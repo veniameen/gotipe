@@ -141,3 +141,4 @@ GoTipe входит на рынок с дифференцированным пр
 | 15 | [15-accessibility-i18n.md](15-accessibility-i18n.md) | Доступность, i18n, RTL, IME, мобильные устройства |
 | 16 | [16-comments-versioning.md](16-comments-versioning.md) | Комментарии, версионирование, права доступа |
 | 17 | [17-migration-guide.md](17-migration-guide.md) | Миграция с Tiptap, ProseMirror, Lexical, Slate |
+| 18 | [18-design-system.md](18-design-system.md) | Design system: UI компоненты, темы, CSS tokens, анимации |
