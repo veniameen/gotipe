@@ -1,0 +1,743 @@
+# GoTipe — Структура репозитория
+
+## Обзор
+
+GoTipe — monorepo с Rust workspace (crates/) и TypeScript packages (packages/). Build tooling: Cargo для Rust, Turborepo для TypeScript, wasm-pack для WASM bridge.
+
+```
+gotipe/
+├── .github/
+│   └── workflows/
+│       ├── ci.yml                # PR checks: lint, test, build
+│       ├── release.yml           # npm publish + crate publish
+│       └── wasm-build.yml        # WASM build + size check
+│
+├── crates/                       # Rust workspace
+│   ├── gotipe-core/              # Document model, schema, transforms, commands
+│   ├── gotipe-schema/            # Schema DSL, validation engine
+│   ├── gotipe-crdt/              # CRDT engine, sync protocol, awareness
+│   ├── gotipe-ai/                # AI context builder, provider interface
+│   ├── gotipe-export/            # HTML, Markdown, PDF (typst), DOCX (docx-rs)
+│   └── gotipe-wasm/              # wasm-bindgen exports
+│
+├── packages/                     # TypeScript packages (Turborepo)
+│   ├── core/                     # @gotipe/core — JS bindings + editor manager
+│   ├── wasm/                     # @gotipe/wasm — WASM pkg wrapper
+│   ├── react/                    # @gotipe/react — React adapter
+│   ├── vue/                      # @gotipe/vue — Vue 3 adapter
+│   ├── svelte/                   # @gotipe/svelte — Svelte 5 adapter
+│   ├── solid/                    # @gotipe/solid — Solid adapter
+│   ├── collaboration/            # @gotipe/collaboration — CRDT sync client
+│   ├── ai/                       # @gotipe/ai — AI integration layer
+│   └── export/                   # @gotipe/export — JS export API
+│
+├── apps/
+│   ├── playground/               # Demo app (Vite + React)
+│   ├── docs/                     # Documentation site (Astro)
+│   └── cloud/                    # Go API + sync server
+│       ├── cmd/
+│       │   ├── api/              # REST API server
+│       │   └── sync/             # WebSocket sync server
+│       ├── internal/
+│       │   ├── auth/
+│       │   ├── storage/
+│       │   └── sync/
+│       ├── go.mod
+│       └── go.sum
+│
+├── scripts/
+│   ├── build-wasm.sh             # Build WASM + optimize
+│   ├── dev.sh                    # Start dev environment
+│   └── release.sh                # Release workflow
+│
+├── Cargo.toml                    # Rust workspace root
+├── Cargo.lock
+├── turbo.json                    # Turborepo config
+├── package.json                  # Root package.json (workspaces)
+├── pnpm-workspace.yaml
+├── tsconfig.base.json
+├── .rustfmt.toml
+├── .eslintrc.js
+├── .prettierrc
+└── LICENSE                       # MIT
+```
+
+---
+
+## Rust Workspace
+
+### Cargo.toml (root)
+
+```toml
+[workspace]
+resolver = "2"
+members = [
+    "crates/gotipe-core",
+    "crates/gotipe-schema",
+    "crates/gotipe-crdt",
+    "crates/gotipe-ai",
+    "crates/gotipe-export",
+    "crates/gotipe-wasm",
+]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+license = "MIT"
+repository = "https://github.com/gotipe/gotipe"
+
+[workspace.dependencies]
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+thiserror = "2.0"
+wasm-bindgen = "0.2"
+uuid = { version = "1.0", features = ["v4"] }
+
+# CRDT
+# (custom implementation, Loro-inspired)
+
+# Export
+typst = "0.12"
+docx-rs = "0.4"
+comrak = "0.31"          # CommonMark + GFM parser
+ammonia = "4.0"          # HTML sanitizer
+
+# Compression
+zstd = "0.13"
+
+# Testing
+criterion = "0.5"
+proptest = "1.5"
+
+[profile.release]
+opt-level = "z"
+lto = true
+codegen-units = 1
+strip = true
+
+[profile.bench]
+opt-level = 3
+lto = true
+```
+
+### Crate Dependencies Graph
+
+```
+gotipe-schema
+    │
+    ▼
+gotipe-core ──────► gotipe-crdt
+    │                    │
+    ├──────► gotipe-ai   │
+    │                    │
+    ▼                    ▼
+gotipe-export       gotipe-wasm ◄── all crates
+```
+
+| Crate | External Dependencies | Size (est.) |
+|-------|----------------------|-------------|
+| gotipe-schema | serde, serde_json, thiserror | ~5KB |
+| gotipe-core | gotipe-schema, serde, uuid | ~30KB |
+| gotipe-crdt | gotipe-core, zstd | ~60KB |
+| gotipe-ai | gotipe-core, serde | ~10KB |
+| gotipe-export | gotipe-core, typst, docx-rs, comrak, ammonia | ~300KB |
+| gotipe-wasm | all above, wasm-bindgen, serde-wasm-bindgen | WASM output |
+
+---
+
+## TypeScript Packages
+
+### pnpm-workspace.yaml
+
+```yaml
+packages:
+  - 'packages/*'
+  - 'apps/*'
+```
+
+### Root package.json
+
+```json
+{
+  "private": true,
+  "scripts": {
+    "dev": "turbo run dev",
+    "build": "turbo run build",
+    "test": "turbo run test",
+    "lint": "turbo run lint",
+    "typecheck": "turbo run typecheck",
+    "build:wasm": "bash scripts/build-wasm.sh",
+    "clean": "turbo run clean && cargo clean"
+  },
+  "devDependencies": {
+    "turbo": "^2.3",
+    "typescript": "^5.7",
+    "vitest": "^2.1",
+    "eslint": "^9.15",
+    "@biomejs/biome": "^1.9",
+    "tsup": "^8.3"
+  }
+}
+```
+
+### turbo.json
+
+```json
+{
+  "$schema": "https://turbo.build/schema.json",
+  "tasks": {
+    "build": {
+      "dependsOn": ["^build"],
+      "outputs": ["dist/**"]
+    },
+    "dev": {
+      "cache": false,
+      "persistent": true
+    },
+    "test": {
+      "dependsOn": ["build"]
+    },
+    "lint": {},
+    "typecheck": {
+      "dependsOn": ["^build"]
+    },
+    "clean": {
+      "cache": false
+    }
+  }
+}
+```
+
+### Package Structure (каждый TS package)
+
+```
+packages/core/
+├── src/
+│   ├── index.ts              # Public API exports
+│   ├── editor.ts             # createEditor, GoTipeEditor class
+│   ├── types/
+│   │   ├── block.ts          # Block, TextSpan, Mark types
+│   │   ├── state.ts          # EditorState, Transaction
+│   │   ├── extension.ts      # Extension, defineExtension
+│   │   └── events.ts         # Event types
+│   ├── extensions/
+│   │   ├── paragraph.ts
+│   │   ├── heading.ts
+│   │   ├── bold.ts
+│   │   └── ...
+│   ├── presets.ts            # MinimalPreset, DefaultPreset, FullPreset
+│   └── wasm-bridge.ts       # WASM initialization and bridge
+├── package.json
+├── tsconfig.json
+├── tsup.config.ts
+└── vitest.config.ts
+```
+
+### tsup.config.ts (build config, каждый пакет)
+
+```typescript
+// packages/core/tsup.config.ts
+import { defineConfig } from 'tsup';
+
+export default defineConfig({
+  entry: ['src/index.ts'],
+  format: ['esm', 'cjs'],
+  dts: true,
+  sourcemap: true,
+  clean: true,
+  external: ['@gotipe/wasm'],
+  treeshake: true,
+  minify: false,
+});
+```
+
+### Package Dependencies
+
+```
+@gotipe/wasm          ← WASM pkg (no TS deps)
+    │
+    ▼
+@gotipe/core          ← @gotipe/wasm
+    │
+    ├──► @gotipe/react          ← @gotipe/core, react
+    ├──► @gotipe/vue            ← @gotipe/core, vue
+    ├──► @gotipe/svelte         ← @gotipe/core, svelte
+    ├──► @gotipe/solid          ← @gotipe/core, solid-js
+    ├──► @gotipe/collaboration  ← @gotipe/core
+    ├──► @gotipe/ai             ← @gotipe/core
+    └──► @gotipe/export         ← @gotipe/core, @gotipe/wasm
+```
+
+### Bundle Sizes (target, gzip)
+
+| Package | ESM (gzip) | Peer Dependencies |
+|---------|-----------|-------------------|
+| @gotipe/wasm | ~255KB | — |
+| @gotipe/core | ~15KB | @gotipe/wasm |
+| @gotipe/react | ~8KB | @gotipe/core, react >=18 |
+| @gotipe/vue | ~7KB | @gotipe/core, vue >=3.4 |
+| @gotipe/svelte | ~6KB | @gotipe/core, svelte >=5 |
+| @gotipe/solid | ~5KB | @gotipe/core, solid-js >=1.8 |
+| @gotipe/collaboration | ~10KB | @gotipe/core |
+| @gotipe/ai | ~5KB | @gotipe/core |
+| @gotipe/export | ~3KB (без WASM lazy) | @gotipe/core, @gotipe/wasm |
+
+---
+
+## Apps
+
+### Playground (Demo)
+
+```
+apps/playground/
+├── src/
+│   ├── main.tsx
+│   ├── App.tsx               # Editor demo with all features
+│   ├── examples/
+│   │   ├── basic.tsx         # Minimal editor
+│   │   ├── collaboration.tsx # Real-time collab demo
+│   │   ├── ai.tsx           # AI features demo
+│   │   └── custom.tsx       # Custom extensions
+│   └── styles.css
+├── index.html
+├── vite.config.ts
+└── package.json
+```
+
+```json
+{
+  "name": "@gotipe/playground",
+  "private": true,
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@gotipe/core": "workspace:*",
+    "@gotipe/react": "workspace:*",
+    "@gotipe/collaboration": "workspace:*",
+    "@gotipe/ai": "workspace:*",
+    "react": "^19.0",
+    "react-dom": "^19.0"
+  },
+  "devDependencies": {
+    "vite": "^6.0",
+    "@vitejs/plugin-react": "^4.3"
+  }
+}
+```
+
+### Documentation Site (Astro)
+
+```
+apps/docs/
+├── src/
+│   ├── content/
+│   │   ├── docs/             # MDX documentation pages
+│   │   └── api/              # Auto-generated API reference
+│   ├── components/
+│   │   ├── Editor.tsx        # Interactive editor examples
+│   │   └── CodeBlock.astro
+│   └── pages/
+├── astro.config.ts
+└── package.json
+```
+
+### Cloud (Go)
+
+```
+apps/cloud/
+├── cmd/
+│   ├── api/
+│   │   └── main.go          # REST API entrypoint
+│   └── sync/
+│       └── main.go          # WebSocket sync entrypoint
+├── internal/
+│   ├── auth/
+│   │   ├── apikey.go
+│   │   ├── jwt.go
+│   │   └── middleware.go
+│   ├── storage/
+│   │   ├── postgres.go
+│   │   ├── s3.go
+│   │   └── valkey.go
+│   ├── sync/
+│   │   ├── server.go        # WebSocket handler
+│   │   ├── room.go          # Room management
+│   │   └── persistence.go
+│   ├── ai/
+│   │   ├── proxy.go         # LLM proxy
+│   │   └── providers.go
+│   └── export/
+│       ├── service.go        # Export queue
+│       └── worker.go
+├── migrations/
+│   ├── 001_initial.up.sql
+│   └── 001_initial.down.sql
+├── Dockerfile
+├── docker-compose.yml
+├── go.mod
+└── go.sum
+```
+
+```
+# go.mod
+module github.com/gotipe/cloud
+
+go 1.23
+
+require (
+    github.com/gorilla/websocket v1.5.3
+    github.com/jackc/pgx/v5 v5.7.2
+    github.com/valkey-io/valkey-go v1.0.49
+    github.com/aws/aws-sdk-go-v2 v1.32.7
+    github.com/golang-jwt/jwt/v5 v5.2.1
+    github.com/prometheus/client_golang v1.20.5
+)
+```
+
+---
+
+## Tooling
+
+### WASM Build
+
+```bash
+#!/bin/bash
+# scripts/build-wasm.sh
+set -euo pipefail
+
+WASM_OUT="packages/wasm/pkg"
+
+echo "=== Building WASM ==="
+wasm-pack build crates/gotipe-wasm \
+  --target web \
+  --out-dir "../../${WASM_OUT}" \
+  --release
+
+echo "=== Optimizing WASM ==="
+wasm-opt "${WASM_OUT}/gotipe_wasm_bg.wasm" \
+  -Oz \
+  -o "${WASM_OUT}/gotipe_wasm_bg.wasm"
+
+# Size report
+echo "=== WASM Size ==="
+RAW_SIZE=$(wc -c < "${WASM_OUT}/gotipe_wasm_bg.wasm")
+GZIP_SIZE=$(gzip -c "${WASM_OUT}/gotipe_wasm_bg.wasm" | wc -c)
+echo "  Raw:  $(numfmt --to=iec ${RAW_SIZE})"
+echo "  Gzip: $(numfmt --to=iec ${GZIP_SIZE})"
+
+# Check size budget (500KB gzip max)
+MAX_SIZE=512000
+if [ "${GZIP_SIZE}" -gt "${MAX_SIZE}" ]; then
+  echo "ERROR: WASM size exceeds budget (${GZIP_SIZE} > ${MAX_SIZE})"
+  exit 1
+fi
+
+echo "=== Done ==="
+```
+
+### Dev Workflow
+
+```bash
+# scripts/dev.sh — Start full dev environment
+#!/bin/bash
+set -euo pipefail
+
+# 1. Build WASM (if changed)
+if [ crates/ -nt packages/wasm/pkg/gotipe_wasm_bg.wasm ]; then
+  echo "WASM outdated, rebuilding..."
+  bash scripts/build-wasm.sh
+fi
+
+# 2. Start TypeScript packages in watch mode
+pnpm turbo run dev &
+
+# 3. Start Go sync server (if developing cloud features)
+if [ -f apps/cloud/go.mod ]; then
+  cd apps/cloud && go run cmd/sync/main.go &
+fi
+
+wait
+```
+
+### Common Commands
+
+| Command | Description |
+|---------|------------|
+| `pnpm install` | Install all dependencies |
+| `pnpm build:wasm` | Build WASM from Rust |
+| `pnpm dev` | Start all packages in watch mode |
+| `pnpm build` | Build all packages |
+| `pnpm test` | Run all tests (Rust + TS) |
+| `pnpm lint` | Lint all code |
+| `cargo test` | Run Rust tests |
+| `cargo bench` | Run Rust benchmarks |
+| `cargo clippy` | Rust linter |
+| `cargo fmt` | Format Rust code |
+| `cd apps/cloud && go test ./...` | Run Go tests |
+
+---
+
+## CI/CD
+
+### GitHub Actions: CI
+
+```yaml
+# .github/workflows/ci.yml
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  rust:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy, rustfmt
+      - uses: Swatinem/rust-cache@v2
+
+      - name: Format check
+        run: cargo fmt --all -- --check
+
+      - name: Clippy
+        run: cargo clippy --all-targets -- -D warnings
+
+      - name: Tests
+        run: cargo test --all
+
+      - name: Benchmarks (compile only)
+        run: cargo bench --no-run
+
+  wasm:
+    runs-on: ubuntu-latest
+    needs: rust
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-unknown-unknown
+      - uses: Swatinem/rust-cache@v2
+
+      - name: Install wasm-pack
+        run: curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh
+
+      - name: Install wasm-opt
+        run: |
+          npm install -g binaryen
+
+      - name: Build WASM
+        run: bash scripts/build-wasm.sh
+
+      - name: Upload WASM artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: wasm-pkg
+          path: packages/wasm/pkg/
+
+  typescript:
+    runs-on: ubuntu-latest
+    needs: wasm
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Download WASM artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: wasm-pkg
+          path: packages/wasm/pkg/
+
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm lint
+      - run: pnpm typecheck
+      - run: pnpm build
+      - run: pnpm test
+
+  go:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/cloud
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.23'
+          cache-dependency-path: apps/cloud/go.sum
+
+      - name: Vet
+        run: go vet ./...
+      - name: Test
+        run: go test ./... -race -count=1
+      - name: Build
+        run: go build ./cmd/...
+```
+
+### GitHub Actions: Release
+
+```yaml
+# .github/workflows/release.yml
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+
+      # Build WASM
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-unknown-unknown
+      - run: curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh
+      - run: npm install -g binaryen
+      - run: bash scripts/build-wasm.sh
+
+      # Build & publish TS packages
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          registry-url: 'https://registry.npmjs.org'
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm build
+      - run: pnpm -r publish --access public --no-git-checks
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      # Publish Rust crates
+      - run: cargo publish -p gotipe-schema
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_TOKEN }}
+      - run: cargo publish -p gotipe-core
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_TOKEN }}
+      # ... remaining crates in dependency order
+
+      # Create GitHub Release
+      - uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true
+```
+
+---
+
+## Linting & Formatting
+
+### Rust
+
+```toml
+# .rustfmt.toml
+edition = "2021"
+max_width = 100
+tab_spaces = 4
+use_field_init_shorthand = true
+use_try_shorthand = true
+```
+
+### TypeScript
+
+```json
+// biome.json
+{
+  "$schema": "https://biomejs.dev/schemas/1.9.0/schema.json",
+  "organizeImports": { "enabled": true },
+  "linter": {
+    "enabled": true,
+    "rules": {
+      "recommended": true,
+      "correctness": {
+        "noUnusedImports": "error",
+        "noUnusedVariables": "error"
+      }
+    }
+  },
+  "formatter": {
+    "enabled": true,
+    "indentStyle": "space",
+    "indentWidth": 2,
+    "lineWidth": 100
+  }
+}
+```
+
+---
+
+## Testing Strategy
+
+| Layer | Tool | What |
+|-------|------|------|
+| Rust unit tests | `cargo test` | Core logic, transforms, CRDT |
+| Rust property tests | proptest | Random document mutations, CRDT convergence |
+| Rust benchmarks | criterion | Performance regression |
+| WASM integration | wasm-pack test | WASM bindings correctness |
+| TypeScript unit | vitest | Editor manager, extensions, adapters |
+| TypeScript E2E | Playwright | Full editor UX in browser |
+| Go unit tests | `go test` | API, sync server |
+| Go integration | testcontainers | PostgreSQL, Valkey integration |
+
+### Test Commands
+
+```bash
+# All Rust tests
+cargo test --all
+
+# Specific crate
+cargo test -p gotipe-core
+
+# Property tests (slow, thorough)
+cargo test --all -- --ignored
+
+# Benchmarks
+cargo bench -p gotipe-core
+
+# WASM tests (requires browser/Node)
+wasm-pack test --node crates/gotipe-wasm
+
+# TypeScript tests
+pnpm test
+
+# Specific package
+pnpm --filter @gotipe/core test
+
+# E2E
+pnpm --filter @gotipe/playground test:e2e
+
+# Go tests
+cd apps/cloud && go test ./...
+
+# Go with race detector
+cd apps/cloud && go test -race ./...
+```
+
+---
+
+## Связанные документы
+
+- [01-architecture.md](01-architecture.md) — crate structure, package dependencies
+- [03-editor-core.md](03-editor-core.md) — Rust crate details, WASM build config
+- [10-cloud.md](10-cloud.md) — Go cloud app structure
+- [12-release-plan.md](12-release-plan.md) — план реализации и релиза
