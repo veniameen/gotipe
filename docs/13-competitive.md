@@ -83,19 +83,19 @@ Collaboration server, AI proxy, export service — всё self-hosted через
 
 ---
 
-## "Best of breed": что берём от каждого конкурента
+## GoTipe vs конкуренты: преимущества по областям
 
-| Источник | Что берём | Как улучшаем |
-|----------|----------|-------------|
-| **Tiptap** | Extension API, headless approach, framework adapters | Typed Rust extensions vs JS objects; built-in slash commands |
-| **BlockNote** | Block-first paradigm, Notion-like UX из коробки | Rust/WASM core вместо ProseMirror+Tiptap wrapper |
-| **Lexical** | Lightweight, performant architecture | WASM для ещё большей производительности |
-| **Slate** | Flexible document model, React-native feel | Typed schema вместо untyped tree |
-| **Notion** | Block editor UX: slash commands, DnD, toggle, columns | Open-source, customizable |
-| **Loro** | Rust CRDT, MovableTree, Rich Text CRDT | Tight integration с editor model |
-| **Figma** | Multiplayer UX, smooth collaboration | Applied to text editing |
-| **CKEditor** | Enterprise features: compliance, PDF, DOCX | Open-source (MIT) вместо GPL |
-| **Novel** (Vercel AI) | AI SDK integration, ghost text UX | Multi-provider, self-hosted |
+| Область | Конкурент | Подход конкурента | GoTipe |
+|---------|-----------|-------------------|--------|
+| **Extension API** | Tiptap | JS class inheritance, untyped | Typed Rust extensions, functional `defineExtension()`, built-in slash commands |
+| **Block paradigm** | BlockNote | ProseMirror+Tiptap wrapper | Собственный Rust/WASM core, block-first document model |
+| **Performance** | Lexical | Lightweight JS architecture | WASM core, 2-5x быстрее на больших документах |
+| **Document model** | Slate | Untyped flexible tree | Typed schema, Rust-validated structure |
+| **Block editor UX** | Notion | Проприетарный, закрытый | Open-source, полностью кастомизируемый |
+| **CRDT** | Loro | Standalone Rust CRDT library | Tight integration с editor document model |
+| **Collaboration UX** | Figma | C++/WASM multiplayer | Применено к text editing с awareness и cursors |
+| **Enterprise** | CKEditor | GPL лицензия, SaaS-only collab | MIT, self-hosted, SOC 2 compliance |
+| **AI integration** | Novel (Vercel) | Single provider, hosted only | Multi-provider, self-hosted Ollama support |
 
 ---
 
