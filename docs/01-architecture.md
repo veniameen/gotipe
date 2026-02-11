@@ -828,7 +828,7 @@ export async function initGoTipe(): Promise<GoTipeEngine> {
 | Export (HTML, MD, PDF) | 1.5 | Rust core | MIT |
 | Sync server (Go) | 1.5 | CRDT engine | MIT |
 | Cloud API | 1 | Sync server | Proprietary |
-| Documentation site | 1 | All | — |
+| Documentation site (Mintlify) | 0.5 | All | — |
 | **Total** | **~16.5 person-months** | | |
 
 > **Модель монетизации:** Headless core (MIT) бесплатный. Block Editor UI (`@gotipe/block-editor`) — коммерческая лицензия ($149/app/год). Cloud — подписка ($29+/mo, Block Editor включён). Детали в [00-overview.md#monetization](00-overview.md) и [12-release-plan.md#pricing](12-release-plan.md).

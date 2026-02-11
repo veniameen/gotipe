@@ -81,11 +81,11 @@ gotipe-crdt    gotipe-ai    gotipe-export   gotipe-wasm
 | **Go sync server** (WebSocket, REST API, PostgreSQL, auth) | 2 | gotipe-crdt | Нет |
 | **Go Cloud API** (documents CRUD, API keys, billing, AI proxy) | 2 | Go sync server | Нет |
 | **Infrastructure** (Docker, CI/CD, monitoring, deployment) | 1.5 | — | Нет |
-| **Documentation site** (Astro, API reference, guides, examples) | 2 | Все пакеты | Нет |
+| **Documentation site** (Mintlify, API reference из OpenAPI, guides, examples) | 1.5 | Все пакеты | Нет |
 | **Playground** (interactive demo, collaboration, AI) | 1 | Документация | Нет |
 | **Landing page** (gotipe.com, marketing) | 0.5 | — | Нет |
 | **Testing & QA** (unit, integration, e2e, browser matrix, accessibility) | 2 | Все | Нет |
-| **Total** | **~36.5 person-months** | | |
+| **Total** | **~36 person-months** | | |
 
 ### С учётом параллелизации
 
@@ -245,9 +245,9 @@ gotipe-crdt    gotipe-ai    gotipe-export   gotipe-wasm
 
 | Задача | Описание |
 |--------|----------|
-| Documentation site | Astro-based, quickstart, API reference, extension guides, examples |
+| Documentation site | Mintlify-hosted (docs.gotipe.com), quickstart, API reference (auto-generated из OpenAPI), extension guides, examples |
 | Playground | Interactive editor: collaboration demo, AI demo, export demo |
-| Landing page | gotipe.com, value proposition, pricing, comparison |
+| Landing page | Next.js → Vercel (gotipe.com), value proposition, pricing, comparison |
 | Migration guides | From Tiptap, from ProseMirror, from Lexical, from Slate |
 | npm packages | Publish @gotipe/* packages to npm registry |
 | GitHub | README, CONTRIBUTING, issue templates, PR templates |

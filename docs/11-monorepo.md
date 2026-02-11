@@ -48,7 +48,7 @@ gotipe/
 │
 ├── apps/
 │   ├── playground/               # Demo app (Vite + React)
-│   ├── docs/                     # Documentation site (Astro)
+│   ├── docs/                     # Documentation site (Mintlify, docs.gotipe.com)
 │   └── cloud/                    # Go API + sync server
 │       ├── cmd/
 │       │   ├── api/              # REST API server
@@ -371,20 +371,38 @@ apps/playground/
 }
 ```
 
-### Documentation Site (Astro)
+### Documentation Site (Mintlify)
+
+Hosted на Mintlify (docs.gotipe.com). Автодеплой через GitHub integration. API Reference автогенерируется из OpenAPI spec.
 
 ```
-apps/docs/
-├── src/
-│   ├── content/
-│   │   ├── docs/             # MDX documentation pages
-│   │   └── api/              # Auto-generated API reference
-│   ├── components/
-│   │   ├── Editor.tsx        # Interactive editor examples
-│   │   └── CodeBlock.astro
-│   └── pages/
-├── astro.config.ts
-└── package.json
+docs-site/
+├── mint.json                   # Mintlify config (navigation, colors, API base URL, openapi)
+├── introduction.mdx            # Overview, feature highlights
+├── quickstart.mdx              # Getting Started
+├── guides/
+│   ├── extensions.mdx          # Extensions Guide
+│   ├── react.mdx               # React adapter
+│   ├── vue.mdx                 # Vue 3 adapter
+│   ├── svelte.mdx              # Svelte 5 adapter
+│   ├── solid.mdx               # Solid adapter
+│   ├── collaboration.mdx       # Real-time collaboration
+│   ├── comments.mdx            # Comments & Track Changes
+│   ├── versions.mdx            # Version History
+│   ├── ai.mdx                  # AI integration
+│   ├── export.mdx              # Export/Import
+│   ├── theming.mdx             # Theming & Design Tokens
+│   ├── i18n.mdx                # i18n & Accessibility
+│   ├── self-hosted.mdx         # Self-hosted deployment
+│   ├── cloud.mdx               # GoTipe Cloud
+│   └── security.mdx            # Security
+├── api-reference/              # Auto-generated from openapi.yaml
+├── migration/
+│   ├── from-tiptap.mdx
+│   ├── from-prosemirror.mdx
+│   ├── from-lexical.mdx
+│   └── from-slate.mdx
+└── images/                     # Screenshots, diagrams
 ```
 
 ### Cloud (Go)
