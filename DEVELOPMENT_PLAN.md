@@ -71,10 +71,37 @@ GoTipe — Rust/WASM rich text editor framework с Notion-like UX. Проект 
 ### Фаза 5: CI/CD
 - [ ] 5.1 `.github/workflows/ci.yml` — rust (fmt, clippy, test, property tests, bench compile) + wasm (build + artifact + size check ≤500KB gzip) + typescript (download wasm → install → lint → typecheck → build → test → bundle size check) + go (vet, test -race, build)
 - [ ] 5.2 `.github/workflows/release.yml` — npm publish (--provenance, dependency order) + cargo publish (schema → core → crdt → comments → versioning → ai → export → wasm) + GitHub Release + CHANGELOG.md generation
-- [ ] 5.3 `.github/workflows/deploy-cloud.yml` — test with services → Docker build+push GHCR → SSH deploy
-- [ ] 5.4 `.github/workflows/security.yml` — `cargo audit`, `cargo deny check`, `npm audit`, SBOM generation (CycloneDX), license compliance check
-- [ ] 5.5 `.github/workflows/e2e.yml` — Playwright (Chrome + Firefox + Safari), data-attr selectors (`[data-gotipe-*]`)
-- [ ] 5.6 `.github/workflows/benchmark.yml` — Criterion benchmark regression detection (fail on >10% regression), per-crate WASM size targets (core ~120KB, crdt ~80KB, export ~40KB, ai ~15KB), per-package gzip size tracking, size comparison on PRs. Performance targets: <1ms keystroke, <0.5ms CRDT op, >10K ops/sec, >50 clients/room
+- [ ] 5.3 `.github/workflows/deploy-cloud.yml` — test with services → Docker build+push GHCR → SSH deploy (Hetzner VDS)
+- [ ] 5.4 `.github/workflows/deploy-infra.yml` — push to main (paths: infra/**) → environment: production (requires approve) → ssh server "git pull && docker compose up -d"
+- [ ] 5.5 `.github/workflows/security.yml` — `cargo audit`, `cargo deny check`, `npm audit`, SBOM generation (CycloneDX), license compliance check
+- [ ] 5.6 `.github/workflows/e2e.yml` — Playwright (Chrome + Firefox + Safari), data-attr selectors (`[data-gotipe-*]`)
+- [ ] 5.7 `.github/workflows/benchmark.yml` — Criterion benchmark regression detection (fail on >10% regression), per-crate WASM size targets (core ~120KB, crdt ~80KB, export ~40KB, ai ~15KB), per-package gzip size tracking, size comparison on PRs. Performance targets: <1ms keystroke, <0.5ms CRDT op, >10K ops/sec, >50 clients/room
+- [ ] 5.8 Vercel integration — подключить `apps/landing/` как Vercel project. Автодеплой на push main (paths: apps/landing/**, packages/**). Preview deployments на PR. `turbo-ignore` скипает билд если лендинг не затронут
+- [ ] 5.9 Mintlify integration — подключить `docs-site/` через Mintlify GitHub App. Автодеплой на push main (paths: docs-site/**). OpenAPI spec из `apps/cloud/api/openapi.yaml`
+
+**Deployment flow (аналог Publeto):**
+```
+git push to main
+  │
+  ├── apps/cloud/** → GitHub Actions (deploy-cloud.yml)
+  │     1. go test → docker build → ghcr.io/gotipe/cloud-api:sha
+  │     2. ssh server "bash infra/scripts/deploy.sh $SHA"
+  │        → migrate up → zero-downtime deploy → health check
+  │
+  ├── apps/landing/** или packages/** → Vercel автодеплой
+  │     turbo-ignore скипает билд если app не затронут
+  │     PR → preview deployment
+  │
+  ├── docs-site/** → Mintlify автодеплой
+  │
+  ├── infra/** → GitHub Actions (deploy-infra.yml)
+  │     environment: production (requires approve в GitHub UI)
+  │     ssh server "git pull && docker compose up -d"
+  │
+  ├── crates/** → GitHub Actions CI (rust + wasm jobs)
+  │
+  └── docs/** → Ничего (design docs, не деплоятся)
+```
 
 ### Фаза 6: Apps & Documentation
 - [ ] 6.1 `apps/playground/` — Vite + React demo (basic, collaboration, comments, suggestions, version history, ai, custom extensions)
@@ -592,8 +619,8 @@ GoTipe — Rust/WASM rich text editor framework с Notion-like UX. Проект 
 | `infra/grafana/dashboards/gotipe-api.json` | API dashboard: request rate by endpoint, latency percentiles, error breakdown |
 | `infra/grafana/dashboards/gotipe-sync.json` | Sync dashboard: WebSocket connections, messages/sec, room count, CRDT merge latency |
 | `infra/grafana/dashboards/gotipe-ai.json` | AI dashboard: requests by provider/model, token usage, cache hit rate, latency |
-| `infra/scripts/setup-server.sh` | Full provisioning: apt install docker, firewall, deploy user, SSH key, GitHub auth, clone repo, .env, docker compose up, backup cron. Полный код из docs/10 |
-| `infra/scripts/deploy.sh` | Zero-downtime: pull → migrate → scale api=2 → health check → remove old → update sync/export. Полный код из docs/10 |
+| `infra/scripts/setup-server.sh` | Full provisioning Hetzner VDS (только Go Cloud — landing на Vercel, docs на Mintlify): apt install docker, firewall, deploy user, SSH key, GitHub auth, clone repo, .env, docker compose up, backup cron. Полный код из docs/10 |
+| `infra/scripts/deploy.sh` | Zero-downtime Go Cloud deploy: pull → migrate (напрямую к Postgres, не через pgBouncer) → scale api=2 → health check → remove old → update sync/export. Полный код из docs/10 |
 | `infra/scripts/restore.sh` | DR: stop services → postgres up → pgbackrest restore (R2) → PITR optional → restart all. Полный код из docs/10 |
 | `infra/scripts/backup-cron` | Cron: daily incremental 03:00 UTC, weekly full Sunday 04:00 UTC |
 | `infra/scripts/rate-limit.lua` | Sliding window Lua script для Valkey. Полный код из docs/10 |
@@ -606,10 +633,13 @@ GoTipe — Rust/WASM rich text editor framework с Notion-like UX. Проект 
 |------|-----------|
 | `.github/workflows/ci.yml` | Jobs: rust (fmt, clippy, test, property tests `--ignored`, bench compile), wasm (build + artifact + gzip size check ≤500KB), typescript (download wasm → install → lint → typecheck → build → test → per-package bundle size check), go (vet, test -race, build). Полная спецификация из docs/11 |
 | `.github/workflows/release.yml` | On tag v*: build wasm → build TS → npm publish --provenance (dependency order) → cargo publish (gotipe-schema → gotipe-core → gotipe-crdt → gotipe-comments → gotipe-versioning → gotipe-ai → gotipe-export → gotipe-wasm) → GitHub Release. CHANGELOG.md via changesets |
-| `.github/workflows/deploy-cloud.yml` | On push main (apps/cloud/**): test with services (postgres, valkey) → docker build+push GHCR → SSH deploy |
+| `.github/workflows/deploy-cloud.yml` | On push main (apps/cloud/**): test with services (postgres, valkey) → docker build+push GHCR → SSH deploy Hetzner VDS |
+| `.github/workflows/deploy-infra.yml` | On push main (infra/**): environment: production (requires approve) → ssh server "git pull && docker compose up -d" |
 | `.github/workflows/security.yml` | Weekly + on PR: `cargo audit`, `cargo deny check licenses`, `npm audit --audit-level=high`, SBOM generation (CycloneDX: `cargo cyclonedx` + `npx @cyclonedx/cyclonedx-npm`), license compliance check |
 | `.github/workflows/e2e.yml` | On PR + main: Playwright tests (Chrome + Firefox + Safari), data-attr selectors (`[data-gotipe-*]`), screenshots on failure |
 | `.github/workflows/benchmark.yml` | On PR: Criterion benchmark (compare vs main, fail on >10% regression), per-crate WASM size targets (core ~120KB, crdt ~80KB, export ~40KB, ai ~15KB, total ≤500KB gzip), per-package gzip size tracking (report in PR comment). Performance targets validation: <1ms keystroke processing, <0.5ms CRDT op generation, <0.1ms binary encoding, >10K ops/sec throughput, >50 concurrent clients/room, 1M ops before compaction threshold |
+| **Vercel (автодеплой)** | `apps/landing/` подключен как Vercel project. Push main → Vercel автодеплой (turbo-ignore скипает если не затронут). PR → Vercel preview deployment. Domain: gotipe.com |
+| **Mintlify (автодеплой)** | `docs-site/` подключен через Mintlify GitHub App. Push main (docs-site/**) → Mintlify автодеплой. OpenAPI spec из apps/cloud/api/openapi.yaml. Domain: docs.gotipe.com |
 
 ### Фаза 6: Apps & Documentation
 
@@ -707,9 +737,11 @@ OpenAPI 3.1 spec covering all REST API endpoints: documents CRUD, comments, vers
 5. **Фаза 3 (Go):** `cd apps/cloud && go test ./... -race && go build ./cmd/...`
 6. **Фаза 3 (Go integration):** `cd apps/cloud && go test -tags=integration ./...` (testcontainers: Postgres + Valkey)
 7. **Фаза 4 (Infra):** `docker compose -f infra/docker-compose.dev.yml up -d` → `curl localhost:8080/healthz`
-8. **Фаза 5 (CI):** Push to branch → GitHub Actions green (all 6 workflows)
-9. **Фаза 5 (Security):** `cargo audit && cargo deny check && npm audit --audit-level=high`
-10. **Фаза 6 (E2E):** `pnpm exec playwright test` → Chrome + Firefox + Safari green
+8. **Фаза 5 (CI):** Push to branch → GitHub Actions green (all workflows)
+9. **Фаза 5 (Vercel):** `apps/landing/` подключен в Vercel → preview deployment на PR работает
+10. **Фаза 5 (Mintlify):** `docs-site/` подключен через Mintlify GitHub App → docs.gotipe.com обновляется на push
+11. **Фаза 5 (Security):** `cargo audit && cargo deny check && npm audit --audit-level=high`
+12. **Фаза 6 (E2E):** `pnpm exec playwright test` → Chrome + Firefox + Safari green
 
 ### End-to-end:
 
@@ -726,3 +758,5 @@ OpenAPI 3.1 spec covering all REST API endpoints: documents CRUD, comments, vers
 11. Start Go server: `cd apps/cloud && go run ./cmd/api`
 12. Enable collaboration → two tabs sync in real-time, colored cursors
 13. Test Stripe: create subscription → verify quota enforcement
+14. Verify landing: `cd apps/landing && pnpm dev` → gotipe.com layout, pricing, features
+15. Verify docs: open docs.gotipe.com → Mintlify site live, API Reference из OpenAPI

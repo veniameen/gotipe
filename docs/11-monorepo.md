@@ -827,6 +827,97 @@ ENTRYPOINT ["gotipe-cloud"]
 CMD ["serve"]
 ```
 
+### Vercel: Landing Page (gotipe.com)
+
+```
+apps/landing/ подключен как Vercel project.
+
+Push to main (paths: apps/landing/**, packages/**) → Vercel автодеплой
+  Vercel turbo-ignore скипает билд если app не изменился
+
+PR → Vercel preview deployments (automatic)
+```
+
+### Mintlify: Documentation (docs.gotipe.com)
+
+```
+Push to main (paths: docs-site/**) → Mintlify автодеплой
+  OpenAPI spec из apps/cloud/api/openapi.yaml → API Reference автогенерация
+```
+
+### GitHub Actions: Infrastructure Deploy
+
+```yaml
+# .github/workflows/deploy-infra.yml
+name: Deploy Infrastructure
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'infra/**'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: production  # requires approve в GitHub UI
+    steps:
+      - uses: actions/checkout@v4
+      - name: Deploy infrastructure
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_KEY }}
+          script: |
+            cd /opt/gotipe/repo
+            git pull
+            cp infra/docker-compose.yml /opt/gotipe/
+            cd /opt/gotipe
+            docker compose up -d
+```
+
+### Deployment Flow
+
+```
+git push to main
+  │
+  ├── apps/cloud/** → GitHub Actions (deploy-cloud.yml)
+  │     1. go test → docker build → ghcr.io/gotipe/cloud-api:sha
+  │     2. ssh server "bash infra/scripts/deploy.sh $SHA"
+  │        → migrate up (напрямую к Postgres) → zero-downtime deploy → health check
+  │
+  ├── apps/landing/** или packages/** → Vercel автодеплой
+  │     turbo-ignore скипает билд если app не затронут
+  │     PR → preview deployment
+  │
+  ├── docs-site/** → Mintlify автодеплой
+  │
+  ├── infra/** → GitHub Actions (deploy-infra.yml)
+  │     environment: production (requires approve в GitHub UI)
+  │     ssh server "git pull && docker compose up -d"
+  │
+  ├── crates/** → GitHub Actions CI (rust + wasm jobs)
+  │
+  └── docs/** → Ничего (design docs, не деплоятся)
+```
+
+### Новый сервер (полная автоматизация)
+
+```
+scp -r infra/ deploy@NEW_IP:/opt/gotipe/
+ssh deploy@NEW_IP "bash /opt/gotipe/scripts/setup-server.sh"
+  → Docker, firewall, deploy user
+  → SSH ключ + GitHub авторизация
+  → GitHub Secrets обновлены (IP + SSH key)
+  → Репа склонирована
+  → Все сервисы запущены (только Go Cloud — landing на Vercel, docs на Mintlify)
+  → Бэкапы настроены (pgBackRest → R2)
+  → Автодеплой работает
+
+Обновить DNS в Cloudflare → новый IP
+```
+
 ---
 
 ## Linting & Formatting
