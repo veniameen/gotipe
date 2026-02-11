@@ -30,7 +30,7 @@ packages/                      # TypeScript workspace
 apps/
   cloud/                       # Go API + WebSocket sync server
   playground/                  # Vite + React demo
-  docs/                        # Astro documentation site
+  docs/                        # Mintlify documentation site (docs.gotipe.com)
 infra/                         # Docker Compose, Caddy, pgBouncer, scripts
 docs/                          # Design documents (00-19), Russian
 ```
