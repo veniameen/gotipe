@@ -76,7 +76,8 @@ gotipe-crdt    gotipe-ai    gotipe-export   gotipe-wasm
 | **@gotipe/collaboration** (GoTipeProvider, WebSocket client) | 1 | gotipe-crdt, @gotipe/core | Нет |
 | **@gotipe/ai** (AIInline extension, AI commands, providers) | 1.5 | gotipe-ai, @gotipe/core | Нет |
 | **@gotipe/export** (client-side JS API) | 1 | gotipe-export, @gotipe/core | Нет |
-| **Block editor UX** (slash commands, DnD, toolbars, block types) | 3 | @gotipe/react | Да |
+| **Block editor UX** (slash commands, DnD, toolbars, block types) — **COMMERCIAL** | 3 | @gotipe/react | Да |
+| **Block Editor license system** (JWT verification, watermark, domain check) | 0.5 | @gotipe/core | Нет |
 | **Go sync server** (WebSocket, REST API, PostgreSQL, auth) | 2 | gotipe-crdt | Нет |
 | **Go Cloud API** (documents CRUD, API keys, billing, AI proxy) | 2 | Go sync server | Нет |
 | **Infrastructure** (Docker, CI/CD, monitoring, deployment) | 1.5 | — | Нет |
@@ -84,7 +85,7 @@ gotipe-crdt    gotipe-ai    gotipe-export   gotipe-wasm
 | **Playground** (interactive demo, collaboration, AI) | 1 | Документация | Нет |
 | **Landing page** (gotipe.com, marketing) | 0.5 | — | Нет |
 | **Testing & QA** (unit, integration, e2e, browser matrix, accessibility) | 2 | Все | Нет |
-| **Total** | **~36 person-months** | | |
+| **Total** | **~36.5 person-months** | | |
 
 ### С учётом параллелизации
 
@@ -211,7 +212,7 @@ gotipe-crdt    gotipe-ai    gotipe-export   gotipe-wasm
 | Editor component | Solid JSX rendering |
 | Block components | Все block types как Solid components |
 
-### 8. Block Editor UX
+### 8. Block Editor UX (Commercial — `@gotipe/block-editor`)
 
 | Задача | Описание |
 |--------|----------|
@@ -232,9 +233,9 @@ gotipe-crdt    gotipe-ai    gotipe-export   gotipe-wasm
 |--------|----------|
 | REST API | Documents CRUD, API keys, auth (JWT), organization management |
 | WebSocket server | Real-time sync, document rooms, connection management |
-| Persistence | PostgreSQL (metadata, auth), S3 (CRDT snapshots, assets) |
+| Persistence | PostgreSQL (metadata, auth), Cloudflare R2 (CRDT snapshots, assets) |
 | AI proxy | OpenAI/Anthropic proxy, rate limiting, usage tracking |
-| Export service | Async PDF/DOCX generation queue, S3 upload |
+| Export service | Async PDF/DOCX generation queue, R2 upload |
 | Auth | API keys + JWT, organization scoping, RBAC |
 | Billing | Stripe integration, usage metering, plan limits |
 | Monitoring | Prometheus metrics, health checks, structured logging |
@@ -290,9 +291,28 @@ Full-St ░░░░░░░░░░░░░░░░░░░░░░██
 
 ## Pricing (v1.0 Launch)
 
+### 3 продукта
+
+| Продукт | Модель | Описание |
+|---------|--------|----------|
+| **GoTipe Core** | MIT (бесплатно) | Headless editor engine, все extensions, CRDT, AI layer, export, framework adapters |
+| **GoTipe Block Editor** | Коммерческая лицензия | Notion-like UI: SlashMenu, BubbleMenu, DragHandle, BlockToolbar, темы, AI UI |
+| **GoTipe Cloud** | Подписка | Managed sync, AI proxy, export service, analytics + Block Editor лицензия включена |
+
+### Block Editor (лицензия без Cloud)
+
+| Tier | Домены | Цена |
+|------|--------|------|
+| **Indie** | 1 production domain | **$149/app/год** |
+| **Business** | До 10 production domains + приоритетная поддержка | **$499/app/год** |
+| **Enterprise** | Unlimited domains + SLA + исходный код | **Custom** |
+
+### GoTipe Cloud (Block Editor включён)
+
 | | Free (self-hosted) | Starter | Pro | Business | Enterprise |
 |---|---|---|---|---|---|
 | **Цена** | $0 | $29/mo | $99/mo | $299/mo | Custom |
+| **Block Editor** | — (headless only) | ✓ Включён | ✓ Включён | ✓ Включён | ✓ Включён |
 | **Documents** | Unlimited | 1,000 | 10,000 | 100,000 | Unlimited |
 | **Collaboration** | Self-hosted | Cloud sync | Cloud sync | Cloud sync | On-premise |
 | **AI requests** | Self-hosted | 10K/mo | 100K/mo | 1M/mo | Unlimited |
@@ -303,17 +323,20 @@ Full-St ░░░░░░░░░░░░░░░░░░░░░░██
 | **Audit log** | — | — | — | Yes | Yes |
 | **Compliance** | — | — | — | SOC 2, GDPR | SOC 2, HIPAA, GDPR |
 
+> **Принцип:** Headless core = MIT (бесплатно навсегда). Block Editor UI = коммерческая лицензия. Cloud = managed инфраструктура + Block Editor лицензия в комплекте.
+
 ### Сравнение с Tiptap Cloud
 
-| Metric | GoTipe Cloud | Tiptap Cloud |
-|--------|-------------|-------------|
-| **Entry price** | $29/mo (1K docs) | $49/mo (500 docs) |
+| Metric | GoTipe | Tiptap |
+|--------|--------|--------|
+| **Block Editor license** | $149/app/год | $149/app/мес |
+| **Cloud entry price** | $29/mo (1K docs) + Block Editor incl. | $49/mo (500 docs) + Editor отдельно |
 | **Cost per 1K docs** | $29 | $49-$98 |
 | **Cost per 10K docs** | $99 | $149 |
 | **Cost per 50K docs** | $299 | $999 |
 | **AI included** | Yes (10K-1M req) | Separate (Content AI addon) |
 | **Export included** | Yes (PDF/DOCX) | Separate (Document Conversion addon) |
-| **Self-hosted** | Full-featured, MIT | Limited (Hocuspocus, no Comments/AI) |
+| **Self-hosted** | Full-featured, MIT headless | Limited (Hocuspocus, no Comments/AI) |
 
 ---
 
@@ -384,7 +407,7 @@ Full-St ░░░░░░░░░░░░░░░░░░░░░░██
 | Tiptap open-sources всё | Medium | High | WASM core = structural advantage, не feature advantage |
 | Разработчики не хотят новый framework | High | High | Yjs compatibility, Tiptap migration guide, killer features |
 | Недостаточно контрибьюторов | Medium | Medium | Good DX, Rust привлекает quality contributors |
-| Cloud не генерирует revenue | Medium | High | Freemium → upsell, enterprise sales, partnerships |
+| Revenue ниже ожиданий | Medium | High | Два источника: Block Editor licenses + Cloud subscriptions, enterprise sales |
 
 ---
 
@@ -414,7 +437,7 @@ Full-St ░░░░░░░░░░░░░░░░░░░░░░██
 - [ ] WASM работает в Node.js (validation, parsing, rendering)
 - [ ] WASM работает в Deno
 - [ ] Go sync server с WebSocket и REST API
-- [ ] PostgreSQL + S3 persistence
+- [ ] PostgreSQL + Cloudflare R2 persistence
 - [ ] Docker compose для self-hosted deployment
 
 ### Quality

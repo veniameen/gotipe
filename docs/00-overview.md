@@ -45,7 +45,7 @@ GoTipe — headless, framework-agnostic rich text editor framework с Notion-lik
 | SaaS-only продукт | Полностью работает оффлайн, self-hosted, zero vendor lock-in |
 | Generic CMS-компонент | Фокус на developer experience: headless API, typed schema, extensible |
 | React-only библиотека | Framework-agnostic core. Первоклассная поддержка React, Vue, Svelte, Solid |
-| Freemium с paywall на extensions | Все extensions MIT. Нет Pro tier. Платить нужно только за Cloud-инфраструктуру |
+| Freemium с paywall на extensions | Headless core MIT. Block Editor UI (Notion-like) — коммерческая лицензия. Cloud — managed инфраструктура |
 | Только для браузера | WASM core работает в Node.js, Deno, Go, Rust — server-side validation и rendering без браузера |
 | Исследовательский проект | Продукт с коммерческой моделью (GoTipe Cloud) и roadmap до v2.0 |
 
@@ -55,14 +55,14 @@ GoTipe — headless, framework-agnostic rich text editor framework с Notion-lik
 
 | Persona | Потребность | Что даёт GoTipe |
 |---------|-------------|-----------------|
-| **Frontend-разработчик** в стартапе | Быстро встроить Notion-like editor в SaaS | Block editor из коробки, 5 строк до рабочего редактора |
-| **Backend-инженер** | Валидировать и обрабатывать rich text на сервере | WASM core в Node.js/Go/Rust — парсинг без браузера |
-| **Tech Lead** | Выбрать editor framework, который не станет vendor lock-in | MIT лицензия, self-hosted collaboration, нет paywall |
-| **Product Manager** | Добавить collaborative editing без Tiptap Cloud pricing | CRDT из коробки, self-hosted WebSocket server |
-| **AI-продукт** | Интегрировать LLM в текстовый редактор | Ghost text, AI commands, multi-provider — в core |
+| **Frontend-разработчик** в стартапе | Быстро встроить Notion-like editor в SaaS | Block Editor — 1 строчка кода, готовый Notion-like UI (лицензия) |
+| **Backend-инженер** | Валидировать и обрабатывать rich text на сервере | WASM core в Node.js/Go/Rust — парсинг без браузера (MIT) |
+| **Tech Lead** | Выбрать editor framework, который не станет vendor lock-in | MIT headless core, self-hosted collaboration, можно построить свой UI |
+| **Product Manager** | Добавить collaborative editing без Tiptap Cloud pricing | CRDT из коробки, self-hosted WebSocket server (MIT) |
+| **AI-продукт** | Интегрировать LLM в текстовый редактор | Ghost text, AI commands, multi-provider — в headless core (MIT) |
 | **Enterprise-архитектор** | On-premise editor с SOC 2, GDPR compliance | Self-hosted всё, audit log, GoTipe Enterprise |
 | **Open-source контрибьютор** | Работать с понятным, typed Rust-кодом | Rust workspace с чёткой модульностью, документированное API |
-| **Indie-разработчик** | Бесплатный rich text editor без ограничений | 100% MIT, включая collaboration и AI layer |
+| **Indie-разработчик** | Бесплатный headless editor без ограничений | Headless core MIT, включая collaboration и AI layer |
 
 ---
 
@@ -74,11 +74,11 @@ GoTipe — headless, framework-agnostic rich text editor framework с Notion-lik
 ### 2. Нативный CRDT — collaboration без облака
 Collaboration на базе CRDT (Loro-inspired) встроена в core. Работает peer-to-peer, через self-hosted сервер, или через GoTipe Cloud. Не нужно платить за синхронизацию — это часть open-source ядра. См. [02-collaboration.md](02-collaboration.md).
 
-### 3. Честный open-source — все extensions MIT
-Все расширения (включая collaboration, AI, export) — MIT. Нет «Pro extensions» как у Tiptap (до июня 2025). Платить нужно только за managed infrastructure (GoTipe Cloud). См. [05-extensions.md](05-extensions.md).
+### 3. Два уровня: MIT headless + коммерческий Block Editor
+Headless core (все extensions, CRDT, AI layer, export) — MIT. Разработчик может построить **любой** UI бесплатно. Для тех, кто хочет **готовый Notion-like UI** из коробки — `@gotipe/block-editor` с коммерческой лицензией. Как у Tiptap: core бесплатный, premium UI — платный. См. [05-extensions.md](05-extensions.md).
 
-### 4. Block Editor из коробки — Notion-like UX
-Slash commands, drag and drop, nested blocks, floating toolbar — всё работает по умолчанию. Headless API позволяет полностью кастомизировать UI. См. [04-block-editor.md](04-block-editor.md).
+### 4. Block Editor — Notion-like UX одной строчкой
+`@gotipe/block-editor` — коммерческий пакет с готовым Notion-like UI: slash commands, drag and drop, nested blocks, floating toolbar, темы. Одна строчка `<BlockEditor />` = готовый редактор. Headless API позволяет построить свой UI бесплатно. См. [04-block-editor.md](04-block-editor.md).
 
 ### 5. AI-first — LLM в core архитектуры
 Ghost text (inline suggestions), AI commands (rewrite, expand, translate), streaming generation — встроены в ядро, не addon. Provider-agnostic: OpenAI, Anthropic, Gemini, Ollama. См. [07-ai.md](07-ai.md).
@@ -107,13 +107,38 @@ GoTipe входит на рынок с дифференцированным пр
 
 ## Монетизация
 
+### 3 продукта
+
+```
+┌──────────────────────────────────────────────────────────┐
+│  @gotipe/block-editor (COMMERCIAL)                        │
+│  Notion-like UI: SlashMenu, DragHandle, BubbleMenu,      │
+│  BlockToolbar, темы, AI UI — готовый редактор              │
+│  Коммерческая лицензия по ключу                           │
+├──────────────────────────────────────────────────────────┤
+│  GoTipe Cloud (SUBSCRIPTION)                              │
+│  Managed sync, AI proxy, export, analytics                │
+│  Block Editor лицензия включена в подписку                │
+├──────────────────────────────────────────────────────────┤
+│  GoTipe Core (MIT, FREE)                                  │
+│  Headless: Rust/WASM engine, extensions, CRDT, AI layer,  │
+│  export, framework adapters, self-hosted server            │
+└──────────────────────────────────────────────────────────┘
+```
+
+### Тарифы
+
 | Tier | Что входит | Цена |
 |------|-----------|------|
-| **Open-Source (MIT)** | Editor core, все extensions, CRDT, AI integration layer, self-hosted server | **$0** |
-| **GoTipe Cloud Starter** | Managed sync (1K docs), AI (10K req/mo), Export (1K/mo) | **$29/mo** |
-| **GoTipe Cloud Pro** | 10K docs, 100K AI req, unlimited export, analytics | **$99/mo** |
-| **GoTipe Cloud Business** | 100K docs, 1M AI req, SSO, priority support | **$299/mo** |
-| **GoTipe Enterprise** | On-premise, SLA, dedicated support, custom integrations, SOC 2, audit log | **Custom** |
+| **Headless Core (MIT)** | Editor engine, все extensions, CRDT, AI layer, export, framework adapters, self-hosted server | **$0** |
+| **Block Editor** | Notion-like UI компоненты, темы, slash commands, DnD, toolbars. Лицензия на 1 production domain | **$149/app/год** |
+| **Block Editor Business** | Block Editor + до 10 domains, приоритетная поддержка | **$499/app/год** |
+| **GoTipe Cloud Starter** | Managed sync (1K docs), AI (10K req/mo), Export (1K/mo) + **Block Editor включён** | **$29/mo** |
+| **GoTipe Cloud Pro** | 10K docs, 100K AI req, unlimited export, analytics + **Block Editor включён** | **$99/mo** |
+| **GoTipe Cloud Business** | 100K docs, 1M AI req, SSO, priority support + **Block Editor включён** | **$299/mo** |
+| **GoTipe Enterprise** | On-premise, SLA, dedicated support, SOC 2, audit log + **Block Editor включён** | **Custom** |
+
+> **Принцип:** Headless core = MIT, всегда бесплатный. Block Editor UI = коммерческая лицензия (как Tiptap Editor). Cloud = managed инфраструктура + Block Editor лицензия в комплекте.
 
 Детали ценообразования и сравнение с конкурентами в [10-cloud.md#pricing](10-cloud.md#pricing) и [12-release-plan.md#pricing](12-release-plan.md#pricing).
 
@@ -142,3 +167,4 @@ GoTipe входит на рынок с дифференцированным пр
 | 16 | [16-comments-versioning.md](16-comments-versioning.md) | Комментарии, версионирование, права доступа |
 | 17 | [17-migration-guide.md](17-migration-guide.md) | Миграция с Tiptap, ProseMirror, Lexical, Slate |
 | 18 | [18-design-system.md](18-design-system.md) | Design system: UI компоненты, темы, CSS tokens, анимации |
+| 19 | [19-testing.md](19-testing.md) | Стратегия тестирования: Rust, TS, Go, E2E, coverage |

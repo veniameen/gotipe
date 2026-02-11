@@ -570,6 +570,73 @@ interface GoTipeJwtPayload {
 - JWT хранится в `httpOnly` cookie (не в localStorage)
 - Refresh rotation: каждый refresh token одноразовый
 
+### JWT Blocklist (Revocation)
+
+Отозванные JWT (logout, password change, session revoke) хранятся в Valkey до истечения TTL:
+
+```go
+// apps/cloud/internal/auth/blocklist.go
+
+const valkeyBlocklistDB = 1  // Отдельная DB для blocklist
+
+type JWTBlocklist struct {
+    client *redis.Client  // Valkey client, db=1
+}
+
+func NewJWTBlocklist(valkeyURL string) *JWTBlocklist {
+    client := redis.NewClient(&redis.Options{
+        Addr: valkeyURL,
+        DB:   valkeyBlocklistDB,
+    })
+    return &JWTBlocklist{client: client}
+}
+
+// Revoke — добавить JWT в blocklist
+func (bl *JWTBlocklist) Revoke(ctx context.Context, tokenHash string, expiresAt time.Time) error {
+    ttl := time.Until(expiresAt)
+    if ttl <= 0 {
+        return nil  // Уже истёк, нет смысла блокировать
+    }
+    return bl.client.Set(ctx, "blocked:"+tokenHash, "1", ttl).Err()
+}
+
+// IsRevoked — проверить, отозван ли JWT
+func (bl *JWTBlocklist) IsRevoked(ctx context.Context, tokenHash string) bool {
+    exists, err := bl.client.Exists(ctx, "blocked:"+tokenHash).Result()
+    if err != nil {
+        // Graceful degradation: если Valkey недоступен — считаем токен валидным
+        // (он всё равно истечёт через 15 минут)
+        return false
+    }
+    return exists > 0
+}
+
+// RevokeAllForUser — отозвать все сессии пользователя (при смене пароля)
+func (bl *JWTBlocklist) RevokeAllForUser(ctx context.Context, userID string) error {
+    return bl.client.Set(ctx,
+        "user_revoked:"+userID,
+        time.Now().Unix(),
+        15*time.Minute,  // Max JWT TTL
+    ).Err()
+}
+```
+
+**Конфигурация Valkey для blocklist:**
+- DB 1 (отдельная от основного кеша в DB 0)
+- `maxmemory-policy noeviction` — нельзя случайно удалить заблокированный токен
+- AOF persistence — blocklist сохраняется при restart
+- TTL на каждом ключе = оставшееся время жизни JWT (автоматическая очистка)
+
+**Сценарии отзыва:**
+
+| Событие | Действие |
+|---------|----------|
+| Logout | `Revoke(tokenHash, token.exp)` |
+| Смена пароля | `RevokeAllForUser(userID)` |
+| Удаление API key | `Revoke(keyHash, key.exp)` |
+| Подозрительная активность | `RevokeAllForUser(userID)` + email уведомление |
+| GDPR deletion | `RevokeAllForUser(userID)` + delete all data |
+
 ### RBAC (Role-Based Access Control)
 
 | Роль | Документы | Комментарии | Редактирование | AI | Export | Настройки | Billing |
@@ -675,9 +742,9 @@ GoTipe Cloud собирает минимум данных:
 │  │  KEK хранится в: AWS KMS / HashiCorp Vault / env var    │  │
 │  └─────────────────────────────────────────────────────────┘  │
 │                                                                │
-│  S3 (CRDT snapshots, exported files)                           │
+│  Cloudflare R2 (CRDT snapshots, exported files)                │
 │  ┌─────────────────────────────────────────────────────────┐  │
-│  │  SSE-S3 (server-side encryption) или SSE-KMS            │  │
+│  │  SSE (server-side encryption by R2)                     │  │
 │  │  Bucket policy: deny non-TLS requests                   │  │
 │  └─────────────────────────────────────────────────────────┘  │
 └────────────────────────────────────────────────────────────────┘
@@ -692,7 +759,7 @@ GoTipe Cloud собирает минимум данных:
 | API Gateway → PostgreSQL | TLS | TLS 1.2 |
 | API Gateway → Valkey | TLS | TLS 1.2 |
 | AI Proxy → LLM Provider | HTTPS | TLS 1.2 |
-| Server → S3 | HTTPS | TLS 1.2 |
+| Server → R2 | HTTPS | TLS 1.2 |
 
 ### Data Retention & Right to Deletion
 
@@ -704,7 +771,7 @@ const deletion = await gotipeCloud.admin.requestDataDeletion({
   deleteDocuments: true,         // Удалить все документы, где user — единственный owner
   anonymizeCollabHistory: true,  // Заменить userId на "deleted_user" в CRDT history
   deleteApiKeys: true,           // Отозвать все API ключи
-  deleteExports: true,           // Удалить сгенерированные файлы из S3
+  deleteExports: true,           // Удалить сгенерированные файлы из R2
 });
 
 // Результат: deletion выполняется в течение 72 часов
@@ -1394,13 +1461,13 @@ GoTipe Cloud поддерживает выбор региона хранения
 
 | Регион | Расположение | Доступность |
 |--------|-------------|-------------|
-| `eu-west` | Frankfurt, Germany (AWS eu-central-1) | GA |
-| `us-east` | Virginia, USA (AWS us-east-1) | GA |
-| `us-west` | Oregon, USA (AWS us-west-2) | Planned |
-| `ap-southeast` | Singapore (AWS ap-southeast-1) | Planned |
+| `eu-central` | Falkenstein/Nuremberg, Germany (Hetzner FSN/NBG) | GA |
+| `us-east` | Ashburn, Virginia, USA (Hetzner ASH) | GA |
+| `us-west` | Hillsboro, Oregon, USA (Hetzner HIL) | Planned |
+| `ap-southeast` | Singapore (Hetzner SIN) | Planned |
 | Self-hosted | Любой | GA |
 
-**Гарантия:** данные, созданные в регионе `eu-west`, никогда не покидают EU. Sync server, database, S3 — всё внутри одного региона.
+**Гарантия:** данные, созданные в регионе `eu-central`, никогда не покидают EU. Sync server, database, R2 — всё внутри одного региона.
 
 ### Audit Logging
 
@@ -1518,7 +1585,7 @@ GoTipe следует принципу responsible disclosure:
 │  [ ] Firewall: только порты 443 (HTTPS) и 8443 (WSS) открыты           │
 │  [ ] PostgreSQL не доступен извне (bind 127.0.0.1 или internal network) │
 │  [ ] Valkey (Redis) не доступен извне + requirepass                     │
-│  [ ] S3 bucket — private, no public access                               │
+│  [ ] R2 bucket — private, no public access                               │
 │  [ ] Docker images pinned по SHA256 digest                               │
 │  [ ] Host OS обновлён (security patches)                                 │
 │                                                                          │

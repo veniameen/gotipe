@@ -57,7 +57,7 @@
 │         ▼                 ▼                       ▼               │
 │  ┌──────────────────────────────────────────────────────────────┐ │
 │  │                   Storage Layer                               │ │
-│  │  PostgreSQL  │  Valkey (Redis)  │  S3-compatible              │ │
+│  │  PostgreSQL  │  Valkey (Redis)  │  Cloudflare R2              │ │
 │  └──────────────────────────────────────────────────────────────┘ │
 └────────────────────────────────────────────────────────────────────┘
 ```
@@ -805,30 +805,32 @@ export async function initGoTipe(): Promise<GoTipeEngine> {
 
 ### Инфраструктурные затраты (self-hosted, 1000 concurrent users)
 
-| Компонент | Минимум | Рекомендация | Облако (AWS) |
-|-----------|---------|-------------|-------------|
-| Sync Server (Go) | 1 vCPU, 512MB RAM | 2 vCPU, 2GB RAM | t3.small (~$15/mo) |
-| PostgreSQL | 10GB storage | 50GB, 2 vCPU | RDS t3.small (~$30/mo) |
-| Valkey (Redis-compatible) | 512MB RAM | 1GB RAM | ElastiCache t3.micro (~$12/mo) |
-| S3 (documents, exports) | Pay per use | ~$5/mo for 100GB | S3 (~$2-5/mo) |
-| **Total** | | | **~$60/mo** |
+| Компонент | Hetzner VDS (рекомендация) | Стоимость |
+|-----------|---------------------------|-----------|
+| Hetzner CX32 (4 vCPU, 8 GB RAM, 80 GB NVMe) | Go API + PostgreSQL + Valkey + Caddy | ~EUR 7/mo |
+| Cloudflare R2 (CRDT snapshots, exports, assets) | 10 GB storage, zero egress | ~$0.15/mo |
+| Cloudflare R2 (backups) | pgBackRest WAL + full backups | ~$0.50/mo |
+| **Total** | | **~EUR 8/mo** |
 
-Для сравнения: Tiptap Cloud для 1000 документов = **$49/mo** (только sync, без AI/export).
+Для сравнения: Tiptap Cloud для 1000 документов = **$49/mo** (только sync, без AI/export). GoTipe self-hosted на Hetzner = **~EUR 8/mo** за всё.
 
 ### Development Effort
 
-| Компонент | Person-months | Зависимости |
-|-----------|--------------|-------------|
-| Rust core (schema, transforms, commands) | 3 | — |
-| WASM bindings | 1 | Rust core |
-| CRDT engine | 2 | Rust core |
-| React adapter | 1.5 | WASM bindings |
-| Block editor UX (slash commands, DnD, toolbar) | 2 | React adapter |
-| AI integration | 1 | WASM bindings |
-| Export (HTML, MD, PDF) | 1.5 | Rust core |
-| Sync server (Go) | 1.5 | CRDT engine |
-| Cloud API | 1 | Sync server |
-| Documentation site | 1 | All |
-| **Total** | **~16 person-months** | |
+| Компонент | Person-months | Зависимости | Лицензия |
+|-----------|--------------|-------------|----------|
+| Rust core (schema, transforms, commands) | 3 | — | MIT |
+| WASM bindings | 1 | Rust core | MIT |
+| CRDT engine | 2 | Rust core | MIT |
+| React adapter | 1.5 | WASM bindings | MIT |
+| Block editor UX (slash commands, DnD, toolbar) | 2 | React adapter | **Commercial** |
+| Block Editor license system (JWT, watermark) | 0.5 | Core | **Commercial** |
+| AI integration | 1 | WASM bindings | MIT |
+| Export (HTML, MD, PDF) | 1.5 | Rust core | MIT |
+| Sync server (Go) | 1.5 | CRDT engine | MIT |
+| Cloud API | 1 | Sync server | Proprietary |
+| Documentation site | 1 | All | — |
+| **Total** | **~16.5 person-months** | | |
+
+> **Модель монетизации:** Headless core (MIT) бесплатный. Block Editor UI (`@gotipe/block-editor`) — коммерческая лицензия ($149/app/год). Cloud — подписка ($29+/mo, Block Editor включён). Детали в [00-overview.md#monetization](00-overview.md) и [12-release-plan.md#pricing](12-release-plan.md).
 
 Детальный план в [12-release-plan.md](12-release-plan.md).

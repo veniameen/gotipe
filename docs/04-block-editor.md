@@ -1,8 +1,55 @@
 # GoTipe — Block Editor (Notion-like UX)
 
+> **Лицензия:** `@gotipe/block-editor` — коммерческий пакет. Headless core (`@gotipe/core`, `@gotipe/react`, etc.) — MIT.
+> Подписчики GoTipe Cloud получают Block Editor лицензию бесплатно.
+
 ## Обзор
 
-GoTipe по умолчанию предоставляет block editor с Notion-like UX: slash commands, drag-and-drop, floating toolbar, nested blocks. Всё работает из коробки через `@gotipe/react` (или другой adapter), но каждый элемент можно кастомизировать или заменить через headless API.
+`@gotipe/block-editor` — коммерческий пакет с готовым Notion-like UI: slash commands, drag-and-drop, floating toolbar, nested blocks, темы. Одна строчка `<BlockEditor />` = полноценный редактор.
+
+Headless API (`@gotipe/core` + framework adapters) позволяет построить **любой** UI бесплатно (MIT). Block Editor — для тех, кто хочет готовый Notion-like UX без написания UI.
+
+### Что MIT vs что коммерческое
+
+| Бесплатно (MIT) | Коммерческое (`@gotipe/block-editor`) |
+|-----------------|--------------------------------------|
+| Document model, transforms, commands | `<BlockEditor />` — готовый компонент |
+| `useEditor()`, `<EditorContent />` | `<SlashMenu />` — slash commands UI |
+| Все block types (data + commands) | `<BubbleMenu />` — floating toolbar UI |
+| Все marks (bold, italic, etc.) | `<BlockToolbar />` — drag handle + block menu |
+| CRDT collaboration engine | `<DragHandle />` — drag-and-drop UI |
+| AI provider interface + commands | `<AIPanel />` — AI ghost text + command palette UI |
+| Export (HTML, MD, PDF, DOCX) | Темы (minimal, modern, notion, docs) |
+| Framework adapters (React, Vue, Svelte, Solid) | Input rules UI feedback |
+| Extension API | Image block UI (resize handles, caption) |
+| CSS variables API | Table block UI (column resize, toolbar) |
+
+### Лицензирование
+
+```tsx
+import { BlockEditor } from '@gotipe/block-editor'
+
+<BlockEditor
+  licenseKey="ge_xxx"              // JWT ключ, офлайн-верификация
+  content={content}
+  onChange={setContent}
+  theme="notion"
+/>
+```
+
+- **Ключ = подписанный JWT** (ES256). Проверяется офлайн, без API-вызовов
+- Содержит: plan, expiry, allowed domains
+- Без ключа: редактор работает, но с watermark "GoTipe Block Editor — Unlicensed"
+- Dev/localhost: всегда работает без watermark
+
+### Цены
+
+| Лицензия | Цена | Включает |
+|----------|------|----------|
+| **Block Editor Indie** | $149/app/год | 1 production domain |
+| **Block Editor Business** | $499/app/год | до 10 domains, приоритетная поддержка |
+| **GoTipe Cloud** (любой план) | от $29/мес | Block Editor лицензия **включена** |
+| **Enterprise** | Custom | Unlimited domains, source access |
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
@@ -733,7 +780,7 @@ Document
 | **Input rules** | Full Markdown shortcuts | Via extensions | Partial |
 | **Keyboard shortcuts** | Comprehensive defaults | Via extensions | Basic |
 | **Virtual rendering** | >1000 blocks | Not built-in | Not built-in |
-| **License** | MIT (all features) | MIT (core) | MPL 2.0 |
+| **License** | MIT (headless) + Commercial (UI) | MIT (core) + Commercial (Editor) | MPL 2.0 |
 
 ---
 

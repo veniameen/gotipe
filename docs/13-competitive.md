@@ -5,7 +5,7 @@
 | Аспект | GoTipe | Tiptap | Lexical | Slate | Plate | BlockNote | CKEditor | TinyMCE |
 |--------|--------|--------|---------|-------|-------|-----------|----------|---------|
 | **Stars** | New | ~35K | ~22.9K | ~31.3K | ~15.5K | ~8.8K | Legacy | Legacy |
-| **License** | MIT | MIT | MIT | MIT | MIT | MPL 2.0 | GPL-2 | GPL-2 |
+| **License** | MIT (headless) + Commercial (Block Editor UI) | MIT + Commercial (Editor) | MIT | MIT | MIT | MPL 2.0 | GPL-2 | GPL-2 |
 | **Foundation** | Own (Rust/WASM) | ProseMirror | Own (Meta) | Own | Slate | ProseMirror+Tiptap | Own | Own |
 | **Language** | Rust + TS | TypeScript | TypeScript | TypeScript | TypeScript | TypeScript | TypeScript | TypeScript |
 | **WASM** | Core | Нет | Нет | Нет | Нет | Нет | Нет | Нет |
@@ -29,7 +29,7 @@
 | **NPM downloads** | New | 3M+/mo | 3M+/mo | 600K+/mo | 200K+/mo | 100K+/mo | 800K+/mo | 500K+/mo |
 | **Company** | GoTipe | Tiptap GmbH | Meta | Community | Community | TypeCell | CKSource | Tiny Technologies |
 | **Revenue** | $0 (pre-launch) | $2.3M (2024) | Meta-funded | $0 | Small | Grants | ~$11-15M | ~$10M |
-| **Pricing** | Cloud $29+ | Cloud $49+ | Free | Free | Free+ | Free | $144+/mo | $25+/mo |
+| **Pricing** | Block Editor $149/yr, Cloud $29+/mo | Editor $149/mo, Cloud $49+/mo | Free | Free | Free+ | Free | $144+/mo | $25+/mo |
 
 ---
 
@@ -60,17 +60,21 @@ AI integration (ghost text, commands, context builder) — часть core archi
 
 Tiptap Content AI — платный addon. CKEditor AI — plugin. GoTipe AI — часть MIT core.
 
-### 4. Честный Open-Source
-**Все extensions MIT.** Нет "Pro tier", нет paywall на фичи. Единственное, за что платишь — managed infrastructure (Cloud).
+### 4. Честный Open-Source + Commercial Block Editor
+**Headless core полностью MIT** — все extensions, CRDT, AI layer, export. Нет "Pro tier" на headless API. Готовый Notion-like UI (`@gotipe/block-editor`) — коммерческая лицензия, как у Tiptap Editor.
 
-| Feature | GoTipe | Tiptap (до июня 2025) | Tiptap (после) |
-|---------|--------|----------------------|----------------|
-| DragHandle | MIT | Pro ($150+/mo) | MIT |
-| FileHandler | MIT | Pro | MIT |
-| Collaboration | MIT | MIT (client), Hocuspocus MIT | Без изменений |
-| AI | MIT | Content AI (Cloud paid) | Без изменений |
-| Export PDF/DOCX | MIT (client) | Cloud paid | Без изменений |
-| Comments | MIT | Cloud paid | Без изменений |
+| Feature | GoTipe | Tiptap |
+|---------|--------|--------|
+| DragHandle (headless API) | MIT | MIT (с 2025) |
+| FileHandler | MIT | MIT (с 2025) |
+| Collaboration | MIT | MIT (client), Hocuspocus MIT |
+| AI layer (headless) | MIT | Content AI (Cloud paid) |
+| Export PDF/DOCX | MIT (client) | Cloud paid |
+| Comments | MIT | Cloud paid |
+| **Notion-like Block Editor UI** | **Commercial ($149/app/yr)** | **Commercial ($149/app/mo)** |
+| Block Editor + Cloud bundle | **Включено в Cloud ($29+/mo)** | **Отдельно** |
+
+> **Модель:** Headless core = MIT (бесплатно навсегда). Block Editor UI = коммерческая лицензия. Cloud = managed инфраструктура + Block Editor лицензия в комплекте.
 
 ### 5. Multi-framework
 Первоклассная поддержка React, Vue, Svelte, Solid + Vanilla JS. Не "React-first with community Vue adapter", а tested & documented adapters для каждого фреймворка.
@@ -104,9 +108,10 @@ Collaboration server, AI proxy, export service — всё self-hosted через
 ```
 Price/month (для ~1000 collaborative documents):
 
-$0       GoTipe Self-Hosted (MIT) ████████████████████████████  FREE
+$0       GoTipe Self-Hosted (MIT) ████████████████████████████  FREE (headless)
+$12/mo   GoTipe Block Editor     ████  ($149/app/yr, ~$12/mo)
 $25      TinyMCE Starter          ████████
-$29      GoTipe Cloud Starter     █████████
+$29      GoTipe Cloud Starter     █████████  (Block Editor included!)
 $49      Tiptap Starter (500 docs)████████████████
 $99      GoTipe Cloud Pro (10K)   ████████████████████████████████
 $144     CKEditor Small            ████████████████████████████████████████████████
@@ -120,7 +125,7 @@ $999     Tiptap Scale (50K docs)  ███████████████�
 
 | Editor | Cost per 1K docs/mo |
 |--------|-------------------|
-| GoTipe Self-Hosted | **$0** (+ your infra ~$60/mo) |
+| GoTipe Self-Hosted | **$0** (+ your infra ~EUR 8/mo Hetzner VDS) |
 | GoTipe Cloud | **$29** |
 | Tiptap Cloud | **$49-98** |
 | Liveblocks | **$29** (per MAU, not docs) |
@@ -135,11 +140,11 @@ $999     Tiptap Scale (50K docs)  ███████████████�
 | 1 | **Rust/WASM core** | Все: чистый JS | 2-5x скорость, memory safety, server-side WASM |
 | 2 | **Нативный CRDT** | Tiptap/BlockNote: Yjs adapter | Tighter integration, MovableTree, binary protocol |
 | 3 | **AI-first** | Tiptap: платный addon | Ghost text в MIT core, provider-agnostic |
-| 4 | **Все extensions MIT** | Tiptap: был Pro tier | Нет paywall, нет vendor lock-in |
+| 4 | **Headless MIT + Block Editor UI** | Tiptap: Editor commercial | Headless 100% MIT, Block Editor $149/yr (vs Tiptap $149/mo) |
 | 5 | **Multi-framework** | Lexical/Slate/Plate: React-only | React, Vue, Svelte, Solid — first-class |
 | 6 | **Server-side WASM** | Tiptap: нужен PM стек | Валидация без браузера, multi-language bindings |
-| 7 | **Self-hosted** | CKEditor/TinyMCE: SaaS-only collab | Docker compose, single binary, zero lock-in |
-| 8 | **Block editor из коробки** | Slate/Lexical: DIY | Notion-like UX по умолчанию |
+| 7 | **Self-hosted** | CKEditor/TinyMCE: SaaS-only collab | Hetzner VDS + Docker Compose + Cloudflare R2, ~EUR 8/mo, zero lock-in |
+| 8 | **Block editor из коробки** | Slate/Lexical: DIY | Notion-like UX: commercial license или headless API бесплатно |
 | 9 | **Export built-in** | Tiptap: платный Cloud | PDF (typst), DOCX (docx-rs) в MIT |
 | 10 | **Цена** | Tiptap: $49+ за 500 docs | $29 за 1000 docs, self-hosted = $0 |
 
@@ -175,7 +180,7 @@ $999     Tiptap Scale (50K docs)  ███████████████�
 - Tiptap: $2.6M seed → VC pressure → pricing increases
 - "VC захотят ROI — цены будут расти" (HN comment)
 - HashiCorp, Redis, Terraform — license changes
-- **GoTipe position:** MIT forever, revenue from Cloud services not features
+- **GoTipe position:** Headless core MIT forever, revenue from Block Editor UI licenses + Cloud services
 
 ### 6. Collaboration = Table Stakes
 - **65%** считают real-time collaboration важным
@@ -195,14 +200,14 @@ $999     Tiptap Scale (50K docs)  ███████████████�
 | **Loro становится стандартом** | Medium | Positive | Можем переключиться на Loro dependency вместо custom CRDT |
 | **Разработчики не хотят новый framework** | High | High | Yjs compatibility adapter, Tiptap migration guide, killer features |
 | **Недостаточно контрибьюторов** | Medium | Medium | Good DX, Rust attracts quality contributors, well-documented |
-| **Cloud не генерирует revenue** | Medium | High | Freemium → upsell, enterprise sales, partnership with hosting providers |
+| **Revenue ниже ожиданий** | Medium | High | Два источника: Block Editor licenses + Cloud subscriptions, enterprise sales, partnerships |
 
 ---
 
 ## Go-to-Market Strategy
 
 ### Launch: Developer Awareness
-1. **HN / Reddit launch post:** "GoTipe: Rust-powered editor framework, MIT alternative to Tiptap"
+1. **HN / Reddit launch post:** "GoTipe: Rust-powered editor framework — MIT headless core, Notion-like Block Editor"
 2. **Show HN:** Playground demo with live collaboration
 3. **Comparison blog posts:** "GoTipe vs Tiptap: benchmarks", "Why Rust for RTE"
 4. **Discord community:** Early adopters, feedback, contributions

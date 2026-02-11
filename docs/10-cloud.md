@@ -7,7 +7,7 @@ GoTipe Cloud — managed backend для GoTipe editor: collaboration sync, AI pr
 Ключевые отличия от Tiptap Cloud:
 - Цена за документ в 2-3x ниже
 - AI proxy и export включены в тариф (у Tiptap — отдельно или отсутствуют)
-- Self-hosted вариант: Docker Compose, single binary, Helm chart
+- Self-hosted вариант: Hetzner VDS + Docker Compose + Cloudflare R2 (~EUR 8/mo)
 
 ---
 
@@ -54,13 +54,13 @@ GoTipe Cloud — managed backend для GoTipe editor: collaboration sync, AI pr
 │  │                       Storage Layer                               │   │
 │  │                                                                  │   │
 │  │  ┌──────────────┐  ┌──────────────┐  ┌────────────────────────┐ │   │
-│  │  │ PostgreSQL   │  │    Valkey    │  │  S3-compatible         │ │   │
-│  │  │              │  │   (Redis)    │  │  (MinIO / AWS S3)      │ │   │
+│  │  │ PostgreSQL   │  │    Valkey    │  │  Cloudflare R2         │ │   │
+│  │  │              │  │   (Redis)    │  │  (S3-compatible)       │ │   │
 │  │  │ documents    │  │              │  │                        │ │   │
 │  │  │ users        │  │ session cache│  │ CRDT snapshots         │ │   │
 │  │  │ api_keys     │  │ rate limits  │  │ exported files (PDF…)  │ │   │
 │  │  │ usage_logs   │  │ AI cache    │  │ file attachments       │ │   │
-│  │  │ exports queue│  │ pubsub      │  │                        │ │   │
+│  │  │ exports queue│  │ pubsub      │  │ backups (pgBackRest)   │ │   │
 │  │  └──────────────┘  └──────────────┘  └────────────────────────┘ │   │
 │  └──────────────────────────────────────────────────────────────────┘   │
 └─────────────────────────────────────────────────────────────────────────┘
@@ -72,7 +72,7 @@ GoTipe Cloud — managed backend для GoTipe editor: collaboration sync, AI pr
 
 ### 1. Collaboration — WebSocket Sync
 
-Sync server принимает WebSocket-соединения, мёрджит CRDT updates, рассылает изменения всем участникам документа, персистит state в PostgreSQL + S3.
+Sync server принимает WebSocket-соединения, мёрджит CRDT updates, рассылает изменения всем участникам документа, персистит state в PostgreSQL + Cloudflare R2.
 
 Подробности sync protocol, CRDT engine и awareness — в [02-collaboration.md](02-collaboration.md).
 
@@ -115,7 +115,7 @@ Client ── POST /api/v1/exports ──► API Gateway ──► PostgreSQL (q
                                                   (Rust binary)
                                                         │
                                                         ▼
-                                                  S3 (result file)
+                                                  R2 (result file)
                                                         │
 Client ◄── GET /api/v1/exports/:id ◄── 302 redirect ───┘
 ```
@@ -192,7 +192,7 @@ CREATE TABLE documents (
     user_id         UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     title           TEXT NOT NULL DEFAULT '',
     version         BIGINT NOT NULL DEFAULT 0,
-    s3_snapshot_key TEXT,                             -- ключ последнего CRDT snapshot в S3
+    r2_snapshot_key TEXT,                             -- ключ последнего CRDT snapshot в R2
     size_bytes      BIGINT NOT NULL DEFAULT 0,
     collaborators   JSONB NOT NULL DEFAULT '[]',     -- [{user_id, role, added_at}]
     created_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
@@ -217,7 +217,7 @@ CREATE INDEX idx_doc_updates_doc ON document_updates(document_id, id);
 CREATE TABLE document_snapshots (
     document_id     TEXT NOT NULL REFERENCES documents(id) ON DELETE CASCADE,
     version         BIGINT NOT NULL,
-    s3_key          TEXT NOT NULL,
+    r2_key          TEXT NOT NULL,
     size_bytes      BIGINT NOT NULL,
     peer_id         TEXT NOT NULL,
     created_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
@@ -231,7 +231,7 @@ CREATE TABLE export_jobs (
     user_id         UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     format          TEXT NOT NULL,                    -- 'pdf', 'docx', 'html', 'md'
     status          TEXT NOT NULL DEFAULT 'pending',  -- pending, processing, completed, failed
-    s3_result_key   TEXT,                             -- ключ результата в S3
+    r2_result_key   TEXT,                             -- ключ результата в R2
     error_message   TEXT,
     created_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
     completed_at    TIMESTAMPTZ
@@ -440,7 +440,7 @@ Response `202 Accepted`:
 #### `GET /api/v1/exports/:id` — статус / download
 
 Пока `status == "pending"` или `"processing"` — возвращает JSON со статусом.
-При `status == "completed"` — 302 redirect на S3 presigned URL.
+При `status == "completed"` — 302 redirect на R2 presigned URL.
 
 ```bash
 curl -L https://api.gotipe.com/v1/exports/exp_q8w2e \
@@ -686,24 +686,24 @@ import (
 func main() {
     logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
     db := mustConnectDB()
-    s3 := mustConnectS3()
+    r2 := mustConnectR2()
     valkey := mustConnectValkey()
 
     mux := http.NewServeMux()
 
     // Health
     mux.HandleFunc("GET /healthz", handler.Healthz(db, valkey))
-    mux.HandleFunc("GET /readyz", handler.Readyz(db, valkey, s3))
+    mux.HandleFunc("GET /readyz", handler.Readyz(db, valkey, r2))
 
     // Auth
     auth := middleware.AuthMiddleware(db)
     rate := middleware.RateLimiter(valkey)
 
     // Documents
-    mux.Handle("POST /api/v1/documents", auth(rate(handler.CreateDocument(db, s3))))
+    mux.Handle("POST /api/v1/documents", auth(rate(handler.CreateDocument(db, r2))))
     mux.Handle("GET /api/v1/documents", auth(rate(handler.ListDocuments(db))))
-    mux.Handle("GET /api/v1/documents/{id}", auth(rate(handler.GetDocument(db, s3))))
-    mux.Handle("DELETE /api/v1/documents/{id}", auth(rate(handler.DeleteDocument(db, s3))))
+    mux.Handle("GET /api/v1/documents/{id}", auth(rate(handler.GetDocument(db, r2))))
+    mux.Handle("DELETE /api/v1/documents/{id}", auth(rate(handler.DeleteDocument(db, r2))))
 
     // Users
     mux.Handle("GET /api/v1/users/me", auth(handler.GetCurrentUser(db)))
@@ -715,7 +715,7 @@ func main() {
 
     // Export
     mux.Handle("POST /api/v1/exports", auth(rate(handler.CreateExport(db))))
-    mux.Handle("GET /api/v1/exports/{id}", auth(handler.GetExport(db, s3)))
+    mux.Handle("GET /api/v1/exports/{id}", auth(handler.GetExport(db, r2)))
 
     // AI Proxy
     mux.Handle("POST /api/v1/ai/complete", auth(rate(handler.AIComplete(valkey))))
@@ -761,7 +761,7 @@ type DocumentResponse struct {
     UpdatedAt string `json:"updated_at"`
 }
 
-func CreateDocument(db *sql.DB, s3 S3Client) http.HandlerFunc {
+func CreateDocument(db *sql.DB, r2 R2Client) http.HandlerFunc {
     return func(w http.ResponseWriter, r *http.Request) {
         user := middleware.UserFromContext(r.Context())
 
@@ -786,19 +786,19 @@ func CreateDocument(db *sql.DB, s3 S3Client) http.HandlerFunc {
             return
         }
 
-        // Store initial content as CRDT snapshot in S3
-        s3Key := "snapshots/" + req.ID + "/v1"
+        // Store initial content as CRDT snapshot in R2
+        r2Key := "snapshots/" + req.ID + "/v1"
         crdtState := contentToCRDT(req.Content)
-        if err := s3.Put(r.Context(), s3Key, crdtState); err != nil {
+        if err := r2.Put(r.Context(), r2Key, crdtState); err != nil {
             writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "storage_error"})
             return
         }
 
         // Insert metadata
         _, err := db.ExecContext(r.Context(),
-            `INSERT INTO documents (id, user_id, title, version, s3_snapshot_key, size_bytes)
+            `INSERT INTO documents (id, user_id, title, version, r2_snapshot_key, size_bytes)
              VALUES ($1, $2, $3, 1, $4, $5)`,
-            req.ID, user.ID, req.Title, s3Key, len(crdtState),
+            req.ID, user.ID, req.Title, r2Key, len(crdtState),
         )
         if err != nil {
             writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "db_error"})
@@ -852,13 +852,19 @@ VALKEY_URL=redis://localhost:6379/0
 VALKEY_PASSWORD=
 VALKEY_MAX_CONNS=20
 
-# --- S3-compatible Storage ---
-S3_ENDPOINT=http://localhost:9000    # MinIO для self-hosted
-S3_BUCKET=gotipe-data
-S3_ACCESS_KEY=minioadmin
-S3_SECRET_KEY=minioadmin
-S3_REGION=us-east-1
-S3_USE_PATH_STYLE=true               # true для MinIO, false для AWS S3
+# --- Cloudflare R2 (Production) ---
+R2_ACCOUNT_ID=your-cloudflare-account-id
+R2_ACCESS_KEY_ID=your-r2-access-key
+R2_SECRET_ACCESS_KEY=your-r2-secret-key
+R2_BUCKET=gotipe-data
+R2_CDN_URL=https://cdn.gotipe.com    # R2 public bucket custom domain
+
+# --- MinIO (Local Development Only) ---
+# S3_ENDPOINT=http://localhost:9000
+# S3_BUCKET=gotipe-data
+# S3_ACCESS_KEY=minioadmin
+# S3_SECRET_KEY=minioadmin
+# S3_USE_PATH_STYLE=true
 
 # --- Auth ---
 JWT_SECRET=your-256-bit-secret-key-here
@@ -884,7 +890,7 @@ AI_MAX_TOKENS=4096
 EXPORT_WORKERS=4                      # concurrent export workers
 EXPORT_POLL_INTERVAL=1s               # queue poll interval
 EXPORT_MAX_DOCUMENT_SIZE=10485760     # 10MB max document for export
-EXPORT_S3_PREFIX=exports/
+EXPORT_R2_PREFIX=exports/
 
 # --- Rate Limiting ---
 RATE_LIMIT_API=100/min                # REST API per key
@@ -901,67 +907,71 @@ LOG_FORMAT=json                       # json, text
 
 ## Self-Hosted Deployment
 
-### Docker Compose
+### Docker Compose (Production)
+
+Production-стек использует Cloudflare R2 для object storage (zero egress, встроенный CDN), Caddy как reverse proxy с auto TLS, Hetzner VDS как хостинг.
 
 ```yaml
-# docker-compose.yml
-version: "3.9"
-
+# infra/docker-compose.yml (Production)
 services:
+  # --- Caddy (Reverse Proxy + Auto TLS) ---
+  caddy:
+    image: caddy:2-alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      api:
+        condition: service_healthy
+      sync:
+        condition: service_healthy
+    restart: always
+
   # --- GoTipe API Server ---
   api:
     image: ghcr.io/gotipe/cloud-api:latest
-    ports:
-      - "8080:8080"
+    expose:
+      - "8080"
+    env_file: .env
     environment:
       LISTEN_ADDR: ":8080"
-      DATABASE_URL: "postgres://gotipe:gotipe@postgres:5432/gotipe?sslmode=disable"
+      DATABASE_URL: "postgres://gotipe:${POSTGRES_PASSWORD}@pgbouncer:6432/gotipe?sslmode=disable"
       VALKEY_URL: "redis://valkey:6379/0"
-      S3_ENDPOINT: "http://minio:9000"
-      S3_BUCKET: "gotipe-data"
-      S3_ACCESS_KEY: "minioadmin"
-      S3_SECRET_KEY: "minioadmin"
-      S3_USE_PATH_STYLE: "true"
-      JWT_SECRET: "${JWT_SECRET:-change-me-in-production}"
-      OPENAI_API_KEY: "${OPENAI_API_KEY:-}"
-      ANTHROPIC_API_KEY: "${ANTHROPIC_API_KEY:-}"
-      GOOGLE_AI_API_KEY: "${GOOGLE_AI_API_KEY:-}"
-      PROMETHEUS_ENABLED: "true"
     depends_on:
-      postgres:
-        condition: service_healthy
+      pgbouncer:
+        condition: service_started
       valkey:
         condition: service_healthy
-      minio:
-        condition: service_started
-    restart: unless-stopped
+    restart: always
+    stop_grace_period: 35s
     healthcheck:
       test: ["CMD", "wget", "-qO-", "http://localhost:8080/healthz"]
       interval: 10s
       timeout: 5s
       retries: 3
+      start_period: 5s
 
   # --- GoTipe WebSocket Sync Server ---
   sync:
     image: ghcr.io/gotipe/cloud-sync:latest
-    ports:
-      - "8081:8081"
+    expose:
+      - "8081"
+    env_file: .env
     environment:
       SYNC_LISTEN_ADDR: ":8081"
-      DATABASE_URL: "postgres://gotipe:gotipe@postgres:5432/gotipe?sslmode=disable"
+      DATABASE_URL: "postgres://gotipe:${POSTGRES_PASSWORD}@pgbouncer:6432/gotipe?sslmode=disable"
       VALKEY_URL: "redis://valkey:6379/0"
-      S3_ENDPOINT: "http://minio:9000"
-      S3_BUCKET: "gotipe-data"
-      S3_ACCESS_KEY: "minioadmin"
-      S3_SECRET_KEY: "minioadmin"
-      S3_USE_PATH_STYLE: "true"
-      JWT_SECRET: "${JWT_SECRET:-change-me-in-production}"
     depends_on:
-      postgres:
-        condition: service_healthy
+      pgbouncer:
+        condition: service_started
       valkey:
         condition: service_healthy
-    restart: unless-stopped
+    restart: always
+    stop_grace_period: 35s
     healthcheck:
       test: ["CMD", "wget", "-qO-", "http://localhost:8081/healthz"]
       interval: 10s
@@ -971,78 +981,67 @@ services:
   # --- Export Worker ---
   export-worker:
     image: ghcr.io/gotipe/cloud-export:latest
+    env_file: .env
     environment:
-      DATABASE_URL: "postgres://gotipe:gotipe@postgres:5432/gotipe?sslmode=disable"
-      S3_ENDPOINT: "http://minio:9000"
-      S3_BUCKET: "gotipe-data"
-      S3_ACCESS_KEY: "minioadmin"
-      S3_SECRET_KEY: "minioadmin"
-      S3_USE_PATH_STYLE: "true"
+      DATABASE_URL: "postgres://gotipe:${POSTGRES_PASSWORD}@pgbouncer:6432/gotipe?sslmode=disable"
       EXPORT_WORKERS: "4"
       EXPORT_POLL_INTERVAL: "1s"
     depends_on:
+      pgbouncer:
+        condition: service_started
+    restart: always
+
+  # --- pgBouncer (Connection Pooling) ---
+  pgbouncer:
+    image: bitnami/pgbouncer:latest
+    environment:
+      PGBOUNCER_DATABASE: gotipe
+      POSTGRESQL_HOST: postgres
+      POSTGRESQL_PORT: "5432"
+      POSTGRESQL_USERNAME: gotipe
+      POSTGRESQL_PASSWORD: "${POSTGRES_PASSWORD}"
+      PGBOUNCER_POOL_MODE: transaction
+      PGBOUNCER_MAX_CLIENT_CONN: "200"
+      PGBOUNCER_DEFAULT_POOL_SIZE: "20"
+      PGBOUNCER_MIN_POOL_SIZE: "5"
+    expose:
+      - "6432"
+    depends_on:
       postgres:
         condition: service_healthy
-      minio:
-        condition: service_started
-    restart: unless-stopped
+    restart: always
 
   # --- PostgreSQL ---
   postgres:
     image: postgres:17-alpine
-    ports:
-      - "5432:5432"
     environment:
       POSTGRES_USER: gotipe
-      POSTGRES_PASSWORD: gotipe
+      POSTGRES_PASSWORD: "${POSTGRES_PASSWORD}"
       POSTGRES_DB: gotipe
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./migrations:/docker-entrypoint-initdb.d
+      - ./postgres/postgresql.conf:/etc/postgresql/postgresql.conf
+    command: postgres -c config_file=/etc/postgresql/postgresql.conf
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U gotipe"]
       interval: 5s
       timeout: 3s
       retries: 5
+    restart: always
 
   # --- Valkey (Redis-compatible) ---
   valkey:
     image: valkey/valkey:8-alpine
-    ports:
-      - "6379:6379"
     volumes:
       - valkey_data:/data
+      - ./valkey/valkey.conf:/etc/valkey/valkey.conf
+    command: valkey-server /etc/valkey/valkey.conf
     healthcheck:
       test: ["CMD", "valkey-cli", "ping"]
       interval: 5s
       timeout: 3s
       retries: 5
-
-  # --- MinIO (S3-compatible) ---
-  minio:
-    image: minio/minio:latest
-    ports:
-      - "9000:9000"
-      - "9001:9001"   # MinIO Console
-    environment:
-      MINIO_ROOT_USER: minioadmin
-      MINIO_ROOT_PASSWORD: minioadmin
-    volumes:
-      - minio_data:/data
-    command: server /data --console-address ":9001"
-
-  # --- Create S3 bucket on startup ---
-  minio-init:
-    image: minio/mc:latest
-    depends_on:
-      - minio
-    entrypoint: >
-      /bin/sh -c "
-        sleep 3;
-        mc alias set local http://minio:9000 minioadmin minioadmin;
-        mc mb local/gotipe-data --ignore-existing;
-        exit 0;
-      "
+    restart: always
 
   # --- Prometheus (optional) ---
   prometheus:
@@ -1067,17 +1066,129 @@ services:
 volumes:
   postgres_data:
   valkey_data:
+  caddy_data:
+  caddy_config:
+```
+
+> **Production использует Cloudflare R2** — object storage не требует отдельного контейнера. R2 credentials передаются через `.env` (R2_ACCOUNT_ID, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY). MinIO используется только для локальной разработки.
+
+### Caddyfile (Reverse Proxy + Auto TLS)
+
+```
+# infra/Caddyfile
+api.gotipe.com {
+    reverse_proxy api:8080
+}
+
+sync.gotipe.com {
+    reverse_proxy sync:8081
+}
+```
+
+Caddy автоматически получает и обновляет TLS-сертификаты через Let's Encrypt. Минимальный конфиг — 6 строк.
+
+### Docker Compose (Local Development)
+
+Для локальной разработки MinIO заменяет R2, порты открыты напрямую:
+
+```yaml
+# docker-compose.dev.yml (Local Development)
+services:
+  api:
+    image: ghcr.io/gotipe/cloud-api:latest
+    ports:
+      - "8080:8080"
+    environment:
+      LISTEN_ADDR: ":8080"
+      DATABASE_URL: "postgres://gotipe:gotipe@postgres:5432/gotipe?sslmode=disable"
+      VALKEY_URL: "redis://valkey:6379/0"
+      S3_ENDPOINT: "http://minio:9000"
+      S3_BUCKET: "gotipe-data"
+      S3_ACCESS_KEY: "minioadmin"
+      S3_SECRET_KEY: "minioadmin"
+      S3_USE_PATH_STYLE: "true"
+      JWT_SECRET: "dev-secret-change-in-production"
+    depends_on:
+      postgres: { condition: service_healthy }
+      valkey: { condition: service_healthy }
+      minio: { condition: service_started }
+
+  sync:
+    image: ghcr.io/gotipe/cloud-sync:latest
+    ports:
+      - "8081:8081"
+    environment:
+      SYNC_LISTEN_ADDR: ":8081"
+      DATABASE_URL: "postgres://gotipe:gotipe@postgres:5432/gotipe?sslmode=disable"
+      VALKEY_URL: "redis://valkey:6379/0"
+      S3_ENDPOINT: "http://minio:9000"
+      S3_BUCKET: "gotipe-data"
+      S3_ACCESS_KEY: "minioadmin"
+      S3_SECRET_KEY: "minioadmin"
+      S3_USE_PATH_STYLE: "true"
+      JWT_SECRET: "dev-secret-change-in-production"
+    depends_on:
+      postgres: { condition: service_healthy }
+      valkey: { condition: service_healthy }
+
+  postgres:
+    image: postgres:17-alpine
+    ports: ["5432:5432"]
+    environment: { POSTGRES_USER: gotipe, POSTGRES_PASSWORD: gotipe, POSTGRES_DB: gotipe }
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./migrations:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U gotipe"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  valkey:
+    image: valkey/valkey:8-alpine
+    ports: ["6379:6379"]
+    volumes: [valkey_data:/data]
+    healthcheck:
+      test: ["CMD", "valkey-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  minio:
+    image: minio/minio:latest
+    ports: ["9000:9000", "9001:9001"]
+    environment: { MINIO_ROOT_USER: minioadmin, MINIO_ROOT_PASSWORD: minioadmin }
+    volumes: [minio_data:/data]
+    command: server /data --console-address ":9001"
+
+  minio-init:
+    image: minio/mc:latest
+    depends_on: [minio]
+    entrypoint: >
+      /bin/sh -c "
+        sleep 3;
+        mc alias set local http://minio:9000 minioadmin minioadmin;
+        mc mb local/gotipe-data --ignore-existing;
+        exit 0;
+      "
+
+volumes:
+  postgres_data:
+  valkey_data:
   minio_data:
 ```
 
 ### Запуск
 
 ```bash
-# Минимальный стек (без monitoring)
-docker compose up -d
+# Production (Hetzner VDS)
+cd /opt/gotipe && docker compose up -d
 
 # С Prometheus + Grafana
 docker compose --profile monitoring up -d
+
+# Local Development
+docker compose -f docker-compose.dev.yml up -d
 
 # Проверка
 curl http://localhost:8080/healthz
@@ -1093,13 +1204,13 @@ curl http://localhost:8081/healthz
 curl -L https://github.com/gotipe/cloud/releases/latest/download/gotipe-cloud-$(uname -s)-$(uname -m) \
   -o gotipe-cloud && chmod +x gotipe-cloud
 
-# Run (requires external PostgreSQL, Valkey, S3)
+# Run (requires external PostgreSQL, Valkey, R2 credentials)
 export DATABASE_URL="postgres://gotipe:secret@localhost:5432/gotipe"
 export VALKEY_URL="redis://localhost:6379/0"
-export S3_ENDPOINT="http://localhost:9000"
-export S3_BUCKET="gotipe-data"
-export S3_ACCESS_KEY="minioadmin"
-export S3_SECRET_KEY="minioadmin"
+export R2_ACCOUNT_ID="your-cloudflare-account-id"
+export R2_ACCESS_KEY_ID="your-r2-access-key"
+export R2_SECRET_ACCESS_KEY="your-r2-secret-key"
+export R2_BUCKET="gotipe-data"
 export JWT_SECRET="your-secret-key"
 
 ./gotipe-cloud serve
@@ -1116,7 +1227,7 @@ helm install gotipe-cloud gotipe/gotipe-cloud \
   --create-namespace \
   --set postgresql.enabled=true \
   --set valkey.enabled=true \
-  --set minio.enabled=true \
+  --set r2.accountId="your-cf-account-id" \
   --set api.replicas=2 \
   --set sync.replicas=3 \
   --set export.workers=4 \
@@ -1154,9 +1265,11 @@ valkey:
   enabled: true
   architecture: standalone     # или replication для HA
 
-minio:
-  enabled: true                # false если AWS S3 / GCS / etc.
-  defaultBuckets: gotipe-data
+r2:
+  accountId: ""               # Cloudflare Account ID
+  accessKeyId: ""
+  secretAccessKey: ""
+  bucket: gotipe-data
 
 ingress:
   enabled: true
@@ -1170,6 +1283,687 @@ ingress:
     - secretName: gotipe-tls
       hosts: [api.gotipe.example.com, sync.gotipe.example.com]
 ```
+
+---
+
+## Infrastructure — Hetzner VDS
+
+### Почему VDS, а не serverless
+
+| | Hetzner VDS | Serverless stack (Workers + Neon + R2) |
+|---|---|---|
+| **Цена** | **~EUR 7/мес** | ~$80/мес |
+| **DB latency** | **<1ms** (localhost) | 10-50ms (network hop) |
+| **Контроль** | Полный | Зависимость от вендоров |
+| **Масштабирование** | VDS upgrade (CX32→CX42) | Дорожает линейно с usage |
+
+### VDS спека
+
+| Компонент | Spec |
+|-----------|------|
+| **Server** | Hetzner CX32: 4 vCPU, 8 GB RAM, 80 GB NVMe |
+| **OS** | Ubuntu 24.04 LTS |
+| **Orchestration** | Docker Compose |
+| **Reverse proxy** | Caddy (auto TLS via Let's Encrypt) |
+| **CDN + DDoS** | Cloudflare (DNS proxy, caching) |
+| **Object storage** | Cloudflare R2 (zero egress, S3-compatible) |
+| **Price** | ~EUR 7/мес |
+
+### Cloudflare R2 — Object Storage
+
+**Почему R2:**
+
+| Фактор | Cloudflare R2 | AWS S3 | MinIO (self-hosted) |
+|--------|--------------|--------|---------------------|
+| Egress | **$0** | $0.09/GB | $0 (но VDS трафик) |
+| Storage | $0.015/GB/мес | $0.023/GB/мес | Disk space на VDS |
+| S3 compatible | Да | Native | Да |
+| CDN | Встроенный (R2 public URL) | CloudFront (доп.) | Нет |
+| Free tier | 10GB storage, 10M reads | 5GB, 12 мес | Unlimited |
+| Бэкапы | Отдельный bucket | S3 lifecycle | Ручное |
+
+**Конфигурация:**
+- Bucket: `gotipe-data` (CRDT snapshots, exports, attachments)
+- Bucket: `gotipe-backups` (pgBackRest WAL + incremental)
+- Public access: через custom domain `cdn.gotipe.com`
+- R2 credentials: через `.env` файл на сервере
+
+> **Production = Cloudflare R2.** MinIO используется только для локальной разработки (`docker-compose.dev.yml`).
+
+### Server Provisioning (setup-server.sh)
+
+Любой новый сервер поднимается за 2 шага:
+
+```bash
+# Шаг 1: Скопировать infra/ на сервер
+scp -r infra/ deploy@NEW_SERVER_IP:/opt/gotipe/
+
+# Шаг 2: Запустить setup
+ssh deploy@NEW_SERVER_IP "cd /opt/gotipe && bash scripts/setup-server.sh"
+```
+
+```bash
+#!/bin/bash
+# infra/scripts/setup-server.sh — полное провижионирование сервера
+set -euo pipefail
+
+REPO="gotipe/gotipe"
+
+# ─── 1. OS + Docker ───
+apt update && apt upgrade -y
+apt install -y docker.io docker-compose-v2 fail2ban ufw gh
+
+# ─── 2. Firewall ───
+ufw allow 22/tcp && ufw allow 80/tcp && ufw allow 443/tcp
+ufw --force enable
+
+# ─── 3. Deploy user ───
+useradd -m -s /bin/bash deploy || true
+usermod -aG docker deploy
+
+# ─── 4. SSH ключ + GitHub авторизация ───
+sudo -u deploy ssh-keygen -t ed25519 -f /home/deploy/.ssh/id_ed25519 -N ""
+gh auth login --with-token <<< "$GITHUB_TOKEN"
+gh repo deploy-key add /home/deploy/.ssh/id_ed25519.pub \
+   --repo $REPO --title "server-$(hostname)"
+
+# ─── 5. Клонируем репу (для git pull при деплое конфигов) ───
+sudo -u deploy git clone git@github.com:$REPO.git /opt/gotipe/repo
+
+# ─── 6. GitHub Secrets (автодеплой будет знать IP и SSH ключ) ───
+SERVER_IP=$(curl -s ifconfig.me)
+gh secret set DEPLOY_HOST --repo $REPO --body "$SERVER_IP"
+gh secret set DEPLOY_KEY --repo $REPO --body "$(cat /home/deploy/.ssh/id_ed25519)"
+
+# ─── 7. .env ───
+if [ ! -f /opt/gotipe/.env ]; then
+  cp /opt/gotipe/.env.example /opt/gotipe/.env
+  echo "⚠️  Отредактируй /opt/gotipe/.env перед запуском"
+fi
+
+# ─── 8. Запуск всех сервисов ───
+cd /opt/gotipe && docker compose up -d
+
+# ─── 9. Бэкапы ───
+cp /opt/gotipe/scripts/backup-cron /etc/cron.d/gotipe-backup
+
+echo "✅ Сервер готов. Автодеплой настроен."
+echo "   IP: $SERVER_IP"
+echo "   Следующий push to main → автоматический деплой API"
+```
+
+**После setup** — всё автоматически. `git push` → GitHub Actions → SSH → `deploy.sh` → zero-downtime update.
+
+### Disaster Recovery (restore.sh)
+
+Восстановление на новый сервер из Cloudflare R2:
+
+```bash
+#!/bin/bash
+# infra/scripts/restore.sh — восстановление из R2 бэкапа
+set -euo pipefail
+
+echo "=== GoTipe Disaster Recovery ==="
+
+# 1. Остановить сервисы (если запущены)
+docker compose down 2>/dev/null || true
+
+# 2. Поднять только PostgreSQL
+docker compose up -d postgres
+sleep 10
+
+# 3. Восстановить из pgBackRest (R2)
+docker compose exec postgres pgbackrest --stanza=gotipe restore
+
+# 4. Если нужен PITR — указать время
+# docker compose exec postgres pgbackrest --stanza=gotipe \
+#   --type=time --target="2026-02-10 14:30:00+00" restore
+
+# 5. Перезапустить PostgreSQL для применения recovery
+docker compose restart postgres
+sleep 10
+
+# 6. Проверить целостность
+docker compose exec postgres psql -U gotipe -c "SELECT COUNT(*) FROM documents;"
+
+# 7. Поднять остальные сервисы
+docker compose up -d
+
+echo "=== Recovery complete ==="
+echo "   Проверьте: curl https://api.gotipe.com/healthz"
+```
+
+**Смена сервера (полная):**
+1. Купить новый Hetzner VDS
+2. `scp -r infra/ deploy@NEW_IP:/opt/gotipe/` + `bash setup-server.sh` (скрипт обновит GitHub Secrets с новым IP)
+3. `bash restore.sh` (восстановит БД из R2)
+4. Обновить DNS в Cloudflare → новый IP
+5. Готово, автодеплой работает на новый сервер
+
+### Стоимость инфраструктуры (Self-Hosted)
+
+| Компонент | Сервис | EUR/мес |
+|-----------|--------|---------|
+| VDS (API + Postgres + Valkey) | Hetzner CX32 | 6.80 |
+| Object storage (data + backups) | Cloudflare R2 free tier | 0 |
+| CDN + DDoS | Cloudflare free | 0 |
+| Monitoring | Prometheus + Grafana (self-hosted) | 0 |
+| Domain | gotipe.com | ~1.00 |
+| **Total** | | **~EUR 8/мес** |
+
+> Для сравнения: Tiptap Cloud начинается от $49/мес за 500 документов. GoTipe self-hosted = **~EUR 8/мес** за unlimited документов.
+
+---
+
+## Deployment Strategy
+
+### Zero-Downtime Deploy с автоматическими миграциями
+
+Каждый деплой включает автоматический запуск миграций **до** старта новой версии API. Rolling update гарантирует отсутствие downtime.
+
+```bash
+#!/bin/bash
+# infra/scripts/deploy.sh — Zero-downtime deploy
+set -euo pipefail
+
+IMAGE_TAG="${1:-latest}"
+COMPOSE="docker compose -f /opt/gotipe/docker-compose.yml"
+
+echo "=== GoTipe Cloud Deploy: ${IMAGE_TAG} ==="
+
+# 1. Pull new images
+echo "[1/5] Pulling images..."
+$COMPOSE pull api sync export-worker
+
+# 2. Run database migrations BEFORE starting new code
+echo "[2/5] Running migrations..."
+$COMPOSE run --rm api /gotipe-cloud migrate up
+
+# 3. Scale API to 2 instances (new + old run in parallel)
+echo "[3/5] Starting new container..."
+$COMPOSE up -d --no-deps --scale api=2 api
+
+# 4. Wait for new container health check
+echo "[4/5] Waiting for health check..."
+sleep 5
+for i in $(seq 1 12); do
+    if docker compose exec api wget -qO- http://localhost:8080/healthz > /dev/null 2>&1; then
+        echo "  Health check passed (attempt $i)"
+        break
+    fi
+    echo "  Waiting... (attempt $i/12)"
+    sleep 5
+done
+
+# 5. Stop old container, scale back to 1
+echo "[5/5] Removing old container..."
+OLD_CONTAINER=$(docker ps --filter "name=gotipe-api" --format '{{.ID}}' | tail -1)
+docker stop "$OLD_CONTAINER" 2>/dev/null || true
+$COMPOSE up -d --no-deps --scale api=1 api
+
+# Update sync + export worker (stateless, можно restart)
+$COMPOSE up -d --no-deps sync export-worker
+
+echo "=== Deploy complete ==="
+```
+
+**Принцип:** Миграции SQL backward-compatible (additive-only). Новый код работает со старой и новой схемой. Деструктивные изменения (drop column) — отдельный миграционный шаг через 1+ версий.
+
+### Graceful Shutdown (6 фаз)
+
+Go-сервер корректно завершает работу, не теряя in-flight requests:
+
+```go
+// apps/cloud/cmd/api/main.go
+
+func main() {
+    // ... setup ...
+
+    srv := &http.Server{Addr: addr, Handler: mux}
+
+    // Goroutine для HTTP server
+    go func() {
+        if err := srv.ListenAndServe(); err != http.ErrServerClosed {
+            logger.Error("server error", "err", err)
+        }
+    }()
+
+    // Ожидание сигнала завершения
+    quit := make(chan os.Signal, 1)
+    signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+    <-quit
+
+    logger.Info("shutdown: starting graceful shutdown")
+
+    // Phase 1: Прекращаем приём новых соединений
+    ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+    defer cancel()
+
+    // Phase 2: Drain HTTP in-flight requests (30s timeout)
+    if err := srv.Shutdown(ctx); err != nil {
+        logger.Error("shutdown: http drain failed", "err", err)
+    }
+    logger.Info("shutdown: http drained")
+
+    // Phase 3: Stop WebSocket sync rooms (graceful disconnect)
+    syncServer.Shutdown(ctx)
+    logger.Info("shutdown: sync rooms closed")
+
+    // Phase 4: Stop background workers
+    exportWorker.Stop()
+    cleanupWorker.Stop()
+    logger.Info("shutdown: workers stopped")
+
+    // Phase 5: Close storage connections
+    db.Close()
+    valkey.Close()
+    logger.Info("shutdown: storage closed")
+
+    // Phase 6: Exit
+    logger.Info("shutdown: complete")
+}
+```
+
+| Фаза | Действие | Timeout |
+|------|----------|---------|
+| 1 | Stop accepting new connections | Мгновенно |
+| 2 | Drain HTTP in-flight requests | 30s |
+| 3 | Close WebSocket rooms, notify clients | 10s |
+| 4 | Stop background workers (finish current tasks) | 15s |
+| 5 | Close DB pool + Valkey connections | 5s |
+| 6 | Exit 0 | — |
+
+---
+
+## Backup & Disaster Recovery
+
+### Стратегия бэкапов
+
+| Тип | Частота | Хранение | Цель |
+|-----|---------|----------|------|
+| **WAL archiving** | Непрерывный (каждый сегмент) | R2 (30 дней) | Point-in-time recovery |
+| **Incremental backup** | Ежедневно 03:00 UTC | R2 (30 дней) | Fast restore |
+| **Full backup** | Еженедельно (воскресенье) | R2 (90 дней) | Baseline |
+| **CRDT snapshots** | При compaction (~100 updates) | R2 | Отдельный pipeline |
+
+### pgBackRest (PostgreSQL Backup)
+
+```bash
+# /etc/pgbackrest/pgbackrest.conf
+[gotipe]
+pg1-path=/var/lib/postgresql/data
+pg1-port=5432
+
+[global]
+repo1-type=s3
+repo1-s3-bucket=gotipe-backups
+repo1-s3-endpoint=${R2_ACCOUNT_ID}.r2.cloudflarestorage.com
+repo1-s3-region=auto
+repo1-s3-key=${R2_ACCESS_KEY_ID}
+repo1-s3-key-secret=${R2_SECRET_ACCESS_KEY}
+repo1-s3-uri-style=path
+repo1-cipher-type=aes-256-cbc
+repo1-cipher-pass=${BACKUP_ENCRYPTION_KEY}
+repo1-retention-full=4
+repo1-retention-diff=30
+
+[global:archive-push]
+compress-type=zst
+compress-level=3
+```
+
+> **Cloudflare R2** полностью совместим с S3 API — pgBackRest работает через S3 protocol. Zero egress = бэкапы не стоят на трафике.
+
+```bash
+# Crontab для бэкапов
+# WAL archiving — автоматически через archive_command
+# Incremental backup — ежедневно
+0 3 * * * pgbackrest --stanza=gotipe --type=incr backup
+# Full backup — еженедельно
+0 4 * * 0 pgbackrest --stanza=gotipe --type=full backup
+```
+
+### Point-in-Time Recovery (PITR)
+
+```bash
+# Восстановление до конкретного момента
+pgbackrest --stanza=gotipe \
+  --type=time \
+  --target="2026-02-10 14:30:00+00" \
+  restore
+```
+
+### Disaster Recovery — время восстановления
+
+| Сценарий | RTO (Recovery Time) | RPO (Data Loss) |
+|----------|:-------------------:|:---------------:|
+| Container crash | 30s (Docker restart: always) | 0 |
+| Server reboot | <1 min (docker-compose auto-start) | 0 |
+| Data corruption | 15-30 min (PITR до нужной секунды) | Секунды |
+| Disk failure | 30-60 min (новый VDS + R2 restore) | Минуты (WAL lag) |
+| Full disaster (весь сервер) | 1-2 часа (новый VDS + полный restore из R2) | Минуты |
+| Region failure | 2-4 часа (другой region + R2 global access) | Минуты |
+
+---
+
+## Background Workers
+
+Помимо основных сервисов (API, Sync, Export Worker), GoTipe Cloud использует фоновые задачи для обслуживания данных.
+
+### Cleanup Worker
+
+Периодическая очистка устаревших данных:
+
+```go
+// apps/cloud/internal/worker/cleanup.go
+
+type CleanupWorker struct {
+    db     *sql.DB
+    r2     R2Client
+    ticker *time.Ticker
+}
+
+func (w *CleanupWorker) Run(ctx context.Context) {
+    w.ticker = time.NewTicker(1 * time.Hour)
+    defer w.ticker.Stop()
+
+    for {
+        select {
+        case <-ctx.Done():
+            return
+        case <-w.ticker.C:
+            w.cleanOrphanExports(ctx)
+            w.cleanExpiredTokens(ctx)
+            w.compactDocumentUpdates(ctx)
+            w.aggregateUsage(ctx)
+        }
+    }
+}
+
+func (w *CleanupWorker) cleanOrphanExports(ctx context.Context) {
+    // Удаление export jobs старше 7 дней с R2 файлами
+    rows, _ := w.db.QueryContext(ctx,
+        `DELETE FROM export_jobs
+         WHERE completed_at < now() - interval '7 days'
+         RETURNING r2_result_key`)
+    defer rows.Close()
+
+    for rows.Next() {
+        var key string
+        rows.Scan(&key)
+        if key != "" {
+            w.r2.Delete(ctx, key)
+        }
+    }
+}
+
+func (w *CleanupWorker) compactDocumentUpdates(ctx context.Context) {
+    // Документы с >200 incremental updates → compact в snapshot
+    rows, _ := w.db.QueryContext(ctx,
+        `SELECT document_id, COUNT(*) as cnt
+         FROM document_updates
+         GROUP BY document_id
+         HAVING COUNT(*) > 200`)
+    defer rows.Close()
+
+    for rows.Next() {
+        var docID string
+        var cnt int
+        rows.Scan(&docID, &cnt)
+        w.compactDocument(ctx, docID)
+    }
+}
+```
+
+### Retry Worker (Compensation Pattern)
+
+Для операций, которые зависят от внешних сервисов (Stripe, email, webhooks), применяется compensation pattern с экспоненциальным backoff:
+
+```go
+// apps/cloud/internal/worker/retry.go
+
+type RetryWorker struct {
+    db     *sql.DB
+    ticker *time.Ticker
+}
+
+func (w *RetryWorker) Run(ctx context.Context) {
+    w.ticker = time.NewTicker(30 * time.Second)
+    defer w.ticker.Stop()
+
+    for {
+        select {
+        case <-ctx.Done():
+            return
+        case <-w.ticker.C:
+            w.retryPendingWebhooks(ctx)
+            w.retryPendingNotifications(ctx)
+        }
+    }
+}
+
+func (w *RetryWorker) retryPendingWebhooks(ctx context.Context) {
+    rows, _ := w.db.QueryContext(ctx,
+        `SELECT id, url, payload, retry_count
+         FROM pending_webhooks
+         WHERE next_retry_at <= now() AND retry_count < 5`)
+    defer rows.Close()
+
+    for rows.Next() {
+        var wh Webhook
+        rows.Scan(&wh.ID, &wh.URL, &wh.Payload, &wh.RetryCount)
+
+        if err := sendWebhook(ctx, wh); err != nil {
+            // Exponential backoff: 10s, 60s, 300s, 1800s, 10800s
+            delay := time.Duration(math.Pow(6, float64(wh.RetryCount))) * 10 * time.Second
+            w.db.ExecContext(ctx,
+                `UPDATE pending_webhooks
+                 SET retry_count = retry_count + 1,
+                     next_retry_at = now() + $1,
+                     last_error = $2
+                 WHERE id = $3`,
+                delay, err.Error(), wh.ID)
+        } else {
+            w.db.ExecContext(ctx,
+                `DELETE FROM pending_webhooks WHERE id = $1`, wh.ID)
+        }
+    }
+}
+```
+
+**Принцип:** Основная транзакция (создание документа, публикация) фиксируется в БД немедленно. Побочные эффекты (webhook, уведомление) ставятся в очередь **вне транзакции**. Если побочный эффект не удался — пользователь не блокирован, retry worker обработает позже.
+
+---
+
+## Operational Patterns
+
+### Idempotency Keys
+
+Все мутирующие API-вызовы (POST, PATCH, DELETE) поддерживают идемпотентность через header `Idempotency-Key`:
+
+```go
+// apps/cloud/internal/middleware/idempotency.go
+
+func IdempotencyMiddleware(valkey *redis.Client) func(http.Handler) http.Handler {
+    return func(next http.Handler) http.Handler {
+        return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+            if r.Method == "GET" || r.Method == "HEAD" {
+                next.ServeHTTP(w, r)
+                return
+            }
+
+            key := r.Header.Get("Idempotency-Key")
+            if key == "" {
+                next.ServeHTTP(w, r)
+                return
+            }
+
+            cacheKey := fmt.Sprintf("idempotency:%s:%s", userID, key)
+
+            // Check cached response
+            cached, err := valkey.Get(r.Context(), cacheKey).Bytes()
+            if err == nil {
+                // Return cached response (same status, body, headers)
+                var resp CachedResponse
+                json.Unmarshal(cached, &resp)
+                for k, v := range resp.Headers {
+                    w.Header().Set(k, v)
+                }
+                w.WriteHeader(resp.Status)
+                w.Write(resp.Body)
+                return
+            }
+
+            // Capture response
+            rec := httptest.NewRecorder()
+            next.ServeHTTP(rec, r)
+
+            // Cache response for 24h
+            resp := CachedResponse{
+                Status:  rec.Code,
+                Headers: rec.Header(),
+                Body:    rec.Body.Bytes(),
+            }
+            data, _ := json.Marshal(resp)
+            valkey.Set(r.Context(), cacheKey, data, 24*time.Hour)
+
+            // Write actual response
+            for k, v := range rec.Header() {
+                w.Header()[k] = v
+            }
+            w.WriteHeader(rec.Code)
+            w.Write(rec.Body.Bytes())
+        })
+    }
+}
+```
+
+**Гарантия:** Один и тот же `Idempotency-Key` → одинаковый ответ (предотвращает дублирование документов, двойные exports). Кеш в Valkey — быстрый, TTL 24h, не нагружает PostgreSQL.
+
+### Rate Limiting — Sliding Window (Lua Script)
+
+Атомарный rate limiter через Lua-скрипт в Valkey (ни одного race condition):
+
+```lua
+-- infra/scripts/rate-limit.lua
+-- Sliding window rate limiter (атомарная операция)
+
+local key = KEYS[1]
+local limit = tonumber(ARGV[1])
+local window = tonumber(ARGV[2])  -- ms
+local now = tonumber(ARGV[3])     -- ms
+local window_start = now - window
+
+-- 1. Удалить устаревшие записи
+redis.call('ZREMRANGEBYSCORE', key, '-inf', window_start)
+
+-- 2. Подсчитать текущее количество в окне
+local count = redis.call('ZCARD', key)
+
+if count < limit then
+    -- 3. Добавить текущий запрос
+    redis.call('ZADD', key, now, now .. ':' .. math.random(1000000))
+    redis.call('PEXPIRE', key, window)
+    return 1  -- allowed
+else
+    redis.call('PEXPIRE', key, window)
+    return 0  -- denied
+end
+```
+
+```go
+// apps/cloud/internal/middleware/ratelimit.go
+
+func (rl *RateLimiter) AllowLua(ctx context.Context, key string, limit int, window time.Duration) bool {
+    now := time.Now().UnixMilli()
+    result, err := rl.valkey.EvalSha(ctx, rl.scriptSHA, []string{key},
+        limit, window.Milliseconds(), now).Int()
+
+    if err != nil {
+        // Graceful degradation: если Valkey недоступен — пропускаем запрос
+        return true
+    }
+    return result == 1
+}
+```
+
+**Преимущество над naive подходом:** Sliding window не допускает burst на границах фиксированных окон. Lua-скрипт атомарен — нет race condition при concurrent requests.
+
+### Structured Logging (slog)
+
+```go
+// apps/cloud/internal/logger/setup.go
+
+func SetupLogger(env string) *slog.Logger {
+    var handler slog.Handler
+
+    if env == "production" {
+        // JSON — parseable для Loki/Elasticsearch/Datadog
+        handler = slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
+            Level: slog.LevelInfo,
+        })
+    } else {
+        // Text — human-readable для разработки
+        handler = slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
+            Level: slog.LevelDebug,
+        })
+    }
+
+    return slog.New(handler)
+}
+```
+
+**Правила логирования:**
+- JSON в production (parse-friendly для observability)
+- Structured fields: `request_id`, `user_id`, `latency`, `status`
+- **Нет PII в логах** — email, имя, document content не логируются
+- Log levels: `DEBUG` (development), `INFO` (production default), `WARN`, `ERROR`
+- Request ID propagation через весь pipeline (HTTP → DB → R2 → response)
+
+### Unified Error Codes
+
+Все API ошибки следуют единому формату с машиночитаемыми кодами:
+
+```go
+// apps/cloud/internal/apierror/codes.go
+
+type APIError struct {
+    Code    string `json:"code"`
+    Message string `json:"message"`
+    Status  int    `json:"-"`
+}
+
+var (
+    ErrInvalidJSON     = &APIError{"INVALID_JSON", "Request body is not valid JSON", 400}
+    ErrValidation      = &APIError{"VALIDATION_ERROR", "Request validation failed", 400}
+    ErrUnauthorized    = &APIError{"UNAUTHORIZED", "Missing or invalid authentication", 401}
+    ErrInvalidAPIKey   = &APIError{"INVALID_API_KEY", "API key is invalid or expired", 401}
+    ErrForbidden       = &APIError{"FORBIDDEN", "Insufficient permissions", 403}
+    ErrNotFound        = &APIError{"NOT_FOUND", "Resource not found", 404}
+    ErrConflict        = &APIError{"CONFLICT", "Resource already exists", 409}
+    ErrQuotaExceeded   = &APIError{"QUOTA_EXCEEDED", "Plan limit reached", 402}
+    ErrRateLimited     = &APIError{"RATE_LIMITED", "Too many requests", 429}
+    ErrInternal        = &APIError{"INTERNAL_ERROR", "Internal server error", 500}
+)
+```
+
+```json
+// Пример ответа при превышении лимита
+{
+  "code": "QUOTA_EXCEEDED",
+  "message": "Document limit reached for your plan. Current: 1000, Limit: 1000. Upgrade at https://gotipe.com/pricing"
+}
+```
+
+### Graceful Degradation
+
+| Сценарий | Поведение |
+|----------|----------|
+| Valkey недоступен | REST API и Sync работают, rate limiting пропускает все запросы, AI cache отключён |
+| R2 недоступен | Uploads заблокированы, существующие CRDT snapshots из PostgreSQL (медленнее) |
+| AI provider недоступен | Fallback на secondary provider → если все недоступны, AI endpoints возвращают 503 |
+| Export worker упал | Export jobs копятся в очереди, обрабатываются при restart |
+| PostgreSQL недоступен | Полный downtime (critical dependency) — health check возвращает 503 |
 
 ---
 
@@ -1196,7 +1990,7 @@ func Healthz(db *sql.DB, valkey *redis.Client) http.HandlerFunc {
 }
 
 // Readyz — readiness probe (сервис готов принимать трафик?)
-func Readyz(db *sql.DB, valkey *redis.Client, s3 S3Client) http.HandlerFunc {
+func Readyz(db *sql.DB, valkey *redis.Client, r2 R2Client) http.HandlerFunc {
     return func(w http.ResponseWriter, r *http.Request) {
         ctx, cancel := context.WithTimeout(r.Context(), 3*time.Second)
         defer cancel()
@@ -1220,12 +2014,12 @@ func Readyz(db *sql.DB, valkey *redis.Client, s3 S3Client) http.HandlerFunc {
             checks["valkey"] = "ok"
         }
 
-        // S3
-        if err := s3.HeadBucket(ctx); err != nil {
-            checks["s3"] = err.Error()
+        // R2
+        if err := r2.HeadBucket(ctx); err != nil {
+            checks["r2"] = err.Error()
             allOK = false
         } else {
-            checks["s3"] = "ok"
+            checks["r2"] = "ok"
         }
 
         status := http.StatusOK
@@ -1308,7 +2102,23 @@ groups:
 
 ## Pricing
 
-### Тарифные планы
+### 3 продукта GoTipe
+
+| Продукт | Описание | Цена |
+|---------|----------|------|
+| **GoTipe Core** | Headless: Rust/WASM engine, extensions, CRDT, AI layer, export, adapters, self-hosted server | **$0 (MIT)** |
+| **GoTipe Block Editor** | Notion-like UI: `<BlockEditor />`, SlashMenu, BubbleMenu, DnD, темы. Лицензия по ключу (офлайн JWT) | **от $149/app/год** |
+| **GoTipe Cloud** | Managed sync + AI proxy + export + analytics. **Block Editor лицензия включена** | **от $29/мес** |
+
+### Block Editor лицензии (без Cloud)
+
+| Лицензия | Цена | Domains | Включает |
+|----------|------|---------|----------|
+| **Indie** | $149/app/год | 1 production | @gotipe/block-editor + @gotipe/theme + @gotipe/ai-ui |
+| **Business** | $499/app/год | до 10 | + приоритетная поддержка |
+| **Enterprise** | Custom | Unlimited | + source access, SLA |
+
+### Cloud тарифы (Block Editor включён)
 
 ```
 ┌─────────────┬──────────┬──────────┬───────────┬────────────┐
@@ -1316,6 +2126,7 @@ groups:
 ├─────────────┼──────────┼──────────┼───────────┼────────────┤
 │ Цена        │ $29/mo   │ $99/mo   │ $299/mo   │ Custom     │
 ├─────────────┼──────────┼──────────┼───────────┼────────────┤
+│ Block Editor│ ✓ (incl.)│ ✓ (incl.)│ ✓ (incl.) │ ✓ (incl.)  │
 │ Документы   │ 1K       │ 10K      │ 100K      │ Unlimited  │
 │ AI requests │ 10K/mo   │ 100K/mo  │ 1M/mo     │ Unlimited  │
 │ Exports     │ 1K/mo    │ Unlimited│ Unlimited │ Unlimited  │
@@ -1361,18 +2172,19 @@ groups:
 │ AI integration       │ Отдельный addon        │ Включено в тариф       │
 │ PDF/DOCX export      │ Нет                    │ Включено в тариф       │
 │ Analytics            │ Отдельный addon        │ Включено (Pro+)        │
-│ Self-hosted option   │ Нет (только Hocuspocus)│ Docker / Binary / Helm │
+│ Self-hosted option   │ Нет (только Hocuspocus)│ Hetzner VDS + R2 / Helm│
 │ SSO/SAML             │ Enterprise only        │ Business ($299)        │
-│ Open-source core     │ Partial (некоторые ext  │ 100% MIT               │
-│                      │  стали MIT в 2025)     │                        │
+│ Open-source core     │ Partial (некоторые ext  │ Headless 100% MIT,     │
+│                      │  стали MIT в 2025)     │ Block Editor commercial│
 └──────────────────────┴────────────────────────┴────────────────────────┘
 ```
 
 Ключевые преимущества GoTipe Cloud:
 1. **3x ниже цена за документ** на entry tier ($0.029 vs $0.098)
 2. **AI и Export включены** — не нужно платить за отдельные addons
-3. **Self-hosted без ограничений** — Docker Compose, single binary, Helm chart
-4. **100% MIT core** — все extensions open-source, без paywall
+3. **Block Editor лицензия включена** — не нужно покупать отдельно ($149/yr value)
+4. **Self-hosted без ограничений** — Docker Compose, single binary, Helm chart
+5. **Headless core MIT** — все extensions, CRDT, AI layer open-source
 
 ---
 
@@ -1445,8 +2257,8 @@ async function exportPDF(documentId: string) {
 |--------|-------------|--------------|
 | Sync server | Вы деплоите и управляете | Managed, auto-scaling |
 | AI proxy | Ваши API keys, ваш сервер | Managed, общий rate limit |
-| Export | Ваш worker, ваш S3 | Managed |
-| Стоимость | Инфраструктура (~$60/mo на AWS) | $29-$299/mo |
+| Export | Ваш worker, Cloudflare R2 | Managed |
+| Стоимость | Инфраструктура (~EUR 7/mo на Hetzner VDS) | $29-$299/mo |
 | SLA | Ваша ответственность | 99.9-99.99% |
 | Data residency | Полный контроль | US / EU regions |
 | Updates | Ручные (docker pull) | Автоматические |

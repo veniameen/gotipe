@@ -26,7 +26,7 @@ GoTipe предоставляет встроенную систему комме
 │         ▼                 ▼                      ▼              │
 │  ┌──────────────────────────────────────────────────────────┐   │
 │  │              GoTipe Cloud (Go backend)                    │   │
-│  │  Comment API · Version Storage (S3) · Permission API      │   │
+│  │  Comment API · Version Storage (R2) · Permission API      │   │
 │  └──────────────────────────────────────────────────────────┘   │
 └─────────────────────────────────────────────────────────────────┘
 ```
@@ -718,8 +718,8 @@ pub struct IncrementalSnapshot {
 │                    Version Storage Architecture                 │
 │                                                                │
 │  ┌──────────────────────┐    ┌──────────────────────────────┐ │
-│  │     PostgreSQL        │    │    S3-compatible Storage      │ │
-│  │                      │    │    (MinIO / AWS S3)            │ │
+│  │     PostgreSQL        │    │    Cloudflare R2              │ │
+│  │                      │    │    (S3-compatible)             │ │
 │  │  ┌────────────────┐  │    │                              │ │
 │  │  │ versions       │  │    │  ┌────────────────────────┐  │ │
 │  │  │  id            │  │    │  │ Incremental Snapshots  │  │ │
@@ -729,7 +729,7 @@ pub struct IncrementalSnapshot {
 │  │  │  state_vector  │  │    │  │ doc_abc/v2-v3.delta    │  │ │
 │  │  │  created_by    │  │    │  │ doc_abc/v3.snapshot    │  │ │
 │  │  │  created_at    │  │    │  │                        │  │ │
-│  │  │  s3_key        │  │    │  │ (zstd compressed)      │  │ │
+│  │  │  r2_key        │  │    │  │ (zstd compressed)      │  │ │
 │  │  │  snapshot_size │  │    │  └────────────────────────┘  │ │
 │  │  └────────────────┘  │    │                              │ │
 │  │                      │    │  Полный snapshot: каждые     │ │
@@ -763,7 +763,7 @@ CREATE TABLE versions (
     created_by      UUID NOT NULL REFERENCES users(id),
     created_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
     description     TEXT,
-    s3_key          TEXT NOT NULL,
+    r2_key          TEXT NOT NULL,
     snapshot_size   BIGINT NOT NULL,
     is_full         BOOLEAN NOT NULL DEFAULT false,
     base_version_id UUID REFERENCES versions(id),
@@ -1568,7 +1568,7 @@ editor.on('presenceUpdated', (peers) => {
 | Version branches | Да (basic) | Нет | Нет | Нет |
 | Incremental storage | Да (CRDT deltas) | N/A | Да | Да |
 | Retention policy | Configurable | N/A | 30 days (free) | 30 days (free) |
-| Self-hosted storage | Да (S3/MinIO) | N/A | Нет | Нет |
+| Self-hosted storage | Да (Cloudflare R2) | N/A | Нет | Нет |
 | API access | Да | Нет | Limited (Docs API) | Нет |
 
 ### Permissions
@@ -1672,20 +1672,14 @@ services:
     image: gotipe/sync-server:latest
     environment:
       DATABASE_URL: postgres://gotipe:password@postgres:5432/gotipe
-      S3_ENDPOINT: http://minio:9000
-      S3_BUCKET: gotipe-versions
-      S3_ACCESS_KEY: minioadmin
-      S3_SECRET_KEY: minioadmin
+      R2_ACCOUNT_ID: ${R2_ACCOUNT_ID}
+      R2_ACCESS_KEY_ID: ${R2_ACCESS_KEY_ID}
+      R2_SECRET_ACCESS_KEY: ${R2_SECRET_ACCESS_KEY}
+      R2_BUCKET: gotipe-versions
       VERSION_AUTO_SAVE_INTERVAL: 300  # seconds
       VERSION_FULL_SNAPSHOT_EVERY: 50
       VERSION_RETENTION_DAYS: 30
       PERMISSIONS_DEFAULT_ROLE: viewer
-
-  minio:
-    image: minio/minio:latest
-    command: server /data --console-address ":9001"
-    volumes:
-      - minio_data:/data
 
   postgres:
     image: postgres:16
@@ -1697,7 +1691,6 @@ services:
       - pg_data:/var/lib/postgresql/data
 
 volumes:
-  minio_data:
   pg_data:
 ```
 
@@ -1711,5 +1704,5 @@ volumes:
 | [03-editor-core.md](03-editor-core.md) | Document model, marks, steps — используются CommentMark и SuggestionMark |
 | [05-extensions.md](05-extensions.md) | Extension API — comments, suggestions, versioning реализованы как extensions |
 | [09-sdk-and-api.md](09-sdk-and-api.md) | TypeScript API — типы Comment, Version, Permission |
-| [10-cloud.md](10-cloud.md) | Cloud infrastructure — S3 storage, PostgreSQL, WebSocket sync |
+| [10-cloud.md](10-cloud.md) | Cloud infrastructure — Cloudflare R2 storage, PostgreSQL, WebSocket sync |
 | [14-security-privacy.md](14-security-privacy.md) | Security model — audit logs, encryption, permission enforcement |

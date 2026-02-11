@@ -1,6 +1,8 @@
 # GoTipe — Design System
 
 > Визуальный дизайн редактора из коробки и система тем для кастомизации. GoTipe поставляется с polished default theme и headless API для полного контроля.
+>
+> **Лицензия:** `@gotipe/theme` — коммерческий пакет (входит в лицензию `@gotipe/block-editor`). Headless mode (без стилей) и `base.css` (структурные стили) доступны бесплатно в MIT core. Кастомные CSS custom properties — бесплатно.
 
 ---
 
@@ -638,17 +640,22 @@ Popup при hover над ссылкой.
 
 ### 7.1 Использование default theme
 
+> **`@gotipe/theme`** — коммерческий пакет (требует лицензию Block Editor или Cloud подписку). `base.css` — MIT, доступен бесплатно.
+
 ```typescript
-// Полная тема (light + dark)
+// Полная тема (light + dark) — требует лицензию Block Editor
 import '@gotipe/theme/styles.css';
 
-// Только light
+// Только light — требует лицензию
 import '@gotipe/theme/light.css';
 
-// Только dark
+// Только dark — требует лицензию
 import '@gotipe/theme/dark.css';
 
-// Без стилей (headless)
+// Структурные стили (headless) — MIT, бесплатно
+import '@gotipe/theme/base.css';
+
+// Без стилей (полностью headless) — MIT
 // Ничего не импортировать
 ```
 

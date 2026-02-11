@@ -556,7 +556,7 @@ export interface AwarenessOptions {
 │  │              Persistence Layer                       │    │
 │  │                      │                              │    │
 │  │  ┌──────────┐  ┌────┴─────┐  ┌──────────────────┐  │    │
-│  │  │PostgreSQL│  │  Valkey  │  │ S3 (snapshots)   │  │    │
+│  │  │PostgreSQL│  │  Valkey  │  │ R2 (snapshots)   │  │    │
 │  │  │ metadata │  │  pubsub  │  │ binary CRDT state │  │    │
 │  │  │ history  │  │  cache   │  │                  │  │    │
 │  │  └──────────┘  └──────────┘  └──────────────────┘  │    │
@@ -771,8 +771,8 @@ CREATE TABLE documents (
 CREATE TABLE document_snapshots (
     document_id TEXT NOT NULL REFERENCES documents(id) ON DELETE CASCADE,
     version     BIGINT NOT NULL,
-    -- Binary CRDT snapshot stored in S3, this is the key
-    s3_key      TEXT NOT NULL,
+    -- Binary CRDT snapshot stored in Cloudflare R2, this is the key
+    r2_key      TEXT NOT NULL,
     size_bytes  BIGINT NOT NULL,
     peer_id     TEXT NOT NULL,
     created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),

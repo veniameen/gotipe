@@ -21,15 +21,30 @@ gotipe/
 │   └── gotipe-wasm/              # wasm-bindgen exports
 │
 ├── packages/                     # TypeScript packages (Turborepo)
+│   │
+│   │ # ── MIT (Open-Source) ──────────────────────────
 │   ├── core/                     # @gotipe/core — JS bindings + editor manager
 │   ├── wasm/                     # @gotipe/wasm — WASM pkg wrapper
-│   ├── react/                    # @gotipe/react — React adapter
+│   ├── react/                    # @gotipe/react — React adapter (useEditor, EditorContent)
 │   ├── vue/                      # @gotipe/vue — Vue 3 adapter
 │   ├── svelte/                   # @gotipe/svelte — Svelte 5 adapter
 │   ├── solid/                    # @gotipe/solid — Solid adapter
 │   ├── collaboration/            # @gotipe/collaboration — CRDT sync client
 │   ├── ai/                       # @gotipe/ai — AI integration layer
-│   └── export/                   # @gotipe/export — JS export API
+│   ├── export/                   # @gotipe/export — JS export API
+│   │
+│   │ # ── Commercial (лицензия) ──────────────────────
+│   ├── block-editor/             # @gotipe/block-editor — Notion-like React UI
+│   │   ├── src/
+│   │   │   ├── editor.tsx        # <BlockEditor> main component
+│   │   │   ├── license.ts        # JWT license verification (offline)
+│   │   │   ├── components/       # SlashMenu, BubbleMenu, BlockToolbar, DragHandle, etc.
+│   │   │   └── index.ts
+│   │   ├── package.json
+│   │   └── LICENSE.md            # Commercial license
+│   ├── block-editor-vue/         # @gotipe/block-editor-vue — Notion-like Vue UI
+│   ├── ai-ui/                    # @gotipe/ai-ui — AI ghost text + command palette UI
+│   └── theme/                    # @gotipe/theme — design tokens, themes (minimal/modern/notion/docs)
 │
 ├── apps/
 │   ├── playground/               # Demo app (Vite + React)
@@ -45,6 +60,24 @@ gotipe/
 │       ├── go.mod
 │       └── go.sum
 │
+├── infra/                         # Server infrastructure (Production)
+│   ├── docker-compose.yml         # Production: API, Postgres, Valkey, pgBouncer, Caddy
+│   ├── docker-compose.dev.yml     # Development: + MinIO (local S3)
+│   ├── .env.example               # Template for server .env (no secrets)
+│   ├── Caddyfile                  # Reverse proxy + auto TLS config
+│   ├── postgres/
+│   │   └── postgresql.conf        # PostgreSQL tuning (shared_buffers, work_mem)
+│   ├── pgbouncer/
+│   │   └── pgbouncer.ini          # Connection pooling config
+│   ├── valkey/
+│   │   └── valkey.conf            # Cache config (maxmemory, AOF)
+│   ├── prometheus.yml             # Monitoring config
+│   └── scripts/
+│       ├── setup-server.sh        # Full server provisioning + GitHub auth
+│       ├── deploy.sh              # Zero-downtime deploy + auto-migrations
+│       ├── restore.sh             # Disaster recovery (pgBackRest → R2)
+│       └── backup-cron            # Cron schedule for automated backups
+│
 ├── scripts/
 │   ├── build-wasm.sh             # Build WASM + optimize
 │   ├── dev.sh                    # Start dev environment
@@ -59,7 +92,8 @@ gotipe/
 ├── .rustfmt.toml
 ├── .eslintrc.js
 ├── .prettierrc
-└── LICENSE                       # MIT
+├── LICENSE                       # MIT (headless core)
+└── LICENSE-COMMERCIAL.md         # Commercial license (block-editor, theme, ai-ui)
 ```
 
 ---
@@ -254,33 +288,42 @@ export default defineConfig({
 ### Package Dependencies
 
 ```
-@gotipe/wasm          ← WASM pkg (no TS deps)
+@gotipe/wasm          ← WASM pkg (no TS deps)                    [MIT]
     │
     ▼
-@gotipe/core          ← @gotipe/wasm
+@gotipe/core          ← @gotipe/wasm                             [MIT]
     │
-    ├──► @gotipe/react          ← @gotipe/core, react
-    ├──► @gotipe/vue            ← @gotipe/core, vue
-    ├──► @gotipe/svelte         ← @gotipe/core, svelte
-    ├──► @gotipe/solid          ← @gotipe/core, solid-js
-    ├──► @gotipe/collaboration  ← @gotipe/core
-    ├──► @gotipe/ai             ← @gotipe/core
-    └──► @gotipe/export         ← @gotipe/core, @gotipe/wasm
+    ├──► @gotipe/react          ← @gotipe/core, react            [MIT]
+    ├──► @gotipe/vue            ← @gotipe/core, vue              [MIT]
+    ├──► @gotipe/svelte         ← @gotipe/core, svelte           [MIT]
+    ├──► @gotipe/solid          ← @gotipe/core, solid-js         [MIT]
+    ├──► @gotipe/collaboration  ← @gotipe/core                   [MIT]
+    ├──► @gotipe/ai             ← @gotipe/core                   [MIT]
+    ├──► @gotipe/export         ← @gotipe/core, @gotipe/wasm     [MIT]
+    │
+    ├──► @gotipe/block-editor   ← @gotipe/react, @gotipe/theme   [COMMERCIAL]
+    ├──► @gotipe/block-editor-vue ← @gotipe/vue, @gotipe/theme   [COMMERCIAL]
+    ├──► @gotipe/ai-ui          ← @gotipe/ai, @gotipe/react      [COMMERCIAL]
+    └──► @gotipe/theme          ← (standalone CSS)                [COMMERCIAL]
 ```
 
 ### Bundle Sizes (target, gzip)
 
-| Package | ESM (gzip) | Peer Dependencies |
-|---------|-----------|-------------------|
-| @gotipe/wasm | ~255KB | — |
-| @gotipe/core | ~15KB | @gotipe/wasm |
-| @gotipe/react | ~8KB | @gotipe/core, react >=18 |
-| @gotipe/vue | ~7KB | @gotipe/core, vue >=3.4 |
-| @gotipe/svelte | ~6KB | @gotipe/core, svelte >=5 |
-| @gotipe/solid | ~5KB | @gotipe/core, solid-js >=1.8 |
-| @gotipe/collaboration | ~10KB | @gotipe/core |
-| @gotipe/ai | ~5KB | @gotipe/core |
-| @gotipe/export | ~3KB (без WASM lazy) | @gotipe/core, @gotipe/wasm |
+| Package | ESM (gzip) | Peer Dependencies | License |
+|---------|-----------|-------------------|---------|
+| @gotipe/wasm | ~255KB | — | MIT |
+| @gotipe/core | ~15KB | @gotipe/wasm | MIT |
+| @gotipe/react | ~8KB | @gotipe/core, react >=18 | MIT |
+| @gotipe/vue | ~7KB | @gotipe/core, vue >=3.4 | MIT |
+| @gotipe/svelte | ~6KB | @gotipe/core, svelte >=5 | MIT |
+| @gotipe/solid | ~5KB | @gotipe/core, solid-js >=1.8 | MIT |
+| @gotipe/collaboration | ~10KB | @gotipe/core | MIT |
+| @gotipe/ai | ~5KB | @gotipe/core | MIT |
+| @gotipe/export | ~3KB (без WASM lazy) | @gotipe/core, @gotipe/wasm | MIT |
+| @gotipe/block-editor | ~25KB | @gotipe/react, @gotipe/theme | Commercial |
+| @gotipe/block-editor-vue | ~22KB | @gotipe/vue, @gotipe/theme | Commercial |
+| @gotipe/ai-ui | ~8KB | @gotipe/ai, @gotipe/react | Commercial |
+| @gotipe/theme | ~12KB | — | Commercial |
 
 ---
 
@@ -360,7 +403,7 @@ apps/cloud/
 │   │   └── middleware.go
 │   ├── storage/
 │   │   ├── postgres.go
-│   │   ├── s3.go
+│   │   ├── r2.go            # Cloudflare R2 client (S3-compatible)
 │   │   └── valkey.go
 │   ├── sync/
 │   │   ├── server.go        # WebSocket handler
@@ -641,6 +684,129 @@ jobs:
       - uses: softprops/action-gh-release@v2
         with:
           generate_release_notes: true
+```
+
+### GitHub Actions: Cloud Deploy
+
+```yaml
+# .github/workflows/deploy-cloud.yml
+name: Deploy Cloud
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'apps/cloud/**'
+      - 'migrations/**'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/cloud
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: gotipe
+          POSTGRES_PASSWORD: gotipe
+          POSTGRES_DB: gotipe_test
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 5
+      valkey:
+        image: valkey/valkey:8-alpine
+        ports: ["6379:6379"]
+        options: >-
+          --health-cmd "valkey-cli ping"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.23'
+          cache-dependency-path: apps/cloud/go.sum
+      - name: Run migrations
+        run: go run cmd/api/main.go migrate up
+        env:
+          DATABASE_URL: postgres://gotipe:gotipe@localhost:5432/gotipe_test?sslmode=disable
+      - name: Test with race detector
+        run: go test ./... -race -count=1 -coverprofile=coverage.out
+        env:
+          DATABASE_URL: postgres://gotipe:gotipe@localhost:5432/gotipe_test?sslmode=disable
+          VALKEY_URL: redis://localhost:6379/0
+      - name: Upload coverage
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage
+          path: apps/cloud/coverage.out
+
+  build-and-deploy:
+    needs: test
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    permissions:
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push API image
+        uses: docker/build-push-action@v5
+        with:
+          context: apps/cloud
+          file: apps/cloud/Dockerfile
+          push: true
+          tags: |
+            ghcr.io/gotipe/cloud-api:${{ github.sha }}
+            ghcr.io/gotipe/cloud-api:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Deploy to production
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_KEY }}
+          script: |
+            cd /opt/gotipe
+            bash infra/scripts/deploy.sh ${{ github.sha }}
+```
+
+### Cloud Dockerfile (multi-stage)
+
+```dockerfile
+# apps/cloud/Dockerfile
+FROM golang:1.23-alpine AS builder
+RUN apk add --no-cache git
+WORKDIR /app
+COPY go.mod go.sum ./
+RUN go mod download
+COPY . .
+RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-s -w" -o /gotipe-cloud ./cmd/api
+
+FROM alpine:3.20
+RUN apk add --no-cache ca-certificates wget
+COPY --from=builder /gotipe-cloud /usr/local/bin/gotipe-cloud
+COPY migrations /migrations
+EXPOSE 8080
+HEALTHCHECK --interval=10s --timeout=5s --retries=3 \
+    CMD wget -qO- http://localhost:8080/healthz || exit 1
+ENTRYPOINT ["gotipe-cloud"]
+CMD ["serve"]
 ```
 
 ---
