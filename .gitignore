@@ -5,3 +5,4 @@ pkg/
 .env
 *.wasm
 .turbo/
+.next/
