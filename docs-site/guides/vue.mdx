@@ -1,0 +1,155 @@
+---
+title: Vue Adapter
+description: Integrate GoTipe into your Vue application
+---
+
+# Vue Adapter
+
+The `@gotipe/vue` package provides Vue composables and components for GoTipe, using `shallowRef` and `triggerRef` for efficient reactivity.
+
+## Installation
+
+```bash
+npm install @gotipe/core @gotipe/vue @gotipe/wasm
+```
+
+## useEditor Composable
+
+```vue
+<script setup lang="ts">
+import { useEditor, EditorContent } from '@gotipe/vue';
+import { DefaultPreset } from '@gotipe/core';
+
+const editor = useEditor({
+  extensions: [DefaultPreset],
+  content: {
+    version: 1,
+    blocks: [
+      { id: '1', type: 'paragraph', attrs: {}, content: [{ text: 'Hello from Vue!', marks: [] }], children: [] },
+    ],
+  },
+  onUpdate: ({ editor }) => {
+    console.log('Updated:', editor.getJSON());
+  },
+});
+</script>
+
+<template>
+  <EditorContent :editor="editor" />
+</template>
+```
+
+## Reactive State
+
+The editor state uses `shallowRef` internally. Access reactive properties:
+
+```vue
+<script setup lang="ts">
+import { computed } from 'vue';
+import { useEditor, useEditorState } from '@gotipe/vue';
+
+const editor = useEditor({ extensions: [DefaultPreset] });
+
+const isBold = useEditorState(editor, (state) => state.activeMarks.includes('bold'));
+const wordCount = useEditorState(editor, (state) => state.doc.textContent.split(/\s+/).length);
+</script>
+
+<template>
+  <div>
+    <button :class="{ active: isBold }" @click="editor?.commands.toggleBold()">Bold</button>
+    <span>{{ wordCount }} words</span>
+  </div>
+</template>
+```
+
+## BubbleMenu
+
+```vue
+<script setup lang="ts">
+import { EditorContent, BubbleMenu } from '@gotipe/vue';
+</script>
+
+<template>
+  <EditorContent :editor="editor" />
+  <BubbleMenu :editor="editor" :should-show="({ state }) => !state.selection.empty">
+    <button @click="editor?.commands.toggleBold()">Bold</button>
+    <button @click="editor?.commands.toggleItalic()">Italic</button>
+    <button @click="editor?.commands.toggleLink()">Link</button>
+  </BubbleMenu>
+</template>
+```
+
+## FloatingMenu
+
+```vue
+<template>
+  <FloatingMenu
+    :editor="editor"
+    :should-show="({ state }) => state.currentBlock?.isEmpty"
+  >
+    <button @click="editor?.commands.setBlockType('heading', { level: 1 })">H1</button>
+    <button @click="editor?.commands.setBlockType('bulletList')">List</button>
+  </FloatingMenu>
+</template>
+```
+
+## Custom Block Rendering
+
+```vue
+<template>
+  <EditorContent :editor="editor">
+    <template #block="{ block }">
+      <div v-if="block.type === 'callout'" :class="`gotipe-callout gotipe-callout--${block.attrs.variant}`">
+        <TextRenderer :content="block.content" />
+      </div>
+    </template>
+  </EditorContent>
+</template>
+```
+
+## Provide/Inject
+
+Share editor across components:
+
+```vue
+<!-- Parent -->
+<script setup>
+import { provide } from 'vue';
+import { EDITOR_KEY, useEditor } from '@gotipe/vue';
+
+const editor = useEditor({ extensions: [DefaultPreset] });
+provide(EDITOR_KEY, editor);
+</script>
+
+<!-- Child -->
+<script setup>
+import { inject } from 'vue';
+import { EDITOR_KEY } from '@gotipe/vue';
+
+const editor = inject(EDITOR_KEY);
+</script>
+```
+
+## SSR with Nuxt
+
+```vue
+<!-- pages/editor.vue -->
+<script setup>
+const EditorComponent = defineAsyncComponent(() => import('~/components/Editor.vue'));
+</script>
+
+<template>
+  <ClientOnly>
+    <EditorComponent />
+    <template #fallback>
+      <div class="gotipe-skeleton" />
+    </template>
+  </ClientOnly>
+</template>
+```
+
+## Related Guides
+
+- [Extensions](/guides/extensions) — Build custom blocks
+- [Theming](/guides/theming) — Style the editor
+- [Collaboration](/guides/collaboration) — Add real-time sync

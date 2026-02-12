@@ -1,0 +1,650 @@
+openapi: 3.1.0
+info:
+  title: GoTipe Cloud API
+  version: 1.0.0
+  description: |
+    GoTipe Cloud — managed backend for GoTipe editor.
+    Provides collaboration sync, AI proxy, document export, and analytics.
+  contact:
+    email: support@gotipe.com
+    url: https://gotipe.com
+  license:
+    name: Proprietary
+    url: https://gotipe.com/terms
+
+servers:
+  - url: https://api.gotipe.com/v1
+    description: Production
+  - url: http://localhost:8080/v1
+    description: Local development
+
+security:
+  - BearerAuth: []
+
+tags:
+  - name: Documents
+    description: Document CRUD operations
+  - name: Comments
+    description: Document comments and threads
+  - name: Versions
+    description: Document version history
+  - name: Organizations
+    description: Organization and team management
+  - name: Billing
+    description: Subscription and billing management
+  - name: Exports
+    description: Document export (PDF, DOCX, HTML, Markdown)
+  - name: AI
+    description: AI proxy for completions and suggestions
+  - name: Auth
+    description: Authentication and API keys
+  - name: Health
+    description: Health and readiness checks
+
+paths:
+  /documents:
+    post:
+      tags: [Documents]
+      summary: Create document
+      operationId: createDocument
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateDocumentRequest'
+      responses:
+        '201':
+          description: Document created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DocumentResponse'
+        '402':
+          $ref: '#/components/responses/QuotaExceeded'
+    get:
+      tags: [Documents]
+      summary: List documents
+      operationId: listDocuments
+      parameters:
+        - name: limit
+          in: query
+          schema: { type: integer, default: 20, maximum: 100 }
+        - name: offset
+          in: query
+          schema: { type: integer, default: 0 }
+        - name: sort
+          in: query
+          schema: { type: string, default: 'updated_at:desc' }
+      responses:
+        '200':
+          description: Document list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DocumentListResponse'
+
+  /documents/{id}:
+    get:
+      tags: [Documents]
+      summary: Get document
+      operationId: getDocument
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Document details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DocumentDetailResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      tags: [Documents]
+      summary: Delete document
+      operationId: deleteDocument
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '204':
+          description: Document deleted
+
+  /documents/{documentId}/comments:
+    get:
+      tags: [Comments]
+      summary: List comments
+      operationId: listComments
+      parameters:
+        - name: documentId
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Comment list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Comment'
+    post:
+      tags: [Comments]
+      summary: Create comment
+      operationId: createComment
+      parameters:
+        - name: documentId
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateCommentRequest'
+      responses:
+        '201':
+          description: Comment created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Comment'
+
+  /documents/{documentId}/versions:
+    get:
+      tags: [Versions]
+      summary: List versions
+      operationId: listVersions
+      parameters:
+        - name: documentId
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Version list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Version'
+    post:
+      tags: [Versions]
+      summary: Create named version
+      operationId: createVersion
+      parameters:
+        - name: documentId
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateVersionRequest'
+      responses:
+        '201':
+          description: Version created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Version'
+
+  /documents/{documentId}/versions/{versionId}/restore:
+    post:
+      tags: [Versions]
+      summary: Restore version
+      operationId: restoreVersion
+      parameters:
+        - name: documentId
+          in: path
+          required: true
+          schema: { type: string }
+        - name: versionId
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Version restored
+
+  /exports:
+    post:
+      tags: [Exports]
+      summary: Create export job
+      operationId: createExport
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateExportRequest'
+      responses:
+        '202':
+          description: Export job created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExportJob'
+
+  /exports/{id}:
+    get:
+      tags: [Exports]
+      summary: Get export status / download
+      description: Returns status JSON while pending/processing. Returns 302 redirect to download URL when completed.
+      operationId: getExport
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Export status (pending/processing)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExportJob'
+        '302':
+          description: Redirect to download URL (completed)
+
+  /ai/complete:
+    post:
+      tags: [AI]
+      summary: AI completion
+      description: Proxies request to AI provider (OpenAI/Anthropic/Gemini). Supports SSE streaming.
+      operationId: aiComplete
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AICompleteRequest'
+      responses:
+        '200':
+          description: AI completion (SSE stream or JSON)
+          content:
+            text/event-stream:
+              schema:
+                type: string
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AICompleteResponse'
+
+  /auth/token:
+    post:
+      tags: [Auth]
+      summary: Generate JWT token
+      description: Generate short-lived JWT for client-side use (WebSocket, restricted API access)
+      operationId: createToken
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateTokenRequest'
+      responses:
+        '200':
+          description: JWT token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenResponse'
+
+  /api-keys:
+    post:
+      tags: [Auth]
+      summary: Create API key
+      operationId: createApiKey
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateApiKeyRequest'
+      responses:
+        '201':
+          description: API key created (key shown only once)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiKeyResponse'
+    get:
+      tags: [Auth]
+      summary: List API keys
+      operationId: listApiKeys
+      responses:
+        '200':
+          description: API key list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ApiKeySummary'
+
+  /users/me:
+    get:
+      tags: [Auth]
+      summary: Get current user
+      operationId: getCurrentUser
+      responses:
+        '200':
+          description: Current user with usage info
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponse'
+
+  /organizations:
+    post:
+      tags: [Organizations]
+      summary: Create organization
+      operationId: createOrganization
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateOrganizationRequest'
+      responses:
+        '201':
+          description: Organization created
+
+  /billing/subscribe:
+    post:
+      tags: [Billing]
+      summary: Create subscription
+      operationId: createSubscription
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateSubscriptionRequest'
+      responses:
+        '200':
+          description: Stripe checkout session URL
+
+  /billing/usage:
+    get:
+      tags: [Billing]
+      summary: Get usage summary
+      operationId: getUsage
+      responses:
+        '200':
+          description: Usage summary for current billing period
+
+  /billing/webhooks:
+    post:
+      tags: [Billing]
+      summary: Stripe webhook handler
+      description: Always returns 200 (never 5xx for Stripe webhooks)
+      security: []
+      responses:
+        '200':
+          description: Webhook processed
+
+  /healthz:
+    get:
+      tags: [Health]
+      summary: Liveness probe
+      security: []
+      responses:
+        '200':
+          description: Service is alive
+
+  /readyz:
+    get:
+      tags: [Health]
+      summary: Readiness probe
+      security: []
+      responses:
+        '200':
+          description: All dependencies healthy
+        '503':
+          description: One or more dependencies unhealthy
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      description: API key (gt_live_...) or JWT token
+
+  responses:
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/APIError'
+    QuotaExceeded:
+      description: Plan quota exceeded
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/APIError'
+
+  schemas:
+    APIError:
+      type: object
+      required: [code, message]
+      properties:
+        code: { type: string, example: 'NOT_FOUND' }
+        message: { type: string, example: 'Resource not found' }
+
+    CreateDocumentRequest:
+      type: object
+      required: [id, title]
+      properties:
+        id: { type: string, example: 'doc_k7x9m2' }
+        title: { type: string, example: 'Project Spec' }
+        content: { type: object, description: 'Initial document content (Block[] format)' }
+
+    DocumentResponse:
+      type: object
+      properties:
+        id: { type: string }
+        title: { type: string }
+        version: { type: integer }
+        size_bytes: { type: integer }
+        sync_url: { type: string, format: uri }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+
+    DocumentListResponse:
+      type: object
+      properties:
+        data: { type: array, items: { $ref: '#/components/schemas/DocumentResponse' } }
+        total: { type: integer }
+        limit: { type: integer }
+        offset: { type: integer }
+
+    DocumentDetailResponse:
+      allOf:
+        - $ref: '#/components/schemas/DocumentResponse'
+        - type: object
+          properties:
+            content: { type: object }
+            collaborators:
+              type: array
+              items:
+                type: object
+                properties:
+                  user_id: { type: string }
+                  role: { type: string, enum: [viewer, commenter, editor, admin] }
+                  added_at: { type: string, format: date-time }
+
+    Comment:
+      type: object
+      properties:
+        id: { type: string }
+        document_id: { type: string }
+        anchor_type: { type: string, enum: [inline, block, document] }
+        anchor_data: { type: object }
+        author_id: { type: string }
+        content: { type: string }
+        parent_id: { type: string, nullable: true }
+        resolved_at: { type: string, format: date-time, nullable: true }
+        created_at: { type: string, format: date-time }
+
+    CreateCommentRequest:
+      type: object
+      required: [anchor_type, content]
+      properties:
+        anchor_type: { type: string, enum: [inline, block, document] }
+        anchor_data: { type: object }
+        content: { type: string }
+        parent_id: { type: string, description: 'Reply to existing comment' }
+
+    Version:
+      type: object
+      properties:
+        id: { type: string }
+        document_id: { type: string }
+        name: { type: string }
+        version_type: { type: string, enum: [auto, manual] }
+        created_by: { type: string }
+        created_at: { type: string, format: date-time }
+        description: { type: string }
+
+    CreateVersionRequest:
+      type: object
+      required: [name]
+      properties:
+        name: { type: string }
+        description: { type: string }
+
+    CreateExportRequest:
+      type: object
+      required: [document_id, format]
+      properties:
+        document_id: { type: string }
+        format: { type: string, enum: [pdf, docx, html, md] }
+
+    ExportJob:
+      type: object
+      properties:
+        id: { type: string }
+        document_id: { type: string }
+        format: { type: string }
+        status: { type: string, enum: [pending, processing, completed, failed] }
+        created_at: { type: string, format: date-time }
+
+    AICompleteRequest:
+      type: object
+      required: [command]
+      properties:
+        provider: { type: string, enum: [openai, anthropic, gemini], default: openai }
+        model: { type: string, default: 'gpt-4o-mini' }
+        document_context:
+          type: object
+          properties:
+            blocks_before: { type: array }
+            blocks_after: { type: array }
+            selection: { type: string }
+        command: { type: string, enum: [complete, rewrite, summarize, expand, translate, fix_grammar] }
+        prompt: { type: string }
+        stream: { type: boolean, default: true }
+
+    AICompleteResponse:
+      type: object
+      properties:
+        content: { type: string }
+        usage:
+          type: object
+          properties:
+            input_tokens: { type: integer }
+            output_tokens: { type: integer }
+
+    CreateTokenRequest:
+      type: object
+      properties:
+        user_id: { type: string }
+        document_ids: { type: array, items: { type: string } }
+        scopes: { type: array, items: { type: string } }
+        expires_in: { type: integer, description: 'Seconds', default: 3600 }
+
+    TokenResponse:
+      type: object
+      properties:
+        token: { type: string }
+        expires_at: { type: string, format: date-time }
+
+    CreateApiKeyRequest:
+      type: object
+      required: [name, scopes]
+      properties:
+        name: { type: string }
+        scopes: { type: array, items: { type: string, enum: [documents, ai, export, admin] } }
+
+    ApiKeyResponse:
+      type: object
+      properties:
+        id: { type: string }
+        name: { type: string }
+        key: { type: string, description: 'Shown only once at creation' }
+        key_prefix: { type: string }
+        scopes: { type: array, items: { type: string } }
+        created_at: { type: string, format: date-time }
+
+    ApiKeySummary:
+      type: object
+      properties:
+        id: { type: string }
+        name: { type: string }
+        key_prefix: { type: string }
+        scopes: { type: array, items: { type: string } }
+        last_used_at: { type: string, format: date-time, nullable: true }
+        created_at: { type: string, format: date-time }
+
+    UserResponse:
+      type: object
+      properties:
+        id: { type: string }
+        email: { type: string }
+        name: { type: string }
+        plan: { type: string }
+        usage:
+          type: object
+          properties:
+            documents: { type: integer }
+            documents_limit: { type: integer }
+            ai_requests: { type: integer }
+            ai_requests_limit: { type: integer }
+            exports: { type: integer }
+            exports_limit: { type: integer }
+
+    CreateOrganizationRequest:
+      type: object
+      required: [name]
+      properties:
+        name: { type: string }
+
+    CreateSubscriptionRequest:
+      type: object
+      required: [plan]
+      properties:
+        plan: { type: string, enum: [starter, pro, business] }
+        success_url: { type: string, format: uri }
+        cancel_url: { type: string, format: uri }

@@ -1,0 +1,167 @@
+---
+title: Comments
+description: Add inline comments, replies, and reactions to your GoTipe editor
+---
+
+# Comments
+
+The `@gotipe/comments` extension adds inline commenting with threads, replies, reactions, and a sidebar panel.
+
+## Installation
+
+```bash
+npm install @gotipe/comments
+```
+
+## Basic Setup
+
+```ts
+import { Comments } from '@gotipe/comments';
+import { createEditor, DefaultPreset } from '@gotipe/core';
+
+const editor = createEditor({
+  extensions: [
+    DefaultPreset,
+    Comments.configure({
+      provider: 'cloud',                // 'cloud' | 'local' | custom provider
+      cloudUrl: 'https://api.gotipe.com/v1',
+      token: jwtToken,
+      currentUser: {
+        id: 'user-1',
+        name: 'Alice',
+        avatar: 'https://example.com/alice.jpg',
+      },
+    }),
+  ],
+});
+```
+
+## Adding Comments
+
+```ts
+// Add a comment on the current selection
+editor.commands.addComment({
+  text: 'This paragraph needs revision.',
+});
+
+// Add a comment programmatically on a specific range
+editor.commands.addComment({
+  text: 'Check this reference.',
+  blockId: 'block-abc',
+  from: 10,
+  to: 25,
+});
+```
+
+## Replying to Comments
+
+```ts
+editor.commands.replyToComment({
+  commentId: 'comment-123',
+  text: 'I agree, updating now.',
+});
+```
+
+## Resolving Comments
+
+```ts
+// Resolve a comment thread
+editor.commands.resolveComment('comment-123');
+
+// Unresolve
+editor.commands.unresolveComment('comment-123');
+```
+
+## Reactions
+
+```ts
+editor.commands.addReaction({
+  commentId: 'comment-123',
+  emoji: 'thumbsup',
+});
+
+editor.commands.removeReaction({
+  commentId: 'comment-123',
+  emoji: 'thumbsup',
+});
+```
+
+## Listing Comments
+
+```ts
+// Get all comments
+const comments = editor.comments.getAll();
+
+// Get unresolved comments only
+const open = editor.comments.getAll({ resolved: false });
+
+// Get comments for a specific block
+const blockComments = editor.comments.getByBlock('block-abc');
+
+// Listen for changes
+editor.comments.onChange((comments) => {
+  updateSidebar(comments);
+});
+```
+
+## Comment Sidebar (React)
+
+```tsx
+import { CommentsSidebar } from '@gotipe/comments/react';
+
+function App() {
+  return (
+    <div className="editor-layout">
+      <EditorContent editor={editor} />
+      <CommentsSidebar
+        editor={editor}
+        showResolved={false}
+        onCommentClick={(comment) => {
+          editor.commands.scrollToComment(comment.id);
+        }}
+      />
+    </div>
+  );
+}
+```
+
+## Comment Highlight Styles
+
+Comments are highlighted in the editor with CSS classes:
+
+```css
+/* Active comment highlight */
+.gotipe-comment-highlight {
+  background-color: var(--gt-comment-bg, rgba(255, 212, 0, 0.2));
+  border-bottom: 2px solid var(--gt-comment-border, #ffd400);
+}
+
+/* Focused comment */
+.gotipe-comment-highlight--active {
+  background-color: var(--gt-comment-bg-active, rgba(255, 212, 0, 0.4));
+}
+```
+
+## Configuration Options
+
+```ts
+Comments.configure({
+  provider: 'cloud',
+  cloudUrl: 'https://api.gotipe.com/v1',
+  token: jwtToken,
+  currentUser: { id, name, avatar },
+  readOnly: false,                       // disable adding comments
+  allowReactions: true,
+  allowReplies: true,
+  highlightColor: '#ffd400',
+  resolvedVisible: false,                // hide resolved by default
+  onCommentAdded: (comment) => {},
+  onCommentResolved: (comment) => {},
+});
+```
+
+## Related Guides
+
+- [Collaboration](/guides/collaboration) — Real-time sync for comments
+- [Versions](/guides/versions) — Version history
+- [Cloud](/guides/cloud) — Managed comment storage

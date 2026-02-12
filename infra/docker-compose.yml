@@ -1,0 +1,212 @@
+# infra/docker-compose.yml (Production)
+services:
+  # --- Caddy (Reverse Proxy + Auto TLS) ---
+  caddy:
+    image: caddy:2-alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      api:
+        condition: service_healthy
+      sync:
+        condition: service_healthy
+    restart: always
+    networks:
+      - frontend
+      - backend
+
+  # --- GoTipe API Server ---
+  api:
+    image: ghcr.io/gotipe/cloud-api:latest
+    expose:
+      - "8080"
+    env_file: .env
+    environment:
+      LISTEN_ADDR: ":8080"
+      DATABASE_URL: "postgres://gotipe:${POSTGRES_PASSWORD}@pgbouncer:6432/gotipe?sslmode=disable"
+      VALKEY_URL: "redis://valkey:6379/0"
+      ENV: "production"
+      LOG_FORMAT: "json"
+    depends_on:
+      pgbouncer:
+        condition: service_started
+      valkey:
+        condition: service_healthy
+    restart: always
+    stop_grace_period: 35s
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8080/healthz"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 5s
+    networks:
+      - backend
+
+  # --- GoTipe WebSocket Sync Server ---
+  sync:
+    image: ghcr.io/gotipe/cloud-sync:latest
+    expose:
+      - "8081"
+    env_file: .env
+    environment:
+      SYNC_LISTEN_ADDR: ":8081"
+      DATABASE_URL: "postgres://gotipe:${POSTGRES_PASSWORD}@pgbouncer:6432/gotipe?sslmode=disable"
+      VALKEY_URL: "redis://valkey:6379/0"
+      ENV: "production"
+      LOG_FORMAT: "json"
+    depends_on:
+      pgbouncer:
+        condition: service_started
+      valkey:
+        condition: service_healthy
+    restart: always
+    stop_grace_period: 35s
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8081/healthz"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    networks:
+      - backend
+
+  # --- Export Worker ---
+  export-worker:
+    image: ghcr.io/gotipe/cloud-export:latest
+    env_file: .env
+    environment:
+      DATABASE_URL: "postgres://gotipe:${POSTGRES_PASSWORD}@pgbouncer:6432/gotipe?sslmode=disable"
+      VALKEY_URL: "redis://valkey:6379/0"
+      EXPORT_WORKERS: "4"
+      EXPORT_POLL_INTERVAL: "1s"
+    depends_on:
+      pgbouncer:
+        condition: service_started
+    restart: always
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+    networks:
+      - backend
+
+  # --- pgBouncer (Connection Pooling) ---
+  pgbouncer:
+    image: bitnami/pgbouncer:latest
+    environment:
+      PGBOUNCER_DATABASE: gotipe
+      POSTGRESQL_HOST: postgres
+      POSTGRESQL_PORT: "5432"
+      POSTGRESQL_USERNAME: gotipe
+      POSTGRESQL_PASSWORD: "${POSTGRES_PASSWORD}"
+      PGBOUNCER_POOL_MODE: transaction
+      PGBOUNCER_MAX_CLIENT_CONN: "200"
+      PGBOUNCER_DEFAULT_POOL_SIZE: "20"
+      PGBOUNCER_MIN_POOL_SIZE: "5"
+      PGBOUNCER_RESERVE_POOL_SIZE: "5"
+      PGBOUNCER_RESERVE_POOL_TIMEOUT: "3"
+    expose:
+      - "6432"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: always
+    networks:
+      - backend
+
+  # --- PostgreSQL ---
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: gotipe
+      POSTGRES_PASSWORD: "${POSTGRES_PASSWORD}"
+      POSTGRES_DB: gotipe
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./postgres/postgresql.conf:/etc/postgresql/postgresql.conf:ro
+    command: postgres -c config_file=/etc/postgresql/postgresql.conf
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U gotipe"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    restart: always
+    networks:
+      - backend
+
+  # --- Valkey (Redis-compatible) ---
+  valkey:
+    image: valkey/valkey:8-alpine
+    volumes:
+      - valkey_data:/data
+      - ./valkey/valkey.conf:/etc/valkey/valkey.conf:ro
+    command: valkey-server /etc/valkey/valkey.conf
+    healthcheck:
+      test: ["CMD", "valkey-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    restart: always
+    networks:
+      - backend
+
+  # --- Prometheus (optional, monitoring profile) ---
+  prometheus:
+    image: prom/prometheus:latest
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./prometheus-alerts.yml:/etc/prometheus/alerts.yml:ro
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.retention.time=30d'
+    profiles:
+      - monitoring
+    restart: always
+    networks:
+      - backend
+
+  # --- Grafana (optional, monitoring profile) ---
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "3000:3000"
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: "${GRAFANA_ADMIN_PASSWORD:-admin}"
+      GF_INSTALL_PLUGINS: "grafana-clock-panel"
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./grafana/dashboards:/etc/grafana/provisioning/dashboards:ro
+      - ./grafana/datasources:/etc/grafana/provisioning/datasources:ro
+    profiles:
+      - monitoring
+    restart: always
+    networks:
+      - backend
+
+networks:
+  frontend:
+  backend:
+
+volumes:
+  postgres_data:
+  valkey_data:
+  caddy_data:
+  caddy_config:
+  prometheus_data:
+  grafana_data:

@@ -1,0 +1,36 @@
+{
+  "name": "@gotipe/theme",
+  "version": "0.1.0",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    },
+    "./base.css": "./src/base.css",
+    "./theme.css": "./src/theme.css",
+    "./themes/*": "./src/themes/*"
+  },
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "sideEffects": [
+    "*.css"
+  ],
+  "peerDependencies": {
+    "@gotipe/core": "^0.1.0"
+  },
+  "devDependencies": {
+    "@gotipe/core": "workspace:*",
+    "vitest": "^2.1",
+    "tsup": "^8.3"
+  },
+  "scripts": {
+    "build": "tsup",
+    "test": "vitest run --passWithNoTests",
+    "typecheck": "tsc --noEmit",
+    "lint": "biome check src/"
+  },
+  "license": "SEE LICENSE IN LICENSE-COMMERCIAL"
+}

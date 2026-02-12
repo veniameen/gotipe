@@ -10,72 +10,72 @@ GoTipe — Rust/WASM rich text editor framework с Notion-like UX. Проект 
 
 > Отмечай `[x]` по мере завершения каждого пункта.
 
-### Фаза 1: Фундамент — Rust Workspace + Root Config
-- [ ] 1.1 Root-level конфигурация (`Cargo.toml`, `package.json`, `turbo.json`, `tsconfig.base.json`, `.rustfmt.toml`, `biome.json`, `.gitignore`, `pnpm-workspace.yaml`, `LICENSE-MIT`, `LICENSE-COMMERCIAL`)
-- [ ] 1.2 `crates/gotipe-schema/` — Schema DSL (NodeSpec, MarkSpec, AttrSpec, ContentRule, MarksRule, AttrType, AttrValue, validate, defaults)
-- [ ] 1.3 `crates/gotipe-core/` — Document model (Block, Document, TextSpan, Selection), EditorState, Transaction, Step (11 variants), Commands (~25), Extension trait (Plugin trait с decorations(), when-conditions: inTable/inCodeBlock/inList, extension storage persistence), clipboard (paste HTML/MD/plain)
-- [ ] 1.4 `crates/gotipe-crdt/` — CRDT engine (CrdtDocument, RichTextCrdt, MovableTreeCrdt, LwwMap, SyncProtocol, AwarenessProtocol, CrdtHistory, VersionVector)
-- [ ] 1.5 `crates/gotipe-comments/` — Comment CRDT (Comment, CommentThread, CommentAnchor, CommentMark, Reaction, CrdtMap integration), Suggestions/Track Changes (Suggestion, SuggestionMark, SuggestionType: Insert/Delete/Replace/Format/BlockChange, SuggestionStatus)
-- [ ] 1.6 `crates/gotipe-versioning/` — Version history (Version, VersionType: AutoSave/Named/Milestone/RestorePoint, IncrementalSnapshot, VersionDiff, state vector-based diff, zstd compressed deltas, full snapshot every 50 versions)
-- [ ] 1.7 `crates/gotipe-ai/` — AI context builder (AiProvider trait с fallback chain OpenAI→Anthropic→Gemini, ContextBuilder с token budget truncation, SuggestionState с request cancellation/AbortController, AiCommand, mode-specific defaults: temperature inline=0.1/command=0.3, streaming timeout 30s, PII detection: email/phone/credit card regex)
-- [ ] 1.8 `crates/gotipe-export/` — Document conversion (HTML, Markdown, JSON, Plaintext; feature-gated: PDF ~400KB, DOCX ~60KB, Notion ~15KB). ExportOptions (inline_styles, csp_nonce, base_url, highlight_code), ImportOptions (strict, sanitize, max_blocks, allowed_tags), ConvertError enum, ConverterRegistry (register_exporter/register_importer), NotionImporter (ZIP→MD→blocks), GoogleDocsImporter (HTML cleanup). HTML sanitizer with allowlist/blocklist (HtmlSanitizer::strict())
-- [ ] 1.9 `crates/gotipe-wasm/` — WASM bindings (WasmEditor, serde-wasm-bindgen, JS callbacks, comments/suggestions/versioning WASM exports)
-- [ ] 1.10 Верификация Фазы 1 — `cargo test --workspace && cargo clippy -- -D warnings && cargo fmt --check && cargo test -p gotipe-crdt -- --ignored` (property tests)
+### Фаза 1: Фундамент — Rust Workspace + Root Config ✅
+- [x] 1.1 Root-level конфигурация (`Cargo.toml`, `package.json`, `turbo.json`, `tsconfig.base.json`, `.rustfmt.toml`, `biome.json`, `.gitignore`, `pnpm-workspace.yaml`, `LICENSE-MIT`, `LICENSE-COMMERCIAL`)
+- [x] 1.2 `crates/gotipe-schema/` — Schema DSL (NodeSpec, MarkSpec, AttrSpec, ContentRule, MarksRule, AttrType, AttrValue, validate, defaults)
+- [x] 1.3 `crates/gotipe-core/` — Document model (Block, Document, TextSpan, Selection), EditorState, Transaction, Step (11 variants), Commands (~25), Extension trait (Plugin trait с decorations(), when-conditions: inTable/inCodeBlock/inList, extension storage persistence), clipboard (paste HTML/MD/plain)
+- [x] 1.4 `crates/gotipe-crdt/` — CRDT engine (CrdtDocument, RichTextCrdt, MovableTreeCrdt, LwwMap, SyncProtocol, AwarenessProtocol, CrdtHistory, VersionVector)
+- [x] 1.5 `crates/gotipe-comments/` — Comment CRDT (Comment, CommentThread, CommentAnchor, CommentMark, Reaction, CrdtMap integration), Suggestions/Track Changes (Suggestion, SuggestionMark, SuggestionType: Insert/Delete/Replace/Format/BlockChange, SuggestionStatus)
+- [x] 1.6 `crates/gotipe-versioning/` — Version history (Version, VersionType: AutoSave/Named/Milestone/RestorePoint, IncrementalSnapshot, VersionDiff, state vector-based diff, zstd compressed deltas, full snapshot every 50 versions)
+- [x] 1.7 `crates/gotipe-ai/` — AI context builder (AiProvider trait с fallback chain OpenAI→Anthropic→Gemini, ContextBuilder с token budget truncation, SuggestionState с request cancellation/AbortController, AiCommand, mode-specific defaults: temperature inline=0.1/command=0.3, streaming timeout 30s, PII detection: email/phone/credit card regex)
+- [x] 1.8 `crates/gotipe-export/` — Document conversion (HTML, Markdown, JSON, Plaintext; feature-gated: PDF ~400KB, DOCX ~60KB, Notion ~15KB). ExportOptions (inline_styles, csp_nonce, base_url, highlight_code), ImportOptions (strict, sanitize, max_blocks, allowed_tags), ConvertError enum, ConverterRegistry (register_exporter/register_importer), NotionImporter (ZIP→MD→blocks), GoogleDocsImporter (HTML cleanup). HTML sanitizer with allowlist/blocklist (HtmlSanitizer::strict())
+- [x] 1.9 `crates/gotipe-wasm/` — WASM bindings (WasmEditor, serde-wasm-bindgen, JS callbacks, comments/suggestions/versioning WASM exports)
+- [x] 1.10 Верификация Фазы 1 — `cargo test --workspace && cargo clippy -- -D warnings && cargo fmt --check && cargo test -p gotipe-crdt -- --ignored` (property tests)
 
-### Фаза 2: TypeScript Packages
-- [ ] 2.1 `packages/wasm/` — WASM pkg wrapper (@gotipe/wasm)
-- [ ] 2.2 `packages/core/` — JS Editor API (~15KB gzip): createEditor, GoTipeEditor, ChainableCommands, extensions (18 node + 9 mark + behaviors), presets, virtual-renderer (threshold >500 blocks), Vanilla JS API (mount(element), setContent, getJSON/HTML/Markdown/Text, destroy), SSR API (renderToHtml, renderToMarkdown, renderToText), clipboard handler (paste HTML/MD/plain → Document, markdown paste auto-detection), a11y layer (BlockA11yConfig, FocusManager, A11yAnnouncer, EditorFocusController, WCAG 2.1 AA), Plugin system (decorations layer, extension storage persistence via localStorage/IndexedDB, when-conditions), security/sanitizer.ts (DOMPurify fallback), WASM graceful degradation (JS fallback when WASM unavailable), browser compat (Chrome 90+, Firefox 90+, Safari 15+, polyfills: ResizeObserver, structuredClone, Clipboard API)
-- [ ] 2.3 `packages/react/` — React adapter (~8KB): useEditor, useEditorState, EditorContent, BubbleMenu, FloatingMenu, BlockRenderer, TextRenderer, context, SSR support (Next.js)
-- [ ] 2.4 `packages/vue/` — Vue 3 adapter (~7KB): useEditor composable, EditorContent.vue, BubbleMenu.vue, FloatingMenu.vue, SSR support (Nuxt)
-- [ ] 2.5 `packages/svelte/` — Svelte 5 adapter (~6KB): createEditorState ($state/$derived), Editor.svelte, BubbleMenu.svelte, FloatingMenu.svelte, SSR support (SvelteKit)
-- [ ] 2.6 `packages/solid/` — Solid adapter (~5KB): createEditorSignal, Editor, BubbleMenu, FloatingMenu, SSR support (Solid Start)
-- [ ] 2.7 `packages/collaboration/` — CRDT sync client (~10KB): GoTipeProvider, WebRTCProvider, BroadcastProvider, IndexedDBProvider
-- [ ] 2.8 `packages/comments/` — Comment API (~6KB): CommentsExtension, CommentPlugin (addComment, addBlockComment, addDocumentComment, replyToComment, resolveComment, reopenComment, deleteComment, getComments, addReaction, removeReaction), CommentFilter, events (commentAdded/Resolved/Deleted/Updated)
-- [ ] 2.9 `packages/suggestions/` — Track Changes (~5KB): SuggestionsExtension, SuggestionsPlugin (setSuggestionMode, acceptSuggestion, rejectSuggestion, acceptAll, rejectAll, getSuggestions), diff rendering CSS
-- [ ] 2.10 `packages/versions/` — Version History UI (~5KB): VersionsExtension, VersionsPlugin (createVersion, listVersions, restoreVersion, compareVersions), VersionTimeline, DiffViewer
-- [ ] 2.11 `packages/ai/` — AI integration (~5KB): AIInline extension (GhostText dismiss on any keystroke, Tab accept, Escape dismiss), OpenAI/Anthropic/Gemini/Ollama providers, provider fallback chain, AbortController for stale request cancellation, streaming timeout (30s), mode-specific defaults (temperature inline=0.1/command=0.3)
-- [ ] 2.12 `packages/export/` — JS export API (~3KB): exportHtml/Markdown/Json/Plaintext (client + SSR via Node.js WASM), lazy PDF (~400KB)/DOCX (~60KB), importFromNotion (ZIP→blocks), importFromGoogleDocs (HTML cleanup), ExportOptions/ImportOptions types
-- [ ] 2.13 `packages/i18n/` — Internationalization (~4KB): LocaleEngine, ICU MessageFormat, pluralization, RTL/BiDi support, default locale = English, built-in locales (en, ru, de, fr, es, zh, ja, ko, ar), setLocale(), t() helper, translatable strings for all UI elements
-- [ ] 2.14 `packages/block-editor/` — Commercial Notion-like UI (~25KB): BlockEditor, SlashMenu (fuzzy search scoring, keyboard nav, grouped commands), BubbleMenu, BlockToolbar (drag handle + plus + "More" menu: duplicate, copy link, move to, turn into, delete), DragHandle (nested drop targets, keyboard Alt+Arrow), block views (ParagraphView, HeadingView, CodeBlockView с syntax highlighting + language selector + line numbers + copy, ImageView с resize handles + caption editor + upload progress, TableView с column resize + cell selection + merge/split cells + add/delete rows/cols, CalloutView, ToggleView (aria-expanded), ColumnsView, EmbedView с URL validation + preview + error states, FileView с upload progress + file type icons + download, DividerView, MathView с KaTeX preview + formula editor), document title (page title attribute), nested block indent guides, CollaborationCursors, CommentBubble, CommentSidebar, SuggestionHighlights
-- [ ] 2.15 `packages/theme/` — Design tokens (~12KB): CSS custom properties (--gt-*), light/dark themes (system preference detection), minimal/modern/notion/docs presets, defineTheme() API (token overrides + component overrides: slotBefore, bubbleMenu, slashMenu, blockHandle), defineIcons() API + SVG icon set (18x18, 1.5px stroke), animation tokens (duration: fast/normal/slow, easing curves: ease-out/ease-in/ease-spring), responsive breakpoints (sm=640/md=768/lg=1024/xl=1280), z-index scale (--gt-z-content=1, --gt-z-dropdown=10, --gt-z-sticky=20, --gt-z-overlay=30, --gt-z-modal=40, --gt-z-popover=50, --gt-z-toast=60, --gt-z-drag=100), collaboration cursor colors (--gt-cursor-1..8), AI tokens (--gt-ai-ghost/highlight/border), CSS architecture: base.css (MIT, structural) + theme.css (commercial, visual), print styles, reduced motion media query, mobile.css (<640px: toolbar→bottom sheet)
-- [ ] 2.16 `packages/block-editor-vue/` — Commercial Vue UI (~22KB)
-- [ ] 2.17 `packages/ai-ui/` — AI UI components (~8KB): GhostText, AiCommandPalette, AiToolbar
-- [ ] 2.18 `packages/sdk/` — GoTipe Cloud REST client SDK (~6KB): GoTipeClient, DocumentsAPI, VersionsAPI, CommentsAPI, ExportsAPI, AIApi, UsageAPI, OrganizationsAPI, WebhooksAPI, typed error handling
-- [ ] 2.19 `packages/migration/` — Migration utilities (~8KB): convertProseMirrorToGoTipe, convertSlateToGoTipe, convertLexicalToGoTipe, YjsAdapter (Hocuspocus compatibility layer), DualProvider (shadow mode — оба CRDT параллельно во время миграции), batch conversion scripts (PostgreSQL pagination, error handling, progress reporting)
-- [ ] 2.20 Верификация Фазы 2 — `pnpm install && pnpm build && pnpm test && pnpm typecheck && pnpm lint`
+### Фаза 2: TypeScript Packages ✅
+- [x] 2.1 `packages/wasm/` — WASM pkg wrapper (@gotipe/wasm)
+- [x] 2.2 `packages/core/` — JS Editor API (~15KB gzip): createEditor, GoTipeEditor, ChainableCommands, extensions (18 node + 9 mark + behaviors), presets, virtual-renderer (threshold >500 blocks), Vanilla JS API (mount(element), setContent, getJSON/HTML/Markdown/Text, destroy), SSR API (renderToHtml, renderToMarkdown, renderToText), clipboard handler (paste HTML/MD/plain → Document, markdown paste auto-detection), a11y layer (BlockA11yConfig, FocusManager, A11yAnnouncer, EditorFocusController, WCAG 2.1 AA), Plugin system (decorations layer, extension storage persistence via localStorage/IndexedDB, when-conditions), security/sanitizer.ts (DOMPurify fallback), WASM graceful degradation (JS fallback when WASM unavailable), browser compat (Chrome 90+, Firefox 90+, Safari 15+, polyfills: ResizeObserver, structuredClone, Clipboard API)
+- [x] 2.3 `packages/react/` — React adapter (~8KB): useEditor, useEditorState, EditorContent, BubbleMenu, FloatingMenu, BlockRenderer, TextRenderer, context, SSR support (Next.js)
+- [x] 2.4 `packages/vue/` — Vue 3 adapter (~7KB): useEditor composable, EditorContent.vue, BubbleMenu.vue, FloatingMenu.vue, SSR support (Nuxt)
+- [x] 2.5 `packages/svelte/` — Svelte 5 adapter (~6KB): createEditorState ($state/$derived), Editor.svelte, BubbleMenu.svelte, FloatingMenu.svelte, SSR support (SvelteKit)
+- [x] 2.6 `packages/solid/` — Solid adapter (~5KB): createEditorSignal, Editor, BubbleMenu, FloatingMenu, SSR support (Solid Start)
+- [x] 2.7 `packages/collaboration/` — CRDT sync client (~10KB): GoTipeProvider, WebRTCProvider, BroadcastProvider, IndexedDBProvider
+- [x] 2.8 `packages/comments/` — Comment API (~6KB): CommentsExtension, CommentPlugin (addComment, addBlockComment, addDocumentComment, replyToComment, resolveComment, reopenComment, deleteComment, getComments, addReaction, removeReaction), CommentFilter, events (commentAdded/Resolved/Deleted/Updated)
+- [x] 2.9 `packages/suggestions/` — Track Changes (~5KB): SuggestionsExtension, SuggestionsPlugin (setSuggestionMode, acceptSuggestion, rejectSuggestion, acceptAll, rejectAll, getSuggestions), diff rendering CSS
+- [x] 2.10 `packages/versions/` — Version History UI (~5KB): VersionsExtension, VersionsPlugin (createVersion, listVersions, restoreVersion, compareVersions), VersionTimeline, DiffViewer
+- [x] 2.11 `packages/ai/` — AI integration (~5KB): AIInline extension (GhostText dismiss on any keystroke, Tab accept, Escape dismiss), OpenAI/Anthropic/Gemini/Ollama providers, provider fallback chain, AbortController for stale request cancellation, streaming timeout (30s), mode-specific defaults (temperature inline=0.1/command=0.3)
+- [x] 2.12 `packages/export/` — JS export API (~3KB): exportHtml/Markdown/Json/Plaintext (client + SSR via Node.js WASM), lazy PDF (~400KB)/DOCX (~60KB), importFromNotion (ZIP→blocks), importFromGoogleDocs (HTML cleanup), ExportOptions/ImportOptions types
+- [x] 2.13 `packages/i18n/` — Internationalization (~4KB): LocaleEngine, ICU MessageFormat, pluralization, RTL/BiDi support, default locale = English, built-in locales (en, ru, de, fr, es, zh, ja, ko, ar), setLocale(), t() helper, translatable strings for all UI elements
+- [x] 2.14 `packages/block-editor/` — Commercial Notion-like UI (~25KB): BlockEditor, SlashMenu (fuzzy search scoring, keyboard nav, grouped commands), BubbleMenu, BlockToolbar (drag handle + plus + "More" menu: duplicate, copy link, move to, turn into, delete), DragHandle (nested drop targets, keyboard Alt+Arrow), block views (ParagraphView, HeadingView, CodeBlockView с syntax highlighting + language selector + line numbers + copy, ImageView с resize handles + caption editor + upload progress, TableView с column resize + cell selection + merge/split cells + add/delete rows/cols, CalloutView, ToggleView (aria-expanded), ColumnsView, EmbedView с URL validation + preview + error states, FileView с upload progress + file type icons + download, DividerView, MathView с KaTeX preview + formula editor), document title (page title attribute), nested block indent guides, CollaborationCursors, CommentBubble, CommentSidebar, SuggestionHighlights
+- [x] 2.15 `packages/theme/` — Design tokens (~12KB): CSS custom properties (--gt-*), light/dark themes (system preference detection), minimal/modern/notion/docs presets, defineTheme() API (token overrides + component overrides: slotBefore, bubbleMenu, slashMenu, blockHandle), defineIcons() API + SVG icon set (18x18, 1.5px stroke), animation tokens (duration: fast/normal/slow, easing curves: ease-out/ease-in/ease-spring), responsive breakpoints (sm=640/md=768/lg=1024/xl=1280), z-index scale (--gt-z-content=1, --gt-z-dropdown=10, --gt-z-sticky=20, --gt-z-overlay=30, --gt-z-modal=40, --gt-z-popover=50, --gt-z-toast=60, --gt-z-drag=100), collaboration cursor colors (--gt-cursor-1..8), AI tokens (--gt-ai-ghost/highlight/border), CSS architecture: base.css (MIT, structural) + theme.css (commercial, visual), print styles, reduced motion media query, mobile.css (<640px: toolbar→bottom sheet)
+- [x] 2.16 `packages/block-editor-vue/` — Commercial Vue UI (~22KB)
+- [x] 2.17 `packages/ai-ui/` — AI UI components (~8KB): GhostText, AiCommandPalette, AiToolbar
+- [x] 2.18 `packages/sdk/` — GoTipe Cloud REST client SDK (~6KB): GoTipeClient, DocumentsAPI, VersionsAPI, CommentsAPI, ExportsAPI, AIApi, UsageAPI, OrganizationsAPI, WebhooksAPI, typed error handling
+- [x] 2.19 `packages/migration/` — Migration utilities (~8KB): convertProseMirrorToGoTipe, convertSlateToGoTipe, convertLexicalToGoTipe, YjsAdapter (Hocuspocus compatibility layer), DualProvider (shadow mode — оба CRDT параллельно во время миграции), batch conversion scripts (PostgreSQL pagination, error handling, progress reporting)
+- [x] 2.20 Верификация Фазы 2 — `pnpm install && pnpm build && pnpm test && pnpm typecheck && pnpm lint`
 
-### Фаза 3: Go Cloud Server
-- [ ] 3.1 `apps/cloud/` — REST API (Chi v5, JWT ES256, API keys, CRUD documents, exports, AI proxy с semantic cache (cosine >0.95) + provider fallback chain + rate limit retry-after, health checks)
-- [ ] 3.2 `apps/cloud/` — WebSocket Sync (gorilla/websocket, Room manager, binary CRDT protocol, persistence)
-- [ ] 3.3 `apps/cloud/` — Middleware (rate limiting Lua, idempotency Valkey, CORS, request ID, CSP headers)
-- [ ] 3.4 `apps/cloud/` — Background workers (cleanup, retry compensation, export, usage aggregation)
-- [ ] 3.5 `apps/cloud/` — Storage (PostgreSQL pgx, Valkey, R2/S3)
-- [ ] 3.6 `apps/cloud/` — Comments & Versions API: `POST/GET/DELETE /v1/documents/:id/comments`, `POST /v1/documents/:id/comments/:id/replies`, `POST /v1/documents/:id/comments/:id/resolve`, `GET/POST /v1/documents/:id/versions`, `POST /v1/documents/:id/versions/:id/restore`, `GET /v1/documents/:id/versions/diff`
-- [ ] 3.7 `apps/cloud/` — Organizations & Permissions: `internal/handler/organizations.go` (CRUD orgs, membership, roles), RBAC enforcement (Viewer/Commenter/Editor/Admin), `internal/handler/permissions.go`
-- [ ] 3.8 `apps/cloud/` — Stripe Billing: `internal/billing/stripe.go` (Stripe client), `internal/handler/billing.go` (create subscription, update, cancel, webhook handler — always return 200), `internal/handler/webhooks.go` (payment events, subscription lifecycle), usage-based billing aggregation, plan quota enforcement (starter=1K docs, pro=10K, business=100K), `internal/worker/billing.go` (daily/monthly usage aggregation)
-- [ ] 3.9 `apps/cloud/` — Audit logging: `internal/audit/logger.go` (structured audit events, write to PostgreSQL audit_log table)
-- [ ] 3.10 `apps/cloud/` — Migrations: `001_initial` (users, api_keys, documents, document_updates, document_snapshots, export_jobs, usage_logs), `002_comments_versions` (comments, comment_reactions, versions, version_diffs), `003_organizations` (organizations, org_members, document_permissions), `004_billing` (subscriptions, payment_methods, invoices, pending_webhooks), `005_audit` (audit_log)
-- [ ] 3.11 `apps/cloud/Dockerfile` — Multi-stage build (golang:1.23-alpine → alpine:3.20)
-- [ ] 3.12 Верификация Фазы 3 — `go test ./... -race && go build ./cmd/... && go test -tags=integration ./...`
+### Фаза 3: Go Cloud Server ✅
+- [x] 3.1 `apps/cloud/` — REST API (Chi v5, JWT ES256, API keys, CRUD documents, exports, AI proxy с semantic cache (cosine >0.95) + provider fallback chain + rate limit retry-after, health checks)
+- [x] 3.2 `apps/cloud/` — WebSocket Sync (gorilla/websocket, Room manager, binary CRDT protocol, persistence)
+- [x] 3.3 `apps/cloud/` — Middleware (rate limiting Lua, idempotency Valkey, CORS, request ID, CSP headers)
+- [x] 3.4 `apps/cloud/` — Background workers (cleanup, retry compensation, export, usage aggregation)
+- [x] 3.5 `apps/cloud/` — Storage (PostgreSQL pgx, Valkey, R2/S3)
+- [x] 3.6 `apps/cloud/` — Comments & Versions API: `POST/GET/DELETE /v1/documents/:id/comments`, `POST /v1/documents/:id/comments/:id/replies`, `POST /v1/documents/:id/comments/:id/resolve`, `GET/POST /v1/documents/:id/versions`, `POST /v1/documents/:id/versions/:id/restore`, `GET /v1/documents/:id/versions/diff`
+- [x] 3.7 `apps/cloud/` — Organizations & Permissions: `internal/handler/organizations.go` (CRUD orgs, membership, roles), RBAC enforcement (Viewer/Commenter/Editor/Admin), `internal/handler/permissions.go`
+- [x] 3.8 `apps/cloud/` — Stripe Billing: `internal/billing/stripe.go` (Stripe client), `internal/handler/billing.go` (create subscription, update, cancel, webhook handler — always return 200), `internal/handler/webhooks.go` (payment events, subscription lifecycle), usage-based billing aggregation, plan quota enforcement (starter=1K docs, pro=10K, business=100K), `internal/worker/billing.go` (daily/monthly usage aggregation)
+- [x] 3.9 `apps/cloud/` — Audit logging: `internal/audit/logger.go` (structured audit events, write to PostgreSQL audit_log table)
+- [x] 3.10 `apps/cloud/` — Migrations: `001_initial` (users, api_keys, documents, document_updates, document_snapshots, export_jobs, usage_logs), `002_comments_versions` (comments, comment_reactions, versions, version_diffs), `003_organizations` (organizations, org_members, document_permissions), `004_billing` (subscriptions, payment_methods, invoices, pending_webhooks), `005_audit` (audit_log)
+- [x] 3.11 `apps/cloud/Dockerfile` — Multi-stage build (golang:1.23-alpine → alpine:3.20)
+- [x] 3.12 Верификация Фазы 3 — `go build ./cmd/...` (build passes, go vet passes)
 
-### Фаза 4: Инфраструктура
-- [ ] 4.1 `infra/docker-compose.yml` — Production (caddy, api, sync, export-worker, pgbouncer, postgres, valkey, prometheus, grafana)
-- [ ] 4.2 `infra/docker-compose.dev.yml` — Development (api, sync, postgres, valkey, minio)
-- [ ] 4.3 `infra/.env.example` + `infra/Caddyfile` (with CSP headers)
-- [ ] 4.4 `infra/postgres/postgresql.conf` + `infra/pgbouncer/pgbouncer.ini` + `infra/valkey/valkey.conf`
-- [ ] 4.5 `infra/prometheus.yml` + `infra/grafana/dashboards/` (gotipe-overview.json, gotipe-api.json, gotipe-sync.json, gotipe-ai.json)
-- [ ] 4.6 `infra/pgbackrest/pgbackrest.conf` — Backup config (R2 as repo, retention 14 days, PITR)
-- [ ] 4.7 `infra/scripts/` — setup-server.sh, deploy.sh (zero-downtime), restore.sh (DR), backup-cron, rate-limit.lua
-- [ ] 4.8 `scripts/` — build-wasm.sh, dev.sh
+### Фаза 4: Инфраструктура ✅
+- [x] 4.1 `infra/docker-compose.yml` — Production (caddy, api, sync, export-worker, pgbouncer, postgres, valkey, prometheus, grafana)
+- [x] 4.2 `infra/docker-compose.dev.yml` — Development (api, sync, postgres, valkey, minio)
+- [x] 4.3 `infra/.env.example` + `infra/Caddyfile` (with CSP headers)
+- [x] 4.4 `infra/postgres/postgresql.conf` + `infra/pgbouncer/pgbouncer.ini` + `infra/valkey/valkey.conf`
+- [x] 4.5 `infra/prometheus.yml` + `infra/grafana/dashboards/` (gotipe-overview.json, gotipe-api.json, gotipe-sync.json, gotipe-ai.json)
+- [x] 4.6 `infra/pgbackrest/pgbackrest.conf` — Backup config (R2 as repo, retention 14 days, PITR)
+- [x] 4.7 `infra/scripts/` — setup-server.sh, deploy.sh (zero-downtime), restore.sh (DR), backup-cron, rate-limit.lua
+- [x] 4.8 `scripts/` — build-wasm.sh, dev.sh
 
-### Фаза 5: CI/CD
-- [ ] 5.1 `.github/workflows/ci.yml` — rust (fmt, clippy, test, property tests, bench compile) + wasm (build + artifact + size check ≤500KB gzip) + typescript (download wasm → install → lint → typecheck → build → test → bundle size check) + go (vet, test -race, build)
-- [ ] 5.2 `.github/workflows/release.yml` — npm publish (--provenance, dependency order) + cargo publish (schema → core → crdt → comments → versioning → ai → export → wasm) + GitHub Release + CHANGELOG.md generation
-- [ ] 5.3 `.github/workflows/deploy-cloud.yml` — test with services → Docker build+push GHCR → SSH deploy (Hetzner VDS)
-- [ ] 5.4 `.github/workflows/deploy-infra.yml` — push to main (paths: infra/**) → environment: production (requires approve) → ssh server "git pull && docker compose up -d"
-- [ ] 5.5 `.github/workflows/security.yml` — `cargo audit`, `cargo deny check`, `npm audit`, SBOM generation (CycloneDX), license compliance check
-- [ ] 5.6 `.github/workflows/e2e.yml` — Playwright (Chrome + Firefox + Safari), data-attr selectors (`[data-gotipe-*]`)
-- [ ] 5.7 `.github/workflows/benchmark.yml` — Criterion benchmark regression detection (fail on >10% regression), per-crate WASM size targets (core ~120KB, crdt ~80KB, export ~40KB, ai ~15KB), per-package gzip size tracking, size comparison on PRs. Performance targets: <1ms keystroke, <0.5ms CRDT op, >10K ops/sec, >50 clients/room
+### Фаза 5: CI/CD ✅
+- [x] 5.1 `.github/workflows/ci.yml` — rust (fmt, clippy, test, property tests, bench compile) + wasm (build + artifact + size check ≤500KB gzip) + typescript (download wasm → install → lint → typecheck → build → test → bundle size check) + go (vet, test -race, build)
+- [x] 5.2 `.github/workflows/release.yml` — npm publish (--provenance, dependency order) + cargo publish (schema → core → crdt → comments → versioning → ai → export → wasm) + GitHub Release + CHANGELOG.md generation
+- [x] 5.3 `.github/workflows/deploy-cloud.yml` — test with services → Docker build+push GHCR → SSH deploy (Hetzner VDS)
+- [x] 5.4 `.github/workflows/deploy-infra.yml` — push to main (paths: infra/**) → environment: production (requires approve) → ssh server "git pull && docker compose up -d"
+- [x] 5.5 `.github/workflows/security.yml` — `cargo audit`, `cargo deny check`, `npm audit`, SBOM generation (CycloneDX), license compliance check
+- [x] 5.6 `.github/workflows/e2e.yml` — Playwright (Chrome + Firefox + Safari), data-attr selectors (`[data-gotipe-*]`)
+- [x] 5.7 `.github/workflows/benchmark.yml` — Criterion benchmark regression detection (fail on >10% regression), per-crate WASM size targets (core ~120KB, crdt ~80KB, export ~40KB, ai ~15KB), per-package gzip size tracking, size comparison on PRs. Performance targets: <1ms keystroke, <0.5ms CRDT op, >10K ops/sec, >50 clients/room
 - [ ] 5.8 Vercel integration — подключить `apps/landing/` как Vercel project. Автодеплой на push main (paths: apps/landing/**, packages/**). Preview deployments на PR. `turbo-ignore` скипает билд если лендинг не затронут
 - [ ] 5.9 Mintlify integration — подключить `docs-site/` через Mintlify GitHub App. Автодеплой на push main (paths: docs-site/**). OpenAPI spec из `apps/cloud/api/openapi.yaml`
 
@@ -103,14 +103,14 @@ git push to main
   └── docs/** → Ничего (design docs, не деплоятся)
 ```
 
-### Фаза 6: Apps & Documentation
-- [ ] 6.1 `apps/playground/` — Vite + React demo (basic, collaboration, comments, suggestions, version history, ai, custom extensions)
-- [ ] 6.2 `docs-site/` — Mintlify documentation site на docs.gotipe.com (Getting Started, API Reference из OpenAPI, Extensions Guide, React/Vue/Svelte/Solid, Collaboration, Comments & Track Changes, Version History, AI, Export, Self-Hosted, Cloud, i18n). Автодеплой через GitHub integration
-- [ ] 6.3 `docs-site/migration/` — Migration guides (from TipTap, ProseMirror, Lexical, Slate)
-- [ ] 6.4 `apps/cloud/api/openapi.yaml` — OpenAPI 3.1 spec for GoTipe Cloud REST API
-- [ ] 6.5 Root files: `SECURITY.md` (security disclosure policy), `CONTRIBUTING.md`, `CODE_OF_CONDUCT.md`
-- [ ] 6.6 `@changesets/cli` setup — changeset workflow, automated CHANGELOG.md, versioning strategy
-- [ ] 6.7 `apps/landing/` — Marketing landing page (gotipe.com): Next.js + Tailwind, деплой на Vercel. Features, pricing, comparison table, getting started CTA
+### Фаза 6: Apps & Documentation ✅
+- [x] 6.1 `apps/playground/` — Vite + React demo (basic, collaboration, comments, suggestions, version history, ai, custom extensions)
+- [x] 6.2 `docs-site/` — Mintlify documentation site на docs.gotipe.com (Getting Started, API Reference из OpenAPI, Extensions Guide, React/Vue/Svelte/Solid, Collaboration, Comments & Track Changes, Version History, AI, Export, Self-Hosted, Cloud, i18n). Автодеплой через GitHub integration
+- [x] 6.3 `docs-site/migration/` — Migration guides (from TipTap, ProseMirror, Lexical, Slate)
+- [x] 6.4 `apps/cloud/api/openapi.yaml` — OpenAPI 3.1 spec for GoTipe Cloud REST API
+- [x] 6.5 Root files: `SECURITY.md` (security disclosure policy), `CONTRIBUTING.md`, `CODE_OF_CONDUCT.md`
+- [x] 6.6 `@changesets/cli` setup — changeset workflow, automated CHANGELOG.md, versioning strategy
+- [x] 6.7 `apps/landing/` — Marketing landing page (gotipe.com): Next.js + Tailwind, деплой на Vercel. Features, pricing, comparison table, getting started CTA
 
 ---
 

@@ -1,0 +1,20 @@
+[package]
+name = "gotipe-crdt"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[features]
+default = ["compression"]
+compression = ["dep:zstd"]
+
+[dependencies]
+gotipe-core = { path = "../gotipe-core" }
+serde = { workspace = true }
+serde_json = { workspace = true }
+thiserror = { workspace = true }
+zstd = { workspace = true, optional = true }
+uuid = { workspace = true }
+
+[dev-dependencies]
+proptest = { workspace = true }

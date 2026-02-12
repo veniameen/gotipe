@@ -1,0 +1,234 @@
+---
+title: Migrate from ProseMirror
+description: Step-by-step guide to migrate from ProseMirror to GoTipe
+---
+
+# Migrate from ProseMirror
+
+GoTipe uses a block-first document model instead of ProseMirror's recursive node tree. The state lives in Rust/WASM rather than JavaScript.
+
+## Key Differences
+
+| Concept | ProseMirror | GoTipe |
+|---------|-------------|--------|
+| Document model | Recursive node tree | Flat block array with children |
+| Schema | `Schema({ nodes, marks })` | `defineExtension({ schema })` |
+| State | `EditorState` (JS) | `EditorState` (Rust/WASM) |
+| Transactions | `tr.insertText()`, `dispatch` | `dispatch(Transaction)` via WASM |
+| Plugins | `Plugin({ state, view })` | `defineExtension({ plugins })` |
+| Decorations | `DecorationSet` | `decorations` in plugin |
+| Key maps | `keymap({})` | `keybindings` in extension |
+| Node views | `NodeView` class | `BlockRenderer` / `renderBlock` |
+
+## Installation
+
+```bash
+# Remove ProseMirror
+npm uninstall prosemirror-state prosemirror-view prosemirror-model prosemirror-schema-basic prosemirror-keymap prosemirror-commands
+
+# Install GoTipe
+npm install @gotipe/core @gotipe/react @gotipe/wasm @gotipe/migration
+```
+
+## Document Migration
+
+```ts
+import { migrateProseMirrorDocument } from '@gotipe/migration';
+
+// ProseMirror document JSON
+const pmDoc = {
+  type: 'doc',
+  content: [
+    {
+      type: 'heading',
+      attrs: { level: 2 },
+      content: [{ type: 'text', text: 'Introduction' }],
+    },
+    {
+      type: 'bullet_list',
+      content: [
+        {
+          type: 'list_item',
+          content: [
+            { type: 'paragraph', content: [{ type: 'text', text: 'First item' }] },
+          ],
+        },
+        {
+          type: 'list_item',
+          content: [
+            { type: 'paragraph', content: [{ type: 'text', text: 'Second item' }] },
+          ],
+        },
+      ],
+    },
+  ],
+};
+
+const gotipeDoc = migrateProseMirrorDocument(pmDoc);
+// Result:
+// {
+//   version: 1,
+//   blocks: [
+//     { id: '<uuid>', type: 'heading', attrs: { level: 2 },
+//       content: [{ text: 'Introduction', marks: [] }], children: [] },
+//     { id: '<uuid>', type: 'bulletList', attrs: {},
+//       content: [], children: [
+//         { id: '<uuid>', type: 'listItem', attrs: {},
+//           content: [{ text: 'First item', marks: [] }], children: [] },
+//         { id: '<uuid>', type: 'listItem', attrs: {},
+//           content: [{ text: 'Second item', marks: [] }], children: [] },
+//       ] },
+//   ],
+// }
+```
+
+## Schema Migration
+
+```ts
+// ProseMirror
+import { Schema } from 'prosemirror-model';
+
+const pmSchema = new Schema({
+  nodes: {
+    doc: { content: 'block+' },
+    paragraph: { content: 'inline*', group: 'block' },
+    heading: { content: 'inline*', group: 'block', attrs: { level: { default: 1 } } },
+    text: { group: 'inline' },
+  },
+  marks: {
+    bold: {},
+    link: { attrs: { href: {}, title: { default: null } } },
+  },
+});
+
+// GoTipe
+import { defineExtension } from '@gotipe/core';
+
+const Heading = defineExtension({
+  name: 'heading',
+  schema: {
+    type: 'block',
+    attrs: {
+      level: { default: 1, values: [1, 2, 3, 4, 5, 6] },
+    },
+    content: 'richtext',
+  },
+});
+
+const Link = defineExtension({
+  name: 'link',
+  schema: {
+    type: 'mark',
+    attrs: {
+      href: { default: '' },
+      title: { default: null },
+    },
+    inclusive: false,
+  },
+});
+```
+
+## Plugin Migration
+
+```ts
+// ProseMirror
+import { Plugin } from 'prosemirror-state';
+import { Decoration, DecorationSet } from 'prosemirror-view';
+
+const searchPlugin = new Plugin({
+  state: {
+    init() { return DecorationSet.empty; },
+    apply(tr, decos, oldState, newState) {
+      const searchTerm = tr.getMeta('search');
+      if (!searchTerm) return decos;
+      // build decorations...
+    },
+  },
+  props: {
+    decorations(state) { return this.getState(state); },
+  },
+});
+
+// GoTipe
+const SearchHighlight = defineExtension({
+  name: 'searchHighlight',
+  plugins: [
+    {
+      name: 'search-decorations',
+      decorations: (state) => {
+        const { searchTerm } = state.meta;
+        if (!searchTerm) return [];
+        return findMatches(state.doc, searchTerm).map((match) => ({
+          type: 'inline',
+          from: match.from,
+          to: match.to,
+          attrs: { class: 'gotipe-search-highlight' },
+        }));
+      },
+    },
+  ],
+});
+```
+
+## Keymap Migration
+
+```ts
+// ProseMirror
+import { keymap } from 'prosemirror-keymap';
+import { toggleMark } from 'prosemirror-commands';
+
+keymap({
+  'Mod-b': toggleMark(schema.marks.bold),
+  'Mod-i': toggleMark(schema.marks.italic),
+});
+
+// GoTipe
+const BoldMark = defineExtension({
+  name: 'bold',
+  schema: { type: 'mark' },
+  keybindings: {
+    'Mod-b': 'toggleBold',
+  },
+  commands: () => ({
+    toggleBold: () => ({ type: 'toggleMark', mark: 'bold' }),
+  }),
+});
+```
+
+## Node View to Block Renderer
+
+```tsx
+// ProseMirror NodeView
+class ImageView {
+  constructor(node, view, getPos) {
+    this.dom = document.createElement('figure');
+    const img = document.createElement('img');
+    img.src = node.attrs.src;
+    this.dom.appendChild(img);
+  }
+  update(node) { /* ... */ }
+  destroy() { /* ... */ }
+}
+
+// GoTipe (React)
+<EditorContent
+  editor={editor}
+  renderBlock={(block) => {
+    if (block.type === 'image') {
+      return (
+        <figure className="gotipe-block--image">
+          <img src={block.attrs.src} alt={block.attrs.alt} />
+          {block.attrs.caption && <figcaption>{block.attrs.caption}</figcaption>}
+        </figure>
+      );
+    }
+    return null;
+  }}
+/>
+```
+
+## Related Guides
+
+- [Extensions](/guides/extensions) — GoTipe extension system
+- [Theming](/guides/theming) — Styling blocks
+- [Quickstart](/quickstart) — Get started with GoTipe

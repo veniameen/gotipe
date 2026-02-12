@@ -1,0 +1,138 @@
+# .github/workflows/benchmark.yml
+name: Benchmarks
+
+on:
+  pull_request:
+    paths:
+      - "crates/**"
+      - "packages/**"
+
+permissions:
+  pull-requests: write
+
+jobs:
+  criterion:
+    name: Rust Benchmarks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          path: main-branch
+
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+
+      # Run benchmarks on PR branch
+      - name: Benchmark PR branch
+        run: cargo bench --workspace -- --save-baseline pr
+
+      # Run benchmarks on main branch
+      - name: Benchmark main branch
+        run: |
+          cd main-branch
+          cargo bench --workspace -- --save-baseline main
+
+      # Compare results
+      - name: Compare benchmarks
+        id: bench
+        run: |
+          cargo install critcmp
+          OUTPUT=$(critcmp main pr --threshold 10)
+          echo "result<<EOF" >> $GITHUB_OUTPUT
+          echo "$OUTPUT" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+          # Check for >10% regression
+          if echo "$OUTPUT" | grep -q "regressed"; then
+            echo "regression=true" >> $GITHUB_OUTPUT
+          else
+            echo "regression=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Comment PR with benchmark results
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const body = `### Benchmark Results
+
+            \`\`\`
+            ${{ steps.bench.outputs.result }}
+            \`\`\`
+
+            ${{ steps.bench.outputs.regression == 'true' && '⚠️ **Performance regression detected (>10%)**' || '✅ No significant regression' }}
+
+            #### Performance Targets
+            | Metric | Target | Status |
+            |--------|--------|--------|
+            | Keystroke processing | <1ms | - |
+            | CRDT op generation | <0.5ms | - |
+            | Binary encoding | <0.1ms | - |
+            | Throughput | >10K ops/sec | - |
+            `;
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body
+            });
+
+  wasm-size:
+    name: WASM Size Tracking
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-unknown-unknown
+      - uses: Swatinem/rust-cache@v2
+
+      - name: Install wasm-pack + wasm-opt
+        run: |
+          curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh
+          npm install -g binaryen
+
+      - name: Build WASM
+        run: bash scripts/build-wasm.sh
+
+      - name: WASM size breakdown
+        id: wasm-size
+        run: |
+          WASM_FILE="packages/wasm/pkg/gotipe_wasm_bg.wasm"
+          RAW=$(wc -c < "$WASM_FILE")
+          GZIP=$(gzip -c "$WASM_FILE" | wc -c)
+
+          echo "raw=$RAW" >> $GITHUB_OUTPUT
+          echo "gzip=$GZIP" >> $GITHUB_OUTPUT
+
+          echo "### WASM Size Report" >> $GITHUB_STEP_SUMMARY
+          echo "| Metric | Size |" >> $GITHUB_STEP_SUMMARY
+          echo "|--------|------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Raw | $(numfmt --to=iec $RAW) |" >> $GITHUB_STEP_SUMMARY
+          echo "| Gzip | $(numfmt --to=iec $GZIP) |" >> $GITHUB_STEP_SUMMARY
+          echo "| Budget | 500KB |" >> $GITHUB_STEP_SUMMARY
+
+      - name: Comment PR with WASM size
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const raw = parseInt('${{ steps.wasm-size.outputs.raw }}');
+            const gzip = parseInt('${{ steps.wasm-size.outputs.gzip }}');
+            const budget = 512000;
+            const status = gzip <= budget ? '✅' : '❌';
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `### WASM Size Report
+            | Metric | Size |
+            |--------|------|
+            | Raw | ${(raw / 1024).toFixed(1)}KB |
+            | Gzip | ${(gzip / 1024).toFixed(1)}KB |
+            | Budget | 500KB ${status} |`
+            });

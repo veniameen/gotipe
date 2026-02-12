@@ -1,0 +1,73 @@
+# infra/prometheus-alerts.yml
+groups:
+  - name: gotipe-alerts
+    rules:
+      # --- API ---
+      - alert: HighAPILatency
+        expr: histogram_quantile(0.95, rate(gotipe_api_latency_seconds_bucket[5m])) > 1
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "API p95 latency > 1s"
+          description: "GoTipe API p95 latency is {{ $value }}s"
+
+      - alert: HighAPIErrorRate
+        expr: rate(gotipe_api_requests_total{status=~"5.."}[5m]) / rate(gotipe_api_requests_total[5m]) > 0.05
+        for: 3m
+        labels:
+          severity: critical
+        annotations:
+          summary: "API 5xx error rate > 5%"
+
+      # --- WebSocket ---
+      - alert: WebSocketConnectionsHigh
+        expr: gotipe_ws_connections > 10000
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "WebSocket connections > 10K"
+
+      # --- Export ---
+      - alert: ExportQueueBacklog
+        expr: gotipe_export_pending_jobs > 100
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Export queue backlog > 100 jobs"
+
+      # --- AI Proxy ---
+      - alert: AIProxyHighErrorRate
+        expr: rate(gotipe_ai_requests_total{status="error"}[5m]) / rate(gotipe_ai_requests_total[5m]) > 0.1
+        for: 3m
+        labels:
+          severity: critical
+        annotations:
+          summary: "AI proxy error rate > 10%"
+
+      # --- Infrastructure ---
+      - alert: PostgresConnectionPoolExhausted
+        expr: pgbouncer_pools_server_active / pgbouncer_pools_server_total > 0.9
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "pgBouncer connection pool > 90% utilized"
+
+      - alert: ValkeyMemoryHigh
+        expr: valkey_used_memory_bytes / valkey_maxmemory_bytes > 0.85
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Valkey memory usage > 85%"
+
+      - alert: DiskSpaceLow
+        expr: node_filesystem_avail_bytes{mountpoint="/"} / node_filesystem_size_bytes{mountpoint="/"} < 0.15
+        for: 10m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Disk space < 15% remaining"

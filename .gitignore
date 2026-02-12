@@ -1,1 +1,7 @@
-node_modules
+target/
+node_modules/
+dist/
+pkg/
+.env
+*.wasm
+.turbo/

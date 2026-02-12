@@ -1,0 +1,196 @@
+---
+title: Theming
+description: Customize GoTipe appearance with CSS tokens, themes, and icon sets
+---
+
+# Theming
+
+GoTipe uses CSS custom properties (tokens) prefixed with `--gt-*` and classes prefixed with `.gotipe-*`. The base styles are MIT-licensed; the commercial theme package adds polished presets.
+
+## Installation
+
+Base styles are included with `@gotipe/core`. For commercial theme presets:
+
+```bash
+npm install @gotipe/theme  # commercial license required
+```
+
+## CSS Tokens
+
+All visual properties are controlled by `--gt-*` tokens:
+
+```css
+:root {
+  /* Typography */
+  --gt-font-family: 'Inter', system-ui, sans-serif;
+  --gt-font-size-base: 16px;
+  --gt-line-height-base: 1.6;
+  --gt-font-mono: 'JetBrains Mono', monospace;
+
+  /* Colors */
+  --gt-text-base: #1a1a1a;
+  --gt-text-muted: #6b7280;
+  --gt-bg-base: #ffffff;
+  --gt-bg-muted: #f9fafb;
+  --gt-bg-hover: #f3f4f6;
+  --gt-border-color: #e5e7eb;
+  --gt-primary: #2563eb;
+  --gt-primary-hover: #1d4ed8;
+
+  /* Spacing */
+  --gt-block-spacing: 0.75em;
+  --gt-editor-padding: 1rem;
+  --gt-block-indent: 1.5em;
+
+  /* Blocks */
+  --gt-code-bg: #f3f4f6;
+  --gt-code-border: #e5e7eb;
+  --gt-blockquote-border: #2563eb;
+  --gt-callout-info-bg: #eff6ff;
+  --gt-callout-warning-bg: #fffbeb;
+  --gt-callout-error-bg: #fef2f2;
+
+  /* Selection & Highlights */
+  --gt-selection-bg: rgba(37, 99, 235, 0.15);
+  --gt-search-highlight-bg: #fef08a;
+  --gt-comment-bg: rgba(255, 212, 0, 0.2);
+}
+```
+
+## Dark Mode
+
+Override tokens in a dark context:
+
+```css
+[data-theme='dark'],
+.dark {
+  --gt-text-base: #e5e7eb;
+  --gt-text-muted: #9ca3af;
+  --gt-bg-base: #111827;
+  --gt-bg-muted: #1f2937;
+  --gt-bg-hover: #374151;
+  --gt-border-color: #374151;
+  --gt-code-bg: #1f2937;
+  --gt-code-border: #374151;
+  --gt-selection-bg: rgba(96, 165, 250, 0.2);
+}
+```
+
+Or use `prefers-color-scheme`:
+
+```css
+@media (prefers-color-scheme: dark) {
+  :root {
+    --gt-text-base: #e5e7eb;
+    --gt-bg-base: #111827;
+    /* ... */
+  }
+}
+```
+
+## Theme Presets (Commercial)
+
+The `@gotipe/theme` package provides ready-made presets:
+
+```ts
+import { defineTheme } from '@gotipe/theme';
+
+// Available presets
+import { MinimalTheme, ModernTheme, NotionTheme, DocsTheme } from '@gotipe/theme';
+
+const editor = createEditor({
+  extensions: [
+    DefaultPreset,
+    MinimalTheme,        // clean, minimal styling
+    // ModernTheme,      // modern with subtle shadows
+    // NotionTheme,      // Notion-inspired look
+    // DocsTheme,        // documentation site style
+  ],
+});
+```
+
+## Custom Themes with defineTheme
+
+```ts
+import { defineTheme } from '@gotipe/theme';
+
+const MyTheme = defineTheme({
+  name: 'my-theme',
+  tokens: {
+    fontFamily: '"Merriweather", Georgia, serif',
+    fontSizeBase: '18px',
+    lineHeightBase: '1.8',
+    textBase: '#2d2d2d',
+    bgBase: '#fefefe',
+    primary: '#8b5cf6',
+    blockSpacing: '1em',
+    editorPadding: '2rem',
+  },
+  darkTokens: {
+    textBase: '#d4d4d8',
+    bgBase: '#18181b',
+    primary: '#a78bfa',
+  },
+});
+```
+
+## Custom Icons with defineIcons
+
+```ts
+import { defineIcons } from '@gotipe/theme';
+
+const CustomIcons = defineIcons({
+  bold: '<svg>...</svg>',
+  italic: '<svg>...</svg>',
+  heading: '<svg>...</svg>',
+  link: '<svg>...</svg>',
+  // ... override any default icon
+});
+
+const editor = createEditor({
+  extensions: [DefaultPreset, ModernTheme, CustomIcons],
+});
+```
+
+## Base CSS (MIT) vs Theme CSS (Commercial)
+
+| File | License | Contents |
+|------|---------|----------|
+| `@gotipe/core/style.css` | MIT | CSS reset, token defaults, `.gotipe-editor` base |
+| `@gotipe/theme/minimal.css` | Commercial | Minimal preset styles |
+| `@gotipe/theme/modern.css` | Commercial | Modern preset with shadows and animations |
+| `@gotipe/theme/notion.css` | Commercial | Notion-style UI |
+| `@gotipe/theme/docs.css` | Commercial | Documentation theme |
+
+Import the base CSS always:
+
+```ts
+import '@gotipe/core/style.css';
+
+// Optionally add a commercial theme
+import '@gotipe/theme/modern.css';
+```
+
+## CSS Classes Reference
+
+All GoTipe elements use `.gotipe-*` classes:
+
+```css
+.gotipe-editor { }              /* Editor root */
+.gotipe-block { }               /* Any block */
+.gotipe-block--paragraph { }    /* Paragraph block */
+.gotipe-block--heading { }      /* Heading block */
+.gotipe-block--selected { }     /* Selected block */
+.gotipe-block--dragging { }     /* Block being dragged */
+.gotipe-mark--bold { }          /* Bold mark */
+.gotipe-mark--code { }          /* Inline code mark */
+.gotipe-bubble-menu { }         /* Bubble menu container */
+.gotipe-floating-menu { }       /* Floating menu container */
+.gotipe-slash-menu { }          /* Slash command menu */
+```
+
+## Related Guides
+
+- [Extensions](/guides/extensions) — Style custom blocks
+- [I18n](/guides/i18n) — RTL and BiDi support
+- [React](/guides/react) — React component styling

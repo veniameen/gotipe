@@ -1,0 +1,191 @@
+---
+title: GoTipe Cloud
+description: Managed backend for collaboration, AI, and document management
+---
+
+# GoTipe Cloud
+
+GoTipe Cloud is the managed backend for GoTipe. It handles collaboration, AI, export, versioning, and storage so you do not have to deploy anything.
+
+## Plans
+
+| Feature | Starter ($29/mo) | Pro ($79/mo) | Business ($199/mo) |
+|---------|:-:|:-:|:-:|
+| Documents | 100 | Unlimited | Unlimited |
+| Collaborators/doc | 5 | 25 | 100 |
+| AI requests/day | 100 | 1,000 | Unlimited |
+| Versions per doc | 10 | 100 | Unlimited |
+| Storage | 1 GB | 10 GB | 100 GB |
+| Block Editor license | Included | Included | Included |
+| Custom domain | - | Yes | Yes |
+| SSO (SAML) | - | - | Yes |
+| SLA | - | 99.9% | 99.99% |
+
+All plans include the commercial Block Editor license.
+
+## SDK Installation
+
+```bash
+npm install @gotipe/sdk
+```
+
+## Initialize the SDK
+
+```ts
+import { GoTipeCloud } from '@gotipe/sdk';
+
+const cloud = new GoTipeCloud({
+  apiKey: 'gt_live_sk_...',       // server-side only
+  baseUrl: 'https://api.gotipe.com/v1',
+});
+```
+
+## Document Management
+
+```ts
+// Create a document
+const doc = await cloud.documents.create({
+  title: 'My Document',
+  teamId: 'team-abc',
+});
+
+// Get a document
+const doc = await cloud.documents.get('doc-abc123');
+
+// List documents
+const docs = await cloud.documents.list({
+  teamId: 'team-abc',
+  limit: 20,
+  cursor: 'next-page-cursor',
+});
+
+// Update metadata
+await cloud.documents.update('doc-abc123', {
+  title: 'Updated Title',
+});
+
+// Delete a document
+await cloud.documents.delete('doc-abc123');
+```
+
+## WebSocket Sync
+
+Generate a client token and connect:
+
+```ts
+// Server-side: generate a token for the client
+const token = await cloud.documents.createToken('doc-abc123', {
+  userId: 'user-1',
+  permissions: ['read', 'write'],
+  expiresIn: '1h',
+});
+
+// Client-side: use with collaboration extension
+import { Collaboration, GoTipeProvider } from '@gotipe/collaboration';
+
+Collaboration.configure({
+  provider: GoTipeProvider.create({
+    serverUrl: 'wss://sync.gotipe.com',
+    documentId: 'doc-abc123',
+    token: token.jwt,
+  }),
+});
+```
+
+## AI Proxy
+
+Route AI requests through GoTipe Cloud to avoid exposing API keys:
+
+```ts
+// Client-side
+import { AIInline } from '@gotipe/ai';
+
+AIInline.configure({
+  provider: 'cloud',
+  cloudUrl: 'https://api.gotipe.com/v1/ai',
+  token: clientToken,        // JWT from server
+});
+```
+
+```ts
+// Server-side: configure AI provider
+await cloud.settings.update({
+  ai: {
+    provider: 'openai',
+    model: 'gpt-4o',
+    apiKey: 'sk-...',        // stored securely on GoTipe Cloud
+  },
+});
+```
+
+## Export API
+
+```ts
+// Server-side export
+const pdfBuffer = await cloud.documents.export('doc-abc123', {
+  format: 'pdf',
+  options: {
+    pageSize: 'A4',
+    includeTableOfContents: true,
+  },
+});
+
+const htmlString = await cloud.documents.export('doc-abc123', {
+  format: 'html',
+  options: {
+    sanitize: true,
+    includeStyles: true,
+  },
+});
+```
+
+## Webhooks
+
+Receive events from GoTipe Cloud:
+
+```ts
+// Configure webhook in dashboard or via SDK
+await cloud.webhooks.create({
+  url: 'https://your-app.com/api/gotipe-webhook',
+  events: [
+    'document.created',
+    'document.updated',
+    'document.deleted',
+    'comment.created',
+    'version.created',
+  ],
+  secret: 'whsec_...',
+});
+```
+
+Handle webhooks:
+
+```ts
+// Express.js example
+app.post('/api/gotipe-webhook', (req, res) => {
+  const signature = req.headers['x-gotipe-signature'];
+  const isValid = cloud.webhooks.verify(req.body, signature, 'whsec_...');
+
+  if (!isValid) return res.status(401).send('Invalid signature');
+
+  const event = req.body;
+  switch (event.type) {
+    case 'document.updated':
+      console.log('Document updated:', event.data.documentId);
+      break;
+    case 'comment.created':
+      console.log('New comment:', event.data.commentId);
+      break;
+  }
+
+  // Always return 200 to acknowledge receipt
+  res.status(200).json({ received: true });
+});
+```
+
+## Related Guides
+
+- [Self-Hosted](/guides/self-hosted) — Deploy your own backend
+- [Collaboration](/guides/collaboration) — Real-time sync
+- [AI](/guides/ai) — AI configuration
+- [Security](/guides/security) — API key security

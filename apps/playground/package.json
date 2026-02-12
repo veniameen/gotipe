@@ -1,0 +1,32 @@
+{
+  "name": "@gotipe/playground",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@gotipe/core": "workspace:*",
+    "@gotipe/react": "workspace:*",
+    "@gotipe/collaboration": "workspace:*",
+    "@gotipe/comments": "workspace:*",
+    "@gotipe/suggestions": "workspace:*",
+    "@gotipe/versions": "workspace:*",
+    "@gotipe/ai": "workspace:*",
+    "@gotipe/i18n": "workspace:*",
+    "@gotipe/theme": "workspace:*",
+    "@gotipe/export": "workspace:*",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
+  "devDependencies": {
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "@vitejs/plugin-react": "^4.3.0",
+    "vite": "^6.0.0",
+    "typescript": "^5.7.0"
+  }
+}

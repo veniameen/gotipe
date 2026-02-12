@@ -1,0 +1,22 @@
+[package]
+name = "gotipe-export"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[features]
+default = ["html", "markdown", "plaintext"]
+html = ["ammonia"]
+markdown = ["comrak"]
+plaintext = []
+pdf = []
+docx = []
+notion = []
+
+[dependencies]
+gotipe-core = { path = "../gotipe-core" }
+serde = { workspace = true }
+serde_json = { workspace = true }
+thiserror = { workspace = true }
+ammonia = { workspace = true, optional = true }
+comrak = { workspace = true, optional = true }
