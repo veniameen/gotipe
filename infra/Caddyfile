@@ -1,0 +1,19 @@
+# infra/Caddyfile
+# Caddy reverse proxy — auto TLS via Let's Encrypt
+
+api.gotipe.com {
+	reverse_proxy api:8080
+
+	header {
+		# Security headers
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "DENY"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		# CSP with WASM support
+		Content-Security-Policy "default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; connect-src 'self' wss://sync.gotipe.com https://api.gotipe.com; frame-src 'none'; object-src 'none'; base-uri 'self'"
+	}
+}
+
+sync.gotipe.com {
+	reverse_proxy sync:8081
+}

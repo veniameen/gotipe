@@ -1,0 +1,13 @@
+# infra/scripts/backup-cron
+# GoTipe — automated PostgreSQL backups via pgBackRest to R2
+
+# WAL archiving — automatic via archive_command in postgresql.conf
+
+# Incremental backup — daily at 03:00 UTC
+0 3 * * * deploy docker compose -f /opt/gotipe/docker-compose.yml exec -T postgres pgbackrest --stanza=gotipe --type=incr backup >> /var/log/gotipe-backup.log 2>&1
+
+# Full backup — weekly on Sunday at 04:00 UTC
+0 4 * * 0 deploy docker compose -f /opt/gotipe/docker-compose.yml exec -T postgres pgbackrest --stanza=gotipe --type=full backup >> /var/log/gotipe-backup.log 2>&1
+
+# Cleanup old backups — weekly on Monday at 05:00 UTC
+0 5 * * 1 deploy docker compose -f /opt/gotipe/docker-compose.yml exec -T postgres pgbackrest --stanza=gotipe expire >> /var/log/gotipe-backup.log 2>&1

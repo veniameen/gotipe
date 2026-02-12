@@ -1,0 +1,48 @@
+[workspace]
+resolver = "2"
+members = [
+    "crates/gotipe-schema",
+    "crates/gotipe-core",
+    "crates/gotipe-crdt",
+    "crates/gotipe-comments",
+    "crates/gotipe-versioning",
+    "crates/gotipe-ai",
+    "crates/gotipe-export",
+    "crates/gotipe-wasm",
+]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+license = "MIT"
+repository = "https://github.com/gotipe/gotipe"
+
+[workspace.dependencies]
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+thiserror = "2.0"
+wasm-bindgen = "0.2"
+uuid = { version = "1.0", features = ["v4", "v7", "js"] }
+chrono = { version = "0.4", features = ["serde"] }
+zstd = { version = "0.13", features = ["wasm", "no_asm"] }
+regex = "1.11"
+
+# Export
+typst = "0.12"
+docx-rs = "0.4"
+comrak = { version = "0.31", default-features = false }
+ammonia = "4.0"
+
+# Testing
+criterion = "0.5"
+proptest = "1.5"
+
+[profile.release]
+opt-level = "z"
+lto = true
+codegen-units = 1
+strip = true
+
+[profile.bench]
+opt-level = 3
+lto = true

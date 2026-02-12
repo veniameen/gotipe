@@ -1,0 +1,173 @@
+---
+title: Solid Adapter
+description: Integrate GoTipe into your Solid application
+---
+
+# Solid Adapter
+
+The `@gotipe/solid` package provides Solid.js primitives for GoTipe, using `createSignal` for fine-grained reactivity.
+
+## Installation
+
+```bash
+npm install @gotipe/core @gotipe/solid @gotipe/wasm
+```
+
+## Basic Usage
+
+```tsx
+import { createEditorSignal, Editor } from '@gotipe/solid';
+import { DefaultPreset } from '@gotipe/core';
+
+function MyEditor() {
+  const [editor, setEditor] = createEditorSignal({
+    extensions: [DefaultPreset],
+    content: {
+      version: 1,
+      blocks: [
+        { id: '1', type: 'paragraph', attrs: {}, content: [{ text: 'Hello from Solid!', marks: [] }], children: [] },
+      ],
+    },
+    onUpdate: ({ editor }) => {
+      console.log('Updated:', editor.getJSON());
+    },
+  });
+
+  return <Editor editor={editor()} />;
+}
+```
+
+## Reactive State
+
+Use `createMemo` with the editor signal for derived state:
+
+```tsx
+import { createMemo } from 'solid-js';
+import { createEditorSignal, Editor } from '@gotipe/solid';
+
+function MyEditor() {
+  const [editor] = createEditorSignal({ extensions: [DefaultPreset] });
+
+  const isBold = createMemo(() => editor()?.activeMarks.includes('bold') ?? false);
+  const wordCount = createMemo(() => {
+    const doc = editor()?.state.doc;
+    return doc ? doc.textContent.split(/\s+/).length : 0;
+  });
+
+  return (
+    <div>
+      <div class="toolbar">
+        <button classList={{ active: isBold() }} onClick={() => editor()?.commands.toggleBold()}>
+          Bold
+        </button>
+        <span>{wordCount()} words</span>
+      </div>
+      <Editor editor={editor()} />
+    </div>
+  );
+}
+```
+
+## BubbleMenu
+
+```tsx
+import { BubbleMenu } from '@gotipe/solid';
+
+function MyEditor() {
+  const [editor] = createEditorSignal({ extensions: [DefaultPreset] });
+
+  return (
+    <>
+      <Editor editor={editor()} />
+      <BubbleMenu
+        editor={editor()}
+        shouldShow={(state) => !state.selection.empty}
+      >
+        <button onClick={() => editor()?.commands.toggleBold()}>Bold</button>
+        <button onClick={() => editor()?.commands.toggleItalic()}>Italic</button>
+        <button onClick={() => editor()?.commands.toggleLink()}>Link</button>
+      </BubbleMenu>
+    </>
+  );
+}
+```
+
+## FloatingMenu
+
+```tsx
+import { FloatingMenu } from '@gotipe/solid';
+
+<FloatingMenu
+  editor={editor()}
+  shouldShow={(state) => state.currentBlock?.isEmpty}
+>
+  <button onClick={() => editor()?.commands.setBlockType('heading', { level: 1 })}>H1</button>
+  <button onClick={() => editor()?.commands.setBlockType('bulletList')}>List</button>
+</FloatingMenu>
+```
+
+## Custom Block Rendering
+
+```tsx
+<Editor
+  editor={editor()}
+  renderBlock={(block) => {
+    if (block.type === 'callout') {
+      return (
+        <div class={`gotipe-callout gotipe-callout--${block.attrs.variant}`}>
+          <TextRenderer content={block.content} />
+        </div>
+      );
+    }
+    return null; // fallback to default renderer
+  }}
+/>
+```
+
+## Context
+
+Share editor across the component tree:
+
+```tsx
+import { createContext, useContext } from 'solid-js';
+import { createEditorSignal } from '@gotipe/solid';
+
+const EditorContext = createContext();
+
+function EditorProvider(props) {
+  const [editor] = createEditorSignal({ extensions: props.extensions });
+  return (
+    <EditorContext.Provider value={editor}>
+      {props.children}
+    </EditorContext.Provider>
+  );
+}
+
+function Toolbar() {
+  const editor = useContext(EditorContext);
+  return <button onClick={() => editor()?.commands.toggleBold()}>Bold</button>;
+}
+```
+
+## SSR with Solid Start
+
+```tsx
+// routes/editor.tsx
+import { clientOnly } from '@solidjs/start';
+
+const EditorComponent = clientOnly(() => import('~/components/Editor'));
+
+export default function EditorPage() {
+  return (
+    <Suspense fallback={<div class="gotipe-skeleton" />}>
+      <EditorComponent />
+    </Suspense>
+  );
+}
+```
+
+## Related Guides
+
+- [Extensions](/guides/extensions) — Build custom blocks
+- [Theming](/guides/theming) — Style the editor
+- [Collaboration](/guides/collaboration) — Add real-time sync

@@ -1,0 +1,278 @@
+---
+title: Migrate from Slate
+description: Step-by-step guide to migrate from Slate to GoTipe
+---
+
+# Migrate from Slate
+
+Slate and GoTipe both use a block-based model, making migration relatively straightforward. The main difference is that GoTipe moves state into Rust/WASM and uses a declarative extension system.
+
+## Key Differences
+
+| Concept | Slate | GoTipe |
+|---------|-------|--------|
+| Document model | Nested JSON tree (mutable) | Block array (immutable, via WASM) |
+| State ownership | JavaScript (immer) | Rust/WASM |
+| State mutations | `Transforms.insertText(editor, ...)` | `dispatch(Transaction)` |
+| Plugins | `withHistory(withReact(editor))` | `defineExtension()` |
+| Rendering | `renderElement` / `renderLeaf` | `renderBlock` / `TextRenderer` |
+| Normalization | `editor.normalizeNode` | Schema validation in WASM |
+| Selections | `Range` objects | Block-aware selections |
+
+## Installation
+
+```bash
+# Remove Slate
+npm uninstall slate slate-react slate-history
+
+# Install GoTipe
+npm install @gotipe/core @gotipe/react @gotipe/wasm @gotipe/migration
+```
+
+## Document Migration
+
+```ts
+import { migrateSlateDocument } from '@gotipe/migration';
+
+// Slate document (Descendant[])
+const slateDoc = [
+  {
+    type: 'heading',
+    level: 1,
+    children: [{ text: 'Hello World' }],
+  },
+  {
+    type: 'paragraph',
+    children: [
+      { text: 'This is ' },
+      { text: 'bold', bold: true },
+      { text: ' and ' },
+      { text: 'italic', italic: true },
+      { text: ' text.' },
+    ],
+  },
+  {
+    type: 'bulleted-list',
+    children: [
+      {
+        type: 'list-item',
+        children: [{ text: 'First item' }],
+      },
+      {
+        type: 'list-item',
+        children: [{ text: 'Second item' }],
+      },
+    ],
+  },
+];
+
+const gotipeDoc = migrateSlateDocument(slateDoc);
+// Result:
+// {
+//   version: 1,
+//   blocks: [
+//     { id: '<uuid>', type: 'heading', attrs: { level: 1 },
+//       content: [{ text: 'Hello World', marks: [] }], children: [] },
+//     { id: '<uuid>', type: 'paragraph', attrs: {},
+//       content: [
+//         { text: 'This is ', marks: [] },
+//         { text: 'bold', marks: ['bold'] },
+//         { text: ' and ', marks: [] },
+//         { text: 'italic', marks: ['italic'] },
+//         { text: ' text.', marks: [] },
+//       ], children: [] },
+//     { id: '<uuid>', type: 'bulletList', attrs: {},
+//       content: [], children: [
+//         { id: '<uuid>', type: 'listItem', attrs: {},
+//           content: [{ text: 'First item', marks: [] }], children: [] },
+//         { id: '<uuid>', type: 'listItem', attrs: {},
+//           content: [{ text: 'Second item', marks: [] }], children: [] },
+//       ] },
+//   ],
+// }
+```
+
+## Custom Type Mapping
+
+Map your Slate element types to GoTipe block types:
+
+```ts
+const gotipeDoc = migrateSlateDocument(slateDoc, {
+  typeMap: {
+    'bulleted-list': 'bulletList',
+    'numbered-list': 'orderedList',
+    'list-item': 'listItem',
+    'block-quote': 'blockquote',
+    'code-block': 'codeBlock',
+    'heading-one': { type: 'heading', attrs: { level: 1 } },
+    'heading-two': { type: 'heading', attrs: { level: 2 } },
+  },
+  markMap: {
+    bold: 'bold',
+    italic: 'italic',
+    underline: 'underline',
+    code: 'code',
+    strikethrough: 'strike',
+  },
+});
+```
+
+## Plugin Migration
+
+```ts
+// Slate: plugin pattern (higher-order function)
+const withImages = (editor) => {
+  const { isVoid } = editor;
+  editor.isVoid = (element) => {
+    return element.type === 'image' ? true : isVoid(element);
+  };
+  return editor;
+};
+
+const editor = withImages(withHistory(withReact(createEditor())));
+
+// GoTipe: declarative extension
+const Image = defineExtension({
+  name: 'image',
+  schema: {
+    type: 'block',
+    attrs: {
+      src: { default: '' },
+      alt: { default: '' },
+      width: { default: null },
+    },
+    content: 'empty',
+    draggable: true,
+  },
+  commands: () => ({
+    insertImage: (src, alt) => ({
+      type: 'insertBlock',
+      blockType: 'image',
+      attrs: { src, alt },
+    }),
+  }),
+});
+```
+
+## Rendering Migration
+
+```tsx
+// Slate
+const renderElement = (props) => {
+  switch (props.element.type) {
+    case 'heading':
+      const Tag = `h${props.element.level}`;
+      return <Tag {...props.attributes}>{props.children}</Tag>;
+    case 'blockquote':
+      return <blockquote {...props.attributes}>{props.children}</blockquote>;
+    default:
+      return <p {...props.attributes}>{props.children}</p>;
+  }
+};
+
+const renderLeaf = (props) => {
+  let { children } = props;
+  if (props.leaf.bold) children = <strong>{children}</strong>;
+  if (props.leaf.italic) children = <em>{children}</em>;
+  return <span {...props.attributes}>{children}</span>;
+};
+
+<Slate editor={editor} initialValue={slateDoc}>
+  <Editable renderElement={renderElement} renderLeaf={renderLeaf} />
+</Slate>
+
+// GoTipe (custom blocks are optional -- defaults handle standard blocks)
+<EditorContent
+  editor={editor}
+  renderBlock={(block) => {
+    if (block.type === 'callout') {
+      return (
+        <div className={`gotipe-callout gotipe-callout--${block.attrs.variant}`}>
+          <TextRenderer content={block.content} />
+        </div>
+      );
+    }
+    return null;  // use default renderer
+  }}
+/>
+```
+
+## Transform Migration
+
+```ts
+// Slate
+import { Transforms, Editor } from 'slate';
+
+// Insert text
+Transforms.insertText(editor, 'Hello');
+
+// Toggle bold
+const isActive = Editor.marks(editor)?.bold === true;
+if (isActive) {
+  Editor.removeMark(editor, 'bold');
+} else {
+  Editor.addMark(editor, 'bold', true);
+}
+
+// GoTipe
+editor.commands.insertText('Hello');
+editor.commands.toggleBold();
+// or chain commands
+editor.chain().insertText('Hello').toggleBold().run();
+```
+
+## React Component Migration
+
+```tsx
+// Slate
+import { createEditor } from 'slate';
+import { Slate, Editable, withReact } from 'slate-react';
+import { withHistory } from 'slate-history';
+
+function SlateEditor() {
+  const [editor] = useState(() => withHistory(withReact(createEditor())));
+  return (
+    <Slate editor={editor} initialValue={initialValue}>
+      <Editable placeholder="Start writing..." />
+    </Slate>
+  );
+}
+
+// GoTipe
+import { useEditor, EditorContent } from '@gotipe/react';
+import { DefaultPreset } from '@gotipe/core';
+
+function GoTipeEditor() {
+  const editor = useEditor({
+    extensions: [DefaultPreset],
+  });
+  return <EditorContent editor={editor} />;
+}
+```
+
+## Batch Document Migration
+
+```ts
+import { migrateSlateDocument } from '@gotipe/migration';
+
+async function migrateAllDocuments() {
+  const docs = await db.query('SELECT id, content FROM documents');
+
+  for (const doc of docs) {
+    const slateNodes = JSON.parse(doc.content);
+    const gotipeContent = migrateSlateDocument(slateNodes, {
+      typeMap: { /* your custom mappings */ },
+    });
+    await db.query('UPDATE documents SET content = $1 WHERE id = $2', [
+      JSON.stringify(gotipeContent),
+      doc.id,
+    ]);
+  }
+}
+```
+
+## Related Guides
+
+- [Extensions](/guides/extensions) — GoTipe extension system
+- [React](/guides/react) — React adapter
+- [Quickstart](/quickstart) — Get started

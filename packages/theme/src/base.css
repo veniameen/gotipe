@@ -1,0 +1,195 @@
+/* GoTipe Base CSS — MIT Licensed */
+/* Structural styles only, no visual theme */
+
+.gotipe-editor {
+  position: relative;
+  outline: none;
+}
+
+.gotipe-content {
+  min-height: 1em;
+  outline: none;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  font-family: var(--gt-font-sans);
+  font-size: var(--gt-font-size-base);
+  line-height: var(--gt-line-height);
+  color: var(--gt-text-base);
+}
+
+.gotipe-content [data-block-id] {
+  position: relative;
+}
+
+.gotipe-content p {
+  margin: 0;
+  padding: var(--gt-spacing-xs) 0;
+}
+.gotipe-content h1 {
+  font-size: 2em;
+  font-weight: 700;
+  margin: 1em 0 0.5em;
+}
+.gotipe-content h2 {
+  font-size: 1.5em;
+  font-weight: 600;
+  margin: 0.8em 0 0.4em;
+}
+.gotipe-content h3 {
+  font-size: 1.25em;
+  font-weight: 600;
+  margin: 0.6em 0 0.3em;
+}
+.gotipe-content h4 {
+  font-size: 1.1em;
+  font-weight: 600;
+  margin: 0.5em 0 0.25em;
+}
+.gotipe-content h5 {
+  font-size: 1em;
+  font-weight: 600;
+  margin: 0.4em 0 0.2em;
+}
+.gotipe-content h6 {
+  font-size: 0.9em;
+  font-weight: 600;
+  margin: 0.3em 0 0.15em;
+}
+
+.gotipe-content ul,
+.gotipe-content ol {
+  padding-left: 1.5em;
+  margin: var(--gt-spacing-xs) 0;
+}
+.gotipe-content li {
+  margin: 2px 0;
+}
+
+.gotipe-content blockquote {
+  border-left: 3px solid var(--gt-border, #dee2e6);
+  padding-left: var(--gt-spacing-lg);
+  margin: var(--gt-spacing-sm) 0;
+  color: var(--gt-text-secondary);
+}
+
+.gotipe-content pre {
+  background: var(--gt-bg-secondary);
+  border-radius: var(--gt-radius-md);
+  padding: var(--gt-spacing-md);
+  overflow-x: auto;
+  font-family: var(--gt-font-mono);
+  font-size: var(--gt-font-size-sm);
+}
+
+.gotipe-content code {
+  background: var(--gt-bg-tertiary);
+  border-radius: var(--gt-radius-sm);
+  padding: 0.15em 0.3em;
+  font-family: var(--gt-font-mono);
+  font-size: 0.9em;
+}
+
+.gotipe-content pre code {
+  background: none;
+  padding: 0;
+  border-radius: 0;
+}
+
+.gotipe-content img {
+  max-width: 100%;
+  height: auto;
+  border-radius: var(--gt-radius-md);
+}
+
+.gotipe-content table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: var(--gt-spacing-sm) 0;
+}
+
+.gotipe-content th,
+.gotipe-content td {
+  border: 1px solid var(--gt-border, #dee2e6);
+  padding: var(--gt-spacing-sm) var(--gt-spacing-md);
+  text-align: left;
+}
+
+.gotipe-content th {
+  background: var(--gt-bg-secondary);
+  font-weight: 600;
+}
+
+.gotipe-content hr {
+  border: none;
+  height: 1px;
+  background: var(--gt-border, #dee2e6);
+  margin: var(--gt-spacing-lg) 0;
+}
+
+.gotipe-content a {
+  color: var(--gt-accent);
+  text-decoration: underline;
+}
+.gotipe-content a:hover {
+  color: var(--gt-accent-hover);
+}
+
+.gotipe-content mark {
+  background: var(--gt-ai-highlight, rgba(76, 110, 245, 0.1));
+  padding: 0.1em 0.2em;
+  border-radius: 2px;
+}
+
+/* Screen reader only */
+.gotipe-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Placeholder */
+.gotipe-content [data-placeholder]::before {
+  content: attr(data-placeholder);
+  color: var(--gt-text-placeholder);
+  pointer-events: none;
+  position: absolute;
+}
+
+/* Drag handle area */
+.gotipe-content [data-block-id]:hover > .gotipe-drag-handle {
+  opacity: 1;
+}
+.gotipe-drag-handle {
+  opacity: 0;
+  transition: opacity var(--gt-duration-fast) var(--gt-ease-out);
+}
+
+/* Print */
+@media print {
+  .gotipe-bubble-menu,
+  .gotipe-floating-menu,
+  .gotipe-slash-menu,
+  .gotipe-drag-handle,
+  .gotipe-block-toolbar {
+    display: none !important;
+  }
+  .gotipe-content {
+    color: #000;
+    font-size: 12pt;
+  }
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .gotipe-editor,
+  .gotipe-editor * {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}

@@ -1,0 +1,205 @@
+---
+title: AI Features
+description: Ghost text, AI command palette, and provider configuration in GoTipe
+---
+
+# AI Features
+
+GoTipe has first-class AI support with inline ghost text completions, an AI command palette, and a provider fallback chain.
+
+## Installation
+
+```bash
+npm install @gotipe/ai
+```
+
+## Basic Setup
+
+```ts
+import { AIInline, AICommands } from '@gotipe/ai';
+import { createEditor, DefaultPreset } from '@gotipe/core';
+
+const editor = createEditor({
+  extensions: [
+    DefaultPreset,
+    AIInline.configure({
+      provider: 'cloud',
+      cloudUrl: 'https://api.gotipe.com/v1/ai',
+      token: jwtToken,
+    }),
+    AICommands.configure({
+      provider: 'cloud',
+      cloudUrl: 'https://api.gotipe.com/v1/ai',
+      token: jwtToken,
+    }),
+  ],
+});
+```
+
+## Ghost Text (Inline Completions)
+
+Ghost text appears as semi-transparent text after the cursor. Users accept with `Tab` or dismiss with `Escape`.
+
+```ts
+AIInline.configure({
+  provider: 'cloud',
+  cloudUrl: 'https://api.gotipe.com/v1/ai',
+  token: jwtToken,
+  debounceMs: 500,              // wait before triggering completion
+  minCharsBeforeTrigger: 20,    // minimum chars in block before suggesting
+  maxTokens: 100,               // limit completion length
+  temperature: 0.7,
+  stopSequences: ['\n\n'],
+  keybindings: {
+    accept: 'Tab',
+    dismiss: 'Escape',
+    acceptWord: 'Mod-Right',    // accept one word at a time
+  },
+});
+```
+
+### Ghost Text Styling
+
+```css
+.gotipe-ai-ghost-text {
+  color: var(--gt-ai-ghost-color, #9ca3af);
+  opacity: var(--gt-ai-ghost-opacity, 0.6);
+}
+```
+
+## AI Command Palette
+
+Open with `Cmd+J` (Mac) or `Ctrl+J` (Windows/Linux). Transform selected text or generate content.
+
+```ts
+AICommands.configure({
+  provider: 'cloud',
+  cloudUrl: 'https://api.gotipe.com/v1/ai',
+  token: jwtToken,
+  commands: [
+    { name: 'Improve writing', prompt: 'Improve the writing quality of this text' },
+    { name: 'Fix grammar', prompt: 'Fix grammar and spelling errors' },
+    { name: 'Make shorter', prompt: 'Make this text more concise' },
+    { name: 'Make longer', prompt: 'Expand this text with more detail' },
+    { name: 'Translate to Spanish', prompt: 'Translate this text to Spanish' },
+    { name: 'Summarize', prompt: 'Summarize this text in one paragraph' },
+  ],
+  keybinding: 'Mod-j',
+});
+```
+
+### Custom Commands
+
+```ts
+AICommands.configure({
+  commands: [
+    {
+      name: 'Generate outline',
+      prompt: 'Generate an outline for an article about: {selection}',
+      icon: 'list',
+      group: 'Generate',
+      outputType: 'replace',     // 'replace' | 'insertBelow' | 'insertAbove'
+    },
+    {
+      name: 'Add code example',
+      prompt: 'Add a code example demonstrating: {selection}',
+      icon: 'code',
+      group: 'Generate',
+      outputType: 'insertBelow',
+    },
+  ],
+});
+```
+
+## Provider Configuration
+
+### GoTipe Cloud (Default)
+
+```ts
+AIInline.configure({
+  provider: 'cloud',
+  cloudUrl: 'https://api.gotipe.com/v1/ai',
+  token: jwtToken,
+});
+```
+
+### OpenAI
+
+```ts
+AIInline.configure({
+  provider: 'openai',
+  apiKey: 'sk-...',
+  model: 'gpt-4o',
+});
+```
+
+### Anthropic
+
+```ts
+AIInline.configure({
+  provider: 'anthropic',
+  apiKey: 'sk-ant-...',
+  model: 'claude-sonnet-4-20250514',
+});
+```
+
+### Google Gemini
+
+```ts
+AIInline.configure({
+  provider: 'gemini',
+  apiKey: 'AIza...',
+  model: 'gemini-2.0-flash',
+});
+```
+
+### Ollama (Local)
+
+```ts
+AIInline.configure({
+  provider: 'ollama',
+  baseUrl: 'http://localhost:11434',
+  model: 'llama3.2',
+});
+```
+
+## Provider Fallback Chain
+
+Configure multiple providers with automatic fallback:
+
+```ts
+AIInline.configure({
+  providers: [
+    { provider: 'anthropic', apiKey: '...', model: 'claude-sonnet-4-20250514', priority: 1 },
+    { provider: 'openai', apiKey: '...', model: 'gpt-4o', priority: 2 },
+    { provider: 'ollama', baseUrl: 'http://localhost:11434', model: 'llama3.2', priority: 3 },
+  ],
+  fallbackStrategy: 'priority',   // 'priority' | 'round-robin' | 'random'
+  retryOnError: true,
+  maxRetries: 2,
+});
+```
+
+## Context Builder
+
+The AI automatically includes surrounding context. Customize what context is sent:
+
+```ts
+AIInline.configure({
+  context: {
+    surroundingBlocks: 5,         // include N blocks before/after cursor
+    includeDocumentTitle: true,
+    includeHeadings: true,         // include all headings for structure
+    maxContextTokens: 2000,
+    customContext: (state) => {
+      return `Document type: ${state.doc.meta.type}`;
+    },
+  },
+});
+```
+
+## Related Guides
+
+- [Extensions](/guides/extensions) — Build custom AI-powered extensions
+- [Cloud](/guides/cloud) — AI proxy and rate limits
+- [Security](/guides/security) — API key handling

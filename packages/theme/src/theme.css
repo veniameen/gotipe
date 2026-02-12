@@ -1,0 +1,160 @@
+/* GoTipe Theme CSS — Commercial Licensed */
+/* Visual theme enhancements for Block Editor */
+
+.gotipe-bubble-menu {
+  display: flex;
+  align-items: center;
+  gap: var(--gt-spacing-xs);
+  padding: var(--gt-spacing-xs) var(--gt-spacing-sm);
+  background: var(--gt-bg);
+  border: 1px solid var(--gt-border);
+  border-radius: var(--gt-radius-lg);
+  box-shadow: var(--gt-shadow-lg);
+  z-index: var(--gt-z-popover, 50);
+}
+
+.gotipe-bubble-menu button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: var(--gt-radius-sm);
+  background: transparent;
+  color: var(--gt-text-base);
+  cursor: pointer;
+  transition: background var(--gt-duration-fast) var(--gt-ease-out);
+}
+
+.gotipe-bubble-menu button:hover {
+  background: var(--gt-bg-hover);
+}
+.gotipe-bubble-menu button.active {
+  background: var(--gt-accent);
+  color: var(--gt-accent-text);
+}
+
+.gotipe-floating-menu {
+  display: flex;
+  align-items: center;
+  z-index: var(--gt-z-overlay, 30);
+}
+
+.gotipe-slash-menu {
+  min-width: 280px;
+  max-height: 320px;
+  overflow-y: auto;
+  background: var(--gt-bg);
+  border: 1px solid var(--gt-border);
+  border-radius: var(--gt-radius-lg);
+  box-shadow: var(--gt-shadow-lg);
+  padding: var(--gt-spacing-xs);
+  z-index: var(--gt-z-popover, 50);
+}
+
+.gotipe-slash-menu-item {
+  display: flex;
+  align-items: center;
+  gap: var(--gt-spacing-sm);
+  padding: var(--gt-spacing-sm) var(--gt-spacing-md);
+  border-radius: var(--gt-radius-sm);
+  cursor: pointer;
+  transition: background var(--gt-duration-fast) var(--gt-ease-out);
+}
+
+.gotipe-slash-menu-item:hover,
+.gotipe-slash-menu-item.selected {
+  background: var(--gt-bg-hover);
+}
+
+.gotipe-slash-menu-item-icon {
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--gt-text-muted);
+}
+
+.gotipe-slash-menu-group-label {
+  font-size: var(--gt-font-size-sm);
+  color: var(--gt-text-muted);
+  padding: var(--gt-spacing-sm) var(--gt-spacing-md) var(--gt-spacing-xs);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.gotipe-block-toolbar {
+  position: absolute;
+  left: -40px;
+  top: 0;
+  display: flex;
+  gap: 2px;
+  opacity: 0;
+  transition: opacity var(--gt-duration-fast) var(--gt-ease-out);
+}
+
+[data-block-id]:hover > .gotipe-block-toolbar {
+  opacity: 1;
+}
+
+/* Collaboration cursors */
+.gotipe-remote-cursor {
+  position: absolute;
+  width: 2px;
+  z-index: var(--gt-z-content);
+}
+
+.gotipe-remote-cursor-label {
+  position: absolute;
+  top: -20px;
+  left: 0;
+  font-size: 11px;
+  padding: 1px 6px;
+  border-radius: var(--gt-radius-sm);
+  white-space: nowrap;
+  color: #fff;
+}
+
+/* AI ghost text */
+.gotipe-ghost-text {
+  color: var(--gt-ai-ghost);
+  font-style: italic;
+}
+
+/* Comment highlight */
+.gotipe-comment-highlight {
+  background: rgba(250, 176, 5, 0.2);
+  border-bottom: 2px solid rgba(250, 176, 5, 0.5);
+}
+
+.gotipe-comment-highlight.resolved {
+  background: rgba(64, 192, 87, 0.1);
+  border-bottom-color: rgba(64, 192, 87, 0.3);
+}
+
+/* Suggestion highlights */
+.gotipe-suggestion-insert {
+  background: rgba(64, 192, 87, 0.2);
+  text-decoration: none;
+}
+.gotipe-suggestion-delete {
+  background: rgba(250, 82, 82, 0.2);
+  text-decoration: line-through;
+}
+
+/* Mobile (<640px) */
+@media (max-width: 639px) {
+  .gotipe-bubble-menu {
+    position: fixed !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    top: auto !important;
+    border-radius: var(--gt-radius-lg) var(--gt-radius-lg) 0 0;
+    justify-content: center;
+    padding: var(--gt-spacing-sm) var(--gt-spacing-md);
+  }
+}

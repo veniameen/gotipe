@@ -1,0 +1,169 @@
+---
+title: Svelte Adapter
+description: Integrate GoTipe into your Svelte 5 application
+---
+
+# Svelte Adapter
+
+The `@gotipe/svelte` package provides Svelte 5 components and reactive state for GoTipe, using `$state` and `$derived` runes.
+
+## Installation
+
+```bash
+npm install @gotipe/core @gotipe/svelte @gotipe/wasm
+```
+
+## Basic Usage
+
+```svelte
+<script lang="ts">
+  import { createEditorState, Editor } from '@gotipe/svelte';
+  import { DefaultPreset } from '@gotipe/core';
+
+  const editorState = createEditorState({
+    extensions: [DefaultPreset],
+    content: {
+      version: 1,
+      blocks: [
+        { id: '1', type: 'paragraph', attrs: {}, content: [{ text: 'Hello from Svelte!', marks: [] }], children: [] },
+      ],
+    },
+    onUpdate: ({ editor }) => {
+      console.log('Updated:', editor.getJSON());
+    },
+  });
+</script>
+
+<Editor state={editorState} />
+```
+
+## Reactive State with Runes
+
+`createEditorState` returns a reactive object powered by Svelte 5 `$state`:
+
+```svelte
+<script lang="ts">
+  import { createEditorState, Editor } from '@gotipe/svelte';
+  import { DefaultPreset } from '@gotipe/core';
+
+  const editorState = createEditorState({ extensions: [DefaultPreset] });
+
+  // $derived rune for computed values
+  const isBold = $derived(editorState.activeMarks.includes('bold'));
+  const wordCount = $derived(editorState.doc.textContent.split(/\s+/).length);
+</script>
+
+<div class="toolbar">
+  <button class:active={isBold} onclick={() => editorState.commands.toggleBold()}>
+    Bold
+  </button>
+  <span>{wordCount} words</span>
+</div>
+
+<Editor state={editorState} />
+```
+
+## BubbleMenu
+
+```svelte
+<script lang="ts">
+  import { Editor, BubbleMenu } from '@gotipe/svelte';
+</script>
+
+<Editor state={editorState}>
+  <BubbleMenu
+    state={editorState}
+    shouldShow={(state) => !state.selection.empty}
+  >
+    <button onclick={() => editorState.commands.toggleBold()}>Bold</button>
+    <button onclick={() => editorState.commands.toggleItalic()}>Italic</button>
+    <button onclick={() => editorState.commands.toggleLink()}>Link</button>
+  </BubbleMenu>
+</Editor>
+```
+
+## FloatingMenu
+
+```svelte
+<script lang="ts">
+  import { Editor, FloatingMenu } from '@gotipe/svelte';
+</script>
+
+<Editor state={editorState}>
+  <FloatingMenu
+    state={editorState}
+    shouldShow={(state) => state.currentBlock?.isEmpty}
+  >
+    <button onclick={() => editorState.commands.setBlockType('heading', { level: 1 })}>H1</button>
+    <button onclick={() => editorState.commands.setBlockType('bulletList')}>List</button>
+  </FloatingMenu>
+</Editor>
+```
+
+## Custom Block Rendering
+
+```svelte
+<Editor state={editorState}>
+  {#snippet block(block)}
+    {#if block.type === 'callout'}
+      <div class="gotipe-callout gotipe-callout--{block.attrs.variant}">
+        {@render textContent(block.content)}
+      </div>
+    {/if}
+  {/snippet}
+</Editor>
+```
+
+## Context API
+
+Share editor state across components:
+
+```svelte
+<!-- Parent.svelte -->
+<script>
+  import { setContext } from 'svelte';
+  import { EDITOR_KEY, createEditorState } from '@gotipe/svelte';
+
+  const editorState = createEditorState({ extensions: [DefaultPreset] });
+  setContext(EDITOR_KEY, editorState);
+</script>
+
+<!-- Child.svelte -->
+<script>
+  import { getContext } from 'svelte';
+  import { EDITOR_KEY } from '@gotipe/svelte';
+
+  const editorState = getContext(EDITOR_KEY);
+</script>
+```
+
+## SSR with SvelteKit
+
+WASM initialization is automatically deferred on the server:
+
+```svelte
+<!-- routes/editor/+page.svelte -->
+<script lang="ts">
+  import { browser } from '$app/environment';
+  import { onMount } from 'svelte';
+
+  let EditorComponent = $state(null);
+
+  onMount(async () => {
+    const mod = await import('$lib/components/Editor.svelte');
+    EditorComponent = mod.default;
+  });
+</script>
+
+{#if EditorComponent}
+  <svelte:component this={EditorComponent} />
+{:else}
+  <div class="gotipe-skeleton"></div>
+{/if}
+```
+
+## Related Guides
+
+- [Extensions](/guides/extensions) — Build custom blocks
+- [Theming](/guides/theming) — Style the editor
+- [Collaboration](/guides/collaboration) — Add real-time sync

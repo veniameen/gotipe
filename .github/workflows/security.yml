@@ -1,0 +1,102 @@
+# .github/workflows/security.yml
+name: Security
+
+on:
+  pull_request:
+  schedule:
+    - cron: "0 6 * * 1" # Weekly Monday 06:00 UTC
+
+permissions:
+  contents: read
+  security-events: write
+
+jobs:
+  rust-audit:
+    name: Rust Security
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+
+      - name: Install cargo-audit
+        run: cargo install cargo-audit
+
+      - name: Install cargo-deny
+        run: cargo install cargo-deny
+
+      - name: Audit dependencies
+        run: cargo audit
+
+      - name: Check licenses
+        run: cargo deny check licenses
+
+      - name: Check advisories
+        run: cargo deny check advisories
+
+      - name: Generate Rust SBOM (CycloneDX)
+        run: |
+          cargo install cargo-cyclonedx
+          cargo cyclonedx --all
+        continue-on-error: true
+
+      - name: Upload Rust SBOM
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: rust-sbom
+          path: "**/bom.xml"
+          retention-days: 30
+
+  npm-audit:
+    name: npm Security
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Audit dependencies
+        run: pnpm audit --audit-level=high
+
+      - name: Generate npm SBOM (CycloneDX)
+        run: |
+          npx @cyclonedx/cyclonedx-npm --output-file npm-sbom.json
+        continue-on-error: true
+
+      - name: Upload npm SBOM
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: npm-sbom
+          path: npm-sbom.json
+          retention-days: 30
+
+  go-audit:
+    name: Go Security
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/cloud
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.23"
+          cache-dependency-path: apps/cloud/go.sum
+
+      - name: Install govulncheck
+        run: go install golang.org/x/vuln/cmd/govulncheck@latest
+
+      - name: Vulnerability check
+        run: govulncheck ./...
+
+      - name: Verify dependencies
+        run: go mod verify

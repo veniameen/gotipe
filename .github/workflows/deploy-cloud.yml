@@ -1,0 +1,103 @@
+# .github/workflows/deploy-cloud.yml
+name: Deploy Cloud
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "apps/cloud/**"
+      - "infra/**"
+
+concurrency:
+  group: deploy-cloud
+  cancel-in-progress: false # Never cancel active deploys
+
+jobs:
+  # -- Test --
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/cloud
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: gotipe
+          POSTGRES_PASSWORD: gotipe
+          POSTGRES_DB: gotipe_test
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 5
+      valkey:
+        image: valkey/valkey:8-alpine
+        ports: ["6379:6379"]
+        options: >-
+          --health-cmd "valkey-cli ping"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.23"
+          cache-dependency-path: apps/cloud/go.sum
+
+      - name: Run migrations
+        run: go run ./cmd/api migrate up
+        env:
+          DATABASE_URL: postgres://gotipe:gotipe@localhost:5432/gotipe_test?sslmode=disable
+
+      - name: Test with race detector
+        run: go test ./... -race -count=1 -coverprofile=coverage.out
+        env:
+          DATABASE_URL: postgres://gotipe:gotipe@localhost:5432/gotipe_test?sslmode=disable
+          VALKEY_URL: redis://localhost:6379/0
+
+  # -- Build & Deploy --
+  build-and-deploy:
+    name: Build & Deploy
+    needs: test
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    permissions:
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build and push API image
+        uses: docker/build-push-action@v6
+        with:
+          context: apps/cloud
+          file: apps/cloud/Dockerfile
+          push: true
+          tags: |
+            ghcr.io/gotipe/cloud-api:${{ github.sha }}
+            ghcr.io/gotipe/cloud-api:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Deploy to production
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_KEY }}
+          script: |
+            cd /opt/gotipe
+            bash infra/scripts/deploy.sh ${{ github.sha }}

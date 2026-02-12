@@ -1,0 +1,212 @@
+---
+title: Self-Hosted
+description: Deploy GoTipe Cloud on your own infrastructure
+---
+
+# Self-Hosted Deployment
+
+GoTipe Cloud can be self-hosted on any infrastructure. This guide covers Docker Compose setup with Postgres, Valkey, and Caddy.
+
+## Requirements
+
+- Docker and Docker Compose v2
+- 2 CPU cores, 4GB RAM minimum (recommended: 4 cores, 8GB)
+- PostgreSQL 16+ (included in Docker Compose)
+- Valkey 7+ (Redis-compatible, included in Docker Compose)
+- Domain name with DNS pointing to your server
+
+## Quick Start with Docker Compose
+
+```bash
+git clone https://github.com/gotipe/gotipe.git
+cd gotipe/infra
+cp .env.example .env
+# Edit .env with your settings
+docker compose -f docker-compose.prod.yml up -d
+```
+
+## Docker Compose Configuration
+
+```yaml
+# infra/docker-compose.prod.yml
+services:
+  api:
+    image: gotipe/cloud:latest
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    env_file: .env
+    depends_on:
+      postgres:
+        condition: service_healthy
+      valkey:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/healthz"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    environment:
+      POSTGRES_DB: gotipe
+      POSTGRES_USER: gotipe
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U gotipe"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  pgbouncer:
+    image: bitnami/pgbouncer:latest
+    restart: unless-stopped
+    environment:
+      POSTGRESQL_HOST: postgres
+      POSTGRESQL_DATABASE: gotipe
+      POSTGRESQL_USERNAME: gotipe
+      POSTGRESQL_PASSWORD: ${POSTGRES_PASSWORD}
+      PGBOUNCER_POOL_MODE: transaction
+      PGBOUNCER_MAX_CLIENT_CONN: 200
+      PGBOUNCER_DEFAULT_POOL_SIZE: 20
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  valkey:
+    image: valkey/valkey:7-alpine
+    restart: unless-stopped
+    volumes:
+      - valkeydata:/data
+    command: >
+      valkey-server
+      --appendonly yes
+      --maxmemory 256mb
+      --maxmemory-policy noeviction
+    healthcheck:
+      test: ["CMD", "valkey-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile
+      - caddydata:/data
+    depends_on:
+      - api
+
+volumes:
+  pgdata:
+  valkeydata:
+  caddydata:
+```
+
+## Environment Variables
+
+```bash
+# .env
+# Server
+PORT=8080
+ENV=production
+LOG_FORMAT=json
+
+# Database (connect through pgBouncer for app, direct for migrations)
+DATABASE_URL=postgres://gotipe:${POSTGRES_PASSWORD}@pgbouncer:6432/gotipe
+DATABASE_URL_DIRECT=postgres://gotipe:${POSTGRES_PASSWORD}@postgres:5432/gotipe
+POSTGRES_PASSWORD=change-me-in-production
+
+# Valkey
+VALKEY_URL=redis://valkey:6379/0
+VALKEY_BLOCKLIST_DB=1
+
+# Authentication
+JWT_PRIVATE_KEY_PATH=/run/secrets/jwt_private.pem
+JWT_PUBLIC_KEY_PATH=/run/secrets/jwt_public.pem
+JWT_ISSUER=gotipe-self-hosted
+
+# Storage (Cloudflare R2 or S3-compatible)
+STORAGE_ENDPOINT=https://your-account.r2.cloudflarestorage.com
+STORAGE_BUCKET=gotipe-uploads
+STORAGE_ACCESS_KEY=your-access-key
+STORAGE_SECRET_KEY=your-secret-key
+
+# AI (optional)
+OPENAI_API_KEY=sk-...
+ANTHROPIC_API_KEY=sk-ant-...
+```
+
+## Caddy Reverse Proxy
+
+```
+# infra/Caddyfile
+gotipe.yourdomain.com {
+    reverse_proxy api:8080
+
+    @websocket {
+        header Connection *Upgrade*
+        header Upgrade websocket
+    }
+    reverse_proxy @websocket api:8080
+}
+```
+
+## pgBouncer Configuration
+
+GoTipe uses pgBouncer in **transaction mode**. Important constraints:
+
+- No `SET LOCAL` statements
+- No prepared statements via pgBouncer (use direct connection for migrations)
+- Migrations run against `DATABASE_URL_DIRECT` (bypasses pgBouncer)
+
+## Backup with pgBackRest
+
+```bash
+# Install pgBackRest
+docker exec -it postgres apk add pgbackrest
+
+# Full backup
+docker exec -it postgres pgbackrest --stanza=gotipe backup --type=full
+
+# Incremental backup (daily cron)
+docker exec -it postgres pgbackrest --stanza=gotipe backup --type=incr
+
+# Point-in-time recovery
+docker exec -it postgres pgbackrest --stanza=gotipe restore \
+  --target="2026-02-10 12:00:00" \
+  --target-action=promote
+```
+
+## Generating JWT Keys
+
+```bash
+# Generate ES256 key pair
+openssl ecparam -genkey -name prime256v1 -noout -out jwt_private.pem
+openssl ec -in jwt_private.pem -pubout -out jwt_public.pem
+```
+
+## Health Checks
+
+```bash
+# API health
+curl https://gotipe.yourdomain.com/healthz
+
+# Detailed status
+curl https://gotipe.yourdomain.com/healthz/ready
+# {"status":"ok","postgres":"ok","valkey":"ok","storage":"ok"}
+```
+
+## Related Guides
+
+- [Cloud](/guides/cloud) — Managed alternative
+- [Collaboration](/guides/collaboration) — WebSocket sync setup
+- [Security](/guides/security) — Production security checklist

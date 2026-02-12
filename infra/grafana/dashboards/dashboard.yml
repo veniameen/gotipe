@@ -1,0 +1,13 @@
+# infra/grafana/dashboards/dashboard.yml
+apiVersion: 1
+
+providers:
+  - name: 'GoTipe'
+    orgId: 1
+    folder: 'GoTipe'
+    type: file
+    disableDeletion: false
+    editable: true
+    options:
+      path: /etc/grafana/provisioning/dashboards
+      foldersFromFilesStructure: false

@@ -1,0 +1,231 @@
+# .github/workflows/ci.yml
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  RUST_BACKTRACE: 1
+  CARGO_TERM_COLOR: always
+
+jobs:
+  # ============================================================
+  # Rust: fmt, clippy, tests, property tests, bench compile
+  # ============================================================
+  rust:
+    name: Rust
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy, rustfmt
+      - uses: Swatinem/rust-cache@v2
+
+      - name: Format check
+        run: cargo fmt --all -- --check
+
+      - name: Clippy
+        run: cargo clippy --all-targets --all-features -- -D warnings
+
+      - name: Unit tests
+        run: cargo test --workspace
+
+      - name: Property tests (proptest)
+        run: cargo test --workspace -- --ignored
+        timeout-minutes: 10
+
+      - name: Benchmarks (compile only)
+        run: cargo bench --no-run
+
+  # ============================================================
+  # WASM: build + optimize + size check + artifact upload
+  # ============================================================
+  wasm:
+    name: WASM Build
+    runs-on: ubuntu-latest
+    needs: rust
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-unknown-unknown
+      - uses: Swatinem/rust-cache@v2
+
+      - name: Install wasm-pack
+        run: curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh
+
+      - name: Install wasm-opt (binaryen)
+        run: npm install -g binaryen
+
+      - name: Build WASM
+        run: bash scripts/build-wasm.sh
+
+      - name: WASM size report
+        run: |
+          WASM_FILE="packages/wasm/pkg/gotipe_wasm_bg.wasm"
+          RAW_SIZE=$(wc -c < "$WASM_FILE")
+          GZIP_SIZE=$(gzip -c "$WASM_FILE" | wc -c)
+          echo "### WASM Size Report" >> $GITHUB_STEP_SUMMARY
+          echo "| Metric | Size |" >> $GITHUB_STEP_SUMMARY
+          echo "|--------|------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Raw | $(numfmt --to=iec $RAW_SIZE) |" >> $GITHUB_STEP_SUMMARY
+          echo "| Gzip | $(numfmt --to=iec $GZIP_SIZE) |" >> $GITHUB_STEP_SUMMARY
+
+          # Fail if over budget
+          MAX_SIZE=512000
+          if [ "$GZIP_SIZE" -gt "$MAX_SIZE" ]; then
+            echo "::error::WASM gzip size ($GZIP_SIZE) exceeds budget ($MAX_SIZE)"
+            exit 1
+          fi
+
+      - name: Upload WASM artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: wasm-pkg
+          path: packages/wasm/pkg/
+          retention-days: 1
+
+  # ============================================================
+  # TypeScript: lint, typecheck, build, test, bundle size
+  # ============================================================
+  typescript:
+    name: TypeScript
+    runs-on: ubuntu-latest
+    needs: wasm
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Download WASM artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: wasm-pkg
+          path: packages/wasm/pkg/
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Lint (Biome)
+        run: pnpm lint
+
+      - name: Type check
+        run: pnpm typecheck
+
+      - name: Build all packages
+        run: pnpm build
+
+      - name: Unit tests (Vitest)
+        run: pnpm test
+
+      - name: Bundle size check
+        run: |
+          echo "### Bundle Size Report" >> $GITHUB_STEP_SUMMARY
+          echo "| Package | ESM (gzip) | Budget |" >> $GITHUB_STEP_SUMMARY
+          echo "|---------|-----------|--------|" >> $GITHUB_STEP_SUMMARY
+
+          check_size() {
+            local pkg=$1
+            local budget=$2
+            local file="packages/${pkg}/dist/index.mjs"
+            if [ -f "$file" ]; then
+              local size=$(gzip -c "$file" | wc -c)
+              local status="✅"
+              if [ "$size" -gt "$budget" ]; then
+                status="❌"
+              fi
+              echo "| @gotipe/${pkg} | $(numfmt --to=iec $size) | $(numfmt --to=iec $budget) ${status} |" >> $GITHUB_STEP_SUMMARY
+              if [ "$size" -gt "$budget" ]; then
+                echo "::error::@gotipe/${pkg} bundle size ($size) exceeds budget ($budget)"
+                return 1
+              fi
+            fi
+            return 0
+          }
+
+          FAILED=0
+          check_size "core" 20480 || FAILED=1         # 20KB
+          check_size "react" 10240 || FAILED=1         # 10KB
+          check_size "vue" 8192 || FAILED=1            # 8KB
+          check_size "svelte" 7168 || FAILED=1         # 7KB
+          check_size "solid" 6144 || FAILED=1          # 6KB
+          check_size "collaboration" 12288 || FAILED=1 # 12KB
+          check_size "ai" 6144 || FAILED=1             # 6KB
+          check_size "export" 4096 || FAILED=1         # 4KB
+
+          if [ "$FAILED" -eq 1 ]; then
+            exit 1
+          fi
+
+  # ============================================================
+  # Go: vet, test (race detector), build
+  # ============================================================
+  go:
+    name: Go
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/cloud
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: gotipe
+          POSTGRES_PASSWORD: gotipe
+          POSTGRES_DB: gotipe_test
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 5
+      valkey:
+        image: valkey/valkey:8-alpine
+        ports: ["6379:6379"]
+        options: >-
+          --health-cmd "valkey-cli ping"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.23"
+          cache-dependency-path: apps/cloud/go.sum
+
+      - name: Vet
+        run: go vet ./...
+
+      - name: Run migrations
+        run: go run ./cmd/api migrate up
+        env:
+          DATABASE_URL: postgres://gotipe:gotipe@localhost:5432/gotipe_test?sslmode=disable
+
+      - name: Tests (race detector)
+        run: go test ./... -race -count=1 -coverprofile=coverage.out
+        env:
+          DATABASE_URL: postgres://gotipe:gotipe@localhost:5432/gotipe_test?sslmode=disable
+          VALKEY_URL: redis://localhost:6379/0
+
+      - name: Build
+        run: go build ./cmd/...
+
+      - name: Upload coverage
+        uses: actions/upload-artifact@v4
+        with:
+          name: go-coverage
+          path: apps/cloud/coverage.out
+          retention-days: 7

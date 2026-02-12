@@ -1,0 +1,190 @@
+---
+title: Security
+description: HTML sanitization, authentication, CSP headers, and rate limiting in GoTipe
+---
+
+# Security
+
+GoTipe implements a multi-layered security approach covering HTML sanitization, authentication, content security, and rate limiting.
+
+## HTML Sanitization (Triple Layer)
+
+GoTipe applies three layers of sanitization to all HTML content:
+
+### 1. Rust (ammonia)
+
+The WASM core sanitizes HTML during import and paste using the `ammonia` crate:
+
+```rust
+// Automatically applied in the WASM core
+// Strips dangerous tags: <script>, <iframe>, <object>, <embed>
+// Strips event handlers: onclick, onload, onerror, etc.
+```
+
+### 2. JavaScript (DOMPurify)
+
+Before rendering, all HTML passes through DOMPurify:
+
+```ts
+import { createEditor, DefaultPreset } from '@gotipe/core';
+
+// DOMPurify is applied automatically
+// You can customize the config:
+const editor = createEditor({
+  extensions: [
+    DefaultPreset,
+  ],
+  sanitization: {
+    allowedTags: ['b', 'i', 'em', 'strong', 'a', 'p', 'br', 'ul', 'ol', 'li', 'h1', 'h2', 'h3'],
+    allowedAttributes: {
+      'a': ['href', 'title', 'target'],
+    },
+  },
+});
+```
+
+### 3. URL Whitelist
+
+Only safe URL protocols are allowed:
+
+```ts
+// Allowed protocols: http, https, mailto
+// Blocked: javascript:, data:, vbscript:, file:
+```
+
+<Warning>
+Never use `dangerouslySetInnerHTML` without DOMPurify. GoTipe's rendering pipeline handles sanitization automatically -- bypassing it creates XSS vulnerabilities.
+</Warning>
+
+## Authentication
+
+### JWT (ES256)
+
+GoTipe uses ES256 (ECDSA P-256) JWTs for authentication:
+
+```ts
+// Server-side: generate a token
+import { GoTipeCloud } from '@gotipe/sdk';
+
+const cloud = new GoTipeCloud({ apiKey: 'gt_live_sk_...' });
+
+const token = await cloud.auth.createToken({
+  userId: 'user-1',
+  permissions: ['read', 'write'],
+  documentIds: ['doc-abc123'],
+  expiresIn: '1h',
+});
+```
+
+### JWT Blocklist
+
+Revoked tokens are tracked in Valkey DB 1 with `noeviction` policy and AOF persistence:
+
+```ts
+// Revoke a token
+await cloud.auth.revokeToken(token.jwt);
+
+// Revoke all tokens for a user
+await cloud.auth.revokeAllTokens('user-1');
+```
+
+### API Key Security
+
+- API keys should only be used server-side
+- Format: `gt_live_sk_<32hex>` (production) or `gt_test_sk_<32hex>` (test)
+- Rotate keys regularly via the dashboard
+- Never expose API keys in client-side code
+
+```ts
+// Correct: server-side API key usage
+const cloud = new GoTipeCloud({ apiKey: process.env.GOTIPE_API_KEY });
+
+// Generate a short-lived JWT for the client
+const clientToken = await cloud.auth.createToken({
+  userId: currentUser.id,
+  expiresIn: '1h',
+});
+```
+
+## Content Security Policy (CSP)
+
+Recommended CSP headers for GoTipe:
+
+```
+Content-Security-Policy:
+  default-src 'self';
+  script-src 'self' 'wasm-unsafe-eval';
+  style-src 'self' 'unsafe-inline';
+  connect-src 'self' https://api.gotipe.com wss://sync.gotipe.com;
+  img-src 'self' data: https:;
+  font-src 'self';
+  worker-src 'self' blob:;
+```
+
+Key requirements:
+- `wasm-unsafe-eval` is needed for WASM execution
+- `connect-src` must include the sync WebSocket URL
+- `worker-src blob:` is needed for Web Worker creation
+
+## Rate Limiting
+
+GoTipe uses sliding window counters via Valkey Lua scripts (not fixed window):
+
+```lua
+-- Sliding window counter (simplified)
+-- Provides smooth rate limiting without burst edges
+```
+
+| Endpoint | Starter | Pro | Business |
+|----------|---------|-----|----------|
+| API requests/min | 60 | 300 | 1,000 |
+| AI requests/day | 100 | 1,000 | Unlimited |
+| WebSocket messages/sec | 50 | 200 | 500 |
+| Upload size | 10 MB | 50 MB | 100 MB |
+
+Rate limit headers are included in every response:
+
+```
+X-RateLimit-Limit: 300
+X-RateLimit-Remaining: 287
+X-RateLimit-Reset: 1707667200
+Retry-After: 12          # only on 429 responses
+```
+
+## PII Detection
+
+GoTipe Cloud can optionally detect and flag personally identifiable information:
+
+```ts
+const editor = createEditor({
+  extensions: [
+    DefaultPreset,
+    PIIDetection.configure({
+      patterns: ['email', 'phone', 'ssn', 'creditCard'],
+      action: 'highlight',       // 'highlight' | 'redact' | 'block'
+      onDetected: (findings) => {
+        console.warn('PII detected:', findings);
+      },
+    }),
+  ],
+});
+```
+
+## Self-Hosted Security Checklist
+
+- [ ] Generate unique ES256 JWT key pair
+- [ ] Set strong `POSTGRES_PASSWORD`
+- [ ] Configure Valkey with `noeviction` policy for blocklist DB
+- [ ] Enable AOF persistence for Valkey
+- [ ] Set up TLS via Caddy (automatic with domain)
+- [ ] Configure CSP headers
+- [ ] Set up firewall (only ports 80, 443 exposed)
+- [ ] Enable pgBackRest for database backups
+- [ ] Review and restrict CORS origins
+- [ ] Monitor rate limit metrics
+
+## Related Guides
+
+- [Self-Hosted](/guides/self-hosted) — Deployment guide
+- [Cloud](/guides/cloud) — Managed security
+- [Collaboration](/guides/collaboration) — WebSocket authentication

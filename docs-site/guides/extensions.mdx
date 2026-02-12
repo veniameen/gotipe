@@ -1,0 +1,191 @@
+---
+title: Extensions
+description: Build custom blocks, marks, and behaviors with the GoTipe extension system
+---
+
+# Extensions
+
+Everything in GoTipe is an extension. Block types, marks, keybindings, slash commands, and behaviors are all built with the same `defineExtension()` API.
+
+## Installation
+
+Extensions are included with `@gotipe/core`:
+
+```bash
+npm install @gotipe/core
+```
+
+## Defining an Extension
+
+```ts
+import { defineExtension } from '@gotipe/core';
+
+const Callout = defineExtension({
+  name: 'callout',
+
+  schema: {
+    type: 'block',
+    attrs: {
+      variant: { default: 'info', values: ['info', 'warning', 'error', 'success'] },
+      title: { default: '' },
+    },
+    content: 'richtext',
+    draggable: true,
+  },
+
+  commands: ({ blockId }) => ({
+    setCalloutVariant: (variant: string) => ({
+      type: 'setBlockAttr',
+      blockId,
+      key: 'variant',
+      value: variant,
+    }),
+  }),
+
+  keybindings: {
+    'Mod-Shift-c': 'insertCallout',
+  },
+
+  inputRules: [
+    {
+      pattern: /^:::(\w+)?\s$/,
+      handler: (match) => ({
+        type: 'insertBlock',
+        blockType: 'callout',
+        attrs: { variant: match[1] || 'info' },
+      }),
+    },
+  ],
+});
+```
+
+## Schema: Blocks and Marks
+
+### Block Schema
+
+```ts
+schema: {
+  type: 'block',
+  attrs: {
+    level: { default: 1, values: [1, 2, 3, 4, 5, 6] },
+  },
+  content: 'richtext' | 'raw' | 'empty',
+  children: true,    // allows nested blocks
+  draggable: true,
+  selectable: true,
+}
+```
+
+### Mark Schema
+
+```ts
+schema: {
+  type: 'mark',
+  attrs: {
+    href: { default: '' },
+    target: { default: '_blank' },
+  },
+  inclusive: false,
+  excludes: 'code',
+}
+```
+
+## Commands
+
+Commands are dispatched as transactions through WASM. Never mutate state directly.
+
+```ts
+// Define commands
+commands: () => ({
+  toggleBold: () => ({ type: 'toggleMark', mark: 'bold' }),
+  insertImage: (src: string) => ({
+    type: 'insertBlock',
+    blockType: 'image',
+    attrs: { src },
+  }),
+}),
+
+// Use commands
+editor.commands.toggleBold();
+editor.chain().toggleBold().setTextAlign('center').run();
+```
+
+## Paste Rules
+
+```ts
+pasteRules: [
+  {
+    pattern: /https:\/\/youtu\.be\/([\w-]+)/g,
+    handler: (match) => ({
+      type: 'insertBlock',
+      blockType: 'youtube',
+      attrs: { videoId: match[1] },
+    }),
+  },
+],
+```
+
+## Slash Commands
+
+```ts
+slashCommands: [
+  {
+    name: 'Callout',
+    description: 'Insert a callout block',
+    icon: 'alert-circle',
+    group: 'Advanced',
+    command: () => ({ type: 'insertBlock', blockType: 'callout' }),
+  },
+],
+```
+
+## Plugin System (Decorations)
+
+```ts
+plugins: [
+  {
+    name: 'highlight-search',
+    decorations: (state) => {
+      const { searchTerm } = state.meta;
+      if (!searchTerm) return [];
+      return findMatches(state.doc, searchTerm).map((match) => ({
+        type: 'inline',
+        from: match.from,
+        to: match.to,
+        attrs: { class: 'gotipe-search-highlight' },
+      }));
+    },
+  },
+],
+```
+
+## Extension Storage
+
+Persist extension-specific data across sessions:
+
+```ts
+storage: {
+  key: 'callout-preferences',
+  defaultValue: { defaultVariant: 'info' },
+  serialize: JSON.stringify,
+  deserialize: JSON.parse,
+},
+```
+
+## Presets
+
+Presets bundle multiple extensions:
+
+```ts
+import { MinimalPreset, DefaultPreset, FullPreset } from '@gotipe/core';
+
+// MinimalPreset: paragraph, bold, italic, link
+// DefaultPreset: + headings, lists, code, image, blockquote
+// FullPreset: + table, callout, toggle, divider, emoji
+```
+
+## Related Guides
+
+- [React Adapter](/guides/react) — Render extensions in React
+- [Theming](/guides/theming) — Style extension blocks
+- [AI](/guides/ai) — AI-powered extensions

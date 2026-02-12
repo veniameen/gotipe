@@ -1,0 +1,17 @@
+{
+  "name": "@gotipe/wasm",
+  "version": "0.1.0",
+  "type": "module",
+  "main": "./pkg/gotipe_wasm.js",
+  "types": "./pkg/gotipe_wasm.d.ts",
+  "exports": {
+    ".": {
+      "types": "./pkg/gotipe_wasm.d.ts",
+      "import": "./pkg/gotipe_wasm.js"
+    },
+    "./pkg/*": "./pkg/*"
+  },
+  "sideEffects": false,
+  "files": ["pkg/"],
+  "license": "MIT"
+}

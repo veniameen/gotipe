@@ -1,0 +1,110 @@
+# .github/workflows/e2e.yml
+name: E2E Tests
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+concurrency:
+  group: e2e-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  e2e:
+    name: E2E (${{ matrix.browser }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        browser: [chromium, firefox, webkit]
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: gotipe
+          POSTGRES_PASSWORD: gotipe
+          POSTGRES_DB: gotipe_test
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 5
+      valkey:
+        image: valkey/valkey:8-alpine
+        ports: ["6379:6379"]
+        options: >-
+          --health-cmd "valkey-cli ping"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 5
+    steps:
+      - uses: actions/checkout@v4
+
+      # -- WASM Build --
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-unknown-unknown
+      - uses: Swatinem/rust-cache@v2
+      - name: Install wasm-pack
+        run: curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh
+      - name: Install wasm-opt
+        run: npm install -g binaryen
+      - name: Build WASM
+        run: bash scripts/build-wasm.sh
+
+      # -- TypeScript Build --
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build all packages
+        run: pnpm build
+
+      - name: Install Playwright browsers
+        run: pnpm exec playwright install --with-deps ${{ matrix.browser }}
+
+      # -- Go API Server --
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.23"
+          cache-dependency-path: apps/cloud/go.sum
+
+      - name: Run migrations
+        run: cd apps/cloud && go run ./cmd/api migrate up
+        env:
+          DATABASE_URL: postgres://gotipe:gotipe@localhost:5432/gotipe_test?sslmode=disable
+
+      - name: Start API server
+        run: |
+          cd apps/cloud && go run ./cmd/api &
+          sleep 5
+        env:
+          DATABASE_URL: postgres://gotipe:gotipe@localhost:5432/gotipe_test?sslmode=disable
+          VALKEY_URL: redis://localhost:6379/0
+          LISTEN_ADDR: ":8080"
+          ENV: "test"
+
+      # -- Playwright Tests --
+      - name: Run E2E tests
+        run: pnpm exec playwright test --project=${{ matrix.browser }}
+        env:
+          GOTIPE_API_URL: http://localhost:8080
+
+      - name: Upload test results
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report-${{ matrix.browser }}
+          path: |
+            test-results/
+            playwright-report/
+          retention-days: 7
