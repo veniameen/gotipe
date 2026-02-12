@@ -53,7 +53,7 @@ export const Heading = defineExtension<HeadingOptions>({
       aliases: ["h1", "heading1"],
       description: "Large section heading",
       icon: "heading-1",
-      group: "basic",
+      group: "style",
       execute: (editor) => editor.chain().setBlockType("heading", { level: 1 }).run(),
     },
     {
@@ -61,7 +61,7 @@ export const Heading = defineExtension<HeadingOptions>({
       aliases: ["h2", "heading2"],
       description: "Medium section heading",
       icon: "heading-2",
-      group: "basic",
+      group: "style",
       execute: (editor) => editor.chain().setBlockType("heading", { level: 2 }).run(),
     },
     {
@@ -69,7 +69,7 @@ export const Heading = defineExtension<HeadingOptions>({
       aliases: ["h3", "heading3"],
       description: "Small section heading",
       icon: "heading-3",
-      group: "basic",
+      group: "style",
       execute: (editor) => editor.chain().setBlockType("heading", { level: 3 }).run(),
     },
   ],

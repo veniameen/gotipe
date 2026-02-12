@@ -15,4 +15,6 @@ export interface EditorEvents {
   commentResolved: (commentId: string) => void;
   commentDeleted: (commentId: string) => void;
   commentUpdated: (commentId: string) => void;
+  executeAiCommand: (payload: { commandId: string; prompt?: string }) => void;
+  aiStatusChange: (status: { active: boolean; label?: string }) => void;
 }

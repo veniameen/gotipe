@@ -23,7 +23,7 @@ export const Divider = defineExtension({
       aliases: ["hr", "separator", "divider"],
       description: "Insert a horizontal divider",
       icon: "minus",
-      group: "basic",
+      group: "insert",
       execute: (editor) => editor.chain().insertBlockAfter("divider").run(),
     },
   ],

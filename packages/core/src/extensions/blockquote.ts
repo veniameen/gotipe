@@ -30,7 +30,7 @@ export const Blockquote = defineExtension({
       aliases: ["blockquote", "quote"],
       description: "Insert a quote block",
       icon: "quote",
-      group: "basic",
+      group: "style",
       execute: (editor) => editor.chain().setBlockType("blockquote").run(),
     },
   ],

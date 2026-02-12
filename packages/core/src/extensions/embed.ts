@@ -29,7 +29,7 @@ export const Embed = defineExtension({
       aliases: ["embed", "iframe", "video"],
       description: "Embed external content",
       icon: "external-link",
-      group: "media",
+      group: "insert",
       execute: (editor) =>
         editor.chain().insertBlockAfter("embed", { url: "", type: "generic" }).run(),
     },

@@ -214,6 +214,11 @@ export class ChainableCommands {
     return this;
   }
 
+  moveBlock(blockId: string, targetIndex: number): this {
+    this.steps.push({ type: "moveBlock", blockId, newParentId: null, newIndex: targetIndex });
+    return this;
+  }
+
   duplicateBlock(blockId?: string): this {
     const state = this.editor.getViewState();
     const id = blockId ?? state.selection.anchor.blockId;

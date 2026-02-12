@@ -1,16 +1,30 @@
 /* GoTipe Theme CSS — Commercial Licensed */
-/* Visual theme enhancements for Block Editor */
+/* Visual theme enhancements for Block Editor UI */
+
+/* ============================================================
+   Block Editor Container
+   ============================================================ */
+
+.gotipe-block-editor {
+  position: relative;
+  background: transparent;
+}
+
+/* ============================================================
+   Bubble Menu
+   ============================================================ */
 
 .gotipe-bubble-menu {
   display: flex;
   align-items: center;
-  gap: var(--gt-spacing-xs);
-  padding: var(--gt-spacing-xs) var(--gt-spacing-sm);
+  gap: var(--gt-space-1, 4px);
+  padding: 4px;
   background: var(--gt-bg);
-  border: 1px solid var(--gt-border);
-  border-radius: var(--gt-radius-lg);
-  box-shadow: var(--gt-shadow-lg);
-  z-index: var(--gt-z-popover, 50);
+  border: 1px solid var(--gt-border-light, rgba(0,0,0,0.05));
+  border-radius: var(--gt-radius-lg, 12px);
+  box-shadow: var(--gt-shadow-elevated);
+  z-index: var(--gt-z-bubble, 40);
+  animation: gotipe-fade-in var(--gt-duration-normal, 150ms) var(--gt-ease-out);
 }
 
 .gotipe-bubble-menu button {
@@ -20,47 +34,106 @@
   width: 32px;
   height: 32px;
   border: none;
-  border-radius: var(--gt-radius-sm);
+  border-radius: var(--gt-radius-lg, 12px);
   background: transparent;
-  color: var(--gt-text-base);
+  color: var(--gt-text-secondary);
   cursor: pointer;
-  transition: background var(--gt-duration-fast) var(--gt-ease-out);
+  transition: background var(--gt-duration-fast, 100ms) var(--gt-ease-out),
+              color var(--gt-duration-fast, 100ms) var(--gt-ease-out);
 }
 
 .gotipe-bubble-menu button:hover {
-  background: var(--gt-bg-hover);
+  background: rgba(0,0,0,0.08);
+  color: var(--gt-text-base);
 }
+
 .gotipe-bubble-menu button.active {
-  background: var(--gt-accent);
-  color: var(--gt-accent-text);
+  color: var(--gt-accent);
 }
+
+.gotipe-bubble-menu-separator {
+  width: 1px;
+  height: 20px;
+  background: var(--gt-border-light, rgba(0,0,0,0.05));
+  margin: 0 var(--gt-space-1, 4px);
+  flex-shrink: 0;
+}
+
+/* ============================================================
+   Floating Menu
+   ============================================================ */
 
 .gotipe-floating-menu {
   display: flex;
   align-items: center;
-  z-index: var(--gt-z-overlay, 30);
+  z-index: var(--gt-z-toolbar, 30);
 }
 
+/* ============================================================
+   Slash Menu
+   ============================================================ */
+
 .gotipe-slash-menu {
-  min-width: 280px;
-  max-height: 320px;
+  width: 320px;
+  max-height: 400px;
   overflow-y: auto;
   background: var(--gt-bg);
-  border: 1px solid var(--gt-border);
-  border-radius: var(--gt-radius-lg);
-  box-shadow: var(--gt-shadow-lg);
-  padding: var(--gt-spacing-xs);
-  z-index: var(--gt-z-popover, 50);
+  border: 1px solid var(--gt-border-light, rgba(0,0,0,0.05));
+  border-radius: var(--gt-radius-card, 20px);
+  box-shadow: var(--gt-shadow-elevated);
+  padding: var(--gt-space-1, 4px);
+  z-index: var(--gt-z-slash, 50);
+  animation: gotipe-scale-in var(--gt-duration-normal, 150ms) var(--gt-ease-out);
+}
+
+.gotipe-slash-menu::-webkit-scrollbar {
+  width: 4px;
+}
+.gotipe-slash-menu::-webkit-scrollbar-track {
+  background: transparent;
+}
+.gotipe-slash-menu::-webkit-scrollbar-thumb {
+  background: var(--gt-border, #e5e5e5);
+  border-radius: 2px;
+}
+
+.gotipe-slash-menu-search {
+  display: flex;
+  align-items: center;
+  gap: var(--gt-space-2, 8px);
+  height: 36px;
+  padding: 0 var(--gt-space-3, 12px);
+  margin: var(--gt-space-1, 4px);
+  background: var(--gt-bg-hover);
+  border: none;
+  border-radius: var(--gt-radius-sm, 6px);
+  font-size: var(--gt-text-sm, 14px);
+  color: var(--gt-text-base);
+  outline: none;
+  width: calc(100% - 8px);
+}
+.gotipe-slash-menu-search::placeholder {
+  color: var(--gt-text-placeholder, var(--gt-text-tertiary));
+}
+
+.gotipe-slash-menu-group-label {
+  font-size: 11px;
+  color: var(--gt-text-tertiary);
+  padding: var(--gt-space-2, 8px) var(--gt-space-3, 12px) var(--gt-space-1, 4px);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
 .gotipe-slash-menu-item {
   display: flex;
   align-items: center;
-  gap: var(--gt-spacing-sm);
-  padding: var(--gt-spacing-sm) var(--gt-spacing-md);
-  border-radius: var(--gt-radius-sm);
+  gap: 10px;
+  height: 40px;
+  padding: var(--gt-space-2, 8px) var(--gt-space-3, 12px);
+  border-radius: var(--gt-radius-sm, 6px);
   cursor: pointer;
-  transition: background var(--gt-duration-fast) var(--gt-ease-out);
+  transition: background var(--gt-duration-fast, 100ms) var(--gt-ease-out);
 }
 
 .gotipe-slash-menu-item:hover,
@@ -69,42 +142,547 @@
 }
 
 .gotipe-slash-menu-item-icon {
-  width: 24px;
-  height: 24px;
+  width: 20px;
+  height: 20px;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--gt-text-muted);
+  color: var(--gt-text-secondary);
+  flex-shrink: 0;
 }
 
-.gotipe-slash-menu-group-label {
-  font-size: var(--gt-font-size-sm);
-  color: var(--gt-text-muted);
-  padding: var(--gt-spacing-sm) var(--gt-spacing-md) var(--gt-spacing-xs);
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
+.gotipe-slash-menu-item-title {
+  font-size: var(--gt-text-sm, 14px);
+  font-weight: 500;
+  color: var(--gt-text-base);
 }
+
+.gotipe-slash-menu-item-description {
+  font-size: var(--gt-text-xs, 12px);
+  color: var(--gt-text-tertiary);
+}
+
+.gotipe-slash-menu-empty {
+  padding: var(--gt-space-2, 8px) var(--gt-space-3, 12px);
+  color: var(--gt-text-tertiary);
+  font-size: var(--gt-text-sm, 14px);
+  text-align: center;
+}
+
+/* Fuzzy match highlight */
+.gotipe-slash-menu-item mark {
+  background: var(--gt-highlight-yellow-bg);
+  color: inherit;
+  padding: 0;
+  border-radius: 1px;
+}
+
+/* ============================================================
+   Block Toolbar
+   ============================================================ */
 
 .gotipe-block-toolbar {
   position: absolute;
   left: -40px;
   top: 0;
   display: flex;
+  align-items: center;
   gap: 2px;
   opacity: 0;
-  transition: opacity var(--gt-duration-fast) var(--gt-ease-out);
+  transition: opacity var(--gt-duration-fast, 100ms) var(--gt-ease-out);
+  z-index: var(--gt-z-block-handle, 10);
 }
 
 [data-block-id]:hover > .gotipe-block-toolbar {
   opacity: 1;
 }
 
-/* Collaboration cursors */
+.gotipe-block-toolbar button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border: none;
+  border-radius: var(--gt-radius-sm, 6px);
+  background: transparent;
+  color: var(--gt-text-tertiary);
+  cursor: pointer;
+  padding: 0;
+  transition: color var(--gt-duration-fast, 100ms) var(--gt-ease-out);
+}
+
+.gotipe-block-toolbar button:hover {
+  color: var(--gt-text-secondary);
+}
+
+.gotipe-drag-handle-btn {
+  cursor: grab;
+}
+.gotipe-drag-handle-btn:active {
+  cursor: grabbing;
+}
+
+/* Block More Menu (context menu) */
+.gotipe-block-more-menu {
+  position: absolute;
+  left: 0;
+  top: 100%;
+  margin-top: var(--gt-space-1, 4px);
+  background: var(--gt-bg);
+  border: 1px solid var(--gt-border-light, rgba(0,0,0,0.05));
+  border-radius: var(--gt-radius-lg, 12px);
+  box-shadow: var(--gt-shadow-elevated);
+  padding: var(--gt-space-1, 4px);
+  min-width: 160px;
+  z-index: var(--gt-z-slash, 50);
+  animation: gotipe-scale-in var(--gt-duration-normal, 150ms) var(--gt-ease-out);
+}
+
+.gotipe-block-more-menu button {
+  display: flex;
+  align-items: center;
+  gap: var(--gt-space-2, 8px);
+  width: 100%;
+  height: 32px;
+  padding: 0 var(--gt-space-2, 8px);
+  border: none;
+  border-radius: var(--gt-radius-md, 8px);
+  background: transparent;
+  color: var(--gt-text-base);
+  font-size: var(--gt-text-sm, 14px);
+  cursor: pointer;
+  transition: background var(--gt-duration-fast, 100ms) var(--gt-ease-out);
+  text-align: left;
+}
+
+.gotipe-block-more-menu button:hover {
+  background: var(--gt-bg-hover);
+}
+
+/* ============================================================
+   Block Context Menu (new — for drag handle click)
+   ============================================================ */
+
+.gotipe-block-context-menu {
+  position: absolute;
+  background: var(--gt-bg);
+  border: 1px solid var(--gt-border-light, rgba(0,0,0,0.05));
+  border-radius: var(--gt-radius-lg, 12px);
+  box-shadow: var(--gt-shadow-elevated);
+  padding: var(--gt-space-1, 4px);
+  min-width: 180px;
+  z-index: var(--gt-z-slash, 50);
+  animation: gotipe-scale-in var(--gt-duration-normal, 150ms) var(--gt-ease-out);
+}
+
+.gotipe-block-context-menu button {
+  display: flex;
+  align-items: center;
+  gap: var(--gt-space-2, 8px);
+  width: 100%;
+  height: 32px;
+  padding: 0 var(--gt-space-2, 8px);
+  border: none;
+  border-radius: var(--gt-radius-md, 8px);
+  background: transparent;
+  color: var(--gt-text-base);
+  font-size: var(--gt-text-sm, 14px);
+  cursor: pointer;
+  transition: background var(--gt-duration-fast, 100ms) var(--gt-ease-out);
+  text-align: left;
+}
+
+.gotipe-block-context-menu button:hover {
+  background: var(--gt-bg-hover);
+}
+
+/* ============================================================
+   Block Type Dropdown (bubble menu)
+   ============================================================ */
+
+.gotipe-block-type-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  margin-top: var(--gt-space-1, 4px);
+  background: var(--gt-bg);
+  border: 1px solid var(--gt-border-light, rgba(0,0,0,0.05));
+  border-radius: var(--gt-radius-card, 20px);
+  box-shadow: var(--gt-shadow-elevated);
+  padding: var(--gt-space-1, 4px);
+  min-width: 180px;
+  z-index: var(--gt-z-slash, 50);
+  animation: gotipe-scale-in var(--gt-duration-normal, 150ms) var(--gt-ease-out);
+}
+
+.gotipe-block-type-dropdown button {
+  display: flex;
+  align-items: center;
+  gap: var(--gt-space-2, 8px);
+  width: 100%;
+  height: 32px;
+  padding: 0 var(--gt-space-2, 8px);
+  border: none;
+  border-radius: var(--gt-radius-md, 8px);
+  background: transparent;
+  color: var(--gt-text-base);
+  font-size: var(--gt-text-sm, 14px);
+  cursor: pointer;
+  transition: background var(--gt-duration-fast, 100ms) var(--gt-ease-out);
+  text-align: left;
+}
+
+.gotipe-block-type-dropdown button:hover {
+  background: var(--gt-bg-hover);
+}
+
+.gotipe-block-type-dropdown button.active {
+  color: var(--gt-accent);
+}
+
+/* ============================================================
+   Text Color Picker (bubble menu)
+   ============================================================ */
+
+.gotipe-text-color-picker {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: var(--gt-space-1, 4px);
+  background: var(--gt-bg);
+  border: 1px solid var(--gt-border-light, rgba(0,0,0,0.05));
+  border-radius: var(--gt-radius-lg, 12px);
+  box-shadow: var(--gt-shadow-elevated);
+  padding: var(--gt-space-2, 8px);
+  z-index: var(--gt-z-slash, 50);
+  animation: gotipe-scale-in var(--gt-duration-normal, 150ms) var(--gt-ease-out);
+}
+
+.gotipe-text-color-picker-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: var(--gt-space-1, 4px);
+}
+
+.gotipe-text-color-swatch {
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: var(--gt-radius-sm, 6px);
+  cursor: pointer;
+  transition: transform var(--gt-duration-fast, 100ms) var(--gt-ease-out);
+}
+
+.gotipe-text-color-swatch:hover {
+  transform: scale(1.15);
+}
+
+.gotipe-text-color-reset {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 28px;
+  border: none;
+  border-radius: var(--gt-radius-sm, 6px);
+  background: transparent;
+  color: var(--gt-text-secondary);
+  font-size: var(--gt-text-xs, 12px);
+  cursor: pointer;
+  margin-top: var(--gt-space-1, 4px);
+}
+
+.gotipe-text-color-reset:hover {
+  background: var(--gt-bg-hover);
+}
+
+/* ============================================================
+   Code Block
+   ============================================================ */
+
+.gotipe-code-block {
+  background: var(--gt-bg-code, var(--gt-bg-hover));
+  border-radius: var(--gt-radius-md, 8px);
+  overflow: hidden;
+}
+
+.gotipe-code-block-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--gt-space-2, 8px) var(--gt-space-4, 16px);
+  border-bottom: 1px solid var(--gt-border-light, rgba(0,0,0,0.05));
+}
+
+.gotipe-code-block-header select {
+  appearance: none;
+  background: transparent;
+  border: none;
+  color: var(--gt-text-tertiary);
+  font-size: var(--gt-text-xs, 12px);
+  font-family: var(--gt-font-body);
+  cursor: pointer;
+  outline: none;
+  padding: 2px 4px;
+  border-radius: var(--gt-radius-sm, 6px);
+}
+
+.gotipe-code-block-header select:hover {
+  color: var(--gt-text-base);
+  background: var(--gt-bg-hover);
+}
+
+.gotipe-code-block-header button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: transparent;
+  color: var(--gt-text-tertiary);
+  font-size: var(--gt-text-xs, 12px);
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: var(--gt-radius-sm, 6px);
+  transition: color var(--gt-duration-fast, 100ms) var(--gt-ease-out),
+              background var(--gt-duration-fast, 100ms) var(--gt-ease-out);
+}
+
+.gotipe-code-block-header button:hover {
+  color: var(--gt-text-base);
+  background: var(--gt-bg-hover);
+}
+
+.gotipe-code-block pre {
+  margin: 0;
+  padding: var(--gt-space-4, 16px);
+  background: transparent;
+  border-radius: 0;
+}
+
+.gotipe-code-block-line-numbers {
+  width: 32px;
+  text-align: right;
+  color: var(--gt-text-tertiary);
+  font-size: var(--gt-text-sm, 14px);
+  user-select: none;
+  padding-right: var(--gt-space-3, 12px);
+}
+
+/* ============================================================
+   Callout
+   ============================================================ */
+
+.gotipe-callout {
+  display: flex;
+  gap: var(--gt-space-3, 12px);
+  background: var(--gt-bg-callout, var(--gt-bg-hover));
+  border-radius: var(--gt-radius-md, 8px);
+  padding: var(--gt-space-4, 16px);
+}
+
+.gotipe-callout-emoji {
+  flex-shrink: 0;
+  font-size: var(--gt-text-lg, 18px);
+  line-height: 1.5;
+  user-select: none;
+}
+
+.gotipe-callout-content {
+  flex: 1;
+  min-width: 0;
+}
+
+/* Callout variants */
+.gotipe-callout[data-variant="warning"] {
+  border-left: 3px solid var(--gt-warning);
+}
+.gotipe-callout[data-variant="error"] {
+  border-left: 3px solid var(--gt-error);
+}
+.gotipe-callout[data-variant="success"] {
+  border-left: 3px solid var(--gt-success);
+}
+
+/* ============================================================
+   Toggle
+   ============================================================ */
+
+.gotipe-toggle {
+  border-radius: var(--gt-radius-sm, 6px);
+}
+
+.gotipe-toggle > summary {
+  cursor: pointer;
+  padding: var(--gt-space-1, 4px) 0;
+  list-style: none;
+  display: flex;
+  align-items: center;
+  gap: var(--gt-space-2, 8px);
+}
+
+.gotipe-toggle > summary::-webkit-details-marker {
+  display: none;
+}
+
+.gotipe-toggle > summary::before {
+  content: "▸";
+  display: inline-block;
+  transition: transform var(--gt-duration-fast, 100ms) var(--gt-ease-out);
+  color: var(--gt-text-tertiary);
+}
+
+.gotipe-toggle[open] > summary::before {
+  transform: rotate(90deg);
+}
+
+.gotipe-toggle-content {
+  padding-left: var(--gt-space-6, 24px);
+}
+
+/* ============================================================
+   Image Block
+   ============================================================ */
+
+.gotipe-image-block {
+  margin: var(--gt-space-2, 8px) 0;
+}
+
+.gotipe-image-block img {
+  display: block;
+  border-radius: 4px;
+}
+
+.gotipe-image-block figcaption {
+  color: var(--gt-text-secondary);
+  font-size: var(--gt-text-sm, 14px);
+  text-align: center;
+  padding: var(--gt-space-2, 8px) 0;
+  outline: none;
+}
+
+.gotipe-image-block figcaption:empty::before {
+  content: "Add caption...";
+  color: var(--gt-text-placeholder, var(--gt-text-tertiary));
+}
+
+.gotipe-image-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 200px;
+  background: var(--gt-bg-hover);
+  border: 2px dashed var(--gt-border);
+  border-radius: var(--gt-radius-md, 8px);
+  color: var(--gt-text-tertiary);
+  font-size: var(--gt-text-sm, 14px);
+  cursor: pointer;
+  transition: border-color var(--gt-duration-fast, 100ms) var(--gt-ease-out),
+              background var(--gt-duration-fast, 100ms) var(--gt-ease-out);
+}
+
+.gotipe-image-placeholder:hover {
+  border-color: var(--gt-accent);
+  background: var(--gt-bg-active);
+}
+
+/* Image selected — resize handles */
+.gotipe-image-block.selected img {
+  outline: 2px solid var(--gt-accent);
+}
+
+.gotipe-image-resize-handle {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  background: var(--gt-accent);
+  border-radius: 50%;
+  border: 1px solid var(--gt-accent-text);
+}
+
+/* Upload progress */
+.gotipe-image-progress {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  height: 4px;
+  background: var(--gt-accent);
+  border-radius: 0 0 4px 4px;
+  transition: width var(--gt-duration-normal, 150ms) var(--gt-ease-out);
+}
+
+/* ============================================================
+   Table
+   ============================================================ */
+
+.gotipe-table-wrapper {
+  overflow-x: auto;
+  margin: var(--gt-space-2, 8px) 0;
+}
+
+.gotipe-table-wrapper table {
+  border-collapse: collapse;
+  width: 100%;
+}
+
+.gotipe-table-cell-selected {
+  background: var(--gt-bg-selected);
+  outline: 2px solid var(--gt-accent);
+}
+
+.gotipe-table-add-row,
+.gotipe-table-add-col {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border: none;
+  border-radius: 50%;
+  background: var(--gt-bg);
+  color: var(--gt-text-tertiary);
+  font-size: 14px;
+  cursor: pointer;
+  box-shadow: var(--gt-shadow-sm);
+  opacity: 0;
+  transition: opacity var(--gt-duration-fast, 100ms) var(--gt-ease-out);
+}
+
+.gotipe-table-wrapper:hover .gotipe-table-add-row,
+.gotipe-table-wrapper:hover .gotipe-table-add-col {
+  opacity: 1;
+}
+
+.gotipe-table-add-row:hover,
+.gotipe-table-add-col:hover {
+  color: var(--gt-accent);
+}
+
+.gotipe-table-col-resize {
+  position: absolute;
+  top: 0;
+  right: -1px;
+  width: 3px;
+  height: 100%;
+  cursor: col-resize;
+  background: transparent;
+}
+
+.gotipe-table-col-resize:hover,
+.gotipe-table-col-resize.active {
+  background: var(--gt-accent);
+}
+
+/* ============================================================
+   Collaboration Cursors
+   ============================================================ */
+
 .gotipe-remote-cursor {
   position: absolute;
   width: 2px;
-  z-index: var(--gt-z-content);
+  z-index: var(--gt-z-content, 1);
 }
 
 .gotipe-remote-cursor-label {
@@ -112,19 +690,24 @@
   top: -20px;
   left: 0;
   font-size: 11px;
-  padding: 1px 6px;
-  border-radius: var(--gt-radius-sm);
+  padding: 2px 6px;
+  border-radius: 4px 4px 4px 0;
   white-space: nowrap;
   color: #fff;
 }
 
-/* AI ghost text */
+/* ============================================================
+   AI Ghost Text
+   ============================================================ */
+
 .gotipe-ghost-text {
   color: var(--gt-ai-ghost);
-  font-style: italic;
 }
 
-/* Comment highlight */
+/* ============================================================
+   Comment Highlight
+   ============================================================ */
+
 .gotipe-comment-highlight {
   background: rgba(250, 176, 5, 0.2);
   border-bottom: 2px solid rgba(250, 176, 5, 0.5);
@@ -135,17 +718,339 @@
   border-bottom-color: rgba(64, 192, 87, 0.3);
 }
 
-/* Suggestion highlights */
+/* ============================================================
+   Comment Sidebar
+   ============================================================ */
+
+.gotipe-comment-sidebar {
+  position: absolute;
+  right: 0;
+  top: 0;
+  width: 280px;
+  height: 100%;
+  border-left: 1px solid var(--gt-border-light, rgba(0,0,0,0.05));
+  background: var(--gt-bg);
+  overflow-y: auto;
+  z-index: var(--gt-z-toolbar, 30);
+}
+
+.gotipe-comment-sidebar-content {
+  padding: var(--gt-space-4, 16px);
+}
+
+.gotipe-comment-thread {
+  margin-bottom: var(--gt-space-4, 16px);
+  padding: var(--gt-space-3, 12px);
+  border: 1px solid var(--gt-border-light, rgba(0,0,0,0.05));
+  border-radius: var(--gt-radius-lg, 12px);
+}
+
+.gotipe-comment-author {
+  font-size: var(--gt-text-sm, 14px);
+  font-weight: 600;
+  color: var(--gt-text-base);
+}
+
+.gotipe-comment-timestamp {
+  font-size: var(--gt-text-xs, 12px);
+  color: var(--gt-text-tertiary);
+}
+
+.gotipe-comment-quote {
+  font-size: var(--gt-text-sm, 14px);
+  color: var(--gt-text-secondary);
+  border-left: 2px solid var(--gt-border);
+  padding-left: var(--gt-space-2, 8px);
+  margin: var(--gt-space-2, 8px) 0;
+}
+
+.gotipe-comment-body {
+  font-size: var(--gt-text-sm, 14px);
+  color: var(--gt-text-base);
+  margin-top: var(--gt-space-2, 8px);
+}
+
+/* ============================================================
+   Suggestion Highlights (AI Proofread)
+   ============================================================ */
+
 .gotipe-suggestion-insert {
-  background: rgba(64, 192, 87, 0.2);
+  background: var(--gt-highlight-green-bg);
   text-decoration: none;
 }
 .gotipe-suggestion-delete {
-  background: rgba(250, 82, 82, 0.2);
+  background: rgba(250, 82, 82, 0.15);
   text-decoration: line-through;
+  color: var(--gt-text-tertiary);
 }
 
-/* Mobile (<640px) */
+/* ============================================================
+   Suggestion Toolbar
+   ============================================================ */
+
+.gotipe-suggestion-toolbar {
+  display: flex;
+  align-items: center;
+  gap: var(--gt-space-2, 8px);
+  padding: var(--gt-space-2, 8px) var(--gt-space-3, 12px);
+  background: var(--gt-bg);
+  border: 1px solid var(--gt-border-light, rgba(0,0,0,0.05));
+  border-radius: var(--gt-radius-lg, 12px);
+  box-shadow: var(--gt-shadow-elevated);
+  font-size: var(--gt-text-sm, 14px);
+  z-index: var(--gt-z-bubble, 40);
+}
+
+.gotipe-suggestion-toolbar button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 28px;
+  padding: 0 var(--gt-space-2, 8px);
+  border: none;
+  border-radius: var(--gt-radius-sm, 6px);
+  background: transparent;
+  color: var(--gt-text-secondary);
+  font-size: var(--gt-text-sm, 14px);
+  cursor: pointer;
+  transition: background var(--gt-duration-fast, 100ms) var(--gt-ease-out);
+}
+
+.gotipe-suggestion-toolbar button:hover:not(:disabled) {
+  background: var(--gt-bg-hover);
+}
+
+.gotipe-suggestion-toolbar button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.gotipe-suggestion-counter {
+  color: var(--gt-text-tertiary);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ============================================================
+   Theme Toggle
+   ============================================================ */
+
+.gotipe-theme-toggle {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 2px;
+  background: var(--gt-bg-hover);
+  border-radius: 999px;
+}
+
+.gotipe-theme-toggle button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--gt-text-tertiary);
+  font-size: var(--gt-text-sm, 14px);
+  cursor: pointer;
+  transition: background var(--gt-duration-fast, 100ms) var(--gt-ease-out),
+              color var(--gt-duration-fast, 100ms) var(--gt-ease-out);
+}
+
+.gotipe-theme-toggle button:hover {
+  color: var(--gt-text-secondary);
+}
+
+.gotipe-theme-toggle button.active {
+  background: var(--gt-bg);
+  color: var(--gt-text-base);
+  box-shadow: var(--gt-shadow-sm);
+}
+
+/* ============================================================
+   AI Command Bar
+   ============================================================ */
+
+.gotipe-ai-command-bar {
+  position: fixed;
+  bottom: var(--gt-space-6, 24px);
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(600px, calc(100vw - 32px));
+  min-width: 320px;
+  background: var(--gt-bg);
+  backdrop-filter: blur(12px);
+  border: 1px solid var(--gt-border-light, rgba(0,0,0,0.05));
+  border-radius: 999px;
+  box-shadow: var(--gt-shadow-elevated);
+  padding: var(--gt-space-2, 8px) var(--gt-space-4, 16px);
+  display: flex;
+  align-items: center;
+  gap: var(--gt-space-2, 8px);
+  z-index: var(--gt-z-ai, 70);
+  animation: gotipe-slide-up var(--gt-duration-enter, 200ms) var(--gt-ease-out);
+}
+
+.gotipe-ai-command-bar input {
+  flex: 1;
+  border: none;
+  background: transparent;
+  font-size: var(--gt-text-sm, 14px);
+  color: var(--gt-text-base);
+  outline: none;
+}
+
+.gotipe-ai-command-bar input::placeholder {
+  color: var(--gt-text-placeholder, var(--gt-text-tertiary));
+}
+
+.gotipe-ai-command-bar-icon {
+  color: var(--gt-text-tertiary);
+  flex-shrink: 0;
+}
+
+.gotipe-ai-command-bar-submit {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 50%;
+  background: var(--gt-accent);
+  color: var(--gt-accent-text);
+  font-size: var(--gt-text-sm, 14px);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: opacity var(--gt-duration-fast, 100ms) var(--gt-ease-out);
+}
+
+.gotipe-ai-command-bar-submit:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.gotipe-ai-command-bar-submit:not(:disabled):hover {
+  background: var(--gt-accent-hover);
+}
+
+/* ============================================================
+   AI Status Indicator
+   ============================================================ */
+
+.gotipe-ai-status {
+  display: flex;
+  align-items: center;
+  gap: var(--gt-space-2, 8px);
+  padding: var(--gt-space-1, 4px) var(--gt-space-3, 12px);
+  font-size: var(--gt-text-xs, 12px);
+  color: var(--gt-text-tertiary);
+}
+
+.gotipe-ai-status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--gt-accent);
+  animation: gotipe-pulse 1.5s ease-in-out infinite;
+}
+
+/* ============================================================
+   Drag & Drop
+   ============================================================ */
+
+.gotipe-drop-indicator {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--gt-accent);
+  border-radius: 1px;
+  pointer-events: none;
+  z-index: var(--gt-z-drag, 100);
+  animation: gotipe-drop-line var(--gt-duration-normal, 150ms) var(--gt-ease-out);
+}
+
+[data-block-id].dragging {
+  opacity: 0.5;
+  box-shadow: var(--gt-shadow-lg);
+  transform: scale(1.02);
+}
+
+/* ============================================================
+   Animations
+   ============================================================ */
+
+@keyframes gotipe-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes gotipe-scale-in {
+  from {
+    opacity: 0;
+    transform: scale(0.98) translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+@keyframes gotipe-slide-up {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+}
+
+@keyframes gotipe-drop-line {
+  from {
+    opacity: 0;
+    transform: scaleX(0);
+  }
+  to {
+    opacity: 1;
+    transform: scaleX(1);
+  }
+}
+
+@keyframes gotipe-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+/* ============================================================
+   Dark mode adjustments
+   ============================================================ */
+
+[data-theme="dark"] .gotipe-bubble-menu button:hover,
+[data-theme="dark"] .gotipe-block-more-menu button:hover,
+[data-theme="dark"] .gotipe-block-context-menu button:hover,
+[data-theme="dark"] .gotipe-block-type-dropdown button:hover {
+  background: rgba(255,255,255,0.08);
+}
+
+[data-theme="dark"] .gotipe-image-placeholder:hover {
+  border-color: var(--gt-accent);
+}
+
+/* ============================================================
+   Mobile (<640px)
+   ============================================================ */
+
 @media (max-width: 639px) {
   .gotipe-bubble-menu {
     position: fixed !important;
@@ -153,8 +1058,26 @@
     left: 0 !important;
     right: 0 !important;
     top: auto !important;
-    border-radius: var(--gt-radius-lg) var(--gt-radius-lg) 0 0;
+    border-radius: var(--gt-radius-lg, 12px) var(--gt-radius-lg, 12px) 0 0;
     justify-content: center;
-    padding: var(--gt-spacing-sm) var(--gt-spacing-md);
+    padding: var(--gt-space-2, 8px) var(--gt-space-3, 12px);
+  }
+
+  .gotipe-slash-menu {
+    width: calc(100vw - 32px);
+    max-width: 320px;
+  }
+
+  .gotipe-ai-command-bar {
+    bottom: var(--gt-space-2, 8px);
+    width: calc(100vw - 16px);
+    min-width: unset;
+    border-radius: var(--gt-radius-card, 20px);
+  }
+
+  .gotipe-comment-sidebar {
+    position: fixed;
+    width: 100%;
+    max-width: 320px;
   }
 }
