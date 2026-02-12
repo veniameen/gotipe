@@ -50,6 +50,7 @@ export function BubbleMenu({ editor, shouldShow, offset, children }: BubbleMenuP
       className="gotipe-bubble-menu"
       role="toolbar"
       aria-label="Text formatting"
+      data-gotipe-bubble-menu=""
       style={{
         position: "fixed",
         top: `${position.top}px`,

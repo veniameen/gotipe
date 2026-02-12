@@ -47,7 +47,7 @@ export const Image = defineExtension<ImageOptions>({
       aliases: ["img", "picture", "photo"],
       description: "Insert an image",
       icon: "image",
-      group: "media",
+      group: "upload",
       execute: (editor) => {
         const input = document.createElement("input");
         input.type = "file";

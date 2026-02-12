@@ -25,7 +25,7 @@ export const File = defineExtension({
       aliases: ["file", "attachment", "upload"],
       description: "Attach a file",
       icon: "paperclip",
-      group: "media",
+      group: "upload",
       execute: (editor) => {
         const input = document.createElement("input");
         input.type = "file";

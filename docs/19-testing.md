@@ -692,6 +692,234 @@ test.describe('Collaboration', () => {
 });
 ```
 
+test.describe('Slash menu', () => {
+    test('opens on "/" and shows categories', async ({ page }) => {
+        await page.click('[data-gotipe-editor]');
+        await page.keyboard.type('/');
+        await page.waitForSelector('[data-gotipe-slash-menu]');
+        // Verify categories exist
+        await expect(page.locator('[data-gotipe-slash-menu]')).toContainText('STYLE');
+        await expect(page.locator('[data-gotipe-slash-menu]')).toContainText('INSERT');
+        await expect(page.locator('[data-gotipe-slash-menu]')).toContainText('UPLOAD');
+    });
+
+    test('filters items via fuzzy search', async ({ page }) => {
+        await page.click('[data-gotipe-editor]');
+        await page.keyboard.type('/head');
+        await page.waitForSelector('[data-gotipe-slash-menu]');
+        // Should show heading items, not all items
+        await expect(page.locator('[data-gotipe-slash-item]')).toHaveCount(3); // H1, H2, H3
+    });
+
+    test('navigates with keyboard and selects', async ({ page }) => {
+        await page.click('[data-gotipe-editor]');
+        await page.keyboard.type('/h1');
+        await page.waitForSelector('[data-gotipe-slash-menu]');
+        await page.keyboard.press('ArrowDown');
+        await page.keyboard.press('Enter');
+        await page.keyboard.type('My Heading');
+        await expect(page.locator('h1')).toContainText('My Heading');
+    });
+
+    test('closes on Escape', async ({ page }) => {
+        await page.click('[data-gotipe-editor]');
+        await page.keyboard.type('/');
+        await page.waitForSelector('[data-gotipe-slash-menu]');
+        await page.keyboard.press('Escape');
+        await expect(page.locator('[data-gotipe-slash-menu]')).not.toBeVisible();
+    });
+});
+
+test.describe('Bubble menu', () => {
+    test('appears on text selection', async ({ page }) => {
+        await page.click('[data-gotipe-editor]');
+        await page.keyboard.type('Hello World');
+        // Select all text
+        await page.keyboard.press('Meta+a');
+        await page.waitForSelector('[data-gotipe-bubble-menu]');
+        await expect(page.locator('[data-gotipe-bubble-menu]')).toBeVisible();
+    });
+
+    test('formats text via Bold button', async ({ page }) => {
+        await page.click('[data-gotipe-editor]');
+        await page.keyboard.type('Bold text');
+        await page.keyboard.press('Meta+a');
+        await page.waitForSelector('[data-gotipe-bubble-menu]');
+        await page.click('[data-gotipe-bubble-menu] [data-mark="bold"]');
+        await expect(page.locator('strong')).toContainText('Bold text');
+    });
+
+    test('changes block type via dropdown', async ({ page }) => {
+        await page.click('[data-gotipe-editor]');
+        await page.keyboard.type('Heading text');
+        await page.keyboard.press('Meta+a');
+        await page.waitForSelector('[data-gotipe-bubble-menu]');
+        await page.click('[data-gotipe-block-type-dropdown]');
+        await page.click('[data-block-type="heading"][data-level="2"]');
+        await expect(page.locator('h2')).toContainText('Heading text');
+    });
+
+    test('hides on click outside', async ({ page }) => {
+        await page.click('[data-gotipe-editor]');
+        await page.keyboard.type('Some text');
+        await page.keyboard.press('Meta+a');
+        await page.waitForSelector('[data-gotipe-bubble-menu]');
+        await page.click('body', { position: { x: 10, y: 10 } });
+        await expect(page.locator('[data-gotipe-bubble-menu]')).not.toBeVisible();
+    });
+});
+
+test.describe('Block toolbar', () => {
+    test('shows drag handle and add button on hover', async ({ page }) => {
+        await page.click('[data-gotipe-editor]');
+        await page.keyboard.type('Hover me');
+        const block = page.locator('[data-gotipe-block]').first();
+        await block.hover();
+        await expect(page.locator('[data-gotipe-drag-handle]')).toBeVisible();
+        await expect(page.locator('.gotipe-block-add-btn')).toBeVisible();
+    });
+
+    test('add button opens slash menu', async ({ page }) => {
+        await page.click('[data-gotipe-editor]');
+        await page.keyboard.type('Some text');
+        const block = page.locator('[data-gotipe-block]').first();
+        await block.hover();
+        await page.click('.gotipe-block-add-btn');
+        await page.waitForSelector('[data-gotipe-slash-menu]');
+    });
+
+    test('drag handle click opens context menu', async ({ page }) => {
+        await page.click('[data-gotipe-editor]');
+        await page.keyboard.type('Block with menu');
+        const block = page.locator('[data-gotipe-block]').first();
+        await block.hover();
+        await page.click('[data-gotipe-drag-handle]');
+        await expect(page.locator('[data-gotipe-context-menu]')).toBeVisible();
+        await expect(page.locator('[data-gotipe-context-menu]')).toContainText('Delete');
+        await expect(page.locator('[data-gotipe-context-menu]')).toContainText('Duplicate');
+    });
+
+    test('drag reorders blocks', async ({ page }) => {
+        await page.click('[data-gotipe-editor]');
+        await page.keyboard.type('First block');
+        await page.keyboard.press('Enter');
+        await page.keyboard.type('Second block');
+        // Drag first block after second
+        // ... (drag API test with page.dragAndDrop)
+    });
+});
+
+test.describe('AI features', () => {
+    test('ghost text appears after typing pause', async ({ page }) => {
+        await page.goto('/?example=ai');
+        await page.click('[data-gotipe-editor]');
+        await page.keyboard.type('The quick brown ');
+        // Wait for debounce + generation
+        await page.waitForSelector('.gotipe-ghost-text', { timeout: 3000 });
+        await expect(page.locator('.gotipe-ghost-text')).toBeVisible();
+    });
+
+    test('Tab accepts ghost text', async ({ page }) => {
+        await page.goto('/?example=ai');
+        await page.click('[data-gotipe-editor]');
+        await page.keyboard.type('The quick brown ');
+        await page.waitForSelector('.gotipe-ghost-text', { timeout: 3000 });
+        const ghostText = await page.locator('.gotipe-ghost-text').textContent();
+        await page.keyboard.press('Tab');
+        // Ghost text should now be part of content
+        await expect(page.locator('.gotipe-ghost-text')).not.toBeVisible();
+        await expect(page.locator('[data-gotipe-editor]')).toContainText(ghostText!);
+    });
+
+    test('AI command bar opens and accepts input', async ({ page }) => {
+        await page.goto('/?example=ai');
+        await page.keyboard.press('Meta+k');
+        await page.waitForSelector('[data-gotipe-ai-command-bar]');
+        await page.keyboard.type('Proofread this document');
+        await page.keyboard.press('Enter');
+        // Should start AI processing
+        await expect(page.locator('[data-gotipe-ai-status]')).toBeVisible();
+    });
+
+    test('suggestion toolbar shows with accept/reject', async ({ page }) => {
+        await page.goto('/?example=ai');
+        // Trigger AI proofread
+        await page.keyboard.press('Meta+k');
+        await page.waitForSelector('[data-gotipe-ai-command-bar]');
+        await page.keyboard.type('Proofread');
+        await page.keyboard.press('Enter');
+        // Wait for suggestions
+        await page.waitForSelector('[data-gotipe-suggestion-toolbar]', { timeout: 10000 });
+        await expect(page.locator('[data-gotipe-suggestion-toolbar]')).toContainText('/');
+        // Accept all
+        await page.click('[data-action="accept-all"]');
+    });
+});
+
+test.describe('Comments', () => {
+    test('creates comment thread via bubble menu', async ({ page }) => {
+        await page.goto('/?example=comments');
+        await page.click('[data-gotipe-editor]');
+        await page.keyboard.type('Comment on this text');
+        await page.keyboard.press('Meta+a');
+        await page.waitForSelector('[data-gotipe-bubble-menu]');
+        await page.click('[data-action="add-comment"]');
+        await page.waitForSelector('.gotipe-comment-input');
+        await page.keyboard.type('This needs work');
+        await page.click('[data-action="submit-comment"]');
+        // Comment should appear in sidebar
+        await expect(page.locator('.gotipe-comment-sidebar')).toContainText('This needs work');
+    });
+
+    test('replies to comment thread', async ({ page }) => {
+        await page.goto('/?example=comments');
+        // ... create comment first, then reply
+        await page.click('.gotipe-comment-reply-input');
+        await page.keyboard.type('Agreed, fixing now');
+        await page.keyboard.press('Enter');
+        await expect(page.locator('.gotipe-comment-thread')).toContainText('Agreed, fixing now');
+    });
+
+    test('resolves and navigates comments', async ({ page }) => {
+        await page.goto('/?example=comments');
+        // ... create multiple comments, then navigate
+        await page.click('[data-action="next-comment"]');
+        await page.click('[data-action="resolve-comment"]');
+    });
+});
+
+test.describe('Dark mode', () => {
+    test('toggles dark mode and all components adapt', async ({ page }) => {
+        await page.goto('/');
+        // Toggle to dark
+        await page.evaluate(() => {
+            document.documentElement.setAttribute('data-theme', 'dark');
+        });
+        // Verify dark mode styles
+        const bg = await page.evaluate(() =>
+            getComputedStyle(document.querySelector('[data-gotipe-editor]')!)
+                .getPropertyValue('--gt-bg')
+        );
+        expect(bg.trim()).toBe('#191919');
+    });
+
+    test('slash menu adapts to dark mode', async ({ page }) => {
+        await page.evaluate(() => {
+            document.documentElement.setAttribute('data-theme', 'dark');
+        });
+        await page.click('[data-gotipe-editor]');
+        await page.keyboard.type('/');
+        await page.waitForSelector('[data-gotipe-slash-menu]');
+        // Verify dark styles are applied
+        const menuBg = await page.evaluate(() =>
+            getComputedStyle(document.querySelector('[data-gotipe-slash-menu]')!).backgroundColor
+        );
+        // Should be dark background
+        expect(menuBg).not.toBe('rgb(255, 255, 255)');
+    });
+});
+```
+
 ---
 
 ## CI Pipeline

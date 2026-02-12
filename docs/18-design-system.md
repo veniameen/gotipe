@@ -21,36 +21,37 @@
 
 ## 2. Типографика
 
-### Системный шрифт стек
+### Шрифты
 
 ```css
---gt-font-body: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
-                "Helvetica Neue", Arial, sans-serif;
+/* Content font — Inter для оптимальной читаемости */
+--gt-font-body: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI",
+                Roboto, "Helvetica Neue", Arial, sans-serif;
 --gt-font-mono: "SF Mono", "Fira Code", "JetBrains Mono", Consolas,
                 "Courier New", monospace;
 --gt-font-heading: var(--gt-font-body);
 ```
 
-Системные шрифты по умолчанию — нулевая задержка загрузки, нативный вид на каждой платформе.
+**Inter** как дефолтный шрифт: оптимизирован для экранного текста, поддерживает variable font, хороший кернинг. При отсутствии Inter — fallback на системные шрифты (нулевая задержка).
 
 ### Шкала размеров
 
-| Токен | Размер | Line-height | Использование |
-|-------|--------|-------------|---------------|
-| `--gt-text-xs` | 12px | 1.5 | Caption, badge |
-| `--gt-text-sm` | 14px | 1.5 | Мелкий текст, toolbar labels |
-| `--gt-text-base` | 16px | 1.625 | Основной текст (body) |
-| `--gt-text-lg` | 18px | 1.55 | Увеличенный текст |
-| `--gt-text-xl` | 20px | 1.4 | Heading 3 |
-| `--gt-text-2xl` | 24px | 1.33 | Heading 2 |
-| `--gt-text-3xl` | 30px | 1.2 | Heading 1 |
+| Токен | Размер | Line-height | Weight | Использование |
+|-------|--------|-------------|--------|---------------|
+| `--gt-text-xs` | 12px | 16px (1.33) | 600 | Labels, badge, category headers |
+| `--gt-text-sm` | 14px | 20px (1.43) | 500 | UI текст, toolbar labels, описания |
+| `--gt-text-base` | 16px | 24px (1.5) | 400 | Основной текст контента (body) |
+| `--gt-text-lg` | 18px | 28px (1.55) | 400 | Увеличенный текст |
+| `--gt-text-xl` | 20px | 28px (1.4) | 600 | Heading 3 |
+| `--gt-text-2xl` | 24px | 32px (1.33) | 600 | Heading 2 |
+| `--gt-text-3xl` | 30px | 36px (1.2) | 700 | Heading 1 |
 
 ### Параграф
 
 ```css
 --gt-paragraph-spacing: 0.75em;    /* Между параграфами */
 --gt-paragraph-indent: 0;          /* Отступ первой строки (0 по умолчанию) */
---gt-line-height-body: 1.625;      /* Оптимально для чтения */
+--gt-line-height-body: 1.5;        /* Оптимально для чтения (16px → 24px) */
 --gt-letter-spacing: -0.011em;     /* Slight tightening для body */
 ```
 
@@ -147,9 +148,34 @@
   --gt-ai-highlight: #dbeafe;
   --gt-ai-border: #93c5fd;
 
+  /* Shadows — 4-layer soft elevation (Tiptap-adapted) */
   --gt-shadow-sm: 0 1px 2px rgba(0,0,0,0.05);
   --gt-shadow-md: 0 4px 12px rgba(0,0,0,0.08);
   --gt-shadow-lg: 0 8px 24px rgba(0,0,0,0.12);
+  --gt-shadow-elevated:
+    0px 16px 48px 0px rgba(17,24,39,0.04),
+    0px 12px 24px 0px rgba(17,24,39,0.04),
+    0px 6px 8px 0px rgba(17,24,39,0.02),
+    0px 2px 3px 0px rgba(17,24,39,0.02);
+
+  /* Highlight palette — 5 colors for text highlights */
+  --gt-highlight-blue-bg: #dbeafe;
+  --gt-highlight-blue-text: #1e40af;
+  --gt-highlight-green-bg: #dcfce7;
+  --gt-highlight-green-text: #166534;
+  --gt-highlight-yellow-bg: #fef9c3;
+  --gt-highlight-yellow-text: #854d0e;
+  --gt-highlight-red-bg: #fecaca;
+  --gt-highlight-red-text: #991b1b;
+  --gt-highlight-purple-bg: #f3e8ff;
+  --gt-highlight-purple-text: #6b21a8;
+
+  /* Border-radius scale */
+  --gt-radius-sm: 6px;
+  --gt-radius-md: 8px;
+  --gt-radius-lg: 12px;
+  --gt-radius-xl: 16px;
+  --gt-radius-card: 20px;
 }
 ```
 
@@ -191,6 +217,23 @@
   --gt-shadow-sm: 0 1px 2px rgba(0,0,0,0.3);
   --gt-shadow-md: 0 4px 12px rgba(0,0,0,0.4);
   --gt-shadow-lg: 0 8px 24px rgba(0,0,0,0.5);
+  --gt-shadow-elevated:
+    0px 16px 48px 0px rgba(0,0,0,0.16),
+    0px 12px 24px 0px rgba(0,0,0,0.12),
+    0px 6px 8px 0px rgba(0,0,0,0.08),
+    0px 2px 3px 0px rgba(0,0,0,0.06);
+
+  /* Highlight palette — dark mode adapted */
+  --gt-highlight-blue-bg: #1e3a5f;
+  --gt-highlight-blue-text: #93c5fd;
+  --gt-highlight-green-bg: #14532d;
+  --gt-highlight-green-text: #86efac;
+  --gt-highlight-yellow-bg: #422006;
+  --gt-highlight-yellow-text: #fde68a;
+  --gt-highlight-red-bg: #450a0a;
+  --gt-highlight-red-text: #fca5a5;
+  --gt-highlight-purple-bg: #3b0764;
+  --gt-highlight-purple-text: #d8b4fe;
 }
 ```
 
@@ -277,14 +320,15 @@
 |----------|---------|
 | Высота | 44px |
 | Фон | `--gt-bg` с `backdrop-filter: blur(12px)` |
-| Border | `1px solid var(--gt-border)` + `--gt-shadow-sm` |
-| Border-radius | `8px` |
-| Кнопка размер | 32px x 32px |
-| Кнопка hover | `--gt-bg-hover`, transition 150ms |
-| Кнопка active | `--gt-bg-active`, `--gt-accent` для текста/иконок |
-| Разделитель | 1px вертикальная линия, `--gt-border-divider`, height 20px |
+| Border | `1px solid rgba(0,0,0,0.05)` + `--gt-shadow-sm` |
+| Border-radius | `var(--gt-radius-lg)` (12px) |
+| Кнопка размер | 32px × 32px, border-radius `var(--gt-radius-lg)` (12px) |
+| Кнопка default | Transparent background |
+| Кнопка hover | `rgba(0,0,0,0.08)` background, transition 150ms |
+| Кнопка active | `--gt-accent` для текста/иконок |
+| Разделитель | 1px вертикальная линия, `rgba(0,0,0,0.05)`, height 20px, margin 0 4px |
 | Иконки | 18px, stroke 1.5px, `--gt-text-secondary` (default), `--gt-text` (hover) |
-| Dropdown | Появляется с `--gt-shadow-md`, border-radius 8px, max-height 320px |
+| Dropdown | `--gt-shadow-elevated`, border-radius `var(--gt-radius-card)` (20px), max-height 320px |
 | Позиционирование | sticky top (desktop), fixed bottom (mobile) |
 
 **Варианты:**
@@ -295,26 +339,31 @@
 
 ### 5.2 Bubble Menu
 
-Появляется при выделении текста.
+Появляется при выделении текста. Layout: AI Improve → Block Type dropdown → Formatting marks → Text Color → More.
 
 ```
-                    ┌──────────────────────────────┐
-Selected text here  │ B  I  U  S  🔗  H▾  ⋮      │
-                    └──────────────────────────────┘
+                    ┌──────────────────────────────────────────────────────┐
+Selected text here  │ ✨ Improve │ Paragraph ▾ │ B I U S </> 🔗 │ A▾ │ ⋮ │
+                    └──────────────────────────────────────────────────────┘
 ```
 
 | Свойство | Значение |
 |----------|---------|
 | Фон | `--gt-bg` |
-| Border | `1px solid var(--gt-border)` |
-| Shadow | `--gt-shadow-md` |
-| Border-radius | `8px` |
+| Border | `1px solid rgba(0,0,0,0.05)` |
+| Shadow | `--gt-shadow-elevated` (4-layer soft) |
+| Border-radius | `var(--gt-radius-lg)` (12px) |
 | Padding | `4px` |
+| Кнопка размер | 32×32px, border-radius `var(--gt-radius-lg)` (12px) |
+| Кнопка default | Transparent background |
+| Кнопка hover | `rgba(0,0,0,0.08)` background |
+| Кнопка active mark | `--gt-accent` цвет иконки |
+| Разделитель | 1px вертикальная, `rgba(0,0,0,0.05)`, height 20px, margin 0 4px |
 | Анимация появления | `opacity 0→1 + translateY(4px→0)`, 150ms ease-out |
 | Анимация скрытия | `opacity 1→0`, 100ms ease-in |
-| Позиционирование | Над выделением, по центру. Если не влезает — снизу. Если не влезает по бокам — прижимается к viewport с padding 8px |
+| Позиционирование | Над выделением, по центру. Flips below when near top edge. Viewport edge detection. |
 | Отступ от выделения | 8px |
-| Z-index | `--gt-z-bubble: 50` |
+| Z-index | `--gt-z-bubble: 40` |
 
 ### 5.3 Slash Commands Menu
 
@@ -357,8 +406,8 @@ Selected text here  │ B  I  U  S  🔗  H▾  ⋮      │
 | Max-height | 400px (scrollable) |
 | Фон | `--gt-bg` |
 | Border | `1px solid var(--gt-border)` |
-| Shadow | `--gt-shadow-lg` |
-| Border-radius | `10px` |
+| Shadow | `--gt-shadow-elevated` (4-layer soft) |
+| Border-radius | `var(--gt-radius-card)` (20px) |
 | Search input | `--gt-bg-hover` фон, border-radius 6px, 36px высота, placeholder: "Search blocks..." |
 | Категория | `--gt-text-tertiary`, 11px, uppercase, letter-spacing 0.05em, padding-left 12px |
 | Item высота | 40px |
@@ -587,6 +636,27 @@ Popup при hover над ссылкой.
 | Commands | Список с иконками, hover `--gt-bg-hover` |
 | Streaming output | Текст появляется token-by-token с cursor blink |
 | Accept/Reject | Два кнопки внизу: "Insert" (accent) и "Discard" (ghost) |
+
+---
+
+### 5.15 Component Computed Styles Summary
+
+Таблица реальных computed-стилей для ключевых компонентов (итоговые значения, не токены):
+
+| Компонент | Background | Border | Border-radius | Shadow | Sizing |
+|-----------|-----------|--------|---------------|--------|--------|
+| **Editor canvas** | transparent | none | — | none | max-width 708px, centered |
+| **Toolbar buttons** | transparent → hover rgba(0,0,0,0.08) | none | 12px | none | 32×32px |
+| **Cards/Dropdowns** | `--gt-bg` | 1px solid rgba(0,0,0,0.05) | 20px | 4-layer elevated | auto |
+| **Slash menu** | `--gt-bg` | 1px solid rgba(0,0,0,0.05) | 20px | 4-layer elevated | 320px width |
+| **Bubble menu** | `--gt-bg` | 1px solid rgba(0,0,0,0.05) | 12px | 4-layer elevated | auto |
+| **Block context menu** | `--gt-bg` | 1px solid rgba(0,0,0,0.05) | 12px | 4-layer elevated | auto |
+| **Separators** | `rgba(0,0,0,0.05)` | — | — | — | 1px, margin 4px 0 |
+| **Code block** | `--gt-bg-code` | none | 8px | none | padding 16px |
+| **Image selected** | — | 2px solid `--gt-accent` | 4px | none | resize handles 8×8px |
+| **AI command bar** | `--gt-bg` | 1px solid rgba(0,0,0,0.05) | 999px (pill) | 4-layer + backdrop blur | ~600px width |
+
+**Ключевой принцип:** Минимальные borders (opacity 0.05), depth через shadows (4-layer soft), крупные border-radius (12px кнопки, 20px карточки/меню).
 
 ---
 

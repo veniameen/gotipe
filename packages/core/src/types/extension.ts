@@ -51,7 +51,7 @@ export interface SlashCommandDef {
   aliases: string[];
   description?: string;
   icon: string;
-  group: "basic" | "media" | "advanced" | "inline";
+  group: "ai" | "style" | "insert" | "upload";
   execute: (editor: GoTipeEditor) => void;
   shouldShow?: (editor: GoTipeEditor) => boolean;
 }

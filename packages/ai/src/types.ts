@@ -6,6 +6,7 @@ export interface AiContext {
   surroundingBlocks?: Block[];
   documentTitle?: string;
   language?: string;
+  fullText?: string;
 }
 
 export interface AiSuggestion {
@@ -13,6 +14,27 @@ export interface AiSuggestion {
   type: "completion" | "rewrite" | "fix" | "translate" | "summarize" | "expand";
   content: string;
   confidence: number;
+}
+
+export interface AiProofreadSuggestion {
+  id: string;
+  type: "insert" | "delete" | "replace";
+  blockId: string;
+  from: number;
+  to: number;
+  originalText: string;
+  suggestedText: string;
+  reason?: string;
+}
+
+export interface AiComment {
+  id: string;
+  blockId: string;
+  from: number;
+  to: number;
+  quotedText: string;
+  body: string;
+  category?: "grammar" | "style" | "clarity" | "logic" | "general";
 }
 
 export interface AiCommand {
@@ -26,6 +48,10 @@ export interface AiProvider {
   generateCompletion(context: AiContext): AsyncIterable<string>;
   generateSuggestions(prompt: string, context: AiContext): Promise<AiSuggestion[]>;
   executeCommand(command: string, context: AiContext): Promise<string>;
+  streamRewrite?(text: string, context: AiContext): AsyncIterable<string>;
+  proofread?(context: AiContext): Promise<AiProofreadSuggestion[]>;
+  reviewComments?(context: AiContext): Promise<AiComment[]>;
+  generateParagraph?(prompt: string, context: AiContext): AsyncIterable<string>;
 }
 
 export interface AiOptions {
@@ -35,4 +61,12 @@ export interface AiOptions {
   commands?: AiCommand[];
   enableAutoComplete?: boolean;
   enablePiiDetection?: boolean;
+}
+
+export interface AiContextOptions {
+  provider?: AiProvider;
+}
+
+export interface AiAgentOptions {
+  provider?: AiProvider;
 }

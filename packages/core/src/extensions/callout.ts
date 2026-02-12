@@ -27,7 +27,7 @@ export const Callout = defineExtension({
       aliases: ["callout", "notice", "alert"],
       description: "Insert a callout block",
       icon: "alert-circle",
-      group: "basic",
+      group: "style",
       execute: (editor) =>
         editor.chain().insertBlockAfter("callout", { emoji: "💡", type: "info" }).run(),
     },

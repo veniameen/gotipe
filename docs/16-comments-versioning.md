@@ -465,6 +465,123 @@ export function CommentThread({ thread }: { thread: CommentThread }) {
 }
 ```
 
+### Comments UX Flow (Google Docs-like)
+
+Полный пользовательский flow создания и управления комментариями:
+
+#### Создание комментария
+
+```
+1. Выделить текст → в Bubble Menu появляется кнопка "Add comment" (💬)
+   ┌────────────────────────────────────────────────────────┐
+   │ ✨ Improve │ Paragraph ▾ │ B I U S </> 🔗 │ A▾ │ 💬 │
+   └────────────────────────────────────────────────────────┘
+                                                       ↑
+                                              "Add comment" button
+
+2. Клик → текст подсвечивается highlight, справа появляется comment input:
+   ┌───────────────────────────────────────────────────────────┐
+   │ Document text with [highlighted comment range] here.      │
+   │                                              ┌──────────┐│
+   │                                              │ 💬 Alice ││
+   │                                              │          ││
+   │                                              │ [Type    ││
+   │                                              │  comment]││
+   │                                              │          ││
+   │                                              │ [Cancel] ││
+   │                                              │ [Submit] ││
+   │                                              └──────────┘│
+   └───────────────────────────────────────────────────────────┘
+```
+
+#### Comment Sidebar (правая панель)
+
+Все комментарии отображаются в sidebar справа от документа. Каждый комментарий — bubble, выровненный по высоте с текстом, к которому он привязан.
+
+```
+┌─── Document ────────────────────────┬── Comment Sidebar ──────────┐
+│                                     │                             │
+│ Some text here.                     │                             │
+│                                     │                             │
+│ Text with [comment highlight] in    │ ┌─────────────────────────┐ │
+│ this paragraph. More text follows.  │ │ Alice · 2 hours ago     │ │
+│                                     │ │                         │ │
+│                                     │ │ "comment highlight"     │ │
+│                                     │ │ This needs rewording.   │ │
+│                                     │ │                         │ │
+│                                     │ │   Bob · 1 hour ago     │ │
+│                                     │ │   Agreed, will fix.    │ │
+│                                     │ │                         │ │
+│                                     │ │ [Reply...]  [Resolve ✓]│ │
+│                                     │ └─────────────────────────┘ │
+│                                     │                             │
+│ Another paragraph with [second      │ ┌─────────────────────────┐ │
+│ comment] on different text.         │ │ Charlie · 30 min ago    │ │
+│                                     │ │                         │ │
+│                                     │ │ Great point here!       │ │
+│                                     │ │                         │ │
+│                                     │ │ [Reply...]  [Resolve ✓]│ │
+│                                     │ └─────────────────────────┘ │
+└─────────────────────────────────────┴─────────────────────────────┘
+```
+
+#### Comment Thread Popover
+
+Клик на highlighted текст → открывается thread popover:
+
+```
+┌────────────────────────────────────┐
+│ Alice · 2 hours ago                │
+│                                    │
+│ "original highlighted text"        │  ← quoted text (italic, border-left)
+│                                    │
+│ This needs rewording for clarity.  │
+│                                    │
+│ ┌────────────────────────────────┐ │
+│ │ Bob · 1 hour ago               │ │  ← reply
+│ │ Agreed, I'll update it.        │ │
+│ └────────────────────────────────┘ │
+│                                    │
+│ ┌──────────────────────────────┐   │
+│ │ Reply...                     │   │  ← reply input
+│ └──────────────────────────────┘   │
+│                                    │
+│ [Resolve ✓]                       │
+└────────────────────────────────────┘
+```
+
+#### Comment Navigation
+
+Навигация между комментариями (prev/next):
+
+```
+┌────────────────────────────────────┐
+│ ◄  2 / 7 comments  ►              │  ← navigation bar
+└────────────────────────────────────┘
+```
+
+| Элемент | Описание |
+|---------|----------|
+| Counter | `N / Total` — текущий / всего активных комментариев |
+| Arrows `◄` `►` | Переход к предыдущему/следующему. Документ скроллится к позиции комментария |
+| Filter | Tabs: "Open" (N) / "Resolved" (N) |
+
+#### Визуальные спецификации комментариев
+
+| Свойство | Значение |
+|----------|---------|
+| Comment highlight | `rgba(255, 212, 0, 0.25)` background + `2px solid rgba(255, 212, 0, 0.5)` border-bottom |
+| Comment highlight hover | `rgba(255, 212, 0, 0.4)` background |
+| Resolved highlight | `rgba(0, 0, 0, 0.04)` background, `1px dashed --gt-border` border-bottom |
+| Sidebar width | 280px, collapsible |
+| Comment bubble | `--gt-bg`, `--gt-shadow-sm`, border-radius 12px, padding 12px |
+| Author name | 13px, font-weight 600, `--gt-text` |
+| Timestamp | 12px, `--gt-text-tertiary` |
+| Quoted text | 13px, italic, `--gt-text-secondary`, 2px `--gt-border` border-left, padding-left 8px |
+| Reply input | border-radius 8px, `--gt-bg-hover` background, placeholder "Reply..." |
+| Resolve button | Ghost button, `--gt-success` цвет при hover |
+| Thread connector | Vertical line 1px `--gt-border` connecting root to replies |
+
 ---
 
 ## 5. Suggestions / Track Changes

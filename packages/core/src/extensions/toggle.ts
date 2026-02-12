@@ -23,7 +23,7 @@ export const Toggle = defineExtension({
       aliases: ["toggle", "collapsible", "accordion"],
       description: "Insert a toggle/collapsible block",
       icon: "chevron-right",
-      group: "advanced",
+      group: "style",
       execute: (editor) => editor.chain().insertBlockAfter("toggle", { open: false }).run(),
     },
   ],

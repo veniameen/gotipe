@@ -32,7 +32,7 @@ export const OrderedList = defineExtension({
       aliases: ["ol", "ordered"],
       description: "Create a numbered list",
       icon: "list-ordered",
-      group: "basic",
+      group: "style",
       execute: (editor) => editor.chain().toggleOrderedList().run(),
     },
   ],

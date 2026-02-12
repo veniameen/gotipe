@@ -70,7 +70,7 @@ export const Table = defineExtension({
       aliases: ["table", "grid"],
       description: "Insert a table",
       icon: "table",
-      group: "advanced",
+      group: "insert",
       execute: (editor) => editor.chain().insertTable({ rows: 3, cols: 3, withHeader: true }).run(),
     },
   ],

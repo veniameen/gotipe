@@ -28,7 +28,7 @@ export const Math = defineExtension({
       aliases: ["math", "equation", "latex", "katex"],
       description: "Insert a math equation",
       icon: "function-square",
-      group: "advanced",
+      group: "insert",
       execute: (editor) => editor.chain().insertBlockAfter("math", { display: "block" }).run(),
     },
   ],
