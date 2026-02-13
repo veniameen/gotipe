@@ -8,6 +8,7 @@ export class ChainableCommands {
   /** @internal Set by cell navigation to signal that preventDefault should fire */
   _cellNavigated = false;
   private _focusPosition: "start" | "end" | undefined | null = null;
+  private selectionOverride: Transaction["selection"] | null = null;
   private static readonly LIST_TYPES = new Set(["bulletList", "orderedList", "todoList"]);
   private static readonly LIST_ITEM_TYPES = new Set(["listItem", "todoItem"]);
 
@@ -192,13 +193,21 @@ export class ChainableCommands {
     if (insideList && !ChainableCommands.LIST_ITEM_TYPES.has(type)) {
       const listLoc = this.findLocation(state.blocks, parent.id);
       if (listLoc) {
+        const liftedContent = this.contentForTargetType(type, block.content);
+        const trailingChildren = block.children.map((child) => this.cloneBlockTree(child));
         const liftedBlock = {
           id: crypto.randomUUID(),
           type,
           attrs: (attrs ?? {}) as Record<string, string | number | boolean | null>,
-          content: (Array.isArray(block.content) ? block.content : []) as BlockContent,
+          content: liftedContent,
           children: [],
         };
+        const sourceOffset = state.selection.anchor.blockId === block.id ? state.selection.anchor.offset : 0;
+        const targetOffset = Math.max(
+          0,
+          Math.min(sourceOffset, this.blockContentTextLength(liftedContent)),
+        );
+        this.selectionOverride = { type: "cursor", blockId: liftedBlock.id, offset: targetOffset };
 
         if (parent.children.length === 1) {
           this.steps.push({ type: "deleteBlock", blockId: parent.id });
@@ -208,6 +217,14 @@ export class ChainableCommands {
             index: listLoc.index,
             block: liftedBlock,
           });
+          for (let i = 0; i < trailingChildren.length; i++) {
+            this.steps.push({
+              type: "insertBlock",
+              parentId: listLoc.parentId,
+              index: listLoc.index + 1 + i,
+              block: trailingChildren[i]!,
+            });
+          }
         } else {
           this.steps.push({ type: "deleteBlock", blockId });
           this.steps.push({
@@ -216,6 +233,14 @@ export class ChainableCommands {
             index: listLoc.index + 1,
             block: liftedBlock,
           });
+          for (let i = 0; i < trailingChildren.length; i++) {
+            this.steps.push({
+              type: "insertBlock",
+              parentId: listLoc.parentId,
+              index: listLoc.index + 2 + i,
+              block: trailingChildren[i]!,
+            });
+          }
         }
         return this;
       }
@@ -267,6 +292,58 @@ export class ChainableCommands {
       };
     }
     return {};
+  }
+
+  private cloneInlineContent(content: BlockView["content"]): BlockContent {
+    if (Array.isArray(content)) {
+      return content.map((s) => ({
+        text: s.text,
+        marks: s.marks.map((m) => ({ ...m })),
+      })) as BlockContent;
+    }
+    if (typeof content === "string") {
+      if (content.length === 0) return [] as unknown as BlockContent;
+      return [{ text: content, marks: [] }] as unknown as BlockContent;
+    }
+    return [] as unknown as BlockContent;
+  }
+
+  private cloneBlockTree(block: BlockView): import("./types/block").Block {
+    const clonedContent =
+      block.content === null
+        ? null
+        : typeof block.content === "string"
+          ? block.content
+          : this.cloneInlineContent(block.content);
+    return {
+      id: crypto.randomUUID(),
+      type: block.type,
+      attrs: { ...block.attrs } as Record<string, string | number | boolean | null>,
+      content: clonedContent,
+      children: block.children.map((child) => this.cloneBlockTree(child)),
+    };
+  }
+
+  private contentForTargetType(type: string, sourceContent: BlockView["content"]): BlockContent {
+    if (type === "codeBlock") {
+      if (typeof sourceContent === "string") return sourceContent;
+      if (Array.isArray(sourceContent)) {
+        return sourceContent.map((s) => s.text).join("");
+      }
+      return "";
+    }
+    if (ChainableCommands.EMPTY_CONTENT_TYPES.has(type)) {
+      return null;
+    }
+    return this.cloneInlineContent(sourceContent);
+  }
+
+  private blockContentTextLength(content: BlockContent): number {
+    if (Array.isArray(content)) {
+      return content.reduce((sum, span) => sum + span.text.length, 0);
+    }
+    if (typeof content === "string") return content.length;
+    return 0;
   }
 
   private blockContent(type: string): BlockContent | null {
@@ -407,20 +484,31 @@ export class ChainableCommands {
         const listLoc = this.findLocation(state.blocks, listBlock.id);
         if (listLoc) {
           this.steps.push({ type: "deleteBlock", blockId: listBlock.id });
+          let insertionIndex = listLoc.index;
           for (let i = 0; i < listBlock.children.length; i++) {
             const item = listBlock.children[i]!;
             this.steps.push({
               type: "insertBlock",
               parentId: listLoc.parentId,
-              index: listLoc.index + i,
+              index: insertionIndex,
               block: {
                 id: crypto.randomUUID(),
                 type: "paragraph",
                 attrs: {},
-                content: (Array.isArray(item.content) ? item.content : []) as BlockContent,
+                content: this.cloneInlineContent(item.content),
                 children: [],
               },
             });
+            insertionIndex += 1;
+            for (const child of item.children) {
+              this.steps.push({
+                type: "insertBlock",
+                parentId: listLoc.parentId,
+                index: insertionIndex,
+                block: this.cloneBlockTree(child),
+              });
+              insertionIndex += 1;
+            }
           }
         }
         return this;
@@ -445,8 +533,13 @@ export class ChainableCommands {
       return this;
     }
 
-    // Paragraph or heading at top level → wrap in list
-    if (block.type === "paragraph" || block.type === "heading") {
+    // Wrap top-level text-capable blocks in list while preserving inline content.
+    if (
+      block.type === "paragraph" ||
+      block.type === "heading" ||
+      block.type === "blockquote" ||
+      block.type === "codeBlock"
+    ) {
       const blockIndex = state.blocks.findIndex((b) => b.id === blockId);
       if (blockIndex === -1) return this;
 
@@ -465,7 +558,7 @@ export class ChainableCommands {
               id: crypto.randomUUID(),
               type: itemType,
               attrs: this.listItemAttrs(itemType as "listItem" | "todoItem", block),
-              content: (Array.isArray(block.content) ? block.content : []) as BlockContent,
+              content: this.cloneInlineContent(block.content),
               children: [],
             },
           ],
@@ -516,28 +609,77 @@ export class ChainableCommands {
   indent(): this {
     const state = this.getViewState();
     const blockId = state.selection.anchor.blockId;
-    const index = state.blocks.findIndex((b) => b.id === blockId);
-    if (index > 0) {
-      const prevBlock = state.blocks[index - 1]!;
+    const block = this.findInTree(state.blocks, blockId);
+    if (!block || !ChainableCommands.LIST_ITEM_TYPES.has(block.type)) return this;
+
+    const location = this.findLocation(state.blocks, blockId);
+    if (!location || location.index <= 0) return this;
+
+    const parent = location.parentId ? this.findInTree(state.blocks, location.parentId) : null;
+    if (!parent || !ChainableCommands.LIST_TYPES.has(parent.type)) return this;
+    if (parent.type === "todoList") return this;
+
+    const prevBlock = parent.children[location.index - 1];
+    if (!prevBlock || !ChainableCommands.LIST_ITEM_TYPES.has(prevBlock.type)) return this;
+
+    const existingNestedList = prevBlock.children.find((child) => child.type === parent.type) ?? null;
+    if (existingNestedList) {
       this.steps.push({
         type: "moveBlock",
         blockId,
-        newParentId: prevBlock.id,
-        newIndex: prevBlock.children.length,
+        newParentId: existingNestedList.id,
+        newIndex: existingNestedList.children.length,
       });
+      return this;
     }
+
+    const nestedListId = crypto.randomUUID();
+    this.steps.push({
+      type: "insertBlock",
+      parentId: prevBlock.id,
+      index: prevBlock.children.length,
+      block: {
+        id: nestedListId,
+        type: parent.type,
+        attrs: { ...parent.attrs } as Record<string, string | number | boolean | null>,
+        content: null,
+        children: [],
+      },
+    });
+
+    this.steps.push({
+      type: "moveBlock",
+      blockId,
+      newParentId: nestedListId,
+      newIndex: 0,
+    });
     return this;
   }
 
   outdent(): this {
     const state = this.getViewState();
     const blockId = state.selection.anchor.blockId;
+    const block = this.findInTree(state.blocks, blockId);
+    if (!block || !ChainableCommands.LIST_ITEM_TYPES.has(block.type)) return this;
+
+    const parentInfo = this.findParentOf(state.blocks, blockId);
+    if (!parentInfo || !ChainableCommands.LIST_TYPES.has(parentInfo.parent.type)) return this;
+
+    const listParentInfo = this.findParentOf(state.blocks, parentInfo.parent.id);
+    if (!listParentInfo) return this;
+
+    const hostLoc = this.findLocation(state.blocks, listParentInfo.parent.id);
+    if (!hostLoc) return this;
+
     this.steps.push({
       type: "moveBlock",
       blockId,
-      newParentId: null,
-      newIndex: state.blocks.length,
+      newParentId: hostLoc.parentId,
+      newIndex: hostLoc.index + 1,
     });
+    if (parentInfo.parent.children.length === 1) {
+      this.steps.push({ type: "deleteBlock", blockId: parentInfo.parent.id });
+    }
     return this;
   }
 
@@ -560,12 +702,24 @@ export class ChainableCommands {
   mergeWithPrevious(): this {
     const state = this.getViewState();
     const blockId = state.selection.anchor.blockId;
-    const index = state.blocks.findIndex((b) => b.id === blockId);
-    if (index > 0) {
+    const loc = this.findLocation(state.blocks, blockId);
+    if (!loc || loc.index <= 0) return this;
+
+    if (loc.parentId) {
+      const parent = this.findInTree(state.blocks, loc.parentId);
+      const prev = parent?.children[loc.index - 1];
+      if (prev) {
+        this.steps.push({
+          type: "mergeBlocks",
+          blockId,
+          targetId: prev.id,
+        });
+      }
+    } else {
       this.steps.push({
         type: "mergeBlocks",
         blockId,
-        targetId: state.blocks[index - 1]!.id,
+        targetId: state.blocks[loc.index - 1]!.id,
       });
     }
     return this;
@@ -807,24 +961,33 @@ export class ChainableCommands {
       this._focusPosition = null;
       didFocus = true;
     }
+    const selectionOverride = this.selectionOverride;
 
     // Handle undo/redo before normal steps
     if (this._undo) {
       this._undo = false;
+      this.selectionOverride = null;
       return this.editor.undo();
     }
     if (this._redo) {
       this._redo = false;
+      this.selectionOverride = null;
       return this.editor.redo();
     }
 
     const cellNavigated = this._cellNavigated;
     this._cellNavigated = false;
 
-    if (this.steps.length === 0 && !cellNavigated) return didFocus;
+    if (this.steps.length === 0 && !cellNavigated) {
+      this.selectionOverride = null;
+      return didFocus;
+    }
     if (this.steps.length > 0) {
       const preserveSelectionTypes = new Set(["addMark", "removeMark", "setBlockType", "setBlockAttrs"]);
-      const shouldPreserveSelection = didFocus && this.steps.every((step) => preserveSelectionTypes.has(step.type));
+      const shouldPreserveSelection =
+        didFocus &&
+        selectionOverride === null &&
+        this.steps.every((step) => preserveSelectionTypes.has(step.type));
       const selectionBefore = shouldPreserveSelection
         ? (() => {
             const markStep = this.steps.find((step) => step.type === "addMark" || step.type === "removeMark");
@@ -845,16 +1008,25 @@ export class ChainableCommands {
           })()
         : null;
 
-      const tr: Transaction = { steps: this.steps };
+      const tr: Transaction = selectionOverride
+        ? { steps: this.steps, selection: selectionOverride }
+        : { steps: this.steps };
       this.editor.dispatch(tr);
       if (selectionBefore) {
         this.editor.setSelection(selectionBefore);
+      } else if (selectionOverride?.type === "cursor") {
+        this.editor.setSelection({
+          anchor: { blockId: selectionOverride.blockId, offset: selectionOverride.offset },
+          head: { blockId: selectionOverride.blockId, offset: selectionOverride.offset },
+        });
       } else if (didFocus) {
         // Re-apply DOM range after mutation/re-render to avoid native selection drift.
         this.editor.focus();
       }
       this.steps = [];
+      this.selectionOverride = null;
     }
+    this.selectionOverride = null;
     return true;
   }
 }

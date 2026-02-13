@@ -9,6 +9,8 @@ export interface SlashMenuProps {
 const GROUP_ORDER: SlashCommandDef["group"][] = ["ai", "style", "insert", "upload"];
 const MENU_OFFSET_Y = 8;
 const VIEWPORT_PADDING = 12;
+const LIST_CONTAINER_TYPES = new Set(["bulletList", "orderedList", "todoList"]);
+const LIST_ITEM_TYPES = new Set(["listItem", "todoItem"]);
 
 const GROUP_LABELS: Record<string, string> = {
   ai: "AI",
@@ -62,7 +64,7 @@ function findTopLevelIndexByBlockId(
 
 function resolveCaretBlock(block: ViewBlock): ViewBlock {
   if (
-    (block.type === "bulletList" || block.type === "orderedList" || block.type === "todoList") &&
+    LIST_CONTAINER_TYPES.has(block.type) &&
     block.children.length > 0
   ) {
     return resolveCaretBlock(block.children[0]!);
@@ -78,61 +80,6 @@ function getBlockTextLength(block: ViewBlock): number {
     return block.content.length;
   }
   return 0;
-}
-
-function forceCaretIntoBlock(blockId: string, targetOffset: number): boolean {
-  const blockEl = document.querySelector(`[data-block-id="${blockId}"]`) as HTMLElement | null;
-  if (!blockEl) return false;
-
-  const editableRoot = blockEl.closest("[data-gotipe-editor]") as HTMLElement | null;
-  editableRoot?.focus({ preventScroll: true });
-
-  let node: Node = blockEl;
-  let offset = 0;
-
-  if (blockEl.getAttribute("data-block-type") === "todoItem") {
-    const contentHost = blockEl.querySelector("[data-gotipe-todo-content]");
-    if (contentHost) {
-      node = contentHost;
-      offset = 0;
-    }
-  } else {
-    const walker = document.createTreeWalker(blockEl, NodeFilter.SHOW_TEXT);
-    let accumulated = 0;
-    let textNode: Node | null;
-    let lastTextNode: Node | null = null;
-    while ((textNode = walker.nextNode())) {
-      lastTextNode = textNode;
-      const len = (textNode.textContent ?? "").length;
-      if (accumulated + len >= targetOffset) {
-        node = textNode;
-        offset = Math.max(0, Math.min(targetOffset - accumulated, len));
-        break;
-      }
-      accumulated += len;
-    }
-    if (node === blockEl && lastTextNode) {
-      node = lastTextNode;
-      offset = (lastTextNode.textContent ?? "").length;
-    }
-  }
-
-  const sel = window.getSelection();
-  if (!sel) return false;
-  try {
-    sel.removeAllRanges();
-    if (typeof sel.setBaseAndExtent === "function") {
-      sel.setBaseAndExtent(node, offset, node, offset);
-      return true;
-    }
-    const range = document.createRange();
-    range.setStart(node, offset);
-    range.collapse(true);
-    sel.addRange(range);
-    return true;
-  } catch {
-    return false;
-  }
 }
 
 function getSlashTrigger(editor: GoTipeEditor): SlashTrigger | null {
@@ -398,6 +345,7 @@ export function SlashMenu({ editor, commands = [] }: SlashMenuProps) {
   const [position, setPosition] = useState({ top: 120, left: 120 });
   const menuRef = useRef<HTMLDivElement>(null);
   const queryRef = useRef("");
+  const triggerRef = useRef<SlashTrigger | null>(null);
 
   // Filter & score
   const filtered = useMemo(() => {
@@ -436,6 +384,7 @@ export function SlashMenu({ editor, commands = [] }: SlashMenuProps) {
     const unsub = editor.on("openSlashMenu", () => {
       setVisible(true);
       const trigger = getSlashTrigger(editor);
+      triggerRef.current = trigger;
       const nextQuery = trigger?.query ?? "";
       setQuery(nextQuery);
       queryRef.current = nextQuery;
@@ -461,9 +410,12 @@ export function SlashMenu({ editor, commands = [] }: SlashMenuProps) {
     const syncFromEditor = () => {
       const trigger = getSlashTrigger(editor);
       if (!trigger) {
-        setVisible(false);
+        if (!triggerRef.current) {
+          setVisible(false);
+        }
         return;
       }
+      triggerRef.current = trigger;
 
       if (queryRef.current !== trigger.query) {
         queryRef.current = trigger.query;
@@ -520,6 +472,7 @@ export function SlashMenu({ editor, commands = [] }: SlashMenuProps) {
     const handleClick = (e: MouseEvent) => {
       if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
         setVisible(false);
+        triggerRef.current = null;
       }
     };
     document.addEventListener("mousedown", handleClick);
@@ -530,13 +483,17 @@ export function SlashMenu({ editor, commands = [] }: SlashMenuProps) {
   const executeCommand = useCallback(
     (cmd: SlashCommandDef) => {
       const beforeState = editor.getViewState();
-      const trigger = getSlashTrigger(editor);
-      const fallbackTopLevelIndex = trigger
-        ? findTopLevelIndexByBlockId(beforeState.blocks, trigger.blockId)
-        : null;
+      const trigger = getSlashTrigger(editor) ?? triggerRef.current;
+      const fallbackAnchorBlockId = trigger?.blockId ?? beforeState.selection.anchor.blockId;
+      const fallbackTopLevelIndex = findTopLevelIndexByBlockId(beforeState.blocks, fallbackAnchorBlockId);
+      const fallbackBlockBefore = findBlockById(beforeState.blocks, fallbackAnchorBlockId);
       if (trigger && trigger.to > trigger.from) {
         editor.dispatch({
           steps: [{ type: "deleteText", blockId: trigger.blockId, from: trigger.from, to: trigger.to }],
+        });
+        editor.setSelection({
+          anchor: { blockId: trigger.blockId, offset: trigger.from },
+          head: { blockId: trigger.blockId, offset: trigger.from },
         });
       }
       cmd.execute(editor);
@@ -549,45 +506,72 @@ export function SlashMenu({ editor, commands = [] }: SlashMenuProps) {
         ? findBlockById(state.blocks, selection.anchor.blockId)
         : null;
       let targetOffset = selection?.anchor.offset ?? 0;
-      let finalSelection: { blockId: string; offset: number } | null = null;
+      const selectionNeedsFallback =
+        !targetBlock || LIST_CONTAINER_TYPES.has(targetBlock.type);
 
-      if (!targetBlock && fallbackTopLevelIndex !== null && state.blocks.length > 0) {
+      if (selectionNeedsFallback && fallbackBlockBefore && fallbackTopLevelIndex !== null) {
+        if (LIST_ITEM_TYPES.has(fallbackBlockBefore.type)) {
+          const mappedItem = findBlockById(state.blocks, fallbackAnchorBlockId);
+          if (mappedItem) {
+            targetBlock = mappedItem;
+          } else if (state.blocks.length > 0) {
+            // listItem/todoItem was lifted out from its list container to a new top-level block
+            const sameIndex = state.blocks[Math.min(fallbackTopLevelIndex, state.blocks.length - 1)] ?? null;
+            if (sameIndex) {
+              targetBlock =
+                LIST_CONTAINER_TYPES.has(sameIndex.type)
+                  ? (state.blocks[fallbackTopLevelIndex + 1] ?? sameIndex)
+                  : sameIndex;
+              targetOffset = 0;
+            }
+          }
+        } else if (
+          LIST_CONTAINER_TYPES.has(fallbackBlockBefore.type) &&
+          state.blocks.length > 0
+        ) {
+          // Some DOM selection paths report the list container instead of the active item.
+          // Detect if one child was lifted out and move caret to the inserted sibling block.
+          const sameIndex = state.blocks[Math.min(fallbackTopLevelIndex, state.blocks.length - 1)] ?? null;
+          const nextTopLevel = state.blocks[fallbackTopLevelIndex + 1] ?? null;
+          if (
+            sameIndex &&
+            LIST_CONTAINER_TYPES.has(sameIndex.type) &&
+            sameIndex.children.length < fallbackBlockBefore.children.length &&
+            nextTopLevel
+          ) {
+            targetBlock = nextTopLevel;
+            targetOffset = 0;
+          }
+        }
+      }
+
+      if (selectionNeedsFallback && !targetBlock && fallbackTopLevelIndex !== null && state.blocks.length > 0) {
         const idx = Math.min(fallbackTopLevelIndex, state.blocks.length - 1);
         targetBlock = state.blocks[idx] ?? null;
         targetOffset = 0;
       }
 
-      if (!targetBlock && state.blocks.length > 0) {
+      if (selectionNeedsFallback && !targetBlock && state.blocks.length > 0) {
         targetBlock = state.blocks[0]!;
         targetOffset = 0;
       }
 
-      if (targetBlock) {
+      if (selectionNeedsFallback && targetBlock) {
         const caretBlock = resolveCaretBlock(targetBlock);
         const maxOffset = getBlockTextLength(caretBlock);
         const offset = Math.max(0, Math.min(targetOffset, maxOffset));
-        finalSelection = { blockId: caretBlock.id, offset };
         editor.setSelection({
           anchor: { blockId: caretBlock.id, offset },
           head: { blockId: caretBlock.id, offset },
         });
       }
+      editor.focus();
 
       setVisible(false);
+      triggerRef.current = null;
       queryRef.current = "";
       setQuery("");
       setSelectedIndex(0);
-      requestAnimationFrame(() => {
-        editor.focus();
-        if (finalSelection) {
-          // Secondary safeguard: some browsers keep caret on list container after slash transform.
-          requestAnimationFrame(() => {
-            if (forceCaretIntoBlock(finalSelection.blockId, finalSelection.offset)) {
-              editor.syncSelectionFromDOM();
-            }
-          });
-        }
-      });
     },
     [editor],
   );
@@ -617,6 +601,8 @@ export function SlashMenu({ editor, commands = [] }: SlashMenuProps) {
       } else if (e.key === "Escape") {
         e.preventDefault();
         setVisible(false);
+        triggerRef.current = null;
+        editor.focus();
         requestAnimationFrame(() => {
           editor.focus();
         });
@@ -677,6 +663,11 @@ export function SlashMenu({ editor, commands = [] }: SlashMenuProps) {
                 tabIndex={-1}
                 aria-selected={isSelected}
                 data-gotipe-slash-item=""
+                onMouseDown={(e) => {
+                  // Keep focus in editor on click path.
+                  e.preventDefault();
+                  e.stopPropagation();
+                }}
                 onClick={() => executeCommand(cmd)}
                 onMouseEnter={() => setSelectedIndex(idx)}
               >

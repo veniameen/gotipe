@@ -10,6 +10,11 @@ export function NotionEditor() {
     content: RICH_CONTENT,
   });
 
+  // Expose Notion editor instance for deterministic E2E setup.
+  if (typeof window !== 'undefined' && editor) {
+    (window as Record<string, unknown>).__GOTIPE_NOTION_EDITOR__ = editor;
+  }
+
   return (
     <ExampleWrapper
       title="Notion-like Editor"

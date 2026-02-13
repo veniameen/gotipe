@@ -101,7 +101,31 @@ export const CodeBlock = defineExtension<CodeBlockOptions>({
       key: "Escape",
       when: "inCodeBlock",
       command: (editor) => {
-        editor.chain().insertBlockAfter("paragraph").run();
+        const state = editor.getViewState();
+        const blockId = state.selection.anchor.blockId;
+        const blockIndex = state.blocks.findIndex((b) => b.id === blockId);
+        if (blockIndex === -1) return false;
+
+        const paragraphId = crypto.randomUUID();
+        editor.dispatch({
+          steps: [{
+            type: "insertBlock",
+            parentId: null,
+            index: blockIndex + 1,
+            block: {
+              id: paragraphId,
+              type: "paragraph",
+              attrs: {},
+              content: [],
+              children: [],
+            },
+          }],
+        });
+        editor.setSelection({
+          anchor: { blockId: paragraphId, offset: 0 },
+          head: { blockId: paragraphId, offset: 0 },
+        });
+        editor.focus();
         return true;
       },
     },
