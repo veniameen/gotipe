@@ -50,29 +50,43 @@ function getCurrentColor(editor: GoTipeEditor): string | null {
 export function TextColorPicker({ editor }: TextColorPickerProps) {
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+  const runWithFocus = useCallback(
+    (apply: (chain: ReturnType<GoTipeEditor["chain"]>) => void) => {
+      const chain = editor.chain().focus();
+      apply(chain);
+      chain.run();
+    },
+    [editor],
+  );
 
   const currentColor = getCurrentColor(editor);
 
   const handleHighlight = useCallback(
     (color: ColorOption) => {
-      editor.chain().setMark("highlight", { color: color.bg, textColor: color.text }).run();
+      runWithFocus((chain) => {
+        chain.setMark("highlight", { color: color.bg, textColor: color.text });
+      });
       setOpen(false);
     },
-    [editor],
+    [runWithFocus],
   );
 
   const handleTextColor = useCallback(
     (color: ColorOption) => {
-      editor.chain().setMark("textColor", { color: color.text }).run();
+      runWithFocus((chain) => {
+        chain.setMark("textColor", { color: color.text });
+      });
       setOpen(false);
     },
-    [editor],
+    [runWithFocus],
   );
 
   const handleReset = useCallback(() => {
-    editor.chain().unsetMark("highlight").unsetMark("textColor").run();
+    runWithFocus((chain) => {
+      chain.unsetMark("highlight").unsetMark("textColor");
+    });
     setOpen(false);
-  }, [editor]);
+  }, [runWithFocus]);
 
   // Close on outside click
   useEffect(() => {

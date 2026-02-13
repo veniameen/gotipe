@@ -23,8 +23,13 @@ function useViewState(editor: GoTipeEditor | null) {
 function BlockContent({ block }: { block: BlockView }) {
   if (block.content === null) return null;
   if (typeof block.content === "string") return <>{block.content}</>;
-  if (Array.isArray(block.content) && block.content.length > 0) {
-    return <TextRenderer spans={block.content} />;
+  if (Array.isArray(block.content)) {
+    const hasVisibleText = block.content.some((span) => span.text.length > 0);
+    if (hasVisibleText) {
+      return <TextRenderer spans={block.content} />;
+    }
+    // Keep empty editable blocks caret-addressable in the DOM.
+    return <br data-gotipe-trailing-break="" />;
   }
   return null;
 }

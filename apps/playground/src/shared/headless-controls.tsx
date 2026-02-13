@@ -1,8 +1,11 @@
 import type { GoTipeEditor } from '@gotipe/core';
+import type React from 'react';
 
 interface HeadlessControlsProps {
   editor: GoTipeEditor | null;
 }
+
+type CommandChain = ReturnType<GoTipeEditor['chain']>;
 
 /**
  * Intentionally unstyled HTML buttons for the Headless Editor template.
@@ -10,40 +13,52 @@ interface HeadlessControlsProps {
  */
 export function HeadlessControls({ editor }: HeadlessControlsProps) {
   if (!editor) return null;
+  const preventFocusSteal = (e: React.MouseEvent<HTMLElement>) => {
+    e.preventDefault();
+  };
+  const buttonProps = {
+    onPointerDown: preventFocusSteal,
+    onMouseDown: preventFocusSteal,
+  };
+  const runWithFocus = (apply: (chain: CommandChain) => void) => {
+    const chain = editor.chain().focus();
+    apply(chain);
+    chain.run();
+  };
 
   return (
     <div className="gotipe-headless-controls">
       {/* Marks */}
-      <button onClick={() => editor.chain().toggleBold().run()}>Bold</button>
-      <button onClick={() => editor.chain().toggleItalic().run()}>Italic</button>
-      <button onClick={() => editor.chain().toggleStrikethrough().run()}>Strike</button>
-      <button onClick={() => editor.chain().toggleCode().run()}>Code</button>
-      <button onClick={() => editor.chain().toggleUnderline().run()}>Underline</button>
-      <button onClick={() => editor.chain().clearFormatting().run()}>Clear marks</button>
+      <button {...buttonProps} onClick={() => runWithFocus((chain) => { chain.toggleBold(); })}>Bold</button>
+      <button {...buttonProps} onClick={() => runWithFocus((chain) => { chain.toggleItalic(); })}>Italic</button>
+      <button {...buttonProps} onClick={() => runWithFocus((chain) => { chain.toggleStrikethrough(); })}>Strike</button>
+      <button {...buttonProps} onClick={() => runWithFocus((chain) => { chain.toggleCode(); })}>Code</button>
+      <button {...buttonProps} onClick={() => runWithFocus((chain) => { chain.toggleUnderline(); })}>Underline</button>
+      <button {...buttonProps} onClick={() => runWithFocus((chain) => { chain.clearFormatting(); })}>Clear marks</button>
 
       {/* Block types */}
-      <button onClick={() => editor.chain().setBlockType('paragraph').run()}>Paragraph</button>
-      <button onClick={() => editor.chain().setBlockType('heading', { level: 1 }).run()}>H1</button>
-      <button onClick={() => editor.chain().setBlockType('heading', { level: 2 }).run()}>H2</button>
-      <button onClick={() => editor.chain().setBlockType('heading', { level: 3 }).run()}>H3</button>
-      <button onClick={() => editor.chain().setBlockType('heading', { level: 4 }).run()}>H4</button>
-      <button onClick={() => editor.chain().setBlockType('heading', { level: 5 }).run()}>H5</button>
-      <button onClick={() => editor.chain().setBlockType('heading', { level: 6 }).run()}>H6</button>
+      <button {...buttonProps} onClick={() => runWithFocus((chain) => { chain.setBlockType('paragraph'); })}>Paragraph</button>
+      <button {...buttonProps} onClick={() => runWithFocus((chain) => { chain.setBlockType('heading', { level: 1 }); })}>H1</button>
+      <button {...buttonProps} onClick={() => runWithFocus((chain) => { chain.setBlockType('heading', { level: 2 }); })}>H2</button>
+      <button {...buttonProps} onClick={() => runWithFocus((chain) => { chain.setBlockType('heading', { level: 3 }); })}>H3</button>
+      <button {...buttonProps} onClick={() => runWithFocus((chain) => { chain.setBlockType('heading', { level: 4 }); })}>H4</button>
+      <button {...buttonProps} onClick={() => runWithFocus((chain) => { chain.setBlockType('heading', { level: 5 }); })}>H5</button>
+      <button {...buttonProps} onClick={() => runWithFocus((chain) => { chain.setBlockType('heading', { level: 6 }); })}>H6</button>
 
       {/* Lists */}
-      <button onClick={() => editor.chain().toggleBulletList().run()}>Bullet list</button>
-      <button onClick={() => editor.chain().toggleOrderedList().run()}>Ordered list</button>
-      <button onClick={() => editor.chain().toggleTodoList().run()}>Task list</button>
+      <button {...buttonProps} onClick={() => runWithFocus((chain) => { chain.toggleBulletList(); })}>Bullet list</button>
+      <button {...buttonProps} onClick={() => runWithFocus((chain) => { chain.toggleOrderedList(); })}>Ordered list</button>
+      <button {...buttonProps} onClick={() => runWithFocus((chain) => { chain.toggleTodoList(); })}>Task list</button>
 
       {/* Insert */}
-      <button onClick={() => editor.chain().insertBlockAfter('codeBlock').run()}>Code block</button>
-      <button onClick={() => editor.chain().setBlockType('blockquote').run()}>Blockquote</button>
-      <button onClick={() => editor.chain().insertBlockAfter('divider').run()}>Horizontal rule</button>
-      <button onClick={() => editor.chain().insertHardBreak().run()}>Hard break</button>
+      <button {...buttonProps} onClick={() => runWithFocus((chain) => { chain.insertBlockAfter('codeBlock'); })}>Code block</button>
+      <button {...buttonProps} onClick={() => runWithFocus((chain) => { chain.setBlockType('blockquote'); })}>Blockquote</button>
+      <button {...buttonProps} onClick={() => runWithFocus((chain) => { chain.insertBlockAfter('divider'); })}>Horizontal rule</button>
+      <button {...buttonProps} onClick={() => runWithFocus((chain) => { chain.insertHardBreak(); })}>Hard break</button>
 
       {/* History */}
-      <button onClick={() => editor.chain().undo().run()}>Undo</button>
-      <button onClick={() => editor.chain().redo().run()}>Redo</button>
+      <button {...buttonProps} onClick={() => runWithFocus((chain) => { chain.undo(); })}>Undo</button>
+      <button {...buttonProps} onClick={() => runWithFocus((chain) => { chain.redo(); })}>Redo</button>
     </div>
   );
 }

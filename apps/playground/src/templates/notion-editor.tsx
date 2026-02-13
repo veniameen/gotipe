@@ -13,7 +13,7 @@ export function NotionEditor() {
   return (
     <ExampleWrapper
       title="Notion-like Editor"
-      description="Full-featured block editor with slash commands, bubble menu, drag handles, and dark mode. Commercial license."
+      description="Full-featured block editor with slash commands, bubble menu, drag handles, and light/dark theme toggle. Commercial license."
       tags={['Commercial']}
     >
       <BlockEditor

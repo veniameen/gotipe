@@ -63,6 +63,14 @@ interface MoreMenuProps {
 function MoreMenu({ editor }: MoreMenuProps) {
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+  const runWithFocus = useCallback(
+    (apply: (chain: ReturnType<GoTipeEditor["chain"]>) => void) => {
+      const chain = editor.chain().focus();
+      apply(chain);
+      chain.run();
+    },
+    [editor],
+  );
 
   // Close on outside click
   useEffect(() => {
@@ -86,9 +94,9 @@ function MoreMenu({ editor }: MoreMenuProps) {
   }, [open]);
 
   const handleClearFormatting = useCallback(() => {
-    editor.chain().clearFormatting().run();
+    runWithFocus((chain) => { chain.clearFormatting(); });
     setOpen(false);
-  }, [editor]);
+  }, [runWithFocus]);
 
   const handleCopyAsMarkdown = useCallback(async () => {
     const md = editor.getMarkdown();
@@ -99,14 +107,14 @@ function MoreMenu({ editor }: MoreMenuProps) {
   }, [editor]);
 
   const handleToggleSuperscript = useCallback(() => {
-    editor.chain().toggleMark("superscript").run();
+    runWithFocus((chain) => { chain.toggleMark("superscript"); });
     setOpen(false);
-  }, [editor]);
+  }, [runWithFocus]);
 
   const handleToggleSubscript = useCallback(() => {
-    editor.chain().toggleMark("subscript").run();
+    runWithFocus((chain) => { chain.toggleMark("subscript"); });
     setOpen(false);
-  }, [editor]);
+  }, [runWithFocus]);
 
   return (
     <div ref={containerRef} style={{ position: "relative" }}>
@@ -149,6 +157,15 @@ function MoreMenu({ editor }: MoreMenuProps) {
 /* ------------------------------------------------------------------ */
 
 export function BlockEditorBubbleMenu({ editor, enableAI = false }: BlockEditorBubbleMenuProps) {
+  const runWithFocus = useCallback(
+    (apply: (chain: ReturnType<GoTipeEditor["chain"]>) => void) => {
+      const chain = editor.chain().focus();
+      apply(chain);
+      chain.run();
+    },
+    [editor],
+  );
+
   const handleAIImprove = useCallback(() => {
     editor.emit("executeAiCommand", { commandId: "rewrite" });
   }, [editor]);
@@ -195,31 +212,31 @@ export function BlockEditorBubbleMenu({ editor, enableAI = false }: BlockEditorB
             label="Bold"
             icon="B"
             active={isMarkActive(editor, "bold")}
-            onClick={() => editor.chain().toggleMark("bold").run()}
+            onClick={() => runWithFocus((chain) => { chain.toggleMark("bold"); })}
           />
           <FormatButton
             label="Italic"
             icon="I"
             active={isMarkActive(editor, "italic")}
-            onClick={() => editor.chain().toggleMark("italic").run()}
+            onClick={() => runWithFocus((chain) => { chain.toggleMark("italic"); })}
           />
           <FormatButton
             label="Underline"
             icon="U"
             active={isMarkActive(editor, "underline")}
-            onClick={() => editor.chain().toggleMark("underline").run()}
+            onClick={() => runWithFocus((chain) => { chain.toggleMark("underline"); })}
           />
           <FormatButton
             label="Strikethrough"
             icon="S"
             active={isMarkActive(editor, "strikethrough")}
-            onClick={() => editor.chain().toggleMark("strikethrough").run()}
+            onClick={() => runWithFocus((chain) => { chain.toggleMark("strikethrough"); })}
           />
           <FormatButton
             label="Code"
             icon="</>"
             active={isMarkActive(editor, "code")}
-            onClick={() => editor.chain().toggleMark("code").run()}
+            onClick={() => runWithFocus((chain) => { chain.toggleMark("code"); })}
           />
           <FormatButton
             label="Link"
@@ -227,11 +244,11 @@ export function BlockEditorBubbleMenu({ editor, enableAI = false }: BlockEditorB
             active={isMarkActive(editor, "link")}
             onClick={() => {
               if (isMarkActive(editor, "link")) {
-                editor.chain().unsetMark("link").run();
+                runWithFocus((chain) => { chain.unsetMark("link"); });
               } else {
                 const url = window.prompt("Enter URL:");
                 if (url) {
-                  editor.chain().setMark("link", { href: url }).run();
+                  runWithFocus((chain) => { chain.setMark("link", { href: url }); });
                 }
               }
             }}

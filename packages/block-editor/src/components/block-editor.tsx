@@ -14,6 +14,9 @@ import type { Suggestion } from "./suggestion-toolbar";
 import { SuggestionToolbar } from "./suggestion-toolbar";
 import { ThemeToggle } from "./theme-toggle";
 
+const BLOCK_TOOLBAR_WIDTH = 36;
+const BLOCK_TOOLBAR_GAP = 8;
+
 export interface BlockEditorProps {
   editor: GoTipeEditor | null;
   className?: string;
@@ -108,7 +111,7 @@ export function BlockEditor({
   const [draggingBlockId, setDraggingBlockId] = useState<string | null>(null);
   const [dropIndex, setDropIndex] = useState<number | null>(null);
   const [hoveredBlockId, setHoveredBlockId] = useState<string | null>(null);
-  const [toolbarPos, setToolbarPos] = useState<{ top: number } | null>(null);
+  const [toolbarPos, setToolbarPos] = useState<{ top: number; left: number } | null>(null);
   const [suggestionIndex, setSuggestionIndex] = useState(0);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -129,13 +132,21 @@ export function BlockEditor({
       if (blockId !== hoveredBlockId) {
         setHoveredBlockId(blockId);
         if (blockId && containerRef.current) {
+          const contentEl = containerRef.current.querySelector("[data-gotipe-content]");
           const blockEl = containerRef.current.querySelector(
             `[data-gotipe-content] > [data-block-id="${blockId}"]`,
           );
           if (blockEl) {
             const containerRect = containerRef.current.getBoundingClientRect();
             const blockRect = blockEl.getBoundingClientRect();
-            setToolbarPos({ top: blockRect.top - containerRect.top });
+            const contentRect =
+              contentEl instanceof HTMLElement ? contentEl.getBoundingClientRect() : null;
+            const anchorLeft = contentRect?.left ?? blockRect.left;
+            const left = Math.max(
+              0,
+              Math.round(anchorLeft - containerRect.left - BLOCK_TOOLBAR_WIDTH - BLOCK_TOOLBAR_GAP),
+            );
+            setToolbarPos({ top: blockRect.top - containerRect.top, left });
           }
         } else {
           setToolbarPos(null);
@@ -256,12 +267,12 @@ export function BlockEditor({
           style={{
             position: "absolute",
             top: toolbarPos.top,
-            left: 0,
-            width: 48,
+            left: toolbarPos.left,
+            width: BLOCK_TOOLBAR_WIDTH,
             display: "flex",
             alignItems: "center",
-            justifyContent: "flex-end",
-            paddingRight: 4,
+            justifyContent: "center",
+            zIndex: 20,
           }}
         >
           <BlockToolbar
