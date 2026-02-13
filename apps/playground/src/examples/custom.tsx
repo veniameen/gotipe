@@ -1,6 +1,7 @@
 import { defineExtension } from '@gotipe/core';
 import { MinimalPreset } from '@gotipe/core/presets';
-import { useEditor, EditorContent } from '@gotipe/react';
+import { useEditor } from '@gotipe/react';
+import { BlockEditor } from '@gotipe/block-editor';
 
 const CalloutExtension = defineExtension({
   name: 'callout',
@@ -50,8 +51,6 @@ export function CustomExample() {
   });
 
   return (
-    <div data-gotipe-example="custom">
-      <EditorContent editor={editor} />
-    </div>
+    <BlockEditor editor={editor} showThemeToggle={false} showAiCommandBar={false} />
   );
 }

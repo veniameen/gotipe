@@ -6,6 +6,7 @@ export { BlockToolbar } from "./components/block-toolbar";
 export type { BlockToolbarProps } from "./components/block-toolbar";
 export { DragHandle } from "./components/drag-handle";
 export { CollaborationCursors } from "./components/collaboration-cursors";
+export type { CollaborationCursorsProps, RemotePeer } from "./components/collaboration-cursors";
 export { CommentSidebar } from "./components/comment-sidebar";
 export type { CommentSidebarProps, CommentData, ReplyData } from "./components/comment-sidebar";
 export { BlockEditorBubbleMenu } from "./components/bubble-menu";
@@ -22,6 +23,8 @@ export { SuggestionToolbar } from "./components/suggestion-toolbar";
 export type { SuggestionToolbarProps, Suggestion } from "./components/suggestion-toolbar";
 export { AiStatusIndicator } from "./components/ai-status-indicator";
 export type { AiStatusIndicatorProps } from "./components/ai-status-indicator";
+export { GhostText } from "./components/ghost-text";
+export type { GhostTextProps } from "./components/ghost-text";
 export { ThemeToggle } from "./components/theme-toggle";
 // Block views
 export { ParagraphView } from "./views/paragraph-view";

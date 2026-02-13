@@ -16,7 +16,18 @@ export const BulletList = defineExtension({
     },
   ],
   inputRules: [
-    { pattern: /^[-*]\s$/, handler: (editor) => editor.chain().toggleBulletList().run() },
+    {
+      pattern: /^[-*]\s$/,
+      handler: (editor) => {
+        const state = editor.getViewState();
+        const blockId = state.selection.anchor.blockId;
+        // Delete the trigger text first, then toggle
+        editor.dispatch({
+          steps: [{ type: "deleteText", blockId, from: 0, to: 2 }],
+        });
+        editor.chain().toggleBulletList().run();
+      },
+    },
   ],
   keybindings: [
     {
@@ -90,9 +101,35 @@ export const TodoList = defineExtension({
       allowsChildren: false,
     },
   ],
+  keybindings: [
+    {
+      key: "mod-shift-9",
+      command: (editor) => editor.chain().toggleTodoList().run(),
+    },
+  ],
   inputRules: [
-    { pattern: /^\[\]\s$/, handler: (editor) => editor.chain().toggleTodoList().run() },
-    { pattern: /^\[x\]\s$/, handler: (editor) => editor.chain().toggleTodoList().run() },
+    {
+      pattern: /^\[\]\s$/,
+      handler: (editor) => {
+        const state = editor.getViewState();
+        const blockId = state.selection.anchor.blockId;
+        editor.dispatch({
+          steps: [{ type: "deleteText", blockId, from: 0, to: 3 }],
+        });
+        editor.chain().toggleTodoList().run();
+      },
+    },
+    {
+      pattern: /^\[x\]\s$/,
+      handler: (editor) => {
+        const state = editor.getViewState();
+        const blockId = state.selection.anchor.blockId;
+        editor.dispatch({
+          steps: [{ type: "deleteText", blockId, from: 0, to: 4 }],
+        });
+        editor.chain().toggleTodoList().run();
+      },
+    },
   ],
   slashCommands: [
     {

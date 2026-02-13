@@ -54,7 +54,7 @@ export const Strikethrough = defineExtension({
   marks: [{ name: "strikethrough", attrs: {}, rank: 4 }],
   keybindings: [
     {
-      key: "mod-shift-s",
+      key: "mod-shift-x",
       command: (editor) => editor.chain().toggleStrikethrough().run(),
     },
   ],

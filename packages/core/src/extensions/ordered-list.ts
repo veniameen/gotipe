@@ -18,7 +18,19 @@ export const OrderedList = defineExtension({
     },
   ],
   inputRules: [
-    { pattern: /^\d+\.\s$/, handler: (editor) => editor.chain().toggleOrderedList().run() },
+    {
+      pattern: /^(\d+)\.\s$/,
+      handler: (editor, match) => {
+        const state = editor.getViewState();
+        const blockId = state.selection.anchor.blockId;
+        const triggerLen = match[0]!.length;
+        const start = parseInt(match[1]!, 10) || 1;
+        editor.dispatch({
+          steps: [{ type: "deleteText", blockId, from: 0, to: triggerLen }],
+        });
+        editor.chain().toggleOrderedList(start !== 1 ? { start } : undefined).run();
+      },
+    },
   ],
   keybindings: [
     {

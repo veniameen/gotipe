@@ -32,8 +32,8 @@ export function TextRenderer({ spans }: TextRendererProps) {
               element = (
                 <a
                   key={`${i}-link`}
-                  href={mark.attrs.href as string}
-                  target={mark.attrs.target as string}
+                  href={mark.attrs?.href as string}
+                  target={mark.attrs?.target as string}
                   rel="noopener noreferrer"
                 >
                   {element}
@@ -44,7 +44,7 @@ export function TextRenderer({ spans }: TextRendererProps) {
               element = (
                 <mark
                   key={`${i}-highlight`}
-                  style={{ backgroundColor: (mark.attrs.color as string) || "yellow" }}
+                  style={{ backgroundColor: (mark.attrs?.color as string) || "yellow" }}
                 >
                   {element}
                 </mark>
@@ -55,6 +55,16 @@ export function TextRenderer({ spans }: TextRendererProps) {
               break;
             case "subscript":
               element = <sub key={`${i}-sub`}>{element}</sub>;
+              break;
+            case "textColor":
+              element = (
+                <span
+                  key={`${i}-textColor`}
+                  style={{ color: (mark.attrs?.color as string) || undefined }}
+                >
+                  {element}
+                </span>
+              );
               break;
           }
         }

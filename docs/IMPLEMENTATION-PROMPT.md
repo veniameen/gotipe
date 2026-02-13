@@ -513,3 +513,69 @@ Phase 6: Polish & Test
   - Their exact sizing (adapt to GoTipe spacing scale)
   - Their pricing/cloud integration
   - Their Extensions API (GoTipe has its own)
+
+---
+
+## 11. Tiptap Examples Catalog (26+ примеров)
+
+Полный каталог примеров на [tiptap.dev/docs/examples](https://tiptap.dev/docs/examples). Используется как референс для функциональности GoTipe.
+
+### 4 шаблона редактора
+
+| Шаблон | Лицензия | Ключевые фичи |
+|--------|----------|----------------|
+| **Agent Editor** | Commercial (AI Toolkit) | AI меню (Proofread, Add AI comment, Adjust text, Justify edit), toolbar с zoom/headings/alignment, AI подсветка правок, Custom components |
+| **Notion-like Editor** | Commercial | Slash-меню с категориями (AI/Style), Bubble menu (Improve + Block Type + Color + форматирование), drag handles, dark mode, коллаборация |
+| **Simple Editor** | MIT | Toolbar (undo/redo, headings, lists, indent, B/I/S/Code/U, links, alignment, + Add), highlight, dark mode toggle. Без AI, без slash/bubble menu |
+| **Headless Editor** | MIT | Минимальный UI — чистые HTML-кнопки (Bold, Italic, Strike, Code, H1-H6, Lists, Blockquote, HR, Undo/Redo). Полностью BYO styles |
+
+### Bubble Menu (Notion-like)
+
+При выделении текста всплывает inline-toolbar:
+- **Improve** (AI) — улучшение через AI
+- **Block Type** (dropdown: Paragraph, Blockquote, Heading...)
+- **B** *I* U ~~S~~ `</>` — форматирование
+- **Link** — вставка ссылки
+- **A** (цвет) — цвет текста/фона
+- **...** — дополнительные опции (Superscript, Subscript и др.)
+
+### Basics (9 примеров)
+
+| Пример | Описание |
+|--------|----------|
+| Default Text Editor | Базовый текстовый редактор |
+| Formatting | Стилизация контента (bold, italic, lists и т.д.) |
+| Images | Вставка и работа с изображениями |
+| Long Texts | Оптимизация производительности на больших документах |
+| Markdown Shortcuts | Конвертация markdown-синтаксиса (**, ##, - и т.д.) |
+| Minimal Setup | Легковесная минимальная реализация |
+| Tables | Создание и редактирование таблиц |
+| Tasks | Task list / чек-листы |
+| Text Direction & RTL | Поддержка right-to-left языков |
+
+### Advanced (10 примеров)
+
+| Пример | Описание |
+|--------|----------|
+| Collaborative Editing | Многопользовательское редактирование в реальном времени |
+| Custom Drawing | Рисование кастомных элементов |
+| Bubble & Floating Menus | Контекстные меню при выделении и курсоре |
+| Mentions | @-упоминания пользователей |
+| Syntax Highlighting | Подсветка синтаксиса в code blocks (Shiki/lowlight) |
+| React Components | Встраивание интерактивных React-компонентов в контент |
+| Vue Components | Встраивание Vue-компонентов |
+| Content Structure | Enforced структура документа (schema rules) |
+| RAG | Retrieval-Augmented Generation — AI + поиск по базе знаний |
+| React Performance | Оптимизация рендера в React |
+
+### Experiments (7 примеров, unsupported)
+
+| Пример | Описание |
+|--------|----------|
+| Collaborative Fields | Отдельные Yjs-документы для полей формы |
+| Figure Node | Кастомный figure/figcaption блок |
+| Generic Figure | Обобщённый figure для разных типов медиа |
+| iFrame Embedding | Встраивание iframe (YouTube, карты и т.д.) |
+| Document Linting | Автоматическая проверка документа на ошибки |
+| Slash Commands | Slash-меню (`/`) для быстрой вставки блоков |
+| Smart Editor | Кастомные замены и автокоррекция |

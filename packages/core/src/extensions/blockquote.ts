@@ -16,7 +16,18 @@ export const Blockquote = defineExtension({
     },
   ],
   inputRules: [
-    { pattern: /^>\s$/, handler: (editor) => editor.chain().setBlockType("blockquote").run() },
+    {
+      pattern: /^>\s$/,
+      handler: (editor) => {
+        const state = editor.getViewState();
+        const blockId = state.selection.anchor.blockId;
+        // Delete the trigger text first, then change block type
+        editor.dispatch({
+          steps: [{ type: "deleteText", blockId, from: 0, to: 2 }],
+        });
+        editor.chain().setBlockType("blockquote").run();
+      },
+    },
   ],
   keybindings: [
     {

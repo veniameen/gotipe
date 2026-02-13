@@ -1,6 +1,6 @@
 import type { GoTipeEditor } from "@gotipe/core";
 import { BubbleMenu } from "@gotipe/react";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { BlockTypeDropdown } from "./block-type-dropdown";
 import { TextColorPicker } from "./text-color-picker";
 
@@ -15,7 +15,7 @@ export interface BlockEditorBubbleMenuProps {
 
 function isMarkActive(editor: GoTipeEditor, markType: string): boolean {
   const state = editor.getViewState();
-  return (state.activeMarks ?? []).some((m) => m.type === markType);
+  return (state.toolbar.activeMarks ?? []).includes(markType);
 }
 
 /* ------------------------------------------------------------------ */
@@ -91,7 +91,7 @@ function MoreMenu({ editor }: MoreMenuProps) {
   }, [editor]);
 
   const handleCopyAsMarkdown = useCallback(async () => {
-    const md = editor.exportMarkdown();
+    const md = editor.getMarkdown();
     if (md) {
       await navigator.clipboard.writeText(md);
     }
@@ -151,11 +151,6 @@ function MoreMenu({ editor }: MoreMenuProps) {
 export function BlockEditorBubbleMenu({ editor, enableAI = false }: BlockEditorBubbleMenuProps) {
   const handleAIImprove = useCallback(() => {
     editor.emit("executeAiCommand", { commandId: "rewrite" });
-  }, [editor]);
-
-  const marks = useMemo(() => {
-    const state = editor.getViewState();
-    return state.activeMarks ?? [];
   }, [editor]);
 
   return (

@@ -35,7 +35,7 @@ export const Columns = defineExtension({
       description: "Insert a multi-column layout",
       icon: "columns",
       group: "insert",
-      execute: (editor) => editor.chain().insertBlockAfter("columns", { count: 2 }).run(),
+      execute: (editor) => editor.chain().insertColumns(2).run(),
     },
   ],
 });

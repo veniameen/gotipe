@@ -28,7 +28,8 @@ export type Step =
   | { type: "addMark"; blockId: string; from: number; to: number; mark: Mark }
   | { type: "removeMark"; blockId: string; from: number; to: number; markType: string }
   | { type: "splitBlock"; blockId: string; offset: number }
-  | { type: "mergeBlocks"; blockId: string; targetId: string };
+  | { type: "mergeBlocks"; blockId: string; targetId: string }
+  | { type: "deleteRange"; blockId: string; from: number; to: number };
 
 export type TransformError =
   | { code: "BLOCK_NOT_FOUND"; blockId: string }

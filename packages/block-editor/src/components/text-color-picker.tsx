@@ -29,11 +29,21 @@ const TEXT_COLORS: ColorOption[] = [
 
 function getCurrentColor(editor: GoTipeEditor): string | null {
   const state = editor.getViewState();
-  const marks = state.activeMarks ?? [];
-  const highlight = marks.find((m) => m.type === "highlight");
-  if (highlight) return (highlight.attrs as Record<string, string>)?.color ?? null;
-  const textColor = marks.find((m) => m.type === "textColor");
-  if (textColor) return (textColor.attrs as Record<string, string>)?.color ?? null;
+  const { anchor } = state.selection;
+  const block = state.blocks.find((b) => b.id === anchor.blockId);
+  if (!block || !Array.isArray(block.content)) return null;
+  let pos = 0;
+  for (const span of block.content) {
+    const end = pos + span.text.length;
+    if (anchor.offset >= pos && anchor.offset < end) {
+      const highlight = span.marks.find((m) => m.type === "highlight");
+      if (highlight) return (highlight.attrs as Record<string, string>)?.color ?? null;
+      const textColor = span.marks.find((m) => m.type === "textColor");
+      if (textColor) return (textColor.attrs as Record<string, string>)?.color ?? null;
+      return null;
+    }
+    pos = end;
+  }
   return null;
 }
 

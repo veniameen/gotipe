@@ -170,6 +170,28 @@ export function SlashMenu({ editor, commands = [] }: SlashMenuProps) {
     return () => document.removeEventListener("mousedown", handleClick);
   }, [visible]);
 
+  // Execute a slash command: delete "/" trigger text, then run the command
+  const executeCommand = useCallback(
+    (cmd: SlashCommandDef) => {
+      const state = editor.getViewState();
+      const blockId = state.selection.anchor.blockId;
+      if (blockId) {
+        const block = state.blocks.find((b) => b.id === blockId);
+        if (block && Array.isArray(block.content)) {
+          const text = block.content.map((s) => s.text).join("");
+          if (text.startsWith("/")) {
+            editor.dispatch({
+              steps: [{ type: "deleteText", blockId, from: 0, to: 1 }],
+            });
+          }
+        }
+      }
+      cmd.execute(editor);
+      setVisible(false);
+    },
+    [editor],
+  );
+
   // Keyboard navigation
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent | KeyboardEvent) => {
@@ -180,19 +202,24 @@ export function SlashMenu({ editor, commands = [] }: SlashMenuProps) {
       } else if (e.key === "ArrowUp") {
         e.preventDefault();
         setSelectedIndex((i) => Math.max(i - 1, 0));
+      } else if (e.key === "Home") {
+        e.preventDefault();
+        setSelectedIndex(0);
+      } else if (e.key === "End") {
+        e.preventDefault();
+        setSelectedIndex(flatItems.length - 1);
       } else if (e.key === "Enter") {
         e.preventDefault();
         const item = flatItems[selectedIndex];
         if (item) {
-          item.execute(editor);
-          setVisible(false);
+          executeCommand(item);
         }
       } else if (e.key === "Escape") {
         e.preventDefault();
         setVisible(false);
       }
     },
-    [visible, flatItems, selectedIndex, editor],
+    [visible, flatItems, selectedIndex, executeCommand],
   );
 
   // Global keydown for keyboard nav when menu is open
@@ -220,7 +247,7 @@ export function SlashMenu({ editor, commands = [] }: SlashMenuProps) {
     <div
       ref={menuRef}
       className="gotipe-slash-menu"
-      role="listbox"
+      role="dialog"
       aria-label="Insert block"
       data-gotipe-slash-menu=""
       style={{ position: "fixed", top: `${position.top}px`, left: `${position.left}px` }}
@@ -237,29 +264,33 @@ export function SlashMenu({ editor, commands = [] }: SlashMenuProps) {
           setSelectedIndex(0);
         }}
         onKeyDown={handleKeyDown}
+        role="combobox"
         aria-label="Search blocks"
+        aria-autocomplete="list"
+        aria-controls="gotipe-slash-menu-list"
+        aria-expanded={true}
+        aria-activedescendant={flatItems[selectedIndex] ? `gotipe-slash-item-${selectedIndex}` : undefined}
       />
 
       {/* Grouped items */}
+      <div id="gotipe-slash-menu-list" role="listbox" aria-label="Commands">
       {grouped.map((group, gi) => (
-        <div key={group.group}>
+        <div key={group.group} role="group" aria-label={group.label}>
           {gi > 0 && <div className="gotipe-bubble-menu-separator" style={{ width: "100%", height: "1px", margin: "4px 0" }} />}
-          <div className="gotipe-slash-menu-group-label">{group.label}</div>
+          <div className="gotipe-slash-menu-group-label" aria-hidden="true">{group.label}</div>
           {group.items.map((cmd) => {
             const idx = flatIdx++;
             const isSelected = idx === selectedIndex;
             return (
               <div
                 key={cmd.name}
+                id={`gotipe-slash-item-${idx}`}
                 className={`gotipe-slash-menu-item ${isSelected ? "selected" : ""}`}
                 role="option"
                 tabIndex={-1}
                 aria-selected={isSelected}
                 data-gotipe-slash-item=""
-                onClick={() => {
-                  cmd.execute(editor);
-                  setVisible(false);
-                }}
+                onClick={() => executeCommand(cmd)}
                 onMouseEnter={() => setSelectedIndex(idx)}
               >
                 <span className="gotipe-slash-menu-item-icon">{cmd.icon}</span>
@@ -281,8 +312,14 @@ export function SlashMenu({ editor, commands = [] }: SlashMenuProps) {
 
       {/* Empty state */}
       {flatItems.length === 0 && (
-        <div className="gotipe-slash-menu-empty">No results</div>
+        <div className="gotipe-slash-menu-empty" role="status">No results</div>
       )}
+      </div>
+
+      {/* Live region for screen reader announcements */}
+      <div aria-live="polite" aria-atomic="true" className="gotipe-sr-only">
+        {flatItems.length > 0 ? `${flatItems.length} results available` : "No results"}
+      </div>
     </div>
   );
 }

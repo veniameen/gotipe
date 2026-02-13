@@ -17,4 +17,7 @@ export interface EditorEvents {
   commentUpdated: (commentId: string) => void;
   executeAiCommand: (payload: { commandId: string; prompt?: string }) => void;
   aiStatusChange: (status: { active: boolean; label?: string }) => void;
+  aiGhostTextChange: (ghost: { text: string; blockId: string; offset: number } | null) => void;
+  aiProofreadChange: (payload: { suggestions: unknown[]; currentIndex: number }) => void;
+  scrollToBlock: (payload: { blockId: string }) => void;
 }
