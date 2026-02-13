@@ -565,22 +565,25 @@ body {
 
 .gotipe-content .gotipe-todo-item {
   display: grid;
-  grid-template-columns: 20px minmax(0, 1fr);
+  grid-template-columns: 18px minmax(0, 1fr);
   align-items: center;
   column-gap: 10px;
-  min-height: 1.6em;
+  min-height: 1.5em;
+  padding: 1px 0;
 }
 
 .gotipe-content .gotipe-todo-item input[type='checkbox'] {
   appearance: none;
   -webkit-appearance: none;
-  width: 20px;
-  height: 20px;
+  width: 18px;
+  height: 18px;
   margin: 0;
   border: 1.5px solid var(--gt-border-hover, #d4d4d4);
-  border-radius: 6px;
+  border-radius: 5px;
   background: var(--gt-bg, #fff);
   cursor: pointer;
+  position: relative;
+  top: 1px;
   transition:
     border-color 0.12s ease,
     background-color 0.12s ease,
@@ -606,8 +609,10 @@ body {
 }
 
 .gotipe-content .gotipe-todo-item .gotipe-todo-item-content {
+  display: block;
   min-width: 0;
   line-height: inherit;
+  min-height: calc(1em * var(--gt-line-height-body, 1.5));
 }
 
 .gotipe-content .gotipe-todo-item .gotipe-todo-item-content > br[data-gotipe-trailing-break] {

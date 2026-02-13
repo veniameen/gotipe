@@ -1,0 +1,38 @@
+# Notion-like TODO
+
+_Last updated: February 13, 2026_
+
+## Ближайшие приоритеты
+
+- Закрыть remaining `Planned` кейсы из `docs/notion-like-qa/01-case-matrix.md`.
+- Синхронизировать прогресс авто-кейсов с `docs/notion-like-qa/04-checklist-500.md`.
+- Пункт 1 (todo caret/selection baseline) закрыт и стабилизирован:
+  - исправлена нормализация каретки при клике в левую зону `todoItem`
+  - добавлены e2e кейсы в `e2e/notion-like-matrix.spec.ts`
+  - repeat-run `--grep "todo click in left zone" --repeat-each=10`: `20/20` PASS
+- Пункт 2 (nested/multi-step) закрыт и стабилизирован:
+  - suite `e2e/notion-like-nested-transform.spec.ts` (`5` кейсов) проходит стабильно
+  - repeat-run `--repeat-each=5`: `25/25` PASS
+- Дожать проблемные edge-case сценарии:
+  - `SLASH-010` (slash в начале непустой строки) — временно `fixme`
+  - `SLASH-022` / `REL-007` (transform-matrix) — временно quarantined (`fixme`)
+  - `ENTER-009` закрыт automation (`Backspace` policy зафиксирована e2e)
+
+## Технический backlog
+
+- Nested list conversion policy (`DEF-005`).
+- Cross-browser stability в Firefox/WebKit (`DEF-006`).
+- High-frequency input stress и race conditions (`DEF-007`) — частично покрыто, нужна более агрессивная нагрузка.
+- Backspace boundary behavior в списках (`DEF-014`) — baseline закрыт, расширить на nested/cross-browser policy.
+- Дальнейшая стабилизация selection/formatting кейсов на больших документах.
+
+## Что нужно для кросс-браузерных прогонов
+
+- Установить Playwright browsers:
+  - `pnpm exec playwright install`
+
+## Источники задач
+
+- 500 чеклист: `docs/notion-like-qa/04-checklist-500.md`
+- Batch-план автоматизации: `docs/notion-like-qa/05-automation-batches.md`
+- Дефекты и статусы: `docs/notion-like-qa/02-defect-roadmap.md`

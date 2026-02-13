@@ -254,6 +254,37 @@ function findBlockAndSibling(
   return null;
 }
 
+/** Find the previous sibling before a block in the tree */
+function findBlockAndPreviousSibling(
+  blocks: ViewState["blocks"],
+  blockId: string,
+): { id: string } | null {
+  for (let i = 0; i < blocks.length; i++) {
+    if (blocks[i]!.id === blockId) {
+      const prev = blocks[i - 1];
+      return prev ? { id: prev.id } : null;
+    }
+    const found = findBlockAndPreviousSibling(blocks[i]!.children, blockId);
+    if (found) return found;
+  }
+  return null;
+}
+
+const LIST_CONTAINER_TYPES = new Set(["bulletList", "orderedList", "todoList"]);
+
+function findFirstSelectableBlock(
+  blocks: ViewState["blocks"],
+): ViewState["blocks"][number] | null {
+  for (const block of blocks) {
+    if (LIST_CONTAINER_TYPES.has(block.type) && block.children.length > 0) {
+      const nested = findFirstSelectableBlock(block.children);
+      if (nested) return nested;
+    }
+    return block;
+  }
+  return null;
+}
+
 // ---- Transaction format conversion: JS step → Rust externally-tagged enum ----
 // JS: { type: "insertText", blockId: "b1", offset: 5, text: "Hi", marks: [] }
 // Rust: { "InsertText": { "block_id": "b1", "offset": 5, "text": "Hi", "marks": [] } }
@@ -754,9 +785,37 @@ export async function createEditor(options: CreateEditorOptions): Promise<GoTipe
       const wasmJson = toWasmDoc(json as Record<string, unknown>);
       bridge.create(schemaJson, JSON.stringify(wasmJson));
       cachedViewState = null;
+      storedMarks = null;
+
+      try {
+        const raw = JSON.parse(bridge.getState()) as Record<string, unknown>;
+        const parsed = fromWasmDoc(raw) as Record<string, unknown>;
+        const blocks = ((parsed.blocks as ViewState["blocks"]) ?? []) as ViewState["blocks"];
+        const first = findFirstSelectableBlock(blocks);
+        currentSelection = first
+          ? {
+              type: "text",
+              anchor: { blockId: first.id, offset: 0 },
+              head: { blockId: first.id, offset: 0 },
+            }
+          : {
+              type: "text",
+              anchor: { blockId: "", offset: 0 },
+              head: { blockId: "", offset: 0 },
+            };
+      } catch {
+        currentSelection = {
+          type: "text",
+          anchor: { blockId: "", offset: 0 },
+          head: { blockId: "", offset: 0 },
+        };
+      }
+
       this.emit("update", { editor: this });
+      this.emit("selectionChange", { editor: this });
       this.emit("viewStateChange", this.getViewState());
       if (currentSelection.anchor.blockId) {
+        restoreDomSelectionImmediately?.();
         scheduleDomSelectionRestore?.();
       }
     },
@@ -1080,8 +1139,15 @@ export async function createEditor(options: CreateEditorOptions): Promise<GoTipe
         this.emit("viewStateChange", this.getViewState());
       };
 
-      // Track selection changes from user interaction
-      let ignoreSelectionChange = false;
+      // Ignore only a handful of programmatic selectionchange events,
+      // but never suppress real user caret moves with time-based locks.
+      let ignoredSelectionEvents = 0;
+      const beginSelectionChangeLock = (events = 3) => {
+        ignoredSelectionEvents = Math.max(ignoredSelectionEvents, events);
+      };
+      const clearSelectionChangeLock = () => {
+        ignoredSelectionEvents = 0;
+      };
       readSelectionFromDOM = () => {
         const sel = document.getSelection();
         if (!sel || sel.rangeCount === 0) return null;
@@ -1100,10 +1166,48 @@ export async function createEditor(options: CreateEditorOptions): Promise<GoTipe
         };
       };
 
+      const shouldNormalizeCollapsedTodoCaret = (sel: Selection | null): boolean => {
+        if (!sel || !sel.isCollapsed || sel.rangeCount === 0) return false;
+        const anchorNode = sel.anchorNode;
+        if (!anchorNode || !element.contains(anchorNode)) return false;
+
+        const anchorEl = anchorNode instanceof Element ? anchorNode : anchorNode.parentElement;
+        const todoItem = anchorEl?.closest('[data-block-type="todoItem"]') as HTMLElement | null;
+        if (!todoItem) return false;
+
+        const textHost = todoItem.querySelector("[data-gotipe-todo-content]");
+        if (!(textHost instanceof HTMLElement)) return false;
+
+        if (textHost === anchorNode || textHost.contains(anchorEl ?? null)) {
+          return false;
+        }
+
+        if (anchorNode === todoItem && sel.anchorOffset <= 1) {
+          return true;
+        }
+
+        const checkbox = todoItem.querySelector('input[type="checkbox"]');
+        if (checkbox && (checkbox === anchorNode || checkbox.contains(anchorEl ?? null))) {
+          return true;
+        }
+
+        return true;
+      };
+
       const onSelectionChange = () => {
-        if (ignoreSelectionChange) return;
+        if (pendingSelectionRestore) return;
+        const domSelection = document.getSelection();
+        const normalizeTodoCaret = shouldNormalizeCollapsedTodoCaret(domSelection);
+        if (ignoredSelectionEvents > 0) {
+          if (!normalizeTodoCaret) {
+            ignoredSelectionEvents -= 1;
+            return;
+          }
+          ignoredSelectionEvents -= 1;
+        }
         const selection = readSelectionFromDOM?.();
         if (!selection) return;
+
         currentSelection = {
           type: "text" as const,
           anchor: { ...selection.anchor },
@@ -1111,6 +1215,14 @@ export async function createEditor(options: CreateEditorOptions): Promise<GoTipe
         };
         storedMarks = null;
         publishSelection();
+
+        if (normalizeTodoCaret) {
+          beginSelectionChangeLock(2);
+          const restoredNow = restoreDomSelectionImmediately?.() ?? false;
+          if (!restoredNow) {
+            scheduleSelectionRestore();
+          }
+        }
       };
       document.addEventListener("selectionchange", onSelectionChange, { signal });
 
@@ -1125,6 +1237,19 @@ export async function createEditor(options: CreateEditorOptions): Promise<GoTipe
       element.addEventListener("beforeinput", (e) => {
         if (options.editable === false) return;
         const inputType = e.inputType;
+        const resolveSelectionForInput = () => {
+          if (!pendingSelectionRestore) {
+            const domSelection = readSelectionFromDOM?.();
+            if (domSelection?.anchor.blockId) {
+              currentSelection = {
+                type: "text",
+                anchor: { ...domSelection.anchor },
+                head: { ...domSelection.head },
+              };
+            }
+          }
+          return currentSelection;
+        };
 
         if (
           inputType === "insertText" ||
@@ -1135,7 +1260,7 @@ export async function createEditor(options: CreateEditorOptions): Promise<GoTipe
           if (!data) return;
           e.preventDefault();
 
-          const pos = currentSelection;
+          const pos = resolveSelectionForInput();
           if (!pos?.anchor.blockId) return;
 
           const steps: unknown[] = [];
@@ -1180,8 +1305,41 @@ export async function createEditor(options: CreateEditorOptions): Promise<GoTipe
             newOffset = pos.anchor.offset + data.length;
           }
 
+          const runInputRules = (blockId: string, caretOffset: number) => {
+            const ruleState = this.getViewState();
+            const ruleBlock = findBlockInTree(ruleState.blocks, blockId);
+            if (!ruleBlock || !Array.isArray(ruleBlock.content)) return;
+            const ruleText = ruleBlock.content.map((s: { text: string }) => s.text).join("");
+            for (const ext of resolved) {
+              if (ext.inputRules) {
+                for (const rule of ext.inputRules) {
+                  const match = ruleText.match(rule.pattern);
+                  if (match) {
+                    rule.handler(this, match);
+                    return;
+                  }
+                }
+              }
+            }
+
+            // Slash menu trigger should also work at caret in non-empty blocks
+            // (e.g. typing "/" at the start of an existing line).
+            if (data === "/") {
+              const safeOffset = Math.max(0, Math.min(caretOffset, ruleText.length));
+              const beforeCaret = ruleText.slice(0, safeOffset);
+              const slashIdx = beforeCaret.lastIndexOf("/");
+              if (slashIdx !== -1) {
+                const prevChar = slashIdx > 0 ? beforeCaret[slashIdx - 1] ?? "" : "";
+                const query = beforeCaret.slice(slashIdx + 1);
+                if ((slashIdx === 0 || /\s/.test(prevChar)) && !/\s/.test(query)) {
+                  this.emit("openSlashMenu");
+                }
+              }
+            }
+          };
+
           try {
-            ignoreSelectionChange = true;
+            beginSelectionChangeLock();
             inputHandledByWasm = true;
             this.dispatch({ steps });
             // Clear stored marks after insertion (position-based detection takes over)
@@ -1194,54 +1352,138 @@ export async function createEditor(options: CreateEditorOptions): Promise<GoTipe
             };
             publishSelection();
             scheduleSelectionRestore();
-            setTimeout(() => { ignoreSelectionChange = false; }, 50);
-            // Check input rules inline (the `input` event handler skips
-            // them when inputHandledByWasm is true to avoid double handling)
-            const ruleState = this.getViewState();
-            const ruleBlock = findBlockInTree(ruleState.blocks, pos.anchor.blockId);
-            if (ruleBlock && Array.isArray(ruleBlock.content)) {
-              const ruleText = ruleBlock.content.map((s: { text: string }) => s.text).join("");
-              for (const ext of resolved) {
-                if (ext.inputRules) {
-                  for (const rule of ext.inputRules) {
-                    const match = ruleText.match(rule.pattern);
-                    if (match) {
-                      rule.handler(this, match);
-                      return;
-                    }
-                  }
-                }
-              }
-
-              // Slash menu trigger should also work at caret in non-empty blocks
-              // (e.g. typing "/" at the start of an existing line).
-              if (data === "/") {
-                const caretOffset = Math.max(0, Math.min(newOffset, ruleText.length));
-                const beforeCaret = ruleText.slice(0, caretOffset);
-                const slashIdx = beforeCaret.lastIndexOf("/");
-                if (slashIdx !== -1) {
-                  const prevChar = slashIdx > 0 ? beforeCaret[slashIdx - 1] ?? "" : "";
-                  const query = beforeCaret.slice(slashIdx + 1);
-                  if ((slashIdx === 0 || /\s/.test(prevChar)) && !/\s/.test(query)) {
-                    this.emit("openSlashMenu");
-                  }
-                }
-              }
-            }
+            runInputRules(pos.anchor.blockId, newOffset);
           } catch {
-            ignoreSelectionChange = false;
+            clearSelectionChangeLock();
+            const fallbackSel = readSelectionFromDOM?.();
+            if (!fallbackSel?.anchor.blockId) return;
+
+            const fallbackPos = {
+              anchor: fallbackSel.anchor,
+              head: fallbackSel.head,
+            };
+            const fallbackState = this.getViewState();
+            const fallbackIsRange =
+              fallbackPos.anchor.blockId === fallbackPos.head.blockId &&
+              fallbackPos.anchor.offset !== fallbackPos.head.offset;
+            const fallbackMarks =
+              storedMarks !== null
+                ? storedMarks
+                : fallbackIsRange
+                  ? getMarksAt(
+                      fallbackState.blocks,
+                      fallbackPos.anchor.blockId,
+                      Math.min(fallbackPos.anchor.offset, fallbackPos.head.offset),
+                      false,
+                    )
+                  : getMarksAt(
+                      fallbackState.blocks,
+                      fallbackPos.anchor.blockId,
+                      fallbackPos.anchor.offset,
+                    );
+
+            const fallbackSteps: unknown[] = [];
+            let fallbackOffset: number;
+            if (fallbackIsRange) {
+              const from = Math.min(fallbackPos.anchor.offset, fallbackPos.head.offset);
+              const to = Math.max(fallbackPos.anchor.offset, fallbackPos.head.offset);
+              fallbackSteps.push({ type: "deleteText", blockId: fallbackPos.anchor.blockId, from, to });
+              fallbackSteps.push({
+                type: "insertText",
+                blockId: fallbackPos.anchor.blockId,
+                offset: from,
+                text: data,
+                marks: fallbackMarks,
+              });
+              fallbackOffset = from + data.length;
+            } else {
+              fallbackSteps.push({
+                type: "insertText",
+                blockId: fallbackPos.anchor.blockId,
+                offset: fallbackPos.anchor.offset,
+                text: data,
+                marks: fallbackMarks,
+              });
+              fallbackOffset = fallbackPos.anchor.offset + data.length;
+            }
+
+            try {
+              beginSelectionChangeLock();
+              inputHandledByWasm = true;
+              this.dispatch({ steps: fallbackSteps });
+              storedMarks = null;
+              currentSelection = {
+                type: "text",
+                anchor: { blockId: fallbackPos.anchor.blockId, offset: fallbackOffset },
+                head: { blockId: fallbackPos.anchor.blockId, offset: fallbackOffset },
+              };
+              publishSelection();
+              scheduleSelectionRestore();
+              runInputRules(fallbackPos.anchor.blockId, fallbackOffset);
+            } catch {
+              clearSelectionChangeLock();
+            }
           }
           return;
         }
 
         if (inputType === "insertParagraph") {
           e.preventDefault();
-          const pos = currentSelection;
+          const pos = resolveSelectionForInput();
           if (!pos?.anchor.blockId) return;
 
-          // Check if current block is an empty listItem → exit the list
           const preState = this.getViewState();
           const currentBlock = findBlockInTree(preState.blocks, pos.anchor.blockId);
+
+          // In code blocks Enter should insert a newline inside the same block,
+          // not split into a second code block.
+          if (currentBlock?.type === "codeBlock") {
+            const isRange =
+              pos.anchor.blockId === pos.head.blockId && pos.anchor.offset !== pos.head.offset;
+            const steps: unknown[] = [];
+            let newOffset: number;
+
+            if (isRange) {
+              const from = Math.min(pos.anchor.offset, pos.head.offset);
+              const to = Math.max(pos.anchor.offset, pos.head.offset);
+              steps.push({ type: "deleteText", blockId: pos.anchor.blockId, from, to });
+              steps.push({
+                type: "insertText",
+                blockId: pos.anchor.blockId,
+                offset: from,
+                text: "\n",
+                marks: [],
+              });
+              newOffset = from + 1;
+            } else {
+              steps.push({
+                type: "insertText",
+                blockId: pos.anchor.blockId,
+                offset: pos.anchor.offset,
+                text: "\n",
+                marks: [],
+              });
+              newOffset = pos.anchor.offset + 1;
+            }
+
+            try {
+              beginSelectionChangeLock();
+              inputHandledByWasm = true;
+              this.dispatch({ steps });
+              currentSelection = {
+                type: "text",
+                anchor: { blockId: pos.anchor.blockId, offset: newOffset },
+                head: { blockId: pos.anchor.blockId, offset: newOffset },
+              };
+              publishSelection();
+              scheduleSelectionRestore();
+            } catch {
+              clearSelectionChangeLock();
+            }
+            return;
+          }
+
+          // Check if current block is an empty listItem → exit the list
           if (
             currentBlock &&
             (currentBlock.type === "listItem" || currentBlock.type === "todoItem") &&
@@ -1255,7 +1497,7 @@ export async function createEditor(options: CreateEditorOptions): Promise<GoTipe
               const listLoc = findBlockLocation(preState.blocks, listBlock.id);
               if (listLoc) {
                 try {
-                  ignoreSelectionChange = true;
+                  beginSelectionChangeLock();
                   inputHandledByWasm = true;
 
                   if (listBlock.children.length === 1) {
@@ -1299,9 +1541,8 @@ export async function createEditor(options: CreateEditorOptions): Promise<GoTipe
                   }
                   publishSelection();
                   scheduleSelectionRestore();
-                  setTimeout(() => { ignoreSelectionChange = false; }, 50);
                 } catch {
-                  ignoreSelectionChange = false;
+                  clearSelectionChangeLock();
                 }
                 return;
               }
@@ -1309,7 +1550,7 @@ export async function createEditor(options: CreateEditorOptions): Promise<GoTipe
           }
 
           try {
-            ignoreSelectionChange = true;
+            beginSelectionChangeLock();
             inputHandledByWasm = true;
             this.dispatch({
               steps: [{ type: "splitBlock", blockId: pos.anchor.blockId, offset: pos.anchor.offset }],
@@ -1325,16 +1566,20 @@ export async function createEditor(options: CreateEditorOptions): Promise<GoTipe
             }
             publishSelection();
             scheduleSelectionRestore();
-            setTimeout(() => { ignoreSelectionChange = false; }, 50);
           } catch {
-            ignoreSelectionChange = false;
+            clearSelectionChangeLock();
           }
           return;
         }
 
-        if (inputType === "deleteContentBackward") {
+        if (
+          inputType === "deleteContentBackward" ||
+          inputType === "deleteWordBackward" ||
+          inputType === "deleteSoftLineBackward" ||
+          inputType === "deleteHardLineBackward"
+        ) {
           e.preventDefault();
-          const pos = currentSelection;
+          const pos = resolveSelectionForInput();
           if (!pos?.anchor.blockId) return;
 
           const steps: unknown[] = [];
@@ -1357,26 +1602,96 @@ export async function createEditor(options: CreateEditorOptions): Promise<GoTipe
           } else {
             // At start of block — merge with previous
             const state = this.getViewState();
-            const blockIdx = state.blocks.findIndex((b) => b.id === pos.anchor.blockId);
-            if (blockIdx > 0) {
-              const prevBlock = state.blocks[blockIdx - 1]!;
+            const currentBlock = findBlockInTree(state.blocks, pos.anchor.blockId);
+            const parentInfo = currentBlock ? findParentBlock(state.blocks, pos.anchor.blockId) : null;
+            const insideListItem =
+              !!currentBlock &&
+              (currentBlock.type === "listItem" || currentBlock.type === "todoItem") &&
+              !!parentInfo &&
+              (
+                parentInfo.parent.type === "bulletList" ||
+                parentInfo.parent.type === "orderedList" ||
+                parentInfo.parent.type === "todoList"
+              );
+
+            // Notion-like behavior: Backspace at start of a non-empty list item
+            // lifts it out of the list to a paragraph instead of no-op.
+            if (insideListItem && !isBlockEmpty(currentBlock)) {
+              try {
+                beginSelectionChangeLock();
+                inputHandledByWasm = true;
+                const converted = this.chain().setBlockType("paragraph").run();
+                if (converted) {
+                  const nextSelection = this.getViewState().selection;
+                  currentSelection = {
+                    type: "text",
+                    anchor: { blockId: nextSelection.anchor.blockId, offset: nextSelection.anchor.offset },
+                    head: { blockId: nextSelection.head.blockId, offset: nextSelection.head.offset },
+                  };
+                  publishSelection();
+                  scheduleSelectionRestore();
+                  return;
+                }
+              } catch {
+                // Fall through to regular merge path.
+              }
+              clearSelectionChangeLock();
+            }
+
+            const prevInfo = findBlockAndPreviousSibling(state.blocks, pos.anchor.blockId);
+            const prevBlock = prevInfo ? findBlockInTree(state.blocks, prevInfo.id) : null;
+            if (prevBlock) {
               const prevLen = Array.isArray(prevBlock.content)
                 ? prevBlock.content.reduce((sum, s) => sum + s.text.length, 0)
                 : typeof prevBlock.content === "string"
                   ? prevBlock.content.length
                   : 0;
-              steps.push({
-                type: "mergeBlocks",
-                blockId: pos.anchor.blockId,
-                targetId: prevBlock.id,
-              });
-              newBlockId = prevBlock.id;
-              newOffset = prevLen;
+              const isListMerge =
+                !!currentBlock &&
+                (currentBlock.type === "listItem" || currentBlock.type === "todoItem") &&
+                (prevBlock.type === "listItem" || prevBlock.type === "todoItem");
+
+              if (isListMerge) {
+                const currentText = Array.isArray(currentBlock.content)
+                  ? currentBlock.content.map((s) => s.text).join("")
+                  : typeof currentBlock.content === "string"
+                    ? currentBlock.content
+                    : "";
+
+                if (currentText.length > 0) {
+                  steps.push({
+                    type: "insertText",
+                    blockId: prevBlock.id,
+                    offset: prevLen,
+                    text: currentText,
+                    marks: [],
+                  });
+                }
+                for (let i = 0; i < currentBlock.children.length; i++) {
+                  steps.push({
+                    type: "moveBlock",
+                    blockId: currentBlock.children[i]!.id,
+                    newParentId: prevBlock.id,
+                    newIndex: prevBlock.children.length + i,
+                  });
+                }
+                steps.push({ type: "deleteBlock", blockId: pos.anchor.blockId });
+                newBlockId = prevBlock.id;
+                newOffset = prevLen + currentText.length;
+              } else {
+                steps.push({
+                  type: "mergeBlocks",
+                  blockId: pos.anchor.blockId,
+                  targetId: prevBlock.id,
+                });
+                newBlockId = prevBlock.id;
+                newOffset = prevLen;
+              }
             }
           }
           if (steps.length > 0) {
             try {
-              ignoreSelectionChange = true;
+              beginSelectionChangeLock();
               inputHandledByWasm = true;
               this.dispatch({ steps });
               currentSelection = {
@@ -1386,9 +1701,8 @@ export async function createEditor(options: CreateEditorOptions): Promise<GoTipe
               };
               publishSelection();
               scheduleSelectionRestore();
-              setTimeout(() => { ignoreSelectionChange = false; }, 50);
             } catch {
-              ignoreSelectionChange = false;
+              clearSelectionChangeLock();
             }
           }
           return;
@@ -1396,10 +1710,11 @@ export async function createEditor(options: CreateEditorOptions): Promise<GoTipe
 
         if (inputType === "deleteContentForward") {
           e.preventDefault();
-          const pos = currentSelection;
+          const pos = resolveSelectionForInput();
           if (!pos?.anchor.blockId) return;
 
-          const block = this.getViewState().blocks.find((b) => b.id === pos.anchor.blockId);
+          const state = this.getViewState();
+          const block = findBlockInTree(state.blocks, pos.anchor.blockId);
           if (!block) return;
           const blockTextLen = Array.isArray(block.content)
             ? block.content.reduce((sum, s) => sum + s.text.length, 0)
@@ -1408,7 +1723,7 @@ export async function createEditor(options: CreateEditorOptions): Promise<GoTipe
               : 0;
 
           try {
-            ignoreSelectionChange = true;
+            beginSelectionChangeLock();
             inputHandledByWasm = true;
             if (pos.anchor.blockId === pos.head.blockId && pos.anchor.offset !== pos.head.offset) {
               const from = Math.min(pos.anchor.offset, pos.head.offset);
@@ -1432,9 +1747,8 @@ export async function createEditor(options: CreateEditorOptions): Promise<GoTipe
               // Cursor stays at same position after forward delete
             }
             scheduleSelectionRestore();
-            setTimeout(() => { ignoreSelectionChange = false; }, 50);
           } catch {
-            ignoreSelectionChange = false;
+            clearSelectionChangeLock();
           }
           return;
         }
@@ -1442,11 +1756,75 @@ export async function createEditor(options: CreateEditorOptions): Promise<GoTipe
 
       // Keyboard shortcuts from extensions
       element.addEventListener("keydown", (e) => {
+        // Some browsers do not dispatch beforeinput(deleteContentBackward)
+        // at list-item boundaries. Handle this path on keydown.
+        if (
+          e.key === "Backspace" &&
+          !e.metaKey &&
+          !e.ctrlKey &&
+          !e.altKey &&
+          readSelectionFromDOM
+        ) {
+          const domSelection = readSelectionFromDOM();
+          if (
+            domSelection &&
+            domSelection.anchor.blockId === domSelection.head.blockId &&
+            domSelection.anchor.offset === domSelection.head.offset &&
+            domSelection.anchor.offset === 0
+          ) {
+            const state = this.getViewState();
+            const currentBlock = findBlockInTree(state.blocks, domSelection.anchor.blockId);
+            const parentInfo = currentBlock
+              ? findParentBlock(state.blocks, domSelection.anchor.blockId)
+              : null;
+            const insideListItem =
+              !!currentBlock &&
+              (currentBlock.type === "listItem" || currentBlock.type === "todoItem") &&
+              !!parentInfo &&
+              (
+                parentInfo.parent.type === "bulletList" ||
+                parentInfo.parent.type === "orderedList" ||
+                parentInfo.parent.type === "todoList"
+              );
+            if (insideListItem && !isBlockEmpty(currentBlock)) {
+              e.preventDefault();
+              try {
+                beginSelectionChangeLock();
+                inputHandledByWasm = true;
+                const converted = this.chain().setBlockType("paragraph").run();
+                if (converted) {
+                  const nextSelection = this.getViewState().selection;
+                  currentSelection = {
+                    type: "text",
+                    anchor: { blockId: nextSelection.anchor.blockId, offset: nextSelection.anchor.offset },
+                    head: { blockId: nextSelection.head.blockId, offset: nextSelection.head.offset },
+                  };
+                  publishSelection();
+                  scheduleSelectionRestore();
+                  return;
+                }
+              } catch {
+                // Fall through to regular key processing.
+              }
+              clearSelectionChangeLock();
+            }
+          }
+        }
+
+        const selection = document.getSelection();
+        const selectionTarget =
+          selection?.anchorNode instanceof HTMLElement
+            ? selection.anchorNode
+            : selection?.anchorNode?.parentElement ?? null;
+        const whenTarget =
+          (selectionTarget && element.contains(selectionTarget) ? selectionTarget : null) ??
+          (e.target instanceof HTMLElement ? e.target : element);
+
         for (const ext of resolved) {
           if (ext.keybindings) {
             for (const kb of ext.keybindings) {
               if (matchKeybinding(e, kb.key)) {
-                if (kb.when && !evaluateWhen(kb.when, e.target as HTMLElement)) {
+                if (kb.when && !evaluateWhen(kb.when, whenTarget)) {
                   continue;
                 }
                 const result = kb.command(this);

@@ -17,10 +17,12 @@ _Last updated: February 13, 2026_
   - slash transform для `paragraph/bullet/ordered/todo`
   - checkbox alignment + spacing
 - Результат:
-  - `notion-like-matrix.spec.ts` расширен до 30-40 тестов
+  - `notion-like-matrix.spec.ts` + `notion-like-exhaustive.spec.ts`
+  - текущий покрытый минимум: `39` авто-кейсов в Chromium
   - запуск только Chromium обязателен в CI
+  - статус: **Completed**
 
-### Batch 2 (Transform matrix, 120 кейсов)
+### Batch 2 (Transform matrix, top-level transitions)
 
 - Область: `D` (вся матрица transform)
 - Подход:
@@ -28,6 +30,18 @@ _Last updated: February 13, 2026_
   - валидация: тип блока, сохранение текста, позиция caret
 - Результат:
   - отдельный spec: `e2e/notion-like-transform-matrix.spec.ts`
+  - текущий статус: временно quarantined (`fixme`) из-за нестабильности slash start-line (`SLASH-010`)
+  - `SLASH-021` закрыт и снят с `fixme` в matrix suite
+  - статус: **In progress**; active-run восстановить после закрытия `SLASH-010`
+
+### Batch 2.1 (Nested / Multi-step baseline)
+
+- Область: nested transforms + list structure stability
+- Результат:
+  - `e2e/notion-like-nested-transform.spec.ts`
+  - текущий baseline: `5/5` PASS
+  - стресс-повтор: `25/25` PASS (`--repeat-each=5`)
+  - покрыты nested slash-transform и `Tab/Shift+Tab` структура
 
 ### Batch 3 (Formatting/History, 70 кейсов)
 
@@ -64,3 +78,4 @@ _Last updated: February 13, 2026_
 - Источник правды по кейсам: `docs/notion-like-qa/04-checklist-500.md`
 - Статус по дефектам: `docs/notion-like-qa/02-defect-roadmap.md`
 - Master-координация: `docs/notion-like-qa/00-master-plan.md`
+- Текущий стабильный авто-охват (Chromium): `48` PASS, `75` quarantine(`fixme`) в combined run

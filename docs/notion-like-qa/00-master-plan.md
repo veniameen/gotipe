@@ -13,15 +13,22 @@ _Last updated: February 13, 2026_
 
 ## Связанные документы
 
+- `docs/notion-like-qa/DONE.md`
+- `docs/notion-like-qa/TODO.md`
 - `docs/notion-like-qa/01-case-matrix.md`
 - `docs/notion-like-qa/02-defect-roadmap.md`
 - `docs/notion-like-qa/03-exploratory-charters.md`
 - `docs/notion-like-qa/04-checklist-500.md`
 - `docs/notion-like-qa/05-automation-batches.md`
+- `docs/notion-like-qa/report-2026-02-13-chromium.md`
 
 ## Что уже сделано
 
 - Добавлены regression-тесты: `e2e/notion-like-matrix.spec.ts`
+- Добавлены keyboard regression-кейсы slash-menu (`ArrowUp/ArrowDown/Enter`, `Escape`)
+- Добавлен расширенный стресс/поведенческий suite: `e2e/notion-like-exhaustive.spec.ts`
+- Добавлен data-driven suite трансформаций: `e2e/notion-like-transform-matrix.spec.ts`
+- Добавлен nested/multi-step suite: `e2e/notion-like-nested-transform.spec.ts`
 - Переписан устаревший suite: `e2e/slash-menu.spec.ts`
 - Исправлены core-преобразования в list-контексте:
   - `packages/core/src/chain.ts`
@@ -34,6 +41,21 @@ _Last updated: February 13, 2026_
   - `packages/block-editor/src/components/slash-menu.tsx`
   - `packages/react/src/editor-content.tsx`
   - `packages/theme/src/theme.css`
+- Исправлена нормализация каретки для клика в левую зону `todoItem`:
+  - `packages/core/src/editor.ts` (selectionchange path)
+  - `e2e/notion-like-matrix.spec.ts` (новые regression кейсы)
+- Исправлены конверсии `codeBlock -> list/todo` (с сохранением текста):
+  - `packages/core/src/chain.ts`
+- Исправлен selection drift после `setContent`/programmatic range:
+  - `packages/core/src/editor.ts`
+  - `e2e/notion-like-nested-transform.spec.ts` (helper sync)
+- Исправлено сохранение nested children при lift/unwrap list transform:
+  - `packages/core/src/chain.ts`
+- Улучшены nested list операции:
+  - `packages/core/src/chain.ts` (`indent` / `outdent`)
+- Добавлен детерминированный тестовый reset для Notion-like:
+  - `apps/playground/src/templates/notion-editor.tsx` (`__GOTIPE_NOTION_EDITOR__`)
+  - reset контента перед каждым e2e кейсом
 
 ## Рабочие фазы
 
@@ -75,7 +97,21 @@ Exit criteria:
 
 ## Текущий статус прогонов
 
-- Chromium: `14/14` PASS (`pnpm playwright test e2e/notion-like-matrix.spec.ts --project=chromium`)
+- Chromium matrix: `28 passed`, `1 skipped (fixme)`  
+  - `pnpm playwright test e2e/notion-like-matrix.spec.ts --project=chromium`
+- Chromium exhaustive: `15 passed`, `2 skipped (fixme)`  
+  - `pnpm playwright test e2e/notion-like-exhaustive.spec.ts --project=chromium`
+- Chromium transform-matrix: временно quarantined, `72 skipped (fixme)`  
+  - `pnpm playwright test e2e/notion-like-transform-matrix.spec.ts --project=chromium`
+- Chromium nested/multi-step: `5/5` PASS  
+  - `pnpm playwright test e2e/notion-like-nested-transform.spec.ts --project=chromium`
+- Chromium nested/multi-step stress: `25/25` PASS (`--repeat-each=5`)
+- Chromium todo-left-zone stress: `20/20` PASS (`--grep "todo click in left zone" --repeat-each=10`)
+- Chromium combined (`matrix + exhaustive + nested`): `48 passed`, `3 skipped`
+- Chromium combined (`matrix + exhaustive + transform-matrix + nested`): `48 passed`, `75 skipped`
+- Известные открытые flaky-зоны:
+  - `SLASH-010` (slash в начале непустой строки)
+  - quarantine `SLASH-022` / `REL-007` до стабилизации slash-path
 - Firefox/WebKit: run blocked, отсутствуют браузерные бинарники Playwright в текущем окружении
   - требуется: `pnpm exec playwright install`
 
