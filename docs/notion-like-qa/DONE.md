@@ -7,6 +7,10 @@ _Last updated: February 13, 2026_
 - Стабилизированы базовые slash-конверсии между `paragraph`, `bullet`, `ordered`, `todo`.
 - Исправлено исчезновение строки при list/todo трансформациях.
 - Исправлено позиционирование gutter-контролов (`+` и drag-handle) рядом с контентом.
+- Усилен hover/position pipeline gutter-тулбара:
+  - hit-testing блока под курсором через `elementsFromPoint(...)` + nearest-by-Y fallback
+  - тулбар не теряется при быстром проходе курсора через левый gutter
+  - отдельный отступ для list-блоков (`bullet/ordered/todo`) чтобы не налезать на маркеры
 - Приведён slash-menu к production-стилю, включая поддержку light/dark темы.
 - Добавлены regression e2e для ключевых сценариев Notion-like.
 - Усилен `todo` UX:
@@ -24,6 +28,14 @@ _Last updated: February 13, 2026_
   - 17 сценариев (slash/enter/backspace/delete/цепочки transform/стресс mixed-операций)
 - Добавлен suite `e2e/notion-like-transform-matrix.spec.ts`:
   - 72 data-driven перехода (`source -> target`) для slash-конверсий
+- Добавлен batch suite `e2e/notion-like-checklist-001-050.spec.ts`:
+  - покрытие `NL-001..NL-050` в отдельном файле (< 300 строк)
+  - shared helper `e2e/helpers/notion-checklist.ts` (< 300 строк)
+- Добавлен batch suite `e2e/notion-like-checklist-051-100.spec.ts`:
+  - покрытие `NL-051..NL-100` в отдельном файле (< 300 строк)
+  - батч закрыт в одном прогоне `50/50`
+- Стабилизирована синхронизация internal selection после программной постановки каретки:
+  - `e2e/helpers/notion-checklist.ts`: `setCaretAt(...)` теперь вызывает `syncSelectionFromDOM()`
 - Исправлен дефект `codeBlock -> list/todo`:
   - до фикса текст строки терялся при transform
   - после фикса текст сохраняется (подтверждено transform-matrix)
@@ -63,6 +75,11 @@ _Last updated: February 13, 2026_
 - Chromium nested/multi-step: `5/5` PASS.
 - Chromium nested/multi-step repeat: `25/25` PASS (`--repeat-each=5`).
 - Chromium todo-left-zone repeat: `20/20` PASS (`--grep "todo click in left zone" --repeat-each=10`).
+- Chromium checklist batch `NL-001..NL-050`: `50/50` PASS.
+- Chromium checklist batch `NL-051..NL-100`: `50/50` PASS.
+- Chromium block-toolbar fast-hover stress: `18/18` PASS (`e2e/block-toolbar-fast-hover.spec.ts`).
+- Chromium block-toolbar baseline: `14/14` PASS (`e2e/block-toolbar.spec.ts`).
+- Chromium gutter/drag batch `NL-471..NL-480`: `10/10` PASS.
 - Chromium combined (`matrix + exhaustive + nested`): `48 passed`, `3 skipped`.
 - Chromium combined (`matrix + exhaustive + transform-matrix + nested`): `48 passed`, `75 skipped`.
 - Открытые нестабильные зоны:

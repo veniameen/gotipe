@@ -377,6 +377,50 @@ test.describe("Notion-like matrix regressions", () => {
     await resetNotionDocument(page);
   });
 
+  test("NL-001: click at start of empty paragraph keeps caret in paragraph start", async ({ page }) => {
+    const coords = await page.evaluate(() => {
+      const paragraph = document.querySelector(
+        '[data-gotipe-content] > [data-block-type="paragraph"]',
+      ) as HTMLElement | null;
+      if (!paragraph) return null;
+      const rect = paragraph.getBoundingClientRect();
+      return {
+        x: rect.left + 8,
+        y: rect.top + rect.height / 2,
+      };
+    });
+    expect(coords).not.toBeNull();
+    await page.mouse.click(coords!.x, coords!.y);
+
+    await expect
+      .poll(async () =>
+        page.evaluate(() => {
+          const paragraph = document.querySelector(
+            '[data-gotipe-content] > [data-block-type="paragraph"]',
+          ) as HTMLElement | null;
+          const content = document.querySelector("[data-gotipe-content]") as HTMLElement | null;
+          const blockId = paragraph?.getAttribute("data-block-id") ?? null;
+          const editor = (window as Record<string, unknown>).__GOTIPE_NOTION_EDITOR__ as
+            | { getViewState?: () => { selection?: { anchor: { blockId: string; offset: number } } } }
+            | undefined;
+          const stateSel = editor?.getViewState?.().selection;
+          const sel = window.getSelection();
+          if (!paragraph || !content || !stateSel || !sel || sel.rangeCount === 0 || !blockId) return "missing";
+
+          const anchorEl =
+            sel.anchorNode instanceof Element ? sel.anchorNode : sel.anchorNode?.parentElement;
+          const inParagraph = !!(
+            anchorEl &&
+            (anchorEl === paragraph || paragraph.contains(anchorEl))
+          );
+          const atRootLeftEdge = sel.anchorNode === content && sel.anchorOffset === 0;
+          const stateMatchesParagraph = stateSel.anchor.blockId === blockId;
+          return `${inParagraph}|${atRootLeftEdge}|${stateMatchesParagraph}|${stateSel.anchor.offset}`;
+        }),
+      )
+      .toBe("true|false|true|0");
+  });
+
   test("slash: paragraph -> bullet list keeps row visible", async ({ page }) => {
     const m = marker("bullet");
     await createFreshLine(page);
@@ -929,13 +973,30 @@ test.describe("Notion-like matrix regressions", () => {
       const toolbarEl = document.querySelector(".gotipe-block-toolbar-wrapper") as HTMLElement | null;
       if (!content || !block || !toolbarEl) return null;
 
+      const getTextAnchorLeft = (blockEl: HTMLElement): number => {
+        const walker = document.createTreeWalker(blockEl, NodeFilter.SHOW_TEXT);
+        let n: Node | null;
+        while ((n = walker.nextNode())) {
+          const text = n.textContent ?? "";
+          if (!text.trim()) continue;
+          const r = document.createRange();
+          r.setStart(n, 0);
+          r.setEnd(n, Math.min(1, text.length));
+          const rr = r.getBoundingClientRect();
+          if (rr.width > 0 || rr.height > 0) return rr.left;
+        }
+        return blockEl.getBoundingClientRect().left;
+      };
+
       const contentRect = content.getBoundingClientRect();
       const blockRect = block.getBoundingClientRect();
       const toolbarRect = toolbarEl.getBoundingClientRect();
+      const textAnchorLeft = getTextAnchorLeft(block);
 
       return {
         contentLeft: contentRect.left,
         blockTop: blockRect.top,
+        textAnchorLeft,
         toolbarLeft: toolbarRect.left,
         toolbarRight: toolbarRect.right,
         toolbarTop: toolbarRect.top,
@@ -943,8 +1004,10 @@ test.describe("Notion-like matrix regressions", () => {
     });
 
     expect(metrics).not.toBeNull();
-    expect((metrics?.toolbarRight ?? 0) - (metrics?.contentLeft ?? 0)).toBeLessThanOrEqual(10);
-    expect((metrics?.toolbarRight ?? 0) - (metrics?.contentLeft ?? 0)).toBeGreaterThanOrEqual(-48);
+    expect((metrics?.toolbarRight ?? 0) - (metrics?.contentLeft ?? 0)).toBeGreaterThanOrEqual(-24);
+    expect((metrics?.toolbarRight ?? 0) - (metrics?.textAnchorLeft ?? 0)).toBeLessThanOrEqual(24);
+    expect((metrics?.toolbarRight ?? 0) - (metrics?.textAnchorLeft ?? 0)).toBeGreaterThanOrEqual(-56);
+    expect((metrics?.toolbarLeft ?? 0)).toBeLessThan((metrics?.textAnchorLeft ?? 0) - 8);
     expect(Math.abs((metrics?.toolbarTop ?? 0) - (metrics?.blockTop ?? 0))).toBeLessThan(20);
   });
 

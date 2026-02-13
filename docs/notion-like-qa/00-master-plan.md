@@ -29,6 +29,8 @@ _Last updated: February 13, 2026_
 - Добавлен расширенный стресс/поведенческий suite: `e2e/notion-like-exhaustive.spec.ts`
 - Добавлен data-driven suite трансформаций: `e2e/notion-like-transform-matrix.spec.ts`
 - Добавлен nested/multi-step suite: `e2e/notion-like-nested-transform.spec.ts`
+- Добавлен checklist-batch suite: `e2e/notion-like-checklist-001-050.spec.ts`
+- Добавлен checklist-batch suite: `e2e/notion-like-checklist-051-100.spec.ts`
 - Переписан устаревший suite: `e2e/slash-menu.spec.ts`
 - Исправлены core-преобразования в list-контексте:
   - `packages/core/src/chain.ts`
@@ -107,6 +109,8 @@ Exit criteria:
   - `pnpm playwright test e2e/notion-like-nested-transform.spec.ts --project=chromium`
 - Chromium nested/multi-step stress: `25/25` PASS (`--repeat-each=5`)
 - Chromium todo-left-zone stress: `20/20` PASS (`--grep "todo click in left zone" --repeat-each=10`)
+- Chromium checklist batch `NL-001..NL-050`: `50/50` PASS
+- Chromium checklist batch `NL-051..NL-100`: `50/50` PASS
 - Chromium combined (`matrix + exhaustive + nested`): `48 passed`, `3 skipped`
 - Chromium combined (`matrix + exhaustive + transform-matrix + nested`): `48 passed`, `75 skipped`
 - Известные открытые flaky-зоны:

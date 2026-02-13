@@ -33,6 +33,35 @@ test.describe("Block toolbar", () => {
     await expect(blocks).toHaveCount(before + 1);
   });
 
+  test("toolbar remains clickable when moving from block text into left gutter", async ({ page }) => {
+    const blocks = page.locator("[data-gotipe-content] > [data-block-id]");
+    const before = await blocks.count();
+
+    const points = await page.evaluate(() => {
+      const block = document.querySelector("[data-gotipe-content] > [data-block-id]") as HTMLElement | null;
+      if (!block) return null;
+      const rect = block.getBoundingClientRect();
+      return {
+        startX: rect.left + Math.min(120, Math.max(24, rect.width / 3)),
+        startY: rect.top + Math.min(24, Math.max(10, rect.height / 2)),
+      };
+    });
+    expect(points).not.toBeNull();
+
+    await page.mouse.move(points!.startX, points!.startY);
+    await expect(page.locator(".gotipe-block-toolbar")).toBeVisible();
+
+    const addButton = page.locator('[aria-label="Add block below"]');
+    const addBox = await addButton.boundingBox();
+    expect(addBox).not.toBeNull();
+
+    await page.mouse.move(addBox!.x + addBox!.width / 2, addBox!.y + addBox!.height / 2, { steps: 12 });
+    await expect(addButton).toBeVisible();
+    await page.mouse.click(addBox!.x + addBox!.width / 2, addBox!.y + addBox!.height / 2);
+
+    await expect(blocks).toHaveCount(before + 1);
+  });
+
   test("drag handle click opens context menu", async ({ page }) => {
     await hoverFirstTopLevelBlock(page);
     await page.click("[data-gotipe-drag-handle]");

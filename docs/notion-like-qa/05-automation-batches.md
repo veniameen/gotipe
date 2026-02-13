@@ -19,6 +19,9 @@ _Last updated: February 13, 2026_
 - Результат:
   - `notion-like-matrix.spec.ts` + `notion-like-exhaustive.spec.ts`
   - текущий покрытый минимум: `39` авто-кейсов в Chromium
+  - добавлен отдельный batch-suite `e2e/notion-like-checklist-001-050.spec.ts` (`50/50` PASS)
+  - добавлен отдельный batch-suite `e2e/notion-like-checklist-051-100.spec.ts` (`50/50` PASS)
+  - суммарно по checklist-batch: `100/100` PASS (`NL-001..NL-100`)
   - запуск только Chromium обязателен в CI
   - статус: **Completed**
 

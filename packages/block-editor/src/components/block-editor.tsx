@@ -16,6 +16,7 @@ import { ThemeToggle } from "./theme-toggle";
 
 const BLOCK_TOOLBAR_WIDTH = 36;
 const BLOCK_TOOLBAR_GAP = 8;
+const BLOCK_TOOLBAR_LIST_EXTRA_GAP = 12;
 
 export interface BlockEditorProps {
   editor: GoTipeEditor | null;
@@ -62,6 +63,57 @@ function getTopLevelBlockEls(containerEl: HTMLElement): HTMLElement[] {
   return Array.from(contentEl.children).filter(
     (el): el is HTMLElement => el instanceof HTMLElement && el.hasAttribute("data-block-id"),
   );
+}
+
+function getTopLevelBlockIdAtPoint(
+  containerEl: HTMLElement,
+  clientX: number,
+  clientY: number,
+): string | null {
+  const stack = document.elementsFromPoint(clientX, clientY);
+  for (const node of stack) {
+    if (!(node instanceof HTMLElement)) continue;
+    const id = getTopLevelBlockId(node, containerEl);
+    if (id) return id;
+  }
+
+  const blocks = getTopLevelBlockEls(containerEl);
+  let nearest: HTMLElement | null = null;
+  let nearestDistance = Number.POSITIVE_INFINITY;
+  for (const block of blocks) {
+    const rect = block.getBoundingClientRect();
+    if (clientY >= rect.top && clientY <= rect.bottom) {
+      return block.getAttribute("data-block-id");
+    }
+    const distance = clientY < rect.top ? rect.top - clientY : clientY - rect.bottom;
+    if (distance < nearestDistance) {
+      nearestDistance = distance;
+      nearest = block;
+    }
+  }
+  return nearest?.getAttribute("data-block-id") ?? null;
+}
+
+function getBlockContentLeft(blockEl: HTMLElement): number {
+  const textWalker = document.createTreeWalker(blockEl, NodeFilter.SHOW_TEXT);
+  let textNode: Node | null;
+  while ((textNode = textWalker.nextNode())) {
+    const text = textNode.textContent ?? "";
+    if (!text.trim()) continue;
+    const range = document.createRange();
+    range.setStart(textNode, 0);
+    range.setEnd(textNode, Math.min(1, text.length));
+    const rect = range.getBoundingClientRect();
+    if (rect.width > 0 || rect.height > 0) {
+      return rect.left;
+    }
+  }
+
+  const fallback =
+    (blockEl.querySelector(
+      "[data-gotipe-todo-content], [contenteditable='true'], p, h1, h2, h3, li, pre, blockquote",
+    ) as HTMLElement | null) ?? blockEl;
+  return fallback.getBoundingClientRect().left;
 }
 
 function getDropIndex(containerEl: HTMLElement, clientY: number): number {
@@ -122,34 +174,41 @@ export function BlockEditor({
 
       // Don't reset when hovering over the toolbar or context menu
       const target = e.target as HTMLElement;
-      if (target.closest(".gotipe-block-toolbar") || target.closest(".gotipe-block-context-menu")) {
+      if (target.closest(".gotipe-block-context-menu")) {
         return;
       }
 
       if (!containerRef.current) return;
-      const blockId = getTopLevelBlockId(target, containerRef.current);
+      const blockId = getTopLevelBlockIdAtPoint(containerRef.current, e.clientX, e.clientY);
+      if (!blockId) {
+        setHoveredBlockId(null);
+        setToolbarPos(null);
+        return;
+      }
 
       if (blockId !== hoveredBlockId) {
         setHoveredBlockId(blockId);
         if (blockId && containerRef.current) {
-          const contentEl = containerRef.current.querySelector("[data-gotipe-content]");
-          const blockEl = containerRef.current.querySelector(
+          const blockEl = containerRef.current.querySelector<HTMLElement>(
             `[data-gotipe-content] > [data-block-id="${blockId}"]`,
           );
           if (blockEl) {
             const containerRect = containerRef.current.getBoundingClientRect();
             const blockRect = blockEl.getBoundingClientRect();
-            const contentRect =
-              contentEl instanceof HTMLElement ? contentEl.getBoundingClientRect() : null;
-            const anchorLeft = contentRect?.left ?? blockRect.left;
+            const contentLeft = getBlockContentLeft(blockEl);
+            const blockType = blockEl.getAttribute("data-block-type");
+            const extraGap =
+              blockType === "bulletList" || blockType === "orderedList" || blockType === "todoList"
+                ? BLOCK_TOOLBAR_LIST_EXTRA_GAP
+                : 0;
             const left = Math.max(
               0,
-              Math.round(anchorLeft - containerRect.left - BLOCK_TOOLBAR_WIDTH - BLOCK_TOOLBAR_GAP),
+              Math.round(
+                contentLeft - containerRect.left - BLOCK_TOOLBAR_WIDTH - BLOCK_TOOLBAR_GAP - extraGap,
+              ),
             );
             setToolbarPos({ top: blockRect.top - containerRect.top, left });
           }
-        } else {
-          setToolbarPos(null);
         }
       }
     },
@@ -159,7 +218,12 @@ export function BlockEditor({
   const handleMouseLeave = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
     // Don't hide if mouse moves to toolbar (which is a child of the container)
     const related = e.relatedTarget as HTMLElement | null;
-    if (related && (related.closest?.(".gotipe-block-toolbar") || related.closest?.(".gotipe-block-context-menu"))) {
+    if (
+      related &&
+      (related.closest?.(".gotipe-block-toolbar") ||
+        related.closest?.(".gotipe-block-toolbar-wrapper") ||
+        related.closest?.(".gotipe-block-context-menu"))
+    ) {
       return;
     }
     setHoveredBlockId(null);

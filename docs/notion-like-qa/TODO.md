@@ -6,6 +6,10 @@ _Last updated: February 13, 2026_
 
 - Закрыть remaining `Planned` кейсы из `docs/notion-like-qa/01-case-matrix.md`.
 - Синхронизировать прогресс авто-кейсов с `docs/notion-like-qa/04-checklist-500.md`.
+- Продолжить batch-подход по 50 кейсов:
+  - закрыт блок: `NL-051..NL-100` (`50/50` PASS)
+  - следующий блок: `NL-101..NL-150`
+  - новый файл по правилу <= 300 строк
 - Пункт 1 (todo caret/selection baseline) закрыт и стабилизирован:
   - исправлена нормализация каретки при клике в левую зону `todoItem`
   - добавлены e2e кейсы в `e2e/notion-like-matrix.spec.ts`
