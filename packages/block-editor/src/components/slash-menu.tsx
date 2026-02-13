@@ -7,6 +7,8 @@ export interface SlashMenuProps {
 }
 
 const GROUP_ORDER: SlashCommandDef["group"][] = ["ai", "style", "insert", "upload"];
+const MENU_OFFSET_Y = 8;
+const VIEWPORT_PADDING = 12;
 
 const GROUP_LABELS: Record<string, string> = {
   ai: "AI",
@@ -14,6 +16,219 @@ const GROUP_LABELS: Record<string, string> = {
   insert: "Insert",
   upload: "Upload",
 };
+
+const ICON_TEXT_TOKENS = new Set(["heading-1", "heading-2", "heading-3"]);
+
+type SlashTrigger = {
+  blockId: string;
+  from: number;
+  to: number;
+  query: string;
+};
+
+function findBlockById(
+  blocks: ReturnType<GoTipeEditor["getViewState"]>["blocks"],
+  blockId: string,
+): ReturnType<GoTipeEditor["getViewState"]>["blocks"][number] | null {
+  for (const block of blocks) {
+    if (block.id === blockId) return block;
+    if (block.children.length > 0) {
+      const nested = findBlockById(block.children, blockId);
+      if (nested) return nested;
+    }
+  }
+  return null;
+}
+
+function getSlashTrigger(editor: GoTipeEditor): SlashTrigger | null {
+  const state = editor.getViewState();
+  const sel = state.selection;
+  if (sel.type !== "text" || !sel.anchor.blockId) return null;
+  if (sel.anchor.blockId !== sel.head.blockId || sel.anchor.offset !== sel.head.offset) return null;
+
+  const block = findBlockById(state.blocks, sel.anchor.blockId);
+  if (!block || !Array.isArray(block.content)) return null;
+
+  const text = block.content.map((span) => span.text).join("");
+  const caret = Math.max(0, Math.min(sel.anchor.offset, text.length));
+  const beforeCaret = text.slice(0, caret);
+  const slashIdx = beforeCaret.lastIndexOf("/");
+  if (slashIdx === -1) return null;
+
+  if (slashIdx > 0 && !/\s/.test(beforeCaret[slashIdx - 1] ?? "")) return null;
+
+  const rawQuery = beforeCaret.slice(slashIdx + 1);
+  if (/\s/.test(rawQuery)) return null;
+
+  return {
+    blockId: sel.anchor.blockId,
+    from: slashIdx,
+    to: caret,
+    query: rawQuery,
+  };
+}
+
+function isUsableRect(rect: DOMRect | null): rect is DOMRect {
+  if (!rect) return false;
+  if (!Number.isFinite(rect.left) || !Number.isFinite(rect.top)) return false;
+  return rect.width > 0 || rect.height > 0;
+}
+
+function getCaretClientRect(): DOMRect | null {
+  const selection = window.getSelection();
+  if (!selection || selection.rangeCount === 0) return null;
+
+  const collapsed = selection.getRangeAt(0).cloneRange();
+  collapsed.collapse(true);
+
+  const rects = Array.from(collapsed.getClientRects());
+  const lastRect = rects.length > 0 ? rects[rects.length - 1]! : null;
+  if (isUsableRect(lastRect)) return lastRect;
+
+  const collapsedRect = collapsed.getBoundingClientRect();
+  if (isUsableRect(collapsedRect)) return collapsedRect;
+
+  try {
+    const { startContainer, startOffset } = collapsed;
+    if (startContainer.nodeType === Node.TEXT_NODE && startOffset > 0) {
+      const previousChar = collapsed.cloneRange();
+      previousChar.setStart(startContainer, startOffset - 1);
+      previousChar.setEnd(startContainer, startOffset);
+      const prevRect = previousChar.getBoundingClientRect();
+      if (isUsableRect(prevRect)) return prevRect;
+    }
+  } catch {
+    // Ignore invalid range manipulations and continue with fallbacks.
+  }
+
+  const anchorEl =
+    selection.anchorNode instanceof Element
+      ? selection.anchorNode.closest("[data-block-id]")
+      : selection.anchorNode?.parentElement?.closest("[data-block-id]");
+  if (anchorEl instanceof HTMLElement) {
+    const anchorRect = anchorEl.getBoundingClientRect();
+    if (isUsableRect(anchorRect)) return anchorRect;
+  }
+
+  return null;
+}
+
+function renderIcon(icon: string, name: string): React.ReactNode {
+  const key = icon.toLowerCase();
+
+  if (ICON_TEXT_TOKENS.has(key)) {
+    return <span className="gotipe-slash-menu-item-icon-text">{key.replace("heading-", "H")}</span>;
+  }
+
+  if (key === "sparkles" || key === "sparkle") {
+    return (
+      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <path d="M12 3l1.7 4.3L18 9l-4.3 1.7L12 15l-1.7-4.3L6 9l4.3-1.7L12 3z" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" />
+        <path d="M18 14l.9 2.1L21 17l-2.1.9L18 20l-.9-2.1L15 17l2.1-.9L18 14z" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" />
+      </svg>
+    );
+  }
+
+  if (key === "type") {
+    return (
+      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <path d="M5 6h14M12 6v12" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" />
+      </svg>
+    );
+  }
+
+  if (key === "list") {
+    return (
+      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <circle cx="5" cy="7" r="1.2" fill="currentColor" />
+        <circle cx="5" cy="12" r="1.2" fill="currentColor" />
+        <circle cx="5" cy="17" r="1.2" fill="currentColor" />
+        <path d="M9 7h10M9 12h10M9 17h10" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+      </svg>
+    );
+  }
+
+  if (key === "list-ordered") {
+    return (
+      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <path d="M4 7h2V5M6 7V5M4 12h2M4 17h2" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+        <path d="M9 7h10M9 12h10M9 17h10" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+      </svg>
+    );
+  }
+
+  if (key === "check-square") {
+    return (
+      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <rect x="3.5" y="4" width="6.5" height="6.5" rx="1.5" stroke="currentColor" strokeWidth="1.7" />
+        <path d="M4.8 7.4l1.6 1.6L8.9 6.6" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+        <path d="M13 7h8M13 12h8M13 17h8" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+      </svg>
+    );
+  }
+
+  if (key === "quote") {
+    return (
+      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <path d="M5 5v14" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+        <path d="M10 7h9M10 12h7M10 17h9" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+      </svg>
+    );
+  }
+
+  if (key === "code") {
+    return (
+      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <rect x="3.5" y="4" width="17" height="16" rx="2.5" stroke="currentColor" strokeWidth="1.7" />
+        <path d="M10 9l-2.5 3L10 15M14 9l2.5 3-2.5 3" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+    );
+  }
+
+  if (key === "table") {
+    return (
+      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <rect x="3.5" y="4" width="17" height="16" rx="2.5" stroke="currentColor" strokeWidth="1.7" />
+        <path d="M3.5 10h17M3.5 15h17M9 4v16M15 4v16" stroke="currentColor" strokeWidth="1.6" />
+      </svg>
+    );
+  }
+
+  if (key === "minus") {
+    return (
+      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <path d="M5 12h14" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+      </svg>
+    );
+  }
+
+  if (key === "image") {
+    return (
+      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <rect x="3.5" y="4" width="17" height="16" rx="2.5" stroke="currentColor" strokeWidth="1.7" />
+        <circle cx="8.5" cy="9" r="1.7" stroke="currentColor" strokeWidth="1.5" />
+        <path d="M5.5 17l4.5-4 3.5 3 3-2.5 2.5 3.5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+    );
+  }
+
+  if (key === "paperclip") {
+    return (
+      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <path d="M9.5 12.5l5.9-5.9a3 3 0 114.2 4.2l-7.8 7.8a5 5 0 11-7.1-7.1l7.1-7.1" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+    );
+  }
+
+  const fallback = name.trim().charAt(0).toUpperCase() || "•";
+  return <span className="gotipe-slash-menu-item-icon-text">{fallback}</span>;
+}
+
+function isAccentIcon(icon: string, name: string): boolean {
+  const key = icon.toLowerCase();
+  if (key === "sparkles" || key === "sparkle") return true;
+  return name.toLowerCase().includes("ai");
+}
 
 /* ------------------------------------------------------------------ */
 /*  Fuzzy search with scoring                                         */
@@ -84,9 +299,10 @@ export function SlashMenu({ editor, commands = [] }: SlashMenuProps) {
   const [visible, setVisible] = useState(false);
   const [query, setQuery] = useState("");
   const [selectedIndex, setSelectedIndex] = useState(0);
-  const [position, setPosition] = useState({ top: 0, left: 0 });
+  const [anchorPosition, setAnchorPosition] = useState({ top: 120, left: 120 });
+  const [position, setPosition] = useState({ top: 120, left: 120 });
   const menuRef = useRef<HTMLDivElement>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
+  const queryRef = useRef("");
 
   // Filter & score
   const filtered = useMemo(() => {
@@ -124,23 +340,56 @@ export function SlashMenu({ editor, commands = [] }: SlashMenuProps) {
   useEffect(() => {
     const unsub = editor.on("openSlashMenu", () => {
       setVisible(true);
-      setQuery("");
+      const trigger = getSlashTrigger(editor);
+      const nextQuery = trigger?.query ?? "";
+      setQuery(nextQuery);
+      queryRef.current = nextQuery;
       setSelectedIndex(0);
-      const sel = window.getSelection();
-      if (sel && sel.rangeCount > 0) {
-        const rect = sel.getRangeAt(0).getBoundingClientRect();
-        setPosition({ top: rect.bottom + 4, left: rect.left });
-      }
+      requestAnimationFrame(() => {
+        const caretRect = getCaretClientRect();
+        const next = caretRect
+          ? { top: caretRect.bottom + MENU_OFFSET_Y, left: caretRect.left }
+          : {
+              top: Math.max(VIEWPORT_PADDING, Math.round(window.innerHeight * 0.28)),
+              left: Math.max(VIEWPORT_PADDING, Math.round(window.innerWidth * 0.22)),
+            };
+        setAnchorPosition(next);
+        setPosition(next);
+      });
     });
     return unsub;
   }, [editor]);
 
-  // Focus input on open
   useEffect(() => {
-    if (visible) {
-      requestAnimationFrame(() => inputRef.current?.focus());
-    }
-  }, [visible]);
+    if (!visible) return;
+
+    const syncFromEditor = () => {
+      const trigger = getSlashTrigger(editor);
+      if (!trigger) {
+        setVisible(false);
+        return;
+      }
+
+      if (queryRef.current !== trigger.query) {
+        queryRef.current = trigger.query;
+        setQuery(trigger.query);
+        setSelectedIndex(0);
+      }
+
+      const caretRect = getCaretClientRect();
+      if (caretRect) {
+        setAnchorPosition({ top: caretRect.bottom + MENU_OFFSET_Y, left: caretRect.left });
+      }
+    };
+
+    syncFromEditor();
+    const unsubUpdate = editor.on("update", syncFromEditor);
+    const unsubSelection = editor.on("selectionChange", syncFromEditor);
+    return () => {
+      unsubUpdate();
+      unsubSelection();
+    };
+  }, [editor, visible]);
 
   // Viewport edge detection — adjust position after render
   useLayoutEffect(() => {
@@ -148,15 +397,27 @@ export function SlashMenu({ editor, commands = [] }: SlashMenuProps) {
     const rect = menuRef.current.getBoundingClientRect();
     const vw = window.innerWidth;
     const vh = window.innerHeight;
-    let { top, left } = position;
-    if (rect.right > vw - 16) left = vw - rect.width - 16;
-    if (rect.bottom > vh - 16) top = position.top - rect.height - 8;
-    if (left < 16) left = 16;
-    if (top < 16) top = 16;
-    if (top !== position.top || left !== position.left) {
-      setPosition({ top, left });
+    const maxLeft = vw - rect.width - VIEWPORT_PADDING;
+    const left = Math.min(Math.max(anchorPosition.left, VIEWPORT_PADDING), Math.max(VIEWPORT_PADDING, maxLeft));
+
+    const spaceBelow = vh - anchorPosition.top - VIEWPORT_PADDING;
+    const spaceAbove = anchorPosition.top - VIEWPORT_PADDING;
+    let top = anchorPosition.top;
+    if (spaceBelow < rect.height && spaceAbove > spaceBelow) {
+      top = anchorPosition.top - rect.height - MENU_OFFSET_Y;
     }
-  }, [visible, position]);
+    const maxTop = vh - rect.height - VIEWPORT_PADDING;
+    top = Math.min(Math.max(top, VIEWPORT_PADDING), Math.max(VIEWPORT_PADDING, maxTop));
+
+    setPosition((prev) => {
+      if (Math.abs(prev.top - top) < 0.5 && Math.abs(prev.left - left) < 0.5) return prev;
+      return { top, left };
+    });
+  }, [anchorPosition, grouped.length, query, visible]);
+
+  useEffect(() => {
+    setSelectedIndex((prev) => Math.min(prev, Math.max(0, flatItems.length - 1)));
+  }, [flatItems.length]);
 
   // Close on outside click
   useEffect(() => {
@@ -173,21 +434,20 @@ export function SlashMenu({ editor, commands = [] }: SlashMenuProps) {
   // Execute a slash command: delete "/" trigger text, then run the command
   const executeCommand = useCallback(
     (cmd: SlashCommandDef) => {
-      const state = editor.getViewState();
-      const blockId = state.selection.anchor.blockId;
-      if (blockId) {
-        const block = state.blocks.find((b) => b.id === blockId);
-        if (block && Array.isArray(block.content)) {
-          const text = block.content.map((s) => s.text).join("");
-          if (text.startsWith("/")) {
-            editor.dispatch({
-              steps: [{ type: "deleteText", blockId, from: 0, to: 1 }],
-            });
-          }
-        }
+      const trigger = getSlashTrigger(editor);
+      if (trigger && trigger.to > trigger.from) {
+        editor.dispatch({
+          steps: [{ type: "deleteText", blockId: trigger.blockId, from: trigger.from, to: trigger.to }],
+        });
       }
       cmd.execute(editor);
       setVisible(false);
+      queryRef.current = "";
+      setQuery("");
+      setSelectedIndex(0);
+      requestAnimationFrame(() => {
+        editor.focus();
+      });
     },
     [editor],
   );
@@ -217,6 +477,9 @@ export function SlashMenu({ editor, commands = [] }: SlashMenuProps) {
       } else if (e.key === "Escape") {
         e.preventDefault();
         setVisible(false);
+        requestAnimationFrame(() => {
+          editor.focus();
+        });
       }
     },
     [visible, flatItems, selectedIndex, executeCommand],
@@ -251,32 +514,16 @@ export function SlashMenu({ editor, commands = [] }: SlashMenuProps) {
       aria-label="Insert block"
       data-gotipe-slash-menu=""
       style={{ position: "fixed", top: `${position.top}px`, left: `${position.left}px` }}
+      onMouseDown={(e) => {
+        // Keep focus/selection in editor while interacting with the menu.
+        e.preventDefault();
+      }}
     >
-      {/* Search input */}
-      <input
-        ref={inputRef}
-        className="gotipe-slash-menu-search"
-        type="text"
-        placeholder="Search..."
-        value={query}
-        onChange={(e) => {
-          setQuery(e.target.value);
-          setSelectedIndex(0);
-        }}
-        onKeyDown={handleKeyDown}
-        role="combobox"
-        aria-label="Search blocks"
-        aria-autocomplete="list"
-        aria-controls="gotipe-slash-menu-list"
-        aria-expanded={true}
-        aria-activedescendant={flatItems[selectedIndex] ? `gotipe-slash-item-${selectedIndex}` : undefined}
-      />
-
       {/* Grouped items */}
-      <div id="gotipe-slash-menu-list" role="listbox" aria-label="Commands">
+      <div id="gotipe-slash-menu-list" className="gotipe-slash-menu-list" role="listbox" aria-label="Commands">
       {grouped.map((group, gi) => (
         <div key={group.group} role="group" aria-label={group.label}>
-          {gi > 0 && <div className="gotipe-bubble-menu-separator" style={{ width: "100%", height: "1px", margin: "4px 0" }} />}
+          {gi > 0 && <div className="gotipe-slash-menu-group-separator" role="separator" />}
           <div className="gotipe-slash-menu-group-label" aria-hidden="true">{group.label}</div>
           {group.items.map((cmd) => {
             const idx = flatIdx++;
@@ -293,16 +540,16 @@ export function SlashMenu({ editor, commands = [] }: SlashMenuProps) {
                 onClick={() => executeCommand(cmd)}
                 onMouseEnter={() => setSelectedIndex(idx)}
               >
-                <span className="gotipe-slash-menu-item-icon">{cmd.icon}</span>
-                <div>
+                <span
+                  className={`gotipe-slash-menu-item-icon ${isAccentIcon(cmd.icon, cmd.name) ? "gotipe-slash-menu-item-icon--accent" : ""}`}
+                  aria-hidden="true"
+                >
+                  {renderIcon(cmd.icon, cmd.name)}
+                </span>
+                <div className="gotipe-slash-menu-item-body">
                   <div className="gotipe-slash-menu-item-title">
                     {highlightMatch(cmd.name, query)}
                   </div>
-                  {cmd.description && (
-                    <div className="gotipe-slash-menu-item-description">
-                      {cmd.description}
-                    </div>
-                  )}
                 </div>
               </div>
             );

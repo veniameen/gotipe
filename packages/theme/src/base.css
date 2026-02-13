@@ -31,6 +31,11 @@
   padding: var(--gt-space-1, 4px) 0;
 }
 
+/* Reserve one text line for empty paragraphs so Enter shows spacing immediately. */
+.gotipe-content p:empty {
+  min-height: calc(1em * var(--gt-line-height-body, 1.5));
+}
+
 .gotipe-content h1 {
   font-family: var(--gt-font-heading, var(--gt-font-body));
   font-size: var(--gt-text-3xl, 30px);

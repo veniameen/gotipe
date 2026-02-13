@@ -26,6 +26,12 @@ export interface GoTipeEditor {
   getHTML(): string;
   getMarkdown(): string;
   getText(): string;
+  focus(position?: "start" | "end"): void;
+  setSelection(selection: {
+    anchor: { blockId: string; offset: number };
+    head: { blockId: string; offset: number };
+  }): void;
+  syncSelectionFromDOM(): void;
   getSlashCommands(): SlashCommandDef[];
   chain(): ChainableCommands;
   dispatch(transaction: object): void;
@@ -442,6 +448,14 @@ export async function createEditor(options: CreateEditorOptions): Promise<GoTipe
   let mountedElement: HTMLElement | null = null;
   let mountAbort: AbortController | null = null;
   let clipboardHandler: ClipboardHandler | null = null;
+  let scheduleDomSelectionRestore: (() => void) | null = null;
+  let restoreDomSelectionImmediately: (() => boolean) | null = null;
+  let readSelectionFromDOM:
+    | (() => {
+        anchor: { blockId: string; offset: number };
+        head: { blockId: string; offset: number };
+      } | null)
+    | null = null;
   let cachedViewState: ViewState | null = null;
   let currentSelection: {
     type: "text";
@@ -558,6 +572,72 @@ export async function createEditor(options: CreateEditorOptions): Promise<GoTipe
         .join("\n");
     },
 
+    focus(position?: "start" | "end"): void {
+      if (!mountedElement) return;
+
+      const state = this.getViewState();
+      if (state.blocks.length === 0) return;
+
+      const textLength = (block: ViewState["blocks"][0]) =>
+        Array.isArray(block.content)
+          ? block.content.reduce((sum, span) => sum + span.text.length, 0)
+          : typeof block.content === "string"
+            ? block.content.length
+            : 0;
+
+      if (position === "start") {
+        const first = state.blocks[0]!;
+        currentSelection = {
+          type: "text",
+          anchor: { blockId: first.id, offset: 0 },
+          head: { blockId: first.id, offset: 0 },
+        };
+      } else if (position === "end") {
+        const last = state.blocks[state.blocks.length - 1]!;
+        const end = textLength(last);
+        currentSelection = {
+          type: "text",
+          anchor: { blockId: last.id, offset: end },
+          head: { blockId: last.id, offset: end },
+        };
+      } else if (!currentSelection.anchor.blockId) {
+        const first = state.blocks[0]!;
+        currentSelection = {
+          type: "text",
+          anchor: { blockId: first.id, offset: 0 },
+          head: { blockId: first.id, offset: 0 },
+        };
+      }
+
+      mountedElement.focus({ preventScroll: true });
+      restoreDomSelectionImmediately?.();
+      scheduleDomSelectionRestore?.();
+    },
+
+    setSelection(selection): void {
+      currentSelection = {
+        type: "text",
+        anchor: { ...selection.anchor },
+        head: { ...selection.head },
+      };
+      cachedViewState = null;
+      this.emit("selectionChange", { editor: this });
+      this.emit("viewStateChange", this.getViewState());
+      restoreDomSelectionImmediately?.();
+      scheduleDomSelectionRestore?.();
+    },
+
+    syncSelectionFromDOM(): void {
+      const selection = readSelectionFromDOM?.();
+      if (!selection) return;
+      currentSelection = {
+        type: "text",
+        anchor: { ...selection.anchor },
+        head: { ...selection.head },
+      };
+      cachedViewState = null;
+    },
+
     getSlashCommands(): SlashCommandDef[] {
       const commands: SlashCommandDef[] = [];
       for (const ext of resolved) {
@@ -611,6 +691,9 @@ export async function createEditor(options: CreateEditorOptions): Promise<GoTipe
         cachedViewState = null;
         this.emit("update", { editor: this });
         this.emit("viewStateChange", this.getViewState());
+        if (currentSelection.anchor.blockId) {
+          scheduleDomSelectionRestore?.();
+        }
         return;
       }
 
@@ -627,6 +710,9 @@ export async function createEditor(options: CreateEditorOptions): Promise<GoTipe
         cachedViewState = null;
         this.emit("update", { editor: this });
         this.emit("viewStateChange", this.getViewState());
+        if (currentSelection.anchor.blockId) {
+          scheduleDomSelectionRestore?.();
+        }
       } catch (e) {
         throw new GoTipeError(
           "TRANSFORM_ERROR",
@@ -643,6 +729,9 @@ export async function createEditor(options: CreateEditorOptions): Promise<GoTipe
       cachedViewState = null;
       this.emit("update", { editor: this });
       this.emit("viewStateChange", this.getViewState());
+      if (currentSelection.anchor.blockId) {
+        scheduleDomSelectionRestore?.();
+      }
       return true;
     },
 
@@ -654,6 +743,9 @@ export async function createEditor(options: CreateEditorOptions): Promise<GoTipe
       cachedViewState = null;
       this.emit("update", { editor: this });
       this.emit("viewStateChange", this.getViewState());
+      if (currentSelection.anchor.blockId) {
+        scheduleDomSelectionRestore?.();
+      }
       return true;
     },
 
@@ -664,6 +756,9 @@ export async function createEditor(options: CreateEditorOptions): Promise<GoTipe
       cachedViewState = null;
       this.emit("update", { editor: this });
       this.emit("viewStateChange", this.getViewState());
+      if (currentSelection.anchor.blockId) {
+        scheduleDomSelectionRestore?.();
+      }
     },
 
     validate(content: string | object): boolean {
@@ -802,35 +897,68 @@ export async function createEditor(options: CreateEditorOptions): Promise<GoTipe
 
       // Restore DOM selection to match currentSelection after React re-render
       let pendingSelectionRestore = false;
-      const restoreDomSelection = () => {
-        if (!currentSelection.anchor.blockId || !mountedElement) return;
+      const resolveDomPoint = (blockId: string, targetOffset: number): { node: Node; offset: number } | null => {
+        if (!mountedElement) return null;
         const blockEl = mountedElement.querySelector(
-          `[data-block-id="${currentSelection.anchor.blockId}"]`,
+          `[data-block-id="${blockId}"]`,
         );
-        if (!blockEl) return;
+        if (!blockEl) return null;
 
-        const targetOffset = currentSelection.anchor.offset;
         const walker = document.createTreeWalker(blockEl, NodeFilter.SHOW_TEXT);
         let accumulated = 0;
         let textNode: Node | null;
+        let lastTextNode: Node | null = null;
 
         while ((textNode = walker.nextNode())) {
+          lastTextNode = textNode;
           const len = (textNode.textContent ?? "").length;
           if (accumulated + len >= targetOffset) {
             const localOffset = targetOffset - accumulated;
-            const sel = document.getSelection();
-            if (sel) {
-              const range = document.createRange();
-              range.setStart(textNode, Math.min(localOffset, len));
-              range.collapse(true);
-              sel.removeAllRanges();
-              sel.addRange(range);
-            }
-            return;
+            return { node: textNode, offset: Math.min(localOffset, len) };
           }
           accumulated += len;
         }
+
+        // Empty block (or no text nodes yet): place caret at block start.
+        if (!lastTextNode) return { node: blockEl, offset: 0 };
+
+        const lastLen = (lastTextNode.textContent ?? "").length;
+        return { node: lastTextNode, offset: lastLen };
       };
+
+      const restoreDomSelection = (): boolean => {
+        if (!mountedElement) return false;
+
+        const anchorPoint = resolveDomPoint(currentSelection.anchor.blockId, currentSelection.anchor.offset);
+        const headPoint = resolveDomPoint(currentSelection.head.blockId, currentSelection.head.offset);
+        if (!anchorPoint || !headPoint) return false;
+
+        const sel = document.getSelection();
+        if (!sel) return false;
+
+        try {
+          sel.removeAllRanges();
+
+          if (typeof sel.setBaseAndExtent === "function") {
+            sel.setBaseAndExtent(
+              anchorPoint.node,
+              anchorPoint.offset,
+              headPoint.node,
+              headPoint.offset,
+            );
+            return true;
+          }
+
+          const range = document.createRange();
+          range.setStart(anchorPoint.node, anchorPoint.offset);
+          range.setEnd(headPoint.node, headPoint.offset);
+          sel.addRange(range);
+          return true;
+        } catch {
+          return false;
+        }
+      };
+      restoreDomSelectionImmediately = restoreDomSelection;
 
       // Correct DOM text nodes if native input leaked through preventDefault()
       const correctDomFromWasmState = () => {
@@ -873,37 +1001,67 @@ export async function createEditor(options: CreateEditorOptions): Promise<GoTipe
       const scheduleSelectionRestore = () => {
         if (pendingSelectionRestore) return;
         pendingSelectionRestore = true;
-        requestAnimationFrame(() => {
-          pendingSelectionRestore = false;
+        let attempts = 0;
+
+        const tryRestore = () => {
+          attempts += 1;
+
           // Fix DOM if native input leaked through preventDefault()
           if (inputHandledByWasm) {
             inputHandledByWasm = false;
             correctDomFromWasmState();
           }
-          restoreDomSelection();
-        });
+
+          const restored = restoreDomSelection();
+          if (!restored && attempts < 4) {
+            requestAnimationFrame(tryRestore);
+            return;
+          }
+
+          pendingSelectionRestore = false;
+        };
+
+        requestAnimationFrame(tryRestore);
+      };
+      scheduleDomSelectionRestore = scheduleSelectionRestore;
+
+      const publishSelection = () => {
+        cachedViewState = null;
+        this.emit("selectionChange", { editor: this });
+        this.emit("viewStateChange", this.getViewState());
       };
 
       // Track selection changes from user interaction
       let ignoreSelectionChange = false;
+      readSelectionFromDOM = () => {
+        const sel = document.getSelection();
+        if (!sel || sel.rangeCount === 0) return null;
+        const anchorNode = sel.anchorNode;
+        const focusNode = sel.focusNode;
+        if (!anchorNode || !focusNode) return null;
+        if (!element.contains(anchorNode) || !element.contains(focusNode)) return null;
+
+        const anchor = resolvePosition(anchorNode, sel.anchorOffset);
+        const head = resolvePosition(focusNode, sel.focusOffset);
+        if (!anchor || !head) return null;
+
+        return {
+          anchor: { blockId: anchor.blockId, offset: anchor.offset },
+          head: { blockId: head.blockId, offset: head.offset },
+        };
+      };
+
       const onSelectionChange = () => {
         if (ignoreSelectionChange) return;
-        const sel = document.getSelection();
-        if (!sel || sel.rangeCount === 0 || !element.contains(sel.anchorNode)) return;
-
-        const anchor = resolvePosition(sel.anchorNode!, sel.anchorOffset);
-        const head = resolvePosition(sel.focusNode!, sel.focusOffset);
-        if (anchor && head) {
-          currentSelection = {
-            type: "text" as const,
-            anchor: { blockId: anchor.blockId, offset: anchor.offset },
-            head: { blockId: head.blockId, offset: head.offset },
-          };
-          storedMarks = null;
-          cachedViewState = null;
-          this.emit("selectionChange", { editor: this });
-          this.emit("viewStateChange", this.getViewState());
-        }
+        const selection = readSelectionFromDOM?.();
+        if (!selection) return;
+        currentSelection = {
+          type: "text" as const,
+          anchor: { ...selection.anchor },
+          head: { ...selection.head },
+        };
+        storedMarks = null;
+        publishSelection();
       };
       document.addEventListener("selectionchange", onSelectionChange, { signal });
 
@@ -919,8 +1077,12 @@ export async function createEditor(options: CreateEditorOptions): Promise<GoTipe
         if (options.editable === false) return;
         const inputType = e.inputType;
 
-        if (inputType === "insertText" || inputType === "insertCompositionText") {
-          const data = e.data;
+        if (
+          inputType === "insertText" ||
+          inputType === "insertCompositionText" ||
+          inputType === "insertLineBreak"
+        ) {
+          const data = inputType === "insertLineBreak" ? "\n" : e.data;
           if (!data) return;
           e.preventDefault();
 
@@ -981,6 +1143,7 @@ export async function createEditor(options: CreateEditorOptions): Promise<GoTipe
               anchor: { blockId: pos.anchor.blockId, offset: newOffset },
               head: { blockId: pos.anchor.blockId, offset: newOffset },
             };
+            publishSelection();
             scheduleSelectionRestore();
             setTimeout(() => { ignoreSelectionChange = false; }, 50);
             // Check input rules inline (the `input` event handler skips
@@ -1000,6 +1163,21 @@ export async function createEditor(options: CreateEditorOptions): Promise<GoTipe
                   }
                 }
               }
+
+              // Slash menu trigger should also work at caret in non-empty blocks
+              // (e.g. typing "/" at the start of an existing line).
+              if (data === "/") {
+                const caretOffset = Math.max(0, Math.min(newOffset, ruleText.length));
+                const beforeCaret = ruleText.slice(0, caretOffset);
+                const slashIdx = beforeCaret.lastIndexOf("/");
+                if (slashIdx !== -1) {
+                  const prevChar = slashIdx > 0 ? beforeCaret[slashIdx - 1] ?? "" : "";
+                  const query = beforeCaret.slice(slashIdx + 1);
+                  if ((slashIdx === 0 || /\s/.test(prevChar)) && !/\s/.test(query)) {
+                    this.emit("openSlashMenu");
+                  }
+                }
+              }
             }
           } catch {
             ignoreSelectionChange = false;
@@ -1007,7 +1185,7 @@ export async function createEditor(options: CreateEditorOptions): Promise<GoTipe
           return;
         }
 
-        if (inputType === "insertParagraph" || inputType === "insertLineBreak") {
+        if (inputType === "insertParagraph") {
           e.preventDefault();
           const pos = currentSelection;
           if (!pos?.anchor.blockId) return;
@@ -1070,6 +1248,7 @@ export async function createEditor(options: CreateEditorOptions): Promise<GoTipe
                       head: { blockId: newId, offset: 0 },
                     };
                   }
+                  publishSelection();
                   scheduleSelectionRestore();
                   setTimeout(() => { ignoreSelectionChange = false; }, 50);
                 } catch {
@@ -1086,7 +1265,6 @@ export async function createEditor(options: CreateEditorOptions): Promise<GoTipe
             this.dispatch({
               steps: [{ type: "splitBlock", blockId: pos.anchor.blockId, offset: pos.anchor.offset }],
             });
-            // After split, find the next sibling block in the tree (works for nested blocks too)
             const state = this.getViewState();
             const loc = findBlockAndSibling(state.blocks, pos.anchor.blockId);
             if (loc) {
@@ -1096,6 +1274,7 @@ export async function createEditor(options: CreateEditorOptions): Promise<GoTipe
                 head: { blockId: loc.id, offset: 0 },
               };
             }
+            publishSelection();
             scheduleSelectionRestore();
             setTimeout(() => { ignoreSelectionChange = false; }, 50);
           } catch {
@@ -1156,6 +1335,7 @@ export async function createEditor(options: CreateEditorOptions): Promise<GoTipe
                 anchor: { blockId: newBlockId, offset: newOffset },
                 head: { blockId: newBlockId, offset: newOffset },
               };
+              publishSelection();
               scheduleSelectionRestore();
               setTimeout(() => { ignoreSelectionChange = false; }, 50);
             } catch {
@@ -1190,6 +1370,7 @@ export async function createEditor(options: CreateEditorOptions): Promise<GoTipe
                 anchor: { blockId: pos.anchor.blockId, offset: from },
                 head: { blockId: pos.anchor.blockId, offset: from },
               };
+              publishSelection();
             } else if (pos.anchor.offset < blockTextLen) {
               this.dispatch({
                 steps: [{
@@ -1263,6 +1444,9 @@ export async function createEditor(options: CreateEditorOptions): Promise<GoTipe
       if (mountedElement) {
         mountAbort?.abort();
         mountAbort = null;
+        scheduleDomSelectionRestore = null;
+        restoreDomSelectionImmediately = null;
+        readSelectionFromDOM = null;
         mountedElement.removeAttribute("contenteditable");
         mountedElement.removeAttribute("data-gotipe-editor");
         mountedElement = null;

@@ -1,6 +1,7 @@
 import type { GoTipeEditor } from '@gotipe/core';
 import { useEditorState } from '@gotipe/react';
 import { ThemeToggle } from '@gotipe/block-editor';
+import type React from 'react';
 
 interface StaticToolbarProps {
   editor: GoTipeEditor | null;
@@ -22,6 +23,8 @@ interface ToolbarState {
   canUndo: boolean;
   canRedo: boolean;
 }
+
+type CommandChain = ReturnType<GoTipeEditor['chain']>;
 
 export function StaticToolbar({
   editor,
@@ -49,6 +52,15 @@ export function StaticToolbar({
   const isMarkActive = (mark: string) => marks.includes(mark);
 
   const headingLevel = blockType === 'heading' ? (blockAttrs.level as number) : 0;
+  const preventFocusSteal = (e: React.MouseEvent<HTMLElement>) => {
+    // Keep DOM selection visible and typing flow uninterrupted after toolbar clicks.
+    e.preventDefault();
+  };
+  const runWithFocus = (apply: (chain: CommandChain) => void) => {
+    const chain = editor.chain().focus();
+    apply(chain);
+    chain.run();
+  };
 
   return (
     <div className="gotipe-static-toolbar">
@@ -59,7 +71,9 @@ export function StaticToolbar({
             className="gotipe-toolbar-btn"
             title="Undo"
             disabled={!toolbar?.canUndo}
-            onClick={() => editor.chain().undo().run()}
+            onPointerDown={preventFocusSteal}
+            onMouseDown={preventFocusSteal}
+            onClick={() => runWithFocus((chain) => { chain.undo(); })}
           >
             {'↶'}
           </button>
@@ -67,7 +81,9 @@ export function StaticToolbar({
             className="gotipe-toolbar-btn"
             title="Redo"
             disabled={!toolbar?.canRedo}
-            onClick={() => editor.chain().redo().run()}
+            onPointerDown={preventFocusSteal}
+            onMouseDown={preventFocusSteal}
+            onClick={() => runWithFocus((chain) => { chain.redo(); })}
           >
             {'↷'}
           </button>
@@ -85,10 +101,10 @@ export function StaticToolbar({
             onChange={(e) => {
               const val = e.target.value;
               if (val === 'paragraph') {
-                editor.chain().setBlockType('paragraph').run();
+                runWithFocus((chain) => { chain.setBlockType('paragraph'); });
               } else {
                 const level = parseInt(val.replace('h', ''), 10);
-                editor.chain().setBlockType('heading', { level }).run();
+                runWithFocus((chain) => { chain.setBlockType('heading', { level }); });
               }
             }}
           >
@@ -108,21 +124,27 @@ export function StaticToolbar({
           <button
             className={`gotipe-toolbar-btn ${blockType === 'bulletList' ? 'active' : ''}`}
             title="Bullet List"
-            onClick={() => editor.chain().toggleBulletList().run()}
+            onPointerDown={preventFocusSteal}
+            onMouseDown={preventFocusSteal}
+            onClick={() => runWithFocus((chain) => { chain.toggleBulletList(); })}
           >
             {'•'}
           </button>
           <button
             className={`gotipe-toolbar-btn ${blockType === 'orderedList' ? 'active' : ''}`}
             title="Ordered List"
-            onClick={() => editor.chain().toggleOrderedList().run()}
+            onPointerDown={preventFocusSteal}
+            onMouseDown={preventFocusSteal}
+            onClick={() => runWithFocus((chain) => { chain.toggleOrderedList(); })}
           >
             {'1.'}
           </button>
           <button
             className={`gotipe-toolbar-btn ${blockType === 'todoList' ? 'active' : ''}`}
             title="Task List"
-            onClick={() => editor.chain().toggleTodoList().run()}
+            onPointerDown={preventFocusSteal}
+            onMouseDown={preventFocusSteal}
+            onClick={() => runWithFocus((chain) => { chain.toggleTodoList(); })}
           >
             {'☑'}
           </button>
@@ -135,14 +157,18 @@ export function StaticToolbar({
           <button
             className="gotipe-toolbar-btn"
             title="Indent"
-            onClick={() => editor.chain().indent().run()}
+            onPointerDown={preventFocusSteal}
+            onMouseDown={preventFocusSteal}
+            onClick={() => runWithFocus((chain) => { chain.indent(); })}
           >
             {'⇥'}
           </button>
           <button
             className="gotipe-toolbar-btn"
             title="Outdent"
-            onClick={() => editor.chain().outdent().run()}
+            onPointerDown={preventFocusSteal}
+            onMouseDown={preventFocusSteal}
+            onClick={() => runWithFocus((chain) => { chain.outdent(); })}
           >
             {'⇤'}
           </button>
@@ -157,35 +183,45 @@ export function StaticToolbar({
           <button
             className={`gotipe-toolbar-btn ${isMarkActive('bold') ? 'active' : ''}`}
             title="Bold (Cmd+B)"
-            onClick={() => editor.chain().toggleBold().run()}
+            onPointerDown={preventFocusSteal}
+            onMouseDown={preventFocusSteal}
+            onClick={() => runWithFocus((chain) => { chain.toggleBold(); })}
           >
             <strong>B</strong>
           </button>
           <button
             className={`gotipe-toolbar-btn ${isMarkActive('italic') ? 'active' : ''}`}
             title="Italic (Cmd+I)"
-            onClick={() => editor.chain().toggleItalic().run()}
+            onPointerDown={preventFocusSteal}
+            onMouseDown={preventFocusSteal}
+            onClick={() => runWithFocus((chain) => { chain.toggleItalic(); })}
           >
             <em>I</em>
           </button>
           <button
             className={`gotipe-toolbar-btn ${isMarkActive('strikethrough') ? 'active' : ''}`}
             title="Strikethrough"
-            onClick={() => editor.chain().toggleStrikethrough().run()}
+            onPointerDown={preventFocusSteal}
+            onMouseDown={preventFocusSteal}
+            onClick={() => runWithFocus((chain) => { chain.toggleStrikethrough(); })}
           >
             <s>S</s>
           </button>
           <button
             className={`gotipe-toolbar-btn ${isMarkActive('code') ? 'active' : ''}`}
             title="Inline Code"
-            onClick={() => editor.chain().toggleCode().run()}
+            onPointerDown={preventFocusSteal}
+            onMouseDown={preventFocusSteal}
+            onClick={() => runWithFocus((chain) => { chain.toggleCode(); })}
           >
             {'</>'}
           </button>
           <button
             className={`gotipe-toolbar-btn ${isMarkActive('underline') ? 'active' : ''}`}
             title="Underline (Cmd+U)"
-            onClick={() => editor.chain().toggleUnderline().run()}
+            onPointerDown={preventFocusSteal}
+            onMouseDown={preventFocusSteal}
+            onClick={() => runWithFocus((chain) => { chain.toggleUnderline(); })}
           >
             <u>U</u>
           </button>
@@ -198,14 +234,18 @@ export function StaticToolbar({
           <button
             className={`gotipe-toolbar-btn ${isMarkActive('superscript') ? 'active' : ''}`}
             title="Superscript"
-            onClick={() => editor.chain().toggleSuperscript().run()}
+            onPointerDown={preventFocusSteal}
+            onMouseDown={preventFocusSteal}
+            onClick={() => runWithFocus((chain) => { chain.toggleSuperscript(); })}
           >
             {'X²'}
           </button>
           <button
             className={`gotipe-toolbar-btn ${isMarkActive('subscript') ? 'active' : ''}`}
             title="Subscript"
-            onClick={() => editor.chain().toggleSubscript().run()}
+            onPointerDown={preventFocusSteal}
+            onMouseDown={preventFocusSteal}
+            onClick={() => runWithFocus((chain) => { chain.toggleSubscript(); })}
           >
             {'X₂'}
           </button>
@@ -218,13 +258,15 @@ export function StaticToolbar({
           <button
             className={`gotipe-toolbar-btn ${isMarkActive('link') ? 'active' : ''}`}
             title="Insert Link"
+            onPointerDown={preventFocusSteal}
+            onMouseDown={preventFocusSteal}
             onClick={() => {
               if (isMarkActive('link')) {
-                editor.chain().removeMark('link').run();
+                runWithFocus((chain) => { chain.removeMark('link'); });
               } else {
                 const href = prompt('Enter URL:');
                 if (href) {
-                  editor.chain().setLink(href).run();
+                  runWithFocus((chain) => { chain.setLink(href); });
                 }
               }
             }}
@@ -247,19 +289,19 @@ export function StaticToolbar({
               if (!val) return;
               switch (val) {
                 case 'table':
-                  editor.chain().insertTable({ rows: 3, cols: 3, withHeader: true }).run();
+                  runWithFocus((chain) => { chain.insertTable({ rows: 3, cols: 3, withHeader: true }); });
                   break;
                 case 'codeBlock':
-                  editor.chain().insertBlockAfter('codeBlock').run();
+                  runWithFocus((chain) => { chain.insertBlockAfter('codeBlock'); });
                   break;
                 case 'divider':
-                  editor.chain().insertBlockAfter('divider').run();
+                  runWithFocus((chain) => { chain.insertBlockAfter('divider'); });
                   break;
                 case 'callout':
-                  editor.chain().insertBlockAfter('callout').run();
+                  runWithFocus((chain) => { chain.insertBlockAfter('callout'); });
                   break;
                 case 'blockquote':
-                  editor.chain().setBlockType('blockquote').run();
+                  runWithFocus((chain) => { chain.setBlockType('blockquote'); });
                   break;
               }
             }}

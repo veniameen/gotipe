@@ -45,11 +45,13 @@ export function BlockTypeDropdown({ editor }: BlockTypeDropdownProps) {
 
   const handleSelect = useCallback(
     (option: BlockTypeOption) => {
+      const chain = editor.chain().focus();
       if (option.attrs) {
-        editor.chain().setBlockType(option.type, option.attrs).run();
+        chain.setBlockType(option.type, option.attrs);
       } else {
-        editor.chain().setBlockType(option.type).run();
+        chain.setBlockType(option.type);
       }
+      chain.run();
       setOpen(false);
     },
     [editor],

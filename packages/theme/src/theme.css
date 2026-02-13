@@ -136,6 +136,20 @@
   --gt-ai-highlight: #dbeafe;
   --gt-ai-border: #93c5fd;
 
+  /* Slash menu */
+  --gt-slash-bg: #ffffff;
+  --gt-slash-border: rgba(15, 23, 42, 0.1);
+  --gt-slash-shadow: 0 22px 56px rgba(15, 23, 42, 0.18);
+  --gt-slash-hover: rgba(15, 23, 42, 0.06);
+  --gt-slash-text: #111827;
+  --gt-slash-muted: #6b7280;
+  --gt-slash-icon: #6b7280;
+  --gt-slash-separator: rgba(15, 23, 42, 0.1);
+  --gt-slash-scrollbar: rgba(15, 23, 42, 0.22);
+  --gt-slash-accent: #7c3aed;
+  --gt-slash-accent-hover: #8b5cf6;
+  --gt-slash-mark-bg: #ede9fe;
+
   /* Highlight palette — 5 colors */
   --gt-highlight-blue-bg: #dbeafe;
   --gt-highlight-blue-text: #1e40af;
@@ -202,6 +216,20 @@
   --gt-ai-ghost: #6b7280;
   --gt-ai-highlight: #1e3a5f;
   --gt-ai-border: #2563eb;
+
+  /* Slash menu */
+  --gt-slash-bg: #1f2128;
+  --gt-slash-border: rgba(255, 255, 255, 0.1);
+  --gt-slash-shadow: 0 24px 62px rgba(0, 0, 0, 0.46);
+  --gt-slash-hover: rgba(255, 255, 255, 0.08);
+  --gt-slash-text: rgba(255, 255, 255, 0.92);
+  --gt-slash-muted: rgba(255, 255, 255, 0.78);
+  --gt-slash-icon: rgba(255, 255, 255, 0.72);
+  --gt-slash-separator: rgba(255, 255, 255, 0.12);
+  --gt-slash-scrollbar: rgba(255, 255, 255, 0.24);
+  --gt-slash-accent: #8b5cf6;
+  --gt-slash-accent-hover: #a78bfa;
+  --gt-slash-mark-bg: rgba(139, 92, 246, 0.32);
 
   /* Highlight palette — dark mode adapted */
   --gt-highlight-blue-bg: #1e3a5f;
@@ -292,104 +320,140 @@
    ============================================================ */
 
 .gotipe-slash-menu {
-  width: 320px;
-  max-height: 400px;
-  overflow-y: auto;
-  background: var(--gt-bg);
-  border: 1px solid var(--gt-border-light, rgba(0,0,0,0.05));
-  border-radius: var(--gt-radius-card, 20px);
-  box-shadow: var(--gt-shadow-elevated);
-  padding: var(--gt-space-1, 4px);
+  box-sizing: border-box;
+  width: min(300px, 90vw);
+  max-height: min(420px, calc(100vh - 24px));
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--gt-slash-bg);
+  border: 1px solid var(--gt-slash-border);
+  border-radius: 16px;
+  box-shadow: var(--gt-slash-shadow);
+  padding: 8px;
   z-index: var(--gt-z-slash, 50);
   animation: gotipe-scale-in var(--gt-duration-normal, 150ms) var(--gt-ease-out);
 }
 
-.gotipe-slash-menu::-webkit-scrollbar {
+.gotipe-slash-menu-list {
+  overflow-y: auto;
+  overflow-x: hidden;
+  max-height: min(404px, calc(100vh - 64px));
+  padding: 0;
+  overscroll-behavior: contain;
+}
+
+.gotipe-slash-menu-list::-webkit-scrollbar {
   width: 4px;
 }
-.gotipe-slash-menu::-webkit-scrollbar-track {
+.gotipe-slash-menu-list::-webkit-scrollbar-track {
   background: transparent;
 }
-.gotipe-slash-menu::-webkit-scrollbar-thumb {
-  background: var(--gt-border, #e5e5e5);
+.gotipe-slash-menu-list::-webkit-scrollbar-thumb {
+  background: var(--gt-slash-scrollbar);
   border-radius: 2px;
 }
 
-.gotipe-slash-menu-search {
-  display: flex;
-  align-items: center;
-  gap: var(--gt-space-2, 8px);
-  height: 36px;
-  padding: 0 var(--gt-space-3, 12px);
-  margin: var(--gt-space-1, 4px);
-  background: var(--gt-bg-hover);
-  border: none;
-  border-radius: var(--gt-radius-sm, 6px);
-  font-size: var(--gt-text-sm, 14px);
-  color: var(--gt-text-base);
-  outline: none;
-  width: calc(100% - 8px);
-}
-.gotipe-slash-menu-search::placeholder {
-  color: var(--gt-text-placeholder, var(--gt-text-tertiary));
+.gotipe-slash-menu-group-separator {
+  width: 100%;
+  height: 1px;
+  background: var(--gt-slash-separator);
+  margin: 10px 0 8px;
 }
 
 .gotipe-slash-menu-group-label {
-  font-size: 11px;
-  color: var(--gt-text-tertiary);
-  padding: var(--gt-space-2, 8px) var(--gt-space-3, 12px) var(--gt-space-1, 4px);
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
+  font-size: 12px;
+  color: var(--gt-slash-muted);
+  padding: 6px 8px 5px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: none;
 }
 
 .gotipe-slash-menu-item {
-  display: flex;
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr);
   align-items: center;
-  gap: 10px;
-  height: 40px;
-  padding: var(--gt-space-2, 8px) var(--gt-space-3, 12px);
-  border-radius: var(--gt-radius-sm, 6px);
+  gap: 12px;
+  min-height: 36px;
+  padding: 6px 10px;
+  border-radius: 12px;
   cursor: pointer;
-  transition: background var(--gt-duration-fast, 100ms) var(--gt-ease-out);
+  transition:
+    background var(--gt-duration-fast, 100ms) var(--gt-ease-out),
+    color var(--gt-duration-fast, 100ms) var(--gt-ease-out);
 }
 
 .gotipe-slash-menu-item:hover,
 .gotipe-slash-menu-item.selected {
-  background: var(--gt-bg-hover);
+  background: var(--gt-slash-hover);
 }
 
 .gotipe-slash-menu-item-icon {
-  width: 20px;
-  height: 20px;
+  width: 28px;
+  height: 28px;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--gt-text-secondary);
+  color: var(--gt-slash-icon);
   flex-shrink: 0;
 }
 
-.gotipe-slash-menu-item-title {
-  font-size: var(--gt-text-sm, 14px);
+.gotipe-slash-menu-item-icon svg {
+  width: 22px;
+  height: 22px;
+}
+
+.gotipe-slash-menu-item-icon-text {
+  font-size: 13px;
+  line-height: 1;
   font-weight: 500;
-  color: var(--gt-text-base);
+  letter-spacing: 0.02em;
+  color: inherit;
+}
+
+.gotipe-slash-menu-item-title {
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 1.25;
+  color: var(--gt-slash-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.gotipe-slash-menu-item.selected .gotipe-slash-menu-item-icon,
+.gotipe-slash-menu-item:hover .gotipe-slash-menu-item-icon {
+  color: var(--gt-slash-text);
+}
+
+.gotipe-slash-menu-item-icon--accent {
+  color: var(--gt-slash-accent);
+}
+
+.gotipe-slash-menu-item.selected .gotipe-slash-menu-item-icon--accent,
+.gotipe-slash-menu-item:hover .gotipe-slash-menu-item-icon--accent {
+  color: var(--gt-slash-accent-hover);
+}
+
+.gotipe-slash-menu-item-body {
+  min-width: 0;
 }
 
 .gotipe-slash-menu-item-description {
-  font-size: var(--gt-text-xs, 12px);
-  color: var(--gt-text-tertiary);
+  display: none;
 }
 
 .gotipe-slash-menu-empty {
-  padding: var(--gt-space-2, 8px) var(--gt-space-3, 12px);
-  color: var(--gt-text-tertiary);
-  font-size: var(--gt-text-sm, 14px);
+  padding: 12px 8px 8px;
+  color: var(--gt-slash-muted);
+  font-size: 12px;
   text-align: center;
 }
 
 /* Fuzzy match highlight */
 .gotipe-slash-menu-item mark {
-  background: var(--gt-highlight-yellow-bg);
+  background: var(--gt-slash-mark-bg);
   color: inherit;
   padding: 0;
   border-radius: 1px;
@@ -400,7 +464,7 @@
    ============================================================ */
 
 .gotipe-block-editor--with-toolbar {
-  padding-left: 48px;
+  padding-left: 0;
 }
 
 /* ============================================================
