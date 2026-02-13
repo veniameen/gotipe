@@ -26,6 +26,8 @@ type SlashTrigger = {
   query: string;
 };
 
+type ViewBlock = ReturnType<GoTipeEditor["getViewState"]>["blocks"][number];
+
 function findBlockById(
   blocks: ReturnType<GoTipeEditor["getViewState"]>["blocks"],
   blockId: string,
@@ -38,6 +40,99 @@ function findBlockById(
     }
   }
   return null;
+}
+
+function blockContainsId(block: ViewBlock, blockId: string): boolean {
+  if (block.id === blockId) return true;
+  for (const child of block.children) {
+    if (blockContainsId(child, blockId)) return true;
+  }
+  return false;
+}
+
+function findTopLevelIndexByBlockId(
+  blocks: ReturnType<GoTipeEditor["getViewState"]>["blocks"],
+  blockId: string,
+): number | null {
+  for (let i = 0; i < blocks.length; i++) {
+    if (blockContainsId(blocks[i]!, blockId)) return i;
+  }
+  return null;
+}
+
+function resolveCaretBlock(block: ViewBlock): ViewBlock {
+  if (
+    (block.type === "bulletList" || block.type === "orderedList" || block.type === "todoList") &&
+    block.children.length > 0
+  ) {
+    return resolveCaretBlock(block.children[0]!);
+  }
+  return block;
+}
+
+function getBlockTextLength(block: ViewBlock): number {
+  if (Array.isArray(block.content)) {
+    return block.content.reduce((sum, span) => sum + span.text.length, 0);
+  }
+  if (typeof block.content === "string") {
+    return block.content.length;
+  }
+  return 0;
+}
+
+function forceCaretIntoBlock(blockId: string, targetOffset: number): boolean {
+  const blockEl = document.querySelector(`[data-block-id="${blockId}"]`) as HTMLElement | null;
+  if (!blockEl) return false;
+
+  const editableRoot = blockEl.closest("[data-gotipe-editor]") as HTMLElement | null;
+  editableRoot?.focus({ preventScroll: true });
+
+  let node: Node = blockEl;
+  let offset = 0;
+
+  if (blockEl.getAttribute("data-block-type") === "todoItem") {
+    const contentHost = blockEl.querySelector("[data-gotipe-todo-content]");
+    if (contentHost) {
+      node = contentHost;
+      offset = 0;
+    }
+  } else {
+    const walker = document.createTreeWalker(blockEl, NodeFilter.SHOW_TEXT);
+    let accumulated = 0;
+    let textNode: Node | null;
+    let lastTextNode: Node | null = null;
+    while ((textNode = walker.nextNode())) {
+      lastTextNode = textNode;
+      const len = (textNode.textContent ?? "").length;
+      if (accumulated + len >= targetOffset) {
+        node = textNode;
+        offset = Math.max(0, Math.min(targetOffset - accumulated, len));
+        break;
+      }
+      accumulated += len;
+    }
+    if (node === blockEl && lastTextNode) {
+      node = lastTextNode;
+      offset = (lastTextNode.textContent ?? "").length;
+    }
+  }
+
+  const sel = window.getSelection();
+  if (!sel) return false;
+  try {
+    sel.removeAllRanges();
+    if (typeof sel.setBaseAndExtent === "function") {
+      sel.setBaseAndExtent(node, offset, node, offset);
+      return true;
+    }
+    const range = document.createRange();
+    range.setStart(node, offset);
+    range.collapse(true);
+    sel.addRange(range);
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 function getSlashTrigger(editor: GoTipeEditor): SlashTrigger | null {
@@ -434,19 +529,64 @@ export function SlashMenu({ editor, commands = [] }: SlashMenuProps) {
   // Execute a slash command: delete "/" trigger text, then run the command
   const executeCommand = useCallback(
     (cmd: SlashCommandDef) => {
+      const beforeState = editor.getViewState();
       const trigger = getSlashTrigger(editor);
+      const fallbackTopLevelIndex = trigger
+        ? findTopLevelIndexByBlockId(beforeState.blocks, trigger.blockId)
+        : null;
       if (trigger && trigger.to > trigger.from) {
         editor.dispatch({
           steps: [{ type: "deleteText", blockId: trigger.blockId, from: trigger.from, to: trigger.to }],
         });
       }
       cmd.execute(editor);
+
+      // Normalize caret after structural commands (e.g. paragraph -> list/todo).
+      // Always resolve to an existing, text-editable block to avoid native caret drift.
+      const state = editor.getViewState();
+      const selection = state.selection.type === "text" ? state.selection : null;
+      let targetBlock: ViewBlock | null = selection
+        ? findBlockById(state.blocks, selection.anchor.blockId)
+        : null;
+      let targetOffset = selection?.anchor.offset ?? 0;
+      let finalSelection: { blockId: string; offset: number } | null = null;
+
+      if (!targetBlock && fallbackTopLevelIndex !== null && state.blocks.length > 0) {
+        const idx = Math.min(fallbackTopLevelIndex, state.blocks.length - 1);
+        targetBlock = state.blocks[idx] ?? null;
+        targetOffset = 0;
+      }
+
+      if (!targetBlock && state.blocks.length > 0) {
+        targetBlock = state.blocks[0]!;
+        targetOffset = 0;
+      }
+
+      if (targetBlock) {
+        const caretBlock = resolveCaretBlock(targetBlock);
+        const maxOffset = getBlockTextLength(caretBlock);
+        const offset = Math.max(0, Math.min(targetOffset, maxOffset));
+        finalSelection = { blockId: caretBlock.id, offset };
+        editor.setSelection({
+          anchor: { blockId: caretBlock.id, offset },
+          head: { blockId: caretBlock.id, offset },
+        });
+      }
+
       setVisible(false);
       queryRef.current = "";
       setQuery("");
       setSelectedIndex(0);
       requestAnimationFrame(() => {
         editor.focus();
+        if (finalSelection) {
+          // Secondary safeguard: some browsers keep caret on list container after slash transform.
+          requestAnimationFrame(() => {
+            if (forceCaretIntoBlock(finalSelection.blockId, finalSelection.offset)) {
+              editor.syncSelectionFromDOM();
+            }
+          });
+        }
       });
     },
     [editor],
