@@ -869,11 +869,40 @@ export async function createEditor(options: CreateEditorOptions): Promise<GoTipe
         }
 
         // Walk up from the node to find the closest [data-block-id] element
-        let blockEl: Node | null = resolvedNode;
-        while (blockEl && !(blockEl instanceof HTMLElement && blockEl.hasAttribute("data-block-id"))) {
-          blockEl = blockEl.parentNode;
+        let blockEl: HTMLElement | null =
+          resolvedNode instanceof HTMLElement ? resolvedNode : resolvedNode.parentElement;
+        while (blockEl && !blockEl.hasAttribute("data-block-id")) {
+          blockEl = blockEl.parentElement;
         }
-        if (!blockEl || !(blockEl instanceof HTMLElement)) return null;
+        if (!blockEl) return null;
+
+        const blockType = blockEl.getAttribute("data-block-type");
+        if (blockType === "bulletList" || blockType === "orderedList" || blockType === "todoList") {
+          const items = Array.from(
+            blockEl.querySelectorAll(
+              ':scope > [data-block-id][data-block-type="listItem"], :scope > [data-block-id][data-block-type="todoItem"]',
+            ),
+          ).filter((item): item is HTMLElement => item instanceof HTMLElement);
+
+          if (items.length > 0) {
+            let targetItem: HTMLElement | null = null;
+
+            if (resolvedNode === blockEl) {
+              const idx = Math.max(0, Math.min(items.length - 1, Math.max(0, resolvedOffset - 1)));
+              targetItem = items[idx] ?? items[0]!;
+            } else {
+              const sourceEl = resolvedNode instanceof Element ? resolvedNode : resolvedNode.parentElement;
+              const owner = sourceEl?.closest(
+                '[data-block-id][data-block-type="listItem"], [data-block-id][data-block-type="todoItem"]',
+              );
+              if (owner instanceof HTMLElement && blockEl.contains(owner)) {
+                targetItem = owner;
+              }
+            }
+
+            blockEl = targetItem ?? items[0]!;
+          }
+        }
 
         const blockId = blockEl.getAttribute("data-block-id")!;
         // Calculate text offset within this block by walking the text nodes
@@ -904,6 +933,19 @@ export async function createEditor(options: CreateEditorOptions): Promise<GoTipe
         );
         if (!blockEl) return null;
 
+        const blockType = blockEl.getAttribute("data-block-type");
+        if (blockType === "bulletList" || blockType === "orderedList" || blockType === "todoList") {
+          const firstItem = blockEl.querySelector(
+            ':scope > [data-block-id][data-block-type="listItem"], :scope > [data-block-id][data-block-type="todoItem"]',
+          );
+          if (firstItem instanceof HTMLElement) {
+            const firstItemId = firstItem.getAttribute("data-block-id");
+            if (firstItemId) {
+              return resolveDomPoint(firstItemId, targetOffset);
+            }
+          }
+        }
+
         const walker = document.createTreeWalker(blockEl, NodeFilter.SHOW_TEXT);
         let accumulated = 0;
         let textNode: Node | null;
@@ -919,8 +961,15 @@ export async function createEditor(options: CreateEditorOptions): Promise<GoTipe
           accumulated += len;
         }
 
-        // Empty block (or no text nodes yet): place caret at block start.
-        if (!lastTextNode) return { node: blockEl, offset: 0 };
+        // Empty block (or no text nodes yet):
+        // for todo items, place caret in the text content area after checkbox.
+        if (!lastTextNode) {
+          if (blockType === "todoItem") {
+            const contentHost = blockEl.querySelector("[data-gotipe-todo-content]");
+            if (contentHost) return { node: contentHost, offset: 0 };
+          }
+          return { node: blockEl, offset: 0 };
+        }
 
         const lastLen = (lastTextNode.textContent ?? "").length;
         return { node: lastTextNode, offset: lastLen };

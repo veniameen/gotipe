@@ -280,20 +280,18 @@ function BlockComponent({ block, editor }: { block: BlockView; editor: GoTipeEdi
     case "todoItem": {
       const checked = !!block.attrs.checked;
       return (
-        <li data-block-id={block.id} data-block-type={block.type} className="gotipe-todo-item">
-          <input
-            type="checkbox"
-            checked={checked}
-            aria-label={checked ? "Mark as incomplete" : "Mark as complete"}
-            onMouseDown={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              editor.chain().setBlockAttrs(block.id, { checked: !checked }).run();
-            }}
-            onChange={() => {}}
-          />
-          <span>{content}</span>
-        </li>
+        <li data-block-id={block.id} data-block-type={block.type} className="gotipe-todo-item"><input
+          type="checkbox"
+          checked={checked}
+          contentEditable={false}
+          aria-label={checked ? "Mark as incomplete" : "Mark as complete"}
+          onMouseDown={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            editor.chain().setBlockAttrs(block.id, { checked: !checked }).run();
+          }}
+          onChange={() => {}}
+        /><span className="gotipe-todo-item-content" data-gotipe-todo-content="">{content}</span></li>
       );
     }
 

@@ -8,6 +8,11 @@ type BlockContext = {
   height: number;
 };
 
+type SelectionContext = {
+  blockType: string | null;
+  parentType: string | null;
+};
+
 function marker(prefix: string): string {
   return `${prefix}_${Math.random().toString(36).slice(2, 8)}`;
 }
@@ -123,7 +128,12 @@ async function placeCaretInTopLevelListItem(
     if (firstText) {
       range.setStart(firstText, (firstText.textContent ?? "").length);
     } else {
-      range.setStart(target, 0);
+      const contentHost = target.querySelector("[data-gotipe-todo-content]");
+      if (contentHost) {
+        range.setStart(contentHost, 0);
+      } else {
+        range.setStart(target, 0);
+      }
     }
     range.collapse(true);
 
@@ -157,6 +167,20 @@ async function getBlockContextByMarker(page: Page, textMarker: string): Promise<
       height: target.getBoundingClientRect().height,
     };
   }, textMarker);
+}
+
+async function getSelectionContext(page: Page): Promise<SelectionContext> {
+  return page.evaluate(() => {
+    const sel = window.getSelection();
+    const anchorEl =
+      sel?.anchorNode instanceof Element ? sel.anchorNode : sel?.anchorNode?.parentElement;
+    const blockEl = anchorEl?.closest("[data-block-id]") as HTMLElement | null;
+    const parentEl = blockEl?.parentElement?.closest("[data-block-id]") as HTMLElement | null;
+    return {
+      blockType: blockEl?.getAttribute("data-block-type") ?? null,
+      parentType: parentEl?.getAttribute("data-block-type") ?? null,
+    };
+  });
 }
 
 async function expectBlockByMarker(
@@ -212,6 +236,66 @@ test.describe("Notion-like matrix regressions", () => {
     await typeStable(page, m);
 
     await expectBlockByMarker(page, m, "todoItem", "todoList");
+  });
+
+  test("todo caret stays after checkbox in empty item", async ({ page }) => {
+    await createFreshLine(page);
+    await runSlashCommand(page, "todo");
+
+    const metrics = await page.evaluate(() => {
+      const checkbox = document.querySelector(
+        '[data-gotipe-content] > [data-block-type="todoList"] > [data-block-type="todoItem"] input[type="checkbox"]',
+      ) as HTMLInputElement | null;
+      const todoItem = checkbox?.closest('[data-block-type="todoItem"]');
+      const textHost = todoItem?.querySelector("[data-gotipe-todo-content]") ?? null;
+      const sel = window.getSelection();
+      if (!checkbox || !sel || sel.rangeCount === 0) return null;
+
+      const anchorEl =
+        sel.anchorNode instanceof Element ? sel.anchorNode : sel.anchorNode?.parentElement;
+      return {
+        insideTextHost: !!(textHost && (textHost === sel.anchorNode || textHost.contains(anchorEl ?? null))),
+        anchorOnItemLeftEdge:
+          sel.anchorNode === todoItem && sel.anchorOffset === 0,
+      };
+    });
+
+    expect(metrics).not.toBeNull();
+    expect(metrics?.insideTextHost).toBe(true);
+    expect(metrics?.anchorOnItemLeftEdge).toBe(false);
+  });
+
+  test("todo checkbox is vertically aligned with text and has spacing", async ({ page }) => {
+    const m = marker("todoAlign");
+    await createFreshLine(page);
+    await runSlashCommand(page, "todo");
+    await placeCaretInTopLevelListItem(page, "todoList", "todoItem", 0);
+    await typeStable(page, m);
+
+    const metrics = await page.evaluate((needle) => {
+      const items = Array.from(
+        document.querySelectorAll('[data-gotipe-content] > [data-block-type="todoList"] > [data-block-type="todoItem"]'),
+      ) as HTMLElement[];
+      const target = items.find((el) => (el.textContent ?? "").includes(needle));
+      if (!target) return null;
+
+      const checkbox = target.querySelector('input[type="checkbox"]') as HTMLInputElement | null;
+      const content = target.querySelector('[data-gotipe-todo-content]') as HTMLElement | null;
+      if (!checkbox || !content) return null;
+
+      const cb = checkbox.getBoundingClientRect();
+      const txt = content.getBoundingClientRect();
+      return {
+        centerDiff: Math.abs((cb.top + cb.height / 2) - (txt.top + txt.height / 2)),
+        gap: txt.left - cb.right,
+        checkboxSize: cb.width,
+      };
+    }, m);
+
+    expect(metrics).not.toBeNull();
+    expect(metrics?.centerDiff ?? 99).toBeLessThan(7);
+    expect(metrics?.gap ?? 0).toBeGreaterThan(6);
+    expect(metrics?.checkboxSize ?? 0).toBeGreaterThan(17);
   });
 
   test("slash: todo -> bullet conversion keeps existing text rows", async ({ page }) => {
@@ -306,14 +390,16 @@ test.describe("Notion-like matrix regressions", () => {
   });
 
   test("todo Enter on empty item exits list to paragraph", async ({ page }) => {
-    const m = marker("todoExit");
     await createFreshLine(page);
     await runSlashCommand(page, "todo");
     await placeCaretInTopLevelListItem(page, "todoList", "todoItem", 0);
     await page.keyboard.press("Enter");
-    await typeStable(page, m);
-
-    await expectBlockByMarker(page, m, "paragraph", null);
+    await expect
+      .poll(async () => {
+        const ctx = await getSelectionContext(page);
+        return `${ctx.blockType ?? "null"}|${ctx.parentType ?? "null"}`;
+      })
+      .toBe("paragraph|null");
   });
 
   test("block toolbar is anchored to content gutter (not stuck on far left)", async ({ page }) => {

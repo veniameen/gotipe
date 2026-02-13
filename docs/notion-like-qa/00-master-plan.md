@@ -16,6 +16,8 @@ _Last updated: February 13, 2026_
 - `docs/notion-like-qa/01-case-matrix.md`
 - `docs/notion-like-qa/02-defect-roadmap.md`
 - `docs/notion-like-qa/03-exploratory-charters.md`
+- `docs/notion-like-qa/04-checklist-500.md`
+- `docs/notion-like-qa/05-automation-batches.md`
 
 ## Что уже сделано
 
@@ -26,6 +28,11 @@ _Last updated: February 13, 2026_
 - Исправлен блоковый gutter toolbar (позиционирование около контента):
   - `packages/block-editor/src/components/block-editor.tsx`
 - Добавлена полноценная light/dark стилизация slash-menu:
+  - `packages/theme/src/theme.css`
+- Исправлена нормализация каретки для пустых todo:
+  - `packages/core/src/editor.ts`
+  - `packages/block-editor/src/components/slash-menu.tsx`
+  - `packages/react/src/editor-content.tsx`
   - `packages/theme/src/theme.css`
 
 ## Рабочие фазы
@@ -65,6 +72,12 @@ Exit criteria:
 Exit criteria:
 
 - стабильный pass-rate > 95% для `notion-like` suites в 3 браузерах
+
+## Текущий статус прогонов
+
+- Chromium: `14/14` PASS (`pnpm playwright test e2e/notion-like-matrix.spec.ts --project=chromium`)
+- Firefox/WebKit: run blocked, отсутствуют браузерные бинарники Playwright в текущем окружении
+  - требуется: `pnpm exec playwright install`
 
 ## Definition of Done
 

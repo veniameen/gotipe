@@ -83,6 +83,32 @@ _Last updated: February 13, 2026_
 
 - `e2e/notion-like-matrix.spec.ts` (`SLASH-010`)
 
+### DEF-008: Каретка в пустом todo оказывалась слева от checkbox
+
+Симптом:
+
+- после `/todo` каретка могла остаться в list-контейнере (или в левом краю item)
+- фактический ввод начинался “вдруг” уже справа от checkbox только после первого символа
+
+Причина:
+
+- selection после slash-команды могла дрейфовать в `todoList` контейнер
+- restore и sync selection не всегда принудительно нормализовали точку в text-host `todoItem`
+
+Фикс:
+
+- `packages/core/src/editor.ts`
+  - нормализация list container -> list item в `resolvePosition`
+  - нормализация `resolveDomPoint` для list container в первый item
+- `packages/block-editor/src/components/slash-menu.tsx`
+  - пост-командная нормализация selection + принудительная DOM-постановка каретки
+- `packages/react/src/editor-content.tsx`
+  - явный `data-gotipe-todo-content` host + `contentEditable={false}` на checkbox
+
+Покрытие:
+
+- `e2e/notion-like-matrix.spec.ts` (`ENTER-011`, `UI-009`)
+
 ## Active backlog
 
 ### DEF-005: Nested list conversion policy

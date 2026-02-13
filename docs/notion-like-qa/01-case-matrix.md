@@ -47,6 +47,7 @@ _Last updated: February 13, 2026_
 | ENTER-008 | Backspace в начале блока | merge с предыдущим блоком | Planned |
 | ENTER-009 | Backspace в начале второго list item | корректный list behavior | Planned |
 | ENTER-010 | Undo/Redo после slash-transform | дерево документа восстанавливается корректно | Planned |
+| ENTER-011 | Caret в пустом todo сразу после slash | каретка после checkbox в text-host, не на левом краю list | Automated |
 
 ## Selection / Formatting
 
@@ -70,6 +71,7 @@ _Last updated: February 13, 2026_
 | UI-006 | block toolbar gutter anchor | `+` и drag рядом с блоком | Automated |
 | UI-007 | mobile width behavior | меню не ломает layout на узком экране | Planned |
 | UI-008 | long command titles | ellipsis без разрыва layout | Planned |
+| UI-009 | todo checkbox/text alignment | checkbox и текст выровнены по вертикали, есть стабильный gap | Automated |
 
 ## Надёжность и стресс
 
