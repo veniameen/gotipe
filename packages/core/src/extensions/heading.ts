@@ -24,27 +24,75 @@ export const Heading = defineExtension<HeadingOptions>({
   inputRules: [
     {
       pattern: /^#\s$/,
-      handler: (editor) => editor.chain().setBlockType("heading", { level: 1 }).run(),
+      handler: (editor) => {
+        const blockId = editor.getViewState().selection.anchor.blockId;
+        editor.dispatch({
+          steps: [
+            { type: "deleteText", blockId, from: 0, to: 2 },
+            { type: "setBlockType", blockId, newType: "heading", attrs: { level: 1 } },
+          ],
+        });
+      },
     },
     {
       pattern: /^##\s$/,
-      handler: (editor) => editor.chain().setBlockType("heading", { level: 2 }).run(),
+      handler: (editor) => {
+        const blockId = editor.getViewState().selection.anchor.blockId;
+        editor.dispatch({
+          steps: [
+            { type: "deleteText", blockId, from: 0, to: 3 },
+            { type: "setBlockType", blockId, newType: "heading", attrs: { level: 2 } },
+          ],
+        });
+      },
     },
     {
       pattern: /^###\s$/,
-      handler: (editor) => editor.chain().setBlockType("heading", { level: 3 }).run(),
+      handler: (editor) => {
+        const blockId = editor.getViewState().selection.anchor.blockId;
+        editor.dispatch({
+          steps: [
+            { type: "deleteText", blockId, from: 0, to: 4 },
+            { type: "setBlockType", blockId, newType: "heading", attrs: { level: 3 } },
+          ],
+        });
+      },
     },
     {
       pattern: /^####\s$/,
-      handler: (editor) => editor.chain().setBlockType("heading", { level: 4 }).run(),
+      handler: (editor) => {
+        const blockId = editor.getViewState().selection.anchor.blockId;
+        editor.dispatch({
+          steps: [
+            { type: "deleteText", blockId, from: 0, to: 5 },
+            { type: "setBlockType", blockId, newType: "heading", attrs: { level: 4 } },
+          ],
+        });
+      },
     },
     {
       pattern: /^#####\s$/,
-      handler: (editor) => editor.chain().setBlockType("heading", { level: 5 }).run(),
+      handler: (editor) => {
+        const blockId = editor.getViewState().selection.anchor.blockId;
+        editor.dispatch({
+          steps: [
+            { type: "deleteText", blockId, from: 0, to: 6 },
+            { type: "setBlockType", blockId, newType: "heading", attrs: { level: 5 } },
+          ],
+        });
+      },
     },
     {
       pattern: /^######\s$/,
-      handler: (editor) => editor.chain().setBlockType("heading", { level: 6 }).run(),
+      handler: (editor) => {
+        const blockId = editor.getViewState().selection.anchor.blockId;
+        editor.dispatch({
+          steps: [
+            { type: "deleteText", blockId, from: 0, to: 7 },
+            { type: "setBlockType", blockId, newType: "heading", attrs: { level: 6 } },
+          ],
+        });
+      },
     },
   ],
   slashCommands: [
@@ -85,6 +133,18 @@ export const Heading = defineExtension<HeadingOptions>({
     {
       key: "mod-alt-3",
       command: (editor) => editor.chain().setBlockType("heading", { level: 3 }).run(),
+    },
+    {
+      key: "mod-alt-4",
+      command: (editor) => editor.chain().setBlockType("heading", { level: 4 }).run(),
+    },
+    {
+      key: "mod-alt-5",
+      command: (editor) => editor.chain().setBlockType("heading", { level: 5 }).run(),
+    },
+    {
+      key: "mod-alt-6",
+      command: (editor) => editor.chain().setBlockType("heading", { level: 6 }).run(),
     },
   ],
 });

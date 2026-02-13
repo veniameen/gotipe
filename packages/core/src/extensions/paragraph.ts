@@ -14,4 +14,14 @@ export const Paragraph = defineExtension({
       allowsChildren: false,
     },
   ],
+  slashCommands: [
+    {
+      name: "Text",
+      aliases: ["text", "paragraph", "plain"],
+      description: "Plain text block",
+      icon: "type",
+      group: "style",
+      execute: (editor) => editor.chain().setBlockType("paragraph").run(),
+    },
+  ],
 });

@@ -18,8 +18,24 @@ export function BlockToolbar({ editor, blockId, onDragStart, onDragEnd }: BlockT
   }, []);
 
   const handleAddBlock = useCallback(() => {
-    editor.chain().insertBlockAfter("paragraph").run();
-  }, [editor]);
+    const state = editor.getViewState();
+    const idx = state.blocks.findIndex((b) => b.id === blockId);
+    if (idx === -1) return;
+    editor.dispatch({
+      steps: [{
+        type: "insertBlock",
+        parentId: null,
+        index: idx + 1,
+        block: {
+          id: crypto.randomUUID(),
+          type: "paragraph",
+          attrs: {},
+          content: [],
+          children: [],
+        },
+      }],
+    });
+  }, [editor, blockId]);
 
   const handleCloseMenu = useCallback(() => {
     setContextMenuOpen(false);
@@ -32,7 +48,10 @@ export function BlockToolbar({ editor, blockId, onDragStart, onDragEnd }: BlockT
         aria-label="Add block below"
         onClick={handleAddBlock}
       >
-        +
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true">
+          <line x1="7" y1="2" x2="7" y2="12" />
+          <line x1="2" y1="7" x2="12" y2="7" />
+        </svg>
       </button>
       <div style={{ position: "relative" }}>
         <div onClick={handleContextMenuToggle} role="presentation">

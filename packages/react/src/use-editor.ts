@@ -12,14 +12,18 @@ export function useEditor(options: UseEditorOptions): GoTipeEditor | null {
     let destroyed = false;
     let instance: GoTipeEditor | null = null;
 
-    createEditor(optionsRef.current).then((ed) => {
-      if (destroyed) {
-        ed.destroy();
-        return;
-      }
-      instance = ed;
-      setEditor(ed);
-    });
+    createEditor(optionsRef.current)
+      .then((ed) => {
+        if (destroyed) {
+          ed.destroy();
+          return;
+        }
+        instance = ed;
+        setEditor(ed);
+      })
+      .catch((err) => {
+        console.error("GoTipe: Failed to create editor:", err);
+      });
 
     return () => {
       destroyed = true;

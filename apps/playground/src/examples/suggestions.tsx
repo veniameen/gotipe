@@ -1,5 +1,6 @@
 import { DefaultPreset } from '@gotipe/core/presets';
-import { useEditor, EditorContent } from '@gotipe/react';
+import { useEditor } from '@gotipe/react';
+import { BlockEditor } from '@gotipe/block-editor';
 import { defineSuggestions } from '@gotipe/suggestions';
 import { useState } from 'react';
 
@@ -9,10 +10,7 @@ export function SuggestionsExample() {
   const editor = useEditor({
     extensions: [
       DefaultPreset,
-      defineSuggestions({
-        currentUser: { id: 'user-1', name: 'Alice' },
-        mode,
-      }),
+      defineSuggestions.configure({ enabled: mode === 'suggesting' }),
     ],
     content: {
       version: 1,
@@ -51,7 +49,7 @@ export function SuggestionsExample() {
           Suggesting
         </button>
       </div>
-      <EditorContent editor={editor} />
+      <BlockEditor editor={editor} showThemeToggle={false} showAiCommandBar={false} />
     </div>
   );
 }

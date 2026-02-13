@@ -43,6 +43,13 @@ export const CodeBlock = defineExtension<CodeBlockOptions>({
       pattern: /^```(\w+)?\s$/,
       handler: (editor, match) => {
         const language = match[1] || "plain";
+        const state = editor.getViewState();
+        const blockId = state.selection.anchor.blockId;
+        const triggerLen = match[0].length;
+        // Delete the trigger text first, then change block type
+        editor.dispatch({
+          steps: [{ type: "deleteText", blockId, from: 0, to: triggerLen }],
+        });
         editor.chain().setBlockType("codeBlock", { language }).run();
       },
     },

@@ -1,5 +1,6 @@
 import { DefaultPreset } from '@gotipe/core/presets';
-import { useEditor, EditorContent } from '@gotipe/react';
+import { useEditor } from '@gotipe/react';
+import { BlockEditor } from '@gotipe/block-editor';
 import { createI18n } from '@gotipe/i18n';
 import { useState } from 'react';
 
@@ -43,7 +44,7 @@ export function I18nExample() {
           </button>
         ))}
       </div>
-      <EditorContent editor={editor} />
+      <BlockEditor editor={editor} showThemeToggle={false} showAiCommandBar={false} />
     </div>
   );
 }

@@ -5,6 +5,10 @@ import { useCallback, useRef, useState } from "react";
 import { AiCommandBar } from "./ai-command-bar";
 import { AiStatusIndicator } from "./ai-status-indicator";
 import { BlockToolbar } from "./block-toolbar";
+import { BlockEditorBubbleMenu } from "./bubble-menu";
+import type { RemotePeer } from "./collaboration-cursors";
+import { CollaborationCursors } from "./collaboration-cursors";
+import { GhostText } from "./ghost-text";
 import { SlashMenu } from "./slash-menu";
 import type { Suggestion } from "./suggestion-toolbar";
 import { SuggestionToolbar } from "./suggestion-toolbar";
@@ -16,7 +20,9 @@ export interface BlockEditorProps {
   style?: React.CSSProperties;
   showSlashMenu?: boolean;
   showBlockToolbar?: boolean;
+  showBubbleMenu?: boolean;
   showCollaborationCursors?: boolean;
+  remotePeers?: RemotePeer[];
   showAiCommandBar?: boolean;
   showThemeToggle?: boolean;
   suggestions?: Suggestion[];
@@ -28,17 +34,35 @@ export interface BlockEditorProps {
   children?: React.ReactNode;
 }
 
-function getBlockIdFromElement(el: HTMLElement | null): string | null {
-  while (el) {
-    const id = el.getAttribute("data-block-id");
-    if (id) return id;
+/**
+ * Walk up from `el` to find the top-level block element
+ * (a direct child of [data-gotipe-content] that has data-block-id).
+ */
+function getTopLevelBlockId(el: HTMLElement | null, containerEl: HTMLElement): string | null {
+  const contentEl = containerEl.querySelector("[data-gotipe-content]");
+  if (!contentEl) return null;
+  while (el && el !== containerEl) {
+    if (el.parentElement === contentEl && el.hasAttribute("data-block-id")) {
+      return el.getAttribute("data-block-id");
+    }
     el = el.parentElement;
   }
   return null;
 }
 
+/**
+ * Get top-level block elements (direct children of the content area).
+ */
+function getTopLevelBlockEls(containerEl: HTMLElement): HTMLElement[] {
+  const contentEl = containerEl.querySelector("[data-gotipe-content]");
+  if (!contentEl) return [];
+  return Array.from(contentEl.children).filter(
+    (el): el is HTMLElement => el instanceof HTMLElement && el.hasAttribute("data-block-id"),
+  );
+}
+
 function getDropIndex(containerEl: HTMLElement, clientY: number): number {
-  const blockEls = containerEl.querySelectorAll<HTMLElement>("[data-block-id]");
+  const blockEls = getTopLevelBlockEls(containerEl);
   for (let i = 0; i < blockEls.length; i++) {
     const rect = blockEls[i]!.getBoundingClientRect();
     const midY = rect.top + rect.height / 2;
@@ -48,7 +72,7 @@ function getDropIndex(containerEl: HTMLElement, clientY: number): number {
 }
 
 function getDropIndicatorY(containerEl: HTMLElement, dropIdx: number): number | null {
-  const blockEls = containerEl.querySelectorAll<HTMLElement>("[data-block-id]");
+  const blockEls = getTopLevelBlockEls(containerEl);
   const containerRect = containerEl.getBoundingClientRect();
 
   if (blockEls.length === 0) return null;
@@ -69,8 +93,10 @@ export function BlockEditor({
   style,
   showSlashMenu = true,
   showBlockToolbar = true,
+  showBubbleMenu = true,
   showAiCommandBar = true,
   showThemeToggle = false,
+  remotePeers,
   suggestions,
   onAiCommand,
   onSuggestionAccept,
@@ -90,12 +116,21 @@ export function BlockEditor({
   const handleMouseMove = useCallback(
     (e: React.MouseEvent<HTMLDivElement>) => {
       if (draggingBlockId) return;
-      const blockId = getBlockIdFromElement(e.target as HTMLElement);
+
+      // Don't reset when hovering over the toolbar or context menu
+      const target = e.target as HTMLElement;
+      if (target.closest(".gotipe-block-toolbar") || target.closest(".gotipe-block-context-menu")) {
+        return;
+      }
+
+      if (!containerRef.current) return;
+      const blockId = getTopLevelBlockId(target, containerRef.current);
+
       if (blockId !== hoveredBlockId) {
         setHoveredBlockId(blockId);
         if (blockId && containerRef.current) {
           const blockEl = containerRef.current.querySelector(
-            `[data-block-id="${blockId}"]`,
+            `[data-gotipe-content] > [data-block-id="${blockId}"]`,
           );
           if (blockEl) {
             const containerRect = containerRef.current.getBoundingClientRect();
@@ -110,7 +145,12 @@ export function BlockEditor({
     [draggingBlockId, hoveredBlockId],
   );
 
-  const handleMouseLeave = useCallback(() => {
+  const handleMouseLeave = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+    // Don't hide if mouse moves to toolbar (which is a child of the container)
+    const related = e.relatedTarget as HTMLElement | null;
+    if (related && (related.closest?.(".gotipe-block-toolbar") || related.closest?.(".gotipe-block-context-menu"))) {
+      return;
+    }
     setHoveredBlockId(null);
     setToolbarPos(null);
   }, []);
@@ -180,10 +220,16 @@ export function BlockEditor({
       ? getDropIndicatorY(containerRef.current, dropIndex)
       : null;
 
+  const editorClasses = [
+    "gotipe-block-editor",
+    showBlockToolbar ? "gotipe-block-editor--with-toolbar" : "",
+    className ?? "",
+  ].filter(Boolean).join(" ");
+
   return (
     <div
       ref={containerRef}
-      className={`gotipe-block-editor ${className ?? ""}`}
+      className={editorClasses}
       style={{ ...style, position: "relative" }}
       data-gotipe-block-editor=""
       onDragOver={handleDragOver}
@@ -193,17 +239,29 @@ export function BlockEditor({
       onMouseLeave={showBlockToolbar ? handleMouseLeave : undefined}
     >
       <Editor editor={editor}>
-        {showSlashMenu && <SlashMenu editor={editor} />}
+        {showSlashMenu && <SlashMenu editor={editor} commands={editor.getSlashCommands()} />}
+        {showBubbleMenu && <BlockEditorBubbleMenu editor={editor} enableAI={showAiCommandBar} />}
         {children}
       </Editor>
 
-      {/* Floating block toolbar — positioned next to hovered block */}
+      {/* Remote collaboration cursors */}
+      {remotePeers && remotePeers.length > 0 && (
+        <CollaborationCursors peers={remotePeers} containerRef={containerRef} />
+      )}
+
+      {/* Floating block toolbar — positioned in the left padding gutter */}
       {showBlockToolbar && hoveredBlockId && toolbarPos && (
         <div
+          className="gotipe-block-toolbar-wrapper"
           style={{
             position: "absolute",
             top: toolbarPos.top,
-            left: -48,
+            left: 0,
+            width: 48,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "flex-end",
+            paddingRight: 4,
           }}
         >
           <BlockToolbar
@@ -236,6 +294,9 @@ export function BlockEditor({
           onRejectAll={onSuggestionRejectAll ?? (() => {})}
         />
       )}
+
+      {/* Ghost text — AI autocomplete overlay */}
+      {showAiCommandBar && <GhostText editor={editor} />}
 
       {/* AI Command Bar — Mod-k toggled floating input */}
       {showAiCommandBar && (
