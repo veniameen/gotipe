@@ -1,15 +1,26 @@
 # Notion-like TODO
 
-_Last updated: February 13, 2026_
+_Last updated: February 14, 2026_
 
 ## Ближайшие приоритеты
 
 - Закрыть remaining `Planned` кейсы из `docs/notion-like-qa/01-case-matrix.md`.
 - Синхронизировать прогресс авто-кейсов с `docs/notion-like-qa/04-checklist-500.md`.
 - Продолжить batch-подход по 50 кейсов:
+  - закрыт блок: `NL-001..NL-050` (`50/50` PASS)
   - закрыт блок: `NL-051..NL-100` (`50/50` PASS)
-  - следующий блок: `NL-101..NL-150`
-  - новый файл по правилу <= 300 строк
+  - закрыт блок: `NL-101..NL-150` (`50/50` PASS)
+  - закрыт блок: `NL-151..NL-200` (`50/50` PASS)
+  - закрыт блок: `NL-201..NL-250` (`50/50` PASS)
+  - закрыт блок: `NL-251..NL-300` (`50/50` PASS)
+  - закрыт блок: `NL-301..NL-350` (`50/50` PASS)
+  - закрыт блок: `NL-351..NL-400` (`50/50` PASS)
+  - закрыт блок: `NL-401..NL-450` (`50/50` PASS)
+  - закрыт блок: `NL-451..NL-500` (`50/50` PASS)
+  - полный checklist: `NL-001..NL-500` (`500/500` PASS)
+- Step 2 reference pass (Notion list-row micro behavior) закрыт:
+  - артефакты: `output/playwright/notion-step2/...`
+  - документация: `docs/notion-like-qa/notion-reference-step2/`
 - Пункт 1 (todo caret/selection baseline) закрыт и стабилизирован:
   - исправлена нормализация каретки при клике в левую зону `todoItem`
   - добавлены e2e кейсы в `e2e/notion-like-matrix.spec.ts`
@@ -17,8 +28,14 @@ _Last updated: February 13, 2026_
 - Пункт 2 (nested/multi-step) закрыт и стабилизирован:
   - suite `e2e/notion-like-nested-transform.spec.ts` (`5` кейсов) проходит стабильно
   - repeat-run `--repeat-each=5`: `25/25` PASS
+- Новый закрытый блок parity:
+  - `SLASH-010` снят с `fixme` и переведён в `Automated`
+  - в меню 6-точек добавлен `Turn into` + e2e конверсий
+  - добавлен heading placeholder flow (`/heading` -> placeholder -> ввод)
+- Дополнительно закрыт race post-slash caret restore:
+  - `packages/block-editor/src/components/slash-menu.tsx`: rAF-restore больше не перетирает selection, если пользователь уже начал ввод
+  - regression кейсы immediate-typing снова стабильны
 - Дожать проблемные edge-case сценарии:
-  - `SLASH-010` (slash в начале непустой строки) — временно `fixme`
   - `SLASH-022` / `REL-007` (transform-matrix) — временно quarantined (`fixme`)
   - `ENTER-009` закрыт automation (`Backspace` policy зафиксирована e2e)
 

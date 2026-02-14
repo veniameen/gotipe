@@ -1,6 +1,6 @@
 # Notion-like Defect Roadmap
 
-_Last updated: February 13, 2026_
+_Last updated: February 14, 2026_
 
 ## Critical (закрыто в этой итерации)
 
@@ -20,6 +20,8 @@ _Last updated: February 13, 2026_
 - `packages/core/src/chain.ts`
 - in-place конвертация типа списка + item типов
 - корректный lift list item в top-level блок при `setBlockType("paragraph" | "heading" | ...)`
+- для slash-команд добавлен idempotent set-path списка:
+  - выбор `Bullet/Numbered/To-do` на уже таком же list-type больше не выполняет unwrap в paragraph
 
 Покрытие:
 
@@ -40,10 +42,12 @@ _Last updated: February 13, 2026_
 - `packages/block-editor/src/components/block-editor.tsx`
 - вычисление `left` относительно `data-gotipe-content`
 - выравнивание wrapper по реальному gutter около блока
+- увеличен list-specific gutter gap (`BLOCK_TOOLBAR_LIST_EXTRA_GAP=32`), чтобы toolbar не перекрывал checkbox в `todoList`
 
 Покрытие:
 
 - `e2e/notion-like-matrix.spec.ts` (`UI-006`)
+- `e2e/notion-like-checklist-321-350.spec.ts` (`NL-321`, `NL-349`)
 
 ### DEF-003: Slash-menu был только в dark-стиле
 
@@ -82,7 +86,7 @@ _Last updated: February 13, 2026_
 Покрытие:
 
 - `e2e/notion-like-matrix.spec.ts` (`SLASH-010`)
-- текущий статус: `fixme`, кейс остаётся нестабильным и вынесен в active backlog (`DEF-015`)
+- текущий статус: **Closed** (`Automated`, `PASS`)
 
 ### DEF-008: Каретка в пустом todo оказывалась слева от checkbox
 
@@ -215,6 +219,7 @@ _Last updated: February 13, 2026_
   - сохранён guard от transient `selectionchange` во время `pendingSelectionRestore`
 - `packages/block-editor/src/components/slash-menu.tsx`
   - усилен post-command caret lock и fallback target resolution для list lift сценариев
+  - добавлен guard для `requestAnimationFrame` restore: если пользователь уже сдвинул каретку/начал ввод, restore не перетирает live selection
 - `e2e/notion-like-nested-transform.spec.ts`
   - после программной постановки range добавлен `editor.syncSelectionFromDOM()` в helper, чтобы исключить тестовый race
 
@@ -229,6 +234,7 @@ _Last updated: February 13, 2026_
 - стресс:
   - `workers=1`, `repeat-each=10` на `immediate typing` группе: `30/30` PASS
   - `e2e/notion-like-nested-transform.spec.ts --repeat-each=5`: `25/25` PASS
+  - targeted re-check (Chromium): `todo checkbox toggle right after slash transform keeps text in place` + `slash click + immediate typing does not lose first character` — `2/2` PASS
 
 ### DEF-013: Nested list transform терял deep children (закрыто)
 
@@ -258,6 +264,96 @@ _Last updated: February 13, 2026_
   - `nested ordered list: listItem -> heading keeps deep child text`
   - `backspace at start of second bullet item lifts it to paragraph and keeps first item in list`
   - `Tab and Shift+Tab keep nested bullet structure valid`
+
+### DEF-015: Hover toolbar мог терять интерактивность при заходе курсора на сам toolbar (закрыто)
+
+Симптом:
+
+- `+` / drag-handle иногда исчезали в момент наведения на них
+- визуально тулбар появлялся, но клик в быстрых сценариях срывался
+
+Причина:
+
+- в `onMouseMove` path блок вычислялся и сбрасывался даже когда target уже внутри toolbar wrapper
+
+Фикс:
+
+- `packages/block-editor/src/components/block-editor.tsx`
+  - добавлен guard: не сбрасывать hover при target внутри
+    `.gotipe-block-toolbar` / `.gotipe-block-toolbar-wrapper` / `.gotipe-block-context-menu`
+
+Покрытие:
+
+- `e2e/block-toolbar-fast-hover.spec.ts`
+- `e2e/block-toolbar.spec.ts`
+- combined regression (`matrix + block-toolbar + fast-hover + checklist-101-150`): `116/116` PASS
+
+### DEF-016: Slash-menu outside click мог приводить к фокус-дрифту (закрыто)
+
+Симптом:
+
+- после клика вне slash-menu возникал нестабильный фокусный переход в разные элементы страницы
+
+Причина:
+
+- outside-close path не предотвращал дефолтный `mousedown` и не имел явного capture-phase контроля
+
+Фикс:
+
+- `packages/block-editor/src/components/slash-menu.tsx`
+  - outside-close обработчик переведён на capture-phase `mousedown`
+  - добавлен `preventDefault()` + `editor.focus()` restore path
+
+Покрытие:
+
+- `e2e/notion-like-checklist-101-150.spec.ts` (`NL-126`, `NL-134`, `NL-142`, `NL-150`)
+
+### DEF-017: Todo left-zone click мог кратковременно ставить caret на левый край item (закрыто)
+
+Симптом:
+
+- при клике слева от текста `todoItem` появлялся transient caret перед checkbox
+
+Причина:
+
+- нативный mouse path иногда устанавливал range на `<li>` до post-normalization этапа
+
+Фикс:
+
+- `packages/react/src/editor-content.tsx`
+  - в `todoItem` добавлен `onMouseDown` guard для левой зоны:
+    принудительная постановка range в `[data-gotipe-todo-content]` + синхронный `syncSelectionFromDOM()`
+
+Покрытие:
+
+- `e2e/notion-like-matrix.spec.ts`
+  - `todo click in left zone normalizes caret after checkbox (empty item)`
+  - `todo click in left zone normalizes caret after checkbox (item with text)`
+  - `todo checkbox is vertically aligned with text and has spacing`
+
+### DEF-018: Slash transform `callout -> list/todo` терял текст строки (закрыто)
+
+Симптом:
+
+- при `callout -> bullet/ordered/todo` исходный текст строки мог исчезать
+
+Причина:
+
+- в `toggleList` top-level wrap поддерживал `paragraph/heading/blockquote/codeBlock`,
+  но не `callout`
+- для `callout` срабатывал fallback `setBlockType(listType)`, который создавал
+  некорректный path без явного `listItem`-wrap
+
+Фикс:
+
+- `packages/core/src/chain.ts`
+  - `callout` добавлен в безопасный wrap-path для list-transform
+  - контент переносится в `listItem/todoItem` без потери текста
+
+Покрытие:
+
+- `e2e/notion-like-checklist-301-320.spec.ts` (`NL-313..NL-315`)
+- `e2e/notion-like-checklist-301-320.spec.ts` (`20/20` PASS)
 
 ## Active backlog
 
@@ -312,15 +408,14 @@ _Last updated: February 13, 2026_
 - `ENTER-009` закрыт в automation (`e2e/notion-like-matrix.spec.ts`)
 - расширить policy на nested/cross-browser сценарии
 
-### DEF-015: Slash start-line / immediate typing instability
+### DEF-020: Slash start-line / immediate typing instability
 
 Риск:
 
-- `slash` в начале непустой строки нестабилен (`SLASH-010`)
-- transform-matrix (`SLASH-022` / `REL-007`) временно quarantined как `fixme`
+- `SLASH-010` закрыт и снят с `fixme` (Chromium PASS)
+- transform-matrix (`SLASH-022` / `REL-007`) остаётся quarantined как `fixme`
 
 План:
 
-- стабилизировать selection/caret race в slash-path
 - вернуть `e2e/notion-like-transform-matrix.spec.ts` из `fixme` в активный прогон
-- снять `fixme` с `SLASH-010` после repeat-run в Chromium
+- закрыть остаточные matrix-флаки (`SLASH-022` / `REL-007`) и вернуть suite в CI gate

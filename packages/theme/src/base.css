@@ -212,11 +212,21 @@
 }
 
 /* Placeholder */
+.gotipe-content [data-placeholder] {
+  position: relative;
+}
+
 .gotipe-content [data-placeholder]::before {
   content: attr(data-placeholder);
   color: var(--gt-text-placeholder, var(--gt-text-tertiary));
   pointer-events: none;
   position: absolute;
+  left: 0;
+  top: 0;
+  line-height: inherit;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 /* Drag handle area */

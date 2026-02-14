@@ -1,6 +1,6 @@
 # Notion-like Automation Batches
 
-_Last updated: February 13, 2026_
+_Last updated: February 14, 2026_
 
 ## Цель
 
@@ -21,7 +21,26 @@ _Last updated: February 13, 2026_
   - текущий покрытый минимум: `39` авто-кейсов в Chromium
   - добавлен отдельный batch-suite `e2e/notion-like-checklist-001-050.spec.ts` (`50/50` PASS)
   - добавлен отдельный batch-suite `e2e/notion-like-checklist-051-100.spec.ts` (`50/50` PASS)
-  - суммарно по checklist-batch: `100/100` PASS (`NL-001..NL-100`)
+  - добавлен отдельный batch-suite `e2e/notion-like-checklist-101-150.spec.ts` (`50/50` PASS)
+  - добавлен отдельный batch-suite `e2e/notion-like-checklist-151-200.spec.ts` (`50/50` PASS)
+  - добавлен отдельный batch-suite `e2e/notion-like-checklist-201-250.spec.ts` (`50/50` PASS)
+  - добавлен отдельный batch-suite `e2e/notion-like-checklist-251-300.spec.ts` (`50/50` PASS)
+  - добавлен отдельный batch-suite `e2e/notion-like-checklist-301-320.spec.ts` (`20/20` PASS)
+  - добавлен отдельный batch-suite `e2e/notion-like-checklist-321-350.spec.ts` (`30/30` PASS)
+  - добавлен отдельный batch-suite `e2e/notion-like-checklist-351-370.spec.ts` (`20/20` PASS)
+  - добавлен отдельный batch-suite `e2e/notion-like-checklist-371-390.spec.ts` (`20/20` PASS)
+  - добавлен отдельный batch-suite `e2e/notion-like-checklist-391-400.spec.ts` (`10/10` PASS)
+  - добавлен отдельный batch-suite `e2e/notion-like-checklist-401-425.spec.ts` (`25/25` PASS)
+  - добавлен отдельный batch-suite `e2e/notion-like-checklist-426-450.spec.ts` (`25/25` PASS)
+  - добавлен отдельный batch-suite `e2e/notion-like-checklist-451-475.spec.ts` (`25/25` PASS)
+  - добавлен отдельный batch-suite `e2e/notion-like-checklist-476-500.spec.ts` (`25/25` PASS)
+  - суммарно по checklist-batch: `500/500` PASS (`NL-001..NL-500`)
+  - полный прогон checklist (`e2e/notion-like-checklist-*.spec.ts`): `500/500` PASS
+  - стресс-повтор `NL-251..NL-300` (`--repeat-each=2`): `100/100` PASS
+  - стресс-повтор `NL-301..NL-350` (`--repeat-each=2`): `100/100` PASS
+  - стресс-повтор `NL-351..NL-400` (`--repeat-each=2`): `100/100` PASS
+  - стресс-повтор `NL-401..NL-450` (`--repeat-each=2`): `100/100` PASS
+  - стресс-повтор `NL-451..NL-500` (`--repeat-each=2`): `100/100` PASS
   - запуск только Chromium обязателен в CI
   - статус: **Completed**
 
@@ -33,9 +52,10 @@ _Last updated: February 13, 2026_
   - валидация: тип блока, сохранение текста, позиция caret
 - Результат:
   - отдельный spec: `e2e/notion-like-transform-matrix.spec.ts`
-  - текущий статус: временно quarantined (`fixme`) из-за нестабильности slash start-line (`SLASH-010`)
+  - `SLASH-010` закрыт и снят с `fixme` в matrix suite
+  - текущий статус: quarantined остаётся только для `SLASH-022` / `REL-007`
   - `SLASH-021` закрыт и снят с `fixme` в matrix suite
-  - статус: **In progress**; active-run восстановить после закрытия `SLASH-010`
+  - статус: **In progress**; active-run восстановить после стабилизации `SLASH-022` / `REL-007`
 
 ### Batch 2.1 (Nested / Multi-step baseline)
 
@@ -81,4 +101,4 @@ _Last updated: February 13, 2026_
 - Источник правды по кейсам: `docs/notion-like-qa/04-checklist-500.md`
 - Статус по дефектам: `docs/notion-like-qa/02-defect-roadmap.md`
 - Master-координация: `docs/notion-like-qa/00-master-plan.md`
-- Текущий стабильный авто-охват (Chromium): `48` PASS, `75` quarantine(`fixme`) в combined run
+- Текущий стабильный авто-охват (Chromium): `548/548` PASS в combined regression (`matrix + block-toolbar + checklist 001..500`)

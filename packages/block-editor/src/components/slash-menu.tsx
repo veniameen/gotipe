@@ -82,6 +82,41 @@ function getBlockTextLength(block: ViewBlock): number {
   return 0;
 }
 
+function setDomCaretInBlock(blockId: string, targetOffset: number): boolean {
+  const block = document.querySelector(`[data-block-id="${blockId}"]`) as HTMLElement | null;
+  const sel = window.getSelection();
+  if (!block || !sel) return false;
+
+  const walker = document.createTreeWalker(block, NodeFilter.SHOW_TEXT);
+  let acc = 0;
+  let targetNode: Text | null = null;
+  let localOffset = 0;
+  let node: Node | null;
+
+  while ((node = walker.nextNode())) {
+    const text = node as Text;
+    const len = (text.textContent ?? "").length;
+    targetNode = text;
+    if (acc + len >= targetOffset) {
+      localOffset = Math.max(0, Math.min(len, targetOffset - acc));
+      break;
+    }
+    acc += len;
+    localOffset = len;
+  }
+
+  const range = document.createRange();
+  if (targetNode) {
+    range.setStart(targetNode, localOffset);
+  } else {
+    range.setStart(block, 0);
+  }
+  range.collapse(true);
+  sel.removeAllRanges();
+  sel.addRange(range);
+  return true;
+}
+
 function getSlashTrigger(editor: GoTipeEditor): SlashTrigger | null {
   const state = editor.getViewState();
   const sel = state.selection;
@@ -471,13 +506,18 @@ export function SlashMenu({ editor, commands = [] }: SlashMenuProps) {
     if (!visible) return;
     const handleClick = (e: MouseEvent) => {
       if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        e.preventDefault();
         setVisible(false);
         triggerRef.current = null;
+        editor.focus();
+        requestAnimationFrame(() => {
+          editor.focus();
+        });
       }
     };
-    document.addEventListener("mousedown", handleClick);
-    return () => document.removeEventListener("mousedown", handleClick);
-  }, [visible]);
+    document.addEventListener("mousedown", handleClick, true);
+    return () => document.removeEventListener("mousedown", handleClick, true);
+  }, [editor, visible]);
 
   // Execute a slash command: delete "/" trigger text, then run the command
   const executeCommand = useCallback(
@@ -508,6 +548,7 @@ export function SlashMenu({ editor, commands = [] }: SlashMenuProps) {
       let targetOffset = selection?.anchor.offset ?? 0;
       const selectionNeedsFallback =
         !targetBlock || LIST_CONTAINER_TYPES.has(targetBlock.type);
+      let normalizedSelection: { blockId: string; offset: number } | null = null;
 
       if (selectionNeedsFallback && fallbackBlockBefore && fallbackTopLevelIndex !== null) {
         if (LIST_ITEM_TYPES.has(fallbackBlockBefore.type)) {
@@ -556,6 +597,19 @@ export function SlashMenu({ editor, commands = [] }: SlashMenuProps) {
         targetOffset = 0;
       }
 
+      // Normalize to a collapsed cursor even for non-structural transforms.
+      // This prevents first typed character from replacing existing block text.
+      if (!selectionNeedsFallback && targetBlock) {
+        const caretBlock = resolveCaretBlock(targetBlock);
+        const maxOffset = getBlockTextLength(caretBlock);
+        const offset = Math.max(0, Math.min(targetOffset, maxOffset));
+        editor.setSelection({
+          anchor: { blockId: caretBlock.id, offset },
+          head: { blockId: caretBlock.id, offset },
+        });
+        normalizedSelection = { blockId: caretBlock.id, offset };
+      }
+
       if (selectionNeedsFallback && targetBlock) {
         const caretBlock = resolveCaretBlock(targetBlock);
         const maxOffset = getBlockTextLength(caretBlock);
@@ -564,6 +618,7 @@ export function SlashMenu({ editor, commands = [] }: SlashMenuProps) {
           anchor: { blockId: caretBlock.id, offset },
           head: { blockId: caretBlock.id, offset },
         });
+        normalizedSelection = { blockId: caretBlock.id, offset };
       }
       editor.focus();
 
@@ -572,6 +627,31 @@ export function SlashMenu({ editor, commands = [] }: SlashMenuProps) {
       queryRef.current = "";
       setQuery("");
       setSelectedIndex(0);
+
+      if (normalizedSelection) {
+        const plannedSelection = normalizedSelection;
+        requestAnimationFrame(() => {
+          // Do not override caret if user already typed/moved selection.
+          // This prevents first-character reordering right after slash command execution.
+          const live = editor.getViewState().selection;
+          if (live.type === "text") {
+            const moved =
+              live.anchor.blockId !== plannedSelection.blockId ||
+              live.head.blockId !== plannedSelection.blockId ||
+              live.anchor.offset !== plannedSelection.offset ||
+              live.head.offset !== plannedSelection.offset;
+            if (moved) return;
+          }
+
+          setDomCaretInBlock(plannedSelection.blockId, plannedSelection.offset);
+          editor.syncSelectionFromDOM?.();
+          editor.setSelection({
+            anchor: { blockId: plannedSelection.blockId, offset: plannedSelection.offset },
+            head: { blockId: plannedSelection.blockId, offset: plannedSelection.offset },
+          });
+          editor.focus();
+        });
+      }
     },
     [editor],
   );

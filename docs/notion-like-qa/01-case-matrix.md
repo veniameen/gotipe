@@ -1,6 +1,6 @@
 # Notion-like Case Matrix
 
-_Last updated: February 13, 2026_
+_Last updated: February 14, 2026_
 
 ## Legend
 
@@ -22,11 +22,11 @@ _Last updated: February 13, 2026_
 | SLASH-007 | ordered -> bullet | сохраняется текст текущей строки | Automated |
 | SLASH-008 | bullet -> text | list item корректно выносится в paragraph | Automated |
 | SLASH-009 | todo -> heading 1 | item выносится в h1 без потери текста | Automated |
-| SLASH-010 | slash в начале непустой строки | существующий текст не удаляется | Fixme |
+| SLASH-010 | slash в начале непустой строки | существующий текст не удаляется | Automated |
 | SLASH-011 | slash + Enter в пустом paragraph | создаётся целевой блок, caret остаётся в нём | Planned |
 | SLASH-012 | slash menu Esc | меню закрывается, редактор остаётся рабочим | Automated |
 | SLASH-013 | slash menu click outside | меню закрывается | Automated |
-| SLASH-014 | slash query без совпадений | виден empty-state | Planned |
+| SLASH-014 | slash query без совпадений | виден empty-state | Automated |
 | SLASH-015 | slash в list item с marks | marks не ломаются | Planned |
 | SLASH-016 | slash при выделении диапазона | поведение предсказуемое, без краша | Planned |
 | SLASH-017 | slash в heading -> paragraph | корректная смена типа | Automated |

@@ -6,6 +6,29 @@ async function openNotion(page: Page) {
   await expect(page.locator("[data-gotipe-content]")).toBeVisible();
 }
 
+async function setSingleParagraph(page: Page, text: string) {
+  const ok = await page.evaluate((value) => {
+    const editor = (window as Record<string, unknown>).__GOTIPE_NOTION_EDITOR__ as
+      | { setContent?: (content: unknown) => void }
+      | undefined;
+    if (!editor?.setContent) return false;
+    editor.setContent({
+      version: 1,
+      blocks: [
+        {
+          id: "qa-paragraph",
+          type: "paragraph",
+          attrs: {},
+          content: [{ text: value, marks: [] }],
+          children: [],
+        },
+      ],
+    });
+    return true;
+  }, text);
+  expect(ok).toBe(true);
+}
+
 async function hoverFirstTopLevelBlock(page: Page) {
   const block = page.locator("[data-gotipe-content] > [data-block-id]").first();
   await block.hover();
@@ -72,10 +95,12 @@ test.describe("Block toolbar", () => {
     await hoverFirstTopLevelBlock(page);
     await page.click("[data-gotipe-drag-handle]");
     const menu = page.locator("[data-gotipe-context-menu]");
-    await expect(menu).toContainText("Delete");
+    await expect(menu).toContainText("Turn into");
+    await expect(menu).toContainText("Copy link to block");
     await expect(menu).toContainText("Duplicate");
     await expect(menu).toContainText("Reset Formatting");
     await expect(menu).toContainText("Copy to Clipboard");
+    await expect(menu).toContainText("Delete");
   });
 
   test("context menu closes on Escape", async ({ page }) => {
@@ -128,7 +153,57 @@ test.describe("Block toolbar", () => {
     await page.click("[data-gotipe-drag-handle]");
     const menu = page.locator("[data-gotipe-context-menu]");
     await expect(menu).toHaveAttribute("role", "menu");
-    await expect(menu.locator('[role="menuitem"]')).toHaveCount(4);
+    await expect(menu.locator('[role="menuitem"]')).toHaveCount(6);
+  });
+
+  test("Turn into converts paragraph to heading 2 and preserves text", async ({ page }) => {
+    const marker = `turn_heading_${Math.random().toString(36).slice(2, 8)}`;
+    await setSingleParagraph(page, marker);
+    await hoverFirstTopLevelBlock(page);
+    await page.click("[data-gotipe-drag-handle]");
+    await page.click('[data-gotipe-context-menu] button:has-text("Turn into")');
+    await page.click('[data-gotipe-context-menu] button:has-text("Heading 2")');
+
+    await expect
+      .poll(async () =>
+        page.evaluate((needle) => {
+          const block = document.querySelector(
+            '[data-gotipe-content] > [data-block-id="qa-paragraph"]',
+          ) as HTMLElement | null;
+          if (!block) return { type: null, tag: null, text: "" };
+          return {
+            type: block.getAttribute("data-block-type"),
+            tag: block.tagName,
+            text: block.textContent ?? "",
+          };
+        }, marker),
+      )
+      .toEqual(expect.objectContaining({ type: "heading", tag: "H2", text: expect.stringContaining(marker) }));
+  });
+
+  test("Turn into converts paragraph to to-do list item and preserves text", async ({ page }) => {
+    const marker = `turn_todo_${Math.random().toString(36).slice(2, 8)}`;
+    await setSingleParagraph(page, marker);
+    await hoverFirstTopLevelBlock(page);
+    await page.click("[data-gotipe-drag-handle]");
+    await page.click('[data-gotipe-context-menu] button:has-text("Turn into")');
+    await page.click('[data-gotipe-context-menu] button:has-text("To-do List")');
+
+    await expect
+      .poll(async () =>
+        page.evaluate((needle) => {
+          const list = document.querySelector(
+            '[data-gotipe-content] > [data-block-type="todoList"]',
+          ) as HTMLElement | null;
+          const item = list?.querySelector('[data-block-type="todoItem"]') as HTMLElement | null;
+          return {
+            listType: list?.getAttribute("data-block-type") ?? null,
+            itemType: item?.getAttribute("data-block-type") ?? null,
+            text: item?.textContent ?? "",
+          };
+        }, marker),
+      )
+      .toEqual(expect.objectContaining({ listType: "todoList", itemType: "todoItem", text: expect.stringContaining(marker) }));
   });
 });
 

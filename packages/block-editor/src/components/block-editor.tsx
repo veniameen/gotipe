@@ -16,7 +16,7 @@ import { ThemeToggle } from "./theme-toggle";
 
 const BLOCK_TOOLBAR_WIDTH = 36;
 const BLOCK_TOOLBAR_GAP = 8;
-const BLOCK_TOOLBAR_LIST_EXTRA_GAP = 12;
+const BLOCK_TOOLBAR_LIST_EXTRA_GAP = 32;
 
 export interface BlockEditorProps {
   editor: GoTipeEditor | null;
@@ -174,7 +174,11 @@ export function BlockEditor({
 
       // Don't reset when hovering over the toolbar or context menu
       const target = e.target as HTMLElement;
-      if (target.closest(".gotipe-block-context-menu")) {
+      if (
+        target.closest(".gotipe-block-toolbar") ||
+        target.closest(".gotipe-block-toolbar-wrapper") ||
+        target.closest(".gotipe-block-context-menu")
+      ) {
         return;
       }
 
