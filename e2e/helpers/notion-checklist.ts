@@ -234,16 +234,64 @@ export async function setCaretAt(page: Page, blockId: string, position: CaretPos
 
 export async function dragSelectionBetween(page: Page, fromBlockId: string, toBlockId: string): Promise<void> {
   const points = await page.evaluate(({ fromId, toId }) => {
+    const getTextPoint = (block: HTMLElement): { x: number; y: number } | null => {
+      const walker = document.createTreeWalker(block, NodeFilter.SHOW_TEXT);
+      let node: Node | null;
+      while ((node = walker.nextNode())) {
+        const textNode = node as Text;
+        const value = textNode.textContent ?? "";
+        if (!value.trim()) continue;
+        const range = document.createRange();
+        range.setStart(textNode, 0);
+        range.setEnd(textNode, Math.min(1, value.length));
+        const rect = range.getBoundingClientRect();
+        if (rect.width > 0 || rect.height > 0) {
+          return {
+            x: rect.left + Math.max(1, Math.min(4, rect.width)),
+            y: rect.top + rect.height / 2,
+          };
+        }
+      }
+
+      const textHost = block.querySelector(
+        '[data-gotipe-text-host], [contenteditable="true"], [data-block-content]',
+      ) as HTMLElement | null;
+      if (textHost) {
+        const rect = textHost.getBoundingClientRect();
+        if (rect.width > 0 || rect.height > 0) {
+          return {
+            x: rect.left + Math.min(10, Math.max(3, rect.width / 8)),
+            y: rect.top + rect.height / 2,
+          };
+        }
+      }
+
+      return null;
+    };
+
+    const getFallbackPoint = (block: HTMLElement): { x: number; y: number } => {
+      const rect = block.getBoundingClientRect();
+      const hasCheckbox =
+        !!block.querySelector('input[type="checkbox"]') ||
+        !!block.querySelector('[role="checkbox"]') ||
+        !!block.querySelector('[aria-label="Mark as complete"]');
+      const baseOffset = hasCheckbox ? 48 : 20;
+      return {
+        x: rect.left + Math.min(rect.width - 8, Math.max(baseOffset, rect.width / 4)),
+        y: rect.top + rect.height / 2,
+      };
+    };
+
     const from = document.querySelector(`[data-block-id="${fromId}"]`) as HTMLElement | null;
     const to = document.querySelector(`[data-block-id="${toId}"]`) as HTMLElement | null;
     if (!from || !to) return null;
-    const fromRect = from.getBoundingClientRect();
-    const toRect = to.getBoundingClientRect();
+    const fromPoint = getTextPoint(from) ?? getFallbackPoint(from);
+    const toPoint = getTextPoint(to) ?? getFallbackPoint(to);
     return {
-      fromX: fromRect.left + Math.min(20, Math.max(8, fromRect.width / 3)),
-      fromY: fromRect.top + fromRect.height / 2,
-      toX: toRect.left + Math.min(20, Math.max(8, toRect.width / 3)),
-      toY: toRect.top + toRect.height / 2,
+      fromX: fromPoint.x,
+      fromY: fromPoint.y,
+      toX: toPoint.x,
+      toY: toPoint.y,
     };
   }, { fromId: fromBlockId, toId: toBlockId });
 

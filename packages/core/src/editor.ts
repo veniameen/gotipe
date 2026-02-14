@@ -1207,13 +1207,21 @@ export async function createEditor(options: CreateEditorOptions): Promise<GoTipe
         }
         const selection = readSelectionFromDOM?.();
         if (!selection) return;
+        const prevSelection = currentSelection;
+        const sameSelection =
+          prevSelection.anchor.blockId === selection.anchor.blockId &&
+          prevSelection.anchor.offset === selection.anchor.offset &&
+          prevSelection.head.blockId === selection.head.blockId &&
+          prevSelection.head.offset === selection.head.offset;
 
         currentSelection = {
           type: "text" as const,
           anchor: { ...selection.anchor },
           head: { ...selection.head },
         };
-        storedMarks = null;
+        if (!sameSelection) {
+          storedMarks = null;
+        }
         publishSelection();
 
         if (normalizeTodoCaret) {
@@ -1277,8 +1285,9 @@ export async function createEditor(options: CreateEditorOptions): Promise<GoTipe
             const selStart = Math.min(pos.anchor.offset, pos.head.offset);
             marksForInsert = getMarksAt(state.blocks, pos.anchor.blockId, selStart, false);
           } else {
-            // Collapsed cursor: inherit from left character
-            marksForInsert = getMarksAt(state.blocks, pos.anchor.blockId, pos.anchor.offset);
+            // Collapsed cursor: prefer current active marks (includes stored/toggled marks)
+            // and keep parity with common editors for typing in the middle/end of text.
+            marksForInsert = (state.toolbar.activeMarks ?? []).map((type) => ({ type, attrs: {} }));
           }
 
           // Delete selected text first if selection is a range
@@ -1376,11 +1385,10 @@ export async function createEditor(options: CreateEditorOptions): Promise<GoTipe
                       Math.min(fallbackPos.anchor.offset, fallbackPos.head.offset),
                       false,
                     )
-                  : getMarksAt(
-                      fallbackState.blocks,
-                      fallbackPos.anchor.blockId,
-                      fallbackPos.anchor.offset,
-                    );
+                  : (fallbackState.toolbar.activeMarks ?? []).map((type) => ({
+                      type,
+                      attrs: {},
+                    }));
 
             const fallbackSteps: unknown[] = [];
             let fallbackOffset: number;
@@ -1487,7 +1495,6 @@ export async function createEditor(options: CreateEditorOptions): Promise<GoTipe
           if (
             currentBlock &&
             (currentBlock.type === "listItem" || currentBlock.type === "todoItem") &&
-            pos.anchor.offset === 0 &&
             isBlockEmpty(currentBlock)
           ) {
             // Find parent list and unwrap this empty item

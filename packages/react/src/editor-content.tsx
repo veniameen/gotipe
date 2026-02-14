@@ -34,6 +34,13 @@ function BlockContent({ block }: { block: BlockView }) {
   return null;
 }
 
+function isBlockContentEmpty(block: BlockView): boolean {
+  if (block.content === null) return true;
+  if (typeof block.content === "string") return block.content.length === 0;
+  if (Array.isArray(block.content)) return block.content.every((span) => span.text.length === 0);
+  return true;
+}
+
 function BlockChildren({ block, editor }: { block: BlockView; editor: GoTipeEditor }) {
   if (!block.children || block.children.length === 0) return null;
   return (
@@ -241,8 +248,13 @@ function BlockComponent({ block, editor }: { block: BlockView; editor: GoTipeEdi
     case "heading": {
       const level = Math.min(Math.max((block.attrs.level as number) || 1, 1), 6);
       const Tag = `h${level}` as "h1" | "h2" | "h3" | "h4" | "h5" | "h6";
+      const isEmpty = isBlockContentEmpty(block);
       return (
-        <Tag data-block-id={block.id} data-block-type={block.type}>
+        <Tag
+          data-block-id={block.id}
+          data-block-type={block.type}
+          data-placeholder={isEmpty ? `Heading ${level}` : undefined}
+        >
           {content}
         </Tag>
       );
@@ -280,18 +292,46 @@ function BlockComponent({ block, editor }: { block: BlockView; editor: GoTipeEdi
     case "todoItem": {
       const checked = !!block.attrs.checked;
       return (
-        <li data-block-id={block.id} data-block-type={block.type} className="gotipe-todo-item"><input
-          type="checkbox"
-          checked={checked}
-          contentEditable={false}
-          aria-label={checked ? "Mark as incomplete" : "Mark as complete"}
+        <li
+          data-block-id={block.id}
+          data-block-type={block.type}
+          className="gotipe-todo-item"
           onMouseDown={(e) => {
+            const target = e.target as HTMLElement;
+            if (target.closest('input[type="checkbox"]')) return;
+
+            const host = e.currentTarget.querySelector("[data-gotipe-todo-content]");
+            if (!(host instanceof HTMLElement)) return;
+            if (e.clientX > host.getBoundingClientRect().left) return;
+
+            // Prevent transient caret placement on <li> left edge when clicking left zone.
             e.preventDefault();
-            e.stopPropagation();
-            editor.chain().setBlockAttrs(block.id, { checked: !checked }).run();
+            const selection = window.getSelection();
+            if (!selection) return;
+            const range = document.createRange();
+            range.setStart(host, 0);
+            range.collapse(true);
+            selection.removeAllRanges();
+            selection.addRange(range);
+            editor.syncSelectionFromDOM();
           }}
-          onChange={() => {}}
-        /><span className="gotipe-todo-item-content" data-gotipe-todo-content="">{content}</span></li>
+        >
+          <input
+            type="checkbox"
+            checked={checked}
+            contentEditable={false}
+            aria-label={checked ? "Mark as incomplete" : "Mark as complete"}
+            onMouseDown={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              editor.chain().setBlockAttrs(block.id, { checked: !checked }).run();
+            }}
+            onChange={() => {}}
+          />
+          <span className="gotipe-todo-item-content" data-gotipe-todo-content="">
+            {content}
+          </span>
+        </li>
       );
     }
 

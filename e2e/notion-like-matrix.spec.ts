@@ -453,6 +453,79 @@ test.describe("Notion-like matrix regressions", () => {
     await expectBlockByMarker(page, m, "todoItem", "todoList");
   });
 
+  test("slash: heading shows placeholder before typing and clears after input", async ({ page }) => {
+    const m = marker("hPlaceholder");
+    await createFreshLine(page);
+    await runSlashCommand(page, "heading");
+
+    await expect
+      .poll(async () =>
+        page.evaluate(() => {
+          const blocks = Array.from(
+            document.querySelectorAll("[data-gotipe-content] > [data-block-id]"),
+          ) as HTMLElement[];
+          const target = blocks[blocks.length - 1] ?? null;
+          return {
+            blockType: target?.getAttribute("data-block-type") ?? null,
+            tag: target?.tagName ?? null,
+            placeholder: target?.getAttribute("data-placeholder") ?? null,
+            text: target?.textContent ?? "",
+          };
+        }),
+      )
+      .toEqual(
+        expect.objectContaining({
+          blockType: "heading",
+          tag: "H1",
+          placeholder: "Heading 1",
+          text: "",
+        }),
+      );
+
+    await typeStable(page, m);
+    await expectBlockByMarker(page, m, "heading", null);
+    await expect
+      .poll(async () =>
+        page.evaluate(() => {
+          const blocks = Array.from(
+            document.querySelectorAll("[data-gotipe-content] > [data-block-id]"),
+          ) as HTMLElement[];
+          const target = blocks[blocks.length - 1] ?? null;
+          return target?.getAttribute("data-placeholder") ?? null;
+        }),
+      )
+      .toBeNull();
+  });
+
+  test("todo checkbox toggle right after slash transform keeps text in place", async ({ page }) => {
+    const m = marker("todoToggle");
+    await createFreshLine(page);
+    await runSlashCommand(page, "todo");
+    await typeStable(page, m);
+
+    const checkbox = page
+      .locator('[data-gotipe-content] > [data-block-type="todoList"] > [data-block-type="todoItem"] input[type="checkbox"]')
+      .first();
+    await expect(checkbox).toBeVisible();
+
+    await checkbox.click();
+
+    await expect
+      .poll(async () =>
+        page.evaluate((needle) => {
+          const item = document.querySelector(
+            '[data-gotipe-content] > [data-block-type="todoList"] > [data-block-type="todoItem"]',
+          ) as HTMLElement | null;
+          const cb = item?.querySelector('input[type="checkbox"]') as HTMLInputElement | null;
+          return {
+            text: item?.textContent ?? "",
+            checked: cb?.checked ?? null,
+          };
+        }, m),
+      )
+      .toEqual(expect.objectContaining({ text: expect.stringContaining(m), checked: true }));
+  });
+
   test("todo caret stays after checkbox in empty item", async ({ page }) => {
     await createFreshLine(page);
     await runSlashCommand(page, "todo");
@@ -797,7 +870,7 @@ test.describe("Notion-like matrix regressions", () => {
       .toBe("paragraph|null");
   });
 
-  test.fixme("slash at line start preserves existing text", async ({ page }) => {
+  test("slash at line start preserves existing text", async ({ page }) => {
     const m = marker("preserve");
     await createFreshLine(page);
     await typeStable(page, m);

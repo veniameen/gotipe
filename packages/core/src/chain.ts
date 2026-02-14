@@ -181,6 +181,7 @@ export class ChainableCommands {
     const blockId = state.selection.anchor.blockId;
     const block = this.findInTree(state.blocks, blockId);
     if (!block) return this;
+    const sourceOffset = state.selection.anchor.blockId === block.id ? state.selection.anchor.offset : 0;
 
     const parentInfo = this.findParentOf(state.blocks, blockId);
     const parent = parentInfo?.parent;
@@ -202,7 +203,6 @@ export class ChainableCommands {
           content: liftedContent,
           children: [],
         };
-        const sourceOffset = state.selection.anchor.blockId === block.id ? state.selection.anchor.offset : 0;
         const targetOffset = Math.max(
           0,
           Math.min(sourceOffset, this.blockContentTextLength(liftedContent)),
@@ -258,6 +258,13 @@ export class ChainableCommands {
                   : false,
           } as Record<string, string | number | boolean | null>)
         : ((attrs ?? {}) as Record<string, string | number | boolean | null>);
+
+    if (type === "codeBlock") {
+      const targetContent = this.contentForTargetType(type, block.content);
+      const maxOffset = this.blockContentTextLength(targetContent);
+      const offset = Math.max(0, Math.min(sourceOffset, maxOffset));
+      this.selectionOverride = { type: "cursor", blockId, offset };
+    }
 
     this.steps.push({
       type: "setBlockType",
@@ -461,10 +468,24 @@ export class ChainableCommands {
     return this.toggleList("todoList", "todoItem");
   }
 
+  // Idempotent list setters for slash/turn-into flows (no unwrap on same type).
+  setBulletList(): this {
+    return this.toggleList("bulletList", "listItem", undefined, false);
+  }
+
+  setOrderedList(attrs?: { start?: number }): this {
+    return this.toggleList("orderedList", "listItem", attrs, false);
+  }
+
+  setTodoList(): this {
+    return this.toggleList("todoList", "todoItem", undefined, false);
+  }
+
   private toggleList(
     listType: string,
     itemType: string,
     listAttrs?: Record<string, unknown>,
+    allowUnwrapSame = true,
   ): this {
     const state = this.getViewState();
     const blockId = state.selection.anchor.blockId;
@@ -481,6 +502,7 @@ export class ChainableCommands {
 
       // Same list command on current list type toggles it off (unwrap to paragraphs).
       if (listBlock.type === listType && block.type === itemType) {
+        if (!allowUnwrapSame) return this;
         const listLoc = this.findLocation(state.blocks, listBlock.id);
         if (listLoc) {
           this.steps.push({ type: "deleteBlock", blockId: listBlock.id });
@@ -538,7 +560,8 @@ export class ChainableCommands {
       block.type === "paragraph" ||
       block.type === "heading" ||
       block.type === "blockquote" ||
-      block.type === "codeBlock"
+      block.type === "codeBlock" ||
+      block.type === "callout"
     ) {
       const blockIndex = state.blocks.findIndex((b) => b.id === blockId);
       if (blockIndex === -1) return this;

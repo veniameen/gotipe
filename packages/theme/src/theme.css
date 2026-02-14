@@ -580,6 +580,24 @@
   background: var(--gt-bg-hover);
 }
 
+.gotipe-context-menu-chevron {
+  margin-left: auto;
+  color: var(--gt-text-tertiary);
+  font-size: 12px;
+  line-height: 1;
+}
+
+.gotipe-context-submenu {
+  margin-top: 4px;
+  padding-top: 4px;
+  border-top: 1px solid var(--gt-border-light, rgba(0,0,0,0.06));
+}
+
+.gotipe-context-submenu button {
+  padding-left: 30px;
+  height: 30px;
+}
+
 .gotipe-block-context-menu button.destructive {
   color: var(--gt-error);
 }

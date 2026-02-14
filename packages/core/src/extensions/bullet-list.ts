@@ -52,7 +52,7 @@ export const BulletList = defineExtension({
       description: "Create a bullet list",
       icon: "list",
       group: "style",
-      execute: (editor) => editor.chain().toggleBulletList().run(),
+      execute: (editor) => editor.chain().setBulletList().run(),
     },
   ],
 });
@@ -138,7 +138,7 @@ export const TodoList = defineExtension({
       description: "Create a to-do list with checkboxes",
       icon: "check-square",
       group: "style",
-      execute: (editor) => editor.chain().toggleTodoList().run(),
+      execute: (editor) => editor.chain().setTodoList().run(),
     },
   ],
 });
