@@ -15,6 +15,7 @@ import { SuggestionToolbar } from "./suggestion-toolbar";
 import { ThemeToggle } from "./theme-toggle";
 
 const BLOCK_TOOLBAR_WIDTH = 36;
+const BLOCK_TOOLBAR_BUTTON_SIZE = 24;
 const BLOCK_TOOLBAR_GAP = 8;
 const BLOCK_TOOLBAR_COLUMN_OFFSET = 45;
 const TOOLBAR_HIDE_DELAY_MS = 20;
@@ -235,6 +236,57 @@ function getBlockTextLeft(blockEl: HTMLElement): number {
     (blockEl.querySelector("[contenteditable='true']") as HTMLElement | null) ??
     blockEl;
   return host.getBoundingClientRect().left;
+}
+
+function getBlockFirstLineMetrics(blockEl: HTMLElement): { top: number; height: number } {
+  const hosts: HTMLElement[] = [];
+  const todoHost = blockEl.querySelector("[data-gotipe-todo-content]") as HTMLElement | null;
+  if (todoHost) hosts.push(todoHost);
+
+  const editableHost = blockEl.querySelector("[contenteditable='true']") as HTMLElement | null;
+  if (editableHost && editableHost !== blockEl) hosts.push(editableHost);
+  hosts.push(blockEl);
+
+  for (const host of hosts) {
+    const walker = document.createTreeWalker(host, NodeFilter.SHOW_TEXT);
+    let textNode: Node | null;
+    while ((textNode = walker.nextNode())) {
+      const text = textNode.textContent ?? "";
+      if (text.length === 0) continue;
+      const firstVisibleChar = text.search(/\S/);
+      const start = firstVisibleChar >= 0 ? firstVisibleChar : 0;
+      const end = Math.min(text.length, start + 1);
+      const range = document.createRange();
+      range.setStart(textNode, start);
+      range.setEnd(textNode, end);
+      const rect = range.getBoundingClientRect();
+      if (rect.height > 0) {
+        return { top: rect.top, height: rect.height };
+      }
+    }
+
+    const trailingBreak = host.querySelector("br[data-gotipe-trailing-break]") as HTMLElement | null;
+    if (trailingBreak) {
+      const rect = trailingBreak.getBoundingClientRect();
+      if (rect.height > 0) {
+        return { top: rect.top, height: rect.height };
+      }
+    }
+
+    const hostRect = host.getBoundingClientRect();
+    if (hostRect.height > 0) {
+      const computed = window.getComputedStyle(host);
+      const parsedLineHeight = Number.parseFloat(computed.lineHeight);
+      const fallbackLineHeight = Number.isFinite(parsedLineHeight)
+        ? parsedLineHeight
+        : hostRect.height;
+      const lineHeight = Math.max(1, Math.min(hostRect.height, fallbackLineHeight));
+      return { top: hostRect.top, height: lineHeight };
+    }
+  }
+
+  const blockRect = blockEl.getBoundingClientRect();
+  return { top: blockRect.top, height: Math.max(1, blockRect.height) };
 }
 
 function findBlockLocation(
@@ -506,10 +558,14 @@ export function BlockEditor({
       setHoveredToolbarTarget({ actionBlockId, anchorBlockId, addBlockId, dragBlockId });
       if (containerRef.current) {
         const containerRect = containerRef.current.getBoundingClientRect();
-        const anchorRect = anchorEl.getBoundingClientRect();
+        const firstLine = getBlockFirstLineMetrics(anchorEl);
         const left = getToolbarRailLeft(containerRef.current);
+        const top =
+          firstLine.top -
+          containerRect.top +
+          (firstLine.height - BLOCK_TOOLBAR_BUTTON_SIZE) / 2;
         setToolbarPos({
-          top: Math.round(anchorRect.top - containerRect.top),
+          top,
           left,
         });
       }
@@ -784,6 +840,7 @@ export function BlockEditor({
             top: toolbarPos.top,
             left: toolbarPos.left,
             width: BLOCK_TOOLBAR_WIDTH,
+            height: BLOCK_TOOLBAR_BUTTON_SIZE,
             display: "flex",
             alignItems: "center",
             justifyContent: "center",

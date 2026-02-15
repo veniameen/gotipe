@@ -227,6 +227,10 @@
   text-overflow: ellipsis;
 }
 
+.gotipe-content p[data-placeholder]::before {
+  top: var(--gt-space-1, 4px);
+}
+
 /* Drag handle area */
 .gotipe-content [data-block-id]:hover > .gotipe-drag-handle {
   opacity: 1;
