@@ -1,7 +1,7 @@
 import type { GoTipeEditor } from "@gotipe/core";
 import { Editor } from "@gotipe/react";
 import type React from "react";
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { AiCommandBar } from "./ai-command-bar";
 import { AiStatusIndicator } from "./ai-status-indicator";
 import { BlockToolbar } from "./block-toolbar";
@@ -16,7 +16,22 @@ import { ThemeToggle } from "./theme-toggle";
 
 const BLOCK_TOOLBAR_WIDTH = 36;
 const BLOCK_TOOLBAR_GAP = 8;
-const BLOCK_TOOLBAR_LIST_EXTRA_GAP = 32;
+const BLOCK_TOOLBAR_COLUMN_OFFSET = 45;
+const TOOLBAR_HIDE_DELAY_MS = 20;
+const TOOLBAR_HOVER_X_MIN_OFFSET = 120;
+const TOOLBAR_HOVER_X_MAX_OFFSET = 560;
+const LIST_CONTAINER_TYPES = new Set(["bulletList", "orderedList", "todoList"]);
+const LIST_ITEM_TYPES = new Set(["listItem", "todoItem"]);
+const ROW_DRAGGABLE_LIST_TYPES = new Set(["bulletList", "orderedList", "todoList"]);
+
+type ViewBlock = ReturnType<GoTipeEditor["getViewState"]>["blocks"][number];
+type DropTarget = { parentId: string | null; index: number };
+type BlockLocation = {
+  parentId: string | null;
+  parentType: string | null;
+  index: number;
+  blockType: string;
+};
 
 export interface BlockEditorProps {
   editor: GoTipeEditor | null;
@@ -94,30 +109,182 @@ function getTopLevelBlockIdAtPoint(
   return nearest?.getAttribute("data-block-id") ?? null;
 }
 
-function getBlockContentLeft(blockEl: HTMLElement): number {
-  const textWalker = document.createTreeWalker(blockEl, NodeFilter.SHOW_TEXT);
-  let textNode: Node | null;
-  while ((textNode = textWalker.nextNode())) {
-    const text = textNode.textContent ?? "";
-    if (!text.trim()) continue;
-    const range = document.createRange();
-    range.setStart(textNode, 0);
-    range.setEnd(textNode, Math.min(1, text.length));
-    const rect = range.getBoundingClientRect();
-    if (rect.width > 0 || rect.height > 0) {
-      return rect.left;
+function getBlockElById(containerEl: HTMLElement, blockId: string): HTMLElement | null {
+  return containerEl.querySelector(`[data-block-id="${blockId}"]`) as HTMLElement | null;
+}
+
+function getTopLevelAncestorBlockId(containerEl: HTMLElement, blockId: string): string | null {
+  const contentEl = containerEl.querySelector("[data-gotipe-content]");
+  if (!contentEl) return null;
+  let blockEl = getBlockElById(containerEl, blockId);
+  if (!blockEl) return null;
+
+  while (blockEl && blockEl.parentElement !== contentEl) {
+    const parent = blockEl.parentElement?.closest("[data-block-id]") as HTMLElement | null;
+    if (!parent) break;
+    blockEl = parent;
+  }
+  return blockEl?.getAttribute("data-block-id") ?? null;
+}
+
+function findNearestRowInList(listEl: HTMLElement, clientY: number): string | null {
+  const rows = Array.from(
+    listEl.querySelectorAll('[data-block-type="listItem"], [data-block-type="todoItem"]'),
+  ).filter((el): el is HTMLElement => el instanceof HTMLElement && el.hasAttribute("data-block-id"));
+  if (rows.length === 0) return null;
+
+  let nearest: HTMLElement | null = null;
+  let nearestDistance = Number.POSITIVE_INFINITY;
+  for (const row of rows) {
+    const rect = row.getBoundingClientRect();
+    if (clientY >= rect.top && clientY <= rect.bottom) {
+      return row.getAttribute("data-block-id");
+    }
+    const distance = clientY < rect.top ? rect.top - clientY : clientY - rect.bottom;
+    if (distance < nearestDistance) {
+      nearestDistance = distance;
+      nearest = row;
+    }
+  }
+  return nearest?.getAttribute("data-block-id") ?? null;
+}
+
+function getRowAnchorBlockIdAtPoint(
+  containerEl: HTMLElement,
+  clientX: number,
+  clientY: number,
+): string | null {
+  const stack = document.elementsFromPoint(clientX, clientY);
+  let listContainerId: string | null = null;
+
+  for (const node of stack) {
+    if (!(node instanceof HTMLElement)) continue;
+    const blockEl = node.closest("[data-block-id]") as HTMLElement | null;
+    if (!blockEl || !containerEl.contains(blockEl)) continue;
+
+    const blockType = blockEl.getAttribute("data-block-type") ?? "";
+    const blockId = blockEl.getAttribute("data-block-id");
+    if (!blockId) continue;
+
+    if (LIST_ITEM_TYPES.has(blockType)) {
+      return blockId;
+    }
+    if (!LIST_CONTAINER_TYPES.has(blockType)) {
+      return blockId;
+    }
+    if (!listContainerId) {
+      listContainerId = blockId;
     }
   }
 
-  const fallback =
-    (blockEl.querySelector(
-      "[data-gotipe-todo-content], [contenteditable='true'], p, h1, h2, h3, li, pre, blockquote",
-    ) as HTMLElement | null) ?? blockEl;
-  return fallback.getBoundingClientRect().left;
+  if (listContainerId) {
+    const listEl = getBlockElById(containerEl, listContainerId);
+    if (listEl) {
+      const rowId = findNearestRowInList(listEl, clientY);
+      if (rowId) return rowId;
+    }
+  }
+
+  // When hovering deep in the left gutter, hit-testing can miss nested list items.
+  // Resolve top-level by Y first, then remap list containers to nearest row item.
+  const topLevelId = getTopLevelBlockIdAtPoint(containerEl, clientX, clientY);
+  if (!topLevelId) return null;
+  const topLevelEl = getBlockElById(containerEl, topLevelId);
+  const topLevelType = topLevelEl?.getAttribute("data-block-type") ?? "";
+  if (LIST_CONTAINER_TYPES.has(topLevelType) && topLevelEl) {
+    const rowId = findNearestRowInList(topLevelEl, clientY);
+    if (rowId) return rowId;
+  }
+  return topLevelId;
 }
 
-function getDropIndex(containerEl: HTMLElement, clientY: number): number {
-  const blockEls = getTopLevelBlockEls(containerEl);
+function getToolbarRailLeft(containerEl: HTMLElement): number {
+  const contentEl = containerEl.querySelector("[data-gotipe-content]") as HTMLElement | null;
+  const containerRect = containerEl.getBoundingClientRect();
+  const contentRect = contentEl?.getBoundingClientRect() ?? containerRect;
+  const topLevelBlocks = getTopLevelBlockEls(containerEl);
+  const columnLeftCandidates = topLevelBlocks
+    .filter((blockEl) => (blockEl.getAttribute("data-block-type") ?? "") !== "divider")
+    .map((blockEl) => blockEl.getBoundingClientRect().left);
+  const columnLeft =
+    columnLeftCandidates.length > 0
+      ? Math.min(...columnLeftCandidates)
+      : contentRect.left;
+
+  return Math.max(
+    0,
+    Math.round(columnLeft - containerRect.left - BLOCK_TOOLBAR_COLUMN_OFFSET),
+  );
+}
+
+function getBlockTextLeft(blockEl: HTMLElement): number {
+  const walker = document.createTreeWalker(blockEl, NodeFilter.SHOW_TEXT);
+  let n: Node | null;
+  while ((n = walker.nextNode())) {
+    const text = n.textContent ?? "";
+    if (!text.trim()) continue;
+    const r = document.createRange();
+    r.setStart(n, 0);
+    r.setEnd(n, Math.min(1, text.length));
+    const rr = r.getBoundingClientRect();
+    if (rr.width > 0 || rr.height > 0) return rr.left;
+  }
+
+  const host =
+    (blockEl.querySelector("[data-gotipe-todo-content]") as HTMLElement | null) ??
+    (blockEl.querySelector("[contenteditable='true']") as HTMLElement | null) ??
+    blockEl;
+  return host.getBoundingClientRect().left;
+}
+
+function findBlockLocation(
+  blocks: ViewBlock[],
+  blockId: string,
+  parent: ViewBlock | null = null,
+): BlockLocation | null {
+  for (let i = 0; i < blocks.length; i++) {
+    const block = blocks[i]!;
+    if (block.id === blockId) {
+      return {
+        parentId: parent?.id ?? null,
+        parentType: parent?.type ?? null,
+        index: i,
+        blockType: block.type,
+      };
+    }
+    const found = findBlockLocation(block.children, blockId, block);
+    if (found) return found;
+  }
+  return null;
+}
+
+function findBlockById(
+  blocks: ViewBlock[],
+  blockId: string,
+): ViewBlock | null {
+  for (const block of blocks) {
+    if (block.id === blockId) return block;
+    const nested = findBlockById(block.children, blockId);
+    if (nested) return nested;
+  }
+  return null;
+}
+
+function getChildBlockEls(containerEl: HTMLElement, parentId: string | null): HTMLElement[] {
+  if (!parentId) return getTopLevelBlockEls(containerEl);
+  const parentEl = getBlockElById(containerEl, parentId);
+  if (!parentEl) return [];
+  return Array.from(parentEl.children).filter(
+    (el): el is HTMLElement => el instanceof HTMLElement && el.hasAttribute("data-block-id"),
+  );
+}
+
+function getDropIndexForParent(
+  containerEl: HTMLElement,
+  parentId: string | null,
+  clientY: number,
+): number {
+  const blockEls = getChildBlockEls(containerEl, parentId);
   for (let i = 0; i < blockEls.length; i++) {
     const rect = blockEls[i]!.getBoundingClientRect();
     const midY = rect.top + rect.height / 2;
@@ -126,20 +293,99 @@ function getDropIndex(containerEl: HTMLElement, clientY: number): number {
   return blockEls.length;
 }
 
-function getDropIndicatorY(containerEl: HTMLElement, dropIdx: number): number | null {
-  const blockEls = getTopLevelBlockEls(containerEl);
+function getDropIndicatorYForParent(
+  containerEl: HTMLElement,
+  parentId: string | null,
+  dropIdx: number,
+): number | null {
+  const blockEls = getChildBlockEls(containerEl, parentId);
   const containerRect = containerEl.getBoundingClientRect();
 
-  if (blockEls.length === 0) return null;
+  if (blockEls.length === 0) {
+    if (!parentId) return null;
+    const parentEl = getBlockElById(containerEl, parentId);
+    if (!parentEl) return null;
+    return parentEl.getBoundingClientRect().top - containerRect.top;
+  }
 
-  if (dropIdx === 0) {
+  if (dropIdx <= 0) {
     return blockEls[0]!.getBoundingClientRect().top - containerRect.top;
   }
+
   if (dropIdx <= blockEls.length) {
     const prevRect = blockEls[dropIdx - 1]!.getBoundingClientRect();
     return prevRect.bottom - containerRect.top;
   }
-  return null;
+
+  return blockEls[blockEls.length - 1]!.getBoundingClientRect().bottom - containerRect.top;
+}
+
+function getDropIndicatorHorizontalInsets(
+  containerEl: HTMLElement,
+  parentId: string | null,
+): { left: number; right: number } {
+  if (!parentId) return { left: 0, right: 0 };
+
+  const parentEl = getBlockElById(containerEl, parentId);
+  if (!parentEl) return { left: 0, right: 0 };
+
+  const containerRect = containerEl.getBoundingClientRect();
+  const parentRect = parentEl.getBoundingClientRect();
+  const left = Math.max(0, Math.round(parentRect.left - containerRect.left));
+  const right = Math.max(0, Math.round(containerRect.right - parentRect.right));
+  return { left, right };
+}
+
+function canDropListItemIntoParent(itemType: string, parentType: string | null): boolean {
+  if (!parentType) return false;
+  if (itemType === "todoItem") return parentType === "todoList";
+  if (itemType === "listItem") return parentType === "bulletList" || parentType === "orderedList";
+  return false;
+}
+
+function inferListContainerTypeForItem(
+  itemType: string,
+  sourceParentType: string | null,
+): "bulletList" | "orderedList" | "todoList" {
+  if (itemType === "todoItem") return "todoList";
+  if (sourceParentType === "orderedList") return "orderedList";
+  return "bulletList";
+}
+
+function resolveListRowDropTarget(
+  containerEl: HTMLElement,
+  blocks: ViewBlock[],
+  draggingBlockType: string,
+  clientX: number,
+  clientY: number,
+): DropTarget {
+  const anchorBlockId = getRowAnchorBlockIdAtPoint(containerEl, clientX, clientY);
+  if (anchorBlockId) {
+    const anchorEl = getBlockElById(containerEl, anchorBlockId);
+    const anchorType = anchorEl?.getAttribute("data-block-type") ?? null;
+    if (canDropListItemIntoParent(draggingBlockType, anchorType)) {
+      return {
+        parentId: anchorBlockId,
+        index: getDropIndexForParent(containerEl, anchorBlockId, clientY),
+      };
+    }
+
+    const anchorLocation = findBlockLocation(blocks, anchorBlockId);
+    if (
+      anchorLocation?.parentId &&
+      canDropListItemIntoParent(draggingBlockType, anchorLocation.parentType)
+    ) {
+      return {
+        parentId: anchorLocation.parentId,
+        index: getDropIndexForParent(containerEl, anchorLocation.parentId, clientY),
+      };
+    }
+  }
+
+  return {
+    parentId: null,
+    index: getDropIndexForParent(containerEl, null, clientY),
+  };
 }
 
 export function BlockEditor({
@@ -161,16 +407,53 @@ export function BlockEditor({
   children,
 }: BlockEditorProps) {
   const [draggingBlockId, setDraggingBlockId] = useState<string | null>(null);
-  const [dropIndex, setDropIndex] = useState<number | null>(null);
-  const [hoveredBlockId, setHoveredBlockId] = useState<string | null>(null);
+  const [draggingBlockType, setDraggingBlockType] = useState<string | null>(null);
+  const [draggingParentId, setDraggingParentId] = useState<string | null>(null);
+  const [dropTarget, setDropTarget] = useState<DropTarget | null>(null);
+  const [hoveredToolbarTarget, setHoveredToolbarTarget] = useState<{
+    actionBlockId: string;
+    anchorBlockId: string;
+    addBlockId: string;
+    dragBlockId: string;
+  } | null>(null);
   const [toolbarPos, setToolbarPos] = useState<{ top: number; left: number } | null>(null);
   const [suggestionIndex, setSuggestionIndex] = useState(0);
   const containerRef = useRef<HTMLDivElement>(null);
+  const hideToolbarTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const draggingBlockIdRef = useRef<string | null>(null);
+  const draggingBlockTypeRef = useRef<string | null>(null);
+  const draggingParentIdRef = useRef<string | null>(null);
+  const dropTargetRef = useRef<DropTarget | null>(null);
+
+  const clearHideToolbarTimer = useCallback(() => {
+    if (hideToolbarTimerRef.current) {
+      clearTimeout(hideToolbarTimerRef.current);
+      hideToolbarTimerRef.current = null;
+    }
+  }, []);
+
+  const hideToolbarNow = useCallback(() => {
+    setHoveredToolbarTarget(null);
+    setToolbarPos(null);
+  }, []);
+
+  const scheduleHideToolbar = useCallback(() => {
+    clearHideToolbarTimer();
+    hideToolbarTimerRef.current = setTimeout(() => {
+      hideToolbarTimerRef.current = null;
+      hideToolbarNow();
+    }, TOOLBAR_HIDE_DELAY_MS);
+  }, [clearHideToolbarTimer, hideToolbarNow]);
+
+  useEffect(() => () => clearHideToolbarTimer(), [clearHideToolbarTimer]);
 
   // Track hovered block for floating toolbar
   const handleMouseMove = useCallback(
     (e: React.MouseEvent<HTMLDivElement>) => {
-      if (draggingBlockId) return;
+      if (draggingBlockId) {
+        clearHideToolbarTimer();
+        return;
+      }
 
       // Don't reset when hovering over the toolbar or context menu
       const target = e.target as HTMLElement;
@@ -179,44 +462,59 @@ export function BlockEditor({
         target.closest(".gotipe-block-toolbar-wrapper") ||
         target.closest(".gotipe-block-context-menu")
       ) {
+        clearHideToolbarTimer();
         return;
       }
 
       if (!containerRef.current) return;
-      const blockId = getTopLevelBlockIdAtPoint(containerRef.current, e.clientX, e.clientY);
-      if (!blockId) {
-        setHoveredBlockId(null);
-        setToolbarPos(null);
+      const anchorBlockId = getRowAnchorBlockIdAtPoint(containerRef.current, e.clientX, e.clientY);
+      if (!anchorBlockId) {
+        scheduleHideToolbar();
+        return;
+      }
+      const actionBlockId =
+        getTopLevelAncestorBlockId(containerRef.current, anchorBlockId) ?? anchorBlockId;
+      clearHideToolbarTimer();
+
+      const anchorEl = getBlockElById(containerRef.current, anchorBlockId);
+      if (!anchorEl) return;
+      const anchorType = anchorEl.getAttribute("data-block-type") ?? "";
+      const addBlockId =
+        anchorType === "listItem" || anchorType === "todoItem"
+          ? anchorBlockId
+          : actionBlockId;
+      const dragBlockId =
+        anchorType === "listItem" || anchorType === "todoItem"
+          ? anchorBlockId
+          : actionBlockId;
+      const textLeft = getBlockTextLeft(anchorEl);
+      const inGutterEnvelope =
+        e.clientX >= textLeft - TOOLBAR_HOVER_X_MIN_OFFSET &&
+        e.clientX <= textLeft + TOOLBAR_HOVER_X_MAX_OFFSET;
+      if (!inGutterEnvelope) {
+        scheduleHideToolbar();
         return;
       }
 
-      if (blockId !== hoveredBlockId) {
-        setHoveredBlockId(blockId);
-        if (blockId && containerRef.current) {
-          const blockEl = containerRef.current.querySelector<HTMLElement>(
-            `[data-gotipe-content] > [data-block-id="${blockId}"]`,
-          );
-          if (blockEl) {
-            const containerRect = containerRef.current.getBoundingClientRect();
-            const blockRect = blockEl.getBoundingClientRect();
-            const contentLeft = getBlockContentLeft(blockEl);
-            const blockType = blockEl.getAttribute("data-block-type");
-            const extraGap =
-              blockType === "bulletList" || blockType === "orderedList" || blockType === "todoList"
-                ? BLOCK_TOOLBAR_LIST_EXTRA_GAP
-                : 0;
-            const left = Math.max(
-              0,
-              Math.round(
-                contentLeft - containerRect.left - BLOCK_TOOLBAR_WIDTH - BLOCK_TOOLBAR_GAP - extraGap,
-              ),
-            );
-            setToolbarPos({ top: blockRect.top - containerRect.top, left });
-          }
-        }
+      const targetChanged =
+        hoveredToolbarTarget?.anchorBlockId !== anchorBlockId ||
+        hoveredToolbarTarget?.actionBlockId !== actionBlockId ||
+        hoveredToolbarTarget?.addBlockId !== addBlockId ||
+        hoveredToolbarTarget?.dragBlockId !== dragBlockId;
+      if (!targetChanged) return;
+
+      setHoveredToolbarTarget({ actionBlockId, anchorBlockId, addBlockId, dragBlockId });
+      if (containerRef.current) {
+        const containerRect = containerRef.current.getBoundingClientRect();
+        const anchorRect = anchorEl.getBoundingClientRect();
+        const left = getToolbarRailLeft(containerRef.current);
+        setToolbarPos({
+          top: Math.round(anchorRect.top - containerRect.top),
+          left,
+        });
       }
     },
-    [draggingBlockId, hoveredBlockId],
+    [clearHideToolbarTimer, draggingBlockId, hoveredToolbarTarget, scheduleHideToolbar],
   );
 
   const handleMouseLeave = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
@@ -228,65 +526,210 @@ export function BlockEditor({
         related.closest?.(".gotipe-block-toolbar-wrapper") ||
         related.closest?.(".gotipe-block-context-menu"))
     ) {
+      clearHideToolbarTimer();
       return;
     }
-    setHoveredBlockId(null);
-    setToolbarPos(null);
-  }, []);
+    scheduleHideToolbar();
+  }, [clearHideToolbarTimer, scheduleHideToolbar]);
 
   const handleBlockDragStart = useCallback((blockId: string) => {
+    if (!editor) return;
+    clearHideToolbarTimer();
+    const location = findBlockLocation(editor.getViewState().blocks, blockId);
+    const canDragAsRow =
+      !!location?.parentId &&
+      (location.blockType === "listItem" || location.blockType === "todoItem") &&
+      !!location.parentType &&
+      ROW_DRAGGABLE_LIST_TYPES.has(location.parentType);
+    const parentId = canDragAsRow ? location.parentId : null;
+
+    draggingBlockIdRef.current = blockId;
+    draggingBlockTypeRef.current = location?.blockType ?? null;
+    draggingParentIdRef.current = parentId;
     setDraggingBlockId(blockId);
-    setHoveredBlockId(null);
-    setToolbarPos(null);
-  }, []);
+    setDraggingBlockType(location?.blockType ?? null);
+    setDraggingParentId(parentId);
+    dropTargetRef.current = null;
+    setDropTarget(null);
+  }, [clearHideToolbarTimer, editor]);
 
   const handleBlockDragEnd = useCallback(() => {
+    clearHideToolbarTimer();
+    draggingBlockIdRef.current = null;
+    draggingBlockTypeRef.current = null;
+    draggingParentIdRef.current = null;
+    dropTargetRef.current = null;
     setDraggingBlockId(null);
-    setDropIndex(null);
-  }, []);
+    setDraggingBlockType(null);
+    setDraggingParentId(null);
+    setDropTarget(null);
+  }, [clearHideToolbarTimer]);
 
   const handleDragOver = useCallback(
     (e: React.DragEvent<HTMLDivElement>) => {
-      if (!draggingBlockId || !containerRef.current) return;
-      e.preventDefault();
-      e.dataTransfer.dropEffect = "move";
-      const idx = getDropIndex(containerRef.current, e.clientY);
-      setDropIndex(idx);
-    },
-    [draggingBlockId],
-  );
+    const activeDragBlockId = draggingBlockIdRef.current ?? draggingBlockId;
+    if (!activeDragBlockId || !containerRef.current) return;
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "move";
+    const activeDragBlockType = draggingBlockTypeRef.current ?? draggingBlockType;
+    const blocks = editor?.getViewState().blocks ?? [];
+    const nextTarget =
+      activeDragBlockType && LIST_ITEM_TYPES.has(activeDragBlockType)
+        ? resolveListRowDropTarget(
+          containerRef.current,
+          blocks,
+          activeDragBlockType,
+          e.clientX,
+          e.clientY,
+        )
+        : (() => {
+          const parentId = draggingParentIdRef.current ?? draggingParentId;
+          const idx = getDropIndexForParent(containerRef.current!, parentId, e.clientY);
+          return { parentId, index: idx };
+        })();
+    const prevTarget = dropTargetRef.current;
+    if (
+      prevTarget?.parentId !== nextTarget.parentId ||
+      prevTarget?.index !== nextTarget.index
+    ) {
+      dropTargetRef.current = nextTarget;
+      setDropTarget(nextTarget);
+    }
+  },
+  [draggingBlockId, draggingBlockType, draggingParentId, editor],
+);
 
   const handleDrop = useCallback(
     (e: React.DragEvent<HTMLDivElement>) => {
       e.preventDefault();
-      const blockId = e.dataTransfer.getData("text/gotipe-block-id");
-      if (!blockId || !editor) return;
-
-      const blocks = editor.getViewState().blocks;
-      const currentIndex = blocks.findIndex((b) => b.id === blockId);
-      if (currentIndex === -1) return;
-
-      const targetIdx = containerRef.current
-        ? getDropIndex(containerRef.current, e.clientY)
-        : blocks.length;
-
-      const adjustedTarget =
-        targetIdx > currentIndex ? targetIdx - 1 : targetIdx;
-
-      if (adjustedTarget !== currentIndex) {
-        editor.chain().moveBlock(blockId, adjustedTarget).run();
+      const blockId =
+        e.dataTransfer.getData("text/gotipe-block-id") ||
+        draggingBlockIdRef.current ||
+        draggingBlockId;
+      if (!blockId || !editor) {
+        draggingBlockIdRef.current = null;
+        draggingBlockTypeRef.current = null;
+        draggingParentIdRef.current = null;
+        dropTargetRef.current = null;
+        setDraggingBlockId(null);
+        setDraggingBlockType(null);
+        setDraggingParentId(null);
+        setDropTarget(null);
+        return;
       }
 
+      const blocks = editor.getViewState().blocks;
+      const currentLocation = findBlockLocation(blocks, blockId);
+      if (!currentLocation) {
+        draggingBlockIdRef.current = null;
+        draggingBlockTypeRef.current = null;
+        draggingParentIdRef.current = null;
+        dropTargetRef.current = null;
+        setDraggingBlockId(null);
+        setDraggingBlockType(null);
+        setDraggingParentId(null);
+        setDropTarget(null);
+        return;
+      }
+
+      const fallbackParentId = draggingParentIdRef.current ?? draggingParentId;
+      const fallbackIndex =
+        containerRef.current
+          ? getDropIndexForParent(containerRef.current, fallbackParentId, e.clientY)
+          : currentLocation.index;
+      const target = dropTarget ?? { parentId: fallbackParentId, index: fallbackIndex };
+      const targetParentId = target.parentId;
+
+      let adjustedTarget = target.index;
+      if (
+        targetParentId === currentLocation.parentId &&
+        adjustedTarget > currentLocation.index
+      ) {
+        adjustedTarget -= 1;
+      }
+
+      const locationChanged =
+        targetParentId !== currentLocation.parentId ||
+        adjustedTarget !== currentLocation.index;
+
+      if (locationChanged) {
+        const draggingType = draggingBlockTypeRef.current ?? draggingBlockType ?? currentLocation.blockType;
+
+        if (
+          LIST_ITEM_TYPES.has(draggingType) &&
+          targetParentId === null
+        ) {
+          const sourceParentId = currentLocation.parentId;
+          const sourceParentType = currentLocation.parentType;
+          const listContainerType = inferListContainerTypeForItem(draggingType, sourceParentType);
+          const newListId = crypto.randomUUID();
+          editor.dispatch({
+            steps: [
+              {
+                type: "insertBlock",
+                parentId: null,
+                index: adjustedTarget,
+                block: {
+                  id: newListId,
+                  type: listContainerType,
+                  attrs: {},
+                  content: null,
+                  children: [],
+                },
+              },
+              {
+                type: "moveBlock",
+                blockId,
+                newParentId: newListId,
+                newIndex: 0,
+              },
+            ],
+          });
+
+          if (sourceParentId) {
+            const nextState = editor.getViewState();
+            const sourceParent = findBlockById(nextState.blocks, sourceParentId);
+            if (
+              sourceParent &&
+              LIST_CONTAINER_TYPES.has(sourceParent.type) &&
+              sourceParent.children.length === 0
+            ) {
+              editor.dispatch({
+                steps: [{ type: "deleteBlock", blockId: sourceParentId }],
+              });
+            }
+          }
+        } else {
+          editor.dispatch({
+            steps: [
+              {
+                type: "moveBlock",
+                blockId,
+                newParentId: targetParentId,
+                newIndex: adjustedTarget,
+              },
+            ],
+          });
+        }
+      }
+
+      draggingBlockIdRef.current = null;
+      draggingBlockTypeRef.current = null;
+      draggingParentIdRef.current = null;
+      dropTargetRef.current = null;
       setDraggingBlockId(null);
-      setDropIndex(null);
+      setDraggingBlockType(null);
+      setDraggingParentId(null);
+      setDropTarget(null);
     },
-    [editor],
+    [draggingBlockId, draggingBlockType, draggingParentId, dropTarget, editor],
   );
 
   const handleDragLeave = useCallback(
     (e: React.DragEvent<HTMLDivElement>) => {
       if (!containerRef.current?.contains(e.relatedTarget as Node)) {
-        setDropIndex(null);
+        dropTargetRef.current = null;
+        setDropTarget(null);
       }
     },
     [],
@@ -295,9 +738,13 @@ export function BlockEditor({
   if (!editor) return null;
 
   const dropIndicatorY =
-    dropIndex !== null && containerRef.current
-      ? getDropIndicatorY(containerRef.current, dropIndex)
+    dropTarget && containerRef.current
+      ? getDropIndicatorYForParent(containerRef.current, dropTarget.parentId, dropTarget.index)
       : null;
+  const dropIndicatorInsets =
+    dropTarget && containerRef.current
+      ? getDropIndicatorHorizontalInsets(containerRef.current, dropTarget.parentId)
+      : { left: 0, right: 0 };
 
   const editorClasses = [
     "gotipe-block-editor",
@@ -329,7 +776,7 @@ export function BlockEditor({
       )}
 
       {/* Floating block toolbar — positioned in the left padding gutter */}
-      {showBlockToolbar && hoveredBlockId && toolbarPos && (
+      {showBlockToolbar && hoveredToolbarTarget && toolbarPos && (
         <div
           className="gotipe-block-toolbar-wrapper"
           style={{
@@ -342,12 +789,29 @@ export function BlockEditor({
             justifyContent: "center",
             zIndex: 20,
           }}
+          onMouseEnter={clearHideToolbarTimer}
+          onMouseLeave={(e) => {
+            const related = e.relatedTarget as HTMLElement | null;
+            if (
+              related &&
+              (related.closest?.(".gotipe-block-toolbar") ||
+                related.closest?.(".gotipe-block-toolbar-wrapper") ||
+                related.closest?.(".gotipe-block-context-menu"))
+            ) {
+              clearHideToolbarTimer();
+              return;
+            }
+            scheduleHideToolbar();
+          }}
         >
           <BlockToolbar
             editor={editor}
-            blockId={hoveredBlockId}
+            blockId={hoveredToolbarTarget.actionBlockId}
+            addBlockId={hoveredToolbarTarget.addBlockId}
+            dragBlockId={hoveredToolbarTarget.dragBlockId}
             onDragStart={handleBlockDragStart}
             onDragEnd={handleBlockDragEnd}
+            openSlashMenuOnAdd={showSlashMenu}
           />
         </div>
       )}
@@ -356,7 +820,11 @@ export function BlockEditor({
       {draggingBlockId && dropIndicatorY !== null && (
         <div
           className="gotipe-drop-indicator"
-          style={{ top: dropIndicatorY }}
+          style={{
+            top: dropIndicatorY,
+            left: dropIndicatorInsets.left,
+            right: dropIndicatorInsets.right,
+          }}
         />
       )}
 

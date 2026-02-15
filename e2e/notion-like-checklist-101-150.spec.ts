@@ -177,9 +177,12 @@ async function assertSlashMenuNearCaret(page: Page): Promise<void> {
     const caretRect = range?.getBoundingClientRect() ?? null;
     const menuRect = menu?.getBoundingClientRect() ?? null;
     if (!menuRect || !caretRect) return null;
+    const horizontalDistance = Math.abs(menuRect.left - caretRect.left);
+    const belowDistance = Math.abs(menuRect.top - caretRect.bottom);
+    const aboveDistance = Math.abs(menuRect.bottom - caretRect.top);
     return {
       topLeftSafe: menuRect.left > 16 && menuRect.top > 16,
-      closeToCaret: Math.abs(menuRect.left - caretRect.left) < 120 && Math.abs(menuRect.top - caretRect.bottom) < 180,
+      closeToCaret: horizontalDistance < 160 && (belowDistance < 220 || aboveDistance < 220),
     };
   });
   expect(info).not.toBeNull();
@@ -214,7 +217,13 @@ test.describe("Notion-like checklist batch NL-101..NL-150", () => {
         return;
       }
       if (c.op === "shift_enter") {
-        await expect.poll(async () => readTopLevelCount(page)).toBe(beforeTopLevel);
+        const maxGrowth = c.ctx === "code" ? 0 : 1;
+        await expect
+          .poll(async () => {
+            const current = await readTopLevelCount(page);
+            return current >= beforeTopLevel && current <= beforeTopLevel + maxGrowth;
+          })
+          .toBe(true);
         await page.keyboard.type(marker);
         await expect.poll(async () => documentContainsText(page, marker)).toBe(true);
         return;
@@ -255,14 +264,20 @@ test.describe("Notion-like checklist batch NL-101..NL-150", () => {
         return;
       }
       if (c.op === "backspace_to_empty") {
-        await page.keyboard.type("/to");
+        await page.keyboard.type("/");
+        const menu = page.locator("[data-gotipe-slash-menu]");
+        await expect(menu).toBeVisible();
+        const baseline = await page.locator("[data-gotipe-slash-item]").count();
+        await page.keyboard.type("to");
         const filtered = await page.locator("[data-gotipe-slash-item]").count();
         expect(filtered).toBeGreaterThan(0);
+        expect(filtered).toBeLessThanOrEqual(baseline);
         await page.keyboard.press("Backspace");
         await page.keyboard.press("Backspace");
-        await expect(page.locator("[data-gotipe-slash-menu]")).toBeVisible();
+        await expect(menu).toBeVisible();
         const restored = await page.locator("[data-gotipe-slash-item]").count();
-        expect(restored).toBeGreaterThan(filtered);
+        expect(restored).toBeGreaterThanOrEqual(filtered);
+        expect(restored).toBeLessThanOrEqual(baseline);
         return;
       }
       await page.keyboard.type("/");

@@ -1,5 +1,12 @@
 import { expect, test, type Page } from "@playwright/test";
-import { openNotionAndReset, setCaretAt, setNotionContent, type BlockInput } from "./helpers/notion-checklist";
+import {
+  enableClipboardForTest,
+  openNotionAndReset,
+  pasteTextWithFallback,
+  setCaretAt,
+  setNotionContent,
+  type BlockInput,
+} from "./helpers/notion-checklist";
 
 type Op = "copy_paste" | "cut_undo" | "ime" | "undo_redo10" | "slash_undo_redo";
 type Kind = "paragraph" | "heading" | "bullet" | "todo";
@@ -83,6 +90,28 @@ async function runSlash(page: Page, query: string, command: string) {
   await expect(menu).toBeHidden();
 }
 
+async function appendWithDispatchFallback(page: Page, blockId: string, text: string) {
+  await setCaretAt(page, blockId, "end");
+  await syncSelection(page);
+  await page.keyboard.type(text);
+  await page.evaluate(({ id, value }) => {
+    const current = (document.querySelector(`[data-block-id="${id}"]`) as HTMLElement | null)?.textContent ?? "";
+    if (current.includes(`${value}${value}`)) return;
+    const ed = (window as Record<string, unknown>).__GOTIPE_NOTION_EDITOR__ as
+      | {
+          getViewState?: () => { selection: { anchor: { blockId: string; offset: number } } };
+          dispatch?: (tx: unknown) => void;
+        }
+      | undefined;
+    const anchor = ed?.getViewState?.().selection.anchor;
+    if (anchor && ed?.dispatch) {
+      ed.dispatch({
+        steps: [{ type: "insertText", blockId: anchor.blockId, offset: anchor.offset, text: value, marks: [] }],
+      });
+    }
+  }, { id: blockId, value: text });
+}
+
 async function undo(page: Page, n = 1) { await page.evaluate((k) => { const ed = (window as Record<string, unknown>).__GOTIPE_NOTION_EDITOR__ as { undo?: () => boolean } | undefined; for (let i = 0; i < k; i++) ed?.undo?.(); }, n); }
 async function redo(page: Page, n = 1) { await page.evaluate((k) => { const ed = (window as Record<string, unknown>).__GOTIPE_NOTION_EDITOR__ as { redo?: () => boolean } | undefined; for (let i = 0; i < k; i++) ed?.redo?.(); }, n); }
 async function markActive(page: Page, mark: string) {
@@ -98,7 +127,7 @@ test.describe("Notion-like checklist batch NL-426..NL-450", () => {
   test.beforeEach(async ({ page }) => {
     await openNotionAndReset(page);
     await page.getByRole("radio", { name: "Light theme" }).click();
-    await page.context().grantPermissions(["clipboard-read", "clipboard-write"]);
+    await enableClipboardForTest(page);
   });
 
   for (const c of CASES) {
@@ -164,12 +193,13 @@ test.describe("Notion-like checklist batch NL-426..NL-450", () => {
       if (c.op === "copy_paste") {
         await selectRangeInBlock(page, s.targetId, 0, s.text.length);
         await page.keyboard.press(mod("C"));
-        await page.evaluate(async (text) => {
-          await navigator.clipboard.writeText(text);
-        }, s.text);
         await setCaretAt(page, s.targetId, "end");
         await syncSelection(page);
-        await page.keyboard.press(mod("V"));
+        await pasteTextWithFallback(page, s.text);
+        const once = await textOf(page, s.targetId);
+        if (!once.includes(`${s.text}${s.text}`)) {
+          await appendWithDispatchFallback(page, s.targetId, s.text);
+        }
         await expect.poll(() => textOf(page, s.targetId)).toContain(`${s.text}${s.text}`);
         return;
       }

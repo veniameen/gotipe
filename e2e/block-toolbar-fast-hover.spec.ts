@@ -94,36 +94,31 @@ async function fastHoverBlock(page: Page, blockId: string): Promise<void> {
 async function expectToolbarOnBlock(page: Page, blockId: string): Promise<void> {
   const toolbar = page.locator(".gotipe-block-toolbar-wrapper");
   await expect(toolbar).toBeVisible();
-  await expect(toolbar.locator('[aria-label="Add block below"]')).toBeVisible();
+  await expect(toolbar.locator('[aria-label="Click to add below. Option-click to add a block above"]')).toBeVisible();
   await expect(toolbar.locator("[data-gotipe-drag-handle]")).toBeVisible();
 
   await expect
     .poll(async () =>
       page.evaluate((id) => {
         const block = document.querySelector(`[data-gotipe-content] > [data-block-id="${id}"]`) as HTMLElement | null;
+        const content = document.querySelector("[data-gotipe-content]") as HTMLElement | null;
+        const topLevel = Array.from(
+          document.querySelectorAll("[data-gotipe-content] > [data-block-id]"),
+        ) as HTMLElement[];
         const wrapper = document.querySelector(".gotipe-block-toolbar-wrapper") as HTMLElement | null;
-        if (!block || !wrapper) return "missing";
-
-        const getTextAnchorLeft = (blockEl: HTMLElement): number => {
-          const walker = document.createTreeWalker(blockEl, NodeFilter.SHOW_TEXT);
-          let n: Node | null;
-          while ((n = walker.nextNode())) {
-            const text = n.textContent ?? "";
-            if (!text.trim()) continue;
-            const r = document.createRange();
-            r.setStart(n, 0);
-            r.setEnd(n, Math.min(1, text.length));
-            const rr = r.getBoundingClientRect();
-            if (rr.width > 0 || rr.height > 0) return rr.left;
-          }
-          return blockEl.getBoundingClientRect().left;
-        };
+        if (!block || !wrapper || !content) return "missing";
 
         const br = block.getBoundingClientRect();
+        const candidateLefts = topLevel
+          .filter((el) => (el.getAttribute("data-block-type") ?? "") !== "divider")
+          .map((el) => el.getBoundingClientRect().left);
+        const columnLeft = candidateLefts.length > 0
+          ? Math.min(...candidateLefts)
+          : content.getBoundingClientRect().left;
         const wr = wrapper.getBoundingClientRect();
-        const textLeft = getTextAnchorLeft(block);
         const topOk = Math.abs(wr.top - br.top) < 24;
-        const leftOk = wr.right <= textLeft + 24 && wr.right >= textLeft - 72;
+        const expectedLeft = Math.round(columnLeft - 45);
+        const leftOk = Math.abs(Math.round(wr.left) - expectedLeft) <= 2;
         return `${topOk}|${leftOk}`;
       }, blockId),
     )
@@ -138,6 +133,20 @@ async function readTopLevelSnapshot(page: Page): Promise<{ ids: string[]; types:
       types: blocks.map((b) => b.getAttribute("data-block-type") ?? ""),
     };
   });
+}
+
+async function readListChildSnapshot(page: Page, listId: string): Promise<{ ids: string[]; types: string[] }> {
+  return page.evaluate((id) => {
+    const list = document.querySelector(`[data-gotipe-content] > [data-block-id="${id}"]`) as HTMLElement | null;
+    if (!list) return { ids: [], types: [] };
+    const rows = Array.from(list.children).filter(
+      (node): node is HTMLElement => node instanceof HTMLElement && node.hasAttribute("data-block-id"),
+    );
+    return {
+      ids: rows.map((row) => row.getAttribute("data-block-id") ?? ""),
+      types: rows.map((row) => row.getAttribute("data-block-type") ?? ""),
+    };
+  }, listId);
 }
 
 test.describe("Block toolbar fast-hover reliability", () => {
@@ -159,21 +168,37 @@ test.describe("Block toolbar fast-hover reliability", () => {
     test(`plus button works after fast hover on ${type}`, async ({ page }) => {
       const target = await getTargetByType(page, type);
       const before = await readTopLevelSnapshot(page);
+      const beforeList = type === "bulletList" || type === "todoList"
+        ? await readListChildSnapshot(page, target.id)
+        : null;
       const index = before.ids.indexOf(target.id);
       expect(index).toBeGreaterThanOrEqual(0);
 
       await fastHoverBlock(page, target.id);
       await expectToolbarOnBlock(page, target.id);
 
-      await page.locator('[aria-label="Add block below"]').click();
+      await page.locator('[aria-label="Click to add below. Option-click to add a block above"]').click();
 
-      await expect
-        .poll(async () => (await readTopLevelSnapshot(page)).ids.length)
-        .toBe(before.ids.length + 1);
+      if (type === "bulletList" || type === "todoList") {
+        await expect
+          .poll(async () => (await readTopLevelSnapshot(page)).ids.length)
+          .toBe(before.ids.length);
+        await expect
+          .poll(async () => (await readListChildSnapshot(page, target.id)).ids.length)
+          .toBe((beforeList?.ids.length ?? 0) + 1);
 
-      const after = await readTopLevelSnapshot(page);
-      expect(after.ids[index]).toBe(target.id);
-      expect(after.types[index + 1]).toBe("paragraph");
+        const listAfter = await readListChildSnapshot(page, target.id);
+        const expectedChildType = type === "todoList" ? "todoItem" : "listItem";
+        expect(listAfter.types.every((childType) => childType === expectedChildType)).toBe(true);
+      } else {
+        await expect
+          .poll(async () => (await readTopLevelSnapshot(page)).ids.length)
+          .toBe(before.ids.length + 1);
+
+        const after = await readTopLevelSnapshot(page);
+        expect(after.ids[index]).toBe(target.id);
+        expect(after.types[index + 1]).toBe("paragraph");
+      }
     });
   }
 
@@ -245,6 +270,7 @@ test.describe("Block toolbar fast-hover reliability", () => {
 
     const target = await getTargetByType(page, "orderedList");
     const before = await readTopLevelSnapshot(page);
+    const beforeRows = await readListChildSnapshot(page, target.id);
     const idx = before.ids.indexOf(target.id);
     expect(idx).toBeGreaterThanOrEqual(0);
 
@@ -256,11 +282,13 @@ test.describe("Block toolbar fast-hover reliability", () => {
     await page.keyboard.press("Escape");
     await expect(page.locator("[data-gotipe-context-menu]")).not.toBeVisible();
 
-    await page.locator('[aria-label="Add block below"]').click();
-    await expect.poll(async () => (await readTopLevelSnapshot(page)).ids.length).toBe(before.ids.length + 1);
+    await page.locator('[aria-label="Click to add below. Option-click to add a block above"]').click();
+    await expect.poll(async () => (await readTopLevelSnapshot(page)).ids.length).toBe(before.ids.length);
+    await expect.poll(async () => (await readListChildSnapshot(page, target.id)).ids.length).toBe(beforeRows.ids.length + 1);
 
     const after = await readTopLevelSnapshot(page);
     expect(after.ids[idx]).toBe(target.id);
-    expect(after.types[idx + 1]).toBe("paragraph");
+    const rowsAfter = await readListChildSnapshot(page, target.id);
+    expect(rowsAfter.types.every((rowType) => rowType === "listItem")).toBe(true);
   });
 });

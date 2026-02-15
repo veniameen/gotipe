@@ -183,7 +183,7 @@ async function openSlashMenuOnFreshLine(page: Page) {
 }
 
 async function placeCaretAtStartOfBlockByMarker(page: Page, textMarker: string) {
-  await page.evaluate((needle) => {
+  const target = await page.evaluate((needle) => {
     const editor = document.querySelector("[data-gotipe-content]") as HTMLElement | null;
     const blocks = Array.from(document.querySelectorAll("[data-block-id]")) as HTMLElement[];
     const target = blocks.find((el) => {
@@ -195,10 +195,28 @@ async function placeCaretAtStartOfBlockByMarker(page: Page, textMarker: string) 
       });
       return !childHas;
     });
-    if (!target || !editor) return;
+    if (!target || !editor) return null;
+    const blockId = target.getAttribute("data-block-id");
+    const goTipe = (window as Record<string, unknown>).__GOTIPE_NOTION_EDITOR__ as
+      | {
+          setSelection?: (selection: {
+            anchor: { blockId: string; offset: number };
+            head: { blockId: string; offset: number };
+          }) => void;
+          focus?: () => void;
+        }
+      | undefined;
+    if (goTipe?.setSelection && blockId) {
+      goTipe.setSelection({
+        anchor: { blockId, offset: 0 },
+        head: { blockId, offset: 0 },
+      });
+      goTipe.focus?.();
+      return { blockId };
+    }
 
     const sel = window.getSelection();
-    if (!sel) return;
+    if (!sel) return null;
 
     // Focus first, then set the range. Some browsers collapse selection to end on focus.
     editor.focus();
@@ -214,20 +232,34 @@ async function placeCaretAtStartOfBlockByMarker(page: Page, textMarker: string) 
     range.collapse(true);
     sel.removeAllRanges();
     sel.addRange(range);
+    return { blockId };
   }, textMarker);
+  expect(target).not.toBeNull();
 
   await expect
-    .poll(async () =>
-      page.evaluate((needle) => {
-        const sel = window.getSelection();
-        const anchorEl =
-          sel?.anchorNode instanceof Element ? sel.anchorNode : sel?.anchorNode?.parentElement;
-        const block = anchorEl?.closest("[data-block-id]") as HTMLElement | null;
-        if (!block) return false;
-        const isLeafForMarker = (block.textContent ?? "").includes(needle);
-        return isLeafForMarker && (sel?.anchorOffset ?? -1) === 0;
-      }, textMarker),
-    )
+    .poll(async () => {
+      return page.evaluate(({ blockId }) => {
+        const goTipe = (window as Record<string, unknown>).__GOTIPE_NOTION_EDITOR__ as
+          | {
+              getViewState?: () => {
+                selection: {
+                  type: string;
+                  anchor: { blockId: string; offset: number };
+                  head: { blockId: string; offset: number };
+                };
+              };
+            }
+          | undefined;
+        const sel = goTipe?.getViewState?.().selection;
+        if (!sel || sel.type !== "text") return false;
+        return (
+          sel.anchor.blockId === blockId &&
+          sel.head.blockId === blockId &&
+          sel.anchor.offset === 0 &&
+          sel.head.offset === 0
+        );
+      }, target as { blockId: string | null });
+    })
     .toBe(true);
 }
 
@@ -238,27 +270,54 @@ async function placeCaretInTopLevelListItem(
   index = 0,
   offsetMode: "start" | "end" = "end",
 ) {
-  await page.evaluate(({ listType, itemType, index, offsetMode }) => {
+  const target = await page.evaluate(({ listType, itemType, index, offsetMode }) => {
     const selector = `[data-gotipe-content] > [data-block-type="${listType}"] > [data-block-type="${itemType}"]`;
     const nodes = Array.from(document.querySelectorAll(selector)) as HTMLElement[];
-    const target = nodes[index];
-    if (!target) return;
+    const targetNode = nodes[index];
+    if (!targetNode) return null;
+
+    const blockId = targetNode.getAttribute("data-block-id");
+    const walkerForLen = document.createTreeWalker(targetNode, NodeFilter.SHOW_TEXT);
+    let textLen = 0;
+    let textNode: Node | null;
+    while ((textNode = walkerForLen.nextNode())) {
+      textLen += (textNode.textContent ?? "").length;
+    }
+    const targetOffset = offsetMode === "start" ? 0 : textLen;
+
+    const editor = (window as Record<string, unknown>).__GOTIPE_NOTION_EDITOR__ as
+      | {
+          setSelection?: (selection: {
+            anchor: { blockId: string; offset: number };
+            head: { blockId: string; offset: number };
+          }) => void;
+          focus?: () => void;
+        }
+      | undefined;
+    if (editor?.setSelection && blockId) {
+      editor.setSelection({
+        anchor: { blockId, offset: targetOffset },
+        head: { blockId, offset: targetOffset },
+      });
+      editor.focus?.();
+      return { blockId, offset: targetOffset };
+    }
 
     const sel = window.getSelection();
-    if (!sel) return;
+    if (!sel) return null;
 
-    const walker = document.createTreeWalker(target, NodeFilter.SHOW_TEXT);
+    const walker = document.createTreeWalker(targetNode, NodeFilter.SHOW_TEXT);
     const firstText = walker.nextNode();
     const range = document.createRange();
     if (firstText) {
       const len = (firstText.textContent ?? "").length;
       range.setStart(firstText, offsetMode === "start" ? 0 : len);
     } else {
-      const contentHost = target.querySelector("[data-gotipe-todo-content]");
+      const contentHost = targetNode.querySelector("[data-gotipe-todo-content]");
       if (contentHost) {
         range.setStart(contentHost, 0);
       } else {
-        range.setStart(target, 0);
+        range.setStart(targetNode, 0);
       }
     }
     range.collapse(true);
@@ -266,8 +325,31 @@ async function placeCaretInTopLevelListItem(
     sel.removeAllRanges();
     sel.addRange(range);
     (document.querySelector("[data-gotipe-content]") as HTMLElement | null)?.focus();
+    return { blockId, offset: targetOffset };
   }, { listType, itemType, index, offsetMode });
-  await page.waitForTimeout(20);
+  expect(target).not.toBeNull();
+  await expect
+    .poll(async () => {
+      return page.evaluate(({ blockId, offset }) => {
+        const editor = (window as Record<string, unknown>).__GOTIPE_NOTION_EDITOR__ as
+          | {
+              getViewState?: () => {
+                selection: {
+                  type: string;
+                  anchor: { blockId: string; offset: number };
+                  head: { blockId: string; offset: number };
+                };
+              };
+            }
+          | undefined;
+        const sel = editor?.getViewState?.().selection;
+        if (!sel || sel.type !== "text") return false;
+        if (sel.anchor.blockId !== blockId || sel.head.blockId !== blockId) return false;
+        if (offset === 0) return sel.anchor.offset === 0 && sel.head.offset === 0;
+        return sel.anchor.offset >= offset && sel.head.offset >= offset;
+      }, target as { blockId: string | null; offset: number });
+    })
+    .toBe(true);
 }
 
 async function getBlockContextByMarker(page: Page, textMarker: string): Promise<BlockContext | null> {
@@ -1037,7 +1119,7 @@ test.describe("Notion-like matrix regressions", () => {
 
     const toolbar = page.locator(".gotipe-block-toolbar-wrapper");
     await expect(toolbar).toBeVisible();
-    await expect(toolbar.locator('[aria-label="Add block below"]')).toBeVisible();
+    await expect(toolbar.locator('[aria-label="Click to add below. Option-click to add a block above"]')).toBeVisible();
     await expect(toolbar.locator("[data-gotipe-drag-handle]")).toBeVisible();
 
     const metrics = await page.evaluate(() => {

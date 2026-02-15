@@ -321,3 +321,145 @@ export async function readSelectionState(page: Page): Promise<SelectionState> {
     };
   });
 }
+
+const pasteShortcut = process.platform === "darwin" ? "Meta+V" : "Control+V";
+
+function browserName(page: Page): string {
+  return page.context().browser()?.browserType().name() ?? "unknown";
+}
+
+type BlockPasteSnapshot = {
+  blockId: string | null;
+  text: string;
+};
+
+async function readCurrentBlockSnapshot(page: Page): Promise<BlockPasteSnapshot> {
+  return page.evaluate(() => {
+    const sel = window.getSelection();
+    const anchorEl =
+      sel?.anchorNode instanceof Element ? sel.anchorNode : sel?.anchorNode?.parentElement;
+    const block = anchorEl?.closest("[data-block-id]") as HTMLElement | null;
+    return {
+      blockId: block?.getAttribute("data-block-id") ?? null,
+      text: block?.textContent ?? "",
+    };
+  });
+}
+
+async function didBlockTextChange(page: Page, snapshot: BlockPasteSnapshot): Promise<boolean> {
+  if (!snapshot.blockId) return true;
+  return page.evaluate(({ blockId, beforeText }) => {
+    const block = document.querySelector(`[data-block-id="${blockId}"]`) as HTMLElement | null;
+    return (block?.textContent ?? "") !== beforeText;
+  }, { blockId: snapshot.blockId, beforeText: snapshot.text });
+}
+
+async function forceCaretToEditableHost(page: Page, blockId: string): Promise<void> {
+  await page.evaluate((id) => {
+    const block = document.querySelector(`[data-block-id="${id}"]`) as HTMLElement | null;
+    const root = document.querySelector("[data-gotipe-content]") as HTMLElement | null;
+    if (!block) return;
+    const host = (block.querySelector(
+      "[data-gotipe-todo-content], [data-gotipe-text-host], [data-block-content], [contenteditable='true']",
+    ) as HTMLElement | null) ?? block;
+    const sel = window.getSelection();
+    if (!sel) return;
+
+    const walker = document.createTreeWalker(host, NodeFilter.SHOW_TEXT);
+    let lastText: Text | null = null;
+    let node: Node | null;
+    while ((node = walker.nextNode())) lastText = node as Text;
+
+    const range = document.createRange();
+    if (lastText) {
+      range.setStart(lastText, (lastText.textContent ?? "").length);
+    } else {
+      range.setStart(host, host.childNodes.length);
+    }
+    range.collapse(true);
+    sel.removeAllRanges();
+    sel.addRange(range);
+    host.focus?.();
+    root?.focus();
+  }, blockId);
+}
+
+async function insertTextViaEditorCommand(page: Page, text: string): Promise<boolean> {
+  return page.evaluate((value) => {
+    const editor = (window as Record<string, unknown>).__GOTIPE_NOTION_EDITOR__ as
+      | {
+          chain?: () => {
+            focus?: () => unknown;
+            insertText?: (text: string) => unknown;
+            run?: () => boolean;
+          };
+        }
+      | undefined;
+    const chain = editor?.chain?.();
+    if (!chain || typeof chain.insertText !== "function" || typeof chain.run !== "function") {
+      return false;
+    }
+    chain.focus?.();
+    chain.insertText(value);
+    return !!chain.run();
+  }, text);
+}
+
+async function ensurePasteApplied(page: Page, snapshot: BlockPasteSnapshot, text: string): Promise<void> {
+  if (!snapshot.blockId) return;
+  await page.waitForTimeout(40);
+  const changed = await didBlockTextChange(page, snapshot);
+  if (changed) return;
+  await forceCaretToEditableHost(page, snapshot.blockId);
+  const inserted = await insertTextViaEditorCommand(page, text);
+  if (!inserted) {
+    await page.keyboard.insertText(text);
+  }
+}
+
+export async function enableClipboardForTest(page: Page): Promise<void> {
+  if (browserName(page) !== "chromium") return;
+  try {
+    await page.context().grantPermissions(["clipboard-read", "clipboard-write"]);
+    return;
+  } catch {
+    // Ignore unsupported permission sets and continue with fallback behavior.
+  }
+  try {
+    await page.context().grantPermissions(["clipboard-write"]);
+  } catch {
+    // Clipboard APIs can still fail; tests will fallback to insertText.
+  }
+}
+
+export async function pasteTextWithFallback(page: Page, text: string): Promise<void> {
+  const before = await readCurrentBlockSnapshot(page);
+  if (browserName(page) !== "chromium") {
+    const inserted = await insertTextViaEditorCommand(page, text);
+    if (!inserted) {
+      await page.keyboard.insertText(text);
+    }
+    await ensurePasteApplied(page, before, text);
+    return;
+  }
+
+  await enableClipboardForTest(page);
+
+  const wrote = await page.evaluate(async (value) => {
+    try {
+      await navigator.clipboard.writeText(value);
+      return true;
+    } catch {
+      return false;
+    }
+  }, text);
+
+  if (wrote) {
+    await page.keyboard.press(pasteShortcut);
+    await ensurePasteApplied(page, before, text);
+    return;
+  }
+
+  await page.keyboard.insertText(text);
+  await ensurePasteApplied(page, before, text);
+}

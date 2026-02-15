@@ -201,11 +201,14 @@ function getMarksAt(
 
 /** Check if a block has empty/no text content */
 function isBlockEmpty(block: ViewState["blocks"][0]): boolean {
+  const normalizedLength = (text: string): number =>
+    text.replace(/[\s\u200B-\u200D\uFEFF]/g, "").length;
+
   if (block.content === null) return true;
   if (Array.isArray(block.content)) {
-    return block.content.length === 0 || block.content.every((s) => s.text === "");
+    return block.content.length === 0 || block.content.every((s) => normalizedLength(s.text) === 0);
   }
-  if (typeof block.content === "string") return block.content === "";
+  if (typeof block.content === "string") return normalizedLength(block.content) === 0;
   return true;
 }
 
@@ -271,6 +274,7 @@ function findBlockAndPreviousSibling(
 }
 
 const LIST_CONTAINER_TYPES = new Set(["bulletList", "orderedList", "todoList"]);
+const ENTER_EXITS_TO_PARAGRAPH_TYPES = new Set(["heading", "blockquote", "callout"]);
 
 function findFirstSelectableBlock(
   blocks: ViewState["blocks"],
@@ -964,9 +968,30 @@ export async function createEditor(options: CreateEditorOptions): Promise<GoTipe
         }
 
         const blockId = blockEl.getAttribute("data-block-id")!;
+        const textHost =
+          blockType === "callout"
+            ? (blockEl.querySelector(".gotipe-callout-content") as HTMLElement | null) ?? blockEl
+            : blockEl;
+
+        if (blockType === "callout") {
+          const anchorElement =
+            resolvedNode instanceof Element ? resolvedNode : resolvedNode.parentElement;
+          if (anchorElement && !textHost.contains(anchorElement)) {
+            return { blockId, offset: 0 };
+          }
+          try {
+            const range = document.createRange();
+            range.setStart(textHost, 0);
+            range.setEnd(resolvedNode, resolvedOffset);
+            return { blockId, offset: range.toString().length };
+          } catch {
+            // Fallback to text walker logic below.
+          }
+        }
+
         // Calculate text offset within this block by walking the text nodes
         let textOffset = 0;
-        const walker = document.createTreeWalker(blockEl, NodeFilter.SHOW_TEXT);
+        const walker = document.createTreeWalker(textHost, NodeFilter.SHOW_TEXT);
         let textNode: Node | null;
         while ((textNode = walker.nextNode())) {
           if (textNode === resolvedNode) {
@@ -1005,7 +1030,11 @@ export async function createEditor(options: CreateEditorOptions): Promise<GoTipe
           }
         }
 
-        const walker = document.createTreeWalker(blockEl, NodeFilter.SHOW_TEXT);
+        const textHost =
+          blockType === "callout"
+            ? (blockEl.querySelector(".gotipe-callout-content") as HTMLElement | null) ?? blockEl
+            : blockEl;
+        const walker = document.createTreeWalker(textHost, NodeFilter.SHOW_TEXT);
         let accumulated = 0;
         let textNode: Node | null;
         let lastTextNode: Node | null = null;
@@ -1026,6 +1055,9 @@ export async function createEditor(options: CreateEditorOptions): Promise<GoTipe
           if (blockType === "todoItem") {
             const contentHost = blockEl.querySelector("[data-gotipe-todo-content]");
             if (contentHost) return { node: contentHost, offset: 0 };
+          }
+          if (blockType === "callout" && textHost !== blockEl) {
+            return { node: textHost, offset: 0 };
           }
           return { node: blockEl, offset: 0 };
         }
@@ -1072,20 +1104,39 @@ export async function createEditor(options: CreateEditorOptions): Promise<GoTipe
       const correctDomFromWasmState = () => {
         if (!mountedElement) return;
         const state = this.getViewState();
+        const collectOwnTextNodes = (host: HTMLElement, ownerBlockId: string): Text[] => {
+          const walker = document.createTreeWalker(host, NodeFilter.SHOW_TEXT);
+          const textNodes: Text[] = [];
+          let node: Node | null;
+          while ((node = walker.nextNode())) {
+            const parent = node.parentElement;
+            const owner = parent?.closest("[data-block-id]")?.getAttribute("data-block-id") ?? ownerBlockId;
+            if (owner === ownerBlockId) {
+              textNodes.push(node as Text);
+            }
+          }
+          return textNodes;
+        };
+
         for (const block of state.blocks) {
           if (!Array.isArray(block.content)) continue;
           const blockEl = mountedElement.querySelector(
             `[data-block-id="${block.id}"]`,
           );
           if (!blockEl) continue;
-          const expected = block.content.map((s) => s.text).join("");
-          const actual = blockEl.textContent ?? "";
-          if (actual !== expected) {
-            const walker = document.createTreeWalker(blockEl, NodeFilter.SHOW_TEXT);
-            const textNodes: Text[] = [];
-            let tn: Node | null;
-            while ((tn = walker.nextNode())) textNodes.push(tn as Text);
 
+          const blockType = blockEl.getAttribute("data-block-type");
+          const textHost =
+            blockType === "todoItem"
+              ? (blockEl.querySelector("[data-gotipe-todo-content]") as HTMLElement | null) ?? blockEl
+              : blockType === "callout"
+                ? (blockEl.querySelector(".gotipe-callout-content") as HTMLElement | null) ?? blockEl
+                : blockEl;
+
+          const expected = block.content.map((s) => s.text).join("");
+          const textNodes = collectOwnTextNodes(textHost as HTMLElement, block.id);
+          const actual = textNodes.map((node) => node.nodeValue ?? "").join("");
+          if (actual !== expected) {
             if (textNodes.length === 1 && block.content.length === 1) {
               textNodes[0]!.nodeValue = expected;
             } else if (textNodes.length > 0) {
@@ -1240,11 +1291,16 @@ export async function createEditor(options: CreateEditorOptions): Promise<GoTipe
       // via WASM so we can correct the DOM in the `input` event if the
       // native mutation leaked through.
       let inputHandledByWasm = false;
+      let pendingEnterMode: "plain" | "shift" | null = null;
 
       // --- beforeinput: capture text editing intent ---
       element.addEventListener("beforeinput", (e) => {
         if (options.editable === false) return;
         const inputType = e.inputType;
+        const enterMode = pendingEnterMode;
+        if (inputType === "insertParagraph" || inputType === "insertLineBreak") {
+          pendingEnterMode = null;
+        }
         const resolveSelectionForInput = () => {
           if (!pendingSelectionRestore) {
             const domSelection = readSelectionFromDOM?.();
@@ -1259,10 +1315,20 @@ export async function createEditor(options: CreateEditorOptions): Promise<GoTipe
           return currentSelection;
         };
 
+        let lineBreakActsAsParagraph = false;
+        if (inputType === "insertLineBreak") {
+          const probePos = resolveSelectionForInput();
+          const probeBlock = probePos?.anchor.blockId
+            ? findBlockInTree(this.getViewState().blocks, probePos.anchor.blockId)
+            : null;
+          const isShiftLineBreak = enterMode === "shift";
+          lineBreakActsAsParagraph = !isShiftLineBreak && probeBlock?.type !== "codeBlock";
+        }
+
         if (
           inputType === "insertText" ||
           inputType === "insertCompositionText" ||
-          inputType === "insertLineBreak"
+          (inputType === "insertLineBreak" && !lineBreakActsAsParagraph)
         ) {
           const data = inputType === "insertLineBreak" ? "\n" : e.data;
           if (!data) return;
@@ -1435,13 +1501,15 @@ export async function createEditor(options: CreateEditorOptions): Promise<GoTipe
           return;
         }
 
-        if (inputType === "insertParagraph") {
+        if (inputType === "insertParagraph" || lineBreakActsAsParagraph) {
           e.preventDefault();
           const pos = resolveSelectionForInput();
           if (!pos?.anchor.blockId) return;
 
           const preState = this.getViewState();
           const currentBlock = findBlockInTree(preState.blocks, pos.anchor.blockId);
+          const shouldExitStyleOnEnter =
+            !!currentBlock && ENTER_EXITS_TO_PARAGRAPH_TYPES.has(currentBlock.type);
 
           // In code blocks Enter should insert a newline inside the same block,
           // not split into a second code block.
@@ -1562,8 +1630,17 @@ export async function createEditor(options: CreateEditorOptions): Promise<GoTipe
             this.dispatch({
               steps: [{ type: "splitBlock", blockId: pos.anchor.blockId, offset: pos.anchor.offset }],
             });
-            const state = this.getViewState();
+            let state = this.getViewState();
             const loc = findBlockAndSibling(state.blocks, pos.anchor.blockId);
+            if (loc && shouldExitStyleOnEnter) {
+              const inserted = findBlockInTree(state.blocks, loc.id);
+              if (inserted && inserted.type !== "paragraph") {
+                this.dispatch({
+                  steps: [{ type: "setBlockType", blockId: loc.id, newType: "paragraph", attrs: {} }],
+                });
+                state = this.getViewState();
+              }
+            }
             if (loc) {
               currentSelection = {
                 type: "text",
@@ -1763,6 +1840,35 @@ export async function createEditor(options: CreateEditorOptions): Promise<GoTipe
 
       // Keyboard shortcuts from extensions
       element.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") {
+          pendingEnterMode = e.shiftKey ? "shift" : "plain";
+        }
+
+        const isPasteShortcut =
+          (e.metaKey || e.ctrlKey) &&
+          !e.altKey &&
+          !e.shiftKey &&
+          e.key.toLowerCase() === "v";
+        if (isPasteShortcut) {
+          const selection = document.getSelection();
+          const selectionAnchor = selection?.anchorNode ?? null;
+          const eventTarget = e.target instanceof Node ? e.target : null;
+          const inEditor =
+            (selectionAnchor ? element.contains(selectionAnchor) : false) ||
+            (eventTarget ? element.contains(eventTarget) : false);
+          if (inEditor) {
+            const domSelection = readSelectionFromDOM?.();
+            if (domSelection?.anchor.blockId) {
+              currentSelection = {
+                type: "text",
+                anchor: { ...domSelection.anchor },
+                head: { ...domSelection.head },
+              };
+            }
+            clipboardHandler?.onPasteShortcut();
+          }
+        }
+
         // Some browsers do not dispatch beforeinput(deleteContentBackward)
         // at list-item boundaries. Handle this path on keydown.
         if (

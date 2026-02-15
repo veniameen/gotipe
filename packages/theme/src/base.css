@@ -79,11 +79,11 @@
 
 .gotipe-content ul,
 .gotipe-content ol {
-  padding-left: var(--gt-space-6, 24px);
+  padding-left: calc(var(--gt-space-6, 24px) + 4px);
   margin: var(--gt-space-1, 4px) 0;
 }
 .gotipe-content li {
-  margin: 2px 0;
+  margin: 3px 0;
 }
 
 .gotipe-content blockquote {
@@ -193,10 +193,8 @@
   border-left: 2px solid var(--gt-accent);
 }
 
-/* Nested block indent */
-.gotipe-content [data-block-id] [data-block-id] {
-  padding-left: var(--gt-block-indent, 24px);
-}
+/* Nested indentation is handled by block-specific containers (lists, toggle, columns).
+   Avoid global nested padding so top-level list rows stay aligned with Notion. */
 
 /* Screen reader only */
 .gotipe-sr-only {

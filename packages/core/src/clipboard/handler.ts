@@ -4,53 +4,103 @@ import type { Block, Mark } from "../types/block";
 import type { Step } from "../types/state";
 
 export class ClipboardHandler {
+  private pendingShortcutFallbackTimer: number | null = null;
+  private lastPasteEventTimestamp = 0;
+
   constructor(private editor: GoTipeEditor) {}
 
   onPaste(event: ClipboardEvent): void {
+    this.editor.syncSelectionFromDOM();
+    this.lastPasteEventTimestamp = Date.now();
+    this.clearPendingShortcutFallback();
     event.preventDefault();
 
     const data = event.clipboardData;
-    if (!data) return;
-
-    // Delete selected text before pasting (if any selection exists)
-    this.deleteSelectionIfNeeded();
-
-    // 1. Internal GoTipe JSON (from copy within editor)
-    const internalJson = data.getData("application/x-gotipe");
-    if (internalJson) {
-      try {
-        const payload = JSON.parse(internalJson) as { blocks?: Block[]; spans?: { text: string; marks: Mark[] }[] };
-        if (payload.spans && payload.spans.length > 0) {
-          // Inline content — insert spans into current block
-          this.insertSpans(payload.spans);
-        } else if (payload.blocks && payload.blocks.length > 0) {
-          this.insertBlocks(payload.blocks);
+    if (data) {
+      // 1. Internal GoTipe JSON (from copy within editor)
+      const internalJson = data.getData("application/x-gotipe");
+      if (internalJson) {
+        try {
+          const payload = JSON.parse(internalJson) as { blocks?: Block[]; spans?: { text: string; marks: Mark[] }[] };
+          if (payload.spans && payload.spans.length > 0) {
+            this.deleteSelectionIfNeeded();
+            // Inline content — insert spans into current block
+            this.insertSpans(payload.spans);
+            return;
+          }
+          if (payload.blocks && payload.blocks.length > 0) {
+            this.deleteSelectionIfNeeded();
+            this.insertBlocks(payload.blocks);
+            return;
+          }
+        } catch {
+          // Ignore malformed internal data
         }
-      } catch {
-        // Ignore malformed internal data
       }
-      return;
+
+      // 2. HTML
+      const html = data.getData("text/html");
+      if (html) {
+        const sanitized = sanitizeHtml(html);
+        const blocks = this.parseHtmlToBlocks(sanitized);
+        if (blocks.length > 0) {
+          this.deleteSelectionIfNeeded();
+          this.insertParsedBlocks(blocks);
+          return;
+        }
+      }
+
+      // 3. Plain text (with markdown detection)
+      const plain = data.getData("text/plain");
+      if (plain) {
+        this.deleteSelectionIfNeeded();
+        this.insertPlainText(plain);
+        return;
+      }
     }
 
-    // 2. HTML
-    const html = data.getData("text/html");
-    if (html) {
-      const sanitized = sanitizeHtml(html);
-      const blocks = this.parseHtmlToBlocks(sanitized);
-      if (blocks.length > 0) {
-        this.insertParsedBlocks(blocks);
-      }
-      return;
-    }
+    // Chromium shortcut paste can occasionally dispatch with empty DataTransfer.
+    // Try async clipboard read as a last-resort fallback.
+    this.tryAsyncPlainTextPaste();
+  }
 
-    // 3. Plain text (with markdown detection)
-    const plain = data.getData("text/plain");
-    if (plain) {
-      this.insertPlainText(plain);
-    }
+  onPasteShortcut(): void {
+    if (typeof window === "undefined") return;
+    this.clearPendingShortcutFallback();
+    const shortcutTimestamp = Date.now();
+    this.pendingShortcutFallbackTimer = window.setTimeout(() => {
+      this.pendingShortcutFallbackTimer = null;
+      // Real paste event won the race; do not duplicate insertion.
+      if (this.lastPasteEventTimestamp >= shortcutTimestamp) return;
+      this.tryAsyncPlainTextPaste();
+    }, 24);
+  }
+
+  canReadClipboardText(): boolean {
+    return (
+      typeof navigator !== "undefined" &&
+      !!navigator.clipboard &&
+      typeof navigator.clipboard.readText === "function"
+    );
+  }
+
+  pasteFromSystemClipboard(): void {
+    if (!this.canReadClipboardText()) return;
+    void navigator.clipboard
+      .readText()
+      .then((text) => {
+        if (!text) return;
+        this.editor.syncSelectionFromDOM();
+        this.deleteSelectionIfNeeded();
+        this.insertPlainText(text);
+      })
+      .catch(() => {
+        // Leave as no-op when browser blocks clipboard read.
+      });
   }
 
   onCopy(event: ClipboardEvent): void {
+    this.editor.syncSelectionFromDOM();
     event.preventDefault();
     const data = event.clipboardData;
     if (!data) return;
@@ -88,6 +138,7 @@ export class ClipboardHandler {
   }
 
   onCut(event: ClipboardEvent): void {
+    this.editor.syncSelectionFromDOM();
     this.onCopy(event);
     const state = this.editor.getViewState();
     const sel = state.selection;
@@ -404,6 +455,18 @@ export class ClipboardHandler {
 
       this.editor.dispatch({ steps });
     }
+  }
+
+  private tryAsyncPlainTextPaste(): void {
+    if (!this.canReadClipboardText()) return;
+    this.pasteFromSystemClipboard();
+  }
+
+  private clearPendingShortcutFallback(): void {
+    if (typeof window === "undefined") return;
+    if (this.pendingShortcutFallbackTimer === null) return;
+    window.clearTimeout(this.pendingShortcutFallbackTimer);
+    this.pendingShortcutFallbackTimer = null;
   }
 
   private escapeHtml(text: string): string {

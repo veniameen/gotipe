@@ -122,7 +122,7 @@ test.describe('Accessibility — ARIA attributes', () => {
     await block.hover();
     await expect(page.locator('[data-gotipe-drag-handle]')).toHaveAttribute(
       'aria-label',
-      'Drag to reorder block',
+      'Drag to move, click to open menu',
     );
   });
 
@@ -140,7 +140,7 @@ test.describe('Accessibility — ARIA attributes', () => {
     await page.keyboard.type('Add button');
     const block = page.locator('[data-block-id]').first();
     await block.hover();
-    await expect(page.locator('[aria-label="Add block below"]')).toBeVisible();
+    await expect(page.locator('[aria-label="Click to add below. Option-click to add a block above"]')).toBeVisible();
   });
 
   test('code block language selector has aria-label', async ({ page }) => {

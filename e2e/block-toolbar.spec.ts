@@ -1,5 +1,8 @@
 import { expect, test, type Page } from "@playwright/test";
 
+const ADD_BLOCK_LABEL = "Click to add below. Option-click to add a block above";
+const DRAG_HANDLE_LABEL = "Drag to move, click to open menu";
+
 async function openNotion(page: Page) {
   await page.goto("/#notion");
   await expect(page.locator('[data-gotipe-nav="notion"]')).toHaveClass(/active/);
@@ -43,17 +46,217 @@ test.describe("Block toolbar", () => {
   test("shows drag handle and add button on block hover", async ({ page }) => {
     await hoverFirstTopLevelBlock(page);
     await expect(page.locator("[data-gotipe-drag-handle]")).toBeVisible();
-    await expect(page.locator('[aria-label="Add block below"]')).toBeVisible();
+    await expect(page.locator(`button[aria-label="${ADD_BLOCK_LABEL}"]`)).toBeVisible();
   });
 
-  test("add button inserts new block", async ({ page }) => {
+  test("shows Notion-like tooltips for + and drag handle", async ({ page }) => {
+    await hoverFirstTopLevelBlock(page);
+
+    const addButton = page.locator(`button[aria-label="${ADD_BLOCK_LABEL}"]`);
+    await addButton.hover();
+    const addTooltip = page.locator('[data-gotipe-toolbar-tooltip="add"]');
+    await expect(addTooltip).toBeVisible();
+    await expect(addTooltip).toContainText("Add block below");
+    await expect(addTooltip).toContainText("Option");
+    await expect(addTooltip).toContainText("/");
+
+    await page.locator("[data-gotipe-drag-handle]").hover();
+    const dragTooltip = page.locator('[data-gotipe-toolbar-tooltip="drag"]');
+    await expect(dragTooltip).toBeVisible();
+    await expect(dragTooltip).toContainText("Drag to move");
+    await expect(dragTooltip).toContainText("Click to open menu");
+  });
+
+  test("toolbar controls do not use native title tooltips", async ({ page }) => {
+    await hoverFirstTopLevelBlock(page);
+    const hasNativeTitles = await page.evaluate((label) => {
+      const add = document.querySelector(`button[aria-label="${label}"]`) as HTMLElement | null;
+      const drag = document.querySelector("[data-gotipe-drag-handle]") as HTMLElement | null;
+      return {
+        add: add?.hasAttribute("title") ?? false,
+        drag: drag?.hasAttribute("title") ?? false,
+      };
+    }, ADD_BLOCK_LABEL);
+    expect(hasNativeTitles).toEqual({ add: false, drag: false });
+  });
+
+  test("tooltip overlay stays single and stable while moving between controls", async ({ page }) => {
+    await hoverFirstTopLevelBlock(page);
+    const addButton = page.locator(`button[aria-label="${ADD_BLOCK_LABEL}"]`);
+    const dragButton = page.locator("[data-gotipe-drag-handle]");
+
+    await addButton.hover();
+    await expect(page.locator('[data-gotipe-toolbar-tooltip="add"]')).toBeVisible();
+
+    await dragButton.hover();
+    await expect(page.locator('[data-gotipe-toolbar-tooltip="drag"]')).toBeVisible();
+
+    const tooltipCount = await page.evaluate(
+      () => document.querySelectorAll(".gotipe-block-toolbar-tooltip").length,
+    );
+    expect(tooltipCount).toBe(1);
+  });
+
+  test("add button inserts new block and opens slash menu", async ({ page }) => {
     const blocks = page.locator("[data-gotipe-content] > [data-block-id]");
     const before = await blocks.count();
 
     await hoverFirstTopLevelBlock(page);
-    await page.click('[aria-label="Add block below"]');
+    await page.click(`button[aria-label="${ADD_BLOCK_LABEL}"]`);
 
     await expect(blocks).toHaveCount(before + 1);
+    await expect(page.locator("[data-gotipe-slash-menu]")).toBeVisible();
+  });
+
+  test("plus on bullet row inserts item below same row and opens slash menu", async ({ page }) => {
+    const ok = await page.evaluate(() => {
+      const editor = (window as Record<string, unknown>).__GOTIPE_NOTION_EDITOR__ as
+        | { setContent?: (content: unknown) => void }
+        | undefined;
+      if (!editor?.setContent) return false;
+      editor.setContent({
+        version: 1,
+        blocks: [
+          {
+            id: "list-plus",
+            type: "bulletList",
+            attrs: {},
+            content: null,
+            children: [
+              {
+                id: "li-a-plus",
+                type: "listItem",
+                attrs: {},
+                content: [{ text: "alpha", marks: [] }],
+                children: [],
+              },
+              {
+                id: "li-b-plus",
+                type: "listItem",
+                attrs: {},
+                content: [{ text: "beta", marks: [] }],
+                children: [],
+              },
+            ],
+          },
+          {
+            id: "after-list-plus",
+            type: "paragraph",
+            attrs: {},
+            content: [{ text: "after", marks: [] }],
+            children: [],
+          },
+        ],
+      });
+      return true;
+    });
+    expect(ok).toBe(true);
+
+    await page.locator('[data-block-id="li-a-plus"]').hover();
+    await page.click(`button[aria-label="${ADD_BLOCK_LABEL}"]`);
+    await expect(page.locator("[data-gotipe-slash-menu]")).toBeVisible();
+
+    await expect
+      .poll(() =>
+        page.evaluate(() => {
+          const list = document.querySelector('[data-block-id="list-plus"]') as HTMLElement | null;
+          if (!list) return null;
+          const ids = Array.from(list.children)
+            .filter((node): node is HTMLElement => node instanceof HTMLElement && node.hasAttribute("data-block-id"))
+            .map((node) => node.getAttribute("data-block-id") ?? "");
+          return { ids, size: ids.length };
+        }),
+      )
+      .toEqual({ ids: expect.any(Array), size: 3 });
+
+    const result = await page.evaluate(() => {
+      const editor = (window as Record<string, unknown>).__GOTIPE_NOTION_EDITOR__ as
+        | { getViewState?: () => { selection?: { anchor: { blockId: string; offset: number } } } }
+        | undefined;
+      const list = document.querySelector('[data-block-id="list-plus"]') as HTMLElement | null;
+      if (!list) return null;
+      const ids = Array.from(list.children)
+        .filter((node): node is HTMLElement => node instanceof HTMLElement && node.hasAttribute("data-block-id"))
+        .map((node) => node.getAttribute("data-block-id") ?? "");
+      const insertedId = ids[1] ?? null;
+      const insertedEl = insertedId
+        ? (document.querySelector(`[data-block-id="${insertedId}"]`) as HTMLElement | null)
+        : null;
+      const topLevelIds = Array.from(document.querySelectorAll("[data-gotipe-content] > [data-block-id]"))
+        .map((node) => (node as HTMLElement).getAttribute("data-block-id") ?? "");
+      const selection = editor?.getViewState?.().selection;
+      return {
+        ids,
+        insertedId,
+        insertedType: insertedEl?.getAttribute("data-block-type") ?? null,
+        topLevelIds,
+        selBlockId: selection?.anchor.blockId ?? null,
+        selOffset: selection?.anchor.offset ?? null,
+      };
+    });
+
+    expect(result).not.toBeNull();
+    expect(result!.ids[0]).toBe("li-a-plus");
+    expect(result!.ids[2]).toBe("li-b-plus");
+    expect(result!.insertedId).not.toBe("li-a-plus");
+    expect(result!.insertedId).not.toBe("li-b-plus");
+    expect(result!.insertedType).toBe("listItem");
+    expect(result!.topLevelIds).toEqual(["list-plus", "after-list-plus"]);
+    expect(result!.selBlockId).toBe(result!.insertedId);
+    expect(result!.selOffset).toBe(1);
+  });
+
+  test("option-click plus inserts row above target", async ({ page }) => {
+    const ok = await page.evaluate(() => {
+      const editor = (window as Record<string, unknown>).__GOTIPE_NOTION_EDITOR__ as
+        | { setContent?: (content: unknown) => void }
+        | undefined;
+      if (!editor?.setContent) return false;
+      editor.setContent({
+        version: 1,
+        blocks: [
+          {
+            id: "list-option-plus",
+            type: "bulletList",
+            attrs: {},
+            content: null,
+            children: [
+              {
+                id: "li-a-option",
+                type: "listItem",
+                attrs: {},
+                content: [{ text: "alpha", marks: [] }],
+                children: [],
+              },
+              {
+                id: "li-b-option",
+                type: "listItem",
+                attrs: {},
+                content: [{ text: "beta", marks: [] }],
+                children: [],
+              },
+            ],
+          },
+        ],
+      });
+      return true;
+    });
+    expect(ok).toBe(true);
+
+    await page.locator('[data-block-id="li-b-option"]').hover();
+    await page.click(`button[aria-label="${ADD_BLOCK_LABEL}"]`, { modifiers: ["Alt"] });
+
+    await expect
+      .poll(() =>
+        page.evaluate(() => {
+          const list = document.querySelector('[data-block-id="list-option-plus"]') as HTMLElement | null;
+          if (!list) return [];
+          return Array.from(list.children)
+            .filter((node): node is HTMLElement => node instanceof HTMLElement && node.hasAttribute("data-block-id"))
+            .map((node) => node.getAttribute("data-block-id") ?? "");
+        }),
+      )
+      .toEqual(["li-a-option", expect.any(String), "li-b-option"]);
   });
 
   test("toolbar remains clickable when moving from block text into left gutter", async ({ page }) => {
@@ -74,7 +277,7 @@ test.describe("Block toolbar", () => {
     await page.mouse.move(points!.startX, points!.startY);
     await expect(page.locator(".gotipe-block-toolbar")).toBeVisible();
 
-    const addButton = page.locator('[aria-label="Add block below"]');
+    const addButton = page.locator(`button[aria-label="${ADD_BLOCK_LABEL}"]`);
     const addBox = await addButton.boundingBox();
     expect(addBox).not.toBeNull();
 
@@ -217,6 +420,374 @@ test.describe("Drag and drop", () => {
     await expect(page.locator("[data-gotipe-drag-handle]")).toHaveAttribute("draggable", "true");
   });
 
+  test("bullet list row drag reorders only list items (not whole list block)", async ({ page }) => {
+    const ok = await page.evaluate(() => {
+      const editor = (window as Record<string, unknown>).__GOTIPE_NOTION_EDITOR__ as
+        | { setContent?: (content: unknown) => void }
+        | undefined;
+      if (!editor?.setContent) return false;
+      editor.setContent({
+        version: 1,
+        blocks: [
+          {
+            id: "pre",
+            type: "paragraph",
+            attrs: {},
+            content: [{ text: "pre", marks: [] }],
+            children: [],
+          },
+          {
+            id: "list-root",
+            type: "bulletList",
+            attrs: {},
+            content: null,
+            children: [
+              {
+                id: "li-a",
+                type: "listItem",
+                attrs: {},
+                content: [{ text: "alpha", marks: [] }],
+                children: [],
+              },
+              {
+                id: "li-b",
+                type: "listItem",
+                attrs: {},
+                content: [{ text: "beta", marks: [] }],
+                children: [],
+              },
+            ],
+          },
+          {
+            id: "post",
+            type: "paragraph",
+            attrs: {},
+            content: [{ text: "post", marks: [] }],
+            children: [],
+          },
+        ],
+      });
+      return true;
+    });
+    expect(ok).toBe(true);
+
+    await page.locator('[data-block-id="li-a"]').hover();
+    await expect(page.locator(".gotipe-block-toolbar")).toBeVisible();
+    await expect(page.locator("[data-gotipe-drag-handle]")).toHaveAttribute("data-block-drag", "li-a");
+
+    await page.evaluate(() => {
+      const root = document.querySelector("[data-gotipe-block-editor]") as HTMLElement | null;
+      const handle = document.querySelector('[data-block-drag="li-a"]') as HTMLElement | null;
+      const target = document.querySelector('[data-block-id="li-b"]') as HTMLElement | null;
+      if (!root || !handle || !target) return;
+
+      const data = new DataTransfer();
+      data.setData("text/gotipe-block-id", "li-a");
+      handle.dispatchEvent(new DragEvent("dragstart", { bubbles: true, cancelable: true, dataTransfer: data }));
+
+      const rect = target.getBoundingClientRect();
+      const y = rect.bottom - 2;
+      root.dispatchEvent(
+        new DragEvent("dragover", {
+          bubbles: true,
+          cancelable: true,
+          clientY: y,
+          dataTransfer: data,
+        }),
+      );
+      root.dispatchEvent(
+        new DragEvent("drop", {
+          bubbles: true,
+          cancelable: true,
+          clientY: y,
+          dataTransfer: data,
+        }),
+      );
+      handle.dispatchEvent(new DragEvent("dragend", { bubbles: true, cancelable: true, dataTransfer: data }));
+    });
+
+    await expect
+      .poll(() =>
+        page.evaluate(() => {
+          const list = document.querySelector('[data-block-id="list-root"]') as HTMLElement | null;
+          if (!list) return [];
+          return Array.from(list.children)
+            .filter(
+              (node): node is HTMLElement =>
+                node instanceof HTMLElement && node.hasAttribute("data-block-id"),
+            )
+            .map((node) => node.getAttribute("data-block-id") ?? "");
+        }),
+      )
+      .toEqual(["li-b", "li-a"]);
+
+    await expect
+      .poll(() =>
+        page.evaluate(() =>
+          Array.from(document.querySelectorAll("[data-gotipe-content] > [data-block-id]")).map(
+            (node) => (node as HTMLElement).getAttribute("data-block-id") ?? "",
+          ),
+        ),
+      )
+      .toEqual(["pre", "list-root", "post"]);
+  });
+
+  test("bullet list row drag via real pointer gesture reorders without freeze", async ({ page }) => {
+    const ok = await page.evaluate(() => {
+      const editor = (window as Record<string, unknown>).__GOTIPE_NOTION_EDITOR__ as
+        | { setContent?: (content: unknown) => void }
+        | undefined;
+      if (!editor?.setContent) return false;
+      editor.setContent({
+        version: 1,
+        blocks: [
+          {
+            id: "pre2",
+            type: "paragraph",
+            attrs: {},
+            content: [{ text: "pre2", marks: [] }],
+            children: [],
+          },
+          {
+            id: "list-root-2",
+            type: "bulletList",
+            attrs: {},
+            content: null,
+            children: [
+              {
+                id: "li-a2",
+                type: "listItem",
+                attrs: {},
+                content: [{ text: "alpha2", marks: [] }],
+                children: [],
+              },
+              {
+                id: "li-b2",
+                type: "listItem",
+                attrs: {},
+                content: [{ text: "beta2", marks: [] }],
+                children: [],
+              },
+              {
+                id: "li-c2",
+                type: "listItem",
+                attrs: {},
+                content: [{ text: "gamma2", marks: [] }],
+                children: [],
+              },
+            ],
+          },
+          {
+            id: "post2",
+            type: "paragraph",
+            attrs: {},
+            content: [{ text: "post2", marks: [] }],
+            children: [],
+          },
+        ],
+      });
+      return true;
+    });
+    expect(ok).toBe(true);
+
+    await page.locator('[data-block-id="li-a2"]').hover();
+    await expect(page.locator("[data-gotipe-drag-handle]")).toHaveAttribute("data-block-drag", "li-a2");
+
+    const handleBox = await page.locator("[data-gotipe-drag-handle]").boundingBox();
+    const targetBox = await page.locator('[data-block-id="li-c2"]').boundingBox();
+    expect(handleBox).not.toBeNull();
+    expect(targetBox).not.toBeNull();
+
+    await page.mouse.move(handleBox!.x + handleBox!.width / 2, handleBox!.y + handleBox!.height / 2);
+    await page.mouse.down();
+    await page.mouse.move(targetBox!.x + 24, targetBox!.y + targetBox!.height - 2, { steps: 20 });
+    await page.mouse.up();
+
+    await expect
+      .poll(() =>
+        page.evaluate(() => {
+          const list = document.querySelector('[data-block-id="list-root-2"]') as HTMLElement | null;
+          if (!list) return [];
+          return Array.from(list.children)
+            .filter((node): node is HTMLElement => node instanceof HTMLElement && node.hasAttribute("data-block-id"))
+            .map((node) => node.getAttribute("data-block-id") ?? "");
+        }),
+      )
+      .toEqual(["li-b2", "li-c2", "li-a2"]);
+  });
+
+  test("bullet row can be dragged out of list to any top-level position", async ({ page }) => {
+    const ok = await page.evaluate(() => {
+      const editor = (window as Record<string, unknown>).__GOTIPE_NOTION_EDITOR__ as
+        | { setContent?: (content: unknown) => void }
+        | undefined;
+      if (!editor?.setContent) return false;
+      editor.setContent({
+        version: 1,
+        blocks: [
+          {
+            id: "pre3",
+            type: "paragraph",
+            attrs: {},
+            content: [{ text: "pre3", marks: [] }],
+            children: [],
+          },
+          {
+            id: "list-root-3",
+            type: "bulletList",
+            attrs: {},
+            content: null,
+            children: [
+              {
+                id: "li-a3",
+                type: "listItem",
+                attrs: {},
+                content: [{ text: "alpha3", marks: [] }],
+                children: [],
+              },
+              {
+                id: "li-b3",
+                type: "listItem",
+                attrs: {},
+                content: [{ text: "beta3", marks: [] }],
+                children: [],
+              },
+            ],
+          },
+          {
+            id: "post3",
+            type: "paragraph",
+            attrs: {},
+            content: [{ text: "post3", marks: [] }],
+            children: [],
+          },
+        ],
+      });
+      return true;
+    });
+    expect(ok).toBe(true);
+
+    await page.locator('[data-block-id="li-a3"]').hover();
+    await expect(page.locator("[data-gotipe-drag-handle]")).toHaveAttribute("data-block-drag", "li-a3");
+
+    const handleBox = await page.locator("[data-gotipe-drag-handle]").boundingBox();
+    const postBox = await page.locator('[data-block-id="post3"]').boundingBox();
+    expect(handleBox).not.toBeNull();
+    expect(postBox).not.toBeNull();
+
+    await page.mouse.move(handleBox!.x + handleBox!.width / 2, handleBox!.y + handleBox!.height / 2);
+    await page.mouse.down();
+    await page.mouse.move(postBox!.x + 24, postBox!.y + postBox!.height / 2, { steps: 20 });
+    await page.mouse.up();
+
+    await expect
+      .poll(() =>
+        page.evaluate(() => {
+          const topLevel = Array.from(document.querySelectorAll("[data-gotipe-content] > [data-block-id]")) as HTMLElement[];
+          const root3 = document.querySelector('[data-block-id="list-root-3"]') as HTMLElement | null;
+          const root3Rows = root3
+            ? Array.from(root3.children)
+              .filter((n): n is HTMLElement => n instanceof HTMLElement && n.hasAttribute("data-block-id"))
+              .map((n) => n.getAttribute("data-block-id") ?? "")
+            : [];
+          const extracted = topLevel.find((node) => {
+            const type = node.getAttribute("data-block-type");
+            if (type !== "bulletList") return false;
+            if (node.getAttribute("data-block-id") === "list-root-3") return false;
+            return (node.textContent ?? "").includes("alpha3");
+          });
+          return {
+            topIds: topLevel.map((n) => n.getAttribute("data-block-id") ?? ""),
+            root3Rows,
+            extractedType: extracted?.getAttribute("data-block-type") ?? null,
+          };
+        }),
+      )
+      .toEqual({
+        topIds: ["pre3", "list-root-3", expect.any(String), "post3"],
+        root3Rows: ["li-b3"],
+        extractedType: "bulletList",
+      });
+  });
+
+  test("bullet row can be moved into another bullet list", async ({ page }) => {
+    const ok = await page.evaluate(() => {
+      const editor = (window as Record<string, unknown>).__GOTIPE_NOTION_EDITOR__ as
+        | { setContent?: (content: unknown) => void }
+        | undefined;
+      if (!editor?.setContent) return false;
+      editor.setContent({
+        version: 1,
+        blocks: [
+          {
+            id: "list-a",
+            type: "bulletList",
+            attrs: {},
+            content: null,
+            children: [
+              {
+                id: "list-a-li",
+                type: "listItem",
+                attrs: {},
+                content: [{ text: "from-a", marks: [] }],
+                children: [],
+              },
+            ],
+          },
+          {
+            id: "between-a-b",
+            type: "paragraph",
+            attrs: {},
+            content: [{ text: "between", marks: [] }],
+            children: [],
+          },
+          {
+            id: "list-b",
+            type: "bulletList",
+            attrs: {},
+            content: null,
+            children: [
+              {
+                id: "list-b-li",
+                type: "listItem",
+                attrs: {},
+                content: [{ text: "from-b", marks: [] }],
+                children: [],
+              },
+            ],
+          },
+        ],
+      });
+      return true;
+    });
+    expect(ok).toBe(true);
+
+    await page.locator('[data-block-id="list-a-li"]').hover();
+    await expect(page.locator("[data-gotipe-drag-handle]")).toHaveAttribute("data-block-drag", "list-a-li");
+
+    const handleBox = await page.locator("[data-gotipe-drag-handle]").boundingBox();
+    const targetRowBox = await page.locator('[data-block-id="list-b-li"]').boundingBox();
+    expect(handleBox).not.toBeNull();
+    expect(targetRowBox).not.toBeNull();
+
+    await page.mouse.move(handleBox!.x + handleBox!.width / 2, handleBox!.y + handleBox!.height / 2);
+    await page.mouse.down();
+    await page.mouse.move(targetRowBox!.x + 24, targetRowBox!.y + targetRowBox!.height - 2, { steps: 20 });
+    await page.mouse.up();
+
+    await expect
+      .poll(() =>
+        page.evaluate(() => {
+          const listB = document.querySelector('[data-block-id="list-b"]') as HTMLElement | null;
+          if (!listB) return [];
+          return Array.from(listB.children)
+            .filter((node): node is HTMLElement => node instanceof HTMLElement && node.hasAttribute("data-block-id"))
+            .map((node) => node.getAttribute("data-block-id") ?? "");
+        }),
+      )
+      .toEqual(["list-b-li", "list-a-li"]);
+  });
+
   test("drop indicator style exists", async ({ page }) => {
     const hasRule = await page.evaluate(() => {
       const sheets = Array.from(document.styleSheets);
@@ -241,7 +812,7 @@ test.describe("Drag and drop", () => {
     await hoverFirstTopLevelBlock(page);
     await expect(page.locator("[data-gotipe-drag-handle]")).toHaveAttribute(
       "aria-label",
-      "Drag to reorder block",
+      DRAG_HANDLE_LABEL,
     );
   });
 });

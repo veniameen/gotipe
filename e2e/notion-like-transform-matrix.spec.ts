@@ -164,8 +164,7 @@ async function runSlashCommandByName(page: Page, query: string, name: string) {
 }
 
 async function placeCaretAtStartOfBlockByMarker(page: Page, textMarker: string) {
-  await page.evaluate((needle) => {
-    const editor = document.querySelector("[data-gotipe-content]") as HTMLElement | null;
+  const targetId = await page.evaluate((needle) => {
     const blocks = Array.from(document.querySelectorAll("[data-block-id]")) as HTMLElement[];
     const target = blocks.find((el) => {
       const selfHas = (el.textContent ?? "").includes(needle);
@@ -176,14 +175,33 @@ async function placeCaretAtStartOfBlockByMarker(page: Page, textMarker: string) 
       });
       return !childHas;
     });
-    if (!target || !editor) return;
+    if (!target) return null;
 
+    const targetBlockId = target.getAttribute("data-block-id");
+    const editorEl = document.querySelector("[data-gotipe-content]") as HTMLElement | null;
+    const editorApi = (window as Record<string, unknown>).__GOTIPE_NOTION_EDITOR__ as
+      | {
+          setSelection?: (selection: {
+            anchor: { blockId: string; offset: number };
+            head: { blockId: string; offset: number };
+          }) => void;
+        }
+      | undefined;
+
+    if (!targetBlockId) return null;
+    editorEl?.focus();
+
+    if (typeof editorApi?.setSelection === "function") {
+      editorApi.setSelection({
+        anchor: { blockId: targetBlockId, offset: 0 },
+        head: { blockId: targetBlockId, offset: 0 },
+      });
+      return targetBlockId;
+    }
+
+    // Fallback to DOM range if editor API is not available.
     const sel = window.getSelection();
-    if (!sel) return;
-
-    // Focus first, then set the range. Some browsers collapse selection to end on focus.
-    editor.focus();
-
+    if (!sel) return targetBlockId;
     const walker = document.createTreeWalker(target, NodeFilter.SHOW_TEXT);
     const firstText = walker.nextNode();
     const range = document.createRange();
@@ -195,19 +213,31 @@ async function placeCaretAtStartOfBlockByMarker(page: Page, textMarker: string) 
     range.collapse(true);
     sel.removeAllRanges();
     sel.addRange(range);
+    return targetBlockId;
   }, textMarker);
+
+  expect(targetId).not.toBeNull();
 
   await expect
     .poll(async () =>
-      page.evaluate((needle) => {
+      page.evaluate((blockId) => {
+        const editorApi = (window as Record<string, unknown>).__GOTIPE_NOTION_EDITOR__ as
+          | { getViewState?: () => { selection?: { anchor: { blockId: string; offset: number } } } }
+          | undefined;
+        const stateSelection = editorApi?.getViewState?.().selection;
+        if (stateSelection?.anchor.blockId === blockId && stateSelection.anchor.offset === 0) {
+          return true;
+        }
+
         const sel = window.getSelection();
         const anchorEl =
           sel?.anchorNode instanceof Element ? sel.anchorNode : sel?.anchorNode?.parentElement;
         const block = anchorEl?.closest("[data-block-id]") as HTMLElement | null;
-        if (!block) return false;
-        const isLeafForMarker = (block.textContent ?? "").includes(needle);
-        return isLeafForMarker && (sel?.anchorOffset ?? -1) === 0;
-      }, textMarker),
+        if (!block || block.getAttribute("data-block-id") !== blockId) return false;
+        if ((sel?.anchorOffset ?? -1) === 0) return true;
+        if (sel?.anchorNode === block && (sel.anchorOffset ?? -1) <= 1) return true;
+        return false;
+      }, targetId),
     )
     .toBe(true);
 }
@@ -459,7 +489,7 @@ const skipPairs = new Set([
   "quote->quote",
 ]);
 
-test.describe.fixme("Notion-like slash transform matrix", () => {
+test.describe("Notion-like slash transform matrix", () => {
   test.beforeEach(async ({ page }) => {
     await openNotion(page);
     await resetNotionDocument(page);

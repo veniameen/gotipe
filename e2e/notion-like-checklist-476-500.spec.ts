@@ -135,7 +135,7 @@ test.describe("Notion-like checklist batch NL-476..NL-500", () => {
 
       if (c.op === "plus") {
         const before = await page.locator('[data-gotipe-content] > [data-block-id]').count();
-        await page.click('[aria-label="Add block below"]');
+        await page.click('[aria-label="Click to add below. Option-click to add a block above"]');
         await expect(page.locator('[data-gotipe-content] > [data-block-id]')).toHaveCount(before + 1);
         return;
       }
