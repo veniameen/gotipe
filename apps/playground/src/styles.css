@@ -417,7 +417,7 @@ body {
 }
 
 .gotipe-content p {
-  margin: 0.2em 0;
+  margin: 0;
 }
 
 .gotipe-content h1 {
@@ -443,12 +443,12 @@ body {
 
 .gotipe-content ul,
 .gotipe-content ol {
-  margin: 0.35em 0;
-  padding-left: 1.75em;
+  margin: 4px 0;
+  padding-left: calc(var(--gt-space-6, 24px) + 4px);
 }
 
 .gotipe-content li {
-  margin: 0.18em 0;
+  margin: 3px 0;
 }
 
 /* Code block */

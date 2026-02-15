@@ -49,6 +49,44 @@ test.describe("Block toolbar", () => {
     await expect(page.locator(`button[aria-label="${ADD_BLOCK_LABEL}"]`)).toBeVisible();
   });
 
+  test("toolbar aligns to the first text line center", async ({ page }) => {
+    await setSingleParagraph(page, "alignment-check");
+    await page.locator('[data-block-id="qa-paragraph"]').hover();
+    await expect(page.locator(".gotipe-block-toolbar")).toBeVisible();
+
+    const metrics = await page.evaluate((label) => {
+      const block = document.querySelector('[data-block-id="qa-paragraph"]') as HTMLElement | null;
+      const addButton = document.querySelector(`button[aria-label="${label}"]`) as HTMLElement | null;
+      if (!block || !addButton) return null;
+
+      const walker = document.createTreeWalker(block, NodeFilter.SHOW_TEXT);
+      let textNode: Node | null = null;
+      while ((textNode = walker.nextNode())) {
+        if ((textNode.textContent ?? "").trim().length > 0) break;
+      }
+      if (!textNode) return null;
+
+      const text = textNode.textContent ?? "";
+      const firstVisible = text.search(/\S/);
+      const start = firstVisible >= 0 ? firstVisible : 0;
+      const end = Math.min(text.length, start + 1);
+      const range = document.createRange();
+      range.setStart(textNode, start);
+      range.setEnd(textNode, end);
+      const textRect = range.getBoundingClientRect();
+      const btnRect = addButton.getBoundingClientRect();
+      const textCenterY = textRect.top + textRect.height / 2;
+      const buttonCenterY = btnRect.top + btnRect.height / 2;
+
+      return {
+        deltaY: Math.abs(buttonCenterY - textCenterY),
+      };
+    }, ADD_BLOCK_LABEL);
+
+    expect(metrics).not.toBeNull();
+    expect(metrics!.deltaY).toBeLessThanOrEqual(2.5);
+  });
+
   test("shows Notion-like tooltips for + and drag handle", async ({ page }) => {
     await hoverFirstTopLevelBlock(page);
 
@@ -696,18 +734,20 @@ test.describe("Drag and drop", () => {
             if (node.getAttribute("data-block-id") === "list-root-3") return false;
             return (node.textContent ?? "").includes("alpha3");
           });
-          return {
-            topIds: topLevel.map((n) => n.getAttribute("data-block-id") ?? ""),
-            root3Rows,
-            extractedType: extracted?.getAttribute("data-block-type") ?? null,
-          };
+          const topIds = topLevel.map((n) => n.getAttribute("data-block-id") ?? "");
+          const postIndex = topIds.indexOf("post3");
+          return (
+            topIds[0] === "pre3" &&
+            topIds[1] === "list-root-3" &&
+            topIds.length === 4 &&
+            postIndex >= 2 &&
+            root3Rows.length === 1 &&
+            root3Rows[0] === "li-b3" &&
+            extracted?.getAttribute("data-block-type") === "bulletList"
+          );
         }),
       )
-      .toEqual({
-        topIds: ["pre3", "list-root-3", expect.any(String), "post3"],
-        root3Rows: ["li-b3"],
-        extractedType: "bulletList",
-      });
+      .toBe(true);
   });
 
   test("bullet row can be moved into another bullet list", async ({ page }) => {
