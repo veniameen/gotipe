@@ -150,12 +150,130 @@ _Last updated: February 14, 2026_
   - `packages/react/src/editor-content.tsx`: syncSelection выполняется синхронно после принудительной постановки range
 - Увеличен list-gutter offset у block-toolbar:
   - `packages/block-editor/src/components/block-editor.tsx`: toolbar больше не перекрывает checkbox в list/todo сценариях
+- Добавлено дополнительное hardening-покрытие Step 2 parity:
+  - `e2e/notion-like-step2-parity.spec.ts`
+  - кейсы: slash boundary behavior в list rows + jagged fast-hover clickability (`+` и drag-handle)
+- Усилен anti-flicker policy для block toolbar:
+  - `packages/block-editor/src/components/block-editor.tsx`: delayed hide + hover hold на wrapper
+- Усилен caret fallback для пустого todo после slash transforms:
+  - `packages/block-editor/src/components/slash-menu.tsx`: DOM caret fallback в `[data-gotipe-todo-content]`
+- Добавлен backlog hardening-suite:
+  - `e2e/notion-like-backlog-hardening.spec.ts`
+  - `e2e/notion-like-backlog-hardening-stress.spec.ts`
+  - покрытие:
+    - `DEF-005`: nested list/todo conversion policy с deep subtree + sibling retention
+    - `DEF-014`: Backspace boundary policy (`listItem/todoItem` -> `paragraph`) для nested/top-level
+    - `DEF-007`: long-run mixed stress (`slash + typing + Enter + Backspace + Undo/Redo`)
+    - repeated fast-hover clickability `+`/drag на мультиблочном документе
+  - cross-browser: Chromium/Firefox/WebKit PASS
+  - Chromium repeat (`--repeat-each=2`): PASS
+- Закрыт активный backlog по policy-рискам:
+  - `DEF-005`: closed
+  - `DEF-007`: closed
+  - `DEF-014`: closed
+  - `DEF-006` (cross-browser stability): closed
+- Добавлен deep DnD policy-suite:
+  - `e2e/notion-like-dnd-policy.spec.ts`
+  - кейсы:
+    - DND-001: complex list move (deep subtree retention + undo/redo)
+    - DND-002: rapid alternating drag across edges (health/stability)
+    - DND-003: drag after slash transform + immediate typing stability
+  - cross-browser: Chromium/Firefox/WebKit PASS
+  - Chromium repeat (`--repeat-each=3`): `9/9` PASS
+- Добавлен IME policy-suite:
+  - `e2e/notion-like-ime-policy.spec.ts`
+  - кейсы:
+    - IME-001: composition insert в paragraph без порчи state
+    - IME-002: composition в todo + Enter flow
+    - IME-003: slash transform + composition + undo/redo
+  - cross-browser: Chromium/Firefox/WebKit PASS
+  - Chromium repeat (`--repeat-each=3`): `9/9` PASS
+- Добавлен selection/history stress-suite:
+  - `e2e/notion-like-selection-history-stress.spec.ts`
+  - кейсы:
+    - SELH-001: bulk mark toggles across large doc + history integrity
+    - SELH-002: list/todo mark toggles + typing + undo/redo
+    - SELH-003: rapid mixed selection/mark/typing loop
+  - cross-browser: Chromium/Firefox/WebKit PASS
+  - Chromium repeat (`--repeat-each=3`): `9/9` PASS
+- Добавлен cross-block clipboard/marks stress-suite:
+  - `e2e/notion-like-crossblock-clipboard-stress.spec.ts`
+  - кейсы:
+    - CBM-001: cross-block copy/paste chain + mark toggles
+    - CBM-002: cross-block cut flow + deterministic undo/redo restoration
+    - CBM-003: rapid mixed loop (cross-block selection + clipboard + marks + history)
+  - cross-browser: Chromium/Firefox/WebKit PASS
+  - Chromium repeat (`--repeat-each=3`): `9/9` PASS
+- Добавлен nested cross-block chains suite:
+  - helper: `e2e/helpers/notion-crossblock.ts`
+  - `e2e/notion-like-crossblock-nested-chains.spec.ts`
+  - кейсы:
+    - NCB-001: nested cross-block copy/paste + marks stability
+    - NCB-002: nested cross-block cut + deterministic undo/redo
+    - NCB-003: rapid mixed nested range loop (clipboard + marks + history)
+  - cross-browser: Chromium/Firefox/WebKit PASS
+  - Chromium repeat (`--repeat-each=3`): `9/9` PASS
+- Добавлен integrated chaos suite:
+  - helper: `e2e/helpers/notion-chaos.ts`
+  - `e2e/notion-like-integrated-chaos.spec.ts`
+  - кейсы:
+    - CHAOS-001: nested DnD + clipboard + marks + history
+    - CHAOS-002: long mixed loop (`DnD + clipboard + marks`) на nested document
+    - CHAOS-003: slash transform + immediate typing + DnD + clipboard
+  - cross-browser: Chromium/Firefox/WebKit PASS
+  - Chromium repeat (`--repeat-each=3`): `9/9` PASS
+- Добавлен headed gutter jitter exploratory suite:
+  - `e2e/notion-like-gutter-jitter-headed.spec.ts`
+  - кейсы:
+    - HEAD-JITTER-001: rapid row-to-row jitter keeps toolbar attached
+    - HEAD-JITTER-002: plus clickable after jitter bursts
+    - HEAD-JITTER-003: drag-handle menu stable under jitter
+  - headed cross-browser: Chromium/Firefox/WebKit PASS
+  - headed Chromium repeat (`--repeat-each=2`): `6/6` PASS
+  - артефакты: screenshots + trace zips в `output/playwright/notion-like-headed-gutter-jitter*`
 
 ## Текущий автоматизированный статус
 
 - Chromium matrix: `32/32` PASS.
 - Chromium exhaustive: `15 passed`, `2 skipped(fixme)`.
-- Chromium transform-matrix: `72 skipped(fixme)` (quarantine до стабилизации slash-path).
+- Chromium transform-matrix: `72/72` PASS.
+- Chromium transform-matrix repeat (`--repeat-each=2`): `144/144` PASS.
+- Step1 strict parity suite (split by files, each <300 lines):
+  - `e2e/notion-like-step1-enter-shift-parity.spec.ts`: `8/8` PASS
+  - `e2e/notion-like-step1-split-backspace-parity.spec.ts`: `7/7` PASS
+- Planned core matrix batch closed:
+  - `e2e/notion-like-matrix-planned-core.spec.ts`
+  - covered: `SLASH-011`, `SLASH-015`, `SLASH-016`, `ENTER-010` (+ `SEL-004`)
+  - Chromium: `4/4` PASS
+  - Firefox: `4/4` PASS
+  - WebKit: `4/4` PASS
+- Planned UI matrix batch closed:
+  - `e2e/notion-like-matrix-planned-ui.spec.ts`
+  - covered: `SLASH-019`, `UI-007`, `UI-008`
+  - Chromium: `3/3` PASS
+  - Firefox: `3/3` PASS
+  - WebKit: `3/3` PASS
+- Planned selection matrix batch closed:
+  - `e2e/notion-like-matrix-planned-selection.spec.ts`
+  - covered: `SEL-005` (mark toggle в `bullet/ordered/todo` list item)
+  - Chromium: `1/1` PASS
+  - Firefox: `1/1` PASS
+  - WebKit: `1/1` PASS
+- Planned reliability matrix batch closed:
+  - `e2e/notion-like-matrix-planned-reliability.spec.ts`
+  - covered: `REL-001`, `REL-002`, `REL-003`
+  - Chromium: `3/3` PASS
+  - Firefox: `3/3` PASS
+  - WebKit: `3/3` PASS
+- Cross-browser critical-pack closed:
+  - Firefox + WebKit critical suites: `134/134` PASS
+  - `REL-004`, `REL-005` переведены в `Automated`
+- WebKit flake-hardening for matrix/slash helpers:
+  - `e2e/notion-like-matrix.spec.ts`: caret placement helpers переведены на editor API + deterministic selection poll
+  - `e2e/slash-menu.spec.ts`: caret/menu distance tolerance увеличен для WebKit line-box rounding
+- Mobile slash-menu width regression closed:
+  - `packages/theme/src/theme.css`
+  - mobile override ограничен до `min(300px, 90vw)` (без overflow на узких viewport)
 - Chromium nested/multi-step: `5/5` PASS.
 - Chromium nested/multi-step repeat: `25/25` PASS (`--repeat-each=5`).
 - Chromium todo-left-zone repeat: `20/20` PASS (`--grep "todo click in left zone" --repeat-each=10`).
@@ -182,8 +300,61 @@ _Last updated: February 14, 2026_
 - Chromium checklist stress-repeat (`NL-401..NL-450`, `--repeat-each=2`): `100/100` PASS.
 - Chromium checklist stress-repeat (`NL-451..NL-500`, `--repeat-each=2`): `100/100` PASS.
 - Chromium block-toolbar fast-hover stress: `18/18` PASS (`e2e/block-toolbar-fast-hover.spec.ts`).
+- Chromium combined (`slash-menu + block-toolbar-fast-hover + planned-core + planned-ui + planned-selection + planned-reliability`): `35/35` PASS.
+- Cross-browser critical-pack (`matrix + slash-menu + block-toolbar-fast-hover + planned-core + planned-ui + planned-selection + planned-reliability`): Firefox+WebKit `134/134` PASS.
 - Chromium block-toolbar baseline: `16/16` PASS (`e2e/block-toolbar.spec.ts`).
 - Chromium gutter/drag batch `NL-471..NL-480`: `10/10` PASS.
+- Step2 parity suite (`e2e/notion-like-step2-parity.spec.ts`):
+  - Chromium: `2/2` PASS
+  - Firefox: `2/2` PASS
+  - WebKit: `2/2` PASS
+  - stress-repeat (`--repeat-each=5`): Chromium `10/10`, WebKit `10/10` PASS
+- Backlog hardening suites (`e2e/notion-like-backlog-hardening.spec.ts` + `e2e/notion-like-backlog-hardening-stress.spec.ts`):
+  - Chromium: `4/4` PASS
+  - Firefox: `4/4` PASS
+  - WebKit: `4/4` PASS
+  - Chromium repeat (`--repeat-each=2`): `8/8` PASS
+- Chromium combined (`block-toolbar-fast-hover + step2-parity + backlog-policy + backlog-hardening`): `27/27` PASS
+- DnD policy suite (`e2e/notion-like-dnd-policy.spec.ts`):
+  - Chromium: `3/3` PASS
+  - Firefox: `3/3` PASS
+  - WebKit: `3/3` PASS
+  - Chromium repeat (`--repeat-each=3`): `9/9` PASS
+- IME policy suite (`e2e/notion-like-ime-policy.spec.ts`):
+  - Chromium: `3/3` PASS
+  - Firefox: `3/3` PASS
+  - WebKit: `3/3` PASS
+  - Chromium repeat (`--repeat-each=3`): `9/9` PASS
+- Chromium combined (`ime-policy + dnd-policy + backlog-hardening + step2-parity`): `12/12` PASS
+- Selection/history stress suite (`e2e/notion-like-selection-history-stress.spec.ts`):
+  - Chromium: `3/3` PASS
+  - Firefox: `3/3` PASS
+  - WebKit: `3/3` PASS
+  - Chromium repeat (`--repeat-each=3`): `9/9` PASS
+- Chromium combined (`selection-history + ime + dnd + backlog-hardening`): `13/13` PASS
+- Cross-block clipboard/marks suite (`e2e/notion-like-crossblock-clipboard-stress.spec.ts`):
+  - Chromium: `3/3` PASS
+  - Firefox: `3/3` PASS
+  - WebKit: `3/3` PASS
+  - Chromium repeat (`--repeat-each=3`): `9/9` PASS
+- Chromium combined (`crossblock-clipboard + selection-history + ime + dnd`): `12/12` PASS
+- Nested cross-block chains suite (`e2e/notion-like-crossblock-nested-chains.spec.ts`):
+  - Chromium: `3/3` PASS
+  - Firefox: `3/3` PASS
+  - WebKit: `3/3` PASS
+  - Chromium repeat (`--repeat-each=3`): `9/9` PASS
+- Chromium combined (`crossblock-clipboard + crossblock-nested + selection-history + ime + dnd`): `15/15` PASS
+- Integrated chaos suite (`e2e/notion-like-integrated-chaos.spec.ts`):
+  - Chromium: `3/3` PASS
+  - Firefox: `3/3` PASS
+  - WebKit: `3/3` PASS
+  - Chromium repeat (`--repeat-each=3`): `9/9` PASS
+- Chromium combined (`integrated-chaos + crossblock-nested + crossblock-clipboard + selection-history + ime + dnd`): `18/18` PASS
+- Headed gutter jitter exploratory (`e2e/notion-like-gutter-jitter-headed.spec.ts`):
+  - Chromium headed: `3/3` PASS
+  - Firefox + WebKit headed: `6/6` PASS
+  - Chromium headed repeat (`--repeat-each=2`): `6/6` PASS
+- Chromium headed combined (`gutter-jitter-headed + integrated-chaos + crossblock-nested`): `9/9` PASS
 - Chromium combined (`matrix + block-toolbar + block-toolbar-fast-hover + production-ux`): `79/79` PASS.
 - Chromium combined (`matrix + block-toolbar-fast-hover + block-toolbar + checklist-101-150`): `116/116` PASS.
 - Chromium combined (`matrix + block-toolbar-fast-hover + block-toolbar + checklist-101-150 + checklist-151-200 + checklist-201-250`): `216/216` PASS.
@@ -192,9 +363,14 @@ _Last updated: February 14, 2026_
 - Chromium combined (`matrix + block-toolbar-fast-hover + block-toolbar + checklist-101-150 + checklist-151-200 + checklist-201-250 + checklist-251-300 + checklist-301-320 + checklist-321-350 + checklist-351-370 + checklist-371-390 + checklist-391-400`): `366/366` PASS.
 - Chromium combined (`matrix + block-toolbar-fast-hover + block-toolbar + checklist-101-150 + checklist-151-200 + checklist-201-250 + checklist-251-300 + checklist-301-320 + checklist-321-350 + checklist-351-370 + checklist-371-390 + checklist-391-400 + checklist-401-425 + checklist-426-450`): `416/416` PASS.
 - Chromium combined (`matrix + block-toolbar + checklist-001-050 + checklist-051-100 + checklist-101-150 + checklist-151-200 + checklist-201-250 + checklist-251-300 + checklist-301-320 + checklist-321-350 + checklist-351-370 + checklist-371-390 + checklist-391-400 + checklist-401-425 + checklist-426-450 + checklist-451-475 + checklist-476-500`): `548/548` PASS.
-- Открытые нестабильные зоны:
-  - quarantine `SLASH-022` / `REL-007` (transform-matrix)
-- Firefox/WebKit: не выполнено в этом окружении (нет установленных браузерных бинарников Playwright).
+- Transform-matrix quarantine снят:
+  - `SLASH-022`: `72/72` PASS (Chromium/Firefox/WebKit)
+  - `REL-007`: `144/144` PASS в Chromium (`--repeat-each=2`)
+  - `e2e/notion-like-transform-matrix.spec.ts` переведён из `fixme` в активный run
+- Firefox smoke (`notion-like-matrix + block-toolbar`): `48/48` PASS.
+- WebKit smoke (`notion-like-matrix + block-toolbar`): `48/48` PASS.
+- Firefox checklist полный прогон (`NL-001..NL-500`): `500/500` PASS.
+- WebKit checklist полный прогон (`NL-001..NL-500`): `500/500` PASS.
 
 ## Где смотреть детали
 

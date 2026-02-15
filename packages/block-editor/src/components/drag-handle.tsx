@@ -16,11 +16,11 @@ export function DragHandle({ blockId, onDragStart, onDragEnd }: DragHandleProps)
       e.dataTransfer.setData("text/gotipe-block-id", blockId);
       e.dataTransfer.effectAllowed = "move";
 
-      // Set the dragged block element as the drag image
+      // Mark dragged element for visual feedback; keep native drag preview.
+      // Using a large custom drag image can cause platform-specific stalls.
       const blockEl = document.querySelector(`[data-block-id="${blockId}"]`);
       if (blockEl) {
         blockEl.classList.add("dragging");
-        e.dataTransfer.setDragImage(blockEl, 0, 0);
       }
 
       onDragStart(blockId);
@@ -64,7 +64,7 @@ export function DragHandle({ blockId, onDragStart, onDragEnd }: DragHandleProps)
       type="button"
       className="gotipe-drag-handle-btn"
       draggable
-      aria-label="Drag to reorder block"
+      aria-label="Drag to move, click to open menu"
       data-gotipe-drag-handle=""
       data-block-drag={blockId}
       onDragStart={handleDragStart}

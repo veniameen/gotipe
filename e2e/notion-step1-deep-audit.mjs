@@ -2,7 +2,9 @@ import fs from 'node:fs/promises'
 import path from 'node:path'
 import { chromium } from '@playwright/test'
 
-const pageUrl = 'https://www.notion.so/3065ab020ff680b7b379c78bb0e7504d?source=copy_link'
+const pageUrl =
+  process.env.NOTION_PAGE_URL ||
+  'https://www.notion.so/3065ab020ff680b7b379c78bb0e7504d?source=copy_link'
 const stamp = new Date().toISOString().replace(/[:.]/g, '-')
 const tag = `ref${Date.now().toString().slice(-6)}`
 

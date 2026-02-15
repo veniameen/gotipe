@@ -1,6 +1,6 @@
 # Notion-like Exploratory Charters
 
-_Last updated: February 13, 2026_
+_Last updated: February 14, 2026_
 
 ## Charter 1: Slash in every block type
 
@@ -68,3 +68,57 @@ Focus:
 - `ArrowUp/ArrowDown/Enter/Escape`
 - фокус не теряется на кнопках вне editor content
 - нет keyboard trap
+
+## Charter 6: Native IME (RU/JP/KR) in headed mode
+
+Mission:
+
+- пройти реальные OS-level composition сценарии (не synthetic events) в Notion-like editor.
+
+Focus:
+
+- composition-start/update/end на:
+  - paragraph
+  - listItem
+  - todoItem
+  - после slash-transform
+- Enter/Backspace во время и сразу после composition.
+- Undo/Redo после composition.
+- стабильность caret/selection (не прыгает в левый край, не теряется block context).
+
+Scenarios:
+
+- RU: кириллица + пробел + Enter в paragraph/todo.
+- JP: hiragana -> kanji conversion -> Enter confirm.
+- KR: hangul syllable composition + быстрый Backspace.
+- mixed: composition в list item, затем slash transform в другой block type.
+
+Artifacts:
+
+- pass/fail таблица по языкам и контекстам.
+- short video/gif на каждый дефект caret/selection drift.
+- финальный summary по parity gap относительно Notion.
+
+## Charter 7: Headed Gutter Jitter (`+` / drag-handle)
+
+Mission:
+
+- проверить интерактивность левого gutter при агрессивных траекториях мыши в headed-режиме.
+
+Focus:
+
+- toolbar остаётся привязан к текущей строке (не “улетает”).
+- `+` кликается сразу после jitter без потери hover-state.
+- drag-handle стабильно открывает context menu после jitter.
+
+Scenarios:
+
+- rapid row-to-row jitter (40 проходов).
+- jitter burst + immediate plus click (16 проходов, с `undo` для нормализации документа).
+- jitter + drag-handle click + `Esc` close (18 проходов).
+
+Artifacts:
+
+- screenshots: `output/playwright/notion-like-headed-gutter-jitter/`
+- traces: `output/playwright/notion-like-headed-gutter-jitter-results/**/trace.zip`
+- repeat traces: `output/playwright/notion-like-headed-gutter-jitter-results-repeat/**/trace.zip`

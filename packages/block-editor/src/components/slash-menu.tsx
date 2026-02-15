@@ -9,6 +9,7 @@ export interface SlashMenuProps {
 const GROUP_ORDER: SlashCommandDef["group"][] = ["ai", "style", "insert", "upload"];
 const MENU_OFFSET_Y = 8;
 const VIEWPORT_PADDING = 12;
+const MAX_CARET_RECT_WIDTH = 48;
 const LIST_CONTAINER_TYPES = new Set(["bulletList", "orderedList", "todoList"]);
 const LIST_ITEM_TYPES = new Set(["listItem", "todoItem"]);
 
@@ -86,6 +87,11 @@ function setDomCaretInBlock(blockId: string, targetOffset: number): boolean {
   const block = document.querySelector(`[data-block-id="${blockId}"]`) as HTMLElement | null;
   const sel = window.getSelection();
   if (!block || !sel) return false;
+  const blockType = block.getAttribute("data-block-type");
+  const todoTextHost =
+    blockType === "todoItem"
+      ? (block.querySelector("[data-gotipe-todo-content]") as HTMLElement | null)
+      : null;
 
   const walker = document.createTreeWalker(block, NodeFilter.SHOW_TEXT);
   let acc = 0;
@@ -108,6 +114,9 @@ function setDomCaretInBlock(blockId: string, targetOffset: number): boolean {
   const range = document.createRange();
   if (targetNode) {
     range.setStart(targetNode, localOffset);
+  } else if (todoTextHost) {
+    // Keep caret after checkbox for empty todo items (no text nodes yet).
+    range.setStart(todoTextHost, 0);
   } else {
     range.setStart(block, 0);
   }
@@ -151,43 +160,124 @@ function isUsableRect(rect: DOMRect | null): rect is DOMRect {
   return rect.width > 0 || rect.height > 0;
 }
 
+function isCaretLikeRect(rect: DOMRect | null): rect is DOMRect {
+  if (!isUsableRect(rect)) return false;
+  return rect.width <= MAX_CARET_RECT_WIDTH;
+}
+
+function getBlockElementFromNode(node: Node | null): HTMLElement | null {
+  if (!node) return null;
+  const anchorEl = node instanceof Element ? node : node.parentElement;
+  return (anchorEl?.closest("[data-block-id]") as HTMLElement | null) ?? null;
+}
+
+function getTextHostForBlock(blockEl: HTMLElement): HTMLElement {
+  const blockType = blockEl.getAttribute("data-block-type");
+  if (blockType === "todoItem") {
+    return (blockEl.querySelector("[data-gotipe-todo-content]") as HTMLElement | null) ?? blockEl;
+  }
+  if (blockType === "callout") {
+    return (blockEl.querySelector(".gotipe-callout-content") as HTMLElement | null) ?? blockEl;
+  }
+  return blockEl;
+}
+
+function getPreviousCharacterRect(range: Range, blockEl: HTMLElement): DOMRect | null {
+  try {
+    const probe = document.createRange();
+    probe.setStart(blockEl, 0);
+    probe.setEnd(range.startContainer, range.startOffset);
+    const absoluteOffset = probe.toString().length;
+    if (absoluteOffset <= 0) return null;
+
+    const textHost = getTextHostForBlock(blockEl);
+    const walker = document.createTreeWalker(textHost, NodeFilter.SHOW_TEXT);
+    let accumulated = 0;
+    let node: Node | null;
+    while ((node = walker.nextNode())) {
+      const textNode = node as Text;
+      const len = (textNode.textContent ?? "").length;
+      if (len === 0) continue;
+      if (accumulated + len >= absoluteOffset) {
+        const localEnd = Math.min(len, absoluteOffset - accumulated);
+        const localStart = Math.max(0, localEnd - 1);
+        const charRange = document.createRange();
+        charRange.setStart(textNode, localStart);
+        charRange.setEnd(textNode, localEnd);
+        const rect = charRange.getBoundingClientRect();
+        return isUsableRect(rect) ? rect : null;
+      }
+      accumulated += len;
+    }
+  } catch {
+    // Continue with anchor fallbacks when range endpoints are stale.
+  }
+  return null;
+}
+
+function getRangeCaretRect(collapsedRange: Range): DOMRect | null {
+  const blockEl = getBlockElementFromNode(collapsedRange.startContainer);
+
+  const rects = Array.from(collapsedRange.getClientRects());
+  const lastRect = rects.length > 0 ? rects[rects.length - 1]! : null;
+  if (isCaretLikeRect(lastRect)) return lastRect;
+
+  const collapsedRect = collapsedRange.getBoundingClientRect();
+  if (isCaretLikeRect(collapsedRect)) return collapsedRect;
+
+  if (blockEl) {
+    const prevRect = getPreviousCharacterRect(collapsedRange, blockEl);
+    if (isUsableRect(prevRect)) return prevRect;
+
+    const anchorRect = blockEl.getBoundingClientRect();
+    if (isUsableRect(anchorRect)) return anchorRect;
+  }
+
+  return null;
+}
+
+function resolveDomPointInBlock(blockEl: HTMLElement, targetOffset: number): { node: Node; offset: number } {
+  const textHost = getTextHostForBlock(blockEl);
+  const walker = document.createTreeWalker(textHost, NodeFilter.SHOW_TEXT);
+  let accumulated = 0;
+  let lastTextNode: Node | null = null;
+  let textNode: Node | null;
+
+  while ((textNode = walker.nextNode())) {
+    lastTextNode = textNode;
+    const len = (textNode.textContent ?? "").length;
+    if (accumulated + len >= targetOffset) {
+      return { node: textNode, offset: Math.min(Math.max(0, targetOffset - accumulated), len) };
+    }
+    accumulated += len;
+  }
+
+  if (!lastTextNode) {
+    return { node: textHost, offset: 0 };
+  }
+
+  const lastLen = (lastTextNode.textContent ?? "").length;
+  return { node: lastTextNode, offset: lastLen };
+}
+
+function getCaretClientRectFromTrigger(trigger: SlashTrigger | null): DOMRect | null {
+  if (!trigger) return null;
+  const blockEl = document.querySelector(`[data-block-id="${trigger.blockId}"]`) as HTMLElement | null;
+  if (!blockEl) return null;
+  const point = resolveDomPointInBlock(blockEl, trigger.to);
+  const range = document.createRange();
+  range.setStart(point.node, point.offset);
+  range.collapse(true);
+  return getRangeCaretRect(range);
+}
+
 function getCaretClientRect(): DOMRect | null {
   const selection = window.getSelection();
   if (!selection || selection.rangeCount === 0) return null;
 
   const collapsed = selection.getRangeAt(0).cloneRange();
   collapsed.collapse(true);
-
-  const rects = Array.from(collapsed.getClientRects());
-  const lastRect = rects.length > 0 ? rects[rects.length - 1]! : null;
-  if (isUsableRect(lastRect)) return lastRect;
-
-  const collapsedRect = collapsed.getBoundingClientRect();
-  if (isUsableRect(collapsedRect)) return collapsedRect;
-
-  try {
-    const { startContainer, startOffset } = collapsed;
-    if (startContainer.nodeType === Node.TEXT_NODE && startOffset > 0) {
-      const previousChar = collapsed.cloneRange();
-      previousChar.setStart(startContainer, startOffset - 1);
-      previousChar.setEnd(startContainer, startOffset);
-      const prevRect = previousChar.getBoundingClientRect();
-      if (isUsableRect(prevRect)) return prevRect;
-    }
-  } catch {
-    // Ignore invalid range manipulations and continue with fallbacks.
-  }
-
-  const anchorEl =
-    selection.anchorNode instanceof Element
-      ? selection.anchorNode.closest("[data-block-id]")
-      : selection.anchorNode?.parentElement?.closest("[data-block-id]");
-  if (anchorEl instanceof HTMLElement) {
-    const anchorRect = anchorEl.getBoundingClientRect();
-    if (isUsableRect(anchorRect)) return anchorRect;
-  }
-
-  return null;
+  return getRangeCaretRect(collapsed);
 }
 
 function renderIcon(icon: string, name: string): React.ReactNode {
@@ -425,7 +515,7 @@ export function SlashMenu({ editor, commands = [] }: SlashMenuProps) {
       queryRef.current = nextQuery;
       setSelectedIndex(0);
       requestAnimationFrame(() => {
-        const caretRect = getCaretClientRect();
+        const caretRect = getCaretClientRectFromTrigger(trigger) ?? getCaretClientRect();
         const next = caretRect
           ? { top: caretRect.bottom + MENU_OFFSET_Y, left: caretRect.left }
           : {
@@ -458,7 +548,7 @@ export function SlashMenu({ editor, commands = [] }: SlashMenuProps) {
         setSelectedIndex(0);
       }
 
-      const caretRect = getCaretClientRect();
+      const caretRect = getCaretClientRectFromTrigger(trigger) ?? getCaretClientRect();
       if (caretRect) {
         setAnchorPosition({ top: caretRect.bottom + MENU_OFFSET_Y, left: caretRect.left });
       }

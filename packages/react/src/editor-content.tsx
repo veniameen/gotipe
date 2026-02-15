@@ -41,12 +41,45 @@ function isBlockContentEmpty(block: BlockView): boolean {
   return true;
 }
 
-function BlockChildren({ block, editor }: { block: BlockView; editor: GoTipeEditor }) {
+function getEmptyBlockPlaceholder(block: BlockView, parentType?: string): string | null {
+  switch (block.type) {
+    case "paragraph":
+      return "Text";
+    case "heading": {
+      const level = Math.min(Math.max((block.attrs.level as number) || 1, 1), 6);
+      return `Heading ${level}`;
+    }
+    case "listItem":
+      return parentType === "orderedList" ? "Numbered List" : "Bullet List";
+    case "todoItem":
+      return "To-do List";
+    case "blockquote":
+      return "Quote";
+    default:
+      return null;
+  }
+}
+
+function BlockChildren({
+  block,
+  editor,
+  selectedBlockId,
+}: {
+  block: BlockView;
+  editor: GoTipeEditor;
+  selectedBlockId: string;
+}) {
   if (!block.children || block.children.length === 0) return null;
   return (
     <>
       {block.children.map((child) => (
-        <BlockComponent key={child.id} block={child} editor={editor} />
+        <BlockComponent
+          key={child.id}
+          block={child}
+          editor={editor}
+          selectedBlockId={selectedBlockId}
+          parentType={block.type}
+        />
       ))}
     </>
   );
@@ -133,9 +166,17 @@ function ImageBlock({ block, editor }: { block: BlockView; editor: GoTipeEditor 
 
 /* ---- Toggle Block ---- */
 
-function ToggleBlock({ block, editor }: { block: BlockView; editor: GoTipeEditor }) {
+function ToggleBlock({
+  block,
+  editor,
+  selectedBlockId,
+}: {
+  block: BlockView;
+  editor: GoTipeEditor;
+  selectedBlockId: string;
+}) {
   const content = <BlockContent block={block} />;
-  const children = <BlockChildren block={block} editor={editor} />;
+  const children = <BlockChildren block={block} editor={editor} selectedBlockId={selectedBlockId} />;
   const isOpen = !!block.attrs.open;
 
   return (
@@ -165,9 +206,17 @@ function ToggleBlock({ block, editor }: { block: BlockView; editor: GoTipeEditor
 
 /* ---- Callout Block ---- */
 
-function CalloutBlock({ block, editor }: { block: BlockView; editor: GoTipeEditor }) {
+function CalloutBlock({
+  block,
+  editor,
+  selectedBlockId,
+}: {
+  block: BlockView;
+  editor: GoTipeEditor;
+  selectedBlockId: string;
+}) {
   const content = <BlockContent block={block} />;
-  const children = <BlockChildren block={block} editor={editor} />;
+  const children = <BlockChildren block={block} editor={editor} selectedBlockId={selectedBlockId} />;
   const variant = (block.attrs.type as string) || "info";
   const emoji = block.attrs.emoji ? String(block.attrs.emoji) : null;
 
@@ -207,8 +256,16 @@ function CalloutBlock({ block, editor }: { block: BlockView; editor: GoTipeEdito
 
 /* ---- Table Block ---- */
 
-function TableBlock({ block, editor }: { block: BlockView; editor: GoTipeEditor }) {
-  const children = <BlockChildren block={block} editor={editor} />;
+function TableBlock({
+  block,
+  editor,
+  selectedBlockId,
+}: {
+  block: BlockView;
+  editor: GoTipeEditor;
+  selectedBlockId: string;
+}) {
+  const children = <BlockChildren block={block} editor={editor} selectedBlockId={selectedBlockId} />;
   const hasHeader =
     block.children.length > 0 &&
     block.children[0]!.children.some((c) => c.type === "tableHeader");
@@ -224,11 +281,22 @@ function TableBlock({ block, editor }: { block: BlockView; editor: GoTipeEditor 
         {hasHeader ? (
           <>
             <thead>
-              <BlockComponent block={block.children[0]!} editor={editor} />
+              <BlockComponent
+                block={block.children[0]!}
+                editor={editor}
+                selectedBlockId={selectedBlockId}
+                parentType={block.type}
+              />
             </thead>
             <tbody>
               {block.children.slice(1).map((child) => (
-                <BlockComponent key={child.id} block={child} editor={editor} />
+                <BlockComponent
+                  key={child.id}
+                  block={child}
+                  editor={editor}
+                  selectedBlockId={selectedBlockId}
+                  parentType={block.type}
+                />
               ))}
             </tbody>
           </>
@@ -240,20 +308,31 @@ function TableBlock({ block, editor }: { block: BlockView; editor: GoTipeEditor 
   );
 }
 
-function BlockComponent({ block, editor }: { block: BlockView; editor: GoTipeEditor }) {
+interface BlockComponentProps {
+  block: BlockView;
+  editor: GoTipeEditor;
+  selectedBlockId: string;
+  parentType?: string;
+}
+
+function BlockComponent({ block, editor, selectedBlockId, parentType }: BlockComponentProps) {
   const content = <BlockContent block={block} />;
-  const children = <BlockChildren block={block} editor={editor} />;
+  const children = <BlockChildren block={block} editor={editor} selectedBlockId={selectedBlockId} />;
+  const isSelected = selectedBlockId === block.id;
+  const isEmpty = isBlockContentEmpty(block);
+  const placeholder = isSelected && isEmpty
+    ? getEmptyBlockPlaceholder(block, parentType)
+    : null;
 
   switch (block.type) {
     case "heading": {
       const level = Math.min(Math.max((block.attrs.level as number) || 1, 1), 6);
       const Tag = `h${level}` as "h1" | "h2" | "h3" | "h4" | "h5" | "h6";
-      const isEmpty = isBlockContentEmpty(block);
       return (
         <Tag
           data-block-id={block.id}
           data-block-type={block.type}
-          data-placeholder={isEmpty ? `Heading ${level}` : undefined}
+          data-placeholder={placeholder ?? undefined}
         >
           {content}
         </Tag>
@@ -276,7 +355,11 @@ function BlockComponent({ block, editor }: { block: BlockView; editor: GoTipeEdi
 
     case "listItem":
       return (
-        <li data-block-id={block.id} data-block-type={block.type}>
+        <li
+          data-block-id={block.id}
+          data-block-type={block.type}
+          data-placeholder={placeholder ?? undefined}
+        >
           {content}
           {children}
         </li>
@@ -328,7 +411,11 @@ function BlockComponent({ block, editor }: { block: BlockView; editor: GoTipeEdi
             }}
             onChange={() => {}}
           />
-          <span className="gotipe-todo-item-content" data-gotipe-todo-content="">
+          <span
+            className="gotipe-todo-item-content"
+            data-gotipe-todo-content=""
+            data-placeholder={placeholder ?? undefined}
+          >
             {content}
           </span>
         </li>
@@ -346,7 +433,11 @@ function BlockComponent({ block, editor }: { block: BlockView; editor: GoTipeEdi
 
     case "blockquote":
       return (
-        <blockquote data-block-id={block.id} data-block-type={block.type}>
+        <blockquote
+          data-block-id={block.id}
+          data-block-type={block.type}
+          data-placeholder={placeholder ?? undefined}
+        >
           {content}
           {children}
         </blockquote>
@@ -359,7 +450,7 @@ function BlockComponent({ block, editor }: { block: BlockView; editor: GoTipeEdi
       return <ImageBlock block={block} editor={editor} />;
 
     case "table":
-      return <TableBlock block={block} editor={editor} />;
+      return <TableBlock block={block} editor={editor} selectedBlockId={selectedBlockId} />;
 
     case "tableRow":
       return (
@@ -383,10 +474,10 @@ function BlockComponent({ block, editor }: { block: BlockView; editor: GoTipeEdi
       );
 
     case "callout":
-      return <CalloutBlock block={block} editor={editor} />;
+      return <CalloutBlock block={block} editor={editor} selectedBlockId={selectedBlockId} />;
 
     case "toggle":
-      return <ToggleBlock block={block} editor={editor} />;
+      return <ToggleBlock block={block} editor={editor} selectedBlockId={selectedBlockId} />;
 
     case "columns":
       return (
@@ -411,7 +502,11 @@ function BlockComponent({ block, editor }: { block: BlockView; editor: GoTipeEdi
     case "paragraph":
     default:
       return (
-        <p data-block-id={block.id} data-block-type={block.type || "paragraph"}>
+        <p
+          data-block-id={block.id}
+          data-block-type={block.type || "paragraph"}
+          data-placeholder={placeholder ?? undefined}
+        >
           {content}
         </p>
       );
@@ -436,6 +531,7 @@ export function EditorContent({
   }, [editor]);
 
   const blocks = viewState?.blocks ?? [];
+  const selectedBlockId = viewState?.selection.anchor.blockId ?? "";
 
   return (
     <>
@@ -451,7 +547,14 @@ export function EditorContent({
         suppressContentEditableWarning
       >
         {editor &&
-          blocks.map((block) => <BlockComponent key={block.id} block={block} editor={editor} />)}
+          blocks.map((block) => (
+            <BlockComponent
+              key={block.id}
+              block={block}
+              editor={editor}
+              selectedBlockId={selectedBlockId}
+            />
+          ))}
       </div>
       {/* Screen reader live region for status updates */}
       <div

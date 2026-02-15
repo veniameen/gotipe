@@ -11,11 +11,11 @@ export const BlockToolbarVue = defineComponent({
 
     return () =>
       h("div", { class: "gotipe-block-toolbar", role: "toolbar", "aria-label": "Block actions" }, [
-        h("button", { "aria-label": "Drag to move block", draggable: true }, "⠿"),
+        h("button", { "aria-label": "Drag to move, click to open menu", draggable: true }, "⠿"),
         h(
           "button",
           {
-            "aria-label": "Add block below",
+            "aria-label": "Click to add below. Option-click to add a block above",
             onClick: () => props.editor.chain().insertBlockAfter("paragraph").run(),
           },
           "+",

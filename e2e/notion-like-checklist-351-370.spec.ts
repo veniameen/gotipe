@@ -1,5 +1,12 @@
 import { expect, test, type Page } from "@playwright/test";
-import { openNotionAndReset, setCaretAt, setNotionContent, type BlockInput } from "./helpers/notion-checklist";
+import {
+  enableClipboardForTest,
+  openNotionAndReset,
+  pasteTextWithFallback,
+  setCaretAt,
+  setNotionContent,
+  type BlockInput,
+} from "./helpers/notion-checklist";
 
 type Op = "type_text" | "enter_nonempty" | "enter_empty" | "todo_to_bullet" | "bullet_to_todo" | "click_checkbox" | "caret_empty";
 type Variant = "inline" | "empty" | "paste" | "undo_click";
@@ -96,9 +103,7 @@ async function getSelectionContext(page: Page): Promise<{ blockType: string | nu
 }
 
 async function pasteText(page: Page, text: string) {
-  await page.context().grantPermissions(["clipboard-read", "clipboard-write"]);
-  await page.evaluate(async (value) => navigator.clipboard.writeText(value), text);
-  await page.keyboard.press(process.platform === "darwin" ? "Meta+V" : "Control+V");
+  await pasteTextWithFallback(page, text);
 }
 
 async function setupVariant(page: Page, variant: Variant, mode: "empty" | "nonempty", marker: string, op: Op): Promise<string> {
@@ -132,6 +137,8 @@ async function setupVariant(page: Page, variant: Variant, mode: "empty" | "nonem
     await setNotionContent(page, [todoList("t-paste", [{ id: "t-paste-main", text: "" }])]);
     await clickTodoLeftZone(page, "t-paste-main");
     await syncSelection(page);
+    await setCaretAt(page, "t-paste-main", "start");
+    await syncSelection(page);
     await pasteText(page, `paste-${marker}`);
     await expect.poll(async () => page.evaluate((id) => ((document.querySelector(`[data-block-id="${id}"]`) as HTMLElement | null)?.textContent ?? ""), "t-paste-main")).toContain(`paste-${marker}`);
     if (mode === "empty") {
@@ -162,9 +169,12 @@ async function setupVariant(page: Page, variant: Variant, mode: "empty" | "nonem
 }
 
 test.describe("Notion-like checklist batch NL-351..NL-370", () => {
+  test.describe.configure({ mode: "serial" });
+
   test.beforeEach(async ({ page }) => {
     await openNotionAndReset(page);
     await page.getByRole("radio", { name: "Light theme" }).click();
+    await enableClipboardForTest(page);
   });
 
   for (const c of CASES) {

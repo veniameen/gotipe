@@ -1,5 +1,12 @@
 import { expect, test, type Page } from "@playwright/test";
-import { openNotionAndReset, setCaretAt, setNotionContent, type BlockInput } from "./helpers/notion-checklist";
+import {
+  enableClipboardForTest,
+  openNotionAndReset,
+  pasteTextWithFallback,
+  setCaretAt,
+  setNotionContent,
+  type BlockInput,
+} from "./helpers/notion-checklist";
 
 type Op = "copy_paste" | "cut_undo" | "ime" | "undo_redo10" | "slash_undo_redo";
 type Scope = "code" | "multi";
@@ -121,6 +128,16 @@ async function topLevelOrder(page: Page) {
   return page.evaluate(() => Array.from(document.querySelectorAll("[data-gotipe-content] > [data-block-id]")).map((n) => (n as HTMLElement).getAttribute("data-block-id") ?? ""));
 }
 
+async function childRowCount(page: Page, listId: string) {
+  return page.evaluate((id) => {
+    const list = document.querySelector(`[data-gotipe-content] > [data-block-id="${id}"]`) as HTMLElement | null;
+    if (!list) return 0;
+    return Array.from(list.children).filter(
+      (node): node is HTMLElement => node instanceof HTMLElement && node.hasAttribute("data-block-id"),
+    ).length;
+  }, listId);
+}
+
 async function dragBlockToIndex(page: Page, blockId: string, targetIndex: number) {
   await page.evaluate(({ blockId, targetIndex }) => {
     const root = document.querySelector("[data-gotipe-block-editor]") as HTMLElement | null;
@@ -145,7 +162,7 @@ test.describe("Notion-like checklist batch NL-451..NL-475", () => {
   test.beforeEach(async ({ page }) => {
     await openNotionAndReset(page);
     await page.getByRole("radio", { name: "Light theme" }).click();
-    await page.context().grantPermissions(["clipboard-read", "clipboard-write"]);
+    await enableClipboardForTest(page);
   });
 
   for (const c of OP_CASES) {
@@ -166,16 +183,19 @@ test.describe("Notion-like checklist batch NL-451..NL-475", () => {
         if (c.scope === "code") {
           await selectRange(page, targetId, 0, codeText.length);
           await page.keyboard.press(mod("C"));
-          await page.evaluate(async (text) => { await navigator.clipboard.writeText(text); }, codeText);
         } else {
           await selectAcross(page, "m-a", "m-b");
           const selected = await page.evaluate(() => window.getSelection()?.toString() ?? "");
           await page.keyboard.press(mod("C"));
-          await page.evaluate(async (text) => { await navigator.clipboard.writeText(text); }, selected);
+          await setCaretAt(page, targetId, "end");
+          await syncSelection(page);
+          await pasteTextWithFallback(page, selected);
+          await expect.poll(() => textOf(page, targetId)).toContain(bText);
+          return;
         }
         await setCaretAt(page, targetId, "end");
         await syncSelection(page);
-        await page.keyboard.press(mod("V"));
+        await pasteTextWithFallback(page, codeText);
         await expect.poll(() => textOf(page, targetId)).toContain(c.scope === "code" ? `${codeText}${codeText}` : bText);
         return;
       }
@@ -261,8 +281,17 @@ test.describe("Notion-like checklist batch NL-451..NL-475", () => {
 
       if (c.op === "plus") {
         const before = await page.locator('[data-gotipe-content] > [data-block-id]').count();
-        await page.click('[aria-label="Add block below"]');
-        await expect(page.locator('[data-gotipe-content] > [data-block-id]')).toHaveCount(before + 1);
+        const beforeChildren =
+          c.kind === "bullet" || c.kind === "todo"
+            ? await childRowCount(page, "g-target")
+            : 0;
+        await page.click('[aria-label="Click to add below. Option-click to add a block above"]');
+        if (c.kind === "bullet" || c.kind === "todo") {
+          await expect(page.locator('[data-gotipe-content] > [data-block-id]')).toHaveCount(before);
+          await expect.poll(() => childRowCount(page, "g-target")).toBe(beforeChildren + 1);
+        } else {
+          await expect(page.locator('[data-gotipe-content] > [data-block-id]')).toHaveCount(before + 1);
+        }
         return;
       }
 

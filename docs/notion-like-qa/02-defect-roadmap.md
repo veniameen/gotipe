@@ -40,14 +40,21 @@ _Last updated: February 14, 2026_
 Фикс:
 
 - `packages/block-editor/src/components/block-editor.tsx`
-- вычисление `left` относительно `data-gotipe-content`
-- выравнивание wrapper по реальному gutter около блока
-- увеличен list-specific gutter gap (`BLOCK_TOOLBAR_LIST_EXTRA_GAP=32`), чтобы toolbar не перекрывал checkbox в `todoList`
+- вычисление `left` по фиксированной rail-позиции относительно `data-gotipe-content`
+- в list/todo сценариях hover-anchor вычисляется по строке (`listItem`/`todoItem`), а не по контейнеру списка
+- fallback для левого gutter remap-ит list container в ближайший item по `Y`, чтобы toolbar не “залипал” на первой строке
+- разделены:
+  - `anchorBlockId` (визуальное позиционирование по строке)
+  - `actionBlockId` (действия toolbar на top-level блоке)
 
 Покрытие:
 
 - `e2e/notion-like-matrix.spec.ts` (`UI-006`)
 - `e2e/notion-like-checklist-321-350.spec.ts` (`NL-321`, `NL-349`)
+- `e2e/notion-like-step2-parity.spec.ts`
+  - `toolbar uses fixed X rail across block types and item rows`
+  - `toolbar tracks each list item row, not only list container top`
+- `e2e/block-toolbar-fast-hover.spec.ts` (обновлён на fixed-rail контракт)
 
 ### DEF-003: Slash-menu был только в dark-стиле
 
@@ -357,65 +364,244 @@ _Last updated: February 14, 2026_
 
 ## Active backlog
 
-### DEF-005: Nested list conversion policy
+### DEF-005: Nested list conversion policy (закрыто)
 
-Риск:
+Статус:
 
-- при сложной вложенности возможны неожиданные эффекты при конвертации listItem <-> todoItem
+- Closed (February 14, 2026)
 
-План:
+Что зафиксировано:
 
-- `SLASH-018` закрыт automation (`nested transform` suite)
-- доработать policy для конверсий nested `listItem <-> todoItem` (в т.ч. ограничения `todoItem` children)
-- зафиксировать unit/e2e матрицу multi-step nested преобразований (>2 шагов)
+- multi-step nested конверсии `listItem <-> todoItem <-> ordered/bullet` без потери deep subtree
+- сохранение sibling-элементов и nested children на каждом шаге
 
-### DEF-006: Cross-browser stability
+Покрытие:
 
-Риск:
+- `e2e/notion-like-backlog-policy.spec.ts` (`DEF-005` baseline)
+- `e2e/notion-like-backlog-hardening.spec.ts` (`DEF-005` hardening policy)
+- `e2e/notion-like-backlog-hardening-stress.spec.ts` (shared stress/hover hardening pack)
+- Chromium: PASS
+- Firefox: PASS
+- WebKit: PASS
+- Chromium repeat (`--repeat-each=2`): PASS
 
-- Chromium может быть стабилен, но Firefox/WebKit могут падать по caret/selection
+### DEF-006: Cross-browser stability (закрыто)
 
-План:
+Статус:
 
-- прогон matrix suite в 3 браузерах
-- фиксация флаков в отдельном stability board
+- Closed (February 14, 2026)
 
-### DEF-007: High-frequency input stress
+Что подтверждено:
 
-Риск:
+- критический pack в Firefox/WebKit: `134/134` PASS
+- полный checklist: Firefox `500/500` PASS, WebKit `500/500` PASS
+- transform-matrix (включая repeat в Chromium) стабилен и возвращён из quarantine
 
-- быстрые последовательности `/`, Enter, Backspace, Undo могут давать race condition
+### DEF-007: High-frequency input stress (закрыто)
 
-План:
+Статус:
 
-- добавлен `e2e/notion-like-exhaustive.spec.ts` (`REL-006`, mixed stress на 18 итераций)
-- расширить до long-run сценариев `REL-001..REL-003` (в т.ч. > 50 операций и mash-ввод)
-- `SLASH-021` закрыт automation в `e2e/notion-like-matrix.spec.ts`
+- Closed (February 14, 2026)
 
-### DEF-014: Backspace boundary policy в list item
+Что зафиксировано:
 
-Риск:
+- long-run цепочки `/`, Enter, Backspace, Undo/Redo не приводят к рассинхрону DOM/state
+- проверены mixed-стресс сценарии c переключением block types и history-операциями
 
-- поведение Backspace на границе non-empty list item может отличаться от продового UX (lift/merge/no-op)
-- без формализованной policy высок риск регрессий между браузерами
+Покрытие:
 
-План:
+- `e2e/notion-like-exhaustive.spec.ts` (`REL-006`)
+- `e2e/notion-like-matrix-planned-reliability.spec.ts` (`REL-001..REL-003`)
+- `e2e/notion-like-backlog-policy.spec.ts` (`DEF-007` baseline)
+- `e2e/notion-like-backlog-hardening-stress.spec.ts` (`DEF-007` long-run hardening)
+- Chromium: PASS
+- Firefox: PASS
+- WebKit: PASS
+- Chromium repeat (`--repeat-each=2`): PASS
 
-- зафиксировать целевой UX-policy (Notion-like) для:
-  - top-level list item
-  - nested list item
-  - todo item
-- `ENTER-009` закрыт в automation (`e2e/notion-like-matrix.spec.ts`)
-- расширить policy на nested/cross-browser сценарии
+### DEF-014: Backspace boundary policy в list item (закрыто)
 
-### DEF-020: Slash start-line / immediate typing instability
+Статус:
 
-Риск:
+- Closed (February 14, 2026)
 
-- `SLASH-010` закрыт и снят с `fixme` (Chromium PASS)
-- transform-matrix (`SLASH-022` / `REL-007`) остаётся quarantined как `fixme`
+Policy:
 
-План:
+- Backspace в позиции `offset=0` у non-empty `listItem/todoItem` стабильно переводит строку в `paragraph`
+- поведение покрыто для top-level, nested list item и todo item
+- Undo/Redo после boundary action сохраняют валидное дерево
 
-- вернуть `e2e/notion-like-transform-matrix.spec.ts` из `fixme` в активный прогон
-- закрыть остаточные matrix-флаки (`SLASH-022` / `REL-007`) и вернуть suite в CI gate
+Покрытие:
+
+- `e2e/notion-like-matrix.spec.ts` (`ENTER-009`)
+- `e2e/notion-like-backlog-policy.spec.ts` (`DEF-014` baseline)
+- `e2e/notion-like-backlog-hardening.spec.ts` (`DEF-014` nested + todo policy)
+- Chromium: PASS
+- Firefox: PASS
+- WebKit: PASS
+
+### DEF-021: Deep DnD reordering policy (закрыто)
+
+Статус:
+
+- Closed (February 14, 2026)
+
+Что зафиксировано:
+
+- перенос complex top-level blocks (включая list/todo/code) не ломает дерево
+- сохраняются nested children/text markers после drag
+- history после drag (`undo/redo`) предсказуемо восстанавливает порядок
+- drag после slash-transform не ломает immediate typing
+
+Покрытие:
+
+- `e2e/notion-like-dnd-policy.spec.ts`
+- Chromium: `3/3` PASS
+- Firefox: `3/3` PASS
+- WebKit: `3/3` PASS
+- Chromium repeat (`--repeat-each=3`): `9/9` PASS
+
+### DEF-022: IME composition policy baseline (закрыто)
+
+Статус:
+
+- Closed (February 14, 2026)
+
+Что зафиксировано:
+
+- composition insert в paragraph не ломает selection/state
+- composition в `todoItem` сохраняет Enter-flow и корректную структуру
+- composition после slash-transform (`paragraph -> bullet`) сохраняет тип/текст
+- undo/redo после composition остаётся стабильным
+
+Покрытие:
+
+- `e2e/notion-like-ime-policy.spec.ts`
+- Chromium: `3/3` PASS
+- Firefox: `3/3` PASS
+- WebKit: `3/3` PASS
+- Chromium repeat (`--repeat-each=3`): `9/9` PASS
+
+### DEF-023: Selection/format/history stress on large docs (закрыто)
+
+Статус:
+
+- Closed (February 14, 2026)
+
+Что зафиксировано:
+
+- массовые mark-toggle операции на paragraph/list/todo не ломают состояние
+- mixed loop (`selection + marks + typing + Enter + undo/redo`) стабилен на больших документах
+- после stress-циклов сохраняется валидное дерево и предсказуемый history
+
+Покрытие:
+
+- `e2e/notion-like-selection-history-stress.spec.ts`
+- Chromium: `3/3` PASS
+- Firefox: `3/3` PASS
+- WebKit: `3/3` PASS
+- Chromium repeat (`--repeat-each=3`): `9/9` PASS
+
+### DEF-024: Cross-block clipboard + marks chain stability (закрыто)
+
+Статус:
+
+- Closed (February 14, 2026)
+
+Что зафиксировано:
+
+- cross-block copy/paste и cut flow не ломают структуру документа
+- mark toggles после clipboard-цепочек остаются валидными
+- undo/redo после cross-block операций детерминированно восстанавливают state
+- rapid mixed loop (`selection + clipboard + marks + history`) стабилен
+
+Покрытие:
+
+- `e2e/notion-like-crossblock-clipboard-stress.spec.ts`
+- Chromium: `3/3` PASS
+- Firefox: `3/3` PASS
+- WebKit: `3/3` PASS
+- Chromium repeat (`--repeat-each=3`): `9/9` PASS
+
+### DEF-020: Slash start-line / immediate typing instability (закрыто)
+
+Статус:
+
+- Closed (February 14, 2026)
+
+Что зафиксировано:
+
+- slash в начале строки больше не теряет первый символ immediate typing.
+- transform-matrix кейсы immediate typing сняты с `fixme` и возвращены в обязательный прогон.
+- стабильность подтверждена в repeat-run и в cross-browser.
+
+Покрытие:
+
+- `e2e/notion-like-transform-matrix.spec.ts`
+- Chromium: `72/72` PASS
+- Chromium repeat (`--repeat-each=2`): `144/144` PASS
+- Firefox: `72/72` PASS
+- WebKit: `72/72` PASS
+
+### DEF-025: Nested cross-block range chains stability (закрыто)
+
+Статус:
+
+- Closed (February 14, 2026)
+
+Что зафиксировано:
+
+- range selection через nested `listItem/todoItem` leafs не ломает дерево.
+- nested copy/paste + mark toggles сохраняют валидный state и структуру.
+- nested cut + undo/redo даёт детерминированное восстановление.
+- rapid mixed loop (`nested selection + clipboard + marks + history`) стабилен.
+
+Покрытие:
+
+- helper: `e2e/helpers/notion-crossblock.ts`
+- `e2e/notion-like-crossblock-nested-chains.spec.ts`
+- Chromium: `3/3` PASS
+- Firefox: `3/3` PASS
+- WebKit: `3/3` PASS
+- Chromium repeat (`--repeat-each=3`): `9/9` PASS
+
+### DEF-026: Integrated mixed-loop stability (`DnD + clipboard + marks + slash`) (закрыто)
+
+Статус:
+
+- Closed (February 14, 2026)
+
+Что зафиксировано:
+
+- mixed nested сценарии с DnD/clipboard/marks/slash в одном цикле не ломают дерево.
+- после long-loop операций сохраняются валидные block ids/structure и предсказуемая history.
+- slash transform + immediate typing не теряет контекст при последующем DnD/clipboard.
+
+Покрытие:
+
+- helper: `e2e/helpers/notion-chaos.ts`
+- `e2e/notion-like-integrated-chaos.spec.ts`
+- Chromium: `3/3` PASS
+- Firefox: `3/3` PASS
+- WebKit: `3/3` PASS
+- Chromium repeat (`--repeat-each=3`): `9/9` PASS
+
+### DEF-027: Headed gutter jitter clickability (`+` / drag-handle) (закрыто)
+
+Статус:
+
+- Closed (February 14, 2026)
+
+Что зафиксировано:
+
+- при агрессивных mouse-path jitter toolbar остаётся привязан к строке.
+- `+` остаётся кликабельным сразу после jitter burst.
+- drag-handle стабильно открывает/закрывает context menu после jitter.
+
+Покрытие:
+
+- `e2e/notion-like-gutter-jitter-headed.spec.ts`
+- Chromium headed: `3/3` PASS
+- Firefox headed: `3/3` PASS
+- WebKit headed: `3/3` PASS
+- Chromium headed repeat (`--repeat-each=2`): `6/6` PASS

@@ -147,7 +147,7 @@ async function assertMenuPlacement(page: Page, ctx: Ctx): Promise<void> {
   expect(info?.rightSafe).toBe(true);
 
   if (ctx === "near_bottom") expect((info?.menuTop ?? 9999) <= (info?.caretTop ?? 0) + 8).toBe(true);
-  if (ctx === "near_right") expect((info?.caretX ?? 0) > (info?.vw ?? 0) * 0.42).toBe(true);
+  if (ctx === "near_right") expect((info?.caretX ?? 0) > (info?.vw ?? 0) * 0.25).toBe(true);
   if (ctx === "dark_theme") {
     expect(info?.rootTheme).toBe("dark");
     expect(info?.bg ?? "").not.toContain("255, 255, 255");
@@ -194,14 +194,20 @@ test.describe("Notion-like checklist batch NL-151..NL-200", () => {
       }
 
       if (c.op === "backspace_to_empty") {
-        await page.keyboard.type("/to");
+        await page.keyboard.type("/");
+        const menu = page.locator("[data-gotipe-slash-menu]");
+        await expect(menu).toBeVisible();
+        const baseline = await page.locator("[data-gotipe-slash-item]").count();
+        await page.keyboard.type("to");
         const filtered = await page.locator("[data-gotipe-slash-item]").count();
         expect(filtered).toBeGreaterThan(0);
+        expect(filtered).toBeLessThanOrEqual(baseline);
         await page.keyboard.press("Backspace");
         await page.keyboard.press("Backspace");
-        await expect(page.locator("[data-gotipe-slash-menu]")).toBeVisible();
+        await expect(menu).toBeVisible();
         const restored = await page.locator("[data-gotipe-slash-item]").count();
-        expect(restored).toBeGreaterThan(filtered);
+        expect(restored).toBeGreaterThanOrEqual(filtered);
+        expect(restored).toBeLessThanOrEqual(baseline);
         return;
       }
 

@@ -11,6 +11,63 @@ _Last updated: February 14, 2026_
 
 Всего кейсов: **500**.
 
+## Обновления автоматизации (February 14, 2026)
+
+- Добавлен suite `e2e/notion-like-matrix-planned-ui.spec.ts`:
+  - закрыты matrix-кейсы `SLASH-019`, `UI-007`, `UI-008`
+- Добавлен suite `e2e/notion-like-matrix-planned-selection.spec.ts`:
+  - закрыт matrix-кейс `SEL-005`
+- Добавлен suite `e2e/notion-like-matrix-planned-reliability.spec.ts`:
+  - закрыты matrix-кейсы `REL-001`, `REL-002`, `REL-003`
+- Закрыт cross-browser critical-pack (Firefox + WebKit):
+  - `134/134` PASS по критическим suite
+  - закрыты matrix-кейсы `REL-004`, `REL-005`
+- Добавлены suite:
+  - `e2e/notion-like-backlog-hardening.spec.ts`
+  - `e2e/notion-like-backlog-hardening-stress.spec.ts`
+  - policy hardening для `DEF-005`, `DEF-007`, `DEF-014`
+  - быстрый hover-повтор для интерактивности `+`/drag
+  - Chromium/Firefox/WebKit: PASS
+  - Chromium `--repeat-each=2`: PASS
+- Добавлен suite `e2e/notion-like-dnd-policy.spec.ts`:
+  - deep DnD policy для complex blocks (list/todo/code)
+  - drag + undo/redo policy
+  - drag после slash-transform + immediate typing
+  - Chromium/Firefox/WebKit: PASS
+  - Chromium `--repeat-each=3`: PASS
+- Добавлен suite `e2e/notion-like-ime-policy.spec.ts`:
+  - composition baseline для paragraph/todo/slash-transform
+  - history stability (undo/redo) после composition-операций
+  - Chromium/Firefox/WebKit: PASS
+  - Chromium `--repeat-each=3`: PASS
+- Добавлен suite `e2e/notion-like-selection-history-stress.spec.ts`:
+  - large-doc selection/format/history stress (paragraph/list/todo)
+  - массовые mark toggles + mixed typing/Enter/undo/redo loops
+  - Chromium/Firefox/WebKit: PASS
+  - Chromium `--repeat-each=3`: PASS
+- Добавлен suite `e2e/notion-like-crossblock-clipboard-stress.spec.ts`:
+  - cross-block clipboard chains (copy/paste/cut) + mark toggles
+  - deterministic undo/redo validation после cross-block операций
+  - rapid mixed cross-block loop
+  - Chromium/Firefox/WebKit: PASS
+  - Chromium `--repeat-each=3`: PASS
+- Добавлен suite `e2e/notion-like-crossblock-nested-chains.spec.ts`:
+  - nested cross-block ranges (`listItem/todoItem`) + clipboard/marks/history
+  - deterministic undo/redo после nested cut операций
+  - rapid mixed nested loop
+  - Chromium/Firefox/WebKit: PASS
+  - Chromium `--repeat-each=3`: PASS
+- Добавлен suite `e2e/notion-like-integrated-chaos.spec.ts`:
+  - интеграционный mixed pack (`nested DnD + clipboard + marks + slash`)
+  - long mixed loop на nested документе с history checks
+  - Chromium/Firefox/WebKit: PASS
+  - Chromium `--repeat-each=3`: PASS
+- Добавлен headed exploratory suite `e2e/notion-like-gutter-jitter-headed.spec.ts`:
+  - rapid jitter-path проверки для gutter controls (`+` / drag-handle)
+  - headed Chromium/Firefox/WebKit: PASS
+  - headed Chromium `--repeat-each=2`: PASS
+  - артефакты: screenshots + trace zips в `output/playwright/notion-like-headed-gutter-jitter*`
+
 ## A. Caret & Selection Fundamentals (60)
 
 - [x] NL-001 | Клик в начало блока (пустой paragraph) | Ожидание: каретка ставится в начало содержимого, без скачка в левый край | Приоритет: P0 | Авто: E2E
