@@ -32,7 +32,9 @@ interface ShikiCore {
   codeToTokensWithThemes(
     code: string,
     options: { lang: string; themes: Record<string, string> },
-  ): Array<Array<{ content: string; variants: Record<string, { color?: string; fontStyle?: number }> }>>;
+  ): Array<
+    Array<{ content: string; variants: Record<string, { color?: string; fontStyle?: number }> }>
+  >;
 }
 
 function moduleDefault<T>(mod: unknown): T {
@@ -47,12 +49,13 @@ export function createShikiHighlighter(options: ShikiHighlighterOptions): CodeHi
   const init = () => {
     if (!core) {
       core = (async () => {
-        const [{ createHighlighterCore }, { createJavaScriptRegexEngine }, light, dark] = await Promise.all([
-          import("shiki/core"),
-          import("shiki/engine/javascript"),
-          options.themes.light(),
-          options.themes.dark(),
-        ]);
+        const [{ createHighlighterCore }, { createJavaScriptRegexEngine }, light, dark] =
+          await Promise.all([
+            import("shiki/core"),
+            import("shiki/engine/javascript"),
+            options.themes.light(),
+            options.themes.dark(),
+          ]);
         const lightTheme = moduleDefault<{ name: string }>(light);
         const darkTheme = moduleDefault<{ name: string }>(dark);
         const highlighter = (await createHighlighterCore({

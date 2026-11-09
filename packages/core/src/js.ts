@@ -10,7 +10,10 @@ export * from "./common";
 export function createEditor(options: CreateEditorOptions): Promise<GoTipeEditor> {
   if (options.engine === "wasm") {
     return Promise.reject(
-      new GoTipeError("WASM_INIT_FAILED", "@gotipe/core/js has no WASM engine; import @gotipe/core instead"),
+      new GoTipeError(
+        "WASM_INIT_FAILED",
+        "@gotipe/core/js has no WASM engine; import @gotipe/core instead",
+      ),
     );
   }
   return createEditorWithLoader({ ...options, engine: "js" }, null);

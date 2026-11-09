@@ -84,7 +84,12 @@ export function AiCommandBar({ editor, onSubmit }: AiCommandBarProps) {
   if (!visible) return null;
 
   return (
-    <div className="gotipe-ai-command-bar" role="dialog" aria-label="AI command bar" data-gotipe-ai-command-bar="">
+    <div
+      className="gotipe-ai-command-bar"
+      role="dialog"
+      aria-label="AI command bar"
+      data-gotipe-ai-command-bar=""
+    >
       <span className="gotipe-ai-command-bar-icon" aria-hidden="true">
         ✨
       </span>

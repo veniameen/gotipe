@@ -65,7 +65,10 @@ function renderMarks(text: React.ReactNode, marks: MarkView[], key: string): Rea
         break;
       case "textColor":
         element = (
-          <span key={`${key}-textColor`} style={{ color: (mark.attrs?.color as string) || undefined }}>
+          <span
+            key={`${key}-textColor`}
+            style={{ color: (mark.attrs?.color as string) || undefined }}
+          >
             {element}
           </span>
         );
@@ -82,7 +85,11 @@ function renderMarks(text: React.ReactNode, marks: MarkView[], key: string): Rea
   return element;
 }
 
-function decorationProps(d: { className?: string; attrs?: Record<string, string>; style?: Record<string, string> }) {
+function decorationProps(d: {
+  className?: string;
+  attrs?: Record<string, string>;
+  style?: Record<string, string>;
+}) {
   return {
     ...(d.attrs ?? {}),
     className: d.className,
@@ -98,7 +105,9 @@ export function Widget({ decoration }: { decoration: WidgetDecoration }) {
       contentEditable={false}
       suppressContentEditableWarning
     >
-      {decoration.text ? renderMarks(decoration.text, decoration.marks ?? [], decoration.key) : null}
+      {decoration.text
+        ? renderMarks(decoration.text, decoration.marks ?? [], decoration.key)
+        : null}
     </span>
   );
 }
@@ -141,7 +150,11 @@ export function TextRenderer({ spans, decorations }: TextRendererProps) {
     points.add(pos);
   }
   const ranges = inline
-    .map((d) => ({ d, from: Math.max(0, Math.min(d.from, total)), to: Math.max(0, Math.min(d.to, total)) }))
+    .map((d) => ({
+      d,
+      from: Math.max(0, Math.min(d.from, total)),
+      to: Math.max(0, Math.min(d.to, total)),
+    }))
     .filter((r) => r.to > r.from);
   for (const r of ranges) {
     points.add(r.from);
@@ -191,7 +204,9 @@ export function TextRenderer({ spans, decorations }: TextRendererProps) {
     const start = spanStart(span);
     const text = span.text.slice(a - start, b - start);
     let node = renderMarks(text, span.marks, `s${a}`);
-    const active = ranges.filter((r) => r.from <= a && r.to >= b).sort((x, y) => x.d.key.localeCompare(y.d.key));
+    const active = ranges
+      .filter((r) => r.from <= a && r.to >= b)
+      .sort((x, y) => x.d.key.localeCompare(y.d.key));
     for (const r of active) {
       node = (
         <span key={`d:${r.d.key}:${a}`} {...decorationProps(r.d)} data-gotipe-decoration="">

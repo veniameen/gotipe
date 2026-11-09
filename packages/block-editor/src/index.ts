@@ -39,7 +39,12 @@ export { CalloutView } from "./views/callout-view";
 export { ToggleView } from "./views/toggle-view";
 export { DividerView } from "./views/divider-view";
 // Wiki page editor (Markdown in/out, v6 look, model suggestions)
-export { PageEditor, pageExtensions, MarkdownRawExtension, MarkdownRawMark } from "./page/page-editor";
+export {
+  PageEditor,
+  pageExtensions,
+  MarkdownRawExtension,
+  MarkdownRawMark,
+} from "./page/page-editor";
 export type { PageEditorProps, PageEditorHandle } from "./page/page-editor";
 export { pageBlockCommands, pageSlashGroups, insertPageBlock } from "./page/page-commands";
 export type { PageBlockCommand, PageBlockKind } from "./page/page-commands";
@@ -48,7 +53,13 @@ export { PageIcon } from "./page/icons";
 export type { PageIconName } from "./page/icons";
 export { MarkdownSession } from "./page/markdown-session";
 export type { SerializedPage } from "./page/markdown-session";
-export { columnTypeOf, setColumnType, addRow, addColumn, deleteColumn } from "./page/table-column-menu";
+export {
+  columnTypeOf,
+  setColumnType,
+  addRow,
+  addColumn,
+  deleteColumn,
+} from "./page/table-column-menu";
 export type { ColumnType } from "./page/table-column-menu";
 export { ReviewLayer, acceptAllInOrder } from "./review/review-layer";
 export type { PageReviewProps, ReviewApi, ReviewAction, ReviewResult } from "./review/review-layer";

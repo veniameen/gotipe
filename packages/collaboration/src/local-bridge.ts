@@ -74,8 +74,7 @@ export class LocalCollaborationBridge {
     if (!existing) return;
 
     const isRange =
-      sel.anchor.blockId === sel.head.blockId &&
-      sel.anchor.offset !== sel.head.offset;
+      sel.anchor.blockId === sel.head.blockId && sel.anchor.offset !== sel.head.offset;
 
     this.peers.set(peerId, {
       ...existing,

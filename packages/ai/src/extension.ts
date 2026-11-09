@@ -67,7 +67,8 @@ export const defineAi = defineExtension<AiOptions>({
         const state = editor.getViewState();
         const sel = state.selection;
         // Only generate when cursor is collapsed
-        if (sel.anchor.blockId !== sel.head.blockId || sel.anchor.offset !== sel.head.offset) return;
+        if (sel.anchor.blockId !== sel.head.blockId || sel.anchor.offset !== sel.head.offset)
+          return;
 
         abortController = new AbortController();
         const signal = abortController.signal;

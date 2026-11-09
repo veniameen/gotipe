@@ -44,8 +44,8 @@
   --gt-track-5: #5f7a99;
   --gt-track-6: #0e7f8e;
   /* elevation */
-  --gt-shadow-overlay:
-    0 0 0 0.5px var(--gt-line-strong), 0 2px 6px rgb(27 27 26 / 0.06), 0 12px 32px -8px rgb(27 27 26 / 0.16);
+  --gt-shadow-overlay: 0 0 0 0.5px var(--gt-line-strong), 0 2px 6px rgb(27 27 26 / 0.06), 0 12px
+    32px -8px rgb(27 27 26 / 0.16);
   --gt-shadow-chip: 0 2px 8px rgb(0 0 0 / 0.16);
   /* type */
   --gt-font-ui: "Inter", "Inter Variable", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
@@ -118,8 +118,8 @@
   --gt-comment-soft: rgb(224 169 59 / 0.12);
   --gt-track-5: #8ea6c2;
   --gt-track-6: #3cbfc9;
-  --gt-shadow-overlay:
-    0 0 0 0.5px rgb(255 255 255 / 0.1), 0 2px 6px rgb(0 0 0 / 0.24), 0 12px 32px -8px rgb(0 0 0 / 0.5);
+  --gt-shadow-overlay: 0 0 0 0.5px rgb(255 255 255 / 0.1), 0 2px 6px rgb(0 0 0 / 0.24), 0 12px 32px
+    -8px rgb(0 0 0 / 0.5);
   --gt-shadow-chip: 0 2px 8px rgb(0 0 0 / 0.4);
   color-scheme: dark;
 }
@@ -154,8 +154,8 @@
     --gt-comment-soft: rgb(224 169 59 / 0.12);
     --gt-track-5: #8ea6c2;
     --gt-track-6: #3cbfc9;
-    --gt-shadow-overlay:
-      0 0 0 0.5px rgb(255 255 255 / 0.1), 0 2px 6px rgb(0 0 0 / 0.24), 0 12px 32px -8px rgb(0 0 0 / 0.5);
+    --gt-shadow-overlay: 0 0 0 0.5px rgb(255 255 255 / 0.1), 0 2px 6px rgb(0 0 0 / 0.24), 0 12px
+      32px -8px rgb(0 0 0 / 0.5);
     --gt-shadow-chip: 0 2px 8px rgb(0 0 0 / 0.4);
     color-scheme: dark;
   }
@@ -238,7 +238,9 @@
 .gotipe-page .gotipe-content [data-placeholder]:empty::before {
   content: none;
 }
-.gotipe-page .gotipe-content [data-placeholder]:has(> br[data-gotipe-trailing-break]:only-child)::before {
+.gotipe-page
+  .gotipe-content
+  [data-placeholder]:has(> br[data-gotipe-trailing-break]:only-child)::before {
   content: attr(data-placeholder);
   position: absolute;
   color: var(--gt-text-3);
@@ -676,7 +678,13 @@
   white-space: nowrap;
   cursor: default;
 }
-.gotipe-page :is(.gotipe-slash-menu-item.selected, .gotipe-slash-menu-item:hover, .gotipe-page-menu-item:hover, .gotipe-page-menu-item:focus-visible) {
+.gotipe-page
+  :is(
+    .gotipe-slash-menu-item.selected,
+    .gotipe-slash-menu-item:hover,
+    .gotipe-page-menu-item:hover,
+    .gotipe-page-menu-item:focus-visible
+  ) {
   background: var(--gt-fill-2);
   outline: 0;
 }
@@ -784,7 +792,8 @@
   background: none;
   color: var(--gt-text-2);
   cursor: default;
-  transition: background-color var(--gt-dur-out) var(--gt-ease-out), color var(--gt-dur-out) var(--gt-ease-out);
+  transition: background-color var(--gt-dur-out) var(--gt-ease-out), color var(--gt-dur-out)
+    var(--gt-ease-out);
 }
 .gotipe-page .gotipe-page-icon-btn:hover,
 .gotipe-page .gotipe-page-icon-btn:focus-visible {
@@ -909,7 +918,9 @@
   border-radius: 3px;
   cursor: pointer;
 }
-.gotipe-page .gotipe-sug-block-ins :is(p, li, h1, h2, h3, td, th, blockquote, .gotipe-callout-content, .gotipe-todo-item-content),
+.gotipe-page
+  .gotipe-sug-block-ins
+  :is(p, li, h1, h2, h3, td, th, blockquote, .gotipe-callout-content, .gotipe-todo-item-content),
 .gotipe-page :is(p, li, h1, h2, h3, blockquote, div).gotipe-sug-block-ins {
   text-decoration: underline;
   text-decoration-thickness: 1.5px;

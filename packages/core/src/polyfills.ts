@@ -8,7 +8,10 @@ export function applyPolyfills(): void {
   }
   // crypto.randomUUID requires a secure context (HTTPS/localhost).
   // Polyfill for non-secure contexts (e.g. Docker, HTTP dev servers).
-  if (typeof globalThis.crypto !== "undefined" && typeof globalThis.crypto.randomUUID !== "function") {
+  if (
+    typeof globalThis.crypto !== "undefined" &&
+    typeof globalThis.crypto.randomUUID !== "function"
+  ) {
     globalThis.crypto.randomUUID = () => {
       const bytes = new Uint8Array(16);
       globalThis.crypto.getRandomValues(bytes);

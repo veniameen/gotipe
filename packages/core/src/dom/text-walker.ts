@@ -32,7 +32,6 @@ export function createTextWalker(root: Node): TreeWalker {
 export function documentTextOf(root: Node): string {
   const walker = createTextWalker(root);
   let text = "";
-  let node: Node | null;
-  while ((node = walker.nextNode())) text += node.nodeValue ?? "";
+  for (let node = walker.nextNode(); node; node = walker.nextNode()) text += node.nodeValue ?? "";
   return text;
 }

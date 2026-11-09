@@ -38,11 +38,19 @@ function pickFile(accept: string): Promise<File | null> {
 const IMAGE_TYPES = "image/png,image/jpeg,image/gif,image/webp";
 
 /** Uploads an image/file through the host and sets the block attrs. */
-async function uploadInto(editor: GoTipeEditor, blockId: string, file: File, kind: "image" | "file") {
+async function uploadInto(
+  editor: GoTipeEditor,
+  blockId: string,
+  file: File,
+  kind: "image" | "file",
+) {
   const saved = await saveAssetWithHost(editor, file, kind);
   if (!saved) return;
   if (kind === "image") {
-    editor.chain().setBlockAttrs(blockId, { src: saved.src, alt: saved.name.replace(/\.[^.]+$/, "") }).run();
+    editor
+      .chain()
+      .setBlockAttrs(blockId, { src: saved.src, alt: saved.name.replace(/\.[^.]+$/, "") })
+      .run();
   } else {
     editor.chain().setBlockAttrs(blockId, { url: saved.src, name: saved.name }).run();
   }
@@ -87,11 +95,28 @@ function CalloutView({ block, rootProps, content, isSelected, readOnly }: BlockV
       {...(rootProps as React.HTMLAttributes<HTMLDivElement>)}
       data-block-type="callout"
       data-variant={variant}
-      className={cx(rootProps.className, "gotipe-callout gotipe-page-callout", isAgent && "gotipe-page-callout-agent")}
+      className={cx(
+        rootProps.className,
+        "gotipe-callout gotipe-page-callout",
+        isAgent && "gotipe-page-callout-agent",
+      )}
       role="note"
     >
-      <span className="gotipe-callout-glyph" contentEditable={false} data-gotipe-widget="" aria-hidden="true">
-        <PageIcon name={isAgent ? "agent" : variant === "warning" || variant === "caution" ? "warning" : "callout"} />
+      <span
+        className="gotipe-callout-glyph"
+        contentEditable={false}
+        data-gotipe-widget=""
+        aria-hidden="true"
+      >
+        <PageIcon
+          name={
+            isAgent
+              ? "agent"
+              : variant === "warning" || variant === "caution"
+                ? "warning"
+                : "callout"
+          }
+        />
       </span>
       <div className="gotipe-callout-body">
         {isAgent ? (
@@ -101,7 +126,9 @@ function CalloutView({ block, rootProps, content, isSelected, readOnly }: BlockV
         ) : null}
         <div
           className="gotipe-callout-content"
-          data-placeholder={empty && isSelected && !readOnly ? i18n.t("page.placeholder.callout") : undefined}
+          data-placeholder={
+            empty && isSelected && !readOnly ? i18n.t("page.placeholder.callout") : undefined
+          }
         >
           {content}
         </div>
@@ -131,7 +158,11 @@ function ImagePageView({ block, editor, rootProps, readOnly, phantom }: BlockVie
       <div
         {...(rootProps as React.HTMLAttributes<HTMLDivElement>)}
         data-block-type="image"
-        className={cx(rootProps.className, "gotipe-page-media gotipe-page-image-empty", dragOver && "is-drag")}
+        className={cx(
+          rootProps.className,
+          "gotipe-page-media gotipe-page-image-empty",
+          dragOver && "is-drag",
+        )}
         contentEditable={false}
         onMouseDown={(e) => e.preventDefault()}
         onClick={() => void choose()}
@@ -257,7 +288,13 @@ function makeCodeView(highlight: CodeHighlighter | undefined) {
           </span>
         ) : null}
         <pre>
-          <code>{tokens ? <HighlightedLines lines={tokens} /> : code || <br data-gotipe-trailing-break="" />}</code>
+          <code>
+            {tokens ? (
+              <HighlightedLines lines={tokens} />
+            ) : (
+              code || <br data-gotipe-trailing-break="" />
+            )}
+          </code>
         </pre>
       </div>
     );
@@ -321,7 +358,10 @@ function CellView({ block, editor, rootProps, content, readOnly, phantom }: Bloc
       data-block-type={block.type}
       contentEditable={editable}
       suppressContentEditableWarning
-      style={{ ...((rootProps.style as React.CSSProperties | undefined) ?? {}), textAlign: align ?? undefined }}
+      style={{
+        ...((rootProps.style as React.CSSProperties | undefined) ?? {}),
+        textAlign: align ?? undefined,
+      }}
       data-align={align ?? undefined}
       className={cx(rootProps.className)}
     >
@@ -335,7 +375,15 @@ function CellView({ block, editor, rootProps, content, readOnly, phantom }: Bloc
 
 // ---------------------------------------------------------------- todo item (checkbox follows read-only)
 
-function TodoItemView({ block, editor, rootProps, content, isSelected, readOnly, phantom }: BlockViewProps) {
+function TodoItemView({
+  block,
+  editor,
+  rootProps,
+  content,
+  isSelected,
+  readOnly,
+  phantom,
+}: BlockViewProps) {
   const i18n = useGoTipeI18n();
   const checked = !!block.attrs.checked;
   const empty = textOf(block).length === 0;
@@ -363,7 +411,9 @@ function TodoItemView({ block, editor, rootProps, content, isSelected, readOnly,
       <span
         className="gotipe-todo-item-content"
         data-gotipe-todo-content=""
-        data-placeholder={empty && isSelected && !readOnly ? i18n.t("page.placeholder.todo") : undefined}
+        data-placeholder={
+          empty && isSelected && !readOnly ? i18n.t("page.placeholder.todo") : undefined
+        }
       >
         {content}
       </span>

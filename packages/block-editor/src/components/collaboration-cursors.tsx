@@ -37,7 +37,7 @@ function getPositionInBlock(
   let accumulated = 0;
   let textNode: Node | null;
 
-  while ((textNode = walker.nextNode())) {
+  for (textNode = walker.nextNode(); textNode; textNode = walker.nextNode()) {
     const len = (textNode.textContent ?? "").length;
     if (accumulated + len >= offset) {
       const localOffset = Math.min(offset - accumulated, len);
@@ -85,7 +85,7 @@ function getSelectionRects(
   let endOffset = 0;
   let textNode: Node | null;
 
-  while ((textNode = walker.nextNode())) {
+  for (textNode = walker.nextNode(); textNode; textNode = walker.nextNode()) {
     const len = (textNode.textContent ?? "").length;
     if (!startNode && accumulated + len >= from) {
       startNode = textNode;

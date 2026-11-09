@@ -52,10 +52,8 @@ export const lightTheme: ThemeConfig = {
       "0px 16px 48px 0px rgba(17,24,39,0.04), 0px 12px 24px 0px rgba(17,24,39,0.04), 0px 6px 8px 0px rgba(17,24,39,0.02), 0px 2px 3px 0px rgba(17,24,39,0.02)",
 
     // Typography — Inter first
-    "--gt-font-body":
-      '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-    "--gt-font-mono":
-      '"SF Mono", "Fira Code", "JetBrains Mono", Consolas, monospace',
+    "--gt-font-body": '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+    "--gt-font-mono": '"SF Mono", "Fira Code", "JetBrains Mono", Consolas, monospace',
     "--gt-font-heading": "var(--gt-font-body)",
 
     // Text size scale
@@ -204,10 +202,8 @@ export const darkTheme: ThemeConfig = {
       "0px 16px 48px 0px rgba(0,0,0,0.16), 0px 12px 24px 0px rgba(0,0,0,0.12), 0px 6px 8px 0px rgba(0,0,0,0.08), 0px 2px 3px 0px rgba(0,0,0,0.06)",
 
     // Typography — Inter first
-    "--gt-font-body":
-      '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-    "--gt-font-mono":
-      '"SF Mono", "Fira Code", "JetBrains Mono", Consolas, monospace',
+    "--gt-font-body": '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+    "--gt-font-mono": '"SF Mono", "Fira Code", "JetBrains Mono", Consolas, monospace',
     "--gt-font-heading": "var(--gt-font-body)",
 
     // Text size scale

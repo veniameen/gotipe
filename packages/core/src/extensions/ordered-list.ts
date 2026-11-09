@@ -24,11 +24,14 @@ export const OrderedList = defineExtension({
         const state = editor.getViewState();
         const blockId = state.selection.anchor.blockId;
         const triggerLen = match[0]!.length;
-        const start = parseInt(match[1]!, 10) || 1;
+        const start = Number.parseInt(match[1]!, 10) || 1;
         editor.dispatch({
           steps: [{ type: "deleteText", blockId, from: 0, to: triggerLen }],
         });
-        editor.chain().toggleOrderedList(start !== 1 ? { start } : undefined).run();
+        editor
+          .chain()
+          .toggleOrderedList(start !== 1 ? { start } : undefined)
+          .run();
       },
     },
   ],

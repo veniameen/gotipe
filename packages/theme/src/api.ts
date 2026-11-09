@@ -1,5 +1,5 @@
-import type { IconSet, ThemeConfig } from "./types";
 import { darkTheme, lightTheme } from "./presets";
+import type { IconSet, ThemeConfig } from "./types";
 
 export type ThemeMode = "light" | "dark" | "system";
 
@@ -47,10 +47,7 @@ function notifyListeners(resolved: "light" | "dark") {
   }
 }
 
-export function setTheme(
-  mode: ThemeMode,
-  root?: HTMLElement,
-): void {
+export function setTheme(mode: ThemeMode, root?: HTMLElement): void {
   const target = root ?? document.documentElement;
   currentMode = mode;
 

@@ -1,4 +1,4 @@
-import { GoTipeError, type GoTipeEditor } from "@gotipe/core";
+import { type GoTipeEditor, GoTipeError } from "@gotipe/core";
 import { useEffect, useState } from "react";
 
 const SCHEME = /^[a-zA-Z][a-zA-Z0-9+.-]*:/;
@@ -8,7 +8,10 @@ const SCHEME = /^[a-zA-Z][a-zA-Z0-9+.-]*:/;
  * (e.g. `assets/x.png` → `data:image/png;base64,…`). Absolute http(s), data:
  * and blob: URLs are shown as they are when the host has no resolver.
  */
-export function useResolvedAsset(editor: GoTipeEditor, src: string): {
+export function useResolvedAsset(
+  editor: GoTipeEditor,
+  src: string,
+): {
   url: string | null;
   failed: boolean;
 } {
@@ -40,7 +43,9 @@ export function useResolvedAsset(editor: GoTipeEditor, src: string): {
         if (cancelled) return;
         setState({ src, url: null, failed: true });
         editor.reportError(
-          new GoTipeError("ASSET_RESOLVE_FAILED", e instanceof Error ? e.message : String(e), { src }),
+          new GoTipeError("ASSET_RESOLVE_FAILED", e instanceof Error ? e.message : String(e), {
+            src,
+          }),
         );
       });
     return () => {
@@ -48,7 +53,9 @@ export function useResolvedAsset(editor: GoTipeEditor, src: string): {
     };
   }, [editor, resolver, src]);
 
-  return state.src === src ? { url: state.url, failed: state.failed } : { url: null, failed: false };
+  return state.src === src
+    ? { url: state.url, failed: state.failed }
+    : { url: null, failed: false };
 }
 
 /**

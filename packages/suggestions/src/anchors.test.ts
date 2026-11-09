@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { anchorAt, anchorWindowsOverlap, applyAnchoredEdits, findAnchor, locateEdits } from "./anchors";
+import {
+  anchorAt,
+  anchorWindowsOverlap,
+  applyAnchoredEdits,
+  findAnchor,
+  locateEdits,
+} from "./anchors";
 
 const PAGE = "# Выкат\n\n- [ ] Снять дамп\n- [ ] Миграция 0042\n\nЦифры — из базы.\n";
 
@@ -10,12 +16,21 @@ describe("findAnchor", () => {
   });
 
   it("reports zero and two matches", () => {
-    expect(findAnchor(PAGE, { before: "", quote: "нет такого", after: "" })).toEqual({ ok: false, reason: "missing" });
-    expect(findAnchor(PAGE, { before: "- [ ] ", quote: "", after: "" })).toEqual({ ok: false, reason: "ambiguous" });
+    expect(findAnchor(PAGE, { before: "", quote: "нет такого", after: "" })).toEqual({
+      ok: false,
+      reason: "missing",
+    });
+    expect(findAnchor(PAGE, { before: "- [ ] ", quote: "", after: "" })).toEqual({
+      ok: false,
+      reason: "ambiguous",
+    });
   });
 
   it("counts overlapping matches as ambiguous", () => {
-    expect(findAnchor("aaa", { before: "", quote: "aa", after: "" })).toEqual({ ok: false, reason: "ambiguous" });
+    expect(findAnchor("aaa", { before: "", quote: "aa", after: "" })).toEqual({
+      ok: false,
+      reason: "ambiguous",
+    });
   });
 
   it("matches LF anchors in CRLF text and maps offsets back", () => {
@@ -26,8 +41,15 @@ describe("findAnchor", () => {
   });
 
   it("an empty needle matches only an empty text", () => {
-    expect(findAnchor("", { before: "", quote: "", after: "" })).toEqual({ ok: true, start: 0, end: 0 });
-    expect(findAnchor("x", { before: "", quote: "", after: "" })).toEqual({ ok: false, reason: "ambiguous" });
+    expect(findAnchor("", { before: "", quote: "", after: "" })).toEqual({
+      ok: true,
+      start: 0,
+      end: 0,
+    });
+    expect(findAnchor("x", { before: "", quote: "", after: "" })).toEqual({
+      ok: false,
+      reason: "ambiguous",
+    });
   });
 });
 
@@ -42,7 +64,9 @@ describe("applyAnchoredEdits", () => {
       ok: true,
       text: "# Выкат статусов\n\n- [ ] Снять дамп\n- [ ] Миграция 0042\n- [ ] Индекс по status_id\n\nЦифры — только из базы стенда.\n",
     });
-    const del = applyAnchoredEdits(PAGE, [{ before: "\n\n", quote: "Цифры — из базы.\n", after: "", text: "" }]);
+    const del = applyAnchoredEdits(PAGE, [
+      { before: "\n\n", quote: "Цифры — из базы.\n", after: "", text: "" },
+    ]);
     expect(del).toEqual({ ok: true, text: "# Выкат\n\n- [ ] Снять дамп\n- [ ] Миграция 0042\n\n" });
   });
 
@@ -73,8 +97,12 @@ describe("applyAnchoredEdits", () => {
 describe("helpers", () => {
   it("anchorWindowsOverlap detects an edit inside another's window", () => {
     const edit = { before: "Снять ", quote: "дамп", after: "", text: "снимок" };
-    expect(anchorWindowsOverlap(PAGE, edit, { before: "- [ ] Снять ", quote: "", after: "" })).toBe(false);
-    expect(anchorWindowsOverlap(PAGE, edit, { before: "- [ ] ", quote: "Снять", after: " дамп" })).toBe(true);
+    expect(anchorWindowsOverlap(PAGE, edit, { before: "- [ ] Снять ", quote: "", after: "" })).toBe(
+      false,
+    );
+    expect(
+      anchorWindowsOverlap(PAGE, edit, { before: "- [ ] ", quote: "Снять", after: " дамп" }),
+    ).toBe(true);
   });
 
   it("anchorAt grows the context until the anchor is unique", () => {

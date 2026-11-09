@@ -15,5 +15,10 @@ export { GoTipeI18nProvider, useGoTipeI18n } from "./i18n-context";
 export { TextRenderer, Widget } from "./text-renderer";
 export type { TextRendererProps } from "./text-renderer";
 export { usePhantom } from "./editor-content";
-export type { BlockViewProps, BlockViewComponent, BlockViews, PlaceholderFn } from "./editor-content";
+export type {
+  BlockViewProps,
+  BlockViewComponent,
+  BlockViews,
+  PlaceholderFn,
+} from "./editor-content";
 export { useResolvedAsset, saveAssetWithHost, isAbsoluteUrl } from "./host-assets";

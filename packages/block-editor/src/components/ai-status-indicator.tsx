@@ -31,9 +31,7 @@ export function AiStatusIndicator({ editor }: AiStatusIndicatorProps) {
       aria-label={status.label ?? "Using AI toolkit..."}
     >
       <span className="gotipe-ai-status-spinner" aria-hidden="true" />
-      <span className="gotipe-ai-status-label">
-        {status.label ?? "Using AI toolkit..."}
-      </span>
+      <span className="gotipe-ai-status-label">{status.label ?? "Using AI toolkit..."}</span>
     </div>
   );
 }

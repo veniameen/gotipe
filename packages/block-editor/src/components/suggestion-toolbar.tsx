@@ -84,27 +84,29 @@ export function SuggestionToolbar({
 
       <div className="gotipe-bubble-menu-separator" role="separator" />
 
-      <button
-        type="button"
-        onClick={handleAcceptCurrent}
-        aria-label="Accept current suggestion"
-      >
+      <button type="button" onClick={handleAcceptCurrent} aria-label="Accept current suggestion">
         ✓
       </button>
-      <button
-        type="button"
-        onClick={handleRejectCurrent}
-        aria-label="Reject current suggestion"
-      >
+      <button type="button" onClick={handleRejectCurrent} aria-label="Reject current suggestion">
         ✗
       </button>
 
       <div className="gotipe-bubble-menu-separator" role="separator" />
 
-      <button type="button" onClick={onAcceptAll} aria-label="Accept all suggestions" data-action="accept-all">
+      <button
+        type="button"
+        onClick={onAcceptAll}
+        aria-label="Accept all suggestions"
+        data-action="accept-all"
+      >
         Accept All
       </button>
-      <button type="button" onClick={onRejectAll} aria-label="Reject all suggestions" data-action="reject-all">
+      <button
+        type="button"
+        onClick={onRejectAll}
+        aria-label="Reject all suggestions"
+        data-action="reject-all"
+      >
         Reject All
       </button>
     </div>

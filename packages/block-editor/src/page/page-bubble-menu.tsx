@@ -3,11 +3,31 @@ import { BubbleMenu, useGoTipeI18n } from "@gotipe/react";
 import { useEffect, useRef, useState } from "react";
 import { PageIcon, type PageIconName } from "./icons";
 
-const MARKS: { mark: string; icon: PageIconName; label: "toolbar.bold" | "toolbar.italic" | "toolbar.strikethrough" | "toolbar.code"; run: (e: GoTipeEditor) => void }[] = [
+const MARKS: {
+  mark: string;
+  icon: PageIconName;
+  label: "toolbar.bold" | "toolbar.italic" | "toolbar.strikethrough" | "toolbar.code";
+  run: (e: GoTipeEditor) => void;
+}[] = [
   { mark: "bold", icon: "bold", label: "toolbar.bold", run: (e) => e.chain().toggleBold().run() },
-  { mark: "italic", icon: "italic", label: "toolbar.italic", run: (e) => e.chain().toggleItalic().run() },
-  { mark: "strikethrough", icon: "strike", label: "toolbar.strikethrough", run: (e) => e.chain().toggleStrikethrough().run() },
-  { mark: "code", icon: "inlineCode", label: "toolbar.code", run: (e) => e.chain().toggleCode().run() },
+  {
+    mark: "italic",
+    icon: "italic",
+    label: "toolbar.italic",
+    run: (e) => e.chain().toggleItalic().run(),
+  },
+  {
+    mark: "strikethrough",
+    icon: "strike",
+    label: "toolbar.strikethrough",
+    run: (e) => e.chain().toggleStrikethrough().run(),
+  },
+  {
+    mark: "code",
+    icon: "inlineCode",
+    label: "toolbar.code",
+    run: (e) => e.chain().toggleCode().run(),
+  },
 ];
 
 /**
@@ -51,7 +71,8 @@ export function PageBubbleMenu({ editor }: { editor: GoTipeEditor }) {
       shouldShow={({ state }) => {
         if (!editor.isEditable) return false;
         const sel = state.selection;
-        if (sel.anchor.blockId === sel.head.blockId && sel.anchor.offset === sel.head.offset) return false;
+        if (sel.anchor.blockId === sel.head.blockId && sel.anchor.offset === sel.head.offset)
+          return false;
         const block = editor.getCurrentBlock();
         return !block || (block.type !== "codeBlock" && block.type !== "markdownRaw");
       }}

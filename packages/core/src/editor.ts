@@ -1,7 +1,7 @@
 import { ChainableCommands } from "./chain";
 import { ClipboardHandler } from "./clipboard/handler";
+import { createTextWalker } from "./dom/text-walker";
 import { GoTipeError } from "./error";
-import { createTextWalker, documentTextOf } from "./dom/text-walker";
 import { applyPolyfills } from "./polyfills";
 import type { EditorEvents } from "./types/events";
 import type { Extension, MarkSpec, NodeSpec, SlashCommandDef } from "./types/extension";
@@ -145,10 +145,12 @@ function toWasmBlock(block: Record<string, unknown>): Record<string, unknown> {
   } else if (Array.isArray(content)) {
     wasmContent = {
       type: "RichText",
-      value: content.map((span: { text: string; marks?: { type: string; attrs?: Record<string, unknown> }[] }) => ({
-        text: span.text,
-        marks: (span.marks ?? []).map(toWasmMark),
-      })),
+      value: content.map(
+        (span: { text: string; marks?: { type: string; attrs?: Record<string, unknown> }[] }) => ({
+          text: span.text,
+          marks: (span.marks ?? []).map(toWasmMark),
+        }),
+      ),
     };
   } else {
     wasmContent = content;
@@ -168,7 +170,9 @@ function toWasmBlock(block: Record<string, unknown>): Record<string, unknown> {
 }
 
 function toWasmDoc(doc: Record<string, unknown>): Record<string, unknown> {
-  const blocks = Array.isArray(doc.blocks) ? (doc.blocks as Record<string, unknown>[]).map(toWasmBlock) : [];
+  const blocks = Array.isArray(doc.blocks)
+    ? (doc.blocks as Record<string, unknown>[]).map(toWasmBlock)
+    : [];
   return { version: doc.version ?? 1, blocks };
 }
 
@@ -189,12 +193,15 @@ function fromWasmBlock(block: Record<string, unknown>): Record<string, unknown> 
     content = rawContent.value;
   } else if (rawContent.type === "RichText") {
     content = Array.isArray(rawContent.value)
-      ? (rawContent.value as { text: string; marks?: { mark_type: string; attrs?: Record<string, unknown> }[] }[]).map(
-          (span) => ({
-            text: span.text,
-            marks: (span.marks ?? []).map(fromWasmMark),
-          }),
-        )
+      ? (
+          rawContent.value as {
+            text: string;
+            marks?: { mark_type: string; attrs?: Record<string, unknown> }[];
+          }[]
+        ).map((span) => ({
+          text: span.text,
+          marks: (span.marks ?? []).map(fromWasmMark),
+        }))
       : [];
   } else {
     content = rawContent;
@@ -214,13 +221,18 @@ function fromWasmBlock(block: Record<string, unknown>): Record<string, unknown> 
 }
 
 function fromWasmDoc(doc: Record<string, unknown>): Record<string, unknown> {
-  const blocks = Array.isArray(doc.blocks) ? (doc.blocks as Record<string, unknown>[]).map(fromWasmBlock) : [];
+  const blocks = Array.isArray(doc.blocks)
+    ? (doc.blocks as Record<string, unknown>[]).map(fromWasmBlock)
+    : [];
   return { version: doc.version ?? 1, blocks };
 }
 
 // ---- Marks position helpers ----
 
-function findBlockInTree(blocks: ViewState["blocks"], blockId: string): ViewState["blocks"][0] | null {
+function findBlockInTree(
+  blocks: ViewState["blocks"],
+  blockId: string,
+): ViewState["blocks"][0] | null {
   for (const block of blocks) {
     if (block.id === blockId) return block;
     if (block.children.length > 0) {
@@ -265,7 +277,7 @@ function getMarksAt(
 /** Check if a block has empty/no text content */
 function isBlockEmpty(block: ViewState["blocks"][0]): boolean {
   const normalizedLength = (text: string): number =>
-    text.replace(/[\s\u200B-\u200D\uFEFF]/g, "").length;
+    text.replace(/\s|\u200B|\u200C|\u200D|\uFEFF/g, "").length;
 
   if (block.content === null) return true;
   if (Array.isArray(block.content)) {
@@ -305,10 +317,7 @@ function findBlockLocation(
 }
 
 /** Find the next sibling after a block (split result) in the tree */
-function findBlockAndSibling(
-  blocks: ViewState["blocks"],
-  blockId: string,
-): { id: string } | null {
+function findBlockAndSibling(blocks: ViewState["blocks"], blockId: string): { id: string } | null {
   for (let i = 0; i < blocks.length; i++) {
     if (blocks[i]!.id === blockId) {
       const next = blocks[i + 1];
@@ -339,9 +348,7 @@ function findBlockAndPreviousSibling(
 const LIST_CONTAINER_TYPES = new Set(["bulletList", "orderedList", "todoList"]);
 const ENTER_EXITS_TO_PARAGRAPH_TYPES = new Set(["heading", "blockquote", "callout"]);
 
-function findFirstSelectableBlock(
-  blocks: ViewState["blocks"],
-): ViewState["blocks"][number] | null {
+function findFirstSelectableBlock(blocks: ViewState["blocks"]): ViewState["blocks"][number] | null {
   for (const block of blocks) {
     if (LIST_CONTAINER_TYPES.has(block.type) && block.children.length > 0) {
       const nested = findFirstSelectableBlock(block.children);
@@ -412,7 +419,9 @@ function toWasmStep(step: Record<string, unknown>): Record<string, unknown> {
       };
     }
     case "removeMark":
-      return { [tag]: { block_id: step.blockId, from: step.from, to: step.to, mark_type: step.markType } };
+      return {
+        [tag]: { block_id: step.blockId, from: step.from, to: step.to, mark_type: step.markType },
+      };
     case "splitBlock":
       return { [tag]: { block_id: step.blockId, offset: step.offset } };
     case "mergeBlocks":
@@ -425,7 +434,9 @@ function toWasmStep(step: Record<string, unknown>): Record<string, unknown> {
 }
 
 function toWasmTransaction(tr: Record<string, unknown>): Record<string, unknown> {
-  const steps = Array.isArray(tr.steps) ? (tr.steps as Record<string, unknown>[]).map(toWasmStep) : [];
+  const steps = Array.isArray(tr.steps)
+    ? (tr.steps as Record<string, unknown>[]).map(toWasmStep)
+    : [];
   return { steps, selection: tr.selection ?? null, metadata: tr.metadata ?? {} };
 }
 
@@ -452,7 +463,10 @@ function blockTextLength(block: ViewState["blocks"][number]): number {
   return 0;
 }
 
-function flattenBlocks(blocks: ViewState["blocks"], out: ViewState["blocks"] = []): ViewState["blocks"] {
+function flattenBlocks(
+  blocks: ViewState["blocks"],
+  out: ViewState["blocks"] = [],
+): ViewState["blocks"] {
   for (const block of blocks) {
     out.push(block);
     if (block.children.length > 0) flattenBlocks(block.children, out);
@@ -466,7 +480,10 @@ function flattenBlocks(blocks: ViewState["blocks"], out: ViewState["blocks"] = [
  * document order; offsets are clamped to the new text.
  */
 function mapSelectionToDocument(
-  selection: { anchor: { blockId: string; offset: number }; head: { blockId: string; offset: number } },
+  selection: {
+    anchor: { blockId: string; offset: number };
+    head: { blockId: string; offset: number };
+  },
   previous: ViewState["blocks"],
   next: ViewState["blocks"],
 ): {
@@ -495,7 +512,7 @@ function mapSelectionToDocument(
 
 function resolveExtensions(extensions: (Extension | Extension[])[]): Extension[] {
   // Flatten nested arrays so presets (which are Extension[]) work with [DefaultPreset, MyExt]
-  const flat: Extension[] = extensions.flat(Infinity) as Extension[];
+  const flat: Extension[] = extensions.flat(Number.POSITIVE_INFINITY) as Extension[];
 
   const resolved: Extension[] = [];
   const visited = new Set<string>();
@@ -537,9 +554,10 @@ function resolveExtensions(extensions: (Extension | Extension[])[]): Extension[]
   return resolved;
 }
 
-function buildSchema(
-  extensions: Extension[],
-): { nodes: Record<string, Omit<NodeSpec, "name">>; marks: Record<string, Omit<MarkSpec, "name">> } {
+function buildSchema(extensions: Extension[]): {
+  nodes: Record<string, Omit<NodeSpec, "name">>;
+  marks: Record<string, Omit<MarkSpec, "name">>;
+} {
   const nodes: Record<string, Omit<NodeSpec, "name">> = {};
   const marks: Record<string, Omit<MarkSpec, "name">> = {};
 
@@ -610,7 +628,10 @@ export async function createEditorWithLoader(
     bridge.create(schemaJson, JSON.stringify(wasmContent));
   } catch (e) {
     if (engineMode === "wasm") {
-      throw new GoTipeError("WASM_INIT_FAILED", e instanceof Error ? e.message : "WASM create failed");
+      throw new GoTipeError(
+        "WASM_INIT_FAILED",
+        e instanceof Error ? e.message : "WASM create failed",
+      );
     }
     console.warn("GoTipe WASM create failed, using JS fallback:", e);
     bridge.forceFallback(JSON.stringify(wasmContent));
@@ -661,7 +682,9 @@ export async function createEditorWithLoader(
   let lastParsed: Record<string, unknown> | null = null;
   const blockKeys = new WeakMap<object, string>();
 
-  const withEmptyDecorations = (block: ViewState["blocks"][number]): ViewState["blocks"][number] => {
+  const withEmptyDecorations = (
+    block: ViewState["blocks"][number],
+  ): ViewState["blocks"][number] => {
     block.decorations = EMPTY_DECORATIONS;
     for (const child of block.children) withEmptyDecorations(child);
     return block;
@@ -801,7 +824,9 @@ export async function createEditorWithLoader(
           host.openLink(safe, info);
         } catch (e) {
           this.reportError(
-            new GoTipeError("LINK_OPEN_FAILED", e instanceof Error ? e.message : String(e), { href: safe }),
+            new GoTipeError("LINK_OPEN_FAILED", e instanceof Error ? e.message : String(e), {
+              href: safe,
+            }),
           );
         }
         return;
@@ -819,14 +844,6 @@ export async function createEditorWithLoader(
         anchor: { blockId: "", offset: 0 },
         head: { blockId: "", offset: 0 },
       };
-      const defaultToolbar = {
-        activeMarks: [] as string[],
-        activeBlockType: "paragraph",
-        activeBlockAttrs: {} as Record<string, unknown>,
-        canUndo: false,
-        canRedo: false,
-      };
-
       let parsed: Record<string, unknown> | null = null;
       try {
         const json = bridge.getState();
@@ -852,12 +869,13 @@ export async function createEditorWithLoader(
       // Prefer tracked DOM selection over WASM selection
       const sel = currentSelection.anchor.blockId
         ? currentSelection
-        : (parsed?.selection as ViewState["selection"]) ?? defaultSelection;
+        : ((parsed?.selection as ViewState["selection"]) ?? defaultSelection);
 
       // Compute toolbar state from JS side (WASM doesn't track toolbar)
       const activeBlockId = sel.anchor.blockId;
       const currentBlock = activeBlockId ? findBlockInTree(blocks, activeBlockId) : null;
-      const isCollapsed = sel.anchor.blockId === sel.head.blockId && sel.anchor.offset === sel.head.offset;
+      const isCollapsed =
+        sel.anchor.blockId === sel.head.blockId && sel.anchor.offset === sel.head.offset;
 
       let activeMarks: string[];
       if (storedMarks !== null) {
@@ -865,7 +883,12 @@ export async function createEditorWithLoader(
       } else if (activeBlockId) {
         activeMarks = isCollapsed
           ? getMarksAt(blocks, activeBlockId, sel.anchor.offset).map((m) => m.type)
-          : getMarksAt(blocks, activeBlockId, Math.min(sel.anchor.offset, sel.head.offset), false).map((m) => m.type);
+          : getMarksAt(
+              blocks,
+              activeBlockId,
+              Math.min(sel.anchor.offset, sel.head.offset),
+              false,
+            ).map((m) => m.type);
       } else {
         activeMarks = [];
       }
@@ -1014,7 +1037,11 @@ export async function createEditorWithLoader(
             const mark = step.mark as { type: string; attrs?: Record<string, unknown> };
             const currentMarks =
               storedMarks ??
-              getMarksAt(state.blocks, currentSelection.anchor.blockId, currentSelection.anchor.offset);
+              getMarksAt(
+                state.blocks,
+                currentSelection.anchor.blockId,
+                currentSelection.anchor.offset,
+              );
             storedMarks = [
               ...currentMarks.filter((m) => m.type !== mark.type),
               { type: mark.type, attrs: mark.attrs ?? {} },
@@ -1023,7 +1050,11 @@ export async function createEditorWithLoader(
             const markType = step.markType as string;
             const currentMarks =
               storedMarks ??
-              getMarksAt(state.blocks, currentSelection.anchor.blockId, currentSelection.anchor.offset);
+              getMarksAt(
+                state.blocks,
+                currentSelection.anchor.blockId,
+                currentSelection.anchor.offset,
+              );
             storedMarks = currentMarks.filter((m) => m.type !== markType);
           }
         }
@@ -1091,9 +1122,19 @@ export async function createEditorWithLoader(
     setContent(content: string | object, setOptions?: SetContentOptions): void {
       const json = typeof content === "string" ? { blocks: [], version: 1 } : content;
       const wasmJson = toWasmDoc(json as Record<string, unknown>);
-      const previousState = setOptions?.addToHistory || setOptions?.preserveSelection
-        ? bridge.getState()
-        : null;
+      const previousState =
+        setOptions?.addToHistory || setOptions?.preserveSelection ? bridge.getState() : null;
+      // The DOM may be ahead of the model (selectionchange is async): sync first.
+      if (setOptions?.preserveSelection) {
+        const domSelection = readSelectionFromDOM?.();
+        if (domSelection?.anchor.blockId) {
+          currentSelection = {
+            type: "text",
+            anchor: { ...domSelection.anchor },
+            head: { ...domSelection.head },
+          };
+        }
+      }
       const previousSelection = currentSelection;
       const hadFocus =
         !!mountedElement &&
@@ -1117,7 +1158,8 @@ export async function createEditorWithLoader(
           setOptions?.preserveSelection && previousState && previousSelection.anchor.blockId
             ? mapSelectionToDocument(
                 previousSelection,
-                fromWasmDoc(JSON.parse(previousState) as Record<string, unknown>).blocks as ViewState["blocks"],
+                fromWasmDoc(JSON.parse(previousState) as Record<string, unknown>)
+                  .blocks as ViewState["blocks"],
                 blocks,
               )
             : null;
@@ -1125,16 +1167,16 @@ export async function createEditorWithLoader(
         currentSelection = mapped
           ? mapped
           : first
-          ? {
-              type: "text",
-              anchor: { blockId: first.id, offset: 0 },
-              head: { blockId: first.id, offset: 0 },
-            }
-          : {
-              type: "text",
-              anchor: { blockId: "", offset: 0 },
-              head: { blockId: "", offset: 0 },
-            };
+            ? {
+                type: "text",
+                anchor: { blockId: first.id, offset: 0 },
+                head: { blockId: first.id, offset: 0 },
+              }
+            : {
+                type: "text",
+                anchor: { blockId: "", offset: 0 },
+                head: { blockId: "", offset: 0 },
+              };
       } catch {
         currentSelection = {
           type: "text",
@@ -1281,7 +1323,10 @@ export async function createEditorWithLoader(
       element.addEventListener("blur", () => this.emit("blur", { editor: this }), { signal });
 
       // --- DOM selection → block/offset resolution ---
-      const resolvePosition = (node: Node, offset: number): { blockId: string; offset: number } | null => {
+      const resolvePosition = (
+        node: Node,
+        offset: number,
+      ): { blockId: string; offset: number } | null => {
         // If node is an element, resolve to the actual text position
         let resolvedNode = node;
         let resolvedOffset = offset;
@@ -1329,7 +1374,8 @@ export async function createEditorWithLoader(
               const idx = Math.max(0, Math.min(items.length - 1, Math.max(0, resolvedOffset - 1)));
               targetItem = items[idx] ?? items[0]!;
             } else {
-              const sourceEl = resolvedNode instanceof Element ? resolvedNode : resolvedNode.parentElement;
+              const sourceEl =
+                resolvedNode instanceof Element ? resolvedNode : resolvedNode.parentElement;
               const owner = sourceEl?.closest(
                 '[data-block-id][data-block-type="listItem"], [data-block-id][data-block-type="todoItem"]',
               );
@@ -1345,7 +1391,7 @@ export async function createEditorWithLoader(
         const blockId = blockEl.getAttribute("data-block-id")!;
         const textHost =
           blockType === "callout"
-            ? (blockEl.querySelector(".gotipe-callout-content") as HTMLElement | null) ?? blockEl
+            ? ((blockEl.querySelector(".gotipe-callout-content") as HTMLElement | null) ?? blockEl)
             : blockEl;
 
         if (blockType === "callout") {
@@ -1360,7 +1406,7 @@ export async function createEditorWithLoader(
         let textOffset = 0;
         const walker = createTextWalker(textHost);
         let textNode: Node | null;
-        while ((textNode = walker.nextNode())) {
+        for (textNode = walker.nextNode(); textNode; textNode = walker.nextNode()) {
           if (textNode === resolvedNode) {
             textOffset += resolvedOffset;
             break;
@@ -1385,11 +1431,12 @@ export async function createEditorWithLoader(
 
       // Restore DOM selection to match currentSelection after React re-render
       let pendingSelectionRestore = false;
-      const resolveDomPoint = (blockId: string, targetOffset: number): { node: Node; offset: number } | null => {
+      const resolveDomPoint = (
+        blockId: string,
+        targetOffset: number,
+      ): { node: Node; offset: number } | null => {
         if (!mountedElement) return null;
-        const blockEl = mountedElement.querySelector(
-          `[data-block-id="${blockId}"]`,
-        );
+        const blockEl = mountedElement.querySelector(`[data-block-id="${blockId}"]`);
         if (!blockEl) return null;
 
         const blockType = blockEl.getAttribute("data-block-type");
@@ -1407,14 +1454,14 @@ export async function createEditorWithLoader(
 
         const textHost =
           blockType === "callout"
-            ? (blockEl.querySelector(".gotipe-callout-content") as HTMLElement | null) ?? blockEl
+            ? ((blockEl.querySelector(".gotipe-callout-content") as HTMLElement | null) ?? blockEl)
             : blockEl;
         const walker = createTextWalker(textHost);
         let accumulated = 0;
         let textNode: Node | null;
         let lastTextNode: Node | null = null;
 
-        while ((textNode = walker.nextNode())) {
+        for (textNode = walker.nextNode(); textNode; textNode = walker.nextNode()) {
           lastTextNode = textNode;
           const len = (textNode.textContent ?? "").length;
           if (accumulated + len >= targetOffset) {
@@ -1444,8 +1491,14 @@ export async function createEditorWithLoader(
       const restoreDomSelection = (): boolean => {
         if (!mountedElement) return false;
 
-        const anchorPoint = resolveDomPoint(currentSelection.anchor.blockId, currentSelection.anchor.offset);
-        const headPoint = resolveDomPoint(currentSelection.head.blockId, currentSelection.head.offset);
+        const anchorPoint = resolveDomPoint(
+          currentSelection.anchor.blockId,
+          currentSelection.anchor.offset,
+        );
+        const headPoint = resolveDomPoint(
+          currentSelection.head.blockId,
+          currentSelection.head.offset,
+        );
         if (!anchorPoint || !headPoint) return false;
 
         const sel = document.getSelection();
@@ -1484,9 +1537,10 @@ export async function createEditorWithLoader(
           const walker = createTextWalker(host);
           const textNodes: Text[] = [];
           let node: Node | null;
-          while ((node = walker.nextNode())) {
+          for (node = walker.nextNode(); node; node = walker.nextNode()) {
             const parent = node.parentElement;
-            const owner = parent?.closest("[data-block-id]")?.getAttribute("data-block-id") ?? ownerBlockId;
+            const owner =
+              parent?.closest("[data-block-id]")?.getAttribute("data-block-id") ?? ownerBlockId;
             if (owner === ownerBlockId) {
               textNodes.push(node as Text);
             }
@@ -1496,17 +1550,17 @@ export async function createEditorWithLoader(
 
         for (const block of flattenBlocks(state.blocks)) {
           if (!Array.isArray(block.content)) continue;
-          const blockEl = mountedElement.querySelector(
-            `[data-block-id="${block.id}"]`,
-          );
+          const blockEl = mountedElement.querySelector(`[data-block-id="${block.id}"]`);
           if (!blockEl) continue;
 
           const blockType = blockEl.getAttribute("data-block-type");
           const textHost =
             blockType === "todoItem"
-              ? (blockEl.querySelector("[data-gotipe-todo-content]") as HTMLElement | null) ?? blockEl
+              ? ((blockEl.querySelector("[data-gotipe-todo-content]") as HTMLElement | null) ??
+                blockEl)
               : blockType === "callout"
-                ? (blockEl.querySelector(".gotipe-callout-content") as HTMLElement | null) ?? blockEl
+                ? ((blockEl.querySelector(".gotipe-callout-content") as HTMLElement | null) ??
+                  blockEl)
                 : blockEl;
 
           const expected = block.content.map((s) => s.text).join("");
@@ -1537,6 +1591,11 @@ export async function createEditorWithLoader(
 
         const tryRestore = () => {
           attempts += 1;
+          // Never move the caret under an active IME composition.
+          if (composingBlockId !== null) {
+            pendingSelectionRestore = false;
+            return;
+          }
 
           // Fix DOM if native input leaked through preventDefault()
           if (inputHandledByWasm) {
@@ -1679,16 +1738,20 @@ export async function createEditorWithLoader(
       // transaction, so dead keys, accent menus and CJK input all work.
       const textHostOf = (blockEl: Element): Element => {
         const blockType = blockEl.getAttribute("data-block-type");
-        if (blockType === "todoItem") return blockEl.querySelector("[data-gotipe-todo-content]") ?? blockEl;
-        if (blockType === "callout") return blockEl.querySelector(".gotipe-callout-content") ?? blockEl;
+        if (blockType === "todoItem")
+          return blockEl.querySelector("[data-gotipe-todo-content]") ?? blockEl;
+        if (blockType === "callout")
+          return blockEl.querySelector(".gotipe-callout-content") ?? blockEl;
         return blockEl;
       };
       const ownDomText = (blockEl: Element, blockId: string): string => {
         const walker = createTextWalker(textHostOf(blockEl));
         let text = "";
         let node: Node | null;
-        while ((node = walker.nextNode())) {
-          const owner = node.parentElement?.closest("[data-block-id]")?.getAttribute("data-block-id");
+        for (node = walker.nextNode(); node; node = walker.nextNode()) {
+          const owner = node.parentElement
+            ?.closest("[data-block-id]")
+            ?.getAttribute("data-block-id");
           if (!owner || owner === blockId) text += node.nodeValue ?? "";
         }
         return text;
@@ -1720,7 +1783,8 @@ export async function createEditorWithLoader(
           const dom = ownDomText(blockEl, blockId);
           let prefix = 0;
           const maxPrefix = Math.min(model.length, dom.length);
-          while (prefix < maxPrefix && model.charCodeAt(prefix) === dom.charCodeAt(prefix)) prefix++;
+          while (prefix < maxPrefix && model.charCodeAt(prefix) === dom.charCodeAt(prefix))
+            prefix++;
           let suffix = 0;
           const maxSuffix = Math.min(model.length, dom.length) - prefix;
           while (
@@ -1774,7 +1838,10 @@ export async function createEditorWithLoader(
           } catch (err) {
             clearSelectionChangeLock();
             this.reportError(
-              new GoTipeError("TRANSFORM_ERROR", err instanceof Error ? err.message : "Composition failed"),
+              new GoTipeError(
+                "TRANSFORM_ERROR",
+                err instanceof Error ? err.message : "Composition failed",
+              ),
             );
           }
         },
@@ -1782,260 +1849,87 @@ export async function createEditorWithLoader(
       );
 
       // --- beforeinput: capture text editing intent ---
-      element.addEventListener("beforeinput", (e) => {
-        if (!editable) {
-          e.preventDefault();
-          return;
-        }
-        const inputType = e.inputType;
-        if (
-          composingBlockId !== null &&
-          (inputType === "insertCompositionText" ||
-            inputType === "deleteCompositionText" ||
-            inputType === "insertFromComposition")
-        ) {
-          // Let the browser render the composition; compositionend commits it.
-          return;
-        }
-        const enterMode = pendingEnterMode;
-        if (inputType === "insertParagraph" || inputType === "insertLineBreak") {
-          pendingEnterMode = null;
-        }
-        const resolveSelectionForInput = () => {
-          if (!pendingSelectionRestore) {
-            const domSelection = readSelectionFromDOM?.();
-            if (domSelection?.anchor.blockId) {
-              currentSelection = {
-                type: "text",
-                anchor: { ...domSelection.anchor },
-                head: { ...domSelection.head },
-              };
-            }
-          }
-          return currentSelection;
-        };
-
-        let lineBreakActsAsParagraph = false;
-        if (inputType === "insertLineBreak") {
-          const probePos = resolveSelectionForInput();
-          const probeBlock = probePos?.anchor.blockId
-            ? findBlockInTree(this.getViewState().blocks, probePos.anchor.blockId)
-            : null;
-          const isShiftLineBreak = enterMode === "shift";
-          lineBreakActsAsParagraph = !isShiftLineBreak && probeBlock?.type !== "codeBlock";
-        }
-
-        if (
-          inputType === "insertText" ||
-          inputType === "insertCompositionText" ||
-          (inputType === "insertLineBreak" && !lineBreakActsAsParagraph)
-        ) {
-          const data = inputType === "insertLineBreak" ? "\n" : e.data;
-          if (!data) return;
-          e.preventDefault();
-
-          const pos = resolveSelectionForInput();
-          if (!pos?.anchor.blockId) return;
-
-          const steps: unknown[] = [];
-          let newOffset: number;
-
-          // Compute marks for new text: stored marks > position-based detection
-          const state = this.getViewState();
-          const isRange = pos.anchor.blockId === pos.head.blockId && pos.anchor.offset !== pos.head.offset;
-          let marksForInsert: { type: string; attrs: Record<string, unknown> }[];
-          if (storedMarks !== null) {
-            marksForInsert = storedMarks;
-          } else if (isRange) {
-            // Replacing selection: inherit marks from first selected character
-            const selStart = Math.min(pos.anchor.offset, pos.head.offset);
-            marksForInsert = getMarksAt(state.blocks, pos.anchor.blockId, selStart, false);
-          } else {
-            // Collapsed cursor: prefer current active marks (includes stored/toggled marks)
-            // and keep parity with common editors for typing in the middle/end of text.
-            marksForInsert = (state.toolbar.activeMarks ?? []).map((type) => ({ type, attrs: {} }));
-          }
-
-          // Delete selected text first if selection is a range
-          if (isRange) {
-            const from = Math.min(pos.anchor.offset, pos.head.offset);
-            const to = Math.max(pos.anchor.offset, pos.head.offset);
-            steps.push({ type: "deleteText", blockId: pos.anchor.blockId, from, to });
-            steps.push({
-              type: "insertText",
-              blockId: pos.anchor.blockId,
-              offset: from,
-              text: data,
-              marks: marksForInsert,
-            });
-            newOffset = from + data.length;
-          } else {
-            steps.push({
-              type: "insertText",
-              blockId: pos.anchor.blockId,
-              offset: pos.anchor.offset,
-              text: data,
-              marks: marksForInsert,
-            });
-            newOffset = pos.anchor.offset + data.length;
-          }
-
-          const runInputRules = (blockId: string, caretOffset: number) => {
-            const ruleState = this.getViewState();
-            const ruleBlock = findBlockInTree(ruleState.blocks, blockId);
-            if (!ruleBlock || !Array.isArray(ruleBlock.content)) return;
-            const ruleText = ruleBlock.content.map((s: { text: string }) => s.text).join("");
-            for (const ext of resolved) {
-              if (ext.inputRules) {
-                for (const rule of ext.inputRules) {
-                  const match = ruleText.match(rule.pattern);
-                  if (match) {
-                    rule.handler(this, match);
-                    return;
-                  }
-                }
-              }
-            }
-
-            // Slash menu trigger should also work at caret in non-empty blocks
-            // (e.g. typing "/" at the start of an existing line).
-            if (data === "/") {
-              const safeOffset = Math.max(0, Math.min(caretOffset, ruleText.length));
-              const beforeCaret = ruleText.slice(0, safeOffset);
-              const slashIdx = beforeCaret.lastIndexOf("/");
-              if (slashIdx !== -1) {
-                const prevChar = slashIdx > 0 ? beforeCaret[slashIdx - 1] ?? "" : "";
-                const query = beforeCaret.slice(slashIdx + 1);
-                if ((slashIdx === 0 || /\s/.test(prevChar)) && !/\s/.test(query)) {
-                  this.emit("openSlashMenu");
-                }
-              }
-            }
-          };
-
-          try {
-            beginSelectionChangeLock();
-            inputHandledByWasm = true;
-            this.dispatch({ steps });
-            // Clear stored marks after insertion (position-based detection takes over)
-            storedMarks = null;
-            // Advance cursor position
-            currentSelection = {
-              type: "text",
-              anchor: { blockId: pos.anchor.blockId, offset: newOffset },
-              head: { blockId: pos.anchor.blockId, offset: newOffset },
-            };
-            publishSelection();
-            scheduleSelectionRestore();
-            runInputRules(pos.anchor.blockId, newOffset);
-          } catch {
-            clearSelectionChangeLock();
-            const fallbackSel = readSelectionFromDOM?.();
-            if (!fallbackSel?.anchor.blockId) return;
-
-            const fallbackPos = {
-              anchor: fallbackSel.anchor,
-              head: fallbackSel.head,
-            };
-            const fallbackState = this.getViewState();
-            const fallbackIsRange =
-              fallbackPos.anchor.blockId === fallbackPos.head.blockId &&
-              fallbackPos.anchor.offset !== fallbackPos.head.offset;
-            const fallbackMarks =
-              storedMarks !== null
-                ? storedMarks
-                : fallbackIsRange
-                  ? getMarksAt(
-                      fallbackState.blocks,
-                      fallbackPos.anchor.blockId,
-                      Math.min(fallbackPos.anchor.offset, fallbackPos.head.offset),
-                      false,
-                    )
-                  : (fallbackState.toolbar.activeMarks ?? []).map((type) => ({
-                      type,
-                      attrs: {},
-                    }));
-
-            const fallbackSteps: unknown[] = [];
-            let fallbackOffset: number;
-            if (fallbackIsRange) {
-              const from = Math.min(fallbackPos.anchor.offset, fallbackPos.head.offset);
-              const to = Math.max(fallbackPos.anchor.offset, fallbackPos.head.offset);
-              fallbackSteps.push({ type: "deleteText", blockId: fallbackPos.anchor.blockId, from, to });
-              fallbackSteps.push({
-                type: "insertText",
-                blockId: fallbackPos.anchor.blockId,
-                offset: from,
-                text: data,
-                marks: fallbackMarks,
-              });
-              fallbackOffset = from + data.length;
-            } else {
-              fallbackSteps.push({
-                type: "insertText",
-                blockId: fallbackPos.anchor.blockId,
-                offset: fallbackPos.anchor.offset,
-                text: data,
-                marks: fallbackMarks,
-              });
-              fallbackOffset = fallbackPos.anchor.offset + data.length;
-            }
-
-            try {
-              beginSelectionChangeLock();
-              inputHandledByWasm = true;
-              this.dispatch({ steps: fallbackSteps });
-              storedMarks = null;
-              currentSelection = {
-                type: "text",
-                anchor: { blockId: fallbackPos.anchor.blockId, offset: fallbackOffset },
-                head: { blockId: fallbackPos.anchor.blockId, offset: fallbackOffset },
-              };
-              publishSelection();
-              scheduleSelectionRestore();
-              runInputRules(fallbackPos.anchor.blockId, fallbackOffset);
-            } catch {
-              clearSelectionChangeLock();
-            }
-          }
-          return;
-        }
-
-        if (inputType === "insertParagraph" || lineBreakActsAsParagraph) {
-          e.preventDefault();
-          const pos = resolveSelectionForInput();
-          if (!pos?.anchor.blockId) return;
-
-          const preState = this.getViewState();
-          const currentBlock = findBlockInTree(preState.blocks, pos.anchor.blockId);
-          const shouldExitStyleOnEnter =
-            !!currentBlock && ENTER_EXITS_TO_PARAGRAPH_TYPES.has(currentBlock.type);
-
-          // Table cells never split: Enter moves to the cell below (or stays).
-          if (currentBlock?.type === "tableCell" || currentBlock?.type === "tableHeader") {
-            const row = findParentBlock(preState.blocks, currentBlock.id);
-            const table = row ? findParentBlock(preState.blocks, row.parent.id) : null;
-            const below = table?.parent.children[(table?.index ?? -1) + 1]?.children[row?.index ?? -1];
-            if (below) {
-              currentSelection = {
-                type: "text",
-                anchor: { blockId: below.id, offset: 0 },
-                head: { blockId: below.id, offset: 0 },
-              };
-              publishSelection();
-              scheduleSelectionRestore();
-            }
+      element.addEventListener(
+        "beforeinput",
+        (e) => {
+          if (!editable) {
+            e.preventDefault();
             return;
           }
+          const inputType = e.inputType;
+          if (
+            composingBlockId !== null &&
+            (inputType === "insertCompositionText" ||
+              inputType === "deleteCompositionText" ||
+              inputType === "insertFromComposition")
+          ) {
+            // Let the browser render the composition; compositionend commits it.
+            return;
+          }
+          const enterMode = pendingEnterMode;
+          if (inputType === "insertParagraph" || inputType === "insertLineBreak") {
+            pendingEnterMode = null;
+          }
+          const resolveSelectionForInput = () => {
+            if (!pendingSelectionRestore) {
+              const domSelection = readSelectionFromDOM?.();
+              if (domSelection?.anchor.blockId) {
+                currentSelection = {
+                  type: "text",
+                  anchor: { ...domSelection.anchor },
+                  head: { ...domSelection.head },
+                };
+              }
+            }
+            return currentSelection;
+          };
 
-          // In code blocks Enter should insert a newline inside the same block,
-          // not split into a second code block.
-          if (currentBlock?.type === "codeBlock") {
-            const isRange =
-              pos.anchor.blockId === pos.head.blockId && pos.anchor.offset !== pos.head.offset;
+          let lineBreakActsAsParagraph = false;
+          if (inputType === "insertLineBreak") {
+            const probePos = resolveSelectionForInput();
+            const probeBlock = probePos?.anchor.blockId
+              ? findBlockInTree(this.getViewState().blocks, probePos.anchor.blockId)
+              : null;
+            const isShiftLineBreak = enterMode === "shift";
+            lineBreakActsAsParagraph = !isShiftLineBreak && probeBlock?.type !== "codeBlock";
+          }
+
+          if (
+            inputType === "insertText" ||
+            inputType === "insertCompositionText" ||
+            (inputType === "insertLineBreak" && !lineBreakActsAsParagraph)
+          ) {
+            const data = inputType === "insertLineBreak" ? "\n" : e.data;
+            if (!data) return;
+            e.preventDefault();
+
+            const pos = resolveSelectionForInput();
+            if (!pos?.anchor.blockId) return;
+
             const steps: unknown[] = [];
             let newOffset: number;
 
+            // Compute marks for new text: stored marks > position-based detection
+            const state = this.getViewState();
+            const isRange =
+              pos.anchor.blockId === pos.head.blockId && pos.anchor.offset !== pos.head.offset;
+            let marksForInsert: { type: string; attrs: Record<string, unknown> }[];
+            if (storedMarks !== null) {
+              marksForInsert = storedMarks;
+            } else if (isRange) {
+              // Replacing selection: inherit marks from first selected character
+              const selStart = Math.min(pos.anchor.offset, pos.head.offset);
+              marksForInsert = getMarksAt(state.blocks, pos.anchor.blockId, selStart, false);
+            } else {
+              // Collapsed cursor: prefer current active marks (includes stored/toggled marks)
+              // and keep parity with common editors for typing in the middle/end of text.
+              marksForInsert = (state.toolbar.activeMarks ?? []).map((type) => ({
+                type,
+                attrs: {},
+              }));
+            }
+
+            // Delete selected text first if selection is a range
             if (isRange) {
               const from = Math.min(pos.anchor.offset, pos.head.offset);
               const to = Math.max(pos.anchor.offset, pos.head.offset);
@@ -2044,30 +1938,328 @@ export async function createEditorWithLoader(
                 type: "insertText",
                 blockId: pos.anchor.blockId,
                 offset: from,
-                text: "\n",
-                marks: [],
+                text: data,
+                marks: marksForInsert,
               });
-              newOffset = from + 1;
+              newOffset = from + data.length;
             } else {
               steps.push({
                 type: "insertText",
                 blockId: pos.anchor.blockId,
                 offset: pos.anchor.offset,
-                text: "\n",
-                marks: [],
+                text: data,
+                marks: marksForInsert,
               });
-              newOffset = pos.anchor.offset + 1;
+              newOffset = pos.anchor.offset + data.length;
             }
+
+            const runInputRules = (blockId: string, caretOffset: number) => {
+              const ruleState = this.getViewState();
+              const ruleBlock = findBlockInTree(ruleState.blocks, blockId);
+              if (!ruleBlock || !Array.isArray(ruleBlock.content)) return;
+              const ruleText = ruleBlock.content.map((s: { text: string }) => s.text).join("");
+              for (const ext of resolved) {
+                if (ext.inputRules) {
+                  for (const rule of ext.inputRules) {
+                    const match = ruleText.match(rule.pattern);
+                    if (match) {
+                      rule.handler(this, match);
+                      return;
+                    }
+                  }
+                }
+              }
+
+              // Slash menu trigger should also work at caret in non-empty blocks
+              // (e.g. typing "/" at the start of an existing line).
+              if (data === "/") {
+                const safeOffset = Math.max(0, Math.min(caretOffset, ruleText.length));
+                const beforeCaret = ruleText.slice(0, safeOffset);
+                const slashIdx = beforeCaret.lastIndexOf("/");
+                if (slashIdx !== -1) {
+                  const prevChar = slashIdx > 0 ? (beforeCaret[slashIdx - 1] ?? "") : "";
+                  const query = beforeCaret.slice(slashIdx + 1);
+                  if ((slashIdx === 0 || /\s/.test(prevChar)) && !/\s/.test(query)) {
+                    this.emit("openSlashMenu");
+                  }
+                }
+              }
+            };
 
             try {
               beginSelectionChangeLock();
               inputHandledByWasm = true;
               this.dispatch({ steps });
+              // Clear stored marks after insertion (position-based detection takes over)
+              storedMarks = null;
+              // Advance cursor position
               currentSelection = {
                 type: "text",
                 anchor: { blockId: pos.anchor.blockId, offset: newOffset },
                 head: { blockId: pos.anchor.blockId, offset: newOffset },
               };
+              publishSelection();
+              scheduleSelectionRestore();
+              runInputRules(pos.anchor.blockId, newOffset);
+            } catch {
+              clearSelectionChangeLock();
+              const fallbackSel = readSelectionFromDOM?.();
+              if (!fallbackSel?.anchor.blockId) return;
+
+              const fallbackPos = {
+                anchor: fallbackSel.anchor,
+                head: fallbackSel.head,
+              };
+              const fallbackState = this.getViewState();
+              const fallbackIsRange =
+                fallbackPos.anchor.blockId === fallbackPos.head.blockId &&
+                fallbackPos.anchor.offset !== fallbackPos.head.offset;
+              const fallbackMarks =
+                storedMarks !== null
+                  ? storedMarks
+                  : fallbackIsRange
+                    ? getMarksAt(
+                        fallbackState.blocks,
+                        fallbackPos.anchor.blockId,
+                        Math.min(fallbackPos.anchor.offset, fallbackPos.head.offset),
+                        false,
+                      )
+                    : (fallbackState.toolbar.activeMarks ?? []).map((type) => ({
+                        type,
+                        attrs: {},
+                      }));
+
+              const fallbackSteps: unknown[] = [];
+              let fallbackOffset: number;
+              if (fallbackIsRange) {
+                const from = Math.min(fallbackPos.anchor.offset, fallbackPos.head.offset);
+                const to = Math.max(fallbackPos.anchor.offset, fallbackPos.head.offset);
+                fallbackSteps.push({
+                  type: "deleteText",
+                  blockId: fallbackPos.anchor.blockId,
+                  from,
+                  to,
+                });
+                fallbackSteps.push({
+                  type: "insertText",
+                  blockId: fallbackPos.anchor.blockId,
+                  offset: from,
+                  text: data,
+                  marks: fallbackMarks,
+                });
+                fallbackOffset = from + data.length;
+              } else {
+                fallbackSteps.push({
+                  type: "insertText",
+                  blockId: fallbackPos.anchor.blockId,
+                  offset: fallbackPos.anchor.offset,
+                  text: data,
+                  marks: fallbackMarks,
+                });
+                fallbackOffset = fallbackPos.anchor.offset + data.length;
+              }
+
+              try {
+                beginSelectionChangeLock();
+                inputHandledByWasm = true;
+                this.dispatch({ steps: fallbackSteps });
+                storedMarks = null;
+                currentSelection = {
+                  type: "text",
+                  anchor: { blockId: fallbackPos.anchor.blockId, offset: fallbackOffset },
+                  head: { blockId: fallbackPos.anchor.blockId, offset: fallbackOffset },
+                };
+                publishSelection();
+                scheduleSelectionRestore();
+                runInputRules(fallbackPos.anchor.blockId, fallbackOffset);
+              } catch {
+                clearSelectionChangeLock();
+              }
+            }
+            return;
+          }
+
+          if (inputType === "insertParagraph" || lineBreakActsAsParagraph) {
+            e.preventDefault();
+            const pos = resolveSelectionForInput();
+            if (!pos?.anchor.blockId) return;
+
+            const preState = this.getViewState();
+            const currentBlock = findBlockInTree(preState.blocks, pos.anchor.blockId);
+            const shouldExitStyleOnEnter =
+              !!currentBlock && ENTER_EXITS_TO_PARAGRAPH_TYPES.has(currentBlock.type);
+
+            // Table cells never split: Enter moves to the cell below (or stays).
+            if (currentBlock?.type === "tableCell" || currentBlock?.type === "tableHeader") {
+              const row = findParentBlock(preState.blocks, currentBlock.id);
+              const table = row ? findParentBlock(preState.blocks, row.parent.id) : null;
+              const below =
+                table?.parent.children[(table?.index ?? -1) + 1]?.children[row?.index ?? -1];
+              if (below) {
+                currentSelection = {
+                  type: "text",
+                  anchor: { blockId: below.id, offset: 0 },
+                  head: { blockId: below.id, offset: 0 },
+                };
+                publishSelection();
+                scheduleSelectionRestore();
+              }
+              return;
+            }
+
+            // In code blocks Enter should insert a newline inside the same block,
+            // not split into a second code block.
+            if (currentBlock?.type === "codeBlock") {
+              const isRange =
+                pos.anchor.blockId === pos.head.blockId && pos.anchor.offset !== pos.head.offset;
+              const steps: unknown[] = [];
+              let newOffset: number;
+
+              if (isRange) {
+                const from = Math.min(pos.anchor.offset, pos.head.offset);
+                const to = Math.max(pos.anchor.offset, pos.head.offset);
+                steps.push({ type: "deleteText", blockId: pos.anchor.blockId, from, to });
+                steps.push({
+                  type: "insertText",
+                  blockId: pos.anchor.blockId,
+                  offset: from,
+                  text: "\n",
+                  marks: [],
+                });
+                newOffset = from + 1;
+              } else {
+                steps.push({
+                  type: "insertText",
+                  blockId: pos.anchor.blockId,
+                  offset: pos.anchor.offset,
+                  text: "\n",
+                  marks: [],
+                });
+                newOffset = pos.anchor.offset + 1;
+              }
+
+              try {
+                beginSelectionChangeLock();
+                inputHandledByWasm = true;
+                this.dispatch({ steps });
+                currentSelection = {
+                  type: "text",
+                  anchor: { blockId: pos.anchor.blockId, offset: newOffset },
+                  head: { blockId: pos.anchor.blockId, offset: newOffset },
+                };
+                publishSelection();
+                scheduleSelectionRestore();
+              } catch {
+                clearSelectionChangeLock();
+              }
+              return;
+            }
+
+            // Check if current block is an empty listItem → exit the list
+            if (
+              currentBlock &&
+              (currentBlock.type === "listItem" || currentBlock.type === "todoItem") &&
+              isBlockEmpty(currentBlock)
+            ) {
+              // Find parent list and unwrap this empty item
+              const parentInfo = findParentBlock(preState.blocks, pos.anchor.blockId);
+              if (parentInfo) {
+                const listBlock = parentInfo.parent;
+                const listLoc = findBlockLocation(preState.blocks, listBlock.id);
+                if (listLoc) {
+                  try {
+                    beginSelectionChangeLock();
+                    inputHandledByWasm = true;
+
+                    if (listBlock.children.length === 1) {
+                      // Only item in list → replace list with empty paragraph
+                      const newId = crypto.randomUUID();
+                      this.dispatch({
+                        steps: [
+                          { type: "deleteBlock", blockId: listBlock.id },
+                          {
+                            type: "insertBlock",
+                            parentId: listLoc.parentId,
+                            index: listLoc.index,
+                            block: {
+                              id: newId,
+                              type: "paragraph",
+                              attrs: {},
+                              content: [],
+                              children: [],
+                            },
+                          },
+                        ],
+                      });
+                      currentSelection = {
+                        type: "text" as const,
+                        anchor: { blockId: newId, offset: 0 },
+                        head: { blockId: newId, offset: 0 },
+                      };
+                    } else {
+                      // Multiple items → remove this item and insert paragraph after list
+                      const newId = crypto.randomUUID();
+                      this.dispatch({
+                        steps: [
+                          { type: "deleteBlock", blockId: pos.anchor.blockId },
+                          {
+                            type: "insertBlock",
+                            parentId: listLoc.parentId,
+                            index: listLoc.index + 1,
+                            block: {
+                              id: newId,
+                              type: "paragraph",
+                              attrs: {},
+                              content: [],
+                              children: [],
+                            },
+                          },
+                        ],
+                      });
+                      currentSelection = {
+                        type: "text" as const,
+                        anchor: { blockId: newId, offset: 0 },
+                        head: { blockId: newId, offset: 0 },
+                      };
+                    }
+                    publishSelection();
+                    scheduleSelectionRestore();
+                  } catch {
+                    clearSelectionChangeLock();
+                  }
+                  return;
+                }
+              }
+            }
+
+            try {
+              beginSelectionChangeLock();
+              inputHandledByWasm = true;
+              this.dispatch({
+                steps: [
+                  { type: "splitBlock", blockId: pos.anchor.blockId, offset: pos.anchor.offset },
+                ],
+              });
+              let state = this.getViewState();
+              const loc = findBlockAndSibling(state.blocks, pos.anchor.blockId);
+              if (loc && shouldExitStyleOnEnter) {
+                const inserted = findBlockInTree(state.blocks, loc.id);
+                if (inserted && inserted.type !== "paragraph") {
+                  this.dispatch({
+                    steps: [
+                      { type: "setBlockType", blockId: loc.id, newType: "paragraph", attrs: {} },
+                    ],
+                  });
+                  state = this.getViewState();
+                }
+              }
+              if (loc) {
+                currentSelection = {
+                  type: "text",
+                  anchor: { blockId: loc.id, offset: 0 },
+                  head: { blockId: loc.id, offset: 0 },
+                };
+              }
               publishSelection();
               scheduleSelectionRestore();
             } catch {
@@ -2076,427 +2268,354 @@ export async function createEditorWithLoader(
             return;
           }
 
-          // Check if current block is an empty listItem → exit the list
           if (
-            currentBlock &&
-            (currentBlock.type === "listItem" || currentBlock.type === "todoItem") &&
-            isBlockEmpty(currentBlock)
+            inputType === "deleteContentBackward" ||
+            inputType === "deleteWordBackward" ||
+            inputType === "deleteSoftLineBackward" ||
+            inputType === "deleteHardLineBackward"
           ) {
-            // Find parent list and unwrap this empty item
-            const parentInfo = findParentBlock(preState.blocks, pos.anchor.blockId);
-            if (parentInfo) {
-              const listBlock = parentInfo.parent;
-              const listLoc = findBlockLocation(preState.blocks, listBlock.id);
-              if (listLoc) {
+            e.preventDefault();
+            const pos = resolveSelectionForInput();
+            if (!pos?.anchor.blockId) return;
+
+            const steps: unknown[] = [];
+            let newBlockId = pos.anchor.blockId;
+            let newOffset = pos.anchor.offset;
+
+            if (pos.anchor.blockId === pos.head.blockId && pos.anchor.offset !== pos.head.offset) {
+              const from = Math.min(pos.anchor.offset, pos.head.offset);
+              const to = Math.max(pos.anchor.offset, pos.head.offset);
+              steps.push({ type: "deleteText", blockId: pos.anchor.blockId, from, to });
+              newOffset = from;
+            } else if (pos.anchor.offset > 0) {
+              steps.push({
+                type: "deleteText",
+                blockId: pos.anchor.blockId,
+                from: pos.anchor.offset - 1,
+                to: pos.anchor.offset,
+              });
+              newOffset = pos.anchor.offset - 1;
+            } else {
+              // At start of block — merge with previous
+              const state = this.getViewState();
+              const currentBlock = findBlockInTree(state.blocks, pos.anchor.blockId);
+              const parentInfo = currentBlock
+                ? findParentBlock(state.blocks, pos.anchor.blockId)
+                : null;
+              const insideListItem =
+                !!currentBlock &&
+                (currentBlock.type === "listItem" || currentBlock.type === "todoItem") &&
+                !!parentInfo &&
+                (parentInfo.parent.type === "bulletList" ||
+                  parentInfo.parent.type === "orderedList" ||
+                  parentInfo.parent.type === "todoList");
+
+              // Notion-like behavior: Backspace at start of a non-empty list item
+              // lifts it out of the list to a paragraph instead of no-op.
+              if (insideListItem && !isBlockEmpty(currentBlock)) {
                 try {
                   beginSelectionChangeLock();
                   inputHandledByWasm = true;
-
-                  if (listBlock.children.length === 1) {
-                    // Only item in list → replace list with empty paragraph
-                    const newId = crypto.randomUUID();
-                    this.dispatch({
-                      steps: [
-                        { type: "deleteBlock", blockId: listBlock.id },
-                        {
-                          type: "insertBlock",
-                          parentId: listLoc.parentId,
-                          index: listLoc.index,
-                          block: { id: newId, type: "paragraph", attrs: {}, content: [], children: [] },
-                        },
-                      ],
-                    });
+                  const converted = this.chain().setBlockType("paragraph").run();
+                  if (converted) {
+                    const nextSelection = this.getViewState().selection;
                     currentSelection = {
-                      type: "text" as const,
-                      anchor: { blockId: newId, offset: 0 },
-                      head: { blockId: newId, offset: 0 },
+                      type: "text",
+                      anchor: {
+                        blockId: nextSelection.anchor.blockId,
+                        offset: nextSelection.anchor.offset,
+                      },
+                      head: {
+                        blockId: nextSelection.head.blockId,
+                        offset: nextSelection.head.offset,
+                      },
                     };
-                  } else {
-                    // Multiple items → remove this item and insert paragraph after list
-                    const newId = crypto.randomUUID();
-                    this.dispatch({
-                      steps: [
-                        { type: "deleteBlock", blockId: pos.anchor.blockId },
-                        {
-                          type: "insertBlock",
-                          parentId: listLoc.parentId,
-                          index: listLoc.index + 1,
-                          block: { id: newId, type: "paragraph", attrs: {}, content: [], children: [] },
-                        },
-                      ],
-                    });
-                    currentSelection = {
-                      type: "text" as const,
-                      anchor: { blockId: newId, offset: 0 },
-                      head: { blockId: newId, offset: 0 },
-                    };
+                    publishSelection();
+                    scheduleSelectionRestore();
+                    return;
                   }
-                  publishSelection();
-                  scheduleSelectionRestore();
                 } catch {
-                  clearSelectionChangeLock();
+                  // Fall through to regular merge path.
                 }
-                return;
+                clearSelectionChangeLock();
+              }
+
+              const prevInfo = findBlockAndPreviousSibling(state.blocks, pos.anchor.blockId);
+              const prevBlock = prevInfo ? findBlockInTree(state.blocks, prevInfo.id) : null;
+              if (prevBlock) {
+                const prevLen = Array.isArray(prevBlock.content)
+                  ? prevBlock.content.reduce((sum, s) => sum + s.text.length, 0)
+                  : typeof prevBlock.content === "string"
+                    ? prevBlock.content.length
+                    : 0;
+                const isListMerge =
+                  !!currentBlock &&
+                  (currentBlock.type === "listItem" || currentBlock.type === "todoItem") &&
+                  (prevBlock.type === "listItem" || prevBlock.type === "todoItem");
+
+                if (isListMerge) {
+                  const currentText = Array.isArray(currentBlock.content)
+                    ? currentBlock.content.map((s) => s.text).join("")
+                    : typeof currentBlock.content === "string"
+                      ? currentBlock.content
+                      : "";
+
+                  if (currentText.length > 0) {
+                    steps.push({
+                      type: "insertText",
+                      blockId: prevBlock.id,
+                      offset: prevLen,
+                      text: currentText,
+                      marks: [],
+                    });
+                  }
+                  for (let i = 0; i < currentBlock.children.length; i++) {
+                    steps.push({
+                      type: "moveBlock",
+                      blockId: currentBlock.children[i]!.id,
+                      newParentId: prevBlock.id,
+                      newIndex: prevBlock.children.length + i,
+                    });
+                  }
+                  steps.push({ type: "deleteBlock", blockId: pos.anchor.blockId });
+                  newBlockId = prevBlock.id;
+                  newOffset = prevLen + currentText.length;
+                } else {
+                  steps.push({
+                    type: "mergeBlocks",
+                    blockId: pos.anchor.blockId,
+                    targetId: prevBlock.id,
+                  });
+                  newBlockId = prevBlock.id;
+                  newOffset = prevLen;
+                }
               }
             }
-          }
-
-          try {
-            beginSelectionChangeLock();
-            inputHandledByWasm = true;
-            this.dispatch({
-              steps: [{ type: "splitBlock", blockId: pos.anchor.blockId, offset: pos.anchor.offset }],
-            });
-            let state = this.getViewState();
-            const loc = findBlockAndSibling(state.blocks, pos.anchor.blockId);
-            if (loc && shouldExitStyleOnEnter) {
-              const inserted = findBlockInTree(state.blocks, loc.id);
-              if (inserted && inserted.type !== "paragraph") {
-                this.dispatch({
-                  steps: [{ type: "setBlockType", blockId: loc.id, newType: "paragraph", attrs: {} }],
-                });
-                state = this.getViewState();
-              }
-            }
-            if (loc) {
-              currentSelection = {
-                type: "text",
-                anchor: { blockId: loc.id, offset: 0 },
-                head: { blockId: loc.id, offset: 0 },
-              };
-            }
-            publishSelection();
-            scheduleSelectionRestore();
-          } catch {
-            clearSelectionChangeLock();
-          }
-          return;
-        }
-
-        if (
-          inputType === "deleteContentBackward" ||
-          inputType === "deleteWordBackward" ||
-          inputType === "deleteSoftLineBackward" ||
-          inputType === "deleteHardLineBackward"
-        ) {
-          e.preventDefault();
-          const pos = resolveSelectionForInput();
-          if (!pos?.anchor.blockId) return;
-
-          const steps: unknown[] = [];
-          let newBlockId = pos.anchor.blockId;
-          let newOffset = pos.anchor.offset;
-
-          if (pos.anchor.blockId === pos.head.blockId && pos.anchor.offset !== pos.head.offset) {
-            const from = Math.min(pos.anchor.offset, pos.head.offset);
-            const to = Math.max(pos.anchor.offset, pos.head.offset);
-            steps.push({ type: "deleteText", blockId: pos.anchor.blockId, from, to });
-            newOffset = from;
-          } else if (pos.anchor.offset > 0) {
-            steps.push({
-              type: "deleteText",
-              blockId: pos.anchor.blockId,
-              from: pos.anchor.offset - 1,
-              to: pos.anchor.offset,
-            });
-            newOffset = pos.anchor.offset - 1;
-          } else {
-            // At start of block — merge with previous
-            const state = this.getViewState();
-            const currentBlock = findBlockInTree(state.blocks, pos.anchor.blockId);
-            const parentInfo = currentBlock ? findParentBlock(state.blocks, pos.anchor.blockId) : null;
-            const insideListItem =
-              !!currentBlock &&
-              (currentBlock.type === "listItem" || currentBlock.type === "todoItem") &&
-              !!parentInfo &&
-              (
-                parentInfo.parent.type === "bulletList" ||
-                parentInfo.parent.type === "orderedList" ||
-                parentInfo.parent.type === "todoList"
-              );
-
-            // Notion-like behavior: Backspace at start of a non-empty list item
-            // lifts it out of the list to a paragraph instead of no-op.
-            if (insideListItem && !isBlockEmpty(currentBlock)) {
+            if (steps.length > 0) {
               try {
                 beginSelectionChangeLock();
                 inputHandledByWasm = true;
-                const converted = this.chain().setBlockType("paragraph").run();
-                if (converted) {
-                  const nextSelection = this.getViewState().selection;
-                  currentSelection = {
-                    type: "text",
-                    anchor: { blockId: nextSelection.anchor.blockId, offset: nextSelection.anchor.offset },
-                    head: { blockId: nextSelection.head.blockId, offset: nextSelection.head.offset },
-                  };
-                  publishSelection();
-                  scheduleSelectionRestore();
-                  return;
-                }
+                this.dispatch({ steps });
+                currentSelection = {
+                  type: "text",
+                  anchor: { blockId: newBlockId, offset: newOffset },
+                  head: { blockId: newBlockId, offset: newOffset },
+                };
+                publishSelection();
+                scheduleSelectionRestore();
               } catch {
-                // Fall through to regular merge path.
-              }
-              clearSelectionChangeLock();
-            }
-
-            const prevInfo = findBlockAndPreviousSibling(state.blocks, pos.anchor.blockId);
-            const prevBlock = prevInfo ? findBlockInTree(state.blocks, prevInfo.id) : null;
-            if (prevBlock) {
-              const prevLen = Array.isArray(prevBlock.content)
-                ? prevBlock.content.reduce((sum, s) => sum + s.text.length, 0)
-                : typeof prevBlock.content === "string"
-                  ? prevBlock.content.length
-                  : 0;
-              const isListMerge =
-                !!currentBlock &&
-                (currentBlock.type === "listItem" || currentBlock.type === "todoItem") &&
-                (prevBlock.type === "listItem" || prevBlock.type === "todoItem");
-
-              if (isListMerge) {
-                const currentText = Array.isArray(currentBlock.content)
-                  ? currentBlock.content.map((s) => s.text).join("")
-                  : typeof currentBlock.content === "string"
-                    ? currentBlock.content
-                    : "";
-
-                if (currentText.length > 0) {
-                  steps.push({
-                    type: "insertText",
-                    blockId: prevBlock.id,
-                    offset: prevLen,
-                    text: currentText,
-                    marks: [],
-                  });
-                }
-                for (let i = 0; i < currentBlock.children.length; i++) {
-                  steps.push({
-                    type: "moveBlock",
-                    blockId: currentBlock.children[i]!.id,
-                    newParentId: prevBlock.id,
-                    newIndex: prevBlock.children.length + i,
-                  });
-                }
-                steps.push({ type: "deleteBlock", blockId: pos.anchor.blockId });
-                newBlockId = prevBlock.id;
-                newOffset = prevLen + currentText.length;
-              } else {
-                steps.push({
-                  type: "mergeBlocks",
-                  blockId: pos.anchor.blockId,
-                  targetId: prevBlock.id,
-                });
-                newBlockId = prevBlock.id;
-                newOffset = prevLen;
+                clearSelectionChangeLock();
               }
             }
+            return;
           }
-          if (steps.length > 0) {
+
+          if (inputType === "deleteContentForward") {
+            e.preventDefault();
+            const pos = resolveSelectionForInput();
+            if (!pos?.anchor.blockId) return;
+
+            const state = this.getViewState();
+            const block = findBlockInTree(state.blocks, pos.anchor.blockId);
+            if (!block) return;
+            const blockTextLen = Array.isArray(block.content)
+              ? block.content.reduce((sum, s) => sum + s.text.length, 0)
+              : typeof block.content === "string"
+                ? block.content.length
+                : 0;
+
             try {
               beginSelectionChangeLock();
               inputHandledByWasm = true;
-              this.dispatch({ steps });
-              currentSelection = {
-                type: "text",
-                anchor: { blockId: newBlockId, offset: newOffset },
-                head: { blockId: newBlockId, offset: newOffset },
-              };
-              publishSelection();
+              if (
+                pos.anchor.blockId === pos.head.blockId &&
+                pos.anchor.offset !== pos.head.offset
+              ) {
+                const from = Math.min(pos.anchor.offset, pos.head.offset);
+                const to = Math.max(pos.anchor.offset, pos.head.offset);
+                this.dispatch({
+                  steps: [{ type: "deleteText", blockId: pos.anchor.blockId, from, to }],
+                });
+                currentSelection = {
+                  type: "text",
+                  anchor: { blockId: pos.anchor.blockId, offset: from },
+                  head: { blockId: pos.anchor.blockId, offset: from },
+                };
+                publishSelection();
+              } else if (pos.anchor.offset < blockTextLen) {
+                this.dispatch({
+                  steps: [
+                    {
+                      type: "deleteText",
+                      blockId: pos.anchor.blockId,
+                      from: pos.anchor.offset,
+                      to: pos.anchor.offset + 1,
+                    },
+                  ],
+                });
+                // Cursor stays at same position after forward delete
+              }
               scheduleSelectionRestore();
             } catch {
               clearSelectionChangeLock();
             }
+            return;
           }
-          return;
-        }
-
-        if (inputType === "deleteContentForward") {
-          e.preventDefault();
-          const pos = resolveSelectionForInput();
-          if (!pos?.anchor.blockId) return;
-
-          const state = this.getViewState();
-          const block = findBlockInTree(state.blocks, pos.anchor.blockId);
-          if (!block) return;
-          const blockTextLen = Array.isArray(block.content)
-            ? block.content.reduce((sum, s) => sum + s.text.length, 0)
-            : typeof block.content === "string"
-              ? block.content.length
-              : 0;
-
-          try {
-            beginSelectionChangeLock();
-            inputHandledByWasm = true;
-            if (pos.anchor.blockId === pos.head.blockId && pos.anchor.offset !== pos.head.offset) {
-              const from = Math.min(pos.anchor.offset, pos.head.offset);
-              const to = Math.max(pos.anchor.offset, pos.head.offset);
-              this.dispatch({ steps: [{ type: "deleteText", blockId: pos.anchor.blockId, from, to }] });
-              currentSelection = {
-                type: "text",
-                anchor: { blockId: pos.anchor.blockId, offset: from },
-                head: { blockId: pos.anchor.blockId, offset: from },
-              };
-              publishSelection();
-            } else if (pos.anchor.offset < blockTextLen) {
-              this.dispatch({
-                steps: [{
-                  type: "deleteText",
-                  blockId: pos.anchor.blockId,
-                  from: pos.anchor.offset,
-                  to: pos.anchor.offset + 1,
-                }],
-              });
-              // Cursor stays at same position after forward delete
-            }
-            scheduleSelectionRestore();
-          } catch {
-            clearSelectionChangeLock();
-          }
-          return;
-        }
-      }, { signal });
+        },
+        { signal },
+      );
 
       // Keyboard shortcuts from extensions
-      element.addEventListener("keydown", (e) => {
-        if (e.isComposing || composingBlockId !== null || e.keyCode === 229) return;
-        if (!editable) {
-          // Read-only: allow navigation and copy, block editing shortcuts.
-          return;
-        }
-        if (e.key === "Enter") {
-          pendingEnterMode = e.shiftKey ? "shift" : "plain";
-        }
-
-        const isPasteShortcut =
-          (e.metaKey || e.ctrlKey) &&
-          !e.altKey &&
-          !e.shiftKey &&
-          e.key.toLowerCase() === "v";
-        if (isPasteShortcut) {
-          const selection = document.getSelection();
-          const selectionAnchor = selection?.anchorNode ?? null;
-          const eventTarget = e.target instanceof Node ? e.target : null;
-          const inEditor =
-            (selectionAnchor ? element.contains(selectionAnchor) : false) ||
-            (eventTarget ? element.contains(eventTarget) : false);
-          if (inEditor) {
-            const domSelection = readSelectionFromDOM?.();
-            if (domSelection?.anchor.blockId) {
-              currentSelection = {
-                type: "text",
-                anchor: { ...domSelection.anchor },
-                head: { ...domSelection.head },
-              };
-            }
-            clipboardHandler?.onPasteShortcut();
+      element.addEventListener(
+        "keydown",
+        (e) => {
+          if (e.isComposing || composingBlockId !== null || e.keyCode === 229) return;
+          if (!editable) {
+            // Read-only: allow navigation and copy, block editing shortcuts.
+            return;
           }
-        }
+          if (e.key === "Enter") {
+            pendingEnterMode = e.shiftKey ? "shift" : "plain";
+          }
 
-        // Some browsers do not dispatch beforeinput(deleteContentBackward)
-        // at list-item boundaries. Handle this path on keydown.
-        if (
-          e.key === "Backspace" &&
-          !e.metaKey &&
-          !e.ctrlKey &&
-          !e.altKey &&
-          readSelectionFromDOM
-        ) {
-          const domSelection = readSelectionFromDOM();
+          const isPasteShortcut =
+            (e.metaKey || e.ctrlKey) && !e.altKey && !e.shiftKey && e.key.toLowerCase() === "v";
+          if (isPasteShortcut) {
+            const selection = document.getSelection();
+            const selectionAnchor = selection?.anchorNode ?? null;
+            const eventTarget = e.target instanceof Node ? e.target : null;
+            const inEditor =
+              (selectionAnchor ? element.contains(selectionAnchor) : false) ||
+              (eventTarget ? element.contains(eventTarget) : false);
+            if (inEditor) {
+              const domSelection = readSelectionFromDOM?.();
+              if (domSelection?.anchor.blockId) {
+                currentSelection = {
+                  type: "text",
+                  anchor: { ...domSelection.anchor },
+                  head: { ...domSelection.head },
+                };
+              }
+              clipboardHandler?.onPasteShortcut();
+            }
+          }
+
+          // Some browsers do not dispatch beforeinput(deleteContentBackward)
+          // at list-item boundaries. Handle this path on keydown.
           if (
-            domSelection &&
-            domSelection.anchor.blockId === domSelection.head.blockId &&
-            domSelection.anchor.offset === domSelection.head.offset &&
-            domSelection.anchor.offset === 0
+            e.key === "Backspace" &&
+            !e.metaKey &&
+            !e.ctrlKey &&
+            !e.altKey &&
+            readSelectionFromDOM
           ) {
-            const state = this.getViewState();
-            const currentBlock = findBlockInTree(state.blocks, domSelection.anchor.blockId);
-            const parentInfo = currentBlock
-              ? findParentBlock(state.blocks, domSelection.anchor.blockId)
-              : null;
-            const insideListItem =
-              !!currentBlock &&
-              (currentBlock.type === "listItem" || currentBlock.type === "todoItem") &&
-              !!parentInfo &&
-              (
-                parentInfo.parent.type === "bulletList" ||
-                parentInfo.parent.type === "orderedList" ||
-                parentInfo.parent.type === "todoList"
-              );
-            if (insideListItem && !isBlockEmpty(currentBlock)) {
-              e.preventDefault();
-              try {
-                beginSelectionChangeLock();
-                inputHandledByWasm = true;
-                const converted = this.chain().setBlockType("paragraph").run();
-                if (converted) {
-                  const nextSelection = this.getViewState().selection;
-                  currentSelection = {
-                    type: "text",
-                    anchor: { blockId: nextSelection.anchor.blockId, offset: nextSelection.anchor.offset },
-                    head: { blockId: nextSelection.head.blockId, offset: nextSelection.head.offset },
-                  };
-                  publishSelection();
-                  scheduleSelectionRestore();
-                  return;
+            const domSelection = readSelectionFromDOM();
+            if (
+              domSelection &&
+              domSelection.anchor.blockId === domSelection.head.blockId &&
+              domSelection.anchor.offset === domSelection.head.offset &&
+              domSelection.anchor.offset === 0
+            ) {
+              const state = this.getViewState();
+              const currentBlock = findBlockInTree(state.blocks, domSelection.anchor.blockId);
+              const parentInfo = currentBlock
+                ? findParentBlock(state.blocks, domSelection.anchor.blockId)
+                : null;
+              const insideListItem =
+                !!currentBlock &&
+                (currentBlock.type === "listItem" || currentBlock.type === "todoItem") &&
+                !!parentInfo &&
+                (parentInfo.parent.type === "bulletList" ||
+                  parentInfo.parent.type === "orderedList" ||
+                  parentInfo.parent.type === "todoList");
+              if (insideListItem && !isBlockEmpty(currentBlock)) {
+                e.preventDefault();
+                try {
+                  beginSelectionChangeLock();
+                  inputHandledByWasm = true;
+                  const converted = this.chain().setBlockType("paragraph").run();
+                  if (converted) {
+                    const nextSelection = this.getViewState().selection;
+                    currentSelection = {
+                      type: "text",
+                      anchor: {
+                        blockId: nextSelection.anchor.blockId,
+                        offset: nextSelection.anchor.offset,
+                      },
+                      head: {
+                        blockId: nextSelection.head.blockId,
+                        offset: nextSelection.head.offset,
+                      },
+                    };
+                    publishSelection();
+                    scheduleSelectionRestore();
+                    return;
+                  }
+                } catch {
+                  // Fall through to regular key processing.
                 }
-              } catch {
-                // Fall through to regular key processing.
-              }
-              clearSelectionChangeLock();
-            }
-          }
-        }
-
-        const selection = document.getSelection();
-        const selectionTarget =
-          selection?.anchorNode instanceof HTMLElement
-            ? selection.anchorNode
-            : selection?.anchorNode?.parentElement ?? null;
-        const whenTarget =
-          (selectionTarget && element.contains(selectionTarget) ? selectionTarget : null) ??
-          (e.target instanceof HTMLElement ? e.target : element);
-
-        for (const ext of resolved) {
-          if (ext.keybindings) {
-            for (const kb of ext.keybindings) {
-              if (matchKeybinding(e, kb.key)) {
-                if (kb.when && !evaluateWhen(kb.when, whenTarget)) {
-                  continue;
-                }
-                const result = kb.command(this);
-                if (result !== false) {
-                  e.preventDefault();
-                  return;
-                }
+                clearSelectionChangeLock();
               }
             }
           }
-        }
-      }, { signal });
+
+          const selection = document.getSelection();
+          const selectionTarget =
+            selection?.anchorNode instanceof HTMLElement
+              ? selection.anchorNode
+              : (selection?.anchorNode?.parentElement ?? null);
+          const whenTarget =
+            (selectionTarget && element.contains(selectionTarget) ? selectionTarget : null) ??
+            (e.target instanceof HTMLElement ? e.target : element);
+
+          for (const ext of resolved) {
+            if (ext.keybindings) {
+              for (const kb of ext.keybindings) {
+                if (matchKeybinding(e, kb.key)) {
+                  if (kb.when && !evaluateWhen(kb.when, whenTarget)) {
+                    continue;
+                  }
+                  const result = kb.command(this);
+                  if (result !== false) {
+                    e.preventDefault();
+                    return;
+                  }
+                }
+              }
+            }
+          }
+        },
+        { signal },
+      );
 
       // Input rules from extensions
-      element.addEventListener("input", () => {
-        if (composingBlockId !== null) return;
-        // Skip input rules if WASM already handled this — DOM correction
-        // happens in the rAF callback of scheduleSelectionRestore()
-        if (inputHandledByWasm) return;
+      element.addEventListener(
+        "input",
+        () => {
+          if (composingBlockId !== null) return;
+          // Skip input rules if WASM already handled this — DOM correction
+          // happens in the rAF callback of scheduleSelectionRestore()
+          if (inputHandledByWasm) return;
 
-        const state = this.getViewState();
-        const block = state.blocks.find((b) => b.id === state.selection.anchor.blockId);
-        if (!block || !Array.isArray(block.content)) return;
-        const text = block.content.map((s) => s.text).join("");
+          const state = this.getViewState();
+          const block = state.blocks.find((b) => b.id === state.selection.anchor.blockId);
+          if (!block || !Array.isArray(block.content)) return;
+          const text = block.content.map((s) => s.text).join("");
 
-        for (const ext of resolved) {
-          if (ext.inputRules) {
-            for (const rule of ext.inputRules) {
-              const match = text.match(rule.pattern);
-              if (match) {
-                rule.handler(this, match);
-                return;
+          for (const ext of resolved) {
+            if (ext.inputRules) {
+              for (const rule of ext.inputRules) {
+                const match = text.match(rule.pattern);
+                if (match) {
+                  rule.handler(this, match);
+                  return;
+                }
               }
             }
           }
-        }
-      }, { signal });
+        },
+        { signal },
+      );
 
       if (options.autofocus) {
         element.focus();

@@ -52,7 +52,10 @@ interface FallbackBlock {
   id: string;
   block_type: string;
   attrs: Record<string, unknown>;
-  content: { type: "RichText"; value: FallbackSpan[] } | { type: "Raw"; value: string } | { type: "Empty" };
+  content:
+    | { type: "RichText"; value: FallbackSpan[] }
+    | { type: "Raw"; value: string }
+    | { type: "Empty" };
   children: FallbackBlock[];
 }
 
@@ -121,7 +124,10 @@ function splitSpansAt(spans: FallbackSpan[], offset: number): [FallbackSpan[], F
       before.push({ text: span.text, marks: span.marks.map((m) => ({ ...m })) });
     } else {
       // Split inside this span
-      before.push({ text: span.text.slice(0, offset - pos), marks: span.marks.map((m) => ({ ...m })) });
+      before.push({
+        text: span.text.slice(0, offset - pos),
+        marks: span.marks.map((m) => ({ ...m })),
+      });
       after.push({ text: span.text.slice(offset - pos), marks: span.marks.map((m) => ({ ...m })) });
       splitDone = true;
     }
@@ -142,7 +148,10 @@ function applyInsertText(
   setRichTextSpans(block, [...before, newSpan, ...after]);
 }
 
-function applyDeleteText(doc: FallbackDoc, step: { block_id: string; from: number; to: number }): void {
+function applyDeleteText(
+  doc: FallbackDoc,
+  step: { block_id: string; from: number; to: number },
+): void {
   const block = findBlockById(doc.blocks, step.block_id);
   if (!block) return;
   const spans = getRichTextSpans(block);
@@ -151,7 +160,10 @@ function applyDeleteText(doc: FallbackDoc, step: { block_id: string; from: numbe
   setRichTextSpans(block, [...beforeFrom, ...afterTo]);
 }
 
-function applyDeleteRange(doc: FallbackDoc, step: { block_id: string; from: number; to: number }): void {
+function applyDeleteRange(
+  doc: FallbackDoc,
+  step: { block_id: string; from: number; to: number },
+): void {
   const block = findBlockById(doc.blocks, step.block_id);
   if (!block) return;
   // For Raw content (code blocks), delete directly from string
@@ -241,16 +253,14 @@ function applySetBlockType(
   const block = findBlockById(doc.blocks, step.block_id);
   if (!block) return;
 
-  const prevType = block.block_type;
   block.block_type = step.new_type;
   block.attrs = step.attrs;
 
   // Convert content type when switching between block categories
   if (RAW_CONTENT_TYPES.has(step.new_type) && block.content.type !== "Raw") {
     // RichText/Empty → Raw: join span texts into a plain string
-    const text = block.content.type === "RichText"
-      ? block.content.value.map((s) => s.text).join("")
-      : "";
+    const text =
+      block.content.type === "RichText" ? block.content.value.map((s) => s.text).join("") : "";
     block.content = { type: "Raw", value: text };
   } else if (EMPTY_CONTENT_TYPES.has(step.new_type) && block.content.type !== "Empty") {
     block.content = { type: "Empty" };
@@ -284,7 +294,9 @@ function applyMoveBlock(
   const clone = JSON.parse(JSON.stringify(block)) as FallbackBlock;
   removeBlockById(doc.blocks, step.block_id);
   // Insert at new location
-  const target = step.new_parent_id ? findBlockById(doc.blocks, step.new_parent_id)?.children : doc.blocks;
+  const target = step.new_parent_id
+    ? findBlockById(doc.blocks, step.new_parent_id)?.children
+    : doc.blocks;
   if (!target) return;
   target.splice(Math.min(step.new_index, target.length), 0, clone);
 }
@@ -296,9 +308,7 @@ function applySplitBlock(doc: FallbackDoc, step: { block_id: string; offset: num
   const [before, after] = splitSpansAt(spans, step.offset);
 
   // Find block in parent array
-  const findInParent = (
-    blocks: FallbackBlock[],
-  ): { arr: FallbackBlock[]; idx: number } | null => {
+  const findInParent = (blocks: FallbackBlock[]): { arr: FallbackBlock[]; idx: number } | null => {
     for (let i = 0; i < blocks.length; i++) {
       if (blocks[i]!.id === step.block_id) return { arr: blocks, idx: i };
       const found = findInParent(blocks[i]!.children);
@@ -335,81 +345,127 @@ function applyMergeBlocks(doc: FallbackDoc, step: { block_id: string; target_id:
 // ---- Fallback HTML exporter ----
 
 function escapeHtml(text: string): string {
-  return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+  return text
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
 }
 
 function spansToHtml(spans: FallbackSpan[]): string {
-  return spans.map((span) => {
-    let html = escapeHtml(span.text);
-    for (const mark of span.marks) {
-      switch (mark.mark_type) {
-        case "bold": html = `<strong>${html}</strong>`; break;
-        case "italic": html = `<em>${html}</em>`; break;
-        case "underline": html = `<u>${html}</u>`; break;
-        case "strikethrough": html = `<s>${html}</s>`; break;
-        case "code": html = `<code>${html}</code>`; break;
-        case "superscript": html = `<sup>${html}</sup>`; break;
-        case "subscript": html = `<sub>${html}</sub>`; break;
-        case "link": {
-          const href = escapeHtml(String(mark.attrs.href ?? ""));
-          html = `<a href="${href}">${html}</a>`;
-          break;
-        }
-        case "highlight": {
-          const color = escapeHtml(String(mark.attrs.color ?? ""));
-          html = color ? `<mark style="background:${color}">${html}</mark>` : `<mark>${html}</mark>`;
-          break;
+  return spans
+    .map((span) => {
+      let html = escapeHtml(span.text);
+      for (const mark of span.marks) {
+        switch (mark.mark_type) {
+          case "bold":
+            html = `<strong>${html}</strong>`;
+            break;
+          case "italic":
+            html = `<em>${html}</em>`;
+            break;
+          case "underline":
+            html = `<u>${html}</u>`;
+            break;
+          case "strikethrough":
+            html = `<s>${html}</s>`;
+            break;
+          case "code":
+            html = `<code>${html}</code>`;
+            break;
+          case "superscript":
+            html = `<sup>${html}</sup>`;
+            break;
+          case "subscript":
+            html = `<sub>${html}</sub>`;
+            break;
+          case "link": {
+            const href = escapeHtml(String(mark.attrs.href ?? ""));
+            html = `<a href="${href}">${html}</a>`;
+            break;
+          }
+          case "highlight": {
+            const color = escapeHtml(String(mark.attrs.color ?? ""));
+            html = color
+              ? `<mark style="background:${color}">${html}</mark>`
+              : `<mark>${html}</mark>`;
+            break;
+          }
         }
       }
-    }
-    return html;
-  }).join("");
+      return html;
+    })
+    .join("");
 }
 
 function blockToHtml(block: FallbackBlock): string {
-  const inner = block.content.type === "RichText"
-    ? spansToHtml(block.content.value)
-    : block.content.type === "Raw" ? escapeHtml(block.content.value) : "";
+  const inner =
+    block.content.type === "RichText"
+      ? spansToHtml(block.content.value)
+      : block.content.type === "Raw"
+        ? escapeHtml(block.content.value)
+        : "";
   const childrenHtml = block.children.map(blockToHtml).join("\n");
 
   switch (block.block_type) {
-    case "paragraph": return `<p>${inner}</p>`;
+    case "paragraph":
+      return `<p>${inner}</p>`;
     case "heading": {
       const level = Math.min(Math.max(Number(block.attrs.level) || 1, 1), 6);
       return `<h${level}>${inner}</h${level}>`;
     }
-    case "bulletList": return `<ul>\n${childrenHtml}\n</ul>`;
-    case "orderedList": return `<ol>\n${childrenHtml}\n</ol>`;
-    case "listItem": return `<li>${inner}${childrenHtml ? `\n${childrenHtml}` : ""}</li>`;
-    case "todoList": return `<ul class="todo-list">\n${childrenHtml}\n</ul>`;
+    case "bulletList":
+      return `<ul>\n${childrenHtml}\n</ul>`;
+    case "orderedList":
+      return `<ol>\n${childrenHtml}\n</ol>`;
+    case "listItem":
+      return `<li>${inner}${childrenHtml ? `\n${childrenHtml}` : ""}</li>`;
+    case "todoList":
+      return `<ul class="todo-list">\n${childrenHtml}\n</ul>`;
     case "todoItem": {
       const checked = block.attrs.checked ? " checked" : "";
       return `<li><input type="checkbox"${checked} disabled> ${inner}</li>`;
     }
     case "codeBlock": {
-      const lang = block.attrs.language ? ` class="language-${escapeHtml(String(block.attrs.language))}"` : "";
+      const lang = block.attrs.language
+        ? ` class="language-${escapeHtml(String(block.attrs.language))}"`
+        : "";
       return `<pre><code${lang}>${inner}</code></pre>`;
     }
-    case "blockquote": return `<blockquote>${inner}${childrenHtml ? `\n${childrenHtml}` : ""}</blockquote>`;
-    case "divider": return "<hr>";
+    case "blockquote":
+      return `<blockquote>${inner}${childrenHtml ? `\n${childrenHtml}` : ""}</blockquote>`;
+    case "divider":
+      return "<hr>";
     case "callout": {
-      const emoji = block.attrs.emoji ? `<span class="callout-emoji">${escapeHtml(String(block.attrs.emoji))}</span>` : "";
+      const emoji = block.attrs.emoji
+        ? `<span class="callout-emoji">${escapeHtml(String(block.attrs.emoji))}</span>`
+        : "";
       return `<div class="callout">${emoji}${inner}</div>`;
     }
     case "image": {
       const src = escapeHtml(String(block.attrs.src ?? ""));
       const alt = escapeHtml(String(block.attrs.alt ?? ""));
-      const caption = block.attrs.caption ? `<figcaption>${escapeHtml(String(block.attrs.caption))}</figcaption>` : "";
+      const caption = block.attrs.caption
+        ? `<figcaption>${escapeHtml(String(block.attrs.caption))}</figcaption>`
+        : "";
       return `<figure><img src="${src}" alt="${alt}">${caption}</figure>`;
     }
-    case "table": return `<table>\n${childrenHtml}\n</table>`;
-    case "tableRow": return `<tr>\n${childrenHtml}\n</tr>`;
-    case "tableHeader": return `<th>${inner}</th>`;
-    case "tableCell": return `<td>${inner}</td>`;
-    case "toggle": return `<details${block.attrs.open ? " open" : ""}><summary>${inner}</summary>\n${childrenHtml}\n</details>`;
-    case "columns": return `<div class="columns">\n${childrenHtml}\n</div>`;
-    case "column": return `<div class="column">\n${childrenHtml}\n</div>`;
-    default: return inner ? `<p>${inner}</p>` : "";
+    case "table":
+      return `<table>\n${childrenHtml}\n</table>`;
+    case "tableRow":
+      return `<tr>\n${childrenHtml}\n</tr>`;
+    case "tableHeader":
+      return `<th>${inner}</th>`;
+    case "tableCell":
+      return `<td>${inner}</td>`;
+    case "toggle":
+      return `<details${block.attrs.open ? " open" : ""}><summary>${inner}</summary>\n${childrenHtml}\n</details>`;
+    case "columns":
+      return `<div class="columns">\n${childrenHtml}\n</div>`;
+    case "column":
+      return `<div class="column">\n${childrenHtml}\n</div>`;
+    default:
+      return inner ? `<p>${inner}</p>` : "";
   }
 }
 
@@ -421,33 +477,57 @@ function fallbackExportHtml(docJson: string): string {
 // ---- Fallback Markdown exporter ----
 
 function spansToMarkdown(spans: FallbackSpan[]): string {
-  return spans.map((span) => {
-    let md = span.text;
-    for (const mark of span.marks) {
-      switch (mark.mark_type) {
-        case "bold": md = `**${md}**`; break;
-        case "italic": md = `*${md}*`; break;
-        case "strikethrough": md = `~~${md}~~`; break;
-        case "code": md = `\`${md}\``; break;
-        case "link": md = `[${md}](${String(mark.attrs.href ?? "")})`; break;
-        case "superscript": md = `<sup>${md}</sup>`; break;
-        case "subscript": md = `<sub>${md}</sub>`; break;
-        // underline and highlight have no standard markdown — use HTML
-        case "underline": md = `<u>${md}</u>`; break;
-        case "highlight": md = `<mark>${md}</mark>`; break;
+  return spans
+    .map((span) => {
+      let md = span.text;
+      for (const mark of span.marks) {
+        switch (mark.mark_type) {
+          case "bold":
+            md = `**${md}**`;
+            break;
+          case "italic":
+            md = `*${md}*`;
+            break;
+          case "strikethrough":
+            md = `~~${md}~~`;
+            break;
+          case "code":
+            md = `\`${md}\``;
+            break;
+          case "link":
+            md = `[${md}](${String(mark.attrs.href ?? "")})`;
+            break;
+          case "superscript":
+            md = `<sup>${md}</sup>`;
+            break;
+          case "subscript":
+            md = `<sub>${md}</sub>`;
+            break;
+          // underline and highlight have no standard markdown — use HTML
+          case "underline":
+            md = `<u>${md}</u>`;
+            break;
+          case "highlight":
+            md = `<mark>${md}</mark>`;
+            break;
+        }
       }
-    }
-    return md;
-  }).join("");
+      return md;
+    })
+    .join("");
 }
 
 function blockToMarkdown(block: FallbackBlock, indent = ""): string {
-  const inner = block.content.type === "RichText"
-    ? spansToMarkdown(block.content.value)
-    : block.content.type === "Raw" ? block.content.value : "";
+  const inner =
+    block.content.type === "RichText"
+      ? spansToMarkdown(block.content.value)
+      : block.content.type === "Raw"
+        ? block.content.value
+        : "";
 
   switch (block.block_type) {
-    case "paragraph": return inner ? `${indent}${inner}\n` : "\n";
+    case "paragraph":
+      return inner ? `${indent}${inner}\n` : "\n";
     case "heading": {
       const level = Math.min(Math.max(Number(block.attrs.level) || 1, 1), 6);
       return `${"#".repeat(level)} ${inner}\n`;
@@ -455,15 +535,18 @@ function blockToMarkdown(block: FallbackBlock, indent = ""): string {
     case "bulletList":
       return block.children.map((child) => blockToMarkdown(child, indent)).join("");
     case "orderedList":
-      return block.children.map((child, i) => {
-        const num = `${i + 1}. `;
-        const childMd = block.children.length > 0
-          ? blockToMarkdown(child, indent).replace(/^- /, num)
-          : `${indent}${num}\n`;
-        return childMd;
-      }).join("");
+      return block.children
+        .map((child, i) => {
+          const num = `${i + 1}. `;
+          const childMd =
+            block.children.length > 0
+              ? blockToMarkdown(child, indent).replace(/^- /, num)
+              : `${indent}${num}\n`;
+          return childMd;
+        })
+        .join("");
     case "listItem": {
-      const childContent = block.children.map((c) => blockToMarkdown(c, indent + "  ")).join("");
+      const childContent = block.children.map((c) => blockToMarkdown(c, `${indent}  `)).join("");
       return `${indent}- ${inner}\n${childContent}`;
     }
     case "todoList":
@@ -478,10 +561,11 @@ function blockToMarkdown(block: FallbackBlock, indent = ""): string {
     }
     case "blockquote": {
       const childContent = block.children.map((c) => blockToMarkdown(c, "")).join("");
-      const lines = (inner + (childContent ? "\n" + childContent : "")).split("\n").filter(Boolean);
-      return lines.map((l) => `> ${l}`).join("\n") + "\n";
+      const lines = (inner + (childContent ? `\n${childContent}` : "")).split("\n").filter(Boolean);
+      return `${lines.map((l) => `> ${l}`).join("\n")}\n`;
     }
-    case "divider": return "---\n";
+    case "divider":
+      return "---\n";
     case "callout": {
       const emoji = block.attrs.emoji ? `${block.attrs.emoji} ` : "";
       return `> ${emoji}${inner}\n`;
@@ -505,7 +589,7 @@ function blockToMarkdown(block: FallbackBlock, indent = ""): string {
           lines.push(`| ${cells.map(() => "---").join(" | ")} |`);
         }
       }
-      return lines.join("\n") + "\n";
+      return `${lines.join("\n")}\n`;
     }
     case "toggle": {
       const childContent = block.children.map((c) => blockToMarkdown(c, indent)).join("");
@@ -518,7 +602,8 @@ function blockToMarkdown(block: FallbackBlock, indent = ""): string {
     case "tableHeader":
     case "tableCell":
       return inner;
-    default: return inner ? `${indent}${inner}\n` : "";
+    default:
+      return inner ? `${indent}${inner}\n` : "";
   }
 }
 
@@ -595,7 +680,10 @@ export class WasmBridge {
     if (this.initialized) return;
     if (this.mode === "js" || !this.loader) {
       if (this.mode === "wasm") {
-        throw new GoTipeError("WASM_INIT_FAILED", "WASM engine requested but no WASM loader is available");
+        throw new GoTipeError(
+          "WASM_INIT_FAILED",
+          "WASM engine requested but no WASM loader is available",
+        );
       }
       this.fallbackMode = true;
       this.initialized = true;

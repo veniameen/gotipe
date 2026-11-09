@@ -6,7 +6,9 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "build:wiki": "vite build --config vite.wiki.config.ts",
+    "preview:wiki": "vite preview --config vite.wiki.config.ts"
   },
   "dependencies": {
     "@gotipe/core": "workspace:*",
@@ -21,7 +23,8 @@
     "@gotipe/theme": "workspace:*",
     "@gotipe/export": "workspace:*",
     "react": "^19.0.0",
-    "react-dom": "^19.0.0"
+    "react-dom": "^19.0.0",
+    "@gotipe/markdown": "workspace:*"
   },
   "devDependencies": {
     "@types/react": "^19.0.0",

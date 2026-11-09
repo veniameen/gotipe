@@ -62,7 +62,10 @@ export class MarkdownSession {
       const first = blocks[0];
       const hasTitle = first?.type === "heading" && Number(first.attrs.level) === 1;
       if (!hasTitle) {
-        const id = previousDoc?.blocks[0] && isEmptyTitle(previousDoc.blocks[0]) ? previousDoc.blocks[0].id : crypto.randomUUID();
+        const id =
+          previousDoc?.blocks[0] && isEmptyTitle(previousDoc.blocks[0])
+            ? previousDoc.blocks[0].id
+            : crypto.randomUUID();
         blocks.unshift({ id, type: "heading", attrs: { level: 1 }, content: [], children: [] });
         this.syntheticTitleId = id;
       }
@@ -89,10 +92,17 @@ export class MarkdownSession {
     if (this.cache && this.cache.revision === this.revision) return this.cache;
     const doc = editor.getJSON() as Doc;
     const blocks = [...doc.blocks];
-    if (this.syntheticTitleId && blocks[0]?.id === this.syntheticTitleId && isEmptyTitle(blocks[0])) {
+    if (
+      this.syntheticTitleId &&
+      blocks[0]?.id === this.syntheticTitleId &&
+      isEmptyTitle(blocks[0])
+    ) {
       blocks.shift();
     }
-    const { text, map, snapshot } = serializeMarkdown({ version: doc.version, blocks } as never, this.snapshot);
+    const { text, map, snapshot } = serializeMarkdown(
+      { version: doc.version, blocks } as never,
+      this.snapshot,
+    );
     this.snapshot = snapshot;
     this.cache = { text, map, revision: this.revision };
     return this.cache;

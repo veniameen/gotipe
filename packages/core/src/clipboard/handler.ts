@@ -21,7 +21,10 @@ export class ClipboardHandler {
       const internalJson = data.getData("application/x-gotipe");
       if (internalJson) {
         try {
-          const payload = JSON.parse(internalJson) as { blocks?: Block[]; spans?: { text: string; marks: Mark[] }[] };
+          const payload = JSON.parse(internalJson) as {
+            blocks?: Block[];
+            spans?: { text: string; marks: Mark[] }[];
+          };
           if (payload.spans && payload.spans.length > 0) {
             this.deleteSelectionIfNeeded();
             // Inline content — insert spans into current block
@@ -115,15 +118,16 @@ export class ClipboardHandler {
         const to = Math.max(sel.anchor.offset, sel.head.offset);
 
         // Extract selected spans preserving marks
-        const selectedSpans = this.extractSpans(block.content as { text: string; marks: Mark[] }[], from, to);
+        const selectedSpans = this.extractSpans(
+          block.content as { text: string; marks: Mark[] }[],
+          from,
+          to,
+        );
         const selectedText = selectedSpans.map((s) => s.text).join("");
 
         data.setData("text/plain", selectedText);
         data.setData("text/html", this.spansToHtml(selectedSpans));
-        data.setData(
-          "application/x-gotipe",
-          JSON.stringify({ spans: selectedSpans }),
-        );
+        data.setData("application/x-gotipe", JSON.stringify({ spans: selectedSpans }));
       }
     } else if (sel.type === "block") {
       const block = state.blocks.find((b) => b.id === sel.anchor.blockId);
@@ -181,7 +185,10 @@ export class ClipboardHandler {
     let pos = 0;
     for (const span of content) {
       const spanEnd = pos + span.text.length;
-      if (spanEnd <= from) { pos = spanEnd; continue; }
+      if (spanEnd <= from) {
+        pos = spanEnd;
+        continue;
+      }
       if (pos >= to) break;
       const sliceFrom = Math.max(from - pos, 0);
       const sliceTo = Math.min(to - pos, span.text.length);
@@ -193,36 +200,58 @@ export class ClipboardHandler {
 
   /** Convert spans to HTML for clipboard */
   private spansToHtml(spans: { text: string; marks: Mark[] }[]): string {
-    const inner = spans.map((span) => {
-      let html = this.escapeHtml(span.text);
-      for (const mark of span.marks) {
-        switch (mark.type) {
-          case "bold": html = `<strong>${html}</strong>`; break;
-          case "italic": html = `<em>${html}</em>`; break;
-          case "underline": html = `<u>${html}</u>`; break;
-          case "strikethrough": html = `<s>${html}</s>`; break;
-          case "code": html = `<code>${html}</code>`; break;
-          case "superscript": html = `<sup>${html}</sup>`; break;
-          case "subscript": html = `<sub>${html}</sub>`; break;
-          case "link": {
-            const href = this.escapeHtml(String((mark.attrs as Record<string, string>)?.href ?? ""));
-            html = `<a href="${href}">${html}</a>`;
-            break;
-          }
-          case "highlight": {
-            const color = (mark.attrs as Record<string, string>)?.color;
-            html = color ? `<mark style="background:${this.escapeHtml(color)}">${html}</mark>` : `<mark>${html}</mark>`;
-            break;
+    const inner = spans
+      .map((span) => {
+        let html = this.escapeHtml(span.text);
+        for (const mark of span.marks) {
+          switch (mark.type) {
+            case "bold":
+              html = `<strong>${html}</strong>`;
+              break;
+            case "italic":
+              html = `<em>${html}</em>`;
+              break;
+            case "underline":
+              html = `<u>${html}</u>`;
+              break;
+            case "strikethrough":
+              html = `<s>${html}</s>`;
+              break;
+            case "code":
+              html = `<code>${html}</code>`;
+              break;
+            case "superscript":
+              html = `<sup>${html}</sup>`;
+              break;
+            case "subscript":
+              html = `<sub>${html}</sub>`;
+              break;
+            case "link": {
+              const href = this.escapeHtml(
+                String((mark.attrs as Record<string, string>)?.href ?? ""),
+              );
+              html = `<a href="${href}">${html}</a>`;
+              break;
+            }
+            case "highlight": {
+              const color = (mark.attrs as Record<string, string>)?.color;
+              html = color
+                ? `<mark style="background:${this.escapeHtml(color)}">${html}</mark>`
+                : `<mark>${html}</mark>`;
+              break;
+            }
           }
         }
-      }
-      return html;
-    }).join("");
+        return html;
+      })
+      .join("");
     return `<p>${inner}</p>`;
   }
 
   /** Parse sanitized HTML into block-like structures */
-  private parseHtmlToBlocks(html: string): { type: string; content: string; attrs: Record<string, unknown> }[] {
+  private parseHtmlToBlocks(
+    html: string,
+  ): { type: string; content: string; attrs: Record<string, unknown> }[] {
     if (typeof DOMParser === "undefined") {
       return [{ type: "paragraph", content: html.replace(/<[^>]*>/g, ""), attrs: {} }];
     }
@@ -242,16 +271,32 @@ export class ClipboardHandler {
       const text = node.textContent || "";
 
       switch (tag) {
-        case "h1": blocks.push({ type: "heading", content: text, attrs: { level: 1 } }); break;
-        case "h2": blocks.push({ type: "heading", content: text, attrs: { level: 2 } }); break;
-        case "h3": blocks.push({ type: "heading", content: text, attrs: { level: 3 } }); break;
-        case "h4": blocks.push({ type: "heading", content: text, attrs: { level: 4 } }); break;
-        case "h5": blocks.push({ type: "heading", content: text, attrs: { level: 5 } }); break;
-        case "h6": blocks.push({ type: "heading", content: text, attrs: { level: 6 } }); break;
+        case "h1":
+          blocks.push({ type: "heading", content: text, attrs: { level: 1 } });
+          break;
+        case "h2":
+          blocks.push({ type: "heading", content: text, attrs: { level: 2 } });
+          break;
+        case "h3":
+          blocks.push({ type: "heading", content: text, attrs: { level: 3 } });
+          break;
+        case "h4":
+          blocks.push({ type: "heading", content: text, attrs: { level: 4 } });
+          break;
+        case "h5":
+          blocks.push({ type: "heading", content: text, attrs: { level: 5 } });
+          break;
+        case "h6":
+          blocks.push({ type: "heading", content: text, attrs: { level: 6 } });
+          break;
         case "pre": {
           const code = node.querySelector("code");
           const lang = code?.className?.replace("language-", "") || "plain";
-          blocks.push({ type: "codeBlock", content: code?.textContent || text, attrs: { language: lang } });
+          blocks.push({
+            type: "codeBlock",
+            content: code?.textContent || text,
+            attrs: { language: lang },
+          });
           break;
         }
         case "blockquote":
@@ -278,20 +323,24 @@ export class ClipboardHandler {
   }
 
   /** Insert parsed HTML blocks */
-  private insertParsedBlocks(blocks: { type: string; content: string; attrs: Record<string, unknown> }[]): void {
+  private insertParsedBlocks(
+    blocks: { type: string; content: string; attrs: Record<string, unknown> }[],
+  ): void {
     const state = this.editor.getViewState();
     const blockIndex = state.blocks.findIndex((b) => b.id === state.selection.anchor.blockId);
 
     if (blocks.length === 1 && blocks[0]!.type === "paragraph") {
       // Single paragraph — insert as text into current block
       this.editor.dispatch({
-        steps: [{
-          type: "insertText",
-          blockId: state.selection.anchor.blockId,
-          offset: state.selection.anchor.offset,
-          text: blocks[0]!.content,
-          marks: [],
-        }],
+        steps: [
+          {
+            type: "insertText",
+            blockId: state.selection.anchor.blockId,
+            offset: state.selection.anchor.offset,
+            text: blocks[0]!.content,
+            marks: [],
+          },
+        ],
       });
       return;
     }
@@ -365,13 +414,15 @@ export class ClipboardHandler {
 
     // Insert text first
     this.editor.dispatch({
-      steps: [{
-        type: "insertText",
-        blockId: sel.anchor.blockId,
-        offset: sel.anchor.offset,
-        text,
-        marks: [],
-      }],
+      steps: [
+        {
+          type: "insertText",
+          blockId: sel.anchor.blockId,
+          offset: sel.anchor.offset,
+          text,
+          marks: [],
+        },
+      ],
     });
 
     // Then apply marks for each span
@@ -379,13 +430,15 @@ export class ClipboardHandler {
     for (const span of spans) {
       for (const mark of span.marks) {
         this.editor.dispatch({
-          steps: [{
-            type: "addMark",
-            blockId: sel.anchor.blockId,
-            from: offset,
-            to: offset + span.text.length,
-            mark,
-          }],
+          steps: [
+            {
+              type: "addMark",
+              blockId: sel.anchor.blockId,
+              from: offset,
+              to: offset + span.text.length,
+              mark,
+            },
+          ],
         });
       }
       offset += span.text.length;
@@ -400,15 +453,17 @@ export class ClipboardHandler {
     for (let i = 0; i < blocks.length; i++) {
       const block = blocks[i]!;
       this.editor.dispatch({
-        steps: [{
-          type: "insertBlock",
-          parentId: null,
-          index: blockIndex + 1 + i,
-          block: {
-            ...block,
-            id: crypto.randomUUID(),
+        steps: [
+          {
+            type: "insertBlock",
+            parentId: null,
+            index: blockIndex + 1 + i,
+            block: {
+              ...block,
+              id: crypto.randomUUID(),
+            },
           },
-        }],
+        ],
       });
     }
   }
@@ -419,23 +474,27 @@ export class ClipboardHandler {
 
     if (lines.length === 1) {
       this.editor.dispatch({
-        steps: [{
+        steps: [
+          {
+            type: "insertText",
+            blockId: state.selection.anchor.blockId,
+            offset: state.selection.anchor.offset,
+            text: lines[0]!,
+            marks: [],
+          },
+        ],
+      });
+    } else {
+      // Multi-line: insert first line into current block, rest as new paragraphs
+      const steps: Step[] = [
+        {
           type: "insertText",
           blockId: state.selection.anchor.blockId,
           offset: state.selection.anchor.offset,
           text: lines[0]!,
           marks: [],
-        }],
-      });
-    } else {
-      // Multi-line: insert first line into current block, rest as new paragraphs
-      const steps: Step[] = [{
-        type: "insertText",
-        blockId: state.selection.anchor.blockId,
-        offset: state.selection.anchor.offset,
-        text: lines[0]!,
-        marks: [],
-      }];
+        },
+      ];
 
       const blockIndex = state.blocks.findIndex((b) => b.id === state.selection.anchor.blockId);
       for (let i = 1; i < lines.length; i++) {
@@ -470,6 +529,10 @@ export class ClipboardHandler {
   }
 
   private escapeHtml(text: string): string {
-    return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+    return text
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
   }
 }
