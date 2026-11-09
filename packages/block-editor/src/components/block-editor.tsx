@@ -4,6 +4,23 @@ import type React from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { AiCommandBar } from "./ai-command-bar";
 import { AiStatusIndicator } from "./ai-status-indicator";
+import {
+  type DropTarget,
+  LIST_ITEM_TYPES,
+  ROW_DRAGGABLE_LIST_TYPES,
+  findBlockLocation,
+  getBlockElById,
+  getBlockFirstLineMetrics,
+  getBlockTextLeft,
+  getDropIndexForParent,
+  getDropIndicatorHorizontalInsets,
+  getDropIndicatorYForParent,
+  getRowAnchorBlockIdAtPoint,
+  getToolbarRailLeft,
+  getTopLevelAncestorBlockId,
+  moveDraggedBlock,
+  resolveListRowDropTarget,
+} from "./block-interaction";
 import { BlockToolbar } from "./block-toolbar";
 import { BlockEditorBubbleMenu } from "./bubble-menu";
 import type { RemotePeer } from "./collaboration-cursors";
@@ -16,22 +33,9 @@ import { ThemeToggle } from "./theme-toggle";
 
 const BLOCK_TOOLBAR_WIDTH = 36;
 const BLOCK_TOOLBAR_BUTTON_SIZE = 24;
-const BLOCK_TOOLBAR_COLUMN_OFFSET = 45;
 const TOOLBAR_HIDE_DELAY_MS = 20;
 const TOOLBAR_HOVER_X_MIN_OFFSET = 120;
 const TOOLBAR_HOVER_X_MAX_OFFSET = 560;
-const LIST_CONTAINER_TYPES = new Set(["bulletList", "orderedList", "todoList"]);
-const LIST_ITEM_TYPES = new Set(["listItem", "todoItem"]);
-const ROW_DRAGGABLE_LIST_TYPES = new Set(["bulletList", "orderedList", "todoList"]);
-
-type ViewBlock = ReturnType<GoTipeEditor["getViewState"]>["blocks"][number];
-type DropTarget = { parentId: string | null; index: number };
-type BlockLocation = {
-  parentId: string | null;
-  parentType: string | null;
-  index: number;
-  blockType: string;
-};
 
 export interface BlockEditorProps {
   editor: GoTipeEditor | null;
@@ -51,389 +55,6 @@ export interface BlockEditorProps {
   onSuggestionAcceptAll?: () => void;
   onSuggestionRejectAll?: () => void;
   children?: React.ReactNode;
-}
-
-/**
- * Walk up from `el` to find the top-level block element
- * (a direct child of [data-gotipe-content] that has data-block-id).
- */
-function getTopLevelBlockId(start: HTMLElement | null, containerEl: HTMLElement): string | null {
-  const contentEl = containerEl.querySelector("[data-gotipe-content]");
-  if (!contentEl) return null;
-  let el = start;
-  while (el && el !== containerEl) {
-    if (el.parentElement === contentEl && el.hasAttribute("data-block-id")) {
-      return el.getAttribute("data-block-id");
-    }
-    el = el.parentElement;
-  }
-  return null;
-}
-
-/**
- * Get top-level block elements (direct children of the content area).
- */
-function getTopLevelBlockEls(containerEl: HTMLElement): HTMLElement[] {
-  const contentEl = containerEl.querySelector("[data-gotipe-content]");
-  if (!contentEl) return [];
-  return Array.from(contentEl.children).filter(
-    (el): el is HTMLElement => el instanceof HTMLElement && el.hasAttribute("data-block-id"),
-  );
-}
-
-function getTopLevelBlockIdAtPoint(
-  containerEl: HTMLElement,
-  clientX: number,
-  clientY: number,
-): string | null {
-  const stack = document.elementsFromPoint(clientX, clientY);
-  for (const node of stack) {
-    if (!(node instanceof HTMLElement)) continue;
-    const id = getTopLevelBlockId(node, containerEl);
-    if (id) return id;
-  }
-
-  const blocks = getTopLevelBlockEls(containerEl);
-  let nearest: HTMLElement | null = null;
-  let nearestDistance = Number.POSITIVE_INFINITY;
-  for (const block of blocks) {
-    const rect = block.getBoundingClientRect();
-    if (clientY >= rect.top && clientY <= rect.bottom) {
-      return block.getAttribute("data-block-id");
-    }
-    const distance = clientY < rect.top ? rect.top - clientY : clientY - rect.bottom;
-    if (distance < nearestDistance) {
-      nearestDistance = distance;
-      nearest = block;
-    }
-  }
-  return nearest?.getAttribute("data-block-id") ?? null;
-}
-
-function getBlockElById(containerEl: HTMLElement, blockId: string): HTMLElement | null {
-  return containerEl.querySelector(`[data-block-id="${blockId}"]`) as HTMLElement | null;
-}
-
-function getTopLevelAncestorBlockId(containerEl: HTMLElement, blockId: string): string | null {
-  const contentEl = containerEl.querySelector("[data-gotipe-content]");
-  if (!contentEl) return null;
-  let blockEl = getBlockElById(containerEl, blockId);
-  if (!blockEl) return null;
-
-  while (blockEl && blockEl.parentElement !== contentEl) {
-    const parent = blockEl.parentElement?.closest("[data-block-id]") as HTMLElement | null;
-    if (!parent) break;
-    blockEl = parent;
-  }
-  return blockEl?.getAttribute("data-block-id") ?? null;
-}
-
-function findNearestRowInList(listEl: HTMLElement, clientY: number): string | null {
-  const rows = Array.from(
-    listEl.querySelectorAll('[data-block-type="listItem"], [data-block-type="todoItem"]'),
-  ).filter(
-    (el): el is HTMLElement => el instanceof HTMLElement && el.hasAttribute("data-block-id"),
-  );
-  if (rows.length === 0) return null;
-
-  let nearest: HTMLElement | null = null;
-  let nearestDistance = Number.POSITIVE_INFINITY;
-  for (const row of rows) {
-    const rect = row.getBoundingClientRect();
-    if (clientY >= rect.top && clientY <= rect.bottom) {
-      return row.getAttribute("data-block-id");
-    }
-    const distance = clientY < rect.top ? rect.top - clientY : clientY - rect.bottom;
-    if (distance < nearestDistance) {
-      nearestDistance = distance;
-      nearest = row;
-    }
-  }
-  return nearest?.getAttribute("data-block-id") ?? null;
-}
-
-function getRowAnchorBlockIdAtPoint(
-  containerEl: HTMLElement,
-  clientX: number,
-  clientY: number,
-): string | null {
-  const stack = document.elementsFromPoint(clientX, clientY);
-  let listContainerId: string | null = null;
-
-  for (const node of stack) {
-    if (!(node instanceof HTMLElement)) continue;
-    const blockEl = node.closest("[data-block-id]") as HTMLElement | null;
-    if (!blockEl || !containerEl.contains(blockEl)) continue;
-
-    const blockType = blockEl.getAttribute("data-block-type") ?? "";
-    const blockId = blockEl.getAttribute("data-block-id");
-    if (!blockId) continue;
-
-    if (LIST_ITEM_TYPES.has(blockType)) {
-      return blockId;
-    }
-    if (!LIST_CONTAINER_TYPES.has(blockType)) {
-      return blockId;
-    }
-    if (!listContainerId) {
-      listContainerId = blockId;
-    }
-  }
-
-  if (listContainerId) {
-    const listEl = getBlockElById(containerEl, listContainerId);
-    if (listEl) {
-      const rowId = findNearestRowInList(listEl, clientY);
-      if (rowId) return rowId;
-    }
-  }
-
-  // When hovering deep in the left gutter, hit-testing can miss nested list items.
-  // Resolve top-level by Y first, then remap list containers to nearest row item.
-  const topLevelId = getTopLevelBlockIdAtPoint(containerEl, clientX, clientY);
-  if (!topLevelId) return null;
-  const topLevelEl = getBlockElById(containerEl, topLevelId);
-  const topLevelType = topLevelEl?.getAttribute("data-block-type") ?? "";
-  if (LIST_CONTAINER_TYPES.has(topLevelType) && topLevelEl) {
-    const rowId = findNearestRowInList(topLevelEl, clientY);
-    if (rowId) return rowId;
-  }
-  return topLevelId;
-}
-
-function getToolbarRailLeft(containerEl: HTMLElement): number {
-  const contentEl = containerEl.querySelector("[data-gotipe-content]") as HTMLElement | null;
-  const containerRect = containerEl.getBoundingClientRect();
-  const contentRect = contentEl?.getBoundingClientRect() ?? containerRect;
-  const topLevelBlocks = getTopLevelBlockEls(containerEl);
-  const columnLeftCandidates = topLevelBlocks
-    .filter((blockEl) => (blockEl.getAttribute("data-block-type") ?? "") !== "divider")
-    .map((blockEl) => blockEl.getBoundingClientRect().left);
-  const columnLeft =
-    columnLeftCandidates.length > 0 ? Math.min(...columnLeftCandidates) : contentRect.left;
-
-  return Math.max(0, Math.round(columnLeft - containerRect.left - BLOCK_TOOLBAR_COLUMN_OFFSET));
-}
-
-function getBlockTextLeft(blockEl: HTMLElement): number {
-  const walker = document.createTreeWalker(blockEl, NodeFilter.SHOW_TEXT);
-  let n: Node | null;
-  for (n = walker.nextNode(); n; n = walker.nextNode()) {
-    const text = n.textContent ?? "";
-    if (!text.trim()) continue;
-    const r = document.createRange();
-    r.setStart(n, 0);
-    r.setEnd(n, Math.min(1, text.length));
-    const rr = r.getBoundingClientRect();
-    if (rr.width > 0 || rr.height > 0) return rr.left;
-  }
-
-  const host =
-    (blockEl.querySelector("[data-gotipe-todo-content]") as HTMLElement | null) ??
-    (blockEl.querySelector("[contenteditable='true']") as HTMLElement | null) ??
-    blockEl;
-  return host.getBoundingClientRect().left;
-}
-
-function getBlockFirstLineMetrics(blockEl: HTMLElement): { top: number; height: number } {
-  const hosts: HTMLElement[] = [];
-  const todoHost = blockEl.querySelector("[data-gotipe-todo-content]") as HTMLElement | null;
-  if (todoHost) hosts.push(todoHost);
-
-  const editableHost = blockEl.querySelector("[contenteditable='true']") as HTMLElement | null;
-  if (editableHost && editableHost !== blockEl) hosts.push(editableHost);
-  hosts.push(blockEl);
-
-  for (const host of hosts) {
-    const walker = document.createTreeWalker(host, NodeFilter.SHOW_TEXT);
-    let textNode: Node | null;
-    for (textNode = walker.nextNode(); textNode; textNode = walker.nextNode()) {
-      const text = textNode.textContent ?? "";
-      if (text.length === 0) continue;
-      const firstVisibleChar = text.search(/\S/);
-      const start = firstVisibleChar >= 0 ? firstVisibleChar : 0;
-      const end = Math.min(text.length, start + 1);
-      const range = document.createRange();
-      range.setStart(textNode, start);
-      range.setEnd(textNode, end);
-      const rect = range.getBoundingClientRect();
-      if (rect.height > 0) {
-        return { top: rect.top, height: rect.height };
-      }
-    }
-
-    const trailingBreak = host.querySelector(
-      "br[data-gotipe-trailing-break]",
-    ) as HTMLElement | null;
-    if (trailingBreak) {
-      const rect = trailingBreak.getBoundingClientRect();
-      if (rect.height > 0) {
-        return { top: rect.top, height: rect.height };
-      }
-    }
-
-    const hostRect = host.getBoundingClientRect();
-    if (hostRect.height > 0) {
-      const computed = window.getComputedStyle(host);
-      const parsedLineHeight = Number.parseFloat(computed.lineHeight);
-      const fallbackLineHeight = Number.isFinite(parsedLineHeight)
-        ? parsedLineHeight
-        : hostRect.height;
-      const lineHeight = Math.max(1, Math.min(hostRect.height, fallbackLineHeight));
-      return { top: hostRect.top, height: lineHeight };
-    }
-  }
-
-  const blockRect = blockEl.getBoundingClientRect();
-  return { top: blockRect.top, height: Math.max(1, blockRect.height) };
-}
-
-function findBlockLocation(
-  blocks: ViewBlock[],
-  blockId: string,
-  parent: ViewBlock | null = null,
-): BlockLocation | null {
-  for (let i = 0; i < blocks.length; i++) {
-    const block = blocks[i]!;
-    if (block.id === blockId) {
-      return {
-        parentId: parent?.id ?? null,
-        parentType: parent?.type ?? null,
-        index: i,
-        blockType: block.type,
-      };
-    }
-    const found = findBlockLocation(block.children, blockId, block);
-    if (found) return found;
-  }
-  return null;
-}
-
-function findBlockById(blocks: ViewBlock[], blockId: string): ViewBlock | null {
-  for (const block of blocks) {
-    if (block.id === blockId) return block;
-    const nested = findBlockById(block.children, blockId);
-    if (nested) return nested;
-  }
-  return null;
-}
-
-function getChildBlockEls(containerEl: HTMLElement, parentId: string | null): HTMLElement[] {
-  if (!parentId) return getTopLevelBlockEls(containerEl);
-  const parentEl = getBlockElById(containerEl, parentId);
-  if (!parentEl) return [];
-  return Array.from(parentEl.children).filter(
-    (el): el is HTMLElement => el instanceof HTMLElement && el.hasAttribute("data-block-id"),
-  );
-}
-
-function getDropIndexForParent(
-  containerEl: HTMLElement,
-  parentId: string | null,
-  clientY: number,
-): number {
-  const blockEls = getChildBlockEls(containerEl, parentId);
-  for (let i = 0; i < blockEls.length; i++) {
-    const rect = blockEls[i]!.getBoundingClientRect();
-    const midY = rect.top + rect.height / 2;
-    if (clientY < midY) return i;
-  }
-  return blockEls.length;
-}
-
-function getDropIndicatorYForParent(
-  containerEl: HTMLElement,
-  parentId: string | null,
-  dropIdx: number,
-): number | null {
-  const blockEls = getChildBlockEls(containerEl, parentId);
-  const containerRect = containerEl.getBoundingClientRect();
-
-  if (blockEls.length === 0) {
-    if (!parentId) return null;
-    const parentEl = getBlockElById(containerEl, parentId);
-    if (!parentEl) return null;
-    return parentEl.getBoundingClientRect().top - containerRect.top;
-  }
-
-  if (dropIdx <= 0) {
-    return blockEls[0]!.getBoundingClientRect().top - containerRect.top;
-  }
-
-  if (dropIdx <= blockEls.length) {
-    const prevRect = blockEls[dropIdx - 1]!.getBoundingClientRect();
-    return prevRect.bottom - containerRect.top;
-  }
-
-  return blockEls[blockEls.length - 1]!.getBoundingClientRect().bottom - containerRect.top;
-}
-
-function getDropIndicatorHorizontalInsets(
-  containerEl: HTMLElement,
-  parentId: string | null,
-): { left: number; right: number } {
-  if (!parentId) return { left: 0, right: 0 };
-
-  const parentEl = getBlockElById(containerEl, parentId);
-  if (!parentEl) return { left: 0, right: 0 };
-
-  const containerRect = containerEl.getBoundingClientRect();
-  const parentRect = parentEl.getBoundingClientRect();
-  const left = Math.max(0, Math.round(parentRect.left - containerRect.left));
-  const right = Math.max(0, Math.round(containerRect.right - parentRect.right));
-  return { left, right };
-}
-
-function canDropListItemIntoParent(itemType: string, parentType: string | null): boolean {
-  if (!parentType) return false;
-  if (itemType === "todoItem") return parentType === "todoList";
-  if (itemType === "listItem") return parentType === "bulletList" || parentType === "orderedList";
-  return false;
-}
-
-function inferListContainerTypeForItem(
-  itemType: string,
-  sourceParentType: string | null,
-): "bulletList" | "orderedList" | "todoList" {
-  if (itemType === "todoItem") return "todoList";
-  if (sourceParentType === "orderedList") return "orderedList";
-  return "bulletList";
-}
-
-function resolveListRowDropTarget(
-  containerEl: HTMLElement,
-  blocks: ViewBlock[],
-  draggingBlockType: string,
-  clientX: number,
-  clientY: number,
-): DropTarget {
-  const anchorBlockId = getRowAnchorBlockIdAtPoint(containerEl, clientX, clientY);
-  if (anchorBlockId) {
-    const anchorEl = getBlockElById(containerEl, anchorBlockId);
-    const anchorType = anchorEl?.getAttribute("data-block-type") ?? null;
-    if (canDropListItemIntoParent(draggingBlockType, anchorType)) {
-      return {
-        parentId: anchorBlockId,
-        index: getDropIndexForParent(containerEl, anchorBlockId, clientY),
-      };
-    }
-
-    const anchorLocation = findBlockLocation(blocks, anchorBlockId);
-    if (
-      anchorLocation?.parentId &&
-      canDropListItemIntoParent(draggingBlockType, anchorLocation.parentType)
-    ) {
-      return {
-        parentId: anchorLocation.parentId,
-        index: getDropIndexForParent(containerEl, anchorLocation.parentId, clientY),
-      };
-    }
-  }
-
-  return {
-    parentId: null,
-    index: getDropIndexForParent(containerEl, null, clientY),
-  };
 }
 
 export function BlockEditor({
@@ -686,74 +307,8 @@ export function BlockEditor({
         ? getDropIndexForParent(containerRef.current, fallbackParentId, e.clientY)
         : currentLocation.index;
       const target = dropTarget ?? { parentId: fallbackParentId, index: fallbackIndex };
-      const targetParentId = target.parentId;
 
-      let adjustedTarget = target.index;
-      if (targetParentId === currentLocation.parentId && adjustedTarget > currentLocation.index) {
-        adjustedTarget -= 1;
-      }
-
-      const locationChanged =
-        targetParentId !== currentLocation.parentId || adjustedTarget !== currentLocation.index;
-
-      if (locationChanged) {
-        const draggingType =
-          draggingBlockTypeRef.current ?? draggingBlockType ?? currentLocation.blockType;
-
-        if (LIST_ITEM_TYPES.has(draggingType) && targetParentId === null) {
-          const sourceParentId = currentLocation.parentId;
-          const sourceParentType = currentLocation.parentType;
-          const listContainerType = inferListContainerTypeForItem(draggingType, sourceParentType);
-          const newListId = crypto.randomUUID();
-          editor.dispatch({
-            steps: [
-              {
-                type: "insertBlock",
-                parentId: null,
-                index: adjustedTarget,
-                block: {
-                  id: newListId,
-                  type: listContainerType,
-                  attrs: {},
-                  content: null,
-                  children: [],
-                },
-              },
-              {
-                type: "moveBlock",
-                blockId,
-                newParentId: newListId,
-                newIndex: 0,
-              },
-            ],
-          });
-
-          if (sourceParentId) {
-            const nextState = editor.getViewState();
-            const sourceParent = findBlockById(nextState.blocks, sourceParentId);
-            if (
-              sourceParent &&
-              LIST_CONTAINER_TYPES.has(sourceParent.type) &&
-              sourceParent.children.length === 0
-            ) {
-              editor.dispatch({
-                steps: [{ type: "deleteBlock", blockId: sourceParentId }],
-              });
-            }
-          }
-        } else {
-          editor.dispatch({
-            steps: [
-              {
-                type: "moveBlock",
-                blockId,
-                newParentId: targetParentId,
-                newIndex: adjustedTarget,
-              },
-            ],
-          });
-        }
-      }
+      moveDraggedBlock(editor, blockId, target);
 
       draggingBlockIdRef.current = null;
       draggingBlockTypeRef.current = null;
@@ -764,7 +319,7 @@ export function BlockEditor({
       setDraggingParentId(null);
       setDropTarget(null);
     },
-    [draggingBlockId, draggingBlockType, draggingParentId, dropTarget, editor],
+    [draggingBlockId, draggingParentId, dropTarget, editor],
   );
 
   const handleDragLeave = useCallback((e: React.DragEvent<HTMLDivElement>) => {
