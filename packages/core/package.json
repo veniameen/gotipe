@@ -8,6 +8,11 @@
       "import": "./dist/index.js",
       "require": "./dist/index.cjs"
     },
+    "./js": {
+      "types": "./dist/js.d.ts",
+      "import": "./dist/js.js",
+      "require": "./dist/js.cjs"
+    },
     "./extensions": {
       "types": "./dist/extensions/index.d.ts",
       "import": "./dist/extensions/index.js",
@@ -35,6 +40,11 @@
   "sideEffects": false,
   "peerDependencies": {
     "@gotipe/wasm": "^0.1.0"
+  },
+  "peerDependenciesMeta": {
+    "@gotipe/wasm": {
+      "optional": true
+    }
   },
   "devDependencies": {
     "@gotipe/wasm": "workspace:*",

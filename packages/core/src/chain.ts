@@ -1,3 +1,4 @@
+import { createTextWalker } from "./dom/text-walker";
 import type { GoTipeEditor } from "./editor";
 import type { BlockContent } from "./types/block";
 import type { Step, Transaction } from "./types/state";
@@ -894,7 +895,7 @@ export class ChainableCommands {
     if (!sel) return;
 
     // Find the first text node or focus the element itself
-    const walker = document.createTreeWalker(cellEl, NodeFilter.SHOW_TEXT);
+    const walker = createTextWalker(cellEl);
     const textNode = walker.nextNode();
     const range = document.createRange();
     if (textNode) {

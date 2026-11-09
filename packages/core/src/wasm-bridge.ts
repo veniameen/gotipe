@@ -1,8 +1,39 @@
-import type { WasmEditor } from "@gotipe/wasm";
 import { GoTipeError } from "./error";
+import { sanitizeHtml as sanitizeHtmlJs } from "./security/sanitizer";
 
-let initPromise: Promise<void> | null = null;
-let wasmModule: typeof import("@gotipe/wasm") | null = null;
+/**
+ * Minimal surface of the `@gotipe/wasm` module the bridge needs. Declared here
+ * (instead of `import type` from the package) so the JS engine build never
+ * references `@gotipe/wasm` at all — not even for types.
+ */
+export interface WasmEditorLike {
+  apply(transactionJson: string): string;
+  validate(docJson: string): boolean;
+  export_json(): string;
+  export_html(): string;
+  export_markdown(): string;
+  sanitize_html(html: string): string;
+  enable_collaboration(peerId: string): void;
+  receive_update(binary: Uint8Array): string;
+  get_update(): Uint8Array;
+  add_comment(json: string): string;
+  resolve_comment(id: string): void;
+  get_comments(): string;
+  create_version(name: string): string;
+  list_versions(): string;
+  restore_version(id: string): string;
+  detect_pii(text: string): string;
+}
+
+export interface WasmModuleLike {
+  WasmEditor: new (schemaJson: string, docJson: string) => WasmEditorLike;
+}
+
+/** Loads and initialises the WASM module. `null` means "JS engine only". */
+export type WasmModuleLoader = () => Promise<WasmModuleLike>;
+
+/** Engine selection: `auto` tries WASM and falls back to JS; `js` never touches WASM. */
+export type EngineMode = "auto" | "wasm" | "js";
 
 // ---- JS fallback transform engine ----
 // Applies WASM-format transactions to a plain JS document when WASM is unavailable.
@@ -548,32 +579,39 @@ function fallbackApply(docJson: string, transactionJson: string): string {
   return JSON.stringify(doc);
 }
 
-async function ensureInit(): Promise<typeof import("@gotipe/wasm")> {
-  if (wasmModule) return wasmModule;
-  if (!initPromise) {
-    initPromise = (async () => {
-      const mod = await import("@gotipe/wasm");
-      await mod.default();
-      wasmModule = mod;
-    })();
-  }
-  await initPromise;
-  return wasmModule!;
-}
-
 export class WasmBridge {
-  private editor: WasmEditor | null = null;
+  private editor: WasmEditorLike | null = null;
+  private wasmModule: WasmModuleLike | null = null;
   private initialized = false;
   private fallbackMode = false;
   private fallbackState: string | null = null;
 
+  constructor(
+    private readonly loader: WasmModuleLoader | null = null,
+    private readonly mode: EngineMode = "auto",
+  ) {}
+
   async init(): Promise<void> {
     if (this.initialized) return;
+    if (this.mode === "js" || !this.loader) {
+      if (this.mode === "wasm") {
+        throw new GoTipeError("WASM_INIT_FAILED", "WASM engine requested but no WASM loader is available");
+      }
+      this.fallbackMode = true;
+      this.initialized = true;
+      return;
+    }
     try {
-      await ensureInit();
+      this.wasmModule = await this.loader();
       this.initialized = true;
     } catch (e) {
-      console.warn("GoTipe WASM init failed, using JS fallback:", e);
+      if (this.mode === "wasm") {
+        throw new GoTipeError(
+          "WASM_INIT_FAILED",
+          e instanceof Error ? e.message : "WASM init failed",
+        );
+      }
+      console.warn("GoTipe WASM init failed, using JS engine:", e);
       this.fallbackMode = true;
       this.initialized = true;
     }
@@ -583,14 +621,18 @@ export class WasmBridge {
     return this.fallbackMode;
   }
 
+  /** The engine actually in use. */
+  get engine(): "wasm" | "js" {
+    return this.fallbackMode ? "js" : "wasm";
+  }
+
   create(schemaJson: string, docJson: string): void {
     if (this.fallbackMode) {
-      // Store the initial document as fallback state
       this.fallbackState = docJson;
       return;
     }
-    const mod = wasmModule!;
-    this.editor = new mod.WasmEditor(schemaJson, docJson);
+    if (!this.wasmModule) throw new GoTipeError("EDITOR_NOT_INITIALIZED", "WASM module not loaded");
+    this.editor = new this.wasmModule.WasmEditor(schemaJson, docJson);
   }
 
   apply(transactionJson: string): string {
@@ -633,7 +675,7 @@ export class WasmBridge {
   }
 
   sanitizeHtml(html: string): string {
-    if (this.fallbackMode) return html;
+    if (this.fallbackMode) return sanitizeHtmlJs(html);
     if (!this.editor) throw new GoTipeError("EDITOR_NOT_INITIALIZED");
     return this.editor.sanitize_html(html);
   }
@@ -693,8 +735,8 @@ export class WasmBridge {
       this.fallbackState = stateJson;
       return;
     }
-    if (!wasmModule) throw new GoTipeError("EDITOR_NOT_INITIALIZED", "WASM module not loaded");
-    this.editor = new wasmModule.WasmEditor(schemaJson, stateJson);
+    if (!this.wasmModule) throw new GoTipeError("EDITOR_NOT_INITIALIZED", "WASM module not loaded");
+    this.editor = new this.wasmModule.WasmEditor(schemaJson, stateJson);
   }
 
   forceFallback(docJson: string): void {

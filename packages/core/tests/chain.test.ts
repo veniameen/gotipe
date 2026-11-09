@@ -35,7 +35,7 @@ vi.mock('@gotipe/wasm', () => {
   };
 });
 
-import { createEditor } from '../src/editor';
+import { createEditor } from '../src/js';
 import { defineExtension } from '../src/types/extension';
 
 const testExt = defineExtension({
@@ -77,6 +77,8 @@ describe('ChainableCommands', () => {
 
   it('should set block type', async () => {
     const editor = await createEditor({ extensions: [testExt] });
+    const first = editor.getViewState().blocks[0]!;
+    editor.setSelection({ anchor: { blockId: first.id, offset: 0 }, head: { blockId: first.id, offset: 0 } });
     const dispatchSpy = vi.spyOn(editor, 'dispatch');
     editor.chain().setBlockType('heading', { level: 2 }).run();
     expect(dispatchSpy).toHaveBeenCalled();

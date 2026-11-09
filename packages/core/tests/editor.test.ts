@@ -44,7 +44,7 @@ vi.mock('@gotipe/wasm', () => {
   };
 });
 
-import { createEditor } from '../src/editor';
+import { createEditor } from '../src/index';
 import { defineExtension } from '../src/types/extension';
 
 const testExt = defineExtension({
@@ -126,6 +126,7 @@ describe('createEditor', () => {
 
   it('should get current block', async () => {
     const editor = await createEditor({ extensions: [testExt] });
+    editor.setSelection({ anchor: { blockId: 'block-1', offset: 0 }, head: { blockId: 'block-1', offset: 0 } });
     const block = editor.getCurrentBlock();
     expect(block).toBeDefined();
     expect(block?.type).toBe('paragraph');

@@ -11,7 +11,7 @@ vi.mock('@gotipe/wasm', () => {
   };
 });
 
-import { createEditor, type GoTipeEditor } from '../src/editor';
+import { createEditor, type GoTipeEditor } from '../src/js';
 import { Bold, Italic, Underline, Strikethrough, InlineCode, Highlight, Superscript, Subscript, Link } from '../src/extensions/marks';
 import { defineExtension } from '../src/types/extension';
 
@@ -115,7 +115,7 @@ describe('Marks — JS Fallback Engine', () => {
       // "Hello" should be bold, " world" should not
       expect(spans.length).toBe(2);
       expect(spans[0].text).toBe('Hello');
-      expect(spans[0].marks).toEqual([{ type: 'bold' }]);
+      expect(spans[0].marks).toEqual([{ type: 'bold', attrs: {} }]);
       expect(spans[1].text).toBe(' world');
       expect(spans[1].marks).toEqual([]);
     });
@@ -142,7 +142,7 @@ describe('Marks — JS Fallback Engine', () => {
       expect(spans[0].text).toBe('Hello ');
       expect(spans[0].marks).toEqual([]);
       expect(spans[1].text).toBe('world');
-      expect(spans[1].marks).toEqual([{ type: 'italic' }]);
+      expect(spans[1].marks).toEqual([{ type: 'italic', attrs: {} }]);
     });
 
     it('should add underline mark', async () => {
@@ -164,7 +164,7 @@ describe('Marks — JS Fallback Engine', () => {
       const spans = getSpans(editor, 'p1');
       expect(spans.length).toBe(1);
       expect(spans[0].text).toBe('Hello world');
-      expect(spans[0].marks).toEqual([{ type: 'underline' }]);
+      expect(spans[0].marks).toEqual([{ type: 'underline', attrs: {} }]);
     });
 
     it('should add strikethrough mark', async () => {
@@ -185,7 +185,7 @@ describe('Marks — JS Fallback Engine', () => {
 
       const spans = getSpans(editor, 'p1');
       expect(spans[0].text).toBe('Hello');
-      expect(spans[0].marks).toEqual([{ type: 'strikethrough' }]);
+      expect(spans[0].marks).toEqual([{ type: 'strikethrough', attrs: {} }]);
     });
 
     it('should add code mark', async () => {
@@ -207,7 +207,7 @@ describe('Marks — JS Fallback Engine', () => {
       const spans = getSpans(editor, 'p1');
       expect(spans.length).toBe(2);
       expect(spans[1].text).toBe('world');
-      expect(spans[1].marks).toEqual([{ type: 'code' }]);
+      expect(spans[1].marks).toEqual([{ type: 'code', attrs: {} }]);
     });
 
     it('should add highlight mark with color attr', async () => {
@@ -269,7 +269,7 @@ describe('Marks — JS Fallback Engine', () => {
       });
 
       const spans = getSpans(editor, 'p1');
-      expect(spans[0].marks).toEqual([{ type: 'superscript' }]);
+      expect(spans[0].marks).toEqual([{ type: 'superscript', attrs: {} }]);
     });
 
     it('should add subscript mark', async () => {
@@ -289,7 +289,7 @@ describe('Marks — JS Fallback Engine', () => {
       });
 
       const spans = getSpans(editor, 'p1');
-      expect(spans[0].marks).toEqual([{ type: 'subscript' }]);
+      expect(spans[0].marks).toEqual([{ type: 'subscript', attrs: {} }]);
     });
   });
 
@@ -303,7 +303,7 @@ describe('Marks — JS Fallback Engine', () => {
       // Initially "bold" (offset 6-10) is bold
       let spans = getSpans(editor, 'b1');
       expect(spans[1].text).toBe('bold');
-      expect(spans[1].marks).toEqual([{ type: 'bold' }]);
+      expect(spans[1].marks).toEqual([{ type: 'bold', attrs: {} }]);
 
       // Remove bold from range 6-10
       editor.dispatch({
@@ -348,7 +348,7 @@ describe('Marks — JS Fallback Engine', () => {
       expect(spans[0].text).toBe('Hello bo');
       expect(spans[0].marks).toEqual([]);
       expect(spans[1].text).toBe('ld');
-      expect(spans[1].marks).toEqual([{ type: 'bold' }]);
+      expect(spans[1].marks).toEqual([{ type: 'bold', attrs: {} }]);
       expect(spans[2].text).toBe(' world');
       expect(spans[2].marks).toEqual([]);
     });
@@ -443,7 +443,7 @@ describe('Marks — JS Fallback Engine', () => {
       // "Hello" (no marks) + " BOLD" (bold) + " world" (no marks)
       expect(spans.length).toBe(3);
       expect(spans[1].text).toBe(' BOLD');
-      expect(spans[1].marks).toEqual([{ type: 'bold' }]);
+      expect(spans[1].marks).toEqual([{ type: 'bold', attrs: {} }]);
     });
 
     it('should insert text with no marks into marked region', async () => {
@@ -491,7 +491,7 @@ describe('Marks — JS Fallback Engine', () => {
       expect(spans[0].text).toBe('Hello');
       expect(spans[0].marks).toEqual([]);
       expect(spans[1].text).toBe('bold');
-      expect(spans[1].marks).toEqual([{ type: 'bold' }]);
+      expect(spans[1].marks).toEqual([{ type: 'bold', attrs: {} }]);
     });
 
     it('should delete within a marked range', async () => {
@@ -515,7 +515,7 @@ describe('Marks — JS Fallback Engine', () => {
       // "bd" should still be bold
       const boldSpan = spans.find((s) => s.marks.length > 0);
       expect(boldSpan?.text).toBe('bd');
-      expect(boldSpan?.marks).toEqual([{ type: 'bold' }]);
+      expect(boldSpan?.marks).toEqual([{ type: 'bold', attrs: {} }]);
     });
   });
 
@@ -642,9 +642,9 @@ describe('Marks — JS Fallback Engine', () => {
       const spans = Array.isArray(state.blocks[0].content) ? state.blocks[0].content : [];
       expect(spans.length).toBe(2);
       expect(spans[0].text).toBe('First');
-      expect(spans[0].marks).toEqual([{ type: 'bold' }]);
+      expect(spans[0].marks).toEqual([{ type: 'bold', attrs: {} }]);
       expect(spans[1].text).toBe('Second');
-      expect(spans[1].marks).toEqual([{ type: 'italic' }]);
+      expect(spans[1].marks).toEqual([{ type: 'italic', attrs: {} }]);
     });
   });
 
@@ -753,7 +753,7 @@ describe('Marks — JS Fallback Engine', () => {
       const spans = getSpans(editor, 'p1');
       expect(spans.length).toBe(1);
       expect(spans[0].text).toBe('Hello world');
-      expect(spans[0].marks).toEqual([{ type: 'bold' }]);
+      expect(spans[0].marks).toEqual([{ type: 'bold', attrs: {} }]);
     });
 
     it('should handle addMark + removeMark in single transaction', async () => {

@@ -1,4 +1,5 @@
 import type { GoTipeEditor } from "../editor";
+import type { GoTipeError } from "../error";
 import type { ViewState } from "./view";
 
 export interface EditorEvents {
@@ -20,4 +21,8 @@ export interface EditorEvents {
   aiGhostTextChange: (ghost: { text: string; blockId: string; offset: number } | null) => void;
   aiProofreadChange: (payload: { suggestions: unknown[]; currentIndex: number }) => void;
   scrollToBlock: (payload: { blockId: string }) => void;
+  /** Every editor error. The editor never renders error text itself. */
+  error: (error: GoTipeError) => void;
+  editableChange: (editable: boolean) => void;
+  decorationsChange: (payload: { layer: string }) => void;
 }

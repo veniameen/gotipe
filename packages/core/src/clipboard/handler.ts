@@ -1,6 +1,6 @@
 import type { GoTipeEditor } from "../editor";
 import { sanitizeHtml } from "../security/sanitizer";
-import type { Block, Mark } from "../types/block";
+import type { AttrValue, Block, Mark } from "../types/block";
 import type { Step } from "../types/state";
 
 export class ClipboardHandler {
@@ -115,7 +115,7 @@ export class ClipboardHandler {
         const to = Math.max(sel.anchor.offset, sel.head.offset);
 
         // Extract selected spans preserving marks
-        const selectedSpans = this.extractSpans(block.content, from, to);
+        const selectedSpans = this.extractSpans(block.content as { text: string; marks: Mark[] }[], from, to);
         const selectedText = selectedSpans.map((s) => s.text).join("");
 
         data.setData("text/plain", selectedText);
@@ -331,7 +331,7 @@ export class ClipboardHandler {
           block: {
             id: crypto.randomUUID(),
             type: "codeBlock",
-            attrs: b.attrs,
+            attrs: b.attrs as Record<string, AttrValue>,
             content: b.content,
             children: [],
           },
@@ -344,7 +344,7 @@ export class ClipboardHandler {
           block: {
             id: crypto.randomUUID(),
             type: b.type,
-            attrs: b.attrs,
+            attrs: b.attrs as Record<string, AttrValue>,
             content: b.content ? [{ text: b.content, marks: [] }] : [],
             children: [],
           },
