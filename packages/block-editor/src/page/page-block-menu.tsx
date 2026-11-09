@@ -5,6 +5,7 @@ import { createPortal } from "react-dom";
 import { PageIcon } from "./icons";
 import { usePageOverlay } from "./overlay";
 import type { PageBlockCommand } from "./page-commands";
+import { usePageBlockHandle } from "./use-page-block-handle";
 
 const TURN_INTO = new Set([
   "text",
@@ -42,59 +43,18 @@ export function PageBlockMenu({
 }) {
   const i18n = useGoTipeI18n();
   const overlay = usePageOverlay();
-  const [hover, setHover] = useState<{
-    id: string;
-    top: number;
-    left: number;
-    height: number;
-  } | null>(null);
   const [menu, setMenu] = useState<{ id: string; top: number; left: number } | null>(null);
   const [submenu, setSubmenu] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
-  const handleRef = useRef<HTMLButtonElement>(null);
+  const { hover, setHover, indicator, editable, handleRef, onDragStart, onDragEnd } =
+    usePageBlockHandle(editor, root, menu !== null);
 
   useEffect(() => {
-    if (!root) return;
-    const content = root.querySelector("[data-gotipe-content]");
-    const onMove = (e: MouseEvent) => {
-      if (!editor.isEditable || menu) return;
-      const target = e.target instanceof Element ? e.target : null;
-      if (target && handleRef.current?.contains(target)) return;
-      let el = target?.closest("[data-block-id]") ?? null;
-      while (el && el.parentElement !== content)
-        el = el.parentElement?.closest("[data-block-id]") ?? null;
-      if (!el) {
-        // Pointer in the left gutter: keep the block on the same line.
-        if (hover && content) {
-          const rect = content.getBoundingClientRect();
-          if (
-            e.clientX < rect.left &&
-            e.clientY >= hover.top &&
-            e.clientY <= hover.top + hover.height
-          )
-            return;
-        }
-        setHover(null);
-        return;
-      }
-      const rect = el.getBoundingClientRect();
-      const id = el.getAttribute("data-block-id")!;
-      setHover((prev) =>
-        prev && prev.id === id && prev.top === rect.top
-          ? prev
-          : { id, top: rect.top, left: rect.left, height: rect.height },
-      );
-    };
-    const onLeave = () => {
-      if (!menu) setHover(null);
-    };
-    root.addEventListener("mousemove", onMove);
-    root.addEventListener("mouseleave", onLeave);
-    return () => {
-      root.removeEventListener("mousemove", onMove);
-      root.removeEventListener("mouseleave", onLeave);
-    };
-  }, [root, editor, hover, menu]);
+    if (!editable) {
+      setMenu(null);
+      setSubmenu(false);
+    }
+  }, [editable]);
 
   useEffect(() => {
     if (!menu) return;
@@ -128,7 +88,7 @@ export function PageBlockMenu({
     setMenu(null);
     setSubmenu(false);
     setHover(null);
-  }, []);
+  }, [setHover]);
 
   const withBlock = useCallback(
     (fn: (block: BlockView) => void) => {
@@ -140,7 +100,7 @@ export function PageBlockMenu({
     [editor, menu, close],
   );
 
-  if (!editor.isEditable || !overlay) return null;
+  if (!editable || !overlay) return null;
 
   const turnInto = commands.filter((c) => TURN_INTO.has(String(c.aliases[0])));
 
@@ -152,18 +112,31 @@ export function PageBlockMenu({
           type="button"
           className="gotipe-page-handle"
           aria-label={i18n.t("block.handle")}
+          draggable
+          data-gotipe-drag-handle=""
+          data-block-drag={hover.dragId}
+          aria-haspopup="menu"
           style={{
             position: "fixed",
-            top: hover.top + Math.min(hover.height, 28) / 2 - 11,
+            top: hover.handleTop,
             left: hover.left - 28,
           }}
-          onMouseDown={(e) => {
-            e.preventDefault();
+          onDragStart={onDragStart}
+          onDragEnd={onDragEnd}
+          onClick={() => {
             setMenu({ id: hover.id, top: hover.top, left: hover.left - 28 });
           }}
         >
           <PageIcon name="grip" />
         </button>
+      ) : null}
+      {indicator ? (
+        <div
+          className="gotipe-page-drop-indicator"
+          data-gotipe-drop-indicator=""
+          style={{ position: "fixed", ...indicator }}
+          aria-hidden="true"
+        />
       ) : null}
       {menu ? (
         <div
