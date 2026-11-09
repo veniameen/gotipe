@@ -90,7 +90,10 @@ export type LocateResult =
   | { ok: false; reason: AnchorFailure | "overlap"; index: number };
 
 /** True when two located edits touch the same text (two inserts at one point overlap too). */
-export function editsOverlap(a: { start: number; end: number }, b: { start: number; end: number }): boolean {
+export function editsOverlap(
+  a: { start: number; end: number },
+  b: { start: number; end: number },
+): boolean {
   if (a.start === a.end && b.start === b.end) return a.start === b.start;
   if (a.start === a.end) return a.start > b.start && a.start < b.end;
   if (b.start === b.end) return b.start > a.start && b.start < a.end;
@@ -108,7 +111,8 @@ export function locateEdits(text: string, edits: AnchoredEdit[]): LocateResult {
   }
   const sorted = [...located].sort((a, b) => a.start - b.start || a.end - b.end);
   for (let i = 1; i < sorted.length; i++) {
-    if (editsOverlap(sorted[i - 1]!, sorted[i]!)) return { ok: false, reason: "overlap", index: sorted[i]!.index };
+    if (editsOverlap(sorted[i - 1]!, sorted[i]!))
+      return { ok: false, reason: "overlap", index: sorted[i]!.index };
   }
   return { ok: true, edits: sorted };
 }
@@ -156,7 +160,8 @@ export function anchorAt(text: string, start: number, end: number, context = 40)
       after: text.slice(end, end + size),
     };
     const match = findAnchor(text, anchor);
-    if (match.ok || size >= context || (start - size <= 0 && end + size >= text.length)) return anchor;
+    if (match.ok || size >= context || (start - size <= 0 && end + size >= text.length))
+      return anchor;
     size = Math.min(context, size * 2);
   }
 }

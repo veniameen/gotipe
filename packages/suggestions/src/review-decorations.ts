@@ -62,7 +62,10 @@ function sameAttrs(a: BlockView, b: BlockView): boolean {
 }
 
 function sameSpans(a: BlockView, b: BlockView): boolean {
-  return JSON.stringify(stripIds({ ...a, children: [] })) === JSON.stringify(stripIds({ ...b, children: [] }));
+  return (
+    JSON.stringify(stripIds({ ...a, children: [] })) ===
+    JSON.stringify(stripIds({ ...b, children: [] }))
+  );
 }
 
 /** Spans of `spans` within `[from, to)`. */
@@ -116,13 +119,20 @@ export function mapOffsetToText(
   for (const g of map.segments) {
     if (offset < g.mdFrom || offset > g.mdTo) continue;
     if (!best) best = g;
-    else if (bias === "after" ? offset < g.mdTo && offset === best.mdTo : offset > g.mdFrom && offset === best.mdFrom) {
+    else if (
+      bias === "after"
+        ? offset < g.mdTo && offset === best.mdTo
+        : offset > g.mdFrom && offset === best.mdFrom
+    ) {
       best = g;
     }
   }
   if (best) {
     if (best.exact) {
-      return { blockId: best.blockId, offset: Math.min(best.textTo, best.textFrom + (offset - best.mdFrom)) };
+      return {
+        blockId: best.blockId,
+        offset: Math.min(best.textTo, best.textFrom + (offset - best.mdFrom)),
+      };
     }
     return { blockId: best.blockId, offset: offset <= best.mdFrom ? best.textFrom : best.textTo };
   }
@@ -226,7 +236,12 @@ function countText(block: BlockView): number {
   return plainText(block).length + block.children.reduce((n, c) => n + countText(c), 0);
 }
 
-function insertBlocks(ctx: Ctx, anchor: BlockView, position: "before" | "after", blocks: BlockView[]) {
+function insertBlocks(
+  ctx: Ctx,
+  anchor: BlockView,
+  position: "before" | "after",
+  blocks: BlockView[],
+) {
   if (blocks.length === 0) return;
   ctx.exact = false;
   const phantoms = blocks.map((b) => phantomId(ctx, b));
@@ -251,7 +266,10 @@ function markBlock(ctx: Ctx, block: BlockView, kind: "del" | "changed") {
     type: "node",
     key: key(ctx, kind),
     blockId: block.id,
-    className: cls(ctx, kind === "del" ? "gotipe-sug gotipe-sug-block-del" : "gotipe-sug gotipe-sug-block-changed"),
+    className: cls(
+      ctx,
+      kind === "del" ? "gotipe-sug gotipe-sug-block-del" : "gotipe-sug gotipe-sug-block-changed",
+    ),
     attrs: ctx.attrs,
     style: ctx.style,
   });
@@ -287,7 +305,9 @@ function diffLeafText(ctx: Ctx, oldB: BlockView, newB: BlockView) {
   }
   const insTo = nt.length - s;
   if (insTo > p) {
-    const spans = Array.isArray(newB.content) ? sliceSpans(newB.content, p, insTo) : [{ text: nt.slice(p, insTo), marks: [] }];
+    const spans = Array.isArray(newB.content)
+      ? sliceSpans(newB.content, p, insTo)
+      : [{ text: nt.slice(p, insTo), marks: [] }];
     for (const span of spans) {
       ctx.out.push({
         type: "widget",
@@ -373,7 +393,9 @@ function clusterEdits(map: TextMap, edits: LocatedEdit[]): Cluster[] {
   const clusters: Cluster[] = [];
   for (const e of edits) {
     const affected = top.filter((b) =>
-      e.start === e.end ? b.start <= e.start && e.start <= b.end : b.start < e.end && b.end > e.start,
+      e.start === e.end
+        ? b.start <= e.start && e.start <= b.end
+        : b.start < e.end && b.end > e.start,
     );
     const start = Math.min(e.start, ...affected.map((b) => b.start));
     const end = Math.max(e.end, ...affected.map((b) => b.end));
@@ -381,7 +403,8 @@ function clusterEdits(map: TextMap, edits: LocatedEdit[]): Cluster[] {
     if (last && start <= last.end && affected.length > 0 && last.blockIds.length > 0) {
       last.end = Math.max(last.end, end);
       last.edits.push(e);
-      for (const b of affected) if (!last.blockIds.includes(b.blockId)) last.blockIds.push(b.blockId);
+      for (const b of affected)
+        if (!last.blockIds.includes(b.blockId)) last.blockIds.push(b.blockId);
     } else {
       clusters.push({ start, end, edits: [e], blockIds: affected.map((b) => b.blockId) });
     }
@@ -389,7 +412,11 @@ function clusterEdits(map: TextMap, edits: LocatedEdit[]): Cluster[] {
   return clusters;
 }
 
-function computeProposal(input: ReviewInput, proposal: ReviewProposal, lane: ReviewLane | undefined): {
+function computeProposal(
+  input: ReviewInput,
+  proposal: ReviewProposal,
+  lane: ReviewLane | undefined,
+): {
   state: ProposalState;
   decorations: Decoration[];
 } {
@@ -432,7 +459,8 @@ function computeProposal(input: ReviewInput, proposal: ReviewProposal, lane: Rev
     let region = input.text.slice(cluster.start, cluster.end);
     for (let i = cluster.edits.length - 1; i >= 0; i--) {
       const e = cluster.edits[i]!;
-      region = region.slice(0, e.start - cluster.start) + e.text + region.slice(e.end - cluster.start);
+      region =
+        region.slice(0, e.start - cluster.start) + e.text + region.slice(e.end - cluster.start);
     }
     const newBlocks = input.parse(region);
     const oldBlocks = cluster.blockIds
@@ -466,7 +494,11 @@ function computeProposal(input: ReviewInput, proposal: ReviewProposal, lane: Rev
 }
 
 /** Best-effort place for a stale proposal: after its `before`, or before its `after`. */
-function staleWidget(input: ReviewInput, proposal: ReviewProposal, ctx: Ctx): ReviewPosition | null {
+function staleWidget(
+  input: ReviewInput,
+  proposal: ReviewProposal,
+  ctx: Ctx,
+): ReviewPosition | null {
   const edit = proposal.edits[0];
   if (!edit) return null;
   let at: number | null = null;
@@ -502,7 +534,12 @@ function staleWidget(input: ReviewInput, proposal: ReviewProposal, ctx: Ctx): Re
 
 // ---------------------------------------------------------------- comments
 
-function computeComment(input: ReviewInput, comment: ReviewComment, lane: ReviewLane | undefined, out: Decoration[]): CommentState {
+function computeComment(
+  input: ReviewInput,
+  comment: ReviewComment,
+  lane: ReviewLane | undefined,
+  out: Decoration[],
+): CommentState {
   const match = findAnchor(input.text, comment.anchor);
   if (!match.ok) return { id: comment.id, status: "stale", position: null };
   const active = input.activeId === comment.id;
@@ -512,13 +549,30 @@ function computeComment(input: ReviewInput, comment: ReviewComment, lane: Review
   if (match.start === match.end) {
     const pos = mapOffsetToText(input.map, match.start, "after");
     if (!pos) return { id: comment.id, status: "stale", position: null };
-    out.push({ type: "widget", key: `${comment.id}:pt`, blockId: pos.blockId, offset: pos.offset, className: `${className} gotipe-cmt-point`, attrs, style });
+    out.push({
+      type: "widget",
+      key: `${comment.id}:pt`,
+      blockId: pos.blockId,
+      offset: pos.offset,
+      className: `${className} gotipe-cmt-point`,
+      attrs,
+      style,
+    });
     return { id: comment.id, status: "anchored", position: pos };
   }
   const ranges = mapRangeToText(input.map, match.start, match.end);
   ranges.forEach((r, i) => {
     if (r.to > r.from) {
-      out.push({ type: "inline", key: `${comment.id}:${i}`, blockId: r.blockId, from: r.from, to: r.to, className, attrs, style });
+      out.push({
+        type: "inline",
+        key: `${comment.id}:${i}`,
+        blockId: r.blockId,
+        from: r.from,
+        to: r.to,
+        className,
+        attrs,
+        style,
+      });
     }
   });
   const first = ranges[0];
@@ -542,7 +596,11 @@ export function computeReviewDecorations(input: ReviewInput): ReviewOutput {
   const decorations: Decoration[] = [];
   const proposals: ProposalState[] = [];
   for (const proposal of input.proposals) {
-    const { state, decorations: own } = computeProposal(input, proposal, lanes.get(proposal.laneId));
+    const { state, decorations: own } = computeProposal(
+      input,
+      proposal,
+      lanes.get(proposal.laneId),
+    );
     proposals.push(state);
     decorations.push(...own);
   }
@@ -554,7 +612,10 @@ export function computeReviewDecorations(input: ReviewInput): ReviewOutput {
 }
 
 /** Document order of proposals by their first position (stale ones last). */
-export function proposalsInDocumentOrder(blocks: BlockView[], states: ProposalState[]): ProposalState[] {
+export function proposalsInDocumentOrder(
+  blocks: BlockView[],
+  states: ProposalState[],
+): ProposalState[] {
   const order = new Map<string, number>();
   let i = 0;
   const walk = (list: BlockView[]) => {
@@ -566,8 +627,12 @@ export function proposalsInDocumentOrder(blocks: BlockView[], states: ProposalSt
   walk(blocks);
   return [...states].sort((a, b) => {
     if (a.status !== b.status) return a.status === "stale" ? 1 : -1;
-    const pa = a.position ? (order.get(a.position.blockId) ?? 0) * 1e6 + a.position.offset : Number.MAX_SAFE_INTEGER;
-    const pb = b.position ? (order.get(b.position.blockId) ?? 0) * 1e6 + b.position.offset : Number.MAX_SAFE_INTEGER;
+    const pa = a.position
+      ? (order.get(a.position.blockId) ?? 0) * 1e6 + a.position.offset
+      : Number.MAX_SAFE_INTEGER;
+    const pb = b.position
+      ? (order.get(b.position.blockId) ?? 0) * 1e6 + b.position.offset
+      : Number.MAX_SAFE_INTEGER;
     return pa - pb;
   });
 }
@@ -576,7 +641,11 @@ export function proposalsInDocumentOrder(blocks: BlockView[], states: ProposalSt
  * The reveal animation: keeps the first `chars` characters of a proposal's
  * new text (widgets and phantom blocks, in order) and drops the rest.
  */
-export function revealDecorations(decorations: Decoration[], proposalId: string, chars: number): Decoration[] {
+export function revealDecorations(
+  decorations: Decoration[],
+  proposalId: string,
+  chars: number,
+): Decoration[] {
   let left = chars;
   const prefix = `${proposalId}:`;
   const truncateBlock = (block: BlockView): BlockView | null => {

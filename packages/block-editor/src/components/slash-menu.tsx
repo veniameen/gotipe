@@ -106,7 +106,7 @@ function setDomCaretInBlock(blockId: string, targetOffset: number): boolean {
   let localOffset = 0;
   let node: Node | null;
 
-  while ((node = walker.nextNode())) {
+  for (node = walker.nextNode(); node; node = walker.nextNode()) {
     const text = node as Text;
     const len = (text.textContent ?? "").length;
     targetNode = text;
@@ -201,7 +201,7 @@ function getPreviousCharacterRect(range: Range, blockEl: HTMLElement): DOMRect |
     const walker = document.createTreeWalker(textHost, NodeFilter.SHOW_TEXT);
     let accumulated = 0;
     let node: Node | null;
-    while ((node = walker.nextNode())) {
+    for (node = walker.nextNode(); node; node = walker.nextNode()) {
       const textNode = node as Text;
       const len = (textNode.textContent ?? "").length;
       if (len === 0) continue;
@@ -253,7 +253,7 @@ function resolveDomPointInBlock(
   let lastTextNode: Node | null = null;
   let textNode: Node | null;
 
-  while ((textNode = walker.nextNode())) {
+  for (textNode = walker.nextNode(); textNode; textNode = walker.nextNode()) {
     lastTextNode = textNode;
     const len = (textNode.textContent ?? "").length;
     if (accumulated + len >= targetOffset) {
@@ -676,6 +676,7 @@ export function SlashMenu({
   }, [editor, visible]);
 
   // Viewport edge detection — adjust position after render
+  // biome-ignore lint/correctness/useExhaustiveDependencies: re-measure when the list size or query changes
   useLayoutEffect(() => {
     if (!visible || !menuRef.current) return;
     const rect = menuRef.current.getBoundingClientRect();
@@ -907,7 +908,7 @@ export function SlashMenu({
         });
       }
     },
-    [visible, flatItems, selectedIndex, executeCommand],
+    [visible, flatItems, selectedIndex, executeCommand, editor],
   );
 
   // Global keydown for keyboard nav when menu is open
@@ -919,6 +920,7 @@ export function SlashMenu({
   }, [visible, handleKeyDown]);
 
   // Scroll selected item into view
+  // biome-ignore lint/correctness/useExhaustiveDependencies: runs when the selected row changes
   useEffect(() => {
     if (!visible || !menuRef.current) return;
     const selected = menuRef.current.querySelector(".gotipe-slash-menu-item.selected");

@@ -1,4 +1,4 @@
-import type { BlocksDecoration, BlockView, GoTipeEditor, NodeDecoration } from "@gotipe/core";
+import type { BlockView, BlocksDecoration, GoTipeEditor, NodeDecoration } from "@gotipe/core";
 import React, {
   createContext,
   useCallback,
@@ -774,7 +774,7 @@ function ImageBlock({
     setIsOptionsOpen(false);
   }, [editor, block.id]);
 
-  const clearImage = useCallback(() => {
+  const _clearImage = useCallback(() => {
     editor
       .chain()
       .setBlockAttrs(block.id, { src: "", alt: "", width: null, height: null, caption: "" })
@@ -1465,12 +1465,7 @@ function ToggleBlock({
   const isOpen = !!block.attrs.open;
 
   return (
-    <details
-      {...rootProps}
-      data-block-type={block.type}
-      className="gotipe-toggle"
-      open={isOpen}
-    >
+    <details {...rootProps} data-block-type={block.type} className="gotipe-toggle" open={isOpen}>
       <summary
         onMouseDown={(e) => {
           // Only handle clicks on the summary marker area (not the text content)
@@ -1634,7 +1629,13 @@ function BlockComponent(props: BlockComponentProps) {
       </Custom>
     );
   } else {
-    element = <BlockComponentInner {...props} rootProps={rootProps} readOnly={!editor.isEditable || phantom} />;
+    element = (
+      <BlockComponentInner
+        {...props}
+        rootProps={rootProps}
+        readOnly={!editor.isEditable || phantom}
+      />
+    );
   }
   if (!extraClass || Custom) return <>{element}</>;
   return <NodeClass className={extraClass}>{element}</NodeClass>;
@@ -1701,11 +1702,7 @@ function BlockComponentInner({
 
     case "listItem":
       return (
-        <li
-          {...rootProps}
-          data-block-type={block.type}
-          data-placeholder={placeholder ?? undefined}
-        >
+        <li {...rootProps} data-block-type={block.type} data-placeholder={placeholder ?? undefined}>
           {content}
           {children}
         </li>
@@ -1807,7 +1804,12 @@ function BlockComponentInner({
 
     case "table":
       return (
-        <TableBlock block={block} editor={editor} selectedBlockId={selectedBlockId} rootProps={rootProps} />
+        <TableBlock
+          block={block}
+          editor={editor}
+          selectedBlockId={selectedBlockId}
+          rootProps={rootProps}
+        />
       );
 
     case "tableRow":
@@ -1819,26 +1821,46 @@ function BlockComponentInner({
 
     case "tableHeader":
       return (
-        <th {...rootProps} data-block-type={block.type} contentEditable={!readOnly} suppressContentEditableWarning>
+        <th
+          {...rootProps}
+          data-block-type={block.type}
+          contentEditable={!readOnly}
+          suppressContentEditableWarning
+        >
           {content}
         </th>
       );
 
     case "tableCell":
       return (
-        <td {...rootProps} data-block-type={block.type} contentEditable={!readOnly} suppressContentEditableWarning>
+        <td
+          {...rootProps}
+          data-block-type={block.type}
+          contentEditable={!readOnly}
+          suppressContentEditableWarning
+        >
           {content}
         </td>
       );
 
     case "callout":
       return (
-        <CalloutBlock block={block} editor={editor} selectedBlockId={selectedBlockId} rootProps={rootProps} />
+        <CalloutBlock
+          block={block}
+          editor={editor}
+          selectedBlockId={selectedBlockId}
+          rootProps={rootProps}
+        />
       );
 
     case "toggle":
       return (
-        <ToggleBlock block={block} editor={editor} selectedBlockId={selectedBlockId} rootProps={rootProps} />
+        <ToggleBlock
+          block={block}
+          editor={editor}
+          selectedBlockId={selectedBlockId}
+          rootProps={rootProps}
+        />
       );
 
     case "columns":
@@ -1919,14 +1941,14 @@ export function EditorContent({
       >
         <BlockViewsContext.Provider value={blockViews ?? null}>
           <PlaceholderContext.Provider value={placeholder ?? null}>
-          {editor &&
-            blocks.map((block) => (
-              <React.Fragment key={blockKey(block)}>
-                <PhantomBlocks block={block} editor={editor} position="before" />
-                <BlockComponent block={block} editor={editor} selectedBlockId={selectedBlockId} />
-                <PhantomBlocks block={block} editor={editor} position="after" />
-              </React.Fragment>
-            ))}
+            {editor &&
+              blocks.map((block) => (
+                <React.Fragment key={blockKey(block)}>
+                  <PhantomBlocks block={block} editor={editor} position="before" />
+                  <BlockComponent block={block} editor={editor} selectedBlockId={selectedBlockId} />
+                  <PhantomBlocks block={block} editor={editor} position="after" />
+                </React.Fragment>
+              ))}
           </PlaceholderContext.Provider>
         </BlockViewsContext.Provider>
       </div>

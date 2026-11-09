@@ -42,7 +42,12 @@ export function PageBlockMenu({
 }) {
   const i18n = useGoTipeI18n();
   const overlay = usePageOverlay();
-  const [hover, setHover] = useState<{ id: string; top: number; left: number; height: number } | null>(null);
+  const [hover, setHover] = useState<{
+    id: string;
+    top: number;
+    left: number;
+    height: number;
+  } | null>(null);
   const [menu, setMenu] = useState<{ id: string; top: number; left: number } | null>(null);
   const [submenu, setSubmenu] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -56,12 +61,18 @@ export function PageBlockMenu({
       const target = e.target instanceof Element ? e.target : null;
       if (target && handleRef.current?.contains(target)) return;
       let el = target?.closest("[data-block-id]") ?? null;
-      while (el && el.parentElement !== content) el = el.parentElement?.closest("[data-block-id]") ?? null;
+      while (el && el.parentElement !== content)
+        el = el.parentElement?.closest("[data-block-id]") ?? null;
       if (!el) {
         // Pointer in the left gutter: keep the block on the same line.
         if (hover && content) {
           const rect = content.getBoundingClientRect();
-          if (e.clientX < rect.left && e.clientY >= hover.top && e.clientY <= hover.top + hover.height) return;
+          if (
+            e.clientX < rect.left &&
+            e.clientY >= hover.top &&
+            e.clientY <= hover.top + hover.height
+          )
+            return;
         }
         setHover(null);
         return;
@@ -69,7 +80,9 @@ export function PageBlockMenu({
       const rect = el.getBoundingClientRect();
       const id = el.getAttribute("data-block-id")!;
       setHover((prev) =>
-        prev && prev.id === id && prev.top === rect.top ? prev : { id, top: rect.top, left: rect.left, height: rect.height },
+        prev && prev.id === id && prev.top === rect.top
+          ? prev
+          : { id, top: rect.top, left: rect.left, height: rect.height },
       );
     };
     const onLeave = () => {
@@ -111,11 +124,11 @@ export function PageBlockMenu({
     if (menu.top > maxTop) setMenu({ ...menu, top: Math.max(8, maxTop) });
   }, [menu]);
 
-  const close = () => {
+  const close = useCallback(() => {
     setMenu(null);
     setSubmenu(false);
     setHover(null);
-  };
+  }, []);
 
   const withBlock = useCallback(
     (fn: (block: BlockView) => void) => {
@@ -124,7 +137,7 @@ export function PageBlockMenu({
       if (block) fn(block);
       close();
     },
-    [editor, menu],
+    [editor, menu, close],
   );
 
   if (!editor.isEditable || !overlay) return null;
@@ -139,7 +152,11 @@ export function PageBlockMenu({
           type="button"
           className="gotipe-page-handle"
           aria-label={i18n.t("block.handle")}
-          style={{ position: "fixed", top: hover.top + Math.min(hover.height, 28) / 2 - 11, left: hover.left - 28 }}
+          style={{
+            position: "fixed",
+            top: hover.top + Math.min(hover.height, 28) / 2 - 11,
+            left: hover.left - 28,
+          }}
           onMouseDown={(e) => {
             e.preventDefault();
             setMenu({ id: hover.id, top: hover.top, left: hover.left - 28 });

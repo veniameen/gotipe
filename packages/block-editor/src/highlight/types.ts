@@ -13,4 +13,7 @@ export interface HighlightToken {
  * engine by default — see `@gotipe/block-editor/shiki` for a lazy Shiki
  * adapter on the JavaScript regex engine (no WASM, CSP-friendly).
  */
-export type CodeHighlighter = (code: string, language: string) => Promise<HighlightToken[][] | null>;
+export type CodeHighlighter = (
+  code: string,
+  language: string,
+) => Promise<HighlightToken[][] | null>;

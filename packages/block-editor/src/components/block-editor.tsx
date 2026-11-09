@@ -16,7 +16,6 @@ import { ThemeToggle } from "./theme-toggle";
 
 const BLOCK_TOOLBAR_WIDTH = 36;
 const BLOCK_TOOLBAR_BUTTON_SIZE = 24;
-const BLOCK_TOOLBAR_GAP = 8;
 const BLOCK_TOOLBAR_COLUMN_OFFSET = 45;
 const TOOLBAR_HIDE_DELAY_MS = 20;
 const TOOLBAR_HOVER_X_MIN_OFFSET = 120;
@@ -58,9 +57,10 @@ export interface BlockEditorProps {
  * Walk up from `el` to find the top-level block element
  * (a direct child of [data-gotipe-content] that has data-block-id).
  */
-function getTopLevelBlockId(el: HTMLElement | null, containerEl: HTMLElement): string | null {
+function getTopLevelBlockId(start: HTMLElement | null, containerEl: HTMLElement): string | null {
   const contentEl = containerEl.querySelector("[data-gotipe-content]");
   if (!contentEl) return null;
+  let el = start;
   while (el && el !== containerEl) {
     if (el.parentElement === contentEl && el.hasAttribute("data-block-id")) {
       return el.getAttribute("data-block-id");
@@ -131,7 +131,9 @@ function getTopLevelAncestorBlockId(containerEl: HTMLElement, blockId: string): 
 function findNearestRowInList(listEl: HTMLElement, clientY: number): string | null {
   const rows = Array.from(
     listEl.querySelectorAll('[data-block-type="listItem"], [data-block-type="todoItem"]'),
-  ).filter((el): el is HTMLElement => el instanceof HTMLElement && el.hasAttribute("data-block-id"));
+  ).filter(
+    (el): el is HTMLElement => el instanceof HTMLElement && el.hasAttribute("data-block-id"),
+  );
   if (rows.length === 0) return null;
 
   let nearest: HTMLElement | null = null;
@@ -208,20 +210,15 @@ function getToolbarRailLeft(containerEl: HTMLElement): number {
     .filter((blockEl) => (blockEl.getAttribute("data-block-type") ?? "") !== "divider")
     .map((blockEl) => blockEl.getBoundingClientRect().left);
   const columnLeft =
-    columnLeftCandidates.length > 0
-      ? Math.min(...columnLeftCandidates)
-      : contentRect.left;
+    columnLeftCandidates.length > 0 ? Math.min(...columnLeftCandidates) : contentRect.left;
 
-  return Math.max(
-    0,
-    Math.round(columnLeft - containerRect.left - BLOCK_TOOLBAR_COLUMN_OFFSET),
-  );
+  return Math.max(0, Math.round(columnLeft - containerRect.left - BLOCK_TOOLBAR_COLUMN_OFFSET));
 }
 
 function getBlockTextLeft(blockEl: HTMLElement): number {
   const walker = document.createTreeWalker(blockEl, NodeFilter.SHOW_TEXT);
   let n: Node | null;
-  while ((n = walker.nextNode())) {
+  for (n = walker.nextNode(); n; n = walker.nextNode()) {
     const text = n.textContent ?? "";
     if (!text.trim()) continue;
     const r = document.createRange();
@@ -250,7 +247,7 @@ function getBlockFirstLineMetrics(blockEl: HTMLElement): { top: number; height: 
   for (const host of hosts) {
     const walker = document.createTreeWalker(host, NodeFilter.SHOW_TEXT);
     let textNode: Node | null;
-    while ((textNode = walker.nextNode())) {
+    for (textNode = walker.nextNode(); textNode; textNode = walker.nextNode()) {
       const text = textNode.textContent ?? "";
       if (text.length === 0) continue;
       const firstVisibleChar = text.search(/\S/);
@@ -265,7 +262,9 @@ function getBlockFirstLineMetrics(blockEl: HTMLElement): { top: number; height: 
       }
     }
 
-    const trailingBreak = host.querySelector("br[data-gotipe-trailing-break]") as HTMLElement | null;
+    const trailingBreak = host.querySelector(
+      "br[data-gotipe-trailing-break]",
+    ) as HTMLElement | null;
     if (trailingBreak) {
       const rect = trailingBreak.getBoundingClientRect();
       if (rect.height > 0) {
@@ -310,10 +309,7 @@ function findBlockLocation(
   return null;
 }
 
-function findBlockById(
-  blocks: ViewBlock[],
-  blockId: string,
-): ViewBlock | null {
+function findBlockById(blocks: ViewBlock[], blockId: string): ViewBlock | null {
   for (const block of blocks) {
     if (block.id === blockId) return block;
     const nested = findBlockById(block.children, blockId);
@@ -532,13 +528,9 @@ export function BlockEditor({
       if (!anchorEl) return;
       const anchorType = anchorEl.getAttribute("data-block-type") ?? "";
       const addBlockId =
-        anchorType === "listItem" || anchorType === "todoItem"
-          ? anchorBlockId
-          : actionBlockId;
+        anchorType === "listItem" || anchorType === "todoItem" ? anchorBlockId : actionBlockId;
       const dragBlockId =
-        anchorType === "listItem" || anchorType === "todoItem"
-          ? anchorBlockId
-          : actionBlockId;
+        anchorType === "listItem" || anchorType === "todoItem" ? anchorBlockId : actionBlockId;
       const textLeft = getBlockTextLeft(anchorEl);
       const inGutterEnvelope =
         e.clientX >= textLeft - TOOLBAR_HOVER_X_MIN_OFFSET &&
@@ -561,9 +553,7 @@ export function BlockEditor({
         const firstLine = getBlockFirstLineMetrics(anchorEl);
         const left = getToolbarRailLeft(containerRef.current);
         const top =
-          firstLine.top -
-          containerRect.top +
-          (firstLine.height - BLOCK_TOOLBAR_BUTTON_SIZE) / 2;
+          firstLine.top - containerRect.top + (firstLine.height - BLOCK_TOOLBAR_BUTTON_SIZE) / 2;
         setToolbarPos({
           top,
           left,
@@ -573,41 +563,47 @@ export function BlockEditor({
     [clearHideToolbarTimer, draggingBlockId, hoveredToolbarTarget, scheduleHideToolbar],
   );
 
-  const handleMouseLeave = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
-    // Don't hide if mouse moves to toolbar (which is a child of the container)
-    const related = e.relatedTarget as HTMLElement | null;
-    if (
-      related &&
-      (related.closest?.(".gotipe-block-toolbar") ||
-        related.closest?.(".gotipe-block-toolbar-wrapper") ||
-        related.closest?.(".gotipe-block-context-menu"))
-    ) {
+  const handleMouseLeave = useCallback(
+    (e: React.MouseEvent<HTMLDivElement>) => {
+      // Don't hide if mouse moves to toolbar (which is a child of the container)
+      const related = e.relatedTarget as HTMLElement | null;
+      if (
+        related &&
+        (related.closest?.(".gotipe-block-toolbar") ||
+          related.closest?.(".gotipe-block-toolbar-wrapper") ||
+          related.closest?.(".gotipe-block-context-menu"))
+      ) {
+        clearHideToolbarTimer();
+        return;
+      }
+      scheduleHideToolbar();
+    },
+    [clearHideToolbarTimer, scheduleHideToolbar],
+  );
+
+  const handleBlockDragStart = useCallback(
+    (blockId: string) => {
+      if (!editor) return;
       clearHideToolbarTimer();
-      return;
-    }
-    scheduleHideToolbar();
-  }, [clearHideToolbarTimer, scheduleHideToolbar]);
+      const location = findBlockLocation(editor.getViewState().blocks, blockId);
+      const canDragAsRow =
+        !!location?.parentId &&
+        (location.blockType === "listItem" || location.blockType === "todoItem") &&
+        !!location.parentType &&
+        ROW_DRAGGABLE_LIST_TYPES.has(location.parentType);
+      const parentId = canDragAsRow ? location.parentId : null;
 
-  const handleBlockDragStart = useCallback((blockId: string) => {
-    if (!editor) return;
-    clearHideToolbarTimer();
-    const location = findBlockLocation(editor.getViewState().blocks, blockId);
-    const canDragAsRow =
-      !!location?.parentId &&
-      (location.blockType === "listItem" || location.blockType === "todoItem") &&
-      !!location.parentType &&
-      ROW_DRAGGABLE_LIST_TYPES.has(location.parentType);
-    const parentId = canDragAsRow ? location.parentId : null;
-
-    draggingBlockIdRef.current = blockId;
-    draggingBlockTypeRef.current = location?.blockType ?? null;
-    draggingParentIdRef.current = parentId;
-    setDraggingBlockId(blockId);
-    setDraggingBlockType(location?.blockType ?? null);
-    setDraggingParentId(parentId);
-    dropTargetRef.current = null;
-    setDropTarget(null);
-  }, [clearHideToolbarTimer, editor]);
+      draggingBlockIdRef.current = blockId;
+      draggingBlockTypeRef.current = location?.blockType ?? null;
+      draggingParentIdRef.current = parentId;
+      setDraggingBlockId(blockId);
+      setDraggingBlockType(location?.blockType ?? null);
+      setDraggingParentId(parentId);
+      dropTargetRef.current = null;
+      setDropTarget(null);
+    },
+    [clearHideToolbarTimer, editor],
+  );
 
   const handleBlockDragEnd = useCallback(() => {
     clearHideToolbarTimer();
@@ -623,37 +619,34 @@ export function BlockEditor({
 
   const handleDragOver = useCallback(
     (e: React.DragEvent<HTMLDivElement>) => {
-    const activeDragBlockId = draggingBlockIdRef.current ?? draggingBlockId;
-    if (!activeDragBlockId || !containerRef.current) return;
-    e.preventDefault();
-    e.dataTransfer.dropEffect = "move";
-    const activeDragBlockType = draggingBlockTypeRef.current ?? draggingBlockType;
-    const blocks = editor?.getViewState().blocks ?? [];
-    const nextTarget =
-      activeDragBlockType && LIST_ITEM_TYPES.has(activeDragBlockType)
-        ? resolveListRowDropTarget(
-          containerRef.current,
-          blocks,
-          activeDragBlockType,
-          e.clientX,
-          e.clientY,
-        )
-        : (() => {
-          const parentId = draggingParentIdRef.current ?? draggingParentId;
-          const idx = getDropIndexForParent(containerRef.current!, parentId, e.clientY);
-          return { parentId, index: idx };
-        })();
-    const prevTarget = dropTargetRef.current;
-    if (
-      prevTarget?.parentId !== nextTarget.parentId ||
-      prevTarget?.index !== nextTarget.index
-    ) {
-      dropTargetRef.current = nextTarget;
-      setDropTarget(nextTarget);
-    }
-  },
-  [draggingBlockId, draggingBlockType, draggingParentId, editor],
-);
+      const activeDragBlockId = draggingBlockIdRef.current ?? draggingBlockId;
+      if (!activeDragBlockId || !containerRef.current) return;
+      e.preventDefault();
+      e.dataTransfer.dropEffect = "move";
+      const activeDragBlockType = draggingBlockTypeRef.current ?? draggingBlockType;
+      const blocks = editor?.getViewState().blocks ?? [];
+      const nextTarget =
+        activeDragBlockType && LIST_ITEM_TYPES.has(activeDragBlockType)
+          ? resolveListRowDropTarget(
+              containerRef.current,
+              blocks,
+              activeDragBlockType,
+              e.clientX,
+              e.clientY,
+            )
+          : (() => {
+              const parentId = draggingParentIdRef.current ?? draggingParentId;
+              const idx = getDropIndexForParent(containerRef.current!, parentId, e.clientY);
+              return { parentId, index: idx };
+            })();
+      const prevTarget = dropTargetRef.current;
+      if (prevTarget?.parentId !== nextTarget.parentId || prevTarget?.index !== nextTarget.index) {
+        dropTargetRef.current = nextTarget;
+        setDropTarget(nextTarget);
+      }
+    },
+    [draggingBlockId, draggingBlockType, draggingParentId, editor],
+  );
 
   const handleDrop = useCallback(
     (e: React.DragEvent<HTMLDivElement>) => {
@@ -689,32 +682,25 @@ export function BlockEditor({
       }
 
       const fallbackParentId = draggingParentIdRef.current ?? draggingParentId;
-      const fallbackIndex =
-        containerRef.current
-          ? getDropIndexForParent(containerRef.current, fallbackParentId, e.clientY)
-          : currentLocation.index;
+      const fallbackIndex = containerRef.current
+        ? getDropIndexForParent(containerRef.current, fallbackParentId, e.clientY)
+        : currentLocation.index;
       const target = dropTarget ?? { parentId: fallbackParentId, index: fallbackIndex };
       const targetParentId = target.parentId;
 
       let adjustedTarget = target.index;
-      if (
-        targetParentId === currentLocation.parentId &&
-        adjustedTarget > currentLocation.index
-      ) {
+      if (targetParentId === currentLocation.parentId && adjustedTarget > currentLocation.index) {
         adjustedTarget -= 1;
       }
 
       const locationChanged =
-        targetParentId !== currentLocation.parentId ||
-        adjustedTarget !== currentLocation.index;
+        targetParentId !== currentLocation.parentId || adjustedTarget !== currentLocation.index;
 
       if (locationChanged) {
-        const draggingType = draggingBlockTypeRef.current ?? draggingBlockType ?? currentLocation.blockType;
+        const draggingType =
+          draggingBlockTypeRef.current ?? draggingBlockType ?? currentLocation.blockType;
 
-        if (
-          LIST_ITEM_TYPES.has(draggingType) &&
-          targetParentId === null
-        ) {
+        if (LIST_ITEM_TYPES.has(draggingType) && targetParentId === null) {
           const sourceParentId = currentLocation.parentId;
           const sourceParentType = currentLocation.parentType;
           const listContainerType = inferListContainerTypeForItem(draggingType, sourceParentType);
@@ -781,15 +767,12 @@ export function BlockEditor({
     [draggingBlockId, draggingBlockType, draggingParentId, dropTarget, editor],
   );
 
-  const handleDragLeave = useCallback(
-    (e: React.DragEvent<HTMLDivElement>) => {
-      if (!containerRef.current?.contains(e.relatedTarget as Node)) {
-        dropTargetRef.current = null;
-        setDropTarget(null);
-      }
-    },
-    [],
-  );
+  const handleDragLeave = useCallback((e: React.DragEvent<HTMLDivElement>) => {
+    if (!containerRef.current?.contains(e.relatedTarget as Node)) {
+      dropTargetRef.current = null;
+      setDropTarget(null);
+    }
+  }, []);
 
   if (!editor) return null;
 
@@ -806,7 +789,9 @@ export function BlockEditor({
     "gotipe-block-editor",
     showBlockToolbar ? "gotipe-block-editor--with-toolbar" : "",
     className ?? "",
-  ].filter(Boolean).join(" ");
+  ]
+    .filter(Boolean)
+    .join(" ");
 
   return (
     <div
@@ -903,9 +888,7 @@ export function BlockEditor({
       {showAiCommandBar && <GhostText editor={editor} />}
 
       {/* AI Command Bar — Mod-k toggled floating input */}
-      {showAiCommandBar && (
-        <AiCommandBar editor={editor} onSubmit={onAiCommand} />
-      )}
+      {showAiCommandBar && <AiCommandBar editor={editor} onSubmit={onAiCommand} />}
 
       {/* AI Status Indicator — footer bar during AI processing */}
       {showAiCommandBar && <AiStatusIndicator editor={editor} />}

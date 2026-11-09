@@ -2,7 +2,12 @@ import type { BlockView, Decoration } from "@gotipe/core";
 import { parseMarkdown, serializeMarkdown } from "@gotipe/markdown";
 import { describe, expect, it } from "vitest";
 import { applyAnchoredEdits } from "./anchors";
-import { computeReviewDecorations, mapOffsetToText, proposalsInDocumentOrder, revealDecorations } from "./review-decorations";
+import {
+  computeReviewDecorations,
+  mapOffsetToText,
+  proposalsInDocumentOrder,
+  revealDecorations,
+} from "./review-decorations";
 import type { ReviewLane, ReviewProposal } from "./review-types";
 
 const PAGE = `# Выкат
@@ -26,7 +31,11 @@ const LANES: ReviewLane[] = [
 type Doc = { blocks: BlockView[] };
 
 function toView(blocks: unknown[]): BlockView[] {
-  return (blocks as BlockView[]).map((b) => ({ ...b, decorations: [], children: toView(b.children) }));
+  return (blocks as BlockView[]).map((b) => ({
+    ...b,
+    decorations: [],
+    children: toView(b.children),
+  }));
 }
 
 function setup(text: string) {
@@ -39,7 +48,11 @@ function setup(text: string) {
 
 const parse = (fragment: string) => toView(parseMarkdown(fragment).doc.blocks as unknown[]);
 
-function run(text: string, proposals: ReviewProposal[], extra: Partial<Parameters<typeof computeReviewDecorations>[0]> = {}) {
+function run(
+  text: string,
+  proposals: ReviewProposal[],
+  extra: Partial<Parameters<typeof computeReviewDecorations>[0]> = {},
+) {
   const s = setup(text);
   return { ...s, ...computeReviewDecorations({ ...s, parse, proposals, lanes: LANES, ...extra }) };
 }
@@ -52,7 +65,14 @@ describe("computeReviewDecorations", () => {
       {
         id: "p1",
         laneId: "agent",
-        edits: [{ before: "- [ ] Индекс по status_id", quote: "", after: "\n\n|", text: "\n- [ ] Переключить listTasks" }],
+        edits: [
+          {
+            before: "- [ ] Индекс по status_id",
+            quote: "",
+            after: "\n\n|",
+            text: "\n- [ ] Переключить listTasks",
+          },
+        ],
       },
     ]);
     expect(r.proposals[0]).toMatchObject({ status: "pending", exact: false });
@@ -88,12 +108,21 @@ describe("computeReviewDecorations", () => {
 
   it("strikes replaced text and inserts the new words in place", () => {
     const r = run(PAGE, [
-      { id: "p3", laneId: "agent", edits: [{ before: "Цифры — ", quote: "только", after: " из", text: "лишь" }] },
+      {
+        id: "p3",
+        laneId: "agent",
+        edits: [{ before: "Цифры — ", quote: "только", after: " из", text: "лишь" }],
+      },
     ]);
     const del = byType(r.decorations, "inline")[0] as Extract<Decoration, { type: "inline" }>;
     const ins = byType(r.decorations, "widget")[0] as Extract<Decoration, { type: "widget" }>;
     const para = r.blocks[3]!;
-    expect(del).toMatchObject({ blockId: para.id, from: 8, to: 14, className: "gotipe-sug gotipe-sug-del" });
+    expect(del).toMatchObject({
+      blockId: para.id,
+      from: 8,
+      to: 14,
+      className: "gotipe-sug gotipe-sug-del",
+    });
     expect(ins).toMatchObject({ blockId: para.id, offset: 14, text: "лишь" });
   });
 
@@ -103,7 +132,9 @@ describe("computeReviewDecorations", () => {
       {
         id: "p4",
         laneId: "agent",
-        edits: [{ before: "- [ ] Индекс по status_id", quote: "", after: "\n\n|", text: "\n- [ ] Ещё" }],
+        edits: [
+          { before: "- [ ] Индекс по status_id", quote: "", after: "\n\n|", text: "\n- [ ] Ещё" },
+        ],
       },
       { id: "p5", laneId: "agent", edits: [{ before: "", quote: "- [", after: "", text: "* [" }] },
     ]);
@@ -111,24 +142,53 @@ describe("computeReviewDecorations", () => {
       ["stale", "missing"],
       ["stale", "ambiguous"],
     ]);
-    const hint = r.decorations.find((d) => d.type === "widget" && d.className?.includes("gotipe-sug-stale"));
+    const hint = r.decorations.find(
+      (d) => d.type === "widget" && d.className?.includes("gotipe-sug-stale"),
+    );
     expect(hint).toBeTruthy();
   });
 
   it("replaces a block of another type: old block struck, new one after it", () => {
     const r = run(PAGE, [
-      { id: "p6", laneId: "agent", edits: [{ before: "\n\n", quote: "Цифры — только из базы.", after: "\n", text: "> [!NOTE]\n> Цифры — только из базы." }] },
+      {
+        id: "p6",
+        laneId: "agent",
+        edits: [
+          {
+            before: "\n\n",
+            quote: "Цифры — только из базы.",
+            after: "\n",
+            text: "> [!NOTE]\n> Цифры — только из базы.",
+          },
+        ],
+      },
     ]);
-    expect(byType(r.decorations, "node")[0]).toMatchObject({ className: "gotipe-sug gotipe-sug-block-del" });
-    expect((byType(r.decorations, "blocks")[0] as Extract<Decoration, { type: "blocks" }>).blocks[0]).toMatchObject({ type: "callout" });
+    expect(byType(r.decorations, "node")[0]).toMatchObject({
+      className: "gotipe-sug gotipe-sug-block-del",
+    });
+    expect(
+      (byType(r.decorations, "blocks")[0] as Extract<Decoration, { type: "blocks" }>).blocks[0],
+    ).toMatchObject({ type: "callout" });
   });
 
   it("anchors comments to text ranges", () => {
     const r = run(PAGE, [], {
-      comments: [{ id: "c1", laneId: "agent", anchor: { before: "- [ ] ", quote: "Индекс", after: " по" }, text: "CONCURRENTLY?" }],
+      comments: [
+        {
+          id: "c1",
+          laneId: "agent",
+          anchor: { before: "- [ ] ", quote: "Индекс", after: " по" },
+          text: "CONCURRENTLY?",
+        },
+      ],
     });
     expect(r.comments[0]).toMatchObject({ status: "anchored" });
-    expect(r.decorations[0]).toMatchObject({ type: "inline", from: 0, to: 6, className: "gotipe-cmt" });
+    expect(r.decorations[0]).toMatchObject({
+      type: "inline",
+      from: 0,
+      to: 6,
+      className: "gotipe-cmt",
+    });
   });
 
   it("maps an offset inside an empty cell to that cell", () => {
@@ -140,24 +200,48 @@ describe("computeReviewDecorations", () => {
 
   it("orders proposals by document position, stale last", () => {
     const r = run(PAGE, [
-      { id: "late", laneId: "agent", edits: [{ before: "Цифры — ", quote: "только", after: "", text: "лишь" }] },
-      { id: "gone", laneId: "agent", edits: [{ before: "", quote: "нет такого", after: "", text: "x" }] },
-      { id: "early", laneId: "agent", edits: [{ before: "Снять ", quote: "дамп", after: "", text: "снимок" }] },
+      {
+        id: "late",
+        laneId: "agent",
+        edits: [{ before: "Цифры — ", quote: "только", after: "", text: "лишь" }],
+      },
+      {
+        id: "gone",
+        laneId: "agent",
+        edits: [{ before: "", quote: "нет такого", after: "", text: "x" }],
+      },
+      {
+        id: "early",
+        laneId: "agent",
+        edits: [{ before: "Снять ", quote: "дамп", after: "", text: "снимок" }],
+      },
     ]);
-    expect(proposalsInDocumentOrder(r.blocks, r.proposals).map((p) => p.id)).toEqual(["early", "late", "gone"]);
+    expect(proposalsInDocumentOrder(r.blocks, r.proposals).map((p) => p.id)).toEqual([
+      "early",
+      "late",
+      "gone",
+    ]);
   });
 
   it("reveals a proposal's text progressively", () => {
     const r = run(PAGE, [
-      { id: "p7", laneId: "agent", edits: [{ before: "Цифры — ", quote: "", after: "только", text: "строго " }] },
+      {
+        id: "p7",
+        laneId: "agent",
+        edits: [{ before: "Цифры — ", quote: "", after: "только", text: "строго " }],
+      },
     ]);
     const partial = revealDecorations(r.decorations, "p7", 3);
-    expect((partial.find((d) => d.type === "widget") as Extract<Decoration, { type: "widget" }>).text).toBe("стр");
+    expect(
+      (partial.find((d) => d.type === "widget") as Extract<Decoration, { type: "widget" }>).text,
+    ).toBe("стр");
     expect(revealDecorations(r.decorations, "p7", 0).some((d) => d.type === "widget")).toBe(false);
   });
 
   it("accepting = applying the anchored edits to the file", () => {
-    const r = applyAnchoredEdits(PAGE, [{ before: "| `open` | ", quote: "", after: " |\n| `done`", text: "1 204" }]);
+    const r = applyAnchoredEdits(PAGE, [
+      { before: "| `open` | ", quote: "", after: " |\n| `done`", text: "1 204" },
+    ]);
     expect(r.ok && r.text.includes("| `open` | 1 204 |")).toBe(true);
   });
 });

@@ -52,7 +52,10 @@ const LAYER = "review";
 const MAX_REVEAL_MS = 1500;
 
 function prefersReducedMotion(): boolean {
-  return typeof window !== "undefined" && !!window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+  return (
+    typeof window !== "undefined" &&
+    !!window.matchMedia?.("(prefers-reduced-motion: reduce)").matches
+  );
 }
 
 /** Client rect of a document position (blockId, offset). */
@@ -60,12 +63,14 @@ function rectAt(root: HTMLElement, blockId: string, offset: number): DOMRect | n
   const blockEl = root.querySelector(`[data-block-id="${CSS.escape(blockId)}"]`);
   if (!blockEl) return null;
   const host =
-    blockEl.querySelector("[data-gotipe-todo-content]") ?? blockEl.querySelector(".gotipe-callout-content") ?? blockEl;
+    blockEl.querySelector("[data-gotipe-todo-content]") ??
+    blockEl.querySelector(".gotipe-callout-content") ??
+    blockEl;
   const walker = createTextWalker(host);
   let acc = 0;
   let node: Node | null;
   let last: Text | null = null;
-  while ((node = walker.nextNode())) {
+  for (node = walker.nextNode(); node; node = walker.nextNode()) {
     const owner = node.parentElement?.closest("[data-block-id]");
     if (owner && owner !== blockEl) continue;
     const text = node as Text;
@@ -264,6 +269,7 @@ export function ReviewLayer({
   }, [states, onStatesChange, onStates]);
 
   // Cursors and the open card follow layout: decorations, scroll, resize.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: layoutTick re-places after decorations change
   useLayoutEffect(() => {
     if (!root) return;
     const place = () => {
@@ -296,18 +302,25 @@ export function ReviewLayer({
       setPlaced(out);
       if (activeId) {
         const rect =
-          decorationRect(root, "data-gotipe-proposal", activeId) ?? decorationRect(root, "data-gotipe-comment", activeId);
+          decorationRect(root, "data-gotipe-proposal", activeId) ??
+          decorationRect(root, "data-gotipe-comment", activeId);
         if (rect) {
           // Beside the text when there is room (v6 к. 6), otherwise below it.
           const width = 288;
           const doc = root.querySelector("[data-gotipe-content]")?.getBoundingClientRect();
           const besideLeft = (doc ? doc.right : rect.right) + 16;
           if (besideLeft + width + 8 <= window.innerWidth) {
-            setCardPos({ top: Math.max(8, Math.min(rect.top - 10, window.innerHeight - 200)), left: besideLeft });
+            setCardPos({
+              top: Math.max(8, Math.min(rect.top - 10, window.innerHeight - 200)),
+              left: besideLeft,
+            });
           } else {
             const left = Math.min(Math.max(8, rect.left), window.innerWidth - width - 8);
             const below = rect.bottom + 8;
-            setCardPos({ top: below + 180 > window.innerHeight ? Math.max(8, rect.top - 188) : below, left });
+            setCardPos({
+              top: below + 180 > window.innerHeight ? Math.max(8, rect.top - 188) : below,
+              left,
+            });
           }
         } else {
           setCardPos(null);
@@ -334,7 +347,10 @@ export function ReviewLayer({
       if (!target) return;
       if (target.closest(".gotipe-review-card")) return;
       const hit = target.closest("[data-gotipe-proposal], [data-gotipe-comment]");
-      const id = hit?.getAttribute("data-gotipe-proposal") ?? hit?.getAttribute("data-gotipe-comment") ?? null;
+      const id =
+        hit?.getAttribute("data-gotipe-proposal") ??
+        hit?.getAttribute("data-gotipe-comment") ??
+        null;
       setActiveId(id && root.contains(hit) ? id : null);
     };
     const onKey = (e: KeyboardEvent) => {
@@ -350,7 +366,11 @@ export function ReviewLayer({
 
   const report = useCallback(
     (e: unknown, code: "PROPOSAL_ACTION_FAILED" | "COMMENT_ACTION_FAILED") => {
-      editor.reportError(e instanceof GoTipeError ? e : new GoTipeError(code, e instanceof Error ? e.message : String(e)));
+      editor.reportError(
+        e instanceof GoTipeError
+          ? e
+          : new GoTipeError(code, e instanceof Error ? e.message : String(e)),
+      );
     },
     [editor],
   );
@@ -361,7 +381,11 @@ export function ReviewLayer({
       const state = states.proposals.find((p) => p.id === id);
       if (!proposal) return false;
       if (state?.status === "stale") {
-        editor.reportError(new GoTipeError("PROPOSAL_STALE", "The text around the suggestion changed", { proposalId: id }));
+        editor.reportError(
+          new GoTipeError("PROPOSAL_STALE", "The text around the suggestion changed", {
+            proposalId: id,
+          }),
+        );
         return false;
       }
       try {
@@ -429,7 +453,9 @@ export function ReviewLayer({
 
   const activeProposal = activeId ? proposals.find((p) => p.id === activeId) : undefined;
   const activeComment = activeId ? comments.find((c) => c.id === activeId) : undefined;
-  const activeState = activeProposal ? states.proposals.find((s) => s.id === activeProposal.id) : undefined;
+  const activeState = activeProposal
+    ? states.proposals.find((s) => s.id === activeProposal.id)
+    : undefined;
 
   if (!overlay) return null;
 
@@ -439,7 +465,15 @@ export function ReviewLayer({
         <div
           key={c.laneId}
           className="gotipe-lane-cursor"
-          style={{ position: "fixed", top: c.top, left: c.left, height: c.height, "--gt-track": c.color } as React.CSSProperties}
+          style={
+            {
+              position: "fixed",
+              top: c.top,
+              left: c.left,
+              height: c.height,
+              "--gt-track": c.color,
+            } as React.CSSProperties
+          }
           aria-hidden="true"
         >
           <span className="gotipe-lane-caret" />
@@ -537,7 +571,15 @@ function ProposalCard({
   left: number;
   onAccept: () => void;
   onReject: () => void;
-  labels: { accept: string; reject: string; stale: string; staleText: string; before: string; after: string; region: string };
+  labels: {
+    accept: string;
+    reject: string;
+    stale: string;
+    staleText: string;
+    before: string;
+    after: string;
+    region: string;
+  };
 }) {
   const stale = state?.status === "stale";
   const edit = proposal.edits[0];
@@ -548,7 +590,14 @@ function ProposalCard({
       className="gotipe-review-card"
       role="dialog"
       aria-label={labels.region}
-      style={{ position: "fixed", top, left, "--gt-track": lane?.color ?? "var(--gt-track-1)" } as React.CSSProperties}
+      style={
+        {
+          position: "fixed",
+          top,
+          left,
+          "--gt-track": lane?.color ?? "var(--gt-track-1)",
+        } as React.CSSProperties
+      }
       data-gotipe-review-card="proposal"
     >
       <div className="gotipe-review-card-head">
@@ -578,11 +627,21 @@ function ProposalCard({
         </div>
       ) : null}
       <div className="gotipe-review-card-actions">
-        <button type="button" className="gotipe-btn gotipe-btn-secondary" disabled={busy} onClick={onReject}>
+        <button
+          type="button"
+          className="gotipe-btn gotipe-btn-secondary"
+          disabled={busy}
+          onClick={onReject}
+        >
           {labels.reject}
         </button>
         {stale ? null : (
-          <button type="button" className="gotipe-btn gotipe-btn-primary" disabled={busy} onClick={onAccept}>
+          <button
+            type="button"
+            className="gotipe-btn gotipe-btn-primary"
+            disabled={busy}
+            onClick={onAccept}
+          >
             {labels.accept}
           </button>
         )}
@@ -624,7 +683,14 @@ function CommentCard({
       className="gotipe-review-card"
       role="dialog"
       aria-label={labels.region}
-      style={{ position: "fixed", top, left, "--gt-track": lane?.color ?? "var(--gt-track-3)" } as React.CSSProperties}
+      style={
+        {
+          position: "fixed",
+          top,
+          left,
+          "--gt-track": lane?.color ?? "var(--gt-track-3)",
+        } as React.CSSProperties
+      }
       data-gotipe-review-card="comment"
     >
       <div className="gotipe-review-card-head">
@@ -656,7 +722,12 @@ function CommentCard({
             setFailed(false);
           }}
         />
-        <button type="submit" className="gotipe-page-icon-btn" aria-label={labels.send} disabled={pending || !draft.trim()}>
+        <button
+          type="submit"
+          className="gotipe-page-icon-btn"
+          aria-label={labels.send}
+          disabled={pending || !draft.trim()}
+        >
           <PageIcon name="send" />
         </button>
       </form>

@@ -1,4 +1,4 @@
-import { defineExtension, type GoTipeEditor } from "@gotipe/core";
+import { type GoTipeEditor, defineExtension } from "@gotipe/core";
 import type { AiManager } from "./manager";
 import type { AiAgentOptions, AiComment, AiProofreadSuggestion } from "./types";
 
@@ -27,7 +27,7 @@ export const defineAiAgent = defineExtension<AiAgentOptions>({
   keybindings: [
     {
       key: "mod-k",
-      command(editor: GoTipeEditor): boolean {
+      command(_editor: GoTipeEditor): boolean {
         // The AI Command Bar component handles its own toggle via document keydown.
         // This keybinding is a fallback to ensure it works if the component
         // hasn't mounted its own listener yet.
@@ -107,14 +107,15 @@ async function handleProofread(editor: GoTipeEditor, manager: AiManager): Promis
   const suggestions = await manager.proofread();
 
   // Store suggestions on the editor for the UI layer to consume
-  const store = (editor as unknown as Record<string, unknown>);
+  const store = editor as unknown as Record<string, unknown>;
   store.__aiProofreadSuggestions = suggestions;
 
   editor.emit("aiStatusChange", {
     active: false,
-    label: suggestions.length > 0
-      ? `Found ${suggestions.length} suggestion${suggestions.length === 1 ? "" : "s"}`
-      : undefined,
+    label:
+      suggestions.length > 0
+        ? `Found ${suggestions.length} suggestion${suggestions.length === 1 ? "" : "s"}`
+        : undefined,
   });
 }
 
@@ -127,7 +128,7 @@ async function handleReviewComments(editor: GoTipeEditor, manager: AiManager): P
   const comments = await manager.reviewComments();
 
   // Store comments and emit events for each
-  const store = (editor as unknown as Record<string, unknown>);
+  const store = editor as unknown as Record<string, unknown>;
   store.__aiReviewComments = comments;
 
   for (const comment of comments) {
@@ -229,14 +230,11 @@ export function getProofreadSuggestions(editor: GoTipeEditor): AiProofreadSugges
 /**
  * Helper to accept a proofread suggestion and remove it from the list.
  */
-export function acceptProofreadSuggestion(
-  editor: GoTipeEditor,
-  suggestionId: string,
-): void {
+export function acceptProofreadSuggestion(editor: GoTipeEditor, suggestionId: string): void {
   const manager = getManager(editor);
   if (!manager) return;
 
-  const store = (editor as unknown as Record<string, unknown>);
+  const store = editor as unknown as Record<string, unknown>;
   const suggestions = (store.__aiProofreadSuggestions as AiProofreadSuggestion[] | undefined) ?? [];
   const suggestion = suggestions.find((s) => s.id === suggestionId);
   if (!suggestion) return;
@@ -248,11 +246,8 @@ export function acceptProofreadSuggestion(
 /**
  * Helper to reject a proofread suggestion (remove without applying).
  */
-export function rejectProofreadSuggestion(
-  editor: GoTipeEditor,
-  suggestionId: string,
-): void {
-  const store = (editor as unknown as Record<string, unknown>);
+export function rejectProofreadSuggestion(editor: GoTipeEditor, suggestionId: string): void {
+  const store = editor as unknown as Record<string, unknown>;
   const suggestions = (store.__aiProofreadSuggestions as AiProofreadSuggestion[] | undefined) ?? [];
   store.__aiProofreadSuggestions = suggestions.filter((s) => s.id !== suggestionId);
 }
@@ -265,7 +260,7 @@ export function acceptAllProofreadSuggestions(editor: GoTipeEditor): void {
   const manager = getManager(editor);
   if (!manager) return;
 
-  const store = (editor as unknown as Record<string, unknown>);
+  const store = editor as unknown as Record<string, unknown>;
   const suggestions = (store.__aiProofreadSuggestions as AiProofreadSuggestion[] | undefined) ?? [];
 
   // Sort in reverse document order so applying earlier ones doesn't shift later offsets
@@ -285,7 +280,7 @@ export function acceptAllProofreadSuggestions(editor: GoTipeEditor): void {
  * Helper to reject all proofread suggestions at once.
  */
 export function rejectAllProofreadSuggestions(editor: GoTipeEditor): void {
-  const store = (editor as unknown as Record<string, unknown>);
+  const store = editor as unknown as Record<string, unknown>;
   store.__aiProofreadSuggestions = [];
 }
 

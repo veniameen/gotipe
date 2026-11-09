@@ -12,9 +12,11 @@ export function useHighlightedCode(
   language: string,
   delayMs = 120,
 ): HighlightToken[][] | null {
-  const [state, setState] = useState<{ code: string; language: string; lines: HighlightToken[][] } | null>(
-    null,
-  );
+  const [state, setState] = useState<{
+    code: string;
+    language: string;
+    lines: HighlightToken[][];
+  } | null>(null);
 
   useEffect(() => {
     if (!highlight || !code || !language || language === "plaintext" || language === "plain") {

@@ -182,7 +182,8 @@ export class ChainableCommands {
     const blockId = state.selection.anchor.blockId;
     const block = this.findInTree(state.blocks, blockId);
     if (!block) return this;
-    const sourceOffset = state.selection.anchor.blockId === block.id ? state.selection.anchor.offset : 0;
+    const sourceOffset =
+      state.selection.anchor.blockId === block.id ? state.selection.anchor.offset : 0;
 
     const parentInfo = this.findParentOf(state.blocks, blockId);
     const parent = parentInfo?.parent;
@@ -286,7 +287,12 @@ export class ChainableCommands {
   }
 
   private static readonly EMPTY_CONTENT_TYPES = new Set([
-    "divider", "image", "columns", "column", "table", "tableRow",
+    "divider",
+    "image",
+    "columns",
+    "column",
+    "table",
+    "tableRow",
   ]);
 
   private listItemAttrs(
@@ -295,8 +301,7 @@ export class ChainableCommands {
   ): Record<string, string | number | boolean | null> {
     if (itemType === "todoItem") {
       return {
-        checked:
-          typeof source?.attrs.checked === "boolean" ? source.attrs.checked : false,
+        checked: typeof source?.attrs.checked === "boolean" ? source.attrs.checked : false,
       };
     }
     return {};
@@ -646,7 +651,8 @@ export class ChainableCommands {
     const prevBlock = parent.children[location.index - 1];
     if (!prevBlock || !ChainableCommands.LIST_ITEM_TYPES.has(prevBlock.type)) return this;
 
-    const existingNestedList = prevBlock.children.find((child) => child.type === parent.type) ?? null;
+    const existingNestedList =
+      prevBlock.children.find((child) => child.type === parent.type) ?? null;
     if (existingNestedList) {
       this.steps.push({
         type: "moveBlock",
@@ -1007,14 +1013,21 @@ export class ChainableCommands {
       return didFocus;
     }
     if (this.steps.length > 0) {
-      const preserveSelectionTypes = new Set(["addMark", "removeMark", "setBlockType", "setBlockAttrs"]);
+      const preserveSelectionTypes = new Set([
+        "addMark",
+        "removeMark",
+        "setBlockType",
+        "setBlockAttrs",
+      ]);
       const shouldPreserveSelection =
         didFocus &&
         selectionOverride === null &&
         this.steps.every((step) => preserveSelectionTypes.has(step.type));
       const selectionBefore = shouldPreserveSelection
         ? (() => {
-            const markStep = this.steps.find((step) => step.type === "addMark" || step.type === "removeMark");
+            const markStep = this.steps.find(
+              (step) => step.type === "addMark" || step.type === "removeMark",
+            );
             if (markStep && "from" in markStep && "to" in markStep && "blockId" in markStep) {
               const from = Math.min(markStep.from, markStep.to);
               const to = Math.max(markStep.from, markStep.to);

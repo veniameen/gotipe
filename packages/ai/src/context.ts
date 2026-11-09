@@ -1,4 +1,4 @@
-import { defineExtension, type GoTipeEditor } from "@gotipe/core";
+import { type GoTipeEditor, defineExtension } from "@gotipe/core";
 import type { AiManager } from "./manager";
 import type { AiContextOptions } from "./types";
 
@@ -106,7 +106,7 @@ export const defineAiContext = defineExtension<AiContextOptions>({
  * Handles "Improve" / rewrite: streams a rewritten version of selected text
  * and replaces the selection with the result.
  */
-async function handleRewrite(editor: GoTipeEditor, manager: AiManager): Promise<void> {
+async function handleRewrite(_editor: GoTipeEditor, manager: AiManager): Promise<void> {
   const context = manager.buildContext();
   if (!context.selectedText) return;
 

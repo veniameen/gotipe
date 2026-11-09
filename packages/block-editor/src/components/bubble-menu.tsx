@@ -94,7 +94,9 @@ function MoreMenu({ editor }: MoreMenuProps) {
   }, [open]);
 
   const handleClearFormatting = useCallback(() => {
-    runWithFocus((chain) => { chain.clearFormatting(); });
+    runWithFocus((chain) => {
+      chain.clearFormatting();
+    });
     setOpen(false);
   }, [runWithFocus]);
 
@@ -107,12 +109,16 @@ function MoreMenu({ editor }: MoreMenuProps) {
   }, [editor]);
 
   const handleToggleSuperscript = useCallback(() => {
-    runWithFocus((chain) => { chain.toggleMark("superscript"); });
+    runWithFocus((chain) => {
+      chain.toggleMark("superscript");
+    });
     setOpen(false);
   }, [runWithFocus]);
 
   const handleToggleSubscript = useCallback(() => {
-    runWithFocus((chain) => { chain.toggleMark("subscript"); });
+    runWithFocus((chain) => {
+      chain.toggleMark("subscript");
+    });
     setOpen(false);
   }, [runWithFocus]);
 
@@ -129,11 +135,7 @@ function MoreMenu({ editor }: MoreMenuProps) {
       </button>
 
       {open && (
-        <div
-          className="gotipe-block-more-menu"
-          role="menu"
-          style={{ right: 0, left: "auto" }}
-        >
+        <div className="gotipe-block-more-menu" role="menu" style={{ right: 0, left: "auto" }}>
           <button type="button" role="menuitem" onClick={handleToggleSuperscript}>
             Superscript
           </button>
@@ -212,31 +214,51 @@ export function BlockEditorBubbleMenu({ editor, enableAI = false }: BlockEditorB
             label="Bold"
             icon="B"
             active={isMarkActive(editor, "bold")}
-            onClick={() => runWithFocus((chain) => { chain.toggleMark("bold"); })}
+            onClick={() =>
+              runWithFocus((chain) => {
+                chain.toggleMark("bold");
+              })
+            }
           />
           <FormatButton
             label="Italic"
             icon="I"
             active={isMarkActive(editor, "italic")}
-            onClick={() => runWithFocus((chain) => { chain.toggleMark("italic"); })}
+            onClick={() =>
+              runWithFocus((chain) => {
+                chain.toggleMark("italic");
+              })
+            }
           />
           <FormatButton
             label="Underline"
             icon="U"
             active={isMarkActive(editor, "underline")}
-            onClick={() => runWithFocus((chain) => { chain.toggleMark("underline"); })}
+            onClick={() =>
+              runWithFocus((chain) => {
+                chain.toggleMark("underline");
+              })
+            }
           />
           <FormatButton
             label="Strikethrough"
             icon="S"
             active={isMarkActive(editor, "strikethrough")}
-            onClick={() => runWithFocus((chain) => { chain.toggleMark("strikethrough"); })}
+            onClick={() =>
+              runWithFocus((chain) => {
+                chain.toggleMark("strikethrough");
+              })
+            }
           />
           <FormatButton
             label="Code"
             icon="</>"
             active={isMarkActive(editor, "code")}
-            onClick={() => runWithFocus((chain) => { chain.toggleMark("code"); })}
+            onClick={() =>
+              runWithFocus((chain) => {
+                chain.toggleMark("code");
+              })
+            }
           />
           <FormatButton
             label="Link"
@@ -244,11 +266,15 @@ export function BlockEditorBubbleMenu({ editor, enableAI = false }: BlockEditorB
             active={isMarkActive(editor, "link")}
             onClick={() => {
               if (isMarkActive(editor, "link")) {
-                runWithFocus((chain) => { chain.unsetMark("link"); });
+                runWithFocus((chain) => {
+                  chain.unsetMark("link");
+                });
               } else {
                 const url = window.prompt("Enter URL:");
                 if (url) {
-                  runWithFocus((chain) => { chain.setMark("link", { href: url }); });
+                  runWithFocus((chain) => {
+                    chain.setMark("link", { href: url });
+                  });
                 }
               }
             }}

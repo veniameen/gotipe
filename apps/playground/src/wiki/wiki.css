@@ -1,0 +1,274 @@
+/* «Как вики SpecOrbit»: SpecOrbit's own tokens (app/src/ui/tokens.css, v6)
+   on .so-root, and the mapping onto GoTipe's --gt-* tokens. The mapping block
+   is what SpecOrbit puts into its wiki stylesheet. */
+
+.so-root {
+  --canvas: #fcfcfb;
+  --surface: #ffffff;
+  --overlay: #ffffff;
+  --text: #262625;
+  --text-2: #5e5e59;
+  --text-3: #787872;
+  --fill-1: rgb(27 27 26 / 0.04);
+  --fill-2: rgb(27 27 26 / 0.07);
+  --fill-3: rgb(27 27 26 / 0.1);
+  --line: rgb(27 27 26 / 0.08);
+  --line-strong: rgb(27 27 26 / 0.13);
+  --line-control: rgb(27 27 26 / 0.22);
+  --line-active: rgb(27 27 26 / 0.4);
+  --primary: #1b1b1a;
+  --primary-hover: #33332f;
+  --primary-text: #fcfcfb;
+  --inverse: #1b1b1a;
+  --inverse-text: #f2f2f0;
+  --accent: #0864d4;
+  --accent-text: #ffffff;
+  --link: #0864d4;
+  --selection: rgb(10 114 239 / 0.18);
+  --success: #2b8247;
+  --warning: #9c6700;
+  --danger: #c93a32;
+  --danger-soft: rgb(201 58 50 / 0.08);
+  --warning-soft: rgb(156 103 0 / 0.1);
+  --shadow-e2: 0 0 0 0.5px var(--line-strong), 0 2px 6px rgb(27 27 26 / 0.06), 0 12px 32px -8px rgb(27 27 26 / 0.16);
+  --font-ui: "Inter", "Inter Variable", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  --font-mono: "Geist Mono Variable", ui-monospace, "SF Mono", Menlo, monospace;
+  --text-body: 13px;
+  --leading-body: 18px;
+  --text-meta: 12px;
+  --text-prose: 14px;
+  --leading-prose: 21px;
+  --text-mono-small: 11px;
+  --r-control: 6px;
+  --r-surface: 8px;
+  --r-overlay: 10px;
+  color-scheme: light;
+}
+.so-root[data-theme="dark"] {
+  --canvas: #161615;
+  --surface: #1d1d1c;
+  --overlay: #2b2b2a;
+  --text: #ededeb;
+  --text-2: #a2a29d;
+  --text-3: #807f7a;
+  --fill-1: rgb(255 255 255 / 0.05);
+  --fill-2: rgb(255 255 255 / 0.08);
+  --fill-3: rgb(255 255 255 / 0.11);
+  --line: rgb(255 255 255 / 0.07);
+  --line-strong: rgb(255 255 255 / 0.11);
+  --line-control: rgb(255 255 255 / 0.22);
+  --line-active: rgb(255 255 255 / 0.38);
+  --primary: #f2f2f0;
+  --primary-hover: #d9d9d5;
+  --primary-text: #161615;
+  --inverse: #3a3a38;
+  --inverse-text: #f2f2f0;
+  --accent: #3e97ff;
+  --accent-text: #161615;
+  --link: #3e97ff;
+  --selection: rgb(62 151 255 / 0.28);
+  --success: #5fbf7a;
+  --warning: #e0a93b;
+  --danger: #ef6b61;
+  --danger-soft: rgb(239 107 97 / 0.12);
+  --warning-soft: rgb(224 169 59 / 0.12);
+  --shadow-e2: 0 0 0 0.5px rgb(255 255 255 / 0.1), 0 2px 6px rgb(0 0 0 / 0.24), 0 12px 32px -8px rgb(0 0 0 / 0.5);
+  color-scheme: dark;
+}
+
+/* ---- the mapping SpecOrbit uses: its tokens → GoTipe --gt-* ---- */
+.so-root .gotipe-page {
+  --gt-page-bg: var(--canvas);
+  --gt-surface: var(--surface);
+  --gt-overlay: var(--overlay);
+  --gt-text: var(--text);
+  --gt-text-2: var(--text-2);
+  --gt-text-3: var(--text-3);
+  --gt-fill-1: var(--fill-1);
+  --gt-fill-2: var(--fill-2);
+  --gt-fill-3: var(--fill-3);
+  --gt-line: var(--line);
+  --gt-line-strong: var(--line-strong);
+  --gt-line-control: var(--line-control);
+  --gt-line-active: var(--line-active);
+  --gt-primary: var(--primary);
+  --gt-primary-hover: var(--primary-hover);
+  --gt-primary-text: var(--primary-text);
+  --gt-accent: var(--accent);
+  --gt-accent-text: var(--accent-text);
+  --gt-link: var(--link);
+  --gt-selection: var(--selection);
+  --gt-success: var(--success);
+  --gt-warning: var(--warning);
+  --gt-danger: var(--danger);
+  --gt-danger-soft: var(--danger-soft);
+  --gt-comment: var(--warning);
+  --gt-comment-soft: var(--warning-soft);
+  --gt-shadow-overlay: var(--shadow-e2);
+  --gt-font-ui: var(--font-ui);
+  --gt-font-mono: var(--font-mono);
+  --gt-text-body: var(--text-body);
+  --gt-leading-body: var(--leading-body);
+  --gt-text-meta: var(--text-meta);
+  --gt-text-prose: var(--text-prose);
+  --gt-leading-prose: var(--leading-prose);
+  --gt-text-mono-small: var(--text-mono-small);
+  --gt-radius-control: var(--r-control);
+  --gt-radius-surface: var(--r-surface);
+  --gt-radius-overlay: var(--r-overlay);
+  color-scheme: inherit;
+}
+
+/* ---- the demo's chrome (the workbench panel around the page) ---- */
+.so-root {
+  position: relative;
+  height: 100%;
+  min-height: 640px;
+  background: var(--canvas);
+  color: var(--text);
+  font-family: var(--font-ui);
+  font-size: var(--text-body);
+}
+.so-standalone {
+  height: 100vh;
+}
+.so-panel {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: inherit;
+}
+.so-tabs {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  height: 40px;
+  padding: 0 8px;
+  box-shadow: inset 0 -1px 0 var(--line);
+}
+.so-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 28px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: var(--r-control);
+  background: var(--fill-1);
+  color: var(--text);
+  font: inherit;
+}
+.so-tab .gotipe-icon,
+.so-ib .gotipe-icon {
+  width: 16px;
+  height: 16px;
+}
+.so-tools {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 8px 10px;
+  background: var(--canvas);
+}
+.so-sp {
+  flex: 1;
+}
+.so-ib {
+  display: inline-grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--r-control);
+  background: none;
+  color: var(--text-2);
+}
+.so-ib:hover,
+.so-ib.is-on {
+  background: var(--fill-2);
+  color: var(--text);
+}
+.so-ib:disabled {
+  opacity: 0.45;
+  background: none;
+}
+.so-body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  overflow: hidden;
+}
+.so-page {
+  flex: 1;
+  min-width: 0;
+  overflow-y: auto;
+}
+.so-source {
+  display: flex;
+  flex-direction: column;
+  width: 42%;
+  min-width: 320px;
+  box-shadow: inset 1px 0 0 var(--line);
+  background: var(--surface);
+}
+.so-source-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 10px 12px;
+  color: var(--text-2);
+  font-size: var(--text-meta);
+  box-shadow: inset 0 -1px 0 var(--line);
+}
+.so-source-head span {
+  color: var(--text-3);
+}
+.so-source pre {
+  flex: 1;
+  margin: 0;
+  padding: 12px;
+  overflow: auto;
+  font-family: var(--font-mono);
+  font-size: var(--text-mono-small);
+  line-height: 1.6;
+  white-space: pre-wrap;
+}
+.so-source-actions {
+  display: flex;
+  gap: 6px;
+  padding: 8px 12px;
+  box-shadow: inset 0 1px 0 var(--line);
+}
+.so-btn {
+  height: 24px;
+  padding: 0 8px;
+  border: 0;
+  border-radius: var(--r-control);
+  background: var(--fill-2);
+  color: var(--text);
+  font: inherit;
+  font-size: var(--text-meta);
+  font-weight: 500;
+}
+.so-toasts {
+  position: fixed;
+  right: 16px;
+  bottom: 16px;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.so-toast {
+  max-width: 380px;
+  padding: 8px 12px;
+  border-radius: var(--r-overlay);
+  background: var(--inverse);
+  color: var(--inverse-text);
+  box-shadow: var(--shadow-e2);
+  font-size: var(--text-body);
+}
+.so-toast.is-error {
+  box-shadow: var(--shadow-e2), inset 3px 0 0 var(--danger);
+}

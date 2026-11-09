@@ -45,13 +45,19 @@ function bodyCells(table: BlockView, column: number): BlockView[] {
     .filter((c): c is BlockView => !!c);
 }
 
-export function columnTypeOf(table: BlockView, column: number, yes: string, no: string): ColumnType {
+export function columnTypeOf(
+  table: BlockView,
+  column: number,
+  yes: string,
+  no: string,
+): ColumnType {
   const align = (table.attrs.align as Align[] | undefined)?.[column] ?? null;
   const cells = bodyCells(table, column).filter((c) => cellText(c).length > 0);
   if (cells.length > 0 && cells.every(isFullyCode)) return "code";
   if (align === "right") return "number";
   const values = new Set([yes, no]);
-  if (cells.length > 0 && cells.every((c) => values.has(cellText(c).trim().toLowerCase()))) return "boolean";
+  if (cells.length > 0 && cells.every((c) => values.has(cellText(c).trim().toLowerCase())))
+    return "boolean";
   return "text";
 }
 
@@ -71,22 +77,36 @@ export function setColumnType(
   const align = [...((table.attrs.align as Align[] | undefined) ?? [])];
   const width = Math.max(align.length, ...table.children.map((r) => r.children.length));
   while (align.length < width) align.push(null);
-  align[column] = type === "number" ? "right" : align[column] === "right" ? null : align[column] ?? null;
+  align[column] =
+    type === "number" ? "right" : align[column] === "right" ? null : (align[column] ?? null);
   steps.push({ type: "setBlockAttrs", blockId: table.id, attrs: { align } });
   for (const cell of bodyCells(table, column)) {
     const text = cellText(cell);
     if (type === "code") {
       if (text.length > 0 && !isFullyCode(cell)) {
-        steps.push({ type: "addMark", blockId: cell.id, from: 0, to: text.length, mark: { type: "code", attrs: {} } });
+        steps.push({
+          type: "addMark",
+          blockId: cell.id,
+          from: 0,
+          to: text.length,
+          mark: { type: "code", attrs: {} },
+        });
       }
     } else if (isFullyCode(cell) && text.length > 0) {
-      steps.push({ type: "removeMark", blockId: cell.id, from: 0, to: text.length, markType: "code" });
+      steps.push({
+        type: "removeMark",
+        blockId: cell.id,
+        from: 0,
+        to: text.length,
+        markType: "code",
+      });
     }
     if (type === "boolean") {
       const value = text.trim();
       const next = TRUTHY.test(value) ? words.yes : FALSY.test(value) ? words.no : null;
       if (next !== null && next !== text) {
-        if (text.length > 0) steps.push({ type: "deleteText", blockId: cell.id, from: 0, to: text.length });
+        if (text.length > 0)
+          steps.push({ type: "deleteText", blockId: cell.id, from: 0, to: text.length });
         steps.push({ type: "insertText", blockId: cell.id, offset: 0, text: next, marks: [] });
       }
     }
@@ -184,7 +204,11 @@ export function TableColumnButton({
   useEffect(() => {
     if (!open) return;
     const close = (e: MouseEvent) => {
-      if (menuRef.current?.contains(e.target as Node) || buttonRef.current?.contains(e.target as Node)) return;
+      if (
+        menuRef.current?.contains(e.target as Node) ||
+        buttonRef.current?.contains(e.target as Node)
+      )
+        return;
       setOpen(false);
     };
     const onKey = (e: KeyboardEvent) => {
@@ -261,7 +285,12 @@ export function TableColumnButton({
                 </button>
               ))}
               <div className="gotipe-page-menu-sep" role="separator" />
-              <button type="button" role="menuitem" className="gotipe-page-menu-item" onClick={() => run(() => addRow(editor, tableId))}>
+              <button
+                type="button"
+                role="menuitem"
+                className="gotipe-page-menu-item"
+                onClick={() => run(() => addRow(editor, tableId))}
+              >
                 <span className="gotipe-page-menu-icon">
                   <PageIcon name="down" />
                 </span>

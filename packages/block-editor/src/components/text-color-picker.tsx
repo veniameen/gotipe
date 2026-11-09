@@ -132,7 +132,14 @@ export function TextColorPicker({ editor }: TextColorPickerProps) {
           gap: "1px",
         }}
       >
-        <span style={{ fontSize: "14px", fontWeight: 600, color: currentColor ?? "var(--gt-text-secondary)", lineHeight: 1 }}>
+        <span
+          style={{
+            fontSize: "14px",
+            fontWeight: 600,
+            color: currentColor ?? "var(--gt-text-secondary)",
+            lineHeight: 1,
+          }}
+        >
           A
         </span>
         <span
@@ -213,11 +220,7 @@ export function TextColorPicker({ editor }: TextColorPickerProps) {
           </div>
 
           {/* Reset */}
-          <button
-            type="button"
-            className="gotipe-text-color-reset"
-            onClick={handleReset}
-          >
+          <button type="button" className="gotipe-text-color-reset" onClick={handleReset}>
             Reset color
           </button>
         </div>

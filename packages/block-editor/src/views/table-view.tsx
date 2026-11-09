@@ -10,7 +10,7 @@ interface CellCoord {
 export function TableView({
   block,
   editor,
-  children,
+  children: _children,
 }: { block: BlockView; editor: GoTipeEditor; children?: React.ReactNode }) {
   const [selectedCell, setSelectedCell] = useState<CellCoord | null>(null);
   const [resizingCol, setResizingCol] = useState<number | null>(null);
@@ -57,10 +57,7 @@ export function TableView({
           setSelectedCell({ row: row + 1, col: 0 });
         } else {
           // Tab in last cell → add new row
-          editor
-            .chain()
-            .setBlockAttrs(block.id, { _addRow: Date.now() })
-            .run();
+          editor.chain().setBlockAttrs(block.id, { _addRow: Date.now() }).run();
           setSelectedCell({ row: numRows, col: 0 });
         }
       }
@@ -74,18 +71,12 @@ export function TableView({
 
   // Add row
   const handleAddRow = useCallback(() => {
-    editor
-      .chain()
-      .setBlockAttrs(block.id, { _addRow: Date.now() })
-      .run();
+    editor.chain().setBlockAttrs(block.id, { _addRow: Date.now() }).run();
   }, [editor, block.id]);
 
   // Add column
   const handleAddCol = useCallback(() => {
-    editor
-      .chain()
-      .setBlockAttrs(block.id, { _addCol: Date.now() })
-      .run();
+    editor.chain().setBlockAttrs(block.id, { _addCol: Date.now() }).run();
     setColWidths((prev) => [...prev, 150]);
   }, [editor, block.id]);
 
@@ -162,8 +153,7 @@ export function TableView({
             <tr key={row.id}>
               {(row.children ?? []).map((cell, colIdx) => {
                 const isHeader = cell.type === "tableHeader" || rowIdx === 0;
-                const isSelected =
-                  selectedCell?.row === rowIdx && selectedCell?.col === colIdx;
+                const isSelected = selectedCell?.row === rowIdx && selectedCell?.col === colIdx;
                 const CellTag = isHeader ? "th" : "td";
                 const cellContent = Array.isArray(cell.content)
                   ? cell.content.map((s) => s.text).join("")
@@ -175,9 +165,7 @@ export function TableView({
                     className={isSelected ? "gotipe-table-cell-selected" : ""}
                     style={{
                       fontWeight: isHeader ? 600 : undefined,
-                      background: isHeader && !isSelected
-                        ? "var(--gt-bg-hover)"
-                        : undefined,
+                      background: isHeader && !isSelected ? "var(--gt-bg-hover)" : undefined,
                       position: "relative",
                     }}
                     onClick={() => handleCellClick(rowIdx, colIdx)}

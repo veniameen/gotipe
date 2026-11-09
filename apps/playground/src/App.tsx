@@ -15,6 +15,7 @@ import { NotionEditor } from './templates/notion-editor';
 import { SimpleEditor } from './templates/simple-editor';
 import { HeadlessEditor } from './templates/headless-editor';
 import { AgentEditor } from './templates/agent-editor';
+import { WikiPageExample } from './wiki/wiki-page-example';
 
 /* ------------------------------------------------------------------ */
 /*  Route registry                                                     */
@@ -29,6 +30,7 @@ interface RouteEntry {
 const ROUTES: Record<string, RouteEntry> = {
   // Templates
   agent:    { name: 'Agent Editor',    category: 'Templates',  component: AgentEditor },
+  wiki:     { name: 'SpecOrbit Wiki',  category: 'Templates',  component: WikiPageExample },
   notion:   { name: 'Notion-like',     category: 'Templates',  component: NotionEditor },
   simple:   { name: 'Simple Editor',   category: 'Templates',  component: SimpleEditor },
   headless: { name: 'Headless',        category: 'Templates',  component: HeadlessEditor },

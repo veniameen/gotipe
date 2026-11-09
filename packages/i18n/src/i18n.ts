@@ -72,7 +72,10 @@ export function createI18n(options: CreateI18nOptions = {}): I18n {
     },
     plural(base: PluralKeyBase, count: number, params?: Record<string, string | number>): string {
       const category = pluralCategory(currentLocale, count);
-      return format(translate(`${base}.${category}` as TranslationKey), { count, ...(params ?? {}) });
+      return format(translate(`${base}.${category}` as TranslationKey), {
+        count,
+        ...(params ?? {}),
+      });
     },
   };
 }

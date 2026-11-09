@@ -104,12 +104,15 @@ export function BlockToolbar({
     setTooltipLeft(Math.round(nextLeft));
   }, []);
 
-  const showTooltip = useCallback((kind: "add" | "drag") => {
-    clearTooltipHideTimer();
-    setTooltipKind(kind);
-    setTooltipVisible(true);
-    requestAnimationFrame(() => updateTooltipPosition(kind));
-  }, [clearTooltipHideTimer, updateTooltipPosition]);
+  const showTooltip = useCallback(
+    (kind: "add" | "drag") => {
+      clearTooltipHideTimer();
+      setTooltipKind(kind);
+      setTooltipVisible(true);
+      requestAnimationFrame(() => updateTooltipPosition(kind));
+    },
+    [clearTooltipHideTimer, updateTooltipPosition],
+  );
 
   const hideTooltip = useCallback(() => {
     clearTooltipHideTimer();
@@ -142,50 +145,57 @@ export function BlockToolbar({
     setContextMenuOpen((prev) => !prev);
   }, [hideTooltip]);
 
-  const handleAddBlock = useCallback((e: React.MouseEvent<HTMLButtonElement>) => {
-    const state = editor.getViewState();
-    const insertionTargetId = addBlockId ?? blockId;
-    const location = findBlockLocation(state.blocks, insertionTargetId);
-    if (!location) return;
+  const handleAddBlock = useCallback(
+    (e: React.MouseEvent<HTMLButtonElement>) => {
+      const state = editor.getViewState();
+      const insertionTargetId = addBlockId ?? blockId;
+      const location = findBlockLocation(state.blocks, insertionTargetId);
+      if (!location) return;
 
-    const insertAbove = e.altKey;
-    const newBlockId = crypto.randomUUID();
-    const newBlock = createInsertedBlock(location.parentType, newBlockId);
+      const insertAbove = e.altKey;
+      const newBlockId = crypto.randomUUID();
+      const newBlock = createInsertedBlock(location.parentType, newBlockId);
 
-    editor.dispatch({
-      steps: [{
-        type: "insertBlock",
-        parentId: location.parentId,
-        index: location.index + (insertAbove ? 0 : 1),
-        block: newBlock,
-      }],
-    });
-    hideTooltip();
+      editor.dispatch({
+        steps: [
+          {
+            type: "insertBlock",
+            parentId: location.parentId,
+            index: location.index + (insertAbove ? 0 : 1),
+            block: newBlock,
+          },
+        ],
+      });
+      hideTooltip();
 
-    editor.setSelection({
-      anchor: { blockId: newBlockId, offset: 0 },
-      head: { blockId: newBlockId, offset: 0 },
-    });
-    editor.focus();
+      editor.setSelection({
+        anchor: { blockId: newBlockId, offset: 0 },
+        head: { blockId: newBlockId, offset: 0 },
+      });
+      editor.focus();
 
-    if (!openSlashMenuOnAdd) return;
+      if (!openSlashMenuOnAdd) return;
 
-    editor.dispatch({
-      steps: [{
-        type: "insertText",
-        blockId: newBlockId,
-        offset: 0,
-        text: "/",
-        marks: [],
-      }],
-    });
-    editor.setSelection({
-      anchor: { blockId: newBlockId, offset: 1 },
-      head: { blockId: newBlockId, offset: 1 },
-    });
-    editor.focus();
-    editor.emit("openSlashMenu");
-  }, [editor, addBlockId, blockId, hideTooltip, openSlashMenuOnAdd]);
+      editor.dispatch({
+        steps: [
+          {
+            type: "insertText",
+            blockId: newBlockId,
+            offset: 0,
+            text: "/",
+            marks: [],
+          },
+        ],
+      });
+      editor.setSelection({
+        anchor: { blockId: newBlockId, offset: 1 },
+        head: { blockId: newBlockId, offset: 1 },
+      });
+      editor.focus();
+      editor.emit("openSlashMenu");
+    },
+    [editor, addBlockId, blockId, hideTooltip, openSlashMenuOnAdd],
+  );
 
   const handleCloseMenu = useCallback(() => {
     hideTooltip();
@@ -217,7 +227,16 @@ export function BlockToolbar({
           }}
           onClick={handleAddBlock}
         >
-          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true">
+          <svg
+            width="14"
+            height="14"
+            viewBox="0 0 14 14"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.8"
+            strokeLinecap="round"
+            aria-hidden="true"
+          >
             <line x1="7" y1="2" x2="7" y2="12" />
             <line x1="2" y1="7" x2="12" y2="7" />
           </svg>

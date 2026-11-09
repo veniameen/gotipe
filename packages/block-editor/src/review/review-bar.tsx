@@ -15,7 +15,10 @@ const LANE_ICON: Record<ReviewLane["kind"], PageIconName> = {
  * Who is on the page: one round avatar per lane in its colour; a lane with a
  * cursor is busy (a spinning ring). v6 `.wkl-avs`.
  */
-export function LaneAvatars({ lanes, cursors = [] }: { lanes: ReviewLane[]; cursors?: LaneCursor[] }) {
+export function LaneAvatars({
+  lanes,
+  cursors = [],
+}: { lanes: ReviewLane[]; cursors?: LaneCursor[] }) {
   const i18n = useGoTipeI18n();
   const busy = new Set(cursors.map((c) => c.laneId));
   return (
@@ -109,7 +112,12 @@ export function ReviewBar({
           ) : null}
         </>
       ) : onClose ? (
-        <button type="button" className="gotipe-page-icon-btn" aria-label={i18n.t("review.close")} onClick={onClose}>
+        <button
+          type="button"
+          className="gotipe-page-icon-btn"
+          aria-label={i18n.t("review.close")}
+          onClick={onClose}
+        >
           <PageIcon name="close" />
         </button>
       ) : null}

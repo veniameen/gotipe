@@ -6,3 +6,5 @@ pkg/
 *.wasm
 .turbo/
 .next/
+# playground: CSP build of the wiki example
+dist-wiki/

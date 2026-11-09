@@ -69,7 +69,7 @@ interface CommentThreadProps {
 function CommentThread({
   comment,
   isActive,
-  currentUser,
+  currentUser: _currentUser,
   onReply,
   onResolve,
   onUnresolve,
@@ -164,23 +164,29 @@ function CommentThread({
       </div>
 
       {/* Quoted text */}
-      {comment.quotedText && (
-        <div className="gotipe-comment-quote">{comment.quotedText}</div>
-      )}
+      {comment.quotedText && <div className="gotipe-comment-quote">{comment.quotedText}</div>}
 
       {/* Comment body */}
       <div className="gotipe-comment-body">{comment.body}</div>
 
       {/* Replies */}
       {comment.replies.length > 0 && (
-        <div style={{ marginTop: "8px", paddingLeft: "12px", borderLeft: "2px solid var(--gt-border-light, rgba(0,0,0,0.05))" }}>
+        <div
+          style={{
+            marginTop: "8px",
+            paddingLeft: "12px",
+            borderLeft: "2px solid var(--gt-border-light, rgba(0,0,0,0.05))",
+          }}
+        >
           {comment.replies.map((reply) => (
             <div key={reply.id} style={{ marginBottom: "8px" }}>
               <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
                 <span className="gotipe-comment-author">{reply.author}</span>
                 <span className="gotipe-comment-timestamp">{formatTimestamp(reply.timestamp)}</span>
               </div>
-              <div className="gotipe-comment-body" style={{ marginTop: "4px" }}>{reply.body}</div>
+              <div className="gotipe-comment-body" style={{ marginTop: "4px" }}>
+                {reply.body}
+              </div>
             </div>
           ))}
         </div>
@@ -208,10 +214,15 @@ function CommentThread({
               fontFamily: "inherit",
             }}
           />
-          <div style={{ display: "flex", gap: "4px", marginTop: "4px", justifyContent: "flex-end" }}>
+          <div
+            style={{ display: "flex", gap: "4px", marginTop: "4px", justifyContent: "flex-end" }}
+          >
             <button
               type="button"
-              onClick={() => { setShowReplyInput(false); setReplyText(""); }}
+              onClick={() => {
+                setShowReplyInput(false);
+                setReplyText("");
+              }}
               style={{
                 border: "none",
                 background: "transparent",
@@ -353,7 +364,11 @@ export function CommentSidebar({
 
   if (collapsed) {
     return (
-      <aside className="gotipe-comment-sidebar" aria-label="Comments" style={{ width: "40px", cursor: "pointer" }}>
+      <aside
+        className="gotipe-comment-sidebar"
+        aria-label="Comments"
+        style={{ width: "40px", cursor: "pointer" }}
+      >
         <button
           type="button"
           onClick={onToggleCollapse}
@@ -390,7 +405,14 @@ export function CommentSidebar({
     <aside ref={sidebarRef} className="gotipe-comment-sidebar" aria-label="Comments">
       <div className="gotipe-comment-sidebar-content">
         {/* Header with collapse + navigation */}
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "12px" }}>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            marginBottom: "12px",
+          }}
+        >
           <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
             {onToggleCollapse && (
               <button
@@ -409,7 +431,13 @@ export function CommentSidebar({
                 {"\u2715"}
               </button>
             )}
-            <span style={{ fontSize: "var(--gt-text-sm, 14px)", fontWeight: 600, color: "var(--gt-text-base)" }}>
+            <span
+              style={{
+                fontSize: "var(--gt-text-sm, 14px)",
+                fontWeight: 600,
+                color: "var(--gt-text-base)",
+              }}
+            >
               Comments
             </span>
           </div>
@@ -432,7 +460,13 @@ export function CommentSidebar({
               >
                 {"\u25C4"}
               </button>
-              <span style={{ fontSize: "12px", color: "var(--gt-text-tertiary)", fontVariantNumeric: "tabular-nums" }}>
+              <span
+                style={{
+                  fontSize: "12px",
+                  color: "var(--gt-text-tertiary)",
+                  fontVariantNumeric: "tabular-nums",
+                }}
+              >
                 {activeIndex >= 0 ? activeIndex + 1 : 0}/{visibleComments.length}
               </span>
               <button
@@ -494,7 +528,14 @@ export function CommentSidebar({
 
         {/* Comment threads */}
         {visibleComments.length === 0 ? (
-          <div style={{ textAlign: "center", color: "var(--gt-text-tertiary)", fontSize: "var(--gt-text-sm, 14px)", padding: "24px 0" }}>
+          <div
+            style={{
+              textAlign: "center",
+              color: "var(--gt-text-tertiary)",
+              fontSize: "var(--gt-text-sm, 14px)",
+              padding: "24px 0",
+            }}
+          >
             {filter === "open" ? "No open comments" : "No resolved comments"}
           </div>
         ) : (

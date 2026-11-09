@@ -6,7 +6,10 @@ describe("i18n", () => {
     const i18n = createI18n({ locale: "ru", locales: { ru, en } });
     expect(i18n.t("review.acceptAll")).toBe("Принять все");
     expect(i18n.t("review.editing", { name: "GigaChat 2" })).toBe("Правит GigaChat 2");
-    const partial = createI18n({ locale: "xx", locales: { xx: { ...ru, "review.accept": undefined as never }, en } });
+    const partial = createI18n({
+      locale: "xx",
+      locales: { xx: { ...ru, "review.accept": undefined as never }, en },
+    });
     expect(partial.t("review.accept")).toBe("Accept");
   });
 
@@ -22,7 +25,9 @@ describe("i18n", () => {
       "25 предложений",
     ]);
     expect(pluralCategory("en", 1)).toBe("one");
-    expect(createI18n({ locale: "en", locales: { en } }).plural("review.proposals", 3)).toBe("3 suggestions");
+    expect(createI18n({ locale: "en", locales: { en } }).plural("review.proposals", 3)).toBe(
+      "3 suggestions",
+    );
   });
 
   it("has every key in both locales", () => {

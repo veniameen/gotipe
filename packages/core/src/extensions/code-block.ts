@@ -69,19 +69,13 @@ export const CodeBlock = defineExtension<CodeBlockOptions>({
       command: (editor) => {
         // Dedent: remove up to 2 leading spaces from current line
         const state = editor.getViewState();
-        const block = state.blocks.find(
-          (b) => b.id === state.selection.anchor.blockId,
-        );
+        const block = state.blocks.find((b) => b.id === state.selection.anchor.blockId);
         if (!block || typeof block.content !== "string") return false;
         const offset = state.selection.anchor.offset;
         const before = block.content.slice(0, offset);
         const lineStart = before.lastIndexOf("\n") + 1;
         const linePrefix = block.content.slice(lineStart, offset);
-        const spacesToRemove = linePrefix.startsWith("  ")
-          ? 2
-          : linePrefix.startsWith(" ")
-            ? 1
-            : 0;
+        const spacesToRemove = linePrefix.startsWith("  ") ? 2 : linePrefix.startsWith(" ") ? 1 : 0;
         if (spacesToRemove > 0) {
           editor.dispatch({
             steps: [
@@ -108,18 +102,20 @@ export const CodeBlock = defineExtension<CodeBlockOptions>({
 
         const paragraphId = crypto.randomUUID();
         editor.dispatch({
-          steps: [{
-            type: "insertBlock",
-            parentId: null,
-            index: blockIndex + 1,
-            block: {
-              id: paragraphId,
-              type: "paragraph",
-              attrs: {},
-              content: [],
-              children: [],
+          steps: [
+            {
+              type: "insertBlock",
+              parentId: null,
+              index: blockIndex + 1,
+              block: {
+                id: paragraphId,
+                type: "paragraph",
+                attrs: {},
+                content: [],
+                children: [],
+              },
             },
-          }],
+          ],
         });
         editor.setSelection({
           anchor: { blockId: paragraphId, offset: 0 },
