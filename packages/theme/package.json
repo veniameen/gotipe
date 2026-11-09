@@ -10,6 +10,7 @@
     },
     "./base.css": "./src/base.css",
     "./theme.css": "./src/theme.css",
+    "./page.css": "./src/page.css",
     "./themes/*": "./src/themes/*"
   },
   "main": "./dist/index.cjs",

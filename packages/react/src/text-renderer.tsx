@@ -30,7 +30,11 @@ function renderMarks(text: React.ReactNode, marks: MarkView[], key: string): Rea
         element = <s key={`${key}-strike`}>{element}</s>;
         break;
       case "code":
-        element = <code key={`${key}-code`}>{element}</code>;
+        element = (
+          <code key={`${key}-code`} spellCheck={false}>
+            {element}
+          </code>
+        );
         break;
       case "link":
         element = (

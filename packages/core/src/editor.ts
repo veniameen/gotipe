@@ -2011,6 +2011,23 @@ export async function createEditorWithLoader(
           const shouldExitStyleOnEnter =
             !!currentBlock && ENTER_EXITS_TO_PARAGRAPH_TYPES.has(currentBlock.type);
 
+          // Table cells never split: Enter moves to the cell below (or stays).
+          if (currentBlock?.type === "tableCell" || currentBlock?.type === "tableHeader") {
+            const row = findParentBlock(preState.blocks, currentBlock.id);
+            const table = row ? findParentBlock(preState.blocks, row.parent.id) : null;
+            const below = table?.parent.children[(table?.index ?? -1) + 1]?.children[row?.index ?? -1];
+            if (below) {
+              currentSelection = {
+                type: "text",
+                anchor: { blockId: below.id, offset: 0 },
+                head: { blockId: below.id, offset: 0 },
+              };
+              publishSelection();
+              scheduleSelectionRestore();
+            }
+            return;
+          }
+
           // In code blocks Enter should insert a newline inside the same block,
           // not split into a second code block.
           if (currentBlock?.type === "codeBlock") {

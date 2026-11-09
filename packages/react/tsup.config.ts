@@ -5,7 +5,7 @@ export default defineConfig({
   format: ['esm', 'cjs'],
   dts: true,
   sourcemap: true,
-  external: ['@gotipe/core', '@gotipe/wasm', 'react', 'react-dom'],
+  external: ['@gotipe/i18n', '@gotipe/core', '@gotipe/wasm', 'react', 'react-dom'],
   treeshake: true,
   clean: true,
 });

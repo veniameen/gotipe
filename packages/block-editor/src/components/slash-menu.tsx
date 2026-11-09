@@ -1,9 +1,19 @@
 import type { GoTipeEditor, SlashCommandDef } from "@gotipe/core";
+import type React from "react";
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 
 export interface SlashMenuProps {
   editor: GoTipeEditor;
   commands?: SlashCommandDef[];
+  /** Group order and labels; groups not listed are hidden. Default: AI, Style, Insert, Upload. */
+  groups?: { id: string; label: string }[];
+  /** Custom row icon. */
+  renderIcon?: (cmd: SlashCommandDef) => React.ReactNode;
+  /** Right-hand meta of a row (e.g. a Markdown shortcut). */
+  renderMeta?: (cmd: SlashCommandDef) => React.ReactNode;
+  /** UI strings. */
+  labels?: { menu?: string; list?: string; empty?: string; results?: (count: number) => string };
+  className?: string;
 }
 
 const GROUP_ORDER: SlashCommandDef["group"][] = ["ai", "style", "insert", "upload"];
@@ -555,7 +565,15 @@ function highlightMatch(text: string, query: string): React.ReactNode {
 /*  Component                                                         */
 /* ------------------------------------------------------------------ */
 
-export function SlashMenu({ editor, commands = [] }: SlashMenuProps) {
+export function SlashMenu({
+  editor,
+  commands = [],
+  groups,
+  renderIcon: renderIconProp,
+  renderMeta,
+  labels,
+  className,
+}: SlashMenuProps) {
   const [visible, setVisible] = useState(false);
   const [query, setQuery] = useState("");
   const [selectedIndex, setSelectedIndex] = useState(0);
@@ -583,16 +601,17 @@ export function SlashMenu({ editor, commands = [] }: SlashMenuProps) {
       if (!map.has(group)) map.set(group, []);
       map.get(group)!.push(cmd);
     }
-    // Return in GROUP_ORDER, skipping empty groups
+    // Return in group order, skipping empty groups
+    const order = groups ?? GROUP_ORDER.map((g) => ({ id: g, label: GROUP_LABELS[g] ?? g }));
     const result: Array<{ group: string; label: string; items: SlashCommandDef[] }> = [];
-    for (const g of GROUP_ORDER) {
-      const items = map.get(g);
+    for (const g of order) {
+      const items = map.get(g.id);
       if (items && items.length > 0) {
-        result.push({ group: g, label: GROUP_LABELS[g] ?? g, items });
+        result.push({ group: g.id, label: g.label, items });
       }
     }
     return result;
-  }, [filtered]);
+  }, [filtered, groups]);
 
   // Flat list for keyboard navigation index
   const flatItems = useMemo(() => grouped.flatMap((g) => g.items), [grouped]);
@@ -915,9 +934,9 @@ export function SlashMenu({ editor, commands = [] }: SlashMenuProps) {
   return (
     <div
       ref={menuRef}
-      className="gotipe-slash-menu"
+      className={className ? `gotipe-slash-menu ${className}` : "gotipe-slash-menu"}
       role="dialog"
-      aria-label="Insert block"
+      aria-label={labels?.menu ?? "Insert block"}
       data-gotipe-slash-menu=""
       style={{ position: "fixed", top: `${position.top}px`, left: `${position.left}px` }}
       onMouseDown={(e) => {
@@ -930,7 +949,7 @@ export function SlashMenu({ editor, commands = [] }: SlashMenuProps) {
         id="gotipe-slash-menu-list"
         className="gotipe-slash-menu-list"
         role="listbox"
-        aria-label="Commands"
+        aria-label={labels?.list ?? "Commands"}
       >
         {grouped.map((group, gi) => (
           <div key={group.group} role="group" aria-label={group.label}>
@@ -962,13 +981,18 @@ export function SlashMenu({ editor, commands = [] }: SlashMenuProps) {
                     className={`gotipe-slash-menu-item-icon ${isAccentIcon(cmd.icon, cmd.name) ? "gotipe-slash-menu-item-icon--accent" : ""}`}
                     aria-hidden="true"
                   >
-                    {renderIcon(cmd.icon, cmd.name)}
+                    {renderIconProp ? renderIconProp(cmd) : renderIcon(cmd.icon, cmd.name)}
                   </span>
                   <div className="gotipe-slash-menu-item-body">
                     <div className="gotipe-slash-menu-item-title">
                       {highlightMatch(cmd.name, query)}
                     </div>
                   </div>
+                  {renderMeta ? (
+                    <span className="gotipe-slash-menu-item-meta" aria-hidden="true">
+                      {renderMeta(cmd)}
+                    </span>
+                  ) : null}
                 </div>
               );
             })}
@@ -978,14 +1002,16 @@ export function SlashMenu({ editor, commands = [] }: SlashMenuProps) {
         {/* Empty state */}
         {flatItems.length === 0 && (
           <div className="gotipe-slash-menu-empty" role="status">
-            No results
+            {labels?.empty ?? "No results"}
           </div>
         )}
       </div>
 
       {/* Live region for screen reader announcements */}
       <div aria-live="polite" aria-atomic="true" className="gotipe-sr-only">
-        {flatItems.length > 0 ? `${flatItems.length} results available` : "No results"}
+        {flatItems.length > 0
+          ? (labels?.results?.(flatItems.length) ?? `${flatItems.length} results available`)
+          : (labels?.empty ?? "No results")}
       </div>
     </div>
   );
