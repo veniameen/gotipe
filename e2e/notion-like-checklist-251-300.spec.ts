@@ -1,4 +1,3 @@
-import path from "node:path";
 import { expect, test, type Page } from "@playwright/test";
 import {
   bulletList,
@@ -40,10 +39,7 @@ type TargetDef = {
   expectedParentType?: string | null;
   expectedTagName?: string;
   expectedInsertedType?: "divider" | "table" | "image";
-  requiresFile?: boolean;
 };
-
-const SAMPLE_IMAGE = path.resolve(process.cwd(), "e2e/screenshots/slash-menu-open.png");
 
 const TARGETS: Record<TargetKey, TargetDef> = {
   text: {
@@ -118,23 +114,89 @@ const TARGETS: Record<TargetKey, TargetDef> = {
     expectedParentType: null,
     expectedTagName: "PRE",
   },
-  divider: { query: "divider", command: "Divider", mode: "insert", expectedInsertedType: "divider" },
+  divider: {
+    query: "divider",
+    command: "Divider",
+    mode: "insert",
+    expectedInsertedType: "divider",
+  },
   table: { query: "table", command: "Table", mode: "insert", expectedInsertedType: "table" },
   image: {
     query: "image",
     command: "Image",
     mode: "insert",
     expectedInsertedType: "image",
-    requiresFile: true,
   },
 };
 
 const CASES: Array<{ id: string; source: SourceKey; target: TargetKey }> = [];
 const LANE: Array<{ source: SourceKey; targets: TargetKey[] }> = [
-  { source: "bullet", targets: ["heading2", "heading3", "bullet", "ordered", "todo", "quote", "code", "divider", "table", "image"] },
-  { source: "ordered", targets: ["text", "heading1", "heading2", "heading3", "bullet", "ordered", "todo", "quote", "code", "divider", "table", "image"] },
-  { source: "todo", targets: ["text", "heading1", "heading2", "heading3", "bullet", "ordered", "todo", "quote", "code", "divider", "table", "image"] },
-  { source: "quote", targets: ["text", "heading1", "heading2", "heading3", "bullet", "ordered", "todo", "quote", "code", "divider", "table", "image"] },
+  {
+    source: "bullet",
+    targets: [
+      "heading2",
+      "heading3",
+      "bullet",
+      "ordered",
+      "todo",
+      "quote",
+      "code",
+      "divider",
+      "table",
+      "image",
+    ],
+  },
+  {
+    source: "ordered",
+    targets: [
+      "text",
+      "heading1",
+      "heading2",
+      "heading3",
+      "bullet",
+      "ordered",
+      "todo",
+      "quote",
+      "code",
+      "divider",
+      "table",
+      "image",
+    ],
+  },
+  {
+    source: "todo",
+    targets: [
+      "text",
+      "heading1",
+      "heading2",
+      "heading3",
+      "bullet",
+      "ordered",
+      "todo",
+      "quote",
+      "code",
+      "divider",
+      "table",
+      "image",
+    ],
+  },
+  {
+    source: "quote",
+    targets: [
+      "text",
+      "heading1",
+      "heading2",
+      "heading3",
+      "bullet",
+      "ordered",
+      "todo",
+      "quote",
+      "code",
+      "divider",
+      "table",
+      "image",
+    ],
+  },
   { source: "code", targets: ["text", "heading1", "heading2", "heading3"] },
 ];
 
@@ -168,12 +230,24 @@ async function setupSource(page: Page, source: SourceKey, marker: string): Promi
     await setCaretAt(page, "batch6-item", "start");
   } else if (source === "quote") {
     await setNotionContent(page, [
-      { id: "batch6-src", type: "blockquote", attrs: {}, content: [{ text: marker, marks: [] }], children: [] },
+      {
+        id: "batch6-src",
+        type: "blockquote",
+        attrs: {},
+        content: [{ text: marker, marks: [] }],
+        children: [],
+      },
     ]);
     await setCaretAt(page, "batch6-src", "start");
   } else {
     await setNotionContent(page, [
-      { id: "batch6-src", type: "codeBlock", attrs: {}, content: [{ text: marker, marks: [] }], children: [] },
+      {
+        id: "batch6-src",
+        type: "codeBlock",
+        attrs: {},
+        content: [{ text: marker, marks: [] }],
+        children: [],
+      },
     ]);
     await setCaretAt(page, "batch6-src", "start");
   }
@@ -187,15 +261,7 @@ async function runSlashCommand(page: Page, target: TargetDef): Promise<void> {
 
   const item = menu.locator(".gotipe-slash-menu-item-title", { hasText: target.command }).first();
   await expect(item).toBeVisible();
-
-  if (target.requiresFile) {
-    const chooserPromise = page.waitForEvent("filechooser");
-    await item.click();
-    const chooser = await chooserPromise;
-    await chooser.setFiles(SAMPLE_IMAGE);
-  } else {
-    await item.click();
-  }
+  await item.click();
 
   await expect(menu).toBeHidden();
 }
@@ -234,9 +300,11 @@ test.describe("Notion-like checklist batch NL-251..NL-300", () => {
       await setupSource(page, c.source, marker);
       await runSlashCommand(page, target);
 
-      await expect.poll(async () =>
-        page.evaluate((needle) => (document.body.textContent ?? "").includes(needle), marker),
-      ).toBe(true);
+      await expect
+        .poll(async () =>
+          page.evaluate((needle) => (document.body.textContent ?? "").includes(needle), marker),
+        )
+        .toBe(true);
 
       if (target.mode === "transform") {
         const ctx = await readMarkerContext(page, marker);
@@ -246,19 +314,39 @@ test.describe("Notion-like checklist batch NL-251..NL-300", () => {
         if (target.expectedTagName) expect(ctx?.tagName).toBe(target.expectedTagName);
       } else {
         const insertedType = target.expectedInsertedType!;
-        await expect.poll(async () =>
-          page.evaluate((type) => document.querySelectorAll(`[data-gotipe-content] > [data-block-type="${type}"]`).length, insertedType),
-        ).toBeGreaterThan(0);
+        await expect
+          .poll(async () =>
+            page.evaluate(
+              (type) =>
+                document.querySelectorAll(`[data-gotipe-content] > [data-block-type="${type}"]`)
+                  .length,
+              insertedType,
+            ),
+          )
+          .toBeGreaterThan(0);
 
         if (insertedType === "table") {
-          await expect.poll(async () =>
-            page.evaluate(() => document.querySelectorAll('[data-block-type="table"] [data-block-type="tableCell"], [data-block-type="table"] [data-block-type="tableHeader"]').length),
-          ).toBeGreaterThan(0);
+          await expect
+            .poll(async () =>
+              page.evaluate(
+                () =>
+                  document.querySelectorAll(
+                    '[data-block-type="table"] [data-block-type="tableCell"], [data-block-type="table"] [data-block-type="tableHeader"]',
+                  ).length,
+              ),
+            )
+            .toBeGreaterThan(0);
         }
         if (insertedType === "image") {
-          await expect.poll(async () =>
-            page.evaluate(() => document.querySelectorAll('[data-block-type="image"] img').length),
-          ).toBeGreaterThan(0);
+          await expect
+            .poll(async () =>
+              page.evaluate(
+                () =>
+                  document.querySelectorAll('[data-block-type="image"] .gotipe-image-placeholder')
+                    .length,
+              ),
+            )
+            .toBeGreaterThan(0);
         }
 
         const markerCtx = await readMarkerContext(page, marker);

@@ -1,4 +1,5 @@
 import type { GoTipeEditor } from "@gotipe/core";
+import type React from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 export interface BlockContextMenuProps {
@@ -9,6 +10,7 @@ export interface BlockContextMenuProps {
 }
 
 interface MenuItem {
+  key: string;
   label: string;
   icon: string;
   action: () => void;
@@ -131,10 +133,6 @@ export function BlockContextMenu({ editor, blockId, open, onClose }: BlockContex
     applyTurnInto({ label: "Text", type: "paragraph" });
   }, [applyTurnInto]);
 
-  const handleToggleTurnInto = useCallback(() => {
-    setTurnIntoOpen((prev) => !prev);
-  }, []);
-
   const handleCopyBlockLink = useCallback(async () => {
     const url = `${window.location.origin}${window.location.pathname}${window.location.hash}#block-${blockId}`;
     await navigator.clipboard.writeText(url);
@@ -156,12 +154,16 @@ export function BlockContextMenu({ editor, blockId, open, onClose }: BlockContex
   }, [editor, blockId, onClose]);
 
   const items: MenuItem[] = [
-    { label: "Turn into", icon: "↹", action: handleToggleTurnInto },
-    { label: "Copy link to block", icon: "🔗", action: handleCopyBlockLink },
-    { label: "Duplicate", icon: "⧉", action: handleDuplicate },
-    { label: "Reset Formatting", icon: "↺", action: handleResetFormatting },
-    { label: "Copy to Clipboard", icon: "⎘", action: handleCopyToClipboard },
-    { label: "Delete", icon: "🗑", action: handleDelete, destructive: true },
+    { key: "copy-link", label: "Copy link to block", icon: "🔗", action: handleCopyBlockLink },
+    { key: "duplicate", label: "Duplicate", icon: "⧉", action: handleDuplicate },
+    {
+      key: "reset-formatting",
+      label: "Reset Formatting",
+      icon: "↺",
+      action: handleResetFormatting,
+    },
+    { key: "copy-clipboard", label: "Copy to Clipboard", icon: "⎘", action: handleCopyToClipboard },
+    { key: "delete", label: "Delete", icon: "🗑", action: handleDelete, destructive: true },
   ];
 
   // Close on outside click
@@ -201,6 +203,22 @@ export function BlockContextMenu({ editor, blockId, open, onClose }: BlockContex
 
   if (!open) return null;
 
+  const handleMenuItemArrowNavigation = (event: React.KeyboardEvent<HTMLButtonElement>) => {
+    if (!menuRef.current) return;
+    if (event.key !== "ArrowDown" && event.key !== "ArrowUp") return;
+    event.preventDefault();
+    const menuItems = Array.from(
+      menuRef.current.querySelectorAll<HTMLButtonElement>('button[role="menuitem"]'),
+    );
+    const currentIndex = menuItems.indexOf(event.currentTarget);
+    if (currentIndex === -1 || menuItems.length === 0) return;
+    const nextIndex =
+      event.key === "ArrowDown"
+        ? Math.min(menuItems.length - 1, currentIndex + 1)
+        : Math.max(0, currentIndex - 1);
+    menuItems[nextIndex]?.focus();
+  };
+
   return (
     <div
       ref={menuRef}
@@ -209,48 +227,89 @@ export function BlockContextMenu({ editor, blockId, open, onClose }: BlockContex
       aria-label="Block actions"
       data-gotipe-context-menu=""
     >
+      <div
+        className="gotipe-context-item-has-submenu"
+        onMouseEnter={() => setTurnIntoOpen(true)}
+        onMouseLeave={() => setTurnIntoOpen(false)}
+      >
+        <button
+          type="button"
+          role="menuitem"
+          aria-haspopup="menu"
+          aria-expanded={turnIntoOpen}
+          onClick={() => setTurnIntoOpen((prev) => !prev)}
+          onKeyDown={(e) => {
+            if (e.key === "ArrowRight") {
+              e.preventDefault();
+              setTurnIntoOpen(true);
+              const firstSubmenuItem = menuRef.current?.querySelector<HTMLButtonElement>(
+                '[data-turn-into-item="true"]',
+              );
+              firstSubmenuItem?.focus();
+              return;
+            }
+            handleMenuItemArrowNavigation(e);
+          }}
+        >
+          <span className="gotipe-context-menu-icon" aria-hidden="true">
+            ↹
+          </span>
+          <span className="gotipe-context-menu-label">Turn into</span>
+          <span className="gotipe-context-menu-chevron" aria-hidden="true">
+            ▸
+          </span>
+        </button>
+        {turnIntoOpen ? (
+          <div className="gotipe-context-submenu" role="menu" aria-label="Turn into">
+            {turnIntoOptions.map((option) => (
+              <button
+                key={option.label}
+                type="button"
+                role="menuitem"
+                data-turn-into-item="true"
+                onClick={() => applyTurnInto(option)}
+                onKeyDown={(e) => {
+                  if (e.key === "ArrowLeft") {
+                    e.preventDefault();
+                    setTurnIntoOpen(false);
+                    const trigger = menuRef.current?.querySelector<HTMLButtonElement>(
+                      ".gotipe-context-item-has-submenu > button[role='menuitem']",
+                    );
+                    trigger?.focus();
+                    return;
+                  }
+                  handleMenuItemArrowNavigation(e);
+                }}
+              >
+                <span className="gotipe-context-menu-label">{option.label}</span>
+              </button>
+            ))}
+          </div>
+        ) : null}
+      </div>
+
       {items.map((item) => (
         <button
-          key={item.label}
+          key={item.key}
           type="button"
           role="menuitem"
           className={item.destructive ? "destructive" : undefined}
           onClick={item.action}
           onKeyDown={(e) => {
-            if (e.key === "ArrowDown") {
+            if (e.key === "ArrowLeft") {
               e.preventDefault();
-              const next = e.currentTarget.nextElementSibling as HTMLButtonElement | null;
-              next?.focus();
-            } else if (e.key === "ArrowUp") {
-              e.preventDefault();
-              const prev = e.currentTarget.previousElementSibling as HTMLButtonElement | null;
-              prev?.focus();
+              setTurnIntoOpen(false);
+              return;
             }
+            handleMenuItemArrowNavigation(e);
           }}
         >
-          <span className="gotipe-context-menu-icon" aria-hidden="true">{item.icon}</span>
-          <span>{item.label}</span>
-          {item.label === "Turn into" ? (
-            <span className="gotipe-context-menu-chevron" aria-hidden="true">
-              {turnIntoOpen ? "▾" : "▸"}
-            </span>
-          ) : null}
+          <span className="gotipe-context-menu-icon" aria-hidden="true">
+            {item.icon}
+          </span>
+          <span className="gotipe-context-menu-label">{item.label}</span>
         </button>
       ))}
-      {turnIntoOpen ? (
-        <div className="gotipe-context-submenu" role="group" aria-label="Turn into">
-          {turnIntoOptions.map((option) => (
-            <button
-              key={option.label}
-              type="button"
-              role="menuitem"
-              onClick={() => applyTurnInto(option)}
-            >
-              <span>{option.label}</span>
-            </button>
-          ))}
-        </div>
-      ) : null}
     </div>
   );
 }

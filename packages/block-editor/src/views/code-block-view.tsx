@@ -42,10 +42,7 @@ function getHighlighter(): Promise<Highlighter> {
 
 const COPY_FEEDBACK_MS = 2000;
 
-export function CodeBlockView({
-  block,
-  editor,
-}: { block: BlockView; editor: GoTipeEditor }) {
+export function CodeBlockView({ block, editor }: { block: BlockView; editor: GoTipeEditor }) {
   const language = (block.attrs.language as string) || "plaintext";
   const code = typeof block.content === "string" ? block.content : "";
   const [highlightedHtml, setHighlightedHtml] = useState<string>("");
@@ -82,10 +79,7 @@ export function CodeBlockView({
 
   const handleLanguageChange = useCallback(
     (e: React.ChangeEvent<HTMLSelectElement>) => {
-      editor
-        .chain()
-        .setBlockAttrs(block.id, { language: e.target.value })
-        .run();
+      editor.chain().setBlockAttrs(block.id, { language: e.target.value }).run();
     },
     [editor, block.id],
   );
@@ -107,13 +101,10 @@ export function CodeBlockView({
   const lines = code.split("\n");
 
   return (
-    <div
-      data-block-id={block.id}
-      data-block-type="codeBlock"
-      className="gotipe-code-block"
-    >
+    <div data-block-id={block.id} data-block-type="codeBlock" className="gotipe-code-block">
       <div className="gotipe-code-block-header">
         <select
+          className="gotipe-select gotipe-select--compact gotipe-code-language-select"
           value={language}
           onChange={handleLanguageChange}
           aria-label="Programming language"
@@ -124,11 +115,7 @@ export function CodeBlockView({
             </option>
           ))}
         </select>
-        <button
-          type="button"
-          aria-label={copied ? "Copied!" : "Copy code"}
-          onClick={handleCopy}
-        >
+        <button type="button" aria-label={copied ? "Copied!" : "Copy code"} onClick={handleCopy}>
           {copied ? (
             <svg
               width="14"

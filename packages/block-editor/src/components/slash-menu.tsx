@@ -64,10 +64,7 @@ function findTopLevelIndexByBlockId(
 }
 
 function resolveCaretBlock(block: ViewBlock): ViewBlock {
-  if (
-    LIST_CONTAINER_TYPES.has(block.type) &&
-    block.children.length > 0
-  ) {
+  if (LIST_CONTAINER_TYPES.has(block.type) && block.children.length > 0) {
     return resolveCaretBlock(block.children[0]!);
   }
   return block;
@@ -236,7 +233,10 @@ function getRangeCaretRect(collapsedRange: Range): DOMRect | null {
   return null;
 }
 
-function resolveDomPointInBlock(blockEl: HTMLElement, targetOffset: number): { node: Node; offset: number } {
+function resolveDomPointInBlock(
+  blockEl: HTMLElement,
+  targetOffset: number,
+): { node: Node; offset: number } {
   const textHost = getTextHostForBlock(blockEl);
   const walker = document.createTreeWalker(textHost, NodeFilter.SHOW_TEXT);
   let accumulated = 0;
@@ -262,7 +262,9 @@ function resolveDomPointInBlock(blockEl: HTMLElement, targetOffset: number): { n
 
 function getCaretClientRectFromTrigger(trigger: SlashTrigger | null): DOMRect | null {
   if (!trigger) return null;
-  const blockEl = document.querySelector(`[data-block-id="${trigger.blockId}"]`) as HTMLElement | null;
+  const blockEl = document.querySelector(
+    `[data-block-id="${trigger.blockId}"]`,
+  ) as HTMLElement | null;
   if (!blockEl) return null;
   const point = resolveDomPointInBlock(blockEl, trigger.to);
   const range = document.createRange();
@@ -290,8 +292,18 @@ function renderIcon(icon: string, name: string): React.ReactNode {
   if (key === "sparkles" || key === "sparkle") {
     return (
       <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-        <path d="M12 3l1.7 4.3L18 9l-4.3 1.7L12 15l-1.7-4.3L6 9l4.3-1.7L12 3z" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" />
-        <path d="M18 14l.9 2.1L21 17l-2.1.9L18 20l-.9-2.1L15 17l2.1-.9L18 14z" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" />
+        <path
+          d="M12 3l1.7 4.3L18 9l-4.3 1.7L12 15l-1.7-4.3L6 9l4.3-1.7L12 3z"
+          stroke="currentColor"
+          strokeWidth="1.8"
+          strokeLinejoin="round"
+        />
+        <path
+          d="M18 14l.9 2.1L21 17l-2.1.9L18 20l-.9-2.1L15 17l2.1-.9L18 14z"
+          stroke="currentColor"
+          strokeWidth="1.6"
+          strokeLinejoin="round"
+        />
       </svg>
     );
   }
@@ -310,7 +322,12 @@ function renderIcon(icon: string, name: string): React.ReactNode {
         <circle cx="5" cy="7" r="1.2" fill="currentColor" />
         <circle cx="5" cy="12" r="1.2" fill="currentColor" />
         <circle cx="5" cy="17" r="1.2" fill="currentColor" />
-        <path d="M9 7h10M9 12h10M9 17h10" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+        <path
+          d="M9 7h10M9 12h10M9 17h10"
+          stroke="currentColor"
+          strokeWidth="1.8"
+          strokeLinecap="round"
+        />
       </svg>
     );
   }
@@ -318,8 +335,18 @@ function renderIcon(icon: string, name: string): React.ReactNode {
   if (key === "list-ordered") {
     return (
       <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-        <path d="M4 7h2V5M6 7V5M4 12h2M4 17h2" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
-        <path d="M9 7h10M9 12h10M9 17h10" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+        <path
+          d="M4 7h2V5M6 7V5M4 12h2M4 17h2"
+          stroke="currentColor"
+          strokeWidth="1.6"
+          strokeLinecap="round"
+        />
+        <path
+          d="M9 7h10M9 12h10M9 17h10"
+          stroke="currentColor"
+          strokeWidth="1.8"
+          strokeLinecap="round"
+        />
       </svg>
     );
   }
@@ -327,9 +354,28 @@ function renderIcon(icon: string, name: string): React.ReactNode {
   if (key === "check-square") {
     return (
       <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-        <rect x="3.5" y="4" width="6.5" height="6.5" rx="1.5" stroke="currentColor" strokeWidth="1.7" />
-        <path d="M4.8 7.4l1.6 1.6L8.9 6.6" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
-        <path d="M13 7h8M13 12h8M13 17h8" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+        <rect
+          x="3.5"
+          y="4"
+          width="6.5"
+          height="6.5"
+          rx="1.5"
+          stroke="currentColor"
+          strokeWidth="1.7"
+        />
+        <path
+          d="M4.8 7.4l1.6 1.6L8.9 6.6"
+          stroke="currentColor"
+          strokeWidth="1.6"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+        <path
+          d="M13 7h8M13 12h8M13 17h8"
+          stroke="currentColor"
+          strokeWidth="1.8"
+          strokeLinecap="round"
+        />
       </svg>
     );
   }
@@ -338,7 +384,12 @@ function renderIcon(icon: string, name: string): React.ReactNode {
     return (
       <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
         <path d="M5 5v14" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-        <path d="M10 7h9M10 12h7M10 17h9" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+        <path
+          d="M10 7h9M10 12h7M10 17h9"
+          stroke="currentColor"
+          strokeWidth="1.8"
+          strokeLinecap="round"
+        />
       </svg>
     );
   }
@@ -346,8 +397,22 @@ function renderIcon(icon: string, name: string): React.ReactNode {
   if (key === "code") {
     return (
       <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-        <rect x="3.5" y="4" width="17" height="16" rx="2.5" stroke="currentColor" strokeWidth="1.7" />
-        <path d="M10 9l-2.5 3L10 15M14 9l2.5 3-2.5 3" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+        <rect
+          x="3.5"
+          y="4"
+          width="17"
+          height="16"
+          rx="2.5"
+          stroke="currentColor"
+          strokeWidth="1.7"
+        />
+        <path
+          d="M10 9l-2.5 3L10 15M14 9l2.5 3-2.5 3"
+          stroke="currentColor"
+          strokeWidth="1.8"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
       </svg>
     );
   }
@@ -355,7 +420,15 @@ function renderIcon(icon: string, name: string): React.ReactNode {
   if (key === "table") {
     return (
       <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-        <rect x="3.5" y="4" width="17" height="16" rx="2.5" stroke="currentColor" strokeWidth="1.7" />
+        <rect
+          x="3.5"
+          y="4"
+          width="17"
+          height="16"
+          rx="2.5"
+          stroke="currentColor"
+          strokeWidth="1.7"
+        />
         <path d="M3.5 10h17M3.5 15h17M9 4v16M15 4v16" stroke="currentColor" strokeWidth="1.6" />
       </svg>
     );
@@ -372,9 +445,23 @@ function renderIcon(icon: string, name: string): React.ReactNode {
   if (key === "image") {
     return (
       <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-        <rect x="3.5" y="4" width="17" height="16" rx="2.5" stroke="currentColor" strokeWidth="1.7" />
+        <rect
+          x="3.5"
+          y="4"
+          width="17"
+          height="16"
+          rx="2.5"
+          stroke="currentColor"
+          strokeWidth="1.7"
+        />
         <circle cx="8.5" cy="9" r="1.7" stroke="currentColor" strokeWidth="1.5" />
-        <path d="M5.5 17l4.5-4 3.5 3 3-2.5 2.5 3.5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+        <path
+          d="M5.5 17l4.5-4 3.5 3 3-2.5 2.5 3.5"
+          stroke="currentColor"
+          strokeWidth="1.6"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
       </svg>
     );
   }
@@ -382,7 +469,13 @@ function renderIcon(icon: string, name: string): React.ReactNode {
   if (key === "paperclip") {
     return (
       <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-        <path d="M9.5 12.5l5.9-5.9a3 3 0 114.2 4.2l-7.8 7.8a5 5 0 11-7.1-7.1l7.1-7.1" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+        <path
+          d="M9.5 12.5l5.9-5.9a3 3 0 114.2 4.2l-7.8 7.8a5 5 0 11-7.1-7.1l7.1-7.1"
+          stroke="currentColor"
+          strokeWidth="1.8"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
       </svg>
     );
   }
@@ -570,7 +663,10 @@ export function SlashMenu({ editor, commands = [] }: SlashMenuProps) {
     const vw = window.innerWidth;
     const vh = window.innerHeight;
     const maxLeft = vw - rect.width - VIEWPORT_PADDING;
-    const left = Math.min(Math.max(anchorPosition.left, VIEWPORT_PADDING), Math.max(VIEWPORT_PADDING, maxLeft));
+    const left = Math.min(
+      Math.max(anchorPosition.left, VIEWPORT_PADDING),
+      Math.max(VIEWPORT_PADDING, maxLeft),
+    );
 
     const spaceBelow = vh - anchorPosition.top - VIEWPORT_PADDING;
     const spaceAbove = anchorPosition.top - VIEWPORT_PADDING;
@@ -612,21 +708,33 @@ export function SlashMenu({ editor, commands = [] }: SlashMenuProps) {
   // Execute a slash command: delete "/" trigger text, then run the command
   const executeCommand = useCallback(
     (cmd: SlashCommandDef) => {
+      const runBeforeEditorMutations = cmd.group === "upload";
+      if (runBeforeEditorMutations) {
+        cmd.execute(editor);
+      }
+
       const beforeState = editor.getViewState();
       const trigger = getSlashTrigger(editor) ?? triggerRef.current;
       const fallbackAnchorBlockId = trigger?.blockId ?? beforeState.selection.anchor.blockId;
-      const fallbackTopLevelIndex = findTopLevelIndexByBlockId(beforeState.blocks, fallbackAnchorBlockId);
+      const fallbackTopLevelIndex = findTopLevelIndexByBlockId(
+        beforeState.blocks,
+        fallbackAnchorBlockId,
+      );
       const fallbackBlockBefore = findBlockById(beforeState.blocks, fallbackAnchorBlockId);
       if (trigger && trigger.to > trigger.from) {
         editor.dispatch({
-          steps: [{ type: "deleteText", blockId: trigger.blockId, from: trigger.from, to: trigger.to }],
+          steps: [
+            { type: "deleteText", blockId: trigger.blockId, from: trigger.from, to: trigger.to },
+          ],
         });
         editor.setSelection({
           anchor: { blockId: trigger.blockId, offset: trigger.from },
           head: { blockId: trigger.blockId, offset: trigger.from },
         });
       }
-      cmd.execute(editor);
+      if (!runBeforeEditorMutations) {
+        cmd.execute(editor);
+      }
 
       // Normalize caret after structural commands (e.g. paragraph -> list/todo).
       // Always resolve to an existing, text-editable block to avoid native caret drift.
@@ -636,8 +744,7 @@ export function SlashMenu({ editor, commands = [] }: SlashMenuProps) {
         ? findBlockById(state.blocks, selection.anchor.blockId)
         : null;
       let targetOffset = selection?.anchor.offset ?? 0;
-      const selectionNeedsFallback =
-        !targetBlock || LIST_CONTAINER_TYPES.has(targetBlock.type);
+      const selectionNeedsFallback = !targetBlock || LIST_CONTAINER_TYPES.has(targetBlock.type);
       let normalizedSelection: { blockId: string; offset: number } | null = null;
 
       if (selectionNeedsFallback && fallbackBlockBefore && fallbackTopLevelIndex !== null) {
@@ -647,22 +754,20 @@ export function SlashMenu({ editor, commands = [] }: SlashMenuProps) {
             targetBlock = mappedItem;
           } else if (state.blocks.length > 0) {
             // listItem/todoItem was lifted out from its list container to a new top-level block
-            const sameIndex = state.blocks[Math.min(fallbackTopLevelIndex, state.blocks.length - 1)] ?? null;
+            const sameIndex =
+              state.blocks[Math.min(fallbackTopLevelIndex, state.blocks.length - 1)] ?? null;
             if (sameIndex) {
-              targetBlock =
-                LIST_CONTAINER_TYPES.has(sameIndex.type)
-                  ? (state.blocks[fallbackTopLevelIndex + 1] ?? sameIndex)
-                  : sameIndex;
+              targetBlock = LIST_CONTAINER_TYPES.has(sameIndex.type)
+                ? (state.blocks[fallbackTopLevelIndex + 1] ?? sameIndex)
+                : sameIndex;
               targetOffset = 0;
             }
           }
-        } else if (
-          LIST_CONTAINER_TYPES.has(fallbackBlockBefore.type) &&
-          state.blocks.length > 0
-        ) {
+        } else if (LIST_CONTAINER_TYPES.has(fallbackBlockBefore.type) && state.blocks.length > 0) {
           // Some DOM selection paths report the list container instead of the active item.
           // Detect if one child was lifted out and move caret to the inserted sibling block.
-          const sameIndex = state.blocks[Math.min(fallbackTopLevelIndex, state.blocks.length - 1)] ?? null;
+          const sameIndex =
+            state.blocks[Math.min(fallbackTopLevelIndex, state.blocks.length - 1)] ?? null;
           const nextTopLevel = state.blocks[fallbackTopLevelIndex + 1] ?? null;
           if (
             sameIndex &&
@@ -676,7 +781,12 @@ export function SlashMenu({ editor, commands = [] }: SlashMenuProps) {
         }
       }
 
-      if (selectionNeedsFallback && !targetBlock && fallbackTopLevelIndex !== null && state.blocks.length > 0) {
+      if (
+        selectionNeedsFallback &&
+        !targetBlock &&
+        fallbackTopLevelIndex !== null &&
+        state.blocks.length > 0
+      ) {
         const idx = Math.min(fallbackTopLevelIndex, state.blocks.length - 1);
         targetBlock = state.blocks[idx] ?? null;
         targetOffset = 0;
@@ -816,52 +926,61 @@ export function SlashMenu({ editor, commands = [] }: SlashMenuProps) {
       }}
     >
       {/* Grouped items */}
-      <div id="gotipe-slash-menu-list" className="gotipe-slash-menu-list" role="listbox" aria-label="Commands">
-      {grouped.map((group, gi) => (
-        <div key={group.group} role="group" aria-label={group.label}>
-          {gi > 0 && <div className="gotipe-slash-menu-group-separator" role="separator" />}
-          <div className="gotipe-slash-menu-group-label" aria-hidden="true">{group.label}</div>
-          {group.items.map((cmd) => {
-            const idx = flatIdx++;
-            const isSelected = idx === selectedIndex;
-            return (
-              <div
-                key={cmd.name}
-                id={`gotipe-slash-item-${idx}`}
-                className={`gotipe-slash-menu-item ${isSelected ? "selected" : ""}`}
-                role="option"
-                tabIndex={-1}
-                aria-selected={isSelected}
-                data-gotipe-slash-item=""
-                onMouseDown={(e) => {
-                  // Keep focus in editor on click path.
-                  e.preventDefault();
-                  e.stopPropagation();
-                }}
-                onClick={() => executeCommand(cmd)}
-                onMouseEnter={() => setSelectedIndex(idx)}
-              >
-                <span
-                  className={`gotipe-slash-menu-item-icon ${isAccentIcon(cmd.icon, cmd.name) ? "gotipe-slash-menu-item-icon--accent" : ""}`}
-                  aria-hidden="true"
+      <div
+        id="gotipe-slash-menu-list"
+        className="gotipe-slash-menu-list"
+        role="listbox"
+        aria-label="Commands"
+      >
+        {grouped.map((group, gi) => (
+          <div key={group.group} role="group" aria-label={group.label}>
+            {gi > 0 && <div className="gotipe-slash-menu-group-separator" role="separator" />}
+            <div className="gotipe-slash-menu-group-label" aria-hidden="true">
+              {group.label}
+            </div>
+            {group.items.map((cmd) => {
+              const idx = flatIdx++;
+              const isSelected = idx === selectedIndex;
+              return (
+                <div
+                  key={cmd.name}
+                  id={`gotipe-slash-item-${idx}`}
+                  className={`gotipe-slash-menu-item ${isSelected ? "selected" : ""}`}
+                  role="option"
+                  tabIndex={-1}
+                  aria-selected={isSelected}
+                  data-gotipe-slash-item=""
+                  onMouseDown={(e) => {
+                    // Keep focus in editor on click path.
+                    e.preventDefault();
+                    e.stopPropagation();
+                  }}
+                  onClick={() => executeCommand(cmd)}
+                  onMouseEnter={() => setSelectedIndex(idx)}
                 >
-                  {renderIcon(cmd.icon, cmd.name)}
-                </span>
-                <div className="gotipe-slash-menu-item-body">
-                  <div className="gotipe-slash-menu-item-title">
-                    {highlightMatch(cmd.name, query)}
+                  <span
+                    className={`gotipe-slash-menu-item-icon ${isAccentIcon(cmd.icon, cmd.name) ? "gotipe-slash-menu-item-icon--accent" : ""}`}
+                    aria-hidden="true"
+                  >
+                    {renderIcon(cmd.icon, cmd.name)}
+                  </span>
+                  <div className="gotipe-slash-menu-item-body">
+                    <div className="gotipe-slash-menu-item-title">
+                      {highlightMatch(cmd.name, query)}
+                    </div>
                   </div>
                 </div>
-              </div>
-            );
-          })}
-        </div>
-      ))}
+              );
+            })}
+          </div>
+        ))}
 
-      {/* Empty state */}
-      {flatItems.length === 0 && (
-        <div className="gotipe-slash-menu-empty" role="status">No results</div>
-      )}
+        {/* Empty state */}
+        {flatItems.length === 0 && (
+          <div className="gotipe-slash-menu-empty" role="status">
+            No results
+          </div>
+        )}
       </div>
 
       {/* Live region for screen reader announcements */}

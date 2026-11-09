@@ -49,8 +49,7 @@ export function BubbleMenu({ editor, shouldShow, offset, children }: BubbleMenuP
       const show = shouldShow
         ? shouldShow({ editor, state })
         : sel.type === "text" &&
-          (sel.anchor.blockId !== sel.head.blockId ||
-            sel.anchor.offset !== sel.head.offset);
+          (sel.anchor.blockId !== sel.head.blockId || sel.anchor.offset !== sel.head.offset);
 
       setVisible(show);
       if (show) {
@@ -80,6 +79,13 @@ export function BubbleMenu({ editor, shouldShow, offset, children }: BubbleMenuP
 
   // Prevent selection loss when interacting with the menu
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
+    const target = e.target;
+    if (!(target instanceof HTMLElement)) {
+      e.preventDefault();
+      return;
+    }
+    // Native controls (especially <select>) need default mouse handling to open.
+    if (target.closest("select, option, input, textarea")) return;
     e.preventDefault();
   }, []);
 

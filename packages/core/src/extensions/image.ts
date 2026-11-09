@@ -49,17 +49,7 @@ export const Image = defineExtension<ImageOptions>({
       icon: "image",
       group: "upload",
       execute: (editor) => {
-        const input = document.createElement("input");
-        input.type = "file";
-        input.accept = "image/*";
-        input.onchange = () => {
-          const file = input.files?.[0];
-          if (file) {
-            const url = URL.createObjectURL(file);
-            editor.chain().insertBlockAfter("image", { src: url, alt: "" }).run();
-          }
-        };
-        input.click();
+        editor.chain().insertBlockAfter("image", { src: "", alt: "" }).run();
       },
     },
   ],

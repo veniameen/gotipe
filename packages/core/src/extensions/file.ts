@@ -27,24 +27,15 @@ export const File = defineExtension({
       icon: "paperclip",
       group: "upload",
       execute: (editor) => {
-        const input = document.createElement("input");
-        input.type = "file";
-        input.onchange = () => {
-          const file = input.files?.[0];
-          if (file) {
-            const url = URL.createObjectURL(file);
-            editor
-              .chain()
-              .insertBlockAfter("file", {
-                url,
-                name: file.name,
-                size: file.size,
-                mime_type: file.type,
-              })
-              .run();
-          }
-        };
-        input.click();
+        editor
+          .chain()
+          .insertBlockAfter("file", {
+            url: "",
+            name: "",
+            size: null,
+            mime_type: "",
+          })
+          .run();
       },
     },
   ],

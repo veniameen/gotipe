@@ -1,12 +1,12 @@
-@import '@gotipe/theme/theme.css';
-@import '@gotipe/theme/base.css';
+@import "@gotipe/theme/theme.css";
+@import "@gotipe/theme/base.css";
 
 :root {
   font-family: var(
     --gt-font-body,
     -apple-system,
     BlinkMacSystemFont,
-    'Segoe UI',
+    "Segoe UI",
     Roboto,
     sans-serif
   );
@@ -192,14 +192,6 @@ body {
 .gotipe-toolbar-dropdown {
   min-width: 80px;
   height: 32px;
-  padding: 0 8px;
-  border: 1px solid var(--gt-border, #e5e5e5);
-  border-radius: 6px;
-  background: var(--gt-bg, #ffffff);
-  color: var(--gt-text-base, #1a1a1a);
-  font-size: var(--gt-text-sm, 14px);
-  cursor: pointer;
-  outline: none;
 }
 
 .gotipe-toolbar-dropdown:hover {
@@ -457,7 +449,7 @@ body {
   border-radius: 8px;
   padding: 0.75em 1em;
   overflow-x: auto;
-  font-family: 'SF Mono', 'Fira Code', 'Fira Mono', Menlo, Consolas, monospace;
+  font-family: "SF Mono", "Fira Code", "Fira Mono", Menlo, Consolas, monospace;
   font-size: 0.875em;
   line-height: 1.5;
   margin: 0.75em 0;
@@ -473,7 +465,7 @@ body {
   background: var(--gt-bg-hover, #f0f0f0);
   padding: 0.15em 0.35em;
   border-radius: 4px;
-  font-family: 'SF Mono', 'Fira Code', Menlo, Consolas, monospace;
+  font-family: "SF Mono", "Fira Code", Menlo, Consolas, monospace;
   font-size: 0.875em;
 }
 
@@ -572,7 +564,7 @@ body {
   padding: 1px 0;
 }
 
-.gotipe-content .gotipe-todo-item input[type='checkbox'] {
+.gotipe-content .gotipe-todo-item input[type="checkbox"] {
   appearance: none;
   -webkit-appearance: none;
   width: 16px;
@@ -584,22 +576,19 @@ body {
   cursor: pointer;
   align-self: center;
   margin-top: 0;
-  transition:
-    border-color 0.12s ease,
-    background-color 0.12s ease,
-    box-shadow 0.12s ease;
+  transition: border-color 0.12s ease, background-color 0.12s ease, box-shadow 0.12s ease;
 }
 
-.gotipe-content .gotipe-todo-item input[type='checkbox']:hover {
+.gotipe-content .gotipe-todo-item input[type="checkbox"]:hover {
   border-color: var(--gt-accent, #2563eb);
 }
 
-.gotipe-content .gotipe-todo-item input[type='checkbox']:focus-visible {
+.gotipe-content .gotipe-todo-item input[type="checkbox"]:focus-visible {
   outline: none;
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--gt-accent, #2563eb) 20%, transparent);
 }
 
-.gotipe-content .gotipe-todo-item input[type='checkbox']:checked {
+.gotipe-content .gotipe-todo-item input[type="checkbox"]:checked {
   border-color: var(--gt-accent, #2563eb);
   background-color: var(--gt-accent, #2563eb);
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath fill='none' stroke='%23fff' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M2 6.5 4.8 9 10 3.5'/%3E%3C/svg%3E");
@@ -608,7 +597,7 @@ body {
   background-size: 10px 10px;
 }
 
-.gotipe-content .gotipe-todo-item input[type='checkbox']:checked + .gotipe-todo-item-content {
+.gotipe-content .gotipe-todo-item input[type="checkbox"]:checked + .gotipe-todo-item-content {
   color: var(--gt-text-secondary, #666);
   text-decoration: line-through;
 }
@@ -646,7 +635,7 @@ body {
 }
 
 .gotipe-content details > summary::before {
-  content: '\25B8';
+  content: "\25B8";
   display: inline-block;
   transition: transform 0.1s ease;
   color: var(--gt-text-tertiary, #999);
@@ -766,8 +755,13 @@ body {
 }
 
 @keyframes gotipe-cursor-blink {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0; }
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0;
+  }
 }
 
 .gotipe-remote-cursor-label {
@@ -847,7 +841,7 @@ body {
 .gotipe-export-pre {
   margin: 0;
   padding: 12px 16px;
-  font-family: var(--gt-font-mono, 'SF Mono', 'Fira Code', Menlo, monospace);
+  font-family: var(--gt-font-mono, "SF Mono", "Fira Code", Menlo, monospace);
   font-size: 13px;
   line-height: 1.5;
   white-space: pre-wrap;
