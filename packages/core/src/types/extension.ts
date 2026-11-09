@@ -51,7 +51,8 @@ export interface SlashCommandDef {
   aliases: string[];
   description?: string;
   icon: string;
-  group: "ai" | "style" | "insert" | "upload";
+  /** Built-in groups or any custom group id (see the SlashMenu `groups` prop). */
+  group: "ai" | "style" | "insert" | "upload" | (string & {});
   execute: (editor: GoTipeEditor) => void;
   shouldShow?: (editor: GoTipeEditor) => boolean;
 }

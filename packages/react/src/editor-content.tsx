@@ -40,7 +40,10 @@ export interface BlockViewProps {
   readOnly: boolean;
   /** Rendered as a non-editable suggestion (phantom block). */
   phantom: boolean;
-  /** Attributes the root element must carry (`data-block-id` or phantom id, node decorations). */
+  /**
+   * Attributes the root element must carry (`data-block-id` or phantom id,
+   * node decorations). Merge `rootProps.className` with your own classes.
+   */
   rootProps: Record<string, unknown>;
   /** The block's text with marks and decorations. */
   content: React.ReactNode;
@@ -52,6 +55,10 @@ export type BlockViewComponent = (props: BlockViewProps) => React.ReactNode;
 export type BlockViews = Partial<Record<string, BlockViewComponent>>;
 
 const BlockViewsContext = createContext<BlockViews | null>(null);
+
+/** Placeholder text of an empty block; `null` hides it. */
+export type PlaceholderFn = (block: BlockView, parentType: string | undefined) => string | null;
+const PlaceholderContext = createContext<PlaceholderFn | null>(null);
 const PhantomContext = createContext(false);
 
 /** True while rendering suggested (phantom) blocks. */
@@ -1606,8 +1613,11 @@ function BlockComponent(props: BlockComponentProps) {
   const phantom = useContext(PhantomContext);
   const rootProps = rootPropsOf(block, phantom);
   const Custom = views?.[block.type];
+  const extraClass = nodeDecorationClass(block);
   let element: React.ReactNode;
   if (Custom) {
+    // Custom views merge `rootProps.className` into their root element.
+    if (extraClass) rootProps.className = extraClass;
     element = (
       <Custom
         block={block}
@@ -1626,8 +1636,7 @@ function BlockComponent(props: BlockComponentProps) {
   } else {
     element = <BlockComponentInner {...props} rootProps={rootProps} readOnly={!editor.isEditable || phantom} />;
   }
-  const extraClass = nodeDecorationClass(block);
-  if (!extraClass) return <>{element}</>;
+  if (!extraClass || Custom) return <>{element}</>;
   return <NodeClass className={extraClass}>{element}</NodeClass>;
 }
 
@@ -1653,10 +1662,13 @@ function BlockComponentInner({
   const children = (
     <BlockChildren block={block} editor={editor} selectedBlockId={selectedBlockId} />
   );
+  const placeholderFn = useContext(PlaceholderContext);
   const isSelected = selectedBlockId === block.id;
   const isEmpty = isBlockContentEmpty(block);
-  const shouldShowPlaceholder = isEmpty && (isSelected || block.type === "heading");
-  const placeholder = shouldShowPlaceholder ? getEmptyBlockPlaceholder(block, parentType) : null;
+  const shouldShowPlaceholder = isEmpty && (isSelected || block.type === "heading") && !readOnly;
+  const placeholder = shouldShowPlaceholder
+    ? (placeholderFn ?? getEmptyBlockPlaceholder)(block, parentType)
+    : null;
 
   switch (block.type) {
     case "heading": {
@@ -1866,12 +1878,15 @@ export function EditorContent({
   editor,
   blockRenderer: _blockRenderer,
   blockViews,
+  placeholder,
   ariaLabel = "Document content",
 }: {
   editor: GoTipeEditor | null;
   blockRenderer?: (props: BlockRendererProps) => React.ReactNode;
   /** Custom views by block type; everything else uses the built-in views. */
   blockViews?: BlockViews;
+  /** Placeholder of empty blocks (shown on the focused empty block and on headings). */
+  placeholder?: PlaceholderFn;
   ariaLabel?: string;
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -1903,6 +1918,7 @@ export function EditorContent({
         suppressContentEditableWarning
       >
         <BlockViewsContext.Provider value={blockViews ?? null}>
+          <PlaceholderContext.Provider value={placeholder ?? null}>
           {editor &&
             blocks.map((block) => (
               <React.Fragment key={blockKey(block)}>
@@ -1911,6 +1927,7 @@ export function EditorContent({
                 <PhantomBlocks block={block} editor={editor} position="after" />
               </React.Fragment>
             ))}
+          </PlaceholderContext.Provider>
         </BlockViewsContext.Provider>
       </div>
       {/* Screen reader live region for status updates */}

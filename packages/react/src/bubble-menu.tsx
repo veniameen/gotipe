@@ -8,9 +8,18 @@ export interface BubbleMenuProps {
   shouldShow?: (props: { editor: GoTipeEditor; state: ViewState }) => boolean;
   offset?: { x: number; y: number };
   children: React.ReactNode | ((props: { editor: GoTipeEditor }) => React.ReactNode);
+  className?: string;
+  ariaLabel?: string;
 }
 
-export function BubbleMenu({ editor, shouldShow, offset, children }: BubbleMenuProps) {
+export function BubbleMenu({
+  editor,
+  shouldShow,
+  offset,
+  children,
+  className,
+  ariaLabel = "Text formatting",
+}: BubbleMenuProps) {
   const [visible, setVisible] = useState(false);
   const [position, setPosition] = useState({ top: 0, left: 0 });
   const menuRef = useRef<HTMLDivElement>(null);
@@ -94,9 +103,9 @@ export function BubbleMenu({ editor, shouldShow, offset, children }: BubbleMenuP
   return (
     <div
       ref={menuRef}
-      className="gotipe-bubble-menu"
+      className={className ? `gotipe-bubble-menu ${className}` : "gotipe-bubble-menu"}
       role="toolbar"
-      aria-label="Text formatting"
+      aria-label={ariaLabel}
       data-gotipe-bubble-menu=""
       onMouseDown={handleMouseDown}
       style={{

@@ -1,0 +1,1207 @@
+/* GoTipe — wiki page (PageEditor), Specimen v6 look.
+   Self-contained: does not need theme.css. Everything is scoped to .gotipe-page
+   and drawn from --gt-* tokens below; a host maps its own tokens onto them
+   (see docs: integration). Defaults are the v6 values. */
+
+/* ============================================================ tokens — light */
+.gotipe-page {
+  /* surfaces */
+  --gt-page-bg: #fcfcfb;
+  --gt-surface: #ffffff;
+  --gt-overlay: #ffffff;
+  /* text */
+  --gt-text: #262625;
+  --gt-text-2: #5e5e59;
+  --gt-text-3: #787872;
+  /* ink fills and lines */
+  --gt-fill-1: rgb(27 27 26 / 0.04);
+  --gt-fill-2: rgb(27 27 26 / 0.07);
+  --gt-fill-3: rgb(27 27 26 / 0.1);
+  --gt-line: rgb(27 27 26 / 0.08);
+  --gt-line-strong: rgb(27 27 26 / 0.13);
+  --gt-line-control: rgb(27 27 26 / 0.22);
+  --gt-line-active: rgb(27 27 26 / 0.4);
+  /* actions */
+  --gt-primary: #1b1b1a;
+  --gt-primary-hover: #33332f;
+  --gt-primary-text: #fcfcfb;
+  --gt-accent: #0864d4;
+  --gt-accent-text: #ffffff;
+  --gt-link: #0864d4;
+  --gt-selection: rgb(10 114 239 / 0.18);
+  /* status */
+  --gt-success: #2b8247;
+  --gt-warning: #9c6700;
+  --gt-danger: #c93a32;
+  --gt-danger-soft: rgb(201 58 50 / 0.08);
+  --gt-comment: #9c6700;
+  --gt-comment-soft: rgb(156 103 0 / 0.1);
+  /* lanes of the model (cursors, suggestions) */
+  --gt-track-1: var(--gt-accent);
+  --gt-track-2: var(--gt-warning);
+  --gt-track-3: color-mix(in srgb, var(--gt-accent) 45%, var(--gt-success));
+  --gt-track-4: var(--gt-success);
+  --gt-track-5: #5f7a99;
+  --gt-track-6: #0e7f8e;
+  /* elevation */
+  --gt-shadow-overlay:
+    0 0 0 0.5px var(--gt-line-strong), 0 2px 6px rgb(27 27 26 / 0.06), 0 12px 32px -8px rgb(27 27 26 / 0.16);
+  --gt-shadow-chip: 0 2px 8px rgb(0 0 0 / 0.16);
+  /* type */
+  --gt-font-ui: "Inter", "Inter Variable", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  --gt-font-features: "cv05", "cv08", "ss03";
+  --gt-font-mono: "Geist Mono Variable", "Geist Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  --gt-text-prose: 14px;
+  --gt-leading-prose: 21px;
+  --gt-tracking-prose: -0.006em;
+  --gt-text-body: 13px;
+  --gt-leading-body: 18px;
+  --gt-text-meta: 12px;
+  --gt-leading-meta: 16px;
+  --gt-text-mono: 12px;
+  --gt-text-mono-small: 11px;
+  --gt-title-size: 30px;
+  --gt-title-leading: 38px;
+  --gt-h1-size: 24px;
+  --gt-h1-leading: 32px;
+  --gt-h2-size: 19px;
+  --gt-h2-leading: 26px;
+  --gt-h3-size: 16px;
+  --gt-h3-leading: 22px;
+  /* shape and layout */
+  --gt-radius-xs: 4px;
+  --gt-radius-control: 6px;
+  --gt-radius-surface: 8px;
+  --gt-radius-overlay: 10px;
+  --gt-radius-callout: 10px;
+  --gt-page-max-width: 760px;
+  --gt-page-padding-top: 40px;
+  --gt-page-padding-x: clamp(20px, 9%, 72px);
+  --gt-page-padding-bottom: 80px;
+  --gt-icon-size: 16px;
+  --gt-control-height: 28px;
+  --gt-dur-out: 150ms;
+  --gt-ease-out: cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  --gt-press-scale: 0.97;
+
+  color-scheme: light;
+}
+
+/* ============================================================ tokens — dark */
+.gotipe-page[data-theme="dark"],
+[data-theme="dark"] .gotipe-page:not([data-theme="light"]) {
+  --gt-page-bg: #161615;
+  --gt-surface: #1d1d1c;
+  --gt-overlay: #2b2b2a;
+  --gt-text: #ededeb;
+  --gt-text-2: #a2a29d;
+  --gt-text-3: #807f7a;
+  --gt-fill-1: rgb(255 255 255 / 0.05);
+  --gt-fill-2: rgb(255 255 255 / 0.08);
+  --gt-fill-3: rgb(255 255 255 / 0.11);
+  --gt-line: rgb(255 255 255 / 0.07);
+  --gt-line-strong: rgb(255 255 255 / 0.11);
+  --gt-line-control: rgb(255 255 255 / 0.22);
+  --gt-line-active: rgb(255 255 255 / 0.38);
+  --gt-primary: #f2f2f0;
+  --gt-primary-hover: #d9d9d5;
+  --gt-primary-text: #161615;
+  --gt-accent: #3e97ff;
+  --gt-accent-text: #161615;
+  --gt-link: #3e97ff;
+  --gt-selection: rgb(62 151 255 / 0.28);
+  --gt-success: #5fbf7a;
+  --gt-warning: #e0a93b;
+  --gt-danger: #ef6b61;
+  --gt-danger-soft: rgb(239 107 97 / 0.12);
+  --gt-comment: #e0a93b;
+  --gt-comment-soft: rgb(224 169 59 / 0.12);
+  --gt-track-5: #8ea6c2;
+  --gt-track-6: #3cbfc9;
+  --gt-shadow-overlay:
+    0 0 0 0.5px rgb(255 255 255 / 0.1), 0 2px 6px rgb(0 0 0 / 0.24), 0 12px 32px -8px rgb(0 0 0 / 0.5);
+  --gt-shadow-chip: 0 2px 8px rgb(0 0 0 / 0.4);
+  color-scheme: dark;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .gotipe-page:not([data-theme="light"]):not([data-theme-lock]) {
+    --gt-page-bg: #161615;
+    --gt-surface: #1d1d1c;
+    --gt-overlay: #2b2b2a;
+    --gt-text: #ededeb;
+    --gt-text-2: #a2a29d;
+    --gt-text-3: #807f7a;
+    --gt-fill-1: rgb(255 255 255 / 0.05);
+    --gt-fill-2: rgb(255 255 255 / 0.08);
+    --gt-fill-3: rgb(255 255 255 / 0.11);
+    --gt-line: rgb(255 255 255 / 0.07);
+    --gt-line-strong: rgb(255 255 255 / 0.11);
+    --gt-line-control: rgb(255 255 255 / 0.22);
+    --gt-line-active: rgb(255 255 255 / 0.38);
+    --gt-primary: #f2f2f0;
+    --gt-primary-hover: #d9d9d5;
+    --gt-primary-text: #161615;
+    --gt-accent: #3e97ff;
+    --gt-accent-text: #161615;
+    --gt-link: #3e97ff;
+    --gt-selection: rgb(62 151 255 / 0.28);
+    --gt-success: #5fbf7a;
+    --gt-warning: #e0a93b;
+    --gt-danger: #ef6b61;
+    --gt-danger-soft: rgb(239 107 97 / 0.12);
+    --gt-comment: #e0a93b;
+    --gt-comment-soft: rgb(224 169 59 / 0.12);
+    --gt-track-5: #8ea6c2;
+    --gt-track-6: #3cbfc9;
+    --gt-shadow-overlay:
+      0 0 0 0.5px rgb(255 255 255 / 0.1), 0 2px 6px rgb(0 0 0 / 0.24), 0 12px 32px -8px rgb(0 0 0 / 0.5);
+    --gt-shadow-chip: 0 2px 8px rgb(0 0 0 / 0.4);
+    color-scheme: dark;
+  }
+}
+
+/* ============================================================ frame */
+.gotipe-page {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+  background: var(--gt-page-bg);
+  color: var(--gt-text);
+  font-family: var(--gt-font-ui);
+  font-feature-settings: var(--gt-font-features);
+  font-size: var(--gt-text-prose);
+  line-height: var(--gt-leading-prose);
+  letter-spacing: var(--gt-tracking-prose);
+  -webkit-font-smoothing: antialiased;
+}
+.gotipe-page *,
+.gotipe-page *::before,
+.gotipe-page *::after {
+  box-sizing: border-box;
+}
+.gotipe-page .gotipe-icon {
+  flex: none;
+  width: var(--gt-icon-size);
+  height: var(--gt-icon-size);
+}
+.gotipe-page-doc {
+  flex: 1;
+  width: 100%;
+  max-width: var(--gt-page-max-width);
+  margin: 0 auto;
+  padding: var(--gt-page-padding-top) var(--gt-page-padding-x) var(--gt-page-padding-bottom);
+  cursor: text;
+}
+.gotipe-page-editor {
+  outline: 0;
+}
+.gotipe-page-loading {
+  min-height: 160px;
+}
+.gotipe-page .gotipe-content {
+  outline: 0;
+  caret-color: var(--gt-text);
+  min-height: 120px;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.gotipe-page .gotipe-content ::selection {
+  background: var(--gt-selection);
+}
+.gotipe-page .gotipe-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+.gotipe-page-overlay {
+  position: absolute;
+  inset: 0 auto auto 0;
+  width: 0;
+  height: 0;
+  z-index: 40;
+}
+
+/* ============================================================ text blocks */
+.gotipe-page .gotipe-content > * {
+  margin: 0;
+}
+.gotipe-page .gotipe-content p {
+  margin: 2px 0;
+  min-height: var(--gt-leading-prose);
+}
+.gotipe-page .gotipe-content [data-placeholder]::before,
+.gotipe-page .gotipe-content [data-placeholder]:empty::before {
+  content: none;
+}
+.gotipe-page .gotipe-content [data-placeholder]:has(> br[data-gotipe-trailing-break]:only-child)::before {
+  content: attr(data-placeholder);
+  position: absolute;
+  color: var(--gt-text-3);
+  pointer-events: none;
+}
+.gotipe-page .gotipe-page-title {
+  position: relative;
+  margin: 0 0 16px;
+  color: var(--gt-text);
+  font-size: var(--gt-title-size);
+  line-height: var(--gt-title-leading);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+.gotipe-page .gotipe-content h1:not(.gotipe-page-title) {
+  margin: 16px 0 4px;
+  font-size: var(--gt-h1-size);
+  line-height: var(--gt-h1-leading);
+  font-weight: 600;
+  letter-spacing: -0.017em;
+}
+.gotipe-page .gotipe-content h2 {
+  margin: 14px 0 2px;
+  font-size: var(--gt-h2-size);
+  line-height: var(--gt-h2-leading);
+  font-weight: 600;
+  letter-spacing: -0.011em;
+}
+.gotipe-page .gotipe-content :is(h3, h4, h5, h6) {
+  margin: 10px 0 2px;
+  font-size: var(--gt-h3-size);
+  line-height: var(--gt-h3-leading);
+  font-weight: 600;
+}
+.gotipe-page .gotipe-content :is(h1, h2, h3, h4, h5, h6) {
+  position: relative;
+}
+.gotipe-page .gotipe-content blockquote {
+  position: relative;
+  margin: 4px 0;
+  padding-left: 12px;
+  box-shadow: inset 2px 0 0 var(--gt-text);
+}
+.gotipe-page .gotipe-content hr {
+  height: 1px;
+  margin: 12px 0;
+  border: 0;
+  background: var(--gt-line);
+}
+.gotipe-page .gotipe-content a {
+  color: var(--gt-link);
+  text-decoration: underline;
+  text-decoration-color: color-mix(in srgb, var(--gt-link) 40%, transparent);
+  text-underline-offset: 2px;
+}
+.gotipe-page .gotipe-content code {
+  padding: 1px 4px;
+  border-radius: var(--gt-radius-xs);
+  background: var(--gt-fill-2);
+  font-family: var(--gt-font-mono);
+  font-size: 0.86em;
+  letter-spacing: 0;
+}
+.gotipe-page .gotipe-content mark {
+  border-radius: 2px;
+  background: color-mix(in srgb, var(--gt-warning) 22%, transparent);
+  color: inherit;
+}
+.gotipe-page .gotipe-md-raw {
+  color: var(--gt-text-2);
+  font-family: var(--gt-font-mono);
+  font-size: 0.86em;
+  letter-spacing: 0;
+}
+
+/* lists */
+.gotipe-page .gotipe-content :is(ul, ol) {
+  margin: 2px 0;
+  padding-left: 24px;
+}
+.gotipe-page .gotipe-content li {
+  position: relative;
+  margin: 1px 0;
+}
+.gotipe-page .gotipe-content li::marker {
+  color: var(--gt-text-2);
+}
+.gotipe-page .gotipe-content ul.gotipe-todo-list {
+  list-style: none;
+  padding-left: 26px;
+}
+.gotipe-page .gotipe-todo-item {
+  position: relative;
+}
+.gotipe-page .gotipe-todo-item > input[type="checkbox"] {
+  appearance: none;
+  position: absolute;
+  left: -24px;
+  top: 3px;
+  width: 15px;
+  height: 15px;
+  margin: 0;
+  border: 1.5px solid var(--gt-text-2);
+  border-radius: 4px;
+  background: transparent;
+  cursor: pointer;
+}
+.gotipe-page .gotipe-todo-item > input[type="checkbox"]:checked {
+  border-color: var(--gt-accent);
+  background: var(--gt-accent)
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M2.75 6.25L5 8.5L9.25 3.75' fill='none' stroke='white' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")
+    center / 11px no-repeat;
+}
+.gotipe-page .gotipe-todo-item > input[type="checkbox"]:disabled {
+  cursor: default;
+}
+.gotipe-page .gotipe-todo-item.is-checked > .gotipe-todo-item-content {
+  color: var(--gt-text-3);
+  text-decoration: line-through;
+}
+.gotipe-page .gotipe-todo-item-content {
+  position: relative;
+  display: block;
+  min-height: var(--gt-leading-prose);
+}
+
+/* code */
+.gotipe-page .gotipe-page-code {
+  position: relative;
+  margin: 6px 0;
+  border-radius: var(--gt-radius-surface);
+  background: var(--gt-fill-1);
+}
+.gotipe-page .gotipe-page-code pre {
+  margin: 0;
+  padding: 10px 12px;
+  overflow-x: auto;
+  font-family: var(--gt-font-mono);
+  font-size: var(--gt-text-mono-small);
+  line-height: 1.6;
+  letter-spacing: 0;
+  white-space: pre-wrap;
+}
+.gotipe-page .gotipe-page-code code {
+  padding: 0;
+  background: none;
+  font-size: inherit;
+}
+.gotipe-page .gotipe-page-code-lang {
+  position: absolute;
+  top: 6px;
+  right: 8px;
+  color: var(--gt-text-3);
+  font-family: var(--gt-font-ui);
+  font-size: var(--gt-text-meta);
+  user-select: none;
+}
+.gotipe-page .gotipe-code-token {
+  color: var(--gt-code-token, inherit);
+}
+.gotipe-page .gotipe-code-token[data-italic] {
+  font-style: italic;
+}
+.gotipe-page .gotipe-code-token[data-bold] {
+  font-weight: 600;
+}
+.gotipe-page[data-theme="dark"] .gotipe-code-token,
+[data-theme="dark"] .gotipe-page .gotipe-code-token {
+  color: var(--gt-code-token-dark, var(--gt-code-token, inherit));
+}
+
+/* raw markdown kept as is */
+.gotipe-page .gotipe-page-raw {
+  margin: 6px 0;
+  padding: 8px 10px;
+  border-radius: var(--gt-radius-surface);
+  box-shadow: inset 0 0 0 1px var(--gt-line);
+  color: var(--gt-text-2);
+  user-select: text;
+  cursor: default;
+}
+.gotipe-page .gotipe-page-raw pre {
+  margin: 0;
+  font-family: var(--gt-font-mono);
+  font-size: var(--gt-text-mono-small);
+  line-height: 1.6;
+  letter-spacing: 0;
+  white-space: pre-wrap;
+}
+
+/* callout and agent instructions */
+.gotipe-page .gotipe-page-callout {
+  display: flex;
+  gap: 10px;
+  margin: 8px 0;
+  padding: 10px 12px;
+  border-radius: var(--gt-radius-callout);
+  background: var(--gt-fill-1);
+}
+.gotipe-page .gotipe-callout-glyph {
+  flex: none;
+  display: grid;
+  place-items: center;
+  height: var(--gt-leading-prose);
+  color: var(--gt-text-2);
+  user-select: none;
+}
+.gotipe-page .gotipe-callout-body {
+  flex: 1;
+  min-width: 0;
+}
+.gotipe-page .gotipe-callout-label {
+  margin-bottom: 2px;
+  color: var(--gt-accent);
+  font-size: var(--gt-text-meta);
+  line-height: var(--gt-leading-meta);
+  font-weight: 500;
+  letter-spacing: 0;
+  user-select: none;
+}
+.gotipe-page .gotipe-callout-content {
+  position: relative;
+  min-height: var(--gt-leading-prose);
+  outline: 0;
+}
+.gotipe-page .gotipe-page-callout-agent {
+  background: color-mix(in srgb, var(--gt-accent) 8%, transparent);
+}
+.gotipe-page .gotipe-page-callout-agent .gotipe-callout-glyph {
+  color: var(--gt-accent);
+}
+.gotipe-page .gotipe-page-callout[data-variant="warning"],
+.gotipe-page .gotipe-page-callout[data-variant="caution"] {
+  background: color-mix(in srgb, var(--gt-warning) 6%, transparent);
+}
+.gotipe-page .gotipe-page-callout[data-variant="warning"] .gotipe-callout-glyph,
+.gotipe-page .gotipe-page-callout[data-variant="caution"] .gotipe-callout-glyph {
+  color: var(--gt-warning);
+}
+
+/* image */
+.gotipe-page .gotipe-page-image-empty {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 8px 0;
+  padding: 12px;
+  border-radius: var(--gt-radius-callout);
+  background: var(--gt-fill-1);
+  color: var(--gt-text-2);
+  user-select: none;
+  cursor: default;
+}
+.gotipe-page .gotipe-page-image-empty .gotipe-icon {
+  color: var(--gt-text-3);
+}
+.gotipe-page .gotipe-page-image-empty:hover,
+.gotipe-page .gotipe-page-image-empty.is-drag,
+.gotipe-page .gotipe-page-image-empty:focus-visible {
+  background: var(--gt-fill-2);
+  outline: 0;
+}
+.gotipe-page .gotipe-page-image {
+  margin: 8px 0;
+}
+.gotipe-page .gotipe-page-image img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  border-radius: var(--gt-radius-surface);
+}
+.gotipe-page .gotipe-page-image figcaption {
+  margin-top: 6px;
+  color: var(--gt-text-3);
+  font-size: var(--gt-text-meta);
+  line-height: var(--gt-leading-meta);
+}
+.gotipe-page .gotipe-page-image-missing {
+  display: grid;
+  place-items: center;
+  height: 120px;
+  border-radius: var(--gt-radius-surface);
+  background: var(--gt-fill-1);
+  color: var(--gt-text-3);
+}
+
+/* file */
+.gotipe-page .gotipe-page-file {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 6px 0;
+  padding: 8px 10px;
+  border-radius: var(--gt-radius-surface);
+  box-shadow: inset 0 0 0 1px var(--gt-line);
+  user-select: none;
+  cursor: default;
+}
+.gotipe-page .gotipe-page-file .gotipe-icon {
+  color: var(--gt-text-2);
+}
+.gotipe-page .gotipe-page-file:hover,
+.gotipe-page .gotipe-page-file:focus-visible {
+  background: var(--gt-fill-1);
+  outline: 0;
+}
+.gotipe-page .gotipe-page-file-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 500;
+}
+.gotipe-page .gotipe-page-file-empty .gotipe-page-file-name {
+  color: var(--gt-text-2);
+  font-weight: 400;
+}
+.gotipe-page .gotipe-page-file-meta {
+  margin-left: auto;
+  color: var(--gt-text-3);
+  font-size: var(--gt-text-meta);
+}
+
+/* table */
+.gotipe-page .gotipe-table-wrapper {
+  margin: 8px 0;
+  overflow-x: auto;
+}
+.gotipe-page .gotipe-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.gotipe-page .gotipe-table :is(th, td) {
+  position: relative;
+  min-width: 60px;
+  padding: 6px 8px;
+  border: 1px solid var(--gt-line);
+  text-align: left;
+  vertical-align: top;
+  outline: 0;
+}
+.gotipe-page .gotipe-table th {
+  background: var(--gt-fill-1);
+  font-weight: 600;
+}
+.gotipe-page .gotipe-table td code:only-child {
+  padding: 0;
+  background: none;
+  font-size: var(--gt-text-mono-small);
+}
+.gotipe-page .gotipe-table td[data-align="right"] {
+  font-variant-numeric: tabular-nums;
+}
+.gotipe-page .gotipe-col-btn {
+  position: absolute;
+  top: 50%;
+  right: 4px;
+  display: none;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  margin-top: -10px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--gt-radius-xs);
+  background: var(--gt-surface);
+  box-shadow: 0 0 0 1px var(--gt-line-strong);
+  color: var(--gt-text-2);
+  cursor: pointer;
+}
+.gotipe-page .gotipe-col-btn .gotipe-icon {
+  width: 12px;
+  height: 12px;
+}
+.gotipe-page .gotipe-table th[data-align="right"] .gotipe-col-btn {
+  right: auto;
+  left: 4px;
+}
+.gotipe-page .gotipe-table th:hover .gotipe-col-btn,
+.gotipe-page .gotipe-col-btn[aria-expanded="true"] {
+  display: grid;
+}
+
+/* ============================================================ menus («/», block, column type) */
+.gotipe-page :is(.gotipe-slash-menu, .gotipe-page-menu) {
+  z-index: 50;
+  padding: 4px;
+  border-radius: var(--gt-radius-overlay);
+  background: var(--gt-overlay);
+  box-shadow: var(--gt-shadow-overlay);
+  color: var(--gt-text);
+  font-size: var(--gt-text-body);
+  line-height: var(--gt-leading-body);
+  letter-spacing: -0.003em;
+}
+.gotipe-page .gotipe-slash-menu {
+  width: 360px;
+  max-height: min(440px, 60vh);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+.gotipe-page .gotipe-slash-menu-list {
+  overflow-y: auto;
+  scrollbar-width: thin;
+}
+.gotipe-page .gotipe-slash-menu-group-separator {
+  display: none;
+}
+.gotipe-page .gotipe-slash-menu-group-label,
+.gotipe-page .gotipe-page-menu-head {
+  padding: 6px 8px 2px;
+  color: var(--gt-text-3);
+  font-size: var(--gt-text-meta);
+  line-height: var(--gt-leading-meta);
+  font-weight: 500;
+  letter-spacing: 0;
+}
+.gotipe-page [role="group"] + [role="group"] .gotipe-slash-menu-group-label {
+  margin-top: 4px;
+}
+.gotipe-page :is(.gotipe-slash-menu-item, .gotipe-page-menu-item) {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  height: var(--gt-control-height);
+  padding: 0 8px;
+  border: 0;
+  border-radius: var(--gt-radius-control);
+  background: none;
+  color: var(--gt-text);
+  font: inherit;
+  text-align: left;
+  white-space: nowrap;
+  cursor: default;
+}
+.gotipe-page :is(.gotipe-slash-menu-item.selected, .gotipe-slash-menu-item:hover, .gotipe-page-menu-item:hover, .gotipe-page-menu-item:focus-visible) {
+  background: var(--gt-fill-2);
+  outline: 0;
+}
+.gotipe-page :is(.gotipe-slash-menu-item-icon, .gotipe-page-menu-icon) {
+  display: grid;
+  place-items: center;
+  width: var(--gt-icon-size);
+  height: var(--gt-icon-size);
+  color: var(--gt-text-2);
+  background: none;
+  border: 0;
+}
+.gotipe-page .gotipe-slash-menu-item-body,
+.gotipe-page .gotipe-page-menu-label {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.gotipe-page .gotipe-slash-menu-item-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.gotipe-page .gotipe-slash-menu-item-title mark {
+  background: none;
+  color: inherit;
+  font-weight: 600;
+}
+.gotipe-page :is(.gotipe-slash-menu-item-meta, .gotipe-page-menu-meta) {
+  flex: none;
+  color: var(--gt-text-3);
+  font-family: var(--gt-font-ui);
+  font-size: var(--gt-text-meta);
+  letter-spacing: 0;
+}
+.gotipe-page .gotipe-page-menu-meta .gotipe-icon {
+  color: var(--gt-text);
+}
+.gotipe-page .gotipe-page-menu-chevron .gotipe-icon {
+  color: var(--gt-text-3);
+  transform: rotate(-90deg);
+}
+.gotipe-page .gotipe-page-menu-item[aria-expanded="true"] .gotipe-page-menu-chevron .gotipe-icon {
+  transform: none;
+}
+.gotipe-page .gotipe-page-menu-sub {
+  padding-left: 16px;
+}
+.gotipe-page .gotipe-page-menu-item.is-danger,
+.gotipe-page .gotipe-page-menu-item.is-danger .gotipe-page-menu-icon {
+  color: var(--gt-danger);
+}
+.gotipe-page .gotipe-page-menu-item.is-danger:hover {
+  background: var(--gt-danger-soft);
+}
+.gotipe-page .gotipe-slash-menu-empty {
+  padding: 6px 8px;
+  color: var(--gt-text-3);
+}
+.gotipe-page .gotipe-page-menu {
+  width: 240px;
+}
+.gotipe-page .gotipe-page-menu-sep {
+  height: 1px;
+  margin: 4px 8px;
+  background: var(--gt-line);
+}
+
+/* block handle */
+.gotipe-page .gotipe-page-handle {
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--gt-radius-xs);
+  background: none;
+  color: var(--gt-text-3);
+  cursor: grab;
+}
+.gotipe-page .gotipe-page-handle:hover {
+  background: var(--gt-fill-2);
+  color: var(--gt-text-2);
+}
+
+/* ============================================================ floating panel */
+.gotipe-page .gotipe-page-bubble {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 3px;
+  border-radius: var(--gt-radius-overlay);
+  background: var(--gt-overlay);
+  box-shadow: var(--gt-shadow-overlay);
+}
+.gotipe-page :is(.gotipe-page-icon-btn) {
+  display: inline-grid;
+  place-items: center;
+  width: var(--gt-control-height);
+  height: var(--gt-control-height);
+  padding: 0;
+  border: 0;
+  border-radius: var(--gt-radius-control);
+  background: none;
+  color: var(--gt-text-2);
+  cursor: default;
+  transition: background-color var(--gt-dur-out) var(--gt-ease-out), color var(--gt-dur-out) var(--gt-ease-out);
+}
+.gotipe-page .gotipe-page-icon-btn:hover,
+.gotipe-page .gotipe-page-icon-btn:focus-visible {
+  background: var(--gt-fill-1);
+  color: var(--gt-text);
+  outline: 0;
+}
+.gotipe-page .gotipe-page-icon-btn.is-on,
+.gotipe-page .gotipe-page-icon-btn:active {
+  background: var(--gt-fill-2);
+  color: var(--gt-text);
+}
+.gotipe-page .gotipe-page-icon-btn:disabled {
+  opacity: 0.45;
+  background: none;
+}
+.gotipe-page .gotipe-page-bubble-sep {
+  width: 1px;
+  height: 16px;
+  margin: 0 4px;
+  background: var(--gt-line);
+}
+.gotipe-page .gotipe-page-bubble-link {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+.gotipe-page .gotipe-page-bubble-link input,
+.gotipe-page .gotipe-review-card-form input {
+  width: 220px;
+  height: var(--gt-control-height);
+  padding: 0 8px;
+  border: 0;
+  border-radius: var(--gt-radius-control);
+  background: none;
+  box-shadow: inset 0 0 0 1px var(--gt-line-control);
+  color: var(--gt-text);
+  font: inherit;
+  font-size: var(--gt-text-body);
+  outline: 0;
+}
+.gotipe-page :is(.gotipe-page-bubble-link, .gotipe-review-card-form) input:focus {
+  box-shadow: inset 0 0 0 1px var(--gt-line-active);
+}
+.gotipe-page :is(.gotipe-page-bubble-link, .gotipe-review-card-form) input[aria-invalid="true"] {
+  box-shadow: inset 0 0 0 1px var(--gt-danger);
+}
+.gotipe-page :is(.gotipe-page-bubble-link, .gotipe-review-card-form) input::placeholder {
+  color: var(--gt-text-3);
+}
+
+/* ============================================================ buttons */
+.gotipe-page .gotipe-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 24px;
+  padding: 0 8px;
+  border: 0;
+  border-radius: var(--gt-radius-control);
+  font: inherit;
+  font-size: var(--gt-text-meta);
+  font-weight: 500;
+  letter-spacing: 0;
+  white-space: nowrap;
+  cursor: default;
+  transition: background-color var(--gt-dur-out) var(--gt-ease-out);
+}
+.gotipe-page .gotipe-btn:active {
+  transform: scale(var(--gt-press-scale));
+}
+.gotipe-page .gotipe-btn-primary {
+  background: var(--gt-primary);
+  color: var(--gt-primary-text);
+}
+.gotipe-page .gotipe-btn-primary:hover {
+  background: var(--gt-primary-hover);
+}
+.gotipe-page .gotipe-btn-secondary {
+  background: var(--gt-fill-2);
+  color: var(--gt-text);
+}
+.gotipe-page .gotipe-btn-secondary:hover {
+  background: var(--gt-fill-3);
+}
+.gotipe-page .gotipe-btn:disabled {
+  background: var(--gt-fill-1);
+  color: var(--gt-text-3);
+  transform: none;
+}
+
+/* ============================================================ suggestions (ADR-0047) */
+.gotipe-page .gotipe-sug-ins {
+  border-radius: 3px;
+  background: color-mix(in srgb, var(--gt-track) 13%, transparent);
+  text-decoration: underline;
+  text-decoration-thickness: 1.5px;
+  text-underline-offset: 3px;
+  text-decoration-color: color-mix(in srgb, var(--gt-track) 75%, transparent);
+  user-select: none;
+  cursor: pointer;
+}
+.gotipe-page .gotipe-sug-del {
+  color: var(--gt-text-3);
+  text-decoration: line-through;
+  text-decoration-color: var(--gt-track);
+  cursor: pointer;
+}
+.gotipe-page .gotipe-sug-stale {
+  color: var(--gt-text-2);
+  text-decoration: underline dashed;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+  text-decoration-color: var(--gt-text-3);
+  user-select: none;
+  cursor: pointer;
+}
+.gotipe-page .gotipe-sug.is-active:is(.gotipe-sug-ins, .gotipe-sug-del, .gotipe-sug-stale) {
+  background: color-mix(in srgb, var(--gt-track) 22%, transparent);
+}
+.gotipe-page .gotipe-sug-block-ins {
+  border-radius: 3px;
+  cursor: pointer;
+}
+.gotipe-page .gotipe-sug-block-ins :is(p, li, h1, h2, h3, td, th, blockquote, .gotipe-callout-content, .gotipe-todo-item-content),
+.gotipe-page :is(p, li, h1, h2, h3, blockquote, div).gotipe-sug-block-ins {
+  text-decoration: underline;
+  text-decoration-thickness: 1.5px;
+  text-underline-offset: 3px;
+  text-decoration-color: color-mix(in srgb, var(--gt-track) 75%, transparent);
+}
+.gotipe-page .gotipe-sug-block-ins:is(p, li, h1, h2, h3, blockquote) {
+  background: color-mix(in srgb, var(--gt-track) 9%, transparent);
+}
+.gotipe-page li.gotipe-sug-block-ins > input[type="checkbox"] {
+  border-color: color-mix(in srgb, var(--gt-track) 75%, transparent);
+}
+.gotipe-page .gotipe-sug-block-del {
+  color: var(--gt-text-3);
+  text-decoration: line-through;
+  text-decoration-color: var(--gt-track);
+}
+.gotipe-page .gotipe-sug-block-changed {
+  box-shadow: inset 2px 0 0 color-mix(in srgb, var(--gt-track) 75%, transparent);
+}
+.gotipe-page table .gotipe-sug-block-ins {
+  background: color-mix(in srgb, var(--gt-track) 9%, transparent);
+}
+
+/* comments */
+.gotipe-page .gotipe-cmt {
+  border-radius: 2px;
+  background: var(--gt-comment-soft);
+  box-shadow: inset 0 -2px 0 var(--gt-comment);
+  cursor: pointer;
+}
+.gotipe-page .gotipe-cmt.is-active {
+  background: color-mix(in srgb, var(--gt-comment) 22%, transparent);
+}
+.gotipe-page .gotipe-cmt-point {
+  display: inline-block;
+  width: 2px;
+  height: 1.1em;
+  vertical-align: -0.2em;
+  background: var(--gt-comment);
+}
+
+/* lane cursors */
+.gotipe-page .gotipe-lane-cursor {
+  z-index: 45;
+  width: 0;
+  pointer-events: none;
+  --gt-track: var(--gt-track-1);
+}
+.gotipe-page .gotipe-lane-caret {
+  position: absolute;
+  left: -1px;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  border-radius: 1px;
+  background: var(--gt-track);
+}
+.gotipe-page .gotipe-lane-chip {
+  position: absolute;
+  left: 4px;
+  top: calc(100% + 2px);
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  max-width: 230px;
+  padding: 3px 7px 4px;
+  border-radius: 6px;
+  background: var(--gt-track);
+  color: var(--gt-accent-text);
+  box-shadow: var(--gt-shadow-chip);
+  white-space: nowrap;
+}
+.gotipe-page .gotipe-lane-chip-name {
+  font-size: 11.5px;
+  line-height: 15px;
+  font-weight: 600;
+  letter-spacing: 0;
+}
+.gotipe-page .gotipe-lane-chip-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 11px;
+  line-height: 14px;
+  opacity: 0.86;
+}
+
+/* cards */
+.gotipe-page .gotipe-review-card {
+  z-index: 55;
+  width: 288px;
+  padding: 10px 12px;
+  border-radius: var(--gt-radius-overlay);
+  background: var(--gt-overlay);
+  box-shadow: var(--gt-shadow-overlay);
+  color: var(--gt-text);
+  animation: gotipe-card-in 0.14s var(--gt-ease-out);
+}
+@keyframes gotipe-card-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+}
+.gotipe-page .gotipe-review-card-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--gt-text-3);
+  font-size: var(--gt-text-meta);
+  line-height: var(--gt-leading-meta);
+}
+.gotipe-page .gotipe-review-card-head b {
+  color: var(--gt-text);
+  font-weight: 600;
+}
+.gotipe-page .gotipe-review-avatar {
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--gt-track) 14%, transparent);
+  color: var(--gt-track);
+}
+.gotipe-page .gotipe-review-avatar .gotipe-icon {
+  width: 12px;
+  height: 12px;
+}
+.gotipe-page .gotipe-review-card-text {
+  margin-top: 6px;
+  font-size: var(--gt-text-body);
+  line-height: var(--gt-leading-body);
+}
+.gotipe-page .gotipe-review-card-diff {
+  display: grid;
+  gap: 4px;
+  margin-top: 8px;
+  font-size: var(--gt-text-body);
+  line-height: var(--gt-leading-body);
+}
+.gotipe-page .gotipe-review-card-diff span {
+  display: block;
+  color: var(--gt-text-3);
+  font-size: var(--gt-text-meta);
+}
+.gotipe-page .gotipe-review-card-diff :is(s, ins) {
+  display: block;
+  max-height: 96px;
+  overflow: hidden;
+  white-space: pre-wrap;
+  text-decoration-color: var(--gt-track);
+}
+.gotipe-page .gotipe-review-card-diff s {
+  color: var(--gt-text-3);
+}
+.gotipe-page .gotipe-review-card-diff ins {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.gotipe-page .gotipe-review-card-reply {
+  margin-top: 8px;
+  font-size: var(--gt-text-body);
+}
+.gotipe-page .gotipe-review-card-reply b {
+  font-weight: 600;
+}
+.gotipe-page .gotipe-review-card-form {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+}
+.gotipe-page .gotipe-review-card-form input {
+  flex: 1;
+  width: auto;
+  min-width: 0;
+}
+.gotipe-page .gotipe-review-card-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+/* the edit bar */
+.gotipe-page .gotipe-review-bar {
+  position: sticky;
+  top: 0;
+  z-index: 3;
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 40px;
+  padding: 0 10px 0 14px;
+  box-shadow: inset 0 1px 0 var(--gt-line), inset 0 -1px 0 var(--gt-line);
+  background: var(--gt-page-bg);
+  color: var(--gt-text-2);
+  font-size: var(--gt-text-meta);
+  letter-spacing: 0;
+}
+.gotipe-page .gotipe-review-bar > .gotipe-icon {
+  color: var(--gt-accent);
+}
+.gotipe-page .gotipe-review-bar-text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  overflow: hidden;
+  white-space: nowrap;
+}
+.gotipe-page .gotipe-review-bar-text b {
+  color: var(--gt-text);
+  font-weight: 500;
+}
+.gotipe-page .gotipe-review-bar-key {
+  color: var(--gt-text);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+/* who is on the page */
+.gotipe-lane-avatars {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+.gotipe-lane-avatar {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  color: var(--gt-track);
+}
+.gotipe-lane-avatar .gotipe-icon {
+  width: 13px;
+  height: 13px;
+}
+.gotipe-lane-avatar::before {
+  content: "";
+  position: absolute;
+  inset: 1px;
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 1.5px var(--gt-track);
+  opacity: 0.3;
+  transition: opacity 0.2s;
+}
+.gotipe-lane-avatar.is-on::before {
+  opacity: 1;
+}
+.gotipe-lane-ring {
+  position: absolute;
+  inset: 0;
+  width: 24px;
+  height: 24px;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+.gotipe-lane-ring circle {
+  fill: none;
+  stroke: var(--gt-track);
+  stroke-width: 2;
+  stroke-dasharray: 14 60;
+  stroke-linecap: round;
+}
+.gotipe-lane-avatar.is-busy .gotipe-lane-ring {
+  opacity: 1;
+  animation: gotipe-spin 1.1s linear infinite;
+}
+.gotipe-lane-avatar.is-busy::before {
+  opacity: 0.25;
+}
+@keyframes gotipe-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* read-only */
+.gotipe-page[data-readonly] .gotipe-content {
+  cursor: default;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gotipe-page *,
+  .gotipe-lane-avatar .gotipe-lane-ring {
+    animation: none !important;
+    transition: none !important;
+  }
+}
