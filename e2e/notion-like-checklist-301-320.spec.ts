@@ -1,4 +1,3 @@
-import path from "node:path";
 import { expect, test, type Page } from "@playwright/test";
 import {
   openNotionAndReset,
@@ -30,7 +29,6 @@ type TargetDef = {
   expectedParentType?: string | null;
   expectedTagName?: string;
   expectedInsertedType?: "divider" | "table" | "image";
-  requiresFile?: boolean;
 };
 
 type MarkerContext = {
@@ -39,30 +37,118 @@ type MarkerContext = {
   tagName: string | null;
 };
 
-const SAMPLE_IMAGE = path.resolve(process.cwd(), "e2e/screenshots/slash-menu-open.png");
-
 const TARGETS: Record<TargetKey, TargetDef> = {
-  text: { query: "text", command: "Text", mode: "transform", expectedBlockType: "paragraph", expectedParentType: null, expectedTagName: "P" },
-  heading1: { query: "h1", command: "Heading 1", mode: "transform", expectedBlockType: "heading", expectedParentType: null, expectedTagName: "H1" },
-  heading2: { query: "h2", command: "Heading 2", mode: "transform", expectedBlockType: "heading", expectedParentType: null, expectedTagName: "H2" },
-  heading3: { query: "h3", command: "Heading 3", mode: "transform", expectedBlockType: "heading", expectedParentType: null, expectedTagName: "H3" },
-  bullet: { query: "bullet", command: "Bullet List", mode: "transform", expectedBlockType: "listItem", expectedParentType: "bulletList", expectedTagName: "LI" },
-  ordered: { query: "numbered", command: "Numbered List", mode: "transform", expectedBlockType: "listItem", expectedParentType: "orderedList", expectedTagName: "LI" },
-  todo: { query: "todo", command: "To-do List", mode: "transform", expectedBlockType: "todoItem", expectedParentType: "todoList", expectedTagName: "LI" },
-  quote: { query: "quote", command: "Quote", mode: "transform", expectedBlockType: "blockquote", expectedParentType: null, expectedTagName: "BLOCKQUOTE" },
-  code: { query: "code", command: "Code Block", mode: "transform", expectedBlockType: "codeBlock", expectedParentType: null, expectedTagName: "PRE" },
-  divider: { query: "divider", command: "Divider", mode: "insert", expectedInsertedType: "divider" },
+  text: {
+    query: "text",
+    command: "Text",
+    mode: "transform",
+    expectedBlockType: "paragraph",
+    expectedParentType: null,
+    expectedTagName: "P",
+  },
+  heading1: {
+    query: "h1",
+    command: "Heading 1",
+    mode: "transform",
+    expectedBlockType: "heading",
+    expectedParentType: null,
+    expectedTagName: "H1",
+  },
+  heading2: {
+    query: "h2",
+    command: "Heading 2",
+    mode: "transform",
+    expectedBlockType: "heading",
+    expectedParentType: null,
+    expectedTagName: "H2",
+  },
+  heading3: {
+    query: "h3",
+    command: "Heading 3",
+    mode: "transform",
+    expectedBlockType: "heading",
+    expectedParentType: null,
+    expectedTagName: "H3",
+  },
+  bullet: {
+    query: "bullet",
+    command: "Bullet List",
+    mode: "transform",
+    expectedBlockType: "listItem",
+    expectedParentType: "bulletList",
+    expectedTagName: "LI",
+  },
+  ordered: {
+    query: "numbered",
+    command: "Numbered List",
+    mode: "transform",
+    expectedBlockType: "listItem",
+    expectedParentType: "orderedList",
+    expectedTagName: "LI",
+  },
+  todo: {
+    query: "todo",
+    command: "To-do List",
+    mode: "transform",
+    expectedBlockType: "todoItem",
+    expectedParentType: "todoList",
+    expectedTagName: "LI",
+  },
+  quote: {
+    query: "quote",
+    command: "Quote",
+    mode: "transform",
+    expectedBlockType: "blockquote",
+    expectedParentType: null,
+    expectedTagName: "BLOCKQUOTE",
+  },
+  code: {
+    query: "code",
+    command: "Code Block",
+    mode: "transform",
+    expectedBlockType: "codeBlock",
+    expectedParentType: null,
+    expectedTagName: "PRE",
+  },
+  divider: {
+    query: "divider",
+    command: "Divider",
+    mode: "insert",
+    expectedInsertedType: "divider",
+  },
   table: { query: "table", command: "Table", mode: "insert", expectedInsertedType: "table" },
-  image: { query: "image", command: "Image", mode: "insert", expectedInsertedType: "image", requiresFile: true },
+  image: { query: "image", command: "Image", mode: "insert", expectedInsertedType: "image" },
 };
 
 const CASES: Array<{ id: string; source: SourceKey; target: TargetKey }> = [];
 let nextId = 301;
-for (const target of ["bullet", "ordered", "todo", "quote", "code", "divider", "table", "image"] as const) {
+for (const target of [
+  "bullet",
+  "ordered",
+  "todo",
+  "quote",
+  "code",
+  "divider",
+  "table",
+  "image",
+] as const) {
   CASES.push({ id: `NL-${nextId}`, source: "code", target });
   nextId += 1;
 }
-for (const target of ["text", "heading1", "heading2", "heading3", "bullet", "ordered", "todo", "quote", "code", "divider", "table", "image"] as const) {
+for (const target of [
+  "text",
+  "heading1",
+  "heading2",
+  "heading3",
+  "bullet",
+  "ordered",
+  "todo",
+  "quote",
+  "code",
+  "divider",
+  "table",
+  "image",
+] as const) {
   CASES.push({ id: `NL-${nextId}`, source: "callout", target });
   nextId += 1;
 }
@@ -85,7 +171,13 @@ async function setupSource(page: Page, source: SourceKey, marker: string): Promi
   const block: BlockInput =
     source === "code"
       ? { id: "batch7-src", type: "codeBlock", attrs: {}, content: spans(marker), children: [] }
-      : { id: "batch7-src", type: "callout", attrs: { type: "info" }, content: spans(marker), children: [] };
+      : {
+          id: "batch7-src",
+          type: "callout",
+          attrs: { type: "info" },
+          content: spans(marker),
+          children: [],
+        };
   await setNotionContent(page, [block]);
   await setCaretAt(page, "batch7-src", "start");
   await syncSelection(page);
@@ -98,15 +190,7 @@ async function runSlashCommand(page: Page, target: TargetDef): Promise<void> {
 
   const item = menu.locator(".gotipe-slash-menu-item-title", { hasText: target.command }).first();
   await expect(item).toBeVisible();
-
-  if (target.requiresFile) {
-    const chooserPromise = page.waitForEvent("filechooser");
-    await item.click();
-    const chooser = await chooserPromise;
-    await chooser.setFiles(SAMPLE_IMAGE);
-  } else {
-    await item.click();
-  }
+  await item.click();
   await expect(menu).toBeHidden();
 }
 
@@ -142,9 +226,11 @@ test.describe("Notion-like checklist batch NL-301..NL-320", () => {
       await setupSource(page, c.source, marker);
       await runSlashCommand(page, target);
 
-      await expect.poll(async () =>
-        page.evaluate((needle) => (document.body.textContent ?? "").includes(needle), marker),
-      ).toBe(true);
+      await expect
+        .poll(async () =>
+          page.evaluate((needle) => (document.body.textContent ?? "").includes(needle), marker),
+        )
+        .toBe(true);
 
       if (target.mode === "transform") {
         const ctx = await readMarkerContext(page, marker);
@@ -153,9 +239,16 @@ test.describe("Notion-like checklist batch NL-301..NL-320", () => {
         if (target.expectedTagName) expect(ctx?.tagName).toBe(target.expectedTagName);
       } else {
         const insertedType = target.expectedInsertedType!;
-        await expect.poll(async () =>
-          page.evaluate((type) => document.querySelectorAll(`[data-gotipe-content] > [data-block-type="${type}"]`).length, insertedType),
-        ).toBeGreaterThan(0);
+        await expect
+          .poll(async () =>
+            page.evaluate(
+              (type) =>
+                document.querySelectorAll(`[data-gotipe-content] > [data-block-type="${type}"]`)
+                  .length,
+              insertedType,
+            ),
+          )
+          .toBeGreaterThan(0);
       }
     });
   }

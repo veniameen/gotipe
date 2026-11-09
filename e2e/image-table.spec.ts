@@ -14,14 +14,14 @@ test.describe('Image block', () => {
   test('renders image placeholder (upload zone)', async ({ page }) => {
     await expect(page.locator('.gotipe-image-placeholder')).toBeVisible();
     await expect(page.locator('.gotipe-image-placeholder')).toContainText(
-      'Click or drag to upload',
+      'Add an image',
     );
   });
 
   test('placeholder has correct ARIA label', async ({ page }) => {
     await expect(page.locator('.gotipe-image-placeholder')).toHaveAttribute(
       'aria-label',
-      'Upload image',
+      'Add an image',
     );
   });
 

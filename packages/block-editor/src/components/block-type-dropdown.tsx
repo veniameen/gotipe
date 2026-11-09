@@ -88,28 +88,19 @@ export function BlockTypeDropdown({ editor }: BlockTypeDropdownProps) {
         aria-haspopup="listbox"
         aria-expanded={open}
         aria-label="Change block type"
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: "4px",
-          height: "32px",
-          padding: "0 8px",
-          border: "none",
-          borderRadius: "var(--gt-radius-lg, 12px)",
-          background: "transparent",
-          color: "var(--gt-text-secondary)",
-          fontSize: "var(--gt-text-sm, 14px)",
-          fontWeight: 500,
-          cursor: "pointer",
-          whiteSpace: "nowrap",
-        }}
       >
-        {currentLabel}
-        <span style={{ fontSize: "10px" }}>{"\u25BE"}</span>
+        <span className="gotipe-block-type-trigger-label">{currentLabel}</span>
+        <span className="gotipe-block-type-trigger-chevron" aria-hidden="true">
+          {"\u25BE"}
+        </span>
       </button>
 
       {open && (
-        <div className="gotipe-block-type-dropdown" role="listbox" data-gotipe-block-type-dropdown="">
+        <div
+          className="gotipe-block-type-dropdown"
+          role="listbox"
+          data-gotipe-block-type-dropdown=""
+        >
           {BLOCK_TYPES.map((option) => {
             const isActive =
               option.label === currentLabel ||
