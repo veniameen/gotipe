@@ -8,6 +8,11 @@
       "import": "./dist/index.js",
       "require": "./dist/index.cjs"
     },
+    "./shiki": {
+      "types": "./dist/shiki.d.ts",
+      "import": "./dist/shiki.js",
+      "require": "./dist/shiki.cjs"
+    },
     "./styles": "./dist/styles.css"
   },
   "main": "./dist/index.cjs",
@@ -16,14 +21,18 @@
   "sideEffects": [
     "*.css"
   ],
-  "dependencies": {
-    "shiki": "^1.0.0"
-  },
   "peerDependencies": {
     "@gotipe/core": "^0.1.0",
+    "@gotipe/react": "^0.1.0",
     "@gotipe/theme": "^0.1.0",
     "react": ">=18",
-    "react-dom": ">=18"
+    "react-dom": ">=18",
+    "shiki": "^1.22.0"
+  },
+  "peerDependenciesMeta": {
+    "shiki": {
+      "optional": true
+    }
   },
   "devDependencies": {
     "@gotipe/core": "workspace:*",
@@ -34,7 +43,8 @@
     "react-dom": "^19.0",
     "@types/react": "^19.0",
     "@types/react-dom": "^19.0",
-    "@gotipe/react": "workspace:*"
+    "@gotipe/react": "workspace:*",
+    "shiki": "^1.0.0"
   },
   "scripts": {
     "build": "tsup",

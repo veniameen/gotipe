@@ -8,7 +8,19 @@ export type GoTipeErrorCode =
   | "EXTENSION_ERROR"
   | "EXTENSION_DEPENDENCY_CYCLE"
   | "UNKNOWN_BLOCK_TYPE"
-  | "UNKNOWN_MARK_TYPE";
+  | "UNKNOWN_MARK_TYPE"
+  // Host integration (reported through the `error` event / `host.onError`)
+  | "ASSET_SAVE_FAILED"
+  | "ASSET_RESOLVE_FAILED"
+  | "ASSET_UNSUPPORTED"
+  | "ASSET_TOO_LARGE"
+  | "LINK_BLOCKED"
+  | "LINK_OPEN_FAILED"
+  | "CLIPBOARD_FAILED"
+  // Review layer (proposals, comments)
+  | "PROPOSAL_STALE"
+  | "PROPOSAL_ACTION_FAILED"
+  | "COMMENT_ACTION_FAILED";
 
 export class GoTipeError extends Error {
   readonly code: GoTipeErrorCode;

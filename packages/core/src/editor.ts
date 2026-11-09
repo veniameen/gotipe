@@ -1,17 +1,62 @@
 import { ChainableCommands } from "./chain";
 import { ClipboardHandler } from "./clipboard/handler";
 import { GoTipeError } from "./error";
+import { createTextWalker, documentTextOf } from "./dom/text-walker";
 import { applyPolyfills } from "./polyfills";
 import type { EditorEvents } from "./types/events";
 import type { Extension, MarkSpec, NodeSpec, SlashCommandDef } from "./types/extension";
-import type { ViewState } from "./types/view";
-import { WasmBridge } from "./wasm-bridge";
+import type { Decoration, ViewState } from "./types/view";
+import { type EngineMode, WasmBridge, type WasmModuleLoader } from "./wasm-bridge";
+
+/**
+ * Everything the editor needs from its host application. All members are
+ * optional; without a host the editor keeps its standalone behaviour.
+ */
+export interface EditorHost {
+  /**
+   * Persist a pasted/dropped/picked image or file. Returns the path or URL that
+   * goes into the document (e.g. `assets/diagram.png`). Throw or reject to
+   * report a failure — the editor turns it into an `error` event.
+   */
+  saveAsset?: (
+    file: Blob,
+    info: { kind: "image" | "file"; name: string; mediaType: string; size: number },
+  ) => Promise<{ src: string; name?: string }>;
+  /**
+   * Resolve a document path (`assets/diagram.png`) to something an <img> can
+   * show under the host's CSP — typically a `data:` URL. Return `null` when the
+   * asset is unavailable.
+   */
+  resolveAsset?: (src: string) => Promise<string | null> | string | null;
+  /** Open a link. Without it the editor falls back to `window.open`. */
+  openLink?: (href: string, info: { blockId: string | null; newTab: boolean }) => void;
+  /** Called for every editor error (also emitted as the `error` event). */
+  onError?: (error: GoTipeError) => void;
+}
+
+export interface SetContentOptions {
+  /**
+   * Keep the caret/selection where it was when the block ids still exist
+   * (falls back to the same block index). Default: `false` (caret to start).
+   */
+  preserveSelection?: boolean;
+  /** Push the previous document onto the undo stack. Default: `false`. */
+  addToHistory?: boolean;
+}
 
 export interface CreateEditorOptions {
   extensions: (Extension | Extension[])[];
   content?: string | object;
   editable?: boolean;
   autofocus?: boolean | "start" | "end";
+  /**
+   * Engine: `"auto"` (default) tries the WASM core and falls back to the JS
+   * engine; `"js"` never loads WASM (strict CSP without `wasm-unsafe-eval`);
+   * `"wasm"` fails with `WASM_INIT_FAILED` instead of falling back.
+   */
+  engine?: EngineMode;
+  /** Host integration: assets, links, errors. */
+  host?: EditorHost;
   onUpdate?: (props: { editor: GoTipeEditor }) => void;
   onSelectionChange?: (props: { editor: GoTipeEditor }) => void;
   onFocus?: (props: { editor: GoTipeEditor }) => void;
@@ -21,6 +66,24 @@ export interface CreateEditorOptions {
 }
 
 export interface GoTipeEditor {
+  /** Engine in use: `"wasm"` or `"js"`. */
+  readonly engine: "wasm" | "js";
+  /** Host callbacks passed in `createEditor({ host })` (empty object when none). */
+  readonly host: EditorHost;
+  /** Whether the document accepts input. */
+  readonly isEditable: boolean;
+  /** Switch read-only mode at runtime. Emits `editableChange`. */
+  setEditable(editable: boolean): void;
+  /**
+   * Replace a named layer of decorations (review proposals, comments, search…).
+   * Decorations never touch the document; an empty array clears the layer.
+   */
+  setDecorations(layer: string, decorations: Decoration[]): void;
+  getDecorations(layer?: string): Decoration[];
+  /** Report an error: emits `error` and calls `host.onError`. Never throws. */
+  reportError(error: GoTipeError): void;
+  /** Open a link through `host.openLink` (or `window.open` without a host). */
+  openLink(href: string, options?: { blockId?: string | null; newTab?: boolean }): void;
   getViewState(): ViewState;
   getJSON(): object;
   getHTML(): string;
@@ -35,7 +98,7 @@ export interface GoTipeEditor {
   getSlashCommands(): SlashCommandDef[];
   chain(): ChainableCommands;
   dispatch(transaction: object): void;
-  setContent(content: string | object): void;
+  setContent(content: string | object, options?: SetContentOptions): void;
   validate(content: string | object): boolean;
   isActive(name: string, attrs?: Record<string, unknown>): boolean;
   getCurrentBlock(): {
@@ -366,6 +429,70 @@ function toWasmTransaction(tr: Record<string, unknown>): Record<string, unknown>
   return { steps, selection: tr.selection ?? null, metadata: tr.metadata ?? {} };
 }
 
+const SAFE_LINK_PROTOCOLS = new Set(["http:", "https:", "mailto:"]);
+
+/**
+ * Returns the href when it is safe to open: http(s)/mailto URLs and relative
+ * references (paths, `#fragments`, `?query`). Anything with another scheme
+ * (`javascript:`, `data:`, `file:` …) is rejected.
+ */
+export function toSafeHref(href: string): string | null {
+  const value = href.trim();
+  if (!value) return null;
+  // biome-ignore lint/suspicious/noControlCharactersInRegex: strip control chars that browsers ignore in schemes
+  const compact = value.replace(/[\u0000-\u001F\u007F\s]+/g, "");
+  const scheme = /^([a-zA-Z][a-zA-Z0-9+.-]*):/.exec(compact);
+  if (!scheme) return value;
+  return SAFE_LINK_PROTOCOLS.has(`${scheme[1]!.toLowerCase()}:`) ? value : null;
+}
+
+function blockTextLength(block: ViewState["blocks"][number]): number {
+  if (Array.isArray(block.content)) return block.content.reduce((n, s) => n + s.text.length, 0);
+  if (typeof block.content === "string") return block.content.length;
+  return 0;
+}
+
+function flattenBlocks(blocks: ViewState["blocks"], out: ViewState["blocks"] = []): ViewState["blocks"] {
+  for (const block of blocks) {
+    out.push(block);
+    if (block.children.length > 0) flattenBlocks(block.children, out);
+  }
+  return out;
+}
+
+/**
+ * Maps a selection from one document to another after an external replacement:
+ * by block id when it survived, otherwise by the position of the block in
+ * document order; offsets are clamped to the new text.
+ */
+function mapSelectionToDocument(
+  selection: { anchor: { blockId: string; offset: number }; head: { blockId: string; offset: number } },
+  previous: ViewState["blocks"],
+  next: ViewState["blocks"],
+): {
+  type: "text";
+  anchor: { blockId: string; offset: number };
+  head: { blockId: string; offset: number };
+} | null {
+  const prevFlat = flattenBlocks(previous);
+  const nextFlat = flattenBlocks(next);
+  if (nextFlat.length === 0) return null;
+  const nextById = new Map(nextFlat.map((b) => [b.id, b] as const));
+  const mapPoint = (point: { blockId: string; offset: number }) => {
+    let target = nextById.get(point.blockId);
+    if (!target) {
+      const index = prevFlat.findIndex((b) => b.id === point.blockId);
+      target = nextFlat[Math.min(Math.max(index, 0), nextFlat.length - 1)];
+    }
+    if (!target) return null;
+    return { blockId: target.id, offset: Math.min(point.offset, blockTextLength(target)) };
+  };
+  const anchor = mapPoint(selection.anchor);
+  const head = mapPoint(selection.head);
+  if (!anchor || !head) return null;
+  return { type: "text", anchor, head };
+}
+
 function resolveExtensions(extensions: (Extension | Extension[])[]): Extension[] {
   // Flatten nested arrays so presets (which are Extension[]) work with [DefaultPreset, MyExt]
   const flat: Extension[] = extensions.flat(Infinity) as Extension[];
@@ -434,11 +561,24 @@ function buildSchema(
   return { nodes, marks };
 }
 
-export async function createEditor(options: CreateEditorOptions): Promise<GoTipeEditor> {
+/**
+ * Creates an editor with an explicit WASM loader (`null` = JS engine only).
+ * Public entries: `createEditor` from `@gotipe/core` (WASM with JS fallback)
+ * and from `@gotipe/core/js` (JS engine, no reference to `@gotipe/wasm`).
+ */
+export async function createEditorWithLoader(
+  options: CreateEditorOptions,
+  loader: WasmModuleLoader | null,
+): Promise<GoTipeEditor> {
   applyPolyfills();
 
-  const bridge = new WasmBridge();
+  const engineMode: EngineMode = options.engine ?? "auto";
+  const bridge = new WasmBridge(engineMode === "js" ? null : loader, engineMode);
   await bridge.init();
+  const host: EditorHost = options.host ?? {};
+  let editable = options.editable !== false;
+  const decorationLayers = new Map<string, Decoration[]>();
+  const EMPTY_DECORATIONS: Decoration[] = [];
 
   const resolved = resolveExtensions(options.extensions);
   const schema = buildSchema(resolved);
@@ -469,6 +609,9 @@ export async function createEditor(options: CreateEditorOptions): Promise<GoTipe
   try {
     bridge.create(schemaJson, JSON.stringify(wasmContent));
   } catch (e) {
+    if (engineMode === "wasm") {
+      throw new GoTipeError("WASM_INIT_FAILED", e instanceof Error ? e.message : "WASM create failed");
+    }
     console.warn("GoTipe WASM create failed, using JS fallback:", e);
     bridge.forceFallback(JSON.stringify(wasmContent));
   }
@@ -512,9 +655,160 @@ export async function createEditor(options: CreateEditorOptions): Promise<GoTipe
   const undoStack: string[] = [];
   const redoStack: string[] = [];
 
+  // Parsed-state cache: the JSON of the engine state is parsed once per change,
+  // and unchanged top-level blocks keep their object identity (cheap re-renders).
+  let lastStateJson: string | null = null;
+  let lastParsed: Record<string, unknown> | null = null;
+  const blockKeys = new WeakMap<object, string>();
+
+  const withEmptyDecorations = (block: ViewState["blocks"][number]): ViewState["blocks"][number] => {
+    block.decorations = EMPTY_DECORATIONS;
+    for (const child of block.children) withEmptyDecorations(child);
+    return block;
+  };
+
+  const shareBlocks = (
+    prev: ViewState["blocks"],
+    next: ViewState["blocks"],
+  ): ViewState["blocks"] => {
+    const prevById = new Map<string, ViewState["blocks"][number]>();
+    for (const block of prev) prevById.set(block.id, block);
+    return next.map((block) => {
+      const key = JSON.stringify(block);
+      const old = prevById.get(block.id);
+      if (old && blockKeys.get(old) === key) return old;
+      withEmptyDecorations(block);
+      blockKeys.set(block, key);
+      return block;
+    });
+  };
+
+  // Blocks whose DOM must be rebuilt from the model (see correctDomFromWasmState).
+  const renderEpochs = new Map<string, number>();
+
+  const allDecorations = (): Decoration[] => {
+    if (decorationLayers.size === 0) return EMPTY_DECORATIONS;
+    const out: Decoration[] = [];
+    for (const layer of decorationLayers.values()) out.push(...layer);
+    return out;
+  };
+
+  const decorationBlockId = (d: Decoration): string | null =>
+    "blockId" in d && typeof d.blockId === "string" ? d.blockId : null;
+
+  const attachDecorations = (blocks: ViewState["blocks"]): ViewState["blocks"] => {
+    const all = allDecorations();
+    if (all.length === 0 && renderEpochs.size === 0) return blocks;
+    const byBlock = new Map<string, Decoration[]>();
+    for (const d of all) {
+      const id = decorationBlockId(d);
+      if (!id) continue;
+      const list = byBlock.get(id);
+      if (list) list.push(d);
+      else byBlock.set(id, [d]);
+    }
+    if (byBlock.size === 0 && renderEpochs.size === 0) return blocks;
+    const visit = (block: ViewState["blocks"][number]): ViewState["blocks"][number] => {
+      const own = byBlock.get(block.id);
+      const epoch = renderEpochs.get(block.id);
+      let children = block.children;
+      let childChanged = false;
+      if (children.length > 0) {
+        const mapped = children.map(visit);
+        childChanged = mapped.some((c, i) => c !== children[i]);
+        if (childChanged) children = mapped;
+      }
+      if (!own && !childChanged && epoch === undefined) return block;
+      const next = { ...block, children, decorations: own ?? EMPTY_DECORATIONS };
+      if (epoch !== undefined) next.renderKey = epoch;
+      return next;
+    };
+    return blocks.map(visit);
+  };
+
   const editor: GoTipeEditor = {
     get isDestroyed() {
       return destroyed;
+    },
+
+    get engine() {
+      return bridge.engine;
+    },
+
+    get host() {
+      return host;
+    },
+
+    get isEditable() {
+      return editable;
+    },
+
+    setEditable(next: boolean): void {
+      if (next === editable) return;
+      editable = next;
+      if (mountedElement) {
+        mountedElement.setAttribute("contenteditable", editable ? "true" : "false");
+        mountedElement.setAttribute("aria-readonly", editable ? "false" : "true");
+      }
+      cachedViewState = null;
+      this.emit("editableChange", editable);
+      this.emit("viewStateChange", this.getViewState());
+    },
+
+    setDecorations(layer: string, decorations: Decoration[]): void {
+      const prev = decorationLayers.get(layer);
+      if (decorations.length === 0) {
+        if (!prev) return;
+        decorationLayers.delete(layer);
+      } else {
+        decorationLayers.set(layer, decorations.slice());
+      }
+      cachedViewState = null;
+      this.emit("decorationsChange", { layer });
+      this.emit("viewStateChange", this.getViewState());
+    },
+
+    getDecorations(layer?: string): Decoration[] {
+      if (layer !== undefined) return (decorationLayers.get(layer) ?? EMPTY_DECORATIONS).slice();
+      return allDecorations().slice();
+    },
+
+    reportError(error: GoTipeError): void {
+      try {
+        this.emit("error", error);
+      } catch {
+        // Listener errors must not mask the original error.
+      }
+      try {
+        host.onError?.(error);
+      } catch {
+        // Host callback errors are ignored on purpose.
+      }
+      if (!host.onError && !listeners.get("error")?.size) {
+        console.error(error);
+      }
+    },
+
+    openLink(href: string, linkOptions?: { blockId?: string | null; newTab?: boolean }): void {
+      const safe = toSafeHref(href);
+      if (!safe) {
+        this.reportError(new GoTipeError("LINK_BLOCKED", `Blocked link: ${href}`, { href }));
+        return;
+      }
+      const info = { blockId: linkOptions?.blockId ?? null, newTab: linkOptions?.newTab ?? true };
+      if (host.openLink) {
+        try {
+          host.openLink(safe, info);
+        } catch (e) {
+          this.reportError(
+            new GoTipeError("LINK_OPEN_FAILED", e instanceof Error ? e.message : String(e), { href: safe }),
+          );
+        }
+        return;
+      }
+      if (typeof window !== "undefined") {
+        window.open(safe, "_blank", "noopener,noreferrer");
+      }
     },
 
     getViewState(): ViewState {
@@ -536,15 +830,25 @@ export async function createEditor(options: CreateEditorOptions): Promise<GoTipe
       let parsed: Record<string, unknown> | null = null;
       try {
         const json = bridge.getState();
-        const raw = JSON.parse(json);
-        // Convert from WASM format (block_type, content: {type: "RichText"}) to JS format
-        parsed = fromWasmDoc(raw) as Record<string, unknown>;
+        if (json === lastStateJson && lastParsed) {
+          parsed = lastParsed;
+        } else {
+          const raw = JSON.parse(json);
+          // Convert from WASM format (block_type, content: {type: "RichText"}) to JS format
+          parsed = fromWasmDoc(raw) as Record<string, unknown>;
+          parsed.blocks = shareBlocks(
+            (lastParsed?.blocks as ViewState["blocks"] | undefined) ?? [],
+            (parsed.blocks as ViewState["blocks"]) ?? [],
+          );
+          lastStateJson = json;
+          lastParsed = parsed;
+        }
       } catch {
         // WASM getState failed — use initial content as fallback
         parsed = fallbackContent as Record<string, unknown>;
       }
 
-      const blocks = (parsed?.blocks as ViewState["blocks"]) ?? [];
+      const blocks = attachDecorations((parsed?.blocks as ViewState["blocks"]) ?? []);
       // Prefer tracked DOM selection over WASM selection
       const sel = currentSelection.anchor.blockId
         ? currentSelection
@@ -577,7 +881,7 @@ export async function createEditor(options: CreateEditorOptions): Promise<GoTipe
       cachedViewState = {
         blocks,
         selection: sel,
-        decorations: (parsed?.decorations as ViewState["decorations"]) ?? [],
+        decorations: allDecorations(),
         toolbar,
         version: (parsed?.version as number) ?? 1,
       };
@@ -784,19 +1088,43 @@ export async function createEditor(options: CreateEditorOptions): Promise<GoTipe
       return true;
     },
 
-    setContent(content: string | object): void {
+    setContent(content: string | object, setOptions?: SetContentOptions): void {
       const json = typeof content === "string" ? { blocks: [], version: 1 } : content;
       const wasmJson = toWasmDoc(json as Record<string, unknown>);
+      const previousState = setOptions?.addToHistory || setOptions?.preserveSelection
+        ? bridge.getState()
+        : null;
+      const previousSelection = currentSelection;
+      const hadFocus =
+        !!mountedElement &&
+        typeof document !== "undefined" &&
+        !!document.activeElement &&
+        mountedElement.contains(document.activeElement);
       bridge.create(schemaJson, JSON.stringify(wasmJson));
       cachedViewState = null;
       storedMarks = null;
+      if (setOptions?.addToHistory && previousState) {
+        undoStack.push(previousState);
+        if (undoStack.length > MAX_HISTORY) undoStack.shift();
+        redoStack.length = 0;
+      }
 
       try {
         const raw = JSON.parse(bridge.getState()) as Record<string, unknown>;
         const parsed = fromWasmDoc(raw) as Record<string, unknown>;
         const blocks = ((parsed.blocks as ViewState["blocks"]) ?? []) as ViewState["blocks"];
-        const first = findFirstSelectableBlock(blocks);
-        currentSelection = first
+        const mapped =
+          setOptions?.preserveSelection && previousState && previousSelection.anchor.blockId
+            ? mapSelectionToDocument(
+                previousSelection,
+                fromWasmDoc(JSON.parse(previousState) as Record<string, unknown>).blocks as ViewState["blocks"],
+                blocks,
+              )
+            : null;
+        const first = mapped ? null : findFirstSelectableBlock(blocks);
+        currentSelection = mapped
+          ? mapped
+          : first
           ? {
               type: "text",
               anchor: { blockId: first.id, offset: 0 },
@@ -818,7 +1146,10 @@ export async function createEditor(options: CreateEditorOptions): Promise<GoTipe
       this.emit("update", { editor: this });
       this.emit("selectionChange", { editor: this });
       this.emit("viewStateChange", this.getViewState());
-      if (currentSelection.anchor.blockId) {
+      // Never pull focus into the editor: restore the DOM selection only when
+      // the editor had focus (or nothing asked us to keep the selection).
+      const mayTouchDomSelection = setOptions?.preserveSelection ? hadFocus : true;
+      if (currentSelection.anchor.blockId && mayTouchDomSelection) {
         restoreDomSelectionImmediately?.();
         scheduleDomSelectionRestore?.();
       }
@@ -892,16 +1223,60 @@ export async function createEditor(options: CreateEditorOptions): Promise<GoTipe
       mountedElement = element;
       mountAbort = new AbortController();
       const { signal } = mountAbort;
-      element.setAttribute("contenteditable", options.editable !== false ? "true" : "false");
+      element.setAttribute("contenteditable", editable ? "true" : "false");
       element.setAttribute("role", "textbox");
       element.setAttribute("aria-multiline", "true");
       element.setAttribute("data-gotipe-editor", "");
 
       clipboardHandler = new ClipboardHandler(this);
 
-      element.addEventListener("paste", (e) => clipboardHandler?.onPaste(e), { signal });
+      element.setAttribute("aria-readonly", editable ? "false" : "true");
+      element.addEventListener(
+        "paste",
+        (e) => {
+          if (!editable) {
+            e.preventDefault();
+            return;
+          }
+          clipboardHandler?.onPaste(e);
+        },
+        { signal },
+      );
       element.addEventListener("copy", (e) => clipboardHandler?.onCopy(e), { signal });
-      element.addEventListener("cut", (e) => clipboardHandler?.onCut(e), { signal });
+      element.addEventListener(
+        "cut",
+        (e) => {
+          if (!editable) {
+            e.preventDefault();
+            return;
+          }
+          clipboardHandler?.onCut(e);
+        },
+        { signal },
+      );
+      element.addEventListener(
+        "drop",
+        (e) => {
+          if (!editable) e.preventDefault();
+        },
+        { signal },
+      );
+
+      // Links never navigate the page: plain click places the caret while
+      // editing; Cmd/Ctrl+click (or any click when read-only) goes through
+      // host.openLink.
+      const onLinkActivate = (e: MouseEvent) => {
+        const target = e.target instanceof Element ? e.target : null;
+        const anchor = target?.closest("a[href]");
+        if (!anchor || !element.contains(anchor)) return;
+        e.preventDefault();
+        const wantsOpen = !editable || e.metaKey || e.ctrlKey || e.button === 1;
+        if (!wantsOpen) return;
+        const blockId = anchor.closest("[data-block-id]")?.getAttribute("data-block-id") ?? null;
+        this.openLink(anchor.getAttribute("href") ?? "", { blockId, newTab: true });
+      };
+      element.addEventListener("click", onLinkActivate, { signal });
+      element.addEventListener("auxclick", onLinkActivate, { signal });
       element.addEventListener("focus", () => this.emit("focus", { editor: this }), { signal });
       element.addEventListener("blur", () => this.emit("blur", { editor: this }), { signal });
 
@@ -979,19 +1354,11 @@ export async function createEditor(options: CreateEditorOptions): Promise<GoTipe
           if (anchorElement && !textHost.contains(anchorElement)) {
             return { blockId, offset: 0 };
           }
-          try {
-            const range = document.createRange();
-            range.setStart(textHost, 0);
-            range.setEnd(resolvedNode, resolvedOffset);
-            return { blockId, offset: range.toString().length };
-          } catch {
-            // Fallback to text walker logic below.
-          }
         }
 
         // Calculate text offset within this block by walking the text nodes
         let textOffset = 0;
-        const walker = document.createTreeWalker(textHost, NodeFilter.SHOW_TEXT);
+        const walker = createTextWalker(textHost);
         let textNode: Node | null;
         while ((textNode = walker.nextNode())) {
           if (textNode === resolvedNode) {
@@ -1001,6 +1368,14 @@ export async function createEditor(options: CreateEditorOptions): Promise<GoTipe
           if (resolvedNode.nodeType !== Node.TEXT_NODE && resolvedNode.contains(textNode)) {
             // resolvedNode is an element containing this text node
             textOffset += resolvedOffset;
+            break;
+          }
+          // The point sits before this text node (e.g. inside or before a
+          // widget, whose text the walker skips): stop counting here.
+          if (
+            resolvedNode.compareDocumentPosition(textNode) & Node.DOCUMENT_POSITION_FOLLOWING &&
+            !resolvedNode.contains(textNode)
+          ) {
             break;
           }
           textOffset += (textNode.textContent ?? "").length;
@@ -1034,7 +1409,7 @@ export async function createEditor(options: CreateEditorOptions): Promise<GoTipe
           blockType === "callout"
             ? (blockEl.querySelector(".gotipe-callout-content") as HTMLElement | null) ?? blockEl
             : blockEl;
-        const walker = document.createTreeWalker(textHost, NodeFilter.SHOW_TEXT);
+        const walker = createTextWalker(textHost);
         let accumulated = 0;
         let textNode: Node | null;
         let lastTextNode: Node | null = null;
@@ -1101,11 +1476,12 @@ export async function createEditor(options: CreateEditorOptions): Promise<GoTipe
       restoreDomSelectionImmediately = restoreDomSelection;
 
       // Correct DOM text nodes if native input leaked through preventDefault()
-      const correctDomFromWasmState = () => {
-        if (!mountedElement) return;
+      const correctDomFromWasmState = (): boolean => {
+        if (!mountedElement) return false;
         const state = this.getViewState();
+        const stale: string[] = [];
         const collectOwnTextNodes = (host: HTMLElement, ownerBlockId: string): Text[] => {
-          const walker = document.createTreeWalker(host, NodeFilter.SHOW_TEXT);
+          const walker = createTextWalker(host);
           const textNodes: Text[] = [];
           let node: Node | null;
           while ((node = walker.nextNode())) {
@@ -1118,7 +1494,7 @@ export async function createEditor(options: CreateEditorOptions): Promise<GoTipe
           return textNodes;
         };
 
-        for (const block of state.blocks) {
+        for (const block of flattenBlocks(state.blocks)) {
           if (!Array.isArray(block.content)) continue;
           const blockEl = mountedElement.querySelector(
             `[data-block-id="${block.id}"]`,
@@ -1137,23 +1513,20 @@ export async function createEditor(options: CreateEditorOptions): Promise<GoTipe
           const textNodes = collectOwnTextNodes(textHost as HTMLElement, block.id);
           const actual = textNodes.map((node) => node.nodeValue ?? "").join("");
           if (actual !== expected) {
-            if (textNodes.length === 1 && block.content.length === 1) {
-              textNodes[0]!.nodeValue = expected;
-            } else if (textNodes.length > 0) {
-              let nodeIdx = 0;
-              let spanIdx = 0;
-              while (spanIdx < block.content.length && nodeIdx < textNodes.length) {
-                textNodes[nodeIdx]!.nodeValue = block.content[spanIdx]!.text;
-                nodeIdx++;
-                spanIdx++;
-              }
-              while (nodeIdx < textNodes.length) {
-                textNodes[nodeIdx]!.nodeValue = "";
-                nodeIdx++;
-              }
-            }
+            // The browser inserted nodes the renderer does not own. Patching
+            // text nodes in place cannot be trusted (decorations split spans,
+            // native nodes sit next to rendered ones), so ask the renderer to
+            // remount this block from the model.
+            stale.push(block.id);
           }
         }
+        if (stale.length > 0) {
+          for (const id of stale) renderEpochs.set(id, (renderEpochs.get(id) ?? 0) + 1);
+          cachedViewState = null;
+          this.emit("viewStateChange", this.getViewState());
+          return true;
+        }
+        return false;
       };
 
       // Schedule selection restore after React re-render
@@ -1168,7 +1541,11 @@ export async function createEditor(options: CreateEditorOptions): Promise<GoTipe
           // Fix DOM if native input leaked through preventDefault()
           if (inputHandledByWasm) {
             inputHandledByWasm = false;
-            correctDomFromWasmState();
+            if (correctDomFromWasmState() && attempts < 4) {
+              // The renderer remounts the stale blocks; restore on next frame.
+              requestAnimationFrame(tryRestore);
+              return;
+            }
           }
 
           const restored = restoreDomSelection();
@@ -1247,6 +1624,7 @@ export async function createEditor(options: CreateEditorOptions): Promise<GoTipe
 
       const onSelectionChange = () => {
         if (pendingSelectionRestore) return;
+        if (composingBlockId !== null) return;
         const domSelection = document.getSelection();
         const normalizeTodoCaret = shouldNormalizeCollapsedTodoCaret(domSelection);
         if (ignoredSelectionEvents > 0) {
@@ -1292,11 +1670,133 @@ export async function createEditor(options: CreateEditorOptions): Promise<GoTipe
       // native mutation leaked through.
       let inputHandledByWasm = false;
       let pendingEnterMode: "plain" | "shift" | null = null;
+      let composingBlockId: string | null = null;
+
+      // --- IME composition ---
+      // During a composition the browser owns the DOM (insertCompositionText is
+      // not cancelable). On compositionend the block text in the DOM is
+      // compared with the model and the difference is applied as one
+      // transaction, so dead keys, accent menus and CJK input all work.
+      const textHostOf = (blockEl: Element): Element => {
+        const blockType = blockEl.getAttribute("data-block-type");
+        if (blockType === "todoItem") return blockEl.querySelector("[data-gotipe-todo-content]") ?? blockEl;
+        if (blockType === "callout") return blockEl.querySelector(".gotipe-callout-content") ?? blockEl;
+        return blockEl;
+      };
+      const ownDomText = (blockEl: Element, blockId: string): string => {
+        const walker = createTextWalker(textHostOf(blockEl));
+        let text = "";
+        let node: Node | null;
+        while ((node = walker.nextNode())) {
+          const owner = node.parentElement?.closest("[data-block-id]")?.getAttribute("data-block-id");
+          if (!owner || owner === blockId) text += node.nodeValue ?? "";
+        }
+        return text;
+      };
+      element.addEventListener(
+        "compositionstart",
+        () => {
+          if (!editable) return;
+          const sel = readSelectionFromDOM?.() ?? currentSelection;
+          if (!sel?.anchor.blockId) return;
+          composingBlockId = sel.anchor.blockId;
+        },
+        { signal },
+      );
+      element.addEventListener(
+        "compositionend",
+        (e) => {
+          const blockId = composingBlockId;
+          composingBlockId = null;
+          if (!blockId || !editable || !mountedElement) return;
+          const blockEl = mountedElement.querySelector(`[data-block-id="${blockId}"]`);
+          const block = findBlockInTree(this.getViewState().blocks, blockId);
+          if (!blockEl || !block) return;
+          const model = Array.isArray(block.content)
+            ? block.content.map((sp) => sp.text).join("")
+            : typeof block.content === "string"
+              ? block.content
+              : "";
+          const dom = ownDomText(blockEl, blockId);
+          let prefix = 0;
+          const maxPrefix = Math.min(model.length, dom.length);
+          while (prefix < maxPrefix && model.charCodeAt(prefix) === dom.charCodeAt(prefix)) prefix++;
+          let suffix = 0;
+          const maxSuffix = Math.min(model.length, dom.length) - prefix;
+          while (
+            suffix < maxSuffix &&
+            model.charCodeAt(model.length - 1 - suffix) === dom.charCodeAt(dom.length - 1 - suffix)
+          ) {
+            suffix++;
+          }
+          const removeTo = model.length - suffix;
+          let inserted = dom.slice(prefix, dom.length - suffix);
+          let at = prefix;
+          let removeFrom = prefix;
+          let removeEnd = removeTo;
+          if (inserted === "" && removeFrom === removeEnd) {
+            // DOM unchanged (the browser cancelled the native insertion):
+            // fall back to the committed string at the caret.
+            if (!e.data) return;
+            const sel = readSelectionFromDOM?.() ?? currentSelection;
+            if (sel.anchor.blockId !== blockId) return;
+            at = Math.min(sel.anchor.offset, sel.head.offset);
+            removeFrom = at;
+            removeEnd = Math.max(sel.anchor.offset, sel.head.offset);
+            inserted = e.data;
+          }
+          const steps: unknown[] = [];
+          if (removeEnd > removeFrom) {
+            steps.push(
+              block.type === "codeBlock"
+                ? { type: "deleteRange", blockId, from: removeFrom, to: removeEnd }
+                : { type: "deleteText", blockId, from: removeFrom, to: removeEnd },
+            );
+          }
+          if (inserted) {
+            const marks = storedMarks ?? getMarksAt(this.getViewState().blocks, blockId, at);
+            steps.push({ type: "insertText", blockId, offset: at, text: inserted, marks });
+          }
+          if (steps.length === 0) return;
+          try {
+            beginSelectionChangeLock();
+            inputHandledByWasm = true;
+            this.dispatch({ steps });
+            storedMarks = null;
+            const caret = at + inserted.length;
+            currentSelection = {
+              type: "text",
+              anchor: { blockId, offset: caret },
+              head: { blockId, offset: caret },
+            };
+            publishSelection();
+            scheduleSelectionRestore();
+          } catch (err) {
+            clearSelectionChangeLock();
+            this.reportError(
+              new GoTipeError("TRANSFORM_ERROR", err instanceof Error ? err.message : "Composition failed"),
+            );
+          }
+        },
+        { signal },
+      );
 
       // --- beforeinput: capture text editing intent ---
       element.addEventListener("beforeinput", (e) => {
-        if (options.editable === false) return;
+        if (!editable) {
+          e.preventDefault();
+          return;
+        }
         const inputType = e.inputType;
+        if (
+          composingBlockId !== null &&
+          (inputType === "insertCompositionText" ||
+            inputType === "deleteCompositionText" ||
+            inputType === "insertFromComposition")
+        ) {
+          // Let the browser render the composition; compositionend commits it.
+          return;
+        }
         const enterMode = pendingEnterMode;
         if (inputType === "insertParagraph" || inputType === "insertLineBreak") {
           pendingEnterMode = null;
@@ -1840,6 +2340,11 @@ export async function createEditor(options: CreateEditorOptions): Promise<GoTipe
 
       // Keyboard shortcuts from extensions
       element.addEventListener("keydown", (e) => {
+        if (e.isComposing || composingBlockId !== null || e.keyCode === 229) return;
+        if (!editable) {
+          // Read-only: allow navigation and copy, block editing shortcuts.
+          return;
+        }
         if (e.key === "Enter") {
           pendingEnterMode = e.shiftKey ? "shift" : "plain";
         }
@@ -1953,6 +2458,7 @@ export async function createEditor(options: CreateEditorOptions): Promise<GoTipe
 
       // Input rules from extensions
       element.addEventListener("input", () => {
+        if (composingBlockId !== null) return;
         // Skip input rules if WASM already handled this — DOM correction
         // happens in the rAF callback of scheduleSelectionRestore()
         if (inputHandledByWasm) return;
@@ -2055,5 +2561,14 @@ function matchKeybinding(event: KeyboardEvent, key: string): boolean {
   if (needsAlt && !event.altKey) return false;
   if (!needsAlt && event.altKey) return false;
 
-  return event.key.toLowerCase() === mainKey;
+  if (event.key.toLowerCase() === mainKey) return true;
+  // Non-Latin layouts (e.g. Russian): Cmd+B reports key "и" — match the
+  // physical key instead, so shortcuts work on any layout.
+  if (mainKey && /^[a-z]$/.test(mainKey) && event.code === `Key${mainKey.toUpperCase()}`) {
+    return !/^[a-z]$/i.test(event.key);
+  }
+  if (mainKey && /^[0-9]$/.test(mainKey) && event.code === `Digit${mainKey}`) {
+    return !/^[0-9]$/.test(event.key);
+  }
+  return false;
 }

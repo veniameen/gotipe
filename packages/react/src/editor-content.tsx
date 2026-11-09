@@ -1,7 +1,15 @@
-import type { BlockView, GoTipeEditor } from "@gotipe/core";
-import type React from "react";
-import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
+import type { BlocksDecoration, BlockView, GoTipeEditor, NodeDecoration } from "@gotipe/core";
+import React, {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+  useSyncExternalStore,
+} from "react";
 import type { BlockRendererProps } from "./block-renderer";
+import { saveAssetWithHost, useResolvedAsset } from "./host-assets";
 import { TextRenderer } from "./text-renderer";
 
 function useViewState(editor: GoTipeEditor | null) {
@@ -21,18 +29,144 @@ function useViewState(editor: GoTipeEditor | null) {
   return useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
 }
 
+/** Props of a custom block view (see `EditorContent`'s `blockViews`). */
+export interface BlockViewProps {
+  block: BlockView;
+  editor: GoTipeEditor;
+  parentType?: string;
+  selectedBlockId: string;
+  isSelected: boolean;
+  /** The document is read-only (`editor.isEditable === false`). */
+  readOnly: boolean;
+  /** Rendered as a non-editable suggestion (phantom block). */
+  phantom: boolean;
+  /** Attributes the root element must carry (`data-block-id` or phantom id, node decorations). */
+  rootProps: Record<string, unknown>;
+  /** The block's text with marks and decorations. */
+  content: React.ReactNode;
+  /** The block's children, rendered by the editor. */
+  children: React.ReactNode;
+}
+
+export type BlockViewComponent = (props: BlockViewProps) => React.ReactNode;
+export type BlockViews = Partial<Record<string, BlockViewComponent>>;
+
+const BlockViewsContext = createContext<BlockViews | null>(null);
+const PhantomContext = createContext(false);
+
+/** True while rendering suggested (phantom) blocks. */
+export function usePhantom(): boolean {
+  return useContext(PhantomContext);
+}
+
+function rootPropsOf(block: BlockView, phantom: boolean): Record<string, unknown> {
+  const props: Record<string, unknown> = phantom
+    ? {
+        "data-gotipe-phantom-id": block.id,
+        "data-gotipe-widget": "",
+        contentEditable: false,
+        suppressContentEditableWarning: true,
+      }
+    : { "data-block-id": block.id };
+  const decorations = block.decorations;
+  if (decorations && decorations.length > 0) {
+    let style: Record<string, string> | undefined;
+    for (const d of decorations) {
+      if (d.type !== "node") continue;
+      const node = d as NodeDecoration;
+      if (node.attrs) Object.assign(props, node.attrs);
+      if (node.style) style = { ...(style ?? {}), ...node.style };
+      props["data-gotipe-node-decoration"] = "";
+    }
+    if (style) props.style = style;
+  }
+  return props;
+}
+
+function nodeDecorationClass(block: BlockView): string | undefined {
+  const classes: string[] = [];
+  for (const d of block.decorations ?? []) {
+    if (d.type === "node" && d.className) classes.push(d.className);
+  }
+  return classes.length > 0 ? classes.join(" ") : undefined;
+}
+
+function phantomBlocksOf(block: BlockView, position: "before" | "after"): BlocksDecoration[] {
+  const out: BlocksDecoration[] = [];
+  for (const d of block.decorations ?? []) {
+    if (d.type === "blocks" && d.position === position) out.push(d);
+  }
+  return out;
+}
+
+function blockKey(block: BlockView): string {
+  return block.renderKey ? `${block.id}:${block.renderKey}` : block.id;
+}
+
 function BlockContent({ block }: { block: BlockView }) {
   if (block.content === null) return null;
   if (typeof block.content === "string") return <>{block.content}</>;
   if (Array.isArray(block.content)) {
     const hasVisibleText = block.content.some((span) => span.text.length > 0);
-    if (hasVisibleText) {
-      return <TextRenderer spans={block.content} />;
+    const hasTextDecorations = (block.decorations ?? []).some(
+      (d) => d.type === "widget" || d.type === "inline",
+    );
+    if (hasVisibleText || hasTextDecorations) {
+      return (
+        <>
+          <TextRenderer spans={block.content} decorations={block.decorations} />
+          {hasVisibleText ? null : <br data-gotipe-trailing-break="" />}
+        </>
+      );
     }
     // Keep empty editable blocks caret-addressable in the DOM.
     return <br data-gotipe-trailing-break="" />;
   }
   return null;
+}
+
+/** Suggested blocks around `block` (a `blocks` decoration). */
+function PhantomBlocks({
+  block,
+  editor,
+  position,
+  parentType,
+}: {
+  block: BlockView;
+  editor: GoTipeEditor;
+  position: "before" | "after";
+  parentType?: string;
+}) {
+  const groups = phantomBlocksOf(block, position);
+  if (groups.length === 0) return null;
+  return (
+    <PhantomContext.Provider value={true}>
+      {groups.map((group) =>
+        group.blocks.map((phantom) => (
+          <BlockComponent
+            key={`${group.key}:${phantom.id}`}
+            block={{
+              ...phantom,
+              decorations: [
+                ...(phantom.decorations ?? []),
+                {
+                  type: "node",
+                  key: group.key,
+                  blockId: phantom.id,
+                  className: group.className,
+                  attrs: group.attrs,
+                  style: group.style,
+                },
+              ],
+            }}
+            editor={editor}
+            selectedBlockId=""
+            parentType={parentType}
+          />
+        )),
+      )}
+    </PhantomContext.Provider>
+  );
 }
 
 function isBlockContentEmpty(block: BlockView): boolean {
@@ -74,13 +208,16 @@ function BlockChildren({
   return (
     <>
       {block.children.map((child) => (
-        <BlockComponent
-          key={child.id}
-          block={child}
-          editor={editor}
-          selectedBlockId={selectedBlockId}
-          parentType={block.type}
-        />
+        <React.Fragment key={blockKey(child)}>
+          <PhantomBlocks block={child} editor={editor} position="before" parentType={block.type} />
+          <BlockComponent
+            block={child}
+            editor={editor}
+            selectedBlockId={selectedBlockId}
+            parentType={block.type}
+          />
+          <PhantomBlocks block={child} editor={editor} position="after" parentType={block.type} />
+        </React.Fragment>
       ))}
     </>
   );
@@ -449,11 +586,16 @@ function ImageOptionsItem({
 
 /* ---- Image Block ---- */
 
-function ImageBlock({ block, editor }: { block: BlockView; editor: GoTipeEditor }) {
+function ImageBlock({
+  block,
+  editor,
+  rootProps,
+}: { block: BlockView; editor: GoTipeEditor; rootProps: Record<string, unknown> }) {
   const src = (block.attrs.src as string) || "";
   const alt = (block.attrs.alt as string) || "";
   const width = block.attrs.width as number | undefined;
   const caption = (block.attrs.caption as string) || "";
+  const { url: displaySrc } = useResolvedAsset(editor, src);
   const [dragOver, setDragOver] = useState(false);
   const [activeTab, setActiveTab] = useState<ImageInsertTab>("upload");
   const [isInsertPanelOpen, setIsInsertPanelOpen] = useState(false);
@@ -493,18 +635,24 @@ function ImageBlock({ block, editor }: { block: BlockView; editor: GoTipeEditor 
     [editor, block.id],
   );
 
+  const uploadImage = useCallback(
+    async (file: File) => {
+      const saved = await saveAssetWithHost(editor, file, "image");
+      if (saved) applyImageSource(saved.src, saved.name);
+    },
+    [editor, applyImageSource],
+  );
+
   const triggerFilePicker = useCallback(() => {
     const input = document.createElement("input");
     input.type = "file";
     input.accept = "image/*";
     input.onchange = () => {
       const file = input.files?.[0];
-      if (file) {
-        applyImageSource(URL.createObjectURL(file), file.name);
-      }
+      if (file) void uploadImage(file);
     };
     input.click();
-  }, [applyImageSource]);
+  }, [uploadImage]);
 
   const submitLink = useCallback(
     (e: React.FormEvent) => {
@@ -526,10 +674,10 @@ function ImageBlock({ block, editor }: { block: BlockView; editor: GoTipeEditor 
       setDragOver(false);
       const file = e.dataTransfer.files[0];
       if (file?.type.startsWith("image/")) {
-        applyImageSource(URL.createObjectURL(file), file.name);
+        void uploadImage(file);
       }
     },
-    [applyImageSource],
+    [uploadImage],
   );
 
   const focusCaption = useCallback(() => {
@@ -716,7 +864,7 @@ function ImageBlock({ block, editor }: { block: BlockView; editor: GoTipeEditor 
 
   return (
     <figure
-      data-block-id={block.id}
+      {...rootProps}
       data-block-type={block.type}
       className="gotipe-image-block"
       contentEditable={false}
@@ -730,7 +878,7 @@ function ImageBlock({ block, editor }: { block: BlockView; editor: GoTipeEditor 
         >
           <img
             ref={imageRef}
-            src={src}
+            src={displaySrc ?? undefined}
             alt={alt}
             style={
               renderWidth
@@ -786,7 +934,7 @@ function ImageBlock({ block, editor }: { block: BlockView; editor: GoTipeEditor 
               onMouseDown={(e) => e.preventDefault()}
               onClick={() => {
                 if (!src) return;
-                window.open(src, "_blank", "noopener,noreferrer");
+                editor.openLink(displaySrc ?? src, { blockId: block.id, newTab: true });
               }}
               aria-label="Zoom"
             >
@@ -1034,7 +1182,11 @@ function ImageBlock({ block, editor }: { block: BlockView; editor: GoTipeEditor 
 
 /* ---- File Block ---- */
 
-function FileBlock({ block, editor }: { block: BlockView; editor: GoTipeEditor }) {
+function FileBlock({
+  block,
+  editor,
+  rootProps,
+}: { block: BlockView; editor: GoTipeEditor; rootProps: Record<string, unknown> }) {
   const url = (block.attrs.url as string) || "";
   const name = (block.attrs.name as string) || "";
   const size = typeof block.attrs.size === "number" ? (block.attrs.size as number) : undefined;
@@ -1059,22 +1211,25 @@ function FileBlock({ block, editor }: { block: BlockView; editor: GoTipeEditor }
     [editor, block.id],
   );
 
+  const uploadFile = useCallback(
+    async (file: File) => {
+      const saved = await saveAssetWithHost(editor, file, "file");
+      if (saved) {
+        applyFile({ url: saved.src, name: saved.name, size: file.size, mime_type: file.type });
+      }
+    },
+    [editor, applyFile],
+  );
+
   const triggerFilePicker = useCallback(() => {
     const input = document.createElement("input");
     input.type = "file";
     input.onchange = () => {
       const file = input.files?.[0];
-      if (file) {
-        applyFile({
-          url: URL.createObjectURL(file),
-          name: file.name,
-          size: file.size,
-          mime_type: file.type,
-        });
-      }
+      if (file) void uploadFile(file);
     };
     input.click();
-  }, [applyFile]);
+  }, [uploadFile]);
 
   const submitLink = useCallback(
     (e: React.FormEvent) => {
@@ -1101,16 +1256,9 @@ function FileBlock({ block, editor }: { block: BlockView; editor: GoTipeEditor }
       e.stopPropagation();
       setDragOver(false);
       const file = e.dataTransfer.files[0];
-      if (file) {
-        applyFile({
-          url: URL.createObjectURL(file),
-          name: file.name,
-          size: file.size,
-          mime_type: file.type,
-        });
-      }
+      if (file) void uploadFile(file);
     },
-    [applyFile],
+    [uploadFile],
   );
 
   const fileMeta = [mimeType, formatFileSize(size)].filter(Boolean).join(" • ");
@@ -1129,7 +1277,7 @@ function FileBlock({ block, editor }: { block: BlockView; editor: GoTipeEditor }
 
   return (
     <figure
-      data-block-id={block.id}
+      {...rootProps}
       data-block-type={block.type}
       className="gotipe-file-block"
       contentEditable={false}
@@ -1296,10 +1444,12 @@ function ToggleBlock({
   block,
   editor,
   selectedBlockId,
+  rootProps,
 }: {
   block: BlockView;
   editor: GoTipeEditor;
   selectedBlockId: string;
+  rootProps: Record<string, unknown>;
 }) {
   const content = <BlockContent block={block} />;
   const children = (
@@ -1309,7 +1459,7 @@ function ToggleBlock({
 
   return (
     <details
-      data-block-id={block.id}
+      {...rootProps}
       data-block-type={block.type}
       className="gotipe-toggle"
       open={isOpen}
@@ -1338,10 +1488,12 @@ function CalloutBlock({
   block,
   editor,
   selectedBlockId,
+  rootProps,
 }: {
   block: BlockView;
   editor: GoTipeEditor;
   selectedBlockId: string;
+  rootProps: Record<string, unknown>;
 }) {
   const content = <BlockContent block={block} />;
   const children = (
@@ -1352,7 +1504,7 @@ function CalloutBlock({
 
   return (
     <div
-      data-block-id={block.id}
+      {...rootProps}
       data-block-type={block.type}
       data-variant={variant}
       className="gotipe-callout"
@@ -1390,10 +1542,12 @@ function TableBlock({
   block,
   editor,
   selectedBlockId,
+  rootProps,
 }: {
   block: BlockView;
   editor: GoTipeEditor;
   selectedBlockId: string;
+  rootProps: Record<string, unknown>;
 }) {
   const children = (
     <BlockChildren block={block} editor={editor} selectedBlockId={selectedBlockId} />
@@ -1403,7 +1557,7 @@ function TableBlock({
 
   return (
     <div
-      data-block-id={block.id}
+      {...rootProps}
       data-block-type={block.type}
       className="gotipe-table-wrapper"
       contentEditable={false}
@@ -1446,7 +1600,55 @@ interface BlockComponentProps {
   parentType?: string;
 }
 
-function BlockComponent({ block, editor, selectedBlockId, parentType }: BlockComponentProps) {
+function BlockComponent(props: BlockComponentProps) {
+  const { block, editor, selectedBlockId, parentType } = props;
+  const views = useContext(BlockViewsContext);
+  const phantom = useContext(PhantomContext);
+  const rootProps = rootPropsOf(block, phantom);
+  const Custom = views?.[block.type];
+  let element: React.ReactNode;
+  if (Custom) {
+    element = (
+      <Custom
+        block={block}
+        editor={editor}
+        parentType={parentType}
+        selectedBlockId={selectedBlockId}
+        isSelected={selectedBlockId === block.id}
+        readOnly={!editor.isEditable}
+        phantom={phantom}
+        rootProps={rootProps}
+        content={<BlockContent block={block} />}
+      >
+        <BlockChildren block={block} editor={editor} selectedBlockId={selectedBlockId} />
+      </Custom>
+    );
+  } else {
+    element = <BlockComponentInner {...props} rootProps={rootProps} readOnly={!editor.isEditable || phantom} />;
+  }
+  const extraClass = nodeDecorationClass(block);
+  if (!extraClass) return <>{element}</>;
+  return <NodeClass className={extraClass}>{element}</NodeClass>;
+}
+
+/** Adds node-decoration classes to the single root element of a block. */
+function NodeClass({ className, children }: { className: string; children: React.ReactNode }) {
+  const child = React.Children.only(children);
+  if (!React.isValidElement<{ className?: string }>(child) || typeof child.type !== "string") {
+    return <>{children}</>;
+  }
+  const merged = [child.props.className, className].filter(Boolean).join(" ");
+  return React.cloneElement(child, { className: merged });
+}
+
+function BlockComponentInner({
+  block,
+  editor,
+  selectedBlockId,
+  parentType,
+  rootProps,
+  readOnly,
+}: BlockComponentProps & { rootProps: Record<string, unknown>; readOnly: boolean }) {
   const content = <BlockContent block={block} />;
   const children = (
     <BlockChildren block={block} editor={editor} selectedBlockId={selectedBlockId} />
@@ -1462,7 +1664,7 @@ function BlockComponent({ block, editor, selectedBlockId, parentType }: BlockCom
       const Tag = `h${level}` as "h1" | "h2" | "h3" | "h4" | "h5" | "h6";
       return (
         <Tag
-          data-block-id={block.id}
+          {...rootProps}
           data-block-type={block.type}
           data-placeholder={placeholder ?? undefined}
         >
@@ -1473,14 +1675,14 @@ function BlockComponent({ block, editor, selectedBlockId, parentType }: BlockCom
 
     case "bulletList":
       return (
-        <ul data-block-id={block.id} data-block-type={block.type}>
+        <ul {...rootProps} data-block-type={block.type}>
           {children}
         </ul>
       );
 
     case "orderedList":
       return (
-        <ol data-block-id={block.id} data-block-type={block.type}>
+        <ol {...rootProps} data-block-type={block.type}>
           {children}
         </ol>
       );
@@ -1488,7 +1690,7 @@ function BlockComponent({ block, editor, selectedBlockId, parentType }: BlockCom
     case "listItem":
       return (
         <li
-          data-block-id={block.id}
+          {...rootProps}
           data-block-type={block.type}
           data-placeholder={placeholder ?? undefined}
         >
@@ -1499,7 +1701,7 @@ function BlockComponent({ block, editor, selectedBlockId, parentType }: BlockCom
 
     case "todoList":
       return (
-        <ul data-block-id={block.id} data-block-type={block.type} className="gotipe-todo-list">
+        <ul {...rootProps} data-block-type={block.type} className="gotipe-todo-list">
           {children}
         </ul>
       );
@@ -1508,7 +1710,7 @@ function BlockComponent({ block, editor, selectedBlockId, parentType }: BlockCom
       const checked = !!block.attrs.checked;
       return (
         <li
-          data-block-id={block.id}
+          {...rootProps}
           data-block-type={block.type}
           className="gotipe-todo-item"
           onMouseDown={(e) => {
@@ -1536,9 +1738,11 @@ function BlockComponent({ block, editor, selectedBlockId, parentType }: BlockCom
             checked={checked}
             contentEditable={false}
             aria-label={checked ? "Mark as incomplete" : "Mark as complete"}
+            disabled={readOnly}
             onMouseDown={(e) => {
               e.preventDefault();
               e.stopPropagation();
+              if (readOnly) return;
               editor.chain().setBlockAttrs(block.id, { checked: !checked }).run();
             }}
             onChange={() => {}}
@@ -1557,7 +1761,7 @@ function BlockComponent({ block, editor, selectedBlockId, parentType }: BlockCom
     case "codeBlock":
       return (
         <pre
-          data-block-id={block.id}
+          {...rootProps}
           data-block-type={block.type}
           className="gotipe-code-block"
           aria-label={`Code block${block.attrs.language ? `, ${block.attrs.language}` : ""}`}
@@ -1571,7 +1775,7 @@ function BlockComponent({ block, editor, selectedBlockId, parentType }: BlockCom
     case "blockquote":
       return (
         <blockquote
-          data-block-id={block.id}
+          {...rootProps}
           data-block-type={block.type}
           data-placeholder={placeholder ?? undefined}
         >
@@ -1581,48 +1785,54 @@ function BlockComponent({ block, editor, selectedBlockId, parentType }: BlockCom
       );
 
     case "divider":
-      return <hr data-block-id={block.id} data-block-type={block.type} />;
+      return <hr {...rootProps} data-block-type={block.type} />;
 
     case "image":
-      return <ImageBlock block={block} editor={editor} />;
+      return <ImageBlock block={block} editor={editor} rootProps={rootProps} />;
 
     case "file":
-      return <FileBlock block={block} editor={editor} />;
+      return <FileBlock block={block} editor={editor} rootProps={rootProps} />;
 
     case "table":
-      return <TableBlock block={block} editor={editor} selectedBlockId={selectedBlockId} />;
+      return (
+        <TableBlock block={block} editor={editor} selectedBlockId={selectedBlockId} rootProps={rootProps} />
+      );
 
     case "tableRow":
       return (
-        <tr data-block-id={block.id} data-block-type={block.type}>
+        <tr {...rootProps} data-block-type={block.type}>
           {children}
         </tr>
       );
 
     case "tableHeader":
       return (
-        <th data-block-id={block.id} data-block-type={block.type} contentEditable>
+        <th {...rootProps} data-block-type={block.type} contentEditable={!readOnly} suppressContentEditableWarning>
           {content}
         </th>
       );
 
     case "tableCell":
       return (
-        <td data-block-id={block.id} data-block-type={block.type} contentEditable>
+        <td {...rootProps} data-block-type={block.type} contentEditable={!readOnly} suppressContentEditableWarning>
           {content}
         </td>
       );
 
     case "callout":
-      return <CalloutBlock block={block} editor={editor} selectedBlockId={selectedBlockId} />;
+      return (
+        <CalloutBlock block={block} editor={editor} selectedBlockId={selectedBlockId} rootProps={rootProps} />
+      );
 
     case "toggle":
-      return <ToggleBlock block={block} editor={editor} selectedBlockId={selectedBlockId} />;
+      return (
+        <ToggleBlock block={block} editor={editor} selectedBlockId={selectedBlockId} rootProps={rootProps} />
+      );
 
     case "columns":
       return (
         <div
-          data-block-id={block.id}
+          {...rootProps}
           data-block-type={block.type}
           className="gotipe-columns"
           data-columns-count={block.attrs.count ?? block.children.length}
@@ -1633,7 +1843,7 @@ function BlockComponent({ block, editor, selectedBlockId, parentType }: BlockCom
 
     case "column":
       return (
-        <div data-block-id={block.id} data-block-type={block.type} className="gotipe-column">
+        <div {...rootProps} data-block-type={block.type} className="gotipe-column">
           {content}
           {children}
         </div>
@@ -1642,7 +1852,7 @@ function BlockComponent({ block, editor, selectedBlockId, parentType }: BlockCom
     default:
       return (
         <p
-          data-block-id={block.id}
+          {...rootProps}
           data-block-type={block.type || "paragraph"}
           data-placeholder={placeholder ?? undefined}
         >
@@ -1655,9 +1865,14 @@ function BlockComponent({ block, editor, selectedBlockId, parentType }: BlockCom
 export function EditorContent({
   editor,
   blockRenderer: _blockRenderer,
+  blockViews,
+  ariaLabel = "Document content",
 }: {
   editor: GoTipeEditor | null;
   blockRenderer?: (props: BlockRendererProps) => React.ReactNode;
+  /** Custom views by block type; everything else uses the built-in views. */
+  blockViews?: BlockViews;
+  ariaLabel?: string;
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const viewState = useViewState(editor);
@@ -1678,22 +1893,25 @@ export function EditorContent({
         ref={containerRef}
         role="textbox"
         aria-multiline={true}
-        aria-label="Document content"
+        aria-label={ariaLabel}
+        aria-readonly={editor ? !editor.isEditable : undefined}
         tabIndex={0}
         className="gotipe-content"
         data-gotipe-content=""
-        contentEditable={!!editor}
+        data-gotipe-readonly={editor && !editor.isEditable ? "" : undefined}
+        contentEditable={!!editor && editor.isEditable}
         suppressContentEditableWarning
       >
-        {editor &&
-          blocks.map((block) => (
-            <BlockComponent
-              key={block.id}
-              block={block}
-              editor={editor}
-              selectedBlockId={selectedBlockId}
-            />
-          ))}
+        <BlockViewsContext.Provider value={blockViews ?? null}>
+          {editor &&
+            blocks.map((block) => (
+              <React.Fragment key={blockKey(block)}>
+                <PhantomBlocks block={block} editor={editor} position="before" />
+                <BlockComponent block={block} editor={editor} selectedBlockId={selectedBlockId} />
+                <PhantomBlocks block={block} editor={editor} position="after" />
+              </React.Fragment>
+            ))}
+        </BlockViewsContext.Provider>
       </div>
       {/* Screen reader live region for status updates */}
       <div

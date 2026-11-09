@@ -1,5 +1,12 @@
 import { defineConfig, devices } from '@playwright/test';
 
+// GOTIPE_E2E_PORT — порт dev-сервера playground (по умолчанию 5173).
+// GOTIPE_E2E_CHANNEL — канал браузера для проекта chromium (например, "chrome",
+// когда браузеры Playwright не установлены).
+const port = Number(process.env.GOTIPE_E2E_PORT ?? 5173);
+const baseURL = `http://localhost:${port}`;
+const channel = process.env.GOTIPE_E2E_CHANNEL;
+
 export default defineConfig({
   testDir: './e2e',
   fullyParallel: true,
@@ -8,18 +15,18 @@ export default defineConfig({
   workers: process.env.CI ? 1 : undefined,
   reporter: 'list',
   use: {
-    baseURL: 'http://localhost:5173',
+    baseURL,
     trace: 'on-first-retry',
   },
   projects: [
-    { name: 'chromium', use: { ...devices['Desktop Chrome'] } },
+    { name: 'chromium', use: { ...devices['Desktop Chrome'], ...(channel ? { channel } : {}) } },
     { name: 'firefox', use: { ...devices['Desktop Firefox'] } },
     { name: 'webkit', use: { ...devices['Desktop Safari'] } },
   ],
   webServer: {
-    command: 'pnpm --filter @gotipe/playground dev',
-    url: 'http://localhost:5173',
+    command: `pnpm --filter @gotipe/playground exec vite --port ${port} --strictPort`,
+    url: baseURL,
     reuseExistingServer: !process.env.CI,
-    timeout: 30000,
+    timeout: 60000,
   },
 });

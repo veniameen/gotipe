@@ -1,7 +1,9 @@
 import type { BlockView, GoTipeEditor } from "@gotipe/core";
+import type React from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
-import type { BundledLanguage, Highlighter } from "shiki";
-import { createHighlighter } from "shiki";
+import type { CodeHighlighter } from "../highlight/types";
+import { useHighlightedCode } from "../highlight/use-highlighted-code";
+import { HighlightedLines } from "./highlighted-lines";
 
 const POPULAR_LANGUAGES: { value: string; label: string }[] = [
   { value: "javascript", label: "JavaScript" },
@@ -26,56 +28,24 @@ const POPULAR_LANGUAGES: { value: string; label: string }[] = [
   { value: "plaintext", label: "Plain text" },
 ];
 
-let highlighterPromise: Promise<Highlighter> | null = null;
-
-function getHighlighter(): Promise<Highlighter> {
-  if (!highlighterPromise) {
-    highlighterPromise = createHighlighter({
-      themes: ["github-light", "github-dark"],
-      langs: POPULAR_LANGUAGES.filter((l) => l.value !== "plaintext").map(
-        (l) => l.value as BundledLanguage,
-      ),
-    });
-  }
-  return highlighterPromise;
-}
-
 const COPY_FEEDBACK_MS = 2000;
 
-export function CodeBlockView({ block, editor }: { block: BlockView; editor: GoTipeEditor }) {
+export function CodeBlockView({
+  block,
+  editor,
+  highlight,
+}: {
+  block: BlockView;
+  editor: GoTipeEditor;
+  /** Optional highlighter (e.g. `createShikiHighlighter` from `@gotipe/block-editor/shiki`). */
+  highlight?: CodeHighlighter;
+}) {
   const language = (block.attrs.language as string) || "plaintext";
   const code = typeof block.content === "string" ? block.content : "";
-  const [highlightedHtml, setHighlightedHtml] = useState<string>("");
+  const tokens = useHighlightedCode(highlight, code, language);
   const [copied, setCopied] = useState(false);
-  const [showLineNumbers, setShowLineNumbers] = useState(true);
+  const [showLineNumbers] = useState(true);
   const copyTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  // Load and apply syntax highlighting
-  useEffect(() => {
-    if (language === "plaintext" || !code) {
-      setHighlightedHtml("");
-      return;
-    }
-
-    let cancelled = false;
-    getHighlighter().then((highlighter) => {
-      if (cancelled) return;
-      try {
-        const html = highlighter.codeToHtml(code, {
-          lang: language as BundledLanguage,
-          theme: "github-light",
-        });
-        setHighlightedHtml(html);
-      } catch {
-        // Language not loaded — fall back to plain text
-        setHighlightedHtml("");
-      }
-    });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [code, language]);
 
   const handleLanguageChange = useCallback(
     (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -142,19 +112,11 @@ export function CodeBlockView({ block, editor }: { block: BlockView; editor: GoT
             ))}
           </div>
         )}
-        {/* Code content — Shiki output is safe: generated from grammar
-            parsing with proper HTML escaping, not from user-supplied HTML */}
-        {highlightedHtml ? (
-          <div
-            className="gotipe-code-block-content"
-            style={{ flex: 1 }}
-            dangerouslySetInnerHTML={{ __html: highlightedHtml }}
-          />
-        ) : (
-          <pre style={{ flex: 1 }}>
-            <code className={`language-${language}`}>{code}</code>
-          </pre>
-        )}
+        <pre style={{ flex: 1 }}>
+          <code className={`language-${language}`}>
+            {tokens ? <HighlightedLines lines={tokens} /> : code}
+          </code>
+        </pre>
       </div>
     </div>
   );

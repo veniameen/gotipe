@@ -13,6 +13,11 @@ export interface BlockView {
   content: TextSpanView[] | string | null;
   children: BlockView[];
   decorations: Decoration[];
+  /**
+   * Changes when the renderer must rebuild this block's DOM from the model
+   * (after the browser inserted nodes it does not own). Use it in the key.
+   */
+  renderKey?: number;
 }
 
 export interface TextSpanView {
@@ -66,4 +71,56 @@ export type Decoration =
       resolved: boolean;
     }
   | { type: "suggestion-insert"; suggestionId: string; blockId: string; from: number; to: number }
-  | { type: "suggestion-delete"; suggestionId: string; blockId: string; from: number; to: number };
+  | { type: "suggestion-delete"; suggestionId: string; blockId: string; from: number; to: number }
+  | InlineDecoration
+  | WidgetDecoration
+  | NodeDecoration
+  | BlocksDecoration;
+
+/** Presentation attributes shared by the generic decorations. */
+export interface DecorationSpec {
+  /** Stable key (unique within the block). */
+  key: string;
+  className?: string;
+  /** Extra attributes, e.g. `data-proposal-id`. */
+  attrs?: Record<string, string>;
+  /** Inline style, e.g. `{ "--gt-track": "var(--gt-track-2)" }`. */
+  style?: Record<string, string>;
+}
+
+/** Wraps existing text `[from, to)` of a block. */
+export interface InlineDecoration extends DecorationSpec {
+  type: "inline";
+  blockId: string;
+  from: number;
+  to: number;
+}
+
+/**
+ * Non-editable content shown at `offset` of a block (a suggested insertion,
+ * a caret). Its text never counts in document offsets.
+ */
+export interface WidgetDecoration extends DecorationSpec {
+  type: "widget";
+  blockId: string;
+  offset: number;
+  text?: string;
+  /** Marks to render the widget text with (bold, code…). */
+  marks?: MarkView[];
+  /** -1: before text inserted at the same offset; 1 (default): after. */
+  side?: -1 | 1;
+}
+
+/** Class/attributes on a block element. */
+export interface NodeDecoration extends DecorationSpec {
+  type: "node";
+  blockId: string;
+}
+
+/** Non-editable phantom blocks rendered before/after a block (suggested new blocks). */
+export interface BlocksDecoration extends DecorationSpec {
+  type: "blocks";
+  blockId: string;
+  position: "before" | "after";
+  blocks: BlockView[];
+}

@@ -91,6 +91,7 @@ export async function renderToText(content: object | string): Promise<string> {
 export async function createHeadlessEditor(options: {
   extensions: Extension[];
 }): Promise<GoTipeEditor> {
-  const { createEditor } = await import("./editor");
-  return createEditor({ ...options, editable: false });
+  const { createEditorWithLoader } = await import("./editor");
+  // Headless editors never need the WASM engine.
+  return createEditorWithLoader({ ...options, editable: false, engine: "js" }, null);
 }
