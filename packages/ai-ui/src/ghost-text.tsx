@@ -7,25 +7,36 @@ export interface GhostTextProps {
   onAccept: () => void;
   onDismiss: () => void;
 }
-
-export function GhostText({ editor: _editor, text, onAccept, onDismiss }: GhostTextProps) {
+export function GhostText({ editor, text, onAccept, onDismiss }: GhostTextProps) {
   useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Tab") {
-        e.preventDefault();
+    const owner = editor.element?.ownerDocument;
+    if (!owner) return;
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (
+        event.defaultPrevented ||
+        event.isComposing ||
+        editor.isDestroyed ||
+        !editor.isEditable ||
+        !(event.target instanceof Node) ||
+        !editor.element?.contains(event.target)
+      )
+        return;
+      if (
+        event.key === "Tab" &&
+        !event.shiftKey &&
+        !event.ctrlKey &&
+        !event.metaKey &&
+        !event.altKey
+      ) {
+        event.preventDefault();
         onAccept();
-      } else if (e.key === "Escape") {
-        onDismiss();
-      } else {
-        onDismiss();
-      } // Dismiss on any other keystroke
+      } else if (!["Shift", "Control", "Alt", "Meta"].includes(event.key)) onDismiss();
     };
-    document.addEventListener("keydown", handleKeyDown);
-    return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [onAccept, onDismiss]);
-
+    owner.addEventListener("keydown", handleKeyDown);
+    return () => owner.removeEventListener("keydown", handleKeyDown);
+  }, [editor, onAccept, onDismiss]);
   return (
-    <span className="gotipe-ghost-text" aria-live="polite">
+    <span className="gotipe-ghost-text" aria-live="polite" contentEditable={false}>
       {text}
     </span>
   );

@@ -13,7 +13,6 @@ pub struct ClipboardData {
 pub fn parse_paste_plain(text: &str) -> Document {
     let blocks: Vec<Block> = text
         .split('\n')
-        .filter(|line| !line.is_empty())
         .map(|line| Block {
             id: BlockId::new(),
             block_type: "paragraph".into(),
@@ -31,10 +30,16 @@ pub fn parse_paste_plain(text: &str) -> Document {
 
 /// Serialize a block to plain text
 pub fn block_to_plain_text(block: &Block) -> String {
-    match &block.content {
+    let own: String = match &block.content {
         BlockContent::RichText(spans) => spans.iter().map(|s| s.text.as_str()).collect(),
         BlockContent::Raw(s) => s.clone(),
         BlockContent::Empty => String::new(),
+    };
+    let children = blocks_to_plain_text(&block.children);
+    match (own.is_empty(), children.is_empty()) {
+        (true, _) => children,
+        (_, true) => own,
+        _ => format!("{own}\n{children}"),
     }
 }
 
@@ -65,9 +70,9 @@ mod tests {
     }
 
     #[test]
-    fn test_parse_paste_plain_empty_lines_filtered() {
+    fn test_parse_paste_plain_empty_lines_preserved() {
         let doc = parse_paste_plain("Line 1\n\nLine 3");
-        assert_eq!(doc.blocks.len(), 2);
+        assert_eq!(doc.blocks.len(), 3);
     }
 
     #[test]

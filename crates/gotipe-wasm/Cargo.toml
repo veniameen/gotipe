@@ -8,13 +8,13 @@ license.workspace = true
 crate-type = ["cdylib", "rlib"]
 
 [dependencies]
-gotipe-schema = { path = "../gotipe-schema" }
-gotipe-core = { path = "../gotipe-core" }
-gotipe-crdt = { path = "../gotipe-crdt", default-features = false }
-gotipe-comments = { path = "../gotipe-comments" }
-gotipe-versioning = { path = "../gotipe-versioning", default-features = false }
-gotipe-ai = { path = "../gotipe-ai" }
-gotipe-export = { path = "../gotipe-export" }
+gotipe-schema = { version = "0.1.0", path = "../gotipe-schema" }
+gotipe-core = { version = "0.1.0", path = "../gotipe-core" }
+gotipe-crdt = { version = "0.1.0", path = "../gotipe-crdt", default-features = false }
+gotipe-comments = { version = "0.1.0", path = "../gotipe-comments" }
+gotipe-versioning = { version = "0.1.0", path = "../gotipe-versioning", default-features = false }
+gotipe-ai = { version = "0.1.0", path = "../gotipe-ai" }
+gotipe-export = { version = "0.1.0", path = "../gotipe-export" }
 wasm-bindgen = { workspace = true }
 serde-wasm-bindgen = "0.6"
 serde_json = { workspace = true }

@@ -26,6 +26,14 @@ fn block_to_plain(block: &Block, indent: usize) -> String {
     result
 }
 
+pub(crate) fn block_text(block: &Block) -> String {
+    match &block.content {
+        BlockContent::RichText(spans) => spans.iter().map(|span| span.text.as_str()).collect(),
+        BlockContent::Raw(text) => text.clone(),
+        BlockContent::Empty => String::new(),
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

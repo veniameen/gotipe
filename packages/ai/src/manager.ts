@@ -1,4 +1,18 @@
-import type { Block, GoTipeEditor } from "@gotipe/core";
+import type { GoTipeEditor, Selection } from "@gotipe/core";
+import {
+  type AiTarget,
+  assertTarget,
+  assertWritable,
+  blockLocation,
+  buildAiContext,
+  captureTarget,
+  flatten,
+  textOf,
+  validOffset,
+} from "./document";
+import { assertNoPii } from "./pii";
+import { proofreadSteps } from "./proofread";
+import { AiRequests } from "./requests";
 import type {
   AiComment,
   AiContext,
@@ -10,243 +24,268 @@ import type {
 
 export class AiManager {
   private provider: AiProvider | null;
-  private debounceTimer: ReturnType<typeof setTimeout> | null = null;
-  private abortController: AbortController | null = null;
-  private _processing = false;
+  private requests: AiRequests;
+  private targets = new Map<string, AiTarget>();
+  private proofreadBaselines = new Map<string, string>();
+  private destroyed = false;
 
   constructor(
     private editor: GoTipeEditor,
     private options: AiOptions,
   ) {
     this.provider = options.provider ?? null;
+    this.requests = new AiRequests(editor);
   }
-
   get processing(): boolean {
-    return this._processing;
+    return this.requests.processing;
   }
-
   setProvider(provider: AiProvider): void {
+    if (this.destroyed) throw new Error("AI manager has been destroyed");
+    this.cancelPending();
     this.provider = provider;
   }
-
   getProvider(): AiProvider | null {
     return this.provider;
   }
-
   buildContext(): AiContext {
-    const state = this.editor.getViewState();
-    const sel = state.selection;
-    const currentBlock = state.blocks.find((b) => b.id === sel.anchor.blockId);
-    let selectedText: string | undefined;
-    if (sel.type === "text" && currentBlock && Array.isArray(currentBlock.content)) {
-      const text = currentBlock.content.map((s) => s.text).join("");
-      selectedText = text.slice(sel.anchor.offset, sel.head.offset);
-    }
-    const blockIndex = state.blocks.findIndex((b) => b.id === sel.anchor.blockId);
-    const maxCtx = this.options.maxContextBlocks ?? 5;
-    const start = Math.max(0, blockIndex - maxCtx);
-    const end = Math.min(state.blocks.length, blockIndex + maxCtx + 1);
-    return {
-      selectedText,
-      currentBlock: currentBlock as unknown as Block | undefined,
-      surroundingBlocks: state.blocks.slice(start, end) as unknown as Block[],
-    };
+    return buildAiContext(this.editor, this.options.maxContextBlocks);
   }
-
   buildFullContext(): AiContext {
-    const state = this.editor.getViewState();
-    const sel = state.selection;
-    const currentBlock = state.blocks.find((b) => b.id === sel.anchor.blockId);
-    const fullText = state.blocks
-      .map((b) =>
-        Array.isArray(b.content) ? b.content.map((s) => s.text).join("") : (b.content ?? ""),
-      )
-      .join("\n");
-    return {
-      currentBlock: currentBlock as unknown as Block | undefined,
-      surroundingBlocks: state.blocks as unknown as Block[],
-      fullText,
-    };
+    return buildAiContext(this.editor, this.options.maxContextBlocks, true);
   }
-
-  private setProcessing(active: boolean, label?: string): void {
-    this._processing = active;
-    this.editor.emit("aiStatusChange", { active, label });
+  captureTarget(): AiTarget {
+    return captureTarget(this.editor);
   }
-
-  async getSuggestions(prompt: string): Promise<AiSuggestion[]> {
-    if (!this.provider) return [];
-    const context = this.buildContext();
-    return this.provider.generateSuggestions(prompt, context);
-  }
-
-  async *streamCompletion(): AsyncIterable<string> {
-    if (!this.provider) return;
-    this.setProcessing(true, "Generating...");
-    try {
-      const context = this.buildContext();
-      yield* this.provider.generateCompletion(context);
-    } finally {
-      this.setProcessing(false);
-    }
-  }
-
-  async *streamRewrite(text: string): AsyncIterable<string> {
-    if (!this.provider) return;
-    this.setProcessing(true, "Improving...");
-    try {
-      const context = this.buildContext();
-      if (this.provider.streamRewrite) {
-        yield* this.provider.streamRewrite(text, context);
-      } else {
-        const result = await this.provider.executeCommand("rewrite", {
-          ...context,
-          selectedText: text,
-        });
-        yield result;
-      }
-    } finally {
-      this.setProcessing(false);
-    }
-  }
-
-  async *streamContinueWriting(): AsyncIterable<string> {
-    if (!this.provider) return;
-    this.setProcessing(true, "Writing...");
-    try {
-      const context = this.buildContext();
-      yield* this.provider.generateCompletion(context);
-    } finally {
-      this.setProcessing(false);
-    }
-  }
-
-  async *streamGenerateParagraph(prompt: string): AsyncIterable<string> {
-    if (!this.provider) return;
-    this.setProcessing(true, "Generating paragraph...");
-    try {
-      const context = this.buildContext();
-      if (this.provider.generateParagraph) {
-        yield* this.provider.generateParagraph(prompt, context);
-      } else {
-        const result = await this.provider.executeCommand(`addParagraph:${prompt}`, context);
-        yield result;
-      }
-    } finally {
-      this.setProcessing(false);
-    }
-  }
-
-  async proofread(): Promise<AiProofreadSuggestion[]> {
-    if (!this.provider?.proofread) return [];
-    this.setProcessing(true, "Proofreading...");
-    try {
-      const context = this.buildFullContext();
-      return await this.provider.proofread(context);
-    } finally {
-      this.setProcessing(false);
-    }
-  }
-
-  async reviewComments(): Promise<AiComment[]> {
-    if (!this.provider?.reviewComments) return [];
-    this.setProcessing(true, "Reviewing...");
-    try {
-      const context = this.buildFullContext();
-      return await this.provider.reviewComments(context);
-    } finally {
-      this.setProcessing(false);
-    }
-  }
-
-  async executeCommand(command: string): Promise<string> {
+  private requireProvider(): AiProvider {
+    assertWritable(this.editor);
+    if (this.destroyed) throw new Error("AI manager has been destroyed");
     if (!this.provider) throw new Error("No AI provider configured");
-    this.setProcessing(true, "Processing...");
+    return this.provider;
+  }
+  private async run<T>(
+    label: string,
+    full: boolean,
+    action: (provider: AiProvider, context: AiContext) => Promise<T>,
+  ): Promise<T> {
+    const provider = this.requireProvider();
+    const request = this.requests.start(label);
     try {
-      const context = this.buildContext();
-      return await this.provider.executeCommand(command, context);
+      request.check();
+      const context = full ? this.buildFullContext() : this.buildContext();
+      if (this.options.enablePiiDetection) assertNoPii(context);
+      const result = await action(provider, { ...context, signal: request.signal });
+      request.check();
+      return result;
     } finally {
-      this.setProcessing(false);
+      request.finish();
     }
   }
-
-  applySuggestion(suggestion: AiSuggestion): void {
-    const state = this.editor.getViewState();
-    const sel = state.selection;
-    if (suggestion.type === "completion") {
-      this.editor.chain().insertText(suggestion.content).run();
-    } else if (suggestion.type === "rewrite" && sel.type === "text") {
-      this.editor.dispatch({
+  private async *stream(
+    label: string,
+    action: (provider: AiProvider, context: AiContext) => AsyncIterable<string>,
+    signal?: AbortSignal,
+  ): AsyncIterable<string> {
+    const provider = this.requireProvider();
+    const request = this.requests.start(label, signal);
+    try {
+      request.check();
+      const context = { ...this.buildContext(), signal: request.signal };
+      if (this.options.enablePiiDetection) assertNoPii(context);
+      for await (const chunk of action(provider, context)) {
+        request.check();
+        if (typeof chunk !== "string")
+          throw new Error("AI provider returned an invalid text chunk");
+        yield chunk;
+      }
+      request.check();
+    } finally {
+      request.finish();
+    }
+  }
+  async getSuggestions(prompt: string): Promise<AiSuggestion[]> {
+    if (this.options.enablePiiDetection) assertNoPii(prompt);
+    const target = this.captureTarget();
+    const result = await this.run("Generating suggestions...", false, (provider, context) =>
+      provider.generateSuggestions(prompt, context),
+    );
+    assertTarget(this.editor, target);
+    const ids = new Set<string>();
+    this.targets.clear();
+    for (const suggestion of result) {
+      if (
+        !suggestion.id ||
+        ids.has(suggestion.id) ||
+        typeof suggestion.content !== "string" ||
+        !["completion", "rewrite", "fix", "translate", "summarize", "expand"].includes(
+          suggestion.type,
+        )
+      )
+        throw new Error("AI provider returned an invalid suggestion");
+      ids.add(suggestion.id);
+      this.targets.set(suggestion.id, target);
+    }
+    return result;
+  }
+  streamCompletion(signal?: AbortSignal): AsyncIterable<string> {
+    return this.stream(
+      "Generating...",
+      (provider, context) => provider.generateCompletion(context),
+      signal,
+    );
+  }
+  streamRewrite(text: string): AsyncIterable<string> {
+    if (this.options.enablePiiDetection) assertNoPii(text);
+    return this.stream("Improving...", async function* (provider, context) {
+      if (provider.streamRewrite) yield* provider.streamRewrite(text, context);
+      else yield await provider.executeCommand("rewrite", { ...context, selectedText: text });
+    });
+  }
+  streamContinueWriting(): AsyncIterable<string> {
+    return this.stream("Writing...", (provider, context) => provider.generateCompletion(context));
+  }
+  streamGenerateParagraph(prompt: string): AsyncIterable<string> {
+    if (this.options.enablePiiDetection) assertNoPii(prompt);
+    return this.stream("Generating paragraph...", async function* (provider, context) {
+      if (provider.generateParagraph) yield* provider.generateParagraph(prompt, context);
+      else yield await provider.executeCommand(`addParagraph:${prompt}`, context);
+    });
+  }
+  async proofread(): Promise<AiProofreadSuggestion[]> {
+    const target = this.captureTarget();
+    const suggestions = await this.run("Proofreading...", true, (provider, context) => {
+      if (!provider.proofread) throw new Error("This AI provider does not support proofreading");
+      return provider.proofread(context);
+    });
+    assertTarget(this.editor, target);
+    // Validate provider coordinates before exposing anything to review controls.
+    proofreadSteps(this.editor, suggestions, new Map());
+    this.proofreadBaselines.clear();
+    const blocks = new Map(flatten(this.editor.getJSON().blocks).map((block) => [block.id, block]));
+    for (const suggestion of suggestions)
+      this.proofreadBaselines.set(suggestion.id, JSON.stringify(blocks.get(suggestion.blockId)));
+    return suggestions;
+  }
+  async reviewComments(): Promise<AiComment[]> {
+    const target = this.captureTarget();
+    const comments = await this.run("Reviewing...", true, (provider, context) => {
+      if (!provider.reviewComments)
+        throw new Error("This AI provider does not support review comments");
+      return provider.reviewComments(context);
+    });
+    assertTarget(this.editor, target);
+    const blocks = new Map(flatten(this.editor.getJSON().blocks).map((block) => [block.id, block]));
+    const ids = new Set<string>();
+    for (const comment of comments) {
+      const block = blocks.get(comment.blockId);
+      const text = block ? textOf(block) : "";
+      if (
+        !block ||
+        !comment.id ||
+        ids.has(comment.id) ||
+        typeof comment.body !== "string" ||
+        !validOffset(text, comment.from) ||
+        !validOffset(text, comment.to) ||
+        comment.from > comment.to ||
+        text.slice(comment.from, comment.to) !== comment.quotedText
+      ) {
+        throw new Error("AI review comment has an invalid text anchor");
+      }
+      ids.add(comment.id);
+    }
+    return comments;
+  }
+  executeCommand(command: string): Promise<string> {
+    if (this.options.enablePiiDetection) assertNoPii(command);
+    return this.run("Processing...", false, (provider, context) =>
+      provider.executeCommand(command, context),
+    );
+  }
+  applySuggestion(
+    suggestion: AiSuggestion,
+    target = this.targets.get(suggestion.id) ?? this.captureTarget(),
+  ): void {
+    if (this.destroyed) throw new Error("AI manager has been destroyed");
+    assertTarget(this.editor, target);
+    if (typeof suggestion.content !== "string") throw new Error("AI suggestion has no text");
+    const selection = target.selection;
+    const engineSelection: Selection =
+      selection.type === "text"
+        ? { type: "range", anchor: selection.anchor, head: selection.head }
+        : selection.type === "multi"
+          ? { type: "multi", blockIds: selection.blockIds ?? [selection.anchor.blockId] }
+          : { type: "block", blockId: selection.anchor.blockId };
+    if (!this.editor.chain().setSelection(engineSelection).insertText(suggestion.content).run()) {
+      throw new Error("The editor declined the AI change");
+    }
+    this.targets.delete(suggestion.id);
+  }
+  insertParagraph(text: string, target: AiTarget): void {
+    if (this.destroyed) throw new Error("AI manager has been destroyed");
+    assertTarget(this.editor, target);
+    if (!text) return;
+    const location = blockLocation(this.editor.getJSON().blocks, target.selection.anchor.blockId);
+    if (!location) throw new Error("The AI insertion block no longer exists");
+    const id = crypto.randomUUID();
+    const item = location.block.type === "listItem" || location.block.type === "todoItem";
+    if (
+      !this.editor.dispatch({
         steps: [
           {
-            type: "deleteText",
-            blockId: sel.anchor.blockId,
-            from: sel.anchor.offset,
-            to: sel.head.offset,
-          },
-          {
-            type: "insertText",
-            blockId: sel.anchor.blockId,
-            offset: sel.anchor.offset,
-            text: suggestion.content,
-            marks: [],
+            type: "insertBlock",
+            parentId: location.parentId,
+            index: location.index + 1,
+            block: {
+              id,
+              type: item ? location.block.type : "paragraph",
+              attrs: location.block.type === "todoItem" ? { checked: false } : {},
+              content: [{ text, marks: [] }],
+              children: [],
+            },
           },
         ],
-      });
-    }
+        selection: { type: "cursor", blockId: id, offset: text.length },
+      })
+    )
+      throw new Error("The editor declined the AI insertion");
   }
-
   applyProofreadSuggestion(suggestion: AiProofreadSuggestion): void {
-    if (suggestion.type === "replace" || suggestion.type === "insert") {
-      this.editor.dispatch({
-        steps: [
-          ...(suggestion.from !== suggestion.to
-            ? [
-                {
-                  type: "deleteText" as const,
-                  blockId: suggestion.blockId,
-                  from: suggestion.from,
-                  to: suggestion.to,
-                },
-              ]
-            : []),
-          {
-            type: "insertText" as const,
-            blockId: suggestion.blockId,
-            offset: suggestion.from,
-            text: suggestion.suggestedText,
-            marks: [],
-          },
-        ],
-      });
-    } else if (suggestion.type === "delete") {
-      this.editor.dispatch({
-        steps: [
-          {
-            type: "deleteText",
-            blockId: suggestion.blockId,
-            from: suggestion.from,
-            to: suggestion.to,
-          },
-        ],
-      });
-    }
+    this.applyProofreadSuggestions([suggestion]);
   }
-
+  applyProofreadSuggestions(suggestions: AiProofreadSuggestion[]): void {
+    if (this.destroyed) throw new Error("AI manager has been destroyed");
+    const steps = proofreadSteps(this.editor, suggestions, this.proofreadBaselines);
+    if (!steps.length) return;
+    if (!this.editor.dispatch({ steps })) throw new Error("The editor declined the AI corrections");
+    for (const suggestion of suggestions) this.proofreadBaselines.delete(suggestion.id);
+  }
+  rebaseProofreadSuggestions(
+    suggestions: AiProofreadSuggestion[],
+    applied: AiProofreadSuggestion[],
+  ): AiProofreadSuggestion[] {
+    const blocks = new Map(flatten(this.editor.getJSON().blocks).map((block) => [block.id, block]));
+    return suggestions.map((suggestion) => {
+      const shift = applied
+        .filter((edit) => edit.blockId === suggestion.blockId && edit.to <= suggestion.from)
+        .reduce(
+          (sum, edit) =>
+            sum + (edit.type === "delete" ? 0 : edit.suggestedText.length) - (edit.to - edit.from),
+          0,
+        );
+      const updated = { ...suggestion, from: suggestion.from + shift, to: suggestion.to + shift };
+      // Only the block changed by this accepted batch receives a new baseline.
+      if (applied.some((edit) => edit.blockId === suggestion.blockId))
+        this.proofreadBaselines.set(suggestion.id, JSON.stringify(blocks.get(suggestion.blockId)));
+      return updated;
+    });
+  }
   cancelPending(): void {
-    if (this.debounceTimer) {
-      clearTimeout(this.debounceTimer);
-      this.debounceTimer = null;
-    }
-    this.abortController?.abort();
-    this.abortController = null;
-    if (this._processing) {
-      this.setProcessing(false);
-    }
+    this.requests.cancel();
   }
-
   destroy(): void {
-    this.cancelPending();
+    this.destroyed = true;
+    this.requests.destroy();
     this.provider = null;
+    this.targets.clear();
+    this.proofreadBaselines.clear();
   }
 }

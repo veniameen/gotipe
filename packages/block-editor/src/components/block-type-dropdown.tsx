@@ -1,128 +1,107 @@
 import type { GoTipeEditor } from "@gotipe/core";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEditorState } from "@gotipe/react";
+import { blockPath } from "./formatting/selection";
+import { useFormattingMenu } from "./formatting/use-formatting-menu";
 
 export interface BlockTypeDropdownProps {
   editor: GoTipeEditor;
 }
-
 interface BlockTypeOption {
   type: string;
   label: string;
   icon: string;
   attrs?: Record<string, unknown>;
 }
-
 const BLOCK_TYPES: BlockTypeOption[] = [
   { type: "paragraph", label: "Paragraph", icon: "Aa" },
   { type: "heading", label: "Heading 1", icon: "H1", attrs: { level: 1 } },
   { type: "heading", label: "Heading 2", icon: "H2", attrs: { level: 2 } },
   { type: "heading", label: "Heading 3", icon: "H3", attrs: { level: 3 } },
-  { type: "bulletList", label: "Bullet List", icon: "\u2022" },
-  { type: "numberedList", label: "Numbered List", icon: "1." },
-  { type: "todoList", label: "Todo List", icon: "\u2611" },
-  { type: "blockquote", label: "Quote", icon: "\u201C" },
+  { type: "bulletList", label: "Bullet List", icon: "•" },
+  { type: "orderedList", label: "Numbered List", icon: "1." },
+  { type: "todoList", label: "Todo List", icon: "☑" },
+  { type: "blockquote", label: "Quote", icon: "“" },
   { type: "codeBlock", label: "Code", icon: "</>" },
 ];
-
-function getCurrentBlockLabel(editor: GoTipeEditor): string {
-  const state = editor.getViewState();
-  const { anchor } = state.selection;
-  const block = state.blocks.find((b) => b.id === anchor.blockId);
-  if (!block) return "Paragraph";
-  if (block.type === "heading") {
-    const level = (block.attrs as Record<string, unknown>)?.level;
-    return `Heading ${level ?? 1}`;
-  }
-  const match = BLOCK_TYPES.find((bt) => bt.type === block.type && !bt.attrs);
-  return match?.label ?? "Paragraph";
-}
-
 export function BlockTypeDropdown({ editor }: BlockTypeDropdownProps) {
-  const [open, setOpen] = useState(false);
-  const containerRef = useRef<HTMLDivElement>(null);
-
-  const currentLabel = getCurrentBlockLabel(editor);
-
-  const handleSelect = useCallback(
-    (option: BlockTypeOption) => {
-      const chain = editor.chain().focus();
-      if (option.attrs) {
-        chain.setBlockType(option.type, option.attrs);
-      } else {
-        chain.setBlockType(option.type);
-      }
-      chain.run();
-      setOpen(false);
-    },
-    [editor],
-  );
-
-  // Close on outside click
-  useEffect(() => {
-    if (!open) return;
-    const handleClick = (e: MouseEvent) => {
-      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
-        setOpen(false);
-      }
-    };
-    document.addEventListener("mousedown", handleClick);
-    return () => document.removeEventListener("mousedown", handleClick);
-  }, [open]);
-
-  // Close on Escape
-  useEffect(() => {
-    if (!open) return;
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setOpen(false);
-    };
-    document.addEventListener("keydown", handleKeyDown);
-    return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [open]);
-
+  const state = useEditorState(editor, (value) => value) ?? editor.getViewState();
+  const menu = useFormattingMenu(editor);
+  const path = blockPath(state.blocks, state.selection.anchor.blockId);
+  const block = path.at(-1);
+  const structuralCell = !!block && ["tableCell", "tableHeader"].includes(block.type);
+  const list = [...path]
+    .reverse()
+    .find((item) => ["bulletList", "orderedList", "todoList"].includes(item.type));
+  const label =
+    block?.type === "heading"
+      ? `Heading ${block.attrs.level ?? 1}`
+      : (BLOCK_TYPES.find((option) => option.type === (list?.type ?? block?.type))?.label ??
+        "Paragraph");
+  const select = (option: BlockTypeOption) => {
+    if (label === option.label) {
+      menu.close();
+      return;
+    }
+    menu.run((chain) => {
+      if (option.type === "bulletList") chain.toggleBulletList();
+      else if (option.type === "orderedList") chain.toggleOrderedList();
+      else if (option.type === "todoList") chain.toggleTodoList();
+      else chain.setBlockType(option.type, option.attrs);
+    });
+  };
   return (
-    <div ref={containerRef} style={{ position: "relative" }}>
+    <div>
       <button
+        ref={menu.trigger}
         type="button"
         className="gotipe-block-type-trigger"
-        onClick={() => setOpen((prev) => !prev)}
+        disabled={!menu.editable || structuralCell}
+        onClick={() => (menu.open ? menu.close() : menu.show())}
         aria-haspopup="listbox"
-        aria-expanded={open}
+        aria-expanded={menu.open}
         aria-label="Change block type"
+        onKeyDown={(event) => {
+          if (event.key === "ArrowDown") {
+            event.preventDefault();
+            menu.show();
+            requestAnimationFrame(() =>
+              menu.popup.current?.querySelector<HTMLButtonElement>("button")?.focus(),
+            );
+          }
+        }}
       >
-        <span className="gotipe-block-type-trigger-label">{currentLabel}</span>
+        <span className="gotipe-block-type-trigger-label">{label}</span>
         <span className="gotipe-block-type-trigger-chevron" aria-hidden="true">
-          {"\u25BE"}
+          ▾
         </span>
       </button>
-
-      {open && (
+      {menu.open && (
         <div
+          ref={menu.popup}
           className="gotipe-block-type-dropdown"
           role="listbox"
+          aria-label="Block types"
           data-gotipe-block-type-dropdown=""
+          data-gotipe-formatting-popup=""
+          style={menu.style}
+          onKeyDown={menu.keydown}
         >
-          {BLOCK_TYPES.map((option) => {
-            const isActive =
-              option.label === currentLabel ||
-              (option.type === "paragraph" && currentLabel === "Paragraph");
-            return (
-              <button
-                key={option.label}
-                type="button"
-                role="option"
-                className={isActive ? "active" : ""}
-                aria-selected={isActive}
-                data-block-type={option.type}
-                data-level={option.attrs?.level}
-                onClick={() => handleSelect(option)}
-              >
-                <span style={{ width: "20px", textAlign: "center", flexShrink: 0 }}>
-                  {option.icon}
-                </span>
-                {option.label}
-              </button>
-            );
-          })}
+          {BLOCK_TYPES.map((option) => (
+            <button
+              key={option.label}
+              type="button"
+              role="option"
+              className={option.label === label ? "active" : ""}
+              aria-selected={option.label === label}
+              data-block-type={option.type}
+              data-level={option.attrs?.level}
+              onClick={() => select(option)}
+            >
+              <span style={{ width: 20, textAlign: "center", flexShrink: 0 }}>{option.icon}</span>
+              {option.label}
+            </button>
+          ))}
+          {menu.error && <p role="alert">{menu.error}</p>}
         </div>
       )}
     </div>

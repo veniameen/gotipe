@@ -1,8 +1,8 @@
 package sync
 
 import (
+	"context"
 	"log/slog"
-	"sync"
 	"time"
 
 	"github.com/gorilla/websocket"
@@ -17,30 +17,36 @@ const (
 
 // Client represents a single WebSocket connection
 type Client struct {
-	room   *Room
-	conn   *websocket.Conn
-	send   chan []byte
-	peerID string
-	userID string
-	mu     sync.Mutex
-	log    *slog.Logger
+	expiresAt time.Time
+	authorize func(context.Context) error
+	limiter   *messageWindow
+	room      *Room
+	conn      *websocket.Conn
+	send      chan []byte
+	peerID    string
+	userID    string
+	log       *slog.Logger
 }
 
 func NewClient(room *Room, conn *websocket.Conn, peerID, userID string, log *slog.Logger) *Client {
 	return &Client{
-		room:   room,
-		conn:   conn,
-		send:   make(chan []byte, 256),
-		peerID: peerID,
-		userID: userID,
-		log:    log,
+		limiter: newMessageWindow(1000, time.Minute),
+		room:    room,
+		conn:    conn,
+		send:    make(chan []byte, 256),
+		peerID:  peerID,
+		userID:  userID,
+		log:     log,
 	}
 }
 
 // ReadPump reads messages from the WebSocket connection
 func (c *Client) ReadPump() {
 	defer func() {
-		c.room.unregister <- c
+		select {
+		case c.room.unregister <- c:
+		case <-c.room.Done():
+		}
 		c.conn.Close()
 	}()
 
@@ -60,6 +66,11 @@ func (c *Client) ReadPump() {
 			break
 		}
 
+		if !c.limiter.allow(time.Now()) {
+			_ = c.conn.WriteControl(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.ClosePolicyViolation, "Message rate limit exceeded"), time.Now().Add(writeWait))
+			return
+		}
+
 		// Only handle binary messages (CRDT protocol)
 		if messageType != websocket.BinaryMessage {
 			continue
@@ -67,6 +78,11 @@ func (c *Client) ReadPump() {
 
 		if len(message) == 0 {
 			continue
+		}
+
+		if err := c.checkAuthorization(); err != nil {
+			c.closeUnauthorized()
+			return
 		}
 
 		// Parse message type from first byte
@@ -78,6 +94,14 @@ func (c *Client) ReadPump() {
 // WritePump writes messages to the WebSocket connection
 func (c *Client) WritePump() {
 	ticker := time.NewTicker(pingPeriod)
+	sessionTicker := time.NewTicker(15 * time.Second)
+	defer sessionTicker.Stop()
+	var expiration <-chan time.Time
+	if !c.expiresAt.IsZero() {
+		timer := time.NewTimer(time.Until(c.expiresAt))
+		defer timer.Stop()
+		expiration = timer.C
+	}
 	defer func() {
 		ticker.Stop()
 		c.conn.Close()
@@ -91,10 +115,22 @@ func (c *Client) WritePump() {
 				c.conn.WriteMessage(websocket.CloseMessage, []byte{})
 				return
 			}
+			if err := c.checkAuthorization(); err != nil {
+				c.closeUnauthorized()
+				return
+			}
 			if err := c.conn.WriteMessage(websocket.BinaryMessage, message); err != nil {
 				return
 			}
 
+		case <-expiration:
+			c.closeUnauthorized()
+			return
+		case <-sessionTicker.C:
+			if err := c.checkAuthorization(); err != nil {
+				c.closeUnauthorized()
+				return
+			}
 		case <-ticker.C:
 			c.conn.SetWriteDeadline(time.Now().Add(writeWait))
 			if err := c.conn.WriteMessage(websocket.PingMessage, nil); err != nil {
@@ -118,6 +154,6 @@ func (c *Client) handleMessage(msgType byte, data []byte) {
 	case 0x05: // AwarenessQuery — request awareness state
 		c.room.handleAwarenessQuery(c)
 	default:
-		c.log.Debug("unknown message type", "type", msgType, "peer_id", c.peerID)
+		c.room.enqueue(c, msgType, data[1:])
 	}
 }

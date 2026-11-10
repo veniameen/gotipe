@@ -14,12 +14,14 @@
   "types": "./dist/index.d.ts",
   "sideEffects": false,
   "peerDependencies": {
-    "@gotipe/core": "^0.1.0"
+    "@gotipe/core": "^0.1.0",
+    "@gotipe/export-wasm": "^0.1.0"
   },
   "devDependencies": {
     "@gotipe/core": "workspace:*",
-    "vitest": "^2.1",
-    "tsup": "^8.3"
+    "@gotipe/export-wasm": "workspace:*",
+    "tsup": "^8.5.1",
+    "vitest": "^4.1.12"
   },
   "scripts": {
     "build": "tsup",
@@ -27,5 +29,17 @@
     "typecheck": "tsc --noEmit",
     "lint": "biome check src/"
   },
-  "license": "MIT"
+  "license": "MIT",
+  "files": [
+    "dist",
+    "LICENSE"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "peerDependenciesMeta": {
+    "@gotipe/export-wasm": {
+      "optional": true
+    }
+  }
 }

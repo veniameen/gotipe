@@ -1,6 +1,8 @@
 package billing
 
 import (
+	"context"
+	"errors"
 	"github.com/stripe/stripe-go/v81"
 	"github.com/stripe/stripe-go/v81/checkout/session"
 	"github.com/stripe/stripe-go/v81/customer"
@@ -12,17 +14,30 @@ type StripeClient struct {
 }
 
 func NewStripeClient(secretKey string) *StripeClient {
-	stripe.Key = secretKey
 	return &StripeClient{secretKey: secretKey}
 }
 
+func (c *StripeClient) GetSubscription(ctx context.Context, id string) (*stripe.Subscription, error) {
+	if c.secretKey == "" {
+		return nil, errors.New("Stripe is not configured")
+	}
+	params := &stripe.SubscriptionParams{}
+	params.Context = ctx
+	return (subscription.Client{B: stripe.GetBackend(stripe.APIBackend), Key: c.secretKey}).Get(id, params)
+}
+
 // CreateCustomer creates Stripe customer for a user
-func (c *StripeClient) CreateCustomer(email, name string) (*stripe.Customer, error) {
+func (c *StripeClient) CreateCustomer(ctx context.Context, userID, email, name string) (*stripe.Customer, error) {
+	if c.secretKey == "" {
+		return nil, errors.New("Stripe is not configured")
+	}
 	params := &stripe.CustomerParams{
 		Email: stripe.String(email),
 		Name:  stripe.String(name),
 	}
-	return customer.New(params)
+	params.Context = ctx
+	params.SetIdempotencyKey("gotipe-customer-" + userID)
+	return (customer.Client{B: stripe.GetBackend(stripe.APIBackend), Key: c.secretKey}).New(params)
 }
 
 // CreateSubscription creates subscription for a customer
@@ -34,20 +49,27 @@ func (c *StripeClient) CreateSubscription(customerID, priceID string) (*stripe.S
 			{Price: stripe.String(priceID)},
 		},
 	}
-	return subscription.New(params)
+	return (subscription.Client{B: stripe.GetBackend(stripe.APIBackend), Key: c.secretKey}).New(params)
 }
 
 // CancelSubscription cancels at period end
 // IMPORTANT: Call OUTSIDE DB transaction
-func (c *StripeClient) CancelSubscription(subscriptionID string) (*stripe.Subscription, error) {
+func (c *StripeClient) CancelSubscription(ctx context.Context, subscriptionID string) (*stripe.Subscription, error) {
+	if c.secretKey == "" {
+		return nil, errors.New("Stripe is not configured")
+	}
 	params := &stripe.SubscriptionParams{
 		CancelAtPeriodEnd: stripe.Bool(true),
 	}
-	return subscription.Update(subscriptionID, params)
+	params.Context = ctx
+	return (subscription.Client{B: stripe.GetBackend(stripe.APIBackend), Key: c.secretKey}).Update(subscriptionID, params)
 }
 
 // CreateCheckoutSession creates hosted checkout page
-func (c *StripeClient) CreateCheckoutSession(customerID, priceID, successURL, cancelURL string) (*stripe.CheckoutSession, error) {
+func (c *StripeClient) CreateCheckoutSession(ctx context.Context, customerID, priceID, successURL, cancelURL, key string) (*stripe.CheckoutSession, error) {
+	if c.secretKey == "" {
+		return nil, errors.New("Stripe is not configured")
+	}
 	params := &stripe.CheckoutSessionParams{
 		Customer: stripe.String(customerID),
 		Mode:     stripe.String(string(stripe.CheckoutSessionModeSubscription)),
@@ -60,5 +82,7 @@ func (c *StripeClient) CreateCheckoutSession(customerID, priceID, successURL, ca
 		SuccessURL: stripe.String(successURL),
 		CancelURL:  stripe.String(cancelURL),
 	}
-	return session.New(params)
+	params.Context = ctx
+	params.SetIdempotencyKey(key)
+	return (session.Client{B: stripe.GetBackend(stripe.APIBackend), Key: c.secretKey}).New(params)
 }

@@ -1,0 +1,111 @@
+.gotipe-code-block {
+  background: var(--gt-bg-code, var(--gt-bg-hover));
+  border-radius: var(--gt-radius-md, 8px);
+  overflow: hidden;
+}
+
+.gotipe-code-block-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--gt-space-2, 8px) var(--gt-space-4, 16px);
+  border-bottom: 1px solid var(--gt-border-light, rgba(0, 0, 0, 0.05));
+}
+
+.gotipe-code-language-select {
+  min-width: 128px;
+  max-width: 220px;
+  color: var(--gt-text-secondary);
+}
+
+.gotipe-code-block-header button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: transparent;
+  color: var(--gt-text-tertiary);
+  font-size: var(--gt-text-xs, 12px);
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: var(--gt-radius-sm, 6px);
+  transition: color var(--gt-duration-fast, 100ms) var(--gt-ease-out), background
+    var(--gt-duration-fast, 100ms) var(--gt-ease-out);
+}
+
+.gotipe-code-block-header button:hover {
+  color: var(--gt-text-base);
+  background: var(--gt-bg-hover);
+}
+
+.gotipe-code-block pre {
+  margin: 0;
+  padding: var(--gt-space-4, 16px);
+  background: transparent;
+  border-radius: 0;
+}
+
+.gotipe-code-block-line-numbers {
+  width: 32px;
+  text-align: right;
+  color: var(--gt-text-tertiary);
+  font-size: var(--gt-text-sm, 14px);
+  user-select: none;
+  padding-right: var(--gt-space-3, 12px);
+}
+
+.gotipe-code-block-header {
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.gotipe-code-language-select {
+  flex: 1 1 128px;
+  min-width: 0;
+  max-width: 220px;
+  border: 1px solid var(--gt-border);
+  border-radius: var(--gt-radius-sm, 6px);
+  background: var(--gt-bg);
+  color: var(--gt-text-secondary);
+  padding: 4px 8px;
+  font: inherit;
+}
+.gotipe-code-block-scroll {
+  display: flex;
+  min-width: 0;
+  font-family: var(--gt-font-mono, monospace);
+  font-size: 13px;
+  line-height: 1.6;
+}
+.gotipe-code-block .gotipe-code-block-scroll pre {
+  flex: 1;
+  min-width: 0;
+  padding: 12px;
+  overflow-x: auto;
+  white-space: pre;
+  overflow-wrap: normal;
+  font: inherit;
+}
+.gotipe-code-block .gotipe-code-block-line-numbers {
+  flex: 0 0 36px;
+  width: auto;
+  padding: 12px 0 12px 4px;
+  font: inherit;
+}
+
+.gotipe-code-token {
+  /* Inherited color-scheme follows the nearest scoped theme, including system
+     themes. An outer dark host must not override a nested light editor. */
+  color: light-dark(
+    var(--gt-code-token, currentColor),
+    var(--gt-code-token-dark, var(--gt-code-token, currentColor))
+  );
+}
+.gotipe-code-token[data-italic] {
+  font-style: italic;
+}
+.gotipe-code-token[data-bold] {
+  font-weight: 600;
+}
+.gotipe-code-token[data-underline] {
+  text-decoration: underline;
+}

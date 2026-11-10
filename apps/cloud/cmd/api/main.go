@@ -6,17 +6,19 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
-	"strings"
 	"syscall"
 	"time"
 
 	"github.com/go-chi/chi/v5"
 	chiMiddleware "github.com/go-chi/chi/v5/middleware"
+	cloudAI "github.com/gotipe/cloud/internal/ai"
 	"github.com/gotipe/cloud/internal/apierror"
 	"github.com/gotipe/cloud/internal/audit"
 	"github.com/gotipe/cloud/internal/auth"
 	"github.com/gotipe/cloud/internal/billing"
 	"github.com/gotipe/cloud/internal/config"
+	"github.com/gotipe/cloud/internal/conversion"
+	"github.com/gotipe/cloud/internal/document"
 	"github.com/gotipe/cloud/internal/handler"
 	"github.com/gotipe/cloud/internal/logger"
 	"github.com/gotipe/cloud/internal/middleware"
@@ -26,6 +28,13 @@ import (
 )
 
 func main() {
+	if handled, err := runCommand(os.Args[1:]); handled {
+		if err != nil {
+			slog.Error("command failed", "error", err)
+			os.Exit(1)
+		}
+		return
+	}
 	// Load config
 	cfg, err := config.Load()
 	if err != nil {
@@ -78,23 +87,50 @@ func main() {
 	stripeClient := billing.NewStripeClient(cfg.StripeSecretKey)
 
 	// Rate limiter
-	apiLimit, apiWindow, _ := config.ParseRateLimit(cfg.RateLimitAPI)
+	apiLimit, apiWindow, err := config.ParseRateLimit(cfg.RateLimitAPI)
+	if err != nil {
+		log.Error("invalid API rate limit", "error", err)
+		os.Exit(1)
+	}
 	rateLimiter, err := middleware.NewRateLimiter(valkeyStore, apiLimit, apiWindow)
 	if err != nil {
-		log.Warn("failed to initialize rate limiter, continuing without", "error", err)
+		log.Error("failed to initialize rate limiter", "error", err)
+		os.Exit(1)
+	}
+	authLimiter, err := middleware.NewRateLimiter(valkeyStore, 10, time.Minute)
+	if err != nil {
+		log.Error("failed to initialize authentication rate limiter", "error", err)
+		os.Exit(1)
+	}
+
+	aiLimit, aiWindow, err := config.ParseRateLimit(cfg.RateLimitAI)
+	if err != nil {
+		log.Error("invalid AI rate limit", "error", err)
+		os.Exit(1)
+	}
+	aiLimiter, err := middleware.NewRateLimiter(valkeyStore, aiLimit, aiWindow)
+	if err != nil {
+		log.Error("failed to initialize AI rate limiter", "error", err)
+		os.Exit(1)
 	}
 
 	// --- Phase 3: Initialize handlers ---
 	authHandler := handler.NewAuthHandler(db, jwtSvc, valkeyStore)
 	usersHandler := handler.NewUsersHandler(db)
 	apiKeysHandler := handler.NewAPIKeysHandler(db, auditLogger, cfg.Environment)
-	documentsHandler := handler.NewDocumentsHandler(db, r2, auditLogger)
+	converter := conversion.Native{Command: os.Getenv("GOTIPE_EXPORT_COMMAND")}
+	contents := &document.Reader{DB: db.Pool, Store: r2, Converter: converter}
+	documentsHandler := handler.NewDocumentsHandler(db, r2, auditLogger, contents)
+	if err := documentsHandler.SetDocumentLimit(cfg.ExportMaxDocSize); err != nil {
+		log.Error("invalid document limit", "error", err)
+		os.Exit(1)
+	}
 	commentsHandler := handler.NewCommentsHandler(db, auditLogger)
-	versionsHandler := handler.NewVersionsHandler(db, r2, auditLogger)
+	versionsHandler := handler.NewVersionsHandler(db, r2, auditLogger, contents)
 	orgsHandler := handler.NewOrganizationsHandler(db, auditLogger)
 	permsHandler := handler.NewPermissionsHandler(db, auditLogger)
 	exportsHandler := handler.NewExportsHandler(db, r2, auditLogger)
-	aiHandler := handler.NewAIHandler(db, valkeyStore, cfg.AIDefaultProvider, cfg.AIDefaultModel, cfg.AIMaxTokens)
+	aiHandler := handler.NewAIHandler(db, cloudAI.NewHTTPProvider(cfg.OpenAIAPIKey, cfg.AnthropicAPIKey, cfg.GoogleAIAPIKey), cfg.AIDefaultProvider, cfg.AIDefaultModel, cfg.AIMaxTokens)
 	billingHandler := handler.NewBillingHandler(db, stripeClient, auditLogger, map[string]string{
 		"starter":  cfg.StripePriceStarterID,
 		"pro":      cfg.StripePriceProID,
@@ -108,23 +144,25 @@ func main() {
 	// Middleware chain (order is critical)
 	r.Use(middleware.RequestIDMiddleware)
 	r.Use(middleware.LoggerMiddleware(log))
+	r.Use(middleware.BodyLimitMiddleware(cfg.ExportMaxDocSize + (1 << 20)))
 	r.Use(chiMiddleware.Recoverer)
-	r.Use(middleware.CORSMiddleware([]string{"*"})) // Configure in production
+	r.Use(middleware.CORSMiddleware(cfg.HTTPAllowedOrigins))
 	r.Use(middleware.CSPMiddleware)
 
 	// Public routes
 	r.Get("/healthz", handler.Healthz())
 	r.Get("/readyz", handler.Readyz(db, valkeyStore, r2))
-	r.Post("/v1/auth/token", authHandler.CreateToken())
+	r.With(authLimiter.IPMiddleware()).Post("/v1/auth/token", authHandler.CreateToken())
 	r.Post("/v1/webhooks/stripe", webhooksHandler.StripeWebhook())
 
 	// Authenticated routes
 	r.Group(func(r chi.Router) {
 		r.Use(auth.AuthMiddleware(jwtSvc, apiKeySvc, valkeyStore))
+		r.Use(auth.RequireAPIScope)
 		if rateLimiter != nil {
 			r.Use(rateLimiter.Middleware())
 		}
-		r.Use(middleware.IdempotencyMiddleware(valkeyStore))
+		r.Use(middleware.IdempotencyMiddleware(valkeyStore, handler.ReplayAccess(db.Pool)))
 
 		// Auth
 		r.Post("/v1/auth/revoke", authHandler.RevokeToken())
@@ -173,7 +211,7 @@ func main() {
 		r.Get("/v1/exports/{id}", exportsHandler.GetExport())
 
 		// AI
-		r.Post("/v1/ai/complete", aiHandler.Complete())
+		r.With(aiLimiter.Middleware("ai")).Post("/v1/ai/complete", aiHandler.Complete())
 
 		// Billing
 		r.Post("/v1/billing/subscribe", billingHandler.CreateSubscription())
@@ -189,21 +227,37 @@ func main() {
 	// --- Phase 5: Initialize WebSocket sync server ---
 	syncPersist := &dbPersistenceStore{db: db, r2: r2}
 	syncServer := sync.NewServer(syncPersist, log)
+	syncServer.SetAuthorizationCheck(handler.SyncSessionAuthorization(db.Pool, valkeyStore))
+	wsLimit, wsWindow, err := config.ParseRateLimit(cfg.RateLimitWS)
+	if err == nil {
+		err = syncServer.SetMessageRate(wsLimit, wsWindow)
+	}
+	if err != nil {
+		log.Error("invalid sync message rate", "error", err)
+		os.Exit(1)
+	}
+	if err := syncServer.SetAllowedOrigins(cfg.SyncAllowedOrigins); err != nil {
+		log.Error("invalid sync origins", "error", err)
+		os.Exit(1)
+	}
 
 	syncRouter := chi.NewRouter()
 	syncRouter.Use(middleware.RequestIDMiddleware)
 	syncRouter.Use(middleware.LoggerMiddleware(log))
+	syncRouter.Use(auth.WebSocketCredentials)
 	syncRouter.Use(auth.AuthMiddleware(jwtSvc, apiKeySvc, valkeyStore))
-	syncRouter.Get("/sync", syncServer.HandleWebSocket())
+	syncRouter.With(rateLimiter.Middleware("sync-connect"), auth.RequireScope("documents:write"), handler.SyncDocumentAccess(db)).Get("/sync", syncServer.HandleWebSocket())
 
 	// --- Phase 6: Start background workers ---
-	cleanupWorker := worker.NewCleanupWorker(db, r2, valkeyStore, log)
+	cleanupWorker := worker.NewCleanupWorker(db, r2, log)
 	go cleanupWorker.Start(ctx)
 
-	retryWorker := worker.NewRetryWorker(db, log)
+	retryWorker := worker.NewRetryWorker(db, log, &billing.EventProcessor{DB: db.Pool, Subscriptions: stripeClient, Prices: map[string]string{
+		"starter": cfg.StripePriceStarterID, "pro": cfg.StripePriceProID, "business": cfg.StripePriceBusinessID,
+	}})
 	go retryWorker.Start(ctx)
 
-	exportWorker := worker.NewExportWorker(db, r2, log, cfg.ExportPollInterval, cfg.ExportR2Prefix)
+	exportWorker := worker.NewExportWorker(db, r2, log, cfg.ExportPollInterval, cfg.ExportR2Prefix, converter, contents, worker.ExportOptions{Workers: cfg.ExportWorkers, MaxDocumentBytes: cfg.ExportMaxDocSize})
 	go exportWorker.Start(ctx)
 
 	billingWorker := worker.NewBillingWorker(db, log)
@@ -294,62 +348,4 @@ func main() {
 	log.Info("shutdown complete")
 }
 
-// dbPersistenceStore implements sync.PersistenceStore
-type dbPersistenceStore struct {
-	db *storage.PostgresStore
-	r2 *storage.R2Store
-}
-
-func (p *dbPersistenceStore) LoadDocument(ctx context.Context, documentID string) ([]byte, error) {
-	var r2Key string
-	err := p.db.Pool.QueryRow(ctx,
-		`SELECT r2_key FROM documents WHERE id = $1`, documentID,
-	).Scan(&r2Key)
-	if err != nil {
-		return nil, err
-	}
-	return p.r2.Get(ctx, r2Key)
-}
-
-func (p *dbPersistenceStore) SaveUpdate(ctx context.Context, documentID string, update []byte) error {
-	_, err := p.db.Pool.Exec(ctx,
-		`INSERT INTO document_updates (document_id, data, created_at) VALUES ($1, $2, now())`,
-		documentID, update,
-	)
-	return err
-}
-
-func (p *dbPersistenceStore) SaveSnapshot(ctx context.Context, documentID string, snapshot []byte) error {
-	var r2Key string
-	err := p.db.Pool.QueryRow(ctx,
-		`SELECT r2_key FROM documents WHERE id = $1`, documentID,
-	).Scan(&r2Key)
-	if err != nil {
-		return err
-	}
-	if err := p.r2.Put(ctx, r2Key, snapshot); err != nil {
-		return err
-	}
-	_, err = p.db.Pool.Exec(ctx,
-		`UPDATE documents SET size_bytes = $1, updated_at = now() WHERE id = $2`,
-		len(snapshot), documentID,
-	)
-	return err
-}
-
 // Ensure allowedOrigins are configured properly
-func getAllowedOrigins(env string) []string {
-	if env == "production" {
-		return []string{
-			"https://gotipe.com",
-			"https://app.gotipe.com",
-			"https://docs.gotipe.com",
-		}
-	}
-	return []string{"*"}
-}
-
-func init() {
-	// Silence unused import
-	_ = strings.TrimPrefix
-}

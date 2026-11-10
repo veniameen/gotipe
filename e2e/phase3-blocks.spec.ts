@@ -1,6 +1,6 @@
 import { test, expect } from "@playwright/test";
 
-const BASE = "http://localhost:5173/#basic";
+const BASE = "http://localhost:5173/?view=block#basic";
 
 test.describe("Phase 3.5-3.8 Block Types", () => {
   test.beforeEach(async ({ page }) => {
@@ -237,12 +237,15 @@ test.describe("Phase 3.5-3.8 Block Types", () => {
     const codeBlock = page.locator('[data-block-type="codeBlock"]');
     expect(await codeBlock.count()).toBeGreaterThan(0);
 
-    // Should be rendered as <pre><code>
-    const pre = page.locator('pre[data-block-type="codeBlock"]');
-    expect(await pre.count()).toBeGreaterThan(0);
-
-    const code = pre.first().locator("code");
-    expect(await code.count()).toBe(1);
+    // Controls are outside the text host; code retains semantic pre/code structure.
+    const code = codeBlock.first().locator('pre > code[data-gotipe-text-content]');
+    await expect(code).toBeVisible();
+    const raw = await codeBlock.first().evaluate((element) => {
+      const editor = window.__GOTIPE_EDITOR__!;
+      return editor.getJSON().blocks.find((block) => block.id === element.getAttribute('data-block-id'))!.content;
+    });
+    expect(typeof raw).toBe('string');
+    expect(await code.textContent()).toBe(raw);
   });
 
   test("Existing blockquote is rendered as <blockquote>", async ({ page }) => {

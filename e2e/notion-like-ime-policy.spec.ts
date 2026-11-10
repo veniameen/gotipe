@@ -1,5 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
-import { openNotionAndReset, setNotionContent } from "./helpers/notion-checklist";
+import { insertComposedText, openNotionAndReset, setNotionContent } from "./helpers/notion-checklist";
 
 type Span = { text: string; marks?: Array<{ type: string; attrs?: Record<string, unknown> }> };
 
@@ -51,19 +51,9 @@ async function runSlash(page: Page, query: string, commandName: string): Promise
 }
 
 async function composeInsert(page: Page, text: string): Promise<void> {
-  await page.evaluate((value) => {
-    const root = document.querySelector("[data-gotipe-content]") as HTMLElement | null;
-    if (!root) return;
-    root.focus();
-    root.dispatchEvent(new CompositionEvent("compositionstart", { data: value, bubbles: true }));
-    root.dispatchEvent(new InputEvent("beforeinput", {
-      data: value,
-      inputType: "insertCompositionText",
-      bubbles: true,
-      cancelable: true,
-    }));
-    root.dispatchEvent(new CompositionEvent("compositionend", { data: value, bubbles: true }));
-  }, text);
+  // Chromium exercises native composition; Firefox/WebKit exercise Unicode
+  // insertion because Playwright does not expose their OS composition protocol.
+  await insertComposedText(page, text);
 }
 
 async function getLeafByMarker(page: Page, marker: string): Promise<{ blockId: string; parentType: string | null; text: string } | null> {

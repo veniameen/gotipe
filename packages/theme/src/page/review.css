@@ -1,0 +1,332 @@
+/* ============================================================ suggestions (ADR-0047) */
+.gotipe-page .gotipe-sug-ins {
+  border-radius: 3px;
+  background: color-mix(in srgb, var(--gt-track) 13%, transparent);
+  text-decoration: underline;
+  text-decoration-thickness: 1.5px;
+  text-underline-offset: 3px;
+  text-decoration-color: color-mix(in srgb, var(--gt-track) 75%, transparent);
+  user-select: none;
+  cursor: pointer;
+}
+.gotipe-page .gotipe-sug-del {
+  color: var(--gt-text-3);
+  text-decoration: line-through;
+  text-decoration-color: var(--gt-track);
+  cursor: pointer;
+}
+.gotipe-page .gotipe-sug-stale {
+  color: var(--gt-text-2);
+  text-decoration: underline dashed;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+  text-decoration-color: var(--gt-text-3);
+  user-select: none;
+  cursor: pointer;
+}
+.gotipe-page .gotipe-sug.is-active:is(.gotipe-sug-ins, .gotipe-sug-del, .gotipe-sug-stale) {
+  background: color-mix(in srgb, var(--gt-track) 22%, transparent);
+}
+.gotipe-page .gotipe-sug-block-ins {
+  border-radius: 3px;
+  cursor: pointer;
+}
+.gotipe-page
+  .gotipe-sug-block-ins
+  :is(p, li, h1, h2, h3, td, th, blockquote, .gotipe-callout-content, .gotipe-todo-item-content),
+.gotipe-page :is(p, li, h1, h2, h3, blockquote, div).gotipe-sug-block-ins {
+  text-decoration: underline;
+  text-decoration-thickness: 1.5px;
+  text-underline-offset: 3px;
+  text-decoration-color: color-mix(in srgb, var(--gt-track) 75%, transparent);
+}
+.gotipe-page .gotipe-sug-block-ins:is(p, li, h1, h2, h3, blockquote) {
+  background: color-mix(in srgb, var(--gt-track) 9%, transparent);
+}
+.gotipe-page li.gotipe-sug-block-ins > input[type="checkbox"] {
+  border-color: color-mix(in srgb, var(--gt-track) 75%, transparent);
+}
+.gotipe-page .gotipe-sug-block-del {
+  color: var(--gt-text-3);
+  text-decoration: line-through;
+  text-decoration-color: var(--gt-track);
+}
+.gotipe-page .gotipe-sug-block-changed {
+  box-shadow: inset 2px 0 0 color-mix(in srgb, var(--gt-track) 75%, transparent);
+}
+.gotipe-page table .gotipe-sug-block-ins {
+  background: color-mix(in srgb, var(--gt-track) 9%, transparent);
+}
+
+/* comments */
+.gotipe-page .gotipe-cmt {
+  border-radius: 2px;
+  background: var(--gt-comment-soft);
+  box-shadow: inset 0 -2px 0 var(--gt-comment);
+  cursor: pointer;
+}
+.gotipe-page .gotipe-cmt.is-active {
+  background: color-mix(in srgb, var(--gt-comment) 22%, transparent);
+}
+.gotipe-page .gotipe-cmt-point {
+  display: inline-block;
+  width: 2px;
+  height: 1.1em;
+  vertical-align: -0.2em;
+  background: var(--gt-comment);
+}
+
+/* lane cursors */
+.gotipe-page .gotipe-lane-cursor {
+  z-index: 45;
+  width: 0;
+  pointer-events: none;
+  --gt-track: var(--gt-track-1);
+}
+.gotipe-page .gotipe-lane-caret {
+  position: absolute;
+  left: -1px;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  border-radius: 1px;
+  background: var(--gt-track);
+}
+.gotipe-page .gotipe-lane-chip {
+  position: absolute;
+  left: 4px;
+  top: calc(100% + 2px);
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  max-width: 230px;
+  padding: 3px 7px 4px;
+  border-radius: 6px;
+  background: var(--gt-track);
+  color: var(--gt-accent-text);
+  box-shadow: var(--gt-shadow-chip);
+  white-space: nowrap;
+}
+.gotipe-page .gotipe-lane-chip-name {
+  font-size: 11.5px;
+  line-height: 15px;
+  font-weight: 600;
+  letter-spacing: 0;
+}
+.gotipe-page .gotipe-lane-chip-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 11px;
+  line-height: 14px;
+  opacity: 0.86;
+}
+
+/* cards */
+.gotipe-page .gotipe-review-card {
+  z-index: 55;
+  width: 288px;
+  padding: 10px 12px;
+  border-radius: var(--gt-radius-overlay);
+  background: var(--gt-overlay);
+  box-shadow: var(--gt-shadow-overlay);
+  color: var(--gt-text);
+  overflow: auto;
+  overflow-wrap: anywhere;
+  animation: gotipe-card-in 0.14s var(--gt-ease-out);
+}
+@keyframes gotipe-card-in {
+  from {
+    opacity: 0;
+  }
+}
+.gotipe-page .gotipe-review-card-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--gt-text-3);
+  font-size: var(--gt-text-meta);
+  line-height: var(--gt-leading-meta);
+}
+.gotipe-page .gotipe-review-card-head b {
+  color: var(--gt-text);
+  font-weight: 600;
+}
+.gotipe-page .gotipe-review-avatar {
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--gt-track) 14%, transparent);
+  color: var(--gt-track);
+}
+.gotipe-page .gotipe-review-avatar .gotipe-icon {
+  width: 12px;
+  height: 12px;
+}
+.gotipe-page .gotipe-review-card-text {
+  margin-top: 6px;
+  font-size: var(--gt-text-body);
+  line-height: var(--gt-leading-body);
+}
+.gotipe-page .gotipe-review-card-diff {
+  display: grid;
+  gap: 4px;
+  margin-top: 8px;
+  font-size: var(--gt-text-body);
+  line-height: var(--gt-leading-body);
+}
+.gotipe-page .gotipe-review-card-diff span {
+  display: block;
+  color: var(--gt-text-3);
+  font-size: var(--gt-text-meta);
+}
+.gotipe-page .gotipe-review-card-diff :is(s, ins) {
+  display: block;
+  max-height: 96px;
+  overflow: hidden;
+  white-space: pre-wrap;
+  text-decoration-color: var(--gt-track);
+}
+.gotipe-page .gotipe-review-card-diff s {
+  color: var(--gt-text-3);
+}
+.gotipe-page .gotipe-review-card-diff ins {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.gotipe-page .gotipe-review-card-reply {
+  margin-top: 8px;
+  font-size: var(--gt-text-body);
+}
+.gotipe-page .gotipe-review-card-reply b {
+  font-weight: 600;
+}
+.gotipe-page .gotipe-review-card-form {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+}
+.gotipe-page .gotipe-review-card-form input {
+  flex: 1;
+  width: auto;
+  min-width: 0;
+}
+.gotipe-page .gotipe-review-card-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+/* the edit bar */
+.gotipe-page .gotipe-review-bar {
+  position: sticky;
+  top: 0;
+  z-index: 3;
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 40px;
+  padding: 0 10px 0 14px;
+  box-shadow: inset 0 1px 0 var(--gt-line), inset 0 -1px 0 var(--gt-line);
+  background: var(--gt-page-bg);
+  color: var(--gt-text-2);
+  font-size: var(--gt-text-meta);
+  letter-spacing: 0;
+}
+.gotipe-page .gotipe-review-bar > .gotipe-icon {
+  color: var(--gt-accent);
+}
+.gotipe-page .gotipe-review-bar-text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  overflow: hidden;
+  white-space: nowrap;
+}
+.gotipe-page .gotipe-review-bar-text b {
+  color: var(--gt-text);
+  font-weight: 500;
+}
+.gotipe-page .gotipe-review-bar-key {
+  color: var(--gt-text);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+/* who is on the page */
+.gotipe-lane-avatars {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+.gotipe-lane-avatar {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  color: var(--gt-track);
+}
+.gotipe-lane-avatar .gotipe-icon {
+  width: 13px;
+  height: 13px;
+}
+.gotipe-lane-avatar::before {
+  content: "";
+  position: absolute;
+  inset: 1px;
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 1.5px var(--gt-track);
+  opacity: 0.3;
+  transition: opacity 0.2s;
+}
+.gotipe-lane-avatar.is-on::before {
+  opacity: 1;
+}
+.gotipe-lane-ring {
+  position: absolute;
+  inset: 0;
+  width: 24px;
+  height: 24px;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+.gotipe-lane-ring circle {
+  fill: none;
+  stroke: var(--gt-track);
+  stroke-width: 2;
+  stroke-dasharray: 14 60;
+  stroke-linecap: round;
+}
+.gotipe-lane-avatar.is-busy .gotipe-lane-ring {
+  opacity: 1;
+  animation: gotipe-spin 1.1s linear infinite;
+}
+.gotipe-lane-avatar.is-busy::before {
+  opacity: 0.25;
+}
+@keyframes gotipe-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* read-only */
+.gotipe-page[data-readonly] .gotipe-content {
+  cursor: default;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gotipe-page *,
+  .gotipe-lane-avatar .gotipe-lane-ring {
+    animation: none !important;
+    transition: none !important;
+  }
+}

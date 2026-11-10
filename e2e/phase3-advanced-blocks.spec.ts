@@ -1,6 +1,6 @@
 import { test, expect } from "@playwright/test";
 
-const BASE = "http://localhost:5173/#basic";
+const BASE = "http://localhost:5173/?view=block#basic";
 
 test.describe("Phase 3.9-3.13: Callout + Image + Table + Toggle + Columns", () => {
   test.beforeEach(async ({ page }) => {
@@ -13,7 +13,7 @@ test.describe("Phase 3.9-3.13: Callout + Image + Table + Toggle + Columns", () =
   test("Full page renders all block types", async ({ page }) => {
     await page.waitForTimeout(500);
     await page.screenshot({
-      path: "e2e/screenshots/phase3-full-page.png",
+      path: test.info().outputPath("phase3-full-page.png"),
       fullPage: true,
     });
   });
@@ -37,7 +37,7 @@ test.describe("Phase 3.9-3.13: Callout + Image + Table + Toggle + Columns", () =
 
     // Screenshot
     await callout.first().screenshot({
-      path: "e2e/screenshots/phase3-callout.png",
+      path: test.info().outputPath("phase3-callout.png"),
     });
   });
 
@@ -56,7 +56,7 @@ test.describe("Phase 3.9-3.13: Callout + Image + Table + Toggle + Columns", () =
 
     // Screenshot
     await firstImage.screenshot({
-      path: "e2e/screenshots/phase3-image-with-src.png",
+      path: test.info().outputPath("phase3-image-with-src.png"),
     });
   });
 
@@ -69,11 +69,11 @@ test.describe("Phase 3.9-3.13: Callout + Image + Table + Toggle + Columns", () =
     const placeholder = placeholderImage.locator(".gotipe-image-placeholder");
     await expect(placeholder).toBeVisible();
     const placeholderText = await placeholder.textContent();
-    expect(placeholderText).toContain("Click to add an image");
+    expect(placeholderText).toContain("Add an image");
 
     // Screenshot
     await placeholderImage.screenshot({
-      path: "e2e/screenshots/phase3-image-placeholder.png",
+      path: test.info().outputPath("phase3-image-placeholder.png"),
     });
   });
 
@@ -115,7 +115,7 @@ test.describe("Phase 3.9-3.13: Callout + Image + Table + Toggle + Columns", () =
 
     // Screenshot
     await table.first().screenshot({
-      path: "e2e/screenshots/phase3-table.png",
+      path: test.info().outputPath("phase3-table.png"),
     });
   });
 
@@ -162,7 +162,7 @@ test.describe("Phase 3.9-3.13: Callout + Image + Table + Toggle + Columns", () =
 
     // Screenshot of open toggle
     await firstToggle.screenshot({
-      path: "e2e/screenshots/phase3-toggle-open.png",
+      path: test.info().outputPath("phase3-toggle-open.png"),
     });
   });
 
@@ -179,7 +179,7 @@ test.describe("Phase 3.9-3.13: Callout + Image + Table + Toggle + Columns", () =
 
     // Screenshot of closed toggle
     await closedToggle.screenshot({
-      path: "e2e/screenshots/phase3-toggle-closed.png",
+      path: test.info().outputPath("phase3-toggle-closed.png"),
     });
   });
 
@@ -213,7 +213,7 @@ test.describe("Phase 3.9-3.13: Callout + Image + Table + Toggle + Columns", () =
 
     // Screenshot
     await columns.first().screenshot({
-      path: "e2e/screenshots/phase3-columns.png",
+      path: test.info().outputPath("phase3-columns.png"),
     });
   });
 

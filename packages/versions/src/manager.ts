@@ -1,97 +1,136 @@
-import type { GoTipeEditor } from "@gotipe/core";
-import type { Version, VersionDiff } from "./types";
+import { type GoTipeEditor, GoTipeError } from "@gotipe/core";
+import { compareDocuments, snapshotKey } from "./diff";
+import type { Version, VersionDiff, VersionsOptions } from "./types";
 
+/** Session snapshots. Hosts own persistence; all returned data is detached from internal state. */
 export class VersionsManager {
   private versions: Version[] = [];
-  private autoSaveTimer: ReturnType<typeof setInterval> | null = null;
+  private timer: ReturnType<typeof setInterval> | null = null;
+  private destroyed = false;
+  private listeners = new Set<() => void>();
+  private revision = 0;
+  private savedKey: string;
+  private maxVersions: number;
+  private unsubscribeDestroy: () => void;
 
   constructor(
-    private editor: GoTipeEditor,
-    private options: { autoSave?: boolean; autoSaveInterval?: number; maxVersions?: number } = {},
+    private editor: Pick<
+      GoTipeEditor,
+      "getJSON" | "setContent" | "isDestroyed" | "on" | "reportError"
+    >,
+    private options: VersionsOptions = {},
   ) {
-    if (options.autoSave) {
-      this.startAutoSave(options.autoSaveInterval ?? 300000); // 5 min default
+    this.maxVersions = options.maxVersions ?? 100;
+    if (!Number.isInteger(this.maxVersions) || this.maxVersions < 1)
+      throw new RangeError("maxVersions must be a positive integer");
+    const interval = options.autoSaveInterval ?? 300000;
+    if (!Number.isFinite(interval) || interval <= 0)
+      throw new RangeError("autoSaveInterval must be positive");
+    this.savedKey = snapshotKey(editor.getJSON());
+    this.unsubscribeDestroy = editor.on("destroy", () => this.destroy());
+    if (options.autoSave) this.timer = setInterval(() => this.autoSave(), interval);
+  }
+  private assertLive(): void {
+    if (this.destroyed || this.editor.isDestroyed)
+      throw new Error("The versions manager was destroyed");
+  }
+  private notify(callback?: () => void): void {
+    try {
+      callback?.();
+    } catch (error) {
+      this.editor.reportError(
+        new GoTipeError(
+          "EXTENSION_ERROR",
+          error instanceof Error ? error.message : "Version callback failed",
+        ),
+      );
     }
+  }
+  private changed(): void {
+    this.revision++;
+    for (const listener of this.listeners) this.notify(listener);
+  }
+  subscribe(listener: () => void): () => void {
+    this.assertLive();
+    this.listeners.add(listener);
+    return () => this.listeners.delete(listener);
+  }
+  getRevision(): number {
+    return this.revision;
   }
 
   createVersion(name: string, createdBy: string, description?: string): Version {
+    this.assertLive();
+    if (!name.trim()) throw new Error("A version name is required");
     const version: Version = {
       id: crypto.randomUUID(),
-      name,
+      name: name.trim(),
       description,
       createdAt: new Date().toISOString(),
       createdBy,
-      snapshot: this.editor.getJSON(),
+      snapshot: structuredClone(this.editor.getJSON()),
     };
-
     this.versions.push(version);
-
-    // Enforce max versions
-    if (this.options.maxVersions && this.versions.length > this.options.maxVersions) {
-      this.versions = this.versions.slice(-this.options.maxVersions);
-    }
-
-    return version;
+    if (this.versions.length > this.maxVersions)
+      this.versions.splice(0, this.versions.length - this.maxVersions);
+    this.savedKey = snapshotKey(version.snapshot);
+    this.changed();
+    this.notify(() => this.options.onVersionCreated?.(structuredClone(version)));
+    return structuredClone(version);
   }
-
-  restoreVersion(versionId: string): boolean {
-    const version = this.versions.find((v) => v.id === versionId);
+  restoreVersion(id: string): boolean {
+    this.assertLive();
+    const version = this.versions.find((entry) => entry.id === id);
     if (!version) return false;
-
-    this.editor.setContent(version.snapshot);
+    this.editor.setContent(structuredClone(version.snapshot), {
+      addToHistory: true,
+      preserveSelection: true,
+    });
+    this.changed();
+    this.notify(() => this.options.onVersionRestored?.(structuredClone(version)));
     return true;
   }
-
   getVersions(): Version[] {
-    return [...this.versions];
+    return structuredClone(this.versions);
   }
-
   getVersion(id: string): Version | undefined {
-    return this.versions.find((v) => v.id === id);
+    const version = this.versions.find((entry) => entry.id === id);
+    return version ? structuredClone(version) : undefined;
   }
-
   deleteVersion(id: string): boolean {
-    const index = this.versions.findIndex((v) => v.id === id);
-    if (index === -1) return false;
+    this.assertLive();
+    const index = this.versions.findIndex((entry) => entry.id === id);
+    if (index < 0) return false;
     this.versions.splice(index, 1);
+    this.changed();
     return true;
   }
-
-  compareVersions(versionIdA: string, versionIdB: string): VersionDiff | null {
-    const a = this.getVersion(versionIdA);
-    const b = this.getVersion(versionIdB);
-    if (!a || !b) return null;
-
-    const blocksA = (a.snapshot as { blocks?: { id: string }[] }).blocks ?? [];
-    const blocksB = (b.snapshot as { blocks?: { id: string }[] }).blocks ?? [];
-
-    const idsA = new Set(blocksA.map((bl) => bl.id));
-    const idsB = new Set(blocksB.map((bl) => bl.id));
-
-    return {
-      added: blocksB.filter((bl) => !idsA.has(bl.id)).map((bl) => bl.id),
-      removed: blocksA.filter((bl) => !idsB.has(bl.id)).map((bl) => bl.id),
-      modified: blocksB
-        .filter((bl) => idsA.has(bl.id))
-        .filter((bl) => {
-          const orig = blocksA.find((o) => o.id === bl.id);
-          return JSON.stringify(orig) !== JSON.stringify(bl);
-        })
-        .map((bl) => bl.id),
-    };
+  compareVersions(a: string, b: string): VersionDiff | null {
+    const before = this.versions.find((entry) => entry.id === a);
+    const after = this.versions.find((entry) => entry.id === b);
+    return before && after ? compareDocuments(before.snapshot, after.snapshot) : null;
   }
-
-  private startAutoSave(interval: number): void {
-    this.autoSaveTimer = setInterval(() => {
-      this.createVersion(`Auto-save ${new Date().toLocaleString()}`, "system");
-    }, interval);
-  }
-
-  destroy(): void {
-    if (this.autoSaveTimer) {
-      clearInterval(this.autoSaveTimer);
-      this.autoSaveTimer = null;
+  private autoSave(): void {
+    if (this.destroyed || this.editor.isDestroyed) return;
+    try {
+      if (snapshotKey(this.editor.getJSON()) !== this.savedKey)
+        this.createVersion(`Auto-save ${new Date().toLocaleString()}`, "system");
+    } catch (error) {
+      this.editor.reportError(
+        new GoTipeError(
+          "EXTENSION_ERROR",
+          error instanceof Error ? error.message : "Version auto-save failed",
+        ),
+      );
     }
+  }
+  destroy(): void {
+    if (this.destroyed) return;
+    this.destroyed = true;
+    this.unsubscribeDestroy();
+    if (this.timer !== null) clearInterval(this.timer);
+    this.timer = null;
     this.versions = [];
+    this.listeners.clear();
   }
 }

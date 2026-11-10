@@ -1,6 +1,7 @@
 import type { GoTipeEditor, Transaction } from "@gotipe/core";
+export { getBlockTextLeft, getBlockFirstLineMetrics } from "../interaction/block-text-metrics";
 
-const BLOCK_TOOLBAR_COLUMN_OFFSET = 45;
+const BLOCK_TOOLBAR_COLUMN_OFFSET = 56;
 export const LIST_CONTAINER_TYPES = new Set(["bulletList", "orderedList", "todoList"]);
 export const LIST_ITEM_TYPES = new Set(["listItem", "todoItem"]);
 export const ROW_DRAGGABLE_LIST_TYPES = new Set(["bulletList", "orderedList", "todoList"]);
@@ -75,7 +76,9 @@ export function getTopLevelBlockIdAtPoint(
 }
 
 export function getBlockElById(containerEl: HTMLElement, blockId: string): HTMLElement | null {
-  return containerEl.querySelector(`[data-block-id="${blockId}"]`) as HTMLElement | null;
+  return containerEl.querySelector(
+    `[data-block-id="${CSS.escape(blockId)}"]`,
+  ) as HTMLElement | null;
 }
 
 export function getTopLevelAncestorBlockId(
@@ -180,79 +183,6 @@ export function getToolbarRailLeft(containerEl: HTMLElement): number {
     columnLeftCandidates.length > 0 ? Math.min(...columnLeftCandidates) : contentRect.left;
 
   return Math.max(0, Math.round(columnLeft - containerRect.left - BLOCK_TOOLBAR_COLUMN_OFFSET));
-}
-
-export function getBlockTextLeft(blockEl: HTMLElement): number {
-  const walker = document.createTreeWalker(blockEl, NodeFilter.SHOW_TEXT);
-  let n: Node | null;
-  for (n = walker.nextNode(); n; n = walker.nextNode()) {
-    const text = n.textContent ?? "";
-    if (!text.trim()) continue;
-    const r = document.createRange();
-    r.setStart(n, 0);
-    r.setEnd(n, Math.min(1, text.length));
-    const rr = r.getBoundingClientRect();
-    if (rr.width > 0 || rr.height > 0) return rr.left;
-  }
-
-  const host =
-    (blockEl.querySelector("[data-gotipe-todo-content]") as HTMLElement | null) ??
-    (blockEl.querySelector("[contenteditable='true']") as HTMLElement | null) ??
-    blockEl;
-  return host.getBoundingClientRect().left;
-}
-
-export function getBlockFirstLineMetrics(blockEl: HTMLElement): { top: number; height: number } {
-  const hosts: HTMLElement[] = [];
-  const todoHost = blockEl.querySelector("[data-gotipe-todo-content]") as HTMLElement | null;
-  if (todoHost) hosts.push(todoHost);
-
-  const editableHost = blockEl.querySelector("[contenteditable='true']") as HTMLElement | null;
-  if (editableHost && editableHost !== blockEl) hosts.push(editableHost);
-  hosts.push(blockEl);
-
-  for (const host of hosts) {
-    const walker = document.createTreeWalker(host, NodeFilter.SHOW_TEXT);
-    let textNode: Node | null;
-    for (textNode = walker.nextNode(); textNode; textNode = walker.nextNode()) {
-      const text = textNode.textContent ?? "";
-      if (text.length === 0) continue;
-      const firstVisibleChar = text.search(/\S/);
-      const start = firstVisibleChar >= 0 ? firstVisibleChar : 0;
-      const end = Math.min(text.length, start + 1);
-      const range = document.createRange();
-      range.setStart(textNode, start);
-      range.setEnd(textNode, end);
-      const rect = range.getBoundingClientRect();
-      if (rect.height > 0) {
-        return { top: rect.top, height: rect.height };
-      }
-    }
-
-    const trailingBreak = host.querySelector(
-      "br[data-gotipe-trailing-break]",
-    ) as HTMLElement | null;
-    if (trailingBreak) {
-      const rect = trailingBreak.getBoundingClientRect();
-      if (rect.height > 0) {
-        return { top: rect.top, height: rect.height };
-      }
-    }
-
-    const hostRect = host.getBoundingClientRect();
-    if (hostRect.height > 0) {
-      const computed = window.getComputedStyle(host);
-      const parsedLineHeight = Number.parseFloat(computed.lineHeight);
-      const fallbackLineHeight = Number.isFinite(parsedLineHeight)
-        ? parsedLineHeight
-        : hostRect.height;
-      const lineHeight = Math.max(1, Math.min(hostRect.height, fallbackLineHeight));
-      return { top: hostRect.top, height: lineHeight };
-    }
-  }
-
-  const blockRect = blockEl.getBoundingClientRect();
-  return { top: blockRect.top, height: Math.max(1, blockRect.height) };
 }
 
 export function findBlockLocation(

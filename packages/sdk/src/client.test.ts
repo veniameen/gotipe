@@ -1,0 +1,149 @@
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { GoTipeClient } from "./client";
+import { GoTipeApiError } from "./transport";
+
+const client = () => new GoTipeClient({ baseUrl: "https://cloud.example/", apiKey: "gt_test_key" });
+function respond(body: unknown, status = 200) {
+  const fetch = vi
+    .fn()
+    .mockImplementation(
+      async () => new Response(status === 204 ? null : JSON.stringify(body), { status }),
+    );
+  vi.stubGlobal("fetch", fetch);
+  return fetch;
+}
+afterEach(() => {
+  vi.unstubAllGlobals();
+  vi.useRealTimers();
+});
+
+describe("Cloud SDK contracts", () => {
+  it("uses bearer API keys and limit/offset pagination without rewriting content", async () => {
+    const fetch = respond({
+      data: [{ id: "doc", size_bytes: 12, created_at: "today", content: { custom_key: "keep" } }],
+      total: 12,
+      limit: 5,
+      offset: 5,
+    });
+    const result = await client().listDocuments(2, 5);
+    expect(fetch).toHaveBeenCalledWith(
+      "https://cloud.example/v1/documents?limit=5&offset=5",
+      expect.objectContaining({
+        headers: { "Content-Type": "application/json", Authorization: "Bearer gt_test_key" },
+      }),
+    );
+    expect(result).toMatchObject({
+      page: 2,
+      perPage: 5,
+      hasMore: true,
+      data: [{ sizeBytes: 12, createdAt: "today", content: { custom_key: "keep" } }],
+    });
+  });
+  it("deletes successfully on a bodyless 204 response and encodes IDs", async () => {
+    const fetch = respond(null, 204);
+    await expect(client().deleteDocument("id/with space")).resolves.toBeUndefined();
+    expect(fetch.mock.calls[0]?.[0]).toBe("https://cloud.example/v1/documents/id%2Fwith%20space");
+  });
+  it("unwraps comment lists and derives resolved state", async () => {
+    respond({ data: [{ id: "a", resolved_at: "today", block_id: "b" }, { id: "c" }] });
+    expect(await client().listComments("doc", true)).toEqual([
+      { id: "a", resolvedAt: "today", blockId: "b", resolved: true },
+      { id: "c", resolved: false },
+    ]);
+  });
+  it("sends comment anchors with server field names", async () => {
+    const fetch = respond({ id: "comment", block_id: "block" }, 201);
+    await client().addComment("doc", { blockId: "block", content: "Hello", from: 2, to: 7 });
+    expect(JSON.parse(fetch.mock.calls[0]?.[1].body)).toEqual({
+      block_id: "block",
+      content: "Hello",
+      anchor_type: "inline",
+      from: 2,
+      to: 7,
+    });
+  });
+  it("uses the top-level export endpoints", async () => {
+    const fetch = respond({ id: "job", document_id: "doc", created_at: "today" }, 202);
+    expect(await client().createExportJob("doc", "pdf")).toMatchObject({
+      documentId: "doc",
+      createdAt: "today",
+    });
+    expect(fetch.mock.calls[0]?.[0]).toBe("https://cloud.example/v1/exports");
+    expect(JSON.parse(fetch.mock.calls[0]?.[1].body)).toEqual({
+      document_id: "doc",
+      format: "pdf",
+    });
+    await client().getExportJob("doc", "job");
+    expect(fetch.mock.calls[1]?.[0]).toBe("https://cloud.example/v1/exports/job");
+  });
+  it("uses the configured AI proxy request contract", async () => {
+    const fetch = respond({ content: "text" });
+    await client().aiGenerate("doc", { prompt: "rewrite", mode: "rewrite", maxTokens: 200 });
+    expect(fetch.mock.calls[0]?.[0]).toBe("https://cloud.example/v1/ai/complete");
+    expect(JSON.parse(fetch.mock.calls[0]?.[1].body)).toEqual({
+      document_id: "doc",
+      prompt: "rewrite",
+      command: "rewrite",
+      max_tokens: 200,
+      stream: false,
+    });
+  });
+  it("requests a document after restoring the server's status response", async () => {
+    const fetch = respond({ status: "restored" });
+    fetch
+      .mockResolvedValueOnce(new Response('{"status":"restored"}'))
+      .mockResolvedValueOnce(new Response('{"id":"doc","size_bytes":4}'));
+    expect(await client().restoreVersion("doc", "version")).toMatchObject({
+      id: "doc",
+      sizeBytes: 4,
+    });
+    expect(fetch.mock.calls.map((call) => call[0])).toEqual([
+      "https://cloud.example/v1/documents/doc/versions/version/restore",
+      "https://cloud.example/v1/documents/doc",
+    ]);
+  });
+  it("throws an Error with status, code and details", async () => {
+    respond({ error: { code: "NOT_FOUND", message: "Missing", details: { id: "doc" } } }, 404);
+    await expect(client().getDocument("doc")).rejects.toMatchObject({
+      name: "GoTipeApiError",
+      code: "NOT_FOUND",
+      message: "Missing",
+      status: 404,
+      details: { id: "doc" },
+    });
+    await expect(client().getDocument("doc")).rejects.toBeInstanceOf(GoTipeApiError);
+  });
+  it("normalizes non-JSON proxy errors", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response("unavailable", { status: 502 })));
+    await expect(client().getDocument("doc")).rejects.toMatchObject({
+      code: "HTTP_ERROR",
+      status: 502,
+    });
+  });
+  it("aborts requests at the configured deadline", async () => {
+    vi.useFakeTimers();
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(
+        (_url, init: RequestInit) =>
+          new Promise((_resolve, reject) => {
+            init.signal?.addEventListener("abort", () =>
+              reject(new DOMException("Aborted", "AbortError")),
+            );
+          }),
+      ),
+    );
+    const request = new GoTipeClient({ baseUrl: "https://cloud.example", timeout: 20 }).getDocument(
+      "doc",
+    );
+    const assertion = expect(request).rejects.toMatchObject({ name: "AbortError" });
+    await vi.advanceTimersByTimeAsync(21);
+    await assertion;
+  });
+  it("requires valid pagination before making requests", async () => {
+    const fetch = respond({});
+    await expect(client().listDocuments(0)).rejects.toThrow(RangeError);
+    await expect(client().listDocuments(1, 101)).rejects.toThrow(RangeError);
+    expect(fetch).not.toHaveBeenCalled();
+  });
+});

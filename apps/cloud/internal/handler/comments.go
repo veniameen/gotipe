@@ -33,6 +33,8 @@ type CreateCommentRequest struct {
 }
 
 type CommentResponse struct {
+	From       *int            `json:"from,omitempty"`
+	To         *int            `json:"to,omitempty"`
 	ID         string          `json:"id"`
 	DocumentID string          `json:"document_id"`
 	AuthorID   string          `json:"author_id"`
@@ -58,17 +60,7 @@ func (h *CommentsHandler) CreateComment() http.HandlerFunc {
 		}
 
 		docID := chi.URLParam(r, "docId")
-
-		// Verify document access
-		var exists bool
-		err := h.db.Pool.QueryRow(r.Context(),
-			`SELECT EXISTS(SELECT 1 FROM documents WHERE id = $1 AND (owner_id = $2 OR id IN (
-				SELECT document_id FROM document_permissions WHERE user_id = $2 AND role IN ('commenter', 'editor', 'admin')
-			)))`,
-			docID, user.UserID,
-		).Scan(&exists)
-		if err != nil || !exists {
-			apierror.ErrNotFound.Write(w)
+		if !requireDocumentAccess(w, r, h.db.Pool, docID, "commenter") {
 			return
 		}
 
@@ -83,13 +75,36 @@ func (h *CommentsHandler) CreateComment() http.HandlerFunc {
 			return
 		}
 
+		if req.AnchorType == "" {
+			req.AnchorType = "document"
+			if req.BlockID != "" {
+				req.AnchorType = "block"
+			}
+		}
+		if req.AnchorType != "document" && req.AnchorType != "block" && req.AnchorType != "inline" {
+			apierror.ErrValidation.WithMessage("invalid anchor_type").Write(w)
+			return
+		}
+		if req.AnchorType != "document" && req.BlockID == "" {
+			apierror.ErrValidation.WithMessage("block_id is required for this anchor").Write(w)
+			return
+		}
+		if req.AnchorType == "inline" && (req.From == nil || req.To == nil || *req.From < 0 || *req.To < *req.From) {
+			apierror.ErrValidation.WithMessage("valid from and to are required for inline anchors").Write(w)
+			return
+		}
+		if req.AnchorType != "inline" {
+			req.From = nil
+			req.To = nil
+		}
+
 		commentID := uuid.New().String()
 		now := time.Now()
 
-		_, err = h.db.Pool.Exec(r.Context(),
-			`INSERT INTO comments (id, document_id, author_id, content, anchor_type, block_id, metadata, created_at, updated_at)
-			 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $8)`,
-			commentID, docID, user.UserID, req.Content, req.AnchorType, req.BlockID, req.Metadata, now,
+		_, err := h.db.Pool.Exec(r.Context(),
+			`INSERT INTO comments (id, document_id, author_id, content, anchor_type, block_id, metadata, anchor_from, anchor_to, created_at, updated_at)
+			 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $10)`,
+			commentID, docID, user.UserID, req.Content, req.AnchorType, req.BlockID, req.Metadata, req.From, req.To, now,
 		)
 		if err != nil {
 			apierror.ErrInternal.Write(w)
@@ -106,8 +121,9 @@ func (h *CommentsHandler) CreateComment() http.HandlerFunc {
 			AnchorType: req.AnchorType,
 			BlockID:    req.BlockID,
 			Metadata:   req.Metadata,
-			CreatedAt:  now,
-			UpdatedAt:  now,
+			From:       req.From, To: req.To,
+			CreatedAt: now,
+			UpdatedAt: now,
 		})
 	}
 }
@@ -122,14 +138,17 @@ func (h *CommentsHandler) ListComments() http.HandlerFunc {
 		}
 
 		docID := chi.URLParam(r, "docId")
+		if !requireDocumentAccess(w, r, h.db.Pool, docID, "viewer") {
+			return
+		}
 		includeResolved := r.URL.Query().Get("include_resolved") == "true"
 		limit, _ := strconv.Atoi(r.URL.Query().Get("limit"))
 		if limit <= 0 || limit > 100 {
 			limit = 50
 		}
 
-		query := `SELECT c.id, c.document_id, c.author_id, u.name, c.content, c.anchor_type, c.block_id,
-				  c.parent_id, c.resolved_at, c.resolved_by, c.metadata, c.created_at, c.updated_at
+		query := `SELECT c.id, c.document_id, c.author_id, COALESCE(u.name, ''), c.content, c.anchor_type, COALESCE(c.block_id, ''),
+				  c.parent_id, c.resolved_at, c.resolved_by, c.metadata, c.anchor_from, c.anchor_to, c.created_at, c.updated_at
 				  FROM comments c LEFT JOIN users u ON c.author_id = u.id
 				  WHERE c.document_id = $1`
 		args := []interface{}{docID}
@@ -152,10 +171,16 @@ func (h *CommentsHandler) ListComments() http.HandlerFunc {
 			var c CommentResponse
 			if err := rows.Scan(&c.ID, &c.DocumentID, &c.AuthorID, &c.AuthorName, &c.Content,
 				&c.AnchorType, &c.BlockID, &c.ParentID, &c.ResolvedAt, &c.ResolvedBy,
-				&c.Metadata, &c.CreatedAt, &c.UpdatedAt); err != nil {
-				continue
+				&c.Metadata, &c.From, &c.To, &c.CreatedAt, &c.UpdatedAt); err != nil {
+				apierror.ErrInternal.Write(w)
+				return
 			}
 			comments = append(comments, c)
+		}
+
+		if rows.Err() != nil {
+			apierror.ErrInternal.Write(w)
+			return
 		}
 
 		if comments == nil {
@@ -176,6 +201,9 @@ func (h *CommentsHandler) ReplyToComment() http.HandlerFunc {
 		}
 
 		docID := chi.URLParam(r, "docId")
+		if !requireDocumentAccess(w, r, h.db.Pool, docID, "commenter") {
+			return
+		}
 		parentID := chi.URLParam(r, "commentId")
 
 		var req struct {
@@ -194,7 +222,7 @@ func (h *CommentsHandler) ReplyToComment() http.HandlerFunc {
 		// Verify parent comment exists
 		var anchorType, blockID string
 		err := h.db.Pool.QueryRow(r.Context(),
-			`SELECT anchor_type, block_id FROM comments WHERE id = $1 AND document_id = $2`,
+			`SELECT anchor_type, COALESCE(block_id, '') FROM comments WHERE id = $1 AND document_id = $2`,
 			parentID, docID,
 		).Scan(&anchorType, &blockID)
 		if err != nil {
@@ -239,6 +267,9 @@ func (h *CommentsHandler) ResolveComment() http.HandlerFunc {
 		}
 
 		docID := chi.URLParam(r, "docId")
+		if !requireDocumentAccess(w, r, h.db.Pool, docID, "commenter") {
+			return
+		}
 		commentID := chi.URLParam(r, "commentId")
 
 		result, err := h.db.Pool.Exec(r.Context(),
@@ -271,6 +302,9 @@ func (h *CommentsHandler) DeleteComment() http.HandlerFunc {
 		}
 
 		docID := chi.URLParam(r, "docId")
+		if !requireDocumentAccess(w, r, h.db.Pool, docID, "viewer") {
+			return
+		}
 		commentID := chi.URLParam(r, "commentId")
 
 		// Only author or document owner can delete

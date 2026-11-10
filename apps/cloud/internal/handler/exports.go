@@ -2,6 +2,7 @@ package handler
 
 import (
 	"encoding/json"
+	"errors"
 	"net/http"
 	"time"
 
@@ -16,11 +17,11 @@ import (
 
 type ExportsHandler struct {
 	db    *storage.PostgresStore
-	r2    *storage.R2Store
+	r2    storage.ObjectStore
 	audit *audit.AuditLogger
 }
 
-func NewExportsHandler(db *storage.PostgresStore, r2 *storage.R2Store, auditLogger *audit.AuditLogger) *ExportsHandler {
+func NewExportsHandler(db *storage.PostgresStore, r2 storage.ObjectStore, auditLogger *audit.AuditLogger) *ExportsHandler {
 	return &ExportsHandler{db: db, r2: r2, audit: auditLogger}
 }
 
@@ -30,13 +31,13 @@ type CreateExportRequest struct {
 }
 
 type ExportResponse struct {
-	ID         string     `json:"id"`
-	DocumentID string     `json:"document_id"`
-	Format     string     `json:"format"`
-	Status     string     `json:"status"` // "pending", "processing", "completed", "failed"
-	URL        string     `json:"url,omitempty"`
-	Error      string     `json:"error,omitempty"`
-	CreatedAt  time.Time  `json:"created_at"`
+	ID          string     `json:"id"`
+	DocumentID  string     `json:"document_id"`
+	Format      string     `json:"format"`
+	Status      string     `json:"status"` // "pending", "processing", "completed", "failed"
+	URL         string     `json:"url,omitempty"`
+	Error       string     `json:"error,omitempty"`
+	CreatedAt   time.Time  `json:"created_at"`
 	CompletedAt *time.Time `json:"completed_at,omitempty"`
 }
 
@@ -60,41 +61,36 @@ func (h *ExportsHandler) CreateExport() http.HandlerFunc {
 			apierror.ErrValidation.WithMessage("invalid export format").Write(w)
 			return
 		}
-
-		// Check export quota
-		var exportCount int64
-		h.db.Pool.QueryRow(r.Context(),
-			`SELECT COUNT(*) FROM export_jobs WHERE user_id = $1
-			 AND created_at > date_trunc('month', now())`,
-			user.UserID,
-		).Scan(&exportCount)
-
-		if !billing.CheckExportQuota(user.Plan, exportCount) {
-			apierror.ErrQuotaExceeded.WithMessage("Export limit reached for your plan").Write(w)
-			return
-		}
-
-		// Verify document access
-		var exists bool
-		err := h.db.Pool.QueryRow(r.Context(),
-			`SELECT EXISTS(SELECT 1 FROM documents WHERE id = $1 AND (owner_id = $2 OR id IN (
-				SELECT document_id FROM document_permissions WHERE user_id = $2
-			)))`,
-			req.DocumentID, user.UserID,
-		).Scan(&exists)
-		if err != nil || !exists {
-			apierror.ErrNotFound.Write(w)
+		if !requireDocumentAccess(w, r, h.db.Pool, req.DocumentID, "viewer") {
 			return
 		}
 
 		jobID := uuid.New().String()
 		now := time.Now()
 
-		_, err = h.db.Pool.Exec(r.Context(),
-			`INSERT INTO export_jobs (id, user_id, document_id, format, status, created_at)
+		err := storage.WithUserLock(r.Context(), h.db.Pool, user.UserID, func(tx storage.Database) error {
+			var count int64
+			if err := tx.QueryRow(r.Context(), `SELECT COUNT(*) FROM usage_logs WHERE user_id=$1 AND action='export.request' AND created_at >= date_trunc('month',now())`, user.UserID).Scan(&count); err != nil {
+				return err
+			}
+			if !billing.CheckExportQuota(user.Plan, count) {
+				return billing.ErrQuotaExceeded
+			}
+			_, insertErr := tx.Exec(r.Context(),
+				`INSERT INTO export_jobs (id, user_id, document_id, format, status, created_at)
 			 VALUES ($1, $2, $3, $4, 'pending', $5)`,
-			jobID, user.UserID, req.DocumentID, req.Format, now,
-		)
+				jobID, user.UserID, req.DocumentID, req.Format, now,
+			)
+			if insertErr != nil {
+				return insertErr
+			}
+			_, insertErr = tx.Exec(r.Context(), `INSERT INTO usage_logs(user_id,action,resource_type,resource_id,created_at) VALUES($1,'export.request','export',$2,$3)`, user.UserID, jobID, now)
+			return insertErr
+		})
+		if errors.Is(err, billing.ErrQuotaExceeded) {
+			apierror.ErrQuotaExceeded.WithMessage("Export limit reached for your plan").Write(w)
+			return
+		}
 		if err != nil {
 			apierror.ErrInternal.Write(w)
 			return
@@ -140,13 +136,18 @@ func (h *ExportsHandler) GetExport() http.HandlerFunc {
 		if errorMsg != nil {
 			resp.Error = *errorMsg
 		}
+		if !requireDocumentAccess(w, r, h.db.Pool, resp.DocumentID, "viewer") {
+			return
+		}
 
 		// Generate presigned URL if completed
 		if resp.Status == "completed" && r2Key != nil {
 			url, err := h.r2.PresignedURL(r.Context(), *r2Key, 1*time.Hour)
-			if err == nil {
-				resp.URL = url
+			if err != nil {
+				apierror.ErrServiceDown.Write(w)
+				return
 			}
+			resp.URL = url
 		}
 
 		apierror.WriteJSON(w, http.StatusOK, resp)

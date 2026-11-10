@@ -1,0 +1,38 @@
+/* ================================================================ */
+/*  Export bar + panel                                                */
+/* ================================================================ */
+
+.gotipe-export-bar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  padding: 8px 12px;
+  border-top: 1px solid var(--gt-border, #e5e5e5);
+  background: var(--gt-bg, #ffffff);
+}
+
+.gotipe-export-label {
+  font-size: var(--gt-text-sm, 14px);
+  font-weight: 600;
+  color: var(--gt-text-secondary, #666);
+  margin-right: 4px;
+}
+
+.gotipe-export-panel {
+  max-height: 300px;
+  overflow: auto;
+  border-top: 1px solid var(--gt-border, #e5e5e5);
+  background: var(--gt-bg-hover, #f9f9f9);
+}
+
+.gotipe-export-pre {
+  margin: 0;
+  padding: 12px 16px;
+  font-family: var(--gt-font-mono, "SF Mono", "Fira Code", Menlo, monospace);
+  font-size: 13px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  word-break: break-all;
+  color: var(--gt-text-base, #1a1a1a);
+}

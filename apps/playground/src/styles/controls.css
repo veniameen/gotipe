@@ -1,0 +1,54 @@
+.gotipe-export-btn,
+.gotipe-example-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 30px;
+  padding: 0 12px;
+  border: 1px solid var(--gt-border, #e5e5e5);
+  border-radius: 6px;
+  background: var(--gt-bg, #ffffff);
+  color: var(--gt-text-secondary, #666);
+  font-size: var(--gt-text-sm, 14px);
+  cursor: pointer;
+  transition: background 0.1s, color 0.1s, border-color 0.1s;
+}
+
+.gotipe-export-btn:hover,
+.gotipe-example-button:hover {
+  background: var(--gt-bg-hover, #f5f5f5);
+  color: var(--gt-text-base, #1a1a1a);
+}
+
+.gotipe-export-btn.active,
+.gotipe-example-button[aria-pressed="true"] {
+  background: var(--gt-bg-active, rgba(37, 99, 235, 0.1));
+  color: var(--gt-accent, #2563eb);
+  border-color: var(--gt-accent, #2563eb);
+}
+
+/* Shared playground actions use the same semantic tokens as editor controls. */
+.gotipe-example-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  border: 0;
+  padding: 0;
+  margin: 0 0 16px;
+  min-inline-size: 0;
+}
+.gotipe-example-actions legend {
+  padding: 0;
+  margin-bottom: 8px;
+  color: var(--gt-text-secondary);
+  font: inherit;
+  font-size: var(--gt-text-sm);
+}
+.gotipe-example-button {
+  max-width: 100%;
+  min-height: 36px;
+  height: auto;
+  padding-block: 8px;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}

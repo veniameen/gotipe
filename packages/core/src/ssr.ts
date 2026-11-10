@@ -1,7 +1,7 @@
-import type { GoTipeEditor } from "./editor";
+import { blocksToHtml } from "./serialization/html";
+import type { GoTipeEditor } from "./types/editor";
 import type { Extension } from "./types/extension";
 import type { BlockView } from "./types/view";
-import { WasmBridge } from "./wasm-bridge";
 
 export interface SSROptions {
   classPrefix?: string;
@@ -11,38 +11,44 @@ export interface SSROptions {
 
 /**
  * Render GoTipe document JSON to HTML string.
- * Works in Node.js via WASM — no browser required.
+ * Uses the JS engine and the same public-document conversion as the editor.
+ * No browser or WASM binary is required.
  */
 export async function renderToHtml(
   content: object | string,
   options?: SSROptions,
 ): Promise<string> {
-  const bridge = new WasmBridge();
-  await bridge.init();
-
-  const doc = typeof content === "string" ? JSON.parse(content) : content;
-  bridge.create(JSON.stringify({ nodes: [], marks: [] }), JSON.stringify(doc));
+  const editor = await createRenderingEditor(content);
 
   try {
-    let html = bridge.exportHtml();
-
+    const replacements = new Map<string, string>();
     if (options?.blockRenderers) {
-      const state = JSON.parse(bridge.getState());
-      for (const block of state.blocks ?? []) {
-        const renderer = options.blockRenderers[block.type];
+      const renderers = options.blockRenderers;
+      const replaceCustomBlock = (block: BlockView): BlockView => {
+        const renderer = renderers[block.type];
         if (renderer) {
-          const customHtml = renderer(block);
-          html = html.replace(
-            new RegExp(`data-block-id="${block.id}"[^>]*>[\\s\\S]*?<\\/[^>]+>`),
-            `data-block-id="${block.id}">${customHtml}</div>`,
-          );
+          const marker = `gotipe-ssr-${crypto.randomUUID()}`;
+          const placeholder: BlockView = {
+            ...block,
+            type: "paragraph",
+            content: [{ text: marker, marks: [] }],
+            children: [],
+          };
+          replacements.set(blocksToHtml([placeholder], options), renderer(block));
+          return placeholder;
         }
-      }
+        return { ...block, children: block.children.map(replaceCustomBlock) };
+      };
+      editor.setContent({
+        version: 1,
+        blocks: editor.getViewState().blocks.map(replaceCustomBlock),
+      });
     }
-
+    let html = blocksToHtml(editor.getViewState().blocks, options);
+    for (const [marker, rendered] of replacements) html = html.split(marker).join(rendered);
     return html;
   } finally {
-    bridge.destroy();
+    editor.destroy();
   }
 }
 
@@ -50,16 +56,11 @@ export async function renderToHtml(
  * Render GoTipe document to Markdown string.
  */
 export async function renderToMarkdown(content: object | string): Promise<string> {
-  const bridge = new WasmBridge();
-  await bridge.init();
-
-  const doc = typeof content === "string" ? JSON.parse(content) : content;
-  bridge.create(JSON.stringify({ nodes: [], marks: [] }), JSON.stringify(doc));
-
+  const editor = await createRenderingEditor(content);
   try {
-    return bridge.exportMarkdown();
+    return editor.getMarkdown();
   } finally {
-    bridge.destroy();
+    editor.destroy();
   }
 }
 
@@ -67,22 +68,21 @@ export async function renderToMarkdown(content: object | string): Promise<string
  * Render GoTipe document to plain text.
  */
 export async function renderToText(content: object | string): Promise<string> {
-  const bridge = new WasmBridge();
-  await bridge.init();
-
-  const doc = typeof content === "string" ? JSON.parse(content) : content;
-  bridge.create(JSON.stringify({ nodes: [], marks: [] }), JSON.stringify(doc));
-
+  const editor = await createRenderingEditor(content);
   try {
-    const state = JSON.parse(bridge.getState());
-    return (state.blocks ?? [])
-      .map((b: BlockView) =>
-        Array.isArray(b.content) ? b.content.map((s) => s.text).join("") : (b.content ?? ""),
-      )
-      .join("\n");
+    return editor.getText();
   } finally {
-    bridge.destroy();
+    editor.destroy();
   }
+}
+
+async function createRenderingEditor(content: object | string): Promise<GoTipeEditor> {
+  const { createEditorWithLoader } = await import("./editor");
+  const doc = typeof content === "string" ? JSON.parse(content) : content;
+  return createEditorWithLoader(
+    { extensions: [], content: doc, editable: false, engine: "js" },
+    null,
+  );
 }
 
 /**

@@ -3,15 +3,17 @@ package audit
 import (
 	"context"
 	"encoding/json"
+	"log/slog"
+	"net"
 
-	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/gotipe/cloud/internal/storage"
 )
 
 type AuditLogger struct {
-	pool *pgxpool.Pool
+	pool storage.Database
 }
 
-func NewAuditLogger(pool *pgxpool.Pool) *AuditLogger {
+func NewAuditLogger(pool storage.Database) *AuditLogger {
 	return &AuditLogger{pool: pool}
 }
 
@@ -37,18 +39,37 @@ const (
 )
 
 func (l *AuditLogger) Log(ctx context.Context, userID, action, resourceType, resourceID string, details interface{}) error {
-	detailsJSON, _ := json.Marshal(details)
+	detailsJSON, err := json.Marshal(details)
+	if err != nil {
+		return err
+	}
 
-	_, err := l.pool.Exec(ctx,
+	_, err = l.pool.Exec(ctx,
 		`INSERT INTO audit_log (user_id, action, resource_type, resource_id, details, ip_address, created_at)
-		 VALUES ($1, $2, $3, $4, $5, $6, now())`,
+		 VALUES ($1, $2, $3, $4, $5, NULLIF($6,''), now())`,
 		userID, action, resourceType, resourceID, detailsJSON, remoteAddrFromContext(ctx),
 	)
+	if err != nil {
+		slog.Error("audit event persistence failed", "action", action, "resource_type", resourceType, "error", err)
+	}
 	return err
 }
 
+type remoteAddressKey struct{}
+
+func WithRemoteAddress(ctx context.Context, address string) context.Context {
+	host, _, err := net.SplitHostPort(address)
+	if err != nil {
+		host = address
+	}
+	if net.ParseIP(host) == nil {
+		host = ""
+	}
+	return context.WithValue(ctx, remoteAddressKey{}, host)
+}
+
 func remoteAddrFromContext(ctx context.Context) string {
-	if addr, ok := ctx.Value("remote_addr").(string); ok {
+	if addr, ok := ctx.Value(remoteAddressKey{}).(string); ok {
 		return addr
 	}
 	return ""

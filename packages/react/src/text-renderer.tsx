@@ -5,6 +5,7 @@ import type {
   TextSpanView,
   WidgetDecoration,
 } from "@gotipe/core";
+import { toSafeColor, toSafeHref } from "@gotipe/core";
 import React from "react";
 
 export interface TextRendererProps {
@@ -40,8 +41,12 @@ function renderMarks(text: React.ReactNode, marks: MarkView[], key: string): Rea
         element = (
           <a
             key={`${key}-link`}
-            href={mark.attrs?.href as string}
-            title={(mark.attrs?.title as string) || undefined}
+            href={
+              typeof mark.attrs?.href === "string"
+                ? (toSafeHref(mark.attrs.href) ?? undefined)
+                : undefined
+            }
+            title={typeof mark.attrs?.title === "string" ? mark.attrs.title : undefined}
             rel="noopener noreferrer"
           >
             {element}
@@ -49,7 +54,7 @@ function renderMarks(text: React.ReactNode, marks: MarkView[], key: string): Rea
         );
         break;
       case "highlight": {
-        const color = mark.attrs?.color as string | undefined;
+        const color = toSafeColor(mark.attrs?.color);
         element = (
           <mark key={`${key}-highlight`} style={color ? { backgroundColor: color } : undefined}>
             {element}
@@ -67,7 +72,7 @@ function renderMarks(text: React.ReactNode, marks: MarkView[], key: string): Rea
         element = (
           <span
             key={`${key}-textColor`}
-            style={{ color: (mark.attrs?.color as string) || undefined }}
+            style={{ color: toSafeColor(mark.attrs?.color) ?? undefined }}
           >
             {element}
           </span>

@@ -1,0 +1,88 @@
+.gotipe-basic-example,
+.gotipe-page-example {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  gap: 16px;
+}
+.gotipe-editor-view {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  color: var(--gt-text-2);
+  font-size: var(--gt-text-body);
+}
+.gotipe-editor-view select {
+  width: 140px;
+}
+.gotipe-page-example-controls {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.gotipe-page-example-controls h2 {
+  margin: 0 auto 0 0;
+  font-size: var(--gt-text-prose);
+  color: var(--gt-text);
+}
+.gotipe-page-example-controls button,
+.gotipe-page-example-error button {
+  border: 1px solid var(--gt-line-control);
+  background: var(--gt-surface);
+  color: var(--gt-text);
+  border-radius: var(--gt-radius-control);
+  padding: 6px 10px;
+  font: inherit;
+}
+.gotipe-page-example-controls button:hover,
+.gotipe-page-example-error button:hover,
+.gotipe-page-example-controls button[aria-pressed="true"] {
+  background: var(--gt-fill-2);
+}
+.gotipe-page-example-controls button:focus-visible,
+.gotipe-page-example-error button:focus-visible,
+.gotipe-page-example-error textarea:focus-visible {
+  outline: 2px solid var(--gt-accent);
+  outline-offset: 2px;
+}
+.gotipe-page-example-controls button:disabled {
+  opacity: 0.5;
+}
+.gotipe-page-example-surface {
+  min-width: 0;
+  max-height: 70vh;
+  overflow: auto;
+  border: 1px solid var(--gt-line);
+  border-radius: var(--gt-radius-surface);
+}
+.gotipe-page-example-source {
+  min-width: 0;
+  max-height: 280px;
+  overflow: auto;
+  margin: 0;
+  padding: 16px;
+  color: var(--gt-text);
+  background: var(--gt-surface);
+  border: 1px solid var(--gt-line);
+  border-radius: var(--gt-radius-surface);
+  font-family: var(--gt-font-mono);
+  font-size: 12px;
+}
+.gotipe-page-example-error {
+  color: var(--gt-danger);
+  overflow-wrap: anywhere;
+}
+.gotipe-page-example-error textarea {
+  display: block;
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 80px;
+  margin-block: 8px;
+  resize: vertical;
+  font: inherit;
+  color: var(--gt-text);
+  background: var(--gt-surface);
+  border: 1px solid var(--gt-line-control);
+}

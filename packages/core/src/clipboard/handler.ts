@@ -1,538 +1,281 @@
-import type { GoTipeEditor } from "../editor";
-import { sanitizeHtml } from "../security/sanitizer";
-import type { AttrValue, Block, Mark } from "../types/block";
-import type { Step } from "../types/state";
+import { saveAsset } from "../assets";
+import { GoTipeError } from "../error";
+import { blocksToHtml, spansToHtml } from "../serialization/html";
+import { blocksToText } from "../text";
+import type { Block, Document } from "../types/block";
+import type { GoTipeEditor } from "../types/editor";
+import { documentTransaction } from "./document";
+import { insertPayload, plainTextPayload } from "./insertion";
+import { type ClipboardOptions, findPasteRule, runPasteRules } from "./paste-rules";
+import { readClipboardPayload } from "./payload";
+import { type ClipboardPayload, copySelection, removeSelection } from "./selection";
 
 export class ClipboardHandler {
-  private pendingShortcutFallbackTimer: number | null = null;
-  private lastPasteEventTimestamp = 0;
+  private request = 0;
+  private disposed = false;
 
-  constructor(private editor: GoTipeEditor) {}
+  private drafts = new Set<GoTipeEditor>();
 
-  onPaste(event: ClipboardEvent): void {
-    this.editor.syncSelectionFromDOM();
-    this.lastPasteEventTimestamp = Date.now();
-    this.clearPendingShortcutFallback();
-    event.preventDefault();
+  constructor(
+    private editor: GoTipeEditor,
+    private options: ClipboardOptions = {},
+  ) {}
 
-    const data = event.clipboardData;
-    if (data) {
-      // 1. Internal GoTipe JSON (from copy within editor)
-      const internalJson = data.getData("application/x-gotipe");
-      if (internalJson) {
-        try {
-          const payload = JSON.parse(internalJson) as {
-            blocks?: Block[];
-            spans?: { text: string; marks: Mark[] }[];
-          };
-          if (payload.spans && payload.spans.length > 0) {
-            this.deleteSelectionIfNeeded();
-            // Inline content — insert spans into current block
-            this.insertSpans(payload.spans);
-            return;
-          }
-          if (payload.blocks && payload.blocks.length > 0) {
-            this.deleteSelectionIfNeeded();
-            this.insertBlocks(payload.blocks);
-            return;
-          }
-        } catch {
-          // Ignore malformed internal data
-        }
-      }
-
-      // 2. HTML
-      const html = data.getData("text/html");
-      if (html) {
-        const sanitized = sanitizeHtml(html);
-        const blocks = this.parseHtmlToBlocks(sanitized);
-        if (blocks.length > 0) {
-          this.deleteSelectionIfNeeded();
-          this.insertParsedBlocks(blocks);
-          return;
-        }
-      }
-
-      // 3. Plain text (with markdown detection)
-      const plain = data.getData("text/plain");
-      if (plain) {
-        this.deleteSelectionIfNeeded();
-        this.insertPlainText(plain);
-        return;
-      }
-    }
-
-    // Chromium shortcut paste can occasionally dispatch with empty DataTransfer.
-    // Try async clipboard read as a last-resort fallback.
-    this.tryAsyncPlainTextPaste();
+  destroy(): void {
+    this.disposed = true;
+    this.request++;
+    for (const draft of this.drafts) draft.destroy();
+    this.drafts.clear();
   }
 
+  onPaste(event: ClipboardEvent): void {
+    if (!this.editor.isEditable || this.disposed) return;
+    this.editor.syncSelectionFromDOM();
+    this.request++;
+    event.preventDefault();
+    const files = Array.from(event.clipboardData?.files ?? []);
+    if (files.length) {
+      void this.pasteFiles(files);
+      return;
+    }
+    try {
+      const text = event.clipboardData?.getData("text/plain");
+      if (text && !event.clipboardData?.getData("application/x-gotipe") && this.hasRule(text)) {
+        void this.pasteUsingRules([text]);
+        return;
+      }
+      const payload = event.clipboardData && readClipboardPayload(event.clipboardData);
+      if (payload) this.apply(payload);
+      else this.pasteFromSystemClipboard();
+    } catch (error) {
+      this.report(error);
+    }
+  }
+
+  /** The native paste event owns insertion; a timer fallback can duplicate a delayed event. */
   onPasteShortcut(): void {
-    if (typeof window === "undefined") return;
-    this.clearPendingShortcutFallback();
-    const shortcutTimestamp = Date.now();
-    this.pendingShortcutFallbackTimer = window.setTimeout(() => {
-      this.pendingShortcutFallbackTimer = null;
-      // Real paste event won the race; do not duplicate insertion.
-      if (this.lastPasteEventTimestamp >= shortcutTimestamp) return;
-      this.tryAsyncPlainTextPaste();
-    }, 24);
+    this.request++;
+  }
+
+  onDrop(event: DragEvent): void {
+    const files = Array.from(event.dataTransfer?.files ?? []);
+    if (!files.length || this.disposed || !this.editor.isEditable) return;
+    event.preventDefault();
+    const document = this.editor.element?.ownerDocument;
+    if (document) {
+      const range = document.caretRangeFromPoint?.(event.clientX, event.clientY);
+      if (range && this.editor.element?.contains(range.startContainer)) {
+        const selection = document.getSelection();
+        selection?.removeAllRanges();
+        selection?.addRange(range);
+      }
+    }
+    this.editor.syncSelectionFromDOM();
+    void this.pasteFiles(files);
+  }
+
+  private hasRule(data: File | string): boolean {
+    return !!this.options.createDraft && !!findPasteRule(this.options, data);
+  }
+
+  private async savedFile(file: File): Promise<Block> {
+    const kind = file.type.startsWith("image/") ? "image" : "file";
+    const saved = await saveAsset(this.editor.host, file, kind);
+    return {
+      id: crypto.randomUUID(),
+      type: kind,
+      content: null,
+      children: [],
+      attrs:
+        kind === "image"
+          ? { src: saved.src, alt: saved.name, caption: "" }
+          : { url: saved.src, name: saved.name, size: file.size, mime_type: file.type },
+    };
+  }
+
+  private async pasteUsingRules(data: (File | string)[]): Promise<void> {
+    const request = ++this.request;
+    const before = this.editor.getJSON();
+    const selection = structuredClone(this.editor.getViewState().selection);
+    const snapshot = JSON.stringify({ document: before, selection });
+    const current = () =>
+      !this.disposed &&
+      !this.editor.isDestroyed &&
+      this.editor.isEditable &&
+      request === this.request;
+    try {
+      const result = await runPasteRules(
+        this.options,
+        data,
+        before,
+        selection,
+        current,
+        this.drafts,
+        async (file) => ({ blocks: [await this.savedFile(file)] }),
+      );
+      if (!result || !current()) return;
+      if (
+        snapshot !==
+        JSON.stringify({
+          document: this.editor.getJSON(),
+          selection: this.editor.getViewState().selection,
+        })
+      )
+        throw new GoTipeError(
+          "CLIPBOARD_FAILED",
+          "The document or selection changed during paste. Paste again at the desired position.",
+        );
+      if (!this.editor.validate(result.document))
+        throw new GoTipeError(
+          "CLIPBOARD_FAILED",
+          "The paste rule produced content outside the editor schema",
+        );
+      const transaction = documentTransaction(before, result.document, result.selection.head);
+      if (transaction.steps.length) this.editor.dispatch(transaction);
+    } catch (error) {
+      if (current()) this.report(error);
+    }
+  }
+
+  private async pasteFiles(files: File[]): Promise<void> {
+    if (files.some((file) => this.hasRule(file))) {
+      await this.pasteUsingRules(files);
+      return;
+    }
+    const request = ++this.request;
+    const snapshot = JSON.stringify({
+      document: this.editor.getJSON(),
+      selection: this.editor.getViewState().selection,
+    });
+    try {
+      const blocks = await Promise.all(files.map((file) => this.savedFile(file)));
+      if (
+        this.disposed ||
+        this.editor.isDestroyed ||
+        !this.editor.isEditable ||
+        request !== this.request
+      )
+        return;
+      const current = JSON.stringify({
+        document: this.editor.getJSON(),
+        selection: this.editor.getViewState().selection,
+      });
+      if (snapshot !== current)
+        throw new GoTipeError(
+          "ASSET_SAVE_FAILED",
+          "The document changed during upload. Insert the file again at the desired position.",
+        );
+      this.apply({ blocks });
+    } catch (error) {
+      if (!this.disposed && !this.editor.isDestroyed && request === this.request)
+        this.report(error);
+    }
   }
 
   canReadClipboardText(): boolean {
-    return (
-      typeof navigator !== "undefined" &&
-      !!navigator.clipboard &&
-      typeof navigator.clipboard.readText === "function"
-    );
+    return typeof navigator !== "undefined" && typeof navigator.clipboard?.readText === "function";
   }
 
   pasteFromSystemClipboard(): void {
-    if (!this.canReadClipboardText()) return;
+    if (!this.canReadClipboardText() || this.disposed || !this.editor.isEditable) return;
+    this.editor.syncSelectionFromDOM();
+    const request = ++this.request;
+    const snapshot = JSON.stringify({
+      document: this.editor.getJSON(),
+      selection: this.editor.getViewState().selection,
+    });
     void navigator.clipboard
       .readText()
       .then((text) => {
-        if (!text) return;
-        this.editor.syncSelectionFromDOM();
-        this.deleteSelectionIfNeeded();
-        this.insertPlainText(text);
+        if (
+          !text ||
+          this.disposed ||
+          this.editor.isDestroyed ||
+          !this.editor.isEditable ||
+          request !== this.request
+        )
+          return;
+        const current = JSON.stringify({
+          document: this.editor.getJSON(),
+          selection: this.editor.getViewState().selection,
+        });
+        if (snapshot !== current) return; // A late clipboard response must not replace a newer edit/selection.
+        if (this.hasRule(text)) void this.pasteUsingRules([text]);
+        else this.apply(plainTextPayload(text));
       })
-      .catch(() => {
-        // Leave as no-op when browser blocks clipboard read.
+      .catch((error) => {
+        if (!this.disposed && request === this.request) this.report(error);
       });
   }
 
   onCopy(event: ClipboardEvent): void {
+    if (this.disposed) return;
     this.editor.syncSelectionFromDOM();
-    event.preventDefault();
-    const data = event.clipboardData;
-    if (!data) return;
-
-    const state = this.editor.getViewState();
-    const sel = state.selection;
-
-    if (sel.type === "text") {
-      const block = state.blocks.find((b) => b.id === sel.anchor.blockId);
-      if (block && Array.isArray(block.content)) {
-        const from = Math.min(sel.anchor.offset, sel.head.offset);
-        const to = Math.max(sel.anchor.offset, sel.head.offset);
-
-        // Extract selected spans preserving marks
-        const selectedSpans = this.extractSpans(
-          block.content as { text: string; marks: Mark[] }[],
-          from,
-          to,
-        );
-        const selectedText = selectedSpans.map((s) => s.text).join("");
-
-        data.setData("text/plain", selectedText);
-        data.setData("text/html", this.spansToHtml(selectedSpans));
-        data.setData("application/x-gotipe", JSON.stringify({ spans: selectedSpans }));
-      }
-    } else if (sel.type === "block") {
-      const block = state.blocks.find((b) => b.id === sel.anchor.blockId);
-      if (block) {
-        const text = Array.isArray(block.content)
-          ? block.content.map((s) => s.text).join("")
-          : (block.content ?? "");
-        data.setData("text/plain", String(text));
-        data.setData("application/x-gotipe", JSON.stringify({ blocks: [block] }));
-      }
-    }
+    this.writeSelection(event);
   }
 
   onCut(event: ClipboardEvent): void {
+    if (this.disposed) return;
     this.editor.syncSelectionFromDOM();
-    this.onCopy(event);
-    const state = this.editor.getViewState();
-    const sel = state.selection;
-
-    if (sel.type === "text") {
-      const from = Math.min(sel.anchor.offset, sel.head.offset);
-      const to = Math.max(sel.anchor.offset, sel.head.offset);
-      if (from !== to) {
-        this.editor.dispatch({
-          steps: [{ type: "deleteText", blockId: sel.anchor.blockId, from, to }],
-        });
-      }
-    } else if (sel.type === "block") {
-      this.editor.chain().deleteBlock(sel.anchor.blockId).run();
+    // Never delete unless all clipboard formats were successfully written.
+    if (!this.writeSelection(event) || !this.editor.isEditable) return;
+    const document = this.editor.getJSON() as Document;
+    const plan = removeSelection(document, this.editor.getViewState().selection);
+    if (!plan) return;
+    try {
+      this.editor.dispatch(documentTransaction(document, plan.document, plan.caret));
+    } catch (error) {
+      this.report(error);
     }
   }
 
-  /** Delete current selection before inserting pasted content */
-  private deleteSelectionIfNeeded(): void {
-    const state = this.editor.getViewState();
-    const sel = state.selection;
-    if (sel.type === "text") {
-      const from = Math.min(sel.anchor.offset, sel.head.offset);
-      const to = Math.max(sel.anchor.offset, sel.head.offset);
-      if (from !== to) {
-        this.editor.dispatch({
-          steps: [{ type: "deleteText", blockId: sel.anchor.blockId, from, to }],
-        });
-      }
+  private writeSelection(event: ClipboardEvent): boolean {
+    const data = event.clipboardData;
+    if (!data) return false;
+    const payload = copySelection(
+      this.editor.getJSON() as Document,
+      this.editor.getViewState().selection,
+    );
+    if (!payload) return false;
+    try {
+      const plain =
+        "spans" in payload
+          ? payload.spans.map((span) => span.text).join("")
+          : blocksToText(payload.blocks);
+      const html = "spans" in payload ? spansToHtml(payload.spans) : blocksToHtml(payload.blocks);
+      data.setData("text/plain", plain);
+      data.setData("text/html", html);
+      data.setData("application/x-gotipe", JSON.stringify(payload));
+      event.preventDefault();
+      return true;
+    } catch (error) {
+      event.preventDefault();
+      this.report(error);
+      return false;
     }
   }
 
-  /** Extract spans from content within a character range, preserving marks */
-  private extractSpans(
-    content: { text: string; marks: Mark[] }[],
-    from: number,
-    to: number,
-  ): { text: string; marks: Mark[] }[] {
-    const result: { text: string; marks: Mark[] }[] = [];
-    let pos = 0;
-    for (const span of content) {
-      const spanEnd = pos + span.text.length;
-      if (spanEnd <= from) {
-        pos = spanEnd;
-        continue;
-      }
-      if (pos >= to) break;
-      const sliceFrom = Math.max(from - pos, 0);
-      const sliceTo = Math.min(to - pos, span.text.length);
-      result.push({ text: span.text.slice(sliceFrom, sliceTo), marks: [...span.marks] });
-      pos = spanEnd;
+  private apply(payload: ClipboardPayload): void {
+    const document = this.editor.getJSON() as Document;
+    const plan = insertPayload(document, this.editor.getViewState().selection, payload);
+    if (!this.editor.validate(plan.document)) {
+      throw new GoTipeError(
+        "CLIPBOARD_FAILED",
+        "The pasted content does not match the editor schema",
+      );
     }
-    return result;
+    const transaction = documentTransaction(document, plan.document, plan.caret);
+    if (transaction.steps.length) this.editor.dispatch(transaction);
   }
 
-  /** Convert spans to HTML for clipboard */
-  private spansToHtml(spans: { text: string; marks: Mark[] }[]): string {
-    const inner = spans
-      .map((span) => {
-        let html = this.escapeHtml(span.text);
-        for (const mark of span.marks) {
-          switch (mark.type) {
-            case "bold":
-              html = `<strong>${html}</strong>`;
-              break;
-            case "italic":
-              html = `<em>${html}</em>`;
-              break;
-            case "underline":
-              html = `<u>${html}</u>`;
-              break;
-            case "strikethrough":
-              html = `<s>${html}</s>`;
-              break;
-            case "code":
-              html = `<code>${html}</code>`;
-              break;
-            case "superscript":
-              html = `<sup>${html}</sup>`;
-              break;
-            case "subscript":
-              html = `<sub>${html}</sub>`;
-              break;
-            case "link": {
-              const href = this.escapeHtml(
-                String((mark.attrs as Record<string, string>)?.href ?? ""),
-              );
-              html = `<a href="${href}">${html}</a>`;
-              break;
-            }
-            case "highlight": {
-              const color = (mark.attrs as Record<string, string>)?.color;
-              html = color
-                ? `<mark style="background:${this.escapeHtml(color)}">${html}</mark>`
-                : `<mark>${html}</mark>`;
-              break;
-            }
-          }
-        }
-        return html;
-      })
-      .join("");
-    return `<p>${inner}</p>`;
-  }
-
-  /** Parse sanitized HTML into block-like structures */
-  private parseHtmlToBlocks(
-    html: string,
-  ): { type: string; content: string; attrs: Record<string, unknown> }[] {
-    if (typeof DOMParser === "undefined") {
-      return [{ type: "paragraph", content: html.replace(/<[^>]*>/g, ""), attrs: {} }];
-    }
-
-    const doc = new DOMParser().parseFromString(html, "text/html");
-    const blocks: { type: string; content: string; attrs: Record<string, unknown> }[] = [];
-
-    for (const node of Array.from(doc.body.childNodes)) {
-      if (node.nodeType === Node.TEXT_NODE) {
-        const text = node.textContent?.trim();
-        if (text) blocks.push({ type: "paragraph", content: text, attrs: {} });
-        continue;
-      }
-      if (!(node instanceof HTMLElement)) continue;
-
-      const tag = node.tagName.toLowerCase();
-      const text = node.textContent || "";
-
-      switch (tag) {
-        case "h1":
-          blocks.push({ type: "heading", content: text, attrs: { level: 1 } });
-          break;
-        case "h2":
-          blocks.push({ type: "heading", content: text, attrs: { level: 2 } });
-          break;
-        case "h3":
-          blocks.push({ type: "heading", content: text, attrs: { level: 3 } });
-          break;
-        case "h4":
-          blocks.push({ type: "heading", content: text, attrs: { level: 4 } });
-          break;
-        case "h5":
-          blocks.push({ type: "heading", content: text, attrs: { level: 5 } });
-          break;
-        case "h6":
-          blocks.push({ type: "heading", content: text, attrs: { level: 6 } });
-          break;
-        case "pre": {
-          const code = node.querySelector("code");
-          const lang = code?.className?.replace("language-", "") || "plain";
-          blocks.push({
-            type: "codeBlock",
-            content: code?.textContent || text,
-            attrs: { language: lang },
-          });
-          break;
-        }
-        case "blockquote":
-          blocks.push({ type: "blockquote", content: text, attrs: {} });
-          break;
-        case "hr":
-          blocks.push({ type: "divider", content: "", attrs: {} });
-          break;
-        case "ul":
-        case "ol": {
-          // Flatten list items into separate paragraph entries for simplicity
-          for (const li of Array.from(node.querySelectorAll("li"))) {
-            blocks.push({ type: "paragraph", content: li.textContent || "", attrs: {} });
-          }
-          break;
-        }
-        default:
-          if (text.trim()) blocks.push({ type: "paragraph", content: text, attrs: {} });
-          break;
-      }
-    }
-
-    return blocks;
-  }
-
-  /** Insert parsed HTML blocks */
-  private insertParsedBlocks(
-    blocks: { type: string; content: string; attrs: Record<string, unknown> }[],
-  ): void {
-    const state = this.editor.getViewState();
-    const blockIndex = state.blocks.findIndex((b) => b.id === state.selection.anchor.blockId);
-
-    if (blocks.length === 1 && blocks[0]!.type === "paragraph") {
-      // Single paragraph — insert as text into current block
-      this.editor.dispatch({
-        steps: [
-          {
-            type: "insertText",
-            blockId: state.selection.anchor.blockId,
-            offset: state.selection.anchor.offset,
-            text: blocks[0]!.content,
-            marks: [],
-          },
-        ],
-      });
-      return;
-    }
-
-    // Multiple blocks — insert first as text, rest as new blocks
-    const steps: Step[] = [];
-    if (blocks[0]!.content) {
-      steps.push({
-        type: "insertText",
-        blockId: state.selection.anchor.blockId,
-        offset: state.selection.anchor.offset,
-        text: blocks[0]!.content,
-        marks: [],
-      });
-    }
-
-    for (let i = 1; i < blocks.length; i++) {
-      const b = blocks[i]!;
-      if (b.type === "divider") {
-        steps.push({
-          type: "insertBlock",
-          parentId: null,
-          index: blockIndex + i,
-          block: {
-            id: crypto.randomUUID(),
-            type: "divider",
-            attrs: {},
-            content: null,
-            children: [],
-          },
-        });
-      } else if (b.type === "codeBlock") {
-        steps.push({
-          type: "insertBlock",
-          parentId: null,
-          index: blockIndex + i,
-          block: {
-            id: crypto.randomUUID(),
-            type: "codeBlock",
-            attrs: b.attrs as Record<string, AttrValue>,
-            content: b.content,
-            children: [],
-          },
-        });
-      } else {
-        steps.push({
-          type: "insertBlock",
-          parentId: null,
-          index: blockIndex + i,
-          block: {
-            id: crypto.randomUUID(),
-            type: b.type,
-            attrs: b.attrs as Record<string, AttrValue>,
-            content: b.content ? [{ text: b.content, marks: [] }] : [],
-            children: [],
-          },
-        });
-      }
-    }
-
-    if (steps.length > 0) {
-      this.editor.dispatch({ steps });
-    }
-  }
-
-  /** Insert internal spans into current block */
-  private insertSpans(spans: { text: string; marks: Mark[] }[]): void {
-    const state = this.editor.getViewState();
-    const sel = state.selection;
-    const text = spans.map((s) => s.text).join("");
-
-    // Insert text first
-    this.editor.dispatch({
-      steps: [
-        {
-          type: "insertText",
-          blockId: sel.anchor.blockId,
-          offset: sel.anchor.offset,
-          text,
-          marks: [],
-        },
-      ],
-    });
-
-    // Then apply marks for each span
-    let offset = sel.anchor.offset;
-    for (const span of spans) {
-      for (const mark of span.marks) {
-        this.editor.dispatch({
-          steps: [
-            {
-              type: "addMark",
-              blockId: sel.anchor.blockId,
-              from: offset,
-              to: offset + span.text.length,
-              mark,
-            },
-          ],
-        });
-      }
-      offset += span.text.length;
-    }
-  }
-
-  /** Insert internal blocks after current block */
-  private insertBlocks(blocks: Block[]): void {
-    const state = this.editor.getViewState();
-    const blockIndex = state.blocks.findIndex((b) => b.id === state.selection.anchor.blockId);
-
-    for (let i = 0; i < blocks.length; i++) {
-      const block = blocks[i]!;
-      this.editor.dispatch({
-        steps: [
-          {
-            type: "insertBlock",
-            parentId: null,
-            index: blockIndex + 1 + i,
-            block: {
-              ...block,
-              id: crypto.randomUUID(),
-            },
-          },
-        ],
-      });
-    }
-  }
-
-  private insertPlainText(text: string): void {
-    const lines = text.split("\n");
-    const state = this.editor.getViewState();
-
-    if (lines.length === 1) {
-      this.editor.dispatch({
-        steps: [
-          {
-            type: "insertText",
-            blockId: state.selection.anchor.blockId,
-            offset: state.selection.anchor.offset,
-            text: lines[0]!,
-            marks: [],
-          },
-        ],
-      });
-    } else {
-      // Multi-line: insert first line into current block, rest as new paragraphs
-      const steps: Step[] = [
-        {
-          type: "insertText",
-          blockId: state.selection.anchor.blockId,
-          offset: state.selection.anchor.offset,
-          text: lines[0]!,
-          marks: [],
-        },
-      ];
-
-      const blockIndex = state.blocks.findIndex((b) => b.id === state.selection.anchor.blockId);
-      for (let i = 1; i < lines.length; i++) {
-        steps.push({
-          type: "insertBlock",
-          parentId: null,
-          index: blockIndex + i,
-          block: {
-            id: crypto.randomUUID(),
-            type: "paragraph",
-            attrs: {},
-            content: [{ text: lines[i]!, marks: [] }],
-            children: [],
-          },
-        });
-      }
-
-      this.editor.dispatch({ steps });
-    }
-  }
-
-  private tryAsyncPlainTextPaste(): void {
-    if (!this.canReadClipboardText()) return;
-    this.pasteFromSystemClipboard();
-  }
-
-  private clearPendingShortcutFallback(): void {
-    if (typeof window === "undefined") return;
-    if (this.pendingShortcutFallbackTimer === null) return;
-    window.clearTimeout(this.pendingShortcutFallbackTimer);
-    this.pendingShortcutFallbackTimer = null;
-  }
-
-  private escapeHtml(text: string): string {
-    return text
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;")
-      .replace(/"/g, "&quot;");
+  private report(error: unknown): void {
+    this.editor.reportError(
+      error instanceof GoTipeError
+        ? error
+        : new GoTipeError(
+            "CLIPBOARD_FAILED",
+            error instanceof Error ? error.message : "Clipboard operation failed",
+          ),
+    );
   }
 }

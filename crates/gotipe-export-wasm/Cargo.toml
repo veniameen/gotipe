@@ -1,0 +1,16 @@
+[package]
+name = "gotipe-export-wasm"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+gotipe-export = { version = "0.1.0", path = "../gotipe-export", default-features = false, features = ["pdf", "docx"] }
+wasm-bindgen = { workspace = true }
+serde_json = { workspace = true }
+
+[package.metadata.wasm-pack.profile.release]
+wasm-opt = false

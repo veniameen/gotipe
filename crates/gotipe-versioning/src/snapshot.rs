@@ -12,33 +12,70 @@ pub struct IncrementalSnapshot {
     pub compressed_data: Vec<u8>,
 }
 
-/// Encode operations into an incremental snapshot (zstd compressed when available)
+const MAGIC: &[u8] = b"GTS1";
+const MAX_DECODED_BYTES: usize = 64 * 1024 * 1024;
+
+/// Compression is tagged explicitly, so native and WASM builds agree on bytes.
 pub fn encode_snapshot(ops: &[CrdtOp], base_state_vector: &[u8]) -> IncrementalSnapshot {
-    let ops_json = serde_json::to_vec(ops).unwrap_or_default();
-
+    let json = serde_json::to_vec(ops).expect("serializable CRDT operations");
     #[cfg(feature = "compression")]
-    let compressed = zstd::encode_all(ops_json.as_slice(), 3).unwrap_or_else(|_| ops_json.clone());
+    let (flag, payload) = match zstd::encode_all(json.as_slice(), 3) {
+        Ok(compressed) => (1u8, compressed),
+        Err(_) => (0u8, json),
+    };
     #[cfg(not(feature = "compression"))]
-    let compressed = ops_json;
-
+    let (flag, payload) = (0u8, json);
+    let mut data = Vec::with_capacity(payload.len() + 5);
+    data.extend_from_slice(MAGIC);
+    data.push(flag);
+    data.extend(payload);
     IncrementalSnapshot {
         base_state_vector: base_state_vector.to_vec(),
         ops: ops.to_vec(),
-        compressed_data: compressed,
+        compressed_data: data,
     }
 }
 
-/// Decode operations from a snapshot
 pub fn decode_snapshot(snapshot: &IncrementalSnapshot) -> Result<Vec<CrdtOp>, SnapshotError> {
-    #[cfg(feature = "compression")]
-    let decompressed = zstd::decode_all(snapshot.compressed_data.as_slice())
+    let bytes = snapshot.compressed_data.as_slice();
+    let (flag, payload) = if bytes.starts_with(MAGIC) {
+        let flag = *bytes.get(4).ok_or(SnapshotError::InvalidHeader)?;
+        (flag, &bytes[5..])
+    } else if bytes.starts_with(&[0x28, 0xb5, 0x2f, 0xfd]) {
+        (1, bytes) // Legacy native zstd snapshots.
+    } else {
+        (0, bytes)
+    }; // Legacy JSON snapshots.
+    let decoded = match flag {
+        0 => {
+            if payload.len() > MAX_DECODED_BYTES {
+                return Err(SnapshotError::TooLarge);
+            }
+            payload.to_vec()
+        }
+        1 => decompress(payload)?,
+        _ => return Err(SnapshotError::InvalidHeader),
+    };
+    serde_json::from_slice(&decoded)
+        .map_err(|e| SnapshotError::DeserializationFailed(e.to_string()))
+}
+#[cfg(feature = "compression")]
+fn decompress(payload: &[u8]) -> Result<Vec<u8>, SnapshotError> {
+    use std::io::Read;
+    let decoder = zstd::Decoder::new(payload).map_err(|_| SnapshotError::DecompressionFailed)?;
+    let mut decoded = Vec::new();
+    decoder
+        .take(MAX_DECODED_BYTES as u64 + 1)
+        .read_to_end(&mut decoded)
         .map_err(|_| SnapshotError::DecompressionFailed)?;
-    #[cfg(not(feature = "compression"))]
-    let decompressed = snapshot.compressed_data.clone();
-
-    let ops: Vec<CrdtOp> = serde_json::from_slice(&decompressed)
-        .map_err(|e| SnapshotError::DeserializationFailed(e.to_string()))?;
-    Ok(ops)
+    if decoded.len() > MAX_DECODED_BYTES {
+        return Err(SnapshotError::TooLarge);
+    }
+    Ok(decoded)
+}
+#[cfg(not(feature = "compression"))]
+fn decompress(_payload: &[u8]) -> Result<Vec<u8>, SnapshotError> {
+    Err(SnapshotError::CompressionUnavailable)
 }
 
 /// Check if a full snapshot should be created
@@ -48,6 +85,12 @@ pub fn should_create_full_snapshot(version_count: usize) -> bool {
 
 #[derive(Debug, Clone, thiserror::Error)]
 pub enum SnapshotError {
+    #[error("Invalid snapshot encoding header")]
+    InvalidHeader,
+    #[error("Snapshot exceeds the 64 MiB decoded limit")]
+    TooLarge,
+    #[error("This build cannot decode compressed snapshots")]
+    CompressionUnavailable,
     #[error("Decompression failed")]
     DecompressionFailed,
 
@@ -72,5 +115,20 @@ mod tests {
         assert!(should_create_full_snapshot(50));
         assert!(should_create_full_snapshot(100));
         assert!(!should_create_full_snapshot(49));
+    }
+    #[test]
+    fn plain_snapshots_decode_identically_regardless_of_compression_feature() {
+        let mut snapshot = IncrementalSnapshot {
+            base_state_vector: vec![],
+            ops: vec![],
+            compressed_data: b"GTS1\0[]".to_vec(),
+        };
+        assert!(decode_snapshot(&snapshot).unwrap().is_empty());
+        snapshot.compressed_data = b"[]".to_vec();
+        assert!(decode_snapshot(&snapshot).unwrap().is_empty());
+        for bytes in [b"GTS1".as_slice(), b"GTS1\x07[]".as_slice()] {
+            snapshot.compressed_data = bytes.to_vec();
+            assert!(decode_snapshot(&snapshot).is_err());
+        }
     }
 }

@@ -40,6 +40,16 @@ describe("findAnchor", () => {
     if (m.ok) expect(crlf.slice(m.start, m.end)).toBe("Миграция");
   });
 
+  it("rejects ambiguous anchors across mixed LF and CRLF lines", () => {
+    expect(
+      findAnchor("before\nquote\nafter\nbefore\r\nquote\r\nafter", {
+        before: "before\n",
+        quote: "quote",
+        after: "\nafter",
+      }),
+    ).toEqual({ ok: false, reason: "ambiguous" });
+  });
+
   it("an empty needle matches only an empty text", () => {
     expect(findAnchor("", { before: "", quote: "", after: "" })).toEqual({
       ok: true,
@@ -54,6 +64,15 @@ describe("findAnchor", () => {
 });
 
 describe("applyAnchoredEdits", () => {
+  it("keeps CRLF outside the replacement and removes both bytes inside it", () => {
+    expect(
+      applyAnchoredEdits("ab\r\ncd", [{ before: "", quote: "ab", after: "\ncd", text: "AB" }]),
+    ).toEqual({ ok: true, text: "AB\r\ncd" });
+    expect(
+      applyAnchoredEdits("ab\r\ncd", [{ before: "ab", quote: "\n", after: "cd", text: " " }]),
+    ).toEqual({ ok: true, text: "ab cd" });
+  });
+
   it("applies insert, replace and delete together", () => {
     const r = applyAnchoredEdits(PAGE, [
       { before: "0042", quote: "", after: "\n\n", text: "\n- [ ] Индекс по status_id" },
@@ -95,6 +114,16 @@ describe("applyAnchoredEdits", () => {
 });
 
 describe("helpers", () => {
+  it("uses original CRLF offsets for the whole anchor window", () => {
+    expect(
+      anchorWindowsOverlap(
+        "ab\r\ncd\r\nef",
+        { before: "", quote: "ab", after: "\n", text: "AB" },
+        { before: "ab\ncd\n", quote: "ef", after: "" },
+      ),
+    ).toBe(true);
+  });
+
   it("anchorWindowsOverlap detects an edit inside another's window", () => {
     const edit = { before: "Снять ", quote: "дамп", after: "", text: "снимок" };
     expect(anchorWindowsOverlap(PAGE, edit, { before: "- [ ] Снять ", quote: "", after: "" })).toBe(

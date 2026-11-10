@@ -1,99 +1,164 @@
-import type { Block } from "@gotipe/core";
+import type { Block, Mark, TextSpan } from "@gotipe/core";
+import {
+  MigrationContext,
+  type SourceNode,
+  UnsupportedContent,
+  append,
+  children,
+  metadata,
+  node,
+  readJSON,
+} from "./context";
 import type { MigrationOptions, MigrationResult } from "./types";
 
-interface LexicalNode {
-  type: string;
-  children?: LexicalNode[];
-  text?: string;
-  format?: number;
-  tag?: string;
-  [key: string]: unknown;
-}
+const blocks: Record<string, string> = {
+  paragraph: "paragraph",
+  heading: "heading",
+  list: "bulletList",
+  listitem: "listItem",
+  code: "codeBlock",
+  quote: "blockquote",
+  horizontalrule: "divider",
+  image: "image",
+  table: "table",
+  tablecell: "tableCell",
+  tablerow: "tableRow",
+};
+const formats: [number, string][] = [
+  [1, "bold"],
+  [2, "italic"],
+  [4, "strikethrough"],
+  [8, "underline"],
+  [16, "code"],
+  [32, "subscript"],
+  [64, "superscript"],
+  [128, "highlight"],
+];
 
-const FORMAT_BOLD = 1;
-const FORMAT_ITALIC = 2;
-const FORMAT_UNDERLINE = 8;
-const FORMAT_STRIKETHROUGH = 4;
-const FORMAT_CODE = 16;
-
+/** Convert serialized Lexical editor state without depending on its runtime. */
 export function convertLexicalToGoTipe(
-  lexicalState: { root: LexicalNode },
+  input: unknown,
   options: MigrationOptions = {},
 ): MigrationResult {
-  const warnings: string[] = [];
-  const skippedNodes = 0;
-  const blockMap: Record<string, string> = {
-    paragraph: "paragraph",
-    heading: "heading",
-    list: "bulletList",
-    listitem: "listItem",
-    code: "codeBlock",
-    quote: "blockquote",
-    horizontalrule: "divider",
-    image: "image",
-    table: "table",
-    tablecell: "tableCell",
-    tablerow: "tableRow",
-    ...options.blockTypeMap,
-  };
+  const context = new MigrationContext("Lexical", options);
+  const state = node(readJSON(input), "state");
+  const root = node(state.root ?? null, "root");
+  if (root.type !== "root") throw new Error("Lexical root must have type root");
+  const blockMap = { ...blocks, ...options.blockTypeMap };
 
-  function convertNode(node: LexicalNode): Block | null {
-    if (node.type === "text") return null;
-
-    let blockType = blockMap[node.type] ?? node.type;
-    if (node.type === "heading" && node.tag) {
-      blockType = "heading";
+  function inline(value: SourceNode, inherited: Mark[] = [], code = false): TextSpan[] | null {
+    if (value.type === "linebreak") return [{ text: "\n", marks: inherited }];
+    if (value.type === "tab") return [{ text: "\t", marks: inherited }];
+    if (value.type === "link" || value.type === "autolink") {
+      if (typeof value.url !== "string") throw new Error("Lexical link requires url");
+      const mark = {
+        type: "link",
+        attrs: { ...metadata(value, ["type", "children"]), href: value.url },
+      };
+      const spans: TextSpan[] = [];
+      for (const child of children(value, "children", "link")) {
+        const converted = inline(child, [...inherited, mark], code);
+        if (!converted) throw new UnsupportedContent("Block nested inside a link");
+        for (const span of converted) append(spans, span.text, span.marks);
+      }
+      return spans;
     }
-
-    const children: Block[] = [];
-    const content: Array<{
-      text: string;
-      marks: Array<{ type: string; attrs: Record<string, string | number | boolean | null> }>;
-    }> = [];
-
-    if (node.children) {
-      for (const child of node.children) {
-        if (child.type === "text" && child.text !== undefined) {
-          const marks: Array<{
-            type: string;
-            attrs: Record<string, string | number | boolean | null>;
-          }> = [];
-          const fmt = child.format ?? 0;
-          if (fmt & FORMAT_BOLD) marks.push({ type: "bold", attrs: {} });
-          if (fmt & FORMAT_ITALIC) marks.push({ type: "italic", attrs: {} });
-          if (fmt & FORMAT_UNDERLINE) marks.push({ type: "underline", attrs: {} });
-          if (fmt & FORMAT_STRIKETHROUGH) marks.push({ type: "strikethrough", attrs: {} });
-          if (fmt & FORMAT_CODE) marks.push({ type: "code", attrs: {} });
-          content.push({ text: child.text, marks });
-        } else {
-          const converted = convertNode(child);
-          if (converted) children.push(converted);
+    if (value.type !== "text" && !(code && value.type === "code-highlight")) return null;
+    if (typeof value.text !== "string") throw new Error("Lexical text node requires text");
+    const format = value.format ?? 0;
+    if (typeof format !== "number" || !Number.isInteger(format) || format < 0 || format > 255) {
+      throw new UnsupportedContent("Unsupported Lexical text format flags");
+    }
+    if (
+      (value.mode !== undefined && value.mode !== "normal") ||
+      (value.detail !== undefined && value.detail !== 0)
+    ) {
+      throw new UnsupportedContent("Lexical token/segmented text requires a custom representation");
+    }
+    const marks = [...inherited];
+    for (const [flag, type] of formats)
+      if (format & flag) marks.push({ type: options.markTypeMap?.[type] ?? type, attrs: {} });
+    if (typeof value.style === "string" && value.style.trim()) {
+      for (const declaration of value.style.split(";")) {
+        if (!declaration.trim()) continue;
+        const separator = declaration.indexOf(":");
+        const property = declaration.slice(0, separator).trim().toLowerCase();
+        const color = declaration.slice(separator + 1).trim();
+        if (separator < 0 || !color || !["color", "background-color"].includes(property)) {
+          throw new UnsupportedContent(`Unsupported Lexical text style ${property}`);
         }
+        marks.push({ type: property === "color" ? "textColor" : "highlight", attrs: { color } });
       }
     }
-
-    const attrs: Record<string, string | number | boolean | null> = {};
-    if (node.type === "heading" && node.tag) {
-      const level = Number.parseInt(node.tag.replace("h", ""), 10);
-      if (!Number.isNaN(level)) attrs.level = level;
-    }
-
-    return {
-      id: crypto.randomUUID(),
-      type: blockType,
-      attrs,
-      content: content.length > 0 ? content : children.length > 0 ? null : [],
-      children,
-    };
+    const unknown = Object.keys(
+      metadata(value, [
+        "type",
+        "text",
+        "format",
+        "style",
+        "mode",
+        "detail",
+        "version",
+        "highlightType",
+      ]),
+    );
+    if (unknown.length)
+      throw new UnsupportedContent(`Unsupported Lexical text properties: ${unknown.join(", ")}`);
+    return [{ text: value.text, marks }];
   }
 
-  const blocks: Block[] = [];
-  if (lexicalState.root.children) {
-    for (const child of lexicalState.root.children) {
-      const block = convertNode(child);
-      if (block) blocks.push(block);
-    }
+  function convert(value: SourceNode, path: string, parentList?: string): Block {
+    return context.recover(value, path, () => {
+      const sourceType = typeof value.type === "string" ? value.type : "";
+      let type = blockMap[sourceType];
+      if (!type) throw new UnsupportedContent(`Unknown node ${sourceType}`);
+      const attrs = metadata(value, ["type", "children"]);
+      if (sourceType === "list" && !options.blockTypeMap?.list) {
+        const kind = value.listType ?? (value.tag === "ol" ? "number" : "bullet");
+        if (!["number", "bullet", "check"].includes(String(kind)))
+          throw new UnsupportedContent(`Unknown list type ${String(kind)}`);
+        type = kind === "number" ? "orderedList" : kind === "check" ? "todoList" : "bulletList";
+        if (type === "orderedList") attrs.start = value.start ?? 1;
+      }
+      if (sourceType === "listitem" && parentList === "todoList") type = "todoItem";
+      if (
+        sourceType === "tablecell" &&
+        typeof value.headerState === "number" &&
+        value.headerState !== 0
+      )
+        type = "tableHeader";
+      if (typeof value.colSpan === "number") attrs.colspan = value.colSpan;
+      if (typeof value.rowSpan === "number") attrs.rowspan = value.rowSpan;
+      if (typeof value.altText === "string") attrs.alt = value.altText;
+      if (typeof value.format === "string" && value.format) attrs.align = value.format;
+      if (sourceType === "heading") {
+        if (typeof value.tag !== "string" || !/^h[1-6]$/.test(value.tag))
+          throw new UnsupportedContent("Invalid heading tag");
+        attrs.level = Number(value.tag[1]);
+      }
+      const spans: TextSpan[] = [];
+      const descendants: Block[] = [];
+      for (const [index, child] of children(value, "children", path).entries()) {
+        const converted = inline(child, [], type === "codeBlock");
+        if (converted) {
+          if (descendants.length)
+            throw new UnsupportedContent(
+              "Interleaved text and child blocks require a custom mapping",
+            );
+          for (const span of converted) append(spans, span.text, span.marks);
+        } else {
+          if (["paragraph", "heading", "codeBlock"].includes(type))
+            throw new UnsupportedContent(`Unknown inline node ${String(child.type)}`);
+          descendants.push(convert(child, `${path}.children[${index}]`, type));
+        }
+      }
+      return context.block(type, attrs, spans, descendants, value.id);
+    });
   }
-
-  return { document: { blocks, version: 1 }, warnings, skippedNodes };
+  return context.result(
+    children(root, "children", "root").map((child, index) =>
+      convert(child, `root.children[${index}]`),
+    ),
+    metadata(root, ["type", "children"]),
+  );
 }

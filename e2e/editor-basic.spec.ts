@@ -1,77 +1,57 @@
+import type { GoTipeEditor } from '@gotipe/core';
 import { test, expect } from '@playwright/test';
+
+declare global { interface Window { __GOTIPE_EDITOR__?: GoTipeEditor } }
 
 test.describe('Editor basic operations', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('/');
-    await page.waitForSelector('[data-gotipe-example="basic"]');
+    await page.goto('/?view=block#basic');
+    await page.waitForFunction(() => Boolean(window.__GOTIPE_EDITOR__));
+    await page.evaluate(() => window.__GOTIPE_EDITOR__!.setContent({ version: 1, blocks: [{ id: 'body', type: 'paragraph', attrs: {}, content: [], children: [] }] }));
+    await page.locator('[data-block-id="body"]').click();
   });
-
-  test('loads editor with empty document', async ({ page }) => {
-    await expect(page.locator('[data-gotipe-block-editor]')).toBeVisible();
+  test('types Unicode and creates separate paragraphs with Enter', async ({ page }) => {
+    await page.keyboard.insertText('Первый 😀'); await page.keyboard.press('Enter');
+    await page.keyboard.insertText('Второй');
+    await expect(page.locator('[data-gotipe-content] > p')).toHaveText(['Первый 😀', 'Второй']);
   });
-
-  test('types text in editor', async ({ page }) => {
-    await page.click('[data-gotipe-block-editor]');
-    await page.keyboard.type('Hello GoTipe');
-    await expect(page.locator('[data-gotipe-block-editor]')).toContainText('Hello GoTipe');
-  });
-
-  test('creates new paragraph on Enter', async ({ page }) => {
-    await page.click('[data-gotipe-block-editor]');
-    await page.keyboard.type('First paragraph');
-    await page.keyboard.press('Enter');
-    await page.keyboard.type('Second paragraph');
-    await expect(page.locator('[data-gotipe-block-editor]')).toContainText('First paragraph');
-    await expect(page.locator('[data-gotipe-block-editor]')).toContainText('Second paragraph');
-  });
-
-  test('creates heading via slash command', async ({ page }) => {
-    await page.click('[data-gotipe-block-editor]');
+  test('creates a heading through the slash menu', async ({ page }) => {
     await page.keyboard.type('/heading');
-    await page.waitForSelector('[data-gotipe-slash-menu]');
-    await page.keyboard.press('Enter');
-    await page.keyboard.type('My Heading');
-    await expect(page.locator('h1')).toContainText('My Heading');
+    await expect(page.locator('[data-gotipe-slash-menu]')).toBeVisible();
+    await page.keyboard.press('Enter'); await page.keyboard.type('My Heading');
+    await expect(page.locator('[data-gotipe-content] h1')).toHaveText('My Heading');
   });
-
-  test('toggles bold with Cmd+B', async ({ page }) => {
-    await page.click('[data-gotipe-block-editor]');
-    await page.keyboard.type('Hello World');
-    await page.keyboard.press('Home');
-    await page.keyboard.press('Shift+End');
-    await page.keyboard.press('Meta+b');
-    await expect(page.locator('strong')).toContainText('Hello World');
+  for (const [key, tag] of [['b', 'strong'], ['i', 'em']] as const) {
+    test(`formats selected text with ${key}`, async ({ page }) => {
+      await page.keyboard.insertText('Hello World');
+      await page.keyboard.press('ControlOrMeta+a'); await page.keyboard.press(`ControlOrMeta+${key}`);
+      await expect(page.locator(`[data-gotipe-content] ${tag}`)).toHaveText('Hello World');
+    });
+  }
+  test('undo and redo restore a complete committed input', async ({ page }) => {
+    await page.keyboard.insertText('First😀'); await page.keyboard.press('ControlOrMeta+z');
+    await expect(page.locator('[data-block-id="body"]')).toHaveText('');
+    await page.keyboard.press('ControlOrMeta+Shift+z');
+    await expect(page.locator('[data-block-id="body"]')).toHaveText('First😀');
   });
-
-  test('toggles italic with Cmd+I', async ({ page }) => {
-    await page.click('[data-gotipe-block-editor]');
-    await page.keyboard.type('Italic text');
-    await page.keyboard.press('Home');
-    await page.keyboard.press('Shift+End');
-    await page.keyboard.press('Meta+i');
-    await expect(page.locator('em')).toContainText('Italic text');
+  test('heading and list input rules transform the current block', async ({ page }) => {
+    await page.keyboard.type('# Heading One');
+    await expect(page.locator('[data-gotipe-content] h1')).toHaveText('Heading One');
+    await page.keyboard.press('Enter'); await page.keyboard.type('- List item');
+    await expect(page.locator('[data-gotipe-content] ul > li')).toHaveText('List item');
   });
-
-  test('undo/redo with Cmd+Z', async ({ page }) => {
-    await page.click('[data-gotipe-block-editor]');
-    await page.keyboard.type('First');
-    await page.keyboard.press('Meta+z');
-    await expect(page.locator('[data-gotipe-block-editor]')).not.toContainText('First');
-    await page.keyboard.press('Meta+Shift+z');
-    await expect(page.locator('[data-gotipe-block-editor]')).toContainText('First');
-  });
-
-  test('creates heading via input rule (# + space)', async ({ page }) => {
-    await page.click('[data-gotipe-block-editor]');
-    await page.keyboard.type('# ');
-    await page.keyboard.type('Heading One');
-    await expect(page.locator('h1')).toContainText('Heading One');
-  });
-
-  test('creates bullet list via input rule (- + space)', async ({ page }) => {
-    await page.click('[data-gotipe-block-editor]');
-    await page.keyboard.type('- ');
-    await page.keyboard.type('List item');
-    await expect(page.locator('li')).toContainText('List item');
+  test('cut, paste and undo keep a selection spanning blocks atomic', async ({ page }) => {
+    await page.keyboard.insertText('Alpha'); await page.keyboard.press('Enter'); await page.keyboard.insertText('Bravo');
+    await page.keyboard.press('ControlOrMeta+a');
+    await page.keyboard.press('ControlOrMeta+x');
+    await expect(page.locator('[data-gotipe-content]')).not.toContainText('Alpha');
+    await page.keyboard.press('ControlOrMeta+z');
+    await expect(page.locator('[data-gotipe-content] > p')).toHaveText(['Alpha', 'Bravo']);
+    await page.keyboard.press('ArrowRight');
+    await page.keyboard.press('ControlOrMeta+v');
+    await expect(page.locator('[data-gotipe-content]')).toContainText('Alpha');
+    await expect.poll(() => page.evaluate(() => window.__GOTIPE_EDITOR__!.getText().match(/Alpha/g)?.length ?? 0)).toBe(2);
+    await page.keyboard.press('ControlOrMeta+z');
+    await expect(page.locator('[data-gotipe-content] > p')).toHaveText(['Alpha', 'Bravo']);
   });
 });

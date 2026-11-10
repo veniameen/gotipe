@@ -14,6 +14,7 @@ import {
   moveDraggedBlock,
   resolveListRowDropTarget,
 } from "../components/block-interaction";
+import { type DragPoint, useTouchDrag } from "../interaction/use-touch-drag";
 
 interface HoveredBlock {
   id: string;
@@ -48,6 +49,81 @@ export function usePageBlockHandle(
     setIndicator(null);
     setHover(null);
   }, []);
+
+  const startDrag = useCallback(
+    (id: string) => {
+      const element = root && getBlockElById(root, id);
+      if (!editor.isEditable || editor.isDestroyed || !element) return false;
+      dragging.current = { id, element };
+      element.classList.add("gotipe-page-block-dragging");
+      return true;
+    },
+    [editor, root],
+  );
+  const targetAt = useCallback(
+    (point: DragPoint): DropTarget | null => {
+      const active = dragging.current;
+      if (!root || !active || !editor.isEditable || editor.isDestroyed) return null;
+      const rect = root.getBoundingClientRect();
+      if (
+        point.x < rect.left ||
+        point.x > rect.right ||
+        point.y < Math.max(0, rect.top) ||
+        point.y > Math.min(window.innerHeight, rect.bottom)
+      )
+        return null;
+      const blocks = editor.getViewState().blocks;
+      const location = findBlockLocation(blocks, active.id);
+      if (!location) return null;
+      return LIST_ITEM_TYPES.has(location.blockType)
+        ? resolveListRowDropTarget(root, blocks, location.blockType, point.x, point.y)
+        : { parentId: null, index: getDropIndexForParent(root, null, point.y) };
+    },
+    [editor, root],
+  );
+  const showDropTarget = useCallback(
+    (point: DragPoint) => {
+      const target = targetAt(point);
+      if (!target || !root) {
+        setIndicator(null);
+        return null;
+      }
+      const elements = getChildBlockEls(root, target.parentId);
+      const content = target.parentId
+        ? getBlockElById(root, target.parentId)
+        : root.querySelector<HTMLElement>("[data-gotipe-content]");
+      if (!content || !elements.length) {
+        setIndicator(null);
+        return target;
+      }
+      const column = content.getBoundingClientRect();
+      const previous = elements[target.index - 1];
+      const top = previous
+        ? previous.getBoundingClientRect().bottom
+        : elements[0]!.getBoundingClientRect().top;
+      setIndicator({ top, left: column.left, width: column.width });
+      return target;
+    },
+    [root, targetAt],
+  );
+  const dropAt = useCallback(
+    (point: DragPoint) => {
+      const target = targetAt(point);
+      if (target && dragging.current) {
+        moveDraggedBlock(editor, dragging.current.id, target);
+        editor.focus();
+      }
+    },
+    [editor, targetAt],
+  );
+  const touchDrag = useTouchDrag({
+    enabled: editable,
+    root: () => (editor.isDestroyed ? null : root),
+    start: startDrag,
+    move: showDropTarget,
+    drop: dropAt,
+    end: endDrag,
+  });
 
   useEffect(() => {
     setEditable(editor.isEditable);
@@ -113,43 +189,17 @@ export function usePageBlockHandle(
       if (!dragging.current && !menuOpen) setHover(null);
     };
 
-    const dropTarget = (event: DragEvent): DropTarget | null => {
-      const active = dragging.current;
-      if (!active || !editor.isEditable) return null;
-      const blocks = editor.getViewState().blocks;
-      const location = findBlockLocation(blocks, active.id);
-      if (!location) return null;
-      return LIST_ITEM_TYPES.has(location.blockType)
-        ? resolveListRowDropTarget(root, blocks, location.blockType, event.clientX, event.clientY)
-        : { parentId: null, index: getDropIndexForParent(root, null, event.clientY) };
-    };
     const onDragOver = (event: DragEvent) => {
-      const target = dropTarget(event);
-      if (!target) return;
+      if (!showDropTarget({ x: event.clientX, y: event.clientY })) return;
       event.preventDefault();
       event.stopPropagation();
       if (event.dataTransfer) event.dataTransfer.dropEffect = "move";
-      const elements = getChildBlockEls(root, target.parentId);
-      const content = target.parentId
-        ? getBlockElById(root, target.parentId)
-        : root.querySelector<HTMLElement>("[data-gotipe-content]");
-      if (!content || !elements.length) return;
-      const column = content.getBoundingClientRect();
-      const previous = elements[target.index - 1];
-      const top = previous
-        ? previous.getBoundingClientRect().bottom
-        : elements[0]!.getBoundingClientRect().top;
-      setIndicator({ top, left: column.left, width: column.width });
     };
     const onDrop = (event: DragEvent) => {
       if (!dragging.current) return;
       event.preventDefault();
       event.stopPropagation();
-      const target = dropTarget(event);
-      if (target) {
-        moveDraggedBlock(editor, dragging.current.id, target);
-        editor.focus();
-      }
+      dropAt({ x: event.clientX, y: event.clientY });
       endDrag();
     };
     const onDragLeave = (event: DragEvent) => {
@@ -174,7 +224,12 @@ export function usePageBlockHandle(
       });
     };
     const unsubscribe = editor.on("viewStateChange", onDocumentChange);
+    const observer = new ResizeObserver(onViewportChange);
+    observer.observe(root);
+    const content = root.querySelector<HTMLElement>("[data-gotipe-content]");
+    if (content) observer.observe(content);
     root.addEventListener("mousemove", onMove);
+    root.addEventListener("pointerdown", onMove);
     root.addEventListener("mouseleave", onLeave);
     root.addEventListener("dragover", onDragOver, true);
     root.addEventListener("drop", onDrop, true);
@@ -186,7 +241,9 @@ export function usePageBlockHandle(
     return () => {
       if (layoutFrame !== null) cancelAnimationFrame(layoutFrame);
       unsubscribe();
+      observer.disconnect();
       root.removeEventListener("mousemove", onMove);
+      root.removeEventListener("pointerdown", onMove);
       root.removeEventListener("mouseleave", onLeave);
       root.removeEventListener("dragover", onDragOver, true);
       root.removeEventListener("drop", onDrop, true);
@@ -198,22 +255,29 @@ export function usePageBlockHandle(
       dragging.current?.element.classList.remove("gotipe-page-block-dragging");
       dragging.current = null;
     };
-  }, [editor, root, menuOpen, endDrag]);
+  }, [editor, root, menuOpen, endDrag, showDropTarget, dropAt]);
 
   const onDragStart = useCallback(
     (event: ReactDragEvent<HTMLButtonElement>) => {
-      const element = root && hover && getBlockElById(root, hover.dragId);
-      if (!editor.isEditable || !hover || !element) {
+      const id = hover && (event.altKey ? hover.id : hover.dragId);
+      if (!id || !startDrag(id)) {
         event.preventDefault();
         return;
       }
-      event.dataTransfer.setData("text/gotipe-block-id", hover.dragId);
+      event.dataTransfer.setData("text/gotipe-block-id", id!);
       event.dataTransfer.effectAllowed = "move";
-      dragging.current = { id: hover.dragId, element };
-      element.classList.add("gotipe-page-block-dragging");
     },
-    [editor, root, hover],
+    [startDrag, hover],
   );
 
-  return { hover, setHover, indicator, editable, handleRef, onDragStart, onDragEnd: endDrag };
+  return {
+    hover,
+    setHover,
+    indicator,
+    editable,
+    handleRef,
+    onDragStart,
+    onDragEnd: endDrag,
+    touchDrag,
+  };
 }

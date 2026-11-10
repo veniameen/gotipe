@@ -3,90 +3,105 @@ package worker
 import (
 	"context"
 	"encoding/json"
-	"log/slog"
-	"time"
-
 	"github.com/gotipe/cloud/internal/storage"
 	"github.com/stripe/stripe-go/v81"
+	"log/slog"
+	"time"
 )
 
 const maxRetryAttempts = 5
 
-// RetryWorker retries failed webhook processing with exponential backoff
+type WebhookProcessor interface {
+	Process(context.Context, *stripe.Event) error
+}
 type RetryWorker struct {
-	db  *storage.PostgresStore
-	log *slog.Logger
+	db        *storage.PostgresStore
+	log       *slog.Logger
+	processor WebhookProcessor
 }
 
-func NewRetryWorker(db *storage.PostgresStore, log *slog.Logger) *RetryWorker {
-	return &RetryWorker{db: db, log: log}
+func NewRetryWorker(db *storage.PostgresStore, log *slog.Logger, processor WebhookProcessor) *RetryWorker {
+	return &RetryWorker{db: db, log: log, processor: processor}
 }
-
 func (w *RetryWorker) Start(ctx context.Context) {
-	ticker := time.NewTicker(30 * time.Second)
+	ticker := time.NewTicker(5 * time.Second)
 	defer ticker.Stop()
-
-	w.log.Info("retry worker started")
-
 	for {
+		w.run(ctx)
 		select {
 		case <-ticker.C:
-			w.run(ctx)
 		case <-ctx.Done():
-			w.log.Info("retry worker stopped")
 			return
 		}
 	}
 }
-
 func (w *RetryWorker) run(ctx context.Context) {
-	rows, err := w.db.Pool.Query(ctx,
-		`SELECT id, event_type, payload, attempts
-		 FROM pending_webhooks
-		 WHERE status = 'retry' AND attempts < $1
-		 AND (last_attempt_at IS NULL OR last_attempt_at < now() - make_interval(secs => power(2, attempts)))
-		 ORDER BY created_at ASC LIMIT 10`,
-		maxRetryAttempts,
-	)
-	if err != nil {
-		w.log.Error("retry query failed", "error", err)
+	if _, err := w.db.Pool.Exec(ctx, `UPDATE pending_webhooks SET status='failed',last_error='Worker lease expired after final attempt'
+        WHERE status='processing' AND attempts >= $1 AND last_attempt_at<now()-interval '5 minutes'`, maxRetryAttempts); err != nil {
+		w.log.Error("webhook exhausted lease cleanup failed", "error", err)
 		return
 	}
-	defer rows.Close()
-
+	// SKIP LOCKED permits multiple workers. Abandoned claims expire in 5 minutes.
+	rows, err := w.db.Pool.Query(ctx, `WITH next AS (
+		SELECT id FROM pending_webhooks WHERE attempts<$1 AND (
+		status='pending' OR (status='retry' AND last_attempt_at<now()-make_interval(secs=>power(2,attempts)::double precision))
+		OR (status='processing' AND last_attempt_at<now()-interval '5 minutes'))
+		ORDER BY created_at FOR UPDATE SKIP LOCKED LIMIT 1
+	) UPDATE pending_webhooks SET status='processing',attempts=attempts+1,last_attempt_at=now()
+	WHERE id IN(SELECT id FROM next) RETURNING id,payload,attempts`, maxRetryAttempts)
+	if err != nil {
+		w.log.Error("webhook claim failed", "error", err)
+		return
+	}
+	type job struct {
+		id      string
+		payload []byte
+		attempt int
+	}
+	jobs := []job{}
 	for rows.Next() {
-		var id, eventType string
-		var payload []byte
-		var attempts int
-
-		if err := rows.Scan(&id, &eventType, &payload, &attempts); err != nil {
-			continue
+		var j job
+		if err = rows.Scan(&j.id, &j.payload, &j.attempt); err != nil {
+			break
 		}
-
+		jobs = append(jobs, j)
+	}
+	if err == nil {
+		err = rows.Err()
+	}
+	rows.Close()
+	if err != nil {
+		w.log.Error("webhook claims unreadable", "error", err)
+		return
+	}
+	for _, j := range jobs {
 		var event stripe.Event
-		if err := json.Unmarshal(payload, &event); err != nil {
-			w.log.Error("failed to unmarshal webhook payload", "id", id, "error", err)
-			_, _ = w.db.Pool.Exec(ctx,
-				`UPDATE pending_webhooks SET status = 'failed', last_error = $1, last_attempt_at = now() WHERE id = $2`,
-				err.Error(), id,
-			)
-			continue
+		err = json.Unmarshal(j.payload, &event)
+		if err == nil {
+			processCtx, cancel := context.WithTimeout(ctx, 2*time.Minute)
+			err = w.processor.Process(processCtx, &event)
+			cancel()
 		}
-
-		// Update attempt counter
-		_, _ = w.db.Pool.Exec(ctx,
-			`UPDATE pending_webhooks SET attempts = attempts + 1, last_attempt_at = now() WHERE id = $1`,
-			id,
-		)
-
-		w.log.Info("retrying webhook", "id", id, "event_type", eventType, "attempt", attempts+1)
-
-		// Mark as processed (webhook handler will process on next invocation)
-		if attempts+1 >= maxRetryAttempts {
-			_, _ = w.db.Pool.Exec(ctx,
-				`UPDATE pending_webhooks SET status = 'failed' WHERE id = $1`, id,
-			)
-			w.log.Warn("webhook max retries exceeded", "id", id, "event_type", eventType)
+		status := "processed"
+		var message *string
+		if err != nil {
+			value := err.Error()
+			message = &value
+			status = "retry"
+			if j.attempt >= maxRetryAttempts {
+				status = "failed"
+			}
+		}
+		saveCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), 5*time.Second)
+		_, saveErr := w.db.Pool.Exec(saveCtx, `UPDATE pending_webhooks SET status=$1,last_error=$2,
+		processed_at=CASE WHEN $1='processed' THEN now() ELSE NULL END
+		WHERE id=$3 AND attempts=$4 AND status='processing'`, status, message, j.id, j.attempt)
+		cancel()
+		if saveErr != nil {
+			w.log.Error("webhook result persistence failed", "id", j.id, "error", saveErr)
+		}
+		if err != nil {
+			w.log.Warn("webhook processing failed", "id", j.id, "attempt", j.attempt, "error", err)
 		}
 	}
 }

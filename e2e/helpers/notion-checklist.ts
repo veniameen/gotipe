@@ -132,12 +132,13 @@ export async function clickBlockAt(page: Page, blockId: string, position: CaretP
       return null;
     };
 
-    const walker = document.createTreeWalker(block, NodeFilter.SHOW_TEXT);
+    const host = block.querySelector('[data-gotipe-todo-content], [data-gotipe-text-content], .gotipe-callout-content') ?? block;
+    const walker = document.createTreeWalker(host, NodeFilter.SHOW_TEXT, { acceptNode(node) { return node.parentElement?.closest('[data-gotipe-widget], [data-gotipe-input]') ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT; } });
     const textNodes: Text[] = [];
     let node: Node | null;
     while ((node = walker.nextNode())) textNodes.push(node as Text);
 
-    const blockRect = block.getBoundingClientRect();
+    const blockRect = host.getBoundingClientRect();
     let x = blockRect.left + 8;
     const y = blockRect.top + Math.max(8, blockRect.height / 2);
 
@@ -197,14 +198,15 @@ export async function setCaretAt(page: Page, blockId: string, position: CaretPos
     const sel = window.getSelection();
     if (!sel) return;
 
-    const walker = document.createTreeWalker(block, NodeFilter.SHOW_TEXT);
+    const host = block.querySelector('[data-gotipe-todo-content], [data-gotipe-text-content], .gotipe-callout-content') ?? block;
+    const walker = document.createTreeWalker(host, NodeFilter.SHOW_TEXT, { acceptNode(node) { return node.parentElement?.closest('[data-gotipe-widget], [data-gotipe-input]') ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT; } });
     const textNodes: Text[] = [];
     let node: Node | null;
     while ((node = walker.nextNode())) textNodes.push(node as Text);
 
     const range = document.createRange();
     if (textNodes.length === 0) {
-      range.setStart(block, 0);
+      range.setStart(host, 0);
       range.collapse(true);
     } else {
       const text = textNodes.map((n) => n.textContent ?? "").join("");
@@ -235,7 +237,8 @@ export async function setCaretAt(page: Page, blockId: string, position: CaretPos
 export async function dragSelectionBetween(page: Page, fromBlockId: string, toBlockId: string): Promise<void> {
   const points = await page.evaluate(({ fromId, toId }) => {
     const getTextPoint = (block: HTMLElement): { x: number; y: number } | null => {
-      const walker = document.createTreeWalker(block, NodeFilter.SHOW_TEXT);
+      const host = block.querySelector('[data-gotipe-todo-content], [data-gotipe-text-content], .gotipe-callout-content') ?? block;
+    const walker = document.createTreeWalker(host, NodeFilter.SHOW_TEXT, { acceptNode(node) { return node.parentElement?.closest('[data-gotipe-widget], [data-gotipe-input]') ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT; } });
       let node: Node | null;
       while ((node = walker.nextNode())) {
         const textNode = node as Text;
@@ -462,4 +465,53 @@ export async function pasteTextWithFallback(page: Page, text: string): Promise<v
 
   await page.keyboard.insertText(text);
   await ensurePasteApplied(page, before, text);
+}
+
+/** Raw code keeps slash characters literal; its block actions use the gutter UI. */
+export async function runCodeBlockCommand(
+  page: Page,
+  target: { mode: "transform" | "insert"; command: string; query: string },
+): Promise<void> {
+  await page.locator('[data-block-type="codeBlock"] code').hover();
+  if (target.mode === "transform") {
+    await page.getByRole('button', { name: 'Drag to move, click to open menu', exact: true }).click();
+    await page.getByRole('menuitem', { name: /Turn into/ }).click();
+    await page.getByRole('menuitem', { name: target.command === 'Quote' ? 'Blockquote' : target.command, exact: true }).click();
+    await expect(page.locator('.gotipe-block-context-menu')).toHaveCount(0);
+    return;
+  }
+  await page.getByRole('button', { name: 'Click to add below. Option-click to add a block above', exact: true }).click();
+  const menu = page.locator('[data-gotipe-slash-menu]');
+  await expect(menu).toBeVisible();
+  await menu.locator('.gotipe-slash-menu-item-title', { hasText: target.command }).first().click();
+  await expect(menu).toBeHidden();
+}
+
+export async function clickTodoTextGap(page: Page, blockId: string): Promise<void> {
+  const point = await page.evaluate((id) => {
+    const item = document.querySelector(`[data-block-id="${id}"][data-block-type="todoItem"]`);
+    const checkbox = item?.querySelector('input[type="checkbox"]');
+    const text = item?.querySelector('[data-gotipe-todo-content]');
+    if (!checkbox || !text) return null;
+    const box = checkbox.getBoundingClientRect();
+    const host = text.getBoundingClientRect();
+    return { x: (box.right + host.left) / 2, y: box.top + box.height / 2 };
+  }, blockId);
+  if (!point) throw new Error(`Missing task controls for ${blockId}`);
+  await page.mouse.click(point.x, point.y);
+}
+
+/** Real Chromium composition; other engines use their native text-insertion protocol. */
+export async function insertComposedText(page: Page, text: string): Promise<void> {
+  if (page.context().browser()?.browserType().name() !== 'chromium') {
+    await page.keyboard.insertText(text);
+    return;
+  }
+  const session = await page.context().newCDPSession(page);
+  try {
+    await session.send('Input.imeSetComposition', { text, selectionStart: text.length, selectionEnd: text.length });
+    await session.send('Input.insertText', { text });
+  } finally {
+    await session.detach();
+  }
 }

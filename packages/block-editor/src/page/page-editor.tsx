@@ -21,19 +21,14 @@ import {
   Subscript,
   Superscript,
   Table,
+  TextColor,
   TodoList,
   Underline,
 } from "@gotipe/core/extensions";
-import { createEditor, defineExtension } from "@gotipe/core/js";
+import { createEditor, defineExtension, saveAsset } from "@gotipe/core/js";
 import type { I18n } from "@gotipe/i18n";
 import { markdownRawNodeSpec } from "@gotipe/markdown";
-import {
-  Editor,
-  GoTipeI18nProvider,
-  type PlaceholderFn,
-  saveAssetWithHost,
-  useGoTipeI18n,
-} from "@gotipe/react";
+import { Editor, GoTipeI18nProvider, type PlaceholderFn, useGoTipeI18n } from "@gotipe/react";
 import {
   type CommentState,
   type ProposalState,
@@ -80,7 +75,7 @@ export const MarkdownRawMark = defineExtension({
   marks: [{ name: "mdRaw", attrs: {}, rank: 90 }],
 });
 
-/** The extensions of a wiki page (GFM blocks and marks). */
+/** Extensions for a Markdown document (GFM blocks and marks). */
 export function pageExtensions() {
   return [
     Paragraph,
@@ -103,6 +98,7 @@ export function pageExtensions() {
     Link,
     Underline,
     Highlight,
+    TextColor,
     Superscript,
     Subscript,
     History,
@@ -139,7 +135,7 @@ export interface PageEditorProps {
   i18n?: I18n;
   /** Shown in the title when the file has no `# heading` (the file name). */
   titlePlaceholder?: string;
-  /** Model suggestions, comments and cursors (ADR-0047). */
+  /** Suggestions, comments and collaborator cursors supplied by the host. */
   review?: PageReviewProps;
   /** Show the edit bar above the page. */
   reviewBar?: { title?: React.ReactNode; extra?: React.ReactNode[] } | false;
@@ -154,10 +150,6 @@ export interface PageEditorProps {
   onReady?: (editor: GoTipeEditor) => void;
   /** Called when the editor reports an error (same as `host.onError`). */
   onError?: EditorHost["onError"];
-}
-
-function isImageFile(file: File): boolean {
-  return /^image\/(png|jpeg|gif|webp)$/.test(file.type);
 }
 
 const PageEditorInner = forwardRef<PageEditorHandle, PageEditorProps>(
@@ -208,14 +200,19 @@ const PageEditorInner = forwardRef<PageEditorHandle, PageEditorProps>(
       let cancelled = false;
       let created: GoTipeEditor | null = null;
       const stableHost: EditorHost = {
+        get imageSources() {
+          return hostRef.current?.imageSources;
+        },
         saveAsset: (file, info) => {
           const save = hostRef.current?.saveAsset;
-          if (!save) return Promise.reject(new Error("No asset storage"));
+          if (!save) return saveAsset({}, file, info.kind);
           return save(file, info);
         },
         resolveAsset: (src) => hostRef.current?.resolveAsset?.(src) ?? src,
         openLink: (href, info) => {
           if (hostRef.current?.openLink) hostRef.current.openLink(href, info);
+          else if (info.newTab) window.open(href, "_blank", "noopener,noreferrer");
+          else window.location.assign(href);
         },
         onError: (error) => {
           hostRef.current?.onError?.(error);
@@ -277,49 +274,6 @@ const PageEditorInner = forwardRef<PageEditorHandle, PageEditorProps>(
     useEffect(() => {
       editor?.setEditable(!readOnly);
     }, [editor, readOnly]);
-
-    // Images and files pasted or dropped anywhere on the page go through the host.
-    useEffect(() => {
-      if (!editor || !root) return;
-      const insertFiles = async (files: File[]) => {
-        for (const file of files) {
-          const kind = isImageFile(file) ? "image" : "file";
-          const saved = await saveAssetWithHost(editor, file, kind);
-          if (!saved) continue;
-          editor
-            .chain()
-            .insertBlockAfter(
-              kind,
-              kind === "image"
-                ? { src: saved.src, alt: saved.name.replace(/\.[^.]+$/, ""), caption: "" }
-                : { url: saved.src, name: saved.name, size: file.size },
-            )
-            .run();
-        }
-      };
-      const onPaste = (e: ClipboardEvent) => {
-        if (!editor.isEditable) return;
-        const files = Array.from(e.clipboardData?.files ?? []);
-        if (files.length === 0) return;
-        e.preventDefault();
-        e.stopPropagation();
-        void insertFiles(files);
-      };
-      const onDrop = (e: DragEvent) => {
-        if (!editor.isEditable) return;
-        const files = Array.from(e.dataTransfer?.files ?? []);
-        if (files.length === 0) return;
-        e.preventDefault();
-        e.stopPropagation();
-        void insertFiles(files);
-      };
-      root.addEventListener("paste", onPaste, true);
-      root.addEventListener("drop", onDrop, true);
-      return () => {
-        root.removeEventListener("paste", onPaste, true);
-        root.removeEventListener("drop", onDrop, true);
-      };
-    }, [editor, root]);
 
     const commands = useMemo<PageBlockCommand[]>(
       () => pageBlockCommands(i18n, allowedBlocks),
@@ -492,7 +446,7 @@ const PageEditorInner = forwardRef<PageEditorHandle, PageEditorProps>(
 );
 
 /**
- * A wiki page editor: GFM Markdown in, Markdown out (untouched blocks keep
+ * A reusable document editor: GFM Markdown in, Markdown out (untouched blocks keep
  * their bytes), Notion-like blocks and «/», model suggestions with cursors.
  * Runs on the JS engine — no WASM, no eval — so it works under
  * `script-src 'self'`. Errors go to `host.onError` / `onError` only.

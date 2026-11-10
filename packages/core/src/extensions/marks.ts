@@ -94,6 +94,7 @@ export const Link = defineExtension({
       name: "link",
       attrs: {
         href: { type: "string", required: true },
+        title: { type: "string" },
         target: { type: "string", default: "_blank" },
         rel: { type: "string", default: "noopener noreferrer" },
       },
@@ -150,4 +151,10 @@ export const Subscript = defineExtension({
       command: (editor) => editor.chain().toggleSubscript().run(),
     },
   ],
+});
+
+/** Foreground color; exported HTML accepts only inert CSS color values. */
+export const TextColor = defineExtension({
+  name: "textColor",
+  marks: [{ name: "textColor", attrs: { color: { type: "string", required: true } }, rank: 10 }],
 });

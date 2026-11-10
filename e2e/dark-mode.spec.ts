@@ -1,160 +1,62 @@
-import { test, expect } from '@playwright/test';
+import { expect, test } from '@playwright/test';
 
-test.describe('Dark mode', () => {
-  test.beforeEach(async ({ page }) => {
-    await page.goto('/');
-    await page.waitForSelector('[data-gotipe-example="basic"]');
+test.describe('Theme behavior', () => {
+  test.beforeEach(async ({ page }) => { await page.goto('/?view=block#basic'); await page.locator('[data-gotipe-content]').waitFor(); });
+  test('all theme controls agree and editor colors switch together', async ({ page }) => {
+    await page.getByRole('radio', { name: 'Light theme' }).first().click();
+    const light = await page.locator('[data-gotipe-block-editor]').evaluate((element) => ({ background: getComputedStyle(document.body).backgroundColor, color: getComputedStyle(element).color }));
+    await page.getByRole('radio', { name: 'Dark theme' }).first().click();
+    await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
+    for (const button of await page.getByRole('radio', { name: 'Dark theme' }).all()) await expect(button).toHaveAttribute('aria-checked', 'true');
+    const dark = await page.locator('[data-gotipe-block-editor]').evaluate((element) => ({ background: getComputedStyle(document.body).backgroundColor, color: getComputedStyle(element).color }));
+    expect(dark.background).not.toBe(light.background); expect(dark.color).not.toBe(light.color);
   });
-
-  test('toggles dark mode via data-theme attribute', async ({ page }) => {
-    await page.evaluate(() => {
-      document.documentElement.setAttribute('data-theme', 'dark');
-    });
-    const bg = await page.evaluate(() =>
-      getComputedStyle(document.documentElement).getPropertyValue('--gt-bg'),
-    );
-    expect(bg.trim()).toBe('#191919');
+  test('system theme follows media changes and explicit mode stops following', async ({ page }) => {
+    await page.emulateMedia({ colorScheme: 'dark' }); await page.getByRole('radio', { name: 'System theme' }).first().click();
+    await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
+    await page.emulateMedia({ colorScheme: 'light' }); await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
+    await page.getByRole('radio', { name: 'Dark theme' }).first().click();
+    await page.emulateMedia({ colorScheme: 'light' }); await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
   });
-
-  test('editor background adapts to dark mode', async ({ page }) => {
-    await page.evaluate(() => {
-      document.documentElement.setAttribute('data-theme', 'dark');
-    });
-    const textColor = await page.evaluate(() =>
-      getComputedStyle(document.documentElement).getPropertyValue('--gt-text-base'),
-    );
-    expect(textColor.trim()).toBe('#e8e8e8');
+  test('PageEditor responds to the theme controls', async ({ page }) => {
+    await page.goto('/?view=page#basic');
+    const pageRoot = page.locator('[data-gotipe-page]');
+    await expect(pageRoot).toBeVisible();
+    await page.getByRole('banner').getByRole('radio', { name: 'Light theme' }).click();
+    const before = await pageRoot.evaluate((element) => getComputedStyle(element).color);
+    await page.getByRole('banner').getByRole('radio', { name: 'Dark theme' }).click();
+    await expect.poll(() => pageRoot.evaluate((element) => getComputedStyle(element).color)).not.toBe(before);
   });
+});
 
-  test('accent color updates in dark mode', async ({ page }) => {
-    await page.evaluate(() => {
-      document.documentElement.setAttribute('data-theme', 'dark');
-    });
-    const accent = await page.evaluate(() =>
-      getComputedStyle(document.documentElement).getPropertyValue('--gt-accent'),
-    );
-    expect(accent.trim()).toBe('#3b82f6');
-  });
+test('PageEditor shares the playground theme and follows system changes on first load', async ({ page }) => {
+  await page.emulateMedia({ colorScheme: 'light' });
+  await page.goto('/?view=page#basic');
+  const editor = page.locator('[data-gotipe-page]');
+  await expect(editor).toBeVisible();
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
+  const light = await editor.evaluate((element) => getComputedStyle(element).color);
+  await page.emulateMedia({ colorScheme: 'dark' });
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
+  await expect.poll(() => editor.evaluate((element) => getComputedStyle(element).color)).not.toBe(light);
+  await page.getByRole('banner').getByRole('radio', { name: 'Light theme' }).click();
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
+  await expect.poll(() => editor.evaluate((element) => getComputedStyle(element).color)).toBe(light);
+  await page.getByRole('banner').getByRole('radio', { name: 'Dark theme' }).click();
+  await expect(page.getByRole('banner').getByRole('radio', { name: 'Dark theme' })).toHaveAttribute('aria-checked', 'true');
+});
 
-  test('borders use light variant in dark mode', async ({ page }) => {
-    await page.evaluate(() => {
-      document.documentElement.setAttribute('data-theme', 'dark');
-    });
-    const border = await page.evaluate(() =>
-      getComputedStyle(document.documentElement).getPropertyValue('--gt-border-light'),
-    );
-    expect(border.trim()).toContain('rgba(255,255,255');
-  });
-
-  test('shadows have higher opacity in dark mode', async ({ page }) => {
-    await page.evaluate(() => {
-      document.documentElement.setAttribute('data-theme', 'dark');
-    });
-    const shadow = await page.evaluate(() =>
-      getComputedStyle(document.documentElement).getPropertyValue('--gt-shadow-elevated'),
-    );
-    // Dark mode shadows use higher opacity (0.16 vs 0.04)
-    expect(shadow).toContain('0.16');
-  });
-
-  test('slash menu adapts to dark mode', async ({ page }) => {
-    await page.evaluate(() => {
-      document.documentElement.setAttribute('data-theme', 'dark');
-    });
-    await page.click('[data-gotipe-block-editor]');
-    await page.keyboard.type('/');
-    await page.waitForSelector('[data-gotipe-slash-menu]');
-    const menuBg = await page.locator('[data-gotipe-slash-menu]').evaluate((el) =>
-      getComputedStyle(el).backgroundColor,
-    );
-    // Should be dark background, not white
-    expect(menuBg).not.toBe('rgb(255, 255, 255)');
-  });
-
-  test('code block adapts to dark mode', async ({ page }) => {
-    await page.evaluate(() => {
-      document.documentElement.setAttribute('data-theme', 'dark');
-    });
-    const codeBg = await page.evaluate(() =>
-      getComputedStyle(document.documentElement).getPropertyValue('--gt-bg-code'),
-    );
-    expect(codeBg.trim()).toBe('#2d2d2d');
-  });
-
-  test('highlight colors adapt to dark mode', async ({ page }) => {
-    await page.evaluate(() => {
-      document.documentElement.setAttribute('data-theme', 'dark');
-    });
-    const blueBg = await page.evaluate(() =>
-      getComputedStyle(document.documentElement).getPropertyValue('--gt-highlight-blue-bg'),
-    );
-    expect(blueBg.trim()).toBe('#1e3a5f');
-    const blueText = await page.evaluate(() =>
-      getComputedStyle(document.documentElement).getPropertyValue('--gt-highlight-blue-text'),
-    );
-    expect(blueText.trim()).toBe('#93c5fd');
-  });
-
-  test('hover states use rgba(255,255,255) in dark mode for menus', async ({ page }) => {
-    // Dark mode uses rgba(255,255,255,0.08) for hover
-    // Verify the CSS rule exists
-    const darkHoverExists = await page.evaluate(() => {
-      const sheets = Array.from(document.styleSheets);
-      for (const sheet of sheets) {
-        try {
-          const rules = Array.from(sheet.cssRules);
-          for (const rule of rules) {
-            if (
-              rule instanceof CSSStyleRule &&
-              rule.selectorText?.includes('[data-theme="dark"]') &&
-              rule.selectorText?.includes('bubble-menu')
-            ) {
-              return true;
-            }
-          }
-        } catch {}
-      }
-      return false;
-    });
-    expect(darkHoverExists).toBe(true);
-  });
-
-  test('can toggle back to light mode', async ({ page }) => {
-    // Go dark
-    await page.evaluate(() => {
-      document.documentElement.setAttribute('data-theme', 'dark');
-    });
-    let bg = await page.evaluate(() =>
-      getComputedStyle(document.documentElement).getPropertyValue('--gt-bg'),
-    );
-    expect(bg.trim()).toBe('#191919');
-
-    // Go light
-    await page.evaluate(() => {
-      document.documentElement.removeAttribute('data-theme');
-    });
-    bg = await page.evaluate(() =>
-      getComputedStyle(document.documentElement).getPropertyValue('--gt-bg'),
-    );
-    expect(bg.trim()).toBe('#ffffff');
-  });
-
-  test('AI ghost text color adapts to dark mode', async ({ page }) => {
-    await page.evaluate(() => {
-      document.documentElement.setAttribute('data-theme', 'dark');
-    });
-    const ghost = await page.evaluate(() =>
-      getComputedStyle(document.documentElement).getPropertyValue('--gt-ai-ghost'),
-    );
-    expect(ghost.trim()).toBe('#6b7280');
-  });
-
-  test('mobile responsive styles work in dark mode', async ({ page }) => {
-    await page.setViewportSize({ width: 375, height: 667 });
-    await page.evaluate(() => {
-      document.documentElement.setAttribute('data-theme', 'dark');
-    });
-    // Verify editor still loads correctly at mobile viewport
-    await expect(page.locator('[data-gotipe-block-editor]')).toBeVisible();
-  });
+test('theme radios use one tab stop and support arrow keys', async ({ page }) => {
+  await page.goto('/?view=block#basic');
+  const group = page.getByRole('banner').getByRole('radiogroup', { name: 'Theme' });
+  const light = group.getByRole('radio', { name: 'Light theme' });
+  const dark = group.getByRole('radio', { name: 'Dark theme' });
+  await light.click();
+  await expect(light).toHaveAttribute('tabindex', '0');
+  await page.keyboard.press('ArrowRight');
+  await expect(dark).toBeFocused();
+  await expect(dark).toHaveAttribute('aria-checked', 'true');
+  await expect(light).toHaveAttribute('tabindex', '-1');
+  await page.keyboard.press('End');
+  await expect(group.getByRole('radio', { name: 'System theme' })).toBeFocused();
 });

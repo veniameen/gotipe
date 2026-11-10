@@ -1,138 +1,130 @@
-import { test, expect } from '@playwright/test';
+import type { GoTipeEditor } from '@gotipe/core';
+import { expect, test, type Page } from '@playwright/test';
 
-test.describe('Image block', () => {
-  test.beforeEach(async ({ page }) => {
-    await page.goto('/');
-    await page.waitForSelector('[data-gotipe-example="basic"]');
-    await page.click('[data-gotipe-block-editor]');
-    // Insert image block via slash menu
-    await page.keyboard.type('/image');
-    await page.waitForSelector('[data-gotipe-slash-menu]');
-    await page.keyboard.press('Enter');
+declare global { interface Window { __GOTIPE_EDITOR__?: GoTipeEditor } }
+
+async function seed(page: Page) {
+  await page.goto('/?view=block#basic');
+  await page.waitForFunction(() => Boolean(window.__GOTIPE_EDITOR__));
+  return page.evaluate(() => {
+    const canvas = document.createElement('canvas');
+    canvas.width = 400; canvas.height = 200;
+    const context = canvas.getContext('2d')!;
+    context.fillStyle = '#5d729a'; context.fillRect(0, 0, 400, 200);
+    context.fillStyle = '#f6e5c1'; context.fillRect(80, 50, 160, 100);
+    const src = canvas.toDataURL('image/png');
+    window.__GOTIPE_EDITOR__!.setContent({ version: 1, blocks: [
+      { id: 'before', type: 'paragraph', attrs: {}, content: [{ text: 'Before image', marks: [] }], children: [] },
+      { id: 'picture', type: 'image', attrs: { src, alt: 'Original image', caption: 'Caption' }, content: null, children: [] },
+      { id: 'empty-image', type: 'image', attrs: { src: '', alt: '' }, content: null, children: [] },
+      { id: 'table', type: 'table', attrs: {}, content: null, children: [0, 1].map((row) => ({
+        id: `row-${row}`, type: 'tableRow', attrs: {}, content: null, children: [0, 1].map((column) => ({
+          id: `cell-${row}-${column}`, type: row === 0 ? 'tableHeader' : 'tableCell', attrs: {},
+          content: [{ text: `${row}:${column}`, marks: [] }], children: [],
+        })),
+      })) },
+      { id: 'after', type: 'paragraph', attrs: {}, content: [{ text: 'After image', marks: [] }], children: [] },
+    ] });
+    return src;
+  });
+}
+
+async function imageAction(page: Page, name: string) {
+  const image = page.locator('[data-block-id="picture"]');
+  await image.hover();
+  await image.getByRole('button', { name: 'More options', exact: true }).click();
+  await image.getByRole('button', { name, exact: true }).click();
+}
+
+test.describe('Image interactions', () => {
+  test.beforeEach(async ({ page }) => { await seed(page); });
+
+  test('caption typing keeps its caret and never edits the main document', async ({ page }) => {
+    const caption = page.getByRole('textbox', { name: 'Image caption' });
+    await caption.click();
+    await caption.evaluate((element) => { const range = document.createRange(); range.selectNodeContents(element); range.collapse(false); const selection = window.getSelection()!; selection.removeAllRanges(); selection.addRange(range); });
+    await page.keyboard.type(' abc'); await page.keyboard.insertText(' 😀'); await page.keyboard.type(' Z');
+    await expect(caption).toHaveText('Caption abc 😀 Z');
+    expect(await page.evaluate(() => window.__GOTIPE_EDITOR__!.getJSON().blocks[1]!.attrs.caption)).toBe('Caption abc 😀 Z');
+    await expect(page.locator('[data-block-id="before"]')).toHaveText('Before image');
+    await expect(page.locator('[data-block-id="after"]')).toHaveText('After image');
   });
 
-  test('renders image placeholder (upload zone)', async ({ page }) => {
-    await expect(page.locator('.gotipe-image-placeholder')).toBeVisible();
-    await expect(page.locator('.gotipe-image-placeholder')).toContainText(
-      'Add an image',
-    );
+  test('uploads persist through JSON serialization and a fresh editor', async ({ page }) => {
+    const image = page.locator('[data-block-id="empty-image"]');
+    await image.getByRole('button', { name: 'Add an image' }).click();
+    const chooser = page.waitForEvent('filechooser');
+    await image.getByRole('button', { name: 'Upload image', exact: true }).click();
+    await (await chooser).setFiles({ name: 'pixel.png', mimeType: 'image/png', buffer: Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/l9sAAAAASUVORK5CYII=', 'base64') });
+    await expect(image.locator('img')).toHaveAttribute('src', /^data:image\/png;base64,/);
+    const saved = await page.evaluate(() => window.__GOTIPE_EDITOR__!.getJSON());
+    await page.reload(); await page.waitForFunction(() => Boolean(window.__GOTIPE_EDITOR__));
+    await page.evaluate((document) => window.__GOTIPE_EDITOR__!.setContent(document), saved);
+    await expect(page.locator('[data-block-id="empty-image"] img')).toHaveJSProperty('naturalWidth', 1);
   });
 
-  test('placeholder has correct ARIA label', async ({ page }) => {
-    await expect(page.locator('.gotipe-image-placeholder')).toHaveAttribute(
-      'aria-label',
-      'Add an image',
-    );
+  test('description, crop, preview and undo are real operations', async ({ page }) => {
+    await imageAction(page, 'Edit alternative text');
+    await page.getByRole('dialog').getByLabel('Alternative text').fill('Описание 😀');
+    await page.getByRole('dialog').getByRole('button', { name: 'Save', exact: true }).click();
+    await expect(page.locator('[data-block-id="picture"] img')).toHaveAttribute('alt', 'Описание 😀');
+    await imageAction(page, 'Crop image');
+    await page.getByRole('dialog').getByLabel('Width (%)', { exact: true }).fill('50');
+    await page.getByRole('dialog').getByRole('button', { name: 'Save', exact: true }).click();
+    await expect(page.getByRole('dialog')).toHaveCount(0);
+    await expect(page.locator('[data-block-id="picture"] img')).toHaveJSProperty('naturalWidth', 200);
+    await page.evaluate(() => window.__GOTIPE_EDITOR__!.undo());
+    await expect(page.locator('[data-block-id="picture"] img')).toHaveJSProperty('naturalWidth', 400);
+    await page.locator('[data-block-id="picture"]').hover();
+    await page.getByRole('button', { name: 'Zoom', exact: true }).click();
+    await expect(page.getByRole('dialog', { name: 'Image preview' })).toBeVisible();
+    await page.keyboard.press('Escape');
+    await expect(page.getByRole('dialog')).toHaveCount(0);
   });
 
-  test('placeholder accepts drag-over hover state', async ({ page }) => {
-    const placeholder = page.locator('.gotipe-image-placeholder');
-    // Verify the placeholder exists and is clickable
-    await expect(placeholder).toBeVisible();
+  test('pointer resize stays within the container and is undoable', async ({ page }) => {
+    await page.setViewportSize({ width: 1024, height: 800 });
+    const picture = page.locator('[data-block-id="picture"]');
+    await picture.hover();
+    const handle = picture.getByRole('button', { name: 'Resize image from right' });
+    const box = (await handle.boundingBox())!;
+    await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2); await page.mouse.down();
+    await page.mouse.move(box.x - 100, box.y + box.height / 2, { steps: 10 }); await page.mouse.up();
+    expect((await picture.locator('img').boundingBox())!.width).toBeLessThan(350);
+    await page.evaluate(() => window.__GOTIPE_EDITOR__!.undo());
+    expect((await picture.locator('img').boundingBox())!.width).toBeCloseTo(400, 2);
+    await page.setViewportSize({ width: 320, height: 720 });
+    expect((await picture.locator('img').boundingBox())!.width).toBeLessThanOrEqual((await picture.boundingBox())!.width);
+    await picture.hover(); await picture.getByRole('button', { name: 'More options', exact: true }).click();
+    const menu = (await picture.locator('.gotipe-image-options-menu').boundingBox())!;
+    expect(menu.x).toBeGreaterThanOrEqual(0); expect(menu.x + menu.width).toBeLessThanOrEqual(320);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(320);
   });
 
-  test('image block has figcaption with placeholder', async ({ page }) => {
-    const caption = page.locator('[data-block-type="image"] figcaption');
-    await expect(caption).toBeVisible();
-    await expect(caption).toHaveAttribute('contenteditable', 'true');
-    await expect(caption).toHaveAttribute('aria-label', 'Image caption');
-  });
-
-  test('resize handles appear on image selection', async ({ page }) => {
-    // This test verifies the CSS class for resize handles exists
-    const handleClass = await page.evaluate(() => {
-      const sheets = Array.from(document.styleSheets);
-      for (const sheet of sheets) {
-        try {
-          const rules = Array.from(sheet.cssRules);
-          for (const rule of rules) {
-            if (
-              rule instanceof CSSStyleRule &&
-              rule.selectorText?.includes('gotipe-image-resize-handle')
-            ) {
-              return true;
-            }
-          }
-        } catch {}
-      }
-      return false;
-    });
-    expect(handleClass).toBe(true);
+  test('read-only captions and controls cannot change the document', async ({ page }) => {
+    await page.evaluate(() => window.__GOTIPE_EDITOR__!.setEditable(false));
+    await expect(page.getByRole('textbox', { name: 'Image caption' })).toHaveAttribute('contenteditable', 'false');
+    await expect(page.getByRole('button', { name: 'Add an image' })).toBeDisabled();
+    await page.locator('[data-block-id="picture"]').hover();
+    await expect(page.locator('[data-block-id="picture"] [data-gotipe-image-toolbar]')).toBeHidden();
   });
 });
 
-test.describe('Table block', () => {
-  test.beforeEach(async ({ page }) => {
-    await page.goto('/');
-    await page.waitForSelector('[data-gotipe-example="basic"]');
-    await page.click('[data-gotipe-block-editor]');
-    // Insert table via slash menu
-    await page.keyboard.type('/table');
-    await page.waitForSelector('[data-gotipe-slash-menu]');
-    await page.keyboard.press('Enter');
+test.describe('Table interactions', () => {
+  test.beforeEach(async ({ page }) => { await seed(page); });
+  test('Tab and Shift+Tab navigate actual cells and typing stays in the target', async ({ page }) => {
+    await page.locator('[data-block-id="cell-0-0"]').click(); await page.keyboard.press('Tab');
+    expect(await page.evaluate(() => window.__GOTIPE_EDITOR__!.getViewState().selection.anchor.blockId)).toBe('cell-0-1');
+    await page.keyboard.insertText('Ж😀');
+    await expect(page.locator('[data-block-id="cell-0-1"]')).toContainText('Ж😀');
+    await page.keyboard.press('Shift+Tab');
+    expect(await page.evaluate(() => window.__GOTIPE_EDITOR__!.getViewState().selection.anchor.blockId)).toBe('cell-0-0');
   });
-
-  test('renders table element', async ({ page }) => {
-    await expect(page.locator('.gotipe-table-wrapper')).toBeVisible();
-    await expect(page.locator('[data-block-type="table"]')).toBeVisible();
-  });
-
-  test('Tab navigates to next cell', async ({ page }) => {
-    const firstCell = page.locator('.gotipe-table-wrapper td, .gotipe-table-wrapper th').first();
-    await firstCell.click();
-    await page.keyboard.press('Tab');
-    // Second cell should now be selected
-    const selected = page.locator('.gotipe-table-cell-selected');
-    await expect(selected).toHaveCount(1);
-  });
-
-  test('Shift+Tab navigates to previous cell', async ({ page }) => {
-    // Click on a cell that's not the first one
-    const cells = page.locator('.gotipe-table-wrapper td, .gotipe-table-wrapper th');
-    const cellCount = await cells.count();
-    if (cellCount >= 2) {
-      await cells.nth(1).click();
-      await page.keyboard.press('Shift+Tab');
-      const selected = page.locator('.gotipe-table-cell-selected');
-      await expect(selected).toHaveCount(1);
-    }
-  });
-
-  test('selected cell has accent border', async ({ page }) => {
-    const firstCell = page.locator('.gotipe-table-wrapper td, .gotipe-table-wrapper th').first();
-    await firstCell.click();
-    const selected = page.locator('.gotipe-table-cell-selected');
-    if (await selected.isVisible()) {
-      const outline = await selected.evaluate((el) => getComputedStyle(el).outline);
-      expect(outline).toContain('solid');
-    }
-  });
-
-  test('add row button appears on hover', async ({ page }) => {
-    await page.locator('.gotipe-table-wrapper').hover();
-    const addRow = page.locator('.gotipe-table-add-row');
-    await expect(addRow).toHaveAttribute('aria-label', 'Add row');
-  });
-
-  test('add column button appears on hover', async ({ page }) => {
-    await page.locator('.gotipe-table-wrapper').hover();
-    const addCol = page.locator('.gotipe-table-add-col');
-    await expect(addCol).toHaveAttribute('aria-label', 'Add column');
-  });
-
-  test('column resize handle has correct cursor', async ({ page }) => {
-    const resizeHandle = page.locator('.gotipe-table-col-resize').first();
-    if (await resizeHandle.isVisible()) {
-      const cursor = await resizeHandle.evaluate((el) => getComputedStyle(el).cursor);
-      expect(cursor).toBe('col-resize');
-    }
-  });
-
-  test('header row has bold font weight', async ({ page }) => {
-    const headerCell = page.locator('.gotipe-table-wrapper th').first();
-    if (await headerCell.isVisible()) {
-      const fontWeight = await headerCell.evaluate((el) => getComputedStyle(el).fontWeight);
-      expect(Number(fontWeight)).toBeGreaterThanOrEqual(600);
-    }
+  test('adding a row changes the document once and Undo restores it', async ({ page }) => {
+    const table = page.locator('.gotipe-table-wrapper'); await table.hover();
+    await table.getByRole('button', { name: 'Add row', exact: true }).click();
+    await expect(table.locator('tr')).toHaveCount(3);
+    await page.evaluate(() => window.__GOTIPE_EDITOR__!.undo());
+    await expect(table.locator('tr')).toHaveCount(2);
   });
 });

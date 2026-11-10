@@ -1,6 +1,6 @@
 import type { BlockView, GoTipeEditor } from "@gotipe/core";
-import { useGoTipeI18n } from "@gotipe/react";
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useFloatingPosition, useGoTipeI18n } from "@gotipe/react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { PageIcon } from "./icons";
 import { usePageOverlay } from "./overlay";
@@ -43,11 +43,26 @@ export function PageBlockMenu({
 }) {
   const i18n = useGoTipeI18n();
   const overlay = usePageOverlay();
-  const [menu, setMenu] = useState<{ id: string; top: number; left: number } | null>(null);
+  const [menu, setMenu] = useState<{ id: string; anchorId: string } | null>(null);
   const [submenu, setSubmenu] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
-  const { hover, setHover, indicator, editable, handleRef, onDragStart, onDragEnd } =
+  const { hover, setHover, indicator, editable, handleRef, onDragStart, onDragEnd, touchDrag } =
     usePageBlockHandle(editor, root, menu !== null);
+  const menuAnchor = useCallback(() => {
+    if (!menu || !root) return null;
+    const block = root.querySelector(`[data-block-id="${CSS.escape(menu.anchorId)}"]`);
+    const content = root.querySelector("[data-gotipe-content]");
+    if (!block || !content) return null;
+    const rect = block.getBoundingClientRect();
+    const left = content.getBoundingClientRect().left - 28;
+    return { left, right: left + 22, top: rect.top, bottom: rect.top + 22, width: 22, height: 22 };
+  }, [menu, root]);
+  const menuPosition = useFloatingPosition({
+    open: menu !== null && editable,
+    anchor: menuAnchor,
+    element: menuRef,
+    placement: "left-start",
+  });
 
   useEffect(() => {
     if (!editable) {
@@ -75,13 +90,6 @@ export function PageBlockMenu({
       document.removeEventListener("mousedown", onDown, true);
       document.removeEventListener("keydown", onKey, true);
     };
-  }, [menu]);
-
-  useLayoutEffect(() => {
-    if (!menu || !menuRef.current) return;
-    const rect = menuRef.current.getBoundingClientRect();
-    const maxTop = window.innerHeight - rect.height - 8;
-    if (menu.top > maxTop) setMenu({ ...menu, top: Math.max(8, maxTop) });
   }, [menu]);
 
   const close = useCallback(() => {
@@ -118,13 +126,16 @@ export function PageBlockMenu({
           aria-haspopup="menu"
           style={{
             position: "fixed",
+            touchAction: "none",
             top: hover.handleTop,
             left: hover.left - 28,
           }}
           onDragStart={onDragStart}
           onDragEnd={onDragEnd}
+          onPointerDown={(event) => touchDrag.begin(event, hover.dragId)}
+          onClickCapture={touchDrag.onClickCapture}
           onClick={() => {
-            setMenu({ id: hover.id, top: hover.top, left: hover.left - 28 });
+            setMenu({ id: hover.id, anchorId: hover.dragId });
           }}
         >
           <PageIcon name="grip" />
@@ -144,7 +155,11 @@ export function PageBlockMenu({
           className="gotipe-page-menu gotipe-block-menu"
           role="menu"
           aria-label={i18n.t("block.menu")}
-          style={{ position: "fixed", top: menu.top, left: Math.max(8, menu.left - 230) }}
+          style={{
+            position: "fixed",
+            ...menuPosition,
+            visibility: menuPosition ? "visible" : "hidden",
+          }}
           onMouseDown={(e) => e.preventDefault()}
         >
           <button
@@ -188,7 +203,7 @@ export function PageBlockMenu({
                 </button>
               ))
             : null}
-          <div className="gotipe-page-menu-sep" role="separator" />
+          <hr className="gotipe-page-menu-sep" />
           <button
             type="button"
             role="menuitem"
@@ -222,7 +237,7 @@ export function PageBlockMenu({
             </span>
             <span className="gotipe-page-menu-label">{i18n.t("block.moveDown")}</span>
           </button>
-          <div className="gotipe-page-menu-sep" role="separator" />
+          <hr className="gotipe-page-menu-sep" />
           <button
             type="button"
             role="menuitem"

@@ -1,4 +1,4 @@
-import type { GoTipeEditor } from "../editor";
+import type { GoTipeEditor } from "./editor";
 import type { EditorState, Transaction } from "./state";
 import type { BlockView, Decoration } from "./view";
 
@@ -15,7 +15,7 @@ export interface NodeSpec {
 }
 
 export interface AttrSpec {
-  type: "string" | "number" | "bool" | "enum";
+  type: "string" | "number" | "bool" | "enum" | "array" | "object";
   values?: string[];
   default?: unknown;
   required?: boolean;
@@ -60,8 +60,12 @@ export interface SlashCommandDef {
 export type PluginFactory = (options: unknown) => Plugin;
 
 export interface Plugin {
+  /** Called once after the document and initial selection exist. */
+  init?(state: EditorState): void;
   apply?(tr: Transaction, state: EditorState): void;
   decorations?(state: EditorState): Decoration[];
+  /** Releases resources when editor creation fails or the editor is destroyed. */
+  destroy?(): void;
 }
 
 export interface BlockA11yConfig {

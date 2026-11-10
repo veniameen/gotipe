@@ -44,7 +44,10 @@ async function readBlockMetrics(page: Page, id: string): Promise<BlockMetrics | 
     if (!block) return null;
 
     const getTextAnchorLeft = (blockEl: HTMLElement): number => {
-      const walker = document.createTreeWalker(blockEl, NodeFilter.SHOW_TEXT);
+      const host = blockEl.querySelector('[data-gotipe-text-content]') ?? blockEl;
+      const walker = document.createTreeWalker(host, NodeFilter.SHOW_TEXT, {
+        acceptNode(node) { return node.parentElement?.closest('button,input,select,option,[contenteditable="false"]') ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT; },
+      });
       let n: Node | null;
       while ((n = walker.nextNode())) {
         const text = n.textContent ?? "";
@@ -58,10 +61,11 @@ async function readBlockMetrics(page: Page, id: string): Promise<BlockMetrics | 
       return blockEl.getBoundingClientRect().left;
     };
 
-    const rect = block.getBoundingClientRect();
+    const host = block.querySelector('[data-gotipe-text-content]') ?? block;
+    const rect = host.getBoundingClientRect();
     return {
       top: rect.top,
-      y: rect.top + Math.min(24, Math.max(10, rect.height / 2)),
+      y: rect.top + Math.min(12, Math.max(6, rect.height / 2)),
       textAnchorLeft: getTextAnchorLeft(block),
     };
   }, id);
@@ -108,7 +112,8 @@ async function expectToolbarOnBlock(page: Page, blockId: string): Promise<void> 
         const wrapper = document.querySelector(".gotipe-block-toolbar-wrapper") as HTMLElement | null;
         if (!block || !wrapper || !content) return "missing";
 
-        const br = block.getBoundingClientRect();
+        const textHost = block.querySelector('[data-gotipe-text-content]') ?? block;
+        const br = textHost.getBoundingClientRect();
         const candidateLefts = topLevel
           .filter((el) => (el.getAttribute("data-block-type") ?? "") !== "divider")
           .map((el) => el.getBoundingClientRect().left);
@@ -117,8 +122,9 @@ async function expectToolbarOnBlock(page: Page, blockId: string): Promise<void> 
           : content.getBoundingClientRect().left;
         const wr = wrapper.getBoundingClientRect();
         const topOk = Math.abs(wr.top - br.top) < 24;
-        const expectedLeft = Math.round(columnLeft - 45);
-        const leftOk = Math.abs(Math.round(wr.left) - expectedLeft) <= 2;
+        // The controls stay in the gutter, close enough to reach without covering text.
+        const gap = columnLeft - wr.right;
+        const leftOk = gap >= 2 && gap <= 24;
         return `${topOk}|${leftOk}`;
       }, blockId),
     )

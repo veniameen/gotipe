@@ -318,3 +318,24 @@ describe('IME composition', () => {
     root.remove();
   });
 });
+
+it('keeps adapter composition lifecycle observers separate from application error handling', async () => {
+  const editor = await createEditor({ extensions: [Paragraph], content: DOC });
+  const lifecycle = vi.fn();
+  const log = vi.spyOn(console, 'error').mockImplementation(() => {});
+  const failure = new GoTipeError('COMPOSITION_CONFLICT', 'Recover input', { text: 'Ж😀' });
+  try {
+    editor.on('compositionInterrupted', lifecycle);
+    editor.reportError(failure);
+    expect(lifecycle).toHaveBeenCalledOnce();
+    expect(log).toHaveBeenCalledExactlyOnceWith(failure);
+    const application = vi.fn();
+    editor.on('error', application);
+    editor.reportError(failure);
+    expect(application).toHaveBeenCalledExactlyOnceWith(failure);
+    expect(log).toHaveBeenCalledOnce();
+  } finally {
+    log.mockRestore();
+    editor.destroy();
+  }
+});

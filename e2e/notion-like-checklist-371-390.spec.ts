@@ -1,5 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
-import { openNotionAndReset, setCaretAt, setNotionContent, type BlockInput } from "./helpers/notion-checklist";
+import { clickTodoTextGap, openNotionAndReset, setCaretAt, setNotionContent, type BlockInput } from "./helpers/notion-checklist";
 
 type Op = "click_checkbox" | "caret_empty" | "type_text" | "enter_nonempty" | "enter_empty" | "todo_to_bullet" | "bullet_to_todo";
 type Variant = "undo" | "slash" | "dark";
@@ -62,8 +62,8 @@ async function syncSelection(page: Page) {
 }
 
 async function setTheme(page: Page, mode: "light" | "dark") {
-  await page.getByRole("radio", { name: mode === "light" ? "Light theme" : "Dark theme" }).click();
-  await expect(page.getByRole("radio", { name: mode === "light" ? "Light theme" : "Dark theme" })).toHaveAttribute("aria-checked", "true");
+  await page.getByRole("banner").getByRole("radio", { name: mode === "light" ? "Light theme" : "Dark theme" }).click();
+  await expect(page.getByRole("banner").getByRole("radio", { name: mode === "light" ? "Light theme" : "Dark theme" })).toHaveAttribute("aria-checked", "true");
 }
 
 async function runSlash(page: Page, query: "todo" | "bullet", command: "To-do List" | "Bullet List") {
@@ -76,18 +76,7 @@ async function runSlash(page: Page, query: "todo" | "bullet", command: "To-do Li
   await expect(menu).toBeHidden();
 }
 
-async function clickTodoLeftZone(page: Page, blockId: string) {
-  const p = await page.evaluate((id) => {
-    const item = document.querySelector(`[data-block-id="${id}"][data-block-type="todoItem"]`) as HTMLElement | null;
-    const cb = item?.querySelector('input[type="checkbox"]') as HTMLElement | null;
-    if (!item || !cb) return null;
-    const ir = item.getBoundingClientRect();
-    const cr = cb.getBoundingClientRect();
-    return { x: Math.max(ir.left + 1, cr.left - 3), y: cr.top + cr.height / 2 };
-  }, blockId);
-  if (!p) throw new Error(`Cannot click left zone for ${blockId}`);
-  await page.mouse.click(p.x, p.y);
-}
+const clickTodoLeftZone = clickTodoTextGap;
 
 async function getSelectionContext(page: Page): Promise<{ blockType: string | null; parentType: string | null }> {
   return page.evaluate(() => {
@@ -241,10 +230,10 @@ test.describe("Notion-like checklist batch NL-371..NL-390", () => {
         const before = await page.evaluate((id) => document.querySelector(`[data-block-id="${id}"]`)?.parentElement?.querySelectorAll('[data-block-type="todoItem"]').length ?? 0, targetId);
         await page.keyboard.press("Enter");
         await expect.poll(async () => page.evaluate(({ id, prevCount }) => {
-          const still = !!document.querySelector(`[data-block-id="${id}"]`);
-          const count = document.querySelector('[data-block-type="todoList"]')?.querySelectorAll(':scope > [data-block-type="todoItem"]').length ?? prevCount - 1;
+          const lifted = !!document.querySelector(`[data-block-id="${id}"][data-block-type="paragraph"]`);
+          const count = document.querySelectorAll('[data-block-type="todoList"] > [data-block-type="todoItem"]').length;
           const pCount = document.querySelectorAll('[data-gotipe-content] > [data-block-type="paragraph"]').length;
-          return !still && count === prevCount - 1 && pCount > 0;
+          return lifted && count === prevCount - 1 && pCount > 0;
         }, { id: targetId, prevCount: before })).toBe(true);
         return;
       }

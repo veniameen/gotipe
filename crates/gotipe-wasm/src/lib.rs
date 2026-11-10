@@ -1,7 +1,10 @@
 use wasm_bindgen::prelude::*;
 
 use gotipe_ai::PiiDetector;
-use gotipe_comments::comment::Comment;
+use gotipe_comments::store::ReviewStore;
+mod history;
+mod review;
+mod review_anchors;
 use gotipe_core::{defaults, Document, EditorState, Schema, Transaction};
 use gotipe_crdt::CrdtDocument;
 use gotipe_versioning::manager::VersionManager;
@@ -12,8 +15,10 @@ pub struct WasmEditor {
     state: EditorState,
     schema: Schema,
     crdt: Option<CrdtDocument>,
+    collaboration_enabled: bool,
     version_manager: VersionManager,
     suggestion_mode: bool,
+    review: ReviewStore,
     pii_detector: PiiDetector,
 }
 
@@ -27,14 +32,22 @@ impl WasmEditor {
         let doc: Document = serde_json::from_str(doc_json)
             .map_err(|e| JsError::new(&format!("Invalid document JSON: {e}")))?;
 
+        if doc.duplicate_block_id().is_some() {
+            return Err(JsError::new("Duplicate block ID"));
+        }
+        schema
+            .validate(&doc)
+            .map_err(|errors| JsError::new(&format!("Schema validation failed: {errors:?}")))?;
         let state = EditorState::new(doc, schema.clone());
 
         Ok(WasmEditor {
             state,
             schema,
             crdt: None,
+            collaboration_enabled: false,
             version_manager: VersionManager::new("default"),
             suggestion_mode: false,
+            review: ReviewStore::default(),
             pii_detector: PiiDetector::new(),
         })
     }
@@ -53,15 +66,56 @@ impl WasmEditor {
         let tr: Transaction = serde_json::from_str(transaction_json)
             .map_err(|e| JsError::new(&format!("Invalid transaction JSON: {e}")))?;
 
-        // Apply to CRDT if collaboration is enabled
-        if let Some(ref mut crdt) = self.crdt {
-            crdt.apply_local(&tr.steps);
+        if self.suggestion_mode && !tr.steps.is_empty() {
+            let mut review = self.review.clone();
+            review
+                .propose(&self.state, tr)
+                .map_err(|e| JsError::new(&e))?;
+            let crdt = review::replicate_review(self.crdt.as_ref(), &review)?;
+            self.review = review;
+            self.crdt = crdt;
+            return Ok(self.export_json());
         }
 
-        self.state = self
-            .state
-            .apply(tr)
-            .map_err(|e| JsError::new(&format!("Transform error: {e}")))?;
+        let add_to_history = !matches!(
+            tr.metadata.get("addToHistory"),
+            Some(gotipe_core::AttrValue::Bool(false))
+        );
+        // Validate the complete transaction before publishing it to collaboration state.
+        let (next_state, trace) = if self.crdt.is_some() {
+            self.state.apply_with_trace(tr)
+        } else {
+            self.state.apply(tr).map(|state| (state, Vec::new()))
+        }
+        .map_err(|e| JsError::new(&format!("Transform error: {e}")))?;
+        if let Some(mut crdt) = self.crdt.clone() {
+            let before_selection =
+                gotipe_crdt::selection::SelectionBookmark::capture(&crdt, self.state.selection());
+            let mut operations = Vec::new();
+            for (step, document) in next_state.last_steps().iter().zip(&trace) {
+                operations.extend(
+                    crdt.apply_local_steps_result(std::slice::from_ref(step), document)
+                        .map_err(|e| JsError::new(&format!("CRDT error: {e}")))?,
+                );
+            }
+            if self.collaboration_enabled && add_to_history {
+                if !history::same_typing_group(self.state.last_steps(), next_state.last_steps()) {
+                    crdt.history_mut().end_group();
+                }
+                let after_selection = gotipe_crdt::selection::SelectionBookmark::capture(
+                    &crdt,
+                    next_state.selection(),
+                );
+                crdt.history_mut().record_bookmarked(
+                    operations,
+                    before_selection,
+                    after_selection,
+                    history::now_ms(),
+                );
+            }
+            self.crdt = Some(crdt);
+        }
+        self.state = next_state;
 
         let doc_json = serde_json::to_string(self.state.doc())
             .map_err(|e| JsError::new(&format!("Serialization error: {e}")))?;
@@ -85,34 +139,69 @@ impl WasmEditor {
 
     /// Enable collaboration with a peer ID
     pub fn enable_collaboration(&mut self, peer_id: &str) -> Result<(), JsError> {
-        self.crdt = Some(CrdtDocument::new(peer_id, self.state.doc()));
+        if self.collaboration_enabled {
+            return if self
+                .crdt
+                .as_ref()
+                .is_some_and(|crdt| crdt.peer_id() == peer_id)
+            {
+                Ok(())
+            } else {
+                Err(JsError::new(
+                    "Collaboration is already enabled with another peer ID",
+                ))
+            };
+        }
+        if peer_id.trim().is_empty() || peer_id.starts_with("@base") || peer_id.len() > 256 {
+            return Err(JsError::new("Invalid collaboration peer ID"));
+        }
+        let mut review = self.review.clone();
+        if let Some(crdt) = &self.crdt {
+            review.comments = review
+                .comments
+                .iter()
+                .map(|(id, comment)| (id.clone(), review_anchors::resolve(comment, crdt)))
+                .collect();
+        }
+        let crdt = CrdtDocument::new(peer_id, self.state.doc());
+        for comment in review.comments.values_mut() {
+            review_anchors::attach(comment, &crdt)?;
+        }
+        let crdt = review::replicate_review(Some(&crdt), &review)?;
+        self.review = review;
+        self.crdt = crdt;
+        self.collaboration_enabled = true;
         Ok(())
     }
 
     /// Receive a binary CRDT update from a remote peer
     pub fn receive_update(&mut self, update: &[u8]) -> Result<String, JsError> {
-        let crdt = self
+        if !self.collaboration_enabled {
+            return Err(JsError::new("Collaboration not enabled"));
+        }
+        let mut next_crdt = self
             .crdt
-            .as_mut()
-            .ok_or_else(|| JsError::new("Collaboration not enabled"))?;
-
-        let steps = crdt
+            .as_ref()
+            .ok_or_else(|| JsError::new("Collaboration not enabled"))?
+            .clone();
+        let bookmark =
+            gotipe_crdt::selection::SelectionBookmark::capture(&next_crdt, self.state.selection());
+        let steps = next_crdt
             .apply_remote(update)
             .map_err(|e| JsError::new(&format!("CRDT error: {e}")))?;
-
-        // Apply resulting steps to local state
         let tr = Transaction {
             steps,
-            selection: None,
+            selection: Some(bookmark.resolve(&next_crdt)),
             metadata: std::collections::HashMap::new(),
         };
-
-        if !tr.steps.is_empty() {
-            self.state = self
-                .state
-                .apply(tr)
-                .map_err(|e| JsError::new(&format!("Transform error: {e}")))?;
-        }
+        let next_state = self
+            .state
+            .apply(tr)
+            .map_err(|e| JsError::new(&format!("Transform error: {e}")))?;
+        let review = review::read_review(&next_crdt)?;
+        self.crdt = Some(next_crdt);
+        self.state = next_state;
+        self.review = review;
 
         let doc_json = serde_json::to_string(self.state.doc())
             .map_err(|e| JsError::new(&format!("Serialization error: {e}")))?;
@@ -121,11 +210,14 @@ impl WasmEditor {
 
     /// Get pending CRDT update to send to peers
     pub fn get_update(&mut self) -> Result<Vec<u8>, JsError> {
+        if !self.collaboration_enabled {
+            return Err(JsError::new("Collaboration not enabled"));
+        }
         let crdt = self
             .crdt
             .as_ref()
             .ok_or_else(|| JsError::new("Collaboration not enabled"))?;
-        Ok(crdt.encode_snapshot())
+        Ok(crdt.encode_update_since(&gotipe_crdt::VersionVector::new()))
     }
 
     // === Export ===
@@ -151,59 +243,12 @@ impl WasmEditor {
         gotipe_export::html::HtmlSanitizer::sanitize(html)
     }
 
-    // === Comments ===
-
-    /// Add a comment (JSON-encoded)
-    pub fn add_comment(&mut self, comment_json: &str) -> Result<String, JsError> {
-        let comment: Comment = serde_json::from_str(comment_json)
-            .map_err(|e| JsError::new(&format!("Invalid comment JSON: {e}")))?;
-        let id = comment.id.0.clone();
-        // In a full implementation, this would integrate with CRDT
-        Ok(id)
-    }
-
-    /// Resolve a comment
-    pub fn resolve_comment(&mut self, _comment_id: &str) -> Result<(), JsError> {
-        // In a full implementation, this would update CRDT state
-        Ok(())
-    }
-
-    /// Get all comments (JSON-encoded)
-    pub fn get_comments(&self) -> Result<String, JsError> {
-        // In a full implementation, this would query CRDT state
-        Ok("[]".into())
-    }
-
-    // === Suggestions ===
-
-    /// Enable/disable suggestion mode
-    pub fn set_suggestion_mode(&mut self, enabled: bool) {
-        self.suggestion_mode = enabled;
-    }
-
-    /// Accept a suggestion
-    pub fn accept_suggestion(&mut self, _suggestion_id: &str) -> Result<String, JsError> {
-        let doc_json = serde_json::to_string(self.state.doc())
-            .map_err(|e| JsError::new(&format!("Serialization error: {e}")))?;
-        Ok(doc_json)
-    }
-
-    /// Reject a suggestion
-    pub fn reject_suggestion(&mut self, _suggestion_id: &str) -> Result<String, JsError> {
-        let doc_json = serde_json::to_string(self.state.doc())
-            .map_err(|e| JsError::new(&format!("Serialization error: {e}")))?;
-        Ok(doc_json)
-    }
-
     // === Versions ===
 
     /// Create a named version
     pub fn create_version(&mut self, name: &str) -> Result<String, JsError> {
-        let state_vector = self
-            .crdt
-            .as_ref()
-            .map(|c| c.encode_snapshot())
-            .unwrap_or_else(|| serde_json::to_vec(self.state.doc()).unwrap_or_default());
+        let state_vector = serde_json::to_vec(self.state.doc())
+            .map_err(|e| JsError::new(&format!("Serialization error: {e}")))?;
 
         let version = self
             .version_manager
@@ -225,13 +270,35 @@ impl WasmEditor {
         let vid = gotipe_versioning::VersionId(version_id.into());
         let state_bytes = self
             .version_manager
-            .restore_version(&vid, "local")
-            .ok_or_else(|| JsError::new("Version not found"))?;
-
-        let doc: Document = serde_json::from_slice(&state_bytes)
+            .get_version(&vid)
+            .ok_or_else(|| JsError::new("Version not found"))?
+            .state_vector
+            .clone();
+        let mut doc: Document = serde_json::from_slice(&state_bytes)
             .map_err(|e| JsError::new(&format!("Failed to restore: {e}")))?;
-
+        if doc.duplicate_block_id().is_some() {
+            return Err(JsError::new("Duplicate block ID in stored version"));
+        }
+        self.schema
+            .validate(&doc)
+            .map_err(|errors| JsError::new(&format!("Schema validation failed: {errors:?}")))?;
+        doc.version = self
+            .state
+            .doc()
+            .version
+            .checked_add(1)
+            .ok_or_else(|| JsError::new("Document version exhausted"))?;
+        let mut next_crdt = self.crdt.clone();
+        if let Some(crdt) = &mut next_crdt {
+            crdt.apply_local_document(&doc)
+                .map_err(|e| JsError::new(&format!("CRDT error: {e}")))?;
+        }
+        let previous = serde_json::to_vec(self.state.doc())
+            .map_err(|e| JsError::new(&format!("Serialization error: {e}")))?;
+        self.version_manager.create_auto_save("local", previous);
+        self.version_manager.restore_version(&vid, "local");
         self.state = EditorState::new(doc, self.schema.clone());
+        self.crdt = next_crdt;
 
         let doc_json = serde_json::to_string(self.state.doc())
             .map_err(|e| JsError::new(&format!("Serialization error: {e}")))?;
@@ -259,76 +326,5 @@ impl WasmEditor {
     }
 }
 
-// Non-WASM tests
 #[cfg(test)]
-mod tests {
-    use super::*;
-
-    fn default_schema_json() -> String {
-        let schema = defaults::default_block_editor();
-        serde_json::to_string(&schema).unwrap()
-    }
-
-    fn empty_doc_json() -> String {
-        let doc = Document::new();
-        serde_json::to_string(&doc).unwrap()
-    }
-
-    fn simple_doc_json() -> String {
-        let doc = Document {
-            blocks: vec![gotipe_core::Block {
-                id: gotipe_core::BlockId("b1".into()),
-                block_type: "paragraph".into(),
-                attrs: std::collections::HashMap::new(),
-                content: gotipe_core::BlockContent::RichText(vec![gotipe_core::TextSpan {
-                    text: "Hello World".into(),
-                    marks: vec![],
-                }]),
-                children: vec![],
-            }],
-            version: 0,
-        };
-        serde_json::to_string(&doc).unwrap()
-    }
-
-    #[test]
-    fn test_create_editor() {
-        let editor = WasmEditor::new(&default_schema_json(), &empty_doc_json());
-        assert!(editor.is_ok());
-    }
-
-    #[test]
-    fn test_export_json() {
-        let editor = WasmEditor::new(&default_schema_json(), &simple_doc_json()).unwrap();
-        let json = editor.export_json();
-        assert!(json.contains("Hello World"));
-    }
-
-    #[test]
-    fn test_validate_valid_doc() {
-        let editor = WasmEditor::new(&default_schema_json(), &simple_doc_json()).unwrap();
-        let result = editor.validate(&simple_doc_json());
-        assert!(result.is_ok());
-    }
-
-    #[test]
-    fn test_enable_collaboration() {
-        let mut editor = WasmEditor::new(&default_schema_json(), &simple_doc_json()).unwrap();
-        assert!(editor.enable_collaboration("peer_a").is_ok());
-    }
-
-    #[test]
-    fn test_create_and_list_versions() {
-        let mut editor = WasmEditor::new(&default_schema_json(), &simple_doc_json()).unwrap();
-        editor.create_version("Draft 1").unwrap();
-        let versions_json = editor.list_versions().unwrap();
-        assert!(versions_json.contains("Draft 1"));
-    }
-
-    #[test]
-    fn test_detect_pii() {
-        let editor = WasmEditor::new(&default_schema_json(), &empty_doc_json()).unwrap();
-        let result = editor.detect_pii("Email: hello@example.com").unwrap();
-        assert!(result.contains("Email"));
-    }
-}
+mod tests;

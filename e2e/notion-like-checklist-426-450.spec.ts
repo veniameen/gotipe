@@ -1,5 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
-import {
+import { insertComposedText,
   enableClipboardForTest,
   openNotionAndReset,
   pasteTextWithFallback,
@@ -126,7 +126,7 @@ test.describe("Notion-like checklist batch NL-426..NL-450", () => {
 
   test.beforeEach(async ({ page }) => {
     await openNotionAndReset(page);
-    await page.getByRole("radio", { name: "Light theme" }).click();
+    await page.getByRole("banner").getByRole("radio", { name: "Light theme" }).click();
     await enableClipboardForTest(page);
   });
 
@@ -217,15 +217,7 @@ test.describe("Notion-like checklist batch NL-426..NL-450", () => {
         const imeText = `ime_${marker}`;
         await setCaretAt(page, s.targetId, "end");
         await syncSelection(page);
-        await page.evaluate(({ id, text }) => {
-          const block = document.querySelector(`[data-block-id="${id}"]`) as HTMLElement | null;
-          const ed = (window as Record<string, unknown>).__GOTIPE_NOTION_EDITOR__ as { getViewState?: () => { selection: { anchor: { blockId: string; offset: number } } }; dispatch?: (tx: unknown) => void } | undefined;
-          block?.dispatchEvent(new CompositionEvent("compositionstart", { data: text, bubbles: true }));
-          block?.dispatchEvent(new CompositionEvent("compositionupdate", { data: text, bubbles: true }));
-          const sel = ed?.getViewState?.().selection.anchor;
-          if (sel && ed?.dispatch) ed.dispatch({ steps: [{ type: "insertText", blockId: sel.blockId, offset: sel.offset, text, marks: [] }] });
-          block?.dispatchEvent(new CompositionEvent("compositionend", { data: text, bubbles: true }));
-        }, { id: s.targetId, text: imeText });
+        await insertComposedText(page, imeText);
         await expect.poll(() => textOf(page, s.targetId)).toContain(imeText);
         await expect.poll(async () => (await textOf(page, s.targetId)).split(imeText).length - 1).toBe(1);
         return;

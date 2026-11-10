@@ -1,0 +1,105 @@
+/** Syntax nodes used by our Markdown reader. All offsets are UTF-16 source offsets. */
+export interface Position {
+  start: { offset: number };
+  end: { offset: number };
+}
+
+interface Node<T extends string> {
+  type: T;
+  position?: Position;
+}
+export interface Text extends Node<"text"> {
+  value: string;
+}
+export interface InlineCode extends Node<"inlineCode"> {
+  value: string;
+}
+export interface Break extends Node<"break"> {}
+export interface Html extends Node<"html"> {
+  value: string;
+}
+export interface Emphasis extends Node<"emphasis" | "strong" | "delete"> {
+  children: PhrasingContent[];
+}
+export interface Link extends Node<"link"> {
+  url: string;
+  title?: string | null;
+  children: PhrasingContent[];
+}
+export interface Image extends Node<"image"> {
+  url: string;
+  title?: string | null;
+  alt: string;
+}
+export interface Reference extends Node<"linkReference" | "imageReference" | "footnoteReference"> {
+  value: string;
+}
+export type PhrasingContent =
+  | Text
+  | InlineCode
+  | Break
+  | Html
+  | Emphasis
+  | Link
+  | Image
+  | Reference;
+export interface Paragraph extends Node<"paragraph"> {
+  children: PhrasingContent[];
+}
+export interface Heading extends Node<"heading"> {
+  depth: number;
+  children: PhrasingContent[];
+}
+export interface Code extends Node<"code"> {
+  value: string;
+  lang?: string | null;
+  meta?: string | null;
+}
+export interface Blockquote extends Node<"blockquote"> {
+  children: RootContent[];
+}
+export interface ListItem extends Node<"listItem"> {
+  children: RootContent[];
+  checked?: boolean | null;
+  spread?: boolean;
+}
+export interface List extends Node<"list"> {
+  children: ListItem[];
+  ordered: boolean;
+  start?: number | null;
+  spread?: boolean;
+}
+export interface TableCell extends Node<"tableCell"> {
+  children: PhrasingContent[];
+}
+export interface TableRow extends Node<"tableRow"> {
+  children: TableCell[];
+}
+export interface Table extends Node<"table"> {
+  children: TableRow[];
+  align: ("left" | "right" | "center" | null)[];
+}
+export interface ThematicBreak extends Node<"thematicBreak"> {}
+export interface Definition extends Node<"definition" | "footnoteDefinition"> {
+  value: string;
+}
+export type RootContent =
+  | Paragraph
+  | Heading
+  | Code
+  | Blockquote
+  | List
+  | Table
+  | ThematicBreak
+  | Html
+  | Definition;
+export type Nodes = RootContent | PhrasingContent | ListItem | TableRow | TableCell;
+export interface Root {
+  type: "root";
+  children: RootContent[];
+}
+
+export const position = (start: number, end: number): Position => ({
+  start: { offset: start },
+  end: { offset: end },
+});

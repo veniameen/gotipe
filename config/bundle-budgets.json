@@ -1,0 +1,53 @@
+{
+  "definition": "Sum of Node zlib gzip level 9 bytes for each unique emitted ESM JS file reachable through static or literal dynamic imports. Workspace dependencies included except explicit framework/core/optional-binary boundaries. No tree shaking or minification simulation.",
+  "budgets": [
+    {
+      "name": "headless-core-and-markdown",
+      "entries": ["packages/core/dist/index.js", "packages/markdown/dist/index.js"],
+      "exclude": ["@gotipe/wasm"],
+      "gzipBytes": 102400
+    },
+    {
+      "name": "react-incremental",
+      "entries": ["packages/react/dist/index.js"],
+      "exclude": ["@gotipe/core", "@gotipe/markdown", "react", "react-dom"],
+      "gzipBytes": 30720
+    },
+    {
+      "name": "vue-incremental",
+      "entries": ["packages/vue/dist/index.js"],
+      "exclude": ["@gotipe/core", "vue"],
+      "gzipBytes": 8192
+    },
+    {
+      "name": "svelte-incremental",
+      "entries": ["packages/svelte/dist/index.js"],
+      "exclude": ["@gotipe/core", "svelte"],
+      "gzipBytes": 7168
+    },
+    {
+      "name": "solid-incremental",
+      "entries": ["packages/solid/dist/index.js"],
+      "exclude": ["@gotipe/core", "solid-js"],
+      "gzipBytes": 6144
+    },
+    {
+      "name": "collaboration-incremental",
+      "entries": ["packages/collaboration/dist/index.js"],
+      "exclude": ["@gotipe/core"],
+      "gzipBytes": 12288
+    },
+    {
+      "name": "ai-incremental",
+      "entries": ["packages/ai/dist/index.js"],
+      "exclude": ["@gotipe/core"],
+      "gzipBytes": 12288
+    },
+    {
+      "name": "export-wrapper",
+      "entries": ["packages/export/dist/index.js"],
+      "exclude": ["@gotipe/core", "@gotipe/export-wasm"],
+      "gzipBytes": 4096
+    }
+  ]
+}

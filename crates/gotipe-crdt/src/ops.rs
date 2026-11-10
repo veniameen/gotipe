@@ -29,6 +29,7 @@ impl OpId {
 /// CRDT operation types
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum CrdtOp {
+    Replica(crate::replica::ReplicaOp),
     Text(BlockId, TextOp),
     Tree(TreeOp),
     Attrs(BlockId, HashMap<String, AttrValue>),
@@ -135,91 +136,53 @@ pub enum SuggestionOp {
     },
 }
 
+#[derive(Debug, Clone, thiserror::Error)]
+#[error("A positional operation cannot be inverted without its original replica state; use identity-based Replica operations")]
+pub struct InverseError;
+
 impl CrdtOp {
-    /// Compute inverse operation for undo
+    /// Compatibility helper for already supported operations. Checked callers use
+    /// `try_inverse`; unsupported legacy edits must never fabricate lost content.
     pub fn inverse(&self) -> CrdtOp {
-        match self {
-            CrdtOp::Text(block_id, text_op) => match text_op {
-                TextOp::Insert { id, .. } => CrdtOp::Text(
-                    block_id.clone(),
-                    TextOp::Delete {
-                        id: id.clone(),
-                        target_id: id.clone(),
+        self.try_inverse()
+            .expect("Cannot invert a legacy operation without replica state")
+    }
+
+    pub fn try_inverse(&self) -> Result<CrdtOp, InverseError> {
+        use crate::replica::{Change, ReplicaOp};
+        Ok(match self {
+            CrdtOp::Replica(op) => CrdtOp::Replica(ReplicaOp {
+                id: OpId::zero(""),
+                change: match &op.change {
+                    Change::SetOperationActive { target, active } => Change::SetOperationActive {
+                        target: target.clone(),
+                        active: !active,
                     },
-                ),
-                TextOp::Delete { id, .. } => {
-                    // Approximate inverse — re-insert is complex
-                    CrdtOp::Text(
-                        block_id.clone(),
-                        TextOp::Insert {
-                            id: id.clone(),
-                            pos: 0,
-                            ch: ' ',
-                            marks: vec![],
-                            left_origin: None,
-                            right_origin: None,
-                        },
-                    )
-                }
-                TextOp::AddMark { from, to, mark } => CrdtOp::Text(
-                    block_id.clone(),
-                    TextOp::RemoveMark {
-                        from: *from,
-                        to: *to,
-                        mark_type: mark.mark_type.clone(),
+                    _ => Change::SetOperationActive {
+                        target: op.id.clone(),
+                        active: false,
                     },
-                ),
-                TextOp::RemoveMark {
-                    from,
-                    to,
-                    mark_type,
-                } => CrdtOp::Text(
-                    block_id.clone(),
-                    TextOp::AddMark {
-                        from: *from,
-                        to: *to,
-                        mark: Mark::new(mark_type),
-                    },
-                ),
-            },
-            // Tree operations inverse
-            CrdtOp::Tree(tree_op) => match tree_op {
-                TreeOp::Insert { id, block_id, .. } => CrdtOp::Tree(TreeOp::Delete {
+                },
+            }),
+            CrdtOp::Text(block_id, TextOp::Insert { id, .. }) => CrdtOp::Text(
+                block_id.clone(),
+                TextOp::Delete {
                     id: id.clone(),
-                    block_id: block_id.clone(),
-                }),
-                TreeOp::Delete { id, block_id } => {
-                    // Cannot fully invert a delete without more context
-                    CrdtOp::Tree(TreeOp::Insert {
-                        id: id.clone(),
-                        parent_id: None,
-                        index: 0,
-                        block_id: block_id.clone(),
-                        block_type: "paragraph".into(),
-                    })
-                }
-                TreeOp::Move { id, block_id, .. } => {
-                    // Approximate inverse
-                    CrdtOp::Tree(TreeOp::Move {
-                        id: id.clone(),
-                        block_id: block_id.clone(),
-                        new_parent_id: None,
-                        new_index: 0,
-                    })
-                }
-            },
-            // Attrs: store old attrs for full inverse (simplified here)
-            CrdtOp::Attrs(block_id, _attrs) => CrdtOp::Attrs(block_id.clone(), HashMap::new()),
-            // Comment/Suggestion inverses
-            CrdtOp::Comment(op) => CrdtOp::Comment(op.clone()),
-            CrdtOp::Suggestion(op) => CrdtOp::Suggestion(op.clone()),
-        }
+                    target_id: id.clone(),
+                },
+            ),
+            CrdtOp::Tree(TreeOp::Insert { id, block_id, .. }) => CrdtOp::Tree(TreeOp::Delete {
+                id: id.clone(),
+                block_id: block_id.clone(),
+            }),
+            _ => return Err(InverseError),
+        })
     }
 }
 
 /// Encode operations to binary
 pub fn encode_ops(ops: &[CrdtOp]) -> Vec<u8> {
-    serde_json::to_vec(ops).unwrap_or_default()
+    serde_json::to_vec(ops).expect("CRDT operations contain serializable JSON data")
 }
 
 /// Decode operations from binary
@@ -256,5 +219,19 @@ mod tests {
         let bytes = encode_ops(&ops);
         let decoded = decode_ops(&bytes).unwrap();
         assert_eq!(decoded.len(), 1);
+    }
+    #[test]
+    fn unchecked_legacy_deletion_never_invents_inverse_text() {
+        let operation = CrdtOp::Text(
+            BlockId("one".into()),
+            TextOp::Delete {
+                id: OpId::new(2, "a"),
+                target_id: OpId::new(1, "a"),
+            },
+        );
+        assert!(operation.try_inverse().is_err());
+        assert!(CrdtOp::Attrs(BlockId("one".into()), HashMap::new())
+            .try_inverse()
+            .is_err());
     }
 }

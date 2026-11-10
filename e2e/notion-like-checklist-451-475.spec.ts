@@ -1,5 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
-import {
+import { runCodeBlockCommand, insertComposedText,
   enableClipboardForTest,
   openNotionAndReset,
   pasteTextWithFallback,
@@ -63,7 +63,7 @@ async function selectRange(page: Page, blockId: string, from: number, to: number
   await page.evaluate(({ id, from, to }) => {
     const root = document.querySelector("[data-gotipe-content]") as HTMLElement | null;
     const block = document.querySelector(`[data-block-id="${id}"]`) as HTMLElement | null;
-    const txt = block ? (document.createTreeWalker(block, NodeFilter.SHOW_TEXT).nextNode() as Text | null) : null;
+    const txt = block ? (document.createTreeWalker(block.querySelector("[data-gotipe-text-content]") ?? block, NodeFilter.SHOW_TEXT).nextNode() as Text | null) : null;
     if (!root || !txt) return;
     const r = document.createRange();
     r.setStart(txt, Math.max(0, Math.min(from, txt.length)));
@@ -161,7 +161,7 @@ test.describe("Notion-like checklist batch NL-451..NL-475", () => {
 
   test.beforeEach(async ({ page }) => {
     await openNotionAndReset(page);
-    await page.getByRole("radio", { name: "Light theme" }).click();
+    await page.getByRole("banner").getByRole("radio", { name: "Light theme" }).click();
     await enableClipboardForTest(page);
   });
 
@@ -173,7 +173,7 @@ test.describe("Notion-like checklist batch NL-451..NL-475", () => {
       const bText = `right-${marker}`;
 
       if (c.scope === "code") {
-        await setNotionContent(page, [{ id: "k-target", type: "codeBlock", attrs: {}, content: spans(codeText), children: [] }]);
+        await setNotionContent(page, [{ id: "k-target", type: "codeBlock", attrs: {}, content: codeText, children: [] }]);
       } else {
         await setNotionContent(page, [{ id: "m-a", type: "paragraph", attrs: {}, content: spans(aText), children: [] }, { id: "m-b", type: "paragraph", attrs: {}, content: spans(bText), children: [] }]);
       }
@@ -215,14 +215,7 @@ test.describe("Notion-like checklist batch NL-451..NL-475", () => {
         const ime = `ime_${marker}`;
         await setCaretAt(page, targetId, "end");
         await syncSelection(page);
-        await page.evaluate(({ id, text }) => {
-          const block = document.querySelector(`[data-block-id="${id}"]`) as HTMLElement | null;
-          const ed = (window as Record<string, unknown>).__GOTIPE_NOTION_EDITOR__ as { getViewState?: () => { selection: { anchor: { blockId: string; offset: number } } }; dispatch?: (tx: unknown) => void } | undefined;
-          block?.dispatchEvent(new CompositionEvent("compositionstart", { data: text, bubbles: true }));
-          const sel = ed?.getViewState?.().selection.anchor;
-          if (sel && ed?.dispatch) ed.dispatch({ steps: [{ type: "insertText", blockId: sel.blockId, offset: sel.offset, text, marks: [] }] });
-          block?.dispatchEvent(new CompositionEvent("compositionend", { data: text, bubbles: true }));
-        }, { id: targetId, text: ime });
+        await insertComposedText(page, ime);
         await expect.poll(() => textOf(page, targetId)).toContain(ime);
         return;
       }
@@ -242,7 +235,8 @@ test.describe("Notion-like checklist batch NL-451..NL-475", () => {
 
       await setCaretAt(page, targetId, "start");
       await syncSelection(page);
-      await runSlash(page, c.scope === "code" ? "h2" : "todo", c.scope === "code" ? "Heading 2" : "To-do List");
+      if (c.scope === "code") await runCodeBlockCommand(page, { mode: "transform", query: "h2", command: "Heading 2" });
+      else await runSlash(page, "todo", "To-do List");
       if (c.scope === "code") {
         await expect.poll(async () => page.locator('[data-gotipe-content] > [data-block-type="heading"]').count()).toBeGreaterThan(0);
         await undo(page, 1);

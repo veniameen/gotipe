@@ -1,0 +1,27 @@
+import assert from "node:assert/strict";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { spawnSync } from "node:child_process";
+import { fileURLToPath } from "node:url";
+import { resolve } from "node:path";
+import { exportToPdf, exportToDocx } from "../packages/export/dist/index.js";
+
+const root = fileURLToPath(new URL("../", import.meta.url));
+const output = resolve(root, "output/export-validation");
+await mkdir(output, { recursive: true });
+const fixture = JSON.parse(await readFile(resolve(root, "crates/gotipe-export/tests/fixtures/formats.json"), "utf8"));
+const original = JSON.stringify(fixture);
+const editor = { getJSON: () => fixture };
+const pdf = await exportToPdf(editor, { pageSize: "a4" });
+const docx = await exportToDocx(editor, { title: "Проверка & title", author: "Автор" });
+assert.equal(new TextDecoder().decode(pdf.subarray(0, 5)), "%PDF-");
+assert.deepEqual([...docx.subarray(0, 2)], [0x50, 0x4b]);
+assert.equal(JSON.stringify(fixture), original, "Export mutated the editor document");
+await writeFile(resolve(output, "verified.pdf"), pdf);
+await writeFile(resolve(output, "verified.docx"), docx);
+await assert.rejects(exportToPdf(editor, { fontSize: -1 }));
+const unsupported = structuredClone(fixture);
+unsupported.blocks[0].content[0].marks = [{ type: "unknown-custom-format" }];
+await assert.rejects(exportToDocx({ getJSON: () => unsupported }));
+const check = spawnSync("python3", [resolve(root, "scripts/validate-export-artifacts.py"), output], { stdio: "inherit" });
+if (check.status !== 0) process.exit(check.status ?? 1);
+console.log(`Validated PDF (${pdf.length} bytes) and DOCX (${docx.length} bytes) through public export APIs`);

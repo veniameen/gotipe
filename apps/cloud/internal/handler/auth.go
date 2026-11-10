@@ -1,7 +1,9 @@
 package handler
 
 import (
+	"context"
 	"encoding/json"
+	"golang.org/x/crypto/bcrypt"
 	"net/http"
 	"time"
 
@@ -13,15 +15,19 @@ import (
 type AuthHandler struct {
 	db     *storage.PostgresStore
 	jwt    *internalAuth.JWTService
-	valkey *storage.ValkeyStore
+	valkey TokenRevoker
 }
 
-func NewAuthHandler(db *storage.PostgresStore, jwt *internalAuth.JWTService, valkey *storage.ValkeyStore) *AuthHandler {
+type TokenRevoker interface {
+	BlocklistAdd(context.Context, string, time.Duration) error
+}
+
+func NewAuthHandler(db *storage.PostgresStore, jwt *internalAuth.JWTService, valkey TokenRevoker) *AuthHandler {
 	return &AuthHandler{db: db, jwt: jwt, valkey: valkey}
 }
 
 type TokenRequest struct {
-	GrantType string `json:"grant_type"` // "password", "refresh_token", "api_key"
+	GrantType string `json:"grant_type"` // "password" or "api_key"
 	Email     string `json:"email,omitempty"`
 	Password  string `json:"password,omitempty"`
 	APIKey    string `json:"api_key,omitempty"`
@@ -61,13 +67,11 @@ func (h *AuthHandler) CreateToken() http.HandlerFunc {
 				apierror.ErrUnauthorized.WithMessage("Invalid credentials").Write(w)
 				return
 			}
-			// In production, use bcrypt.CompareHashAndPassword
-			// For now, basic check
-			if passwordHash == "" {
+			if bcrypt.CompareHashAndPassword([]byte(passwordHash), []byte(req.Password)) != nil {
 				apierror.ErrUnauthorized.WithMessage("Invalid credentials").Write(w)
 				return
 			}
-			scopes = []string{"documents:read", "documents:write", "ai:use", "export:use"}
+			scopes = []string{"documents:read", "documents:write", "ai:use", "export:use", "account:manage"}
 
 		case "api_key":
 			if req.APIKey == "" {
@@ -123,12 +127,24 @@ func (h *AuthHandler) RevokeToken() http.HandlerFunc {
 		}
 
 		if req.TokenID == "" {
-			apierror.ErrValidation.WithMessage("token_id is required").Write(w)
+			req.TokenID = user.TokenID
+		}
+		if req.TokenID == "" || req.TokenID != user.TokenID {
+			apierror.ErrForbidden.WithMessage("Only the current token can be revoked").Write(w)
 			return
 		}
 
-		// Add to blocklist with remaining TTL (max 24h as safety)
-		_ = h.valkey.BlocklistAdd(r.Context(), req.TokenID, 24*time.Hour)
+		remaining := time.Until(user.ExpiresAt)
+		if remaining <= 0 {
+			apierror.ErrInvalidToken.Write(w)
+			return
+		}
+		// Round up because storage TTLs are measured in whole seconds.
+		remaining = (remaining/time.Second + 1) * time.Second
+		if err := h.valkey.BlocklistAdd(r.Context(), req.TokenID, remaining); err != nil {
+			apierror.ErrServiceDown.Write(w)
+			return
+		}
 
 		apierror.WriteJSON(w, http.StatusOK, map[string]string{"status": "revoked"})
 	}

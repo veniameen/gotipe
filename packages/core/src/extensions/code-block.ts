@@ -31,6 +31,7 @@ export const CodeBlock = defineExtension<CodeBlockOptions>({
       content: "rawText",
       attrs: {
         language: { type: "string", default: "plain" },
+        meta: { type: "string" },
       },
       topLevel: true,
       marksAllowed: "none",

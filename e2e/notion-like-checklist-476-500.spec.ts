@@ -47,7 +47,7 @@ const spans = (text: string) => [{ text, marks: [] as Array<{ type: string }> }]
 function gutterBlocks(kind: GutterKind, marker: string): BlockInput[] {
   const pre: BlockInput = { id: "g-pre", type: "paragraph", attrs: {}, content: spans(`pre-${marker}`), children: [] };
   const post: BlockInput = { id: "g-post", type: "paragraph", attrs: {}, content: spans(`post-${marker}`), children: [] };
-  if (kind === "code") return [pre, { id: "g-target", type: "codeBlock", attrs: {}, content: spans(`target-${marker}`), children: [] }, post];
+  if (kind === "code") return [pre, { id: "g-target", type: "codeBlock", attrs: {}, content: `target-${marker}`, children: [] }, post];
   return [pre, { id: "g-target", type: "todoList", attrs: {}, content: null, children: [{ id: "g-item", type: "todoItem", attrs: { checked: false }, content: spans(`target-${marker}`), children: [] }] }, post];
 }
 
@@ -91,7 +91,7 @@ async function configureEnv(page: Page, env: Env) {
   else await page.setViewportSize({ width: 1280, height: 900 });
 
   const themeName = env === "desktop_dark" ? "Dark theme" : env === "system" ? "System theme" : "Light theme";
-  await page.getByRole("radio", { name: themeName }).click();
+  await page.getByRole("banner").getByRole("radio", { name: themeName }).click();
 }
 
 async function openSlash(page: Page, marker: string, query = "h2") {
@@ -109,7 +109,7 @@ test.describe("Notion-like checklist batch NL-476..NL-500", () => {
 
   test.beforeEach(async ({ page }) => {
     await openNotionAndReset(page);
-    await page.getByRole("radio", { name: "Light theme" }).click();
+    await page.getByRole("banner").getByRole("radio", { name: "Light theme" }).click();
   });
 
   for (const c of GUTTER_CASES) {

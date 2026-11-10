@@ -1,0 +1,156 @@
+.gotipe-review-example {
+  container-type: inline-size;
+  color: var(--gt-text);
+}
+.gotipe-review-toolbar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 14px;
+  border: 1px solid var(--gt-border);
+  border-radius: var(--gt-radius-lg);
+  background: var(--gt-bg);
+}
+.gotipe-review-toolbar fieldset {
+  border: 0;
+  margin: 0;
+  padding: 0;
+  min-inline-size: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.gotipe-review-toolbar > span {
+  flex: 1;
+  color: var(--gt-text-secondary);
+  font-size: 13px;
+}
+.gotipe-review-example button {
+  font: inherit;
+  font-size: 13px;
+  color: var(--gt-text);
+  background: var(--gt-bg);
+  border: 1px solid var(--gt-border);
+  border-radius: var(--gt-radius-md);
+  padding: 8px 12px;
+  min-height: 36px;
+  cursor: pointer;
+}
+.gotipe-review-example button:hover {
+  background: var(--gt-bg-hover);
+}
+.gotipe-review-example button[aria-pressed="true"] {
+  background: var(--gt-bg-active);
+  border-color: var(--gt-accent);
+  color: var(--gt-accent);
+}
+.gotipe-review-example button:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+.gotipe-review-example :is(button, input, textarea):focus-visible {
+  outline: 2px solid var(--gt-accent);
+  outline-offset: 2px;
+}
+.gotipe-review-description,
+.gotipe-review-empty {
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--gt-text-secondary);
+}
+.gotipe-review-status {
+  min-height: 20px;
+  margin: 10px 0;
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+.gotipe-review-status[role="alert"] {
+  color: var(--gt-danger);
+}
+.gotipe-review-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(240px, 320px);
+  gap: 16px;
+  align-items: start;
+}
+.gotipe-review-document,
+.gotipe-review-sidebar {
+  min-width: 0;
+  background: var(--gt-bg);
+  border: 1px solid var(--gt-border);
+  border-radius: var(--gt-radius-lg);
+}
+.gotipe-review-document .gotipe-page {
+  border-radius: inherit;
+}
+.gotipe-review-sidebar {
+  padding: 16px;
+}
+.gotipe-review-sidebar h2 {
+  font-size: 16px;
+  margin: 0 0 12px;
+}
+.gotipe-review-check {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  font-size: 13px;
+}
+.gotipe-review-records {
+  display: grid;
+  gap: 10px;
+  list-style: none;
+  padding: 0;
+  margin: 16px 0 0;
+  max-height: 660px;
+  overflow-y: auto;
+}
+.gotipe-review-card {
+  padding: 12px;
+  border: 1px solid var(--gt-border);
+  border-radius: var(--gt-radius-md);
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.gotipe-review-card-heading {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  font-size: 12px;
+  margin-bottom: 10px;
+}
+.gotipe-review-card-heading span,
+.gotipe-review-card time,
+.gotipe-review-state {
+  color: var(--gt-text-secondary);
+  font-size: 12px;
+}
+.gotipe-review-card :is(del, ins, p) {
+  display: block;
+  font-size: 13px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  margin: 6px 0;
+}
+.gotipe-review-card del {
+  color: var(--gt-danger);
+}
+.gotipe-review-card ins {
+  color: var(--gt-success);
+}
+.gotipe-review-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 10px;
+}
+@container (max-width: 760px) {
+  .gotipe-review-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .gotipe-review-records {
+    max-height: 440px;
+  }
+}

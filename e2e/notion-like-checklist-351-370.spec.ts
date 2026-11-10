@@ -1,5 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
-import {
+import { clickTodoTextGap,
   enableClipboardForTest,
   openNotionAndReset,
   pasteTextWithFallback,
@@ -79,18 +79,7 @@ async function runSlash(page: Page, query: "todo" | "bullet", command: "To-do Li
   await expect(menu).toBeHidden();
 }
 
-async function clickTodoLeftZone(page: Page, blockId: string) {
-  const p = await page.evaluate((id) => {
-    const item = document.querySelector(`[data-block-id="${id}"][data-block-type="todoItem"]`) as HTMLElement | null;
-    const cb = item?.querySelector('input[type="checkbox"]') as HTMLElement | null;
-    if (!item || !cb) return null;
-    const ir = item.getBoundingClientRect();
-    const cr = cb.getBoundingClientRect();
-    return { x: Math.max(ir.left + 1, cr.left - 3), y: cr.top + cr.height / 2 };
-  }, blockId);
-  if (!p) throw new Error(`Cannot click left zone for ${blockId}`);
-  await page.mouse.click(p.x, p.y);
-}
+const clickTodoLeftZone = clickTodoTextGap;
 
 async function getSelectionContext(page: Page): Promise<{ blockType: string | null; parentType: string | null }> {
   return page.evaluate(() => {
@@ -173,7 +162,7 @@ test.describe("Notion-like checklist batch NL-351..NL-370", () => {
 
   test.beforeEach(async ({ page }) => {
     await openNotionAndReset(page);
-    await page.getByRole("radio", { name: "Light theme" }).click();
+    await page.getByRole("banner").getByRole("radio", { name: "Light theme" }).click();
     await enableClipboardForTest(page);
   });
 

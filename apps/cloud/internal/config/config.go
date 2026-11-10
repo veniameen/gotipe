@@ -10,10 +10,12 @@ import (
 
 type Config struct {
 	// Server
-	ListenAddr     string
-	SyncListenAddr string
-	MetricsAddr    string
-	Environment    string // "production" | "development"
+	ListenAddr         string
+	SyncListenAddr     string
+	MetricsAddr        string
+	Environment        string // "production" | "development"
+	SyncAllowedOrigins []string
+	HTTPAllowedOrigins []string
 
 	// PostgreSQL
 	DatabaseURL string
@@ -26,12 +28,12 @@ type Config struct {
 	ValkeyMaxConns int
 
 	// R2 / S3
-	R2AccountID   string
-	R2AccessKeyID string
-	R2SecretKey   string
-	R2Bucket      string
-	R2CDNUrl      string
-	S3Endpoint    string // MinIO for dev
+	R2AccountID    string
+	R2AccessKeyID  string
+	R2SecretKey    string
+	R2Bucket       string
+	R2CDNUrl       string
+	S3Endpoint     string // MinIO for dev
 	S3UsePathStyle bool
 
 	// Auth
@@ -81,13 +83,17 @@ type Config struct {
 }
 
 func Load() (*Config, error) {
+	if err := validateEnvironmentValues(); err != nil {
+		return nil, err
+	}
 	c := &Config{
-		ListenAddr:     envOr("LISTEN_ADDR", ":8080"),
-		SyncListenAddr: envOr("SYNC_LISTEN_ADDR", ":8081"),
-		MetricsAddr:    envOr("METRICS_LISTEN_ADDR", ":9090"),
-		Environment:    envOr("ENVIRONMENT", "development"),
+		ListenAddr:         envOr("LISTEN_ADDR", ":8080"),
+		SyncListenAddr:     envOr("SYNC_LISTEN_ADDR", ":8081"),
+		MetricsAddr:        envOr("METRICS_LISTEN_ADDR", ":9090"),
+		Environment:        envOr("ENVIRONMENT", "development"),
+		SyncAllowedOrigins: splitValues(os.Getenv("SYNC_ALLOWED_ORIGINS")),
 
-		DatabaseURL: envRequired("DATABASE_URL"),
+		DatabaseURL: os.Getenv("DATABASE_URL"),
 		DBMaxConns:  int32(envInt("DATABASE_MAX_CONNS", 50)),
 		DBIdleConns: int32(envInt("DATABASE_IDLE_CONNS", 10)),
 
@@ -141,7 +147,41 @@ func Load() (*Config, error) {
 		LogLevel:          envOr("LOG_LEVEL", "info"),
 		LogFormat:         envOr("LOG_FORMAT", "json"),
 	}
+	c.HTTPAllowedOrigins = httpOrigins(c.Environment)
+	if err := validateOrigins("HTTP_ALLOWED_ORIGINS", c.HTTPAllowedOrigins); err != nil {
+		return nil, err
+	}
+	if err := validateOrigins("SYNC_ALLOWED_ORIGINS", c.SyncAllowedOrigins); err != nil {
+		return nil, err
+	}
+	if c.DatabaseURL == "" {
+		return nil, fmt.Errorf("DATABASE_URL is required")
+	}
+	if c.Environment != "development" && c.Environment != "production" {
+		return nil, fmt.Errorf("ENVIRONMENT must be development or production")
+	}
+	if c.DBMaxConns < 1 || c.DBIdleConns < 0 || c.DBIdleConns > c.DBMaxConns {
+		return nil, fmt.Errorf("invalid database connection limits")
+	}
+	if c.JWTExpiry <= 0 || c.ExportPollInterval <= 0 || c.ExportMaxDocSize <= 0 || c.ExportMaxDocSize > 64<<20 || c.ExportWorkers < 1 || c.ExportWorkers > 16 || c.AIMaxTokens < 1 {
+		return nil, fmt.Errorf("invalid token, export or AI resource limits")
+	}
+	for _, value := range []string{c.RateLimitAPI, c.RateLimitAI, c.RateLimitWS} {
+		if _, _, err := ParseRateLimit(value); err != nil {
+			return nil, err
+		}
+	}
 	return c, nil
+}
+
+func splitValues(value string) []string {
+	var values []string
+	for _, item := range strings.Split(value, ",") {
+		if item = strings.TrimSpace(item); item != "" {
+			values = append(values, item)
+		}
+	}
+	return values
 }
 
 func (c *Config) IsProduction() bool {
@@ -155,7 +195,7 @@ func ParseRateLimit(s string) (int, time.Duration, error) {
 		return 0, 0, fmt.Errorf("invalid rate limit format: %s", s)
 	}
 	limit, err := strconv.Atoi(parts[0])
-	if err != nil {
+	if err != nil || limit <= 0 {
 		return 0, 0, fmt.Errorf("invalid rate limit number: %s", parts[0])
 	}
 	var window time.Duration
@@ -177,14 +217,6 @@ func envOr(key, fallback string) string {
 		return v
 	}
 	return fallback
-}
-
-func envRequired(key string) string {
-	v := os.Getenv(key)
-	if v == "" {
-		panic(fmt.Sprintf("required env var %s is not set", key))
-	}
-	return v
 }
 
 func envInt(key string, fallback int) int {

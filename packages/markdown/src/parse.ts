@@ -1,3 +1,5 @@
+import { alignCodeBlock } from "./align";
+import { readMarkdown } from "./grammar/blocks";
 import type {
   Blockquote,
   Code,
@@ -10,11 +12,7 @@ import type {
   PhrasingContent,
   RootContent,
   Table,
-} from "mdast";
-import { fromMarkdown } from "mdast-util-from-markdown";
-import { gfmFromMarkdown } from "mdast-util-gfm";
-import { gfm } from "micromark-extension-gfm";
-import { alignCodeBlock } from "./align";
+} from "./grammar/types";
 import { assignIds, prevFromDoc, prevFromSnapshot } from "./ids";
 import {
   type InlineParseCtx,
@@ -55,10 +53,6 @@ export interface ParsedInternal {
 }
 
 const ALERT_RE = /^\[!(NOTE|TIP|IMPORTANT|WARNING|CAUTION)\][ \t]*(?:\n|$)/i;
-
-function mdast(body: string) {
-  return fromMarkdown(body, { extensions: [gfm()], mdastExtensions: [gfmFromMarkdown()] });
-}
 
 function mk(
   type: string,
@@ -378,7 +372,7 @@ export function parseInternal(text: string, segments: boolean): ParsedInternal {
   const frontMatter = text.slice(bom.length, fmEnd);
   const base = fmEnd;
   const conv = new Converter(text, base, segments);
-  const root = mdast(text.slice(base));
+  const root = readMarkdown(text.slice(base));
   const nodes: PNode[] = [];
   let cursor = base;
   const gapRaw = (a: number, b: number): void => {

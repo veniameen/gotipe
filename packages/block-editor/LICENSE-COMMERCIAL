@@ -1,0 +1,18 @@
+GoTipe Commercial License
+
+Copyright (c) 2025 GoTipe Contributors
+
+This software and associated documentation files (the "Software") are licensed
+under the GoTipe Commercial License. You may use the Software only in
+accordance with the terms and conditions of the Commercial License Agreement.
+
+The Commercial License applies to the following packages:
+- @gotipe/block-editor
+- @gotipe/block-editor-vue
+- @gotipe/ai-ui
+- @gotipe/theme
+
+For licensing inquiries, please contact: license@gotipe.com
+
+All other packages in this repository are licensed under the MIT License.
+See LICENSE-MIT for details.

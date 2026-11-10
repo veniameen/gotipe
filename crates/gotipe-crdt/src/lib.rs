@@ -1,9 +1,12 @@
 pub mod awareness;
+mod clock;
 pub mod doc;
 pub mod history;
 pub mod lww;
 pub mod map;
 pub mod ops;
+pub mod replica;
+pub mod selection;
 pub mod sync;
 pub mod text;
 pub mod tree;

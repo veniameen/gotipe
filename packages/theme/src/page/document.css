@@ -1,0 +1,469 @@
+/* ============================================================ frame */
+.gotipe-page {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+  background: var(--gt-page-bg);
+  color: var(--gt-text);
+  font-family: var(--gt-font-ui);
+  font-feature-settings: var(--gt-font-features);
+  font-size: var(--gt-text-prose);
+  line-height: var(--gt-leading-prose);
+  letter-spacing: var(--gt-tracking-prose);
+  -webkit-font-smoothing: antialiased;
+}
+.gotipe-page *,
+.gotipe-page *::before,
+.gotipe-page *::after {
+  box-sizing: border-box;
+}
+.gotipe-page .gotipe-icon {
+  flex: none;
+  width: var(--gt-icon-size);
+  height: var(--gt-icon-size);
+}
+.gotipe-page-doc {
+  flex: 1;
+  width: 100%;
+  max-width: var(--gt-page-max-width);
+  margin: 0 auto;
+  padding: var(--gt-page-padding-top) var(--gt-page-padding-x) var(--gt-page-padding-bottom);
+  cursor: text;
+}
+.gotipe-page-editor {
+  outline: 0;
+}
+.gotipe-page .gotipe-editor {
+  border: 0;
+  border-radius: 0;
+  padding: 0;
+  min-height: 0;
+  background: transparent;
+  box-shadow: none;
+}
+.gotipe-page-loading {
+  min-height: 160px;
+}
+.gotipe-page .gotipe-content {
+  outline: 0;
+  padding: 0;
+  margin: 0;
+  max-width: none;
+  font: inherit;
+  color: inherit;
+  letter-spacing: inherit;
+  caret-color: var(--gt-text);
+  min-height: 120px;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.gotipe-page .gotipe-content ::selection {
+  background: var(--gt-selection);
+}
+.gotipe-page .gotipe-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+.gotipe-page-overlay {
+  position: absolute;
+  inset: 0 auto auto 0;
+  width: 0;
+  height: 0;
+  z-index: 40;
+}
+
+/* ============================================================ text blocks */
+.gotipe-page .gotipe-content > * {
+  margin: 0;
+}
+.gotipe-page .gotipe-content p {
+  margin: 2px 0;
+  min-height: var(--gt-leading-prose);
+}
+.gotipe-page .gotipe-content [data-placeholder]::before,
+.gotipe-page .gotipe-content [data-placeholder]:empty::before {
+  content: none;
+}
+.gotipe-page
+  .gotipe-content
+  [data-placeholder]:has(> br[data-gotipe-trailing-break]:only-child)::before {
+  content: attr(data-placeholder);
+  position: absolute;
+  color: var(--gt-text-3);
+  pointer-events: none;
+}
+.gotipe-page .gotipe-page-title {
+  position: relative;
+  margin: 0 0 16px;
+  color: var(--gt-text);
+  font-size: var(--gt-title-size);
+  line-height: var(--gt-title-leading);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+.gotipe-page .gotipe-content h1:not(.gotipe-page-title) {
+  margin: 16px 0 4px;
+  font-size: var(--gt-h1-size);
+  line-height: var(--gt-h1-leading);
+  font-weight: 600;
+  letter-spacing: -0.017em;
+}
+.gotipe-page .gotipe-content h2 {
+  margin: 14px 0 2px;
+  font-size: var(--gt-h2-size);
+  line-height: var(--gt-h2-leading);
+  font-weight: 600;
+  letter-spacing: -0.011em;
+}
+.gotipe-page .gotipe-content :is(h3, h4, h5, h6) {
+  margin: 10px 0 2px;
+  font-size: var(--gt-h3-size);
+  line-height: var(--gt-h3-leading);
+  font-weight: 600;
+}
+.gotipe-page .gotipe-content :is(h1, h2, h3, h4, h5, h6) {
+  position: relative;
+}
+.gotipe-page .gotipe-content blockquote {
+  position: relative;
+  margin: 4px 0;
+  padding-left: 12px;
+  box-shadow: inset 2px 0 0 var(--gt-text);
+}
+.gotipe-page .gotipe-content hr {
+  height: 1px;
+  margin: 12px 0;
+  border: 0;
+  background: var(--gt-line);
+}
+.gotipe-page .gotipe-content a {
+  color: var(--gt-link);
+  text-decoration: underline;
+  text-decoration-color: color-mix(in srgb, var(--gt-link) 40%, transparent);
+  text-underline-offset: 2px;
+}
+.gotipe-page .gotipe-content code {
+  padding: 1px 4px;
+  border-radius: var(--gt-radius-xs);
+  background: var(--gt-fill-2);
+  font-family: var(--gt-font-mono);
+  font-size: 0.86em;
+  letter-spacing: 0;
+}
+.gotipe-page .gotipe-content mark {
+  border-radius: 2px;
+  background: color-mix(in srgb, var(--gt-warning) 22%, transparent);
+  color: inherit;
+}
+.gotipe-page .gotipe-md-raw {
+  color: var(--gt-text-2);
+  font-family: var(--gt-font-mono);
+  font-size: 0.86em;
+  letter-spacing: 0;
+}
+
+/* lists */
+.gotipe-page .gotipe-content :is(ul, ol) {
+  margin: 2px 0;
+  padding-left: 24px;
+}
+.gotipe-page .gotipe-content li {
+  position: relative;
+  margin: 1px 0;
+}
+.gotipe-page .gotipe-content li::marker {
+  color: var(--gt-text-2);
+}
+.gotipe-page .gotipe-content ul.gotipe-todo-list {
+  list-style: none;
+  padding-left: 26px;
+}
+.gotipe-page .gotipe-content .gotipe-todo-item {
+  position: relative;
+  display: block;
+  padding: 0;
+}
+.gotipe-page .gotipe-todo-item > input[type="checkbox"] {
+  appearance: none;
+  position: absolute;
+  left: -24px;
+  top: 3px;
+  width: 15px;
+  height: 15px;
+  margin: 0;
+  border: 1.5px solid var(--gt-text-2);
+  border-radius: 4px;
+  background: transparent;
+  cursor: pointer;
+}
+.gotipe-page .gotipe-todo-item > input[type="checkbox"]:checked {
+  border-color: var(--gt-accent);
+  background: var(--gt-accent)
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M2.75 6.25L5 8.5L9.25 3.75' fill='none' stroke='white' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")
+    center / 11px no-repeat;
+}
+.gotipe-page .gotipe-todo-item > input[type="checkbox"]:disabled {
+  cursor: default;
+}
+.gotipe-page .gotipe-todo-item.is-checked > .gotipe-todo-item-content {
+  color: var(--gt-text-3);
+  text-decoration: line-through;
+}
+.gotipe-page .gotipe-todo-item-content {
+  position: relative;
+  display: block;
+  min-height: var(--gt-leading-prose);
+}
+
+/* code */
+.gotipe-page .gotipe-page-code {
+  position: relative;
+  margin: 6px 0;
+  border-radius: var(--gt-radius-surface);
+  background: var(--gt-fill-1);
+}
+.gotipe-page .gotipe-page-code pre {
+  margin: 0;
+  padding: 10px 12px;
+  overflow-x: auto;
+  font-family: var(--gt-font-mono);
+  font-size: var(--gt-text-mono-small);
+  line-height: 1.6;
+  letter-spacing: 0;
+  white-space: pre-wrap;
+}
+.gotipe-page .gotipe-page-code code {
+  padding: 0;
+  background: none;
+  font-size: inherit;
+}
+.gotipe-page .gotipe-page-code-lang {
+  position: absolute;
+  top: 6px;
+  right: 8px;
+  color: var(--gt-text-3);
+  font-family: var(--gt-font-ui);
+  font-size: var(--gt-text-meta);
+  user-select: none;
+}
+/* raw markdown kept as is */
+.gotipe-page .gotipe-page-raw {
+  margin: 6px 0;
+  padding: 8px 10px;
+  border-radius: var(--gt-radius-surface);
+  box-shadow: inset 0 0 0 1px var(--gt-line);
+  color: var(--gt-text-2);
+  user-select: text;
+  cursor: default;
+}
+.gotipe-page .gotipe-page-raw pre {
+  margin: 0;
+  font-family: var(--gt-font-mono);
+  font-size: var(--gt-text-mono-small);
+  line-height: 1.6;
+  letter-spacing: 0;
+  white-space: pre-wrap;
+}
+
+/* callout and agent instructions */
+.gotipe-page .gotipe-page-callout {
+  display: flex;
+  gap: 10px;
+  margin: 8px 0;
+  padding: 10px 12px;
+  border-radius: var(--gt-radius-callout);
+  background: var(--gt-fill-1);
+}
+.gotipe-page .gotipe-callout-glyph {
+  flex: none;
+  display: grid;
+  place-items: center;
+  height: var(--gt-leading-prose);
+  color: var(--gt-text-2);
+  user-select: none;
+}
+.gotipe-page .gotipe-callout-body {
+  flex: 1;
+  min-width: 0;
+}
+.gotipe-page .gotipe-callout-label {
+  margin-bottom: 2px;
+  color: var(--gt-accent);
+  font-size: var(--gt-text-meta);
+  line-height: var(--gt-leading-meta);
+  font-weight: 500;
+  letter-spacing: 0;
+  user-select: none;
+}
+.gotipe-page .gotipe-callout-content {
+  position: relative;
+  min-height: var(--gt-leading-prose);
+  outline: 0;
+}
+.gotipe-page .gotipe-page-callout-agent {
+  background: color-mix(in srgb, var(--gt-accent) 8%, transparent);
+}
+.gotipe-page .gotipe-page-callout-agent .gotipe-callout-glyph {
+  color: var(--gt-accent);
+}
+.gotipe-page .gotipe-page-callout[data-variant="warning"],
+.gotipe-page .gotipe-page-callout[data-variant="caution"] {
+  background: color-mix(in srgb, var(--gt-warning) 6%, transparent);
+}
+.gotipe-page .gotipe-page-callout[data-variant="warning"] .gotipe-callout-glyph,
+.gotipe-page .gotipe-page-callout[data-variant="caution"] .gotipe-callout-glyph {
+  color: var(--gt-warning);
+}
+
+/* image */
+.gotipe-page .gotipe-page-image-empty {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 8px 0;
+  padding: 12px;
+  border-radius: var(--gt-radius-callout);
+  background: var(--gt-fill-1);
+  color: var(--gt-text-2);
+  user-select: none;
+  cursor: default;
+}
+.gotipe-page .gotipe-page-image-empty .gotipe-icon {
+  color: var(--gt-text-3);
+}
+.gotipe-page .gotipe-page-image-empty:hover,
+.gotipe-page .gotipe-page-image-empty.is-drag,
+.gotipe-page .gotipe-page-image-empty:focus-visible {
+  background: var(--gt-fill-2);
+  outline: 0;
+}
+.gotipe-page .gotipe-page-image {
+  margin: 8px 0;
+}
+.gotipe-page .gotipe-page-image img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  border-radius: var(--gt-radius-surface);
+}
+.gotipe-page .gotipe-page-image figcaption {
+  margin-top: 6px;
+  color: var(--gt-text-3);
+  font-size: var(--gt-text-meta);
+  line-height: var(--gt-leading-meta);
+}
+.gotipe-page .gotipe-page-image-missing {
+  display: grid;
+  place-items: center;
+  height: 120px;
+  border-radius: var(--gt-radius-surface);
+  background: var(--gt-fill-1);
+  color: var(--gt-text-3);
+}
+
+/* file */
+.gotipe-page .gotipe-page-file {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 6px 0;
+  padding: 8px 10px;
+  border-radius: var(--gt-radius-surface);
+  box-shadow: inset 0 0 0 1px var(--gt-line);
+  user-select: none;
+  cursor: default;
+}
+.gotipe-page .gotipe-page-file .gotipe-icon {
+  color: var(--gt-text-2);
+}
+.gotipe-page .gotipe-page-file:hover,
+.gotipe-page .gotipe-page-file:focus-visible {
+  background: var(--gt-fill-1);
+  outline: 0;
+}
+.gotipe-page .gotipe-page-file-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 500;
+}
+.gotipe-page .gotipe-page-file-empty .gotipe-page-file-name {
+  color: var(--gt-text-2);
+  font-weight: 400;
+}
+.gotipe-page .gotipe-page-file-meta {
+  margin-left: auto;
+  color: var(--gt-text-3);
+  font-size: var(--gt-text-meta);
+}
+
+/* table */
+.gotipe-page .gotipe-table-wrapper {
+  margin: 8px 0;
+  overflow-x: auto;
+}
+.gotipe-page .gotipe-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.gotipe-page .gotipe-table :is(th, td) {
+  position: relative;
+  min-width: 60px;
+  padding: 6px 8px;
+  border: 1px solid var(--gt-line);
+  text-align: left;
+  vertical-align: top;
+  outline: 0;
+}
+.gotipe-page .gotipe-table th {
+  background: var(--gt-fill-1);
+  font-weight: 600;
+}
+.gotipe-page .gotipe-table td code:only-child {
+  padding: 0;
+  background: none;
+  font-size: var(--gt-text-mono-small);
+}
+.gotipe-page .gotipe-table td[data-align="right"] {
+  font-variant-numeric: tabular-nums;
+}
+.gotipe-page .gotipe-col-btn {
+  position: absolute;
+  top: 50%;
+  right: 4px;
+  display: grid;
+  opacity: 0;
+  pointer-events: none;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  margin-top: -10px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--gt-radius-xs);
+  background: var(--gt-surface);
+  box-shadow: 0 0 0 1px var(--gt-line-strong);
+  color: var(--gt-text-2);
+  cursor: pointer;
+}
+.gotipe-page .gotipe-col-btn .gotipe-icon {
+  width: 12px;
+  height: 12px;
+}
+.gotipe-page .gotipe-table th[data-align="right"] .gotipe-col-btn {
+  right: auto;
+  left: 4px;
+}
+.gotipe-page .gotipe-table th:hover .gotipe-col-btn,
+.gotipe-page .gotipe-table th:focus-within .gotipe-col-btn,
+.gotipe-page .gotipe-col-btn[aria-expanded="true"] {
+  display: grid;
+  opacity: 1;
+  pointer-events: auto;
+}

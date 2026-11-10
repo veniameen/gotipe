@@ -1,4 +1,10 @@
-export type AttrValue = string | number | boolean | null;
+export type AttrValue =
+  | string
+  | number
+  | boolean
+  | null
+  | AttrValue[]
+  | { [key: string]: AttrValue };
 
 export interface Mark {
   type: string;

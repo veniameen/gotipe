@@ -12,7 +12,8 @@ export function defineIcons(icons: IconSet): IconSet {
 }
 
 export function applyTheme(config: ThemeConfig, root?: HTMLElement): void {
-  const target = root ?? document.documentElement;
+  const target = root ?? (typeof document === "undefined" ? undefined : document.documentElement);
+  if (!target) return;
   if (config.tokens) {
     for (const [key, value] of Object.entries(config.tokens)) {
       const cssVar = key.startsWith("--gt-") ? key : `--gt-${key}`;
@@ -21,55 +22,77 @@ export function applyTheme(config: ThemeConfig, root?: HTMLElement): void {
   }
 }
 
-let currentMode: ThemeMode = "system";
-let systemThemeCleanup: (() => void) | null = null;
-const listeners: Set<(mode: ThemeMode, resolved: "light" | "dark") => void> = new Set();
-
-function getResolvedTheme(root?: HTMLElement): "light" | "dark" {
-  const target = root ?? document.documentElement;
-  return (target.getAttribute("data-theme") as "light" | "dark") ?? "light";
+interface ThemeState {
+  mode: ThemeMode;
+  resolved: "light" | "dark";
+  generation: number;
+  cleanup: (() => void) | null;
+  listeners: Set<(mode: ThemeMode, resolved: "light" | "dark") => void>;
+}
+const roots = new WeakMap<HTMLElement, ThemeState>();
+const defaultRoot = () => (typeof document === "undefined" ? undefined : document.documentElement);
+const preferredTheme = (): "light" | "dark" =>
+  typeof window !== "undefined" && window.matchMedia?.("(prefers-color-scheme: dark)").matches
+    ? "dark"
+    : "light";
+function stateOf(target: HTMLElement): ThemeState {
+  let state = roots.get(target);
+  if (!state) {
+    const attribute = target.getAttribute("data-theme");
+    state = {
+      mode: attribute === "dark" || attribute === "light" ? attribute : "system",
+      resolved: attribute === "dark" || attribute === "light" ? attribute : preferredTheme(),
+      generation: 0,
+      cleanup: null,
+      listeners: new Set(),
+    };
+    roots.set(target, state);
+  }
+  return state;
 }
 
-export function getTheme(): { mode: ThemeMode; resolved: "light" | "dark" } {
-  return { mode: currentMode, resolved: getResolvedTheme() };
+export function getTheme(root = defaultRoot()): { mode: ThemeMode; resolved: "light" | "dark" } {
+  if (!root) return { mode: "system", resolved: "light" };
+  const state = stateOf(root);
+  return { mode: state.mode, resolved: state.resolved };
 }
 
 export function onThemeChange(
   listener: (mode: ThemeMode, resolved: "light" | "dark") => void,
+  root = defaultRoot(),
 ): () => void {
-  listeners.add(listener);
-  return () => listeners.delete(listener);
+  if (!root) return () => {};
+  const state = stateOf(root);
+  state.listeners.add(listener);
+  return () => {
+    state.listeners.delete(listener);
+  };
 }
 
-function notifyListeners(resolved: "light" | "dark") {
-  for (const listener of listeners) {
-    listener(currentMode, resolved);
-  }
-}
-
-export function setTheme(mode: ThemeMode, root?: HTMLElement): void {
-  const target = root ?? document.documentElement;
-  currentMode = mode;
-
-  if (systemThemeCleanup) {
-    systemThemeCleanup();
-    systemThemeCleanup = null;
-  }
-
-  if (mode === "system") {
-    const mql = window.matchMedia("(prefers-color-scheme: dark)");
-    const apply = () => {
-      const resolved = mql.matches ? "dark" : "light";
-      target.setAttribute("data-theme", resolved);
-      applyTheme(mql.matches ? darkTheme : lightTheme, target);
-      notifyListeners(resolved);
-    };
-    apply();
-    mql.addEventListener("change", apply);
-    systemThemeCleanup = () => mql.removeEventListener("change", apply);
-  } else {
-    target.setAttribute("data-theme", mode);
-    applyTheme(mode === "dark" ? darkTheme : lightTheme, target);
-    notifyListeners(mode);
-  }
+/** Returns cleanup for the system listener. A later setTheme owns its own lifetime. */
+export function setTheme(mode: ThemeMode, root = defaultRoot()): () => void {
+  if (!root) return () => {};
+  const state = stateOf(root);
+  state.cleanup?.();
+  state.cleanup = null;
+  state.mode = mode;
+  const generation = ++state.generation;
+  const apply = (resolved: "light" | "dark") => {
+    state.resolved = resolved;
+    root.setAttribute("data-theme", resolved);
+    applyTheme(resolved === "dark" ? darkTheme : lightTheme, root);
+    for (const listener of state.listeners) listener(state.mode, resolved);
+  };
+  if (mode === "system" && typeof window !== "undefined" && window.matchMedia) {
+    const query = window.matchMedia("(prefers-color-scheme: dark)");
+    const change = () => apply(query.matches ? "dark" : "light");
+    change();
+    query.addEventListener("change", change);
+    state.cleanup = () => query.removeEventListener("change", change);
+  } else apply(mode === "system" ? preferredTheme() : mode);
+  return () => {
+    if (state.generation !== generation) return;
+    state.cleanup?.();
+    state.cleanup = null;
+  };
 }

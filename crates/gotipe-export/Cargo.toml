@@ -7,16 +7,31 @@ license.workspace = true
 [features]
 default = ["html", "markdown", "plaintext"]
 html = ["ammonia"]
-markdown = ["comrak"]
+markdown = []
 plaintext = []
-pdf = []
-docx = []
+pdf = ["dep:typst", "dep:typst-pdf", "dep:typst-assets", "image-data"]
+docx = ["dep:zip", "image-data"]
+image-data = ["dep:image"]
 notion = []
+cli = ["dep:gotipe-crdt"]
 
 [dependencies]
-gotipe-core = { path = "../gotipe-core" }
+gotipe-core = { version = "0.1.0", path = "../gotipe-core" }
 serde = { workspace = true }
 serde_json = { workspace = true }
 thiserror = { workspace = true }
+regex = { workspace = true, features = ["unicode-gencat"] }
 ammonia = { workspace = true, optional = true }
-comrak = { workspace = true, optional = true }
+
+typst = { workspace = true, optional = true }
+typst-pdf = { workspace = true, optional = true }
+typst-assets = { workspace = true, optional = true }
+zip = { workspace = true, optional = true }
+image = { version = "0.25", default-features = false, features = ["png", "jpeg", "gif"], optional = true }
+
+gotipe-crdt = { version = "0.1.0", path = "../gotipe-crdt", default-features = false, optional = true }
+
+[[bin]]
+name = "gotipe-convert"
+path = "src/bin/convert.rs"
+required-features = ["html", "markdown", "cli"]

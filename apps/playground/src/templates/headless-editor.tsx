@@ -1,8 +1,8 @@
-import { DefaultPreset } from '@gotipe/core/presets';
-import { useEditor, Editor } from '@gotipe/react';
-import { ExampleWrapper } from '../shared/example-wrapper';
-import { HeadlessControls } from '../shared/headless-controls';
-import { SIMPLE_CONTENT } from '../shared/sample-content';
+import { DefaultPreset } from "@gotipe/core/presets";
+import { Editor, useEditor } from "@gotipe/react";
+import { ExampleWrapper } from "../shared/example-wrapper";
+import { HeadlessControls } from "../shared/headless-controls";
+import { SIMPLE_CONTENT } from "../shared/sample-content";
 
 export function HeadlessEditor() {
   const editor = useEditor({
@@ -13,8 +13,8 @@ export function HeadlessEditor() {
   return (
     <ExampleWrapper
       title="Headless Editor"
-      description="Zero UI opinions. Raw HTML buttons, bring your own styles. Ideal for building fully custom editor interfaces."
-      tags={['MIT']}
+      description="Headless commands with host-provided controls. This demo supplies its own buttons and styles; your application can build a custom interface."
+      tags={["MIT"]}
     >
       <HeadlessControls editor={editor} />
       <Editor editor={editor} className="gotipe-headless-editor" />

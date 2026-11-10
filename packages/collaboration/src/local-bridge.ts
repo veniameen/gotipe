@@ -23,6 +23,23 @@ export class LocalCollaborationBridge {
    * Changes from this editor will be broadcast to all others.
    */
   join(peerId: string, editor: GoTipeEditor, user: AwarenessUser): void {
+    if (editor.isDestroyed) throw new Error("Cannot join a destroyed editor");
+    const existing = this.editors.get(peerId);
+    if (existing && existing !== editor) throw new Error("Peer identity is already in use");
+    if (existing) return;
+    editor.enableCollaboration(peerId);
+    this.applying = true;
+    try {
+      // Late joiners replay the real operation log before their first edit.
+      const source = this.editors.values().next().value;
+      if (source) {
+        editor.receiveCollaborationUpdate(source.getCollaborationUpdate());
+        const update = editor.getCollaborationUpdate();
+        for (const other of this.editors.values()) other.receiveCollaborationUpdate(update);
+      }
+    } finally {
+      this.applying = false;
+    }
     this.editors.set(peerId, editor);
     this.peers.set(peerId, {
       peerId,
@@ -38,10 +55,10 @@ export class LocalCollaborationBridge {
         if (this.applying) return;
         this.applying = true;
         try {
-          const json = editor.getJSON();
+          const update = editor.getCollaborationUpdate();
           for (const [id, other] of this.editors) {
             if (id !== peerId) {
-              other.setContent(json);
+              other.receiveCollaborationUpdate(update);
             }
           }
         } finally {
@@ -56,6 +73,8 @@ export class LocalCollaborationBridge {
         this.updateAwareness(peerId, editor);
       }),
     );
+
+    unsubs.push(editor.on("destroy", () => this.leave(peerId)));
 
     unsubs.push(
       editor.on("focus", () => {

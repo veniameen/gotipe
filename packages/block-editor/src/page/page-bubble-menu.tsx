@@ -1,6 +1,7 @@
 import { type GoTipeEditor, toSafeHref } from "@gotipe/core";
 import { BubbleMenu, useGoTipeI18n } from "@gotipe/react";
 import { useEffect, useRef, useState } from "react";
+import { currentMarks } from "../components/formatting/selection";
 import { PageIcon, type PageIconName } from "./icons";
 
 const MARKS: {
@@ -9,24 +10,29 @@ const MARKS: {
   label: "toolbar.bold" | "toolbar.italic" | "toolbar.strikethrough" | "toolbar.code";
   run: (e: GoTipeEditor) => void;
 }[] = [
-  { mark: "bold", icon: "bold", label: "toolbar.bold", run: (e) => e.chain().toggleBold().run() },
+  {
+    mark: "bold",
+    icon: "bold",
+    label: "toolbar.bold",
+    run: (e) => e.chain().toggleBold().focus().run(),
+  },
   {
     mark: "italic",
     icon: "italic",
     label: "toolbar.italic",
-    run: (e) => e.chain().toggleItalic().run(),
+    run: (e) => e.chain().toggleItalic().focus().run(),
   },
   {
     mark: "strikethrough",
     icon: "strike",
     label: "toolbar.strikethrough",
-    run: (e) => e.chain().toggleStrikethrough().run(),
+    run: (e) => e.chain().toggleStrikethrough().focus().run(),
   },
   {
     mark: "code",
     icon: "inlineCode",
     label: "toolbar.code",
-    run: (e) => e.chain().toggleCode().run(),
+    run: (e) => e.chain().toggleCode().focus().run(),
   },
 ];
 
@@ -50,7 +56,7 @@ export function PageBubbleMenu({ editor }: { editor: GoTipeEditor }) {
   const applyLink = () => {
     const value = href.trim();
     if (!value) {
-      editor.chain().removeLink().run();
+      editor.chain().removeLink().focus().run();
       setLinkMode(false);
       return;
     }
@@ -59,7 +65,7 @@ export function PageBubbleMenu({ editor }: { editor: GoTipeEditor }) {
       setInvalid(true);
       return;
     }
-    editor.chain().setLink(safe).run();
+    editor.chain().setLink(safe).focus().run();
     setLinkMode(false);
   };
 
@@ -127,7 +133,8 @@ export function PageBubbleMenu({ editor }: { editor: GoTipeEditor }) {
             className={`gotipe-page-icon-btn${editor.isActive("link") ? " is-on" : ""}`}
             aria-label={i18n.t("format.link")}
             onClick={() => {
-              setHref("");
+              const link = currentMarks(editor).find((mark) => mark.type === "link");
+              setHref(typeof link?.attrs.href === "string" ? link.attrs.href : "");
               setInvalid(false);
               setLinkMode(true);
             }}

@@ -7,30 +7,32 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "build:wiki": "vite build --config vite.wiki.config.ts",
-    "preview:wiki": "vite preview --config vite.wiki.config.ts"
+    "build:csp-test": "vite build --config vite.csp.config.ts",
+    "preview:csp-test": "vite preview --config vite.csp.config.ts",
+    "typecheck": "tsc --noEmit",
+    "lint": "biome check src tests/csp"
   },
   "dependencies": {
-    "@gotipe/core": "workspace:*",
-    "@gotipe/react": "workspace:*",
+    "@gotipe/ai": "workspace:*",
     "@gotipe/block-editor": "workspace:*",
     "@gotipe/collaboration": "workspace:*",
     "@gotipe/comments": "workspace:*",
-    "@gotipe/suggestions": "workspace:*",
-    "@gotipe/versions": "workspace:*",
-    "@gotipe/ai": "workspace:*",
-    "@gotipe/i18n": "workspace:*",
-    "@gotipe/theme": "workspace:*",
+    "@gotipe/core": "workspace:*",
     "@gotipe/export": "workspace:*",
-    "react": "^19.0.0",
-    "react-dom": "^19.0.0",
-    "@gotipe/markdown": "workspace:*"
+    "@gotipe/i18n": "workspace:*",
+    "@gotipe/markdown": "workspace:*",
+    "@gotipe/react": "workspace:*",
+    "@gotipe/suggestions": "workspace:*",
+    "@gotipe/theme": "workspace:*",
+    "@gotipe/versions": "workspace:*",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1"
   },
   "devDependencies": {
-    "@types/react": "^19.0.0",
-    "@types/react-dom": "^19.0.0",
-    "@vitejs/plugin-react": "^4.3.0",
-    "vite": "^6.0.0",
-    "typescript": "^5.7.0"
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@vitejs/plugin-react": "^4.7.0",
+    "typescript": "^5.9.3",
+    "vite": "^6.4.6"
   }
 }

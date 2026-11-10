@@ -18,6 +18,7 @@ import {
   Strikethrough,
   Subscript,
   Superscript,
+  TextColor,
   Underline,
 } from "./extensions/marks";
 import { Math } from "./extensions/math";
@@ -49,6 +50,7 @@ export const DefaultPreset = [
   InlineCode,
   Link,
   Highlight,
+  TextColor,
   History,
   Placeholder.configure({ text: 'Type "/" for commands...' }),
   DragAndDrop,

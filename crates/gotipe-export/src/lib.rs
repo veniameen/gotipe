@@ -1,3 +1,8 @@
+#[cfg(feature = "image-data")]
+mod assets;
+#[cfg(any(feature = "pdf", feature = "docx"))]
+mod document_checks;
+pub mod input;
 pub mod json;
 pub mod plaintext;
 
@@ -6,6 +11,8 @@ pub mod html;
 
 #[cfg(feature = "markdown")]
 pub mod markdown;
+#[cfg(feature = "markdown")]
+mod markdown_parse;
 
 use gotipe_core::Document;
 use serde::{Deserialize, Serialize};
@@ -96,4 +103,24 @@ pub fn to_html(doc: &Document) -> Result<String, ConvertError> {
 #[cfg(feature = "markdown")]
 pub fn to_markdown(doc: &Document) -> String {
     markdown::to_markdown(doc)
+}
+
+#[cfg(feature = "docx")]
+pub mod docx;
+#[cfg(feature = "pdf")]
+pub mod pdf;
+#[cfg(feature = "pdf")]
+mod pdf_source;
+
+pub(crate) fn safe_url(url: &str) -> bool {
+    let clean = url.trim();
+    if clean.chars().any(|c| c.is_control()) {
+        return false;
+    }
+    let lower = clean.to_ascii_lowercase();
+    lower.starts_with("https://")
+        || lower.starts_with("http://")
+        || lower.starts_with("mailto:")
+        || clean.starts_with('#')
+        || (clean.starts_with('/') && !clean.starts_with("//"))
 }

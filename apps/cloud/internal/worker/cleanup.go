@@ -10,14 +10,13 @@ import (
 
 // CleanupWorker runs hourly to clean up orphan resources
 type CleanupWorker struct {
-	db     *storage.PostgresStore
-	r2     *storage.R2Store
-	valkey *storage.ValkeyStore
-	log    *slog.Logger
+	db  *storage.PostgresStore
+	r2  storage.ObjectStore
+	log *slog.Logger
 }
 
-func NewCleanupWorker(db *storage.PostgresStore, r2 *storage.R2Store, valkey *storage.ValkeyStore, log *slog.Logger) *CleanupWorker {
-	return &CleanupWorker{db: db, r2: r2, valkey: valkey, log: log}
+func NewCleanupWorker(db *storage.PostgresStore, r2 storage.ObjectStore, log *slog.Logger) *CleanupWorker {
+	return &CleanupWorker{db: db, r2: r2, log: log}
 }
 
 func (w *CleanupWorker) Start(ctx context.Context) {
@@ -40,20 +39,11 @@ func (w *CleanupWorker) Start(ctx context.Context) {
 func (w *CleanupWorker) run(ctx context.Context) {
 	w.log.Info("running cleanup")
 
-	// 1. Delete orphan export jobs (completed > 24h ago, or failed > 7d ago)
-	result, err := w.db.Pool.Exec(ctx,
-		`DELETE FROM export_jobs
-		 WHERE (status = 'completed' AND completed_at < now() - interval '24 hours')
-		    OR (status = 'failed' AND created_at < now() - interval '7 days')`,
-	)
-	if err != nil {
-		w.log.Error("cleanup export jobs failed", "error", err)
-	} else {
-		w.log.Info("cleaned up export jobs", "deleted", result.RowsAffected())
-	}
+	w.cleanupExports(ctx)
+	w.cleanupRetiredObjects(ctx)
 
 	// 2. Delete expired API keys
-	result, err = w.db.Pool.Exec(ctx,
+	result, err := w.db.Pool.Exec(ctx,
 		`DELETE FROM api_keys WHERE expires_at IS NOT NULL AND expires_at < now()`,
 	)
 	if err != nil {

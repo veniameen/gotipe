@@ -82,7 +82,7 @@ async function activateToolbarForBlock(page: Page, blockId: string): Promise<voi
   await page.mouse.move(4, 4);
   await page.mouse.move(point.textX, point.y, { steps: 1 });
   await page.mouse.move(point.gutterX, point.y, { steps: 1 });
-  await expect(page.locator(`[data-block-drag="${blockId}"]`)).toBeVisible();
+  await expect(page.locator(`[data-block-drag="${blockId}"], [data-block-drag-whole="${blockId}"]`)).toBeVisible();
 }
 
 async function topLevelOrder(page: Page): Promise<string[]> {
@@ -95,14 +95,14 @@ async function topLevelOrder(page: Page): Promise<string[]> {
 async function dragBlockToIndex(page: Page, blockId: string, targetIndex: number): Promise<void> {
   await page.evaluate(({ blockId, targetIndex }) => {
     const root = document.querySelector("[data-gotipe-block-editor]") as HTMLElement | null;
-    const handle = document.querySelector(`[data-block-drag="${blockId}"]`) as HTMLElement | null;
+    const handle = document.querySelector(`[data-block-drag="${blockId}"], [data-block-drag-whole="${blockId}"]`) as HTMLElement | null;
     const blocks = Array.from(document.querySelectorAll("[data-gotipe-content] > [data-block-id]")) as HTMLElement[];
     const target = blocks[targetIndex] ?? null;
     if (!root || !handle || !target) return;
 
     const data = new DataTransfer();
     data.setData("text/gotipe-block-id", blockId);
-    handle.dispatchEvent(new DragEvent("dragstart", { bubbles: true, cancelable: true, dataTransfer: data }));
+    handle.dispatchEvent(new DragEvent("dragstart", { bubbles: true, cancelable: true, dataTransfer: data, altKey: handle.getAttribute("data-block-drag") !== blockId }));
     const rect = target.getBoundingClientRect();
     const y = rect.top + rect.height / 2;
     root.dispatchEvent(new DragEvent("dragover", { bubbles: true, cancelable: true, clientY: y, dataTransfer: data }));

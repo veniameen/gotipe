@@ -1,6 +1,8 @@
 import type { GoTipeEditor } from "@gotipe/core";
-import type { ExportOptions } from "./types";
+import { validateOptionNames } from "./options";
 
-export function exportToMarkdown(editor: GoTipeEditor, _options?: ExportOptions): string {
+/** Markdown has no HTML class or stylesheet options. */
+export function exportToMarkdown(editor: GoTipeEditor, options?: Record<string, never>): string {
+  validateOptionNames(options, []);
   return editor.getMarkdown();
 }

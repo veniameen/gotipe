@@ -9,7 +9,7 @@ export const WIDGET_ATTR = "data-gotipe-widget";
 export function isInsideWidget(node: Node, root?: Node | null): boolean {
   let el: Element | null = node.nodeType === 1 ? (node as Element) : node.parentElement;
   while (el && el !== root) {
-    if (el.hasAttribute(WIDGET_ATTR)) return true;
+    if (el.hasAttribute(WIDGET_ATTR) || el.hasAttribute("data-gotipe-input")) return true;
     el = el.parentElement;
   }
   return false;

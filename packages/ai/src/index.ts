@@ -21,3 +21,7 @@ export type {
   AiAgentOptions,
 } from "./types";
 export { AiManager } from "./manager";
+export { buildAiContext, captureTarget as captureAiTarget } from "./document";
+export type { AiTarget } from "./document";
+export { detectPii } from "./pii";
+export type { PiiMatch } from "./pii";

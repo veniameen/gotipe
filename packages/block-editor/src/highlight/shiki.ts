@@ -73,6 +73,7 @@ export function createShikiHighlighter(options: ShikiHighlighterOptions): CodeHi
   };
 
   const ensureLanguage = (highlighter: ShikiCore, id: string): Promise<boolean> => {
+    if (!Object.hasOwn(options.langs, id)) return Promise.resolve(false);
     const loader = options.langs[id];
     if (!loader) return Promise.resolve(false);
     let pending = loading.get(id);
@@ -80,15 +81,22 @@ export function createShikiHighlighter(options: ShikiHighlighterOptions): CodeHi
       pending = loader()
         .then((mod) => highlighter.loadLanguage(moduleDefault(mod)))
         .then(() => true)
-        .catch(() => false);
+        .catch((error: unknown) => {
+          loading.delete(id);
+          throw error;
+        });
       loading.set(id, pending);
     }
     return pending;
   };
 
   return async (code, language) => {
-    const id = options.aliases?.[language] ?? language;
-    if (!options.langs[id]) return null;
+    const alias =
+      options.aliases && Object.hasOwn(options.aliases, language)
+        ? options.aliases[language]
+        : undefined;
+    const id = alias ?? language;
+    if (!Object.hasOwn(options.langs, id)) return null;
     const { highlighter, light, dark } = await init();
     if (!(await ensureLanguage(highlighter, id))) return null;
     const lines = highlighter.codeToTokensWithThemes(code, { lang: id, themes: { light, dark } });

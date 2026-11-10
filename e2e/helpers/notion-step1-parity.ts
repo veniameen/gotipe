@@ -20,7 +20,7 @@ export function callout(id: string, text: string): BlockInput {
 }
 
 export function codeBlock(id: string, text: string): BlockInput {
-  return { id, type: "codeBlock", attrs: { language: "ts" }, content: spans(text), children: [] };
+  return { id, type: "codeBlock", attrs: { language: "ts" }, content: text, children: [] };
 }
 
 export function todoList(
@@ -65,7 +65,7 @@ export async function setCaret(
         ? (block.querySelector("[data-gotipe-todo-content]") as HTMLElement | null) ?? block
         : blockType === "callout"
           ? (block.querySelector(".gotipe-callout-content") as HTMLElement | null) ?? block
-          : block;
+          : block.querySelector<HTMLElement>("[data-gotipe-text-content]") ?? block;
 
     const sel = window.getSelection();
     if (!sel) return;
@@ -141,7 +141,7 @@ export async function textOf(page: Page, blockId: string): Promise<string> {
         ? (block.querySelector("[data-gotipe-todo-content]") as HTMLElement | null) ?? block
         : blockType === "callout"
           ? (block.querySelector(".gotipe-callout-content") as HTMLElement | null) ?? block
-          : block;
+          : block.querySelector<HTMLElement>("[data-gotipe-text-content]") ?? block;
     return host.textContent ?? "";
   }, blockId);
 }

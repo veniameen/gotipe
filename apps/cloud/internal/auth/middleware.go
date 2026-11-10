@@ -2,11 +2,12 @@ package auth
 
 import (
 	"context"
+	"errors"
 	"net/http"
 	"strings"
 
 	"github.com/gotipe/cloud/internal/apierror"
-	"github.com/gotipe/cloud/internal/storage"
+	"github.com/jackc/pgx/v5"
 )
 
 type contextKey string
@@ -18,12 +19,17 @@ func UserFromContext(ctx context.Context) *UserContext {
 	return u
 }
 
-func withUser(ctx context.Context, u *UserContext) context.Context {
+// WithUser attaches an authenticated identity to a request context.
+func WithUser(ctx context.Context, u *UserContext) context.Context {
 	return context.WithValue(ctx, userContextKey, u)
 }
 
+type TokenBlocklist interface {
+	BlocklistCheck(context.Context, string) (bool, error)
+}
+
 // AuthMiddleware validates Bearer token (API key or JWT)
-func AuthMiddleware(jwtSvc *JWTService, apiKeySvc *APIKeyService, valkeyStore *storage.ValkeyStore) func(http.Handler) http.Handler {
+func AuthMiddleware(jwtSvc *JWTService, apiKeySvc *APIKeyService, valkeyStore TokenBlocklist) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			token := strings.TrimPrefix(r.Header.Get("Authorization"), "Bearer ")
@@ -39,7 +45,7 @@ func AuthMiddleware(jwtSvc *JWTService, apiKeySvc *APIKeyService, valkeyStore *s
 					apierror.ErrInvalidAPIKey.Write(w)
 					return
 				}
-				ctx := withUser(r.Context(), user)
+				ctx := WithUser(r.Context(), user)
 				next.ServeHTTP(w, r.WithContext(ctx))
 				return
 			}
@@ -53,20 +59,36 @@ func AuthMiddleware(jwtSvc *JWTService, apiKeySvc *APIKeyService, valkeyStore *s
 
 			// Check JWT blocklist
 			if claims.ID != "" {
-				blocked, _ := valkeyStore.BlocklistCheck(r.Context(), claims.ID)
+				blocked, err := valkeyStore.BlocklistCheck(r.Context(), claims.ID)
+				if err != nil {
+					apierror.ErrServiceDown.Write(w)
+					return
+				}
 				if blocked {
 					apierror.ErrInvalidToken.WithMessage("Token has been revoked").Write(w)
 					return
 				}
 			}
 
-			user := &UserContext{
-				UserID: claims.UserID,
-				Plan:   claims.Plan,
-				Scopes: claims.Scopes,
-				OrgID:  claims.OrgID,
+			plan, err := apiKeySvc.CurrentPlan(r.Context(), claims.UserID)
+			if err != nil {
+				if errors.Is(err, pgx.ErrNoRows) {
+					apierror.ErrInvalidToken.Write(w)
+				} else {
+					apierror.ErrServiceDown.Write(w)
+				}
+				return
 			}
-			ctx := withUser(r.Context(), user)
+			user := &UserContext{
+				UserID:      claims.UserID,
+				Plan:        plan,
+				Scopes:      claims.Scopes,
+				OrgID:       claims.OrgID,
+				TokenID:     claims.ID,
+				ExpiresAt:   claims.ExpiresAt.Time,
+				DocumentIDs: claims.DocumentIDs,
+			}
+			ctx := WithUser(r.Context(), user)
 			next.ServeHTTP(w, r.WithContext(ctx))
 		})
 	}

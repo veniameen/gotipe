@@ -127,26 +127,29 @@ async function readHoverPoint(page: Page, blockId: string): Promise<{ textX: num
   const point = await page.evaluate((id) => {
     const block = document.querySelector(`[data-gotipe-content] > [data-block-id="${id}"]`) as HTMLElement | null;
     if (!block) return null;
-    const walker = document.createTreeWalker(block, NodeFilter.SHOW_TEXT);
-    let n: Node | null;
-    let textLeft = block.getBoundingClientRect().left + 20;
-    while ((n = walker.nextNode())) {
-      const text = n.textContent ?? "";
-      if (!text.trim()) continue;
-      const r = document.createRange();
-      r.setStart(n, 0);
-      r.setEnd(n, Math.min(1, text.length));
-      const rr = r.getBoundingClientRect();
-      if (rr.width > 0 || rr.height > 0) {
-        textLeft = rr.left;
+    const host = block.querySelector<HTMLElement>("[data-gotipe-text-content], [data-gotipe-todo-content]") ?? block;
+    const walker = document.createTreeWalker(host, NodeFilter.SHOW_TEXT, {
+      acceptNode(node) {
+        return node.parentElement?.closest('button, input, select, [contenteditable="false"]')
+          ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT;
+      },
+    });
+    let rect = host.getBoundingClientRect();
+    for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+      if (!(node.textContent ?? "").trim()) continue;
+      const range = document.createRange();
+      range.setStart(node, 0);
+      range.setEnd(node, 1);
+      const textRect = range.getBoundingClientRect();
+      if (textRect.width > 0 && textRect.height > 0) {
+        rect = textRect;
         break;
       }
     }
-    const br = block.getBoundingClientRect();
     return {
-      textX: textLeft + 10,
-      gutterX: Math.max(4, textLeft - 28),
-      y: br.top + Math.min(20, Math.max(10, br.height / 2)),
+      textX: rect.left + 10,
+      gutterX: Math.max(4, rect.left - 28),
+      y: rect.top + rect.height / 2,
     };
   }, blockId);
   expect(point).not.toBeNull();
@@ -216,11 +219,11 @@ test.describe("Notion-like backlog hardening (stress)", () => {
         await page.mouse.move(point.gutterX, point.y, { steps: 1 });
         await expect(page.locator('[aria-label="Click to add below. Option-click to add a block above"]')).toBeVisible();
         await expect(page.locator("[data-gotipe-drag-handle]")).toBeVisible();
-        const before = await page.locator("[data-gotipe-content] > [data-block-id]").count();
+        const before = await page.locator("[data-gotipe-content] [data-block-id]").count();
         await page.locator('[aria-label="Click to add below. Option-click to add a block above"]').click();
-        await expect.poll(() => page.locator("[data-gotipe-content] > [data-block-id]").count()).toBe(before + 1);
+        await expect.poll(() => page.locator("[data-gotipe-content] [data-block-id]").count()).toBe(before + 1);
         await page.evaluate(() => ((window as Record<string, unknown>).__GOTIPE_NOTION_EDITOR__ as { undo?: () => boolean } | undefined)?.undo?.());
-        await expect.poll(() => page.locator("[data-gotipe-content] > [data-block-id]").count()).toBe(before);
+        await expect.poll(() => page.locator("[data-gotipe-content] [data-block-id]").count()).toBe(before);
         await page.locator("[data-gotipe-drag-handle]").click();
         await expect(page.locator("[data-gotipe-context-menu]")).toBeVisible();
         await page.keyboard.press("Escape");

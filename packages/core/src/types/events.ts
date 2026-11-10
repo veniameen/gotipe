@@ -1,9 +1,12 @@
-import type { GoTipeEditor } from "../editor";
 import type { GoTipeError } from "../error";
+import type { GoTipeEditor } from "./editor";
+import type { TransactionContext } from "./state";
 import type { ViewState } from "./view";
 
 export interface EditorEvents {
   update: (props: { editor: GoTipeEditor }) => void;
+  /** Emitted after a local dispatch commits, before its update event. */
+  transaction: (props: TransactionContext & { editor: GoTipeEditor }) => void;
   selectionChange: (props: { editor: GoTipeEditor }) => void;
   focus: (props: { editor: GoTipeEditor }) => void;
   blur: (props: { editor: GoTipeEditor }) => void;
@@ -23,6 +26,8 @@ export interface EditorEvents {
   scrollToBlock: (payload: { blockId: string }) => void;
   /** Every editor error. The editor never renders error text itself. */
   error: (error: GoTipeError) => void;
+  /** Native IME ownership ended before an external mutation; error carries recovery data. */
+  compositionInterrupted: () => void;
   editableChange: (editable: boolean) => void;
   decorationsChange: (payload: { layer: string }) => void;
 }

@@ -1,5 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
-import { openNotionAndReset, setCaretAt, setNotionContent, type BlockInput } from "./helpers/notion-checklist";
+import { clickTodoTextGap, openNotionAndReset, setCaretAt, setNotionContent, type BlockInput } from "./helpers/notion-checklist";
 
 type TodoVariant = "first" | "middle" | "last" | "long" | "inline";
 type TodoOp = "click_checkbox" | "caret_empty" | "type_text" | "enter_nonempty" | "enter_empty" | "todo_to_bullet" | "bullet_to_todo";
@@ -100,18 +100,7 @@ async function readMarkerContext(page: Page, marker: string): Promise<MarkerCont
   }, marker);
 }
 
-async function clickTodoLeftZone(page: Page, blockId: string): Promise<void> {
-  const p = await page.evaluate((id) => {
-    const item = document.querySelector(`[data-block-id="${id}"][data-block-type="todoItem"]`) as HTMLElement | null;
-    const cb = item?.querySelector('input[type="checkbox"]') as HTMLElement | null;
-    if (!item || !cb) return null;
-    const itemRect = item.getBoundingClientRect();
-    const cbRect = cb.getBoundingClientRect();
-    return { x: Math.max(itemRect.left + 1, cbRect.left - 3), y: cbRect.top + cbRect.height / 2 };
-  }, blockId);
-  if (!p) throw new Error(`Cannot resolve left zone for ${blockId}`);
-  await page.mouse.click(p.x, p.y);
-}
+const clickTodoLeftZone = clickTodoTextGap;
 
 async function setupTodoVariant(page: Page, variant: TodoVariant, mode: "empty" | "nonempty", marker: string): Promise<string> {
   const longText = `long_${marker}_${"x".repeat(120)}`;
@@ -268,10 +257,10 @@ test.describe("Notion-like checklist batch NL-321..NL-350", () => {
         await page.keyboard.press("Enter");
         await expect.poll(async () =>
           page.evaluate(({ id, prevCount }) => {
-            const itemStillExists = !!document.querySelector(`[data-block-id="${id}"]`);
-            const listCount = document.querySelector(`[data-block-type="todoList"]`)?.querySelectorAll(':scope > [data-block-type="todoItem"]').length ?? prevCount - 1;
+            const lifted = document.querySelector(`[data-block-id="${id}"][data-block-type="paragraph"]`);
+            const listCount = document.querySelectorAll('[data-block-type="todoList"] > [data-block-type="todoItem"]').length;
             const paragraphCount = document.querySelectorAll('[data-gotipe-content] > [data-block-type="paragraph"]').length;
-            return !itemStillExists && listCount === prevCount - 1 && paragraphCount > 0;
+            return !!lifted && listCount === prevCount - 1 && paragraphCount > 0;
           }, { id: targetId, prevCount: beforeCount }),
         ).toBe(true);
         return;

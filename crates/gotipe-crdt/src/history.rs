@@ -1,4 +1,4 @@
-use crate::ops::CrdtOp;
+use crate::{ops::CrdtOp, selection::SelectionBookmark};
 use gotipe_core::Selection;
 
 fn current_time_ms() -> u64 {
@@ -17,7 +17,8 @@ struct HistoryItem {
     /// Timestamp (used for grouping decisions)
     _timestamp: u64,
     /// Selection before the operation
-    selection: Selection,
+    selection: SelectionBookmark,
+    after_selection: SelectionBookmark,
 }
 
 /// CRDT-based undo/redo history
@@ -53,14 +54,36 @@ impl CrdtHistory {
 
     /// Record a local operation (only local ops are undoable)
     pub fn record(&mut self, ops: Vec<CrdtOp>, selection: Selection) {
-        let now = current_time_ms();
-        let inverse: Vec<CrdtOp> = ops.iter().map(|op| op.inverse()).collect();
+        self.record_at(ops, selection, current_time_ms());
+    }
+
+    /// The host supplies time on platforms without a native system clock.
+    pub fn record_at(&mut self, ops: Vec<CrdtOp>, selection: Selection, now: u64) {
+        let selection = SelectionBookmark::fallback(selection);
+        self.record_bookmarked(ops, selection.clone(), selection, now);
+    }
+
+    pub fn record_bookmarked(
+        &mut self,
+        ops: Vec<CrdtOp>,
+        selection: SelectionBookmark,
+        after_selection: SelectionBookmark,
+        now: u64,
+    ) {
+        if ops.is_empty() {
+            return;
+        }
+        let inverse: Vec<CrdtOp> = ops.iter().rev().map(|op| op.inverse()).collect();
+        self.redo_stack.clear();
 
         // Group with previous if within timeout
-        if now - self.last_operation_time < self.group_timeout_ms {
+        if now.saturating_sub(self.last_operation_time) < self.group_timeout_ms {
             if let Some(last) = self.undo_stack.last_mut() {
                 last.operations.extend(ops);
-                last.inverse.extend(inverse);
+                last.after_selection = after_selection;
+                let mut inverse = inverse;
+                inverse.append(&mut last.inverse);
+                last.inverse = inverse;
                 self.last_operation_time = now;
                 return;
             }
@@ -71,6 +94,7 @@ impl CrdtHistory {
             inverse,
             _timestamp: now,
             selection,
+            after_selection,
         });
 
         // Clear redo stack on new operation
@@ -84,8 +108,17 @@ impl CrdtHistory {
         self.last_operation_time = now;
     }
 
+    /// End a typing group before a structural edit or explicit history boundary.
+    pub fn end_group(&mut self) {
+        self.last_operation_time = 0;
+    }
+
     /// Undo: return inverse operations to apply
     pub fn undo(&mut self) -> Option<(Vec<CrdtOp>, Selection)> {
+        self.undo_bookmarked()
+            .map(|(ops, bookmark)| (ops, bookmark.selection))
+    }
+    pub fn undo_bookmarked(&mut self) -> Option<(Vec<CrdtOp>, SelectionBookmark)> {
         let item = self.undo_stack.pop()?;
         let inverse = item.inverse.clone();
         let selection = item.selection.clone();
@@ -95,9 +128,13 @@ impl CrdtHistory {
 
     /// Redo: return original operations to re-apply
     pub fn redo(&mut self) -> Option<(Vec<CrdtOp>, Selection)> {
+        self.redo_bookmarked()
+            .map(|(ops, bookmark)| (ops, bookmark.selection))
+    }
+    pub fn redo_bookmarked(&mut self) -> Option<(Vec<CrdtOp>, SelectionBookmark)> {
         let item = self.redo_stack.pop()?;
         let ops = item.operations.clone();
-        let selection = item.selection.clone();
+        let selection = item.after_selection.clone();
         self.undo_stack.push(item);
         Some((ops, selection))
     }

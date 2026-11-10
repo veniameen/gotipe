@@ -1,0 +1,1082 @@
+[
+  {
+    "markdown": "\tЖ😀 line\n",
+    "blocks": [
+      {
+        "type": "codeBlock",
+        "attrs": {
+          "language": ""
+        },
+        "content": "Ж😀 line",
+        "children": []
+      }
+    ]
+  },
+  {
+    "markdown": "  \tFirst\n    Second\n",
+    "blocks": [
+      {
+        "type": "codeBlock",
+        "attrs": {
+          "language": ""
+        },
+        "content": "First\nSecond",
+        "children": []
+      }
+    ]
+  },
+  {
+    "markdown": "# Heading *em* and **strong**\n",
+    "blocks": [
+      {
+        "type": "heading",
+        "attrs": {
+          "level": 1
+        },
+        "content": [
+          {
+            "text": "Heading ",
+            "marks": []
+          },
+          {
+            "text": "em",
+            "marks": [
+              {
+                "type": "italic"
+              }
+            ]
+          },
+          {
+            "text": " and ",
+            "marks": []
+          },
+          {
+            "text": "strong",
+            "marks": [
+              {
+                "type": "bold"
+              }
+            ]
+          }
+        ],
+        "children": []
+      }
+    ]
+  },
+  {
+    "markdown": "  ## End ###  \n",
+    "blocks": [
+      {
+        "type": "heading",
+        "attrs": {
+          "level": 2
+        },
+        "content": [
+          {
+            "text": "End",
+            "marks": []
+          }
+        ],
+        "children": []
+      }
+    ]
+  },
+  {
+    "markdown": "Title\ncontinuation\n---\n",
+    "blocks": [
+      {
+        "type": "heading",
+        "attrs": {
+          "level": 2
+        },
+        "content": [
+          {
+            "text": "Title\ncontinuation",
+            "marks": []
+          }
+        ],
+        "children": []
+      }
+    ]
+  },
+  {
+    "markdown": "  ```rust example=yes\n  fn main() {}\n  ```\n",
+    "blocks": [
+      {
+        "type": "codeBlock",
+        "attrs": {
+          "language": "rust",
+          "meta": "example=yes"
+        },
+        "content": "fn main() {}",
+        "children": []
+      }
+    ]
+  },
+  {
+    "markdown": "~~~text\nline ``` inside\n~~~\n",
+    "blocks": [
+      {
+        "type": "codeBlock",
+        "attrs": {
+          "language": "text"
+        },
+        "content": "line ``` inside",
+        "children": []
+      }
+    ]
+  },
+  {
+    "markdown": "> quoted **text**\ncontinued 😀\n",
+    "blocks": [
+      {
+        "type": "blockquote",
+        "attrs": {},
+        "content": [
+          {
+            "text": "quoted ",
+            "marks": []
+          },
+          {
+            "text": "text",
+            "marks": [
+              {
+                "type": "bold"
+              }
+            ]
+          },
+          {
+            "text": "\ncontinued 😀",
+            "marks": []
+          }
+        ],
+        "children": []
+      }
+    ]
+  },
+  {
+    "markdown": "> first\n>\n> second\n",
+    "blocks": [
+      {
+        "type": "markdownRaw",
+        "attrs": {
+          "kind": "blockquote"
+        },
+        "content": "> first\n>\n> second",
+        "children": []
+      }
+    ]
+  },
+  {
+    "markdown": "> [!WARNING]\n> Keep changes\n",
+    "blocks": [
+      {
+        "type": "callout",
+        "attrs": {
+          "type": "warning",
+          "alert": "WARNING"
+        },
+        "content": [
+          {
+            "text": "Keep changes",
+            "marks": []
+          }
+        ],
+        "children": []
+      }
+    ]
+  },
+  {
+    "markdown": "> **Инструкции для агента:** Привет\n",
+    "blocks": [
+      {
+        "type": "callout",
+        "attrs": {
+          "type": "agent"
+        },
+        "content": [
+          {
+            "text": "Привет",
+            "marks": []
+          }
+        ],
+        "children": []
+      }
+    ]
+  },
+  {
+    "markdown": "- first\n  - child Ж\n- second\n",
+    "blocks": [
+      {
+        "type": "bulletList",
+        "attrs": {
+          "marker": "-",
+          "spread": false
+        },
+        "content": null,
+        "children": [
+          {
+            "type": "listItem",
+            "attrs": {},
+            "content": [
+              {
+                "text": "first",
+                "marks": []
+              }
+            ],
+            "children": [
+              {
+                "type": "bulletList",
+                "attrs": {
+                  "marker": "-",
+                  "spread": false
+                },
+                "content": null,
+                "children": [
+                  {
+                    "type": "listItem",
+                    "attrs": {},
+                    "content": [
+                      {
+                        "text": "child Ж",
+                        "marks": []
+                      }
+                    ],
+                    "children": []
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "type": "listItem",
+            "attrs": {},
+            "content": [
+              {
+                "text": "second",
+                "marks": []
+              }
+            ],
+            "children": []
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "markdown": "3) ordered\n4) next\n",
+    "blocks": [
+      {
+        "type": "orderedList",
+        "attrs": {
+          "start": 3,
+          "delimiter": ")",
+          "spread": false
+        },
+        "content": null,
+        "children": [
+          {
+            "type": "listItem",
+            "attrs": {},
+            "content": [
+              {
+                "text": "ordered",
+                "marks": []
+              }
+            ],
+            "children": []
+          },
+          {
+            "type": "listItem",
+            "attrs": {},
+            "content": [
+              {
+                "text": "next",
+                "marks": []
+              }
+            ],
+            "children": []
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "markdown": "- first\n\n- second\n",
+    "blocks": [
+      {
+        "type": "bulletList",
+        "attrs": {
+          "marker": "-",
+          "spread": true
+        },
+        "content": null,
+        "children": [
+          {
+            "type": "listItem",
+            "attrs": {},
+            "content": [
+              {
+                "text": "first",
+                "marks": []
+              }
+            ],
+            "children": []
+          },
+          {
+            "type": "listItem",
+            "attrs": {},
+            "content": [
+              {
+                "text": "second",
+                "marks": []
+              }
+            ],
+            "children": []
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "markdown": "- first\n\n  another paragraph\n",
+    "blocks": [
+      {
+        "type": "markdownRaw",
+        "attrs": {
+          "kind": "list"
+        },
+        "content": "- first\n\n  another paragraph",
+        "children": []
+      }
+    ]
+  },
+  {
+    "markdown": "- [ ] pending\n- [x] finished\n",
+    "blocks": [
+      {
+        "type": "todoList",
+        "attrs": {
+          "spread": false,
+          "marker": "-"
+        },
+        "content": null,
+        "children": [
+          {
+            "type": "todoItem",
+            "attrs": {
+              "checked": false
+            },
+            "content": [
+              {
+                "text": "pending",
+                "marks": []
+              }
+            ],
+            "children": []
+          },
+          {
+            "type": "todoItem",
+            "attrs": {
+              "checked": true
+            },
+            "content": [
+              {
+                "text": "finished",
+                "marks": []
+              }
+            ],
+            "children": []
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "markdown": "- [ ] task\n- regular\n",
+    "blocks": [
+      {
+        "type": "markdownRaw",
+        "attrs": {
+          "kind": "list"
+        },
+        "content": "- [ ] task\n- regular",
+        "children": []
+      }
+    ]
+  },
+  {
+    "markdown": "[future] and ![future]\n\n[future]: /file \"title\"\n",
+    "blocks": [
+      {
+        "type": "paragraph",
+        "attrs": {},
+        "content": [
+          {
+            "text": "[future]",
+            "marks": [
+              {
+                "type": "mdRaw"
+              }
+            ]
+          },
+          {
+            "text": " and ",
+            "marks": []
+          },
+          {
+            "text": "![future]",
+            "marks": [
+              {
+                "type": "mdRaw"
+              }
+            ]
+          }
+        ],
+        "children": []
+      },
+      {
+        "type": "markdownRaw",
+        "attrs": {
+          "kind": "definition"
+        },
+        "content": "[future]: /file \"title\"",
+        "children": []
+      }
+    ]
+  },
+  {
+    "markdown": "[multi\n label]: <docs/a.md>\n \"title\"\n\n[multi label]\n",
+    "blocks": [
+      {
+        "type": "markdownRaw",
+        "attrs": {
+          "kind": "definition"
+        },
+        "content": "[multi\n label]: <docs/a.md>\n \"title\"",
+        "children": []
+      },
+      {
+        "type": "paragraph",
+        "attrs": {},
+        "content": [
+          {
+            "text": "[multi label]",
+            "marks": [
+              {
+                "type": "mdRaw"
+              }
+            ]
+          }
+        ],
+        "children": []
+      }
+    ]
+  },
+  {
+    "markdown": "Use [read **this**](docs/read.md \"Title\") now.\n",
+    "blocks": [
+      {
+        "type": "paragraph",
+        "attrs": {},
+        "content": [
+          {
+            "text": "Use ",
+            "marks": []
+          },
+          {
+            "text": "read ",
+            "marks": [
+              {
+                "type": "link",
+                "attrs": {
+                  "href": "docs/read.md",
+                  "title": "Title"
+                }
+              }
+            ]
+          },
+          {
+            "text": "this",
+            "marks": [
+              {
+                "type": "bold"
+              },
+              {
+                "type": "link",
+                "attrs": {
+                  "href": "docs/read.md",
+                  "title": "Title"
+                }
+              }
+            ]
+          },
+          {
+            "text": " now.",
+            "marks": []
+          }
+        ],
+        "children": []
+      }
+    ]
+  },
+  {
+    "markdown": "[![image](img.png)](/detail)\n",
+    "blocks": [
+      {
+        "type": "paragraph",
+        "attrs": {},
+        "content": [
+          {
+            "text": "[![image](img.png)](/detail)",
+            "marks": [
+              {
+                "type": "mdRaw"
+              }
+            ]
+          }
+        ],
+        "children": []
+      }
+    ]
+  },
+  {
+    "markdown": "![a *picture*](img.png \"caption\")\n",
+    "blocks": [
+      {
+        "type": "image",
+        "attrs": {
+          "src": "img.png",
+          "alt": "a picture",
+          "caption": "caption"
+        },
+        "content": null,
+        "children": []
+      }
+    ]
+  },
+  {
+    "markdown": "[Пример.md](docs/%D0%9F%D1%80%D0%B8%D0%BC%D0%B5%D1%80.md)\n",
+    "blocks": [
+      {
+        "type": "file",
+        "attrs": {
+          "url": "docs/%D0%9F%D1%80%D0%B8%D0%BC%D0%B5%D1%80.md",
+          "name": "Пример.md"
+        },
+        "content": null,
+        "children": []
+      }
+    ]
+  },
+  {
+    "markdown": "A &copy; &#x1F600; &#128; &notareference; \\*literal\\*\n",
+    "blocks": [
+      {
+        "type": "paragraph",
+        "attrs": {},
+        "content": [
+          {
+            "text": "A © 😀 € &notareference; *literal*",
+            "marks": []
+          }
+        ],
+        "children": []
+      }
+    ]
+  },
+  {
+    "markdown": "before ` a\nb ` after\n",
+    "blocks": [
+      {
+        "type": "paragraph",
+        "attrs": {},
+        "content": [
+          {
+            "text": "before ",
+            "marks": []
+          },
+          {
+            "text": "a\nb",
+            "marks": [
+              {
+                "type": "code"
+              }
+            ]
+          },
+          {
+            "text": " after",
+            "marks": []
+          }
+        ],
+        "children": []
+      }
+    ]
+  },
+  {
+    "markdown": "***nested*** and a_b_c and ~removed~\n",
+    "blocks": [
+      {
+        "type": "paragraph",
+        "attrs": {},
+        "content": [
+          {
+            "text": "nested",
+            "marks": [
+              {
+                "type": "bold"
+              },
+              {
+                "type": "italic"
+              }
+            ]
+          },
+          {
+            "text": " and a_b_c and ",
+            "marks": []
+          },
+          {
+            "text": "removed",
+            "marks": [
+              {
+                "type": "strikethrough"
+              }
+            ]
+          }
+        ],
+        "children": []
+      }
+    ]
+  },
+  {
+    "markdown": "**bold *inside* after**\n",
+    "blocks": [
+      {
+        "type": "paragraph",
+        "attrs": {},
+        "content": [
+          {
+            "text": "bold ",
+            "marks": [
+              {
+                "type": "bold"
+              }
+            ]
+          },
+          {
+            "text": "inside",
+            "marks": [
+              {
+                "type": "bold"
+              },
+              {
+                "type": "italic"
+              }
+            ]
+          },
+          {
+            "text": " after",
+            "marks": [
+              {
+                "type": "bold"
+              }
+            ]
+          }
+        ],
+        "children": []
+      }
+    ]
+  },
+  {
+    "markdown": "Space\t \nnext\\\nlast\n",
+    "blocks": [
+      {
+        "type": "paragraph",
+        "attrs": {},
+        "content": [
+          {
+            "text": "Space\nnext\nlast",
+            "marks": []
+          }
+        ],
+        "children": []
+      }
+    ]
+  },
+  {
+    "markdown": "Go to https://example.test/a_(b). and <mailto:team@example.test>\n",
+    "blocks": [
+      {
+        "type": "paragraph",
+        "attrs": {},
+        "content": [
+          {
+            "text": "Go to ",
+            "marks": []
+          },
+          {
+            "text": "https://example.test/a_(b)",
+            "marks": [
+              {
+                "type": "link",
+                "attrs": {
+                  "href": "https://example.test/a_(b)"
+                }
+              }
+            ]
+          },
+          {
+            "text": ". and ",
+            "marks": []
+          },
+          {
+            "text": "mailto:team@example.test",
+            "marks": [
+              {
+                "type": "link",
+                "attrs": {
+                  "href": "mailto:team@example.test"
+                }
+              }
+            ]
+          }
+        ],
+        "children": []
+      }
+    ]
+  },
+  {
+    "markdown": "<div>\n\nraw 😀\n</div>\n",
+    "blocks": [
+      {
+        "type": "markdownRaw",
+        "attrs": {
+          "kind": "html"
+        },
+        "content": "<div>",
+        "children": []
+      },
+      {
+        "type": "paragraph",
+        "attrs": {},
+        "content": [
+          {
+            "text": "raw 😀",
+            "marks": []
+          }
+        ],
+        "children": []
+      },
+      {
+        "type": "markdownRaw",
+        "attrs": {
+          "kind": "html"
+        },
+        "content": "</div>",
+        "children": []
+      }
+    ]
+  },
+  {
+    "markdown": "<?instruction\nunterminated\n",
+    "blocks": [
+      {
+        "type": "markdownRaw",
+        "attrs": {
+          "kind": "html"
+        },
+        "content": "<?instruction\nunterminated\n",
+        "children": []
+      }
+    ]
+  },
+  {
+    "markdown": "inline <u>under <strong>bold</strong></u> and <custom>raw</custom>\n",
+    "blocks": [
+      {
+        "type": "paragraph",
+        "attrs": {},
+        "content": [
+          {
+            "text": "inline ",
+            "marks": []
+          },
+          {
+            "text": "under ",
+            "marks": [
+              {
+                "type": "underline"
+              }
+            ]
+          },
+          {
+            "text": "bold",
+            "marks": [
+              {
+                "type": "bold"
+              },
+              {
+                "type": "underline"
+              }
+            ]
+          },
+          {
+            "text": " and ",
+            "marks": []
+          },
+          {
+            "text": "<custom>",
+            "marks": [
+              {
+                "type": "mdRaw"
+              }
+            ]
+          },
+          {
+            "text": "raw",
+            "marks": []
+          },
+          {
+            "text": "</custom>",
+            "marks": [
+              {
+                "type": "mdRaw"
+              }
+            ]
+          }
+        ],
+        "children": []
+      }
+    ]
+  },
+  {
+    "markdown": "| Left | Right |\n| :--- | ---: |\n| a\\|b | `x\\|y`<br>end |\n",
+    "blocks": [
+      {
+        "type": "table",
+        "attrs": {
+          "align": [
+            "left",
+            "right"
+          ]
+        },
+        "content": null,
+        "children": [
+          {
+            "type": "tableRow",
+            "attrs": {},
+            "content": null,
+            "children": [
+              {
+                "type": "tableHeader",
+                "attrs": {},
+                "content": [
+                  {
+                    "text": "Left",
+                    "marks": []
+                  }
+                ],
+                "children": []
+              },
+              {
+                "type": "tableHeader",
+                "attrs": {},
+                "content": [
+                  {
+                    "text": "Right",
+                    "marks": []
+                  }
+                ],
+                "children": []
+              }
+            ]
+          },
+          {
+            "type": "tableRow",
+            "attrs": {},
+            "content": null,
+            "children": [
+              {
+                "type": "tableCell",
+                "attrs": {},
+                "content": [
+                  {
+                    "text": "a|b",
+                    "marks": []
+                  }
+                ],
+                "children": []
+              },
+              {
+                "type": "tableCell",
+                "attrs": {},
+                "content": [
+                  {
+                    "text": "x|y",
+                    "marks": [
+                      {
+                        "type": "code"
+                      }
+                    ]
+                  },
+                  {
+                    "text": "\nend",
+                    "marks": []
+                  }
+                ],
+                "children": []
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "markdown": "---\nname: example\n---\n\nBody 😀\n",
+    "blocks": [
+      {
+        "type": "paragraph",
+        "attrs": {},
+        "content": [
+          {
+            "text": "Body 😀",
+            "marks": []
+          }
+        ],
+        "children": []
+      }
+    ]
+  },
+  {
+    "markdown": "﻿# Пример\r\n\r\nText\r\n",
+    "blocks": [
+      {
+        "type": "heading",
+        "attrs": {
+          "level": 1
+        },
+        "content": [
+          {
+            "text": "Пример",
+            "marks": []
+          }
+        ],
+        "children": []
+      },
+      {
+        "type": "paragraph",
+        "attrs": {},
+        "content": [
+          {
+            "text": "Text",
+            "marks": []
+          }
+        ],
+        "children": []
+      }
+    ]
+  },
+  {
+    "markdown": "One\r\nTwo\rThree\n",
+    "blocks": [
+      {
+        "type": "paragraph",
+        "attrs": {},
+        "content": [
+          {
+            "text": "One\nTwo\nThree",
+            "marks": []
+          }
+        ],
+        "children": []
+      }
+    ]
+  },
+  {
+    "markdown": "<!-- comment -->\n\nText\n",
+    "blocks": [
+      {
+        "type": "markdownRaw",
+        "attrs": {
+          "kind": "html"
+        },
+        "content": "<!-- comment -->",
+        "children": []
+      },
+      {
+        "type": "paragraph",
+        "attrs": {},
+        "content": [
+          {
+            "text": "Text",
+            "marks": []
+          }
+        ],
+        "children": []
+      }
+    ]
+  },
+  {
+    "markdown": "[^memo]: first\n    continuation\n\nA [^memo] reference\n",
+    "blocks": [
+      {
+        "type": "markdownRaw",
+        "attrs": {
+          "kind": "footnoteDefinition"
+        },
+        "content": "[^memo]: first\n    continuation",
+        "children": []
+      },
+      {
+        "type": "paragraph",
+        "attrs": {},
+        "content": [
+          {
+            "text": "A ",
+            "marks": []
+          },
+          {
+            "text": "[^memo]",
+            "marks": [
+              {
+                "type": "mdRaw"
+              }
+            ]
+          },
+          {
+            "text": " reference",
+            "marks": []
+          }
+        ],
+        "children": []
+      }
+    ]
+  },
+  {
+    "markdown": "> - nested list\n>   continuation\n",
+    "blocks": [
+      {
+        "type": "markdownRaw",
+        "attrs": {
+          "kind": "blockquote"
+        },
+        "content": "> - nested list\n>   continuation",
+        "children": []
+      }
+    ]
+  },
+  {
+    "markdown": "- `code`\n  ```js\n  raw\n  ```\n",
+    "blocks": [
+      {
+        "type": "markdownRaw",
+        "attrs": {
+          "kind": "list"
+        },
+        "content": "- `code`\n  ```js\n  raw\n  ```",
+        "children": []
+      }
+    ]
+  }
+]

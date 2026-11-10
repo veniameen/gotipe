@@ -1,4 +1,4 @@
-import type { GoTipeEditor } from "./editor";
+import type { GoTipeEditor } from "./types/editor";
 import type { ViewState } from "./types/view";
 
 export function createBubbleMenu(
