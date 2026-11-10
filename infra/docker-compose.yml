@@ -13,8 +13,6 @@ services:
     depends_on:
       api:
         condition: service_healthy
-      sync:
-        condition: service_healthy
     restart: always
     networks:
       - frontend
@@ -22,15 +20,19 @@ services:
 
   # --- GoTipe API Server ---
   api:
-    image: ghcr.io/gotipe/cloud-api:latest
+    image: ghcr.io/gotipe/cloud-api:${IMAGE_TAG:-latest}
     expose:
       - "8080"
+      - "8081"
     env_file: .env
     environment:
       LISTEN_ADDR: ":8080"
+      SYNC_LISTEN_ADDR: ":8081"
+      SYNC_ALLOWED_ORIGINS: "${SYNC_ALLOWED_ORIGINS:-https://gotipe.com,https://app.gotipe.com}"
+      EXPORT_WORKERS: "${EXPORT_WORKERS:-2}"
       DATABASE_URL: "postgres://gotipe:${POSTGRES_PASSWORD}@pgbouncer:6432/gotipe?sslmode=disable"
       VALKEY_URL: "redis://valkey:6379/0"
-      ENV: "production"
+      ENVIRONMENT: "production"
       LOG_FORMAT: "json"
     depends_on:
       pgbouncer:
@@ -42,64 +44,13 @@ services:
     deploy:
       resources:
         limits:
-          memory: 512M
+          memory: 2G
     healthcheck:
-      test: ["CMD", "wget", "-qO-", "http://localhost:8080/healthz"]
+      test: ["CMD", "wget", "-qO-", "http://localhost:8080/readyz"]
       interval: 10s
       timeout: 5s
       retries: 3
       start_period: 5s
-    networks:
-      - backend
-
-  # --- GoTipe WebSocket Sync Server ---
-  sync:
-    image: ghcr.io/gotipe/cloud-sync:latest
-    expose:
-      - "8081"
-    env_file: .env
-    environment:
-      SYNC_LISTEN_ADDR: ":8081"
-      DATABASE_URL: "postgres://gotipe:${POSTGRES_PASSWORD}@pgbouncer:6432/gotipe?sslmode=disable"
-      VALKEY_URL: "redis://valkey:6379/0"
-      ENV: "production"
-      LOG_FORMAT: "json"
-    depends_on:
-      pgbouncer:
-        condition: service_started
-      valkey:
-        condition: service_healthy
-    restart: always
-    stop_grace_period: 35s
-    deploy:
-      resources:
-        limits:
-          memory: 2G
-    healthcheck:
-      test: ["CMD", "wget", "-qO-", "http://localhost:8081/healthz"]
-      interval: 10s
-      timeout: 5s
-      retries: 3
-    networks:
-      - backend
-
-  # --- Export Worker ---
-  export-worker:
-    image: ghcr.io/gotipe/cloud-export:latest
-    env_file: .env
-    environment:
-      DATABASE_URL: "postgres://gotipe:${POSTGRES_PASSWORD}@pgbouncer:6432/gotipe?sslmode=disable"
-      VALKEY_URL: "redis://valkey:6379/0"
-      EXPORT_WORKERS: "4"
-      EXPORT_POLL_INTERVAL: "1s"
-    depends_on:
-      pgbouncer:
-        condition: service_started
-    restart: always
-    deploy:
-      resources:
-        limits:
-          memory: 2G
     networks:
       - backend
 

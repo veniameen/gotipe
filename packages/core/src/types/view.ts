@@ -32,6 +32,8 @@ export interface MarkView {
 
 export interface SelectionView {
   type: "text" | "block" | "multi";
+  /** Exact selected IDs for multi-block selections. */
+  blockIds?: string[];
   anchor: { blockId: string; offset: number };
   head: { blockId: string; offset: number };
 }

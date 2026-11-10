@@ -4,7 +4,17 @@ use serde::{Deserialize, Serialize};
 use crate::transaction::Step;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct TextPosition {
+    pub block_id: BlockId,
+    pub offset: usize,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum Selection {
+    Range {
+        anchor: TextPosition,
+        head: TextPosition,
+    },
     Cursor {
         block_id: BlockId,
         offset: usize,
@@ -33,10 +43,14 @@ impl Selection {
 
     pub fn block_id(&self) -> &BlockId {
         match self {
+            Selection::Range { anchor, .. } => &anchor.block_id,
             Selection::Cursor { block_id, .. } => block_id,
             Selection::Text { block_id, .. } => block_id,
             Selection::Block { block_id } => block_id,
-            Selection::Multi { block_ids } => &block_ids[0],
+            Selection::Multi { block_ids } => {
+                static EMPTY_ID: BlockId = BlockId(String::new());
+                block_ids.first().unwrap_or(&EMPTY_ID)
+            }
         }
     }
 
@@ -54,6 +68,11 @@ impl Selection {
         }
     }
 
+    /// Recover an implicit selection after a document replacement.
+    pub fn recover_in(&self, doc: &gotipe_schema::Document) -> Selection {
+        crate::selection_mapping::normalize(self.clone(), doc, 0)
+    }
+
     /// Map selection through a set of steps, adjusting offsets as needed
     pub fn map_through(&self, steps: &[Step]) -> Selection {
         let mut result = self.clone();
@@ -65,6 +84,13 @@ impl Selection {
 
     fn map_through_step(&self, step: &Step) -> Selection {
         match (self, step) {
+            (Selection::Range { anchor, head }, _) => {
+                let anchor = Selection::cursor(anchor.block_id.clone(), anchor.offset)
+                    .map_through_step(step);
+                let head =
+                    Selection::cursor(head.block_id.clone(), head.offset).map_through_step(step);
+                crate::selection_mapping::range_from_cursors(anchor, head)
+            }
             (
                 Selection::Cursor { block_id, offset },
                 Step::InsertText {
@@ -75,7 +101,7 @@ impl Selection {
                 },
             ) if block_id == step_block_id && *insert_offset <= *offset => Selection::Cursor {
                 block_id: block_id.clone(),
-                offset: offset + text.len(),
+                offset: offset + text.encode_utf16().count(),
             },
             (
                 Selection::Cursor { block_id, offset },
@@ -107,7 +133,7 @@ impl Selection {
                     ..
                 },
             ) if block_id == step_block_id => {
-                let len = text.len();
+                let len = text.encode_utf16().count();
                 let new_from = if *insert_offset <= *from {
                     from + len
                 } else {

@@ -137,19 +137,13 @@ test.describe("Notion-like nested cross-block range chains", () => {
     await selectAcross(page, "li-a2", "ti-b", 1, 5);
     await page.keyboard.press(mod("X"));
 
-    let mutated = await snapshot(page);
-    if (mutated === before) {
-      await setSelection(page, { blockId: "p-tail", offset: 2 }, { blockId: "p-tail", offset: 6 });
-      await page.keyboard.press("Backspace");
-      mutated = await snapshot(page);
-    }
-
+    const mutated = await snapshot(page);
     expect(mutated).not.toBe(before);
     await undo(page, 1);
     await expect.poll(() => snapshot(page)).toBe(before);
 
     await redo(page, 1);
-    await expect.poll(() => snapshot(page)).not.toBe(before);
+    await expect.poll(() => snapshot(page)).toBe(mutated);
 
     const stats = await getDocStats(page);
     expect(stats.hasInvalidId).toBe(false);
@@ -184,9 +178,18 @@ test.describe("Notion-like nested cross-block range chains", () => {
         const payload = (selected || `n${i}`).replace(/\s+/g, " ").slice(0, 18);
         await pasteTextWithFallback(page, payload);
       } else if (i % 3 === 1) {
+        const beforeCut = await snapshot(page);
+        expect(selected.length).toBeGreaterThan(0);
         await page.keyboard.press(mod("X"));
+        const afterCut = await snapshot(page);
+        expect(afterCut).not.toBe(beforeCut);
         await undo(page, 1);
+        await expect.poll(() => snapshot(page)).toBe(beforeCut);
         await redo(page, 1);
+        await expect.poll(() => snapshot(page)).toBe(afterCut);
+        // Restore through history so the next range still targets existing blocks.
+        await undo(page, 1);
+        await expect.poll(() => snapshot(page)).toBe(beforeCut);
       } else {
         const target = textTargets[(i + 1) % textTargets.length]!;
         await setSelection(page, { blockId: target, offset: 1 }, { blockId: target, offset: 7 });

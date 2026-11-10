@@ -5,8 +5,10 @@ edition.workspace = true
 license.workspace = true
 
 [dependencies]
-gotipe-core = { path = "../gotipe-core" }
+gotipe-core = { version = "0.1.0", path = "../gotipe-core" }
 serde = { workspace = true }
 serde_json = { workspace = true }
 thiserror = { workspace = true }
+
+[dev-dependencies]
 regex = { workspace = true }

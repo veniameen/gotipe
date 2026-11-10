@@ -1,5 +1,12 @@
 # GoTipe — План реализации и релиза
 
+> **Историческая спецификация, не руководство по текущему API.** Примеры, сроки,
+> сравнения производительности, коммерческие условия и обещания ниже не подтверждают
+> реализацию или доступность сервиса. Актуально: [контракты](development/editor-contracts.md),
+> [карта кода](development/code-map.md), [проверки](development/testing.md),
+> [план выпуска](22-release-readiness.md). Лицензии определяются `LICENSE` и manifest
+> каждого пакета, а не этим документом.
+
 ## Цель
 
 Полноценный production-ready rich text editor framework с Notion-like UX, multi-framework адаптерами, CRDT collaboration, AI integration, document export и GoTipe Cloud. Не итеративный MVP — а завершённый продукт, готовый к публичному релизу.

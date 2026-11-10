@@ -1,5 +1,12 @@
 # GoTipe — Real-time Collaboration
 
+> **Историческая спецификация, не руководство по текущему API.** Примеры, сроки,
+> сравнения производительности, коммерческие условия и обещания ниже не подтверждают
+> реализацию или доступность сервиса. Актуально: [контракты](development/editor-contracts.md),
+> [карта кода](development/code-map.md), [проверки](development/testing.md),
+> [план выпуска](22-release-readiness.md). Лицензии определяются `LICENSE` и manifest
+> каждого пакета, а не этим документом.
+
 ## Обзор
 
 GoTipe использует CRDT (Conflict-free Replicated Data Type) для real-time collaboration. CRDT встроен в ядро — collaboration работает без облака, через self-hosted сервер или peer-to-peer.

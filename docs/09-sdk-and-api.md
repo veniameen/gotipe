@@ -1,5 +1,10 @@
 # GoTipe — SDK и API
 
+> Исторический проектный документ. Сигнатуры, размеры, цены, сравнения и планы ниже
+> не подтверждают текущую реализацию или доступный сервис. Актуальные контракты:
+> [разработка](development/editor-contracts.md), [экспорт](development/export-contract.md),
+> [Cloud](development/cloud-contract.md), [готовность выпуска](22-release-readiness.md).
+
 Справочник по всем npm-пакетам GoTipe: TypeScript-интерфейсы, сигнатуры, примеры, конфигурация exports.
 
 Source of truth для Rust-типов: [03-editor-core.md](03-editor-core.md). Здесь описаны TypeScript-биндинги поверх WASM.

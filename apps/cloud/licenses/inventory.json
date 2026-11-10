@@ -1,0 +1,499 @@
+[
+  {
+    "module": "github.com/aws/aws-sdk-go-v2",
+    "version": "v1.41.5",
+    "notices": [
+      {
+        "file": "github.com__aws__aws-sdk-go-v2@v1.41.5-LICENSE.txt",
+        "source": "LICENSE.txt",
+        "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30"
+      },
+      {
+        "file": "github.com__aws__aws-sdk-go-v2@v1.41.5-NOTICE.txt",
+        "source": "NOTICE.txt",
+        "sha256": "a6e830174d62dafad3a718384772ea1f4c0e27989f050932dc442a5e3ddad080"
+      }
+    ]
+  },
+  {
+    "module": "github.com/aws/aws-sdk-go-v2/aws/protocol/eventstream",
+    "version": "v1.7.8",
+    "notices": [
+      {
+        "file": "github.com__aws__aws-sdk-go-v2__aws__protocol__eventstream@v1.7.8-LICENSE.txt",
+        "source": "LICENSE.txt",
+        "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30"
+      }
+    ]
+  },
+  {
+    "module": "github.com/aws/aws-sdk-go-v2/config",
+    "version": "v1.28.7",
+    "notices": [
+      {
+        "file": "github.com__aws__aws-sdk-go-v2__config@v1.28.7-LICENSE.txt",
+        "source": "LICENSE.txt",
+        "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30"
+      }
+    ]
+  },
+  {
+    "module": "github.com/aws/aws-sdk-go-v2/credentials",
+    "version": "v1.17.48",
+    "notices": [
+      {
+        "file": "github.com__aws__aws-sdk-go-v2__credentials@v1.17.48-LICENSE.txt",
+        "source": "LICENSE.txt",
+        "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30"
+      }
+    ]
+  },
+  {
+    "module": "github.com/aws/aws-sdk-go-v2/feature/ec2/imds",
+    "version": "v1.16.22",
+    "notices": [
+      {
+        "file": "github.com__aws__aws-sdk-go-v2__feature__ec2__imds@v1.16.22-LICENSE.txt",
+        "source": "LICENSE.txt",
+        "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30"
+      }
+    ]
+  },
+  {
+    "module": "github.com/aws/aws-sdk-go-v2/internal/configsources",
+    "version": "v1.4.21",
+    "notices": [
+      {
+        "file": "github.com__aws__aws-sdk-go-v2__internal__configsources@v1.4.21-LICENSE.txt",
+        "source": "LICENSE.txt",
+        "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30"
+      }
+    ]
+  },
+  {
+    "module": "github.com/aws/aws-sdk-go-v2/internal/endpoints/v2",
+    "version": "v2.7.21",
+    "notices": [
+      {
+        "file": "github.com__aws__aws-sdk-go-v2__internal__endpoints__v2@v2.7.21-LICENSE.txt",
+        "source": "LICENSE.txt",
+        "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30"
+      }
+    ]
+  },
+  {
+    "module": "github.com/aws/aws-sdk-go-v2/internal/ini",
+    "version": "v1.8.1",
+    "notices": [
+      {
+        "file": "github.com__aws__aws-sdk-go-v2__internal__ini@v1.8.1-LICENSE.txt",
+        "source": "LICENSE.txt",
+        "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30"
+      }
+    ]
+  },
+  {
+    "module": "github.com/aws/aws-sdk-go-v2/internal/v4a",
+    "version": "v1.4.22",
+    "notices": [
+      {
+        "file": "github.com__aws__aws-sdk-go-v2__internal__v4a@v1.4.22-LICENSE.txt",
+        "source": "LICENSE.txt",
+        "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30"
+      }
+    ]
+  },
+  {
+    "module": "github.com/aws/aws-sdk-go-v2/service/internal/accept-encoding",
+    "version": "v1.13.7",
+    "notices": [
+      {
+        "file": "github.com__aws__aws-sdk-go-v2__service__internal__accept-encoding@v1.13.7-LICENSE.txt",
+        "source": "LICENSE.txt",
+        "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30"
+      }
+    ]
+  },
+  {
+    "module": "github.com/aws/aws-sdk-go-v2/service/internal/checksum",
+    "version": "v1.9.13",
+    "notices": [
+      {
+        "file": "github.com__aws__aws-sdk-go-v2__service__internal__checksum@v1.9.13-LICENSE.txt",
+        "source": "LICENSE.txt",
+        "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30"
+      }
+    ]
+  },
+  {
+    "module": "github.com/aws/aws-sdk-go-v2/service/internal/presigned-url",
+    "version": "v1.13.21",
+    "notices": [
+      {
+        "file": "github.com__aws__aws-sdk-go-v2__service__internal__presigned-url@v1.13.21-LICENSE.txt",
+        "source": "LICENSE.txt",
+        "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30"
+      }
+    ]
+  },
+  {
+    "module": "github.com/aws/aws-sdk-go-v2/service/internal/s3shared",
+    "version": "v1.19.21",
+    "notices": [
+      {
+        "file": "github.com__aws__aws-sdk-go-v2__service__internal__s3shared@v1.19.21-LICENSE.txt",
+        "source": "LICENSE.txt",
+        "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30"
+      }
+    ]
+  },
+  {
+    "module": "github.com/aws/aws-sdk-go-v2/service/s3",
+    "version": "v1.97.3",
+    "notices": [
+      {
+        "file": "github.com__aws__aws-sdk-go-v2__service__s3@v1.97.3-LICENSE.txt",
+        "source": "LICENSE.txt",
+        "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30"
+      }
+    ]
+  },
+  {
+    "module": "github.com/aws/aws-sdk-go-v2/service/sso",
+    "version": "v1.24.8",
+    "notices": [
+      {
+        "file": "github.com__aws__aws-sdk-go-v2__service__sso@v1.24.8-LICENSE.txt",
+        "source": "LICENSE.txt",
+        "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30"
+      }
+    ]
+  },
+  {
+    "module": "github.com/aws/aws-sdk-go-v2/service/ssooidc",
+    "version": "v1.28.7",
+    "notices": [
+      {
+        "file": "github.com__aws__aws-sdk-go-v2__service__ssooidc@v1.28.7-LICENSE.txt",
+        "source": "LICENSE.txt",
+        "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30"
+      }
+    ]
+  },
+  {
+    "module": "github.com/aws/aws-sdk-go-v2/service/sts",
+    "version": "v1.33.3",
+    "notices": [
+      {
+        "file": "github.com__aws__aws-sdk-go-v2__service__sts@v1.33.3-LICENSE.txt",
+        "source": "LICENSE.txt",
+        "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30"
+      }
+    ]
+  },
+  {
+    "module": "github.com/aws/smithy-go",
+    "version": "v1.24.2",
+    "notices": [
+      {
+        "file": "github.com__aws__smithy-go@v1.24.2-LICENSE",
+        "source": "LICENSE",
+        "sha256": "09e8a9bcec8067104652c168685ab0931e7868f9c8284b66f5ae6edae5f1130b"
+      },
+      {
+        "file": "github.com__aws__smithy-go@v1.24.2-NOTICE",
+        "source": "NOTICE",
+        "sha256": "d4290ed64c2edd0fce1d84e3f9dfb2881240fe534def76b8cd29ed6af683e287"
+      }
+    ]
+  },
+  {
+    "module": "github.com/beorn7/perks",
+    "version": "v1.0.1",
+    "notices": [
+      {
+        "file": "github.com__beorn7__perks@v1.0.1-LICENSE",
+        "source": "LICENSE",
+        "sha256": "0db7c9ebb3717e526f34f87dd1ee8bc77d36846e29cb0cec9246f7138fbe962b"
+      }
+    ]
+  },
+  {
+    "module": "github.com/cespare/xxhash/v2",
+    "version": "v2.3.0",
+    "notices": [
+      {
+        "file": "github.com__cespare__xxhash__v2@v2.3.0-LICENSE.txt",
+        "source": "LICENSE.txt",
+        "sha256": "f566a9f97bacdaf00d9f21dd991e81dc11201c4e016c86b470799429a1c9a79c"
+      }
+    ]
+  },
+  {
+    "module": "github.com/go-chi/chi/v5",
+    "version": "v5.3.0",
+    "notices": [
+      {
+        "file": "github.com__go-chi__chi__v5@v5.3.0-LICENSE",
+        "source": "LICENSE",
+        "sha256": "a2d51b7515acfaff2f7a88688650f2fc4fd99561383e72bba2305e3db59a1647"
+      }
+    ]
+  },
+  {
+    "module": "github.com/go-chi/cors",
+    "version": "v1.2.1",
+    "notices": [
+      {
+        "file": "github.com__go-chi__cors@v1.2.1-LICENSE",
+        "source": "LICENSE",
+        "sha256": "df53da8b4f70a2d6e360b9c86ba7b9cc284654c126686656cbe9029809fca25f"
+      }
+    ]
+  },
+  {
+    "module": "github.com/golang-jwt/jwt/v5",
+    "version": "v5.2.2",
+    "notices": [
+      {
+        "file": "github.com__golang-jwt__jwt__v5@v5.2.2-LICENSE",
+        "source": "LICENSE",
+        "sha256": "fe26ca41577b9b2b4448050a24b25e5753af66b5d5945d5d36094e7790bfcb2f"
+      }
+    ]
+  },
+  {
+    "module": "github.com/google/uuid",
+    "version": "v1.6.0",
+    "notices": [
+      {
+        "file": "github.com__google__uuid@v1.6.0-LICENSE",
+        "source": "LICENSE",
+        "sha256": "0a8d61ed3cbfd5312326e8126c31ce9c627a283adc99131b56896d29ada04b2d"
+      }
+    ]
+  },
+  {
+    "module": "github.com/gorilla/websocket",
+    "version": "v1.5.3",
+    "notices": [
+      {
+        "file": "github.com__gorilla__websocket@v1.5.3-LICENSE",
+        "source": "LICENSE",
+        "sha256": "2be1b548b0387ca8948e1bb9434e709126904d15f622cc2d0d8e7f186e4d122d"
+      }
+    ]
+  },
+  {
+    "module": "github.com/jackc/pgpassfile",
+    "version": "v1.0.0",
+    "notices": [
+      {
+        "file": "github.com__jackc__pgpassfile@v1.0.0-LICENSE",
+        "source": "LICENSE",
+        "sha256": "adb1663fda031df8f4344aa68f299fd87d80353e31339406742ded21dae65702"
+      }
+    ]
+  },
+  {
+    "module": "github.com/jackc/pgservicefile",
+    "version": "v0.0.0-20240606120523-5a60cdf6a761",
+    "notices": [
+      {
+        "file": "github.com__jackc__pgservicefile@v0.0.0-20240606120523-5a60cdf6a761-LICENSE",
+        "source": "LICENSE",
+        "sha256": "fc505773403fe869ed64cc2235cdd13988a427bb7e3a7e7004a3f4b27420f8fc"
+      }
+    ]
+  },
+  {
+    "module": "github.com/jackc/pgx/v5",
+    "version": "v5.9.2",
+    "notices": [
+      {
+        "file": "github.com__jackc__pgx__v5@v5.9.2-LICENSE",
+        "source": "LICENSE",
+        "sha256": "467f95e074fe23079a5623ed652619682692041b8551da27e3c2ddb9659a1507"
+      }
+    ]
+  },
+  {
+    "module": "github.com/jackc/puddle/v2",
+    "version": "v2.2.2",
+    "notices": [
+      {
+        "file": "github.com__jackc__puddle__v2@v2.2.2-LICENSE",
+        "source": "LICENSE",
+        "sha256": "2d50e98a4900b4d6457a38d39c1432fdc156fc2f7b365f2e33ec9344acbb0057"
+      }
+    ]
+  },
+  {
+    "module": "github.com/klauspost/compress",
+    "version": "v1.20.2",
+    "notices": [
+      {
+        "file": "github.com__klauspost__compress@v1.20.2-LICENSE",
+        "source": "LICENSE",
+        "sha256": "0d9e582ee4bff57bf1189c9e514e6da7ce277f9cd3bc2d488b22fbb39a6d87cf"
+      }
+    ]
+  },
+  {
+    "module": "github.com/munnerz/goautoneg",
+    "version": "v0.0.0-20191010083416-a7dc8b61c822",
+    "notices": [
+      {
+        "file": "github.com__munnerz__goautoneg@v0.0.0-20191010083416-a7dc8b61c822-LICENSE",
+        "source": "LICENSE",
+        "sha256": "aa1376b9bc5dea6f30cdefde40c176a254f247d2814d0a9929395138631b2ae0"
+      }
+    ]
+  },
+  {
+    "module": "github.com/prometheus/client_golang",
+    "version": "v1.20.5",
+    "notices": [
+      {
+        "file": "github.com__prometheus__client_golang@v1.20.5-LICENSE",
+        "source": "LICENSE",
+        "sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4"
+      },
+      {
+        "file": "github.com__prometheus__client_golang@v1.20.5-NOTICE",
+        "source": "NOTICE",
+        "sha256": "8548bfb2bc1913396df38c548a6ec60b8dbcac3b0800485a40569c8bdd184471"
+      }
+    ]
+  },
+  {
+    "module": "github.com/prometheus/client_model",
+    "version": "v0.6.1",
+    "notices": [
+      {
+        "file": "github.com__prometheus__client_model@v0.6.1-LICENSE",
+        "source": "LICENSE",
+        "sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4"
+      },
+      {
+        "file": "github.com__prometheus__client_model@v0.6.1-NOTICE",
+        "source": "NOTICE",
+        "sha256": "6c79faa15168885fb88a316ae0df18f486deafddefdc16826cdc56dfbd421e24"
+      }
+    ]
+  },
+  {
+    "module": "github.com/prometheus/common",
+    "version": "v0.55.0",
+    "notices": [
+      {
+        "file": "github.com__prometheus__common@v0.55.0-LICENSE",
+        "source": "LICENSE",
+        "sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4"
+      },
+      {
+        "file": "github.com__prometheus__common@v0.55.0-NOTICE",
+        "source": "NOTICE",
+        "sha256": "600244c8052c8c1d307043fafacbc83b429c171dd8e08f5a537c0a54014585ee"
+      }
+    ]
+  },
+  {
+    "module": "github.com/prometheus/procfs",
+    "version": "v0.15.1",
+    "notices": [
+      {
+        "file": "github.com__prometheus__procfs@v0.15.1-LICENSE",
+        "source": "LICENSE",
+        "sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4"
+      },
+      {
+        "file": "github.com__prometheus__procfs@v0.15.1-NOTICE",
+        "source": "NOTICE",
+        "sha256": "497fcdb9fae55924c12f55f05cbe83a096662e5c591d79b74e4a8f23bab5ffee"
+      }
+    ]
+  },
+  {
+    "module": "github.com/stripe/stripe-go/v81",
+    "version": "v81.1.1",
+    "notices": [
+      {
+        "file": "github.com__stripe__stripe-go__v81@v81.1.1-LICENSE",
+        "source": "LICENSE",
+        "sha256": "09db8d93f1ec60eb9f2be32ce2e10e440b35e209ea9fa505e84e788af938670a"
+      }
+    ]
+  },
+  {
+    "module": "github.com/valkey-io/valkey-go",
+    "version": "v1.0.47",
+    "notices": [
+      {
+        "file": "github.com__valkey-io__valkey-go@v1.0.47-LICENSE",
+        "source": "LICENSE",
+        "sha256": "283ea6cc2997a1a70da0049e09adf9317bb60ca1b51279b65196b83a69e1996b"
+      },
+      {
+        "file": "github.com__valkey-io__valkey-go@v1.0.47-NOTICE",
+        "source": "NOTICE",
+        "sha256": "41824cdce292fe84e7130615e322aae144fdb9e1d147c00ce901b92694fae02c"
+      }
+    ]
+  },
+  {
+    "module": "golang.org/x/crypto",
+    "version": "v0.58.1-0.20261009181718-2f1f834330b2",
+    "notices": [
+      {
+        "file": "golang.org__x__crypto@v0.58.1-0.20261009181718-2f1f834330b2-LICENSE",
+        "source": "LICENSE",
+        "sha256": "911f8f5782931320f5b8d1160a76365b83aea6447ee6c04fa6d5591467db9dad"
+      }
+    ]
+  },
+  {
+    "module": "golang.org/x/sync",
+    "version": "v0.24.0",
+    "notices": [
+      {
+        "file": "golang.org__x__sync@v0.24.0-LICENSE",
+        "source": "LICENSE",
+        "sha256": "911f8f5782931320f5b8d1160a76365b83aea6447ee6c04fa6d5591467db9dad"
+      }
+    ]
+  },
+  {
+    "module": "golang.org/x/sys",
+    "version": "v0.49.0",
+    "notices": [
+      {
+        "file": "golang.org__x__sys@v0.49.0-LICENSE",
+        "source": "LICENSE",
+        "sha256": "911f8f5782931320f5b8d1160a76365b83aea6447ee6c04fa6d5591467db9dad"
+      }
+    ]
+  },
+  {
+    "module": "golang.org/x/text",
+    "version": "v0.43.0",
+    "notices": [
+      {
+        "file": "golang.org__x__text@v0.43.0-LICENSE",
+        "source": "LICENSE",
+        "sha256": "911f8f5782931320f5b8d1160a76365b83aea6447ee6c04fa6d5591467db9dad"
+      }
+    ]
+  },
+  {
+    "module": "google.golang.org/protobuf",
+    "version": "v1.34.2",
+    "notices": [
+      {
+        "file": "google.golang.org__protobuf@v1.34.2-LICENSE",
+        "source": "LICENSE",
+        "sha256": "4835612df0098ca95f8e7d9e3bffcb02358d435dbb38057c844c99d7f725eb20"
+      }
+    ]
+  }
+]

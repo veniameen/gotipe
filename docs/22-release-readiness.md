@@ -1,6 +1,7 @@
 # GoTipe — доведение до публикации
 
-Статус: **в работе**. Начато 2026-11-09 по прямому запросу владельца.
+Статус: **локальная приёмка пройдена; публикация заблокирована R-034**.
+Начато 2026-11-09 по прямому запросу владельца.
 
 ## Результат
 
@@ -8,6 +9,12 @@
 приложениях: публичные API, все заявленные в репозитории функции, адаптеры, готовый UI,
 документация и проверенные пакеты. Визуальная основа — новый PageEditor / Specimen v6:
 нейтральные поверхности, синий акцент, общие токены, светлая и тёмная темы.
+
+Уточнение владельца 10 ноября: GoTipe остаётся библиотекой, аналогом редакторного
+SDK. Wiki, дерево страниц, вкладки, права, сохранение и workflow модели реализуются
+в SpecOrbit поверх её публичного API. Отдельная оболочка SpecOrbit Wiki удалена
+из GoTipe; PageEditor показывается как вариант общего примера редактора. Проверки
+CSP остаются техническим consumer-тестом, не приложением Wiki.
 
 Готовность означает прохождение перечисленных ниже проверок и отсутствие известных
 блокирующих дефектов в поддерживаемых сценариях. Старые отметки «готово» и успешные
@@ -34,24 +41,24 @@
 
 | Направление | Обязательный результат | Статус |
 |---|---|---|
-| Ядро JS / Rust / WASM | одинаковая семантика транзакций, Unicode, схема, события, история | аудит / исправление |
-| Ввод | кириллица, emoji, IME, выделение, Enter/Backspace/Delete, undo/redo | аудит / исправление |
-| Буфер обмена | текст, HTML, Markdown, вложенные и пересекающие блоки выделения; безопасный cut | аудит |
-| Markdown | исходные байты неизменённых фрагментов, минимальный diff, вложенные структуры | аудит |
-| Блоки и marks | все экспортируемые расширения, команды и преобразования без потери содержимого | аудит |
-| Перемещение | блоки/строки/вложенные списки, видимое место вставки, атомарная отмена | исправлено; нужен общий регрессионный прогон |
-| Таблицы и медиа | редактирование, размеры, вставка, файлы через host API, ошибки/отмена | аудит |
-| UI | PageEditor, BlockEditor, панели, меню, состояния загрузки/ошибки/пустоты/чтения | в работе |
-| Обсуждения и правки | комментарии/ответы/разрешение, предложения/устаревание/принятие | аудит |
-| Версии | создание, список, просмотр, сравнение, восстановление, история | аудит |
-| AI | настоящий API провайдера, поток/отмена/ошибки, инструменты и правки; демо обозначено | аудит |
-| Совместная работа | реальная синхронизация, конкурентные правки, reconnect, курсоры | аудит |
-| Экспорт/импорт | каждый заявленный формат выдаёт валидный результат, ограничения описаны | аудит |
-| Адаптеры | React/Vue/Svelte/Solid: рендер, подписки, destroy, SSR, строгий режим | в работе |
-| SDK / Cloud | совпадение контрактов, права доступа, хранение, ошибки, тесты без внешней оплаты | аудит |
-| Миграция | поддерживаемые документы других редакторов, потери явно видны | аудит |
-| Пакеты | exports/types/files/licenses, ESM/CJS/SSR, чистый потребитель | в работе |
-| Документация | примеры воспроизводимы, нет обещаний несуществующих возможностей | запланировано |
+| Ядро JS / Rust / WASM | одинаковая семантика транзакций, Unicode, схема, события, история | 268 core tests и 228 native tests прошли; полный browser повтор 2634/2634 |
+| Ввод | кириллица, emoji, IME, выделение, Enter/Backspace/Delete, undo/redo | Unicode/IME/каретка/Shift+Enter исправлены; полный повтор в трёх движках прошёл; конфликт ввода описан в R-041 |
+| Буфер обмена | текст, HTML, Markdown, вложенные и пересекающие блоки выделения; безопасный cut | native clipboard и строгие cross-block Undo/Redo проверки прошли |
+| Markdown | исходные байты неизменённых фрагментов, минимальный diff, вложенные структуры | свой parser; 94 TS tests, 652 CommonMark cases и native parity прошли |
+| Блоки и marks | все экспортируемые расширения, команды и преобразования без потери содержимого | unit/transform matrix и общий повтор 878 сценариев × 3 движка прошли |
+| Перемещение | блоки/строки/вложенные списки, видимое место вставки, атомарная отмена | desktop, nested rows, touch/pen, cancel и один Undo проверены |
+| Таблицы и медиа | редактирование, размеры, вставка, файлы через host API, ошибки/отмена | atomic table/resize/upload/crop/caption/read-only проверены во всех трёх движках |
+| UI | PageEditor, BlockEditor, панели, меню, состояния загрузки/ошибки/пустоты/чтения | 12 маршрутов + второй вариант основного редактора × 5 ширин × 2 темы; floating/keyboard/container проверки прошли |
+| Обсуждения и правки | комментарии/ответы/разрешение, предложения/устаревание/принятие | comments/replies/anchors/persistence и accept/reject/undo проверены |
+| Версии | создание, список, просмотр, сравнение, восстановление, история | snapshot/diff/restore/undo и интерфейс проверены |
+| AI | настоящий API провайдера, поток/отмена/ошибки, инструменты и правки; демо обозначено | provider contracts/stream/cancel/error и три браузера проверены; платные внешние вызовы не выполнялись |
+| Совместная работа | реальная синхронизация, конкурентные правки, reconnect, курсоры | две реальные WASM реплики → offline edits → reconnect → durable PostgreSQL bootstrap проверены |
+| Экспорт/импорт | каждый заявленный формат выдаёт валидный результат, ограничения описаны | PDF/DOCX/HTML/Markdown и валидаторы прошли; source-release exporter заблокирован R-034 |
+| Адаптеры | React/Vue/Svelte/Solid: рендер, подписки, destroy, SSR, строгий режим | lifecycle, destroy, subscriptions, SSR и чистые package consumers проверены |
+| SDK / Cloud | совпадение контрактов, права доступа, хранение, ошибки, тесты без внешней оплаты | role/scope/storage/errors, Go race/integration, Docker и native/browser exports проверены |
+| Миграция | поддерживаемые документы других редакторов, потери явно видны | поддерживаемые 3 converter APIs и границы потерь описаны и проверены |
+| Пакеты | exports/types/files/licenses, ESM/CJS/SSR, чистый потребитель | 21 tarball, 27 ESM/25 CJS entries, strict types и чистый consumer прошли |
+| Документация | примеры воспроизводимы, нет обещаний несуществующих возможностей | поддерживаемые контракты обновлены; 00–20 помечены историческими проектами |
 
 ## Критерии интерфейса
 
@@ -71,30 +78,68 @@
 | ID | Дефект | Работа / доказательство |
 |---|---|---|
 | R-001 | В PageEditor отсутствовало перетаскивание, наведение в отступе терялось | исправлено; реальные жесты Chrome, Markdown, undo/redo, оба редактора |
-| R-002 | JS-движок теряет raw-текст кодового блока при редактировании | в работе: ядро |
-| R-003 | Перемещение в отсутствующего родителя/потомка может удалить источник | UI защищён; защита транзакций в работе |
-| R-004 | WASM использует байтовые смещения, JS — UTF-16 | аудит границы и тесты Unicode |
-| R-005 | Строковый content, plain-text и clipboard теряют содержимое/вложенность | в работе: ядро |
-| R-006 | Замена документа сохраняет историю предыдущего документа | в работе: ядро |
-| R-007 | React useEditorState возвращает новый snapshot для object-selector | в работе: React |
-| R-008 | Асинхронное создание редактора после destroy в адаптерах | в работе: адаптеры |
-| R-009 | Часть Cloud handlers не проверяет доступ к документу; Go-тестов нет | блокер выпуска Cloud |
-| R-010 | PDF/DOCX wrappers вызывают отсутствующие методы WASM | блокер заявленного экспорта |
-| R-011 | npm/cargo release подавляет ошибки; неполный список пакетов; CI проверяет несуществующий .mjs | в работе: выпуск |
-| R-012 | История версий в примере — alert, часть экранов без полного UI | запланирована реализация |
-| R-013 | Меню таблицы/блока/форматирования не полностью реагируют на resize/scroll | в работе: UI |
+| R-002 | JS-движок теряет raw-текст кодового блока при редактировании | исправлено; unit/regression на raw text и clipboard |
+| R-003 | Перемещение в отсутствующего родителя/потомка может удалить источник | атомарная validation JS/Rust, DnD guard; целевые тесты проходят |
+| R-004 | WASM использует байтовые смещения, JS — UTF-16 | ядро и WASM работают с UTF-16; реальные WASM/Unicode/undo тесты проходят |
+| R-005 | Строковый content, plain-text и clipboard теряют содержимое/вложенность | рекурсивные copy/cut/paste planners, целевые тесты и полный browser clipboard прогон прошли |
+| R-006 | Замена документа сохраняет историю предыдущего документа | исправлено reset/addToHistory; native selective undo сохраняет удалённые правки |
+| R-007 | React useEditorState возвращает новый snapshot для object-selector | исправлено; 4 regression tests |
+| R-008 | Асинхронное создание редактора после destroy в адаптерах | исправлено lifecycle Vue/Svelte/Solid; целевые тесты проходят |
+| R-009 | Часть Cloud handlers не проверяет доступ к документу; Go-тестов нет | исправлено; реальный PostgreSQL/Valkey, Go race/integration checks, live WS revoke/expiry tests |
+| R-010 | PDF/DOCX wrappers вызывают отсутствующие методы WASM | реальные Typst PDF / DOCX и lazy export WASM; структура файлов/Unicode и Cloud jobs проверены |
+| R-011 | npm/cargo release подавляет ошибки; неполный список пакетов; CI проверяет несуществующий .mjs | обязательные reusable CI/browser/security, полные графы bundle, npm archives и Cargo source preflight; upstream security gates ещё блокируют выпуск |
+| R-012 | История версий в примере — alert, часть экранов без полного UI | PageEditor history/list/preview/diff/restore, 5 unit tests; Chrome restore→Undo и 10 light/dark layouts проходят |
+| R-013 | Меню таблицы/блока/форматирования не полностью реагируют на resize/scroll | исправлены anchor/viewport observers, portals и cleanup; три браузера, keyboard/scroll/container resize и темы проверены |
+| R-014 | Монолитные исходники до 2700 строк, нет обязательных архитектурных правил | AGENTS/SOLID, runtime boundaries/cycles/size gates; strict release check проходит без baseline исключений |
+| R-015 | Новый Markdown зависит от mdast/micromark вопреки выбранной автономной архитектуре | свой TS parser: 94 теста, 652/652 грамматических примера совпали с прежним parser AST; зависимости удалены (44 пакета). Это не утверждение полной HTML conformance; Rust parity отдельно R-028 |
+| R-016 | Cloud принимает любой непустой пароль; нет scope/role checks на части маршрутов | bcrypt, scopes/roles, tenant isolation, quotas и session revalidation; Go race/integration проходят |
+| R-017 | Cloud export выдаёт JSON под видом PDF/DOCX; AI возвращает placeholder success | настоящие PDF/DOCX jobs и streaming providers; local fixture exports и отказ/отмена проходят |
+| R-018 | При 320 px sidebar оставляет main 80 px, внутренние панели не адаптивны | исправлены mobile navigation, container grids, wrap; финальные 130 layout cases прошли после удаления Wiki и унификации темы |
+| R-019 | IME после быстрого ввода мог вставлять текст в начало строки | исправлено pending-caret восстановление; Chrome 3/3 повторения, следующий символ и undo проверены |
+| R-020 | Базовый CSS сжимает текст чек-листа PageEditor до 16 px | изолированы page styles; Chrome 320 px: строка 216 px, визуально проверено |
+| R-021 | WebSocket provider принимал сообщения без применения, локальное demo заменяло полный JSON | заменено CRDT transport, ACK/delta/reconnect; 8 unit tests и реальный Chrome → Cloud → PostgreSQL replay прошли |
+| R-022 | camelCase schema не подходила Rust; auto mode незаметно переходил на JS | typed schema adapter; реальные WASM/auto constructors проходят, ошибки документа не маскируются |
+| R-023 | Logger терял Hijacker/Flusher: WebSocket возвращал 500, SSE не стримился | исправлено Cloud middleware, реальные WS/SSE tests; browser handshake 101 |
+| R-024 | Ввод/Enter/Delete между блоками не удалял выделенное содержимое | общие атомарные planners; JS/WASM и полный browser прогон прошли |
+| R-025 | React blockRenderer игнорировался, node decoration classes терялись на default views | восстановлен документированный callback/fallback; metadata и media classes проверены DOM-тестами |
+| R-026 | Image menu содержит фиктивные действия/вкладки; late uploads и media persistence не завершены | общий media UI, durable upload, crop/alt/preview/resize; 7 сценариев media/table проходят Chrome, Firefox и WebKit |
+| R-027 | Локальный WASM budget 800 KiB расходится с CI 500 KiB | единый measured budget 600 KiB, Node gzip9 590122 bytes на окончательном native дереве; прежний 512000 не пройден. Решение и сохранение sanitizer/API: [ADR](development/wasm-budget.md) |
+| R-028 | Native Rust Markdown семантически не совпадает с собственным TS parser | свой Rust grammar/converter: 652/652 public models, 40 постоянных fixtures + bounded stress; native schema и changed-document serializer исправлены |
+| R-029 | Caption attr update переводит caret в основной документ после первого символа | воспроизведено Chrome, guard независимого input в DOM selection исправлен; regression и реальный Unicode/caret browser retest проходят во всех трёх браузерах |
+| R-030 | TableView пишет фиктивные _addRow/_addCol, Tab зависит от запоздалого selectionchange | shared editTable и общий UI, структурные операции/resize с Undo; 3 unit tests и Chrome/Table browser tests проходят; быстрый ввод после Tab в Firefox исправлен и проверен |
+
+## Дополнительные регрессии и внешние ограничения
+
+| ID | Дефект | Работа / доказательство |
+|---|---|---|
+| R-031 | После замены paragraph на code renderer теряет native caret до следующего кадра | ядро восстанавливает ожидаемое выделение после DOM commit; быстрый ввод, сценарии кода и общий повтор прошли |
+| R-032 | Touch long-press показывал drag state без реального перемещения | общий pointer lifecycle, move/drop/edge scroll; 11 реальных Chrome touch проверок обоих редакторов, Undo/cancel/read-only/destroy/container resize |
+| R-033 | Checkbox задач реагировал только на mousedown | нативный change обрабатывает мышь и Space; 3 браузерных сценария keyboard/read-only/Undo прошли |
+| R-034 | Обновлённые native зависимости экспорта имеют неполный источник для публикации | исправлены известные vulnerabilities; upstream citationberg fix пока закреплён Git commit. Crates.io source release и cargo-deny maintenance gate остаются закрыты; детали в dependency policy |
+| R-035 | Toolbar metrics могли учитывать подписи контролов кодового блока | исправлено; hover/transform проверки и полный промежуточный прогон прошли |
+| R-036 | Вложенные todo существовали в модели, но не отображались | оба renderer исправлены; 20 native layout/input/checkbox checks в Chrome/Firefox и cross-browser regression прошли |
+| R-037 | Async подсветка теряла native caret и могла конфликтовать с IME DOM | snapshot boundary через чистый getDOMSelection, отложенный token render; native Chrome IME и Firefox/WebKit range/Unicode/Undo проверены |
+| R-038 | WebKit передаёт Shift+Enter как insertParagraph | общий input planner учитывает Shift intent; 12 unit + 9 browser regressions прошли |
+| R-039 | Кнопка + оставляла пустой блок после одного Undo | вставка блока, slash и caret объединены в одну транзакцию; hover/history stress прошёл |
+| R-040 | PDF export считал столбцы по числу ячеек первой строки, игнорируя colspan | исправлены logical grid, rowspan occupancy и explicit positions; PDF 3/3 и DOCX 4/4 regression tests, native/WASM validators и реальные Cloud jobs прошли |
+| R-041 | Конкурентная правка во время IME могла терять текст и оставлять stale DOM | pre-mutation interruption сохраняет новый документ и возвращает текст/исходное выделение в COMPOSITION_CONFLICT; native Chrome CDP model/DOM/recovery проверены. Awareness decorations ждут окончания IME; автоматического rebase пересекающихся правок нет |
+| R-042 | Отложенное обновление подсветки могло сработать внутри следующей IME композиции | pending frame отменяется при новой композиции; guard и lifecycle regression прошли, обычный native IME/подсветка повторно проверены |
 
 ## Проверки перед закрытием цели
 
-- [ ] Unit/property-тесты всех поддерживаемых движков и модулей, включая найденные регрессии.
-- [ ] Typecheck/lint/build workspace без замалчивания ошибок.
-- [ ] Браузерная функциональная матрица и ручная визуальная проверка всех экранов.
-- [ ] Сохранение и восстановление документов при ошибках, отменах и конкурентных правках.
-- [ ] Go API: изоляция пользователей/организаций, CRUD, WebSocket, тестовые зависимости.
-- [ ] Сборка под CSP SpecOrbit и проверка отсутствия неожиданных сетевых запросов.
-- [ ] Чистые потребители tarball-пакетов, каждый exports путь и файл лицензии проверен.
-- [ ] Документация и примеры соответствуют реальному поведению.
-- [ ] Итоговый отчёт содержит версии инструментов, команды, результаты, ограничения и артефакты.
+- [x] Unit/интеграционные тесты всех поддерживаемых движков и модулей, включая найденные регрессии.
+- [x] Typecheck/lint/build workspace без замалчивания ошибок.
+- [x] `pnpm check:architecture:release`: нет старых превышений размеров и временных runtime-зависимостей.
+- [x] Браузерная функциональная матрица и ручная визуальная проверка всех экранов.
+- [x] Сохранение и восстановление документов при ошибках, отменах и конкурентных правках.
+- [x] Go API: изоляция пользователей/организаций, CRUD, WebSocket, тестовые зависимости.
+- [x] Generic CSP consumer после удаления Wiki: сборка и проверка сетевых запросов.
+- [x] Чистые потребители tarball-пакетов, каждый exports путь и файл лицензии проверен.
+- [x] Документация и примеры соответствуют реальному поведению.
+- [x] Итоговый отчёт содержит версии инструментов, команды, результаты, ограничения и артефакты.
+
+- [ ] `pnpm check:cargo-release`: исправленный registry graph без Git patch.
+- [ ] `cargo deny check advisories`: отсутствуют неподдерживаемые native dependencies.
 
 ## Журнал
 
@@ -104,3 +149,97 @@
   `output/playwright/page-handle-verification.json` и `page-handle-fix.png`.
 - 2026-11-09: начат независимый аудит ядра и упаковки; перечисленные выше блокеры
   подтверждены исходниками. Проверки старого проекта не означают готовность нового UI.
+
+- 2026-11-10: полный целевой wiki Chrome suite 11/11; React renderer/floating/store
+  12/12; core на проверенном промежуточном дереве 165/165. Это не заменяет финальный
+  прогон после следующих правок.
+- 2026-11-10: две реальные WASM реплики + локальный Cloud/PostgreSQL подтвердили
+  concurrent offline edits, reconnect, durable ACK и новый bootstrap из GET.
+  `output/cloud-validation/browser-sync-result.json`; секреты не входят в отчёт.
+- 2026-11-10: один источник темы `packages/theme/src/design-tokens.json` используется
+  PageEditor, общим CSS и JS presets. `pnpm check:theme` проверяет generated CSS.
+  React renderer, clipboard, slash, CSS и core orchestration разделены по владельцам;
+  строгая проверка проходит с пустым baseline, без размерного долга.
+
+- 2026-11-10: 65 текущих layout-сценариев (13 маршрутов × 5 ширин) прошли:
+  нет горизонтального overflow страницы, минимальная ширина обычного редактора
+  214 px при viewport 320 px. Это геометрическая проверка; финальные темы/взаимодействия
+  и визуальная приёмка проверяются отдельно.
+- 2026-11-10: публичный validate больше не отправляет public JSON напрямую в Rust
+  enum decoder; JS проверяет схему вместо unconditional true. Native Chrome
+  cross-block cut → Undo → paste → Undo проходит; basic/navigation 11/11.
+- 2026-11-10: AI unit/UI 19/19 и browser 21/21 (3 движка): generation,
+  cancel/error/retry, proofread/Undo, read-only, ghost completion, узкая ширина.
+  Непроверенные платные внешние запросы не входят в этот результат.
+
+## Открытый gate зависимостей (2026-11-10)
+
+- Свежие npm audit, cargo-audit и Go govulncheck не находят уязвимостей после
+  обновлений. Go vet, unit/race и изолированный PostgreSQL/Valkey integration/race
+  прошли на Go 1.26.10; это не заменяет финальный Docker smoke.
+- `cargo deny check licenses` проходит. `cargo deny check advisories` остаётся
+  красным: шесть unmaintained транзитивных зависимостей актуального Typst.
+  Игнорирования не добавлены; точная цепочка и решение описаны в
+  [политике зависимостей](development/dependencies.md#native-and-cloud-security-boundary).
+- Исправленный quick-xml требует upstream Git patch citationberg, ещё не
+  опубликованный в crates.io. `pnpm check:cargo-release` намеренно запрещает
+  публикацию до доступности исправленного registry graph, до любых npm/crate
+  publish шагов. Нельзя называть исходный Cargo выпуск готовым.
+- Собственный OOXML renderer и Typst 0.15.1 требуют нового полного прогона
+  native/browser PDF/DOCX validators и Cloud image; старые export receipts
+  относятся к предыдущему compiler graph.
+
+- 2026-11-10: лендинг использует shared tokens и проверен на 10 light/dark layouts;
+  убраны фиктивные тарифы, SLA и непроверенные сравнительные метрики. Typecheck/lint
+  проходят; окончательная workspace сборка ещё предстоит.
+- 2026-11-10: production wiki под CSP SpecOrbit загрузил только собственные
+  HTML/JS/CSS; нет CSP violations, page errors, external requests или WASM.
+  Unicode/Undo, keyboard checkbox, read-only и 320 px проверены. Повторить на
+  окончательном дереве; процедура в [CSP contract](development/csp.md).
+
+- 2026-11-10: полный Chrome прогон 875 сценариев: 845 прошли, 30 не прошли.
+  Найдены отдельная Undo-запись кнопки +, невидимые вложенные todo-строки и
+  задержка позиционирования AI ghost после resize; исправления и повтор продолжаются.
+  Часть старых fixtures нарушала raw-code schema, ожидала целый list вместо строки
+  или меняла theme-атрибут без применения токенов; проверки обновляются на публичный
+  контракт без удаления сценариев. Это промежуточный прогон, не релизная приёмка.
+- 2026-11-10: optional highlight contract проверен семью unit-сценариями, в том числе
+  настоящими Shiki grammars, retry после сбоя, Unicode/newline integrity и stale async.
+  Highlighter не может подменять editable DOM неполным текстом.
+
+## Текущая локальная приёмка (2026-11-10)
+
+- Workspace build/typecheck/lint: 21/21; lint содержит 24 advisory предупреждения
+  ARIA/semantic-elements, ошибок нет. Проверки клавиатуры и focus выполняются отдельно.
+- Vitest: 524/524; native Rust: 228 тестов, fmt и строгий Clippy прошли.
+- Architecture: 539 production files, пустой размерный baseline, 8 JS graph budgets
+  соблюдены. Core WASM: 590122 bytes gzip9 при лимите 614400.
+- Чистая установка 21 tarball: 27 ESM, 25 CJS, TypeScript без skipLibCheck,
+  реальные HTML/Markdown/PDF/DOCX consumers; ZIP/XML/Unicode/media validators прошли.
+- Generic CSP consumer: собственные HTML/JS/CSS, без WASM/внешних запросов/CSP
+  violations; Unicode/Undo, task keyboard, read-only и 10 layouts прошли.
+- В промежуточном полном прогоне было 2625/2628 успешных сценариев. Причины трёх
+  сбоев caret fixtures подтверждены и устранены; ниже результат окончательного повтора.
+- Окончательный повтор: **2634/2634** (878 × Chromium/Firefox/WebKit), 17,8 минуты.
+  Исходники не менялись: tree SHA256
+  `33a36edae716dacc0b54856e30223a795a13d2da54cbc685d2d57f2c288f5d7b`, runtime/build SHA256
+  `b077d5a5c2fe05044fcb4489fdecd1cbef51f1a31c08615261c3f584edc3408e`.
+  Последующее обновление этого отчёта не меняет runtime. Source/package receipts
+  позволяют сверить конкретные файлы и архивы.
+- На окончательном общем примере отдельно пройдены gutter hover, меню шести точек,
+  native block/list drag, Markdown reorder, точный Undo, Redo, read-only и hover
+  после decoration updates. Новая Wiki-оболочка в другом месте не создавалась.
+- Native Chrome CDP подтвердил сохранение конкурентной правки и DOM, видимый recovery
+  text при COMPOSITION_CONFLICT и отложенную публикацию awareness decorations без
+  прерывания IME. Конфликт документа возвращает ввод хосту; автоматический rebase
+  пересекающихся правок и его бесшовное слияние этим результатом не заявляются.
+- npm audit, cargo-audit и govulncheck: уязвимостей не найдено. Это не снимает
+  два незакрытых source-release gates R-034. Повторная проверка официальных
+  upstream/registry источников 10 ноября подтвердила отсутствие исправленного выпуска.
+
+Подробные команды, версии и receipts находятся в ignored `output/release-gates-final.json`,
+`output/release-tree-before.json`, `output/release-package-artifacts.json`,
+`output/manual-browser-acceptance-final.json`, `output/release-browser-final.log`,
+`output/native-pdf-refresh-result.json` и `output/upstream-gate-refresh/result.json`.
+Удалённый CI, интеграция в реальный renderer SpecOrbit, внешние платные AI запросы
+и публикация не выполнялись. Ограничения форматов остаются в export-contract.md.

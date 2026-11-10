@@ -2,6 +2,11 @@ import { type GoTipeEditor, defineExtension } from "@gotipe/core";
 import { VersionsManager } from "./manager";
 import type { VersionsOptions } from "./types";
 
+const managers = new WeakMap<GoTipeEditor, VersionsManager>();
+export function getVersionsManager(editor: GoTipeEditor): VersionsManager | undefined {
+  return managers.get(editor);
+}
+
 export const defineVersions = defineExtension<VersionsOptions>({
   name: "versions",
   options: { autoSave: false, autoSaveInterval: 300000, maxVersions: 100 },
@@ -9,12 +14,10 @@ export const defineVersions = defineExtension<VersionsOptions>({
   onCreate(editor: GoTipeEditor) {
     const opts = this.options as VersionsOptions;
     const manager = new VersionsManager(editor, opts);
-    (editor as unknown as Record<string, unknown>).__versionsManager = manager;
+    managers.set(editor, manager);
   },
   onDestroy(editor: GoTipeEditor) {
-    const manager = (editor as unknown as Record<string, unknown>).__versionsManager as
-      | VersionsManager
-      | undefined;
-    manager?.destroy();
+    managers.get(editor)?.destroy();
+    managers.delete(editor);
   },
 });

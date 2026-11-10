@@ -84,6 +84,18 @@ impl Document {
         remove_from_blocks(&mut self.blocks, id)
     }
 
+    /// A block identity must be unique across the entire document tree.
+    pub fn duplicate_block_id(&self) -> Option<&BlockId> {
+        let mut ids = std::collections::HashSet::new();
+        self.flatten().find_map(|block| {
+            if ids.insert(&block.id) {
+                None
+            } else {
+                Some(&block.id)
+            }
+        })
+    }
+
     /// Recursive flattening of all blocks (depth-first)
     pub fn flatten(&self) -> impl Iterator<Item = &Block> {
         let mut result = Vec::new();
@@ -162,10 +174,13 @@ impl Block {
         }
     }
 
+    /// Length in UTF-16 code units, matching JavaScript and DOM text offsets.
     pub fn text_length(&self) -> usize {
         match &self.content {
-            BlockContent::RichText(spans) => spans.iter().map(|s| s.text.len()).sum(),
-            BlockContent::Raw(s) => s.len(),
+            BlockContent::RichText(spans) => {
+                spans.iter().map(|s| s.text.encode_utf16().count()).sum()
+            }
+            BlockContent::Raw(s) => s.encode_utf16().count(),
             BlockContent::Empty => 0,
         }
     }

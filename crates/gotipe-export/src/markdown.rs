@@ -1,7 +1,26 @@
-use gotipe_core::{AttrValue, Block, BlockContent, Document, Mark, TextSpan};
+use gotipe_core::{AttrValue, Block, BlockContent, Document, TextSpan};
 
 /// Convert a Document to Markdown
 pub fn to_markdown(doc: &Document) -> String {
+    if let Some(first) = doc.blocks.first() {
+        if let (Some(AttrValue::String(source)), Some(AttrValue::String(model))) = (
+            first.attrs.get("markdownDocumentSource"),
+            first.attrs.get("markdownDocumentModel"),
+        ) {
+            let mut current = doc.clone();
+            current.version = 0;
+            current.blocks[0].attrs.remove("markdownDocumentSource");
+            current.blocks[0].attrs.remove("markdownDocumentModel");
+            if serde_json::to_value(&current)
+                .ok()
+                .and_then(|value| serde_json::to_string(&value).ok())
+                .as_deref()
+                == Some(model.as_str())
+            {
+                return source.clone();
+            }
+        }
+    }
     let mut md = String::new();
     for (i, block) in doc.blocks.iter().enumerate() {
         md.push_str(&block_to_markdown(block));
@@ -13,236 +32,305 @@ pub fn to_markdown(doc: &Document) -> String {
 }
 
 fn block_to_markdown(block: &Block) -> String {
+    let content = content_to_markdown(&block.content);
+    let nested = block
+        .children
+        .iter()
+        .map(block_to_markdown)
+        .collect::<Vec<_>>()
+        .join("\n");
+    let attr = |name: &str| match block.attrs.get(name) {
+        Some(AttrValue::String(value)) => value.as_str(),
+        _ => "",
+    };
     match block.block_type.as_str() {
-        "paragraph" => {
-            let content = content_to_markdown(&block.content);
-            format!("{content}\n")
-        }
+        "paragraph" => format!("{content}\n{nested}"),
         "heading" => {
             let level = match block.attrs.get("level") {
                 Some(AttrValue::Number(n)) => *n as usize,
                 _ => 1,
-            };
-            let hashes = "#".repeat(level.clamp(1, 6));
-            let content = content_to_markdown(&block.content);
-            format!("{hashes} {content}\n")
-        }
-        "bulletList" => {
-            let mut items = String::new();
-            for child in &block.children {
-                let content = content_to_markdown(&child.content);
-                items.push_str(&format!("- {content}\n"));
             }
-            items
+            .clamp(1, 6);
+            format!("{} {content}\n{nested}", "#".repeat(level))
         }
-        "orderedList" => {
+        "bulletList" | "orderedList" | "todoList" => {
             let start = match block.attrs.get("start") {
                 Some(AttrValue::Number(n)) => *n as usize,
                 _ => 1,
             };
-            let mut items = String::new();
-            for (i, child) in block.children.iter().enumerate() {
-                let num = start + i;
-                let content = content_to_markdown(&child.content);
-                items.push_str(&format!("{num}. {content}\n"));
-            }
-            items
+            block
+                .children
+                .iter()
+                .enumerate()
+                .map(|(i, item)| {
+                    let marker = match attr("marker") {
+                        "+" => "+",
+                        "*" => "*",
+                        _ => "-",
+                    };
+                    let prefix = if block.block_type == "orderedList" {
+                        format!(
+                            "{}{} ",
+                            start + i,
+                            if attr("delimiter") == ")" { ")" } else { "." }
+                        )
+                    } else if block.block_type == "todoList" || item.attrs.contains_key("checked") {
+                        if matches!(item.attrs.get("checked"), Some(AttrValue::Bool(true))) {
+                            format!("{marker} [x] ")
+                        } else {
+                            format!("{marker} [ ] ")
+                        }
+                    } else {
+                        format!("{marker} ")
+                    };
+                    let text = content_to_markdown(&item.content);
+                    let indent = " ".repeat(prefix.len());
+                    let mut rendered =
+                        format!("{prefix}{}\n", text.replace('\n', &format!("\n{indent}")));
+                    for child in &item.children {
+                        for line in block_to_markdown(child).lines() {
+                            rendered.push_str(&format!("{indent}{line}\n"))
+                        }
+                    }
+                    rendered
+                })
+                .collect()
         }
+        "listItem" | "todoItem" => format!("{content}\n{nested}"),
         "codeBlock" => {
-            let lang = match block.attrs.get("language") {
-                Some(AttrValue::String(s)) => s.as_str(),
-                _ => "",
-            };
-            let content = match &block.content {
-                BlockContent::Raw(s) => s.clone(),
-                _ => String::new(),
-            };
-            format!("```{lang}\n{content}\n```\n")
+            let raw = crate::plaintext::block_text(block);
+            let fence = code_fence(&raw, 3);
+            let mut info = attr("language").replace(['\n', '\r', '`'], "");
+            if !attr("meta").is_empty() {
+                info.push(' ');
+                info.push_str(&attr("meta").replace(['\n', '\r', '`'], ""));
+            }
+            format!("{fence}{info}\n{raw}\n{fence}\n{nested}")
         }
-        "blockquote" => {
-            let content = content_to_markdown(&block.content);
-            let lines: Vec<String> = content.lines().map(|l| format!("> {l}")).collect();
-            format!("{}\n", lines.join("\n"))
+        "blockquote" => format!(
+            "{}\n",
+            format!("{content}\n{nested}")
+                .trim_end()
+                .lines()
+                .map(|line| format!("> {line}"))
+                .collect::<Vec<_>>()
+                .join("\n")
+        ),
+        "callout" => {
+            let label = if attr("type") == "agent" {
+                "**Инструкции для агента:** ".to_owned()
+            } else {
+                let kind = match attr("type") {
+                    "tip" | "success" => "TIP",
+                    "important" => "IMPORTANT",
+                    "warning" => "WARNING",
+                    "caution" | "error" | "danger" => "CAUTION",
+                    _ => "NOTE",
+                };
+                format!("[!{kind}]\n")
+            };
+            format!(
+                "{}\n",
+                format!("{label}{content}\n{nested}")
+                    .trim_end()
+                    .lines()
+                    .map(|line| format!("> {line}"))
+                    .collect::<Vec<_>>()
+                    .join("\n")
+            )
         }
         "divider" => "---\n".into(),
-        "image" => {
-            let src = match block.attrs.get("src") {
-                Some(AttrValue::String(s)) => s.as_str(),
-                _ => "",
-            };
-            let alt = match block.attrs.get("alt") {
-                Some(AttrValue::String(s)) => s.as_str(),
-                _ => "",
-            };
-            format!("![{alt}]({src})\n")
+        "image" => format!(
+            "![{}](<{}>{})\n{nested}",
+            escape_text(attr("alt")),
+            destination(attr("src")),
+            title_suffix(attr("caption"))
+        ),
+        "file" | "embed" => format!(
+            "[{}](<{}>)\n{nested}",
+            escape_text(if attr("name").is_empty() {
+                attr("url")
+            } else {
+                attr("name")
+            }),
+            destination(attr("url"))
+        ),
+        "math" => format!("$$\n{}\n$$\n{nested}", crate::plaintext::block_text(block)),
+        "markdownRaw" => format!("{}\n{nested}", crate::plaintext::block_text(block)),
+        "table" => {
+            let mut result = String::new();
+            for (index, row) in block.children.iter().enumerate() {
+                let cells = row
+                    .children
+                    .iter()
+                    .map(|cell| {
+                        format!(
+                            "{}{}",
+                            content_to_markdown(&cell.content),
+                            cell.children
+                                .iter()
+                                .map(block_to_markdown)
+                                .collect::<String>()
+                        )
+                        .trim()
+                        .replace('|', "\\|")
+                        .replace('\n', "<br>")
+                    })
+                    .collect::<Vec<_>>();
+                result.push_str(&format!("| {} |\n", cells.join(" | ")));
+                if index == 0 {
+                    let alignment = match block.attrs.get("align") {
+                        Some(AttrValue::Array(values)) => values.as_slice(),
+                        _ => &[],
+                    };
+                    let delimiters: Vec<_> = (0..cells.len())
+                        .map(|column| match alignment.get(column) {
+                            Some(AttrValue::String(value)) if value == "left" => ":---",
+                            Some(AttrValue::String(value)) if value == "right" => "---:",
+                            Some(AttrValue::String(value)) if value == "center" => ":---:",
+                            _ => "---",
+                        })
+                        .collect();
+                    result.push_str(&format!("| {} |\n", delimiters.join(" | ")))
+                }
+            }
+            result
         }
-        "math" => {
-            let content = match &block.content {
-                BlockContent::Raw(s) => s.clone(),
-                _ => String::new(),
-            };
-            format!("$$\n{content}\n$$\n")
-        }
-        _ => {
-            let content = content_to_markdown(&block.content);
-            format!("{content}\n")
-        }
+        _ => format!("{content}\n{nested}"),
     }
 }
-
+fn title_suffix(title: &str) -> String {
+    if title.is_empty() {
+        String::new()
+    } else {
+        format!(
+            " \"{}\"",
+            title
+                .replace('\\', "\\\\")
+                .replace('"', "\\\"")
+                .replace('&', "\\&")
+        )
+    }
+}
+fn destination(url: &str) -> String {
+    url.replace('\\', "\\\\")
+        .replace('<', "\\<")
+        .replace('>', "\\>")
+        .replace('&', "\\&")
+        .replace('\n', "%0A")
+        .replace('\r', "%0D")
+}
+fn escape_text(text: &str) -> String {
+    let mut result = String::new();
+    for c in text.chars() {
+        if "\\`*_[]<>#!~&".contains(c) {
+            result.push('\\')
+        };
+        result.push(c)
+    }
+    result
+}
+fn code_fence(text: &str, minimum: usize) -> String {
+    let mut longest = 0;
+    let mut current = 0;
+    for c in text.chars() {
+        if c == '`' {
+            current += 1;
+            longest = longest.max(current)
+        } else {
+            current = 0
+        }
+    }
+    "`".repeat(minimum.max(longest + 1))
+}
 fn content_to_markdown(content: &BlockContent) -> String {
     match content {
         BlockContent::RichText(spans) => spans_to_markdown(spans),
-        BlockContent::Raw(s) => s.clone(),
+        BlockContent::Raw(raw) => raw.clone(),
         BlockContent::Empty => String::new(),
     }
 }
-
 fn spans_to_markdown(spans: &[TextSpan]) -> String {
-    let mut md = String::new();
-    for span in spans {
-        let mut text = span.text.clone();
-        for mark in &span.marks {
-            text = wrap_mark_md(&text, mark);
-        }
-        md.push_str(&text);
-    }
-    md
-}
-
-fn wrap_mark_md(text: &str, mark: &Mark) -> String {
-    match mark.mark_type.as_str() {
-        "bold" => format!("**{text}**"),
-        "italic" => format!("*{text}*"),
-        "strikethrough" => format!("~~{text}~~"),
-        "code" => format!("`{text}`"),
-        "link" => {
-            let href = match mark.attrs.get("href") {
-                Some(AttrValue::String(s)) => s.as_str(),
-                _ => "#",
+    spans
+        .iter()
+        .map(|span| {
+            let raw = span.marks.iter().any(|mark| mark.mark_type == "mdRaw");
+            let mut text = if raw {
+                span.text.clone()
+            } else if span.marks.iter().any(|mark| mark.mark_type == "code") {
+                let fence = code_fence(&span.text, 1);
+                let padding = if span.text.starts_with('`')
+                    || span.text.ends_with('`')
+                    || span.text.starts_with(' ')
+                        && span.text.ends_with(' ')
+                        && span.text.chars().any(|c| c != ' ')
+                {
+                    " "
+                } else {
+                    ""
+                };
+                format!("{fence}{padding}{}{padding}{fence}", span.text)
+            } else {
+                escape_text(&span.text)
             };
-            format!("[{text}]({href})")
-        }
-        _ => text.to_string(),
-    }
+            for mark in &span.marks {
+                let (open, close) = match mark.mark_type.as_str() {
+                    "bold" => ("**", "**"),
+                    "italic" => ("*", "*"),
+                    "strikethrough" => ("~~", "~~"),
+                    "underline" => ("<u>", "</u>"),
+                    "highlight" => ("<mark>", "</mark>"),
+                    "superscript" => ("<sup>", "</sup>"),
+                    "subscript" => ("<sub>", "</sub>"),
+                    _ => ("", ""),
+                };
+                let colored;
+                let (open, close) = if matches!(mark.mark_type.as_str(), "textColor" | "highlight") {
+                    if let Some(AttrValue::String(color)) = mark.attrs.get("color").filter(|value| matches!(value, AttrValue::String(color) if crate::html::safe_color(color))) {
+                        let (tag, property) = if mark.mark_type == "textColor" { ("span", "color") } else { ("mark", "background-color") };
+                        colored = format!("<{tag} style=\"{property}:{color}\">");
+                        (colored.as_str(), if tag == "span" { "</span>" } else { "</mark>" })
+                    } else { (open, close) }
+                } else { (open, close) };
+                if !open.is_empty() {
+                    let leading = text.len() - text.trim_start().len();
+                    let end = text.trim_end().len();
+                    if end > leading {
+                        text = format!(
+                            "{}{open}{}{close}{}",
+                            &text[..leading],
+                            &text[leading..end],
+                            &text[end..]
+                        )
+                    }
+                }
+                if mark.mark_type == "link" {
+                    if let Some(AttrValue::String(href)) = mark.attrs.get("href") {
+                        let title = match mark.attrs.get("title") {
+                            Some(AttrValue::String(title)) => title.as_str(),
+                            _ => "",
+                        };
+                        text = format!("[{text}](<{}>{})", destination(href), title_suffix(title))
+                    }
+                }
+            }
+            text
+        })
+        .collect()
 }
 
-/// Parse Markdown to Document (using comrak for CommonMark + GFM)
+/// Parse supported Markdown into GoTipe blocks, retaining unknown syntax as raw content.
 pub fn from_markdown(
     md: &str,
     _schema: &gotipe_core::Schema,
 ) -> Result<Document, crate::ConvertError> {
-    use comrak::{parse_document, Arena, Options};
-
-    let arena = Arena::new();
-    let mut options = Options::default();
-    options.extension.strikethrough = true;
-    options.extension.table = true;
-
-    let root = parse_document(&arena, md, &options);
-    let mut blocks = Vec::new();
-
-    for child in root.children() {
-        if let Some(block) = node_to_block(child) {
-            blocks.push(block);
-        }
-    }
-
-    Ok(Document { blocks, version: 0 })
-}
-
-fn node_to_block<'a>(
-    node: &'a comrak::arena_tree::Node<'a, std::cell::RefCell<comrak::nodes::Ast>>,
-) -> Option<Block> {
-    use comrak::nodes::NodeValue;
-    use gotipe_core::{Block, BlockId};
-
-    let ast = node.data.borrow();
-    match &ast.value {
-        NodeValue::Paragraph => {
-            let text = collect_text(node);
-            Some(Block {
-                id: BlockId::new(),
-                block_type: "paragraph".into(),
-                attrs: std::collections::HashMap::new(),
-                content: BlockContent::RichText(vec![TextSpan {
-                    text,
-                    marks: vec![],
-                }]),
-                children: vec![],
-            })
-        }
-        NodeValue::Heading(heading) => {
-            let text = collect_text(node);
-            Some(Block {
-                id: BlockId::new(),
-                block_type: "heading".into(),
-                attrs: std::collections::HashMap::from([(
-                    "level".into(),
-                    AttrValue::Number(heading.level as f64),
-                )]),
-                content: BlockContent::RichText(vec![TextSpan {
-                    text,
-                    marks: vec![],
-                }]),
-                children: vec![],
-            })
-        }
-        NodeValue::CodeBlock(code) => Some(Block {
-            id: BlockId::new(),
-            block_type: "codeBlock".into(),
-            attrs: std::collections::HashMap::from([(
-                "language".into(),
-                AttrValue::String(code.info.clone()),
-            )]),
-            content: BlockContent::Raw(code.literal.clone()),
-            children: vec![],
-        }),
-        NodeValue::ThematicBreak => Some(Block {
-            id: BlockId::new(),
-            block_type: "divider".into(),
-            attrs: std::collections::HashMap::new(),
-            content: BlockContent::Empty,
-            children: vec![],
-        }),
-        NodeValue::BlockQuote => {
-            let text = collect_text(node);
-            Some(Block {
-                id: BlockId::new(),
-                block_type: "blockquote".into(),
-                attrs: std::collections::HashMap::new(),
-                content: BlockContent::RichText(vec![TextSpan {
-                    text,
-                    marks: vec![],
-                }]),
-                children: vec![],
-            })
-        }
-        _ => None,
-    }
-}
-
-fn collect_text<'a>(
-    node: &'a comrak::arena_tree::Node<'a, std::cell::RefCell<comrak::nodes::Ast>>,
-) -> String {
-    use comrak::nodes::NodeValue;
-    let mut text = String::new();
-    for child in node.children() {
-        let ast = child.data.borrow();
-        match &ast.value {
-            NodeValue::Text(t) => text.push_str(t),
-            NodeValue::SoftBreak | NodeValue::LineBreak => text.push(' '),
-            NodeValue::Code(c) => text.push_str(&c.literal),
-            _ => text.push_str(&collect_text(child)),
-        }
-    }
-    text
+    Ok(crate::markdown_parse::parse(md))
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use gotipe_core::{Block, BlockContent, BlockId, TextSpan};
+    use gotipe_core::{Block, BlockContent, BlockId, Mark, TextSpan};
     use std::collections::HashMap;
 
     #[test]

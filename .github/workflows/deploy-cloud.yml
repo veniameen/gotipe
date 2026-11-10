@@ -7,6 +7,10 @@ on:
     paths:
       - "apps/cloud/**"
       - "infra/**"
+      - "crates/**"
+      - "Cargo.toml"
+      - "Cargo.lock"
+      - ".github/workflows/deploy-cloud.yml"
 
 concurrency:
   group: deploy-cloud
@@ -45,7 +49,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v5
         with:
-          go-version: "1.23"
+          go-version-file: apps/cloud/go.mod
           cache-dependency-path: apps/cloud/go.sum
 
       - name: Run migrations
@@ -54,8 +58,9 @@ jobs:
           DATABASE_URL: postgres://gotipe:gotipe@localhost:5432/gotipe_test?sslmode=disable
 
       - name: Test with race detector
-        run: go test ./... -race -count=1 -coverprofile=coverage.out
+        run: GOMAXPROCS=2 go test -p 2 -tags integration ./... -race -count=1 -coverprofile=coverage.out
         env:
+          GOTIPE_TEST_DATABASE_URL: postgres://gotipe:gotipe@localhost:5432/gotipe_test?sslmode=disable
           DATABASE_URL: postgres://gotipe:gotipe@localhost:5432/gotipe_test?sslmode=disable
           VALKEY_URL: redis://localhost:6379/0
 
@@ -83,7 +88,7 @@ jobs:
       - name: Build and push API image
         uses: docker/build-push-action@v6
         with:
-          context: apps/cloud
+          context: .
           file: apps/cloud/Dockerfile
           push: true
           tags: |

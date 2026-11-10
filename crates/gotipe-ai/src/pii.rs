@@ -1,4 +1,5 @@
-use regex::Regex;
+mod scanner;
+mod unicode;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -17,72 +18,58 @@ pub struct PiiMatch {
 }
 
 /// PII detector for pre-processing text before sending to AI
-pub struct PiiDetector {
-    email_regex: Regex,
-    phone_regex: Regex,
-    credit_card_regex: Regex,
-}
+pub struct PiiDetector;
 
 impl PiiDetector {
     pub fn new() -> Self {
-        PiiDetector {
-            email_regex: Regex::new(r"[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}")
-                .expect("valid email regex"),
-            phone_regex: Regex::new(r"(?:\+?1[-.\s]?)?(?:\(?\d{3}\)?[-.\s]?)?\d{3}[-.\s]?\d{4}")
-                .expect("valid phone regex"),
-            credit_card_regex: Regex::new(r"\b\d{4}[-\s]?\d{4}[-\s]?\d{4}[-\s]?\d{4}\b")
-                .expect("valid credit card regex"),
-        }
+        Self
     }
 
-    /// Detect email addresses in text
+    /// Detect email addresses. Positions use UTF-16 code units for browser consumers.
     pub fn detect_email(&self, text: &str) -> Vec<PiiMatch> {
-        self.email_regex
-            .find_iter(text)
-            .map(|m| PiiMatch {
-                pii_type: PiiType::Email,
-                start: m.start(),
-                end: m.end(),
-                matched_text: m.as_str().into(),
-            })
-            .collect()
+        self.matches(text, PiiType::Email)
     }
 
-    /// Detect phone numbers in text (international formats)
+    /// Detect likely phone numbers in the supported formatted-number patterns.
     pub fn detect_phone(&self, text: &str) -> Vec<PiiMatch> {
-        self.phone_regex
-            .find_iter(text)
-            .filter(|m| {
-                let digits: String = m.as_str().chars().filter(|c| c.is_ascii_digit()).collect();
-                digits.len() >= 10
-            })
-            .map(|m| PiiMatch {
-                pii_type: PiiType::Phone,
-                start: m.start(),
-                end: m.end(),
-                matched_text: m.as_str().into(),
-            })
-            .collect()
+        self.matches(text, PiiType::Phone)
     }
 
-    /// Detect credit card numbers (with Luhn validation)
+    /// Detect credit card numbers with Luhn validation.
     pub fn detect_credit_card(&self, text: &str) -> Vec<PiiMatch> {
-        self.credit_card_regex
-            .find_iter(text)
-            .filter(|m| {
-                let digits: String = m.as_str().chars().filter(|c| c.is_ascii_digit()).collect();
-                luhn_check(&digits)
-            })
-            .map(|m| PiiMatch {
-                pii_type: PiiType::CreditCard,
-                start: m.start(),
-                end: m.end(),
-                matched_text: m.as_str().into(),
+        self.matches(text, PiiType::CreditCard)
+    }
+
+    fn ranges(&self, text: &str, kind: &PiiType) -> Vec<std::ops::Range<usize>> {
+        scanner::ranges(text, kind)
+            .into_iter()
+            .filter(|range| {
+                let digits: String = text[range.clone()]
+                    .chars()
+                    .filter(|ch| ch.is_ascii_digit())
+                    .collect();
+                match kind {
+                    PiiType::Email => true,
+                    PiiType::Phone => digits.len() >= 10,
+                    PiiType::CreditCard => luhn_check(&digits),
+                }
             })
             .collect()
     }
 
-    /// Detect all PII types
+    fn matches(&self, text: &str, kind: PiiType) -> Vec<PiiMatch> {
+        self.ranges(text, &kind)
+            .into_iter()
+            .map(|range| PiiMatch {
+                pii_type: kind.clone(),
+                start: text[..range.start].encode_utf16().count(),
+                end: text[..range.end].encode_utf16().count(),
+                matched_text: text[range].into(),
+            })
+            .collect()
+    }
+
+    /// Detect all supported types, ordered by their UTF-16 start position.
     pub fn detect_all(&self, text: &str) -> Vec<PiiMatch> {
         let mut matches = Vec::new();
         matches.extend(self.detect_email(text));
@@ -92,29 +79,31 @@ impl PiiDetector {
         matches
     }
 
-    /// Redact all PII from text, replacing with [REDACTED]
+    /// Redact the union of matches, so overlapping phone/card matches cannot
+    /// duplicate placeholders or expose a suffix of a longer sensitive value.
     pub fn redact_pii(&self, text: &str) -> String {
-        let matches = self.detect_all(text);
-        if matches.is_empty() {
-            return text.to_string();
+        let mut ranges = Vec::new();
+        for kind in [PiiType::Email, PiiType::Phone, PiiType::CreditCard] {
+            ranges.extend(self.ranges(text, &kind));
         }
-
-        let mut result = String::with_capacity(text.len());
-        let mut last_end = 0;
-
-        for m in &matches {
-            if m.start > last_end {
-                result.push_str(&text[last_end..m.start]);
+        ranges.sort_by_key(|range| range.start);
+        let mut merged: Vec<std::ops::Range<usize>> = Vec::new();
+        for range in ranges {
+            if let Some(last) = merged.last_mut().filter(|last| range.start <= last.end) {
+                last.end = last.end.max(range.end);
+            } else {
+                merged.push(range);
             }
-            result.push_str("[REDACTED]");
-            last_end = m.end;
         }
-
-        if last_end < text.len() {
-            result.push_str(&text[last_end..]);
+        let mut output = String::with_capacity(text.len());
+        let mut end = 0;
+        for range in merged {
+            output.push_str(&text[end..range.start]);
+            output.push_str("[REDACTED]");
+            end = range.end;
         }
-
-        result
+        output.push_str(&text[end..]);
+        output
     }
 }
 
@@ -150,63 +139,6 @@ fn luhn_check(digits: &str) -> bool {
 }
 
 #[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_detect_email() {
-        let detector = PiiDetector::new();
-        let matches = detector.detect_email("Contact us at hello@example.com for more info");
-        assert_eq!(matches.len(), 1);
-        assert_eq!(matches[0].matched_text, "hello@example.com");
-        assert_eq!(matches[0].pii_type, PiiType::Email);
-    }
-
-    #[test]
-    fn test_detect_phone() {
-        let detector = PiiDetector::new();
-        let matches = detector.detect_phone("Call +1 (555) 123-4567 for support");
-        assert_eq!(matches.len(), 1);
-        assert_eq!(matches[0].pii_type, PiiType::Phone);
-    }
-
-    #[test]
-    fn test_detect_credit_card() {
-        let detector = PiiDetector::new();
-        // Valid Luhn: 4111 1111 1111 1111
-        let matches = detector.detect_credit_card("Card: 4111 1111 1111 1111");
-        assert_eq!(matches.len(), 1);
-        assert_eq!(matches[0].pii_type, PiiType::CreditCard);
-    }
-
-    #[test]
-    fn test_invalid_credit_card_rejected() {
-        let detector = PiiDetector::new();
-        // Invalid Luhn
-        let matches = detector.detect_credit_card("Card: 1234 5678 9012 3456");
-        assert_eq!(matches.len(), 0);
-    }
-
-    #[test]
-    fn test_redact_pii() {
-        let detector = PiiDetector::new();
-        let text = "Email: hello@example.com and card: 4111 1111 1111 1111";
-        let redacted = detector.redact_pii(text);
-        assert!(redacted.contains("[REDACTED]"));
-        assert!(!redacted.contains("hello@example.com"));
-    }
-
-    #[test]
-    fn test_no_pii_returns_unchanged() {
-        let detector = PiiDetector::new();
-        let text = "Just some regular text with no PII";
-        assert_eq!(detector.redact_pii(text), text);
-    }
-
-    #[test]
-    fn test_luhn_check() {
-        assert!(luhn_check("4111111111111111")); // Visa test card
-        assert!(luhn_check("5500000000000004")); // Mastercard test card
-        assert!(!luhn_check("1234567890123456"));
-    }
-}
+mod differential_tests;
+#[cfg(test)]
+mod tests;

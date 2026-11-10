@@ -2,6 +2,8 @@ package handler
 
 import (
 	"encoding/json"
+	"errors"
+	"github.com/jackc/pgx/v5/pgconn"
 	"net/http"
 	"strconv"
 	"time"
@@ -12,17 +14,32 @@ import (
 	"github.com/gotipe/cloud/internal/audit"
 	"github.com/gotipe/cloud/internal/auth"
 	"github.com/gotipe/cloud/internal/billing"
+	"github.com/gotipe/cloud/internal/document"
 	"github.com/gotipe/cloud/internal/storage"
 )
 
 type DocumentsHandler struct {
-	db    *storage.PostgresStore
-	r2    *storage.R2Store
-	audit *audit.AuditLogger
+	db               *storage.PostgresStore
+	r2               storage.ObjectStore
+	audit            *audit.AuditLogger
+	contents         document.ContentReader
+	maxDocumentBytes int64
 }
 
-func NewDocumentsHandler(db *storage.PostgresStore, r2 *storage.R2Store, auditLogger *audit.AuditLogger) *DocumentsHandler {
-	return &DocumentsHandler{db: db, r2: r2, audit: auditLogger}
+func NewDocumentsHandler(db *storage.PostgresStore, r2 storage.ObjectStore, auditLogger *audit.AuditLogger, readers ...document.ContentReader) *DocumentsHandler {
+	var contents document.ContentReader = document.ObjectReader{Store: r2}
+	if len(readers) > 0 {
+		contents = readers[0]
+	}
+	return &DocumentsHandler{db: db, r2: r2, audit: auditLogger, contents: contents, maxDocumentBytes: 10 << 20}
+}
+
+func (h *DocumentsHandler) SetDocumentLimit(limit int64) error {
+	if limit < 1 || limit > storage.MaxObjectBytes {
+		return errors.New("document byte limit must be between 1 and 64 MiB")
+	}
+	h.maxDocumentBytes = limit
+	return nil
 }
 
 type CreateDocumentRequest struct {
@@ -32,15 +49,16 @@ type CreateDocumentRequest struct {
 }
 
 type DocumentResponse struct {
-	ID            string          `json:"id"`
-	Title         string          `json:"title"`
-	Version       int64           `json:"version"`
-	SizeBytes     int64           `json:"size_bytes"`
-	Content       json.RawMessage `json:"content,omitempty"`
-	Collaborators json.RawMessage `json:"collaborators,omitempty"`
-	SyncURL       string          `json:"sync_url,omitempty"`
-	CreatedAt     time.Time       `json:"created_at"`
-	UpdatedAt     time.Time       `json:"updated_at"`
+	ID                 string                       `json:"id"`
+	Title              string                       `json:"title"`
+	Version            int64                        `json:"version"`
+	SizeBytes          int64                        `json:"size_bytes"`
+	Content            json.RawMessage              `json:"content,omitempty"`
+	Collaborators      json.RawMessage              `json:"collaborators,omitempty"`
+	CollaborationState *document.CollaborationState `json:"collaboration_state,omitempty"`
+	SyncURL            string                       `json:"sync_url,omitempty"`
+	CreatedAt          time.Time                    `json:"created_at"`
+	UpdatedAt          time.Time                    `json:"updated_at"`
 }
 
 type ListDocumentsResponse struct {
@@ -70,36 +88,33 @@ func (h *DocumentsHandler) CreateDocument() http.HandlerFunc {
 			return
 		}
 
-		// Check plan quota
-		var docCount int64
-		err := h.db.Pool.QueryRow(r.Context(),
-			`SELECT COUNT(*) FROM documents WHERE owner_id = $1`,
-			user.UserID,
-		).Scan(&docCount)
-		if err != nil {
-			apierror.ErrInternal.Write(w)
-			return
-		}
-
-		if !billing.CheckDocumentQuota(user.Plan, docCount) {
-			apierror.ErrQuotaExceeded.WithMessage("Document limit reached for your plan").Write(w)
-			return
-		}
-
 		docID := req.ID
 		if docID == "" {
 			docID = uuid.New().String()
 		}
 
+		if _, err := uuid.Parse(docID); err != nil {
+			apierror.ErrValidation.WithMessage("id must be a UUID").Write(w)
+			return
+		}
+
+		if !user.AllowsDocument(docID) {
+			apierror.ErrForbidden.Write(w)
+			return
+		}
 		contentBytes := req.Content
 		if contentBytes == nil {
 			contentBytes = json.RawMessage(`{"blocks":[]}`)
 		}
 
 		sizeBytes := int64(len(contentBytes))
+		if sizeBytes > h.maxDocumentBytes {
+			(&apierror.APIError{Code: "PAYLOAD_TOO_LARGE", Message: "Document exceeds configured byte limit", Status: 413}).Write(w)
+			return
+		}
 
 		// Upload content to R2
-		r2Key := "documents/" + docID + "/content.json"
+		r2Key := "documents/" + docID + "/" + uuid.NewString() + ".json"
 		if err := h.r2.Put(r.Context(), r2Key, contentBytes); err != nil {
 			apierror.ErrInternal.Write(w)
 			return
@@ -107,13 +122,31 @@ func (h *DocumentsHandler) CreateDocument() http.HandlerFunc {
 
 		// Insert into DB
 		now := time.Now()
-		_, err = h.db.Pool.Exec(r.Context(),
-			`INSERT INTO documents (id, title, owner_id, version, size_bytes, r2_key, created_at, updated_at)
+		err := storage.WithUserLock(r.Context(), h.db.Pool, user.UserID, func(tx storage.Database) error {
+			var docCount int64
+			if err := tx.QueryRow(r.Context(), `SELECT COUNT(*) FROM documents WHERE owner_id=$1`, user.UserID).Scan(&docCount); err != nil {
+				return err
+			}
+			if !billing.CheckDocumentQuota(user.Plan, docCount) {
+				return billing.ErrQuotaExceeded
+			}
+			_, insertErr := tx.Exec(r.Context(),
+				`INSERT INTO documents (id, title, owner_id, version, size_bytes, r2_key, created_at, updated_at)
 			 VALUES ($1, $2, $3, 1, $4, $5, $6, $6)`,
-			docID, req.Title, user.UserID, sizeBytes, r2Key, now,
-		)
+				docID, req.Title, user.UserID, sizeBytes, r2Key, now,
+			)
+			return insertErr
+		})
 		if err != nil {
-			apierror.ErrInternal.Write(w)
+			_ = h.r2.Delete(r.Context(), r2Key)
+			var pgErr *pgconn.PgError
+			if errors.Is(err, billing.ErrQuotaExceeded) {
+				apierror.ErrQuotaExceeded.WithMessage("Document limit reached for your plan").Write(w)
+			} else if errors.As(err, &pgErr) && pgErr.Code == "23505" {
+				apierror.ErrConflict.Write(w)
+			} else {
+				apierror.ErrInternal.Write(w)
+			}
 			return
 		}
 
@@ -148,6 +181,10 @@ func (h *DocumentsHandler) GetDocument() http.HandlerFunc {
 		}
 
 		docID := chi.URLParam(r, "id")
+		if !user.AllowsDocument(docID) {
+			apierror.ErrNotFound.Write(w)
+			return
+		}
 
 		var doc DocumentResponse
 		var r2Key string
@@ -164,10 +201,14 @@ func (h *DocumentsHandler) GetDocument() http.HandlerFunc {
 		}
 
 		// Fetch content from R2
-		content, err := h.r2.Get(r.Context(), r2Key)
-		if err == nil {
-			doc.Content = json.RawMessage(content)
+		snapshot, err := document.LoadSnapshot(r.Context(), h.contents, docID, r2Key)
+		if err != nil {
+			apierror.ErrInternal.Write(w)
+			return
 		}
+		doc.Content = json.RawMessage(snapshot.Content)
+		doc.SizeBytes = int64(len(snapshot.Content))
+		doc.CollaborationState = snapshot.CollaborationState
 
 		apierror.WriteJSON(w, http.StatusOK, doc)
 	}
@@ -193,8 +234,8 @@ func (h *DocumentsHandler) ListDocuments() http.HandlerFunc {
 
 		var total int64
 		err := h.db.Pool.QueryRow(r.Context(),
-			`SELECT COUNT(*) FROM documents WHERE owner_id = $1`,
-			user.UserID,
+			`SELECT COUNT(*) FROM documents WHERE (owner_id = $1 OR id IN (SELECT document_id FROM document_permissions WHERE user_id = $1)) AND (COALESCE(cardinality($2::uuid[]), 0) = 0 OR id = ANY($2::uuid[]))`,
+			user.UserID, user.DocumentIDs,
 		).Scan(&total)
 		if err != nil {
 			apierror.ErrInternal.Write(w)
@@ -203,9 +244,9 @@ func (h *DocumentsHandler) ListDocuments() http.HandlerFunc {
 
 		rows, err := h.db.Pool.Query(r.Context(),
 			`SELECT id, title, version, size_bytes, created_at, updated_at
-			 FROM documents WHERE owner_id = $1
-			 ORDER BY updated_at DESC LIMIT $2 OFFSET $3`,
-			user.UserID, limit, offset,
+			 FROM documents WHERE (owner_id = $1 OR id IN (SELECT document_id FROM document_permissions WHERE user_id = $1)) AND (COALESCE(cardinality($2::uuid[]), 0) = 0 OR id = ANY($2::uuid[]))
+			 ORDER BY updated_at DESC LIMIT $3 OFFSET $4`,
+			user.UserID, user.DocumentIDs, limit, offset,
 		)
 		if err != nil {
 			apierror.ErrInternal.Write(w)
@@ -217,9 +258,15 @@ func (h *DocumentsHandler) ListDocuments() http.HandlerFunc {
 		for rows.Next() {
 			var d DocumentResponse
 			if err := rows.Scan(&d.ID, &d.Title, &d.Version, &d.SizeBytes, &d.CreatedAt, &d.UpdatedAt); err != nil {
-				continue
+				apierror.ErrInternal.Write(w)
+				return
 			}
 			docs = append(docs, d)
+		}
+
+		if rows.Err() != nil {
+			apierror.ErrInternal.Write(w)
+			return
 		}
 
 		if docs == nil {
@@ -245,6 +292,13 @@ func (h *DocumentsHandler) UpdateDocument() http.HandlerFunc {
 		}
 
 		docID := chi.URLParam(r, "id")
+		if !user.AllowsDocument(docID) {
+			apierror.ErrNotFound.Write(w)
+			return
+		}
+		if !requireDocumentAccess(w, r, h.db.Pool, docID, "editor") {
+			return
+		}
 
 		var req struct {
 			Title   *string         `json:"title,omitempty"`
@@ -255,19 +309,30 @@ func (h *DocumentsHandler) UpdateDocument() http.HandlerFunc {
 			return
 		}
 
-		// Verify ownership
-		var ownerID, r2Key string
-		err := h.db.Pool.QueryRow(r.Context(),
-			`SELECT owner_id, r2_key FROM documents WHERE id = $1`,
-			docID,
-		).Scan(&ownerID, &r2Key)
+		// Read the existing object key; updates write a new immutable object.
+		var r2Key string
+		err := h.db.Pool.QueryRow(r.Context(), `SELECT r2_key FROM documents WHERE id = $1`, docID).Scan(&r2Key)
 		if err != nil {
-			apierror.ErrNotFound.Write(w)
+			apierror.ErrInternal.Write(w)
 			return
 		}
-		if ownerID != user.UserID {
-			apierror.ErrForbidden.Write(w)
+		if req.Title != nil && *req.Title == "" {
+			apierror.ErrValidation.WithMessage("title must not be empty").Write(w)
 			return
+		}
+		if req.Title == nil && req.Content == nil {
+			apierror.ErrValidation.WithMessage("title or content is required").Write(w)
+			return
+		}
+		var sizeBytes *int64
+		if req.Content != nil {
+			size := int64(len(req.Content))
+			if size > h.maxDocumentBytes {
+				(&apierror.APIError{Code: "PAYLOAD_TOO_LARGE", Message: "Document exceeds configured byte limit", Status: 413}).Write(w)
+				return
+			}
+			sizeBytes = &size
+			r2Key = "documents/" + docID + "/" + uuid.NewString() + ".json"
 		}
 
 		if req.Content != nil {
@@ -277,22 +342,16 @@ func (h *DocumentsHandler) UpdateDocument() http.HandlerFunc {
 			}
 		}
 
-		// Build update query
-		if req.Title != nil {
-			_, err = h.db.Pool.Exec(r.Context(),
-				`UPDATE documents SET title = $1, version = version + 1, size_bytes = $2, updated_at = now()
-				 WHERE id = $3`,
-				*req.Title, len(req.Content), docID,
-			)
-		} else if req.Content != nil {
-			_, err = h.db.Pool.Exec(r.Context(),
-				`UPDATE documents SET version = version + 1, size_bytes = $1, updated_at = now()
-				 WHERE id = $2`,
-				len(req.Content), docID,
-			)
-		}
-
+		_, err = h.db.Pool.Exec(r.Context(), `WITH changed AS (UPDATE documents SET title = COALESCE($1, title),
+            version = version + 1, size_bytes = COALESCE($2, size_bytes), r2_key = $3, updated_at = now() WHERE id = $4 RETURNING id),
+            removed_updates AS (DELETE FROM document_updates USING changed WHERE document_id = changed.id AND $5),
+            removed_snapshots AS (DELETE FROM document_snapshots USING changed WHERE document_id = changed.id AND $5)
+            SELECT id FROM changed`,
+			req.Title, sizeBytes, r2Key, docID, req.Content != nil)
 		if err != nil {
+			if req.Content != nil {
+				_ = h.r2.Delete(r.Context(), r2Key)
+			}
 			apierror.ErrInternal.Write(w)
 			return
 		}
@@ -301,10 +360,14 @@ func (h *DocumentsHandler) UpdateDocument() http.HandlerFunc {
 
 		// Return updated document
 		var doc DocumentResponse
-		_ = h.db.Pool.QueryRow(r.Context(),
+		err = h.db.Pool.QueryRow(r.Context(),
 			`SELECT id, title, version, size_bytes, created_at, updated_at FROM documents WHERE id = $1`,
 			docID,
 		).Scan(&doc.ID, &doc.Title, &doc.Version, &doc.SizeBytes, &doc.CreatedAt, &doc.UpdatedAt)
+		if err != nil {
+			apierror.ErrInternal.Write(w)
+			return
+		}
 
 		apierror.WriteJSON(w, http.StatusOK, doc)
 	}
@@ -320,6 +383,10 @@ func (h *DocumentsHandler) DeleteDocument() http.HandlerFunc {
 		}
 
 		docID := chi.URLParam(r, "id")
+		if !user.AllowsDocument(docID) {
+			apierror.ErrNotFound.Write(w)
+			return
+		}
 
 		// Verify ownership
 		var ownerID, r2Key string
@@ -336,9 +403,6 @@ func (h *DocumentsHandler) DeleteDocument() http.HandlerFunc {
 			return
 		}
 
-		// Delete from R2
-		_ = h.r2.Delete(r.Context(), r2Key)
-
 		// Delete from DB (cascades to comments, versions, permissions)
 		_, err = h.db.Pool.Exec(r.Context(),
 			`DELETE FROM documents WHERE id = $1`,
@@ -348,6 +412,9 @@ func (h *DocumentsHandler) DeleteDocument() http.HandlerFunc {
 			apierror.ErrInternal.Write(w)
 			return
 		}
+		// Delete the object only after the authoritative row was removed. A DB
+		// failure must leave the current document content readable.
+		_ = h.r2.Delete(r.Context(), r2Key)
 
 		_ = h.audit.Log(r.Context(), user.UserID, audit.ActionDocumentDelete, "document", docID, nil)
 

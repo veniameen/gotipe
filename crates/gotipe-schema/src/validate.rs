@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 
-use crate::document::{Block, BlockContent, BlockId, Document};
+use crate::attr::{AttrSpec, AttrType, AttrValue};
+use crate::document::{Block, BlockContent, BlockId, Document, Mark};
 use crate::mark_spec::MarkSpec;
 use crate::node_spec::{ContentRule, MarksRule, NodeSpec};
 
@@ -23,10 +24,78 @@ impl Schema {
     pub fn validate(&self, doc: &Document) -> Result<(), Vec<ValidationError>> {
         let mut errors = Vec::new();
 
+        if let Some(id) = doc.duplicate_block_id() {
+            errors.push(ValidationError::DuplicateBlockId {
+                block_id: id.clone(),
+            });
+        }
+        // An explicit empty schema is the public schema-free mode. The typed
+        // document decoder still validates shape and duplicate IDs remain invalid.
+        if self.nodes.is_empty() && self.marks.is_empty() {
+            return if errors.is_empty() {
+                Ok(())
+            } else {
+                Err(errors)
+            };
+        }
+        for block in &doc.blocks {
+            if self
+                .nodes
+                .get(&block.block_type)
+                .is_some_and(|spec| !spec.top_level)
+            {
+                errors.push(ValidationError::TopLevelNotAllowed {
+                    block_id: block.id.clone(),
+                });
+            }
+        }
         for block in doc.flatten() {
             self.validate_block(block, &mut errors);
         }
 
+        if errors.is_empty() {
+            Ok(())
+        } else {
+            Err(errors)
+        }
+    }
+
+    /// Validate even a collapsed formatting operation before it reaches the document.
+    pub fn validate_mark(&self, block: &Block, mark: &Mark) -> Result<(), Vec<ValidationError>> {
+        let mut errors = Vec::new();
+        if let Some(spec) = self.marks.get(&mark.mark_type) {
+            validate_attributes(
+                &mark.attrs,
+                &spec.attrs,
+                &block.id,
+                &format!("{}.", mark.mark_type),
+                &mut errors,
+            );
+        } else {
+            errors.push(ValidationError::UnknownMark {
+                block_id: block.id.clone(),
+                mark_type: mark.mark_type.clone(),
+            });
+        }
+        match self.nodes.get(&block.block_type) {
+            None => errors.push(ValidationError::UnknownBlockType {
+                block_id: block.id.clone(),
+                block_type: block.block_type.clone(),
+            }),
+            Some(spec) => {
+                let allowed = match &spec.marks_allowed {
+                    MarksRule::None => false,
+                    MarksRule::Only(types) => types.contains(&mark.mark_type),
+                    MarksRule::All => true,
+                };
+                if !allowed {
+                    errors.push(ValidationError::MarkNotAllowed {
+                        block_id: block.id.clone(),
+                        mark_type: mark.mark_type.clone(),
+                    });
+                }
+            }
+        }
         if errors.is_empty() {
             Ok(())
         } else {
@@ -47,31 +116,13 @@ impl Schema {
             }
         };
 
-        // 2. Validate attributes — check required attrs present
-        for (key, attr_spec) in &spec.attrs {
-            if attr_spec.required && !block.attrs.contains_key(key) {
-                errors.push(ValidationError::MissingAttribute {
-                    block_id: block.id.clone(),
-                    attr: key.clone(),
-                });
-            }
-        }
-
-        // Check for unknown attributes
-        for key in block.attrs.keys() {
-            if !spec.attrs.contains_key(key) {
-                errors.push(ValidationError::UnknownAttribute {
-                    block_id: block.id.clone(),
-                    attr: key.clone(),
-                });
-            }
-        }
+        validate_attributes(&block.attrs, &spec.attrs, &block.id, "", errors);
 
         // 3. Validate content type
         match (&spec.content, &block.content) {
             (ContentRule::RichText, BlockContent::RichText(_)) => {}
             (ContentRule::RawText, BlockContent::Raw(_)) => {}
-            (ContentRule::Empty, BlockContent::Empty) => {}
+            (_, BlockContent::Empty) => {}
             _ => {
                 errors.push(ValidationError::InvalidContent {
                     block_id: block.id.clone(),
@@ -84,28 +135,8 @@ impl Schema {
         if let BlockContent::RichText(spans) = &block.content {
             for span in spans {
                 for mark in &span.marks {
-                    // Check mark exists in schema
-                    if !self.marks.contains_key(&mark.mark_type) {
-                        errors.push(ValidationError::UnknownMark {
-                            block_id: block.id.clone(),
-                            mark_type: mark.mark_type.clone(),
-                        });
-                    }
-                    // Check mark is allowed on this block type
-                    match &spec.marks_allowed {
-                        MarksRule::None => {
-                            errors.push(ValidationError::MarkNotAllowed {
-                                block_id: block.id.clone(),
-                                mark_type: mark.mark_type.clone(),
-                            });
-                        }
-                        MarksRule::Only(allowed) if !allowed.contains(&mark.mark_type) => {
-                            errors.push(ValidationError::MarkNotAllowed {
-                                block_id: block.id.clone(),
-                                mark_type: mark.mark_type.clone(),
-                            });
-                        }
-                        _ => {}
+                    if let Err(mark_errors) = self.validate_mark(block, mark) {
+                        errors.extend(mark_errors);
                     }
                 }
             }
@@ -138,6 +169,61 @@ impl Schema {
     }
 }
 
+fn validate_attributes(
+    values: &HashMap<String, AttrValue>,
+    specs: &HashMap<String, AttrSpec>,
+    block_id: &BlockId,
+    prefix: &str,
+    errors: &mut Vec<ValidationError>,
+) {
+    for (key, spec) in specs {
+        if spec.required && !values.contains_key(key) {
+            errors.push(ValidationError::MissingAttribute {
+                block_id: block_id.clone(),
+                attr: format!("{prefix}{key}"),
+            });
+        }
+    }
+    for (key, value) in values {
+        let attr = format!("{prefix}{key}");
+        match specs.get(key) {
+            None => errors.push(ValidationError::UnknownAttribute {
+                block_id: block_id.clone(),
+                attr,
+            }),
+            Some(spec) if !valid_attribute(value, spec) => {
+                errors.push(ValidationError::InvalidAttributeType {
+                    block_id: block_id.clone(),
+                    attr,
+                    expected: format!("{:?}", spec.attr_type),
+                })
+            }
+            _ => {}
+        }
+    }
+}
+fn valid_attribute(value: &AttrValue, spec: &AttrSpec) -> bool {
+    if matches!(value, AttrValue::Null) && !spec.required {
+        return true;
+    }
+    match (&spec.attr_type, value) {
+        (AttrType::String, AttrValue::String(_)) | (AttrType::Bool, AttrValue::Bool(_)) => true,
+        (AttrType::Number, AttrValue::Number(number)) => number.is_finite(),
+        (AttrType::Enum(values), AttrValue::String(value)) => values.contains(value),
+        (AttrType::Array, AttrValue::Array(values)) => values.iter().all(finite_json),
+        (AttrType::Object, AttrValue::Object(values)) => values.values().all(finite_json),
+        _ => false,
+    }
+}
+fn finite_json(value: &AttrValue) -> bool {
+    match value {
+        AttrValue::Number(number) => number.is_finite(),
+        AttrValue::Array(values) => values.iter().all(finite_json),
+        AttrValue::Object(values) => values.values().all(finite_json),
+        _ => true,
+    }
+}
+
 impl Default for Schema {
     fn default() -> Self {
         Self::new()
@@ -146,6 +232,17 @@ impl Default for Schema {
 
 #[derive(Debug, Clone, thiserror::Error)]
 pub enum ValidationError {
+    #[error("Duplicate block identity {block_id}")]
+    DuplicateBlockId { block_id: BlockId },
+    #[error("Block {block_id} is not allowed at top level")]
+    TopLevelNotAllowed { block_id: BlockId },
+    #[error("Invalid attribute '{attr}' in block {block_id}, expected {expected}")]
+    InvalidAttributeType {
+        block_id: BlockId,
+        attr: String,
+        expected: String,
+    },
+
     #[error("Unknown block type '{block_type}' in block {block_id}")]
     UnknownBlockType {
         block_id: BlockId,
@@ -213,8 +310,9 @@ mod tests {
     #[test]
     fn test_default_schema_has_all_blocks() {
         let schema = default_schema();
-        assert_eq!(schema.nodes.len(), 20);
-        assert_eq!(schema.marks.len(), 9);
+        assert_eq!(schema.nodes.len(), 23);
+        assert!(schema.nodes.contains_key("markdownRaw"));
+        assert_eq!(schema.marks.len(), 11);
         assert!(schema.nodes.contains_key("paragraph"));
         assert!(schema.nodes.contains_key("heading"));
         assert!(schema.nodes.contains_key("table"));

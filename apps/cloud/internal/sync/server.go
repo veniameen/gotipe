@@ -5,6 +5,7 @@ import (
 	"log/slog"
 	"net/http"
 	"sync"
+	"time"
 
 	"github.com/gorilla/websocket"
 	"github.com/gotipe/cloud/internal/auth"
@@ -12,27 +13,29 @@ import (
 )
 
 var upgrader = websocket.Upgrader{
+	Subprotocols:    []string{"gotipe.v1"},
 	ReadBufferSize:  4096,
 	WriteBufferSize: 4096,
-	CheckOrigin: func(r *http.Request) bool {
-		// In production, validate origin against allowed origins
-		return true
-	},
 }
 
 // Server manages WebSocket sync rooms
 type Server struct {
-	rooms   map[string]*Room
-	persist PersistenceStore
-	log     *slog.Logger
-	mu      sync.RWMutex
-	ctx     context.Context
-	cancel  context.CancelFunc
+	authorize      AuthorizationCheck
+	allowedOrigins map[string]bool
+	messageLimit   int
+	messageWindow  time.Duration
+	rooms          map[string]*Room
+	persist        PersistenceStore
+	log            *slog.Logger
+	mu             sync.RWMutex
+	ctx            context.Context
+	cancel         context.CancelFunc
 }
 
 func NewServer(persist PersistenceStore, log *slog.Logger) *Server {
 	ctx, cancel := context.WithCancel(context.Background())
 	return &Server{
+		messageLimit: 1000, messageWindow: time.Minute,
 		rooms:   make(map[string]*Room),
 		persist: persist,
 		log:     log,
@@ -62,7 +65,9 @@ func (s *Server) HandleWebSocket() http.HandlerFunc {
 			return
 		}
 
-		conn, err := upgrader.Upgrade(w, r, nil)
+		connectionUpgrader := upgrader
+		connectionUpgrader.CheckOrigin = s.checkOrigin
+		conn, err := connectionUpgrader.Upgrade(w, r, nil)
 		if err != nil {
 			s.log.Error("websocket upgrade failed", "error", err)
 			return
@@ -70,8 +75,24 @@ func (s *Server) HandleWebSocket() http.HandlerFunc {
 
 		room := s.getOrCreateRoom(documentID)
 		client := NewClient(room, conn, peerID, user.UserID, s.log)
+		s.mu.RLock()
+		client.limiter = newMessageWindow(s.messageLimit, s.messageWindow)
+		client.expiresAt = user.ExpiresAt
+		if check := s.authorize; check != nil {
+			client.authorize = func(ctx context.Context) error { return check(ctx, user, documentID) }
+		}
+		s.mu.RUnlock()
 
-		room.register <- client
+		select {
+		case room.register <- client:
+		case <-room.Done():
+			conn.WriteControl(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseInternalServerErr, "Document collaboration state is unavailable"), time.Now().Add(time.Second))
+			conn.Close()
+			return
+		case <-r.Context().Done():
+			conn.Close()
+			return
+		}
 
 		handler.WebSocketConnections.Inc()
 		defer handler.WebSocketConnections.Dec()
@@ -88,7 +109,11 @@ func (s *Server) getOrCreateRoom(documentID string) *Room {
 	s.mu.RUnlock()
 
 	if exists {
-		return room
+		select {
+		case <-room.Done():
+		default:
+			return room
+		}
 	}
 
 	s.mu.Lock()
@@ -96,7 +121,11 @@ func (s *Server) getOrCreateRoom(documentID string) *Room {
 
 	// Double-check after acquiring write lock
 	if room, exists := s.rooms[documentID]; exists {
-		return room
+		select {
+		case <-room.Done():
+		default:
+			return room
+		}
 	}
 
 	room = NewRoom(documentID, s.persist, s.log)
@@ -107,7 +136,9 @@ func (s *Server) getOrCreateRoom(documentID string) *Room {
 	go func() {
 		room.Run(s.ctx)
 		s.mu.Lock()
-		delete(s.rooms, documentID)
+		if s.rooms[documentID] == room {
+			delete(s.rooms, documentID)
+		}
 		s.mu.Unlock()
 		handler.WebSocketRooms.Dec()
 	}()
@@ -125,5 +156,5 @@ func (s *Server) RoomCount() int {
 // Shutdown gracefully stops all rooms
 func (s *Server) Shutdown() {
 	s.cancel()
-	s.log.Info("sync server shutdown", "rooms", len(s.rooms))
+	s.log.Info("sync server shutdown", "rooms", s.RoomCount())
 }

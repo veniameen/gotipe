@@ -7,15 +7,16 @@ import (
 	"encoding/hex"
 	"fmt"
 	"strings"
+	"time"
 
-	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/gotipe/cloud/internal/storage"
 )
 
 type APIKeyService struct {
-	pool *pgxpool.Pool
+	pool storage.Database
 }
 
-func NewAPIKeyService(pool *pgxpool.Pool) *APIKeyService {
+func NewAPIKeyService(pool storage.Database) *APIKeyService {
 	return &APIKeyService{pool: pool}
 }
 
@@ -43,15 +44,26 @@ func (s *APIKeyService) ValidateKey(ctx context.Context, key string) (*UserConte
 
 	// Update last_used_at (fire and forget)
 	go func() {
-		_, _ = s.pool.Exec(context.Background(),
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+		_, _ = s.pool.Exec(ctx,
 			`UPDATE api_keys SET last_used_at = now() WHERE key_hash = $1`, keyHash)
 	}()
 
 	return &UserContext{
-		UserID: userID,
-		Plan:   plan,
-		Scopes: scopes,
+		UserID:     userID,
+		Plan:       plan,
+		Scopes:     scopes,
+		APIKeyHash: keyHash,
 	}, nil
+}
+
+// CurrentPlan also confirms that a JWT's account still exists. Entitlements must
+// reflect billing changes instead of remaining frozen until the JWT expires.
+func (s *APIKeyService) CurrentPlan(ctx context.Context, userID string) (string, error) {
+	var plan string
+	err := s.pool.QueryRow(ctx, `SELECT plan FROM users WHERE id=$1`, userID).Scan(&plan)
+	return plan, err
 }
 
 // GenerateKey creates new API key, returns raw key (only shown once) and prefix

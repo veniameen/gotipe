@@ -1,176 +1,190 @@
-import { test, expect } from '@playwright/test';
+import { type Page, expect, test } from "@playwright/test";
 
-test.describe('AI Command Bar', () => {
-  test.beforeEach(async ({ page }) => {
-    await page.goto('/');
-    // Navigate to AI example which has AI extensions loaded
-    await page.locator('[data-gotipe-nav="ai"]').click();
-    await page.waitForSelector('[data-gotipe-example="ai"]');
-  });
+async function setup(page: Page, first = "First paragraph", last = "Last paragraph") {
+  await page.goto("/#ai");
+  await expect(page.locator('[data-gotipe-example="ai"]')).toBeVisible();
+  await page.waitForFunction(() => !!window.__GOTIPE_EDITOR__);
+  await page.evaluate(
+    ({ first, last }) => {
+      const editor = window.__GOTIPE_EDITOR__!;
+      editor.setContent({
+        version: 1,
+        blocks: [first, last].map((text, index) => ({
+          id: `ai-test-${index}`,
+          type: "paragraph",
+          attrs: {},
+          content: [{ text, marks: [] }],
+          children: [],
+        })),
+      });
+      editor.setSelection({
+        anchor: { blockId: "ai-test-0", offset: 0 },
+        head: { blockId: "ai-test-0", offset: 0 },
+      });
+    },
+    { first, last },
+  );
+}
+async function open(page: Page) {
+  await page.locator('[data-block-id="ai-test-0"]').click();
+  await page.keyboard.press("ControlOrMeta+k");
+  await expect(page.getByRole("dialog", { name: "AI command bar" })).toBeVisible();
+  await expect(page.getByRole("textbox", { name: "AI prompt" })).toBeFocused();
+}
+const content = (page: Page) => page.evaluate(() => window.__GOTIPE_EDITOR__!.getJSON());
 
-  test('opens on Mod-k shortcut', async ({ page }) => {
-    await page.keyboard.press('Meta+k');
-    await page.waitForSelector('[data-gotipe-ai-command-bar]');
-    await expect(page.locator('[data-gotipe-ai-command-bar]')).toBeVisible();
-  });
-
-  test('closes on second Mod-k toggle', async ({ page }) => {
-    await page.keyboard.press('Meta+k');
-    await page.waitForSelector('[data-gotipe-ai-command-bar]');
-    await page.keyboard.press('Meta+k');
-    await expect(page.locator('[data-gotipe-ai-command-bar]')).not.toBeVisible();
-  });
-
-  test('closes on Escape', async ({ page }) => {
-    await page.keyboard.press('Meta+k');
-    await page.waitForSelector('[data-gotipe-ai-command-bar]');
-    await page.keyboard.press('Escape');
-    await expect(page.locator('[data-gotipe-ai-command-bar]')).not.toBeVisible();
-  });
-
-  test('closes on outside click', async ({ page }) => {
-    await page.keyboard.press('Meta+k');
-    await page.waitForSelector('[data-gotipe-ai-command-bar]');
-    await page.click('body', { position: { x: 10, y: 10 } });
-    await expect(page.locator('[data-gotipe-ai-command-bar]')).not.toBeVisible();
-  });
-
-  test('has input field with placeholder', async ({ page }) => {
-    await page.keyboard.press('Meta+k');
-    await page.waitForSelector('[data-gotipe-ai-command-bar]');
-    const input = page.locator('[data-gotipe-ai-command-bar] input');
-    await expect(input).toBeVisible();
-    await expect(input).toHaveAttribute('placeholder', 'Tell AI what to change...');
-    await expect(input).toHaveAttribute('aria-label', 'AI prompt');
-  });
-
-  test('input is focused on open', async ({ page }) => {
-    await page.keyboard.press('Meta+k');
-    await page.waitForSelector('[data-gotipe-ai-command-bar]');
-    const input = page.locator('[data-gotipe-ai-command-bar] input');
-    await expect(input).toBeFocused();
-  });
-
-  test('submit button is disabled when empty', async ({ page }) => {
-    await page.keyboard.press('Meta+k');
-    await page.waitForSelector('[data-gotipe-ai-command-bar]');
-    const submitBtn = page.locator('.gotipe-ai-command-bar-submit');
-    await expect(submitBtn).toBeDisabled();
-  });
-
-  test('submit button enables with text', async ({ page }) => {
-    await page.keyboard.press('Meta+k');
-    await page.waitForSelector('[data-gotipe-ai-command-bar]');
-    const input = page.locator('[data-gotipe-ai-command-bar] input');
-    await input.fill('Proofread this');
-    const submitBtn = page.locator('.gotipe-ai-command-bar-submit');
-    await expect(submitBtn).not.toBeDisabled();
-  });
-
-  test('submits on Enter and closes', async ({ page }) => {
-    await page.keyboard.press('Meta+k');
-    await page.waitForSelector('[data-gotipe-ai-command-bar]');
-    const input = page.locator('[data-gotipe-ai-command-bar] input');
-    await input.fill('Proofread this document');
-    await page.keyboard.press('Enter');
-    await expect(page.locator('[data-gotipe-ai-command-bar]')).not.toBeVisible();
-  });
-
-  test('has pill-shape border-radius (999px)', async ({ page }) => {
-    await page.keyboard.press('Meta+k');
-    await page.waitForSelector('[data-gotipe-ai-command-bar]');
-    const borderRadius = await page.locator('[data-gotipe-ai-command-bar]').evaluate((el) =>
-      getComputedStyle(el).borderRadius,
-    );
-    expect(borderRadius).toBe('999px');
-  });
-
-  test('has sparkle icon', async ({ page }) => {
-    await page.keyboard.press('Meta+k');
-    await page.waitForSelector('[data-gotipe-ai-command-bar]');
-    const icon = page.locator('.gotipe-ai-command-bar-icon');
-    await expect(icon).toBeVisible();
-    await expect(icon).toHaveAttribute('aria-hidden', 'true');
-  });
-
-  test('has correct ARIA role', async ({ page }) => {
-    await page.keyboard.press('Meta+k');
-    await page.waitForSelector('[data-gotipe-ai-command-bar]');
-    await expect(page.locator('[data-gotipe-ai-command-bar]')).toHaveAttribute('role', 'dialog');
-    await expect(page.locator('[data-gotipe-ai-command-bar]')).toHaveAttribute(
-      'aria-label',
-      'AI command bar',
-    );
-  });
+test("AI keyboard ownership, empty state, Escape and read-only", async ({ page }) => {
+  await setup(page);
+  await page.locator("h1").click();
+  await page.keyboard.press("ControlOrMeta+k");
+  await expect(page.getByRole("dialog", { name: "AI command bar" })).toHaveCount(0);
+  await open(page);
+  await expect(page.getByRole("button", { name: "Submit AI command" })).toBeDisabled();
+  await page.keyboard.press("Escape");
+  await expect(page.getByRole("dialog", { name: "AI command bar" })).toHaveCount(0);
+  await page.evaluate(() => window.__GOTIPE_EDITOR__!.setEditable(false));
+  await page.locator('[data-block-id="ai-test-0"]').click();
+  await page.keyboard.press("ControlOrMeta+k");
+  await expect(page.getByRole("dialog", { name: "AI command bar" })).toHaveCount(0);
+  await expect
+    .poll(() => page.evaluate(() => window.__GOTIPE_EDITOR__!.getText()))
+    .toBe("First paragraph\nLast paragraph");
 });
 
-test.describe('AI Status Indicator', () => {
-  test('status indicator element exists in DOM', async ({ page }) => {
-    await page.goto('/');
-    await page.locator('[data-gotipe-nav="ai"]').click();
-    await page.waitForSelector('[data-gotipe-example="ai"]');
-    // The AI status indicator is only visible during active processing.
-    // Verify the CSS class exists
-    const statusCssExists = await page.evaluate(() => {
-      const sheets = Array.from(document.styleSheets);
-      for (const sheet of sheets) {
-        try {
-          const rules = Array.from(sheet.cssRules);
-          for (const rule of rules) {
-            if (
-              rule instanceof CSSStyleRule &&
-              rule.selectorText?.includes('gotipe-ai-status')
-            ) {
-              return true;
-            }
-          }
-        } catch {}
-      }
-      return false;
+test("generated paragraph goes after the requested block and is one undo", async ({ page }) => {
+  await setup(page);
+  const before = await content(page);
+  await open(page);
+  await page.getByRole("textbox", { name: "AI prompt" }).fill("volcanoes");
+  await page.getByRole("button", { name: "Submit AI command" }).click();
+  await expect(page.getByRole("button", { name: "Submit AI command" })).toBeDisabled();
+  await expect(page.locator("[data-gotipe-ai-status]")).toBeVisible();
+  await expect.poll(async () => (await content(page)).blocks.length).toBe(3);
+  const after = await content(page);
+  expect(after.blocks[0]!.id).toBe("ai-test-0");
+  expect(after.blocks[2]!.id).toBe("ai-test-1");
+  expect(JSON.stringify(after.blocks[1]!.content)).toContain("volcanoes");
+  await expect(page.getByRole("dialog", { name: "AI command bar" })).toHaveCount(0);
+  await page.keyboard.press("ControlOrMeta+z");
+  expect((await content(page)).blocks).toEqual(before.blocks);
+});
+
+test("cancelling a running request leaves no partial block or undo entry", async ({ page }) => {
+  await setup(page);
+  const before = await content(page);
+  await open(page);
+  await page.getByRole("textbox", { name: "AI prompt" }).fill("cancel this generation");
+  await page.keyboard.press("Enter");
+  await expect(page.getByRole("button", { name: "Cancel AI command" })).toBeVisible();
+  await page.getByRole("button", { name: "Cancel AI command" }).click();
+  await expect(page.locator("[data-gotipe-ai-status]")).toHaveCount(0);
+  // Waiting past the provider's next chunk proves an ignored late result cannot insert.
+  await page.waitForTimeout(1200);
+  expect((await content(page)).blocks).toEqual(before.blocks);
+  expect(await page.evaluate(() => window.__GOTIPE_EDITOR__!.getViewState().toolbar.canUndo)).toBe(
+    false,
+  );
+});
+
+test("provider failure keeps prompt visible, supports retry and never inserts partial output", async ({
+  page,
+}) => {
+  await setup(page);
+  const before = await content(page);
+  await page.evaluate(async () => {
+    const mockAiProvider = window.__GOTIPE_AI_PROVIDER__!;
+    mockAiProvider.generateParagraph = async function* () {
+      yield "partial";
+      throw new Error("Temporary mock provider failure");
+    };
+  });
+  await open(page);
+  await page.getByRole("textbox", { name: "AI prompt" }).fill("retry topic");
+  await page.keyboard.press("Enter");
+  await expect(page.getByRole("alert")).toContainText("Temporary mock provider failure");
+  await expect(page.getByRole("textbox", { name: "AI prompt" })).toHaveValue("retry topic");
+  expect((await content(page)).blocks).toEqual(before.blocks);
+  await page.evaluate(async () => {
+    const mockAiProvider = window.__GOTIPE_AI_PROVIDER__!;
+    mockAiProvider.generateParagraph = async function* () {
+      yield "Recovered";
+    };
+  });
+  await page.getByRole("button", { name: "Submit AI command" }).click();
+  await expect
+    .poll(async () => JSON.stringify((await content(page)).blocks))
+    .toContain("Recovered");
+});
+
+test("proofread accepts all corrections atomically and undo restores original text", async ({
+  page,
+}) => {
+  await setup(page, "To be determined soon", "Another to be determined item");
+  const before = await content(page);
+  await page.getByRole("button", { name: "Proofread", exact: true }).click();
+  await expect(page.getByRole("toolbar", { name: "AI suggestions" })).toBeVisible();
+  await page.getByRole("button", { name: "Accept all suggestions" }).click();
+  await expect
+    .poll(() => page.evaluate(() => window.__GOTIPE_EDITOR__!.getText()))
+    .toBe("yet to be finalized soon\nAnother yet to be finalized item");
+  await page.locator('[data-block-id="ai-test-0"]').click();
+  await page.keyboard.press("ControlOrMeta+z");
+  expect((await content(page)).blocks).toEqual(before.blocks);
+});
+
+test("ghost completion accepts only in the owning editor and stays inside a resized viewport", async ({
+  page,
+}) => {
+  await setup(page, "Hello", "Last paragraph");
+  await page.locator('[data-block-id="ai-test-0"]').click();
+  await page.keyboard.press("End");
+  await page.keyboard.type(" world");
+  const ghost = page.locator("[data-gotipe-ghost-text]");
+  await expect(ghost).toBeVisible({ timeout: 5000 });
+  await page.setViewportSize({ width: 375, height: 720 });
+  await expect(ghost).toBeVisible();
+  const bounds = await ghost.boundingBox();
+  expect(bounds!.x).toBeGreaterThanOrEqual(0);
+  expect(bounds!.x + bounds!.width).toBeLessThanOrEqual(375);
+  const text = await ghost.textContent();
+  await page.keyboard.press("Tab");
+  await expect
+    .poll(() => page.evaluate(() => window.__GOTIPE_EDITOR__!.getText()))
+    .toContain(`Hello world${text}`);
+});
+
+test("AI controls fit at 320px in light and dark with a long error", async ({ page }) => {
+  await page.setViewportSize({ width: 320, height: 740 });
+  await setup(page);
+  await page.evaluate(async () => {
+    const mockAiProvider = window.__GOTIPE_AI_PROVIDER__!;
+    mockAiProvider.generateParagraph = async function* () {
+      yield "";
+      throw new Error("A-long-provider-error-without-spaces-".repeat(8));
+    };
+  });
+  for (const theme of ["light", "dark"]) {
+    const themeControl = page.getByRole("banner").getByRole("radio", {
+      name: theme === "dark" ? "Dark theme" : "Light theme",
+      exact: true,
     });
-    expect(statusCssExists).toBe(true);
-  });
-});
-
-test.describe('Suggestion toolbar', () => {
-  test('suggestion toolbar CSS styles exist', async ({ page }) => {
-    await page.goto('/');
-    // Verify the suggestion toolbar styles are loaded
-    const cssExists = await page.evaluate(() => {
-      const sheets = Array.from(document.styleSheets);
-      for (const sheet of sheets) {
-        try {
-          const rules = Array.from(sheet.cssRules);
-          for (const rule of rules) {
-            if (
-              rule instanceof CSSStyleRule &&
-              rule.selectorText?.includes('gotipe-suggestion-toolbar')
-            ) {
-              return true;
-            }
-          }
-        } catch {}
-      }
-      return false;
-    });
-    expect(cssExists).toBe(true);
-  });
-});
-
-test.describe('Ghost text', () => {
-  test('ghost text appears after typing pause (AI example)', async ({ page }) => {
-    await page.goto('/');
-    await page.locator('[data-gotipe-nav="ai"]').click();
-    await page.waitForSelector('[data-gotipe-example="ai"]');
-    await page.click('[data-gotipe-block-editor]');
-    await page.keyboard.type('The quick brown ');
-    // Wait for debounce + possible AI generation
-    try {
-      await page.waitForSelector('.gotipe-ghost-text', { timeout: 5000 });
-      await expect(page.locator('.gotipe-ghost-text')).toBeVisible();
-    } catch {
-      // Ghost text may not appear if AI provider isn't configured — that's OK
-      test.skip();
+    await themeControl.click();
+    await expect(themeControl).toHaveAttribute("aria-checked", "true");
+    await open(page);
+    await page.getByRole("textbox", { name: "AI prompt" }).fill("topic");
+    await page.keyboard.press("Enter");
+    await expect(page.getByRole("alert")).toBeVisible();
+    const bar = page.getByRole("dialog", { name: "AI command bar" });
+    const bounds = await bar.boundingBox();
+    expect(bounds!.x).toBeGreaterThanOrEqual(0);
+    expect(bounds!.x + bounds!.width).toBeLessThanOrEqual(320);
+    for (const button of await bar.getByRole("button").all()) {
+      const rect = await button.boundingBox();
+      expect(rect!.x).toBeGreaterThanOrEqual(bounds!.x);
+      expect(rect!.x + rect!.width).toBeLessThanOrEqual(bounds!.x + bounds!.width);
     }
-  });
+    expect(await bar.evaluate((element) => element.scrollWidth <= element.clientWidth)).toBe(true);
+    await page.screenshot({ path: `output/playwright/ai-320-${theme}.png`, fullPage: true });
+    await page.getByRole("button", { name: "Close AI command bar" }).click();
+  }
 });

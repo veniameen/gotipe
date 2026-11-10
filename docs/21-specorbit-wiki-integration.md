@@ -1,9 +1,21 @@
-# 21 — Вики-страница SpecOrbit на GoTipe: интеграция
+# 21 — Использование библиотеки GoTipe внутри SpecOrbit
 
-Для кого: SpecOrbit (Electron, React 19), Ф60 — вики-страницы проекта (ADR-0059) и правки
-модели (ADR-0047). Редактор — `PageEditor` из `@gotipe/block-editor`. Пример с моками всего,
-что делает runtime SpecOrbit: `apps/playground/src/wiki/` (`pnpm --filter @gotipe/playground
-dev`, страница `/wiki.html`).
+GoTipe — библиотека редактора. Wiki является функцией приложения SpecOrbit и
+реализуется в его репозитории поверх публичных пакетов GoTipe. В GoTipe нет
+отдельной Wiki-страницы, файлового рабочего пространства или runtime SpecOrbit.
+
+| GoTipe | Приложение SpecOrbit |
+|---|---|
+| Документ, команды, выделение, история, Markdown | Страницы проекта, пути и дерево файлов |
+| Универсальный `PageEditor`, блоки, меню и оформление | Вкладки, панели, навигация и компоновка Wiki |
+| Host contracts для assets, links и ошибок | Чтение/запись файлов, права, durable storage и автосохранение |
+| Отображение предложений/комментариев и действия над ними | Запросы к модели, ревизии, бизнес-процесс принятия правок |
+
+Основной playground показывает универсальные варианты Page и Block одного
+редактора: `/?view=page#basic` и `/?view=block#basic`. Примеры ниже описывают код
+адаптера **на стороне SpecOrbit**: `wiki.*`, `file`, `projectPath` и функции
+сохранения принадлежат хосту, не являются API пакетов GoTipe. Этот документ не
+подтверждает выполнение интеграции или её проверок в репозитории SpecOrbit.
 
 ## Пакеты
 
@@ -12,12 +24,14 @@ dev`, страница `/wiki.html`).
 | `@gotipe/block-editor` | `PageEditor`, `ReviewBar`, `LaneAvatars`, `PageIcon`, `insertPageBlock` |
 | `@gotipe/theme` | `@gotipe/theme/page.css` — всё оформление страницы |
 | `@gotipe/core`, `@gotipe/react` | ядро и React-слой (peer) |
-| `@gotipe/markdown` | кодек GFM без потерь (peer; ещё и для runtime: `applyAnchoredEdits` — в `@gotipe/suggestions`) |
+| `@gotipe/markdown` | собственный кодек Markdown; ещё и для runtime: `applyAnchoredEdits` — в `@gotipe/suggestions` |
 | `@gotipe/suggestions` | типы и якоря предложений: `findAnchor`, `applyAnchoredEdits`, `locateEdits` |
 | `@gotipe/i18n` | русские строки (`locale="ru"` по умолчанию) |
 
-Не нужны: `@gotipe/wasm`, `shiki`. Зависимости кодека (`mdast-util-from-markdown`,
-`mdast-util-gfm`, `micromark-extension-gfm`) — те же версии, что уже стоят в SpecOrbit.
+Для JS-режима и редактирования без подсветки не нужны `@gotipe/wasm` и `shiki`.
+Кодек использует собственный parser GoTipe, без runtime-зависимостей mdast/micromark.
+Нетронутые Markdown-фрагменты сохраняют исходные байты; произвольные JSON-атрибуты
+не становятся частью Markdown автоматически.
 
 ## Сборка (Vite)
 
@@ -31,32 +45,35 @@ resolve: {
 },
 ```
 
-- `@gotipe/core/js` — тот же API, что `@gotipe/core`, без ссылок на `@gotipe/wasm`. Без alias
-  сборка потребует установленный `@gotipe/wasm` и положит 1,9 МБ `.wasm` в ленивый chunk.
-- Всё вики — в ленивом chunk (`features/wiki/load-view.ts` → `import("./WikiEditor")`),
-  CSS импортируется там же: `import "@gotipe/theme/page.css"` — Vite вынесет его в CSS этого
-  chunk, стартовые JS и CSS не растут.
-- Импорт модулей GoTipe не вешает слушателей, не ходит в сеть и не грузит шрифты. Одна
-  оговорка: браузерная сборка `decode-named-character-reference` (зависимость micromark) при
-  загрузке создаёт отсоединённый `<i>` для разбора `&nbsp;` и подобных. Без сети и слушателей;
-  если и это лишнее — alias на его чистую JS-версию (`decode-named-character-reference/index.js`
-  по абсолютному пути из `node_modules`).
-- Размер: пример `pnpm --filter @gotipe/playground build:wiki` — 544 КБ JS (161 КБ gzip) вместе
-  с React; CSS страницы — 32 КБ (6 КБ gzip).
+- `@gotipe/core/js` — JS entry без загрузки `@gotipe/wasm`; native collaboration
+  в этом режиме недоступна. Основной entry поддерживает optional WASM peer и
+  выбирает движок через `engine`. Для строгой JS-only сборки сохраняйте точный alias.
+- На стороне SpecOrbit экран Wiki можно загружать лениво вместе с
+  `import "@gotipe/theme/page.css"`. Состав стартового bundle проверяется в сборке
+  хоста; сам пакет GoTipe не создаёт экран или маршрут приложения.
+- Импорт модулей GoTipe не вешает слушателей, не ходит в сеть и не грузит шрифты.
+  Именованные HTML references декодирует собственная таблица Unicode без создания
+  DOM-элементов; отдельный alias для декодера не нужен.
+- Размер проверяется на конкретной production-сборке. Поддерживаемые бюджеты
+  полного JS-графа описаны в [javascript-budgets.md](development/javascript-budgets.md),
+  native-модуля — в [wasm-budget.md](development/wasm-budget.md). Они не являются
+  обещанием неизменного размера произвольного приложения SpecOrbit.
 
 ## CSP
 
-Проверено сборкой `build:wiki` с CSP SpecOrbit из `app/index.html`
-(`default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:;
-font-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'none'`): ни одного нарушения,
-в бандле нет `WebAssembly`, `eval`, `new Function`, внешних шрифтов.
+Изолированный consumer-тест `build:csp-test` проверяет библиотеку под политикой:
+`default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:;
+font-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'none'`.
+Сборка сама по себе не доказывает отсутствие нарушений CSP. Проверка запросов,
+ошибок и реального ввода описана в [контракте CSP](development/csp.md);
+интеграция в приложение хоста требует отдельного прогона в его renderer.
 
 - `script-src 'self'` — хватает: JS-движок, без `wasm-unsafe-eval` и `unsafe-eval`.
 - `style-src 'unsafe-inline'` — нужен для атрибутов `style` (позиции меню и курсоров, цвет
-  дорожки `--gt-track`, выравнивание ячеек). У SpecOrbit он уже есть.
+  дорожки `--gt-track`, выравнивание ячеек). Нужную политику задаёт хост.
 - `img-src data:` — картинки страницы показываются data URL из `host.resolveAsset`.
 - `font-src` — `page.css` не объявляет `@font-face`: шрифты берутся из `--gt-font-ui` и
-  `--gt-font-mono` (SpecOrbit подставляет свои Inter и Geist Mono).
+  `--gt-font-mono`; шрифты и их загрузку выбирает SpecOrbit.
 - `connect-src` — редактор в сеть не ходит.
 - Подсветка кода по умолчанию выключена. Если нужна: `@gotipe/block-editor/shiki`
   (`shiki/core` + JavaScript regex engine, без WASM; грамматики — ленивыми `import()`).
@@ -163,7 +180,7 @@ const review: PageReviewProps = {
 Всё оформление страницы — `--gt-*` на `.gotipe-page` (`@gotipe/theme/page.css`). Значения по
 умолчанию — v6. Тёмная тема: `[data-theme="dark"]` на предке или на `.gotipe-page`, либо
 `prefers-color-scheme`. Сопоставление с токенами SpecOrbit (`app/src/ui/tokens.css`) — его же
-использует пример (`apps/playground/src/wiki/wiki.css`):
+нужно реализовать только внутри SpecOrbit. Пример адаптера темы хоста:
 
 ```css
 .wk-page .gotipe-page {

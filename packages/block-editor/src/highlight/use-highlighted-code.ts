@@ -25,10 +25,28 @@ export function useHighlightedCode(
     }
     let cancelled = false;
     const timer = setTimeout(() => {
-      highlight(code, language)
+      Promise.resolve()
+        .then(() => highlight(code, language))
         .then((lines) => {
           if (cancelled) return;
-          setState(lines ? { code, language, lines } : null);
+          // A host adapter may reject, normalize newlines or return incomplete
+          // tokens. Never let that change the editable DOM's document text.
+          const valid =
+            Array.isArray(lines) &&
+            lines.every(
+              (line) =>
+                Array.isArray(line) &&
+                line.every(
+                  (token) =>
+                    token !== null &&
+                    typeof token === "object" &&
+                    typeof token.content === "string",
+                ),
+            );
+          const text = valid
+            ? lines.map((line) => line.map((token) => token.content).join("")).join("\n")
+            : null;
+          setState(valid && text === code ? { code, language, lines } : null);
         })
         .catch(() => {
           if (!cancelled) setState(null);

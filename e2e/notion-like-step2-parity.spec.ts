@@ -195,29 +195,30 @@ test.describe("Notion-like Step2 parity regressions", () => {
       await test.step(`plus works after jagged hover on ${blockId}`, async () => {
         await seedToolbarSurface(page);
         const before = await topLevelIds(page);
-        const idx = before.indexOf(blockId);
-        expect(idx).toBeGreaterThanOrEqual(0);
+        const itemId = blockId.replace("-list", "-item");
+        const list = page.locator(`[data-gotipe-content] > [data-block-id="${blockId}"]`);
+        const rows = list.locator(":scope > [data-block-id]");
+        await expect(rows).toHaveCount(1);
 
-        await jaggedHoverOnBlock(page, blockId);
+        await jaggedHoverOnBlock(page, itemId);
         const toolbar = page.locator(".gotipe-block-toolbar-wrapper");
         await expect(toolbar).toBeVisible();
         await toolbar.locator('[aria-label="Click to add below. Option-click to add a block above"]').click();
 
-        await expect.poll(async () => (await topLevelIds(page)).length).toBe(before.length + 1);
-
-        const after = await topLevelIds(page);
-        expect(after[idx]).toBe(blockId);
-        const insertedId = after[idx + 1];
-        const insertedType = await page.evaluate((id) => {
-          const node = document.querySelector(`[data-gotipe-content] > [data-block-id="${id}"]`) as HTMLElement | null;
-          return node?.getAttribute("data-block-type") ?? null;
-        }, insertedId);
-        expect(insertedType).toBe("paragraph");
+        // The handle belongs to the item row; adding below retains its list parent.
+        await expect(rows).toHaveCount(2);
+        expect(await topLevelIds(page)).toEqual(before);
+        await expect(rows.nth(0)).toHaveAttribute("data-block-id", itemId);
+        await expect(rows.nth(1)).toHaveAttribute("data-block-type", blockId === "s2-t-list" ? "todoItem" : "listItem");
+        await page.keyboard.press("Escape");
+        await page.keyboard.type("new row");
+        await expect(rows.nth(1)).toContainText("new row");
+        await expect(rows.nth(0)).not.toContainText("new row");
       });
 
       await test.step(`drag menu works after jagged hover on ${blockId}`, async () => {
         await seedToolbarSurface(page);
-        await jaggedHoverOnBlock(page, blockId);
+        await jaggedHoverOnBlock(page, blockId.replace("-list", "-item"));
 
         const toolbar = page.locator(".gotipe-block-toolbar-wrapper");
         await expect(toolbar).toBeVisible();

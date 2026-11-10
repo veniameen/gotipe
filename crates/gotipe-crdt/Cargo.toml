@@ -6,15 +6,13 @@ license.workspace = true
 
 [features]
 default = ["compression"]
-compression = ["dep:zstd"]
+compression = []
 
 [dependencies]
-gotipe-core = { path = "../gotipe-core" }
+gotipe-core = { version = "0.1.0", path = "../gotipe-core" }
 serde = { workspace = true }
 serde_json = { workspace = true }
 thiserror = { workspace = true }
-zstd = { workspace = true, optional = true }
-uuid = { workspace = true }
 
 [dev-dependencies]
 proptest = { workspace = true }

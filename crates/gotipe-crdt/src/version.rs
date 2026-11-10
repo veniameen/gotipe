@@ -22,6 +22,12 @@ impl VersionVector {
         *counter
     }
 
+    /// Observe an operation's Lamport clock.
+    pub fn observe(&mut self, peer_id: &str, clock: u64) {
+        let counter = self.clocks.entry(peer_id.into()).or_insert(0);
+        *counter = (*counter).max(clock);
+    }
+
     /// Get the current clock for a peer
     pub fn get(&self, peer_id: &str) -> u64 {
         self.clocks.get(peer_id).copied().unwrap_or(0)

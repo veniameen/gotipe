@@ -1,4 +1,5 @@
-import { type CreateEditorOptions, type GoTipeEditor, createEditorWithLoader } from "./editor";
+import { createEditorWithLoader } from "./editor";
+import type { CreateEditorOptions, GoTipeEditor } from "./types/editor";
 import { loadWasmModule } from "./wasm-loader";
 
 /**

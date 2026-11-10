@@ -1,6 +1,7 @@
-export { defineSuggestions } from "./extension";
+export { defineSuggestions, getSuggestionsManager } from "./extension";
 export type { Suggestion, SuggestionState, SuggestionsOptions } from "./types";
 export { SuggestionsManager } from "./manager";
+export type { SuggestionsSnapshot } from "./persistence";
 export {
   findAnchor,
   locateEdits,

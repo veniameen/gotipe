@@ -1,14 +1,11 @@
 import { type GoTipeEditor, defineExtension } from "@gotipe/core";
-import { type AwarenessUser, type CollaborationOptions, CollaborationProvider } from "./provider";
+import { type CollaborationOptions, CollaborationProvider } from "./provider";
 
-export interface CollaborationExtensionOptions {
-  documentId: string;
-  wsUrl: string;
-  user: AwarenessUser;
-  token?: string;
-  onStateChange?: CollaborationOptions["onStateChange"];
-  onPeersChange?: CollaborationOptions["onPeersChange"];
-  onError?: CollaborationOptions["onError"];
+export type CollaborationExtensionOptions = CollaborationOptions;
+
+const providers = new WeakMap<GoTipeEditor, CollaborationProvider>();
+export function getCollaborationProvider(editor: GoTipeEditor): CollaborationProvider | undefined {
+  return providers.get(editor);
 }
 
 export const defineCollaboration = defineExtension<CollaborationExtensionOptions>({
@@ -23,25 +20,12 @@ export const defineCollaboration = defineExtension<CollaborationExtensionOptions
     const opts = this.options as CollaborationExtensionOptions;
     if (!opts.wsUrl || !opts.documentId) return;
 
-    const provider = new CollaborationProvider({
-      documentId: opts.documentId,
-      wsUrl: opts.wsUrl,
-      user: opts.user,
-      token: opts.token,
-      onStateChange: opts.onStateChange,
-      onPeersChange: opts.onPeersChange,
-      onError: opts.onError,
-    });
-
+    const provider = new CollaborationProvider(opts);
     provider.connect(editor);
-
-    // Store provider for later access
-    (editor as unknown as Record<string, unknown>).__collaborationProvider = provider;
+    providers.set(editor, provider);
   },
   onDestroy(editor: GoTipeEditor) {
-    const provider = (editor as unknown as Record<string, unknown>).__collaborationProvider as
-      | CollaborationProvider
-      | undefined;
-    provider?.destroy();
+    providers.get(editor)?.destroy();
+    providers.delete(editor);
   },
 });

@@ -15,5 +15,5 @@ api.gotipe.com {
 }
 
 sync.gotipe.com {
-	reverse_proxy sync:8081
+	reverse_proxy api:8081
 }

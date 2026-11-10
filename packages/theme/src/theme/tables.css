@@ -1,0 +1,99 @@
+/* Shared table controls remain inside the scroll area at every container width. */
+.gotipe-table-wrapper {
+  position: relative;
+  overflow-x: auto;
+  max-width: 100%;
+}
+.gotipe-table-wrapper table {
+  table-layout: fixed;
+  width: max-content;
+  min-width: 100%;
+  border-collapse: collapse;
+}
+.gotipe-table-wrapper th,
+.gotipe-table-wrapper td {
+  position: relative;
+  min-width: 64px;
+  overflow-wrap: anywhere;
+}
+.gotipe-table-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 8px 0;
+  position: sticky;
+  left: 0;
+  width: fit-content;
+  max-width: 100%;
+}
+.gotipe-table-actions button {
+  position: static;
+  transform: none;
+  width: auto;
+  height: auto;
+  opacity: 1;
+  padding: 4px 8px;
+  border: 1px solid var(--gt-border);
+  border-radius: var(--gt-radius-sm);
+  background: var(--gt-bg);
+  color: var(--gt-text);
+  font: inherit;
+  cursor: pointer;
+}
+.gotipe-table-actions button:hover {
+  background: var(--gt-bg-hover);
+}
+.gotipe-table-col-resize {
+  position: absolute;
+  right: -3px;
+  top: 0;
+  bottom: 0;
+  width: 6px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: col-resize;
+  touch-action: none;
+  z-index: 2;
+  opacity: 0.2;
+}
+.gotipe-table-col-resize:hover,
+.gotipe-table-col-resize:focus-visible,
+.gotipe-table-col-resize.active {
+  background: var(--gt-accent);
+  opacity: 1;
+}
+.gotipe-toggle > summary::before {
+  display: none;
+}
+.gotipe-toggle > summary {
+  list-style: none;
+}
+.gotipe-toggle-button {
+  width: 22px;
+  padding: 0;
+  margin-inline-end: 4px;
+  border: none;
+  background: transparent;
+  color: var(--gt-text-muted);
+  font: inherit;
+  cursor: pointer;
+}
+.gotipe-callout-icon-editor {
+  flex: 0 0 auto;
+}
+.gotipe-callout-icon-editor input {
+  width: 48px;
+  max-width: 100%;
+  color: inherit;
+  background: var(--gt-bg);
+  border: 1px solid var(--gt-border);
+  border-radius: var(--gt-radius-sm);
+}
+.gotipe-callout-icon-editor button {
+  border: none;
+  padding: 0;
+  background: transparent;
+  font: inherit;
+  cursor: pointer;
+}

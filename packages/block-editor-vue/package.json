@@ -16,15 +16,17 @@
   "peerDependencies": {
     "@gotipe/core": "^0.1.0",
     "@gotipe/theme": "^0.1.0",
+    "@gotipe/vue": "^0.1.0",
     "vue": ">=3.4"
   },
   "devDependencies": {
     "@gotipe/core": "workspace:*",
     "@gotipe/theme": "workspace:*",
-    "vitest": "^2.1",
-    "tsup": "^8.3",
-    "vue": "^3.5",
-    "@gotipe/vue": "workspace:*"
+    "@gotipe/vue": "workspace:*",
+    "jsdom": "^26.1.0",
+    "tsup": "^8.5.1",
+    "vitest": "^4.1.12",
+    "vue": "^3.5.45"
   },
   "scripts": {
     "build": "tsup",
@@ -32,5 +34,12 @@
     "typecheck": "tsc --noEmit",
     "lint": "biome check src/"
   },
-  "license": "SEE LICENSE IN LICENSE-COMMERCIAL"
+  "license": "SEE LICENSE IN LICENSE-COMMERCIAL",
+  "files": [
+    "dist",
+    "LICENSE-COMMERCIAL"
+  ],
+  "publishConfig": {
+    "access": "public"
+  }
 }

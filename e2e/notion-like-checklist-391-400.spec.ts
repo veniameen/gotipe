@@ -32,8 +32,8 @@ function makeBlock(kind: BlockKind, id: string, text: string): BlockInput {
 }
 
 async function setTheme(page: Page, mode: "light" | "dark") {
-  await page.getByRole("radio", { name: mode === "light" ? "Light theme" : "Dark theme" }).click();
-  await expect(page.getByRole("radio", { name: mode === "light" ? "Light theme" : "Dark theme" })).toHaveAttribute("aria-checked", "true");
+  await page.getByRole("banner").getByRole("radio", { name: mode === "light" ? "Light theme" : "Dark theme" }).click();
+  await expect(page.getByRole("banner").getByRole("radio", { name: mode === "light" ? "Light theme" : "Dark theme" })).toHaveAttribute("aria-checked", "true");
 }
 
 async function selectRange(page: Page, blockId: string, from: number, to: number) {

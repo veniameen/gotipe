@@ -7,7 +7,7 @@ export const Table = defineExtension({
       name: "table",
       group: ["block"],
       content: "empty",
-      attrs: {},
+      attrs: { align: { type: "array" }, colWidths: { type: "array" } },
       topLevel: true,
       marksAllowed: "none",
       leaf: false,
@@ -32,6 +32,7 @@ export const Table = defineExtension({
       attrs: {
         colspan: { type: "number", default: 1 },
         rowspan: { type: "number", default: 1 },
+        align: { type: "string" },
       },
       topLevel: false,
       marksAllowed: "all",
@@ -45,6 +46,7 @@ export const Table = defineExtension({
       attrs: {
         colspan: { type: "number", default: 1 },
         rowspan: { type: "number", default: 1 },
+        align: { type: "string" },
       },
       topLevel: false,
       marksAllowed: "all",

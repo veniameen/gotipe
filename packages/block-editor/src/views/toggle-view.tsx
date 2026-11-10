@@ -1,4 +1,5 @@
 import type { BlockView, GoTipeEditor } from "@gotipe/core";
+import { TextRenderer, ToggleBlock } from "@gotipe/react";
 import type React from "react";
 
 export function ToggleView({
@@ -6,23 +7,20 @@ export function ToggleView({
   editor,
   children,
 }: { block: BlockView; editor: GoTipeEditor; children?: React.ReactNode }) {
-  const isOpen = !!block.attrs.open;
-
   return (
-    <details
-      data-block-id={block.id}
-      data-block-type="toggle"
-      className="gotipe-toggle"
-      open={isOpen}
-      onToggle={(e) => {
-        editor
-          .chain()
-          .setBlockAttrs(block.id, { open: (e.target as HTMLDetailsElement).open })
-          .run();
-      }}
+    <ToggleBlock
+      block={block}
+      editor={editor}
+      rootProps={{ "data-block-id": block.id }}
+      content={
+        Array.isArray(block.content) ? (
+          <TextRenderer spans={block.content} decorations={block.decorations} />
+        ) : (
+          block.content
+        )
+      }
     >
-      <summary>Toggle</summary>
-      <div className="gotipe-toggle-content">{children}</div>
-    </details>
+      {children}
+    </ToggleBlock>
   );
 }

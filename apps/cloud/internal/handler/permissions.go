@@ -22,12 +22,12 @@ func NewPermissionsHandler(db *storage.PostgresStore, auditLogger *audit.AuditLo
 }
 
 type PermissionResponse struct {
-	UserID     string    `json:"user_id"`
-	UserName   string    `json:"user_name"`
-	UserEmail  string    `json:"user_email"`
-	Role       string    `json:"role"` // "viewer", "commenter", "editor", "admin"
-	GrantedAt  time.Time `json:"granted_at"`
-	GrantedBy  string    `json:"granted_by"`
+	UserID    string    `json:"user_id"`
+	UserName  string    `json:"user_name"`
+	UserEmail string    `json:"user_email"`
+	Role      string    `json:"role"` // "viewer", "commenter", "editor", "admin"
+	GrantedAt time.Time `json:"granted_at"`
+	GrantedBy string    `json:"granted_by"`
 }
 
 // ListPermissions handles GET /v1/documents/{docId}/permissions
@@ -40,9 +40,12 @@ func (h *PermissionsHandler) ListPermissions() http.HandlerFunc {
 		}
 
 		docID := chi.URLParam(r, "docId")
+		if !requireDocumentAccess(w, r, h.db.Pool, docID, "admin") {
+			return
+		}
 
 		rows, err := h.db.Pool.Query(r.Context(),
-			`SELECT p.user_id, u.name, u.email, p.role, p.granted_at, p.granted_by
+			`SELECT p.user_id, u.name, u.email, p.role, p.granted_at, COALESCE(p.granted_by::text,'')
 			 FROM document_permissions p JOIN users u ON p.user_id = u.id
 			 WHERE p.document_id = $1`,
 			docID,
@@ -57,9 +60,15 @@ func (h *PermissionsHandler) ListPermissions() http.HandlerFunc {
 		for rows.Next() {
 			var p PermissionResponse
 			if err := rows.Scan(&p.UserID, &p.UserName, &p.UserEmail, &p.Role, &p.GrantedAt, &p.GrantedBy); err != nil {
-				continue
+				apierror.ErrInternal.Write(w)
+				return
 			}
 			perms = append(perms, p)
+		}
+
+		if rows.Err() != nil {
+			apierror.ErrInternal.Write(w)
+			return
 		}
 
 		if perms == nil {
@@ -81,26 +90,8 @@ func (h *PermissionsHandler) SetPermission() http.HandlerFunc {
 
 		docID := chi.URLParam(r, "docId")
 
-		// Verify ownership or admin role
-		var ownerID string
-		err := h.db.Pool.QueryRow(r.Context(),
-			`SELECT owner_id FROM documents WHERE id = $1`, docID,
-		).Scan(&ownerID)
-		if err != nil {
-			apierror.ErrNotFound.Write(w)
+		if !requireDocumentAccess(w, r, h.db.Pool, docID, "admin") {
 			return
-		}
-		if ownerID != user.UserID {
-			// Check if user has admin permission
-			var role string
-			err = h.db.Pool.QueryRow(r.Context(),
-				`SELECT role FROM document_permissions WHERE document_id = $1 AND user_id = $2`,
-				docID, user.UserID,
-			).Scan(&role)
-			if err != nil || role != "admin" {
-				apierror.ErrForbidden.Write(w)
-				return
-			}
 		}
 
 		var req struct {
@@ -120,7 +111,7 @@ func (h *PermissionsHandler) SetPermission() http.HandlerFunc {
 
 		// Lookup user
 		var targetUserID string
-		err = h.db.Pool.QueryRow(r.Context(),
+		err := h.db.Pool.QueryRow(r.Context(),
 			`SELECT id FROM users WHERE email = $1`, req.Email,
 		).Scan(&targetUserID)
 		if err != nil {
@@ -158,21 +149,11 @@ func (h *PermissionsHandler) RevokePermission() http.HandlerFunc {
 		docID := chi.URLParam(r, "docId")
 		targetUserID := chi.URLParam(r, "userId")
 
-		// Verify ownership
-		var ownerID string
-		err := h.db.Pool.QueryRow(r.Context(),
-			`SELECT owner_id FROM documents WHERE id = $1`, docID,
-		).Scan(&ownerID)
-		if err != nil {
-			apierror.ErrNotFound.Write(w)
-			return
-		}
-		if ownerID != user.UserID {
-			apierror.ErrForbidden.Write(w)
+		if !requireDocumentAccess(w, r, h.db.Pool, docID, "owner") {
 			return
 		}
 
-		_, err = h.db.Pool.Exec(r.Context(),
+		_, err := h.db.Pool.Exec(r.Context(),
 			`DELETE FROM document_permissions WHERE document_id = $1 AND user_id = $2`,
 			docID, targetUserID,
 		)

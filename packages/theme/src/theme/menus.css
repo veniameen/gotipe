@@ -1,0 +1,296 @@
+/* ============================================================
+   Slash Menu
+   ============================================================ */
+
+.gotipe-slash-menu {
+  box-sizing: border-box;
+  width: min(300px, 90vw);
+  max-height: min(420px, calc(100vh - 24px));
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--gt-slash-bg);
+  border: 1px solid var(--gt-slash-border);
+  border-radius: 16px;
+  box-shadow: var(--gt-slash-shadow);
+  padding: 8px;
+  z-index: var(--gt-z-slash, 50);
+  animation: gotipe-scale-in var(--gt-duration-normal, 150ms) var(--gt-ease-out);
+}
+
+.gotipe-slash-menu-list {
+  overflow-y: auto;
+  overflow-x: hidden;
+  max-height: min(404px, calc(100vh - 64px));
+  padding: 0;
+  overscroll-behavior: contain;
+}
+
+.gotipe-slash-menu-list::-webkit-scrollbar {
+  width: 4px;
+}
+.gotipe-slash-menu-list::-webkit-scrollbar-track {
+  background: transparent;
+}
+.gotipe-slash-menu-list::-webkit-scrollbar-thumb {
+  background: var(--gt-slash-scrollbar);
+  border-radius: 2px;
+}
+
+.gotipe-slash-menu-group-separator {
+  border: 0;
+  width: 100%;
+  height: 1px;
+  background: var(--gt-slash-separator);
+  margin: 10px 0 8px;
+}
+
+.gotipe-slash-menu-group-label {
+  font-size: 12px;
+  color: var(--gt-slash-muted);
+  padding: 6px 8px 5px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: none;
+}
+
+.gotipe-slash-menu-item {
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr);
+  align-items: center;
+  gap: 12px;
+  min-height: 36px;
+  padding: 6px 10px;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: background var(--gt-duration-fast, 100ms) var(--gt-ease-out), color
+    var(--gt-duration-fast, 100ms) var(--gt-ease-out);
+}
+
+.gotipe-slash-menu-item:hover,
+.gotipe-slash-menu-item.selected {
+  background: var(--gt-slash-hover);
+}
+
+.gotipe-slash-menu-item-icon {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--gt-slash-icon);
+  flex-shrink: 0;
+}
+
+.gotipe-slash-menu-item-icon svg {
+  width: 22px;
+  height: 22px;
+}
+
+.gotipe-slash-menu-item-icon-text {
+  font-size: 13px;
+  line-height: 1;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  color: inherit;
+}
+
+.gotipe-slash-menu-item-title {
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 1.25;
+  color: var(--gt-slash-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.gotipe-slash-menu-item.selected .gotipe-slash-menu-item-icon,
+.gotipe-slash-menu-item:hover .gotipe-slash-menu-item-icon {
+  color: var(--gt-slash-text);
+}
+
+.gotipe-slash-menu-item-icon--accent {
+  color: var(--gt-slash-accent);
+}
+
+.gotipe-slash-menu-item.selected .gotipe-slash-menu-item-icon--accent,
+.gotipe-slash-menu-item:hover .gotipe-slash-menu-item-icon--accent {
+  color: var(--gt-slash-accent-hover);
+}
+
+.gotipe-slash-menu-item-body {
+  min-width: 0;
+}
+
+.gotipe-slash-menu-item-description {
+  display: none;
+}
+
+.gotipe-slash-menu-empty {
+  padding: 12px 8px 8px;
+  color: var(--gt-slash-muted);
+  font-size: 12px;
+  text-align: center;
+}
+
+/* Fuzzy match highlight */
+.gotipe-slash-menu-item mark {
+  background: var(--gt-slash-mark-bg);
+  color: inherit;
+  padding: 0;
+  border-radius: 1px;
+}
+
+/* ============================================================
+   Block Editor — with toolbar gutter
+   ============================================================ */
+
+.gotipe-block-editor--with-toolbar {
+  padding-left: 0;
+}
+
+/* Reserve a stable action rail, including in a narrow host container. */
+.gotipe-block-editor--with-toolbar > .gotipe-editor {
+  padding-left: 64px;
+}
+
+/* ============================================================
+   Block Toolbar
+   ============================================================ */
+
+.gotipe-block-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  z-index: var(--gt-z-block-handle, 10);
+}
+
+.gotipe-block-toolbar-control {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.gotipe-block-toolbar button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border: none;
+  border-radius: var(--gt-radius-sm, 6px);
+  background: transparent;
+  color: var(--gt-text-tertiary);
+  cursor: pointer;
+  padding: 0;
+  transition: background 20ms linear;
+}
+
+.gotipe-block-toolbar button:hover {
+  color: var(--gt-text-secondary);
+  background: var(--gt-bg-hover);
+}
+
+.gotipe-drag-handle-btn {
+  cursor: grab;
+}
+.gotipe-drag-handle-btn:active {
+  cursor: grabbing;
+}
+
+.gotipe-block-toolbar-tooltip {
+  position: absolute;
+  left: 0;
+  top: -8px;
+  transform: translate(-50%, -94%);
+  min-width: 168px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: rgba(15, 23, 42, 0.96);
+  color: #fff;
+  font-size: 12px;
+  line-height: 1.25;
+  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.24);
+  pointer-events: none;
+  z-index: var(--gt-z-slash, 50);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  opacity: 0;
+  transition: opacity var(--gt-duration-fast, 100ms) var(--gt-ease-out), transform
+    var(--gt-duration-fast, 100ms) var(--gt-ease-out), left var(--gt-duration-fast, 100ms)
+    var(--gt-ease-out);
+}
+
+.gotipe-block-toolbar-tooltip::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: -5px;
+  width: 10px;
+  height: 10px;
+  background: rgba(15, 23, 42, 0.96);
+  transform: translateX(-50%) rotate(45deg);
+}
+
+.gotipe-block-toolbar-tooltip-meta {
+  color: rgba(255, 255, 255, 0.82);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.gotipe-block-toolbar-tooltip kbd {
+  font-family: var(--gt-font-body);
+  font-size: 11px;
+  line-height: 1;
+  font-weight: 600;
+  border-radius: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  padding: 2px 4px;
+  color: rgba(255, 255, 255, 0.92);
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.gotipe-block-toolbar-tooltip.is-visible {
+  opacity: 1;
+  transform: translate(-50%, -100%);
+}
+
+/* Block More Menu (context menu) */
+.gotipe-block-more-menu {
+  position: absolute;
+  left: 0;
+  top: 100%;
+  margin-top: var(--gt-space-1, 4px);
+  background: var(--gt-bg);
+  border: 1px solid var(--gt-border-light, rgba(0, 0, 0, 0.05));
+  border-radius: var(--gt-radius-lg, 12px);
+  box-shadow: var(--gt-shadow-elevated);
+  padding: var(--gt-space-1, 4px);
+  min-width: 160px;
+  z-index: var(--gt-z-slash, 50);
+  animation: gotipe-scale-in var(--gt-duration-normal, 150ms) var(--gt-ease-out);
+}
+
+.gotipe-block-more-menu button {
+  display: flex;
+  align-items: center;
+  gap: var(--gt-space-2, 8px);
+  width: 100%;
+  height: 32px;
+  padding: 0 var(--gt-space-2, 8px);
+  border: none;
+  border-radius: var(--gt-radius-md, 8px);
+  background: transparent;
+  color: var(--gt-text-base);
+  font-size: var(--gt-text-sm, 14px);
+  cursor: pointer;
+  transition: background var(--gt-duration-fast, 100ms) var(--gt-ease-out);
+  text-align: left;
+}
+
+.gotipe-block-more-menu button:hover {
+  background: var(--gt-bg-hover);
+}

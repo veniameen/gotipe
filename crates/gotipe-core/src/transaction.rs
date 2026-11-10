@@ -51,6 +51,7 @@ pub enum Step {
         text: String,
         marks: Vec<Mark>,
     },
+    #[serde(alias = "DeleteRange")]
     DeleteText {
         block_id: BlockId,
         from: usize,

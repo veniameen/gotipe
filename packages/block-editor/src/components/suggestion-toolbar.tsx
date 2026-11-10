@@ -1,5 +1,5 @@
 import type { GoTipeEditor } from "@gotipe/core";
-import { useCallback } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 export interface Suggestion {
   id: string;
@@ -23,6 +23,7 @@ export interface SuggestionToolbarProps {
 }
 
 export function SuggestionToolbar({
+  editor,
   suggestions,
   currentIndex,
   onNavigate,
@@ -32,19 +33,30 @@ export function SuggestionToolbar({
   onRejectAll,
 }: SuggestionToolbarProps) {
   const total = suggestions.length;
-  const current = suggestions[currentIndex];
+  const index = Math.min(Math.max(currentIndex, 0), Math.max(0, total - 1));
+  const current = suggestions[index];
+  const [editable, setEditable] = useState(editor.isEditable);
+  useEffect(() => {
+    setEditable(editor.isEditable);
+    const off = editor.on("editableChange", setEditable);
+    const destroy = editor.on("destroy", () => setEditable(false));
+    return () => {
+      off();
+      destroy();
+    };
+  }, [editor]);
 
   const handlePrev = useCallback(() => {
-    if (currentIndex > 0) onNavigate(currentIndex - 1);
-  }, [currentIndex, onNavigate]);
+    if (index > 0) onNavigate(index - 1);
+  }, [index, onNavigate]);
 
   const handleNext = useCallback(() => {
-    if (currentIndex < total - 1) onNavigate(currentIndex + 1);
-  }, [currentIndex, total, onNavigate]);
+    if (index < total - 1) onNavigate(index + 1);
+  }, [index, total, onNavigate]);
 
   const handleAcceptCurrent = useCallback(() => {
-    if (current) onAccept(current);
-  }, [current, onAccept]);
+    if (current && editor.isEditable && !editor.isDestroyed) onAccept(current);
+  }, [current, editor, onAccept]);
 
   const handleRejectCurrent = useCallback(() => {
     if (current) onReject(current);
@@ -60,15 +72,15 @@ export function SuggestionToolbar({
       data-gotipe-suggestion-toolbar=""
     >
       <span className="gotipe-suggestion-counter" aria-live="polite">
-        {currentIndex + 1}/{total}
+        {index + 1}/{total}
       </span>
 
-      <div className="gotipe-bubble-menu-separator" role="separator" />
+      <div className="gotipe-bubble-menu-separator" aria-hidden="true" />
 
       <button
         type="button"
         onClick={handlePrev}
-        disabled={currentIndex === 0}
+        disabled={index === 0}
         aria-label="Previous suggestion"
       >
         ◄
@@ -76,26 +88,34 @@ export function SuggestionToolbar({
       <button
         type="button"
         onClick={handleNext}
-        disabled={currentIndex >= total - 1}
+        disabled={index >= total - 1}
         aria-label="Next suggestion"
       >
         ►
       </button>
 
-      <div className="gotipe-bubble-menu-separator" role="separator" />
+      <div className="gotipe-bubble-menu-separator" aria-hidden="true" />
 
-      <button type="button" onClick={handleAcceptCurrent} aria-label="Accept current suggestion">
+      <button
+        type="button"
+        onClick={handleAcceptCurrent}
+        disabled={!editable}
+        aria-label="Accept current suggestion"
+      >
         ✓
       </button>
       <button type="button" onClick={handleRejectCurrent} aria-label="Reject current suggestion">
         ✗
       </button>
 
-      <div className="gotipe-bubble-menu-separator" role="separator" />
+      <div className="gotipe-bubble-menu-separator" aria-hidden="true" />
 
       <button
         type="button"
-        onClick={onAcceptAll}
+        onClick={() => {
+          if (editor.isEditable && !editor.isDestroyed) onAcceptAll();
+        }}
+        disabled={!editable}
         aria-label="Accept all suggestions"
         data-action="accept-all"
       >

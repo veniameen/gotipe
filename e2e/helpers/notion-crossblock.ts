@@ -49,35 +49,40 @@ export async function selectAcross(
   from = 1,
   to = 6,
 ): Promise<string> {
-  return page.evaluate(({ fromId, toId, from, to }) => {
-    const root = document.querySelector("[data-gotipe-content]") as HTMLElement | null;
-    const fromBlock = document.querySelector(`[data-block-id="${fromId}"]`) as HTMLElement | null;
-    const toBlock = document.querySelector(`[data-block-id="${toId}"]`) as HTMLElement | null;
-
-    const firstText = (el: HTMLElement | null): Text | null => {
-      if (!el) return null;
-      const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
-      let n: Node | null;
-      while ((n = walker.nextNode())) {
-        if ((n.textContent ?? "").length > 0) return n as Text;
+  return page.evaluate(async ({ fromId, toId, from, to }) => {
+    // Let the previous model edit finish its scheduled caret restoration first.
+    await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
+    const root = document.querySelector<HTMLElement>("[data-gotipe-content]");
+    if (!root) throw new Error("Editor content is missing");
+    const point = (id: string, offset: number) => {
+      const block = root.querySelector<HTMLElement>(`[data-block-id="${CSS.escape(id)}"]`);
+      if (!block) throw new Error(`Cannot select missing block ${id}`);
+      const walker = document.createTreeWalker(block, NodeFilter.SHOW_TEXT, {
+        acceptNode(node) {
+          const parent = node.parentElement;
+          return parent?.closest("[data-block-id]") === block &&
+            !parent.closest('button, select, input, [contenteditable="false"]')
+            ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT;
+        },
+      });
+      let remaining = offset;
+      let last: Node | null = null;
+      for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+        last = node;
+        const length = node.textContent?.length ?? 0;
+        if (remaining <= length) return { node, offset: remaining };
+        remaining -= length;
       }
-      return null;
+      if (!last) throw new Error(`Cannot select text in empty block ${id}`);
+      return { node: last, offset: last.textContent?.length ?? 0 };
     };
-
-    const a = firstText(fromBlock);
-    const b = firstText(toBlock);
-    if (!root || !a || !b) return "";
-
-    const range = document.createRange();
-    range.setStart(a, Math.min(from, a.length));
-    range.setEnd(b, Math.min(to, b.length));
-
-    const sel = window.getSelection();
-    if (!sel) return "";
-    sel.removeAllRanges();
-    sel.addRange(range);
+    const anchor = point(fromId, from);
+    const head = point(toId, to);
     root.focus();
-    return sel.toString();
+    const selection = window.getSelection();
+    if (!selection) throw new Error("Browser selection is unavailable");
+    selection.setBaseAndExtent(anchor.node, anchor.offset, head.node, head.offset);
+    return selection.toString();
   }, { fromId, toId, from, to });
 }
 

@@ -2,7 +2,9 @@ package handler
 
 import (
 	"encoding/json"
+	"errors"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/go-chi/chi/v5"
@@ -11,6 +13,7 @@ import (
 	"github.com/gotipe/cloud/internal/audit"
 	"github.com/gotipe/cloud/internal/auth"
 	"github.com/gotipe/cloud/internal/storage"
+	"github.com/jackc/pgx/v5/pgconn"
 )
 
 type OrganizationsHandler struct {
@@ -37,11 +40,11 @@ type OrgResponse struct {
 }
 
 type OrgMemberResponse struct {
-	UserID    string    `json:"user_id"`
-	Name      string    `json:"name"`
-	Email     string    `json:"email"`
-	Role      string    `json:"role"`
-	JoinedAt  time.Time `json:"joined_at"`
+	UserID   string    `json:"user_id"`
+	Name     string    `json:"name"`
+	Email    string    `json:"email"`
+	Role     string    `json:"role"`
+	JoinedAt time.Time `json:"joined_at"`
 }
 
 // CreateOrganization handles POST /v1/organizations
@@ -59,8 +62,9 @@ func (h *OrganizationsHandler) CreateOrganization() http.HandlerFunc {
 			return
 		}
 
-		if req.Name == "" || req.Slug == "" {
-			apierror.ErrValidation.WithMessage("name and slug are required").Write(w)
+		req.Name = strings.TrimSpace(req.Name)
+		if req.Name == "" || len(req.Name) > 200 || !validOrgSlug(req.Slug) {
+			apierror.ErrValidation.WithMessage("name and a lowercase alphanumeric slug are required").Write(w)
 			return
 		}
 
@@ -68,20 +72,20 @@ func (h *OrganizationsHandler) CreateOrganization() http.HandlerFunc {
 		now := time.Now()
 
 		_, err := h.db.Pool.Exec(r.Context(),
-			`INSERT INTO organizations (id, name, slug, owner_id, plan, created_at)
-			 VALUES ($1, $2, $3, $4, $5, $6)`,
+			`WITH created AS (INSERT INTO organizations (id,name,slug,owner_id,plan,created_at)
+			VALUES($1,$2,$3,$4,$5,$6) RETURNING id,owner_id,created_at)
+			INSERT INTO org_members(org_id,user_id,role,joined_at) SELECT id,owner_id,'admin',created_at FROM created`,
 			orgID, req.Name, req.Slug, user.UserID, user.Plan, now,
 		)
 		if err != nil {
-			apierror.ErrConflict.WithMessage("Organization slug already exists").Write(w)
+			var pgErr *pgconn.PgError
+			if errors.As(err, &pgErr) && pgErr.Code == "23505" {
+				apierror.ErrConflict.WithMessage("Organization slug already exists").Write(w)
+			} else {
+				apierror.ErrInternal.Write(w)
+			}
 			return
 		}
-
-		// Add owner as admin member
-		_, _ = h.db.Pool.Exec(r.Context(),
-			`INSERT INTO org_members (org_id, user_id, role, joined_at) VALUES ($1, $2, 'admin', $3)`,
-			orgID, user.UserID, now,
-		)
 
 		_ = h.audit.Log(r.Context(), user.UserID, audit.ActionOrgCreate, "organization", orgID, map[string]string{"name": req.Name})
 
@@ -134,6 +138,15 @@ func (h *OrganizationsHandler) ListMembers() http.HandlerFunc {
 		}
 
 		orgID := chi.URLParam(r, "id")
+		var member bool
+		if err := h.db.Pool.QueryRow(r.Context(), `SELECT EXISTS(SELECT 1 FROM org_members WHERE org_id = $1 AND user_id = $2)`, orgID, user.UserID).Scan(&member); err != nil {
+			apierror.ErrInternal.Write(w)
+			return
+		}
+		if !member {
+			apierror.ErrNotFound.Write(w)
+			return
+		}
 
 		rows, err := h.db.Pool.Query(r.Context(),
 			`SELECT m.user_id, u.name, u.email, m.role, m.joined_at
@@ -151,9 +164,15 @@ func (h *OrganizationsHandler) ListMembers() http.HandlerFunc {
 		for rows.Next() {
 			var m OrgMemberResponse
 			if err := rows.Scan(&m.UserID, &m.Name, &m.Email, &m.Role, &m.JoinedAt); err != nil {
-				continue
+				apierror.ErrInternal.Write(w)
+				return
 			}
 			members = append(members, m)
+		}
+
+		if rows.Err() != nil {
+			apierror.ErrInternal.Write(w)
+			return
 		}
 
 		if members == nil {
@@ -194,6 +213,10 @@ func (h *OrganizationsHandler) AddMember() http.HandlerFunc {
 			apierror.ErrInvalidJSON.Write(w)
 			return
 		}
+		if req.Role != "viewer" && req.Role != "commenter" && req.Role != "editor" && req.Role != "admin" {
+			apierror.ErrValidation.WithMessage("Invalid organization role").Write(w)
+			return
+		}
 
 		// Look up user by email
 		var newUserID string
@@ -205,13 +228,18 @@ func (h *OrganizationsHandler) AddMember() http.HandlerFunc {
 			return
 		}
 
-		_, err = h.db.Pool.Exec(r.Context(),
+		tag, err := h.db.Pool.Exec(r.Context(),
 			`INSERT INTO org_members (org_id, user_id, role, joined_at)
-			 VALUES ($1, $2, $3, now()) ON CONFLICT (org_id, user_id) DO UPDATE SET role = $3`,
+			 SELECT $1,$2,$3,now() FROM organizations WHERE id=$1 AND (owner_id<>$2 OR $3='admin')
+			 ON CONFLICT (org_id, user_id) DO UPDATE SET role = $3`,
 			orgID, newUserID, req.Role,
 		)
 		if err != nil {
 			apierror.ErrInternal.Write(w)
+			return
+		}
+		if tag.RowsAffected() != 1 {
+			apierror.ErrForbidden.WithMessage("Cannot demote organization owner").Write(w)
 			return
 		}
 
@@ -246,9 +274,13 @@ func (h *OrganizationsHandler) RemoveMember() http.HandlerFunc {
 
 		// Cannot remove org owner
 		var ownerID string
-		_ = h.db.Pool.QueryRow(r.Context(),
+		err = h.db.Pool.QueryRow(r.Context(),
 			`SELECT owner_id FROM organizations WHERE id = $1`, orgID,
 		).Scan(&ownerID)
+		if err != nil {
+			apierror.ErrInternal.Write(w)
+			return
+		}
 		if memberID == ownerID {
 			apierror.ErrForbidden.WithMessage("Cannot remove organization owner").Write(w)
 			return
@@ -267,4 +299,16 @@ func (h *OrganizationsHandler) RemoveMember() http.HandlerFunc {
 
 		w.WriteHeader(http.StatusNoContent)
 	}
+}
+
+func validOrgSlug(slug string) bool {
+	if len(slug) == 0 || len(slug) > 100 || slug[0] == '-' || slug[len(slug)-1] == '-' {
+		return false
+	}
+	for _, c := range slug {
+		if (c < 'a' || c > 'z') && (c < '0' || c > '9') && c != '-' {
+			return false
+		}
+	}
+	return true
 }

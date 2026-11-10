@@ -1,0 +1,6 @@
+# Imported license files are verified byte-for-byte by the notice collectors.
+# Preserve upstream line endings and whitespace; production code keeps all checks.
+apps/cloud/licenses/** -text -whitespace
+packages/wasm/licenses/** -text -whitespace
+packages/export-wasm/licenses/** -text -whitespace
+crates/gotipe-export/assets/NotoEmoji-OFL.txt -text -whitespace

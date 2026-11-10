@@ -1,3 +1,4 @@
+import { toSafeColor } from "@gotipe/core";
 import type React from "react";
 import type { HighlightToken } from "../highlight/types";
 
@@ -12,15 +13,24 @@ export function HighlightedLines({ lines }: { lines: HighlightToken[][] }) {
     if (li > 0) out.push("\n");
     line.forEach((token, ti) => {
       const style: Record<string, string> = {};
-      if (token.color) style["--gt-code-token"] = token.color;
-      if (token.darkColor) style["--gt-code-token-dark"] = token.darkColor;
-      const fs = token.fontStyle ?? 0;
+      const color = toSafeColor(token.color);
+      const darkColor = toSafeColor(token.darkColor);
+      if (color) style["--gt-code-token"] = color;
+      if (darkColor) style["--gt-code-token-dark"] = darkColor;
+      const fs =
+        typeof token.fontStyle === "number" &&
+        Number.isInteger(token.fontStyle) &&
+        token.fontStyle >= 0 &&
+        token.fontStyle <= 7
+          ? token.fontStyle
+          : 0;
       out.push(
         <span
           key={`${li}:${ti}`}
           className="gotipe-code-token"
           data-italic={fs & 1 ? "" : undefined}
           data-bold={fs & 2 ? "" : undefined}
+          data-underline={fs & 4 ? "" : undefined}
           style={style as React.CSSProperties}
         >
           {token.content}

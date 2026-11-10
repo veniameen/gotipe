@@ -1,19 +1,20 @@
 import type { GoTipeEditor } from "@gotipe/core";
+import { prepareImages } from "./assets";
+import { validateOptionNames } from "./options";
 import type { PdfOptions } from "./types";
+import { loadExporters } from "./wasm";
 
-/**
- * Export to PDF via lazy-loaded WASM module (~400KB).
- * Uses typst for rendering. NOT bundled in core.
- */
+/** Typeset a PDF with the optional exporter, loaded on first use. */
 export async function exportToPdf(editor: GoTipeEditor, options?: PdfOptions): Promise<Uint8Array> {
-  // Lazy-loaded WASM — module exists only after `pnpm build:wasm`
-  const wasm = await import(/* webpackIgnore: true */ "@gotipe/wasm/pkg/gotipe_wasm.js" as string);
-  const exportPdf: (json: string, config: string) => Uint8Array = wasm.exportPdf;
-  const json = JSON.stringify(editor.getJSON());
-  const config = JSON.stringify({
-    pageSize: options?.pageSize ?? "a4",
-    margin: options?.margin ?? { top: 72, right: 72, bottom: 72, left: 72 },
-    fontSize: options?.fontSize ?? 12,
-  });
-  return exportPdf(json, config);
+  validateOptionNames(options, [
+    "resolveImage",
+    "pageSize",
+    "margin",
+    "fontSize",
+    "headerTemplate",
+    "footerTemplate",
+  ]);
+  const document = await prepareImages(editor.getJSON(), options?.resolveImage);
+  const module = await loadExporters();
+  return module.exportPdf(JSON.stringify(document), JSON.stringify(options ?? {}));
 }

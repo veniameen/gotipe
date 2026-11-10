@@ -83,11 +83,13 @@ export async function topLevelOrder(page: Page): Promise<string[]> {
 
 async function readHoverPoint(page: Page, blockId: string): Promise<{ textX: number; gutterX: number; y: number }> {
   const point = await page.evaluate((id) => {
-    const block = document.querySelector(`[data-gotipe-content] > [data-block-id="${id}"]`) as HTMLElement | null;
+    const block = document.querySelector(`[data-gotipe-content] [data-block-id="${id}"]`) as HTMLElement | null;
     if (!block) return null;
 
-    const walker = document.createTreeWalker(block, NodeFilter.SHOW_TEXT);
-    let textLeft = block.getBoundingClientRect().left + 20;
+    const host = block.querySelector("[data-gotipe-text-content], [data-gotipe-todo-content]") ?? block;
+    const walker = document.createTreeWalker(host, NodeFilter.SHOW_TEXT);
+    let textLeft = host.getBoundingClientRect().left + 20;
+    let textY = host.getBoundingClientRect().top + 10;
     let n: Node | null;
     while ((n = walker.nextNode())) {
       const text = n.textContent ?? "";
@@ -98,15 +100,15 @@ async function readHoverPoint(page: Page, blockId: string): Promise<{ textX: num
       const rect = r.getBoundingClientRect();
       if (rect.width > 0 || rect.height > 0) {
         textLeft = rect.left;
+        textY = rect.top + rect.height / 2;
         break;
       }
     }
 
-    const br = block.getBoundingClientRect();
     return {
       textX: textLeft + 10,
       gutterX: Math.max(4, textLeft - 28),
-      y: br.top + Math.min(20, Math.max(10, br.height / 2)),
+      y: textY,
     };
   }, blockId);
 
@@ -128,22 +130,23 @@ export async function activateToolbarForBlock(page: Page, blockId: string): Prom
 }
 
 export async function dragBlockToIndex(page: Page, blockId: string, targetIndex: number): Promise<void> {
-  await page.evaluate(({ blockId, targetIndex }) => {
-    const root = document.querySelector("[data-gotipe-block-editor]") as HTMLElement | null;
-    const handle = document.querySelector(`[data-block-drag="${blockId}"]`) as HTMLElement | null;
-    const blocks = Array.from(document.querySelectorAll("[data-gotipe-content] > [data-block-id]")) as HTMLElement[];
-    const target = blocks[targetIndex] ?? null;
-    if (!root || !handle || !target) return;
-
-    const data = new DataTransfer();
-    data.setData("text/gotipe-block-id", blockId);
-    handle.dispatchEvent(new DragEvent("dragstart", { bubbles: true, cancelable: true, dataTransfer: data }));
-    const rect = target.getBoundingClientRect();
-    const y = rect.top + rect.height / 2;
-    root.dispatchEvent(new DragEvent("dragover", { bubbles: true, cancelable: true, clientY: y, dataTransfer: data }));
-    root.dispatchEvent(new DragEvent("drop", { bubbles: true, cancelable: true, clientY: y, dataTransfer: data }));
-    handle.dispatchEvent(new DragEvent("dragend", { bubbles: true, cancelable: true, dataTransfer: data }));
-  }, { blockId, targetIndex });
+  const handle = page.locator(`[data-block-drag="${blockId}"]`);
+  const blocks = page.locator("[data-gotipe-content] > [data-block-id]");
+  const target = blocks.nth(targetIndex);
+  await target.scrollIntoViewIfNeeded();
+  await activateToolbarForBlock(page, blockId);
+  const source = await handle.boundingBox();
+  const bounds = await target.boundingBox();
+  const content = await page.locator("[data-gotipe-content]").boundingBox();
+  if (!source || !bounds || !content) throw new Error("Missing drag source or target");
+  const x = content.x + 3;
+  const y = targetIndex === 0 ? bounds.y + 1 : bounds.y + bounds.height - 1;
+  await page.mouse.move(source.x + source.width / 2, source.y + source.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(source.x + source.width / 2 + 10, source.y + source.height / 2, { steps: 3 });
+  await page.mouse.move(x, y, { steps: 12 });
+  await page.mouse.move(x, y + (targetIndex === 0 ? 1 : -1));
+  await page.mouse.up();
 }
 
 async function openSlashMenu(page: Page, query: string): Promise<void> {

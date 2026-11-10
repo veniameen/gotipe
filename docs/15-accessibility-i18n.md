@@ -1,5 +1,12 @@
 # GoTipe — Accessibility & Internationalization
 
+> **Историческая спецификация, не руководство по текущему API.** Примеры, сроки,
+> сравнения производительности, коммерческие условия и обещания ниже не подтверждают
+> реализацию или доступность сервиса. Актуально: [контракты](development/editor-contracts.md),
+> [карта кода](development/code-map.md), [проверки](development/testing.md),
+> [план выпуска](22-release-readiness.md). Лицензии определяются `LICENSE` и manifest
+> каждого пакета, а не этим документом.
+
 ## Обзор
 
 GoTipe обеспечивает первоклассную поддержку accessibility (a11y) и internationalization (i18n) на уровне core. Rich text editor — один из самых сложных UI-компонентов с точки зрения доступности: он должен корректно работать с клавиатурой, screen readers, различными языками, IME, RTL-текстом и assistive technologies. GoTipe решает все эти задачи системно — a11y и i18n встроены в архитектуру, а не добавлены как afterthought.

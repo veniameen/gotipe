@@ -6,6 +6,8 @@ pub enum AttrValue {
     String(String),
     Number(f64),
     Bool(bool),
+    Array(Vec<AttrValue>),
+    Object(std::collections::BTreeMap<String, AttrValue>),
     Null,
 }
 
@@ -22,4 +24,6 @@ pub enum AttrType {
     Number,
     Bool,
     Enum(Vec<std::string::String>),
+    Array,
+    Object,
 }

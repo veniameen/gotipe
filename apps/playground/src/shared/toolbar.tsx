@@ -1,6 +1,6 @@
+import { ThemeToggle } from "@gotipe/block-editor";
 import type { GoTipeEditor } from "@gotipe/core";
 import { useEditorState } from "@gotipe/react";
-import { ThemeToggle } from "@gotipe/block-editor";
 import type React from "react";
 
 interface StaticToolbarProps {
@@ -65,6 +65,7 @@ export function StaticToolbar({
       {showHistory && (
         <div className="gotipe-toolbar-group">
           <button
+            type="button"
             className="gotipe-toolbar-btn"
             title="Undo"
             disabled={!toolbar?.canUndo}
@@ -79,6 +80,7 @@ export function StaticToolbar({
             {"↶"}
           </button>
           <button
+            type="button"
             className="gotipe-toolbar-btn"
             title="Redo"
             disabled={!toolbar?.canRedo}
@@ -110,7 +112,7 @@ export function StaticToolbar({
                   chain.setBlockType("paragraph");
                 });
               } else {
-                const level = parseInt(val.replace("h", ""), 10);
+                const level = Number.parseInt(val.replace("h", ""), 10);
                 runWithFocus((chain) => {
                   chain.setBlockType("heading", { level });
                 });
@@ -131,6 +133,7 @@ export function StaticToolbar({
       {showLists && (
         <div className="gotipe-toolbar-group">
           <button
+            type="button"
             className={`gotipe-toolbar-btn ${blockType === "bulletList" ? "active" : ""}`}
             title="Bullet List"
             onPointerDown={preventFocusSteal}
@@ -144,6 +147,7 @@ export function StaticToolbar({
             {"•"}
           </button>
           <button
+            type="button"
             className={`gotipe-toolbar-btn ${blockType === "orderedList" ? "active" : ""}`}
             title="Ordered List"
             onPointerDown={preventFocusSteal}
@@ -157,6 +161,7 @@ export function StaticToolbar({
             {"1."}
           </button>
           <button
+            type="button"
             className={`gotipe-toolbar-btn ${blockType === "todoList" ? "active" : ""}`}
             title="Task List"
             onPointerDown={preventFocusSteal}
@@ -176,6 +181,7 @@ export function StaticToolbar({
       {showIndent && (
         <div className="gotipe-toolbar-group">
           <button
+            type="button"
             className="gotipe-toolbar-btn"
             title="Indent"
             onPointerDown={preventFocusSteal}
@@ -189,6 +195,7 @@ export function StaticToolbar({
             {"⇥"}
           </button>
           <button
+            type="button"
             className="gotipe-toolbar-btn"
             title="Outdent"
             onPointerDown={preventFocusSteal}
@@ -210,6 +217,7 @@ export function StaticToolbar({
       {showMarks && (
         <div className="gotipe-toolbar-group">
           <button
+            type="button"
             className={`gotipe-toolbar-btn ${isMarkActive("bold") ? "active" : ""}`}
             title="Bold (Cmd+B)"
             onPointerDown={preventFocusSteal}
@@ -223,6 +231,7 @@ export function StaticToolbar({
             <strong>B</strong>
           </button>
           <button
+            type="button"
             className={`gotipe-toolbar-btn ${isMarkActive("italic") ? "active" : ""}`}
             title="Italic (Cmd+I)"
             onPointerDown={preventFocusSteal}
@@ -236,6 +245,7 @@ export function StaticToolbar({
             <em>I</em>
           </button>
           <button
+            type="button"
             className={`gotipe-toolbar-btn ${isMarkActive("strikethrough") ? "active" : ""}`}
             title="Strikethrough"
             onPointerDown={preventFocusSteal}
@@ -249,6 +259,7 @@ export function StaticToolbar({
             <s>S</s>
           </button>
           <button
+            type="button"
             className={`gotipe-toolbar-btn ${isMarkActive("code") ? "active" : ""}`}
             title="Inline Code"
             onPointerDown={preventFocusSteal}
@@ -262,6 +273,7 @@ export function StaticToolbar({
             {"</>"}
           </button>
           <button
+            type="button"
             className={`gotipe-toolbar-btn ${isMarkActive("underline") ? "active" : ""}`}
             title="Underline (Cmd+U)"
             onPointerDown={preventFocusSteal}
@@ -281,6 +293,7 @@ export function StaticToolbar({
       {showExtras && (
         <div className="gotipe-toolbar-group">
           <button
+            type="button"
             className={`gotipe-toolbar-btn ${isMarkActive("superscript") ? "active" : ""}`}
             title="Superscript"
             onPointerDown={preventFocusSteal}
@@ -294,6 +307,7 @@ export function StaticToolbar({
             {"X²"}
           </button>
           <button
+            type="button"
             className={`gotipe-toolbar-btn ${isMarkActive("subscript") ? "active" : ""}`}
             title="Subscript"
             onPointerDown={preventFocusSteal}
@@ -313,6 +327,7 @@ export function StaticToolbar({
       {showLink && (
         <div className="gotipe-toolbar-group">
           <button
+            type="button"
             className={`gotipe-toolbar-btn ${isMarkActive("link") ? "active" : ""}`}
             title="Insert Link"
             onPointerDown={preventFocusSteal}

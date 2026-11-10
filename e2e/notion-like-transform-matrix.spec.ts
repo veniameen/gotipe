@@ -1,4 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
+import { runCodeBlockCommand } from "./helpers/notion-checklist";
 
 type BlockContext = {
   blockType: string | null;
@@ -510,8 +511,12 @@ test.describe("Notion-like slash transform matrix", () => {
           })
           .toBe(true);
 
-        await placeCaretAtStartOfBlockByMarker(page, m);
-        await runSlashCommandByName(page, target.query, target.command);
+        if (source.id === "code") {
+          await runCodeBlockCommand(page, { ...target, mode: "transform" });
+        } else {
+          await placeCaretAtStartOfBlockByMarker(page, m);
+          await runSlashCommandByName(page, target.query, target.command);
+        }
 
         await expect
           .poll(async () => {

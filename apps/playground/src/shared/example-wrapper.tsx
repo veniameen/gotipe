@@ -9,10 +9,12 @@ export function ExampleWrapper({ title, description, tags, children }: ExampleWr
   return (
     <div className="gotipe-example-wrapper">
       <div className="gotipe-example-header">
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+        <div className="gotipe-example-heading">
           <h2 className="gotipe-example-title">{title}</h2>
           {tags?.map((tag) => (
-            <span key={tag} className="gotipe-example-tag">{tag}</span>
+            <span key={tag} className="gotipe-example-tag">
+              {tag}
+            </span>
           ))}
         </div>
         <p className="gotipe-example-description">{description}</p>

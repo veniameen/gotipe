@@ -1,3 +1,4 @@
+import type { GoTipeEditor } from "@gotipe/core";
 import { expect, test, type Page } from "@playwright/test";
 
 type BlockContext = {
@@ -49,38 +50,41 @@ async function resetNotionDocument(page: Page) {
   await page.locator("[data-gotipe-content]").click();
 }
 
-async function setCaretToEndOfLastTopLevelBlock(page: Page) {
-  await page.evaluate(() => {
-    const editor = document.querySelector("[data-gotipe-content]") as HTMLElement | null;
-    const blocks = Array.from(
-      document.querySelectorAll("[data-gotipe-content] > [data-block-id]"),
-    ) as HTMLElement[];
-    const target = blocks[blocks.length - 1] ?? null;
-    if (!editor || !target) return;
-
-    const sel = window.getSelection();
-    if (!sel) return;
-
-    const walker = document.createTreeWalker(target, NodeFilter.SHOW_TEXT);
-    let lastText: Node | null = null;
-    let current: Node | null;
-    while ((current = walker.nextNode())) {
-      lastText = current;
-    }
-
-    const range = document.createRange();
-    if (lastText) {
-      range.setStart(lastText, (lastText.textContent ?? "").length);
-    } else {
-      range.setStart(target, target.childNodes.length);
-    }
-    range.collapse(true);
-
-    sel.removeAllRanges();
-    sel.addRange(range);
+async function setCaret(page: Page, blockId: string, offset: number) {
+  if (!blockId) throw new Error("Caret target block is missing");
+  const expected = { anchor: { blockId, offset }, head: { blockId, offset } };
+  await page.evaluate((selection) => {
+    const editor = (window as unknown as { __GOTIPE_NOTION_EDITOR__: GoTipeEditor })
+      .__GOTIPE_NOTION_EDITOR__;
+    editor.setSelection(selection);
     editor.focus();
+  }, expected);
+  await expect
+    .poll(() =>
+      page.evaluate(() => {
+        const editor = (window as unknown as { __GOTIPE_NOTION_EDITOR__: GoTipeEditor })
+          .__GOTIPE_NOTION_EDITOR__;
+        const { anchor, head } = editor.getViewState().selection;
+        return { model: { anchor, head }, native: editor.getDOMSelection() };
+      }),
+    )
+    .toEqual({ model: expected, native: expected });
+}
+
+async function setCaretToEndOfLastTopLevelBlock(page: Page) {
+  const target = await page.evaluate(() => {
+    const editor = (window as unknown as { __GOTIPE_NOTION_EDITOR__: GoTipeEditor })
+      .__GOTIPE_NOTION_EDITOR__;
+    let block = editor.getViewState().blocks.at(-1);
+    while (block?.children.length) block = block.children.at(-1);
+    if (!block) throw new Error("Last block is missing");
+    const offset =
+      typeof block.content === "string"
+        ? block.content.length
+        : (block.content ?? []).reduce((length, span) => length + span.text.length, 0);
+    return { blockId: block.id, offset };
   });
-  await page.waitForTimeout(20);
+  await setCaret(page, target.blockId, target.offset);
 }
 
 async function createFreshLine(page: Page) {
@@ -89,35 +93,15 @@ async function createFreshLine(page: Page) {
 }
 
 async function setCaretToStartOfLastTopLevelParagraph(page: Page) {
-  await page.evaluate(() => {
-    const editor = document.querySelector("[data-gotipe-content]") as HTMLElement | null;
-    const paragraphs = Array.from(
-      document.querySelectorAll('[data-gotipe-content] > [data-block-type="paragraph"]'),
-    ) as HTMLElement[];
+  const id = await page.evaluate(() => {
     const blocks = Array.from(
-      document.querySelectorAll("[data-gotipe-content] > [data-block-id]"),
-    ) as HTMLElement[];
-    const target = paragraphs[paragraphs.length - 1] ?? blocks[blocks.length - 1] ?? null;
-    if (!editor || !target) return;
-
-    const sel = window.getSelection();
-    if (!sel) return;
-
-    const walker = document.createTreeWalker(target, NodeFilter.SHOW_TEXT);
-    const firstText = walker.nextNode();
-    const range = document.createRange();
-    if (firstText) {
-      range.setStart(firstText, 0);
-    } else {
-      range.setStart(target, 0);
-    }
-    range.collapse(true);
-
-    sel.removeAllRanges();
-    sel.addRange(range);
-    editor.focus();
+      document.querySelectorAll<HTMLElement>(
+        '[data-gotipe-content] > [data-block-type="paragraph"]',
+      ),
+    );
+    return blocks.at(-1)?.dataset.blockId ?? "";
   });
-  await page.waitForTimeout(20);
+  await setCaret(page, id, 0);
 }
 
 async function typeStable(page: Page, text: string) {
@@ -126,21 +110,7 @@ async function typeStable(page: Page, text: string) {
 
 async function runSlashCommandByName(page: Page, query: string, name: string) {
   const slashMenu = page.locator("[data-gotipe-slash-menu]");
-  const typed = `/${query}`;
-
-  for (let attempt = 0; attempt < 3; attempt++) {
-    await page.keyboard.type(typed, { delay: 10 });
-    try {
-      await expect(slashMenu).toBeVisible({ timeout: 1200 });
-      break;
-    } catch {
-      for (let i = 0; i < typed.length; i++) {
-        await page.keyboard.press("Backspace");
-      }
-      await page.waitForTimeout(30);
-    }
-  }
-
+  await page.keyboard.type(`/${query}`, { delay: 10 });
   await expect(slashMenu).toBeVisible();
   const item = slashMenu.locator(".gotipe-slash-menu-item-title", { hasText: name }).first();
   await expect(item).toBeVisible();
@@ -154,38 +124,33 @@ async function placeCaretInTopLevelListItem(
   itemType: "listItem" | "todoItem",
   index = 0,
 ) {
-  await page.evaluate(({ listType, itemType, index }) => {
-    const selector = `[data-gotipe-content] > [data-block-type="${listType}"] > [data-block-type="${itemType}"]`;
-    const nodes = Array.from(document.querySelectorAll(selector)) as HTMLElement[];
-    const target = nodes[index];
-    if (!target) return;
-
-    const sel = window.getSelection();
-    if (!sel) return;
-
-    const walker = document.createTreeWalker(target, NodeFilter.SHOW_TEXT);
-    const firstText = walker.nextNode();
-    const range = document.createRange();
-    if (firstText) {
-      range.setStart(firstText, (firstText.textContent ?? "").length);
-    } else {
-      const contentHost = target.querySelector("[data-gotipe-todo-content]");
-      if (contentHost) {
-        range.setStart(contentHost, 0);
-      } else {
-        range.setStart(target, 0);
-      }
-    }
-    range.collapse(true);
-
-    sel.removeAllRanges();
-    sel.addRange(range);
-    (document.querySelector("[data-gotipe-content]") as HTMLElement | null)?.focus();
-  }, { listType, itemType, index });
-  await page.waitForTimeout(20);
+  const target = await page.evaluate(
+    ({ listType, itemType, index }) => {
+      const selector = `[data-gotipe-content] > [data-block-type="${listType}"] > [data-block-type="${itemType}"]`;
+      const element = document.querySelectorAll<HTMLElement>(selector)[index];
+      const id = element?.dataset.blockId;
+      const editor = (window as unknown as { __GOTIPE_NOTION_EDITOR__: GoTipeEditor })
+        .__GOTIPE_NOTION_EDITOR__;
+      const block = editor
+        .getViewState()
+        .blocks.flatMap((block) => block.children)
+        .find((block) => block.id === id);
+      if (!block) throw new Error("List item is missing");
+      const offset =
+        typeof block.content === "string"
+          ? block.content.length
+          : (block.content ?? []).reduce((length, span) => length + span.text.length, 0);
+      return { blockId: block.id, offset };
+    },
+    { listType, itemType, index },
+  );
+  await setCaret(page, target.blockId, target.offset);
 }
 
-async function getBlockContextByMarker(page: Page, textMarker: string): Promise<BlockContext | null> {
+async function getBlockContextByMarker(
+  page: Page,
+  textMarker: string,
+): Promise<BlockContext | null> {
   return page.evaluate((needle) => {
     const blocks = Array.from(document.querySelectorAll("[data-block-id]")) as HTMLElement[];
     const target = blocks.find((el) => {
@@ -209,43 +174,26 @@ async function getBlockContextByMarker(page: Page, textMarker: string): Promise<
   }, textMarker);
 }
 
-async function placeCaretAtStartOfBlockByMarker(page: Page, textMarker: string) {
-  await page.evaluate((needle) => {
-    const blocks = Array.from(document.querySelectorAll("[data-block-id]")) as HTMLElement[];
-    const target = blocks.find((el) => {
-      const selfHas = (el.textContent ?? "").includes(needle);
-      if (!selfHas) return false;
-      const childHas = Array.from(el.querySelectorAll("[data-block-id]")).some((child) => {
-        if (!(child instanceof HTMLElement) || child === el) return false;
-        return (child.textContent ?? "").includes(needle);
-      });
-      return !childHas;
-    });
-    if (!target) return;
-
-    const sel = window.getSelection();
-    if (!sel) return;
-
-    const walker = document.createTreeWalker(target, NodeFilter.SHOW_TEXT);
-    const firstText = walker.nextNode();
-    const range = document.createRange();
-    if (firstText) {
-      range.setStart(firstText, 0);
-    } else {
-      range.setStart(target, 0);
-    }
-    range.collapse(true);
-    sel.removeAllRanges();
-    sel.addRange(range);
-    (document.querySelector("[data-gotipe-content]") as HTMLElement | null)?.focus();
+async function placeCaretAtStartOfBlockByMarker(page: Page, textMarker: string, offset = 0) {
+  const id = await page.evaluate((needle) => {
+    const blocks = Array.from(document.querySelectorAll<HTMLElement>("[data-block-id]"));
+    const target = blocks.find(
+      (element) =>
+        (element.textContent ?? "").includes(needle) &&
+        !Array.from(element.querySelectorAll("[data-block-id]")).some((child) =>
+          (child.textContent ?? "").includes(needle),
+        ),
+    );
+    return target?.dataset.blockId ?? "";
   }, textMarker);
-  await page.waitForTimeout(20);
+  await setCaret(page, id, offset);
 }
 
 async function getTopLevelBlockTypes(page: Page): Promise<string[]> {
   return page.evaluate(() =>
-    Array.from(document.querySelectorAll("[data-gotipe-content] > [data-block-id]"))
-      .map((el) => (el as HTMLElement).getAttribute("data-block-type") ?? "unknown"),
+    Array.from(document.querySelectorAll("[data-gotipe-content] > [data-block-id]")).map(
+      (el) => (el as HTMLElement).getAttribute("data-block-type") ?? "unknown",
+    ),
   );
 }
 
@@ -439,8 +387,6 @@ test.describe("Notion-like exhaustive operations", () => {
   });
 
   test("Backspace at start of paragraph merges with previous paragraph", async ({ page }) => {
-    test.fixme("ENTER-008 paragraph merge is flaky under current selection race conditions.");
-
     const first = marker("mergeA");
     const second = marker("mergeB");
 
@@ -460,40 +406,10 @@ test.describe("Notion-like exhaustive operations", () => {
   });
 
   test("Delete forward removes next character in paragraph", async ({ page }) => {
-    test.fixme("Forward delete paragraph case is flaky under current selection race conditions.");
-
     const content = marker("deleteX");
     await createFreshLine(page);
     await typeStable(page, `${content}AB`);
-    await page.evaluate((needle) => {
-      const blocks = Array.from(document.querySelectorAll("[data-block-id]")) as HTMLElement[];
-      const target = blocks.find((el) => {
-        const selfHas = (el.textContent ?? "").includes(needle);
-        if (!selfHas) return false;
-        const childHas = Array.from(el.querySelectorAll("[data-block-id]")).some((child) => {
-          if (!(child instanceof HTMLElement) || child === el) return false;
-          return (child.textContent ?? "").includes(needle);
-        });
-        return !childHas;
-      });
-      if (!target) return;
-
-      const sel = window.getSelection();
-      if (!sel) return;
-
-      const walker = document.createTreeWalker(target, NodeFilter.SHOW_TEXT);
-      const firstText = walker.nextNode();
-      if (!firstText) return;
-
-      const offset = (firstText.textContent ?? "").indexOf(needle) + needle.length;
-      const range = document.createRange();
-      range.setStart(firstText, Math.max(0, offset));
-      range.collapse(true);
-      sel.removeAllRanges();
-      sel.addRange(range);
-      (document.querySelector("[data-gotipe-content]") as HTMLElement | null)?.focus();
-    }, content);
-    await page.waitForTimeout(20);
+    await placeCaretAtStartOfBlockByMarker(page, content, content.length);
     await page.keyboard.press("Delete");
     await expect
       .poll(async () => {
@@ -515,20 +431,27 @@ test.describe("Notion-like exhaustive operations", () => {
     await placeCaretInTopLevelListItem(page, "bulletList", "listItem", 0);
     await typeStable(page, m);
 
-    await page.keyboard.press("Enter");
-    await placeCaretInTopLevelListItem(page, "bulletList", "listItem", 1);
+    await placeCaretAtStartOfBlockByMarker(page, m);
     await runSlashCommandByName(page, "todo", "To-do List");
-    await placeCaretInTopLevelListItem(page, "todoList", "todoItem", 1);
+    await expect
+      .poll(() => getBlockContextByMarker(page, m))
+      .toMatchObject({ parentType: "todoList" });
+    await placeCaretAtStartOfBlockByMarker(page, m);
     await runSlashCommandByName(page, "numbered", "Numbered List");
-    await placeCaretInTopLevelListItem(page, "orderedList", "listItem", 1);
-    await runSlashCommandByName(page, "numbered", "Numbered List");
+    await expect
+      .poll(() => getBlockContextByMarker(page, m))
+      .toMatchObject({ parentType: "orderedList" });
+    await placeCaretAtStartOfBlockByMarker(page, m);
+    await runSlashCommandByName(page, "text", "Text");
 
     const ctx = await getBlockContextByMarker(page, m);
     expect(ctx?.blockType).toBe("paragraph");
     expect(ctx?.text).toContain(m);
   });
 
-  test("stress sequence: mixed create/change/delete operations remains stable", async ({ page }) => {
+  test("stress sequence: mixed create/change/delete operations remains stable", async ({
+    page,
+  }) => {
     const commands: Array<{ query: string; name: string; kind: "list" | "code" | "text" }> = [
       { query: "bullet", name: "Bullet List", kind: "list" },
       { query: "numbered", name: "Numbered List", kind: "list" },

@@ -2,6 +2,7 @@ package auth
 
 import (
 	"crypto/ecdsa"
+	"crypto/elliptic"
 	"crypto/x509"
 	"encoding/pem"
 	"fmt"
@@ -40,6 +41,12 @@ func NewJWTService(privateKeyPEM, publicKeyPEM, issuer, audience string, expiry 
 	pubKey, ok := pubKeyIface.(*ecdsa.PublicKey)
 	if !ok {
 		return nil, fmt.Errorf("public key is not ECDSA")
+	}
+	if expiry <= 0 || issuer == "" || audience == "" {
+		return nil, fmt.Errorf("JWT expiry, issuer and audience must be configured")
+	}
+	if privKey.Curve != elliptic.P256() || pubKey.Curve != elliptic.P256() || !privKey.PublicKey.Equal(pubKey) {
+		return nil, fmt.Errorf("JWT keys must be a matching P-256 pair")
 	}
 
 	return &JWTService{
@@ -87,6 +94,7 @@ func (s *JWTService) Validate(tokenString string) (*Claims, error) {
 		}
 		return s.publicKey, nil
 	},
+		jwt.WithValidMethods([]string{"ES256"}),
 		jwt.WithIssuer(s.issuer),
 		jwt.WithAudience(s.audience),
 		jwt.WithExpirationRequired(),
@@ -96,7 +104,7 @@ func (s *JWTService) Validate(tokenString string) (*Claims, error) {
 	}
 
 	claims, ok := token.Claims.(*Claims)
-	if !ok || !token.Valid {
+	if !ok || !token.Valid || claims.UserID == "" || claims.UserID != claims.Subject || claims.ID == "" {
 		return nil, fmt.Errorf("invalid token claims")
 	}
 

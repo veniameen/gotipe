@@ -1,0 +1,125 @@
+import { type Block, type GoTipeEditor, GoTipeError, copySelection } from "@gotipe/core";
+import { serializeMarkdown } from "@gotipe/markdown";
+import { useEffect, useRef, useState } from "react";
+import { useFormattingMenu } from "./use-formatting-menu";
+
+export function MoreMenu({ editor }: { editor: GoTipeEditor }) {
+  const menu = useFormattingMenu(editor);
+  const markdown = useRef("");
+  const generation = useRef(0);
+  const [copying, setCopying] = useState(false);
+  useEffect(() => {
+    if (!menu.open) {
+      generation.current++;
+      setCopying(false);
+    }
+    return () => {
+      generation.current++;
+    };
+  }, [menu.open]);
+  const show = () => {
+    const payload = copySelection(editor.getJSON(), editor.getViewState().selection);
+    const blocks: Block[] =
+      payload && "blocks" in payload
+        ? payload.blocks
+        : payload
+          ? [
+              {
+                id: "selection",
+                type: "paragraph",
+                attrs: {},
+                content: payload.spans,
+                children: [],
+              },
+            ]
+          : [];
+    // The serializer adds one document newline. Selected trailing spaces belong
+    // to the user's text and must survive copying.
+    markdown.current = serializeMarkdown({ version: 0, blocks }).text.replace(/\r?\n$/, "");
+    menu.show();
+  };
+  const copy = async () => {
+    if (copying || !menu.editable) return;
+    const current = ++generation.current;
+    setCopying(true);
+    try {
+      const clipboard = editor.element?.ownerDocument.defaultView?.navigator.clipboard;
+      if (!clipboard) throw new Error("Clipboard is unavailable in this browser context.");
+      await clipboard.writeText(markdown.current);
+      if (current === generation.current && !editor.isDestroyed) menu.close(true);
+    } catch (failure) {
+      if (current !== generation.current || editor.isDestroyed) return;
+      const message = failure instanceof Error ? failure.message : String(failure);
+      menu.setError(`Could not copy the selection: ${message}`);
+      editor.reportError(new GoTipeError("CLIPBOARD_FAILED", message));
+    } finally {
+      if (current === generation.current) setCopying(false);
+    }
+  };
+  return (
+    <div>
+      <button
+        ref={menu.trigger}
+        type="button"
+        aria-label="More formatting options"
+        aria-haspopup="menu"
+        aria-expanded={menu.open}
+        disabled={!menu.editable}
+        onClick={() => (menu.open ? menu.close() : show())}
+        onKeyDown={(event) => {
+          if (event.key === "ArrowDown") {
+            event.preventDefault();
+            show();
+            requestAnimationFrame(() =>
+              menu.popup.current?.querySelector<HTMLButtonElement>("button")?.focus(),
+            );
+          }
+        }}
+      >
+        ⋮
+      </button>
+      {menu.open && (
+        <div
+          ref={menu.popup}
+          className="gotipe-block-more-menu"
+          role="menu"
+          aria-label="More formatting"
+          data-gotipe-formatting-popup=""
+          style={menu.style}
+          onKeyDown={menu.keydown}
+        >
+          <button
+            type="button"
+            role="menuitem"
+            onClick={() => menu.run((chain) => chain.toggleMark("superscript"))}
+          >
+            Superscript
+          </button>
+          <button
+            type="button"
+            role="menuitem"
+            onClick={() => menu.run((chain) => chain.toggleMark("subscript"))}
+          >
+            Subscript
+          </button>
+          <button
+            type="button"
+            role="menuitem"
+            onClick={() => menu.run((chain) => chain.clearFormatting())}
+          >
+            Clear Formatting
+          </button>
+          <button
+            type="button"
+            role="menuitem"
+            disabled={copying || !markdown.current}
+            onClick={() => void copy()}
+          >
+            {copying ? "Copying…" : "Copy as Markdown"}
+          </button>
+          {menu.error && <p role="alert">{menu.error}</p>}
+        </div>
+      )}
+    </div>
+  );
+}

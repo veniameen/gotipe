@@ -1,0 +1,191 @@
+@import "@gotipe/theme/theme.css";
+@import "@gotipe/theme/base.css";
+
+:root {
+  font-family: var(
+    --gt-font-body,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    Roboto,
+    sans-serif
+  );
+}
+
+body {
+  margin: 0;
+  background: var(--gt-bg, #ffffff);
+  color: var(--gt-text-base);
+}
+
+/* ================================================================ */
+/*  Playground layout: sidebar + content                             */
+/* ================================================================ */
+
+.gotipe-playground {
+  display: grid;
+  grid-template-columns: 208px minmax(0, 1fr);
+  grid-template-rows: auto 1fr;
+  min-height: 100vh;
+  max-width: 100%;
+  min-width: 0;
+}
+
+.gotipe-playground-header {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  border-bottom: 1px solid var(--gt-border, #e5e5e5);
+  padding: 0.75rem 1.25rem;
+}
+
+.gotipe-playground-header h1 {
+  margin: 0;
+  font-size: var(--gt-text-lg, 18px);
+  font-weight: 700;
+}
+
+/* Sidebar */
+.gotipe-playground-header h1 span {
+  color: var(--gt-text-secondary);
+  font-weight: 400;
+  font-size: var(--gt-text-sm);
+  margin-left: 6px;
+}
+.gotipe-mobile-navigation {
+  display: none;
+}
+.gotipe-playground :is(button, a, select, input, textarea):focus-visible {
+  outline: 2px solid var(--gt-accent);
+  outline-offset: 2px;
+}
+
+.gotipe-sidebar {
+  border-right: 1px solid var(--gt-border, #e5e5e5);
+  overflow-y: auto;
+  padding: 0.75rem 0;
+  background: var(--gt-bg, #ffffff);
+}
+
+.gotipe-sidebar-category {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--gt-text-tertiary, #999);
+  padding: 0.75rem 1rem 0.25rem;
+  margin-top: 0.25rem;
+  user-select: none;
+}
+
+.gotipe-sidebar-item {
+  display: block;
+  width: 100%;
+  padding: 0.4rem 1rem;
+  border: none;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+  font-size: var(--gt-text-sm, 14px);
+  color: var(--gt-text-secondary, #666);
+  border-radius: 0;
+  transition: background 0.1s, color 0.1s;
+}
+
+.gotipe-sidebar-item:hover {
+  background: var(--gt-bg-hover, #f5f5f5);
+  color: var(--gt-text-base, #1a1a1a);
+}
+
+.gotipe-sidebar-item.active {
+  background: var(--gt-bg-selected, rgba(37, 99, 235, 0.08));
+  color: var(--gt-accent, #2563eb);
+  font-weight: 500;
+}
+
+/* Main content area */
+.gotipe-playground-main {
+  min-width: 0;
+  min-height: 400px;
+  padding: clamp(12px, 2vw, 28px);
+  container-type: inline-size;
+  container-name: playground;
+}
+
+.gotipe-playground-main > * {
+  min-width: 0;
+}
+
+@media (max-width: 760px) {
+  .gotipe-playground {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto auto 1fr;
+  }
+  .gotipe-sidebar {
+    display: none;
+  }
+  .gotipe-mobile-navigation {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    border-bottom: 1px solid var(--gt-border);
+    color: var(--gt-text-secondary);
+    font-size: var(--gt-text-sm);
+  }
+  .gotipe-mobile-navigation select {
+    flex: 1;
+    min-width: 0;
+    padding: 8px;
+    border: 1px solid var(--gt-border-hover);
+    border-radius: var(--gt-radius-sm);
+    background: var(--gt-bg);
+    color: var(--gt-text-base);
+    font: inherit;
+  }
+  .gotipe-playground-header {
+    padding: 12px;
+  }
+}
+
+/* ================================================================ */
+/*  Example wrapper                                                  */
+/* ================================================================ */
+
+.gotipe-example-header {
+  margin-bottom: 1.25rem;
+}
+
+.gotipe-example-heading {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.gotipe-example-title {
+  margin: 0;
+  font-size: var(--gt-text-xl, 20px);
+  font-weight: 600;
+  color: var(--gt-text-base, #1a1a1a);
+}
+
+.gotipe-example-description {
+  margin: 0.25rem 0 0;
+  font-size: var(--gt-text-sm, 14px);
+  color: var(--gt-text-secondary, #666);
+  line-height: 1.5;
+}
+
+.gotipe-example-tag {
+  display: inline-block;
+  padding: 0.125rem 0.5rem;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  background: var(--gt-bg-hover, #f5f5f5);
+  color: var(--gt-text-secondary, #666);
+}

@@ -35,7 +35,7 @@ function buildDoc(seed: string): BlockInput[] {
     },
     { id: "code", type: "codeBlock", attrs: { language: "plaintext" }, content: `${seed}-code`, children: [] },
     { id: "quote", type: "blockquote", attrs: {}, content: spans(`${seed}-quote`), children: [] },
-    { id: "call", type: "callout", attrs: { tone: "info" }, content: spans(`${seed}-callout`), children: [] },
+    { id: "call", type: "callout", attrs: { type: "info" }, content: spans(`${seed}-callout`), children: [] },
     { id: "tail", type: "paragraph", attrs: {}, content: spans(`${seed}-tail`), children: [] },
   ];
 }
@@ -62,10 +62,12 @@ async function topLevelIds(page: Page): Promise<string[]> {
 
 async function readHoverPoint(page: Page, blockId: string): Promise<{ textX: number; gutterX: number; y: number }> {
   const point = await page.evaluate((id) => {
-    const block = document.querySelector(`[data-gotipe-content] > [data-block-id="${id}"]`) as HTMLElement | null;
+    const block = document.querySelector(`[data-gotipe-content] [data-block-id="${id}"]`) as HTMLElement | null;
     if (!block) return null;
-    const walker = document.createTreeWalker(block, NodeFilter.SHOW_TEXT);
-    let textLeft = block.getBoundingClientRect().left + 20;
+    const host = block.querySelector("[data-gotipe-text-content], [data-gotipe-todo-content], .gotipe-callout-content") ?? block;
+    const walker = document.createTreeWalker(host, NodeFilter.SHOW_TEXT);
+    let textLeft = host.getBoundingClientRect().left + 20;
+    let textY = host.getBoundingClientRect().top + 10;
     let n: Node | null;
     while ((n = walker.nextNode())) {
       const text = n.textContent ?? "";
@@ -76,6 +78,7 @@ async function readHoverPoint(page: Page, blockId: string): Promise<{ textX: num
       const rect = r.getBoundingClientRect();
       if (rect.width > 0 || rect.height > 0) {
         textLeft = rect.left;
+        textY = rect.top + rect.height / 2;
         break;
       }
     }
@@ -83,7 +86,7 @@ async function readHoverPoint(page: Page, blockId: string): Promise<{ textX: num
     return {
       textX: textLeft + 10,
       gutterX: Math.max(4, textLeft - 28),
-      y: br.top + Math.min(20, Math.max(10, br.height / 2)),
+      y: textY,
     };
   }, blockId);
   expect(point).not.toBeNull();
@@ -113,12 +116,19 @@ async function expectToolbarAligned(page: Page, blockId: string): Promise<void> 
   await expect
     .poll(async () =>
       page.evaluate((id) => {
-        const block = document.querySelector(`[data-gotipe-content] > [data-block-id="${id}"]`) as HTMLElement | null;
+        const block = document.querySelector(`[data-gotipe-content] [data-block-id="${id}"]`) as HTMLElement | null;
         const wrap = document.querySelector(".gotipe-block-toolbar-wrapper") as HTMLElement | null;
         if (!block || !wrap) return "missing";
         const br = block.getBoundingClientRect();
         const wr = wrap.getBoundingClientRect();
-        const topOk = Math.abs(wr.top - br.top) < 28;
+        const host = block.querySelector("[data-gotipe-text-content], [data-gotipe-todo-content], .gotipe-callout-content") ?? block;
+        const walker = document.createTreeWalker(host, NodeFilter.SHOW_TEXT);
+        const text = walker.nextNode();
+        if (!text) return "missing text";
+        const range = document.createRange();
+        range.setStart(text, 0); range.setEnd(text, 1);
+        const line = range.getBoundingClientRect();
+        const topOk = Math.abs(wr.top + wr.height / 2 - line.top - line.height / 2) < 4;
         const leftOk = wr.left < br.left;
         return `${topOk}|${leftOk}`;
       }, blockId),
@@ -136,7 +146,7 @@ test.describe("Notion-like headed gutter jitter exploratory", () => {
     await setNotionContent(page, buildDoc(seed));
     await saveShot(page, testInfo, "head-jitter-001-start");
 
-    const ids = await topLevelIds(page);
+    const ids = ["h1", "p1", "li1", "li2", "ti1", "code", "quote", "call", "tail"];
     for (let i = 0; i < 40; i++) {
       const blockId = ids[i % ids.length]!;
       await jitterHover(page, blockId, 9);
@@ -151,16 +161,16 @@ test.describe("Notion-like headed gutter jitter exploratory", () => {
     await setNotionContent(page, buildDoc(seed));
     await saveShot(page, testInfo, "head-jitter-002-start");
 
-    const ids = await topLevelIds(page);
+    const ids = ["h1", "p1", "li1", "li2", "ti1", "code", "quote", "call", "tail"];
     for (let i = 0; i < 16; i++) {
       const blockId = ids[i % ids.length]!;
-      const before = await topLevelIds(page);
+      const before = await page.locator("[data-gotipe-content] [data-block-id]").evaluateAll(nodes => nodes.map(n => n.getAttribute("data-block-id")));
       await jitterHover(page, blockId, 10);
       await expectToolbarAligned(page, blockId);
       await page.locator('[aria-label="Click to add below. Option-click to add a block above"]').click();
-      await expect.poll(() => topLevelIds(page).then((arr) => arr.length)).toBe(before.length + 1);
+      await expect(page.locator("[data-gotipe-content] [data-block-id]")).toHaveCount(before.length + 1);
       await undo(page, 1);
-      await expect.poll(() => topLevelIds(page)).toEqual(before);
+      await expect.poll(() => page.locator("[data-gotipe-content] [data-block-id]").evaluateAll(nodes => nodes.map(n => n.getAttribute("data-block-id")))).toEqual(before);
     }
 
     await saveShot(page, testInfo, "head-jitter-002-end");
@@ -171,7 +181,7 @@ test.describe("Notion-like headed gutter jitter exploratory", () => {
     await setNotionContent(page, buildDoc(seed));
     await saveShot(page, testInfo, "head-jitter-003-start");
 
-    const ids = await topLevelIds(page);
+    const ids = ["h1", "p1", "li1", "li2", "ti1", "code", "quote", "call", "tail"];
     for (let i = 0; i < 18; i++) {
       const blockId = ids[i % ids.length]!;
       await jitterHover(page, blockId, 8);

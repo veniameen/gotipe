@@ -12,143 +12,123 @@ pub fn to_html(doc: &Document, _options: &ExportOptions) -> Result<String, Conve
 }
 
 fn block_to_html(block: &Block) -> Result<String, ConvertError> {
-    match block.block_type.as_str() {
-        "paragraph" => {
-            let content = content_to_html(&block.content);
-            Ok(format!("<p>{content}</p>\n"))
-        }
+    let content = content_to_html(&block.content);
+    let nested = block
+        .children
+        .iter()
+        .map(block_to_html)
+        .collect::<Result<String, _>>()?;
+    let attr = |name: &str| match block.attrs.get(name) {
+        Some(AttrValue::String(value)) => value.as_str(),
+        _ => "",
+    };
+    let number = |name: &str, fallback: usize| match block.attrs.get(name) {
+        Some(AttrValue::Number(value)) if value.is_finite() && *value >= 0.0 => *value as usize,
+        _ => fallback,
+    };
+    Ok(match block.block_type.as_str() {
+        "paragraph" => format!("<p>{content}</p>\n{nested}"),
         "heading" => {
-            let level = match block.attrs.get("level") {
-                Some(AttrValue::Number(n)) => *n as u32,
-                _ => 1,
-            };
-            let level = level.clamp(1, 6);
-            let content = content_to_html(&block.content);
-            Ok(format!("<h{level}>{content}</h{level}>\n"))
+            let level = number("level", 1).clamp(1, 6);
+            format!("<h{level}>{content}</h{level}>\n{nested}")
         }
-        "bulletList" => {
+        "bulletList" | "orderedList" | "todoList" => {
             let mut items = String::new();
             for child in &block.children {
-                items.push_str(&format!("<li>{}</li>\n", content_to_html(&child.content)));
+                let body = content_to_html(&child.content);
+                let children = child
+                    .children
+                    .iter()
+                    .map(block_to_html)
+                    .collect::<Result<String, _>>()?;
+                let checkbox = if block.block_type == "todoList" {
+                    format!(
+                        "<input type=\"checkbox\" disabled{} />",
+                        if matches!(child.attrs.get("checked"), Some(AttrValue::Bool(true))) {
+                            " checked"
+                        } else {
+                            ""
+                        }
+                    )
+                } else {
+                    String::new()
+                };
+                items.push_str(&format!("<li>{checkbox}{body}{children}</li>\n"));
             }
-            Ok(format!("<ul>\n{items}</ul>\n"))
-        }
-        "orderedList" => {
-            let start = match block.attrs.get("start") {
-                Some(AttrValue::Number(n)) => *n as u32,
-                _ => 1,
-            };
-            let mut items = String::new();
-            for child in &block.children {
-                items.push_str(&format!("<li>{}</li>\n", content_to_html(&child.content)));
+            if block.block_type == "orderedList" {
+                format!(
+                    "<ol start=\"{}\">\n{items}</ol>\n",
+                    number("start", 1).max(1)
+                )
+            } else {
+                format!("<ul>\n{items}</ul>\n")
             }
-            Ok(format!("<ol start=\"{start}\">\n{items}</ol>\n"))
         }
-        "codeBlock" => {
-            let lang = match block.attrs.get("language") {
-                Some(AttrValue::String(s)) => s.as_str(),
-                _ => "plain",
-            };
-            let content = content_to_html(&block.content);
-            Ok(format!(
-                "<pre><code class=\"language-{lang}\">{content}</code></pre>\n"
-            ))
-        }
-        "blockquote" => {
-            let content = content_to_html(&block.content);
-            Ok(format!("<blockquote>{content}</blockquote>\n"))
-        }
-        "divider" => Ok("<hr />\n".into()),
+        "listItem" | "todoItem" => format!("<li>{content}{nested}</li>\n"),
+        "codeBlock" => format!(
+            "<pre><code class=\"language-{}\">{content}</code></pre>\n{nested}",
+            html_escape(attr("language"))
+        ),
+        "blockquote" => format!("<blockquote>{content}{nested}</blockquote>\n"),
+        "divider" => "<hr />\n".into(),
         "image" => {
-            let src = match block.attrs.get("src") {
-                Some(AttrValue::String(s)) => s.as_str(),
-                _ => "",
-            };
-            let alt = match block.attrs.get("alt") {
-                Some(AttrValue::String(s)) => s.as_str(),
-                _ => "",
-            };
-            let src = ammonia::clean(src);
-            let alt = ammonia::clean(alt);
-            Ok(format!("<img src=\"{src}\" alt=\"{alt}\" />\n"))
-        }
-        "callout" => {
-            let emoji = match block.attrs.get("emoji") {
-                Some(AttrValue::String(s)) => s.as_str(),
-                _ => "",
-            };
-            let content = content_to_html(&block.content);
-            Ok(format!(
-                "<div class=\"gotipe-callout\"><span class=\"gotipe-callout-emoji\">{emoji}</span>{content}</div>\n"
-            ))
-        }
-        "table" => {
-            let mut rows = String::new();
-            for row in &block.children {
-                let mut cells = String::new();
-                for cell in &row.children {
-                    let tag = if cell.block_type == "tableHeader" {
-                        "th"
-                    } else {
-                        "td"
-                    };
-                    let content = content_to_html(&cell.content);
-                    cells.push_str(&format!("<{tag}>{content}</{tag}>"));
-                }
-                rows.push_str(&format!("<tr>{cells}</tr>\n"));
+            let src = attr("src");
+            if !crate::safe_url(src) || src.trim().to_ascii_lowercase().starts_with("mailto:") {
+                return Err(ConvertError::ImageError(
+                    "Image requires a safe resolved URL".into(),
+                ));
             }
-            Ok(format!("<table>\n{rows}</table>\n"))
+            format!(
+                "<img src=\"{}\" alt=\"{}\" />\n{nested}",
+                html_escape(src),
+                html_escape(attr("alt"))
+            )
         }
-        "toggle" => {
-            let content = content_to_html(&block.content);
-            Ok(format!("<details><summary>{content}</summary></details>\n"))
-        }
-        "math" => {
-            let content = content_to_html(&block.content);
-            Ok(format!("<div class=\"gotipe-math\">{content}</div>\n"))
-        }
-        "embed" => {
-            let url = match block.attrs.get("url") {
-                Some(AttrValue::String(s)) => s.as_str(),
-                _ => "",
+        "callout" => format!(
+            "<aside class=\"gotipe-callout\"><span>{}</span>{content}{nested}</aside>\n",
+            html_escape(attr("emoji"))
+        ),
+        "table" => format!("<table>\n{nested}</table>\n"),
+        "tableRow" => format!("<tr>{nested}</tr>\n"),
+        "tableCell" | "tableHeader" => {
+            let tag = if block.block_type == "tableHeader" {
+                "th"
+            } else {
+                "td"
             };
-            let url = ammonia::clean(url);
-            Ok(format!(
-                "<div class=\"gotipe-embed\"><iframe src=\"{url}\"></iframe></div>\n"
-            ))
+            format!(
+                "<{tag} colspan=\"{}\" rowspan=\"{}\">{content}{nested}</{tag}>",
+                number("colspan", 1).clamp(1, 1000),
+                number("rowspan", 1).clamp(1, 1000)
+            )
         }
-        "file" => {
-            let url = match block.attrs.get("url") {
-                Some(AttrValue::String(s)) => s.as_str(),
-                _ => "",
-            };
-            let name = match block.attrs.get("name") {
-                Some(AttrValue::String(s)) => s.as_str(),
-                _ => "file",
-            };
-            let url = ammonia::clean(url);
-            let name = ammonia::clean(name);
-            Ok(format!(
-                "<div class=\"gotipe-file\"><a href=\"{url}\">{name}</a></div>\n"
-            ))
-        }
-        "columns" => {
-            let mut cols = String::new();
-            for col in &block.children {
-                let mut col_content = String::new();
-                for child in &col.children {
-                    col_content.push_str(&block_to_html(child)?);
-                }
-                cols.push_str(&format!("<div class=\"gotipe-column\">{col_content}</div>"));
+        "toggle" => format!("<details><summary>{content}</summary>{nested}</details>\n"),
+        "math" | "markdownRaw" => format!("<pre class=\"gotipe-raw\">{content}</pre>\n{nested}"),
+        "embed" | "file" => {
+            let url = attr("url");
+            if !crate::safe_url(url) {
+                return Err(ConvertError::Encoding("Unsafe attachment URL".into()));
             }
-            Ok(format!("<div class=\"gotipe-columns\">{cols}</div>\n"))
+            let label = if attr("name").is_empty() {
+                url
+            } else {
+                attr("name")
+            };
+            format!(
+                "<p><a href=\"{}\" rel=\"noopener noreferrer\">{}</a></p>\n{nested}",
+                html_escape(url),
+                html_escape(label)
+            )
         }
-        _ => {
-            // Generic fallback
-            let content = content_to_html(&block.content);
-            Ok(format!("<div>{content}</div>\n"))
-        }
-    }
+        "columns" | "column" => format!(
+            "<div class=\"gotipe-{}\">{content}{nested}</div>\n",
+            block.block_type
+        ),
+        _ => format!(
+            "<div data-block-type=\"{}\">{content}{nested}</div>\n",
+            html_escape(&block.block_type)
+        ),
+    })
 }
 
 fn content_to_html(content: &BlockContent) -> String {
@@ -186,26 +166,54 @@ fn wrap_mark(text: &str, mark: &Mark) -> String {
         "code" => format!("<code>{text}</code>"),
         "link" => {
             let href = match mark.attrs.get("href") {
-                Some(AttrValue::String(s)) => ammonia::clean(s).to_string(),
+                Some(AttrValue::String(s)) if crate::safe_url(s) => html_escape(s),
                 _ => "#".into(),
             };
-            let target = match mark.attrs.get("target") {
-                Some(AttrValue::String(s)) => s.clone(),
+            let target: String = match mark.attrs.get("target") {
+                Some(AttrValue::String(s)) if s == "_self" => "_self".into(),
                 _ => "_blank".into(),
             };
             format!("<a href=\"{href}\" target=\"{target}\" rel=\"noopener noreferrer\">{text}</a>")
         }
         "highlight" => {
             let color = match mark.attrs.get("color") {
-                Some(AttrValue::String(s)) => s.as_str(),
+                Some(AttrValue::String(s)) if safe_color(s) => s.as_str(),
                 _ => "yellow",
             };
             format!("<mark style=\"background-color: {color}\">{text}</mark>")
         }
+        "textColor" => match mark.attrs.get("color") {
+            Some(AttrValue::String(color)) if safe_color(color) => {
+                format!("<span style=\"color: {color}\">{text}</span>")
+            }
+            _ => text.to_owned(),
+        },
         "superscript" => format!("<sup>{text}</sup>"),
         "subscript" => format!("<sub>{text}</sub>"),
         _ => text.to_string(),
     }
+}
+
+pub(crate) fn safe_color(value: &str) -> bool {
+    if !value.is_empty() && value.bytes().all(|c| c.is_ascii_alphabetic()) {
+        return true;
+    }
+    if let Some(hex) = value.strip_prefix('#') {
+        return (3..=8).contains(&hex.len()) && hex.bytes().all(|c| c.is_ascii_hexdigit());
+    }
+    let Some((name, arguments)) = value.split_once('(') else {
+        return false;
+    };
+    let Some(arguments) = arguments.strip_suffix(')') else {
+        return false;
+    };
+    ["rgb", "rgba", "hsl", "hsla"]
+        .iter()
+        .any(|candidate| name.eq_ignore_ascii_case(candidate))
+        && !arguments.is_empty()
+        && arguments
+            .bytes()
+            .all(|c| c.is_ascii_digit() || b".% ,/+-".contains(&c))
 }
 
 fn html_escape(text: &str) -> String {
@@ -338,6 +346,39 @@ mod tests {
     #[test]
     fn test_html_escape() {
         assert_eq!(html_escape("<script>"), "&lt;script&gt;");
+    }
+
+    #[test]
+    fn text_colors_preserve_inert_css_without_allowing_declarations() {
+        for color in [
+            "#ab4",
+            "#aabbccdd",
+            "rebeccapurple",
+            "RGB(12 34 56 / 50%)",
+            "hsl(40, 50%, 60%)",
+        ] {
+            let mut mark = Mark::new("textColor");
+            mark.attrs
+                .insert("color".into(), AttrValue::String(color.into()));
+            assert_eq!(
+                wrap_mark("color", &mark),
+                format!("<span style=\"color: {color}\">color</span>")
+            );
+        }
+        for color in [
+            "",
+            "red;background:url(x)",
+            "url(x)",
+            "var(--x)",
+            "rgb(1)\" onclick=\"x",
+            "rgb(1\\32 3)",
+        ] {
+            assert!(!safe_color(color), "unsafe color {color:?}");
+            let mut mark = Mark::new("textColor");
+            mark.attrs
+                .insert("color".into(), AttrValue::String(color.into()));
+            assert_eq!(wrap_mark("color", &mark), "color");
+        }
     }
 
     #[test]

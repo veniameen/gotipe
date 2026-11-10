@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test';
 
 test.describe('Marks — text formatting', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('/#basic');
+    await page.goto('/?view=block#basic');
     // Wait for the contenteditable editor to render
     await page.waitForSelector('[data-gotipe-content][contenteditable="true"]', { timeout: 10000 });
   });

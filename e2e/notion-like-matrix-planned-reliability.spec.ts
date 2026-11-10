@@ -1,5 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
-import { openNotionAndReset, setNotionContent } from "./helpers/notion-checklist";
+import { enableClipboardForTest, openNotionAndReset, setNotionContent } from "./helpers/notion-checklist";
 
 function spans(text: string) {
   return [{ text, marks: [] as Array<{ type: string; attrs?: Record<string, unknown> }> }];
@@ -202,28 +202,11 @@ test.describe("Notion-like planned reliability matrix cases", () => {
     await setNotionContent(page, [{ id: "p", type: "paragraph", attrs: {}, content: spans(seed), children: [] }]);
     await setEditorSelection(page, "p", seed.length);
 
-    await page.evaluate((text) => {
-      const editor = (window as Record<string, unknown>).__GOTIPE_NOTION_EDITOR__ as
-        | {
-            getViewState?: () => {
-              selection: { type: string; anchor: { blockId: string; offset: number } };
-            };
-            dispatch?: (tr: unknown) => void;
-            setSelection?: (selection: {
-              anchor: { blockId: string; offset: number };
-              head: { blockId: string; offset: number };
-            }) => void;
-          }
-        | undefined;
-      const sel = editor?.getViewState?.().selection;
-      if (!editor?.dispatch || !editor?.setSelection || !sel || sel.type !== "text") return;
-      const { blockId, offset } = sel.anchor;
-      editor.dispatch({ steps: [{ type: "insertText", blockId, from: offset, to: offset, text, marks: [] }] });
-      editor.setSelection({
-        anchor: { blockId, offset: offset + text.length },
-        head: { blockId, offset: offset + text.length },
-      });
-    }, pasteChunk);
+    await enableClipboardForTest(page);
+    // Firefox strips clipboardData from constructed ClipboardEvents; use the browser clipboard.
+    await page.evaluate((text) => navigator.clipboard.writeText(text), pasteChunk);
+    await page.keyboard.press(process.platform === "darwin" ? "Meta+V" : "Control+V");
+    await expect.poll(async () => (await getDocumentHealth(page)).text).toBe(seed + pasteChunk);
 
     await runSlashByClick(page, "bullet", "Bullet List");
     await expect.poll(() => getLeafByMarker(page, "paste-alpha")).toMatchObject({

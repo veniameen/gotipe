@@ -1,31 +1,44 @@
-import { defineExtension } from '@gotipe/core';
-import { MinimalPreset } from '@gotipe/core/presets';
-import { useEditor } from '@gotipe/react';
-import { BlockEditor } from '@gotipe/block-editor';
+import { BlockEditor } from "@gotipe/block-editor";
+import { defineExtension } from "@gotipe/core";
+import { MinimalPreset } from "@gotipe/core/presets";
+import { useEditor } from "@gotipe/react";
 
 const CalloutExtension = defineExtension({
-  name: 'callout',
-  schema: {
-    type: 'block',
-    attrs: {
-      emoji: { default: '💡' },
-      variant: { default: 'info' },
-    },
-    content: 'richText',
-  },
-  commands: {
-    insertCallout:
-      (attrs = {}) =>
-      ({ commands }) => {
-        commands.insertBlock({
-          type: 'callout',
-          attrs: { emoji: '💡', variant: 'info', ...attrs },
-        });
+  name: "callout",
+  nodes: [
+    {
+      name: "callout",
+      group: ["block"],
+      content: "richText",
+      attrs: {
+        emoji: { type: "string", default: "💡" },
+        type: { type: "string", default: "info" },
       },
-  },
-  keybindings: {
-    'Mod-Shift-c': 'insertCallout',
-  },
+      topLevel: true,
+      marksAllowed: "all",
+      leaf: false,
+      allowsChildren: false,
+    },
+  ],
+  keybindings: [
+    {
+      key: "Mod-Shift-c",
+      command: (editor) =>
+        editor.chain().insertBlockAfter("callout", { emoji: "💡", type: "info" }).run(),
+    },
+  ],
+  slashCommands: [
+    {
+      name: "Callout",
+      aliases: ["notice"],
+      description: "Insert a custom callout",
+      icon: "alert-circle",
+      group: "insert",
+      execute: (editor) => {
+        editor.chain().insertBlockAfter("callout", { emoji: "💡", type: "info" }).run();
+      },
+    },
+  ],
 });
 
 export function CustomExample() {
@@ -35,12 +48,12 @@ export function CustomExample() {
       version: 1,
       blocks: [
         {
-          id: 'b1',
-          type: 'paragraph',
+          id: "b1",
+          type: "paragraph",
           attrs: {},
           content: [
             {
-              text: 'This editor uses MinimalPreset + a custom Callout extension. Press Cmd+Shift+C to insert a callout.',
+              text: "This editor uses MinimalPreset + a custom Callout extension. Press Cmd+Shift+C to insert a callout.",
               marks: [],
             },
           ],
@@ -51,6 +64,8 @@ export function CustomExample() {
   });
 
   return (
-    <BlockEditor editor={editor} showThemeToggle={false} showAiCommandBar={false} />
+    <div data-gotipe-example="custom">
+      <BlockEditor editor={editor} showThemeToggle={false} showAiCommandBar={false} />
+    </div>
   );
 }

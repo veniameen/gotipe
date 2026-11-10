@@ -1,4 +1,4 @@
-import type { AttrValue, Block, Mark } from "./block";
+import type { AttrValue, Block, Document, Mark } from "./block";
 
 export interface EditorState {
   doc: { blocks: Block[]; version: number };
@@ -8,6 +8,11 @@ export interface EditorState {
 export type Selection =
   | { type: "cursor"; blockId: string; offset: number }
   | { type: "text"; blockId: string; from: number; to: number }
+  | {
+      type: "range";
+      anchor: { blockId: string; offset: number };
+      head: { blockId: string; offset: number };
+    }
   | { type: "block"; blockId: string }
   | { type: "multi"; blockIds: string[] };
 
@@ -16,6 +21,16 @@ export interface Transaction {
   selection?: Selection;
   metadata?: Record<string, AttrValue>;
 }
+
+/** Detached snapshots for a validated local document change. */
+export interface TransactionContext {
+  transaction: Transaction;
+  before: Document;
+  after: Document;
+}
+
+/** Return false to cancel before the document, selection or history changes. */
+export type TransactionFilter = (context: TransactionContext) => boolean;
 
 export type Step =
   | { type: "insertText"; blockId: string; offset: number; text: string; marks: Mark[] }

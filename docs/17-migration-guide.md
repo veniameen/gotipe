@@ -1,5 +1,12 @@
 # GoTipe -- Migration Guide
 
+> **Историческая спецификация, не руководство по текущему API.** Примеры, сроки,
+> сравнения производительности, коммерческие условия и обещания ниже не подтверждают
+> реализацию или доступность сервиса. Актуально: [контракты](development/migration-contract.md),
+> [карта кода](development/code-map.md), [проверки](development/testing.md),
+> [план выпуска](22-release-readiness.md). Лицензии определяются `LICENSE` и manifest
+> каждого пакета, а не этим документом.
+
 > Руководство по миграции с других rich text editor фреймворков на GoTipe. Охватывает Tiptap, ProseMirror, Lexical, Slate, CKEditor и TinyMCE.
 
 ---

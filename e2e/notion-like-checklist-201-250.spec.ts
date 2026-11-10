@@ -112,7 +112,7 @@ const TARGETS: Record<TargetKey, TargetDef> = {
     mode: "transform",
     expectedBlockType: "codeBlock",
     expectedParentType: null,
-    expectedTagName: "PRE",
+    expectedTagName: "DIV",
   },
   divider: {
     query: "divider",

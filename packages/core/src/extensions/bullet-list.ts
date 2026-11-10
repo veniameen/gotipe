@@ -69,7 +69,6 @@ export const ListItem = defineExtension({
       marksAllowed: "all",
       leaf: false,
       allowsChildren: true,
-      childTypes: ["bulletList", "orderedList"],
     },
   ],
 });
@@ -98,7 +97,7 @@ export const TodoList = defineExtension({
       topLevel: false,
       marksAllowed: "all",
       leaf: false,
-      allowsChildren: false,
+      allowsChildren: true,
     },
   ],
   keybindings: [

@@ -11,7 +11,7 @@
     "./base.css": "./src/base.css",
     "./theme.css": "./src/theme.css",
     "./page.css": "./src/page.css",
-    "./themes/*": "./src/themes/*"
+    "./tokens.css": "./src/tokens.css"
   },
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
@@ -24,8 +24,8 @@
   },
   "devDependencies": {
     "@gotipe/core": "workspace:*",
-    "vitest": "^2.1",
-    "tsup": "^8.3"
+    "tsup": "^8.5.1",
+    "vitest": "^4.1.12"
   },
   "scripts": {
     "build": "tsup",
@@ -33,5 +33,13 @@
     "typecheck": "tsc --noEmit",
     "lint": "biome check src/"
   },
-  "license": "SEE LICENSE IN LICENSE-COMMERCIAL"
+  "license": "SEE LICENSE IN LICENSE-COMMERCIAL",
+  "files": [
+    "dist",
+    "src/**/*.css",
+    "LICENSE-COMMERCIAL"
+  ],
+  "publishConfig": {
+    "access": "public"
+  }
 }

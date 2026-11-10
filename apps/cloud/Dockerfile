@@ -1,39 +1,31 @@
-# Multi-stage build for GoTipe Cloud API
-# Stage 1: Build
-FROM golang:1.23-alpine AS builder
+# Build from the repository root: docker build -f apps/cloud/Dockerfile .
+FROM rust:1.93-bookworm AS converter
+WORKDIR /source
+COPY Cargo.toml Cargo.lock ./
+COPY crates ./crates
+RUN CARGO_BUILD_JOBS=2 cargo build --locked --release -p gotipe-export --features pdf,docx,cli --bin gotipe-convert
 
-RUN apk add --no-cache git ca-certificates
-
-WORKDIR /app
-
-# Cache dependencies
-COPY go.mod go.sum ./
+FROM golang:1.26.10-bookworm AS api
+WORKDIR /source
+COPY apps/cloud/go.mod apps/cloud/go.sum ./
 RUN go mod download
+COPY apps/cloud .
+RUN GOMAXPROCS=2 CGO_ENABLED=0 go build -p 2 -trimpath -ldflags="-w -s" -o /api ./cmd/api
 
-# Build
-COPY . .
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build \
-    -ldflags="-w -s" \
-    -o /app/api ./cmd/api
-
-# Stage 2: Runtime
-FROM alpine:3.20
-
-RUN apk add --no-cache ca-certificates tzdata
-
-# Create non-root user
-RUN addgroup -S gotipe && adduser -S gotipe -G gotipe
-
-WORKDIR /app
-
-COPY --from=builder /app/api .
-COPY --from=builder /app/migrations ./migrations
-
+FROM debian:bookworm-slim
+RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates tzdata wget \
+    && rm -rf /var/lib/apt/lists/* \
+    && useradd --system --create-home gotipe
+COPY --from=api /api /usr/local/bin/gotipe-cloud
+COPY --from=converter /source/target/release/gotipe-convert /usr/local/bin/gotipe-convert
+COPY LICENSE-MIT LICENSE-COMMERCIAL /usr/share/doc/gotipe/
+COPY packages/export-wasm/THIRD_PARTY_NOTICES.md /usr/share/doc/gotipe/export-NOTICES.md
+COPY packages/export-wasm/licenses /usr/share/doc/gotipe/licenses
+COPY crates/gotipe-export/licenses /usr/share/doc/gotipe/licenses
+COPY apps/cloud/licenses /usr/share/doc/gotipe/go-licenses
 USER gotipe
-
+WORKDIR /home/gotipe
 EXPOSE 8080 8081 9090
-
-HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-    CMD wget --no-verbose --tries=1 --spider http://localhost:8080/healthz || exit 1
-
-ENTRYPOINT ["/app/api"]
+HEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 \
+    CMD wget --quiet --output-document=/dev/null http://localhost:8080/readyz || exit 1
+ENTRYPOINT ["/usr/local/bin/gotipe-cloud"]

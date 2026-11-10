@@ -1,5 +1,12 @@
 # GoTipe — Editor Core (Rust/WASM)
 
+> **Историческая спецификация, не руководство по текущему API.** Примеры, сроки,
+> сравнения производительности, коммерческие условия и обещания ниже не подтверждают
+> реализацию или доступность сервиса. Актуально: [контракты](development/editor-contracts.md),
+> [карта кода](development/code-map.md), [проверки](development/testing.md),
+> [план выпуска](22-release-readiness.md). Лицензии определяются `LICENSE` и manifest
+> каждого пакета, а не этим документом.
+
 ## Обзор
 
 Editor Core — Rust crate'ы, содержащие всю бизнес-логику редактора: document model, schema engine, transforms, commands, history, serialization. Компилируется в WebAssembly для браузера и работает нативно на сервере.

@@ -14,8 +14,8 @@
   "types": "./dist/index.d.ts",
   "sideEffects": false,
   "devDependencies": {
-    "vitest": "^2.1",
-    "tsup": "^8.3"
+    "tsup": "^8.5.1",
+    "vitest": "^4.1.12"
   },
   "scripts": {
     "build": "tsup",
@@ -23,5 +23,12 @@
     "typecheck": "tsc --noEmit",
     "lint": "biome check src/"
   },
-  "license": "MIT"
+  "license": "MIT",
+  "files": [
+    "dist",
+    "LICENSE"
+  ],
+  "publishConfig": {
+    "access": "public"
+  }
 }

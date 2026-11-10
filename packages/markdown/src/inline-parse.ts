@@ -1,5 +1,6 @@
-import type { Nodes, PhrasingContent } from "mdast";
 import { align, alignInlineCode, alignLoose } from "./align";
+import type { Nodes, PhrasingContent } from "./grammar/types";
+import { inlineHtmlMark } from "./inline-html";
 import { normalizeSpans } from "./model";
 import type { Mark, RawSegment, Span } from "./types";
 import { normalizeEol } from "./util";
@@ -28,20 +29,6 @@ export interface InlineResult {
   newlines: { at: number; hard: boolean }[];
 }
 
-const PAIR_TAGS: Record<string, string> = {
-  u: "underline",
-  mark: "highlight",
-  sup: "superscript",
-  sub: "subscript",
-  em: "italic",
-  i: "italic",
-  strong: "bold",
-  b: "bold",
-  s: "strikethrough",
-  del: "strikethrough",
-};
-
-const OPEN_TAG_RE = /^<(u|mark|sup|sub|em|strong|b|i|s|del)>$/i;
 const BR_RE = /^<br[ \t]*\/?>$/i;
 
 class Builder {
@@ -156,12 +143,11 @@ function walk(
       continue;
     }
     if (node.type === "html") {
-      const open = OPEN_TAG_RE.exec(node.value);
+      const open = inlineHtmlMark(node.value);
       if (open) {
-        const tag = open[1]!.toLowerCase();
+        const { tag, mark } = open;
         const close = findClose(children, idx, tag);
         if (close > idx + 1) {
-          const mark: Mark = { type: PAIR_TAGS[tag]! };
           const from = endOf(node, ctx) ?? parentFrom;
           const to = startOf(children[close]!, ctx) ?? parentTo;
           walk(children.slice(idx + 1, close), [...marks, mark], b, ctx, flags, from, to, noSegs);
@@ -177,7 +163,7 @@ function walk(
 
 function findClose(children: PhrasingContent[], openIdx: number, tag: string): number {
   let depth = 0;
-  const openRe = new RegExp(`^<${tag}>$`, "i");
+  const openRe = new RegExp(`^<${tag}(?:\\s[^>]*)?>$`, "i");
   const closeRe = new RegExp(`^</${tag}>$`, "i");
   for (let k = openIdx; k < children.length; k++) {
     const c = children[k]!;

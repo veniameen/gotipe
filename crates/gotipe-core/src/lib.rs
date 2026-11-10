@@ -3,6 +3,7 @@ pub mod command;
 pub mod error;
 pub mod extension;
 pub mod selection;
+mod selection_mapping;
 pub mod state;
 pub mod transaction;
 pub mod transform;
@@ -14,6 +15,6 @@ pub use gotipe_schema::{
 };
 
 pub use error::GoTipeError;
-pub use selection::Selection;
+pub use selection::{Selection, TextPosition};
 pub use state::EditorState;
 pub use transaction::{Step, Transaction, TransformError};

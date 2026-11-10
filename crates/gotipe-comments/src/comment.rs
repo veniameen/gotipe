@@ -28,6 +28,13 @@ pub enum CommentAnchor {
         from: usize,
         to: usize,
     },
+    /// A text range whose endpoints belong to different blocks.
+    Range {
+        from_block_id: BlockId,
+        from_offset: usize,
+        to_block_id: BlockId,
+        to_offset: usize,
+    },
     /// Anchored to an entire block
     Block { block_id: BlockId },
     /// Anchored to the entire document

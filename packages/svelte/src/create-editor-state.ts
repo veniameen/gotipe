@@ -17,13 +17,15 @@ export interface EditorStore {
 /**
  * Svelte 5 adapter using $state-compatible store pattern.
  * Usage in Svelte 5:
+ *   import { onDestroy } from 'svelte';
  *   const store = createEditorState({ extensions: [...] });
- *   $effect(() => { store.destroy; }); // cleanup
+ *   onDestroy(() => store.destroy());
  */
 export function createEditorState(options: CreateEditorOptions): EditorStore {
   let editor: GoTipeEditor | null = null;
   let viewState: ViewState | undefined = undefined;
   let unsub: (() => void) | null = null;
+  let destroyed = false;
   const subscribers = new Set<
     (value: { editor: GoTipeEditor | null; state: ViewState | undefined }) => void
   >();
@@ -37,6 +39,10 @@ export function createEditorState(options: CreateEditorOptions): EditorStore {
 
   // Initialize async
   createEditor(options).then((ed) => {
+    if (destroyed) {
+      ed.destroy();
+      return;
+    }
     editor = ed;
     viewState = ed.getViewState();
     unsub = ed.on("viewStateChange", (state) => {
@@ -54,15 +60,20 @@ export function createEditorState(options: CreateEditorOptions): EditorStore {
       return viewState;
     },
     subscribe(fn) {
-      subscribers.add(fn);
       fn({ editor, state: viewState });
+      if (destroyed) return () => {};
+      subscribers.add(fn);
       return () => subscribers.delete(fn);
     },
     destroy() {
+      if (destroyed) return;
+      destroyed = true;
       unsub?.();
+      unsub = null;
       editor?.destroy();
       editor = null;
       viewState = undefined;
+      notify();
       subscribers.clear();
     },
   };

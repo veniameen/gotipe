@@ -50,9 +50,8 @@ async function syncSelection(page: Page): Promise<void> {
 }
 
 async function setTheme(page: Page, theme: "light" | "dark"): Promise<void> {
-  await page.evaluate((t) => {
-    document.documentElement.setAttribute("data-theme", t);
-  }, theme);
+  await page.getByRole("banner").getByRole("radio", { name: theme === "dark" ? "Dark theme" : "Light theme", exact: true }).click();
+  await expect(page.locator("html")).toHaveAttribute("data-theme", theme);
 }
 
 async function setupContext(page: Page, ctx: Ctx): Promise<void> {
@@ -114,9 +113,9 @@ async function setupContext(page: Page, ctx: Ctx): Promise<void> {
   }
 
   await setNotionContent(page, [paragraph(TARGET_ID, "Dark seed ")]);
+  await setTheme(page, "dark");
   await setCaretAt(page, TARGET_ID, "end");
   await syncSelection(page);
-  await setTheme(page, "dark");
 }
 
 async function assertMenuPlacement(page: Page, ctx: Ctx): Promise<void> {

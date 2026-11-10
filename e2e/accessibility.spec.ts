@@ -2,15 +2,18 @@ import { test, expect } from '@playwright/test';
 
 test.describe('Accessibility — ARIA attributes', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('/');
+    await page.goto('/?view=block#basic');
     await page.waitForSelector('[data-gotipe-example="basic"]');
+    await page.waitForFunction(() => Boolean(window.__GOTIPE_EDITOR__));
+    await page.evaluate(() => window.__GOTIPE_EDITOR__!.setContent({ version: 1, blocks: [{ id: 'test-body', type: 'paragraph', attrs: {}, content: [], children: [] }] }));
   });
 
-  test('slash menu has role="listbox" and aria-label', async ({ page }) => {
+  test('slash dialog contains a labelled command list', async ({ page }) => {
     await page.click('[data-gotipe-block-editor]');
     await page.keyboard.type('/');
     await page.waitForSelector('[data-gotipe-slash-menu]');
-    await expect(page.locator('[data-gotipe-slash-menu]')).toHaveAttribute('role', 'listbox');
+    await expect(page.locator('[data-gotipe-slash-menu]')).toHaveAttribute('role', 'dialog');
+    await expect(page.getByRole('listbox', { name: 'Commands' })).toBeVisible();
     await expect(page.locator('[data-gotipe-slash-menu]')).toHaveAttribute(
       'aria-label',
       'Insert block',
@@ -27,18 +30,20 @@ test.describe('Accessibility — ARIA attributes', () => {
     await expect(firstItem).toHaveAttribute('aria-selected', 'true');
   });
 
-  test('slash menu search input has aria-label', async ({ page }) => {
+  test('slash command list exposes the active option', async ({ page }) => {
     await page.click('[data-gotipe-block-editor]');
     await page.keyboard.type('/');
     await page.waitForSelector('[data-gotipe-slash-menu]');
-    const searchInput = page.locator('.gotipe-slash-menu-search');
-    await expect(searchInput).toHaveAttribute('aria-label', 'Search blocks');
+    const list = page.getByRole('listbox', { name: 'Commands' });
+    const active = await list.getAttribute('aria-activedescendant');
+    expect(active).toBeTruthy();
+    await expect(page.locator(`#${active}`)).toHaveAttribute('aria-selected', 'true');
   });
 
   test('bubble menu has role="toolbar" and aria-label', async ({ page }) => {
     await page.click('[data-gotipe-block-editor]');
     await page.keyboard.type('Select me');
-    await page.keyboard.press('Meta+a');
+    await page.keyboard.press('ControlOrMeta+a');
     await page.waitForSelector('[data-gotipe-bubble-menu]');
     await expect(page.locator('[data-gotipe-bubble-menu]')).toHaveAttribute('role', 'toolbar');
     await expect(page.locator('[data-gotipe-bubble-menu]')).toHaveAttribute(
@@ -50,7 +55,7 @@ test.describe('Accessibility — ARIA attributes', () => {
   test('bubble menu buttons have aria-label and aria-pressed', async ({ page }) => {
     await page.click('[data-gotipe-block-editor]');
     await page.keyboard.type('Format me');
-    await page.keyboard.press('Meta+a');
+    await page.keyboard.press('ControlOrMeta+a');
     await page.waitForSelector('[data-gotipe-bubble-menu]');
     // Bold button
     const bold = page.locator('[data-mark="bold"]');
@@ -65,7 +70,7 @@ test.describe('Accessibility — ARIA attributes', () => {
   test('more menu has aria-haspopup and aria-expanded', async ({ page }) => {
     await page.click('[data-gotipe-block-editor]');
     await page.keyboard.type('More');
-    await page.keyboard.press('Meta+a');
+    await page.keyboard.press('ControlOrMeta+a');
     await page.waitForSelector('[data-gotipe-bubble-menu]');
     const moreBtn = page.locator('[aria-label="More formatting options"]');
     await expect(moreBtn).toHaveAttribute('aria-haspopup', 'menu');
@@ -78,7 +83,7 @@ test.describe('Accessibility — ARIA attributes', () => {
   test('block type dropdown has aria-haspopup and aria-expanded', async ({ page }) => {
     await page.click('[data-gotipe-block-editor]');
     await page.keyboard.type('Block type');
-    await page.keyboard.press('Meta+a');
+    await page.keyboard.press('ControlOrMeta+a');
     await page.waitForSelector('[data-gotipe-bubble-menu]');
     const trigger = page.locator('.gotipe-block-type-trigger');
     await expect(trigger).toHaveAttribute('aria-haspopup', 'listbox');
@@ -112,7 +117,7 @@ test.describe('Accessibility — ARIA attributes', () => {
     await page.waitForSelector('[data-gotipe-context-menu]');
     await expect(page.locator('[data-gotipe-context-menu]')).toHaveAttribute('role', 'menu');
     const menuItems = page.locator('[data-gotipe-context-menu] [role="menuitem"]');
-    expect(await menuItems.count()).toBe(4);
+    expect(await menuItems.allTextContents()).toEqual(expect.arrayContaining([expect.stringContaining('Duplicate'), expect.stringContaining('Delete')]));
   });
 
   test('drag handle has aria-label', async ({ page }) => {
@@ -165,8 +170,10 @@ test.describe('Accessibility — ARIA attributes', () => {
 
 test.describe('Accessibility — Keyboard navigation', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('/');
+    await page.goto('/?view=block#basic');
     await page.waitForSelector('[data-gotipe-example="basic"]');
+    await page.waitForFunction(() => Boolean(window.__GOTIPE_EDITOR__));
+    await page.evaluate(() => window.__GOTIPE_EDITOR__!.setContent({ version: 1, blocks: [{ id: 'test-body', type: 'paragraph', attrs: {}, content: [], children: [] }] }));
     await page.click('[data-gotipe-block-editor]');
   });
 
@@ -179,7 +186,7 @@ test.describe('Accessibility — Keyboard navigation', () => {
 
   test('Escape closes bubble menu dropdown', async ({ page }) => {
     await page.keyboard.type('Text');
-    await page.keyboard.press('Meta+a');
+    await page.keyboard.press('ControlOrMeta+a');
     await page.waitForSelector('[data-gotipe-bubble-menu]');
     await page.click('.gotipe-block-type-trigger');
     await page.waitForSelector('[data-gotipe-block-type-dropdown]');
@@ -198,10 +205,11 @@ test.describe('Accessibility — Keyboard navigation', () => {
   });
 
   test('Escape closes AI command bar', async ({ page }) => {
-    await page.goto('/');
+    await page.goto('/?view=block#basic');
     await page.locator('[data-gotipe-nav="ai"]').click();
     await page.waitForSelector('[data-gotipe-example="ai"]');
-    await page.keyboard.press('Meta+k');
+    await page.locator('[data-gotipe-content] > [data-block-id]').first().click();
+    await page.keyboard.press('ControlOrMeta+k');
     await page.waitForSelector('[data-gotipe-ai-command-bar]');
     await page.keyboard.press('Escape');
     await expect(page.locator('[data-gotipe-ai-command-bar]')).not.toBeVisible();
@@ -233,22 +241,26 @@ test.describe('Accessibility — Keyboard navigation', () => {
 });
 
 test.describe('Accessibility — Focus management', () => {
-  test('slash menu search input receives focus on open', async ({ page }) => {
-    await page.goto('/');
+  test('slash query keeps the native caret in the document', async ({ page }) => {
+    await page.goto('/?view=block#basic');
     await page.waitForSelector('[data-gotipe-example="basic"]');
+    await page.waitForFunction(() => Boolean(window.__GOTIPE_EDITOR__));
+    await page.evaluate(() => window.__GOTIPE_EDITOR__!.setContent({ version: 1, blocks: [{ id: 'test-body', type: 'paragraph', attrs: {}, content: [], children: [] }] }));
     await page.click('[data-gotipe-block-editor]');
     await page.keyboard.type('/');
     await page.waitForSelector('[data-gotipe-slash-menu]');
-    // Search input should be focused
-    const searchInput = page.locator('.gotipe-slash-menu-search');
-    await expect(searchInput).toBeFocused();
+    await expect(page.locator('[data-gotipe-content]')).toBeFocused();
+    await page.keyboard.type('heading');
+    await expect(page.locator('[data-gotipe-slash-item]')).toHaveCount(3);
+    await expect(page.locator('[data-block-id="test-body"]')).toHaveText('/heading');
   });
 
   test('AI command bar input receives focus on open', async ({ page }) => {
-    await page.goto('/');
+    await page.goto('/?view=block#basic');
     await page.locator('[data-gotipe-nav="ai"]').click();
     await page.waitForSelector('[data-gotipe-example="ai"]');
-    await page.keyboard.press('Meta+k');
+    await page.locator('[data-gotipe-content] > [data-block-id]').first().click();
+    await page.keyboard.press('ControlOrMeta+k');
     await page.waitForSelector('[data-gotipe-ai-command-bar]');
     const input = page.locator('[data-gotipe-ai-command-bar] input');
     await expect(input).toBeFocused();
@@ -257,7 +269,7 @@ test.describe('Accessibility — Focus management', () => {
 
 test.describe('Accessibility — Reduced motion', () => {
   test('reduced motion CSS is defined', async ({ page }) => {
-    await page.goto('/');
+    await page.goto('/?view=block#basic');
     const reducedMotionDefined = await page.evaluate(() => {
       const sheets = Array.from(document.styleSheets);
       for (const sheet of sheets) {
@@ -278,7 +290,7 @@ test.describe('Accessibility — Reduced motion', () => {
 
 test.describe('Accessibility — Screen reader utilities', () => {
   test('sr-only CSS class exists', async ({ page }) => {
-    await page.goto('/');
+    await page.goto('/?view=block#basic');
     const srOnlyExists = await page.evaluate(() => {
       const sheets = Array.from(document.styleSheets);
       for (const sheet of sheets) {
@@ -301,52 +313,73 @@ test.describe('Accessibility — Screen reader utilities', () => {
 });
 
 test.describe('Accessibility — Live regions', () => {
-  test('suggestion counter has aria-live="polite"', async ({ page }) => {
-    // Verify the attribute exists in source — we check CSS existence
-    await page.goto('/');
-    const ariaLiveExists = await page.evaluate(() => {
-      // Check that the suggestion toolbar component defines aria-live
-      // Since the toolbar might not be visible without AI suggestions,
-      // we verify the CSS is loaded
-      const sheets = Array.from(document.styleSheets);
-      for (const sheet of sheets) {
-        try {
-          const rules = Array.from(sheet.cssRules);
-          for (const rule of rules) {
-            if (
-              rule instanceof CSSStyleRule &&
-              rule.selectorText?.includes('gotipe-suggestion-counter')
-            ) {
-              return true;
-            }
-          }
-        } catch {}
-      }
-      return false;
-    });
-    expect(ariaLiveExists).toBe(true);
+  test('AI processing is announced and cancellation removes the status', async ({ page }) => {
+    await page.goto('/#ai');
+    await page.locator('[data-gotipe-content] > [data-block-id]').first().click();
+    await page.keyboard.press('ControlOrMeta+k');
+    await page.getByRole('textbox', { name: 'AI prompt' }).fill('Write about accessibility');
+    await page.getByRole('button', { name: 'Submit AI command' }).click();
+    const status = page.locator('[data-gotipe-ai-status]');
+    await expect(status).toHaveAttribute('role', 'status');
+    await expect(status).toHaveAttribute('aria-live', 'polite');
+    await page.getByRole('button', { name: 'Cancel AI command' }).click();
+    await expect(status).toHaveCount(0);
+  });
+});
+
+test.describe('Interactive blocks — keyboard and read-only', () => {
+  test('task checkbox supports Space, pointer clicks and undo', async ({ page }) => {
+    await page.goto('/?view=block#basic');
+    await page.waitForFunction(() => Boolean(window.__GOTIPE_EDITOR__));
+    await page.evaluate(() => window.__GOTIPE_EDITOR__!.setContent({ version: 1, blocks: [
+      { id: 'tasks', type: 'todoList', attrs: {}, content: null, children: [
+        { id: 'task', type: 'todoItem', attrs: { checked: false }, content: [{ text: 'Клавиатура 😀', marks: [] }], children: [] },
+      ] },
+    ] }));
+    const checkbox = page.getByRole('checkbox');
+    await checkbox.focus();
+    await page.keyboard.press('Space');
+    await expect(checkbox).toBeChecked();
+    await checkbox.click();
+    await expect(checkbox).not.toBeChecked();
+    await page.locator('[data-gotipe-todo-content]').click();
+    await page.keyboard.press('ControlOrMeta+z');
+    await expect(checkbox).toBeChecked();
+    await page.evaluate(() => window.__GOTIPE_EDITOR__!.setEditable(false));
+    await expect(checkbox).toBeDisabled();
   });
 
-  test('AI status indicator has role="status" and aria-live="polite"', async ({ page }) => {
-    await page.goto('/');
-    // Verify the CSS class exists (indicator only shows during AI processing)
-    const statusCss = await page.evaluate(() => {
-      const sheets = Array.from(document.styleSheets);
-      for (const sheet of sheets) {
-        try {
-          const rules = Array.from(sheet.cssRules);
-          for (const rule of rules) {
-            if (
-              rule instanceof CSSStyleRule &&
-              rule.selectorText?.includes('gotipe-ai-status')
-            ) {
-              return true;
-            }
-          }
-        } catch {}
-      }
-      return false;
-    });
-    expect(statusCss).toBe(true);
+  test('read-only toggle can reveal content without changing document or history', async ({ page }) => {
+    await page.goto('/?view=block#basic');
+    await page.waitForFunction(() => Boolean(window.__GOTIPE_EDITOR__));
+    await page.evaluate(() => window.__GOTIPE_EDITOR__!.setContent({ version: 1, blocks: [
+      { id: 'toggle', type: 'toggle', attrs: { open: false }, content: [{ text: 'Details', marks: [] }], children: [
+        { id: 'inside', type: 'paragraph', attrs: {}, content: [{ text: 'Nested content', marks: [] }], children: [] },
+      ] },
+    ] }));
+    await page.evaluate(() => window.__GOTIPE_EDITOR__!.setEditable(false));
+    const original = await page.evaluate(() => JSON.stringify(window.__GOTIPE_EDITOR__!.getJSON()));
+    await page.getByRole('button', { name: 'Expand section' }).focus();
+    await page.keyboard.press('Enter');
+    await expect(page.locator('[data-block-id="inside"]')).toBeVisible();
+    await page.getByRole('button', { name: 'Collapse section' }).click();
+    await expect(page.locator('[data-block-id="inside"]')).not.toBeVisible();
+    expect(await page.evaluate(() => JSON.stringify(window.__GOTIPE_EDITOR__!.getJSON()))).toBe(original);
+  });
+
+  test('PageEditor task checkbox preserves Markdown and supports keyboard undo', async ({ page }) => {
+    await page.goto('/?view=page#basic');
+    await page.getByRole('button', { name: 'Markdown', exact: true }).click();
+    const checkbox = page.locator('[data-block-type="todoItem"] input').last();
+    await expect(checkbox).not.toBeChecked();
+    await checkbox.focus();
+    await page.keyboard.press('Space');
+    await expect(checkbox).toBeChecked();
+    await expect(page.locator('[data-gotipe-page-source]')).toContainText('- [x] Проверить таблицу');
+    await page.locator('[data-gotipe-todo-content]').last().click();
+    await page.keyboard.press('ControlOrMeta+z');
+    await expect(checkbox).not.toBeChecked();
+    await page.getByRole('button', { name: 'Только чтение' }).click();
+    await expect(checkbox).toBeDisabled();
   });
 });

@@ -1,7 +1,16 @@
-import { createTextWalker } from "./dom/text-walker";
-import type { GoTipeEditor } from "./editor";
-import type { BlockContent } from "./types/block";
-import type { Step, Transaction } from "./types/state";
+import { documentTransaction } from "./clipboard/document";
+import { insertPayload } from "./clipboard/insertion";
+import { blockContent, cloneBlockTree } from "./commands/content";
+import { insertionPoint } from "./commands/insertion-point";
+import { ListCommands } from "./commands/list-commands";
+import { MarkCommands } from "./commands/mark-commands";
+import type { CommandPort } from "./commands/port";
+import { StructureCommands } from "./commands/structure-commands";
+import { cloneAttributes } from "./document/attributes";
+import { findBlockInTree, findBlockLocation, flattenBlocks } from "./document/tree";
+import type { Document } from "./types/block";
+import type { GoTipeEditor } from "./types/editor";
+import type { Selection, Step, Transaction } from "./types/state";
 import type { BlockView } from "./types/view";
 
 export class ChainableCommands {
@@ -10,13 +19,104 @@ export class ChainableCommands {
   _cellNavigated = false;
   private _focusPosition: "start" | "end" | undefined | null = null;
   private selectionOverride: Transaction["selection"] | null = null;
-  private static readonly LIST_TYPES = new Set(["bulletList", "orderedList", "todoList"]);
-  private static readonly LIST_ITEM_TYPES = new Set(["listItem", "todoItem"]);
 
-  constructor(private editor: GoTipeEditor) {}
+  private marks: MarkCommands;
+  private lists: ListCommands;
+  private structures: StructureCommands;
+  constructor(
+    private editor: GoTipeEditor,
+    private allowsChild?: (parentType: string, childType: string) => boolean,
+  ) {
+    const port: CommandPort = {
+      getState: () => this.getViewState(),
+      allowsChild,
+      append: (...steps) => this.steps.push(...steps),
+      select: (selection) => {
+        this.selectionOverride = selection ?? null;
+      },
+    };
+    this.lists = new ListCommands(port);
+    this.marks = new MarkCommands(port);
+    this.structures = new StructureCommands(port);
+  }
+
+  setBlockType(type: string, attrs?: Record<string, unknown>): this {
+    this.lists.setBlockType(type, attrs);
+    return this;
+  }
+  /** Stage a selection for subsequent commands without changing the live caret. */
+  setSelection(selection: Selection): this {
+    this.selectionOverride = structuredClone(selection);
+    return this;
+  }
+  indent(): this {
+    this.lists.indent();
+    return this;
+  }
+  outdent(): this {
+    this.lists.outdent();
+    return this;
+  }
+  private toggleList(
+    listType: string,
+    itemType: string,
+    attrs?: Record<string, unknown>,
+    unwrap = true,
+  ): this {
+    this.lists.toggleList(listType, itemType, attrs, unwrap);
+    return this;
+  }
+  insertTable(options: { rows: number; cols: number; withHeader?: boolean }): this {
+    this.structures.insertTable(options);
+    return this;
+  }
+  insertColumns(count = 2): this {
+    this.structures.insertColumns(count);
+    return this;
+  }
+  insertToggle(): this {
+    this.structures.insertToggle();
+    return this;
+  }
 
   private getViewState() {
-    return this.editor.getViewState();
+    const state = this.editor.getViewState();
+    const selection = this.selectionOverride;
+    if (!selection) return state;
+    const point = (blockId: string, offset: number) => ({ blockId, offset });
+    if (selection.type === "cursor")
+      return {
+        ...state,
+        selection: {
+          type: "text" as const,
+          anchor: point(selection.blockId, selection.offset),
+          head: point(selection.blockId, selection.offset),
+        },
+      };
+    if (selection.type === "text")
+      return {
+        ...state,
+        selection: {
+          type: "text" as const,
+          anchor: point(selection.blockId, selection.from),
+          head: point(selection.blockId, selection.to),
+        },
+      };
+    if (selection.type === "range")
+      return {
+        ...state,
+        selection: { type: "text" as const, anchor: selection.anchor, head: selection.head },
+      };
+    if (selection.type === "block")
+      return {
+        ...state,
+        selection: {
+          type: "block" as const,
+          anchor: point(selection.blockId, 0),
+          head: point(selection.blockId, 0),
+        },
+      };
+    return state;
   }
 
   // Text formatting
@@ -53,329 +153,58 @@ export class ChainableCommands {
   }
 
   setLink(href: string, target?: string): this {
-    const state = this.getViewState();
-    const sel = state.selection;
-    if (sel.type !== "text") return this;
-    const from = Math.min(sel.anchor.offset, sel.head.offset);
-    const to = Math.max(sel.anchor.offset, sel.head.offset);
-    this.steps.push({
-      type: "addMark",
-      blockId: sel.anchor.blockId,
-      from,
-      to,
-      mark: { type: "link", attrs: { href, target: target ?? "_blank" } },
-    });
+    this.marks.add("link", undefined, undefined, { href, target: target ?? "_blank" });
     return this;
   }
-
   removeLink(): this {
-    const state = this.getViewState();
-    const sel = state.selection;
-    if (sel.type !== "text") return this;
-    const from = Math.min(sel.anchor.offset, sel.head.offset);
-    const to = Math.max(sel.anchor.offset, sel.head.offset);
-    this.steps.push({
-      type: "removeMark",
-      blockId: sel.anchor.blockId,
-      from,
-      to,
-      markType: "link",
-    });
+    this.marks.remove("link");
     return this;
   }
-
   toggleMark(markType: string, attrs?: Record<string, unknown>): this {
-    const state = this.getViewState();
-    const isActive = state.toolbar.activeMarks.includes(markType);
-    const sel = state.selection;
-    if (sel.type !== "text") return this;
-    const from = Math.min(sel.anchor.offset, sel.head.offset);
-    const to = Math.max(sel.anchor.offset, sel.head.offset);
-
-    if (isActive) {
-      this.steps.push({
-        type: "removeMark",
-        blockId: sel.anchor.blockId,
-        from,
-        to,
-        markType,
-      });
-    } else {
-      this.steps.push({
-        type: "addMark",
-        blockId: sel.anchor.blockId,
-        from,
-        to,
-        mark: {
-          type: markType,
-          attrs: (attrs ?? {}) as Record<string, string | number | boolean | null>,
-        },
-      });
-    }
+    this.marks.toggle(markType, attrs);
     return this;
   }
-
   addMark(markType: string, from?: number, to?: number, attrs?: Record<string, unknown>): this {
-    const state = this.getViewState();
-    const sel = state.selection;
-    const blockId = sel.anchor.blockId;
-    const computedFrom = from ?? Math.min(sel.anchor.offset, sel.head.offset);
-    const computedTo = to ?? Math.max(sel.anchor.offset, sel.head.offset);
-    this.steps.push({
-      type: "addMark",
-      blockId,
-      from: Math.min(computedFrom, computedTo),
-      to: Math.max(computedFrom, computedTo),
-      mark: {
-        type: markType,
-        attrs: (attrs ?? {}) as Record<string, string | number | boolean | null>,
-      },
-    });
+    this.marks.add(markType, from, to, attrs);
     return this;
   }
-
   removeMark(markType: string, from?: number, to?: number): this {
-    const state = this.getViewState();
-    const sel = state.selection;
-    const blockId = sel.anchor.blockId;
-    const computedFrom = from ?? Math.min(sel.anchor.offset, sel.head.offset);
-    const computedTo = to ?? Math.max(sel.anchor.offset, sel.head.offset);
-    this.steps.push({
-      type: "removeMark",
-      blockId,
-      from: Math.min(computedFrom, computedTo),
-      to: Math.max(computedFrom, computedTo),
-      markType,
-    });
+    this.marks.remove(markType, from, to);
     return this;
   }
-
   setMark(markType: string, attrs?: Record<string, unknown>): this {
     return this.addMark(markType, undefined, undefined, attrs);
   }
-
   unsetMark(markType: string): this {
     return this.removeMark(markType);
   }
-
   clearFormatting(): this {
-    const state = this.getViewState();
-    const sel = state.selection;
-    if (sel.type !== "text") return this;
-    const from = Math.min(sel.anchor.offset, sel.head.offset);
-    const to = Math.max(sel.anchor.offset, sel.head.offset);
-    for (const mark of state.toolbar.activeMarks) {
-      this.steps.push({
-        type: "removeMark",
-        blockId: sel.anchor.blockId,
-        from,
-        to,
-        markType: mark,
-      });
-    }
+    this.marks.clear();
     return this;
   }
 
   // Block operations
-  setBlockType(type: string, attrs?: Record<string, unknown>): this {
-    const state = this.getViewState();
-    const blockId = state.selection.anchor.blockId;
-    const block = this.findInTree(state.blocks, blockId);
-    if (!block) return this;
-    const sourceOffset =
-      state.selection.anchor.blockId === block.id ? state.selection.anchor.offset : 0;
-
-    const parentInfo = this.findParentOf(state.blocks, blockId);
-    const parent = parentInfo?.parent;
-    const insideList =
-      !!parent &&
-      ChainableCommands.LIST_TYPES.has(parent.type) &&
-      ChainableCommands.LIST_ITEM_TYPES.has(block.type);
-
-    // Converting a list item to any non-list-item block should lift it out of the list.
-    if (insideList && !ChainableCommands.LIST_ITEM_TYPES.has(type)) {
-      const listLoc = this.findLocation(state.blocks, parent.id);
-      if (listLoc) {
-        const liftedContent = this.contentForTargetType(type, block.content);
-        const trailingChildren = block.children.map((child) => this.cloneBlockTree(child));
-        const liftedBlock = {
-          id: crypto.randomUUID(),
-          type,
-          attrs: (attrs ?? {}) as Record<string, string | number | boolean | null>,
-          content: liftedContent,
-          children: [],
-        };
-        const targetOffset = Math.max(
-          0,
-          Math.min(sourceOffset, this.blockContentTextLength(liftedContent)),
-        );
-        this.selectionOverride = { type: "cursor", blockId: liftedBlock.id, offset: targetOffset };
-
-        if (parent.children.length === 1) {
-          this.steps.push({ type: "deleteBlock", blockId: parent.id });
-          this.steps.push({
-            type: "insertBlock",
-            parentId: listLoc.parentId,
-            index: listLoc.index,
-            block: liftedBlock,
-          });
-          for (let i = 0; i < trailingChildren.length; i++) {
-            this.steps.push({
-              type: "insertBlock",
-              parentId: listLoc.parentId,
-              index: listLoc.index + 1 + i,
-              block: trailingChildren[i]!,
-            });
-          }
-        } else {
-          this.steps.push({ type: "deleteBlock", blockId });
-          this.steps.push({
-            type: "insertBlock",
-            parentId: listLoc.parentId,
-            index: listLoc.index + 1,
-            block: liftedBlock,
-          });
-          for (let i = 0; i < trailingChildren.length; i++) {
-            this.steps.push({
-              type: "insertBlock",
-              parentId: listLoc.parentId,
-              index: listLoc.index + 2 + i,
-              block: trailingChildren[i]!,
-            });
-          }
-        }
-        return this;
-      }
-    }
-
-    // Ensure todo items always keep a checked attr when directly converted.
-    const normalizedAttrs =
-      type === "todoItem"
-        ? ({
-            checked:
-              typeof attrs?.checked === "boolean"
-                ? attrs.checked
-                : typeof block.attrs.checked === "boolean"
-                  ? block.attrs.checked
-                  : false,
-          } as Record<string, string | number | boolean | null>)
-        : ((attrs ?? {}) as Record<string, string | number | boolean | null>);
-
-    if (type === "codeBlock") {
-      const targetContent = this.contentForTargetType(type, block.content);
-      const maxOffset = this.blockContentTextLength(targetContent);
-      const offset = Math.max(0, Math.min(sourceOffset, maxOffset));
-      this.selectionOverride = { type: "cursor", blockId, offset };
-    }
-
-    this.steps.push({
-      type: "setBlockType",
-      blockId,
-      newType: type,
-      attrs: normalizedAttrs,
-    });
-    return this;
-  }
-
   setBlockAttrs(blockId: string, attrs: Record<string, unknown>): this {
     this.steps.push({
       type: "setBlockAttrs",
       blockId,
-      attrs: attrs as Record<string, string | number | boolean | null>,
+      attrs: cloneAttributes(attrs),
     });
     return this;
-  }
-
-  private static readonly EMPTY_CONTENT_TYPES = new Set([
-    "divider",
-    "image",
-    "columns",
-    "column",
-    "table",
-    "tableRow",
-  ]);
-
-  private listItemAttrs(
-    itemType: "listItem" | "todoItem",
-    source?: BlockView,
-  ): Record<string, string | number | boolean | null> {
-    if (itemType === "todoItem") {
-      return {
-        checked: typeof source?.attrs.checked === "boolean" ? source.attrs.checked : false,
-      };
-    }
-    return {};
-  }
-
-  private cloneInlineContent(content: BlockView["content"]): BlockContent {
-    if (Array.isArray(content)) {
-      return content.map((s) => ({
-        text: s.text,
-        marks: s.marks.map((m) => ({ ...m })),
-      })) as BlockContent;
-    }
-    if (typeof content === "string") {
-      if (content.length === 0) return [] as unknown as BlockContent;
-      return [{ text: content, marks: [] }] as unknown as BlockContent;
-    }
-    return [] as unknown as BlockContent;
-  }
-
-  private cloneBlockTree(block: BlockView): import("./types/block").Block {
-    const clonedContent =
-      block.content === null
-        ? null
-        : typeof block.content === "string"
-          ? block.content
-          : this.cloneInlineContent(block.content);
-    return {
-      id: crypto.randomUUID(),
-      type: block.type,
-      attrs: { ...block.attrs } as Record<string, string | number | boolean | null>,
-      content: clonedContent,
-      children: block.children.map((child) => this.cloneBlockTree(child)),
-    };
-  }
-
-  private contentForTargetType(type: string, sourceContent: BlockView["content"]): BlockContent {
-    if (type === "codeBlock") {
-      if (typeof sourceContent === "string") return sourceContent;
-      if (Array.isArray(sourceContent)) {
-        return sourceContent.map((s) => s.text).join("");
-      }
-      return "";
-    }
-    if (ChainableCommands.EMPTY_CONTENT_TYPES.has(type)) {
-      return null;
-    }
-    return this.cloneInlineContent(sourceContent);
-  }
-
-  private blockContentTextLength(content: BlockContent): number {
-    if (Array.isArray(content)) {
-      return content.reduce((sum, span) => sum + span.text.length, 0);
-    }
-    if (typeof content === "string") return content.length;
-    return 0;
-  }
-
-  private blockContent(type: string): BlockContent | null {
-    return ChainableCommands.EMPTY_CONTENT_TYPES.has(type) ? null : ([] as unknown as BlockContent);
   }
 
   insertBlockAfter(type: string, attrs?: Record<string, unknown>): this {
     const state = this.getViewState();
     const blockId = state.selection.anchor.blockId;
-    const blockIndex = state.blocks.findIndex((b) => b.id === blockId);
+    const location = insertionPoint(state.blocks, blockId, type, "after", this.allowsChild);
     this.steps.push({
       type: "insertBlock",
-      parentId: null,
-      index: blockIndex + 1,
+      ...location,
       block: {
         id: crypto.randomUUID(),
         type,
-        attrs: (attrs ?? {}) as Record<string, string | number | boolean | null>,
-        content: this.blockContent(type),
+        attrs: cloneAttributes(attrs ?? {}),
+        content: blockContent(type),
         children: [],
       },
     });
@@ -385,16 +214,15 @@ export class ChainableCommands {
   insertBlockBefore(type: string, attrs?: Record<string, unknown>): this {
     const state = this.getViewState();
     const blockId = state.selection.anchor.blockId;
-    const blockIndex = state.blocks.findIndex((b) => b.id === blockId);
+    const location = insertionPoint(state.blocks, blockId, type, "before", this.allowsChild);
     this.steps.push({
       type: "insertBlock",
-      parentId: null,
-      index: Math.max(0, blockIndex),
+      ...location,
       block: {
         id: crypto.randomUUID(),
         type,
-        attrs: (attrs ?? {}) as Record<string, string | number | boolean | null>,
-        content: this.blockContent(type),
+        attrs: cloneAttributes(attrs ?? {}),
+        content: blockContent(type),
         children: [],
       },
     });
@@ -411,9 +239,14 @@ export class ChainableCommands {
   moveBlockUp(blockId?: string): this {
     const state = this.getViewState();
     const id = blockId ?? state.selection.anchor.blockId;
-    const index = state.blocks.findIndex((b) => b.id === id);
-    if (index > 0) {
-      this.steps.push({ type: "moveBlock", blockId: id, newParentId: null, newIndex: index - 1 });
+    const location = findBlockLocation(state.blocks, id);
+    if (location && location.index > 0) {
+      this.steps.push({
+        type: "moveBlock",
+        blockId: id,
+        newParentId: location.parentId,
+        newIndex: location.index - 1,
+      });
     }
     return this;
   }
@@ -421,9 +254,17 @@ export class ChainableCommands {
   moveBlockDown(blockId?: string): this {
     const state = this.getViewState();
     const id = blockId ?? state.selection.anchor.blockId;
-    const index = state.blocks.findIndex((b) => b.id === id);
-    if (index < state.blocks.length - 1) {
-      this.steps.push({ type: "moveBlock", blockId: id, newParentId: null, newIndex: index + 1 });
+    const location = findBlockLocation(state.blocks, id);
+    const siblings = location?.parentId
+      ? findBlockInTree(state.blocks, location.parentId)?.children
+      : state.blocks;
+    if (location && siblings && location.index < siblings.length - 1) {
+      this.steps.push({
+        type: "moveBlock",
+        blockId: id,
+        newParentId: location.parentId,
+        newIndex: location.index + 1,
+      });
     }
     return this;
   }
@@ -436,21 +277,15 @@ export class ChainableCommands {
   duplicateBlock(blockId?: string): this {
     const state = this.getViewState();
     const id = blockId ?? state.selection.anchor.blockId;
-    const block = state.blocks.find((b) => b.id === id);
-    if (block) {
-      const index = state.blocks.indexOf(block);
+    const block = findBlockInTree(state.blocks, id);
+    const location = findBlockLocation(state.blocks, id);
+    if (block && location) {
+      const index = location.index;
       this.steps.push({
         type: "insertBlock",
-        parentId: null,
+        parentId: location.parentId,
         index: index + 1,
-        block: {
-          ...block,
-          id: crypto.randomUUID(),
-          content: Array.isArray(block.content)
-            ? block.content.map((s) => ({ ...s, marks: s.marks.map((m) => ({ ...m })) }))
-            : block.content,
-          children: [],
-        } as import("./types/block").Block,
+        block: cloneBlockTree(block),
       });
     }
     return this;
@@ -487,232 +322,6 @@ export class ChainableCommands {
     return this.toggleList("todoList", "todoItem", undefined, false);
   }
 
-  private toggleList(
-    listType: string,
-    itemType: string,
-    listAttrs?: Record<string, unknown>,
-    allowUnwrapSame = true,
-  ): this {
-    const state = this.getViewState();
-    const blockId = state.selection.anchor.blockId;
-    const block = this.findInTree(state.blocks, blockId);
-    if (!block) return this;
-
-    const parentInfo = this.findParentOf(state.blocks, blockId);
-    if (
-      parentInfo &&
-      ChainableCommands.LIST_TYPES.has(parentInfo.parent.type) &&
-      ChainableCommands.LIST_ITEM_TYPES.has(block.type)
-    ) {
-      const listBlock = parentInfo.parent;
-
-      // Same list command on current list type toggles it off (unwrap to paragraphs).
-      if (listBlock.type === listType && block.type === itemType) {
-        if (!allowUnwrapSame) return this;
-        const listLoc = this.findLocation(state.blocks, listBlock.id);
-        if (listLoc) {
-          this.steps.push({ type: "deleteBlock", blockId: listBlock.id });
-          let insertionIndex = listLoc.index;
-          for (let i = 0; i < listBlock.children.length; i++) {
-            const item = listBlock.children[i]!;
-            this.steps.push({
-              type: "insertBlock",
-              parentId: listLoc.parentId,
-              index: insertionIndex,
-              block: {
-                id: crypto.randomUUID(),
-                type: "paragraph",
-                attrs: {},
-                content: this.cloneInlineContent(item.content),
-                children: [],
-              },
-            });
-            insertionIndex += 1;
-            for (const child of item.children) {
-              this.steps.push({
-                type: "insertBlock",
-                parentId: listLoc.parentId,
-                index: insertionIndex,
-                block: this.cloneBlockTree(child),
-              });
-              insertionIndex += 1;
-            }
-          }
-        }
-        return this;
-      }
-
-      // Convert list kind in-place (bullet <-> ordered <-> todo) to avoid losing the active row.
-      this.steps.push({
-        type: "setBlockType",
-        blockId: listBlock.id,
-        newType: listType,
-        attrs: (listAttrs ?? {}) as Record<string, string | number | boolean | null>,
-      });
-
-      for (const item of listBlock.children) {
-        this.steps.push({
-          type: "setBlockType",
-          blockId: item.id,
-          newType: itemType,
-          attrs: this.listItemAttrs(itemType as "listItem" | "todoItem", item),
-        });
-      }
-      return this;
-    }
-
-    // Wrap top-level text-capable blocks in list while preserving inline content.
-    if (
-      block.type === "paragraph" ||
-      block.type === "heading" ||
-      block.type === "blockquote" ||
-      block.type === "codeBlock" ||
-      block.type === "callout"
-    ) {
-      const blockIndex = state.blocks.findIndex((b) => b.id === blockId);
-      if (blockIndex === -1) return this;
-
-      this.steps.push({ type: "deleteBlock", blockId });
-      this.steps.push({
-        type: "insertBlock",
-        parentId: null,
-        index: blockIndex,
-        block: {
-          id: crypto.randomUUID(),
-          type: listType,
-          attrs: (listAttrs ?? {}) as Record<string, string | number | boolean | null>,
-          content: null,
-          children: [
-            {
-              id: crypto.randomUUID(),
-              type: itemType,
-              attrs: this.listItemAttrs(itemType as "listItem" | "todoItem", block),
-              content: this.cloneInlineContent(block.content),
-              children: [],
-            },
-          ],
-        },
-      });
-      return this;
-    }
-
-    return this.setBlockType(listType, listAttrs);
-  }
-
-  private findInTree(blocks: BlockView[], id: string): BlockView | null {
-    for (const b of blocks) {
-      if (b.id === id) return b;
-      const found = this.findInTree(b.children, id);
-      if (found) return found;
-    }
-    return null;
-  }
-
-  private findParentOf(
-    blocks: BlockView[],
-    childId: string,
-  ): { parent: BlockView; index: number } | null {
-    for (const b of blocks) {
-      for (let i = 0; i < b.children.length; i++) {
-        if (b.children[i]!.id === childId) return { parent: b, index: i };
-      }
-      const found = this.findParentOf(b.children, childId);
-      if (found) return found;
-    }
-    return null;
-  }
-
-  private findLocation(
-    blocks: BlockView[],
-    id: string,
-    parentId: string | null = null,
-  ): { parentId: string | null; index: number } | null {
-    for (let i = 0; i < blocks.length; i++) {
-      if (blocks[i]!.id === id) return { parentId, index: i };
-      const found = this.findLocation(blocks[i]!.children, id, blocks[i]!.id);
-      if (found) return found;
-    }
-    return null;
-  }
-
-  indent(): this {
-    const state = this.getViewState();
-    const blockId = state.selection.anchor.blockId;
-    const block = this.findInTree(state.blocks, blockId);
-    if (!block || !ChainableCommands.LIST_ITEM_TYPES.has(block.type)) return this;
-
-    const location = this.findLocation(state.blocks, blockId);
-    if (!location || location.index <= 0) return this;
-
-    const parent = location.parentId ? this.findInTree(state.blocks, location.parentId) : null;
-    if (!parent || !ChainableCommands.LIST_TYPES.has(parent.type)) return this;
-    if (parent.type === "todoList") return this;
-
-    const prevBlock = parent.children[location.index - 1];
-    if (!prevBlock || !ChainableCommands.LIST_ITEM_TYPES.has(prevBlock.type)) return this;
-
-    const existingNestedList =
-      prevBlock.children.find((child) => child.type === parent.type) ?? null;
-    if (existingNestedList) {
-      this.steps.push({
-        type: "moveBlock",
-        blockId,
-        newParentId: existingNestedList.id,
-        newIndex: existingNestedList.children.length,
-      });
-      return this;
-    }
-
-    const nestedListId = crypto.randomUUID();
-    this.steps.push({
-      type: "insertBlock",
-      parentId: prevBlock.id,
-      index: prevBlock.children.length,
-      block: {
-        id: nestedListId,
-        type: parent.type,
-        attrs: { ...parent.attrs } as Record<string, string | number | boolean | null>,
-        content: null,
-        children: [],
-      },
-    });
-
-    this.steps.push({
-      type: "moveBlock",
-      blockId,
-      newParentId: nestedListId,
-      newIndex: 0,
-    });
-    return this;
-  }
-
-  outdent(): this {
-    const state = this.getViewState();
-    const blockId = state.selection.anchor.blockId;
-    const block = this.findInTree(state.blocks, blockId);
-    if (!block || !ChainableCommands.LIST_ITEM_TYPES.has(block.type)) return this;
-
-    const parentInfo = this.findParentOf(state.blocks, blockId);
-    if (!parentInfo || !ChainableCommands.LIST_TYPES.has(parentInfo.parent.type)) return this;
-
-    const listParentInfo = this.findParentOf(state.blocks, parentInfo.parent.id);
-    if (!listParentInfo) return this;
-
-    const hostLoc = this.findLocation(state.blocks, listParentInfo.parent.id);
-    if (!hostLoc) return this;
-
-    this.steps.push({
-      type: "moveBlock",
-      blockId,
-      newParentId: hostLoc.parentId,
-      newIndex: hostLoc.index + 1,
-    });
-    if (parentInfo.parent.children.length === 1) {
-      this.steps.push({ type: "deleteBlock", blockId: parentInfo.parent.id });
-    }
-    return this;
-  }
-
   // Block splitting/merging
   splitBlock(): this {
     const state = this.getViewState();
@@ -732,11 +341,11 @@ export class ChainableCommands {
   mergeWithPrevious(): this {
     const state = this.getViewState();
     const blockId = state.selection.anchor.blockId;
-    const loc = this.findLocation(state.blocks, blockId);
+    const loc = findBlockLocation(state.blocks, blockId);
     if (!loc || loc.index <= 0) return this;
 
     if (loc.parentId) {
-      const parent = this.findInTree(state.blocks, loc.parentId);
+      const parent = findBlockInTree(state.blocks, loc.parentId);
       const prev = parent?.children[loc.index - 1];
       if (prev) {
         this.steps.push({
@@ -756,125 +365,7 @@ export class ChainableCommands {
   }
 
   insertHardBreak(): this {
-    const state = this.getViewState();
-    const sel = state.selection;
-    this.steps.push({
-      type: "insertText",
-      blockId: sel.anchor.blockId,
-      offset: sel.anchor.offset,
-      text: "\n",
-      marks: [],
-    });
-    return this;
-  }
-
-  // Table
-  insertTable(options: { rows: number; cols: number; withHeader?: boolean }): this {
-    const state = this.getViewState();
-    const blockId = state.selection.anchor.blockId;
-    const index = state.blocks.findIndex((b) => b.id === blockId);
-    const rows: import("./types/block").Block[] = [];
-
-    for (let r = 0; r < options.rows; r++) {
-      const cells: import("./types/block").Block[] = [];
-      for (let c = 0; c < options.cols; c++) {
-        cells.push({
-          id: crypto.randomUUID(),
-          type: r === 0 && options.withHeader ? "tableHeader" : "tableCell",
-          attrs: {},
-          content: [],
-          children: [],
-        });
-      }
-      rows.push({
-        id: crypto.randomUUID(),
-        type: "tableRow",
-        attrs: {},
-        content: null,
-        children: cells,
-      });
-    }
-
-    this.steps.push({
-      type: "insertBlock",
-      parentId: null,
-      index: index + 1,
-      block: {
-        id: crypto.randomUUID(),
-        type: "table",
-        attrs: {},
-        content: null,
-        children: rows,
-      },
-    });
-    return this;
-  }
-
-  insertColumns(count = 2): this {
-    const state = this.getViewState();
-    const blockId = state.selection.anchor.blockId;
-    const blockIndex = state.blocks.findIndex((b) => b.id === blockId);
-
-    const columns: import("./types/block").Block[] = [];
-    for (let i = 0; i < count; i++) {
-      columns.push({
-        id: crypto.randomUUID(),
-        type: "column",
-        attrs: {},
-        content: null,
-        children: [
-          {
-            id: crypto.randomUUID(),
-            type: "paragraph",
-            attrs: {},
-            content: [],
-            children: [],
-          },
-        ],
-      });
-    }
-
-    this.steps.push({
-      type: "insertBlock",
-      parentId: null,
-      index: blockIndex + 1,
-      block: {
-        id: crypto.randomUUID(),
-        type: "columns",
-        attrs: { count },
-        content: null,
-        children: columns,
-      },
-    });
-    return this;
-  }
-
-  insertToggle(): this {
-    const state = this.getViewState();
-    const blockId = state.selection.anchor.blockId;
-    const blockIndex = state.blocks.findIndex((b) => b.id === blockId);
-
-    this.steps.push({
-      type: "insertBlock",
-      parentId: null,
-      index: blockIndex + 1,
-      block: {
-        id: crypto.randomUUID(),
-        type: "toggle",
-        attrs: { open: true },
-        content: [{ text: "Toggle heading", marks: [] }],
-        children: [
-          {
-            id: crypto.randomUUID(),
-            type: "paragraph",
-            attrs: {},
-            content: [],
-            children: [],
-          },
-        ],
-      },
-    });
-    return this;
+    return this.insertText("\n");
   }
 
   goToNextCell(): this {
@@ -893,25 +384,14 @@ export class ChainableCommands {
     const cell = this.findCellNavTarget(state.blocks, blockId, direction);
     if (!cell) return;
 
-    // Find the target cell DOM element and set selection into it
-    const cellEl = document.querySelector(`[data-block-id="${cell.id}"]`);
-    if (!cellEl) return;
-
-    const sel = window.getSelection();
-    if (!sel) return;
-
-    // Find the first text node or focus the element itself
-    const walker = createTextWalker(cellEl);
-    const textNode = walker.nextNode();
-    const range = document.createRange();
-    if (textNode) {
-      range.setStart(textNode, 0);
-      range.setEnd(textNode, textNode.textContent?.length ?? 0);
-    } else {
-      range.selectNodeContents(cellEl);
-    }
-    sel.removeAllRanges();
-    sel.addRange(range);
+    this.selectionOverride = {
+      type: "text",
+      blockId: cell.id,
+      from: 0,
+      to: Array.isArray(cell.content)
+        ? cell.content.reduce((sum, span) => sum + span.text.length, 0)
+        : 0,
+    };
 
     // Mark that navigation happened so the keybinding can preventDefault
     this._cellNavigated = true;
@@ -941,11 +421,29 @@ export class ChainableCommands {
 
   // Selection
   selectAll(): this {
-    // Handled via selection change, not steps
+    const blocks = flattenBlocks(this.getViewState().blocks).filter(
+      (block) => block.content !== null,
+    );
+    const first = blocks[0];
+    const last = blocks.at(-1);
+    if (first && last)
+      this.selectionOverride = {
+        type: "range",
+        anchor: { blockId: first.id, offset: 0 },
+        head: {
+          blockId: last.id,
+          offset: Array.isArray(last.content)
+            ? last.content.reduce((sum, span) => sum + span.text.length, 0)
+            : (last.content?.length ?? 0),
+        },
+      };
     return this;
   }
 
-  selectBlock(_blockId?: string): this {
+  selectBlock(blockId?: string): this {
+    const id = blockId ?? this.getViewState().selection.anchor.blockId;
+    if (findBlockInTree(this.getViewState().blocks, id))
+      this.selectionOverride = { type: "block", blockId: id };
     return this;
   }
 
@@ -953,13 +451,29 @@ export class ChainableCommands {
   insertText(text: string): this {
     const state = this.getViewState();
     const sel = state.selection;
+    if (sel.type !== "text" || sel.anchor.blockId !== sel.head.blockId) {
+      const before = this.editor.getJSON() as Document;
+      const change = insertPayload(before, sel, { spans: [{ text, marks: [] }] });
+      const transaction = documentTransaction(before, change.document, change.caret);
+      this.steps.push(...transaction.steps);
+      this.selectionOverride = transaction.selection ?? null;
+      return this;
+    }
+    const from = Math.min(sel.anchor.offset, sel.head.offset);
+    const to = Math.max(sel.anchor.offset, sel.head.offset);
+    if (from !== to) this.steps.push({ type: "deleteText", blockId: sel.anchor.blockId, from, to });
     this.steps.push({
       type: "insertText",
       blockId: sel.anchor.blockId,
-      offset: sel.anchor.offset,
+      offset: from,
       text,
       marks: [],
     });
+    this.selectionOverride = {
+      type: "cursor",
+      blockId: sel.anchor.blockId,
+      offset: from + text.length,
+    };
     return this;
   }
 
@@ -1008,11 +522,11 @@ export class ChainableCommands {
     const cellNavigated = this._cellNavigated;
     this._cellNavigated = false;
 
-    if (this.steps.length === 0 && !cellNavigated) {
+    if (this.steps.length === 0 && !cellNavigated && !selectionOverride) {
       this.selectionOverride = null;
       return didFocus;
     }
-    if (this.steps.length > 0) {
+    if (this.steps.length > 0 || selectionOverride) {
       const preserveSelectionTypes = new Set([
         "addMark",
         "removeMark",
@@ -1025,18 +539,6 @@ export class ChainableCommands {
         this.steps.every((step) => preserveSelectionTypes.has(step.type));
       const selectionBefore = shouldPreserveSelection
         ? (() => {
-            const markStep = this.steps.find(
-              (step) => step.type === "addMark" || step.type === "removeMark",
-            );
-            if (markStep && "from" in markStep && "to" in markStep && "blockId" in markStep) {
-              const from = Math.min(markStep.from, markStep.to);
-              const to = Math.max(markStep.from, markStep.to);
-              return {
-                anchor: { blockId: markStep.blockId, offset: from },
-                head: { blockId: markStep.blockId, offset: to },
-              };
-            }
-
             const sel = this.getViewState().selection;
             return {
               anchor: { ...sel.anchor },
@@ -1048,7 +550,7 @@ export class ChainableCommands {
       const tr: Transaction = selectionOverride
         ? { steps: this.steps, selection: selectionOverride }
         : { steps: this.steps };
-      this.editor.dispatch(tr);
+      if (!this.editor.dispatch(tr)) return false;
       if (selectionBefore) {
         this.editor.setSelection(selectionBefore);
       } else if (selectionOverride?.type === "cursor") {

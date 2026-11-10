@@ -1,6 +1,8 @@
 import type { Block, GoTipeEditor } from "@gotipe/core";
 
 export interface AiContext {
+  /** Providers should abort network/stream work when this signal is cancelled. */
+  signal?: AbortSignal;
   selectedText?: string;
   currentBlock?: Block;
   surroundingBlocks?: Block[];
@@ -60,6 +62,7 @@ export interface AiOptions {
   maxContextBlocks?: number;
   commands?: AiCommand[];
   enableAutoComplete?: boolean;
+  /** Block outbound requests containing supported email/phone/Luhn-card patterns. Not a complete privacy classifier. */
   enablePiiDetection?: boolean;
 }
 

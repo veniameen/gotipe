@@ -12,6 +12,17 @@
     "./pkg/*": "./pkg/*"
   },
   "sideEffects": false,
-  "files": ["pkg/"],
-  "license": "MIT"
+  "files": [
+    "pkg/gotipe_wasm.js",
+    "pkg/gotipe_wasm_bg.wasm",
+    "pkg/gotipe_wasm.d.ts",
+    "pkg/gotipe_wasm_bg.wasm.d.ts",
+    "LICENSE",
+    "THIRD_PARTY_NOTICES.md",
+    "licenses"
+  ],
+  "license": "MIT",
+  "publishConfig": {
+    "access": "public"
+  }
 }

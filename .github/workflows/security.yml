@@ -2,13 +2,13 @@
 name: Security
 
 on:
+  workflow_call:
   pull_request:
   schedule:
     - cron: "0 6 * * 1" # Weekly Monday 06:00 UTC
 
 permissions:
   contents: read
-  security-events: write
 
 jobs:
   rust-audit:
@@ -54,7 +54,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
         with:
-          version: 9
+          version: 10.28.2
       - uses: actions/setup-node@v4
         with:
           node-version: 22
@@ -89,7 +89,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v5
         with:
-          go-version: "1.23"
+          go-version-file: apps/cloud/go.mod
           cache-dependency-path: apps/cloud/go.sum
 
       - name: Install govulncheck

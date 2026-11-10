@@ -1,10 +1,22 @@
-use gotipe_schema::{Block, BlockContent, BlockId, Document, Mark, TextSpan};
+use gotipe_schema::{Block, BlockContent, BlockId, ContentRule, Document, Mark, Schema, TextSpan};
 
 use crate::transaction::{Step, TransformError};
 
 impl Step {
     /// Apply step to document, return new document
-    pub fn apply(&self, mut doc: Document) -> Result<Document, TransformError> {
+    pub fn apply(&self, doc: Document) -> Result<Document, TransformError> {
+        self.apply_with_schema(doc, None)
+    }
+
+    pub(crate) fn apply_with_schema(
+        &self,
+        mut doc: Document,
+        schema: Option<&Schema>,
+    ) -> Result<Document, TransformError> {
+        let next_version = doc
+            .version
+            .checked_add(1)
+            .ok_or_else(|| TransformError::InvalidStep("Document revision exhausted".into()))?;
         match self {
             Step::InsertText {
                 block_id,
@@ -16,28 +28,24 @@ impl Step {
                     .find_block_mut(block_id)
                     .ok_or(TransformError::BlockNotFound(block_id.clone()))?;
 
+                promote_empty_content(block, schema);
                 match &mut block.content {
                     BlockContent::RichText(spans) => {
                         insert_text_at(spans, *offset, text, marks)?;
                     }
                     BlockContent::Raw(raw) => {
-                        if *offset > raw.len() {
-                            return Err(TransformError::OffsetOutOfRange);
-                        }
-                        raw.insert_str(*offset, text);
+                        let byte_offset = byte_offset(raw, *offset)?;
+                        raw.insert_str(byte_offset, text);
                     }
                     BlockContent::Empty => {
                         return Err(TransformError::InvalidContentType);
                     }
                 }
-                doc.version += 1;
+                doc.version = next_version;
                 Ok(doc)
             }
 
             Step::DeleteText { block_id, from, to } => {
-                if from >= to {
-                    return Ok(doc);
-                }
                 let block = doc
                     .find_block_mut(block_id)
                     .ok_or(TransformError::BlockNotFound(block_id.clone()))?;
@@ -47,16 +55,18 @@ impl Step {
                         delete_text_range(spans, *from, *to)?;
                     }
                     BlockContent::Raw(raw) => {
-                        if *to > raw.len() {
+                        if from > to {
                             return Err(TransformError::OffsetOutOfRange);
                         }
-                        raw.drain(*from..*to);
+                        let start = byte_offset(raw, *from)?;
+                        let end = byte_offset(raw, *to)?;
+                        raw.drain(start..end);
                     }
                     BlockContent::Empty => {
                         return Err(TransformError::InvalidContentType);
                     }
                 }
-                doc.version += 1;
+                doc.version = next_version;
                 Ok(doc)
             }
 
@@ -65,6 +75,17 @@ impl Step {
                 index,
                 block,
             } => {
+                let subtree = Document {
+                    blocks: vec![block.clone()],
+                    version: 0,
+                };
+                if subtree.duplicate_block_id().is_some()
+                    || subtree
+                        .flatten()
+                        .any(|node| doc.find_block(&node.id).is_some())
+                {
+                    return Err(TransformError::InvalidStep("Duplicate block ID".into()));
+                }
                 if let Some(parent_id) = parent_id {
                     let parent = doc
                         .find_block_mut(parent_id)
@@ -75,14 +96,14 @@ impl Step {
                     let idx = (*index).min(doc.blocks.len());
                     doc.blocks.insert(idx, block.clone());
                 }
-                doc.version += 1;
+                doc.version = next_version;
                 Ok(doc)
             }
 
             Step::DeleteBlock { block_id } => {
                 doc.remove_block(block_id)
                     .ok_or(TransformError::BlockNotFound(block_id.clone()))?;
-                doc.version += 1;
+                doc.version = next_version;
                 Ok(doc)
             }
 
@@ -91,6 +112,17 @@ impl Step {
                 new_parent_id,
                 new_index,
             } => {
+                let source = doc
+                    .find_block(block_id)
+                    .ok_or(TransformError::BlockNotFound(block_id.clone()))?;
+                if let Some(parent_id) = new_parent_id {
+                    if contains_block(source, parent_id) {
+                        return Err(TransformError::CycleDetected);
+                    }
+                    if doc.find_block(parent_id).is_none() {
+                        return Err(TransformError::BlockNotFound(parent_id.clone()));
+                    }
+                }
                 let block = doc
                     .remove_block(block_id)
                     .ok_or(TransformError::BlockNotFound(block_id.clone()))?;
@@ -105,7 +137,7 @@ impl Step {
                     let idx = (*new_index).min(doc.blocks.len());
                     doc.blocks.insert(idx, block);
                 }
-                doc.version += 1;
+                doc.version = next_version;
                 Ok(doc)
             }
 
@@ -116,7 +148,7 @@ impl Step {
                 for (k, v) in attrs {
                     block.attrs.insert(k.clone(), v.clone());
                 }
-                doc.version += 1;
+                doc.version = next_version;
                 Ok(doc)
             }
 
@@ -128,9 +160,12 @@ impl Step {
                 let block = doc
                     .find_block_mut(block_id)
                     .ok_or(TransformError::BlockNotFound(block_id.clone()))?;
+                if let Some(rule) = content_rule(new_type, schema) {
+                    convert_content(block, &rule);
+                }
                 block.block_type.clone_from(new_type);
                 block.attrs = attrs.clone();
-                doc.version += 1;
+                doc.version = next_version;
                 Ok(doc)
             }
 
@@ -145,8 +180,10 @@ impl Step {
                     .ok_or(TransformError::BlockNotFound(block_id.clone()))?;
                 if let BlockContent::RichText(spans) = &mut block.content {
                     add_mark_to_range(spans, *from, *to, mark)?;
+                } else {
+                    return Err(TransformError::InvalidContentType);
                 }
-                doc.version += 1;
+                doc.version = next_version;
                 Ok(doc)
             }
 
@@ -161,14 +198,16 @@ impl Step {
                     .ok_or(TransformError::BlockNotFound(block_id.clone()))?;
                 if let BlockContent::RichText(spans) = &mut block.content {
                     remove_mark_from_range(spans, *from, *to, mark_type)?;
+                } else {
+                    return Err(TransformError::InvalidContentType);
                 }
-                doc.version += 1;
+                doc.version = next_version;
                 Ok(doc)
             }
 
             Step::SplitBlock { block_id, offset } => {
-                split_block_at(&mut doc, block_id, *offset)?;
-                doc.version += 1;
+                split_block_at(&mut doc, block_id, *offset, schema)?;
+                doc.version = next_version;
                 Ok(doc)
             }
 
@@ -176,252 +215,196 @@ impl Step {
                 block_id,
                 target_id,
             } => {
-                merge_blocks(&mut doc, target_id, block_id)?;
-                doc.version += 1;
+                merge_blocks(&mut doc, target_id, block_id, schema)?;
+                doc.version = next_version;
                 Ok(doc)
             }
         }
     }
 }
 
-/// Helper: insert text into spans at a character offset
+/// Translate a DOM/JavaScript UTF-16 offset into a Rust string boundary.
+/// An offset inside a surrogate pair is invalid; never slice a UTF-8 string with it.
+pub(crate) fn byte_offset(text: &str, offset: usize) -> Result<usize, TransformError> {
+    let mut units = 0;
+    for (byte, ch) in text.char_indices() {
+        if units == offset {
+            return Ok(byte);
+        }
+        units += ch.len_utf16();
+        if units > offset {
+            return Err(TransformError::OffsetOutOfRange);
+        }
+    }
+    if units == offset {
+        Ok(text.len())
+    } else {
+        Err(TransformError::OffsetOutOfRange)
+    }
+}
+
+fn content_rule(block_type: &str, schema: Option<&Schema>) -> Option<ContentRule> {
+    if let Some(schema) = schema {
+        schema
+            .nodes
+            .get(block_type)
+            .map(|spec| spec.content.clone())
+    } else {
+        gotipe_schema::defaults::default_block_editor()
+            .nodes
+            .get(block_type)
+            .map(|spec| spec.content.clone())
+    }
+}
+
+fn convert_content(block: &mut Block, rule: &ContentRule) {
+    block.content = match (
+        rule,
+        std::mem::replace(&mut block.content, BlockContent::Empty),
+    ) {
+        (ContentRule::Empty, _) => BlockContent::Empty,
+        (ContentRule::RawText, BlockContent::RichText(spans)) => {
+            BlockContent::Raw(spans.into_iter().map(|span| span.text).collect())
+        }
+        (ContentRule::RawText, BlockContent::Empty) => BlockContent::Raw(String::new()),
+        (ContentRule::RichText, BlockContent::Raw(text)) => {
+            BlockContent::RichText(if text.is_empty() {
+                vec![]
+            } else {
+                vec![TextSpan {
+                    text,
+                    marks: vec![],
+                }]
+            })
+        }
+        (ContentRule::RichText, BlockContent::Empty) => BlockContent::RichText(vec![]),
+        (_, content) => content,
+    };
+}
+
+fn promote_empty_content(block: &mut Block, schema: Option<&Schema>) {
+    if matches!(block.content, BlockContent::Empty) {
+        if let Some(rule) = content_rule(&block.block_type, schema) {
+            convert_content(block, &rule);
+        }
+    }
+}
+
+fn contains_block(block: &Block, id: &BlockId) -> bool {
+    block.id == *id || block.children.iter().any(|child| contains_block(child, id))
+}
+
+fn split_spans_at(
+    spans: &[TextSpan],
+    offset: usize,
+) -> Result<(Vec<TextSpan>, Vec<TextSpan>), TransformError> {
+    let mut before = Vec::new();
+    let mut after = Vec::new();
+    let mut position = 0;
+    for span in spans {
+        let end = position + span.text.encode_utf16().count();
+        if end <= offset {
+            before.push(span.clone());
+        } else if position >= offset {
+            after.push(span.clone());
+        } else {
+            let byte = byte_offset(&span.text, offset - position)?;
+            before.push(TextSpan {
+                text: span.text[..byte].into(),
+                marks: span.marks.clone(),
+            });
+            after.push(TextSpan {
+                text: span.text[byte..].into(),
+                marks: span.marks.clone(),
+            });
+        }
+        position = end;
+    }
+    if offset > position {
+        return Err(TransformError::OffsetOutOfRange);
+    }
+    Ok((before, after))
+}
+
 fn insert_text_at(
     spans: &mut Vec<TextSpan>,
     offset: usize,
     text: &str,
     marks: &[Mark],
 ) -> Result<(), TransformError> {
-    if spans.is_empty() {
-        spans.push(TextSpan {
-            text: text.to_string(),
-            marks: marks.to_vec(),
-        });
-        return Ok(());
-    }
-
-    let mut current_offset = 0;
-
-    for i in 0..spans.len() {
-        let span_len = spans[i].text.len();
-
-        if current_offset + span_len >= offset {
-            let local_offset = offset - current_offset;
-
-            // Check if marks match — if so, just insert into existing span
-            if spans[i].marks == *marks {
-                spans[i].text.insert_str(local_offset, text);
-                return Ok(());
-            }
-
-            // Otherwise, split span and insert new one
-            let after = spans[i].text.split_off(local_offset);
-            let new_span = TextSpan {
-                text: text.to_string(),
-                marks: marks.to_vec(),
-            };
-
-            let after_span = TextSpan {
-                text: after,
-                marks: spans[i].marks.clone(),
-            };
-
-            spans.insert(i + 1, new_span);
-            spans.insert(i + 2, after_span);
-            normalize_spans(spans);
-            return Ok(());
-        }
-
-        current_offset += span_len;
-    }
-
-    // Append at end
-    spans.push(TextSpan {
-        text: text.to_string(),
+    let (mut before, after) = split_spans_at(spans, offset)?;
+    before.push(TextSpan {
+        text: text.into(),
         marks: marks.to_vec(),
     });
-    normalize_spans(spans);
+    before.extend(after);
+    normalize_spans(&mut before);
+    *spans = before;
     Ok(())
 }
 
-/// Helper: delete text range from spans
 fn delete_text_range(
     spans: &mut Vec<TextSpan>,
     from: usize,
     to: usize,
 ) -> Result<(), TransformError> {
-    if from >= to {
-        return Ok(());
-    }
-
-    let total_len: usize = spans.iter().map(|s| s.text.len()).sum();
-    if to > total_len {
+    if from > to {
         return Err(TransformError::OffsetOutOfRange);
     }
-
-    let mut new_spans = Vec::new();
-    let mut current_offset = 0;
-
-    for span in spans.iter() {
-        let span_start = current_offset;
-        let span_end = current_offset + span.text.len();
-
-        if span_end <= from || span_start >= to {
-            // Span is completely outside the delete range
-            new_spans.push(span.clone());
-        } else {
-            // Span overlaps with delete range
-            let keep_start = if from > span_start {
-                &span.text[..from - span_start]
-            } else {
-                ""
-            };
-            let keep_end = if to < span_end {
-                &span.text[to - span_start..]
-            } else {
-                ""
-            };
-
-            if !keep_start.is_empty() {
-                new_spans.push(TextSpan {
-                    text: keep_start.to_string(),
-                    marks: span.marks.clone(),
-                });
-            }
-            if !keep_end.is_empty() {
-                new_spans.push(TextSpan {
-                    text: keep_end.to_string(),
-                    marks: span.marks.clone(),
-                });
-            }
-        }
-
-        current_offset = span_end;
-    }
-
-    *spans = new_spans;
-    normalize_spans(spans);
+    let (mut before, rest) = split_spans_at(spans, from)?;
+    let (_, after) = split_spans_at(&rest, to - from)?;
+    before.extend(after);
+    normalize_spans(&mut before);
+    *spans = before;
     Ok(())
 }
 
-/// Helper: add a mark to a text range
+fn map_marks_in_range(
+    spans: &mut Vec<TextSpan>,
+    from: usize,
+    to: usize,
+    mut map: impl FnMut(&mut Vec<Mark>),
+) -> Result<(), TransformError> {
+    if from > to {
+        return Err(TransformError::OffsetOutOfRange);
+    }
+    let (mut before, rest) = split_spans_at(spans, from)?;
+    let (mut middle, after) = split_spans_at(&rest, to - from)?;
+    for span in &mut middle {
+        map(&mut span.marks);
+    }
+    before.extend(middle);
+    before.extend(after);
+    normalize_spans(&mut before);
+    *spans = before;
+    Ok(())
+}
+
 fn add_mark_to_range(
     spans: &mut Vec<TextSpan>,
     from: usize,
     to: usize,
     mark: &Mark,
 ) -> Result<(), TransformError> {
-    if from >= to {
-        return Ok(());
-    }
-
-    let mut new_spans = Vec::new();
-    let mut current_offset = 0;
-
-    for span in spans.iter() {
-        let span_start = current_offset;
-        let span_end = current_offset + span.text.len();
-
-        if span_end <= from || span_start >= to {
-            // Outside range — keep as-is
-            new_spans.push(span.clone());
-        } else {
-            // Before the range
-            if span_start < from {
-                new_spans.push(TextSpan {
-                    text: span.text[..from - span_start].to_string(),
-                    marks: span.marks.clone(),
-                });
-            }
-
-            // The overlapping part — add the mark
-            let overlap_start = from.max(span_start) - span_start;
-            let overlap_end = to.min(span_end) - span_start;
-            let mut new_marks = span.marks.clone();
-            // Remove existing marks in the same exclusive group if applicable
-            if !new_marks.iter().any(|m| m.mark_type == mark.mark_type) {
-                new_marks.push(mark.clone());
-            }
-            new_spans.push(TextSpan {
-                text: span.text[overlap_start..overlap_end].to_string(),
-                marks: new_marks,
-            });
-
-            // After the range
-            if span_end > to {
-                new_spans.push(TextSpan {
-                    text: span.text[to - span_start..].to_string(),
-                    marks: span.marks.clone(),
-                });
-            }
+    map_marks_in_range(spans, from, to, |marks| {
+        if !marks
+            .iter()
+            .any(|existing| existing.mark_type == mark.mark_type)
+        {
+            marks.push(mark.clone());
         }
-
-        current_offset = span_end;
-    }
-
-    *spans = new_spans;
-    normalize_spans(spans);
-    Ok(())
+    })
 }
 
-/// Helper: remove a mark type from a text range
 fn remove_mark_from_range(
     spans: &mut Vec<TextSpan>,
     from: usize,
     to: usize,
     mark_type: &str,
 ) -> Result<(), TransformError> {
-    if from >= to {
-        return Ok(());
-    }
-
-    let mut new_spans = Vec::new();
-    let mut current_offset = 0;
-
-    for span in spans.iter() {
-        let span_start = current_offset;
-        let span_end = current_offset + span.text.len();
-
-        if span_end <= from || span_start >= to {
-            // Outside range — keep as-is
-            new_spans.push(span.clone());
-        } else {
-            // Before the range
-            if span_start < from {
-                new_spans.push(TextSpan {
-                    text: span.text[..from - span_start].to_string(),
-                    marks: span.marks.clone(),
-                });
-            }
-
-            // The overlapping part — remove the mark
-            let overlap_start = from.max(span_start) - span_start;
-            let overlap_end = to.min(span_end) - span_start;
-            let new_marks: Vec<Mark> = span
-                .marks
-                .iter()
-                .filter(|m| m.mark_type != mark_type)
-                .cloned()
-                .collect();
-            new_spans.push(TextSpan {
-                text: span.text[overlap_start..overlap_end].to_string(),
-                marks: new_marks,
-            });
-
-            // After the range
-            if span_end > to {
-                new_spans.push(TextSpan {
-                    text: span.text[to - span_start..].to_string(),
-                    marks: span.marks.clone(),
-                });
-            }
-        }
-
-        current_offset = span_end;
-    }
-
-    *spans = new_spans;
-    normalize_spans(spans);
-    Ok(())
+    map_marks_in_range(spans, from, to, |marks| {
+        marks.retain(|mark| mark.mark_type != mark_type)
+    })
 }
 
 /// Helper: split a block at a text offset, creating a new block after it
@@ -429,74 +412,43 @@ fn split_block_at(
     doc: &mut Document,
     block_id: &BlockId,
     offset: usize,
+    schema: Option<&Schema>,
 ) -> Result<(), TransformError> {
     let (parent_id, index) = doc
         .parent_and_index(block_id)
         .ok_or(TransformError::BlockNotFound(block_id.clone()))?;
-
     let block = doc
         .find_block_mut(block_id)
         .ok_or(TransformError::BlockNotFound(block_id.clone()))?;
-
-    let new_block_id = BlockId::new();
+    promote_empty_content(block, schema);
     let new_content = match &mut block.content {
         BlockContent::RichText(spans) => {
-            let total_len: usize = spans.iter().map(|s| s.text.len()).sum();
-            if offset > total_len {
-                return Err(TransformError::OffsetOutOfRange);
-            }
-
-            // Split spans at offset
-            let mut before_spans = Vec::new();
-            let mut after_spans = Vec::new();
-            let mut current_offset = 0;
-
-            for span in spans.iter() {
-                let span_end = current_offset + span.text.len();
-                if span_end <= offset {
-                    before_spans.push(span.clone());
-                } else if current_offset >= offset {
-                    after_spans.push(span.clone());
-                } else {
-                    // Split this span
-                    let local_offset = offset - current_offset;
-                    before_spans.push(TextSpan {
-                        text: span.text[..local_offset].to_string(),
-                        marks: span.marks.clone(),
-                    });
-                    after_spans.push(TextSpan {
-                        text: span.text[local_offset..].to_string(),
-                        marks: span.marks.clone(),
-                    });
-                }
-                current_offset = span_end;
-            }
-
-            *spans = before_spans;
-            BlockContent::RichText(after_spans)
+            let (before, after) = split_spans_at(spans, offset)?;
+            *spans = before;
+            BlockContent::RichText(after)
         }
         BlockContent::Raw(raw) => {
-            if offset > raw.len() {
-                return Err(TransformError::OffsetOutOfRange);
-            }
-            let after = raw.split_off(offset);
-            BlockContent::Raw(after)
+            let byte = byte_offset(raw, offset)?;
+            BlockContent::Raw(raw.split_off(byte))
         }
-        BlockContent::Empty => {
-            return Err(TransformError::InvalidContentType);
-        }
+        BlockContent::Empty => return Err(TransformError::InvalidContentType),
     };
-
-    let block_type = block.block_type.clone();
+    let is_heading = block.block_type == "heading";
     let new_block = Block {
-        id: new_block_id,
-        block_type,
-        attrs: std::collections::HashMap::new(),
+        id: BlockId::new(),
+        block_type: if is_heading {
+            "paragraph".into()
+        } else {
+            block.block_type.clone()
+        },
+        attrs: if is_heading {
+            Default::default()
+        } else {
+            block.attrs.clone()
+        },
         content: new_content,
         children: Vec::new(),
     };
-
-    // Insert new block after the current one
     if let Some(parent_id) = parent_id {
         let parent = doc
             .find_block_mut(&parent_id)
@@ -505,7 +457,6 @@ fn split_block_at(
     } else {
         doc.blocks.insert(index + 1, new_block);
     }
-
     Ok(())
 }
 
@@ -514,8 +465,18 @@ fn merge_blocks(
     doc: &mut Document,
     target_id: &BlockId,
     source_id: &BlockId,
+    schema: Option<&Schema>,
 ) -> Result<(), TransformError> {
     let source = doc
+        .find_block(source_id)
+        .ok_or(TransformError::BlockNotFound(source_id.clone()))?;
+    let target = doc
+        .find_block(target_id)
+        .ok_or(TransformError::BlockNotFound(target_id.clone()))?;
+    if contains_block(source, target_id) || contains_block(target, source_id) {
+        return Err(TransformError::CycleDetected);
+    }
+    let mut source = doc
         .remove_block(source_id)
         .ok_or(TransformError::BlockNotFound(source_id.clone()))?;
 
@@ -523,6 +484,8 @@ fn merge_blocks(
         .find_block_mut(target_id)
         .ok_or(TransformError::BlockNotFound(target_id.clone()))?;
 
+    promote_empty_content(&mut source, schema);
+    promote_empty_content(target, schema);
     match (&mut target.content, source.content) {
         (BlockContent::RichText(target_spans), BlockContent::RichText(source_spans)) => {
             target_spans.extend(source_spans);
@@ -536,6 +499,7 @@ fn merge_blocks(
         }
     }
 
+    target.children.extend(source.children);
     Ok(())
 }
 
@@ -558,294 +522,4 @@ fn normalize_spans(spans: &mut Vec<TextSpan>) {
 }
 
 #[cfg(test)]
-mod tests {
-    use super::*;
-    use std::collections::HashMap;
-
-    fn make_doc_with_paragraph(text: &str) -> (Document, BlockId) {
-        let id = BlockId("block1".into());
-        let doc = Document {
-            blocks: vec![Block {
-                id: id.clone(),
-                block_type: "paragraph".into(),
-                attrs: HashMap::new(),
-                content: BlockContent::RichText(vec![TextSpan {
-                    text: text.into(),
-                    marks: vec![],
-                }]),
-                children: vec![],
-            }],
-            version: 0,
-        };
-        (doc, id)
-    }
-
-    fn make_doc_with_two_paragraphs(text1: &str, text2: &str) -> (Document, BlockId, BlockId) {
-        let id1 = BlockId("block1".into());
-        let id2 = BlockId("block2".into());
-        let doc = Document {
-            blocks: vec![
-                Block {
-                    id: id1.clone(),
-                    block_type: "paragraph".into(),
-                    attrs: HashMap::new(),
-                    content: BlockContent::RichText(vec![TextSpan {
-                        text: text1.into(),
-                        marks: vec![],
-                    }]),
-                    children: vec![],
-                },
-                Block {
-                    id: id2.clone(),
-                    block_type: "paragraph".into(),
-                    attrs: HashMap::new(),
-                    content: BlockContent::RichText(vec![TextSpan {
-                        text: text2.into(),
-                        marks: vec![],
-                    }]),
-                    children: vec![],
-                },
-            ],
-            version: 0,
-        };
-        (doc, id1, id2)
-    }
-
-    #[test]
-    fn test_insert_text_into_empty_spans() {
-        let (doc, id) = make_doc_with_paragraph("");
-        let step = Step::InsertText {
-            block_id: id.clone(),
-            offset: 0,
-            text: "Hello".into(),
-            marks: vec![],
-        };
-        let result = step.apply(doc).unwrap();
-        let block = result.find_block(&id).unwrap();
-        assert_eq!(block.text_length(), 5);
-    }
-
-    #[test]
-    fn test_insert_text_at_middle() {
-        let (doc, id) = make_doc_with_paragraph("Hello World");
-        let step = Step::InsertText {
-            block_id: id.clone(),
-            offset: 5,
-            text: " Beautiful".into(),
-            marks: vec![],
-        };
-        let result = step.apply(doc).unwrap();
-        let block = result.find_block(&id).unwrap();
-        assert_eq!(block.text_length(), 21); // "Hello Beautiful World"
-    }
-
-    #[test]
-    fn test_delete_text_range() {
-        let (doc, id) = make_doc_with_paragraph("Hello World");
-        let step = Step::DeleteText {
-            block_id: id.clone(),
-            from: 5,
-            to: 11,
-        };
-        let result = step.apply(doc).unwrap();
-        let block = result.find_block(&id).unwrap();
-        assert_eq!(block.text_length(), 5); // "Hello"
-    }
-
-    #[test]
-    fn test_delete_text_out_of_range_fails() {
-        let (doc, id) = make_doc_with_paragraph("Hello");
-        let step = Step::DeleteText {
-            block_id: id,
-            from: 0,
-            to: 100,
-        };
-        assert!(step.apply(doc).is_err());
-    }
-
-    #[test]
-    fn test_insert_block_at_top_level() {
-        let (doc, _) = make_doc_with_paragraph("First");
-        let new_block = Block::new_paragraph();
-        let step = Step::InsertBlock {
-            parent_id: None,
-            index: 1,
-            block: new_block,
-        };
-        let result = step.apply(doc).unwrap();
-        assert_eq!(result.blocks.len(), 2);
-    }
-
-    #[test]
-    fn test_delete_block() {
-        let (doc, id) = make_doc_with_paragraph("Delete me");
-        let step = Step::DeleteBlock { block_id: id };
-        let result = step.apply(doc).unwrap();
-        assert_eq!(result.blocks.len(), 0);
-    }
-
-    #[test]
-    fn test_delete_block_not_found() {
-        let (doc, _) = make_doc_with_paragraph("Hello");
-        let step = Step::DeleteBlock {
-            block_id: BlockId("nonexistent".into()),
-        };
-        assert!(step.apply(doc).is_err());
-    }
-
-    #[test]
-    fn test_set_block_attrs() {
-        let (doc, id) = make_doc_with_paragraph("Hello");
-        let step = Step::SetBlockAttrs {
-            block_id: id.clone(),
-            attrs: HashMap::from([("level".into(), gotipe_schema::AttrValue::Number(2.0))]),
-        };
-        let result = step.apply(doc).unwrap();
-        let block = result.find_block(&id).unwrap();
-        assert!(block.attrs.contains_key("level"));
-    }
-
-    #[test]
-    fn test_set_block_type() {
-        let (doc, id) = make_doc_with_paragraph("Hello");
-        let step = Step::SetBlockType {
-            block_id: id.clone(),
-            new_type: "heading".into(),
-            attrs: HashMap::from([("level".into(), gotipe_schema::AttrValue::Number(1.0))]),
-        };
-        let result = step.apply(doc).unwrap();
-        let block = result.find_block(&id).unwrap();
-        assert_eq!(block.block_type, "heading");
-    }
-
-    #[test]
-    fn test_add_mark_to_range() {
-        let (doc, id) = make_doc_with_paragraph("Hello World");
-        let step = Step::AddMark {
-            block_id: id.clone(),
-            from: 0,
-            to: 5,
-            mark: Mark::new("bold"),
-        };
-        let result = step.apply(doc).unwrap();
-        let block = result.find_block(&id).unwrap();
-        if let BlockContent::RichText(spans) = &block.content {
-            assert!(spans[0].marks.iter().any(|m| m.mark_type == "bold"));
-        } else {
-            panic!("Expected RichText");
-        }
-    }
-
-    #[test]
-    fn test_remove_mark_from_range() {
-        let id = BlockId("b1".into());
-        let doc = Document {
-            blocks: vec![Block {
-                id: id.clone(),
-                block_type: "paragraph".into(),
-                attrs: HashMap::new(),
-                content: BlockContent::RichText(vec![TextSpan {
-                    text: "Bold text".into(),
-                    marks: vec![Mark::new("bold")],
-                }]),
-                children: vec![],
-            }],
-            version: 0,
-        };
-        let step = Step::RemoveMark {
-            block_id: id.clone(),
-            from: 0,
-            to: 9,
-            mark_type: "bold".into(),
-        };
-        let result = step.apply(doc).unwrap();
-        let block = result.find_block(&id).unwrap();
-        if let BlockContent::RichText(spans) = &block.content {
-            assert!(spans.iter().all(|s| s.marks.is_empty()));
-        } else {
-            panic!("Expected RichText");
-        }
-    }
-
-    #[test]
-    fn test_split_block() {
-        let (doc, id) = make_doc_with_paragraph("Hello World");
-        let step = Step::SplitBlock {
-            block_id: id.clone(),
-            offset: 5,
-        };
-        let result = step.apply(doc).unwrap();
-        assert_eq!(result.blocks.len(), 2);
-        assert_eq!(result.blocks[0].text_length(), 5);
-        assert_eq!(result.blocks[1].text_length(), 6); // " World"
-    }
-
-    #[test]
-    fn test_merge_blocks() {
-        let (doc, id1, id2) = make_doc_with_two_paragraphs("Hello", " World");
-        let step = Step::MergeBlocks {
-            block_id: id2,
-            target_id: id1.clone(),
-        };
-        let result = step.apply(doc).unwrap();
-        assert_eq!(result.blocks.len(), 1);
-        assert_eq!(result.blocks[0].text_length(), 11); // "Hello World"
-    }
-
-    #[test]
-    fn test_move_block() {
-        let (doc, _, id2) = make_doc_with_two_paragraphs("First", "Second");
-        let step = Step::MoveBlock {
-            block_id: id2,
-            new_parent_id: None,
-            new_index: 0,
-        };
-        let result = step.apply(doc).unwrap();
-        assert_eq!(result.blocks.len(), 2);
-        if let BlockContent::RichText(spans) = &result.blocks[0].content {
-            assert_eq!(spans[0].text, "Second");
-        }
-    }
-
-    #[test]
-    fn test_insert_text_into_raw_content() {
-        let id = BlockId("code1".into());
-        let doc = Document {
-            blocks: vec![Block {
-                id: id.clone(),
-                block_type: "codeBlock".into(),
-                attrs: HashMap::new(),
-                content: BlockContent::Raw("fn main()".into()),
-                children: vec![],
-            }],
-            version: 0,
-        };
-        let step = Step::InsertText {
-            block_id: id.clone(),
-            offset: 9,
-            text: " {}".into(),
-            marks: vec![],
-        };
-        let result = step.apply(doc).unwrap();
-        let block = result.find_block(&id).unwrap();
-        if let BlockContent::Raw(text) = &block.content {
-            assert_eq!(text, "fn main() {}");
-        } else {
-            panic!("Expected Raw");
-        }
-    }
-
-    #[test]
-    fn test_version_increments_on_apply() {
-        let (doc, id) = make_doc_with_paragraph("Hello");
-        assert_eq!(doc.version, 0);
-        let step = Step::InsertText {
-            block_id: id,
-            offset: 5,
-            text: "!".into(),
-            marks: vec![],
-        };
-        let result = step.apply(doc).unwrap();
-        assert_eq!(result.version, 1);
-    }
-}
+mod tests;

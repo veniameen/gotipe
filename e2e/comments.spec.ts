@@ -1,127 +1,105 @@
-import { test, expect } from '@playwright/test';
+import { expect, type Page, test } from '@playwright/test';
 
-test.describe('Comment sidebar', () => {
+async function selectQuote(page: Page, crossBlock = false) {
+  return page.locator('[data-gotipe-example="comments"] [data-gotipe-content]').evaluate((root, cross) => {
+    const paragraphs = root.querySelectorAll('[data-block-type="paragraph"]');
+    const first = paragraphs[0]!;
+    const last = cross ? paragraphs[1]! : first;
+    const start = document.createTreeWalker(first, NodeFilter.SHOW_TEXT).nextNode()!;
+    const end = document.createTreeWalker(last, NodeFilter.SHOW_TEXT).nextNode()!;
+    (root as HTMLElement).focus();
+    const range = document.createRange();
+    range.setStart(start, cross ? 7 : 0);
+    range.setEnd(end, cross ? 18 : 15);
+    const selection = window.getSelection()!;
+    selection.removeAllRanges(); selection.addRange(range);
+    document.dispatchEvent(new Event('selectionchange'));
+    return selection.toString();
+  }, crossBlock);
+}
+async function comment(page: Page, body = 'Нужны детали 😀', cross = false) {
+  const quote = await selectQuote(page, cross);
+  await page.getByRole('button', { name: 'Add comment', exact: true }).click();
+  await expect(page.getByRole('textbox', { name: 'New comment' })).toBeFocused();
+  await page.getByRole('textbox', { name: 'New comment' }).fill(body);
+  await page.getByRole('button', { name: 'Post comment', exact: true }).click();
+  const thread = page.locator('.gotipe-comment-thread').filter({ hasText: body });
+  await expect(thread).toBeVisible();
+  return { thread, quote };
+}
+
+test.describe('Owned comment discussion', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('/');
-    await page.locator('[data-gotipe-nav="comments"]').click();
-    await page.waitForSelector('[data-gotipe-example="comments"]');
+    await page.goto('/#comments');
+    await expect(page.getByRole('button', { name: 'Add comment', exact: true })).toBeEnabled();
   });
-
-  test('sidebar renders with Comments heading', async ({ page }) => {
-    await expect(page.locator('.gotipe-comment-sidebar')).toBeVisible();
-    await expect(page.locator('.gotipe-comment-sidebar')).toHaveAttribute(
-      'aria-label',
-      'Comments',
-    );
+  test('creates a cross-block quote, replies, resolves, reopens, persists and deletes', async ({ page }) => {
+    const { thread } = await comment(page, 'Проверить оба абзаца 😀', true);
+    await expect(thread.locator('.gotipe-comment-quote')).toContainText('a phrase to start');
+    await expect(thread.locator('.gotipe-comment-quote')).toContainText('Reply with details');
+    await expect(page.locator('[data-comment-id]')).toHaveCount(1);
+    await thread.getByRole('button', { name: 'Reply', exact: true }).click();
+    await expect(thread.getByRole('textbox', { name: 'Reply', exact: true })).toBeFocused();
+    await thread.getByRole('textbox', { name: 'Reply', exact: true }).fill('Добавлено — 🦀');
+    await thread.getByRole('button', { name: 'Send reply', exact: true }).click();
+    await expect(thread.locator('.gotipe-comment-replies')).toHaveText(/Добавлено — 🦀/);
+    await thread.getByRole('button', { name: 'Resolve', exact: true }).click();
+    await expect(page.getByText('No open comments', { exact: true })).toBeVisible();
+    await page.getByRole('button', { name: 'Resolved (1)', exact: true }).click();
+    await page.getByRole('button', { name: 'Unresolve', exact: true }).click();
+    await page.getByRole('button', { name: 'Open (1)', exact: true }).click();
+    await expect(thread).toBeVisible();
+    await page.reload();
+    const restored = page.locator('.gotipe-comment-thread');
+    await expect(restored).toContainText('Проверить оба абзаца 😀');
+    await expect(restored).toContainText('Добавлено — 🦀');
+    await restored.getByRole('button', { name: 'Scroll to comment', exact: true }).click();
+    await expect.poll(() => page.evaluate(() => window.getSelection()?.toString())).toContain('Reply with details');
+    await restored.getByRole('button', { name: 'Delete comment', exact: true }).click();
+    await expect(page.getByText('No open comments', { exact: true })).toBeVisible();
+    await page.reload();
+    await expect(page.getByText('No open comments', { exact: true })).toBeVisible();
   });
-
-  test('shows filter tabs (Open / Resolved)', async ({ page }) => {
-    const sidebar = page.locator('.gotipe-comment-sidebar');
-    await expect(sidebar).toContainText('Open');
-    await expect(sidebar).toContainText('Resolved');
+  test('tracks quote movement, signals removed text and restores the anchor with undo', async ({ page }) => {
+    const { thread } = await comment(page);
+    const paragraph = page.locator('[data-gotipe-example="comments"] [data-block-type="paragraph"]').first();
+    await paragraph.click();
+    await page.keyboard.press('Home');
+    await page.keyboard.insertText('Префикс 😀 ');
+    await thread.getByRole('button', { name: 'Scroll to comment', exact: true }).click();
+    await expect.poll(() => page.evaluate(() => window.getSelection()?.toString())).toBe('Select a phrase');
+    await page.keyboard.press('Backspace');
+    await expect(thread).toContainText('The quoted text has changed or was removed.');
+    await expect(thread.getByRole('button', { name: 'Scroll to comment', exact: true })).toBeDisabled();
+    await page.keyboard.press('ControlOrMeta+z');
+    await expect(thread.getByRole('button', { name: 'Scroll to comment', exact: true })).toBeEnabled();
+    await thread.getByRole('button', { name: 'Scroll to comment', exact: true }).click();
+    await expect.poll(() => page.evaluate(() => window.getSelection()?.toString())).toBe('Select a phrase');
   });
-
-  test('shows navigation counter', async ({ page }) => {
-    // If comments exist, navigation should be visible
-    const navCounter = page.locator('.gotipe-comment-sidebar').locator('text=/\\d+\\/\\d+/');
-    // May not have comments — soft check
-    const sidebarText = await page.locator('.gotipe-comment-sidebar').textContent();
-    expect(sidebarText).toBeTruthy();
+  test('keeps the document read-only while discussion actions remain available', async ({ page }) => {
+    await page.getByRole('checkbox', { name: 'Read-only document' }).check();
+    const root = page.locator('[data-gotipe-example="comments"] [data-gotipe-content]');
+    await expect(root).toHaveAttribute('contenteditable', 'false');
+    const before = await root.textContent();
+    const { thread } = await comment(page, 'Комментарий к защищённому тексту');
+    await thread.getByRole('button', { name: 'Reply', exact: true }).click();
+    await thread.getByRole('textbox', { name: 'Reply', exact: true }).fill('Ответ без изменения документа');
+    await thread.getByRole('button', { name: 'Send reply', exact: true }).click();
+    await expect(root).toHaveText(before!);
   });
-
-  test('comment threads have author and timestamp', async ({ page }) => {
-    const thread = page.locator('.gotipe-comment-thread').first();
-    if (await thread.isVisible()) {
-      await expect(thread.locator('.gotipe-comment-author')).toBeVisible();
-      await expect(thread.locator('.gotipe-comment-timestamp')).toBeVisible();
-    }
-  });
-
-  test('comment thread shows quoted text', async ({ page }) => {
-    const thread = page.locator('.gotipe-comment-thread').first();
-    if (await thread.isVisible()) {
-      const quote = thread.locator('.gotipe-comment-quote');
-      // Quote may or may not be present
-      if (await quote.isVisible()) {
-        await expect(quote).toBeVisible();
+  test('keeps long discussions inside light and dark responsive containers', async ({ page }) => {
+    await comment(page, 'Длинный комментарий 😀 '.repeat(14));
+    for (const theme of ['light', 'dark']) {
+      await page.getByRole('banner').getByRole('radio', { name: theme === 'dark' ? 'Dark theme' : 'Light theme', exact: true }).click();
+      await expect(page.locator('html')).toHaveAttribute('data-theme', theme);
+      for (const width of [320, 375, 768, 1024, 1440]) {
+        await page.setViewportSize({ width, height: 1000 });
+        await expect(page.locator('.gotipe-comment-sidebar')).toBeVisible();
+        expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1)).toBe(true);
+        const sidebar = await page.locator('.gotipe-comment-sidebar').boundingBox();
+        expect(sidebar!.x).toBeGreaterThanOrEqual(0);
+        expect(sidebar!.x + sidebar!.width).toBeLessThanOrEqual(width + 1);
       }
-    }
-  });
-
-  test('reply button exists on threads', async ({ page }) => {
-    const thread = page.locator('.gotipe-comment-thread').first();
-    if (await thread.isVisible()) {
-      const replyBtn = thread.locator('button:has-text("Reply")');
-      await expect(replyBtn).toBeVisible();
-    }
-  });
-
-  test('reply input opens on Reply click', async ({ page }) => {
-    const thread = page.locator('.gotipe-comment-thread').first();
-    if (await thread.isVisible()) {
-      const replyBtn = thread.locator('button:has-text("Reply")').last();
-      await replyBtn.click();
-      // Textarea should appear
-      const textarea = thread.locator('textarea');
-      await expect(textarea).toBeVisible();
-      await expect(textarea).toHaveAttribute('placeholder', 'Reply...');
-    }
-  });
-
-  test('resolve button exists', async ({ page }) => {
-    const thread = page.locator('.gotipe-comment-thread').first();
-    if (await thread.isVisible()) {
-      const resolveBtn = thread.locator('[aria-label="Resolve"]');
-      if (await resolveBtn.isVisible()) {
-        await expect(resolveBtn).toBeVisible();
-      }
-    }
-  });
-
-  test('previous/next navigation buttons exist', async ({ page }) => {
-    const prevBtn = page.locator('.gotipe-comment-sidebar [aria-label="Previous comment"]');
-    const nextBtn = page.locator('.gotipe-comment-sidebar [aria-label="Next comment"]');
-    if (await prevBtn.isVisible()) {
-      await expect(prevBtn).toBeVisible();
-      await expect(nextBtn).toBeVisible();
-    }
-  });
-
-  test('scroll-to-anchor button exists', async ({ page }) => {
-    const thread = page.locator('.gotipe-comment-thread').first();
-    if (await thread.isVisible()) {
-      const scrollBtn = thread.locator('[aria-label="Scroll to comment"]');
-      await expect(scrollBtn).toBeVisible();
-    }
-  });
-
-  test('filter tabs switch between open and resolved', async ({ page }) => {
-    const openBtn = page.locator('.gotipe-comment-sidebar button:has-text("Open")');
-    const resolvedBtn = page.locator('.gotipe-comment-sidebar button:has-text("Resolved")');
-
-    if (await openBtn.isVisible()) {
-      await resolvedBtn.click();
-      // Content should update
-      await openBtn.click();
-      // Back to open
-    }
-  });
-
-  test('empty state shows when no comments', async ({ page }) => {
-    // Switch to resolved which may be empty
-    const resolvedBtn = page.locator('.gotipe-comment-sidebar button:has-text("Resolved")');
-    if (await resolvedBtn.isVisible()) {
-      await resolvedBtn.click();
-      const emptyText = page.locator('.gotipe-comment-sidebar').locator('text=/No .* comments/');
-      // May or may not be empty depending on example data
-    }
-  });
-
-  test('sidebar width is 280px', async ({ page }) => {
-    const sidebar = page.locator('.gotipe-comment-sidebar');
-    if (await sidebar.isVisible()) {
-      const width = await sidebar.evaluate((el) => getComputedStyle(el).width);
-      expect(width).toBe('280px');
     }
   });
 });

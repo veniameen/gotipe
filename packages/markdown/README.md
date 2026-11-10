@@ -127,12 +127,11 @@ defineExtension({ name: "markdownRaw", nodes: [markdownRawNodeSpec] });
 
 ### Strict CSP / Trusted Types
 
-`mdast-util-from-markdown` depends on `decode-named-character-reference`, whose `browser`
-export decodes entities through a DOM element (`innerHTML`, created at import time). This is
-not `eval`, but it breaks under `require-trusted-types-for 'script'`. In that case point a
-bundler alias for `decode-named-character-reference` at the file of its `default` export
-condition (`index.js`, a pure-JS entity table) — e.g. a Vite `resolve.alias` entry with the
-absolute path of that file. (Not verified in a SpecOrbit build yet.)
+The owned parser decodes named character references with a platform-independent data
+table. Import and parsing do not create DOM elements, use `innerHTML`, or evaluate code.
+No third-party parser or bundler alias is required. The entity data provenance and
+license are included in the package's third-party notices. A complete SpecOrbit
+integration still needs its application's CSP acceptance checks.
 
 ## Development
 

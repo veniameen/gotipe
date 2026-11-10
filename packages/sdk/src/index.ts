@@ -1,3 +1,4 @@
+export { GoTipeApiError } from "./transport";
 export { GoTipeClient } from "./client";
 export type {
   GoTipeClientOptions,

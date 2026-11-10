@@ -11,17 +11,23 @@ import (
 	"github.com/gotipe/cloud/internal/apierror"
 	"github.com/gotipe/cloud/internal/audit"
 	"github.com/gotipe/cloud/internal/auth"
+	"github.com/gotipe/cloud/internal/document"
 	"github.com/gotipe/cloud/internal/storage"
 )
 
 type VersionsHandler struct {
-	db    *storage.PostgresStore
-	r2    *storage.R2Store
-	audit *audit.AuditLogger
+	db       *storage.PostgresStore
+	r2       storage.ObjectStore
+	audit    *audit.AuditLogger
+	contents document.ContentReader
 }
 
-func NewVersionsHandler(db *storage.PostgresStore, r2 *storage.R2Store, auditLogger *audit.AuditLogger) *VersionsHandler {
-	return &VersionsHandler{db: db, r2: r2, audit: auditLogger}
+func NewVersionsHandler(db *storage.PostgresStore, r2 storage.ObjectStore, auditLogger *audit.AuditLogger, readers ...document.ContentReader) *VersionsHandler {
+	var contents document.ContentReader = document.ObjectReader{Store: r2}
+	if len(readers) > 0 {
+		contents = readers[0]
+	}
+	return &VersionsHandler{db: db, r2: r2, audit: auditLogger, contents: contents}
 }
 
 type CreateVersionRequest struct {
@@ -51,6 +57,9 @@ func (h *VersionsHandler) CreateVersion() http.HandlerFunc {
 		}
 
 		docID := chi.URLParam(r, "docId")
+		if !requireDocumentAccess(w, r, h.db.Pool, docID, "editor") {
+			return
+		}
 
 		var req CreateVersionRequest
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -60,6 +69,14 @@ func (h *VersionsHandler) CreateVersion() http.HandlerFunc {
 
 		if req.Name == "" {
 			apierror.ErrValidation.WithMessage("name is required").Write(w)
+			return
+		}
+
+		if req.VersionType == "" {
+			req.VersionType = "named"
+		}
+		if req.VersionType != "named" && req.VersionType != "milestone" {
+			apierror.ErrValidation.WithMessage("version_type must be named or milestone").Write(w)
 			return
 		}
 
@@ -76,7 +93,7 @@ func (h *VersionsHandler) CreateVersion() http.HandlerFunc {
 			return
 		}
 
-		content, err := h.r2.Get(r.Context(), r2Key)
+		content, err := h.contents.Load(r.Context(), docID, r2Key)
 		if err != nil {
 			apierror.ErrInternal.Write(w)
 			return
@@ -98,6 +115,7 @@ func (h *VersionsHandler) CreateVersion() http.HandlerFunc {
 			versionID, docID, req.Name, req.Description, req.VersionType, user.UserID, snapshotKey, len(content), now,
 		)
 		if err != nil {
+			_ = h.r2.Delete(r.Context(), snapshotKey)
 			apierror.ErrInternal.Write(w)
 			return
 		}
@@ -127,6 +145,9 @@ func (h *VersionsHandler) ListVersions() http.HandlerFunc {
 		}
 
 		docID := chi.URLParam(r, "docId")
+		if !requireDocumentAccess(w, r, h.db.Pool, docID, "viewer") {
+			return
+		}
 		limit, _ := strconv.Atoi(r.URL.Query().Get("limit"))
 		if limit <= 0 || limit > 100 {
 			limit = 50
@@ -147,9 +168,15 @@ func (h *VersionsHandler) ListVersions() http.HandlerFunc {
 		for rows.Next() {
 			var v VersionResponse
 			if err := rows.Scan(&v.ID, &v.DocumentID, &v.Name, &v.Description, &v.VersionType, &v.CreatedBy, &v.SizeBytes, &v.CreatedAt); err != nil {
-				continue
+				apierror.ErrInternal.Write(w)
+				return
 			}
 			versions = append(versions, v)
+		}
+
+		if rows.Err() != nil {
+			apierror.ErrInternal.Write(w)
+			return
 		}
 
 		if versions == nil {
@@ -157,78 +184,5 @@ func (h *VersionsHandler) ListVersions() http.HandlerFunc {
 		}
 
 		apierror.WriteJSON(w, http.StatusOK, map[string]interface{}{"data": versions})
-	}
-}
-
-// RestoreVersion handles POST /v1/documents/{docId}/versions/{versionId}/restore
-func (h *VersionsHandler) RestoreVersion() http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		user := auth.UserFromContext(r.Context())
-		if user == nil {
-			apierror.ErrUnauthorized.Write(w)
-			return
-		}
-
-		docID := chi.URLParam(r, "docId")
-		versionID := chi.URLParam(r, "versionId")
-
-		// Get snapshot key
-		var snapshotKey string
-		err := h.db.Pool.QueryRow(r.Context(),
-			`SELECT snapshot_key FROM versions WHERE id = $1 AND document_id = $2`,
-			versionID, docID,
-		).Scan(&snapshotKey)
-		if err != nil {
-			apierror.ErrNotFound.Write(w)
-			return
-		}
-
-		// Get snapshot content from R2
-		content, err := h.r2.Get(r.Context(), snapshotKey)
-		if err != nil {
-			apierror.ErrInternal.Write(w)
-			return
-		}
-
-		// Get current document R2 key
-		var r2Key string
-		err = h.db.Pool.QueryRow(r.Context(),
-			`SELECT r2_key FROM documents WHERE id = $1`,
-			docID,
-		).Scan(&r2Key)
-		if err != nil {
-			apierror.ErrNotFound.Write(w)
-			return
-		}
-
-		// Overwrite current content with snapshot
-		if err := h.r2.Put(r.Context(), r2Key, content); err != nil {
-			apierror.ErrInternal.Write(w)
-			return
-		}
-
-		// Update document version
-		_, err = h.db.Pool.Exec(r.Context(),
-			`UPDATE documents SET version = version + 1, size_bytes = $1, updated_at = now() WHERE id = $2`,
-			len(content), docID,
-		)
-		if err != nil {
-			apierror.ErrInternal.Write(w)
-			return
-		}
-
-		// Create restore point version
-		restoreID := uuid.New().String()
-		restoreKey := "versions/" + docID + "/" + restoreID + ".json"
-		_ = h.r2.Put(r.Context(), restoreKey, content)
-		_, _ = h.db.Pool.Exec(r.Context(),
-			`INSERT INTO versions (id, document_id, name, version_type, created_by, snapshot_key, size_bytes, created_at)
-			 VALUES ($1, $2, $3, 'restore_point', $4, $5, $6, now())`,
-			restoreID, docID, "Restored from: "+versionID, user.UserID, restoreKey, len(content),
-		)
-
-		_ = h.audit.Log(r.Context(), user.UserID, audit.ActionVersionRestore, "version", versionID, map[string]string{"document_id": docID})
-
-		apierror.WriteJSON(w, http.StatusOK, map[string]string{"status": "restored", "version_id": restoreID})
 	}
 }

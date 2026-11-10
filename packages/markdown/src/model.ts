@@ -85,7 +85,7 @@ export function linkAttrs(mark: Mark): { href: string; title?: string } {
 
 function canonicalMark(mark: Mark): Mark {
   if (mark.type === "link") return { type: "link", attrs: linkAttrs(mark) };
-  if (MARK_RANK[mark.type] !== undefined) return { type: mark.type };
+  if (MARK_RANK[mark.type] !== undefined && mark.type !== "highlight") return { type: mark.type };
   return mark.attrs && Object.keys(mark.attrs).length > 0
     ? { type: mark.type, attrs: mark.attrs }
     : { type: mark.type };

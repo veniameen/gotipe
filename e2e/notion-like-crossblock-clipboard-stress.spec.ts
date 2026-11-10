@@ -7,6 +7,8 @@ import {
   type BlockInput,
 } from "./helpers/notion-checklist";
 
+import { selectAcross } from "./helpers/notion-crossblock";
+
 type MarkName = "bold" | "italic" | "underline" | "strikethrough" | "code";
 type Span = { text: string; marks?: Array<{ type: string; attrs?: Record<string, unknown> }> };
 
@@ -34,33 +36,6 @@ async function setSelection(
     editor?.setSelection?.({ anchor, head });
     editor?.focus?.();
   }, { anchor, head });
-}
-
-async function selectAcross(page: Page, fromId: string, toId: string, from = 1, to = 4): Promise<string> {
-  return page.evaluate(({ fromId, toId, from, to }) => {
-    const root = document.querySelector("[data-gotipe-content]") as HTMLElement | null;
-    const fromBlock = document.querySelector(`[data-block-id="${fromId}"]`) as HTMLElement | null;
-    const toBlock = document.querySelector(`[data-block-id="${toId}"]`) as HTMLElement | null;
-    const firstText = (el: HTMLElement | null) => {
-      if (!el) return null;
-      const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
-      let n: Node | null;
-      while ((n = walker.nextNode())) if ((n.textContent ?? "").length > 0) return n as Text;
-      return null;
-    };
-    const a = firstText(fromBlock);
-    const b = firstText(toBlock);
-    if (!root || !a || !b) return "";
-    const r = document.createRange();
-    r.setStart(a, Math.min(from, a.length));
-    r.setEnd(b, Math.min(to, b.length));
-    const sel = window.getSelection();
-    if (!sel) return "";
-    sel.removeAllRanges();
-    sel.addRange(r);
-    root.focus();
-    return sel.toString();
-  }, { fromId, toId, from, to });
 }
 
 async function toggleMark(page: Page, mark: MarkName): Promise<void> {
@@ -177,19 +152,12 @@ test.describe("Notion-like cross-block clipboard/marks stress", () => {
     const before = await snapshot(page);
     await selectAcross(page, "li-4", "ti-6", 1, 5);
     await page.keyboard.press(mod("X"));
-    let mutated = await snapshot(page);
-    if (mutated === before) {
-      // Some engines can treat cross-block cut as no-op in synthetic range setup.
-      // Ensure deterministic mutation so undo/redo path is still validated.
-      await setSelection(page, { blockId: "p-5", offset: 2 }, { blockId: "p-5", offset: 6 });
-      await page.keyboard.press("Backspace");
-      mutated = await snapshot(page);
-    }
+    const mutated = await snapshot(page);
     expect(mutated).not.toBe(before);
     await undo(page, 1);
     await expect.poll(() => snapshot(page)).toBe(before);
     await redo(page, 1);
-    await expect.poll(() => snapshot(page)).not.toBe(before);
+    await expect.poll(() => snapshot(page)).toBe(mutated);
 
     const stats = await getDocStats(page);
     expect(stats.hasInvalidId).toBe(false);
@@ -213,9 +181,18 @@ test.describe("Notion-like cross-block clipboard/marks stress", () => {
         const payload = (selected || `x${i}`).replace(/\s+/g, " ").slice(0, 16);
         await pasteTextWithFallback(page, payload);
       } else if (i % 3 === 1) {
+        const beforeCut = await snapshot(page);
+        expect(selected.length).toBeGreaterThan(0);
         await page.keyboard.press(mod("X"));
+        const afterCut = await snapshot(page);
+        expect(afterCut).not.toBe(beforeCut);
         await undo(page, 1);
+        await expect.poll(() => snapshot(page)).toBe(beforeCut);
         await redo(page, 1);
+        await expect.poll(() => snapshot(page)).toBe(afterCut);
+        // Restore through history so the next range still targets existing blocks.
+        await undo(page, 1);
+        await expect.poll(() => snapshot(page)).toBe(beforeCut);
       } else {
         const blockId = `p-${(i + 2) % 9}`;
         await setSelection(page, { blockId, offset: 1 }, { blockId, offset: 6 });

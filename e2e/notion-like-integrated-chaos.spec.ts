@@ -11,6 +11,7 @@ import {
   redo,
   selectAcross,
   setSelection,
+  snapshot,
   toggleMark,
   undo,
   type MarkName,
@@ -35,8 +36,8 @@ test.describe("Notion-like integrated chaos pack", () => {
     await setNotionContent(page, buildMixedDoc(seed));
 
     const before = await topLevelOrder(page);
-    await activateToolbarForBlock(page, "bl-root");
-    await dragBlockToIndex(page, "bl-root", before.length - 1);
+    await activateToolbarForBlock(page, "li-a");
+    await dragBlockToIndex(page, "li-a", before.length - 1);
     await expect.poll(() => topLevelOrder(page)).not.toEqual(before);
 
     const selected = await selectAcross(page, "li-a1", "ti-a1", 1, 5);
@@ -62,7 +63,7 @@ test.describe("Notion-like integrated chaos pack", () => {
     const seed = `chaos2-${Math.random().toString(36).slice(2, 7)}`;
     await setNotionContent(page, buildMixedDoc(seed));
 
-    const dragBlocks = ["bl-root", "tl-root", "code", "p-a"];
+    const dragBlocks = ["li-a", "ti-a", "code", "p-a"];
     const ranges: Array<[string, string]> = [["li-a1", "ti-a1"], ["li-a", "ti-a"], ["p-a", "p-tail"]];
     const marks: MarkName[] = ["bold", "italic", "underline", "strikethrough", "code"];
     const iterations = browserName === "chromium" ? 24 : 16;
@@ -81,9 +82,17 @@ test.describe("Notion-like integrated chaos pack", () => {
         await setSelection(page, { blockId: "p-anchor", offset: 5 });
         await pasteTextWithFallback(page, (selected || `z${i}`).replace(/\s+/g, " ").slice(0, 16));
       } else if (i % 3 === 1) {
+        const beforeCut = await snapshot(page);
+        expect(selected.length).toBeGreaterThan(0);
         await page.keyboard.press(mod("X"));
+        const afterCut = await snapshot(page);
+        expect(afterCut).not.toBe(beforeCut);
         await undo(page, 1);
+        await expect.poll(() => snapshot(page)).toBe(beforeCut);
         await redo(page, 1);
+        await expect.poll(() => snapshot(page)).toBe(afterCut);
+        await undo(page, 1);
+        await expect.poll(() => snapshot(page)).toBe(beforeCut);
       } else {
         await setSelection(page, { blockId: "p-tail", offset: 1 }, { blockId: "p-tail", offset: 6 });
         await toggleMark(page, marks[i % marks.length]!);
@@ -129,8 +138,8 @@ test.describe("Notion-like integrated chaos pack", () => {
     }, leaf?.blockId ?? null);
     expect(topTodoId).not.toBeNull();
 
-    await activateToolbarForBlock(page, topTodoId!);
-    await dragBlockToIndex(page, topTodoId!, 0);
+    await activateToolbarForBlock(page, leaf!.blockId);
+    await dragBlockToIndex(page, leaf!.blockId, 0);
 
     const copied = await selectAcross(page, leaf!.blockId, "other", 1, 4);
     await page.keyboard.press(mod("C"));

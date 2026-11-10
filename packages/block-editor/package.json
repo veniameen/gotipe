@@ -13,7 +13,7 @@
       "import": "./dist/shiki.js",
       "require": "./dist/shiki.cjs"
     },
-    "./styles": "./dist/styles.css"
+    "./styles": "./styles.css"
   },
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
@@ -39,18 +39,18 @@
   },
   "devDependencies": {
     "@gotipe/core": "workspace:*",
-    "@gotipe/theme": "workspace:*",
-    "vitest": "^2.1",
-    "tsup": "^8.3",
-    "react": "^19.0",
-    "react-dom": "^19.0",
-    "@types/react": "^19.0",
-    "@types/react-dom": "^19.0",
-    "@gotipe/react": "workspace:*",
-    "shiki": "^1.0.0",
     "@gotipe/i18n": "workspace:*",
     "@gotipe/markdown": "workspace:*",
-    "@gotipe/suggestions": "workspace:*"
+    "@gotipe/react": "workspace:*",
+    "@gotipe/suggestions": "workspace:*",
+    "@gotipe/theme": "workspace:*",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
+    "shiki": "^1.29.2",
+    "tsup": "^8.5.1",
+    "vitest": "^4.1.12"
   },
   "scripts": {
     "build": "tsup",
@@ -58,5 +58,13 @@
     "typecheck": "tsc --noEmit",
     "lint": "biome check src/"
   },
-  "license": "SEE LICENSE IN LICENSE-COMMERCIAL"
+  "license": "SEE LICENSE IN LICENSE-COMMERCIAL",
+  "files": [
+    "dist",
+    "styles.css",
+    "LICENSE-COMMERCIAL"
+  ],
+  "publishConfig": {
+    "access": "public"
+  }
 }

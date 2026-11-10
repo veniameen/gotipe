@@ -1,5 +1,12 @@
 # GoTipe — Структура репозитория
 
+> **Историческая спецификация, не руководство по текущему API.** Примеры, сроки,
+> сравнения производительности, коммерческие условия и обещания ниже не подтверждают
+> реализацию или доступность сервиса. Актуально: [контракты](development/editor-contracts.md),
+> [карта кода](development/code-map.md), [проверки](development/testing.md),
+> [план выпуска](22-release-readiness.md). Лицензии определяются `LICENSE` и manifest
+> каждого пакета, а не этим документом.
+
 ## Обзор
 
 GoTipe — monorepo с Rust workspace (crates/) и TypeScript packages (packages/). Build tooling: Cargo для Rust, Turborepo для TypeScript, wasm-pack для WASM bridge.

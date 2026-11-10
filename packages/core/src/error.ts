@@ -2,6 +2,7 @@ export type GoTipeErrorCode =
   | "EDITOR_NOT_INITIALIZED"
   | "WASM_INIT_FAILED"
   | "TRANSFORM_ERROR"
+  | "COMPOSITION_CONFLICT"
   | "VALIDATION_ERROR"
   | "SCHEMA_ERROR"
   | "PARSE_ERROR"
@@ -17,6 +18,8 @@ export type GoTipeErrorCode =
   | "LINK_BLOCKED"
   | "LINK_OPEN_FAILED"
   | "CLIPBOARD_FAILED"
+  | "COLLABORATION_UNAVAILABLE"
+  | "COLLABORATION_ERROR"
   // Review layer (proposals, comments)
   | "PROPOSAL_STALE"
   | "PROPOSAL_ACTION_FAILED"

@@ -694,7 +694,8 @@ test.describe("Notion-like matrix regressions", () => {
     expect(metrics).not.toBeNull();
     expect(metrics?.centerDiff ?? 99).toBeLessThan(7);
     expect(metrics?.gap ?? 0).toBeGreaterThan(6);
-    expect(metrics?.checkboxSize ?? 0).toBeGreaterThan(17);
+    // The shared Specimen checkbox is 16px; check the actual design size.
+    expect(metrics?.checkboxSize).toBe(16);
   });
 
   test("slash: todo -> bullet conversion keeps existing text rows", async ({ page }) => {
@@ -1167,8 +1168,8 @@ test.describe("Notion-like matrix regressions", () => {
   });
 
   test("slash menu supports both light and dark themes", async ({ page }) => {
-    const lightButton = page.locator('.gotipe-theme-toggle button[aria-label="Light theme"]');
-    const darkButton = page.locator('.gotipe-theme-toggle button[aria-label="Dark theme"]');
+    const lightButton = page.getByRole("banner").getByRole("radio", { name: "Light theme" });
+    const darkButton = page.getByRole("banner").getByRole("radio", { name: "Dark theme" });
     const menu = page.locator("[data-gotipe-slash-menu]");
 
     await lightButton.click();

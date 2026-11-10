@@ -9,8 +9,8 @@ default = ["compression"]
 compression = ["dep:zstd", "gotipe-crdt/compression"]
 
 [dependencies]
-gotipe-core = { path = "../gotipe-core" }
-gotipe-crdt = { path = "../gotipe-crdt", default-features = false }
+gotipe-core = { version = "0.1.0", path = "../gotipe-core" }
+gotipe-crdt = { version = "0.1.0", path = "../gotipe-crdt", default-features = false }
 serde = { workspace = true }
 serde_json = { workspace = true }
 thiserror = { workspace = true }

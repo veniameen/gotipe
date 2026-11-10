@@ -1,4 +1,5 @@
-import type { GoTipeEditor } from "@gotipe/core";
+import { type GoTipeEditor, GoTipeError } from "@gotipe/core";
+import { useFloatingPosition } from "@gotipe/react";
 import type React from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
@@ -53,7 +54,26 @@ function getTextLength(block: ViewBlock): number {
 
 export function BlockContextMenu({ editor, blockId, open, onClose }: BlockContextMenuProps) {
   const menuRef = useRef<HTMLDivElement>(null);
+  const submenuRef = useRef<HTMLDivElement>(null);
+  const submenuTriggerRef = useRef<HTMLButtonElement>(null);
   const [turnIntoOpen, setTurnIntoOpen] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const anchor = useCallback(
+    () => menuRef.current?.parentElement?.getBoundingClientRect() ?? null,
+    [],
+  );
+  const submenuAnchor = useCallback(
+    () => submenuTriggerRef.current?.getBoundingClientRect() ?? null,
+    [],
+  );
+  const position = useFloatingPosition({ open, element: menuRef, anchor });
+  const submenuPosition = useFloatingPosition({
+    open: open && turnIntoOpen,
+    element: submenuRef,
+    anchor: submenuAnchor,
+    placement: "left-start",
+    gap: 0,
+  });
 
   const turnIntoOptions = useMemo<TurnIntoOption[]>(
     () => [
@@ -134,8 +154,9 @@ export function BlockContextMenu({ editor, blockId, open, onClose }: BlockContex
   }, [applyTurnInto]);
 
   const handleCopyBlockLink = useCallback(async () => {
-    const url = `${window.location.origin}${window.location.pathname}${window.location.hash}#block-${blockId}`;
-    await navigator.clipboard.writeText(url);
+    const url = new URL(window.location.href);
+    url.searchParams.set("gotipe-block", blockId);
+    await navigator.clipboard.writeText(url.toString());
     setTurnIntoOpen(false);
     onClose();
   }, [blockId, onClose]);
@@ -144,9 +165,16 @@ export function BlockContextMenu({ editor, blockId, open, onClose }: BlockContex
     const state = editor.getViewState();
     const block = findBlockById(state.blocks, blockId);
     if (block) {
-      const text = Array.isArray(block.content)
-        ? block.content.map((s) => s.text).join("")
-        : (block.content ?? "");
+      const textOf = (node: ViewBlock): string =>
+        [
+          Array.isArray(node.content)
+            ? node.content.map((span) => span.text).join("")
+            : (node.content ?? ""),
+          ...node.children.map(textOf),
+        ]
+          .filter(Boolean)
+          .join("\n");
+      const text = textOf(block);
       await navigator.clipboard.writeText(text);
     }
     setTurnIntoOpen(false);
@@ -182,17 +210,26 @@ export function BlockContextMenu({ editor, blockId, open, onClose }: BlockContex
   useEffect(() => {
     if (!open) return;
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
+      if (e.key === "Escape") {
+        e.preventDefault();
+        if (turnIntoOpen) setTurnIntoOpen(false);
+        else {
+          menuRef.current?.parentElement
+            ?.querySelector<HTMLButtonElement>("[data-gotipe-drag-handle]")
+            ?.focus({ preventScroll: true });
+          onClose();
+        }
+      }
     };
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [open, onClose]);
+  }, [open, onClose, turnIntoOpen]);
 
   // Keyboard navigation within menu
   useEffect(() => {
     if (!open || !menuRef.current) return;
     const firstItem = menuRef.current.querySelector<HTMLButtonElement>("[role=menuitem]");
-    firstItem?.focus();
+    firstItem?.focus({ preventScroll: true });
   }, [open]);
 
   useEffect(() => {
@@ -202,6 +239,20 @@ export function BlockContextMenu({ editor, blockId, open, onClose }: BlockContex
   }, [open]);
 
   if (!open) return null;
+
+  const runAction = async (action: () => void) => {
+    setError(null);
+    try {
+      await action();
+    } catch (cause) {
+      const error = new GoTipeError(
+        "TRANSFORM_ERROR",
+        cause instanceof Error ? cause.message : "Block action failed",
+      );
+      setError(error.message);
+      editor.reportError(error);
+    }
+  };
 
   const handleMenuItemArrowNavigation = (event: React.KeyboardEvent<HTMLButtonElement>) => {
     if (!menuRef.current) return;
@@ -226,6 +277,12 @@ export function BlockContextMenu({ editor, blockId, open, onClose }: BlockContex
       role="menu"
       aria-label="Block actions"
       data-gotipe-context-menu=""
+      style={{
+        ...position,
+        position: "fixed",
+        visibility: position ? "visible" : "hidden",
+        overflowY: "auto",
+      }}
     >
       <div
         className="gotipe-context-item-has-submenu"
@@ -233,11 +290,12 @@ export function BlockContextMenu({ editor, blockId, open, onClose }: BlockContex
         onMouseLeave={() => setTurnIntoOpen(false)}
       >
         <button
+          ref={submenuTriggerRef}
           type="button"
           role="menuitem"
           aria-haspopup="menu"
           aria-expanded={turnIntoOpen}
-          onClick={() => setTurnIntoOpen((prev) => !prev)}
+          onClick={() => setTurnIntoOpen(true)}
           onKeyDown={(e) => {
             if (e.key === "ArrowRight") {
               e.preventDefault();
@@ -260,14 +318,25 @@ export function BlockContextMenu({ editor, blockId, open, onClose }: BlockContex
           </span>
         </button>
         {turnIntoOpen ? (
-          <div className="gotipe-context-submenu" role="menu" aria-label="Turn into">
+          <div
+            ref={submenuRef}
+            className="gotipe-context-submenu"
+            role="menu"
+            aria-label="Turn into"
+            style={{
+              ...submenuPosition,
+              position: "fixed",
+              visibility: submenuPosition ? "visible" : "hidden",
+              overflowY: "auto",
+            }}
+          >
             {turnIntoOptions.map((option) => (
               <button
                 key={option.label}
                 type="button"
                 role="menuitem"
                 data-turn-into-item="true"
-                onClick={() => applyTurnInto(option)}
+                onClick={() => void runAction(() => applyTurnInto(option))}
                 onKeyDown={(e) => {
                   if (e.key === "ArrowLeft") {
                     e.preventDefault();
@@ -294,7 +363,7 @@ export function BlockContextMenu({ editor, blockId, open, onClose }: BlockContex
           type="button"
           role="menuitem"
           className={item.destructive ? "destructive" : undefined}
-          onClick={item.action}
+          onClick={() => void runAction(item.action)}
           onKeyDown={(e) => {
             if (e.key === "ArrowLeft") {
               e.preventDefault();
@@ -310,6 +379,7 @@ export function BlockContextMenu({ editor, blockId, open, onClose }: BlockContex
           <span className="gotipe-context-menu-label">{item.label}</span>
         </button>
       ))}
+      {error && <p role="alert">{error}</p>}
     </div>
   );
 }

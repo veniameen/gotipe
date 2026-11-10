@@ -1,0 +1,74 @@
+/* ================================================================ */
+/*  Static toolbar (Simple Editor)                                   */
+/* ================================================================ */
+
+.gotipe-static-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 6px 8px;
+  border: 1px solid var(--gt-border, #e5e5e5);
+  border-bottom: none;
+  border-radius: 8px 8px 0 0;
+  background: var(--gt-bg, #ffffff);
+  flex-wrap: wrap;
+}
+
+.gotipe-toolbar-group {
+  display: flex;
+  align-items: center;
+  gap: 1px;
+}
+
+.gotipe-toolbar-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--gt-text-secondary, #666);
+  cursor: pointer;
+  font-size: 14px;
+  transition: background 0.1s, color 0.1s;
+  flex-shrink: 0;
+}
+
+.gotipe-toolbar-btn:hover {
+  background: var(--gt-bg-hover, #f5f5f5);
+  color: var(--gt-text-base, #1a1a1a);
+}
+
+.gotipe-toolbar-btn.active {
+  background: var(--gt-bg-active, rgba(37, 99, 235, 0.1));
+  color: var(--gt-accent, #2563eb);
+}
+
+.gotipe-toolbar-btn:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+
+.gotipe-toolbar-separator {
+  width: 1px;
+  height: 20px;
+  margin: 0 4px;
+  background: var(--gt-border, #e5e5e5);
+  flex-shrink: 0;
+}
+
+.gotipe-toolbar-dropdown {
+  min-width: 80px;
+  height: 32px;
+}
+
+.gotipe-toolbar-dropdown:hover {
+  border-color: var(--gt-border-hover, #ccc);
+}
+
+/* Simple editor: toolbar + editor as one unit */
+.gotipe-simple-editor .gotipe-editor {
+  border-radius: 0 0 8px 8px;
+}

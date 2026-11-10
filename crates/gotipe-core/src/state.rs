@@ -36,38 +36,81 @@ impl EditorState {
         self
     }
 
-    /// Apply a transaction to produce a new EditorState.
-    /// Pipeline: 1) validate steps → 2) apply to doc → 3) map selection → 4) return new state
-    pub fn apply(&self, tr: Transaction) -> Result<EditorState, TransformError> {
-        let mut doc = self.doc.clone();
+    /// Set an explicit selection without changing document or transaction history.
+    pub fn with_valid_selection(mut self, selection: Selection) -> Result<Self, TransformError> {
+        crate::selection_mapping::validate(&selection, &self.doc)?;
+        self.selection = selection;
+        Ok(self)
+    }
 
-        // 1) Validate each step against schema
+    /// Apply a transaction to produce a new EditorState.
+    /// Validate and apply each step against the staged document, then map selection.
+    pub fn apply(&self, tr: Transaction) -> Result<EditorState, TransformError> {
+        self.apply_inner(tr, false).map(|(state, _)| state)
+    }
+
+    /// Validated intermediate documents retain generated structural identities for
+    /// collaboration. No intermediate result escapes a failed transaction.
+    pub fn apply_with_trace(
+        &self,
+        tr: Transaction,
+    ) -> Result<(EditorState, Vec<Document>), TransformError> {
+        self.apply_inner(tr, true)
+    }
+
+    fn apply_inner(
+        &self,
+        tr: Transaction,
+        capture: bool,
+    ) -> Result<(EditorState, Vec<Document>), TransformError> {
+        if self.doc.duplicate_block_id().is_some() {
+            return Err(TransformError::InvalidStep("Duplicate block ID".into()));
+        }
+        let mut doc = self.doc.clone();
+        let mut selection = self.selection.clone();
+        let mut trace = Vec::new();
+
+        // Later steps can refer to blocks inserted or converted earlier in this transaction.
+        // Nothing is committed to the original state if any step fails.
         for step in &tr.steps {
             self.validate_step(step, &doc)?;
+            let mapping = crate::selection_mapping::SelectionMap::new(&selection, step, &doc);
+            doc = step.apply_with_schema(doc, Some(&self.schema))?;
+            selection = mapping.finish(step, &doc);
+            if capture {
+                trace.push(doc.clone());
+            }
         }
 
-        // 2) Apply each step
-        for step in &tr.steps {
-            doc = step.apply(doc)?;
+        // The complete staged document must satisfy the declared schema, even when
+        // several individually valid steps alter structural or attribute constraints.
+        if !self.schema.nodes.is_empty() || !self.schema.marks.is_empty() {
+            self.schema.validate(&doc).map_err(|errors| {
+                TransformError::InvalidStep(format!("Schema validation failed: {errors:?}"))
+            })?;
         }
 
         // 3) Map selection through the steps
-        let selection = if let Some(sel) = tr.selection {
-            sel
-        } else {
-            self.selection.map_through(&tr.steps)
-        };
+        if let Some(explicit) = tr.selection {
+            crate::selection_mapping::validate(&explicit, &doc)?;
+            selection = explicit;
+        }
 
-        Ok(EditorState {
-            doc,
-            selection,
-            schema: self.schema.clone(),
-            last_steps: tr.steps,
-        })
+        Ok((
+            EditorState {
+                doc,
+                selection,
+                schema: self.schema.clone(),
+                last_steps: tr.steps,
+            },
+            trace,
+        ))
     }
 
     fn validate_step(&self, step: &Step, doc: &Document) -> Result<(), TransformError> {
-        use gotipe_schema::MarksRule;
+        if self.schema.nodes.is_empty() && self.schema.marks.is_empty() {
+            return Ok(());
+        }
         match step {
             Step::InsertBlock { block, .. } => {
                 if !self.schema.nodes.contains_key(&block.block_type) {
@@ -82,27 +125,22 @@ impl EditorState {
                 let block = doc
                     .find_block(block_id)
                     .ok_or(TransformError::BlockNotFound(block_id.clone()))?;
-                let spec =
-                    self.schema
-                        .nodes
-                        .get(&block.block_type)
-                        .ok_or(TransformError::InvalidStep(format!(
-                            "Unknown block type: {}",
-                            block.block_type
-                        )))?;
-                match &spec.marks_allowed {
-                    MarksRule::None => Err(TransformError::InvalidStep(format!(
-                        "Marks not allowed on block type: {}",
-                        block.block_type
-                    ))),
-                    MarksRule::Only(allowed) if !allowed.contains(&mark.mark_type) => {
-                        Err(TransformError::InvalidStep(format!(
-                            "Mark '{}' not allowed on block type: {}",
-                            mark.mark_type, block.block_type
-                        )))
-                    }
-                    _ => Ok(()),
+                self.schema.validate_mark(block, mark).map_err(|errors| {
+                    TransformError::InvalidStep(format!("Schema validation failed: {errors:?}"))
+                })
+            }
+            Step::InsertText {
+                block_id, marks, ..
+            } => {
+                let block = doc
+                    .find_block(block_id)
+                    .ok_or(TransformError::BlockNotFound(block_id.clone()))?;
+                for mark in marks {
+                    self.schema.validate_mark(block, mark).map_err(|errors| {
+                        TransformError::InvalidStep(format!("Schema validation failed: {errors:?}"))
+                    })?;
                 }
+                Ok(())
             }
             Step::SetBlockType { new_type, .. } => {
                 if !self.schema.nodes.contains_key(new_type) {

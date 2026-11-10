@@ -14,20 +14,20 @@
   "types": "./dist/index.d.ts",
   "sideEffects": false,
   "peerDependencies": {
-    "@gotipe/core": "^0.1.0",
     "@gotipe/ai": "^0.1.0",
+    "@gotipe/core": "^0.1.0",
     "react": ">=18",
     "react-dom": ">=18"
   },
   "devDependencies": {
-    "@gotipe/core": "workspace:*",
     "@gotipe/ai": "workspace:*",
-    "vitest": "^2.1",
-    "tsup": "^8.3",
-    "react": "^19.0",
-    "react-dom": "^19.0",
-    "@types/react": "^19.0",
-    "@types/react-dom": "^19.0"
+    "@gotipe/core": "workspace:*",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
+    "tsup": "^8.5.1",
+    "vitest": "^4.1.12"
   },
   "scripts": {
     "build": "tsup",
@@ -35,5 +35,12 @@
     "typecheck": "tsc --noEmit",
     "lint": "biome check src/"
   },
-  "license": "SEE LICENSE IN LICENSE-COMMERCIAL"
+  "license": "SEE LICENSE IN LICENSE-COMMERCIAL",
+  "files": [
+    "dist",
+    "LICENSE-COMMERCIAL"
+  ],
+  "publishConfig": {
+    "access": "public"
+  }
 }

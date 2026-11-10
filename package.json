@@ -8,15 +8,32 @@
     "lint": "turbo run lint",
     "typecheck": "turbo run typecheck",
     "build:wasm": "bash scripts/build-wasm.sh",
-    "clean": "turbo run clean && cargo clean"
+    "build:export-wasm": "bash scripts/build-export-wasm.sh",
+    "build:converter": "cargo build --locked -p gotipe-export --features pdf,docx,cli --bin gotipe-convert --release --jobs 2",
+    "clean": "turbo run clean && cargo clean",
+    "check:packages": "node scripts/check-packages.mjs",
+    "check:exports": "node scripts/validate-export-formats.mjs",
+    "generate:theme": "node scripts/generate-theme.mjs",
+    "check:theme": "node scripts/generate-theme.mjs --check",
+    "check:architecture": "node --test scripts/quality/architecture.test.mjs && node scripts/quality/architecture.mjs",
+    "check:architecture:release": "node scripts/quality/architecture.mjs --release",
+    "check:bundles": "node --test scripts/quality/bundle-graph.test.mjs && node scripts/check-bundle-sizes.mjs",
+    "check:cargo-release": "node scripts/check-cargo-release.mjs",
+    "check:consumer": "node scripts/check-package-consumer.mjs"
   },
   "devDependencies": {
-    "turbo": "^2.3",
-    "typescript": "^5.7",
-    "vitest": "^2.1",
-    "@biomejs/biome": "^1.9",
-    "tsup": "^8.3",
-    "@changesets/cli": "^2.27",
-    "@playwright/test": "^1.49"
+    "@biomejs/biome": "^1.9.4",
+    "@changesets/cli": "^2.31.1",
+    "@playwright/test": "^1.65.0",
+    "tsup": "^8.5.1",
+    "turbo": "^2.11.10",
+    "typescript": "^5.9.3",
+    "vitest": "^4.1.12"
+  },
+  "pnpm": {
+    "overrides": {
+      "next>postcss": "^8.5.23",
+      "tsup>esbuild": "^0.28.1"
+    }
   }
 }

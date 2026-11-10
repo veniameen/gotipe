@@ -1,5 +1,10 @@
 # GoTipe Cloud
 
+> Исторический проектный документ. Сигнатуры, размеры, цены, сравнения и планы ниже
+> не подтверждают текущую реализацию или доступный сервис. Актуальные контракты:
+> [разработка](development/cloud-contract.md), [экспорт](development/export-contract.md),
+> [Cloud](development/cloud-contract.md), [готовность выпуска](22-release-readiness.md).
+
 ## Обзор
 
 GoTipe Cloud — managed backend для GoTipe editor: collaboration sync, AI proxy, document export, analytics. Open-source ядро работает без облака. Cloud — опциональная инфраструктура для тех, кто не хочет деплоить свой backend.

@@ -1,0 +1,128 @@
+/* ============================================================
+   Animations
+   ============================================================ */
+
+@keyframes gotipe-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes gotipe-scale-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes gotipe-slide-up {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+}
+
+@keyframes gotipe-drop-line {
+  from {
+    opacity: 0;
+    transform: scaleX(0);
+  }
+  to {
+    opacity: 1;
+    transform: scaleX(1);
+  }
+}
+
+@keyframes gotipe-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.4;
+  }
+}
+
+/* ============================================================
+   Dark mode adjustments
+   ============================================================ */
+
+[data-theme="dark"] .gotipe-bubble-menu button:hover,
+[data-theme="dark"] .gotipe-block-more-menu button:hover,
+[data-theme="dark"] .gotipe-block-context-menu button:hover,
+[data-theme="dark"] .gotipe-block-type-dropdown button:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+[data-theme="dark"] .gotipe-block-context-menu button.destructive:hover {
+  background: rgba(239, 68, 68, 0.15);
+}
+
+[data-theme="dark"] .gotipe-media-placeholder:hover,
+[data-theme="dark"] .gotipe-media-placeholder.dragover {
+  border-color: var(--gt-accent);
+}
+
+/* ============================================================
+   Mobile (<640px)
+   ============================================================ */
+
+@media (max-width: 639px) {
+  .gotipe-bubble-menu {
+    flex-wrap: wrap;
+    border-radius: var(--gt-radius-md, 8px);
+  }
+
+  .gotipe-slash-menu {
+    width: min(300px, 90vw);
+    max-width: 90vw;
+  }
+
+  .gotipe-ai-command-bar {
+    bottom: var(--gt-space-2, 8px);
+    width: calc(100vw - 16px);
+    min-width: unset;
+    border-radius: var(--gt-radius-card, 20px);
+  }
+
+  .gotipe-comment-sidebar {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .gotipe-media-link-form,
+  .gotipe-media-link-form--file {
+    grid-template-columns: 1fr;
+    display: grid;
+  }
+
+  .gotipe-media-link-form button,
+  .gotipe-media-link-form--file button {
+    width: 100%;
+  }
+}
+
+/* ============================================================
+   Accessibility Utilities
+   ============================================================ */
+
+.gotipe-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}

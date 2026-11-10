@@ -1,16 +1,13 @@
 import type { GoTipeEditor } from "@gotipe/core";
 import type { ViewState } from "@gotipe/core";
-import { useCallback, useRef, useSyncExternalStore } from "react";
+import { useCallback, useEffect, useMemo, useRef, useSyncExternalStore } from "react";
 
 export function useEditorState<T>(
   editor: GoTipeEditor | null,
   selector: (state: ViewState) => T,
   isEqual?: (a: T, b: T) => boolean,
 ): T | undefined {
-  const selectorRef = useRef(selector);
-  selectorRef.current = selector;
-  const isEqualRef = useRef(isEqual);
-  isEqualRef.current = isEqual;
+  const committed = useRef<{ editor: GoTipeEditor | null; value: T | undefined } | null>(null);
 
   const subscribe = useCallback(
     (onStoreChange: () => void) => {
@@ -20,10 +17,38 @@ export function useEditorState<T>(
     [editor],
   );
 
-  const getSnapshot = useCallback(() => {
-    if (!editor) return undefined;
-    return selectorRef.current(editor.getViewState());
-  }, [editor]);
+  const getSnapshot = useMemo(() => {
+    let previousState: ViewState | undefined;
+    let previousValue: T;
+    let hasValue = false;
+    return () => {
+      if (!editor) return undefined;
+      const state = editor.getViewState();
+      if (hasValue && Object.is(previousState, state)) return previousValue;
 
-  return useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
+      let value = selector(state);
+      if (hasValue && (isEqual ?? Object.is)(previousValue, value)) {
+        value = previousValue;
+      } else if (
+        !hasValue &&
+        isEqual &&
+        committed.current?.editor === editor &&
+        isEqual(committed.current.value as T, value)
+      ) {
+        // A caller may supply a new selector on every render. Reuse an equal
+        // committed selection without sharing mutable caches across renders.
+        value = committed.current.value as T;
+      }
+      previousState = state;
+      previousValue = value;
+      hasValue = true;
+      return value;
+    };
+  }, [editor, selector, isEqual]);
+
+  const value = useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
+  useEffect(() => {
+    committed.current = { editor, value };
+  }, [editor, value]);
+  return value;
 }

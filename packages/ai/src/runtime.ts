@@ -1,0 +1,48 @@
+import { type GoTipeEditor, GoTipeError } from "@gotipe/core";
+import type { AiManager } from "./manager";
+import type { AiComment, AiProofreadSuggestion } from "./types";
+
+export interface AiRuntime {
+  manager: AiManager;
+  suggestions: AiProofreadSuggestion[];
+  comments: AiComment[];
+  cleanup: (() => void)[];
+}
+const runtimes = new WeakMap<GoTipeEditor, AiRuntime>();
+export function getRuntime(editor: GoTipeEditor): AiRuntime | undefined {
+  return runtimes.get(editor);
+}
+export function registerRuntime(editor: GoTipeEditor, manager: AiManager): AiRuntime {
+  const runtime: AiRuntime = { manager, suggestions: [], comments: [], cleanup: [] };
+  runtime.cleanup.push(
+    editor.on("update", () => {
+      // Provider review coordinates are snapshot-relative, not collaborative anchors.
+      const comments = runtime.comments;
+      runtime.comments = [];
+      for (const comment of comments) editor.emit("commentDeleted", comment.id);
+    }),
+  );
+  runtimes.set(editor, runtime);
+  return runtime;
+}
+export function destroyRuntime(editor: GoTipeEditor): void {
+  const runtime = runtimes.get(editor);
+  if (!runtime) return;
+  runtime.manager.destroy();
+  for (const cleanup of runtime.cleanup) cleanup();
+  runtimes.delete(editor);
+}
+export function reportAiError(editor: GoTipeEditor, error: unknown): void {
+  if (editor.isDestroyed || (error instanceof Error && error.name === "AbortError")) return;
+  const message = error instanceof Error ? error.message : String(error);
+  editor.emit("aiStatusChange", { active: false, label: message });
+  editor.reportError(new GoTipeError("EXTENSION_ERROR", message, { extension: "ai" }));
+}
+export function runAiTask(editor: GoTipeEditor, task: () => Promise<void>): void {
+  void task().catch((error) => reportAiError(editor, error));
+}
+export async function collectText(source: AsyncIterable<string>): Promise<string> {
+  let result = "";
+  for await (const chunk of source) result += chunk;
+  return result;
+}

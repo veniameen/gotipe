@@ -4,13 +4,14 @@ export interface Version {
   description?: string;
   createdAt: string;
   createdBy: string;
-  snapshot: object;
+  snapshot: Document;
 }
 
 export interface VersionDiff {
   added: string[];
   removed: string[];
   modified: string[];
+  moved: string[];
 }
 
 export interface VersionsOptions {
@@ -20,3 +21,4 @@ export interface VersionsOptions {
   onVersionCreated?: (version: Version) => void;
   onVersionRestored?: (version: Version) => void;
 }
+import type { Document } from "@gotipe/core";

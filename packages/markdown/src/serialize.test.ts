@@ -21,6 +21,43 @@ function md(block: Block): string {
 }
 
 describe("blockToMarkdown", () => {
+  it("preserves safe foreground and highlight colors without HTML attribute injection", () => {
+    const colored = para([
+      {
+        text: "Цвет 😀",
+        marks: [
+          { type: "textColor", attrs: { color: "#123abc" } },
+          { type: "highlight", attrs: { color: "rgb(12, 34, 56)" } },
+        ],
+      },
+    ]);
+    expect(md(colored)).toContain('<span style="color:#123abc">');
+    expect(md(colored)).toContain('<mark style="background:rgb(12, 34, 56)">');
+    const hostile = para([
+      {
+        text: "text",
+        marks: [{ type: "textColor", attrs: { color: "red; background:url(https://invalid)" } }],
+      },
+    ]);
+    expect(blockToMarkdown(hostile)).toBe("text");
+  });
+  it("retains children of authored quotes, callouts and task items", () => {
+    const child = para(plain("child body"));
+    expect(blockToMarkdown(b("blockquote", {}, plain("quote"), [child]))).toBe(
+      "> quote\n>\n> child body",
+    );
+    expect(blockToMarkdown(b("callout", { type: "note" }, plain("notice"), [child]))).toContain(
+      "> child body",
+    );
+    const list = b("todoList", {}, null, [
+      b("todoItem", { checked: false }, plain("task"), [
+        b("bulletList", {}, null, [b("listItem", {}, plain("nested"))]),
+      ]),
+    ]);
+    expect(blockToMarkdown(list)).toBe("- [ ] task\n  - nested");
+    const custom = b("custom", {}, plain("own body"), [child]);
+    expect(blockToMarkdown(custom)).toBe("own body\n\nchild body");
+  });
   it("escapes only what is needed", () => {
     expect(md(para(plain("2 * 3 = 6, snake_case, a < b, AT&T")))).toBe(
       "2 * 3 = 6, snake_case, a < b, AT&T",

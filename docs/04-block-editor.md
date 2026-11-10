@@ -1,5 +1,12 @@
 # GoTipe — Block Editor (Notion-like UX)
 
+> **Историческая спецификация, не руководство по текущему API.** Примеры, сроки,
+> сравнения производительности, коммерческие условия и обещания ниже не подтверждают
+> реализацию или доступность сервиса. Актуально: [контракты](development/editor-contracts.md),
+> [карта кода](development/code-map.md), [проверки](development/testing.md),
+> [план выпуска](22-release-readiness.md). Лицензии определяются `LICENSE` и manifest
+> каждого пакета, а не этим документом.
+
 > **Лицензия:** `@gotipe/block-editor` — коммерческий пакет. Headless core (`@gotipe/core`, `@gotipe/react`, etc.) — MIT.
 > Подписчики GoTipe Cloud получают Block Editor лицензию бесплатно.
 

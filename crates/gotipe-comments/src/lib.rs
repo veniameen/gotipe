@@ -1,6 +1,7 @@
 pub mod comment;
 pub mod mark;
 pub mod ops;
+pub mod store;
 pub mod suggestion;
 pub mod suggestion_mark;
 

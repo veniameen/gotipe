@@ -6,5 +6,14 @@ pkg/
 *.wasm
 .turbo/
 .next/
-# playground: CSP build of the wiki example
+# Legacy local build retained for recovery; no active Wiki entry.
 dist-wiki/
+output/
+.playwright-cli/
+.DS_Store
+*.tsbuildinfo
+test-results/
+playwright-report/
+e2e/screenshots/
+__pycache__/
+*.pyc

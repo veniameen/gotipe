@@ -121,7 +121,7 @@ async function active(page: Page, mark: string) {
 test.describe("Notion-like checklist batch NL-401..NL-425", () => {
   test.beforeEach(async ({ page }) => {
     await openNotionAndReset(page);
-    await page.getByRole("radio", { name: "Light theme" }).click();
+    await page.getByRole("banner").getByRole("radio", { name: "Light theme" }).click();
   });
 
   for (const c of CASES) {

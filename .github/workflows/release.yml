@@ -11,8 +11,21 @@ permissions:
   id-token: write
 
 jobs:
+  checks:
+    name: Required Rust, Go, TypeScript and package checks
+    uses: ./.github/workflows/ci.yml
+
+  browsers:
+    name: Required browser matrix
+    uses: ./.github/workflows/e2e.yml
+
+  security:
+    name: Required dependency security checks
+    uses: ./.github/workflows/security.yml
+
   release:
     name: Release
+    needs: [checks, browsers, security]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -34,10 +47,13 @@ jobs:
       - name: Build WASM
         run: bash scripts/build-wasm.sh
 
+      - name: Build optional PDF and DOCX exporter
+        run: bash scripts/build-export-wasm.sh
+
       # -- TypeScript --
       - uses: pnpm/action-setup@v4
         with:
-          version: 9
+          version: 10.28.2
       - uses: actions/setup-node@v4
         with:
           node-version: 22
@@ -47,34 +63,42 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Enforce release architecture without legacy allowances
+        run: pnpm check:architecture:release && pnpm check:theme
+
       - name: Build all TS packages
-        run: pnpm build
+        run: pnpm build --concurrency=2
 
       - name: Run tests
-        run: pnpm test
+        run: pnpm test --concurrency=2 -- --maxWorkers=2
+
+      - name: Type check
+        run: pnpm typecheck
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Complete JavaScript import graph budgets
+        run: pnpm check:bundles
+
+      - name: Check package archives and entrypoints
+        run: pnpm check:packages
+
+      - name: Install archives in an isolated consumer
+        run: pnpm check:consumer
+
+      - name: Validate actual PDF and DOCX output
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y poppler-utils
+          pnpm check:exports
+
+      - name: Verify registry source dependency graph
+        run: pnpm check:cargo-release
 
       # -- Publish npm packages (dependency order) --
       - name: Publish npm packages
-        run: |
-          PACKAGES=(
-            "wasm"
-            "core"
-            "react"
-            "vue"
-            "svelte"
-            "solid"
-            "collaboration"
-            "ai"
-            "export"
-            "block-editor"
-            "block-editor-vue"
-            "ai-ui"
-            "theme"
-          )
-          for pkg in "${PACKAGES[@]}"; do
-            echo "Publishing @gotipe/${pkg}..."
-            pnpm --filter "@gotipe/${pkg}" publish --access public --no-git-checks --provenance || true
-          done
+        run: pnpm --filter './packages/**' -r publish --access public --no-git-checks --provenance
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
@@ -89,11 +113,12 @@ jobs:
             "gotipe-versioning"
             "gotipe-ai"
             "gotipe-export"
+            "gotipe-export-wasm"
             "gotipe-wasm"
           )
           for crate in "${CRATES[@]}"; do
             echo "Publishing ${crate}..."
-            cargo publish -p "$crate" --allow-dirty || true
+            cargo publish --locked -p "$crate"
             sleep 30  # crates.io rate limit
           done
         env:
@@ -106,10 +131,11 @@ jobs:
           VERSION=${GITHUB_REF_NAME#v}
           echo "version=$VERSION" >> $GITHUB_OUTPUT
 
-          if command -v changeset &> /dev/null; then
-            npx changeset status --output=CHANGELOG_ENTRY.md
+          PREVIOUS_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || true)
+          if [ -n "$PREVIOUS_TAG" ]; then
+            git log --pretty=format:"- %s (%h)" "$PREVIOUS_TAG"..HEAD > CHANGELOG_ENTRY.md
           else
-            git log --pretty=format:"- %s (%h)" $(git describe --tags --abbrev=0 HEAD^)..HEAD > CHANGELOG_ENTRY.md
+            git log --pretty=format:"- %s (%h)" > CHANGELOG_ENTRY.md
           fi
 
       # -- GitHub Release --

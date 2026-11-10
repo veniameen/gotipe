@@ -1,5 +1,12 @@
 # GoTipe — Framework Integration
 
+> **Историческая спецификация, не руководство по текущему API.** Примеры, сроки,
+> сравнения производительности, коммерческие условия и обещания ниже не подтверждают
+> реализацию или доступность сервиса. Актуально: [контракты](development/editor-contracts.md),
+> [карта кода](development/code-map.md), [проверки](development/testing.md),
+> [план выпуска](22-release-readiness.md). Лицензии определяются `LICENSE` и manifest
+> каждого пакета, а не этим документом.
+
 ## Обзор
 
 GoTipe — framework-agnostic editor. Core (`@gotipe/core` + `gotipe-wasm`) ничего не знает о React, Vue, Svelte или Solid. Ядро выдаёт `ViewState` — plain JS objects. Тонкий adapter layer конвертирует `ViewState` в framework-specific компоненты и обратно транслирует DOM events в commands/transactions.

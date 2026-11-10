@@ -40,9 +40,13 @@ function lfView(text: string): { lf: string; toOriginal: (i: number) => number }
   const positions: number[] = [];
   let lf = "";
   for (let i = 0; i < text.length; i++) {
-    if (text[i] === "\r" && text[i + 1] === "\n") continue;
     positions.push(i);
-    lf += text[i];
+    if (text[i] === "\r" && text[i + 1] === "\n") {
+      lf += "\n";
+      i++;
+    } else {
+      lf += text[i];
+    }
   }
   positions.push(text.length);
   return { lf, toOriginal: (i) => positions[i] ?? text.length };
@@ -54,27 +58,29 @@ function lfView(text: string): { lf: string; toOriginal: (i: number) => number }
  */
 export function findAnchor(text: string, anchor: TextAnchor): AnchorMatch {
   const needle = anchor.before + anchor.quote + anchor.after;
-  const hits = occurrences(text, needle);
-  if (hits.length === 1) {
-    const start = hits[0]! + anchor.before.length;
-    return { ok: true, start, end: start + anchor.quote.length };
-  }
-  if (hits.length > 1) return { ok: false, reason: "ambiguous" };
+  // Search the same normalized view for all matches. A mixed-EOL document
+  // must not prefer its one literal LF hit over another equivalent CRLF hit.
   if (!needle.includes("\r")) {
     const view = lfView(text);
     if (view) {
-      const lfHits = occurrences(view.lf, needle);
-      if (lfHits.length === 1) {
-        const start = lfHits[0]! + anchor.before.length;
+      const hits = occurrences(view.lf, needle);
+      if (hits.length === 1) {
+        const start = hits[0]! + anchor.before.length;
         return {
           ok: true,
           start: view.toOriginal(start),
           end: view.toOriginal(start + anchor.quote.length),
         };
       }
-      if (lfHits.length > 1) return { ok: false, reason: "ambiguous" };
+      return { ok: false, reason: hits.length > 1 ? "ambiguous" : "missing" };
     }
   }
+  const hits = occurrences(text, needle);
+  if (hits.length === 1) {
+    const start = hits[0]! + anchor.before.length;
+    return { ok: true, start, end: start + anchor.quote.length };
+  }
+  if (hits.length > 1) return { ok: false, reason: "ambiguous" };
   return { ok: false, reason: "missing" };
 }
 
@@ -142,11 +148,13 @@ export function applyAnchoredEdits(text: string, edits: AnchoredEdit[]): ApplyRe
  */
 export function anchorWindowsOverlap(text: string, edit: AnchoredEdit, other: TextAnchor): boolean {
   const a = findAnchor(text, edit);
-  const b = findAnchor(text, other);
+  const b = findAnchor(text, {
+    before: "",
+    quote: other.before + other.quote + other.after,
+    after: "",
+  });
   if (!a.ok || !b.ok) return false;
-  const windowStart = b.start - other.before.length;
-  const windowEnd = b.end + other.after.length;
-  return a.start < windowEnd && a.end > windowStart;
+  return a.start < b.end && a.end > b.start;
 }
 
 /** Builds an anchor for `[start, end)` of `text` with up to `context` chars on each side, unique if possible. */

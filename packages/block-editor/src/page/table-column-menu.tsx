@@ -1,13 +1,13 @@
-import type { BlockView, GoTipeEditor } from "@gotipe/core";
-import { useGoTipeI18n } from "@gotipe/react";
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { type BlockView, type GoTipeEditor, GoTipeError, editTable } from "@gotipe/core";
+import { useFloatingPosition, useGoTipeI18n } from "@gotipe/react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { PageIcon } from "./icons";
 import { usePageOverlay } from "./overlay";
 
 /**
- * Column types are not stored: they are read from and written to Markdown
- * (ADR-0059). «Число» — right alignment `---:`; «Код» — every body cell in
+ * Column types are read from and written to Markdown cell content and
+ * alignment. «Число» — right alignment `---:`; «Код» — every body cell in
  * backticks; «Да / нет» — cells «да»/«нет»; «Текст» — as is.
  */
 export type ColumnType = "text" | "code" | "number" | "boolean";
@@ -114,68 +114,17 @@ export function setColumnType(
   editor.dispatch({ steps });
 }
 
-function emptyCell(type: "tableCell" | "tableHeader"): Record<string, unknown> {
-  return { id: crypto.randomUUID(), type, attrs: {}, content: [], children: [] };
-}
-
 export function addRow(editor: GoTipeEditor, tableId: string): void {
   const table = findTable(editor, tableId);
-  if (!table) return;
-  const width = Math.max(1, ...table.children.map((r) => r.children.length));
-  editor.dispatch({
-    steps: [
-      {
-        type: "insertBlock",
-        parentId: table.id,
-        index: table.children.length,
-        block: {
-          id: crypto.randomUUID(),
-          type: "tableRow",
-          attrs: {},
-          content: null,
-          children: Array.from({ length: width }, () => emptyCell("tableCell")),
-        },
-      },
-    ],
-  });
+  if (table) editTable(editor, tableId, { type: "insertRow", index: table.children.length });
 }
 
 export function addColumn(editor: GoTipeEditor, tableId: string, after: number): void {
-  const table = findTable(editor, tableId);
-  if (!table) return;
-  const steps: Record<string, unknown>[] = [];
-  table.children.forEach((row, r) => {
-    const headerRow = r === 0 && row.children.some((c) => c.type === "tableHeader");
-    steps.push({
-      type: "insertBlock",
-      parentId: row.id,
-      index: Math.min(after + 1, row.children.length),
-      block: emptyCell(headerRow ? "tableHeader" : "tableCell"),
-    });
-  });
-  const align = [...((table.attrs.align as Align[] | undefined) ?? [])];
-  if (align.length > after) align.splice(after + 1, 0, null);
-  steps.push({ type: "setBlockAttrs", blockId: table.id, attrs: { align } });
-  editor.dispatch({ steps });
+  editTable(editor, tableId, { type: "insertColumn", index: after + 1 });
 }
 
 export function deleteColumn(editor: GoTipeEditor, tableId: string, column: number): void {
-  const table = findTable(editor, tableId);
-  if (!table) return;
-  const width = Math.max(...table.children.map((r) => r.children.length));
-  if (width <= 1) {
-    editor.dispatch({ steps: [{ type: "deleteBlock", blockId: table.id }] });
-    return;
-  }
-  const steps: Record<string, unknown>[] = [];
-  for (const row of table.children) {
-    const cell = row.children[column];
-    if (cell) steps.push({ type: "deleteBlock", blockId: cell.id });
-  }
-  const align = [...((table.attrs.align as Align[] | undefined) ?? [])];
-  if (align.length > column) align.splice(column, 1);
-  steps.push({ type: "setBlockAttrs", blockId: table.id, attrs: { align } });
-  editor.dispatch({ steps });
+  editTable(editor, tableId, { type: "deleteColumn", index: column });
 }
 
 export function TableColumnButton({
@@ -190,16 +139,14 @@ export function TableColumnButton({
   const i18n = useGoTipeI18n();
   const overlay = usePageOverlay();
   const [open, setOpen] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
-  const [pos, setPos] = useState<{ top: number; left: number } | null>(null);
-
-  useLayoutEffect(() => {
-    if (!open) return;
+  const anchor = useCallback(() => {
     const cell = buttonRef.current?.closest("th, td");
-    const rect = (cell ?? buttonRef.current)?.getBoundingClientRect();
-    if (rect) setPos({ top: rect.bottom + 4, left: rect.left });
-  }, [open]);
+    return (cell ?? buttonRef.current)?.getBoundingClientRect() ?? null;
+  }, []);
+  const pos = useFloatingPosition({ open, anchor, element: menuRef, gap: 4 });
 
   useEffect(() => {
     if (!open) return;
@@ -232,8 +179,21 @@ export function TableColumnButton({
     { type: "boolean", label: i18n.t("table.type.boolean"), glyph: <PageIcon name="check" /> },
   ];
   const run = (fn: () => void) => {
-    fn();
-    setOpen(false);
+    try {
+      fn();
+      setError(null);
+      setOpen(false);
+    } catch (cause) {
+      const failure =
+        cause instanceof GoTipeError
+          ? cause
+          : new GoTipeError(
+              "TRANSFORM_ERROR",
+              cause instanceof Error ? cause.message : "Table operation failed",
+            );
+      setError(failure.message);
+      editor.reportError(failure);
+    }
   };
 
   return (
@@ -250,22 +210,27 @@ export function TableColumnButton({
         onMouseDown={(e) => {
           e.preventDefault();
           e.stopPropagation();
-          setOpen((v) => !v);
         }}
+        onClick={() => setOpen((value) => !value)}
       >
         <PageIcon name="chevron" />
       </button>
-      {open && pos && overlay
+      {open && overlay
         ? createPortal(
             <div
               ref={menuRef}
               className="gotipe-page-menu gotipe-col-menu"
               role="menu"
               aria-label={i18n.t("table.columnType")}
-              style={{ position: "fixed", top: pos.top, left: pos.left }}
+              style={{ position: "fixed", ...pos, visibility: pos ? "visible" : "hidden" }}
               onMouseDown={(e) => e.preventDefault()}
             >
               <div className="gotipe-page-menu-head">{i18n.t("table.columnType")}</div>
+              {error && (
+                <p role="alert" className="gotipe-media-insert-error">
+                  {error}
+                </p>
+              )}
               {types.map((t) => (
                 <button
                   key={t.type}
@@ -284,7 +249,7 @@ export function TableColumnButton({
                   ) : null}
                 </button>
               ))}
-              <div className="gotipe-page-menu-sep" role="separator" />
+              <hr className="gotipe-page-menu-sep" />
               <button
                 type="button"
                 role="menuitem"

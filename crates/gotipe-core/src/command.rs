@@ -2,10 +2,11 @@ use std::collections::HashMap;
 
 use gotipe_schema::{AttrValue, Block, BlockContent, BlockId, Mark, TextSpan};
 
-use crate::clipboard::ClipboardData;
+mod clipboard;
 use crate::selection::Selection;
 use crate::state::EditorState;
 use crate::transaction::{Step, Transaction};
+pub use clipboard::{copy, cut, paste};
 
 // === Text formatting commands ===
 
@@ -128,7 +129,7 @@ pub fn set_block_type(
 pub fn insert_block_after(state: &EditorState, block_type: &str) -> Option<Transaction> {
     let block_id = state.selection().block_id();
     let (parent_id, index) = state.doc().parent_and_index(block_id)?;
-    let new_block = Block::new_with_type(block_type, default_content_for_type(block_type));
+    let new_block = Block::new_with_type(block_type, default_content_for_type(state, block_type)?);
     let new_block_id = new_block.id.clone();
     let step = Step::InsertBlock {
         parent_id,
@@ -148,7 +149,7 @@ pub fn insert_block_after(state: &EditorState, block_type: &str) -> Option<Trans
 pub fn insert_block_before(state: &EditorState, block_type: &str) -> Option<Transaction> {
     let block_id = state.selection().block_id();
     let (parent_id, index) = state.doc().parent_and_index(block_id)?;
-    let new_block = Block::new_with_type(block_type, default_content_for_type(block_type));
+    let new_block = Block::new_with_type(block_type, default_content_for_type(state, block_type)?);
     let new_block_id = new_block.id.clone();
     let step = Step::InsertBlock {
         parent_id,
@@ -244,8 +245,9 @@ pub fn toggle_todo_list(state: &EditorState) -> Option<Transaction> {
         // Remove checked attr — convert back to regular list item
         let mut attrs = block.attrs.clone();
         attrs.remove("checked");
-        Some(Transaction::new().with_step(Step::SetBlockAttrs {
+        Some(Transaction::new().with_step(Step::SetBlockType {
             block_id: block_id.clone(),
+            new_type: "listItem".into(),
             attrs,
         }))
     } else if block.block_type == "listItem" {
@@ -382,119 +384,12 @@ pub fn select_block(state: &EditorState) -> Option<Transaction> {
 
 // === Clipboard ===
 
-pub fn cut(state: &EditorState) -> Option<(Transaction, ClipboardData)> {
-    let clipboard_data = copy(state)?;
-
-    let tr = match state.selection() {
-        Selection::Text { block_id, from, to } => Transaction::new()
-            .with_step(Step::DeleteText {
-                block_id: block_id.clone(),
-                from: *from,
-                to: *to,
-            })
-            .with_selection(Selection::Cursor {
-                block_id: block_id.clone(),
-                offset: *from,
-            }),
-        Selection::Block { block_id } => Transaction::new().with_step(Step::DeleteBlock {
-            block_id: block_id.clone(),
-        }),
-        _ => return None,
-    };
-
-    Some((tr, clipboard_data))
-}
-
-pub fn copy(state: &EditorState) -> Option<ClipboardData> {
-    match state.selection() {
-        Selection::Text { block_id, from, to } => {
-            let block = state.doc().find_block(block_id)?;
-            if let BlockContent::RichText(spans) = &block.content {
-                let text = extract_text_range(spans, *from, *to);
-                Some(ClipboardData {
-                    plain_text: text.clone(),
-                    html: None,
-                    internal_json: None,
-                })
-            } else if let BlockContent::Raw(raw) = &block.content {
-                let text = raw[*from..*to].to_string();
-                Some(ClipboardData {
-                    plain_text: text,
-                    html: None,
-                    internal_json: None,
-                })
-            } else {
-                None
-            }
-        }
-        Selection::Block { block_id } => {
-            let block = state.doc().find_block(block_id)?;
-            let json = serde_json::to_string(block).ok()?;
-            Some(ClipboardData {
-                plain_text: block_to_plain_text(block),
-                html: None,
-                internal_json: Some(json),
-            })
-        }
-        _ => None,
-    }
-}
-
-pub fn paste(state: &EditorState, data: &ClipboardData) -> Option<Transaction> {
-    // If we have internal JSON, insert it as a block
-    if let Some(json) = &data.internal_json {
-        if let Ok(block) = serde_json::from_str::<Block>(json) {
-            let current_id = state.selection().block_id();
-            let (parent_id, index) = state.doc().parent_and_index(current_id)?;
-            let mut new_block = block;
-            new_block.id = BlockId::new();
-            reassign_ids(&mut new_block);
-            return Some(Transaction::new().with_step(Step::InsertBlock {
-                parent_id,
-                index: index + 1,
-                block: new_block,
-            }));
-        }
-    }
-
-    // Otherwise, insert as plain text
-    let text = &data.plain_text;
-    match state.selection() {
-        Selection::Cursor { block_id, offset } => {
-            Some(Transaction::new().with_step(Step::InsertText {
-                block_id: block_id.clone(),
-                offset: *offset,
-                text: text.clone(),
-                marks: vec![],
-            }))
-        }
-        Selection::Text { block_id, from, to } => {
-            // Delete selection then insert
-            Some(
-                Transaction::new()
-                    .with_step(Step::DeleteText {
-                        block_id: block_id.clone(),
-                        from: *from,
-                        to: *to,
-                    })
-                    .with_step(Step::InsertText {
-                        block_id: block_id.clone(),
-                        offset: *from,
-                        text: text.clone(),
-                        marks: vec![],
-                    }),
-            )
-        }
-        _ => None,
-    }
-}
-
 // === Helpers ===
 
 fn spans_have_mark_in_range(spans: &[TextSpan], from: usize, to: usize, mark_type: &str) -> bool {
     let mut offset = 0;
     for span in spans {
-        let span_end = offset + span.text.len();
+        let span_end = offset + span.text.encode_utf16().count();
         if span_end > from && offset < to && span.marks.iter().any(|m| m.mark_type == mark_type) {
             return true;
         }
@@ -503,26 +398,13 @@ fn spans_have_mark_in_range(spans: &[TextSpan], from: usize, to: usize, mark_typ
     false
 }
 
-fn extract_text_range(spans: &[TextSpan], from: usize, to: usize) -> String {
-    let full_text: String = spans.iter().map(|s| s.text.as_str()).collect();
-    full_text.get(from..to).unwrap_or("").to_string()
-}
-
-fn block_to_plain_text(block: &Block) -> String {
-    match &block.content {
-        BlockContent::RichText(spans) => spans.iter().map(|s| s.text.as_str()).collect(),
-        BlockContent::Raw(s) => s.clone(),
-        BlockContent::Empty => String::new(),
-    }
-}
-
-fn default_content_for_type(block_type: &str) -> BlockContent {
-    match block_type {
-        "codeBlock" | "math" => BlockContent::Raw(String::new()),
-        "divider" | "image" | "embed" | "file" | "bulletList" | "orderedList" | "table"
-        | "columns" => BlockContent::Empty,
-        _ => BlockContent::RichText(Vec::new()),
-    }
+fn default_content_for_type(state: &EditorState, block_type: &str) -> Option<BlockContent> {
+    use gotipe_schema::ContentRule;
+    Some(match state.schema().nodes.get(block_type)?.content {
+        ContentRule::RawText => BlockContent::Raw(String::new()),
+        ContentRule::Empty => BlockContent::Empty,
+        ContentRule::RichText => BlockContent::RichText(Vec::new()),
+    })
 }
 
 fn reassign_ids(block: &mut Block) {
@@ -534,22 +416,74 @@ fn reassign_ids(block: &mut Block) {
 
 fn toggle_list_type(state: &EditorState, list_type: &str) -> Option<Transaction> {
     let block_id = state.selection().block_id();
-    let _block = state.doc().find_block(block_id)?;
-
-    // If already in a list of this type, convert back to paragraph
     let (parent_id, _) = state.doc().parent_and_index(block_id)?;
-    if let Some(ref pid) = parent_id {
-        let parent = state.doc().find_block(pid)?;
+    if let Some(parent_id) = parent_id {
+        let parent = state.doc().find_block(&parent_id)?;
         if parent.block_type == list_type {
-            // Unwrap: move the block out of the list
+            let (grandparent, index) = state.doc().parent_and_index(&parent_id)?;
+            let selected_index = parent
+                .children
+                .iter()
+                .position(|item| &item.id == block_id)?;
+            let mut paragraph = parent.children[selected_index].clone();
+            paragraph.block_type = "paragraph".into();
+            let paragraph_spec = state.schema().nodes.get("paragraph")?;
+            paragraph
+                .attrs
+                .retain(|key, _| paragraph_spec.attrs.contains_key(key));
+            let children = if paragraph_spec.allows_children {
+                Vec::new()
+            } else {
+                std::mem::take(&mut paragraph.children)
+            };
+            let mut replacement = Vec::new();
+            if selected_index > 0 {
+                let mut before = parent.clone();
+                before.children.truncate(selected_index);
+                replacement.push(before);
+            }
+            replacement.push(paragraph);
+            replacement.extend(children);
+            if selected_index + 1 < parent.children.len() {
+                let mut after = parent.clone();
+                if selected_index > 0 {
+                    after.id = BlockId::new();
+                }
+                after.children = parent.children[selected_index + 1..].to_vec();
+                if after.block_type == "orderedList" {
+                    let start = match parent.attrs.get("start") {
+                        Some(AttrValue::Number(value)) => *value,
+                        _ => 1.0,
+                    };
+                    after.attrs.insert(
+                        "start".into(),
+                        AttrValue::Number(start + selected_index as f64 + 1.0),
+                    );
+                }
+                replacement.push(after);
+            }
+            let mut tr = Transaction::new().with_step(Step::DeleteBlock {
+                block_id: parent_id,
+            });
+            tr.steps
+                .extend(replacement.into_iter().enumerate().map(|(offset, block)| {
+                    Step::InsertBlock {
+                        parent_id: grandparent.clone(),
+                        index: index + offset,
+                        block,
+                    }
+                }));
+            tr.selection = Some(state.selection().clone());
+            return Some(tr);
+        }
+        if parent.block_type == "bulletList" || parent.block_type == "orderedList" {
             return Some(Transaction::new().with_step(Step::SetBlockType {
-                block_id: block_id.clone(),
-                new_type: "paragraph".into(),
+                block_id: parent_id,
+                new_type: list_type.into(),
                 attrs: HashMap::new(),
             }));
         }
     }
-
     wrap_in_list(state, list_type, None)
 }
 
@@ -560,134 +494,38 @@ fn wrap_in_list(
 ) -> Option<Transaction> {
     let block_id = state.selection().block_id();
     let block = state.doc().find_block(block_id)?;
-    let (parent_id, index) = state.doc().parent_and_index(block_id)?;
-
-    // Create list item from the current block content
-    let mut list_item_attrs = HashMap::new();
-    if let Some((k, v)) = extra_attr {
-        list_item_attrs.insert(k.into(), v);
+    if matches!(
+        state.schema().nodes.get(&block.block_type)?.content,
+        gotipe_schema::ContentRule::Empty
+    ) {
+        return None;
     }
-    let list_item = Block {
-        id: BlockId::new(),
-        block_type: "listItem".into(),
-        attrs: list_item_attrs,
-        content: block.content.clone(),
-        children: vec![],
-    };
-
-    let list_block = Block {
-        id: BlockId::new(),
-        block_type: list_type.into(),
-        attrs: HashMap::new(),
-        content: BlockContent::Empty,
-        children: vec![list_item],
-    };
-
-    let mut tr = Transaction::new();
-    tr.steps.push(Step::DeleteBlock {
-        block_id: block_id.clone(),
-    });
-    tr.steps.push(Step::InsertBlock {
-        parent_id,
-        index,
-        block: list_block,
-    });
-    Some(tr)
+    let (parent_id, index) = state.doc().parent_and_index(block_id)?;
+    let mut attrs = HashMap::new();
+    if let Some((key, value)) = extra_attr {
+        attrs.insert(key.into(), value);
+    }
+    let list = Block::new_with_type(list_type, BlockContent::Empty);
+    let list_id = list.id.clone();
+    Some(
+        Transaction::new()
+            .with_step(Step::InsertBlock {
+                parent_id,
+                index,
+                block: list,
+            })
+            .with_step(Step::MoveBlock {
+                block_id: block_id.clone(),
+                new_parent_id: Some(list_id),
+                new_index: 0,
+            })
+            .with_step(Step::SetBlockType {
+                block_id: block_id.clone(),
+                new_type: "listItem".into(),
+                attrs,
+            }),
+    )
 }
 
 #[cfg(test)]
-mod tests {
-    use super::*;
-    use gotipe_schema::{Block, BlockContent, BlockId, TextSpan};
-
-    fn test_state_with_selection(from: usize, to: usize) -> EditorState {
-        let schema = gotipe_schema::defaults::default_block_editor();
-        let doc = gotipe_schema::Document {
-            blocks: vec![Block {
-                id: BlockId("b1".into()),
-                block_type: "paragraph".into(),
-                attrs: HashMap::new(),
-                content: BlockContent::RichText(vec![TextSpan {
-                    text: "Hello World".into(),
-                    marks: vec![],
-                }]),
-                children: vec![],
-            }],
-            version: 0,
-        };
-        EditorState::new(doc, schema).with_selection(Selection::Text {
-            block_id: BlockId("b1".into()),
-            from,
-            to,
-        })
-    }
-
-    fn test_state_cursor(offset: usize) -> EditorState {
-        let schema = gotipe_schema::defaults::default_block_editor();
-        let doc = gotipe_schema::Document {
-            blocks: vec![Block {
-                id: BlockId("b1".into()),
-                block_type: "paragraph".into(),
-                attrs: HashMap::new(),
-                content: BlockContent::RichText(vec![TextSpan {
-                    text: "Hello World".into(),
-                    marks: vec![],
-                }]),
-                children: vec![],
-            }],
-            version: 0,
-        };
-        EditorState::new(doc, schema).with_selection(Selection::Cursor {
-            block_id: BlockId("b1".into()),
-            offset,
-        })
-    }
-
-    #[test]
-    fn test_toggle_bold_creates_add_mark() {
-        let state = test_state_with_selection(0, 5);
-        let tr = toggle_bold(&state).unwrap();
-        assert_eq!(tr.steps.len(), 1);
-        assert!(matches!(&tr.steps[0], Step::AddMark { mark, .. } if mark.mark_type == "bold"));
-    }
-
-    #[test]
-    fn test_split_block_from_cursor() {
-        let state = test_state_cursor(5);
-        let tr = split_block(&state).unwrap();
-        assert!(matches!(&tr.steps[0], Step::SplitBlock { offset: 5, .. }));
-    }
-
-    #[test]
-    fn test_insert_block_after() {
-        let state = test_state_cursor(0);
-        let tr = insert_block_after(&state, "paragraph").unwrap();
-        assert!(matches!(&tr.steps[0], Step::InsertBlock { index: 1, .. }));
-    }
-
-    #[test]
-    fn test_copy_returns_clipboard_data() {
-        let state = test_state_with_selection(0, 5);
-        let data = copy(&state).unwrap();
-        assert_eq!(data.plain_text, "Hello");
-    }
-
-    #[test]
-    fn test_paste_inserts_text_at_cursor() {
-        let state = test_state_cursor(5);
-        let data = ClipboardData {
-            plain_text: " Beautiful".into(),
-            html: None,
-            internal_json: None,
-        };
-        let tr = paste(&state, &data).unwrap();
-        assert!(matches!(&tr.steps[0], Step::InsertText { text, .. } if text == " Beautiful"));
-    }
-
-    #[test]
-    fn test_select_all_returns_multi_selection() {
-        let state = test_state_cursor(0);
-        let tr = select_all(&state).unwrap();
-        assert!(matches!(tr.selection, Some(Selection::Multi { .. })));
-    }
-}
+mod tests;

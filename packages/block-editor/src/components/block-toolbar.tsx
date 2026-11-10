@@ -1,8 +1,9 @@
-import type { GoTipeEditor } from "@gotipe/core";
+import type { Block, GoTipeEditor, Transaction } from "@gotipe/core";
+import { useFloatingPosition } from "@gotipe/react";
 import type React from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { BlockContextMenu } from "./block-context-menu";
-import { DragHandle } from "./drag-handle";
+import { DragHandle, type DragHandleProps } from "./drag-handle";
 
 type ViewBlock = ReturnType<GoTipeEditor["getViewState"]>["blocks"][number];
 type BlockLocation = {
@@ -31,7 +32,7 @@ function findBlockLocation(
   return null;
 }
 
-function createInsertedBlock(parentType: string | null, blockId: string) {
+function createInsertedBlock(parentType: string | null, blockId: string): Block {
   if (parentType === "bulletList" || parentType === "orderedList") {
     return {
       id: blockId,
@@ -39,7 +40,7 @@ function createInsertedBlock(parentType: string | null, blockId: string) {
       attrs: {},
       content: [],
       children: [],
-    } as const;
+    };
   }
   if (parentType === "todoList") {
     return {
@@ -48,7 +49,7 @@ function createInsertedBlock(parentType: string | null, blockId: string) {
       attrs: { checked: false },
       content: [],
       children: [],
-    } as const;
+    };
   }
   return {
     id: blockId,
@@ -56,7 +57,7 @@ function createInsertedBlock(parentType: string | null, blockId: string) {
     attrs: {},
     content: [],
     children: [],
-  } as const;
+  };
 }
 
 export interface BlockToolbarProps {
@@ -66,6 +67,7 @@ export interface BlockToolbarProps {
   dragBlockId?: string;
   onDragStart: (blockId: string) => void;
   onDragEnd: () => void;
+  touchDrag?: DragHandleProps["touchDrag"];
   openSlashMenuOnAdd?: boolean;
 }
 
@@ -76,12 +78,13 @@ export function BlockToolbar({
   dragBlockId,
   onDragStart,
   onDragEnd,
+  touchDrag,
   openSlashMenuOnAdd = false,
 }: BlockToolbarProps) {
   const [contextMenuOpen, setContextMenuOpen] = useState(false);
   const [tooltipKind, setTooltipKind] = useState<"add" | "drag">("add");
   const [tooltipVisible, setTooltipVisible] = useState(false);
-  const [tooltipLeft, setTooltipLeft] = useState(0);
+  const tooltipRef = useRef<HTMLDivElement | null>(null);
   const toolbarRef = useRef<HTMLDivElement | null>(null);
   const addControlRef = useRef<HTMLDivElement | null>(null);
   const dragControlRef = useRef<HTMLDivElement | null>(null);
@@ -94,24 +97,28 @@ export function BlockToolbar({
     }
   }, []);
 
-  const updateTooltipPosition = useCallback((kind: "add" | "drag") => {
-    const toolbarEl = toolbarRef.current;
-    const targetEl = kind === "add" ? addControlRef.current : dragControlRef.current;
-    if (!toolbarEl || !targetEl) return;
-    const toolbarRect = toolbarEl.getBoundingClientRect();
-    const targetRect = targetEl.getBoundingClientRect();
-    const nextLeft = targetRect.left - toolbarRect.left + targetRect.width / 2;
-    setTooltipLeft(Math.round(nextLeft));
-  }, []);
+  const tooltipAnchor = useCallback(
+    () =>
+      (tooltipKind === "add"
+        ? addControlRef.current
+        : dragControlRef.current
+      )?.getBoundingClientRect() ?? null,
+    [tooltipKind],
+  );
+  const tooltipPosition = useFloatingPosition({
+    open: tooltipVisible,
+    anchor: tooltipAnchor,
+    element: tooltipRef,
+    placement: "top",
+  });
 
   const showTooltip = useCallback(
     (kind: "add" | "drag") => {
       clearTooltipHideTimer();
       setTooltipKind(kind);
       setTooltipVisible(true);
-      requestAnimationFrame(() => updateTooltipPosition(kind));
     },
-    [clearTooltipHideTimer, updateTooltipPosition],
+    [clearTooltipHideTimer],
   );
 
   const hideTooltip = useCallback(() => {
@@ -129,17 +136,6 @@ export function BlockToolbar({
 
   useEffect(() => () => clearTooltipHideTimer(), [clearTooltipHideTimer]);
 
-  useEffect(() => {
-    if (!tooltipVisible) return;
-    const handleViewportChange = () => updateTooltipPosition(tooltipKind);
-    window.addEventListener("resize", handleViewportChange);
-    window.addEventListener("scroll", handleViewportChange, true);
-    return () => {
-      window.removeEventListener("resize", handleViewportChange);
-      window.removeEventListener("scroll", handleViewportChange, true);
-    };
-  }, [tooltipKind, tooltipVisible, updateTooltipPosition]);
-
   const handleContextMenuToggle = useCallback(() => {
     hideTooltip();
     setContextMenuOpen((prev) => !prev);
@@ -147,6 +143,7 @@ export function BlockToolbar({
 
   const handleAddBlock = useCallback(
     (e: React.MouseEvent<HTMLButtonElement>) => {
+      if (!editor.isEditable) return;
       const state = editor.getViewState();
       const insertionTargetId = addBlockId ?? blockId;
       const location = findBlockLocation(state.blocks, insertionTargetId);
@@ -156,43 +153,35 @@ export function BlockToolbar({
       const newBlockId = crypto.randomUUID();
       const newBlock = createInsertedBlock(location.parentType, newBlockId);
 
+      const steps: Transaction["steps"] = [
+        {
+          type: "insertBlock",
+          parentId: location.parentId,
+          index: location.index + (insertAbove ? 0 : 1),
+          block: newBlock,
+        },
+      ];
+      if (openSlashMenuOnAdd) {
+        steps.push({
+          type: "insertText",
+          blockId: newBlockId,
+          offset: 0,
+          text: "/",
+          marks: [],
+        });
+      }
+      // Adding from the toolbar is one action, including its command trigger.
       editor.dispatch({
-        steps: [
-          {
-            type: "insertBlock",
-            parentId: location.parentId,
-            index: location.index + (insertAbove ? 0 : 1),
-            block: newBlock,
-          },
-        ],
+        steps,
+        selection: {
+          type: "cursor",
+          blockId: newBlockId,
+          offset: openSlashMenuOnAdd ? 1 : 0,
+        },
       });
       hideTooltip();
-
-      editor.setSelection({
-        anchor: { blockId: newBlockId, offset: 0 },
-        head: { blockId: newBlockId, offset: 0 },
-      });
       editor.focus();
-
-      if (!openSlashMenuOnAdd) return;
-
-      editor.dispatch({
-        steps: [
-          {
-            type: "insertText",
-            blockId: newBlockId,
-            offset: 0,
-            text: "/",
-            marks: [],
-          },
-        ],
-      });
-      editor.setSelection({
-        anchor: { blockId: newBlockId, offset: 1 },
-        head: { blockId: newBlockId, offset: 1 },
-      });
-      editor.focus();
-      editor.emit("openSlashMenu");
+      if (openSlashMenuOnAdd) editor.emit("openSlashMenu");
     },
     [editor, addBlockId, blockId, hideTooltip, openSlashMenuOnAdd],
   );
@@ -255,13 +244,14 @@ export function BlockToolbar({
           scheduleHideTooltip();
         }}
       >
-        <div onClick={handleContextMenuToggle} role="presentation">
-          <DragHandle
-            blockId={dragBlockId ?? blockId}
-            onDragStart={onDragStart}
-            onDragEnd={onDragEnd}
-          />
-        </div>
+        <DragHandle
+          blockId={dragBlockId ?? blockId}
+          wholeBlockId={blockId}
+          onDragStart={onDragStart}
+          onDragEnd={onDragEnd}
+          touchDrag={touchDrag}
+          onClick={handleContextMenuToggle}
+        />
         <BlockContextMenu
           editor={editor}
           blockId={blockId}
@@ -274,7 +264,13 @@ export function BlockToolbar({
         role="tooltip"
         aria-hidden={tooltipVisible ? "false" : "true"}
         data-gotipe-toolbar-tooltip={tooltipKind}
-        style={{ left: tooltipLeft }}
+        ref={tooltipRef}
+        style={{
+          ...tooltipPosition,
+          position: "fixed",
+          transform: "none",
+          visibility: tooltipVisible && tooltipPosition ? "visible" : "hidden",
+        }}
       >
         {tooltipKind === "add" ? (
           <>
@@ -290,6 +286,11 @@ export function BlockToolbar({
           <>
             <span>Drag to move</span>
             <span className="gotipe-block-toolbar-tooltip-meta">Click to open menu</span>
+            {dragBlockId && dragBlockId !== blockId && (
+              <span className="gotipe-block-toolbar-tooltip-meta">
+                Alt-drag moves the whole list
+              </span>
+            )}
           </>
         )}
       </div>

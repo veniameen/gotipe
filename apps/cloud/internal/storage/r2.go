@@ -67,7 +67,14 @@ func (s *R2Store) Get(ctx context.Context, key string) ([]byte, error) {
 		return nil, err
 	}
 	defer out.Body.Close()
-	return io.ReadAll(out.Body)
+	data, err := io.ReadAll(io.LimitReader(out.Body, MaxObjectBytes+1))
+	if err != nil {
+		return nil, err
+	}
+	if int64(len(data)) > MaxObjectBytes {
+		return nil, fmt.Errorf("object exceeds %d bytes", MaxObjectBytes)
+	}
+	return data, nil
 }
 
 func (s *R2Store) Delete(ctx context.Context, key string) error {

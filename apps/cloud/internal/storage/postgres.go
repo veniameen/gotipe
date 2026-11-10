@@ -8,7 +8,7 @@ import (
 )
 
 type PostgresStore struct {
-	Pool *pgxpool.Pool
+	Pool ConnectionPool
 }
 
 func NewPostgresStore(ctx context.Context, databaseURL string, maxConns, idleConns int32) (*PostgresStore, error) {
@@ -26,6 +26,7 @@ func NewPostgresStore(ctx context.Context, databaseURL string, maxConns, idleCon
 	}
 
 	if err := pool.Ping(ctx); err != nil {
+		pool.Close()
 		return nil, fmt.Errorf("ping database: %w", err)
 	}
 

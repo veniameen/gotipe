@@ -24,6 +24,7 @@ export {
   InlineCode,
   Link,
   Highlight,
+  TextColor,
   Superscript,
   Subscript,
 } from "./marks";

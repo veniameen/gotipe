@@ -1,16 +1,17 @@
+mod markdown;
+mod marks;
+
 use std::collections::HashMap;
 
 use crate::attr::{AttrSpec, AttrType, AttrValue};
-use crate::mark_spec::MarkSpec;
 use crate::node_spec::{ContentRule, MarksRule, NodeSpec};
 use crate::validate::Schema;
 
 /// Create the standard schema with Notion-like block types
 pub fn default_block_editor() -> Schema {
     let mut nodes = HashMap::new();
-    let mut marks = HashMap::new();
 
-    // === Nodes (20) ===
+    // === Nodes ===
 
     nodes.insert(
         "paragraph".into(),
@@ -36,12 +37,7 @@ pub fn default_block_editor() -> Schema {
             attrs: HashMap::from([(
                 "level".into(),
                 AttrSpec {
-                    attr_type: AttrType::Enum(
-                        vec!["1", "2", "3", "4", "5", "6"]
-                            .into_iter()
-                            .map(String::from)
-                            .collect(),
-                    ),
+                    attr_type: AttrType::Number,
                     default: Some(AttrValue::Number(1.0)),
                     required: true,
                 },
@@ -109,7 +105,7 @@ pub fn default_block_editor() -> Schema {
             marks_allowed: MarksRule::All,
             leaf: false,
             allows_children: true,
-            child_types: Some(vec!["bulletList".into(), "orderedList".into()]),
+            child_types: None,
         },
     );
 
@@ -486,121 +482,24 @@ pub fn default_block_editor() -> Schema {
         },
     );
 
-    // === Marks (9) ===
-
-    marks.insert(
-        "bold".into(),
-        MarkSpec {
-            name: "bold".into(),
-            exclusive_group: None,
+    // Preserve unsupported Markdown constructs as editable source without loss.
+    nodes.insert(
+        "markdownRaw".into(),
+        NodeSpec {
+            name: "markdownRaw".into(),
+            group: vec!["block".into()],
+            content: ContentRule::RawText,
             attrs: HashMap::new(),
-            rank: 10,
+            top_level: true,
+            marks_allowed: MarksRule::None,
+            leaf: false,
+            allows_children: false,
+            child_types: None,
         },
     );
 
-    marks.insert(
-        "italic".into(),
-        MarkSpec {
-            name: "italic".into(),
-            exclusive_group: None,
-            attrs: HashMap::new(),
-            rank: 20,
-        },
-    );
-
-    marks.insert(
-        "underline".into(),
-        MarkSpec {
-            name: "underline".into(),
-            exclusive_group: None,
-            attrs: HashMap::new(),
-            rank: 30,
-        },
-    );
-
-    marks.insert(
-        "strikethrough".into(),
-        MarkSpec {
-            name: "strikethrough".into(),
-            exclusive_group: None,
-            attrs: HashMap::new(),
-            rank: 40,
-        },
-    );
-
-    marks.insert(
-        "code".into(),
-        MarkSpec {
-            name: "code".into(),
-            exclusive_group: Some("code".into()),
-            attrs: HashMap::new(),
-            rank: 50,
-        },
-    );
-
-    marks.insert(
-        "link".into(),
-        MarkSpec {
-            name: "link".into(),
-            exclusive_group: None,
-            attrs: HashMap::from([
-                (
-                    "href".into(),
-                    AttrSpec {
-                        attr_type: AttrType::String,
-                        default: None,
-                        required: true,
-                    },
-                ),
-                (
-                    "target".into(),
-                    AttrSpec {
-                        attr_type: AttrType::String,
-                        default: Some(AttrValue::String("_blank".into())),
-                        required: false,
-                    },
-                ),
-            ]),
-            rank: 60,
-        },
-    );
-
-    marks.insert(
-        "highlight".into(),
-        MarkSpec {
-            name: "highlight".into(),
-            exclusive_group: None,
-            attrs: HashMap::from([(
-                "color".into(),
-                AttrSpec {
-                    attr_type: AttrType::String,
-                    default: Some(AttrValue::String("yellow".into())),
-                    required: false,
-                },
-            )]),
-            rank: 5,
-        },
-    );
-
-    marks.insert(
-        "superscript".into(),
-        MarkSpec {
-            name: "superscript".into(),
-            exclusive_group: Some("script".into()),
-            attrs: HashMap::new(),
-            rank: 70,
-        },
-    );
-
-    marks.insert(
-        "subscript".into(),
-        MarkSpec {
-            name: "subscript".into(),
-            exclusive_group: Some("script".into()),
-            attrs: HashMap::new(),
-            rank: 80,
-        },
-    );
+    let mut marks = marks::default_marks();
+    markdown::extend(&mut nodes, &mut marks);
 
     Schema { nodes, marks }
 }

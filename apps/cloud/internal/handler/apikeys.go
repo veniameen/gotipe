@@ -24,20 +24,20 @@ func NewAPIKeysHandler(db *storage.PostgresStore, auditLogger *audit.AuditLogger
 }
 
 type CreateAPIKeyRequest struct {
-	Name      string    `json:"name"`
-	Scopes    []string  `json:"scopes"`
-	ExpiresAt *string   `json:"expires_at,omitempty"`
+	Name      string   `json:"name"`
+	Scopes    []string `json:"scopes"`
+	ExpiresAt *string  `json:"expires_at,omitempty"`
 }
 
 type APIKeyResponse struct {
-	ID        string    `json:"id"`
-	Name      string    `json:"name"`
-	Prefix    string    `json:"prefix"`
-	Key       string    `json:"key,omitempty"` // only on create
-	Scopes    []string  `json:"scopes"`
-	LastUsed  *string   `json:"last_used_at,omitempty"`
-	ExpiresAt *string   `json:"expires_at,omitempty"`
-	CreatedAt string    `json:"created_at"`
+	ID        string   `json:"id"`
+	Name      string   `json:"name"`
+	Prefix    string   `json:"prefix"`
+	Key       string   `json:"key,omitempty"` // only on create
+	Scopes    []string `json:"scopes"`
+	LastUsed  *string  `json:"last_used_at,omitempty"`
+	ExpiresAt *string  `json:"expires_at,omitempty"`
+	CreatedAt string   `json:"created_at"`
 }
 
 // CreateAPIKey handles POST /v1/api-keys
@@ -60,6 +60,13 @@ func (h *APIKeysHandler) CreateAPIKey() http.HandlerFunc {
 			return
 		}
 
+		validScopes := map[string]bool{"documents:read": true, "documents:write": true, "ai:use": true, "export:use": true, "account:manage": true}
+		for _, scope := range req.Scopes {
+			if !validScopes[scope] || !user.HasScope(scope) {
+				apierror.ErrForbidden.WithMessage("Cannot grant an unavailable scope").Write(w)
+				return
+			}
+		}
 		rawKey, prefix := internalAuth.GenerateKey(h.env)
 		keyHash := internalAuth.HashKey(rawKey)
 		keyID := uuid.New().String()
@@ -122,7 +129,8 @@ func (h *APIKeysHandler) ListAPIKeys() http.HandlerFunc {
 			var k APIKeyResponse
 			var lastUsed, expiresAt, createdAt *time.Time
 			if err := rows.Scan(&k.ID, &k.Name, &k.Prefix, &k.Scopes, &lastUsed, &expiresAt, &createdAt); err != nil {
-				continue
+				apierror.ErrInternal.Write(w)
+				return
 			}
 			if lastUsed != nil {
 				s := lastUsed.Format(time.RFC3339)

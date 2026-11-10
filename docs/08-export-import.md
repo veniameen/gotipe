@@ -1,5 +1,10 @@
 # GoTipe -- Document Conversion (Export/Import)
 
+> Исторический проектный документ. Сигнатуры, размеры, цены, сравнения и планы ниже
+> не подтверждают текущую реализацию или доступный сервис. Актуальные контракты:
+> [разработка](development/export-contract.md), [экспорт](development/export-contract.md),
+> [Cloud](development/cloud-contract.md), [готовность выпуска](22-release-readiness.md).
+
 ## Обзор
 
 `gotipe-export` -- Rust crate, реализующий конвертацию документов между форматами. Компилируется в WebAssembly (работает в браузере) и нативный binary (работает на сервере). Один и тот же код, одинаковый результат.

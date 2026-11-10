@@ -8,6 +8,10 @@ import type { Block } from "./types";
 const ids = (blocks: Block[]): string[] => blocks.map((b) => b.id);
 
 describe("id reuse after an external change", () => {
+  it("rejects an exhausted ID factory rather than returning duplicate document identities", () => {
+    expect(() => parseMarkdown("one\n\ntwo", { createId: () => "same" })).toThrow("unique");
+    expect(() => parseMarkdown("one", { createId: () => "" })).toThrow("non-empty");
+  });
   const first = parseMarkdown(WIKI_PAGE, { createId: counterIds("old") });
   const old = first.doc.blocks;
 

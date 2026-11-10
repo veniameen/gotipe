@@ -1,4 +1,4 @@
-import { type GoTipeEditor, GoTipeError } from "@gotipe/core";
+import { type GoTipeEditor, GoTipeError, saveAsset } from "@gotipe/core";
 import { useEffect, useState } from "react";
 
 const SCHEME = /^[a-zA-Z][a-zA-Z0-9+.-]*:/;
@@ -60,7 +60,7 @@ export function useResolvedAsset(
 
 /**
  * Stores a file through `host.saveAsset` and returns the document path.
- * Without a host the file is shown through an object URL (standalone mode).
+ * Without a host small files are embedded as durable data URLs (standalone mode).
  * Failures are reported as `error` events and resolve to `null`.
  */
 export async function saveAssetWithHost(
@@ -68,15 +68,9 @@ export async function saveAssetWithHost(
   file: File | Blob,
   kind: "image" | "file",
 ): Promise<{ src: string; name: string } | null> {
-  const name = file instanceof File && file.name ? file.name : kind === "image" ? "image" : "file";
-  const save = editor.host.saveAsset;
-  if (!save) {
-    return { src: URL.createObjectURL(file), name };
-  }
+  const name = typeof File !== "undefined" && file instanceof File && file.name ? file.name : kind;
   try {
-    const saved = await save(file, { kind, name, mediaType: file.type, size: file.size });
-    if (!saved?.src) throw new Error("The host returned no path");
-    return { src: saved.src, name: saved.name ?? name };
+    return await saveAsset(editor.host, file, kind);
   } catch (e) {
     editor.reportError(
       e instanceof GoTipeError

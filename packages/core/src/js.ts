@@ -1,8 +1,9 @@
 // @gotipe/core/js — the same API as @gotipe/core with the pure JS engine.
 // Nothing here references @gotipe/wasm, so bundles stay free of WASM and the
 // editor runs under a CSP without 'wasm-unsafe-eval'.
-import { type CreateEditorOptions, type GoTipeEditor, createEditorWithLoader } from "./editor";
+import { createEditorWithLoader } from "./editor";
 import { GoTipeError } from "./error";
+import type { CreateEditorOptions, GoTipeEditor } from "./types/editor";
 
 export * from "./common";
 

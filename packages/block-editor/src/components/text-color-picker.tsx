@@ -1,5 +1,7 @@
-import type { GoTipeEditor } from "@gotipe/core";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { type GoTipeEditor, toSafeColor } from "@gotipe/core";
+import { useEditorState } from "@gotipe/react";
+import { currentMarks } from "./formatting/selection";
+import { useFormattingMenu } from "./formatting/use-formatting-menu";
 
 export interface TextColorPickerProps {
   editor: GoTipeEditor;
@@ -27,96 +29,29 @@ const TEXT_COLORS: ColorOption[] = [
   { name: "Red", bg: "transparent", text: "#dc2626" },
 ];
 
-function getCurrentColor(editor: GoTipeEditor): string | null {
-  const state = editor.getViewState();
-  const { anchor } = state.selection;
-  const block = state.blocks.find((b) => b.id === anchor.blockId);
-  if (!block || !Array.isArray(block.content)) return null;
-  let pos = 0;
-  for (const span of block.content) {
-    const end = pos + span.text.length;
-    if (anchor.offset >= pos && anchor.offset < end) {
-      const highlight = span.marks.find((m) => m.type === "highlight");
-      if (highlight) return (highlight.attrs as Record<string, string>)?.color ?? null;
-      const textColor = span.marks.find((m) => m.type === "textColor");
-      if (textColor) return (textColor.attrs as Record<string, string>)?.color ?? null;
-      return null;
-    }
-    pos = end;
-  }
-  return null;
-}
-
 export function TextColorPicker({ editor }: TextColorPickerProps) {
-  const [open, setOpen] = useState(false);
-  const containerRef = useRef<HTMLDivElement>(null);
-  const runWithFocus = useCallback(
-    (apply: (chain: ReturnType<GoTipeEditor["chain"]>) => void) => {
-      const chain = editor.chain().focus();
-      apply(chain);
-      chain.run();
-    },
-    [editor],
-  );
-
-  const currentColor = getCurrentColor(editor);
-
-  const handleHighlight = useCallback(
-    (color: ColorOption) => {
-      runWithFocus((chain) => {
-        chain.setMark("highlight", { color: color.bg, textColor: color.text });
-      });
-      setOpen(false);
-    },
-    [runWithFocus],
-  );
-
-  const handleTextColor = useCallback(
-    (color: ColorOption) => {
-      runWithFocus((chain) => {
-        chain.setMark("textColor", { color: color.text });
-      });
-      setOpen(false);
-    },
-    [runWithFocus],
-  );
-
-  const handleReset = useCallback(() => {
-    runWithFocus((chain) => {
-      chain.unsetMark("highlight").unsetMark("textColor");
-    });
-    setOpen(false);
-  }, [runWithFocus]);
-
-  // Close on outside click
-  useEffect(() => {
-    if (!open) return;
-    const handleClick = (e: MouseEvent) => {
-      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
-        setOpen(false);
-      }
-    };
-    document.addEventListener("mousedown", handleClick);
-    return () => document.removeEventListener("mousedown", handleClick);
-  }, [open]);
-
-  // Close on Escape
-  useEffect(() => {
-    if (!open) return;
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setOpen(false);
-    };
-    document.addEventListener("keydown", handleKeyDown);
-    return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [open]);
-
+  useEditorState(editor, (value) => value);
+  const menu = useFormattingMenu(editor);
+  const marks = currentMarks(editor);
+  const active =
+    marks.find((mark) => mark.type === "textColor") ??
+    marks.find((mark) => mark.type === "highlight");
+  const currentColor = toSafeColor(active?.attrs.color);
+  const handleHighlight = (color: ColorOption) =>
+    menu.run((chain) => chain.setMark("highlight", { color: color.bg }));
+  const handleTextColor = (color: ColorOption) =>
+    menu.run((chain) => chain.setMark("textColor", { color: color.text }));
+  const handleReset = () =>
+    menu.run((chain) => chain.unsetMark("highlight").unsetMark("textColor"));
   return (
-    <div ref={containerRef} style={{ position: "relative" }}>
+    <div>
       <button
         type="button"
-        onClick={() => setOpen((prev) => !prev)}
-        aria-haspopup="true"
-        aria-expanded={open}
+        ref={menu.trigger}
+        disabled={!menu.editable}
+        onClick={() => (menu.open ? menu.close() : menu.show())}
+        aria-haspopup="dialog"
+        aria-expanded={menu.open}
         aria-label="Text color"
         style={{
           display: "flex",
@@ -152,8 +87,17 @@ export function TextColorPicker({ editor }: TextColorPickerProps) {
         />
       </button>
 
-      {open && (
-        <div className="gotipe-text-color-picker" data-gotipe-color-picker="">
+      {menu.open && (
+        <div
+          ref={menu.popup}
+          className="gotipe-text-color-picker"
+          role="dialog"
+          aria-label="Text and highlight colors"
+          data-gotipe-color-picker=""
+          data-gotipe-formatting-popup=""
+          style={menu.style}
+          onKeyDown={menu.keydown}
+        >
           {/* Highlight section */}
           <div
             style={{
@@ -175,6 +119,9 @@ export function TextColorPicker({ editor }: TextColorPickerProps) {
                 className="gotipe-text-color-swatch"
                 title={color.name}
                 aria-label={`Highlight ${color.name}`}
+                aria-pressed={marks.some(
+                  (mark) => mark.type === "highlight" && toSafeColor(mark.attrs.color) === color.bg,
+                )}
                 style={{ background: color.bg }}
                 onClick={() => handleHighlight(color)}
               />
@@ -202,6 +149,10 @@ export function TextColorPicker({ editor }: TextColorPickerProps) {
                 className="gotipe-text-color-swatch"
                 title={color.name}
                 aria-label={`Text color ${color.name}`}
+                aria-pressed={marks.some(
+                  (mark) =>
+                    mark.type === "textColor" && toSafeColor(mark.attrs.color) === color.text,
+                )}
                 style={{
                   background: "transparent",
                   border: "1px solid var(--gt-border-light, rgba(0,0,0,0.05))",
@@ -219,6 +170,7 @@ export function TextColorPicker({ editor }: TextColorPickerProps) {
             ))}
           </div>
 
+          {menu.error && <p role="alert">{menu.error}</p>}
           {/* Reset */}
           <button type="button" className="gotipe-text-color-reset" onClick={handleReset}>
             Reset color

@@ -1,7 +1,8 @@
 import type { GoTipeEditor } from "@gotipe/core";
 import { Editor } from "@gotipe/react";
 import type React from "react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { type DragPoint, useTouchDrag } from "../interaction/use-touch-drag";
 import { AiCommandBar } from "./ai-command-bar";
 import { AiStatusIndicator } from "./ai-status-indicator";
 import {
@@ -31,7 +32,7 @@ import type { Suggestion } from "./suggestion-toolbar";
 import { SuggestionToolbar } from "./suggestion-toolbar";
 import { ThemeToggle } from "./theme-toggle";
 
-const BLOCK_TOOLBAR_WIDTH = 36;
+const BLOCK_TOOLBAR_WIDTH = 50;
 const BLOCK_TOOLBAR_BUTTON_SIZE = 24;
 const TOOLBAR_HIDE_DELAY_MS = 20;
 const TOOLBAR_HOVER_X_MIN_OFFSET = 120;
@@ -75,6 +76,7 @@ export function BlockEditor({
   onSuggestionRejectAll,
   children,
 }: BlockEditorProps) {
+  const [editable, setEditable] = useState(editor?.isEditable ?? false);
   const [draggingBlockId, setDraggingBlockId] = useState<string | null>(null);
   const [draggingBlockType, setDraggingBlockType] = useState<string | null>(null);
   const [draggingParentId, setDraggingParentId] = useState<string | null>(null);
@@ -115,6 +117,44 @@ export function BlockEditor({
   }, [clearHideToolbarTimer, hideToolbarNow]);
 
   useEffect(() => () => clearHideToolbarTimer(), [clearHideToolbarTimer]);
+
+  useEffect(() => {
+    setEditable(editor?.isEditable ?? false);
+    return editor?.on("editableChange", (value) => {
+      setEditable(value);
+      if (!value) hideToolbarNow();
+    });
+  }, [editor, hideToolbarNow]);
+
+  useLayoutEffect(() => {
+    const root = containerRef.current;
+    if (!root || !hoveredToolbarTarget || !editor) return;
+    const update = () => {
+      const block = getBlockElById(root, hoveredToolbarTarget.anchorBlockId);
+      if (!block) return hideToolbarNow();
+      const container = root.getBoundingClientRect();
+      const line = getBlockFirstLineMetrics(block);
+      const next = {
+        top: line.top - container.top + (line.height - BLOCK_TOOLBAR_BUTTON_SIZE) / 2,
+        left: getToolbarRailLeft(root),
+      };
+      setToolbarPos((previous) =>
+        previous?.top === next.top && previous.left === next.left ? previous : next,
+      );
+    };
+    const observer = new ResizeObserver(update);
+    observer.observe(root);
+    const unsubscribe = editor.on("viewStateChange", update);
+    window.addEventListener("resize", update);
+    window.addEventListener("scroll", update, true);
+    update();
+    return () => {
+      observer.disconnect();
+      unsubscribe();
+      window.removeEventListener("resize", update);
+      window.removeEventListener("scroll", update, true);
+    };
+  }, [editor, hoveredToolbarTarget, hideToolbarNow]);
 
   // Track hovered block for floating toolbar
   const handleMouseMove = useCallback(
@@ -204,8 +244,10 @@ export function BlockEditor({
 
   const handleBlockDragStart = useCallback(
     (blockId: string) => {
-      if (!editor) return;
+      if (!editor?.isEditable) return;
       clearHideToolbarTimer();
+      containerRef.current &&
+        getBlockElById(containerRef.current, blockId)?.classList.add("dragging");
       const location = findBlockLocation(editor.getViewState().blocks, blockId);
       const canDragAsRow =
         !!location?.parentId &&
@@ -228,6 +270,10 @@ export function BlockEditor({
 
   const handleBlockDragEnd = useCallback(() => {
     clearHideToolbarTimer();
+    if (containerRef.current && draggingBlockIdRef.current)
+      getBlockElById(containerRef.current, draggingBlockIdRef.current)?.classList.remove(
+        "dragging",
+      );
     draggingBlockIdRef.current = null;
     draggingBlockTypeRef.current = null;
     draggingParentIdRef.current = null;
@@ -237,6 +283,50 @@ export function BlockEditor({
     setDraggingParentId(null);
     setDropTarget(null);
   }, [clearHideToolbarTimer]);
+
+  const touchTarget = useCallback(
+    (point: DragPoint): DropTarget | null => {
+      const root = containerRef.current;
+      const id = draggingBlockIdRef.current;
+      if (!root || !id || !editor?.isEditable || editor.isDestroyed) return null;
+      const rect = root.getBoundingClientRect();
+      if (
+        point.x < rect.left ||
+        point.x > rect.right ||
+        point.y < Math.max(0, rect.top) ||
+        point.y > Math.min(window.innerHeight, rect.bottom)
+      )
+        return null;
+      const type = draggingBlockTypeRef.current;
+      return type && LIST_ITEM_TYPES.has(type)
+        ? resolveListRowDropTarget(root, editor.getViewState().blocks, type, point.x, point.y)
+        : { parentId: null, index: getDropIndexForParent(root, null, point.y) };
+    },
+    [editor],
+  );
+  const touchDrag = useTouchDrag({
+    enabled: editable,
+    root: () => (editor?.isDestroyed ? null : containerRef.current),
+    start: (id) => {
+      if (!editor?.isEditable || editor.isDestroyed) return false;
+      handleBlockDragStart(id);
+      return true;
+    },
+    move: (point) => {
+      const target = touchTarget(point);
+      dropTargetRef.current = target;
+      setDropTarget(target);
+    },
+    drop: (point) => {
+      const target = touchTarget(point);
+      const id = draggingBlockIdRef.current;
+      if (target && id && editor) {
+        moveDraggedBlock(editor, id, target);
+        editor.focus();
+      }
+    },
+    end: handleBlockDragEnd,
+  });
 
   const handleDragOver = useCallback(
     (e: React.DragEvent<HTMLDivElement>) => {
@@ -357,10 +447,26 @@ export function BlockEditor({
       onDragOver={handleDragOver}
       onDrop={handleDrop}
       onDragLeave={handleDragLeave}
-      onMouseMove={showBlockToolbar ? handleMouseMove : undefined}
+      onMouseMove={showBlockToolbar && editable ? handleMouseMove : undefined}
+      onPointerDown={
+        showBlockToolbar && editable
+          ? (event) => {
+              if (event.pointerType !== "mouse") handleMouseMove(event);
+            }
+          : undefined
+      }
       onMouseLeave={showBlockToolbar ? handleMouseLeave : undefined}
     >
-      <Editor editor={editor}>
+      <Editor
+        editor={editor}
+        slotBefore={
+          showThemeToggle ? (
+            <div className="gotipe-block-editor-tools">
+              <ThemeToggle />
+            </div>
+          ) : undefined
+        }
+      >
         {showSlashMenu && <SlashMenu editor={editor} commands={editor.getSlashCommands()} />}
         {showBubbleMenu && <BlockEditorBubbleMenu editor={editor} enableAI={showAiCommandBar} />}
         {children}
@@ -372,7 +478,7 @@ export function BlockEditor({
       )}
 
       {/* Floating block toolbar — positioned in the left padding gutter */}
-      {showBlockToolbar && hoveredToolbarTarget && toolbarPos && (
+      {showBlockToolbar && editable && hoveredToolbarTarget && toolbarPos && (
         <div
           className="gotipe-block-toolbar-wrapper"
           style={{
@@ -408,6 +514,7 @@ export function BlockEditor({
             dragBlockId={hoveredToolbarTarget.dragBlockId}
             onDragStart={handleBlockDragStart}
             onDragEnd={handleBlockDragEnd}
+            touchDrag={touchDrag}
             openSlashMenuOnAdd={showSlashMenu}
           />
         </div>
@@ -447,13 +554,6 @@ export function BlockEditor({
 
       {/* AI Status Indicator — footer bar during AI processing */}
       {showAiCommandBar && <AiStatusIndicator editor={editor} />}
-
-      {/* Theme toggle */}
-      {showThemeToggle && (
-        <div style={{ position: "absolute", top: 8, right: 8 }}>
-          <ThemeToggle />
-        </div>
-      )}
     </div>
   );
 }

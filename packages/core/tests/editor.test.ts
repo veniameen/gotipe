@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 
 // Mock WASM module
 vi.mock('@gotipe/wasm', () => {
@@ -40,7 +40,7 @@ vi.mock('@gotipe/wasm', () => {
 
   return {
     default: vi.fn().mockResolvedValue(undefined),
-    WasmEditor: vi.fn().mockImplementation(() => mockEditor),
+    WasmEditor: vi.fn().mockImplementation(function () { return mockEditor; }),
   };
 });
 
@@ -110,7 +110,7 @@ describe('createEditor', () => {
 
   it('should get Markdown', async () => {
     const editor = await createEditor({ extensions: [testExt] });
-    expect(editor.getMarkdown()).toBe('Hello world');
+    expect(editor.getMarkdown()).toBe('Hello world\n');
   });
 
   it('should get plain text', async () => {

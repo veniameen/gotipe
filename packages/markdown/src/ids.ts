@@ -123,6 +123,8 @@ export function assignIds(
     for (let tries = 0; tries < 100 && (taken.has(id) || reserved.has(id) || id === ""); tries++) {
       id = createId();
     }
+    if (typeof id !== "string" || !id || taken.has(id) || reserved.has(id))
+      throw new Error("Markdown createId must produce unique non-empty IDs");
     taken.add(id);
     return id;
   };

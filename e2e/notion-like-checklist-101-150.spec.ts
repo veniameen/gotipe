@@ -89,7 +89,8 @@ async function setCaretOffset(page: Page, blockId: string, offset: number): Prom
     if (!block) return;
     const sel = window.getSelection();
     if (!sel) return;
-    const walker = document.createTreeWalker(block, NodeFilter.SHOW_TEXT);
+    const host = block.querySelector('[data-gotipe-todo-content], [data-gotipe-text-content], .gotipe-callout-content') ?? block;
+    const walker = document.createTreeWalker(host, NodeFilter.SHOW_TEXT, { acceptNode(node) { return node.parentElement?.closest('[data-gotipe-widget], [data-gotipe-input]') ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT; } });
     let remaining = Math.max(0, wantedOffset);
     let target: Text | null = null;
     let local = 0;
@@ -110,7 +111,7 @@ async function setCaretOffset(page: Page, blockId: string, offset: number): Prom
     if (target) {
       range.setStart(target, local);
     } else {
-      range.setStart(block, 0);
+      range.setStart(host, 0);
     }
     range.collapse(true);
     sel.removeAllRanges();
@@ -132,7 +133,10 @@ function initialText(op: TypingOp): string {
   return "Seed";
 }
 async function readTextOfBlock(page: Page, blockId: string): Promise<string> {
-  return page.evaluate((id) => (document.querySelector(`[data-block-id="${id}"]`) as HTMLElement | null)?.textContent ?? "", blockId);
+  return page.evaluate((id) => {
+    const block = document.querySelector(`[data-block-id="${id}"]`);
+    return (block?.querySelector('[data-gotipe-text-content], [data-gotipe-todo-content], .gotipe-callout-content') ?? block)?.textContent ?? "";
+  }, blockId);
 }
 async function readTopLevelCount(page: Page): Promise<number> {
   return page.evaluate(() => document.querySelectorAll("[data-gotipe-content] > [data-block-id]").length);

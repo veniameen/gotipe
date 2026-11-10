@@ -1,0 +1,190 @@
+{
+  "version": 1,
+  "blocks": [
+    {
+      "id": "title",
+      "type": "heading",
+      "attrs": {
+        "level": 1
+      },
+      "content": [
+        {
+          "text": "Проверка экспорта 😀",
+          "marks": []
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "p",
+      "type": "paragraph",
+      "attrs": {},
+      "content": [
+        {
+          "text": "Привет, world & <tags> #read(\"/etc/passwd\")",
+          "marks": [
+            {
+              "type": "bold",
+              "attrs": {}
+            }
+          ]
+        },
+        {
+          "text": " Color Highlight",
+          "marks": [
+            {
+              "type": "textColor",
+              "attrs": {
+                "color": "#c026d3"
+              }
+            },
+            {
+              "type": "highlight",
+              "attrs": {
+                "color": "yellow"
+              }
+            }
+          ]
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "list",
+      "type": "bulletList",
+      "attrs": {},
+      "content": [
+        {
+          "text": "",
+          "marks": []
+        }
+      ],
+      "children": [
+        {
+          "id": "li",
+          "type": "listItem",
+          "attrs": {},
+          "content": [
+            {
+              "text": "Вложенный текст",
+              "marks": []
+            }
+          ],
+          "children": [
+            {
+              "id": "p2",
+              "type": "paragraph",
+              "attrs": {},
+              "content": [
+                {
+                  "text": "Сохраняется целиком",
+                  "marks": []
+                }
+              ],
+              "children": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "table",
+      "type": "table",
+      "attrs": {},
+      "content": [
+        {
+          "text": "",
+          "marks": []
+        }
+      ],
+      "children": [
+        {
+          "id": "row",
+          "type": "tableRow",
+          "attrs": {},
+          "content": [
+            {
+              "text": "",
+              "marks": []
+            }
+          ],
+          "children": [
+            {
+              "id": "a",
+              "type": "tableHeader",
+              "attrs": {},
+              "content": [
+                {
+                  "text": "Колонка А",
+                  "marks": []
+                }
+              ],
+              "children": []
+            },
+            {
+              "id": "b",
+              "type": "tableHeader",
+              "attrs": {},
+              "content": [
+                {
+                  "text": "Column B",
+                  "marks": []
+                }
+              ],
+              "children": []
+            }
+          ]
+        },
+        {
+          "id": "r2",
+          "type": "tableRow",
+          "attrs": {},
+          "content": [
+            {
+              "text": "",
+              "marks": []
+            }
+          ],
+          "children": [
+            {
+              "id": "c",
+              "type": "tableCell",
+              "attrs": {},
+              "content": [
+                {
+                  "text": "Значение",
+                  "marks": []
+                }
+              ],
+              "children": []
+            },
+            {
+              "id": "d",
+              "type": "tableCell",
+              "attrs": {},
+              "content": [
+                {
+                  "text": "😀",
+                  "marks": []
+                }
+              ],
+              "children": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "image",
+      "type": "image",
+      "attrs": {
+        "src": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAIAAAD91JpzAAAAFElEQVR4nGP4z8DAAMIM////ZwAAHu8E/KPItPcAAAAASUVORK5CYII=",
+        "width": 80,
+        "caption": "Схема цветов",
+        "alt": "Four colored pixels"
+      },
+      "content": null,
+      "children": []
+    }
+  ]
+}

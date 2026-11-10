@@ -1,77 +1,81 @@
-import { useCallback, useRef } from "react";
+import { useCallback, useEffect, useRef } from "react";
+import type { useTouchDrag } from "../interaction/use-touch-drag";
 
 export interface DragHandleProps {
   blockId: string;
+  /** Alt-drag moves the complete top-level block when the normal handle targets a row. */
+  wholeBlockId?: string;
   onDragStart: (blockId: string) => void;
   onDragEnd: () => void;
+  onClick?: React.MouseEventHandler<HTMLButtonElement>;
+  touchDrag?: Pick<ReturnType<typeof useTouchDrag>, "begin" | "onClickCapture">;
 }
 
-const LONG_PRESS_MS = 300;
-
-export function DragHandle({ blockId, onDragStart, onDragEnd }: DragHandleProps) {
-  const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+export function DragHandle({
+  blockId,
+  wholeBlockId,
+  onDragStart,
+  onDragEnd,
+  touchDrag,
+  onClick,
+}: DragHandleProps) {
+  const buttonRef = useRef<HTMLButtonElement>(null);
+  const activeBlockId = useRef(blockId);
+  const findBlock = useCallback(() => {
+    const root = buttonRef.current?.closest("[data-gotipe-block-editor]");
+    return root?.querySelector(`[data-block-id="${CSS.escape(activeBlockId.current)}"]`) ?? null;
+  }, []);
 
   const handleDragStart = useCallback(
     (e: React.DragEvent<HTMLButtonElement>) => {
-      e.dataTransfer.setData("text/gotipe-block-id", blockId);
+      const id = e.altKey && wholeBlockId ? wholeBlockId : blockId;
+      activeBlockId.current = id;
+      e.dataTransfer.setData("text/gotipe-block-id", id);
       e.dataTransfer.effectAllowed = "move";
 
       // Mark dragged element for visual feedback; keep native drag preview.
       // Using a large custom drag image can cause platform-specific stalls.
-      const blockEl = document.querySelector(`[data-block-id="${blockId}"]`);
+      const blockEl = findBlock();
       if (blockEl) {
         blockEl.classList.add("dragging");
       }
 
-      onDragStart(blockId);
+      onDragStart(id);
     },
-    [blockId, onDragStart],
+    [blockId, wholeBlockId, findBlock, onDragStart],
   );
 
   const handleDragEnd = useCallback(() => {
-    const blockEl = document.querySelector(`[data-block-id="${blockId}"]`);
+    const blockEl = findBlock();
     if (blockEl) {
       blockEl.classList.remove("dragging");
     }
     onDragEnd();
-  }, [blockId, onDragEnd]);
+  }, [findBlock, onDragEnd]);
 
-  // Touch: long-press activation
-  const handleTouchStart = useCallback(() => {
-    longPressTimer.current = setTimeout(() => {
-      const blockEl = document.querySelector(`[data-block-id="${blockId}"]`);
-      if (blockEl) {
-        blockEl.classList.add("dragging");
-      }
-      onDragStart(blockId);
-    }, LONG_PRESS_MS);
-  }, [blockId, onDragStart]);
-
-  const handleTouchEnd = useCallback(() => {
-    if (longPressTimer.current) {
-      clearTimeout(longPressTimer.current);
-      longPressTimer.current = null;
-    }
-    const blockEl = document.querySelector(`[data-block-id="${blockId}"]`);
-    if (blockEl) {
-      blockEl.classList.remove("dragging");
-    }
-    onDragEnd();
-  }, [blockId, onDragEnd]);
+  useEffect(
+    () => () => {
+      findBlock()?.classList.remove("dragging");
+    },
+    [findBlock],
+  );
 
   return (
     <button
+      ref={buttonRef}
       type="button"
       className="gotipe-drag-handle-btn"
       draggable
       aria-label="Drag to move, click to open menu"
       data-gotipe-drag-handle=""
       data-block-drag={blockId}
+      data-block-drag-whole={wholeBlockId}
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
-      onTouchStart={handleTouchStart}
-      onTouchEnd={handleTouchEnd}
-      onTouchCancel={handleTouchEnd}
+      style={{ touchAction: "none" }}
+      onPointerDown={(event) => touchDrag?.begin(event, blockId)}
+      onClickCapture={touchDrag?.onClickCapture}
+      onClick={onClick}
     >
       <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor" aria-hidden="true">
         <circle cx="5" cy="3" r="1.2" />

@@ -5,6 +5,7 @@ import {
   openNotionAndReset,
   setCaretAt,
   setNotionContent,
+  runCodeBlockCommand,
   todoList,
 } from "./helpers/notion-checklist";
 
@@ -112,7 +113,7 @@ const TARGETS: Record<TargetKey, TargetDef> = {
     mode: "transform",
     expectedBlockType: "codeBlock",
     expectedParentType: null,
-    expectedTagName: "PRE",
+    expectedTagName: "DIV",
   },
   divider: {
     query: "divider",
@@ -245,7 +246,7 @@ async function setupSource(page: Page, source: SourceKey, marker: string): Promi
         id: "batch6-src",
         type: "codeBlock",
         attrs: {},
-        content: [{ text: marker, marks: [] }],
+        content: marker,
         children: [],
       },
     ]);
@@ -298,7 +299,8 @@ test.describe("Notion-like checklist batch NL-251..NL-300", () => {
       const marker = `${c.id.toLowerCase()}_${Math.random().toString(36).slice(2, 7)}`;
       const target = TARGETS[c.target];
       await setupSource(page, c.source, marker);
-      await runSlashCommand(page, target);
+      if (c.source === "code") await runCodeBlockCommand(page, target);
+      else await runSlashCommand(page, target);
 
       await expect
         .poll(async () =>

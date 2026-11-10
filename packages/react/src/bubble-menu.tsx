@@ -1,7 +1,9 @@
 import type { GoTipeEditor } from "@gotipe/core";
 import type { ViewState } from "@gotipe/core";
 import type React from "react";
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { FloatingPortal } from "./floating-portal";
+import { useFloatingPosition } from "./use-floating-position";
 
 export interface BubbleMenuProps {
   editor: GoTipeEditor;
@@ -21,70 +23,77 @@ export function BubbleMenu({
   ariaLabel = "Text formatting",
 }: BubbleMenuProps) {
   const [visible, setVisible] = useState(false);
-  const [position, setPosition] = useState({ top: 0, left: 0 });
   const menuRef = useRef<HTMLDivElement>(null);
-  const [, setTick] = useState(0);
+  const rangeRef = useRef<Range | null>(null);
+  const shouldShowRef = useRef(shouldShow);
+  shouldShowRef.current = shouldShow;
+  const [revision, setTick] = useState(0);
 
-  const updatePosition = useCallback(() => {
-    const sel = window.getSelection();
-    if (!sel || sel.rangeCount === 0) return;
-
-    const rect = sel.getRangeAt(0).getBoundingClientRect();
-    if (rect.width === 0 && rect.height === 0) return;
-
-    const menuWidth = menuRef.current?.offsetWidth ?? 0;
-    const menuHeight = menuRef.current?.offsetHeight ?? 0;
-
-    let top = rect.top - menuHeight - 8 + (offset?.y ?? 0);
-    let left = rect.left + rect.width / 2 - menuWidth / 2 + (offset?.x ?? 0);
-
-    // Edge detection: flip below if too close to top
-    if (top < 8) {
-      top = rect.bottom + 8 + (offset?.y ?? 0);
-    }
-    // Clamp horizontal
-    if (left < 8) left = 8;
-    if (menuWidth > 0 && left + menuWidth > window.innerWidth - 8) {
-      left = window.innerWidth - menuWidth - 8;
-    }
-
-    setPosition({ top, left });
-  }, [offset]);
+  const anchor = useCallback(() => {
+    const rect = rangeRef.current?.getBoundingClientRect();
+    return rect && (rect.width > 0 || rect.height > 0) ? rect : null;
+  }, []);
+  const position = useFloatingPosition({
+    open: visible,
+    anchor,
+    element: menuRef,
+    placement: "top",
+    gap: 8,
+    offsetX: offset?.x,
+    offsetY: offset?.y,
+    revision,
+    observe: editor.element,
+  });
 
   useEffect(() => {
     const checkVisibility = () => {
       const state = editor.getViewState();
       const sel = state.selection;
-      const show = shouldShow
-        ? shouldShow({ editor, state })
-        : sel.type === "text" &&
-          (sel.anchor.blockId !== sel.head.blockId || sel.anchor.offset !== sel.head.offset);
+      const show =
+        editor.isEditable &&
+        (shouldShowRef.current
+          ? shouldShowRef.current({ editor, state })
+          : sel.type === "text" &&
+            (sel.anchor.blockId !== sel.head.blockId || sel.anchor.offset !== sel.head.offset));
 
-      setVisible(show);
-      if (show) {
-        updatePosition();
+      const selection = window.getSelection();
+      const ownsSelection =
+        selection?.rangeCount &&
+        !selection.isCollapsed &&
+        editor.element?.contains(selection.anchorNode) &&
+        editor.element.contains(selection.focusNode);
+      const interacting = menuRef.current?.contains(document.activeElement);
+      if (show && ownsSelection && selection) {
+        rangeRef.current = selection.getRangeAt(0).cloneRange();
       }
+      const active = !!(show && (ownsSelection || (interacting && rangeRef.current)));
+      if (!active) rangeRef.current = null;
+
+      setVisible(active);
+      // A DOM range can be replaced after a mark render without changing the
+      // model selection. Its new geometry still invalidates the virtual anchor.
+      setTick((value) => value + 1);
     };
 
-    const unsubSelection = editor.on("selectionChange", checkVisibility);
+    const unsubSelection = editor.on("selectionChange", () => {
+      checkVisibility();
+    });
 
     // Re-render on state changes so mark active states update
     const unsubState = editor.on("viewStateChange", () => {
-      setTick((c) => c + 1);
+      checkVisibility();
     });
+    const unsubEditable = editor.on("editableChange", checkVisibility);
+    document.addEventListener("selectionchange", checkVisibility);
+    checkVisibility();
 
     return () => {
       unsubSelection();
       unsubState();
+      unsubEditable();
+      document.removeEventListener("selectionchange", checkVisibility);
     };
-  }, [editor, shouldShow, updatePosition]);
-
-  // Recalculate position after menu mounts (first render has no ref dimensions)
-  useLayoutEffect(() => {
-    if (visible && menuRef.current) {
-      updatePosition();
-    }
-  }, [visible, updatePosition]);
+  }, [editor]);
 
   // Prevent selection loss when interacting with the menu
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
@@ -101,21 +110,26 @@ export function BubbleMenu({
   if (!visible) return null;
 
   return (
-    <div
-      ref={menuRef}
-      className={className ? `gotipe-bubble-menu ${className}` : "gotipe-bubble-menu"}
-      role="toolbar"
-      aria-label={ariaLabel}
-      data-gotipe-bubble-menu=""
-      onMouseDown={handleMouseDown}
-      style={{
-        position: "fixed",
-        top: `${position.top}px`,
-        left: `${position.left}px`,
-        zIndex: 40,
-      }}
-    >
-      {typeof children === "function" ? children({ editor }) : children}
-    </div>
+    <FloatingPortal owner={editor.element}>
+      <div
+        ref={menuRef}
+        className={className ? `gotipe-bubble-menu ${className}` : "gotipe-bubble-menu"}
+        role="toolbar"
+        aria-label={ariaLabel}
+        data-gotipe-bubble-menu=""
+        onMouseDown={handleMouseDown}
+        style={{
+          position: "fixed",
+          ...position,
+          visibility: position ? "visible" : "hidden",
+          overflow: "visible",
+          flexWrap: "wrap",
+          animation: "none",
+          zIndex: 40,
+        }}
+      >
+        {typeof children === "function" ? children({ editor }) : children}
+      </div>
+    </FloatingPortal>
   );
 }

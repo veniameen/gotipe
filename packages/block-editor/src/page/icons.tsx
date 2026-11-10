@@ -164,6 +164,8 @@ export function PageIcon({ name, className }: { name: PageIconName; className?: 
     <svg
       className={className ? `gotipe-icon ${className}` : "gotipe-icon"}
       viewBox="0 0 16 16"
+      width="16"
+      height="16"
       fill="none"
       stroke="currentColor"
       strokeWidth="1.5"
