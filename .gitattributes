@@ -6,7 +6,7 @@ packages/export-wasm/licenses/** -text -whitespace
 crates/gotipe-export/assets/NotoEmoji-OFL.txt -text -whitespace
 
 # These inventories are maintained by GoTipe, so normal checks still apply.
-apps/cloud/licenses/inventory.json text whitespace
-packages/export-wasm/licenses/dependencies.md text whitespace
-packages/export-wasm/licenses/cargo/inventory.json text whitespace
-packages/wasm/licenses/cargo/inventory.json text whitespace
+apps/cloud/licenses/inventory.json text !whitespace
+packages/export-wasm/licenses/dependencies.md text !whitespace
+packages/export-wasm/licenses/cargo/inventory.json text !whitespace
+packages/wasm/licenses/cargo/inventory.json text !whitespace
