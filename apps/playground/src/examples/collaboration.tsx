@@ -6,8 +6,8 @@ import { useEditor } from "@gotipe/react";
 import { useEffect, useRef, useState } from "react";
 import { ExampleWrapper } from "../shared/example-wrapper";
 
-const ALICE = { name: "Alice", color: "#FF6B6B" };
-const BOB = { name: "Bob", color: "#4ECDC4" };
+const ALICE = { name: "Alice", color: "#2c62d4" };
+const BOB = { name: "Bob", color: "#2b7547" };
 
 const INITIAL_CONTENT = {
   version: 1,
@@ -106,7 +106,7 @@ function EditorPanel({
         <ConnectionDot connected={!!editor} />
         <span
           className="gotipe-collab-user-badge"
-          style={{ backgroundColor: user.color, color: "#fff" }}
+          style={{ backgroundColor: user.color, color: "var(--gt-inverse-text)" }}
         >
           {label}
         </span>
