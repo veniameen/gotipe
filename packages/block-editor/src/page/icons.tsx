@@ -39,7 +39,14 @@ export type PageIconName =
   | "send"
   | "close"
   | "warning"
-  | "markdown";
+  | "markdown"
+  | "plus"
+  | "copy"
+  | "more"
+  | "info"
+  | "sun"
+  | "moon"
+  | "system";
 
 const PATHS: Record<PageIconName, React.ReactNode> = {
   image: (
@@ -104,12 +111,12 @@ const PATHS: Record<PageIconName, React.ReactNode> = {
   chevron: <path d="m4.5 6.25 3.5 3.5 3.5-3.5" />,
   grip: (
     <>
-      <circle cx="6" cy="4" r=".95" fill="currentColor" stroke="none" />
-      <circle cx="10" cy="4" r=".95" fill="currentColor" stroke="none" />
-      <circle cx="6" cy="8" r=".95" fill="currentColor" stroke="none" />
-      <circle cx="10" cy="8" r=".95" fill="currentColor" stroke="none" />
-      <circle cx="6" cy="12" r=".95" fill="currentColor" stroke="none" />
-      <circle cx="10" cy="12" r=".95" fill="currentColor" stroke="none" />
+      <circle cx="5.75" cy="4" r="1.1" fill="currentColor" stroke="none" />
+      <circle cx="10.25" cy="4" r="1.1" fill="currentColor" stroke="none" />
+      <circle cx="5.75" cy="8" r="1.1" fill="currentColor" stroke="none" />
+      <circle cx="10.25" cy="8" r="1.1" fill="currentColor" stroke="none" />
+      <circle cx="5.75" cy="12" r="1.1" fill="currentColor" stroke="none" />
+      <circle cx="10.25" cy="12" r="1.1" fill="currentColor" stroke="none" />
     </>
   ),
   trash: (
@@ -155,6 +162,40 @@ const PATHS: Record<PageIconName, React.ReactNode> = {
     <>
       <rect x="1.75" y="3.5" width="12.5" height="9" rx="1.75" />
       <path d="M4.25 10.25v-4l1.75 2 1.75-2v4M10.75 6.25v4M9.25 8.75l1.5 1.5 1.5-1.5" />
+    </>
+  ),
+  plus: <path d="M8 3.5v9M3.5 8h9" />,
+  copy: (
+    <>
+      <rect x="5.25" y="5.25" width="7.5" height="7.5" rx="1.75" />
+      <path d="M10.75 5.25v-.5a1.5 1.5 0 0 0-1.5-1.5h-4.5a1.5 1.5 0 0 0-1.5 1.5v4.5a1.5 1.5 0 0 0 1.5 1.5h.5" />
+    </>
+  ),
+  more: (
+    <>
+      <circle cx="3.75" cy="8" r="1.1" fill="currentColor" stroke="none" />
+      <circle cx="8" cy="8" r="1.1" fill="currentColor" stroke="none" />
+      <circle cx="12.25" cy="8" r="1.1" fill="currentColor" stroke="none" />
+    </>
+  ),
+  info: (
+    <>
+      <circle cx="8" cy="8" r="5.5" />
+      <path d="M8 7.25v3.5" />
+      <circle cx="8" cy="5.25" r=".75" fill="currentColor" stroke="none" />
+    </>
+  ),
+  sun: (
+    <>
+      <circle cx="8" cy="8" r="2.75" />
+      <path d="M8 1.75v1.5M8 12.75v1.5M1.75 8h1.5M12.75 8h1.5M3.6 3.6l1.05 1.05M11.35 11.35l1.05 1.05M3.6 12.4l1.05-1.05M11.35 4.65l1.05-1.05" />
+    </>
+  ),
+  moon: <path d="M12.9 9.6A5.25 5.25 0 0 1 6.4 3.1a5.25 5.25 0 1 0 6.5 6.5Z" />,
+  system: (
+    <>
+      <circle cx="8" cy="8" r="5.5" />
+      <path d="M8 2.5a5.5 5.5 0 0 0 0 11Z" fill="currentColor" stroke="none" />
     </>
   ),
 };
