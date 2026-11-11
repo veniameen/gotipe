@@ -315,20 +315,29 @@
    Drag & Drop
    ============================================================ */
 
+/* drag: the block leaves a trace where it was, an accent line with a dot shows where it lands */
 .gotipe-drop-indicator {
   position: absolute;
-  left: 0;
-  right: 0;
-  height: 2px;
+  z-index: var(--gt-z-drag);
+  height: var(--gt-drop-line);
+  border-radius: var(--gt-radius-round);
   background: var(--gt-accent);
-  border-radius: 1px;
   pointer-events: none;
-  z-index: var(--gt-z-drag, 100);
-  animation: gotipe-drop-line var(--gt-duration-normal, 150ms) var(--gt-ease-out);
+  animation: gotipe-drop-line var(--gt-duration-normal) var(--gt-ease-out);
+}
+.gotipe-drop-indicator::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: calc(-1 * var(--gt-drop-dot));
+  width: var(--gt-drop-dot);
+  height: var(--gt-drop-dot);
+  border: var(--gt-drop-line) solid var(--gt-accent);
+  border-radius: var(--gt-radius-round);
+  box-sizing: border-box;
+  transform: translateY(-50%);
 }
 
 [data-block-id].dragging {
-  opacity: 0.5;
-  box-shadow: var(--gt-shadow-lg);
-  transform: scale(1.02);
+  opacity: var(--gt-drag-source-opacity);
 }

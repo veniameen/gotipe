@@ -1,5 +1,6 @@
 @import "./theme/tokens.css";
 @import "./theme/editor.css";
+@import "./theme/overlay.css";
 @import "./theme/menus.css";
 @import "./theme/blocks.css";
 @import "./theme/media.css";

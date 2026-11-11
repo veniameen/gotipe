@@ -1,145 +1,120 @@
 /* ============================================================
-   Slash Menu
+   Slash menu — Atlas frame 7: groups with a quiet label, a 16 px icon, the title and the
+   Markdown shortcut on the right; no descriptions. The match is marked; nothing found is one line.
    ============================================================ */
 
 .gotipe-slash-menu {
   box-sizing: border-box;
-  width: min(300px, 90vw);
-  max-height: min(420px, calc(100vh - 24px));
   display: flex;
   flex-direction: column;
+  width: min(var(--gt-menu-w), calc(100vw - 2 * var(--gt-space-2)));
+  max-height: min(var(--gt-menu-max-h), calc(100vh - 2 * var(--gt-space-3)));
   overflow: hidden;
-  background: var(--gt-slash-bg);
-  border: 1px solid var(--gt-slash-border);
-  border-radius: 16px;
-  box-shadow: var(--gt-slash-shadow);
-  padding: 8px;
-  z-index: var(--gt-z-slash, 50);
-  animation: gotipe-scale-in var(--gt-duration-normal, 150ms) var(--gt-ease-out);
+  padding: var(--gt-menu-pad);
+  border: 0;
+  border-radius: var(--gt-radius-overlay);
+  background: var(--gt-overlay);
+  box-shadow: var(--gt-shadow-overlay);
+  color: var(--gt-text);
+  font-family: var(--gt-font-ui);
+  font-size: var(--gt-ui-size);
+  line-height: var(--gt-ui-leading);
+  letter-spacing: normal;
+  z-index: var(--gt-z-slash);
+  animation: gotipe-fade-in var(--gt-duration-normal) var(--gt-ease-out);
 }
 
 .gotipe-slash-menu-list {
-  overflow-y: auto;
+  min-height: 0;
   overflow-x: hidden;
-  max-height: min(404px, calc(100vh - 64px));
-  padding: 0;
+  overflow-y: auto;
   overscroll-behavior: contain;
-}
-
-.gotipe-slash-menu-list::-webkit-scrollbar {
-  width: 4px;
-}
-.gotipe-slash-menu-list::-webkit-scrollbar-track {
-  background: transparent;
-}
-.gotipe-slash-menu-list::-webkit-scrollbar-thumb {
-  background: var(--gt-slash-scrollbar);
-  border-radius: 2px;
+  scrollbar-color: var(--gt-line-control) transparent;
+  scrollbar-width: thin;
 }
 
 .gotipe-slash-menu-group-separator {
+  height: var(--gt-hairline);
+  margin: var(--gt-menu-sep-gap) calc(-1 * var(--gt-menu-pad));
   border: 0;
-  width: 100%;
-  height: 1px;
-  background: var(--gt-slash-separator);
-  margin: 10px 0 8px;
+  background: var(--gt-line);
 }
 
 .gotipe-slash-menu-group-label {
-  font-size: 12px;
-  color: var(--gt-slash-muted);
-  padding: 6px 8px 5px;
-  font-weight: 700;
-  letter-spacing: 0.02em;
-  text-transform: none;
+  padding: var(--gt-menu-label-pad);
+  color: var(--gt-text-3);
+  font-size: var(--gt-ui-small);
+  font-weight: var(--gt-weight-medium);
+  line-height: var(--gt-ui-small-leading);
 }
 
 .gotipe-slash-menu-item {
-  display: grid;
-  grid-template-columns: 28px minmax(0, 1fr);
+  display: flex;
   align-items: center;
-  gap: 12px;
-  min-height: 36px;
-  padding: 6px 10px;
-  border-radius: 12px;
+  gap: var(--gt-menu-gap);
+  min-width: 0;
+  height: var(--gt-menu-item-h);
+  padding: var(--gt-menu-item-pad);
+  border-radius: var(--gt-radius-control);
   cursor: pointer;
-  transition: background var(--gt-duration-fast, 100ms) var(--gt-ease-out), color
-    var(--gt-duration-fast, 100ms) var(--gt-ease-out);
 }
-
 .gotipe-slash-menu-item:hover,
 .gotipe-slash-menu-item.selected {
-  background: var(--gt-slash-hover);
+  background: var(--gt-fill-2);
 }
 
 .gotipe-slash-menu-item-icon {
-  width: 28px;
-  height: 28px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--gt-slash-icon);
-  flex-shrink: 0;
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: var(--gt-icon-size);
+  height: var(--gt-icon-size);
+  color: var(--gt-text-2);
 }
-
 .gotipe-slash-menu-item-icon svg {
-  width: 22px;
-  height: 22px;
+  width: var(--gt-icon-size);
+  height: var(--gt-icon-size);
 }
-
 .gotipe-slash-menu-item-icon-text {
-  font-size: 13px;
-  line-height: 1;
-  font-weight: 500;
-  letter-spacing: 0.02em;
-  color: inherit;
+  font-size: var(--gt-ui-tiny);
+  font-weight: var(--gt-weight-strong);
+  line-height: var(--gt-ui-tiny-leading);
 }
-
-.gotipe-slash-menu-item-title {
-  font-size: 15px;
-  font-weight: 500;
-  line-height: 1.25;
-  color: var(--gt-slash-text);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.gotipe-slash-menu-item.selected .gotipe-slash-menu-item-icon,
-.gotipe-slash-menu-item:hover .gotipe-slash-menu-item-icon {
-  color: var(--gt-slash-text);
-}
-
 .gotipe-slash-menu-item-icon--accent {
-  color: var(--gt-slash-accent);
-}
-
-.gotipe-slash-menu-item.selected .gotipe-slash-menu-item-icon--accent,
-.gotipe-slash-menu-item:hover .gotipe-slash-menu-item-icon--accent {
-  color: var(--gt-slash-accent-hover);
+  color: var(--gt-accent);
 }
 
 .gotipe-slash-menu-item-body {
+  flex: 1;
   min-width: 0;
 }
-
+.gotipe-slash-menu-item-title {
+  overflow: hidden;
+  color: var(--gt-text);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 .gotipe-slash-menu-item-description {
   display: none;
 }
-
-.gotipe-slash-menu-empty {
-  padding: 12px 8px 8px;
-  color: var(--gt-slash-muted);
-  font-size: 12px;
-  text-align: center;
+.gotipe-slash-menu-item-meta {
+  flex: none;
+  color: var(--gt-text-3);
+  font-size: var(--gt-ui-small);
+  font-variant-numeric: tabular-nums;
 }
 
-/* Fuzzy match highlight */
+.gotipe-slash-menu-empty {
+  padding: var(--gt-menu-label-pad);
+  color: var(--gt-text-3);
+}
+
+/* the part of a title that matches the query */
 .gotipe-slash-menu-item mark {
-  background: var(--gt-slash-mark-bg);
-  color: inherit;
   padding: 0;
-  border-radius: 1px;
+  border-radius: var(--gt-hairline);
+  background: var(--gt-selection);
+  color: inherit;
 }
 
 /* ============================================================
@@ -157,7 +132,8 @@
   display: var(--gt-handle-display);
   align-items: center;
   height: var(--gt-handle-h);
-  transform: translateY(-50%);
+  /* centred on the first line by a margin: a transform would capture the fixed menus inside */
+  margin-top: calc(-0.5 * var(--gt-handle-h));
 }
 
 .gotipe-block-toolbar {
@@ -172,7 +148,7 @@
   align-items: center;
 }
 
-.gotipe-block-toolbar button {
+.gotipe-block-toolbar-control > button {
   display: grid;
   place-items: center;
   width: var(--gt-handle-w);
@@ -184,16 +160,16 @@
   color: var(--gt-text-3);
   cursor: pointer;
 }
-.gotipe-block-toolbar button > svg {
+.gotipe-block-toolbar-control > button > svg {
   width: var(--gt-icon-size);
   height: var(--gt-icon-size);
 }
-.gotipe-block-toolbar button:hover,
-.gotipe-block-toolbar button[aria-expanded="true"] {
+.gotipe-block-toolbar-control > button:hover,
+.gotipe-block-toolbar-control > button[aria-expanded="true"] {
   background: var(--gt-fill-2);
   color: var(--gt-text);
 }
-.gotipe-block-toolbar button:focus-visible {
+.gotipe-block-toolbar-control > button:focus-visible {
   outline: var(--gt-focus-width) solid var(--gt-focus);
   outline-offset: var(--gt-focus-gap);
 }
@@ -242,41 +218,4 @@
   font-family: var(--gt-font-ui);
   font-size: var(--gt-ui-tiny);
   line-height: var(--gt-ui-tiny-leading);
-}
-
-/* Block More Menu (context menu) */
-.gotipe-block-more-menu {
-  position: absolute;
-  left: 0;
-  top: 100%;
-  margin-top: var(--gt-space-1, 4px);
-  background: var(--gt-bg);
-  border: 1px solid var(--gt-border-light, rgba(0, 0, 0, 0.05));
-  border-radius: var(--gt-radius-lg, 12px);
-  box-shadow: var(--gt-shadow-elevated);
-  padding: var(--gt-space-1, 4px);
-  min-width: 160px;
-  z-index: var(--gt-z-slash, 50);
-  animation: gotipe-scale-in var(--gt-duration-normal, 150ms) var(--gt-ease-out);
-}
-
-.gotipe-block-more-menu button {
-  display: flex;
-  align-items: center;
-  gap: var(--gt-space-2, 8px);
-  width: 100%;
-  height: 32px;
-  padding: 0 var(--gt-space-2, 8px);
-  border: none;
-  border-radius: var(--gt-radius-md, 8px);
-  background: transparent;
-  color: var(--gt-text-base);
-  font-size: var(--gt-text-sm, 14px);
-  cursor: pointer;
-  transition: background var(--gt-duration-fast, 100ms) var(--gt-ease-out);
-  text-align: left;
-}
-
-.gotipe-block-more-menu button:hover {
-  background: var(--gt-bg-hover);
 }

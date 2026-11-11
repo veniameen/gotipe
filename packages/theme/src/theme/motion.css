@@ -53,40 +53,10 @@
 }
 
 /* ============================================================
-   Dark mode adjustments
-   ============================================================ */
-
-[data-theme="dark"] .gotipe-bubble-menu button:hover,
-[data-theme="dark"] .gotipe-block-more-menu button:hover,
-[data-theme="dark"] .gotipe-block-context-menu button:hover,
-[data-theme="dark"] .gotipe-block-type-dropdown button:hover {
-  background: rgba(255, 255, 255, 0.08);
-}
-
-[data-theme="dark"] .gotipe-block-context-menu button.destructive:hover {
-  background: rgba(239, 68, 68, 0.15);
-}
-
-[data-theme="dark"] .gotipe-media-placeholder:hover,
-[data-theme="dark"] .gotipe-media-placeholder.dragover {
-  border-color: var(--gt-accent);
-}
-
-/* ============================================================
    Mobile (<640px)
    ============================================================ */
 
 @media (max-width: 639px) {
-  .gotipe-bubble-menu {
-    flex-wrap: wrap;
-    border-radius: var(--gt-radius-md, 8px);
-  }
-
-  .gotipe-slash-menu {
-    width: min(300px, 90vw);
-    max-width: 90vw;
-  }
-
   .gotipe-ai-command-bar {
     bottom: var(--gt-space-2, 8px);
     width: calc(100vw - 16px);
