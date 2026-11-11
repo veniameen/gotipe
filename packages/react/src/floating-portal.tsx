@@ -35,7 +35,7 @@ export function FloatingPortal({
     for (let ancestor: HTMLElement | null = owner; ancestor; ancestor = ancestor.parentElement) {
       observer.observe(ancestor, {
         attributes: true,
-        attributeFilter: ["style", "class", "data-theme", "data-gotipe-theme"],
+        attributeFilter: ["style", "class", "data-theme", "data-gotipe-theme", "data-gt-view"],
       });
     }
     const theme = win.matchMedia?.("(prefers-color-scheme: dark)");

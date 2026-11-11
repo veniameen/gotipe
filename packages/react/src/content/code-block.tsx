@@ -2,6 +2,7 @@ import { type BlockView, type GoTipeEditor, GoTipeError } from "@gotipe/core";
 import { type ReactNode, useEffect, useRef, useState } from "react";
 import { CodeText } from "./code-text";
 import { usePhantom } from "./context";
+import { ContentIcon } from "./icons";
 
 const LANGUAGES = [
   ["plaintext", "Plain text"],
@@ -104,9 +105,10 @@ export function CodeBlock({
         <button
           type="button"
           aria-label={copied ? "Copied!" : "Copy code"}
+          title={copied ? "Copied" : "Copy code"}
           onClick={() => void copy()}
         >
-          {copied ? "Copied" : "Copy"}
+          <ContentIcon name={copied ? "check" : "copy"} />
         </button>
       </div>
       <div className="gotipe-code-block-scroll">
