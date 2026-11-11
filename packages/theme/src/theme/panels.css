@@ -1,88 +1,4 @@
 /* ============================================================
-   Table
-   ============================================================ */
-
-.gotipe-table-wrapper {
-  overflow-x: auto;
-  margin: var(--gt-space-2, 8px) 0;
-}
-
-.gotipe-table-wrapper table {
-  border-collapse: collapse;
-  width: 100%;
-}
-
-.gotipe-table-wrapper th,
-.gotipe-table-wrapper td {
-  border: 1px solid var(--gt-border, #e5e5e5);
-  padding: var(--gt-space-2, 8px) var(--gt-space-3, 12px);
-  text-align: left;
-  vertical-align: top;
-  min-width: 100px;
-  font-size: var(--gt-text-sm, 14px);
-  line-height: 1.5;
-}
-
-.gotipe-table-wrapper th {
-  background: var(--gt-bg-hover, #f7f7f5);
-  font-weight: 600;
-  color: var(--gt-text-base);
-}
-
-.gotipe-table-wrapper td {
-  background: transparent;
-}
-
-.gotipe-table-cell-selected {
-  background: var(--gt-bg-selected);
-  outline: 2px solid var(--gt-accent);
-}
-
-.gotipe-table-add-row,
-.gotipe-table-add-col {
-  position: absolute;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 20px;
-  height: 20px;
-  border: none;
-  border-radius: 50%;
-  background: var(--gt-bg);
-  color: var(--gt-text-tertiary);
-  font-size: 14px;
-  cursor: pointer;
-  box-shadow: var(--gt-shadow-sm);
-  opacity: 0;
-  transition: opacity var(--gt-duration-fast, 100ms) var(--gt-ease-out);
-}
-
-.gotipe-table-wrapper:hover .gotipe-table-add-row,
-.gotipe-table-wrapper:hover .gotipe-table-add-col {
-  opacity: 1;
-}
-
-.gotipe-table-add-row:hover,
-.gotipe-table-add-col:hover {
-  color: var(--gt-accent);
-}
-
-.gotipe-table-col-resize {
-  position: absolute;
-  top: 0;
-  right: -1px;
-  width: 3px;
-  height: 100%;
-  cursor: col-resize;
-  background: transparent;
-}
-
-.gotipe-table-col-resize:hover,
-.gotipe-table-col-resize.active {
-  background: var(--gt-accent);
-}
-
-/* ============================================================
    Collaboration Cursors
    ============================================================ */
 
@@ -249,39 +165,42 @@
    Theme Toggle
    ============================================================ */
 
+/* a segmented control: the current choice stands on the overlay surface */
 .gotipe-theme-toggle {
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: 2px;
-  padding: 2px;
-  background: var(--gt-bg-hover);
-  border-radius: 999px;
+  padding: var(--gt-seg-pad);
+  border-radius: var(--gt-radius-control);
+  background: var(--gt-fill-2);
 }
 
 .gotipe-theme-toggle button {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 28px;
-  height: 28px;
-  border: none;
-  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  width: var(--gt-tool);
+  height: var(--gt-handle-h);
+  padding: 0;
+  border: 0;
+  border-radius: var(--gt-radius-inline);
   background: transparent;
-  color: var(--gt-text-tertiary);
-  font-size: var(--gt-text-sm, 14px);
+  color: var(--gt-text-3);
   cursor: pointer;
-  transition: background var(--gt-duration-fast, 100ms) var(--gt-ease-out), color
-    var(--gt-duration-fast, 100ms) var(--gt-ease-out);
 }
-
+.gotipe-theme-toggle button > svg {
+  width: var(--gt-icon-size);
+  height: var(--gt-icon-size);
+}
 .gotipe-theme-toggle button:hover {
-  color: var(--gt-text-secondary);
+  color: var(--gt-text);
 }
-
 .gotipe-theme-toggle button.active {
-  background: var(--gt-bg);
-  color: var(--gt-text-base);
-  box-shadow: var(--gt-shadow-sm);
+  background: var(--gt-overlay);
+  box-shadow: var(--gt-shadow-card);
+  color: var(--gt-text);
+}
+.gotipe-theme-toggle button:focus-visible {
+  outline: var(--gt-focus-width) solid var(--gt-focus);
+  outline-offset: var(--gt-focus-gap);
 }
 
 /* ============================================================

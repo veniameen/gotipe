@@ -1,30 +1,26 @@
-/* ============================================================
-   Image + File Blocks
-   ============================================================ */
-
-.gotipe-image-block,
-.gotipe-file-block {
-  margin: var(--gt-space-2, 8px) 0;
-}
+/* Image and file blocks — Atlas frames 1 and 10. The image keeps the block radius; the caption is
+   quiet text under it. Shared by BlockEditor and PageEditor. */
 
 .gotipe-image-block img {
   display: block;
-  border-radius: 10px;
   max-width: 100%;
   height: auto;
+  border-radius: var(--gt-radius-block);
 }
 
 .gotipe-image-block figcaption {
-  color: var(--gt-text-secondary);
-  font-size: var(--gt-text-sm, 14px);
-  text-align: center;
-  padding: var(--gt-space-2, 8px) 0;
+  padding-top: var(--gt-caption-gap);
   outline: none;
+  color: var(--gt-text-2);
+  font-size: var(--gt-small-size);
+  line-height: var(--gt-small-leading);
+  letter-spacing: normal;
+  text-align: left;
 }
 
 .gotipe-image-block figcaption:empty::before {
   content: "Add caption...";
-  color: var(--gt-text-placeholder, var(--gt-text-tertiary));
+  color: var(--gt-text-3);
 }
 
 .gotipe-media-placeholder-shell {

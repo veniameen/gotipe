@@ -1,16 +1,19 @@
 /* ============================================================
-   Block Editor Container
+   Block Editor — the root carries the view (data-gt-view) and is a size container: a narrow
+   container changes the view's tokens, never the markup.
    ============================================================ */
 
 .gotipe-block-editor {
   position: relative;
+  container-type: inline-size;
   background: transparent;
+  color: var(--gt-text);
 }
 
 .gotipe-block-editor-tools {
   display: flex;
   justify-content: flex-end;
-  margin-bottom: 12px;
+  padding: var(--gt-space-3) var(--gt-space-3) 0;
 }
 
 /* ============================================================
