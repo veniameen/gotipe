@@ -11,6 +11,7 @@ import { CustomExample } from "./examples/custom";
 import { I18nExample } from "./examples/i18n";
 import { SuggestionsExample } from "./examples/suggestions";
 import { VersionsExample } from "./examples/versions";
+import { ViewsExample } from "./examples/views";
 
 import { AgentEditor } from "./templates/agent-editor";
 import { HeadlessEditor } from "./templates/headless-editor";
@@ -32,6 +33,7 @@ const ROUTES: Record<string, RouteEntry> = {
   // Templates
   agent: { name: "Agent Editor", category: "Templates", component: AgentEditor },
   notion: { name: "Notion-like", category: "Templates", component: NotionEditor },
+  views: { name: "Views", category: "Templates", component: ViewsExample },
   simple: { name: "Simple Editor", category: "Templates", component: SimpleEditor },
   headless: { name: "Headless", category: "Templates", component: HeadlessEditor },
   // Extension demos
