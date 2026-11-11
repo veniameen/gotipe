@@ -71,6 +71,12 @@ export { copySelection } from "./clipboard/selection";
 export type { ClipboardPayload } from "./clipboard/selection";
 
 export { toSafeColor } from "./security/colors";
+export {
+  DOCUMENT_TEXT_COLORS,
+  DOCUMENT_HIGHLIGHT_COLORS,
+  documentColorStyle,
+} from "./document-colors";
+export type { DocumentColor } from "./document-colors";
 
 export { blocksToHtml as serializeHtml } from "./serialization/html";
 export type { HtmlSerializationOptions, HtmlBlock } from "./serialization/html";
