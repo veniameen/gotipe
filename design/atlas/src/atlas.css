@@ -1,0 +1,225 @@
+/* The atlas page around the frames: quiet chrome, every frame on a stage; the theme switch at the
+   top draws the whole page light or dark. Narrow frames stand side by side, wide ones alone. */
+
+html {
+  background: var(--at-bg);
+  color: var(--at-text);
+  font-family: var(--gt-font-ui);
+  font-size: var(--at-text-size);
+  line-height: var(--at-text-leading);
+  -webkit-font-smoothing: antialiased;
+}
+body {
+  margin: 0;
+}
+.at-sprite {
+  position: absolute;
+  width: 0;
+  height: 0;
+  overflow: hidden;
+}
+.at-page {
+  box-sizing: border-box;
+  max-width: var(--at-page-max);
+  margin: 0 auto;
+  padding: var(--at-page-pad);
+}
+
+/* ---- head: the name, the draft and the theme filter ---- */
+.at-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--at-gap) var(--at-gap-l);
+  padding-bottom: var(--at-gap-l);
+  border-bottom: var(--gt-hairline) solid var(--at-line);
+}
+.at-mark {
+  margin: 0;
+  font-size: var(--at-mark-size);
+  font-weight: var(--gt-weight-strong);
+  line-height: var(--at-mark-leading);
+}
+.at-mark > span,
+.at-meta {
+  color: var(--at-text-2);
+  font-weight: var(--gt-weight-regular);
+}
+.at-meta {
+  flex: 1;
+  margin: 0;
+}
+.at-seg {
+  display: inline-flex;
+  padding: var(--at-seg-pad);
+  border-radius: var(--gt-radius-control);
+  background: var(--at-seg);
+}
+.at-seg > button {
+  padding: var(--at-seg-item-pad);
+  border: 0;
+  border-radius: var(--gt-radius-inline);
+  background: transparent;
+  color: var(--at-text-2);
+  font: inherit;
+  cursor: pointer;
+}
+.at-seg > button[aria-pressed="true"] {
+  background: var(--at-seg-on);
+  box-shadow: var(--gt-shadow-card);
+  color: var(--at-text);
+}
+
+/* ---- index ---- */
+.at-index {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(var(--at-index-col), 1fr));
+  gap: var(--at-gap-l);
+  margin-top: var(--at-gap-l);
+}
+.at-index-group > p {
+  margin: 0 0 var(--at-gap);
+  color: var(--at-text-2);
+}
+.at-index a {
+  display: flex;
+  align-items: baseline;
+  gap: var(--at-gap);
+  color: inherit;
+  text-decoration: none;
+}
+.at-num {
+  flex: none;
+  padding: var(--at-num-pad);
+  border-radius: var(--gt-radius-inline);
+  background: var(--at-chip);
+  color: var(--at-text-2);
+  font-size: var(--at-label-size);
+  line-height: var(--at-label-leading);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---- figures and their stages ---- */
+.at-section {
+  margin: var(--at-section-gap) 0 0;
+  color: var(--at-text-2);
+  font-size: var(--at-title-size);
+  font-weight: var(--gt-weight-regular);
+  line-height: var(--at-title-leading);
+}
+.at-figure {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--at-gap-l);
+  margin: var(--at-figure-gap) 0 0;
+}
+.at-section + .at-figure {
+  margin-top: var(--at-gap-l);
+}
+.at-figure-head {
+  display: grid;
+  flex: 1 1 100%;
+  grid-template-columns: auto 1fr;
+  align-items: baseline;
+  gap: 0 var(--at-gap);
+}
+.at-figure-title {
+  margin: 0;
+  font-size: var(--at-title-size);
+  font-weight: var(--gt-weight-strong);
+  line-height: var(--at-title-leading);
+}
+.at-caption {
+  grid-column: 2;
+  max-width: var(--at-caption-max);
+  margin: 0;
+  color: var(--at-text-2);
+}
+.at-stage {
+  box-sizing: border-box;
+  flex: 1 1 100%;
+  min-width: 0;
+  overflow-x: auto;
+  padding: var(--at-stage-pad);
+  border-radius: var(--at-stage-radius);
+  background: var(--at-stage);
+  color: var(--at-text-2);
+}
+.at-stage:is([data-w="320"], [data-w="375"], [data-w="480"]) {
+  flex: 1 1 0;
+  min-width: max-content;
+}
+.at-stage-label {
+  margin: 0 0 var(--at-gap);
+  font-size: var(--at-label-size);
+  line-height: var(--at-label-leading);
+}
+.at-frame {
+  position: relative;
+  box-sizing: border-box;
+  margin: 0 auto;
+  overflow: hidden;
+  border-radius: var(--at-frame-radius);
+  box-shadow: var(--at-frame-shadow);
+}
+.at-frame[data-w="320"] {
+  width: var(--at-w-320);
+}
+.at-frame[data-w="375"] {
+  width: var(--at-w-375);
+}
+.at-frame[data-w="480"] {
+  width: var(--at-w-480);
+}
+.at-frame[data-w="768"] {
+  width: var(--at-w-768);
+}
+.at-frame[data-w="1024"] {
+  width: var(--at-w-1024);
+}
+.at-frame[data-w="1440"] {
+  width: var(--at-w-1440);
+  zoom: var(--at-zoom-1440);
+}
+.at-frame[data-h="640"] {
+  height: var(--at-h-640);
+}
+.at-frame[data-h="720"] {
+  height: var(--at-h-720);
+}
+.at-frame[data-h="900"] {
+  height: var(--at-h-900);
+}
+.at-frame[data-h="960"] {
+  height: var(--at-h-960);
+}
+.at-frame[data-min="320"] {
+  min-height: var(--at-min-320);
+}
+.at-frame[data-min="400"] {
+  min-height: var(--at-min-400);
+}
+.at-frame[data-min="480"] {
+  min-height: var(--at-min-480);
+}
+.at-frame[data-min="560"] {
+  min-height: var(--at-min-560);
+}
+
+/* the pointer of a frame: where the mouse is when the state is drawn */
+.at-pointer {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  z-index: 30;
+  width: var(--gt-icon);
+  height: var(--gt-icon);
+  fill: var(--at-pointer-fill);
+  stroke: var(--at-pointer-line);
+  stroke-width: var(--gt-hairline);
+  pointer-events: none;
+}
+.at-pointer.is-grab {
+  top: 22%;
+  left: 6%;
+}

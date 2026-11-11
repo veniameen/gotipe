@@ -1,0 +1,9 @@
+/* View «minimal»: the editor as a field of the host — the same document in interface type, no head
+   and no handles; formatting comes from the bubble over a selection. */
+
+.gotipe-minimal > .gotipe-page {
+  margin: 0;
+}
+.gotipe-minimal .gotipe-page-head {
+  margin-bottom: var(--gt-flow-after-h1);
+}

@@ -1,0 +1,191 @@
+/* Popovers bound to a place in the text: the link field inside the bubble, text colours, the image
+   toolbar and its resize handles, the column handle of a table. */
+
+/* ---- link: the bubble turns into a field and a confirm button ---- */
+.gotipe-link-row {
+  display: flex;
+  align-items: center;
+  gap: var(--gt-toolbar-gap);
+  width: var(--gt-popover-w);
+  padding: var(--gt-toolbar-pad);
+}
+.gotipe-link-row > .gotipe-field {
+  flex: 1;
+}
+
+/* ---- colours: the bubble turns into one row — text colours as letters, backgrounds as squares ---- */
+.gotipe-color-row > .gotipe-swatch {
+  width: var(--gt-swatch-row);
+  height: var(--gt-swatch-row);
+}
+.gotipe-colors {
+  padding: var(--gt-popover-pad);
+}
+.gotipe-swatches {
+  display: grid;
+  grid-template-columns: repeat(6, var(--gt-swatch));
+  gap: var(--gt-swatch-gap);
+  padding: var(--gt-swatch-gap);
+}
+.gotipe-swatch {
+  display: grid;
+  place-items: center;
+  width: var(--gt-swatch);
+  height: var(--gt-swatch);
+  border-radius: var(--gt-radius-control);
+  box-shadow: inset 0 0 0 var(--gt-hairline) var(--gt-line);
+  font-size: var(--gt-ui-size);
+  font-weight: var(--gt-weight-strong);
+}
+.gotipe-swatch.is-current {
+  box-shadow: inset 0 0 0 var(--gt-swatch-ring) var(--gt-text);
+}
+.gotipe-swatch.is-hover {
+  background: var(--gt-fill-2);
+}
+.gotipe-swatch > .gt-icon {
+  color: var(--gt-text-3);
+}
+.gotipe-colors > .gotipe-menu-item {
+  margin-top: var(--gt-menu-sep-gap);
+}
+
+/* text colours of the document (marks) and their backgrounds */
+:is(.gotipe-swatch, .gotipe-tc)[data-c="gray"] {
+  color: var(--gt-tc-gray);
+}
+:is(.gotipe-swatch, .gotipe-tc)[data-c="red"] {
+  color: var(--gt-tc-red);
+}
+:is(.gotipe-swatch, .gotipe-tc)[data-c="amber"] {
+  color: var(--gt-tc-amber);
+}
+:is(.gotipe-swatch, .gotipe-tc)[data-c="green"] {
+  color: var(--gt-tc-green);
+}
+:is(.gotipe-swatch, .gotipe-tc)[data-c="blue"] {
+  color: var(--gt-tc-blue);
+}
+:is(.gotipe-swatch, .gotipe-bg)[data-bg="yellow"] {
+  background: var(--gt-bg-yellow);
+}
+:is(.gotipe-swatch, .gotipe-bg)[data-bg="green"] {
+  background: var(--gt-bg-green);
+}
+:is(.gotipe-swatch, .gotipe-bg)[data-bg="blue"] {
+  background: var(--gt-bg-blue);
+}
+:is(.gotipe-swatch, .gotipe-bg)[data-bg="red"] {
+  background: var(--gt-bg-red);
+}
+:is(.gotipe-swatch, .gotipe-bg)[data-bg="gray"] {
+  background: var(--gt-bg-gray);
+}
+
+/* ---- image: a toolbar over its top edge, handles on its sides while hovered ---- */
+.gotipe-image.is-hovered {
+  position: relative;
+  box-shadow: inset 0 0 0 var(--gt-hairline) var(--gt-line-strong);
+}
+.gotipe-image-tools {
+  position: absolute;
+  top: var(--gt-resize-inset);
+  right: var(--gt-resize-inset);
+  z-index: var(--gt-z-overlay);
+}
+.gotipe-resize {
+  position: absolute;
+  top: 50%;
+  width: var(--gt-resize-w);
+  height: var(--gt-resize-h);
+  border-radius: var(--gt-radius-round);
+  background: var(--gt-text-2);
+  box-shadow: 0 0 0 var(--gt-hairline) var(--gt-page-bg);
+  transform: translateY(-50%);
+}
+.gotipe-resize[data-side="start"] {
+  left: var(--gt-resize-inset);
+}
+.gotipe-resize[data-side="end"] {
+  right: var(--gt-resize-inset);
+}
+
+/* ---- table: the column handle in a hovered header cell, the bars that add a row or column ---- */
+.gotipe-table th.is-hovered {
+  position: relative;
+  background: var(--gt-fill-1);
+}
+.gotipe-column-handle {
+  position: absolute;
+  top: 50%;
+  right: var(--gt-toolbar-pad);
+  left: auto;
+  display: grid;
+  place-items: center;
+  width: var(--gt-handle-w);
+  height: var(--gt-handle-w);
+  border-radius: var(--gt-radius-control);
+  background: var(--gt-fill-2);
+  color: var(--gt-text);
+  transform: translateY(-50%);
+}
+.gotipe-table th.is-number > .gotipe-column-handle {
+  right: auto;
+  left: var(--gt-toolbar-pad);
+}
+.gotipe-table-wrap.is-open {
+  overflow: visible;
+}
+.gotipe-table-adds {
+  display: flex;
+  gap: var(--gt-toolbar-gap);
+}
+.gotipe-table-adds > .gotipe-table-add:first-child {
+  flex: 1;
+}
+.gotipe-table-add {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--gt-toolbar-gap);
+  height: var(--gt-handle-h);
+  padding: var(--gt-tool-text-pad);
+  margin-top: var(--gt-toolbar-gap);
+  border-radius: var(--gt-radius-control);
+  background: var(--gt-fill-1);
+  color: var(--gt-text-3);
+  font-size: var(--gt-ui-small);
+  line-height: var(--gt-ui-small-leading);
+}
+.gotipe-table td.is-number,
+.gotipe-table th.is-number {
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+.gotipe-table td.is-code {
+  font-family: var(--gt-font-mono);
+  font-size: var(--gt-inline-code-size);
+}
+.gotipe-color-bar[data-c="gray"] {
+  background: var(--gt-tc-gray);
+}
+.gotipe-color-bar[data-c="red"] {
+  background: var(--gt-tc-red);
+}
+.gotipe-color-bar[data-c="amber"] {
+  background: var(--gt-tc-amber);
+}
+.gotipe-color-bar[data-c="green"] {
+  background: var(--gt-tc-green);
+}
+.gotipe-color-bar[data-c="blue"] {
+  background: var(--gt-tc-blue);
+}
+.gotipe-yes {
+  display: inline-grid;
+  color: var(--gt-success);
+  vertical-align: middle;
+}
+.gotipe-no {
+  color: var(--gt-text-3);
+}

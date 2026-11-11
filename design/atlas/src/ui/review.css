@@ -1,0 +1,217 @@
+/* Review: proposed edits in the text, their cards and the bar above the page; versions; the model's
+   command bar and the text it offers at the caret. */
+
+/* ---- proposed edits: an insertion is underlined in its author's colour, a deletion is struck ---- */
+.gotipe-insert {
+  background: var(--s, var(--gt-add-tint));
+  box-shadow: inset 0 calc(-1 * var(--gt-rule)) 0 var(--c, var(--gt-add));
+  color: inherit;
+  text-decoration: none;
+}
+.gotipe-delete {
+  color: var(--gt-text-3);
+  text-decoration-line: line-through;
+  text-decoration-thickness: var(--gt-underline);
+  text-decoration-color: var(--c, var(--gt-del));
+}
+.gotipe-insert.is-stale {
+  background: transparent;
+  box-shadow: inset 0 calc(-1 * var(--gt-hairline)) 0 var(--gt-line-control);
+}
+
+/* ---- the bar over the page: who proposes, how many wait, accept or reject them all ---- */
+.gotipe-review-bar {
+  display: flex;
+  align-items: center;
+  gap: var(--gt-menu-gap);
+  padding: var(--gt-bar-pad);
+  border-bottom: var(--gt-hairline) solid var(--gt-line);
+  background: var(--gt-page-bg);
+  font-size: var(--gt-ui-size);
+  line-height: var(--gt-ui-leading);
+  letter-spacing: normal;
+}
+.gotipe-review-bar + .gotipe-with-margin {
+  --gt-slice-top: var(--gt-slice-top-tight);
+}
+.gotipe-review-bar > .gt-icon {
+  color: var(--gt-accent);
+}
+.gotipe-review-title {
+  font-weight: var(--gt-weight-strong);
+}
+.gotipe-review-fact {
+  color: var(--gt-text-2);
+  font-variant-numeric: tabular-nums;
+}
+.gotipe-review-fact.is-stale {
+  color: var(--gt-warning);
+}
+.gotipe-review-bar > .gotipe-tool-spacer + .gotipe-button {
+  margin-left: auto;
+}
+
+/* ---- a proposal's card: the author, why, before and after, the two answers ---- */
+.gotipe-lane {
+  display: inline-grid;
+  flex: none;
+  place-items: center;
+  width: var(--gt-avatar);
+  height: var(--gt-avatar);
+  border-radius: var(--gt-radius-round);
+  background: var(--s);
+  color: var(--c);
+}
+.gotipe-lane > .gt-icon {
+  width: var(--gt-icon-check);
+  height: var(--gt-icon-check);
+}
+.gotipe-tag {
+  padding: var(--gt-kbd-pad);
+  border-radius: var(--gt-radius-inline);
+  background: var(--gt-warning-tint);
+  color: var(--gt-warning);
+  font-size: var(--gt-ui-tiny);
+  line-height: var(--gt-ui-tiny-leading);
+}
+.gotipe-change {
+  display: grid;
+  gap: var(--gt-toolbar-pad);
+  margin-top: var(--gt-card-gap);
+  white-space: normal;
+}
+.gotipe-change-label {
+  color: var(--gt-text-3);
+  font-size: var(--gt-ui-small);
+}
+.gotipe-card-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--gt-button-gap);
+  margin-top: var(--gt-card-pad);
+}
+.gotipe-card-note {
+  margin: var(--gt-toolbar-pad) 0 0;
+  color: var(--gt-text-2);
+  white-space: normal;
+}
+
+/* ---- versions: the list beside the page, the page shows what changed since ---- */
+.gotipe-version-head {
+  display: flex;
+  align-items: center;
+  gap: var(--gt-menu-gap);
+  padding: var(--gt-bar-pad);
+  border-bottom: var(--gt-hairline) solid var(--gt-line);
+  font-size: var(--gt-ui-size);
+  line-height: var(--gt-ui-leading);
+  letter-spacing: normal;
+}
+.gotipe-version-head > .gotipe-tool-spacer + .gotipe-button {
+  margin-left: auto;
+}
+.gotipe-version-list {
+  display: grid;
+  gap: var(--gt-toolbar-gap);
+}
+.gotipe-version {
+  display: grid;
+  gap: var(--gt-toolbar-gap);
+  padding: var(--gt-card-gap) var(--gt-menu-gap);
+  border-radius: var(--gt-radius-control);
+}
+.gotipe-version.is-current {
+  background: var(--gt-fill-2);
+}
+.gotipe-version-name {
+  font-weight: var(--gt-weight-medium);
+}
+.gotipe-version-meta {
+  color: var(--gt-text-3);
+  font-size: var(--gt-ui-small);
+  line-height: var(--gt-ui-small-leading);
+}
+.gotipe-diff-stat {
+  color: var(--gt-text-2);
+  font-variant-numeric: tabular-nums;
+}
+.gotipe-diff-stat > .is-add {
+  color: var(--gt-add);
+}
+.gotipe-diff-stat > .is-del {
+  color: var(--gt-del);
+}
+
+/* ---- the model: a command bar at the bottom, its text at the caret ---- */
+.gotipe-ai-bar {
+  position: absolute;
+  bottom: var(--gt-ai-bar-bottom);
+  left: 50%;
+  display: flex;
+  align-items: center;
+  gap: var(--gt-menu-gap);
+  width: var(--gt-ai-bar-w);
+  max-width: calc(100% - 2 * var(--gt-page-pad-x));
+  padding: var(--gt-ai-bar-pad);
+  border-radius: var(--gt-radius-card);
+  transform: translateX(-50%);
+}
+.gotipe-ai-bar > .gt-icon {
+  color: var(--gt-accent);
+}
+.gotipe-ai-chip {
+  flex: none;
+  padding: var(--gt-ai-chip-pad);
+  border-radius: var(--gt-radius-inline);
+  background: var(--gt-fill-2);
+  color: var(--gt-text-2);
+  font-size: var(--gt-ui-small);
+}
+.gotipe-ai-input {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.gotipe-send {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: var(--gt-send);
+  height: var(--gt-send);
+  border-radius: var(--gt-radius-round);
+  background: var(--gt-ink);
+  color: var(--gt-ink-text);
+}
+.gotipe-send[aria-disabled="true"] {
+  background: var(--gt-fill-2);
+  color: var(--gt-text-3);
+}
+.gotipe-ghost {
+  color: var(--gt-text-3);
+}
+.gotipe-ghost > .gotipe-kbd {
+  margin-left: var(--gt-toolbar-pad);
+  vertical-align: middle;
+}
+.gotipe-spinner {
+  display: inline-block;
+  flex: none;
+  box-sizing: border-box;
+  width: var(--gt-spinner);
+  height: var(--gt-spinner);
+  border: var(--gt-spinner-ring) solid var(--gt-line-strong);
+  border-top-color: var(--gt-accent);
+  border-radius: var(--gt-radius-round);
+}
+.gotipe-writing {
+  background: var(--gt-person-1-sel);
+}
+.gotipe-version-save {
+  display: flex;
+  gap: var(--gt-button-gap);
+  margin-bottom: var(--gt-card-pad);
+}
+.gotipe-version-save > .gotipe-field {
+  flex: 1;
+}

@@ -1,0 +1,67 @@
+/* View «docs»: a reference page — the outline of headings beside a denser column, numbered code,
+   an anchor at the heading under the pointer. On a narrow container the outline steps away. */
+
+.gotipe-docs {
+  display: grid;
+  grid-template-columns: var(--gt-docs-columns);
+  column-gap: var(--gt-outline-gap);
+  justify-content: center;
+  padding: 0 var(--gt-page-pad-x);
+}
+.gotipe-docs > * {
+  min-width: 0;
+}
+.gotipe-docs > .gotipe-page {
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  padding-right: 0;
+  padding-left: 0;
+}
+.gotipe-outline {
+  position: sticky;
+  top: 0;
+  display: var(--gt-outline-display);
+  align-self: start;
+  padding-top: calc(var(--gt-page-pad-top) + var(--gt-outline-top));
+  font-size: var(--gt-ui-size);
+  line-height: var(--gt-small-leading);
+  letter-spacing: normal;
+}
+.gotipe-outline-title {
+  margin: 0 0 var(--gt-menu-gap);
+  color: var(--gt-text-3);
+  font-size: var(--gt-ui-small);
+  font-weight: var(--gt-weight-medium);
+  line-height: var(--gt-ui-small-leading);
+}
+.gotipe-outline a {
+  display: block;
+  padding: var(--gt-outline-item-pad);
+  box-shadow: inset var(--gt-hairline) 0 0 var(--gt-line-strong);
+  color: var(--gt-text-2);
+  text-decoration: none;
+}
+.gotipe-outline a[data-level="2"] {
+  padding-left: var(--gt-outline-indent);
+}
+.gotipe-outline a[data-level="3"] {
+  padding-left: var(--gt-outline-indent-2);
+}
+.gotipe-outline a.is-current {
+  box-shadow: inset var(--gt-rule) 0 0 var(--gt-text);
+  color: var(--gt-text);
+}
+
+/* the anchor of the heading under the pointer: a quiet # in the gutter */
+.gotipe-doc > .has-anchor {
+  position: relative;
+}
+.gotipe-heading-anchor {
+  display: var(--gt-anchor-display);
+  position: absolute;
+  top: 50%;
+  left: calc(-1 * var(--gt-anchor-offset));
+  color: var(--gt-text-3);
+  transform: translateY(-50%);
+}

@@ -1,0 +1,45 @@
+/* The picture of the sample page: drawn with the theme's roles so it follows light and dark. */
+
+.dg text {
+  font-family: var(--gt-font-ui);
+  letter-spacing: normal;
+  text-anchor: middle;
+}
+.dg-node {
+  fill: var(--gt-diagram-node);
+  stroke: var(--gt-line-strong);
+  stroke-width: var(--gt-hairline);
+}
+.dg-title {
+  fill: var(--gt-text);
+  font-size: var(--gt-diagram-label);
+  font-weight: var(--gt-weight-strong);
+}
+.dg-sub {
+  fill: var(--gt-text-3);
+  font-size: var(--gt-diagram-sub);
+}
+.dg-mono {
+  font-family: var(--gt-font-mono);
+}
+.dg-note {
+  fill: var(--gt-text-2);
+  font-size: var(--gt-diagram-sub);
+}
+.dg-edge {
+  fill: none;
+  stroke: var(--gt-text-2);
+  stroke-width: var(--gt-icon-stroke);
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.dg-off {
+  stroke: var(--gt-text-3);
+  stroke-dasharray: var(--gt-diagram-dash);
+}
+.dg-go {
+  stroke: var(--gt-accent);
+}
+.dg-queue {
+  fill: var(--gt-diagram-queue);
+}

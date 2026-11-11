@@ -1,0 +1,39 @@
+/* View «notion»: a page to read and arrange by blocks — glyph, title, the host's byline, a wide
+   reading column and a handle beside the block under the pointer (docs shares the handle). */
+
+.gotipe-page-icon {
+  width: var(--gt-page-icon);
+  height: var(--gt-page-icon);
+  color: var(--gt-text);
+  stroke-width: var(--gt-page-icon-stroke);
+}
+
+/* the handle of the block under the pointer: «+» and the grip, in the gutter */
+.gotipe-doc > .is-hovered {
+  position: relative;
+}
+.gotipe-block-handle {
+  position: absolute;
+  top: 0;
+  left: calc(-1 * var(--gt-handle-offset));
+  z-index: var(--gt-z-handle);
+  display: var(--gt-handle-display);
+  gap: var(--gt-handle-gap);
+  color: var(--gt-text-3);
+}
+.gotipe-handle-button {
+  display: grid;
+  place-items: center;
+  width: var(--gt-handle-w);
+  height: var(--gt-handle-h);
+  border-radius: var(--gt-radius-control);
+}
+.gotipe-handle-button.is-hover {
+  background: var(--gt-fill-2);
+  color: var(--gt-text);
+}
+.gotipe-handle-button.is-active {
+  position: relative;
+  background: var(--gt-fill-2);
+  color: var(--gt-text);
+}

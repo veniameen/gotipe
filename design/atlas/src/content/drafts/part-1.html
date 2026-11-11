@@ -1,0 +1,44 @@
+<p>
+  Правка, сделанная без сети, сейчас пропадает, если закрыть вкладку до того, как связь
+  вернётся. В выпуске 2.8 редактор пишет каждую транзакцию в локальный журнал и отправляет его,
+  как только сеть появится. Решение опирается на
+  <a class="gotipe-mention" data-kind="page"
+    ><svg class="gt-icon" aria-hidden="true"><use href="#i-page" /></svg><span>ADR-0031</span></a
+  >
+  и на обращения в поддержку за октябрь — их разобрал
+  <span class="gotipe-mention" data-kind="person"
+    ><span class="gotipe-avatar" data-person="1">ИО</span>Илья Орлов</span
+  >.
+</p>
+
+<div class="gotipe-callout" data-variant="info">
+  <span class="gotipe-callout-icon"
+    ><svg class="gt-icon" aria-hidden="true"><use href="#i-lock" /></svg
+  ></span>
+  <div class="gotipe-callout-content">
+    <p>
+      Черновик хранится только на устройстве и зашифрован ключом сессии. При выходе из аккаунта
+      он удаляется вместе с ключом.
+    </p>
+  </div>
+</div>
+
+<h1>Как это работает</h1>
+<p class="is-hovered">
+  Журнал лежит в <code class="gotipe-inline-code">IndexedDB</code> и переживает перезапуск
+  приложения. Сервер принимает пачку транзакций целиком или отклоняет её:
+  <mark class="gotipe-highlight">половина пачки записаться не может</mark>.
+  <span class="gotipe-block-handle" aria-hidden="true"
+    ><span class="gotipe-handle-button"><svg class="gt-icon"><use href="#i-plus" /></svg></span
+    ><span class="gotipe-handle-button"><svg class="gt-icon"><use href="#i-grip" /></svg></span
+  ></span>
+</p>
+
+<figure class="gotipe-figure">
+  <div class="gotipe-image">
+    <!-- @include content/drafts/diagram.svg -->
+  </div>
+  <figcaption>
+    Транзакции копятся в журнале, пока нет сети, и уходят на сервер одной пачкой.
+  </figcaption>
+</figure>

@@ -1,0 +1,137 @@
+<figure class="at-figure" id="f17" data-section="Состояния">
+  <figcaption class="at-figure-head">
+    <span class="at-num">17</span>
+    <h2 class="at-figure-title">Загрузка, ошибки, только чтение, фокус</h2>
+    <p class="at-caption">
+      Загрузка — силуэт страницы без мерцания. Ошибка — тост или сам элемент, без строки под полем.
+      Причина «нельзя» — в подсказке. Фокус с клавиатуры — кольцо темы, не браузера.
+    </p>
+  </figcaption>
+  <!-- @frame frame=loading view=notion w=480 label="загрузка" -->
+  <article class="gotipe-page" lang="ru" aria-busy="true">
+    <div class="gotipe-skeleton">
+      <span class="is-title"></span><span class="is-meta"></span><span></span><span class="is-90"></span
+      ><span class="is-75"></span><span class="is-block"></span><span class="is-90"></span><span class="is-60"></span>
+    </div>
+  </article>
+  <!-- @end -->
+  <!-- @frame frame=save-error view=notion w=768 label="не сохранено" -->
+  <div class="gotipe-toast" role="status">
+    <svg class="gt-icon"><use href="#i-warning" /></svg>Не сохранено: нет связи<span class="gotipe-button">Повторить</span>
+  </div>
+  <article class="gotipe-page is-slice" lang="ru">
+    <div class="gotipe-doc">
+      <h2>Как это работает</h2>
+      <p>Журнал лежит в IndexedDB и переживает перезапуск приложения. Сервер принимает пачку транзакций целиком или отклоняет её.</p>
+    </div>
+  </article>
+  <!-- @end -->
+  <!-- @frame frame=image-error view=notion w=480 label="изображение недоступно" -->
+  <article class="gotipe-page is-slice" lang="ru">
+    <div class="gotipe-doc">
+      <p>Транзакции копятся в журнале, пока нет сети.</p>
+      <div class="gotipe-image-state is-error">
+        <svg class="gt-icon"><use href="#i-warning" /></svg>
+        <span>Изображение недоступно</span>
+        <span class="gotipe-image-state-actions"
+          ><span class="gotipe-button"><svg class="gt-icon"><use href="#i-restore" /></svg>Повторить</span
+          ><span class="gotipe-button is-quiet">Заменить</span></span
+        >
+      </div>
+    </div>
+  </article>
+  <!-- @end -->
+  <!-- @frame frame=read-only view=notion w=480 min=320 label="только чтение" -->
+  <article class="gotipe-page" lang="ru">
+    <header class="gotipe-page-head">
+      <div class="gotipe-title-row">
+        <h1 class="gotipe-page-title">Офлайн-черновики</h1>
+        <span class="gotipe-tool is-hover"
+          ><svg class="gt-icon"><use href="#i-lock" /></svg><span class="gotipe-tooltip" data-place="below-end">Только чтение: документ в архиве</span
+          ><svg class="at-pointer"><use href="#i-pointer" /></svg></span
+        >
+      </div>
+    </header>
+    <div class="gotipe-doc">
+      <ul class="gotipe-todo-list">
+        <li class="gotipe-todo-item" data-checked="true">
+          <span class="gotipe-check" role="checkbox" aria-checked="true" aria-disabled="true"><svg class="gt-icon"><use href="#i-check" /></svg></span>
+          <span class="gotipe-todo-item-content">Шифрование черновика ключом сессии</span>
+        </li>
+        <li class="gotipe-todo-item" data-checked="false">
+          <span class="gotipe-check" role="checkbox" aria-checked="false" aria-disabled="true"><svg class="gt-icon"><use href="#i-check" /></svg></span>
+          <span class="gotipe-todo-item-content">Метрика потерянных правок</span>
+        </li>
+      </ul>
+    </div>
+  </article>
+  <!-- @end -->
+  <!-- @frame frame=raw view=docs w=480 label="Markdown как есть" -->
+  <article class="gotipe-page is-slice" lang="ru">
+    <div class="gotipe-doc">
+      <p>Порог считается от правок без сети.</p>
+      <pre class="gotipe-raw">&lt;details&gt;
+  &lt;summary&gt;Журнал в цифрах&lt;/summary&gt;
+  1 284 транзакции в очереди
+&lt;/details&gt;
+
+[^1]: 0,1 % — от правок без сети.<span class="gotipe-raw-mark gotipe-tool is-hover"
+          ><svg class="gt-icon"><use href="#i-lock" /></svg><span class="gotipe-tooltip" data-place="below-end">Сохранится без изменений</span
+          ><svg class="at-pointer"><use href="#i-pointer" /></svg></span
+        ></pre>
+    </div>
+  </article>
+  <!-- @end -->
+  <!-- @frame frame=disabled view=notion w=480 min=320 label="недоступно" -->
+  <article class="gotipe-page is-slice" lang="ru">
+    <div class="gotipe-doc">
+      <p>
+        <span class="gotipe-anchor"
+          ><span class="gotipe-query">/из</span><span class="gotipe-caret"></span
+          ><span class="gotipe-overlay gotipe-menu is-narrow" data-place="below"><span class="gotipe-menu-group"><span class="gotipe-menu-label">Медиа</span><span class="gotipe-menu-item is-selected" aria-disabled="true"><svg class="gt-icon"><use href="#i-image" /></svg><span class="gotipe-menu-text">Изображение</span><span class="gotipe-tooltip" data-place="side">Загрузка файлов выключена</span><svg class="at-pointer"><use href="#i-pointer" /></svg></span><span class="gotipe-menu-item" aria-disabled="true"><svg class="gt-icon"><use href="#i-file" /></svg><span class="gotipe-menu-text">Файл</span></span></span></span></span
+        >
+      </p>
+    </div>
+  </article>
+  <!-- @end -->
+  <!-- @frame frame=focus-toolbar view=notion w=480 label="фокус: панель" -->
+  <article class="gotipe-page is-slice" lang="ru">
+    <div class="gotipe-doc">
+      <p>
+        Сервер принимает пачку транзакций целиком или отклоняет её, поэтому
+        <span class="gotipe-anchor is-inline"
+          ><span class="gotipe-selection">половина пачки не запишется</span
+          ><span class="gotipe-overlay gotipe-toolbar" data-place="above" role="toolbar"
+            ><span class="gotipe-tool is-text">Текст<svg class="gt-icon"><use href="#i-chevron-down" /></svg></span><span class="gotipe-tool-sep"></span
+            ><span class="gotipe-tool"><svg class="gt-icon"><use href="#i-bold" /></svg></span><span class="gotipe-tool"><svg class="gt-icon"><use href="#i-italic" /></svg></span
+            ><span class="gotipe-tool"><svg class="gt-icon"><use href="#i-underline" /></svg></span><span class="gotipe-tool-sep"></span
+            ><span class="gotipe-tool is-focus-visible"><svg class="gt-icon"><use href="#i-link" /></svg><span class="gotipe-tooltip" data-place="above">Ссылка<span class="gotipe-key">⌘K</span></span></span
+            ><span class="gotipe-tool"><svg class="gt-icon"><use href="#i-more" /></svg></span></span
+        ></span>
+        — даже если связь оборвалась посреди отправки.
+      </p>
+    </div>
+  </article>
+  <!-- @end -->
+  <!-- @frame frame=focus-check view=notion w=480 label="фокус: задача" -->
+  <article class="gotipe-page is-slice" lang="ru">
+    <div class="gotipe-doc">
+      <h2>Задачи</h2>
+      <ul class="gotipe-todo-list">
+        <li class="gotipe-todo-item" data-checked="true">
+          <span class="gotipe-check" role="checkbox" aria-checked="true"><svg class="gt-icon"><use href="#i-check" /></svg></span>
+          <span class="gotipe-todo-item-content">Шифрование черновика ключом сессии</span>
+        </li>
+        <li class="gotipe-todo-item" data-checked="false">
+          <span class="gotipe-check is-focus-visible" role="checkbox" aria-checked="false"><svg class="gt-icon"><use href="#i-check" /></svg></span>
+          <span class="gotipe-todo-item-content">Индикатор «Не отправлено» в шапке документа</span>
+        </li>
+        <li class="gotipe-todo-item" data-checked="false">
+          <span class="gotipe-check" role="checkbox" aria-checked="false"><svg class="gt-icon"><use href="#i-check" /></svg></span>
+          <span class="gotipe-todo-item-content">Метрика потерянных правок на дашборде выпуска</span>
+        </li>
+      </ul>
+    </div>
+  </article>
+  <!-- @end -->
+</figure>
