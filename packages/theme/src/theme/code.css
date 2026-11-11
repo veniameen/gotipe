@@ -1,95 +1,125 @@
+/* Code block — Atlas frames 1–5. A sunken block with a quiet head: the language on the left, the
+   copy button on the right. The code scrolls inside its <pre>; line numbers are a view token
+   (docs shows them). Shared by BlockEditor and PageEditor. */
+
 .gotipe-code-block {
-  background: var(--gt-bg-code, var(--gt-bg-hover));
-  border-radius: var(--gt-radius-md, 8px);
-  overflow: hidden;
+  min-width: 0;
+  border-radius: var(--gt-radius-block);
+  background: var(--gt-sunken);
 }
 
 .gotipe-code-block-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: var(--gt-space-2, 8px) var(--gt-space-4, 16px);
-  border-bottom: 1px solid var(--gt-border-light, rgba(0, 0, 0, 0.05));
+  gap: var(--gt-menu-gap);
+  min-height: var(--gt-code-head);
+  padding: var(--gt-code-head-pad);
+  color: var(--gt-text-3);
+  font-family: var(--gt-font-ui);
+  font-size: var(--gt-label-size);
+  line-height: var(--gt-label-leading);
+  letter-spacing: normal;
 }
 
-.gotipe-code-language-select {
-  min-width: 128px;
-  max-width: 220px;
-  color: var(--gt-text-secondary);
+/* the language reads as a label; it opens the list on click */
+.gotipe-code-block-header .gotipe-code-language-select {
+  flex: 0 1 auto;
+  min-width: 0;
+  max-width: 100%;
+  height: var(--gt-handle-h);
+  margin-left: calc(-1 * var(--gt-space-2));
+  padding: 0 var(--gt-space-2);
+  border: 0;
+  border-radius: var(--gt-radius-control);
+  background: transparent;
+  box-shadow: none;
+  color: var(--gt-text-3);
+  font: inherit;
+  text-overflow: ellipsis;
+  cursor: pointer;
+  appearance: none;
+}
+.gotipe-code-block-header .gotipe-code-language-select:hover:not(:disabled) {
+  background: var(--gt-fill-2);
+  color: var(--gt-text-2);
+}
+.gotipe-code-block-header .gotipe-code-language-select:disabled {
+  opacity: 1;
+  cursor: default;
 }
 
 .gotipe-code-block-header button {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border: none;
+  display: grid;
+  flex: none;
+  place-items: center;
+  min-width: var(--gt-handle-w);
+  height: var(--gt-handle-h);
+  padding: 0;
+  border: 0;
+  border-radius: var(--gt-radius-control);
   background: transparent;
-  color: var(--gt-text-tertiary);
-  font-size: var(--gt-text-xs, 12px);
-  cursor: pointer;
-  padding: 4px 8px;
-  border-radius: var(--gt-radius-sm, 6px);
-  transition: color var(--gt-duration-fast, 100ms) var(--gt-ease-out), background
-    var(--gt-duration-fast, 100ms) var(--gt-ease-out);
-}
-
-.gotipe-code-block-header button:hover {
-  color: var(--gt-text-base);
-  background: var(--gt-bg-hover);
-}
-
-.gotipe-code-block pre {
-  margin: 0;
-  padding: var(--gt-space-4, 16px);
-  background: transparent;
-  border-radius: 0;
-}
-
-.gotipe-code-block-line-numbers {
-  width: 32px;
-  text-align: right;
-  color: var(--gt-text-tertiary);
-  font-size: var(--gt-text-sm, 14px);
-  user-select: none;
-  padding-right: var(--gt-space-3, 12px);
-}
-
-.gotipe-code-block-header {
-  gap: 8px;
-  flex-wrap: wrap;
-}
-.gotipe-code-language-select {
-  flex: 1 1 128px;
-  min-width: 0;
-  max-width: 220px;
-  border: 1px solid var(--gt-border);
-  border-radius: var(--gt-radius-sm, 6px);
-  background: var(--gt-bg);
-  color: var(--gt-text-secondary);
-  padding: 4px 8px;
+  color: var(--gt-text-3);
   font: inherit;
+  cursor: pointer;
+  transition: color var(--gt-duration-fast) var(--gt-ease-out), background var(--gt-duration-fast)
+    var(--gt-ease-out);
 }
+.gotipe-code-block-header button:hover {
+  background: var(--gt-fill-2);
+  color: var(--gt-text);
+}
+.gotipe-code-block-header button > svg {
+  width: var(--gt-icon-size);
+  height: var(--gt-icon-size);
+}
+.gotipe-code-block-header :is(button, select):focus-visible {
+  outline: var(--gt-focus-width) solid var(--gt-focus);
+  outline-offset: var(--gt-focus-gap);
+}
+
 .gotipe-code-block-scroll {
   display: flex;
   min-width: 0;
-  font-family: var(--gt-font-mono, monospace);
-  font-size: 13px;
-  line-height: 1.6;
+  font-family: var(--gt-font-mono);
+  font-size: var(--gt-code-size);
+  line-height: var(--gt-code-leading);
+  letter-spacing: normal;
+  tab-size: 2;
+}
+.gotipe-code-block .gotipe-code-block-line-numbers {
+  display: var(--gt-code-lines-display);
+  flex: none;
+  box-sizing: content-box;
+  min-width: var(--gt-code-gutter);
+  padding: 0 0 var(--gt-code-pad-bottom) var(--gt-code-pad-x);
+  color: var(--gt-text-3);
+  font: inherit;
+  text-align: right;
+  user-select: none;
 }
 .gotipe-code-block .gotipe-code-block-scroll pre {
   flex: 1;
   min-width: 0;
-  padding: 12px;
+  margin: 0;
+  padding: 0 var(--gt-code-pad-x) var(--gt-code-pad-bottom);
   overflow-x: auto;
+  background: transparent;
+  border-radius: 0;
+  color: var(--gt-text);
+  font: inherit;
   white-space: pre;
   overflow-wrap: normal;
+}
+.gotipe-code-block .gotipe-code-block-scroll pre > code {
   font: inherit;
 }
-.gotipe-code-block .gotipe-code-block-line-numbers {
-  flex: 0 0 36px;
-  width: auto;
-  padding: 12px 0 12px 4px;
-  font: inherit;
+.gotipe-code-block > [role="alert"] {
+  margin: 0;
+  padding: 0 var(--gt-code-pad-x) var(--gt-code-pad-bottom);
+  color: var(--gt-danger);
+  font-size: var(--gt-label-size);
+  line-height: var(--gt-label-leading);
 }
 
 .gotipe-code-token {
@@ -104,7 +134,7 @@
   font-style: italic;
 }
 .gotipe-code-token[data-bold] {
-  font-weight: 600;
+  font-weight: var(--gt-weight-strong);
 }
 .gotipe-code-token[data-underline] {
   text-decoration: underline;

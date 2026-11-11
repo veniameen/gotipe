@@ -143,27 +143,27 @@
 }
 
 /* ============================================================
-   Block Editor — with toolbar gutter
+   Block handle — Atlas frames 1 and 8: «+» and the grip in the gutter of the block under the
+   pointer. It never moves the text; a narrow notion page keeps a rail for it (touch drag).
    ============================================================ */
 
-.gotipe-block-editor--with-toolbar {
-  padding-left: 0;
+.gotipe-block-editor--with-toolbar > .gotipe-editor > .gotipe-content:where(:not(.gotipe-page *)) {
+  padding-left: max(var(--gt-page-pad-x), var(--gt-handle-rail));
 }
 
-/* Reserve a stable action rail, including in a narrow host container. */
-.gotipe-block-editor--with-toolbar > .gotipe-editor {
-  padding-left: 64px;
+.gotipe-block-toolbar-wrapper {
+  position: absolute;
+  z-index: var(--gt-z-block-handle);
+  display: var(--gt-handle-display);
+  align-items: center;
+  height: var(--gt-handle-h);
+  transform: translateY(-50%);
 }
-
-/* ============================================================
-   Block Toolbar
-   ============================================================ */
 
 .gotipe-block-toolbar {
   display: flex;
   align-items: center;
-  gap: 2px;
-  z-index: var(--gt-z-block-handle, 10);
+  gap: var(--gt-handle-gap);
 }
 
 .gotipe-block-toolbar-control {
@@ -173,89 +173,75 @@
 }
 
 .gotipe-block-toolbar button {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 24px;
-  height: 24px;
-  border: none;
-  border-radius: var(--gt-radius-sm, 6px);
-  background: transparent;
-  color: var(--gt-text-tertiary);
-  cursor: pointer;
+  display: grid;
+  place-items: center;
+  width: var(--gt-handle-w);
+  height: var(--gt-handle-h);
   padding: 0;
-  transition: background 20ms linear;
+  border: 0;
+  border-radius: var(--gt-radius-control);
+  background: transparent;
+  color: var(--gt-text-3);
+  cursor: pointer;
 }
-
-.gotipe-block-toolbar button:hover {
-  color: var(--gt-text-secondary);
-  background: var(--gt-bg-hover);
+.gotipe-block-toolbar button > svg {
+  width: var(--gt-icon-size);
+  height: var(--gt-icon-size);
+}
+.gotipe-block-toolbar button:hover,
+.gotipe-block-toolbar button[aria-expanded="true"] {
+  background: var(--gt-fill-2);
+  color: var(--gt-text);
+}
+.gotipe-block-toolbar button:focus-visible {
+  outline: var(--gt-focus-width) solid var(--gt-focus);
+  outline-offset: var(--gt-focus-gap);
 }
 
 .gotipe-drag-handle-btn {
   cursor: grab;
+  touch-action: none;
 }
 .gotipe-drag-handle-btn:active {
   cursor: grabbing;
 }
 
+/* the handle's tooltip: an inverted label, its keys quieter under it */
 .gotipe-block-toolbar-tooltip {
-  position: absolute;
-  left: 0;
-  top: -8px;
-  transform: translate(-50%, -94%);
-  min-width: 168px;
-  padding: 8px 10px;
-  border-radius: 8px;
-  background: rgba(15, 23, 42, 0.96);
-  color: #fff;
-  font-size: 12px;
-  line-height: 1.25;
-  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.24);
-  pointer-events: none;
-  z-index: var(--gt-z-slash, 50);
+  z-index: var(--gt-z-tooltip);
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: var(--gt-toolbar-gap);
+  max-width: var(--gt-tooltip-max);
+  padding: var(--gt-tooltip-pad);
+  border-radius: var(--gt-radius-control);
+  background: var(--gt-inverse);
+  color: var(--gt-inverse-text);
+  font-family: var(--gt-font-ui);
+  font-size: var(--gt-ui-small);
+  line-height: var(--gt-ui-small-leading);
+  letter-spacing: normal;
+  pointer-events: none;
   opacity: 0;
-  transition: opacity var(--gt-duration-fast, 100ms) var(--gt-ease-out), transform
-    var(--gt-duration-fast, 100ms) var(--gt-ease-out), left var(--gt-duration-fast, 100ms)
-    var(--gt-ease-out);
+  transition: opacity var(--gt-duration-fast) var(--gt-ease-out);
 }
-
-.gotipe-block-toolbar-tooltip::after {
-  content: "";
-  position: absolute;
-  left: 50%;
-  bottom: -5px;
-  width: 10px;
-  height: 10px;
-  background: rgba(15, 23, 42, 0.96);
-  transform: translateX(-50%) rotate(45deg);
-}
-
-.gotipe-block-toolbar-tooltip-meta {
-  color: rgba(255, 255, 255, 0.82);
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-}
-
-.gotipe-block-toolbar-tooltip kbd {
-  font-family: var(--gt-font-body);
-  font-size: 11px;
-  line-height: 1;
-  font-weight: 600;
-  border-radius: 4px;
-  border: 1px solid rgba(255, 255, 255, 0.28);
-  padding: 2px 4px;
-  color: rgba(255, 255, 255, 0.92);
-  background: rgba(255, 255, 255, 0.12);
-}
-
 .gotipe-block-toolbar-tooltip.is-visible {
   opacity: 1;
-  transform: translate(-50%, -100%);
+}
+.gotipe-block-toolbar-tooltip-meta {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--gt-space-1);
+  color: var(--gt-inverse-text-2);
+}
+.gotipe-block-toolbar-tooltip kbd {
+  padding: var(--gt-kbd-pad);
+  border-radius: var(--gt-radius-inline);
+  box-shadow: inset 0 0 0 var(--gt-hairline) var(--gt-inverse-text-2);
+  color: var(--gt-inverse-text);
+  font-family: var(--gt-font-ui);
+  font-size: var(--gt-ui-tiny);
+  line-height: var(--gt-ui-tiny-leading);
 }
 
 /* Block More Menu (context menu) */
