@@ -56,7 +56,8 @@ export type PageIconName =
   | "restore"
   | "toggle"
   | "columns"
-  | "math";
+  | "math"
+  | "chevronLeft";
 
 const PATHS: Record<PageIconName, React.ReactNode> = {
   image: (
@@ -229,6 +230,7 @@ const PATHS: Record<PageIconName, React.ReactNode> = {
   math: (
     <path d="M10.5 3.25H8.9a1.6 1.6 0 0 0-1.58 1.33L5.9 12.4a1.6 1.6 0 0 1-1.58 1.35H3.5M5 7h5" />
   ),
+  chevronLeft: <path d="M9.75 4.5 6.25 8l3.5 3.5" />,
 };
 
 export function PageIcon({ name, className }: { name: PageIconName; className?: string }) {

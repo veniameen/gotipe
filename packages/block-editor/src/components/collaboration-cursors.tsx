@@ -211,14 +211,11 @@ export function CollaborationCursors({ peers, containerRef }: CollaborationCurso
             key={`${sel.peerId}-sel-${i}`}
             className="gotipe-remote-selection"
             style={{
-              position: "absolute",
               left: rect.x,
               top: rect.y,
               width: rect.width,
               height: rect.height,
               backgroundColor: sel.color,
-              opacity: 0.2,
-              pointerEvents: "none",
             }}
           />
         )),
@@ -231,11 +228,9 @@ export function CollaborationCursors({ peers, containerRef }: CollaborationCurso
           className="gotipe-remote-cursor"
           data-peer-id={cursor.peerId}
           style={{
-            position: "absolute",
             left: cursor.x - 1,
             top: cursor.y,
             height: cursor.height,
-            pointerEvents: "none",
           }}
         >
           <div
