@@ -1,5 +1,6 @@
 import type { GoTipeEditor } from "@gotipe/core";
 import { useCallback, useEffect, useState } from "react";
+import { PageIcon } from "../page/icons";
 
 export interface Suggestion {
   id: string;
@@ -83,7 +84,7 @@ export function SuggestionToolbar({
         disabled={index === 0}
         aria-label="Previous suggestion"
       >
-        ◄
+        <PageIcon name="chevronLeft" />
       </button>
       <button
         type="button"
@@ -91,7 +92,7 @@ export function SuggestionToolbar({
         disabled={index >= total - 1}
         aria-label="Next suggestion"
       >
-        ►
+        <PageIcon name="chevronRight" />
       </button>
 
       <div className="gotipe-bubble-menu-separator" aria-hidden="true" />
@@ -102,10 +103,10 @@ export function SuggestionToolbar({
         disabled={!editable}
         aria-label="Accept current suggestion"
       >
-        ✓
+        <PageIcon name="check" />
       </button>
       <button type="button" onClick={handleRejectCurrent} aria-label="Reject current suggestion">
-        ✗
+        <PageIcon name="close" />
       </button>
 
       <div className="gotipe-bubble-menu-separator" aria-hidden="true" />
@@ -118,6 +119,7 @@ export function SuggestionToolbar({
         disabled={!editable}
         aria-label="Accept all suggestions"
         data-action="accept-all"
+        className="is-primary"
       >
         Accept All
       </button>

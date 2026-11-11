@@ -1,5 +1,6 @@
 import type { GoTipeEditor } from "@gotipe/core";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { PageIcon } from "../page/icons";
 
 export interface AiCommandBarProps {
   editor: GoTipeEditor;
@@ -152,10 +153,9 @@ export function AiCommandBar({ editor, onSubmit }: AiCommandBarProps) {
       aria-label="AI command bar"
       aria-busy={busy}
       data-gotipe-ai-command-bar=""
-      style={{ flexWrap: "wrap" }}
     >
       <span className="gotipe-ai-command-bar-icon" aria-hidden="true">
-        ✨
+        <PageIcon name="sparkle" />
       </span>
       <input
         ref={inputRef}
@@ -179,31 +179,24 @@ export function AiCommandBar({ editor, onSubmit }: AiCommandBarProps) {
         disabled={!value.trim() || busy}
         aria-label="Submit AI command"
       >
-        ↵
+        <PageIcon name="send" />
       </button>
       <button
         type="button"
-        className="gotipe-ai-command-bar-submit"
+        className="gotipe-ai-command-bar-close"
         onClick={() => close(true)}
         aria-label={busy ? "Cancel AI command" : "Close AI command bar"}
       >
-        ×
+        <PageIcon name="close" />
       </button>
       {busy && (
-        <output aria-live="polite" style={{ flexBasis: "100%", fontSize: "0.85em" }}>
+        <output className="gotipe-ai-command-bar-status" aria-live="polite">
+          <span className="gotipe-ai-status-spinner" aria-hidden="true" />
           Processing...
         </output>
       )}
       {error && (
-        <span
-          role="alert"
-          style={{
-            flexBasis: "100%",
-            overflowWrap: "anywhere",
-            color: "var(--gt-danger, #b42318)",
-            fontSize: "0.85em",
-          }}
-        >
+        <span role="alert" className="gotipe-ai-command-bar-error">
           {error}
         </span>
       )}
