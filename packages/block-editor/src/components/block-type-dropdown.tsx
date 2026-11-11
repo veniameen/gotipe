@@ -1,5 +1,6 @@
 import type { GoTipeEditor } from "@gotipe/core";
 import { useEditorState } from "@gotipe/react";
+import { PageIcon, type PageIconName } from "../page/icons";
 import { blockPath } from "./formatting/selection";
 import { useFormattingMenu } from "./formatting/use-formatting-menu";
 
@@ -9,19 +10,19 @@ export interface BlockTypeDropdownProps {
 interface BlockTypeOption {
   type: string;
   label: string;
-  icon: string;
+  icon: PageIconName;
   attrs?: Record<string, unknown>;
 }
 const BLOCK_TYPES: BlockTypeOption[] = [
-  { type: "paragraph", label: "Paragraph", icon: "Aa" },
-  { type: "heading", label: "Heading 1", icon: "H1", attrs: { level: 1 } },
-  { type: "heading", label: "Heading 2", icon: "H2", attrs: { level: 2 } },
-  { type: "heading", label: "Heading 3", icon: "H3", attrs: { level: 3 } },
-  { type: "bulletList", label: "Bullet List", icon: "•" },
-  { type: "orderedList", label: "Numbered List", icon: "1." },
-  { type: "todoList", label: "Todo List", icon: "☑" },
-  { type: "blockquote", label: "Quote", icon: "“" },
-  { type: "codeBlock", label: "Code", icon: "</>" },
+  { type: "paragraph", label: "Paragraph", icon: "text" },
+  { type: "heading", label: "Heading 1", icon: "h1", attrs: { level: 1 } },
+  { type: "heading", label: "Heading 2", icon: "h2", attrs: { level: 2 } },
+  { type: "heading", label: "Heading 3", icon: "h3", attrs: { level: 3 } },
+  { type: "bulletList", label: "Bullet List", icon: "bullet" },
+  { type: "orderedList", label: "Numbered List", icon: "numbered" },
+  { type: "todoList", label: "Todo List", icon: "todo" },
+  { type: "blockquote", label: "Quote", icon: "quote" },
+  { type: "codeBlock", label: "Code", icon: "code" },
 ];
 export function BlockTypeDropdown({ editor }: BlockTypeDropdownProps) {
   const state = useEditorState(editor, (value) => value) ?? editor.getViewState();
@@ -72,7 +73,7 @@ export function BlockTypeDropdown({ editor }: BlockTypeDropdownProps) {
       >
         <span className="gotipe-block-type-trigger-label">{label}</span>
         <span className="gotipe-block-type-trigger-chevron" aria-hidden="true">
-          ▾
+          <PageIcon name="chevron" />
         </span>
       </button>
       {menu.open && (
@@ -97,8 +98,9 @@ export function BlockTypeDropdown({ editor }: BlockTypeDropdownProps) {
               data-level={option.attrs?.level}
               onClick={() => select(option)}
             >
-              <span style={{ width: 20, textAlign: "center", flexShrink: 0 }}>{option.icon}</span>
-              {option.label}
+              <PageIcon name={option.icon} />
+              <span className="gotipe-menu-text">{option.label}</span>
+              {option.label === label && <PageIcon name="check" className="gotipe-menu-end" />}
             </button>
           ))}
           {menu.error && <p role="alert">{menu.error}</p>}

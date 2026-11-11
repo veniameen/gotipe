@@ -1,6 +1,7 @@
 import { type GoTipeEditor, GoTipeError } from "@gotipe/core";
 import { BubbleMenu } from "@gotipe/react";
 import { useCallback } from "react";
+import { PageIcon, type PageIconName } from "../page/icons";
 import { BlockTypeDropdown } from "./block-type-dropdown";
 import { LinkEditor } from "./formatting/link-editor";
 import { MoreMenu } from "./formatting/more-menu";
@@ -34,7 +35,7 @@ function Separator() {
 
 interface FormatButtonProps {
   label: string;
-  icon: string;
+  icon: PageIconName;
   active: boolean;
   onClick: () => void;
 }
@@ -49,7 +50,7 @@ function FormatButton({ label, icon, active, onClick }: FormatButtonProps) {
       data-mark={label.toLowerCase()}
       onClick={onClick}
     >
-      {icon}
+      <PageIcon name={icon} />
     </button>
   );
 }
@@ -91,25 +92,12 @@ export function BlockEditorBubbleMenu({ editor, enableAI = false }: BlockEditorB
             <>
               <button
                 type="button"
+                className="gotipe-bubble-model"
                 aria-label="AI Improve"
                 onClick={handleAIImprove}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "4px",
-                  height: "32px",
-                  padding: "0 8px",
-                  border: "none",
-                  borderRadius: "var(--gt-radius-lg, 12px)",
-                  background: "transparent",
-                  color: "var(--gt-text-secondary)",
-                  fontSize: "var(--gt-text-sm, 14px)",
-                  fontWeight: 500,
-                  cursor: "pointer",
-                  whiteSpace: "nowrap",
-                }}
               >
-                {"\u2728"} Improve
+                <PageIcon name="sparkle" />
+                Improve
               </button>
               <Separator />
             </>
@@ -122,7 +110,7 @@ export function BlockEditorBubbleMenu({ editor, enableAI = false }: BlockEditorB
           {/* Formatting buttons */}
           <FormatButton
             label="Bold"
-            icon="B"
+            icon="bold"
             active={isMarkActive(editor, "bold")}
             onClick={() =>
               runWithFocus((chain) => {
@@ -132,7 +120,7 @@ export function BlockEditorBubbleMenu({ editor, enableAI = false }: BlockEditorB
           />
           <FormatButton
             label="Italic"
-            icon="I"
+            icon="italic"
             active={isMarkActive(editor, "italic")}
             onClick={() =>
               runWithFocus((chain) => {
@@ -142,7 +130,7 @@ export function BlockEditorBubbleMenu({ editor, enableAI = false }: BlockEditorB
           />
           <FormatButton
             label="Underline"
-            icon="U"
+            icon="underline"
             active={isMarkActive(editor, "underline")}
             onClick={() =>
               runWithFocus((chain) => {
@@ -152,7 +140,7 @@ export function BlockEditorBubbleMenu({ editor, enableAI = false }: BlockEditorB
           />
           <FormatButton
             label="Strikethrough"
-            icon="S"
+            icon="strike"
             active={isMarkActive(editor, "strikethrough")}
             onClick={() =>
               runWithFocus((chain) => {
@@ -162,7 +150,7 @@ export function BlockEditorBubbleMenu({ editor, enableAI = false }: BlockEditorB
           />
           <FormatButton
             label="Code"
-            icon="</>"
+            icon="inlineCode"
             active={isMarkActive(editor, "code")}
             onClick={() =>
               runWithFocus((chain) => {

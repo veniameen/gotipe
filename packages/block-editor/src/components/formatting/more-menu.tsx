@@ -1,6 +1,7 @@
 import { type Block, type GoTipeEditor, GoTipeError, copySelection } from "@gotipe/core";
 import { serializeMarkdown } from "@gotipe/markdown";
 import { useEffect, useRef, useState } from "react";
+import { PageIcon } from "../../page/icons";
 import { useFormattingMenu } from "./use-formatting-menu";
 
 export function MoreMenu({ editor }: { editor: GoTipeEditor }) {
@@ -76,7 +77,7 @@ export function MoreMenu({ editor }: { editor: GoTipeEditor }) {
           }
         }}
       >
-        ⋮
+        <PageIcon name="more" />
       </button>
       {menu.open && (
         <div

@@ -46,7 +46,17 @@ export type PageIconName =
   | "info"
   | "sun"
   | "moon"
-  | "system";
+  | "system"
+  | "underline"
+  | "unlink"
+  | "letter"
+  | "sparkle"
+  | "chevronRight"
+  | "swap"
+  | "restore"
+  | "toggle"
+  | "columns"
+  | "math";
 
 const PATHS: Record<PageIconName, React.ReactNode> = {
   image: (
@@ -197,6 +207,27 @@ const PATHS: Record<PageIconName, React.ReactNode> = {
       <circle cx="8" cy="8" r="5.5" />
       <path d="M8 2.5a5.5 5.5 0 0 0 0 11Z" fill="currentColor" stroke="none" />
     </>
+  ),
+  underline: <path d="M5 3v4.5a3 3 0 0 0 6 0V3M4 13.25h8" />,
+  unlink: (
+    <path d="M8.75 4.15l.9-.9a3 3 0 0 1 4.25 4.25l-.9.9M7.25 11.85l-.9.9A3 3 0 0 1 2.1 8.5l.9-.9M2.75 2.75l10.5 10.5" />
+  ),
+  letter: <path d="M4.75 11.5 8 3.5l3.25 8M6 8.75h4" />,
+  sparkle: (
+    <path d="M7 3c.45 2.4 1.6 3.55 4 4-2.4.45-3.55 1.6-4 4-.45-2.4-1.6-3.55-4-4 2.4-.45 3.55-1.6 4-4ZM12.25 1.75v3M10.75 3.25h3" />
+  ),
+  chevronRight: <path d="M6.25 4.5 9.75 8l-3.5 3.5" />,
+  swap: <path d="M3.25 5.5h9l-2.25-2.25M12.75 10.5h-9l2.25 2.25" />,
+  restore: <path d="M3.25 8a4.75 4.75 0 1 0 1.4-3.35M3.25 3.25v2.5h2.5" />,
+  toggle: <path d="M3 4.25 5 6 3 7.75M7.5 6h6M7.5 10.5h6" />,
+  columns: (
+    <>
+      <rect x="2.25" y="3" width="5" height="10" rx="1.25" />
+      <rect x="8.75" y="3" width="5" height="10" rx="1.25" />
+    </>
+  ),
+  math: (
+    <path d="M10.5 3.25H8.9a1.6 1.6 0 0 0-1.58 1.33L5.9 12.4a1.6 1.6 0 0 1-1.58 1.35H3.5M5 7h5" />
   ),
 };
 

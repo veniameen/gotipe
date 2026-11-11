@@ -1,5 +1,6 @@
 import { type GoTipeEditor, toSafeHref } from "@gotipe/core";
 import { useEffect, useRef, useState } from "react";
+import { PageIcon } from "../../page/icons";
 import { currentMarks } from "./selection";
 import { useFormattingMenu } from "./use-formatting-menu";
 
@@ -38,7 +39,7 @@ export function LinkEditor({ editor }: { editor: GoTipeEditor }) {
         disabled={!menu.editable}
         onClick={() => (menu.open ? menu.close() : open())}
       >
-        🔗
+        <PageIcon name="link" />
       </button>
       {menu.open && (
         <div
@@ -56,8 +57,9 @@ export function LinkEditor({ editor }: { editor: GoTipeEditor }) {
               apply();
             }}
           >
-            <label>
-              Link address
+            <label className="gotipe-link-editor-field">
+              <PageIcon name="link" />
+              <span className="gotipe-sr-only">Link address</span>
               <input
                 ref={input}
                 value={url}
@@ -72,20 +74,39 @@ export function LinkEditor({ editor }: { editor: GoTipeEditor }) {
                 aria-invalid={!!menu.error}
               />
             </label>
-            {menu.error && <p role="alert">{menu.error}</p>}
             <div className="gotipe-link-editor-actions">
+              <button
+                type="submit"
+                aria-label="Apply link"
+                title="Apply link"
+                disabled={!url.trim()}
+              >
+                <PageIcon name="check" />
+              </button>
               {mark && (
-                <button type="button" onClick={() => menu.run((chain) => chain.unsetMark("link"))}>
-                  Remove link
+                <button
+                  type="button"
+                  aria-label="Remove link"
+                  title="Remove link"
+                  onClick={() => menu.run((chain) => chain.unsetMark("link"))}
+                >
+                  <PageIcon name="unlink" />
                 </button>
               )}
-              <button type="button" onClick={() => menu.close(true)}>
-                Cancel
-              </button>
-              <button type="submit" disabled={!url.trim()}>
-                Apply link
+              <button
+                type="button"
+                aria-label="Cancel"
+                title="Cancel"
+                onClick={() => menu.close(true)}
+              >
+                <PageIcon name="close" />
               </button>
             </div>
+            {menu.error && (
+              <p role="alert" className="gotipe-sr-only">
+                {menu.error}
+              </p>
+            )}
           </form>
         </div>
       )}

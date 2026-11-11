@@ -147,18 +147,18 @@ test.describe('Bubble menu', () => {
     await page.getByRole('button', { name: 'Text color', exact: true }).click();
     await page.getByRole('button', { name: 'Text color Blue', exact: true }).click();
     const paragraph = page.locator('[data-block-id="test-body"]');
-    await expect(paragraph.locator('span[style]')).toHaveCSS('color', 'rgb(29, 78, 216)');
+    await expect(paragraph.locator('span[style]')).toHaveCSS('color', 'rgb(44, 98, 212)');
     await page.getByRole('button', { name: 'Text color', exact: true }).click();
     await expect(page.getByRole('button', { name: 'Text color Blue', exact: true })).toHaveAttribute('aria-pressed', 'true');
     await page.getByRole('button', { name: 'Highlight Yellow', exact: true }).click();
-    await expect(paragraph.locator('mark')).toHaveCSS('background-color', 'rgb(254, 249, 195)');
-    await expect(paragraph.locator('span[style]')).toHaveCSS('color', 'rgb(29, 78, 216)');
+    await expect(paragraph.locator('mark')).toHaveCSS('background-color', 'rgba(234, 179, 8, 0.2)');
+    await expect(paragraph.locator('span[style]')).toHaveCSS('color', 'rgb(44, 98, 212)');
     await page.getByRole('button', { name: 'Text color', exact: true }).click();
     await page.getByRole('button', { name: 'Reset color', exact: true }).click();
     await expect(paragraph.locator('mark, span[style]')).toHaveCount(0);
     await expect(paragraph).toHaveText('Цвет 😀');
     await page.keyboard.press('ControlOrMeta+z');
-    await expect(paragraph.locator('mark')).toHaveCSS('background-color', 'rgb(254, 249, 195)');
+    await expect(paragraph.locator('mark')).toHaveCSS('background-color', 'rgba(234, 179, 8, 0.2)');
   });
 
   test('converts a selected middle list row while preserving its neighbors and nested rows', async ({ page }) => {
