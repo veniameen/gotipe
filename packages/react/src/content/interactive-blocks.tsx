@@ -1,6 +1,7 @@
 import type { BlockView, GoTipeEditor } from "@gotipe/core";
 import { type ReactNode, useState } from "react";
 import { usePhantom } from "./context";
+import { ContentIcon, calloutIconOf } from "./icons";
 
 interface Props {
   block: BlockView;
@@ -38,7 +39,7 @@ export function ToggleBlock({ block, editor, rootProps, content, children }: Pro
             else editor.chain().setBlockAttrs(block.id, { open: !isOpen }).run();
           }}
         >
-          {isOpen ? "▾" : "▸"}
+          <ContentIcon name="chevron" />
         </button>
         {content}
       </summary>
@@ -66,6 +67,11 @@ export function CalloutBlock({ block, editor, rootProps, content, children }: Pr
       className={["gotipe-callout", rootProps.className].filter(Boolean).join(" ")}
       role="note"
     >
+      {!emoji && (
+        <span className="gotipe-callout-icon" contentEditable={false} data-gotipe-widget="">
+          <ContentIcon name={calloutIconOf(variant)} />
+        </span>
+      )}
       {emoji && (
         <span className="gotipe-callout-icon-editor" contentEditable={false} data-gotipe-widget="">
           {editing ? (
