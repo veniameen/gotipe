@@ -1,163 +1,188 @@
-/* ============================================================
-   Collaboration Cursors
-   ============================================================ */
+/* Working together and the model — Atlas frames 12–16, and the theme switch and drag of the
+   block editor. People's colours come from the host (or the --gt-person-* tokens); everything
+   else is the theme. */
 
+/* ---- other people: a caret line and a flag with the name, a tinted selection ---- */
+.gotipe-remote-selection,
 .gotipe-remote-cursor {
   position: absolute;
-  width: 2px;
-  z-index: var(--gt-z-content, 1);
+  pointer-events: none;
 }
-
+.gotipe-remote-selection {
+  opacity: var(--gt-remote-selection-opacity);
+}
+.gotipe-remote-cursor {
+  z-index: var(--gt-z-content);
+  width: var(--gt-caret-w);
+}
+.gotipe-remote-cursor-caret {
+  width: var(--gt-caret-w);
+  height: 100%;
+}
 .gotipe-remote-cursor-label {
   position: absolute;
-  top: -20px;
+  bottom: 100%;
   left: 0;
-  font-size: 11px;
-  padding: 2px 6px;
-  border-radius: 4px 4px 4px 0;
+  padding: var(--gt-flag-pad);
+  border-radius: var(--gt-flag-radius);
+  color: var(--gt-inverse-text);
+  font-family: var(--gt-font-ui);
+  font-size: var(--gt-ui-tiny);
+  font-weight: var(--gt-weight-medium);
+  line-height: var(--gt-ui-tiny-leading);
+  letter-spacing: normal;
   white-space: nowrap;
-  color: #fff;
 }
 
-/* ============================================================
-   AI Ghost Text
-   ============================================================ */
-
+/* ---- the model's suggestion after the caret: quiet text ---- */
 .gotipe-ghost-text {
-  position: absolute;
-  color: var(--gt-ai-ghost, #9ca3af);
-  pointer-events: none;
-  user-select: none;
-  white-space: pre;
+  z-index: var(--gt-z-content);
+  color: var(--gt-ai-ghost);
   font-family: inherit;
   font-size: inherit;
-  z-index: var(--gt-z-content, 1);
-  animation: gotipe-fade-in var(--gt-duration-normal, 150ms) var(--gt-ease-out);
+  white-space: pre;
+  pointer-events: none;
+  user-select: none;
+  animation: gotipe-fade-in var(--gt-duration-normal) var(--gt-ease-out);
 }
 
-/* ============================================================
-   Comment Highlight
-   ============================================================ */
-
+/* ---- comments: the commented words carry an amber underline; the open one is tinted ---- */
 .gotipe-comment-highlight {
-  background: rgba(250, 176, 5, 0.2);
-  border-bottom: 2px solid rgba(250, 176, 5, 0.5);
+  background: transparent;
+  box-shadow: inset 0 calc(-1 * var(--gt-rule)) 0 var(--gt-comment);
 }
-
+.gotipe-comment-highlight:is(.active, .is-active) {
+  background: var(--gt-comment-tint);
+}
 .gotipe-comment-highlight.resolved {
-  background: rgba(64, 192, 87, 0.1);
-  border-bottom-color: rgba(64, 192, 87, 0.3);
+  box-shadow: none;
 }
-
-/* ============================================================
-   Comment Sidebar
-   ============================================================ */
 
 .gotipe-comment-sidebar {
   position: absolute;
-  right: 0;
   top: 0;
-  width: 280px;
+  right: 0;
+  z-index: var(--gt-z-toolbar);
+  box-sizing: border-box;
+  width: var(--gt-panel-w);
   height: 100%;
-  border-left: 1px solid var(--gt-border-light, rgba(0, 0, 0, 0.05));
-  background: var(--gt-bg);
   overflow-y: auto;
-  z-index: var(--gt-z-toolbar, 30);
+  box-shadow: inset var(--gt-hairline) 0 0 var(--gt-line);
+  background: var(--gt-page-bg);
+  color: var(--gt-text);
+  font-family: var(--gt-font-ui);
+  font-size: var(--gt-ui-size);
+  line-height: var(--gt-ui-leading);
+  letter-spacing: normal;
 }
-
 .gotipe-comment-sidebar-content {
-  padding: var(--gt-space-4, 16px);
+  padding: var(--gt-panel-pad);
 }
-
 .gotipe-comment-thread {
-  margin-bottom: var(--gt-space-4, 16px);
-  padding: var(--gt-space-3, 12px);
-  border: 1px solid var(--gt-border-light, rgba(0, 0, 0, 0.05));
-  border-radius: var(--gt-radius-lg, 12px);
+  padding: var(--gt-card-pad);
+  border-radius: var(--gt-radius-card);
+  background: var(--gt-overlay);
+  box-shadow: var(--gt-shadow-card);
 }
-
+.gotipe-comment-thread + .gotipe-comment-thread {
+  margin-top: var(--gt-card-gap);
+}
 .gotipe-comment-author {
-  font-size: var(--gt-text-sm, 14px);
-  font-weight: 600;
-  color: var(--gt-text-base);
+  color: var(--gt-text);
+  font-weight: var(--gt-weight-strong);
 }
-
 .gotipe-comment-timestamp {
-  font-size: var(--gt-text-xs, 12px);
-  color: var(--gt-text-tertiary);
+  color: var(--gt-text-3);
+  font-size: var(--gt-ui-small);
+  font-variant-numeric: tabular-nums;
 }
-
 .gotipe-comment-quote {
-  font-size: var(--gt-text-sm, 14px);
-  color: var(--gt-text-secondary);
-  border-left: 2px solid var(--gt-border);
-  padding-left: var(--gt-space-2, 8px);
-  margin: var(--gt-space-2, 8px) 0;
+  margin: var(--gt-space-2) 0;
+  padding-left: var(--gt-space-2);
+  box-shadow: inset var(--gt-rule) 0 0 var(--gt-comment);
+  color: var(--gt-text-2);
 }
-
 .gotipe-comment-body {
-  font-size: var(--gt-text-sm, 14px);
-  color: var(--gt-text-base);
-  margin-top: var(--gt-space-2, 8px);
+  margin-top: var(--gt-space-2);
+  color: var(--gt-text);
 }
 
-/* ============================================================
-   Suggestion Highlights (AI Proofread)
-   ============================================================ */
-
+/* ---- proposed edits: an insertion underlined in its author's colour, a deletion struck ---- */
 .gotipe-suggestion-insert {
-  background: var(--gt-highlight-green-bg);
+  background: var(--gt-add-tint);
+  box-shadow: inset 0 calc(-1 * var(--gt-rule)) 0 var(--gt-add);
   text-decoration: none;
 }
 .gotipe-suggestion-delete {
-  background: rgba(250, 82, 82, 0.15);
-  text-decoration: line-through;
-  color: var(--gt-text-tertiary);
+  color: var(--gt-text-3);
+  text-decoration-line: line-through;
+  text-decoration-thickness: var(--gt-underline);
+  text-decoration-color: var(--gt-del);
 }
 
-/* ============================================================
-   Suggestion Toolbar
-   ============================================================ */
-
+/* the proposals' toolbar: counter, previous and next, accept or reject one or all */
 .gotipe-suggestion-toolbar {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: var(--gt-space-2, 8px);
-  padding: var(--gt-space-2, 8px) var(--gt-space-3, 12px);
-  background: var(--gt-bg);
-  border: 1px solid var(--gt-border-light, rgba(0, 0, 0, 0.05));
-  border-radius: var(--gt-radius-lg, 12px);
-  box-shadow: var(--gt-shadow-elevated);
-  font-size: var(--gt-text-sm, 14px);
-  z-index: var(--gt-z-bubble, 40);
+  gap: var(--gt-toolbar-gap);
+  max-width: calc(100vw - 2 * var(--gt-space-2));
+  padding: var(--gt-toolbar-pad);
+  border-radius: var(--gt-radius-overlay);
+  background: var(--gt-overlay);
+  box-shadow: var(--gt-shadow-overlay);
+  color: var(--gt-text);
+  font-family: var(--gt-font-ui);
+  font-size: var(--gt-ui-size);
+  line-height: var(--gt-ui-leading);
+  letter-spacing: normal;
+  z-index: var(--gt-z-bubble);
 }
-
 .gotipe-suggestion-toolbar button {
-  display: flex;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  height: 28px;
-  padding: 0 var(--gt-space-2, 8px);
-  border: none;
-  border-radius: var(--gt-radius-sm, 6px);
+  min-width: var(--gt-tool);
+  height: var(--gt-tool);
+  padding: 0;
+  border: 0;
+  border-radius: var(--gt-radius-control);
   background: transparent;
-  color: var(--gt-text-secondary);
-  font-size: var(--gt-text-sm, 14px);
+  color: var(--gt-text-2);
+  font: inherit;
+  white-space: nowrap;
   cursor: pointer;
-  transition: background var(--gt-duration-fast, 100ms) var(--gt-ease-out);
 }
-
+.gotipe-suggestion-toolbar button[data-action] {
+  padding: var(--gt-button-pad);
+}
+.gotipe-suggestion-toolbar button > svg {
+  width: var(--gt-icon-size);
+  height: var(--gt-icon-size);
+}
 .gotipe-suggestion-toolbar button:hover:not(:disabled) {
-  background: var(--gt-bg-hover);
+  background: var(--gt-fill-2);
+  color: var(--gt-text);
 }
-
+.gotipe-suggestion-toolbar button.is-primary {
+  background: var(--gt-ink);
+  color: var(--gt-ink-text);
+}
+.gotipe-suggestion-toolbar button.is-primary:hover:not(:disabled) {
+  background: var(--gt-ink-hover);
+  color: var(--gt-ink-text);
+}
 .gotipe-suggestion-toolbar button:disabled {
-  opacity: 0.4;
+  opacity: var(--gt-disabled-opacity);
   cursor: default;
 }
-
+.gotipe-suggestion-toolbar button:focus-visible {
+  outline: var(--gt-focus-width) solid var(--gt-focus);
+  outline-offset: var(--gt-focus-gap);
+}
 .gotipe-suggestion-counter {
-  color: var(--gt-text-tertiary);
+  padding: var(--gt-kbd-pad);
+  color: var(--gt-text-2);
   font-variant-numeric: tabular-nums;
 }
 
@@ -204,105 +229,137 @@
 }
 
 /* ============================================================
-   AI Command Bar
+   The model's command bar — Atlas frame 16: at the bottom of the editor, it knows what is
+   selected; while the model writes it says so and lets you stop.
    ============================================================ */
 
 .gotipe-ai-command-bar {
   position: fixed;
-  bottom: var(--gt-space-6, 24px);
+  bottom: var(--gt-ai-bar-bottom);
   left: 50%;
-  transform: translateX(-50%);
-  width: min(600px, calc(100vw - 32px));
-  min-width: 0;
+  z-index: var(--gt-z-ai);
   box-sizing: border-box;
-  margin: 0;
-  color: var(--gt-text-base);
-  background: var(--gt-bg);
-  backdrop-filter: blur(12px);
-  border: 1px solid var(--gt-border-light, rgba(0, 0, 0, 0.05));
-  border-radius: var(--gt-radius-xl, 24px);
-  box-shadow: var(--gt-shadow-elevated);
-  padding: var(--gt-space-2, 8px) var(--gt-space-4, 16px);
   display: flex;
-  align-items: center;
   flex-wrap: wrap;
-  gap: var(--gt-space-2, 8px);
-  z-index: var(--gt-z-ai, 70);
-  animation: gotipe-slide-up var(--gt-duration-enter, 200ms) var(--gt-ease-out);
+  align-items: center;
+  gap: var(--gt-menu-gap);
+  width: min(var(--gt-ai-bar-w), calc(100vw - 2 * var(--gt-space-4)));
+  min-width: 0;
+  margin: 0;
+  padding: var(--gt-ai-bar-pad);
+  border: 0;
+  border-radius: var(--gt-radius-card);
+  background: var(--gt-overlay);
+  box-shadow: var(--gt-shadow-overlay);
+  color: var(--gt-text);
+  font-family: var(--gt-font-ui);
+  font-size: var(--gt-ui-size);
+  line-height: var(--gt-ui-leading);
+  letter-spacing: normal;
+  transform: translateX(-50%);
+  animation: gotipe-slide-up var(--gt-duration-enter) var(--gt-ease-out);
 }
-
 .gotipe-ai-command-bar input {
   flex: 1;
   min-width: 0;
-  border: none;
-  background: transparent;
-  font-size: var(--gt-text-sm, 14px);
-  color: var(--gt-text-base);
+  padding: 0;
+  border: 0;
   outline: none;
+  background: transparent;
+  color: var(--gt-text);
+  font: inherit;
 }
-
 .gotipe-ai-command-bar input::placeholder {
-  color: var(--gt-text-placeholder, var(--gt-text-tertiary));
+  color: var(--gt-text-3);
 }
-
 .gotipe-ai-command-bar-icon {
-  color: var(--gt-text-tertiary);
-  flex-shrink: 0;
+  display: grid;
+  flex: none;
+  place-items: center;
+  color: var(--gt-accent);
 }
-
-.gotipe-ai-command-bar-submit {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 28px;
-  height: 28px;
-  border: none;
-  border-radius: 50%;
-  background: var(--gt-accent);
-  color: var(--gt-accent-text);
-  font-size: var(--gt-text-sm, 14px);
+.gotipe-ai-command-bar-icon > svg,
+.gotipe-ai-command-bar button > svg {
+  width: var(--gt-icon-size);
+  height: var(--gt-icon-size);
+}
+.gotipe-ai-command-bar button {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: var(--gt-send);
+  height: var(--gt-send);
+  padding: 0;
+  border: 0;
+  border-radius: var(--gt-radius-round);
+  background: transparent;
+  color: var(--gt-text-2);
   cursor: pointer;
-  flex-shrink: 0;
-  transition: opacity var(--gt-duration-fast, 100ms) var(--gt-ease-out);
 }
-
-.gotipe-ai-command-bar-submit:disabled {
-  opacity: 0.4;
+.gotipe-ai-command-bar button:hover:not(:disabled) {
+  background: var(--gt-fill-2);
+  color: var(--gt-text);
+}
+.gotipe-ai-command-bar .gotipe-ai-command-bar-submit {
+  background: var(--gt-ink);
+  color: var(--gt-ink-text);
+}
+.gotipe-ai-command-bar .gotipe-ai-command-bar-submit:hover:not(:disabled) {
+  background: var(--gt-ink-hover);
+  color: var(--gt-ink-text);
+}
+.gotipe-ai-command-bar .gotipe-ai-command-bar-submit:disabled {
+  background: var(--gt-fill-2);
+  color: var(--gt-text-3);
   cursor: default;
 }
-
-.gotipe-ai-command-bar-submit:not(:disabled):hover {
-  background: var(--gt-accent-hover);
+.gotipe-ai-command-bar button:focus-visible {
+  outline: var(--gt-focus-width) solid var(--gt-focus);
+  outline-offset: var(--gt-focus-gap);
+}
+.gotipe-ai-command-bar-status,
+.gotipe-ai-command-bar-error {
+  flex-basis: 100%;
+  font-size: var(--gt-ui-small);
+  line-height: var(--gt-ui-small-leading);
+}
+.gotipe-ai-command-bar-status {
+  display: flex;
+  align-items: center;
+  gap: var(--gt-space-2);
+  color: var(--gt-text-2);
+}
+.gotipe-ai-command-bar-error {
+  color: var(--gt-danger);
+  overflow-wrap: anywhere;
 }
 
-/* ============================================================
-   AI Status Indicator
-   ============================================================ */
-
+/* the model is working: a quiet line with an accent spinner */
 .gotipe-ai-status-indicator {
   display: flex;
   align-items: center;
-  gap: var(--gt-space-2, 8px);
-  padding: var(--gt-space-2, 8px) var(--gt-space-3, 12px);
-  font-size: var(--gt-text-xs, 12px);
-  color: var(--gt-text-tertiary);
-  border-top: 1px solid var(--gt-border-light, rgba(0, 0, 0, 0.05));
-  animation: gotipe-fade-in var(--gt-duration-normal, 150ms) var(--gt-ease-out);
+  gap: var(--gt-space-2);
+  padding: var(--gt-space-2) var(--gt-space-3);
+  box-shadow: inset 0 var(--gt-hairline) 0 var(--gt-line);
+  color: var(--gt-text-2);
+  font-family: var(--gt-font-ui);
+  font-size: var(--gt-ui-small);
+  line-height: var(--gt-ui-small-leading);
+  animation: gotipe-fade-in var(--gt-duration-normal) var(--gt-ease-out);
 }
-
 .gotipe-ai-status-spinner {
   display: inline-block;
-  width: 12px;
-  height: 12px;
-  border: 2px solid var(--gt-border, #e5e5e5);
-  border-top-color: var(--gt-accent, #2563eb);
-  border-radius: 50%;
-  animation: gotipe-spin 0.8s linear infinite;
-  flex-shrink: 0;
+  flex: none;
+  box-sizing: border-box;
+  width: var(--gt-spinner);
+  height: var(--gt-spinner);
+  border: var(--gt-spinner-ring) solid var(--gt-line-strong);
+  border-top-color: var(--gt-accent);
+  border-radius: var(--gt-radius-round);
+  animation: gotipe-spin var(--gt-spin-duration) linear infinite;
 }
-
 .gotipe-ai-status-label {
-  color: var(--gt-text-secondary);
+  color: var(--gt-text-2);
 }
 
 @keyframes gotipe-spin {
