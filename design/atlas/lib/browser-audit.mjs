@@ -188,7 +188,9 @@ function auditPage({ roles, theme }) {
 }
 
 export async function browserAudit({ file, shotsDir, chromium }) {
-  const browser = await chromium.launch();
+  // GOTIPE_E2E_CHANNEL (e.g. "chrome") runs the audit in an installed browser, as the e2e do.
+  const channel = process.env.GOTIPE_E2E_CHANNEL;
+  const browser = await chromium.launch(channel ? { channel } : {});
   const page = await browser.newPage({
     viewport: { width: 1320, height: 900 },
     deviceScaleFactor: 1,
