@@ -1,0 +1,234 @@
+/* Document blocks shared by every view. A view sets the sizes through its tokens; colours come
+   from the theme. No borders between blocks: depth is a fill, a block keeps its own radius. */
+
+.gotipe-root {
+  container-type: inline-size;
+  background: var(--gt-page-bg);
+  color: var(--gt-text);
+  font-family: var(--gt-font-ui);
+  font-size: var(--gt-body-size);
+  line-height: var(--gt-body-leading);
+  letter-spacing: var(--gt-body-tracking);
+  font-kerning: normal;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+.gotipe-root ::selection {
+  background: var(--gt-selection);
+}
+
+/* ---- flow: one rule per kind of neighbour, later rules win ---- */
+.gotipe-doc > * {
+  margin: 0;
+}
+.gotipe-doc > * + * {
+  margin-top: var(--gt-flow);
+}
+.gotipe-doc
+  > :where(
+    .gotipe-callout,
+    .gotipe-code-block,
+    .gotipe-table-wrap,
+    .gotipe-figure,
+    .gotipe-quote,
+    .gotipe-toggle
+  ),
+.gotipe-doc
+  > :where(
+    .gotipe-callout,
+    .gotipe-code-block,
+    .gotipe-table-wrap,
+    .gotipe-figure,
+    .gotipe-quote,
+    .gotipe-toggle
+  )
+  + * {
+  margin-top: var(--gt-flow-block);
+}
+.gotipe-doc > :where(h1) {
+  margin-top: var(--gt-flow-h1);
+}
+.gotipe-doc > :where(h2) {
+  margin-top: var(--gt-flow-h2);
+}
+.gotipe-doc > :where(h3) {
+  margin-top: var(--gt-flow-h3);
+}
+.gotipe-doc > :where(h1) + * {
+  margin-top: var(--gt-flow-after-h1);
+}
+.gotipe-doc > :where(h2) + * {
+  margin-top: var(--gt-flow-after-h2);
+}
+.gotipe-doc > :where(h3) + * {
+  margin-top: var(--gt-flow-after-h3);
+}
+.gotipe-doc > :where(hr),
+.gotipe-doc > :where(hr) + * {
+  margin-top: var(--gt-flow-rule);
+}
+.gotipe-doc > :first-child {
+  margin-top: 0;
+}
+
+/* ---- page: the column, the head and the host's byline ---- */
+.gotipe-page {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: calc(var(--gt-page-width) + 2 * var(--gt-page-pad-x));
+  margin: 0 auto;
+  padding: var(--gt-page-pad-top) var(--gt-page-pad-x) var(--gt-page-pad-bottom);
+}
+
+.gotipe-page-head {
+  display: grid;
+  gap: var(--gt-head-gap);
+  margin-bottom: var(--gt-head-after);
+}
+.gotipe-page-title {
+  margin: 0;
+  font-size: var(--gt-title-size);
+  font-weight: var(--gt-weight-title);
+  line-height: var(--gt-title-leading);
+  letter-spacing: var(--gt-title-tracking);
+  text-wrap: balance;
+}
+
+/* the host's slot under the title: who wrote the page and when it changed */
+.gotipe-page-byline {
+  display: flex;
+  align-items: center;
+  gap: var(--gt-check-gap);
+  color: var(--gt-text-2);
+  font-size: var(--gt-small-size);
+  line-height: var(--gt-small-leading);
+  letter-spacing: normal;
+}
+.gotipe-avatars {
+  display: flex;
+  gap: var(--gt-avatar-gap);
+}
+.gotipe-avatars > .gotipe-avatar {
+  width: var(--gt-avatar);
+  height: var(--gt-avatar);
+  line-height: var(--gt-avatar);
+}
+
+.gotipe-page.is-scrolled {
+  padding-top: var(--gt-flow-block);
+}
+.gotipe-page.is-slice {
+  padding-top: var(--gt-slice-top);
+  padding-bottom: var(--gt-slice-bottom);
+}
+.gotipe-selection {
+  background: var(--gt-selection);
+}
+
+/* ---- text ---- */
+.gotipe-doc :where(p) {
+  text-wrap: pretty;
+}
+.gotipe-doc :where(h1, h2, h3) {
+  margin-bottom: 0;
+  color: var(--gt-text);
+  font-weight: var(--gt-weight-strong);
+  text-wrap: balance;
+}
+.gotipe-doc h1 {
+  font-size: var(--gt-h1-size);
+  line-height: var(--gt-h1-leading);
+  letter-spacing: var(--gt-h1-tracking);
+}
+.gotipe-doc h2 {
+  font-size: var(--gt-h2-size);
+  line-height: var(--gt-h2-leading);
+  letter-spacing: var(--gt-h2-tracking);
+}
+.gotipe-doc h3 {
+  font-size: var(--gt-h3-size);
+  line-height: var(--gt-h3-leading);
+  letter-spacing: var(--gt-h3-tracking);
+}
+.gotipe-doc :where(strong, b) {
+  font-weight: var(--gt-weight-strong);
+}
+.gotipe-link {
+  color: inherit;
+  text-decoration-line: underline;
+  text-decoration-thickness: var(--gt-underline);
+  text-decoration-color: var(--gt-link-line);
+  text-underline-offset: var(--gt-underline-offset);
+}
+.gotipe-inline-code {
+  padding: var(--gt-inline-pad);
+  border-radius: var(--gt-radius-inline);
+  background: var(--gt-fill-2);
+  font-family: var(--gt-font-mono);
+  font-size: var(--gt-inline-code-size);
+  letter-spacing: normal;
+}
+.gotipe-highlight {
+  padding: var(--gt-mark-pad);
+  border-radius: var(--gt-radius-inline);
+  background: var(--gt-highlight);
+  color: inherit;
+}
+.gotipe-color-gray {
+  color: var(--gt-text-2);
+}
+
+/* ---- mentions: a person is their avatar and name; a page is its glyph and title ---- */
+.gotipe-mention {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--gt-mention-gap);
+  color: inherit;
+  font-weight: var(--gt-weight-medium);
+  text-decoration: none;
+  white-space: nowrap;
+}
+.gotipe-mention > .gt-icon {
+  align-self: center;
+  color: var(--gt-text-2);
+}
+.gotipe-mention[data-kind="page"] > span {
+  text-decoration-line: underline;
+  text-decoration-thickness: var(--gt-underline);
+  text-decoration-color: var(--gt-link-line);
+  text-underline-offset: var(--gt-underline-offset);
+}
+.gotipe-avatar {
+  display: inline-grid;
+  flex: none;
+  place-items: center;
+  align-self: center;
+  width: var(--gt-avatar-inline);
+  height: var(--gt-avatar-inline);
+  border-radius: var(--gt-radius-round);
+  font-size: var(--gt-avatar-text);
+  font-weight: var(--gt-weight-strong);
+  line-height: var(--gt-avatar-inline);
+  letter-spacing: normal;
+}
+.gotipe-avatar[data-person="1"] {
+  background: var(--gt-person-1-bg);
+  color: var(--gt-person-1);
+}
+.gotipe-avatar[data-person="2"] {
+  background: var(--gt-person-2-bg);
+  color: var(--gt-person-2);
+}
+
+/* ---- icons: one stroke for all, it never scales with the glyph ---- */
+.gt-icon {
+  display: inline-block;
+  flex: none;
+  width: var(--gt-icon);
+  height: var(--gt-icon);
+  fill: none;
+  stroke: currentColor;
+  stroke-width: var(--gt-icon-stroke);
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}

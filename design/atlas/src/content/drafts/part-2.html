@@ -1,0 +1,53 @@
+<h2>Что меняется</h2>
+<ul class="gotipe-list">
+  <li>Каждая транзакция сначала попадает в журнал и только потом — на сервер.</li>
+  <li>
+    Когда связь вернулась, журнал уходит пачкой, а сервер отвечает новой версией документа.
+  </li>
+  <li>
+    Конфликт решается по блокам:
+    <ul class="gotipe-list">
+      <li>чужая правка блока не перезаписывает вашу;</li>
+      <li>обе версии остаются, ваша — предложением правки.</li>
+    </ul>
+  </li>
+</ul>
+
+<div class="gotipe-code-block">
+  <div class="gotipe-code-block-header">
+    <span>TypeScript</span>
+    <span class="gotipe-code-copy"
+      ><svg class="gt-icon" aria-hidden="true"><use href="#i-copy" /></svg
+    ></span>
+  </div>
+  <pre
+    class="gotipe-code-block-scroll"
+  ><span class="gotipe-code-lines" aria-hidden="true">1
+2
+3
+4
+5</span><code><span class="tk-com">// Журнал пишется до отправки: закрытая вкладка ничего не теряет.</span>
+editor<span class="tk-pun">.</span>on<span class="tk-pun">(</span><span class="tk-str">"transaction"</span><span class="tk-pun">,</span> <span class="tk-key">async</span> <span class="tk-pun">({</span> steps<span class="tk-pun">,</span> version <span class="tk-pun">}:</span> <span class="tk-type">Transaction</span><span class="tk-pun">)</span> <span class="tk-key">=&gt;</span> <span class="tk-pun">{</span>
+  <span class="tk-key">await</span> drafts<span class="tk-pun">.</span>append<span class="tk-pun">(</span>documentId<span class="tk-pun">, {</span> steps<span class="tk-pun">,</span> version <span class="tk-pun">});</span>
+  <span class="tk-key">if</span> <span class="tk-pun">(</span>navigator<span class="tk-pun">.</span>onLine<span class="tk-pun">)</span> <span class="tk-key">await</span> drafts<span class="tk-pun">.</span>flush<span class="tk-pun">(</span>documentId<span class="tk-pun">, {</span> retries<span class="tk-pun">:</span> <span class="tk-num">3</span> <span class="tk-pun">});</span>
+<span class="tk-pun">});</span></code></pre>
+</div>
+
+<h3>Порядок выката</h3>
+<ol class="gotipe-list">
+  <li>Включить журнал для 5 % пользователей веб-версии.</li>
+  <li>Неделю сравнивать долю потерянных правок с контрольной группой.</li>
+  <li>Открыть всем, начиная с приложения для macOS.</li>
+</ol>
+
+<div class="gotipe-callout" data-variant="warning">
+  <span class="gotipe-callout-icon"
+    ><svg class="gt-icon" aria-hidden="true"><use href="#i-warning" /></svg
+  ></span>
+  <div class="gotipe-callout-content">
+    <p>
+      До выпуска 2.9 черновик не переносится между устройствами: правка с ноутбука не появится
+      на телефоне, пока не отправлена.
+    </p>
+  </div>
+</div>

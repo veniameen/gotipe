@@ -1,0 +1,90 @@
+/* Toolbars: the bubble over a selection and the fixed bar of the modern view. One button size,
+   separators between groups, the mark that is on stands on a fill. */
+
+.gotipe-toolbar {
+  display: flex;
+  align-items: center;
+  gap: var(--gt-toolbar-gap);
+  padding: var(--gt-toolbar-pad);
+}
+.gotipe-tool {
+  position: relative;
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  min-width: var(--gt-tool);
+  height: var(--gt-tool);
+  border-radius: var(--gt-radius-control);
+  color: var(--gt-text-2);
+}
+.gotipe-tool.is-hover {
+  background: var(--gt-fill-1);
+  color: var(--gt-text);
+}
+.gotipe-tool.is-active {
+  background: var(--gt-fill-2);
+  color: var(--gt-text);
+}
+.gotipe-tool[aria-disabled="true"] {
+  opacity: var(--gt-disabled-opacity);
+}
+.gotipe-tool.is-text {
+  gap: var(--gt-toolbar-gap);
+  padding: var(--gt-tool-text-pad);
+  color: var(--gt-text);
+  font-size: var(--gt-ui-size);
+  line-height: var(--gt-ui-leading);
+}
+.gotipe-tool.is-text > .gt-icon {
+  color: var(--gt-text-3);
+}
+.gotipe-tool.is-model {
+  gap: var(--gt-button-gap);
+  padding: var(--gt-tool-text-pad);
+  color: var(--gt-text);
+  font-size: var(--gt-ui-size);
+  line-height: var(--gt-ui-leading);
+}
+.gotipe-tool.is-model > .gt-icon {
+  color: var(--gt-accent);
+}
+.gotipe-tool.is-model-icon > .gt-icon {
+  color: var(--gt-accent);
+}
+.gotipe-tool-sep {
+  flex: none;
+  width: var(--gt-hairline);
+  height: var(--gt-tool-sep-h);
+  margin: 0 var(--gt-tool-sep-gap);
+  background: var(--gt-line-strong);
+}
+.gotipe-tool-spacer {
+  flex: 1;
+}
+
+/* the text colour button: the letter with a bar of the colour it applies */
+.gotipe-color-tool {
+  display: grid;
+  justify-items: center;
+  gap: var(--gt-color-bar-gap);
+}
+.gotipe-color-bar {
+  width: var(--gt-color-bar-w);
+  height: var(--gt-color-bar-h);
+  border-radius: var(--gt-radius-round);
+  background: var(--gt-text);
+}
+
+/* the fixed bar: part of the editor, not of the page; it scrolls sideways when narrow */
+.gotipe-toolbar-fixed {
+  position: sticky;
+  top: 0;
+  z-index: var(--gt-z-handle);
+  overflow-x: auto;
+  padding: var(--gt-fixed-toolbar-pad);
+  border-bottom: var(--gt-hairline) solid var(--gt-line);
+  background: var(--gt-page-bg);
+  scrollbar-width: none;
+}

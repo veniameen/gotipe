@@ -1,0 +1,52 @@
+<figure class="at-figure" id="f16" data-section="Совместная работа и ревью">
+  <figcaption class="at-figure-head">
+    <span class="at-num">16</span>
+    <h2 class="at-figure-title">Модель: строка команды и подсказка</h2>
+    <p class="at-caption">
+      Подсказка — тихий текст после курсора, Tab принимает. Строка команды — внизу редактора, знает,
+      что выделено; пока модель пишет, строка показывает это и даёт остановить.
+    </p>
+  </figcaption>
+  <!-- @frame frame=ghost view=notion w=768 label="текст-подсказка у курсора" -->
+  <article class="gotipe-page is-slice" lang="ru">
+    <div class="gotipe-doc">
+      <h2>Как это работает</h2>
+      <p>
+        Журнал лежит в IndexedDB и переживает перезапуск приложения. Когда сеть вернётся,
+        редактор<span class="gotipe-caret"></span><span class="gotipe-ghost">
+          отправит журнал одной пачкой и дождётся новой версии<span class="gotipe-kbd">Tab</span></span
+        >
+      </p>
+    </div>
+  </article>
+  <!-- @end -->
+  <!-- @frame frame=command view=notion w=768 min=320 label="строка команды" -->
+  <article class="gotipe-page is-slice" lang="ru">
+    <div class="gotipe-doc">
+      <h2>Как это работает</h2>
+      <p><span class="gotipe-selection">Журнал лежит в IndexedDB и переживает перезапуск приложения. Сервер принимает пачку транзакций целиком или отклоняет её.</span></p>
+    </div>
+  </article>
+  <div class="gotipe-overlay gotipe-ai-bar" role="dialog" aria-label="Команда модели">
+    <svg class="gt-icon"><use href="#i-sparkle" /></svg><span class="gotipe-ai-chip">Абзац</span
+    ><span class="gotipe-ai-input">Сделай короче, без канцелярита<span class="gotipe-caret"></span></span
+    ><span class="gotipe-kbd">↵</span><span class="gotipe-send"><svg class="gt-icon"><use href="#i-arrow-up" /></svg></span>
+  </div>
+  <!-- @end -->
+  <!-- @frame frame=writing view=notion w=768 min=320 label="модель пишет" -->
+  <article class="gotipe-page is-slice" lang="ru">
+    <div class="gotipe-doc">
+      <h2>Как это работает</h2>
+      <p>
+        <span class="gotipe-writing">Журнал живёт в IndexedDB и переживает перезапуск. Сервер берёт
+          пачку целиком</span
+        ><span class="gotipe-remote" data-person="3"><span class="gotipe-remote-flag">Модель</span></span>
+      </p>
+    </div>
+  </article>
+  <div class="gotipe-overlay gotipe-ai-bar" role="status">
+    <span class="gotipe-spinner"></span><span class="gotipe-ai-input">Модель переписывает абзац…</span
+    ><span class="gotipe-button"><svg class="gt-icon"><use href="#i-stop" /></svg>Остановить</span>
+  </div>
+  <!-- @end -->
+</figure>

@@ -1,0 +1,15 @@
+/* View «modern»: the editor of a form or a CMS — a fixed toolbar over the document, the title as its
+   first line, no page head and no handles. */
+
+.gotipe-modern {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: auto 1fr;
+  min-height: 100%;
+}
+.gotipe-modern > * {
+  min-width: 0;
+}
+.gotipe-modern .gotipe-page-head {
+  margin-bottom: var(--gt-flow-after-h1);
+}

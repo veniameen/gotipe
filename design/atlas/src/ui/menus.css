@@ -1,0 +1,95 @@
+/* Menus: slash, block, column, more. Groups with a quiet label, rows of one height, the key or the
+   Markdown shortcut at the end, the chosen row on a fill, the current choice with a check. */
+
+.gotipe-menu-group,
+.gotipe-menu-label,
+.gotipe-menu-empty,
+.gotipe-menu-scroll {
+  display: block;
+}
+.gotipe-menu {
+  width: var(--gt-menu-w);
+  padding: var(--gt-menu-pad);
+}
+.gotipe-menu.is-wide {
+  width: var(--gt-menu-w-wide);
+}
+.gotipe-menu.is-narrow {
+  width: var(--gt-menu-w-narrow);
+}
+.gotipe-menu-scroll {
+  max-height: var(--gt-menu-max-h);
+  overflow-y: auto;
+}
+.gotipe-menu-group + .gotipe-menu-group {
+  margin-top: var(--gt-menu-sep-gap);
+  padding-top: var(--gt-menu-sep-gap);
+  border-top: var(--gt-hairline) solid var(--gt-line);
+}
+.gotipe-menu-label {
+  margin: 0;
+  padding: var(--gt-menu-label-pad);
+  color: var(--gt-text-3);
+  font-size: var(--gt-ui-small);
+  font-weight: var(--gt-weight-medium);
+  line-height: var(--gt-ui-small-leading);
+}
+.gotipe-menu-item {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--gt-menu-gap);
+  height: var(--gt-menu-item-h);
+  padding: var(--gt-menu-item-pad);
+  border-radius: var(--gt-radius-control);
+  color: var(--gt-text);
+}
+.gotipe-menu-item > .gt-icon {
+  color: var(--gt-text-2);
+}
+.gotipe-menu-item > .gotipe-menu-text {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.gotipe-menu-item > .gotipe-key,
+.gotipe-menu-item > .gotipe-menu-end {
+  margin-left: auto;
+  color: var(--gt-text-3);
+}
+.gotipe-menu-item.is-selected {
+  background: var(--gt-fill-2);
+}
+.gotipe-menu-item.is-selected > .gt-icon {
+  color: var(--gt-text);
+}
+.gotipe-menu-item.is-current > .gotipe-menu-end {
+  color: var(--gt-text);
+}
+.gotipe-menu-item.is-danger,
+.gotipe-menu-item.is-danger > .gt-icon {
+  color: var(--gt-danger);
+}
+.gotipe-menu-item[aria-disabled="true"],
+.gotipe-menu-item[aria-disabled="true"] > .gt-icon {
+  color: var(--gt-text-3);
+}
+.gotipe-menu-item mark {
+  background: none;
+  color: inherit;
+  font-weight: var(--gt-weight-strong);
+}
+.gotipe-menu-item.is-model > .gt-icon {
+  color: var(--gt-accent);
+}
+.gotipe-menu-empty {
+  margin: 0;
+  padding: var(--gt-menu-label-pad);
+  color: var(--gt-text-3);
+}
+
+/* the query the menu answers: typed into the document line, quiet until the menu closes */
+.gotipe-query {
+  color: var(--gt-text-2);
+}

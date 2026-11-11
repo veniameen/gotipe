@@ -1,0 +1,44 @@
+<figure class="at-figure" id="f11" data-section="Взаимодействие">
+  <figcaption class="at-figure-head">
+    <span class="at-num">11</span>
+    <h2 class="at-figure-title">Подсказки в пустых блоках и пустая страница</h2>
+    <p class="at-caption">
+      Пустой блок говорит, чем станет. Новая страница: значок появляется по наведению, курсор в
+      заголовке, ниже — быстрые блоки (предложение: в библиотеке их ещё нет).
+    </p>
+  </figcaption>
+  <!-- @frame frame=placeholders view=notion w=480 label="пустые блоки" -->
+  <article class="gotipe-page is-slice" lang="ru">
+    <div class="gotipe-doc">
+      <h2 class="is-empty" data-placeholder="Заголовок"></h2>
+      <p class="is-empty" data-placeholder="Введите «/» для блоков"><span class="gotipe-caret"></span></p>
+      <ul class="gotipe-list">
+        <li class="is-empty" data-placeholder="Список"></li>
+      </ul>
+      <ul class="gotipe-todo-list">
+        <li class="gotipe-todo-item" data-checked="false">
+          <span class="gotipe-check" role="checkbox" aria-checked="false"><svg class="gt-icon"><use href="#i-check" /></svg></span>
+          <span class="gotipe-todo-item-content is-empty" data-placeholder="Задача"></span>
+        </li>
+      </ul>
+      <blockquote class="gotipe-quote"><p class="is-empty" data-placeholder="Цитата"></p></blockquote>
+    </div>
+  </article>
+  <!-- @end -->
+  <!-- @frame frame=empty-page view=notion w=768 min=400 label="новая страница" -->
+  <article class="gotipe-page" lang="ru">
+    <header class="gotipe-page-head">
+      <span class="gotipe-icon-slot is-hover"><svg class="gt-icon"><use href="#i-smile" /></svg>Добавить значок</span>
+      <h1 class="gotipe-page-title is-empty" data-placeholder="Без названия"><span class="gotipe-caret"></span></h1>
+    </header>
+    <div class="gotipe-doc">
+      <div class="gotipe-starters">
+        <span class="gotipe-button is-quiet"><svg class="gt-icon"><use href="#i-todo" /></svg>Список задач</span>
+        <span class="gotipe-button is-quiet"><svg class="gt-icon"><use href="#i-table" /></svg>Таблица</span>
+        <span class="gotipe-button is-quiet"><svg class="gt-icon"><use href="#i-code" /></svg>Код</span>
+        <span class="gotipe-button is-quiet"><svg class="gt-icon"><use href="#i-image" /></svg>Изображение</span>
+      </div>
+    </div>
+  </article>
+  <!-- @end -->
+</figure>

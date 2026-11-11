@@ -1,0 +1,198 @@
+/* Surfaces above the document: one overlay recipe (ring and shadow, no border), anchoring to the
+   element it belongs to, tooltips with their keys, buttons and fields. Interface text is 13/18. */
+
+.gotipe-anchor {
+  position: relative;
+}
+.gotipe-anchor.is-inline {
+  display: inline-block;
+}
+.gotipe-overlay {
+  position: absolute;
+  z-index: var(--gt-z-overlay);
+  box-sizing: border-box;
+  border-radius: var(--gt-radius-overlay);
+  background: var(--gt-overlay);
+  box-shadow: var(--gt-shadow-overlay);
+  color: var(--gt-text);
+  font-family: var(--gt-font-ui);
+  font-size: var(--gt-ui-size);
+  font-weight: var(--gt-weight-regular);
+  line-height: var(--gt-ui-leading);
+  letter-spacing: normal;
+  text-align: left;
+  white-space: nowrap;
+}
+.gotipe-overlay[data-place="above"] {
+  bottom: calc(100% + var(--gt-overlay-gap));
+  left: 50%;
+  transform: translateX(-50%);
+}
+.gotipe-overlay[data-place="above-start"] {
+  bottom: calc(100% + var(--gt-overlay-gap));
+  left: 0;
+}
+.gotipe-overlay[data-place="below"] {
+  top: calc(100% + var(--gt-overlay-gap));
+  left: 0;
+}
+.gotipe-overlay[data-place="below-center"] {
+  top: calc(100% + var(--gt-overlay-gap));
+  left: 50%;
+  transform: translateX(-50%);
+}
+.gotipe-overlay[data-place="below-end"] {
+  top: calc(100% + var(--gt-overlay-gap));
+  right: 0;
+}
+.gotipe-overlay[data-place="side"] {
+  top: 0;
+  left: calc(100% + var(--gt-overlay-gap));
+}
+.gotipe-overlay[data-place="submenu"] {
+  z-index: var(--gt-z-submenu);
+  top: calc(-1 * var(--gt-menu-pad));
+  left: calc(100% + var(--gt-submenu-gap));
+}
+
+/* ---- tooltip: an inverted label, the key quieter after it ---- */
+.gotipe-tooltip {
+  position: absolute;
+  z-index: var(--gt-z-tooltip);
+  display: flex;
+  gap: var(--gt-kbd-gap);
+  max-width: var(--gt-tooltip-max);
+  padding: var(--gt-tooltip-pad);
+  border-radius: var(--gt-radius-control);
+  background: var(--gt-inverse);
+  color: var(--gt-inverse-text);
+  font-family: var(--gt-font-ui);
+  font-size: var(--gt-ui-small);
+  font-weight: var(--gt-weight-regular);
+  line-height: var(--gt-ui-small-leading);
+  letter-spacing: normal;
+  white-space: nowrap;
+}
+.gotipe-tooltip[data-place="above"] {
+  bottom: calc(100% + var(--gt-overlay-gap));
+  left: 50%;
+  transform: translateX(-50%);
+}
+.gotipe-tooltip[data-place="below"] {
+  top: calc(100% + var(--gt-overlay-gap));
+  left: 50%;
+  transform: translateX(-50%);
+}
+.gotipe-tooltip[data-place="below-start"] {
+  top: calc(100% + var(--gt-overlay-gap));
+  left: 0;
+}
+.gotipe-tooltip.is-wrap {
+  white-space: normal;
+}
+.gotipe-tooltip > .gotipe-key {
+  color: var(--gt-inverse-text-2);
+}
+.gotipe-key {
+  color: var(--gt-text-3);
+  font-size: var(--gt-ui-small);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: normal;
+}
+.gotipe-kbd {
+  display: inline-block;
+  padding: var(--gt-kbd-pad);
+  border-radius: var(--gt-radius-inline);
+  box-shadow: inset 0 0 0 var(--gt-hairline) var(--gt-line-strong);
+  color: var(--gt-text-3);
+  font-size: var(--gt-ui-tiny);
+  line-height: var(--gt-ui-tiny-leading);
+  letter-spacing: normal;
+}
+
+/* ---- buttons: ink for the one main action, a fill for the rest ---- */
+.gotipe-button {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  gap: var(--gt-button-gap);
+  box-sizing: border-box;
+  height: var(--gt-button-h);
+  padding: var(--gt-button-pad);
+  border-radius: var(--gt-radius-control);
+  background: var(--gt-fill-2);
+  color: var(--gt-text);
+  font-size: var(--gt-ui-size);
+  font-weight: var(--gt-weight-medium);
+  line-height: var(--gt-ui-leading);
+  letter-spacing: normal;
+  white-space: nowrap;
+}
+.gotipe-button.is-primary {
+  background: var(--gt-ink);
+  color: var(--gt-ink-text);
+}
+.gotipe-button.is-quiet {
+  background: transparent;
+  color: var(--gt-text-2);
+}
+.gotipe-button.is-danger {
+  background: var(--gt-danger-tint);
+  color: var(--gt-danger);
+}
+.gotipe-button[aria-disabled="true"] {
+  opacity: var(--gt-disabled-opacity);
+}
+
+/* ---- fields: a hairline at rest, one step darker while typing, the danger colour when wrong ---- */
+.gotipe-field {
+  display: flex;
+  align-items: center;
+  gap: var(--gt-menu-gap);
+  box-sizing: border-box;
+  min-width: 0;
+  height: var(--gt-field-h);
+  padding: var(--gt-field-pad);
+  border-radius: var(--gt-radius-control);
+  box-shadow: inset 0 0 0 var(--gt-hairline) var(--gt-line-control);
+  color: var(--gt-text);
+}
+.gotipe-field.is-typing {
+  box-shadow: inset 0 0 0 var(--gt-hairline) var(--gt-line-active);
+}
+.gotipe-field.is-invalid {
+  box-shadow: inset 0 0 0 var(--gt-hairline) var(--gt-danger);
+  background: var(--gt-danger-tint);
+}
+.gotipe-field > .gt-icon {
+  color: var(--gt-text-3);
+}
+.gotipe-field-value {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.gotipe-field-placeholder {
+  flex: 1;
+  color: var(--gt-text-3);
+}
+.gotipe-caret {
+  display: inline-block;
+  width: var(--gt-own-caret-w);
+  height: var(--gt-caret-h);
+  margin-right: calc(-1 * var(--gt-own-caret-w));
+  background: var(--gt-text);
+  vertical-align: var(--gt-caret-shift);
+}
+.gotipe-tooltip[data-place="below-end"] {
+  top: calc(100% + var(--gt-overlay-gap));
+  right: 0;
+}
+.gotipe-tooltip[data-place="side"] {
+  top: 50%;
+  left: calc(100% + var(--gt-overlay-gap));
+  transform: translateY(-50%);
+}

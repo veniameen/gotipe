@@ -1,0 +1,209 @@
+/* GoTipe Atlas — view presets. A view is a set of tokens over the same markup: notion's values are
+   the base, every other view changes only what makes it itself. Narrow containers change tokens,
+   never the markup. */
+
+/* ---- every view: the document's own sizes ---- */
+[data-gt-view] {
+  --gt-page-width: 680px;
+  --gt-page-pad-top: 72px;
+  --gt-page-pad-x: 64px;
+  --gt-page-pad-bottom: 112px;
+
+  --gt-title-size: 32px;
+  --gt-title-leading: 40px;
+  --gt-title-tracking: -0.021em;
+  --gt-h1-size: 24px;
+  --gt-h1-leading: 32px;
+  --gt-h1-tracking: -0.017em;
+  --gt-h2-size: 20px;
+  --gt-h2-leading: 28px;
+  --gt-h2-tracking: -0.012em;
+  --gt-h3-size: 16px;
+  --gt-h3-leading: 24px;
+  --gt-h3-tracking: -0.006em;
+  --gt-body-size: 15px;
+  --gt-body-leading: 24px;
+  --gt-body-tracking: -0.004em;
+  --gt-quote-size: 16px;
+  --gt-quote-leading: 26px;
+  --gt-small-size: 13px;
+  --gt-small-leading: 20px;
+  --gt-label-size: 12px;
+  --gt-label-leading: 16px;
+  --gt-code-size: 13px;
+  --gt-code-leading: 20px;
+  --gt-table-size: 14px;
+  --gt-table-leading: 20px;
+
+  /* rhythm: a heading keeps its distance above and holds its text close below */
+  --gt-flow: 8px;
+  --gt-flow-list: 4px;
+  --gt-flow-block: 16px;
+  --gt-flow-h1: 40px;
+  --gt-flow-h2: 32px;
+  --gt-flow-h3: 20px;
+  --gt-flow-after-h1: 10px;
+  --gt-flow-after-h2: 8px;
+  --gt-flow-after-h3: 4px;
+  --gt-flow-rule: 28px;
+  --gt-indent: 24px;
+  --gt-bullet: 5px;
+  --gt-bullet-x: 8px;
+  --gt-bullet-y: 9.5px;
+  --gt-number-width: 18px;
+
+  --gt-head-gap: 12px;
+  --gt-head-after: 32px;
+  --gt-page-icon: 40px;
+  --gt-page-icon-stroke: 1.25;
+  --gt-avatar: 20px;
+  --gt-avatar-inline: 18px;
+  --gt-avatar-gap: 2px;
+  --gt-avatar-text: 9px;
+  --gt-mention-gap: 4px;
+  --gt-check: 16px;
+  --gt-check-gap: 8px;
+  --gt-check-top: 4px;
+  --gt-callout-pad: 12px 16px;
+  --gt-callout-gap: 12px;
+  --gt-code-head: 32px;
+  --gt-code-pad: 0 16px 14px;
+  --gt-code-head-pad: 0 8px 0 16px;
+  --gt-code-gutter: 20px;
+  --gt-code-gutter-gap: 16px;
+  --gt-code-lines-display: none;
+  --gt-cell-pad: 9px 12px;
+  --gt-head-cell-pad: 8px 12px;
+  --gt-cell-min: 132px;
+  --gt-quote-pad: 16px;
+  --gt-figure-pad: 24px;
+  --gt-caption-gap: 8px;
+  --gt-inline-pad: 0.1em 0.35em;
+  --gt-inline-code-size: 0.87em;
+  --gt-mark-pad: 0.05em 0.15em;
+  --gt-toggle-gap: 4px;
+  --gt-handle-w: 22px;
+  --gt-handle-h: 24px;
+  --gt-handle-gap: 2px;
+  --gt-handle-offset: 54px;
+  --gt-handle-top: 0px;
+  --gt-diagram-label: 13px;
+  --gt-diagram-sub: 11px;
+  --gt-diagram-dash: 3 4;
+
+  --gt-outline-display: none;
+  --gt-docs-columns: minmax(0, 1fr);
+  --gt-handle-display: flex;
+  --gt-anchor-display: none;
+}
+
+/* ---- docs: a reference page — denser text, an outline beside it, numbered code ---- */
+[data-gt-view="docs"] {
+  --gt-page-pad-top: 48px;
+  --gt-title-size: 28px;
+  --gt-title-leading: 36px;
+  --gt-h1-size: 22px;
+  --gt-h1-leading: 28px;
+  --gt-h2-size: 18px;
+  --gt-h2-leading: 24px;
+  --gt-h3-size: 15px;
+  --gt-h3-leading: 22px;
+  --gt-body-size: 14px;
+  --gt-body-leading: 22px;
+  --gt-quote-size: 15px;
+  --gt-quote-leading: 24px;
+  --gt-table-size: 13px;
+  --gt-code-size: 12px;
+  --gt-flow-h1: 36px;
+  --gt-flow-h2: 28px;
+  --gt-flow-h3: 18px;
+  --gt-bullet-y: 8.5px;
+  --gt-check-top: 3px;
+  --gt-head-after: 24px;
+  --gt-outline-width: 184px;
+  --gt-outline-gap: 48px;
+  --gt-outline-top: 52px;
+  --gt-outline-item-pad: 3px 0 3px 12px;
+  --gt-outline-indent: 24px;
+  --gt-outline-indent-2: 36px;
+  --gt-outline-display: block;
+  --gt-docs-columns: var(--gt-outline-width) minmax(0, var(--gt-page-width));
+  --gt-anchor-offset: 20px;
+  --gt-anchor-display: block;
+  --gt-handle-display: none;
+  --gt-code-lines-display: block;
+}
+
+/* ---- modern: a fixed toolbar over a document without the page's head ---- */
+[data-gt-view="modern"] {
+  --gt-page-pad-top: 40px;
+  --gt-title-size: 28px;
+  --gt-title-leading: 36px;
+  --gt-handle-display: none;
+}
+
+/* ---- minimal: the editor as a field of the host — text, the bubble and nothing else ---- */
+[data-gt-view="minimal"] {
+  --gt-page-width: 640px;
+  --gt-page-pad-top: 24px;
+  --gt-page-pad-x: 24px;
+  --gt-page-pad-bottom: 32px;
+  --gt-title-size: 22px;
+  --gt-title-leading: 28px;
+  --gt-title-tracking: -0.017em;
+  --gt-h1-size: 18px;
+  --gt-h1-leading: 26px;
+  --gt-h2-size: 16px;
+  --gt-h2-leading: 22px;
+  --gt-h3-size: 14px;
+  --gt-h3-leading: 22px;
+  --gt-body-size: 14px;
+  --gt-body-leading: 22px;
+  --gt-quote-size: 14px;
+  --gt-quote-leading: 22px;
+  --gt-table-size: 13px;
+  --gt-code-size: 12px;
+  --gt-flow-h1: 24px;
+  --gt-flow-h2: 20px;
+  --gt-flow-h3: 16px;
+  --gt-flow-after-h1: 6px;
+  --gt-flow-after-h2: 4px;
+  --gt-flow-rule: 20px;
+  --gt-bullet-y: 8.5px;
+  --gt-check-top: 3px;
+  --gt-figure-pad: 16px;
+  --gt-handle-display: none;
+}
+
+/* ---- narrow containers: phones and side panels ---- */
+@container (max-width: 640px) {
+  .gotipe-root > * {
+    --gt-page-pad-top: 40px;
+    --gt-page-pad-x: 20px;
+    --gt-page-pad-bottom: 64px;
+    --gt-title-size: 26px;
+    --gt-title-leading: 32px;
+    --gt-h1-size: 21px;
+    --gt-h1-leading: 28px;
+    --gt-h2-size: 18px;
+    --gt-h2-leading: 26px;
+    --gt-flow-h1: 32px;
+    --gt-flow-h2: 28px;
+    --gt-page-icon: 32px;
+    --gt-head-after: 24px;
+    --gt-figure-pad: 12px;
+    --gt-callout-pad: 12px 14px;
+    --gt-outline-display: none;
+    --gt-docs-columns: minmax(0, 1fr);
+    --gt-handle-display: none;
+  }
+}
+@container (max-width: 359px) {
+  .gotipe-root > * {
+    --gt-page-pad-x: 16px;
+    --gt-title-size: 24px;
+    --gt-title-leading: 30px;
+    --gt-code-pad: 0 12px 12px;
+    --gt-code-head-pad: 0 4px 0 12px;
+  }
+}

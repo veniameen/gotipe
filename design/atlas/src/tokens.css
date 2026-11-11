@@ -1,0 +1,250 @@
+/* GoTipe Atlas — base tokens and themes. Token files are the only parts with literal colours and
+   sizes (check.mjs). --gt-* belong to the library and move to packages/theme once a frame is
+   accepted; --at-* dress the atlas page around the frames. Measure: Specimen v6 (scale,
+   rhythm, radii, density), not its values: GoTipe draws on the system font and its own palette. */
+
+/* ---- theme-independent: type families, weights, geometry ---- */
+:root {
+  --gt-font-ui: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI Variable Text",
+    "Segoe UI", system-ui, "Helvetica Neue", Arial, sans-serif;
+  --gt-font-mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, "Liberation Mono",
+    monospace;
+  --gt-weight-regular: 400;
+  --gt-weight-medium: 500;
+  --gt-weight-strong: 600;
+  --gt-weight-title: 700;
+
+  /* one radius per role, never the same one nested inside itself */
+  --gt-radius-inline: 4px;
+  --gt-radius-check: 4px;
+  --gt-radius-control: 6px;
+  --gt-radius-block: 8px;
+  --gt-radius-overlay: 10px;
+  --gt-radius-card: 12px;
+  --gt-radius-round: 999px;
+
+  --gt-hairline: 1px;
+  --gt-rule: 2px;
+  --gt-check-ring: 1.5px;
+  --gt-underline: 1px;
+  --gt-underline-offset: 0.2em;
+  --gt-icon: 16px;
+  --gt-icon-check: 12px;
+  --gt-icon-stroke: 1.5;
+  --gt-icon-stroke-check: 2;
+
+  --at-page-max: 1240px;
+  --at-page-pad: 40px;
+  --at-gap: 8px;
+  --at-gap-l: 16px;
+  --at-section-gap: 72px;
+  --at-figure-gap: 56px;
+  --at-stage-pad: 32px;
+  --at-stage-radius: 16px;
+  --at-frame-radius: 12px;
+  --at-text-size: 13px;
+  --at-text-leading: 20px;
+  --at-title-size: 15px;
+  --at-title-leading: 22px;
+  --at-mark-size: 17px;
+  --at-mark-leading: 24px;
+  --at-label-size: 12px;
+  --at-label-leading: 16px;
+  --at-num-pad: 1px 6px;
+  --at-caption-max: 680px;
+  --at-index-col: 260px;
+  --at-seg-pad: 2px;
+  --at-seg-item-pad: 2px 10px;
+  --at-w-320: 320px;
+  --at-w-375: 375px;
+  --at-w-480: 480px;
+  --at-w-768: 768px;
+  --at-w-1024: 1024px;
+  --at-w-1440: 1440px;
+  --at-zoom-1440: 0.75;
+  --at-h-640: 640px;
+  --at-h-720: 720px;
+  --at-h-900: 900px;
+  --at-h-960: 960px;
+  --at-min-320: 320px;
+  --at-min-400: 400px;
+  --at-min-480: 480px;
+  --at-min-560: 560px;
+}
+
+/* ---- light ---- */
+[data-theme="light"] {
+  color-scheme: light;
+  --gt-page-bg: #ffffff;
+  --gt-sunken: #f7f7f5;
+  --gt-text: #232322;
+  --gt-text-2: #66665f;
+  --gt-text-3: #8e8e87;
+  --gt-fill-1: rgb(35 35 34 / 0.04);
+  --gt-fill-2: rgb(35 35 34 / 0.07);
+  --gt-fill-3: rgb(35 35 34 / 0.11);
+  --gt-line: rgb(35 35 34 / 0.09);
+  --gt-line-strong: rgb(35 35 34 / 0.15);
+  --gt-line-control: rgb(35 35 34 / 0.3);
+  --gt-line-active: rgb(35 35 34 / 0.48);
+  --gt-ink: #1d1d1c;
+  --gt-ink-hover: #3a3a37;
+  --gt-ink-text: #ffffff;
+  --gt-accent: #2c62d4;
+  --gt-focus: rgb(44 98 212 / 0.55);
+  --gt-selection: rgb(44 98 212 / 0.16);
+  --gt-link-line: rgb(35 35 34 / 0.32);
+  --gt-highlight: rgb(255 204 41 / 0.34);
+  --gt-info: #2c62d4;
+  --gt-info-tint: rgb(44 98 212 / 0.06);
+  --gt-warning: #9a6500;
+  --gt-warning-tint: rgb(234 179 8 / 0.1);
+  --gt-danger: #c4382f;
+  --gt-danger-tint: rgb(196 56 47 / 0.07);
+  --gt-success: #2b7547;
+  --gt-add: #2b7a48;
+  --gt-add-tint: rgb(43 122 72 / 0.12);
+  --gt-del: #c4382f;
+  --gt-comment: #b98a00;
+  --gt-comment-tint: rgb(234 179 8 / 0.16);
+  --gt-comment-tint-strong: rgb(234 179 8 / 0.32);
+  --gt-skeleton: rgb(35 35 34 / 0.06);
+  --gt-overlay: #ffffff;
+  --gt-shadow-overlay: 0 0 0 0.5px rgb(35 35 34 / 0.16), 0 2px 6px rgb(35 35 34 / 0.06), 0 12px 32px
+    -8px rgb(35 35 34 / 0.18);
+  --gt-shadow-card: 0 0 0 0.5px rgb(35 35 34 / 0.14), 0 1px 2px rgb(35 35 34 / 0.05), 0 8px 20px
+    -12px rgb(35 35 34 / 0.16);
+  --gt-inverse: #1d1d1c;
+  --gt-inverse-text: #f4f4f2;
+  --gt-inverse-text-2: #a8a8a2;
+  --gt-inverse-accent: #8db3ff;
+  --gt-person-1: #2c62d4;
+  --gt-person-1-bg: rgb(44 98 212 / 0.13);
+  --gt-person-1-sel: rgb(44 98 212 / 0.16);
+  --gt-person-2: #2b7547;
+  --gt-person-2-bg: rgb(43 117 71 / 0.14);
+  --gt-person-2-sel: rgb(43 117 71 / 0.16);
+  --gt-person-3: #0e7c86;
+  --gt-person-3-bg: rgb(14 124 134 / 0.14);
+  --gt-person-3-sel: rgb(14 124 134 / 0.16);
+  --gt-flag-text: #ffffff;
+  --gt-syn-keyword: #2450b8;
+  --gt-syn-string: #2b7a48;
+  --gt-syn-number: #0b7285;
+  --gt-syn-type: #8a5e00;
+  --gt-syn-comment: #8e8e87;
+  --gt-syn-punct: #66665f;
+  --gt-tc-gray: #66665f;
+  --gt-tc-red: #c4382f;
+  --gt-tc-amber: #9a6500;
+  --gt-tc-green: #2b7547;
+  --gt-tc-blue: #2c62d4;
+  --gt-bg-yellow: rgb(234 179 8 / 0.2);
+  --gt-bg-green: rgb(43 122 72 / 0.14);
+  --gt-bg-blue: rgb(44 98 212 / 0.12);
+  --gt-bg-red: rgb(196 56 47 / 0.12);
+  --gt-bg-gray: rgb(35 35 34 / 0.08);
+  --gt-diagram-node: #ffffff;
+  --gt-diagram-queue: rgb(44 98 212 / 0.32);
+
+  --at-bg: #f3f3f1;
+  --at-text: #232322;
+  --at-text-2: #6b6b65;
+  --at-line: rgb(35 35 34 / 0.1);
+  --at-chip: rgb(35 35 34 / 0.06);
+  --at-seg: rgb(35 35 34 / 0.06);
+  --at-seg-on: #ffffff;
+  --at-stage: #e9e9e6;
+  --at-pointer-fill: #000000;
+  --at-pointer-line: #ffffff;
+  --at-frame-shadow: 0 0 0 1px rgb(35 35 34 / 0.08), 0 1px 2px rgb(35 35 34 / 0.04), 0 18px 44px
+    -18px rgb(35 35 34 / 0.2);
+}
+
+/* ---- dark ---- */
+[data-theme="dark"] {
+  color-scheme: dark;
+  --gt-page-bg: #191918;
+  --gt-sunken: #20201f;
+  --gt-text: #ececea;
+  --gt-text-2: #a6a6a0;
+  --gt-text-3: #7a7a74;
+  --gt-fill-1: rgb(255 255 255 / 0.045);
+  --gt-fill-2: rgb(255 255 255 / 0.075);
+  --gt-fill-3: rgb(255 255 255 / 0.11);
+  --gt-line: rgb(255 255 255 / 0.08);
+  --gt-line-strong: rgb(255 255 255 / 0.13);
+  --gt-line-control: rgb(255 255 255 / 0.28);
+  --gt-line-active: rgb(255 255 255 / 0.44);
+  --gt-ink: #ececea;
+  --gt-ink-hover: #d4d4d0;
+  --gt-ink-text: #191918;
+  --gt-accent: #6b9cff;
+  --gt-focus: rgb(107 156 255 / 0.6);
+  --gt-selection: rgb(107 156 255 / 0.26);
+  --gt-link-line: rgb(255 255 255 / 0.32);
+  --gt-highlight: rgb(255 204 41 / 0.22);
+  --gt-info: #6b9cff;
+  --gt-info-tint: rgb(107 156 255 / 0.09);
+  --gt-warning: #e2ad45;
+  --gt-warning-tint: rgb(226 173 69 / 0.1);
+  --gt-danger: #f06b60;
+  --gt-danger-tint: rgb(240 107 96 / 0.1);
+  --gt-success: #6cc48a;
+  --gt-add: #7fd09b;
+  --gt-add-tint: rgb(108 196 138 / 0.16);
+  --gt-del: #f06b60;
+  --gt-comment: #e2ad45;
+  --gt-comment-tint: rgb(226 173 69 / 0.16);
+  --gt-comment-tint-strong: rgb(226 173 69 / 0.3);
+  --gt-skeleton: rgb(255 255 255 / 0.07);
+  --gt-overlay: #262625;
+  --gt-shadow-overlay: 0 0 0 0.5px rgb(255 255 255 / 0.12), 0 2px 6px rgb(0 0 0 / 0.3), 0 12px 32px
+    -8px rgb(0 0 0 / 0.6);
+  --gt-shadow-card: 0 0 0 0.5px rgb(255 255 255 / 0.1), 0 1px 2px rgb(0 0 0 / 0.24), 0 8px 20px
+    -12px rgb(0 0 0 / 0.5);
+  --gt-inverse: #3a3a38;
+  --gt-inverse-text: #f4f4f2;
+  --gt-inverse-text-2: #b4b4ae;
+  --gt-inverse-accent: #a9c5ff;
+  --gt-person-1: #8db3ff;
+  --gt-person-1-bg: rgb(107 156 255 / 0.2);
+  --gt-person-1-sel: rgb(107 156 255 / 0.24);
+  --gt-person-2: #7fd09b;
+  --gt-person-2-bg: rgb(108 196 138 / 0.2);
+  --gt-person-2-sel: rgb(108 196 138 / 0.22);
+  --gt-person-3: #5fc6cf;
+  --gt-person-3-bg: rgb(95 198 207 / 0.2);
+  --gt-person-3-sel: rgb(95 198 207 / 0.22);
+  --gt-flag-text: #191918;
+  --gt-syn-keyword: #82a8ff;
+  --gt-syn-string: #8fd1a2;
+  --gt-syn-number: #6cc7d2;
+  --gt-syn-type: #e0b863;
+  --gt-syn-comment: #7a7a74;
+  --gt-syn-punct: #a6a6a0;
+  --gt-tc-gray: #a6a6a0;
+  --gt-tc-red: #f06b60;
+  --gt-tc-amber: #e2ad45;
+  --gt-tc-green: #7fd09b;
+  --gt-tc-blue: #8db3ff;
+  --gt-bg-yellow: rgb(226 173 69 / 0.22);
+  --gt-bg-green: rgb(108 196 138 / 0.18);
+  --gt-bg-blue: rgb(107 156 255 / 0.18);
+  --gt-bg-red: rgb(240 107 96 / 0.18);
+  --gt-bg-gray: rgb(255 255 255 / 0.1);
+  --gt-diagram-node: #232322;
+  --gt-diagram-queue: rgb(107 156 255 / 0.36);
+
+  --at-bg: #121211;
+  --at-text: #ececea;
+  --at-text-2: #8d8d87;
+  --at-line: rgb(255 255 255 / 0.08);
+  --at-chip: rgb(255 255 255 / 0.07);
+  --at-seg: rgb(255 255 255 / 0.07);
+  --at-seg-on: #333331;
+  --at-stage: #0e0e0d;
+  --at-pointer-fill: #000000;
+  --at-pointer-line: #ffffff;
+  --at-frame-shadow: 0 0 0 1px rgb(255 255 255 / 0.08), 0 18px 44px -18px rgb(0 0 0 / 0.7);
+}

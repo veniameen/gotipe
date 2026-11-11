@@ -1,0 +1,205 @@
+/* States: placeholders with character, loading as quiet skeletons, errors as a toast or the failed
+   element itself, read-only reasons as a tooltip, a keyboard focus ring of the theme's own. */
+
+/* ---- placeholders: an empty block shows what it will be ---- */
+.gotipe-doc .is-empty::after,
+.gotipe-page-title.is-empty::after {
+  content: attr(data-placeholder);
+  color: var(--gt-text-3);
+  pointer-events: none;
+}
+.gotipe-icon-slot {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--gt-button-gap);
+  justify-self: start;
+  height: var(--gt-button-h);
+  padding: var(--gt-button-pad);
+  border-radius: var(--gt-radius-control);
+  color: var(--gt-text-3);
+  font-size: var(--gt-ui-size);
+  line-height: var(--gt-ui-leading);
+  letter-spacing: normal;
+}
+.gotipe-icon-slot.is-hover {
+  background: var(--gt-fill-1);
+  color: var(--gt-text-2);
+}
+.gotipe-starters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--gt-button-gap);
+}
+.gotipe-starters > .gotipe-button {
+  color: var(--gt-text-2);
+}
+.gotipe-starters > .gotipe-button > .gt-icon {
+  color: var(--gt-text-3);
+}
+
+/* ---- loading: the shape of a page, no shimmer ---- */
+.gotipe-skeleton {
+  display: grid;
+  gap: var(--gt-skeleton-gap);
+}
+.gotipe-skeleton > span {
+  height: var(--gt-skeleton-h);
+  border-radius: var(--gt-radius-inline);
+  background: var(--gt-skeleton);
+}
+.gotipe-skeleton > .is-title {
+  width: 56%;
+  height: var(--gt-skeleton-title-h);
+  border-radius: var(--gt-radius-control);
+}
+.gotipe-skeleton > .is-meta {
+  width: 32%;
+  margin-bottom: var(--gt-skeleton-gap);
+}
+.gotipe-skeleton > .is-block {
+  height: var(--gt-skeleton-block-h);
+  margin: var(--gt-skeleton-gap) 0;
+  border-radius: var(--gt-radius-block);
+}
+.gotipe-skeleton > .is-90 {
+  width: 90%;
+}
+.gotipe-skeleton > .is-75 {
+  width: 75%;
+}
+.gotipe-skeleton > .is-60 {
+  width: 60%;
+}
+
+/* ---- errors: a toast at the top of the editor, or the element that failed ---- */
+.gotipe-toast {
+  position: absolute;
+  top: var(--gt-toast-top);
+  left: 50%;
+  z-index: var(--gt-z-tooltip);
+  display: flex;
+  align-items: center;
+  gap: var(--gt-toast-gap);
+  padding: var(--gt-toast-pad);
+  border-radius: var(--gt-radius-overlay);
+  background: var(--gt-inverse);
+  box-shadow: var(--gt-shadow-overlay);
+  color: var(--gt-inverse-text);
+  font-size: var(--gt-ui-size);
+  line-height: var(--gt-ui-leading);
+  letter-spacing: normal;
+  white-space: nowrap;
+  transform: translateX(-50%);
+}
+.gotipe-toast > .gt-icon {
+  color: var(--gt-danger);
+}
+.gotipe-toast > .gotipe-button {
+  background: transparent;
+  color: var(--gt-inverse-accent);
+}
+.gotipe-image-state {
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: var(--gt-menu-gap);
+  min-height: var(--gt-image-empty-h);
+  border-radius: var(--gt-radius-block);
+  background: var(--gt-sunken);
+  color: var(--gt-text-2);
+  font-size: var(--gt-ui-size);
+  line-height: var(--gt-ui-leading);
+  letter-spacing: normal;
+}
+.gotipe-image-state.is-error {
+  background: var(--gt-danger-tint);
+  box-shadow: inset 0 0 0 var(--gt-hairline) var(--gt-danger);
+}
+.gotipe-image-state.is-error > .gt-icon {
+  color: var(--gt-danger);
+}
+.gotipe-image-state-actions {
+  display: flex;
+  gap: var(--gt-button-gap);
+}
+
+/* ---- Markdown the editor keeps as it is: quiet, read-only, with its reason on hover ---- */
+.gotipe-raw {
+  position: relative;
+  margin: 0;
+  padding: var(--gt-raw-pad);
+  border-radius: var(--gt-radius-block);
+  background: var(--gt-sunken);
+  color: var(--gt-text-2);
+  font-family: var(--gt-font-mono);
+  font-size: var(--gt-code-size);
+  line-height: var(--gt-code-leading);
+  white-space: pre-wrap;
+}
+.gotipe-raw-mark {
+  position: absolute;
+  top: var(--gt-toolbar-pad);
+  right: var(--gt-toolbar-pad);
+}
+
+/* ---- read-only: the page says so by a glyph beside the title, the reason in its tooltip ---- */
+.gotipe-title-row {
+  display: flex;
+  align-items: center;
+  gap: var(--gt-menu-gap);
+}
+.gotipe-title-row > .gotipe-tool {
+  color: var(--gt-text-3);
+}
+.gotipe-title-row > .gotipe-tool.is-hover {
+  color: var(--gt-text-2);
+}
+
+/* ---- keyboard focus: the theme's ring, never the browser's ---- */
+.is-focus-visible {
+  box-shadow: 0 0 0 var(--gt-focus-gap) var(--gt-page-bg), 0 0 0
+    calc(var(--gt-focus-gap) + var(--gt-focus-width)) var(--gt-focus);
+}
+.gotipe-overlay .is-focus-visible {
+  box-shadow: 0 0 0 var(--gt-focus-gap) var(--gt-overlay), 0 0 0
+    calc(var(--gt-focus-gap) + var(--gt-focus-width)) var(--gt-focus);
+}
+.gotipe-check.is-focus-visible {
+  box-shadow: inset 0 0 0 var(--gt-check-ring) var(--gt-line-control), 0 0 0 var(--gt-focus-gap)
+    var(--gt-page-bg), 0 0 0 calc(var(--gt-focus-gap) + var(--gt-focus-width)) var(--gt-focus);
+}
+.gotipe-link.is-focus-visible {
+  border-radius: var(--gt-radius-inline);
+}
+
+/* ---- drag: the block leaves a trace, its ghost follows the pointer, a line marks the drop ---- */
+.gotipe-doc > .is-drag-source {
+  opacity: var(--gt-drag-source-opacity);
+}
+.gotipe-doc.is-dragging,
+.has-drop-before {
+  position: relative;
+}
+.has-drop-before::before {
+  content: "";
+  position: absolute;
+  top: calc(-0.5 * var(--gt-flow) - 0.5 * var(--gt-drop-line));
+  right: 0;
+  left: 0;
+  height: var(--gt-drop-line);
+  border-radius: var(--gt-radius-round);
+  background: var(--gt-accent);
+}
+.gotipe-drag-ghost {
+  position: absolute;
+  top: var(--at-drag-y);
+  left: var(--at-drag-x);
+  z-index: var(--gt-z-overlay);
+  box-sizing: border-box;
+  width: var(--at-drag-w);
+  padding: var(--gt-toolbar-pad) var(--gt-menu-gap);
+  border-radius: var(--gt-radius-block);
+  background: var(--gt-page-bg);
+  box-shadow: var(--gt-shadow-overlay);
+  opacity: var(--gt-ghost-opacity);
+}
