@@ -1,305 +1,95 @@
-/* ============================================================
-   Block Context Menu (new — for drag handle click)
-   ============================================================ */
+/* Block menu and shared selects — Atlas frame 8. The surface and the rows come from overlay.css;
+   here: where the menu and «Turn into» stand, their glyphs and the dangerous row. */
 
 .gotipe-block-context-menu {
   position: absolute;
-  background: var(--gt-bg);
-  border: 1px solid var(--gt-border-light, rgba(0, 0, 0, 0.05));
-  border-radius: var(--gt-radius-lg, 12px);
-  box-shadow: var(--gt-shadow-elevated);
-  padding: var(--gt-space-1, 4px);
-  min-width: 180px;
+  z-index: var(--gt-z-slash);
   overflow: visible;
-  z-index: var(--gt-z-slash, 50);
-  animation: gotipe-scale-in var(--gt-duration-normal, 150ms) var(--gt-ease-out);
 }
-
-.gotipe-block-context-menu button {
-  display: flex;
-  align-items: center;
-  justify-content: flex-start;
-  gap: var(--gt-space-2, 8px);
-  width: 100%;
-  height: 32px;
-  padding: 0 var(--gt-space-2, 8px);
-  border: none;
-  border-radius: var(--gt-radius-md, 8px);
-  background: transparent;
-  color: var(--gt-text-base);
-  font-size: var(--gt-text-sm, 14px);
-  cursor: pointer;
-  transition: background var(--gt-duration-fast, 100ms) var(--gt-ease-out);
-  text-align: left;
-}
-
-.gotipe-block-context-menu button:hover {
-  background: var(--gt-bg-hover);
-}
-
 .gotipe-context-item-has-submenu {
   position: relative;
 }
-
-.gotipe-context-menu-chevron {
-  margin-left: auto;
-  color: var(--gt-text-tertiary);
-  font-size: 12px;
-  line-height: 1;
+.gotipe-context-submenu {
+  position: absolute;
+  top: calc(-1 * var(--gt-menu-pad));
+  left: calc(100% + var(--gt-submenu-gap));
+  z-index: calc(var(--gt-z-slash) + 1);
 }
-
+.gotipe-context-menu-icon {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: var(--gt-icon-size);
+  height: var(--gt-icon-size);
+  color: var(--gt-text-2);
+}
+.gotipe-context-menu-icon > svg {
+  width: var(--gt-icon-size);
+  height: var(--gt-icon-size);
+}
 .gotipe-context-menu-label {
   flex: 1 1 auto;
   min-width: 0;
-  text-align: left;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
-
-.gotipe-context-submenu {
-  position: absolute;
-  top: -4px;
-  left: calc(100% + 6px);
-  background: var(--gt-bg);
-  border: 1px solid var(--gt-border-light, rgba(0, 0, 0, 0.05));
-  border-radius: var(--gt-radius-lg, 12px);
-  box-shadow: var(--gt-shadow-elevated);
-  padding: var(--gt-space-1, 4px);
-  min-width: 180px;
-  z-index: calc(var(--gt-z-slash, 50) + 1);
-  animation: gotipe-scale-in var(--gt-duration-normal, 150ms) var(--gt-ease-out);
+.gotipe-context-menu-chevron {
+  display: inline-flex;
+  margin-left: auto;
+  color: var(--gt-text-3);
 }
-
-.gotipe-context-submenu button {
-  padding: 0 var(--gt-space-2, 8px);
-  height: 30px;
+.gotipe-block-context-menu .gotipe-context-menu-separator {
+  height: var(--gt-hairline);
+  margin: var(--gt-menu-sep-gap) calc(-1 * var(--gt-menu-pad));
+  border: 0;
+  background: var(--gt-line);
 }
-
-.gotipe-block-context-menu button.destructive {
-  color: var(--gt-error);
+.gotipe-block-context-menu button.destructive,
+.gotipe-block-context-menu button.destructive .gotipe-context-menu-icon {
+  color: var(--gt-danger);
 }
-
 .gotipe-block-context-menu button.destructive:hover {
-  background: rgba(220, 38, 38, 0.08);
-}
-
-.gotipe-context-menu-icon {
-  flex-shrink: 0;
-  width: 20px;
-  text-align: center;
-  font-size: var(--gt-text-sm, 14px);
+  background: var(--gt-danger-tint);
 }
 
 /* ============================================================
-   Block Type Dropdown (bubble menu)
-   ============================================================ */
-
-.gotipe-block-type-dropdown {
-  position: absolute;
-  top: 100%;
-  left: 0;
-  margin-top: var(--gt-space-1, 4px);
-  background: var(--gt-bg);
-  border: 1px solid var(--gt-border-light, rgba(0, 0, 0, 0.05));
-  border-radius: var(--gt-radius-card, 20px);
-  box-shadow: var(--gt-shadow-elevated);
-  padding: var(--gt-space-1, 4px);
-  min-width: 180px;
-  z-index: var(--gt-z-slash, 50);
-  animation: gotipe-scale-in var(--gt-duration-normal, 150ms) var(--gt-ease-out);
-}
-
-.gotipe-block-type-dropdown button {
-  display: flex;
-  align-items: center;
-  gap: var(--gt-space-2, 8px);
-  width: 100%;
-  height: 32px;
-  padding: 0 var(--gt-space-2, 8px);
-  border: none;
-  border-radius: var(--gt-radius-md, 8px);
-  background: transparent;
-  color: var(--gt-text-base);
-  font-size: var(--gt-text-sm, 14px);
-  cursor: pointer;
-  transition: background var(--gt-duration-fast, 100ms) var(--gt-ease-out);
-  text-align: left;
-}
-
-.gotipe-block-type-dropdown button:hover {
-  background: var(--gt-bg-hover);
-}
-
-.gotipe-block-type-dropdown button.active {
-  color: var(--gt-accent);
-}
-
-/* ============================================================
-   Shared Selects
+   Shared selects: a quiet field with a chevron
    ============================================================ */
 
 .gotipe-select {
-  appearance: none;
-  -webkit-appearance: none;
-  -moz-appearance: none;
   display: inline-flex;
   align-items: center;
-  min-width: 120px;
-  height: 36px;
-  padding: 0 34px 0 12px;
-  border: 1px solid var(--gt-border, #e5e5e5);
-  border-radius: var(--gt-radius-md, 8px);
-  background-color: var(--gt-bg);
-  color: var(--gt-text-base);
-  font-family: var(--gt-font-body);
-  font-size: var(--gt-text-sm, 14px);
-  line-height: 1.2;
+  min-width: 0;
+  height: var(--gt-field-h);
+  padding: 0 calc(var(--gt-space-2) + var(--gt-icon-size)) 0 var(--gt-space-3);
+  border: 0;
+  border-radius: var(--gt-radius-control);
+  background: var(--gt-fill-1) var(--gt-select-chevron) no-repeat right var(--gt-space-2) center /
+    var(--gt-icon-size);
+  box-shadow: inset 0 0 0 var(--gt-hairline) var(--gt-line-strong);
+  color: var(--gt-text);
+  font-family: var(--gt-font-ui);
+  font-size: var(--gt-ui-size);
+  line-height: var(--gt-ui-leading);
   cursor: pointer;
   outline: none;
-  transition: border-color var(--gt-duration-fast, 100ms) var(--gt-ease-out), box-shadow
-    var(--gt-duration-fast, 100ms) var(--gt-ease-out), background var(--gt-duration-fast, 100ms)
-    var(--gt-ease-out), color var(--gt-duration-fast, 100ms) var(--gt-ease-out);
-  background-image: linear-gradient(45deg, transparent 50%, currentColor 50%),
-    linear-gradient(135deg, currentColor 50%, transparent 50%);
-  background-position: calc(100% - 16px) 50%, calc(100% - 11px) 50%;
-  background-size: 5px 5px, 5px 5px;
-  background-repeat: no-repeat;
+  appearance: none;
 }
-
-.gotipe-select:hover {
-  border-color: var(--gt-border-hover, #d6d6d6);
-  background-color: var(--gt-bg-hover);
+.gotipe-select:hover:not(:disabled) {
+  background-color: var(--gt-fill-2);
 }
-
 .gotipe-select:focus-visible {
-  border-color: var(--gt-accent);
-  box-shadow: 0 0 0 2px color-mix(in srgb, var(--gt-accent) 22%, transparent);
+  outline: var(--gt-focus-width) solid var(--gt-focus);
+  outline-offset: var(--gt-focus-gap);
 }
-
 .gotipe-select:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
+  opacity: var(--gt-disabled-opacity);
+  cursor: default;
 }
-
 .gotipe-select option {
-  color: var(--gt-text-base);
-  background: var(--gt-bg);
+  background: var(--gt-overlay);
+  color: var(--gt-text);
 }
-
 .gotipe-select--compact {
-  height: 32px;
-  min-width: 92px;
-  padding: 0 30px 0 10px;
-  border-radius: var(--gt-radius-sm, 6px);
-  font-size: var(--gt-text-sm, 14px);
-}
-
-/* ============================================================
-   Text Color Picker (bubble menu)
-   ============================================================ */
-
-.gotipe-text-color-picker {
-  position: absolute;
-  top: 100%;
-  right: 0;
-  margin-top: var(--gt-space-1, 4px);
-  background: var(--gt-bg);
-  border: 1px solid var(--gt-border-light, rgba(0, 0, 0, 0.05));
-  border-radius: var(--gt-radius-lg, 12px);
-  box-shadow: var(--gt-shadow-elevated);
-  padding: var(--gt-space-2, 8px);
-  z-index: var(--gt-z-slash, 50);
-  animation: gotipe-scale-in var(--gt-duration-normal, 150ms) var(--gt-ease-out);
-}
-
-.gotipe-text-color-picker-grid {
-  display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  gap: var(--gt-space-1, 4px);
-}
-
-.gotipe-text-color-swatch {
-  width: 28px;
-  height: 28px;
-  border: none;
-  border-radius: var(--gt-radius-sm, 6px);
-  cursor: pointer;
-  transition: transform var(--gt-duration-fast, 100ms) var(--gt-ease-out);
-}
-
-.gotipe-text-color-swatch:hover {
-  transform: scale(1.15);
-}
-
-.gotipe-text-color-reset {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
-  height: 28px;
-  border: none;
-  border-radius: var(--gt-radius-sm, 6px);
-  background: transparent;
-  color: var(--gt-text-secondary);
-  font-size: var(--gt-text-xs, 12px);
-  cursor: pointer;
-  margin-top: var(--gt-space-1, 4px);
-}
-
-.gotipe-text-color-reset:hover {
-  background: var(--gt-bg-hover);
-}
-
-/* Formatting popups retain their selection while native inputs take focus. */
-[data-gotipe-formatting-popup] {
-  box-sizing: border-box;
-  color: var(--gt-text-base);
-}
-[data-gotipe-formatting-popup] [role="alert"] {
-  max-width: 280px;
-  margin: 8px 4px 4px;
-  color: var(--gt-danger, #b91c1c);
-  font-size: var(--gt-text-xs, 12px);
-  line-height: 1.4;
-  overflow-wrap: anywhere;
-  white-space: normal;
-}
-.gotipe-link-editor {
-  width: 300px;
-  padding: 12px;
-  border: 1px solid var(--gt-border);
-  border-radius: var(--gt-radius-lg, 12px);
-  background: var(--gt-bg);
-  box-shadow: var(--gt-shadow-elevated);
-}
-.gotipe-link-editor label {
-  display: grid;
-  gap: 6px;
-  font-size: var(--gt-text-xs, 12px);
-  color: var(--gt-text-secondary);
-}
-.gotipe-link-editor input {
-  box-sizing: border-box;
-  width: 100%;
-  min-width: 0;
-  padding: 8px;
-  border: 1px solid var(--gt-border);
-  border-radius: var(--gt-radius-sm, 6px);
-  background: var(--gt-bg);
-  color: var(--gt-text-base);
-  font: inherit;
-}
-.gotipe-link-editor-actions {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: flex-end;
-  gap: 4px;
-  margin-top: 10px;
-}
-.gotipe-bubble-menu .gotipe-link-editor-actions button {
-  width: auto;
-  padding-inline: 8px;
-  color: var(--gt-text-base);
-}
-[data-gotipe-formatting-popup] :is(button, input):focus-visible {
-  outline: 2px solid var(--gt-accent);
-  outline-offset: 1px;
+  height: var(--gt-button-h);
 }

@@ -1,0 +1,334 @@
+/* Overlays — Atlas frames 6–8: the bubble over a selection, its popovers and the block menu.
+   An overlay is a surface with a 0.5 px ring and a shadow, never a 1 px frame. Rows are 28 px,
+   icons 16; the current choice stands on a fill, a dangerous one is red. */
+
+/* ---- one surface for everything that floats over the document ---- */
+.gotipe-bubble-menu,
+.gotipe-block-type-dropdown,
+.gotipe-link-editor,
+.gotipe-text-color-picker,
+.gotipe-block-more-menu,
+.gotipe-block-context-menu,
+.gotipe-context-submenu {
+  box-sizing: border-box;
+  border: 0;
+  border-radius: var(--gt-radius-overlay);
+  background: var(--gt-overlay);
+  box-shadow: var(--gt-shadow-overlay);
+  color: var(--gt-text);
+  font-family: var(--gt-font-ui);
+  font-size: var(--gt-ui-size);
+  font-weight: var(--gt-weight-regular);
+  line-height: var(--gt-ui-leading);
+  letter-spacing: normal;
+  animation: gotipe-fade-in var(--gt-duration-normal) var(--gt-ease-out);
+}
+[data-gotipe-formatting-popup] {
+  z-index: var(--gt-z-slash);
+  max-width: calc(100vw - 2 * var(--gt-space-2));
+}
+[data-gotipe-formatting-popup] :is(button, input):focus-visible {
+  outline: var(--gt-focus-width) solid var(--gt-focus);
+  outline-offset: var(--gt-focus-gap);
+}
+[data-gotipe-formatting-popup] > p[role="alert"]:not(.gotipe-sr-only) {
+  max-width: var(--gt-menu-w);
+  margin: var(--gt-menu-sep-gap) var(--gt-space-2);
+  color: var(--gt-danger);
+  font-size: var(--gt-ui-small);
+  line-height: var(--gt-ui-small-leading);
+  overflow-wrap: anywhere;
+  white-space: normal;
+}
+
+/* ---- the bubble: model, block type, styles, link, colour, more ---- */
+.gotipe-bubble-menu {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--gt-toolbar-gap);
+  max-width: calc(100vw - 2 * var(--gt-space-2));
+  padding: var(--gt-toolbar-pad);
+  z-index: var(--gt-z-bubble);
+}
+.gotipe-bubble-menu > * {
+  flex-shrink: 0;
+}
+.gotipe-bubble-menu button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--gt-space-1);
+  min-width: var(--gt-tool);
+  height: var(--gt-tool);
+  padding: 0;
+  border: 0;
+  border-radius: var(--gt-radius-control);
+  background: transparent;
+  color: var(--gt-text-2);
+  font: inherit;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.gotipe-bubble-menu button > svg {
+  width: var(--gt-icon-size);
+  height: var(--gt-icon-size);
+  flex: none;
+}
+.gotipe-bubble-menu button:hover:not(:disabled),
+.gotipe-bubble-menu button:is(.active, [aria-pressed="true"], [aria-expanded="true"]) {
+  background: var(--gt-fill-2);
+  color: var(--gt-text);
+}
+.gotipe-bubble-menu button:disabled {
+  opacity: var(--gt-disabled-opacity);
+  cursor: default;
+}
+.gotipe-bubble-menu button:focus-visible {
+  outline: var(--gt-focus-width) solid var(--gt-focus);
+  outline-offset: calc(-1 * var(--gt-focus-width));
+}
+.gotipe-bubble-menu .gotipe-bubble-model,
+.gotipe-bubble-menu .gotipe-block-type-trigger {
+  padding: var(--gt-tool-text-pad);
+  color: var(--gt-text);
+}
+.gotipe-bubble-model > svg {
+  color: var(--gt-accent);
+}
+.gotipe-bubble-menu .gotipe-block-type-trigger {
+  max-width: var(--gt-menu-w-narrow);
+}
+.gotipe-block-type-trigger-label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.gotipe-block-type-trigger-chevron {
+  display: inline-flex;
+  color: var(--gt-text-3);
+}
+.gotipe-bubble-menu-separator {
+  flex: none;
+  width: var(--gt-hairline);
+  height: var(--gt-tool-sep-h);
+  margin: 0 var(--gt-tool-sep-gap);
+  background: var(--gt-line-strong);
+}
+.gotipe-color-trigger {
+  position: relative;
+}
+.gotipe-color-bar {
+  position: absolute;
+  bottom: var(--gt-space-1);
+  left: 50%;
+  width: var(--gt-color-bar-w);
+  height: var(--gt-color-bar-h);
+  border-radius: var(--gt-radius-round);
+  background: var(--gt-color-current, currentColor);
+  transform: translateX(-50%);
+}
+
+/* ---- menus: one row per choice, the current one ticked ---- */
+:is(
+    .gotipe-block-type-dropdown,
+    .gotipe-block-more-menu,
+    .gotipe-block-context-menu,
+    .gotipe-context-submenu
+  ) {
+  display: flex;
+  flex-direction: column;
+  min-width: var(--gt-menu-w-narrow);
+  padding: var(--gt-menu-pad);
+}
+:is(
+    .gotipe-block-type-dropdown,
+    .gotipe-block-more-menu,
+    .gotipe-block-context-menu,
+    .gotipe-context-submenu
+  )
+  button {
+  display: flex;
+  align-items: center;
+  gap: var(--gt-menu-gap);
+  width: 100%;
+  height: var(--gt-menu-item-h);
+  padding: var(--gt-menu-item-pad);
+  border: 0;
+  border-radius: var(--gt-radius-control);
+  background: transparent;
+  color: var(--gt-text);
+  font: inherit;
+  text-align: left;
+  white-space: nowrap;
+  cursor: pointer;
+}
+:is(
+    .gotipe-block-type-dropdown,
+    .gotipe-block-more-menu,
+    .gotipe-block-context-menu,
+    .gotipe-context-submenu
+  )
+  button
+  > svg {
+  flex: none;
+  width: var(--gt-icon-size);
+  height: var(--gt-icon-size);
+  color: var(--gt-text-2);
+}
+:is(
+    .gotipe-block-type-dropdown,
+    .gotipe-block-more-menu,
+    .gotipe-block-context-menu,
+    .gotipe-context-submenu
+  )
+  button:is(:hover, :focus-visible):not(:disabled) {
+  background: var(--gt-fill-2);
+  outline: none;
+}
+:is(
+    .gotipe-block-type-dropdown,
+    .gotipe-block-more-menu,
+    .gotipe-block-context-menu,
+    .gotipe-context-submenu
+  )
+  button:disabled {
+  opacity: var(--gt-disabled-opacity);
+  cursor: default;
+}
+.gotipe-menu-text {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.gotipe-menu-end {
+  margin-left: auto;
+}
+
+/* ---- link: a field with its icon, then apply, unlink and cancel ---- */
+.gotipe-link-editor {
+  width: var(--gt-popover-w);
+  padding: var(--gt-popover-pad);
+}
+.gotipe-link-editor form {
+  display: flex;
+  align-items: center;
+  gap: var(--gt-toolbar-gap);
+}
+.gotipe-link-editor-field {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: var(--gt-space-2);
+  min-width: 0;
+  height: var(--gt-field-h);
+  padding: var(--gt-field-pad);
+  border-radius: var(--gt-radius-control);
+  background: var(--gt-fill-1);
+  box-shadow: inset 0 0 0 var(--gt-hairline) var(--gt-line-strong);
+  color: var(--gt-text-3);
+}
+.gotipe-link-editor-field:focus-within {
+  box-shadow: inset 0 0 0 var(--gt-hairline) var(--gt-accent);
+}
+.gotipe-link-editor-field:has(input[aria-invalid="true"]) {
+  background: var(--gt-danger-tint);
+  box-shadow: inset 0 0 0 var(--gt-hairline) var(--gt-danger);
+  color: var(--gt-danger);
+}
+.gotipe-link-editor-field > svg {
+  flex: none;
+  width: var(--gt-icon-size);
+  height: var(--gt-icon-size);
+}
+.gotipe-link-editor input {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--gt-text);
+  font: inherit;
+  outline: none;
+}
+.gotipe-link-editor input:focus-visible {
+  outline: none;
+}
+.gotipe-link-editor input::placeholder {
+  color: var(--gt-text-3);
+}
+.gotipe-link-editor-actions {
+  display: flex;
+  gap: var(--gt-toolbar-gap);
+}
+
+/* ---- colour: the text swatches, the backgrounds, then reset ---- */
+.gotipe-text-color-picker {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--gt-toolbar-gap);
+  padding: var(--gt-toolbar-pad);
+}
+.gotipe-color-group {
+  display: flex;
+  gap: var(--gt-toolbar-gap);
+}
+.gotipe-color-sep {
+  flex: none;
+  width: var(--gt-hairline);
+  height: var(--gt-tool-sep-h);
+  margin: 0 var(--gt-tool-sep-gap);
+  background: var(--gt-line-strong);
+}
+
+/* small square buttons of the popovers */
+:is(.gotipe-link-editor-actions button, .gotipe-text-color-swatch, .gotipe-text-color-reset) {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: var(--gt-tool);
+  height: var(--gt-tool);
+  padding: 0;
+  border: 0;
+  border-radius: var(--gt-radius-control);
+  background: transparent;
+  color: var(--gt-text-2);
+  font: inherit;
+  cursor: pointer;
+}
+:is(.gotipe-link-editor-actions button, .gotipe-text-color-swatch, .gotipe-text-color-reset) > svg {
+  width: var(--gt-icon-size);
+  height: var(--gt-icon-size);
+}
+:is(
+    .gotipe-link-editor-actions button,
+    .gotipe-text-color-swatch:not(.is-fill),
+    .gotipe-text-color-reset
+  ):hover:not(:disabled) {
+  background: var(--gt-fill-2);
+  color: var(--gt-text);
+}
+.gotipe-link-editor-actions button:disabled {
+  opacity: var(--gt-disabled-opacity);
+  cursor: default;
+}
+.gotipe-text-color-swatch.is-fill {
+  width: var(--gt-swatch-row);
+  height: var(--gt-swatch-row);
+  margin: calc((var(--gt-tool) - var(--gt-swatch-row)) / 2);
+  box-shadow: inset 0 0 0 var(--gt-hairline) var(--gt-line);
+}
+.gotipe-text-color-swatch.is-fill:hover {
+  box-shadow: inset 0 0 0 var(--gt-hairline) var(--gt-line-active);
+}
+.gotipe-text-color-swatch[aria-pressed="true"],
+.gotipe-text-color-swatch.is-fill[aria-pressed="true"] {
+  box-shadow: inset 0 0 0 var(--gt-swatch-ring) var(--gt-text);
+}
+.gotipe-text-color-reset {
+  color: var(--gt-text-3);
+}
