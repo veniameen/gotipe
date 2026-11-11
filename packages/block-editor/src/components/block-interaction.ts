@@ -1,7 +1,6 @@
 import type { GoTipeEditor, Transaction } from "@gotipe/core";
 export { getBlockTextLeft, getBlockFirstLineMetrics } from "../interaction/block-text-metrics";
 
-const BLOCK_TOOLBAR_COLUMN_OFFSET = 56;
 export const LIST_CONTAINER_TYPES = new Set(["bulletList", "orderedList", "todoList"]);
 export const LIST_ITEM_TYPES = new Set(["listItem", "todoItem"]);
 export const ROW_DRAGGABLE_LIST_TYPES = new Set(["bulletList", "orderedList", "todoList"]);
@@ -182,7 +181,15 @@ export function getToolbarRailLeft(containerEl: HTMLElement): number {
   const columnLeft =
     columnLeftCandidates.length > 0 ? Math.min(...columnLeftCandidates) : contentRect.left;
 
-  return Math.max(0, Math.round(columnLeft - containerRect.left - BLOCK_TOOLBAR_COLUMN_OFFSET));
+  // The handle stands --gt-handle-offset left of the text column; the view and the container
+  // width choose the token.
+  const offset = Number.parseFloat(
+    getComputedStyle(containerEl).getPropertyValue("--gt-handle-offset"),
+  );
+  return Math.max(
+    0,
+    Math.round(columnLeft - containerRect.left - (Number.isFinite(offset) ? offset : 0)),
+  );
 }
 
 export function findBlockLocation(

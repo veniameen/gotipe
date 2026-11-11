@@ -1,5 +1,6 @@
 import { type ThemeMode, getTheme, onThemeChange, setTheme } from "@gotipe/theme";
 import { useCallback, useEffect, useState } from "react";
+import { PageIcon } from "../page/icons";
 
 export function ThemeToggle() {
   const [mode, setMode] = useState<ThemeMode>(() => getTheme().mode);
@@ -47,7 +48,7 @@ export function ThemeToggle() {
         className={mode === "light" ? "active" : ""}
         onClick={handleSetLight}
       >
-        ☀
+        <PageIcon name="sun" />
       </button>
       <button
         type="button"
@@ -58,7 +59,7 @@ export function ThemeToggle() {
         className={mode === "dark" ? "active" : ""}
         onClick={handleSetDark}
       >
-        ☾
+        <PageIcon name="moon" />
       </button>
       <button
         type="button"
@@ -69,7 +70,7 @@ export function ThemeToggle() {
         className={mode === "system" ? "active" : ""}
         onClick={handleSetSystem}
       >
-        ⊙
+        <PageIcon name="system" />
       </button>
     </div>
   );

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef } from "react";
 import type { useTouchDrag } from "../interaction/use-touch-drag";
+import { PageIcon } from "../page/icons";
 
 export interface DragHandleProps {
   blockId: string;
@@ -77,14 +78,7 @@ export function DragHandle({
       onClickCapture={touchDrag?.onClickCapture}
       onClick={onClick}
     >
-      <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor" aria-hidden="true">
-        <circle cx="5" cy="3" r="1.2" />
-        <circle cx="9" cy="3" r="1.2" />
-        <circle cx="5" cy="7" r="1.2" />
-        <circle cx="9" cy="7" r="1.2" />
-        <circle cx="5" cy="11" r="1.2" />
-        <circle cx="9" cy="11" r="1.2" />
-      </svg>
+      <PageIcon name="grip" />
     </button>
   );
 }

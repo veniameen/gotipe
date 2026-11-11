@@ -1,5 +1,6 @@
 import type { GoTipeEditor } from "@gotipe/core";
 import { Editor } from "@gotipe/react";
+import type { ThemePreset } from "@gotipe/theme";
 import type React from "react";
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { type DragPoint, useTouchDrag } from "../interaction/use-touch-drag";
@@ -32,8 +33,6 @@ import type { Suggestion } from "./suggestion-toolbar";
 import { SuggestionToolbar } from "./suggestion-toolbar";
 import { ThemeToggle } from "./theme-toggle";
 
-const BLOCK_TOOLBAR_WIDTH = 50;
-const BLOCK_TOOLBAR_BUTTON_SIZE = 24;
 const TOOLBAR_HIDE_DELAY_MS = 20;
 const TOOLBAR_HOVER_X_MIN_OFFSET = 120;
 const TOOLBAR_HOVER_X_MAX_OFFSET = 560;
@@ -42,6 +41,11 @@ export interface BlockEditorProps {
   editor: GoTipeEditor | null;
   className?: string;
   style?: React.CSSProperties;
+  /**
+   * The view drawn in the GoTipe Atlas: `notion` (default), `docs`, `modern` or `minimal`.
+   * A view is a set of `--gt-*` tokens over the same markup (`data-gt-view` on the root).
+   */
+  view?: ThemePreset;
   showSlashMenu?: boolean;
   showBlockToolbar?: boolean;
   showBubbleMenu?: boolean;
@@ -62,6 +66,7 @@ export function BlockEditor({
   editor,
   className,
   style,
+  view = "notion",
   showSlashMenu = true,
   showBlockToolbar = true,
   showBubbleMenu = true,
@@ -135,7 +140,7 @@ export function BlockEditor({
       const container = root.getBoundingClientRect();
       const line = getBlockFirstLineMetrics(block);
       const next = {
-        top: line.top - container.top + (line.height - BLOCK_TOOLBAR_BUTTON_SIZE) / 2,
+        top: line.top - container.top + line.height / 2,
         left: getToolbarRailLeft(root),
       };
       setToolbarPos((previous) =>
@@ -213,8 +218,7 @@ export function BlockEditor({
         const containerRect = containerRef.current.getBoundingClientRect();
         const firstLine = getBlockFirstLineMetrics(anchorEl);
         const left = getToolbarRailLeft(containerRef.current);
-        const top =
-          firstLine.top - containerRect.top + (firstLine.height - BLOCK_TOOLBAR_BUTTON_SIZE) / 2;
+        const top = firstLine.top - containerRect.top + firstLine.height / 2;
         setToolbarPos({
           top,
           left,
@@ -444,6 +448,7 @@ export function BlockEditor({
       className={editorClasses}
       style={{ ...style, position: "relative" }}
       data-gotipe-block-editor=""
+      data-gt-view={view}
       onDragOver={handleDragOver}
       onDrop={handleDrop}
       onDragLeave={handleDragLeave}
@@ -481,17 +486,7 @@ export function BlockEditor({
       {showBlockToolbar && editable && hoveredToolbarTarget && toolbarPos && (
         <div
           className="gotipe-block-toolbar-wrapper"
-          style={{
-            position: "absolute",
-            top: toolbarPos.top,
-            left: toolbarPos.left,
-            width: BLOCK_TOOLBAR_WIDTH,
-            height: BLOCK_TOOLBAR_BUTTON_SIZE,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            zIndex: 20,
-          }}
+          style={{ top: toolbarPos.top, left: toolbarPos.left }}
           onMouseEnter={clearHideToolbarTimer}
           onMouseLeave={(e) => {
             const related = e.relatedTarget as HTMLElement | null;
