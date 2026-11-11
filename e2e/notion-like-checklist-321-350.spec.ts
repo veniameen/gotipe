@@ -232,7 +232,15 @@ test.describe("Notion-like checklist batch NL-321..NL-350", () => {
           if (!cb || !host) return null;
           const a = cb.getBoundingClientRect();
           const b = host.getBoundingClientRect();
-          return { centerDiff: Math.abs(a.top + a.height / 2 - (b.top + b.height / 2)), gap: b.left - a.right };
+          // The box stands at the first line of the task (GoTipe Atlas, frame 1), also for long text.
+          const text = document.createTreeWalker(host, NodeFilter.SHOW_TEXT).nextNode();
+          const range = document.createRange();
+          if (text) {
+            range.setStart(text, 0);
+            range.setEnd(text, Math.min(1, text.textContent?.length ?? 0));
+          }
+          const line = text ? range.getBoundingClientRect() : b;
+          return { centerDiff: Math.abs(a.top + a.height / 2 - (line.top + line.height / 2)), gap: b.left - a.right };
         }, targetId);
         expect(metrics?.centerDiff ?? 99).toBeLessThan(8);
         expect(metrics?.gap ?? 0).toBeGreaterThan(6);
