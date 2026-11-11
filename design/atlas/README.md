@@ -55,7 +55,8 @@ node design/atlas/check.mjs
   поверхностей и заливок.
 
 Снимки кадров в обеих темах сохраняются в `output/atlas/` (вне Git); флаг
-`--no-shots` их пропускает.
+`--no-shots` их пропускает. Без браузеров Playwright проверку можно запустить в
+установленном Chrome: `GOTIPE_E2E_CHANNEL=chrome node design/atlas/check.mjs`.
 
 ## Кадры
 
