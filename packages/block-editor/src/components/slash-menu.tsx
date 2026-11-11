@@ -18,7 +18,7 @@ export interface SlashMenuProps {
 }
 
 import { getCaretClientRect, getCaretClientRectFromTrigger } from "./slash/caret";
-import { isAccentIcon, renderIcon } from "./slash/icons";
+import { isAccentIcon, markdownShortcut, renderIcon } from "./slash/icons";
 import {
   LIST_CONTAINER_TYPES,
   LIST_ITEM_TYPES,
@@ -430,6 +430,10 @@ export function SlashMenu({
                   {renderMeta ? (
                     <span className="gotipe-slash-menu-item-meta" aria-hidden="true">
                       {renderMeta(cmd)}
+                    </span>
+                  ) : markdownShortcut(cmd.icon) ? (
+                    <span className="gotipe-slash-menu-item-meta" aria-hidden="true">
+                      {markdownShortcut(cmd.icon)}
                     </span>
                   ) : null}
                 </div>

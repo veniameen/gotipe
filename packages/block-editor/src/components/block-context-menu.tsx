@@ -2,6 +2,7 @@ import { type GoTipeEditor, GoTipeError } from "@gotipe/core";
 import { useFloatingPosition } from "@gotipe/react";
 import type React from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { PageIcon, type PageIconName } from "../page/icons";
 
 export interface BlockContextMenuProps {
   editor: GoTipeEditor;
@@ -13,7 +14,7 @@ export interface BlockContextMenuProps {
 interface MenuItem {
   key: string;
   label: string;
-  icon: string;
+  icon: PageIconName;
   action: () => void;
   destructive?: boolean;
 }
@@ -22,6 +23,7 @@ type ViewBlock = ReturnType<GoTipeEditor["getViewState"]>["blocks"][number];
 
 type TurnIntoOption = {
   label: string;
+  icon: PageIconName;
   type: string;
   attrs?: Record<string, unknown>;
 };
@@ -77,15 +79,15 @@ export function BlockContextMenu({ editor, blockId, open, onClose }: BlockContex
 
   const turnIntoOptions = useMemo<TurnIntoOption[]>(
     () => [
-      { label: "Text", type: "paragraph" },
-      { label: "Heading 1", type: "heading", attrs: { level: 1 } },
-      { label: "Heading 2", type: "heading", attrs: { level: 2 } },
-      { label: "Heading 3", type: "heading", attrs: { level: 3 } },
-      { label: "Bullet List", type: "bulletList" },
-      { label: "Numbered List", type: "orderedList" },
-      { label: "To-do List", type: "todoList" },
-      { label: "Blockquote", type: "blockquote" },
-      { label: "Code Block", type: "codeBlock" },
+      { label: "Text", icon: "text", type: "paragraph" },
+      { label: "Heading 1", icon: "h1", type: "heading", attrs: { level: 1 } },
+      { label: "Heading 2", icon: "h2", type: "heading", attrs: { level: 2 } },
+      { label: "Heading 3", icon: "h3", type: "heading", attrs: { level: 3 } },
+      { label: "Bullet List", icon: "bullet", type: "bulletList" },
+      { label: "Numbered List", icon: "numbered", type: "orderedList" },
+      { label: "To-do List", icon: "todo", type: "todoList" },
+      { label: "Blockquote", icon: "quote", type: "blockquote" },
+      { label: "Code Block", icon: "code", type: "codeBlock" },
     ],
     [],
   );
@@ -150,7 +152,7 @@ export function BlockContextMenu({ editor, blockId, open, onClose }: BlockContex
   }, [editor, blockId, onClose]);
 
   const handleResetFormatting = useCallback(() => {
-    applyTurnInto({ label: "Text", type: "paragraph" });
+    applyTurnInto({ label: "Text", icon: "text", type: "paragraph" });
   }, [applyTurnInto]);
 
   const handleCopyBlockLink = useCallback(async () => {
@@ -182,16 +184,21 @@ export function BlockContextMenu({ editor, blockId, open, onClose }: BlockContex
   }, [editor, blockId, onClose]);
 
   const items: MenuItem[] = [
-    { key: "copy-link", label: "Copy link to block", icon: "🔗", action: handleCopyBlockLink },
-    { key: "duplicate", label: "Duplicate", icon: "⧉", action: handleDuplicate },
+    { key: "copy-link", label: "Copy link to block", icon: "link", action: handleCopyBlockLink },
+    { key: "duplicate", label: "Duplicate", icon: "duplicate", action: handleDuplicate },
     {
       key: "reset-formatting",
       label: "Reset Formatting",
-      icon: "↺",
+      icon: "restore",
       action: handleResetFormatting,
     },
-    { key: "copy-clipboard", label: "Copy to Clipboard", icon: "⎘", action: handleCopyToClipboard },
-    { key: "delete", label: "Delete", icon: "🗑", action: handleDelete, destructive: true },
+    {
+      key: "copy-clipboard",
+      label: "Copy to Clipboard",
+      icon: "copy",
+      action: handleCopyToClipboard,
+    },
+    { key: "delete", label: "Delete", icon: "trash", action: handleDelete, destructive: true },
   ];
 
   // Close on outside click
@@ -310,11 +317,11 @@ export function BlockContextMenu({ editor, blockId, open, onClose }: BlockContex
           }}
         >
           <span className="gotipe-context-menu-icon" aria-hidden="true">
-            ↹
+            <PageIcon name="swap" />
           </span>
           <span className="gotipe-context-menu-label">Turn into</span>
           <span className="gotipe-context-menu-chevron" aria-hidden="true">
-            ▸
+            <PageIcon name="chevronRight" />
           </span>
         </button>
         {turnIntoOpen ? (
@@ -350,6 +357,9 @@ export function BlockContextMenu({ editor, blockId, open, onClose }: BlockContex
                   handleMenuItemArrowNavigation(e);
                 }}
               >
+                <span className="gotipe-context-menu-icon" aria-hidden="true">
+                  <PageIcon name={option.icon} />
+                </span>
                 <span className="gotipe-context-menu-label">{option.label}</span>
               </button>
             ))}
@@ -357,7 +367,10 @@ export function BlockContextMenu({ editor, blockId, open, onClose }: BlockContex
         ) : null}
       </div>
 
-      {items.map((item) => (
+      {items.map((item) => [
+        item.destructive ? (
+          <div key={`${item.key}-separator`} className="gotipe-context-menu-separator" />
+        ) : null,
         <button
           key={item.key}
           type="button"
@@ -374,11 +387,11 @@ export function BlockContextMenu({ editor, blockId, open, onClose }: BlockContex
           }}
         >
           <span className="gotipe-context-menu-icon" aria-hidden="true">
-            {item.icon}
+            <PageIcon name={item.icon} />
           </span>
           <span className="gotipe-context-menu-label">{item.label}</span>
-        </button>
-      ))}
+        </button>,
+      ])}
       {error && <p role="alert">{error}</p>}
     </div>
   );
