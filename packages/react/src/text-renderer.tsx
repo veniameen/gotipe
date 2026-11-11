@@ -5,7 +5,7 @@ import type {
   TextSpanView,
   WidgetDecoration,
 } from "@gotipe/core";
-import { toSafeColor, toSafeHref } from "@gotipe/core";
+import { documentColorStyle, toSafeHref } from "@gotipe/core";
 import React from "react";
 
 export interface TextRendererProps {
@@ -54,7 +54,7 @@ function renderMarks(text: React.ReactNode, marks: MarkView[], key: string): Rea
         );
         break;
       case "highlight": {
-        const color = toSafeColor(mark.attrs?.color);
+        const color = documentColorStyle(mark.attrs?.color);
         element = (
           <mark key={`${key}-highlight`} style={color ? { backgroundColor: color } : undefined}>
             {element}
@@ -72,7 +72,7 @@ function renderMarks(text: React.ReactNode, marks: MarkView[], key: string): Rea
         element = (
           <span
             key={`${key}-textColor`}
-            style={{ color: toSafeColor(mark.attrs?.color) ?? undefined }}
+            style={{ color: documentColorStyle(mark.attrs?.color) ?? undefined }}
           >
             {element}
           </span>
