@@ -176,7 +176,8 @@ compatible Shiki peer and explicitly chooses lazy language/theme imports:
 ```tsx
 import { PageEditor } from '@gotipe/block-editor';
 import { createShikiHighlighter } from '@gotipe/block-editor/shiki';
-import '@gotipe/theme/page.css';
+import '@gotipe/theme/base.css';
+import '@gotipe/theme/theme.css';
 
 const highlight = createShikiHighlighter({
   langs: { javascript: () => import('shiki/langs/javascript.mjs') },

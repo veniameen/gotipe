@@ -41,7 +41,8 @@ pnpm --filter @gotipe/playground exec vite --host 127.0.0.1 --port 5173
 ```tsx
 import { useState } from 'react';
 import { PageEditor } from '@gotipe/block-editor';
-import '@gotipe/theme/page.css';
+import '@gotipe/theme/base.css';
+import '@gotipe/theme/theme.css';
 
 export function Document() {
   const [markdown, setMarkdown] = useState('# Документ\n\nНачните писать.\n');
@@ -49,7 +50,8 @@ export function Document() {
 }
 ```
 
-Для хранения файлов подключите `host.saveAsset` и `host.resolveAsset`.
+PageEditor рисуется общим видом: `view` — `notion` (по умолчанию), `docs`, `modern` или
+`minimal`. Для хранения файлов подключите `host.saveAsset` и `host.resolveAsset`.
 Без хоста небольшие файлы включаются в документ как data URLs; callbacks и
 ограничения описаны в [контракте медиа](docs/development/assets.md).
 Для полной структуры rich document используйте `getJSON()`; Markdown сохраняет
