@@ -1,0 +1,132 @@
+---
+title: SDK
+description: "@gotipe/sdk — a small typed client for the GoTipe Cloud REST API, for browsers and Node."
+packages: ["@gotipe/sdk"]
+license: MIT
+---
+
+`GoTipeClient` wraps the most used [REST API](/docs/cloud/rest-api) calls: documents,
+versions, comments, export jobs, AI, organizations and usage. It has no dependencies and uses
+the global `fetch`, so it runs in browsers and in Node.
+
+## Install
+
+```sh
+npm install @gotipe/sdk
+```
+
+## Create a client
+
+```ts title="cloud.ts"
+import { GoTipeClient } from "@gotipe/sdk";
+
+const client = new GoTipeClient({
+  baseUrl: "https://api.example.com",
+  token: process.env.GOTIPE_TOKEN,
+});
+
+const created = await client.createDocument({
+  title: "Launch plan",
+  content: {
+    version: 1,
+    blocks: [{ id: "p1", type: "paragraph", attrs: {}, content: [{ text: "Draft", marks: [] }], children: [] }],
+  },
+});
+await client.addComment(created.id, { blockId: "p1", content: "Who owns this?", from: 0, to: 5 });
+
+const page = await client.listDocuments(1, 20);
+console.log(page.total, page.hasMore, page.data.map((document) => document.title));
+```
+
+| Option | Type | Default | Description |
+|---|---|---|---|
+| `baseUrl` | `string` | required | The API's address; trailing slashes are removed. |
+| `token` | `string` | — | An access token, sent as `Authorization: Bearer`. |
+| `apiKey` | `string` | — | An API key, used when there is no `token`. |
+| `timeout` | `number` | `30000` | Milliseconds before a request is aborted; must be positive. |
+
+The credential is fixed when the client is created. When a token expires, create a new client
+with a fresh one. In browsers, pass short-lived access tokens, never API keys.
+
+## Methods
+
+| Method | REST call | Resolves to |
+|---|---|---|
+| `listDocuments(page = 1, perPage = 20)` | `GET /v1/documents` | `{ data, total, page, perPage, hasMore }`; `perPage` 1–100, otherwise a `RangeError` |
+| `getDocument(id)` | `GET /v1/documents/{id}` | `Document` with `content` and `collaborationState` |
+| `createDocument({ id?, title, content? })` | `POST /v1/documents` | `Document` |
+| `updateDocument(id, { title?, content? })` | `PATCH /v1/documents/{id}` | `Document` without `content` |
+| `deleteDocument(id)` | `DELETE /v1/documents/{id}` | `undefined` |
+| `listVersions(docId)` | `GET …/versions` | `Version[]`, newest 50 |
+| `createVersion(docId, name)` | `POST …/versions` | `Version` of type `named` |
+| `restoreVersion(docId, versionId)` | `POST …/versions/{versionId}/restore`, then `GET` | The restored `Document` |
+| `listComments(docId, includeResolved = false)` | `GET …/comments` | `ApiComment[]`, first 50, each with `resolved` |
+| `addComment(docId, { content, blockId?, from?, to? })` | `POST …/comments` | `ApiComment` |
+| `resolveComment(docId, commentId)` | `POST …/comments/{commentId}/resolve` | `undefined` |
+| `deleteComment(docId, commentId)` | `DELETE …/comments/{commentId}` | `undefined` |
+| `createExportJob(docId, format)` | `POST /v1/exports` | `ExportJob` |
+| `getExportJob(docId, jobId)` | `GET /v1/exports/{jobId}` | `ExportJob`; `docId` is not used |
+| `aiGenerate(docId, request)` | `POST /v1/ai/complete` | `AiResponse` |
+| `getOrganization(id)` | `GET /v1/organizations/{id}` | `Organization` |
+| `getUsage()` | `GET /v1/billing/usage` | `Usage` for the current month |
+
+`addComment` anchors the comment to text when `from` is set (then `blockId` and `to` are
+required), to the block when only `blockId` is set, and to the document otherwise. `format` is
+one of `html`, `markdown`, `plaintext`, `json`, `pdf` and `docx`; see
+[Server-side conversion](/docs/conversion/server#cloud-export-jobs) for polling a job.
+
+`aiGenerate` sends `stream: false` and waits for the whole answer. Its request has `prompt`
+(required), `context`, `mode` (the command, default `"complete"`), `provider`, `model` and
+`maxTokens`. Pass `""` as `docId` to skip the document check. For a streamed answer, call
+`/v1/ai/complete` with `fetch` and read the events described in the
+[REST reference](/docs/cloud/rest-api#ai).
+
+## Field names
+
+The SDK renames top-level response fields from snake_case to camelCase: `size_bytes` becomes
+`sizeBytes`, `collaboration_state` becomes `collaborationState`, `resolved_at` becomes
+`resolvedAt`. Nested values stay as the server sends them — document content, comment
+metadata, `AiResponse.usage` (`prompt_tokens`, `completion_tokens`) and `Usage.usage`
+(`documents`, `ai_requests`, `exports`, each `{ current, limit }`). Request bodies are sent as
+you pass them.
+
+The package exports the types `GoTipeClientOptions`, `PaginatedResponse`, `Document`,
+`Version`, `ApiComment`, `ExportJob`, `AiRequest`, `AiResponse`, `Organization`, `Usage` and
+`ApiError`.
+
+## Errors
+
+A response outside 2xx rejects with `GoTipeApiError`, which has the server's `code` and
+`message`, the HTTP `status` and `details` when present. A body that is not the error envelope
+gives the code `HTTP_ERROR`. A timeout or a network failure rejects with the error from `fetch`
+(an `AbortError` for timeouts).
+
+```ts title="errors.ts"
+import { GoTipeApiError, GoTipeClient } from "@gotipe/sdk";
+
+const client = new GoTipeClient({ baseUrl: "https://api.example.com", apiKey: process.env.GOTIPE_API_KEY });
+
+try {
+  await client.createExportJob("6f1c2b8e-0d1a-4f5e-9a63-2a7d1e0b9c44", "pdf");
+} catch (error) {
+  if (error instanceof GoTipeApiError && error.code === "QUOTA_EXCEEDED") {
+    console.warn("Monthly export limit reached");
+  } else {
+    throw error;
+  }
+}
+```
+
+> [!NOTE]
+> The SDK covers part of the API. Use the REST API directly for access tokens and
+> revocation, `/v1/users/me`, API keys, document permissions, creating organizations and
+> managing members, comment replies, version descriptions and milestones, billing and
+> streamed AI answers. The SDK sends no `Idempotency-Key`, so do not retry a mutation that
+> may have reached the server. The `Document` type also declares `collaborators` and
+> `syncUrl`, which the server does not send.
+
+## Related
+
+- [REST API](/docs/cloud/rest-api)
+- [Authentication](/docs/cloud/auth)
+- [Real-time sync](/docs/cloud/realtime)

@@ -1,0 +1,183 @@
+---
+title: Page editor
+description: PageEditor edits a Markdown file in the block editor and gives Markdown back, keeping untouched blocks byte for byte, with an optional review layer.
+packages: ["@gotipe/block-editor", "@gotipe/markdown", "@gotipe/suggestions"]
+license: Commercial
+---
+
+`PageEditor` is [BlockEditor](/docs/ui/block-editor) with a Markdown session: you pass the
+file's text and get Markdown back after each edit. An unchanged file comes back byte for
+byte, and an edit rewrites only the blocks it touched. On top it can show anchored
+suggestions, comments and cursors from a model or a reviewer.
+
+`PageEditor` always runs on the JS engine: no WebAssembly, no `eval`, so it works under
+`script-src 'self'`. Files, saving, names and permissions stay in your application.
+
+## Install
+
+```sh
+npm install @gotipe/block-editor @gotipe/core @gotipe/react @gotipe/theme @gotipe/i18n @gotipe/markdown @gotipe/suggestions react react-dom
+```
+
+## Example
+
+```tsx title="MarkdownPage.tsx"
+import "@gotipe/theme/base.css";
+import "@gotipe/theme/theme.css";
+import { PageEditor, type PageEditorHandle } from "@gotipe/block-editor";
+import { useEffect, useRef, useState } from "react";
+
+export function MarkdownPage({ file, save }: { file: string; save: (text: string) => void }) {
+  const page = useRef<PageEditorHandle>(null);
+  const [draft, setDraft] = useState(file);
+
+  // Save one second after the last edit.
+  useEffect(() => {
+    if (draft === file) return;
+    const timer = setTimeout(() => save(draft), 1000);
+    return () => clearTimeout(timer);
+  }, [draft, file, save]);
+
+  return (
+    <>
+      <button type="button" onClick={() => page.current?.selectTitle()}>Rename</button>
+      <PageEditor ref={page} markdown={file} onChange={setDraft} titlePlaceholder="notes.md" />
+    </>
+  );
+}
+```
+
+```demo
+page-editor
+```
+
+## The Markdown session
+
+- **Loading.** `markdown` is parsed when the editor is created. Later, a value that differs
+  from the last draft `PageEditor` emitted replaces the document as an external change:
+  block ids are reused, focus, caret and scroll stay, and the replacement is one undo step.
+- **Saving.** `onChange` receives the whole file after edits, at most once per animation
+  frame and only when the text changed. Debounce writes yourself.
+- **Title.** A leading `# heading` is the page title. If the file has none, an empty title
+  line shows `titlePlaceholder` and stays out of the file until someone types a title.
+- **Kept as is.** Front matter is not shown and is written back unchanged. HTML, footnotes,
+  link definitions, quotes that hold more than one paragraph, list items that hold more than
+  a paragraph and nested lists, lists that mix tasks and plain items, and numbered task
+  lists appear as read-only "Markdown" blocks with a lock.
+- **Mapped blocks.** `- [ ]` is a task, `> [!NOTE]` (and `TIP`, `IMPORTANT`, `WARNING`,
+  `CAUTION`) a callout, a paragraph with only `![alt](src "caption")` an image, and a
+  paragraph with only a relative link named after its file, such as
+  `[report.pdf](assets/report.pdf)`, a file block.
+- **Table column types** are not stored: Number is right alignment (`---:`), Code wraps
+  cells in backticks, Yes / no writes the words of the UI language.
+
+Details of the codec are in [Markdown](/docs/conversion/markdown).
+
+## Props
+
+| Prop | Type | Default | Description |
+|---|---|---|---|
+| `markdown` | `string` | — | The file's text. A new value that differs from the last draft replaces the document. |
+| `onChange` | `(markdown: string) => void` | — | The draft after edits. |
+| `readOnly` | `boolean` | `false` | No input; links open on a plain click; task boxes are disabled. |
+| `host` | `EditorHost` | — | Assets, links and errors; see below. |
+| `locale` | `string` | `"en"` | UI language; `"ru"` is built in. |
+| `i18n` | `I18n` | — | A ready dictionary from `createI18n`; wins over `locale`. |
+| `titlePlaceholder` | `string` | `"Untitled"` | Shown in an empty title, for example the file name. |
+| `view` | `"notion" \| "docs" \| "modern" \| "minimal"` | `"notion"` | One of the shared [views](/docs/ui/theming). |
+| `highlight` | `CodeHighlighter` | — | Code highlighter (`@gotipe/block-editor/shiki`). |
+| `blockViews` | `BlockViews` | — | Your views; they win over the page's and the shared ones. |
+| `blocks` | `PageBlockKind[]` | all | Blocks offered by `/`. |
+| `review` | `PageReviewProps` | — | Suggestions, comments and cursors. Without it there is no review layer. |
+| `reviewBar` | `{ title?: ReactNode; extra?: ReactNode[] } \| false` | not shown | Pass an object to show the review bar above the page. |
+| `autoFocus` | `boolean` | — | Put the caret at the end once the editor exists. |
+| `onReady` | `(editor: GoTipeEditor) => void` | — | Called once the editor exists. Pass a stable function. |
+| `onError` | `(error: GoTipeError) => void` | — | Every editor error, like `host.onError`. |
+| `className`, `style` | | — | On the root `.gotipe-page`. |
+
+`markdown` and `readOnly` apply at any time; `host` is read on each call. The extensions are
+fixed: `pageExtensions()` (exported) lists them. Toggles, columns, embeds and math are not
+among them.
+
+## Ref
+
+| Member | Description |
+|---|---|
+| `editor` | The `GoTipeEditor`, or `null` before it exists. |
+| `getMarkdown()` | The current document as Markdown. |
+| `focus(position?)` | Focus the page, optionally at `"start"` or `"end"`. |
+| `insertBlock(kind)` | Insert a block of a `PageBlockKind` at the caret, for your own toolbar. |
+| `getTitle()` | Text of the leading `# heading`, or `null` when there is none or it is empty. |
+| `selectTitle()` | Focus the title and select its text. |
+| `review` | The review actions below, or `null` without `review`. |
+
+`PageBlockKind` is one of `text`, `heading1`, `heading2`, `heading3`, `bulletList`,
+`orderedList`, `todoList`, `quote`, `code`, `table`, `divider`, `callout`, `image`, `file`.
+The `/` menu groups them as Style, Insert and Upload.
+
+## Host
+
+`host` takes the [EditorHost](/docs/concepts/host) callbacks. Without `saveAsset`, pasted
+and uploaded images and files up to 10 MiB are stored in the file as `data:` URLs. Without
+`openLink`, a link opens in a new tab with `noopener`. Without `onError` and
+`host.onError`, errors show as a toast; with either of them the toast is off.
+
+## Review layer
+
+```tsx title="ReviewedPage.tsx"
+import { PageEditor, type PageReviewProps } from "@gotipe/block-editor";
+
+const review: PageReviewProps = {
+  lanes: [{ id: "assistant", name: "Assistant", kind: "agent", color: "var(--gt-track-1)" }],
+  proposals: [
+    {
+      id: "p1",
+      laneId: "assistant",
+      reason: "Shorter wording",
+      edits: [{ before: "Run ", quote: "the whole build", after: " first.", text: "the build" }],
+    },
+  ],
+};
+
+export function ReviewedPage({ file, save }: { file: string; save: (text: string) => void }) {
+  return <PageEditor markdown={file} onChange={save} review={review} reviewBar={{ title: "Assistant" }} />;
+}
+```
+
+- A **lane** is who suggests: `agent`, `skill`, `tool` or `user`, with a colour.
+- A **proposal** is a list of anchored edits: `before + quote + after` in the file, replaced
+  by `text`. Anchors are matched against the draft after every edit. Anything other than
+  exactly one match makes the proposal stale: it can only be rejected.
+- Without `onAccept` a proposal is applied locally and `onChange` gets the new text; without
+  `onReject` it is hidden locally. Accept all goes one by one in document order and stops at
+  the first stale proposal or `false` result; `onAcceptAll` replaces that.
+- **Comments** quote a range, can be questions, and take replies through `onReply`.
+- **Cursors** stand at the end of a proposal's text or at an anchor, with a label.
+- On a page at least 880 px wide (card, gap and minimum page width tokens) cards stand in
+  the margin beside their text; on a narrower page a card opens next to the text you click.
+  Escape closes it.
+
+`ref.current.review` has `accept(id)`, `reject(id)`, `acceptAll()`, `rejectAll()`,
+`states()` and `focus(id)`. `ReviewBar` and `LaneAvatars` are exported for a bar of your
+own. The data model and callbacks are described in [model edits](/docs/review/model-edits).
+
+## Language and read-only
+
+`locale="ru"` switches the UI to Russian; `i18n` takes any dictionary (see
+[i18n](/docs/ui/i18n)). `PageEditor` sets its own provider, so a surrounding
+`GoTipeI18nProvider` does not reach it. With `readOnly` the page ignores input, hides the
+handle and menus, and opens links on a plain click.
+
+## Limitations
+
+- There is no CRDT collaboration inside `PageEditor`: it always uses the JS engine. Use
+  `BlockEditor` with the WASM engine for [collaboration](/docs/collaboration/overview).
+- The AI command bar is off, and the extensions cannot be changed; `blocks` only filters
+  the `/` menu.
+- `onReady` is an effect dependency: a new function on each render calls it again and,
+  with `autoFocus`, moves the caret to the end again. Wrap it in `useCallback`.
+
+## Related
+
+- [Block editor](/docs/ui/block-editor) · [Menus](/docs/ui/menus) · [Markdown](/docs/conversion/markdown)
+- [Model edits](/docs/review/model-edits) · [Host](/docs/concepts/host) · [Security](/docs/resources/security)
