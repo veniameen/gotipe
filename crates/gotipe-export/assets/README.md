@@ -1,9 +1,21 @@
 # Export fonts
 
-Noto Emoji, unmodified variable font from Google Fonts (SIL OFL 1.1).
+The exporter embeds original font files without relying on system fonts or network access.
+GoTipe owns document layout; these files do not include the Typst compiler.
 
-Source: https://github.com/google/fonts/tree/main/ofl/notoemoji
+Seventeen unchanged font files were copied from the published `typst-assets 0.15.1`
+archive: Libertinus Serif (six styles, SIL OFL 1.1), New Computer Modern
+(four text and three math styles, GUST Font License 1.0), and DejaVu Sans Mono
+(four styles, Bitstream Vera/DejaVu licenses). The archive's original
+`typst-assets-LICENSE` and `typst-assets-NOTICE` are retained byte-for-byte;
+the NOTICE contains the individual font copyright and permission texts.
 
-SHA-256: `de6c18832938afc99caf132b39d6a30a19bac7f2e812e28db2535b4608d27551`
+Noto Emoji is the unchanged variable font from
+https://github.com/google/fonts/tree/main/ofl/notoemoji under SIL OFL 1.1.
+Its original license is `NotoEmoji-OFL.txt`.
 
-Additional default fonts are bundled by typst-assets 0.12.0; full notices ship in `packages/export-wasm/licenses`.
+`inventory.json` records the source archive, revision and SHA-256 of every copied
+font and notice. The font filenames and internal names remain unchanged.
+`scripts/collect-rust-licenses.py` verifies all font bytes and copies the original
+notices and inventory into the optional WASM package. Cloud ships that same
+notice directory with the native converter.

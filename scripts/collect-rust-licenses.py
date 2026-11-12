@@ -58,6 +58,51 @@ def collect(crate, metadata):
     return files
 
 
+def font_notices():
+    assets = ROOT / 'crates/gotipe-export/assets'
+    inventory = json.loads((assets / 'inventory.json').read_text())
+    for item in inventory['files']:
+        if hashlib.sha256((assets / item['file']).read_bytes()).hexdigest() != item['sha256']:
+            raise RuntimeError(f'Bundled font asset changed: {item["file"]}')
+    emoji = inventory['notoEmoji']
+    for filename, digest in [(emoji['file'], emoji['sha256']),
+                             (emoji['licenseFile'], emoji['licenseSha256'])]:
+        if hashlib.sha256((assets / filename).read_bytes()).hexdigest() != digest:
+            raise RuntimeError(f'Bundled emoji asset changed: {filename}')
+    return {name: (assets / name).read_bytes() for name in
+            ['typst-assets-LICENSE', 'typst-assets-NOTICE', 'NotoEmoji-OFL.txt', 'inventory.json']}
+
+
+def dependency_summary(files):
+    inventory = json.loads(files['inventory.json'])
+    lines = ['# Optional exporter dependencies', '',
+             'Generated from the locked normal/build WASM graph. GoTipe owns document layout',
+             'and PDF/OOXML rendering; font and format libraries retain their original terms.',
+             'Original texts and hashes are in `cargo/`; bundled font provenance is in `fonts/`.', '',
+             '| Crate | Version | License |', '|---|---|---|']
+    lines.extend(f'| {item["name"]} | {item["version"]} | {item["license"]} |'
+                 for item in inventory)
+    return ('\n'.join(lines) + '\n').encode()
+
+
+def synchronize(target, files, check):
+    existing = {path.name for path in target.iterdir() if path.is_file()} if target.exists() else set()
+    if check:
+        mismatches = [name for name, data in files.items()
+                      if not (target / name).is_file() or (target / name).read_bytes() != data]
+        unexpected = sorted(existing - files.keys())
+        if mismatches or unexpected:
+            raise SystemExit(f'{target.relative_to(ROOT)} notices differ: '
+                             + ', '.join(mismatches + unexpected))
+        return
+    target.mkdir(parents=True, exist_ok=True)
+    for name, data in files.items():
+        (target / name).write_bytes(data)
+    # This directory is generated exclusively from the resolved dependency graph.
+    for name in existing - files.keys():
+        (target / name).unlink()
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--check', action='store_true')
@@ -67,16 +112,13 @@ def main():
                                ('gotipe-export-wasm', 'packages/export-wasm/licenses/cargo')]:
         files = collect(crate, metadata)
         target = ROOT / destination
-        if arguments.check:
-            mismatches = [name for name, data in files.items()
-                          if not (target / name).is_file() or (target / name).read_bytes() != data]
-            if mismatches:
-                raise SystemExit(f'{crate} notices differ: ' + ', '.join(mismatches))
-        else:
-            target.mkdir(parents=True, exist_ok=True)
-            for name, data in files.items():
-                (target / name).write_bytes(data)
+        synchronize(target, files, arguments.check)
         print(f'{crate}: {len(files) - 1} original notices verified')
+        if crate == 'gotipe-export-wasm':
+            synchronize(ROOT / 'packages/export-wasm/licenses',
+                        {'dependencies.md': dependency_summary(files)}, arguments.check)
+    synchronize(ROOT / 'packages/export-wasm/licenses/fonts', font_notices(), arguments.check)
+    print('Export font bytes and original notices verified')
 
 
 if __name__ == '__main__':

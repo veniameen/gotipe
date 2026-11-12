@@ -1,13 +1,24 @@
+//! Optional PDF export with GoTipe layout and dedicated font/PDF codecs.
+use crate::ConvertError;
 use gotipe_core::Document;
 use serde::{Deserialize, Serialize};
-use typst::diag::{FileError, FileResult};
-use typst::foundations::{Bytes, Datetime, Duration};
-use typst::syntax::{FileId, Source};
-use typst::text::{Font, FontBook};
-use typst::utils::LazyHash;
-use typst::{Library, LibraryExt, World};
-
-use crate::{pdf_source, ConvertError};
+mod flow;
+mod font_embedding;
+mod fonts;
+mod highlight;
+mod images;
+mod inline;
+mod layout;
+mod metadata;
+mod model;
+mod outlines;
+mod pagination;
+mod semantics;
+mod table;
+mod tagging;
+mod text;
+mod validation;
+mod writer;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(default, rename_all = "camelCase")]
@@ -48,83 +59,99 @@ impl Default for PdfOptions {
     }
 }
 
-struct ExportWorld {
-    library: LazyHash<Library>,
-    book: LazyHash<FontBook>,
-    fonts: Vec<Font>,
-    source: Source,
-}
-impl ExportWorld {
-    fn new(source: String) -> Self {
-        let mut fonts = Vec::new();
-        for data in typst_assets::fonts().chain(std::iter::once(
-            include_bytes!("../assets/NotoEmoji.ttf").as_slice(),
-        )) {
-            fonts.extend(Font::iter(Bytes::new(data)));
-        }
-        Self {
-            library: LazyHash::new(Library::default()),
-            book: LazyHash::new(FontBook::from_fonts(&fonts)),
-            fonts,
-            source: Source::detached(source),
-        }
+fn dimensions(options: &PdfOptions) -> Result<(f32, f32), ConvertError> {
+    if !options.font_size.is_finite() || !(1.0..=100.0).contains(&options.font_size) {
+        return Err(ConvertError::Encoding(
+            "Invalid PDF page size or font size".into(),
+        ));
     }
-}
-impl World for ExportWorld {
-    fn library(&self) -> &LazyHash<Library> {
-        &self.library
+    let m = &options.margin;
+    if [m.top, m.right, m.bottom, m.left]
+        .iter()
+        .any(|v| !v.is_finite() || !(0.0..=200.0).contains(v))
+    {
+        return Err(ConvertError::Encoding("Invalid PDF margin".into()));
     }
-    fn book(&self) -> &LazyHash<FontBook> {
-        &self.book
-    }
-    fn main(&self) -> FileId {
-        self.source.id()
-    }
-    fn source(&self, id: FileId) -> FileResult<Source> {
-        if id == self.source.id() {
-            Ok(self.source.clone())
-        } else {
-            Err(FileError::AccessDenied)
-        }
-    }
-    fn file(&self, _id: FileId) -> FileResult<Bytes> {
-        Err(FileError::AccessDenied)
-    }
-    fn font(&self, index: usize) -> Option<Font> {
-        self.fonts.get(index).cloned()
-    }
-    fn today(&self, _offset: Option<Duration>) -> Option<Datetime> {
-        None
+    match options.page_size.as_str() {
+        "a4" => Ok((595.2756, 841.8898)),
+        "letter" => Ok((612.0, 792.0)),
+        "legal" => Ok((612.0, 1008.0)),
+        _ => Err(ConvertError::Encoding(
+            "Invalid PDF page size or font size".into(),
+        )),
     }
 }
 
 pub fn to_pdf(doc: &Document, options: &PdfOptions) -> Result<Vec<u8>, ConvertError> {
-    let source = pdf_source::document_source(doc, options)?;
-    let world = ExportWorld::new(source);
-    let result = typst::compile(&world);
-    let document = result.output.map_err(|errors| {
-        ConvertError::Encoding(
-            errors
-                .iter()
-                .map(|e| e.message.to_string())
-                .collect::<Vec<_>>()
-                .join("; "),
-        )
-    })?;
-    if let Some(warning) = result
-        .warnings
-        .iter()
-        .find(|warning| warning.message.contains("glyph"))
-    {
-        return Err(ConvertError::Encoding(warning.message.to_string()));
+    let (width, height) = dimensions(options)?;
+    validation::document(doc)?;
+    let fonts = fonts::Fonts::new()?;
+    let size = options.font_size as f32;
+    let content_width = width - options.margin.left as f32 - options.margin.right as f32;
+    let next_tag = std::cell::Cell::new(1);
+    let layout = layout::Layout {
+        fonts: &fonts,
+        size,
+        max_height: height,
+        next_tag: &next_tag,
+    };
+    let mut decorations = Vec::new();
+    let mut top = options.margin.top as f32;
+    let mut bottom = height - options.margin.bottom as f32;
+    for (content, header) in [
+        (&options.header_template, true),
+        (&options.footer_template, false),
+    ] {
+        if let Some(content) = content.as_ref().filter(|text| !text.is_empty()) {
+            let rows = layout.text(
+                &[inline::Span {
+                    text: content.clone(),
+                    style: layout.style(),
+                }],
+                content_width,
+                size,
+            )?;
+            let extent = flow::height(&rows);
+            let margin = if header {
+                options.margin.top
+            } else {
+                options.margin.bottom
+            } as f32;
+            let offset = ((margin - extent) * 0.5).max(6.0);
+            let start = if header {
+                offset
+            } else {
+                height - offset - extent
+            };
+            let mut y = start;
+            for mut row in rows {
+                flow::shift(&mut row.ops, options.margin.left as f32, y);
+                decorations.extend(row.ops);
+                y += row.height;
+            }
+            if header {
+                top = top.max(y + size);
+            } else {
+                bottom = bottom.min(start - size);
+            }
+        }
     }
-    typst_pdf::pdf(&document, &typst_pdf::PdfOptions::default()).map_err(|errors| {
-        ConvertError::Encoding(
-            errors
-                .iter()
-                .map(|e| e.message.to_string())
-                .collect::<Vec<_>>()
-                .join("; "),
-        )
-    })
+    if bottom - top < size * 1.5 {
+        return Err(ConvertError::Encoding(
+            "PDF header, footer and margins leave no printable content area".into(),
+        ));
+    }
+    let layout = layout::Layout {
+        max_height: bottom - top,
+        ..layout
+    };
+    let rows = layout.blocks(&doc.blocks, content_width, 0)?;
+    let geometry = flow::PageGeometry {
+        width,
+        height,
+        left: options.margin.left as f32,
+        top,
+        bottom,
+    };
+    writer::write(&flow::paginate(rows, &geometry, &decorations)?, &fonts)
 }

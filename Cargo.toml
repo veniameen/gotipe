@@ -29,9 +29,13 @@ zstd = { version = "0.13.4", features = ["wasm", "no_asm"] }
 regex = { version = "1.11", default-features = false, features = ["std", "perf", "unicode-perl"] }
 
 # Export
-typst = "0.15.1"
-typst-pdf = "0.15.1"
-typst-assets = { version = "0.15.1", features = ["fonts"] }
+pdf-writer = "0.15.0"
+harfrust = "0.15.0"
+read-fonts = "0.46.0"
+subsetter = "0.2.6"
+unicode-bidi = "0.3.18"
+unicode-segmentation = "1.13.3"
+flate2 = { version = "1.1", default-features = false, features = ["zlib-rs"] }
 zip = { version = "9.0", default-features = false, features = ["deflate-flate2-zlib-rs"] }
 ammonia = "4.2.4"
 
@@ -48,8 +52,3 @@ strip = true
 [profile.bench]
 opt-level = 3
 lto = true
-
-# Typst's released citationberg still pins vulnerable quick-xml 0.38.
-# Use the upstream security fix until citationberg publishes it (see dependencies.md).
-[patch.crates-io]
-citationberg = { git = "https://github.com/typst/citationberg", rev = "06a591e2f237d25e1dfdedac3f3d1494c496c52d" }

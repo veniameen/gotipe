@@ -41,7 +41,17 @@ jobs:
         run: python3 scripts/collect-rust-licenses.py --check
 
       - name: Unit tests
+        env:
+          GOTIPE_PDF_CORPUS_OUTPUT: ${{ github.workspace }}/output/pdf-native-corpus
         run: cargo test --locked --workspace --all-features
+
+      - name: Upload native PDF corpus
+        uses: actions/upload-artifact@v4
+        with:
+          name: native-pdf-corpus
+          path: output/pdf-native-corpus/
+          if-no-files-found: error
+          retention-days: 1
 
       - name: Compile optimized test and benchmark harnesses
         run: cargo bench --locked --no-run
@@ -104,7 +114,7 @@ jobs:
   typescript:
     name: TypeScript
     runs-on: ubuntu-latest
-    needs: [wasm, exporter]
+    needs: [rust, wasm, exporter]
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
@@ -130,6 +140,12 @@ jobs:
           name: exporter-pkg
           path: packages/export-wasm/pkg/
 
+      - name: Download native PDF corpus
+        uses: actions/download-artifact@v4
+        with:
+          name: native-pdf-corpus
+          path: output/pdf-native-corpus/
+
       - name: Lint (Biome)
         run: pnpm lint
 
@@ -145,14 +161,18 @@ jobs:
       - name: Check package archives and entrypoints
         run: pnpm check:packages
 
+      - name: Install independent PDF validators
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y poppler-utils python3-pypdf
+
       - name: Install archives in an isolated consumer
         run: pnpm check:consumer
 
       - name: Validate actual PDF and DOCX output
         run: |
-          sudo apt-get update
-          sudo apt-get install -y poppler-utils
           pnpm check:exports
+          node scripts/pdf-regression.mjs --native-dir output/pdf-native-corpus --out output/pdf-regression
 
       - name: Unit tests (Vitest)
         run: pnpm test --concurrency=2 -- --maxWorkers=2

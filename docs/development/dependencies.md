@@ -24,35 +24,60 @@ Runtime imports проверяет `pnpm check:architecture`. Release режим
 
 ## Необязательные PDF и DOCX
 
-`gotipe-export` использует Typst 0.15.1 / typst-pdf (Apache-2.0) для типографики,
-переносов, shaping и Unicode PDF; собственный OOXML renderer — для DOCX. ZIP 9 (MIT) обеспечивает проверенный
-контейнер и Deflate; собственная компрессия в этот контракт не входит.
-Это самостоятельные форматы и компилятор, а не замена редакторного ядра или
-Markdown. В браузере они входят только в отдельный `@gotipe/export-wasm`, который
-`@gotipe/export` загружает при первом PDF/DOCX запросе. Основной editor WASM не
-включает эти features. Cloud использует тот же native `gotipe-convert`.
+Решение владельца от 2026-11-10: GoTipe владеет обходом документа, разметкой
+страниц, переносами, таблицами, marks, колонтитулами и PDF/OOXML rendering.
+Typst, typst-pdf, typst-assets как runtime dependencies и citationberg удалены.
+Ни один полный document/layout compiler не входит в новый PDF backend.
 
-Raster codecs из `image 0.25` (MIT/Apache-2.0, уже зависимость Typst) подключены
-только к PDF/DOCX features. Они проверяют и декодируют PNG/JPEG/GIF с лимитами
-размера и памяти и нормализуют их в PNG для OOXML. Реализация собственного
-сжатия/декодера контейнеров не относится к helper-политике. URL загружает явный
-host `resolveImage`; компилятор не получает доступ к сети или произвольным файлам.
+Узкие библиотеки отвечают за специализированные форматы и международный текст:
 
-Отдельный export WASM занимает около 35.5 MB до HTTP compression, включая fonts.
-Импорт `@gotipe/export` не запускает его загрузку/инициализацию; первый вызов
-PDF/DOCX выполняет dynamic import. Headless editor и обычный HTML/Markdown export
-не должны включать этот asset в собственный initial bundle.
+| Библиотека | Задача и причина | Лицензия |
+|---|---|---|
+| pdf-writer 0.15 | корректная сериализация PDF objects/xref/streams; не layout | MIT/Apache-2.0 |
+| harfrust 0.15 | OpenType shaping, ligatures, complex scripts; поддерживаемая реализация HarfBuzz | MIT |
+| read-fonts 0.46 | проверенное чтение OpenType tables/metrics; общий parser с harfrust | MIT/Apache-2.0 |
+| subsetter 0.2.6 | CFF/TrueType glyph subsetting и instancing variable Noto Emoji; font compiler не пишем заново | MIT/Apache-2.0 |
+| unicode-bidi / unicode-segmentation | стандартные UAX #9/#29: порядок текста и границы grapheme clusters, не layout документа | MIT/Apache-2.0 |
+| flate2 / zlib-rs и ZIP 9 | Deflate streams и контейнер OOXML; компрессию не переписываем | MIT/Apache-2.0, Zlib, MIT |
+| image 0.25 | ограниченное декодирование PNG/JPEG/GIF; собственный raster codec не нужен | MIT/Apache-2.0 |
 
-Typst получает только сгенерированный из дерева документа исходник. Текст и
-атрибуты экранируются; world запрещает внешние файлы, сеть и пакеты. Unicode fonts
-из typst-assets и Noto Emoji обеспечивают кириллицу и emoji без системных fonts.
-Лицензии шрифтов и notices поставляются с отдельным npm package.
+Subsetting включает upstream variable-fonts feature, поэтому использует собственные
+skrifa/write-fonts/kurbo. Прямой второй scaler skrifa не подключается: экспортёру
+достаточно read-fonts, который уже нужен HarfRust. Optional ICU feature HarfRust
+выключен. Точные transitive versions и оригинальные notices генерируются из lockfile.
+Эти библиотеки разрешены только для отдельного PDF/DOCX exporter, не для ядра,
+Markdown или небольших helpers. Владелец обновлений — модуль export.
 
-Источники контрактов: [Typst](https://github.com/typst/typst/tree/v0.15.1),
+В браузере PDF/DOCX входят в отдельный `@gotipe/export-wasm`; `@gotipe/export`
+загружает его при первом запросе. Основной editor WASM не включает эти features.
+Импорт wrapper не запускает загрузку/инициализацию. Cloud вызывает тот же native
+`gotipe-convert`. Размер нового WASM измеряется после сборки, не выводится из
+размера Cargo graph. Core bundle проверяется отдельно.
+
+URL изображений загружает явный host `resolveImage`; native renderer не получает
+доступ к сети или произвольным файлам. Raster codecs проверяют размер и бюджет
+памяти и нормализуют изображения в PNG для OOXML.
+
+Неизменённые fonts перенесены из опубликованного typst-assets 0.15.1 в
+`crates/gotipe-export/assets`, вместе с исходными LICENSE/NOTICE. Это Libertinus
+Serif, New Computer Modern и DejaVu Sans Mono; Noto Emoji сохранён под SIL OFL.
+Имена, байты и лицензионные условия не изменены. `assets/inventory.json` фиксирует
+исходный archive/revision и SHA-256. Collector проверяет fonts и помещает notices
+в optional npm package и Cloud image. Шрифты не требуют установленного Typst.
+
+Источники: [PDF writer](https://github.com/typst/pdf-writer),
+[HarfRust](https://github.com/harfbuzz/harfrust),
+[Fontations](https://github.com/googlefonts/fontations),
+[Subsetter](https://github.com/typst/subsetter),
+[Unicode bidi](https://github.com/servo/unicode-bidi),
+[Unicode segmentation](https://github.com/unicode-rs/unicode-segmentation),
 [ZIP codec](https://github.com/zip-rs/zip2),
 [Noto Emoji / SIL OFL](https://github.com/google/fonts/tree/main/ofl/notoemoji).
-Владелец обновлений — модуль export; проверка требует валидатора PDF/OOXML,
-извлечения Unicode текста, таблиц/marks и проверки независимости core bundle.
+
+Приёмка требует сохранённых baseline fixtures прежнего backend, PDF/OOXML
+validators, Unicode extraction, glyph/font checks, geometry/pagination, tables,
+marks, images, header/footer и одинакового поведения native/WASM/Cloud. Сборка
+или чистый audit сами по себе не подтверждают визуальную совместимость.
 
 ## Native Markdown grammar
 
@@ -125,19 +150,16 @@ tables, metadata), while the maintained ZIP 9 codec owns archive framing and
 compression. Native and browser exports must pass independent XML/ZIP/PDF
 validation, Unicode extraction and image checks after this migration.
 
-Typst 0.15.1 still depends on citationberg 0.7.0, whose published package requires
-vulnerable quick-xml 0.38. The workspace pins the unmodified upstream security
-commit [06a591e](https://github.com/typst/citationberg/commit/06a591e2f237d25e1dfdedac3f3d1494c496c52d),
-which upgrades to quick-xml 0.41. This removes the vulnerability without ignoring
-the advisory. **Crates.io publication remains blocked until that upstream fix
-is published and the patch can be removed**: workspace patches do not propagate
-to downstream Cargo consumers. Local builds, Docker and bundled npm WASM use
-the locked fixed commit. Do not publish a source archive that resolves the old
-vulnerable graph.
+The former Typst graph required a Git-only citationberg security fix and six
+unmaintained dependencies. The owner-authorized PDF migration removes that
+entire graph: citationberg, bincode, paste, rustybuzz, ttf-parser, unsafe-libyaml
+and yaml-rust are absent from Cargo.lock. No advisory is suppressed and no
+replacement is sourced from Git. `pnpm check:cargo-release` still rejects any
+future Git dependency; `cargo deny check advisories` still rejects unmaintained
+packages. Both checks passed for the new resolved graph on 2026-11-10; fresh
+checks and runtime export acceptance remain mandatory for each release.
 
-The fresh cargo-audit vulnerability count is zero, but cargo-deny advisories
-still rejects six unmaintained Typst transitive dependencies: bincode, paste,
-rustybuzz, ttf-parser, unsafe-libyaml and yaml-rust. This is an explicit release
-gate, not a waived finding. The compiler must adopt maintained replacements
-before the complete source-release security gate can pass. Original licenses
-and the resolved Git source are retained in generated notices.
+Original Cargo notices are regenerated for the exact current normal/build graph;
+removed package notices are pruned rather than kept as a stale superset. Original
+font notices remain separately under `licenses/fonts/` because the font assets
+continue to ship after removal of the compiler dependency.

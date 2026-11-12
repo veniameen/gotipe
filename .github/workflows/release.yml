@@ -84,14 +84,18 @@ jobs:
       - name: Check package archives and entrypoints
         run: pnpm check:packages
 
+      - name: Install independent PDF validators
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y poppler-utils python3-pypdf
+
       - name: Install archives in an isolated consumer
         run: pnpm check:consumer
 
       - name: Validate actual PDF and DOCX output
         run: |
-          sudo apt-get update
-          sudo apt-get install -y poppler-utils
           pnpm check:exports
+          pnpm check:pdf-regression
 
       - name: Verify registry source dependency graph
         run: pnpm check:cargo-release

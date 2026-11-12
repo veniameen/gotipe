@@ -19,7 +19,8 @@
     "check:architecture:release": "node scripts/quality/architecture.mjs --release",
     "check:bundles": "node --test scripts/quality/bundle-graph.test.mjs && node scripts/check-bundle-sizes.mjs",
     "check:cargo-release": "node scripts/check-cargo-release.mjs",
-    "check:consumer": "node scripts/check-package-consumer.mjs"
+    "check:consumer": "node scripts/check-package-consumer.mjs",
+    "check:pdf-regression": "GOTIPE_PDF_CORPUS_OUTPUT=\"$PWD/output/pdf-native-corpus\" cargo test --locked -p gotipe-export --features pdf --test pdf_corpus_contract --jobs 2 && node scripts/pdf-regression.mjs --native-dir output/pdf-native-corpus --out output/pdf-regression"
   },
   "devDependencies": {
     "@biomejs/biome": "^1.9.4",
