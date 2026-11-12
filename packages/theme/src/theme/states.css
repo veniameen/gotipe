@@ -1,0 +1,296 @@
+/* The page's head and the editor's states — Atlas frames 1, 2, 11 and 17. The head and the quick
+   blocks stand in the document's column; errors are a toast at the top or the element that failed,
+   never a line under a control. */
+
+/* ---- the head: the glyph, the title, the host's byline, the read-only sign ---- */
+.gotipe-page-head {
+  box-sizing: border-box;
+  display: grid;
+  gap: var(--gt-head-gap);
+  max-width: calc(var(--gt-page-width) + 2 * var(--gt-page-pad-x));
+  margin: 0 auto;
+  padding: var(--gt-page-pad-top) var(--gt-page-pad-x) 0;
+  color: var(--gt-text);
+  font-family: var(--gt-font-ui);
+}
+.gotipe-block-editor--with-toolbar .gotipe-page-head,
+.gotipe-block-editor--with-toolbar .gotipe-starters {
+  padding-left: max(var(--gt-page-pad-x), var(--gt-handle-rail));
+}
+.gotipe-page-head ~ .gotipe-content:where(:not(.gotipe-page *)) {
+  padding-top: var(--gt-head-after);
+}
+.gotipe-page-head-icon {
+  display: flex;
+  color: var(--gt-text);
+}
+.gotipe-page-head-icon > svg {
+  width: var(--gt-page-icon);
+  height: var(--gt-page-icon);
+  stroke-width: var(--gt-page-icon-stroke);
+}
+.gotipe-page-head-add {
+  justify-self: start;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--gt-space-1);
+  height: var(--gt-handle-h);
+  padding: var(--gt-tool-text-pad);
+  border: 0;
+  border-radius: var(--gt-radius-control);
+  background: transparent;
+  color: var(--gt-text-3);
+  font: inherit;
+  font-size: var(--gt-ui-size);
+  line-height: var(--gt-ui-leading);
+  cursor: pointer;
+  opacity: 0;
+}
+.gotipe-page-head:is(:hover, :focus-within) .gotipe-page-head-add {
+  opacity: 1;
+}
+.gotipe-page-head-add:hover {
+  background: var(--gt-fill-2);
+  color: var(--gt-text-2);
+}
+.gotipe-page-head-add > svg {
+  width: var(--gt-icon-size);
+  height: var(--gt-icon-size);
+}
+.gotipe-page-head-line {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--gt-space-2);
+}
+.gotipe-page-head-title {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  outline: none;
+  color: var(--gt-text);
+  font-size: var(--gt-title-size);
+  font-weight: var(--gt-weight-title);
+  line-height: var(--gt-title-leading);
+  letter-spacing: var(--gt-title-tracking);
+  overflow-wrap: break-word;
+  white-space: pre-wrap;
+}
+.gotipe-page-head-title:not([contenteditable]) {
+  flex: 0 1 auto;
+}
+.gotipe-page-head-title:is(:empty, [data-empty])::before {
+  content: attr(data-placeholder);
+  color: var(--gt-text-3);
+  pointer-events: none;
+}
+.gotipe-page-head-lock {
+  display: grid;
+  flex: none;
+  place-items: center;
+  height: var(--gt-title-leading);
+  color: var(--gt-text-3);
+  cursor: help;
+}
+.gotipe-page-head-lock > svg {
+  width: var(--gt-icon-size);
+  height: var(--gt-icon-size);
+}
+.gotipe-page-head-byline {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--gt-check-gap);
+  color: var(--gt-text-2);
+  font-size: var(--gt-small-size);
+  line-height: var(--gt-small-leading);
+}
+.gotipe-page-head :is(button, [contenteditable]):focus-visible {
+  outline: var(--gt-focus-width) solid var(--gt-focus);
+  outline-offset: var(--gt-focus-gap);
+}
+.gotipe-page-head-title[contenteditable]:focus-visible {
+  outline: none;
+}
+
+/* ---- an empty page: quick blocks under its first line ---- */
+.gotipe-content:where(:not(.gotipe-page *)):has(~ .gotipe-starters) {
+  min-height: 0;
+  padding-bottom: 0;
+}
+.gotipe-starters {
+  box-sizing: border-box;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--gt-button-gap);
+  max-width: calc(var(--gt-page-width) + 2 * var(--gt-page-pad-x));
+  margin: 0 auto;
+  padding: var(--gt-flow-block) var(--gt-page-pad-x) var(--gt-page-pad-bottom);
+}
+.gotipe-starter {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--gt-button-gap);
+  height: var(--gt-button-h);
+  padding: var(--gt-button-pad);
+  border: 0;
+  border-radius: var(--gt-radius-control);
+  background: transparent;
+  color: var(--gt-text-2);
+  font-family: var(--gt-font-ui);
+  font-size: var(--gt-ui-size);
+  line-height: var(--gt-ui-leading);
+  cursor: pointer;
+}
+.gotipe-starter > svg {
+  width: var(--gt-icon-size);
+  height: var(--gt-icon-size);
+  color: var(--gt-text-3);
+}
+.gotipe-starter:hover {
+  background: var(--gt-fill-2);
+  color: var(--gt-text);
+}
+.gotipe-starter:focus-visible {
+  outline: var(--gt-focus-width) solid var(--gt-focus);
+  outline-offset: var(--gt-focus-gap);
+}
+
+/* ---- loading: the shape of a page, no shimmer ---- */
+[data-gotipe-block-loading] > .gotipe-skeleton {
+  box-sizing: border-box;
+  max-width: calc(var(--gt-page-width) + 2 * var(--gt-page-pad-x));
+  margin: 0 auto;
+  padding: var(--gt-page-pad-top) var(--gt-page-pad-x) var(--gt-page-pad-bottom);
+}
+.gotipe-skeleton {
+  display: grid;
+  gap: var(--gt-skeleton-gap);
+}
+.gotipe-skeleton > [aria-hidden] {
+  display: block;
+  height: var(--gt-skeleton-h);
+  border-radius: var(--gt-radius-inline);
+  background: var(--gt-skeleton);
+}
+.gotipe-skeleton > .is-title {
+  width: 56%;
+  height: var(--gt-skeleton-title-h);
+  border-radius: var(--gt-radius-control);
+}
+.gotipe-skeleton > .is-meta {
+  width: 32%;
+  margin-bottom: var(--gt-skeleton-gap);
+}
+.gotipe-skeleton > .is-block {
+  height: var(--gt-skeleton-block-h);
+  margin: var(--gt-skeleton-gap) 0;
+  border-radius: var(--gt-radius-block);
+}
+.gotipe-skeleton > .is-90 {
+  width: 90%;
+}
+.gotipe-skeleton > .is-75 {
+  width: 75%;
+}
+.gotipe-skeleton > .is-60 {
+  width: 60%;
+}
+
+/* ---- errors: a toast at the top of the window ---- */
+.gotipe-toast {
+  position: fixed;
+  top: var(--gt-toast-top);
+  left: 50%;
+  z-index: var(--gt-z-toast);
+  display: flex;
+  align-items: center;
+  gap: var(--gt-space-2);
+  max-width: calc(100vw - 2 * var(--gt-space-4));
+  padding: var(--gt-space-2) var(--gt-space-4) var(--gt-space-2) var(--gt-space-3);
+  border-radius: var(--gt-radius-overlay);
+  background: var(--gt-inverse);
+  box-shadow: var(--gt-shadow-overlay);
+  color: var(--gt-inverse-text);
+  font-family: var(--gt-font-ui);
+  font-size: var(--gt-ui-size);
+  line-height: var(--gt-ui-leading);
+  letter-spacing: normal;
+  pointer-events: none;
+  transform: translateX(-50%);
+  animation: gotipe-fade-in var(--gt-duration-normal) var(--gt-ease-out);
+}
+.gotipe-toast > svg {
+  flex: none;
+  width: var(--gt-icon-size);
+  height: var(--gt-icon-size);
+  color: var(--gt-danger);
+}
+.gotipe-toast-detail {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--gt-inverse-text-2);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* the element that failed: an image that cannot be shown */
+.gotipe-image-block > .gotipe-image-error {
+  display: grid;
+  place-items: center;
+  min-height: var(--gt-image-empty-h);
+  margin: 0;
+  border-radius: var(--gt-radius-block);
+  background: var(--gt-danger-tint);
+  box-shadow: inset 0 0 0 var(--gt-hairline) var(--gt-danger);
+  color: var(--gt-danger);
+  font-family: var(--gt-font-ui);
+  font-size: var(--gt-ui-size);
+  line-height: var(--gt-ui-leading);
+}
+
+/* a reported error is shown by the toast; the control keeps its alert for screen readers */
+.gotipe-block-editor
+  :is(.gotipe-code-block, .gotipe-block-context-menu, .gotipe-image-block)
+  > :is(
+    [role="alert"]:not(.gotipe-image-error, .gotipe-media-insert-error),
+    .gotipe-media-action-error
+  ) {
+  position: absolute;
+  width: var(--gt-hairline);
+  height: var(--gt-hairline);
+  padding: 0;
+  margin: calc(-1 * var(--gt-hairline));
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* ---- people in a byline: initials on their colour's tint ---- */
+.gotipe-avatars {
+  display: flex;
+  gap: var(--gt-avatar-gap);
+}
+.gotipe-avatar {
+  display: inline-grid;
+  flex: none;
+  place-items: center;
+  width: var(--gt-avatar);
+  height: var(--gt-avatar);
+  border-radius: var(--gt-radius-round);
+  background: var(--gt-person-1-bg);
+  color: var(--gt-person-1);
+  font-family: var(--gt-font-ui);
+  font-size: var(--gt-avatar-text);
+  font-weight: var(--gt-weight-strong);
+  line-height: var(--gt-avatar);
+  letter-spacing: normal;
+}
+.gotipe-avatar[data-person="2"] {
+  background: var(--gt-person-2-bg);
+  color: var(--gt-person-2);
+}
+.gotipe-avatar[data-person="3"] {
+  background: var(--gt-person-3-bg);
+  color: var(--gt-person-3);
+}
