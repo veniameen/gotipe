@@ -1,7 +1,9 @@
-/* Image and file blocks — Atlas frames 1 and 10. The image keeps the block radius and a quiet
+/* Image and file blocks — Atlas frames 1, 10 and 17. The image keeps the block radius and a quiet
    caption; its tools stand in the corner while it is hovered, its width handles on its sides. An
-   empty block is a sunken area that offers upload and a link. Shared by BlockEditor and
-   PageEditor. */
+   empty block is a sunken area with its two answers on it: upload and a link. An image that cannot
+   be shown is the highlighted element. Keyboard focus draws the theme's ring, never the browser's.
+   Shared by BlockEditor and PageEditor. */
+@import "./media-insert.css";
 
 .gotipe-image-block img {
   display: block;
@@ -18,9 +20,15 @@
   letter-spacing: normal;
   text-align: left;
 }
-.gotipe-image-block figcaption:empty::before {
-  content: "Add caption...";
+/* the caption is edited as text: the caret shows where, no ring; empty, it says what it is for */
+.gotipe-image-block figcaption > [data-gotipe-input] {
+  min-height: var(--gt-small-leading);
+  outline: none;
+}
+.gotipe-image-block figcaption > [data-caption-placeholder]:empty::before {
+  content: attr(data-caption-placeholder);
   color: var(--gt-text-3);
+  pointer-events: none;
 }
 
 /* ---- empty: upload or link ---- */
@@ -35,6 +43,7 @@
   align-items: center;
   justify-content: center;
   gap: var(--gt-space-2);
+  box-sizing: border-box;
   width: 100%;
   min-height: var(--gt-image-empty-h);
   padding: var(--gt-space-4);
@@ -47,9 +56,11 @@
   line-height: var(--gt-ui-leading);
   letter-spacing: normal;
   text-align: center;
+}
+button.gotipe-media-placeholder {
   cursor: pointer;
 }
-.gotipe-media-placeholder:hover {
+button.gotipe-media-placeholder:hover:not(:disabled) {
   box-shadow: inset 0 0 0 var(--gt-hairline) var(--gt-line-strong);
   color: var(--gt-text);
 }
@@ -73,108 +84,61 @@
   width: 100%;
   height: 100%;
 }
-
-/* ---- insert: upload, a link or a file on the overlay surface ---- */
-.gotipe-media-insert-panel {
-  z-index: var(--gt-z-modal);
-  align-self: center;
-  width: min(var(--gt-popover-w), calc(100vw - 2 * var(--gt-space-2)));
-  overflow: hidden;
-  border: 0;
-  border-radius: var(--gt-radius-overlay);
-  background: var(--gt-overlay);
-  box-shadow: var(--gt-shadow-overlay);
-  color: var(--gt-text);
-  font-family: var(--gt-font-ui);
-  font-size: var(--gt-ui-size);
-  line-height: var(--gt-ui-leading);
-}
-.gotipe-media-insert-tabs {
+.gotipe-media-placeholder-actions {
   display: flex;
   flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--gt-button-gap);
+}
+
+/* ---- buttons on a block: ink for the main answer, a fill for the other, quiet for the rest ---- */
+.gotipe-media-button {
+  display: inline-flex;
+  flex: none;
   align-items: center;
-  gap: var(--gt-space-3);
-  padding: var(--gt-space-2) var(--gt-space-3) 0;
-  box-shadow: inset 0 calc(-1 * var(--gt-hairline)) 0 var(--gt-line);
-}
-.gotipe-media-tab {
-  padding: var(--gt-space-1) 0 var(--gt-space-2);
-  border: 0;
-  background: transparent;
-  color: var(--gt-text-2);
-  font: inherit;
-  cursor: pointer;
-}
-.gotipe-media-tab.active {
-  box-shadow: inset 0 calc(-1 * var(--gt-rule)) 0 var(--gt-text);
-  color: var(--gt-text);
-  font-weight: var(--gt-weight-medium);
-}
-.gotipe-media-tab.disabled {
-  opacity: var(--gt-disabled-opacity);
-  cursor: default;
-}
-.gotipe-media-insert-content {
-  display: flex;
-  flex-direction: column;
-  gap: var(--gt-space-2);
-  padding: var(--gt-space-3);
-}
-.gotipe-media-upload-button,
-.gotipe-media-link-form button {
-  min-height: var(--gt-field-h);
+  justify-content: center;
+  gap: var(--gt-button-gap);
+  box-sizing: border-box;
+  height: var(--gt-button-h);
   padding: var(--gt-button-pad);
   border: 0;
   border-radius: var(--gt-radius-control);
-  background: var(--gt-ink);
-  color: var(--gt-ink-text);
-  font: inherit;
+  background: var(--gt-fill-2);
+  color: var(--gt-text);
+  font-family: var(--gt-font-ui);
+  font-size: var(--gt-ui-size);
   font-weight: var(--gt-weight-medium);
+  line-height: var(--gt-ui-leading);
+  letter-spacing: normal;
+  white-space: nowrap;
   cursor: pointer;
 }
-.gotipe-media-upload-button:hover,
-.gotipe-media-link-form button:hover {
+.gotipe-media-button:hover:not(:disabled) {
+  background: var(--gt-fill-3);
+}
+.gotipe-media-button.is-primary {
+  background: var(--gt-ink);
+  color: var(--gt-ink-text);
+}
+.gotipe-media-button.is-primary:hover:not(:disabled) {
   background: var(--gt-ink-hover);
 }
-.gotipe-media-link-form {
-  display: flex;
-  gap: var(--gt-space-2);
-}
-.gotipe-media-link-form input {
-  flex: 1 1 auto;
-  min-width: 0;
-  min-height: var(--gt-field-h);
-  padding: var(--gt-field-pad);
-  border: 0;
-  border-radius: var(--gt-radius-control);
-  background: var(--gt-fill-1);
-  box-shadow: inset 0 0 0 var(--gt-hairline) var(--gt-line-strong);
-  color: var(--gt-text);
-  font: inherit;
-}
-.gotipe-media-link-form input:focus-visible {
-  outline: none;
-  box-shadow: inset 0 0 0 var(--gt-hairline) var(--gt-accent);
-}
-.gotipe-media-link-form--file {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, var(--gt-menu-w-narrow)) auto;
-}
-.gotipe-media-insert-note,
-.gotipe-media-insert-error {
-  margin: 0;
-  font-size: var(--gt-ui-small);
-  line-height: var(--gt-ui-small-leading);
-}
-.gotipe-media-insert-note {
+.gotipe-media-button.is-quiet {
+  background: transparent;
   color: var(--gt-text-2);
 }
-.gotipe-media-insert-error {
-  color: var(--gt-danger);
+.gotipe-media-button.is-quiet:hover:not(:disabled) {
+  background: var(--gt-fill-2);
+  color: var(--gt-text);
 }
-.gotipe-media-insert-panel :is(button, input):focus-visible {
-  outline: var(--gt-focus-width) solid var(--gt-focus);
-  outline-offset: var(--gt-focus-gap);
+.gotipe-media-button:disabled {
+  opacity: var(--gt-disabled-opacity);
+  cursor: default;
+}
+.gotipe-media-button svg {
+  flex: none;
+  width: var(--gt-icon-size);
+  height: var(--gt-icon-size);
 }
 
 /* ---- file: a sunken card with the file's glyph, name and size ---- */
@@ -227,10 +191,22 @@
   font-size: var(--gt-ui-small);
   font-variant-numeric: tabular-nums;
 }
+.gotipe-file-card.is-failed {
+  background: var(--gt-danger-tint);
+}
+.gotipe-file-card.is-failed .gotipe-file-card-meta {
+  color: var(--gt-danger);
+}
 .gotipe-media-actions {
   display: flex;
   align-items: center;
   gap: var(--gt-toolbar-gap);
+  transition: opacity var(--gt-duration-fast) var(--gt-ease-out);
+}
+@media (hover: hover) {
+  .gotipe-file-card:not(:hover, :focus-within) > .gotipe-media-actions {
+    opacity: 0;
+  }
 }
 .gotipe-media-action-btn {
   min-height: var(--gt-handle-h);
@@ -243,9 +219,12 @@
   font-size: var(--gt-ui-small);
   cursor: pointer;
 }
-.gotipe-media-action-btn:hover {
+.gotipe-media-action-btn:hover:not(:disabled) {
   background: var(--gt-fill-2);
   color: var(--gt-text);
+}
+.gotipe-media-action-btn:disabled {
+  cursor: default;
 }
 
 /* ---- a placed image: tools in the corner, width handles on the sides ---- */
@@ -263,6 +242,9 @@
   z-index: var(--gt-z-toolbar);
   display: flex;
   flex-wrap: wrap;
+  justify-content: flex-end;
+  box-sizing: border-box;
+  max-width: calc(100% - 2 * var(--gt-resize-inset));
   align-items: center;
   gap: var(--gt-toolbar-gap);
   padding: var(--gt-toolbar-pad);
@@ -277,6 +259,9 @@
 .gotipe-image-toolbar.visible {
   opacity: 1;
   pointer-events: auto;
+}
+.gotipe-image-toolbar[hidden] {
+  display: none;
 }
 .gotipe-image-toolbar-btn {
   display: inline-grid;
@@ -327,7 +312,7 @@
   background: var(--gt-text-2);
   box-shadow: 0 0 0 var(--gt-hairline) var(--gt-page-bg);
 }
-.gotipe-image-side-handle:hover::before {
+.gotipe-image-side-handle:is(:hover, :focus-visible)::before {
   background: var(--gt-text);
 }
 .gotipe-image-side-handle-left {
@@ -450,131 +435,46 @@
   transition: width var(--gt-duration-normal) var(--gt-ease-out);
 }
 
-/* ---- the image dialog: alternative text, crop, the catalog ---- */
-.gotipe-image-dialog {
-  box-sizing: border-box;
-  width: min(var(--gt-dialog-w), calc(100vw - 2 * var(--gt-space-3)));
-  max-height: calc(100dvh - 2 * var(--gt-space-3));
-  padding: var(--gt-panel-pad);
-  overflow: auto;
-  border: 0;
-  border-radius: var(--gt-radius-card);
-  background: var(--gt-overlay);
-  box-shadow: var(--gt-shadow-overlay);
-  color: var(--gt-text);
-  font-family: var(--gt-font-ui);
-  font-size: var(--gt-ui-size);
-  line-height: var(--gt-ui-leading);
+/* ---- an image that cannot be shown: the element itself says so (theme/states.css draws the box) */
+.gotipe-image-block > .gotipe-image-error {
+  align-content: center;
+  gap: var(--gt-menu-gap);
+  padding: var(--gt-space-4);
 }
-.gotipe-image-dialog::backdrop {
-  background: var(--gt-scrim);
+.gotipe-image-error > svg {
+  width: var(--gt-icon-size);
+  height: var(--gt-icon-size);
 }
-.gotipe-image-dialog form {
-  display: grid;
-  gap: var(--gt-space-4);
-}
-.gotipe-image-dialog header,
-.gotipe-image-dialog footer {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--gt-space-3);
-}
-.gotipe-image-dialog footer {
-  flex-wrap: wrap;
-  justify-content: flex-end;
-}
-.gotipe-image-dialog label {
-  display: grid;
-  gap: var(--gt-space-1);
-  min-width: 0;
+.gotipe-image-error-text {
   color: var(--gt-text-2);
 }
-.gotipe-image-dialog input {
-  box-sizing: border-box;
-  width: 100%;
-  min-width: 0;
-  min-height: var(--gt-field-h);
-  padding: var(--gt-field-pad);
-  border: 0;
-  border-radius: var(--gt-radius-control);
-  background: var(--gt-fill-1);
-  box-shadow: inset 0 0 0 var(--gt-hairline) var(--gt-line-strong);
-  color: var(--gt-text);
-  font: inherit;
+.gotipe-image-error-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--gt-button-gap);
 }
-.gotipe-image-dialog button {
-  min-height: var(--gt-button-h);
-  padding: var(--gt-button-pad);
-  border: 0;
-  border-radius: var(--gt-radius-control);
-  background: var(--gt-fill-2);
-  color: var(--gt-text);
-  font: inherit;
-  cursor: pointer;
+
+/* ---- keyboard focus: the theme's ring on what is focused — the picture, not the whole row ---- */
+.gotipe-image-block:focus {
+  outline: none;
 }
-.gotipe-image-dialog button:hover:not(:disabled) {
-  background: var(--gt-fill-3);
-}
-.gotipe-image-dialog button:disabled {
-  opacity: var(--gt-disabled-opacity);
-  cursor: wait;
-}
-.gotipe-image-dialog :is(button, input):focus-visible {
+.gotipe-image-block:focus-visible img,
+.gotipe-image-block:focus-visible > :is(.gotipe-image-error, .gotipe-media-placeholder-shell) {
   outline: var(--gt-focus-width) solid var(--gt-focus);
   outline-offset: var(--gt-focus-gap);
 }
-.gotipe-image-preview {
-  position: relative;
-  width: fit-content;
-  max-width: 100%;
-  margin-inline: auto;
-  overflow: hidden;
-  line-height: 0;
+.gotipe-image-block:focus-visible > .gotipe-media-placeholder-shell {
+  border-radius: var(--gt-radius-block);
 }
-.gotipe-image-preview img {
-  display: block;
-  max-width: 100%;
-  max-height: 55dvh;
-  object-fit: contain;
+:is(.gotipe-media-button, .gotipe-media-action-btn, .gotipe-file-card-name):focus-visible {
+  outline: var(--gt-focus-width) solid var(--gt-focus);
+  outline-offset: var(--gt-focus-gap);
 }
-.gotipe-image-crop-box {
-  position: absolute;
-  box-sizing: border-box;
-  border: var(--gt-rule) solid var(--gt-overlay);
-  outline: var(--gt-hairline) solid var(--gt-text);
-  box-shadow: 0 0 0 100vmax var(--gt-scrim);
-  pointer-events: none;
+.gotipe-file-card-name:focus-visible {
+  border-radius: var(--gt-radius-inline);
 }
-.gotipe-crop-fields {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(var(--gt-crop-field-min), 1fr));
-  gap: var(--gt-space-2);
-}
-.gotipe-image-catalog {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: var(--gt-space-2);
-  margin-top: var(--gt-space-3);
-}
-.gotipe-image-catalog button {
-  min-width: 0;
-  padding: 0;
-  overflow: hidden;
-  border: 0;
-  border-radius: var(--gt-radius-control);
-  background: var(--gt-overlay);
-  box-shadow: inset 0 0 0 var(--gt-hairline) var(--gt-line-strong);
-  color: inherit;
-  cursor: pointer;
-}
-.gotipe-image-catalog img {
-  width: 100%;
-  height: var(--gt-thumb-h);
-  object-fit: cover;
-}
-.gotipe-image-catalog small {
-  display: block;
-  padding: var(--gt-space-1);
-  overflow-wrap: anywhere;
+.gotipe-image-side-handle:focus-visible {
+  outline: var(--gt-focus-width) solid var(--gt-focus);
+  outline-offset: calc(-1 * var(--gt-focus-width));
 }

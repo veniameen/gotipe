@@ -1,11 +1,35 @@
 /* Table — Atlas frames 1, 5 and 9: rules between rows, no frame and no columns drawn; the head is
-   quiet. Wide tables scroll inside the wrapper; row and column are added under the table.
-   Shared by BlockEditor and PageEditor. */
+   quiet. A wide table scrolls inside .gotipe-table-scroll and the edge with hidden columns fades.
+   The bars that add a column (right of the table) and a row (under it) live outside the scrolling
+   area, so a scrollbar never covers them. Shared by BlockEditor and PageEditor. */
 
 .gotipe-table-wrapper {
   position: relative;
   max-width: 100%;
+}
+/* room under the table for the bar that adds a row; read-only tables have no bars */
+.gotipe-table-wrapper:has(> .gotipe-table-add) {
+  padding-bottom: calc(var(--gt-table-add) + var(--gt-table-add-gap));
+}
+.gotipe-table-scroll {
+  max-width: 100%;
   overflow-x: auto;
+  overscroll-behavior-x: contain;
+}
+.gotipe-table-scroll[data-more="left"] {
+  mask-image: linear-gradient(to right, transparent, currentColor var(--gt-table-fade));
+}
+.gotipe-table-scroll[data-more="right"] {
+  mask-image: linear-gradient(to left, transparent, currentColor var(--gt-table-fade));
+}
+.gotipe-table-scroll[data-more="both"] {
+  mask-image: linear-gradient(
+    to right,
+    transparent,
+    currentColor var(--gt-table-fade),
+    currentColor calc(100% - var(--gt-table-fade)),
+    transparent
+  );
 }
 .gotipe-table-wrapper table {
   table-layout: fixed;
@@ -44,43 +68,72 @@
 .gotipe-table-cell-selected {
   background: var(--gt-selection);
 }
-
-/* add a row or a column: quiet bars under the table, pinned to its visible width */
-.gotipe-table-actions {
-  position: sticky;
-  left: 0;
-  display: flex;
-  gap: var(--gt-toolbar-gap);
-  width: 100%;
-  margin-top: var(--gt-toolbar-gap);
+/* a cell is a text field, like a paragraph: the caret marks it, no ring (Atlas frame 9) */
+.gotipe-table-wrapper :is(th, td):focus {
+  outline: none;
 }
-.gotipe-table-actions button {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: var(--gt-handle-h);
-  padding: var(--gt-tool-text-pad);
+
+/* add a column on the right, a row below: quiet bars, shown with the pointer or the caret in the
+   table; they keep receiving the pointer while hidden, so moving onto one shows it */
+.gotipe-table-add {
+  position: absolute;
+  z-index: var(--gt-z-content);
+  display: grid;
+  place-items: center;
+  padding: 0;
   border: 0;
   border-radius: var(--gt-radius-control);
   background: var(--gt-fill-1);
   color: var(--gt-text-3);
-  font-family: var(--gt-font-ui);
-  font-size: var(--gt-ui-small);
-  line-height: var(--gt-ui-small-leading);
-  letter-spacing: normal;
-  white-space: nowrap;
   cursor: pointer;
+  opacity: 0;
+  transition: opacity var(--gt-duration-fast) var(--gt-ease-out), background-color
+    var(--gt-duration-fast) var(--gt-ease-out);
 }
-.gotipe-table-actions button:first-child {
-  flex: 1;
+.gotipe-table-wrapper:is(:hover, :focus-within) > .gotipe-table-add {
+  opacity: 1;
 }
-.gotipe-table-actions button:hover {
+.gotipe-table-add-col {
+  top: 0;
+  bottom: calc(var(--gt-table-add) + var(--gt-table-add-gap));
+  left: calc(100% + var(--gt-table-add-gap));
+  width: var(--gt-table-add);
+}
+/* bridges the gap, so the pointer keeps the table hovered on its way to the bar */
+.gotipe-table-add-col::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  right: 100%;
+  bottom: 0;
+  width: var(--gt-table-add-gap);
+}
+.gotipe-table-add-row {
+  right: 0;
+  bottom: 0;
+  left: 0;
+  height: var(--gt-table-add);
+}
+.gotipe-table-add > svg {
+  width: var(--gt-icon-small);
+  height: var(--gt-icon-small);
+}
+.gotipe-table-add:hover {
   background: var(--gt-fill-2);
   color: var(--gt-text);
 }
-.gotipe-table-actions button:focus-visible {
+.gotipe-table-add:focus-visible {
   outline: var(--gt-focus-width) solid var(--gt-focus);
   outline-offset: var(--gt-focus-gap);
+}
+.gotipe-table-add-col > .gotipe-tip {
+  top: 50%;
+  right: calc(100% + var(--gt-overlay-gap));
+  left: auto;
+  transform: translateY(-50%);
+}
+.gotipe-table-add-row > .gotipe-tip {
+  top: calc(100% + var(--gt-overlay-gap));
 }
 
 /* column width: a wide hit area, an accent rule while it is used */
@@ -97,6 +150,10 @@
   cursor: col-resize;
   touch-action: none;
 }
+/* the last column's handle stays inside the table, so the table never scrolls by a few pixels */
+.gotipe-table-wrapper tr > :last-child > .gotipe-table-col-resize {
+  right: 0;
+}
 .gotipe-table-col-resize::after {
   content: "";
   position: absolute;
@@ -107,6 +164,16 @@
 }
 .gotipe-table-col-resize:is(:hover, :focus-visible, .active)::after {
   background: var(--gt-accent);
+}
+/* the last column's hint opens towards the table, not past its edge */
+.gotipe-table-wrapper tr > :last-child > .gotipe-table-col-resize > .gotipe-tip {
+  right: 0;
+  left: auto;
+  transform: none;
+}
+/* while a column is being resized its hint steps aside */
+.gotipe-table-col-resize.active > .gotipe-tip {
+  display: none;
 }
 .gotipe-table-col-resize:focus-visible {
   outline: none;

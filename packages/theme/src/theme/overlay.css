@@ -334,7 +334,8 @@
 }
 
 /* ---- a toolbar button's tooltip: an inverted label, its key quieter after it ---- */
-.gotipe-bubble-menu button {
+.gotipe-bubble-menu button,
+:where(button:has(> .gotipe-tip)) {
   position: relative;
 }
 .gotipe-tip {
@@ -342,7 +343,7 @@
   top: calc(100% + var(--gt-toolbar-pad) + var(--gt-overlay-gap));
   left: 50%;
   z-index: var(--gt-z-tooltip);
-  display: flex;
+  display: none;
   gap: var(--gt-kbd-gap);
   max-width: var(--gt-tooltip-max);
   padding: var(--gt-tooltip-pad);
@@ -357,14 +358,18 @@
   white-space: nowrap;
   pointer-events: none;
   transform: translateX(-50%);
-  visibility: hidden;
   opacity: 0;
 }
+/* a hidden tip takes no room, so one near an edge never widens the page or a table's scroll */
 :is(button:hover, button:focus-visible) > .gotipe-tip {
-  visibility: visible;
+  display: flex;
   opacity: 1;
-  transition: opacity var(--gt-duration-fast) var(--gt-ease-out) var(--gt-tip-delay), visibility 0s
-    linear var(--gt-tip-delay);
+  transition: opacity var(--gt-duration-fast) var(--gt-ease-out) var(--gt-tip-delay);
+}
+@starting-style {
+  :is(button:hover, button:focus-visible) > .gotipe-tip {
+    opacity: 0;
+  }
 }
 .gotipe-tip-key {
   color: var(--gt-inverse-text-2);

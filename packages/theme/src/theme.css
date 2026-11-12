@@ -9,6 +9,7 @@
 @import "./theme/tables.css";
 
 @import "./theme/code.css";
+@import "./theme/embeds.css";
 
 @import "./theme/comments.css";
 @import "./theme/states.css";
