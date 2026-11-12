@@ -452,6 +452,8 @@ test.describe("Notion-like exhaustive operations", () => {
   test("stress sequence: mixed create/change/delete operations remains stable", async ({
     page,
   }) => {
+    // Budget all 18 interaction rounds; keep individual assertions at their usual limits.
+    test.setTimeout(90_000);
     const commands: Array<{ query: string; name: string; kind: "list" | "code" | "text" }> = [
       { query: "bullet", name: "Bullet List", kind: "list" },
       { query: "numbered", name: "Numbered List", kind: "list" },
