@@ -152,9 +152,7 @@ function TableHandleMenu({
             </div>
             {groups().map((group, index) => (
               <div key={group[0]?.key ?? index} className="gotipe-table-menu-group" role="group">
-                {index > 0 ? (
-                  <div className="gotipe-context-menu-separator" role="separator" />
-                ) : null}
+                {index > 0 ? <hr className="gotipe-context-menu-separator" /> : null}
                 {group.map((row) => (
                   <button
                     key={row.key}

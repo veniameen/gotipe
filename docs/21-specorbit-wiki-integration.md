@@ -26,7 +26,7 @@ GoTipe — библиотека редактора. Wiki является фун
 | `@gotipe/core`, `@gotipe/react` | ядро и React-слой (peer) |
 | `@gotipe/markdown` | собственный кодек Markdown; ещё и для runtime: `applyAnchoredEdits` — в `@gotipe/suggestions` |
 | `@gotipe/suggestions` | типы и якоря предложений: `findAnchor`, `applyAnchoredEdits`, `locateEdits` |
-| `@gotipe/i18n` | русские строки (`locale="ru"` по умолчанию) |
+| `@gotipe/i18n` | строки интерфейса: `en` по умолчанию, `ru` встроен — вике нужен `locale="ru"` |
 
 Для JS-режима и редактирования без подсветки не нужны `@gotipe/wasm` и `shiki`.
 Кодек использует собственный parser GoTipe, без runtime-зависимостей mdast/micromark.
@@ -92,7 +92,7 @@ import { PageEditor, type PageEditorHandle } from "@gotipe/block-editor";
   markdown={file.content}              // текст файла; новое значение ≠ последнему черновику → внешняя замена
   onChange={(md) => scheduleSave(md)}  // черновик после каждой правки; автосохранение ~1 с — у хоста
   readOnly={viewingVersion}            // В8: просмотр старой версии
-  locale="ru"
+  locale="ru"                          // по умолчанию en
   titlePlaceholder={slugToTitle(path)} // название без «# …» в файле
   host={{
     saveAsset: async (blob, { name, mediaType }) => {

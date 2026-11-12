@@ -127,7 +127,7 @@ export interface PageEditorProps {
   readOnly?: boolean;
   /** Assets, links, errors. */
   host?: EditorHost;
-  /** Locale of the UI strings («ru» by default) or a ready `I18n`. */
+  /** Locale of the UI strings (`en` by default, `ru` built in) or a ready `I18n`. */
   locale?: string;
   i18n?: I18n;
   /** Shown in the title when the file has no `# heading` (the file name). */
@@ -418,7 +418,7 @@ const PageEditorInner = forwardRef<PageEditorHandle, PageEditorProps>(
  */
 export const PageEditor = forwardRef<PageEditorHandle, PageEditorProps>(
   function PageEditor(props, ref) {
-    const { locale = "ru", i18n } = props;
+    const { locale = "en", i18n } = props;
     return (
       <GoTipeI18nProvider i18n={i18n} locale={locale}>
         <PageEditorInner {...props} ref={ref} />
