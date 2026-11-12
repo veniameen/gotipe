@@ -8,7 +8,11 @@ it("colours code with the theme's syntax tokens in light and dark", async () => 
     langs: { typescript: () => import("shiki/langs/typescript.mjs") },
     themes: { light: gotipeCodeThemeLoader, dark: gotipeCodeThemeLoader },
   });
-  const lines = await highlighter('// note\nconst x: Draft = "a" + 1;', "typescript");
+  const code = '// note\nconst x: Draft = "a" + 1;';
+  // The first pass compiles the grammar. Under load a line can outlast Shiki's per-line time limit
+  // and leave the next line inside the comment, so the colours are read from the second pass.
+  await highlighter(code, "typescript");
+  const lines = await highlighter(code, "typescript");
   const colour = (text: string) => lines?.flat().find((token) => token.content.trim() === text);
   expect(colour("const")?.color).toBe("var(--gt-syn-keyword)");
   expect(colour("const")?.darkColor).toBe("var(--gt-syn-keyword)");
