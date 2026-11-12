@@ -1,14 +1,21 @@
 # GoTipe — доведение до публикации
 
-Статус: **локальная приёмка пройдена; публикация заблокирована R-034**.
+Статус: **локальный кандидат в `main`: проверки и Chromium пройдены; Firefox и WebKit не прогонялись**.
 Начато 2026-11-09 по прямому запросу владельца.
+
+10 ноября владелец разрешил заменить Typst собственным PDF layout поверх небольших
+библиотек записи PDF и работы со шрифтами, сохранив функции браузерного и серверного
+экспорта. Typst и Git patch citationberg удалены; свежие Cargo advisory/license и
+source-release gates проходят. Итоговое дерево после сведения в `main` принято
+2026-11-12 (раздел «Сведение в main»); более ранние приёмки ниже — история.
 
 ## Результат
 
 Собственная библиотека редактора, пригодная для использования в SpecOrbit и других
 приложениях: публичные API, все заявленные в репозитории функции, адаптеры, готовый UI,
-документация и проверенные пакеты. Визуальная основа — новый PageEditor / Specimen v6:
-нейтральные поверхности, синий акцент, общие токены, светлая и тёмная темы.
+документация и проверенные пакеты. Визуальная основа — Атлас GoTipe (`design/atlas`):
+общие виды notion/docs/modern/minimal на одних токенах, светлая и тёмная темы.
+PageEditor стоит на тех же видах, отдельной темы страницы больше нет.
 
 Уточнение владельца 10 ноября: GoTipe остаётся библиотекой, аналогом редакторного
 SDK. Wiki, дерево страниц, вкладки, права, сохранение и workflow модели реализуются
@@ -53,7 +60,7 @@ CSP остаются техническим consumer-тестом, не прил
 | Версии | создание, список, просмотр, сравнение, восстановление, история | snapshot/diff/restore/undo и интерфейс проверены |
 | AI | настоящий API провайдера, поток/отмена/ошибки, инструменты и правки; демо обозначено | provider contracts/stream/cancel/error и три браузера проверены; платные внешние вызовы не выполнялись |
 | Совместная работа | реальная синхронизация, конкурентные правки, reconnect, курсоры | две реальные WASM реплики → offline edits → reconnect → durable PostgreSQL bootstrap проверены |
-| Экспорт/импорт | каждый заявленный формат выдаёт валидный результат, ограничения описаны | PDF/DOCX/HTML/Markdown и валидаторы прошли; source-release exporter заблокирован R-034 |
+| Экспорт/импорт | каждый заявленный формат выдаёт валидный результат, ограничения описаны | Собственный PDF backend: native corpus 26/26, полный Rust 249/249; native/WASM 52/52, PDF browsers 78/78, Cloud 19/19 и clean consumer прошли. R-034 устранён |
 | Адаптеры | React/Vue/Svelte/Solid: рендер, подписки, destroy, SSR, строгий режим | lifecycle, destroy, subscriptions, SSR и чистые package consumers проверены |
 | SDK / Cloud | совпадение контрактов, права доступа, хранение, ошибки, тесты без внешней оплаты | role/scope/storage/errors, Go race/integration, Docker и native/browser exports проверены |
 | Миграция | поддерживаемые документы других редакторов, потери явно видны | поддерживаемые 3 converter APIs и границы потерь описаны и проверены |
@@ -86,8 +93,8 @@ CSP остаются техническим consumer-тестом, не прил
 | R-007 | React useEditorState возвращает новый snapshot для object-selector | исправлено; 4 regression tests |
 | R-008 | Асинхронное создание редактора после destroy в адаптерах | исправлено lifecycle Vue/Svelte/Solid; целевые тесты проходят |
 | R-009 | Часть Cloud handlers не проверяет доступ к документу; Go-тестов нет | исправлено; реальный PostgreSQL/Valkey, Go race/integration checks, live WS revoke/expiry tests |
-| R-010 | PDF/DOCX wrappers вызывают отсутствующие методы WASM | реальные Typst PDF / DOCX и lazy export WASM; структура файлов/Unicode и Cloud jobs проверены |
-| R-011 | npm/cargo release подавляет ошибки; неполный список пакетов; CI проверяет несуществующий .mjs | обязательные reusable CI/browser/security, полные графы bundle, npm archives и Cargo source preflight; upstream security gates ещё блокируют выпуск |
+| R-010 | PDF/DOCX wrappers вызывают отсутствующие методы WASM | реальные PDF / DOCX и lazy export WASM; после R-034 собственный PDF backend, структура файлов/Unicode и Cloud jobs проверены |
+| R-011 | npm/cargo release подавляет ошибки; неполный список пакетов; CI проверяет несуществующий .mjs | обязательные reusable CI/browser/security, полные графы bundle, npm archives и Cargo source preflight; после R-034 все source/advisory/license gates проходят |
 | R-012 | История версий в примере — alert, часть экранов без полного UI | PageEditor history/list/preview/diff/restore, 5 unit tests; Chrome restore→Undo и 10 light/dark layouts проходят |
 | R-013 | Меню таблицы/блока/форматирования не полностью реагируют на resize/scroll | исправлены anchor/viewport observers, portals и cleanup; три браузера, keyboard/scroll/container resize и темы проверены |
 | R-014 | Монолитные исходники до 2700 строк, нет обязательных архитектурных правил | AGENTS/SOLID, runtime boundaries/cycles/size gates; strict release check проходит без baseline исключений |
@@ -115,7 +122,7 @@ CSP остаются техническим consumer-тестом, не прил
 | R-031 | После замены paragraph на code renderer теряет native caret до следующего кадра | ядро восстанавливает ожидаемое выделение после DOM commit; быстрый ввод, сценарии кода и общий повтор прошли |
 | R-032 | Touch long-press показывал drag state без реального перемещения | общий pointer lifecycle, move/drop/edge scroll; 11 реальных Chrome touch проверок обоих редакторов, Undo/cancel/read-only/destroy/container resize |
 | R-033 | Checkbox задач реагировал только на mousedown | нативный change обрабатывает мышь и Space; 3 браузерных сценария keyboard/read-only/Undo прошли |
-| R-034 | Обновлённые native зависимости экспорта имеют неполный источник для публикации | исправлены известные vulnerabilities; upstream citationberg fix пока закреплён Git commit. Crates.io source release и cargo-deny maintenance gate остаются закрыты; детали в dependency policy |
+| R-034 | Обновлённые native зависимости экспорта имеют неполный источник для публикации | устранено заменой Typst собственным PDF backend: Git patch citationberg и шесть неподдерживаемых transitives удалены; registry-source, advisory и license gates проходят без исключений |
 | R-035 | Toolbar metrics могли учитывать подписи контролов кодового блока | исправлено; hover/transform проверки и полный промежуточный прогон прошли |
 | R-036 | Вложенные todo существовали в модели, но не отображались | оба renderer исправлены; 20 native layout/input/checkbox checks в Chrome/Firefox и cross-browser regression прошли |
 | R-037 | Async подсветка теряла native caret и могла конфликтовать с IME DOM | snapshot boundary через чистый getDOMSelection, отложенный token render; native Chrome IME и Firefox/WebKit range/Unicode/Undo проверены |
@@ -138,8 +145,8 @@ CSP остаются техническим consumer-тестом, не прил
 - [x] Документация и примеры соответствуют реальному поведению.
 - [x] Итоговый отчёт содержит версии инструментов, команды, результаты, ограничения и артефакты.
 
-- [ ] `pnpm check:cargo-release`: исправленный registry graph без Git patch.
-- [ ] `cargo deny check advisories`: отсутствуют неподдерживаемые native dependencies.
+- [x] `pnpm check:cargo-release`: исправленный registry graph без Git patch.
+- [x] `cargo deny check advisories`: отсутствуют неподдерживаемые native dependencies.
 
 ## Журнал
 
@@ -171,8 +178,17 @@ CSP остаются техническим consumer-тестом, не прил
 - 2026-11-10: AI unit/UI 19/19 и browser 21/21 (3 движка): generation,
   cancel/error/retry, proofread/Undo, read-only, ghost completion, узкая ширина.
   Непроверенные платные внешние запросы не входят в этот результат.
+- 2026-11-11: Атлас GoTipe (`design/atlas`, 19 кадров) — общий язык видов, состояний
+  и меню; код приведён к кадрам. PageEditor перенесён на общие виды (кадр 19): тема
+  `page` удалена, `page.css` грузит `base.css` + `theme.css`; запись R-020 об изоляции
+  page styles историческая. Выноска SpecOrbit «Инструкции для агента» убрана из библиотеки.
+- 2026-11-12: меню строки таблицы, колонка карточек ревью на полях, подзадачи
+  (Tab/Shift+Tab, Markdown в TS и Rust). PageEditor по умолчанию показывает строки `en`.
+  По замечаниям владельца к атласу: иконки списков в две строки и задача одним квадратом,
+  край узкой панели modern затухает (атлас и playground), меню столбца стоит над полосой
+  добавления строки. Замена PDF от 2026-11-10 и работа над видами сведены в одну ветку `main`.
 
-## Открытый gate зависимостей (2026-11-10)
+## История gate зависимостей до замены Typst (2026-11-10)
 
 - Свежие npm audit, cargo-audit и Go govulncheck не находят уязвимостей после
   обновлений. Go vet, unit/race и изолированный PostgreSQL/Valkey integration/race
@@ -207,7 +223,7 @@ CSP остаются техническим consumer-тестом, не прил
   настоящими Shiki grammars, retry после сбоя, Unicode/newline integrity и stale async.
   Highlighter не может подменять editable DOM неполным текстом.
 
-## Текущая локальная приёмка (2026-11-10)
+## Локальная приёмка до замены PDF backend (2026-11-10)
 
 - Workspace build/typecheck/lint: 21/21; lint содержит 24 advisory предупреждения
   ARIA/semantic-elements, ошибок нет. Проверки клавиатуры и focus выполняются отдельно.
@@ -243,3 +259,100 @@ CSP остаются техническим consumer-тестом, не прил
 `output/native-pdf-refresh-result.json` и `output/upstream-gate-refresh/result.json`.
 Удалённый CI, интеграция в реальный renderer SpecOrbit, внешние платные AI запросы
 и публикация не выполнялись. Ограничения форматов остаются в export-contract.md.
+
+
+## Сведение в main: приёмка итогового дерева (2026-11-12)
+
+Ветка `codex/release-readiness` с заменой PDF и работой по Атласу влита в `main`
+перемоткой; других веток нет. Проверки шли на итоговом дереве, тяжёлые — по одной:
+
+- Rust: fmt, строгий Clippy all-targets/all-features, 250/250 тестов без ignored;
+  notices 149 + 167 и байты шрифтов экспорта сверены; registry-источники Cargo публикуемы.
+- WASM пересобраны: core 1 497 834 байт, 589 986 gzip при бюджете 614 400;
+  export 14 420 356 байт.
+- JS: build 21/21, typecheck 34/34, lint без ошибок (27 a11y-советов Biome, было 24),
+  architecture 573 файла (release без долга), theme, Vitest 545/545
+  в 18 пакетах (тест подсветки кода под нагрузкой падал — исправлен); 21 архив и чистый потребитель (27 ESM / 25 CJS); реальные PDF/DOCX
+  через публичный API; PDF corpus native/WASM 52/52 (13 файлов совпадают побайтно,
+  13 ожидаемых отказов). `check:bundles` упал на React-слое: 36 441 байт при потолке
+  30 720 — рост от кадров Атласа; потолок поднят до 40 960 решением с замерами
+  в [javascript-budgets.md](development/javascript-budgets.md).
+- Браузер: Chromium (канал Chrome) — общий прогон 900/905 под внешней нагрузкой на машине;
+  5 падений — таймауты (4 раза редактор не появился за 5 s после загрузки, стресс REL-001
+  не уложился в 30 s); оба файла при повторе 53/53. Firefox и WebKit не запускались:
+  браузеров Playwright на машине нет, загрузка — с согласия владельца. Атлас: 100 кадров,
+  статические правила и браузерный аудит прошли. Логи — `output/merge-acceptance-20261112/`.
+- Go: `go vet`, notices 50 файлов. Integration-тесты Cloud с PostgreSQL/Valkey в этот
+  раз не запускались: код `apps/cloud` при сведении не менялся.
+
+## Собственный PDF backend: итоговая приёмка (2026-11-10)
+
+По прямому запросу владельца Typst заменён собственной раскладкой GoTipe поверх
+поддерживаемых PDF/font codecs. Публичные API, optional/lazy граница, HTML/Markdown
+и DOCX сохраняются. Граф зависимостей Cargo workspace уменьшен с 402 до 230 пакетов; Typst,
+citationberg, Git patch и шесть неподдерживаемых транзитивных зависимостей удалены.
+R-034 закрыт: source-release, cargo-audit, cargo-deny advisories/licenses проходят
+без добавления исключений. Нынешняя зависимость — описание в dependency policy,
+а не старые проектные предложения из numbered docs.
+
+Проверки нового PDF включают marks/цвета/код, таблицы с colspan/rowspan и очень
+длинными ячейками, независимый поток колонок, картинки/captions, списки, A4/Letter/Legal,
+поля и колонтитулы, закладки, связную tagged-структуру/Alt/OBJR/ParentTree и XMP.
+Проверены кириллица, RTL, диакритика, лигатуры, emoji/ZWJ/VS16 и отдельные границы
+слов для выделения/поиска. Неизвестные блоки/marks, недопустимые структуры и символы
+без встроенного шрифта дают явную ошибку. Неподдерживаемое содержимое не отбрасывается.
+
+- Rust: 249/249, без skipped/ignored; fmt и строгий all-target/all-feature Clippy.
+- Native corpus: 26/26; публичный native/WASM: 52/52.
+- PDF browser corpus: 78/78 в Chromium/Firefox/WebKit; 39 успешных файлов побайтно
+  совпадают с Node/WASM, 39 отрицательных сценариев возвращают ожидаемые ошибки.
+- Cloud: новый локальный non-root image, readiness и 10 migrations дважды;
+  базовые PDF/DOCX/merged-table jobs 3/3, corpus 19/19 (9 успехов + 10 ожидаемых
+  отказов). Все 9 PDF побайтно совпадают с native и Node/WASM. Cloud API использует
+  default PDF options; опции страниц/колонтитулов проверены на Rust/WASM API.
+- Workspace: 524/524 Vitest, build/typecheck/lint, architecture release, theme,
+  JS import budgets и независимые PDF/DOCX validators прошли. Lint сохраняет
+  прежние 24 advisory предупреждения; новых ошибок нет.
+- Упакован и установлен чистый consumer 21 реального архива: 27 ESM, 25 CJS,
+  строгие TypeScript declarations, headless/Markdown/PDF/DOCX проверки прошли.
+- Core WASM побайтно прежний: 590122 bytes gzip9. Optional export WASM:
+  14420356 bytes raw / 8566476 gzip9 вместо 35456393 / 15796750.
+- Общий окончательный browser suite: выполняется на замороженном runtime/build
+  SHA256 `ea3b73d4901dd5d2c63db4e9d82ce5ca28d6861065f7c9495ae33c328265de5f`.
+
+Первый общий browser прогон выявил 8 сбоев подготовки каретки в старых тестах:
+TreeWalker выбирал текст кнопки Copy у пустого code block, поэтому ввод не попадал
+в документ. Исправлены два test helper: публичный setSelection/focus и ожидание
+совпадения model/native selection. Сами проверки Enter/Escape/преобразований
+сохранены. Ещё два старых тестовых файла используют baseURL вместо жёсткого порта,
+чтобы окончательная приёмка запускалась на отдельном свежем Vite server.
+Сценарий mixed create/change/delete выполняет 18 последовательностей действий.
+Следующий прогон показал исчерпание его общего default-бюджета 30 s при сильной
+параллельной нагрузке; assertions содержимого не падали. Результат сохранён в
+`output/owned-pdf-release/browser-stress-timeout/` (763 passed, 1 timeout,
+2 interrupted). Для этого functional stress задан общий бюджет 90 s, как у остальных длинных
+сценариев; per-assertion timeouts и все 18 последовательностей сохранены.
+Проверка repeat3 с двумя workers: Chromium/WebKit 6/6, Firefox 3 deadline failures
+при той же внешней нагрузке. Первый serial повтор дал 2/3, поэтому результат не принят. После завершения
+внешнего fidelity runner Firefox прошёл 3/3 с тем же 90 s лимитом
+(44.3/45.9/48.0 s); окончательный suite выполняется с Firefox workers=1
+и Chromium/WebKit workers=2, без автоматических повторов.
+Production JS/Rust и собранные пакеты при этих правках не менялись. Исходные ошибки
+и остановленный прогон (1092 passed, 8 failed, 2 interrupted) сохранены в
+`output/owned-pdf-release/browser-initial-failure/`; повторная приёмка ниже заменяет
+их как результат окончательного дерева.
+
+Независимые валидаторы читают созданные PDF, а не внутренние структуры renderer.
+Просмотрены 11 растеризованных страниц; проверено отсутствие обрезки/наложений,
+правильное заполнение первой страницы длинной таблицы и сохранение внешнего вида
+при исправлении границ выделения. PDF/UA и PDF/A сертификация не заявляется;
+остальные границы форматов перечислены в export-contract.md.
+
+Команды, контрольные суммы исходников/шрифтов/WASM/архивов и результаты:
+`output/owned-pdf-release/`, `output/pdf-migration-visual/receipt.json`,
+`output/pdf-native-acceptance/validation.json`, `output/pdf-regression/validation.json`,
+`output/pdf-browser-final.log`, `output/pdf-migration-rust-tests.log`,
+`output/pdf-migration-rust-clippy.log`, `output/pdf-migration-workspace-tests.log`,
+`output/pdf-migration-browser-full.log`. Промежуточные результаты сохранены отдельно
+и не заменяют приёмку последнего дерева. Это локальная приёмка; внешняя публикация
+и удалённый CI в рамках этой задачи не запускались.
