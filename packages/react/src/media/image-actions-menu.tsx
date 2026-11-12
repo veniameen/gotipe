@@ -1,5 +1,6 @@
 import type { CSSProperties, ComponentProps, RefObject } from "react";
 import { useState } from "react";
+import { useGoTipeI18n } from "../i18n-context";
 import { ImageOptionsItem } from "./icons";
 
 export interface ImageAction {
@@ -21,6 +22,7 @@ export function ImageActionsMenu({
   actions: ImageAction[];
   onClose: () => void;
 }) {
+  const i18n = useGoTipeI18n();
   const [query, setQuery] = useState("");
   const filtered = actions.filter((action) =>
     action.label.toLocaleLowerCase().includes(query.toLocaleLowerCase().trim()),
@@ -41,16 +43,16 @@ export function ImageActionsMenu({
       <input
         className="gotipe-image-options-search"
         type="search"
-        placeholder="Search actions…"
-        aria-label="Search image actions"
+        placeholder={i18n.t("media.searchActions")}
+        aria-label={i18n.t("media.searchActionsLabel")}
         value={query}
         onChange={(event) => setQuery(event.target.value)}
       />
-      <div className="gotipe-image-options-group">Image</div>
+      <div className="gotipe-image-options-group">{i18n.t("media.imageGroup")}</div>
       {filtered.map(({ id, ...action }) => (
         <ImageOptionsItem key={id} {...action} />
       ))}
-      {!filtered.length ? <p role="status">No matching actions</p> : null}
+      {!filtered.length ? <p role="status">{i18n.t("media.noActions")}</p> : null}
     </div>
   );
 }

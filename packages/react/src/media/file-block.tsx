@@ -1,20 +1,22 @@
 import { type BlockView, type GoTipeEditor, toSafeHref } from "@gotipe/core";
 import type React from "react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { usePhantom } from "../content/context";
 import { useResolvedAsset } from "../host-assets";
+import { useGoTipeI18n } from "../i18n-context";
 import { useFloatingPosition } from "../use-floating-position";
 import { downloadAsset } from "./download";
-import { PlaceholderFileIcon } from "./icons";
+import { MediaGlyph, PlaceholderFileIcon } from "./icons";
 import { formatFileSize, inferFileNameFromUrl, normalizeHttpUrl } from "./links";
 import { useAssetUpload } from "./use-asset-upload";
-type FileInsertTab = "upload" | "link";
 
 export function FileBlock({
   block,
   editor,
   rootProps,
 }: { block: BlockView; editor: GoTipeEditor; rootProps: Record<string, unknown> }) {
+  const i18n = useGoTipeI18n();
+  const linkErrorId = useId();
   const url = (block.attrs.url as string) || "";
   const { url: displayUrl, failed: assetFailed } = useResolvedAsset(editor, url);
   const readOnly = usePhantom() || !editor.isEditable;
@@ -23,7 +25,6 @@ export function FileBlock({
   const mimeType = (block.attrs.mime_type as string) || "";
 
   const [dragOver, setDragOver] = useState(false);
-  const [activeTab, setActiveTab] = useState<FileInsertTab>("upload");
   const [isInsertPanelOpen, setIsInsertPanelOpen] = useState(false);
   const [linkUrlValue, setLinkUrlValue] = useState("");
   const [linkNameValue, setLinkNameValue] = useState("");
@@ -78,10 +79,11 @@ export function FileBlock({
       e.preventDefault();
       const normalized = normalizeHttpUrl(linkUrlValue);
       if (!normalized) {
-        setLinkError("Enter a valid file URL");
+        setLinkError(i18n.t("media.invalidFileUrl"));
         return;
       }
-      const resolvedName = linkNameValue.trim() || inferFileNameFromUrl(normalized);
+      const resolvedName =
+        linkNameValue.trim() || inferFileNameFromUrl(normalized, i18n.t("media.linkedFile"));
       applyFile({
         url: normalized,
         name: resolvedName,
@@ -89,7 +91,7 @@ export function FileBlock({
         mime_type: "",
       });
     },
-    [applyFile, linkNameValue, linkUrlValue],
+    [applyFile, linkNameValue, linkUrlValue, i18n],
   );
 
   const handleDrop = useCallback(
@@ -103,7 +105,7 @@ export function FileBlock({
     [uploadFile],
   );
 
-  const fileMeta = [mimeType, formatFileSize(size)].filter(Boolean).join(" • ");
+  const fileMeta = [mimeType, formatFileSize(size, i18n)].filter(Boolean).join(" • ");
 
   useEffect(() => {
     if (!isInsertPanelOpen || url) return;
@@ -125,7 +127,7 @@ export function FileBlock({
       contentEditable={false}
     >
       {url ? (
-        <div className="gotipe-file-card">
+        <div className={`gotipe-file-card${assetFailed ? " is-failed" : ""}`}>
           <span className="gotipe-file-card-icon" aria-hidden="true">
             <PlaceholderFileIcon />
           </span>
@@ -139,13 +141,19 @@ export function FileBlock({
               onClick={(event) => {
                 event.preventDefault();
                 if (!displayUrl) return;
-                if (displayUrl.startsWith("data:")) downloadAsset(editor, displayUrl, name);
+                if (displayUrl.startsWith("data:"))
+                  downloadAsset(editor, displayUrl, name, i18n.t("media.unsupportedUrl"));
                 else editor.openLink(displayUrl, { blockId: block.id, newTab: true });
               }}
             >
-              {name || "Untitled file"}
+              {name || i18n.t("media.untitledFile")}
             </a>
-            <div className="gotipe-file-card-meta">{fileMeta || "File attachment"}</div>
+            {/* a file that cannot be reached marks its own card, no line under it */}
+            <div className="gotipe-file-card-meta">
+              {assetFailed
+                ? i18n.t("media.fileUnavailable")
+                : fileMeta || i18n.t("media.fileAttachment")}
+            </div>
           </div>
           <div className="gotipe-media-actions">
             <button
@@ -155,7 +163,7 @@ export function FileBlock({
               onMouseDown={(e) => e.preventDefault()}
               onClick={triggerFilePicker}
             >
-              Replace
+              {i18n.t("media.replace")}
             </button>
             <button
               type="button"
@@ -175,31 +183,17 @@ export function FileBlock({
                   .run();
               }}
             >
-              Remove
+              {i18n.t("media.remove")}
             </button>
           </div>
         </div>
       ) : (
         <div className="gotipe-media-placeholder-shell" ref={insertShellRef}>
-          <button
-            type="button"
+          {/* like an empty image (Atlas frame 10): what the block holds and its two ways in */}
+          <div
             className={`gotipe-file-placeholder gotipe-media-placeholder${dragOver ? " dragover" : ""}`}
-            aria-label="Add a file"
-            disabled={readOnly}
-            onMouseDown={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              setIsInsertPanelOpen(true);
-              setActiveTab("upload");
-            }}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" || e.key === " ") {
-                e.preventDefault();
-                setIsInsertPanelOpen(true);
-                setActiveTab("upload");
-              }
-            }}
             onDragOver={(e) => {
+              if (readOnly) return;
               e.preventDefault();
               setDragOver(true);
             }}
@@ -209,13 +203,40 @@ export function FileBlock({
             <span className="gotipe-media-placeholder-icon" aria-hidden="true">
               <PlaceholderFileIcon />
             </span>
-            <span className="gotipe-media-placeholder-label">Add a file</span>
-          </button>
+            <span className="gotipe-media-placeholder-label">{i18n.t("media.addFile")}</span>
+            <span className="gotipe-media-placeholder-actions">
+              <button
+                type="button"
+                className="gotipe-media-button is-primary"
+                aria-label={i18n.t(uploading ? "media.uploading" : "media.uploadFile")}
+                disabled={readOnly || uploading}
+                onMouseDown={(e) => e.preventDefault()}
+                onClick={triggerFilePicker}
+              >
+                <MediaGlyph kind="upload" />
+                {i18n.t(uploading ? "media.uploading" : "media.upload")}
+              </button>
+              <button
+                type="button"
+                className="gotipe-media-button"
+                aria-label={i18n.t("media.addFileByLink")}
+                aria-expanded={isInsertPanelOpen}
+                disabled={readOnly}
+                onMouseDown={(e) => e.preventDefault()}
+                onClick={() => {
+                  setIsInsertPanelOpen((open) => !open);
+                }}
+              >
+                <MediaGlyph kind="link" />
+                {i18n.t("media.byLink")}
+              </button>
+            </span>
+          </div>
           {isInsertPanelOpen && !readOnly ? (
             <div
               ref={insertPanelRef}
               className="gotipe-media-insert-panel"
-              aria-label="File source"
+              aria-label={i18n.t("media.fileSource")}
               style={{
                 position: "fixed",
                 ...insertPosition,
@@ -223,75 +244,45 @@ export function FileBlock({
                 overflow: "auto",
               }}
             >
-              <div
-                className="gotipe-media-insert-tabs"
-                role="tablist"
-                aria-label="File source tabs"
-              >
-                <button
-                  type="button"
-                  className={`gotipe-media-tab${activeTab === "upload" ? " active" : ""}`}
-                  role="tab"
-                  aria-selected={activeTab === "upload"}
-                  onMouseDown={(e) => e.preventDefault()}
-                  onClick={() => setActiveTab("upload")}
-                >
-                  Upload
-                </button>
-                <button
-                  type="button"
-                  className={`gotipe-media-tab${activeTab === "link" ? " active" : ""}`}
-                  role="tab"
-                  aria-selected={activeTab === "link"}
-                  onMouseDown={(e) => e.preventDefault()}
-                  onClick={() => setActiveTab("link")}
-                >
-                  Link
-                </button>
-              </div>
+              {/* uploading starts from the block itself; the panel only takes an address */}
               <div className="gotipe-media-insert-content">
-                {activeTab === "upload" ? (
-                  <>
-                    <button
-                      type="button"
-                      className="gotipe-media-upload-button"
-                      disabled={uploading}
-                      onMouseDown={(e) => e.preventDefault()}
-                      onClick={triggerFilePicker}
-                    >
-                      {uploading ? "Uploading…" : "Upload file"}
-                    </button>
-                    <p className="gotipe-media-insert-note">You can also drag and drop a file.</p>
-                  </>
+                <form
+                  noValidate
+                  className="gotipe-media-link-form gotipe-media-link-form--file"
+                  onSubmit={submitLink}
+                >
+                  <input
+                    type="url"
+                    aria-label={i18n.t("media.fileUrl")}
+                    aria-invalid={linkError ? true : undefined}
+                    aria-errormessage={linkError ? linkErrorId : undefined}
+                    title={linkError ?? undefined}
+                    placeholder="https://example.com/file.pdf"
+                    value={linkUrlValue}
+                    onChange={(e) => {
+                      setLinkUrlValue(e.target.value);
+                      if (linkError) setLinkError(null);
+                    }}
+                    onMouseDown={(e) => e.stopPropagation()}
+                  />
+                  <input
+                    type="text"
+                    aria-label={i18n.t("media.fileName")}
+                    placeholder={i18n.t("media.fileName")}
+                    value={linkNameValue}
+                    onChange={(e) => setLinkNameValue(e.target.value)}
+                    onMouseDown={(e) => e.stopPropagation()}
+                  />
+                  <button type="submit" onMouseDown={(e) => e.preventDefault()}>
+                    {i18n.t("media.insert")}
+                  </button>
+                </form>
+                {/* A wrong address marks the field; the reason is its tooltip and is read aloud. */}
+                {linkError ? (
+                  <p id={linkErrorId} role="alert" className="gotipe-sr-only">
+                    {linkError}
+                  </p>
                 ) : null}
-                {activeTab === "link" ? (
-                  <form
-                    className="gotipe-media-link-form gotipe-media-link-form--file"
-                    onSubmit={submitLink}
-                  >
-                    <input
-                      type="url"
-                      placeholder="https://example.com/file.pdf"
-                      value={linkUrlValue}
-                      onChange={(e) => {
-                        setLinkUrlValue(e.target.value);
-                        if (linkError) setLinkError(null);
-                      }}
-                      onMouseDown={(e) => e.stopPropagation()}
-                    />
-                    <input
-                      type="text"
-                      placeholder="File name (optional)"
-                      value={linkNameValue}
-                      onChange={(e) => setLinkNameValue(e.target.value)}
-                      onMouseDown={(e) => e.stopPropagation()}
-                    />
-                    <button type="submit" onMouseDown={(e) => e.preventDefault()}>
-                      Insert
-                    </button>
-                  </form>
-                ) : null}
-                {linkError ? <p className="gotipe-media-insert-error">{linkError}</p> : null}
               </div>
             </div>
           ) : null}
@@ -303,8 +294,8 @@ export function FileBlock({
         </p>
       ) : null}
       {assetFailed && (
-        <p className="gotipe-media-insert-error" role="alert">
-          File unavailable
+        <p className="gotipe-sr-only" role="alert">
+          {i18n.t("media.fileUnavailable")}
         </p>
       )}
     </figure>

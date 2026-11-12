@@ -107,10 +107,12 @@ export function CodeBlock({
         <button
           type="button"
           aria-label={i18n.t(copied ? "code.copied" : "code.copy")}
-          title={i18n.t(copied ? "code.copied" : "code.copy")}
           onClick={() => void copy()}
         >
           <ContentIcon name={copied ? "check" : "copy"} />
+          <span className="gotipe-tip" aria-hidden="true">
+            {i18n.t(copied ? "code.copied" : "code.copy")}
+          </span>
         </button>
       </div>
       <div className="gotipe-code-block-scroll">

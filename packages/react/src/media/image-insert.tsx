@@ -1,13 +1,16 @@
 import type { GoTipeEditor, ImageSource, ImageSourceItem } from "@gotipe/core";
-import { useCallback, useEffect, useRef, useState } from "react";
+import type React from "react";
+import { useCallback, useEffect, useId, useRef, useState } from "react";
+import { useGoTipeI18n } from "../i18n-context";
 import { useFloatingPosition } from "../use-floating-position";
-import { PlaceholderImageIcon } from "./icons";
+import { MediaGlyph, PlaceholderImageIcon } from "./icons";
 import { normalizeHttpUrl } from "./links";
 
 function Catalog({
   source,
   onSource,
 }: { source: ImageSource; onSource: (src: string, alt: string) => void }) {
+  const i18n = useGoTipeI18n();
   const [query, setQuery] = useState("");
   const [items, setItems] = useState<ImageSourceItem[]>([]);
   const [status, setStatus] = useState<"idle" | "loading" | "ready" | "error">("idle");
@@ -26,7 +29,7 @@ function Catalog({
       setStatus("ready");
     } catch (cause) {
       if (controller.signal.aborted) return;
-      setError(cause instanceof Error ? cause.message : "Image search failed");
+      setError(cause instanceof Error ? cause.message : i18n.t("media.searchFailed"));
       setStatus("error");
     }
   }
@@ -41,22 +44,22 @@ function Catalog({
       >
         <input
           type="search"
-          aria-label={`Search ${source.label}`}
+          aria-label={i18n.t("media.searchSource", { source: source.label })}
           value={query}
           onChange={(event) => setQuery(event.target.value)}
-          placeholder="Search images"
+          placeholder={i18n.t("media.searchImages")}
         />
         <button type="submit" disabled={status === "loading"}>
-          Search
+          {i18n.t("media.search")}
         </button>
       </form>
-      {status === "loading" && <p role="status">Searching…</p>}
+      {status === "loading" && <p role="status">{i18n.t("media.searching")}</p>}
       {status === "error" && (
         <p role="alert" className="gotipe-media-insert-error">
           {error}
         </p>
       )}
-      {status === "ready" && !items.length && <p>No images found</p>}
+      {status === "ready" && !items.length && <p>{i18n.t("media.noImages")}</p>}
       <div className="gotipe-image-catalog">
         {items.map((item) => (
           <button
@@ -78,6 +81,17 @@ function Catalog({
   );
 }
 
+/** Keeps the editor's selection where it is while a control of the block is pressed. */
+const hold = (event: React.MouseEvent) => {
+  event.preventDefault();
+  event.stopPropagation();
+};
+
+/**
+ * Atlas frame 10, the empty block: the image glyph, what the block offers, and its two answers on
+ * the block itself — upload (the main one) and a link, which opens the address field (and the
+ * host's image catalogs, when there are any). A file can also be dropped on the block.
+ */
 export function ImageInsert({
   editor,
   readOnly,
@@ -93,15 +107,20 @@ export function ImageInsert({
   onSource: (src: string, alt: string) => void;
   onPick: () => void;
 }) {
+  const i18n = useGoTipeI18n();
+  const errorId = useId();
   const [open, setOpen] = useState(false);
-  const [tab, setTab] = useState("upload");
+  const [tab, setTab] = useState("link");
   const [dragOver, setDragOver] = useState(false);
   const [link, setLink] = useState("");
   const [error, setError] = useState("");
   const shell = useRef<HTMLDivElement>(null);
   const panel = useRef<HTMLDivElement>(null);
+  const linkButton = useRef<HTMLButtonElement>(null);
+  const address = useRef<HTMLInputElement>(null);
   const anchor = useCallback(() => shell.current?.getBoundingClientRect() ?? null, []);
   const position = useFloatingPosition({ open: open && !readOnly, anchor, element: panel });
+  const placed = Boolean(position);
   const sources = (editor.host.imageSources ?? []).filter(
     (source) => source.id !== "upload" && source.id !== "link",
   );
@@ -114,20 +133,16 @@ export function ImageInsert({
     document.addEventListener("pointerdown", close, true);
     return () => document.removeEventListener("pointerdown", close, true);
   }, [open]);
+  // The address field takes the caret once the panel has its place (it is hidden until then).
+  useEffect(() => {
+    if (open && placed && tab === "link") address.current?.focus({ preventScroll: true });
+  }, [open, placed, tab]);
   return (
     <div className="gotipe-media-placeholder-shell" ref={shell}>
-      <button
-        type="button"
+      <div
         className={`gotipe-image-placeholder gotipe-media-placeholder${dragOver ? " dragover" : ""}`}
-        aria-label="Add an image"
-        disabled={readOnly}
         onMouseDown={(event) => {
-          event.preventDefault();
-          event.stopPropagation();
-        }}
-        onClick={() => {
-          setOpen((value) => !value);
-          setTab("upload");
+          if (event.target === event.currentTarget) hold(event);
         }}
         onDragOver={(event) => {
           if (readOnly) return;
@@ -146,18 +161,49 @@ export function ImageInsert({
         <span className="gotipe-media-placeholder-icon" aria-hidden="true">
           <PlaceholderImageIcon />
         </span>
-        <span className="gotipe-media-placeholder-label">Add an image</span>
-      </button>
+        <span className="gotipe-media-placeholder-label">{i18n.t("media.addImage")}</span>
+        <span className="gotipe-media-placeholder-actions">
+          <button
+            type="button"
+            className="gotipe-media-button is-primary"
+            aria-label={i18n.t(uploading ? "media.uploading" : "media.uploadImage")}
+            title={i18n.t("media.imageNote")}
+            disabled={readOnly || uploading}
+            onMouseDown={hold}
+            onClick={onPick}
+          >
+            <MediaGlyph kind="upload" />
+            {i18n.t(uploading ? "media.uploading" : "media.upload")}
+          </button>
+          <button
+            type="button"
+            ref={linkButton}
+            className="gotipe-media-button"
+            aria-label={i18n.t("media.addImageByLink")}
+            aria-expanded={open}
+            disabled={readOnly}
+            onMouseDown={hold}
+            onClick={() => {
+              setOpen((value) => !value);
+              setTab("link");
+              setError("");
+            }}
+          >
+            <MediaGlyph kind="link" />
+            {i18n.t("media.byLink")}
+          </button>
+        </span>
+      </div>
       {open && !readOnly && (
         <div
           ref={panel}
           className="gotipe-media-insert-panel"
-          aria-label="Image source"
+          aria-label={i18n.t("media.imageSource")}
           onKeyDown={(event) => {
             if (event.key === "Escape") {
               event.stopPropagation();
               setOpen(false);
-              shell.current?.querySelector("button")?.focus();
+              linkButton.current?.focus();
             }
           }}
           style={{
@@ -167,9 +213,13 @@ export function ImageInsert({
             overflow: "auto",
           }}
         >
-          <div className="gotipe-media-insert-tabs" role="tablist" aria-label="Image source tabs">
-            {[{ id: "upload", label: "Upload" }, { id: "link", label: "Link" }, ...sources].map(
-              (item) => (
+          {sources.length > 0 && (
+            <div
+              className="gotipe-media-insert-tabs"
+              role="tablist"
+              aria-label={i18n.t("media.imageSourceTabs")}
+            >
+              {[{ id: "link", label: i18n.t("media.link") }, ...sources].map((item) => (
                 <button
                   type="button"
                   key={item.id}
@@ -183,41 +233,32 @@ export function ImageInsert({
                 >
                   {item.label}
                 </button>
-              ),
-            )}
-          </div>
+              ))}
+            </div>
+          )}
           <div className="gotipe-media-insert-content">
-            {tab === "upload" && (
-              <>
-                <button
-                  type="button"
-                  className="gotipe-media-upload-button"
-                  disabled={uploading}
-                  onClick={onPick}
-                >
-                  {uploading ? "Uploading…" : "Upload image"}
-                </button>
-                <p className="gotipe-media-insert-note">
-                  PNG, JPEG, GIF or WebP. You can also drop an image here.
-                </p>
-              </>
-            )}
             {tab === "link" && (
               <form
+                noValidate
                 className="gotipe-media-link-form"
                 onSubmit={(event) => {
                   event.preventDefault();
                   const normalized = normalizeHttpUrl(link);
                   if (!normalized) {
-                    setError("Enter a valid image URL");
+                    setError(i18n.t("media.invalidImageUrl"));
+                    address.current?.focus();
                     return;
                   }
                   onSource(normalized, "");
                 }}
               >
                 <input
+                  ref={address}
                   type="url"
-                  aria-label="Image URL"
+                  aria-label={i18n.t("media.imageUrl")}
+                  aria-invalid={error ? true : undefined}
+                  aria-errormessage={error ? errorId : undefined}
+                  title={error || undefined}
                   placeholder="https://example.com/image.png"
                   value={link}
                   onChange={(event) => {
@@ -225,12 +266,13 @@ export function ImageInsert({
                     setError("");
                   }}
                 />
-                <button type="submit">Insert</button>
+                <button type="submit">{i18n.t("media.insert")}</button>
               </form>
             )}
             {source && <Catalog key={source.id} source={source} onSource={onSource} />}
-            {error && (
-              <p role="alert" className="gotipe-media-insert-error">
+            {/* A wrong address marks the field; the reason is its tooltip and is read aloud. */}
+            {error && tab === "link" && (
+              <p id={errorId} role="alert" className="gotipe-sr-only">
                 {error}
               </p>
             )}

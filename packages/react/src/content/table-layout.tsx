@@ -1,6 +1,7 @@
 import { type BlockView, type GoTipeEditor, GoTipeError, editTable } from "@gotipe/core";
 import {
   type ReactNode,
+  type RefObject,
   createContext,
   useCallback,
   useContext,
@@ -10,12 +11,15 @@ import {
 } from "react";
 import { useGoTipeI18n } from "../i18n-context";
 import { usePhantom } from "./context";
+import { ContentIcon } from "./icons";
 
 interface TableLayout {
   table: BlockView;
   editor: GoTipeEditor;
   readOnly: boolean;
   widths: number[];
+  /** The scrolling area, so a new column can be brought into view. */
+  scroll: RefObject<HTMLDivElement | null>;
   preview(column: number, width: number | null): void;
   report(error: unknown): void;
 }
@@ -28,6 +32,7 @@ export function TableLayoutProvider({
 }: { block: BlockView; editor: GoTipeEditor; children: ReactNode }) {
   const [draft, setDraft] = useState<{ column: number; width: number } | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const scroll = useRef<HTMLDivElement | null>(null);
   const widths = Array.from({ length: block.children[0]?.children.length ?? 0 }, (_, column) => {
     const value = Array.isArray(block.attrs.colWidths) ? block.attrs.colWidths[column] : null;
     return draft?.column === column ? draft.width : typeof value === "number" ? value : 160;
@@ -52,10 +57,11 @@ export function TableLayoutProvider({
   );
   const readOnly = usePhantom() || !editor.isEditable;
   return (
-    <Context.Provider value={{ table: block, editor, readOnly, widths, preview, report }}>
+    <Context.Provider value={{ table: block, editor, readOnly, widths, scroll, preview, report }}>
       {children}
+      {/* the editor's toast shows the error; this line is for screen readers only */}
       {error && (
-        <p contentEditable={false} role="alert">
+        <p className="gotipe-sr-only" contentEditable={false} role="alert">
           {error}
         </p>
       )}
@@ -74,11 +80,53 @@ export function TableColumns() {
   ) : null;
 }
 
+type HiddenSide = "left" | "right" | "both";
+
+/**
+ * The scrolling area of a table (Atlas frame 9). It marks the sides that hide columns, so the
+ * theme fades them; sides are physical, so the fade is right in either text direction.
+ */
+export function TableScroll({ children }: { children: ReactNode }) {
+  const layout = useContext(Context);
+  const own = useRef<HTMLDivElement | null>(null);
+  const ref = layout?.scroll ?? own;
+  const [hidden, setHidden] = useState<HiddenSide | null>(null);
+  useEffect(() => {
+    const element = ref.current;
+    if (!element) return;
+    const update = () => {
+      const table = element.firstElementChild?.getBoundingClientRect();
+      const box = element.getBoundingClientRect();
+      const left = !!table && table.left < box.left - 1;
+      const right = !!table && table.right > box.right + 1;
+      setHidden(left && right ? "both" : left ? "left" : right ? "right" : null);
+    };
+    update();
+    element.addEventListener("scroll", update, { passive: true });
+    const observer = typeof ResizeObserver === "undefined" ? null : new ResizeObserver(update);
+    observer?.observe(element);
+    if (element.firstElementChild) observer?.observe(element.firstElementChild);
+    return () => {
+      element.removeEventListener("scroll", update);
+      observer?.disconnect();
+    };
+  }, [ref]);
+  return (
+    <div ref={ref} className="gotipe-table-scroll" data-more={hidden ?? undefined}>
+      {children}
+    </div>
+  );
+}
+
+/**
+ * The bars that add a column (right of the table) and a row (under it), Atlas frame 9. They sit
+ * outside the scrolling area; pressing one keeps the caret where it was.
+ */
 export function TableToolbar() {
   const layout = useContext(Context);
   const i18n = useGoTipeI18n();
   if (!layout || layout.readOnly) return null;
-  const { editor, table, report } = layout;
+  const { editor, table, report, scroll } = layout;
   const apply = (type: "insertRow" | "insertColumn") => {
     try {
       editTable(editor, table.id, {
@@ -88,27 +136,41 @@ export function TableToolbar() {
       });
     } catch (error) {
       report(error);
+      return;
     }
+    if (type !== "insertColumn") return;
+    // a wide table shows the new column: scroll to its end once React has drawn it
+    requestAnimationFrame(() => {
+      const element = scroll.current;
+      if (!element) return;
+      const rtl = getComputedStyle(element).direction === "rtl";
+      element.scrollTo({ left: rtl ? -element.scrollWidth : element.scrollWidth });
+    });
+  };
+  const bar = (type: "insertRow" | "insertColumn") => {
+    const label = i18n.t(type === "insertRow" ? "table.addRow" : "table.addColumn");
+    return (
+      <button
+        type="button"
+        className={`gotipe-table-add ${type === "insertRow" ? "gotipe-table-add-row" : "gotipe-table-add-col"}`}
+        contentEditable={false}
+        data-gotipe-widget=""
+        aria-label={label}
+        onMouseDown={(event) => event.preventDefault()}
+        onClick={() => apply(type)}
+      >
+        <ContentIcon name="plus" />
+        <span className="gotipe-tip" aria-hidden="true">
+          {label}
+        </span>
+      </button>
+    );
   };
   return (
-    <div className="gotipe-table-actions" contentEditable={false} data-gotipe-widget="">
-      <button
-        type="button"
-        className="gotipe-table-add-row"
-        aria-label={i18n.t("table.addRow")}
-        onClick={() => apply("insertRow")}
-      >
-        {i18n.t("table.addRowShort")}
-      </button>
-      <button
-        type="button"
-        className="gotipe-table-add-col"
-        aria-label={i18n.t("table.addColumn")}
-        onClick={() => apply("insertColumn")}
-      >
-        {i18n.t("table.addColumnShort")}
-      </button>
-    </div>
+    <>
+      {bar("insertRow")}
+      {bar("insertColumn")}
+    </>
   );
 }
 
@@ -179,7 +241,6 @@ export function TableColumnResizeHandle({ cellId }: { cellId: string }) {
       contentEditable={false}
       data-gotipe-widget=""
       aria-label={i18n.t("table.resizeColumn", { index: column + 1 })}
-      title={i18n.t("table.resizeHint")}
       onPointerDown={(event) => {
         if (event.button !== 0) return;
         event.preventDefault();
@@ -198,6 +259,10 @@ export function TableColumnResizeHandle({ cellId }: { cellId: string }) {
           commit((layout.widths[column] ?? 160) + (event.key === "ArrowRight" ? 16 : -16));
         }
       }}
-    />
+    >
+      <span className="gotipe-tip" aria-hidden="true">
+        {i18n.t("table.resizeHint")}
+      </span>
+    </button>
   );
 }
