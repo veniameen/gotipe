@@ -4,9 +4,10 @@
     <h2 class="at-figure-title">Таблица: строки, столбцы и меню столбца</h2>
     <p class="at-caption">
       Столбец добавляется полосой справа от таблицы, строка — полосой под ней; обе видны под
-      указателем и пока курсор в таблице, а прокрутка их не закрывает. Ячейка — поле текста, рамки
-      фокуса у неё нет. Широкая таблица прокручивается вбок, край со скрытыми столбцами затухает.
-      Тип столбца меняет вид ячеек: код — моноширинным, число — вправо, да / нет — знаком.
+      указателем и пока курсор в таблице, а прокрутка их не закрывает. У строки под указателем
+      слева — ручка с меню: строка выше, ниже, удалить. Ячейка — поле текста, рамки фокуса у неё
+      нет. Широкая таблица прокручивается вбок, край со скрытыми столбцами затухает. Тип столбца
+      меняет вид ячеек: код — моноширинным, число — вправо, да / нет — знаком.
     </p>
   </figcaption>
   <!-- @frame frame=column-menu view=notion w=768 min=480 label="меню столбца" -->
@@ -36,6 +37,35 @@
           </tbody>
         </table>
       </div>
+        <span class="gotipe-table-add is-column"><svg class="gt-icon"><use href="#i-plus" /></svg></span>
+        <span class="gotipe-table-add is-row"><svg class="gt-icon"><use href="#i-plus" /></svg></span>
+      </div>
+    </div>
+  </article>
+  <!-- @end -->
+  <!-- @frame frame=row-menu view=notion w=768 min=420 label="меню строки" -->
+  <article class="gotipe-page is-slice" lang="ru">
+    <div class="gotipe-doc">
+      <h2>Конфликты</h2>
+      <div class="gotipe-table-block is-hovered">
+        <div class="gotipe-table-wrap is-open">
+          <table class="gotipe-table">
+            <thead>
+              <tr><th>Ситуация</th><th>Что видит автор</th><th>Что сохраняется</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>Блок изменён только у вас</td><td>Ничего</td><td>Ваша версия</td></tr>
+              <tr class="is-hovered">
+                <td>Блок изменён у обоих<span class="gotipe-row-handle"
+                    ><svg class="gt-icon"><use href="#i-chevron-down" /></svg><span class="gotipe-overlay gotipe-menu is-narrow" data-place="below"><span class="gotipe-menu-group"><span class="gotipe-menu-label">Строка</span><span class="gotipe-menu-item"><svg class="gt-icon"><use href="#i-arrow-up" /></svg><span class="gotipe-menu-text">Добавить строку выше</span></span><span class="gotipe-menu-item is-selected"><svg class="gt-icon"><use href="#i-arrow-down" /></svg><span class="gotipe-menu-text">Добавить строку ниже</span></span></span><span class="gotipe-menu-group"><span class="gotipe-menu-item is-danger"><svg class="gt-icon"><use href="#i-trash" /></svg><span class="gotipe-menu-text">Удалить строку</span></span></span></span><svg class="at-pointer"><use href="#i-pointer" /></svg></span
+                  ></td>
+                <td>Предложение правки</td><td>Обе версии</td>
+              </tr>
+              <tr><td>Блок удалён на сервере</td><td>Тост «Блок удалён»</td><td>Ваша версия — в истории</td></tr>
+              <tr><td>Документ удалён</td><td>Окно восстановления</td><td>Копия в «Черновиках»</td></tr>
+            </tbody>
+          </table>
+        </div>
         <span class="gotipe-table-add is-column"><svg class="gt-icon"><use href="#i-plus" /></svg></span>
         <span class="gotipe-table-add is-row"><svg class="gt-icon"><use href="#i-plus" /></svg></span>
       </div>
