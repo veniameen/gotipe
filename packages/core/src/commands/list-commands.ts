@@ -221,7 +221,6 @@ export class ListCommands {
 
     const parent = location.parentId ? findBlockInTree(state.blocks, location.parentId) : null;
     if (!parent || !LIST_TYPES.has(parent.type)) return this;
-    if (parent.type === "todoList") return this;
 
     const prevBlock = parent.children[location.index - 1];
     if (!prevBlock || !LIST_ITEM_TYPES.has(prevBlock.type)) return this;

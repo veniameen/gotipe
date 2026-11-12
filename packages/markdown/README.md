@@ -78,7 +78,7 @@ after a list is re-fenced, nested ordered lists not starting at 1 get a blank li
 | `#`…`######`, setext | `heading {level}` |
 | `-`/`*`/`+` list | `bulletList {marker, spread}` → `listItem` (rich text, nested lists only) |
 | `1.`/`1)` list | `orderedList {start, delimiter, spread}` → `listItem` |
-| task list (`- [ ]`, `- [x]`, also bare `- [ ]`) | `todoList {marker, spread}` → `todoItem {checked}` |
+| task list (`- [ ]`, `- [x]`, also bare `- [ ]`) | `todoList {marker, spread}` → `todoItem {checked}` (nested lists, sub-tasks included) |
 | quote with exactly one paragraph | `blockquote` |
 | `> [!NOTE]` … (GFM alerts) | `callout {type: "note"…, alert: "NOTE"…}` |
 | fenced / indented code | `codeBlock {language, meta?}` (content: string) |
