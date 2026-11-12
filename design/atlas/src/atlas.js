@@ -11,3 +11,20 @@
     });
   }
 })();
+
+// A bar that scrolls sideways marks the side with more tools (`data-more`), as the library marks a
+// wide table: the theme fades that edge.
+(() => {
+  for (const track of document.querySelectorAll(".gotipe-toolbar-track")) {
+    const update = () => {
+      const left = track.scrollLeft > 1;
+      const right = track.scrollLeft + track.clientWidth < track.scrollWidth - 1;
+      const more = left && right ? "both" : left ? "left" : right ? "right" : null;
+      if (more) track.dataset.more = more;
+      else delete track.dataset.more;
+    };
+    update();
+    track.addEventListener("scroll", update, { passive: true });
+    new ResizeObserver(update).observe(track);
+  }
+})();

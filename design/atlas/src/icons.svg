@@ -58,22 +58,23 @@
       d="M2.5 4v8M8 4v8M2.5 8H8M10.5 6h3l-1.75 2.1a1.95 1.95 0 1 1-1.3 3.4"
     />
   </symbol>
+  <!-- lists: two rows, the marker level with its line; a task is one box with its check -->
   <symbol id="i-list" viewBox="0 0 16 16">
-    <path vector-effect="non-scaling-stroke" d="M6.5 4.5h7M6.5 8h7M6.5 11.5h7" />
+    <path vector-effect="non-scaling-stroke" d="M6.75 4.5h6.75M6.75 11.5h6.75" />
     <g fill="currentColor" stroke="none">
-      <circle cx="3.25" cy="4.5" r="1" />
-      <circle cx="3.25" cy="8" r="1" />
-      <circle cx="3.25" cy="11.5" r="1" />
+      <circle cx="3.5" cy="4.5" r="1" />
+      <circle cx="3.5" cy="11.5" r="1" />
     </g>
   </symbol>
   <symbol id="i-list-num" viewBox="0 0 16 16">
-    <path vector-effect="non-scaling-stroke" d="M7 4.5h6.5M7 8h6.5M7 11.5h6.5M2.75 3.5l1-.75v3" />
-    <path vector-effect="non-scaling-stroke" d="M2.5 8.6a1 1 0 0 1 1.9.35c0 .9-1.9 1.3-1.9 2.55h2" />
+    <path
+      vector-effect="non-scaling-stroke"
+      d="M7.25 4.5h6.25M7.25 11.5h6.25M2.6 3.4 3.75 2.75v3.5M2.5 10.5c.15-.5.55-.75 1.05-.75.65 0 1.15.42 1.15 1 0 .48-.28.83-.7 1.25L2.5 13.25h2.4"
+    />
   </symbol>
   <symbol id="i-todo" viewBox="0 0 16 16">
-    <rect vector-effect="non-scaling-stroke" x="2.5" y="3" width="4.5" height="4.5" rx="1" />
-    <rect vector-effect="non-scaling-stroke" x="2.5" y="9" width="4.5" height="4.5" rx="1" />
-    <path vector-effect="non-scaling-stroke" d="M9.5 5.25h4M9.5 11.25h4M3.6 5.3l.9.9 1.4-1.6" />
+    <rect vector-effect="non-scaling-stroke" x="2.75" y="2.75" width="10.5" height="10.5" rx="2.25" />
+    <path vector-effect="non-scaling-stroke" d="m5.6 8.1 1.65 1.65 3.2-3.5" />
   </symbol>
   <symbol id="i-quote" viewBox="0 0 16 16">
     <path vector-effect="non-scaling-stroke" d="M3.5 3.5v9M6.5 5h6.5M6.5 8h6.5M6.5 11h4" />

@@ -2060,11 +2060,36 @@ ol.gotipe-list > li::before {
   position: sticky;
   top: 0;
   z-index: var(--gt-z-handle);
-  overflow-x: auto;
-  padding: var(--gt-fixed-toolbar-pad);
+  display: block;
+  padding: 0;
   border-bottom: var(--gt-hairline) solid var(--gt-line);
   background: var(--gt-page-bg);
+}
+/* The tools scroll on a track inside the bar. Where the track is cut they fade out, a tool wide,
+   as a wide table does (`data-more`: the side with more tools). The mask is on the track, not the
+   bar, so the page under the sticky bar stays hidden. */
+.gotipe-toolbar-track {
+  display: flex;
+  align-items: center;
+  gap: var(--gt-toolbar-gap);
+  overflow-x: auto;
+  padding: var(--gt-fixed-toolbar-pad);
   scrollbar-width: none;
+}
+.gotipe-toolbar-track[data-more="left"] {
+  mask-image: linear-gradient(to right, transparent, currentColor var(--gt-tool));
+}
+.gotipe-toolbar-track[data-more="right"] {
+  mask-image: linear-gradient(to left, transparent, currentColor var(--gt-tool));
+}
+.gotipe-toolbar-track[data-more="both"] {
+  mask-image: linear-gradient(
+    to right,
+    transparent,
+    currentColor var(--gt-tool),
+    currentColor calc(100% - var(--gt-tool)),
+    transparent
+  );
 }
 
 /* ui/popovers.css */
@@ -2185,8 +2210,11 @@ ol.gotipe-list > li::before {
   position: relative;
   background: var(--gt-fill-1);
 }
+/* centred by a margin, not a transform: a transform would shut its menu in a layer under the
+   later parts of the table (the strip that adds a row) */
 .gotipe-column-handle {
   position: absolute;
+  z-index: var(--gt-z-overlay);
   top: 50%;
   right: var(--gt-toolbar-pad);
   left: auto;
@@ -2194,10 +2222,10 @@ ol.gotipe-list > li::before {
   place-items: center;
   width: var(--gt-handle-w);
   height: var(--gt-handle-w);
+  margin-top: calc(-0.5 * var(--gt-handle-w));
   border-radius: var(--gt-radius-control);
   background: var(--gt-fill-2);
   color: var(--gt-text);
-  transform: translateY(-50%);
 }
 .gotipe-table th.is-number > .gotipe-column-handle {
   right: auto;
@@ -2966,22 +2994,23 @@ ol.gotipe-list > li::before {
       d="M2.5 4v8M8 4v8M2.5 8H8M10.5 6h3l-1.75 2.1a1.95 1.95 0 1 1-1.3 3.4"
     />
   </symbol>
+  <!-- lists: two rows, the marker level with its line; a task is one box with its check -->
   <symbol id="i-list" viewBox="0 0 16 16">
-    <path vector-effect="non-scaling-stroke" d="M6.5 4.5h7M6.5 8h7M6.5 11.5h7" />
+    <path vector-effect="non-scaling-stroke" d="M6.75 4.5h6.75M6.75 11.5h6.75" />
     <g fill="currentColor" stroke="none">
-      <circle cx="3.25" cy="4.5" r="1" />
-      <circle cx="3.25" cy="8" r="1" />
-      <circle cx="3.25" cy="11.5" r="1" />
+      <circle cx="3.5" cy="4.5" r="1" />
+      <circle cx="3.5" cy="11.5" r="1" />
     </g>
   </symbol>
   <symbol id="i-list-num" viewBox="0 0 16 16">
-    <path vector-effect="non-scaling-stroke" d="M7 4.5h6.5M7 8h6.5M7 11.5h6.5M2.75 3.5l1-.75v3" />
-    <path vector-effect="non-scaling-stroke" d="M2.5 8.6a1 1 0 0 1 1.9.35c0 .9-1.9 1.3-1.9 2.55h2" />
+    <path
+      vector-effect="non-scaling-stroke"
+      d="M7.25 4.5h6.25M7.25 11.5h6.25M2.6 3.4 3.75 2.75v3.5M2.5 10.5c.15-.5.55-.75 1.05-.75.65 0 1.15.42 1.15 1 0 .48-.28.83-.7 1.25L2.5 13.25h2.4"
+    />
   </symbol>
   <symbol id="i-todo" viewBox="0 0 16 16">
-    <rect vector-effect="non-scaling-stroke" x="2.5" y="3" width="4.5" height="4.5" rx="1" />
-    <rect vector-effect="non-scaling-stroke" x="2.5" y="9" width="4.5" height="4.5" rx="1" />
-    <path vector-effect="non-scaling-stroke" d="M9.5 5.25h4M9.5 11.25h4M3.6 5.3l.9.9 1.4-1.6" />
+    <rect vector-effect="non-scaling-stroke" x="2.75" y="2.75" width="10.5" height="10.5" rx="2.25" />
+    <path vector-effect="non-scaling-stroke" d="m5.6 8.1 1.65 1.65 3.2-3.5" />
   </symbol>
   <symbol id="i-quote" viewBox="0 0 16 16">
     <path vector-effect="non-scaling-stroke" d="M3.5 3.5v9M6.5 5h6.5M6.5 8h6.5M6.5 11h4" />
@@ -3734,8 +3763,8 @@ editor<span class="tk-pun">.</span>on<span class="tk-pun">(</span><span class="t
     <span class="at-num">3</span>
     <h2 class="at-figure-title">Вид modern</h2>
     <p class="at-caption">
-      Редактор формы или CMS: закреплённая панель над документом, заголовок — первая строка, без шапки страницы и ручек. На узком экране панель листается вбок. Сейчас такая панель есть только
-      в playground — вид предлагает перенести её в библиотеку.
+      Редактор формы или CMS: закреплённая панель над документом, заголовок — первая строка, без шапки страницы и ручек. На узком экране панель листается вбок, край со скрытыми инструментами
+      затухает. Сейчас такая панель есть только в playground — вид предлагает перенести её в библиотеку.
     </p>
   </figcaption>
   <section class="at-stage" data-w="1024">
@@ -3743,32 +3772,34 @@ editor<span class="tk-pun">.</span>on<span class="tk-pun">(</span><span class="t
 <div class="at-frame gotipe-root" data-gt-view="modern" data-frame="modern-document" data-w="1024">
 <div class="gotipe-modern">
     <div class="gotipe-toolbar gotipe-toolbar-fixed" role="toolbar" aria-label="Форматирование">
-  <span class="gotipe-tool"><svg class="gt-icon"><use href="#i-undo" /></svg></span>
-  <span class="gotipe-tool" aria-disabled="true"><svg class="gt-icon"><use href="#i-redo" /></svg></span>
-  <span class="gotipe-tool-sep"></span>
-  <span class="gotipe-tool is-text">Текст<svg class="gt-icon"><use href="#i-chevron-down" /></svg></span>
-  <span class="gotipe-tool-sep"></span>
-  <span class="gotipe-tool"><svg class="gt-icon"><use href="#i-bold" /></svg></span>
-  <span class="gotipe-tool"><svg class="gt-icon"><use href="#i-italic" /></svg></span>
-  <span class="gotipe-tool"><svg class="gt-icon"><use href="#i-underline" /></svg></span>
-  <span class="gotipe-tool"><svg class="gt-icon"><use href="#i-strike" /></svg></span>
-  <span class="gotipe-tool"><svg class="gt-icon"><use href="#i-code" /></svg></span>
-  <span class="gotipe-tool"><svg class="gt-icon"><use href="#i-link" /></svg></span>
-  <span class="gotipe-tool"
-    ><span class="gotipe-color-tool"
-      ><svg class="gt-icon"><use href="#i-letter" /></svg><span class="gotipe-color-bar"></span></span
-  ></span>
-  <span class="gotipe-tool-sep"></span>
-  <span class="gotipe-tool"><svg class="gt-icon"><use href="#i-list" /></svg></span>
-  <span class="gotipe-tool"><svg class="gt-icon"><use href="#i-list-num" /></svg></span>
-  <span class="gotipe-tool"><svg class="gt-icon"><use href="#i-todo" /></svg></span>
-  <span class="gotipe-tool"><svg class="gt-icon"><use href="#i-outdent" /></svg></span>
-  <span class="gotipe-tool"><svg class="gt-icon"><use href="#i-indent" /></svg></span>
-  <span class="gotipe-tool-sep"></span>
-  <span class="gotipe-tool is-text"
-    ><svg class="gt-icon"><use href="#i-plus" /></svg>Вставить<svg class="gt-icon">
-      <use href="#i-chevron-down" /></svg
-  ></span>
+  <div class="gotipe-toolbar-track">
+    <span class="gotipe-tool"><svg class="gt-icon"><use href="#i-undo" /></svg></span>
+    <span class="gotipe-tool" aria-disabled="true"><svg class="gt-icon"><use href="#i-redo" /></svg></span>
+    <span class="gotipe-tool-sep"></span>
+    <span class="gotipe-tool is-text">Текст<svg class="gt-icon"><use href="#i-chevron-down" /></svg></span>
+    <span class="gotipe-tool-sep"></span>
+    <span class="gotipe-tool"><svg class="gt-icon"><use href="#i-bold" /></svg></span>
+    <span class="gotipe-tool"><svg class="gt-icon"><use href="#i-italic" /></svg></span>
+    <span class="gotipe-tool"><svg class="gt-icon"><use href="#i-underline" /></svg></span>
+    <span class="gotipe-tool"><svg class="gt-icon"><use href="#i-strike" /></svg></span>
+    <span class="gotipe-tool"><svg class="gt-icon"><use href="#i-code" /></svg></span>
+    <span class="gotipe-tool"><svg class="gt-icon"><use href="#i-link" /></svg></span>
+    <span class="gotipe-tool"
+      ><span class="gotipe-color-tool"
+        ><svg class="gt-icon"><use href="#i-letter" /></svg><span class="gotipe-color-bar"></span></span
+    ></span>
+    <span class="gotipe-tool-sep"></span>
+    <span class="gotipe-tool"><svg class="gt-icon"><use href="#i-list" /></svg></span>
+    <span class="gotipe-tool"><svg class="gt-icon"><use href="#i-list-num" /></svg></span>
+    <span class="gotipe-tool"><svg class="gt-icon"><use href="#i-todo" /></svg></span>
+    <span class="gotipe-tool"><svg class="gt-icon"><use href="#i-outdent" /></svg></span>
+    <span class="gotipe-tool"><svg class="gt-icon"><use href="#i-indent" /></svg></span>
+    <span class="gotipe-tool-sep"></span>
+    <span class="gotipe-tool is-text"
+      ><svg class="gt-icon"><use href="#i-plus" /></svg>Вставить<svg class="gt-icon">
+        <use href="#i-chevron-down" /></svg
+    ></span>
+  </div>
 </div>
     <article class="gotipe-page" lang="ru">
       <header class="gotipe-page-head">
@@ -4007,32 +4038,34 @@ editor<span class="tk-pun">.</span>on<span class="tk-pun">(</span><span class="t
 <div class="at-frame gotipe-root" data-gt-view="modern" data-frame="modern-phone" data-w="375" data-h="720">
 <div class="gotipe-modern">
     <div class="gotipe-toolbar gotipe-toolbar-fixed" role="toolbar" aria-label="Форматирование">
-  <span class="gotipe-tool"><svg class="gt-icon"><use href="#i-undo" /></svg></span>
-  <span class="gotipe-tool" aria-disabled="true"><svg class="gt-icon"><use href="#i-redo" /></svg></span>
-  <span class="gotipe-tool-sep"></span>
-  <span class="gotipe-tool is-text">Текст<svg class="gt-icon"><use href="#i-chevron-down" /></svg></span>
-  <span class="gotipe-tool-sep"></span>
-  <span class="gotipe-tool"><svg class="gt-icon"><use href="#i-bold" /></svg></span>
-  <span class="gotipe-tool"><svg class="gt-icon"><use href="#i-italic" /></svg></span>
-  <span class="gotipe-tool"><svg class="gt-icon"><use href="#i-underline" /></svg></span>
-  <span class="gotipe-tool"><svg class="gt-icon"><use href="#i-strike" /></svg></span>
-  <span class="gotipe-tool"><svg class="gt-icon"><use href="#i-code" /></svg></span>
-  <span class="gotipe-tool"><svg class="gt-icon"><use href="#i-link" /></svg></span>
-  <span class="gotipe-tool"
-    ><span class="gotipe-color-tool"
-      ><svg class="gt-icon"><use href="#i-letter" /></svg><span class="gotipe-color-bar"></span></span
-  ></span>
-  <span class="gotipe-tool-sep"></span>
-  <span class="gotipe-tool"><svg class="gt-icon"><use href="#i-list" /></svg></span>
-  <span class="gotipe-tool"><svg class="gt-icon"><use href="#i-list-num" /></svg></span>
-  <span class="gotipe-tool"><svg class="gt-icon"><use href="#i-todo" /></svg></span>
-  <span class="gotipe-tool"><svg class="gt-icon"><use href="#i-outdent" /></svg></span>
-  <span class="gotipe-tool"><svg class="gt-icon"><use href="#i-indent" /></svg></span>
-  <span class="gotipe-tool-sep"></span>
-  <span class="gotipe-tool is-text"
-    ><svg class="gt-icon"><use href="#i-plus" /></svg>Вставить<svg class="gt-icon">
-      <use href="#i-chevron-down" /></svg
-  ></span>
+  <div class="gotipe-toolbar-track">
+    <span class="gotipe-tool"><svg class="gt-icon"><use href="#i-undo" /></svg></span>
+    <span class="gotipe-tool" aria-disabled="true"><svg class="gt-icon"><use href="#i-redo" /></svg></span>
+    <span class="gotipe-tool-sep"></span>
+    <span class="gotipe-tool is-text">Текст<svg class="gt-icon"><use href="#i-chevron-down" /></svg></span>
+    <span class="gotipe-tool-sep"></span>
+    <span class="gotipe-tool"><svg class="gt-icon"><use href="#i-bold" /></svg></span>
+    <span class="gotipe-tool"><svg class="gt-icon"><use href="#i-italic" /></svg></span>
+    <span class="gotipe-tool"><svg class="gt-icon"><use href="#i-underline" /></svg></span>
+    <span class="gotipe-tool"><svg class="gt-icon"><use href="#i-strike" /></svg></span>
+    <span class="gotipe-tool"><svg class="gt-icon"><use href="#i-code" /></svg></span>
+    <span class="gotipe-tool"><svg class="gt-icon"><use href="#i-link" /></svg></span>
+    <span class="gotipe-tool"
+      ><span class="gotipe-color-tool"
+        ><svg class="gt-icon"><use href="#i-letter" /></svg><span class="gotipe-color-bar"></span></span
+    ></span>
+    <span class="gotipe-tool-sep"></span>
+    <span class="gotipe-tool"><svg class="gt-icon"><use href="#i-list" /></svg></span>
+    <span class="gotipe-tool"><svg class="gt-icon"><use href="#i-list-num" /></svg></span>
+    <span class="gotipe-tool"><svg class="gt-icon"><use href="#i-todo" /></svg></span>
+    <span class="gotipe-tool"><svg class="gt-icon"><use href="#i-outdent" /></svg></span>
+    <span class="gotipe-tool"><svg class="gt-icon"><use href="#i-indent" /></svg></span>
+    <span class="gotipe-tool-sep"></span>
+    <span class="gotipe-tool is-text"
+      ><svg class="gt-icon"><use href="#i-plus" /></svg>Вставить<svg class="gt-icon">
+        <use href="#i-chevron-down" /></svg
+    ></span>
+  </div>
 </div>
     <article class="gotipe-page" lang="ru">
       <header class="gotipe-page-head">
@@ -6615,6 +6648,23 @@ editor<span class="tk-pun">.</span>on<span class="tk-pun">(</span><span class="t
         other.setAttribute("aria-pressed", String(other === button));
       }
     });
+  }
+})();
+
+// A bar that scrolls sideways marks the side with more tools (`data-more`), as the library marks a
+// wide table: the theme fades that edge.
+(() => {
+  for (const track of document.querySelectorAll(".gotipe-toolbar-track")) {
+    const update = () => {
+      const left = track.scrollLeft > 1;
+      const right = track.scrollLeft + track.clientWidth < track.scrollWidth - 1;
+      const more = left && right ? "both" : left ? "left" : right ? "right" : null;
+      if (more) track.dataset.more = more;
+      else delete track.dataset.more;
+    };
+    update();
+    track.addEventListener("scroll", update, { passive: true });
+    new ResizeObserver(update).observe(track);
   }
 })();
 </script>

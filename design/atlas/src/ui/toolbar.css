@@ -82,9 +82,34 @@
   position: sticky;
   top: 0;
   z-index: var(--gt-z-handle);
-  overflow-x: auto;
-  padding: var(--gt-fixed-toolbar-pad);
+  display: block;
+  padding: 0;
   border-bottom: var(--gt-hairline) solid var(--gt-line);
   background: var(--gt-page-bg);
+}
+/* The tools scroll on a track inside the bar. Where the track is cut they fade out, a tool wide,
+   as a wide table does (`data-more`: the side with more tools). The mask is on the track, not the
+   bar, so the page under the sticky bar stays hidden. */
+.gotipe-toolbar-track {
+  display: flex;
+  align-items: center;
+  gap: var(--gt-toolbar-gap);
+  overflow-x: auto;
+  padding: var(--gt-fixed-toolbar-pad);
   scrollbar-width: none;
+}
+.gotipe-toolbar-track[data-more="left"] {
+  mask-image: linear-gradient(to right, transparent, currentColor var(--gt-tool));
+}
+.gotipe-toolbar-track[data-more="right"] {
+  mask-image: linear-gradient(to left, transparent, currentColor var(--gt-tool));
+}
+.gotipe-toolbar-track[data-more="both"] {
+  mask-image: linear-gradient(
+    to right,
+    transparent,
+    currentColor var(--gt-tool),
+    currentColor calc(100% - var(--gt-tool)),
+    transparent
+  );
 }
