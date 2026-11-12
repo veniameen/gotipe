@@ -332,3 +332,56 @@
 .gotipe-text-color-reset {
   color: var(--gt-text-3);
 }
+
+/* ---- a toolbar button's tooltip: an inverted label, its key quieter after it ---- */
+.gotipe-bubble-menu button {
+  position: relative;
+}
+.gotipe-tip {
+  position: absolute;
+  top: calc(100% + var(--gt-toolbar-pad) + var(--gt-overlay-gap));
+  left: 50%;
+  z-index: var(--gt-z-tooltip);
+  display: flex;
+  gap: var(--gt-kbd-gap);
+  max-width: var(--gt-tooltip-max);
+  padding: var(--gt-tooltip-pad);
+  border-radius: var(--gt-radius-control);
+  background: var(--gt-inverse);
+  color: var(--gt-inverse-text);
+  font-family: var(--gt-font-ui);
+  font-size: var(--gt-ui-small);
+  font-weight: var(--gt-weight-regular);
+  line-height: var(--gt-ui-small-leading);
+  letter-spacing: normal;
+  white-space: nowrap;
+  pointer-events: none;
+  transform: translateX(-50%);
+  visibility: hidden;
+  opacity: 0;
+}
+:is(button:hover, button:focus-visible) > .gotipe-tip {
+  visibility: visible;
+  opacity: 1;
+  transition: opacity var(--gt-duration-fast) var(--gt-ease-out) var(--gt-tip-delay), visibility 0s
+    linear var(--gt-tip-delay);
+}
+.gotipe-tip-key {
+  color: var(--gt-inverse-text-2);
+  font-variant-numeric: tabular-nums;
+}
+button[aria-expanded="true"] > .gotipe-tip {
+  display: none;
+}
+
+/* a bound key at the end of a menu row */
+.gotipe-menu-key {
+  margin-left: auto;
+  padding-left: var(--gt-space-3);
+  color: var(--gt-text-3);
+  font-size: var(--gt-ui-small);
+  font-variant-numeric: tabular-nums;
+}
+.gotipe-menu-key + .gotipe-menu-end {
+  margin-left: var(--gt-space-2);
+}
