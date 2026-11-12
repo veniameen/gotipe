@@ -1,0 +1,123 @@
+import { type BlockView, type GoTipeEditor, editTable } from "@gotipe/core";
+
+/**
+ * Column types are read from and written to Markdown cell content and
+ * alignment. «Число» — right alignment `---:`; «Код» — every body cell in
+ * backticks; «Да / нет» — cells «да»/«нет»; «Текст» — as is.
+ */
+export type ColumnType = "text" | "code" | "number" | "boolean";
+
+type Align = "left" | "right" | "center" | null;
+
+function cellText(cell: BlockView): string {
+  return Array.isArray(cell.content) ? cell.content.map((s) => s.text).join("") : "";
+}
+
+function isFullyCode(cell: BlockView): boolean {
+  return (
+    Array.isArray(cell.content) &&
+    cell.content.length > 0 &&
+    cell.content.every((s) => s.text.length === 0 || s.marks.some((m) => m.type === "code"))
+  );
+}
+
+export function findTable(editor: GoTipeEditor, tableId: string): BlockView | null {
+  const visit = (blocks: BlockView[]): BlockView | null => {
+    for (const b of blocks) {
+      if (b.id === tableId) return b;
+      const inner = visit(b.children);
+      if (inner) return inner;
+    }
+    return null;
+  };
+  return visit(editor.getViewState().blocks);
+}
+
+function bodyCells(table: BlockView, column: number): BlockView[] {
+  return table.children
+    .slice(table.children[0]?.children.some((c) => c.type === "tableHeader") ? 1 : 0)
+    .map((row) => row.children[column])
+    .filter((c): c is BlockView => !!c);
+}
+
+export function columnTypeOf(
+  table: BlockView,
+  column: number,
+  yes: string,
+  no: string,
+): ColumnType {
+  const align = (table.attrs.align as Align[] | undefined)?.[column] ?? null;
+  const cells = bodyCells(table, column).filter((c) => cellText(c).length > 0);
+  if (cells.length > 0 && cells.every(isFullyCode)) return "code";
+  if (align === "right") return "number";
+  const values = new Set([yes, no]);
+  if (cells.length > 0 && cells.every((c) => values.has(cellText(c).trim().toLowerCase())))
+    return "boolean";
+  return "text";
+}
+
+const TRUTHY = /^(да|yes|true|1|\+|x|✓|✔|y)$/i;
+const FALSY = /^(нет|no|false|0|-|—|n|)$/i;
+
+export function setColumnType(
+  editor: GoTipeEditor,
+  tableId: string,
+  column: number,
+  type: ColumnType,
+  words: { yes: string; no: string },
+): void {
+  const table = findTable(editor, tableId);
+  if (!table) return;
+  const steps: Record<string, unknown>[] = [];
+  const align = [...((table.attrs.align as Align[] | undefined) ?? [])];
+  const width = Math.max(align.length, ...table.children.map((r) => r.children.length));
+  while (align.length < width) align.push(null);
+  align[column] =
+    type === "number" ? "right" : align[column] === "right" ? null : (align[column] ?? null);
+  steps.push({ type: "setBlockAttrs", blockId: table.id, attrs: { align } });
+  for (const cell of bodyCells(table, column)) {
+    const text = cellText(cell);
+    if (type === "code") {
+      if (text.length > 0 && !isFullyCode(cell)) {
+        steps.push({
+          type: "addMark",
+          blockId: cell.id,
+          from: 0,
+          to: text.length,
+          mark: { type: "code", attrs: {} },
+        });
+      }
+    } else if (isFullyCode(cell) && text.length > 0) {
+      steps.push({
+        type: "removeMark",
+        blockId: cell.id,
+        from: 0,
+        to: text.length,
+        markType: "code",
+      });
+    }
+    if (type === "boolean") {
+      const value = text.trim();
+      const next = TRUTHY.test(value) ? words.yes : FALSY.test(value) ? words.no : null;
+      if (next !== null && next !== text) {
+        if (text.length > 0)
+          steps.push({ type: "deleteText", blockId: cell.id, from: 0, to: text.length });
+        steps.push({ type: "insertText", blockId: cell.id, offset: 0, text: next, marks: [] });
+      }
+    }
+  }
+  editor.dispatch({ steps });
+}
+
+export function addRow(editor: GoTipeEditor, tableId: string): void {
+  const table = findTable(editor, tableId);
+  if (table) editTable(editor, tableId, { type: "insertRow", index: table.children.length });
+}
+
+export function addColumn(editor: GoTipeEditor, tableId: string, after: number): void {
+  editTable(editor, tableId, { type: "insertColumn", index: after + 1 });
+}
+
+export function deleteColumn(editor: GoTipeEditor, tableId: string, column: number): void {
+  editTable(editor, tableId, { type: "deleteColumn", index: column });
+}

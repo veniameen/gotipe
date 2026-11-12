@@ -34,7 +34,8 @@ test.describe('PageEditor showcase', () => {
     await view.selectOption('page');
     await expect(page).toHaveURL(/\?view=page#basic$/);
     await expect(page.locator('[data-gotipe-page]')).toBeVisible();
-    await expect(page.locator('[data-gotipe-block-editor]')).toHaveCount(0);
+    // the page is the shared editor with a Markdown session (GoTipe Atlas, frame 19)
+    await expect(page.locator('[data-gotipe-page] [data-gotipe-block-editor]')).toBeVisible();
   });
 
   test('host errors expose recoverable composition text without editing the document', async ({ page }) => {
@@ -59,15 +60,16 @@ test.describe('PageEditor showcase', () => {
 
   test('renders the Markdown file and keeps it byte-for-byte', async ({ page }) => {
     await expect(page.locator('.gotipe-page-title')).toHaveText('Документ редактора');
-    await expect(page.locator('.gotipe-page-callout-agent')).toContainText('Инструкции для агента');
+    // a host's own quote stays a quote: the library knows no host-specific callout
+    await expect(page.locator('[data-gotipe-page] blockquote').first()).toContainText('Инструкции для агента');
     await expect(page.locator('[data-block-type="todoItem"]')).toHaveCount(3);
     await expect(page.locator('.gotipe-table th')).toHaveCount(3);
-    await expect(page.locator('.gotipe-page-raw')).toHaveCount(3);
+    await expect(page.locator('.gotipe-raw')).toHaveCount(3);
     expect(await source(page).textContent()).toBe(PAGE_MARKDOWN);
   });
 
   test('editing a paragraph changes only its line', async ({ page }) => {
-    await caretToEnd(page, '.gotipe-callout-content', 1);
+    await caretToEnd(page, '.gotipe-callout-content', 0);
     await page.keyboard.type(' Новый текст.');
     await expect.poll(() => source(page).textContent()).toBe(PAGE_MARKDOWN.replace(
       '> Текст с `кодом` сохраняет форматирование.',
@@ -93,7 +95,7 @@ test.describe('PageEditor showcase', () => {
     await expect(source(page)).toContainText('- [ ] Проверить таблицу — отдельно漢\n');
   });
 
-  test('«/» opens the v6 blocks menu and inserts a heading', async ({ page }) => {
+  test('«/» opens the blocks menu and inserts a heading', async ({ page }) => {
     await caretToEnd(page, '.gotipe-page-title');
     await page.keyboard.press('Enter');
     await page.keyboard.type('/');
@@ -160,8 +162,8 @@ test.describe('PageEditor showcase', () => {
   test('column type «Код» writes backticks into the file', async ({ page }) => {
     const header = page.locator('.gotipe-table th').nth(2);
     await header.hover();
-    await header.locator('.gotipe-col-btn').click();
-    const menu = page.locator('.gotipe-col-menu');
+    await header.locator('.gotipe-column-handle').click();
+    const menu = page.locator('[data-gotipe-column-menu]');
     await expect(menu).toContainText('Тип столбца');
     await menu.getByRole('menuitemradio', { name: 'Код' }).click();
     await expect(source(page)).toContainText('| `alpha` |  | `нет` |');
@@ -184,12 +186,12 @@ test.describe('PageEditor showcase', () => {
   });
 
   test('dark theme re-colours the page through tokens', async ({ page }) => {
-    const bg = () => page.locator('.gotipe-page').evaluate((el) => getComputedStyle(el).backgroundColor);
+    const ink = () => page.locator('.gotipe-page-title').evaluate((el) => getComputedStyle(el).color);
     await page.getByRole('banner').getByRole('radio', { name: 'Light theme' }).click();
-    const light = await bg();
+    const light = await ink();
     await page.getByRole('banner').getByRole('radio', { name: 'Dark theme' }).click();
     await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
-    const dark = await bg();
+    const dark = await ink();
     expect(dark).not.toBe(light);
   });
 
@@ -199,13 +201,13 @@ test.describe('PageEditor showcase', () => {
     await caretToEnd(page, '.gotipe-page-title');
     for (let index = 0; index < 5; index++) await page.keyboard.press('Shift+ArrowLeft');
     await page.getByRole('button', { name: 'Ссылка', exact: true }).click();
-    const address = page.getByRole('textbox', { name: 'Ссылка', exact: true });
+    const address = page.getByRole('textbox', { name: 'Адрес ссылки', exact: true });
     await address.fill('javascript:alert(1)');
-    await page.getByRole('button', { name: 'Ссылка', exact: true }).click();
+    await address.press('Enter');
     await expect(address).toHaveAttribute('aria-invalid', 'true');
     await expect(heading.locator('a')).toHaveCount(0);
     await address.fill('https://example.com/путь');
-    await page.getByRole('button', { name: 'Ссылка', exact: true }).click();
+    await address.press('Enter');
     await expect(heading.locator('a')).toHaveText(original.slice(-5));
     await expect(page.getByRole('textbox', { name: 'Страница', exact: true })).toBeFocused();
     await page.getByRole('button', { name: 'Ссылка', exact: true }).click();
@@ -220,7 +222,7 @@ test.describe('PageEditor showcase', () => {
   test('the floating page toolbar follows viewport, container, scrolling, and theme', async ({ page }) => {
     await caretToEnd(page, '.gotipe-page-title');
     for (let index = 0; index < 5; index++) await page.keyboard.press('Shift+ArrowLeft');
-    const menu = page.locator('.gotipe-page-bubble');
+    const menu = page.locator('[data-gotipe-bubble-menu]');
     await expect(menu).toBeVisible();
     for (const icon of await menu.locator('button svg').all()) {
       const bounds = await icon.boundingBox();
@@ -231,7 +233,7 @@ test.describe('PageEditor showcase', () => {
       expect(bounds!.height).toBeLessThanOrEqual(control!.height);
     }
     await page.locator('.gotipe-page').evaluate((node) => node.style.setProperty('--gt-icon-size', '20px'));
-    await expect(menu.locator('button svg').first()).toHaveCSS('width', '20px');
+    await expect(menu.getByRole('button', { name: 'Жирный', exact: true }).locator('svg')).toHaveCSS('width', '20px');
     await page.locator('.gotipe-page').evaluate((node) => node.style.removeProperty('--gt-icon-size'));
     for (const width of [320, 375, 768, 1024, 1440]) {
       await page.setViewportSize({ width, height: 780 });
@@ -253,7 +255,7 @@ test.describe('PageEditor showcase', () => {
     await page.locator('.gotipe-page-example-surface').evaluate((node) => { node.scrollTop = 160; });
     await expect.poll(async () => (await menu.boundingBox())?.y).toBeGreaterThanOrEqual(7);
     await page.getByRole('button', { name: 'Ссылка', exact: true }).click();
-    await expect(page.getByRole('textbox', { name: 'Ссылка', exact: true })).toBeFocused();
+    await expect(page.getByRole('textbox', { name: 'Адрес ссылки', exact: true })).toBeFocused();
     await page.locator('[data-gotipe-page-readonly]').click();
     await expect(menu).toHaveCount(0);
   });

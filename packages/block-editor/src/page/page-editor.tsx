@@ -1,4 +1,4 @@
-import type { BlockView, EditorHost, GoTipeEditor } from "@gotipe/core";
+import type { EditorHost, GoTipeEditor } from "@gotipe/core";
 import {
   Blockquote,
   Bold,
@@ -28,13 +28,14 @@ import {
 import { createEditor, defineExtension, saveAsset } from "@gotipe/core/js";
 import type { I18n } from "@gotipe/i18n";
 import { markdownRawNodeSpec } from "@gotipe/markdown";
-import { Editor, GoTipeI18nProvider, type PlaceholderFn, useGoTipeI18n } from "@gotipe/react";
+import { type BlockViews, GoTipeI18nProvider, useGoTipeI18n } from "@gotipe/react";
 import {
   type CommentState,
   type ProposalState,
   type ReviewProposal,
   applyAnchoredEdits,
 } from "@gotipe/suggestions";
+import type { ThemePreset } from "@gotipe/theme";
 import type React from "react";
 import {
   forwardRef,
@@ -45,21 +46,17 @@ import {
   useRef,
   useState,
 } from "react";
-import { SlashMenu } from "../components/slash-menu";
+import { BlockEditor } from "../components/block-editor";
 import type { CodeHighlighter } from "../highlight/types";
 import { ReviewBar } from "../review/review-bar";
 import { type PageReviewProps, type ReviewApi, ReviewLayer } from "../review/review-layer";
-import { PageIcon } from "./icons";
 import { MarkdownSession } from "./markdown-session";
 import { PageOverlayContext } from "./overlay";
-import { PageBlockMenu } from "./page-block-menu";
-import { PageBubbleMenu } from "./page-bubble-menu";
 import {
   type PageBlockCommand,
   type PageBlockKind,
   insertPageBlock,
   pageBlockCommands,
-  pageSlashGroups,
 } from "./page-commands";
 import { createPageBlockViews } from "./page-views";
 
@@ -139,8 +136,18 @@ export interface PageEditorProps {
   review?: PageReviewProps;
   /** Show the edit bar above the page. */
   reviewBar?: { title?: React.ReactNode; extra?: React.ReactNode[] } | false;
+  /**
+   * One of the shared views (GoTipe Atlas, frames 1–4 and 19): `notion` (default), `docs`,
+   * `modern` or `minimal`. The page has no theme of its own.
+   */
+  view?: ThemePreset;
   /** Optional code highlighter (`@gotipe/block-editor/shiki`). */
   highlight?: CodeHighlighter;
+  /**
+   * The host's own block views; they win over the page's and the shared ones. E.g. a quote that
+   * starts with a bold label the host gives a look of its own.
+   */
+  blockViews?: BlockViews;
   /** Blocks offered by «/» (default: all). */
   blocks?: PageBlockKind[];
   autoFocus?: boolean;
@@ -162,7 +169,9 @@ const PageEditorInner = forwardRef<PageEditorHandle, PageEditorProps>(
       titlePlaceholder,
       review,
       reviewBar,
+      view = "notion",
       highlight,
+      blockViews: hostViews,
       blocks: allowedBlocks,
       autoFocus,
       className,
@@ -279,27 +288,9 @@ const PageEditorInner = forwardRef<PageEditorHandle, PageEditorProps>(
       () => pageBlockCommands(i18n, allowedBlocks),
       [i18n, allowedBlocks],
     );
-    const groups = useMemo(() => pageSlashGroups(i18n), [i18n]);
-    const blockViews = useMemo(() => createPageBlockViews({ highlight }), [highlight]);
-
-    const placeholder = useCallback<PlaceholderFn>(
-      (block: BlockView, parentType) => {
-        switch (block.type) {
-          case "paragraph":
-            return i18n.t("page.placeholder.paragraph");
-          case "heading":
-            return i18n.t("page.placeholder.heading");
-          case "listItem":
-            return parentType ? i18n.t("page.placeholder.list") : null;
-          case "todoItem":
-            return i18n.t("page.placeholder.todo");
-          case "blockquote":
-            return i18n.t("page.placeholder.quote");
-          default:
-            return null;
-        }
-      },
-      [i18n],
+    const blockViews = useMemo<BlockViews>(
+      () => ({ ...createPageBlockViews({ highlight, titlePlaceholder }), ...hostViews }),
+      [highlight, titlePlaceholder, hostViews],
     );
 
     const localAccept = useCallback(
@@ -370,16 +361,14 @@ const PageEditorInner = forwardRef<PageEditorHandle, PageEditorProps>(
       [editor, session, markdown],
     );
 
-    const titleHint = titlePlaceholder ?? i18n.t("page.titlePlaceholder");
-
     return (
       <div
         ref={setRoot}
         className={`gotipe-page${className ? ` ${className}` : ""}`}
         style={style}
         data-gotipe-page=""
+        data-gt-view={view}
         data-readonly={readOnly ? "" : undefined}
-        data-title-placeholder={titleHint}
       >
         <PageOverlayContext.Provider value={overlay}>
           {effectiveReview && reviewBar !== false && reviewBar !== undefined ? (
@@ -391,52 +380,28 @@ const PageEditorInner = forwardRef<PageEditorHandle, PageEditorProps>(
               onRejectAll={() => reviewApi.current?.rejectAll()}
             />
           ) : null}
-          <div
-            className="gotipe-page-doc"
-            style={{ "--gt-title-placeholder": JSON.stringify(titleHint) } as React.CSSProperties}
-          >
-            {editor ? (
-              <Editor
-                editor={editor}
-                className="gotipe-page-editor"
-                blockViews={blockViews}
-                placeholder={placeholder}
-                ariaLabel={i18n.t("page.ariaLabel")}
-              />
-            ) : (
-              <div className="gotipe-page-loading" aria-busy="true" />
-            )}
-          </div>
-          {editor ? (
-            <>
-              <SlashMenu
-                editor={editor}
-                commands={commands}
-                groups={groups}
-                className="gotipe-page-slash"
-                renderIcon={(cmd) => <PageIcon name={(cmd as PageBlockCommand).pageIcon} />}
-                renderMeta={(cmd) => (cmd as PageBlockCommand).shortcut ?? null}
-                labels={{
-                  menu: i18n.t("slash.menuLabel"),
-                  list: i18n.t("slash.menuLabel"),
-                  empty: i18n.t("slash.empty"),
-                  results: (n) => String(n),
-                }}
-              />
-              <PageBubbleMenu editor={editor} />
-              <PageBlockMenu editor={editor} root={root} commands={commands} />
-              {effectiveReview ? (
-                <ReviewLayer
-                  editor={editor}
-                  session={session}
-                  root={root}
-                  review={effectiveReview}
-                  onLocalAccept={localAccept}
-                  apiRef={reviewApi}
-                  onStates={setReviewStates}
-                />
-              ) : null}
-            </>
+          {/* the shared editor: its panel, «/», handle, block and column menus (Atlas, frame 19) */}
+          <BlockEditor
+            editor={editor}
+            view={view}
+            className="gotipe-page-editor"
+            highlight={highlight}
+            blockViews={blockViews}
+            slashCommands={commands}
+            ariaLabel={i18n.t("page.ariaLabel")}
+            errorToast={!host?.onError && !onError}
+            showAiCommandBar={false}
+          />
+          {editor && effectiveReview ? (
+            <ReviewLayer
+              editor={editor}
+              session={session}
+              root={root}
+              review={effectiveReview}
+              onLocalAccept={localAccept}
+              apiRef={reviewApi}
+              onStates={setReviewStates}
+            />
           ) : null}
           <div ref={setOverlay} className="gotipe-page-overlay" />
         </PageOverlayContext.Provider>
@@ -447,7 +412,7 @@ const PageEditorInner = forwardRef<PageEditorHandle, PageEditorProps>(
 
 /**
  * A reusable document editor: GFM Markdown in, Markdown out (untouched blocks keep
- * their bytes), Notion-like blocks and «/», model suggestions with cursors.
+ * their bytes), model suggestions with cursors — on top of the shared BlockEditor and its views.
  * Runs on the JS engine — no WASM, no eval — so it works under
  * `script-src 'self'`. Errors go to `host.onError` / `onError` only.
  */

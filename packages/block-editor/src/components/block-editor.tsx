@@ -1,13 +1,12 @@
-import type { GoTipeEditor } from "@gotipe/core";
-import { Editor } from "@gotipe/react";
-import type { ThemePreset } from "@gotipe/theme";
+import { type BlockViews, Editor } from "@gotipe/react";
 import type React from "react";
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
-import type { CodeHighlighter } from "../highlight/types";
 import { type DragPoint, useTouchDrag } from "../interaction/use-touch-drag";
 import { codeBlockViewFor } from "../views/code-block-view";
+import { TableCellView } from "../views/table-cell-view";
 import { AiCommandBar } from "./ai-command-bar";
 import { AiStatusIndicator } from "./ai-status-indicator";
+import type { BlockEditorProps } from "./block-editor-props";
 import {
   type DropTarget,
   LIST_ITEM_TYPES,
@@ -27,12 +26,11 @@ import {
 } from "./block-interaction";
 import { BlockToolbar } from "./block-toolbar";
 import { BlockEditorBubbleMenu } from "./bubble-menu";
-import type { RemotePeer } from "./collaboration-cursors";
 import { CollaborationCursors } from "./collaboration-cursors";
+import { DocsOutline } from "./docs-outline";
 import { EditorErrorToast, EditorSkeleton, EditorStarters } from "./editor-states";
 import { GhostText } from "./ghost-text";
 import { SlashMenu } from "./slash-menu";
-import type { Suggestion } from "./suggestion-toolbar";
 import { SuggestionToolbar } from "./suggestion-toolbar";
 import { ThemeToggle } from "./theme-toggle";
 
@@ -40,36 +38,7 @@ const TOOLBAR_HIDE_DELAY_MS = 20;
 const TOOLBAR_HOVER_X_MIN_OFFSET = 120;
 const TOOLBAR_HOVER_X_MAX_OFFSET = 560;
 
-export interface BlockEditorProps {
-  editor: GoTipeEditor | null;
-  className?: string;
-  style?: React.CSSProperties;
-  /**
-   * The view drawn in the GoTipe Atlas: `notion` (default), `docs`, `modern` or `minimal`.
-   * A view is a set of `--gt-*` tokens over the same markup (`data-gt-view` on the root).
-   */
-  view?: ThemePreset;
-  /** The page's head above the document, e.g. `<PageHead>` (icon, title, byline). */
-  header?: React.ReactNode;
-  /** Quick blocks under an empty page. Default: on for a page with a `header` in notion and docs. */
-  starters?: boolean;
-  /** Optional code highlighter, e.g. Shiki with `gotipeCodeTheme` from `@gotipe/block-editor/shiki`. */
-  highlight?: CodeHighlighter;
-  showSlashMenu?: boolean;
-  showBlockToolbar?: boolean;
-  showBubbleMenu?: boolean;
-  showCollaborationCursors?: boolean;
-  remotePeers?: RemotePeer[];
-  showAiCommandBar?: boolean;
-  showThemeToggle?: boolean;
-  suggestions?: Suggestion[];
-  onAiCommand?: (prompt: string) => void;
-  onSuggestionAccept?: (suggestion: Suggestion) => void;
-  onSuggestionReject?: (suggestion: Suggestion) => void;
-  onSuggestionAcceptAll?: () => void;
-  onSuggestionRejectAll?: () => void;
-  children?: React.ReactNode;
-}
+export type { BlockEditorProps } from "./block-editor-props";
 
 export function BlockEditor({
   editor,
@@ -91,6 +60,10 @@ export function BlockEditor({
   onSuggestionReject,
   onSuggestionAcceptAll,
   onSuggestionRejectAll,
+  blockViews: hostViews,
+  slashCommands,
+  ariaLabel,
+  errorToast = true,
   children,
 }: BlockEditorProps) {
   const [editable, setEditable] = useState(editor?.isEditable ?? false);
@@ -107,9 +80,15 @@ export function BlockEditor({
   const [toolbarPos, setToolbarPos] = useState<{ top: number; left: number } | null>(null);
   const [suggestionIndex, setSuggestionIndex] = useState(0);
   const containerRef = useRef<HTMLDivElement>(null);
-  const blockViews = useMemo(
-    () => (highlight ? { codeBlock: codeBlockViewFor(highlight) } : undefined),
-    [highlight],
+  // shared cells carry the column menu (Atlas frame 9); the host's views win
+  const blockViews = useMemo<BlockViews>(
+    () => ({
+      tableHeader: TableCellView,
+      tableCell: TableCellView,
+      ...(highlight ? { codeBlock: codeBlockViewFor(highlight) } : {}),
+      ...hostViews,
+    }),
+    [highlight, hostViews],
   );
   const hideToolbarTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const draggingBlockIdRef = useRef<string | null>(null);
@@ -483,9 +462,11 @@ export function BlockEditor({
       }
       onMouseLeave={showBlockToolbar ? handleMouseLeave : undefined}
     >
+      {view === "docs" && <DocsOutline editor={editor} />}
       <Editor
         editor={editor}
         blockViews={blockViews}
+        ariaLabel={ariaLabel}
         slotBefore={
           <>
             {showThemeToggle && (
@@ -498,8 +479,10 @@ export function BlockEditor({
         }
       >
         {starters && <EditorStarters editor={editor} />}
-        <EditorErrorToast editor={editor} />
-        {showSlashMenu && <SlashMenu editor={editor} commands={editor.getSlashCommands()} />}
+        {errorToast && <EditorErrorToast editor={editor} />}
+        {showSlashMenu && (
+          <SlashMenu editor={editor} commands={slashCommands ?? editor.getSlashCommands()} />
+        )}
         {showBubbleMenu && <BlockEditorBubbleMenu editor={editor} enableAI={showAiCommandBar} />}
         {children}
       </Editor>

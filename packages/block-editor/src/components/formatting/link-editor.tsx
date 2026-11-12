@@ -8,7 +8,7 @@ import { Tip } from "./tip";
 import { useFormattingMenu } from "./use-formatting-menu";
 
 export function LinkEditor({ editor }: { editor: GoTipeEditor }) {
-  const menu = useFormattingMenu(editor);
+  const menu = useFormattingMenu(editor, { returnTo: "text" });
   const [url, setUrl] = useState("");
   const input = useRef<HTMLInputElement>(null);
   const mark = currentMarks(editor).find((item) => item.type === "link");

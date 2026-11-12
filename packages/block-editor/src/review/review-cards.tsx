@@ -19,7 +19,7 @@ function useCardPosition(top: number, left: number) {
 }
 
 export const LANE_ICON: Record<ReviewLane["kind"], PageIconName> = {
-  agent: "agent",
+  agent: "sparkle",
   skill: "skill",
   tool: "tool",
   user: "user",
@@ -32,7 +32,7 @@ function LaneAvatar({ lane }: { lane: ReviewLane | undefined }) {
       style={trackStyle(lane?.color ?? "var(--gt-track-1)")}
       aria-hidden="true"
     >
-      <PageIcon name={lane ? LANE_ICON[lane.kind] : "agent"} />
+      <PageIcon name={lane ? LANE_ICON[lane.kind] : "sparkle"} />
     </span>
   );
 }
@@ -205,7 +205,7 @@ export function CommentCard({
         />
         <button
           type="submit"
-          className="gotipe-page-icon-btn"
+          className="gotipe-review-icon-btn"
           aria-label={labels.send}
           disabled={pending || !draft.trim()}
         >

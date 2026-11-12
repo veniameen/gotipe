@@ -4,8 +4,15 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import type { KeyboardEvent } from "react";
 import { capturedSelection } from "./selection";
 
-/** Owns a formatting popup, its captured selection and dismissal lifetime. */
-export function useFormattingMenu(editor: GoTipeEditor) {
+/**
+ * Owns a formatting popup, its captured selection and dismissal lifetime. Escape returns the keys
+ * to the popup's button; a popup with a text field (`returnTo: "text"`) gives them back to the
+ * text with the selection it was opened on, so typing goes on.
+ */
+export function useFormattingMenu(
+  editor: GoTipeEditor,
+  { returnTo = "trigger" }: { returnTo?: "trigger" | "text" } = {},
+) {
   const [open, setOpen] = useState(false);
   const [editable, setEditable] = useState(editor.isEditable);
   const [error, setError] = useState<string | null>(null);
@@ -20,10 +27,16 @@ export function useFormattingMenu(editor: GoTipeEditor) {
     placement: "bottom-start",
     gap: 6,
   });
-  const close = useCallback((returnFocus = false) => {
-    setOpen(false);
-    if (returnFocus) trigger.current?.focus();
-  }, []);
+  const close = useCallback(
+    (returnFocus = false) => {
+      setOpen(false);
+      if (!returnFocus) return;
+      if (returnTo === "text" && selection.current && !editor.isDestroyed)
+        editor.chain().setSelection(selection.current).focus().run();
+      else trigger.current?.focus();
+    },
+    [editor, returnTo],
+  );
   const show = useCallback(() => {
     if (!editor.isEditable || editor.isDestroyed) return;
     selection.current = capturedSelection(editor.getViewState().selection);
