@@ -1,5 +1,6 @@
 import { type BlockView, type GoTipeEditor, GoTipeError } from "@gotipe/core";
 import { type ReactNode, useEffect, useRef, useState } from "react";
+import { useGoTipeI18n } from "../i18n-context";
 import { CodeText } from "./code-text";
 import { usePhantom } from "./context";
 import { ContentIcon } from "./icons";
@@ -73,6 +74,7 @@ export function CodeBlock({
     }
   };
   const lines = code.split("\n");
+  const i18n = useGoTipeI18n();
   return (
     <div
       {...rootProps}
@@ -80,12 +82,12 @@ export function CodeBlock({
       data-block-type="codeBlock"
       className={["gotipe-code-block", rootProps.className].filter(Boolean).join(" ")}
       spellCheck={false}
-      aria-label={`Code block, ${language}`}
+      aria-label={i18n.t("code.label", { language })}
     >
       <div className="gotipe-code-block-header" contentEditable={false} data-gotipe-widget="">
         <select
           className="gotipe-select gotipe-select--compact gotipe-code-language-select"
-          aria-label="Programming language"
+          aria-label={i18n.t("code.language")}
           value={language}
           disabled={readOnly}
           onChange={(event) => {
@@ -98,14 +100,14 @@ export function CodeBlock({
           )}
           {LANGUAGES.map(([value, label]) => (
             <option key={value} value={value}>
-              {label}
+              {value === "plaintext" ? i18n.t("code.plainText") : label}
             </option>
           ))}
         </select>
         <button
           type="button"
-          aria-label={copied ? "Copied!" : "Copy code"}
-          title={copied ? "Copied" : "Copy code"}
+          aria-label={i18n.t(copied ? "code.copied" : "code.copy")}
+          title={i18n.t(copied ? "code.copied" : "code.copy")}
           onClick={() => void copy()}
         >
           <ContentIcon name={copied ? "check" : "copy"} />

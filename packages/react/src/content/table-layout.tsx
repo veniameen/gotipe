@@ -8,6 +8,7 @@ import {
   useRef,
   useState,
 } from "react";
+import { useGoTipeI18n } from "../i18n-context";
 import { usePhantom } from "./context";
 
 interface TableLayout {
@@ -75,6 +76,7 @@ export function TableColumns() {
 
 export function TableToolbar() {
   const layout = useContext(Context);
+  const i18n = useGoTipeI18n();
   if (!layout || layout.readOnly) return null;
   const { editor, table, report } = layout;
   const apply = (type: "insertRow" | "insertColumn") => {
@@ -93,18 +95,18 @@ export function TableToolbar() {
       <button
         type="button"
         className="gotipe-table-add-row"
-        aria-label="Add row"
+        aria-label={i18n.t("table.addRow")}
         onClick={() => apply("insertRow")}
       >
-        + Row
+        {i18n.t("table.addRowShort")}
       </button>
       <button
         type="button"
         className="gotipe-table-add-col"
-        aria-label="Add column"
+        aria-label={i18n.t("table.addColumn")}
         onClick={() => apply("insertColumn")}
       >
-        + Column
+        {i18n.t("table.addColumnShort")}
       </button>
     </div>
   );
@@ -113,6 +115,7 @@ export function TableToolbar() {
 /** One keyboard/pointer handle per first-row cell; a drag commits one undo step. */
 export function TableColumnResizeHandle({ cellId }: { cellId: string }) {
   const layout = useContext(Context);
+  const i18n = useGoTipeI18n();
   const column = layout?.table.children[0]?.children.findIndex((cell) => cell.id === cellId) ?? -1;
   const drag = useRef<{ x: number; width: number; next: number; pointerId: number } | null>(null);
   const [active, setActive] = useState(false);
@@ -175,8 +178,8 @@ export function TableColumnResizeHandle({ cellId }: { cellId: string }) {
       className={`gotipe-table-col-resize${active ? " active" : ""}`}
       contentEditable={false}
       data-gotipe-widget=""
-      aria-label={`Resize column ${column + 1}`}
-      title="Drag or use Left and Right arrows to resize"
+      aria-label={i18n.t("table.resizeColumn", { index: column + 1 })}
+      title={i18n.t("table.resizeHint")}
       onPointerDown={(event) => {
         if (event.button !== 0) return;
         event.preventDefault();

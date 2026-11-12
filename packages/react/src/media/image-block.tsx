@@ -415,12 +415,12 @@ export function ImageBlock({
         />
       )}
       {assetFailed && (
-        <p className="gotipe-media-insert-error" role="alert">
+        <p className="gotipe-media-insert-error gotipe-image-error" role="alert">
           Image unavailable
         </p>
       )}
       {actionError && (
-        <p className="gotipe-media-insert-error" role="alert">
+        <p className="gotipe-media-insert-error gotipe-media-action-error" role="alert">
           {actionError}
         </p>
       )}
