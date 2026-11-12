@@ -11,8 +11,12 @@
 .gotipe-table-wrapper:has(> .gotipe-table-add) {
   padding-bottom: calc(var(--gt-table-add) + var(--gt-table-add-gap));
 }
+/* the scrolling area reaches into the left margin by the row handle's room, so a row's handle
+   stays visible beside it; the table itself does not move */
 .gotipe-table-scroll {
-  max-width: 100%;
+  max-width: calc(100% + var(--gt-row-handle-room));
+  margin-left: calc(-1 * var(--gt-row-handle-room));
+  padding-left: var(--gt-row-handle-room);
   overflow-x: auto;
   overscroll-behavior-x: contain;
 }
@@ -241,4 +245,44 @@
   width: var(--gt-icon-size);
   height: var(--gt-icon-size);
   color: var(--gt-text);
+}
+
+/* ---- the row handle: beside the row under the pointer, its menu adds a row or takes it away ---- */
+.gotipe-table-wrapper tbody > tr:hover > td {
+  background: var(--gt-fill-1);
+}
+.gotipe-row-handle {
+  position: absolute;
+  top: 50%;
+  left: calc(-1 * var(--gt-row-handle-room));
+  z-index: var(--gt-z-toolbar);
+  display: grid;
+  place-items: center;
+  width: var(--gt-handle-w);
+  height: var(--gt-handle-w);
+  padding: 0;
+  border: 0;
+  border-radius: var(--gt-radius-control);
+  background: var(--gt-fill-2);
+  color: var(--gt-text);
+  cursor: pointer;
+  opacity: 0;
+  transform: translateY(-50%);
+}
+.gotipe-table-wrapper tr:is(:hover, :focus-within) > td > .gotipe-row-handle,
+.gotipe-row-handle[aria-expanded="true"] {
+  opacity: 1;
+}
+.gotipe-row-handle > svg {
+  width: var(--gt-icon-size);
+  height: var(--gt-icon-size);
+}
+.gotipe-row-handle:focus-visible {
+  outline: var(--gt-focus-width) solid var(--gt-focus);
+  outline-offset: var(--gt-focus-gap);
+}
+.gotipe-row-handle > .gotipe-tip {
+  top: calc(100% + var(--gt-overlay-gap));
+  left: 0;
+  transform: none;
 }
