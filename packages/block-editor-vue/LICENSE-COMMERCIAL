@@ -1,18 +1,106 @@
-GoTipe Commercial License
+GoTipe Commercial License 1.0
 
-Copyright (c) 2025 GoTipe Contributors
+Copyright (c) 2025-2026 The GoTipe authors
 
-This software and associated documentation files (the "Software") are licensed
-under the GoTipe Commercial License. You may use the Software only in
-accordance with the terms and conditions of the Commercial License Agreement.
+This license covers these packages and their source code (the "Software"):
 
-The Commercial License applies to the following packages:
-- @gotipe/block-editor
-- @gotipe/block-editor-vue
-- @gotipe/ai-ui
-- @gotipe/theme
+  - @gotipe/block-editor
+  - @gotipe/block-editor-vue
+  - @gotipe/ai-ui
+  - @gotipe/theme
 
-For licensing inquiries, please contact: license@gotipe.com
+Everything else in the GoTipe repository - the engine, the Markdown codec, the
+framework adapters, collaboration, comments, suggestions, versions, the AI layer,
+export, migration, the SDK, the Rust crates and GoTipe Cloud - is licensed under
+the MIT License (LICENSE-MIT).
 
-All other packages in this repository are licensed under the MIT License.
-See LICENSE-MIT for details.
+"Licensor" means the copyright holders of the Software. "You" means the person or
+organisation using the Software, together with the organisations that control it,
+are controlled by it or are under common control with it ("affiliates").
+"Product" means one application or service offered under one name, including its
+internal tools, staging and test environments.
+
+
+1. Free use
+
+You may use the Software at no cost if any of the following is true:
+
+  a. You are an individual using it for a personal project.
+  b. You are a non-profit organisation, a school, a university or a public
+     research institution.
+  c. You use it in a project published under a license approved by the Open
+     Source Initiative.
+  d. Your gross revenue, with your affiliates, was less than USD 1,000,000 in
+     the last 12 months.
+  e. You are evaluating the Software, or developing and testing with it, and
+     not yet running it in production.
+
+If you stop meeting these conditions, you have 60 days to obtain a commercial
+license or to stop using the Software in production.
+
+
+2. Commercial license
+
+Any other production use requires a commercial license from the Licensor. A
+commercial license is granted for one Product. It covers every developer working
+on that Product and every end user of it. There are no fees per document, end
+user, server or environment. The price and the period of updates are set in your
+order; this license governs everything else.
+
+A commercial license is perpetual for every version of the Software released
+before its period of updates ends.
+
+
+3. What you may do
+
+Under free use, or for the Product your commercial license covers, you may:
+
+  a. use, copy and run the Software;
+  b. read and modify its source code;
+  c. distribute it, modified or not, in source or compiled form, as part of
+     your own application or service.
+
+
+4. What you may not do
+
+  a. Sell, license or distribute the Software, modified or not, on its own, or
+     as part of a product whose main purpose is to let others build editors -
+     an editor framework, component library, UI kit or theme.
+  b. Remove or change copyright and license notices.
+  c. Use the GoTipe name or marks except to say truthfully that your product
+     uses GoTipe.
+  d. Give the users of your product more rights to the Software than to use
+     your product.
+
+
+5. Notices
+
+When you distribute the Software as part of your product, keep this license,
+or a link to it, with the notices of the third-party software in your product.
+
+
+6. Termination
+
+If you break this license and do not fix it within 30 days after the Licensor
+tells you, your rights under it end, and you must stop using and distributing
+the Software. Rights you gave your end users through a product you lawfully
+distributed before then continue.
+
+
+7. No warranty
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
+FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+
+
+8. Limitation of liability
+
+TO THE EXTENT THE LAW ALLOWS: UNDER FREE USE, THE LICENSOR IS NOT LIABLE FOR
+ANY CLAIM, DAMAGES OR OTHER LIABILITY ARISING FROM, OUT OF OR IN CONNECTION WITH
+THE SOFTWARE OR ITS USE; UNDER A COMMERCIAL LICENSE, THE LICENSOR'S TOTAL
+LIABILITY IS LIMITED TO THE FEES YOU PAID FOR THAT LICENSE IN THE 12 MONTHS
+BEFORE THE CLAIM.
+
+
+Commercial licenses and questions: license@gotipe.com

@@ -35,11 +35,25 @@ package's `LICENSE` file.
 
 ## Commercial
 
-The commercial packages carry `"license": "SEE LICENSE IN LICENSE-COMMERCIAL"`. That file
-says the software may be used only under the terms of the GoTipe Commercial License
-Agreement. The agreement itself is not part of the repository or the packages.
+The commercial packages carry `"license": "SEE LICENSE IN LICENSE-COMMERCIAL"` and ship
+the full text of the GoTipe Commercial License 1.0.
 
-To get a commercial license, or to ask whether your use needs one, write to
+**Free use.** You pay nothing if you are an individual on a personal project, a non-profit,
+a school or a public research institution, an open-source project under an OSI-approved
+license, or a company whose revenue with its affiliates was under USD 1,000,000 in the
+last 12 months. Evaluation and development before production are free for everyone. If you
+outgrow free use, you have 60 days to get a commercial license.
+
+**Commercial license.** Any other production use needs a license for your product. One
+license covers every developer on that product and every one of its users; there are no
+fees per document, user, server or environment. It is perpetual for the versions released
+during your period of updates.
+
+**Both** let you read and modify the source and ship it, in source or compiled form, as part
+of your own application. Neither lets you sell the components on their own or build a
+competing editor framework, UI kit or theme from them.
+
+To buy a license or ask whether your use needs one, write to
 [license@gotipe.com](mailto:license@gotipe.com).
 
 ## What needs which
@@ -75,11 +89,8 @@ Some MIT packages contain third-party data, listed in their `THIRD_PARTY_NOTICES
 
 Keep these files when you redistribute the packages.
 
-> [!NOTE]
-> The self-hosted Cloud server (`apps/cloud`) is not on the commercial list and has no
-> license file of its own; `LICENSE-COMMERCIAL` states that all other packages in the
-> repository are MIT. Its Go dependencies' licenses are in `apps/cloud/licenses`. Ask
-> [license@gotipe.com](mailto:license@gotipe.com) if you need this confirmed in writing.
+GoTipe Cloud (`apps/cloud`) is MIT, as `LICENSE-COMMERCIAL` states for everything outside
+its four packages. The licenses of its Go dependencies are in `apps/cloud/licenses`.
 
 ## Related
 

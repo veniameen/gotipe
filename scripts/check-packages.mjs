@@ -40,6 +40,14 @@ for (const { dir, manifest } of packages) {
       ? manifest.license.slice("SEE LICENSE IN ".length)
       : "LICENSE";
     if (!files.has(license)) fail(`license file is absent from tarball: ${license}`);
+    // a commercial package ships the repository's own license text, byte for byte
+    if (
+      license === "LICENSE-COMMERCIAL" &&
+      readFileSync(path.join(dir, license), "utf8") !==
+        readFileSync(path.join(root, "LICENSE-COMMERCIAL"), "utf8")
+    ) {
+      fail("LICENSE-COMMERCIAL differs from the repository's");
+    }
     for (const file of files) {
       if (
         file.startsWith(".turbo/") ||

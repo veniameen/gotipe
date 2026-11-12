@@ -1,4 +1,5 @@
-/* GoTipe base — the document of every view (MIT Licensed). Drawn in the GoTipe Atlas, frames 1–5.
+/* GoTipe base — the document of every view. GoTipe Commercial License, see LICENSE-COMMERCIAL.
+   Drawn in the GoTipe Atlas, frames 1–5.
    Every size and colour is a token: the view (data-gt-view) and a narrow container choose them.
    BlockEditor and PageEditor share it. */
 @import "./tokens.css";
