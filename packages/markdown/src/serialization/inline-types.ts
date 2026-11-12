@@ -2,8 +2,8 @@
  * Where the inline content is written:
  * - `block`: paragraph-like content whose lines start at a block line start
  *   (paragraph, list item, blockquote, callout body);
- * - `midline`: first line follows other text on the same line (todo item after `[ ] `,
- *   agent callout after the label); continuation lines are like `block`;
+ * - `midline`: first line follows other text on the same line (todo item after `[ ] `);
+ *   continuation lines are like `block`;
  * - `heading`, `cell`: single line, "\n" is written as `<br>`;
  * - `alt`: image alt / file name inside `[...]`.
  */

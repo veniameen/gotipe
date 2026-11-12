@@ -21,6 +21,8 @@ export const Callout = defineExtension({
             "tip",
             "important",
             "caution",
+            // Deprecated: kept only so stored documents stay valid. It has no behaviour of
+            // its own; Markdown writes it as a `[!NOTE]` alert.
             "agent",
           ],
           default: "info",

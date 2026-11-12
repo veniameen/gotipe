@@ -69,7 +69,7 @@ describe("document model of the fixture", () => {
   it("produces the expected block sequence", () => {
     expect(types).toEqual([
       "heading",
-      "callout",
+      "blockquote",
       "callout",
       "paragraph",
       "heading",
@@ -91,11 +91,13 @@ describe("document model of the fixture", () => {
     ]);
   });
 
-  it("parses callouts", () => {
-    const agent = doc.blocks[1]!;
-    expect(agent.attrs).toEqual({ type: "agent" });
-    expect(agent.content).toEqual([
-      { text: "перед изменением страницы сверяйся с ", marks: [] },
+  it("parses quotes and callouts", () => {
+    // A bold label at the start of a quote has no meaning of its own: it stays text.
+    const quote = doc.blocks[1]!;
+    expect(quote.attrs).toEqual({});
+    expect(quote.content).toEqual([
+      { text: "Инструкции для агента:", marks: [{ type: "bold" }] },
+      { text: " перед изменением страницы сверяйся с ", marks: [] },
       { text: "чек-листом", marks: [{ type: "link", attrs: { href: "checklist.md" } }] },
       { text: " и не трогай таблицу совместимости.", marks: [] },
     ]);

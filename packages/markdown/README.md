@@ -81,7 +81,6 @@ after a list is re-fenced, nested ordered lists not starting at 1 get a blank li
 | task list (`- [ ]`, `- [x]`, also bare `- [ ]`) | `todoList {marker, spread}` → `todoItem {checked}` |
 | quote with exactly one paragraph | `blockquote` |
 | `> [!NOTE]` … (GFM alerts) | `callout {type: "note"…, alert: "NOTE"…}` |
-| `> **Инструкции для агента:** …` | `callout {type: "agent"}` |
 | fenced / indented code | `codeBlock {language, meta?}` (content: string) |
 | `---`, `***`, `___` | `divider` |
 | paragraph with only `![alt](src "caption")` | `image {src, alt, caption}` |

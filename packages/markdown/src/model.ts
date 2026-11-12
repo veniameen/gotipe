@@ -66,15 +66,18 @@ const CALLOUT_FALLBACK: Record<string, string> = {
   danger: "CAUTION",
 };
 
-export const AGENT_LABEL = "Инструкции для агента:";
-
-/** Resolves a callout block to `"agent"` or a GFM alert name (`NOTE`, `TIP`, ...). */
+/**
+ * Resolves a callout block to a GFM alert name (`NOTE`, `TIP`, ...).
+ * Other GoTipe types map to the closest alert; unknown types become `NOTE`.
+ */
 export function calloutKind(attrs: Record<string, unknown>): string {
   const type = typeof attrs.type === "string" ? attrs.type.toLowerCase() : "";
-  if (type === "agent") return "agent";
   const alert = typeof attrs.alert === "string" ? attrs.alert.toUpperCase() : "";
   if (alert && Object.values(ALERTS).includes(alert)) return alert;
-  return ALERTS[type] ?? CALLOUT_FALLBACK[type] ?? "NOTE";
+  // own keys only: a type like "constructor" must not reach the object's prototype
+  if (Object.hasOwn(ALERTS, type)) return ALERTS[type]!;
+  if (Object.hasOwn(CALLOUT_FALLBACK, type)) return CALLOUT_FALLBACK[type]!;
+  return "NOTE";
 }
 
 export function linkAttrs(mark: Mark): { href: string; title?: string } {

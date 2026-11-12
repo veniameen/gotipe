@@ -1,12 +1,5 @@
 import { type InlineOptions, linkDestination, linkTitle, writeInline } from "../inline-serialize";
-import {
-  AGENT_LABEL,
-  calloutKind,
-  clampLevel,
-  listStart,
-  normalizeAlign,
-  richContent,
-} from "../model";
+import { calloutKind, clampLevel, listStart, normalizeAlign, richContent } from "../model";
 import type { Block, RawSegment, Span } from "../types";
 import { normalizeEol } from "../util";
 
@@ -242,20 +235,11 @@ function renderBlock(w: Writer, block: Block, indent: string, ro: RenderOpts): R
       }
       break;
     case "callout": {
-      const kind = calloutKind(attrs);
       const newline = `${ro.eol + indent}> `;
-      if (kind === "agent") {
-        w.write(`> **${AGENT_LABEL}**`);
-        if (spans.length > 0) {
-          w.write(" ");
-          node.segs = inline(w, spans, { kind: "midline", newline, hard }, ro);
-        }
-      } else {
-        w.write(`> [!${kind}]`);
-        if (spans.length > 0) {
-          w.write(newline);
-          node.segs = inline(w, spans, { kind: "block", newline, hard, continuation: true }, ro);
-        }
+      w.write(`> [!${calloutKind(attrs)}]`);
+      if (spans.length > 0) {
+        w.write(newline);
+        node.segs = inline(w, spans, { kind: "block", newline, hard, continuation: true }, ro);
       }
       break;
     }

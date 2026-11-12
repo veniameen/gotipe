@@ -117,21 +117,16 @@ fn block_to_markdown(block: &Block) -> String {
                 .join("\n")
         ),
         "callout" => {
-            let label = if attr("type") == "agent" {
-                "**Инструкции для агента:** ".to_owned()
-            } else {
-                let kind = match attr("type") {
-                    "tip" | "success" => "TIP",
-                    "important" => "IMPORTANT",
-                    "warning" => "WARNING",
-                    "caution" | "error" | "danger" => "CAUTION",
-                    _ => "NOTE",
-                };
-                format!("[!{kind}]\n")
+            let kind = match attr("type") {
+                "tip" | "success" => "TIP",
+                "important" => "IMPORTANT",
+                "warning" => "WARNING",
+                "caution" | "error" | "danger" => "CAUTION",
+                _ => "NOTE",
             };
             format!(
                 "{}\n",
-                format!("{label}{content}\n{nested}")
+                format!("[!{kind}]\n{content}\n{nested}")
                     .trim_end()
                     .lines()
                     .map(|line| format!("> {line}"))
@@ -385,6 +380,32 @@ mod tests {
             version: 0,
         };
         assert!(to_markdown(&doc).contains("**bold**"));
+    }
+
+    #[test]
+    fn test_deprecated_agent_callout_is_written_as_a_note_alert() {
+        let doc = Document {
+            blocks: vec![Block {
+                id: BlockId::new(),
+                block_type: "callout".into(),
+                attrs: HashMap::from([("type".into(), AttrValue::String("agent".into()))]),
+                content: BlockContent::RichText(vec![TextSpan {
+                    text: "Keep the table".into(),
+                    marks: vec![],
+                }]),
+                children: vec![],
+            }],
+            version: 0,
+        };
+        let md = to_markdown(&doc);
+        assert_eq!(md, "> [!NOTE]\n> Keep the table\n");
+        let schema = gotipe_core::defaults::default_block_editor();
+        let back = from_markdown(&md, &schema).unwrap();
+        assert_eq!(back.blocks[0].block_type, "callout");
+        assert_eq!(
+            back.blocks[0].attrs.get("type"),
+            Some(&AttrValue::String("note".into()))
+        );
     }
 
     #[test]

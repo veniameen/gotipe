@@ -190,13 +190,19 @@
     "markdown": "> **Инструкции для агента:** Привет\n",
     "blocks": [
       {
-        "type": "callout",
-        "attrs": {
-          "type": "agent"
-        },
+        "type": "blockquote",
+        "attrs": {},
         "content": [
           {
-            "text": "Привет",
+            "text": "Инструкции для агента:",
+            "marks": [
+              {
+                "type": "bold"
+              }
+            ]
+          },
+          {
+            "text": " Привет",
             "marks": []
           }
         ],
