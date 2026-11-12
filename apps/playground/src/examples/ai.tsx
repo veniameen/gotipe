@@ -102,7 +102,7 @@ const AI_CONTENT = {
           content: [
             { text: "AI Command Bar: ", marks: [{ type: "bold", attrs: {} }] },
             { text: "Press ", marks: [] },
-            { text: "Cmd+K", marks: [{ type: "code", attrs: {} }] },
+            { text: "Cmd+J", marks: [{ type: "code", attrs: {} }] },
             { text: " to type a free-text AI prompt", marks: [] },
           ],
           children: [],
