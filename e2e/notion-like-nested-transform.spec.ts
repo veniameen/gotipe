@@ -487,6 +487,53 @@ test.describe("Notion-like nested and multi-step transforms", () => {
       .toBe("listItem|bulletList");
   });
 
+  test("Tab gives a task a sub-task and Shift+Tab lifts it back", async ({ page }) => {
+    const first = marker("taskFirst");
+    const second = marker("taskSecond");
+    const task = (id: string, text: string) => ({
+      id,
+      type: "todoItem",
+      attrs: { checked: false },
+      content: [{ text, marks: [] }],
+      children: [],
+    });
+    await setNotionContent(page, {
+      version: 1,
+      blocks: [
+        {
+          id: "root-tasks",
+          type: "todoList",
+          attrs: {},
+          content: null,
+          children: [task("task-1", first), task("task-2", second)],
+        },
+      ],
+    });
+
+    const shape = () =>
+      page.evaluate(() => {
+        const editor = (window as Record<string, unknown>).__GOTIPE_NOTION_EDITOR__ as {
+          getJSON(): { blocks: { type: string; children: { type: string; children: unknown[] }[] }[] };
+        };
+        const walk = (blocks: { type: string; children: unknown[] }[]): string =>
+          blocks
+            .map((b) => (b.children.length ? `${b.type}(${walk(b.children as never)})` : b.type))
+            .join(",");
+        return walk(editor.getJSON().blocks as never);
+      });
+
+    await placeCaretAtEndOfBlockByMarker(page, second);
+    await page.keyboard.press("Tab");
+    await expect.poll(shape).toBe("todoList(todoItem(todoList(todoItem)))");
+    await expect(
+      page.locator('[data-block-type="todoItem"] [data-block-type="todoList"] [data-block-type="todoItem"]'),
+    ).toContainText(second);
+
+    await placeCaretAtEndOfBlockByMarker(page, second);
+    await page.keyboard.press("Shift+Tab");
+    await expect.poll(shape).toBe("todoList(todoItem,todoItem)");
+  });
+
   test("Tab and Shift+Tab keep nested bullet structure valid", async ({ page }) => {
     const first = marker("tabFirst");
     const second = marker("tabSecond");

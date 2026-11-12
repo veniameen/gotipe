@@ -347,6 +347,19 @@ fn task(item: &Node, source: &str) -> Option<bool> {
         }
     })
 }
+/// The lists nested in an item after its first `from` children; `None` when anything else is.
+fn nested_lists(item: &Node, from: usize, source: &str) -> Option<Vec<Block>> {
+    item.children[from.min(item.children.len())..]
+        .iter()
+        .map(|nested| {
+            if nested.kind == "list" {
+                list(nested, source)
+            } else {
+                None
+            }
+        })
+        .collect()
+}
 fn list(n: &Node, source: &str) -> Option<Block> {
     if n.children.is_empty() {
         return None;
@@ -376,11 +389,11 @@ fn list(n: &Node, source: &str) -> Option<Block> {
             let mut child = if item.checked.is_none() {
                 node("todoItem", BlockContent::RichText(vec![]))
             } else {
-                let p = item
-                    .children
-                    .first()
-                    .filter(|p| item.children.len() == 1 && p.kind == "paragraph")?;
-                rich("todoItem", inline(p, source, false))
+                // a task is one paragraph, then the lists nested under it
+                let p = item.children.first().filter(|p| p.kind == "paragraph")?;
+                let mut task = rich("todoItem", inline(p, source, false));
+                task.children = nested_lists(item, 1, source)?;
+                task
             };
             child.attrs.insert(
                 "checked".into(),
@@ -396,16 +409,7 @@ fn list(n: &Node, source: &str) -> Option<Block> {
         } else {
             node("listItem", BlockContent::RichText(vec![]))
         };
-        for nested in &item.children[index..] {
-            if nested.kind != "list" {
-                return None;
-            }
-            let list = list(nested, source)?;
-            if list.block_type != "bulletList" && list.block_type != "orderedList" {
-                return None;
-            }
-            child.children.push(list)
-        }
+        child.children = nested_lists(item, index, source)?;
         result.children.push(child);
     }
     if n.ordered {

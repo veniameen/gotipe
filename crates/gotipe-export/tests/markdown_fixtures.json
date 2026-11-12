@@ -1084,5 +1084,120 @@
         "children": []
       }
     ]
+  },
+  {
+    "markdown": "- [ ] parent\n  - [x] child\n- [x] next\n",
+    "blocks": [
+      {
+        "type": "todoList",
+        "attrs": {
+          "spread": false,
+          "marker": "-"
+        },
+        "content": null,
+        "children": [
+          {
+            "type": "todoItem",
+            "attrs": {
+              "checked": false
+            },
+            "content": [
+              {
+                "text": "parent",
+                "marks": []
+              }
+            ],
+            "children": [
+              {
+                "type": "todoList",
+                "attrs": {
+                  "spread": false,
+                  "marker": "-"
+                },
+                "content": null,
+                "children": [
+                  {
+                    "type": "todoItem",
+                    "attrs": {
+                      "checked": true
+                    },
+                    "content": [
+                      {
+                        "text": "child",
+                        "marks": []
+                      }
+                    ],
+                    "children": []
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "type": "todoItem",
+            "attrs": {
+              "checked": true
+            },
+            "content": [
+              {
+                "text": "next",
+                "marks": []
+              }
+            ],
+            "children": []
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "markdown": "- first\n  - [ ] task\n",
+    "blocks": [
+      {
+        "type": "bulletList",
+        "attrs": {
+          "marker": "-",
+          "spread": false
+        },
+        "content": null,
+        "children": [
+          {
+            "type": "listItem",
+            "attrs": {},
+            "content": [
+              {
+                "text": "first",
+                "marks": []
+              }
+            ],
+            "children": [
+              {
+                "type": "todoList",
+                "attrs": {
+                  "spread": false,
+                  "marker": "-"
+                },
+                "content": null,
+                "children": [
+                  {
+                    "type": "todoItem",
+                    "attrs": {
+                      "checked": false
+                    },
+                    "content": [
+                      {
+                        "text": "task",
+                        "marks": []
+                      }
+                    ],
+                    "children": []
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
   }
 ]

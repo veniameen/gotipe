@@ -237,3 +237,39 @@ describe("document model of the fixture", () => {
     expect(d.blocks[1]!.children[0]!.children[0]!.content).toEqual([{ text: "x\ny", marks: [] }]);
   });
 });
+
+describe("nested task lists", () => {
+  const TASKS = "- [ ] Журнал\n  - [x] Схема\n  - [ ] Миграция\n- [x] Шифрование\n";
+  const MIXED = "- Выкат\n  - [ ] Включить для 5 %\n  - [ ] Сравнить потери\n";
+
+  it("reads sub-tasks under a task and writes them back byte for byte", () => {
+    const { doc } = parseMarkdown(TASKS);
+    const list = doc.blocks[0]!;
+    expect(list.type).toBe("todoList");
+    const nested = list.children[0]!.children[0]!;
+    expect(nested.type).toBe("todoList");
+    expect(nested.children.map((c) => [c.type, c.attrs.checked])).toEqual([
+      ["todoItem", true],
+      ["todoItem", false],
+    ]);
+    expect(roundTrip(TASKS)).toBe(TASKS);
+  });
+
+  it("reads tasks nested under a plain list item", () => {
+    const { doc } = parseMarkdown(MIXED);
+    const item = doc.blocks[0]!.children[0]!;
+    expect(item.type).toBe("listItem");
+    expect(item.children[0]!.type).toBe("todoList");
+    expect(roundTrip(MIXED)).toBe(MIXED);
+  });
+
+  it("writes a new sub-task as an indented task", () => {
+    const { doc, snapshot } = parseMarkdown("- [ ] Журнал\n- [ ] Миграция\n");
+    const [first, second] = doc.blocks[0]!.children;
+    first!.children = [
+      { id: "sub", type: "todoList", attrs: { marker: "-" }, content: null, children: [second!] },
+    ];
+    doc.blocks[0]!.children = [first!];
+    expect(serializeMarkdown(doc, snapshot).text).toBe("- [ ] Журнал\n  - [ ] Миграция\n");
+  });
+});

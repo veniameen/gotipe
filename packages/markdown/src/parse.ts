@@ -230,6 +230,22 @@ class Converter {
     return null;
   }
 
+  /** The lists nested in an item after its first `from` children; null when anything else is. */
+  nestedLists(item: ListItem, from: number): PNode[] | null {
+    const nested: PNode[] = [];
+    for (let idx = from; idx < item.children.length; idx++) {
+      const c = item.children[idx]!;
+      if (c.type !== "list") return null;
+      const cs = this.start(c);
+      const ce = this.end(c);
+      if (cs === null || ce === null) return null;
+      const cn = this.list(c, cs, ce);
+      if (!cn) return null;
+      nested.push(cn);
+    }
+    return nested;
+  }
+
   list(node: List, s: number, e: number): PNode | null {
     const items = node.children;
     if (items.length === 0) return null;
@@ -250,11 +266,22 @@ class Converter {
           kids.push(mk("todoItem", { checked: states[i] === true }, [], is, ie));
           continue;
         }
-        const p = item.children.length === 1 ? item.children[0] : undefined;
+        // a task is one paragraph, then the lists nested under it (sub-tasks or plain items)
+        const p = item.children[0];
         if (p?.type !== "paragraph") return null;
+        const nested = this.nestedLists(item, 1);
+        if (!nested) return null;
         const r = this.inline(p.children, this.start(p) ?? is, this.end(p) ?? ie);
         kids.push(
-          mk("todoItem", { checked: item.checked, ...breaksAttr(r) }, r.spans, is, ie, r.segs),
+          mk(
+            "todoItem",
+            { checked: item.checked, ...breaksAttr(r) },
+            r.spans,
+            is,
+            ie,
+            r.segs,
+            nested,
+          ),
         );
       }
       const attrs: Record<string, unknown> = { spread };
@@ -277,17 +304,8 @@ class Converter {
         attrs = breaksAttr(r);
         idx = 1;
       }
-      const nested: PNode[] = [];
-      for (; idx < item.children.length; idx++) {
-        const c = item.children[idx]!;
-        if (c.type !== "list") return null;
-        const cs = this.start(c);
-        const ce = this.end(c);
-        if (cs === null || ce === null) return null;
-        const cn = this.list(c, cs, ce);
-        if (!cn || (cn.block.type !== "bulletList" && cn.block.type !== "orderedList")) return null;
-        nested.push(cn);
-      }
+      const nested = this.nestedLists(item, idx);
+      if (!nested) return null;
       kids.push(mk("listItem", attrs, content, is, ie, segs, nested));
     }
     if (node.ordered) {
