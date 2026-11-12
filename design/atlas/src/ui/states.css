@@ -164,10 +164,6 @@
   box-shadow: 0 0 0 var(--gt-focus-gap) var(--gt-overlay), 0 0 0
     calc(var(--gt-focus-gap) + var(--gt-focus-width)) var(--gt-focus);
 }
-.gotipe-check.is-focus-visible {
-  box-shadow: inset 0 0 0 var(--gt-check-ring) var(--gt-line-control), 0 0 0 var(--gt-focus-gap)
-    var(--gt-page-bg), 0 0 0 calc(var(--gt-focus-gap) + var(--gt-focus-width)) var(--gt-focus);
-}
 .gotipe-link.is-focus-visible {
   border-radius: var(--gt-radius-inline);
 }

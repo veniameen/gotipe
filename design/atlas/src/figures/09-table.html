@@ -1,16 +1,19 @@
 <figure class="at-figure" id="f9" data-section="Взаимодействие">
   <figcaption class="at-figure-head">
     <span class="at-num">9</span>
-    <h2 class="at-figure-title">Таблица и меню столбца</h2>
+    <h2 class="at-figure-title">Таблица: строки, столбцы и меню столбца</h2>
     <p class="at-caption">
+      Столбец добавляется полосой справа от таблицы, строка — полосой под ней; обе видны под
+      указателем и пока курсор в таблице, а прокрутка их не закрывает. Ячейка — поле текста, рамки
+      фокуса у неё нет. Широкая таблица прокручивается вбок, край со скрытыми столбцами затухает.
       Тип столбца меняет вид ячеек: код — моноширинным, число — вправо, да / нет — знаком.
-      Шеврон появляется в заголовке под указателем; строка и столбец добавляются снизу таблицы.
     </p>
   </figcaption>
   <!-- @frame frame=column-menu view=notion w=768 min=480 label="меню столбца" -->
   <article class="gotipe-page is-slice" lang="ru">
     <div class="gotipe-doc">
       <h2>Журнал по платформам</h2>
+      <div class="gotipe-table-block is-hovered">
       <div class="gotipe-table-wrap is-open">
         <table class="gotipe-table">
           <thead>
@@ -33,9 +36,59 @@
           </tbody>
         </table>
       </div>
-      <div class="gotipe-table-adds">
-        <span class="gotipe-table-add"><svg class="gt-icon"><use href="#i-plus" /></svg>Строка</span>
-        <span class="gotipe-table-add"><svg class="gt-icon"><use href="#i-plus" /></svg>Столбец</span>
+        <span class="gotipe-table-add is-column"><svg class="gt-icon"><use href="#i-plus" /></svg></span>
+        <span class="gotipe-table-add is-row"><svg class="gt-icon"><use href="#i-plus" /></svg></span>
+      </div>
+    </div>
+  </article>
+  <!-- @end -->
+  <!-- @frame frame=table-add view=notion w=768 label="добавить столбец" -->
+  <article class="gotipe-page is-slice" lang="ru">
+    <div class="gotipe-doc">
+      <h2>Конфликты</h2>
+      <div class="gotipe-table-block is-hovered">
+        <div class="gotipe-table-wrap">
+          <table class="gotipe-table">
+            <thead>
+              <tr><th>Ситуация</th><th>Что видит автор</th><th>Что сохраняется</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>Блок изменён только у вас</td><td>Ничего</td><td>Ваша версия</td></tr>
+              <tr><td>Блок изменён у обоих</td><td>Предложение правки<span class="gotipe-caret"></span></td><td>Обе версии</td></tr>
+              <tr><td>Документ удалён</td><td>Окно восстановления</td><td>Копия в «Черновиках»</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <span class="gotipe-table-add is-column is-hover"
+          ><svg class="gt-icon"><use href="#i-plus" /></svg
+          ><span class="gotipe-tooltip" data-place="start">Добавить столбец</span
+          ><svg class="at-pointer"><use href="#i-pointer" /></svg
+        ></span>
+        <span class="gotipe-table-add is-row"><svg class="gt-icon"><use href="#i-plus" /></svg></span>
+      </div>
+      <p>Таблицу дописывают по ходу обсуждения: новый столбец появляется справа, строка — снизу.</p>
+    </div>
+  </article>
+  <!-- @end -->
+  <!-- @frame frame=table-wide view=notion w=375 label="широкая таблица" -->
+  <article class="gotipe-page is-slice" lang="ru">
+    <div class="gotipe-doc">
+      <h2>Журнал по платформам</h2>
+      <div class="gotipe-table-block is-hovered">
+        <div class="gotipe-table-wrap" data-more="right">
+          <table class="gotipe-table">
+            <thead>
+              <tr><th>Платформа</th><th>Ключ журнала</th><th class="is-number">В очереди</th><th>Шифрование</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>Веб<span class="gotipe-caret"></span></td><td class="is-code">drafts.web</td><td class="is-number">1 284</td><td><span class="gotipe-yes"><svg class="gt-icon"><use href="#i-check-16" /></svg></span></td></tr>
+              <tr><td>macOS</td><td class="is-code">drafts.mac</td><td class="is-number">312</td><td><span class="gotipe-yes"><svg class="gt-icon"><use href="#i-check-16" /></svg></span></td></tr>
+              <tr><td>iOS</td><td class="is-code">drafts.ios</td><td class="is-number">0</td><td><span class="gotipe-no">—</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <span class="gotipe-table-add is-column"><svg class="gt-icon"><use href="#i-plus" /></svg></span>
+        <span class="gotipe-table-add is-row"><svg class="gt-icon"><use href="#i-plus" /></svg></span>
       </div>
     </div>
   </article>

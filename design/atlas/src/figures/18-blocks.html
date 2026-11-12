@@ -1,0 +1,128 @@
+<figure class="at-figure" id="f18" data-section="Блоки">
+  <figcaption class="at-figure-head">
+    <span class="at-num">18</span>
+    <h2 class="at-figure-title">Задачи, раскрывающиеся блоки, файл, вставка и формула</h2>
+    <p class="at-caption">
+      Рамка флажка — целый пиксель на любом экране; под указателем она темнеет. Пустые задача и
+      раскрывающийся блок говорят, чем станут. Действия файла появляются под указателем. Вставка
+      без ссылки просит её, со ссылкой — карточка страницы. Формула показывает TeX как написан,
+      нарисовать её может хост.
+    </p>
+  </figcaption>
+  <!-- @frame frame=tasks view=notion w=480 label="задачи" -->
+  <article class="gotipe-page is-slice" lang="ru">
+    <div class="gotipe-doc">
+      <h2>Задачи</h2>
+      <ul class="gotipe-todo-list">
+        <li class="gotipe-todo-item" data-checked="true">
+          <span class="gotipe-check" role="checkbox" aria-checked="true"><svg class="gt-icon"><use href="#i-check" /></svg></span>
+          <span class="gotipe-todo-item-content">Шифрование черновика ключом сессии</span>
+        </li>
+        <li class="gotipe-todo-item" data-checked="false">
+          <span class="gotipe-check is-hover" role="checkbox" aria-checked="false"
+            ><svg class="gt-icon"><use href="#i-check" /></svg
+            ><svg class="at-pointer"><use href="#i-pointer" /></svg
+          ></span>
+          <span class="gotipe-todo-item-content">Индикатор «Не отправлено» в шапке документа</span>
+        </li>
+        <li class="gotipe-todo-item" data-checked="false">
+          <span class="gotipe-check" role="checkbox" aria-checked="false"><svg class="gt-icon"><use href="#i-check" /></svg></span>
+          <span class="gotipe-todo-item-content">Метрика потерянных правок на дашборде выпуска</span>
+        </li>
+        <li class="gotipe-todo-item" data-checked="false">
+          <span class="gotipe-check" role="checkbox" aria-checked="false"><svg class="gt-icon"><use href="#i-check" /></svg></span>
+          <span class="gotipe-todo-item-content is-empty" data-placeholder="Задача"></span>
+        </li>
+      </ul>
+    </div>
+  </article>
+  <!-- @end -->
+  <!-- @frame frame=toggles view=notion w=480 label="раскрывающиеся блоки" -->
+  <article class="gotipe-page is-slice" lang="ru">
+    <div class="gotipe-doc">
+      <details class="gotipe-toggle" open>
+        <summary>
+          <span class="gotipe-toggle-button"><svg class="gt-icon"><use href="#i-chevron-down" /></svg></span>
+          <span>Почему не Background Sync</span>
+        </summary>
+        <div class="gotipe-toggle-content">
+          <p>В Safari его нет, а журнал в IndexedDB работает везде одинаково.</p>
+        </div>
+      </details>
+      <details class="gotipe-toggle">
+        <summary>
+          <span class="gotipe-toggle-button is-focus-visible"><svg class="gt-icon"><use href="#i-chevron-right" /></svg></span>
+          <span>Что будет с вложениями</span>
+        </summary>
+      </details>
+      <details class="gotipe-toggle">
+        <summary>
+          <span class="gotipe-toggle-button"><svg class="gt-icon"><use href="#i-chevron-right" /></svg></span>
+          <span class="is-empty" data-placeholder="Раскрывающийся блок"></span>
+        </summary>
+      </details>
+    </div>
+  </article>
+  <!-- @end -->
+  <!-- @frame frame=file view=notion w=480 label="файл" -->
+  <article class="gotipe-page is-slice" lang="ru">
+    <div class="gotipe-doc">
+      <div class="gotipe-file">
+        <span class="gotipe-card-icon"><svg class="gt-icon"><use href="#i-file" /></svg></span>
+        <span class="gotipe-card-main"
+          ><span class="gotipe-card-title">Схема журнала, v3.pdf</span
+          ><span class="gotipe-card-meta">482,1 КБ</span></span
+        >
+        <span class="gotipe-card-actions"
+          ><span class="gotipe-card-action">Заменить</span><span class="gotipe-card-action">Удалить</span></span
+        >
+      </div>
+      <div class="gotipe-file is-hovered">
+        <span class="gotipe-card-icon"><svg class="gt-icon"><use href="#i-file" /></svg></span>
+        <span class="gotipe-card-main"
+          ><span class="gotipe-card-title">Обращения в поддержку, октябрь.xlsx</span
+          ><span class="gotipe-card-meta">1,4 МБ</span></span
+        >
+        <span class="gotipe-card-actions"
+          ><span class="gotipe-card-action is-hover"
+            >Заменить<svg class="at-pointer"><use href="#i-pointer" /></svg></span
+          ><span class="gotipe-card-action">Удалить</span></span
+        >
+      </div>
+    </div>
+  </article>
+  <!-- @end -->
+  <!-- @frame frame=embed view=notion w=480 label="вставка" -->
+  <article class="gotipe-page is-slice" lang="ru">
+    <div class="gotipe-doc">
+      <div class="gotipe-embed is-hovered">
+        <span class="gotipe-card-icon"><svg class="gt-icon"><use href="#i-link" /></svg></span>
+        <span class="gotipe-card-main"
+          ><span class="gotipe-card-title">figma.com</span
+          ><span class="gotipe-card-meta">figma.com/design/k2Lw/Офлайн-черновики</span></span
+        >
+        <span class="gotipe-card-actions"
+          ><span class="gotipe-card-action is-icon"><svg class="gt-icon"><use href="#i-external" /></svg></span
+        ></span>
+      </div>
+      <div class="gotipe-embed">
+        <span class="gotipe-card-icon"><svg class="gt-icon"><use href="#i-link" /></svg></span>
+        <span class="gotipe-embed-field">Ссылка на страницу, видео или макет</span>
+        <span class="gotipe-button is-primary">Вставить</span>
+      </div>
+    </div>
+  </article>
+  <!-- @end -->
+  <!-- @frame frame=math view=notion w=480 label="формула" -->
+  <article class="gotipe-page is-slice" lang="ru">
+    <div class="gotipe-doc">
+      <p>Доля потерянных правок считается за неделю:</p>
+      <div class="gotipe-math">
+        <div class="gotipe-code-block-header"><span>Формула · TeX</span></div>
+        <pre class="gotipe-math-source">p = \frac{lost}{lost + sent}</pre>
+      </div>
+      <p>Цель выпуска — меньше 0,1 %.</p>
+    </div>
+  </article>
+  <!-- @end -->
+</figure>
