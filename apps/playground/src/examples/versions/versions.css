@@ -1,219 +1,230 @@
+/* Versions demo — GoTipe Atlas, frame 15: the list beside the page, the changes since the chosen
+   version marked in the text. The host owns this panel; it is drawn with the editor's tokens. */
+
 .gotipe-versions-example {
   container-type: inline-size;
   color: var(--gt-text);
+  font-family: var(--gt-font-ui);
+  font-size: var(--gt-ui-size);
+  line-height: var(--gt-ui-leading);
 }
 .gotipe-versions-toolbar {
   display: flex;
-  align-items: end;
   flex-wrap: wrap;
-  gap: 12px;
-  padding: 16px;
-  border: 1px solid var(--gt-border);
-  border-radius: var(--gt-radius-lg);
-  background: var(--gt-bg);
+  align-items: end;
+  gap: var(--gt-space-3);
+  padding: var(--gt-panel-pad);
+  border-radius: var(--gt-radius-card);
+  background: var(--gt-sunken);
 }
 .gotipe-versions-toolbar form {
   display: flex;
-  align-items: end;
-  flex-wrap: wrap;
   flex: 1;
-  gap: 8px;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: var(--gt-space-2);
   min-width: 0;
 }
 .gotipe-versions-toolbar label {
   display: grid;
   flex: 1;
-  gap: 6px;
-  font-size: 12px;
-  color: var(--gt-text-secondary);
-  min-width: min(100%, 180px);
+  gap: var(--gt-space-1);
+  min-width: min(100%, var(--gt-menu-w-narrow));
+  color: var(--gt-text-2);
+  font-size: var(--gt-ui-small);
 }
 .gotipe-versions-toolbar input {
   box-sizing: border-box;
   width: 100%;
   min-width: 0;
-  height: 36px;
-  padding: 0 10px;
-  border: 1px solid var(--gt-border);
-  border-radius: var(--gt-radius-md);
+  height: var(--gt-field-h);
+  padding: var(--gt-field-pad);
+  border: 0;
+  border-radius: var(--gt-radius-control);
+  background: var(--gt-page-bg);
+  box-shadow: inset 0 0 0 var(--gt-hairline) var(--gt-line-strong);
   color: var(--gt-text);
-  background: var(--gt-bg);
   font: inherit;
-  font-size: 14px;
 }
 .gotipe-version-button {
-  padding: 8px 12px;
-  min-height: 36px;
-  border: 1px solid var(--gt-border);
-  border-radius: var(--gt-radius-md);
-  background: var(--gt-bg);
+  min-height: var(--gt-field-h);
+  padding: var(--gt-button-pad);
+  border: 0;
+  border-radius: var(--gt-radius-control);
+  background: var(--gt-fill-2);
   color: var(--gt-text);
   font: inherit;
-  font-size: 13px;
   cursor: pointer;
 }
-.gotipe-version-button:hover {
-  background: var(--gt-bg-hover);
+.gotipe-version-button:hover:not(:disabled) {
+  background: var(--gt-fill-3);
 }
 .gotipe-version-button:disabled {
-  opacity: 0.45;
+  opacity: var(--gt-disabled-opacity);
   cursor: default;
 }
 .gotipe-versions-example :is(button, input):focus-visible {
-  outline: 2px solid var(--gt-accent);
-  outline-offset: 2px;
+  outline: var(--gt-focus-width) solid var(--gt-focus);
+  outline-offset: var(--gt-focus-gap);
 }
 .gotipe-versions-meta,
 .gotipe-version-empty,
 .gotipe-version-summary {
-  color: var(--gt-text-secondary);
-  font-size: 13px;
-  line-height: 1.5;
+  color: var(--gt-text-2);
 }
 .gotipe-versions-meta {
-  margin: 12px 2px;
+  margin: var(--gt-space-3) 0;
 }
 .gotipe-versions-status {
-  min-height: 20px;
-  font-size: 13px;
-  margin: 8px 2px;
+  min-height: var(--gt-ui-leading);
+  margin: var(--gt-space-2) 0;
 }
 .gotipe-versions-error {
   color: var(--gt-danger);
 }
+
+/* the page and the list of versions beside it */
 .gotipe-versions-layout {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
-  gap: 16px;
+  gap: var(--gt-margin-gap);
   align-items: start;
 }
 .gotipe-versions-layout[data-history="true"] {
-  grid-template-columns: minmax(0, 1fr) minmax(260px, 340px);
+  grid-template-columns: minmax(0, 1fr) var(--gt-panel-w);
 }
 .gotipe-version-document,
 .gotipe-version-history {
   min-width: 0;
-  border: 1px solid var(--gt-border);
-  border-radius: var(--gt-radius-lg);
-  background: var(--gt-bg);
 }
 .gotipe-version-document .gotipe-page {
   border-radius: inherit;
 }
 .gotipe-version-history {
-  padding: 16px;
+  padding: var(--gt-panel-pad);
+  border-radius: var(--gt-radius-card);
+  background: var(--gt-sunken);
 }
 .gotipe-version-history h2 {
-  margin: 0 0 12px;
-  font-size: 16px;
+  margin: 0 0 var(--gt-space-2);
+  font-size: var(--gt-ui-size);
+  font-weight: var(--gt-weight-strong);
 }
 .gotipe-version-history ul {
-  padding: 0;
-  margin: 0;
-  list-style: none;
   display: grid;
-  gap: 6px;
-  max-height: 340px;
+  gap: var(--gt-toolbar-gap);
+  max-height: calc(12 * var(--gt-menu-item-h));
+  margin: 0;
+  padding: 0;
   overflow-y: auto;
+  list-style: none;
 }
 .gotipe-version-entry {
   display: grid;
-  gap: 4px;
-  text-align: left;
+  gap: var(--gt-space-1);
   width: 100%;
-  padding: 10px;
-  border: 1px solid transparent;
-  border-radius: var(--gt-radius-md);
-  color: var(--gt-text);
+  padding: var(--gt-space-2);
+  border: 0;
+  border-radius: var(--gt-radius-control);
   background: transparent;
-  cursor: pointer;
-  overflow-wrap: anywhere;
+  color: var(--gt-text);
   font: inherit;
-  font-size: 13px;
+  text-align: left;
+  overflow-wrap: anywhere;
+  cursor: pointer;
 }
 .gotipe-version-entry:hover {
-  background: var(--gt-bg-hover);
+  background: var(--gt-fill-2);
 }
 .gotipe-version-entry[aria-pressed="true"] {
-  background: var(--gt-bg-active);
-  border-color: var(--gt-accent);
+  background: var(--gt-overlay);
+  box-shadow: var(--gt-shadow-card);
 }
 .gotipe-version-entry time {
-  color: var(--gt-text-secondary);
-  font-size: 12px;
+  color: var(--gt-text-2);
+  font-size: var(--gt-ui-small);
+  font-variant-numeric: tabular-nums;
 }
+
+/* the chosen version: what changed since it */
 .gotipe-version-preview {
-  margin-top: 16px;
   min-width: 0;
-  border: 1px solid var(--gt-border);
-  border-radius: var(--gt-radius-lg);
+  margin-top: var(--gt-space-4);
   overflow: hidden;
+  border-radius: var(--gt-radius-card);
+  background: var(--gt-overlay);
+  box-shadow: var(--gt-shadow-card);
 }
 .gotipe-version-preview-header {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 10px;
-  padding: 16px;
-  border-bottom: 1px solid var(--gt-border);
+  gap: var(--gt-space-3);
+  padding: var(--gt-panel-pad);
+  box-shadow: inset 0 calc(-1 * var(--gt-hairline)) 0 var(--gt-line);
 }
 .gotipe-version-preview-header h2 {
   flex: 1;
+  min-width: 0;
   margin: 0;
-  font-size: 16px;
+  font-size: var(--gt-ui-size);
+  font-weight: var(--gt-weight-strong);
   overflow-wrap: anywhere;
-  min-width: 100px;
 }
 .gotipe-version-tabs {
   display: flex;
-  gap: 8px;
   flex-wrap: wrap;
-  padding: 12px 16px;
+  gap: var(--gt-toolbar-gap);
+  padding: var(--gt-space-3) var(--gt-panel-pad);
 }
 .gotipe-version-tabs [aria-selected="true"] {
-  color: var(--gt-accent);
-  border-color: var(--gt-accent);
-  background: var(--gt-bg-active);
+  background: var(--gt-overlay);
+  box-shadow: var(--gt-shadow-card);
 }
 .gotipe-version-preview-body > .gotipe-version-empty {
-  margin: 20px;
+  margin: var(--gt-panel-pad);
 }
 .gotipe-version-changes {
-  padding: 0 16px 16px;
+  padding: 0 var(--gt-panel-pad) var(--gt-panel-pad);
 }
 .gotipe-version-changes ol {
-  list-style: none;
-  padding: 0;
   display: grid;
-  gap: 10px;
+  gap: var(--gt-card-gap);
+  padding: 0;
+  list-style: none;
 }
 .gotipe-version-changes li {
-  padding: 12px;
-  border: 1px solid var(--gt-border);
-  border-radius: var(--gt-radius-md);
+  padding: var(--gt-card-pad);
+  border-radius: var(--gt-radius-block);
+  background: var(--gt-sunken);
 }
 .gotipe-version-change-label {
   display: block;
-  margin-bottom: 8px;
-  color: var(--gt-text-secondary);
-  font-size: 12px;
+  margin-bottom: var(--gt-space-2);
+  color: var(--gt-text-2);
+  font-size: var(--gt-ui-small);
 }
 .gotipe-version-changes :is(del, ins, p) {
   display: block;
+  margin: var(--gt-space-1) 0;
+  font-size: var(--gt-body-size);
+  line-height: var(--gt-body-leading);
   white-space: pre-wrap;
   overflow-wrap: anywhere;
-  margin: 4px 0;
-  font-size: 14px;
-  line-height: 1.5;
 }
 .gotipe-version-changes del {
-  color: var(--gt-danger);
+  color: var(--gt-text-3);
+  text-decoration-line: line-through;
+  text-decoration-color: var(--gt-del);
 }
 .gotipe-version-changes ins {
-  color: var(--gt-success);
+  background: var(--gt-add-tint);
+  box-shadow: inset 0 calc(-1 * var(--gt-rule)) 0 var(--gt-add);
+  color: var(--gt-text);
+  text-decoration: none;
 }
 .gotipe-version-changes small {
-  color: var(--gt-text-secondary);
+  color: var(--gt-text-2);
 }
 @container (max-width: 760px) {
   .gotipe-versions-layout[data-history="true"] {
@@ -222,17 +233,9 @@
   .gotipe-version-history {
     order: -1;
   }
-  .gotipe-version-history ul {
-    max-height: 220px;
-  }
 }
 @container (max-width: 400px) {
-  .gotipe-versions-toolbar {
-    padding: 12px;
-  }
-  .gotipe-versions-toolbar form {
-    flex-basis: 100%;
-  }
+  .gotipe-versions-toolbar form,
   .gotipe-versions-toolbar label {
     flex-basis: 100%;
   }

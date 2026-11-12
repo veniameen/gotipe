@@ -1,4 +1,5 @@
 import { ThemeToggle } from "@gotipe/block-editor";
+import { PageIcon } from "@gotipe/block-editor";
 import type { GoTipeEditor } from "@gotipe/core";
 import { useEditorState } from "@gotipe/react";
 import type React from "react";
@@ -77,7 +78,7 @@ export function StaticToolbar({
               })
             }
           >
-            {"↶"}
+            <PageIcon name="undo" />
           </button>
           <button
             type="button"
@@ -92,7 +93,7 @@ export function StaticToolbar({
               })
             }
           >
-            {"↷"}
+            <PageIcon name="redo" />
           </button>
         </div>
       )}
@@ -144,7 +145,7 @@ export function StaticToolbar({
               })
             }
           >
-            {"•"}
+            <PageIcon name="bullet" />
           </button>
           <button
             type="button"
@@ -158,7 +159,7 @@ export function StaticToolbar({
               })
             }
           >
-            {"1."}
+            <PageIcon name="numbered" />
           </button>
           <button
             type="button"
@@ -172,7 +173,7 @@ export function StaticToolbar({
               })
             }
           >
-            {"☑"}
+            <PageIcon name="todo" />
           </button>
         </div>
       )}
@@ -192,7 +193,7 @@ export function StaticToolbar({
               })
             }
           >
-            {"⇥"}
+            <PageIcon name="indent" />
           </button>
           <button
             type="button"
@@ -206,7 +207,7 @@ export function StaticToolbar({
               })
             }
           >
-            {"⇤"}
+            <PageIcon name="outdent" />
           </button>
         </div>
       )}
@@ -228,7 +229,7 @@ export function StaticToolbar({
               })
             }
           >
-            <strong>B</strong>
+            <PageIcon name="bold" />
           </button>
           <button
             type="button"
@@ -242,7 +243,7 @@ export function StaticToolbar({
               })
             }
           >
-            <em>I</em>
+            <PageIcon name="italic" />
           </button>
           <button
             type="button"
@@ -256,7 +257,7 @@ export function StaticToolbar({
               })
             }
           >
-            <s>S</s>
+            <PageIcon name="strike" />
           </button>
           <button
             type="button"
@@ -270,7 +271,7 @@ export function StaticToolbar({
               })
             }
           >
-            {"</>"}
+            <PageIcon name="inlineCode" />
           </button>
           <button
             type="button"
@@ -284,7 +285,7 @@ export function StaticToolbar({
               })
             }
           >
-            <u>U</u>
+            <PageIcon name="underline" />
           </button>
         </div>
       )}
@@ -347,7 +348,7 @@ export function StaticToolbar({
               }
             }}
           >
-            {"🔗"}
+            <PageIcon name="link" />
           </button>
         </div>
       )}
@@ -404,7 +405,7 @@ export function StaticToolbar({
 
       {/* Theme toggle */}
       {showTheme && (
-        <div className="gotipe-toolbar-group" style={{ marginLeft: "auto" }}>
+        <div className="gotipe-toolbar-group is-end">
           <ThemeToggle />
         </div>
       )}

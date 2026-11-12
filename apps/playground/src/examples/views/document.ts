@@ -34,6 +34,8 @@ const row = (cell: "tableHeader" | "tableCell", values: string[]) =>
     values.map((value) => block(cell, [text(value)])),
   );
 
+export const ATLAS_TITLE = "Офлайн-черновики";
+
 export const ATLAS_DOCUMENT = {
   version: 1,
   blocks: [
