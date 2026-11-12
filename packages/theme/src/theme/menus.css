@@ -27,7 +27,9 @@
 /* the list keeps its own limit: the positioner sets the menu's max-height to the whole window */
 .gotipe-slash-menu-list {
   max-height: calc(
-    min(var(--gt-menu-max-h), 100vh - 2 * var(--gt-space-3)) - 2 * var(--gt-menu-pad)
+    min(var(--gt-menu-max-h), 100vh - 2 * var(--gt-space-3)) -
+    2 *
+    var(--gt-menu-pad)
   );
   min-height: 0;
   overflow-x: hidden;
