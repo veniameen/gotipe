@@ -38,6 +38,10 @@
   scrollbar-color: var(--gt-line-control) transparent;
   scrollbar-width: thin;
 }
+/* the active item is the focus mark; the list itself draws no ring */
+.gotipe-slash-menu-list:focus {
+  outline: none;
+}
 
 .gotipe-slash-menu-group-separator {
   height: var(--gt-hairline);

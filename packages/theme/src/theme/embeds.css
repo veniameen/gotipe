@@ -1,0 +1,177 @@
+/* Embed and formula — GoTipe Atlas, frame 18. An embed is a sunken card with its site, its
+   address and a way to open it; without an address it asks for one, and a wrong one marks the
+   field itself. A formula shows its TeX centred and is edited as text. */
+
+.gotipe-embed {
+  display: flex;
+  align-items: center;
+  gap: var(--gt-space-3);
+  padding: var(--gt-card-pad);
+  border-radius: var(--gt-radius-block);
+  background: var(--gt-sunken);
+  font-family: var(--gt-font-ui);
+  font-size: var(--gt-ui-size);
+  line-height: var(--gt-ui-leading);
+}
+.gotipe-embed-icon {
+  display: inline-grid;
+  flex: none;
+  place-items: center;
+  width: var(--gt-field-h);
+  height: var(--gt-field-h);
+  border-radius: var(--gt-radius-control);
+  background: var(--gt-overlay);
+  box-shadow: var(--gt-shadow-card);
+  color: var(--gt-text-2);
+}
+.gotipe-embed-icon > svg,
+.gotipe-embed-open > svg {
+  width: var(--gt-icon-size);
+  height: var(--gt-icon-size);
+}
+.gotipe-embed-main {
+  display: grid;
+  flex: 1;
+  min-width: 0;
+}
+.gotipe-embed-title,
+.gotipe-embed-meta {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.gotipe-embed-title {
+  color: var(--gt-text);
+  font-weight: var(--gt-weight-medium);
+}
+.gotipe-embed-meta {
+  color: var(--gt-text-2);
+  font-size: var(--gt-ui-small);
+}
+.gotipe-embed-open {
+  position: relative;
+  display: inline-grid;
+  flex: none;
+  place-items: center;
+  width: var(--gt-handle-w);
+  height: var(--gt-handle-h);
+  border-radius: var(--gt-radius-control);
+  color: var(--gt-text-2);
+}
+.gotipe-embed-open:hover {
+  background: var(--gt-fill-2);
+  color: var(--gt-text);
+}
+.gotipe-embed-open:focus-visible {
+  outline: var(--gt-focus-width) solid var(--gt-focus);
+  outline-offset: var(--gt-focus-gap);
+}
+.gotipe-embed-open:is(:hover, :focus-visible) > .gotipe-tip {
+  display: flex;
+  opacity: 1;
+  transition: opacity var(--gt-duration-fast) var(--gt-ease-out) var(--gt-tip-delay);
+}
+@starting-style {
+  .gotipe-embed-open:is(:hover, :focus-visible) > .gotipe-tip {
+    opacity: 0;
+  }
+}
+.gotipe-embed-open > .gotipe-tip {
+  top: calc(100% + var(--gt-overlay-gap));
+  right: 0;
+  left: auto;
+  transform: none;
+}
+
+/* no address yet: a field and an ink button */
+.gotipe-embed-form {
+  display: flex;
+  flex: 1;
+  gap: var(--gt-space-2);
+  min-width: 0;
+}
+.gotipe-embed-field {
+  box-sizing: border-box;
+  appearance: none;
+  flex: 1;
+  min-width: 0;
+  height: var(--gt-field-h);
+  padding: var(--gt-field-pad);
+  border: var(--gt-hairline) solid var(--gt-line-strong);
+  border-radius: var(--gt-radius-control);
+  background: var(--gt-page-bg);
+  color: var(--gt-text);
+  font: inherit;
+}
+.gotipe-embed-field::placeholder {
+  color: var(--gt-text-3);
+}
+.gotipe-embed-field:focus {
+  border-color: var(--gt-line-active);
+  outline: none;
+}
+.gotipe-embed-field:focus-visible {
+  outline: var(--gt-focus-width) solid var(--gt-focus);
+  outline-offset: var(--gt-focus-gap);
+}
+.gotipe-embed-field[aria-invalid="true"] {
+  border-color: var(--gt-danger);
+  background: var(--gt-danger-tint);
+}
+.gotipe-embed-submit {
+  flex: none;
+  height: var(--gt-field-h);
+  padding: var(--gt-button-pad);
+  border: 0;
+  border-radius: var(--gt-radius-control);
+  background: var(--gt-ink);
+  color: var(--gt-ink-text);
+  font: inherit;
+  font-weight: var(--gt-weight-medium);
+  cursor: pointer;
+}
+.gotipe-embed-submit:hover:not(:disabled) {
+  background: var(--gt-ink-hover);
+}
+.gotipe-embed-submit:disabled {
+  opacity: var(--gt-disabled-opacity);
+  cursor: default;
+}
+.gotipe-embed-submit:focus-visible {
+  outline: var(--gt-focus-width) solid var(--gt-focus);
+  outline-offset: var(--gt-focus-gap);
+}
+
+/* ---- formula ---- */
+.gotipe-math {
+  min-width: 0;
+  border-radius: var(--gt-radius-block);
+  background: var(--gt-sunken);
+}
+.gotipe-math-header {
+  display: flex;
+  align-items: center;
+  min-height: var(--gt-code-head);
+  padding: var(--gt-code-head-pad);
+  color: var(--gt-text-3);
+  font-family: var(--gt-font-ui);
+  font-size: var(--gt-label-size);
+  line-height: var(--gt-label-leading);
+  letter-spacing: normal;
+  user-select: none;
+}
+.gotipe-math-source {
+  margin: 0;
+  padding: 0 var(--gt-code-pad-x) var(--gt-code-pad-bottom);
+  overflow-x: auto;
+  color: var(--gt-text);
+  font-family: var(--gt-font-mono);
+  font-size: var(--gt-code-size);
+  line-height: var(--gt-code-leading);
+  letter-spacing: normal;
+  text-align: center;
+  white-space: pre;
+}
+.gotipe-math-source > code {
+  font: inherit;
+}

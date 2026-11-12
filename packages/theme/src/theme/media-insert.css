@@ -1,0 +1,244 @@
+/* Media overlays — Atlas frame 10: the panel that takes a link (or a host's catalog) for an empty
+   image or file block, and the image dialog (alternative text, crop, preview). Both stand on the
+   overlay surface. A wrong address marks its field; the reason is the field's tooltip. Imported by
+   media.css, so BlockEditor and PageEditor both get it. */
+
+/* ---- insert: upload, a link or a file on the overlay surface ---- */
+.gotipe-media-insert-panel {
+  z-index: var(--gt-z-modal);
+  align-self: center;
+  width: min(var(--gt-popover-w), calc(100vw - 2 * var(--gt-space-2)));
+  overflow: hidden;
+  border: 0;
+  border-radius: var(--gt-radius-overlay);
+  background: var(--gt-overlay);
+  box-shadow: var(--gt-shadow-overlay);
+  color: var(--gt-text);
+  font-family: var(--gt-font-ui);
+  font-size: var(--gt-ui-size);
+  line-height: var(--gt-ui-leading);
+}
+.gotipe-media-insert-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--gt-space-3);
+  padding: var(--gt-space-2) var(--gt-space-3) 0;
+  box-shadow: inset 0 calc(-1 * var(--gt-hairline)) 0 var(--gt-line);
+}
+.gotipe-media-tab {
+  padding: var(--gt-space-1) 0 var(--gt-space-2);
+  border: 0;
+  background: transparent;
+  color: var(--gt-text-2);
+  font: inherit;
+  cursor: pointer;
+}
+.gotipe-media-tab.active {
+  box-shadow: inset 0 calc(-1 * var(--gt-rule)) 0 var(--gt-text);
+  color: var(--gt-text);
+  font-weight: var(--gt-weight-medium);
+}
+.gotipe-media-tab.disabled {
+  opacity: var(--gt-disabled-opacity);
+  cursor: default;
+}
+.gotipe-media-insert-content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gt-space-2);
+  padding: var(--gt-space-3);
+}
+.gotipe-media-upload-button,
+.gotipe-media-link-form button {
+  min-height: var(--gt-field-h);
+  padding: var(--gt-button-pad);
+  border: 0;
+  border-radius: var(--gt-radius-control);
+  background: var(--gt-ink);
+  color: var(--gt-ink-text);
+  font: inherit;
+  font-weight: var(--gt-weight-medium);
+  cursor: pointer;
+}
+.gotipe-media-upload-button:hover,
+.gotipe-media-link-form button:hover {
+  background: var(--gt-ink-hover);
+}
+.gotipe-media-link-form {
+  display: flex;
+  gap: var(--gt-space-2);
+}
+.gotipe-media-link-form input {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: var(--gt-field-h);
+  padding: var(--gt-field-pad);
+  border: 0;
+  border-radius: var(--gt-radius-control);
+  background: var(--gt-fill-1);
+  box-shadow: inset 0 0 0 var(--gt-hairline) var(--gt-line-strong);
+  color: var(--gt-text);
+  font: inherit;
+}
+.gotipe-media-link-form input:focus-visible {
+  outline: none;
+  box-shadow: inset 0 0 0 var(--gt-hairline) var(--gt-accent);
+}
+.gotipe-media-link-form input[aria-invalid="true"] {
+  background: var(--gt-danger-tint);
+  box-shadow: inset 0 0 0 var(--gt-hairline) var(--gt-danger);
+}
+/* a file: the address on its own line, then its name and the button */
+.gotipe-media-link-form--file {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+.gotipe-media-link-form--file > input:first-child {
+  grid-column: 1 / -1;
+}
+.gotipe-media-insert-note,
+.gotipe-media-insert-error {
+  margin: 0;
+  font-size: var(--gt-ui-small);
+  line-height: var(--gt-ui-small-leading);
+}
+.gotipe-media-insert-note {
+  color: var(--gt-text-2);
+}
+.gotipe-media-insert-error {
+  color: var(--gt-danger);
+}
+.gotipe-media-insert-panel :is(button, input):focus-visible {
+  outline: var(--gt-focus-width) solid var(--gt-focus);
+  outline-offset: var(--gt-focus-gap);
+}
+
+/* ---- the image dialog: alternative text, crop, the catalog ---- */
+.gotipe-image-dialog {
+  box-sizing: border-box;
+  width: min(var(--gt-dialog-w), calc(100vw - 2 * var(--gt-space-3)));
+  max-height: calc(100dvh - 2 * var(--gt-space-3));
+  padding: var(--gt-panel-pad);
+  overflow: auto;
+  border: 0;
+  border-radius: var(--gt-radius-card);
+  background: var(--gt-overlay);
+  box-shadow: var(--gt-shadow-overlay);
+  color: var(--gt-text);
+  font-family: var(--gt-font-ui);
+  font-size: var(--gt-ui-size);
+  line-height: var(--gt-ui-leading);
+}
+.gotipe-image-dialog::backdrop {
+  background: var(--gt-scrim);
+}
+.gotipe-image-dialog form {
+  display: grid;
+  gap: var(--gt-space-4);
+}
+.gotipe-image-dialog header,
+.gotipe-image-dialog footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--gt-space-3);
+}
+.gotipe-image-dialog footer {
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+.gotipe-image-dialog label {
+  display: grid;
+  gap: var(--gt-space-1);
+  min-width: 0;
+  color: var(--gt-text-2);
+}
+.gotipe-image-dialog input {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  min-height: var(--gt-field-h);
+  padding: var(--gt-field-pad);
+  border: 0;
+  border-radius: var(--gt-radius-control);
+  background: var(--gt-fill-1);
+  box-shadow: inset 0 0 0 var(--gt-hairline) var(--gt-line-strong);
+  color: var(--gt-text);
+  font: inherit;
+}
+.gotipe-image-dialog button {
+  min-height: var(--gt-button-h);
+  padding: var(--gt-button-pad);
+  border: 0;
+  border-radius: var(--gt-radius-control);
+  background: var(--gt-fill-2);
+  color: var(--gt-text);
+  font: inherit;
+  cursor: pointer;
+}
+.gotipe-image-dialog button:hover:not(:disabled) {
+  background: var(--gt-fill-3);
+}
+.gotipe-image-dialog button:disabled {
+  opacity: var(--gt-disabled-opacity);
+  cursor: wait;
+}
+.gotipe-image-dialog :is(button, input):focus-visible {
+  outline: var(--gt-focus-width) solid var(--gt-focus);
+  outline-offset: var(--gt-focus-gap);
+}
+.gotipe-image-preview {
+  position: relative;
+  width: fit-content;
+  max-width: 100%;
+  margin-inline: auto;
+  overflow: hidden;
+  line-height: 0;
+}
+.gotipe-image-preview img {
+  display: block;
+  max-width: 100%;
+  max-height: 55dvh;
+  object-fit: contain;
+}
+.gotipe-image-crop-box {
+  position: absolute;
+  box-sizing: border-box;
+  border: var(--gt-rule) solid var(--gt-overlay);
+  outline: var(--gt-hairline) solid var(--gt-text);
+  box-shadow: 0 0 0 100vmax var(--gt-scrim);
+  pointer-events: none;
+}
+.gotipe-crop-fields {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(var(--gt-crop-field-min), 1fr));
+  gap: var(--gt-space-2);
+}
+.gotipe-image-catalog {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--gt-space-2);
+  margin-top: var(--gt-space-3);
+}
+.gotipe-image-catalog button {
+  min-width: 0;
+  padding: 0;
+  overflow: hidden;
+  border: 0;
+  border-radius: var(--gt-radius-control);
+  background: var(--gt-overlay);
+  box-shadow: inset 0 0 0 var(--gt-hairline) var(--gt-line-strong);
+  color: inherit;
+  cursor: pointer;
+}
+.gotipe-image-catalog img {
+  width: 100%;
+  height: var(--gt-thumb-h);
+  object-fit: cover;
+}
+.gotipe-image-catalog small {
+  display: block;
+  padding: var(--gt-space-1);
+  overflow-wrap: anywhere;
+}

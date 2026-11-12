@@ -139,3 +139,10 @@
 .gotipe-code-token[data-underline] {
   text-decoration: underline;
 }
+
+/* the copy button stands at the block's end: its tip opens towards the text */
+.gotipe-code-block-header button > .gotipe-tip {
+  right: 0;
+  left: auto;
+  transform: none;
+}

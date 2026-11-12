@@ -84,12 +84,29 @@
   pointer-events: none;
 }
 .gotipe-page-head-lock {
+  position: relative;
   display: grid;
   flex: none;
   place-items: center;
   height: var(--gt-title-leading);
+  padding: 0;
+  border: 0;
+  border-radius: var(--gt-radius-control);
+  background: transparent;
   color: var(--gt-text-3);
+  font: inherit;
   cursor: help;
+}
+/* the reason is the theme's tooltip under the lock (Atlas frame 17), for the pointer and the keys */
+.gotipe-page-head-lock > .gotipe-tip {
+  top: calc(100% + var(--gt-overlay-gap));
+  right: 0;
+  left: auto;
+  transform: none;
+}
+.gotipe-page-head-lock:focus-visible {
+  outline: var(--gt-focus-width) solid var(--gt-focus);
+  outline-offset: var(--gt-focus-gap);
 }
 .gotipe-page-head-lock > svg {
   width: var(--gt-icon-size);
@@ -248,13 +265,11 @@
   line-height: var(--gt-ui-leading);
 }
 
-/* a reported error is shown by the toast; the control keeps its alert for screen readers */
+/* a reported error is shown by the toast (uploads included); the control keeps its alert for
+   screen readers. An image or a file that cannot be shown marks itself instead. */
 .gotipe-block-editor
-  :is(.gotipe-code-block, .gotipe-block-context-menu, .gotipe-image-block)
-  > :is(
-    [role="alert"]:not(.gotipe-image-error, .gotipe-media-insert-error),
-    .gotipe-media-action-error
-  ) {
+  :is(.gotipe-code-block, .gotipe-block-context-menu, .gotipe-image-block, .gotipe-file-block)
+  > :is([role="alert"]:not(.gotipe-image-error), .gotipe-media-action-error) {
   position: absolute;
   width: var(--gt-hairline);
   height: var(--gt-hairline);

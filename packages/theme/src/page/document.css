@@ -406,7 +406,6 @@
 /* table */
 .gotipe-page .gotipe-table-wrapper {
   margin: 8px 0;
-  overflow-x: auto;
 }
 .gotipe-page .gotipe-table {
   width: 100%;
