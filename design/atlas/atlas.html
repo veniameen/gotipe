@@ -1077,6 +1077,8 @@ body {
 .gotipe-list > li > .gotipe-list {
   margin-top: var(--gt-flow-list);
 }
+/* markers are drawn, not clicked: in Firefox a click beside an empty item would take the caret to
+   the next block */
 ul.gotipe-list > li::before {
   content: "";
   position: absolute;
@@ -1086,6 +1088,7 @@ ul.gotipe-list > li::before {
   height: var(--gt-bullet);
   border-radius: var(--gt-radius-round);
   background: currentColor;
+  pointer-events: none;
 }
 ul.gotipe-list ul.gotipe-list > li::before {
   box-sizing: border-box;
@@ -1106,6 +1109,7 @@ ol.gotipe-list > li::before {
   color: var(--gt-text-2);
   font-variant-numeric: tabular-nums;
   text-align: right;
+  pointer-events: none;
 }
 
 /* ---- tasks ---- */
