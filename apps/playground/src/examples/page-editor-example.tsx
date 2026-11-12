@@ -1,10 +1,10 @@
 import { PageEditor, type PageEditorHandle } from "@gotipe/block-editor";
 import type { GoTipeEditor, GoTipeError } from "@gotipe/core";
 import type { LaneCursor, ReviewComment, ReviewProposal } from "@gotipe/suggestions";
+import type { ThemePreset } from "@gotipe/theme";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useDebugEditor } from "../shared/use-debug-editor";
 import { PAGE_LANES, PAGE_MARKDOWN, demoReview } from "./page-editor-sample";
-import "@gotipe/theme/page.css";
 import "./page-editor-example.css";
 
 declare global {
@@ -18,6 +18,7 @@ export function PageEditorExample() {
   const [markdown, setMarkdown] = useState(PAGE_MARKDOWN);
   const [draft, setDraft] = useState(PAGE_MARKDOWN);
   const [readOnly, setReadOnly] = useState(false);
+  const [view, setView] = useState<ThemePreset>("notion");
   const [showSource, setShowSource] = useState(false);
   const [editor, setEditor] = useState<GoTipeEditor | null>(null);
   const [error, setError] = useState<{ message: string; recoveryText?: string } | null>(null);
@@ -61,6 +62,20 @@ export function PageEditorExample() {
     <section className="gotipe-page-example" data-gotipe-example="page" aria-label="Editor example">
       <div className="gotipe-page-example-controls">
         <h2>Editor</h2>
+        <label className="gotipe-editor-view">
+          Вид
+          <select
+            value={view}
+            onChange={(event) => setView(event.target.value as ThemePreset)}
+            aria-label="Вид страницы"
+          >
+            {(["notion", "docs", "modern", "minimal"] as const).map((name) => (
+              <option key={name} value={name}>
+                {name}
+              </option>
+            ))}
+          </select>
+        </label>
         <button type="button" className="gotipe-button" onClick={loadReview} disabled={readOnly}>
           Demo suggestions
         </button>
@@ -100,6 +115,7 @@ export function PageEditorExample() {
           onChange={setDraft}
           onReady={ready}
           readOnly={readOnly}
+          view={view}
           locale="ru"
           onError={reportError}
           review={{
