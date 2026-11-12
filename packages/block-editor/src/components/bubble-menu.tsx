@@ -1,10 +1,13 @@
 import { type GoTipeEditor, GoTipeError } from "@gotipe/core";
 import { BubbleMenu } from "@gotipe/react";
+import { useGoTipeI18n } from "@gotipe/react";
 import { useCallback } from "react";
 import { PageIcon, type PageIconName } from "../page/icons";
 import { BlockTypeDropdown } from "./block-type-dropdown";
+import { MARK_KEYS, ariaKeys } from "./formatting/keys";
 import { LinkEditor } from "./formatting/link-editor";
 import { MoreMenu } from "./formatting/more-menu";
+import { Tip } from "./formatting/tip";
 import { TextColorPicker } from "./text-color-picker";
 
 export interface BlockEditorBubbleMenuProps {
@@ -35,22 +38,26 @@ function Separator() {
 
 interface FormatButtonProps {
   label: string;
+  mark: string;
   icon: PageIconName;
+  binding: string;
   active: boolean;
   onClick: () => void;
 }
 
-function FormatButton({ label, icon, active, onClick }: FormatButtonProps) {
+function FormatButton({ label, mark, icon, binding, active, onClick }: FormatButtonProps) {
   return (
     <button
       type="button"
       className={active ? "active" : ""}
       aria-label={label}
       aria-pressed={active}
-      data-mark={label.toLowerCase()}
+      aria-keyshortcuts={ariaKeys(binding)}
+      data-mark={mark}
       onClick={onClick}
     >
       <PageIcon name={icon} />
+      <Tip label={label} binding={binding} />
     </button>
   );
 }
@@ -60,6 +67,7 @@ function FormatButton({ label, icon, active, onClick }: FormatButtonProps) {
 /* ------------------------------------------------------------------ */
 
 export function BlockEditorBubbleMenu({ editor, enableAI = false }: BlockEditorBubbleMenuProps) {
+  const i18n = useGoTipeI18n();
   const runWithFocus = useCallback(
     (apply: (chain: ReturnType<GoTipeEditor["chain"]>) => void) => {
       if (!editor.isEditable || editor.isDestroyed) return;
@@ -93,11 +101,11 @@ export function BlockEditorBubbleMenu({ editor, enableAI = false }: BlockEditorB
               <button
                 type="button"
                 className="gotipe-bubble-model"
-                aria-label="AI Improve"
+                aria-label={i18n.t("editor.improveLabel")}
                 onClick={handleAIImprove}
               >
                 <PageIcon name="sparkle" />
-                Improve
+                {i18n.t("editor.improve")}
               </button>
               <Separator />
             </>
@@ -109,8 +117,10 @@ export function BlockEditorBubbleMenu({ editor, enableAI = false }: BlockEditorB
 
           {/* Formatting buttons */}
           <FormatButton
-            label="Bold"
+            label={i18n.t("toolbar.bold")}
+            mark="bold"
             icon="bold"
+            binding={MARK_KEYS.bold}
             active={isMarkActive(editor, "bold")}
             onClick={() =>
               runWithFocus((chain) => {
@@ -119,8 +129,10 @@ export function BlockEditorBubbleMenu({ editor, enableAI = false }: BlockEditorB
             }
           />
           <FormatButton
-            label="Italic"
+            label={i18n.t("toolbar.italic")}
+            mark="italic"
             icon="italic"
+            binding={MARK_KEYS.italic}
             active={isMarkActive(editor, "italic")}
             onClick={() =>
               runWithFocus((chain) => {
@@ -129,8 +141,10 @@ export function BlockEditorBubbleMenu({ editor, enableAI = false }: BlockEditorB
             }
           />
           <FormatButton
-            label="Underline"
+            label={i18n.t("toolbar.underline")}
+            mark="underline"
             icon="underline"
+            binding={MARK_KEYS.underline}
             active={isMarkActive(editor, "underline")}
             onClick={() =>
               runWithFocus((chain) => {
@@ -139,8 +153,10 @@ export function BlockEditorBubbleMenu({ editor, enableAI = false }: BlockEditorB
             }
           />
           <FormatButton
-            label="Strikethrough"
+            label={i18n.t("toolbar.strikethrough")}
+            mark="strikethrough"
             icon="strike"
+            binding={MARK_KEYS.strikethrough}
             active={isMarkActive(editor, "strikethrough")}
             onClick={() =>
               runWithFocus((chain) => {
@@ -149,8 +165,10 @@ export function BlockEditorBubbleMenu({ editor, enableAI = false }: BlockEditorB
             }
           />
           <FormatButton
-            label="Code"
+            label={i18n.t("toolbar.code")}
+            mark="code"
             icon="inlineCode"
+            binding={MARK_KEYS.code}
             active={isMarkActive(editor, "code")}
             onClick={() =>
               runWithFocus((chain) => {

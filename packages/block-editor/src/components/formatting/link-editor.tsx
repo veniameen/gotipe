@@ -1,7 +1,10 @@
 import { type GoTipeEditor, toSafeHref } from "@gotipe/core";
+import { useGoTipeI18n } from "@gotipe/react";
 import { useEffect, useRef, useState } from "react";
 import { PageIcon } from "../../page/icons";
+import { MARK_KEYS, ariaKeys } from "./keys";
 import { currentMarks } from "./selection";
+import { Tip } from "./tip";
 import { useFormattingMenu } from "./use-formatting-menu";
 
 export function LinkEditor({ editor }: { editor: GoTipeEditor }) {
@@ -9,6 +12,7 @@ export function LinkEditor({ editor }: { editor: GoTipeEditor }) {
   const [url, setUrl] = useState("");
   const input = useRef<HTMLInputElement>(null);
   const mark = currentMarks(editor).find((item) => item.type === "link");
+  const i18n = useGoTipeI18n();
   const open = () => {
     setUrl(typeof mark?.attrs?.href === "string" ? mark.attrs.href : "");
     menu.show();
@@ -19,7 +23,7 @@ export function LinkEditor({ editor }: { editor: GoTipeEditor }) {
   const apply = () => {
     const href = toSafeHref(url);
     if (!href) {
-      menu.setError("Enter a web address, email link, or relative URL.");
+      menu.setError(i18n.t("format.linkInvalid"));
       input.current?.focus();
       return;
     }
@@ -30,7 +34,8 @@ export function LinkEditor({ editor }: { editor: GoTipeEditor }) {
       <button
         ref={menu.trigger}
         type="button"
-        aria-label="Link"
+        aria-label={i18n.t("toolbar.link")}
+        aria-keyshortcuts={ariaKeys(MARK_KEYS.link)}
         aria-haspopup="dialog"
         aria-expanded={menu.open}
         aria-pressed={!!mark}
@@ -40,12 +45,13 @@ export function LinkEditor({ editor }: { editor: GoTipeEditor }) {
         onClick={() => (menu.open ? menu.close() : open())}
       >
         <PageIcon name="link" />
+        <Tip label={i18n.t("toolbar.link")} binding={MARK_KEYS.link} />
       </button>
       {menu.open && (
         <div
           ref={menu.popup}
           role="dialog"
-          aria-label="Edit link"
+          aria-label={i18n.t("format.linkDialog")}
           className="gotipe-link-editor"
           data-gotipe-formatting-popup=""
           style={menu.style}
@@ -59,7 +65,7 @@ export function LinkEditor({ editor }: { editor: GoTipeEditor }) {
           >
             <label className="gotipe-link-editor-field">
               <PageIcon name="link" />
-              <span className="gotipe-sr-only">Link address</span>
+              <span className="gotipe-sr-only">{i18n.t("format.linkAddress")}</span>
               <input
                 ref={input}
                 value={url}
@@ -77,8 +83,8 @@ export function LinkEditor({ editor }: { editor: GoTipeEditor }) {
             <div className="gotipe-link-editor-actions">
               <button
                 type="submit"
-                aria-label="Apply link"
-                title="Apply link"
+                aria-label={i18n.t("format.applyLink")}
+                title={i18n.t("format.applyLink")}
                 disabled={!url.trim()}
               >
                 <PageIcon name="check" />
@@ -86,8 +92,8 @@ export function LinkEditor({ editor }: { editor: GoTipeEditor }) {
               {mark && (
                 <button
                   type="button"
-                  aria-label="Remove link"
-                  title="Remove link"
+                  aria-label={i18n.t("format.unlink")}
+                  title={i18n.t("format.unlink")}
                   onClick={() => menu.run((chain) => chain.unsetMark("link"))}
                 >
                   <PageIcon name="unlink" />
@@ -95,8 +101,8 @@ export function LinkEditor({ editor }: { editor: GoTipeEditor }) {
               )}
               <button
                 type="button"
-                aria-label="Cancel"
-                title="Cancel"
+                aria-label={i18n.t("format.cancel")}
+                title={i18n.t("format.cancel")}
                 onClick={() => menu.close(true)}
               >
                 <PageIcon name="close" />

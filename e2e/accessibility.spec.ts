@@ -209,7 +209,7 @@ test.describe('Accessibility — Keyboard navigation', () => {
     await page.locator('[data-gotipe-nav="ai"]').click();
     await page.waitForSelector('[data-gotipe-example="ai"]');
     await page.locator('[data-gotipe-content] > [data-block-id]').first().click();
-    await page.keyboard.press('ControlOrMeta+k');
+    await page.keyboard.press('ControlOrMeta+j');
     await page.waitForSelector('[data-gotipe-ai-command-bar]');
     await page.keyboard.press('Escape');
     await expect(page.locator('[data-gotipe-ai-command-bar]')).not.toBeVisible();
@@ -260,7 +260,7 @@ test.describe('Accessibility — Focus management', () => {
     await page.locator('[data-gotipe-nav="ai"]').click();
     await page.waitForSelector('[data-gotipe-example="ai"]');
     await page.locator('[data-gotipe-content] > [data-block-id]').first().click();
-    await page.keyboard.press('ControlOrMeta+k');
+    await page.keyboard.press('ControlOrMeta+j');
     await page.waitForSelector('[data-gotipe-ai-command-bar]');
     const input = page.locator('[data-gotipe-ai-command-bar] input');
     await expect(input).toBeFocused();
@@ -316,7 +316,7 @@ test.describe('Accessibility — Live regions', () => {
   test('AI processing is announced and cancellation removes the status', async ({ page }) => {
     await page.goto('/#ai');
     await page.locator('[data-gotipe-content] > [data-block-id]').first().click();
-    await page.keyboard.press('ControlOrMeta+k');
+    await page.keyboard.press('ControlOrMeta+j');
     await page.getByRole('textbox', { name: 'AI prompt' }).fill('Write about accessibility');
     await page.getByRole('button', { name: 'Submit AI command' }).click();
     const status = page.locator('[data-gotipe-ai-status]');

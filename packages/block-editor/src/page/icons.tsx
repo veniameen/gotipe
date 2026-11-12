@@ -57,7 +57,12 @@ export type PageIconName =
   | "toggle"
   | "columns"
   | "math"
-  | "chevronLeft";
+  | "chevronLeft"
+  | "lock"
+  | "undo"
+  | "redo"
+  | "indent"
+  | "outdent";
 
 const PATHS: Record<PageIconName, React.ReactNode> = {
   image: (
@@ -231,6 +236,16 @@ const PATHS: Record<PageIconName, React.ReactNode> = {
     <path d="M10.5 3.25H8.9a1.6 1.6 0 0 0-1.58 1.33L5.9 12.4a1.6 1.6 0 0 1-1.58 1.35H3.5M5 7h5" />
   ),
   chevronLeft: <path d="M9.75 4.5 6.25 8l3.5 3.5" />,
+  lock: (
+    <>
+      <rect x="3.25" y="7.25" width="9.5" height="6.5" rx="1.75" />
+      <path d="M5.25 7.25V5.5a2.75 2.75 0 0 1 5.5 0v1.75" />
+    </>
+  ),
+  undo: <path d="M5.75 4 3 6.75 5.75 9.5M3 6.75h6.5a3.25 3.25 0 0 1 0 6.5H7.5" />,
+  redo: <path d="M10.25 4 13 6.75 10.25 9.5M13 6.75H6.5a3.25 3.25 0 0 0 0 6.5h2" />,
+  indent: <path d="M2.75 3.75h10.5M7.25 8h6M2.75 12.25h10.5M2.75 6.25 4.75 8l-2 1.75" />,
+  outdent: <path d="M2.75 3.75h10.5M7.25 8h6M2.75 12.25h10.5M4.75 6.25 2.75 8l2 1.75" />,
 };
 
 export function PageIcon({ name, className }: { name: PageIconName; className?: string }) {

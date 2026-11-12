@@ -6,9 +6,11 @@ import {
   toSafeColor,
 } from "@gotipe/core";
 import { useEditorState } from "@gotipe/react";
+import { useGoTipeI18n } from "@gotipe/react";
 import type React from "react";
 import { PageIcon } from "../page/icons";
 import { currentMarks } from "./formatting/selection";
+import { Tip } from "./formatting/tip";
 import { useFormattingMenu } from "./formatting/use-formatting-menu";
 
 export interface TextColorPickerProps {
@@ -28,6 +30,8 @@ export function TextColorPicker({ editor }: TextColorPickerProps) {
   const textColor = stored("textColor");
   const highlight = stored("highlight");
   const current = documentColorStyle(textColor ?? highlight);
+  const i18n = useGoTipeI18n();
+  const colorName = (name: string) => i18n.t(`color.${name}` as Parameters<typeof i18n.t>[0]);
   return (
     <div>
       <button
@@ -38,11 +42,12 @@ export function TextColorPicker({ editor }: TextColorPickerProps) {
         onClick={() => (menu.open ? menu.close() : menu.show())}
         aria-haspopup="dialog"
         aria-expanded={menu.open}
-        aria-label="Text color"
+        aria-label={i18n.t("editor.textColor")}
         style={current ? ({ "--gt-color-current": current } as React.CSSProperties) : undefined}
       >
         <PageIcon name="letter" />
         <span className="gotipe-color-bar" aria-hidden="true" />
+        <Tip label={i18n.t("editor.color")} />
       </button>
 
       {menu.open && (
@@ -50,20 +55,20 @@ export function TextColorPicker({ editor }: TextColorPickerProps) {
           ref={menu.popup}
           className="gotipe-text-color-picker"
           role="dialog"
-          aria-label="Text and highlight colors"
+          aria-label={i18n.t("color.dialog")}
           data-gotipe-color-picker=""
           data-gotipe-formatting-popup=""
           style={menu.style}
           onKeyDown={menu.keydown}
         >
-          <div className="gotipe-color-group" role="group" aria-label="Text">
+          <div className="gotipe-color-group" role="group" aria-label={i18n.t("color.text")}>
             {DOCUMENT_TEXT_COLORS.map((color) => (
               <button
                 key={`tc-${color.name}`}
                 type="button"
                 className="gotipe-text-color-swatch"
-                title={color.name}
-                aria-label={`Text color ${color.name}`}
+                title={colorName(color.name)}
+                aria-label={i18n.t("color.textOption", { name: colorName(color.name) })}
                 aria-pressed={textColor === color.value}
                 style={{ color: documentColorStyle(color.value) ?? undefined }}
                 onClick={() =>
@@ -75,14 +80,14 @@ export function TextColorPicker({ editor }: TextColorPickerProps) {
             ))}
           </div>
           <span className="gotipe-color-sep" aria-hidden="true" />
-          <div className="gotipe-color-group" role="group" aria-label="Highlight">
+          <div className="gotipe-color-group" role="group" aria-label={i18n.t("color.highlight")}>
             {DOCUMENT_HIGHLIGHT_COLORS.map((color) => (
               <button
                 key={`hl-${color.name}`}
                 type="button"
                 className="gotipe-text-color-swatch is-fill"
-                title={color.name}
-                aria-label={`Highlight ${color.name}`}
+                title={colorName(color.name)}
+                aria-label={i18n.t("color.highlightOption", { name: colorName(color.name) })}
                 aria-pressed={highlight === color.value}
                 style={{ background: documentColorStyle(color.value) ?? undefined }}
                 onClick={() =>
@@ -95,8 +100,8 @@ export function TextColorPicker({ editor }: TextColorPickerProps) {
           <button
             type="button"
             className="gotipe-text-color-reset"
-            aria-label="Reset color"
-            title="Reset color"
+            aria-label={i18n.t("color.reset")}
+            title={i18n.t("color.reset")}
             onClick={() => menu.run((chain) => chain.unsetMark("highlight").unsetMark("textColor"))}
           >
             <PageIcon name="close" />

@@ -1,8 +1,12 @@
 import { type GoTipeEditor, GoTipeError } from "@gotipe/core";
+import type { TranslationKey } from "@gotipe/i18n";
 import { useFloatingPosition } from "@gotipe/react";
+import { useGoTipeI18n } from "@gotipe/react";
 import type React from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { PageIcon, type PageIconName } from "../page/icons";
+import { BLOCK_KEYS } from "./formatting/keys";
+import { MenuKey } from "./formatting/tip";
 
 export interface BlockContextMenuProps {
   editor: GoTipeEditor;
@@ -29,6 +33,24 @@ type TurnIntoOption = {
 };
 
 const LIST_TYPES = new Set(["bulletList", "orderedList", "todoList"]);
+
+/** The names shown for the menu's English labels. */
+const NAMES: Record<string, TranslationKey> = {
+  Text: "slashMenu.text",
+  "Heading 1": "slashMenu.heading1",
+  "Heading 2": "slashMenu.heading2",
+  "Heading 3": "slashMenu.heading3",
+  "Bullet List": "toolbar.bulletList",
+  "Numbered List": "toolbar.orderedList",
+  "To-do List": "toolbar.todoList",
+  Blockquote: "block.blockquote",
+  "Code Block": "toolbar.codeBlock",
+  "Copy link to block": "block.copyLink",
+  Duplicate: "block.duplicate",
+  "Reset Formatting": "block.resetFormatting",
+  "Copy to Clipboard": "block.copy",
+  Delete: "block.delete",
+};
 
 function findBlockById(blocks: ViewBlock[], targetId: string): ViewBlock | null {
   for (const block of blocks) {
@@ -60,6 +82,8 @@ export function BlockContextMenu({ editor, blockId, open, onClose }: BlockContex
   const submenuTriggerRef = useRef<HTMLButtonElement>(null);
   const [turnIntoOpen, setTurnIntoOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const i18n = useGoTipeI18n();
+  const nameOf = (label: string) => (NAMES[label] ? i18n.t(NAMES[label]) : label);
   const anchor = useCallback(
     () => menuRef.current?.parentElement?.getBoundingClientRect() ?? null,
     [],
@@ -282,7 +306,7 @@ export function BlockContextMenu({ editor, blockId, open, onClose }: BlockContex
       ref={menuRef}
       className="gotipe-block-context-menu"
       role="menu"
-      aria-label="Block actions"
+      aria-label={i18n.t("block.handle")}
       data-gotipe-context-menu=""
       style={{
         ...position,
@@ -319,7 +343,7 @@ export function BlockContextMenu({ editor, blockId, open, onClose }: BlockContex
           <span className="gotipe-context-menu-icon" aria-hidden="true">
             <PageIcon name="swap" />
           </span>
-          <span className="gotipe-context-menu-label">Turn into</span>
+          <span className="gotipe-context-menu-label">{i18n.t("block.turnInto")}</span>
           <span className="gotipe-context-menu-chevron" aria-hidden="true">
             <PageIcon name="chevronRight" />
           </span>
@@ -329,7 +353,7 @@ export function BlockContextMenu({ editor, blockId, open, onClose }: BlockContex
             ref={submenuRef}
             className="gotipe-context-submenu"
             role="menu"
-            aria-label="Turn into"
+            aria-label={i18n.t("block.turnInto")}
             style={{
               ...submenuPosition,
               position: "fixed",
@@ -360,7 +384,14 @@ export function BlockContextMenu({ editor, blockId, open, onClose }: BlockContex
                 <span className="gotipe-context-menu-icon" aria-hidden="true">
                   <PageIcon name={option.icon} />
                 </span>
-                <span className="gotipe-context-menu-label">{option.label}</span>
+                <span className="gotipe-context-menu-label">{nameOf(option.label)}</span>
+                <MenuKey
+                  binding={
+                    BLOCK_KEYS[
+                      option.type === "heading" ? `heading:${option.attrs?.level}` : option.type
+                    ]
+                  }
+                />
               </button>
             ))}
           </div>
@@ -389,7 +420,7 @@ export function BlockContextMenu({ editor, blockId, open, onClose }: BlockContex
           <span className="gotipe-context-menu-icon" aria-hidden="true">
             <PageIcon name={item.icon} />
           </span>
-          <span className="gotipe-context-menu-label">{item.label}</span>
+          <span className="gotipe-context-menu-label">{nameOf(item.label)}</span>
         </button>,
       ])}
       {error && <p role="alert">{error}</p>}

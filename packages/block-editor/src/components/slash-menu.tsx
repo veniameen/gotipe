@@ -17,6 +17,8 @@ export interface SlashMenuProps {
   className?: string;
 }
 
+import { type TranslationKey, createI18n, en } from "@gotipe/i18n";
+import { useGoTipeI18n } from "@gotipe/react";
 import { getCaretClientRect, getCaretClientRectFromTrigger } from "./slash/caret";
 import { isAccentIcon, markdownShortcut, renderIcon } from "./slash/icons";
 import {
@@ -34,12 +36,35 @@ import { highlightMatch, scoreCommand } from "./slash/search";
 
 const GROUP_ORDER: SlashCommandDef["group"][] = ["ai", "style", "insert", "upload"];
 const MENU_OFFSET_Y = 8;
-const GROUP_LABELS: Record<string, string> = {
-  ai: "AI",
-  style: "Style",
-  insert: "Insert",
-  upload: "Upload",
+const GROUP_LABELS: Record<string, TranslationKey> = {
+  ai: "slashMenu.group.ai",
+  style: "slashMenu.group.style",
+  insert: "slashMenu.group.insert",
+  upload: "slashMenu.group.upload",
 };
+
+/** Built-in commands by icon; a command is translated only when its name is the core's own. */
+const COMMAND_NAMES: Record<string, TranslationKey> = {
+  type: "slashMenu.text",
+  "heading-1": "slashMenu.heading1",
+  "heading-2": "slashMenu.heading2",
+  "heading-3": "slashMenu.heading3",
+  list: "slashMenu.bulletList",
+  "list-ordered": "slashMenu.orderedList",
+  "check-square": "slashMenu.todoList",
+  quote: "slashMenu.blockquote",
+  code: "slashMenu.codeBlock",
+  table: "slashMenu.table",
+  minus: "slashMenu.divider",
+  image: "slashMenu.image",
+  paperclip: "slashMenu.fileBlock",
+  "alert-circle": "slashMenu.callout",
+  "chevron-right": "slashMenu.toggle",
+  columns: "slashMenu.columns",
+  "external-link": "slashMenu.embed",
+  "function-square": "slashMenu.math",
+};
+const englishNames = createI18n({ locale: "en", locales: { en } });
 
 export function SlashMenu({
   editor,
@@ -57,6 +82,18 @@ export function SlashMenu({
   const menuRef = useRef<HTMLDivElement>(null);
   const listId = useId();
   const queryRef = useRef("");
+  const i18n = useGoTipeI18n();
+  // Built-in commands speak the editor's language; their English name stays a search alias.
+  const localized = useMemo(
+    () =>
+      commands.map((cmd) => {
+        const key = COMMAND_NAMES[cmd.icon.toLowerCase()];
+        if (!key || englishNames.t(key) !== cmd.name) return cmd;
+        const name = i18n.t(key);
+        return name === cmd.name ? cmd : { ...cmd, name, aliases: [...cmd.aliases, cmd.name] };
+      }),
+    [commands, i18n],
+  );
   const triggerRef = useRef<SlashTrigger | null>(null);
 
   const anchor = useCallback(() => {
@@ -77,13 +114,13 @@ export function SlashMenu({
 
   // Filter & score
   const filtered = useMemo(() => {
-    return commands
+    return localized
       .filter((cmd) => !cmd.shouldShow || cmd.shouldShow(editor))
       .map((cmd) => ({ cmd, score: scoreCommand(query, cmd) }))
       .filter((item) => item.score > 0)
       .sort((a, b) => b.score - a.score)
       .map((item) => item.cmd);
-  }, [commands, query, editor]);
+  }, [localized, query, editor]);
 
   // Group by category in defined order
   const grouped = useMemo(() => {
@@ -94,7 +131,9 @@ export function SlashMenu({
       map.get(group)!.push(cmd);
     }
     // Return in group order, skipping empty groups
-    const order = groups ?? GROUP_ORDER.map((g) => ({ id: g, label: GROUP_LABELS[g] ?? g }));
+    const order =
+      groups ??
+      GROUP_ORDER.map((g) => ({ id: g, label: GROUP_LABELS[g] ? i18n.t(GROUP_LABELS[g]) : g }));
     const result: Array<{ group: string; label: string; items: SlashCommandDef[] }> = [];
     for (const g of order) {
       const items = map.get(g.id);
@@ -103,7 +142,7 @@ export function SlashMenu({
       }
     }
     return result;
-  }, [filtered, groups]);
+  }, [filtered, groups, i18n]);
 
   // Flat list for keyboard navigation index
   const flatItems = useMemo(() => grouped.flatMap((g) => g.items), [grouped]);
@@ -364,7 +403,7 @@ export function SlashMenu({
       ref={menuRef}
       className={className ? `gotipe-slash-menu ${className}` : "gotipe-slash-menu"}
       role="dialog"
-      aria-label={labels?.menu ?? "Insert block"}
+      aria-label={labels?.menu ?? i18n.t("slashMenu.menu")}
       data-gotipe-slash-menu=""
       style={{
         position: "fixed",
@@ -388,7 +427,7 @@ export function SlashMenu({
         role="listbox"
         tabIndex={0}
         aria-activedescendant={flatItems.length ? `${listId}-item-${selectedIndex}` : undefined}
-        aria-label={labels?.list ?? "Commands"}
+        aria-label={labels?.list ?? i18n.t("slashMenu.list")}
       >
         {grouped.map((group, gi) => (
           <div key={group.group} role="group" aria-label={group.label}>
@@ -445,7 +484,7 @@ export function SlashMenu({
         {/* Empty state */}
         {flatItems.length === 0 && (
           <div className="gotipe-slash-menu-empty" role="status">
-            {labels?.empty ?? "No results"}
+            {labels?.empty ?? i18n.t("slashMenu.empty")}
           </div>
         )}
       </div>
@@ -453,8 +492,9 @@ export function SlashMenu({
       {/* Live region for screen reader announcements */}
       <div aria-live="polite" aria-atomic="true" className="gotipe-sr-only">
         {flatItems.length > 0
-          ? (labels?.results?.(flatItems.length) ?? `${flatItems.length} results available`)
-          : (labels?.empty ?? "No results")}
+          ? (labels?.results?.(flatItems.length) ??
+            i18n.t("slashMenu.results", { count: flatItems.length }))
+          : (labels?.empty ?? i18n.t("slashMenu.empty"))}
       </div>
     </div>
   );

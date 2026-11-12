@@ -115,3 +115,44 @@ export function createShikiHighlighter(options: ShikiHighlighterOptions): CodeHi
 
 export type { CodeHighlighter, HighlightToken } from "./types";
 export type { ShikiToken };
+
+export { gotipeCodeTheme, gotipeCodeThemeLoader } from "./gotipe-theme";
+
+/**
+ * Lazy grammars for the languages the code block offers. Each is a separate chunk loaded on first
+ * use; pass `codeLanguages` and `codeLanguageAliases` to `createShikiHighlighter`, or your own set.
+ */
+export const codeLanguages = {
+  typescript: () => import("shiki/langs/typescript.mjs"),
+  javascript: () => import("shiki/langs/javascript.mjs"),
+  python: () => import("shiki/langs/python.mjs"),
+  rust: () => import("shiki/langs/rust.mjs"),
+  go: () => import("shiki/langs/go.mjs"),
+  html: () => import("shiki/langs/html.mjs"),
+  css: () => import("shiki/langs/css.mjs"),
+  json: () => import("shiki/langs/json.mjs"),
+  sql: () => import("shiki/langs/sql.mjs"),
+  bash: () => import("shiki/langs/bash.mjs"),
+  java: () => import("shiki/langs/java.mjs"),
+  c: () => import("shiki/langs/c.mjs"),
+  cpp: () => import("shiki/langs/cpp.mjs"),
+  ruby: () => import("shiki/langs/ruby.mjs"),
+  php: () => import("shiki/langs/php.mjs"),
+  swift: () => import("shiki/langs/swift.mjs"),
+  kotlin: () => import("shiki/langs/kotlin.mjs"),
+  yaml: () => import("shiki/langs/yaml.mjs"),
+  markdown: () => import("shiki/langs/markdown.mjs"),
+};
+
+export const codeLanguageAliases = {
+  ts: "typescript",
+  tsx: "typescript",
+  js: "javascript",
+  jsx: "javascript",
+  py: "python",
+  rs: "rust",
+  sh: "bash",
+  shell: "bash",
+  yml: "yaml",
+  md: "markdown",
+};

@@ -1,9 +1,11 @@
+import { useGoTipeI18n } from "@gotipe/react";
 import { type ThemeMode, getTheme, onThemeChange, setTheme } from "@gotipe/theme";
 import { useCallback, useEffect, useState } from "react";
 import { PageIcon } from "../page/icons";
 
 export function ThemeToggle() {
   const [mode, setMode] = useState<ThemeMode>(() => getTheme().mode);
+  const i18n = useGoTipeI18n();
 
   useEffect(() => {
     return onThemeChange((newMode) => setMode(newMode));
@@ -17,7 +19,7 @@ export function ThemeToggle() {
     <div
       className="gotipe-theme-toggle"
       role="radiogroup"
-      aria-label="Theme"
+      aria-label={i18n.t("theme.label")}
       onKeyDown={(event) => {
         const modes: ThemeMode[] = ["light", "dark", "system"];
         const direction = ["ArrowRight", "ArrowDown"].includes(event.key)
@@ -44,7 +46,7 @@ export function ThemeToggle() {
         role="radio"
         aria-checked={mode === "light"}
         tabIndex={mode === "light" ? 0 : -1}
-        aria-label="Light theme"
+        aria-label={i18n.t("theme.light")}
         className={mode === "light" ? "active" : ""}
         onClick={handleSetLight}
       >
@@ -55,7 +57,7 @@ export function ThemeToggle() {
         role="radio"
         aria-checked={mode === "dark"}
         tabIndex={mode === "dark" ? 0 : -1}
-        aria-label="Dark theme"
+        aria-label={i18n.t("theme.dark")}
         className={mode === "dark" ? "active" : ""}
         onClick={handleSetDark}
       >
@@ -66,7 +68,7 @@ export function ThemeToggle() {
         role="radio"
         aria-checked={mode === "system"}
         tabIndex={mode === "system" ? 0 : -1}
-        aria-label="System theme"
+        aria-label={i18n.t("theme.system")}
         className={mode === "system" ? "active" : ""}
         onClick={handleSetSystem}
       >
