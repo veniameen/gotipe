@@ -61,6 +61,13 @@
   --gt-duration-exit: 100ms;
   --gt-dur-out: 150ms;
   --gt-spin-duration: 800ms;
+  --gt-track-tint: 12%;
+  --gt-track-tint-active: 22%;
+  --gt-track-avatar-tint: 14%;
+  --gt-lane-idle-opacity: 0.3;
+  --gt-lane-busy-opacity: 0.25;
+  --gt-flag-label-opacity: 0.86;
+  --gt-lane-ring-dash: 14 60;
   --gt-tip-delay: 400ms;
   --gt-ease-out: cubic-bezier(0.25, 0.46, 0.45, 0.94);
   --gt-ease-in: cubic-bezier(0.5, 0, 0.75, 0);
@@ -173,6 +180,7 @@
   --gt-anchor-display: none;
   --gt-anchor-offset: 20px;
   --gt-outline-display: none;
+  --gt-docs-columns: minmax(0, 1fr);
   --gt-ui-size: 13px;
   --gt-ui-leading: 18px;
   --gt-ui-small: 12px;
@@ -319,6 +327,15 @@
   --gt-anchor-display: block;
   --gt-handle-display: none;
   --gt-handle-rail: 0px;
+  --gt-outline-display: block;
+  --gt-outline-width: 184px;
+  --gt-outline-gap: 48px;
+  --gt-outline-top: 52px;
+  --gt-outline-sticky-top: 0px;
+  --gt-outline-item-pad: 3px 0 3px 12px;
+  --gt-outline-indent: 24px;
+  --gt-outline-indent-2: 36px;
+  --gt-docs-columns: auto minmax(0, calc(var(--gt-page-width) + 2 * var(--gt-page-pad-x)));
 }
 
 [data-gt-view="modern"] {

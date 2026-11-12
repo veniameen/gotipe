@@ -1,0 +1,395 @@
+/* Review of a Markdown page — GoTipe Atlas, frames 14 and 19. The model's proposals stand in the
+   text in their lane's colour: an insertion underlined, a deletion struck, a stale one dashed. Over
+   the page, the bar says how many wait; a card opens at the text with the reason and two answers.
+   Lane cursors are carets with a flag. Every lane colour comes in as --gt-track. */
+
+/* ---- proposals in the text ---- */
+.gotipe-sug-ins {
+  border-radius: var(--gt-radius-inline);
+  background: color-mix(in srgb, var(--gt-track, var(--gt-add)) var(--gt-track-tint), transparent);
+  box-shadow: inset 0 calc(-1 * var(--gt-rule)) 0 var(--gt-track, var(--gt-add));
+  text-decoration: none;
+  user-select: none;
+  cursor: pointer;
+}
+/* a whole new block: a quiet tint, its text underlined in the lane's colour */
+.gotipe-sug-block-ins:is(p, li, h1, h2, h3, h4, h5, h6, blockquote),
+.gotipe-sug-block-ins
+  :is(p, li, h1, h2, h3, td, th, blockquote, .gotipe-callout-content, .gotipe-todo-item-content) {
+  border-radius: var(--gt-radius-inline);
+  background: color-mix(in srgb, var(--gt-track, var(--gt-add)) var(--gt-track-tint), transparent);
+  text-decoration: underline;
+  text-decoration-color: var(--gt-track, var(--gt-add));
+  text-decoration-thickness: var(--gt-underline);
+  text-underline-offset: var(--gt-underline-offset);
+  cursor: pointer;
+}
+.gotipe-sug-del,
+.gotipe-sug-block-del {
+  color: var(--gt-text-3);
+  text-decoration-line: line-through;
+  text-decoration-thickness: var(--gt-underline);
+  text-decoration-color: var(--gt-track, var(--gt-del));
+  cursor: pointer;
+}
+.gotipe-sug-stale {
+  color: var(--gt-text-2);
+  text-decoration: underline dashed var(--gt-line-control);
+  text-decoration-thickness: var(--gt-underline);
+  text-underline-offset: var(--gt-underline-offset);
+  user-select: none;
+  cursor: pointer;
+}
+.gotipe-sug.is-active:is(.gotipe-sug-ins, .gotipe-sug-del, .gotipe-sug-stale) {
+  background: color-mix(
+    in srgb,
+    var(--gt-track, var(--gt-add)) var(--gt-track-tint-active),
+    transparent
+  );
+}
+.gotipe-sug-block-changed {
+  box-shadow: inset var(--gt-rule) 0 0 var(--gt-track, var(--gt-add));
+}
+li.gotipe-sug-block-ins > input[type="checkbox"] {
+  border-color: var(--gt-track, var(--gt-add));
+}
+
+/* ---- comments on the text ---- */
+.gotipe-cmt {
+  border-radius: var(--gt-radius-inline);
+  background: var(--gt-comment-soft);
+  box-shadow: inset 0 calc(-1 * var(--gt-rule)) 0 var(--gt-comment);
+  cursor: pointer;
+}
+.gotipe-cmt.is-active {
+  background: var(--gt-comment-tint-strong);
+}
+.gotipe-cmt-point {
+  display: inline-block;
+  width: var(--gt-caret-w);
+  height: var(--gt-caret-h);
+  background: var(--gt-comment);
+  vertical-align: var(--gt-caret-shift);
+}
+
+/* ---- lane cursors: a caret and its flag ---- */
+.gotipe-lane-cursor {
+  z-index: var(--gt-z-selection);
+  width: 0;
+  pointer-events: none;
+  --gt-track: var(--gt-track-1);
+}
+.gotipe-lane-caret {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: calc(-0.5 * var(--gt-caret-w));
+  width: var(--gt-caret-w);
+  border-radius: var(--gt-radius-round);
+  background: var(--gt-track);
+}
+.gotipe-lane-chip {
+  position: absolute;
+  top: calc(100% + var(--gt-toolbar-gap));
+  left: 0;
+  display: flex;
+  flex-direction: column;
+  max-width: var(--gt-menu-w-narrow);
+  padding: var(--gt-flag-pad);
+  border-radius: var(--gt-flag-radius);
+  background: var(--gt-track);
+  box-shadow: var(--gt-shadow-chip);
+  color: var(--gt-inverse-text);
+  font-family: var(--gt-font-ui);
+  font-size: var(--gt-ui-tiny);
+  line-height: var(--gt-ui-tiny-leading);
+  letter-spacing: normal;
+  white-space: nowrap;
+}
+.gotipe-lane-chip-name {
+  font-weight: var(--gt-weight-medium);
+}
+.gotipe-lane-chip-label {
+  overflow: hidden;
+  opacity: var(--gt-flag-label-opacity);
+  text-overflow: ellipsis;
+}
+
+/* ---- the card at the text ---- */
+.gotipe-review-card {
+  z-index: var(--gt-z-bubble);
+  box-sizing: border-box;
+  width: var(--gt-card-w);
+  max-width: calc(100vw - 2 * var(--gt-space-2));
+  padding: var(--gt-card-pad);
+  border-radius: var(--gt-radius-overlay);
+  background: var(--gt-overlay);
+  box-shadow: var(--gt-shadow-overlay);
+  color: var(--gt-text);
+  font-family: var(--gt-font-ui);
+  font-size: var(--gt-ui-size);
+  line-height: var(--gt-ui-leading);
+  letter-spacing: normal;
+  overflow: auto;
+  overflow-wrap: anywhere;
+  animation: gotipe-fade-in var(--gt-duration-normal) var(--gt-ease-out);
+}
+.gotipe-review-card-head {
+  display: flex;
+  align-items: center;
+  gap: var(--gt-menu-gap);
+  color: var(--gt-text-3);
+  font-size: var(--gt-ui-small);
+  line-height: var(--gt-ui-small-leading);
+}
+.gotipe-review-card-head b {
+  color: var(--gt-text);
+  font-size: var(--gt-ui-size);
+  font-weight: var(--gt-weight-medium);
+}
+.gotipe-review-avatar {
+  display: inline-grid;
+  flex: none;
+  place-items: center;
+  width: var(--gt-avatar);
+  height: var(--gt-avatar);
+  border-radius: var(--gt-radius-round);
+  background: color-mix(in srgb, var(--gt-track) var(--gt-track-avatar-tint), transparent);
+  color: var(--gt-track);
+}
+.gotipe-review-avatar > svg {
+  width: var(--gt-icon-check);
+  height: var(--gt-icon-check);
+}
+.gotipe-review-card-text {
+  margin-top: var(--gt-toolbar-pad);
+  white-space: normal;
+}
+.gotipe-review-card-diff {
+  display: grid;
+  gap: var(--gt-toolbar-pad);
+  margin-top: var(--gt-card-gap);
+}
+.gotipe-review-card-diff span {
+  display: block;
+  color: var(--gt-text-3);
+  font-size: var(--gt-ui-small);
+}
+.gotipe-review-card-diff :is(s, ins) {
+  display: block;
+  max-height: calc(4 * var(--gt-ui-leading));
+  overflow: hidden;
+  white-space: pre-wrap;
+  text-decoration-color: var(--gt-track);
+}
+.gotipe-review-card-diff s {
+  color: var(--gt-text-3);
+}
+.gotipe-review-card-diff ins {
+  text-decoration: underline;
+  text-underline-offset: var(--gt-underline-offset);
+}
+.gotipe-review-card-reply {
+  margin-top: var(--gt-card-gap);
+  white-space: normal;
+}
+.gotipe-review-card-reply b {
+  font-weight: var(--gt-weight-medium);
+}
+.gotipe-review-card-form {
+  display: flex;
+  align-items: center;
+  gap: var(--gt-toolbar-pad);
+  margin-top: var(--gt-card-gap);
+}
+.gotipe-review-card-form input {
+  box-sizing: border-box;
+  flex: 1;
+  min-width: 0;
+  height: var(--gt-field-h);
+  padding: var(--gt-field-pad);
+  border: var(--gt-hairline) solid var(--gt-line-strong);
+  border-radius: var(--gt-radius-control);
+  background: var(--gt-page-bg);
+  color: var(--gt-text);
+  font: inherit;
+}
+.gotipe-review-card-form input:focus {
+  border-color: var(--gt-line-active);
+  outline: none;
+}
+.gotipe-review-card-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--gt-button-gap);
+  margin-top: var(--gt-card-pad);
+}
+
+/* ---- the bar over the page ---- */
+.gotipe-review-bar {
+  position: sticky;
+  top: 0;
+  z-index: var(--gt-z-toolbar);
+  display: flex;
+  align-items: center;
+  gap: var(--gt-menu-gap);
+  padding: var(--gt-bar-pad);
+  border-bottom: var(--gt-hairline) solid var(--gt-line);
+  background: var(--gt-page-bg);
+  color: var(--gt-text-2);
+  font-family: var(--gt-font-ui);
+  font-size: var(--gt-ui-size);
+  line-height: var(--gt-ui-leading);
+  letter-spacing: normal;
+}
+.gotipe-review-bar > svg {
+  flex: none;
+  width: var(--gt-icon-size);
+  height: var(--gt-icon-size);
+  color: var(--gt-accent);
+}
+.gotipe-review-bar-text {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: var(--gt-space-3);
+  min-width: 0;
+  overflow: hidden;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.gotipe-review-bar-text b {
+  color: var(--gt-text);
+  font-weight: var(--gt-weight-strong);
+}
+.gotipe-review-bar-key {
+  color: var(--gt-text);
+  font-weight: var(--gt-weight-medium);
+}
+
+/* ---- buttons of the bar and the cards: quiet, or ink for the answer that applies ---- */
+.gotipe-btn {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  gap: var(--gt-button-gap);
+  height: var(--gt-button-h);
+  padding: var(--gt-button-pad);
+  border: 0;
+  border-radius: var(--gt-radius-control);
+  background: transparent;
+  color: var(--gt-text-2);
+  font: inherit;
+  font-weight: var(--gt-weight-medium);
+  white-space: nowrap;
+  cursor: pointer;
+}
+.gotipe-btn:hover:not(:disabled) {
+  background: var(--gt-fill-2);
+  color: var(--gt-text);
+}
+.gotipe-btn-primary {
+  background: var(--gt-ink);
+  color: var(--gt-ink-text);
+}
+.gotipe-btn-primary:hover:not(:disabled) {
+  background: var(--gt-ink-hover);
+  color: var(--gt-ink-text);
+}
+.gotipe-btn:disabled {
+  opacity: var(--gt-disabled-opacity);
+  cursor: default;
+}
+.gotipe-review-icon-btn {
+  display: inline-grid;
+  flex: none;
+  place-items: center;
+  width: var(--gt-handle-w);
+  height: var(--gt-handle-h);
+  padding: 0;
+  border: 0;
+  border-radius: var(--gt-radius-control);
+  background: transparent;
+  color: var(--gt-text-2);
+  cursor: pointer;
+}
+.gotipe-review-icon-btn:hover:not(:disabled) {
+  background: var(--gt-fill-2);
+  color: var(--gt-text);
+}
+.gotipe-review-icon-btn > svg {
+  width: var(--gt-icon-size);
+  height: var(--gt-icon-size);
+}
+:is(.gotipe-btn, .gotipe-review-icon-btn):focus-visible {
+  outline: var(--gt-focus-width) solid var(--gt-focus);
+  outline-offset: var(--gt-focus-gap);
+}
+
+/* ---- who is on the page ---- */
+.gotipe-lane-avatars {
+  display: flex;
+  align-items: center;
+  gap: var(--gt-avatar-gap);
+}
+.gotipe-lane-avatar {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: var(--gt-handle-h);
+  height: var(--gt-handle-h);
+  border-radius: var(--gt-radius-round);
+  color: var(--gt-track);
+}
+.gotipe-lane-avatar > svg:not(.gotipe-lane-ring) {
+  width: var(--gt-icon-check);
+  height: var(--gt-icon-check);
+}
+.gotipe-lane-avatar::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border: var(--gt-check-ring) solid var(--gt-track);
+  border-radius: var(--gt-radius-round);
+  opacity: var(--gt-lane-idle-opacity);
+  transition: opacity var(--gt-duration-normal) var(--gt-ease-out);
+}
+.gotipe-lane-avatar.is-on::before {
+  opacity: 1;
+}
+.gotipe-lane-ring {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+}
+.gotipe-lane-ring circle {
+  fill: none;
+  stroke: var(--gt-track);
+  stroke-width: var(--gt-rule);
+  stroke-dasharray: var(--gt-lane-ring-dash);
+  stroke-linecap: round;
+}
+.gotipe-lane-avatar.is-busy .gotipe-lane-ring {
+  opacity: 1;
+  animation: gotipe-spin var(--gt-spin-duration) linear infinite;
+}
+.gotipe-lane-avatar.is-busy::before {
+  opacity: var(--gt-lane-busy-opacity);
+}
+
+/* ---- the page itself ---- */
+.gotipe-page[data-readonly] .gotipe-content {
+  cursor: default;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gotipe-review-card,
+  .gotipe-lane-avatar::before,
+  .gotipe-lane-avatar .gotipe-lane-ring {
+    animation: none;
+    transition: none;
+  }
+}

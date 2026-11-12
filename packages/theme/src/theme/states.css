@@ -75,6 +75,15 @@
   overflow-wrap: break-word;
   white-space: pre-wrap;
 }
+/* a Markdown page's title is its leading «# heading», drawn as the page's title (Atlas frame 19) */
+.gotipe-content > h1.gotipe-page-title:first-child {
+  margin: 0 0 var(--gt-head-after);
+  color: var(--gt-text);
+  font-size: var(--gt-title-size);
+  font-weight: var(--gt-weight-title);
+  line-height: var(--gt-title-leading);
+  letter-spacing: var(--gt-title-tracking);
+}
 .gotipe-page-head-title:not([contenteditable]) {
   flex: 0 1 auto;
 }
@@ -308,4 +317,52 @@
 .gotipe-avatar[data-person="3"] {
   background: var(--gt-person-3-bg);
   color: var(--gt-person-3);
+}
+
+/* ---- Markdown kept as it is (HTML, footnotes, definitions): read-only, Atlas frame 17 ---- */
+.gotipe-raw {
+  position: relative;
+  border-radius: var(--gt-radius-block);
+  background: var(--gt-sunken);
+}
+.gotipe-raw > pre {
+  margin: 0;
+  padding: var(--gt-raw-pad);
+  overflow-x: auto;
+  color: var(--gt-text-2);
+  font-family: var(--gt-font-mono);
+  font-size: var(--gt-code-size);
+  line-height: var(--gt-code-leading);
+  letter-spacing: normal;
+  white-space: pre-wrap;
+}
+.gotipe-raw-mark {
+  position: absolute;
+  top: var(--gt-toolbar-pad);
+  right: var(--gt-toolbar-pad);
+  display: grid;
+  place-items: center;
+  width: var(--gt-handle-w);
+  height: var(--gt-handle-h);
+  padding: 0;
+  border: 0;
+  border-radius: var(--gt-radius-control);
+  background: transparent;
+  color: var(--gt-text-3);
+  cursor: help;
+}
+.gotipe-raw-mark > svg {
+  width: var(--gt-icon-size);
+  height: var(--gt-icon-size);
+}
+.gotipe-raw-mark > .gotipe-tip {
+  top: calc(100% + var(--gt-overlay-gap));
+  right: 0;
+  left: auto;
+  transform: none;
+}
+.gotipe-raw-mark:hover > .gotipe-tip {
+  display: flex;
+  opacity: 1;
+  transition: opacity var(--gt-duration-fast) var(--gt-ease-out) var(--gt-tip-delay);
 }

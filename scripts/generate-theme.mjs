@@ -40,14 +40,11 @@ const pick = (values, keep) => Object.fromEntries(Object.entries(values).filter(
 const sharedThemed = pick(tokens.shared, ([key]) => themed.has(key));
 const sharedFixed = pick(tokens.shared, ([key]) => !themed.has(key));
 
-const darkSelectors =
-  '[data-theme="dark"],\n.gotipe-page[data-theme="dark"],\n[data-theme="dark"] .gotipe-page:not([data-theme="light"])';
-const palette = `${rules(':root,\n.gotipe-page,\n[data-theme="light"]', { ...sharedThemed, ...tokens.light }, "light")}\n${rules(darkSelectors, { ...sharedThemed, ...tokens.dark }, "dark")}\n@media (prefers-color-scheme: dark) {\n${indent(
-  rules(
-    ":root:not([data-theme]),\n:root:not([data-theme]) .gotipe-page:not([data-theme]):not([data-theme] *)",
-    { ...sharedThemed, ...tokens.dark },
-    "dark",
-  ),
+// The palette lives on the root and on any element that names its theme; everything else, the
+// editors included, inherits it, so a host's own --gt-* on a page's container reach the content.
+const darkSelectors = '[data-theme="dark"]';
+const palette = `${rules(':root,\n[data-theme="light"]', { ...sharedThemed, ...tokens.light }, "light")}\n${rules(darkSelectors, { ...sharedThemed, ...tokens.dark }, "dark")}\n@media (prefers-color-scheme: dark) {\n${indent(
+  rules(":root:not([data-theme])", { ...sharedThemed, ...tokens.dark }, "dark"),
 )}}\n`;
 
 // Views: notion's values are the base of every view; a view changes only what makes it itself.

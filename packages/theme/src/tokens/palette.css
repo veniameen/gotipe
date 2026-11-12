@@ -1,7 +1,6 @@
 /* Generated from design-tokens.json by scripts/generate-theme.mjs. */
 
 :root,
-.gotipe-page,
 [data-theme="light"] {
   --gt-surface: var(--gt-page-bg);
   --gt-bg: var(--gt-page-bg);
@@ -150,9 +149,7 @@
   color-scheme: light;
 }
 
-[data-theme="dark"],
-.gotipe-page[data-theme="dark"],
-[data-theme="dark"] .gotipe-page:not([data-theme="light"]) {
+[data-theme="dark"] {
   --gt-surface: var(--gt-page-bg);
   --gt-bg: var(--gt-page-bg);
   --gt-bg-hover: var(--gt-fill-1);
@@ -301,8 +298,7 @@
 }
 
 @media (prefers-color-scheme: dark) {
-  :root:not([data-theme]),
-  :root:not([data-theme]) .gotipe-page:not([data-theme]):not([data-theme] *) {
+  :root:not([data-theme]) {
     --gt-surface: var(--gt-page-bg);
     --gt-bg: var(--gt-page-bg);
     --gt-bg-hover: var(--gt-fill-1);

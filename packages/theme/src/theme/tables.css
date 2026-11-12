@@ -178,3 +178,67 @@
 .gotipe-table-col-resize:focus-visible {
   outline: none;
 }
+
+/* ---- the column handle: a chevron in the header cell under the pointer, its menu (frame 9) ---- */
+.gotipe-table-wrapper th:is(:hover, :focus-within) {
+  background: var(--gt-fill-1);
+}
+.gotipe-column-handle {
+  position: absolute;
+  top: 50%;
+  right: var(--gt-toolbar-pad);
+  z-index: var(--gt-z-content);
+  display: grid;
+  place-items: center;
+  width: var(--gt-handle-w);
+  height: var(--gt-handle-w);
+  padding: 0;
+  border: 0;
+  border-radius: var(--gt-radius-control);
+  background: var(--gt-fill-2);
+  color: var(--gt-text);
+  cursor: pointer;
+  opacity: 0;
+  transform: translateY(-50%);
+}
+.gotipe-table-wrapper th:is(:hover, :focus-within) > .gotipe-column-handle,
+.gotipe-column-handle[aria-expanded="true"] {
+  opacity: 1;
+}
+/* a number column reads from the right: its handle stands on the left */
+.gotipe-table-wrapper th[data-align="right"] > .gotipe-column-handle {
+  right: auto;
+  left: var(--gt-toolbar-pad);
+}
+.gotipe-column-handle > svg {
+  width: var(--gt-icon-size);
+  height: var(--gt-icon-size);
+}
+.gotipe-column-handle:focus-visible {
+  outline: var(--gt-focus-width) solid var(--gt-focus);
+  outline-offset: var(--gt-focus-gap);
+}
+.gotipe-column-handle > .gotipe-tip {
+  top: calc(100% + var(--gt-overlay-gap));
+  right: 0;
+  left: auto;
+  transform: none;
+}
+.gotipe-column-menu {
+  z-index: var(--gt-z-slash);
+}
+.gotipe-column-menu-label {
+  padding: var(--gt-menu-label-pad);
+  color: var(--gt-text-3);
+  font-size: var(--gt-ui-small);
+  font-weight: var(--gt-weight-medium);
+  line-height: var(--gt-ui-small-leading);
+}
+.gotipe-column-menu button[aria-checked="true"] {
+  background: var(--gt-fill-1);
+}
+.gotipe-column-menu .gotipe-menu-end > svg {
+  width: var(--gt-icon-size);
+  height: var(--gt-icon-size);
+  color: var(--gt-text);
+}

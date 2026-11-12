@@ -9,7 +9,8 @@
 .gotipe-text-color-picker,
 .gotipe-block-more-menu,
 .gotipe-block-context-menu,
-.gotipe-context-submenu {
+.gotipe-context-submenu,
+.gotipe-column-menu {
   box-sizing: border-box;
   border: 0;
   border-radius: var(--gt-radius-overlay);
@@ -135,7 +136,8 @@
     .gotipe-block-type-dropdown,
     .gotipe-block-more-menu,
     .gotipe-block-context-menu,
-    .gotipe-context-submenu
+    .gotipe-context-submenu,
+    .gotipe-column-menu
   ) {
   display: flex;
   flex-direction: column;
@@ -146,7 +148,8 @@
     .gotipe-block-type-dropdown,
     .gotipe-block-more-menu,
     .gotipe-block-context-menu,
-    .gotipe-context-submenu
+    .gotipe-context-submenu,
+    .gotipe-column-menu
   )
   button {
   display: flex;
@@ -168,7 +171,8 @@
     .gotipe-block-type-dropdown,
     .gotipe-block-more-menu,
     .gotipe-block-context-menu,
-    .gotipe-context-submenu
+    .gotipe-context-submenu,
+    .gotipe-column-menu
   )
   button
   > svg {
@@ -181,7 +185,8 @@
     .gotipe-block-type-dropdown,
     .gotipe-block-more-menu,
     .gotipe-block-context-menu,
-    .gotipe-context-submenu
+    .gotipe-context-submenu,
+    .gotipe-column-menu
   )
   button:is(:hover, :focus-visible):not(:disabled) {
   background: var(--gt-fill-2);
@@ -191,7 +196,8 @@
     .gotipe-block-type-dropdown,
     .gotipe-block-more-menu,
     .gotipe-block-context-menu,
-    .gotipe-context-submenu
+    .gotipe-context-submenu,
+    .gotipe-column-menu
   )
   button:disabled {
   opacity: var(--gt-disabled-opacity);
