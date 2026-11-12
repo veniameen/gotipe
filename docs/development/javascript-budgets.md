@@ -28,6 +28,13 @@ On the audit build, with this exact definition:
 | React increment, including i18n | 26,603 | 30,720 (30 KiB) |
 | AI increment | 7,530 | 12,288 (12 KiB) |
 
+Decision of 2026-11-12: the React increment ceiling is 40,960 (40 KiB). The
+GoTipe Atlas frames added the embed and math renderers, the table layout with
+its handles, media states, content icons and the strings of the new UI in both
+built-in locales: 36,441 bytes on the merge build (React renderer 27,582 + i18n
+8,859). Dropping the 45 keys no code reads would save about 0.8 KiB, so the
+cost is the features, not dead strings. Headroom is about 12% (it was 15%).
+
 These are dated implementation measurements, not permanent product claims.
 The ceilings allow limited maintenance headroom; increases require an explicit
 architecture decision and evidence. UI increments exclude their framework peers
