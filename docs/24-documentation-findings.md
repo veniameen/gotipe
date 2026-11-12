@@ -1,0 +1,106 @@
+# 24 — Что нашла документация
+
+2026-11-12, `main` после e6f869c. Пять агентов писали публичную документацию
+(`docs-site/`, 56 страниц) и сверяли каждое имя, параметр и предел с кодом; там, где
+код ведёт себя не так, как обещают API, контракты или интерфейс, страница говорит
+об ограничении прямо (раздел Limitations), а сюда записан дефект. Тесты этих мест не
+ловили. После исправления обновить и страницу документации.
+
+Серьёзность: **Б** — блокирует выпуск (ломает основной сценарий, теряет данные,
+открывает атаку или не даёт запустить свой сервер); **В** — заметная ошибка или
+расхождение движков; **М** — мелочь и уборка.
+
+## Ядро и команды
+
+| ID | Ур. | Что | Где |
+|---|---|---|---|
+| D-01 | Б | Команды разметки падают VALIDATION_ERROR, если выделение задевает блок без текста: `selectAll().toggleBold()` в документе со списком | core/src/commands/mark-commands.ts:14-45 |
+| D-02 | Б | `setMark`/`addMark` не меняют атрибуты существующей разметки: перекраска текста и правка адреса ссылки оставляют старое значение | core/src/engine/js-transactions.ts:176; crates/gotipe-core/src/transform.rs:389-395 |
+| D-03 | В | JS-движок молча пропускает deleteBlock/setBlockType/setBlockAttrs/removeMark для несуществующего блока и пишет пустой шаг истории; Rust отклоняет | js-transactions.ts:184-289; transform.rs:103-200 |
+| D-04 | В | `getHTML()` различается по движкам: WASM пишет другую разметку, перенос как `\n`, теряет подписи и отклоняет `data:`/относительные картинки | core/src/wasm-bridge.ts:201-207; crates/gotipe-export/src/html.rs:74 |
+| D-05 | В | Встроенные имена типов зашиты в коде: insertBlockAfter/Before и setBlockType не работают для своих узлов `rawText`/`empty` | core/src/commands/content.ts:5-17,86-92 |
+| D-06 | В | Inline-правила Markdown (`**x**`, `*x*`, `~~x~~`, `` `x` ``) лишь переключают отложенную разметку; разделители остаются, `2*3*` включает курсив | core/src/extensions/marks.ts:12-87 |
+| D-07 | В | Цепочка: `setSelection` остаётся итоговым выделением, даже если блок удалён (`selectAll().deleteBlock()` падает); `moveBlock` только на верхнем уровне; команды читают состояние до цепочки; undo/redo выбрасывают остальные шаги | core/src/chain.ts:48,272,511-519 |
+| D-08 | В | Набор текста — один шаг истории на каждое событие ввода (предел 100): Undo отменяет по символу | core/src/editor/transactions.ts:47 |
+| D-09 | В | `Heading.levels`, `AttrSpec.default`, `MarkSpec.rank`, `exclusiveGroup` не применяются: `####` работает в DefaultPreset, верхний и нижний индекс сосуществуют, `toggleHighlight()` пишет `attrs: {}` | heading.ts:4-9; presets.ts:34; marks.ts:136,147 |
+| D-10 | В | Tab в последней ячейке таблицы уходит в следующую таблицу документа | core/src/chain.ts:415 |
+| D-11 | В | `[x] ` создаёт невыполненную задачу; `$$` оставляет триггер в формуле; Enter делит формулу на два блока | bullet-list.ts:121-130; math.ts:20-23; input/paragraph-input.ts:63 |
+| D-12 | В | `@gotipe/wasm` без входа для Node: загрузчик по умолчанию падает «fetch failed» | core/src/wasm-loader.ts:14-15 |
+| D-13 | М | `autofocus: "start" \| "end"` работает как `true`; `Document.version` растёт только в WASM; строка в `setContent` — HTML, а в `validate`/`renderTo*` — JSON; без host `openLink` открывает новую вкладку всегда; пропущенная зависимость расширения молча игнорируется | editor.ts:332,414,537; host.ts:53; extensions.ts:32 |
+| D-14 | М | Три написания простого кода: `plain`, `plaintext`, `""` — Markdown пишет три разных заголовка блока | code-block.ts:46; react/src/content/code-block.tsx:9; page-commands.ts:150 |
+| D-15 | М | `insertToggle()` вставляет английский текст «Toggle heading» | structure-commands.ts:126 |
+
+## Интерфейс
+
+| ID | Ур. | Что | Где |
+|---|---|---|---|
+| D-20 | В | Слои декораций, которые React не рисует: подсветка комментариев, курсоры и выделения провайдера, Placeholder; Vue не рисует декорации вовсе | react/src/text-renderer.tsx:121-133; comments/src/anchors.ts:97-112 |
+| D-21 | В | Кнопка Improve, ⌘J и ghost text видны без расширения ИИ (по умолчанию `showAiCommandBar`), нажатие ничего не делает | block-editor.tsx:54; bubble-menu.tsx:98 |
+| D-22 | В | ⌘K объявлен в интерфейсе, но событие `openLinkDialog` никто не слушает | marks.ts:108; formatting/keys.ts:11 |
+| D-23 | В | Верхний и нижний индекс в меню «Ещё» и при DefaultPreset, где этих marks нет, — ошибка | formatting/more-menu.tsx:99,106 |
+| D-24 | В | Меню блока действует на блок верхнего уровня: «Дублировать» или «Удалить» на пункте списка трогает весь список; «Сбросить форматирование» не снимает marks | block-context-menu.tsx:178 |
+| D-25 | В | Столбец «Да / нет» пишет в документ слова языка интерфейса («yes»/«да») | block-editor/src/table/column-types.ts |
+| D-26 | В | Таблицы в React и BlockEditor не рисуют colspan/rowspan; команды разъединения нет, хотя editTable её требует; insertRow с индексом 0 встаёт над заголовком | react/src/content/blocks.tsx:422-446; core/src/tables.ts:53 |
+| D-27 | В | PageEditor: `onReady` в зависимостях эффекта — новый колбэк на каждом рендере снова вызывает onReady, отменяет onChange, с autoFocus каретка прыгает в конец | page/page-editor.tsx:255-274 |
+| D-28 | В | PageEditor: `crypto.randomUUID()` раньше полифила — на HTTP не-localhost редактор может не создаться | page/markdown-session.ts:68 |
+| D-29 | В | Тост ошибок не показывает EXTENSION_ERROR, COMPOSITION_CONFLICT и PROPOSAL_STALE | editor-states.tsx:25-37 |
+| D-30 | В | Вид docs прячет ручку блока (в кадре 2 Атласа она есть); `--gt-anchor-display` не используется — якорей у заголовков нет | theme/src/tokens/views.css:182,330-331 |
+| D-31 | В | Представление неизвестного блока в React теряет дочерние блоки | react/src/content/blocks.tsx:492 |
+| D-32 | В | Vue: выноска всегда с эмодзи 💡 (читает несуществующий `attrs.icon`), формула читает `attrs.latex`; block-editor-vue — заглушка: «/» без фильтра и клавиатуры, ручка не тянет, значки символами | vue/src/editor-content.ts:198,243; block-editor-vue/src/* |
+| D-33 | В | Svelte создаёт редактор при вызове (и на сервере), отказ без `.catch`; React `useEditor` только пишет ошибку в лог | svelte/src/create-editor-state.ts:41; react/src/use-editor.ts |
+| D-34 | М | Эмодзи вместо значков у пунктов ИИ в «/» (показываются буквы); английские строки вне i18n (ai-ui, CommentSidebar, меню); 48 из 341 ключа не используются | ai/src/context.ts:14,24; ai-ui/src/*; i18n/src/locales/* |
+| D-35 | М | Reduced motion покрывает только `.gotipe-editor`: панель ИИ, спиннер, индикатор перетаскивания и ghost text анимируются | theme/src/base.css:522 |
+
+## Совместная работа, ревью, ИИ
+
+| ID | Ур. | Что | Где |
+|---|---|---|---|
+| D-40 | Б | Одно неверное сообщение присутствия (например, цвет не в hex) навсегда останавливает провайдер у всех остальных; Cloud пересылает его без проверки | collaboration/src/provider.ts:104-113; cloud/internal/sync/room.go:181-199 |
+| D-41 | Б | Каждое обновление несёт весь базовый документ и все неподтверждённые операции; при лимите WebSocket 1 MiB большой документ или долгий офлайн уходят в цикл переподключений; журнал не сжимается, после 60 MiB падают GET, версии и экспорт | crates/gotipe-crdt/src/doc.rs:299-305; cloud/internal/sync/client.go:15; document/reader.go:86 |
+| D-42 | Б | После PATCH содержимого или восстановления версии открытая комната держит старую базу — все обновления падают UPDATE_NOT_SAVED, пока не закроются соединения | sync/room.go:41,169; cmd/api/sync_persistence.go:53-84 |
+| D-43 | В | Присутствие шлётся на каждый selectionChange, а он приходит и на каждое чужое обновление: при нескольких участниках срабатывает лимит, Cloud закрывает 1008 | provider.ts:62; core/src/editor.ts:140; config.go:137 |
+| D-44 | В | Комментарии и предложения не синхронизируются между людьми; версии без загрузки и без готового UI истории | comments, suggestions, versions |
+| D-45 | В | `compareDocuments` помечает перемещёнными все блоки после вставленного или удалённого | versions/src/diff.ts:46 |
+| D-46 | В | Менеджер `defineAi` недоступен (`getRuntime` не экспортирован); комментарии ИИ шлют те же события, что и CommentsManager; любое обновление (и чужое) отменяет запрос ИИ | ai/src/runtime.ts:12; ai/src/agent.ts:36; ai/src/requests.ts:21 |
+| D-47 | М | Постоянные ошибки настройки провайдера (не ws URL, учётные данные в URL) повторяются как временные; `showCollaborationCursors`, `AiOptions.commands`, `SuggestionState "viewing"` объявлены и не читаются; два разных `Suggestion` и два `GhostText` | provider.ts:82-127; block-editor-props.ts:27 |
+
+## Экспорт, импорт, Markdown
+
+| ID | Ур. | Что | Где |
+|---|---|---|---|
+| D-50 | Б | PDF и DOCX отклоняют то, что редактор принимает: WebP, загрузки `data:`, пустые картинки и файлы, относительные ссылки, вложения около 9–10 MiB | gotipe-export assets.rs:35; lib.rs:113; packages/export/src/assets.ts:22,42 |
+| D-51 | Б | Результат миграции из Tiptap и Lexical не проходит `validate()` со стандартными пресетами (лишние атрибуты источника и `migration*`) | migration/src/context.ts:82-129 |
+| D-52 | В | TS-писатель Markdown выбрасывает встраивания и пишет формулу без `$$`; Rust-писатель — иначе | markdown/src/serialization/blocks.ts:311-316; gotipe-export/src/markdown.rs:153 |
+| D-53 | В | `exportToMarkdown` не сохраняет нетронутые байты (контракт обещает): пишет канонически, теряет front matter | export/src/markdown.ts:7; export-contract.md:22-25 |
+| D-54 | М | Ошибки WASM-экспорта — строки, не `Error`; язык PDF всегда `en`, нет title/author; `includeStyles` против `inlineStyles`; `Uint8Array<ArrayBufferLike>` не кладётся в Blob на TS 5.9 | gotipe-export-wasm/src/lib.rs:11-21; pdf/writer.rs:61 |
+| D-55 | М | README `@gotipe/markdown` устарел (mdast, вложенные задачи как raw, пример не типизируется); `markdownRawNodeSpec` не `NodeSpec` | packages/markdown/README.md:10,101,114 |
+
+## Cloud и инфраструктура
+
+| ID | Ур. | Что | Где |
+|---|---|---|---|
+| D-60 | Б | `infra/.env.example` не даёт API запуститься: неверные имена переменных, длительности в секундах вместо Go duration | infra/.env.example; config/environment.go:18-24 |
+| D-61 | Б | Valkey `allkeys-lru` может вытеснить отзыв JWT и ключи идемпотентности | infra/valkey/valkey.conf:13; storage/valkey.go:80-92 |
+| D-62 | Б | Архивирование WAL через pgBackRest, которого нет в образе: WAL копится до заполнения диска | infra/postgres/postgresql.conf:19-20 |
+| D-63 | Б | Лимит входа считается по адресу сокета: за Caddy все клиенты делят 10 попыток в минуту | middleware/ratelimit.go:86 |
+| D-64 | В | Prometheus опрашивает несуществующие цели; четыре метрики зарегистрированы и не обновляются | infra/prometheus.yml; handler/metrics.go:11-63 |
+| D-65 | В | Организации не дают доступа к документам, `org_id` в JWT не ставится; нет регистрации и OAuth; комнаты синхронизации в одном процессе; комментарии и версии без страниц после 100 | auth/jwt.go:61-79; sync/server.go:106-147 |
+| D-66 | М | `/readyz` отдаёт текст ошибок зависимостей; DELETE чужого документа — 403 вместо 404; ключ без `scopes` — вероятно 500; пустой список ключей — `null`; неверный UUID — вероятно 500 | health.go; documents.go:391-404; apikeys.go:84-149 |
+| D-67 | М | Compose, Caddyfile и deploy.sh рассчитаны на хостинг gotipe.com; ссылка PGP в SECURITY.md никуда не ведёт; openapi.yaml устарел; SDK без ответа на комментарий, metadata и Idempotency-Key | infra/*; SECURITY.md:35; sdk/src/client.ts |
+
+## Пакеты, лицензии, документы
+
+| ID | Ур. | Что | Где |
+|---|---|---|---|
+| D-70 | Б | Условия коммерческой лицензии не написаны (`LICENSE-COMMERCIAL` — адрес и список пакетов); `base.css` коммерческого `@gotipe/theme` помечен MIT; лицензия `apps/cloud` не названа | LICENSE-COMMERCIAL; packages/theme/src/base.css:1 |
+| D-71 | В | `release.yml` публикует crates в crates.io — решено публиковать только npm | .github/workflows/release.yml:109-127 |
+| D-72 | М | `@gotipe/block-editor/styles` подключает только theme.css; `@gotipe/i18n` с `sideEffects: false` регистрирует локаль при импорте и объявляет лишний peer | block-editor/styles.css:1; i18n/package.json |
+| D-73 | М | Мёртвый код: core/src/a11y/*, virtual-renderer.ts, JS `sanitizeHtml`, `defineIcons`, `componentOverrides`, неиспользуемые коды ошибок и поля конфигурации Cloud | — |
+| D-74 | М | Устаревшие документы: ai-contract.md (Mod-K вместо ⌘J), code-map.md («общая реализация» HTML), docs/21 (абсолютные ссылки на файлы, цвета дорожек), комментарий о версиях браузеров в polyfills.ts | docs/development/*; docs/21 |
+
+## Порядок
+
+1. Блокеры: D-01, D-02, D-40–D-42, D-50, D-51, D-60–D-63, D-70.
+2. Расхождения движков и контрактов: D-03–D-05, D-52, D-53 — правило «один контракт».
+3. Интерфейс, который обещает несуществующее: D-20–D-23, D-29, D-30.
+4. Остальное — пакетами по областям, с обновлением страниц `docs-site`.
