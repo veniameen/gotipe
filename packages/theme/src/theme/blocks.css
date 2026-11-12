@@ -38,17 +38,19 @@
   margin-left: auto;
   color: var(--gt-text-3);
 }
-.gotipe-block-context-menu .gotipe-context-menu-separator {
+:is(.gotipe-block-context-menu, .gotipe-column-menu) .gotipe-context-menu-separator {
   height: var(--gt-hairline);
   margin: var(--gt-menu-sep-gap) calc(-1 * var(--gt-menu-pad));
   border: 0;
   background: var(--gt-line);
 }
-.gotipe-block-context-menu button.destructive,
-.gotipe-block-context-menu button.destructive .gotipe-context-menu-icon {
+:is(.gotipe-block-context-menu, .gotipe-column-menu) button.destructive,
+:is(.gotipe-block-context-menu, .gotipe-column-menu)
+  button.destructive
+  :is(.gotipe-context-menu-icon, svg) {
   color: var(--gt-danger);
 }
-.gotipe-block-context-menu button.destructive:hover {
+:is(.gotipe-block-context-menu, .gotipe-column-menu) button.destructive:hover {
   background: var(--gt-danger-tint);
 }
 

@@ -1,6 +1,6 @@
 /* GoTipe base — the document of every view (MIT Licensed). Drawn in the GoTipe Atlas, frames 1–5.
    Every size and colour is a token: the view (data-gt-view) and a narrow container choose them.
-   The rules skip PageEditor's content: it keeps page.css until it moves to the shared views. */
+   BlockEditor and PageEditor share it. */
 @import "./tokens.css";
 
 .gotipe-editor {
@@ -9,7 +9,7 @@
   container-type: inline-size;
 }
 
-.gotipe-content:where(:not(.gotipe-page *)) {
+.gotipe-content {
   box-sizing: border-box;
   max-width: calc(var(--gt-page-width) + 2 * var(--gt-page-pad-x));
   min-height: var(--gt-editor-min-height);
@@ -28,28 +28,28 @@
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
 }
-.gotipe-content:where(:not(.gotipe-page *)) ::selection {
+.gotipe-content ::selection {
   background: var(--gt-selection);
 }
-.gotipe-content:where(:not(.gotipe-page *)) [data-block-id] {
+.gotipe-content [data-block-id] {
   position: relative;
 }
 
 /* ---- flow: one rule per kind of neighbour, later rules win ---- */
-.gotipe-content:where(:not(.gotipe-page *)) > *,
-.gotipe-content:where(:not(.gotipe-page *))
+.gotipe-content > *,
+.gotipe-content
   :where(.gotipe-callout-content, .gotipe-toggle-content, .gotipe-column, blockquote)
   > * {
   margin: 0;
 }
-.gotipe-content:where(:not(.gotipe-page *)) > * + *,
-.gotipe-content:where(:not(.gotipe-page *))
+.gotipe-content > * + *,
+.gotipe-content
   :where(.gotipe-callout-content, .gotipe-toggle-content, .gotipe-column, blockquote)
   > *
   + * {
   margin-top: var(--gt-flow);
 }
-.gotipe-content:where(:not(.gotipe-page *))
+.gotipe-content
   > :where(
     .gotipe-callout,
     .gotipe-code-block,
@@ -60,9 +60,10 @@
     [data-block-type="image"],
     [data-block-type="file"],
     [data-block-type="embed"],
-    [data-block-type="math"]
+    [data-block-type="math"],
+    [data-block-type="markdownRaw"]
   ),
-.gotipe-content:where(:not(.gotipe-page *))
+.gotipe-content
   > :where(
     .gotipe-callout,
     .gotipe-code-block,
@@ -73,80 +74,81 @@
     [data-block-type="image"],
     [data-block-type="file"],
     [data-block-type="embed"],
-    [data-block-type="math"]
+    [data-block-type="math"],
+    [data-block-type="markdownRaw"]
   )
   + * {
   margin-top: var(--gt-flow-block);
 }
-.gotipe-content:where(:not(.gotipe-page *)) > :where(h1) {
+.gotipe-content > :where(h1) {
   margin-top: var(--gt-flow-h1);
 }
-.gotipe-content:where(:not(.gotipe-page *)) > :where(h2) {
+.gotipe-content > :where(h2) {
   margin-top: var(--gt-flow-h2);
 }
-.gotipe-content:where(:not(.gotipe-page *)) > :where(h3, h4, h5, h6) {
+.gotipe-content > :where(h3, h4, h5, h6) {
   margin-top: var(--gt-flow-h3);
 }
-.gotipe-content:where(:not(.gotipe-page *)) > :where(h1) + * {
+.gotipe-content > :where(h1) + * {
   margin-top: var(--gt-flow-after-h1);
 }
-.gotipe-content:where(:not(.gotipe-page *)) > :where(h2) + * {
+.gotipe-content > :where(h2) + * {
   margin-top: var(--gt-flow-after-h2);
 }
-.gotipe-content:where(:not(.gotipe-page *)) > :where(h3, h4, h5, h6) + * {
+.gotipe-content > :where(h3, h4, h5, h6) + * {
   margin-top: var(--gt-flow-after-h3);
 }
-.gotipe-content:where(:not(.gotipe-page *)) > :where(hr),
-.gotipe-content:where(:not(.gotipe-page *)) > :where(hr) + * {
+.gotipe-content > :where(hr),
+.gotipe-content > :where(hr) + * {
   margin-top: var(--gt-flow-rule);
 }
-.gotipe-content:where(:not(.gotipe-page *)) > :first-child {
+.gotipe-content > :first-child {
   margin-top: 0;
 }
 
 /* ---- text ---- */
-.gotipe-content:where(:not(.gotipe-page *)) p:empty {
+.gotipe-content p:empty {
   min-height: var(--gt-body-leading);
 }
-.gotipe-content:where(:not(.gotipe-page *)) :where(h1, h2, h3, h4, h5, h6) {
+.gotipe-content :where(h1, h2, h3, h4, h5, h6) {
   margin-bottom: 0;
   color: var(--gt-text);
   font-family: var(--gt-font-ui);
   font-weight: var(--gt-weight-strong);
 }
-.gotipe-content:where(:not(.gotipe-page *)) h1 {
+.gotipe-content h1 {
   font-size: var(--gt-h1-size);
   line-height: var(--gt-h1-leading);
   letter-spacing: var(--gt-h1-tracking);
 }
-.gotipe-content:where(:not(.gotipe-page *)) h2 {
+.gotipe-content h2 {
   font-size: var(--gt-h2-size);
   line-height: var(--gt-h2-leading);
   letter-spacing: var(--gt-h2-tracking);
 }
-.gotipe-content:where(:not(.gotipe-page *)) h3 {
+.gotipe-content h3 {
   font-size: var(--gt-h3-size);
   line-height: var(--gt-h3-leading);
   letter-spacing: var(--gt-h3-tracking);
 }
-.gotipe-content:where(:not(.gotipe-page *)) :where(h4, h5, h6) {
+.gotipe-content :where(h4, h5, h6) {
   font-size: var(--gt-h4-size);
   line-height: var(--gt-h4-leading);
 }
-.gotipe-content:where(:not(.gotipe-page *)) :where(strong, b) {
+.gotipe-content :where(strong, b) {
   font-weight: var(--gt-weight-strong);
 }
-.gotipe-content:where(:not(.gotipe-page *)) a {
+.gotipe-content a {
   color: inherit;
   text-decoration-line: underline;
   text-decoration-thickness: var(--gt-underline);
   text-decoration-color: var(--gt-link-line);
   text-underline-offset: var(--gt-underline-offset);
 }
-.gotipe-content:where(:not(.gotipe-page *)) a:hover {
+.gotipe-content a:hover {
   text-decoration-color: currentColor;
 }
-.gotipe-content:where(:not(.gotipe-page *)) :not(pre) > code {
+.gotipe-content :not(pre) > code {
   padding: var(--gt-inline-pad);
   border-radius: var(--gt-radius-inline);
   background: var(--gt-fill-2);
@@ -157,7 +159,7 @@
   -webkit-box-decoration-break: clone;
   box-decoration-break: clone;
 }
-.gotipe-content:where(:not(.gotipe-page *)) mark {
+.gotipe-content mark {
   padding: var(--gt-mark-pad);
   border-radius: var(--gt-radius-inline);
   background: var(--gt-highlight);
@@ -165,7 +167,7 @@
   -webkit-box-decoration-break: clone;
   box-decoration-break: clone;
 }
-.gotipe-content:where(:not(.gotipe-page *)) img {
+.gotipe-content img {
   max-width: 100%;
   height: auto;
 }
@@ -193,17 +195,17 @@
 }
 
 /* ---- lists: a dot, then a ring one level down; numbers are quiet ---- */
-.gotipe-content:where(:not(.gotipe-page *)) :where(ul, ol) {
+.gotipe-content :where(ul, ol) {
   margin: 0;
 }
-.gotipe-content:where(:not(.gotipe-page *)) ul:not(.gotipe-todo-list) {
+.gotipe-content ul:not(.gotipe-todo-list) {
   padding: 0;
   list-style: none;
 }
-.gotipe-content:where(:not(.gotipe-page *)) ul:not(.gotipe-todo-list) > li {
+.gotipe-content ul:not(.gotipe-todo-list) > li {
   padding-left: var(--gt-indent);
 }
-.gotipe-content:where(:not(.gotipe-page *)) ul:not(.gotipe-todo-list) > li::before {
+.gotipe-content ul:not(.gotipe-todo-list) > li::before {
   content: "";
   position: absolute;
   top: var(--gt-bullet-y);
@@ -213,38 +215,35 @@
   border-radius: var(--gt-radius-round);
   background: currentColor;
 }
-.gotipe-content:where(:not(.gotipe-page *))
-  ul:not(.gotipe-todo-list)
-  ul:not(.gotipe-todo-list)
-  > li::before {
+.gotipe-content ul:not(.gotipe-todo-list) ul:not(.gotipe-todo-list) > li::before {
   box-sizing: border-box;
   border: var(--gt-check-ring) solid currentColor;
   background: transparent;
 }
-.gotipe-content:where(:not(.gotipe-page *)) ol {
+.gotipe-content ol {
   padding-left: var(--gt-indent);
 }
-.gotipe-content:where(:not(.gotipe-page *)) ol > li::marker {
+.gotipe-content ol > li::marker {
   color: var(--gt-text-2);
   font-variant-numeric: tabular-nums;
 }
-.gotipe-content:where(:not(.gotipe-page *)) :where(ul, ol) > li + li,
-.gotipe-content:where(:not(.gotipe-page *)) li > :where(ul, ol, [data-block-id]) {
+.gotipe-content :where(ul, ol) > li + li,
+.gotipe-content li > :where(ul, ol, [data-block-id]) {
   margin-top: var(--gt-flow-list);
 }
 
 /* ---- tasks: an ink box when done, the text steps back ---- */
-.gotipe-content:where(:not(.gotipe-page *)) .gotipe-todo-list {
+.gotipe-content .gotipe-todo-list {
   padding: 0;
   list-style: none;
 }
-.gotipe-content:where(:not(.gotipe-page *)) .gotipe-todo-item {
+.gotipe-content .gotipe-todo-item {
   display: grid;
   grid-template-columns: var(--gt-check) minmax(0, 1fr);
   align-items: start;
   column-gap: var(--gt-check-gap);
 }
-.gotipe-content:where(:not(.gotipe-page *)) .gotipe-todo-item > [data-block-id] {
+.gotipe-content .gotipe-todo-item > [data-block-id] {
   grid-column: 2;
   min-width: 0;
 }
@@ -295,7 +294,7 @@
 }
 
 /* ---- quote: an ink rule, the text a step larger ---- */
-.gotipe-content:where(:not(.gotipe-page *)) blockquote {
+.gotipe-content blockquote {
   padding-left: var(--gt-quote-pad);
   box-shadow: inset var(--gt-rule) 0 0 var(--gt-text);
   font-size: var(--gt-quote-size);
@@ -303,7 +302,7 @@
 }
 
 /* ---- divider ---- */
-.gotipe-content:where(:not(.gotipe-page *)) hr {
+.gotipe-content hr {
   height: var(--gt-hairline);
   border: 0;
   background: var(--gt-line-strong);
@@ -439,11 +438,11 @@
 }
 
 /* ---- selected blocks and empty blocks ---- */
-.gotipe-content:where(:not(.gotipe-page *)) [data-block-id].selected {
+.gotipe-content [data-block-id].selected {
   border-radius: var(--gt-radius-control);
   background: var(--gt-selection);
 }
-.gotipe-content:where(:not(.gotipe-page *)) [data-placeholder]::after {
+.gotipe-content [data-placeholder]::after {
   content: attr(data-placeholder);
   position: absolute;
   top: 0;
@@ -455,16 +454,14 @@
   text-overflow: ellipsis;
   pointer-events: none;
 }
-.gotipe-content:where(:not(.gotipe-page *))
-  ul:not(.gotipe-todo-list)
-  > li[data-placeholder]::after {
+.gotipe-content ul:not(.gotipe-todo-list) > li[data-placeholder]::after {
   left: var(--gt-indent);
 }
-.gotipe-content:where(:not(.gotipe-page *)) blockquote[data-placeholder]::after {
+.gotipe-content blockquote[data-placeholder]::after {
   left: var(--gt-quote-pad);
 }
 /* an empty toggle: the words follow the chevron, in the summary's own line */
-.gotipe-content:where(:not(.gotipe-page *)) .gotipe-toggle > summary[data-placeholder]::after {
+.gotipe-content .gotipe-toggle > summary[data-placeholder]::after {
   position: static;
   min-width: 0;
 }
@@ -502,7 +499,7 @@
   .gotipe-suggestion-toolbar {
     display: none !important;
   }
-  .gotipe-content:where(:not(.gotipe-page *)) {
+  .gotipe-content {
     max-width: none;
     padding: 0;
     color: CanvasText;

@@ -1,11 +1,4 @@
-@import "./page/tokens.css";
-@import "./theme/media.css";
-@import "./page/document.css";
-@import "./page/menus.css";
-@import "./page/review.css";
-@import "./theme/tables.css";
-
-@import "./theme/code.css";
-@import "./theme/embeds.css";
-
-@import "./theme/comments.css";
+/* PageEditor draws with the shared views (GoTipe Atlas, frame 19) and has no theme of its own.
+   This entry stays for hosts that imported it: it loads the same files as base.css + theme.css. */
+@import "./base.css";
+@import "./theme.css";
