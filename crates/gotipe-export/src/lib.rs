@@ -109,8 +109,6 @@ pub fn to_markdown(doc: &Document) -> String {
 pub mod docx;
 #[cfg(feature = "pdf")]
 pub mod pdf;
-#[cfg(feature = "pdf")]
-mod pdf_source;
 
 pub(crate) fn safe_url(url: &str) -> bool {
     let clean = url.trim();

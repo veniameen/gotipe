@@ -9,7 +9,7 @@ default = ["html", "markdown", "plaintext"]
 html = ["ammonia"]
 markdown = []
 plaintext = []
-pdf = ["dep:typst", "dep:typst-pdf", "dep:typst-assets", "image-data"]
+pdf = ["dep:pdf-writer", "dep:harfrust", "dep:read-fonts", "dep:subsetter", "dep:unicode-bidi", "dep:unicode-segmentation", "dep:flate2", "image-data"]
 docx = ["dep:zip", "image-data"]
 image-data = ["dep:image"]
 notion = []
@@ -23,9 +23,13 @@ thiserror = { workspace = true }
 regex = { workspace = true, features = ["unicode-gencat"] }
 ammonia = { workspace = true, optional = true }
 
-typst = { workspace = true, optional = true }
-typst-pdf = { workspace = true, optional = true }
-typst-assets = { workspace = true, optional = true }
+pdf-writer = { workspace = true, optional = true }
+harfrust = { workspace = true, optional = true }
+read-fonts = { workspace = true, optional = true }
+subsetter = { workspace = true, optional = true }
+unicode-bidi = { workspace = true, optional = true }
+unicode-segmentation = { workspace = true, optional = true }
+flate2 = { workspace = true, optional = true }
 zip = { workspace = true, optional = true }
 image = { version = "0.25", default-features = false, features = ["png", "jpeg", "gif"], optional = true }
 

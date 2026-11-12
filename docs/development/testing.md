@@ -30,6 +30,7 @@ pnpm check:consumer
 pnpm check:bundles
 pnpm check:theme
 pnpm check:exports
+pnpm check:pdf-regression
 pnpm check:cargo-release
 python3 scripts/collect-rust-licenses.py --check
 python3 scripts/collect-cloud-licenses.py --check
@@ -64,3 +65,10 @@ overflow страницы, но доступную ширину редактор
 а не только по entry-файлу. Для локальной полной приёмки ограничивай Turbo
 `--concurrency=2`, Vitest `--maxWorkers=2`; WASM-скрипты используют
 не более двух Cargo/Binaryen workers по умолчанию.
+
+`check:pdf-regression` сохраняет native PDF из фиксированного corpus и сравнивает
+их с реальным public WASM export. Независимый validator использует Poppler
+(`pdfinfo`, `pdftotext`, `pdftohtml`) и Python `pypdf`: Unicode, page geometry,
+пагинация, marks, links, images, merged tables и явные ошибки. Эти инструменты
+нужны локально; CI устанавливает `poppler-utils` и `python3-pypdf`.
+Browser corpus находится в `e2e/pdf-export.spec.ts` и входит в общий suite.

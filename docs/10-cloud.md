@@ -1,5 +1,10 @@
 # GoTipe Cloud
 
+> **PDF: историческое предложение.** Упоминания Typst/docx-rs, оценки размеров и
+> возможностей ниже не описывают текущий backend. GoTipe владеет PDF layout и
+> OOXML rendering; актуальны [контракт экспорта](development/export-contract.md)
+> и [политика зависимостей](development/dependencies.md).
+
 > Исторический проектный документ. Сигнатуры, размеры, цены, сравнения и планы ниже
 > не подтверждают текущую реализацию или доступный сервис. Актуальные контракты:
 > [разработка](development/cloud-contract.md), [экспорт](development/export-contract.md),

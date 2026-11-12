@@ -3,8 +3,15 @@
 The Cloud API is a Go service with PostgreSQL, Valkey and private S3/R2 storage.
 The same image runs REST on port 8080 and authenticated collaboration on 8081.
 The native `gotipe-convert` binary in that image uses GoTipe's Rust document/CRDT
-engine and optional Typst/PDF and OOXML exporters. It does not invoke a remote
-conversion service.
+engine and owned PDF layout/OOXML exporters with bundled Unicode fonts. The PDF
+backend uses maintained format/font libraries and has no Typst compiler dependency.
+It does not invoke a remote conversion service.
+
+The Cloud export request contains `document_id` and `format`; PDF jobs use the
+native renderer's default A4 options. Page size, custom margins, font size and
+header/footer options belong to the native Rust and browser export APIs and are
+not Cloud request fields. Cloud acceptance verifies document fidelity and job
+failure behavior without claiming a Cloud option matrix that the API does not expose.
 
 ## Authorization and idempotency
 
@@ -84,6 +91,7 @@ GOMAXPROCS=2 go -C apps/cloud test -p 2 ./...
 GOTIPE_TEST_DATABASE_URL=postgres://... GOMAXPROCS=2 \
   go -C apps/cloud test -race -tags integration -p 2 ./...
 pnpm check:exports
+pnpm check:pdf-regression
 pnpm check:packages
 docker build -f apps/cloud/Dockerfile -t gotipe-cloud:local .
 ```

@@ -35,10 +35,9 @@ and the already measured core. Runtime workspace dependencies such as i18n are
 included. Core's optional WASM module has its own mandatory canonical binary
 budget (`pnpm build:wasm`), and is explicitly excluded from the JS graph.
 
-PDF/DOCX compiler, fonts and codecs stay in the separate lazy
-`@gotipe/export-wasm` module. Its small loader is measured; the roughly 35.5 MB
-uncompressed exporter payload is documented independently in the dependency
-policy. Importing the editor or export wrapper must not initialize this module.
+PDF/DOCX rendering, fonts and codecs stay in the separate lazy
+`@gotipe/export-wasm` module. Its small loader is measured; the final raw/gzip
+exporter payload is recorded separately during release acceptance. Importing the editor or export wrapper must not initialize this module.
 Syntax highlighting and additional heavy integrations must likewise keep their
 loading boundary explicit. CSS and native/font/binary assets are not counted as
 JavaScript; their separate reporting must not be described as a total page size.

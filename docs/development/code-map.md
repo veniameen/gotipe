@@ -56,6 +56,20 @@ React/content/table-layout владеет временной шириной пр
 
 DOCX: `crates/gotipe-export/src/docx.rs` owns OOXML rendering; `docx/package.rs`
 owns OPC parts and relationships. ZIP is a container codec, not a document model.
+
+PDF: `crates/gotipe-export/src/pdf.rs` owns options and export orchestration;
+`pdf/validation.rs` checks complete supported structure before rendering, including
+explicit rejection of content/children that a leaf or structural container cannot hold.
+`pdf/layout.rs`, `inline.rs`, `table.rs` and `flow.rs` own GoTipe block layout,
+line wrapping, merged cells and page boundaries. `pagination.rs` fills remaining
+page space by splitting large measured fragments at intact text/image boundaries.
+`highlight.rs` owns code token
+presentation. `fonts.rs`/`text.rs` own embedded font selection and shaping;
+`font_embedding.rs`, `images.rs`, `outlines.rs` and `writer.rs` own PDF resources,
+bookmarks and serialization. `semantics.rs` attaches block roles before pagination;
+`tagging.rs` owns the connected PDF structure/MCID/annotation tree and `metadata.rs`
+owns XMP. The same Rust path runs natively and in optional
+export WASM; no Typst compiler or host browser printing is used.
 Миграция JSON: `packages/migration/src` содержит отдельный конвертер каждого
 источника и общий владелец IDs/предупреждений/сохранения неизвестных данных.
 Поддерживаемый API и границы: [migration-contract.md](migration-contract.md).

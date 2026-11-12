@@ -1,26 +1,22 @@
 # Optional export module notices
 
-This package's GoTipe bindings are MIT licensed. The WebAssembly binary also
-contains Typst 0.15.1 and typst-pdf 0.15.1 (Apache-2.0), the ZIP 9 codec (MIT),
-and their Cargo.lock dependencies. Full direct compiler and font license texts
-are in `licenses/`; transitive dependency inventory is maintained alongside them.
+This package's GoTipe bindings, document layout and PDF/OOXML renderer are MIT
+licensed. The WebAssembly binary also contains maintained format and font
+libraries from Cargo.lock, including pdf-writer, HarfRust, read-fonts, subsetter,
+Unicode bidi/segmentation, image codecs, Deflate and ZIP. Their original license
+texts, source URLs, versions and hashes are in `licenses/cargo/inventory.json`
+and its sibling files. `licenses/dependencies.md` summarizes this resolved graph.
+No Typst compiler or citationberg code is linked.
 
-Bundled fonts from typst-assets 0.15.1 keep their original licenses and names:
-Libertinus Serif (SIL OFL 1.1), New Computer Modern (GUST Font License 1.0),
-DejaVu Sans Mono (Bitstream Vera/DejaVu licenses). Noto Emoji is SIL OFL 1.1.
-The typst-assets NOTICE reproduces their copyright and permission texts.
+Bundled fonts retain their original licenses and names: Libertinus Serif
+(SIL OFL 1.1), New Computer Modern (GUST Font License 1.0), DejaVu Sans Mono
+(Bitstream Vera/DejaVu licenses), and Noto Emoji (SIL OFL 1.1). The original
+font notices and file hashes are in `licenses/fonts/`. The first three families
+were copied unchanged from the published typst-assets 0.15.1 archive; its name
+is retained solely as the provenance of those original assets and notices.
+Noto Emoji source: https://github.com/google/fonts/tree/main/ofl/notoemoji.
 
-Noto Emoji source: https://github.com/google/fonts/tree/main/ofl/notoemoji
-The font file is unmodified. It is embedded only in this optional exporter.
-
-The current normal/build Cargo graph and unchanged dependency notices are in
-`licenses/cargo/inventory.json` and its sibling files. The older top-level
-license collection is a conservative superset retained with the font notices.
-Regenerate current graph notices with `scripts/collect-rust-licenses.py`.
-
-Some upstream crate archives omit their repository license files. Their original
-notices are copied from the exact Git revision recorded by `.cargo_vcs_info.json`
-under `licenses/upstream/`. `config/rust-upstream-notices.json` records the source
-URLs, revisions and SHA-256 values; collection validates them before packaging.
-Glidesort supplies its license declaration in README.md, retained unchanged next
-to the full Apache-2.0 license text already included in this distribution.
+Regenerate and verify current dependency/font notices with
+`scripts/collect-rust-licenses.py` and its `--check` mode. Generated directories
+contain only the current graph; removed dependencies' notices are not carried
+forward into new distributions. This does not alter any project's license.
