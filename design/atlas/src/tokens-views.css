@@ -78,6 +78,8 @@
   --gt-table-add: 16px;
   --gt-table-add-gap: 4px;
   --gt-table-fade: 24px;
+  --gt-row-handle-full: calc(var(--gt-handle-w) + var(--gt-table-add-gap));
+  --gt-row-handle-room: min(var(--gt-row-handle-full), var(--gt-page-pad-x));
   --gt-quote-pad: 16px;
   --gt-figure-pad: 24px;
   --gt-caption-gap: 8px;
@@ -185,6 +187,7 @@
     --gt-page-pad-x: 20px;
     --gt-page-pad-bottom: 64px;
     --gt-table-add: 12px;
+    --gt-row-handle-room: min(var(--gt-row-handle-full), var(--gt-page-pad-x));
     --gt-title-size: 26px;
     --gt-title-leading: 32px;
     --gt-h1-size: 21px;
