@@ -1,7 +1,7 @@
 import type { BlockView, GoTipeEditor } from "@gotipe/core";
 import { type BlockViewProps, TableColumnResizeHandle } from "@gotipe/react";
 import type React from "react";
-import { TableColumnButton } from "../components/table-column-menu";
+import { TableColumnButton, TableRowButton } from "../components/table-column-menu";
 
 type Align = "left" | "right" | "center" | null;
 
@@ -29,7 +29,8 @@ function cellPosition(
 
 /**
  * A table cell of the shared views (GoTipe Atlas, frame 9): it follows its column's alignment,
- * the first row carries the width handle, a header cell carries the column's menu.
+ * the first row carries the width handle, a header cell carries the column's menu and the first
+ * cell of a body row carries the row's.
  */
 export function TableCellView({
   block,
@@ -62,6 +63,9 @@ export function TableCellView({
       {editable && <TableColumnResizeHandle cellId={block.id} />}
       {isHeader && editable && position ? (
         <TableColumnButton editor={editor} tableId={position.table.id} column={position.column} />
+      ) : null}
+      {!isHeader && editable && position?.column === 0 ? (
+        <TableRowButton editor={editor} tableId={position.table.id} row={position.row} />
       ) : null}
     </Tag>
   );

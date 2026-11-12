@@ -20,7 +20,8 @@ import type { PageIconName } from "../page/icons";
 import type { MarkdownSession } from "../page/markdown-session";
 import { usePageOverlay } from "../page/overlay";
 import { decorationRect, proposalEndRect, rectAt } from "./dom-position";
-import { CommentCard, LANE_ICON, ProposalCard } from "./review-cards";
+import { type CardPlace, CommentCard, LANE_ICON, ProposalCard } from "./review-cards";
+import { ReviewMargin, useMarginLayout } from "./review-margin";
 
 export type ReviewResult = boolean | undefined;
 export type ReviewAction = (id: string) => Promise<ReviewResult> | ReviewResult;
@@ -113,6 +114,8 @@ export function ReviewLayer({
   const lanes = useMemo(() => new Map(review.lanes.map((l) => [l.id, l] as const)), [review.lanes]);
   const proposals = review.proposals;
   const comments = review.comments ?? [];
+  // Wide pages keep every card in a margin column (Atlas, frame 14); narrow ones open one by the text.
+  const margin = useMarginLayout(root, proposals.length + comments.length > 0);
 
   const applyDecorations = useCallback(() => {
     let decorations = fullRef.current;
@@ -232,7 +235,7 @@ export function ReviewLayer({
         });
       }
       setPlaced(out);
-      if (activeId) {
+      if (activeId && !margin) {
         const rect =
           decorationRect(root, "data-gotipe-proposal", activeId) ??
           decorationRect(root, "data-gotipe-comment", activeId);
@@ -274,7 +277,7 @@ export function ReviewLayer({
       window.removeEventListener("scroll", onScroll, true);
       window.removeEventListener("resize", onScroll);
     };
-  }, [root, editor, session, review.cursors, lanes, activeId, layoutTick]);
+  }, [root, editor, session, review.cursors, lanes, activeId, layoutTick, margin]);
 
   // Clicking a suggestion or a comment opens its card.
   useEffect(() => {
@@ -390,9 +393,63 @@ export function ReviewLayer({
 
   const activeProposal = activeId ? proposals.find((p) => p.id === activeId) : undefined;
   const activeComment = activeId ? comments.find((c) => c.id === activeId) : undefined;
-  const activeState = activeProposal
-    ? states.proposals.find((s) => s.id === activeProposal.id)
-    : undefined;
+
+  const proposalLabels = {
+    accept: i18n.t("review.accept"),
+    reject: i18n.t("review.reject"),
+    stale: i18n.t("review.stale"),
+    staleText: i18n.t("review.staleText"),
+    before: i18n.t("review.before"),
+    after: i18n.t("review.after"),
+    region: i18n.t("review.suggestion"),
+  };
+  const commentLabels = {
+    reply: i18n.t("review.reply"),
+    send: i18n.t("review.send"),
+    waiting: i18n.t("review.waitingReply"),
+    region: i18n.t("review.comment"),
+    you: i18n.t("review.you"),
+  };
+  const proposalCard = (proposal: ReviewProposal, place: CardPlace, compact = false) => (
+    <ProposalCard
+      key={proposal.id}
+      proposal={proposal}
+      state={states.proposals.find((s) => s.id === proposal.id)}
+      lane={lanes.get(proposal.laneId)}
+      busy={busy}
+      place={place}
+      compact={compact}
+      onAccept={() =>
+        void run(async () => {
+          if (await accept(proposal.id)) setActiveId(null);
+        })
+      }
+      onReject={() =>
+        void run(async () => {
+          if (await reject(proposal.id)) setActiveId(null);
+        })
+      }
+      labels={proposalLabels}
+    />
+  );
+  const commentCard = (comment: ReviewComment, place: CardPlace, compact = false) => (
+    <CommentCard
+      key={comment.id}
+      comment={comment}
+      lane={lanes.get(comment.laneId)}
+      place={place}
+      compact={compact}
+      onReply={async (text) => {
+        try {
+          return (await review.onReply?.(comment.id, text)) !== false;
+        } catch (e) {
+          report(e, "COMMENT_ACTION_FAILED");
+          return false;
+        }
+      }}
+      labels={commentLabels}
+    />
+  );
 
   if (!overlay) return null;
 
@@ -420,60 +477,29 @@ export function ReviewLayer({
           </span>
         </div>
       ))}
-      {cardPos && activeProposal ? (
-        <ProposalCard
-          key={activeProposal.id}
-          proposal={activeProposal}
-          state={activeState}
-          lane={lanes.get(activeProposal.laneId)}
-          busy={busy}
-          top={cardPos.top}
-          left={cardPos.left}
-          onAccept={() =>
-            void run(async () => {
-              if (await accept(activeProposal.id)) setActiveId(null);
-            })
-          }
-          onReject={() =>
-            void run(async () => {
-              if (await reject(activeProposal.id)) setActiveId(null);
-            })
-          }
-          labels={{
-            accept: i18n.t("review.accept"),
-            reject: i18n.t("review.reject"),
-            stale: i18n.t("review.stale"),
-            staleText: i18n.t("review.staleText"),
-            before: i18n.t("review.before"),
-            after: i18n.t("review.after"),
-            region: i18n.t("review.suggestion"),
-          }}
+      {margin && root ? (
+        <ReviewMargin
+          root={root}
+          column={overlay}
+          activeId={activeId}
+          onActivate={setActiveId}
+          tick={layoutTick}
+          items={[
+            ...proposals.map((proposal) => ({
+              id: proposal.id,
+              kind: "proposal" as const,
+              render: (compact: boolean) => proposalCard(proposal, "margin", compact),
+            })),
+            ...comments.map((comment) => ({
+              id: comment.id,
+              kind: "comment" as const,
+              render: (compact: boolean) => commentCard(comment, "margin", compact),
+            })),
+          ]}
         />
       ) : null}
-      {cardPos && activeComment ? (
-        <CommentCard
-          key={activeComment.id}
-          comment={activeComment}
-          lane={lanes.get(activeComment.laneId)}
-          top={cardPos.top}
-          left={cardPos.left}
-          onReply={async (text) => {
-            try {
-              return (await review.onReply?.(activeComment.id, text)) !== false;
-            } catch (e) {
-              report(e, "COMMENT_ACTION_FAILED");
-              return false;
-            }
-          }}
-          labels={{
-            reply: i18n.t("review.reply"),
-            send: i18n.t("review.send"),
-            waiting: i18n.t("review.waitingReply"),
-            region: i18n.t("review.comment"),
-            you: i18n.t("review.you"),
-          }}
-        />
-      ) : null}
+      {!margin && cardPos && activeProposal ? proposalCard(activeProposal, cardPos) : null}
+      {!margin && cardPos && activeComment ? commentCard(activeComment, cardPos) : null}
     </>,
     overlay,
   );

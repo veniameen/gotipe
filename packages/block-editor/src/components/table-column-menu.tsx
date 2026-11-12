@@ -9,7 +9,9 @@ import {
   addRow,
   columnTypeOf,
   deleteColumn,
+  deleteRow,
   findTable,
+  insertRow,
   setColumnType,
 } from "../table/column-types";
 import { Tip } from "./formatting/tip";
@@ -21,28 +23,38 @@ const TYPES: { type: ColumnType; icon: PageIconName }[] = [
   { type: "boolean", icon: "check" },
 ];
 
+/** One row of a table menu. `checked` makes it a radio row; `danger` paints it red. */
+interface MenuRow {
+  key: string;
+  icon: PageIconName;
+  label: string;
+  run: () => void;
+  checked?: boolean;
+  danger?: boolean;
+}
+
 /**
- * The column handle of a header cell and its menu (GoTipe Atlas, frame 9): the column's type,
- * a row or a column more, the column away. Shared by BlockEditor and PageEditor.
+ * A handle of the table and its menu (GoTipe Atlas, frame 9): a chevron in a header cell for the
+ * column, beside a row for the row. The menu stands on the shared overlay surface.
  */
-export function TableColumnButton({
+function TableHandleMenu({
   editor,
-  tableId,
-  column,
+  className,
+  label,
+  groups,
+  marker,
 }: {
   editor: GoTipeEditor;
-  tableId: string;
-  column: number;
+  className: string;
+  label: string;
+  groups: () => MenuRow[][];
+  marker: "data-gotipe-column-menu" | "data-gotipe-row-menu";
 }) {
-  const i18n = useGoTipeI18n();
   const [open, setOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
-  const anchor = useCallback(() => {
-    const cell = buttonRef.current?.closest("th, td");
-    return (cell ?? buttonRef.current)?.getBoundingClientRect() ?? null;
-  }, []);
+  const anchor = useCallback(() => buttonRef.current?.getBoundingClientRect() ?? null, []);
   const position = useFloatingPosition({
     open,
     anchor,
@@ -77,9 +89,6 @@ export function TableColumnButton({
       menuRef.current?.querySelector<HTMLButtonElement>("button")?.focus({ preventScroll: true });
   }, [open, position]);
 
-  const table = open ? findTable(editor, tableId) : null;
-  const words = { yes: i18n.t("table.yes"), no: i18n.t("table.no") };
-  const current = table ? columnTypeOf(table, column, words.yes, words.no) : "text";
   const run = (action: () => void) => {
     try {
       action();
@@ -105,14 +114,13 @@ export function TableColumnButton({
     const next = event.key === "ArrowDown" ? index + 1 : index - 1;
     items[(next + items.length) % items.length]?.focus();
   };
-  const label = i18n.t("table.columnType");
 
   return (
     <>
       <button
         ref={buttonRef}
         type="button"
-        className="gotipe-column-handle"
+        className={className}
         contentEditable={false}
         data-gotipe-widget=""
         aria-label={label}
@@ -134,7 +142,7 @@ export function TableColumnButton({
             className="gotipe-column-menu"
             role="menu"
             aria-label={label}
-            data-gotipe-column-menu=""
+            {...{ [marker]: "" }}
             style={{ position: "fixed", ...position, visibility: position ? "visible" : "hidden" }}
             onMouseDown={(event) => event.preventDefault()}
             onKeyDown={arrows}
@@ -142,50 +150,31 @@ export function TableColumnButton({
             <div className="gotipe-column-menu-label" aria-hidden="true">
               {label}
             </div>
-            {TYPES.map(({ type, icon }) => (
-              <button
-                key={type}
-                type="button"
-                role="menuitemradio"
-                aria-checked={current === type}
-                onClick={() => run(() => setColumnType(editor, tableId, column, type, words))}
-              >
-                <PageIcon name={icon} />
-                <span className="gotipe-menu-text">{i18n.t(`table.type.${type}`)}</span>
-                {current === type ? (
-                  <span className="gotipe-menu-end" aria-hidden="true">
-                    <PageIcon name="check" />
-                  </span>
+            {groups().map((group, index) => (
+              <div key={group[0]?.key ?? index} className="gotipe-table-menu-group" role="group">
+                {index > 0 ? (
+                  <div className="gotipe-context-menu-separator" role="separator" />
                 ) : null}
-              </button>
+                {group.map((row) => (
+                  <button
+                    key={row.key}
+                    type="button"
+                    role={row.checked === undefined ? "menuitem" : "menuitemradio"}
+                    aria-checked={row.checked}
+                    className={row.danger ? "destructive" : undefined}
+                    onClick={() => run(row.run)}
+                  >
+                    <PageIcon name={row.icon} />
+                    <span className="gotipe-menu-text">{row.label}</span>
+                    {row.checked ? (
+                      <span className="gotipe-menu-end" aria-hidden="true">
+                        <PageIcon name="check" />
+                      </span>
+                    ) : null}
+                  </button>
+                ))}
+              </div>
             ))}
-            <div className="gotipe-context-menu-separator" role="separator" />
-            <button
-              type="button"
-              role="menuitem"
-              onClick={() => run(() => addRow(editor, tableId))}
-            >
-              <PageIcon name="plus" />
-              <span className="gotipe-menu-text">{i18n.t("table.addRow")}</span>
-            </button>
-            <button
-              type="button"
-              role="menuitem"
-              onClick={() => run(() => addColumn(editor, tableId, column))}
-            >
-              <PageIcon name="plus" />
-              <span className="gotipe-menu-text">{i18n.t("table.addColumn")}</span>
-            </button>
-            <div className="gotipe-context-menu-separator" role="separator" />
-            <button
-              type="button"
-              role="menuitem"
-              className="destructive"
-              onClick={() => run(() => deleteColumn(editor, tableId, column))}
-            >
-              <PageIcon name="trash" />
-              <span className="gotipe-menu-text">{i18n.t("table.deleteColumn")}</span>
-            </button>
             {error ? (
               <p role="alert" className="gotipe-sr-only">
                 {error}
@@ -195,5 +184,109 @@ export function TableColumnButton({
         </FloatingPortal>
       ) : null}
     </>
+  );
+}
+
+/** The column's handle in its header cell: its type, a row or a column more, the column away. */
+export function TableColumnButton({
+  editor,
+  tableId,
+  column,
+}: {
+  editor: GoTipeEditor;
+  tableId: string;
+  column: number;
+}) {
+  const i18n = useGoTipeI18n();
+  const words = { yes: i18n.t("table.yes"), no: i18n.t("table.no") };
+  return (
+    <TableHandleMenu
+      editor={editor}
+      className="gotipe-column-handle"
+      label={i18n.t("table.columnType")}
+      marker="data-gotipe-column-menu"
+      groups={() => {
+        const table = findTable(editor, tableId);
+        const current = table ? columnTypeOf(table, column, words.yes, words.no) : "text";
+        return [
+          TYPES.map(({ type, icon }) => ({
+            key: type,
+            icon,
+            label: i18n.t(`table.type.${type}`),
+            checked: current === type,
+            run: () => setColumnType(editor, tableId, column, type, words),
+          })),
+          [
+            {
+              key: "row",
+              icon: "plus",
+              label: i18n.t("table.addRow"),
+              run: () => addRow(editor, tableId),
+            },
+            {
+              key: "column",
+              icon: "plus",
+              label: i18n.t("table.addColumn"),
+              run: () => addColumn(editor, tableId, column),
+            },
+          ],
+          [
+            {
+              key: "delete",
+              icon: "trash",
+              label: i18n.t("table.deleteColumn"),
+              danger: true,
+              run: () => deleteColumn(editor, tableId, column),
+            },
+          ],
+        ];
+      }}
+    />
+  );
+}
+
+/** The row's handle beside its first cell: a row above or below, the row away. */
+export function TableRowButton({
+  editor,
+  tableId,
+  row,
+}: {
+  editor: GoTipeEditor;
+  tableId: string;
+  row: number;
+}) {
+  const i18n = useGoTipeI18n();
+  return (
+    <TableHandleMenu
+      editor={editor}
+      className="gotipe-row-handle"
+      label={i18n.t("table.rowMenu")}
+      marker="data-gotipe-row-menu"
+      groups={() => [
+        [
+          {
+            key: "above",
+            icon: "up",
+            label: i18n.t("table.addRowAbove"),
+            run: () => insertRow(editor, tableId, row),
+          },
+          {
+            key: "below",
+            icon: "down",
+            label: i18n.t("table.addRowBelow"),
+            run: () => insertRow(editor, tableId, row + 1),
+          },
+        ],
+        [
+          {
+            key: "delete",
+            icon: "trash",
+            label: i18n.t("table.deleteRow"),
+            danger: true,
+            run: () => deleteRow(editor, tableId, row),
+          },
+        ],
+      ]}
+    />
   );
 }

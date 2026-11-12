@@ -60,11 +60,13 @@ export {
   columnTypeOf,
   setColumnType,
   addRow,
+  insertRow,
+  deleteRow,
   addColumn,
   deleteColumn,
 } from "./table/column-types";
 export type { ColumnType } from "./table/column-types";
-export { TableColumnButton } from "./components/table-column-menu";
+export { TableColumnButton, TableRowButton } from "./components/table-column-menu";
 export { ReviewLayer, acceptAllInOrder } from "./review/review-layer";
 export type { PageReviewProps, ReviewApi, ReviewAction, ReviewResult } from "./review/review-layer";
 export { ReviewBar, LaneAvatars } from "./review/review-bar";

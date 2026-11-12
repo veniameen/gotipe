@@ -8,14 +8,23 @@ function trackStyle(color: string, style: React.CSSProperties = {}): TrackStyle 
   return { ...style, "--gt-track": color };
 }
 
-function useCardPosition(top: number, left: number) {
+/** Where a card stands: floating at a point by the text, or in the margin column (frame 14). */
+export type CardPlace = { top: number; left: number } | "margin";
+
+function useCardPosition(place: CardPlace) {
   const ref = useRef<HTMLDivElement>(null);
+  const top = place === "margin" ? 0 : place.top;
+  const left = place === "margin" ? 0 : place.left;
   const anchor = useCallback(
     () => ({ top, bottom: top, left, right: left, width: 0, height: 0 }),
     [top, left],
   );
-  const position = useFloatingPosition({ open: true, anchor, element: ref, gap: 0 });
-  return { ref, style: position ?? { visibility: "hidden" as const } };
+  const floating = place !== "margin";
+  const position = useFloatingPosition({ open: floating, anchor, element: ref, gap: 0 });
+  const style: React.CSSProperties = floating
+    ? { position: "fixed", ...(position ?? { visibility: "hidden" }) }
+    : {};
+  return { ref, style };
 }
 
 export const LANE_ICON: Record<ReviewLane["kind"], PageIconName> = {
@@ -42,8 +51,8 @@ export function ProposalCard({
   state,
   lane,
   busy,
-  top,
-  left,
+  place,
+  compact = false,
   onAccept,
   onReject,
   labels,
@@ -52,8 +61,9 @@ export function ProposalCard({
   state: ProposalState | undefined;
   lane: ReviewLane | undefined;
   busy: boolean;
-  top: number;
-  left: number;
+  place: CardPlace;
+  /** In the margin, a card that is not open shows only who and why. */
+  compact?: boolean;
   onAccept: () => void;
   onReject: () => void;
   labels: {
@@ -66,7 +76,7 @@ export function ProposalCard({
     region: string;
   };
 }) {
-  const position = useCardPosition(top, left);
+  const position = useCardPosition(place);
   const stale = state?.status === "stale";
   const edit = proposal.edits[0];
   // Было/стало only when whole blocks are rewritten (a pure insertion is visible in place).
@@ -74,14 +84,13 @@ export function ProposalCard({
   return (
     <div
       ref={position.ref}
-      className="gotipe-review-card"
-      role="dialog"
+      className={`gotipe-review-card${compact ? " is-compact" : ""}`}
+      role={compact ? "group" : "dialog"}
       aria-label={labels.region}
-      style={trackStyle(lane?.color ?? "var(--gt-track-1)", {
-        position: "fixed",
-        ...position.style,
-      })}
-      data-gotipe-review-card="proposal"
+      style={trackStyle(lane?.color ?? "var(--gt-track-1)", position.style)}
+      {...(compact
+        ? { "data-gotipe-review-summary": "proposal" }
+        : { "data-gotipe-review-card": "proposal" })}
     >
       <div className="gotipe-review-card-head">
         <LaneAvatar lane={lane} />
@@ -93,7 +102,7 @@ export function ProposalCard({
       ) : proposal.reason ? (
         <div className="gotipe-review-card-text">{proposal.reason}</div>
       ) : null}
-      {showDiff ? (
+      {showDiff && !compact ? (
         <div className="gotipe-review-card-diff">
           {edit.quote ? (
             <div className="gotipe-review-card-was">
@@ -109,26 +118,28 @@ export function ProposalCard({
           ) : null}
         </div>
       ) : null}
-      <div className="gotipe-review-card-actions">
-        <button
-          type="button"
-          className="gotipe-btn gotipe-btn-secondary"
-          disabled={busy}
-          onClick={onReject}
-        >
-          {labels.reject}
-        </button>
-        {stale ? null : (
+      {compact ? null : (
+        <div className="gotipe-review-card-actions">
           <button
             type="button"
-            className="gotipe-btn gotipe-btn-primary"
+            className="gotipe-btn gotipe-btn-secondary"
             disabled={busy}
-            onClick={onAccept}
+            onClick={onReject}
           >
-            {labels.accept}
+            {labels.reject}
           </button>
-        )}
-      </div>
+          {stale ? null : (
+            <button
+              type="button"
+              className="gotipe-btn gotipe-btn-primary"
+              disabled={busy}
+              onClick={onAccept}
+            >
+              {labels.accept}
+            </button>
+          )}
+        </div>
+      )}
     </div>
   );
 }
@@ -136,19 +147,20 @@ export function ProposalCard({
 export function CommentCard({
   comment,
   lane,
-  top,
-  left,
+  place,
+  compact = false,
   onReply,
   labels,
 }: {
   comment: ReviewComment;
   lane: ReviewLane | undefined;
-  top: number;
-  left: number;
+  place: CardPlace;
+  /** In the margin, a card that is not open shows only who and what. */
+  compact?: boolean;
   onReply: (text: string) => Promise<boolean>;
   labels: { reply: string; send: string; waiting: string; region: string; you: string };
 }) {
-  const position = useCardPosition(top, left);
+  const position = useCardPosition(place);
   const [draft, setDraft] = useState("");
   const [pending, setPending] = useState(false);
   const [failed, setFailed] = useState(false);
@@ -165,14 +177,13 @@ export function CommentCard({
   return (
     <div
       ref={position.ref}
-      className="gotipe-review-card"
-      role="dialog"
+      className={`gotipe-review-card${compact ? " is-compact" : ""}`}
+      role={compact ? "group" : "dialog"}
       aria-label={labels.region}
-      style={trackStyle(lane?.color ?? "var(--gt-track-3)", {
-        position: "fixed",
-        ...position.style,
-      })}
-      data-gotipe-review-card="comment"
+      style={trackStyle(lane?.color ?? "var(--gt-track-3)", position.style)}
+      {...(compact
+        ? { "data-gotipe-review-summary": "comment" }
+        : { "data-gotipe-review-card": "comment" })}
     >
       <div className="gotipe-review-card-head">
         <LaneAvatar lane={lane} />
@@ -180,38 +191,40 @@ export function CommentCard({
         {comment.question && replies.length === 0 ? <span>{labels.waiting}</span> : null}
       </div>
       <div className="gotipe-review-card-text">{comment.text}</div>
-      {replies.map((r) => (
+      {(compact ? [] : replies).map((r) => (
         <div key={r.id} className="gotipe-review-card-reply">
           <b>{r.author || labels.you}</b> {r.text}
         </div>
       ))}
-      <form
-        className="gotipe-review-card-form"
-        onSubmit={(e) => {
-          e.preventDefault();
-          void submit();
-        }}
-      >
-        <input
-          value={draft}
-          placeholder={labels.reply}
-          aria-label={labels.reply}
-          aria-invalid={failed || undefined}
-          disabled={pending}
-          onChange={(e) => {
-            setDraft(e.target.value);
-            setFailed(false);
+      {compact ? null : (
+        <form
+          className="gotipe-review-card-form"
+          onSubmit={(e) => {
+            e.preventDefault();
+            void submit();
           }}
-        />
-        <button
-          type="submit"
-          className="gotipe-review-icon-btn"
-          aria-label={labels.send}
-          disabled={pending || !draft.trim()}
         >
-          <PageIcon name="send" />
-        </button>
-      </form>
+          <input
+            value={draft}
+            placeholder={labels.reply}
+            aria-label={labels.reply}
+            aria-invalid={failed || undefined}
+            disabled={pending}
+            onChange={(e) => {
+              setDraft(e.target.value);
+              setFailed(false);
+            }}
+          />
+          <button
+            type="submit"
+            className="gotipe-review-icon-btn"
+            aria-label={labels.send}
+            disabled={pending || !draft.trim()}
+          >
+            <PageIcon name="send" />
+          </button>
+        </form>
+      )}
     </div>
   );
 }
