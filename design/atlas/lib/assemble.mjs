@@ -15,6 +15,7 @@ export const STYLES = [
   "tokens.css",
   "tokens-views.css",
   "tokens-ui.css",
+  "tokens-site.css",
   "atlas.css",
   "document.css",
   "blocks.css",
@@ -29,6 +30,8 @@ export const STYLES = [
   "ui/collab.css",
   "ui/review.css",
   "ui/states.css",
+  "site/landing.css",
+  "site/docs.css",
   "content/diagram.css",
 ];
 
