@@ -81,31 +81,27 @@ export function LinkEditor({ editor }: { editor: GoTipeEditor }) {
               />
             </label>
             <div className="gotipe-link-editor-actions">
-              <button
-                type="submit"
-                aria-label={i18n.t("format.applyLink")}
-                title={i18n.t("format.applyLink")}
-                disabled={!url.trim()}
-              >
+              <button type="submit" aria-label={i18n.t("format.applyLink")} disabled={!url.trim()}>
                 <PageIcon name="check" />
+                <Tip label={i18n.t("format.applyLink")} />
               </button>
               {mark && (
                 <button
                   type="button"
                   aria-label={i18n.t("format.unlink")}
-                  title={i18n.t("format.unlink")}
                   onClick={() => menu.run((chain) => chain.unsetMark("link"))}
                 >
                   <PageIcon name="unlink" />
+                  <Tip label={i18n.t("format.unlink")} />
                 </button>
               )}
               <button
                 type="button"
                 aria-label={i18n.t("format.cancel")}
-                title={i18n.t("format.cancel")}
                 onClick={() => menu.close(true)}
               >
                 <PageIcon name="close" />
+                <Tip label={i18n.t("format.cancel")} />
               </button>
             </div>
             {menu.error && (

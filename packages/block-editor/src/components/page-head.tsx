@@ -2,6 +2,7 @@ import { useGoTipeI18n } from "@gotipe/react";
 import type React from "react";
 import { useEffect, useRef } from "react";
 import { PageIcon } from "../page/icons";
+import { Tip } from "./formatting/tip";
 
 export interface PageHeadProps {
   /** The page's glyph chosen by the host. */
@@ -78,9 +79,11 @@ export function PageHead({
           }}
         />
         {readOnly ? (
-          <span className="gotipe-page-head-lock" role="img" aria-label={reason} title={reason}>
+          // a button only to be reachable by the keys: it shows the reason, it does nothing else
+          <button type="button" className="gotipe-page-head-lock" aria-label={reason}>
             <PageIcon name="lock" />
-          </span>
+            <Tip label={reason} />
+          </button>
         ) : null}
       </div>
       {byline ? <div className="gotipe-page-head-byline">{byline}</div> : null}
