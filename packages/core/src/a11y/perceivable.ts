@@ -51,7 +51,10 @@ export const defaultA11yConfigs: Record<string, BlockA11yConfig> = {
   orderedList: { role: "list", label: "Numbered list" },
   listItem: { role: "listitem", label: "List item" },
   blockquote: { role: "blockquote", label: "Blockquote" },
-  callout: { role: "note", label: (block) => `${block.attrs.emoji} Callout` },
+  callout: {
+    role: "note",
+    label: (block) => (block.attrs.emoji ? `${block.attrs.emoji} Callout` : "Callout"),
+  },
   divider: { role: "separator", label: "Divider" },
   toggle: {
     role: "region",
