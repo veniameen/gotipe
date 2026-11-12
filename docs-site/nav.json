@@ -1,0 +1,97 @@
+{
+  "sections": [
+    {
+      "title": "Getting started",
+      "pages": [
+        "getting-started/introduction",
+        "getting-started/installation",
+        "getting-started/quick-start",
+        "getting-started/engines"
+      ]
+    },
+    {
+      "title": "Core concepts",
+      "pages": [
+        "concepts/document-model",
+        "concepts/transactions",
+        "concepts/commands",
+        "concepts/events",
+        "concepts/extensions",
+        "concepts/content-formats",
+        "concepts/host"
+      ]
+    },
+    {
+      "title": "Extensions",
+      "pages": [
+        "extensions/overview",
+        "extensions/text-blocks",
+        "extensions/lists",
+        "extensions/code-block",
+        "extensions/tables",
+        "extensions/media",
+        "extensions/math",
+        "extensions/marks",
+        "extensions/behaviors"
+      ]
+    },
+    {
+      "title": "Editor UI",
+      "pages": [
+        "ui/block-editor",
+        "ui/page-editor",
+        "ui/menus",
+        "ui/theming",
+        "ui/i18n",
+        "ui/keyboard"
+      ]
+    },
+    {
+      "title": "Frameworks",
+      "pages": ["frameworks/react", "frameworks/vue", "frameworks/svelte-solid"]
+    },
+    {
+      "title": "Collaboration",
+      "pages": ["collaboration/overview", "collaboration/provider", "collaboration/offline"]
+    },
+    {
+      "title": "Review",
+      "pages": [
+        "review/comments",
+        "review/suggestions",
+        "review/model-edits",
+        "review/versions"
+      ]
+    },
+    {
+      "title": "AI",
+      "pages": ["ai/overview", "ai/provider", "ai/ui"]
+    },
+    {
+      "title": "Import and export",
+      "pages": [
+        "conversion/overview",
+        "conversion/markdown",
+        "conversion/pdf",
+        "conversion/docx",
+        "conversion/server",
+        "conversion/migration"
+      ]
+    },
+    {
+      "title": "Cloud",
+      "pages": ["cloud/overview", "cloud/auth", "cloud/rest-api", "cloud/realtime", "cloud/sdk"]
+    },
+    {
+      "title": "Resources",
+      "pages": [
+        "resources/licensing",
+        "resources/performance",
+        "resources/security",
+        "resources/browser-support",
+        "resources/rust",
+        "resources/changelog"
+      ]
+    }
+  ]
+}
