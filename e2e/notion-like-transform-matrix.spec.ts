@@ -1,3 +1,4 @@
+import type { GoTipeEditor } from "@gotipe/core";
 import { expect, test, type Page } from "@playwright/test";
 import { runCodeBlockCommand } from "./helpers/notion-checklist";
 
@@ -66,37 +67,35 @@ async function resetNotionDocument(page: Page) {
 }
 
 async function setCaretToEndOfLastTopLevelBlock(page: Page) {
-  await page.evaluate(() => {
-    const editor = document.querySelector("[data-gotipe-content]") as HTMLElement | null;
-    const blocks = Array.from(
-      document.querySelectorAll("[data-gotipe-content] > [data-block-id]"),
-    ) as HTMLElement[];
-    const target = blocks[blocks.length - 1] ?? null;
-    if (!editor || !target) return;
-
-    const sel = window.getSelection();
-    if (!sel) return;
-
-    const walker = document.createTreeWalker(target, NodeFilter.SHOW_TEXT);
-    let lastText: Node | null = null;
-    let current: Node | null;
-    while ((current = walker.nextNode())) {
-      lastText = current;
-    }
-
-    const range = document.createRange();
-    if (lastText) {
-      range.setStart(lastText, (lastText.textContent ?? "").length);
-    } else {
-      range.setStart(target, target.childNodes.length);
-    }
-    range.collapse(true);
-
-    sel.removeAllRanges();
-    sel.addRange(range);
-    editor.focus();
+  const target = await page.evaluate(() => {
+    const editor = (window as unknown as { __GOTIPE_NOTION_EDITOR__: GoTipeEditor })
+      .__GOTIPE_NOTION_EDITOR__;
+    let block = editor.getViewState().blocks.at(-1);
+    while (block?.children.length) block = block.children.at(-1);
+    if (!block) throw new Error("Last block is missing");
+    const offset =
+      typeof block.content === "string"
+        ? block.content.length
+        : (block.content ?? []).reduce((length, span) => length + span.text.length, 0);
+    return { blockId: block.id, offset };
   });
-  await page.waitForTimeout(20);
+  const expected = { anchor: target, head: target };
+  await page.evaluate((selection) => {
+    const editor = (window as unknown as { __GOTIPE_NOTION_EDITOR__: GoTipeEditor })
+      .__GOTIPE_NOTION_EDITOR__;
+    editor.setSelection(selection);
+    editor.focus();
+  }, expected);
+  await expect
+    .poll(() =>
+      page.evaluate(() => {
+        const editor = (window as unknown as { __GOTIPE_NOTION_EDITOR__: GoTipeEditor })
+          .__GOTIPE_NOTION_EDITOR__;
+        const { anchor, head } = editor.getViewState().selection;
+        return { model: { anchor, head }, native: editor.getDOMSelection() };
+      }),
+    )
+    .toEqual({ model: expected, native: expected });
 }
 
 async function setCaretToStartOfLastTopLevelParagraph(page: Page) {

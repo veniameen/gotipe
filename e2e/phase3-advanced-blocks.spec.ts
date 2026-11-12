@@ -1,6 +1,6 @@
 import { test, expect } from "@playwright/test";
 
-const BASE = "http://localhost:5173/?view=block#basic";
+const BASE = "/?view=block#basic";
 
 test.describe("Phase 3.9-3.13: Callout + Image + Table + Toggle + Columns", () => {
   test.beforeEach(async ({ page }) => {
@@ -119,17 +119,30 @@ test.describe("Phase 3.9-3.13: Callout + Image + Table + Toggle + Columns", () =
     });
   });
 
-  test("Table has proper styling (borders, header background)", async ({ page }) => {
+  test("Table has proper styling (rules between rows, quiet header)", async ({ page }) => {
     const table = page.locator('[data-block-type="table"]');
     await expect(table.first()).toBeVisible();
 
-    // Check that th has background style
-    const th = table.first().locator("th").first();
-    const bgColor = await th.evaluate(
-      (el) => getComputedStyle(el).backgroundColor
-    );
-    // Should have a non-transparent background
-    expect(bgColor).not.toBe("rgba(0, 0, 0, 0)");
+    // GoTipe Atlas, frame 9: no frame and no fill; the head stands apart by a stronger rule under
+    // it and by quieter, heavier text.
+    const look = await table.first().evaluate((el) => {
+      const th = getComputedStyle(el.querySelector("th")!);
+      const td = getComputedStyle(el.querySelector("td")!);
+      return {
+        headRule: th.borderBottomStyle,
+        headRuleColor: th.borderBottomColor,
+        rowRuleColor: td.borderBottomColor,
+        headColor: th.color,
+        cellColor: td.color,
+        headWeight: Number(th.fontWeight),
+        sideRule: td.borderLeftStyle,
+      };
+    });
+    expect(look.headRule).toBe("solid");
+    expect(look.headRuleColor).not.toBe(look.rowRuleColor);
+    expect(look.headColor).not.toBe(look.cellColor);
+    expect(look.headWeight).toBeGreaterThanOrEqual(500);
+    expect(look.sideRule).toBe("none");
   });
 
   // --- 3.12: Toggle ---

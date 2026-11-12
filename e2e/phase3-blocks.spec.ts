@@ -1,6 +1,6 @@
 import { test, expect } from "@playwright/test";
 
-const BASE = "http://localhost:5173/?view=block#basic";
+const BASE = "/?view=block#basic";
 
 test.describe("Phase 3.5-3.8 Block Types", () => {
   test.beforeEach(async ({ page }) => {
