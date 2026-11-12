@@ -1,0 +1,96 @@
+<figure class="at-figure" id="f19" data-section="PageEditor">
+  <figcaption class="at-figure-head">
+    <span class="at-num">19</span>
+    <h2 class="at-figure-title">Страница вики: PageEditor в общем виде</h2>
+    <p class="at-caption">
+      PageEditor собран из BlockEditor: та же панель, «/», ручка и меню блока, меню столбца; сверху
+      — Markdown без потерь и предложения модели. Темы page больше нет. Заголовок — первый «#»
+      файла. Вид по умолчанию — notion (решение владельца 12 ноября); docs и остальные хост
+      передаёт в view.
+    </p>
+  </figcaption>
+  <!-- @frame frame=page-notion view=notion w=1024 h=760 label="по умолчанию — notion" -->
+  <div class="gotipe-review-bar"><svg class="gt-icon"><use href="#i-sparkle" /></svg><span class="gotipe-review-title">Правка модели</span
+    ><span class="gotipe-review-fact">2 предложения</span
+    ><span class="gotipe-tool-spacer"></span><span class="gotipe-button is-quiet">Отклонить все</span
+    ><span class="gotipe-button is-primary">Принять все</span></div>
+  <article class="gotipe-page" lang="ru">
+    <header class="gotipe-page-head"><h1 class="gotipe-page-title">Офлайн-черновики</h1></header>
+    <div class="gotipe-doc">
+      <p>
+        Правка, сделанная без сети,
+        <span class="gotipe-delete" data-person="3">сейчас пропадает</span
+        ><span class="gotipe-insert" data-person="3">теряется</span>, если закрыть вкладку до
+        того, как связь вернётся. Решение опирается на ADR-0031.
+      </p>
+      <h2>Как это работает</h2>
+      <p>
+        Журнал лежит в <code>IndexedDB</code> и переживает перезапуск приложения. Сервер принимает
+        пачку транзакций целиком или отклоняет её.
+      </p>
+      <h2>Порядок выката</h2>
+      <ol class="gotipe-list">
+        <li>Включить журнал для 5 % пользователей веб-версии.</li>
+        <li>
+          Неделю сравнивать долю потерянных правок с контрольной группой<span
+            class="gotipe-insert"
+            data-person="1"
+            >: порог — меньше 0,1 %</span
+          >.
+        </li>
+      </ol>
+      <h2>Что не трогаем</h2>
+      <pre class="gotipe-raw">&lt;details&gt;
+  &lt;summary&gt;Журнал в цифрах&lt;/summary&gt;
+  1 284 транзакции в очереди
+&lt;/details&gt;</pre>
+    </div>
+  </article>
+  <!-- @end -->
+  <!-- @frame frame=page-docs view=docs w=1024 h=760 label="view=docs" -->
+  <div class="gotipe-review-bar"><svg class="gt-icon"><use href="#i-sparkle" /></svg><span class="gotipe-review-title">Правка модели</span
+    ><span class="gotipe-review-fact">2 предложения</span
+    ><span class="gotipe-tool-spacer"></span><span class="gotipe-button is-quiet">Отклонить все</span
+    ><span class="gotipe-button is-primary">Принять все</span></div>
+  <div class="gotipe-docs">
+    <nav class="gotipe-outline" aria-label="Оглавление">
+      <p class="gotipe-outline-title">На этой странице</p>
+      <a class="is-current">Как это работает</a>
+      <a data-level="2">Порядок выката</a>
+      <a data-level="2">Что не трогаем</a>
+    </nav>
+    <article class="gotipe-page" lang="ru">
+      <header class="gotipe-page-head"><h1 class="gotipe-page-title">Офлайн-черновики</h1></header>
+      <div class="gotipe-doc">
+        <p>
+          Правка, сделанная без сети,
+          <span class="gotipe-delete" data-person="3">сейчас пропадает</span
+          ><span class="gotipe-insert" data-person="3">теряется</span>, если закрыть вкладку до
+          того, как связь вернётся. Решение опирается на ADR-0031.
+        </p>
+        <h2>Как это работает</h2>
+        <p>
+          Журнал лежит в <code>IndexedDB</code> и переживает перезапуск приложения. Сервер
+          принимает пачку транзакций целиком или отклоняет её.
+        </p>
+        <h2>Порядок выката</h2>
+        <ol class="gotipe-list">
+          <li>Включить журнал для 5 % пользователей веб-версии.</li>
+          <li>
+            Неделю сравнивать долю потерянных правок с контрольной группой<span
+              class="gotipe-insert"
+              data-person="1"
+              >: порог — меньше 0,1 %</span
+            >.
+          </li>
+        </ol>
+        <h2>Что не трогаем</h2>
+        <pre class="gotipe-raw">&lt;details&gt;
+  &lt;summary&gt;Журнал в цифрах&lt;/summary&gt;
+  1 284 транзакции в очереди
+&lt;/details&gt;</pre>
+      </div>
+    </article>
+  </div>
+  <!-- @end -->
+</figure>
