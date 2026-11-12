@@ -8,7 +8,7 @@ export const Callout = defineExtension({
       group: ["block"],
       content: "richText",
       attrs: {
-        emoji: { type: "string", default: "💡" },
+        emoji: { type: "string", default: "" },
         alert: { type: "string" },
         type: {
           type: "enum",
@@ -39,8 +39,7 @@ export const Callout = defineExtension({
       description: "Insert a callout block",
       icon: "alert-circle",
       group: "style",
-      execute: (editor) =>
-        editor.chain().insertBlockAfter("callout", { emoji: "💡", type: "info" }).run(),
+      execute: (editor) => editor.chain().insertBlockAfter("callout", { type: "info" }).run(),
     },
   ],
 });

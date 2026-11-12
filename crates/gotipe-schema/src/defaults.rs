@@ -211,7 +211,8 @@ pub fn default_block_editor() -> Schema {
                 "emoji".into(),
                 AttrSpec {
                     attr_type: AttrType::String,
-                    default: Some(AttrValue::String("\u{1f4a1}".into())), // 💡
+                    // No emoji by default: the callout shows the glyph of its kind.
+                    default: Some(AttrValue::String(String::new())),
                     required: false,
                 },
             )]),
