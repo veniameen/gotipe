@@ -86,13 +86,14 @@ const PATHS: Record<PageIconName, React.ReactNode> = {
   ),
   bullet: (
     <>
-      <circle cx="3.5" cy="4.5" r=".9" fill="currentColor" stroke="none" />
-      <circle cx="3.5" cy="11.5" r=".9" fill="currentColor" stroke="none" />
-      <path d="M6.5 4.5h7M6.5 11.5h7" />
+      <circle cx="3.5" cy="4.5" r="1" fill="currentColor" stroke="none" />
+      <circle cx="3.5" cy="11.5" r="1" fill="currentColor" stroke="none" />
+      <path d="M6.75 4.5h6.75M6.75 11.5h6.75" />
     </>
   ),
+  // the numerals stand level with their lines and are as tall as each other
   numbered: (
-    <path d="M6.5 4.5h7M6.5 11.5h7M2.75 3.25l1-.6v3.6M2.6 10.4c.2-.4.55-.6 1-.6.55 0 .95.35.95.85 0 .4-.2.65-.6 1.05l-1.3 1.3h1.95" />
+    <path d="M7.25 4.5h6.25M7.25 11.5h6.25M2.6 3.4 3.75 2.75v3.5M2.5 10.5c.15-.5.55-.75 1.05-.75.65 0 1.15.42 1.15 1 0 .48-.28.83-.7 1.25L2.5 13.25h2.4" />
   ),
   todo: (
     <>

@@ -6,11 +6,6 @@
   position: sticky;
   top: 0;
   z-index: var(--gt-z-toolbar);
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--gt-toolbar-gap);
-  padding: var(--gt-fixed-toolbar-pad);
   box-shadow: inset 0 calc(-1 * var(--gt-hairline)) 0 var(--gt-line);
   background: var(--gt-page-bg);
   color: var(--gt-text-2);
@@ -19,8 +14,36 @@
   line-height: var(--gt-ui-leading);
 }
 
+/* When narrow, the tools scroll sideways on a track and the side with more fades out, a tool
+   wide (`data-more`, as on a wide table). The mask is on the track, so the page under the sticky
+   bar stays hidden. */
+.gotipe-static-toolbar-track {
+  display: flex;
+  align-items: center;
+  gap: var(--gt-toolbar-gap);
+  overflow-x: auto;
+  padding: var(--gt-fixed-toolbar-pad);
+  scrollbar-width: none;
+}
+.gotipe-static-toolbar-track[data-more="left"] {
+  mask-image: linear-gradient(to right, transparent, currentColor var(--gt-tool));
+}
+.gotipe-static-toolbar-track[data-more="right"] {
+  mask-image: linear-gradient(to left, transparent, currentColor var(--gt-tool));
+}
+.gotipe-static-toolbar-track[data-more="both"] {
+  mask-image: linear-gradient(
+    to right,
+    transparent,
+    currentColor var(--gt-tool),
+    currentColor calc(100% - var(--gt-tool)),
+    transparent
+  );
+}
+
 .gotipe-toolbar-group {
   display: flex;
+  flex: none;
   align-items: center;
   gap: var(--gt-toolbar-gap);
 }
