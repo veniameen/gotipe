@@ -164,6 +164,8 @@
   --gt-table-add: 16px;
   --gt-table-add-gap: 4px;
   --gt-table-fade: 24px;
+  --gt-row-handle-full: calc(var(--gt-handle-w) + var(--gt-table-add-gap));
+  --gt-row-handle-room: min(var(--gt-row-handle-full), var(--gt-page-pad-x));
   --gt-quote-pad: 16px;
   --gt-caption-gap: 8px;
   --gt-inline-pad: 0.1em 0.35em;
@@ -238,6 +240,7 @@
   --gt-panel-w: 300px;
   --gt-panel-pad: 16px;
   --gt-margin-gap: 32px;
+  --gt-margin-page-min: 560px;
   --gt-bar-pad: 8px 12px 8px 16px;
   --gt-seg-pad: 2px;
   --gt-seg-item-pad: 2px 8px;
@@ -385,6 +388,7 @@
     --gt-page-pad-top: 40px;
     --gt-page-pad-x: 20px;
     --gt-table-add: 12px;
+    --gt-row-handle-room: min(var(--gt-row-handle-full), var(--gt-page-pad-x));
     --gt-page-pad-bottom: 64px;
     --gt-title-size: 26px;
     --gt-title-leading: 32px;
@@ -398,6 +402,7 @@
     --gt-head-after: 24px;
     --gt-callout-pad: 12px 14px;
     --gt-outline-display: none;
+    --gt-row-handle-full: calc(var(--gt-handle-w) + var(--gt-table-add-gap));
     --gt-text-prose: var(--gt-body-size);
     --gt-leading-prose: var(--gt-body-leading);
     --gt-tracking-prose: var(--gt-body-tracking);
@@ -435,6 +440,8 @@
     --gt-h2-leading: 22px;
     --gt-flow-h1: 24px;
     --gt-flow-h2: 20px;
+    --gt-row-handle-full: calc(var(--gt-handle-w) + var(--gt-table-add-gap));
+    --gt-row-handle-room: min(var(--gt-row-handle-full), var(--gt-page-pad-x));
     --gt-text-prose: var(--gt-body-size);
     --gt-leading-prose: var(--gt-body-leading);
     --gt-tracking-prose: var(--gt-body-tracking);
@@ -468,6 +475,8 @@
     --gt-code-pad-x: 12px;
     --gt-code-pad-bottom: 12px;
     --gt-code-head-pad: 0 4px 0 12px;
+    --gt-row-handle-full: calc(var(--gt-handle-w) + var(--gt-table-add-gap));
+    --gt-row-handle-room: min(var(--gt-row-handle-full), var(--gt-page-pad-x));
     --gt-text-prose: var(--gt-body-size);
     --gt-leading-prose: var(--gt-body-leading);
     --gt-tracking-prose: var(--gt-body-tracking);
@@ -496,6 +505,8 @@
   [data-gt-view="minimal"] :is(.gotipe-block-editor, .gotipe-editor) > * {
     --gt-title-size: 22px;
     --gt-title-leading: 28px;
+    --gt-row-handle-full: calc(var(--gt-handle-w) + var(--gt-table-add-gap));
+    --gt-row-handle-room: min(var(--gt-row-handle-full), var(--gt-page-pad-x));
     --gt-text-prose: var(--gt-body-size);
     --gt-leading-prose: var(--gt-body-leading);
     --gt-tracking-prose: var(--gt-body-tracking);

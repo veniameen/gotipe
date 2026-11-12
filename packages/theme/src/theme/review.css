@@ -225,6 +225,49 @@ li.gotipe-sug-block-ins > input[type="checkbox"] {
   margin-top: var(--gt-card-pad);
 }
 
+/* ---- a wide page: every card in a column beside the text, level with it (Atlas, frame 14);
+   the open card lifts with the overlay shadow, the others sit on the card shadow ---- */
+.gotipe-page[data-review-layout="margin"] {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) var(--gt-card-w);
+  column-gap: var(--gt-margin-gap);
+  align-items: start;
+  padding-right: var(--gt-margin-gap);
+}
+.gotipe-page[data-review-layout="margin"] > .gotipe-review-bar {
+  margin-right: calc(-1 * var(--gt-margin-gap));
+}
+.gotipe-page[data-review-layout="margin"] > .gotipe-review-bar {
+  grid-column: 1 / -1;
+}
+.gotipe-page[data-review-layout="margin"] > .gotipe-page-overlay {
+  position: relative;
+  align-self: stretch;
+  min-width: 0;
+}
+.gotipe-review-slot {
+  position: absolute;
+  right: 0;
+  left: 0;
+}
+.gotipe-review-slot > .gotipe-review-card {
+  width: auto;
+  max-width: none;
+  border-radius: var(--gt-radius-card);
+  overflow: visible;
+  animation: none;
+}
+.gotipe-review-card.is-compact {
+  box-shadow: var(--gt-shadow-card);
+  cursor: pointer;
+}
+.gotipe-review-card.is-compact .gotipe-review-card-text {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
 /* ---- the bar over the page ---- */
 .gotipe-review-bar {
   position: sticky;
