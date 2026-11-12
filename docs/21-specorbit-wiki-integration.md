@@ -22,7 +22,7 @@ GoTipe — библиотека редактора. Wiki является фун
 | Пакет | Зачем |
 |---|---|
 | `@gotipe/block-editor` | `PageEditor`, `ReviewBar`, `LaneAvatars`, `PageIcon`, `insertPageBlock` |
-| `@gotipe/theme` | `@gotipe/theme/page.css` — всё оформление страницы |
+| `@gotipe/theme` | `@gotipe/theme/base.css` и `theme.css` — общие виды; `page.css` грузит их же одним файлом |
 | `@gotipe/core`, `@gotipe/react` | ядро и React-слой (peer) |
 | `@gotipe/markdown` | собственный кодек Markdown; ещё и для runtime: `applyAnchoredEdits` — в `@gotipe/suggestions` |
 | `@gotipe/suggestions` | типы и якоря предложений: `findAnchor`, `applyAnchoredEdits`, `locateEdits` |
@@ -49,7 +49,8 @@ resolve: {
   в этом режиме недоступна. Основной entry поддерживает optional WASM peer и
   выбирает движок через `engine`. Для строгой JS-only сборки сохраняйте точный alias.
 - На стороне SpecOrbit экран Wiki можно загружать лениво вместе с
-  `import "@gotipe/theme/page.css"`. Состав стартового bundle проверяется в сборке
+  `import "@gotipe/theme/base.css"` и `import "@gotipe/theme/theme.css"` (или `page.css` — то же
+  одним файлом). Состав стартового bundle проверяется в сборке
   хоста; сам пакет GoTipe не создаёт экран или маршрут приложения.
 - Импорт модулей GoTipe не вешает слушателей, не ходит в сеть и не грузит шрифты.
   Именованные HTML references декодирует собственная таблица Unicode без создания
@@ -72,7 +73,7 @@ font-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'none'`.
 - `style-src 'unsafe-inline'` — нужен для атрибутов `style` (позиции меню и курсоров, цвет
   дорожки `--gt-track`, выравнивание ячеек). Нужную политику задаёт хост.
 - `img-src data:` — картинки страницы показываются data URL из `host.resolveAsset`.
-- `font-src` — `page.css` не объявляет `@font-face`: шрифты берутся из `--gt-font-ui` и
+- `font-src` — тема не объявляет `@font-face`: шрифты берутся из `--gt-font-ui` и
   `--gt-font-mono`; шрифты и их загрузку выбирает SpecOrbit.
 - `connect-src` — редактор в сеть не ходит.
 - Подсветка кода по умолчанию выключена. Если нужна: `@gotipe/block-editor/shiki`
@@ -81,11 +82,13 @@ font-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'none'`.
 ## Использование
 
 ```tsx
-import "@gotipe/theme/page.css";
+import "@gotipe/theme/base.css";
+import "@gotipe/theme/theme.css";
 import { PageEditor, type PageEditorHandle } from "@gotipe/block-editor";
 
 <PageEditor
   ref={pageRef}
+  view="notion"                        // общий вид: notion (по умолчанию), docs, modern, minimal
   markdown={file.content}              // текст файла; новое значение ≠ последнему черновику → внешняя замена
   onChange={(md) => scheduleSave(md)}  // черновик после каждой правки; автосохранение ~1 с — у хоста
   readOnly={viewingVersion}            // В8: просмотр старой версии
@@ -98,7 +101,7 @@ import { PageEditor, type PageEditorHandle } from "@gotipe/block-editor";
     },
     resolveAsset: async (src) => (await wiki.readAsset({ projectPath, path: resolve(page, src) })).dataUrl,
     openLink: (href) => openExternalOrPage(href),  // http(s)/mailto или путь в проекте
-    onError: (error) => toast.error(errorText(error.code)),
+    onError: (error) => toast.error(errorText(error.code)), // с onError свой тост редактор не показывает
   }}
   review={review}                      // см. ниже; без него слоя предложений нет
   reviewBar={false}                    // полосу правки SpecOrbit рисует сам (WikiLiveBar) или { title, extra }
@@ -115,6 +118,12 @@ import { PageEditor, type PageEditorHandle } from "@gotipe/block-editor";
 - Внешняя замена (файл изменил агент, Git, принятое предложение): передайте новый `markdown` —
   id блоков переиспользуются, фокус, каретка и прокрутка сохраняются, правка попадает в undo.
 - Неизменённый файл возвращается байт-в-байт; после правки абзаца меняется только его блок.
+- PageEditor — это BlockEditor с Markdown-сессией и предложениями модели: та же панель над
+  выделением, «/», ручка и меню блока, меню столбца таблицы (атлас, кадры 6–9 и 19). Своей темы
+  у страницы нет.
+- Свои виды блоков — проп `blockViews`: они важнее видов страницы и общих. Так SpecOrbit рисует,
+  например, цитату, которая начинается с жирной метки «Инструкции для агента:» — для библиотеки
+  это обычная цитата.
 
 ### Колбэки хоста (`EditorHost`)
 
@@ -177,48 +186,44 @@ const review: PageReviewProps = {
 
 ## CSS-переменные
 
-Всё оформление страницы — `--gt-*` на `.gotipe-page` (`@gotipe/theme/page.css`). Значения по
-умолчанию — v6. Тёмная тема: `[data-theme="dark"]` на предке или на `.gotipe-page`, либо
-`prefers-color-scheme`. Сопоставление с токенами SpecOrbit (`app/src/ui/tokens.css`) — его же
-нужно реализовать только внутри SpecOrbit. Пример адаптера темы хоста:
+Страница рисуется общим видом (`view`); все цвета, шрифты и размеры — токены `--gt-*`
+(`@gotipe/theme`). Тёмная тема — `data-theme="dark"` на любом предке (или `prefers-color-scheme`,
+если `data-theme` нет).
+
+- Цвета, шрифты, радиусы и тени наследуются: задайте их на контейнере страницы или выше, и они
+  дойдут до текста, меню и карточек предложений.
+- Размеры вида (кегль, интерлиньяж, поля страницы) задаёт сам вид на `[data-gt-view]`. Свои
+  значения ставьте на `.gotipe-page .gotipe-block-editor`.
+
+Пример адаптера на стороне SpecOrbit (имена справа — токены приложения):
 
 ```css
-.wk-page .gotipe-page {
-  --gt-page-bg: var(--canvas);     --gt-surface: var(--surface);      --gt-overlay: var(--overlay);
-  --gt-text: var(--text);          --gt-text-2: var(--text-2);        --gt-text-3: var(--text-3);
-  --gt-fill-1: var(--fill-1);      --gt-fill-2: var(--fill-2);        --gt-fill-3: var(--fill-3);
-  --gt-line: var(--line);          --gt-line-strong: var(--line-strong);
-  --gt-line-control: var(--line-control);                            --gt-line-active: var(--line-active);
-  --gt-primary: var(--primary);    --gt-primary-hover: var(--primary-hover); --gt-primary-text: var(--primary-text);
-  --gt-accent: var(--accent);      --gt-accent-text: var(--accent-text);     --gt-link: var(--link);
-  --gt-selection: var(--selection);
-  --gt-success: var(--success);    --gt-warning: var(--warning);      --gt-danger: var(--danger);
-  --gt-danger-soft: var(--danger-soft);
-  --gt-comment: var(--warning);    --gt-comment-soft: var(--warning-soft);
+.wk-page {
+  --gt-page-bg: var(--canvas);      --gt-sunken: var(--surface);      --gt-overlay: var(--overlay);
+  --gt-text: var(--text);           --gt-text-2: var(--text-2);       --gt-text-3: var(--text-3);
+  --gt-fill-1: var(--fill-1);       --gt-fill-2: var(--fill-2);       --gt-fill-3: var(--fill-3);
+  --gt-line: var(--line);           --gt-line-strong: var(--line-strong);
+  --gt-line-control: var(--line-control);                             --gt-line-active: var(--line-active);
+  --gt-ink: var(--primary);         --gt-ink-hover: var(--primary-hover); --gt-ink-text: var(--primary-text);
+  --gt-accent: var(--accent);       --gt-accent-text: var(--accent-text);
+  --gt-focus: var(--focus-ring);    --gt-selection: var(--selection);
+  --gt-success: var(--success);     --gt-warning: var(--warning);     --gt-danger: var(--danger);
+  --gt-danger-tint: var(--danger-soft);
+  --gt-comment: var(--warning);     --gt-comment-tint: var(--warning-soft);
   --gt-shadow-overlay: var(--shadow-e2);
-  --gt-font-ui: var(--font-ui);    --gt-font-mono: var(--font-mono);
-  --gt-text-body: var(--text-body);   --gt-leading-body: var(--leading-body);
-  --gt-text-meta: var(--text-meta);   --gt-text-prose: var(--text-prose);
-  --gt-leading-prose: var(--leading-prose); --gt-text-mono-small: var(--text-mono-small);
-  --gt-radius-control: var(--r-control); --gt-radius-surface: var(--r-surface);
-  --gt-radius-overlay: var(--r-overlay);
+  --gt-font-ui: var(--font-ui);     --gt-font-mono: var(--font-mono);
+  --gt-radius-control: var(--r-control); --gt-radius-overlay: var(--r-overlay);
 }
 ```
 
-Остальные токены (свои значения по умолчанию, при желании тоже сопоставить):
-`--gt-track-1…6` (цвета дорожек: акцент, warning, смесь акцента и success, success, два
-нейтральных; без фиолетового и терракоты), `--gt-shadow-chip`, `--gt-font-features`,
-`--gt-tracking-prose`, `--gt-leading-meta`, `--gt-text-mono`, `--gt-title-size` /
-`--gt-title-leading` (30/38), `--gt-h1-size…--gt-h3-leading` (24/32, 19/26, 16/22),
-`--gt-radius-xs`, `--gt-radius-callout`, `--gt-page-max-width` (760px), `--gt-page-padding-top`
-/ `-x` / `-bottom`, `--gt-icon-size`, `--gt-control-height`, `--gt-dur-out`, `--gt-ease-out`,
-`--gt-press-scale`.
+Цвета дорожек предложений — `--gt-track-1…6` (по умолчанию — цвета участников, warning и два
+нейтральных; без фиолетового и терракоты); дорожка может передать свой цвет в `lanes[].color`.
 
-Классы для своих правок: `.gotipe-page-title`, `.gotipe-page-callout[-agent]`,
-`.gotipe-page-image[-empty]`, `.gotipe-page-file`, `.gotipe-page-raw`, `.gotipe-table`,
-`.gotipe-slash-menu`, `.gotipe-page-menu`, `.gotipe-page-bubble`, `.gotipe-review-card`,
-`.gotipe-review-bar`, `.gotipe-lane-cursor`, `.gotipe-sug-ins|-del|-stale|-block-ins|-block-del`,
-`.gotipe-cmt`. Атрибуты: `data-gotipe-proposal`, `data-gotipe-comment`, `data-gotipe-lane`.
+Классы для своих правок: `.gotipe-page` (корень), `.gotipe-page-title`, `.gotipe-raw`,
+`.gotipe-table`, `.gotipe-column-menu`, `.gotipe-bubble-menu`, `.gotipe-slash-menu`,
+`.gotipe-block-context-menu`, `.gotipe-review-bar`, `.gotipe-review-card`, `.gotipe-lane-cursor`,
+`.gotipe-sug-ins|-del|-stale|-block-ins|-block-del`, `.gotipe-cmt`. Атрибуты:
+`data-gt-view`, `data-gotipe-proposal`, `data-gotipe-comment`, `data-gotipe-lane`.
 
 ## Что в Markdown
 
@@ -226,7 +231,6 @@ const review: PageReviewProps = {
 |---|---|
 | Задачи | `- [ ]` / `- [x]` |
 | Выноска | `> [!NOTE]` (TIP, IMPORTANT, WARNING, CAUTION) |
-| Инструкции для агента | `> **Инструкции для агента:** …` |
 | Изображение | `![alt](assets/имя.png "подпись")` — путь возвращает `saveAsset` |
 | Файл | `[имя.pdf](assets/имя.pdf)` — абсолютная или относительная ссылка, текст = имя файла |
 | Тип столбца | не хранится: «Число» — `---:`, «Код» — ячейки в `` ` ``, «Да / нет» — `да`/`нет` |
