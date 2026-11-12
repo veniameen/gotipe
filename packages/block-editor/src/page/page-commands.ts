@@ -13,7 +13,6 @@ export interface PageBlockCommand extends SlashCommandDef {
 export type PageBlockKind =
   | "image"
   | "file"
-  | "agent"
   | "text"
   | "heading1"
   | "heading2"
@@ -31,7 +30,7 @@ interface Spec {
   kind: PageBlockKind;
   label: TranslationKey;
   icon: PageIconName;
-  group: "media" | "basic";
+  group: "upload" | "style" | "insert";
   shortcut?: string;
   aliases: string[];
   run: (editor: GoTipeEditor) => void;
@@ -58,7 +57,7 @@ const SPECS: Spec[] = [
     kind: "image",
     label: "slash.image",
     icon: "image",
-    group: "media",
+    group: "upload",
     aliases: ["image", "img", "picture", "картинка", "изображение", "фото"],
     run: (e) => insertLeaf(e, "image", { src: "", alt: "", caption: "" }),
   },
@@ -66,23 +65,15 @@ const SPECS: Spec[] = [
     kind: "file",
     label: "slash.file",
     icon: "file",
-    group: "media",
+    group: "upload",
     aliases: ["file", "attachment", "файл", "вложение"],
     run: (e) => insertLeaf(e, "file", { url: "", name: "" }),
-  },
-  {
-    kind: "agent",
-    label: "slash.agentInstructions",
-    icon: "agent",
-    group: "basic",
-    aliases: ["agent", "instructions", "агент", "инструкции"],
-    run: (e) => e.chain().setBlockType("callout", { type: "agent", emoji: "" }).run(),
   },
   {
     kind: "text",
     label: "slash.text",
     icon: "text",
-    group: "basic",
+    group: "style",
     aliases: ["text", "paragraph", "текст", "абзац"],
     run: (e) => e.chain().setBlockType("paragraph").run(),
   },
@@ -90,7 +81,7 @@ const SPECS: Spec[] = [
     kind: "heading1",
     label: "slash.heading1",
     icon: "h1",
-    group: "basic",
+    group: "style",
     shortcut: "#",
     aliases: ["h1", "heading", "title", "заголовок"],
     run: (e) => e.chain().setBlockType("heading", { level: 1 }).run(),
@@ -99,7 +90,7 @@ const SPECS: Spec[] = [
     kind: "heading2",
     label: "slash.heading2",
     icon: "h2",
-    group: "basic",
+    group: "style",
     shortcut: "##",
     aliases: ["h2", "heading", "subtitle", "заголовок"],
     run: (e) => e.chain().setBlockType("heading", { level: 2 }).run(),
@@ -108,7 +99,7 @@ const SPECS: Spec[] = [
     kind: "heading3",
     label: "slash.heading3",
     icon: "h3",
-    group: "basic",
+    group: "style",
     shortcut: "###",
     aliases: ["h3", "heading", "заголовок"],
     run: (e) => e.chain().setBlockType("heading", { level: 3 }).run(),
@@ -117,7 +108,7 @@ const SPECS: Spec[] = [
     kind: "bulletList",
     label: "slash.bulletList",
     icon: "bullet",
-    group: "basic",
+    group: "style",
     shortcut: "-",
     aliases: ["ul", "bullet", "list", "список", "маркированный"],
     run: (e) => e.chain().setBulletList().run(),
@@ -126,7 +117,7 @@ const SPECS: Spec[] = [
     kind: "orderedList",
     label: "slash.orderedList",
     icon: "numbered",
-    group: "basic",
+    group: "style",
     shortcut: "1.",
     aliases: ["ol", "numbered", "ordered", "нумерованный"],
     run: (e) => e.chain().setOrderedList().run(),
@@ -135,7 +126,7 @@ const SPECS: Spec[] = [
     kind: "todoList",
     label: "slash.todoList",
     icon: "todo",
-    group: "basic",
+    group: "style",
     shortcut: "[]",
     aliases: ["todo", "task", "checkbox", "задачи", "задача", "чеклист"],
     run: (e) => e.chain().setTodoList().run(),
@@ -144,7 +135,7 @@ const SPECS: Spec[] = [
     kind: "quote",
     label: "slash.quote",
     icon: "quote",
-    group: "basic",
+    group: "style",
     shortcut: ">",
     aliases: ["quote", "blockquote", "цитата"],
     run: (e) => e.chain().setBlockType("blockquote").run(),
@@ -153,7 +144,7 @@ const SPECS: Spec[] = [
     kind: "code",
     label: "slash.code",
     icon: "code",
-    group: "basic",
+    group: "style",
     shortcut: "```",
     aliases: ["code", "snippet", "код"],
     run: (e) => e.chain().setBlockType("codeBlock", { language: "" }).run(),
@@ -162,7 +153,7 @@ const SPECS: Spec[] = [
     kind: "table",
     label: "slash.table",
     icon: "table",
-    group: "basic",
+    group: "insert",
     aliases: ["table", "grid", "таблица"],
     run: (e) => e.chain().insertTable({ rows: 3, cols: 3, withHeader: true }).run(),
   },
@@ -170,7 +161,7 @@ const SPECS: Spec[] = [
     kind: "divider",
     label: "slash.divider",
     icon: "divider",
-    group: "basic",
+    group: "insert",
     shortcut: "---",
     aliases: ["divider", "hr", "line", "разделитель", "линия"],
     run: (e) => insertLeaf(e, "divider", {}),
@@ -179,17 +170,36 @@ const SPECS: Spec[] = [
     kind: "callout",
     label: "slash.callout",
     icon: "callout",
-    group: "basic",
+    group: "insert",
     aliases: ["callout", "note", "alert", "выноска", "заметка"],
     run: (e) => e.chain().setBlockType("callout", { type: "note", emoji: "" }).run(),
   },
 ];
 
-/** Groups of the «/» menu in display order (v6: «Медиа», «Основные»). */
+/** The core's icon name of each page icon, so the shared «/» menu draws the row (Atlas, frame 7). */
+const SLASH_ICONS: Partial<Record<PageIconName, string>> = {
+  image: "image",
+  file: "paperclip",
+  text: "type",
+  h1: "heading-1",
+  h2: "heading-2",
+  h3: "heading-3",
+  bullet: "list",
+  numbered: "list-ordered",
+  todo: "check-square",
+  quote: "quote",
+  code: "code",
+  table: "table",
+  divider: "minus",
+  callout: "alert-circle",
+};
+
+/** Groups of the «/» menu in display order — the shared menu's own: «Основные», «Блоки», «Медиа». */
 export function pageSlashGroups(i18n: I18n): { id: string; label: string }[] {
   return [
-    { id: "media", label: i18n.t("slash.group.media") },
-    { id: "basic", label: i18n.t("slash.group.basic") },
+    { id: "style", label: i18n.t("slashMenu.group.style") },
+    { id: "insert", label: i18n.t("slashMenu.group.insert") },
+    { id: "upload", label: i18n.t("slashMenu.group.upload") },
   ];
 }
 
@@ -199,7 +209,7 @@ export function pageBlockCommands(i18n: I18n, kinds?: PageBlockKind[]): PageBloc
   return SPECS.filter((s) => !allowed || allowed.has(s.kind)).map((s) => ({
     name: i18n.t(s.label),
     aliases: [s.kind, ...s.aliases],
-    icon: s.icon,
+    icon: SLASH_ICONS[s.icon] ?? s.icon,
     pageIcon: s.icon,
     shortcut: s.shortcut,
     group: s.group as SlashCommandDef["group"],

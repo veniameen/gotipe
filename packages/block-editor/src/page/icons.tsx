@@ -7,7 +7,6 @@ import type React from "react";
 export type PageIconName =
   | "image"
   | "file"
-  | "agent"
   | "text"
   | "h1"
   | "h2"
@@ -74,13 +73,6 @@ const PATHS: Record<PageIconName, React.ReactNode> = {
   ),
   file: (
     <path d="M10.4 6.6 6.3 10.7a1.6 1.6 0 0 1-2.3-2.3l4.9-4.9a2.6 2.6 0 0 1 3.7 3.7l-5 5a3.6 3.6 0 0 1-5.1-5.1l3.9-3.9" />
-  ),
-  agent: (
-    <>
-      <circle cx="8" cy="8" r="5.75" />
-      <circle cx="8" cy="8" r="1.5" />
-      <path d="M8 2.25v1.5M8 12.25v1.5M2.25 8h1.5M12.25 8h1.5" />
-    </>
   ),
   text: (
     <path d="M2.5 12.25 5.25 4.5 8 12.25M3.5 9.75h3.5M10.25 8.4c.5-.5 1.1-.7 1.8-.7 1.1 0 1.7.6 1.7 1.7v2.85M13.75 10.6c-.55-.2-1.05-.3-1.6-.3-1 0-1.65.45-1.65 1.15s.55 1.05 1.25 1.05c.85 0 1.6-.5 2-1.3" />

@@ -5,7 +5,7 @@ import { useState } from "react";
 import { PageIcon, type PageIconName } from "../page/icons";
 
 const LANE_ICON: Record<ReviewLane["kind"], PageIconName> = {
-  agent: "agent",
+  agent: "sparkle",
   skill: "skill",
   tool: "tool",
   user: "user",
@@ -77,7 +77,7 @@ export function ReviewBar({
   };
   return (
     <div className="gotipe-review-bar" role="status">
-      <PageIcon name="agent" />
+      <PageIcon name="sparkle" />
       <span className="gotipe-review-bar-text">
         {title ? <b>{title}</b> : null}
         {pending > 0 ? <span>{i18n.plural("review.proposals", pending)}</span> : null}
@@ -114,7 +114,7 @@ export function ReviewBar({
       ) : onClose ? (
         <button
           type="button"
-          className="gotipe-page-icon-btn"
+          className="gotipe-review-icon-btn"
           aria-label={i18n.t("review.close")}
           onClick={onClose}
         >

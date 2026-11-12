@@ -41,7 +41,7 @@ export { TableView } from "./views/table-view";
 export { CalloutView } from "./views/callout-view";
 export { ToggleView } from "./views/toggle-view";
 export { DividerView } from "./views/divider-view";
-// Wiki page editor (Markdown in/out, v6 look, model suggestions)
+// Markdown page editor on the shared views (Markdown in/out, model suggestions)
 export {
   PageEditor,
   pageExtensions,
@@ -62,8 +62,9 @@ export {
   addRow,
   addColumn,
   deleteColumn,
-} from "./page/table-column-menu";
-export type { ColumnType } from "./page/table-column-menu";
+} from "./table/column-types";
+export type { ColumnType } from "./table/column-types";
+export { TableColumnButton } from "./components/table-column-menu";
 export { ReviewLayer, acceptAllInOrder } from "./review/review-layer";
 export type { PageReviewProps, ReviewApi, ReviewAction, ReviewResult } from "./review/review-layer";
 export { ReviewBar, LaneAvatars } from "./review/review-bar";
