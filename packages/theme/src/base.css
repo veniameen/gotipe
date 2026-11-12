@@ -205,6 +205,8 @@
 .gotipe-content ul:not(.gotipe-todo-list) > li {
   padding-left: var(--gt-indent);
 }
+/* the dot is drawn, not clicked: Firefox would put the caret of a click beside an empty item into
+   the next block (as the placeholder, it lets the pointer through) */
 .gotipe-content ul:not(.gotipe-todo-list) > li::before {
   content: "";
   position: absolute;
@@ -214,6 +216,7 @@
   height: var(--gt-bullet);
   border-radius: var(--gt-radius-round);
   background: currentColor;
+  pointer-events: none;
 }
 .gotipe-content ul:not(.gotipe-todo-list) ul:not(.gotipe-todo-list) > li::before {
   box-sizing: border-box;
