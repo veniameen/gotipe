@@ -3,6 +3,8 @@ import { PageIcon } from "@gotipe/block-editor";
 import type { GoTipeEditor } from "@gotipe/core";
 import { useEditorState } from "@gotipe/react";
 import type React from "react";
+import { useState } from "react";
+import { useScrollMore } from "./use-scroll-more";
 
 interface StaticToolbarProps {
   editor: GoTipeEditor | null;
@@ -40,6 +42,8 @@ export function StaticToolbar({
   showTheme = false,
 }: StaticToolbarProps) {
   const toolbar = useEditorState<ToolbarState | null>(editor, (state) => state.toolbar ?? null);
+  const [track, setTrack] = useState<HTMLDivElement | null>(null);
+  const more = useScrollMore(track);
 
   if (!editor) return null;
 
@@ -62,353 +66,355 @@ export function StaticToolbar({
 
   return (
     <div className="gotipe-static-toolbar">
-      {/* History */}
-      {showHistory && (
-        <div className="gotipe-toolbar-group">
-          <button
-            type="button"
-            className="gotipe-toolbar-btn"
-            title="Undo"
-            disabled={!toolbar?.canUndo}
-            onPointerDown={preventFocusSteal}
-            onMouseDown={preventFocusSteal}
-            onClick={() =>
-              runWithFocus((chain) => {
-                chain.undo();
-              })
-            }
-          >
-            <PageIcon name="undo" />
-          </button>
-          <button
-            type="button"
-            className="gotipe-toolbar-btn"
-            title="Redo"
-            disabled={!toolbar?.canRedo}
-            onPointerDown={preventFocusSteal}
-            onMouseDown={preventFocusSteal}
-            onClick={() =>
-              runWithFocus((chain) => {
-                chain.redo();
-              })
-            }
-          >
-            <PageIcon name="redo" />
-          </button>
-        </div>
-      )}
-
-      <span className="gotipe-toolbar-separator" />
-
-      {/* Block type dropdown */}
-      {showHeadings && (
-        <div className="gotipe-toolbar-group">
-          <select
-            className="gotipe-toolbar-dropdown gotipe-select gotipe-select--compact"
-            value={headingLevel > 0 ? `h${headingLevel}` : "paragraph"}
-            onChange={(e) => {
-              const val = e.target.value;
-              if (val === "paragraph") {
+      <div ref={setTrack} className="gotipe-static-toolbar-track" data-more={more}>
+        {/* History */}
+        {showHistory && (
+          <div className="gotipe-toolbar-group">
+            <button
+              type="button"
+              className="gotipe-toolbar-btn"
+              title="Undo"
+              disabled={!toolbar?.canUndo}
+              onPointerDown={preventFocusSteal}
+              onMouseDown={preventFocusSteal}
+              onClick={() =>
                 runWithFocus((chain) => {
-                  chain.setBlockType("paragraph");
-                });
-              } else {
-                const level = Number.parseInt(val.replace("h", ""), 10);
-                runWithFocus((chain) => {
-                  chain.setBlockType("heading", { level });
-                });
+                  chain.undo();
+                })
               }
-            }}
-          >
-            <option value="paragraph">Paragraph</option>
-            <option value="h1">Heading 1</option>
-            <option value="h2">Heading 2</option>
-            <option value="h3">Heading 3</option>
-          </select>
-        </div>
-      )}
-
-      <span className="gotipe-toolbar-separator" />
-
-      {/* Lists */}
-      {showLists && (
-        <div className="gotipe-toolbar-group">
-          <button
-            type="button"
-            className={`gotipe-toolbar-btn ${blockType === "bulletList" ? "active" : ""}`}
-            title="Bullet List"
-            onPointerDown={preventFocusSteal}
-            onMouseDown={preventFocusSteal}
-            onClick={() =>
-              runWithFocus((chain) => {
-                chain.toggleBulletList();
-              })
-            }
-          >
-            <PageIcon name="bullet" />
-          </button>
-          <button
-            type="button"
-            className={`gotipe-toolbar-btn ${blockType === "orderedList" ? "active" : ""}`}
-            title="Ordered List"
-            onPointerDown={preventFocusSteal}
-            onMouseDown={preventFocusSteal}
-            onClick={() =>
-              runWithFocus((chain) => {
-                chain.toggleOrderedList();
-              })
-            }
-          >
-            <PageIcon name="numbered" />
-          </button>
-          <button
-            type="button"
-            className={`gotipe-toolbar-btn ${blockType === "todoList" ? "active" : ""}`}
-            title="Task List"
-            onPointerDown={preventFocusSteal}
-            onMouseDown={preventFocusSteal}
-            onClick={() =>
-              runWithFocus((chain) => {
-                chain.toggleTodoList();
-              })
-            }
-          >
-            <PageIcon name="todo" />
-          </button>
-        </div>
-      )}
-
-      {/* Indent */}
-      {showIndent && (
-        <div className="gotipe-toolbar-group">
-          <button
-            type="button"
-            className="gotipe-toolbar-btn"
-            title="Indent"
-            onPointerDown={preventFocusSteal}
-            onMouseDown={preventFocusSteal}
-            onClick={() =>
-              runWithFocus((chain) => {
-                chain.indent();
-              })
-            }
-          >
-            <PageIcon name="indent" />
-          </button>
-          <button
-            type="button"
-            className="gotipe-toolbar-btn"
-            title="Outdent"
-            onPointerDown={preventFocusSteal}
-            onMouseDown={preventFocusSteal}
-            onClick={() =>
-              runWithFocus((chain) => {
-                chain.outdent();
-              })
-            }
-          >
-            <PageIcon name="outdent" />
-          </button>
-        </div>
-      )}
-
-      <span className="gotipe-toolbar-separator" />
-
-      {/* Formatting marks */}
-      {showMarks && (
-        <div className="gotipe-toolbar-group">
-          <button
-            type="button"
-            className={`gotipe-toolbar-btn ${isMarkActive("bold") ? "active" : ""}`}
-            title="Bold (Cmd+B)"
-            onPointerDown={preventFocusSteal}
-            onMouseDown={preventFocusSteal}
-            onClick={() =>
-              runWithFocus((chain) => {
-                chain.toggleBold();
-              })
-            }
-          >
-            <PageIcon name="bold" />
-          </button>
-          <button
-            type="button"
-            className={`gotipe-toolbar-btn ${isMarkActive("italic") ? "active" : ""}`}
-            title="Italic (Cmd+I)"
-            onPointerDown={preventFocusSteal}
-            onMouseDown={preventFocusSteal}
-            onClick={() =>
-              runWithFocus((chain) => {
-                chain.toggleItalic();
-              })
-            }
-          >
-            <PageIcon name="italic" />
-          </button>
-          <button
-            type="button"
-            className={`gotipe-toolbar-btn ${isMarkActive("strikethrough") ? "active" : ""}`}
-            title="Strikethrough"
-            onPointerDown={preventFocusSteal}
-            onMouseDown={preventFocusSteal}
-            onClick={() =>
-              runWithFocus((chain) => {
-                chain.toggleStrikethrough();
-              })
-            }
-          >
-            <PageIcon name="strike" />
-          </button>
-          <button
-            type="button"
-            className={`gotipe-toolbar-btn ${isMarkActive("code") ? "active" : ""}`}
-            title="Inline Code"
-            onPointerDown={preventFocusSteal}
-            onMouseDown={preventFocusSteal}
-            onClick={() =>
-              runWithFocus((chain) => {
-                chain.toggleCode();
-              })
-            }
-          >
-            <PageIcon name="inlineCode" />
-          </button>
-          <button
-            type="button"
-            className={`gotipe-toolbar-btn ${isMarkActive("underline") ? "active" : ""}`}
-            title="Underline (Cmd+U)"
-            onPointerDown={preventFocusSteal}
-            onMouseDown={preventFocusSteal}
-            onClick={() =>
-              runWithFocus((chain) => {
-                chain.toggleUnderline();
-              })
-            }
-          >
-            <PageIcon name="underline" />
-          </button>
-        </div>
-      )}
-
-      {/* Extras */}
-      {showExtras && (
-        <div className="gotipe-toolbar-group">
-          <button
-            type="button"
-            className={`gotipe-toolbar-btn ${isMarkActive("superscript") ? "active" : ""}`}
-            title="Superscript"
-            onPointerDown={preventFocusSteal}
-            onMouseDown={preventFocusSteal}
-            onClick={() =>
-              runWithFocus((chain) => {
-                chain.toggleSuperscript();
-              })
-            }
-          >
-            {"X²"}
-          </button>
-          <button
-            type="button"
-            className={`gotipe-toolbar-btn ${isMarkActive("subscript") ? "active" : ""}`}
-            title="Subscript"
-            onPointerDown={preventFocusSteal}
-            onMouseDown={preventFocusSteal}
-            onClick={() =>
-              runWithFocus((chain) => {
-                chain.toggleSubscript();
-              })
-            }
-          >
-            {"X₂"}
-          </button>
-        </div>
-      )}
-
-      {/* Link */}
-      {showLink && (
-        <div className="gotipe-toolbar-group">
-          <button
-            type="button"
-            className={`gotipe-toolbar-btn ${isMarkActive("link") ? "active" : ""}`}
-            title="Insert Link"
-            onPointerDown={preventFocusSteal}
-            onMouseDown={preventFocusSteal}
-            onClick={() => {
-              if (isMarkActive("link")) {
+            >
+              <PageIcon name="undo" />
+            </button>
+            <button
+              type="button"
+              className="gotipe-toolbar-btn"
+              title="Redo"
+              disabled={!toolbar?.canRedo}
+              onPointerDown={preventFocusSteal}
+              onMouseDown={preventFocusSteal}
+              onClick={() =>
                 runWithFocus((chain) => {
-                  chain.removeMark("link");
-                });
-              } else {
-                const href = prompt("Enter URL:");
-                if (href) {
+                  chain.redo();
+                })
+              }
+            >
+              <PageIcon name="redo" />
+            </button>
+          </div>
+        )}
+
+        <span className="gotipe-toolbar-separator" />
+
+        {/* Block type dropdown */}
+        {showHeadings && (
+          <div className="gotipe-toolbar-group">
+            <select
+              className="gotipe-toolbar-dropdown gotipe-select gotipe-select--compact"
+              value={headingLevel > 0 ? `h${headingLevel}` : "paragraph"}
+              onChange={(e) => {
+                const val = e.target.value;
+                if (val === "paragraph") {
                   runWithFocus((chain) => {
-                    chain.setLink(href);
+                    chain.setBlockType("paragraph");
+                  });
+                } else {
+                  const level = Number.parseInt(val.replace("h", ""), 10);
+                  runWithFocus((chain) => {
+                    chain.setBlockType("heading", { level });
                   });
                 }
+              }}
+            >
+              <option value="paragraph">Paragraph</option>
+              <option value="h1">Heading 1</option>
+              <option value="h2">Heading 2</option>
+              <option value="h3">Heading 3</option>
+            </select>
+          </div>
+        )}
+
+        <span className="gotipe-toolbar-separator" />
+
+        {/* Lists */}
+        {showLists && (
+          <div className="gotipe-toolbar-group">
+            <button
+              type="button"
+              className={`gotipe-toolbar-btn ${blockType === "bulletList" ? "active" : ""}`}
+              title="Bullet List"
+              onPointerDown={preventFocusSteal}
+              onMouseDown={preventFocusSteal}
+              onClick={() =>
+                runWithFocus((chain) => {
+                  chain.toggleBulletList();
+                })
               }
-            }}
-          >
-            <PageIcon name="link" />
-          </button>
-        </div>
-      )}
-
-      <span className="gotipe-toolbar-separator" />
-
-      {/* Insert */}
-      {showInsert && (
-        <div className="gotipe-toolbar-group">
-          <select
-            className="gotipe-toolbar-dropdown gotipe-select gotipe-select--compact"
-            value=""
-            onChange={(e) => {
-              const val = e.target.value;
-              if (!val) return;
-              switch (val) {
-                case "table":
-                  runWithFocus((chain) => {
-                    chain.insertTable({ rows: 3, cols: 3, withHeader: true });
-                  });
-                  break;
-                case "codeBlock":
-                  runWithFocus((chain) => {
-                    chain.insertBlockAfter("codeBlock");
-                  });
-                  break;
-                case "divider":
-                  runWithFocus((chain) => {
-                    chain.insertBlockAfter("divider");
-                  });
-                  break;
-                case "callout":
-                  runWithFocus((chain) => {
-                    chain.insertBlockAfter("callout");
-                  });
-                  break;
-                case "blockquote":
-                  runWithFocus((chain) => {
-                    chain.setBlockType("blockquote");
-                  });
-                  break;
+            >
+              <PageIcon name="bullet" />
+            </button>
+            <button
+              type="button"
+              className={`gotipe-toolbar-btn ${blockType === "orderedList" ? "active" : ""}`}
+              title="Ordered List"
+              onPointerDown={preventFocusSteal}
+              onMouseDown={preventFocusSteal}
+              onClick={() =>
+                runWithFocus((chain) => {
+                  chain.toggleOrderedList();
+                })
               }
-            }}
-          >
-            <option value="">+ Insert</option>
-            <option value="table">Table</option>
-            <option value="codeBlock">Code Block</option>
-            <option value="blockquote">Blockquote</option>
-            <option value="divider">Divider</option>
-            <option value="callout">Callout</option>
-          </select>
-        </div>
-      )}
+            >
+              <PageIcon name="numbered" />
+            </button>
+            <button
+              type="button"
+              className={`gotipe-toolbar-btn ${blockType === "todoList" ? "active" : ""}`}
+              title="Task List"
+              onPointerDown={preventFocusSteal}
+              onMouseDown={preventFocusSteal}
+              onClick={() =>
+                runWithFocus((chain) => {
+                  chain.toggleTodoList();
+                })
+              }
+            >
+              <PageIcon name="todo" />
+            </button>
+          </div>
+        )}
 
-      {/* Theme toggle */}
-      {showTheme && (
-        <div className="gotipe-toolbar-group is-end">
-          <ThemeToggle />
-        </div>
-      )}
+        {/* Indent */}
+        {showIndent && (
+          <div className="gotipe-toolbar-group">
+            <button
+              type="button"
+              className="gotipe-toolbar-btn"
+              title="Indent"
+              onPointerDown={preventFocusSteal}
+              onMouseDown={preventFocusSteal}
+              onClick={() =>
+                runWithFocus((chain) => {
+                  chain.indent();
+                })
+              }
+            >
+              <PageIcon name="indent" />
+            </button>
+            <button
+              type="button"
+              className="gotipe-toolbar-btn"
+              title="Outdent"
+              onPointerDown={preventFocusSteal}
+              onMouseDown={preventFocusSteal}
+              onClick={() =>
+                runWithFocus((chain) => {
+                  chain.outdent();
+                })
+              }
+            >
+              <PageIcon name="outdent" />
+            </button>
+          </div>
+        )}
+
+        <span className="gotipe-toolbar-separator" />
+
+        {/* Formatting marks */}
+        {showMarks && (
+          <div className="gotipe-toolbar-group">
+            <button
+              type="button"
+              className={`gotipe-toolbar-btn ${isMarkActive("bold") ? "active" : ""}`}
+              title="Bold (Cmd+B)"
+              onPointerDown={preventFocusSteal}
+              onMouseDown={preventFocusSteal}
+              onClick={() =>
+                runWithFocus((chain) => {
+                  chain.toggleBold();
+                })
+              }
+            >
+              <PageIcon name="bold" />
+            </button>
+            <button
+              type="button"
+              className={`gotipe-toolbar-btn ${isMarkActive("italic") ? "active" : ""}`}
+              title="Italic (Cmd+I)"
+              onPointerDown={preventFocusSteal}
+              onMouseDown={preventFocusSteal}
+              onClick={() =>
+                runWithFocus((chain) => {
+                  chain.toggleItalic();
+                })
+              }
+            >
+              <PageIcon name="italic" />
+            </button>
+            <button
+              type="button"
+              className={`gotipe-toolbar-btn ${isMarkActive("strikethrough") ? "active" : ""}`}
+              title="Strikethrough"
+              onPointerDown={preventFocusSteal}
+              onMouseDown={preventFocusSteal}
+              onClick={() =>
+                runWithFocus((chain) => {
+                  chain.toggleStrikethrough();
+                })
+              }
+            >
+              <PageIcon name="strike" />
+            </button>
+            <button
+              type="button"
+              className={`gotipe-toolbar-btn ${isMarkActive("code") ? "active" : ""}`}
+              title="Inline Code"
+              onPointerDown={preventFocusSteal}
+              onMouseDown={preventFocusSteal}
+              onClick={() =>
+                runWithFocus((chain) => {
+                  chain.toggleCode();
+                })
+              }
+            >
+              <PageIcon name="inlineCode" />
+            </button>
+            <button
+              type="button"
+              className={`gotipe-toolbar-btn ${isMarkActive("underline") ? "active" : ""}`}
+              title="Underline (Cmd+U)"
+              onPointerDown={preventFocusSteal}
+              onMouseDown={preventFocusSteal}
+              onClick={() =>
+                runWithFocus((chain) => {
+                  chain.toggleUnderline();
+                })
+              }
+            >
+              <PageIcon name="underline" />
+            </button>
+          </div>
+        )}
+
+        {/* Extras */}
+        {showExtras && (
+          <div className="gotipe-toolbar-group">
+            <button
+              type="button"
+              className={`gotipe-toolbar-btn ${isMarkActive("superscript") ? "active" : ""}`}
+              title="Superscript"
+              onPointerDown={preventFocusSteal}
+              onMouseDown={preventFocusSteal}
+              onClick={() =>
+                runWithFocus((chain) => {
+                  chain.toggleSuperscript();
+                })
+              }
+            >
+              {"X²"}
+            </button>
+            <button
+              type="button"
+              className={`gotipe-toolbar-btn ${isMarkActive("subscript") ? "active" : ""}`}
+              title="Subscript"
+              onPointerDown={preventFocusSteal}
+              onMouseDown={preventFocusSteal}
+              onClick={() =>
+                runWithFocus((chain) => {
+                  chain.toggleSubscript();
+                })
+              }
+            >
+              {"X₂"}
+            </button>
+          </div>
+        )}
+
+        {/* Link */}
+        {showLink && (
+          <div className="gotipe-toolbar-group">
+            <button
+              type="button"
+              className={`gotipe-toolbar-btn ${isMarkActive("link") ? "active" : ""}`}
+              title="Insert Link"
+              onPointerDown={preventFocusSteal}
+              onMouseDown={preventFocusSteal}
+              onClick={() => {
+                if (isMarkActive("link")) {
+                  runWithFocus((chain) => {
+                    chain.removeMark("link");
+                  });
+                } else {
+                  const href = prompt("Enter URL:");
+                  if (href) {
+                    runWithFocus((chain) => {
+                      chain.setLink(href);
+                    });
+                  }
+                }
+              }}
+            >
+              <PageIcon name="link" />
+            </button>
+          </div>
+        )}
+
+        <span className="gotipe-toolbar-separator" />
+
+        {/* Insert */}
+        {showInsert && (
+          <div className="gotipe-toolbar-group">
+            <select
+              className="gotipe-toolbar-dropdown gotipe-select gotipe-select--compact"
+              value=""
+              onChange={(e) => {
+                const val = e.target.value;
+                if (!val) return;
+                switch (val) {
+                  case "table":
+                    runWithFocus((chain) => {
+                      chain.insertTable({ rows: 3, cols: 3, withHeader: true });
+                    });
+                    break;
+                  case "codeBlock":
+                    runWithFocus((chain) => {
+                      chain.insertBlockAfter("codeBlock");
+                    });
+                    break;
+                  case "divider":
+                    runWithFocus((chain) => {
+                      chain.insertBlockAfter("divider");
+                    });
+                    break;
+                  case "callout":
+                    runWithFocus((chain) => {
+                      chain.insertBlockAfter("callout");
+                    });
+                    break;
+                  case "blockquote":
+                    runWithFocus((chain) => {
+                      chain.setBlockType("blockquote");
+                    });
+                    break;
+                }
+              }}
+            >
+              <option value="">+ Insert</option>
+              <option value="table">Table</option>
+              <option value="codeBlock">Code Block</option>
+              <option value="blockquote">Blockquote</option>
+              <option value="divider">Divider</option>
+              <option value="callout">Callout</option>
+            </select>
+          </div>
+        )}
+
+        {/* Theme toggle */}
+        {showTheme && (
+          <div className="gotipe-toolbar-group is-end">
+            <ThemeToggle />
+          </div>
+        )}
+      </div>
     </div>
   );
 }
