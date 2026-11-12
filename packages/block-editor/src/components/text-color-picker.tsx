@@ -67,7 +67,6 @@ export function TextColorPicker({ editor }: TextColorPickerProps) {
                 key={`tc-${color.name}`}
                 type="button"
                 className="gotipe-text-color-swatch"
-                title={colorName(color.name)}
                 aria-label={i18n.t("color.textOption", { name: colorName(color.name) })}
                 aria-pressed={textColor === color.value}
                 style={{ color: documentColorStyle(color.value) ?? undefined }}
@@ -76,6 +75,7 @@ export function TextColorPicker({ editor }: TextColorPickerProps) {
                 }
               >
                 <PageIcon name="letter" />
+                <Tip label={colorName(color.name)} />
               </button>
             ))}
           </div>
@@ -86,14 +86,15 @@ export function TextColorPicker({ editor }: TextColorPickerProps) {
                 key={`hl-${color.name}`}
                 type="button"
                 className="gotipe-text-color-swatch is-fill"
-                title={colorName(color.name)}
                 aria-label={i18n.t("color.highlightOption", { name: colorName(color.name) })}
                 aria-pressed={highlight === color.value}
                 style={{ background: documentColorStyle(color.value) ?? undefined }}
                 onClick={() =>
                   menu.run((chain) => chain.setMark("highlight", { color: color.value }))
                 }
-              />
+              >
+                <Tip label={colorName(color.name)} />
+              </button>
             ))}
           </div>
           <span className="gotipe-color-sep" aria-hidden="true" />
@@ -101,10 +102,10 @@ export function TextColorPicker({ editor }: TextColorPickerProps) {
             type="button"
             className="gotipe-text-color-reset"
             aria-label={i18n.t("color.reset")}
-            title={i18n.t("color.reset")}
             onClick={() => menu.run((chain) => chain.unsetMark("highlight").unsetMark("textColor"))}
           >
             <PageIcon name="close" />
+            <Tip label={i18n.t("color.reset")} />
           </button>
           {menu.error && (
             <p role="alert" className="gotipe-sr-only">
