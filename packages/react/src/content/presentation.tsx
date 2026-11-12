@@ -1,4 +1,5 @@
 import type { BlockView, BlocksDecoration, NodeDecoration } from "@gotipe/core";
+import { type I18n, createI18n, en } from "@gotipe/i18n";
 import { TextRenderer } from "../text-renderer";
 
 export function rootPropsOf(block: BlockView, phantom: boolean): Record<string, unknown> {
@@ -77,20 +78,28 @@ export function isBlockContentEmpty(block: BlockView): boolean {
   return true;
 }
 
-export function getEmptyBlockPlaceholder(block: BlockView, parentType?: string): string | null {
+const englishI18n = createI18n({ locale: "en", locales: { en } });
+
+export function getEmptyBlockPlaceholder(
+  block: BlockView,
+  parentType?: string,
+  i18n: Pick<I18n, "t"> = englishI18n,
+): string | null {
   switch (block.type) {
     case "paragraph":
-      return "Text";
+      return i18n.t("placeholder.paragraph");
     case "heading": {
       const level = Math.min(Math.max((block.attrs.level as number) || 1, 1), 6);
-      return `Heading ${level}`;
+      return i18n.t("placeholder.heading", { level });
     }
     case "listItem":
-      return parentType === "orderedList" ? "Numbered List" : "Bullet List";
+      return i18n.t(
+        parentType === "orderedList" ? "placeholder.orderedList" : "placeholder.bulletList",
+      );
     case "todoItem":
-      return "To-do List";
+      return i18n.t("placeholder.todo");
     case "blockquote":
-      return "Quote";
+      return i18n.t("placeholder.quote");
     default:
       return null;
   }

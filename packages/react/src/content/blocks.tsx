@@ -1,5 +1,6 @@
 import type { BlockView, GoTipeEditor } from "@gotipe/core";
 import React, { useContext } from "react";
+import { useGoTipeI18n } from "../i18n-context";
 import { FileBlock } from "../media/file-block";
 import { ImageBlock } from "../media/image-block";
 import { CodeBlock } from "./code-block";
@@ -251,11 +252,14 @@ function BlockComponentInner({
     <BlockChildren block={block} editor={editor} selectedBlockId={selectedBlockId} />
   );
   const placeholderFn = useContext(PlaceholderContext);
+  const i18n = useGoTipeI18n();
   const isSelected = selectedBlockId === block.id;
   const isEmpty = isBlockContentEmpty(block);
   const shouldShowPlaceholder = isEmpty && (isSelected || block.type === "heading") && !readOnly;
   const placeholder = shouldShowPlaceholder
-    ? (placeholderFn ?? getEmptyBlockPlaceholder)(block, parentType)
+    ? placeholderFn
+      ? placeholderFn(block, parentType)
+      : getEmptyBlockPlaceholder(block, parentType, i18n)
     : null;
 
   switch (block.type) {
@@ -338,7 +342,7 @@ function BlockComponentInner({
             type="checkbox"
             checked={checked}
             contentEditable={false}
-            aria-label={checked ? "Mark as incomplete" : "Mark as complete"}
+            aria-label={i18n.t(checked ? "todo.uncheck" : "todo.check")}
             disabled={readOnly}
             onMouseDown={(e) => {
               e.preventDefault();

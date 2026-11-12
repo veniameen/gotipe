@@ -1,5 +1,6 @@
 import type { BlockView, GoTipeEditor } from "@gotipe/core";
 import { type ReactNode, useState } from "react";
+import { useGoTipeI18n } from "../i18n-context";
 import { usePhantom } from "./context";
 import { ContentIcon, calloutIconOf } from "./icons";
 
@@ -16,6 +17,7 @@ export function ToggleBlock({ block, editor, rootProps, content, children }: Pro
   const sourceOpen = !!block.attrs.open;
   const [preview, setPreview] = useState<{ source: boolean; open: boolean } | null>(null);
   const isOpen = readOnly && preview?.source === sourceOpen ? preview.open : sourceOpen;
+  const i18n = useGoTipeI18n();
   return (
     <details
       {...rootProps}
@@ -29,7 +31,7 @@ export function ToggleBlock({ block, editor, rootProps, content, children }: Pro
           contentEditable={false}
           data-gotipe-widget=""
           className="gotipe-toggle-button"
-          aria-label={isOpen ? "Collapse section" : "Expand section"}
+          aria-label={i18n.t(isOpen ? "toggle.collapse" : "toggle.expand")}
           aria-expanded={isOpen}
           onMouseDown={(event) => event.preventDefault()}
           onClick={(event) => {
@@ -54,6 +56,7 @@ export function CalloutBlock({ block, editor, rootProps, content, children }: Pr
   const readOnly = usePhantom() || !editor.isEditable;
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(emoji);
+  const i18n = useGoTipeI18n();
   const save = () => {
     if (!readOnly && draft.trim())
       editor.chain().setBlockAttrs(block.id, { emoji: draft.trim() }).run();
@@ -76,7 +79,7 @@ export function CalloutBlock({ block, editor, rootProps, content, children }: Pr
         <span className="gotipe-callout-icon-editor" contentEditable={false} data-gotipe-widget="">
           {editing ? (
             <input
-              aria-label="Callout icon"
+              aria-label={i18n.t("callout.icon")}
               value={draft}
               maxLength={32}
               onChange={(event) => setDraft(event.target.value)}
@@ -97,7 +100,7 @@ export function CalloutBlock({ block, editor, rootProps, content, children }: Pr
             <button
               type="button"
               className="gotipe-callout-emoji"
-              aria-label="Change callout icon"
+              aria-label={i18n.t("callout.changeIcon")}
               disabled={readOnly}
               onClick={() => {
                 setDraft(emoji);
