@@ -26,6 +26,9 @@ export type { AiStatusIndicatorProps } from "./components/ai-status-indicator";
 export { GhostText } from "./components/ghost-text";
 export type { GhostTextProps } from "./components/ghost-text";
 export { ThemeToggle } from "./components/theme-toggle";
+export { PageHead } from "./components/page-head";
+export type { PageHeadProps } from "./components/page-head";
+export { EditorSkeleton, EditorErrorToast, EditorStarters } from "./components/editor-states";
 // Block views
 export { ParagraphView } from "./views/paragraph-view";
 export { HeadingView } from "./views/heading-view";

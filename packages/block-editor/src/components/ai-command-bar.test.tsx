@@ -27,7 +27,7 @@ afterEach(() => {
 });
 function open() {
   surface.dispatchEvent(
-    new KeyboardEvent("keydown", { key: "k", ctrlKey: true, bubbles: true, cancelable: true }),
+    new KeyboardEvent("keydown", { key: "j", ctrlKey: true, bubbles: true, cancelable: true }),
   );
 }
 function enter(value: string) {
@@ -39,7 +39,7 @@ it("opens only for its editor and respects runtime read-only mode", () => {
   act(() => root.render(<AiCommandBar editor={editor} />));
   act(() =>
     document.body.dispatchEvent(
-      new KeyboardEvent("keydown", { key: "k", ctrlKey: true, bubbles: true }),
+      new KeyboardEvent("keydown", { key: "j", ctrlKey: true, bubbles: true }),
     ),
   );
   expect(container.querySelector("dialog")).toBeNull();

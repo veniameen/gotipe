@@ -7,14 +7,20 @@ import type { HighlightToken } from "../highlight/types";
  * through CSS variables so themes can switch without re-highlighting:
  * `--gt-code-token` (light) and `--gt-code-token-dark`.
  */
+/** A safe colour, or one of the theme's syntax tokens (the GoTipe code theme writes them). */
+function tokenColor(value: unknown): string | null {
+  if (typeof value === "string" && /^var\(--gt-syn-[a-z]+\)$/.test(value)) return value;
+  return toSafeColor(value);
+}
+
 export function HighlightedLines({ lines }: { lines: HighlightToken[][] }) {
   const out: React.ReactNode[] = [];
   lines.forEach((line, li) => {
     if (li > 0) out.push("\n");
     line.forEach((token, ti) => {
       const style: Record<string, string> = {};
-      const color = toSafeColor(token.color);
-      const darkColor = toSafeColor(token.darkColor);
+      const color = tokenColor(token.color);
+      const darkColor = tokenColor(token.darkColor);
       if (color) style["--gt-code-token"] = color;
       if (darkColor) style["--gt-code-token-dark"] = darkColor;
       const fs =

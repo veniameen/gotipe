@@ -1,4 +1,5 @@
 import type { GoTipeEditor } from "@gotipe/core";
+import { useGoTipeI18n } from "@gotipe/react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { PageIcon } from "../page/icons";
 
@@ -8,6 +9,7 @@ export interface AiCommandBarProps {
 }
 
 export function AiCommandBar({ editor, onSubmit }: AiCommandBarProps) {
+  const i18n = useGoTipeI18n();
   const [visible, setVisible] = useState(false);
   const [value, setValue] = useState("");
   const [busy, setBusy] = useState(false);
@@ -88,7 +90,9 @@ export function AiCommandBar({ editor, onSubmit }: AiCommandBarProps) {
         target instanceof Node &&
         (editor.element?.contains(target) || barRef.current?.contains(target));
       if (!owned || event.isComposing || !editor.isEditable || editor.isDestroyed) return;
-      if ((event.metaKey || event.ctrlKey) && !event.altKey && event.key.toLowerCase() === "k") {
+      // ⌘J (Ctrl+J): ⌘K belongs to the link (GoTipe Atlas). The physical key works on any layout.
+      const j = event.code === "KeyJ" || event.key.toLowerCase() === "j";
+      if ((event.metaKey || event.ctrlKey) && !event.altKey && !event.shiftKey && j) {
         event.preventDefault();
         if (visible) close(true);
         else setVisible(true);
@@ -150,7 +154,7 @@ export function AiCommandBar({ editor, onSubmit }: AiCommandBarProps) {
       open
       ref={barRef}
       className="gotipe-ai-command-bar"
-      aria-label="AI command bar"
+      aria-label={i18n.t("ai.bar")}
       aria-busy={busy}
       data-gotipe-ai-command-bar=""
     >
@@ -169,15 +173,15 @@ export function AiCommandBar({ editor, onSubmit }: AiCommandBarProps) {
             void submit();
           }
         }}
-        placeholder="Tell AI what to change..."
-        aria-label="AI prompt"
+        placeholder={i18n.t("ai.placeholder")}
+        aria-label={i18n.t("ai.prompt")}
       />
       <button
         type="button"
         className="gotipe-ai-command-bar-submit"
         onClick={() => void submit()}
         disabled={!value.trim() || busy}
-        aria-label="Submit AI command"
+        aria-label={i18n.t("ai.submit")}
       >
         <PageIcon name="send" />
       </button>
@@ -185,14 +189,14 @@ export function AiCommandBar({ editor, onSubmit }: AiCommandBarProps) {
         type="button"
         className="gotipe-ai-command-bar-close"
         onClick={() => close(true)}
-        aria-label={busy ? "Cancel AI command" : "Close AI command bar"}
+        aria-label={i18n.t(busy ? "ai.cancel" : "ai.close")}
       >
         <PageIcon name="close" />
       </button>
       {busy && (
         <output className="gotipe-ai-command-bar-status" aria-live="polite">
           <span className="gotipe-ai-status-spinner" aria-hidden="true" />
-          Processing...
+          {i18n.t("ai.processing")}
         </output>
       )}
       {error && (

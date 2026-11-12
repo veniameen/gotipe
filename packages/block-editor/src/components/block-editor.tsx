@@ -2,8 +2,10 @@ import type { GoTipeEditor } from "@gotipe/core";
 import { Editor } from "@gotipe/react";
 import type { ThemePreset } from "@gotipe/theme";
 import type React from "react";
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import type { CodeHighlighter } from "../highlight/types";
 import { type DragPoint, useTouchDrag } from "../interaction/use-touch-drag";
+import { codeBlockViewFor } from "../views/code-block-view";
 import { AiCommandBar } from "./ai-command-bar";
 import { AiStatusIndicator } from "./ai-status-indicator";
 import {
@@ -27,6 +29,7 @@ import { BlockToolbar } from "./block-toolbar";
 import { BlockEditorBubbleMenu } from "./bubble-menu";
 import type { RemotePeer } from "./collaboration-cursors";
 import { CollaborationCursors } from "./collaboration-cursors";
+import { EditorErrorToast, EditorSkeleton, EditorStarters } from "./editor-states";
 import { GhostText } from "./ghost-text";
 import { SlashMenu } from "./slash-menu";
 import type { Suggestion } from "./suggestion-toolbar";
@@ -46,6 +49,12 @@ export interface BlockEditorProps {
    * A view is a set of `--gt-*` tokens over the same markup (`data-gt-view` on the root).
    */
   view?: ThemePreset;
+  /** The page's head above the document, e.g. `<PageHead>` (icon, title, byline). */
+  header?: React.ReactNode;
+  /** Quick blocks under an empty page. Default: on for a page with a `header` in notion and docs. */
+  starters?: boolean;
+  /** Optional code highlighter, e.g. Shiki with `gotipeCodeTheme` from `@gotipe/block-editor/shiki`. */
+  highlight?: CodeHighlighter;
   showSlashMenu?: boolean;
   showBlockToolbar?: boolean;
   showBubbleMenu?: boolean;
@@ -67,6 +76,9 @@ export function BlockEditor({
   className,
   style,
   view = "notion",
+  header,
+  starters = header !== undefined && (view === "notion" || view === "docs"),
+  highlight,
   showSlashMenu = true,
   showBlockToolbar = true,
   showBubbleMenu = true,
@@ -95,6 +107,10 @@ export function BlockEditor({
   const [toolbarPos, setToolbarPos] = useState<{ top: number; left: number } | null>(null);
   const [suggestionIndex, setSuggestionIndex] = useState(0);
   const containerRef = useRef<HTMLDivElement>(null);
+  const blockViews = useMemo(
+    () => (highlight ? { codeBlock: codeBlockViewFor(highlight) } : undefined),
+    [highlight],
+  );
   const hideToolbarTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const draggingBlockIdRef = useRef<string | null>(null);
   const draggingBlockTypeRef = useRef<string | null>(null);
@@ -423,7 +439,12 @@ export function BlockEditor({
     }
   }, []);
 
-  if (!editor) return null;
+  if (!editor)
+    return (
+      <div className="gotipe-block-editor" data-gotipe-block-loading="" data-gt-view={view}>
+        <EditorSkeleton />
+      </div>
+    );
 
   const dropIndicatorY =
     dropTarget && containerRef.current
@@ -464,14 +485,20 @@ export function BlockEditor({
     >
       <Editor
         editor={editor}
+        blockViews={blockViews}
         slotBefore={
-          showThemeToggle ? (
-            <div className="gotipe-block-editor-tools">
-              <ThemeToggle />
-            </div>
-          ) : undefined
+          <>
+            {showThemeToggle && (
+              <div className="gotipe-block-editor-tools">
+                <ThemeToggle />
+              </div>
+            )}
+            {header}
+          </>
         }
       >
+        {starters && <EditorStarters editor={editor} />}
+        <EditorErrorToast editor={editor} />
         {showSlashMenu && <SlashMenu editor={editor} commands={editor.getSlashCommands()} />}
         {showBubbleMenu && <BlockEditorBubbleMenu editor={editor} enableAI={showAiCommandBar} />}
         {children}
@@ -544,7 +571,7 @@ export function BlockEditor({
       {/* Ghost text — AI autocomplete overlay */}
       {showAiCommandBar && <GhostText editor={editor} />}
 
-      {/* AI Command Bar — Mod-k toggled floating input */}
+      {/* AI Command Bar — Mod-j toggled floating input */}
       {showAiCommandBar && <AiCommandBar editor={editor} onSubmit={onAiCommand} />}
 
       {/* AI Status Indicator — footer bar during AI processing */}

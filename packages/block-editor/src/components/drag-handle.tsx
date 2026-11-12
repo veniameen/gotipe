@@ -1,3 +1,4 @@
+import { useGoTipeI18n } from "@gotipe/react";
 import { useCallback, useEffect, useRef } from "react";
 import type { useTouchDrag } from "../interaction/use-touch-drag";
 import { PageIcon } from "../page/icons";
@@ -20,6 +21,7 @@ export function DragHandle({
   touchDrag,
   onClick,
 }: DragHandleProps) {
+  const i18n = useGoTipeI18n();
   const buttonRef = useRef<HTMLButtonElement>(null);
   const activeBlockId = useRef(blockId);
   const findBlock = useCallback(() => {
@@ -67,7 +69,7 @@ export function DragHandle({
       type="button"
       className="gotipe-drag-handle-btn"
       draggable
-      aria-label="Drag to move, click to open menu"
+      aria-label={i18n.t("block.dragHandle")}
       data-gotipe-drag-handle=""
       data-block-drag={blockId}
       data-block-drag-whole={wholeBlockId}

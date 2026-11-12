@@ -1,11 +1,14 @@
 import { type Block, type GoTipeEditor, GoTipeError, copySelection } from "@gotipe/core";
 import { serializeMarkdown } from "@gotipe/markdown";
+import { useGoTipeI18n } from "@gotipe/react";
 import { useEffect, useRef, useState } from "react";
 import { PageIcon } from "../../page/icons";
+import { Tip } from "./tip";
 import { useFormattingMenu } from "./use-formatting-menu";
 
 export function MoreMenu({ editor }: { editor: GoTipeEditor }) {
   const menu = useFormattingMenu(editor);
+  const i18n = useGoTipeI18n();
   const markdown = useRef("");
   const generation = useRef(0);
   const [copying, setCopying] = useState(false);
@@ -51,7 +54,7 @@ export function MoreMenu({ editor }: { editor: GoTipeEditor }) {
     } catch (failure) {
       if (current !== generation.current || editor.isDestroyed) return;
       const message = failure instanceof Error ? failure.message : String(failure);
-      menu.setError(`Could not copy the selection: ${message}`);
+      menu.setError(i18n.t("format.copyFailed", { message }));
       editor.reportError(new GoTipeError("CLIPBOARD_FAILED", message));
     } finally {
       if (current === generation.current) setCopying(false);
@@ -62,7 +65,7 @@ export function MoreMenu({ editor }: { editor: GoTipeEditor }) {
       <button
         ref={menu.trigger}
         type="button"
-        aria-label="More formatting options"
+        aria-label={i18n.t("editor.moreFormatting")}
         aria-haspopup="menu"
         aria-expanded={menu.open}
         disabled={!menu.editable}
@@ -78,13 +81,14 @@ export function MoreMenu({ editor }: { editor: GoTipeEditor }) {
         }}
       >
         <PageIcon name="more" />
+        <Tip label={i18n.t("editor.more")} />
       </button>
       {menu.open && (
         <div
           ref={menu.popup}
           className="gotipe-block-more-menu"
           role="menu"
-          aria-label="More formatting"
+          aria-label={i18n.t("format.more")}
           data-gotipe-formatting-popup=""
           style={menu.style}
           onKeyDown={menu.keydown}
@@ -94,21 +98,21 @@ export function MoreMenu({ editor }: { editor: GoTipeEditor }) {
             role="menuitem"
             onClick={() => menu.run((chain) => chain.toggleMark("superscript"))}
           >
-            Superscript
+            {i18n.t("format.superscript")}
           </button>
           <button
             type="button"
             role="menuitem"
             onClick={() => menu.run((chain) => chain.toggleMark("subscript"))}
           >
-            Subscript
+            {i18n.t("format.subscript")}
           </button>
           <button
             type="button"
             role="menuitem"
             onClick={() => menu.run((chain) => chain.clearFormatting())}
           >
-            Clear Formatting
+            {i18n.t("format.clear")}
           </button>
           <button
             type="button"
@@ -116,9 +120,13 @@ export function MoreMenu({ editor }: { editor: GoTipeEditor }) {
             disabled={copying || !markdown.current}
             onClick={() => void copy()}
           >
-            {copying ? "Copying…" : "Copy as Markdown"}
+            {i18n.t(copying ? "format.copying" : "format.copyMarkdown")}
           </button>
-          {menu.error && <p role="alert">{menu.error}</p>}
+          {menu.error && (
+            <p role="alert" className="gotipe-sr-only">
+              {menu.error}
+            </p>
+          )}
         </div>
       )}
     </div>

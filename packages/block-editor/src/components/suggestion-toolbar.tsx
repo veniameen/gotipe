@@ -1,4 +1,5 @@
 import type { GoTipeEditor } from "@gotipe/core";
+import { useGoTipeI18n } from "@gotipe/react";
 import { useCallback, useEffect, useState } from "react";
 import { PageIcon } from "../page/icons";
 
@@ -33,6 +34,7 @@ export function SuggestionToolbar({
   onAcceptAll,
   onRejectAll,
 }: SuggestionToolbarProps) {
+  const i18n = useGoTipeI18n();
   const total = suggestions.length;
   const index = Math.min(Math.max(currentIndex, 0), Math.max(0, total - 1));
   const current = suggestions[index];
@@ -69,7 +71,7 @@ export function SuggestionToolbar({
     <div
       className="gotipe-suggestion-toolbar"
       role="toolbar"
-      aria-label="AI suggestions"
+      aria-label={i18n.t("review.suggestions")}
       data-gotipe-suggestion-toolbar=""
     >
       <span className="gotipe-suggestion-counter" aria-live="polite">
@@ -82,7 +84,7 @@ export function SuggestionToolbar({
         type="button"
         onClick={handlePrev}
         disabled={index === 0}
-        aria-label="Previous suggestion"
+        aria-label={i18n.t("review.previous")}
       >
         <PageIcon name="chevronLeft" />
       </button>
@@ -90,7 +92,7 @@ export function SuggestionToolbar({
         type="button"
         onClick={handleNext}
         disabled={index >= total - 1}
-        aria-label="Next suggestion"
+        aria-label={i18n.t("review.next")}
       >
         <PageIcon name="chevronRight" />
       </button>
@@ -101,11 +103,15 @@ export function SuggestionToolbar({
         type="button"
         onClick={handleAcceptCurrent}
         disabled={!editable}
-        aria-label="Accept current suggestion"
+        aria-label={i18n.t("review.acceptCurrent")}
       >
         <PageIcon name="check" />
       </button>
-      <button type="button" onClick={handleRejectCurrent} aria-label="Reject current suggestion">
+      <button
+        type="button"
+        onClick={handleRejectCurrent}
+        aria-label={i18n.t("review.rejectCurrent")}
+      >
         <PageIcon name="close" />
       </button>
 
@@ -117,19 +123,19 @@ export function SuggestionToolbar({
           if (editor.isEditable && !editor.isDestroyed) onAcceptAll();
         }}
         disabled={!editable}
-        aria-label="Accept all suggestions"
+        aria-label={i18n.t("review.acceptAllLabel")}
         data-action="accept-all"
         className="is-primary"
       >
-        Accept All
+        {i18n.t("review.acceptAllShort")}
       </button>
       <button
         type="button"
         onClick={onRejectAll}
-        aria-label="Reject all suggestions"
+        aria-label={i18n.t("review.rejectAllLabel")}
         data-action="reject-all"
       >
-        Reject All
+        {i18n.t("review.rejectAllShort")}
       </button>
     </div>
   );

@@ -1,5 +1,6 @@
 import type { Block, GoTipeEditor, Transaction } from "@gotipe/core";
 import { useFloatingPosition } from "@gotipe/react";
+import { useGoTipeI18n } from "@gotipe/react";
 import type React from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { PageIcon } from "../page/icons";
@@ -82,6 +83,7 @@ export function BlockToolbar({
   touchDrag,
   openSlashMenuOnAdd = false,
 }: BlockToolbarProps) {
+  const i18n = useGoTipeI18n();
   const [contextMenuOpen, setContextMenuOpen] = useState(false);
   const [tooltipKind, setTooltipKind] = useState<"add" | "drag">("add");
   const [tooltipVisible, setTooltipVisible] = useState(false);
@@ -197,7 +199,7 @@ export function BlockToolbar({
       ref={toolbarRef}
       className="gotipe-block-toolbar"
       role="toolbar"
-      aria-label="Block actions"
+      aria-label={i18n.t("block.handle")}
       onMouseEnter={clearTooltipHideTimer}
       onMouseLeave={scheduleHideTooltip}
     >
@@ -208,7 +210,7 @@ export function BlockToolbar({
       >
         <button
           type="button"
-          aria-label="Click to add below. Option-click to add a block above"
+          aria-label={i18n.t("block.add")}
           onFocus={() => showTooltip("add")}
           onBlur={(e) => {
             const related = e.relatedTarget as Node | null;
@@ -263,21 +265,21 @@ export function BlockToolbar({
       >
         {tooltipKind === "add" ? (
           <>
-            <span>Add block below</span>
+            <span>{i18n.t("block.addBelow")}</span>
             <span className="gotipe-block-toolbar-tooltip-meta">
-              <kbd>Option</kbd> + Click adds above
+              <kbd>{i18n.t("block.optionKey")}</kbd> {i18n.t("block.addAboveHint")}
             </span>
             <span className="gotipe-block-toolbar-tooltip-meta">
-              <kbd>/</kbd> search commands
+              <kbd>/</kbd> {i18n.t("block.searchHint")}
             </span>
           </>
         ) : (
           <>
-            <span>Drag to move</span>
-            <span className="gotipe-block-toolbar-tooltip-meta">Click to open menu</span>
+            <span>{i18n.t("block.dragHint")}</span>
+            <span className="gotipe-block-toolbar-tooltip-meta">{i18n.t("block.menuHint")}</span>
             {dragBlockId && dragBlockId !== blockId && (
               <span className="gotipe-block-toolbar-tooltip-meta">
-                Alt-drag moves the whole list
+                {i18n.t("block.dragListHint")}
               </span>
             )}
           </>

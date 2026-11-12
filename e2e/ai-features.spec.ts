@@ -27,7 +27,7 @@ async function setup(page: Page, first = "First paragraph", last = "Last paragra
 }
 async function open(page: Page) {
   await page.locator('[data-block-id="ai-test-0"]').click();
-  await page.keyboard.press("ControlOrMeta+k");
+  await page.keyboard.press("ControlOrMeta+j");
   await expect(page.getByRole("dialog", { name: "AI command bar" })).toBeVisible();
   await expect(page.getByRole("textbox", { name: "AI prompt" })).toBeFocused();
 }
@@ -36,7 +36,7 @@ const content = (page: Page) => page.evaluate(() => window.__GOTIPE_EDITOR__!.ge
 test("AI keyboard ownership, empty state, Escape and read-only", async ({ page }) => {
   await setup(page);
   await page.locator("h1").click();
-  await page.keyboard.press("ControlOrMeta+k");
+  await page.keyboard.press("ControlOrMeta+j");
   await expect(page.getByRole("dialog", { name: "AI command bar" })).toHaveCount(0);
   await open(page);
   await expect(page.getByRole("button", { name: "Submit AI command" })).toBeDisabled();
@@ -44,7 +44,7 @@ test("AI keyboard ownership, empty state, Escape and read-only", async ({ page }
   await expect(page.getByRole("dialog", { name: "AI command bar" })).toHaveCount(0);
   await page.evaluate(() => window.__GOTIPE_EDITOR__!.setEditable(false));
   await page.locator('[data-block-id="ai-test-0"]').click();
-  await page.keyboard.press("ControlOrMeta+k");
+  await page.keyboard.press("ControlOrMeta+j");
   await expect(page.getByRole("dialog", { name: "AI command bar" })).toHaveCount(0);
   await expect
     .poll(() => page.evaluate(() => window.__GOTIPE_EDITOR__!.getText()))
