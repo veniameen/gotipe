@@ -115,8 +115,11 @@
   position: relative;
   background: var(--gt-fill-1);
 }
+/* centred by a margin, not a transform: a transform would shut its menu in a layer under the
+   later parts of the table (the strip that adds a row) */
 .gotipe-column-handle {
   position: absolute;
+  z-index: var(--gt-z-overlay);
   top: 50%;
   right: var(--gt-toolbar-pad);
   left: auto;
@@ -124,10 +127,10 @@
   place-items: center;
   width: var(--gt-handle-w);
   height: var(--gt-handle-w);
+  margin-top: calc(-0.5 * var(--gt-handle-w));
   border-radius: var(--gt-radius-control);
   background: var(--gt-fill-2);
   color: var(--gt-text);
-  transform: translateY(-50%);
 }
 .gotipe-table th.is-number > .gotipe-column-handle {
   right: auto;
