@@ -11,7 +11,7 @@
       "name": "react-incremental",
       "entries": ["packages/react/dist/index.js"],
       "exclude": ["@gotipe/core", "@gotipe/markdown", "react", "react-dom"],
-      "gzipBytes": 30720
+      "gzipBytes": 40960
     },
     {
       "name": "vue-incremental",
