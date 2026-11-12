@@ -100,6 +100,7 @@ function generator(seed: number) {
       return { id: id(), type: "table", attrs: { align }, content: null, children: rows };
     }
     if (r < 0.85) {
+      // `agent` is a deprecated type without an alert: it must come back as a NOTE alert.
       const t = pick(["note", "tip", "important", "warning", "caution", "agent"]);
       return rich(
         "callout",

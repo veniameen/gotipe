@@ -145,9 +145,18 @@ describe("blockToMarkdown", () => {
     expect(md(b("callout", { type: "warning", alert: "WARNING" }, plain("Осторожно")))).toBe(
       "> [!WARNING]\n> Осторожно",
     );
+    // `agent` is a deprecated type without an alert of its own.
     expect(md(b("callout", { type: "agent" }, plain("не трогай таблицу")))).toBe(
-      "> **Инструкции для агента:** не трогай таблицу",
+      "> [!NOTE]\n> не трогай таблицу",
     );
+    // A type that names an Object.prototype member is no alert either.
+    expect(md(b("callout", { type: "constructor" }, plain("x")))).toBe("> [!NOTE]\n> x");
+    // A bold label at the start of a quote is plain text: the quote reads back as a quote.
+    const label: Span[] = [
+      { text: "Инструкции для агента:", marks: [{ type: "bold" }] },
+      { text: " не трогай таблицу", marks: [] },
+    ];
+    expect(md(b("blockquote", {}, label))).toBe("> **Инструкции для агента:** не трогай таблицу");
     expect(md(b("blockquote", {}, plain("[!NOTE] not an alert")))).toBe(
       "> \\[!NOTE\\] not an alert",
     );

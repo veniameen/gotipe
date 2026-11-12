@@ -20,7 +20,7 @@ import {
   parseInline,
   trimInlineStart,
 } from "./inline-parse";
-import { AGENT_LABEL, fingerprint, normalizeAlign } from "./model";
+import { fingerprint, normalizeAlign } from "./model";
 import type {
   Block,
   ParseOptions,
@@ -210,18 +210,6 @@ class Converter {
           t.segs,
         );
       }
-    }
-    if (
-      first?.type === "strong" &&
-      first.children.length === 1 &&
-      first.children[0]!.type === "text" &&
-      first.children[0]!.value === AGENT_LABEL &&
-      r.text.startsWith(AGENT_LABEL)
-    ) {
-      let k = AGENT_LABEL.length;
-      if (r.text[k] === " " || r.text[k] === "\t") k++;
-      const t = trimInlineStart(r, k);
-      return mk("callout", { type: "agent", ...breaksAttr(t) }, t.spans, s, e, t.segs);
     }
     return mk("blockquote", breaksAttr(r), r.spans, s, e, r.segs);
   }

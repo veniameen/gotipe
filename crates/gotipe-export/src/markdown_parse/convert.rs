@@ -330,23 +330,6 @@ fn quote(n: &Node, source: &str) -> Option<Block> {
             }
         }
     }
-    const AGENT: &str = "Инструкции для агента:";
-    if first.is_some_and(|f| {
-        f.kind == "strong"
-            && f.children.len() == 1
-            && f.children[0].kind == "text"
-            && f.children[0].value == AGENT
-    }) && text.starts_with(AGENT)
-    {
-        let mut count = AGENT.len();
-        if text[count..].starts_with([' ', '\t']) {
-            count += 1
-        }
-        r.trim(count);
-        let mut block = rich("callout", r);
-        block.attrs.insert("type".into(), string("agent"));
-        return Some(block);
-    }
     Some(rich("blockquote", r))
 }
 fn task(item: &Node, source: &str) -> Option<bool> {

@@ -30,6 +30,24 @@ describe("incremental serialization", () => {
     expect(replacedSlice(text, out, start, end)).toBe("Релиз выпускается **по средам**.");
   });
 
+  it("an edited quote that starts with a bold label is written as a plain blockquote", () => {
+    const { doc, snapshot, text } = setup();
+    const quote = doc.blocks[1]!;
+    expect(quote.type).toBe("blockquote");
+    quote.content = [
+      { text: "Инструкции для агента:", marks: [{ type: "bold" }] },
+      { text: " сверяйся с ", marks: [] },
+      { text: "чек-листом", marks: [{ type: "link", attrs: { href: "checklist.md" } }] },
+      { text: ".", marks: [] },
+    ];
+    const out = serializeMarkdown(doc, snapshot).text;
+    const { start, end } = sliceOf(snapshot, quote.id);
+    expect(replacedSlice(text, out, start, end)).toBe(
+      "> **Инструкции для агента:** сверяйся с [чек-листом](checklist.md).",
+    );
+    expect(parseMarkdown(out).doc.blocks[1]).toMatchObject({ type: "blockquote", attrs: {} });
+  });
+
   it("editing a table cell re-serializes only the table", () => {
     const { doc, snapshot, text } = setup();
     const table = doc.blocks[9]!;
