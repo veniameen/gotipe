@@ -28,6 +28,9 @@ On the audit build, with this exact definition:
 | React increment, including i18n | 26,603 | 30,720 (30 KiB) |
 | AI increment | 7,530 | 12,288 (12 KiB) |
 
+On the merge build of 2026-11-12 the same graphs measure 95,659 (core and Markdown,
+6.6% under its ceiling), 36,441 (React) and 7,536 (AI) bytes.
+
 Decision of 2026-11-12: the React increment ceiling is 40,960 (40 KiB). The
 GoTipe Atlas frames added the embed and math renderers, the table layout with
 its handles, media states, content icons and the strings of the new UI in both
