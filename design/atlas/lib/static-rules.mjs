@@ -2,7 +2,7 @@
 // every var() is defined, markup carries no inline styles, colours or network addresses.
 import { readPart } from "./assemble.mjs";
 
-const TOKENS = new Set(["tokens.css", "tokens-views.css", "tokens-ui.css"]);
+const TOKENS = new Set(["tokens.css", "tokens-views.css", "tokens-ui.css", "tokens-site.css"]);
 const COLOR_LITERAL =
   /#[0-9a-f]{3,8}\b|\b(?:rgba?|hsla?|hwb|lab|lch|oklab|oklch|color-mix|color)\(/i;
 const LENGTH_LITERAL =

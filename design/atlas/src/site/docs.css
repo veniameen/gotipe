@@ -1,0 +1,244 @@
+/* The documentation: the navigation of all pages, the page in the library's `docs` view, its
+   outline on the right; search over everything behind ⌘K. The page itself is a GoTipe document:
+   the site draws only what stands around it. */
+
+.site-docs-head .site-head-in {
+  max-width: var(--site-docs-max);
+  margin: 0 auto;
+  padding: 0 var(--site-pad-x);
+}
+.site-version {
+  padding: var(--site-badge-pad);
+  border-radius: var(--gt-radius-inline);
+  background: var(--gt-fill-2);
+  color: var(--gt-text-2);
+  font-size: var(--site-eyebrow-size);
+  font-weight: var(--gt-weight-medium);
+  line-height: var(--site-eyebrow-leading);
+}
+
+/* the search field: a button that opens the dialog */
+.site-search {
+  display: var(--site-wide-display);
+  align-items: center;
+  gap: var(--site-gap-s);
+  box-sizing: border-box;
+  width: var(--site-search-w);
+  height: var(--site-search-h);
+  padding: var(--site-search-pad);
+  border-radius: var(--gt-radius-control);
+  background: var(--gt-fill-1);
+  box-shadow: inset 0 0 0 var(--gt-hairline) var(--gt-line);
+  color: var(--gt-text-2);
+  font-size: var(--gt-ui-size);
+}
+.site-search > .gotipe-kbd {
+  margin-left: auto;
+}
+
+/* ---- three columns: navigation · page · outline ---- */
+.site-docs-body {
+  display: grid;
+  grid-template-columns: var(--site-docs-cols);
+  column-gap: var(--site-docs-gap);
+  justify-content: center;
+  max-width: var(--site-docs-max);
+  margin: 0 auto;
+  padding: 0 var(--site-pad-x);
+}
+.site-docs-body > * {
+  min-width: 0;
+}
+.site-side {
+  display: var(--site-side-display);
+  position: sticky;
+  top: var(--site-head-h);
+  align-self: start;
+  padding: var(--site-side-pad);
+  font-size: var(--gt-ui-size);
+  line-height: var(--gt-small-leading);
+}
+.site-side-group + .site-side-group {
+  margin-top: var(--site-side-group-gap);
+}
+.site-side-title {
+  display: flex;
+  align-items: center;
+  gap: var(--site-gap-s);
+  margin: 0 0 var(--site-gap-s);
+  padding: 0 var(--site-gap-s);
+  font-weight: var(--gt-weight-strong);
+}
+.site-side a {
+  display: block;
+  padding: var(--site-side-item-pad);
+  border-radius: var(--gt-radius-control);
+  color: var(--gt-text-2);
+}
+.site-side a.is-current {
+  background: var(--gt-fill-2);
+  color: var(--gt-text);
+  font-weight: var(--gt-weight-medium);
+}
+
+/* the page: the docs view's own document; the site adds the crumbs, the badges and the pager */
+.site-docs-main > .gotipe-page {
+  max-width: none;
+  padding: var(--site-doc-top) 0 var(--site-section-gap);
+}
+.site-crumbs {
+  display: flex;
+  align-items: center;
+  gap: var(--gt-hairline);
+  margin: 0 0 var(--site-gap-s);
+  color: var(--gt-text-2);
+  font-size: var(--gt-ui-small);
+  line-height: var(--gt-ui-small-leading);
+}
+.site-doc-lede {
+  margin: var(--site-gap-s) 0 0;
+  color: var(--gt-text-2);
+  font-size: var(--site-text-size);
+  line-height: var(--site-text-leading);
+}
+.site-doc-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--site-gap-s);
+  margin: var(--site-gap) 0 var(--site-gap-xl);
+}
+.site-doc-meta > .gotipe-button {
+  margin-left: auto;
+}
+.site-doc-meta > .gotipe-button + .gotipe-button {
+  margin-left: 0;
+}
+.site-pager {
+  display: grid;
+  grid-template-columns: repeat(var(--site-cols-2), minmax(0, 1fr));
+  gap: var(--site-gap);
+  margin-top: var(--site-section-gap);
+}
+.site-pager a {
+  display: block;
+  padding: var(--site-pager-pad);
+  border-radius: var(--gt-radius-block);
+  box-shadow: inset 0 0 0 var(--gt-hairline) var(--gt-line);
+  font-weight: var(--gt-weight-medium);
+}
+.site-pager a > small {
+  display: block;
+  color: var(--gt-text-2);
+  font-size: var(--gt-ui-small);
+  font-weight: var(--gt-weight-regular);
+  line-height: var(--gt-ui-small-leading);
+}
+.site-pager a.is-next {
+  text-align: right;
+}
+
+/* the outline: the docs view's, standing to the right of the page */
+.site-toc {
+  display: var(--site-toc-display);
+  position: sticky;
+  top: var(--site-head-h);
+  align-self: start;
+}
+.site-toc > .gotipe-outline {
+  display: block;
+  padding-top: var(--site-doc-top);
+}
+
+/* ---- the search dialog ---- */
+.site-scrim {
+  position: absolute;
+  inset: 0;
+  z-index: var(--gt-z-overlay);
+  display: flex;
+  justify-content: center;
+  padding-top: var(--site-dialog-top);
+  background: var(--site-scrim);
+}
+.site-dialog {
+  align-self: start;
+  width: min(var(--site-dialog-w), calc(100% - 2 * var(--site-pad-x)));
+  overflow: hidden;
+  border-radius: var(--gt-radius-overlay);
+  background: var(--gt-overlay);
+  box-shadow: var(--gt-shadow-overlay);
+  font-size: var(--gt-ui-size);
+  line-height: var(--gt-small-leading);
+}
+.site-dialog-input {
+  display: flex;
+  align-items: center;
+  gap: var(--site-gap-s);
+  height: var(--site-dialog-input-h);
+  padding: 0 var(--site-gap);
+  border-bottom: var(--gt-hairline) solid var(--gt-line);
+  font-size: var(--site-text-size);
+}
+.site-dialog-input > .gt-icon {
+  color: var(--gt-text-2);
+}
+.site-dialog-input > .gotipe-kbd {
+  margin-left: auto;
+}
+.site-results {
+  padding: var(--site-gap-s);
+}
+.site-results-title {
+  margin: var(--site-gap-s) 0 var(--gt-hairline);
+  padding: 0 var(--site-gap-s);
+  color: var(--gt-text-2);
+  font-size: var(--gt-ui-small);
+  font-weight: var(--gt-weight-medium);
+  line-height: var(--gt-ui-small-leading);
+}
+.site-result {
+  display: flex;
+  align-items: center;
+  gap: var(--site-gap-s);
+  padding: var(--site-result-pad);
+  border-radius: var(--gt-radius-control);
+}
+.site-result.is-active {
+  background: var(--gt-fill-2);
+}
+.site-result > .gt-icon {
+  color: var(--gt-text-3);
+}
+.site-result small {
+  display: block;
+  color: var(--gt-text-2);
+  font-size: var(--gt-ui-small);
+  line-height: var(--gt-ui-small-leading);
+}
+.site-result mark {
+  background: var(--gt-highlight);
+  color: inherit;
+}
+.site-dialog-foot {
+  display: flex;
+  gap: var(--site-gap);
+  padding: var(--site-gap-s) var(--site-gap);
+  border-top: var(--gt-hairline) solid var(--gt-line);
+  color: var(--gt-text-2);
+  font-size: var(--gt-ui-small);
+  line-height: var(--gt-ui-small-leading);
+}
+.site-search-button {
+  display: var(--site-search-button-display);
+}
+/* a folded section: its name, a chevron, the pages behind a click */
+.site-side a.site-side-title.is-folded {
+  display: flex;
+  justify-content: space-between;
+  margin: 0;
+  padding: var(--site-side-item-pad);
+  color: var(--gt-text);
+}
+.site-side-title.is-folded > .gt-icon {
+  color: var(--gt-text-3);
+}

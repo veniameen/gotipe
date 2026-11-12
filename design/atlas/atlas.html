@@ -592,6 +592,160 @@
   --at-drag-w: 320px;
 }
 
+/* tokens-site.css */
+/* Site tokens: the landing and the documentation of GoTipe. The site wears the library's palette
+   (--gt-*), so light and dark come for free; here live only its sizes and how its columns fold on a
+   narrow screen. A frame is a container, so the folds are container queries. */
+
+:root {
+  /* the page */
+  --site-max: 1160px;
+  --site-docs-max: 1400px;
+  --site-pad-x: 40px;
+  --site-head-h: 56px;
+  --site-logo: 24px;
+  --site-hero-top: 88px;
+  --site-hero-gap: 56px;
+  --site-section-y: 104px;
+  --site-section-gap: 48px;
+  --site-gap-s: 8px;
+  --site-gap: 16px;
+  --site-gap-l: 24px;
+  --site-gap-xl: 32px;
+  --site-head-max: 760px;
+  --site-lede-max: 540px;
+
+  /* type: the editor's family, only larger at the top of the page */
+  --site-hero-size: 56px;
+  --site-hero-leading: 60px;
+  --site-hero-tracking: -0.025em;
+  --site-h2-size: 36px;
+  --site-h2-leading: 42px;
+  --site-h2-tracking: -0.02em;
+  --site-h3-size: 16px;
+  --site-h3-leading: 24px;
+  --site-lede-size: 18px;
+  --site-lede-leading: 28px;
+  --site-text-size: 15px;
+  --site-text-leading: 24px;
+  --site-small-size: 13px;
+  --site-small-leading: 20px;
+  --site-eyebrow-size: 12px;
+  --site-eyebrow-leading: 16px;
+  --site-eyebrow-pad: 3px 10px;
+  --site-fact-size: 28px;
+  --site-fact-leading: 34px;
+
+  /* controls of the site: a larger call to action, the install line, badges */
+  --site-cta-h: 40px;
+  --site-cta-pad: 0 16px;
+  --site-install-h: 40px;
+  --site-install-pad: 0 4px 0 14px;
+  --site-badge-pad: 1px 6px;
+  --site-card-pad: 20px;
+  --site-card-icon: 32px;
+  --site-demo-bar-h: 40px;
+  --site-demo-bar-pad: 0 12px;
+  --site-band-pad: 56px;
+  --site-demo-pad: 20px 28px 28px;
+  --site-demo-top: 64px;
+
+  /* columns that fold */
+  --site-hero-cols: minmax(0, 1fr) minmax(0, 1.08fr);
+  --site-cols-4: 4;
+  --site-cols-3: 3;
+  --site-cols-2: 2;
+  --site-steps-cols: minmax(0, 0.8fr) minmax(0, 1.2fr);
+  --site-foot-cols: minmax(0, 1.4fr) repeat(3, minmax(0, 1fr));
+  --site-nav-display: flex;
+  --site-menu-display: none;
+  --site-wide-display: inline-flex;
+  --site-search-button-display: none;
+
+  /* the documentation: navigation, page, outline */
+  --site-side-w: 232px;
+  --site-docs-gap: 48px;
+  --site-side-display: block;
+  --site-toc-display: block;
+  --site-side-pad: 28px 0 48px;
+  --site-side-item-pad: 4px 10px;
+  --site-side-group-gap: 20px;
+  --site-search-w: 240px;
+  --site-search-h: 32px;
+  --site-search-pad: 0 4px 0 10px;
+  --site-doc-top: 40px;
+  --site-pager-pad: 12px 16px;
+  --site-dialog-w: 600px;
+  --site-dialog-top: 72px;
+  --site-dialog-input-h: 48px;
+  --site-result-pad: 8px 12px;
+}
+
+/* the docs columns name the docs view's own widths, so they are set inside the view, not at the root */
+.gotipe-root > * {
+  --site-docs-cols: var(--site-side-w) minmax(0, var(--gt-page-width)) var(--gt-outline-width);
+}
+
+/* ---- a laptop: the outline of the page steps away first ---- */
+@container (max-width: 1279px) {
+  .gotipe-root > * {
+    --site-docs-cols: var(--site-side-w) minmax(0, 1fr);
+    --site-toc-display: none;
+  }
+}
+
+/* ---- a tablet: one column, the navigation goes behind the menu button ---- */
+@container (max-width: 1023px) {
+  .gotipe-root > * {
+    --site-pad-x: 32px;
+    --site-hero-cols: minmax(0, 1fr);
+    --site-hero-top: 64px;
+    --site-cols-4: 2;
+    --site-cols-3: 2;
+    --site-steps-cols: minmax(0, 1fr);
+    --site-foot-cols: repeat(2, minmax(0, 1fr));
+    --site-nav-display: none;
+    --site-menu-display: inline-flex;
+    --site-docs-cols: minmax(0, 1fr);
+    --site-side-display: none;
+  }
+}
+
+/* ---- a phone ---- */
+@container (max-width: 640px) {
+  .gotipe-root > * {
+    --site-pad-x: 20px;
+    --site-hero-top: 40px;
+    --site-hero-gap: 40px;
+    --site-section-y: 72px;
+    --site-section-gap: 32px;
+    --site-hero-size: 38px;
+    --site-hero-leading: 42px;
+    --site-h2-size: 28px;
+    --site-h2-leading: 34px;
+    --site-lede-size: 16px;
+    --site-lede-leading: 26px;
+    --site-fact-size: 22px;
+    --site-fact-leading: 28px;
+    --site-cols-3: 1;
+    --site-cols-2: 1;
+    --site-band-pad: 32px;
+    --site-wide-display: none;
+    --site-search-button-display: inline-flex;
+    --site-doc-top: 24px;
+    --site-demo-pad: 16px 20px 20px;
+    --site-demo-top: 56px;
+  }
+}
+
+/* the dim behind the search dialog: the page stays readable under it */
+[data-theme="light"] {
+  --site-scrim: rgb(35 35 34 / 0.2);
+}
+[data-theme="dark"] {
+  --site-scrim: rgb(0 0 0 / 0.5);
+}
+
 /* atlas.css */
 /* The atlas page around the frames: quiet chrome, every frame on a stage; the theme switch at the
    top draws the whole page light or dark. Narrow frames stand side by side, wide ones alone. */
@@ -2889,6 +3043,714 @@ ol.gotipe-list > li::before {
   opacity: var(--gt-ghost-opacity);
 }
 
+/* site/landing.css */
+/* The site of GoTipe: the shell shared by the landing and the documentation, then the landing.
+   The site speaks in the editor's family and palette; it is larger only where a page needs a voice. */
+
+.site {
+  position: relative;
+  background: var(--gt-page-bg);
+  color: var(--gt-text);
+  font-family: var(--gt-font-ui);
+  font-size: var(--site-text-size);
+  line-height: var(--site-text-leading);
+  letter-spacing: normal;
+}
+.site a {
+  color: inherit;
+  text-decoration: none;
+}
+.site-wrap {
+  max-width: var(--site-max);
+  margin: 0 auto;
+  padding: 0 var(--site-pad-x);
+}
+
+/* ---- the head of every page: the mark, the sections, the actions ---- */
+.site-head {
+  position: sticky;
+  top: 0;
+  z-index: var(--gt-z-handle);
+  border-bottom: var(--gt-hairline) solid var(--gt-line);
+  background: var(--gt-page-bg);
+}
+.site-head-in {
+  display: flex;
+  align-items: center;
+  gap: var(--site-gap-l);
+  height: var(--site-head-h);
+}
+.site-brand {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: var(--site-gap-s);
+  font-size: var(--site-h3-size);
+  font-weight: var(--gt-weight-title);
+  line-height: var(--site-h3-leading);
+}
+.site-brand > small {
+  color: var(--gt-text-3);
+  font-size: var(--site-h3-size);
+  font-weight: var(--gt-weight-regular);
+}
+.site-logo {
+  flex: none;
+  width: var(--site-logo);
+  height: var(--site-logo);
+  color: var(--gt-accent);
+  fill: var(--gt-page-bg);
+}
+.site-nav {
+  display: var(--site-nav-display);
+  gap: var(--site-gap-s);
+}
+.site-nav a {
+  padding: var(--gt-button-pad);
+  border-radius: var(--gt-radius-control);
+  color: var(--gt-text-2);
+  font-size: var(--gt-ui-size);
+  line-height: var(--gt-button-h);
+}
+.site-nav a.is-current {
+  color: var(--gt-text);
+  font-weight: var(--gt-weight-medium);
+}
+.site-head-end {
+  display: flex;
+  align-items: center;
+  gap: var(--site-gap-s);
+  margin-left: auto;
+}
+.site-head-end > .is-wide {
+  display: var(--site-wide-display);
+}
+.site-menu-button {
+  display: var(--site-menu-display);
+}
+
+/* ---- calls to action ---- */
+.site .gotipe-button.is-cta {
+  height: var(--site-cta-h);
+  padding: var(--site-cta-pad);
+  font-size: var(--site-text-size);
+}
+.site-install {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--site-gap);
+  box-sizing: border-box;
+  height: var(--site-install-h);
+  padding: var(--site-install-pad);
+  border-radius: var(--gt-radius-block);
+  box-shadow: inset 0 0 0 var(--gt-hairline) var(--gt-line-strong);
+  max-width: 100%;
+  font-family: var(--gt-font-mono);
+  font-size: var(--site-small-size);
+  white-space: nowrap;
+}
+.site-install > code {
+  min-width: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.site-install > code::before {
+  content: "$ ";
+  color: var(--gt-text-3);
+}
+.site-install > .gotipe-button {
+  color: var(--gt-text-2);
+}
+
+/* ---- section heads ---- */
+.site-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--site-gap-s);
+  margin: 0;
+  padding: var(--site-eyebrow-pad);
+  border-radius: var(--gt-radius-round);
+  background: var(--gt-fill-1);
+  color: var(--gt-text-2);
+  font-size: var(--site-eyebrow-size);
+  font-weight: var(--gt-weight-medium);
+  line-height: var(--site-eyebrow-leading);
+}
+.site-section {
+  padding: var(--site-section-y) 0;
+}
+.site-section.is-sunken {
+  background: var(--gt-sunken);
+}
+.site-section-head {
+  max-width: var(--site-head-max);
+  margin-bottom: var(--site-section-gap);
+}
+.site-section-head h2,
+.site-band h2 {
+  margin: var(--site-gap) 0 0;
+  font-size: var(--site-h2-size);
+  font-weight: var(--gt-weight-title);
+  line-height: var(--site-h2-leading);
+  letter-spacing: var(--site-h2-tracking);
+}
+.site-section-head h2 + p {
+  margin: var(--site-gap) 0 0;
+  color: var(--gt-text-2);
+  font-size: var(--site-lede-size);
+  line-height: var(--site-lede-leading);
+}
+
+/* ---- the hero: the promise on the left, a working editor on the right ---- */
+.site-hero {
+  padding: var(--site-hero-top) 0 var(--site-section-y);
+}
+.site-hero-grid {
+  display: grid;
+  grid-template-columns: var(--site-hero-cols);
+  gap: var(--site-hero-gap);
+  align-items: center;
+}
+.site-hero h1 {
+  margin: var(--site-gap-l) 0 0;
+  font-size: var(--site-hero-size);
+  font-weight: var(--gt-weight-title);
+  line-height: var(--site-hero-leading);
+  letter-spacing: var(--site-hero-tracking);
+}
+.site-lede {
+  max-width: var(--site-lede-max);
+  margin: var(--site-gap-l) 0 0;
+  color: var(--gt-text-2);
+  font-size: var(--site-lede-size);
+  line-height: var(--site-lede-leading);
+}
+.site-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--site-gap-s);
+  margin-top: var(--site-gap-xl);
+}
+.site-hero .site-install {
+  margin-top: var(--site-gap-l);
+}
+
+/* a window with the real editor in it: the document is the library's own markup */
+.site-demo {
+  min-width: 0;
+  border-radius: var(--gt-radius-card);
+  background: var(--gt-page-bg);
+  box-shadow: var(--gt-shadow-card);
+}
+.site-demo-bar {
+  display: flex;
+  align-items: center;
+  gap: var(--site-gap-s);
+  height: var(--site-demo-bar-h);
+  padding: var(--site-demo-bar-pad);
+  border-bottom: var(--gt-hairline) solid var(--gt-line);
+  color: var(--gt-text-2);
+  font-size: var(--gt-ui-small);
+}
+.site-demo-bar > .gotipe-seg {
+  margin-left: auto;
+}
+.site-demo > .gotipe-page {
+  max-width: none;
+  padding: var(--site-demo-pad);
+}
+.site-demo.is-hero > .gotipe-page {
+  padding-top: var(--site-demo-top);
+}
+
+/* ---- facts that can be checked ---- */
+.site-facts {
+  display: grid;
+  grid-template-columns: repeat(var(--site-cols-4), minmax(0, 1fr));
+  gap: var(--site-gap-l);
+  padding: var(--site-gap-xl) 0;
+  border-top: var(--gt-hairline) solid var(--gt-line);
+  border-bottom: var(--gt-hairline) solid var(--gt-line);
+}
+.site-fact {
+  margin: 0;
+  color: var(--gt-text-2);
+  font-size: var(--site-small-size);
+  line-height: var(--site-small-leading);
+}
+.site-fact > strong {
+  display: block;
+  margin-bottom: var(--site-gap-s);
+  color: var(--gt-text);
+  font-size: var(--site-fact-size);
+  font-weight: var(--gt-weight-title);
+  line-height: var(--site-fact-leading);
+  letter-spacing: var(--site-h2-tracking);
+}
+
+/* ---- cards ---- */
+.site-grid {
+  display: grid;
+  grid-template-columns: repeat(var(--site-cols-3), minmax(0, 1fr));
+  gap: var(--site-gap);
+}
+.site-grid.is-2 {
+  grid-template-columns: repeat(var(--site-cols-2), minmax(0, 1fr));
+}
+.site-grid.is-4 {
+  grid-template-columns: repeat(var(--site-cols-4), minmax(0, 1fr));
+}
+.site-card {
+  min-width: 0;
+  padding: var(--site-card-pad);
+  border-radius: var(--gt-radius-card);
+  background: var(--gt-page-bg);
+  box-shadow: inset 0 0 0 var(--gt-hairline) var(--gt-line);
+}
+.site-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--site-gap);
+}
+.site-card-icon {
+  display: grid;
+  place-items: center;
+  width: var(--site-card-icon);
+  height: var(--site-card-icon);
+  border-radius: var(--gt-radius-control);
+  background: var(--gt-fill-1);
+  color: var(--gt-text-2);
+}
+.site-card h3 {
+  margin: 0;
+  font-size: var(--site-h3-size);
+  font-weight: var(--gt-weight-strong);
+  line-height: var(--site-h3-leading);
+}
+.site-card p {
+  margin: var(--site-gap-s) 0 0;
+  color: var(--gt-text-2);
+  font-size: var(--site-small-size);
+  line-height: var(--site-small-leading);
+}
+.site-card ul {
+  margin: var(--site-gap) 0 0;
+  padding: 0;
+  list-style: none;
+  font-size: var(--site-small-size);
+  line-height: var(--site-small-leading);
+}
+.site-card li {
+  display: flex;
+  gap: var(--site-gap-s);
+  padding: var(--gt-hairline) 0;
+}
+.site-card li > .gt-icon {
+  margin-top: var(--gt-hairline);
+  color: var(--gt-text-3);
+}
+.site-badge {
+  flex: none;
+  padding: var(--site-badge-pad);
+  border-radius: var(--gt-radius-inline);
+  background: var(--gt-fill-2);
+  color: var(--gt-text-2);
+  font-size: var(--site-eyebrow-size);
+  font-weight: var(--gt-weight-medium);
+  line-height: var(--site-eyebrow-leading);
+}
+.site-badge.is-commercial {
+  background: var(--gt-info-tint);
+  color: var(--gt-accent);
+}
+
+/* the same document in the four views: each card is a page of its view */
+.site-view-card {
+  min-width: 0;
+  overflow: hidden;
+  background: var(--gt-page-bg);
+  font-size: var(--gt-body-size);
+  line-height: var(--gt-body-leading);
+  letter-spacing: var(--gt-body-tracking);
+  border-radius: var(--gt-radius-card);
+  box-shadow: inset 0 0 0 var(--gt-hairline) var(--gt-line);
+}
+.site-view-card > .gotipe-page {
+  max-width: none;
+  padding: var(--site-card-pad);
+}
+.site-view-name {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: var(--site-demo-bar-h);
+  padding: var(--site-demo-bar-pad);
+  border-bottom: var(--gt-hairline) solid var(--gt-line);
+  color: var(--gt-text-2);
+  font-family: var(--gt-font-ui);
+  font-size: var(--gt-ui-small);
+  line-height: var(--gt-ui-small-leading);
+}
+
+/* ---- three steps beside the code ---- */
+.site-steps {
+  display: grid;
+  grid-template-columns: var(--site-steps-cols);
+  gap: var(--site-hero-gap);
+  align-items: start;
+}
+.site-step {
+  display: grid;
+  grid-template-columns: var(--site-card-icon) minmax(0, 1fr);
+  gap: var(--site-gap);
+  padding: var(--site-gap) 0;
+  border-top: var(--gt-hairline) solid var(--gt-line);
+}
+.site-step:first-child {
+  border-top: 0;
+}
+.site-step-num {
+  display: grid;
+  place-items: center;
+  width: var(--site-card-icon);
+  height: var(--site-card-icon);
+  border-radius: var(--gt-radius-round);
+  background: var(--gt-fill-2);
+  font-size: var(--site-small-size);
+  font-weight: var(--gt-weight-strong);
+}
+.site-step h3 {
+  margin: 0;
+  font-size: var(--site-h3-size);
+  font-weight: var(--gt-weight-strong);
+  line-height: var(--site-h3-leading);
+}
+.site-step p {
+  margin: var(--site-gap-s) 0 0;
+  color: var(--gt-text-2);
+  font-size: var(--site-small-size);
+  line-height: var(--site-small-leading);
+}
+.site-code {
+  min-width: 0;
+}
+.site-code .gotipe-code-block {
+  margin: 0;
+}
+
+/* ---- the closing band, the one dark surface of the page ---- */
+.site-band {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--site-gap-l);
+  padding: var(--site-band-pad);
+  border-radius: var(--gt-radius-card);
+  background: var(--gt-inverse);
+  color: var(--gt-inverse-text);
+}
+.site-band h2 {
+  max-width: var(--site-head-max);
+  margin: 0;
+}
+.site-band p {
+  margin: var(--site-gap-s) 0 0;
+  color: var(--gt-inverse-text-2);
+  font-size: var(--site-lede-size);
+  line-height: var(--site-lede-leading);
+}
+.site-band .gotipe-button.is-on-inverse {
+  background: var(--gt-inverse-text);
+  color: var(--gt-inverse);
+}
+.site-band .gotipe-button.is-quiet {
+  color: var(--gt-inverse-text);
+}
+
+/* ---- the foot ---- */
+.site-foot {
+  padding: var(--site-section-gap) 0;
+  border-top: var(--gt-hairline) solid var(--gt-line);
+  font-size: var(--site-small-size);
+  line-height: var(--site-small-leading);
+}
+.site-foot-grid {
+  display: grid;
+  grid-template-columns: var(--site-foot-cols);
+  gap: var(--site-gap-xl);
+}
+.site-foot h4 {
+  margin: 0 0 var(--site-gap-s);
+  font-size: var(--site-small-size);
+  font-weight: var(--gt-weight-strong);
+  line-height: var(--site-small-leading);
+}
+.site-foot p,
+.site-foot a {
+  display: block;
+  margin: 0;
+  padding: var(--gt-hairline) 0;
+  color: var(--gt-text-2);
+}
+.site-foot-base {
+  margin-top: var(--site-section-gap);
+  color: var(--gt-text-3);
+}
+.site-foot .site-brand {
+  display: inline-flex;
+  margin-bottom: var(--site-gap-s);
+  color: var(--gt-text);
+}
+
+/* site/docs.css */
+/* The documentation: the navigation of all pages, the page in the library's `docs` view, its
+   outline on the right; search over everything behind ⌘K. The page itself is a GoTipe document:
+   the site draws only what stands around it. */
+
+.site-docs-head .site-head-in {
+  max-width: var(--site-docs-max);
+  margin: 0 auto;
+  padding: 0 var(--site-pad-x);
+}
+.site-version {
+  padding: var(--site-badge-pad);
+  border-radius: var(--gt-radius-inline);
+  background: var(--gt-fill-2);
+  color: var(--gt-text-2);
+  font-size: var(--site-eyebrow-size);
+  font-weight: var(--gt-weight-medium);
+  line-height: var(--site-eyebrow-leading);
+}
+
+/* the search field: a button that opens the dialog */
+.site-search {
+  display: var(--site-wide-display);
+  align-items: center;
+  gap: var(--site-gap-s);
+  box-sizing: border-box;
+  width: var(--site-search-w);
+  height: var(--site-search-h);
+  padding: var(--site-search-pad);
+  border-radius: var(--gt-radius-control);
+  background: var(--gt-fill-1);
+  box-shadow: inset 0 0 0 var(--gt-hairline) var(--gt-line);
+  color: var(--gt-text-2);
+  font-size: var(--gt-ui-size);
+}
+.site-search > .gotipe-kbd {
+  margin-left: auto;
+}
+
+/* ---- three columns: navigation · page · outline ---- */
+.site-docs-body {
+  display: grid;
+  grid-template-columns: var(--site-docs-cols);
+  column-gap: var(--site-docs-gap);
+  justify-content: center;
+  max-width: var(--site-docs-max);
+  margin: 0 auto;
+  padding: 0 var(--site-pad-x);
+}
+.site-docs-body > * {
+  min-width: 0;
+}
+.site-side {
+  display: var(--site-side-display);
+  position: sticky;
+  top: var(--site-head-h);
+  align-self: start;
+  padding: var(--site-side-pad);
+  font-size: var(--gt-ui-size);
+  line-height: var(--gt-small-leading);
+}
+.site-side-group + .site-side-group {
+  margin-top: var(--site-side-group-gap);
+}
+.site-side-title {
+  display: flex;
+  align-items: center;
+  gap: var(--site-gap-s);
+  margin: 0 0 var(--site-gap-s);
+  padding: 0 var(--site-gap-s);
+  font-weight: var(--gt-weight-strong);
+}
+.site-side a {
+  display: block;
+  padding: var(--site-side-item-pad);
+  border-radius: var(--gt-radius-control);
+  color: var(--gt-text-2);
+}
+.site-side a.is-current {
+  background: var(--gt-fill-2);
+  color: var(--gt-text);
+  font-weight: var(--gt-weight-medium);
+}
+
+/* the page: the docs view's own document; the site adds the crumbs, the badges and the pager */
+.site-docs-main > .gotipe-page {
+  max-width: none;
+  padding: var(--site-doc-top) 0 var(--site-section-gap);
+}
+.site-crumbs {
+  display: flex;
+  align-items: center;
+  gap: var(--gt-hairline);
+  margin: 0 0 var(--site-gap-s);
+  color: var(--gt-text-2);
+  font-size: var(--gt-ui-small);
+  line-height: var(--gt-ui-small-leading);
+}
+.site-doc-lede {
+  margin: var(--site-gap-s) 0 0;
+  color: var(--gt-text-2);
+  font-size: var(--site-text-size);
+  line-height: var(--site-text-leading);
+}
+.site-doc-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--site-gap-s);
+  margin: var(--site-gap) 0 var(--site-gap-xl);
+}
+.site-doc-meta > .gotipe-button {
+  margin-left: auto;
+}
+.site-doc-meta > .gotipe-button + .gotipe-button {
+  margin-left: 0;
+}
+.site-pager {
+  display: grid;
+  grid-template-columns: repeat(var(--site-cols-2), minmax(0, 1fr));
+  gap: var(--site-gap);
+  margin-top: var(--site-section-gap);
+}
+.site-pager a {
+  display: block;
+  padding: var(--site-pager-pad);
+  border-radius: var(--gt-radius-block);
+  box-shadow: inset 0 0 0 var(--gt-hairline) var(--gt-line);
+  font-weight: var(--gt-weight-medium);
+}
+.site-pager a > small {
+  display: block;
+  color: var(--gt-text-2);
+  font-size: var(--gt-ui-small);
+  font-weight: var(--gt-weight-regular);
+  line-height: var(--gt-ui-small-leading);
+}
+.site-pager a.is-next {
+  text-align: right;
+}
+
+/* the outline: the docs view's, standing to the right of the page */
+.site-toc {
+  display: var(--site-toc-display);
+  position: sticky;
+  top: var(--site-head-h);
+  align-self: start;
+}
+.site-toc > .gotipe-outline {
+  display: block;
+  padding-top: var(--site-doc-top);
+}
+
+/* ---- the search dialog ---- */
+.site-scrim {
+  position: absolute;
+  inset: 0;
+  z-index: var(--gt-z-overlay);
+  display: flex;
+  justify-content: center;
+  padding-top: var(--site-dialog-top);
+  background: var(--site-scrim);
+}
+.site-dialog {
+  align-self: start;
+  width: min(var(--site-dialog-w), calc(100% - 2 * var(--site-pad-x)));
+  overflow: hidden;
+  border-radius: var(--gt-radius-overlay);
+  background: var(--gt-overlay);
+  box-shadow: var(--gt-shadow-overlay);
+  font-size: var(--gt-ui-size);
+  line-height: var(--gt-small-leading);
+}
+.site-dialog-input {
+  display: flex;
+  align-items: center;
+  gap: var(--site-gap-s);
+  height: var(--site-dialog-input-h);
+  padding: 0 var(--site-gap);
+  border-bottom: var(--gt-hairline) solid var(--gt-line);
+  font-size: var(--site-text-size);
+}
+.site-dialog-input > .gt-icon {
+  color: var(--gt-text-2);
+}
+.site-dialog-input > .gotipe-kbd {
+  margin-left: auto;
+}
+.site-results {
+  padding: var(--site-gap-s);
+}
+.site-results-title {
+  margin: var(--site-gap-s) 0 var(--gt-hairline);
+  padding: 0 var(--site-gap-s);
+  color: var(--gt-text-2);
+  font-size: var(--gt-ui-small);
+  font-weight: var(--gt-weight-medium);
+  line-height: var(--gt-ui-small-leading);
+}
+.site-result {
+  display: flex;
+  align-items: center;
+  gap: var(--site-gap-s);
+  padding: var(--site-result-pad);
+  border-radius: var(--gt-radius-control);
+}
+.site-result.is-active {
+  background: var(--gt-fill-2);
+}
+.site-result > .gt-icon {
+  color: var(--gt-text-3);
+}
+.site-result small {
+  display: block;
+  color: var(--gt-text-2);
+  font-size: var(--gt-ui-small);
+  line-height: var(--gt-ui-small-leading);
+}
+.site-result mark {
+  background: var(--gt-highlight);
+  color: inherit;
+}
+.site-dialog-foot {
+  display: flex;
+  gap: var(--site-gap);
+  padding: var(--site-gap-s) var(--site-gap);
+  border-top: var(--gt-hairline) solid var(--gt-line);
+  color: var(--gt-text-2);
+  font-size: var(--gt-ui-small);
+  line-height: var(--gt-ui-small-leading);
+}
+.site-search-button {
+  display: var(--site-search-button-display);
+}
+/* a folded section: its name, a chevron, the pages behind a click */
+.site-side a.site-side-title.is-folded {
+  display: flex;
+  justify-content: space-between;
+  margin: 0;
+  padding: var(--site-side-item-pad);
+  color: var(--gt-text);
+}
+.site-side-title.is-folded > .gt-icon {
+  color: var(--gt-text-3);
+}
+
 /* content/diagram.css */
 /* The picture of the sample page: drawn with the theme's roles so it follows light and dark. */
 
@@ -3229,6 +4091,32 @@ ol.gotipe-list > li::before {
   <symbol id="i-pointer" viewBox="0 0 16 16">
     <path d="M3 1.75v11.5l2.85-2.7 1.9 4.15 1.9-.85-1.9-4.1h3.95Z" stroke-linejoin="round" />
   </symbol>
+  <!-- the site: search, the menu of a narrow page, the theme, a forward arrow -->
+  <symbol id="i-search" viewBox="0 0 16 16">
+    <circle vector-effect="non-scaling-stroke" cx="7" cy="7" r="4.25" />
+    <path vector-effect="non-scaling-stroke" d="m10.25 10.25 3 3" />
+  </symbol>
+  <symbol id="i-menu" viewBox="0 0 16 16">
+    <path vector-effect="non-scaling-stroke" d="M2.75 4.75h10.5M2.75 8h10.5M2.75 11.25h10.5" />
+  </symbol>
+  <symbol id="i-sun" viewBox="0 0 16 16">
+    <circle vector-effect="non-scaling-stroke" cx="8" cy="8" r="2.75" />
+    <path
+      vector-effect="non-scaling-stroke"
+      d="M8 1.75v1.5M8 12.75v1.5M1.75 8h1.5M12.75 8h1.5M3.6 3.6l1.05 1.05M11.35 11.35l1.05 1.05M3.6 12.4l1.05-1.05M11.35 4.65l1.05-1.05"
+    />
+  </symbol>
+  <symbol id="i-moon" viewBox="0 0 16 16">
+    <path vector-effect="non-scaling-stroke" d="M12.75 9.6A5 5 0 0 1 6.4 3.25a5 5 0 1 0 6.35 6.35Z" />
+  </symbol>
+  <symbol id="i-arrow-right" viewBox="0 0 16 16">
+    <path vector-effect="non-scaling-stroke" d="M3.25 8h9.5M9 4.25 12.75 8 9 11.75" />
+  </symbol>
+  <!-- the mark: a square of the accent with the letter cut in the page's colour (`fill` of the use) -->
+  <symbol id="i-logo" viewBox="0 0 32 32">
+    <rect width="32" height="32" rx="8" fill="currentColor" />
+    <path d="M23 11a8 8 0 1 0 1 9v-5h-8v3h5v1a5 5 0 1 1-1-6z" />
+  </symbol>
 </svg>
     <main class="at-page">
       <header class="at-head">
@@ -3247,6 +4135,7 @@ ol.gotipe-list > li::before {
 <div class="at-index-group"><p>Состояния</p><a href="#f17"><span class="at-num">17</span>Загрузка, ошибки, только чтение, фокус</a></div>
 <div class="at-index-group"><p>Блоки</p><a href="#f18"><span class="at-num">18</span>Задачи, раскрывающиеся блоки, файл, вставка и формула</a></div>
 <div class="at-index-group"><p>PageEditor</p><a href="#f19"><span class="at-num">19</span>Страница вики: PageEditor в общем виде</a></div>
+<div class="at-index-group"><p>Сайт</p><a href="#f20"><span class="at-num">20</span>Главная страница</a><a href="#f21"><span class="at-num">21</span>Документация</a></div>
       </nav>
       <h2 class="at-section">Документ</h2>
 <figure class="at-figure" id="f1" data-section="Документ">
@@ -6635,6 +7524,1297 @@ editor<span class="tk-pun">.</span>on<span class="tk-pun">(</span><span class="t
 &lt;/details&gt;</pre>
       </div>
     </article>
+  </div>
+</div>
+</section>
+</figure>
+<h2 class="at-section">Сайт</h2>
+<figure class="at-figure" id="f20" data-section="Сайт">
+  <figcaption class="at-figure-head">
+    <span class="at-num">20</span>
+    <h2 class="at-figure-title">Главная страница</h2>
+    <p class="at-caption">
+      Обещание и живой редактор в первом экране; проверяемые факты вместо логотипов клиентов;
+      возможности с бейджами MIT и Commercial; один документ в четырёх видах; быстрый старт;
+      три способа запуска; лицензии. Сайт говорит словами и цветами библиотеки, крупнее только
+      заголовки.
+    </p>
+  </figcaption>
+  <section class="at-stage" data-w="1440">
+<p class="at-stage-label">главная · 1440</p>
+<div class="at-frame gotipe-root" data-gt-view="notion" data-frame="landing" data-w="1440">
+<div class="site" lang="en">
+  <header class="site-head">
+  <div class="site-wrap site-head-in">
+    <a class="site-brand"><svg class="site-logo" aria-hidden="true"><use href="#i-logo" /></svg>GoTipe</a>
+    <nav class="site-nav" aria-label="Site">
+      <a>Docs</a>
+      <a>Playground</a>
+      <a>Licensing</a>
+      <a>Changelog</a>
+    </nav>
+    <div class="site-head-end">
+      <span class="gotipe-button is-quiet is-wide">GitHub<svg class="gt-icon" aria-hidden="true"><use href="#i-external" /></svg></span>
+      <span class="gotipe-button is-quiet is-wide" aria-label="Dark theme"><svg class="gt-icon" aria-hidden="true"><use href="#i-moon" /></svg></span>
+      <span class="gotipe-button is-primary">Get started</span>
+      <span class="gotipe-button is-quiet site-menu-button" aria-label="Menu"><svg class="gt-icon" aria-hidden="true"><use href="#i-menu" /></svg></span>
+    </div>
+  </div>
+</header>
+
+  <section class="site-hero">
+    <div class="site-wrap site-hero-grid">
+      <div>
+        <p class="site-eyebrow">Version 0.1 · MIT core</p>
+        <h1>The editor you own, down to the engine.</h1>
+        <p class="site-lede">
+          GoTipe is a document editor framework with its own engine in TypeScript and Rust/WASM:
+          lossless Markdown, a ready block editor, review and real-time collaboration — and no
+          third-party editor underneath.
+        </p>
+        <div class="site-actions">
+          <span class="gotipe-button is-primary is-cta">Get started<svg class="gt-icon" aria-hidden="true"><use href="#i-arrow-right" /></svg></span>
+          <span class="gotipe-button is-cta">Open the playground</span>
+        </div>
+        <div class="site-install">
+          <code>npm i @gotipe/core @gotipe/react</code>
+          <span class="gotipe-button is-quiet" aria-label="Copy"><svg class="gt-icon" aria-hidden="true"><use href="#i-copy" /></svg></span>
+        </div>
+      </div>
+
+      <div class="site-demo is-hero">
+        <div class="site-demo-bar">
+          <span>Live editor</span>
+          <span class="gotipe-seg"><span class="is-on">Block</span><span>Page</span><span>Views</span></span>
+        </div>
+        <article class="gotipe-page">
+          <div class="gotipe-doc">
+            <p>
+              <span class="gotipe-anchor is-inline"
+                ><strong class="gotipe-selection">Everything here syncs live</strong
+                ><span class="gotipe-overlay gotipe-toolbar" data-place="above-start" role="toolbar"
+                  ><span class="gotipe-tool is-model-icon"><svg class="gt-icon"><use href="#i-sparkle" /></svg></span
+                  ><span class="gotipe-tool-sep"></span
+                  ><span class="gotipe-tool is-active"><svg class="gt-icon"><use href="#i-bold" /></svg></span
+                  ><span class="gotipe-tool"><svg class="gt-icon"><use href="#i-italic" /></svg></span
+                  ><span class="gotipe-tool"><svg class="gt-icon"><use href="#i-underline" /></svg></span
+                  ><span class="gotipe-tool"><svg class="gt-icon"><use href="#i-code" /></svg></span
+                  ><span class="gotipe-tool-sep"></span
+                  ><span class="gotipe-tool"><svg class="gt-icon"><use href="#i-link" /></svg></span
+                  ><span class="gotipe-tool"><svg class="gt-icon"><use href="#i-comment" /></svg></span></span
+              ></span>
+              — two people's edits merge without conflicts. The beta ships on Thursday.
+            </p>
+            <h3>Launch checklist</h3>
+            <ul class="gotipe-todo-list">
+              <li class="gotipe-todo-item" data-checked="true">
+                <span class="gotipe-check" role="checkbox" aria-checked="true"
+                  ><svg class="gt-icon" aria-hidden="true"><use href="#i-check" /></svg
+                ></span>
+                <span class="gotipe-todo-item-content">Freeze the public API</span>
+              </li>
+              <li class="gotipe-todo-item" data-checked="false">
+                <span class="gotipe-check" role="checkbox" aria-checked="false"
+                  ><svg class="gt-icon" aria-hidden="true"><use href="#i-check" /></svg
+                ></span>
+                <span class="gotipe-todo-item-content">Write the migration guide</span>
+              </li>
+              <li class="gotipe-todo-item" data-checked="false">
+                <span class="gotipe-check" role="checkbox" aria-checked="false"
+                  ><svg class="gt-icon" aria-hidden="true"><use href="#i-check" /></svg
+                ></span>
+                <span class="gotipe-todo-item-content">Run the browser suite</span>
+              </li>
+            </ul>
+            <div class="gotipe-callout" data-variant="info">
+              <span class="gotipe-callout-icon"
+                ><svg class="gt-icon" aria-hidden="true"><use href="#i-hash" /></svg
+              ></span>
+              <div class="gotipe-callout-content">
+                <p>Blocks nobody touched keep their Markdown byte for byte.</p>
+              </div>
+            </div>
+          </div>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <div class="site-wrap">
+    <div class="site-facts">
+      <p class="site-fact"><strong>905</strong>browser scenarios, run in Chromium, Firefox and WebKit</p>
+      <p class="site-fact"><strong>652 / 652</strong>CommonMark examples parsed like the reference</p>
+      <p class="site-fact"><strong>88 KB</strong>gzip for the engine together with Markdown</p>
+      <p class="site-fact"><strong>0</strong>third-party runtime dependencies in the engine</p>
+    </div>
+  </div>
+
+  <section class="site-section">
+    <div class="site-wrap">
+      <div class="site-section-head">
+        <p class="site-eyebrow">What's inside</p>
+        <h2>Everything a document needs. Most of it MIT.</h2>
+        <p>The engine and every service around it are open source. Only the ready-made interface has a commercial license.</p>
+      </div>
+      <div class="site-grid">
+        <article class="site-card">
+          <div class="site-card-top"><span class="site-card-icon"><svg class="gt-icon" aria-hidden="true"><use href="#i-code" /></svg></span><span class="site-badge">MIT</span></div>
+          <h3>Own engine</h3>
+          <p>Transactions, history, selection and IME in TypeScript, with the same contract in Rust/WASM.</p>
+        </article>
+        <article class="site-card">
+          <div class="site-card-top"><span class="site-card-icon"><svg class="gt-icon" aria-hidden="true"><use href="#i-hash" /></svg></span><span class="site-badge">MIT</span></div>
+          <h3>Lossless Markdown</h3>
+          <p>Our own parser: an edit rewrites only the block it touched, the rest of the file stays as written.</p>
+        </article>
+        <article class="site-card">
+          <div class="site-card-top"><span class="site-card-icon"><svg class="gt-icon" aria-hidden="true"><use href="#i-grip" /></svg></span><span class="site-badge is-commercial">Commercial</span></div>
+          <h3>Block editor</h3>
+          <p>Slash menu, drag handle, bubble toolbar, tables, media and code — ready for React.</p>
+        </article>
+        <article class="site-card">
+          <div class="site-card-top"><span class="site-card-icon"><svg class="gt-icon" aria-hidden="true"><use href="#i-page" /></svg></span><span class="site-badge is-commercial">Commercial</span></div>
+          <h3>Page editor</h3>
+          <p>A Markdown page with review lanes, anchored proposals and comments in the margin.</p>
+        </article>
+        <article class="site-card">
+          <div class="site-card-top"><span class="site-card-icon"><svg class="gt-icon" aria-hidden="true"><use href="#i-swap" /></svg></span><span class="site-badge">MIT</span></div>
+          <h3>Real-time collaboration</h3>
+          <p>Our own CRDT in Rust: concurrent edits, cursors, reconnect and durable sync.</p>
+        </article>
+        <article class="site-card">
+          <div class="site-card-top"><span class="site-card-icon"><svg class="gt-icon" aria-hidden="true"><use href="#i-comment" /></svg></span><span class="site-badge">MIT</span></div>
+          <h3>Comments and suggestions</h3>
+          <p>Anchored threads and tracked changes, accepted or rejected in one step.</p>
+        </article>
+        <article class="site-card">
+          <div class="site-card-top"><span class="site-card-icon"><svg class="gt-icon" aria-hidden="true"><use href="#i-clock" /></svg></span><span class="site-badge">MIT</span></div>
+          <h3>Versions</h3>
+          <p>Snapshots, a block-level compare and a restore you can undo.</p>
+        </article>
+        <article class="site-card">
+          <div class="site-card-top"><span class="site-card-icon"><svg class="gt-icon" aria-hidden="true"><use href="#i-sparkle" /></svg></span><span class="site-badge">MIT</span></div>
+          <h3>AI layer</h3>
+          <p>Bring your model: streaming, cancel, proofreading, ghost text and a guard for personal data.</p>
+        </article>
+        <article class="site-card">
+          <div class="site-card-top"><span class="site-card-icon"><svg class="gt-icon" aria-hidden="true"><use href="#i-download" /></svg></span><span class="site-badge">MIT</span></div>
+          <h3>PDF and DOCX</h3>
+          <p>Our own PDF layout and Word writer, in the browser through WebAssembly or on the server.</p>
+        </article>
+        <article class="site-card">
+          <div class="site-card-top"><span class="site-card-icon"><svg class="gt-icon" aria-hidden="true"><use href="#i-upload" /></svg></span><span class="site-badge">MIT</span></div>
+          <h3>Migration</h3>
+          <p>Bring ProseMirror, Tiptap, Slate or Lexical JSON; content we can't map is kept, not dropped.</p>
+        </article>
+        <article class="site-card">
+          <div class="site-card-top"><span class="site-card-icon"><svg class="gt-icon" aria-hidden="true"><use href="#i-sun" /></svg></span><span class="site-badge is-commercial">Commercial</span></div>
+          <h3>Views and themes</h3>
+          <p>Four looks over one markup, light and dark; your colours through CSS variables.</p>
+        </article>
+        <article class="site-card">
+          <div class="site-card-top"><span class="site-card-icon"><svg class="gt-icon" aria-hidden="true"><use href="#i-lock" /></svg></span><span class="site-badge">MIT</span></div>
+          <h3>Your own cloud</h3>
+          <p>Documents, permissions, sync, exports and an AI proxy in one Go service you run.</p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section class="site-section is-sunken">
+    <div class="site-wrap">
+      <div class="site-section-head">
+        <p class="site-eyebrow">Four views</p>
+        <h2>One markup, four looks.</h2>
+        <p>Notion, docs, modern and minimal are sets of tokens over the same document. Switch them with one attribute.</p>
+      </div>
+      <div class="site-grid is-4">
+        <div class="site-view-card" data-gt-view="notion">
+          <p class="site-view-name">notion<span>default</span></p>
+          <article class="gotipe-page is-slice">
+            <div class="gotipe-doc">
+              <h2>Offline drafts</h2>
+              <p>A draft is kept on the device and sent when the network returns.</p>
+              <ul class="gotipe-list"><li>Saved every second</li><li>Encrypted at rest</li></ul>
+            </div>
+          </article>
+        </div>
+        <div class="site-view-card" data-gt-view="docs">
+          <p class="site-view-name">docs<span>reference</span></p>
+          <article class="gotipe-page is-slice">
+            <div class="gotipe-doc">
+              <h2>Offline drafts</h2>
+              <p>A draft is kept on the device and sent when the network returns.</p>
+              <ul class="gotipe-list"><li>Saved every second</li><li>Encrypted at rest</li></ul>
+            </div>
+          </article>
+        </div>
+        <div class="site-view-card" data-gt-view="modern">
+          <p class="site-view-name">modern<span>fixed toolbar</span></p>
+          <article class="gotipe-page is-slice">
+            <div class="gotipe-doc">
+              <h2>Offline drafts</h2>
+              <p>A draft is kept on the device and sent when the network returns.</p>
+              <ul class="gotipe-list"><li>Saved every second</li><li>Encrypted at rest</li></ul>
+            </div>
+          </article>
+        </div>
+        <div class="site-view-card" data-gt-view="minimal">
+          <p class="site-view-name">minimal<span>just text</span></p>
+          <article class="gotipe-page is-slice">
+            <div class="gotipe-doc">
+              <h2>Offline drafts</h2>
+              <p>A draft is kept on the device and sent when the network returns.</p>
+              <ul class="gotipe-list"><li>Saved every second</li><li>Encrypted at rest</li></ul>
+            </div>
+          </article>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="site-section">
+    <div class="site-wrap">
+      <div class="site-section-head">
+        <p class="site-eyebrow">Get started</p>
+        <h2>From npm install to a working editor.</h2>
+      </div>
+      <div class="site-steps">
+        <div>
+          <div class="site-step">
+            <span class="site-step-num">1</span>
+            <div><h3>Install</h3><p>The engine, the React adapter and the ready editor. Add the theme's CSS once.</p></div>
+          </div>
+          <div class="site-step">
+            <span class="site-step-num">2</span>
+            <div><h3>Create the editor</h3><p>Pick a preset or your own extensions; the engine is chosen for you.</p></div>
+          </div>
+          <div class="site-step">
+            <span class="site-step-num">3</span>
+            <div><h3>Save the document</h3><p>JSON, HTML or Markdown from every update — your storage, your format.</p></div>
+          </div>
+        </div>
+        <div class="site-code" data-gt-view="docs">
+          <div class="gotipe-code-block">
+            <div class="gotipe-code-block-header">
+              <span class="gotipe-seg"><span class="is-on">React</span><span>Vue</span><span>Headless</span></span>
+              <span class="gotipe-code-copy"><svg class="gt-icon" aria-hidden="true"><use href="#i-copy" /></svg></span>
+            </div>
+            <pre class="gotipe-code-block-scroll"><span class="gotipe-code-lines" aria-hidden="true">1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14</span><code><span class="tk-key">import</span> <span class="tk-pun">{</span> BlockEditor <span class="tk-pun">}</span> <span class="tk-key">from</span> <span class="tk-str">"@gotipe/block-editor"</span><span class="tk-pun">;</span>
+<span class="tk-key">import</span> <span class="tk-pun">{</span> FullPreset <span class="tk-pun">}</span> <span class="tk-key">from</span> <span class="tk-str">"@gotipe/core/presets"</span><span class="tk-pun">;</span>
+<span class="tk-key">import</span> <span class="tk-pun">{</span> useEditor <span class="tk-pun">}</span> <span class="tk-key">from</span> <span class="tk-str">"@gotipe/react"</span><span class="tk-pun">;</span>
+<span class="tk-key">import</span> <span class="tk-str">"@gotipe/theme/theme.css"</span><span class="tk-pun">;</span>
+<span class="tk-key">import</span> <span class="tk-str">"@gotipe/theme/base.css"</span><span class="tk-pun">;</span>
+
+<span class="tk-key">export function</span> <span class="tk-type">Notes</span><span class="tk-pun">({</span> content<span class="tk-pun">,</span> save <span class="tk-pun">})</span> <span class="tk-pun">{</span>
+  <span class="tk-key">const</span> editor <span class="tk-pun">=</span> useEditor<span class="tk-pun">({</span>
+    extensions<span class="tk-pun">: [</span>FullPreset<span class="tk-pun">],</span>
+    content<span class="tk-pun">,</span>
+    onUpdate<span class="tk-pun">: ({</span> editor <span class="tk-pun">}) =&gt;</span> save<span class="tk-pun">(</span>editor<span class="tk-pun">.</span>getJSON<span class="tk-pun">()),</span>
+  <span class="tk-pun">});</span>
+  <span class="tk-key">return</span> <span class="tk-pun">&lt;</span><span class="tk-type">BlockEditor</span> editor<span class="tk-pun">={</span>editor<span class="tk-pun">} /&gt;;</span>
+<span class="tk-pun">}</span></code></pre>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="site-section is-sunken">
+    <div class="site-wrap">
+      <div class="site-section-head">
+        <p class="site-eyebrow">Run it your way</p>
+        <h2>In the browser, in WebAssembly, on your servers.</h2>
+      </div>
+      <div class="site-grid">
+        <article class="site-card">
+          <div class="site-card-top"><h3>JavaScript engine</h3><span class="site-badge">MIT</span></div>
+          <p>The default. The whole editing model in TypeScript, nothing extra to load.</p>
+          <ul>
+            <li><svg class="gt-icon" aria-hidden="true"><use href="#i-check" /></svg>About 88 KB gzip with Markdown</li>
+            <li><svg class="gt-icon" aria-hidden="true"><use href="#i-check" /></svg>Server rendering to HTML, Markdown and text</li>
+          </ul>
+        </article>
+        <article class="site-card">
+          <div class="site-card-top"><h3>Rust/WASM engine</h3><span class="site-badge">MIT</span></div>
+          <p>The same API and document contract, compiled from Rust. Required for real-time collaboration.</p>
+          <ul>
+            <li><svg class="gt-icon" aria-hidden="true"><use href="#i-check" /></svg>About 590 KB gzip</li>
+            <li><svg class="gt-icon" aria-hidden="true"><use href="#i-check" /></svg>CRDT, cursors and reconnect</li>
+          </ul>
+        </article>
+        <article class="site-card">
+          <div class="site-card-top"><h3>GoTipe Cloud</h3><span class="site-badge">MIT</span></div>
+          <p>A Go service you run: documents, permissions, sync, exports and an AI proxy.</p>
+          <ul>
+            <li><svg class="gt-icon" aria-hidden="true"><use href="#i-check" /></svg>PostgreSQL and Valkey</li>
+            <li><svg class="gt-icon" aria-hidden="true"><use href="#i-check" /></svg>One Docker Compose file</li>
+          </ul>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section class="site-section">
+    <div class="site-wrap">
+      <div class="site-section-head">
+        <p class="site-eyebrow">Licensing</p>
+        <h2>Open where it matters.</h2>
+      </div>
+      <div class="site-grid is-2">
+        <article class="site-card">
+          <div class="site-card-top"><h3>Engine and services</h3><span class="site-badge">MIT</span></div>
+          <ul>
+            <li><svg class="gt-icon" aria-hidden="true"><use href="#i-check" /></svg>Engine, Markdown and framework adapters</li>
+            <li><svg class="gt-icon" aria-hidden="true"><use href="#i-check" /></svg>Collaboration, comments, suggestions, versions</li>
+            <li><svg class="gt-icon" aria-hidden="true"><use href="#i-check" /></svg>AI layer, PDF and DOCX export, migration</li>
+            <li><svg class="gt-icon" aria-hidden="true"><use href="#i-check" /></svg>GoTipe Cloud and the SDK</li>
+          </ul>
+        </article>
+        <article class="site-card">
+          <div class="site-card-top"><h3>Ready-made interface</h3><span class="site-badge is-commercial">Commercial</span></div>
+          <ul>
+            <li><svg class="gt-icon" aria-hidden="true"><use href="#i-check" /></svg>BlockEditor and PageEditor for React</li>
+            <li><svg class="gt-icon" aria-hidden="true"><use href="#i-check" /></svg>The block editor for Vue</li>
+            <li><svg class="gt-icon" aria-hidden="true"><use href="#i-check" /></svg>AI interface components</li>
+            <li><svg class="gt-icon" aria-hidden="true"><use href="#i-check" /></svg>The theme and its four views</li>
+          </ul>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <div class="site-wrap">
+    <div class="site-band">
+      <div>
+        <h2>Build on an engine you own.</h2>
+        <p>Start with the quick start, or open the playground and edit a real document.</p>
+      </div>
+      <div class="site-actions">
+        <span class="gotipe-button is-cta is-on-inverse">Read the docs</span>
+        <span class="gotipe-button is-cta is-quiet">Open the playground</span>
+      </div>
+    </div>
+  </div>
+
+  <footer class="site-foot">
+    <div class="site-wrap">
+      <div class="site-foot-grid">
+        <div>
+          <a class="site-brand"><svg class="site-logo" aria-hidden="true"><use href="#i-logo" /></svg>GoTipe</a>
+          <p>A document editor framework with its own engine.</p>
+        </div>
+        <div><h4>Product</h4><a>Docs</a><a>Playground</a><a>Changelog</a></div>
+        <div><h4>Resources</h4><a>Licensing</a><a>Security</a><a>Browser support</a></div>
+        <div><h4>Project</h4><a>GitHub</a><a>Contributing</a><a>Report a vulnerability</a></div>
+      </div>
+      <p class="site-foot-base">© 2026 GoTipe contributors · MIT and commercial licenses</p>
+    </div>
+  </footer>
+</div>
+</div>
+</section>
+  <section class="at-stage" data-w="375">
+<p class="at-stage-label">первый экран на телефоне · 375</p>
+<div class="at-frame gotipe-root" data-gt-view="notion" data-frame="landing-phone" data-w="375" data-h="960">
+<div class="site" lang="en">
+  <header class="site-head">
+  <div class="site-wrap site-head-in">
+    <a class="site-brand"><svg class="site-logo" aria-hidden="true"><use href="#i-logo" /></svg>GoTipe</a>
+    <nav class="site-nav" aria-label="Site">
+      <a>Docs</a>
+      <a>Playground</a>
+      <a>Licensing</a>
+      <a>Changelog</a>
+    </nav>
+    <div class="site-head-end">
+      <span class="gotipe-button is-quiet is-wide">GitHub<svg class="gt-icon" aria-hidden="true"><use href="#i-external" /></svg></span>
+      <span class="gotipe-button is-quiet is-wide" aria-label="Dark theme"><svg class="gt-icon" aria-hidden="true"><use href="#i-moon" /></svg></span>
+      <span class="gotipe-button is-primary">Get started</span>
+      <span class="gotipe-button is-quiet site-menu-button" aria-label="Menu"><svg class="gt-icon" aria-hidden="true"><use href="#i-menu" /></svg></span>
+    </div>
+  </div>
+</header>
+
+  <section class="site-hero">
+    <div class="site-wrap site-hero-grid">
+      <div>
+        <p class="site-eyebrow">Version 0.1 · MIT core</p>
+        <h1>The editor you own, down to the engine.</h1>
+        <p class="site-lede">
+          GoTipe is a document editor framework with its own engine in TypeScript and Rust/WASM:
+          lossless Markdown, a ready block editor, review and real-time collaboration — and no
+          third-party editor underneath.
+        </p>
+        <div class="site-actions">
+          <span class="gotipe-button is-primary is-cta">Get started<svg class="gt-icon" aria-hidden="true"><use href="#i-arrow-right" /></svg></span>
+          <span class="gotipe-button is-cta">Open the playground</span>
+        </div>
+        <div class="site-install">
+          <code>npm i @gotipe/core @gotipe/react</code>
+          <span class="gotipe-button is-quiet" aria-label="Copy"><svg class="gt-icon" aria-hidden="true"><use href="#i-copy" /></svg></span>
+        </div>
+      </div>
+
+      <div class="site-demo is-hero">
+        <div class="site-demo-bar">
+          <span>Live editor</span>
+          <span class="gotipe-seg"><span class="is-on">Block</span><span>Page</span><span>Views</span></span>
+        </div>
+        <article class="gotipe-page">
+          <div class="gotipe-doc">
+            <p>
+              <span class="gotipe-anchor is-inline"
+                ><strong class="gotipe-selection">Everything here syncs live</strong
+                ><span class="gotipe-overlay gotipe-toolbar" data-place="above-start" role="toolbar"
+                  ><span class="gotipe-tool is-model-icon"><svg class="gt-icon"><use href="#i-sparkle" /></svg></span
+                  ><span class="gotipe-tool-sep"></span
+                  ><span class="gotipe-tool is-active"><svg class="gt-icon"><use href="#i-bold" /></svg></span
+                  ><span class="gotipe-tool"><svg class="gt-icon"><use href="#i-italic" /></svg></span
+                  ><span class="gotipe-tool"><svg class="gt-icon"><use href="#i-underline" /></svg></span
+                  ><span class="gotipe-tool"><svg class="gt-icon"><use href="#i-code" /></svg></span
+                  ><span class="gotipe-tool-sep"></span
+                  ><span class="gotipe-tool"><svg class="gt-icon"><use href="#i-link" /></svg></span
+                  ><span class="gotipe-tool"><svg class="gt-icon"><use href="#i-comment" /></svg></span></span
+              ></span>
+              — two people's edits merge without conflicts. The beta ships on Thursday.
+            </p>
+            <h3>Launch checklist</h3>
+            <ul class="gotipe-todo-list">
+              <li class="gotipe-todo-item" data-checked="true">
+                <span class="gotipe-check" role="checkbox" aria-checked="true"
+                  ><svg class="gt-icon" aria-hidden="true"><use href="#i-check" /></svg
+                ></span>
+                <span class="gotipe-todo-item-content">Freeze the public API</span>
+              </li>
+              <li class="gotipe-todo-item" data-checked="false">
+                <span class="gotipe-check" role="checkbox" aria-checked="false"
+                  ><svg class="gt-icon" aria-hidden="true"><use href="#i-check" /></svg
+                ></span>
+                <span class="gotipe-todo-item-content">Write the migration guide</span>
+              </li>
+              <li class="gotipe-todo-item" data-checked="false">
+                <span class="gotipe-check" role="checkbox" aria-checked="false"
+                  ><svg class="gt-icon" aria-hidden="true"><use href="#i-check" /></svg
+                ></span>
+                <span class="gotipe-todo-item-content">Run the browser suite</span>
+              </li>
+            </ul>
+            <div class="gotipe-callout" data-variant="info">
+              <span class="gotipe-callout-icon"
+                ><svg class="gt-icon" aria-hidden="true"><use href="#i-hash" /></svg
+              ></span>
+              <div class="gotipe-callout-content">
+                <p>Blocks nobody touched keep their Markdown byte for byte.</p>
+              </div>
+            </div>
+          </div>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <div class="site-wrap">
+    <div class="site-facts">
+      <p class="site-fact"><strong>905</strong>browser scenarios, run in Chromium, Firefox and WebKit</p>
+      <p class="site-fact"><strong>652 / 652</strong>CommonMark examples parsed like the reference</p>
+      <p class="site-fact"><strong>88 KB</strong>gzip for the engine together with Markdown</p>
+      <p class="site-fact"><strong>0</strong>third-party runtime dependencies in the engine</p>
+    </div>
+  </div>
+
+  <section class="site-section">
+    <div class="site-wrap">
+      <div class="site-section-head">
+        <p class="site-eyebrow">What's inside</p>
+        <h2>Everything a document needs. Most of it MIT.</h2>
+        <p>The engine and every service around it are open source. Only the ready-made interface has a commercial license.</p>
+      </div>
+      <div class="site-grid">
+        <article class="site-card">
+          <div class="site-card-top"><span class="site-card-icon"><svg class="gt-icon" aria-hidden="true"><use href="#i-code" /></svg></span><span class="site-badge">MIT</span></div>
+          <h3>Own engine</h3>
+          <p>Transactions, history, selection and IME in TypeScript, with the same contract in Rust/WASM.</p>
+        </article>
+        <article class="site-card">
+          <div class="site-card-top"><span class="site-card-icon"><svg class="gt-icon" aria-hidden="true"><use href="#i-hash" /></svg></span><span class="site-badge">MIT</span></div>
+          <h3>Lossless Markdown</h3>
+          <p>Our own parser: an edit rewrites only the block it touched, the rest of the file stays as written.</p>
+        </article>
+        <article class="site-card">
+          <div class="site-card-top"><span class="site-card-icon"><svg class="gt-icon" aria-hidden="true"><use href="#i-grip" /></svg></span><span class="site-badge is-commercial">Commercial</span></div>
+          <h3>Block editor</h3>
+          <p>Slash menu, drag handle, bubble toolbar, tables, media and code — ready for React.</p>
+        </article>
+        <article class="site-card">
+          <div class="site-card-top"><span class="site-card-icon"><svg class="gt-icon" aria-hidden="true"><use href="#i-page" /></svg></span><span class="site-badge is-commercial">Commercial</span></div>
+          <h3>Page editor</h3>
+          <p>A Markdown page with review lanes, anchored proposals and comments in the margin.</p>
+        </article>
+        <article class="site-card">
+          <div class="site-card-top"><span class="site-card-icon"><svg class="gt-icon" aria-hidden="true"><use href="#i-swap" /></svg></span><span class="site-badge">MIT</span></div>
+          <h3>Real-time collaboration</h3>
+          <p>Our own CRDT in Rust: concurrent edits, cursors, reconnect and durable sync.</p>
+        </article>
+        <article class="site-card">
+          <div class="site-card-top"><span class="site-card-icon"><svg class="gt-icon" aria-hidden="true"><use href="#i-comment" /></svg></span><span class="site-badge">MIT</span></div>
+          <h3>Comments and suggestions</h3>
+          <p>Anchored threads and tracked changes, accepted or rejected in one step.</p>
+        </article>
+        <article class="site-card">
+          <div class="site-card-top"><span class="site-card-icon"><svg class="gt-icon" aria-hidden="true"><use href="#i-clock" /></svg></span><span class="site-badge">MIT</span></div>
+          <h3>Versions</h3>
+          <p>Snapshots, a block-level compare and a restore you can undo.</p>
+        </article>
+        <article class="site-card">
+          <div class="site-card-top"><span class="site-card-icon"><svg class="gt-icon" aria-hidden="true"><use href="#i-sparkle" /></svg></span><span class="site-badge">MIT</span></div>
+          <h3>AI layer</h3>
+          <p>Bring your model: streaming, cancel, proofreading, ghost text and a guard for personal data.</p>
+        </article>
+        <article class="site-card">
+          <div class="site-card-top"><span class="site-card-icon"><svg class="gt-icon" aria-hidden="true"><use href="#i-download" /></svg></span><span class="site-badge">MIT</span></div>
+          <h3>PDF and DOCX</h3>
+          <p>Our own PDF layout and Word writer, in the browser through WebAssembly or on the server.</p>
+        </article>
+        <article class="site-card">
+          <div class="site-card-top"><span class="site-card-icon"><svg class="gt-icon" aria-hidden="true"><use href="#i-upload" /></svg></span><span class="site-badge">MIT</span></div>
+          <h3>Migration</h3>
+          <p>Bring ProseMirror, Tiptap, Slate or Lexical JSON; content we can't map is kept, not dropped.</p>
+        </article>
+        <article class="site-card">
+          <div class="site-card-top"><span class="site-card-icon"><svg class="gt-icon" aria-hidden="true"><use href="#i-sun" /></svg></span><span class="site-badge is-commercial">Commercial</span></div>
+          <h3>Views and themes</h3>
+          <p>Four looks over one markup, light and dark; your colours through CSS variables.</p>
+        </article>
+        <article class="site-card">
+          <div class="site-card-top"><span class="site-card-icon"><svg class="gt-icon" aria-hidden="true"><use href="#i-lock" /></svg></span><span class="site-badge">MIT</span></div>
+          <h3>Your own cloud</h3>
+          <p>Documents, permissions, sync, exports and an AI proxy in one Go service you run.</p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section class="site-section is-sunken">
+    <div class="site-wrap">
+      <div class="site-section-head">
+        <p class="site-eyebrow">Four views</p>
+        <h2>One markup, four looks.</h2>
+        <p>Notion, docs, modern and minimal are sets of tokens over the same document. Switch them with one attribute.</p>
+      </div>
+      <div class="site-grid is-4">
+        <div class="site-view-card" data-gt-view="notion">
+          <p class="site-view-name">notion<span>default</span></p>
+          <article class="gotipe-page is-slice">
+            <div class="gotipe-doc">
+              <h2>Offline drafts</h2>
+              <p>A draft is kept on the device and sent when the network returns.</p>
+              <ul class="gotipe-list"><li>Saved every second</li><li>Encrypted at rest</li></ul>
+            </div>
+          </article>
+        </div>
+        <div class="site-view-card" data-gt-view="docs">
+          <p class="site-view-name">docs<span>reference</span></p>
+          <article class="gotipe-page is-slice">
+            <div class="gotipe-doc">
+              <h2>Offline drafts</h2>
+              <p>A draft is kept on the device and sent when the network returns.</p>
+              <ul class="gotipe-list"><li>Saved every second</li><li>Encrypted at rest</li></ul>
+            </div>
+          </article>
+        </div>
+        <div class="site-view-card" data-gt-view="modern">
+          <p class="site-view-name">modern<span>fixed toolbar</span></p>
+          <article class="gotipe-page is-slice">
+            <div class="gotipe-doc">
+              <h2>Offline drafts</h2>
+              <p>A draft is kept on the device and sent when the network returns.</p>
+              <ul class="gotipe-list"><li>Saved every second</li><li>Encrypted at rest</li></ul>
+            </div>
+          </article>
+        </div>
+        <div class="site-view-card" data-gt-view="minimal">
+          <p class="site-view-name">minimal<span>just text</span></p>
+          <article class="gotipe-page is-slice">
+            <div class="gotipe-doc">
+              <h2>Offline drafts</h2>
+              <p>A draft is kept on the device and sent when the network returns.</p>
+              <ul class="gotipe-list"><li>Saved every second</li><li>Encrypted at rest</li></ul>
+            </div>
+          </article>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="site-section">
+    <div class="site-wrap">
+      <div class="site-section-head">
+        <p class="site-eyebrow">Get started</p>
+        <h2>From npm install to a working editor.</h2>
+      </div>
+      <div class="site-steps">
+        <div>
+          <div class="site-step">
+            <span class="site-step-num">1</span>
+            <div><h3>Install</h3><p>The engine, the React adapter and the ready editor. Add the theme's CSS once.</p></div>
+          </div>
+          <div class="site-step">
+            <span class="site-step-num">2</span>
+            <div><h3>Create the editor</h3><p>Pick a preset or your own extensions; the engine is chosen for you.</p></div>
+          </div>
+          <div class="site-step">
+            <span class="site-step-num">3</span>
+            <div><h3>Save the document</h3><p>JSON, HTML or Markdown from every update — your storage, your format.</p></div>
+          </div>
+        </div>
+        <div class="site-code" data-gt-view="docs">
+          <div class="gotipe-code-block">
+            <div class="gotipe-code-block-header">
+              <span class="gotipe-seg"><span class="is-on">React</span><span>Vue</span><span>Headless</span></span>
+              <span class="gotipe-code-copy"><svg class="gt-icon" aria-hidden="true"><use href="#i-copy" /></svg></span>
+            </div>
+            <pre class="gotipe-code-block-scroll"><span class="gotipe-code-lines" aria-hidden="true">1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14</span><code><span class="tk-key">import</span> <span class="tk-pun">{</span> BlockEditor <span class="tk-pun">}</span> <span class="tk-key">from</span> <span class="tk-str">"@gotipe/block-editor"</span><span class="tk-pun">;</span>
+<span class="tk-key">import</span> <span class="tk-pun">{</span> FullPreset <span class="tk-pun">}</span> <span class="tk-key">from</span> <span class="tk-str">"@gotipe/core/presets"</span><span class="tk-pun">;</span>
+<span class="tk-key">import</span> <span class="tk-pun">{</span> useEditor <span class="tk-pun">}</span> <span class="tk-key">from</span> <span class="tk-str">"@gotipe/react"</span><span class="tk-pun">;</span>
+<span class="tk-key">import</span> <span class="tk-str">"@gotipe/theme/theme.css"</span><span class="tk-pun">;</span>
+<span class="tk-key">import</span> <span class="tk-str">"@gotipe/theme/base.css"</span><span class="tk-pun">;</span>
+
+<span class="tk-key">export function</span> <span class="tk-type">Notes</span><span class="tk-pun">({</span> content<span class="tk-pun">,</span> save <span class="tk-pun">})</span> <span class="tk-pun">{</span>
+  <span class="tk-key">const</span> editor <span class="tk-pun">=</span> useEditor<span class="tk-pun">({</span>
+    extensions<span class="tk-pun">: [</span>FullPreset<span class="tk-pun">],</span>
+    content<span class="tk-pun">,</span>
+    onUpdate<span class="tk-pun">: ({</span> editor <span class="tk-pun">}) =&gt;</span> save<span class="tk-pun">(</span>editor<span class="tk-pun">.</span>getJSON<span class="tk-pun">()),</span>
+  <span class="tk-pun">});</span>
+  <span class="tk-key">return</span> <span class="tk-pun">&lt;</span><span class="tk-type">BlockEditor</span> editor<span class="tk-pun">={</span>editor<span class="tk-pun">} /&gt;;</span>
+<span class="tk-pun">}</span></code></pre>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="site-section is-sunken">
+    <div class="site-wrap">
+      <div class="site-section-head">
+        <p class="site-eyebrow">Run it your way</p>
+        <h2>In the browser, in WebAssembly, on your servers.</h2>
+      </div>
+      <div class="site-grid">
+        <article class="site-card">
+          <div class="site-card-top"><h3>JavaScript engine</h3><span class="site-badge">MIT</span></div>
+          <p>The default. The whole editing model in TypeScript, nothing extra to load.</p>
+          <ul>
+            <li><svg class="gt-icon" aria-hidden="true"><use href="#i-check" /></svg>About 88 KB gzip with Markdown</li>
+            <li><svg class="gt-icon" aria-hidden="true"><use href="#i-check" /></svg>Server rendering to HTML, Markdown and text</li>
+          </ul>
+        </article>
+        <article class="site-card">
+          <div class="site-card-top"><h3>Rust/WASM engine</h3><span class="site-badge">MIT</span></div>
+          <p>The same API and document contract, compiled from Rust. Required for real-time collaboration.</p>
+          <ul>
+            <li><svg class="gt-icon" aria-hidden="true"><use href="#i-check" /></svg>About 590 KB gzip</li>
+            <li><svg class="gt-icon" aria-hidden="true"><use href="#i-check" /></svg>CRDT, cursors and reconnect</li>
+          </ul>
+        </article>
+        <article class="site-card">
+          <div class="site-card-top"><h3>GoTipe Cloud</h3><span class="site-badge">MIT</span></div>
+          <p>A Go service you run: documents, permissions, sync, exports and an AI proxy.</p>
+          <ul>
+            <li><svg class="gt-icon" aria-hidden="true"><use href="#i-check" /></svg>PostgreSQL and Valkey</li>
+            <li><svg class="gt-icon" aria-hidden="true"><use href="#i-check" /></svg>One Docker Compose file</li>
+          </ul>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section class="site-section">
+    <div class="site-wrap">
+      <div class="site-section-head">
+        <p class="site-eyebrow">Licensing</p>
+        <h2>Open where it matters.</h2>
+      </div>
+      <div class="site-grid is-2">
+        <article class="site-card">
+          <div class="site-card-top"><h3>Engine and services</h3><span class="site-badge">MIT</span></div>
+          <ul>
+            <li><svg class="gt-icon" aria-hidden="true"><use href="#i-check" /></svg>Engine, Markdown and framework adapters</li>
+            <li><svg class="gt-icon" aria-hidden="true"><use href="#i-check" /></svg>Collaboration, comments, suggestions, versions</li>
+            <li><svg class="gt-icon" aria-hidden="true"><use href="#i-check" /></svg>AI layer, PDF and DOCX export, migration</li>
+            <li><svg class="gt-icon" aria-hidden="true"><use href="#i-check" /></svg>GoTipe Cloud and the SDK</li>
+          </ul>
+        </article>
+        <article class="site-card">
+          <div class="site-card-top"><h3>Ready-made interface</h3><span class="site-badge is-commercial">Commercial</span></div>
+          <ul>
+            <li><svg class="gt-icon" aria-hidden="true"><use href="#i-check" /></svg>BlockEditor and PageEditor for React</li>
+            <li><svg class="gt-icon" aria-hidden="true"><use href="#i-check" /></svg>The block editor for Vue</li>
+            <li><svg class="gt-icon" aria-hidden="true"><use href="#i-check" /></svg>AI interface components</li>
+            <li><svg class="gt-icon" aria-hidden="true"><use href="#i-check" /></svg>The theme and its four views</li>
+          </ul>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <div class="site-wrap">
+    <div class="site-band">
+      <div>
+        <h2>Build on an engine you own.</h2>
+        <p>Start with the quick start, or open the playground and edit a real document.</p>
+      </div>
+      <div class="site-actions">
+        <span class="gotipe-button is-cta is-on-inverse">Read the docs</span>
+        <span class="gotipe-button is-cta is-quiet">Open the playground</span>
+      </div>
+    </div>
+  </div>
+
+  <footer class="site-foot">
+    <div class="site-wrap">
+      <div class="site-foot-grid">
+        <div>
+          <a class="site-brand"><svg class="site-logo" aria-hidden="true"><use href="#i-logo" /></svg>GoTipe</a>
+          <p>A document editor framework with its own engine.</p>
+        </div>
+        <div><h4>Product</h4><a>Docs</a><a>Playground</a><a>Changelog</a></div>
+        <div><h4>Resources</h4><a>Licensing</a><a>Security</a><a>Browser support</a></div>
+        <div><h4>Project</h4><a>GitHub</a><a>Contributing</a><a>Report a vulnerability</a></div>
+      </div>
+      <p class="site-foot-base">© 2026 GoTipe contributors · MIT and commercial licenses</p>
+    </div>
+  </footer>
+</div>
+</div>
+</section>
+</figure>
+<figure class="at-figure" id="f21" data-section="Сайт">
+  <figcaption class="at-figure-head">
+    <span class="at-num">21</span>
+    <h2 class="at-figure-title">Документация</h2>
+    <p class="at-caption">
+      Слева разделы, в середине страница в виде docs — это документ GoTipe, справа оглавление.
+      Страница начинается с живого примера, дальше установка, код, команды и ограничения;
+      у каждой — «Copy Markdown» и правка на GitHub. Поиск по ⌘K. На ноутбуке уходит
+      оглавление, на планшете и телефоне разделы прячутся за кнопку меню.
+    </p>
+  </figcaption>
+  <section class="at-stage" data-w="1440">
+<p class="at-stage-label">страница расширения · 1440</p>
+<div class="at-frame gotipe-root" data-gt-view="docs" data-frame="docs-page" data-w="1440">
+<div class="site" lang="en">
+    <header class="site-head site-docs-head">
+  <div class="site-head-in">
+    <a class="site-brand"><svg class="site-logo" aria-hidden="true"><use href="#i-logo" /></svg>GoTipe <small>Docs</small></a>
+    <span class="site-version">0.1</span>
+    <span class="site-search"><svg class="gt-icon" aria-hidden="true"><use href="#i-search" /></svg>Search docs<span class="gotipe-kbd">⌘K</span></span>
+    <div class="site-head-end">
+      <span class="gotipe-button is-quiet is-wide">Playground</span>
+      <span class="gotipe-button is-quiet is-wide">GitHub<svg class="gt-icon" aria-hidden="true"><use href="#i-external" /></svg></span>
+      <span class="gotipe-button is-quiet is-wide" aria-label="Dark theme"><svg class="gt-icon" aria-hidden="true"><use href="#i-moon" /></svg></span>
+      <span class="gotipe-button is-quiet site-search-button" aria-label="Search"><svg class="gt-icon" aria-hidden="true"><use href="#i-search" /></svg></span>
+      <span class="gotipe-button is-quiet site-menu-button" aria-label="Menu"><svg class="gt-icon" aria-hidden="true"><use href="#i-menu" /></svg></span>
+    </div>
+  </div>
+</header>
+<div class="site-docs-body">
+  <nav class="site-side" aria-label="Documentation">
+    <div class="site-side-group">
+      <p class="site-side-title">Getting started</p>
+      <a>Introduction</a><a>Installation</a><a>Quick start</a><a>Engines</a>
+    </div>
+    <div class="site-side-group">
+      <p class="site-side-title">Core concepts</p>
+      <a>Document model</a><a>Transactions</a><a>Commands</a><a>Events</a><a>Extensions</a><a>Content formats</a><a>Host</a>
+    </div>
+    <div class="site-side-group">
+      <p class="site-side-title">Extensions</p>
+      <a>Overview</a><a>Text blocks</a><a>Lists</a><a>Code block</a><a class="is-current" aria-current="page">Tables</a><a>Media</a><a>Math</a><a>Marks</a><a>Behaviors</a>
+    </div>
+    <div class="site-side-group">
+      <p class="site-side-title">Editor UI<span class="site-badge is-commercial">Commercial</span></p>
+      <a>Block editor</a><a>Page editor</a><a>Menus</a><a>Theming</a><a>i18n</a><a>Keyboard</a>
+    </div>
+    <div class="site-side-group">
+      <a class="site-side-title is-folded">Frameworks<svg class="gt-icon" aria-hidden="true"><use href="#i-chevron-right" /></svg></a>
+      <a class="site-side-title is-folded">Collaboration<svg class="gt-icon" aria-hidden="true"><use href="#i-chevron-right" /></svg></a>
+      <a class="site-side-title is-folded">Review<svg class="gt-icon" aria-hidden="true"><use href="#i-chevron-right" /></svg></a>
+      <a class="site-side-title is-folded">AI<svg class="gt-icon" aria-hidden="true"><use href="#i-chevron-right" /></svg></a>
+      <a class="site-side-title is-folded">Import and export<svg class="gt-icon" aria-hidden="true"><use href="#i-chevron-right" /></svg></a>
+      <a class="site-side-title is-folded">Cloud<svg class="gt-icon" aria-hidden="true"><use href="#i-chevron-right" /></svg></a>
+      <a class="site-side-title is-folded">Resources<svg class="gt-icon" aria-hidden="true"><use href="#i-chevron-right" /></svg></a>
+    </div>
+  </nav>
+
+  <main class="site-docs-main">
+    <article class="gotipe-page">
+      <p class="site-crumbs">Extensions<svg class="gt-icon" aria-hidden="true"><use href="#i-chevron-right" /></svg>Tables</p>
+      <h1 class="gotipe-page-title">Tables</h1>
+      <p class="site-doc-lede">Header rows, column widths, alignment and resizable columns, with every edit undone in one step.</p>
+      <div class="site-doc-meta">
+        <span class="site-badge">@gotipe/core</span>
+        <span class="site-badge">MIT</span>
+        <span class="gotipe-button is-quiet"><svg class="gt-icon" aria-hidden="true"><use href="#i-copy" /></svg>Copy Markdown</span>
+        <span class="gotipe-button is-quiet"><svg class="gt-icon" aria-hidden="true"><use href="#i-external" /></svg>Edit on GitHub</span>
+      </div>
+      <div class="gotipe-doc">
+        <h2 class="has-anchor"><span class="gotipe-heading-anchor" aria-hidden="true">#</span>Try it</h2>
+        <div class="site-demo">
+          <div class="site-demo-bar"><span>Live editor · type, Tab between cells</span></div>
+          <article class="gotipe-page is-slice">
+            <div class="gotipe-doc">
+              <div class="gotipe-table-block">
+                <div class="gotipe-table-wrap">
+                  <table class="gotipe-table">
+                    <thead>
+                      <tr><th>Platform</th><th class="is-number">Queued</th><th>Encrypted</th></tr>
+                    </thead>
+                    <tbody>
+                      <tr><td>Web</td><td class="is-number">12</td><td>yes</td></tr>
+                      <tr><td>iOS</td><td class="is-number">3</td><td>yes</td></tr>
+                      <tr><td>Android</td><td class="is-number">0</td><td>no</td></tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </article>
+        </div>
+
+        <h2>Install</h2>
+        <div class="gotipe-code-block">
+          <div class="gotipe-code-block-header">
+            <span class="gotipe-seg"><span class="is-on">npm</span><span>pnpm</span><span>yarn</span><span>bun</span></span>
+            <span class="gotipe-code-copy"><svg class="gt-icon" aria-hidden="true"><use href="#i-copy" /></svg></span>
+          </div>
+          <pre class="gotipe-code-block-scroll"><span class="gotipe-code-lines" aria-hidden="true">1</span><code>npm install @gotipe/core</code></pre>
+        </div>
+
+        <h2>Usage</h2>
+        <p>Tables are part of the default preset. Insert one with a command:</p>
+        <div class="gotipe-code-block">
+          <div class="gotipe-code-block-header">
+            <span>editor.ts</span>
+            <span class="gotipe-code-copy"><svg class="gt-icon" aria-hidden="true"><use href="#i-copy" /></svg></span>
+          </div>
+          <pre class="gotipe-code-block-scroll"><span class="gotipe-code-lines" aria-hidden="true">1
+2
+3
+4
+5</span><code><span class="tk-key">import</span> <span class="tk-pun">{</span> createEditor <span class="tk-pun">}</span> <span class="tk-key">from</span> <span class="tk-str">"@gotipe/core"</span><span class="tk-pun">;</span>
+<span class="tk-key">import</span> <span class="tk-pun">{</span> DefaultPreset <span class="tk-pun">}</span> <span class="tk-key">from</span> <span class="tk-str">"@gotipe/core/presets"</span><span class="tk-pun">;</span>
+
+<span class="tk-key">const</span> editor <span class="tk-pun">=</span> <span class="tk-key">await</span> createEditor<span class="tk-pun">({</span> extensions<span class="tk-pun">: [</span>DefaultPreset<span class="tk-pun">] });</span>
+editor<span class="tk-pun">.</span>chain<span class="tk-pun">().</span>insertTable<span class="tk-pun">({</span> rows<span class="tk-pun">:</span> <span class="tk-num">3</span><span class="tk-pun">,</span> cols<span class="tk-pun">:</span> <span class="tk-num">3</span><span class="tk-pun">,</span> withHeader<span class="tk-pun">:</span> <span class="tk-key">true</span> <span class="tk-pun">}).</span>run<span class="tk-pun">();</span></code></pre>
+        </div>
+
+        <h2>Commands</h2>
+        <div class="gotipe-table-block">
+          <div class="gotipe-table-wrap">
+            <table class="gotipe-table">
+              <thead><tr><th>Command</th><th>Description</th></tr></thead>
+              <tbody>
+                <tr><td class="is-code">insertTable</td><td>Inserts a table after the current block.</td></tr>
+                <tr><td class="is-code">goToNextCell</td><td>Moves to the next cell; Tab.</td></tr>
+                <tr><td class="is-code">goToPrevCell</td><td>Moves to the previous cell; Shift+Tab.</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div class="gotipe-callout" data-variant="info">
+          <span class="gotipe-callout-icon"><svg class="gt-icon" aria-hidden="true"><use href="#i-info" /></svg></span>
+          <div class="gotipe-callout-content">
+            <p>Merged cells are kept, but a table with merged cells takes no row or column edits.</p>
+          </div>
+        </div>
+      </div>
+      <nav class="site-pager" aria-label="Pages">
+        <a><small>Previous</small>Code block</a>
+        <a class="is-next"><small>Next</small>Media</a>
+      </nav>
+    </article>
+  </main>
+
+  <aside class="site-toc">
+    <nav class="gotipe-outline" aria-label="On this page">
+      <p class="gotipe-outline-title">On this page</p>
+      <a class="is-current">Try it</a>
+      <a>Install</a>
+      <a>Usage</a>
+      <a>Commands</a>
+      <a data-level="2">Editing rows and columns</a>
+      <a>Keyboard</a>
+      <a>Markdown</a>
+      <a>Limits</a>
+    </nav>
+  </aside>
+</div>
+  </div>
+</div>
+</section>
+  <section class="at-stage" data-w="1024">
+<p class="at-stage-label">поиск · 1024</p>
+<div class="at-frame gotipe-root" data-gt-view="docs" data-frame="docs-search" data-w="1024" data-h="720">
+<div class="site" lang="en">
+    <header class="site-head site-docs-head">
+  <div class="site-head-in">
+    <a class="site-brand"><svg class="site-logo" aria-hidden="true"><use href="#i-logo" /></svg>GoTipe <small>Docs</small></a>
+    <span class="site-version">0.1</span>
+    <span class="site-search"><svg class="gt-icon" aria-hidden="true"><use href="#i-search" /></svg>Search docs<span class="gotipe-kbd">⌘K</span></span>
+    <div class="site-head-end">
+      <span class="gotipe-button is-quiet is-wide">Playground</span>
+      <span class="gotipe-button is-quiet is-wide">GitHub<svg class="gt-icon" aria-hidden="true"><use href="#i-external" /></svg></span>
+      <span class="gotipe-button is-quiet is-wide" aria-label="Dark theme"><svg class="gt-icon" aria-hidden="true"><use href="#i-moon" /></svg></span>
+      <span class="gotipe-button is-quiet site-search-button" aria-label="Search"><svg class="gt-icon" aria-hidden="true"><use href="#i-search" /></svg></span>
+      <span class="gotipe-button is-quiet site-menu-button" aria-label="Menu"><svg class="gt-icon" aria-hidden="true"><use href="#i-menu" /></svg></span>
+    </div>
+  </div>
+</header>
+<div class="site-docs-body">
+  <nav class="site-side" aria-label="Documentation">
+    <div class="site-side-group">
+      <p class="site-side-title">Getting started</p>
+      <a>Introduction</a><a>Installation</a><a>Quick start</a><a>Engines</a>
+    </div>
+    <div class="site-side-group">
+      <p class="site-side-title">Core concepts</p>
+      <a>Document model</a><a>Transactions</a><a>Commands</a><a>Events</a><a>Extensions</a><a>Content formats</a><a>Host</a>
+    </div>
+    <div class="site-side-group">
+      <p class="site-side-title">Extensions</p>
+      <a>Overview</a><a>Text blocks</a><a>Lists</a><a>Code block</a><a class="is-current" aria-current="page">Tables</a><a>Media</a><a>Math</a><a>Marks</a><a>Behaviors</a>
+    </div>
+    <div class="site-side-group">
+      <p class="site-side-title">Editor UI<span class="site-badge is-commercial">Commercial</span></p>
+      <a>Block editor</a><a>Page editor</a><a>Menus</a><a>Theming</a><a>i18n</a><a>Keyboard</a>
+    </div>
+    <div class="site-side-group">
+      <a class="site-side-title is-folded">Frameworks<svg class="gt-icon" aria-hidden="true"><use href="#i-chevron-right" /></svg></a>
+      <a class="site-side-title is-folded">Collaboration<svg class="gt-icon" aria-hidden="true"><use href="#i-chevron-right" /></svg></a>
+      <a class="site-side-title is-folded">Review<svg class="gt-icon" aria-hidden="true"><use href="#i-chevron-right" /></svg></a>
+      <a class="site-side-title is-folded">AI<svg class="gt-icon" aria-hidden="true"><use href="#i-chevron-right" /></svg></a>
+      <a class="site-side-title is-folded">Import and export<svg class="gt-icon" aria-hidden="true"><use href="#i-chevron-right" /></svg></a>
+      <a class="site-side-title is-folded">Cloud<svg class="gt-icon" aria-hidden="true"><use href="#i-chevron-right" /></svg></a>
+      <a class="site-side-title is-folded">Resources<svg class="gt-icon" aria-hidden="true"><use href="#i-chevron-right" /></svg></a>
+    </div>
+  </nav>
+
+  <main class="site-docs-main">
+    <article class="gotipe-page">
+      <p class="site-crumbs">Extensions<svg class="gt-icon" aria-hidden="true"><use href="#i-chevron-right" /></svg>Tables</p>
+      <h1 class="gotipe-page-title">Tables</h1>
+      <p class="site-doc-lede">Header rows, column widths, alignment and resizable columns, with every edit undone in one step.</p>
+      <div class="site-doc-meta">
+        <span class="site-badge">@gotipe/core</span>
+        <span class="site-badge">MIT</span>
+        <span class="gotipe-button is-quiet"><svg class="gt-icon" aria-hidden="true"><use href="#i-copy" /></svg>Copy Markdown</span>
+        <span class="gotipe-button is-quiet"><svg class="gt-icon" aria-hidden="true"><use href="#i-external" /></svg>Edit on GitHub</span>
+      </div>
+      <div class="gotipe-doc">
+        <h2 class="has-anchor"><span class="gotipe-heading-anchor" aria-hidden="true">#</span>Try it</h2>
+        <div class="site-demo">
+          <div class="site-demo-bar"><span>Live editor · type, Tab between cells</span></div>
+          <article class="gotipe-page is-slice">
+            <div class="gotipe-doc">
+              <div class="gotipe-table-block">
+                <div class="gotipe-table-wrap">
+                  <table class="gotipe-table">
+                    <thead>
+                      <tr><th>Platform</th><th class="is-number">Queued</th><th>Encrypted</th></tr>
+                    </thead>
+                    <tbody>
+                      <tr><td>Web</td><td class="is-number">12</td><td>yes</td></tr>
+                      <tr><td>iOS</td><td class="is-number">3</td><td>yes</td></tr>
+                      <tr><td>Android</td><td class="is-number">0</td><td>no</td></tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </article>
+        </div>
+
+        <h2>Install</h2>
+        <div class="gotipe-code-block">
+          <div class="gotipe-code-block-header">
+            <span class="gotipe-seg"><span class="is-on">npm</span><span>pnpm</span><span>yarn</span><span>bun</span></span>
+            <span class="gotipe-code-copy"><svg class="gt-icon" aria-hidden="true"><use href="#i-copy" /></svg></span>
+          </div>
+          <pre class="gotipe-code-block-scroll"><span class="gotipe-code-lines" aria-hidden="true">1</span><code>npm install @gotipe/core</code></pre>
+        </div>
+
+        <h2>Usage</h2>
+        <p>Tables are part of the default preset. Insert one with a command:</p>
+        <div class="gotipe-code-block">
+          <div class="gotipe-code-block-header">
+            <span>editor.ts</span>
+            <span class="gotipe-code-copy"><svg class="gt-icon" aria-hidden="true"><use href="#i-copy" /></svg></span>
+          </div>
+          <pre class="gotipe-code-block-scroll"><span class="gotipe-code-lines" aria-hidden="true">1
+2
+3
+4
+5</span><code><span class="tk-key">import</span> <span class="tk-pun">{</span> createEditor <span class="tk-pun">}</span> <span class="tk-key">from</span> <span class="tk-str">"@gotipe/core"</span><span class="tk-pun">;</span>
+<span class="tk-key">import</span> <span class="tk-pun">{</span> DefaultPreset <span class="tk-pun">}</span> <span class="tk-key">from</span> <span class="tk-str">"@gotipe/core/presets"</span><span class="tk-pun">;</span>
+
+<span class="tk-key">const</span> editor <span class="tk-pun">=</span> <span class="tk-key">await</span> createEditor<span class="tk-pun">({</span> extensions<span class="tk-pun">: [</span>DefaultPreset<span class="tk-pun">] });</span>
+editor<span class="tk-pun">.</span>chain<span class="tk-pun">().</span>insertTable<span class="tk-pun">({</span> rows<span class="tk-pun">:</span> <span class="tk-num">3</span><span class="tk-pun">,</span> cols<span class="tk-pun">:</span> <span class="tk-num">3</span><span class="tk-pun">,</span> withHeader<span class="tk-pun">:</span> <span class="tk-key">true</span> <span class="tk-pun">}).</span>run<span class="tk-pun">();</span></code></pre>
+        </div>
+
+        <h2>Commands</h2>
+        <div class="gotipe-table-block">
+          <div class="gotipe-table-wrap">
+            <table class="gotipe-table">
+              <thead><tr><th>Command</th><th>Description</th></tr></thead>
+              <tbody>
+                <tr><td class="is-code">insertTable</td><td>Inserts a table after the current block.</td></tr>
+                <tr><td class="is-code">goToNextCell</td><td>Moves to the next cell; Tab.</td></tr>
+                <tr><td class="is-code">goToPrevCell</td><td>Moves to the previous cell; Shift+Tab.</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div class="gotipe-callout" data-variant="info">
+          <span class="gotipe-callout-icon"><svg class="gt-icon" aria-hidden="true"><use href="#i-info" /></svg></span>
+          <div class="gotipe-callout-content">
+            <p>Merged cells are kept, but a table with merged cells takes no row or column edits.</p>
+          </div>
+        </div>
+      </div>
+      <nav class="site-pager" aria-label="Pages">
+        <a><small>Previous</small>Code block</a>
+        <a class="is-next"><small>Next</small>Media</a>
+      </nav>
+    </article>
+  </main>
+
+  <aside class="site-toc">
+    <nav class="gotipe-outline" aria-label="On this page">
+      <p class="gotipe-outline-title">On this page</p>
+      <a class="is-current">Try it</a>
+      <a>Install</a>
+      <a>Usage</a>
+      <a>Commands</a>
+      <a data-level="2">Editing rows and columns</a>
+      <a>Keyboard</a>
+      <a>Markdown</a>
+      <a>Limits</a>
+    </nav>
+  </aside>
+</div>
+    <div class="site-scrim">
+      <div class="site-dialog" role="dialog" aria-label="Search the documentation">
+        <div class="site-dialog-input">
+          <svg class="gt-icon" aria-hidden="true"><use href="#i-search" /></svg>table<span class="gotipe-caret"></span>
+          <span class="gotipe-kbd">esc</span>
+        </div>
+        <div class="site-results">
+          <p class="site-results-title">Extensions</p>
+          <div class="site-result is-active">
+            <svg class="gt-icon" aria-hidden="true"><use href="#i-table" /></svg>
+            <span><mark>Table</mark>s<small>Header rows, column widths, alignment</small></span>
+          </div>
+          <div class="site-result">
+            <svg class="gt-icon" aria-hidden="true"><use href="#i-hash" /></svg>
+            <span>Markdown<small>Tables · GFM pipes and alignment</small></span>
+          </div>
+          <p class="site-results-title">Core concepts</p>
+          <div class="site-result">
+            <svg class="gt-icon" aria-hidden="true"><use href="#i-hash" /></svg>
+            <span>edit<mark>Table</mark><small>Commands · insert and delete rows and columns</small></span>
+          </div>
+          <p class="site-results-title">Editor UI</p>
+          <div class="site-result">
+            <svg class="gt-icon" aria-hidden="true"><use href="#i-hash" /></svg>
+            <span><mark>Table</mark> controls<small>Menus · column types, add bars, resize</small></span>
+          </div>
+        </div>
+        <div class="site-dialog-foot">
+          <span><span class="gotipe-kbd">↑</span> <span class="gotipe-kbd">↓</span> move</span>
+          <span><span class="gotipe-kbd">↵</span> open</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</section>
+  <section class="at-stage" data-w="375">
+<p class="at-stage-label">страница на телефоне · 375</p>
+<div class="at-frame gotipe-root" data-gt-view="docs" data-frame="docs-phone" data-w="375" data-h="900">
+<div class="site" lang="en">
+    <header class="site-head site-docs-head">
+  <div class="site-head-in">
+    <a class="site-brand"><svg class="site-logo" aria-hidden="true"><use href="#i-logo" /></svg>GoTipe <small>Docs</small></a>
+    <span class="site-version">0.1</span>
+    <span class="site-search"><svg class="gt-icon" aria-hidden="true"><use href="#i-search" /></svg>Search docs<span class="gotipe-kbd">⌘K</span></span>
+    <div class="site-head-end">
+      <span class="gotipe-button is-quiet is-wide">Playground</span>
+      <span class="gotipe-button is-quiet is-wide">GitHub<svg class="gt-icon" aria-hidden="true"><use href="#i-external" /></svg></span>
+      <span class="gotipe-button is-quiet is-wide" aria-label="Dark theme"><svg class="gt-icon" aria-hidden="true"><use href="#i-moon" /></svg></span>
+      <span class="gotipe-button is-quiet site-search-button" aria-label="Search"><svg class="gt-icon" aria-hidden="true"><use href="#i-search" /></svg></span>
+      <span class="gotipe-button is-quiet site-menu-button" aria-label="Menu"><svg class="gt-icon" aria-hidden="true"><use href="#i-menu" /></svg></span>
+    </div>
+  </div>
+</header>
+<div class="site-docs-body">
+  <nav class="site-side" aria-label="Documentation">
+    <div class="site-side-group">
+      <p class="site-side-title">Getting started</p>
+      <a>Introduction</a><a>Installation</a><a>Quick start</a><a>Engines</a>
+    </div>
+    <div class="site-side-group">
+      <p class="site-side-title">Core concepts</p>
+      <a>Document model</a><a>Transactions</a><a>Commands</a><a>Events</a><a>Extensions</a><a>Content formats</a><a>Host</a>
+    </div>
+    <div class="site-side-group">
+      <p class="site-side-title">Extensions</p>
+      <a>Overview</a><a>Text blocks</a><a>Lists</a><a>Code block</a><a class="is-current" aria-current="page">Tables</a><a>Media</a><a>Math</a><a>Marks</a><a>Behaviors</a>
+    </div>
+    <div class="site-side-group">
+      <p class="site-side-title">Editor UI<span class="site-badge is-commercial">Commercial</span></p>
+      <a>Block editor</a><a>Page editor</a><a>Menus</a><a>Theming</a><a>i18n</a><a>Keyboard</a>
+    </div>
+    <div class="site-side-group">
+      <a class="site-side-title is-folded">Frameworks<svg class="gt-icon" aria-hidden="true"><use href="#i-chevron-right" /></svg></a>
+      <a class="site-side-title is-folded">Collaboration<svg class="gt-icon" aria-hidden="true"><use href="#i-chevron-right" /></svg></a>
+      <a class="site-side-title is-folded">Review<svg class="gt-icon" aria-hidden="true"><use href="#i-chevron-right" /></svg></a>
+      <a class="site-side-title is-folded">AI<svg class="gt-icon" aria-hidden="true"><use href="#i-chevron-right" /></svg></a>
+      <a class="site-side-title is-folded">Import and export<svg class="gt-icon" aria-hidden="true"><use href="#i-chevron-right" /></svg></a>
+      <a class="site-side-title is-folded">Cloud<svg class="gt-icon" aria-hidden="true"><use href="#i-chevron-right" /></svg></a>
+      <a class="site-side-title is-folded">Resources<svg class="gt-icon" aria-hidden="true"><use href="#i-chevron-right" /></svg></a>
+    </div>
+  </nav>
+
+  <main class="site-docs-main">
+    <article class="gotipe-page">
+      <p class="site-crumbs">Extensions<svg class="gt-icon" aria-hidden="true"><use href="#i-chevron-right" /></svg>Tables</p>
+      <h1 class="gotipe-page-title">Tables</h1>
+      <p class="site-doc-lede">Header rows, column widths, alignment and resizable columns, with every edit undone in one step.</p>
+      <div class="site-doc-meta">
+        <span class="site-badge">@gotipe/core</span>
+        <span class="site-badge">MIT</span>
+        <span class="gotipe-button is-quiet"><svg class="gt-icon" aria-hidden="true"><use href="#i-copy" /></svg>Copy Markdown</span>
+        <span class="gotipe-button is-quiet"><svg class="gt-icon" aria-hidden="true"><use href="#i-external" /></svg>Edit on GitHub</span>
+      </div>
+      <div class="gotipe-doc">
+        <h2 class="has-anchor"><span class="gotipe-heading-anchor" aria-hidden="true">#</span>Try it</h2>
+        <div class="site-demo">
+          <div class="site-demo-bar"><span>Live editor · type, Tab between cells</span></div>
+          <article class="gotipe-page is-slice">
+            <div class="gotipe-doc">
+              <div class="gotipe-table-block">
+                <div class="gotipe-table-wrap">
+                  <table class="gotipe-table">
+                    <thead>
+                      <tr><th>Platform</th><th class="is-number">Queued</th><th>Encrypted</th></tr>
+                    </thead>
+                    <tbody>
+                      <tr><td>Web</td><td class="is-number">12</td><td>yes</td></tr>
+                      <tr><td>iOS</td><td class="is-number">3</td><td>yes</td></tr>
+                      <tr><td>Android</td><td class="is-number">0</td><td>no</td></tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </article>
+        </div>
+
+        <h2>Install</h2>
+        <div class="gotipe-code-block">
+          <div class="gotipe-code-block-header">
+            <span class="gotipe-seg"><span class="is-on">npm</span><span>pnpm</span><span>yarn</span><span>bun</span></span>
+            <span class="gotipe-code-copy"><svg class="gt-icon" aria-hidden="true"><use href="#i-copy" /></svg></span>
+          </div>
+          <pre class="gotipe-code-block-scroll"><span class="gotipe-code-lines" aria-hidden="true">1</span><code>npm install @gotipe/core</code></pre>
+        </div>
+
+        <h2>Usage</h2>
+        <p>Tables are part of the default preset. Insert one with a command:</p>
+        <div class="gotipe-code-block">
+          <div class="gotipe-code-block-header">
+            <span>editor.ts</span>
+            <span class="gotipe-code-copy"><svg class="gt-icon" aria-hidden="true"><use href="#i-copy" /></svg></span>
+          </div>
+          <pre class="gotipe-code-block-scroll"><span class="gotipe-code-lines" aria-hidden="true">1
+2
+3
+4
+5</span><code><span class="tk-key">import</span> <span class="tk-pun">{</span> createEditor <span class="tk-pun">}</span> <span class="tk-key">from</span> <span class="tk-str">"@gotipe/core"</span><span class="tk-pun">;</span>
+<span class="tk-key">import</span> <span class="tk-pun">{</span> DefaultPreset <span class="tk-pun">}</span> <span class="tk-key">from</span> <span class="tk-str">"@gotipe/core/presets"</span><span class="tk-pun">;</span>
+
+<span class="tk-key">const</span> editor <span class="tk-pun">=</span> <span class="tk-key">await</span> createEditor<span class="tk-pun">({</span> extensions<span class="tk-pun">: [</span>DefaultPreset<span class="tk-pun">] });</span>
+editor<span class="tk-pun">.</span>chain<span class="tk-pun">().</span>insertTable<span class="tk-pun">({</span> rows<span class="tk-pun">:</span> <span class="tk-num">3</span><span class="tk-pun">,</span> cols<span class="tk-pun">:</span> <span class="tk-num">3</span><span class="tk-pun">,</span> withHeader<span class="tk-pun">:</span> <span class="tk-key">true</span> <span class="tk-pun">}).</span>run<span class="tk-pun">();</span></code></pre>
+        </div>
+
+        <h2>Commands</h2>
+        <div class="gotipe-table-block">
+          <div class="gotipe-table-wrap">
+            <table class="gotipe-table">
+              <thead><tr><th>Command</th><th>Description</th></tr></thead>
+              <tbody>
+                <tr><td class="is-code">insertTable</td><td>Inserts a table after the current block.</td></tr>
+                <tr><td class="is-code">goToNextCell</td><td>Moves to the next cell; Tab.</td></tr>
+                <tr><td class="is-code">goToPrevCell</td><td>Moves to the previous cell; Shift+Tab.</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div class="gotipe-callout" data-variant="info">
+          <span class="gotipe-callout-icon"><svg class="gt-icon" aria-hidden="true"><use href="#i-info" /></svg></span>
+          <div class="gotipe-callout-content">
+            <p>Merged cells are kept, but a table with merged cells takes no row or column edits.</p>
+          </div>
+        </div>
+      </div>
+      <nav class="site-pager" aria-label="Pages">
+        <a><small>Previous</small>Code block</a>
+        <a class="is-next"><small>Next</small>Media</a>
+      </nav>
+    </article>
+  </main>
+
+  <aside class="site-toc">
+    <nav class="gotipe-outline" aria-label="On this page">
+      <p class="gotipe-outline-title">On this page</p>
+      <a class="is-current">Try it</a>
+      <a>Install</a>
+      <a>Usage</a>
+      <a>Commands</a>
+      <a data-level="2">Editing rows and columns</a>
+      <a>Keyboard</a>
+      <a>Markdown</a>
+      <a>Limits</a>
+    </nav>
+  </aside>
+</div>
   </div>
 </div>
 </section>

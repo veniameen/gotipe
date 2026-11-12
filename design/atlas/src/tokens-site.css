@@ -1,0 +1,152 @@
+/* Site tokens: the landing and the documentation of GoTipe. The site wears the library's palette
+   (--gt-*), so light and dark come for free; here live only its sizes and how its columns fold on a
+   narrow screen. A frame is a container, so the folds are container queries. */
+
+:root {
+  /* the page */
+  --site-max: 1160px;
+  --site-docs-max: 1400px;
+  --site-pad-x: 40px;
+  --site-head-h: 56px;
+  --site-logo: 24px;
+  --site-hero-top: 88px;
+  --site-hero-gap: 56px;
+  --site-section-y: 104px;
+  --site-section-gap: 48px;
+  --site-gap-s: 8px;
+  --site-gap: 16px;
+  --site-gap-l: 24px;
+  --site-gap-xl: 32px;
+  --site-head-max: 760px;
+  --site-lede-max: 540px;
+
+  /* type: the editor's family, only larger at the top of the page */
+  --site-hero-size: 56px;
+  --site-hero-leading: 60px;
+  --site-hero-tracking: -0.025em;
+  --site-h2-size: 36px;
+  --site-h2-leading: 42px;
+  --site-h2-tracking: -0.02em;
+  --site-h3-size: 16px;
+  --site-h3-leading: 24px;
+  --site-lede-size: 18px;
+  --site-lede-leading: 28px;
+  --site-text-size: 15px;
+  --site-text-leading: 24px;
+  --site-small-size: 13px;
+  --site-small-leading: 20px;
+  --site-eyebrow-size: 12px;
+  --site-eyebrow-leading: 16px;
+  --site-eyebrow-pad: 3px 10px;
+  --site-fact-size: 28px;
+  --site-fact-leading: 34px;
+
+  /* controls of the site: a larger call to action, the install line, badges */
+  --site-cta-h: 40px;
+  --site-cta-pad: 0 16px;
+  --site-install-h: 40px;
+  --site-install-pad: 0 4px 0 14px;
+  --site-badge-pad: 1px 6px;
+  --site-card-pad: 20px;
+  --site-card-icon: 32px;
+  --site-demo-bar-h: 40px;
+  --site-demo-bar-pad: 0 12px;
+  --site-band-pad: 56px;
+  --site-demo-pad: 20px 28px 28px;
+  --site-demo-top: 64px;
+
+  /* columns that fold */
+  --site-hero-cols: minmax(0, 1fr) minmax(0, 1.08fr);
+  --site-cols-4: 4;
+  --site-cols-3: 3;
+  --site-cols-2: 2;
+  --site-steps-cols: minmax(0, 0.8fr) minmax(0, 1.2fr);
+  --site-foot-cols: minmax(0, 1.4fr) repeat(3, minmax(0, 1fr));
+  --site-nav-display: flex;
+  --site-menu-display: none;
+  --site-wide-display: inline-flex;
+  --site-search-button-display: none;
+
+  /* the documentation: navigation, page, outline */
+  --site-side-w: 232px;
+  --site-docs-gap: 48px;
+  --site-side-display: block;
+  --site-toc-display: block;
+  --site-side-pad: 28px 0 48px;
+  --site-side-item-pad: 4px 10px;
+  --site-side-group-gap: 20px;
+  --site-search-w: 240px;
+  --site-search-h: 32px;
+  --site-search-pad: 0 4px 0 10px;
+  --site-doc-top: 40px;
+  --site-pager-pad: 12px 16px;
+  --site-dialog-w: 600px;
+  --site-dialog-top: 72px;
+  --site-dialog-input-h: 48px;
+  --site-result-pad: 8px 12px;
+}
+
+/* the docs columns name the docs view's own widths, so they are set inside the view, not at the root */
+.gotipe-root > * {
+  --site-docs-cols: var(--site-side-w) minmax(0, var(--gt-page-width)) var(--gt-outline-width);
+}
+
+/* ---- a laptop: the outline of the page steps away first ---- */
+@container (max-width: 1279px) {
+  .gotipe-root > * {
+    --site-docs-cols: var(--site-side-w) minmax(0, 1fr);
+    --site-toc-display: none;
+  }
+}
+
+/* ---- a tablet: one column, the navigation goes behind the menu button ---- */
+@container (max-width: 1023px) {
+  .gotipe-root > * {
+    --site-pad-x: 32px;
+    --site-hero-cols: minmax(0, 1fr);
+    --site-hero-top: 64px;
+    --site-cols-4: 2;
+    --site-cols-3: 2;
+    --site-steps-cols: minmax(0, 1fr);
+    --site-foot-cols: repeat(2, minmax(0, 1fr));
+    --site-nav-display: none;
+    --site-menu-display: inline-flex;
+    --site-docs-cols: minmax(0, 1fr);
+    --site-side-display: none;
+  }
+}
+
+/* ---- a phone ---- */
+@container (max-width: 640px) {
+  .gotipe-root > * {
+    --site-pad-x: 20px;
+    --site-hero-top: 40px;
+    --site-hero-gap: 40px;
+    --site-section-y: 72px;
+    --site-section-gap: 32px;
+    --site-hero-size: 38px;
+    --site-hero-leading: 42px;
+    --site-h2-size: 28px;
+    --site-h2-leading: 34px;
+    --site-lede-size: 16px;
+    --site-lede-leading: 26px;
+    --site-fact-size: 22px;
+    --site-fact-leading: 28px;
+    --site-cols-3: 1;
+    --site-cols-2: 1;
+    --site-band-pad: 32px;
+    --site-wide-display: none;
+    --site-search-button-display: inline-flex;
+    --site-doc-top: 24px;
+    --site-demo-pad: 16px 20px 20px;
+    --site-demo-top: 56px;
+  }
+}
+
+/* the dim behind the search dialog: the page stays readable under it */
+[data-theme="light"] {
+  --site-scrim: rgb(35 35 34 / 0.2);
+}
+[data-theme="dark"] {
+  --site-scrim: rgb(0 0 0 / 0.5);
+}

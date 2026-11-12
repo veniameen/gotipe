@@ -1,0 +1,60 @@
+<figure class="at-figure" id="f21" data-section="Сайт">
+  <figcaption class="at-figure-head">
+    <span class="at-num">21</span>
+    <h2 class="at-figure-title">Документация</h2>
+    <p class="at-caption">
+      Слева разделы, в середине страница в виде docs — это документ GoTipe, справа оглавление.
+      Страница начинается с живого примера, дальше установка, код, команды и ограничения;
+      у каждой — «Copy Markdown» и правка на GitHub. Поиск по ⌘K. На ноутбуке уходит
+      оглавление, на планшете и телефоне разделы прячутся за кнопку меню.
+    </p>
+  </figcaption>
+  <!-- @frame frame=docs-page view=docs w=1440 label="страница расширения" -->
+  <div class="site" lang="en">
+    <!-- @include content/site/docs-page.html -->
+  </div>
+  <!-- @end -->
+  <!-- @frame frame=docs-search view=docs w=1024 h=720 label="поиск" -->
+  <div class="site" lang="en">
+    <!-- @include content/site/docs-page.html -->
+    <div class="site-scrim">
+      <div class="site-dialog" role="dialog" aria-label="Search the documentation">
+        <div class="site-dialog-input">
+          <svg class="gt-icon" aria-hidden="true"><use href="#i-search" /></svg>table<span class="gotipe-caret"></span>
+          <span class="gotipe-kbd">esc</span>
+        </div>
+        <div class="site-results">
+          <p class="site-results-title">Extensions</p>
+          <div class="site-result is-active">
+            <svg class="gt-icon" aria-hidden="true"><use href="#i-table" /></svg>
+            <span><mark>Table</mark>s<small>Header rows, column widths, alignment</small></span>
+          </div>
+          <div class="site-result">
+            <svg class="gt-icon" aria-hidden="true"><use href="#i-hash" /></svg>
+            <span>Markdown<small>Tables · GFM pipes and alignment</small></span>
+          </div>
+          <p class="site-results-title">Core concepts</p>
+          <div class="site-result">
+            <svg class="gt-icon" aria-hidden="true"><use href="#i-hash" /></svg>
+            <span>edit<mark>Table</mark><small>Commands · insert and delete rows and columns</small></span>
+          </div>
+          <p class="site-results-title">Editor UI</p>
+          <div class="site-result">
+            <svg class="gt-icon" aria-hidden="true"><use href="#i-hash" /></svg>
+            <span><mark>Table</mark> controls<small>Menus · column types, add bars, resize</small></span>
+          </div>
+        </div>
+        <div class="site-dialog-foot">
+          <span><span class="gotipe-kbd">↑</span> <span class="gotipe-kbd">↓</span> move</span>
+          <span><span class="gotipe-kbd">↵</span> open</span>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- @end -->
+  <!-- @frame frame=docs-phone view=docs w=375 h=900 label="страница на телефоне" -->
+  <div class="site" lang="en">
+    <!-- @include content/site/docs-page.html -->
+  </div>
+  <!-- @end -->
+</figure>

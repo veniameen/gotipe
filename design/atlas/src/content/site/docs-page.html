@@ -1,0 +1,133 @@
+<!-- @include content/site/docs-head.html -->
+<div class="site-docs-body">
+  <nav class="site-side" aria-label="Documentation">
+    <div class="site-side-group">
+      <p class="site-side-title">Getting started</p>
+      <a>Introduction</a><a>Installation</a><a>Quick start</a><a>Engines</a>
+    </div>
+    <div class="site-side-group">
+      <p class="site-side-title">Core concepts</p>
+      <a>Document model</a><a>Transactions</a><a>Commands</a><a>Events</a><a>Extensions</a><a>Content formats</a><a>Host</a>
+    </div>
+    <div class="site-side-group">
+      <p class="site-side-title">Extensions</p>
+      <a>Overview</a><a>Text blocks</a><a>Lists</a><a>Code block</a><a class="is-current" aria-current="page">Tables</a><a>Media</a><a>Math</a><a>Marks</a><a>Behaviors</a>
+    </div>
+    <div class="site-side-group">
+      <p class="site-side-title">Editor UI<span class="site-badge is-commercial">Commercial</span></p>
+      <a>Block editor</a><a>Page editor</a><a>Menus</a><a>Theming</a><a>i18n</a><a>Keyboard</a>
+    </div>
+    <div class="site-side-group">
+      <a class="site-side-title is-folded">Frameworks<svg class="gt-icon" aria-hidden="true"><use href="#i-chevron-right" /></svg></a>
+      <a class="site-side-title is-folded">Collaboration<svg class="gt-icon" aria-hidden="true"><use href="#i-chevron-right" /></svg></a>
+      <a class="site-side-title is-folded">Review<svg class="gt-icon" aria-hidden="true"><use href="#i-chevron-right" /></svg></a>
+      <a class="site-side-title is-folded">AI<svg class="gt-icon" aria-hidden="true"><use href="#i-chevron-right" /></svg></a>
+      <a class="site-side-title is-folded">Import and export<svg class="gt-icon" aria-hidden="true"><use href="#i-chevron-right" /></svg></a>
+      <a class="site-side-title is-folded">Cloud<svg class="gt-icon" aria-hidden="true"><use href="#i-chevron-right" /></svg></a>
+      <a class="site-side-title is-folded">Resources<svg class="gt-icon" aria-hidden="true"><use href="#i-chevron-right" /></svg></a>
+    </div>
+  </nav>
+
+  <main class="site-docs-main">
+    <article class="gotipe-page">
+      <p class="site-crumbs">Extensions<svg class="gt-icon" aria-hidden="true"><use href="#i-chevron-right" /></svg>Tables</p>
+      <h1 class="gotipe-page-title">Tables</h1>
+      <p class="site-doc-lede">Header rows, column widths, alignment and resizable columns, with every edit undone in one step.</p>
+      <div class="site-doc-meta">
+        <span class="site-badge">@gotipe/core</span>
+        <span class="site-badge">MIT</span>
+        <span class="gotipe-button is-quiet"><svg class="gt-icon" aria-hidden="true"><use href="#i-copy" /></svg>Copy Markdown</span>
+        <span class="gotipe-button is-quiet"><svg class="gt-icon" aria-hidden="true"><use href="#i-external" /></svg>Edit on GitHub</span>
+      </div>
+      <div class="gotipe-doc">
+        <h2 class="has-anchor"><span class="gotipe-heading-anchor" aria-hidden="true">#</span>Try it</h2>
+        <div class="site-demo">
+          <div class="site-demo-bar"><span>Live editor · type, Tab between cells</span></div>
+          <article class="gotipe-page is-slice">
+            <div class="gotipe-doc">
+              <div class="gotipe-table-block">
+                <div class="gotipe-table-wrap">
+                  <table class="gotipe-table">
+                    <thead>
+                      <tr><th>Platform</th><th class="is-number">Queued</th><th>Encrypted</th></tr>
+                    </thead>
+                    <tbody>
+                      <tr><td>Web</td><td class="is-number">12</td><td>yes</td></tr>
+                      <tr><td>iOS</td><td class="is-number">3</td><td>yes</td></tr>
+                      <tr><td>Android</td><td class="is-number">0</td><td>no</td></tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </article>
+        </div>
+
+        <h2>Install</h2>
+        <div class="gotipe-code-block">
+          <div class="gotipe-code-block-header">
+            <span class="gotipe-seg"><span class="is-on">npm</span><span>pnpm</span><span>yarn</span><span>bun</span></span>
+            <span class="gotipe-code-copy"><svg class="gt-icon" aria-hidden="true"><use href="#i-copy" /></svg></span>
+          </div>
+          <pre class="gotipe-code-block-scroll"><span class="gotipe-code-lines" aria-hidden="true">1</span><code>npm install @gotipe/core</code></pre>
+        </div>
+
+        <h2>Usage</h2>
+        <p>Tables are part of the default preset. Insert one with a command:</p>
+        <div class="gotipe-code-block">
+          <div class="gotipe-code-block-header">
+            <span>editor.ts</span>
+            <span class="gotipe-code-copy"><svg class="gt-icon" aria-hidden="true"><use href="#i-copy" /></svg></span>
+          </div>
+          <pre class="gotipe-code-block-scroll"><span class="gotipe-code-lines" aria-hidden="true">1
+2
+3
+4
+5</span><code><span class="tk-key">import</span> <span class="tk-pun">{</span> createEditor <span class="tk-pun">}</span> <span class="tk-key">from</span> <span class="tk-str">"@gotipe/core"</span><span class="tk-pun">;</span>
+<span class="tk-key">import</span> <span class="tk-pun">{</span> DefaultPreset <span class="tk-pun">}</span> <span class="tk-key">from</span> <span class="tk-str">"@gotipe/core/presets"</span><span class="tk-pun">;</span>
+
+<span class="tk-key">const</span> editor <span class="tk-pun">=</span> <span class="tk-key">await</span> createEditor<span class="tk-pun">({</span> extensions<span class="tk-pun">: [</span>DefaultPreset<span class="tk-pun">] });</span>
+editor<span class="tk-pun">.</span>chain<span class="tk-pun">().</span>insertTable<span class="tk-pun">({</span> rows<span class="tk-pun">:</span> <span class="tk-num">3</span><span class="tk-pun">,</span> cols<span class="tk-pun">:</span> <span class="tk-num">3</span><span class="tk-pun">,</span> withHeader<span class="tk-pun">:</span> <span class="tk-key">true</span> <span class="tk-pun">}).</span>run<span class="tk-pun">();</span></code></pre>
+        </div>
+
+        <h2>Commands</h2>
+        <div class="gotipe-table-block">
+          <div class="gotipe-table-wrap">
+            <table class="gotipe-table">
+              <thead><tr><th>Command</th><th>Description</th></tr></thead>
+              <tbody>
+                <tr><td class="is-code">insertTable</td><td>Inserts a table after the current block.</td></tr>
+                <tr><td class="is-code">goToNextCell</td><td>Moves to the next cell; Tab.</td></tr>
+                <tr><td class="is-code">goToPrevCell</td><td>Moves to the previous cell; Shift+Tab.</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div class="gotipe-callout" data-variant="info">
+          <span class="gotipe-callout-icon"><svg class="gt-icon" aria-hidden="true"><use href="#i-info" /></svg></span>
+          <div class="gotipe-callout-content">
+            <p>Merged cells are kept, but a table with merged cells takes no row or column edits.</p>
+          </div>
+        </div>
+      </div>
+      <nav class="site-pager" aria-label="Pages">
+        <a><small>Previous</small>Code block</a>
+        <a class="is-next"><small>Next</small>Media</a>
+      </nav>
+    </article>
+  </main>
+
+  <aside class="site-toc">
+    <nav class="gotipe-outline" aria-label="On this page">
+      <p class="gotipe-outline-title">On this page</p>
+      <a class="is-current">Try it</a>
+      <a>Install</a>
+      <a>Usage</a>
+      <a>Commands</a>
+      <a data-level="2">Editing rows and columns</a>
+      <a>Keyboard</a>
+      <a>Markdown</a>
+      <a>Limits</a>
+    </nav>
+  </aside>
+</div>
