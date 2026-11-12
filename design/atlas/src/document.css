@@ -28,19 +28,25 @@
   > :where(
     .gotipe-callout,
     .gotipe-code-block,
-    .gotipe-table-wrap,
+    .gotipe-table-block,
     .gotipe-figure,
     .gotipe-quote,
-    .gotipe-toggle
+    .gotipe-toggle,
+    .gotipe-file,
+    .gotipe-embed,
+    .gotipe-math
   ),
 .gotipe-doc
   > :where(
     .gotipe-callout,
     .gotipe-code-block,
-    .gotipe-table-wrap,
+    .gotipe-table-block,
     .gotipe-figure,
     .gotipe-quote,
-    .gotipe-toggle
+    .gotipe-toggle,
+    .gotipe-file,
+    .gotipe-embed,
+    .gotipe-math
   )
   + * {
   margin-top: var(--gt-flow-block);

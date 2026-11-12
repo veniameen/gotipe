@@ -24,8 +24,9 @@ ul.gotipe-list > li::before {
   background: currentColor;
 }
 ul.gotipe-list ul.gotipe-list > li::before {
+  box-sizing: border-box;
+  border: var(--gt-check-ring) solid currentColor;
   background: transparent;
-  box-shadow: inset 0 0 0 var(--gt-check-ring) currentColor;
 }
 ol.gotipe-list {
   counter-reset: gotipe-ol;
@@ -59,13 +60,20 @@ ol.gotipe-list > li::before {
 .gotipe-check {
   display: grid;
   flex: none;
+  position: relative;
   place-items: center;
   width: var(--gt-check);
   height: var(--gt-check);
   margin-top: var(--gt-check-top);
+  box-sizing: border-box;
+  /* a border, not an inset shadow: engines round border widths to whole device pixels, so the
+     ring stays one line on 1x screens instead of a dark line and a pale one */
+  border: var(--gt-check-ring) solid var(--gt-line-control);
   border-radius: var(--gt-radius-check);
-  box-shadow: inset 0 0 0 var(--gt-check-ring) var(--gt-line-control);
   color: var(--gt-ink-text);
+}
+.gotipe-check.is-hover {
+  border-color: var(--gt-line-active);
 }
 .gotipe-check > .gt-icon {
   width: var(--gt-icon-check);
@@ -74,8 +82,8 @@ ol.gotipe-list > li::before {
   visibility: hidden;
 }
 .gotipe-todo-item[data-checked="true"] > .gotipe-check {
+  border-color: transparent;
   background: var(--gt-ink);
-  box-shadow: none;
 }
 .gotipe-todo-item[data-checked="true"] > .gotipe-check > .gt-icon {
   visibility: visible;
@@ -224,8 +232,59 @@ ol.gotipe-list > li::before {
 }
 
 /* ---- table: rules between rows, no frame, no columns drawn ---- */
+/* The block keeps room under the table for the bar that adds a row; the bar that adds a column
+   stands in the page margin. Both live outside the scrolling area, so a scrollbar never covers
+   them. A wide table scrolls; the edge with hidden columns fades. */
+.gotipe-table-block {
+  position: relative;
+  padding-bottom: calc(var(--gt-table-add) + var(--gt-table-add-gap));
+}
 .gotipe-table-wrap {
   overflow-x: auto;
+}
+.gotipe-table-wrap[data-more="right"] {
+  mask-image: linear-gradient(to left, transparent, currentColor var(--gt-table-fade));
+}
+.gotipe-table-wrap[data-more="both"] {
+  mask-image: linear-gradient(
+    to right,
+    transparent,
+    currentColor var(--gt-table-fade),
+    currentColor calc(100% - var(--gt-table-fade)),
+    transparent
+  );
+}
+.gotipe-table-add {
+  position: absolute;
+  display: grid;
+  place-items: center;
+  border-radius: var(--gt-radius-control);
+  background: var(--gt-fill-1);
+  color: var(--gt-text-3);
+  opacity: 0;
+}
+.gotipe-table-block.is-hovered > .gotipe-table-add {
+  opacity: 1;
+}
+.gotipe-table-add.is-column {
+  top: 0;
+  bottom: calc(var(--gt-table-add) + var(--gt-table-add-gap));
+  left: calc(100% + var(--gt-table-add-gap));
+  width: var(--gt-table-add);
+}
+.gotipe-table-add.is-row {
+  right: 0;
+  bottom: 0;
+  left: 0;
+  height: var(--gt-table-add);
+}
+.gotipe-table-add > .gt-icon {
+  width: var(--gt-icon-small);
+  height: var(--gt-icon-small);
+}
+.gotipe-table-add.is-hover {
+  background: var(--gt-fill-2);
+  color: var(--gt-text);
 }
 .gotipe-table {
   width: 100%;
@@ -280,4 +339,109 @@ ol.gotipe-list > li::before {
   height: var(--gt-hairline);
   border: 0;
   background: var(--gt-line-strong);
+}
+
+/* ---- file and embed: a sunken card; its actions appear under the pointer ---- */
+.gotipe-file,
+.gotipe-embed {
+  display: flex;
+  align-items: center;
+  gap: var(--gt-callout-gap);
+  padding: var(--gt-card-pad);
+  border-radius: var(--gt-radius-block);
+  background: var(--gt-sunken);
+  font-family: var(--gt-font-ui);
+  font-size: var(--gt-ui-size);
+  line-height: var(--gt-ui-leading);
+}
+.gotipe-card-icon {
+  display: inline-grid;
+  flex: none;
+  place-items: center;
+  width: var(--gt-field-h);
+  height: var(--gt-field-h);
+  border-radius: var(--gt-radius-control);
+  background: var(--gt-overlay);
+  box-shadow: var(--gt-shadow-card);
+  color: var(--gt-text-2);
+}
+.gotipe-card-main {
+  display: grid;
+  flex: 1;
+  min-width: 0;
+}
+.gotipe-card-title,
+.gotipe-card-meta {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.gotipe-card-title {
+  color: var(--gt-text);
+  font-weight: var(--gt-weight-medium);
+}
+.gotipe-card-meta {
+  color: var(--gt-text-2);
+  font-size: var(--gt-ui-small);
+  font-variant-numeric: tabular-nums;
+}
+.gotipe-card-actions {
+  position: relative;
+  display: flex;
+  flex: none;
+  gap: var(--gt-toolbar-gap);
+  opacity: 0;
+}
+.is-hovered > .gotipe-card-actions {
+  opacity: 1;
+}
+.gotipe-card-action {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: var(--gt-handle-w);
+  min-height: var(--gt-handle-h);
+  padding: var(--gt-tool-text-pad);
+  border-radius: var(--gt-radius-control);
+  color: var(--gt-text-2);
+  font-size: var(--gt-ui-small);
+}
+.gotipe-card-action.is-icon {
+  padding: 0;
+}
+.gotipe-card-action.is-hover {
+  background: var(--gt-fill-2);
+  color: var(--gt-text);
+}
+/* an embed without a link asks for one */
+.gotipe-embed-field {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  min-width: 0;
+  height: var(--gt-field-h);
+  padding: var(--gt-field-pad);
+  border-radius: var(--gt-radius-control);
+  background: var(--gt-page-bg);
+  box-shadow: inset 0 0 0 var(--gt-hairline) var(--gt-line-strong);
+  color: var(--gt-text-3);
+  white-space: nowrap;
+}
+
+/* ---- formula: TeX as it is typed, centred; a host may draw it instead ---- */
+.gotipe-math {
+  border-radius: var(--gt-radius-block);
+  background: var(--gt-sunken);
+}
+.gotipe-math-source {
+  margin: 0;
+  padding: var(--gt-code-pad);
+  overflow-x: auto;
+  font-family: var(--gt-font-mono);
+  font-size: var(--gt-code-size);
+  line-height: var(--gt-code-leading);
+  letter-spacing: normal;
+  text-align: center;
+  white-space: pre;
 }

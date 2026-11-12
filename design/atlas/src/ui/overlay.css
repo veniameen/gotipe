@@ -191,6 +191,11 @@
   top: calc(100% + var(--gt-overlay-gap));
   right: 0;
 }
+.gotipe-tooltip[data-place="start"] {
+  top: 50%;
+  right: calc(100% + var(--gt-overlay-gap));
+  transform: translateY(-50%);
+}
 .gotipe-tooltip[data-place="side"] {
   top: 50%;
   left: calc(100% + var(--gt-overlay-gap));

@@ -75,6 +75,9 @@
   --gt-cell-pad: 9px 12px;
   --gt-head-cell-pad: 8px 12px;
   --gt-cell-min: 132px;
+  --gt-table-add: 16px;
+  --gt-table-add-gap: 4px;
+  --gt-table-fade: 24px;
   --gt-quote-pad: 16px;
   --gt-figure-pad: 24px;
   --gt-caption-gap: 8px;
@@ -181,6 +184,7 @@
     --gt-page-pad-top: 40px;
     --gt-page-pad-x: 20px;
     --gt-page-pad-bottom: 64px;
+    --gt-table-add: 12px;
     --gt-title-size: 26px;
     --gt-title-leading: 32px;
     --gt-h1-size: 21px;

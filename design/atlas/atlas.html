@@ -38,6 +38,7 @@
   --gt-underline-offset: 0.2em;
   --gt-icon: 16px;
   --gt-icon-check: 12px;
+  --gt-icon-small: 12px;
   --gt-icon-stroke: 1.5;
   --gt-icon-stroke-check: 2;
 
@@ -335,6 +336,9 @@
   --gt-cell-pad: 9px 12px;
   --gt-head-cell-pad: 8px 12px;
   --gt-cell-min: 132px;
+  --gt-table-add: 16px;
+  --gt-table-add-gap: 4px;
+  --gt-table-fade: 24px;
   --gt-quote-pad: 16px;
   --gt-figure-pad: 24px;
   --gt-caption-gap: 8px;
@@ -441,6 +445,7 @@
     --gt-page-pad-top: 40px;
     --gt-page-pad-x: 20px;
     --gt-page-pad-bottom: 64px;
+    --gt-table-add: 12px;
     --gt-title-size: 26px;
     --gt-title-leading: 32px;
     --gt-h1-size: 21px;
@@ -842,19 +847,25 @@ body {
   > :where(
     .gotipe-callout,
     .gotipe-code-block,
-    .gotipe-table-wrap,
+    .gotipe-table-block,
     .gotipe-figure,
     .gotipe-quote,
-    .gotipe-toggle
+    .gotipe-toggle,
+    .gotipe-file,
+    .gotipe-embed,
+    .gotipe-math
   ),
 .gotipe-doc
   > :where(
     .gotipe-callout,
     .gotipe-code-block,
-    .gotipe-table-wrap,
+    .gotipe-table-block,
     .gotipe-figure,
     .gotipe-quote,
-    .gotipe-toggle
+    .gotipe-toggle,
+    .gotipe-file,
+    .gotipe-embed,
+    .gotipe-math
   )
   + * {
   margin-top: var(--gt-flow-block);
@@ -1074,8 +1085,9 @@ ul.gotipe-list > li::before {
   background: currentColor;
 }
 ul.gotipe-list ul.gotipe-list > li::before {
+  box-sizing: border-box;
+  border: var(--gt-check-ring) solid currentColor;
   background: transparent;
-  box-shadow: inset 0 0 0 var(--gt-check-ring) currentColor;
 }
 ol.gotipe-list {
   counter-reset: gotipe-ol;
@@ -1109,13 +1121,20 @@ ol.gotipe-list > li::before {
 .gotipe-check {
   display: grid;
   flex: none;
+  position: relative;
   place-items: center;
   width: var(--gt-check);
   height: var(--gt-check);
   margin-top: var(--gt-check-top);
+  box-sizing: border-box;
+  /* a border, not an inset shadow: engines round border widths to whole device pixels, so the
+     ring stays one line on 1x screens instead of a dark line and a pale one */
+  border: var(--gt-check-ring) solid var(--gt-line-control);
   border-radius: var(--gt-radius-check);
-  box-shadow: inset 0 0 0 var(--gt-check-ring) var(--gt-line-control);
   color: var(--gt-ink-text);
+}
+.gotipe-check.is-hover {
+  border-color: var(--gt-line-active);
 }
 .gotipe-check > .gt-icon {
   width: var(--gt-icon-check);
@@ -1124,8 +1143,8 @@ ol.gotipe-list > li::before {
   visibility: hidden;
 }
 .gotipe-todo-item[data-checked="true"] > .gotipe-check {
+  border-color: transparent;
   background: var(--gt-ink);
-  box-shadow: none;
 }
 .gotipe-todo-item[data-checked="true"] > .gotipe-check > .gt-icon {
   visibility: visible;
@@ -1274,8 +1293,59 @@ ol.gotipe-list > li::before {
 }
 
 /* ---- table: rules between rows, no frame, no columns drawn ---- */
+/* The block keeps room under the table for the bar that adds a row; the bar that adds a column
+   stands in the page margin. Both live outside the scrolling area, so a scrollbar never covers
+   them. A wide table scrolls; the edge with hidden columns fades. */
+.gotipe-table-block {
+  position: relative;
+  padding-bottom: calc(var(--gt-table-add) + var(--gt-table-add-gap));
+}
 .gotipe-table-wrap {
   overflow-x: auto;
+}
+.gotipe-table-wrap[data-more="right"] {
+  mask-image: linear-gradient(to left, transparent, currentColor var(--gt-table-fade));
+}
+.gotipe-table-wrap[data-more="both"] {
+  mask-image: linear-gradient(
+    to right,
+    transparent,
+    currentColor var(--gt-table-fade),
+    currentColor calc(100% - var(--gt-table-fade)),
+    transparent
+  );
+}
+.gotipe-table-add {
+  position: absolute;
+  display: grid;
+  place-items: center;
+  border-radius: var(--gt-radius-control);
+  background: var(--gt-fill-1);
+  color: var(--gt-text-3);
+  opacity: 0;
+}
+.gotipe-table-block.is-hovered > .gotipe-table-add {
+  opacity: 1;
+}
+.gotipe-table-add.is-column {
+  top: 0;
+  bottom: calc(var(--gt-table-add) + var(--gt-table-add-gap));
+  left: calc(100% + var(--gt-table-add-gap));
+  width: var(--gt-table-add);
+}
+.gotipe-table-add.is-row {
+  right: 0;
+  bottom: 0;
+  left: 0;
+  height: var(--gt-table-add);
+}
+.gotipe-table-add > .gt-icon {
+  width: var(--gt-icon-small);
+  height: var(--gt-icon-small);
+}
+.gotipe-table-add.is-hover {
+  background: var(--gt-fill-2);
+  color: var(--gt-text);
 }
 .gotipe-table {
   width: 100%;
@@ -1330,6 +1400,111 @@ ol.gotipe-list > li::before {
   height: var(--gt-hairline);
   border: 0;
   background: var(--gt-line-strong);
+}
+
+/* ---- file and embed: a sunken card; its actions appear under the pointer ---- */
+.gotipe-file,
+.gotipe-embed {
+  display: flex;
+  align-items: center;
+  gap: var(--gt-callout-gap);
+  padding: var(--gt-card-pad);
+  border-radius: var(--gt-radius-block);
+  background: var(--gt-sunken);
+  font-family: var(--gt-font-ui);
+  font-size: var(--gt-ui-size);
+  line-height: var(--gt-ui-leading);
+}
+.gotipe-card-icon {
+  display: inline-grid;
+  flex: none;
+  place-items: center;
+  width: var(--gt-field-h);
+  height: var(--gt-field-h);
+  border-radius: var(--gt-radius-control);
+  background: var(--gt-overlay);
+  box-shadow: var(--gt-shadow-card);
+  color: var(--gt-text-2);
+}
+.gotipe-card-main {
+  display: grid;
+  flex: 1;
+  min-width: 0;
+}
+.gotipe-card-title,
+.gotipe-card-meta {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.gotipe-card-title {
+  color: var(--gt-text);
+  font-weight: var(--gt-weight-medium);
+}
+.gotipe-card-meta {
+  color: var(--gt-text-2);
+  font-size: var(--gt-ui-small);
+  font-variant-numeric: tabular-nums;
+}
+.gotipe-card-actions {
+  position: relative;
+  display: flex;
+  flex: none;
+  gap: var(--gt-toolbar-gap);
+  opacity: 0;
+}
+.is-hovered > .gotipe-card-actions {
+  opacity: 1;
+}
+.gotipe-card-action {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: var(--gt-handle-w);
+  min-height: var(--gt-handle-h);
+  padding: var(--gt-tool-text-pad);
+  border-radius: var(--gt-radius-control);
+  color: var(--gt-text-2);
+  font-size: var(--gt-ui-small);
+}
+.gotipe-card-action.is-icon {
+  padding: 0;
+}
+.gotipe-card-action.is-hover {
+  background: var(--gt-fill-2);
+  color: var(--gt-text);
+}
+/* an embed without a link asks for one */
+.gotipe-embed-field {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  min-width: 0;
+  height: var(--gt-field-h);
+  padding: var(--gt-field-pad);
+  border-radius: var(--gt-radius-control);
+  background: var(--gt-page-bg);
+  box-shadow: inset 0 0 0 var(--gt-hairline) var(--gt-line-strong);
+  color: var(--gt-text-3);
+  white-space: nowrap;
+}
+
+/* ---- formula: TeX as it is typed, centred; a host may draw it instead ---- */
+.gotipe-math {
+  border-radius: var(--gt-radius-block);
+  background: var(--gt-sunken);
+}
+.gotipe-math-source {
+  margin: 0;
+  padding: var(--gt-code-pad);
+  overflow-x: auto;
+  font-family: var(--gt-font-mono);
+  font-size: var(--gt-code-size);
+  line-height: var(--gt-code-leading);
+  letter-spacing: normal;
+  text-align: center;
+  white-space: pre;
 }
 
 /* views/notion.css */
@@ -1664,6 +1839,11 @@ ol.gotipe-list > li::before {
   top: calc(100% + var(--gt-overlay-gap));
   right: 0;
 }
+.gotipe-tooltip[data-place="start"] {
+  top: 50%;
+  right: calc(100% + var(--gt-overlay-gap));
+  transform: translateY(-50%);
+}
 .gotipe-tooltip[data-place="side"] {
   top: 50%;
   left: calc(100% + var(--gt-overlay-gap));
@@ -1972,7 +2152,7 @@ ol.gotipe-list > li::before {
   right: var(--gt-resize-inset);
 }
 
-/* ---- table: the column handle in a hovered header cell, the bars that add a row or column ---- */
+/* ---- table: the column handle in a hovered header cell; the add bars are in blocks.css ---- */
 .gotipe-table th.is-hovered {
   position: relative;
   background: var(--gt-fill-1);
@@ -1997,27 +2177,6 @@ ol.gotipe-list > li::before {
 }
 .gotipe-table-wrap.is-open {
   overflow: visible;
-}
-.gotipe-table-adds {
-  display: flex;
-  gap: var(--gt-toolbar-gap);
-}
-.gotipe-table-adds > .gotipe-table-add:first-child {
-  flex: 1;
-}
-.gotipe-table-add {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--gt-toolbar-gap);
-  height: var(--gt-handle-h);
-  padding: var(--gt-tool-text-pad);
-  margin-top: var(--gt-toolbar-gap);
-  border-radius: var(--gt-radius-control);
-  background: var(--gt-fill-1);
-  color: var(--gt-text-3);
-  font-size: var(--gt-ui-small);
-  line-height: var(--gt-ui-small-leading);
 }
 .gotipe-table td.is-number,
 .gotipe-table th.is-number {
@@ -2634,10 +2793,6 @@ ol.gotipe-list > li::before {
   box-shadow: 0 0 0 var(--gt-focus-gap) var(--gt-overlay), 0 0 0
     calc(var(--gt-focus-gap) + var(--gt-focus-width)) var(--gt-focus);
 }
-.gotipe-check.is-focus-visible {
-  box-shadow: inset 0 0 0 var(--gt-check-ring) var(--gt-line-control), 0 0 0 var(--gt-focus-gap)
-    var(--gt-page-bg), 0 0 0 calc(var(--gt-focus-gap) + var(--gt-focus-width)) var(--gt-focus);
-}
 .gotipe-link.is-focus-visible {
   border-radius: var(--gt-radius-inline);
 }
@@ -3026,9 +3181,10 @@ ol.gotipe-list > li::before {
       <nav class="at-index" aria-label="Кадры">
         <div class="at-index-group"><p>Документ</p><a href="#f1"><span class="at-num">1</span>Вид notion</a><a href="#f2"><span class="at-num">2</span>Вид docs</a><a href="#f3"><span class="at-num">3</span>Вид modern</a><a href="#f4"><span class="at-num">4</span>Вид minimal</a></div>
 <div class="at-index-group"><p>Ширины</p><a href="#f5"><span class="at-num">5</span>Notion на 375, 320, 768 и 1440</a></div>
-<div class="at-index-group"><p>Взаимодействие</p><a href="#f6"><span class="at-num">6</span>Выделение, ссылка и цвет</a><a href="#f7"><span class="at-num">7</span>Меню «/»</a><a href="#f8"><span class="at-num">8</span>Ручка, меню блока, перетаскивание</a><a href="#f9"><span class="at-num">9</span>Таблица и меню столбца</a><a href="#f10"><span class="at-num">10</span>Изображение</a><a href="#f11"><span class="at-num">11</span>Подсказки в пустых блоках и пустая страница</a></div>
+<div class="at-index-group"><p>Взаимодействие</p><a href="#f6"><span class="at-num">6</span>Выделение, ссылка и цвет</a><a href="#f7"><span class="at-num">7</span>Меню «/»</a><a href="#f8"><span class="at-num">8</span>Ручка, меню блока, перетаскивание</a><a href="#f9"><span class="at-num">9</span>Таблица: строки, столбцы и меню столбца</a><a href="#f10"><span class="at-num">10</span>Изображение</a><a href="#f11"><span class="at-num">11</span>Подсказки в пустых блоках и пустая страница</a></div>
 <div class="at-index-group"><p>Совместная работа и ревью</p><a href="#f12"><span class="at-num">12</span>Курсоры</a><a href="#f13"><span class="at-num">13</span>Комментарии</a><a href="#f14"><span class="at-num">14</span>Предложения правок</a><a href="#f15"><span class="at-num">15</span>Версии</a><a href="#f16"><span class="at-num">16</span>Модель: строка команды и подсказка</a></div>
 <div class="at-index-group"><p>Состояния</p><a href="#f17"><span class="at-num">17</span>Загрузка, ошибки, только чтение, фокус</a></div>
+<div class="at-index-group"><p>Блоки</p><a href="#f18"><span class="at-num">18</span>Задачи, раскрывающиеся блоки, файл, вставка и формула</a></div>
       </nav>
       <h2 class="at-section">Документ</h2>
 <figure class="at-figure" id="f1" data-section="Документ">
@@ -3182,38 +3338,42 @@ editor<span class="tk-pun">.</span>on<span class="tk-pun">(</span><span class="t
     ><svg class="gt-icon"><use href="#i-hash" /></svg></span
   >Конфликты
 </h2>
-<div class="gotipe-table-wrap">
-  <table class="gotipe-table">
-    <thead>
-      <tr>
-        <th>Ситуация</th>
-        <th>Что видит автор</th>
-        <th>Что сохраняется</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr>
-        <td>Блок изменён только у вас</td>
-        <td>Ничего</td>
-        <td>Ваша версия</td>
-      </tr>
-      <tr>
-        <td>Блок изменён у обоих</td>
-        <td>Предложение правки</td>
-        <td>Обе версии</td>
-      </tr>
-      <tr>
-        <td>Блок удалён на сервере</td>
-        <td>Тост «Блок удалён»</td>
-        <td>Ваша версия — в истории</td>
-      </tr>
-      <tr>
-        <td>Документ удалён</td>
-        <td>Окно восстановления</td>
-        <td>Копия в «Черновиках»</td>
-      </tr>
-    </tbody>
-  </table>
+<div class="gotipe-table-block">
+  <div class="gotipe-table-wrap">
+    <table class="gotipe-table">
+      <thead>
+        <tr>
+          <th>Ситуация</th>
+          <th>Что видит автор</th>
+          <th>Что сохраняется</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Блок изменён только у вас</td>
+          <td>Ничего</td>
+          <td>Ваша версия</td>
+        </tr>
+        <tr>
+          <td>Блок изменён у обоих</td>
+          <td>Предложение правки</td>
+          <td>Обе версии</td>
+        </tr>
+        <tr>
+          <td>Блок удалён на сервере</td>
+          <td>Тост «Блок удалён»</td>
+          <td>Ваша версия — в истории</td>
+        </tr>
+        <tr>
+          <td>Документ удалён</td>
+          <td>Окно восстановления</td>
+          <td>Копия в «Черновиках»</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <span class="gotipe-table-add is-column"><svg class="gt-icon"><use href="#i-plus" /></svg></span>
+  <span class="gotipe-table-add is-row"><svg class="gt-icon"><use href="#i-plus" /></svg></span>
 </div>
 
 <blockquote class="gotipe-quote">
@@ -3438,38 +3598,42 @@ editor<span class="tk-pun">.</span>on<span class="tk-pun">(</span><span class="t
     ><svg class="gt-icon"><use href="#i-hash" /></svg></span
   >Конфликты
 </h2>
-<div class="gotipe-table-wrap">
-  <table class="gotipe-table">
-    <thead>
-      <tr>
-        <th>Ситуация</th>
-        <th>Что видит автор</th>
-        <th>Что сохраняется</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr>
-        <td>Блок изменён только у вас</td>
-        <td>Ничего</td>
-        <td>Ваша версия</td>
-      </tr>
-      <tr>
-        <td>Блок изменён у обоих</td>
-        <td>Предложение правки</td>
-        <td>Обе версии</td>
-      </tr>
-      <tr>
-        <td>Блок удалён на сервере</td>
-        <td>Тост «Блок удалён»</td>
-        <td>Ваша версия — в истории</td>
-      </tr>
-      <tr>
-        <td>Документ удалён</td>
-        <td>Окно восстановления</td>
-        <td>Копия в «Черновиках»</td>
-      </tr>
-    </tbody>
-  </table>
+<div class="gotipe-table-block">
+  <div class="gotipe-table-wrap">
+    <table class="gotipe-table">
+      <thead>
+        <tr>
+          <th>Ситуация</th>
+          <th>Что видит автор</th>
+          <th>Что сохраняется</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Блок изменён только у вас</td>
+          <td>Ничего</td>
+          <td>Ваша версия</td>
+        </tr>
+        <tr>
+          <td>Блок изменён у обоих</td>
+          <td>Предложение правки</td>
+          <td>Обе версии</td>
+        </tr>
+        <tr>
+          <td>Блок удалён на сервере</td>
+          <td>Тост «Блок удалён»</td>
+          <td>Ваша версия — в истории</td>
+        </tr>
+        <tr>
+          <td>Документ удалён</td>
+          <td>Окно восстановления</td>
+          <td>Копия в «Черновиках»</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <span class="gotipe-table-add is-column"><svg class="gt-icon"><use href="#i-plus" /></svg></span>
+  <span class="gotipe-table-add is-row"><svg class="gt-icon"><use href="#i-plus" /></svg></span>
 </div>
 
 <blockquote class="gotipe-quote">
@@ -3708,38 +3872,42 @@ editor<span class="tk-pun">.</span>on<span class="tk-pun">(</span><span class="t
     ><svg class="gt-icon"><use href="#i-hash" /></svg></span
   >Конфликты
 </h2>
-<div class="gotipe-table-wrap">
-  <table class="gotipe-table">
-    <thead>
-      <tr>
-        <th>Ситуация</th>
-        <th>Что видит автор</th>
-        <th>Что сохраняется</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr>
-        <td>Блок изменён только у вас</td>
-        <td>Ничего</td>
-        <td>Ваша версия</td>
-      </tr>
-      <tr>
-        <td>Блок изменён у обоих</td>
-        <td>Предложение правки</td>
-        <td>Обе версии</td>
-      </tr>
-      <tr>
-        <td>Блок удалён на сервере</td>
-        <td>Тост «Блок удалён»</td>
-        <td>Ваша версия — в истории</td>
-      </tr>
-      <tr>
-        <td>Документ удалён</td>
-        <td>Окно восстановления</td>
-        <td>Копия в «Черновиках»</td>
-      </tr>
-    </tbody>
-  </table>
+<div class="gotipe-table-block">
+  <div class="gotipe-table-wrap">
+    <table class="gotipe-table">
+      <thead>
+        <tr>
+          <th>Ситуация</th>
+          <th>Что видит автор</th>
+          <th>Что сохраняется</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Блок изменён только у вас</td>
+          <td>Ничего</td>
+          <td>Ваша версия</td>
+        </tr>
+        <tr>
+          <td>Блок изменён у обоих</td>
+          <td>Предложение правки</td>
+          <td>Обе версии</td>
+        </tr>
+        <tr>
+          <td>Блок удалён на сервере</td>
+          <td>Тост «Блок удалён»</td>
+          <td>Ваша версия — в истории</td>
+        </tr>
+        <tr>
+          <td>Документ удалён</td>
+          <td>Окно восстановления</td>
+          <td>Копия в «Черновиках»</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <span class="gotipe-table-add is-column"><svg class="gt-icon"><use href="#i-plus" /></svg></span>
+  <span class="gotipe-table-add is-row"><svg class="gt-icon"><use href="#i-plus" /></svg></span>
 </div>
 
 <blockquote class="gotipe-quote">
@@ -3968,38 +4136,42 @@ editor<span class="tk-pun">.</span>on<span class="tk-pun">(</span><span class="t
     ><svg class="gt-icon"><use href="#i-hash" /></svg></span
   >Конфликты
 </h2>
-<div class="gotipe-table-wrap">
-  <table class="gotipe-table">
-    <thead>
-      <tr>
-        <th>Ситуация</th>
-        <th>Что видит автор</th>
-        <th>Что сохраняется</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr>
-        <td>Блок изменён только у вас</td>
-        <td>Ничего</td>
-        <td>Ваша версия</td>
-      </tr>
-      <tr>
-        <td>Блок изменён у обоих</td>
-        <td>Предложение правки</td>
-        <td>Обе версии</td>
-      </tr>
-      <tr>
-        <td>Блок удалён на сервере</td>
-        <td>Тост «Блок удалён»</td>
-        <td>Ваша версия — в истории</td>
-      </tr>
-      <tr>
-        <td>Документ удалён</td>
-        <td>Окно восстановления</td>
-        <td>Копия в «Черновиках»</td>
-      </tr>
-    </tbody>
-  </table>
+<div class="gotipe-table-block">
+  <div class="gotipe-table-wrap">
+    <table class="gotipe-table">
+      <thead>
+        <tr>
+          <th>Ситуация</th>
+          <th>Что видит автор</th>
+          <th>Что сохраняется</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Блок изменён только у вас</td>
+          <td>Ничего</td>
+          <td>Ваша версия</td>
+        </tr>
+        <tr>
+          <td>Блок изменён у обоих</td>
+          <td>Предложение правки</td>
+          <td>Обе версии</td>
+        </tr>
+        <tr>
+          <td>Блок удалён на сервере</td>
+          <td>Тост «Блок удалён»</td>
+          <td>Ваша версия — в истории</td>
+        </tr>
+        <tr>
+          <td>Документ удалён</td>
+          <td>Окно восстановления</td>
+          <td>Копия в «Черновиках»</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <span class="gotipe-table-add is-column"><svg class="gt-icon"><use href="#i-plus" /></svg></span>
+  <span class="gotipe-table-add is-row"><svg class="gt-icon"><use href="#i-plus" /></svg></span>
 </div>
 
 <blockquote class="gotipe-quote">
@@ -4209,38 +4381,42 @@ editor<span class="tk-pun">.</span>on<span class="tk-pun">(</span><span class="t
     ><svg class="gt-icon"><use href="#i-hash" /></svg></span
   >Конфликты
 </h2>
-<div class="gotipe-table-wrap">
-  <table class="gotipe-table">
-    <thead>
-      <tr>
-        <th>Ситуация</th>
-        <th>Что видит автор</th>
-        <th>Что сохраняется</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr>
-        <td>Блок изменён только у вас</td>
-        <td>Ничего</td>
-        <td>Ваша версия</td>
-      </tr>
-      <tr>
-        <td>Блок изменён у обоих</td>
-        <td>Предложение правки</td>
-        <td>Обе версии</td>
-      </tr>
-      <tr>
-        <td>Блок удалён на сервере</td>
-        <td>Тост «Блок удалён»</td>
-        <td>Ваша версия — в истории</td>
-      </tr>
-      <tr>
-        <td>Документ удалён</td>
-        <td>Окно восстановления</td>
-        <td>Копия в «Черновиках»</td>
-      </tr>
-    </tbody>
-  </table>
+<div class="gotipe-table-block">
+  <div class="gotipe-table-wrap">
+    <table class="gotipe-table">
+      <thead>
+        <tr>
+          <th>Ситуация</th>
+          <th>Что видит автор</th>
+          <th>Что сохраняется</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Блок изменён только у вас</td>
+          <td>Ничего</td>
+          <td>Ваша версия</td>
+        </tr>
+        <tr>
+          <td>Блок изменён у обоих</td>
+          <td>Предложение правки</td>
+          <td>Обе версии</td>
+        </tr>
+        <tr>
+          <td>Блок удалён на сервере</td>
+          <td>Тост «Блок удалён»</td>
+          <td>Ваша версия — в истории</td>
+        </tr>
+        <tr>
+          <td>Документ удалён</td>
+          <td>Окно восстановления</td>
+          <td>Копия в «Черновиках»</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <span class="gotipe-table-add is-column"><svg class="gt-icon"><use href="#i-plus" /></svg></span>
+  <span class="gotipe-table-add is-row"><svg class="gt-icon"><use href="#i-plus" /></svg></span>
 </div>
 
 <blockquote class="gotipe-quote">
@@ -4458,38 +4634,42 @@ editor<span class="tk-pun">.</span>on<span class="tk-pun">(</span><span class="t
     ><svg class="gt-icon"><use href="#i-hash" /></svg></span
   >Конфликты
 </h2>
-<div class="gotipe-table-wrap">
-  <table class="gotipe-table">
-    <thead>
-      <tr>
-        <th>Ситуация</th>
-        <th>Что видит автор</th>
-        <th>Что сохраняется</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr>
-        <td>Блок изменён только у вас</td>
-        <td>Ничего</td>
-        <td>Ваша версия</td>
-      </tr>
-      <tr>
-        <td>Блок изменён у обоих</td>
-        <td>Предложение правки</td>
-        <td>Обе версии</td>
-      </tr>
-      <tr>
-        <td>Блок удалён на сервере</td>
-        <td>Тост «Блок удалён»</td>
-        <td>Ваша версия — в истории</td>
-      </tr>
-      <tr>
-        <td>Документ удалён</td>
-        <td>Окно восстановления</td>
-        <td>Копия в «Черновиках»</td>
-      </tr>
-    </tbody>
-  </table>
+<div class="gotipe-table-block">
+  <div class="gotipe-table-wrap">
+    <table class="gotipe-table">
+      <thead>
+        <tr>
+          <th>Ситуация</th>
+          <th>Что видит автор</th>
+          <th>Что сохраняется</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Блок изменён только у вас</td>
+          <td>Ничего</td>
+          <td>Ваша версия</td>
+        </tr>
+        <tr>
+          <td>Блок изменён у обоих</td>
+          <td>Предложение правки</td>
+          <td>Обе версии</td>
+        </tr>
+        <tr>
+          <td>Блок удалён на сервере</td>
+          <td>Тост «Блок удалён»</td>
+          <td>Ваша версия — в истории</td>
+        </tr>
+        <tr>
+          <td>Документ удалён</td>
+          <td>Окно восстановления</td>
+          <td>Копия в «Черновиках»</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <span class="gotipe-table-add is-column"><svg class="gt-icon"><use href="#i-plus" /></svg></span>
+  <span class="gotipe-table-add is-row"><svg class="gt-icon"><use href="#i-plus" /></svg></span>
 </div>
 
 <blockquote class="gotipe-quote">
@@ -4626,38 +4806,42 @@ editor<span class="tk-pun">.</span>on<span class="tk-pun">(</span><span class="t
     ><svg class="gt-icon"><use href="#i-hash" /></svg></span
   >Конфликты
 </h2>
-<div class="gotipe-table-wrap">
-  <table class="gotipe-table">
-    <thead>
-      <tr>
-        <th>Ситуация</th>
-        <th>Что видит автор</th>
-        <th>Что сохраняется</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr>
-        <td>Блок изменён только у вас</td>
-        <td>Ничего</td>
-        <td>Ваша версия</td>
-      </tr>
-      <tr>
-        <td>Блок изменён у обоих</td>
-        <td>Предложение правки</td>
-        <td>Обе версии</td>
-      </tr>
-      <tr>
-        <td>Блок удалён на сервере</td>
-        <td>Тост «Блок удалён»</td>
-        <td>Ваша версия — в истории</td>
-      </tr>
-      <tr>
-        <td>Документ удалён</td>
-        <td>Окно восстановления</td>
-        <td>Копия в «Черновиках»</td>
-      </tr>
-    </tbody>
-  </table>
+<div class="gotipe-table-block">
+  <div class="gotipe-table-wrap">
+    <table class="gotipe-table">
+      <thead>
+        <tr>
+          <th>Ситуация</th>
+          <th>Что видит автор</th>
+          <th>Что сохраняется</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Блок изменён только у вас</td>
+          <td>Ничего</td>
+          <td>Ваша версия</td>
+        </tr>
+        <tr>
+          <td>Блок изменён у обоих</td>
+          <td>Предложение правки</td>
+          <td>Обе версии</td>
+        </tr>
+        <tr>
+          <td>Блок удалён на сервере</td>
+          <td>Тост «Блок удалён»</td>
+          <td>Ваша версия — в истории</td>
+        </tr>
+        <tr>
+          <td>Документ удалён</td>
+          <td>Окно восстановления</td>
+          <td>Копия в «Черновиках»</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <span class="gotipe-table-add is-column"><svg class="gt-icon"><use href="#i-plus" /></svg></span>
+  <span class="gotipe-table-add is-row"><svg class="gt-icon"><use href="#i-plus" /></svg></span>
 </div>
 
 <blockquote class="gotipe-quote">
@@ -4826,38 +5010,42 @@ editor<span class="tk-pun">.</span>on<span class="tk-pun">(</span><span class="t
     ><svg class="gt-icon"><use href="#i-hash" /></svg></span
   >Конфликты
 </h2>
-<div class="gotipe-table-wrap">
-  <table class="gotipe-table">
-    <thead>
-      <tr>
-        <th>Ситуация</th>
-        <th>Что видит автор</th>
-        <th>Что сохраняется</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr>
-        <td>Блок изменён только у вас</td>
-        <td>Ничего</td>
-        <td>Ваша версия</td>
-      </tr>
-      <tr>
-        <td>Блок изменён у обоих</td>
-        <td>Предложение правки</td>
-        <td>Обе версии</td>
-      </tr>
-      <tr>
-        <td>Блок удалён на сервере</td>
-        <td>Тост «Блок удалён»</td>
-        <td>Ваша версия — в истории</td>
-      </tr>
-      <tr>
-        <td>Документ удалён</td>
-        <td>Окно восстановления</td>
-        <td>Копия в «Черновиках»</td>
-      </tr>
-    </tbody>
-  </table>
+<div class="gotipe-table-block">
+  <div class="gotipe-table-wrap">
+    <table class="gotipe-table">
+      <thead>
+        <tr>
+          <th>Ситуация</th>
+          <th>Что видит автор</th>
+          <th>Что сохраняется</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Блок изменён только у вас</td>
+          <td>Ничего</td>
+          <td>Ваша версия</td>
+        </tr>
+        <tr>
+          <td>Блок изменён у обоих</td>
+          <td>Предложение правки</td>
+          <td>Обе версии</td>
+        </tr>
+        <tr>
+          <td>Блок удалён на сервере</td>
+          <td>Тост «Блок удалён»</td>
+          <td>Ваша версия — в истории</td>
+        </tr>
+        <tr>
+          <td>Документ удалён</td>
+          <td>Окно восстановления</td>
+          <td>Копия в «Черновиках»</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <span class="gotipe-table-add is-column"><svg class="gt-icon"><use href="#i-plus" /></svg></span>
+  <span class="gotipe-table-add is-row"><svg class="gt-icon"><use href="#i-plus" /></svg></span>
 </div>
 
 <blockquote class="gotipe-quote">
@@ -5064,38 +5252,42 @@ editor<span class="tk-pun">.</span>on<span class="tk-pun">(</span><span class="t
     ><svg class="gt-icon"><use href="#i-hash" /></svg></span
   >Конфликты
 </h2>
-<div class="gotipe-table-wrap">
-  <table class="gotipe-table">
-    <thead>
-      <tr>
-        <th>Ситуация</th>
-        <th>Что видит автор</th>
-        <th>Что сохраняется</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr>
-        <td>Блок изменён только у вас</td>
-        <td>Ничего</td>
-        <td>Ваша версия</td>
-      </tr>
-      <tr>
-        <td>Блок изменён у обоих</td>
-        <td>Предложение правки</td>
-        <td>Обе версии</td>
-      </tr>
-      <tr>
-        <td>Блок удалён на сервере</td>
-        <td>Тост «Блок удалён»</td>
-        <td>Ваша версия — в истории</td>
-      </tr>
-      <tr>
-        <td>Документ удалён</td>
-        <td>Окно восстановления</td>
-        <td>Копия в «Черновиках»</td>
-      </tr>
-    </tbody>
-  </table>
+<div class="gotipe-table-block">
+  <div class="gotipe-table-wrap">
+    <table class="gotipe-table">
+      <thead>
+        <tr>
+          <th>Ситуация</th>
+          <th>Что видит автор</th>
+          <th>Что сохраняется</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Блок изменён только у вас</td>
+          <td>Ничего</td>
+          <td>Ваша версия</td>
+        </tr>
+        <tr>
+          <td>Блок изменён у обоих</td>
+          <td>Предложение правки</td>
+          <td>Обе версии</td>
+        </tr>
+        <tr>
+          <td>Блок удалён на сервере</td>
+          <td>Тост «Блок удалён»</td>
+          <td>Ваша версия — в истории</td>
+        </tr>
+        <tr>
+          <td>Документ удалён</td>
+          <td>Окно восстановления</td>
+          <td>Копия в «Черновиках»</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <span class="gotipe-table-add is-column"><svg class="gt-icon"><use href="#i-plus" /></svg></span>
+  <span class="gotipe-table-add is-row"><svg class="gt-icon"><use href="#i-plus" /></svg></span>
 </div>
 
 <blockquote class="gotipe-quote">
@@ -5397,10 +5589,11 @@ editor<span class="tk-pun">.</span>on<span class="tk-pun">(</span><span class="t
 <figure class="at-figure" id="f9" data-section="Взаимодействие">
   <figcaption class="at-figure-head">
     <span class="at-num">9</span>
-    <h2 class="at-figure-title">Таблица и меню столбца</h2>
+    <h2 class="at-figure-title">Таблица: строки, столбцы и меню столбца</h2>
     <p class="at-caption">
+      Столбец добавляется полосой справа от таблицы, строка — полосой под ней; обе видны под указателем и пока курсор в таблице, а прокрутка их не закрывает. Ячейка — поле текста, рамки
+      фокуса у неё нет. Широкая таблица прокручивается вбок, край со скрытыми столбцами затухает.
       Тип столбца меняет вид ячеек: код — моноширинным, число — вправо, да / нет — знаком.
-      Шеврон появляется в заголовке под указателем; строка и столбец добавляются снизу таблицы.
     </p>
   </figcaption>
   <section class="at-stage" data-w="768">
@@ -5409,6 +5602,7 @@ editor<span class="tk-pun">.</span>on<span class="tk-pun">(</span><span class="t
 <article class="gotipe-page is-slice" lang="ru">
     <div class="gotipe-doc">
       <h2>Журнал по платформам</h2>
+      <div class="gotipe-table-block is-hovered">
       <div class="gotipe-table-wrap is-open">
         <table class="gotipe-table">
           <thead>
@@ -5431,9 +5625,65 @@ editor<span class="tk-pun">.</span>on<span class="tk-pun">(</span><span class="t
           </tbody>
         </table>
       </div>
-      <div class="gotipe-table-adds">
-        <span class="gotipe-table-add"><svg class="gt-icon"><use href="#i-plus" /></svg>Строка</span>
-        <span class="gotipe-table-add"><svg class="gt-icon"><use href="#i-plus" /></svg>Столбец</span>
+        <span class="gotipe-table-add is-column"><svg class="gt-icon"><use href="#i-plus" /></svg></span>
+        <span class="gotipe-table-add is-row"><svg class="gt-icon"><use href="#i-plus" /></svg></span>
+      </div>
+    </div>
+  </article>
+</div>
+</section>
+  <section class="at-stage" data-w="768">
+<p class="at-stage-label">добавить столбец · 768</p>
+<div class="at-frame gotipe-root" data-gt-view="notion" data-frame="table-add" data-w="768">
+<article class="gotipe-page is-slice" lang="ru">
+    <div class="gotipe-doc">
+      <h2>Конфликты</h2>
+      <div class="gotipe-table-block is-hovered">
+        <div class="gotipe-table-wrap">
+          <table class="gotipe-table">
+            <thead>
+              <tr><th>Ситуация</th><th>Что видит автор</th><th>Что сохраняется</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>Блок изменён только у вас</td><td>Ничего</td><td>Ваша версия</td></tr>
+              <tr><td>Блок изменён у обоих</td><td>Предложение правки<span class="gotipe-caret"></span></td><td>Обе версии</td></tr>
+              <tr><td>Документ удалён</td><td>Окно восстановления</td><td>Копия в «Черновиках»</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <span class="gotipe-table-add is-column is-hover"
+          ><svg class="gt-icon"><use href="#i-plus" /></svg
+          ><span class="gotipe-tooltip" data-place="start">Добавить столбец</span
+          ><svg class="at-pointer"><use href="#i-pointer" /></svg
+        ></span>
+        <span class="gotipe-table-add is-row"><svg class="gt-icon"><use href="#i-plus" /></svg></span>
+      </div>
+      <p>Таблицу дописывают по ходу обсуждения: новый столбец появляется справа, строка — снизу.</p>
+    </div>
+  </article>
+</div>
+</section>
+  <section class="at-stage" data-w="375">
+<p class="at-stage-label">широкая таблица · 375</p>
+<div class="at-frame gotipe-root" data-gt-view="notion" data-frame="table-wide" data-w="375">
+<article class="gotipe-page is-slice" lang="ru">
+    <div class="gotipe-doc">
+      <h2>Журнал по платформам</h2>
+      <div class="gotipe-table-block is-hovered">
+        <div class="gotipe-table-wrap" data-more="right">
+          <table class="gotipe-table">
+            <thead>
+              <tr><th>Платформа</th><th>Ключ журнала</th><th class="is-number">В очереди</th><th>Шифрование</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>Веб<span class="gotipe-caret"></span></td><td class="is-code">drafts.web</td><td class="is-number">1 284</td><td><span class="gotipe-yes"><svg class="gt-icon"><use href="#i-check-16" /></svg></span></td></tr>
+              <tr><td>macOS</td><td class="is-code">drafts.mac</td><td class="is-number">312</td><td><span class="gotipe-yes"><svg class="gt-icon"><use href="#i-check-16" /></svg></span></td></tr>
+              <tr><td>iOS</td><td class="is-code">drafts.ios</td><td class="is-number">0</td><td><span class="gotipe-no">—</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <span class="gotipe-table-add is-column"><svg class="gt-icon"><use href="#i-plus" /></svg></span>
+        <span class="gotipe-table-add is-row"><svg class="gt-icon"><use href="#i-plus" /></svg></span>
       </div>
     </div>
   </article>
@@ -6042,6 +6292,149 @@ editor<span class="tk-pun">.</span>on<span class="tk-pun">(</span><span class="t
           <span class="gotipe-todo-item-content">Метрика потерянных правок на дашборде выпуска</span>
         </li>
       </ul>
+    </div>
+  </article>
+</div>
+</section>
+</figure>
+<h2 class="at-section">Блоки</h2>
+<figure class="at-figure" id="f18" data-section="Блоки">
+  <figcaption class="at-figure-head">
+    <span class="at-num">18</span>
+    <h2 class="at-figure-title">Задачи, раскрывающиеся блоки, файл, вставка и формула</h2>
+    <p class="at-caption">
+      Рамка флажка — целый пиксель на любом экране; под указателем она темнеет. Пустые задача и раскрывающийся блок говорят, чем станут. Действия файла появляются под указателем. Вставка
+      без ссылки просит её, со ссылкой — карточка страницы. Формула показывает TeX как написан,
+      нарисовать её может хост.
+    </p>
+  </figcaption>
+  <section class="at-stage" data-w="480">
+<p class="at-stage-label">задачи</p>
+<div class="at-frame gotipe-root" data-gt-view="notion" data-frame="tasks" data-w="480">
+<article class="gotipe-page is-slice" lang="ru">
+    <div class="gotipe-doc">
+      <h2>Задачи</h2>
+      <ul class="gotipe-todo-list">
+        <li class="gotipe-todo-item" data-checked="true">
+          <span class="gotipe-check" role="checkbox" aria-checked="true"><svg class="gt-icon"><use href="#i-check" /></svg></span>
+          <span class="gotipe-todo-item-content">Шифрование черновика ключом сессии</span>
+        </li>
+        <li class="gotipe-todo-item" data-checked="false">
+          <span class="gotipe-check is-hover" role="checkbox" aria-checked="false"
+            ><svg class="gt-icon"><use href="#i-check" /></svg
+            ><svg class="at-pointer"><use href="#i-pointer" /></svg
+          ></span>
+          <span class="gotipe-todo-item-content">Индикатор «Не отправлено» в шапке документа</span>
+        </li>
+        <li class="gotipe-todo-item" data-checked="false">
+          <span class="gotipe-check" role="checkbox" aria-checked="false"><svg class="gt-icon"><use href="#i-check" /></svg></span>
+          <span class="gotipe-todo-item-content">Метрика потерянных правок на дашборде выпуска</span>
+        </li>
+        <li class="gotipe-todo-item" data-checked="false">
+          <span class="gotipe-check" role="checkbox" aria-checked="false"><svg class="gt-icon"><use href="#i-check" /></svg></span>
+          <span class="gotipe-todo-item-content is-empty" data-placeholder="Задача"></span>
+        </li>
+      </ul>
+    </div>
+  </article>
+</div>
+</section>
+  <section class="at-stage" data-w="480">
+<p class="at-stage-label">раскрывающиеся блоки</p>
+<div class="at-frame gotipe-root" data-gt-view="notion" data-frame="toggles" data-w="480">
+<article class="gotipe-page is-slice" lang="ru">
+    <div class="gotipe-doc">
+      <details class="gotipe-toggle" open>
+        <summary>
+          <span class="gotipe-toggle-button"><svg class="gt-icon"><use href="#i-chevron-down" /></svg></span>
+          <span>Почему не Background Sync</span>
+        </summary>
+        <div class="gotipe-toggle-content">
+          <p>В Safari его нет, а журнал в IndexedDB работает везде одинаково.</p>
+        </div>
+      </details>
+      <details class="gotipe-toggle">
+        <summary>
+          <span class="gotipe-toggle-button is-focus-visible"><svg class="gt-icon"><use href="#i-chevron-right" /></svg></span>
+          <span>Что будет с вложениями</span>
+        </summary>
+      </details>
+      <details class="gotipe-toggle">
+        <summary>
+          <span class="gotipe-toggle-button"><svg class="gt-icon"><use href="#i-chevron-right" /></svg></span>
+          <span class="is-empty" data-placeholder="Раскрывающийся блок"></span>
+        </summary>
+      </details>
+    </div>
+  </article>
+</div>
+</section>
+  <section class="at-stage" data-w="480">
+<p class="at-stage-label">файл</p>
+<div class="at-frame gotipe-root" data-gt-view="notion" data-frame="file" data-w="480">
+<article class="gotipe-page is-slice" lang="ru">
+    <div class="gotipe-doc">
+      <div class="gotipe-file">
+        <span class="gotipe-card-icon"><svg class="gt-icon"><use href="#i-file" /></svg></span>
+        <span class="gotipe-card-main"
+          ><span class="gotipe-card-title">Схема журнала, v3.pdf</span
+          ><span class="gotipe-card-meta">482,1 КБ</span></span
+        >
+        <span class="gotipe-card-actions"
+          ><span class="gotipe-card-action">Заменить</span><span class="gotipe-card-action">Удалить</span></span
+        >
+      </div>
+      <div class="gotipe-file is-hovered">
+        <span class="gotipe-card-icon"><svg class="gt-icon"><use href="#i-file" /></svg></span>
+        <span class="gotipe-card-main"
+          ><span class="gotipe-card-title">Обращения в поддержку, октябрь.xlsx</span
+          ><span class="gotipe-card-meta">1,4 МБ</span></span
+        >
+        <span class="gotipe-card-actions"
+          ><span class="gotipe-card-action is-hover"
+            >Заменить<svg class="at-pointer"><use href="#i-pointer" /></svg></span
+          ><span class="gotipe-card-action">Удалить</span></span
+        >
+      </div>
+    </div>
+  </article>
+</div>
+</section>
+  <section class="at-stage" data-w="480">
+<p class="at-stage-label">вставка</p>
+<div class="at-frame gotipe-root" data-gt-view="notion" data-frame="embed" data-w="480">
+<article class="gotipe-page is-slice" lang="ru">
+    <div class="gotipe-doc">
+      <div class="gotipe-embed is-hovered">
+        <span class="gotipe-card-icon"><svg class="gt-icon"><use href="#i-link" /></svg></span>
+        <span class="gotipe-card-main"
+          ><span class="gotipe-card-title">figma.com</span
+          ><span class="gotipe-card-meta">figma.com/design/k2Lw/Офлайн-черновики</span></span
+        >
+        <span class="gotipe-card-actions"
+          ><span class="gotipe-card-action is-icon"><svg class="gt-icon"><use href="#i-external" /></svg></span
+        ></span>
+      </div>
+      <div class="gotipe-embed">
+        <span class="gotipe-card-icon"><svg class="gt-icon"><use href="#i-link" /></svg></span>
+        <span class="gotipe-embed-field">Ссылка на страницу, видео или макет</span>
+        <span class="gotipe-button is-primary">Вставить</span>
+      </div>
+    </div>
+  </article>
+</div>
+</section>
+  <section class="at-stage" data-w="480">
+<p class="at-stage-label">формула</p>
+<div class="at-frame gotipe-root" data-gt-view="notion" data-frame="math" data-w="480">
+<article class="gotipe-page is-slice" lang="ru">
+    <div class="gotipe-doc">
+      <p>Доля потерянных правок считается за неделю:</p>
+      <div class="gotipe-math">
+        <div class="gotipe-code-block-header"><span>Формула · TeX</span></div>
+        <pre class="gotipe-math-source">p = \frac{lost}{lost + sent}</pre>
+      </div>
+      <p>Цель выпуска — меньше 0,1 %.</p>
     </div>
   </article>
 </div>

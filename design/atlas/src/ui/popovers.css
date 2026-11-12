@@ -110,7 +110,7 @@
   right: var(--gt-resize-inset);
 }
 
-/* ---- table: the column handle in a hovered header cell, the bars that add a row or column ---- */
+/* ---- table: the column handle in a hovered header cell; the add bars are in blocks.css ---- */
 .gotipe-table th.is-hovered {
   position: relative;
   background: var(--gt-fill-1);
@@ -135,27 +135,6 @@
 }
 .gotipe-table-wrap.is-open {
   overflow: visible;
-}
-.gotipe-table-adds {
-  display: flex;
-  gap: var(--gt-toolbar-gap);
-}
-.gotipe-table-adds > .gotipe-table-add:first-child {
-  flex: 1;
-}
-.gotipe-table-add {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--gt-toolbar-gap);
-  height: var(--gt-handle-h);
-  padding: var(--gt-tool-text-pad);
-  margin-top: var(--gt-toolbar-gap);
-  border-radius: var(--gt-radius-control);
-  background: var(--gt-fill-1);
-  color: var(--gt-text-3);
-  font-size: var(--gt-ui-small);
-  line-height: var(--gt-ui-small-leading);
 }
 .gotipe-table td.is-number,
 .gotipe-table th.is-number {
