@@ -121,6 +121,9 @@ import { PageEditor, type PageEditorHandle } from "@gotipe/block-editor";
 - PageEditor — это BlockEditor с Markdown-сессией и предложениями модели: та же панель над
   выделением, «/», ручка и меню блока, меню столбца таблицы (атлас, кадры 6–9 и 19). Своей темы
   у страницы нет.
+- На широкой странице (карточка + зазор + `--gt-margin-page-min`) карточки предложений стоят
+  колонкой на полях напротив своих правок: открытая — с ответами, остальные свёрнуты. На узкой
+  карточка открывается у текста.
 - Свои виды блоков — проп `blockViews`: они важнее видов страницы и общих. Так SpecOrbit рисует,
   например, цитату, которая начинается с жирной метки «Инструкции для агента:» — для библиотеки
   это обычная цитата.
@@ -220,16 +223,16 @@ const review: PageReviewProps = {
 нейтральных; без фиолетового и терракоты); дорожка может передать свой цвет в `lanes[].color`.
 
 Классы для своих правок: `.gotipe-page` (корень), `.gotipe-page-title`, `.gotipe-raw`,
-`.gotipe-table`, `.gotipe-column-menu`, `.gotipe-bubble-menu`, `.gotipe-slash-menu`,
+`.gotipe-table`, `.gotipe-column-handle`, `.gotipe-row-handle`, `.gotipe-column-menu`, `.gotipe-bubble-menu`, `.gotipe-slash-menu`,
 `.gotipe-block-context-menu`, `.gotipe-review-bar`, `.gotipe-review-card`, `.gotipe-lane-cursor`,
 `.gotipe-sug-ins|-del|-stale|-block-ins|-block-del`, `.gotipe-cmt`. Атрибуты:
-`data-gt-view`, `data-gotipe-proposal`, `data-gotipe-comment`, `data-gotipe-lane`.
+`data-gt-view`, `data-review-layout` (колонка на полях), `data-gotipe-proposal`, `data-gotipe-comment`, `data-gotipe-lane`.
 
 ## Что в Markdown
 
 | Блок | Markdown |
 |---|---|
-| Задачи | `- [ ]` / `- [x]` |
+| Задачи | `- [ ]` / `- [x]`; подзадача — вложенный список с отступом (Tab / Shift+Tab) |
 | Выноска | `> [!NOTE]` (TIP, IMPORTANT, WARNING, CAUTION) |
 | Изображение | `![alt](assets/имя.png "подпись")` — путь возвращает `saveAsset` |
 | Файл | `[имя.pdf](assets/имя.pdf)` — абсолютная или относительная ссылка, текст = имя файла |
