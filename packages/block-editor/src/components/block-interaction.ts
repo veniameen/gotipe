@@ -131,8 +131,11 @@ export function getRowAnchorBlockIdAtPoint(
 
   for (const node of stack) {
     if (!(node instanceof HTMLElement)) continue;
-    const blockEl = node.closest("[data-block-id]") as HTMLElement | null;
+    let blockEl = node.closest("[data-block-id]") as HTMLElement | null;
     if (!blockEl || !containerEl.contains(blockEl)) continue;
+    // A table's handle stays at its first line: its rows carry handles of their own (Atlas, frame 9).
+    const table = blockEl.closest('[data-block-type="table"]') as HTMLElement | null;
+    if (table && containerEl.contains(table)) blockEl = table;
 
     const blockType = blockEl.getAttribute("data-block-type") ?? "";
     const blockId = blockEl.getAttribute("data-block-id");

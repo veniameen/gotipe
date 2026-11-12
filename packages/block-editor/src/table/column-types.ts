@@ -114,6 +114,16 @@ export function addRow(editor: GoTipeEditor, tableId: string): void {
   if (table) editTable(editor, tableId, { type: "insertRow", index: table.children.length });
 }
 
+/** A new row at `index` (0 — above the first row); a header row stays on top. */
+export function insertRow(editor: GoTipeEditor, tableId: string, index: number): void {
+  editTable(editor, tableId, { type: "insertRow", index });
+}
+
+/** The row away; the table's last row takes the table with it. */
+export function deleteRow(editor: GoTipeEditor, tableId: string, row: number): void {
+  editTable(editor, tableId, { type: "deleteRow", index: row });
+}
+
 export function addColumn(editor: GoTipeEditor, tableId: string, after: number): void {
   editTable(editor, tableId, { type: "insertColumn", index: after + 1 });
 }
