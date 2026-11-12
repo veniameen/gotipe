@@ -10,9 +10,11 @@ interface Props {
   rootProps: Record<string, unknown>;
   content: ReactNode;
   children: ReactNode;
+  /** What an empty toggle will become, shown in its summary. */
+  placeholder?: string | null;
 }
 
-export function ToggleBlock({ block, editor, rootProps, content, children }: Props) {
+export function ToggleBlock({ block, editor, rootProps, content, children, placeholder }: Props) {
   const readOnly = usePhantom() || !editor.isEditable;
   const sourceOpen = !!block.attrs.open;
   const [preview, setPreview] = useState<{ source: boolean; open: boolean } | null>(null);
@@ -25,7 +27,11 @@ export function ToggleBlock({ block, editor, rootProps, content, children }: Pro
       className={["gotipe-toggle", rootProps.className].filter(Boolean).join(" ")}
       open={isOpen}
     >
-      <summary onClick={(event) => event.preventDefault()} tabIndex={-1}>
+      <summary
+        onClick={(event) => event.preventDefault()}
+        tabIndex={-1}
+        data-placeholder={placeholder ?? undefined}
+      >
         <button
           type="button"
           contentEditable={false}

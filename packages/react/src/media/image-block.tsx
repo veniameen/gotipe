@@ -2,9 +2,10 @@ import { type BlockView, type GoTipeEditor, GoTipeError } from "@gotipe/core";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { usePhantom } from "../content/context";
 import { useResolvedAsset } from "../host-assets";
+import { useGoTipeI18n } from "../i18n-context";
 import { useFloatingPosition } from "../use-floating-position";
 import { downloadAsset } from "./download";
-import { ImageToolbarIcon } from "./icons";
+import { ImageToolbarIcon, MediaGlyph } from "./icons";
 import { type ImageAction, ImageActionsMenu } from "./image-actions-menu";
 import { ImageCaption } from "./image-caption";
 import { ImageDialog } from "./image-dialog";
@@ -22,7 +23,13 @@ export function ImageBlock({
   const alt = (block.attrs.alt as string) || "";
   const width = block.attrs.width as number | undefined;
   const caption = (block.attrs.caption as string) || "";
+  const i18n = useGoTipeI18n();
   const { url: displaySrc, failed: assetFailed } = useResolvedAsset(editor, src);
+  // The browser could not show this source: the block shows its failed state (Atlas frame 17)
+  // until the source changes or the reader retries.
+  const [failedSource, setFailedSource] = useState<string | null>(null);
+  const [attempt, setAttempt] = useState(0);
+  const loadFailed = displaySrc !== null && failedSource === displaySrc;
   const { hovered: isHovered, onEnter, onLeave } = useHoverIntent();
   const [isFocused, setIsFocused] = useState(false);
   const [isOptionsOpen, setIsOptionsOpen] = useState(false);
@@ -110,17 +117,18 @@ export function ImageBlock({
   }, []);
 
   const downloadImage = useCallback(() => {
-    if (displaySrc) downloadAsset(editor, displaySrc, alt || "image");
+    if (displaySrc)
+      downloadAsset(editor, displaySrc, alt || "image", i18n.t("media.unsupportedUrl"));
     setIsOptionsOpen(false);
-  }, [editor, displaySrc, alt]);
+  }, [editor, displaySrc, alt, i18n]);
 
   const clipboardFailure = useCallback(
     (error: unknown) => {
-      const message = error instanceof Error ? error.message : "Clipboard access is unavailable";
+      const message = error instanceof Error ? error.message : i18n.t("media.clipboardUnavailable");
       setActionError(message);
       editor.reportError(new GoTipeError("CLIPBOARD_FAILED", message));
     },
-    [editor],
+    [editor, i18n],
   );
 
   const copyImage = useCallback(async () => {
@@ -174,7 +182,7 @@ export function ImageBlock({
     {
       id: "alt",
       icon: "caption",
-      label: "Edit alternative text",
+      label: i18n.t("media.editAlt"),
       onClick: () => {
         setDialogMode("alt");
         closeImageOptions();
@@ -183,22 +191,42 @@ export function ImageBlock({
     {
       id: "crop",
       icon: "crop",
-      label: "Crop image",
+      label: i18n.t("media.crop"),
       onClick: () => {
         setDialogMode("crop");
         closeImageOptions();
       },
     },
-    { id: "replace", icon: "replace", label: "Replace image", onClick: triggerFilePicker },
-    { id: "copy", icon: "copy", label: "Copy image URL", onClick: () => void copyImage() },
-    { id: "download", icon: "download", label: "Download image", onClick: downloadImage },
-    { id: "caption", icon: "caption", label: "Edit caption", onClick: focusCaption },
-    { id: "link", icon: "link", label: "Copy link to block", onClick: () => void copyBlockLink() },
-    { id: "duplicate", icon: "duplicate", label: "Duplicate image", onClick: duplicateImageBlock },
+    {
+      id: "replace",
+      icon: "replace",
+      label: i18n.t("media.replaceImage"),
+      onClick: triggerFilePicker,
+    },
+    { id: "copy", icon: "copy", label: i18n.t("media.copyUrl"), onClick: () => void copyImage() },
+    {
+      id: "download",
+      icon: "download",
+      label: i18n.t("media.downloadImage"),
+      onClick: downloadImage,
+    },
+    { id: "caption", icon: "caption", label: i18n.t("media.editCaption"), onClick: focusCaption },
+    {
+      id: "link",
+      icon: "link",
+      label: i18n.t("media.copyBlockLink"),
+      onClick: () => void copyBlockLink(),
+    },
+    {
+      id: "duplicate",
+      icon: "duplicate",
+      label: i18n.t("media.duplicateImage"),
+      onClick: duplicateImageBlock,
+    },
     {
       id: "up",
       icon: "move",
-      label: "Move up",
+      label: i18n.t("media.moveUp"),
       onClick: () => {
         editor.chain().moveBlockUp(block.id).run();
         closeImageOptions();
@@ -207,7 +235,7 @@ export function ImageBlock({
     {
       id: "down",
       icon: "move",
-      label: "Move down",
+      label: i18n.t("media.moveDown"),
       onClick: () => {
         editor.chain().moveBlockDown(block.id).run();
         closeImageOptions();
@@ -216,7 +244,7 @@ export function ImageBlock({
     {
       id: "delete",
       icon: "delete",
-      label: "Delete image",
+      label: i18n.t("media.deleteImage"),
       danger: true,
       onClick: removeImageBlock,
     },
@@ -225,17 +253,7 @@ export function ImageBlock({
   const renderWidth = draftWidth ?? width;
   const showImageControls =
     !readOnly && Boolean(src) && (isHovered || isFocused || isResizing || isOptionsOpen);
-  const toolbarAnchor = useCallback(
-    () => imageShellRef.current?.getBoundingClientRect() ?? null,
-    [],
-  );
-  const toolbarPosition = useFloatingPosition({
-    open: showImageControls,
-    anchor: toolbarAnchor,
-    element: toolbarRef,
-    placement: "top",
-    revision: draftWidth,
-  });
+  const failed = assetFailed || loadFailed;
 
   return (
     <figure
@@ -249,7 +267,41 @@ export function ImageBlock({
         if (!event.currentTarget.contains(event.relatedTarget)) setIsFocused(false);
       }}
     >
-      {src ? (
+      {src && failed ? (
+        <div className="gotipe-image-error">
+          <MediaGlyph kind="warning" />
+          <span className="gotipe-image-error-text">
+            {i18n.t("media.imageUnavailable")}
+            {alt && <span className="gotipe-sr-only">: {alt}</span>}
+          </span>
+          {!readOnly && (
+            <span className="gotipe-image-error-actions">
+              {loadFailed && (
+                <button
+                  type="button"
+                  className="gotipe-media-button"
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={() => {
+                    setFailedSource(null);
+                    setAttempt((value) => value + 1);
+                  }}
+                >
+                  <MediaGlyph kind="retry" />
+                  {i18n.t("media.retry")}
+                </button>
+              )}
+              <button
+                type="button"
+                className="gotipe-media-button is-quiet"
+                onMouseDown={(e) => e.preventDefault()}
+                onClick={triggerFilePicker}
+              >
+                {i18n.t("media.replace")}
+              </button>
+            </span>
+          )}
+        </div>
+      ) : src ? (
         <div
           ref={imageShellRef}
           className="gotipe-image-loaded-shell"
@@ -257,25 +309,21 @@ export function ImageBlock({
           onMouseLeave={onLeave}
         >
           <img
+            key={attempt}
             ref={imageRef}
             src={displaySrc ?? undefined}
             alt={alt}
+            onError={() => setFailedSource(displaySrc)}
             style={
               renderWidth
                 ? { width: `${renderWidth}px`, maxWidth: "100%", height: "auto" }
                 : undefined
             }
           />
+          {/* The theme draws the tools in the image's top corner (Atlas frame 10). */}
           <div
             ref={toolbarRef}
             className={`gotipe-image-toolbar${showImageControls ? " visible" : ""}`}
-            style={{
-              position: "fixed",
-              transform: "none",
-              ...toolbarPosition,
-              display: readOnly ? "none" : undefined,
-              visibility: toolbarPosition ? "visible" : "hidden",
-            }}
             data-gotipe-image-toolbar=""
             hidden={readOnly}
             inert={!showImageControls}
@@ -288,7 +336,7 @@ export function ImageBlock({
                 setDialogMode("alt");
                 setIsOptionsOpen(false);
               }}
-              aria-label="Alternative text"
+              aria-label={i18n.t("media.altText")}
             >
               <ImageToolbarIcon kind="caption" />
             </button>
@@ -297,7 +345,7 @@ export function ImageBlock({
               className="gotipe-image-toolbar-btn"
               onMouseDown={(e) => e.preventDefault()}
               onClick={setOriginalImageWidth}
-              aria-label="Original size"
+              aria-label={i18n.t("media.originalSize")}
             >
               <ImageToolbarIcon kind="original" />
             </button>
@@ -306,7 +354,7 @@ export function ImageBlock({
               className="gotipe-image-toolbar-btn"
               onMouseDown={(e) => e.preventDefault()}
               onClick={resetImageWidth}
-              aria-label="Fit to width"
+              aria-label={i18n.t("media.fitWidth")}
             >
               <ImageToolbarIcon kind="fit" />
             </button>
@@ -315,7 +363,7 @@ export function ImageBlock({
               className="gotipe-image-toolbar-btn"
               onMouseDown={(e) => e.preventDefault()}
               onClick={focusCaption}
-              aria-label="Caption"
+              aria-label={i18n.t("media.caption")}
             >
               <ImageToolbarIcon kind="caption" />
             </button>
@@ -327,7 +375,7 @@ export function ImageBlock({
                 if (!src) return;
                 setDialogMode("preview");
               }}
-              aria-label="Zoom"
+              aria-label={i18n.t("media.zoom")}
             >
               <ImageToolbarIcon kind="zoom" />
             </button>
@@ -336,7 +384,7 @@ export function ImageBlock({
               className="gotipe-image-toolbar-btn"
               onMouseDown={(e) => e.preventDefault()}
               onClick={downloadImage}
-              aria-label="Download"
+              aria-label={i18n.t("media.download")}
             >
               <ImageToolbarIcon kind="download" />
             </button>
@@ -346,7 +394,7 @@ export function ImageBlock({
               ref={optionsButtonRef}
               onMouseDown={(e) => e.preventDefault()}
               onClick={() => setIsOptionsOpen((current) => !current)}
-              aria-label="More options"
+              aria-label={i18n.t("media.moreOptions")}
             >
               <ImageToolbarIcon kind="more" />
             </button>
@@ -363,8 +411,8 @@ export function ImageBlock({
                     nudge(event.key === "ArrowRight" ? 16 : -16);
                   }
                 }}
-                title="Use Left and Right arrow keys to resize"
-                aria-label="Resize image from left"
+                title={i18n.t("media.resizeHint")}
+                aria-label={i18n.t("media.resizeLeft")}
               />
               <button
                 type="button"
@@ -376,8 +424,8 @@ export function ImageBlock({
                     nudge(event.key === "ArrowRight" ? 16 : -16);
                   }
                 }}
-                title="Use Left and Right arrow keys to resize"
-                aria-label="Resize image from right"
+                title={i18n.t("media.resizeHint")}
+                aria-label={i18n.t("media.resizeRight")}
               />
             </>
           ) : null}
@@ -413,11 +461,6 @@ export function ImageBlock({
           mode={dialogMode}
           onClose={() => setDialogMode(null)}
         />
-      )}
-      {assetFailed && (
-        <p className="gotipe-media-insert-error gotipe-image-error" role="alert">
-          Image unavailable
-        </p>
       )}
       {actionError && (
         <p className="gotipe-media-insert-error gotipe-media-action-error" role="alert">

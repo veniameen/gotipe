@@ -322,3 +322,36 @@ export function ImageOptionsItem({
     </button>
   );
 }
+
+const GLYPHS = {
+  upload: (
+    <path d="M8 10.5v-7M5 6.25l3-3 3 3M3.25 10.75v1a1.5 1.5 0 0 0 1.5 1.5h6.5a1.5 1.5 0 0 0 1.5-1.5v-1" />
+  ),
+  link: (
+    <path d="M7 9a3 3 0 0 0 4.25.25l1.75-1.75a3 3 0 0 0-4.25-4.25l-.9.9M9 7a3 3 0 0 0-4.25-.25L3 8.5a3 3 0 0 0 4.25 4.25l.9-.9" />
+  ),
+  warning: (
+    <>
+      <path d="M7.13 2.9a1 1 0 0 1 1.74 0l5.53 9.6a1 1 0 0 1-.87 1.5H2.47a1 1 0 0 1-.87-1.5ZM8 6.25v3" />
+      <circle cx="8" cy="11.4" r="0.8" fill="currentColor" stroke="none" />
+    </>
+  ),
+  retry: <path d="M3.25 8a4.75 4.75 0 1 0 1.4-3.35M3.25 3.25v2.5h2.5" />,
+};
+
+/** The Atlas's 16px glyphs used on media blocks: upload, link, warning, retry. */
+export function MediaGlyph({ kind }: { kind: keyof typeof GLYPHS }) {
+  return (
+    <svg
+      viewBox="0 0 16 16"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      {GLYPHS[kind]}
+    </svg>
+  );
+}

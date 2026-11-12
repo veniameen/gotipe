@@ -1,5 +1,6 @@
 import type { GoTipeEditor } from "@gotipe/core";
 import { type RefObject, useLayoutEffect } from "react";
+import { useGoTipeI18n } from "../i18n-context";
 
 /** Keep the live text node while typing; React must not replace the native caret's node. */
 export function ImageCaption({
@@ -17,6 +18,7 @@ export function ImageCaption({
   element: RefObject<HTMLDivElement | null>;
   onEmpty: () => void;
 }) {
+  const i18n = useGoTipeI18n();
   useLayoutEffect(() => {
     if (element.current && element.current.textContent !== caption)
       element.current.textContent = caption;
@@ -28,7 +30,8 @@ export function ImageCaption({
         data-gotipe-input=""
         contentEditable={!readOnly}
         suppressContentEditableWarning
-        aria-label="Image caption"
+        aria-label={i18n.t("media.captionLabel")}
+        data-caption-placeholder={readOnly ? undefined : i18n.t("media.captionPlaceholder")}
         role="textbox"
         tabIndex={readOnly ? -1 : 0}
         aria-readonly={readOnly}

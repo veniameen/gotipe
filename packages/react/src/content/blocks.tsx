@@ -10,7 +10,9 @@ import {
   PhantomContext,
   PlaceholderContext,
 } from "./context";
+import { EmbedBlock } from "./embed-block";
 import { CalloutBlock, ToggleBlock } from "./interactive-blocks";
+import { MathBlock } from "./math-block";
 import {
   BlockContent,
   blockKey,
@@ -24,6 +26,7 @@ import {
   TableColumnResizeHandle,
   TableColumns,
   TableLayoutProvider,
+  TableScroll,
   TableToolbar,
 } from "./table-layout";
 
@@ -126,34 +129,36 @@ export function TableBlock({
         className={["gotipe-table-wrapper", rootProps.className].filter(Boolean).join(" ")}
         contentEditable={false}
       >
-        <table className="gotipe-table">
-          <TableColumns />
-          {hasHeader ? (
-            <>
-              <thead>
-                <BlockComponent
-                  block={block.children[0]!}
-                  editor={editor}
-                  selectedBlockId={selectedBlockId}
-                  parentType={block.type}
-                />
-              </thead>
-              <tbody>
-                {block.children.slice(1).map((child) => (
+        <TableScroll>
+          <table className="gotipe-table">
+            <TableColumns />
+            {hasHeader ? (
+              <>
+                <thead>
                   <BlockComponent
-                    key={child.id}
-                    block={child}
+                    block={block.children[0]!}
                     editor={editor}
                     selectedBlockId={selectedBlockId}
                     parentType={block.type}
                   />
-                ))}
-              </tbody>
-            </>
-          ) : (
-            <tbody>{children}</tbody>
-          )}
-        </table>
+                </thead>
+                <tbody>
+                  {block.children.slice(1).map((child) => (
+                    <BlockComponent
+                      key={child.id}
+                      block={child}
+                      editor={editor}
+                      selectedBlockId={selectedBlockId}
+                      parentType={block.type}
+                    />
+                  ))}
+                </tbody>
+              </>
+            ) : (
+              <tbody>{children}</tbody>
+            )}
+          </table>
+        </TableScroll>
         <TableToolbar />
       </div>
     </TableLayoutProvider>
@@ -255,7 +260,9 @@ function BlockComponentInner({
   const i18n = useGoTipeI18n();
   const isSelected = selectedBlockId === block.id;
   const isEmpty = isBlockContentEmpty(block);
-  const shouldShowPlaceholder = isEmpty && (isSelected || block.type === "heading") && !readOnly;
+  // An empty block says what it will become (Atlas frame 11); an empty paragraph only under the
+  // caret, so a page of empty lines stays quiet.
+  const shouldShowPlaceholder = isEmpty && !readOnly && (isSelected || block.type !== "paragraph");
   const placeholder = shouldShowPlaceholder
     ? placeholderFn
       ? placeholderFn(block, parentType)
@@ -389,6 +396,12 @@ function BlockComponentInner({
     case "file":
       return <FileBlock block={block} editor={editor} rootProps={rootProps} />;
 
+    case "embed":
+      return <EmbedBlock block={block} editor={editor} rootProps={rootProps} />;
+
+    case "math":
+      return <MathBlock block={block} editor={editor} rootProps={rootProps} />;
+
     case "table":
       return (
         <TableBlock
@@ -441,7 +454,13 @@ function BlockComponentInner({
 
     case "toggle":
       return (
-        <ToggleBlock block={block} editor={editor} rootProps={rootProps} content={content}>
+        <ToggleBlock
+          block={block}
+          editor={editor}
+          rootProps={rootProps}
+          content={content}
+          placeholder={placeholder}
+        >
           {children}
         </ToggleBlock>
       );

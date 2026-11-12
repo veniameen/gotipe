@@ -100,6 +100,8 @@ export function getEmptyBlockPlaceholder(
       return i18n.t("placeholder.todo");
     case "blockquote":
       return i18n.t("placeholder.quote");
+    case "toggle":
+      return i18n.t("placeholder.toggle");
     default:
       return null;
   }

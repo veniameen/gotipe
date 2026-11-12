@@ -1,6 +1,7 @@
 import { type BlockView, type GoTipeEditor, GoTipeError } from "@gotipe/core";
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import { useGoTipeI18n } from "../i18n-context";
 import { useAssetUpload } from "./use-asset-upload";
 
 interface Crop {
@@ -10,20 +11,25 @@ interface Crop {
   height: number;
 }
 
-async function cropImage(src: string, crop: Crop): Promise<File> {
+interface CropMessages {
+  tooLarge: string;
+  unsupported: string;
+  encodeFailed: string;
+}
+
+async function cropImage(src: string, crop: Crop, messages: CropMessages): Promise<File> {
   const image = new Image();
   image.crossOrigin = "anonymous";
   image.src = src;
   await image.decode();
   const width = Math.max(1, Math.round((image.naturalWidth * crop.width) / 100));
   const height = Math.max(1, Math.round((image.naturalHeight * crop.height) / 100));
-  if (width * height > 16_000_000)
-    throw new Error("The crop exceeds 16 megapixels. Choose a smaller area.");
+  if (width * height > 16_000_000) throw new Error(messages.tooLarge);
   const canvas = document.createElement("canvas");
   canvas.width = width;
   canvas.height = height;
   const context = canvas.getContext("2d");
-  if (!context) throw new Error("This browser cannot crop images");
+  if (!context) throw new Error(messages.unsupported);
   context.drawImage(
     image,
     (image.naturalWidth * crop.x) / 100,
@@ -37,12 +43,19 @@ async function cropImage(src: string, crop: Crop): Promise<File> {
   );
   const blob = await new Promise<Blob>((resolve, reject) =>
     canvas.toBlob(
-      (blob) => (blob ? resolve(blob) : reject(new Error("Could not encode the cropped image"))),
+      (blob) => (blob ? resolve(blob) : reject(new Error(messages.encodeFailed))),
       "image/png",
     ),
   );
   return new File([blob], "cropped-image.png", { type: "image/png" });
 }
+
+const CROP_LABELS = {
+  x: "media.cropLeft",
+  y: "media.cropTop",
+  width: "media.cropWidth",
+  height: "media.cropHeight",
+} as const;
 
 export function ImageDialog({
   editor,
@@ -57,6 +70,7 @@ export function ImageDialog({
   mode: "preview" | "alt" | "crop";
   onClose: () => void;
 }) {
+  const i18n = useGoTipeI18n();
   const dialog = useRef<HTMLDialogElement>(null);
   const active = useRef(true);
   const originalSource = useRef(String(block.attrs.src ?? ""));
@@ -83,8 +97,9 @@ export function ImageDialog({
     };
   }, []);
   const busy = processing || pending;
-  const title =
-    mode === "preview" ? "Image preview" : mode === "crop" ? "Crop image" : "Image description";
+  const title = i18n.t(
+    mode === "preview" ? "media.previewTitle" : mode === "crop" ? "media.crop" : "media.altTitle",
+  );
   async function submit() {
     if (busy || !editor.isEditable || editor.isDestroyed) return;
     setError(null);
@@ -95,12 +110,16 @@ export function ImageDialog({
     }
     setProcessing(true);
     try {
-      const file = await cropImage(src, crop);
+      const file = await cropImage(src, crop, {
+        tooLarge: i18n.t("media.cropTooLarge"),
+        unsupported: i18n.t("media.cropUnsupported"),
+        encodeFailed: i18n.t("media.cropEncodeFailed"),
+      });
       if (active.current && !editor.isDestroyed) await upload(file, originalSource.current);
     } catch (cause) {
       if (!active.current || editor.isDestroyed) return;
-      const message = cause instanceof Error ? cause.message : "Could not crop image";
-      setError(`${message}. For a remote image, its server must allow cross-origin access.`);
+      const message = cause instanceof Error ? cause.message : i18n.t("media.cropFailed");
+      setError(i18n.t("media.cropCors", { message }));
       editor.reportError(new GoTipeError("ASSET_SAVE_FAILED", message));
     } finally {
       if (active.current) setProcessing(false);
@@ -128,7 +147,7 @@ export function ImageDialog({
       >
         <header>
           <strong>{title}</strong>
-          <button type="button" onClick={onClose} aria-label="Close image dialog">
+          <button type="button" onClick={onClose} aria-label={i18n.t("media.closeDialog")}>
             ×
           </button>
         </header>
@@ -148,11 +167,11 @@ export function ImageDialog({
         </div>
         {mode !== "preview" && (
           <label>
-            Alternative text
+            {i18n.t("media.altText")}
             <input
               value={alt}
               onChange={(event) => setAlt(event.target.value)}
-              placeholder="Describe the image"
+              placeholder={i18n.t("media.describe")}
             />
           </label>
         )}
@@ -161,7 +180,7 @@ export function ImageDialog({
             <div className="gotipe-crop-fields">
               {(["x", "y", "width", "height"] as const).map((key) => (
                 <label key={key}>
-                  {{ x: "Left", y: "Top", width: "Width", height: "Height" }[key]} (%)
+                  {i18n.t(CROP_LABELS[key])} (%)
                   <input
                     type="number"
                     min={key === "x" || key === "y" ? 0 : 1}
@@ -186,10 +205,7 @@ export function ImageDialog({
                 </label>
               ))}
             </div>
-            <p>
-              The selected area is saved as PNG. Animated images use the first frame. Undo restores
-              the original image.
-            </p>
+            <p>{i18n.t("media.cropNote")}</p>
           </>
         )}
         {(error || uploadError) && (
@@ -199,11 +215,11 @@ export function ImageDialog({
         )}
         <footer>
           <button type="button" onClick={onClose}>
-            {mode === "preview" ? "Close" : "Cancel"}
+            {i18n.t(mode === "preview" ? "media.close" : "media.cancel")}
           </button>
           {mode !== "preview" && (
             <button type="submit" disabled={busy}>
-              {busy ? "Saving…" : "Save"}
+              {i18n.t(busy ? "media.saving" : "media.save")}
             </button>
           )}
         </footer>

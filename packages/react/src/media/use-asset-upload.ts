@@ -1,6 +1,7 @@
 import { type BlockView, type GoTipeEditor, GoTipeError } from "@gotipe/core";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { saveAssetWithHost } from "../host-assets";
+import { useGoTipeI18n } from "../i18n-context";
 
 function find(blocks: BlockView[], id: string): BlockView | undefined {
   for (const block of blocks) {
@@ -17,6 +18,7 @@ export function useAssetUpload(
   kind: "image" | "file",
   apply: (saved: { src: string; name: string }, file: File) => void,
 ) {
+  const i18n = useGoTipeI18n();
   const request = useRef(0);
   const mounted = useRef(false);
   const [pending, setPending] = useState(false);
@@ -36,7 +38,7 @@ export function useAssetUpload(
       const sourceKey = kind === "image" ? "src" : "url";
       const previousSource = before.attrs[sourceKey];
       if (expectedSource !== undefined && previousSource !== expectedSource) {
-        setError("The image changed. Reopen the dialog before editing it.");
+        setError(i18n.t("media.sourceChanged"));
         return;
       }
       const generation = ++request.current;
@@ -54,7 +56,7 @@ export function useAssetUpload(
         const current = find(editor.getViewState().blocks, blockId);
         if (!current || current.attrs[sourceKey] !== previousSource) return;
         if (saved) apply(saved, file);
-        else setError("Upload failed. Please try again.");
+        else setError(i18n.t("media.uploadFailed"));
       } catch (error) {
         if (mounted.current && generation === request.current && !editor.isDestroyed) {
           const failure =
@@ -62,7 +64,7 @@ export function useAssetUpload(
               ? error
               : new GoTipeError(
                   "ASSET_SAVE_FAILED",
-                  error instanceof Error ? error.message : "Could not insert the uploaded asset",
+                  error instanceof Error ? error.message : i18n.t("media.insertFailed"),
                 );
           setError(failure.message);
           editor.reportError(failure);
@@ -71,7 +73,7 @@ export function useAssetUpload(
         if (mounted.current && generation === request.current) setPending(false);
       }
     },
-    [editor, blockId, kind, apply],
+    [editor, blockId, kind, apply, i18n],
   );
   return { upload, pending, error };
 }
