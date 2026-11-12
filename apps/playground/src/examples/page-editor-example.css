@@ -11,7 +11,7 @@
   flex-wrap: wrap;
   gap: 8px;
   color: var(--gt-text-2);
-  font-size: var(--gt-text-body);
+  font-size: var(--gt-ui-size);
 }
 .gotipe-editor-view select {
   width: 140px;
@@ -24,13 +24,13 @@
 }
 .gotipe-page-example-controls h2 {
   margin: 0 auto 0 0;
-  font-size: var(--gt-text-prose);
+  font-size: var(--gt-h3-size);
   color: var(--gt-text);
 }
 .gotipe-page-example-controls button,
 .gotipe-page-example-error button {
   border: 1px solid var(--gt-line-control);
-  background: var(--gt-surface);
+  background: var(--gt-page-bg);
   color: var(--gt-text);
   border-radius: var(--gt-radius-control);
   padding: 6px 10px;
@@ -55,7 +55,7 @@
   max-height: 70vh;
   overflow: auto;
   border: 1px solid var(--gt-line);
-  border-radius: var(--gt-radius-surface);
+  border-radius: var(--gt-radius-card);
 }
 .gotipe-page-example-source {
   min-width: 0;
@@ -64,9 +64,9 @@
   margin: 0;
   padding: 16px;
   color: var(--gt-text);
-  background: var(--gt-surface);
+  background: var(--gt-page-bg);
   border: 1px solid var(--gt-line);
-  border-radius: var(--gt-radius-surface);
+  border-radius: var(--gt-radius-card);
   font-family: var(--gt-font-mono);
   font-size: 12px;
 }
@@ -83,6 +83,6 @@
   resize: vertical;
   font: inherit;
   color: var(--gt-text);
-  background: var(--gt-surface);
+  background: var(--gt-page-bg);
   border: 1px solid var(--gt-line-control);
 }
