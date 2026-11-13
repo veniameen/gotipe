@@ -34,14 +34,16 @@ export async function downloadPdf(editor: GoTipeEditor) {
     fontSize: 11,
     headerTemplate: "Quarterly report",
     footerTemplate: "Internal",
+    lang: "en-US",
+    title: "Quarterly report",
+    author: "Finance team",
     resolveImage: async (source) => {
       const response = await fetch(source, { credentials: "include" });
       if (!response.ok) throw new Error(`${source}: HTTP ${response.status}`);
       return response.blob();
     },
   });
-  // Copy into an ArrayBuffer-backed array, which Blob's type expects.
-  const url = URL.createObjectURL(new Blob([new Uint8Array(bytes)], { type: "application/pdf" }));
+  const url = URL.createObjectURL(new Blob([bytes], { type: "application/pdf" }));
   const link = document.createElement("a");
   link.href = url;
   link.download = "report.pdf";
@@ -75,21 +77,27 @@ Export works on a private copy of the document: the editor's state is never chan
 | `fontSize` | `number` | `12` | Body text size in points, from 1 to 100. Headings scale from it. |
 | `headerTemplate` | `string` | — | Plain text printed in the top margin of every page. |
 | `footerTemplate` | `string` | — | Plain text printed in the bottom margin of every page. |
+| `lang` | `string` | — | BCP 47 language of the text, such as `"ru"` or `"pt-BR"`. Screen readers use it to pick a voice. Without it the file declares no language. |
+| `title` | `string` | — | Document title. Viewers show it as the window title. |
+| `author` | `string` | — | Author in the document properties. |
 | `resolveImage` | `(source: string) => Promise<Uint8Array \| Blob>` | — | Returns the bytes of an image URL. Required when the document has images that are not `data:` URLs. |
 
 The header and footer are text, not templates: there are no variables and no page numbers.
 A header or footer taller than its margin pushes the content area in. Options that leave no
-room for content fail with an error.
+room for content fail with an error, and so do a malformed `lang` and a control character in
+`title` or `author`.
 
 ## Images
 
 A `data:` image is embedded as it is. Any other source is passed to `resolveImage` once per
 export, however often it occurs; your callback owns credentials and access checks. Without a
-callback, such an image fails the export.
+callback, such an image fails the export. An image block without a source, the placeholder
+the editor inserts before an upload, exports as nothing, or as its caption when it has one.
 
-- Formats: PNG, JPEG and GIF (the first frame). WebP and SVG fail.
-- Limits: 8 MiB per resolved image, 12 MiB per embedded `data:` URL, 32 MiB of embedded
-  image data per export, 4096 pixels per side.
+- Formats: PNG, JPEG, GIF (the first frame) and WebP, the formats the editor uploads. SVG
+  fails.
+- Limits: 10 MiB of image data per image, the same as the editor's limit for files kept in
+  the document, 64 MiB per export (also checked by `gotipe-convert`), 4096 pixels per side.
 - An image keeps its aspect ratio. Its `width` attribute is read as CSS pixels and capped by the
   content width and the page height. The caption is printed below it, `alt` becomes the
   figure's alternative text.
@@ -123,16 +131,29 @@ package's `licenses/` folder and `THIRD_PARTY_NOTICES.md`.
 - Tables with shaded header cells, column and row spans. A row that fits stays on one page;
   a taller row continues on the next.
 - Columns side by side; quotes, callouts and toggles in a box (toggles always open).
-- Images with captions. Files and embeds as a link with their name.
+- Images with captions. Files and embeds as their name, or their address when they have
+  none, linked when the address is absolute (see [Links](#links)).
 - Math and raw Markdown blocks as their source text; dividers as a rule.
 
 The structure tree tags headings, paragraphs, lists with labels, tables with spans, figures
 with alternative text, captions, code, quotes and links in reading order. XMP metadata
-records the producer and the page count.
+records the producer and the page count, and the title, author and language when given.
+
+## Links
+
+A downloaded PDF has no page to resolve a relative link against, so only absolute `http:`,
+`https:` and `mailto:` addresses become web links; characters outside ASCII are
+percent-encoded. A link to `#` and a block ID jumps inside the PDF when that block is in the
+document: it is a named destination with the block's ID, so `report.pdf#nameddest=<id>` opens
+there too. Every other link keeps its text without a link: a relative or `/` path, `//host`, a
+fragment that names no block or an empty placeholder, an inline `data:` upload, and any other
+scheme, `javascript:` included. A link never makes the export fail. A file or embed shows its
+name; without one, its address, and for an inline upload its media type (`application/pdf`)
+instead of the encoded bytes. Empty file and embed placeholders export as nothing.
 
 ## Loading and size
 
-PDF and DOCX share `@gotipe/export-wasm`: 14.4 MB, 8.6 MB gzipped, most of it fonts. It is
+PDF and DOCX share `@gotipe/export-wasm`: 14.7 MB, 8.6 MB gzipped, most of it fonts. It is
 downloaded and initialized on the first `exportToPdf` or `exportToDocx` call and reused
 afterwards. Importing the editor or `@gotipe/export` never loads it, and HTML, Markdown and
 text export never need it. If loading fails, the call rejects with
@@ -140,11 +161,32 @@ text export never need it. If loading fails, the call rejects with
 
 ## Errors
 
-Invalid option names throw a `TypeError` before anything loads. Image preparation rejects
-with an `Error` (a missing source, a missing `resolveImage`, a size limit). Everything the
-renderer finds rejects with a **string**, not an `Error`, so show it with `String(error)`.
-Examples: `Unsupported block type: widget`, `Font not found: No embedded font covers "中"`,
-`Encoding error: Unsafe link URL`, `Encoding error: Invalid PDF margin`.
+Invalid option names throw a `TypeError` before anything loads. Every other failure rejects
+with an `ExportError`: its `name` is `GoTipeExportError` and its `code` says why.
+
+| `code` | Cause |
+|---|---|
+| `INVALID_OPTIONS` | An option value: page size, font size, margins, `lang`, `title`, `author` |
+| `IMAGE_ERROR` | An image: a URL without `resolveImage`, an unsupported format, a size limit |
+| `UNSUPPORTED_BLOCK_TYPE`, `UNSUPPORTED_MARK` | A block or mark the renderer does not know |
+| `FONT_NOT_FOUND` | A character no bundled font covers |
+| `ENCODING_ERROR` | Content the format cannot hold, a complexity limit |
+| `PARSE_ERROR` | A document that is not GoTipe JSON |
+| `EXPORTER_UNAVAILABLE` | `@gotipe/export-wasm` could not be loaded; the next call tries again |
+
+```ts
+import { ExportError, exportToPdf } from "@gotipe/export";
+
+try {
+  await exportToPdf(editor);
+} catch (error) {
+  if (!(error instanceof ExportError) || error.code !== "FONT_NOT_FOUND") throw error;
+  console.warn(`Some characters have no PDF font: ${error.message}`);
+}
+```
+
+An error thrown by your `resolveImage` propagates unchanged. The message names the cause, for
+example `Unsupported block type: widget` or `Font not found: No embedded font covers "中"`.
 
 ## Limitations
 
@@ -152,14 +194,12 @@ Examples: `Unsupported block type: widget`, `Font not found: No embedded font co
 > The PDF is a document layout, not a copy of the editor's CSS. It is not certified as PDF/UA
 > or PDF/A.
 
-- The document language is always `en`, and there are no title or author fields.
 - Table columns share the width equally; column widths and cell alignment are not applied,
   and header rows are not repeated on new pages.
-- Unknown block types and marks fail. So do links and file or embed URLs other than
-  `http(s)`, `mailto:`, `#…` or a path starting with `/`: a relative `guide.md`, an empty URL
-  or a `data:` file fails.
-- Colors must be `#rgb`, `#rrggbb` or a basic CSS name such as `navy`. An image block without
-  a source fails.
+- Unknown block types and marks fail. Links other than absolute `http(s)`, `mailto:` and
+  `#<block ID>` stay text without a link (see [Links](#links)).
+- Colors must be `#rgb`, `#rrggbb` or a basic CSS name such as `navy`.
+- Images larger than 4096 pixels per side fail; scale them down before export.
 - A document may have at most 64 nesting levels, 100,000 blocks, 10,000 pages and 1,024
   table columns.
 

@@ -6,6 +6,8 @@ import type { BlockView } from "./types/view";
 export interface SSROptions {
   classPrefix?: string;
   inlineStyles?: boolean;
+  /** The same as `inlineStyles`, as accepted by `exportToHtml`. */
+  includeStyles?: boolean;
   blockRenderers?: Record<string, (block: BlockView) => string>;
 }
 

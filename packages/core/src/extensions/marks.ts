@@ -1,4 +1,5 @@
 import { defineExtension } from "../types/extension";
+import { markInputRule } from "./mark-input-rule";
 
 export const Bold = defineExtension({
   name: "bold",
@@ -9,14 +10,7 @@ export const Bold = defineExtension({
       command: (editor) => editor.chain().toggleBold().run(),
     },
   ],
-  inputRules: [
-    {
-      pattern: /\*\*(.+)\*\*$/,
-      handler: (editor, _match) => {
-        editor.chain().toggleBold().run();
-      },
-    },
-  ],
+  inputRules: [markInputRule("bold", "**")],
 });
 
 export const Italic = defineExtension({
@@ -28,14 +22,7 @@ export const Italic = defineExtension({
       command: (editor) => editor.chain().toggleItalic().run(),
     },
   ],
-  inputRules: [
-    {
-      pattern: /\*(.+)\*$/,
-      handler: (editor) => {
-        editor.chain().toggleItalic().run();
-      },
-    },
-  ],
+  inputRules: [markInputRule("italic", "*")],
 });
 
 export const Underline = defineExtension({
@@ -58,14 +45,7 @@ export const Strikethrough = defineExtension({
       command: (editor) => editor.chain().toggleStrikethrough().run(),
     },
   ],
-  inputRules: [
-    {
-      pattern: /~~(.+)~~$/,
-      handler: (editor) => {
-        editor.chain().toggleStrikethrough().run();
-      },
-    },
-  ],
+  inputRules: [markInputRule("strikethrough", "~~")],
 });
 
 export const InlineCode = defineExtension({
@@ -77,14 +57,7 @@ export const InlineCode = defineExtension({
       command: (editor) => editor.chain().toggleCode().run(),
     },
   ],
-  inputRules: [
-    {
-      pattern: /`(.+)`$/,
-      handler: (editor) => {
-        editor.chain().toggleCode().run();
-      },
-    },
-  ],
+  inputRules: [markInputRule("code", "`")],
 });
 
 export const Link = defineExtension({
@@ -118,7 +91,8 @@ export const Highlight = defineExtension({
     {
       name: "highlight",
       attrs: {
-        color: { type: "string", default: "yellow" },
+        // No default: `toggleHighlight()` stores a colourless highlight, the theme's `<mark>`.
+        color: { type: "string" },
       },
       rank: 7,
     },

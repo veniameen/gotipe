@@ -65,6 +65,10 @@ def validate(path, fixture, require_producer=None):
         failures.append(f"Too few pages: {len(reader.pages)}")
     dimensions = expected.get("pagePoints", [595.276, 841.89])
     links = []
+    internal = collections.defaultdict(set)
+    page_numbers = {page.indirect_reference.idnum: number for number, page in enumerate(reader.pages, 1)}
+    named = reader.trailer["/Root"].get("/Dests")
+    named = named.get_object() if named is not None else {}
     images = 0
     image_placements = []
     fixed_fonts = set()
@@ -123,6 +127,16 @@ def validate(path, fixture, require_producer=None):
                     failures.append(f"Unsafe annotation URL: {uri}")
             if action.get("/S") in ("/JavaScript", "/Launch"):
                 failures.append("Executable PDF action")
+            if action.get("/S") == "/GoTo":
+                # In-document links name a destination that must lead to a page of this file.
+                name = str(action.get("/D", ""))
+                destination = named.get(name) if name else None
+                target = destination.get_object()[0] if destination is not None else None
+                number = page_numbers.get(getattr(target, "idnum", None))
+                if number is None:
+                    failures.append(f"Dangling in-document link: {name!r}")
+                else:
+                    internal[name.lstrip("/")].add(number)
         literal_text = command("pdftotext", "-f", str(page_number), "-l", str(page_number), "-raw", str(path), "-") if expected.get("header") or expected.get("footer") else ""
         for field in ["header", "footer"]:
             if expected.get(field) and expected[field] not in literal_text:
@@ -130,6 +144,23 @@ def validate(path, fixture, require_producer=None):
     for uri in expected.get("links", []):
         if uri not in links:
             failures.append(f"Missing link annotation: {uri}")
+    if "internalLinks" in expected or internal:
+        wanted = sorted(expected.get("internalLinks", []))
+        if sorted(internal) != wanted:
+            failures.append(f"In-document links {sorted(internal)!r} != expected {wanted!r}")
+        blocks = {}
+        def index(items):
+            for block in items:
+                blocks[block["id"]] = block
+                index(block.get("children", []))
+        index(fixture["document"]["blocks"])
+        for name, pages in internal.items():
+            # The destination page shows the linked block's own text.
+            own = normalized("".join(fragments([{**blocks[name], "children": []}]))) if name in blocks else None
+            for number in pages:
+                shown = normalized(command("pdftotext", "-f", str(number), "-l", str(number), str(path), "-"))
+                if not own or own not in shown:
+                    failures.append(f"In-document link {name!r} leads to page {number} without its block")
     if images < expected.get("imageCount", 0):
         failures.append(f"Missing embedded image: {images}")
     geometry = ET.fromstring(command("pdftotext", "-bbox-layout", str(path), "-"))
@@ -282,7 +313,7 @@ def validate(path, fixture, require_producer=None):
     if actual_outline != expected_outline:
         failures.append(f"Heading outline mismatch: {actual_outline!r} != {expected_outline!r}")
     failures.extend(validate_structure(reader, fixture, fragments))
-    return {"producer": producer, "pages": len(reader.pages), "words": len(all_words), "images": images, "links": links, "text": compact, "layout": [(word[0], *[round(value, 2) for value in word[1:]]) for word in all_words], "failures": failures}
+    return {"producer": producer, "pages": len(reader.pages), "words": len(all_words), "images": images, "links": links + sorted(f"#{name}" for name in internal), "text": compact, "layout": [(word[0], *[round(value, 2) for value in word[1:]]) for word in all_words], "failures": failures}
 
 
 def main():

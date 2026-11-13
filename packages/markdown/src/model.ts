@@ -233,8 +233,9 @@ export function fingerprint(block: Block): string {
 }
 
 /**
- * Whether the serializer skips the block when it has to (re)write it:
- * paragraphs and headings without text, raw blocks without content, tables without cells.
+ * Whether the serializer skips the block when it has to (re)write it: paragraphs,
+ * headings and math without text, raw blocks without content, embeds without an
+ * address, tables without cells.
  */
 export function isBlockEmpty(block: Block): boolean {
   switch (block.type) {
@@ -243,6 +244,12 @@ export function isBlockEmpty(block: Block): boolean {
       return spansText(richContent(block)).length === 0;
     case "markdownRaw":
       return typeof block.content !== "string" || block.content.length === 0;
+    case "math":
+      return typeof block.content === "string"
+        ? block.content.length === 0
+        : spansText(richContent(block)).length === 0;
+    case "embed":
+      return str(block.attrs?.url) === "";
     case "table": {
       const first = block.children?.[0];
       return !first || !first.children || first.children.length === 0;

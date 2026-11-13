@@ -14,6 +14,7 @@ pub(crate) struct Layout<'a> {
     pub size: f32,
     pub max_height: f32,
     pub next_tag: &'a std::cell::Cell<u64>,
+    pub links: &'a crate::links::Targets,
 }
 
 pub(crate) fn attr<'a>(block: &'a Block, key: &str) -> &'a str {
@@ -65,7 +66,7 @@ impl Layout<'_> {
                 if block.block_type == "tableHeader" {
                     style.font = FontStyle::SerifBold;
                 }
-                let source = inline::spans(block, &style);
+                let source = inline::spans(block, &style, self.links);
                 let mut rows = if source.iter().all(|span| span.text.is_empty())
                     && !block.children.is_empty()
                     && block.block_type != "paragraph"
@@ -83,7 +84,8 @@ impl Layout<'_> {
                 let level = number(block, "level", 1).clamp(1, 6);
                 style.size *= [1.7, 1.45, 1.25, 1.1, 1.0, 0.9][level - 1];
                 style.font = FontStyle::SerifBold;
-                let mut rows = self.text(&inline::spans(block, &style), width, style.size)?;
+                let mut rows =
+                    self.text(&inline::spans(block, &style, self.links), width, style.size)?;
                 let reserve = flow::height(&rows) + self.size * 2.0;
                 if let Some(first) = rows.first_mut() {
                     first.keep = reserve;
@@ -165,21 +167,17 @@ impl Layout<'_> {
                 }
             }
             "file" | "embed" => {
-                let url = attr(block, "url");
-                if !crate::safe_url(url) {
-                    return Err(ConvertError::Encoding("Unsafe attachment URL".into()));
+                // An empty placeholder has nothing to show; an unlinkable address stays text.
+                let text = crate::links::attachment_label(block);
+                if text.is_empty() {
+                    Vec::new()
+                } else {
+                    if let Some(link) = self.links.link(attr(block, "url")) {
+                        style.link = Some(link.encoded());
+                        style.underline = true;
+                    }
+                    self.text(&[Span { text, style }], width, self.size)?
                 }
-                style.link = Some(url.into());
-                style.underline = true;
-                let name = attr(block, "name");
-                self.text(
-                    &[Span {
-                        text: if name.is_empty() { url } else { name }.into(),
-                        style,
-                    }],
-                    width,
-                    self.size,
-                )?
             }
             other => return Err(ConvertError::UnsupportedBlockType(other.into())),
         };
@@ -190,6 +188,21 @@ impl Layout<'_> {
             }
         }
         super::semantics::wrap(self, block, &mut result);
+        // A block an in-document link leads to marks where it starts; it travels with
+        // its first row through pagination.
+        if let Some(first) = result
+            .first_mut()
+            .filter(|_| self.links.is_linked(&block.id.0))
+        {
+            first.ops.insert(
+                0,
+                DrawOp::Anchor {
+                    id: block.id.0.clone(),
+                    x: 0.0,
+                    y: 0.0,
+                },
+            );
+        }
         Ok(result)
     }
 
@@ -255,7 +268,7 @@ impl Layout<'_> {
             ..*self
         };
         let mut rows = nested.text(
-            &inline::spans(block, &self.style()),
+            &inline::spans(block, &self.style(), self.links),
             width - inset * 2.0,
             self.size,
         )?;
@@ -315,11 +328,22 @@ impl Layout<'_> {
     }
 
     fn image(&self, block: &Block, width: f32) -> Result<Vec<Row>, ConvertError> {
-        let image = crate::assets::image(block)?;
+        let caption = attr(block, "caption");
+        let Some(source) = crate::assets::source(block) else {
+            // A placeholder without an uploaded image keeps only its caption.
+            if caption.is_empty() {
+                return Ok(Vec::new());
+            }
+            let style = self.style();
+            let text = caption.into();
+            let mut rows = self.text(&[Span { text, style }], width, self.size)?;
+            rows.push(Row::gap(self.size * 0.5));
+            return Ok(rows);
+        };
+        let image = crate::assets::image(source)?;
         let requested = number(block, "width", image.width as usize).clamp(1, 8192) as f32 * 0.75;
         let mut w = requested.min(width);
         let mut h = w * image.height as f32 / image.width as f32;
-        let caption = attr(block, "caption");
         let mut caption_rows = if caption.is_empty() {
             Vec::new()
         } else {

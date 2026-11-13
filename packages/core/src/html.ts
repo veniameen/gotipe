@@ -152,7 +152,7 @@ function parseElement(element: HTMLElement): Block[] {
   }
   if (tag === "pre") {
     const code = element.querySelector("code");
-    const language = /(?:^|\s)language-([^\s]+)/.exec(code?.className ?? "")?.[1] ?? "plain";
+    const language = /(?:^|\s)language-([^\s]+)/.exec(code?.className ?? "")?.[1] ?? "";
     return [makeBlock("codeBlock", code?.textContent ?? element.textContent ?? "", { language })];
   }
   if (tag === "blockquote") return [makeBlock("blockquote", inline(nodes))];

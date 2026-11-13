@@ -38,6 +38,7 @@ pub(crate) fn wrap(context: &Layout<'_>, block: &Block, rows: &mut [Row]) {
         "tableRow" => "TR".into(),
         "tableCell" => "TD".into(),
         "tableHeader" => "TH".into(),
+        "image" if crate::assets::source(block).is_none() => "P".into(),
         "image" => "Figure".into(),
         "file" | "embed" => "P".into(),
         _ => "Div".into(),

@@ -21,7 +21,7 @@ export const CodeBlock = defineExtension<CodeBlockOptions>({
       "sql",
       "bash",
     ],
-    defaultLanguage: "plain",
+    defaultLanguage: "",
     syntaxHighlight: true,
   },
   nodes: [
@@ -30,7 +30,8 @@ export const CodeBlock = defineExtension<CodeBlockOptions>({
       group: ["block"],
       content: "rawText",
       attrs: {
-        language: { type: "string", default: "plain" },
+        // "" is plain text: a new block writes a bare fence and a bare <pre><code>.
+        language: { type: "string", default: "" },
         meta: { type: "string" },
       },
       topLevel: true,
@@ -43,7 +44,7 @@ export const CodeBlock = defineExtension<CodeBlockOptions>({
     {
       pattern: /^```(\w+)?\s$/,
       handler: (editor, match) => {
-        const language = match[1] || "plain";
+        const language = match[1] ?? "";
         const state = editor.getViewState();
         const blockId = state.selection.anchor.blockId;
         const triggerLen = match[0].length;

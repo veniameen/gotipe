@@ -1,0 +1,2006 @@
+{
+  "version": 1,
+  "cases": [
+    {
+      "id": "blocks",
+      "document": {
+        "version": 1,
+        "blocks": [
+          {
+            "id": "b1",
+            "type": "heading",
+            "attrs": {
+              "level": 2
+            },
+            "content": [
+              {
+                "text": "Заголовок <h>",
+                "marks": []
+              }
+            ],
+            "children": []
+          },
+          {
+            "id": "b2",
+            "type": "paragraph",
+            "attrs": {},
+            "content": [
+              {
+                "text": "Строка\nвторая & \"кавычки\" 😀",
+                "marks": []
+              }
+            ],
+            "children": []
+          },
+          {
+            "id": "b7",
+            "type": "bulletList",
+            "attrs": {
+              "marker": "-"
+            },
+            "content": null,
+            "children": [
+              {
+                "id": "b5",
+                "type": "listItem",
+                "attrs": {},
+                "content": [
+                  {
+                    "text": "one",
+                    "marks": []
+                  }
+                ],
+                "children": [
+                  {
+                    "id": "b4",
+                    "type": "orderedList",
+                    "attrs": {
+                      "start": 3
+                    },
+                    "content": null,
+                    "children": [
+                      {
+                        "id": "b3",
+                        "type": "listItem",
+                        "attrs": {},
+                        "content": [
+                          {
+                            "text": "nested",
+                            "marks": []
+                          }
+                        ],
+                        "children": []
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "id": "b6",
+                "type": "listItem",
+                "attrs": {},
+                "content": [
+                  {
+                    "text": "two",
+                    "marks": []
+                  }
+                ],
+                "children": []
+              }
+            ]
+          },
+          {
+            "id": "b9",
+            "type": "orderedList",
+            "attrs": {
+              "start": 1,
+              "delimiter": ")"
+            },
+            "content": null,
+            "children": [
+              {
+                "id": "b8",
+                "type": "listItem",
+                "attrs": {},
+                "content": [
+                  {
+                    "text": "first",
+                    "marks": []
+                  }
+                ],
+                "children": []
+              }
+            ]
+          },
+          {
+            "id": "b12",
+            "type": "todoList",
+            "attrs": {},
+            "content": null,
+            "children": [
+              {
+                "id": "b10",
+                "type": "todoItem",
+                "attrs": {
+                  "checked": true
+                },
+                "content": [
+                  {
+                    "text": "done",
+                    "marks": []
+                  }
+                ],
+                "children": []
+              },
+              {
+                "id": "b11",
+                "type": "todoItem",
+                "attrs": {
+                  "checked": false
+                },
+                "content": [
+                  {
+                    "text": "open",
+                    "marks": []
+                  }
+                ],
+                "children": []
+              }
+            ]
+          },
+          {
+            "id": "b13",
+            "type": "codeBlock",
+            "attrs": {
+              "language": "ts\" onclick=\"x"
+            },
+            "content": "const a = 1 < 2;\nreturn a;",
+            "children": []
+          },
+          {
+            "id": "b14",
+            "type": "codeBlock",
+            "attrs": {
+              "language": ""
+            },
+            "content": [
+              {
+                "text": "spans\nin code",
+                "marks": []
+              }
+            ],
+            "children": []
+          },
+          {
+            "id": "b16",
+            "type": "blockquote",
+            "attrs": {},
+            "content": [
+              {
+                "text": "Цитата",
+                "marks": []
+              }
+            ],
+            "children": [
+              {
+                "id": "b15",
+                "type": "paragraph",
+                "attrs": {},
+                "content": [
+                  {
+                    "text": "inside",
+                    "marks": []
+                  }
+                ],
+                "children": []
+              }
+            ]
+          },
+          {
+            "id": "b17",
+            "type": "divider",
+            "attrs": {},
+            "content": null,
+            "children": []
+          },
+          {
+            "id": "b19",
+            "type": "callout",
+            "attrs": {
+              "emoji": "💡",
+              "type": "info"
+            },
+            "content": [
+              {
+                "text": "Callout",
+                "marks": []
+              }
+            ],
+            "children": [
+              {
+                "id": "b18",
+                "type": "paragraph",
+                "attrs": {},
+                "content": [
+                  {
+                    "text": "child",
+                    "marks": []
+                  }
+                ],
+                "children": []
+              }
+            ]
+          },
+          {
+            "id": "b20",
+            "type": "callout",
+            "attrs": {
+              "emoji": ""
+            },
+            "content": [
+              {
+                "text": "No emoji",
+                "marks": []
+              }
+            ],
+            "children": []
+          },
+          {
+            "id": "b28",
+            "type": "table",
+            "attrs": {
+              "align": [
+                "left",
+                null
+              ]
+            },
+            "content": null,
+            "children": [
+              {
+                "id": "b23",
+                "type": "tableRow",
+                "attrs": {},
+                "content": null,
+                "children": [
+                  {
+                    "id": "b21",
+                    "type": "tableHeader",
+                    "attrs": {
+                      "colspan": 2,
+                      "align": "center"
+                    },
+                    "content": [
+                      {
+                        "text": "H",
+                        "marks": []
+                      }
+                    ],
+                    "children": []
+                  },
+                  {
+                    "id": "b22",
+                    "type": "tableHeader",
+                    "attrs": {},
+                    "content": [
+                      {
+                        "text": "H2",
+                        "marks": []
+                      }
+                    ],
+                    "children": []
+                  }
+                ]
+              },
+              {
+                "id": "b27",
+                "type": "tableRow",
+                "attrs": {},
+                "content": null,
+                "children": [
+                  {
+                    "id": "b24",
+                    "type": "tableCell",
+                    "attrs": {
+                      "rowspan": 2,
+                      "align": "right"
+                    },
+                    "content": [
+                      {
+                        "text": "c",
+                        "marks": []
+                      }
+                    ],
+                    "children": []
+                  },
+                  {
+                    "id": "b26",
+                    "type": "tableCell",
+                    "attrs": {
+                      "align": "justify"
+                    },
+                    "content": [
+                      {
+                        "text": "d",
+                        "marks": []
+                      }
+                    ],
+                    "children": [
+                      {
+                        "id": "b25",
+                        "type": "paragraph",
+                        "attrs": {},
+                        "content": [
+                          {
+                            "text": "cell child",
+                            "marks": []
+                          }
+                        ],
+                        "children": []
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "b30",
+            "type": "toggle",
+            "attrs": {
+              "open": true
+            },
+            "content": [
+              {
+                "text": "Toggle",
+                "marks": []
+              }
+            ],
+            "children": [
+              {
+                "id": "b29",
+                "type": "paragraph",
+                "attrs": {},
+                "content": [
+                  {
+                    "text": "hidden",
+                    "marks": []
+                  }
+                ],
+                "children": []
+              }
+            ]
+          },
+          {
+            "id": "b31",
+            "type": "toggle",
+            "attrs": {},
+            "content": [
+              {
+                "text": "Closed",
+                "marks": []
+              }
+            ],
+            "children": []
+          },
+          {
+            "id": "b35",
+            "type": "columns",
+            "attrs": {},
+            "content": null,
+            "children": [
+              {
+                "id": "b33",
+                "type": "column",
+                "attrs": {},
+                "content": null,
+                "children": [
+                  {
+                    "id": "b32",
+                    "type": "paragraph",
+                    "attrs": {},
+                    "content": [
+                      {
+                        "text": "left",
+                        "marks": []
+                      }
+                    ],
+                    "children": []
+                  }
+                ]
+              },
+              {
+                "id": "b34",
+                "type": "column",
+                "attrs": {},
+                "content": null,
+                "children": []
+              }
+            ]
+          },
+          {
+            "id": "b36",
+            "type": "math",
+            "attrs": {
+              "display": "block"
+            },
+            "content": "x^2 < y",
+            "children": []
+          },
+          {
+            "id": "b37",
+            "type": "markdownRaw",
+            "attrs": {
+              "kind": "html"
+            },
+            "content": "<div>raw</div>",
+            "children": []
+          }
+        ]
+      },
+      "html": "<h2>Заголовок &lt;h&gt;</h2>\n<p>Строка<br>вторая &amp; &quot;кавычки&quot; 😀</p>\n<ul>\n<li>one\n<ol start=\"3\">\n<li>nested</li>\n</ol></li>\n<li>two</li>\n</ul>\n<ol>\n<li>first</li>\n</ol>\n<ul class=\"todo-list\">\n<li><input type=\"checkbox\" checked disabled> done</li>\n<li><input type=\"checkbox\" disabled> open</li>\n</ul>\n<pre><code class=\"language-ts&quot; onclick=&quot;x\">const a = 1 &lt; 2;\nreturn a;</code></pre>\n<pre><code>spans<br>in code</code></pre>\n<blockquote>Цитата\n<p>inside</p></blockquote>\n<hr>\n<div class=\"callout\"><span class=\"callout-emoji\">💡</span>Callout\n<p>child</p></div>\n<div class=\"callout\">No emoji</div>\n<table>\n<tr>\n<th colspan=\"2\" style=\"text-align:center\">H</th>\n<th>H2</th>\n</tr>\n<tr>\n<td rowspan=\"2\" style=\"text-align:right\">c</td>\n<td>d<p>cell child</p></td>\n</tr>\n</table>\n<details open><summary>Toggle</summary>\n<p>hidden</p>\n</details>\n<details><summary>Closed</summary>\n\n</details>\n<div class=\"columns\">\n<div class=\"column\">\n<p>left</p>\n</div>\n<div class=\"column\">\n\n</div>\n</div>\n<p>x^2 &lt; y</p>\n<p>&lt;div&gt;raw&lt;/div&gt;</p>"
+    },
+    {
+      "id": "marks",
+      "document": {
+        "version": 1,
+        "blocks": [
+          {
+            "id": "b38",
+            "type": "paragraph",
+            "attrs": {},
+            "content": [
+              {
+                "text": "bold",
+                "marks": [
+                  {
+                    "type": "bold",
+                    "attrs": {}
+                  }
+                ]
+              },
+              {
+                "text": "italic",
+                "marks": [
+                  {
+                    "type": "italic",
+                    "attrs": {}
+                  }
+                ]
+              },
+              {
+                "text": "under",
+                "marks": [
+                  {
+                    "type": "underline",
+                    "attrs": {}
+                  }
+                ]
+              },
+              {
+                "text": "strike",
+                "marks": [
+                  {
+                    "type": "strikethrough",
+                    "attrs": {}
+                  }
+                ]
+              },
+              {
+                "text": "code",
+                "marks": [
+                  {
+                    "type": "code",
+                    "attrs": {}
+                  },
+                  {
+                    "type": "bold",
+                    "attrs": {}
+                  }
+                ]
+              },
+              {
+                "text": "sup",
+                "marks": [
+                  {
+                    "type": "superscript",
+                    "attrs": {}
+                  }
+                ]
+              },
+              {
+                "text": "sub",
+                "marks": [
+                  {
+                    "type": "subscript",
+                    "attrs": {}
+                  }
+                ]
+              },
+              {
+                "text": "link",
+                "marks": [
+                  {
+                    "type": "link",
+                    "attrs": {
+                      "href": "https://example.test/?a=1&b=\"2\"",
+                      "title": "T & <t>"
+                    }
+                  }
+                ]
+              },
+              {
+                "text": "relative",
+                "marks": [
+                  {
+                    "type": "link",
+                    "attrs": {
+                      "href": "guide.md"
+                    }
+                  }
+                ]
+              },
+              {
+                "text": "unsafe",
+                "marks": [
+                  {
+                    "type": "link",
+                    "attrs": {
+                      "href": "javascript:alert(1)"
+                    }
+                  }
+                ]
+              },
+              {
+                "text": "tricky",
+                "marks": [
+                  {
+                    "type": "link",
+                    "attrs": {
+                      "href": "java\nscript:alert(1)"
+                    }
+                  }
+                ]
+              },
+              {
+                "text": "data",
+                "marks": [
+                  {
+                    "type": "link",
+                    "attrs": {
+                      "href": "data:text/html,x"
+                    }
+                  }
+                ]
+              },
+              {
+                "text": "empty",
+                "marks": [
+                  {
+                    "type": "link",
+                    "attrs": {
+                      "href": ""
+                    }
+                  }
+                ]
+              },
+              {
+                "text": "titled",
+                "marks": [
+                  {
+                    "type": "link",
+                    "attrs": {
+                      "href": "#top",
+                      "title": ""
+                    }
+                  }
+                ]
+              },
+              {
+                "text": "color",
+                "marks": [
+                  {
+                    "type": "textColor",
+                    "attrs": {
+                      "color": "#c026d3"
+                    }
+                  }
+                ]
+              },
+              {
+                "text": "bad color",
+                "marks": [
+                  {
+                    "type": "textColor",
+                    "attrs": {
+                      "color": "red;x:y"
+                    }
+                  }
+                ]
+              },
+              {
+                "text": "mark",
+                "marks": [
+                  {
+                    "type": "highlight",
+                    "attrs": {
+                      "color": "rgb(1 2 3 / 50%)"
+                    }
+                  }
+                ]
+              },
+              {
+                "text": "plain mark",
+                "marks": [
+                  {
+                    "type": "highlight",
+                    "attrs": {}
+                  }
+                ]
+              },
+              {
+                "text": "unknown",
+                "marks": [
+                  {
+                    "type": "mention",
+                    "attrs": {
+                      "id": 1
+                    }
+                  }
+                ]
+              },
+              {
+                "text": "multi\nline",
+                "marks": [
+                  {
+                    "type": "bold",
+                    "attrs": {}
+                  },
+                  {
+                    "type": "link",
+                    "attrs": {
+                      "href": "/x"
+                    }
+                  }
+                ]
+              }
+            ],
+            "children": []
+          }
+        ]
+      },
+      "html": "<p><strong>bold</strong><em>italic</em><u>under</u><s>strike</s><strong><code>code</code></strong><sup>sup</sup><sub>sub</sub><a href=\"https://example.test/?a=1&amp;b=&quot;2&quot;\" title=\"T &amp; &lt;t&gt;\">link</a><a href=\"guide.md\">relative</a>unsafetrickydataempty<a href=\"#top\">titled</a><span style=\"color:#c026d3\">color</span>bad color<mark style=\"background:rgb(1 2 3 / 50%)\">mark</mark><mark>plain mark</mark>unknown<a href=\"/x\"><strong>multi<br>line</strong></a></p>"
+    },
+    {
+      "id": "media",
+      "document": {
+        "version": 1,
+        "blocks": [
+          {
+            "id": "b39",
+            "type": "image",
+            "attrs": {
+              "src": "data:image/webp;base64,UklGRg==",
+              "alt": "WebP",
+              "caption": "Подпись"
+            },
+            "content": null,
+            "children": []
+          },
+          {
+            "id": "b40",
+            "type": "image",
+            "attrs": {
+              "src": " images/a b.png ",
+              "alt": "\"quoted\"",
+              "caption": ""
+            },
+            "content": null,
+            "children": []
+          },
+          {
+            "id": "b41",
+            "type": "image",
+            "attrs": {
+              "src": "javascript:alert(1)",
+              "alt": "x"
+            },
+            "content": null,
+            "children": []
+          },
+          {
+            "id": "b42",
+            "type": "image",
+            "attrs": {
+              "src": "mailto:a@b.test"
+            },
+            "content": null,
+            "children": []
+          },
+          {
+            "id": "b43",
+            "type": "image",
+            "attrs": {
+              "src": "data:image/svg+xml;base64,PHN2Zz4="
+            },
+            "content": null,
+            "children": []
+          },
+          {
+            "id": "b44",
+            "type": "image",
+            "attrs": {
+              "src": "",
+              "alt": ""
+            },
+            "content": null,
+            "children": []
+          },
+          {
+            "id": "b45",
+            "type": "image",
+            "attrs": {},
+            "content": null,
+            "children": []
+          },
+          {
+            "id": "b46",
+            "type": "file",
+            "attrs": {
+              "url": "docs/guide.pdf",
+              "name": "Guide.pdf"
+            },
+            "content": null,
+            "children": []
+          },
+          {
+            "id": "b47",
+            "type": "file",
+            "attrs": {
+              "url": "https://example.test/f.pdf",
+              "name": ""
+            },
+            "content": null,
+            "children": []
+          },
+          {
+            "id": "b48",
+            "type": "file",
+            "attrs": {
+              "url": "data:application/pdf;base64,AAAA",
+              "name": "Inline.pdf"
+            },
+            "content": null,
+            "children": []
+          },
+          {
+            "id": "b49",
+            "type": "file",
+            "attrs": {
+              "url": "",
+              "name": "",
+              "size": null,
+              "mime_type": ""
+            },
+            "content": null,
+            "children": []
+          },
+          {
+            "id": "b50",
+            "type": "embed",
+            "attrs": {
+              "url": "https://www.youtube.com/watch?v=x",
+              "type": "youtube"
+            },
+            "content": null,
+            "children": []
+          },
+          {
+            "id": "b51",
+            "type": "embed",
+            "attrs": {
+              "src": "https://example.test/e",
+              "title": "Titled"
+            },
+            "content": null,
+            "children": []
+          },
+          {
+            "id": "b52",
+            "type": "embed",
+            "attrs": {
+              "url": null,
+              "src": "https://example.test/src"
+            },
+            "content": null,
+            "children": []
+          },
+          {
+            "id": "b53",
+            "type": "embed",
+            "attrs": {
+              "url": "",
+              "type": "generic"
+            },
+            "content": null,
+            "children": []
+          }
+        ]
+      },
+      "html": "<figure><img src=\"data:image/webp;base64,UklGRg==\" alt=\"WebP\"><figcaption>Подпись</figcaption></figure>\n<figure><img src=\"images/a b.png\" alt=\"&quot;quoted&quot;\"></figure>\n<figure><img src=\"\" alt=\"x\"></figure>\n<figure><img src=\"\" alt=\"\"></figure>\n<figure><img src=\"\" alt=\"\"></figure>\n<figure><img src=\"\" alt=\"\"></figure>\n<figure><img src=\"\" alt=\"\"></figure>\n<p><a href=\"docs/guide.pdf\">Guide.pdf</a></p>\n<p><a href=\"https://example.test/f.pdf\">https://example.test/f.pdf</a></p>\n<p>Inline.pdf</p>\n<p></p>\n<p><a href=\"https://www.youtube.com/watch?v=x\">https://www.youtube.com/watch?v=x</a></p>\n<p><a href=\"https://example.test/e\">Titled</a></p>\n<p><a href=\"https://example.test/src\">https://example.test/src</a></p>\n<p></p>"
+    },
+    {
+      "id": "coercions",
+      "document": {
+        "version": 1,
+        "blocks": [
+          {
+            "id": "b54",
+            "type": "heading",
+            "attrs": {
+              "level": "3"
+            },
+            "content": [
+              {
+                "text": "string level",
+                "marks": []
+              }
+            ],
+            "children": []
+          },
+          {
+            "id": "b55",
+            "type": "heading",
+            "attrs": {
+              "level": 0
+            },
+            "content": [
+              {
+                "text": "zero",
+                "marks": []
+              }
+            ],
+            "children": []
+          },
+          {
+            "id": "b56",
+            "type": "heading",
+            "attrs": {
+              "level": 9
+            },
+            "content": [
+              {
+                "text": "nine",
+                "marks": []
+              }
+            ],
+            "children": []
+          },
+          {
+            "id": "b57",
+            "type": "heading",
+            "attrs": {
+              "level": "x"
+            },
+            "content": [
+              {
+                "text": "nan",
+                "marks": []
+              }
+            ],
+            "children": []
+          },
+          {
+            "id": "b58",
+            "type": "heading",
+            "attrs": {
+              "level": 2.7
+            },
+            "content": [
+              {
+                "text": "fraction",
+                "marks": []
+              }
+            ],
+            "children": []
+          },
+          {
+            "id": "b59",
+            "type": "heading",
+            "attrs": {},
+            "content": [
+              {
+                "text": "missing",
+                "marks": []
+              }
+            ],
+            "children": []
+          },
+          {
+            "id": "b61",
+            "type": "orderedList",
+            "attrs": {
+              "start": 0
+            },
+            "content": null,
+            "children": [
+              {
+                "id": "b60",
+                "type": "listItem",
+                "attrs": {},
+                "content": [
+                  {
+                    "text": "zero",
+                    "marks": []
+                  }
+                ],
+                "children": []
+              }
+            ]
+          },
+          {
+            "id": "b63",
+            "type": "orderedList",
+            "attrs": {
+              "start": "5"
+            },
+            "content": null,
+            "children": [
+              {
+                "id": "b62",
+                "type": "listItem",
+                "attrs": {},
+                "content": [
+                  {
+                    "text": "five",
+                    "marks": []
+                  }
+                ],
+                "children": []
+              }
+            ]
+          },
+          {
+            "id": "b65",
+            "type": "orderedList",
+            "attrs": {
+              "start": 2.5
+            },
+            "content": null,
+            "children": [
+              {
+                "id": "b64",
+                "type": "listItem",
+                "attrs": {},
+                "content": [
+                  {
+                    "text": "fraction",
+                    "marks": []
+                  }
+                ],
+                "children": []
+              }
+            ]
+          },
+          {
+            "id": "b67",
+            "type": "orderedList",
+            "attrs": {
+              "start": null
+            },
+            "content": null,
+            "children": [
+              {
+                "id": "b66",
+                "type": "listItem",
+                "attrs": {},
+                "content": [
+                  {
+                    "text": "null",
+                    "marks": []
+                  }
+                ],
+                "children": []
+              }
+            ]
+          },
+          {
+            "id": "b69",
+            "type": "orderedList",
+            "attrs": {
+              "start": -2
+            },
+            "content": null,
+            "children": [
+              {
+                "id": "b68",
+                "type": "listItem",
+                "attrs": {},
+                "content": [
+                  {
+                    "text": "negative",
+                    "marks": []
+                  }
+                ],
+                "children": []
+              }
+            ]
+          },
+          {
+            "id": "b71",
+            "type": "orderedList",
+            "attrs": {
+              "start": 1e+21
+            },
+            "content": null,
+            "children": [
+              {
+                "id": "b70",
+                "type": "listItem",
+                "attrs": {},
+                "content": [
+                  {
+                    "text": "huge",
+                    "marks": []
+                  }
+                ],
+                "children": []
+              }
+            ]
+          },
+          {
+            "id": "b76",
+            "type": "table",
+            "attrs": {},
+            "content": null,
+            "children": [
+              {
+                "id": "b75",
+                "type": "tableRow",
+                "attrs": {},
+                "content": null,
+                "children": [
+                  {
+                    "id": "b72",
+                    "type": "tableCell",
+                    "attrs": {
+                      "colspan": "2",
+                      "rowspan": 1001
+                    },
+                    "content": [
+                      {
+                        "text": "a",
+                        "marks": []
+                      }
+                    ],
+                    "children": []
+                  },
+                  {
+                    "id": "b73",
+                    "type": "tableCell",
+                    "attrs": {
+                      "colspan": 2,
+                      "rowspan": true
+                    },
+                    "content": [
+                      {
+                        "text": "b",
+                        "marks": []
+                      }
+                    ],
+                    "children": []
+                  },
+                  {
+                    "id": "b74",
+                    "type": "tableCell",
+                    "attrs": {
+                      "colspan": [
+                        3
+                      ]
+                    },
+                    "content": [
+                      {
+                        "text": "c",
+                        "marks": []
+                      }
+                    ],
+                    "children": []
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "b79",
+            "type": "todoList",
+            "attrs": {},
+            "content": null,
+            "children": [
+              {
+                "id": "b77",
+                "type": "todoItem",
+                "attrs": {
+                  "checked": "yes"
+                },
+                "content": [
+                  {
+                    "text": "truthy",
+                    "marks": []
+                  }
+                ],
+                "children": []
+              },
+              {
+                "id": "b78",
+                "type": "todoItem",
+                "attrs": {
+                  "checked": 0
+                },
+                "content": [
+                  {
+                    "text": "falsy",
+                    "marks": []
+                  }
+                ],
+                "children": []
+              }
+            ]
+          },
+          {
+            "id": "b80",
+            "type": "codeBlock",
+            "attrs": {
+              "language": 5
+            },
+            "content": "five",
+            "children": []
+          },
+          {
+            "id": "b81",
+            "type": "toggle",
+            "attrs": {
+              "open": ""
+            },
+            "content": [
+              {
+                "text": "closed",
+                "marks": []
+              }
+            ],
+            "children": []
+          },
+          {
+            "id": "b82",
+            "type": "callout",
+            "attrs": {
+              "emoji": 0
+            },
+            "content": [
+              {
+                "text": "zero emoji",
+                "marks": []
+              }
+            ],
+            "children": []
+          }
+        ]
+      },
+      "html": "<h3>string level</h3>\n<h1>zero</h1>\n<h6>nine</h6>\n<h1>nan</h1>\n<h2>fraction</h2>\n<h1>missing</h1>\n<ol start=\"0\">\n<li>zero</li>\n</ol>\n<ol start=\"5\">\n<li>five</li>\n</ol>\n<ol>\n<li>fraction</li>\n</ol>\n<ol start=\"0\">\n<li>null</li>\n</ol>\n<ol start=\"-2\">\n<li>negative</li>\n</ol>\n<ol start=\"1e+21\">\n<li>huge</li>\n</ol>\n<table>\n<tr>\n<td colspan=\"2\">a</td>\n<td colspan=\"2\">b</td>\n<td colspan=\"3\">c</td>\n</tr>\n</table>\n<ul class=\"todo-list\">\n<li><input type=\"checkbox\" checked disabled> truthy</li>\n<li><input type=\"checkbox\" disabled> falsy</li>\n</ul>\n<pre><code class=\"language-5\">five</code></pre>\n<details><summary>closed</summary>\n\n</details>\n<div class=\"callout\">zero emoji</div>"
+    },
+    {
+      "id": "children-and-unknown",
+      "document": {
+        "version": 1,
+        "blocks": [
+          {
+            "id": "b85",
+            "type": "paragraph",
+            "attrs": {},
+            "content": [
+              {
+                "text": "parent",
+                "marks": []
+              }
+            ],
+            "children": [
+              {
+                "id": "b83",
+                "type": "paragraph",
+                "attrs": {},
+                "content": [
+                  {
+                    "text": "child",
+                    "marks": []
+                  }
+                ],
+                "children": []
+              },
+              {
+                "id": "b84",
+                "type": "heading",
+                "attrs": {
+                  "level": 3
+                },
+                "content": [
+                  {
+                    "text": "child heading",
+                    "marks": []
+                  }
+                ],
+                "children": []
+              }
+            ]
+          },
+          {
+            "id": "b87",
+            "type": "heading",
+            "attrs": {
+              "level": 1
+            },
+            "content": [
+              {
+                "text": "h",
+                "marks": []
+              }
+            ],
+            "children": [
+              {
+                "id": "b86",
+                "type": "paragraph",
+                "attrs": {},
+                "content": [
+                  {
+                    "text": "under heading",
+                    "marks": []
+                  }
+                ],
+                "children": []
+              }
+            ]
+          },
+          {
+            "id": "b89",
+            "type": "image",
+            "attrs": {
+              "src": "a.png"
+            },
+            "content": null,
+            "children": [
+              {
+                "id": "b88",
+                "type": "paragraph",
+                "attrs": {},
+                "content": [
+                  {
+                    "text": "under image",
+                    "marks": []
+                  }
+                ],
+                "children": []
+              }
+            ]
+          },
+          {
+            "id": "b91",
+            "type": "divider",
+            "attrs": {},
+            "content": null,
+            "children": [
+              {
+                "id": "b90",
+                "type": "paragraph",
+                "attrs": {},
+                "content": [
+                  {
+                    "text": "under divider",
+                    "marks": []
+                  }
+                ],
+                "children": []
+              }
+            ]
+          },
+          {
+            "id": "b93",
+            "type": "file",
+            "attrs": {
+              "url": "a.pdf",
+              "name": "a"
+            },
+            "content": null,
+            "children": [
+              {
+                "id": "b92",
+                "type": "paragraph",
+                "attrs": {},
+                "content": [
+                  {
+                    "text": "under file",
+                    "marks": []
+                  }
+                ],
+                "children": []
+              }
+            ]
+          },
+          {
+            "id": "b95",
+            "type": "widget",
+            "attrs": {
+              "any": 1
+            },
+            "content": [
+              {
+                "text": "unknown with text",
+                "marks": []
+              }
+            ],
+            "children": [
+              {
+                "id": "b94",
+                "type": "paragraph",
+                "attrs": {},
+                "content": [
+                  {
+                    "text": "unknown child",
+                    "marks": []
+                  }
+                ],
+                "children": []
+              }
+            ]
+          },
+          {
+            "id": "b97",
+            "type": "widget",
+            "attrs": {},
+            "content": null,
+            "children": [
+              {
+                "id": "b96",
+                "type": "paragraph",
+                "attrs": {},
+                "content": [
+                  {
+                    "text": "only children",
+                    "marks": []
+                  }
+                ],
+                "children": []
+              }
+            ]
+          },
+          {
+            "id": "b98",
+            "type": "widget",
+            "attrs": {},
+            "content": null,
+            "children": []
+          },
+          {
+            "id": "b99",
+            "type": "paragraph",
+            "attrs": {},
+            "content": [],
+            "children": []
+          },
+          {
+            "id": "b100",
+            "type": "paragraph",
+            "attrs": {},
+            "content": "",
+            "children": []
+          }
+        ]
+      },
+      "html": "<p>parent</p>\n<p>child</p>\n<h3>child heading</h3>\n<h1>h</h1>\n<p>under heading</p>\n<figure><img src=\"a.png\" alt=\"\"></figure>\n<p>under image</p>\n<hr>\n<p>under divider</p>\n<p><a href=\"a.pdf\">a</a></p>\n<p>under file</p>\n<p>unknown with text</p><p>unknown child</p>\n<p>only children</p>\n\n<p></p>\n<p></p>"
+    },
+    {
+      "id": "urls",
+      "document": {
+        "version": 1,
+        "blocks": [
+          {
+            "id": "b101",
+            "type": "paragraph",
+            "attrs": {},
+            "content": [
+              {
+                "text": "nbsp",
+                "marks": [
+                  {
+                    "type": "link",
+                    "attrs": {
+                      "href": " https://example.test/nbsp　"
+                    }
+                  }
+                ]
+              },
+              {
+                "text": "bom",
+                "marks": [
+                  {
+                    "type": "link",
+                    "attrs": {
+                      "href": "﻿guide.md"
+                    }
+                  }
+                ]
+              },
+              {
+                "text": "tab",
+                "marks": [
+                  {
+                    "type": "link",
+                    "attrs": {
+                      "href": "java\tscript:x"
+                    }
+                  }
+                ]
+              },
+              {
+                "text": "upper",
+                "marks": [
+                  {
+                    "type": "link",
+                    "attrs": {
+                      "href": "HTTPS://EXAMPLE.TEST"
+                    }
+                  }
+                ]
+              },
+              {
+                "text": "mail",
+                "marks": [
+                  {
+                    "type": "link",
+                    "attrs": {
+                      "href": "mailto:a@b.test"
+                    }
+                  }
+                ]
+              },
+              {
+                "text": "protocol",
+                "marks": [
+                  {
+                    "type": "link",
+                    "attrs": {
+                      "href": "//cdn.example.test/x"
+                    }
+                  }
+                ]
+              },
+              {
+                "text": "query",
+                "marks": [
+                  {
+                    "type": "link",
+                    "attrs": {
+                      "href": "?q=1"
+                    }
+                  }
+                ]
+              },
+              {
+                "text": "nel",
+                "marks": [
+                  {
+                    "type": "link",
+                    "attrs": {
+                      "href": "javascript:x"
+                    }
+                  }
+                ]
+              }
+            ],
+            "children": []
+          },
+          {
+            "id": "b102",
+            "type": "image",
+            "attrs": {
+              "src": " data:image/png;base64,iVBO RK== "
+            },
+            "content": null,
+            "children": []
+          },
+          {
+            "id": "b103",
+            "type": "image",
+            "attrs": {
+              "src": "DATA:IMAGE/JPEG;BASE64,/9j/"
+            },
+            "content": null,
+            "children": []
+          }
+        ]
+      },
+      "html": "<p><a href=\"https://example.test/nbsp\">nbsp</a><a href=\"guide.md\">bom</a>tab<a href=\"HTTPS://EXAMPLE.TEST\">upper</a><a href=\"mailto:a@b.test\">mail</a><a href=\"//cdn.example.test/x\">protocol</a><a href=\"?q=1\">query</a><a href=\"javascript:x\">nel</a></p>\n<figure><img src=\"data:image/png;base64,iVBO RK==\" alt=\"\"></figure>\n<figure><img src=\"DATA:IMAGE/JPEG;BASE64,/9j/\" alt=\"\"></figure>"
+    },
+    {
+      "id": "plain-code",
+      "document": {
+        "version": 1,
+        "blocks": [
+          {
+            "id": "b104",
+            "type": "codeBlock",
+            "attrs": {
+              "language": "plain"
+            },
+            "content": "plain",
+            "children": []
+          },
+          {
+            "id": "b105",
+            "type": "codeBlock",
+            "attrs": {
+              "language": "PlainText"
+            },
+            "content": "plaintext",
+            "children": []
+          },
+          {
+            "id": "b106",
+            "type": "codeBlock",
+            "attrs": {
+              "language": "plain text"
+            },
+            "content": "two words",
+            "children": []
+          },
+          {
+            "id": "b107",
+            "type": "codeBlock",
+            "attrs": {
+              "language": "text"
+            },
+            "content": "text",
+            "children": []
+          },
+          {
+            "id": "b108",
+            "type": "codeBlock",
+            "attrs": {
+              "language": "plain",
+              "meta": "title=x"
+            },
+            "content": "meta",
+            "children": []
+          }
+        ]
+      },
+      "html": "<pre><code>plain</code></pre>\n<pre><code>plaintext</code></pre>\n<pre><code class=\"language-plain text\">two words</code></pre>\n<pre><code class=\"language-text\">text</code></pre>\n<pre><code>meta</code></pre>"
+    },
+    {
+      "id": "options-styles",
+      "document": {
+        "version": 1,
+        "blocks": [
+          {
+            "id": "b109",
+            "type": "paragraph",
+            "attrs": {},
+            "content": [
+              {
+                "text": "p",
+                "marks": []
+              }
+            ],
+            "children": []
+          },
+          {
+            "id": "b110",
+            "type": "heading",
+            "attrs": {
+              "level": 2
+            },
+            "content": [
+              {
+                "text": "h",
+                "marks": []
+              }
+            ],
+            "children": []
+          },
+          {
+            "id": "b111",
+            "type": "callout",
+            "attrs": {
+              "emoji": "!"
+            },
+            "content": [
+              {
+                "text": "c",
+                "marks": []
+              }
+            ],
+            "children": []
+          },
+          {
+            "id": "b112",
+            "type": "codeBlock",
+            "attrs": {
+              "language": "js"
+            },
+            "content": "x",
+            "children": []
+          },
+          {
+            "id": "b114",
+            "type": "todoList",
+            "attrs": {},
+            "content": null,
+            "children": [
+              {
+                "id": "b113",
+                "type": "todoItem",
+                "attrs": {
+                  "checked": true
+                },
+                "content": [
+                  {
+                    "text": "t",
+                    "marks": []
+                  }
+                ],
+                "children": []
+              }
+            ]
+          },
+          {
+            "id": "b117",
+            "type": "table",
+            "attrs": {},
+            "content": null,
+            "children": [
+              {
+                "id": "b116",
+                "type": "tableRow",
+                "attrs": {},
+                "content": null,
+                "children": [
+                  {
+                    "id": "b115",
+                    "type": "tableCell",
+                    "attrs": {
+                      "align": "right"
+                    },
+                    "content": [
+                      {
+                        "text": "cell",
+                        "marks": []
+                      }
+                    ],
+                    "children": []
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "b119",
+            "type": "widget",
+            "attrs": {},
+            "content": null,
+            "children": [
+              {
+                "id": "b118",
+                "type": "paragraph",
+                "attrs": {},
+                "content": [
+                  {
+                    "text": "first child gets the class",
+                    "marks": []
+                  }
+                ],
+                "children": []
+              }
+            ]
+          },
+          {
+            "id": "b120",
+            "type": "image",
+            "attrs": {
+              "src": "a.png",
+              "caption": "c"
+            },
+            "content": null,
+            "children": []
+          }
+        ]
+      },
+      "options": {
+        "inlineStyles": true
+      },
+      "html": "<p style=\"margin:0 0 0.75em;line-height:1.5;overflow-wrap:anywhere\">p</p>\n<h2 style=\"margin:1em 0 0.5em;line-height:1.25;overflow-wrap:anywhere\">h</h2>\n<div class=\"callout\" style=\"padding:1em;border:1px solid #a0a0a0;border-radius:0.375em\"><span class=\"callout-emoji\">!</span>c</div>\n<pre style=\"white-space:pre;overflow-x:auto;max-width:100%;padding:1em;background:#f5f5f5;color:#202020\"><code class=\"language-js\">x</code></pre>\n<ul class=\"todo-list\" style=\"list-style:none;padding-left:0;margin:0.5em 0\">\n<li style=\"line-height:1.5;list-style:none\"><input type=\"checkbox\" checked disabled> t</li>\n</ul>\n<table style=\"border-collapse:collapse;max-width:100%\">\n<tr>\n<td style=\"padding:0.5em;border:1px solid #a0a0a0;vertical-align:top;text-align:right\">cell</td>\n</tr>\n</table>\n<p style=\"margin:0 0 0.75em;line-height:1.5;overflow-wrap:anywhere\">first child gets the class</p>\n<figure style=\"margin:1em 0;max-width:100%;overflow:auto\"><img src=\"a.png\" alt=\"\"><figcaption>c</figcaption></figure>"
+    },
+    {
+      "id": "options-prefix",
+      "document": {
+        "version": 1,
+        "blocks": [
+          {
+            "id": "b109",
+            "type": "paragraph",
+            "attrs": {},
+            "content": [
+              {
+                "text": "p",
+                "marks": []
+              }
+            ],
+            "children": []
+          },
+          {
+            "id": "b110",
+            "type": "heading",
+            "attrs": {
+              "level": 2
+            },
+            "content": [
+              {
+                "text": "h",
+                "marks": []
+              }
+            ],
+            "children": []
+          },
+          {
+            "id": "b111",
+            "type": "callout",
+            "attrs": {
+              "emoji": "!"
+            },
+            "content": [
+              {
+                "text": "c",
+                "marks": []
+              }
+            ],
+            "children": []
+          },
+          {
+            "id": "b112",
+            "type": "codeBlock",
+            "attrs": {
+              "language": "js"
+            },
+            "content": "x",
+            "children": []
+          },
+          {
+            "id": "b114",
+            "type": "todoList",
+            "attrs": {},
+            "content": null,
+            "children": [
+              {
+                "id": "b113",
+                "type": "todoItem",
+                "attrs": {
+                  "checked": true
+                },
+                "content": [
+                  {
+                    "text": "t",
+                    "marks": []
+                  }
+                ],
+                "children": []
+              }
+            ]
+          },
+          {
+            "id": "b117",
+            "type": "table",
+            "attrs": {},
+            "content": null,
+            "children": [
+              {
+                "id": "b116",
+                "type": "tableRow",
+                "attrs": {},
+                "content": null,
+                "children": [
+                  {
+                    "id": "b115",
+                    "type": "tableCell",
+                    "attrs": {
+                      "align": "right"
+                    },
+                    "content": [
+                      {
+                        "text": "cell",
+                        "marks": []
+                      }
+                    ],
+                    "children": []
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "b119",
+            "type": "widget",
+            "attrs": {},
+            "content": null,
+            "children": [
+              {
+                "id": "b118",
+                "type": "paragraph",
+                "attrs": {},
+                "content": [
+                  {
+                    "text": "first child gets the class",
+                    "marks": []
+                  }
+                ],
+                "children": []
+              }
+            ]
+          },
+          {
+            "id": "b120",
+            "type": "image",
+            "attrs": {
+              "src": "a.png",
+              "caption": "c"
+            },
+            "content": null,
+            "children": []
+          }
+        ]
+      },
+      "options": {
+        "classPrefix": "doc-"
+      },
+      "html": "<p class=\"doc-paragraph\">p</p>\n<h2 class=\"doc-heading\">h</h2>\n<div class=\"callout doc-callout\"><span class=\"callout-emoji\">!</span>c</div>\n<pre class=\"doc-codeBlock\"><code class=\"language-js\">x</code></pre>\n<ul class=\"todo-list doc-todoList\">\n<li class=\"doc-todoItem\"><input type=\"checkbox\" checked disabled> t</li>\n</ul>\n<table class=\"doc-table\">\n<tr class=\"doc-tableRow\">\n<td style=\"text-align:right\" class=\"doc-tableCell\">cell</td>\n</tr>\n</table>\n<p class=\"doc-paragraph doc-widget\">first child gets the class</p>\n<figure class=\"doc-image\"><img src=\"a.png\" alt=\"\"><figcaption>c</figcaption></figure>"
+    },
+    {
+      "id": "options-both",
+      "document": {
+        "version": 1,
+        "blocks": [
+          {
+            "id": "b109",
+            "type": "paragraph",
+            "attrs": {},
+            "content": [
+              {
+                "text": "p",
+                "marks": []
+              }
+            ],
+            "children": []
+          },
+          {
+            "id": "b110",
+            "type": "heading",
+            "attrs": {
+              "level": 2
+            },
+            "content": [
+              {
+                "text": "h",
+                "marks": []
+              }
+            ],
+            "children": []
+          },
+          {
+            "id": "b111",
+            "type": "callout",
+            "attrs": {
+              "emoji": "!"
+            },
+            "content": [
+              {
+                "text": "c",
+                "marks": []
+              }
+            ],
+            "children": []
+          },
+          {
+            "id": "b112",
+            "type": "codeBlock",
+            "attrs": {
+              "language": "js"
+            },
+            "content": "x",
+            "children": []
+          },
+          {
+            "id": "b114",
+            "type": "todoList",
+            "attrs": {},
+            "content": null,
+            "children": [
+              {
+                "id": "b113",
+                "type": "todoItem",
+                "attrs": {
+                  "checked": true
+                },
+                "content": [
+                  {
+                    "text": "t",
+                    "marks": []
+                  }
+                ],
+                "children": []
+              }
+            ]
+          },
+          {
+            "id": "b117",
+            "type": "table",
+            "attrs": {},
+            "content": null,
+            "children": [
+              {
+                "id": "b116",
+                "type": "tableRow",
+                "attrs": {},
+                "content": null,
+                "children": [
+                  {
+                    "id": "b115",
+                    "type": "tableCell",
+                    "attrs": {
+                      "align": "right"
+                    },
+                    "content": [
+                      {
+                        "text": "cell",
+                        "marks": []
+                      }
+                    ],
+                    "children": []
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "b119",
+            "type": "widget",
+            "attrs": {},
+            "content": null,
+            "children": [
+              {
+                "id": "b118",
+                "type": "paragraph",
+                "attrs": {},
+                "content": [
+                  {
+                    "text": "first child gets the class",
+                    "marks": []
+                  }
+                ],
+                "children": []
+              }
+            ]
+          },
+          {
+            "id": "b120",
+            "type": "image",
+            "attrs": {
+              "src": "a.png",
+              "caption": "c"
+            },
+            "content": null,
+            "children": []
+          }
+        ]
+      },
+      "options": {
+        "classPrefix": "_x-1",
+        "inlineStyles": true
+      },
+      "html": "<p class=\"_x-1paragraph\" style=\"margin:0 0 0.75em;line-height:1.5;overflow-wrap:anywhere\">p</p>\n<h2 class=\"_x-1heading\" style=\"margin:1em 0 0.5em;line-height:1.25;overflow-wrap:anywhere\">h</h2>\n<div class=\"callout _x-1callout\" style=\"padding:1em;border:1px solid #a0a0a0;border-radius:0.375em\"><span class=\"callout-emoji\">!</span>c</div>\n<pre class=\"_x-1codeBlock\" style=\"white-space:pre;overflow-x:auto;max-width:100%;padding:1em;background:#f5f5f5;color:#202020\"><code class=\"language-js\">x</code></pre>\n<ul class=\"todo-list _x-1todoList\" style=\"list-style:none;padding-left:0;margin:0.5em 0\">\n<li class=\"_x-1todoItem\" style=\"line-height:1.5;list-style:none\"><input type=\"checkbox\" checked disabled> t</li>\n</ul>\n<table class=\"_x-1table\" style=\"border-collapse:collapse;max-width:100%\">\n<tr class=\"_x-1tableRow\">\n<td style=\"padding:0.5em;border:1px solid #a0a0a0;vertical-align:top;text-align:right\" class=\"_x-1tableCell\">cell</td>\n</tr>\n</table>\n<p class=\"_x-1paragraph _x-1widget\" style=\"margin:0 0 0.75em;line-height:1.5;overflow-wrap:anywhere\">first child gets the class</p>\n<figure class=\"_x-1image\" style=\"margin:1em 0;max-width:100%;overflow:auto\"><img src=\"a.png\" alt=\"\"><figcaption>c</figcaption></figure>"
+    }
+  ]
+}

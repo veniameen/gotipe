@@ -29,9 +29,10 @@ import { Toggle } from "./extensions/toggle";
 
 export const MinimalPreset = [Paragraph, Bold, Italic, History];
 
-export const DefaultPreset = [
+/** The Default extensions; each preset lists an extension once, with its heading levels. */
+const standard = (heading: typeof Heading) => [
   Paragraph,
-  Heading.configure({ levels: [1, 2, 3] }),
+  heading,
   BulletList,
   OrderedList,
   ListItem,
@@ -57,9 +58,10 @@ export const DefaultPreset = [
   SlashCommands,
 ];
 
+export const DefaultPreset = standard(Heading.configure({ levels: [1, 2, 3] }));
+
 export const FullPreset = [
-  ...DefaultPreset,
-  Heading.configure({ levels: [1, 2, 3, 4, 5, 6] }),
+  ...standard(Heading.configure({ levels: [1, 2, 3, 4, 5, 6] })),
   Columns,
   Embed,
   Math,

@@ -39,7 +39,8 @@ Typst, typst-pdf, typst-assets как runtime dependencies и citationberg уд�
 | subsetter 0.2.6 | CFF/TrueType glyph subsetting и instancing variable Noto Emoji; font compiler не пишем заново | MIT/Apache-2.0 |
 | unicode-bidi / unicode-segmentation | стандартные UAX #9/#29: порядок текста и границы grapheme clusters, не layout документа | MIT/Apache-2.0 |
 | flate2 / zlib-rs и ZIP 9 | Deflate streams и контейнер OOXML; компрессию не переписываем | MIT/Apache-2.0, Zlib, MIT |
-| image 0.25 | ограниченное декодирование PNG/JPEG/GIF; собственный raster codec не нужен | MIT/Apache-2.0 |
+| image 0.25 | ограниченное декодирование PNG/JPEG/GIF/WebP; собственный raster codec не нужен | MIT/Apache-2.0 |
+| image-webp 0.2 (feature `webp` у image) | WebP (VP8 и VP8L) — один из четырёх форматов, которые редактор принимает при загрузке (`IMAGE_MEDIA_TYPES`); без него PDF/DOCX отклоняли документ, который редактор показывает. Pure Rust без unsafe/C, ≈8,7 тыс. строк, тот же владелец image-rs и те же `Limits`; тянет только quick-error 2 (MIT/Apache-2.0), byteorder-lite уже в графе. Только export WASM и `gotipe-convert`, не ядро | MIT/Apache-2.0 |
 
 Subsetting включает upstream variable-fonts feature, поэтому использует собственные
 skrifa/write-fonts/kurbo. Прямой второй scaler skrifa не подключается: экспортёру

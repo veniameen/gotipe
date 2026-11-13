@@ -2,8 +2,11 @@ use gotipe_schema::{Block, BlockContent, BlockId, ContentRule, Document, Mark, S
 
 use crate::transaction::{Step, TransformError};
 
+mod marks;
+
 impl Step {
-    /// Apply step to document, return new document
+    /// Apply step to document, return new document. Without a schema, marks have
+    /// no exclusive groups; `EditorState::apply` passes the editor's schema.
     pub fn apply(&self, doc: Document) -> Result<Document, TransformError> {
         self.apply_with_schema(doc, None)
     }
@@ -31,7 +34,8 @@ impl Step {
                 promote_empty_content(block, schema);
                 match &mut block.content {
                     BlockContent::RichText(spans) => {
-                        insert_text_at(spans, *offset, text, marks)?;
+                        let marks = marks::normalize_marks(marks, schema);
+                        insert_text_at(spans, *offset, text, &marks)?;
                     }
                     BlockContent::Raw(raw) => {
                         let byte_offset = byte_offset(raw, *offset)?;
@@ -179,7 +183,9 @@ impl Step {
                     .find_block_mut(block_id)
                     .ok_or(TransformError::BlockNotFound(block_id.clone()))?;
                 if let BlockContent::RichText(spans) = &mut block.content {
-                    add_mark_to_range(spans, *from, *to, mark)?;
+                    map_marks_in_range(spans, *from, *to, |marks| {
+                        marks::apply_mark(marks, mark, schema)
+                    })?;
                 } else {
                     return Err(TransformError::InvalidContentType);
                 }
@@ -380,22 +386,6 @@ fn map_marks_in_range(
     Ok(())
 }
 
-fn add_mark_to_range(
-    spans: &mut Vec<TextSpan>,
-    from: usize,
-    to: usize,
-    mark: &Mark,
-) -> Result<(), TransformError> {
-    map_marks_in_range(spans, from, to, |marks| {
-        if !marks
-            .iter()
-            .any(|existing| existing.mark_type == mark.mark_type)
-        {
-            marks.push(mark.clone());
-        }
-    })
-}
-
 fn remove_mark_from_range(
     spans: &mut Vec<TextSpan>,
     from: usize,
@@ -521,5 +511,7 @@ fn normalize_spans(spans: &mut Vec<TextSpan>) {
     }
 }
 
+#[cfg(test)]
+mod mark_tests;
 #[cfg(test)]
 mod tests;

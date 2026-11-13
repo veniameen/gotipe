@@ -5,8 +5,11 @@ import { CodeText } from "./code-text";
 import { usePhantom } from "./context";
 import { ContentIcon } from "./icons";
 
+/** Stored languages that mean plain text; a new code block stores `""`. */
+const PLAIN_TEXT = new Set(["", "plain", "plaintext"]);
+
 const LANGUAGES = [
-  ["plaintext", "Plain text"],
+  ["", "Plain text"],
   ["javascript", "JavaScript"],
   ["typescript", "TypeScript"],
   ["python", "Python"],
@@ -41,7 +44,10 @@ export function CodeBlock({
   /** Optional token rendering supplied by a lazy highlighter. */
   children?: ReactNode;
 }) {
-  const language = String(block.attrs.language || "plaintext");
+  const stored = String(block.attrs.language ?? "");
+  const plain = PLAIN_TEXT.has(stored);
+  // The highlighter's name for plain text; the menu writes `""` for it.
+  const language = plain ? "plaintext" : stored;
   const code = typeof block.content === "string" ? block.content : "";
   const readOnly = usePhantom() || !editor.isEditable;
   const [copied, setCopied] = useState(false);
@@ -88,19 +94,19 @@ export function CodeBlock({
         <select
           className="gotipe-select gotipe-select--compact gotipe-code-language-select"
           aria-label={i18n.t("code.language")}
-          value={language}
+          value={plain ? "" : stored}
           disabled={readOnly}
           onChange={(event) => {
             if (editor.isEditable)
               editor.chain().setBlockAttrs(block.id, { language: event.target.value }).run();
           }}
         >
-          {!LANGUAGES.some(([value]) => value === language) && (
-            <option value={language}>{language}</option>
+          {!plain && !LANGUAGES.some(([value]) => value === stored) && (
+            <option value={stored}>{stored}</option>
           )}
           {LANGUAGES.map(([value, label]) => (
-            <option key={value} value={value}>
-              {value === "plaintext" ? i18n.t("code.plainText") : label}
+            <option key={value || "plain"} value={value}>
+              {value === "" ? i18n.t("code.plainText") : label}
             </option>
           ))}
         </select>

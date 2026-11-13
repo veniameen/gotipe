@@ -12,7 +12,7 @@ function attributes(specs: Record<string, AttrSpec>) {
       {
         attr_type:
           spec.type === "enum"
-            ? { Enum: spec.values ?? [] }
+            ? { Enum: (spec.values ?? []).map(String) }
             : {
                 string: "String",
                 number: "Number",

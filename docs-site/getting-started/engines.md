@@ -120,12 +120,8 @@ Pass `null` as the loader for a JS-only editor.
 
 ## Known differences
 
-In this release the engines differ in three places:
+In this release the engines differ in two places:
 
-- `getHTML()` uses each engine's own HTML exporter, and the markup differs. The WASM
-  exporter writes a hard break as a newline instead of `<br>`. For identical HTML from
-  both engines, call `serializeHtml(editor.getJSON().blocks)`; see
-  [content formats](/docs/concepts/content-formats#html).
 - `Document.version` grows with every applied step on WASM and stays as loaded on JS.
   Listen to `update` to detect changes.
 - A `deleteBlock`, `setBlockAttrs`, `setBlockType` or `removeMark` step for a block that

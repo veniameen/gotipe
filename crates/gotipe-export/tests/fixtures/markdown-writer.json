@@ -1,0 +1,805 @@
+{
+  "version": 1,
+  "cases": [
+    {
+      "id": "math-and-embed",
+      "document": {
+        "version": 1,
+        "blocks": [
+          {
+            "id": "h",
+            "type": "heading",
+            "attrs": {
+              "level": 1
+            },
+            "content": [
+              {
+                "text": "Формулы и видео",
+                "marks": []
+              }
+            ],
+            "children": []
+          },
+          {
+            "id": "m1",
+            "type": "math",
+            "attrs": {
+              "display": "block"
+            },
+            "content": "E = mc^2",
+            "children": []
+          },
+          {
+            "id": "m2",
+            "type": "math",
+            "attrs": {
+              "display": "block"
+            },
+            "content": "a^2 + b^2 = c^2\r\n\\sum_{i=1}^{n} i",
+            "children": []
+          },
+          {
+            "id": "e1",
+            "type": "embed",
+            "attrs": {
+              "url": "https://www.youtube.com/watch?v=GoTipe",
+              "type": "youtube"
+            },
+            "content": null,
+            "children": []
+          },
+          {
+            "id": "p",
+            "type": "paragraph",
+            "attrs": {},
+            "content": [
+              {
+                "text": "Текст после",
+                "marks": []
+              }
+            ],
+            "children": []
+          },
+          {
+            "id": "e2",
+            "type": "embed",
+            "attrs": {
+              "url": "https://example.test/a b (1)?x=&amp;",
+              "type": "generic",
+              "title": "Demo *video* [1] #2"
+            },
+            "content": null,
+            "children": []
+          },
+          {
+            "id": "m0",
+            "type": "math",
+            "attrs": {
+              "display": "block"
+            },
+            "content": "",
+            "children": []
+          },
+          {
+            "id": "e0",
+            "type": "embed",
+            "attrs": {
+              "url": "",
+              "type": "generic"
+            },
+            "content": null,
+            "children": []
+          },
+          {
+            "id": "e3",
+            "type": "embed",
+            "attrs": {
+              "url": "https://vimeo.com/1",
+              "type": "vimeo",
+              "name": "Line\r\nbreak & <tag>"
+            },
+            "content": null,
+            "children": []
+          }
+        ]
+      },
+      "markdown": "# Формулы и видео\n\n$$\nE = mc^2\n$$\n\n$$\na^2 + b^2 = c^2\n\\sum_{i=1}^{n} i\n$$\n\n[https://www.youtube.com/watch?v=GoTipe](https://www.youtube.com/watch?v=GoTipe)\n\nТекст после\n\n[Demo \\*video\\* \\[1\\] \\#2](<https://example.test/a b (1)?x=\\&amp;>)\n\n[Line break \\& \\<tag\\>](https://vimeo.com/1)\n",
+      "reparsed": [
+        {
+          "type": "heading",
+          "attrs": {
+            "level": 1
+          },
+          "content": [
+            {
+              "text": "Формулы и видео",
+              "marks": []
+            }
+          ],
+          "children": []
+        },
+        {
+          "type": "math",
+          "attrs": {
+            "display": "block"
+          },
+          "content": "E = mc^2",
+          "children": []
+        },
+        {
+          "type": "math",
+          "attrs": {
+            "display": "block"
+          },
+          "content": "a^2 + b^2 = c^2\n\\sum_{i=1}^{n} i",
+          "children": []
+        },
+        {
+          "type": "paragraph",
+          "attrs": {},
+          "content": [
+            {
+              "text": "https://www.youtube.com/watch?v=GoTipe",
+              "marks": [
+                {
+                  "type": "link",
+                  "attrs": {
+                    "href": "https://www.youtube.com/watch?v=GoTipe"
+                  }
+                }
+              ]
+            }
+          ],
+          "children": []
+        },
+        {
+          "type": "paragraph",
+          "attrs": {},
+          "content": [
+            {
+              "text": "Текст после",
+              "marks": []
+            }
+          ],
+          "children": []
+        },
+        {
+          "type": "paragraph",
+          "attrs": {},
+          "content": [
+            {
+              "text": "Demo *video* [1] #2",
+              "marks": [
+                {
+                  "type": "link",
+                  "attrs": {
+                    "href": "https://example.test/a b (1)?x=&amp;"
+                  }
+                }
+              ]
+            }
+          ],
+          "children": []
+        },
+        {
+          "type": "paragraph",
+          "attrs": {},
+          "content": [
+            {
+              "text": "Line break & <tag>",
+              "marks": [
+                {
+                  "type": "link",
+                  "attrs": {
+                    "href": "https://vimeo.com/1"
+                  }
+                }
+              ]
+            }
+          ],
+          "children": []
+        }
+      ]
+    },
+    {
+      "id": "tex-round-trip",
+      "document": {
+        "version": 1,
+        "blocks": [
+          {
+            "id": "escapes",
+            "type": "math",
+            "attrs": {
+              "display": "block"
+            },
+            "content": "a \\\\ b\n\\{x\\} = *a* + _b_ + `c`",
+            "children": []
+          },
+          {
+            "id": "blank-lines",
+            "type": "math",
+            "attrs": {
+              "display": "block"
+            },
+            "content": "\\begin{aligned}\na &= b\n\n- c &= d\n+ e\n# f\n> g\n\\end{aligned}",
+            "children": []
+          },
+          {
+            "id": "dollar-line",
+            "type": "math",
+            "attrs": {
+              "display": "block"
+            },
+            "content": "a\n$$\nb",
+            "children": []
+          },
+          {
+            "id": "dollar-and-fence",
+            "type": "math",
+            "attrs": {
+              "display": "block"
+            },
+            "content": "x\n  $$  \n```\ny",
+            "children": []
+          },
+          {
+            "id": "indented",
+            "type": "math",
+            "attrs": {
+              "display": "block"
+            },
+            "content": "  leading\n    four spaces\ntrailing  ",
+            "children": []
+          },
+          {
+            "id": "dollars",
+            "type": "paragraph",
+            "attrs": {},
+            "content": [
+              {
+                "text": "Costs $5, $$10$$ inline and $ alone",
+                "marks": []
+              }
+            ],
+            "children": []
+          },
+          {
+            "id": "unclosed",
+            "type": "paragraph",
+            "attrs": {},
+            "content": [
+              {
+                "text": "Before\n$$\nstill text",
+                "marks": []
+              }
+            ],
+            "children": []
+          }
+        ]
+      },
+      "markdown": "$$\na \\\\ b\n\\{x\\} = *a* + _b_ + `c`\n$$\n\n$$\n\\begin{aligned}\na &= b\n\n- c &= d\n+ e\n# f\n> g\n\\end{aligned}\n$$\n\n```math\na\n$$\nb\n```\n\n````math\nx\n  $$  \n```\ny\n````\n\n$$\n  leading\n    four spaces\ntrailing  \n$$\n\nCosts $5, $$10$$ inline and $ alone\n\nBefore\n$$\nstill text\n",
+      "reparsed": [
+        {
+          "type": "math",
+          "attrs": {
+            "display": "block"
+          },
+          "content": "a \\\\ b\n\\{x\\} = *a* + _b_ + `c`",
+          "children": []
+        },
+        {
+          "type": "math",
+          "attrs": {
+            "display": "block"
+          },
+          "content": "\\begin{aligned}\na &= b\n\n- c &= d\n+ e\n# f\n> g\n\\end{aligned}",
+          "children": []
+        },
+        {
+          "type": "math",
+          "attrs": {
+            "display": "block"
+          },
+          "content": "a\n$$\nb",
+          "children": []
+        },
+        {
+          "type": "math",
+          "attrs": {
+            "display": "block"
+          },
+          "content": "x\n  $$  \n```\ny",
+          "children": []
+        },
+        {
+          "type": "math",
+          "attrs": {
+            "display": "block"
+          },
+          "content": "  leading\n    four spaces\ntrailing  ",
+          "children": []
+        },
+        {
+          "type": "paragraph",
+          "attrs": {},
+          "content": [
+            {
+              "text": "Costs $5, $$10$$ inline and $ alone",
+              "marks": []
+            }
+          ],
+          "children": []
+        },
+        {
+          "type": "paragraph",
+          "attrs": {},
+          "content": [
+            {
+              "text": "Before\n$$\nstill text",
+              "marks": []
+            }
+          ],
+          "children": []
+        }
+      ]
+    },
+    {
+      "id": "files-and-quotes",
+      "document": {
+        "version": 1,
+        "blocks": [
+          {
+            "id": "f1",
+            "type": "file",
+            "attrs": {
+              "url": "docs/a b.pdf",
+              "name": ""
+            },
+            "content": null,
+            "children": []
+          },
+          {
+            "id": "f2",
+            "type": "file",
+            "attrs": {
+              "url": "docs/report_v2.pdf",
+              "name": "report_v2.pdf"
+            },
+            "content": null,
+            "children": []
+          },
+          {
+            "id": "f3",
+            "type": "file",
+            "attrs": {
+              "url": "https://example.test/f.pdf",
+              "name": "Отчёт [final] *v2*"
+            },
+            "content": null,
+            "children": []
+          },
+          {
+            "id": "q1",
+            "type": "blockquote",
+            "attrs": {},
+            "content": [
+              {
+                "text": "quoted",
+                "marks": []
+              }
+            ],
+            "children": [
+              {
+                "id": "qm",
+                "type": "math",
+                "attrs": {
+                  "display": "block"
+                },
+                "content": "x^2",
+                "children": []
+              }
+            ]
+          },
+          {
+            "id": "q2",
+            "type": "blockquote",
+            "attrs": {},
+            "content": null,
+            "children": [
+              {
+                "id": "qp",
+                "type": "paragraph",
+                "attrs": {},
+                "content": [
+                  {
+                    "text": "only child",
+                    "marks": []
+                  }
+                ],
+                "children": []
+              }
+            ]
+          },
+          {
+            "id": "c1",
+            "type": "callout",
+            "attrs": {
+              "type": "warning"
+            },
+            "content": [
+              {
+                "text": "careful",
+                "marks": []
+              }
+            ],
+            "children": [
+              {
+                "id": "cm",
+                "type": "math",
+                "attrs": {
+                  "display": "block"
+                },
+                "content": "y",
+                "children": []
+              }
+            ]
+          }
+        ]
+      },
+      "markdown": "[docs/a b.pdf](<docs/a b.pdf>)\n\n[report\\_v2.pdf](docs/report_v2.pdf)\n\n[Отчёт \\[final\\] \\*v2\\*](https://example.test/f.pdf)\n\n> quoted\n>\n> $$\n> x^2\n> $$\n\n>\n>\n> only child\n\n> [!WARNING]\n> careful\n>\n> $$\n> y\n> $$\n",
+      "reparsed": [
+        {
+          "type": "paragraph",
+          "attrs": {},
+          "content": [
+            {
+              "text": "docs/a b.pdf",
+              "marks": [
+                {
+                  "type": "link",
+                  "attrs": {
+                    "href": "docs/a b.pdf"
+                  }
+                }
+              ]
+            }
+          ],
+          "children": []
+        },
+        {
+          "type": "file",
+          "attrs": {
+            "url": "docs/report_v2.pdf",
+            "name": "report_v2.pdf"
+          },
+          "content": null,
+          "children": []
+        },
+        {
+          "type": "paragraph",
+          "attrs": {},
+          "content": [
+            {
+              "text": "Отчёт [final] *v2*",
+              "marks": [
+                {
+                  "type": "link",
+                  "attrs": {
+                    "href": "https://example.test/f.pdf"
+                  }
+                }
+              ]
+            }
+          ],
+          "children": []
+        },
+        {
+          "type": "markdownRaw",
+          "attrs": {
+            "kind": "blockquote"
+          },
+          "content": "> quoted\n>\n> $$\n> x^2\n> $$",
+          "children": []
+        },
+        {
+          "type": "blockquote",
+          "attrs": {},
+          "content": [
+            {
+              "text": "only child",
+              "marks": []
+            }
+          ],
+          "children": []
+        },
+        {
+          "type": "markdownRaw",
+          "attrs": {
+            "kind": "blockquote"
+          },
+          "content": "> [!WARNING]\n> careful\n>\n> $$\n> y\n> $$",
+          "children": []
+        }
+      ]
+    },
+    {
+      "id": "nested-placeholders",
+      "document": {
+        "version": 1,
+        "blocks": [
+          {
+            "id": "l",
+            "type": "bulletList",
+            "attrs": {},
+            "content": null,
+            "children": [
+              {
+                "id": "li",
+                "type": "listItem",
+                "attrs": {},
+                "content": [
+                  {
+                    "text": "item",
+                    "marks": []
+                  }
+                ],
+                "children": [
+                  {
+                    "id": "lm",
+                    "type": "math",
+                    "attrs": {
+                      "display": "block"
+                    },
+                    "content": "",
+                    "children": []
+                  },
+                  {
+                    "id": "le",
+                    "type": "embed",
+                    "attrs": {
+                      "url": ""
+                    },
+                    "content": null,
+                    "children": []
+                  }
+                ]
+              },
+              {
+                "id": "li2",
+                "type": "listItem",
+                "attrs": {},
+                "content": [
+                  {
+                    "text": "second",
+                    "marks": []
+                  }
+                ],
+                "children": [
+                  {
+                    "id": "lf",
+                    "type": "embed",
+                    "attrs": {
+                      "url": "https://example.test/v"
+                    },
+                    "content": null,
+                    "children": []
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "q",
+            "type": "blockquote",
+            "attrs": {},
+            "content": [
+              {
+                "text": "quote",
+                "marks": []
+              }
+            ],
+            "children": [
+              {
+                "id": "qm0",
+                "type": "math",
+                "attrs": {
+                  "display": "block"
+                },
+                "content": "",
+                "children": []
+              },
+              {
+                "id": "qe0",
+                "type": "embed",
+                "attrs": {
+                  "url": "",
+                  "type": "generic"
+                },
+                "content": null,
+                "children": []
+              }
+            ]
+          },
+          {
+            "id": "p",
+            "type": "paragraph",
+            "attrs": {},
+            "content": [
+              {
+                "text": "after",
+                "marks": []
+              }
+            ],
+            "children": []
+          }
+        ]
+      },
+      "markdown": "- item\n- second\n  [https://example.test/v](https://example.test/v)\n\n> quote\n\nafter\n",
+      "reparsed": [
+        {
+          "type": "bulletList",
+          "attrs": {
+            "marker": "-",
+            "spread": false
+          },
+          "content": null,
+          "children": [
+            {
+              "type": "listItem",
+              "attrs": {},
+              "content": [
+                {
+                  "text": "item",
+                  "marks": []
+                }
+              ],
+              "children": []
+            },
+            {
+              "type": "listItem",
+              "attrs": {},
+              "content": [
+                {
+                  "text": "second\n",
+                  "marks": []
+                },
+                {
+                  "text": "https://example.test/v",
+                  "marks": [
+                    {
+                      "type": "link",
+                      "attrs": {
+                        "href": "https://example.test/v"
+                      }
+                    }
+                  ]
+                }
+              ],
+              "children": []
+            }
+          ]
+        },
+        {
+          "type": "blockquote",
+          "attrs": {},
+          "content": [
+            {
+              "text": "quote",
+              "marks": []
+            }
+          ],
+          "children": []
+        },
+        {
+          "type": "paragraph",
+          "attrs": {},
+          "content": [
+            {
+              "text": "after",
+              "marks": []
+            }
+          ],
+          "children": []
+        }
+      ]
+    },
+    {
+      "id": "plain-code",
+      "document": {
+        "version": 1,
+        "blocks": [
+          {
+            "id": "c1",
+            "type": "codeBlock",
+            "attrs": {
+              "language": "plain"
+            },
+            "content": "plain text",
+            "children": []
+          },
+          {
+            "id": "c2",
+            "type": "codeBlock",
+            "attrs": {
+              "language": "PlainText"
+            },
+            "content": "plaintext",
+            "children": []
+          },
+          {
+            "id": "c3",
+            "type": "codeBlock",
+            "attrs": {
+              "language": ""
+            },
+            "content": "empty",
+            "children": []
+          },
+          {
+            "id": "c4",
+            "type": "codeBlock",
+            "attrs": {
+              "language": "plain",
+              "meta": "title=x"
+            },
+            "content": "with meta",
+            "children": []
+          },
+          {
+            "id": "c5",
+            "type": "codeBlock",
+            "attrs": {
+              "language": "ts"
+            },
+            "content": "const a = 1;",
+            "children": []
+          }
+        ]
+      },
+      "markdown": "```\nplain text\n```\n\n```\nplaintext\n```\n\n```\nempty\n```\n\n```plain title=x\nwith meta\n```\n\n```ts\nconst a = 1;\n```\n",
+      "reparsed": [
+        {
+          "type": "codeBlock",
+          "attrs": {
+            "language": ""
+          },
+          "content": "plain text",
+          "children": []
+        },
+        {
+          "type": "codeBlock",
+          "attrs": {
+            "language": ""
+          },
+          "content": "plaintext",
+          "children": []
+        },
+        {
+          "type": "codeBlock",
+          "attrs": {
+            "language": ""
+          },
+          "content": "empty",
+          "children": []
+        },
+        {
+          "type": "codeBlock",
+          "attrs": {
+            "language": "plain",
+            "meta": "title=x"
+          },
+          "content": "with meta",
+          "children": []
+        },
+        {
+          "type": "codeBlock",
+          "attrs": {
+            "language": "ts"
+          },
+          "content": "const a = 1;",
+          "children": []
+        }
+      ]
+    }
+  ]
+}

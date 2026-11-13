@@ -119,7 +119,8 @@ pub fn default_block_editor() -> Schema {
                 "language".into(),
                 AttrSpec {
                     attr_type: AttrType::String,
-                    default: Some(AttrValue::String("plain".into())),
+                    // Empty is plain text, as in the JS CodeBlock extension.
+                    default: Some(AttrValue::String(String::new())),
                     required: false,
                 },
             )]),
@@ -426,7 +427,16 @@ pub fn default_block_editor() -> Schema {
             name: "math".into(),
             group: vec!["block".into()],
             content: ContentRule::RawText,
-            attrs: HashMap::new(),
+            // As the `Math` extension of @gotipe/core: the editor and the Markdown parsers
+            // store `display: "block"`.
+            attrs: HashMap::from([(
+                "display".into(),
+                AttrSpec {
+                    attr_type: AttrType::Enum(vec!["block".into(), "inline".into()]),
+                    default: Some(AttrValue::String("block".into())),
+                    required: false,
+                },
+            )]),
             top_level: true,
             marks_allowed: MarksRule::None,
             leaf: false,

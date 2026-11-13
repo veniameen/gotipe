@@ -1,5 +1,6 @@
 import { ChainableCommands } from "./chain";
 import { ClipboardHandler } from "./clipboard/handler";
+import { commandSchema } from "./commands/schema";
 import { viewToEngineSelection } from "./document/selection";
 import { findBlockInTree, findFirstSelectableBlock, mapSelectionToDocument } from "./document/tree";
 import { clipboardOptions } from "./editor/clipboard-options";
@@ -46,6 +47,7 @@ export async function createEditorWithLoader(
   loader: WasmModuleLoader | null,
 ): Promise<GoTipeEditor> {
   const { bridge, resolved, schema, schemaJson } = await initializeEditor(options, loader);
+  const schemaForCommands = commandSchema(schema);
   const host: EditorHost = options.host ?? {};
   let editable = options.editable !== false;
 
@@ -299,15 +301,7 @@ export async function createEditorWithLoader(
     },
 
     chain(): ChainableCommands {
-      return new ChainableCommands(this, (parentType, childType) => {
-        const parent = schema.nodes[parentType];
-        return (
-          !parent ||
-          (!parent.leaf &&
-            parent.allowsChildren &&
-            (!parent.childTypes || parent.childTypes.includes(childType)))
-        );
-      });
+      return new ChainableCommands(this, schemaForCommands);
     },
 
     dispatch(transaction: object): boolean {

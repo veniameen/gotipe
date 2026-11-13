@@ -68,7 +68,7 @@ gotipe-convert parse-markdown < README.md > document.json
 
 | Command | Input | Output |
 |---|---|---|
-| `html` | Document JSON | HTML fragment (Rust exporter) |
+| `html` | Document JSON | HTML fragment, the same as `serializeHtml` and `getHTML()` |
 | `markdown` | Document JSON | Markdown |
 | `plaintext` | Document JSON | Plain text |
 | `json` | Document JSON | The same document, normalized and pretty-printed |
@@ -82,9 +82,10 @@ Document JSON is the public format (`{ "version": 1, "blocks": [...] }`). Input 
 with status 1.
 
 For `pdf` and `docx`, images must already be embedded as `data:` URLs: the binary has no
-`resolveImage`, and a URL image fails. The `html` command uses the Rust HTML exporter, which
-does the opposite: it rejects `data:` images and paths that do not start with `/` (see the
-note in [Import and export](/docs/conversion/overview#exporttohtml)).
+`resolveImage`, and a URL image fails. The `html` command writes the same HTML as the
+`serializeHtml` function of `@gotipe/core`; `markdown` maps formulas and embeds as
+`@gotipe/markdown` does. Errors name the same causes as the
+[`ExportError` codes](/docs/conversion/pdf#errors).
 
 ## Cloud export jobs
 

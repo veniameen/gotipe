@@ -3,14 +3,14 @@ use std::{collections::BTreeMap, io::Write, sync::Arc};
 
 use flate2::{write::ZlibEncoder, Compression};
 use pdf_writer::{
-    types::{ActionType, AnnotationType},
-    Content, Filter, Finish, Name, Pdf, Rect, Ref, Str, TextStr,
+    types::AnnotationType, Content, Filter, Finish, Name, Pdf, Rect, Ref, Str, TextStr,
 };
 
 use super::{
     font_embedding::{self, EmbeddedFont},
     fonts::Fonts,
     images,
+    metadata::DocumentMetadata,
     model::{Color, DrawOp, Page, TextStyle},
     text::{Glyph, ShapedText},
 };
@@ -38,7 +38,11 @@ pub(super) fn compress(data: &[u8]) -> Result<Vec<u8>, ConvertError> {
         .map_err(|error| ConvertError::Encoding(error.to_string()))
 }
 
-pub(crate) fn write(pages: &[Page], fonts: &Fonts) -> Result<Vec<u8>, ConvertError> {
+pub(crate) fn write(
+    pages: &[Page],
+    fonts: &Fonts,
+    meta: &DocumentMetadata,
+) -> Result<Vec<u8>, ConvertError> {
     if pages.is_empty() {
         return Err(ConvertError::Encoding("PDF needs at least one page".into()));
     }
@@ -48,17 +52,37 @@ pub(crate) fn write(pages: &[Page], fonts: &Fonts) -> Result<Vec<u8>, ConvertErr
     let catalog = ids.next();
     let tree = ids.next();
     let document_info = ids.next();
-    pdf.document_info(document_info)
-        .creator(TextStr("GoTipe"))
-        .producer(TextStr("GoTipe PDF"));
+    {
+        let mut info = pdf.document_info(document_info);
+        info.creator(TextStr("GoTipe"))
+            .producer(TextStr("GoTipe PDF"));
+        if let Some(title) = meta.title {
+            info.title(TextStr(title));
+        }
+        if let Some(author) = meta.author {
+            info.author(TextStr(author));
+        }
+    }
     let embedded = font_embedding::embed(&mut pdf, &mut ids, fonts, pages)?;
     let page_refs: Vec<_> = pages.iter().map(|_| ids.next()).collect();
     let outline = super::outlines::write(&mut pdf, &mut ids, pages, &page_refs)?;
-    let metadata = super::metadata::write(&mut pdf, &mut ids, pages.len());
+    let metadata = super::metadata::write(&mut pdf, &mut ids, pages.len(), meta);
+    let destinations = super::destinations::collect(pages);
+    let named = (!destinations.is_empty()).then(|| ids.next());
     let mut tagging = super::tagging::Tagging::new(&mut ids, pages.len());
     {
         let mut root = pdf.catalog(catalog);
-        root.pages(tree).metadata(metadata).lang(TextStr("en"));
+        root.pages(tree).metadata(metadata);
+        if let Some(named) = named {
+            root.destinations(named);
+        }
+        // Without a caller-supplied language the file declares none instead of a wrong one.
+        if let Some(lang) = meta.lang {
+            root.lang(TextStr(lang));
+        }
+        if meta.title.is_some() {
+            root.viewer_preferences().display_doc_title(true);
+        }
         root.pair(Name(b"StructTreeRoot"), tagging.root);
         root.mark_info().marked(true);
         if let Some(outline) = outline {
@@ -69,7 +93,7 @@ pub(crate) fn write(pages: &[Page], fonts: &Fonts) -> Result<Vec<u8>, ConvertErr
         .map_err(|_| ConvertError::Encoding("Too many PDF pages".into()))?;
     pdf.pages(tree).kids(page_refs.iter().copied()).count(count);
     let mut rasters: BTreeMap<usize, (Ref, String)> = BTreeMap::new();
-    for (page_index, (page, reference)) in pages.iter().zip(page_refs).enumerate() {
+    for (page_index, (page, reference)) in pages.iter().zip(page_refs.iter().copied()).enumerate() {
         positive(page.width)?;
         positive(page.height)?;
         let content_ref = ids.next();
@@ -80,13 +104,28 @@ pub(crate) fn write(pages: &[Page], fonts: &Fonts) -> Result<Vec<u8>, ConvertErr
             match operation {
                 DrawOp::BeginTag { tag } => tagging.begin(tag, &mut ids)?,
                 DrawOp::EndTag => tagging.end()?,
-                DrawOp::Bookmark { .. } => {}
+                DrawOp::Bookmark { .. } | DrawOp::Anchor { .. } => {}
                 DrawOp::Text { x, y, run, style } => {
                     finite(&[*x, *y, style.rise, run.width(), run.ascent(), run.descent()])?;
                     positive(style.size)?;
                     color(style.color)?;
+                    // A link to a block that rendered nothing stays text, also for tagging.
+                    let link = style
+                        .link
+                        .as_deref()
+                        .filter(|link| destinations.resolves(link));
+                    let unlinked;
+                    let tagged = if link.is_none() && style.link.is_some() {
+                        unlinked = TextStyle {
+                            link: None,
+                            ..style.clone()
+                        };
+                        &unlinked
+                    } else {
+                        style
+                    };
                     let paint =
-                        tagging.text(&mut content, page_index, reference, style, &mut ids)?;
+                        tagging.text(&mut content, page_index, reference, tagged, &mut ids)?;
                     draw_text(
                         &mut content,
                         &embedded,
@@ -96,10 +135,7 @@ pub(crate) fn write(pages: &[Page], fonts: &Fonts) -> Result<Vec<u8>, ConvertErr
                         style,
                     )?;
                     content.end_marked_content();
-                    if let Some(url) = &style.link {
-                        if !crate::safe_url(url) {
-                            return Err(ConvertError::Encoding("Unsafe PDF link".into()));
-                        }
+                    if let Some(link) = link {
                         let id = ids.next();
                         let baseline = page.height - *y + style.rise;
                         let mut annotation = pdf.annotation(id);
@@ -114,10 +150,7 @@ pub(crate) fn write(pages: &[Page], fonts: &Fonts) -> Result<Vec<u8>, ConvertErr
                             baseline + run.ascent(),
                         ));
                         annotation.border(0.0, 0.0, 0.0, None);
-                        annotation
-                            .action()
-                            .action_type(ActionType::Uri)
-                            .uri(Str(url.as_bytes()));
+                        super::destinations::act(&mut annotation, link)?;
                         annotations.push(id);
                     }
                 }
@@ -250,6 +283,9 @@ pub(crate) fn write(pages: &[Page], fonts: &Fonts) -> Result<Vec<u8>, ConvertErr
         page_dict.finish();
         pdf.stream(content_ref, &compress(&content.finish())?)
             .filter(Filter::FlateDecode);
+    }
+    if let Some(named) = named {
+        destinations.write(&mut pdf, named, &page_refs)?;
     }
     tagging.finish(&mut pdf, &mut ids)?;
     Ok(pdf.finish())
@@ -407,7 +443,7 @@ mod tests {
         let fonts = Fonts::new().unwrap();
         let text = "Привет é e\u{301} office 😀 👩‍💻 שלום 123 مرحبا שָׁלוֹם إِنَّ لا";
         let page = text_page(&fonts, text, TextStyle::default());
-        let pdf = write(&[page], &fonts).unwrap();
+        let pdf = write(&[page], &fonts, &DocumentMetadata::default()).unwrap();
         assert!(pdf.starts_with(b"%PDF-1.7"));
         let visible = String::from_utf8_lossy(&pdf);
         assert!(visible.contains("/ToUnicode"));
@@ -485,7 +521,7 @@ mod tests {
                 },
             ],
         };
-        let pdf = write(&[page], &fonts).unwrap();
+        let pdf = write(&[page], &fonts, &DocumentMetadata::default()).unwrap();
         let visible = String::from_utf8_lossy(&pdf);
         assert_eq!(visible.matches("/SMask").count(), 1);
         assert_eq!(visible.matches("/Subtype /Image").count(), 2);
@@ -502,10 +538,15 @@ mod tests {
             link: Some("javascript:alert(1)".into()),
             ..TextStyle::default()
         };
-        assert!(write(&[text_page(&fonts, "unsafe", unsafe_style)], &fonts).is_err());
+        assert!(write(
+            &[text_page(&fonts, "unsafe", unsafe_style)],
+            &fonts,
+            &DocumentMetadata::default()
+        )
+        .is_err());
         let mut page = text_page(&fonts, "valid", TextStyle::default());
         page.width = f32::NAN;
-        assert!(write(&[page], &fonts).is_err());
+        assert!(write(&[page], &fonts, &DocumentMetadata::default()).is_err());
     }
 
     #[test]
@@ -533,7 +574,7 @@ mod tests {
             x: 40.0,
             y: 60.0,
         });
-        let pdf = write(&[first, second], &fonts).unwrap();
+        let pdf = write(&[first, second], &fonts, &DocumentMetadata::default()).unwrap();
         let visible = String::from_utf8_lossy(&pdf);
         assert!(visible.contains("/Outlines"));
         assert_eq!(visible.matches("/Dest").count(), 3);

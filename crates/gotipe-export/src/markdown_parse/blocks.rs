@@ -78,6 +78,21 @@ impl Reader {
                 i = next;
                 continue;
             }
+            // `$$` … `$$`: the body is taken raw, without inline parsing. Without a closing
+            // line the `$$` stays ordinary paragraph text.
+            if let Some(end) = math_fence(&line.text)
+                .then(|| (i + 1..lines.len()).find(|&next| math_fence(&lines[next].text)))
+                .flatten()
+            {
+                let indentation = line.text.bytes().take_while(|c| *c == b' ').count();
+                let body: Vec<String> = lines[i + 1..end]
+                    .iter()
+                    .map(|body| body.indent(indentation).text)
+                    .collect();
+                nodes.push(Node::text("math", body.join("\n"), start, lines[end].end));
+                i = end + 1;
+                continue;
+            }
             if let Some(m) = atx(&line.text) {
                 let raw = m.get(2).map_or("", |m| m.as_str());
                 let prefix = m.get(0).unwrap().len() - raw.len();

@@ -21,21 +21,34 @@ pub fn to_markdown(doc: &Document) -> String {
             }
         }
     }
-    let mut md = String::new();
-    for (i, block) in doc.blocks.iter().enumerate() {
-        md.push_str(&block_to_markdown(block));
-        if i < doc.blocks.len() - 1 {
-            md.push('\n');
+    doc.blocks
+        .iter()
+        .filter(|block| !omitted(block))
+        .map(block_to_markdown)
+        .collect::<Vec<_>>()
+        .join("\n")
+}
+
+/// An empty formula or an embed without an address has no Markdown at any depth, as in the
+/// TS writer.
+fn omitted(block: &Block) -> bool {
+    match block.block_type.as_str() {
+        "math" => crate::plaintext::block_text(block).is_empty(),
+        "embed" => {
+            !matches!(block.attrs.get("url"), Some(AttrValue::String(url)) if !url.is_empty())
         }
+        _ => false,
     }
-    md
+}
+
+/// The children a writer shows, without omitted placeholders.
+fn shown(block: &Block) -> impl Iterator<Item = &Block> {
+    block.children.iter().filter(|child| !omitted(child))
 }
 
 fn block_to_markdown(block: &Block) -> String {
     let content = content_to_markdown(&block.content);
-    let nested = block
-        .children
-        .iter()
+    let nested = shown(block)
         .map(block_to_markdown)
         .collect::<Vec<_>>()
         .join("\n");
@@ -87,7 +100,7 @@ fn block_to_markdown(block: &Block) -> String {
                     let indent = " ".repeat(prefix.len());
                     let mut rendered =
                         format!("{prefix}{}\n", text.replace('\n', &format!("\n{indent}")));
-                    for child in &item.children {
+                    for child in shown(item) {
                         for line in block_to_markdown(child).lines() {
                             rendered.push_str(&format!("{indent}{line}\n"))
                         }
@@ -100,22 +113,30 @@ fn block_to_markdown(block: &Block) -> String {
         "codeBlock" => {
             let raw = crate::plaintext::block_text(block);
             let fence = code_fence(&raw, 3);
-            let mut info = attr("language").replace(['\n', '\r', '`'], "");
+            // Older documents store plain text as `plain`/`plaintext`; new ones store "".
+            let plain = ["plain", "plaintext"]
+                .iter()
+                .any(|name| attr("language").eq_ignore_ascii_case(name));
+            let language = if plain && attr("meta").is_empty() {
+                ""
+            } else {
+                attr("language")
+            };
+            let mut info = language.replace(['\n', '\r', '`'], "");
             if !attr("meta").is_empty() {
                 info.push(' ');
                 info.push_str(&attr("meta").replace(['\n', '\r', '`'], ""));
             }
             format!("{fence}{info}\n{raw}\n{fence}\n{nested}")
         }
-        "blockquote" => format!(
-            "{}\n",
-            format!("{content}\n{nested}")
-                .trim_end()
-                .lines()
-                .map(|line| format!("> {line}"))
-                .collect::<Vec<_>>()
-                .join("\n")
-        ),
+        "blockquote" => {
+            let head = if content.is_empty() {
+                ">".to_owned()
+            } else {
+                quoted(&content)
+            };
+            quote_children(head, block)
+        }
         "callout" => {
             let kind = match attr("type") {
                 "tip" | "success" => "TIP",
@@ -124,15 +145,12 @@ fn block_to_markdown(block: &Block) -> String {
                 "caution" | "error" | "danger" => "CAUTION",
                 _ => "NOTE",
             };
-            format!(
-                "{}\n",
-                format!("[!{kind}]\n{content}\n{nested}")
-                    .trim_end()
-                    .lines()
-                    .map(|line| format!("> {line}"))
-                    .collect::<Vec<_>>()
-                    .join("\n")
-            )
+            let mut head = format!("> [!{kind}]");
+            if !content.is_empty() {
+                head.push('\n');
+                head.push_str(&quoted(&content));
+            }
+            quote_children(head, block)
         }
         "divider" => "---\n".into(),
         "image" => format!(
@@ -141,16 +159,8 @@ fn block_to_markdown(block: &Block) -> String {
             destination(attr("src")),
             title_suffix(attr("caption"))
         ),
-        "file" | "embed" => format!(
-            "[{}](<{}>)\n{nested}",
-            escape_text(if attr("name").is_empty() {
-                attr("url")
-            } else {
-                attr("name")
-            }),
-            destination(attr("url"))
-        ),
-        "math" => format!("$$\n{}\n$$\n{nested}", crate::plaintext::block_text(block)),
+        "file" | "embed" => format!("{}\n{nested}", link_line(block)),
+        "math" => format!("{}\n{nested}", math(&crate::plaintext::block_text(block))),
         "markdownRaw" => format!("{}\n{nested}", crate::plaintext::block_text(block)),
         "table" => {
             let mut result = String::new();
@@ -162,10 +172,7 @@ fn block_to_markdown(block: &Block) -> String {
                         format!(
                             "{}{}",
                             content_to_markdown(&cell.content),
-                            cell.children
-                                .iter()
-                                .map(block_to_markdown)
-                                .collect::<String>()
+                            shown(cell).map(block_to_markdown).collect::<String>()
                         )
                         .trim()
                         .replace('|', "\\|")
@@ -194,6 +201,136 @@ fn block_to_markdown(block: &Block) -> String {
         _ => format!("{content}\n{nested}"),
     }
 }
+/// Every line of a quote's own text behind `> `.
+fn quoted(text: &str) -> String {
+    text.split('\n')
+        .map(|line| format!("> {line}"))
+        .collect::<Vec<_>>()
+        .join("\n")
+}
+
+/// A quote's children follow its text after a `>` line, as in the TS writer.
+fn quote_children(mut quote: String, block: &Block) -> String {
+    for child in shown(block) {
+        quote.push_str("\n>\n");
+        quote.push_str(&quoted(block_to_markdown(child).trim_end_matches('\n')));
+    }
+    quote.push('\n');
+    quote
+}
+
+/// GitHub and most renderers show a `$$` block as display math. TeX with a line of its own
+/// `$$` uses a ```` ```math ```` fence longer than any backtick run inside; as the TS writer.
+fn math(tex: &str) -> String {
+    let tex = tex.replace("\r\n", "\n").replace('\r', "\n");
+    if tex
+        .split('\n')
+        .any(|line| line.trim_matches([' ', '\t']) == "$$")
+    {
+        let fence = code_fence(&tex, 3);
+        format!("{fence}math\n{tex}\n{fence}")
+    } else {
+        format!("$$\n{tex}\n$$")
+    }
+}
+
+/// A file or an embed is a link line to its address, labelled by its name or the address
+/// itself; byte-identical to `linkLine` in @gotipe/markdown.
+fn link_line(block: &Block) -> String {
+    let attr = |name: &str| match block.attrs.get(name) {
+        Some(AttrValue::String(value)) => value.as_str(),
+        _ => "",
+    };
+    let url = attr("url");
+    let label = [attr("name"), attr("title"), url]
+        .into_iter()
+        .find(|value| !value.is_empty())
+        .unwrap_or("");
+    let label = label.replace("\r\n", " ").replace(['\r', '\n'], " ");
+    format!("[{}]({})", escape_text(&label), link_destination(url))
+}
+
+/// `linkDestination` of @gotipe/markdown: the raw form when it is safe, `<...>` otherwise.
+fn link_destination(href: &str) -> String {
+    if href.is_empty() {
+        return "<>".into();
+    }
+    let mut depth = 0i64;
+    let mut balanced = true;
+    for c in href.chars() {
+        match c {
+            '(' => depth += 1,
+            ')' => {
+                depth -= 1;
+                balanced &= depth >= 0;
+            }
+            _ => {}
+        }
+    }
+    let plain =
+        |c: char| !(js_space(c) || matches!(c, '<' | '>' | '\\') || c <= '\u{1f}' || c == '\u{7f}');
+    if balanced && depth == 0 && href.chars().all(plain) {
+        return escape_entities(href);
+    }
+    let mut inner = String::new();
+    for c in href.chars() {
+        if matches!(c, '\\' | '<' | '>') {
+            inner.push('\\');
+        }
+        inner.push(c);
+    }
+    let inner = escape_entities(&inner)
+        .replace("\r\n", "%0A")
+        .replace(['\r', '\n'], "%0A");
+    format!("<{inner}>")
+}
+
+/// JavaScript `\s`: the whitespace a raw link destination may not contain.
+fn js_space(c: char) -> bool {
+    matches!(
+        c,
+        '\t' | '\n' | '\u{b}' | '\u{c}' | '\r' | ' ' | '\u{a0}' | '\u{1680}' | '\u{2000}'
+            ..='\u{200a}'
+                | '\u{2028}'
+                | '\u{2029}'
+                | '\u{202f}'
+                | '\u{205f}'
+                | '\u{3000}'
+                | '\u{feff}'
+    )
+}
+
+/// Escapes `&` that would start a character reference (`&amp;`, `&#38;`, `&#x26;`).
+fn escape_entities(text: &str) -> String {
+    let mut result = String::new();
+    for (index, c) in text.char_indices() {
+        if c == '&' && starts_reference(&text[index + 1..]) {
+            result.push('\\');
+        }
+        result.push(c);
+    }
+    result
+}
+
+fn starts_reference(rest: &str) -> bool {
+    let bytes = rest.as_bytes();
+    let run = |from: usize, accept: fn(&u8) -> bool| {
+        bytes[from.min(bytes.len())..]
+            .iter()
+            .take_while(|b| accept(b))
+            .count()
+    };
+    let (start, length, bounds) = match bytes {
+        [b'#', b'x' | b'X', ..] => (2, run(2, u8::is_ascii_hexdigit), 1..=6),
+        [b'#', ..] => (1, run(1, u8::is_ascii_digit), 1..=7),
+        [first, ..] if first.is_ascii_alphabetic() => {
+            (0, run(0, u8::is_ascii_alphanumeric), 2..=32)
+        }
+        _ => return false,
+    };
+    bounds.contains(&length) && bytes.get(start + length) == Some(&b';')
+}
+
 fn title_suffix(title: &str) -> String {
     if title.is_empty() {
         String::new()

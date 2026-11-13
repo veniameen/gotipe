@@ -9,10 +9,7 @@ export function createExtensionEvents(extensions: Extension[], editor: GoTipeEdi
       for (const extension of extensions)
         for (const rule of extension.inputRules ?? []) {
           const match = text.match(rule.pattern);
-          if (match) {
-            rule.handler(editor, match);
-            return true;
-          }
+          if (match && rule.handler(editor, match) !== false) return true;
         }
       return false;
     },

@@ -113,3 +113,59 @@ fn merged_first_row_keeps_the_logical_grid_width() {
         assert!(xml.contains(text));
     }
 }
+
+/// Everything the editor can insert exports: WebP uploads, empty placeholders, inline
+/// `data:` files and relative links. Only absolute addresses become hyperlinks.
+#[test]
+fn editor_content_exports_with_text_for_unlinkable_references() {
+    let corpus: serde_json::Value =
+        serde_json::from_str(include_str!("fixtures/pdf-corpus.json")).unwrap();
+    let case = corpus["cases"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|case| case["id"] == "editor-content")
+        .unwrap();
+    let document = document_from_json(&case["document"].to_string()).unwrap();
+    let output = to_docx(&document, &DocxOptions::default()).unwrap();
+    let xml = part(&output, "word/document.xml");
+    for text in [
+        "WEBP-LOSSY подпись",
+        "IMAGE-PENDING caption",
+        "INLINE-UPLOAD Отчёт.pdf",
+        "RELATIVE-FILE guide",
+        "https://www.youtube.com/watch?v=GoTipe",
+        "relative",
+        "absolute",
+    ] {
+        assert!(xml.contains(text), "missing {text}");
+    }
+    assert_eq!(xml.matches("<w:drawing>").count(), 2);
+    assert_eq!(xml.matches("<w:hyperlink ").count(), 2);
+    let relationships = part(&output, "word/_rels/document.xml.rels");
+    for target in [
+        "https://example.test/ok",
+        "https://www.youtube.com/watch?v=GoTipe",
+    ] {
+        assert!(relationships.contains(target), "missing {target}");
+    }
+    for text in [
+        "guide.md",
+        "data:",
+        "tel:",
+        "cdn.example.test",
+        "/docs/guide",
+    ] {
+        assert!(!relationships.contains(text), "unexpected link {text}");
+    }
+    let mut archive = zip::ZipArchive::new(Cursor::new(output)).unwrap();
+    for index in 1..=2 {
+        let mut png = Vec::new();
+        archive
+            .by_name(&format!("word/media/image{index}.png"))
+            .unwrap()
+            .read_to_end(&mut png)
+            .unwrap();
+        assert!(png.starts_with(b"\x89PNG\r\n\x1a\n"));
+    }
+}

@@ -4,6 +4,7 @@ import {
   htmlBlock,
   interrupts,
   listMarker,
+  mathFence,
   quotePrefix,
   thematic,
 } from "./block-syntax";
@@ -70,6 +71,24 @@ class Reader {
           position: position(start, lines[last]!.end),
         });
         i = next;
+        continue;
+      }
+      // `$$` … `$$`: the body is taken raw, without inline parsing. Without a closing
+      // line the `$$` stays ordinary paragraph text.
+      const mathEnd = mathFence(line.text)
+        ? lines.findIndex((candidate, index) => index > i && mathFence(candidate.text))
+        : -1;
+      if (mathEnd > 0) {
+        const indentation = /^ */.exec(line.text)![0].length;
+        nodes.push({
+          type: "math",
+          value: lines
+            .slice(i + 1, mathEnd)
+            .map((body) => stripIndent(body, indentation).text)
+            .join("\n"),
+          position: position(start, lines[mathEnd]!.end),
+        });
+        i = mathEnd + 1;
         continue;
       }
       const heading = atx(line.text);

@@ -1,6 +1,10 @@
-/** HTML-only presentation options. */
+/** HTML-only presentation options, the same as `serializeHtml` in @gotipe/core. */
 export interface ExportOptions {
+  /** Add neutral inline structural styles. */
+  inlineStyles?: boolean;
+  /** The earlier name of `inlineStyles`; still accepted. */
   includeStyles?: boolean;
+  /** One class per block, e.g. `"doc-"` gives `doc-paragraph`. */
   classPrefix?: string;
 }
 
@@ -14,6 +18,11 @@ export interface PdfOptions {
   fontSize?: number;
   headerTemplate?: string;
   footerTemplate?: string;
+  /** BCP 47 language of the text, e.g. `"ru"` or `"en-GB"`. Without it none is declared. */
+  lang?: string;
+  /** Document title, shown by viewers as the window title. */
+  title?: string;
+  author?: string;
 }
 
 export interface DocxOptions {

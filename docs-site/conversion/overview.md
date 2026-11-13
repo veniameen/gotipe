@@ -69,7 +69,7 @@ const editor = await createEditor({
   },
 });
 
-const html = exportToHtml(editor, { classPrefix: "doc-", includeStyles: true });
+const html = exportToHtml(editor, { classPrefix: "doc-", inlineStyles: true });
 const markdown = exportToMarkdown(editor); // "# Release notes\n\nExport is **lossless** for JSON only.\n"
 const text = exportToPlainText(editor); // "Release notes\nExport is lossless for JSON only."
 ```
@@ -83,7 +83,7 @@ const document = JSON.parse(await readFile("document.json", "utf8"));
 const editor = await createHeadlessEditor({ extensions: [] });
 try {
   editor.setContent(document);
-  await writeFile("document.html", exportToHtml(editor, { includeStyles: true }));
+  await writeFile("document.html", exportToHtml(editor, { inlineStyles: true }));
   await writeFile("document.md", exportToMarkdown(editor));
   await writeFile("document.txt", exportToPlainText(editor));
 } finally {
@@ -101,7 +101,7 @@ by newlines, without `<html>` or `<body>`.
 | Option | Type | Default | Description |
 |---|---|---|---|
 | `classPrefix` | `string` | — | Adds one class per block from the prefix and the block type: `"doc-"` gives `doc-paragraph`, `doc-bulletList`. Must match `^[a-zA-Z_][a-zA-Z0-9_-]*$`. |
-| `includeStyles` | `boolean` | `false` | Adds neutral inline styles (spacing, table borders, code background) so the fragment reads well on its own page. |
+| `inlineStyles` | `boolean` | `false` | Adds neutral inline styles (spacing, table borders, code background) so the fragment reads well on its own page. The earlier name `includeStyles` is still accepted. |
 
 Any other option name throws a `TypeError` before work starts. Text is escaped; link targets
 pass `toSafeHref` (`http:`, `https:`, `mailto:` or a relative URL); image sources accept
@@ -113,15 +113,17 @@ pass `toSafeHref` (`http:`, `https:`, `mailto:` or a relative URL); image source
 | `paragraph`, `heading` | `<p>`, `<h1>`–`<h6>` |
 | `bulletList`, `orderedList`, `listItem` | `<ul>`, `<ol start>`, `<li>` |
 | `todoList`, `todoItem` | `<ul class="todo-list">` with a disabled checkbox per `<li>` |
-| `codeBlock` | `<pre><code class="language-…">` |
+| `codeBlock` | `<pre><code class="language-…">`; no class for plain text (`""`, `plain`, `plaintext`) |
 | `blockquote`, `divider` | `<blockquote>`, `<hr>` |
 | `callout` | `<div class="callout">` |
 | `image` | `<figure><img>`, with `<figcaption>` when there is a caption |
 | `table`, `tableRow`, `tableHeader`, `tableCell` | `<table>`, `<tr>`, `<th>`, `<td>` with `colspan`, `rowspan` and `text-align` |
 | `toggle` | `<details><summary>`, `open` kept |
 | `columns`, `column` | `<div class="columns">`, `<div class="column">` |
-| `file`, `embed` | `<p><a href>` with the file name |
-| other types | `<p>` with the block's text, then its children |
+| `file`, `embed` | `<p><a href>` with the file name, or the address without one |
+| other types, `math`, `markdownRaw` | `<p>` with the block's text, then its children |
+
+A block's children are always written, also under a paragraph, heading, image or file.
 
 Marks become `<strong>`, `<em>`, `<u>`, `<s>`, `<code>`, `<sup>`, `<sub>`, `<a href title>`,
 `<span style="color:…">` for text color and `<mark style="background:…">` for highlight.
@@ -133,24 +135,20 @@ Two functions in `@gotipe/core` use the same serializer without an editor:
   `@gotipe/core/server` — async; `blockRenderers` maps a block type to a function that returns
   HTML. That HTML is inserted as is, so it is your code's responsibility to escape it.
 
-These two call the styles option `inlineStyles`; `exportToHtml` calls it `includeStyles`.
-
-> [!NOTE]
-> Without options, `exportToHtml(editor)` returns `editor.getHTML()`, which comes from the
-> active engine. On the JS engine that is the serializer above. On the WASM engine the Rust
-> exporter writes different markup (no `<figure>` or caption, `<aside>` for callouts) and
-> fails on an image whose source is a `data:` URL or a path that does not start with `/`.
-> For the same HTML on both engines, pass options or call
-> `serializeHtml(editor.getJSON().blocks)`.
+All three accept `inlineStyles` and its earlier name `includeStyles`. Without options,
+`exportToHtml(editor)` returns `editor.getHTML()`, which uses the same serializer on the JS and
+WASM engines; the server's `gotipe-convert html` writes the same HTML too.
 
 ## exportToMarkdown
 
 `exportToMarkdown(editor)` returns `editor.getMarkdown()`: canonical GitHub-flavoured Markdown
 for the current document. It has no options; passing any throws a `TypeError`. Empty blocks
-are left out.
+are left out, and front matter is not written: it is not part of the document.
 
-To round-trip an existing file byte for byte, keep its parse snapshot and serialize with it —
-see [Markdown](/docs/conversion/markdown). `PageEditor` does this for you.
+To save an existing file without rewriting it, keep its parse snapshot and call
+`serializeMarkdown(editor.getJSON(), snapshot)` from `@gotipe/markdown` — see
+[Markdown](/docs/conversion/markdown). `exportToMarkdown` takes an editor, not a file, so it
+does not keep source bytes or front matter. `PageEditor` does this for you.
 
 ## exportToPlainText
 
