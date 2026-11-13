@@ -50,7 +50,7 @@ try {
 const clockEditor=WasmEditor.withDefaultSchema(base);
 try {
   clockEditor.enable_collaboration('clock-local');
-  const envelope=clock=>({protocol:'gotipe.crdt/1',base:JSON.parse(base),operations:[{id:{lamport:clock,peer_id:'clock-remote'},change:{SetData:{key:'clock-test',value:true}}}]});
+  const envelope=clock=>({protocol:'gotipe.crdt/1',base:JSON.parse(base),operations:[{id:{lamport:clock,peer_id:'clock-remote'},change:{SetData:{collection:'test',key:'clock-test',value:'true'}}}]});
   const bytes=value=>new TextEncoder().encode(JSON.stringify(value));
   const initial=clockEditor.export_json();
   assert.throws(()=>clockEditor.receive_update(bytes(envelope(Number.MAX_SAFE_INTEGER+1))));

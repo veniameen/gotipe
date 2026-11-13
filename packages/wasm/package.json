@@ -21,6 +21,9 @@
     "THIRD_PARTY_NOTICES.md",
     "licenses"
   ],
+  "scripts": {
+    "test": "node tests/integrity.mjs"
+  },
   "license": "MIT",
   "publishConfig": {
     "access": "public"
