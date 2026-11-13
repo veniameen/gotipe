@@ -1,0 +1,71 @@
+[
+  { "type": "heading-one", "children": [{ "text": "Slate document" }] },
+  {
+    "type": "paragraph",
+    "align": "center",
+    "children": [
+      { "text": "This is editable " },
+      { "text": "rich", "bold": true },
+      { "text": " text, " },
+      { "text": "much", "italic": true },
+      { "text": " better than a " },
+      { "text": "<textarea>", "code": true },
+      { "text": "!" }
+    ]
+  },
+  {
+    "type": "paragraph",
+    "children": [
+      { "text": "Read the " },
+      {
+        "type": "link",
+        "url": "https://docs.slatejs.org",
+        "children": [{ "text": "docs", "underline": true }]
+      },
+      { "text": ". Привет 😀", "strikethrough": true }
+    ]
+  },
+  { "type": "block-quote", "children": [{ "text": "A wise quote." }] },
+  {
+    "type": "bulleted-list",
+    "children": [
+      { "type": "list-item", "children": [{ "text": "One" }] },
+      { "type": "list-item", "children": [{ "text": "Two" }] }
+    ]
+  },
+  {
+    "type": "numbered-list",
+    "children": [{ "type": "list-item", "children": [{ "text": "First" }] }]
+  },
+  { "type": "check-list-item", "checked": true, "children": [{ "text": "Criss-cross!" }] },
+  { "type": "check-list-item", "checked": false, "children": [{ "text": "Slide to the left." }] },
+  {
+    "type": "image",
+    "url": "https://example.com/mountains.jpg",
+    "alt": "Mountains",
+    "children": [{ "text": "" }]
+  },
+  {
+    "type": "table",
+    "children": [
+      {
+        "type": "table-row",
+        "children": [
+          { "type": "table-cell", "children": [{ "text": "" }] },
+          { "type": "table-cell", "children": [{ "text": "Human", "bold": true }] },
+          { "type": "table-cell", "children": [{ "text": "Dog", "bold": true }] }
+        ]
+      },
+      {
+        "type": "table-row",
+        "children": [
+          { "type": "table-cell", "children": [{ "text": "# of Feet", "bold": true }] },
+          { "type": "table-cell", "children": [{ "text": "2" }] },
+          { "type": "table-cell", "children": [{ "text": "4" }] }
+        ]
+      }
+    ]
+  },
+  { "type": "heading-two", "children": [{ "text": "Try it out" }] },
+  { "type": "paragraph", "children": [{ "text": "Text with a color", "color": "#2f6fdb" }] }
+]

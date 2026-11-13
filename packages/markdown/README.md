@@ -6,8 +6,9 @@ Lossless GFM Markdown ⇄ GoTipe document codec for editing Markdown files that 
   newline, odd spacing, HTML, footnotes, link definitions — everything).
 - After an edit only the source of the **changed top-level blocks** is rewritten; every other
   fragment (and the gaps between untouched neighbours) is copied from the original text.
-- Pure ESM JS, no side effects on import, no Node-only APIs, no `eval`/`new Function`, no WASM.
-  Built on `mdast-util-from-markdown` + `mdast-util-gfm` (CSP note below).
+- Plain JS (ESM and CommonJS builds) without runtime dependencies: GoTipe's own CommonMark/GFM
+  grammar (`src/grammar`). No side effects on import, no Node-only APIs, no
+  `eval`/`new Function`, no WASM (CSP note below).
 
 ```ts
 import { parseMarkdown, serializeMarkdown } from "@gotipe/markdown";
@@ -37,7 +38,7 @@ fingerprint(block: Block): string;                      // id-free canonical JSO
 mdOffsetToText(map, mdOffset, bias?: "before" | "after"): { blockId; offset } | null;
 textOffsetToMd(map, blockId, offset): number | null;
 
-markdownRawNodeSpec   // plain GoTipe node spec for the `markdownRaw` block
+markdownRawNodeSpec   // GoTipe NodeSpec of the `markdownRaw` block, for defineExtension
 ```
 
 `MarkdownSnapshot` is plain JSON (store it next to the open file). It holds the original text,
@@ -94,12 +95,21 @@ tags `<u>` → `underline`, `<mark>` → `highlight`, `<sup>`, `<sub>`, `<em>/<i
 are kept verbatim as text with the `mdRaw` mark. Line breaks are `"\n"` in text; in table cells
 and headings `"\n"` ⇄ `<br>`.
 
-Register the raw block in the editor:
+Register the raw block and the raw mark in the editor:
 
 ```ts
+import { defineExtension } from "@gotipe/core";
 import { markdownRawNodeSpec } from "@gotipe/markdown";
-defineExtension({ name: "markdownRaw", nodes: [markdownRawNodeSpec] });
+
+const MarkdownRaw = defineExtension({ name: "markdownRaw", nodes: [markdownRawNodeSpec] });
+const MarkdownRawMark = defineExtension({
+  name: "mdRaw",
+  marks: [{ name: "mdRaw", attrs: {}, rank: 90 }],
+});
 ```
+
+`markdownRawNodeSpec` has the type of `NodeSpec` from `@gotipe/core`. The type is repeated in
+this package, because core depends on it and not the other way round.
 
 ## Known limitations
 
@@ -111,9 +121,9 @@ defineExtension({ name: "markdownRaw", nodes: [markdownRawNodeSpec] });
 - `file` blocks round-trip only when `name` equals the decoded basename of a relative `url`;
   otherwise they read back as a paragraph with a link. Conversely a paragraph that is only such a
   link (or only an image) is read as a `file` (`image`) block.
-- Lists mixing task and normal items, items with several paragraphs/code/quotes, nested task
-  lists and ordered task lists are kept as one `markdownRaw` block. Quotes with more than one
-  paragraph likewise. `<details>` blocks are split by CommonMark into HTML / paragraph / HTML
+- Lists mixing task and normal items, items with several paragraphs/code/quotes and ordered
+  task lists are kept as one `markdownRaw` block. Quotes with more than one paragraph likewise.
+  Nested task lists and lists under a task are parsed as nested `todoList`/lists. `<details>` blocks are split by CommonMark into HTML / paragraph / HTML
   blocks (the inner paragraphs are editable).
 - Re-serialized blocks use canonical syntax (ATX headings, fenced code, `*`/`**`/`~~`,
   `| a |` tables, `<url>` or bare autolinks); list markers, delimiters, start and spread are kept.

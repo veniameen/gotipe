@@ -18,12 +18,36 @@ export type {
   TextSegment,
 } from "./types";
 
+/** `AttrSpec` of `@gotipe/core`, see `NodeSpec`. */
+interface AttrSpec {
+  type: "string" | "number" | "bool" | "enum" | "array" | "object";
+  values?: string[];
+  default?: unknown;
+  required?: boolean;
+}
+
+/**
+ * `NodeSpec` of `@gotipe/core`, repeated: core depends on this package, so this package
+ * cannot import it. A value of this type is a core `NodeSpec` for TypeScript.
+ */
+interface NodeSpec {
+  name: string;
+  group: string[];
+  content: "richText" | "rawText" | "empty";
+  attrs: Record<string, AttrSpec>;
+  topLevel: boolean;
+  marksAllowed: "all" | "none" | string[];
+  leaf: boolean;
+  allowsChildren: boolean;
+  childTypes?: string[];
+}
+
 /**
  * GoTipe node spec for verbatim Markdown fragments (HTML blocks, footnote and
- * link definitions, unsupported constructs). Plain object: register it in the
- * editor schema without depending on `@gotipe/core`.
+ * link definitions, unsupported constructs). Pass it to `defineExtension` of
+ * `@gotipe/core` as is; this package does not depend on core.
  */
-export const markdownRawNodeSpec = {
+export const markdownRawNodeSpec: NodeSpec = {
   name: "markdownRaw",
   group: ["block"],
   content: "rawText",

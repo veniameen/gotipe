@@ -63,7 +63,7 @@ import { createPageBlockViews } from "./page-views";
 /** Raw Markdown the editor keeps as is (HTML, footnotes, definitions…). */
 export const MarkdownRawExtension = defineExtension({
   name: "markdownRaw",
-  nodes: [{ ...markdownRawNodeSpec } as never],
+  nodes: [{ ...markdownRawNodeSpec }],
 });
 
 /** Inline Markdown kept verbatim (footnote references, inline HTML…). */
