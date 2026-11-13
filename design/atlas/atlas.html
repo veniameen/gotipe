@@ -17,6 +17,8 @@
     "Segoe UI", system-ui, "Helvetica Neue", Arial, sans-serif;
   --gt-font-mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, "Liberation Mono",
     monospace;
+  /* a font a selection may take in the modern view; system faces only, nothing is loaded */
+  --gt-font-serif: ui-serif, "Iowan Old Style", Charter, Georgia, "Times New Roman", serif;
   --gt-weight-regular: 400;
   --gt-weight-medium: 500;
   --gt-weight-strong: 600;
@@ -24,6 +26,7 @@
 
   /* one radius per role, never the same one nested inside itself */
   --gt-radius-inline: 4px;
+  --gt-radius-match: 3px;
   --gt-radius-check: 4px;
   --gt-radius-control: 6px;
   --gt-radius-block: 8px;
@@ -155,6 +158,10 @@
   --gt-bg-gray: rgb(35 35 34 / 0.08);
   --gt-diagram-node: #ffffff;
   --gt-diagram-queue: rgb(44 98 212 / 0.32);
+  --gt-find: rgb(234 179 8 / 0.22);
+  --gt-find-current: rgb(234 179 8 / 0.5);
+  --gt-find-ring: rgb(154 101 0 / 0.6);
+  --gt-over-limit: rgb(196 56 47 / 0.13);
 
   --at-bg: #f3f3f1;
   --at-text: #232322;
@@ -244,6 +251,10 @@
   --gt-bg-gray: rgb(255 255 255 / 0.1);
   --gt-diagram-node: #232322;
   --gt-diagram-queue: rgb(107 156 255 / 0.36);
+  --gt-find: rgb(226 173 69 / 0.16);
+  --gt-find-current: rgb(226 173 69 / 0.32);
+  --gt-find-ring: rgb(226 173 69 / 0.75);
+  --gt-over-limit: rgb(240 107 96 / 0.2);
 
   --at-bg: #121211;
   --at-text: #ececea;
@@ -464,6 +475,18 @@
     --gt-outline-display: none;
     --gt-docs-columns: minmax(0, 1fr);
     --gt-handle-display: none;
+    /* the find bar spans the editor; its tools step under the field */
+    --gt-find-inset: 8px;
+    --gt-find-w: calc(100% - 2 * var(--gt-find-inset));
+    --gt-find-columns: auto minmax(0, 1fr);
+    --gt-find-tools-column: 1 / -1;
+    --gt-find-sep-end: auto;
+    /* history is two screens: the list, then the compare view with a way back */
+    --gt-history-columns: minmax(0, 1fr);
+    --gt-history-panel-display: none;
+    --gt-history-back-display: inline-flex;
+    --gt-history-facts-order: 1;
+    --gt-history-facts-basis: 100%;
   }
 }
 @container (max-width: 359px) {
@@ -583,6 +606,52 @@
   --gt-slice-top: 96px;
   --gt-slice-top-tight: 32px;
   --gt-slice-bottom: 48px;
+
+  /* inline atoms: a mention, an emoji, a formula — one piece of the line */
+  --gt-chip-pad-x: 3px;
+  --gt-menu-avatar-inset: 2px;
+  --gt-emoji-menu: 15px;
+  --gt-emoji-menu-leading: 20px;
+  --gt-emoji-picker-w: 344px;
+  --gt-emoji-cell: 36px;
+  --gt-emoji-grid: 22px;
+  --gt-emoji-grid-leading: 28px;
+  --gt-emoji-scroll-h: 214px;
+  --gt-emoji-inline: 1.25em;
+  --gt-emoji-inline-shift: -0.24em;
+  --gt-math-op: 0.28em;
+  --gt-math-frac: 0.8em;
+  --gt-math-frac-leading: 1;
+  --gt-math-frac-pad: 0.14em;
+  --gt-math-script: 0.7em;
+  --gt-math-display-frac: 1em;
+  --gt-math-display-leading: 1.25;
+  --gt-math-pop-w: 288px;
+  --gt-math-preview-pad: 12px;
+  --gt-math-preview-size: 18px;
+  --gt-math-preview-leading: 26px;
+
+  /* find and replace, the counter under the document */
+  --gt-find-w: 452px;
+  --gt-find-inset: 12px;
+  --gt-find-columns: auto minmax(0, 1fr) auto;
+  --gt-find-tools-column: auto;
+  --gt-find-sep-end: var(--gt-tool-sep-gap);
+  --gt-status-gap: 40px;
+
+  /* invisible characters: the dot over a space stands at the middle of the x-height */
+  --gt-space-mark-shift: -0.14em;
+
+  /* the size of a selection's text in the fixed bar */
+  --gt-size-field-w: 36px;
+
+  /* history: versions beside the page, the compare view marks blocks in the gutter */
+  --gt-diff-bar-gap: 16px;
+  --gt-history-columns: minmax(0, 1fr) var(--gt-panel-w);
+  --gt-history-panel-display: block;
+  --gt-history-back-display: none;
+  --gt-history-facts-order: 0;
+  --gt-history-facts-basis: auto;
 }
 
 /* ---- the drawing's own positions: where a dragged block's ghost stands ---- */
@@ -971,6 +1040,10 @@ body {
 .at-pointer.is-grab {
   top: 22%;
   left: 6%;
+}
+.at-pointer.is-end {
+  top: 64%;
+  left: 86%;
 }
 
 /* document.css */
@@ -2103,6 +2176,10 @@ ol.gotipe-list > li::before {
 .gotipe-menu-item.is-selected > .gt-icon {
   color: var(--gt-text);
 }
+/* on the chosen row's fill the key steps up one tone, so it still reads */
+.gotipe-menu-item.is-selected > .gotipe-key {
+  color: var(--gt-text-2);
+}
 .gotipe-menu-item.is-current > .gotipe-menu-end {
   color: var(--gt-text);
 }
@@ -3041,6 +3118,474 @@ ol.gotipe-list > li::before {
   background: var(--gt-page-bg);
   box-shadow: var(--gt-shadow-overlay);
   opacity: var(--gt-ghost-opacity);
+}
+
+/* ui/atoms.css */
+/* Atoms of a line: a mention, an emoji, a formula. Each is one piece of the text — the caret steps
+   over it, a deletion takes it whole — and shows the text it stands for when it cannot be drawn.
+   Their lists after «@» and «:» are the slash menu's rows; the emoji picker and the formula field
+   are popovers at the caret. */
+
+/* ---- a chip appears around an atom under the pointer; a selected atom is selected whole ---- */
+:is(.gotipe-mention, .gotipe-math-inline, .gotipe-emoji-custom):is(.is-hover, .is-selected) {
+  margin-inline: calc(-1 * var(--gt-chip-pad-x));
+  padding-inline: var(--gt-chip-pad-x);
+  border-radius: var(--gt-radius-inline);
+}
+:is(.gotipe-mention, .gotipe-math-inline, .gotipe-emoji-custom).is-hover {
+  background: var(--gt-fill-2);
+}
+:is(.gotipe-mention, .gotipe-math-inline).is-selected {
+  background: var(--gt-selection);
+}
+.gotipe-mention.is-hover {
+  position: relative;
+}
+.gotipe-avatar[data-person="3"] {
+  background: var(--gt-person-3-bg);
+  color: var(--gt-person-3);
+}
+
+/* ---- the lists after «@» and «:» — rows of the slash menu with an avatar or an emoji in front;
+   a page among people keeps its glyph in the avatar's column ---- */
+.gotipe-menu-item > .gotipe-avatar {
+  width: var(--gt-avatar);
+  height: var(--gt-avatar);
+  line-height: var(--gt-avatar);
+}
+.gotipe-menu.has-avatars .gotipe-menu-item > .gt-icon {
+  margin-inline: var(--gt-menu-avatar-inset);
+}
+.gotipe-emoji {
+  display: inline-grid;
+  flex: none;
+  place-items: center;
+  width: var(--gt-avatar);
+  font-size: var(--gt-emoji-menu);
+  line-height: var(--gt-emoji-menu-leading);
+  letter-spacing: normal;
+}
+
+/* ---- the emoji picker: search, categories as glyphs, a grid that scrolls under them ---- */
+.gotipe-emoji-picker {
+  display: grid;
+  gap: var(--gt-popover-pad);
+  width: var(--gt-emoji-picker-w);
+  padding: var(--gt-popover-pad);
+  white-space: normal;
+}
+.gotipe-emoji-tabs {
+  display: flex;
+  justify-content: space-between;
+  padding-bottom: var(--gt-popover-pad);
+  border-bottom: var(--gt-hairline) solid var(--gt-line);
+}
+.gotipe-emoji-scroll {
+  display: block;
+  max-height: var(--gt-emoji-scroll-h);
+  overflow-y: auto;
+}
+.gotipe-emoji-scroll > .gotipe-menu-label {
+  padding-inline: var(--gt-toolbar-pad);
+}
+.gotipe-emoji-grid {
+  display: grid;
+  grid-template-columns: repeat(9, minmax(0, 1fr));
+}
+.gotipe-emoji-cell {
+  position: relative;
+  display: grid;
+  place-items: center;
+  height: var(--gt-emoji-cell);
+  border-radius: var(--gt-radius-control);
+  font-size: var(--gt-emoji-grid);
+  line-height: var(--gt-emoji-grid-leading);
+  letter-spacing: normal;
+}
+.gotipe-emoji-cell.is-hover {
+  background: var(--gt-fill-2);
+}
+
+/* ---- a custom emoji: the team's image at the size of an emoji, its name on hover ---- */
+.gotipe-emoji-custom {
+  position: relative;
+  display: inline-block;
+  vertical-align: var(--gt-emoji-inline-shift);
+}
+.gotipe-emoji-image {
+  display: block;
+  width: var(--gt-emoji-inline);
+  height: var(--gt-emoji-inline);
+  color: var(--gt-accent);
+  fill: var(--gt-page-bg);
+}
+
+/* ---- a formula in the line: typeset math in the document's own font — variables italic,
+   operators upright with room around them, a fraction stacked on its rule ---- */
+.gotipe-math-inline {
+  position: relative;
+  white-space: nowrap;
+}
+.gotipe-math-inline i {
+  font-style: italic;
+}
+.gotipe-mo {
+  padding-inline: var(--gt-math-op);
+}
+.gotipe-frac {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  font-size: var(--gt-math-frac);
+  line-height: var(--gt-math-frac-leading);
+  vertical-align: middle;
+}
+.gotipe-frac > * {
+  padding-inline: var(--gt-math-frac-pad);
+}
+.gotipe-frac > * + * {
+  border-top: var(--gt-hairline) solid currentColor;
+}
+.gotipe-math-inline sup {
+  font-size: var(--gt-math-script);
+  line-height: 0;
+}
+
+/* a formula that cannot be drawn shows its TeX, tinted; the reason is in the tooltip */
+.gotipe-math-inline.is-invalid {
+  padding: var(--gt-inline-pad);
+  border-radius: var(--gt-radius-inline);
+  background: var(--gt-danger-tint);
+  box-shadow: inset 0 calc(-1 * var(--gt-hairline)) 0 var(--gt-danger);
+  font-family: var(--gt-font-mono);
+  font-size: var(--gt-inline-code-size);
+  letter-spacing: normal;
+}
+
+/* ---- the formula's popover: TeX in a field, the drawing under it as it is typed ---- */
+.gotipe-math-pop {
+  display: grid;
+  gap: var(--gt-popover-pad);
+  width: var(--gt-math-pop-w);
+  padding: var(--gt-popover-pad);
+}
+.gotipe-math-pop-row {
+  display: flex;
+  align-items: center;
+  gap: var(--gt-toolbar-gap);
+}
+.gotipe-math-pop-row > .gotipe-field {
+  flex: 1;
+}
+.gotipe-field.is-code {
+  font-family: var(--gt-font-mono);
+  font-size: var(--gt-code-size);
+  letter-spacing: normal;
+}
+.gotipe-math-preview {
+  display: grid;
+  place-items: center;
+  padding: var(--gt-math-preview-pad);
+  border-radius: var(--gt-radius-control);
+  background: var(--gt-sunken);
+  font-size: var(--gt-math-preview-size);
+  line-height: var(--gt-math-preview-leading);
+  letter-spacing: var(--gt-body-tracking);
+}
+.gotipe-math-preview .gotipe-frac {
+  font-size: var(--gt-math-display-frac);
+  line-height: var(--gt-math-display-leading);
+}
+
+/* ui/find.css */
+/* Find and replace, and the counter. The find bar is docked at the top right of the editor: the
+   query with «3 из 12» in its end, the three switches, previous and next, close; replace opens a
+   second row under it. Every match is tinted, the current one stronger and ringed. The counter is a
+   quiet line under the document that takes a tone only near a limit. */
+
+/* ---- the bar: one grid, so the replace field stands right under the query ---- */
+.gotipe-find {
+  top: var(--gt-find-inset);
+  right: var(--gt-find-inset);
+  display: grid;
+  grid-template-columns: var(--gt-find-columns);
+  align-items: center;
+  gap: var(--gt-toolbar-gap);
+  width: var(--gt-find-w);
+  padding: var(--gt-toolbar-pad);
+}
+.gotipe-find-tools {
+  display: flex;
+  grid-column: var(--gt-find-tools-column);
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--gt-toolbar-gap);
+}
+.gotipe-find-tools > .gotipe-tool-sep {
+  margin-inline-end: var(--gt-find-sep-end);
+}
+.gotipe-find-replace {
+  grid-column: 2;
+}
+.gotipe-find-count {
+  flex: none;
+  color: var(--gt-text-3);
+  font-size: var(--gt-ui-small);
+  font-variant-numeric: tabular-nums;
+}
+/* on the highlighted field of an empty search the count steps up a tone, so it still reads */
+.gotipe-field.is-invalid > .gotipe-find-count {
+  color: var(--gt-text-2);
+}
+
+/* ---- matches in the text ---- */
+.gotipe-match {
+  border-radius: var(--gt-radius-match);
+  background: var(--gt-find);
+  color: inherit;
+}
+.gotipe-match.is-current {
+  background: var(--gt-find-current);
+  box-shadow: 0 0 0 var(--gt-hairline) var(--gt-find-ring);
+}
+
+/* ---- the counter: words and characters under the document ---- */
+.gotipe-status {
+  margin-top: var(--gt-status-gap);
+  color: var(--gt-text-3);
+  font-size: var(--gt-ui-small);
+  line-height: var(--gt-ui-small-leading);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: normal;
+}
+.gotipe-status-part {
+  position: relative;
+  white-space: nowrap;
+}
+.gotipe-status-part.is-near {
+  color: var(--gt-warning);
+}
+.gotipe-status-part.is-over {
+  color: var(--gt-danger);
+}
+/* text past the limit: what will not fit is tinted where it stands */
+.gotipe-over-limit {
+  background: var(--gt-over-limit);
+}
+
+/* ui/layout.css */
+/* The layout of text: a block's alignment, the face and size of a selection in the fixed bar,
+   invisible characters, a paragraph written right to left, merged table cells and a selection of
+   cells. */
+
+/* ---- alignment belongs to the block; its handle stays in the gutter ---- */
+.gotipe-doc > [data-align="center"] {
+  text-align: center;
+}
+.gotipe-doc > [data-align="right"] {
+  text-align: right;
+}
+.gotipe-doc > [data-align="justify"] {
+  text-align: justify;
+  hyphens: auto;
+}
+
+/* ---- the fixed bar with an open list: the track lets the list out, as an open table does ---- */
+.gotipe-toolbar-track.is-open {
+  overflow: visible;
+}
+/* a tool that opens a list: its glyph, then the quieter chevron */
+.gotipe-tool.is-pick {
+  gap: var(--gt-toolbar-gap);
+  padding: var(--gt-tool-text-pad);
+}
+.gotipe-tool.is-pick > .gt-icon + .gt-icon {
+  color: var(--gt-text-3);
+}
+
+/* ---- faces and sizes: each face is named in itself; the size steps by one ---- */
+.is-face-serif {
+  font-family: var(--gt-font-serif);
+}
+.is-face-mono {
+  font-family: var(--gt-font-mono);
+}
+.gotipe-size-field {
+  display: inline-grid;
+  flex: none;
+  place-items: center;
+  box-sizing: border-box;
+  min-width: var(--gt-size-field-w);
+  height: var(--gt-tool);
+  border-radius: var(--gt-radius-control);
+  box-shadow: inset 0 0 0 var(--gt-hairline) var(--gt-line-strong);
+  color: var(--gt-text);
+  font-size: var(--gt-ui-size);
+  line-height: var(--gt-ui-leading);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---- invisible characters: quiet marks over spaces, at soft breaks and at paragraph ends ---- */
+.gotipe-sp {
+  position: relative;
+}
+.gotipe-sp::before {
+  content: "·";
+  position: absolute;
+  inset: 0;
+  color: var(--gt-text-3);
+  text-align: center;
+  translate: 0 var(--gt-space-mark-shift);
+}
+.gotipe-br::before {
+  content: "↵";
+  color: var(--gt-text-3);
+}
+.gotipe-pilcrow::after {
+  content: "¶";
+  color: var(--gt-text-3);
+}
+
+/* ---- right to left: the paragraph runs from the right, its handle stands in the right gutter ---- */
+.gotipe-doc > [dir="rtl"] > .gotipe-block-handle {
+  right: calc(-1 * var(--gt-handle-offset));
+  left: auto;
+}
+
+/* ---- merged cells: a header over two columns keeps its rule under those columns only; a cell
+   over two rows breaks the rule between them ---- */
+.gotipe-table th[rowspan] {
+  vertical-align: bottom;
+}
+.gotipe-table tr.is-continued > th:first-child {
+  padding: var(--gt-head-cell-pad);
+}
+.gotipe-table th[colspan] {
+  position: relative;
+}
+/* cells selected together: the selection's tint over the whole cell, above a hovered row */
+.gotipe-table :is(tr, tr.is-hovered) > td.is-selected {
+  background: var(--gt-selection);
+}
+
+/* ui/history.css */
+/* Version history as a component of the library: versions by day — who, when and how much changed;
+   the page compares the chosen version with the current one block by block; «Восстановить» answers
+   with a toast that takes it back. On a narrow screen the list and the comparison are two screens. */
+
+.gotipe-history {
+  display: grid;
+  grid-template-columns: var(--gt-history-columns);
+  min-height: 100%;
+}
+.gotipe-history > * {
+  min-width: 0;
+}
+.gotipe-history > .gotipe-panel {
+  display: var(--gt-history-panel-display);
+}
+.gotipe-history-main {
+  position: relative;
+}
+
+/* ---- the head over the comparison: what is compared, how much, and the one action ---- */
+.gotipe-history-head {
+  flex-wrap: wrap;
+  row-gap: var(--gt-toolbar-pad);
+}
+.gotipe-history-back {
+  display: var(--gt-history-back-display);
+  margin-inline-start: calc(-1 * var(--gt-toolbar-pad));
+}
+.gotipe-history-facts {
+  display: flex;
+  flex-basis: var(--gt-history-facts-basis);
+  align-items: center;
+  gap: var(--gt-menu-gap);
+  order: var(--gt-history-facts-order);
+  min-width: 0;
+}
+.gotipe-diff-stat > .is-change {
+  color: var(--gt-info);
+}
+
+/* ---- the list: a quiet day, then versions — name or time, its size, the author ---- */
+.gotipe-history-day {
+  margin: var(--gt-card-pad) 0 var(--gt-toolbar-pad);
+  padding: 0 var(--gt-menu-gap);
+  color: var(--gt-text-3);
+  font-size: var(--gt-ui-small);
+  font-weight: var(--gt-weight-medium);
+  line-height: var(--gt-ui-small-leading);
+}
+.gotipe-history-day:first-of-type {
+  margin-top: 0;
+}
+.gotipe-history-item {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: baseline;
+  gap: var(--gt-toolbar-gap) var(--gt-menu-gap);
+  padding: var(--gt-card-gap) var(--gt-menu-gap);
+  border-radius: var(--gt-radius-control);
+}
+.gotipe-history-item + .gotipe-history-item {
+  margin-top: var(--gt-toolbar-gap);
+}
+.gotipe-history-item.is-current {
+  background: var(--gt-fill-2);
+}
+.gotipe-history-item.is-current > .gotipe-version-meta {
+  color: var(--gt-text-2);
+}
+.gotipe-history-item > .gotipe-diff-stat {
+  font-size: var(--gt-ui-small);
+  line-height: var(--gt-ui-small-leading);
+}
+.gotipe-history-item > .gotipe-version-meta {
+  display: flex;
+  grid-column: 1 / -1;
+  align-items: center;
+  gap: var(--gt-mention-gap);
+}
+.gotipe-history-item > .gotipe-version-meta > .gotipe-avatar {
+  width: var(--gt-avatar-inline);
+  height: var(--gt-avatar-inline);
+}
+
+/* ---- the comparison: a rule in the gutter marks a block added, removed or changed ---- */
+.gotipe-doc [data-diff] {
+  position: relative;
+}
+.gotipe-doc [data-diff]::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: calc(-1 * var(--gt-diff-bar-gap));
+  width: var(--gt-rule);
+  border-radius: var(--gt-radius-round);
+  background: var(--gt-add);
+}
+.gotipe-doc [data-diff="removed"]::after {
+  background: var(--gt-del);
+}
+.gotipe-doc [data-diff="changed"]::after {
+  background: var(--gt-info);
+}
+.gotipe-doc [data-diff="removed"] {
+  color: var(--gt-text-3);
+  text-decoration-line: line-through;
+  text-decoration-thickness: var(--gt-underline);
+  text-decoration-color: var(--gt-del);
+}
+
+/* ---- the toast after restoring: what happened and the way back ---- */
+.gotipe-toast.is-done > .gt-icon {
+  color: var(--gt-inverse-text-2);
+}
+.gotipe-toast .gotipe-key {
+  color: var(--gt-inverse-text-2);
 }
 
 /* site/landing.css */
@@ -4053,6 +4598,94 @@ ol.gotipe-list > li::before {
     <path vector-effect="non-scaling-stroke" d="M2.5 11.5 5 4.5l2.5 7M3.4 9.25h3.2M10 5.5h3.5M10 8.5h3.5M10 11.5h2.25" />
   </symbol>
 
+  <!-- text layout: alignment as three lines, invisible characters as the pilcrow, a size step -->
+  <symbol id="i-align-left" viewBox="0 0 16 16">
+    <path vector-effect="non-scaling-stroke" d="M2.75 3.75h10.5M2.75 8h7M2.75 12.25h9" />
+  </symbol>
+  <symbol id="i-align-center" viewBox="0 0 16 16">
+    <path vector-effect="non-scaling-stroke" d="M2.75 3.75h10.5M4.5 8h7M3.5 12.25h9" />
+  </symbol>
+  <symbol id="i-align-right" viewBox="0 0 16 16">
+    <path vector-effect="non-scaling-stroke" d="M2.75 3.75h10.5M6.25 8h7M4.25 12.25h9" />
+  </symbol>
+  <symbol id="i-align-justify" viewBox="0 0 16 16">
+    <path vector-effect="non-scaling-stroke" d="M2.75 3.75h10.5M2.75 8h10.5M2.75 12.25h6.5" />
+  </symbol>
+  <symbol id="i-pilcrow" viewBox="0 0 16 16">
+    <path
+      vector-effect="non-scaling-stroke"
+      d="M12.75 3.25h-5.5a2.625 2.625 0 0 0 0 5.25h1.5M8.75 3.25v9.5M11.25 3.25v9.5"
+    />
+  </symbol>
+  <symbol id="i-minus" viewBox="0 0 16 16">
+    <path vector-effect="non-scaling-stroke" d="M3.5 8h9" />
+  </symbol>
+  <!-- table cells: two meet in one, one parts in two -->
+  <symbol id="i-merge" viewBox="0 0 16 16">
+    <path
+      vector-effect="non-scaling-stroke"
+      d="M2.75 3.25v9.5M13.25 3.25v9.5M4.75 8h2.75M5.75 6l2 2-2 2M11.25 8H8.5M10.25 6l-2 2 2 2"
+    />
+  </symbol>
+  <symbol id="i-split" viewBox="0 0 16 16">
+    <path
+      vector-effect="non-scaling-stroke"
+      d="M8 3.25v9.5M6.25 8H3M4.75 6l-2 2 2 2M9.75 8H13M11.25 6l2 2-2 2"
+    />
+  </symbol>
+
+  <!-- find: match case, whole word, regular expression -->
+  <symbol id="i-case" viewBox="0 0 16 16">
+    <path vector-effect="non-scaling-stroke" d="M1.75 12.5 4.88 3.75 8 12.5M2.9 9.25h3.95M13.5 7.75v4.75" />
+    <circle vector-effect="non-scaling-stroke" cx="11.25" cy="10.25" r="2.25" />
+  </symbol>
+  <symbol id="i-word" viewBox="0 0 16 16">
+    <circle vector-effect="non-scaling-stroke" cx="4.75" cy="7.25" r="2" />
+    <circle vector-effect="non-scaling-stroke" cx="11.25" cy="7.25" r="2" />
+    <path vector-effect="non-scaling-stroke" d="M6.75 5.25v4M9.25 3v6.25M2.25 11.25V13h11.5v-1.75" />
+  </symbol>
+  <symbol id="i-regex" viewBox="0 0 16 16">
+    <path vector-effect="non-scaling-stroke" d="M10.75 2.75v6M8.15 4.25l5.2 3M8.15 7.25l5.2-3" />
+    <circle cx="4.25" cy="11.75" r="1.25" fill="currentColor" stroke="none" />
+  </symbol>
+
+  <!-- emoji categories (recent — the clock, faces — the smile, the team's own — the image) -->
+  <symbol id="i-leaf" viewBox="0 0 16 16">
+    <path
+      vector-effect="non-scaling-stroke"
+      d="M3.25 12.75C3.25 7 6.75 3.25 12.75 3.25c0 6-3.75 9.5-9.5 9.5ZM3.25 12.75l5-5"
+    />
+  </symbol>
+  <symbol id="i-cup" viewBox="0 0 16 16">
+    <path
+      vector-effect="non-scaling-stroke"
+      d="M3.25 6.25h7.5V9.5a3.25 3.25 0 0 1-3.25 3.25h-1A3.25 3.25 0 0 1 3.25 9.5ZM10.75 7.25h.5a1.75 1.75 0 0 1 0 3.5h-.75M5.5 2.75v1.5M8.5 2.75v1.5"
+    />
+  </symbol>
+  <symbol id="i-ball" viewBox="0 0 16 16">
+    <circle vector-effect="non-scaling-stroke" cx="8" cy="8" r="5.5" />
+    <path vector-effect="non-scaling-stroke" d="M4.1 4.1c2.15 2.15 2.15 5.65 0 7.8M11.9 4.1c-2.15 2.15-2.15 5.65 0 7.8" />
+  </symbol>
+  <symbol id="i-pin" viewBox="0 0 16 16">
+    <path
+      vector-effect="non-scaling-stroke"
+      d="M8 13.75s4.25-3.9 4.25-7.25a4.25 4.25 0 0 0-8.5 0c0 3.35 4.25 7.25 4.25 7.25Z"
+    />
+    <circle vector-effect="non-scaling-stroke" cx="8" cy="6.5" r="1.5" />
+  </symbol>
+  <symbol id="i-bulb" viewBox="0 0 16 16">
+    <path vector-effect="non-scaling-stroke" d="M5.75 11.25V9.6a4 4 0 1 1 4.5 0v1.65ZM6.5 13.25h3" />
+  </symbol>
+  <symbol id="i-heart" viewBox="0 0 16 16">
+    <path
+      vector-effect="non-scaling-stroke"
+      d="M8 13 3.1 8.1a2.9 2.9 0 0 1 4.1-4.1l.8.8.8-.8a2.9 2.9 0 0 1 4.1 4.1Z"
+    />
+  </symbol>
+  <symbol id="i-flag" viewBox="0 0 16 16">
+    <path vector-effect="non-scaling-stroke" d="M3.75 13.25V2.75M3.75 3.25h8.5l-2 3 2 3h-8.5" />
+  </symbol>
+
   <!-- states -->
   <symbol id="i-lock" viewBox="0 0 16 16">
     <rect vector-effect="non-scaling-stroke" x="3.25" y="7.25" width="9.5" height="6.5" rx="1.75" />
@@ -4136,6 +4769,7 @@ ol.gotipe-list > li::before {
 <div class="at-index-group"><p>Блоки</p><a href="#f18"><span class="at-num">18</span>Задачи, раскрывающиеся блоки, файл, вставка и формула</a></div>
 <div class="at-index-group"><p>PageEditor</p><a href="#f19"><span class="at-num">19</span>Страница вики: PageEditor в общем виде</a></div>
 <div class="at-index-group"><p>Сайт</p><a href="#f20"><span class="at-num">20</span>Главная страница</a><a href="#f21"><span class="at-num">21</span>Документация</a></div>
+<div class="at-index-group"><p>Новые возможности</p><a href="#f22"><span class="at-num">22</span>Упоминания</a><a href="#f23"><span class="at-num">23</span>Эмодзи</a><a href="#f24"><span class="at-num">24</span>Формула в строке</a><a href="#f25"><span class="at-num">25</span>Поиск и замена</a><a href="#f26"><span class="at-num">26</span>Счётчик слов и символов</a><a href="#f27"><span class="at-num">27</span>Выравнивание, шрифт и размер</a><a href="#f28"><span class="at-num">28</span>Невидимые символы и направление текста</a><a href="#f29"><span class="at-num">29</span>Таблица: объединённые ячейки</a><a href="#f30"><span class="at-num">30</span>История версий</a></div>
       </nav>
       <h2 class="at-section">Документ</h2>
 <figure class="at-figure" id="f1" data-section="Документ">
@@ -8817,6 +9451,976 @@ editor<span class="tk-pun">.</span>chain<span class="tk-pun">().</span>insertTab
     </nav>
   </aside>
 </div>
+  </div>
+</div>
+</section>
+</figure>
+<h2 class="at-section">Новые возможности</h2>
+<figure class="at-figure" id="f22" data-section="Новые возможности">
+  <figcaption class="at-figure-head">
+    <span class="at-num">22</span>
+    <h2 class="at-figure-title">Упоминания</h2>
+    <p class="at-caption">
+      Упоминание — одно целое в строке: аватар и имя или значок и название страницы; курсор его
+      обходит, под указателем проступает подложка. После «@» — люди и страницы, совпадение выделено,
+      ↵ вставляет выбранное; пустой ответ — одной строкой.
+    </p>
+  </figcaption>
+  <section class="at-stage" data-w="480">
+<p class="at-stage-label">упоминание в тексте</p>
+<div class="at-frame gotipe-root" data-gt-view="notion" data-frame="mention" data-w="480">
+<article class="gotipe-page is-slice" lang="ru">
+    <div class="gotipe-doc">
+      <p>
+        Схему журнала проверили
+        <span class="gotipe-mention" data-kind="person"
+          ><span class="gotipe-avatar" data-person="1">ИО</span>Илья Орлов</span
+        >
+        и
+        <span class="gotipe-mention is-hover" data-kind="person"
+          ><span class="gotipe-avatar" data-person="3">АК</span>Анна Ковалёва<svg class="at-pointer"><use href="#i-pointer" /></svg></span
+        >, решение записано в
+        <a class="gotipe-mention" data-kind="page"
+          ><svg class="gt-icon" aria-hidden="true"><use href="#i-page" /></svg><span>ADR-0031</span></a
+        >.
+      </p>
+    </div>
+  </article>
+</div>
+</section>
+  <section class="at-stage" data-w="480">
+<p class="at-stage-label">«@ан»</p>
+<div class="at-frame gotipe-root" data-gt-view="notion" data-frame="mention-list" data-w="480" data-min="400">
+<article class="gotipe-page is-slice" lang="ru">
+    <div class="gotipe-doc">
+      <h3>Ревью схемы</h3>
+      <p>
+        Схему журнала смотрит
+        <span class="gotipe-anchor"
+          ><span class="gotipe-query">@ан</span><span class="gotipe-caret"></span
+          ><span class="gotipe-overlay gotipe-menu has-avatars" data-place="below" role="listbox"><span class="gotipe-menu-group"><span class="gotipe-menu-label">Люди</span><span class="gotipe-menu-item is-selected"><span class="gotipe-avatar" data-person="3">АК</span><span class="gotipe-menu-text"><mark>Ан</mark>на Ковалёва</span><span class="gotipe-key">↵</span></span><span class="gotipe-menu-item"><span class="gotipe-avatar" data-person="1">АС</span><span class="gotipe-menu-text"><mark>Ан</mark>дрей Соколов</span></span><span class="gotipe-menu-item"><span class="gotipe-avatar" data-person="2">ОА</span><span class="gotipe-menu-text">Ольга <mark>Ан</mark>тонова</span></span></span><span class="gotipe-menu-group"><span class="gotipe-menu-label">Страницы</span><span class="gotipe-menu-item"><svg class="gt-icon"><use href="#i-page" /></svg><span class="gotipe-menu-text"><mark>Ан</mark>ализ обращений за октябрь</span></span></span></span></span
+        >
+      </p>
+    </div>
+  </article>
+</div>
+</section>
+  <section class="at-stage" data-w="480">
+<p class="at-stage-label">никого не найдено</p>
+<div class="at-frame gotipe-root" data-gt-view="notion" data-frame="mention-empty" data-w="480" data-min="320">
+<article class="gotipe-page is-slice" lang="ru">
+    <div class="gotipe-doc">
+      <h3>Ревью схемы</h3>
+      <p>
+        Схему журнала смотрит
+        <span class="gotipe-anchor"
+          ><span class="gotipe-query">@юрист</span><span class="gotipe-caret"></span
+          ><span class="gotipe-overlay gotipe-menu" data-place="below" role="listbox"><span class="gotipe-menu-empty">Никого не найдено</span></span></span
+        >
+      </p>
+    </div>
+  </article>
+</div>
+</section>
+</figure>
+<figure class="at-figure" id="f23" data-section="Новые возможности">
+  <figcaption class="at-figure-head">
+    <span class="at-num">23</span>
+    <h2 class="at-figure-title">Эмодзи</h2>
+    <p class="at-caption">
+      После «:» — эмодзи по имени, ↵ вставляет выбранный; пункт «Эмодзи» в меню «/» открывает выбор:
+      поиск, разделы значками, недавние сверху, имя — в подсказке. Свой эмодзи команды стоит в строке
+      картинкой размером с букву и под указателем называет себя.
+    </p>
+  </figcaption>
+  <section class="at-stage" data-w="480">
+<p class="at-stage-label">«:пра»</p>
+<div class="at-frame gotipe-root" data-gt-view="notion" data-frame="emoji-list" data-w="480" data-min="320">
+<article class="gotipe-page is-slice" lang="ru">
+    <div class="gotipe-doc">
+      <h3>Сборка 2.8</h3>
+      <p>
+        Все проверки прошли
+        <span class="gotipe-anchor"
+          ><span class="gotipe-query">:пра</span><span class="gotipe-caret"></span
+          ><span class="gotipe-overlay gotipe-menu" data-place="below" role="listbox"><span class="gotipe-menu-item is-selected"><span class="gotipe-emoji">🎉</span><span class="gotipe-menu-text"><mark>пра</mark>здник</span><span class="gotipe-key">↵</span></span><span class="gotipe-menu-item"><span class="gotipe-emoji">✅</span><span class="gotipe-menu-text"><mark>пра</mark>вильно</span></span><span class="gotipe-menu-item"><span class="gotipe-emoji">✍️</span><span class="gotipe-menu-text"><mark>пра</mark>вка</span></span><span class="gotipe-menu-item"><span class="gotipe-emoji">👉</span><span class="gotipe-menu-text">на<mark>пра</mark>во</span></span></span></span
+        >
+      </p>
+    </div>
+  </article>
+</div>
+</section>
+  <section class="at-stage" data-w="480">
+<p class="at-stage-label">выбор из меню «/»</p>
+<div class="at-frame gotipe-root" data-gt-view="notion" data-frame="emoji-picker" data-w="480" data-min="560">
+<article class="gotipe-page is-slice" lang="ru">
+    <div class="gotipe-doc">
+      <h3>Сборка 2.8</h3>
+      <p>Все проверки прошли, сборка подписана.</p>
+      <p>
+        <span class="gotipe-anchor"
+          ><span class="gotipe-overlay gotipe-emoji-picker" data-place="below" role="dialog" aria-label="Эмодзи"
+            ><span class="gotipe-field is-typing"
+              ><svg class="gt-icon"><use href="#i-search" /></svg
+              ><span class="gotipe-field-placeholder"><span class="gotipe-caret"></span>Найти эмодзи</span></span
+            ><span class="gotipe-emoji-tabs" role="tablist"
+              ><span class="gotipe-tool is-active"><svg class="gt-icon"><use href="#i-clock" /></svg></span
+              ><span class="gotipe-tool"><svg class="gt-icon"><use href="#i-smile" /></svg></span
+              ><span class="gotipe-tool"><svg class="gt-icon"><use href="#i-leaf" /></svg></span
+              ><span class="gotipe-tool"><svg class="gt-icon"><use href="#i-cup" /></svg></span
+              ><span class="gotipe-tool"><svg class="gt-icon"><use href="#i-ball" /></svg></span
+              ><span class="gotipe-tool"><svg class="gt-icon"><use href="#i-pin" /></svg></span
+              ><span class="gotipe-tool"><svg class="gt-icon"><use href="#i-bulb" /></svg></span
+              ><span class="gotipe-tool"><svg class="gt-icon"><use href="#i-heart" /></svg></span
+              ><span class="gotipe-tool"><svg class="gt-icon"><use href="#i-flag" /></svg></span
+              ><span class="gotipe-tool"><svg class="gt-icon"><use href="#i-image" /></svg></span></span
+            ><span class="gotipe-emoji-scroll"
+              ><span class="gotipe-menu-label">Недавние</span
+              ><span class="gotipe-emoji-grid"
+                ><span class="gotipe-emoji-cell">🎉</span><span class="gotipe-emoji-cell">👍</span><span class="gotipe-emoji-cell">✅</span><span class="gotipe-emoji-cell">🙏</span><span class="gotipe-emoji-cell">🔥</span><span class="gotipe-emoji-cell">👀</span><span class="gotipe-emoji-cell">💡</span><span class="gotipe-emoji-cell">🚀</span><span class="gotipe-emoji-cell">❤️</span></span
+              ><span class="gotipe-menu-label">Смайлики и люди</span
+              ><span class="gotipe-emoji-grid"
+                ><span class="gotipe-emoji-cell">😀</span><span class="gotipe-emoji-cell">😃</span><span class="gotipe-emoji-cell">😄</span><span class="gotipe-emoji-cell">😁</span><span class="gotipe-emoji-cell">😆</span><span class="gotipe-emoji-cell">😅</span><span class="gotipe-emoji-cell">😂</span><span class="gotipe-emoji-cell">🙂</span><span class="gotipe-emoji-cell">😉</span
+                ><span class="gotipe-emoji-cell">😊</span><span class="gotipe-emoji-cell">😇</span><span class="gotipe-emoji-cell">🥰</span><span class="gotipe-emoji-cell">😍</span><span class="gotipe-emoji-cell">🤩</span><span class="gotipe-emoji-cell">😋</span><span class="gotipe-emoji-cell">😛</span><span class="gotipe-emoji-cell is-hover">🤔<span class="gotipe-tooltip" data-place="above">задумчивое лицо</span><svg class="at-pointer"><use href="#i-pointer" /></svg></span><span class="gotipe-emoji-cell">🤨</span
+                ><span class="gotipe-emoji-cell">😐</span><span class="gotipe-emoji-cell">😑</span><span class="gotipe-emoji-cell">😶</span><span class="gotipe-emoji-cell">🙄</span><span class="gotipe-emoji-cell">😏</span><span class="gotipe-emoji-cell">😬</span><span class="gotipe-emoji-cell">😌</span><span class="gotipe-emoji-cell">😴</span><span class="gotipe-emoji-cell">😷</span
+                ><span class="gotipe-emoji-cell">🥳</span><span class="gotipe-emoji-cell">😎</span><span class="gotipe-emoji-cell">🤓</span><span class="gotipe-emoji-cell">🧐</span><span class="gotipe-emoji-cell">😕</span><span class="gotipe-emoji-cell">😟</span><span class="gotipe-emoji-cell">😮</span><span class="gotipe-emoji-cell">😲</span><span class="gotipe-emoji-cell">😳</span
+                ><span class="gotipe-emoji-cell">😢</span><span class="gotipe-emoji-cell">😭</span><span class="gotipe-emoji-cell">😤</span><span class="gotipe-emoji-cell">😠</span><span class="gotipe-emoji-cell">🤯</span><span class="gotipe-emoji-cell">😱</span><span class="gotipe-emoji-cell">🥶</span><span class="gotipe-emoji-cell">🤗</span><span class="gotipe-emoji-cell">🤭</span></span
+            ></span></span
+        ></span>
+      </p>
+    </div>
+  </article>
+</div>
+</section>
+  <section class="at-stage" data-w="480">
+<p class="at-stage-label">свой эмодзи</p>
+<div class="at-frame gotipe-root" data-gt-view="notion" data-frame="emoji-custom" data-w="480">
+<article class="gotipe-page is-slice" lang="ru">
+    <div class="gotipe-doc">
+      <h3>Сборка 2.8</h3>
+      <p>
+        Все проверки прошли, сборка подписана
+        <span class="gotipe-emoji-custom is-hover" role="img" aria-label=":gotipe:"
+          ><svg class="gotipe-emoji-image" aria-hidden="true"><use href="#i-logo" /></svg
+          ><span class="gotipe-tooltip" data-place="above">:gotipe:</span
+          ><svg class="at-pointer"><use href="#i-pointer" /></svg></span
+        >
+        — спасибо всем, кто гонял журнал на своих устройствах 🙏
+      </p>
+    </div>
+  </article>
+</div>
+</section>
+</figure>
+<figure class="at-figure" id="f24" data-section="Новые возможности">
+  <figcaption class="at-figure-head">
+    <span class="at-num">24</span>
+    <h2 class="at-figure-title">Формула в строке</h2>
+    <p class="at-caption">
+      Формула набрана шрифтом документа: переменные курсивом, дробь на черте; щелчок открывает поле
+      TeX, рисунок под ним меняется по мере набора. TeX, который не разобрать, остаётся в строке как
+      есть на красной подложке, причина — в подсказке. Сейчас библиотека показывает только TeX — кадр
+      предлагает рисовать формулу.
+    </p>
+  </figcaption>
+  <section class="at-stage" data-w="480">
+<p class="at-stage-label">формула в тексте</p>
+<div class="at-frame gotipe-root" data-gt-view="notion" data-frame="math-inline" data-w="480">
+<article class="gotipe-page is-slice" lang="ru">
+    <div class="gotipe-doc">
+      <h3>Цель выпуска</h3>
+      <p>
+        Доля потерянных правок
+        <span class="gotipe-math-inline" role="math" aria-label="p = \frac{L}{N}"
+          ><i>p</i><span class="gotipe-mo">=</span><span class="gotipe-frac"><span><i>L</i></span><span><i>N</i></span></span></span
+        >
+        за неделю должна остаться ниже
+        <span class="gotipe-math-inline is-hover" role="math" aria-label="10^{-3}"
+          >10<sup>−3</sup><svg class="at-pointer is-end"><use href="#i-pointer" /></svg></span
+        >, где
+        <span class="gotipe-math-inline" role="math" aria-label="L"><i>L</i></span> — правки, не дошедшие до сервера.
+      </p>
+    </div>
+  </article>
+</div>
+</section>
+  <section class="at-stage" data-w="480">
+<p class="at-stage-label">поле TeX и рисунок</p>
+<div class="at-frame gotipe-root" data-gt-view="notion" data-frame="math-edit" data-w="480" data-min="320">
+<article class="gotipe-page is-slice" lang="ru">
+    <div class="gotipe-doc">
+      <h3>Цель выпуска</h3>
+      <p>
+        Доля потерянных правок
+        <span class="gotipe-anchor is-inline"
+          ><span class="gotipe-math-inline is-selected" role="math" aria-label="p = \frac{L}{N}"
+            ><i>p</i><span class="gotipe-mo">=</span><span class="gotipe-frac"><span><i>L</i></span><span><i>N</i></span></span></span
+          ><span class="gotipe-overlay gotipe-math-pop" data-place="below-center" role="dialog" aria-label="Формула"
+            ><span class="gotipe-math-pop-row"
+              ><span class="gotipe-field is-typing is-code"
+                ><span class="gotipe-field-value">p = \frac{L}{N}<span class="gotipe-caret"></span></span></span
+              ><span class="gotipe-tool is-active"><svg class="gt-icon"><use href="#i-check-16" /></svg></span></span
+            ><span class="gotipe-math-preview"
+              ><span class="gotipe-math-inline"
+                ><i>p</i><span class="gotipe-mo">=</span><span class="gotipe-frac"><span><i>L</i></span><span><i>N</i></span></span></span></span></span
+        ></span>
+        за неделю должна остаться ниже
+        <span class="gotipe-math-inline" role="math" aria-label="10^{-3}">10<sup>−3</sup></span>, где
+        <span class="gotipe-math-inline" role="math" aria-label="L"><i>L</i></span> — правки, не дошедшие до сервера.
+      </p>
+    </div>
+  </article>
+</div>
+</section>
+  <section class="at-stage" data-w="480">
+<p class="at-stage-label">TeX с ошибкой</p>
+<div class="at-frame gotipe-root" data-gt-view="notion" data-frame="math-invalid" data-w="480">
+<article class="gotipe-page is-slice" lang="ru">
+    <div class="gotipe-doc">
+      <h3>Цель выпуска</h3>
+      <p>
+        Доля потерянных правок
+        <span class="gotipe-math-inline is-invalid" role="math" aria-invalid="true"
+          >p = \frac{L}{N<span class="gotipe-tooltip" data-place="below">Не хватает закрывающей «}»</span
+          ><svg class="at-pointer"><use href="#i-pointer" /></svg></span
+        >
+        за неделю должна остаться ниже
+        <span class="gotipe-math-inline" role="math" aria-label="10^{-3}">10<sup>−3</sup></span>, где
+        <span class="gotipe-math-inline" role="math" aria-label="L"><i>L</i></span> — правки, не дошедшие до сервера.
+      </p>
+    </div>
+  </article>
+</div>
+</section>
+</figure>
+<figure class="at-figure" id="f25" data-section="Новые возможности">
+  <figcaption class="at-figure-head">
+    <span class="at-num">25</span>
+    <h2 class="at-figure-title">Поиск и замена</h2>
+    <p class="at-caption">
+      Строка поиска — в правом верхнем углу редактора: запрос и «3 из 12», регистр, слово целиком,
+      регулярное выражение, назад, вперёд, закрыть; совпадения подсвечены, текущее — сильнее и с
+      обводкой. Замена — второй строкой под запросом, пустой поиск подсвечивает поле; на телефоне
+      инструменты уходят под поле.
+    </p>
+  </figcaption>
+  <section class="at-stage" data-w="768">
+<p class="at-stage-label">найдено · 768</p>
+<div class="at-frame gotipe-root" data-gt-view="notion" data-frame="find" data-w="768">
+<div class="gotipe-overlay gotipe-find" role="search" aria-label="Поиск по документу">
+    <span class="gotipe-tool"><svg class="gt-icon"><use href="#i-chevron-right" /></svg></span>
+    <span class="gotipe-field is-typing"
+      ><span class="gotipe-field-value">журнал<span class="gotipe-caret"></span></span
+      ><span class="gotipe-find-count">3 из 12</span></span
+    >
+    <span class="gotipe-find-tools"
+      ><span class="gotipe-tool"><svg class="gt-icon"><use href="#i-case" /></svg></span
+      ><span class="gotipe-tool is-hover"
+        ><svg class="gt-icon"><use href="#i-word" /></svg
+        ><span class="gotipe-tooltip" data-place="below">Слово целиком</span
+        ><svg class="at-pointer"><use href="#i-pointer" /></svg></span
+      ><span class="gotipe-tool"><svg class="gt-icon"><use href="#i-regex" /></svg></span
+      ><span class="gotipe-tool-sep"></span
+      ><span class="gotipe-tool"><svg class="gt-icon"><use href="#i-arrow-up" /></svg></span
+      ><span class="gotipe-tool"><svg class="gt-icon"><use href="#i-arrow-down" /></svg></span
+      ><span class="gotipe-tool"><svg class="gt-icon"><use href="#i-x" /></svg></span></span
+    >
+  </div>
+  <article class="gotipe-page is-slice" lang="ru">
+    <div class="gotipe-doc">
+      <h2>Как это работает</h2>
+      <p>
+        Каждая транзакция сначала попадает в <mark class="gotipe-match">журнал</mark> и только
+        потом — на сервер. Когда связь вернулась, <mark class="gotipe-match">журнал</mark> уходит
+        пачкой, а сервер отвечает новой версией документа.
+      </p>
+      <p>
+        <mark class="gotipe-match is-current">Журнал</mark> лежит в IndexedDB и переживает перезапуск
+        приложения. Сервер принимает пачку транзакций целиком или отклоняет её —
+        <mark class="gotipe-match">журнал</mark> при этом не очищается.
+      </p>
+      <p>Схема <mark class="gotipe-match">журнал</mark>а и миграция описаны в ADR-0031.</p>
+    </div>
+  </article>
+</div>
+</section>
+  <section class="at-stage" data-w="768">
+<p class="at-stage-label">замена · 768</p>
+<div class="at-frame gotipe-root" data-gt-view="notion" data-frame="replace" data-w="768">
+<div class="gotipe-overlay gotipe-find" role="search" aria-label="Поиск и замена">
+    <span class="gotipe-tool is-active"><svg class="gt-icon"><use href="#i-chevron-down" /></svg></span>
+    <span class="gotipe-field"
+      ><span class="gotipe-field-value">журнал</span><span class="gotipe-find-count">3 из 12</span></span
+    >
+    <span class="gotipe-find-tools"
+      ><span class="gotipe-tool"><svg class="gt-icon"><use href="#i-case" /></svg></span
+      ><span class="gotipe-tool"><svg class="gt-icon"><use href="#i-word" /></svg></span
+      ><span class="gotipe-tool"><svg class="gt-icon"><use href="#i-regex" /></svg></span
+      ><span class="gotipe-tool-sep"></span
+      ><span class="gotipe-tool"><svg class="gt-icon"><use href="#i-arrow-up" /></svg></span
+      ><span class="gotipe-tool"><svg class="gt-icon"><use href="#i-arrow-down" /></svg></span
+      ><span class="gotipe-tool"><svg class="gt-icon"><use href="#i-x" /></svg></span></span
+    >
+    <span class="gotipe-field is-typing gotipe-find-replace"
+      ><span class="gotipe-field-value">очередь<span class="gotipe-caret"></span></span></span
+    >
+    <span class="gotipe-find-tools"
+      ><span class="gotipe-button">Заменить</span><span class="gotipe-button">Заменить все</span></span
+    >
+  </div>
+  <article class="gotipe-page is-slice" lang="ru">
+    <div class="gotipe-doc">
+      <h2>Как это работает</h2>
+      <p>
+        Каждая транзакция сначала попадает в <mark class="gotipe-match">журнал</mark> и только
+        потом — на сервер. Когда связь вернулась, <mark class="gotipe-match">журнал</mark> уходит
+        пачкой, а сервер отвечает новой версией документа.
+      </p>
+      <p>
+        <mark class="gotipe-match is-current">Журнал</mark> лежит в IndexedDB и переживает перезапуск
+        приложения. Сервер принимает пачку транзакций целиком или отклоняет её —
+        <mark class="gotipe-match">журнал</mark> при этом не очищается.
+      </p>
+      <p>Схема <mark class="gotipe-match">журнал</mark>а и миграция описаны в ADR-0031.</p>
+    </div>
+  </article>
+</div>
+</section>
+  <section class="at-stage" data-w="768">
+<p class="at-stage-label">ничего не найдено · 768</p>
+<div class="at-frame gotipe-root" data-gt-view="notion" data-frame="find-empty" data-w="768">
+<div class="gotipe-overlay gotipe-find" role="search" aria-label="Поиск по документу">
+    <span class="gotipe-tool"><svg class="gt-icon"><use href="#i-chevron-right" /></svg></span>
+    <span class="gotipe-field is-typing is-invalid"
+      ><span class="gotipe-field-value">синхронизация<span class="gotipe-caret"></span></span
+      ><span class="gotipe-find-count">0 из 0</span></span
+    >
+    <span class="gotipe-find-tools"
+      ><span class="gotipe-tool"><svg class="gt-icon"><use href="#i-case" /></svg></span
+      ><span class="gotipe-tool"><svg class="gt-icon"><use href="#i-word" /></svg></span
+      ><span class="gotipe-tool"><svg class="gt-icon"><use href="#i-regex" /></svg></span
+      ><span class="gotipe-tool-sep"></span
+      ><span class="gotipe-tool" aria-disabled="true"><svg class="gt-icon"><use href="#i-arrow-up" /></svg></span
+      ><span class="gotipe-tool" aria-disabled="true"><svg class="gt-icon"><use href="#i-arrow-down" /></svg></span
+      ><span class="gotipe-tool"><svg class="gt-icon"><use href="#i-x" /></svg></span></span
+    >
+  </div>
+  <article class="gotipe-page is-slice" lang="ru">
+    <div class="gotipe-doc">
+      <h2>Как это работает</h2>
+      <p>
+        Каждая транзакция сначала попадает в журнал и только потом — на сервер. Когда связь
+        вернулась, журнал уходит пачкой, а сервер отвечает новой версией документа.
+      </p>
+      <p>
+        Журнал лежит в IndexedDB и переживает перезапуск приложения. Сервер принимает пачку
+        транзакций целиком или отклоняет её — журнал при этом не очищается.
+      </p>
+    </div>
+  </article>
+</div>
+</section>
+  <section class="at-stage" data-w="375">
+<p class="at-stage-label">на телефоне · 375</p>
+<div class="at-frame gotipe-root" data-gt-view="notion" data-frame="find-phone" data-w="375">
+<div class="gotipe-overlay gotipe-find" role="search" aria-label="Поиск по документу">
+    <span class="gotipe-tool"><svg class="gt-icon"><use href="#i-chevron-right" /></svg></span>
+    <span class="gotipe-field is-typing"
+      ><span class="gotipe-field-value">журнал<span class="gotipe-caret"></span></span
+      ><span class="gotipe-find-count">3 из 12</span></span
+    >
+    <span class="gotipe-find-tools"
+      ><span class="gotipe-tool"><svg class="gt-icon"><use href="#i-case" /></svg></span
+      ><span class="gotipe-tool"><svg class="gt-icon"><use href="#i-word" /></svg></span
+      ><span class="gotipe-tool"><svg class="gt-icon"><use href="#i-regex" /></svg></span
+      ><span class="gotipe-tool-sep"></span
+      ><span class="gotipe-tool"><svg class="gt-icon"><use href="#i-arrow-up" /></svg></span
+      ><span class="gotipe-tool"><svg class="gt-icon"><use href="#i-arrow-down" /></svg></span
+      ><span class="gotipe-tool"><svg class="gt-icon"><use href="#i-x" /></svg></span></span
+    >
+  </div>
+  <article class="gotipe-page is-slice" lang="ru">
+    <div class="gotipe-doc">
+      <h2>Как это работает</h2>
+      <p>
+        Каждая транзакция сначала попадает в <mark class="gotipe-match">журнал</mark> и только
+        потом — на сервер. Когда связь вернулась, <mark class="gotipe-match">журнал</mark> уходит
+        пачкой.
+      </p>
+      <p>
+        <mark class="gotipe-match is-current">Журнал</mark> лежит в IndexedDB и переживает перезапуск
+        приложения.
+      </p>
+    </div>
+  </article>
+</div>
+</section>
+</figure>
+<figure class="at-figure" id="f26" data-section="Новые возможности">
+  <figcaption class="at-figure-head">
+    <span class="at-num">26</span>
+    <h2 class="at-figure-title">Счётчик слов и символов</h2>
+    <p class="at-caption">
+      Тихая строка под документом: слова и символы. Если хост задал лимит, у края число символов
+      принимает тон предупреждения, за краем — ошибки: лишний текст подсвечен на месте, причина
+      лимита — в подсказке.
+    </p>
+  </figcaption>
+  <section class="at-stage" data-w="768">
+<p class="at-stage-label">без лимита · 768</p>
+<div class="at-frame gotipe-root" data-gt-view="notion" data-frame="count" data-w="768">
+<article class="gotipe-page is-slice" lang="ru">
+    <div class="gotipe-doc">
+      <h3>Порядок выката</h3>
+      <ol class="gotipe-list">
+        <li>Включить журнал для 5 % пользователей веб-версии.</li>
+        <li>Неделю сравнивать долю потерянных правок с контрольной группой.</li>
+        <li>Открыть всем, начиная с приложения для macOS.</li>
+      </ol>
+      <p>Возражения принимаем до 18 ноября — в обсуждении ADR-0031 или в треде выпуска 2.8.</p>
+    </div>
+    <footer class="gotipe-status" role="status">
+      <span class="gotipe-status-part">1 204 слова</span> ·
+      <span class="gotipe-status-part">7 830 символов</span>
+    </footer>
+  </article>
+</div>
+</section>
+  <section class="at-stage" data-w="768">
+<p class="at-stage-label">у лимита · 768</p>
+<div class="at-frame gotipe-root" data-gt-view="notion" data-frame="count-near" data-w="768">
+<article class="gotipe-page is-slice" lang="ru">
+    <div class="gotipe-doc">
+      <h3>Порядок выката</h3>
+      <ol class="gotipe-list">
+        <li>Включить журнал для 5 % пользователей веб-версии.</li>
+        <li>Неделю сравнивать долю потерянных правок с контрольной группой.</li>
+        <li>Открыть всем, начиная с приложения для macOS.</li>
+      </ol>
+      <p>Возражения принимаем до 18 ноября — в обсуждении ADR-0031 или в треде выпуска 2.8.</p>
+    </div>
+    <footer class="gotipe-status" role="status">
+      <span class="gotipe-status-part">1 204 слова</span> ·
+      <span class="gotipe-status-part is-near">7 830 из 8 000 символов</span>
+    </footer>
+  </article>
+</div>
+</section>
+  <section class="at-stage" data-w="768">
+<p class="at-stage-label">за лимитом · 768</p>
+<div class="at-frame gotipe-root" data-gt-view="notion" data-frame="count-over" data-w="768">
+<article class="gotipe-page is-slice" lang="ru">
+    <div class="gotipe-doc">
+      <h3>Порядок выката</h3>
+      <ol class="gotipe-list">
+        <li>Включить журнал для 5 % пользователей веб-версии.</li>
+        <li>Неделю сравнивать долю потерянных правок с контрольной группой.</li>
+        <li>Открыть всем, начиная с приложения для macOS.</li>
+      </ol>
+      <p>
+        Возражения принимаем до 18 ноября — в обсуждении ADR-0031 или в треде выпуска 2.8.
+        <span class="gotipe-over-limit"
+          >Если возражений не будет, выкат начнётся 19 ноября с веб-версии, а через неделю — macOS.</span
+        >
+      </p>
+    </div>
+    <footer class="gotipe-status" role="status">
+      <span class="gotipe-status-part">1 219 слов</span> ·
+      <span class="gotipe-status-part is-over"
+        >8 112 из 8 000 символов<span class="gotipe-tooltip" data-place="above">Описание выпуска — до 8 000 символов</span
+        ><svg class="at-pointer"><use href="#i-pointer" /></svg></span
+      >
+    </footer>
+  </article>
+</div>
+</section>
+</figure>
+<figure class="at-figure" id="f27" data-section="Новые возможности">
+  <figcaption class="at-figure-head">
+    <span class="at-num">27</span>
+    <h2 class="at-figure-title">Выравнивание, шрифт и размер</h2>
+    <p class="at-caption">
+      Выравнивание — свойство блока: четыре пункта в «Ещё» панели над выделением, клавиши рядом;
+      заголовок и абзацы встают по центру, вправо или по ширине. В закреплённой панели modern —
+      шрифт и размер выделения: каждый шрифт назван своим начертанием, размер меняется на шаг.
+    </p>
+  </figcaption>
+  <section class="at-stage" data-w="480">
+<p class="at-stage-label">«Ещё»: выравнивание</p>
+<div class="at-frame gotipe-root" data-gt-view="notion" data-frame="align-menu" data-w="480" data-min="320">
+<article class="gotipe-page is-slice" lang="ru">
+    <div class="gotipe-doc">
+      <p>
+        Сервер принимает пачку транзакций целиком или отклоняет её, поэтому
+        <span class="gotipe-anchor is-inline"
+          ><strong class="gotipe-selection">половина пачки не запишется</strong
+          ><span class="gotipe-overlay gotipe-toolbar" data-place="above" role="toolbar"
+            ><span class="gotipe-tool is-model-icon"><svg class="gt-icon"><use href="#i-sparkle" /></svg></span
+            ><span class="gotipe-tool-sep"></span
+            ><span class="gotipe-tool is-text">Текст<svg class="gt-icon"><use href="#i-chevron-down" /></svg></span
+            ><span class="gotipe-tool-sep"></span
+            ><span class="gotipe-tool is-active"><svg class="gt-icon"><use href="#i-bold" /></svg></span
+            ><span class="gotipe-tool"><svg class="gt-icon"><use href="#i-italic" /></svg></span
+            ><span class="gotipe-tool"><svg class="gt-icon"><use href="#i-underline" /></svg></span
+            ><span class="gotipe-tool"><svg class="gt-icon"><use href="#i-strike" /></svg></span
+            ><span class="gotipe-tool"><svg class="gt-icon"><use href="#i-code" /></svg></span
+            ><span class="gotipe-tool-sep"></span
+            ><span class="gotipe-tool"><svg class="gt-icon"><use href="#i-link" /></svg></span
+            ><span class="gotipe-tool"
+              ><span class="gotipe-color-tool"
+                ><svg class="gt-icon"><use href="#i-letter" /></svg><span class="gotipe-color-bar"></span></span
+            ></span
+            ><span class="gotipe-tool is-active"
+              ><svg class="gt-icon"><use href="#i-more" /></svg
+              ><span class="gotipe-overlay gotipe-menu is-narrow" data-place="below-end"><span class="gotipe-menu-group"><span class="gotipe-menu-label">Выравнивание</span><span class="gotipe-menu-item is-current"><svg class="gt-icon"><use href="#i-align-left" /></svg><span class="gotipe-menu-text">По левому краю</span><svg class="gt-icon gotipe-menu-end"><use href="#i-check-16" /></svg></span><span class="gotipe-menu-item is-selected"><svg class="gt-icon"><use href="#i-align-center" /></svg><span class="gotipe-menu-text">По центру</span><span class="gotipe-key">⇧⌘E</span><svg class="at-pointer"><use href="#i-pointer" /></svg></span><span class="gotipe-menu-item"><svg class="gt-icon"><use href="#i-align-right" /></svg><span class="gotipe-menu-text">По правому краю</span><span class="gotipe-key">⇧⌘R</span></span><span class="gotipe-menu-item"><svg class="gt-icon"><use href="#i-align-justify" /></svg><span class="gotipe-menu-text">По ширине</span><span class="gotipe-key">⇧⌘J</span></span></span></span></span></span
+        ></span>
+        — даже если связь оборвалась посреди отправки.
+      </p>
+    </div>
+  </article>
+</div>
+</section>
+  <section class="at-stage" data-w="768">
+<p class="at-stage-label">заголовок и абзацы выровнены · 768</p>
+<div class="at-frame gotipe-root" data-gt-view="notion" data-frame="aligned" data-w="768">
+<article class="gotipe-page is-slice" lang="ru">
+    <div class="gotipe-doc">
+      <h2 data-align="center">Офлайн-черновики</h2>
+      <p data-align="center">Выпуск 2.8 · 11 ноября 2026</p>
+      <p data-align="justify">
+        Правка, сделанная без сети, сейчас пропадает, если закрыть вкладку до того, как связь
+        вернётся. В выпуске 2.8 редактор пишет каждую транзакцию в локальный журнал и отправляет его,
+        как только сеть появится, а сервер принимает пачку транзакций целиком или отклоняет её.
+      </p>
+      <p data-align="right">Мария Лебедева, руководитель выпуска</p>
+    </div>
+  </article>
+</div>
+</section>
+  <section class="at-stage" data-w="1024">
+<p class="at-stage-label">шрифт и размер в панели modern · 1024</p>
+<div class="at-frame gotipe-root" data-gt-view="modern" data-frame="face-size" data-w="1024" data-min="400">
+<div class="gotipe-modern">
+    <div class="gotipe-toolbar gotipe-toolbar-fixed" role="toolbar" aria-label="Форматирование">
+      <div class="gotipe-toolbar-track is-open">
+        <span class="gotipe-tool"><svg class="gt-icon"><use href="#i-undo" /></svg></span>
+        <span class="gotipe-tool" aria-disabled="true"><svg class="gt-icon"><use href="#i-redo" /></svg></span>
+        <span class="gotipe-tool-sep"></span>
+        <span class="gotipe-tool is-text">Текст<svg class="gt-icon"><use href="#i-chevron-down" /></svg></span>
+        <span class="gotipe-tool-sep"></span>
+        <span class="gotipe-tool is-text is-active"
+          >Системный<svg class="gt-icon"><use href="#i-chevron-down" /></svg
+          ><span class="gotipe-overlay gotipe-menu is-narrow" data-place="below" role="listbox"><span class="gotipe-menu-item is-current"><span class="gotipe-menu-text">Системный</span><svg class="gt-icon gotipe-menu-end"><use href="#i-check-16" /></svg></span><span class="gotipe-menu-item is-selected"><span class="gotipe-menu-text is-face-serif">С засечками</span><svg class="at-pointer"><use href="#i-pointer" /></svg></span><span class="gotipe-menu-item"><span class="gotipe-menu-text is-face-mono">Моноширинный</span></span></span></span
+        >
+        <span class="gotipe-tool"><svg class="gt-icon"><use href="#i-minus" /></svg></span>
+        <span class="gotipe-size-field">15</span>
+        <span class="gotipe-tool"><svg class="gt-icon"><use href="#i-plus" /></svg></span>
+        <span class="gotipe-tool-sep"></span>
+        <span class="gotipe-tool"><svg class="gt-icon"><use href="#i-bold" /></svg></span>
+        <span class="gotipe-tool"><svg class="gt-icon"><use href="#i-italic" /></svg></span>
+        <span class="gotipe-tool"><svg class="gt-icon"><use href="#i-underline" /></svg></span>
+        <span class="gotipe-tool"><svg class="gt-icon"><use href="#i-strike" /></svg></span>
+        <span class="gotipe-tool"><svg class="gt-icon"><use href="#i-code" /></svg></span>
+        <span class="gotipe-tool"><svg class="gt-icon"><use href="#i-link" /></svg></span>
+        <span class="gotipe-tool"
+          ><span class="gotipe-color-tool"
+            ><svg class="gt-icon"><use href="#i-letter" /></svg><span class="gotipe-color-bar"></span></span
+        ></span>
+        <span class="gotipe-tool-sep"></span>
+        <span class="gotipe-tool is-pick"
+          ><svg class="gt-icon"><use href="#i-align-left" /></svg><svg class="gt-icon"><use href="#i-chevron-down" /></svg
+        ></span>
+        <span class="gotipe-tool"><svg class="gt-icon"><use href="#i-list" /></svg></span>
+        <span class="gotipe-tool"><svg class="gt-icon"><use href="#i-list-num" /></svg></span>
+        <span class="gotipe-tool"><svg class="gt-icon"><use href="#i-todo" /></svg></span>
+        <span class="gotipe-tool-sep"></span>
+        <span class="gotipe-tool is-text"
+          ><svg class="gt-icon"><use href="#i-plus" /></svg>Вставить<svg class="gt-icon"><use href="#i-chevron-down" /></svg
+        ></span>
+      </div>
+    </div>
+    <article class="gotipe-page" lang="ru">
+      <header class="gotipe-page-head">
+  <h1 class="gotipe-page-title">Офлайн-черновики</h1>
+</header>
+      <div class="gotipe-doc">
+        <p>
+          Правка, сделанная без сети, сейчас пропадает, если закрыть вкладку до того, как связь
+          вернётся.
+          <span class="gotipe-selection">В выпуске 2.8 редактор пишет каждую транзакцию в локальный
+            журнал и отправляет его, как только сеть появится.</span>
+        </p>
+      </div>
+    </article>
+  </div>
+</div>
+</section>
+</figure>
+<figure class="at-figure" id="f28" data-section="Новые возможности">
+  <figcaption class="at-figure-head">
+    <span class="at-num">28</span>
+    <h2 class="at-figure-title">Невидимые символы и направление текста</h2>
+    <p class="at-caption">
+      Переключатель ¶ показывает невидимое тише текста: пробел — точкой, перенос строки — ↵, конец
+      абзаца — ¶. Абзац справа налево идёт от правого края, и ручка блока стоит в правом поле — там,
+      где строка начинается.
+    </p>
+  </figcaption>
+  <section class="at-stage" data-w="768">
+<p class="at-stage-label">невидимые символы · 768</p>
+<div class="at-frame gotipe-root" data-gt-view="modern" data-frame="invisibles" data-w="768">
+<div class="gotipe-modern">
+    <div class="gotipe-toolbar gotipe-toolbar-fixed" role="toolbar" aria-label="Форматирование">
+      <div class="gotipe-toolbar-track is-open">
+        <span class="gotipe-tool"><svg class="gt-icon"><use href="#i-undo" /></svg></span>
+        <span class="gotipe-tool" aria-disabled="true"><svg class="gt-icon"><use href="#i-redo" /></svg></span>
+        <span class="gotipe-tool-sep"></span>
+        <span class="gotipe-tool is-text">Текст<svg class="gt-icon"><use href="#i-chevron-down" /></svg></span>
+        <span class="gotipe-tool-sep"></span>
+        <span class="gotipe-tool"><svg class="gt-icon"><use href="#i-bold" /></svg></span>
+        <span class="gotipe-tool"><svg class="gt-icon"><use href="#i-italic" /></svg></span>
+        <span class="gotipe-tool"><svg class="gt-icon"><use href="#i-underline" /></svg></span>
+        <span class="gotipe-tool"><svg class="gt-icon"><use href="#i-strike" /></svg></span>
+        <span class="gotipe-tool"><svg class="gt-icon"><use href="#i-code" /></svg></span>
+        <span class="gotipe-tool"><svg class="gt-icon"><use href="#i-link" /></svg></span>
+        <span class="gotipe-tool"
+          ><span class="gotipe-color-tool"
+            ><svg class="gt-icon"><use href="#i-letter" /></svg><span class="gotipe-color-bar"></span></span
+        ></span>
+        <span class="gotipe-tool-sep"></span>
+        <span class="gotipe-tool"><svg class="gt-icon"><use href="#i-list" /></svg></span>
+        <span class="gotipe-tool"><svg class="gt-icon"><use href="#i-list-num" /></svg></span>
+        <span class="gotipe-tool"><svg class="gt-icon"><use href="#i-todo" /></svg></span>
+        <span class="gotipe-tool-sep"></span>
+        <span class="gotipe-tool is-text"
+          ><svg class="gt-icon"><use href="#i-plus" /></svg>Вставить<svg class="gt-icon"><use href="#i-chevron-down" /></svg
+        ></span>
+        <span class="gotipe-tool-spacer"></span>
+        <span class="gotipe-tool is-active is-hover"
+          ><svg class="gt-icon"><use href="#i-pilcrow" /></svg
+          ><span class="gotipe-tooltip" data-place="below-end">Невидимые символы</span
+          ><svg class="at-pointer"><use href="#i-pointer" /></svg
+        ></span>
+      </div>
+    </div>
+    <article class="gotipe-page" lang="ru">
+      <header class="gotipe-page-head">
+        <h1 class="gotipe-page-title">Офлайн-черновики<span class="gotipe-pilcrow"></span></h1>
+      </header>
+      <div class="gotipe-doc">
+        <p>Правка,<span class="gotipe-sp"> </span>сделанная<span class="gotipe-sp"> </span>без<span class="gotipe-sp"> </span>сети,<span class="gotipe-sp"> </span>сейчас<span class="gotipe-sp"> </span>пропадает,<span class="gotipe-sp"> </span>если<span class="gotipe-sp"> </span>закрыть<span class="gotipe-sp"> </span>вкладку<span class="gotipe-sp"> </span>до<span class="gotipe-sp"> </span>того,<span class="gotipe-sp"> </span>как<span class="gotipe-sp"> </span>связь<span class="gotipe-sp"> </span>вернётся.<span class="gotipe-br"></span><br />В<span class="gotipe-sp"> </span>выпуске<span class="gotipe-sp"> </span>2.8<span class="gotipe-sp"> </span>редактор<span class="gotipe-sp"> </span>пишет<span class="gotipe-sp"> </span>каждую<span class="gotipe-sp"> </span>транзакцию<span class="gotipe-sp"> </span>в<span class="gotipe-sp"> </span>журнал<span class="gotipe-sp"> </span>и<span class="gotipe-sp"> </span>отправит<span class="gotipe-sp"> </span>его,<span class="gotipe-sp"> </span>когда<span class="gotipe-sp"> </span>сеть<span class="gotipe-sp"> </span>появится.<span class="gotipe-pilcrow"></span></p>
+        <p>Возражения<span class="gotipe-sp"> </span>принимаем<span class="gotipe-sp"> </span>до<span class="gotipe-sp"> </span>18<span class="gotipe-sp"> </span>ноября.<span class="gotipe-pilcrow"></span></p>
+      </div>
+    </article>
+  </div>
+</div>
+</section>
+  <section class="at-stage" data-w="768">
+<p class="at-stage-label">абзац справа налево · 768</p>
+<div class="at-frame gotipe-root" data-gt-view="notion" data-frame="rtl" data-w="768">
+<article class="gotipe-page is-slice" lang="ru">
+    <div class="gotipe-doc">
+      <h3>Что меняется</h3>
+      <p>
+        Правка, сделанная без сети, больше не пропадает: редактор пишет её в журнал и отправляет,
+        когда связь вернётся.
+      </p>
+      <p class="is-hovered" lang="ar" dir="rtl">
+        لم تعد التعديلات التي تُجرى دون اتصال تضيع: يحفظها المحرر في سجل محلي ويرسلها عندما يعود
+        الاتصال.
+        <span class="gotipe-block-handle" aria-hidden="true"
+          ><span class="gotipe-handle-button"><svg class="gt-icon"><use href="#i-plus" /></svg></span
+          ><span class="gotipe-handle-button"><svg class="gt-icon"><use href="#i-grip" /></svg></span
+        ></span>
+      </p>
+      <p>Возражения принимаем до 18 ноября — в обсуждении ADR-0031.</p>
+    </div>
+  </article>
+</div>
+</section>
+</figure>
+<figure class="at-figure" id="f29" data-section="Новые возможности">
+  <figcaption class="at-figure-head">
+    <span class="at-num">29</span>
+    <h2 class="at-figure-title">Таблица: объединённые ячейки</h2>
+    <p class="at-caption">
+      Ячейка занимает два столбца или две строки: черта под объединённым заголовком идёт только под его столбцами, объединённая ячейка прерывает черту между строками. Выделенные ячейки — в цвете
+      выделения; «Объединить ячейки» и «Разделить ячейку» — в меню строки и столбца, недоступное —
+      бледнее.
+    </p>
+  </figcaption>
+  <section class="at-stage" data-w="768">
+<p class="at-stage-label">заголовок на два столбца, ячейка на две строки · 768</p>
+<div class="at-frame gotipe-root" data-gt-view="notion" data-frame="merged" data-w="768">
+<article class="gotipe-page is-slice" lang="ru">
+    <div class="gotipe-doc">
+      <h2>Журнал по платформам</h2>
+      <div class="gotipe-table-block">
+        <div class="gotipe-table-wrap">
+          <table class="gotipe-table">
+            <thead>
+              <tr><th rowspan="2">Платформа</th><th colspan="2">Журнал</th><th rowspan="2">Шифрование</th></tr>
+              <tr class="is-continued"><th>Ключ</th><th class="is-number">В очереди</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>Веб</td><td class="is-code">drafts.web</td><td class="is-number">1 284</td><td rowspan="2">Ключ сессии</td></tr>
+              <tr><td>macOS</td><td class="is-code">drafts.mac</td><td class="is-number">312</td></tr>
+              <tr><td>iOS</td><td class="is-code">drafts.ios</td><td class="is-number">0</td><td>Нет</td></tr>
+              <tr><td>Android</td><td class="is-code">drafts.android</td><td class="is-number">27</td><td>Ключ устройства</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <span class="gotipe-table-add is-column"><svg class="gt-icon"><use href="#i-plus" /></svg></span>
+        <span class="gotipe-table-add is-row"><svg class="gt-icon"><use href="#i-plus" /></svg></span>
+      </div>
+    </div>
+  </article>
+</div>
+</section>
+  <section class="at-stage" data-w="768">
+<p class="at-stage-label">две ячейки выделены · 768</p>
+<div class="at-frame gotipe-root" data-gt-view="notion" data-frame="cells-merge" data-w="768" data-min="480">
+<article class="gotipe-page is-slice" lang="ru">
+    <div class="gotipe-doc">
+      <h2>Журнал по платформам</h2>
+      <div class="gotipe-table-block is-hovered">
+        <div class="gotipe-table-wrap is-open">
+          <table class="gotipe-table">
+            <thead>
+              <tr><th rowspan="2">Платформа</th><th colspan="2">Журнал</th><th rowspan="2">Шифрование</th></tr>
+              <tr class="is-continued"><th>Ключ</th><th class="is-number">В очереди</th></tr>
+            </thead>
+            <tbody>
+              <tr class="is-hovered">
+                <td>Веб<span class="gotipe-row-handle"
+                    ><svg class="gt-icon"><use href="#i-chevron-down" /></svg><span class="gotipe-overlay gotipe-menu is-narrow" data-place="below"><span class="gotipe-menu-group"><span class="gotipe-menu-label">Строка</span><span class="gotipe-menu-item"><svg class="gt-icon"><use href="#i-arrow-up" /></svg><span class="gotipe-menu-text">Добавить строку выше</span></span><span class="gotipe-menu-item"><svg class="gt-icon"><use href="#i-arrow-down" /></svg><span class="gotipe-menu-text">Добавить строку ниже</span></span></span><span class="gotipe-menu-group"><span class="gotipe-menu-label">Ячейки</span><span class="gotipe-menu-item is-selected"><svg class="gt-icon"><use href="#i-merge" /></svg><span class="gotipe-menu-text">Объединить ячейки</span><svg class="at-pointer"><use href="#i-pointer" /></svg></span><span class="gotipe-menu-item" aria-disabled="true"><svg class="gt-icon"><use href="#i-split" /></svg><span class="gotipe-menu-text">Разделить ячейку</span></span></span><span class="gotipe-menu-group"><span class="gotipe-menu-item is-danger"><svg class="gt-icon"><use href="#i-trash" /></svg><span class="gotipe-menu-text">Удалить строку</span></span></span></span></span
+                  ></td>
+                <td class="is-code">drafts.web</td><td class="is-number">1 284</td><td class="is-selected">Ключ сессии</td>
+              </tr>
+              <tr><td>macOS</td><td class="is-code">drafts.mac</td><td class="is-number">312</td><td class="is-selected">Ключ сессии</td></tr>
+              <tr><td>iOS</td><td class="is-code">drafts.ios</td><td class="is-number">0</td><td>Нет</td></tr>
+              <tr><td>Android</td><td class="is-code">drafts.android</td><td class="is-number">27</td><td>Ключ устройства</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <span class="gotipe-table-add is-column"><svg class="gt-icon"><use href="#i-plus" /></svg></span>
+        <span class="gotipe-table-add is-row"><svg class="gt-icon"><use href="#i-plus" /></svg></span>
+      </div>
+    </div>
+  </article>
+</div>
+</section>
+  <section class="at-stage" data-w="768">
+<p class="at-stage-label">разделить заголовок · 768</p>
+<div class="at-frame gotipe-root" data-gt-view="notion" data-frame="cell-split" data-w="768" data-min="480">
+<article class="gotipe-page is-slice" lang="ru">
+    <div class="gotipe-doc">
+      <h2>Журнал по платформам</h2>
+      <div class="gotipe-table-block is-hovered">
+        <div class="gotipe-table-wrap is-open">
+          <table class="gotipe-table">
+            <thead>
+              <tr>
+                <th rowspan="2">Платформа</th>
+                <th colspan="2" class="is-hovered">
+                  Журнал<span class="gotipe-caret"></span><span class="gotipe-column-handle"
+                    ><svg class="gt-icon"><use href="#i-chevron-down" /></svg><span class="gotipe-overlay gotipe-menu is-narrow" data-place="below-end"><span class="gotipe-menu-group"><span class="gotipe-menu-label">Ячейки</span><span class="gotipe-menu-item" aria-disabled="true"><svg class="gt-icon"><use href="#i-merge" /></svg><span class="gotipe-menu-text">Объединить ячейки</span></span><span class="gotipe-menu-item is-selected"><svg class="gt-icon"><use href="#i-split" /></svg><span class="gotipe-menu-text">Разделить ячейку</span><svg class="at-pointer"><use href="#i-pointer" /></svg></span></span><span class="gotipe-menu-group"><span class="gotipe-menu-item"><svg class="gt-icon"><use href="#i-plus" /></svg><span class="gotipe-menu-text">Добавить строку</span></span><span class="gotipe-menu-item"><svg class="gt-icon"><use href="#i-plus" /></svg><span class="gotipe-menu-text">Добавить столбец</span></span></span><span class="gotipe-menu-group"><span class="gotipe-menu-item is-danger"><svg class="gt-icon"><use href="#i-trash" /></svg><span class="gotipe-menu-text">Удалить столбцы</span></span></span></span></span
+                  >
+                </th>
+                <th rowspan="2">Шифрование</th>
+              </tr>
+              <tr class="is-continued"><th>Ключ</th><th class="is-number">В очереди</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>Веб</td><td class="is-code">drafts.web</td><td class="is-number">1 284</td><td rowspan="2">Ключ сессии</td></tr>
+              <tr><td>macOS</td><td class="is-code">drafts.mac</td><td class="is-number">312</td></tr>
+              <tr><td>iOS</td><td class="is-code">drafts.ios</td><td class="is-number">0</td><td>Нет</td></tr>
+              <tr><td>Android</td><td class="is-code">drafts.android</td><td class="is-number">27</td><td>Ключ устройства</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <span class="gotipe-table-add is-column"><svg class="gt-icon"><use href="#i-plus" /></svg></span>
+        <span class="gotipe-table-add is-row"><svg class="gt-icon"><use href="#i-plus" /></svg></span>
+      </div>
+    </div>
+  </article>
+</div>
+</section>
+</figure>
+<figure class="at-figure" id="f30" data-section="Новые возможности">
+  <figcaption class="at-figure-head">
+    <span class="at-num">30</span>
+    <h2 class="at-figure-title">История версий</h2>
+    <p class="at-caption">
+      Панель библиотеки: версии по дням — автор, время, сколько слов добавлено и убрано; страница
+      сравнивает выбранную версию с текущей по блокам — черта в поле: добавлен, удалён, изменён.
+      «Восстановить» отвечает тостом с отменой; на телефоне список и сравнение — два экрана.
+    </p>
+  </figcaption>
+  <section class="at-stage" data-w="1024">
+<p class="at-stage-label">сравнение с текущей · 1024</p>
+<div class="at-frame gotipe-root" data-gt-view="notion" data-frame="history" data-w="1024">
+<div class="gotipe-history">
+    <div class="gotipe-history-main">
+      <div class="gotipe-version-head gotipe-history-head">
+        <span class="gotipe-tool gotipe-history-back"><svg class="gt-icon"><use href="#i-chevron-left" /></svg></span
+        ><span class="gotipe-review-title">Выпуск 2.8</span
+        ><span class="gotipe-history-facts"
+          ><span class="gotipe-review-fact">10 ноября, 18:40</span
+          ><span class="gotipe-diff-stat"><span class="is-add">+2</span> · <span class="is-del">−1</span> · <span class="is-change">1 изменён</span></span></span
+        ><span class="gotipe-tool-spacer"></span
+        ><span class="gotipe-button is-primary"><svg class="gt-icon"><use href="#i-restore" /></svg>Восстановить</span>
+      </div>
+      <article class="gotipe-page is-scrolled" lang="ru">
+        <div class="gotipe-doc">
+          <h3>Порядок выката</h3>
+          <p>Журнал включают по шагам, каждый — после недели наблюдения.</p>
+          <ol class="gotipe-list">
+            <li data-diff="changed">
+              Включить журнал для <span class="gotipe-delete">10 %</span
+              ><span class="gotipe-insert">5 %</span> пользователей веб-версии.
+            </li>
+            <li>Неделю сравнивать долю потерянных правок с контрольной группой.</li>
+            <li data-diff="added">Открыть всем, начиная с приложения для macOS.</li>
+          </ol>
+          <p data-diff="removed">Шифрование черновика — после выпуска.</p>
+          <p data-diff="added">Черновик шифруется ключом сессии с первого дня.</p>
+          <p>Возражения принимаем до 18 ноября — в обсуждении ADR-0031.</p>
+        </div>
+      </article>
+    </div>
+    <aside class="gotipe-panel" aria-label="История версий">
+      <div class="gotipe-panel-head">
+        <p class="gotipe-panel-title">История</p>
+        <span class="gotipe-tool-spacer"></span>
+        <span class="gotipe-tool"><svg class="gt-icon"><use href="#i-x" /></svg></span>
+      </div>
+      <p class="gotipe-history-day">Сегодня</p>
+      <div class="gotipe-history-item">
+        <span class="gotipe-version-name">Текущая</span
+        ><span class="gotipe-diff-stat"><span class="is-add">+38</span> <span class="is-del">−4</span></span
+        ><span class="gotipe-version-meta"><span class="gotipe-avatar" data-person="2">МЛ</span>14:32 · Мария Лебедева</span>
+      </div>
+      <div class="gotipe-history-item">
+        <span class="gotipe-version-name">Автосохранение</span
+        ><span class="gotipe-diff-stat"><span class="is-add">+6</span> <span class="is-del">−15</span></span
+        ><span class="gotipe-version-meta"><span class="gotipe-avatar" data-person="1">ИО</span>11:05 · Илья Орлов</span>
+      </div>
+      <p class="gotipe-history-day">Вчера</p>
+      <div class="gotipe-history-item is-current">
+        <span class="gotipe-version-name">Выпуск 2.8</span
+        ><span class="gotipe-diff-stat"><span class="is-add">+124</span> <span class="is-del">−30</span></span
+        ><span class="gotipe-version-meta"><span class="gotipe-avatar" data-person="1">ИО</span>18:40 · Илья Орлов</span>
+      </div>
+      <div class="gotipe-history-item">
+        <span class="gotipe-version-name">Автосохранение</span
+        ><span class="gotipe-diff-stat"><span class="is-add">+12</span></span
+        ><span class="gotipe-version-meta"><span class="gotipe-avatar" data-person="3">АК</span>12:05 · Анна Ковалёва</span>
+      </div>
+      <p class="gotipe-history-day">7 ноября</p>
+      <div class="gotipe-history-item">
+        <span class="gotipe-version-name">Черновик для ревью</span
+        ><span class="gotipe-diff-stat"><span class="is-add">+540</span></span
+        ><span class="gotipe-version-meta"><span class="gotipe-avatar" data-person="2">МЛ</span>16:20 · Мария Лебедева</span>
+      </div>
+    </aside>
+  </div>
+</div>
+</section>
+  <section class="at-stage" data-w="1024">
+<p class="at-stage-label">восстановлено, можно отменить · 1024</p>
+<div class="at-frame gotipe-root" data-gt-view="notion" data-frame="history-restored" data-w="1024">
+<div class="gotipe-history">
+    <div class="gotipe-history-main">
+      <div class="gotipe-toast is-done" role="status">
+        <svg class="gt-icon"><use href="#i-restore" /></svg>Восстановлена версия «Выпуск 2.8»<span class="gotipe-button"
+          >Отменить<span class="gotipe-key">⌘Z</span></span
+        >
+      </div>
+      <div class="gotipe-version-head gotipe-history-head">
+        <span class="gotipe-tool gotipe-history-back"><svg class="gt-icon"><use href="#i-chevron-left" /></svg></span
+        ><span class="gotipe-review-title">Текущая</span
+        ><span class="gotipe-history-facts"><span class="gotipe-review-fact">сейчас</span></span>
+      </div>
+      <article class="gotipe-page is-scrolled" lang="ru">
+        <div class="gotipe-doc">
+          <h3>Порядок выката</h3>
+          <p>Журнал включают по шагам, каждый — после недели наблюдения.</p>
+          <ol class="gotipe-list">
+            <li>Включить журнал для 10 % пользователей веб-версии.</li>
+            <li>Неделю сравнивать долю потерянных правок с контрольной группой.</li>
+          </ol>
+          <p>Шифрование черновика — после выпуска.</p>
+          <p>Возражения принимаем до 18 ноября — в обсуждении ADR-0031.</p>
+        </div>
+      </article>
+    </div>
+    <aside class="gotipe-panel" aria-label="История версий">
+      <div class="gotipe-panel-head">
+        <p class="gotipe-panel-title">История</p>
+        <span class="gotipe-tool-spacer"></span>
+        <span class="gotipe-tool"><svg class="gt-icon"><use href="#i-x" /></svg></span>
+      </div>
+      <p class="gotipe-history-day">Сегодня</p>
+      <div class="gotipe-history-item is-current">
+        <span class="gotipe-version-name">Возврат к «Выпуск 2.8»</span
+        ><span class="gotipe-diff-stat"><span class="is-add">+30</span> <span class="is-del">−162</span></span
+        ><span class="gotipe-version-meta"><span class="gotipe-avatar" data-person="2">МЛ</span>14:35 · Мария Лебедева</span>
+      </div>
+      <div class="gotipe-history-item">
+        <span class="gotipe-version-name">До восстановления</span
+        ><span class="gotipe-diff-stat"><span class="is-add">+38</span> <span class="is-del">−4</span></span
+        ><span class="gotipe-version-meta"><span class="gotipe-avatar" data-person="2">МЛ</span>14:32 · Мария Лебедева</span>
+      </div>
+      <div class="gotipe-history-item">
+        <span class="gotipe-version-name">Автосохранение</span
+        ><span class="gotipe-diff-stat"><span class="is-add">+6</span> <span class="is-del">−15</span></span
+        ><span class="gotipe-version-meta"><span class="gotipe-avatar" data-person="1">ИО</span>11:05 · Илья Орлов</span>
+      </div>
+      <p class="gotipe-history-day">Вчера</p>
+      <div class="gotipe-history-item">
+        <span class="gotipe-version-name">Выпуск 2.8</span
+        ><span class="gotipe-diff-stat"><span class="is-add">+124</span> <span class="is-del">−30</span></span
+        ><span class="gotipe-version-meta"><span class="gotipe-avatar" data-person="1">ИО</span>18:40 · Илья Орлов</span>
+      </div>
+    </aside>
+  </div>
+</div>
+</section>
+  <section class="at-stage" data-w="375">
+<p class="at-stage-label">сравнение на телефоне · 375</p>
+<div class="at-frame gotipe-root" data-gt-view="notion" data-frame="history-phone" data-w="375">
+<div class="gotipe-history">
+    <div class="gotipe-history-main">
+      <div class="gotipe-version-head gotipe-history-head">
+        <span class="gotipe-tool gotipe-history-back"><svg class="gt-icon"><use href="#i-chevron-left" /></svg></span
+        ><span class="gotipe-review-title">Выпуск 2.8</span
+        ><span class="gotipe-history-facts"
+          ><span class="gotipe-review-fact">10 ноября, 18:40</span
+          ><span class="gotipe-diff-stat"><span class="is-add">+2</span> · <span class="is-del">−1</span> · <span class="is-change">1 изменён</span></span></span
+        ><span class="gotipe-tool-spacer"></span
+        ><span class="gotipe-button is-primary"><svg class="gt-icon"><use href="#i-restore" /></svg>Восстановить</span>
+      </div>
+      <article class="gotipe-page is-scrolled" lang="ru">
+        <div class="gotipe-doc">
+          <h3>Порядок выката</h3>
+          <p>Журнал включают по шагам, каждый — после недели наблюдения.</p>
+          <ol class="gotipe-list">
+            <li data-diff="changed">
+              Включить журнал для <span class="gotipe-delete">10 %</span
+              ><span class="gotipe-insert">5 %</span> пользователей веб-версии.
+            </li>
+            <li>Неделю сравнивать долю потерянных правок с контрольной группой.</li>
+            <li data-diff="added">Открыть всем, начиная с приложения для macOS.</li>
+          </ol>
+          <p data-diff="removed">Шифрование черновика — после выпуска.</p>
+          <p data-diff="added">Черновик шифруется ключом сессии с первого дня.</p>
+        </div>
+      </article>
+    </div>
+    <aside class="gotipe-panel" aria-label="История версий">
+      <div class="gotipe-panel-head"><p class="gotipe-panel-title">История</p></div>
+    </aside>
   </div>
 </div>
 </section>

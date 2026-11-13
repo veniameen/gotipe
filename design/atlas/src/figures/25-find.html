@@ -1,0 +1,151 @@
+<figure class="at-figure" id="f25" data-section="Новые возможности">
+  <figcaption class="at-figure-head">
+    <span class="at-num">25</span>
+    <h2 class="at-figure-title">Поиск и замена</h2>
+    <p class="at-caption">
+      Строка поиска — в правом верхнем углу редактора: запрос и «3 из 12», регистр, слово целиком,
+      регулярное выражение, назад, вперёд, закрыть; совпадения подсвечены, текущее — сильнее и с
+      обводкой. Замена — второй строкой под запросом, пустой поиск подсвечивает поле; на телефоне
+      инструменты уходят под поле.
+    </p>
+  </figcaption>
+  <!-- @frame frame=find view=notion w=768 label="найдено" -->
+  <div class="gotipe-overlay gotipe-find" role="search" aria-label="Поиск по документу">
+    <span class="gotipe-tool"><svg class="gt-icon"><use href="#i-chevron-right" /></svg></span>
+    <span class="gotipe-field is-typing"
+      ><span class="gotipe-field-value">журнал<span class="gotipe-caret"></span></span
+      ><span class="gotipe-find-count">3 из 12</span></span
+    >
+    <span class="gotipe-find-tools"
+      ><span class="gotipe-tool"><svg class="gt-icon"><use href="#i-case" /></svg></span
+      ><span class="gotipe-tool is-hover"
+        ><svg class="gt-icon"><use href="#i-word" /></svg
+        ><span class="gotipe-tooltip" data-place="below">Слово целиком</span
+        ><svg class="at-pointer"><use href="#i-pointer" /></svg></span
+      ><span class="gotipe-tool"><svg class="gt-icon"><use href="#i-regex" /></svg></span
+      ><span class="gotipe-tool-sep"></span
+      ><span class="gotipe-tool"><svg class="gt-icon"><use href="#i-arrow-up" /></svg></span
+      ><span class="gotipe-tool"><svg class="gt-icon"><use href="#i-arrow-down" /></svg></span
+      ><span class="gotipe-tool"><svg class="gt-icon"><use href="#i-x" /></svg></span></span
+    >
+  </div>
+  <article class="gotipe-page is-slice" lang="ru">
+    <div class="gotipe-doc">
+      <h2>Как это работает</h2>
+      <p>
+        Каждая транзакция сначала попадает в <mark class="gotipe-match">журнал</mark> и только
+        потом — на сервер. Когда связь вернулась, <mark class="gotipe-match">журнал</mark> уходит
+        пачкой, а сервер отвечает новой версией документа.
+      </p>
+      <p>
+        <mark class="gotipe-match is-current">Журнал</mark> лежит в IndexedDB и переживает перезапуск
+        приложения. Сервер принимает пачку транзакций целиком или отклоняет её —
+        <mark class="gotipe-match">журнал</mark> при этом не очищается.
+      </p>
+      <p>Схема <mark class="gotipe-match">журнал</mark>а и миграция описаны в ADR-0031.</p>
+    </div>
+  </article>
+  <!-- @end -->
+  <!-- @frame frame=replace view=notion w=768 label="замена" -->
+  <div class="gotipe-overlay gotipe-find" role="search" aria-label="Поиск и замена">
+    <span class="gotipe-tool is-active"><svg class="gt-icon"><use href="#i-chevron-down" /></svg></span>
+    <span class="gotipe-field"
+      ><span class="gotipe-field-value">журнал</span><span class="gotipe-find-count">3 из 12</span></span
+    >
+    <span class="gotipe-find-tools"
+      ><span class="gotipe-tool"><svg class="gt-icon"><use href="#i-case" /></svg></span
+      ><span class="gotipe-tool"><svg class="gt-icon"><use href="#i-word" /></svg></span
+      ><span class="gotipe-tool"><svg class="gt-icon"><use href="#i-regex" /></svg></span
+      ><span class="gotipe-tool-sep"></span
+      ><span class="gotipe-tool"><svg class="gt-icon"><use href="#i-arrow-up" /></svg></span
+      ><span class="gotipe-tool"><svg class="gt-icon"><use href="#i-arrow-down" /></svg></span
+      ><span class="gotipe-tool"><svg class="gt-icon"><use href="#i-x" /></svg></span></span
+    >
+    <span class="gotipe-field is-typing gotipe-find-replace"
+      ><span class="gotipe-field-value">очередь<span class="gotipe-caret"></span></span></span
+    >
+    <span class="gotipe-find-tools"
+      ><span class="gotipe-button">Заменить</span><span class="gotipe-button">Заменить все</span></span
+    >
+  </div>
+  <article class="gotipe-page is-slice" lang="ru">
+    <div class="gotipe-doc">
+      <h2>Как это работает</h2>
+      <p>
+        Каждая транзакция сначала попадает в <mark class="gotipe-match">журнал</mark> и только
+        потом — на сервер. Когда связь вернулась, <mark class="gotipe-match">журнал</mark> уходит
+        пачкой, а сервер отвечает новой версией документа.
+      </p>
+      <p>
+        <mark class="gotipe-match is-current">Журнал</mark> лежит в IndexedDB и переживает перезапуск
+        приложения. Сервер принимает пачку транзакций целиком или отклоняет её —
+        <mark class="gotipe-match">журнал</mark> при этом не очищается.
+      </p>
+      <p>Схема <mark class="gotipe-match">журнал</mark>а и миграция описаны в ADR-0031.</p>
+    </div>
+  </article>
+  <!-- @end -->
+  <!-- @frame frame=find-empty view=notion w=768 label="ничего не найдено" -->
+  <div class="gotipe-overlay gotipe-find" role="search" aria-label="Поиск по документу">
+    <span class="gotipe-tool"><svg class="gt-icon"><use href="#i-chevron-right" /></svg></span>
+    <span class="gotipe-field is-typing is-invalid"
+      ><span class="gotipe-field-value">синхронизация<span class="gotipe-caret"></span></span
+      ><span class="gotipe-find-count">0 из 0</span></span
+    >
+    <span class="gotipe-find-tools"
+      ><span class="gotipe-tool"><svg class="gt-icon"><use href="#i-case" /></svg></span
+      ><span class="gotipe-tool"><svg class="gt-icon"><use href="#i-word" /></svg></span
+      ><span class="gotipe-tool"><svg class="gt-icon"><use href="#i-regex" /></svg></span
+      ><span class="gotipe-tool-sep"></span
+      ><span class="gotipe-tool" aria-disabled="true"><svg class="gt-icon"><use href="#i-arrow-up" /></svg></span
+      ><span class="gotipe-tool" aria-disabled="true"><svg class="gt-icon"><use href="#i-arrow-down" /></svg></span
+      ><span class="gotipe-tool"><svg class="gt-icon"><use href="#i-x" /></svg></span></span
+    >
+  </div>
+  <article class="gotipe-page is-slice" lang="ru">
+    <div class="gotipe-doc">
+      <h2>Как это работает</h2>
+      <p>
+        Каждая транзакция сначала попадает в журнал и только потом — на сервер. Когда связь
+        вернулась, журнал уходит пачкой, а сервер отвечает новой версией документа.
+      </p>
+      <p>
+        Журнал лежит в IndexedDB и переживает перезапуск приложения. Сервер принимает пачку
+        транзакций целиком или отклоняет её — журнал при этом не очищается.
+      </p>
+    </div>
+  </article>
+  <!-- @end -->
+  <!-- @frame frame=find-phone view=notion w=375 label="на телефоне" -->
+  <div class="gotipe-overlay gotipe-find" role="search" aria-label="Поиск по документу">
+    <span class="gotipe-tool"><svg class="gt-icon"><use href="#i-chevron-right" /></svg></span>
+    <span class="gotipe-field is-typing"
+      ><span class="gotipe-field-value">журнал<span class="gotipe-caret"></span></span
+      ><span class="gotipe-find-count">3 из 12</span></span
+    >
+    <span class="gotipe-find-tools"
+      ><span class="gotipe-tool"><svg class="gt-icon"><use href="#i-case" /></svg></span
+      ><span class="gotipe-tool"><svg class="gt-icon"><use href="#i-word" /></svg></span
+      ><span class="gotipe-tool"><svg class="gt-icon"><use href="#i-regex" /></svg></span
+      ><span class="gotipe-tool-sep"></span
+      ><span class="gotipe-tool"><svg class="gt-icon"><use href="#i-arrow-up" /></svg></span
+      ><span class="gotipe-tool"><svg class="gt-icon"><use href="#i-arrow-down" /></svg></span
+      ><span class="gotipe-tool"><svg class="gt-icon"><use href="#i-x" /></svg></span></span
+    >
+  </div>
+  <article class="gotipe-page is-slice" lang="ru">
+    <div class="gotipe-doc">
+      <h2>Как это работает</h2>
+      <p>
+        Каждая транзакция сначала попадает в <mark class="gotipe-match">журнал</mark> и только
+        потом — на сервер. Когда связь вернулась, <mark class="gotipe-match">журнал</mark> уходит
+        пачкой.
+      </p>
+      <p>
+        <mark class="gotipe-match is-current">Журнал</mark> лежит в IndexedDB и переживает перезапуск
+        приложения.
+      </p>
+    </div>
+  </article>
+  <!-- @end -->
+</figure>

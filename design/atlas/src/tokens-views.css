@@ -203,6 +203,18 @@
     --gt-outline-display: none;
     --gt-docs-columns: minmax(0, 1fr);
     --gt-handle-display: none;
+    /* the find bar spans the editor; its tools step under the field */
+    --gt-find-inset: 8px;
+    --gt-find-w: calc(100% - 2 * var(--gt-find-inset));
+    --gt-find-columns: auto minmax(0, 1fr);
+    --gt-find-tools-column: 1 / -1;
+    --gt-find-sep-end: auto;
+    /* history is two screens: the list, then the compare view with a way back */
+    --gt-history-columns: minmax(0, 1fr);
+    --gt-history-panel-display: none;
+    --gt-history-back-display: inline-flex;
+    --gt-history-facts-order: 1;
+    --gt-history-facts-basis: 100%;
   }
 }
 @container (max-width: 359px) {

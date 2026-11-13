@@ -1,0 +1,175 @@
+/* Atoms of a line: a mention, an emoji, a formula. Each is one piece of the text — the caret steps
+   over it, a deletion takes it whole — and shows the text it stands for when it cannot be drawn.
+   Their lists after «@» and «:» are the slash menu's rows; the emoji picker and the formula field
+   are popovers at the caret. */
+
+/* ---- a chip appears around an atom under the pointer; a selected atom is selected whole ---- */
+:is(.gotipe-mention, .gotipe-math-inline, .gotipe-emoji-custom):is(.is-hover, .is-selected) {
+  margin-inline: calc(-1 * var(--gt-chip-pad-x));
+  padding-inline: var(--gt-chip-pad-x);
+  border-radius: var(--gt-radius-inline);
+}
+:is(.gotipe-mention, .gotipe-math-inline, .gotipe-emoji-custom).is-hover {
+  background: var(--gt-fill-2);
+}
+:is(.gotipe-mention, .gotipe-math-inline).is-selected {
+  background: var(--gt-selection);
+}
+.gotipe-mention.is-hover {
+  position: relative;
+}
+.gotipe-avatar[data-person="3"] {
+  background: var(--gt-person-3-bg);
+  color: var(--gt-person-3);
+}
+
+/* ---- the lists after «@» and «:» — rows of the slash menu with an avatar or an emoji in front;
+   a page among people keeps its glyph in the avatar's column ---- */
+.gotipe-menu-item > .gotipe-avatar {
+  width: var(--gt-avatar);
+  height: var(--gt-avatar);
+  line-height: var(--gt-avatar);
+}
+.gotipe-menu.has-avatars .gotipe-menu-item > .gt-icon {
+  margin-inline: var(--gt-menu-avatar-inset);
+}
+.gotipe-emoji {
+  display: inline-grid;
+  flex: none;
+  place-items: center;
+  width: var(--gt-avatar);
+  font-size: var(--gt-emoji-menu);
+  line-height: var(--gt-emoji-menu-leading);
+  letter-spacing: normal;
+}
+
+/* ---- the emoji picker: search, categories as glyphs, a grid that scrolls under them ---- */
+.gotipe-emoji-picker {
+  display: grid;
+  gap: var(--gt-popover-pad);
+  width: var(--gt-emoji-picker-w);
+  padding: var(--gt-popover-pad);
+  white-space: normal;
+}
+.gotipe-emoji-tabs {
+  display: flex;
+  justify-content: space-between;
+  padding-bottom: var(--gt-popover-pad);
+  border-bottom: var(--gt-hairline) solid var(--gt-line);
+}
+.gotipe-emoji-scroll {
+  display: block;
+  max-height: var(--gt-emoji-scroll-h);
+  overflow-y: auto;
+}
+.gotipe-emoji-scroll > .gotipe-menu-label {
+  padding-inline: var(--gt-toolbar-pad);
+}
+.gotipe-emoji-grid {
+  display: grid;
+  grid-template-columns: repeat(9, minmax(0, 1fr));
+}
+.gotipe-emoji-cell {
+  position: relative;
+  display: grid;
+  place-items: center;
+  height: var(--gt-emoji-cell);
+  border-radius: var(--gt-radius-control);
+  font-size: var(--gt-emoji-grid);
+  line-height: var(--gt-emoji-grid-leading);
+  letter-spacing: normal;
+}
+.gotipe-emoji-cell.is-hover {
+  background: var(--gt-fill-2);
+}
+
+/* ---- a custom emoji: the team's image at the size of an emoji, its name on hover ---- */
+.gotipe-emoji-custom {
+  position: relative;
+  display: inline-block;
+  vertical-align: var(--gt-emoji-inline-shift);
+}
+.gotipe-emoji-image {
+  display: block;
+  width: var(--gt-emoji-inline);
+  height: var(--gt-emoji-inline);
+  color: var(--gt-accent);
+  fill: var(--gt-page-bg);
+}
+
+/* ---- a formula in the line: typeset math in the document's own font — variables italic,
+   operators upright with room around them, a fraction stacked on its rule ---- */
+.gotipe-math-inline {
+  position: relative;
+  white-space: nowrap;
+}
+.gotipe-math-inline i {
+  font-style: italic;
+}
+.gotipe-mo {
+  padding-inline: var(--gt-math-op);
+}
+.gotipe-frac {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  font-size: var(--gt-math-frac);
+  line-height: var(--gt-math-frac-leading);
+  vertical-align: middle;
+}
+.gotipe-frac > * {
+  padding-inline: var(--gt-math-frac-pad);
+}
+.gotipe-frac > * + * {
+  border-top: var(--gt-hairline) solid currentColor;
+}
+.gotipe-math-inline sup {
+  font-size: var(--gt-math-script);
+  line-height: 0;
+}
+
+/* a formula that cannot be drawn shows its TeX, tinted; the reason is in the tooltip */
+.gotipe-math-inline.is-invalid {
+  padding: var(--gt-inline-pad);
+  border-radius: var(--gt-radius-inline);
+  background: var(--gt-danger-tint);
+  box-shadow: inset 0 calc(-1 * var(--gt-hairline)) 0 var(--gt-danger);
+  font-family: var(--gt-font-mono);
+  font-size: var(--gt-inline-code-size);
+  letter-spacing: normal;
+}
+
+/* ---- the formula's popover: TeX in a field, the drawing under it as it is typed ---- */
+.gotipe-math-pop {
+  display: grid;
+  gap: var(--gt-popover-pad);
+  width: var(--gt-math-pop-w);
+  padding: var(--gt-popover-pad);
+}
+.gotipe-math-pop-row {
+  display: flex;
+  align-items: center;
+  gap: var(--gt-toolbar-gap);
+}
+.gotipe-math-pop-row > .gotipe-field {
+  flex: 1;
+}
+.gotipe-field.is-code {
+  font-family: var(--gt-font-mono);
+  font-size: var(--gt-code-size);
+  letter-spacing: normal;
+}
+.gotipe-math-preview {
+  display: grid;
+  place-items: center;
+  padding: var(--gt-math-preview-pad);
+  border-radius: var(--gt-radius-control);
+  background: var(--gt-sunken);
+  font-size: var(--gt-math-preview-size);
+  line-height: var(--gt-math-preview-leading);
+  letter-spacing: var(--gt-body-tracking);
+}
+.gotipe-math-preview .gotipe-frac {
+  font-size: var(--gt-math-display-frac);
+  line-height: var(--gt-math-display-leading);
+}

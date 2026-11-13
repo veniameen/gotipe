@@ -223,3 +223,7 @@ body {
   top: 22%;
   left: 6%;
 }
+.at-pointer.is-end {
+  top: 64%;
+  left: 86%;
+}

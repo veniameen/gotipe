@@ -31,6 +31,13 @@ const CONTRAST = [
   [".gotipe-review-fact", 4.5],
   [".gotipe-version-meta", 3],
   [".gotipe-ghost", 3],
+  [".gotipe-find-count", 3],
+  [".gotipe-match.is-current", 7],
+  [".gotipe-math-inline.is-invalid", 7],
+  [".gotipe-status", 3],
+  [".gotipe-status-part.is-near", 4.5],
+  [".gotipe-status-part.is-over", 4.5],
+  [".gotipe-history-day", 3],
   [".gotipe-doc .is-empty", 3, "::after"],
   [".gotipe-page-title.is-empty", 3, "::after"],
 ];

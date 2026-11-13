@@ -1,0 +1,75 @@
+<figure class="at-figure" id="f24" data-section="Новые возможности">
+  <figcaption class="at-figure-head">
+    <span class="at-num">24</span>
+    <h2 class="at-figure-title">Формула в строке</h2>
+    <p class="at-caption">
+      Формула набрана шрифтом документа: переменные курсивом, дробь на черте; щелчок открывает поле
+      TeX, рисунок под ним меняется по мере набора. TeX, который не разобрать, остаётся в строке как
+      есть на красной подложке, причина — в подсказке. Сейчас библиотека показывает только TeX — кадр
+      предлагает рисовать формулу.
+    </p>
+  </figcaption>
+  <!-- @frame frame=math-inline view=notion w=480 label="формула в тексте" -->
+  <article class="gotipe-page is-slice" lang="ru">
+    <div class="gotipe-doc">
+      <h3>Цель выпуска</h3>
+      <p>
+        Доля потерянных правок
+        <span class="gotipe-math-inline" role="math" aria-label="p = \frac{L}{N}"
+          ><i>p</i><span class="gotipe-mo">=</span><span class="gotipe-frac"><span><i>L</i></span><span><i>N</i></span></span></span
+        >
+        за неделю должна остаться ниже
+        <span class="gotipe-math-inline is-hover" role="math" aria-label="10^{-3}"
+          >10<sup>−3</sup><svg class="at-pointer is-end"><use href="#i-pointer" /></svg></span
+        >, где
+        <span class="gotipe-math-inline" role="math" aria-label="L"><i>L</i></span> — правки, не
+        дошедшие до сервера.
+      </p>
+    </div>
+  </article>
+  <!-- @end -->
+  <!-- @frame frame=math-edit view=notion w=480 min=320 label="поле TeX и рисунок" -->
+  <article class="gotipe-page is-slice" lang="ru">
+    <div class="gotipe-doc">
+      <h3>Цель выпуска</h3>
+      <p>
+        Доля потерянных правок
+        <span class="gotipe-anchor is-inline"
+          ><span class="gotipe-math-inline is-selected" role="math" aria-label="p = \frac{L}{N}"
+            ><i>p</i><span class="gotipe-mo">=</span><span class="gotipe-frac"><span><i>L</i></span><span><i>N</i></span></span></span
+          ><span class="gotipe-overlay gotipe-math-pop" data-place="below-center" role="dialog" aria-label="Формула"
+            ><span class="gotipe-math-pop-row"
+              ><span class="gotipe-field is-typing is-code"
+                ><span class="gotipe-field-value">p = \frac{L}{N}<span class="gotipe-caret"></span></span></span
+              ><span class="gotipe-tool is-active"><svg class="gt-icon"><use href="#i-check-16" /></svg></span></span
+            ><span class="gotipe-math-preview"
+              ><span class="gotipe-math-inline"
+                ><i>p</i><span class="gotipe-mo">=</span><span class="gotipe-frac"><span><i>L</i></span><span><i>N</i></span></span></span></span></span
+        ></span>
+        за неделю должна остаться ниже
+        <span class="gotipe-math-inline" role="math" aria-label="10^{-3}">10<sup>−3</sup></span>, где
+        <span class="gotipe-math-inline" role="math" aria-label="L"><i>L</i></span> — правки, не
+        дошедшие до сервера.
+      </p>
+    </div>
+  </article>
+  <!-- @end -->
+  <!-- @frame frame=math-invalid view=notion w=480 label="TeX с ошибкой" -->
+  <article class="gotipe-page is-slice" lang="ru">
+    <div class="gotipe-doc">
+      <h3>Цель выпуска</h3>
+      <p>
+        Доля потерянных правок
+        <span class="gotipe-math-inline is-invalid" role="math" aria-invalid="true"
+          >p = \frac{L}{N<span class="gotipe-tooltip" data-place="below">Не хватает закрывающей «}»</span
+          ><svg class="at-pointer"><use href="#i-pointer" /></svg></span
+        >
+        за неделю должна остаться ниже
+        <span class="gotipe-math-inline" role="math" aria-label="10^{-3}">10<sup>−3</sup></span>, где
+        <span class="gotipe-math-inline" role="math" aria-label="L"><i>L</i></span> — правки, не
+        дошедшие до сервера.
+      </p>
+    </div>
+  </article>
+  <!-- @end -->
+</figure>

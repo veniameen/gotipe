@@ -1,0 +1,70 @@
+<figure class="at-figure" id="f26" data-section="Новые возможности">
+  <figcaption class="at-figure-head">
+    <span class="at-num">26</span>
+    <h2 class="at-figure-title">Счётчик слов и символов</h2>
+    <p class="at-caption">
+      Тихая строка под документом: слова и символы. Если хост задал лимит, у края число символов
+      принимает тон предупреждения, за краем — ошибки: лишний текст подсвечен на месте, причина
+      лимита — в подсказке.
+    </p>
+  </figcaption>
+  <!-- @frame frame=count view=notion w=768 label="без лимита" -->
+  <article class="gotipe-page is-slice" lang="ru">
+    <div class="gotipe-doc">
+      <h3>Порядок выката</h3>
+      <ol class="gotipe-list">
+        <li>Включить журнал для 5 % пользователей веб-версии.</li>
+        <li>Неделю сравнивать долю потерянных правок с контрольной группой.</li>
+        <li>Открыть всем, начиная с приложения для macOS.</li>
+      </ol>
+      <p>Возражения принимаем до 18 ноября — в обсуждении ADR-0031 или в треде выпуска 2.8.</p>
+    </div>
+    <footer class="gotipe-status" role="status">
+      <span class="gotipe-status-part">1 204 слова</span> ·
+      <span class="gotipe-status-part">7 830 символов</span>
+    </footer>
+  </article>
+  <!-- @end -->
+  <!-- @frame frame=count-near view=notion w=768 label="у лимита" -->
+  <article class="gotipe-page is-slice" lang="ru">
+    <div class="gotipe-doc">
+      <h3>Порядок выката</h3>
+      <ol class="gotipe-list">
+        <li>Включить журнал для 5 % пользователей веб-версии.</li>
+        <li>Неделю сравнивать долю потерянных правок с контрольной группой.</li>
+        <li>Открыть всем, начиная с приложения для macOS.</li>
+      </ol>
+      <p>Возражения принимаем до 18 ноября — в обсуждении ADR-0031 или в треде выпуска 2.8.</p>
+    </div>
+    <footer class="gotipe-status" role="status">
+      <span class="gotipe-status-part">1 204 слова</span> ·
+      <span class="gotipe-status-part is-near">7 830 из 8 000 символов</span>
+    </footer>
+  </article>
+  <!-- @end -->
+  <!-- @frame frame=count-over view=notion w=768 label="за лимитом" -->
+  <article class="gotipe-page is-slice" lang="ru">
+    <div class="gotipe-doc">
+      <h3>Порядок выката</h3>
+      <ol class="gotipe-list">
+        <li>Включить журнал для 5 % пользователей веб-версии.</li>
+        <li>Неделю сравнивать долю потерянных правок с контрольной группой.</li>
+        <li>Открыть всем, начиная с приложения для macOS.</li>
+      </ol>
+      <p>
+        Возражения принимаем до 18 ноября — в обсуждении ADR-0031 или в треде выпуска 2.8.
+        <span class="gotipe-over-limit"
+          >Если возражений не будет, выкат начнётся 19 ноября с веб-версии, а через неделю — macOS.</span
+        >
+      </p>
+    </div>
+    <footer class="gotipe-status" role="status">
+      <span class="gotipe-status-part">1 219 слов</span> ·
+      <span class="gotipe-status-part is-over"
+        >8 112 из 8 000 символов<span class="gotipe-tooltip" data-place="above">Описание выпуска — до 8 000 символов</span
+        ><svg class="at-pointer"><use href="#i-pointer" /></svg></span
+      >
+    </footer>
+  </article>
+  <!-- @end -->
+</figure>

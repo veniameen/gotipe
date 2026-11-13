@@ -1,0 +1,93 @@
+/* The layout of text: a block's alignment, the face and size of a selection in the fixed bar,
+   invisible characters, a paragraph written right to left, merged table cells and a selection of
+   cells. */
+
+/* ---- alignment belongs to the block; its handle stays in the gutter ---- */
+.gotipe-doc > [data-align="center"] {
+  text-align: center;
+}
+.gotipe-doc > [data-align="right"] {
+  text-align: right;
+}
+.gotipe-doc > [data-align="justify"] {
+  text-align: justify;
+  hyphens: auto;
+}
+
+/* ---- the fixed bar with an open list: the track lets the list out, as an open table does ---- */
+.gotipe-toolbar-track.is-open {
+  overflow: visible;
+}
+/* a tool that opens a list: its glyph, then the quieter chevron */
+.gotipe-tool.is-pick {
+  gap: var(--gt-toolbar-gap);
+  padding: var(--gt-tool-text-pad);
+}
+.gotipe-tool.is-pick > .gt-icon + .gt-icon {
+  color: var(--gt-text-3);
+}
+
+/* ---- faces and sizes: each face is named in itself; the size steps by one ---- */
+.is-face-serif {
+  font-family: var(--gt-font-serif);
+}
+.is-face-mono {
+  font-family: var(--gt-font-mono);
+}
+.gotipe-size-field {
+  display: inline-grid;
+  flex: none;
+  place-items: center;
+  box-sizing: border-box;
+  min-width: var(--gt-size-field-w);
+  height: var(--gt-tool);
+  border-radius: var(--gt-radius-control);
+  box-shadow: inset 0 0 0 var(--gt-hairline) var(--gt-line-strong);
+  color: var(--gt-text);
+  font-size: var(--gt-ui-size);
+  line-height: var(--gt-ui-leading);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---- invisible characters: quiet marks over spaces, at soft breaks and at paragraph ends ---- */
+.gotipe-sp {
+  position: relative;
+}
+.gotipe-sp::before {
+  content: "·";
+  position: absolute;
+  inset: 0;
+  color: var(--gt-text-3);
+  text-align: center;
+  translate: 0 var(--gt-space-mark-shift);
+}
+.gotipe-br::before {
+  content: "↵";
+  color: var(--gt-text-3);
+}
+.gotipe-pilcrow::after {
+  content: "¶";
+  color: var(--gt-text-3);
+}
+
+/* ---- right to left: the paragraph runs from the right, its handle stands in the right gutter ---- */
+.gotipe-doc > [dir="rtl"] > .gotipe-block-handle {
+  right: calc(-1 * var(--gt-handle-offset));
+  left: auto;
+}
+
+/* ---- merged cells: a header over two columns keeps its rule under those columns only; a cell
+   over two rows breaks the rule between them ---- */
+.gotipe-table th[rowspan] {
+  vertical-align: bottom;
+}
+.gotipe-table tr.is-continued > th:first-child {
+  padding: var(--gt-head-cell-pad);
+}
+.gotipe-table th[colspan] {
+  position: relative;
+}
+/* cells selected together: the selection's tint over the whole cell, above a hovered row */
+.gotipe-table :is(tr, tr.is-hovered) > td.is-selected {
+  background: var(--gt-selection);
+}

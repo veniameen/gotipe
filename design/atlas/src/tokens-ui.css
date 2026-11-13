@@ -104,6 +104,52 @@
   --gt-slice-top: 96px;
   --gt-slice-top-tight: 32px;
   --gt-slice-bottom: 48px;
+
+  /* inline atoms: a mention, an emoji, a formula — one piece of the line */
+  --gt-chip-pad-x: 3px;
+  --gt-menu-avatar-inset: 2px;
+  --gt-emoji-menu: 15px;
+  --gt-emoji-menu-leading: 20px;
+  --gt-emoji-picker-w: 344px;
+  --gt-emoji-cell: 36px;
+  --gt-emoji-grid: 22px;
+  --gt-emoji-grid-leading: 28px;
+  --gt-emoji-scroll-h: 214px;
+  --gt-emoji-inline: 1.25em;
+  --gt-emoji-inline-shift: -0.24em;
+  --gt-math-op: 0.28em;
+  --gt-math-frac: 0.8em;
+  --gt-math-frac-leading: 1;
+  --gt-math-frac-pad: 0.14em;
+  --gt-math-script: 0.7em;
+  --gt-math-display-frac: 1em;
+  --gt-math-display-leading: 1.25;
+  --gt-math-pop-w: 288px;
+  --gt-math-preview-pad: 12px;
+  --gt-math-preview-size: 18px;
+  --gt-math-preview-leading: 26px;
+
+  /* find and replace, the counter under the document */
+  --gt-find-w: 452px;
+  --gt-find-inset: 12px;
+  --gt-find-columns: auto minmax(0, 1fr) auto;
+  --gt-find-tools-column: auto;
+  --gt-find-sep-end: var(--gt-tool-sep-gap);
+  --gt-status-gap: 40px;
+
+  /* invisible characters: the dot over a space stands at the middle of the x-height */
+  --gt-space-mark-shift: -0.14em;
+
+  /* the size of a selection's text in the fixed bar */
+  --gt-size-field-w: 36px;
+
+  /* history: versions beside the page, the compare view marks blocks in the gutter */
+  --gt-diff-bar-gap: 16px;
+  --gt-history-columns: minmax(0, 1fr) var(--gt-panel-w);
+  --gt-history-panel-display: block;
+  --gt-history-back-display: none;
+  --gt-history-facts-order: 0;
+  --gt-history-facts-basis: auto;
 }
 
 /* ---- the drawing's own positions: where a dragged block's ghost stands ---- */

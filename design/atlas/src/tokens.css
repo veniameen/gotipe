@@ -9,6 +9,8 @@
     "Segoe UI", system-ui, "Helvetica Neue", Arial, sans-serif;
   --gt-font-mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, "Liberation Mono",
     monospace;
+  /* a font a selection may take in the modern view; system faces only, nothing is loaded */
+  --gt-font-serif: ui-serif, "Iowan Old Style", Charter, Georgia, "Times New Roman", serif;
   --gt-weight-regular: 400;
   --gt-weight-medium: 500;
   --gt-weight-strong: 600;
@@ -16,6 +18,7 @@
 
   /* one radius per role, never the same one nested inside itself */
   --gt-radius-inline: 4px;
+  --gt-radius-match: 3px;
   --gt-radius-check: 4px;
   --gt-radius-control: 6px;
   --gt-radius-block: 8px;
@@ -147,6 +150,10 @@
   --gt-bg-gray: rgb(35 35 34 / 0.08);
   --gt-diagram-node: #ffffff;
   --gt-diagram-queue: rgb(44 98 212 / 0.32);
+  --gt-find: rgb(234 179 8 / 0.22);
+  --gt-find-current: rgb(234 179 8 / 0.5);
+  --gt-find-ring: rgb(154 101 0 / 0.6);
+  --gt-over-limit: rgb(196 56 47 / 0.13);
 
   --at-bg: #f3f3f1;
   --at-text: #232322;
@@ -236,6 +243,10 @@
   --gt-bg-gray: rgb(255 255 255 / 0.1);
   --gt-diagram-node: #232322;
   --gt-diagram-queue: rgb(107 156 255 / 0.36);
+  --gt-find: rgb(226 173 69 / 0.16);
+  --gt-find-current: rgb(226 173 69 / 0.32);
+  --gt-find-ring: rgb(226 173 69 / 0.75);
+  --gt-over-limit: rgb(240 107 96 / 0.2);
 
   --at-bg: #121211;
   --at-text: #ececea;

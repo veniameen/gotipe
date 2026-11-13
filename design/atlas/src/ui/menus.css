@@ -64,6 +64,10 @@
 .gotipe-menu-item.is-selected > .gt-icon {
   color: var(--gt-text);
 }
+/* on the chosen row's fill the key steps up one tone, so it still reads */
+.gotipe-menu-item.is-selected > .gotipe-key {
+  color: var(--gt-text-2);
+}
 .gotipe-menu-item.is-current > .gotipe-menu-end {
   color: var(--gt-text);
 }
