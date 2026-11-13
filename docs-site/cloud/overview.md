@@ -48,19 +48,17 @@ openssl ecparam -name prime256v1 -genkey -noout -out jwt-private.pem
 openssl ec -in jwt-private.pem -pubout -out jwt-public.pem
 ```
 
-**3. Write `infra/.env`.** Compose reads it for its own variables and passes it to the API:
+**3. Write `infra/.env`.** Compose reads it for its own variables and passes it to the API.
+Start from the example, which uses the API's own names and formats (a test loads it through
+the API's configuration loader), and replace every `CHANGE_ME` and `example.com` value:
 
-```sh title="infra/.env"
-POSTGRES_PASSWORD=change-me
-HTTP_ALLOWED_ORIGINS=https://app.example.com
-SYNC_ALLOWED_ORIGINS=https://app.example.com
-R2_ACCOUNT_ID=your-account-id
-R2_ACCESS_KEY_ID=your-access-key
-R2_SECRET_ACCESS_KEY=your-secret-key
-R2_BUCKET=gotipe-data
+```sh
+cp infra/.env.example infra/.env
 ```
 
-Append the keys as quoted multi-line values:
+At least set `POSTGRES_PASSWORD`, `HTTP_ALLOWED_ORIGINS`, `SYNC_ALLOWED_ORIGINS`,
+`R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET` and
+`GRAFANA_ADMIN_PASSWORD`. Then append the keys as quoted multi-line values:
 
 ```sh
 printf 'JWT_PRIVATE_KEY="%s"\nJWT_PUBLIC_KEY="%s"\n' "$(cat jwt-private.pem)" "$(cat jwt-public.pem)" >> infra/.env
@@ -72,6 +70,18 @@ must exist.
 
 **4. Set your host names.** Replace `api.gotipe.com` and `sync.gotipe.com` in
 `infra/Caddyfile` with yours.
+
+Caddy has the fixed address `172.30.240.2` on the compose `backend` network
+(`172.30.240.0/24`), and the API sets `TRUSTED_PROXIES=172.30.240.2/32`: it takes the client
+address from `X-Forwarded-For` only when Caddy sent the request, so the login limit counts
+each client separately. Caddy sends one address there, the client as it resolved it
+(`{client_ip}`). If that subnet is taken on your host, change the subnet, Caddy's
+`ipv4_address` and `TRUSTED_PROXIES` together.
+
+If a CDN or load balancer sits in front of Caddy, configure it in Caddy only: add its ranges
+to `trusted_proxies` and enable `trusted_proxies_strict` in Caddy's global options, as the
+comment in `infra/Caddyfile` shows. Caddy then forwards the client that proxy reports.
+Leave `TRUSTED_PROXIES` at Caddy's address.
 
 **5. Apply the schema.** Migrations connect to PostgreSQL directly, not through PgBouncer:
 
@@ -95,10 +105,26 @@ docker compose exec api wget -qO- http://localhost:8080/readyz
 
 **7. Create the first account** — see [Authentication](/docs/cloud/auth#create-the-first-account).
 
-> [!WARNING]
-> Do not copy `infra/.env.example` as it is: several of its names and formats are out of
-> date (`JWT_PRIVATE_KEY_PATH`, `STRIPE_PRICE_STARTER`, `JWT_EXPIRY=3600`), and the API
-> refuses to start with them. Use the names in the table below.
+At startup the API logs its trusted proxies (`trusted_proxies=172.30.240.2/32`). When a
+request from any other address carries `X-Forwarded-For` or `X-Real-IP`, it logs a warning,
+at most once a minute: behind a proxy this means `TRUSTED_PROXIES` does not match the proxy,
+and every client shares one login limit.
+
+### Upgrading a host set up before the fixed subnet
+
+Docker does not change the subnet of an existing network. On a host whose stack was created
+before the `backend` network had a fixed subnet, Caddy would keep a dynamic address,
+`TRUSTED_PROXIES` would match nothing, and a later `up` of Caddy would fail.
+`infra/scripts/deploy.sh` checks the network and stops with these steps. Recreate the
+containers and networks once; volumes and data are kept:
+
+```sh
+docker compose -f infra/docker-compose.yml --profile monitoring down
+infra/scripts/deploy.sh <tag>
+IMAGE_TAG=<tag> docker compose -f infra/docker-compose.yml up -d
+```
+
+Add `--profile monitoring` to the last command if you run Prometheus and Grafana.
 
 ## Local development
 
@@ -123,8 +149,9 @@ and their `127.0.0.1` forms unless `HTTP_ALLOWED_ORIGINS` is set.
 
 ## Configuration
 
-The API reads environment variables only. Durations are Go durations such as `30s` or `1h`;
-rate limits are `<count>/<s|sec|min|h|hour>`. An invalid value stops the API at startup.
+The API reads environment variables only; `infra/.env.example` lists all of them. Durations
+are Go durations such as `30s` or `1h` (a bare number such as `3600` is rejected); rate limits
+are `<count>/<s|sec|min|h|hour>`. An invalid value stops the API at startup.
 
 | Variable | Default | Description |
 |---|---|---|
@@ -141,6 +168,7 @@ rate limits are `<count>/<s|sec|min|h|hour>`. An invalid value stops the API at 
 | `ENVIRONMENT` | `development` | `development` or `production`. Sets default CORS origins and the API key prefix. |
 | `HTTP_ALLOWED_ORIGINS` | per environment | Exact browser origins for the REST API, comma-separated. Set it in production: the built-in production default is GoTipe's own domains. |
 | `SYNC_ALLOWED_ORIGINS` | — | Exact browser origins for `/sync`, comma-separated. Wildcards are rejected. |
+| `TRUSTED_PROXIES` | — | Reverse proxies whose `X-Forwarded-For` (or `X-Real-IP`) names the client: IP addresses or CIDR ranges, comma-separated. The API reads the header right to left and takes the first address outside this list, so list every proxy that appends to it, or have the last proxy send only the client (as the compose stack's Caddy does). Empty trusts no proxy; a range that covers every address is rejected. |
 | `LISTEN_ADDR`, `SYNC_LISTEN_ADDR`, `METRICS_LISTEN_ADDR` | `:8080`, `:8081`, `:9090` | Listen addresses. |
 | `PROMETHEUS_ENABLED` | `true` | Serve `/metrics`. |
 | `RATE_LIMIT_API`, `RATE_LIMIT_AI`, `RATE_LIMIT_WS` | `100/min`, `60/min`, `1000/min` | Requests per user, AI requests per user, messages per WebSocket. |
@@ -154,23 +182,87 @@ rate limits are `<count>/<s|sec|min|h|hour>`. An invalid value stops the API at 
 | `AI_MAX_TOKENS` | `4096` | Default and largest `max_tokens`. |
 | `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET` | — | Stripe billing; without the webhook secret the webhook answers `503`. |
 | `STRIPE_PRICE_STARTER_ID`, `STRIPE_PRICE_PRO_ID`, `STRIPE_PRICE_BUSINESS_ID` | — | Stripe prices of the paid plans. |
-| `LOG_LEVEL`, `LOG_FORMAT` | `info`, `json` | `debug`, `info`, `warn` or `error`; `json` or text. |
+| `LOG_LEVEL`, `LOG_FORMAT` | `info`, `json` | `debug`, `info`, `warn` or `error`; `json` or `text`. |
 
-The API also reads `OAUTH_*`, `AI_CACHE_TTL`, `VALKEY_MAX_CONNS` and `R2_CDN_URL`; this release
-does not use them.
+Older drafts named `ENV`, `JWT_PRIVATE_KEY_PATH`, `STRIPE_PRICE_STARTER`, `S3_BUCKET`,
+`OAUTH_*`, `AI_CACHE_TTL`, `VALKEY_MAX_CONNS` and `R2_CDN_URL`; the API does not read them.
 
 ## Health and metrics
 
 - `GET /healthz` answers `200 {"status":"ok"}` while the process runs.
-- `GET /readyz` checks PostgreSQL, Valkey and the bucket. It answers `200` with
-  `{"status":"ok","checks":{"postgres":"ok","valkey":"ok","r2":"ok"}}`, or `503` with
-  `"status":"degraded"` and the failing check's error. The image's health check uses it.
-- `GET /metrics` on port `9090` serves Go runtime and process metrics and
-  `gotipe_websocket_connections`, `gotipe_websocket_rooms` and
-  `gotipe_export_jobs_total{format,status}`.
+- `GET /readyz` checks PostgreSQL, Valkey and the bucket at the same time, within 3 seconds.
+  It answers `200` with `{"status":"ok","checks":{"postgres":"ok","valkey":"ok","r2":"ok"}}`,
+  or `503` with `"status":"degraded"` and `"unavailable"` for each failing dependency. The
+  response never contains the error; the API logs it as `readiness check failed` with the
+  dependency's name. The image's health check uses this endpoint.
+- `GET /metrics` on port `9090` serves Go runtime and process metrics and:
+
+| Metric | Labels | Meaning |
+|---|---|---|
+| `gotipe_http_requests_total` | `method`, `path`, `status` | REST requests. `path` is the route pattern, such as `/v1/documents/{id}`; requests that match no route have `unmatched`. |
+| `gotipe_http_request_duration_seconds` | `method`, `path` | REST request duration histogram. |
+| `gotipe_ai_requests_total` | `provider`, `model`, `status` | Calls to an AI provider, `success` or `error`. A failed call's model is `unknown` and an unknown provider is `other`, so request fields cannot create new series. |
+| `gotipe_documents_total` | — | Stored documents, counted in PostgreSQL at most once a minute. Missing from a scrape when the count fails. |
+| `gotipe_valkey_used_memory_bytes`, `gotipe_valkey_maxmemory_bytes` | — | Valkey's `used_memory` and `maxmemory` (`0` means no limit), read with `INFO memory` at each scrape. Missing when Valkey does not answer. |
+| `gotipe_websocket_connections`, `gotipe_websocket_rooms` | — | Open `/sync` connections and rooms. |
+| `gotipe_export_jobs_total` | `format`, `status` | Finished export jobs, `completed` or `failed`. |
+
+`infra/prometheus.yml` scrapes `api:9090`. The compose stack runs no exporters; the alert
+rules and the Grafana dashboards use only the metrics above. `ValkeyMemoryHigh` fires when
+Valkey uses more than 80% of `maxmemory`, and the overview dashboard shows the same ratio. For
+PostgreSQL, PgBouncer or disk alerts, add the matching exporter and scrape job.
 
 On `SIGTERM` the API stops accepting requests, finishes open ones for up to 30 seconds, saves
 collaboration checkpoints and stops the workers.
+
+## Valkey
+
+Valkey holds token revocations, idempotency records and rate-limit windows, each with its own
+expiry. None of it is a cache: evicting a revocation would make a revoked token work again,
+and evicting an idempotency record would let a retry repeat a mutation. `infra/valkey/valkey.conf`
+therefore sets `maxmemory 1gb` with `maxmemory-policy noeviction`; the policy covers the whole
+instance, not one database. Do not point the API at a Valkey or Redis that evicts keys
+(`allkeys-*` or `volatile-*` policies).
+
+When the instance is full, Valkey refuses writes and most API requests answer `503` until keys
+expire: rate-limit windows after one window, idempotency records after 24 hours. Size
+`maxmemory` for a day of idempotency records — a stored reply is at most 256 KiB. The API
+exports Valkey's `used_memory` and `maxmemory` on `/metrics`, and the `ValkeyMemoryHigh` alert
+fires at 80%.
+
+## Backups
+
+The compose stack does not archive WAL. `infra/postgres/postgresql.conf` sets
+`archive_mode = off`: the stock `postgres:17-alpine` image has no pgBackRest, and a failing
+`archive_command` makes PostgreSQL keep every WAL segment until the disk is full.
+
+Without archiving, take logical backups and copy them off the server:
+
+```sh
+docker compose -f infra/docker-compose.yml exec -T postgres \
+  pg_dump -U gotipe -Fc gotipe > "gotipe-$(date +%F).dump"
+```
+
+Document bodies, versions and export files live in the bucket, not in PostgreSQL; back up the
+bucket separately.
+
+For point-in-time recovery with pgBackRest instead:
+
+1. Run PostgreSQL from an image that adds pgBackRest to PostgreSQL 17, and mount
+   `infra/pgbackrest/pgbackrest.conf` at `/etc/pgbackrest/pgbackrest.conf`.
+2. Give that container `PGBACKREST_REPO1_S3_ENDPOINT`, `PGBACKREST_REPO1_S3_KEY`,
+   `PGBACKREST_REPO1_S3_KEY_SECRET` and `PGBACKREST_REPO1_CIPHER_PASS`. pgBackRest does not
+   expand variables inside its configuration file. The `gotipe-backups` bucket must exist.
+3. Create the stanza as the `postgres` user:
+   `docker compose exec -u postgres postgres pgbackrest --stanza=gotipe stanza-create`.
+4. In `infra/postgres/postgresql.conf`, set `archive_mode = on` and
+   `archive_command = 'pgbackrest --stanza=gotipe archive-push %p'`, then restart PostgreSQL.
+5. Run `pgbackrest --stanza=gotipe check` the same way. Only when it succeeds, take a full
+   backup and schedule `infra/scripts/backup-cron`.
+
+With archiving on, watch disk space and `failed_count` in `pg_stat_archiver`: while
+`archive_command` fails, WAL accumulates. `infra/scripts/restore.sh` assumes this setup.
+The release checks did not run it; rehearse a restore before you rely on it.
 
 ## Limitations
 
@@ -178,13 +270,10 @@ collaboration checkpoints and stops the workers.
 > The compose stack is a starting point, not a tested production setup: the release checks ran
 > the image against PostgreSQL, Valkey and MinIO directly. Review it before you rely on it.
 
-- `infra/prometheus.yml` scrapes `api:8080` and `sync:8081`; point it at `api:9090`.
-  `gotipe_http_requests_total`, `gotipe_http_request_duration_seconds`,
-  `gotipe_ai_requests_total` and `gotipe_documents_total` are registered but not updated.
-- `infra/postgres/postgresql.conf` archives WAL through pgBackRest, which the
-  `postgres:17-alpine` image does not contain. Add it to the image, or change the archive
-  settings, before you depend on backups.
-- Grafana's admin password defaults to `admin`; set `GRAFANA_ADMIN_PASSWORD`.
+- Without the pgBackRest setup above there is no point-in-time recovery.
+- The monitoring profile publishes Prometheus (`9090`) and Grafana (`3000`) on every host
+  interface, and Grafana's admin password falls back to `admin` when
+  `GRAFANA_ADMIN_PASSWORD` is unset. Keep both off the public network.
 - Collaboration rooms live in the API process. Run one API process per deployment, or route
   every connection to a document to the same process.
 

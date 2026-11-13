@@ -66,7 +66,7 @@ func main() {
 	defer valkeyStore.Close()
 
 	r2, err := storage.NewR2Store(ctx, cfg.R2AccountID, cfg.R2AccessKeyID, cfg.R2SecretKey,
-		cfg.R2Bucket, cfg.R2CDNUrl, cfg.S3Endpoint, cfg.S3UsePathStyle)
+		cfg.R2Bucket, cfg.S3Endpoint, cfg.S3UsePathStyle)
 	if err != nil {
 		log.Error("failed to connect to r2/s3", "error", err)
 		os.Exit(1)
@@ -118,7 +118,7 @@ func main() {
 	authHandler := handler.NewAuthHandler(db, jwtSvc, valkeyStore)
 	usersHandler := handler.NewUsersHandler(db)
 	apiKeysHandler := handler.NewAPIKeysHandler(db, auditLogger, cfg.Environment)
-	converter := conversion.Native{Command: os.Getenv("GOTIPE_EXPORT_COMMAND")}
+	converter := conversion.Native{Command: cfg.ExportCommand}
 	contents := &document.Reader{DB: db.Pool, Store: r2, Converter: converter}
 	documentsHandler := handler.NewDocumentsHandler(db, r2, auditLogger, contents)
 	if err := documentsHandler.SetDocumentLimit(cfg.ExportMaxDocSize); err != nil {
@@ -141,9 +141,13 @@ func main() {
 	// --- Phase 4: Build router ---
 	r := chi.NewRouter()
 
-	// Middleware chain (order is critical)
+	// Middleware chain (order is critical). Metrics sit outside the recoverer so a
+	// recovered panic is counted as the 500 it becomes.
+	clients := middleware.TrustProxies(cfg.TrustedProxies)
+	log.Info("client addresses: X-Forwarded-For is honoured only from trusted proxies", "trusted_proxies", clients)
 	r.Use(middleware.RequestIDMiddleware)
-	r.Use(middleware.LoggerMiddleware(log))
+	r.Use(middleware.LoggerMiddleware(log, clients))
+	r.Use(middleware.MetricsMiddleware(handler.HTTPMetrics{}))
 	r.Use(middleware.BodyLimitMiddleware(cfg.ExportMaxDocSize + (1 << 20)))
 	r.Use(chiMiddleware.Recoverer)
 	r.Use(middleware.CORSMiddleware(cfg.HTTPAllowedOrigins))
@@ -151,8 +155,10 @@ func main() {
 
 	// Public routes
 	r.Get("/healthz", handler.Healthz())
-	r.Get("/readyz", handler.Readyz(db, valkeyStore, r2))
-	r.With(authLimiter.IPMiddleware()).Post("/v1/auth/token", authHandler.CreateToken())
+	r.Get("/readyz", handler.Readyz(log, map[string]handler.ReadinessCheck{
+		"postgres": db.Ping, "valkey": valkeyStore.Ping, "r2": r2.HeadBucket,
+	}))
+	r.With(authLimiter.IPMiddleware(clients)).Post("/v1/auth/token", authHandler.CreateToken())
 	r.Post("/v1/webhooks/stripe", webhooksHandler.StripeWebhook())
 
 	// Authenticated routes
@@ -228,6 +234,9 @@ func main() {
 	syncPersist := &dbPersistenceStore{db: db, r2: r2}
 	syncServer := sync.NewServer(syncPersist, log)
 	syncServer.SetAuthorizationCheck(handler.SyncSessionAuthorization(db.Pool, valkeyStore))
+	// Open rooms adopt content replaced over REST and ask their clients to reload.
+	documentsHandler.SetBaselineReplacement(syncServer.ReplaceBaseline)
+	versionsHandler.SetBaselineReplacement(syncServer.ReplaceBaseline)
 	wsLimit, wsWindow, err := config.ParseRateLimit(cfg.RateLimitWS)
 	if err == nil {
 		err = syncServer.SetMessageRate(wsLimit, wsWindow)
@@ -243,7 +252,7 @@ func main() {
 
 	syncRouter := chi.NewRouter()
 	syncRouter.Use(middleware.RequestIDMiddleware)
-	syncRouter.Use(middleware.LoggerMiddleware(log))
+	syncRouter.Use(middleware.LoggerMiddleware(log, clients))
 	syncRouter.Use(auth.WebSocketCredentials)
 	syncRouter.Use(auth.AuthMiddleware(jwtSvc, apiKeySvc, valkeyStore))
 	syncRouter.With(rateLimiter.Middleware("sync-connect"), auth.RequireScope("documents:write"), handler.SyncDocumentAccess(db)).Get("/sync", syncServer.HandleWebSocket())
@@ -278,6 +287,14 @@ func main() {
 	}
 
 	// Metrics server
+	if err := handler.RegisterDocumentCount(db.Pool, log); err != nil {
+		log.Error("failed to register document metrics", "error", err)
+		os.Exit(1)
+	}
+	if err := handler.RegisterValkeyMemory(valkeyStore.MemoryInfo, log); err != nil {
+		log.Error("failed to register valkey metrics", "error", err)
+		os.Exit(1)
+	}
 	metricsRouter := chi.NewRouter()
 	metricsRouter.Handle("/metrics", handler.MetricsHandler())
 	metricsServer := &http.Server{

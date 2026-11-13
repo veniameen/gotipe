@@ -95,10 +95,34 @@ payload. Browser clients need no compression runtime.
 | `0x08` | Structured error `{ "code": "…", "message": "…" }` |
 | `0x09` | ACK after durable save; duplicate delivery also receives ACK |
 
-The connection query uses `document_id` and `peer_id`. Authentication and document
-write access are checked before WebSocket upgrade. The room event loop alone owns
-membership, outgoing queues, awareness, and the operation union. Read pumps post
+| `0x08` code | Sender's reaction |
+| --- | --- |
+| `UPDATE_NOT_SAVED` | Storage failed; reconnect and resend the unacknowledged operations. |
+| `BASELINE_REPLACED` | The replica's baseline is obsolete; the server closes the connection. Reload the document over REST and start a new replica. Never retry with the old one. |
+| `INVALID_AWARENESS` | Only this presence frame was refused; the connection and the document stay. |
+| `INVALID_UPDATE`, `UNKNOWN_MESSAGE` | Protocol error; stop. |
+
+The connection query uses `document_id` and `peer_id`. `peer_id` follows the replica
+rule of the engine (non-blank, at most 256 bytes, no `@base` prefix); anything else is
+refused with HTTP 400 before upgrade. Authentication and document write access are
+checked before WebSocket upgrade. The room event loop alone owns membership, outgoing
+queues, awareness, the operation union and its storage generation. Read pumps post
 events. A failed durable write changes neither the in-memory union nor peers.
+
+Awareness is validated, not relayed blindly. A client frame is one JSON object of at
+most 32 KiB: `user.name` up to 256 UTF-16 code units, `user.color` `#rgb`/`#rrggbb`,
+optional `user.avatar` (`http:`, `https:` or `data:image/`, up to 16384 code units),
+optional `cursor {blockId, offset}` and `selection {blockId, from, to}` with a
+non-empty block and exact non-negative integers (`from <= to`), and a numeric
+`lastActive`. The room stores and relays only these fields with the connection's
+`peerId`; `removed` and unknown fields are dropped. An invalid frame is answered with
+`INVALID_AWARENESS` to its sender only and is neither stored nor relayed; the
+sender's previous valid presence stays. Receivers still validate: an unreadable
+presence removes only that peer and is reported without closing anything.
+`@gotipe/collaboration` validates its own user at configuration time, sends
+presence only when the user, caret or one-block selection changes (remote merges
+alone do not count), at most once per 100 ms after the change, and re-announces
+it after every handshake.
 The negotiated subprotocol is `gotipe.v1`; authentication middleware consumes the
 credential subprotocol before upgrade. Origins default to same origin. Explicit
 `Server.SetAllowedOrigins` entries are exact HTTP(S) scheme/host pairs; wildcard,
@@ -109,14 +133,47 @@ The ordinary baseline remains in `documents.r2_key`. Immutable deltas are stored
 `document_updates`; replication checkpoints use `document_snapshots`. Neither is
 written over the ordinary document object. REST replacement/restore atomically
 invalidates old logs. Each record also carries the immutable `generation_key`;
-readers filter it against the current object key. Persistence validates the
-baseline and conditionally inserts against the loaded key. A late write racing
-with REST replacement can never enter the new generation's visible log.
+readers filter it against the current object key. A room loads one generation
+(object, checkpoint and updates for that key) and validates every update's `base`
+against it; saves and checkpoints insert only while `r2_key` still equals the room's
+generation. A late write racing with REST replacement can never enter the new
+generation's visible log; it fails with `ErrBaselineReplaced` instead.
 
 REST content/export must project the baseline plus stored updates through the Rust
 engine (`gotipe-convert project-crdt`); reading the baseline alone is insufficient.
 Checkpoints do not justify discarding older updates unless coverage is proven.
 The current adapter retains the durable log and deduplicates replay.
+
+## Baseline replacement
+
+`PATCH /v1/documents/{id}` with `content` and a version restore commit a new
+generation, then notify the sync server (`Server.ReplaceBaseline`). The open room
+reloads storage; if the generation changed it adopts the new log and sends
+`BASELINE_REPLACED` to every client, which the server then closes normally (1000)
+after the frames already queued. A notice for the generation a room already serves
+changes nothing. A room in another API process gets no notice, so it compares its
+generation with `documents.r2_key` (`CurrentGeneration`) before serving a new client,
+when an update's `base` differs from its baseline, and on its 5-minute tick when it
+has nothing to checkpoint; a save or checkpoint of an old generation fails with
+`ErrBaselineReplaced`. Whenever the stored generation moved on, the room adopts it and
+resynchronizes its clients, so a client that loaded the new content is never served
+the old one. An update from another baseline while the stored generation is still the
+room's gets `BASELINE_REPLACED` for its sender only; if the generation cannot be read,
+it gets `UPDATE_NOT_SAVED`. If storage cannot be reloaded, clients still receive
+`BASELINE_REPLACED` and the room stops instead of serving an obsolete log.
+
+A save advances the document row first (`UPDATE … WHERE r2_key = generation`) and
+inserts the delta only from the row it changed. A save waiting for a REST
+replacement's row lock therefore matches nothing after the replacement commits and
+inserts no delta of the old generation.
+
+A replica cannot change its baseline: the provider stops, keeps unconfirmed
+operations in the editor (`getSyncState().pendingOperations`) and calls
+`onBaselineReplaced` (or `onError`). The host loads `collaboration_state` again and
+creates a new editor and provider. The provider also recognizes a replacement that
+happened while it was offline: when the editor rejects a full state (`0x02`) whose
+`base` differs from its own (ignoring the revision counter), it reacts as to
+`BASELINE_REPLACED` instead of failing.
 
 ## Exact clocks and failure boundaries
 

@@ -10,40 +10,80 @@ import (
 	"time"
 )
 
+// memoryPersistence models one document: an immutable object per generation
+// and the log recorded against the current generation.
 type memoryPersistence struct {
-	mu        sync.Mutex
-	updates   [][]byte
-	snapshots [][]byte
-	fail      bool
+	mu         sync.Mutex
+	generation string
+	document   []byte
+	updates    [][]byte
+	snapshots  [][]byte
+	fail       bool
+	loadFails  bool
 }
 
-func (s *memoryPersistence) LoadDocument(context.Context, string) ([]byte, error) {
-	return append([]byte(nil), testDocument...), nil
-}
-func (s *memoryPersistence) LoadUpdates(context.Context, string) ([][]byte, error) {
+func (s *memoryPersistence) LoadState(context.Context, string) (StoredState, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
+	if s.loadFails {
+		return StoredState{}, errors.New("storage unavailable")
+	}
+	document := s.document
+	if document == nil {
+		document = testDocument
+	}
 	out := append([][]byte{}, s.snapshots...)
-	return append(out, s.updates...), nil
+	return StoredState{Generation: s.generation, Document: append([]byte(nil), document...), Updates: append(out, s.updates...)}, nil
 }
-func (s *memoryPersistence) SaveUpdate(_ context.Context, _ string, data []byte) error {
+func (s *memoryPersistence) CurrentGeneration(context.Context, string) (string, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if s.loadFails {
+		return "", errors.New("storage unavailable")
+	}
+	return s.generation, nil
+}
+func (s *memoryPersistence) SaveUpdate(_ context.Context, _ string, generation string, data []byte) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	if s.fail {
 		return errors.New("storage unavailable")
 	}
+	if generation != s.generation {
+		return ErrBaselineReplaced
+	}
 	s.updates = append(s.updates, append([]byte(nil), data...))
 	return nil
 }
-func (s *memoryPersistence) SaveSnapshot(_ context.Context, _ string, data []byte) error {
+func (s *memoryPersistence) SaveSnapshot(_ context.Context, _ string, generation string, data []byte) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
+	if generation != s.generation {
+		return ErrBaselineReplaced
+	}
 	s.snapshots = append(s.snapshots, append([]byte(nil), data...))
 	return nil
 }
+
+// replace models REST PATCH with content or a version restore: a new object
+// and generation, with the old generation's log invalidated.
+func (s *memoryPersistence) replace(document []byte) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.generation += "+"
+	s.document = append([]byte(nil), document...)
+	s.updates, s.snapshots = nil, nil
+}
 func startRoom(t *testing.T, store *memoryPersistence) *Room {
 	t.Helper()
+	return startRoomEvery(t, store, snapshotInterval)
+}
+
+// startRoomEvery sets the room's tick before Run starts, so tests need not wait minutes.
+func startRoomEvery(t *testing.T, store *memoryPersistence, tick time.Duration) *Room {
+	t.Helper()
 	room := NewRoom("doc", store, slog.New(slog.NewTextHandler(io.Discard, nil)))
+	room.tick = tick
 	ctx, cancel := context.WithCancel(context.Background())
 	go room.Run(ctx)
 	t.Cleanup(func() {

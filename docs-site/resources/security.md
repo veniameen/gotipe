@@ -114,12 +114,15 @@ identifiers pass. The Cloud AI endpoint does not run it.
 
 - Set `HTTP_ALLOWED_ORIGINS` and `SYNC_ALLOWED_ORIGINS` to your own origins; the production
   defaults and the compose file name GoTipe's domains.
-- The stock `infra/valkey/valkey.conf` evicts keys under memory pressure (`allkeys-lru`),
-  which can drop token revocations and idempotency keys. Use `noeviction`.
-- `/readyz` is public and includes dependency error messages. Keep it, the metrics port
-  (`9090`) and the monitoring profile's Prometheus and Grafana (admin password `admin` by
-  default) off the public network.
-- The login limit counts the socket's peer address; behind a proxy, limit per client there.
+- Keep Valkey on `maxmemory-policy noeviction`, as the stock `infra/valkey/valkey.conf` does:
+  an evicting policy can drop token revocations and idempotency keys.
+- `/readyz` is public and reports each dependency only as `ok` or `unavailable`. Keep the
+  metrics port (`9090`) and the monitoring profile's Prometheus and Grafana (admin password
+  `admin` unless `GRAFANA_ADMIN_PASSWORD` is set) off the public network.
+- The login limit counts each client address. Behind your own reverse proxy, list it in
+  `TRUSTED_PROXIES`; otherwise every client shares the proxy's limit. The compose stack's
+  Caddy forwards only the client it resolved; put a CDN in front of it into Caddy's
+  `trusted_proxies`, not into `TRUSTED_PROXIES`.
 
 ## Report a vulnerability
 

@@ -33,6 +33,13 @@ Mutation idempotency keys are scoped to the user and fingerprint the method, URL
 content type, body and credential restrictions. Pending/uncertain results cannot
 be repeated with the same key. Cached successful replies recheck current resource
 read access. Streaming AI cannot be buffered/replayed with an idempotency key.
+A stored reply is at most 256 KiB (`middleware.MaxReplayBody`); a larger one keeps
+only its status, and a repeat answers 409 naming it instead of running again.
+
+Client-supplied document and API-key IDs must be hyphenated UUIDs (either case);
+anything else answers 400 `VALIDATION_ERROR` before a database query, including a
+`/sync` handshake without `document_id`. Access checks use the lower-case form,
+and the sync handler receives it, so one document never opens two rooms.
 
 ## Durable collaboration and read consistency
 
@@ -52,11 +59,45 @@ for the replica's baseline. The SDK exposes this as `collaborationState`.
 
 `RATE_LIMIT_WS` limits messages per connection in an exact sliding window;
 exhaustion closes with code 1008. REST, AI and WebSocket handshakes have separate
-per-user rate namespaces. Authentication attempts use the socket peer IP; a
-reverse proxy should enforce its own client-IP gate before forwarding requests.
+per-user rate namespaces. Authentication attempts are limited per client address
+(IPv6 per /64). The client is the socket peer unless the peer is listed in
+`TRUSTED_PROXIES`; then it is the nearest untrusted `X-Forwarded-For` hop (else
+`X-Real-IP`), and a malformed chain falls back to the peer. Request and audit
+logs record the same address. The compose stack trusts only Caddy's fixed
+address; Caddy sends exactly one address (`{client_ip}`, resolved with its own
+`trusted_proxies`, where any CDN is configured) and drops `X-Real-IP`
+(`middleware/client_address_test.go` checks the Caddyfile, `config/compose_test.go`
+the fixed address). The API logs its trusted prefixes at startup and warns at
+most once a minute when an untrusted peer sends forwarded headers.
+`infra/scripts/deploy.sh` stops when an existing backend network lacks the fixed
+subnet, because Docker never changes it in place.
+
+Valkey state (revocations, idempotency records, rate windows) must not be
+evicted: `infra/valkey/valkey.conf` uses `noeviction`, so a full instance makes
+writes fail and the API answer 503 instead of forgetting a revocation. The API
+exports `INFO memory` (`gotipe_valkey_used_memory_bytes`,
+`gotipe_valkey_maxmemory_bytes`) and `ValkeyMemoryHigh` fires at 80%.
 
 REST request bodies and stored document reads have bounded sizes; the configured
 document limit cannot exceed the converter's 64 MiB ceiling.
+
+## Configuration, readiness and metrics
+
+The server reads its environment only through `config.LoadFrom` (`migrate up`
+reads just `DATABASE_URL`). `infra/.env.example` must load through it
+(`config/env_example_test.go`): every variable it sets must be read, and every
+variable read must be listed. Durations are Go durations only.
+Missing `DATABASE_URL`, `JWT_PRIVATE_KEY` or `JWT_PUBLIC_KEY`, an unknown
+`LOG_LEVEL`/`LOG_FORMAT` or a `TRUSTED_PROXIES` range covering every address
+stops startup.
+
+`/readyz` is public: it checks PostgreSQL, Valkey and the bucket concurrently and
+reports each only as `ok` or `unavailable`; error details are logged. Metrics on
+`METRICS_LISTEN_ADDR` count REST requests by route pattern and status, AI
+provider calls (bounded labels), stored documents (counted at most once a minute,
+omitted when the count fails), sync connections/rooms and export jobs. Alert
+rules and dashboards may only use served series (`handler/metrics_test.go`).
+PostgreSQL WAL archiving is off unless pgBackRest is installed and configured.
 
 ## Jobs, quotas and failure behavior
 

@@ -72,7 +72,7 @@ func (log *updateLog) prepare(data []byte) (*updateLog, []byte, bool, error) {
 		return nil, nil, false, err
 	}
 	if !bytes.Equal(base, log.base) {
-		return nil, nil, false, errors.New("collaboration baseline differs from saved document")
+		return nil, nil, false, fmt.Errorf("%w: the update starts from another document", ErrBaselineReplaced)
 	}
 	staged := &updateLog{base: log.base, operations: make(map[operationID]replicaOperation, len(log.operations)+len(update.Operations))}
 	for id, op := range log.operations {
@@ -113,17 +113,6 @@ func (log *updateLog) encode() []byte {
 	})
 	data, _ := json.Marshal(replicaUpdate{Protocol: replicaProtocol, Base: log.base, Operations: operations})
 	return data // All fields were validated and are JSON serializable.
-}
-
-// ValidateBaseline verifies that an update belongs to the current REST document
-// generation before a persistence adapter conditionally inserts it.
-func ValidateBaseline(document, update []byte) error {
-	log, err := newUpdateLog(document)
-	if err != nil {
-		return err
-	}
-	_, _, _, err = log.prepare(update)
-	return err
 }
 
 // MergeUpdates creates a complete reconnect/bootstrap envelope from durable

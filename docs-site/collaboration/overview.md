@@ -28,7 +28,9 @@ collaboration
 - An update is the replica's complete operation log on top of a baseline document. Updates
   are replay-safe: you can apply one more than once and in any order.
 - All replicas start from the same baseline. A replica that already has operations rejects
-  an update built on a different baseline.
+  an update built on a different baseline. Replacing the content over REST starts a new
+  baseline, and every open editor must load the document again (see
+  [When the document is replaced](/docs/collaboration/provider#when-the-document-is-replaced)).
 - Undo and redo stay per replica: undo reverts your own operations and keeps everyone
   else's. Turning collaboration on clears the undo history.
 
@@ -41,7 +43,7 @@ Shared through updates:
   The file itself stays where your [host](/docs/concepts/host) saved it, so every client
   must be able to load it.
 
-Shared through awareness, relayed by the server and never stored:
+Shared through awareness, checked and relayed by the server, never stored:
 
 - Each peer's name, color, avatar, caret, and a selection inside one block.
 

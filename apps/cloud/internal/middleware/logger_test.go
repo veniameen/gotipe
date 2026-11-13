@@ -12,7 +12,7 @@ import (
 
 func TestLoggerPreservesWebSocketHijacking(t *testing.T) {
 	log := slog.New(slog.NewTextHandler(io.Discard, nil))
-	server := httptest.NewServer(LoggerMiddleware(log)(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	server := httptest.NewServer(LoggerMiddleware(log, ClientAddresses{})(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		upgrader := websocket.Upgrader{}
 		conn, err := upgrader.Upgrade(w, r, nil)
 		if err != nil {
@@ -37,7 +37,7 @@ func TestLoggerPreservesWebSocketHijacking(t *testing.T) {
 }
 func TestLoggerPreservesStreamingFlush(t *testing.T) {
 	log := slog.New(slog.NewTextHandler(io.Discard, nil))
-	h := LoggerMiddleware(log)(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+	h := LoggerMiddleware(log, ClientAddresses{})(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		flusher, ok := w.(http.Flusher)
 		if !ok {
 			t.Fatal("streaming interface lost")

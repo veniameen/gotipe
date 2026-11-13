@@ -15,8 +15,11 @@ services:
         condition: service_healthy
     restart: always
     networks:
-      - frontend
-      - backend
+      frontend:
+      backend:
+        # Fixed so the API trusts X-Forwarded-For from this address only
+        # (TRUSTED_PROXIES below). Change both if the subnet collides.
+        ipv4_address: 172.30.240.2
 
   # --- GoTipe API Server ---
   api:
@@ -24,6 +27,7 @@ services:
     expose:
       - "8080"
       - "8081"
+      - "9090"
     env_file: .env
     environment:
       LISTEN_ADDR: ":8080"
@@ -34,6 +38,9 @@ services:
       VALKEY_URL: "redis://valkey:6379/0"
       ENVIRONMENT: "production"
       LOG_FORMAT: "json"
+      # Caddy replaces any client-sent X-Forwarded-For with the client address;
+      # the login rate limit counts that address only when Caddy sent it.
+      TRUSTED_PROXIES: "172.30.240.2/32"
     depends_on:
       pgbouncer:
         condition: service_started
@@ -153,6 +160,11 @@ services:
 networks:
   frontend:
   backend:
+    ipam:
+      config:
+        # Containers get addresses from ip_range; 172.30.240.2 stays Caddy's.
+        - subnet: 172.30.240.0/24
+          ip_range: 172.30.240.128/25
 
 volumes:
   postgres_data:

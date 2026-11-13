@@ -139,8 +139,9 @@ Rules for the stored copy:
 - The log only grows: it holds every operation since the baseline. Prefer IndexedDB to
   `localStorage` for large documents.
 - If the server's baseline changed, because the document was replaced over REST or a
-  version was restored, the stored operations no longer apply. The provider reports the
-  error and stops. Load the document again and drop the local copy.
+  version was restored, the stored operations no longer apply. The provider stops at the
+  handshake and calls `onBaselineReplaced`; drop the local copy and load the document again
+  (see [When the document is replaced](/docs/collaboration/provider#when-the-document-is-replaced)).
 
 Without a provider, `applyCollaborationState(editor, state, peerId)` performs the same
 replay for a transport of your own.

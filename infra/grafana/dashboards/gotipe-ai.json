@@ -1,5 +1,7 @@
 {
-  "annotations": { "list": [] },
+  "annotations": {
+    "list": []
+  },
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 1,
@@ -9,71 +11,106 @@
     {
       "title": "AI Requests by Provider",
       "type": "timeseries",
-      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 0
+      },
       "targets": [
-        { "expr": "sum(rate(gotipe_ai_requests_total[5m])) by (provider)", "legendFormat": "{{provider}}", "refId": "A" }
+        {
+          "expr": "sum(rate(gotipe_ai_requests_total[5m])) by (provider)",
+          "legendFormat": "{{provider}}",
+          "refId": "A"
+        }
       ],
       "fieldConfig": {
-        "defaults": { "unit": "reqps" }
+        "defaults": {
+          "unit": "reqps"
+        }
       }
     },
     {
-      "title": "AI Token Usage",
+      "title": "Successful Requests by Model",
       "type": "timeseries",
-      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 0
+      },
       "targets": [
-        { "expr": "sum(rate(gotipe_ai_tokens_total[5m])) by (provider, type)", "legendFormat": "{{provider}} {{type}}", "refId": "A" }
+        {
+          "expr": "sum(rate(gotipe_ai_requests_total{status=\"success\"}[5m])) by (provider, model)",
+          "legendFormat": "{{provider}} {{model}}",
+          "refId": "A"
+        }
       ],
       "fieldConfig": {
-        "defaults": { "unit": "short" }
-      }
-    },
-    {
-      "title": "AI Latency by Provider (p95)",
-      "type": "timeseries",
-      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 8 },
-      "targets": [
-        { "expr": "histogram_quantile(0.95, sum(rate(gotipe_ai_latency_seconds_bucket[5m])) by (le, provider))", "legendFormat": "{{provider}}", "refId": "A" }
-      ],
-      "fieldConfig": {
-        "defaults": { "unit": "s" }
-      }
-    },
-    {
-      "title": "AI Cache Hit Rate",
-      "type": "timeseries",
-      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 8 },
-      "targets": [
-        { "expr": "rate(gotipe_ai_cache_hits_total[5m]) / (rate(gotipe_ai_cache_hits_total[5m]) + rate(gotipe_ai_cache_misses_total[5m]))", "legendFormat": "hit rate", "refId": "A" }
-      ],
-      "fieldConfig": {
-        "defaults": { "unit": "percentunit", "min": 0, "max": 1 }
+        "defaults": {
+          "unit": "reqps"
+        }
       }
     },
     {
       "title": "AI Error Rate by Provider",
       "type": "timeseries",
-      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 16 },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 8
+      },
       "targets": [
-        { "expr": "sum(rate(gotipe_ai_requests_total{status=\"error\"}[5m])) by (provider)", "legendFormat": "{{provider}}", "refId": "A" }
+        {
+          "expr": "sum(rate(gotipe_ai_requests_total{status=\"error\"}[5m])) by (provider)",
+          "legendFormat": "{{provider}}",
+          "refId": "A"
+        }
       ],
       "fieldConfig": {
-        "defaults": { "unit": "reqps" }
+        "defaults": {
+          "unit": "reqps"
+        }
       }
     },
     {
-      "title": "AI Fallback Events",
+      "title": "AI Error Ratio",
       "type": "timeseries",
-      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 16 },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 8
+      },
       "targets": [
-        { "expr": "sum(rate(gotipe_ai_fallback_total[5m])) by (from_provider, to_provider)", "legendFormat": "{{from_provider}} -> {{to_provider}}", "refId": "A" }
-      ]
+        {
+          "expr": "sum(rate(gotipe_ai_requests_total{status=\"error\"}[5m])) / sum(rate(gotipe_ai_requests_total[5m]))",
+          "legendFormat": "errors",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "min": 0,
+          "max": 1
+        }
+      }
     }
   ],
   "schemaVersion": 39,
-  "tags": ["gotipe", "ai"],
-  "templating": { "list": [] },
-  "time": { "from": "now-6h", "to": "now" },
+  "tags": [
+    "gotipe",
+    "ai"
+  ],
+  "templating": {
+    "list": []
+  },
+  "time": {
+    "from": "now-6h",
+    "to": "now"
+  },
   "title": "GoTipe AI",
   "uid": "gotipe-ai"
 }

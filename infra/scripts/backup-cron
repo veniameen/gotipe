@@ -1,7 +1,11 @@
 # infra/scripts/backup-cron
 # GoTipe — automated PostgreSQL backups via pgBackRest to R2
-
-# WAL archiving — automatic via archive_command in postgresql.conf
+#
+# Opt-in: these jobs need the pgBackRest setup described under "Backups" in
+# docs-site/cloud/overview.md. The stock postgres:17-alpine image has no
+# pgbackrest, so do not install this file with the default compose stack.
+# WAL archiving then runs through archive_command once it is enabled in
+# infra/postgres/postgresql.conf.
 
 # Incremental backup — daily at 03:00 UTC
 0 3 * * * deploy docker compose -f /opt/gotipe/docker-compose.yml exec -T postgres pgbackrest --stanza=gotipe --type=incr backup >> /var/log/gotipe-backup.log 2>&1

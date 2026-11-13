@@ -16,10 +16,9 @@ import (
 type R2Store struct {
 	client *s3.Client
 	bucket string
-	cdnURL string
 }
 
-func NewR2Store(ctx context.Context, accountID, accessKeyID, secretKey, bucket, cdnURL, endpoint string, usePathStyle bool) (*R2Store, error) {
+func NewR2Store(ctx context.Context, accountID, accessKeyID, secretKey, bucket, endpoint string, usePathStyle bool) (*R2Store, error) {
 	var endpointURL string
 	if endpoint != "" {
 		endpointURL = endpoint // MinIO for dev
@@ -45,7 +44,6 @@ func NewR2Store(ctx context.Context, accountID, accessKeyID, secretKey, bucket, 
 	return &R2Store{
 		client: client,
 		bucket: bucket,
-		cdnURL: cdnURL,
 	}, nil
 }
 

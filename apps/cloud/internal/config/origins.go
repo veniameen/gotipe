@@ -3,12 +3,13 @@ package config
 import (
 	"fmt"
 	"net/url"
-	"os"
 	"strings"
 )
 
-func httpOrigins(environment string) []string {
-	if value, exists := os.LookupEnv("HTTP_ALLOWED_ORIGINS"); exists {
+// httpOrigins keeps an explicitly empty HTTP_ALLOWED_ORIGINS empty: only an unset
+// variable selects the environment's defaults.
+func httpOrigins(value string, set bool, environment string) []string {
+	if set {
 		return splitValues(value)
 	}
 	if environment == "production" {

@@ -3,6 +3,7 @@ package handler
 import (
 	"encoding/json"
 	"errors"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 	"net/http"
 	"strconv"
@@ -24,6 +25,22 @@ type DocumentsHandler struct {
 	audit            *audit.AuditLogger
 	contents         document.ContentReader
 	maxDocumentBytes int64
+	replaced         BaselineReplacement
+}
+
+// BaselineReplacement is told after REST committed new document content (PATCH
+// with content or a version restore), so open collaboration rooms adopt it.
+type BaselineReplacement func(documentID string)
+
+func (notify BaselineReplacement) after(documentID string) {
+	if notify != nil {
+		notify(documentID)
+	}
+}
+
+// SetBaselineReplacement installs the collaboration notice; call it before serving.
+func (h *DocumentsHandler) SetBaselineReplacement(notify BaselineReplacement) {
+	h.replaced = notify
 }
 
 func NewDocumentsHandler(db *storage.PostgresStore, r2 storage.ObjectStore, auditLogger *audit.AuditLogger, readers ...document.ContentReader) *DocumentsHandler {
@@ -355,6 +372,9 @@ func (h *DocumentsHandler) UpdateDocument() http.HandlerFunc {
 			apierror.ErrInternal.Write(w)
 			return
 		}
+		if req.Content != nil {
+			h.replaced.after(docID)
+		}
 
 		_ = h.audit.Log(r.Context(), user.UserID, audit.ActionDocumentUpdate, "document", docID, nil)
 
@@ -382,24 +402,20 @@ func (h *DocumentsHandler) DeleteDocument() http.HandlerFunc {
 			return
 		}
 
+		// Only the owner deletes. Like every document route, a document the caller
+		// cannot delete is indistinguishable from a missing one.
 		docID := chi.URLParam(r, "id")
-		if !user.AllowsDocument(docID) {
+		if !requireDocumentAccess(w, r, h.db.Pool, docID, "owner") {
+			return
+		}
+		var r2Key string
+		err := h.db.Pool.QueryRow(r.Context(), `SELECT r2_key FROM documents WHERE id = $1`, docID).Scan(&r2Key)
+		if errors.Is(err, pgx.ErrNoRows) {
 			apierror.ErrNotFound.Write(w)
 			return
 		}
-
-		// Verify ownership
-		var ownerID, r2Key string
-		err := h.db.Pool.QueryRow(r.Context(),
-			`SELECT owner_id, r2_key FROM documents WHERE id = $1`,
-			docID,
-		).Scan(&ownerID, &r2Key)
 		if err != nil {
-			apierror.ErrNotFound.Write(w)
-			return
-		}
-		if ownerID != user.UserID {
-			apierror.ErrForbidden.Write(w)
+			apierror.ErrInternal.Write(w)
 			return
 		}
 

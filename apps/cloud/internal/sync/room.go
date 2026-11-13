@@ -3,6 +3,7 @@ package sync
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"log/slog"
 	"sync/atomic"
 	"time"
@@ -16,49 +17,54 @@ type roomEvent struct {
 	data   []byte
 }
 
-// Room's event loop exclusively owns membership, awareness, and the update log.
-// Read pumps enqueue messages; they never send to or close another client's queue.
+// Room's event loop exclusively owns membership, awareness, the update log and
+// its storage generation. Read pumps enqueue messages; they never send to or
+// close another client's queue.
 type Room struct {
 	documentID string
 	clients    map[*Client]bool
 	register   chan *Client
 	unregister chan *Client
 	events     chan roomEvent
+	replaced   chan struct{}
 	persist    PersistenceStore
 	log        *slog.Logger
 	state      *updateLog
+	generation string
 	awareness  map[string][]byte
 	count      atomic.Int64
 	done       chan struct{}
 	dirty      bool
+	// stale is set when storage was replaced but could not be reloaded.
+	stale bool
+	// tick saves a checkpoint, or checks the stored generation when nothing changed.
+	tick time.Duration
 }
 
 func NewRoom(documentID string, persist PersistenceStore, log *slog.Logger) *Room {
 	return &Room{documentID: documentID, clients: make(map[*Client]bool), register: make(chan *Client),
-		unregister: make(chan *Client), events: make(chan roomEvent, 256), persist: persist, log: log,
-		awareness: make(map[string][]byte), done: make(chan struct{})}
+		unregister: make(chan *Client), events: make(chan roomEvent, 256), replaced: make(chan struct{}, 1),
+		persist: persist, log: log, awareness: make(map[string][]byte), done: make(chan struct{}), tick: snapshotInterval}
 }
-func (r *Room) load(ctx context.Context) error {
-	document, err := r.persist.LoadDocument(ctx, r.documentID)
+
+// loadState reads one storage generation without changing the live room.
+func (r *Room) loadState(ctx context.Context) (*updateLog, string, error) {
+	stored, err := r.persist.LoadState(ctx, r.documentID)
 	if err != nil {
-		return err
+		return nil, "", err
 	}
-	r.state, err = newUpdateLog(document)
+	state, err := newUpdateLog(stored.Document)
 	if err != nil {
-		return err
+		return nil, "", err
 	}
-	updates, err := r.persist.LoadUpdates(ctx, r.documentID)
-	if err != nil {
-		return err
-	}
-	for _, update := range updates {
-		staged, _, _, err := r.state.prepare(update)
+	for _, update := range stored.Updates {
+		staged, _, _, err := state.prepare(update)
 		if err != nil {
-			return err
+			return nil, "", err
 		}
-		r.state = staged
+		state = staged
 	}
-	return nil
+	return state, stored.Generation, nil
 }
 func (r *Room) Run(ctx context.Context) {
 	defer close(r.done)
@@ -67,16 +73,20 @@ func (r *Room) Run(ctx context.Context) {
 			r.remove(client)
 		}
 	}()
-	if err := r.load(ctx); err != nil {
+	state, generation, err := r.loadState(ctx)
+	if err != nil {
 		r.log.Error("failed to load collaboration state", "document_id", r.documentID, "error", err)
 		return
 	}
-	ticker := time.NewTicker(snapshotInterval)
+	r.state, r.generation = state, generation
+	ticker := time.NewTicker(r.tick)
 	defer ticker.Stop()
 	hadClients := false
 	for {
 		select {
 		case client := <-r.register:
+			// Another process may have replaced the document: never serve an old baseline.
+			r.verifyGeneration(ctx)
 			// A reconnect replaces a prior connection using the same peer identity.
 			for existing := range r.clients {
 				if existing.peerID == client.peerID {
@@ -86,6 +96,9 @@ func (r *Room) Run(ctx context.Context) {
 			r.clients[client] = true
 			r.count.Store(int64(len(r.clients)))
 			hadClients = true
+			if r.stale {
+				break // The loop stops below and closes this connection.
+			}
 			r.send(client, 0x02, r.state.encode())
 			for _, awareness := range r.awareness {
 				r.send(client, 0x04, awareness)
@@ -101,21 +114,33 @@ func (r *Room) Run(ctx context.Context) {
 					r.handleEvent(ctx, event)
 				}
 			}
+		case <-r.replaced:
+			r.adoptStoredBaseline(ctx)
 		case <-ticker.C:
-			r.saveState(ctx)
+			if !r.dirty {
+				r.verifyGeneration(ctx)
+			} else if errors.Is(r.saveState(ctx), ErrBaselineReplaced) {
+				r.adoptStoredBaseline(ctx)
+			}
 		case <-ctx.Done():
 			saveCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 			r.saveState(saveCtx)
 			cancel()
 			return
 		}
-		if hadClients && len(r.clients) == 0 {
+		if r.stale || (hadClients && len(r.clients) == 0) {
 			r.saveState(ctx)
 			return
 		}
 	}
 }
-func (r *Room) remove(client *Client) bool {
+
+// remove ends a connection at once: a peer replaced by a reconnect, a full
+// queue or revoked access. release lets the write pump flush queued frames and
+// close normally.
+func (r *Room) remove(client *Client) bool  { return r.leave(client, true) }
+func (r *Room) release(client *Client) bool { return r.leave(client, false) }
+func (r *Room) leave(client *Client, abort bool) bool {
 	if !r.clients[client] {
 		return false
 	}
@@ -123,7 +148,7 @@ func (r *Room) remove(client *Client) bool {
 	delete(r.awareness, client.peerID)
 	r.count.Store(int64(len(r.clients)))
 	close(client.send)
-	if client.conn != nil {
+	if abort && client.conn != nil {
 		client.conn.Close()
 	}
 	removal, _ := json.Marshal(map[string]any{"peerId": client.peerID, "removed": true})
@@ -160,14 +185,22 @@ func (r *Room) handleEvent(ctx context.Context, event roomEvent) {
 		r.send(event.client, 0x02, r.state.encode())
 	case 0x02, 0x03:
 		staged, delta, changed, err := r.state.prepare(event.data)
+		if errors.Is(err, ErrBaselineReplaced) {
+			r.foreignBaseline(ctx, event.client)
+			return
+		}
 		if err != nil {
 			r.error(event.client, "INVALID_UPDATE", err.Error())
 			return
 		}
 		if changed {
 			saveCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
-			saveErr := r.persist.SaveUpdate(saveCtx, r.documentID, delta)
+			saveErr := r.persist.SaveUpdate(saveCtx, r.documentID, r.generation, delta)
 			cancel()
+			if errors.Is(saveErr, ErrBaselineReplaced) {
+				r.adoptStoredBaseline(ctx)
+				return
+			}
 			if err := saveErr; err != nil {
 				r.log.Error("failed to persist collaboration update", "document_id", r.documentID, "error", err)
 				r.error(event.client, "UPDATE_NOT_SAVED", "The update was not saved; reconnect and retry.")
@@ -179,19 +212,9 @@ func (r *Room) handleEvent(ctx context.Context, event roomEvent) {
 		}
 		r.send(event.client, 0x09, nil)
 	case 0x04:
-		if len(event.data) > 32*1024 {
-			r.error(event.client, "INVALID_AWARENESS", "Awareness payload is too large")
-			return
-		}
-		var awareness map[string]any
-		if json.Unmarshal(event.data, &awareness) != nil || awareness == nil {
-			r.error(event.client, "INVALID_AWARENESS", "Invalid awareness JSON")
-			return
-		}
-		awareness["peerId"] = event.client.peerID
-		delete(awareness, "removed")
-		data, err := json.Marshal(awareness)
+		data, err := readPresence(event.client.peerID, event.data)
 		if err != nil {
+			// Refused from the sender only: nothing is stored or relayed.
 			r.error(event.client, "INVALID_AWARENESS", err.Error())
 			return
 		}
@@ -217,15 +240,16 @@ func (r *Room) handleSyncStep2(client *Client, data []byte) { r.enqueue(client, 
 func (r *Room) handleUpdate(client *Client, data []byte)    { r.enqueue(client, 0x03, data) }
 func (r *Room) handleAwareness(client *Client, data []byte) { r.enqueue(client, 0x04, data) }
 func (r *Room) handleAwarenessQuery(client *Client)         { r.enqueue(client, 0x05, nil) }
-func (r *Room) saveState(ctx context.Context) {
+func (r *Room) saveState(ctx context.Context) error {
 	if r.state == nil || !r.dirty {
-		return
+		return nil
 	}
-	if err := r.persist.SaveSnapshot(ctx, r.documentID, r.state.encode()); err != nil {
+	if err := r.persist.SaveSnapshot(ctx, r.documentID, r.generation, r.state.encode()); err != nil {
 		r.log.Error("failed to checkpoint collaboration", "document_id", r.documentID, "error", err)
-		return
+		return err
 	}
 	r.dirty = false
+	return nil
 }
 func (r *Room) ClientCount() int      { return int(r.count.Load()) }
 func (r *Room) Done() <-chan struct{} { return r.done }

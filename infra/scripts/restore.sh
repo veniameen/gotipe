@@ -1,5 +1,8 @@
 #!/bin/bash
 # infra/scripts/restore.sh — disaster recovery from R2 backup
+# Opt-in: requires the pgBackRest setup described under "Backups" in
+# docs-site/cloud/overview.md; the stock postgres:17-alpine image has no
+# pgbackrest. Rehearse a restore before you rely on this script.
 set -euo pipefail
 
 echo "=== GoTipe Disaster Recovery ==="

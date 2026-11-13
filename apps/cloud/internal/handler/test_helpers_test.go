@@ -50,14 +50,18 @@ func (*emptyRows) Next() bool   { return false }
 func (*emptyRows) Close()       {}
 func (r *emptyRows) Err() error { return r.err }
 
+// testDocumentID is the {docId}/{id} route parameter of requestAs. Document IDs
+// are validated as UUIDs before any database access.
+const testDocumentID = "6f1c2b8e-0d1a-4f5e-9a63-2a7d1e0b9c44"
+
 func requestAs(method, path, body string, user *auth.UserContext) *http.Request {
 	r := httptest.NewRequest(method, path, strings.NewReader(body))
 	if user != nil {
 		r = r.WithContext(auth.WithUser(r.Context(), user))
 	}
 	ctx := chi.NewRouteContext()
-	ctx.URLParams.Add("docId", "document")
-	ctx.URLParams.Add("id", "document")
+	ctx.URLParams.Add("docId", testDocumentID)
+	ctx.URLParams.Add("id", testDocumentID)
 	ctx.URLParams.Add("commentId", "comment")
 	ctx.URLParams.Add("versionId", "version")
 	return r.WithContext(context.WithValue(r.Context(), chi.RouteCtxKey, ctx))

@@ -63,9 +63,9 @@ export function SharedDocument(props: {
 | Option | Type | Default | Description |
 | --- | --- | --- | --- |
 | `documentId` | `string` | — | Required. Sent as the `document_id` query parameter. |
-| `wsUrl` | `string` | — | A `ws:` or `wss:` URL of the sync endpoint, for example `wss://sync.example.com/sync`. No user info and no `token` parameter. |
-| `user` | `AwarenessUser` | — | `{ name, color, avatar? }` that other peers see. `color` is `#rgb` or `#rrggbb`. |
-| `peerId` | `string` | `crypto.randomUUID()` | The replica's ID, up to 256 characters. Stays the same across reconnects; every editor and every tab needs its own. |
+| `wsUrl` | `string` | — | An absolute `ws:` or `wss:` URL of the sync endpoint, for example `wss://sync.example.com/sync`. No user info and no `token` parameter. |
+| `user` | `AwarenessUser` | — | `{ name, color, avatar? }` that other peers see. `name` has at most 256 characters, `color` is `#rgb` or `#rrggbb`, `avatar` an `http:`, `https:` or `data:image/` URL of at most 16 384 characters. Other fields are not sent. |
+| `peerId` | `string` | `crypto.randomUUID()` | The replica's ID: not blank, at most 256 bytes in UTF-8, not starting with `@base`. Stays the same across reconnects; every editor and every tab needs its own. |
 | `initialState` | `CollaborationState` | — | `{ baseline, updates }` from Cloud. Applied once, on the first `connect()`. Create the editor from `baseline`. |
 | `token` | `string \| () => string \| Promise<string>` | — | The credential. A function is called before every connection attempt. |
 | `reconnectInterval` | `number` | `1000` | First reconnect delay in ms. It doubles on each attempt, up to 30 000. |
@@ -73,6 +73,9 @@ export function SharedDocument(props: {
 | `handshakeTimeout` | `number` | `15000` | Time in ms for each connection step: getting the token, opening the socket, receiving the state. |
 | `acknowledgementTimeout` | `number` | `15000` | Time in ms to wait for the server to confirm a saved update. |
 | `createWebSocket` | `(url, protocols) => WebSocket` | — | Your own socket factory, for example outside the browser or in tests. |
+
+The constructor throws a `TypeError` for a `wsUrl`, `user` or `peerId` that breaks these
+rules. Such a mistake can never connect, so it is not retried.
 
 ## Methods
 
@@ -95,7 +98,8 @@ Pass these callbacks as options.
 | `onStateChange` | `"connecting" \| "connected" \| "disconnected" \| "error"` | The connection changes. `connected` means the initial state exchange has finished. |
 | `onSyncChange` | `{ pendingOperations: number, saving: boolean }` | After local edits, saves and reconnects. `pendingOperations` counts operations the server has not confirmed; `saving` is `true` while an update waits for its ACK. |
 | `onPeersChange` | `PeerState[]` | A peer joins, moves the caret or leaves. Empty after the connection drops. |
-| `onError` | `Error` | A token, socket, protocol or saving failure. A failure never turns into success. |
+| `onBaselineReplaced` | — | The document's content was replaced in GoTipe Cloud. The provider has stopped; load the document again. See [When the document is replaced](#when-the-document-is-replaced). |
+| `onError` | `Error` | A token, socket, protocol or saving failure, and recoverable problems such as an unreadable peer presence. A failure never turns into success. |
 
 ## Tokens
 
@@ -126,14 +130,75 @@ Pass these callbacks as options.
 | --- | --- |
 | The socket closes | Reports `disconnected` and reconnects. |
 | A socket error, a timeout, a token function that throws, the server error `UPDATE_NOT_SAVED` | Calls `onError` and reconnects. |
+| The browser refuses the endpoint (`SecurityError`, for example `ws:` from an HTTPS page) | Calls `onError` and stops without retrying. |
+| An unreadable presence from a peer, the server error `INVALID_AWARENESS` | Calls `onError` and keeps working. The peer's caret disappears until its next valid presence. |
+| The server error `BASELINE_REPLACED`, or a handshake from another baseline | Stops and calls `onBaselineReplaced`. See below. |
 | A malformed frame, an unexpected ACK, an update the editor rejects, any other server error | Calls `onError` and stops. Fix the cause, then call `connect(editor)`. |
+
+## When the document is replaced
+
+A replica can only merge edits made from the same baseline. When someone replaces the
+document's content over REST (`PATCH` with `content`, or a version restore), GoTipe Cloud
+sends `BASELINE_REPLACED` to every connected editor and closes their connections. An editor
+that was offline notices it in the next handshake.
+
+The provider then stops for good: reconnecting cannot help. It reports `disconnected` and
+calls `onBaselineReplaced`; without that option it reports `error` and calls `onError`.
+Edits the server had not confirmed stay in the editor but cannot be saved:
+`getSyncState().pendingOperations` tells how many. Load the document again and create a
+new editor and provider:
+
+```ts title="reload-on-replace.ts"
+import { CollaborationProvider, type CollaborationState } from "@gotipe/collaboration";
+import { createEditor, type GoTipeEditor } from "@gotipe/core";
+import { FullPreset } from "@gotipe/core/presets";
+
+export async function openShared(
+  documentId: string,
+  load: () => Promise<CollaborationState>,
+  getToken: () => Promise<string>,
+  mount: (editor: GoTipeEditor) => void,
+): Promise<() => void> {
+  const initialState = await load();
+  const editor = await createEditor({
+    engine: "wasm",
+    content: initialState.baseline,
+    extensions: [FullPreset],
+  });
+  let close = () => {};
+  const provider = new CollaborationProvider({
+    documentId,
+    wsUrl: "wss://sync.example.com/sync",
+    initialState,
+    token: getToken,
+    user: { name: "Alice", color: "#3264ab" },
+    onBaselineReplaced: () => {
+      const unsaved = provider.getSyncState().pendingOperations;
+      if (unsaved) console.warn(`${unsaved} unsaved changes were replaced`);
+      close();
+      void openShared(documentId, load, getToken, mount).then((next) => {
+        close = next;
+      });
+    },
+  });
+  provider.connect(editor);
+  mount(editor);
+  close = () => {
+    provider.destroy();
+    editor.destroy();
+  };
+  return () => close();
+}
+```
 
 ## Awareness and remote cursors
 
-After the handshake and on every selection or focus change, the provider sends the local
-peer: `user`, the caret as `cursor: { blockId, offset }` (the selection head), and
-`selection: { blockId, from, to }` for a range inside one block. A selection across blocks
-shows only the caret.
+After each handshake, and then whenever the caret or the selection changes, the provider
+sends the local peer: `user`, the caret as `cursor: { blockId, offset }` (the selection
+head), and `selection: { blockId, from, to }` for a range inside one block. A selection
+across blocks shows only the caret. Changes are sent at most once per 100 ms, after the
+last one, and only if they differ from what peers already have: edits from other peers do
+not resend your presence.
 
 Remote peers arrive in `onPeersChange` as `PeerState[]`. The provider also writes them to
 the editor's `collaboration` decoration layer as `remote-cursor` and `remote-selection`
@@ -254,11 +319,14 @@ head.
 - Every update frame repeats the baseline document and all unconfirmed operations.
   GoTipe Cloud accepts WebSocket messages up to 1 MiB and closes the connection for a
   larger one, so a very large document or a long offline session can fail to sync.
-- Other peers validate your awareness. Keep `color` in hex: a peer that receives any other
-  color format stops its provider. An `avatar` that is not an `http:`, `https:` or
-  `data:image/` URL is dropped, and `CollaborationCursors` shows names, not avatars.
+- `CollaborationCursors` shows names, not avatars.
 - GoTipe Cloud limits messages per connection (`RATE_LIMIT_WS`, 1000 per minute by
-  default) and closes the socket with code 1008 above it. The provider reconnects.
+  default) and closes the socket with code 1008 above it; the provider reconnects.
+  Presence takes at most 10 messages per second and updates at most one per server
+  acknowledgement, so only continuous fast typing over a fast connection comes near the
+  default. Raise the limit if your users see such reconnects.
+- After the document is replaced, edits the server had not confirmed are not merged into
+  the new content; the provider only counts them.
 
 ## Related
 

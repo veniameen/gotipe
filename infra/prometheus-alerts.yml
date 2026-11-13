@@ -1,28 +1,54 @@
 # infra/prometheus-alerts.yml
+# Every rule uses a metric that /metrics on api:9090 actually serves
+# (apps/cloud/internal/handler/metrics_test.go checks this). Rules on
+# PostgreSQL, PgBouncer or disk need the exporters named in prometheus.yml;
+# add them together with those exporters.
 groups:
   - name: gotipe-alerts
     rules:
+      - alert: GoTipeMetricsDown
+        expr: up{job="gotipe-api"} == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "GoTipe API metrics endpoint unreachable"
+          description: "Prometheus cannot scrape api:9090; the API process may be down."
+
       # --- API ---
       - alert: HighAPILatency
-        expr: histogram_quantile(0.95, rate(gotipe_api_latency_seconds_bucket[5m])) > 1
+        expr: histogram_quantile(0.95, sum by (le) (rate(gotipe_http_request_duration_seconds_bucket{path!="/v1/ai/complete"}[5m]))) > 1
         for: 5m
         labels:
           severity: warning
         annotations:
           summary: "API p95 latency > 1s"
-          description: "GoTipe API p95 latency is {{ $value }}s"
+          description: "GoTipe API p95 latency (AI completions excluded) is {{ $value }}s"
 
       - alert: HighAPIErrorRate
-        expr: rate(gotipe_api_requests_total{status=~"5.."}[5m]) / rate(gotipe_api_requests_total[5m]) > 0.05
+        expr: sum(rate(gotipe_http_requests_total{status=~"5.."}[5m])) / sum(rate(gotipe_http_requests_total[5m])) > 0.05
         for: 3m
         labels:
           severity: critical
         annotations:
           summary: "API 5xx error rate > 5%"
+          description: "Includes 503 from a full or unreachable Valkey and unavailable PostgreSQL."
+
+      # --- Valkey ---
+      # noeviction: at maxmemory Valkey refuses writes and most API requests
+      # answer 503. maxmemory 0 (no limit) is ignored.
+      - alert: ValkeyMemoryHigh
+        expr: gotipe_valkey_used_memory_bytes / (gotipe_valkey_maxmemory_bytes > 0) > 0.8
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Valkey memory > 80% of maxmemory"
+          description: "Valkey uses {{ $value | humanizePercentage }} of maxmemory. It does not evict keys: when full it refuses writes and the API answers 503. Raise maxmemory or find what fills it (idempotency records last 24 hours)."
 
       # --- WebSocket ---
       - alert: WebSocketConnectionsHigh
-        expr: gotipe_ws_connections > 10000
+        expr: gotipe_websocket_connections > 10000
         for: 2m
         labels:
           severity: warning
@@ -30,44 +56,19 @@ groups:
           summary: "WebSocket connections > 10K"
 
       # --- Export ---
-      - alert: ExportQueueBacklog
-        expr: gotipe_export_pending_jobs > 100
-        for: 5m
+      - alert: ExportFailures
+        expr: sum(rate(gotipe_export_jobs_total{status="failed"}[15m])) / sum(rate(gotipe_export_jobs_total[15m])) > 0.1
+        for: 15m
         labels:
           severity: warning
         annotations:
-          summary: "Export queue backlog > 100 jobs"
+          summary: "More than 10% of export jobs fail"
 
       # --- AI Proxy ---
       - alert: AIProxyHighErrorRate
-        expr: rate(gotipe_ai_requests_total{status="error"}[5m]) / rate(gotipe_ai_requests_total[5m]) > 0.1
+        expr: sum(rate(gotipe_ai_requests_total{status="error"}[5m])) / sum(rate(gotipe_ai_requests_total[5m])) > 0.1
         for: 3m
         labels:
           severity: critical
         annotations:
           summary: "AI proxy error rate > 10%"
-
-      # --- Infrastructure ---
-      - alert: PostgresConnectionPoolExhausted
-        expr: pgbouncer_pools_server_active / pgbouncer_pools_server_total > 0.9
-        for: 2m
-        labels:
-          severity: critical
-        annotations:
-          summary: "pgBouncer connection pool > 90% utilized"
-
-      - alert: ValkeyMemoryHigh
-        expr: valkey_used_memory_bytes / valkey_maxmemory_bytes > 0.85
-        for: 5m
-        labels:
-          severity: warning
-        annotations:
-          summary: "Valkey memory usage > 85%"
-
-      - alert: DiskSpaceLow
-        expr: node_filesystem_avail_bytes{mountpoint="/"} / node_filesystem_size_bytes{mountpoint="/"} < 0.15
-        for: 10m
-        labels:
-          severity: critical
-        annotations:
-          summary: "Disk space < 15% remaining"

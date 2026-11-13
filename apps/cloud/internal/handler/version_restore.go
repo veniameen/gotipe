@@ -80,6 +80,7 @@ func (h *VersionsHandler) RestoreVersion() http.HandlerFunc {
 			}
 			return
 		}
+		h.replaced.after(docID)
 		_ = h.audit.Log(r.Context(), user.UserID, audit.ActionVersionRestore, "version", versionID, map[string]string{"document_id": docID})
 		apierror.WriteJSON(w, http.StatusOK, map[string]string{"status": "restored", "version_id": restoreID})
 	}
