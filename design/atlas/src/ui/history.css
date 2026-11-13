@@ -1,0 +1,118 @@
+/* Version history as a component of the library: versions by day — who, when and how much changed;
+   the page compares the chosen version with the current one block by block; «Восстановить» answers
+   with a toast that takes it back. On a narrow screen the list and the comparison are two screens. */
+
+.gotipe-history {
+  display: grid;
+  grid-template-columns: var(--gt-history-columns);
+  min-height: 100%;
+}
+.gotipe-history > * {
+  min-width: 0;
+}
+.gotipe-history > .gotipe-panel {
+  display: var(--gt-history-panel-display);
+}
+.gotipe-history-main {
+  position: relative;
+}
+
+/* ---- the head over the comparison: what is compared, how much, and the one action ---- */
+.gotipe-history-head {
+  flex-wrap: wrap;
+  row-gap: var(--gt-toolbar-pad);
+}
+.gotipe-history-back {
+  display: var(--gt-history-back-display);
+  margin-inline-start: calc(-1 * var(--gt-toolbar-pad));
+}
+.gotipe-history-facts {
+  display: flex;
+  flex-basis: var(--gt-history-facts-basis);
+  align-items: center;
+  gap: var(--gt-menu-gap);
+  order: var(--gt-history-facts-order);
+  min-width: 0;
+}
+.gotipe-diff-stat > .is-change {
+  color: var(--gt-info);
+}
+
+/* ---- the list: a quiet day, then versions — name or time, its size, the author ---- */
+.gotipe-history-day {
+  margin: var(--gt-card-pad) 0 var(--gt-toolbar-pad);
+  padding: 0 var(--gt-menu-gap);
+  color: var(--gt-text-3);
+  font-size: var(--gt-ui-small);
+  font-weight: var(--gt-weight-medium);
+  line-height: var(--gt-ui-small-leading);
+}
+.gotipe-history-day:first-of-type {
+  margin-top: 0;
+}
+.gotipe-history-item {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: baseline;
+  gap: var(--gt-toolbar-gap) var(--gt-menu-gap);
+  padding: var(--gt-card-gap) var(--gt-menu-gap);
+  border-radius: var(--gt-radius-control);
+}
+.gotipe-history-item + .gotipe-history-item {
+  margin-top: var(--gt-toolbar-gap);
+}
+.gotipe-history-item.is-current {
+  background: var(--gt-fill-2);
+}
+.gotipe-history-item.is-current > .gotipe-version-meta {
+  color: var(--gt-text-2);
+}
+.gotipe-history-item > .gotipe-diff-stat {
+  font-size: var(--gt-ui-small);
+  line-height: var(--gt-ui-small-leading);
+}
+.gotipe-history-item > .gotipe-version-meta {
+  display: flex;
+  grid-column: 1 / -1;
+  align-items: center;
+  gap: var(--gt-mention-gap);
+}
+.gotipe-history-item > .gotipe-version-meta > .gotipe-avatar {
+  width: var(--gt-avatar-inline);
+  height: var(--gt-avatar-inline);
+}
+
+/* ---- the comparison: a rule in the gutter marks a block added, removed or changed ---- */
+.gotipe-doc [data-diff] {
+  position: relative;
+}
+.gotipe-doc [data-diff]::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: calc(-1 * var(--gt-diff-bar-gap));
+  width: var(--gt-rule);
+  border-radius: var(--gt-radius-round);
+  background: var(--gt-add);
+}
+.gotipe-doc [data-diff="removed"]::after {
+  background: var(--gt-del);
+}
+.gotipe-doc [data-diff="changed"]::after {
+  background: var(--gt-info);
+}
+.gotipe-doc [data-diff="removed"] {
+  color: var(--gt-text-3);
+  text-decoration-line: line-through;
+  text-decoration-thickness: var(--gt-underline);
+  text-decoration-color: var(--gt-del);
+}
+
+/* ---- the toast after restoring: what happened and the way back ---- */
+.gotipe-toast.is-done > .gt-icon {
+  color: var(--gt-inverse-text-2);
+}
+.gotipe-toast .gotipe-key {
+  color: var(--gt-inverse-text-2);
+}

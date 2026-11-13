@@ -1,0 +1,74 @@
+/* Find and replace, and the counter. The find bar is docked at the top right of the editor: the
+   query with «3 из 12» in its end, the three switches, previous and next, close; replace opens a
+   second row under it. Every match is tinted, the current one stronger and ringed. The counter is a
+   quiet line under the document that takes a tone only near a limit. */
+
+/* ---- the bar: one grid, so the replace field stands right under the query ---- */
+.gotipe-find {
+  top: var(--gt-find-inset);
+  right: var(--gt-find-inset);
+  display: grid;
+  grid-template-columns: var(--gt-find-columns);
+  align-items: center;
+  gap: var(--gt-toolbar-gap);
+  width: var(--gt-find-w);
+  padding: var(--gt-toolbar-pad);
+}
+.gotipe-find-tools {
+  display: flex;
+  grid-column: var(--gt-find-tools-column);
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--gt-toolbar-gap);
+}
+.gotipe-find-tools > .gotipe-tool-sep {
+  margin-inline-end: var(--gt-find-sep-end);
+}
+.gotipe-find-replace {
+  grid-column: 2;
+}
+.gotipe-find-count {
+  flex: none;
+  color: var(--gt-text-3);
+  font-size: var(--gt-ui-small);
+  font-variant-numeric: tabular-nums;
+}
+/* on the highlighted field of an empty search the count steps up a tone, so it still reads */
+.gotipe-field.is-invalid > .gotipe-find-count {
+  color: var(--gt-text-2);
+}
+
+/* ---- matches in the text ---- */
+.gotipe-match {
+  border-radius: var(--gt-radius-match);
+  background: var(--gt-find);
+  color: inherit;
+}
+.gotipe-match.is-current {
+  background: var(--gt-find-current);
+  box-shadow: 0 0 0 var(--gt-hairline) var(--gt-find-ring);
+}
+
+/* ---- the counter: words and characters under the document ---- */
+.gotipe-status {
+  margin-top: var(--gt-status-gap);
+  color: var(--gt-text-3);
+  font-size: var(--gt-ui-small);
+  line-height: var(--gt-ui-small-leading);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: normal;
+}
+.gotipe-status-part {
+  position: relative;
+  white-space: nowrap;
+}
+.gotipe-status-part.is-near {
+  color: var(--gt-warning);
+}
+.gotipe-status-part.is-over {
+  color: var(--gt-danger);
+}
+/* text past the limit: what will not fit is tinted where it stands */
+.gotipe-over-limit {
+  background: var(--gt-over-limit);
+}

@@ -1,0 +1,77 @@
+<figure class="at-figure" id="f28" data-section="Новые возможности">
+  <figcaption class="at-figure-head">
+    <span class="at-num">28</span>
+    <h2 class="at-figure-title">Невидимые символы и направление текста</h2>
+    <p class="at-caption">
+      Переключатель ¶ показывает невидимое тише текста: пробел — точкой, перенос строки — ↵, конец
+      абзаца — ¶. Абзац справа налево идёт от правого края, и ручка блока стоит в правом поле — там,
+      где строка начинается.
+    </p>
+  </figcaption>
+  <!-- @frame frame=invisibles view=modern w=768 label="невидимые символы" -->
+  <div class="gotipe-modern">
+    <div class="gotipe-toolbar gotipe-toolbar-fixed" role="toolbar" aria-label="Форматирование">
+      <div class="gotipe-toolbar-track is-open">
+        <span class="gotipe-tool"><svg class="gt-icon"><use href="#i-undo" /></svg></span>
+        <span class="gotipe-tool" aria-disabled="true"><svg class="gt-icon"><use href="#i-redo" /></svg></span>
+        <span class="gotipe-tool-sep"></span>
+        <span class="gotipe-tool is-text">Текст<svg class="gt-icon"><use href="#i-chevron-down" /></svg></span>
+        <span class="gotipe-tool-sep"></span>
+        <span class="gotipe-tool"><svg class="gt-icon"><use href="#i-bold" /></svg></span>
+        <span class="gotipe-tool"><svg class="gt-icon"><use href="#i-italic" /></svg></span>
+        <span class="gotipe-tool"><svg class="gt-icon"><use href="#i-underline" /></svg></span>
+        <span class="gotipe-tool"><svg class="gt-icon"><use href="#i-strike" /></svg></span>
+        <span class="gotipe-tool"><svg class="gt-icon"><use href="#i-code" /></svg></span>
+        <span class="gotipe-tool"><svg class="gt-icon"><use href="#i-link" /></svg></span>
+        <span class="gotipe-tool"
+          ><span class="gotipe-color-tool"
+            ><svg class="gt-icon"><use href="#i-letter" /></svg><span class="gotipe-color-bar"></span></span
+        ></span>
+        <span class="gotipe-tool-sep"></span>
+        <span class="gotipe-tool"><svg class="gt-icon"><use href="#i-list" /></svg></span>
+        <span class="gotipe-tool"><svg class="gt-icon"><use href="#i-list-num" /></svg></span>
+        <span class="gotipe-tool"><svg class="gt-icon"><use href="#i-todo" /></svg></span>
+        <span class="gotipe-tool-sep"></span>
+        <span class="gotipe-tool is-text"
+          ><svg class="gt-icon"><use href="#i-plus" /></svg>Вставить<svg class="gt-icon"><use href="#i-chevron-down" /></svg
+        ></span>
+        <span class="gotipe-tool-spacer"></span>
+        <span class="gotipe-tool is-active is-hover"
+          ><svg class="gt-icon"><use href="#i-pilcrow" /></svg
+          ><span class="gotipe-tooltip" data-place="below-end">Невидимые символы</span
+          ><svg class="at-pointer"><use href="#i-pointer" /></svg
+        ></span>
+      </div>
+    </div>
+    <article class="gotipe-page" lang="ru">
+      <header class="gotipe-page-head">
+        <h1 class="gotipe-page-title">Офлайн-черновики<span class="gotipe-pilcrow"></span></h1>
+      </header>
+      <div class="gotipe-doc">
+        <p>Правка,<span class="gotipe-sp"> </span>сделанная<span class="gotipe-sp"> </span>без<span class="gotipe-sp"> </span>сети,<span class="gotipe-sp"> </span>сейчас<span class="gotipe-sp"> </span>пропадает,<span class="gotipe-sp"> </span>если<span class="gotipe-sp"> </span>закрыть<span class="gotipe-sp"> </span>вкладку<span class="gotipe-sp"> </span>до<span class="gotipe-sp"> </span>того,<span class="gotipe-sp"> </span>как<span class="gotipe-sp"> </span>связь<span class="gotipe-sp"> </span>вернётся.<span class="gotipe-br"></span><br />В<span class="gotipe-sp"> </span>выпуске<span class="gotipe-sp"> </span>2.8<span class="gotipe-sp"> </span>редактор<span class="gotipe-sp"> </span>пишет<span class="gotipe-sp"> </span>каждую<span class="gotipe-sp"> </span>транзакцию<span class="gotipe-sp"> </span>в<span class="gotipe-sp"> </span>журнал<span class="gotipe-sp"> </span>и<span class="gotipe-sp"> </span>отправит<span class="gotipe-sp"> </span>его,<span class="gotipe-sp"> </span>когда<span class="gotipe-sp"> </span>сеть<span class="gotipe-sp"> </span>появится.<span class="gotipe-pilcrow"></span></p>
+        <p>Возражения<span class="gotipe-sp"> </span>принимаем<span class="gotipe-sp"> </span>до<span class="gotipe-sp"> </span>18<span class="gotipe-sp"> </span>ноября.<span class="gotipe-pilcrow"></span></p>
+      </div>
+    </article>
+  </div>
+  <!-- @end -->
+  <!-- @frame frame=rtl view=notion w=768 label="абзац справа налево" -->
+  <article class="gotipe-page is-slice" lang="ru">
+    <div class="gotipe-doc">
+      <h3>Что меняется</h3>
+      <p>
+        Правка, сделанная без сети, больше не пропадает: редактор пишет её в журнал и отправляет,
+        когда связь вернётся.
+      </p>
+      <p class="is-hovered" lang="ar" dir="rtl">
+        لم تعد التعديلات التي تُجرى دون اتصال تضيع: يحفظها المحرر في سجل محلي ويرسلها عندما يعود
+        الاتصال.
+        <span class="gotipe-block-handle" aria-hidden="true"
+          ><span class="gotipe-handle-button"><svg class="gt-icon"><use href="#i-plus" /></svg></span
+          ><span class="gotipe-handle-button"><svg class="gt-icon"><use href="#i-grip" /></svg></span
+        ></span>
+      </p>
+      <p>Возражения принимаем до 18 ноября — в обсуждении ADR-0031.</p>
+    </div>
+  </article>
+  <!-- @end -->
+</figure>

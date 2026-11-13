@@ -1,0 +1,100 @@
+<figure class="at-figure" id="f29" data-section="Новые возможности">
+  <figcaption class="at-figure-head">
+    <span class="at-num">29</span>
+    <h2 class="at-figure-title">Таблица: объединённые ячейки</h2>
+    <p class="at-caption">
+      Ячейка занимает два столбца или две строки: черта под объединённым заголовком идёт только под
+      его столбцами, объединённая ячейка прерывает черту между строками. Выделенные ячейки — в цвете
+      выделения; «Объединить ячейки» и «Разделить ячейку» — в меню строки и столбца, недоступное —
+      бледнее.
+    </p>
+  </figcaption>
+  <!-- @frame frame=merged view=notion w=768 label="заголовок на два столбца, ячейка на две строки" -->
+  <article class="gotipe-page is-slice" lang="ru">
+    <div class="gotipe-doc">
+      <h2>Журнал по платформам</h2>
+      <div class="gotipe-table-block">
+        <div class="gotipe-table-wrap">
+          <table class="gotipe-table">
+            <thead>
+              <tr><th rowspan="2">Платформа</th><th colspan="2">Журнал</th><th rowspan="2">Шифрование</th></tr>
+              <tr class="is-continued"><th>Ключ</th><th class="is-number">В очереди</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>Веб</td><td class="is-code">drafts.web</td><td class="is-number">1 284</td><td rowspan="2">Ключ сессии</td></tr>
+              <tr><td>macOS</td><td class="is-code">drafts.mac</td><td class="is-number">312</td></tr>
+              <tr><td>iOS</td><td class="is-code">drafts.ios</td><td class="is-number">0</td><td>Нет</td></tr>
+              <tr><td>Android</td><td class="is-code">drafts.android</td><td class="is-number">27</td><td>Ключ устройства</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <span class="gotipe-table-add is-column"><svg class="gt-icon"><use href="#i-plus" /></svg></span>
+        <span class="gotipe-table-add is-row"><svg class="gt-icon"><use href="#i-plus" /></svg></span>
+      </div>
+    </div>
+  </article>
+  <!-- @end -->
+  <!-- @frame frame=cells-merge view=notion w=768 min=480 label="две ячейки выделены" -->
+  <article class="gotipe-page is-slice" lang="ru">
+    <div class="gotipe-doc">
+      <h2>Журнал по платформам</h2>
+      <div class="gotipe-table-block is-hovered">
+        <div class="gotipe-table-wrap is-open">
+          <table class="gotipe-table">
+            <thead>
+              <tr><th rowspan="2">Платформа</th><th colspan="2">Журнал</th><th rowspan="2">Шифрование</th></tr>
+              <tr class="is-continued"><th>Ключ</th><th class="is-number">В очереди</th></tr>
+            </thead>
+            <tbody>
+              <tr class="is-hovered">
+                <td>Веб<span class="gotipe-row-handle"
+                    ><svg class="gt-icon"><use href="#i-chevron-down" /></svg><span class="gotipe-overlay gotipe-menu is-narrow" data-place="below"><span class="gotipe-menu-group"><span class="gotipe-menu-label">Строка</span><span class="gotipe-menu-item"><svg class="gt-icon"><use href="#i-arrow-up" /></svg><span class="gotipe-menu-text">Добавить строку выше</span></span><span class="gotipe-menu-item"><svg class="gt-icon"><use href="#i-arrow-down" /></svg><span class="gotipe-menu-text">Добавить строку ниже</span></span></span><span class="gotipe-menu-group"><span class="gotipe-menu-label">Ячейки</span><span class="gotipe-menu-item is-selected"><svg class="gt-icon"><use href="#i-merge" /></svg><span class="gotipe-menu-text">Объединить ячейки</span><svg class="at-pointer"><use href="#i-pointer" /></svg></span><span class="gotipe-menu-item" aria-disabled="true"><svg class="gt-icon"><use href="#i-split" /></svg><span class="gotipe-menu-text">Разделить ячейку</span></span></span><span class="gotipe-menu-group"><span class="gotipe-menu-item is-danger"><svg class="gt-icon"><use href="#i-trash" /></svg><span class="gotipe-menu-text">Удалить строку</span></span></span></span></span
+                  ></td>
+                <td class="is-code">drafts.web</td><td class="is-number">1 284</td><td class="is-selected">Ключ сессии</td>
+              </tr>
+              <tr><td>macOS</td><td class="is-code">drafts.mac</td><td class="is-number">312</td><td class="is-selected">Ключ сессии</td></tr>
+              <tr><td>iOS</td><td class="is-code">drafts.ios</td><td class="is-number">0</td><td>Нет</td></tr>
+              <tr><td>Android</td><td class="is-code">drafts.android</td><td class="is-number">27</td><td>Ключ устройства</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <span class="gotipe-table-add is-column"><svg class="gt-icon"><use href="#i-plus" /></svg></span>
+        <span class="gotipe-table-add is-row"><svg class="gt-icon"><use href="#i-plus" /></svg></span>
+      </div>
+    </div>
+  </article>
+  <!-- @end -->
+  <!-- @frame frame=cell-split view=notion w=768 min=480 label="разделить заголовок" -->
+  <article class="gotipe-page is-slice" lang="ru">
+    <div class="gotipe-doc">
+      <h2>Журнал по платформам</h2>
+      <div class="gotipe-table-block is-hovered">
+        <div class="gotipe-table-wrap is-open">
+          <table class="gotipe-table">
+            <thead>
+              <tr>
+                <th rowspan="2">Платформа</th>
+                <th colspan="2" class="is-hovered">
+                  Журнал<span class="gotipe-caret"></span><span class="gotipe-column-handle"
+                    ><svg class="gt-icon"><use href="#i-chevron-down" /></svg><span class="gotipe-overlay gotipe-menu is-narrow" data-place="below-end"><span class="gotipe-menu-group"><span class="gotipe-menu-label">Ячейки</span><span class="gotipe-menu-item" aria-disabled="true"><svg class="gt-icon"><use href="#i-merge" /></svg><span class="gotipe-menu-text">Объединить ячейки</span></span><span class="gotipe-menu-item is-selected"><svg class="gt-icon"><use href="#i-split" /></svg><span class="gotipe-menu-text">Разделить ячейку</span><svg class="at-pointer"><use href="#i-pointer" /></svg></span></span><span class="gotipe-menu-group"><span class="gotipe-menu-item"><svg class="gt-icon"><use href="#i-plus" /></svg><span class="gotipe-menu-text">Добавить строку</span></span><span class="gotipe-menu-item"><svg class="gt-icon"><use href="#i-plus" /></svg><span class="gotipe-menu-text">Добавить столбец</span></span></span><span class="gotipe-menu-group"><span class="gotipe-menu-item is-danger"><svg class="gt-icon"><use href="#i-trash" /></svg><span class="gotipe-menu-text">Удалить столбцы</span></span></span></span></span
+                  >
+                </th>
+                <th rowspan="2">Шифрование</th>
+              </tr>
+              <tr class="is-continued"><th>Ключ</th><th class="is-number">В очереди</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>Веб</td><td class="is-code">drafts.web</td><td class="is-number">1 284</td><td rowspan="2">Ключ сессии</td></tr>
+              <tr><td>macOS</td><td class="is-code">drafts.mac</td><td class="is-number">312</td></tr>
+              <tr><td>iOS</td><td class="is-code">drafts.ios</td><td class="is-number">0</td><td>Нет</td></tr>
+              <tr><td>Android</td><td class="is-code">drafts.android</td><td class="is-number">27</td><td>Ключ устройства</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <span class="gotipe-table-add is-column"><svg class="gt-icon"><use href="#i-plus" /></svg></span>
+        <span class="gotipe-table-add is-row"><svg class="gt-icon"><use href="#i-plus" /></svg></span>
+      </div>
+    </div>
+  </article>
+  <!-- @end -->
+</figure>
