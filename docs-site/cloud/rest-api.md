@@ -33,7 +33,7 @@ Errors use one envelope:
 | Status | Code | When |
 |---|---|---|
 | 400 | `INVALID_JSON` | The body is not valid JSON (an empty body included). |
-| 400 | `VALIDATION_ERROR` | A field is missing or invalid; the message names it. |
+| 400 | `VALIDATION_ERROR` | A field is missing or invalid, or an ID in the path, query or body is not a UUID; the message names it. |
 | 401 | `UNAUTHORIZED` | No bearer credential, or wrong email or password. |
 | 401 | `INVALID_TOKEN` | The JWT is invalid, expired or revoked. |
 | 401 | `INVALID_API_KEY` | The API key is unknown or expired. |
@@ -55,7 +55,7 @@ length in seconds.
 |---|---|---|
 | Authenticated REST requests (`RATE_LIMIT_API`) | 100 per minute | User |
 | `POST /v1/ai/complete`, in addition (`RATE_LIMIT_AI`) | 60 per minute | User |
-| `POST /v1/auth/token` | 10 per minute | Client address (the socket peer) |
+| `POST /v1/auth/token` | 10 per minute | Client address: the socket peer, or the `X-Forwarded-For` client when the peer is in `TRUSTED_PROXIES`. IPv6 clients count per `/64`. |
 | `/sync` connection attempts | `RATE_LIMIT_API` | User |
 | Messages on one `/sync` connection (`RATE_LIMIT_WS`) | 1,000 per minute | Connection |
 
@@ -81,6 +81,9 @@ curl -X POST https://api.example.com/v1/documents \
   `409 CONFLICT`. Check the resource's state instead of retrying with a new key.
 - A body sent with a key may be up to 10 MiB. A streaming AI request (`"stream": true`)
   rejects keys with `400`.
+- A stored response body is at most 256 KiB. When the first response was larger, the first
+  caller still gets all of it, but a repeat answers `409 CONFLICT` with the original status in
+  the message; read the resource instead of repeating the mutation.
 
 ## Quotas
 
@@ -142,6 +145,9 @@ bucket and answers `200` or `503`:
 { "status": "ok", "checks": { "postgres": "ok", "valkey": "ok", "r2": "ok" } }
 ```
 
+With a failing dependency the status is `"degraded"` and that check is `"unavailable"`. The
+error itself is only in the server log.
+
 ## Authentication
 
 `POST /v1/auth/token` — exchange a password or an API key for an access token.
@@ -173,17 +179,19 @@ bucket and answers `200` or `503`:
 ## API keys
 
 `POST /v1/api-keys` — `{ "name": "…", "scopes": ["documents:read"], "expires_at": "2027-01-01T00:00:00Z" }`.
-`name` and `scopes` are required; each scope must be one of the five grantable scopes and held by
-the caller (`403` otherwise). Returns `201` with the key, shown only in this response:
+`name` and `scopes` are required (`400` without them); each scope must be one of the five
+grantable scopes and held by the caller (`403` otherwise). `"scopes": []` makes a key that can
+only call the routes without a scope, such as `GET /v1/users/me`. Returns `201` with the key,
+shown only in this response:
 
 ```json
 { "id": "0b7c…", "name": "CI", "prefix": "gt_live_", "key": "gt_live_sk_3f9a…", "scopes": ["documents:read"], "created_at": "2026-11-12T12:00:00Z" }
 ```
 
 `GET /v1/api-keys` — `{ "data": [ … ] }` with `id`, `name`, `prefix`, `scopes`, `last_used_at`,
-`expires_at` and `created_at`; never the key. With no keys, `data` is `null`.
+`expires_at` and `created_at`; never the key. With no keys, `data` is `[]`.
 
-`DELETE /v1/api-keys/{id}` — `204`, or `404` for someone else's key.
+`DELETE /v1/api-keys/{id}` — `204`, `404` for someone else's key, `400` when `id` is not a UUID.
 
 ## Documents
 
@@ -238,12 +246,13 @@ most recently updated first, without `content`. `limit` is 1–100 (otherwise 20
 ### Update
 
 `PATCH /v1/documents/{id}` with `title`, `content` or both → `200` with the document, without
-`content`. New `content` replaces the stored document and discards its collaboration updates;
-connected real-time editors must reload.
+`content`. New `content` replaces the stored document and discards its collaboration updates.
+Connected real-time editors receive `BASELINE_REPLACED` and must load the document again (see
+[Replaced content](/docs/cloud/realtime#replaced-content)).
 
 ### Delete
 
-`DELETE /v1/documents/{id}` → `204`. Owner only: other users get `403`. Comments, versions,
+`DELETE /v1/documents/{id}` → `204`. Owner only: other users get `404`. Comments, versions,
 permissions and export jobs go with it; stored objects are removed by the cleanup worker.
 
 ## Comments
@@ -310,8 +319,9 @@ Restore points have `version_type` `restore_point`.
 
 `POST /v1/documents/{docId}/versions/{versionId}/restore` → `{"status": "restored", "version_id": "…"}`.
 The current content is first saved as a `restore_point` version named
-`Before restoring: <versionId>`, whose ID is returned. Collaboration updates are discarded.
-A change during the restore answers `409`.
+`Before restoring: <versionId>`, whose ID is returned. Collaboration updates are discarded,
+and connected real-time editors receive `BASELINE_REPLACED`. A change during the restore
+answers `409`.
 
 ## Permissions
 

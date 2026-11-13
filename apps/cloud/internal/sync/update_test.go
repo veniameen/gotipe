@@ -2,6 +2,7 @@ package sync
 
 import (
 	"encoding/json"
+	"errors"
 	"testing"
 )
 
@@ -80,7 +81,7 @@ func TestRevisionCountersDoNotChangeBaselineIdentity(t *testing.T) {
 	base["version"] = 42
 	update.Base, _ = json.Marshal(base)
 	encoded, _ := json.Marshal(update)
-	if err := ValidateBaseline(testDocument, encoded); err != nil {
+	if err := acceptsBaseline(testDocument, encoded); err != nil {
 		t.Fatal(err)
 	}
 }
@@ -89,9 +90,22 @@ func TestPublicAndRustBaselinesHaveTheSameIdentity(t *testing.T) {
 	public := []byte(`{"version":42,"blocks":[{"id":"b1","type":"heading","attrs":{"level":2},"content":[{"text":"Ж😀","marks":[{"type":"bold"}]}]}]}`)
 	rust := []byte(`{"version":1,"blocks":[{"id":"b1","block_type":"heading","attrs":{"level":2.0},"content":{"type":"RichText","value":[{"text":"Ж😀","marks":[{"mark_type":"bold","attrs":{}}]}]},"children":[]}]}`)
 	data, _ := json.Marshal(replicaUpdate{Protocol: replicaProtocol, Base: rust, Operations: []replicaOperation{}})
-	if err := ValidateBaseline(public, data); err != nil {
+	if err := acceptsBaseline(public, data); err != nil {
 		t.Fatal(err)
 	}
+	other := []byte(`{"version":0,"blocks":[{"id":"b2","type":"paragraph","content":[]}]}`)
+	if err := acceptsBaseline(other, data); !errors.Is(err, ErrBaselineReplaced) {
+		t.Fatalf("another baseline was not reported as replaced: %v", err)
+	}
+}
+
+func acceptsBaseline(document, update []byte) error {
+	log, err := newUpdateLog(document)
+	if err != nil {
+		return err
+	}
+	_, _, _, err = log.prepare(update)
+	return err
 }
 
 func TestNestedJSONAttributesPreserveBaselineAndOperationValues(t *testing.T) {

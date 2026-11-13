@@ -48,6 +48,15 @@ export interface CollaborationOptions {
   onStateChange?: (state: ConnectionState) => void;
   onSyncChange?: (state: SyncState) => void;
   onPeersChange?: (peers: PeerState[]) => void;
+  /**
+   * Cloud replaced the document's content (PATCH with content or a version
+   * restore), so this replica's baseline is obsolete. The provider has stopped;
+   * operations the server did not confirm cannot be saved. Load the document
+   * again and create a new editor and provider from its collaboration state.
+   * Without this callback the provider reports the replacement through onError.
+   */
+  onBaselineReplaced?: () => void;
+  /** Failures, including recoverable ones such as an invalid peer presence. */
   onError?: (error: Error) => void;
 }
 

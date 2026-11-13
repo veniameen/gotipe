@@ -64,6 +64,10 @@ func (s *Server) HandleWebSocket() http.HandlerFunc {
 			http.Error(w, "peer_id required", http.StatusBadRequest)
 			return
 		}
+		if !validPeerID(peerID) {
+			http.Error(w, "peer_id must be at most 256 bytes and not start with @base", http.StatusBadRequest)
+			return
+		}
 
 		connectionUpgrader := upgrader
 		connectionUpgrader.CheckOrigin = s.checkOrigin
@@ -73,7 +77,7 @@ func (s *Server) HandleWebSocket() http.HandlerFunc {
 			return
 		}
 
-		room := s.getOrCreateRoom(documentID)
+		room := s.getOrCreateRoom(roomKey(documentID))
 		client := NewClient(room, conn, peerID, user.UserID, s.log)
 		s.mu.RLock()
 		client.limiter = newMessageWindow(s.messageLimit, s.messageWindow)

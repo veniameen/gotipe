@@ -4,11 +4,13 @@ package main
 
 import (
 	"context"
+	"errors"
 	"strings"
 	"testing"
 	"time"
 
 	"github.com/gotipe/cloud/internal/storage"
+	cloudsync "github.com/gotipe/cloud/internal/sync"
 	"github.com/gotipe/cloud/internal/testdb"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
@@ -65,7 +67,7 @@ func TestSyncGenerationFiltersUpdateCommittedAfterRESTReplacement(t *testing.T) 
 			finished := make(chan error, 1)
 			go func() {
 				if checkpoint {
-					finished <- store.SaveSnapshot(ctx, docID, syncEnvelope(base))
+					finished <- store.SaveSnapshot(ctx, docID, "old-generation", syncEnvelope(base))
 				} else {
 					// Model an old in-flight writer during rolling upgrade. The new
 					// SaveUpdate also changes metadata, serializing its row lock with REST.
@@ -105,21 +107,77 @@ func TestSyncGenerationFiltersUpdateCommittedAfterRESTReplacement(t *testing.T) 
 				t.Fatalf("race did not retain stale insert: %d", stale)
 			}
 			store.db = db
-			updates, err := store.LoadUpdates(ctx, docID)
+			state, err := store.LoadState(ctx, docID)
 			if err != nil {
 				t.Fatal(err)
 			}
-			if len(updates) != 0 {
-				t.Fatal("obsolete generation would be sent to reconnecting clients")
+			if state.Generation != "new-generation" || len(state.Updates) != 0 {
+				t.Fatalf("obsolete generation would be sent to reconnecting clients: %s %d", state.Generation, len(state.Updates))
 			}
-			if err = store.SaveUpdate(ctx, docID, syncEnvelope(base)); err != nil {
+			if err = store.SaveUpdate(ctx, docID, "old-generation", syncEnvelope(base)); !errors.Is(err, cloudsync.ErrBaselineReplaced) {
+				t.Fatalf("write pinned to the old generation was not refused: %v", err)
+			}
+			if err = store.SaveUpdate(ctx, docID, state.Generation, syncEnvelope(base)); err != nil {
 				t.Fatal(err)
 			}
-			updates, err = store.LoadUpdates(ctx, docID)
-			if err != nil || len(updates) != 1 {
-				t.Fatalf("current generation updates=%d err=%v", len(updates), err)
+			state, err = store.LoadState(ctx, docID)
+			if err != nil || len(state.Updates) != 1 {
+				t.Fatalf("current generation updates=%d err=%v", len(state.Updates), err)
 			}
 		})
+	}
+}
+
+// A save of the old generation that waits for a REST replacement's row lock must
+// insert nothing: under READ COMMITTED an INSERT that read the row before the lock
+// wait would commit an orphan delta although the save reports a replaced baseline.
+func TestSaveBlockedByRESTReplacementInsertsNoOldDelta(t *testing.T) {
+	db := testdb.Open(t)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	var userID, docID string
+	if err := db.Pool.QueryRow(ctx, `INSERT INTO users(email)VALUES('blocked@test.invalid')RETURNING id`).Scan(&userID); err != nil {
+		t.Fatal(err)
+	}
+	if err := db.Pool.QueryRow(ctx, `INSERT INTO documents(owner_id,r2_key)VALUES($1,'old-generation')RETURNING id`, userID).Scan(&docID); err != nil {
+		t.Fatal(err)
+	}
+	base := []byte(`{"blocks":[],"version":0}`)
+	store := &dbPersistenceStore{db: db, r2: &syncTestObjects{data: base}}
+	replacement, err := db.Pool.(*pgxpool.Pool).Begin(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer replacement.Rollback(ctx)
+	if _, err = replacement.Exec(ctx, `UPDATE documents SET r2_key='new-generation',version=version+1 WHERE id=$1`, docID); err != nil {
+		t.Fatal(err)
+	}
+	saved := make(chan error, 1)
+	go func() { saved <- store.SaveUpdate(ctx, docID, "old-generation", syncEnvelope(base)) }()
+	for waiting := 0; waiting == 0; {
+		if err := db.Pool.QueryRow(ctx, `SELECT count(*) FROM pg_stat_activity WHERE datname=current_database() AND wait_event_type='Lock'`).Scan(&waiting); err != nil {
+			t.Fatal(err)
+		}
+		select {
+		case err := <-saved:
+			t.Fatalf("save finished before the replacement committed: %v", err)
+		case <-ctx.Done():
+			t.Fatal(ctx.Err())
+		case <-time.After(10 * time.Millisecond):
+		}
+	}
+	if err = replacement.Commit(ctx); err != nil {
+		t.Fatal(err)
+	}
+	if err = <-saved; !errors.Is(err, cloudsync.ErrBaselineReplaced) {
+		t.Fatalf("save during replacement was not reported as replaced: %v", err)
+	}
+	var deltas int
+	if err = db.Pool.QueryRow(ctx, `SELECT count(*) FROM document_updates WHERE document_id=$1`, docID).Scan(&deltas); err != nil {
+		t.Fatal(err)
+	}
+	if deltas != 0 {
+		t.Fatalf("a delta of the replaced generation was inserted: %d", deltas)
 	}
 }
 
@@ -135,10 +193,10 @@ func TestDurableSyncUpdateAdvancesRESTRevisionAtomically(t *testing.T) {
 	}
 	base := []byte(`{"blocks":[],"version":0}`)
 	store := &dbPersistenceStore{db: db, r2: &syncTestObjects{data: base}}
-	if err := store.SaveUpdate(ctx, docID, syncEnvelope(base)); err != nil {
+	if err := store.SaveUpdate(ctx, docID, "baseline", syncEnvelope(base)); err != nil {
 		t.Fatal(err)
 	}
-	if err := store.SaveSnapshot(ctx, docID, syncEnvelope(base)); err != nil {
+	if err := store.SaveSnapshot(ctx, docID, "baseline", syncEnvelope(base)); err != nil {
 		t.Fatal(err)
 	}
 	var version int64
@@ -155,7 +213,7 @@ func TestDurableSyncUpdateAdvancesRESTRevisionAtomically(t *testing.T) {
 	if _, err := db.Pool.Exec(ctx, `UPDATE documents SET version=9223372036854775807 WHERE id=$1`, docID); err != nil {
 		t.Fatal(err)
 	}
-	if err := store.SaveUpdate(ctx, docID, syncEnvelope(base)); err == nil {
+	if err := store.SaveUpdate(ctx, docID, "baseline", syncEnvelope(base)); err == nil {
 		t.Fatal("overflow accepted")
 	}
 	if err := db.Pool.QueryRow(ctx, `SELECT count(*) FROM document_updates WHERE document_id=$1`, docID).Scan(&count); err != nil {

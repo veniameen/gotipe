@@ -115,6 +115,8 @@ paths:
       responses:
         '204':
           description: Document deleted
+        '404':
+          $ref: '#/components/responses/NotFound'
 
   /documents/{documentId}/comments:
     get:

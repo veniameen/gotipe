@@ -107,6 +107,7 @@ func (h *AIHandler) Complete() http.HandlerFunc {
 			return writeAIEvent(w, "content", map[string]string{"text": text})
 		}
 		result, err := h.provider.Complete(r.Context(), cloudAI.Request{Provider: req.Provider, Model: req.Model, Command: req.Command, Context: req.Context, Prompt: req.Prompt, MaxTokens: req.MaxTokens, Temperature: req.Temperature, Stream: req.Stream}, emit)
+		observeAIRequest(req.Provider, req.Model, err)
 		if err != nil {
 			if started {
 				_ = writeAIEvent(w, "error", map[string]string{"code": "AI_PROVIDER_ERROR", "message": "AI generation failed"})

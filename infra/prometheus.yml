@@ -7,31 +7,22 @@ rule_files:
   - "alerts.yml"
 
 scrape_configs:
-  # --- GoTipe API Server ---
+  # --- GoTipe Cloud ---
+  # The REST API, the sync server and the workers run in one process; its
+  # metrics are on METRICS_LISTEN_ADDR (:9090), not on the REST (:8080) or
+  # sync (:8081) ports.
   - job_name: gotipe-api
     static_configs:
-      - targets: ["api:8080"]
+      - targets: ["api:9090"]
     metrics_path: /metrics
     scrape_interval: 10s
-
-  # --- GoTipe WebSocket Sync Server ---
-  - job_name: gotipe-sync
-    static_configs:
-      - targets: ["sync:8081"]
-    metrics_path: /metrics
-    scrape_interval: 10s
-
-  # --- PostgreSQL (via postgres_exporter) ---
-  - job_name: postgres
-    static_configs:
-      - targets: ["postgres-exporter:9187"]
-
-  # --- Valkey (via valkey-exporter) ---
-  - job_name: valkey
-    static_configs:
-      - targets: ["valkey-exporter:9121"]
 
   # --- Prometheus self-monitoring ---
   - job_name: prometheus
     static_configs:
       - targets: ["localhost:9090"]
+
+  # The API also exports Valkey's used_memory and maxmemory
+  # (gotipe_valkey_*_bytes). The compose stack runs no exporters: to watch
+  # PostgreSQL, PgBouncer or disk space (WAL), add postgres_exporter,
+  # pgbouncer_exporter or node_exporter services and a scrape job for each.

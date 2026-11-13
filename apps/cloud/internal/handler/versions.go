@@ -20,6 +20,13 @@ type VersionsHandler struct {
 	r2       storage.ObjectStore
 	audit    *audit.AuditLogger
 	contents document.ContentReader
+	replaced BaselineReplacement
+}
+
+// SetBaselineReplacement installs the collaboration notice sent after a restore;
+// call it before serving.
+func (h *VersionsHandler) SetBaselineReplacement(notify BaselineReplacement) {
+	h.replaced = notify
 }
 
 func NewVersionsHandler(db *storage.PostgresStore, r2 storage.ObjectStore, auditLogger *audit.AuditLogger, readers ...document.ContentReader) *VersionsHandler {

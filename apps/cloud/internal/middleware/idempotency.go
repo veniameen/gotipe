@@ -6,6 +6,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -26,7 +27,14 @@ type cachedResponse struct {
 	Status      int         `json:"status"`
 	Headers     http.Header `json:"headers,omitempty"`
 	Body        []byte      `json:"body,omitempty"`
+	// Omitted marks a completed request whose reply exceeded MaxReplayBody.
+	Omitted bool `json:"omitted,omitempty"`
 }
+
+// MaxReplayBody bounds the reply one idempotency record keeps in Valkey for 24
+// hours. Valkey runs with noeviction because revocations and idempotency claims
+// must not be dropped, so what each record stores has to stay small.
+const MaxReplayBody = 256 << 10
 
 const claimIdempotency = `if redis.call('SET',KEYS[1],ARGV[1],'NX','EX',86400) then return 1 else return 0 end`
 
@@ -108,6 +116,10 @@ func IdempotencyMiddleware(store IdempotencyStore, authorize ...ReplayAuthorizer
 					apierror.ErrConflict.WithMessage("The original request is pending or its result is uncertain; do not repeat the mutation with a new key").Write(w)
 					return
 				}
+				if response.Omitted {
+					apierror.ErrConflict.WithMessage(fmt.Sprintf("The original request completed with status %d; its response was too large to keep for replay, so read the resource instead of repeating the mutation", response.Status)).Write(w)
+					return
+				}
 				if response.Status >= 200 && response.Status < 300 && len(response.Body) > 0 {
 					for _, check := range authorize {
 						if !check(w, r, body, response.Body) {
@@ -121,7 +133,12 @@ func IdempotencyMiddleware(store IdempotencyStore, authorize ...ReplayAuthorizer
 			recorder := httptest.NewRecorder()
 			next.ServeHTTP(recorder, r)
 			response := cachedResponse{Fingerprint: fingerprint, Status: recorder.Code, Headers: recorder.Header().Clone(), Body: recorder.Body.Bytes()}
-			data, err := json.Marshal(response)
+			record := response
+			if len(record.Body) > MaxReplayBody {
+				// The caller still gets the full reply now; the record keeps only the outcome.
+				record = cachedResponse{Fingerprint: fingerprint, Status: response.Status, Omitted: true}
+			}
+			data, err := json.Marshal(record)
 			if err != nil {
 				apierror.ErrServiceDown.Write(w)
 				return

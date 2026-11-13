@@ -2,33 +2,82 @@ package config
 
 import (
 	"fmt"
-	"os"
+	"net/netip"
 	"strconv"
 	"time"
 )
 
-func validateEnvironmentValues() error {
-	for _, name := range []string{"DATABASE_MAX_CONNS", "DATABASE_IDLE_CONNS", "VALKEY_MAX_CONNS", "AI_MAX_TOKENS", "EXPORT_WORKERS", "EXPORT_MAX_DOCUMENT_SIZE"} {
-		if value := os.Getenv(name); value != "" {
-			if _, err := strconv.ParseInt(value, 10, 32); err != nil {
-				return fmt.Errorf("%s must be an integer", name)
-			}
-		}
+// environment reads typed values and keeps the first invalid one. An invalid value
+// stops the API at startup instead of falling back to a default silently.
+type environment struct {
+	lookup func(string) (string, bool)
+	err    error
+}
+
+func (e *environment) fail(format string, args ...any) {
+	if e.err == nil {
+		e.err = fmt.Errorf(format, args...)
 	}
-	for _, name := range []string{"JWT_EXPIRY", "AI_CACHE_TTL", "EXPORT_POLL_INTERVAL"} {
-		if value := os.Getenv(name); value != "" {
-			parsed, err := time.ParseDuration(value)
-			if err != nil || parsed <= 0 {
-				return fmt.Errorf("%s must be a positive duration", name)
-			}
-		}
+}
+
+// text returns the value, or fallback when the variable is unset or empty.
+func (e *environment) text(name, fallback string) string {
+	if value, ok := e.lookup(name); ok && value != "" {
+		return value
 	}
-	for _, name := range []string{"S3_USE_PATH_STYLE", "PROMETHEUS_ENABLED"} {
-		if value := os.Getenv(name); value != "" {
-			if _, err := strconv.ParseBool(value); err != nil {
-				return fmt.Errorf("%s must be a boolean", name)
-			}
-		}
+	return fallback
+}
+
+func (e *environment) list(name string) []string {
+	return splitValues(e.text(name, ""))
+}
+
+func (e *environment) integer(name string, fallback int) int {
+	value := e.text(name, "")
+	if value == "" {
+		return fallback
 	}
-	return nil
+	parsed, err := strconv.ParseInt(value, 10, 32)
+	if err != nil {
+		e.fail("%s must be an integer", name)
+		return fallback
+	}
+	return int(parsed)
+}
+
+// duration accepts Go durations only ("90s", "1h"). A bare number is rejected
+// rather than guessed as seconds.
+func (e *environment) duration(name string, fallback time.Duration) time.Duration {
+	value := e.text(name, "")
+	if value == "" {
+		return fallback
+	}
+	parsed, err := time.ParseDuration(value)
+	if err != nil || parsed <= 0 {
+		e.fail("%s must be a positive duration such as 30s or 1h", name)
+		return fallback
+	}
+	return parsed
+}
+
+func (e *environment) boolean(name string, fallback bool) bool {
+	value := e.text(name, "")
+	if value == "" {
+		return fallback
+	}
+	parsed, err := strconv.ParseBool(value)
+	if err != nil {
+		e.fail("%s must be a boolean", name)
+		return fallback
+	}
+	return parsed
+}
+
+func (e *environment) prefixes(name string) []netip.Prefix {
+	prefixes, err := parseTrustedProxies(e.list(name))
+	if err != nil {
+		e.fail("%s: %v", name, err)
+		return nil
+	}
+	return prefixes
 }

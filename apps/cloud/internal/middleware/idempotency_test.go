@@ -152,3 +152,32 @@ func TestIdempotencyChecksLiveAuthorizationBeforeReplay(t *testing.T) {
 		t.Fatalf("revocation bypass: %d %s", replay.Code, replay.Body)
 	}
 }
+
+func TestIdempotencyKeepsOnlyTheOutcomeOfOversizedReplies(t *testing.T) {
+	store := &idempotencyStore{data: map[string][]byte{}}
+	calls := 0
+	large := strings.Repeat("x", MaxReplayBody+1)
+	h := IdempotencyMiddleware(store, func(http.ResponseWriter, *http.Request, []byte, []byte) bool {
+		t.Fatal("an omitted reply has no body to authorize")
+		return false
+	})(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		calls++
+		w.WriteHeader(201)
+		w.Write([]byte(large))
+	}))
+	first := httptest.NewRecorder()
+	h.ServeHTTP(first, idempotentRequest("/v1/documents", `{"title":"big"}`))
+	if first.Code != 201 || first.Body.Len() != len(large) {
+		t.Fatalf("first reply truncated: %d %d", first.Code, first.Body.Len())
+	}
+	for key, record := range store.data {
+		if len(record) > 1024 || strings.Contains(string(record), "xxxx") {
+			t.Fatalf("record %s stores the oversized body (%d bytes)", key, len(record))
+		}
+	}
+	repeat := httptest.NewRecorder()
+	h.ServeHTTP(repeat, idempotentRequest("/v1/documents", `{"title":"big"}`))
+	if repeat.Code != 409 || !strings.Contains(repeat.Body.String(), "status 201") || calls != 1 {
+		t.Fatalf("repeat: %d %s calls=%d", repeat.Code, repeat.Body, calls)
+	}
+}

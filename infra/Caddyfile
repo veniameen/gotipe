@@ -1,8 +1,30 @@
 # infra/Caddyfile
 # Caddy reverse proxy — auto TLS via Let's Encrypt
+#
+# Client addresses: every reverse_proxy below sends X-Forwarded-For with exactly
+# one address, {client_ip}: the client as Caddy resolved it. The API accepts that
+# header only from Caddy's fixed compose address (TRUSTED_PROXIES), so Caddy is
+# the one place where proxies in front of it are configured. X-Real-IP is
+# removed so a client cannot supply it.
+#
+# Without trusted_proxies, {client_ip} is the address that connected to Caddy.
+# With a CDN or load balancer in front of Caddy, add a global options block at
+# the top of this file so {client_ip} becomes the client that proxy reports:
+#   {
+#   	servers {
+#   		trusted_proxies static <the CDN's or load balancer's ranges>
+#   		trusted_proxies_strict
+#   	}
+#   }
+# trusted_proxies_strict reads X-Forwarded-For right to left; without it Caddy
+# takes the leftmost entry, which the client can write. Do not add those ranges
+# to the API's TRUSTED_PROXIES.
 
 api.gotipe.com {
-	reverse_proxy api:8080
+	reverse_proxy api:8080 {
+		header_up X-Forwarded-For {client_ip}
+		header_up -X-Real-IP
+	}
 
 	header {
 		# Security headers
@@ -15,5 +37,8 @@ api.gotipe.com {
 }
 
 sync.gotipe.com {
-	reverse_proxy api:8081
+	reverse_proxy api:8081 {
+		header_up X-Forwarded-For {client_ip}
+		header_up -X-Real-IP
+	}
 }

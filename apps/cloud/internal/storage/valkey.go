@@ -2,7 +2,10 @@ package storage
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/valkey-io/valkey-go"
@@ -89,4 +92,51 @@ func (s *ValkeyStore) BlocklistCheck(ctx context.Context, jti string) (bool, err
 		return false, err
 	}
 	return val != nil, nil
+}
+
+// ValkeyMemory is the part of INFO memory that the API exports as metrics.
+type ValkeyMemory struct {
+	Used int64 // used_memory, bytes
+	Max  int64 // maxmemory, bytes; 0 means no limit
+}
+
+// MemoryInfo reads used_memory and maxmemory. GoTipe runs Valkey with noeviction,
+// so a full instance refuses writes; these values let an alert fire before that.
+func (s *ValkeyStore) MemoryInfo(ctx context.Context) (ValkeyMemory, error) {
+	text, err := s.Client.Do(ctx, s.Client.B().Info().Section("memory").Build()).ToString()
+	if err != nil {
+		return ValkeyMemory{}, err
+	}
+	return parseMemoryInfo(text)
+}
+
+// parseMemoryInfo reads "name:value" lines of an INFO reply; a RESP3 verbatim
+// reply keeps its "txt:" prefix on the first line, which holds no field we read.
+func parseMemoryInfo(text string) (ValkeyMemory, error) {
+	var memory ValkeyMemory
+	found := map[string]bool{}
+	for _, line := range strings.Split(text, "\n") {
+		name, value, ok := strings.Cut(strings.TrimSpace(line), ":")
+		if !ok {
+			continue
+		}
+		var target *int64
+		switch name {
+		case "used_memory":
+			target = &memory.Used
+		case "maxmemory":
+			target = &memory.Max
+		default:
+			continue
+		}
+		parsed, err := strconv.ParseInt(value, 10, 64)
+		if err != nil || parsed < 0 {
+			return ValkeyMemory{}, fmt.Errorf("INFO memory has an invalid %s", name)
+		}
+		*target, found[name] = parsed, true
+	}
+	if !found["used_memory"] || !found["maxmemory"] {
+		return ValkeyMemory{}, errors.New("INFO memory lacks used_memory or maxmemory")
+	}
+	return memory, nil
 }

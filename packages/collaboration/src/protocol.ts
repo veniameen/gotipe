@@ -42,6 +42,70 @@ export function readUpdate(bytes: Uint8Array): Update {
   return value;
 }
 
+/** Error codes the provider handles itself; any other 0x08 code stops it. */
+export const BASELINE_REPLACED = "BASELINE_REPLACED";
+export const INVALID_AWARENESS = "INVALID_AWARENESS";
+export const UPDATE_NOT_SAVED = "UPDATE_NOT_SAVED";
+
+export function readServerError(bytes: Uint8Array): { code: string; message: string } {
+  const value = decodeJSON(bytes) as { code?: unknown; message?: unknown } | null;
+  if (!value || typeof value.code !== "string" || !value.code)
+    throw new Error("Invalid collaboration error frame");
+  const message =
+    typeof value.message === "string" && value.message
+      ? value.message
+      : "The collaboration server rejected the request";
+  return { code: value.code, message };
+}
+
+/**
+ * Validates the sync endpoint once, when the provider is configured. These are
+ * permanent mistakes: retrying them can never succeed.
+ */
+export function syncEndpoint(wsUrl: string): URL {
+  let url: URL;
+  try {
+    url = new URL(wsUrl);
+  } catch {
+    throw new TypeError("The collaboration URL must be an absolute ws: or wss: URL");
+  }
+  if (url.protocol !== "ws:" && url.protocol !== "wss:")
+    throw new TypeError("The collaboration URL must be an absolute ws: or wss: URL");
+  if (url.username || url.password || url.searchParams.has("token"))
+    throw new TypeError("Use the token option instead of credentials in the collaboration URL");
+  return url;
+}
+
+/** The replica identity rule of the engine and Cloud: byte length, as Rust and Go count it. */
+export function validPeerId(peerId: string): boolean {
+  return !!peerId.trim() && encoder.encode(peerId).length <= 256 && !peerId.startsWith("@base");
+}
+
+/** Same baseline content; revision counters are local and ignored, as in the engine. */
+export function sameBaseline(left: object, right: object): boolean {
+  const { version: _left, ...a } = left as Record<string, unknown>;
+  const { version: _right, ...b } = right as Record<string, unknown>;
+  return equalJSON(a, b);
+}
+function equalJSON(left: unknown, right: unknown): boolean {
+  if (left === right) return true;
+  if (Array.isArray(left) || Array.isArray(right))
+    return (
+      Array.isArray(left) &&
+      Array.isArray(right) &&
+      left.length === right.length &&
+      left.every((value, index) => equalJSON(value, right[index]))
+    );
+  if (!left || !right || typeof left !== "object" || typeof right !== "object") return false;
+  const a = left as Record<string, unknown>;
+  const b = right as Record<string, unknown>;
+  const keys = Object.keys(a);
+  return (
+    keys.length === Object.keys(b).length &&
+    keys.every((key) => Object.hasOwn(b, key) && equalJSON(a[key], b[key]))
+  );
+}
+
 export function encodeJSON(value: unknown): Uint8Array {
   return encoder.encode(JSON.stringify(value));
 }

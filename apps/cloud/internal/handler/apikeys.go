@@ -59,6 +59,11 @@ func (h *APIKeysHandler) CreateAPIKey() http.HandlerFunc {
 			apierror.ErrValidation.WithMessage("name is required").Write(w)
 			return
 		}
+		// The column is NOT NULL: a missing list would otherwise fail in PostgreSQL.
+		if req.Scopes == nil {
+			apierror.ErrValidation.WithMessage("scopes is required; send [] for a key without scopes").Write(w)
+			return
+		}
 
 		validScopes := map[string]bool{"documents:read": true, "documents:write": true, "ai:use": true, "export:use": true, "account:manage": true}
 		for _, scope := range req.Scopes {
@@ -124,7 +129,7 @@ func (h *APIKeysHandler) ListAPIKeys() http.HandlerFunc {
 		}
 		defer rows.Close()
 
-		var keys []APIKeyResponse
+		keys := []APIKeyResponse{}
 		for rows.Next() {
 			var k APIKeyResponse
 			var lastUsed, expiresAt, createdAt *time.Time
@@ -145,6 +150,10 @@ func (h *APIKeysHandler) ListAPIKeys() http.HandlerFunc {
 			}
 			keys = append(keys, k)
 		}
+		if err := rows.Err(); err != nil {
+			apierror.ErrInternal.Write(w)
+			return
+		}
 
 		apierror.WriteJSON(w, http.StatusOK, map[string]interface{}{"data": keys})
 	}
@@ -159,7 +168,11 @@ func (h *APIKeysHandler) DeleteAPIKey() http.HandlerFunc {
 			return
 		}
 
-		keyID := chi.URLParam(r, "id")
+		keyID, valid := canonicalUUID(chi.URLParam(r, "id"))
+		if !valid {
+			apierror.ErrValidation.WithMessage("id must be a UUID").Write(w)
+			return
+		}
 		result, err := h.db.Pool.Exec(r.Context(),
 			`DELETE FROM api_keys WHERE id = $1 AND user_id = $2`,
 			keyID, user.UserID,

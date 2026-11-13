@@ -171,14 +171,16 @@ can read the organization and its member list. See [REST API](/docs/cloud/rest-a
 - A deleted API key stops working on the next request.
 - Open `/sync` connections re-check the credential and the editor role every 15 seconds and on
   every message, and close at the token's expiry. See [Real-time sync](/docs/cloud/realtime).
+- The login limit (10 attempts a minute) counts each client address. Behind a reverse proxy,
+  list the proxy in `TRUSTED_PROXIES` so the API reads the client from `X-Forwarded-For`; the
+  compose stack does this for Caddy. Headers from any other sender are ignored.
+- Revocations live in Valkey, which must not evict keys: the stock `infra/valkey/valkey.conf`
+  uses `maxmemory-policy noeviction`. When Valkey is full the API answers `503` instead of
+  dropping a revocation. See [Valkey](/docs/cloud/overview#valkey).
 
 > [!NOTE]
-> Not in this release: sign-up, password change or reset, OAuth or SSO (the `OAUTH_*`
-> settings are unused), refresh tokens, and an endpoint for document-restricted tokens.
-> The login limit counts the socket's peer address: behind a reverse proxy every client
-> shares the proxy's address, so apply a per-client limit in the proxy. The stock
-> `infra/valkey/valkey.conf` uses `maxmemory-policy allkeys-lru`, which may evict
-> revocations and idempotency keys under memory pressure; use `noeviction` if they must hold.
+> Not in this release: sign-up, password change or reset, OAuth or SSO, refresh tokens, and an
+> endpoint for document-restricted tokens.
 
 ## Related
 

@@ -36,7 +36,7 @@ func TestIPLimiterFailsClosedAndIgnoresForwardedIdentity(t *testing.T) {
 		r.RemoteAddr = "192.0.2.1:3210"
 		r.Header.Set("X-Forwarded-For", "attacker")
 		w := httptest.NewRecorder()
-		limiter.IPMiddleware()(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) { w.WriteHeader(204) })).ServeHTTP(w, r)
+		limiter.IPMiddleware(ClientAddresses{})(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) { w.WriteHeader(204) })).ServeHTTP(w, r)
 		if w.Code != test.want {
 			t.Fatalf("got %d want %d", w.Code, test.want)
 		}

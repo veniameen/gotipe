@@ -3,7 +3,6 @@ package middleware
 import (
 	"context"
 	"fmt"
-	"net"
 	"net/http"
 	"time"
 
@@ -81,15 +80,11 @@ func (rl *RateLimiter) Middleware(namespaces ...string) func(http.Handler) http.
 	})
 }
 
-// IPMiddleware uses the socket peer, never an untrusted X-Forwarded-For header.
-// Reverse proxies should apply their own per-client gate before forwarding.
-func (rl *RateLimiter) IPMiddleware() func(http.Handler) http.Handler {
+// IPMiddleware limits per client address. Forwarded headers count only from the
+// trusted proxies in clients; any other peer is limited by its socket address.
+func (rl *RateLimiter) IPMiddleware(clients ClientAddresses) func(http.Handler) http.Handler {
 	return rl.middleware(func(r *http.Request) string {
-		host, _, err := net.SplitHostPort(r.RemoteAddr)
-		if err != nil {
-			host = r.RemoteAddr
-		}
-		return "rl:auth:" + host
+		return "rl:auth:" + rateLimitClient(clients.Of(r))
 	})
 }
 

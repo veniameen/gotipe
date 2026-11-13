@@ -1,5 +1,7 @@
 {
-  "annotations": { "list": [] },
+  "annotations": {
+    "list": []
+  },
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 1,
@@ -9,89 +11,99 @@
     {
       "title": "Active WebSocket Connections",
       "type": "timeseries",
-      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 0
+      },
       "targets": [
-        { "expr": "gotipe_ws_connections", "legendFormat": "connections", "refId": "A" }
+        {
+          "expr": "gotipe_websocket_connections",
+          "legendFormat": "connections",
+          "refId": "A"
+        }
       ]
     },
     {
       "title": "Active Rooms",
       "type": "stat",
-      "gridPos": { "h": 4, "w": 6, "x": 12, "y": 0 },
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 12,
+        "y": 0
+      },
       "targets": [
-        { "expr": "gotipe_ws_rooms_active", "refId": "A" }
+        {
+          "expr": "gotipe_websocket_rooms",
+          "refId": "A"
+        }
       ],
       "fieldConfig": {
-        "defaults": { "unit": "short", "thresholds": { "steps": [{ "color": "green", "value": null }] } }
+        "defaults": {
+          "unit": "short",
+          "thresholds": {
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        }
       }
     },
     {
       "title": "Clients per Room (avg)",
       "type": "stat",
-      "gridPos": { "h": 4, "w": 6, "x": 18, "y": 0 },
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 18,
+        "y": 0
+      },
       "targets": [
-        { "expr": "gotipe_ws_connections / gotipe_ws_rooms_active", "refId": "A" }
+        {
+          "expr": "gotipe_websocket_connections / gotipe_websocket_rooms",
+          "refId": "A"
+        }
       ],
       "fieldConfig": {
-        "defaults": { "unit": "short", "thresholds": { "steps": [
-          { "color": "green", "value": null },
-          { "color": "yellow", "value": 30 },
-          { "color": "red", "value": 50 }
-        ] } }
-      }
-    },
-    {
-      "title": "WebSocket Messages/sec",
-      "type": "timeseries",
-      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 8 },
-      "targets": [
-        { "expr": "sum(rate(gotipe_ws_messages_total[5m])) by (direction)", "legendFormat": "{{direction}}", "refId": "A" }
-      ],
-      "fieldConfig": {
-        "defaults": { "unit": "msg/s" }
-      }
-    },
-    {
-      "title": "CRDT Merge Latency",
-      "type": "timeseries",
-      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 8 },
-      "targets": [
-        { "expr": "histogram_quantile(0.50, rate(gotipe_crdt_merge_seconds_bucket[5m]))", "legendFormat": "p50", "refId": "A" },
-        { "expr": "histogram_quantile(0.95, rate(gotipe_crdt_merge_seconds_bucket[5m]))", "legendFormat": "p95", "refId": "B" },
-        { "expr": "histogram_quantile(0.99, rate(gotipe_crdt_merge_seconds_bucket[5m]))", "legendFormat": "p99", "refId": "C" }
-      ],
-      "fieldConfig": {
-        "defaults": { "unit": "s" }
-      }
-    },
-    {
-      "title": "Message Size Distribution",
-      "type": "timeseries",
-      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 16 },
-      "targets": [
-        { "expr": "histogram_quantile(0.50, rate(gotipe_ws_message_size_bytes_bucket[5m]))", "legendFormat": "p50", "refId": "A" },
-        { "expr": "histogram_quantile(0.95, rate(gotipe_ws_message_size_bytes_bucket[5m]))", "legendFormat": "p95", "refId": "B" }
-      ],
-      "fieldConfig": {
-        "defaults": { "unit": "bytes" }
-      }
-    },
-    {
-      "title": "Connection Errors",
-      "type": "timeseries",
-      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 16 },
-      "targets": [
-        { "expr": "sum(rate(gotipe_ws_errors_total[5m])) by (type)", "legendFormat": "{{type}}", "refId": "A" }
-      ],
-      "fieldConfig": {
-        "defaults": { "unit": "reqps" }
+        "defaults": {
+          "unit": "short",
+          "thresholds": {
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 30
+              },
+              {
+                "color": "red",
+                "value": 50
+              }
+            ]
+          }
+        }
       }
     }
   ],
   "schemaVersion": 39,
-  "tags": ["gotipe", "sync"],
-  "templating": { "list": [] },
-  "time": { "from": "now-6h", "to": "now" },
+  "tags": [
+    "gotipe",
+    "sync"
+  ],
+  "templating": {
+    "list": []
+  },
+  "time": {
+    "from": "now-6h",
+    "to": "now"
+  },
   "title": "GoTipe Sync",
   "uid": "gotipe-sync"
 }
