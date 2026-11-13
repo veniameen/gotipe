@@ -50,12 +50,16 @@ React/content/table-layout владеет временной шириной пр
 | Lifecycle extensions/plugins и decoration layers | `editor/extension-lifecycle.ts` |
 | Настроенные paste rules и изолированный draft | `editor/clipboard-options.ts`, `clipboard/paste-rules.ts` |
 | Вставка с учётом разрешённых детей контейнера | `commands/insertion-point.ts`, `commands/structure-commands.ts` |
+| Наложение mark на span: замена того же типа, exclusive group | `engine/mark-rules.ts` = `crates/gotipe-core/src/transform/marks.rs` |
 
-`editor.ts` связывает владельцев. Команды получают узкий query разрешённых детей
-из собранной схемы; кастомные контейнеры не требуют веток по имени приложения.
+`editor.ts` связывает владельцев. Команды получают узкий query собранной схемы
+(`commands/schema.ts`: разрешённые дети, marks блока, exclusive group, defaults атрибутов,
+`values`); кастомные контейнеры не требуют веток по имени приложения.
 
 DOCX: `crates/gotipe-export/src/docx.rs` owns OOXML rendering; `docx/package.rs`
 owns OPC parts and relationships. ZIP is a container codec, not a document model.
+PDF and DOCX share `links.rs` (which references become links, attachment labels) and
+`assets.rs` (bounded decoding of embedded PNG/JPEG/GIF/WebP).
 
 PDF: `crates/gotipe-export/src/pdf.rs` owns options and export orchestration;
 `pdf/validation.rs` checks complete supported structure before rendering, including
@@ -90,8 +94,12 @@ native composition и её DOM reconciliation; listeners/frame очищаютс�
 редактора, destroy и unmount.
 
 HTML/SSR: `packages/core/src/serialization/html.ts` owns the canonical serializer;
-`html-styles.ts` supplies optional neutral export styles. Core `serializeHtml`,
-server rendering and the HTML export wrapper share this implementation.
+`html-styles.ts` supplies optional neutral export styles. `getHTML()` on both engines
+(`wasm-bridge.ts`), core `serializeHtml`, server rendering and the HTML export wrapper
+call this implementation. The native `crates/gotipe-export/src/html.rs` (Cloud,
+`gotipe-convert html`) is a separate port that must stay byte-identical: both suites
+check `crates/gotipe-export/tests/fixtures/html-parity.json`. `html/js.rs` mirrors the
+JavaScript attribute conversions, `html/safety.rs` the URL and color checks.
 
 Нативный IME: `core/src/input/composition.ts` планирует одну транзакцию ввода,
 `composition-dom.ts` временно сохраняет идентичность затронутых DOM-узлов до передачи

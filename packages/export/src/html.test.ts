@@ -38,10 +38,25 @@ describe("public format options", () => {
     }
   });
 
+  it("accepts inlineStyles, the serializer's name, and keeps includeStyles working", async () => {
+    const instance = await editor();
+    try {
+      const styled = exportToHtml(instance, { inlineStyles: true });
+      expect(styled).toContain("line-height:1.5");
+      expect(exportToHtml(instance, { includeStyles: true })).toBe(styled);
+      expect(exportToHtml(instance, { includeStyles: false })).toBe(instance.getHTML());
+      expect(() => exportToHtml(instance, { inlineStyles: true, includeStyles: false })).toThrow(
+        TypeError,
+      );
+    } finally {
+      instance.destroy();
+    }
+  });
+
   it("rejects HTML options for other formats before loading the compiler", async () => {
     const instance = await editor();
     try {
-      const options = { includeStyles: true };
+      const options = { inlineStyles: true };
       expect(() => Reflect.apply(exportToMarkdown, undefined, [instance, options])).toThrow(
         "Unsupported export option",
       );

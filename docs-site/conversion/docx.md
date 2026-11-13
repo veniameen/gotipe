@@ -38,7 +38,7 @@ export async function downloadDocx(editor: GoTipeEditor) {
     },
   });
   const type = "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
-  const url = URL.createObjectURL(new Blob([new Uint8Array(bytes)], { type }));
+  const url = URL.createObjectURL(new Blob([bytes], { type }));
   const link = document.createElement("a");
   link.href = url;
   link.download = "report.docx";
@@ -71,8 +71,10 @@ try {
 | `resolveImage` | `(source: string) => Promise<Uint8Array \| Blob>` | — | Returns the bytes of an image URL. Required when the document has images that are not `data:` URLs. |
 
 Images follow the same rules as in PDF: `data:` images are embedded as they are, other
-sources go through `resolveImage` once per export, and PNG, JPEG and GIF are accepted with the
-same size limits. Option names other than these throw a `TypeError` before anything loads.
+sources go through `resolveImage` once per export, and PNG, JPEG, GIF and WebP are accepted
+with the same size limits (10 MiB per image, 64 MiB per export). An image placeholder
+without a source exports as nothing, or as its caption. Option names other than these throw
+a `TypeError` before anything loads.
 
 ## What the file contains
 
@@ -89,7 +91,7 @@ same size limits. Option names other than these throw a `TypeError` before anyth
 | Callout, toggle | Paragraph followed by its blocks (no box; toggles open) |
 | Table | Word table with column spans |
 | Image | Inline picture (converted to PNG), up to 560 px wide, `alt` as its description; the caption as the next paragraph |
-| File, embed | Hyperlink with the file name or URL |
+| File, embed | The file name, or the URL without one; a hyperlink when the URL is absolute, or a link to a bookmark when it is `#` and the ID of a block in the document (see [Links](/docs/conversion/pdf#links)). Empty placeholders are left out |
 | Columns | The columns one after another |
 | Divider | A line of box-drawing characters |
 | Math, raw Markdown | Their source text |
@@ -99,9 +101,10 @@ and substitutes "DejaVu Sans Mono" when it is not installed.
 
 ## Errors
 
-As with PDF, invalid option names throw a `TypeError`, image preparation rejects with an
-`Error`, and the renderer rejects with a string (`String(error)` shows it), for example
-`Encoding error: Text contains an invalid XML character` for a control character in the text.
+As with PDF, invalid option names throw a `TypeError` and every other failure rejects with an
+`ExportError` whose `code` names the cause (see [PDF errors](/docs/conversion/pdf#errors)), for
+example `ENCODING_ERROR` with `Encoding error: Text contains an invalid XML character` for a
+control character in the text.
 
 ## Limitations
 
@@ -113,8 +116,9 @@ As with PDF, invalid option names throw a `TypeError`, image preparation rejects
 - List markers are text, so Word does not treat the paragraphs as a numbered list. Tables have
   no borders or table style. Columns are not laid out side by side.
 - A table cell that spans rows fails the export.
-- Unknown block types and marks fail, and the URL and color rules of PDF apply: links and file
-  or embed URLs must be `http(s)`, `mailto:`, `#…` or start with `/`.
+- Unknown block types and marks fail. The link rule of PDF applies: absolute `http(s)` and
+  `mailto:` addresses become hyperlinks, `#<block ID>` a link to a bookmark at that block;
+  relative paths, unknown fragments, inline `data:` files and other schemes stay text.
 - Math stays as its literal source; it is not converted to Word equations.
 
 ## Related

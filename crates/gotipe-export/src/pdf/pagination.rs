@@ -80,7 +80,7 @@ pub(crate) fn split_row(row: &Row, available: f32) -> Option<(Row, Row)> {
                     after.ops.push(op.clone());
                 }
             }
-            DrawOp::Bookmark { y, .. } => {
+            DrawOp::Bookmark { y, .. } | DrawOp::Anchor { y, .. } => {
                 if *y < cut {
                     before.ops.push(op.clone());
                 } else {

@@ -30,6 +30,7 @@ Original texts and hashes are in `cargo/`; bundled font provenance is in `fonts/
 | harfrust | 0.15.0 | MIT |
 | hashbrown | 0.17.1 | MIT OR Apache-2.0 |
 | image | 0.25.10 | MIT OR Apache-2.0 |
+| image-webp | 0.2.4 | MIT OR Apache-2.0 |
 | indexmap | 2.14.2 | Apache-2.0 OR MIT |
 | itoa | 1.0.19 | MIT OR Apache-2.0 |
 | kurbo | 0.13.1 | Apache-2.0 OR MIT |
@@ -45,6 +46,7 @@ Original texts and hashes are in `cargo/`; bundled font provenance is in `fonts/
 | polycool | 0.4.0 | MIT OR Apache-2.0 |
 | proc-macro2 | 1.0.107 | MIT OR Apache-2.0 |
 | pxfm | 0.1.30 | BSD-3-Clause OR Apache-2.0 |
+| quick-error | 2.0.1 | MIT/Apache-2.0 |
 | quote | 1.0.47 | MIT OR Apache-2.0 |
 | read-fonts | 0.39.2 | MIT OR Apache-2.0 |
 | read-fonts | 0.46.0 | MIT OR Apache-2.0 |

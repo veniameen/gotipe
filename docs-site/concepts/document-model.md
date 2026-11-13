@@ -197,9 +197,9 @@ levels or with more than 100,000 blocks are rejected.
 > mark.
 
 > [!NOTE]
-> Marks keep the order in which they were added. A mark type's `rank` and
-> `exclusiveGroup` are stored in the schema but not enforced yet, so superscript and
-> subscript can be applied to the same text.
+> Marks keep the order in which they were added; a mark that replaces one of its type takes
+> that mark's place. A mark type's `rank` is stored in the schema but not used yet. Its
+> `exclusiveGroup` is applied: adding superscript removes subscript from that text.
 
 ## Related
 

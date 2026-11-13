@@ -39,7 +39,7 @@ const editor = await createEditor({ extensions: [Paragraph, Bold, Italic, Link, 
 
 ## Commands
 
-Mark commands act on the current selection: every rich-text block it touches, or the stored marks for the next typed text when the selection is collapsed.
+Mark commands act on the current selection: every rich-text block it touches, or the stored marks for the next typed text when the selection is collapsed. Lists, tables, dividers, images and code blocks are passed over, while the list items and table cells inside a selection are formatted.
 
 ```ts
 editor.chain().toggleBold().run();
@@ -52,11 +52,11 @@ editor.chain().setLink("https://example.com/docs").run();
 | `toggleBold()`, `toggleItalic()`, `toggleUnderline()`, `toggleStrikethrough()`, `toggleCode()`, `toggleSuperscript()`, `toggleSubscript()` | Removes the mark when every selected character has it, adds it otherwise. |
 | `toggleHighlight(color?)` | The same for `highlight`, with an optional colour. |
 | `toggleMark(type, attrs?)` | The same for any mark. |
-| `setMark(type, attrs?)` | Adds a mark to the selection. |
+| `setMark(type, attrs?)` | Adds a mark to the selection; text that already has it takes the new attributes. |
 | `unsetMark(type)` | Removes a mark from the selection. |
 | `addMark(type, from?, to?, attrs?)` | Adds a mark to a range of the block that holds the selection anchor (UTF-16 offsets). |
 | `removeMark(type, from?, to?)` | Removes a mark from such a range. |
-| `setLink(href, target?)` | Adds a link; `target` defaults to `"_blank"`. |
+| `setLink(href, target?)` | Adds a link or changes the address of the selected one; `target` defaults to `"_blank"`. |
 | `removeLink()` | Removes links from the selection. |
 | `clearFormatting()` | Removes every mark from the selection. |
 
@@ -64,18 +64,22 @@ editor.chain().setLink("https://example.com/docs").run();
 
 ### Change an attribute
 
-`setMark` adds a mark only where the text does not have that mark yet. Text that already carries it keeps its old attributes. To change a link address or a colour, remove the mark and add it again in the same chain, which is one undo step:
+A mark replaces a mark of the same type, so `setMark` changes a link address or a colour in one undo step, also where only part of the selection had the mark:
 
 ```ts
-editor.chain().unsetMark("link").setMark("link", { href: "https://example.com" }).run();
+editor.chain().setMark("textColor", { color: "#c4382f" }).run();
+editor.chain().setLink("https://example.com/new").run();
 ```
+
+The new mark has exactly the attributes you pass, plus the declared defaults of the ones you leave out; other attributes of the old mark, such as a link `title`, are not kept.
 
 ## Input rules
 
-`Bold`, `Italic`, `Strikethrough` and `InlineCode` declare input rules for `**text**`, `*text*`, `~~text~~` and `` `text` `` typed at the end of a block.
+`Bold`, `Italic`, `Strikethrough` and `InlineCode` format text typed as `**text**`, `*text*`, `~~text~~` and `` `text` ``. When you type the closing delimiter right before the caret, anywhere in a block, the delimiters disappear and the text between them gets the mark; the text you type next is not formatted. One undo brings the delimiters back.
 
-> [!NOTE]
-> In this release a matching rule only switches the mark on for the text you type next. The delimiters stay in the text and the matched text is not formatted. Use the shortcuts or the menu instead.
+The opening delimiter has to start a word: it stands at the start of the block or after a space or punctuation, so `2*3*` and `snake_case*x*` stay as typed. The text between the delimiters may not start or end with a space or contain the delimiter character.
+
+Like the block shortcuts (`# `, `- `), these rules run for typed text only: text committed by an IME composition, such as Japanese or Chinese input, is not converted.
 
 ## Links
 
@@ -85,6 +89,8 @@ editor.chain().unsetMark("link").setMark("link", { href: "https://example.com" }
 | `title` | `string` | — | Title, written to Markdown and HTML. |
 | `target` | `string` | `"_blank"` | Stored only; not used by the views or exports. |
 | `rel` | `string` | `"noopener noreferrer"` | Stored only; not used by the views or exports. |
+
+Commands write the defaults: a link made with `setLink` or `setMark("link", { href })` stores `target` and `rel`.
 
 Links never navigate the page by themselves. While editing, a click places the caret and Cmd/Ctrl+click (or a middle click) opens the link; in read-only mode any click opens it. The editor opens links through `host.openLink`, or `window.open` without a host. Only `http:`, `https:`, `mailto:` and relative addresses are opened or rendered; any other scheme is blocked with `LINK_BLOCKED`.
 
@@ -117,14 +123,11 @@ A mark stores the colour as it looks on a light page, so exports print it as it 
 
 Colours are validated with `toSafeColor`: hex colours, colour names and `rgb()`, `rgba()`, `hsl()` and `hsla()` pass; declarations, URLs and CSS variables are dropped.
 
-`toggleHighlight()` without a colour stores a highlight with no `color`, drawn as a plain `<mark>`.
+`toggleHighlight()` without a colour stores a highlight with no `color`, drawn as a plain `<mark>` in the theme's highlight colour.
 
 ## Superscript and subscript
 
-Both marks declare the exclusive group `script`.
-
-> [!NOTE]
-> The exclusive group is not enforced yet: applying superscript does not remove subscript, and text can carry both.
+Both marks declare the exclusive group `script`, so text carries at most one of them: applying superscript removes subscript from that text, and at a caret switching one on switches the other off.
 
 ## Markdown
 

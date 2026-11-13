@@ -58,9 +58,9 @@ console.log(editor.getMarkdown()); // "**Hello** world!\n"
 
 | Step | Fields | Effect |
 |---|---|---|
-| `insertText` | `blockId`, `offset`, `text`, `marks` | Inserts `text` with exactly `marks`. The block must allow those marks. |
+| `insertText` | `blockId`, `offset`, `text`, `marks` | Inserts `text` with `marks`. The block must allow those marks. Of several marks of one type or one exclusive group, the last one counts. |
 | `deleteText` | `blockId`, `from`, `to` | Deletes `[from, to)` inside one block. `deleteRange` is an alias. |
-| `addMark` | `blockId`, `from`, `to`, `mark` | Adds `mark` to the range. Text that already has a mark of this type keeps it unchanged. |
+| `addMark` | `blockId`, `from`, `to`, `mark` | Adds `mark` to the range. A mark of the same type is replaced in its place, so the text takes the new attributes; marks of the same exclusive group are removed. |
 | `removeMark` | `blockId`, `from`, `to`, `markType` | Removes marks of `markType` from the range. |
 | `insertBlock` | `parentId`, `index`, `block` | Inserts a block tree; `parentId: null` means top level. Every ID in the tree must be new. An `index` past the end appends. |
 | `deleteBlock` | `blockId` | Removes the block with its children. |
@@ -69,6 +69,9 @@ console.log(editor.getMarkdown()); // "**Hello** world!\n"
 | `setBlockAttrs` | `blockId`, `attrs` | Merges `attrs` into the existing attributes. |
 | `splitBlock` | `blockId`, `offset` | Moves the text after `offset` into a new block below, with a new ID. A heading continues as a paragraph; other types keep type and attributes. Children stay in the first block. |
 | `mergeBlocks` | `blockId`, `targetId` | Appends the text of `blockId` to `targetId`, moves its children to the end of the target's children and removes it. Both must hold rich text, or both raw text. |
+
+Steps carry attributes as written: unlike [commands](/docs/concepts/commands), they don't
+fill in the defaults a block or mark type declares.
 
 ## Atomicity and errors
 

@@ -131,16 +131,16 @@ The card shows the site, the readable address and an **Open link** button. GoTip
 | Node | Markdown |
 | --- | --- |
 | `image` | A paragraph holding only `![alt](src "caption")`. `width` and `height` are not written. |
-| `file` | A paragraph holding only `[name](path)` |
-| `embed` | None |
+| `file` | A paragraph holding only `[name](path)`; without a name, the path is the link text |
+| `embed` | A link line `[name or address](address)`; it reads back as a paragraph with a link |
 
 A file block reads back as a file only when its link has no scheme (a relative or `/` path) and its text equals the decoded file name of the path. Otherwise it reads back as a paragraph with a link. An image inside a line of text stays verbatim text and is not an image block.
 
 > [!NOTE]
-> An embed has no Markdown form and is left out of `getMarkdown()`; keep documents with embeds as JSON. `PageEditor` does not offer embeds.
+> Markdown has no embed syntax: `getMarkdown()` writes an embed as a link to its address, and it reads back as a paragraph with that link. Keep documents with embeds as JSON to keep them as embeds. `PageEditor` does not offer embeds.
 
 > [!NOTE]
-> PDF and DOCX export embed PNG, JPEG and GIF images only: a WebP image makes those exports fail, and images given by URL need a `resolveImage` callback. See [PDF](/docs/conversion/pdf).
+> PDF and DOCX export embed PNG, JPEG, GIF and WebP images up to 10 MiB, the formats and size the editor uploads; images given by URL need a `resolveImage` callback. Empty image, file and embed blocks export as nothing. See [PDF](/docs/conversion/pdf).
 
 ## Related
 

@@ -1,5 +1,12 @@
 import { type InlineOptions, linkDestination, linkTitle, writeInline } from "../inline-serialize";
-import { calloutKind, clampLevel, listStart, normalizeAlign, richContent } from "../model";
+import {
+  calloutKind,
+  clampLevel,
+  isBlockEmpty,
+  listStart,
+  normalizeAlign,
+  richContent,
+} from "../model";
 import type { Block, RawSegment, Span } from "../types";
 import { normalizeEol } from "../util";
 
@@ -50,8 +57,12 @@ function inline(
 
 const ENTITY_GLOBAL = /&(?=(?:#[0-9]{1,7}|#[xX][0-9a-fA-F]{1,6}|[A-Za-z][A-Za-z0-9]{1,31});)/g;
 
+/** Older documents store plain text as `plain`/`plaintext`; new ones store "". */
+const PLAIN_LANGUAGE = /^plain(?:text)?$/i;
+
 function infoString(language: string, meta: string): string {
-  const info = (meta ? `${language} ${meta}` : language).replace(/\r\n?|\n/g, " ");
+  const lang = !meta && PLAIN_LANGUAGE.test(language) ? "" : language;
+  const info = (meta ? `${lang} ${meta}` : lang).replace(/\r\n?|\n/g, " ");
   return info.replace(/\\(?=[!-/:-@[-`{-~])/g, "\\\\").replace(ENTITY_GLOBAL, "\\&");
 }
 
@@ -75,6 +86,33 @@ function plainAlt(text: string, ro: RenderOpts): string {
     hard: false,
     tier: 2,
   }).md;
+}
+
+/**
+ * A file or an embed is a link line to its address, labelled by its name or the address
+ * itself. The Rust writer (`crates/gotipe-export/src/markdown.rs`) writes the same bytes.
+ */
+function linkLine(attrs: Record<string, unknown>): string {
+  const url = str(attrs.url);
+  const label = str(attrs.name) || str(attrs.title) || url;
+  const text = label.replace(/\r\n?|\n/g, " ").replace(/[\\`*_[\]<>#!~&]/g, "\\$&");
+  return `[${text}](${linkDestination(url)})`;
+}
+
+/** An empty formula or an embed without an address has no Markdown at any depth. */
+function omitted(block: Block): boolean {
+  return (block.type === "math" || block.type === "embed") && isBlockEmpty(block);
+}
+
+/** A `$$` block; TeX with a line of its own `$$` uses a ```` ```math ```` fence instead. */
+function writeMath(w: Writer, tex: string, indent: string, ro: RenderOpts): void {
+  const lines = tex.split("\n");
+  const fence = lines.some((line) => line.replace(/^[ \t]+|[ \t]+$/g, "") === "$$")
+    ? "`".repeat(Math.max(3, longestRun(tex, "`") + 1))
+    : "";
+  w.write(fence ? `${fence}math` : "$$");
+  for (const line of lines) w.write(ro.eol + indent + line);
+  w.write(ro.eol + indent + (fence || "$$"));
 }
 
 export function bulletMarker(attrs: Record<string, unknown>, override?: string): string {
@@ -144,6 +182,7 @@ function renderList(w: Writer, block: Block, indent: string, ro: RenderOpts, nod
       }
     }
     for (const child of item.children ?? []) {
+      if (omitted(child)) continue;
       w.write(ro.eol);
       if (spread || (spans.length > 0 && cannotInterrupt(child))) w.write(ro.eol);
       w.write(contIndent);
@@ -295,7 +334,19 @@ function renderBlock(w: Writer, block: Block, indent: string, ro: RenderOpts): R
       break;
     }
     case "file":
-      w.write(`[${plainAlt(str(attrs.name), ro)}](${linkDestination(str(attrs.url))})`);
+    case "embed":
+      w.write(linkLine(attrs));
+      break;
+    case "math":
+      // GitHub and most Markdown renderers show a `$$` block as display math.
+      writeMath(
+        w,
+        normalizeEol(
+          typeof block.content === "string" ? block.content : spans.map((s) => s.text).join(""),
+        ),
+        indent,
+        ro,
+      );
       break;
     case "table":
       renderTable(w, block, indent, ro, node);
@@ -319,6 +370,7 @@ function renderBlock(w: Writer, block: Block, indent: string, ro: RenderOpts): R
     const quoted = block.type === "blockquote" || block.type === "callout";
     const childIndent = quoted ? `${indent}> ` : indent;
     for (const child of block.children ?? []) {
+      if (omitted(child)) continue;
       if (w.pos > node.start) w.write(ro.eol + (quoted ? `${indent}>` : "") + ro.eol + childIndent);
       node.children.push(renderBlock(w, child, childIndent, ro));
     }

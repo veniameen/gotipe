@@ -17,9 +17,10 @@ Browser bundlers must serve the `.wasm` file referenced by the generated module
 with `application/wasm`. The Node entry initializes from the local package file.
 No remote compilation service, system fonts or user document upload is used.
 
-Unsupported block types return an error instead of producing an incomplete
-document. Embedded PNG/JPEG/GIF images are decoded with bounded dimensions and
-memory. URL images require an explicit `resolveImage` host callback in PDF/DOCX
-options; the renderer itself never fetches them. See the repository
+Unsupported block types reject with an `Error` named `GoTipeExportError` and a
+stable `code` instead of producing an incomplete document. Embedded PNG/JPEG/GIF/WebP
+images are decoded with bounded dimensions and memory. URL images require an explicit
+`resolveImage` host callback in PDF/DOCX options; the renderer itself never fetches
+them. Only absolute web/mail addresses become links; other references stay text. See the repository
 release-readiness plan for format acceptance. Font and dependency licenses ship in `licenses/` and
 `THIRD_PARTY_NOTICES.md`.

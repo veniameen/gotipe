@@ -16,7 +16,7 @@ The `CodeBlock` extension is in `DefaultPreset`, `FullPreset` and `PageEditor`. 
 
 | Attribute | Type | Default | Description |
 | --- | --- | --- | --- |
-| `language` | `string` | `"plain"` | Language id, such as `"typescript"`, or an alias, such as `"ts"`. |
+| `language` | `string` | `""` | Language id, such as `"typescript"`, or an alias, such as `"ts"`. Empty is plain text, written as a bare fence and a bare `<pre><code>`. |
 | `meta` | `string` | — | The rest of the fence's info string, such as `title="a.ts"`. |
 
 ```ts title="editor.ts"
@@ -30,7 +30,7 @@ editor.chain().setBlockType("codeBlock", { language: "typescript" }).run();
 | Option | Type | Default | Description |
 | --- | --- | --- | --- |
 | `languages` | `string[]` | `javascript`, `typescript`, `python`, `rust`, `go`, `html`, `css`, `json`, `sql`, `bash` | Not read in this release. |
-| `defaultLanguage` | `string` | `"plain"` | Not read in this release. |
+| `defaultLanguage` | `string` | `""` | Not read in this release. |
 | `syntaxHighlight` | `boolean` | `true` | Not read in this release. Highlighting is on when you pass a highlighter. |
 
 ## Commands
@@ -54,7 +54,7 @@ The "/" menu lists it as **Code Block**.
 
 ## In the editor UI
 
-The block has a header with a language menu (Plain text, JavaScript, TypeScript, Python, Rust, Go, HTML, CSS, JSON, SQL, Bash, Java, C, C++, Ruby, PHP, Swift, Kotlin, YAML, Markdown) and a copy button. Code with more than one line shows line numbers. A language that is not in the menu, such as `ts` from a Markdown fence, is shown as it is.
+The block has a header with a language menu (Plain text, JavaScript, TypeScript, Python, Rust, Go, HTML, CSS, JSON, SQL, Bash, Java, C, C++, Ruby, PHP, Swift, Kotlin, YAML, Markdown) and a copy button. Code with more than one line shows line numbers. A language that is not in the menu, such as `ts` from a Markdown fence, is shown as it is. Plain text stands for an empty language and for `plain` or `plaintext` in older documents; choosing it writes an empty language.
 
 ## Syntax highlighting with Shiki
 

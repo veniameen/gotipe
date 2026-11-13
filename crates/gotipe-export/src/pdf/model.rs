@@ -55,6 +55,12 @@ pub(crate) enum DrawOp {
         x: f32,
         y: f32,
     },
+    /// Where a block that an in-document link leads to starts.
+    Anchor {
+        id: String,
+        x: f32,
+        y: f32,
+    },
     Text {
         x: f32,
         y: f32,

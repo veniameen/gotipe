@@ -1,11 +1,12 @@
 import { serializeMarkdown } from "@gotipe/markdown";
 import { fromWasmDoc } from "./engine/conversion";
-import { fallbackExportHtml } from "./engine/html";
 import { fallbackApply } from "./engine/js-transactions";
+import { markGroups } from "./engine/mark-rules";
 import { replacementTransaction } from "./engine/replacement";
 import { validateEngineDocument, validateEngineStep } from "./engine/validate";
 import { GoTipeError } from "./error";
 import { sanitizeHtml as sanitizeHtmlJs } from "./security/sanitizer";
+import { blocksToHtml } from "./serialization/html";
 
 /**
  * Minimal surface of the `@gotipe/wasm` module the bridge needs. Declared here
@@ -17,8 +18,6 @@ export interface WasmEditorLike {
   apply(transactionJson: string): string;
   validate(docJson: string): boolean;
   export_json(): string;
-  export_html(): string;
-  export_markdown(): string;
   sanitize_html(html: string): string;
   enable_collaboration(peerId: string): void;
   receive_update(binary: Uint8Array): string;
@@ -152,13 +151,18 @@ export class WasmBridge {
     const before = this.getState();
     if (this.prepared?.before === before && this.prepared.transaction === transactionJson)
       return this.prepared.after;
-    const after = fallbackApply(before, transactionJson, (step, document) => {
-      if (!this.schema || !validateEngineStep(this.schema, step, document))
-        throw new GoTipeError(
-          "VALIDATION_ERROR",
-          "Transaction step does not match the editor schema",
-        );
-    });
+    const after = fallbackApply(
+      before,
+      transactionJson,
+      (step, document) => {
+        if (!this.schema || !validateEngineStep(this.schema, step, document))
+          throw new GoTipeError(
+            "VALIDATION_ERROR",
+            "Transaction step does not match the editor schema",
+          );
+      },
+      markGroups(this.schema),
+    );
     if (!this.schema || !validateEngineDocument(this.schema, JSON.parse(after)))
       throw new GoTipeError(
         "VALIDATION_ERROR",
@@ -198,12 +202,9 @@ export class WasmBridge {
     return this.editor.export_json();
   }
 
+  /** One serializer for both engines: the same document gives the same HTML. */
   exportHtml(): string {
-    if (this.fallbackMode && this.fallbackState) {
-      return fallbackExportHtml(this.fallbackState);
-    }
-    if (!this.editor) throw new GoTipeError("EDITOR_NOT_INITIALIZED");
-    return this.editor.export_html();
+    return blocksToHtml(fromWasmDoc(JSON.parse(this.getState())).blocks);
   }
 
   exportMarkdown(): string {

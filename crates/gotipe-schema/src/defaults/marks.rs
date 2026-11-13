@@ -91,7 +91,8 @@ pub(super) fn default_marks() -> HashMap<String, MarkSpec> {
                 "color".into(),
                 AttrSpec {
                     attr_type: AttrType::String,
-                    default: Some(AttrValue::String("yellow".into())),
+                    // No default: a highlight without colour is the theme's highlight.
+                    default: None,
                     required: false,
                 },
             )]),

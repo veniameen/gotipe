@@ -174,14 +174,40 @@ def validate_structure(reader, fixture, fragments):
     required = {"/Document"}
     expected_spans = collections.Counter()
     expected_decimal_lists = 0
+    shown = set()
+    def collect_shown(blocks):
+        # Blocks an in-document `#id` link may lead to: all but empty upload placeholders.
+        for block in blocks:
+            attrs = block.get("attrs", {})
+            if block["type"] == "image":
+                visible = str(attrs.get("src") or "").strip() or attrs.get("caption")
+            elif block["type"] in ("file", "embed"):
+                visible = str(attrs.get("name") or "").strip() or str(attrs.get("url") or "").strip()
+            else:
+                visible = True
+            if visible:
+                shown.add(block["id"])
+            collect_shown(block.get("children", []))
+    collect_shown(fixture["document"]["blocks"])
     def inspect_blocks(blocks):
         nonlocal expected_decimal_lists
         mapping = {"paragraph": ["/P"], "bulletList": ["/L", "/LI", "/Lbl", "/LBody"],
                    "orderedList": ["/L", "/LI", "/Lbl", "/LBody"], "todoList": ["/L", "/LI", "/Lbl", "/LBody"],
                    "table": ["/Table", "/TR"], "tableCell": ["/TD"], "codeBlock": ["/Code"],
-                   "blockquote": ["/BlockQuote"], "image": ["/Figure"], "file": ["/Link"], "embed": ["/Link"]}
+                   "blockquote": ["/BlockQuote"]}
         for block in blocks:
             required.update(mapping.get(block["type"], []))
+            # An image placeholder without a source has no figure; its caption is text.
+            if block["type"] == "image" and str(block.get("attrs", {}).get("src") or "").strip():
+                required.add("/Figure")
+            # Standalone files link only absolute web/mail addresses and `#id` of a shown block;
+            # other references (relative paths, inline data, other schemes) stay text.
+            url = str(block.get("attrs", {}).get("url") or "").strip()
+            clickable = url.lower().startswith(("https://", "http://", "mailto:")) or (
+                url.startswith("#") and url[1:] in shown)
+            if block["type"] in ("file", "embed") and clickable \
+                    and not any(ord(c) < 32 or 127 <= ord(c) < 160 for c in url):
+                required.add("/Link")
             if block["type"] == "orderedList":
                 expected_decimal_lists += 1
             if block["type"] in ("tableCell", "tableHeader"):

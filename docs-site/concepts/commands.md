@@ -70,9 +70,10 @@ export function BoldButton({ editor }: { editor: GoTipeEditor }) {
 
 ## Marks
 
-Mark commands apply to every text block in the selection, including selections across
-blocks. Code blocks are skipped. With a caret and no selected text, `toggle*` commands
-switch the mark on or off for the next text the user types.
+Mark commands apply to every rich-text block the selection covers, including the list items
+and table cells of a selection across blocks or of a selected list or table. Lists, tables,
+dividers, images and code blocks themselves are passed over. With a caret and no selected
+text, `toggle*` commands switch the mark on or off for the next text the user types.
 
 | Command | Description |
 |---|---|
@@ -80,7 +81,7 @@ switch the mark on or off for the next text the user types.
 | `toggleSuperscript()`, `toggleSubscript()` | Toggle `superscript` or `subscript`. |
 | `toggleHighlight(color?)` | Toggle `highlight`, with `{ color }` when given. |
 | `toggleMark(type, attrs?)` | Remove the mark when all selected text has it, otherwise add it. |
-| `addMark(type, from?, to?, attrs?)` | Add a mark to the selection, or to `[from, to)` in the block at the selection anchor. |
+| `addMark(type, from?, to?, attrs?)` | Add a mark to the selection, or to `[from, to)` in the block at the selection anchor. Text that has the mark takes the new attributes. |
 | `setMark(type, attrs?)` | `addMark` on the selection. |
 | `removeMark(type, from?, to?)` | Remove a mark from the selection or the given range. |
 | `unsetMark(type)` | `removeMark` on the selection. |
@@ -88,8 +89,10 @@ switch the mark on or off for the next text the user types.
 | `removeLink()` | Remove links from the selection. |
 | `clearFormatting()` | Remove every mark from the selected text. |
 
-Adding a mark doesn't replace one of the same type. To change a link, remove it first:
-`editor.chain().removeLink().setLink("https://example.com").run()`.
+Adding a mark replaces a mark of the same type, so `setLink(href)` changes the address of
+a link and `setMark("textColor", { color })` recolours text, as one undo step. Attributes
+you leave out get the defaults the mark declares: `setLink` stores `target` and `rel`.
+Superscript and subscript share an exclusive group: adding one removes the other.
 
 ## Blocks
 
@@ -106,6 +109,12 @@ Adding a mark doesn't replace one of the same type. To change a link, remove it 
 | `moveBlock(blockId, targetIndex)` | Move a block to `targetIndex` among the top-level blocks. |
 | `splitBlock()` | Split the block at the caret; the new block below gets a new ID. The caret stays in the first block. |
 | `mergeWithPrevious()` | Append the block to its previous sibling. |
+
+`setBlockType`, `insertBlockAfter`, `insertBlockBefore` and the list commands give the new
+block the declared default of every attribute you leave out, such as `type: "info"` for a
+callout or `language: ""` (plain text) for a code block. A heading level that the `Heading`
+extension doesn't offer stages nothing (see `values` in
+[attributes](/docs/concepts/extensions#attributes)).
 
 ## Lists
 
@@ -166,7 +175,7 @@ The built-in extensions bind these keys. `Mod` is Cmd on macOS and Ctrl elsewher
 | `Mod-B`, `Mod-I`, `Mod-U`, `Mod-E` | `toggleBold`, `toggleItalic`, `toggleUnderline`, `toggleCode` |
 | `Mod-Shift-X`, `Mod-Shift-H` | `toggleStrikethrough`, `toggleHighlight` |
 | `Mod-.`, `Mod-,` | `toggleSuperscript`, `toggleSubscript` |
-| `Mod-Alt-1` … `Mod-Alt-6` | `setBlockType("heading", { level })` |
+| `Mod-Alt-1` … `Mod-Alt-6` | `setBlockType("heading", { level })` for the configured heading levels |
 | `Mod-Shift-7`, `Mod-Shift-8`, `Mod-Shift-9` | `toggleOrderedList`, `toggleBulletList`, `toggleTodoList` |
 | `Mod-Shift-B` | `setBlockType("blockquote")` |
 | `Tab`, `Shift-Tab` in a list | `indent`, `outdent` |
@@ -197,8 +206,6 @@ Active marks are read at the caret, or at the start of the selected range. In Re
   dispatch an `insertBlock` step with the content yourself.
 - A chain that stages a selection inside a block and then removes that block, such as
   `setSelection(…).mergeWithPrevious()`, throws `TRANSFORM_ERROR`.
-- Mark commands throw `VALIDATION_ERROR` when a selection across blocks includes a block
-  without text: a list or table container, a divider or an image.
 
 ## Related
 

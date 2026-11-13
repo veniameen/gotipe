@@ -48,6 +48,10 @@ pub(super) fn atx(text: &str) -> Option<regex::Captures<'_>> {
 pub(super) fn fence(text: &str) -> Option<regex::Captures<'_>> {
     re!(r"^ {0,3}(`{3,}|~{3,})([^\n]*)$").captures(text)
 }
+/// A line of its own `$$` opens or closes a math block; it does not interrupt a paragraph.
+pub(super) fn math_fence(text: &str) -> bool {
+    re!(r"^ {0,3}\$\$[ \t]*$").is_match(text)
+}
 pub(super) fn quote(text: &str) -> usize {
     re!(r"^ {0,3}>[ \t]?").find(text).map_or(0, |m| m.end())
 }

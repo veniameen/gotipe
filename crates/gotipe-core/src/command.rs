@@ -1,114 +1,17 @@
 use std::collections::HashMap;
 
-use gotipe_schema::{AttrValue, Block, BlockContent, BlockId, Mark, TextSpan};
+use gotipe_schema::{AttrValue, Block, BlockContent, BlockId};
 
 mod clipboard;
+mod marks;
 use crate::selection::Selection;
 use crate::state::EditorState;
 use crate::transaction::{Step, Transaction};
 pub use clipboard::{copy, cut, paste};
-
-// === Text formatting commands ===
-
-pub fn toggle_mark(state: &EditorState, mark_type: &str) -> Option<Transaction> {
-    let (block_id, from, to) = state.selection().as_text()?;
-    let block = state.doc().find_block(block_id)?;
-
-    let has_mark = if let BlockContent::RichText(spans) = &block.content {
-        spans_have_mark_in_range(spans, from, to, mark_type)
-    } else {
-        return None;
-    };
-
-    let step = if has_mark {
-        Step::RemoveMark {
-            block_id: block_id.clone(),
-            from,
-            to,
-            mark_type: mark_type.into(),
-        }
-    } else {
-        Step::AddMark {
-            block_id: block_id.clone(),
-            from,
-            to,
-            mark: Mark::new(mark_type),
-        }
-    };
-
-    Some(Transaction::new().with_step(step))
-}
-
-pub fn toggle_bold(state: &EditorState) -> Option<Transaction> {
-    toggle_mark(state, "bold")
-}
-
-pub fn toggle_italic(state: &EditorState) -> Option<Transaction> {
-    toggle_mark(state, "italic")
-}
-
-pub fn toggle_underline(state: &EditorState) -> Option<Transaction> {
-    toggle_mark(state, "underline")
-}
-
-pub fn toggle_strikethrough(state: &EditorState) -> Option<Transaction> {
-    toggle_mark(state, "strikethrough")
-}
-
-pub fn toggle_code(state: &EditorState) -> Option<Transaction> {
-    toggle_mark(state, "code")
-}
-
-pub fn toggle_highlight(state: &EditorState, color: &str) -> Option<Transaction> {
-    let (block_id, from, to) = state.selection().as_text()?;
-    let block = state.doc().find_block(block_id)?;
-
-    let has_mark = if let BlockContent::RichText(spans) = &block.content {
-        spans_have_mark_in_range(spans, from, to, "highlight")
-    } else {
-        return None;
-    };
-
-    let step = if has_mark {
-        Step::RemoveMark {
-            block_id: block_id.clone(),
-            from,
-            to,
-            mark_type: "highlight".into(),
-        }
-    } else {
-        Step::AddMark {
-            block_id: block_id.clone(),
-            from,
-            to,
-            mark: Mark::new("highlight").with_attr("color", AttrValue::String(color.into())),
-        }
-    };
-
-    Some(Transaction::new().with_step(step))
-}
-
-pub fn set_link(state: &EditorState, href: &str) -> Option<Transaction> {
-    let (block_id, from, to) = state.selection().as_text()?;
-    let step = Step::AddMark {
-        block_id: block_id.clone(),
-        from,
-        to,
-        mark: Mark::new("link").with_attr("href", AttrValue::String(href.into())),
-    };
-    Some(Transaction::new().with_step(step))
-}
-
-pub fn remove_link(state: &EditorState) -> Option<Transaction> {
-    let (block_id, from, to) = state.selection().as_text()?;
-    let step = Step::RemoveMark {
-        block_id: block_id.clone(),
-        from,
-        to,
-        mark_type: "link".into(),
-    };
-    Some(Transaction::new().with_step(step))
-}
+pub use marks::{
+    add_mark, remove_link, remove_mark, set_link, toggle_bold, toggle_code, toggle_highlight,
+    toggle_italic, toggle_mark, toggle_mark_with, toggle_strikethrough, toggle_underline,
+};
 
 // === Block operations ===
 
@@ -121,7 +24,7 @@ pub fn set_block_type(
     let step = Step::SetBlockType {
         block_id: block_id.clone(),
         new_type: block_type.into(),
-        attrs,
+        attrs: state.schema().node_attrs_with_defaults(block_type, attrs),
     };
     Some(Transaction::new().with_step(step))
 }
@@ -129,7 +32,7 @@ pub fn set_block_type(
 pub fn insert_block_after(state: &EditorState, block_type: &str) -> Option<Transaction> {
     let block_id = state.selection().block_id();
     let (parent_id, index) = state.doc().parent_and_index(block_id)?;
-    let new_block = Block::new_with_type(block_type, default_content_for_type(state, block_type)?);
+    let new_block = new_block(state, block_type)?;
     let new_block_id = new_block.id.clone();
     let step = Step::InsertBlock {
         parent_id,
@@ -149,7 +52,7 @@ pub fn insert_block_after(state: &EditorState, block_type: &str) -> Option<Trans
 pub fn insert_block_before(state: &EditorState, block_type: &str) -> Option<Transaction> {
     let block_id = state.selection().block_id();
     let (parent_id, index) = state.doc().parent_and_index(block_id)?;
-    let new_block = Block::new_with_type(block_type, default_content_for_type(state, block_type)?);
+    let new_block = new_block(state, block_type)?;
     let new_block_id = new_block.id.clone();
     let step = Step::InsertBlock {
         parent_id,
@@ -386,16 +289,13 @@ pub fn select_block(state: &EditorState) -> Option<Transaction> {
 
 // === Helpers ===
 
-fn spans_have_mark_in_range(spans: &[TextSpan], from: usize, to: usize, mark_type: &str) -> bool {
-    let mut offset = 0;
-    for span in spans {
-        let span_end = offset + span.text.encode_utf16().count();
-        if span_end > from && offset < to && span.marks.iter().any(|m| m.mark_type == mark_type) {
-            return true;
-        }
-        offset = span_end;
-    }
-    false
+/// An empty block of `block_type` with its declared attribute defaults.
+fn new_block(state: &EditorState, block_type: &str) -> Option<Block> {
+    let mut block = Block::new_with_type(block_type, default_content_for_type(state, block_type)?);
+    block.attrs = state
+        .schema()
+        .node_attrs_with_defaults(block_type, Default::default());
+    Some(block)
 }
 
 fn default_content_for_type(state: &EditorState, block_type: &str) -> Option<BlockContent> {
@@ -505,7 +405,10 @@ fn wrap_in_list(
     if let Some((key, value)) = extra_attr {
         attrs.insert(key.into(), value);
     }
-    let list = Block::new_with_type(list_type, BlockContent::Empty);
+    let mut list = Block::new_with_type(list_type, BlockContent::Empty);
+    list.attrs = state
+        .schema()
+        .node_attrs_with_defaults(list_type, Default::default());
     let list_id = list.id.clone();
     Some(
         Transaction::new()
@@ -522,10 +425,12 @@ fn wrap_in_list(
             .with_step(Step::SetBlockType {
                 block_id: block_id.clone(),
                 new_type: "listItem".into(),
-                attrs,
+                attrs: state.schema().node_attrs_with_defaults("listItem", attrs),
             }),
     )
 }
 
+#[cfg(test)]
+mod mark_tests;
 #[cfg(test)]
 mod tests;

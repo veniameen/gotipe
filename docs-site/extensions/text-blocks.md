@@ -48,26 +48,26 @@ editor.chain().setBlockType("heading", { level: 2 }).run();
 
 | Option | Type | Default | Description |
 | --- | --- | --- | --- |
-| `levels` | `number[]` | `[1, 2, 3, 4, 5, 6]` | The levels you intend to offer. Not read in this release (see the note). |
+| `levels` | `number[]` | `[1, 2, 3, 4, 5, 6]` | The levels the editor creates: input rules, shortcuts, the "/" menu and commands offer only these. `DefaultPreset` uses `[1, 2, 3]`. |
 
 | Attribute | Type | Default | Description |
 | --- | --- | --- | --- |
-| `level` | `number` | `1` | Heading level. Renderers clamp it to 1–6. |
+| `level` | `number` | The lowest of `levels` | Heading level. Renderers clamp it to 1–6. |
 
 | Command | Description |
 | --- | --- |
-| `setBlockType("heading", { level })` | Turns the current block into a heading of that level. |
+| `setBlockType("heading", { level })` | Turns the current block into a heading of that level. A level outside `levels` stages nothing; without `level` the heading gets the lowest of `levels`. |
 
 | Key or input | Action |
 | --- | --- |
-| `Mod+Alt+1` … `Mod+Alt+6` | Heading 1 to 6 |
-| `#` and a space in an empty block | Heading 1; `##` for 2, up to `######` for 6 |
+| `Mod+Alt+1` … `Mod+Alt+6` | Heading 1 to 6, for the levels in `levels` |
+| `#` and a space in an empty block | Heading 1; `##` for 2, up to `######` for 6, for the levels in `levels` |
 | Enter | Splits the heading; the text after the caret goes to a new paragraph |
 
-The "/" menu offers Heading 1, 2 and 3. In Markdown a heading is written in ATX form (`## Title`); setext headings (underlined with `===` or `---`) are read as headings and rewritten in ATX form once edited. A line break inside a heading is written as `<br>`.
+The "/" menu offers Heading 1, 2 and 3 when they are in `levels`. In Markdown a heading is written in ATX form (`## Title`); setext headings (underlined with `===` or `---`) are read as headings and rewritten in ATX form once edited. A line break inside a heading is written as `<br>`.
 
 > [!NOTE]
-> `levels` is not enforced. With `Heading.configure({ levels: [1, 2, 3] })`, as in `DefaultPreset`, `####` and `Mod+Alt+4` still create a level-4 heading, and the schema accepts any number as `level`.
+> `levels` limits what the editor creates, not what a document may hold. Content you load or paste keeps its headings of other levels, and they render, export and edit as usual; the schema accepts any number as `level`.
 
 ## Blockquote
 

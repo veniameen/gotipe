@@ -3,12 +3,14 @@ import type React from "react";
 
 interface HeadlessControlsProps {
   editor: GoTipeEditor | null;
+  /** The levels the editor's `Heading` creates; other levels would do nothing. */
+  headingLevels: readonly number[];
 }
 
 type CommandChain = ReturnType<GoTipeEditor["chain"]>;
 
 /** Host-provided controls: the headless core supplies commands, this demo supplies UI. */
-export function HeadlessControls({ editor }: HeadlessControlsProps) {
+export function HeadlessControls({ editor, headingLevels }: HeadlessControlsProps) {
   if (!editor) return null;
   const preventFocusSteal = (e: React.MouseEvent<HTMLElement>) => {
     e.preventDefault();
@@ -100,66 +102,19 @@ export function HeadlessControls({ editor }: HeadlessControlsProps) {
       >
         Paragraph
       </button>
-      <button
-        {...buttonProps}
-        onClick={() =>
-          runWithFocus((chain) => {
-            chain.setBlockType("heading", { level: 1 });
-          })
-        }
-      >
-        H1
-      </button>
-      <button
-        {...buttonProps}
-        onClick={() =>
-          runWithFocus((chain) => {
-            chain.setBlockType("heading", { level: 2 });
-          })
-        }
-      >
-        H2
-      </button>
-      <button
-        {...buttonProps}
-        onClick={() =>
-          runWithFocus((chain) => {
-            chain.setBlockType("heading", { level: 3 });
-          })
-        }
-      >
-        H3
-      </button>
-      <button
-        {...buttonProps}
-        onClick={() =>
-          runWithFocus((chain) => {
-            chain.setBlockType("heading", { level: 4 });
-          })
-        }
-      >
-        H4
-      </button>
-      <button
-        {...buttonProps}
-        onClick={() =>
-          runWithFocus((chain) => {
-            chain.setBlockType("heading", { level: 5 });
-          })
-        }
-      >
-        H5
-      </button>
-      <button
-        {...buttonProps}
-        onClick={() =>
-          runWithFocus((chain) => {
-            chain.setBlockType("heading", { level: 6 });
-          })
-        }
-      >
-        H6
-      </button>
+      {headingLevels.map((level) => (
+        <button
+          key={level}
+          {...buttonProps}
+          onClick={() =>
+            runWithFocus((chain) => {
+              chain.setBlockType("heading", { level });
+            })
+          }
+        >
+          H{level}
+        </button>
+      ))}
 
       {/* Lists */}
       <button

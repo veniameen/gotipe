@@ -105,3 +105,36 @@ fn invalid_numeric_options_fail_before_layout() {
         );
     }
 }
+
+#[test]
+fn language_title_and_author_are_declared_only_when_given() {
+    let document = document_from_json(
+        r#"{"blocks":[{"id":"p","type":"paragraph","content":[{"text":"Привет"}]}]}"#,
+    )
+    .unwrap();
+    let text = |bytes: Vec<u8>| String::from_utf8_lossy(&bytes).into_owned();
+    let plain = text(to_pdf(&document, &PdfOptions::default()).unwrap());
+    assert!(!plain.contains("/Lang") && !plain.contains("dc:language"));
+    let options: PdfOptions =
+        serde_json::from_str(r#"{"lang":"ru-RU","title":"Отчёт & <план>","author":"Аня"}"#)
+            .unwrap();
+    let described = text(to_pdf(&document, &options).unwrap());
+    assert!(described.contains("/Lang (ru-RU)"));
+    assert!(described.contains("<rdf:li>ru-RU</rdf:li>"));
+    assert!(described.contains("Отчёт &amp; &lt;план&gt;"));
+    assert!(described.contains("<rdf:li>Аня</rdf:li>"));
+    assert!(described.contains("/DisplayDocTitle true"));
+    for invalid in [
+        r#"{"lang":"en_US"}"#,
+        r#"{"lang":"-en"}"#,
+        r#"{"title":"a\u0001b"}"#,
+        r#"{"pageSize":"a4","unknown":1}"#,
+    ] {
+        let options = serde_json::from_str::<PdfOptions>(invalid);
+        let error = match options {
+            Ok(options) => to_pdf(&document, &options).unwrap_err(),
+            Err(error) => gotipe_export::ConvertError::InvalidOptions(error.to_string()),
+        };
+        assert_eq!(error.code(), "INVALID_OPTIONS", "{invalid}: {error}");
+    }
+}

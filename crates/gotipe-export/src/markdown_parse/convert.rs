@@ -215,6 +215,11 @@ fn rich(kind: &str, r: Inline) -> Block {
     block.attrs = attrs;
     block
 }
+fn math(value: &str) -> Block {
+    let mut block = node("math", BlockContent::Raw(value.into()));
+    block.attrs.insert("display".into(), string("block"));
+    block
+}
 pub(super) fn block(n: &Node, source: &str) -> Block {
     match n.kind {
         "paragraph" => {
@@ -251,6 +256,9 @@ pub(super) fn block(n: &Node, source: &str) -> Block {
             block
         }
         "thematicBreak" => node("divider", BlockContent::Empty),
+        // A `$$` block or a ```` ```math ```` fence: the editor's formula block.
+        "math" => math(&n.value),
+        "code" if n.lang.as_deref() == Some("math") && n.meta.is_none() => math(&n.value),
         "code" => {
             let mut block = node("codeBlock", BlockContent::Raw(n.value.clone()));
             block

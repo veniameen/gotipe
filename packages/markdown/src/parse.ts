@@ -130,7 +130,11 @@ class Converter {
       case "thematicBreak":
         return mk("divider", {}, null, s, e);
       case "code":
-        return this.code(node, s, e);
+        return node.lang === "math" && node.meta == null
+          ? this.math(node.value, s, e)
+          : this.code(node, s, e);
+      case "math":
+        return this.math(node.value, s, e);
       case "blockquote":
         return this.blockquote(node, s, e) ?? this.raw(node.type, s, e);
       case "list":
@@ -178,6 +182,18 @@ class Converter {
       ];
     }
     return mk("codeBlock", attrs, value, s, e, segs);
+  }
+
+  /** A `$$` block or a ```` ```math ```` fence; the editor's formula block. */
+  math(source: string, s: number, e: number): PNode {
+    const value = normalizeEol(source);
+    let segs: RawSegment[] = [];
+    if (this.ctx.segments) {
+      segs = alignCodeBlock(value, this.text, s, e, true) ?? [
+        { textFrom: 0, textTo: value.length, mdFrom: s, mdTo: e, exact: false },
+      ];
+    }
+    return mk("math", { display: "block" }, value, s, e, segs);
   }
 
   blockquote(node: Blockquote, s: number, e: number): PNode | null {

@@ -43,23 +43,14 @@ The parser emits the node types of `FullPreset` plus a raw block and a raw mark 
 ```ts title="markdown-editor.ts"
 import { createEditor, defineExtension } from "@gotipe/core";
 import { FullPreset } from "@gotipe/core/presets";
-import { type MarkdownSnapshot, parseMarkdown, serializeMarkdown } from "@gotipe/markdown";
+import {
+  type MarkdownSnapshot,
+  markdownRawNodeSpec,
+  parseMarkdown,
+  serializeMarkdown,
+} from "@gotipe/markdown";
 
-const MarkdownRaw = defineExtension({
-  name: "markdownRaw",
-  nodes: [
-    {
-      name: "markdownRaw",
-      group: ["block"],
-      content: "rawText",
-      attrs: { kind: { type: "string", default: "" } },
-      topLevel: true,
-      marksAllowed: "none",
-      leaf: true,
-      allowsChildren: false,
-    },
-  ],
-});
+const MarkdownRaw = defineExtension({ name: "markdownRaw", nodes: [markdownRawNodeSpec] });
 const MarkdownRawMark = defineExtension({
   name: "mdRaw",
   marks: [{ name: "mdRaw", attrs: {}, rank: 90 }],
@@ -129,6 +120,7 @@ The writer also avoids structural accidents: two adjacent lists that would merge
 | Paragraph holding only `![alt](src "caption")` | `image` with `src`, `alt`, `caption` |
 | Paragraph holding only `[name](path)`, where `path` has no scheme and `name` is its decoded file name | `file` with `url`, `name` |
 | GFM table | `table` (`align`) of `tableRow` of `tableHeader` (first row) and `tableCell` |
+| `$$` on its own line, the TeX, `$$` on its own line; a ```` ```math ```` fence | `math` with `display: "block"`; content is the TeX as written |
 | HTML blocks, link reference definitions, footnote definitions, everything else | `markdownRaw` with `kind`; content is the exact source |
 
 A list item holds rich text and nested lists only. In headings and table cells a line break is `<br>`.
@@ -189,11 +181,11 @@ textOffsetToMd(map, paragraph, 6); // 17, the offset of "world" in the source
 | `parseMarkdown(text, options?)` | Returns `{ doc, snapshot }`. |
 | `serializeMarkdown(doc, snapshot?)` | Returns `{ text, snapshot, map }`. Without a snapshot, writes canonical Markdown. |
 | `blockToMarkdown(block, eol?)` | One block as canonical Markdown, without surrounding blank lines. |
-| `isBlockEmpty(block)` | Whether the writer skips the block: a paragraph or heading without text, a raw block without content, a table without cells. |
+| `isBlockEmpty(block)` | Whether the writer skips the block: a paragraph, heading or formula without text, a raw block without content, an embed without an address, a table without cells. |
 | `fingerprint(block)` | The id-free canonical JSON used to detect changes. |
 | `mdOffsetToText(map, mdOffset, bias?)` | Markdown offset to `{ blockId, offset }`, or `null`. |
 | `textOffsetToMd(map, blockId, offset)` | Block text offset to a Markdown offset, or `null`. |
-| `markdownRawNodeSpec` | The node spec of `markdownRaw` as a plain object. Its fields are typed as plain strings, so TypeScript rejects it in `defineExtension` without a cast; define the node as in [With an editor](/docs/conversion/markdown#with-an-editor) or use `MarkdownRawExtension`. |
+| `markdownRawNodeSpec` | The `NodeSpec` of the `markdownRaw` block. Pass it to `defineExtension` as in [With an editor](/docs/conversion/markdown#with-an-editor); the package does not depend on `@gotipe/core`, so its type repeats core's `NodeSpec`. |
 
 | Option of `parseMarkdown` | Type | Default | Description |
 | --- | --- | --- | --- |
@@ -212,9 +204,12 @@ The package also exports the types `Doc`, `Block`, `Span`, `Mark`, `ParseOptions
 - **Canonical rewrite.** An edited block is written in canonical syntax: ATX headings, fenced code, `*`, `**` and `~~`, `| a |` tables, `<url>` or bare autolinks. List markers, numbering delimiters, start numbers and loose or tight spacing are kept.
 - **Bare addresses.** Plain text such as `https://…`, `www.…` or an e-mail address becomes a link when an edited block is read again; escaping cannot prevent it.
 - **Raw blocks.** Multi-paragraph list items and quotes, mixed and numbered task lists stay read-only raw blocks.
-- **Not stored.** Image sizes, table column widths and cell spans, callout emoji and other attributes outside the mapping are not written. `toggle` and `columns` are written as their content, `math` as its TeX source in a paragraph, and `embed` is left out.
+- **Not stored.** Image sizes, table column widths and cell spans, callout emoji and other attributes outside the mapping are not written. `toggle` and `columns` are written as their content.
+- **Formulas.** A formula is written as a `$$` block, which GitHub and most renderers show as math, or as a ```` ```math ```` fence when its TeX has a line of its own `$$`; both read back as the same formula. A `$$` block needs its closing line and does not interrupt a paragraph, so other dollar signs stay text.
+- **Embeds.** Markdown has no embed syntax: an embed is written as a link line `[name or address](address)` and reads back as a paragraph with that link. An empty formula and an embed without an address are left out at any depth.
 - **Callout types.** Types without a GFM alert are written as the closest alert: `info` as `NOTE`, `success` as `TIP`, `error` as `CAUTION`; others as `NOTE`.
-- **Files.** A `file` block reads back as a file only when its name equals the decoded file name of a scheme-less path. A paragraph that holds only such a link, or only an image, is read as a file or image block.
+- **Files.** A `file` block is written as a link line labelled by its name, or by its address without one. It reads back as a file only when its name equals the decoded file name of a scheme-less path. A paragraph that holds only such a link, or only an image, is read as a file or image block.
+- **Plain text code.** Code whose language is `plain` or `plaintext`, as older documents store it, is written with a bare fence; an untouched block keeps its source.
 - **Inline code.** A line break in inline code is written as a line break only where that is safe, otherwise as a space, and never in headings or cells. A backslash right before `|` inside code in a table cell cannot be expressed in GFM and reads back with an extra backslash.
 - **Front matter.** Only YAML-style front matter (`---` … `---` or `...` at the start of the file) is recognized.
 

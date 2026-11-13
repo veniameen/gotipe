@@ -4,7 +4,7 @@ use super::{
     fonts::{FontStyle, Fonts},
     model::{Color, DrawOp, TextStyle},
 };
-use crate::ConvertError;
+use crate::{links::Targets, ConvertError};
 use gotipe_core::{AttrValue, Block, BlockContent};
 use unicode_bidi::BidiInfo;
 use unicode_segmentation::UnicodeSegmentation;
@@ -22,7 +22,7 @@ pub(crate) fn color(value: &str) -> Color {
     })
 }
 
-pub(crate) fn spans(block: &Block, base: &TextStyle) -> Vec<Span> {
+pub(crate) fn spans(block: &Block, base: &TextStyle, links: &Targets) -> Vec<Span> {
     match &block.content {
         BlockContent::Empty => Vec::new(),
         BlockContent::Raw(text) => vec![Span {
@@ -57,7 +57,7 @@ pub(crate) fn spans(block: &Block, base: &TextStyle) -> Vec<Span> {
                         }
                         "link" => {
                             if let Some(AttrValue::String(url)) = mark.attrs.get("href") {
-                                style.link = Some(url.clone());
+                                style.link = links.link(url).map(|link| link.encoded());
                             }
                         }
                         "textColor" | "highlight" => {

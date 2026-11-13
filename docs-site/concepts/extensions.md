@@ -86,9 +86,9 @@ snippets on this page do.
 | Field | Type | Description |
 |---|---|---|
 | `type` | `"string" \| "number" \| "bool" \| "enum" \| "array" \| "object"` | Value type. Numbers must be finite. |
-| `values` | `string[]` | Allowed values of an `enum`. |
+| `values` | `string[]` or `number[]` | Allowed values of an `enum`. For another type, the values commands create, such as `Heading` levels; documents may hold others. |
 | `required` | `boolean` | The attribute must be present and not `null`. Default `false`. |
-| `default` | `unknown` | A hint for renderers and your code. The engine doesn't write it into documents. |
+| `default` | `unknown` | Written by commands into a new block or mark that leaves the attribute out. Steps you dispatch are applied as written. |
 
 ## Mark types
 
@@ -105,7 +105,7 @@ const marks: MarkSpec[] = [
 | `name` | `string` | The value of `Mark.type`. |
 | `attrs` | `Record<string, AttrSpec>` | Mark attributes. |
 | `rank` | `number` | Stored in the schema. |
-| `exclusiveGroup` | `string` | Stored in the schema. |
+| `exclusiveGroup` | `string` | Marks of one group exclude each other: adding one removes the others from that text. |
 
 Adjacent spans merge only when their marks are equal, so give a mark only the attributes
 that matter. The renderers draw built-in marks; for your own marks, see
@@ -161,8 +161,11 @@ const arrow: InputRule = {
 
 After each typed input in a rich-text block, the editor tests every rule, in extension
 order, against the **whole text of the block**, not only the text before the caret. The
-first match calls `handler(editor, match)` and stops. Anchor patterns with `^` and `$`;
-here `$` is the end of the block, so typing `->` in the middle of a line does nothing.
+first match calls `handler(editor, match)` and stops, unless the handler returns `false`:
+then the next rule is tried. Anchor patterns with `^` and `$`; here `$` is the end of the
+block, so typing `->` in the middle of a line does nothing. To act at the caret anywhere in
+a line, match loosely and let the handler check the text before the caret and return
+`false` when it doesn't fit, as the built-in `**bold**` rules do.
 
 The typed text is already in the document when the handler runs, so the handler's changes
 are a separate undo step. Rules don't run in raw-text blocks or for text committed by an
@@ -398,8 +401,7 @@ export function Editor() {
 - `insertBlockAfter`, `insertBlockBefore` and `setBlockType` choose content from the
   built-in type names, so they fail for your own `rawText` and `empty` node types. Insert
   such blocks with an `insertBlock` step that carries the content.
-- Attribute defaults are not written into new blocks; pass attributes when you insert.
-- `rank` and `exclusiveGroup` are not enforced yet.
+- `rank` is stored in the schema but not used yet.
 - The React and Vue renderers draw only the built-in marks; text with your own mark
   renders unformatted. Use an `inline` decoration to show it.
 - The React renderer draws `inline`, `widget`, `node` and `blocks` decorations. The Vue

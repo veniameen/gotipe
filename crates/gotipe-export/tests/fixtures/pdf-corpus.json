@@ -6774,6 +6774,1052 @@
       }
     },
     {
+      "id": "editor-content",
+      "document": {
+        "version": 1,
+        "blocks": [
+          {
+            "id": "intro",
+            "type": "paragraph",
+            "attrs": {},
+            "content": [
+              {
+                "text": "EDITOR-CONTENT Содержимое редактора",
+                "marks": []
+              }
+            ],
+            "children": []
+          },
+          {
+            "id": "webp-lossy",
+            "type": "image",
+            "attrs": {
+              "src": "data:image/webp;base64,UklGRlgAAABXRUJQVlA4IEwAAAAQAgCdASoMAAgAAUAmJbACdDiAAUnm8xQAAP77lLvHXsGshPXKf/T/8dvenf93z+F8N1p/+BD2v+f/76IGQ/+3a6QCv/8/H4v9fGAA",
+              "alt": "Lossy WebP",
+              "caption": "WEBP-LOSSY подпись"
+            },
+            "content": null,
+            "children": []
+          },
+          {
+            "id": "webp-lossless",
+            "type": "image",
+            "attrs": {
+              "src": "DATA:image/webp;BASE64,UklGRiwAAABXRUJQVlA4TCAAAAAvC8ABALmM6H/sovDR/4CQgLDE/6WSAUMxyDEBSFWWAA==",
+              "alt": "Lossless WebP",
+              "caption": ""
+            },
+            "content": null,
+            "children": []
+          },
+          {
+            "id": "image-placeholder",
+            "type": "image",
+            "attrs": {
+              "src": "",
+              "alt": "",
+              "caption": ""
+            },
+            "content": null,
+            "children": []
+          },
+          {
+            "id": "image-caption-only",
+            "type": "image",
+            "attrs": {
+              "src": "  ",
+              "alt": "",
+              "caption": "IMAGE-PENDING caption"
+            },
+            "content": null,
+            "children": []
+          },
+          {
+            "id": "file-placeholder",
+            "type": "file",
+            "attrs": {
+              "url": "",
+              "name": "",
+              "size": null,
+              "mime_type": ""
+            },
+            "content": null,
+            "children": []
+          },
+          {
+            "id": "embed-placeholder",
+            "type": "embed",
+            "attrs": {
+              "url": "",
+              "type": "generic"
+            },
+            "content": null,
+            "children": []
+          },
+          {
+            "id": "inline-upload",
+            "type": "file",
+            "attrs": {
+              "url": "data:application/pdf;base64,JVBERi0xLjcK",
+              "name": "INLINE-UPLOAD Отчёт.pdf",
+              "size": 9,
+              "mime_type": "application/pdf"
+            },
+            "content": null,
+            "children": []
+          },
+          {
+            "id": "relative-file",
+            "type": "file",
+            "attrs": {
+              "url": "docs/guide.pdf",
+              "name": "RELATIVE-FILE guide"
+            },
+            "content": null,
+            "children": []
+          },
+          {
+            "id": "video",
+            "type": "embed",
+            "attrs": {
+              "url": "https://www.youtube.com/watch?v=GoTipe",
+              "type": "youtube"
+            },
+            "content": null,
+            "children": []
+          },
+          {
+            "id": "links",
+            "type": "paragraph",
+            "attrs": {},
+            "content": [
+              {
+                "text": "LINKS ",
+                "marks": []
+              },
+              {
+                "text": "relative",
+                "marks": [
+                  {
+                    "type": "link",
+                    "attrs": {
+                      "href": "guide.md"
+                    }
+                  }
+                ]
+              },
+              {
+                "text": " root",
+                "marks": [
+                  {
+                    "type": "link",
+                    "attrs": {
+                      "href": "/docs/guide"
+                    }
+                  }
+                ]
+              },
+              {
+                "text": " network",
+                "marks": [
+                  {
+                    "type": "link",
+                    "attrs": {
+                      "href": "//cdn.example.test/x"
+                    }
+                  }
+                ]
+              },
+              {
+                "text": " data",
+                "marks": [
+                  {
+                    "type": "link",
+                    "attrs": {
+                      "href": "data:text/plain;base64,SGk="
+                    }
+                  }
+                ]
+              },
+              {
+                "text": " other",
+                "marks": [
+                  {
+                    "type": "link",
+                    "attrs": {
+                      "href": "tel:+100"
+                    }
+                  }
+                ]
+              },
+              {
+                "text": " absolute",
+                "marks": [
+                  {
+                    "type": "link",
+                    "attrs": {
+                      "href": "https://example.test/ok"
+                    }
+                  }
+                ]
+              }
+            ],
+            "children": []
+          }
+        ]
+      },
+      "options": {},
+      "expect": {
+        "minPages": 1,
+        "imageCount": 2,
+        "links": [
+          "https://example.test/ok",
+          "https://www.youtube.com/watch?v=GoTipe"
+        ]
+      }
+    },
+    {
+      "id": "internal-links",
+      "document": {
+        "version": 1,
+        "blocks": [
+          {
+            "id": "links",
+            "type": "paragraph",
+            "attrs": {},
+            "content": [
+              {
+                "text": "INTERNAL-LINKS ",
+                "marks": []
+              },
+              {
+                "text": "TO-TARGET",
+                "marks": [
+                  {
+                    "type": "link",
+                    "attrs": {
+                      "href": "#target"
+                    }
+                  }
+                ]
+              },
+              {
+                "text": " ",
+                "marks": []
+              },
+              {
+                "text": "TO-MISSING",
+                "marks": [
+                  {
+                    "type": "link",
+                    "attrs": {
+                      "href": "#missing"
+                    }
+                  }
+                ]
+              },
+              {
+                "text": " ",
+                "marks": []
+              },
+              {
+                "text": "TO-PLACEHOLDER",
+                "marks": [
+                  {
+                    "type": "link",
+                    "attrs": {
+                      "href": "#placeholder"
+                    }
+                  }
+                ]
+              },
+              {
+                "text": " ",
+                "marks": []
+              },
+              {
+                "text": "TO-WEB",
+                "marks": [
+                  {
+                    "type": "link",
+                    "attrs": {
+                      "href": "https://example.test/путь"
+                    }
+                  }
+                ]
+              }
+            ],
+            "children": []
+          },
+          {
+            "id": "jump",
+            "type": "file",
+            "attrs": {
+              "url": "#target",
+              "name": "FILE-JUMP"
+            },
+            "content": null,
+            "children": []
+          },
+          {
+            "id": "placeholder",
+            "type": "image",
+            "attrs": {
+              "src": "",
+              "alt": "",
+              "caption": ""
+            },
+            "content": null,
+            "children": []
+          },
+          {
+            "id": "filler-0",
+            "type": "paragraph",
+            "attrs": {},
+            "content": [
+              {
+                "text": "Filler line 0",
+                "marks": []
+              }
+            ],
+            "children": []
+          },
+          {
+            "id": "filler-1",
+            "type": "paragraph",
+            "attrs": {},
+            "content": [
+              {
+                "text": "Filler line 1",
+                "marks": []
+              }
+            ],
+            "children": []
+          },
+          {
+            "id": "filler-2",
+            "type": "paragraph",
+            "attrs": {},
+            "content": [
+              {
+                "text": "Filler line 2",
+                "marks": []
+              }
+            ],
+            "children": []
+          },
+          {
+            "id": "filler-3",
+            "type": "paragraph",
+            "attrs": {},
+            "content": [
+              {
+                "text": "Filler line 3",
+                "marks": []
+              }
+            ],
+            "children": []
+          },
+          {
+            "id": "filler-4",
+            "type": "paragraph",
+            "attrs": {},
+            "content": [
+              {
+                "text": "Filler line 4",
+                "marks": []
+              }
+            ],
+            "children": []
+          },
+          {
+            "id": "filler-5",
+            "type": "paragraph",
+            "attrs": {},
+            "content": [
+              {
+                "text": "Filler line 5",
+                "marks": []
+              }
+            ],
+            "children": []
+          },
+          {
+            "id": "filler-6",
+            "type": "paragraph",
+            "attrs": {},
+            "content": [
+              {
+                "text": "Filler line 6",
+                "marks": []
+              }
+            ],
+            "children": []
+          },
+          {
+            "id": "filler-7",
+            "type": "paragraph",
+            "attrs": {},
+            "content": [
+              {
+                "text": "Filler line 7",
+                "marks": []
+              }
+            ],
+            "children": []
+          },
+          {
+            "id": "filler-8",
+            "type": "paragraph",
+            "attrs": {},
+            "content": [
+              {
+                "text": "Filler line 8",
+                "marks": []
+              }
+            ],
+            "children": []
+          },
+          {
+            "id": "filler-9",
+            "type": "paragraph",
+            "attrs": {},
+            "content": [
+              {
+                "text": "Filler line 9",
+                "marks": []
+              }
+            ],
+            "children": []
+          },
+          {
+            "id": "filler-10",
+            "type": "paragraph",
+            "attrs": {},
+            "content": [
+              {
+                "text": "Filler line 10",
+                "marks": []
+              }
+            ],
+            "children": []
+          },
+          {
+            "id": "filler-11",
+            "type": "paragraph",
+            "attrs": {},
+            "content": [
+              {
+                "text": "Filler line 11",
+                "marks": []
+              }
+            ],
+            "children": []
+          },
+          {
+            "id": "filler-12",
+            "type": "paragraph",
+            "attrs": {},
+            "content": [
+              {
+                "text": "Filler line 12",
+                "marks": []
+              }
+            ],
+            "children": []
+          },
+          {
+            "id": "filler-13",
+            "type": "paragraph",
+            "attrs": {},
+            "content": [
+              {
+                "text": "Filler line 13",
+                "marks": []
+              }
+            ],
+            "children": []
+          },
+          {
+            "id": "filler-14",
+            "type": "paragraph",
+            "attrs": {},
+            "content": [
+              {
+                "text": "Filler line 14",
+                "marks": []
+              }
+            ],
+            "children": []
+          },
+          {
+            "id": "filler-15",
+            "type": "paragraph",
+            "attrs": {},
+            "content": [
+              {
+                "text": "Filler line 15",
+                "marks": []
+              }
+            ],
+            "children": []
+          },
+          {
+            "id": "filler-16",
+            "type": "paragraph",
+            "attrs": {},
+            "content": [
+              {
+                "text": "Filler line 16",
+                "marks": []
+              }
+            ],
+            "children": []
+          },
+          {
+            "id": "filler-17",
+            "type": "paragraph",
+            "attrs": {},
+            "content": [
+              {
+                "text": "Filler line 17",
+                "marks": []
+              }
+            ],
+            "children": []
+          },
+          {
+            "id": "filler-18",
+            "type": "paragraph",
+            "attrs": {},
+            "content": [
+              {
+                "text": "Filler line 18",
+                "marks": []
+              }
+            ],
+            "children": []
+          },
+          {
+            "id": "filler-19",
+            "type": "paragraph",
+            "attrs": {},
+            "content": [
+              {
+                "text": "Filler line 19",
+                "marks": []
+              }
+            ],
+            "children": []
+          },
+          {
+            "id": "filler-20",
+            "type": "paragraph",
+            "attrs": {},
+            "content": [
+              {
+                "text": "Filler line 20",
+                "marks": []
+              }
+            ],
+            "children": []
+          },
+          {
+            "id": "filler-21",
+            "type": "paragraph",
+            "attrs": {},
+            "content": [
+              {
+                "text": "Filler line 21",
+                "marks": []
+              }
+            ],
+            "children": []
+          },
+          {
+            "id": "filler-22",
+            "type": "paragraph",
+            "attrs": {},
+            "content": [
+              {
+                "text": "Filler line 22",
+                "marks": []
+              }
+            ],
+            "children": []
+          },
+          {
+            "id": "filler-23",
+            "type": "paragraph",
+            "attrs": {},
+            "content": [
+              {
+                "text": "Filler line 23",
+                "marks": []
+              }
+            ],
+            "children": []
+          },
+          {
+            "id": "filler-24",
+            "type": "paragraph",
+            "attrs": {},
+            "content": [
+              {
+                "text": "Filler line 24",
+                "marks": []
+              }
+            ],
+            "children": []
+          },
+          {
+            "id": "filler-25",
+            "type": "paragraph",
+            "attrs": {},
+            "content": [
+              {
+                "text": "Filler line 25",
+                "marks": []
+              }
+            ],
+            "children": []
+          },
+          {
+            "id": "filler-26",
+            "type": "paragraph",
+            "attrs": {},
+            "content": [
+              {
+                "text": "Filler line 26",
+                "marks": []
+              }
+            ],
+            "children": []
+          },
+          {
+            "id": "filler-27",
+            "type": "paragraph",
+            "attrs": {},
+            "content": [
+              {
+                "text": "Filler line 27",
+                "marks": []
+              }
+            ],
+            "children": []
+          },
+          {
+            "id": "filler-28",
+            "type": "paragraph",
+            "attrs": {},
+            "content": [
+              {
+                "text": "Filler line 28",
+                "marks": []
+              }
+            ],
+            "children": []
+          },
+          {
+            "id": "filler-29",
+            "type": "paragraph",
+            "attrs": {},
+            "content": [
+              {
+                "text": "Filler line 29",
+                "marks": []
+              }
+            ],
+            "children": []
+          },
+          {
+            "id": "filler-30",
+            "type": "paragraph",
+            "attrs": {},
+            "content": [
+              {
+                "text": "Filler line 30",
+                "marks": []
+              }
+            ],
+            "children": []
+          },
+          {
+            "id": "filler-31",
+            "type": "paragraph",
+            "attrs": {},
+            "content": [
+              {
+                "text": "Filler line 31",
+                "marks": []
+              }
+            ],
+            "children": []
+          },
+          {
+            "id": "filler-32",
+            "type": "paragraph",
+            "attrs": {},
+            "content": [
+              {
+                "text": "Filler line 32",
+                "marks": []
+              }
+            ],
+            "children": []
+          },
+          {
+            "id": "filler-33",
+            "type": "paragraph",
+            "attrs": {},
+            "content": [
+              {
+                "text": "Filler line 33",
+                "marks": []
+              }
+            ],
+            "children": []
+          },
+          {
+            "id": "filler-34",
+            "type": "paragraph",
+            "attrs": {},
+            "content": [
+              {
+                "text": "Filler line 34",
+                "marks": []
+              }
+            ],
+            "children": []
+          },
+          {
+            "id": "filler-35",
+            "type": "paragraph",
+            "attrs": {},
+            "content": [
+              {
+                "text": "Filler line 35",
+                "marks": []
+              }
+            ],
+            "children": []
+          },
+          {
+            "id": "filler-36",
+            "type": "paragraph",
+            "attrs": {},
+            "content": [
+              {
+                "text": "Filler line 36",
+                "marks": []
+              }
+            ],
+            "children": []
+          },
+          {
+            "id": "filler-37",
+            "type": "paragraph",
+            "attrs": {},
+            "content": [
+              {
+                "text": "Filler line 37",
+                "marks": []
+              }
+            ],
+            "children": []
+          },
+          {
+            "id": "filler-38",
+            "type": "paragraph",
+            "attrs": {},
+            "content": [
+              {
+                "text": "Filler line 38",
+                "marks": []
+              }
+            ],
+            "children": []
+          },
+          {
+            "id": "filler-39",
+            "type": "paragraph",
+            "attrs": {},
+            "content": [
+              {
+                "text": "Filler line 39",
+                "marks": []
+              }
+            ],
+            "children": []
+          },
+          {
+            "id": "filler-40",
+            "type": "paragraph",
+            "attrs": {},
+            "content": [
+              {
+                "text": "Filler line 40",
+                "marks": []
+              }
+            ],
+            "children": []
+          },
+          {
+            "id": "filler-41",
+            "type": "paragraph",
+            "attrs": {},
+            "content": [
+              {
+                "text": "Filler line 41",
+                "marks": []
+              }
+            ],
+            "children": []
+          },
+          {
+            "id": "filler-42",
+            "type": "paragraph",
+            "attrs": {},
+            "content": [
+              {
+                "text": "Filler line 42",
+                "marks": []
+              }
+            ],
+            "children": []
+          },
+          {
+            "id": "filler-43",
+            "type": "paragraph",
+            "attrs": {},
+            "content": [
+              {
+                "text": "Filler line 43",
+                "marks": []
+              }
+            ],
+            "children": []
+          },
+          {
+            "id": "filler-44",
+            "type": "paragraph",
+            "attrs": {},
+            "content": [
+              {
+                "text": "Filler line 44",
+                "marks": []
+              }
+            ],
+            "children": []
+          },
+          {
+            "id": "filler-45",
+            "type": "paragraph",
+            "attrs": {},
+            "content": [
+              {
+                "text": "Filler line 45",
+                "marks": []
+              }
+            ],
+            "children": []
+          },
+          {
+            "id": "filler-46",
+            "type": "paragraph",
+            "attrs": {},
+            "content": [
+              {
+                "text": "Filler line 46",
+                "marks": []
+              }
+            ],
+            "children": []
+          },
+          {
+            "id": "filler-47",
+            "type": "paragraph",
+            "attrs": {},
+            "content": [
+              {
+                "text": "Filler line 47",
+                "marks": []
+              }
+            ],
+            "children": []
+          },
+          {
+            "id": "filler-48",
+            "type": "paragraph",
+            "attrs": {},
+            "content": [
+              {
+                "text": "Filler line 48",
+                "marks": []
+              }
+            ],
+            "children": []
+          },
+          {
+            "id": "filler-49",
+            "type": "paragraph",
+            "attrs": {},
+            "content": [
+              {
+                "text": "Filler line 49",
+                "marks": []
+              }
+            ],
+            "children": []
+          },
+          {
+            "id": "filler-50",
+            "type": "paragraph",
+            "attrs": {},
+            "content": [
+              {
+                "text": "Filler line 50",
+                "marks": []
+              }
+            ],
+            "children": []
+          },
+          {
+            "id": "filler-51",
+            "type": "paragraph",
+            "attrs": {},
+            "content": [
+              {
+                "text": "Filler line 51",
+                "marks": []
+              }
+            ],
+            "children": []
+          },
+          {
+            "id": "filler-52",
+            "type": "paragraph",
+            "attrs": {},
+            "content": [
+              {
+                "text": "Filler line 52",
+                "marks": []
+              }
+            ],
+            "children": []
+          },
+          {
+            "id": "filler-53",
+            "type": "paragraph",
+            "attrs": {},
+            "content": [
+              {
+                "text": "Filler line 53",
+                "marks": []
+              }
+            ],
+            "children": []
+          },
+          {
+            "id": "filler-54",
+            "type": "paragraph",
+            "attrs": {},
+            "content": [
+              {
+                "text": "Filler line 54",
+                "marks": []
+              }
+            ],
+            "children": []
+          },
+          {
+            "id": "filler-55",
+            "type": "paragraph",
+            "attrs": {},
+            "content": [
+              {
+                "text": "Filler line 55",
+                "marks": []
+              }
+            ],
+            "children": []
+          },
+          {
+            "id": "filler-56",
+            "type": "paragraph",
+            "attrs": {},
+            "content": [
+              {
+                "text": "Filler line 56",
+                "marks": []
+              }
+            ],
+            "children": []
+          },
+          {
+            "id": "filler-57",
+            "type": "paragraph",
+            "attrs": {},
+            "content": [
+              {
+                "text": "Filler line 57",
+                "marks": []
+              }
+            ],
+            "children": []
+          },
+          {
+            "id": "filler-58",
+            "type": "paragraph",
+            "attrs": {},
+            "content": [
+              {
+                "text": "Filler line 58",
+                "marks": []
+              }
+            ],
+            "children": []
+          },
+          {
+            "id": "filler-59",
+            "type": "paragraph",
+            "attrs": {},
+            "content": [
+              {
+                "text": "Filler line 59",
+                "marks": []
+              }
+            ],
+            "children": []
+          },
+          {
+            "id": "target",
+            "type": "heading",
+            "attrs": {
+              "level": 2
+            },
+            "content": [
+              {
+                "text": "TARGET heading",
+                "marks": []
+              }
+            ],
+            "children": []
+          }
+        ]
+      },
+      "options": {},
+      "expect": {
+        "minPages": 2,
+        "links": [
+          "https://example.test/%D0%BF%D1%83%D1%82%D1%8C"
+        ],
+        "internalLinks": [
+          "target"
+        ]
+      }
+    },
+    {
       "id": "unknown-block",
       "document": {
         "version": 1,
@@ -6856,8 +7902,8 @@
       },
       "options": {},
       "expect": {
-        "error": true,
-        "errorPattern": "unsafe.*link|unsafe.*url|link.*unsafe"
+        "minPages": 1,
+        "links": []
       }
     },
     {
@@ -6879,8 +7925,8 @@
       },
       "options": {},
       "expect": {
-        "error": true,
-        "errorPattern": "unsafe.*attachment|unsafe.*url"
+        "minPages": 1,
+        "links": []
       }
     },
     {

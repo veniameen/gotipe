@@ -101,7 +101,7 @@ const editor = await createEditor({
 });
 ```
 
-The editor flattens nested arrays and keeps one extension per name. When a name repeats, the last configuration wins and the extension keeps the position of its first occurrence. That is how `FullPreset` replaces the Heading of `DefaultPreset`. Shortcuts and input rules are tried in that order, and the first match handles the key or the text.
+The editor flattens nested arrays and keeps one extension per name. When a name repeats, the last configuration wins and the extension keeps the position of its first occurrence. That is how `[DefaultPreset, Heading.configure({ levels: [1, 2] })]` replaces the preset's Heading. Shortcuts and input rules are tried in that order, and the first match handles the key or the text.
 
 | Extension | Options | Page |
 | --- | --- | --- |
@@ -113,7 +113,7 @@ The editor flattens nested arrays and keeps one extension per name. When a name 
 The other built-in extensions have no options.
 
 > [!NOTE]
-> In this release the `Heading` and `CodeBlock` options are accepted but not read by the editor or its UI. Their pages say what that means in practice.
+> In this release the `CodeBlock` options are accepted but not read by the editor or its UI; its page says what that means in practice.
 
 ## Attributes every node accepts
 

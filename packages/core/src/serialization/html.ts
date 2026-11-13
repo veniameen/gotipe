@@ -82,13 +82,15 @@ function blockToHtml(block: HtmlBlock, options: HtmlSerializationOptions): strin
       ? escapeHtml(block.content)
       : "";
   const childrenHtml = block.children.map((child) => renderBlock(child, options)).join("\n");
+  // Blocks that do not hold children in the editor schema still never lose them.
+  const after = childrenHtml ? `\n${childrenHtml}` : "";
 
   switch (block.type) {
     case "paragraph":
-      return `<p>${inner}</p>`;
+      return `<p>${inner}</p>${after}`;
     case "heading": {
       const level = Math.min(Math.max(Math.trunc(Number(block.attrs.level)) || 1, 1), 6);
-      return `<h${level}>${inner}</h${level}>`;
+      return `<h${level}>${inner}</h${level}>${after}`;
     }
     case "bulletList":
       return `<ul>\n${childrenHtml}\n</ul>`;
@@ -106,15 +108,18 @@ function blockToHtml(block: HtmlBlock, options: HtmlSerializationOptions): strin
       return `<li><input type="checkbox"${checked} disabled> ${inner}${childrenHtml ? `\n${childrenHtml}` : ""}</li>`;
     }
     case "codeBlock": {
-      const lang = block.attrs.language
-        ? ` class="language-${escapeHtml(String(block.attrs.language))}"`
-        : "";
-      return `<pre><code${lang}>${inner}</code></pre>`;
+      // Older documents store plain text as `plain`/`plaintext`; it has no language class.
+      const language = block.attrs.language;
+      const lang =
+        language && !/^plain(?:text)?$/i.test(String(language))
+          ? ` class="language-${escapeHtml(String(language))}"`
+          : "";
+      return `<pre><code${lang}>${inner}</code></pre>${after}`;
     }
     case "blockquote":
       return `<blockquote>${inner}${childrenHtml ? `\n${childrenHtml}` : ""}</blockquote>`;
     case "divider":
-      return "<hr>";
+      return `<hr>${after}`;
     case "callout": {
       const emoji = block.attrs.emoji
         ? `<span class="callout-emoji">${escapeHtml(String(block.attrs.emoji))}</span>`
@@ -127,7 +132,7 @@ function blockToHtml(block: HtmlBlock, options: HtmlSerializationOptions): strin
       const caption = block.attrs.caption
         ? `<figcaption>${escapeHtml(String(block.attrs.caption))}</figcaption>`
         : "";
-      return `<figure><img src="${src}" alt="${alt}">${caption}</figure>`;
+      return `<figure><img src="${src}" alt="${alt}">${caption}</figure>${after}`;
     }
     case "table":
       return `<table>\n${childrenHtml}\n</table>`;
@@ -140,8 +145,11 @@ function blockToHtml(block: HtmlBlock, options: HtmlSerializationOptions): strin
     case "file":
     case "embed": {
       const href = toSafeHref(String(block.attrs.url ?? block.attrs.src ?? ""));
-      const label = escapeHtml(String(block.attrs.name ?? block.attrs.title ?? href ?? ""));
-      return href ? `<p><a href="${escapeHtml(href)}">${label}</a></p>` : `<p>${label}</p>`;
+      const name = [block.attrs.name, block.attrs.title].find(
+        (value) => value !== undefined && value !== null && String(value) !== "",
+      );
+      const label = escapeHtml(name === undefined ? (href ?? "") : String(name));
+      return `${href ? `<p><a href="${escapeHtml(href)}">${label}</a></p>` : `<p>${label}</p>`}${after}`;
     }
     case "toggle":
       return `<details${block.attrs.open ? " open" : ""}><summary>${inner}</summary>\n${childrenHtml}\n</details>`;
@@ -170,6 +178,8 @@ export interface HtmlSerializationOptions {
   classPrefix?: string;
   /** Include neutral structural styles suitable for a standalone document. */
   inlineStyles?: boolean;
+  /** The same as `inlineStyles`; the name `exportToHtml` has always accepted. */
+  includeStyles?: boolean;
 }
 
 function renderBlock(block: HtmlBlock, options: HtmlSerializationOptions): string {
@@ -207,7 +217,16 @@ export function blocksToHtml(
       !/^[a-zA-Z_][a-zA-Z0-9_-]*$/.test(options.classPrefix))
   )
     throw new TypeError("classPrefix must be a non-empty CSS identifier prefix");
-  if (options.inlineStyles !== undefined && typeof options.inlineStyles !== "boolean")
+  const { inlineStyles, includeStyles } = options;
+  if (inlineStyles !== undefined && typeof inlineStyles !== "boolean")
     throw new TypeError("inlineStyles must be boolean");
-  return blocks.map((block) => renderBlock(block, options)).join("\n");
+  if (includeStyles !== undefined && typeof includeStyles !== "boolean")
+    throw new TypeError("includeStyles must be boolean");
+  if (inlineStyles !== undefined && includeStyles !== undefined && inlineStyles !== includeStyles)
+    throw new TypeError("inlineStyles and includeStyles must not disagree");
+  const resolved = {
+    classPrefix: options.classPrefix,
+    inlineStyles: inlineStyles ?? includeStyles,
+  };
+  return blocks.map((block) => renderBlock(block, resolved)).join("\n");
 }

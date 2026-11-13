@@ -28,7 +28,7 @@ editing shortcuts are ignored. Menus and tooltips show only keys that are bound.
 
 | Shortcut | Action | Extension |
 |---|---|---|
-| Mod+Alt+1 … Mod+Alt+6 | Heading 1–6 | `Heading` |
+| Mod+Alt+1 … Mod+Alt+6 | Heading 1–6, for the levels `Heading` offers (1–3 in `DefaultPreset`) | `Heading` |
 | Mod+Shift+7 | Numbered list, on or off | `OrderedList` |
 | Mod+Shift+8 | Bullet list, on or off | `BulletList` |
 | Mod+Shift+9 | To-do list, on or off | `TodoList` |
@@ -68,7 +68,7 @@ Type these in an empty paragraph:
 
 | Type | Result | Extension |
 |---|---|---|
-| `#` to `######`, then a space | Heading 1–6 | `Heading` |
+| `#` to `######`, then a space | Heading 1–6, for the levels `Heading` offers | `Heading` |
 | `-` or `*`, then a space | Bullet list | `BulletList` |
 | `1.` or any number and a dot, then a space | Numbered list starting at that number | `OrderedList` |
 | `[]`, then a space | To-do list | `TodoList` |
@@ -78,6 +78,10 @@ Type these in an empty paragraph:
 | `---` | Divider | `Divider` |
 | `$$` | Math block | `Math` |
 | `/` | Slash menu; also after a space inside a line | UI |
+
+Anywhere in a line, `**text**`, `*text*`, `~~text~~` and `` `text` `` become bold, italic,
+struck-through and code text as you type the closing delimiter; see
+[marks](/docs/extensions/marks#input-rules).
 
 ## Editor UI
 

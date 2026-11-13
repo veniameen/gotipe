@@ -16,7 +16,12 @@ export interface NodeSpec {
 
 export interface AttrSpec {
   type: "string" | "number" | "bool" | "enum" | "array" | "object";
-  values?: string[];
+  /**
+   * `enum`: the values a document may hold. Any other type: the values commands create,
+   * such as `Heading` levels; documents may hold others.
+   */
+  values?: string[] | number[];
+  /** Commands write it into a new block or mark that leaves the attribute out. */
   default?: unknown;
   required?: boolean;
 }
@@ -38,7 +43,9 @@ export type WhenCondition = "inTable" | "inCodeBlock" | "inList" | "inBlockquote
 
 export interface InputRule {
   pattern: RegExp;
-  handler: (editor: GoTipeEditor, match: RegExpMatchArray) => void;
+  /** Return `false` when the rule does not apply after all; the next rule is tried. */
+  // biome-ignore lint/suspicious/noConfusingVoidType: handlers written before `false` existed return void.
+  handler: (editor: GoTipeEditor, match: RegExpMatchArray) => boolean | void;
 }
 
 export interface PasteRule {

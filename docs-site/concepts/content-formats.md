@@ -93,9 +93,8 @@ become `div.callout`, task lists `ul.todo-list` with disabled checkboxes, images
 toggles `details`, and files and embeds a paragraph with a link. A block type the
 serializer doesn't know becomes a paragraph with its text.
 
-`editor.getHTML()` returns the same output on the JS engine. The WASM engine has its own
-exporter with different markup, and it writes a hard break as a newline instead of `<br>`.
-Use `serializeHtml` when the HTML must not depend on the engine.
+`editor.getHTML()` returns the same output on both engines, and so does the server's
+`gotipe-convert html`. `inlineStyles` is also accepted under its earlier name `includeStyles`.
 
 ## Markdown
 

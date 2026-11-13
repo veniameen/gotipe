@@ -134,16 +134,14 @@ GoTipe escapes ordinary document text, but the HTML a block renderer returns is 
 
 | Output | A math block becomes |
 | --- | --- |
-| `getMarkdown()`, `exportToMarkdown`, `renderToMarkdown` | The source as a plain paragraph, without `$$`; it reads back as a paragraph |
-| `getHTML()` on the JS engine, `serializeHtml`, `exportToHtml` with options, `renderToHtml` | `<p>` with the escaped source |
+| `getMarkdown()`, `exportToMarkdown`, `renderToMarkdown`, `gotipe-convert markdown` | The source between `$$` lines (a ```` ```math ```` fence when the source has a `$$` line); it reads back as the same formula |
+| `getHTML()` on both engines, `serializeHtml`, `exportToHtml`, `renderToHtml`, `gotipe-convert html` | `<p>` with the escaped source |
 | `renderToHtml` with `blockRenderers.math` | Your HTML |
-| `getHTML()` on the WASM engine, `gotipe-convert html` | `<pre class="gotipe-raw">` with the escaped source |
-| `gotipe-convert markdown` | The source between `$$` lines |
 | PDF and DOCX | The source as literal text |
 | `getText()` | The source |
 
 > [!NOTE]
-> Math is always a block node: there is no inline math mark, and `display: "inline"` is only a hint for your renderer. The `$$` rule keeps the two dollar signs as the start of the TeX source; delete them after the conversion. Markdown has no math in this release: `getMarkdown()` writes the source as plain text, so a round trip through Markdown turns a formula into a paragraph.
+> Math is always a block node: there is no inline math mark, and `display: "inline"` is only a hint for your renderer. The `$$` rule keeps the two dollar signs as the start of the TeX source; delete them after the conversion. `getMarkdown()` writes a formula as a `$$` block, which GitHub and most Markdown renderers show as math, and `parseMarkdown` reads `$$` blocks and ```` ```math ```` fences back as formulas with the source unchanged.
 
 ## Related
 

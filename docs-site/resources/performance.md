@@ -34,7 +34,7 @@ measurements.
 | Module | Raw | gzip | Loaded |
 |---|---:|---:|---|
 | `@gotipe/wasm`, the core engine | 1,497,834 B | 589,986 B (budget 600 KiB) | When `createEditor` uses the WASM engine |
-| `@gotipe/export-wasm`, PDF and DOCX with fonts | 14,420,356 B | about 8.6 MB | On the first `exportToPdf` or `exportToDocx` |
+| `@gotipe/export-wasm`, PDF and DOCX with fonts | 14,676,786 B | about 8.6 MB | On the first `exportToPdf` or `exportToDocx` |
 
 The JS engine needs no WASM at all. Choose it with `engine: "js"` or import from
 `@gotipe/core/js`, which has no reference to `@gotipe/wasm`; see [Engines](/docs/getting-started/engines).
@@ -72,7 +72,7 @@ Fixed limits that apply to large content:
 |---|---|
 | Files embedded without host storage | 10 MiB each, as `data:` URLs in the document |
 | PDF export | 64 nesting levels, 100,000 blocks, 10,000 pages |
-| PDF and DOCX images | 4096 px per side; 8 MiB per resolved image; 32 MiB of embedded image data per export |
+| PDF and DOCX images | 4096 px per side; 10 MiB of data per image, as the editor's inline upload limit; 64 MiB per export |
 | Migration input | 100,000 values, 128 levels, 32 Mi UTF-16 code units of text |
 | `gotipe-convert` input | 64 MiB |
 | Cloud document body | `EXPORT_MAX_DOCUMENT_SIZE`, 10 MiB by default, at most 64 MiB |

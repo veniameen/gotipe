@@ -34,6 +34,7 @@ pub(crate) fn shift(ops: &mut [DrawOp], dx: f32, dy: f32) {
             DrawOp::Text { x, y, .. }
             | DrawOp::Rect { x, y, .. }
             | DrawOp::Bookmark { x, y, .. }
+            | DrawOp::Anchor { x, y, .. }
             | DrawOp::Image { x, y, .. } => {
                 *x += dx;
                 *y += dy;

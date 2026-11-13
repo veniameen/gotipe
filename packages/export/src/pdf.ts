@@ -2,10 +2,13 @@ import type { GoTipeEditor } from "@gotipe/core";
 import { prepareImages } from "./assets";
 import { validateOptionNames } from "./options";
 import type { PdfOptions } from "./types";
-import { loadExporters } from "./wasm";
+import { exportBytes, loadExporters } from "./wasm";
 
 /** Typeset a PDF with the optional exporter, loaded on first use. */
-export async function exportToPdf(editor: GoTipeEditor, options?: PdfOptions): Promise<Uint8Array> {
+export async function exportToPdf(
+  editor: GoTipeEditor,
+  options?: PdfOptions,
+): Promise<Uint8Array<ArrayBuffer>> {
   validateOptionNames(options, [
     "resolveImage",
     "pageSize",
@@ -13,8 +16,13 @@ export async function exportToPdf(editor: GoTipeEditor, options?: PdfOptions): P
     "fontSize",
     "headerTemplate",
     "footerTemplate",
+    "lang",
+    "title",
+    "author",
   ]);
   const document = await prepareImages(editor.getJSON(), options?.resolveImage);
   const module = await loadExporters();
-  return module.exportPdf(JSON.stringify(document), JSON.stringify(options ?? {}));
+  return exportBytes(() =>
+    module.exportPdf(JSON.stringify(document), JSON.stringify(options ?? {})),
+  );
 }

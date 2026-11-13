@@ -4,6 +4,8 @@ mod assets;
 mod document_checks;
 pub mod input;
 pub mod json;
+#[cfg(any(feature = "pdf", feature = "docx"))]
+mod links;
 pub mod plaintext;
 
 #[cfg(feature = "html")]
@@ -18,8 +20,12 @@ use gotipe_core::Document;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(default)]
 pub struct ExportOptions {
+    /// Neutral structural styles, as `inlineStyles` of `serializeHtml`.
     pub inline_styles: bool,
+    /// One class per block from this CSS identifier prefix, as `classPrefix` of `serializeHtml`.
+    pub class_prefix: Option<String>,
     pub csp_nonce: Option<String>,
     pub base_url: Option<String>,
     pub css_classes: bool,
@@ -31,6 +37,7 @@ impl Default for ExportOptions {
     fn default() -> Self {
         ExportOptions {
             inline_styles: false,
+            class_prefix: None,
             csp_nonce: None,
             base_url: None,
             css_classes: true,
@@ -80,6 +87,24 @@ pub enum ConvertError {
 
     #[error("Parse error: {0}")]
     ParseError(String),
+
+    #[error("Invalid options: {0}")]
+    InvalidOptions(String),
+}
+
+impl ConvertError {
+    /// Stable machine-readable reason, shared by the native converter and the WASM exporter.
+    pub fn code(&self) -> &'static str {
+        match self {
+            ConvertError::UnsupportedBlockType(_) => "UNSUPPORTED_BLOCK_TYPE",
+            ConvertError::UnsupportedMark(_) => "UNSUPPORTED_MARK",
+            ConvertError::Encoding(_) => "ENCODING_ERROR",
+            ConvertError::FontNotFound(_) => "FONT_NOT_FOUND",
+            ConvertError::ImageError(_) => "IMAGE_ERROR",
+            ConvertError::ParseError(_) => "PARSE_ERROR",
+            ConvertError::InvalidOptions(_) => "INVALID_OPTIONS",
+        }
+    }
 }
 
 // Convenience re-exports for common operations
@@ -109,16 +134,3 @@ pub fn to_markdown(doc: &Document) -> String {
 pub mod docx;
 #[cfg(feature = "pdf")]
 pub mod pdf;
-
-pub(crate) fn safe_url(url: &str) -> bool {
-    let clean = url.trim();
-    if clean.chars().any(|c| c.is_control()) {
-        return false;
-    }
-    let lower = clean.to_ascii_lowercase();
-    lower.starts_with("https://")
-        || lower.starts_with("http://")
-        || lower.starts_with("mailto:")
-        || clean.starts_with('#')
-        || (clean.starts_with('/') && !clean.starts_with("//"))
-}

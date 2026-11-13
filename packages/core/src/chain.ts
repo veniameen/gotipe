@@ -5,6 +5,7 @@ import { insertionPoint } from "./commands/insertion-point";
 import { ListCommands } from "./commands/list-commands";
 import { MarkCommands } from "./commands/mark-commands";
 import type { CommandPort } from "./commands/port";
+import { type AllowsChild, type CommandSchema, chainSchema } from "./commands/schema";
 import { StructureCommands } from "./commands/structure-commands";
 import { cloneAttributes } from "./document/attributes";
 import { findBlockInTree, findBlockLocation, flattenBlocks } from "./document/tree";
@@ -23,13 +24,17 @@ export class ChainableCommands {
   private marks: MarkCommands;
   private lists: ListCommands;
   private structures: StructureCommands;
+  private schema: CommandSchema;
+  /** `schema` is the editor's schema query; an `allowsChild(parent, child)` function still works. */
   constructor(
     private editor: GoTipeEditor,
-    private allowsChild?: (parentType: string, childType: string) => boolean,
+    schema?: CommandSchema | AllowsChild,
   ) {
+    this.schema = chainSchema(schema);
     const port: CommandPort = {
       getState: () => this.getViewState(),
-      allowsChild,
+      allowsChild: this.schema.allowsChild,
+      schema: this.schema,
       append: (...steps) => this.steps.push(...steps),
       select: (selection) => {
         this.selectionOverride = selection ?? null;
@@ -194,34 +199,31 @@ export class ChainableCommands {
   }
 
   insertBlockAfter(type: string, attrs?: Record<string, unknown>): this {
-    const state = this.getViewState();
-    const blockId = state.selection.anchor.blockId;
-    const location = insertionPoint(state.blocks, blockId, type, "after", this.allowsChild);
-    this.steps.push({
-      type: "insertBlock",
-      ...location,
-      block: {
-        id: crypto.randomUUID(),
-        type,
-        attrs: cloneAttributes(attrs ?? {}),
-        content: blockContent(type),
-        children: [],
-      },
-    });
-    return this;
+    return this.insertBlock(type, attrs, "after");
   }
 
   insertBlockBefore(type: string, attrs?: Record<string, unknown>): this {
+    return this.insertBlock(type, attrs, "before");
+  }
+
+  /** A new block gets the declared attribute defaults; values outside `values` stage nothing. */
+  private insertBlock(
+    type: string,
+    attrs: Record<string, unknown> | undefined,
+    side: "after" | "before",
+  ): this {
+    const filled = this.schema.withDefaults("node", type, attrs);
+    if (!this.schema.acceptsAttrs(type, filled)) return this;
     const state = this.getViewState();
     const blockId = state.selection.anchor.blockId;
-    const location = insertionPoint(state.blocks, blockId, type, "before", this.allowsChild);
+    const location = insertionPoint(state.blocks, blockId, type, side, this.schema.allowsChild);
     this.steps.push({
       type: "insertBlock",
       ...location,
       block: {
         id: crypto.randomUUID(),
         type,
-        attrs: cloneAttributes(attrs ?? {}),
+        attrs: filled,
         content: blockContent(type),
         children: [],
       },

@@ -408,6 +408,23 @@
     ]
   },
   {
+    "name": "image-webp",
+    "version": "0.2.4",
+    "license": "MIT OR Apache-2.0",
+    "source": "https://github.com/image-rs/image-webp",
+    "resolved_source": "registry+https://github.com/rust-lang/crates.io-index",
+    "notices": [
+      {
+        "file": "image-webp-0.2.4-LICENSE-APACHE",
+        "sha256": "0d542e0c8804e39aa7f37eb00da5a762149dc682d7829451287e11b938e94594"
+      },
+      {
+        "file": "image-webp-0.2.4-LICENSE-MIT",
+        "sha256": "c77a4cf9da729987d0fe7ccd811e3bd27393914ddf3d23467c18cc22954513b3"
+      }
+    ]
+  },
+  {
     "name": "indexmap",
     "version": "2.14.2",
     "license": "Apache-2.0 OR MIT",
@@ -675,6 +692,23 @@
       {
         "file": "pxfm-0.1.30-LICENSE.md",
         "sha256": "2aa92cada6431e75615e3fe6cb1a9082c98f777d48ae1c087c0da0e37f7b8bff"
+      }
+    ]
+  },
+  {
+    "name": "quick-error",
+    "version": "2.0.1",
+    "license": "MIT/Apache-2.0",
+    "source": "http://github.com/tailhook/quick-error",
+    "resolved_source": "registry+https://github.com/rust-lang/crates.io-index",
+    "notices": [
+      {
+        "file": "quick-error-2.0.1-LICENSE-APACHE",
+        "sha256": "c6596eb7be8581c18be736c846fb9173b69eccf6ef94c5135893ec56bd92ba08"
+      },
+      {
+        "file": "quick-error-2.0.1-LICENSE-MIT",
+        "sha256": "058f01fe181608d027fcde7e528fc03ea3cf90f30903c407644b0a9bbc54f500"
       }
     ]
   },

@@ -1,5 +1,12 @@
 import { GoTipeError } from "../error";
 import { isUtf16Boundary } from "../text";
+import {
+  type MarkGroups,
+  NO_MARK_GROUPS,
+  applyMark,
+  normalizeMarks,
+  sameValue,
+} from "./mark-rules";
 import type { FallbackBlock, FallbackDoc, FallbackMark, FallbackSpan } from "./types";
 
 function findBlockById(blocks: FallbackBlock[], id: string): FallbackBlock | null {
@@ -57,7 +64,7 @@ function marksEqual(a: FallbackMark[], b: FallbackMark[]): boolean {
   if (a.length !== b.length) return false;
   for (let i = 0; i < a.length; i++) {
     if (a[i]!.mark_type !== b[i]!.mark_type) return false;
-    if (JSON.stringify(a[i]!.attrs) !== JSON.stringify(b[i]!.attrs)) return false;
+    if (!sameValue(a[i]!.attrs ?? {}, b[i]!.attrs ?? {})) return false;
   }
   return true;
 }
@@ -119,6 +126,7 @@ function splitSpansAt(spans: FallbackSpan[], offset: number): [FallbackSpan[], F
 function applyInsertText(
   doc: FallbackDoc,
   step: { block_id: string; offset: number; text: string; marks: FallbackMark[] },
+  groups: MarkGroups,
 ): void {
   const block = requireBlock(doc, step.block_id);
   requireTextRange(block, step.offset);
@@ -129,7 +137,7 @@ function applyInsertText(
   }
   const spans = getRichTextSpans(block);
   const [before, after] = splitSpansAt(spans, step.offset);
-  const newSpan: FallbackSpan = { text: step.text, marks: step.marks.map((m) => ({ ...m })) };
+  const newSpan: FallbackSpan = { text: step.text, marks: normalizeMarks(step.marks, groups) };
   setRichTextSpans(block, [...before, newSpan, ...after]);
 }
 
@@ -160,6 +168,7 @@ function applyDeleteRange(
 function applyAddMark(
   doc: FallbackDoc,
   step: { block_id: string; from: number; to: number; mark: FallbackMark },
+  groups: MarkGroups,
 ): void {
   const block = findBlockById(doc.blocks, step.block_id);
   if (!block) return;
@@ -171,12 +180,8 @@ function applyAddMark(
   const rangeLen = step.to - step.from;
   const [middle, afterTo] = splitSpansAt(rest, Math.min(rangeLen, totalLen));
 
-  // Add the mark to every span in the range
-  for (const span of middle) {
-    if (!span.marks.some((m) => m.mark_type === step.mark.mark_type)) {
-      span.marks.push({ mark_type: step.mark.mark_type, attrs: { ...step.mark.attrs } });
-    }
-  }
+  // Same type: the new attributes replace the old; same exclusive group: the others go.
+  for (const span of middle) span.marks = applyMark(span.marks, step.mark, groups);
 
   setRichTextSpans(block, [...beforeFrom, ...middle, ...afterTo]);
 }
@@ -369,10 +374,12 @@ function applyMergeBlocks(doc: FallbackDoc, step: { block_id: string; target_id:
   removeBlockById(doc.blocks, step.block_id);
 }
 
+/** `groups` are the schema's exclusive mark groups; the Rust engine reads them from its schema. */
 export function fallbackApply(
   docJson: string,
   transactionJson: string,
   validateStep?: (step: Record<string, unknown>, document: FallbackDoc) => void,
+  groups: MarkGroups = NO_MARK_GROUPS,
 ): string {
   const doc = JSON.parse(docJson) as FallbackDoc;
   const tr = JSON.parse(transactionJson) as { steps: Record<string, unknown>[] };
@@ -385,13 +392,13 @@ export function fallbackApply(
 
     switch (tag) {
       case "InsertText":
-        applyInsertText(doc, data as Parameters<typeof applyInsertText>[1]);
+        applyInsertText(doc, data as Parameters<typeof applyInsertText>[1], groups);
         break;
       case "DeleteText":
         applyDeleteText(doc, data as Parameters<typeof applyDeleteText>[1]);
         break;
       case "AddMark":
-        applyAddMark(doc, data as Parameters<typeof applyAddMark>[1]);
+        applyAddMark(doc, data as Parameters<typeof applyAddMark>[1], groups);
         break;
       case "RemoveMark":
         applyRemoveMark(doc, data as Parameters<typeof applyRemoveMark>[1]);

@@ -1,8 +1,10 @@
 use crate::ConvertError;
 use gotipe_core::Document;
 use serde_json::{json, Value};
+use std::collections::HashSet;
 
-/// Accept both the public JS document and Rust's tagged representation.
+/// Accept both the public JS document and Rust's tagged representation. Like
+/// `decodeDocument` in @gotipe/core, block IDs and type names must be non-empty and IDs unique.
 pub fn document_from_json(input: &str) -> Result<Document, ConvertError> {
     let mut value: Value =
         serde_json::from_str(input).map_err(|e| ConvertError::ParseError(e.to_string()))?;
@@ -18,12 +20,23 @@ fn normalize_document(doc: &mut Value) -> Result<(), ConvertError> {
         .get_mut("blocks")
         .and_then(Value::as_array_mut)
         .ok_or_else(|| ConvertError::ParseError("blocks must be an array".into()))?;
+    let mut ids = HashSet::new();
     for block in blocks {
-        normalize_block(block, 0)?
+        normalize_block(block, 0, &mut ids)?
     }
     Ok(())
 }
-fn normalize_block(value: &mut Value, depth: usize) -> Result<(), ConvertError> {
+fn non_empty<'a>(value: Option<&'a Value>, label: &str) -> Result<&'a str, ConvertError> {
+    value
+        .and_then(Value::as_str)
+        .filter(|value| !value.is_empty())
+        .ok_or_else(|| ConvertError::ParseError(format!("{label} must be a non-empty string")))
+}
+fn normalize_block(
+    value: &mut Value,
+    depth: usize,
+    ids: &mut HashSet<String>,
+) -> Result<(), ConvertError> {
     if depth > 128 {
         return Err(ConvertError::ParseError(
             "document is too deeply nested".into(),
@@ -32,9 +45,16 @@ fn normalize_block(value: &mut Value, depth: usize) -> Result<(), ConvertError> 
     let block = value
         .as_object_mut()
         .ok_or_else(|| ConvertError::ParseError("block must be an object".into()))?;
+    let id = non_empty(block.get("id"), "Block ID")?;
+    if !ids.insert(id.to_owned()) {
+        return Err(ConvertError::ParseError(format!(
+            "Duplicate block ID: {id}"
+        )));
+    }
     if let Some(kind) = block.remove("type") {
         block.entry("block_type").or_insert(kind);
     }
+    non_empty(block.get("block_type"), "Block type")?;
     block.entry("attrs").or_insert(json!({}));
     let content = block.entry("content").or_insert(json!({"type":"Empty"}));
     if content.is_array() {
@@ -65,6 +85,7 @@ fn normalize_block(value: &mut Value, depth: usize) -> Result<(), ConvertError> 
                 if let Some(kind) = mark.remove("type") {
                     mark.entry("mark_type").or_insert(kind);
                 }
+                non_empty(mark.get("mark_type"), "Mark type")?;
                 mark.entry("attrs").or_insert(json!({}));
             }
         }
@@ -75,7 +96,7 @@ fn normalize_block(value: &mut Value, depth: usize) -> Result<(), ConvertError> 
         .as_array_mut()
         .ok_or_else(|| ConvertError::ParseError("children must be an array".into()))?;
     for child in children {
-        normalize_block(child, depth + 1)?
+        normalize_block(child, depth + 1, ids)?
     }
     Ok(())
 }
@@ -135,4 +156,46 @@ pub fn public_document(doc: &Document) -> Value {
         }
     }
     value
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn rejects_what_the_editor_document_decoder_rejects() {
+        for (input, message) in [
+            (
+                r#"{"blocks":[{"id":"","type":"paragraph"}]}"#,
+                "Block ID must be a non-empty string",
+            ),
+            (
+                r#"{"blocks":[{"type":"paragraph"}]}"#,
+                "Block ID must be a non-empty string",
+            ),
+            (
+                r#"{"blocks":[{"id":"a","type":""}]}"#,
+                "Block type must be a non-empty string",
+            ),
+            (
+                r#"{"blocks":[{"id":"a"}]}"#,
+                "Block type must be a non-empty string",
+            ),
+            (
+                r#"{"blocks":[{"id":"a","type":"paragraph","children":[{"id":"a","type":"paragraph"}]}]}"#,
+                "Duplicate block ID: a",
+            ),
+            (
+                r#"{"blocks":[{"id":"a","type":"paragraph","content":[{"text":"x","marks":[{"type":""}]}]}]}"#,
+                "Mark type must be a non-empty string",
+            ),
+        ] {
+            let error = document_from_json(input).unwrap_err().to_string();
+            assert!(error.contains(message), "{input}: {error}");
+        }
+        assert!(document_from_json(
+            r#"{"blocks":[{"id":"a","block_type":"paragraph","children":[{"id":"b","type":"paragraph"}]}]}"#
+        )
+        .is_ok());
+    }
 }

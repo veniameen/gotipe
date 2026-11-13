@@ -62,10 +62,8 @@ pub(crate) fn validate_marks(blocks: &[Block]) -> Result<(), ConvertError> {
                                 )));
                             }
                         }
-                        "link" => match mark.attrs.get("href") {
-                            Some(AttrValue::String(href)) if crate::safe_url(href) => {}
-                            _ => return Err(ConvertError::Encoding("Unsafe link URL".into())),
-                        },
+                        // A link that cannot be clickable in a standalone file keeps its text.
+                        "link" => {}
                         other => return Err(ConvertError::UnsupportedMark(other.into())),
                     }
                 }

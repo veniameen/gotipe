@@ -15,11 +15,16 @@ const LIST_ITEM_TYPES = new Set(["listItem", "todoItem"]);
 /** List wrapping/lifting and indentation are planned into one caller-owned transaction. */
 export class ListCommands {
   constructor(private port: CommandPort) {}
+  /** The block gets the declared defaults; values outside an attribute's `values` stage nothing. */
   setBlockType(type: string, attrs?: Record<string, unknown>): this {
     const state = this.port.getState();
     const blockId = state.selection.anchor.blockId;
     const block = findBlockInTree(state.blocks, blockId);
-    if (!block) return this;
+    if (
+      !block ||
+      !this.port.schema.acceptsAttrs(type, this.port.schema.withDefaults("node", type, attrs))
+    )
+      return this;
     const sourceOffset =
       state.selection.anchor.blockId === block.id ? state.selection.anchor.offset : 0;
 
@@ -35,7 +40,7 @@ export class ListCommands {
         const lifted = {
           id: block.id,
           type,
-          attrs: cloneAttributes(attrs ?? {}),
+          attrs: this.port.schema.withDefaults("node", type, attrs),
           content,
           children: [],
         };
@@ -97,7 +102,7 @@ export class ListCommands {
       type: "setBlockType",
       blockId,
       newType: type,
-      attrs: normalizedAttrs,
+      attrs: this.port.schema.withDefaults("node", type, normalizedAttrs),
     });
     return this;
   }
@@ -158,7 +163,7 @@ export class ListCommands {
         type: "setBlockType",
         blockId: listBlock.id,
         newType: listType,
-        attrs: cloneAttributes(listAttrs ?? {}),
+        attrs: this.port.schema.withDefaults("node", listType, listAttrs),
       });
 
       for (const item of listBlock.children) {
@@ -191,7 +196,7 @@ export class ListCommands {
         block: {
           id: crypto.randomUUID(),
           type: listType,
-          attrs: cloneAttributes(listAttrs ?? {}),
+          attrs: this.port.schema.withDefaults("node", listType, listAttrs),
           content: null,
           children: [
             {

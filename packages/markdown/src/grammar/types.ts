@@ -80,6 +80,10 @@ export interface Table extends Node<"table"> {
   align: ("left" | "right" | "center" | null)[];
 }
 export interface ThematicBreak extends Node<"thematicBreak"> {}
+/** A `$$` block: TeX between `$$` lines, taken as written. */
+export interface MathBlock extends Node<"math"> {
+  value: string;
+}
 export interface Definition extends Node<"definition" | "footnoteDefinition"> {
   value: string;
 }
@@ -91,6 +95,7 @@ export type RootContent =
   | List
   | Table
   | ThematicBreak
+  | MathBlock
   | Html
   | Definition;
 export type Nodes = RootContent | PhrasingContent | ListItem | TableRow | TableCell;

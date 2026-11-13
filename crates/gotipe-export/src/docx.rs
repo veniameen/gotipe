@@ -1,21 +1,24 @@
 //! GoTipe OOXML renderer. ZIP framing belongs to the maintained codec.
 mod package;
+use crate::links::{Link, Targets};
 use crate::ConvertError;
 use gotipe_core::{AttrValue, Block, BlockContent, Document, TextSpan};
 use serde::{Deserialize, Serialize};
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, HashMap};
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
-#[serde(default)]
+#[serde(default, deny_unknown_fields)]
 pub struct DocxOptions {
     pub title: String,
     pub author: String,
     pub description: String,
 }
-#[derive(Default)]
 struct Renderer {
     links: Vec<String>,
     images: Vec<Vec<u8>>,
+    targets: Targets,
+    /// Bookmark number of each linked block, in order of first use.
+    bookmarks: HashMap<String, usize>,
 }
 fn attr<'a>(node: &'a Block, name: &str) -> &'a str {
     match node.attrs.get(name) {
@@ -90,16 +93,48 @@ fn run(span: &TextSpan, base: &RunProperties) -> Result<String, ConvertError> {
     text_run(&span.text, &properties.into_values().collect::<String>())
 }
 impl Renderer {
-    fn hyperlink(&mut self, href: &str, content: &str) -> Result<String, ConvertError> {
-        if !crate::safe_url(href) {
-            return Err(ConvertError::Encoding("Unsafe attachment URL".into()));
+    fn new(blocks: &[Block]) -> Self {
+        Renderer {
+            links: Vec::new(),
+            images: Vec::new(),
+            targets: Targets::new(blocks),
+            bookmarks: HashMap::new(),
         }
-        escape(href)?;
-        self.links.push(href.to_string());
-        Ok(format!(
-            "<w:hyperlink r:id=\"link{}\">{content}</w:hyperlink>",
-            self.links.len()
-        ))
+    }
+    /// A hyperlink to an absolute web/mail address or to a block of this document;
+    /// other references stay text.
+    fn link(&mut self, href: &str, content: String) -> Result<String, ConvertError> {
+        match self.targets.link(href) {
+            Some(Link::External(target)) => {
+                escape(target)?;
+                self.links.push(target.to_string());
+                Ok(format!(
+                    "<w:hyperlink r:id=\"link{}\">{content}</w:hyperlink>",
+                    self.links.len()
+                ))
+            }
+            Some(Link::Internal(id)) => {
+                let number = self.bookmark(id);
+                Ok(format!(
+                    "<w:hyperlink w:anchor=\"gotipe_{number}\">{content}</w:hyperlink>"
+                ))
+            }
+            None => Ok(content),
+        }
+    }
+    fn bookmark(&mut self, id: &str) -> usize {
+        let next = self.bookmarks.len() + 1;
+        *self.bookmarks.entry(id.to_owned()).or_insert(next)
+    }
+    /// An empty bookmark where a linked block starts; Word accepts it between blocks.
+    fn anchor(&mut self, node: &Block) -> String {
+        if !self.targets.is_linked(&node.id.0) {
+            return String::new();
+        }
+        let number = self.bookmark(&node.id.0);
+        format!(
+            "<w:bookmarkStart w:id=\"{number}\" w:name=\"gotipe_{number}\"/><w:bookmarkEnd w:id=\"{number}\"/>"
+        )
     }
     fn paragraph(
         &mut self,
@@ -140,8 +175,8 @@ impl Renderer {
                         .find(|m| m.mark_type == "link")
                         .and_then(|m| m.attrs.get("href"));
                     match href {
-                        Some(AttrValue::String(href)) if crate::safe_url(href) => {
-                            result.push_str(&self.hyperlink(href, &content)?)
+                        Some(AttrValue::String(href)) => {
+                            result.push_str(&self.link(href, content)?)
                         }
                         _ => result.push_str(&content),
                     }
@@ -179,6 +214,7 @@ impl Renderer {
         result.push_str("</w:tblGrid>");
         for row in &node.children {
             result.push_str("<w:tr>");
+            result.push_str(&self.anchor(row));
             for cell in &row.children {
                 if matches!(cell.attrs.get("rowspan"), Some(AttrValue::Number(n)) if *n > 1.0) {
                     return Err(ConvertError::Encoding(
@@ -193,6 +229,7 @@ impl Renderer {
                     ));
                 }
                 result.push_str("</w:tcPr>");
+                result.push_str(&self.anchor(cell));
                 result.push_str(&self.paragraph(cell, 0, "")?);
                 result.push_str(&self.elements(&cell.children, depth)?);
                 if cell
@@ -209,8 +246,8 @@ impl Renderer {
         result.push_str("</w:tbl>");
         Ok(result)
     }
-    fn image(&mut self, node: &Block) -> Result<String, ConvertError> {
-        let image = crate::assets::image(node)?;
+    fn image(&mut self, node: &Block, source: &str) -> Result<String, ConvertError> {
+        let image = crate::assets::image(source)?;
         let requested = match node.attrs.get("width") {
             Some(AttrValue::Number(n)) if n.is_finite() && *n > 0.0 => *n,
             _ => image.width as f64,
@@ -228,6 +265,7 @@ impl Renderer {
     fn elements(&mut self, nodes: &[Block], depth: usize) -> Result<String, ConvertError> {
         let mut result = String::new();
         for node in nodes {
+            result.push_str(&self.anchor(node));
             match node.block_type.as_str() {
                 "table" => result.push_str(&self.table(node, depth)?),
                 "bulletList" | "orderedList" | "todoList" => {
@@ -249,6 +287,7 @@ impl Renderer {
                             "todoList" => "☐ ".into(),
                             _ => "• ".into(),
                         };
+                        result.push_str(&self.anchor(item));
                         result.push_str(&self.paragraph(item, depth, &prefix)?);
                         result.push_str(&self.elements(&item.children, depth + 1)?);
                     }
@@ -263,7 +302,10 @@ impl Renderer {
                     result.push_str(&format!("<w:p>{}</w:p>", text_run("────────────────", "")?))
                 }
                 "image" => {
-                    result.push_str(&self.image(node)?);
+                    // A placeholder without an uploaded image keeps only its caption.
+                    if let Some(source) = crate::assets::source(node) {
+                        result.push_str(&self.image(node, source)?);
+                    }
                     if !attr(node, "caption").is_empty() {
                         result.push_str(&format!(
                             "<w:p>{}</w:p>",
@@ -272,16 +314,11 @@ impl Renderer {
                     }
                 }
                 "file" | "embed" => {
-                    let url = attr(node, "url");
-                    let label = if attr(node, "name").is_empty() {
-                        url
-                    } else {
-                        attr(node, "name")
-                    };
-                    result.push_str(&format!(
-                        "<w:p>{}</w:p>",
-                        self.hyperlink(url, &text_run(label, "")?)?
-                    ));
+                    let label = crate::links::attachment_label(node);
+                    if !label.is_empty() {
+                        let content = self.link(attr(node, "url"), text_run(&label, "")?)?;
+                        result.push_str(&format!("<w:p>{content}</w:p>"));
+                    }
                 }
                 "paragraph" | "heading" | "codeBlock" | "blockquote" | "callout" | "toggle"
                 | "math" | "markdownRaw" | "listItem" | "todoItem" => {
@@ -299,7 +336,8 @@ impl Renderer {
 }
 pub fn to_docx(doc: &Document, options: &DocxOptions) -> Result<Vec<u8>, ConvertError> {
     crate::document_checks::validate_marks(&doc.blocks)?;
-    let mut renderer = Renderer::default();
+    crate::assets::check_document_images(&doc.blocks)?;
+    let mut renderer = Renderer::new(&doc.blocks);
     let body = renderer.elements(&doc.blocks, 0)?;
     package::pack(&body, &renderer.links, &renderer.images, options)
 }
