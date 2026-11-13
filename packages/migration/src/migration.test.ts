@@ -81,7 +81,9 @@ describe("ProseMirror and Tiptap serialized documents", () => {
     const before = structuredClone(source);
     const result = convertProseMirrorToGoTipe(source);
     expect(source).toEqual(before);
-    expect(result.warnings).toEqual([]);
+    expect(result.warnings).toEqual([
+      "ProseMirror/Tiptap content[2].content[0].content[0].attrs: tableHeader field colwidth does not fit the GoTipe schema; kept in unmapped",
+    ]);
     expect(result.document.blocks[0]?.attrs.start).toBe(4);
     const item = result.document.blocks[0]?.children[0];
     expect(
@@ -89,13 +91,26 @@ describe("ProseMirror and Tiptap serialized documents", () => {
         .map((span) => span.text)
         .join(""),
     ).toBe("Привет 😀\nnext");
-    expect(item?.attrs.migrationFirstParagraph).toMatchObject({ id: "p1" });
+    expect(item?.attrs).toEqual({});
     expect(item?.children[0]?.children[0]?.attrs.checked).toBe(true);
     expect(result.document.blocks[1]?.content).toBe("const x = 1;\n");
-    expect(result.document.blocks[2]?.children[0]?.children[0]?.attrs).toMatchObject({
-      colspan: 2,
-      colwidth: [100, 120],
-    });
+    const header = result.document.blocks[2]?.children[0]?.children[0];
+    expect(header?.attrs).toEqual({ colspan: 2 });
+    // The flattened paragraph's ID and the column widths stay in the report.
+    expect(result.unmapped).toEqual([
+      {
+        blockId: item?.id,
+        path: "content[0].content[0].content[0].attrs",
+        sourceType: "paragraph",
+        fields: { id: "p1" },
+      },
+      {
+        blockId: header?.id,
+        path: "content[2].content[0].content[0].attrs",
+        sourceType: "tableHeader",
+        fields: { colwidth: [100, 120] },
+      },
+    ]);
   });
 
   it("maps snake_case nodes and textStyle without losing link attributes", () => {
@@ -125,7 +140,10 @@ describe("ProseMirror and Tiptap serialized documents", () => {
                             rel: "noopener",
                           },
                         },
-                        { type: "textStyle", attrs: { color: "#123456" } },
+                        {
+                          type: "textStyle",
+                          attrs: { color: "#123456", fontFamily: "Inter", fontSize: null },
+                        },
                       ],
                     },
                   ],
@@ -136,10 +154,68 @@ describe("ProseMirror and Tiptap serialized documents", () => {
         },
       ],
     });
-    expect(
-      spans(result.document.blocks[0]?.children[0])[0]?.marks.map((mark) => mark.type),
-    ).toEqual(["bold", "italic", "link", "textColor"]);
-    expect(spans(result.document.blocks[0]?.children[0])[0]?.marks[2]?.attrs.target).toBe("_blank");
+    const item = result.document.blocks[0]?.children[0];
+    expect(spans(item)[0]?.marks.map((mark) => mark.type)).toEqual([
+      "bold",
+      "italic",
+      "link",
+      "textColor",
+    ]);
+    expect(spans(item)[0]?.marks[2]?.attrs.target).toBe("_blank");
+    // Text styles without a GoTipe mark are reported for the block, not dropped or kept raw.
+    expect(result.unmapped).toEqual([
+      {
+        blockId: item?.id,
+        path: "content[0].content[0].content[0].content[0].marks[3].attrs",
+        sourceType: "textStyle",
+        fields: { fontFamily: "Inter" },
+      },
+    ]);
+    expect(result.warnings).toHaveLength(1);
+  });
+
+  it("maps basic-schema inline images and prosemirror-markdown list and code attributes", () => {
+    const result = convertProseMirrorToGoTipe({
+      type: "doc",
+      content: [
+        {
+          type: "paragraph",
+          content: [{ type: "image", attrs: { src: "a.png", alt: "A", title: null } }],
+        },
+        {
+          type: "ordered_list",
+          attrs: { order: 3, tight: true },
+          content: [
+            {
+              type: "list_item",
+              content: [{ type: "paragraph", content: [{ type: "text", text: "x" }] }],
+            },
+          ],
+        },
+        {
+          type: "code_block",
+          attrs: { params: "ts {1,3}" },
+          content: [{ type: "text", text: "let a" }],
+        },
+        { type: "image", attrs: { src: null, alt: "Uploading" } },
+      ],
+    });
+    const blocks = result.document.blocks;
+    expect(blocks.map((block) => [block.type, block.attrs])).toEqual([
+      ["image", { src: "a.png", alt: "A" }],
+      ["orderedList", { start: 3 }],
+      ["codeBlock", { language: "ts", meta: "{1,3}" }],
+      ["markdownRaw", { kind: "json" }],
+    ]);
+    expect(result.unmapped).toEqual([
+      {
+        blockId: blocks[1]?.id,
+        path: "content[1].attrs",
+        sourceType: "ordered_list",
+        fields: { tight: true },
+      },
+    ]);
+    expect(result.preserved[0]).toMatchObject({ path: "content[3]", reason: "image requires src" });
   });
 
   it("preserves unknown inline nodes/marks as intact subtrees and throws in strict mode", () => {
@@ -155,9 +231,20 @@ describe("ProseMirror and Tiptap serialized documents", () => {
     const result = convertProseMirrorToGoTipe(source, {
       onWarning: (message) => warnings.push(message),
     });
-    expect(result.document.blocks[0]?.type).toBe("markdownRaw");
+    expect(result.document.blocks[0]).toMatchObject({
+      type: "markdownRaw",
+      attrs: { kind: "json" },
+    });
     expect(JSON.parse(String(result.document.blocks[0]?.content))).toEqual(paragraph);
     expect(result).toMatchObject({ preservedNodes: 1, skippedNodes: 0 });
+    expect(result.preserved).toEqual([
+      {
+        blockId: result.document.blocks[0]?.id,
+        path: "content[0]",
+        sourceType: "paragraph",
+        reason: "Inline node mention cannot be represented",
+      },
+    ]);
     expect(warnings).toEqual(result.warnings);
     expect(() => convertProseMirrorToGoTipe(source, { strict: true })).toThrow("mention");
   });
@@ -265,15 +352,26 @@ describe("Lexical serialized editor state", () => {
         ],
       },
     });
-    expect(result.document.blocks[0]?.attrs).toMatchObject({
-      altText: "Pixel",
+    expect(result.document.blocks[0]?.attrs).toEqual({
+      src: "data:image/png;base64,AA==",
+      alt: "Pixel",
       width: 50,
       height: 20,
     });
+    expect(result.document.blocks[1]?.attrs).toEqual({ colWidths: [20, 30] });
     expect(result.document.blocks[1]?.children[0]?.children[0]).toMatchObject({
       type: "tableHeader",
       attrs: { colspan: 2, rowspan: 1 },
     });
+    expect(result.warnings).toEqual([]);
+    expect(result.unmapped).toEqual([
+      {
+        blockId: result.document.blocks[1]?.children[0]?.children[0]?.id,
+        path: "root.children[1].children[0].children[0]",
+        sourceType: "tablecell",
+        fields: { headerState: 1 },
+      },
+    ]);
   });
 
   it("does not silently lose unsupported text transforms or custom nodes", () => {
@@ -294,7 +392,7 @@ describe("Lexical serialized editor state", () => {
 });
 
 describe("Slate schema migration", () => {
-  it("retains leaf marks, inline links, alignment and image attributes", () => {
+  it("retains leaf marks, inline links and image attributes, and reports alignment", () => {
     const result = convertSlateToGoTipe([
       {
         type: "heading-two",
@@ -317,13 +415,20 @@ describe("Slate schema migration", () => {
         width: 500,
         children: [{ text: "" }],
       },
+      { type: "heading-six", children: [{ text: "Small" }] },
     ]);
-    expect(result.warnings).toEqual([]);
+    expect(result.warnings).toEqual([
+      "Slate [0]: heading-two field align does not fit the GoTipe schema; kept in unmapped",
+    ]);
+    expect(result.document.blocks[3]?.attrs).toEqual({ level: 6 });
     expect(result.document.blocks[0]).toMatchObject({
       id: "heading",
       type: "heading",
-      attrs: { level: 2, align: "center" },
+      attrs: { level: 2 },
     });
+    expect(result.unmapped).toEqual([
+      { blockId: "heading", path: "[0]", sourceType: "heading-two", fields: { align: "center" } },
+    ]);
     expect(spans(result.document.blocks[1])[1]?.marks.map((mark) => mark.type)).toEqual([
       "link",
       "italic",
@@ -335,7 +440,7 @@ describe("Slate schema migration", () => {
     });
   });
 
-  it("accepts explicit custom block/mark maps while retaining structured attrs", () => {
+  it("copies attrs to an application's own type and fits a GoTipe type's attrs to its schema", () => {
     const result = convertSlateToGoTipe(
       [
         {
@@ -343,18 +448,44 @@ describe("Slate schema migration", () => {
           settings: { tone: "info" },
           children: [{ text: "Pay attention", emphasis: { color: "yellow" } }],
         },
+        {
+          type: "aside",
+          emoji: "💡",
+          settings: { tone: "tip" },
+          children: [{ text: "Tip", emphasis: { color: "green", shade: 2 } }],
+        },
       ],
       {
-        blockTypeMap: { notice: "callout" },
+        blockTypeMap: { notice: "notice", aside: "callout" },
         markTypeMap: { emphasis: "highlight" },
       },
     );
+    // `notice` is not a GoTipe node: its extension declares the attributes, so they are copied.
     expect(result.document.blocks[0]).toMatchObject({
-      type: "callout",
+      type: "notice",
       attrs: { settings: { tone: "info" } },
     });
     expect(spans(result.document.blocks[0])[0]?.marks).toEqual([
       { type: "highlight", attrs: { color: "yellow" } },
+    ]);
+    // `callout` is: it gets the attributes the GoTipe schema declares, the rest is reported.
+    expect(result.document.blocks[1]).toMatchObject({ type: "callout", attrs: { emoji: "💡" } });
+    expect(spans(result.document.blocks[1])[0]?.marks).toEqual([
+      { type: "highlight", attrs: { color: "green" } },
+    ]);
+    expect(result.unmapped).toEqual([
+      {
+        blockId: result.document.blocks[1]?.id,
+        path: "[1]",
+        sourceType: "aside",
+        fields: { settings: { tone: "tip" } },
+      },
+      {
+        blockId: result.document.blocks[1]?.id,
+        path: "[1].children[0].emphasis",
+        sourceType: "emphasis",
+        fields: { shade: 2 },
+      },
     ]);
   });
 
@@ -384,12 +515,25 @@ describe("migration boundaries", () => {
     ).toThrow("requires text");
   });
   it("replaces duplicate source IDs and validates custom ID factories", () => {
-    const result = convertSlateToGoTipe([
-      { type: "paragraph", id: "same", children: [] },
-      { type: "paragraph", id: "same", children: [] },
+    let next = 0;
+    const result = convertSlateToGoTipe(
+      [
+        { type: "paragraph", id: "same", children: [] },
+        { type: "paragraph", id: "same", children: [] },
+        { type: "paragraph", id: 7, children: [] },
+      ],
+      { createId: () => `new${++next}` },
+    );
+    expect(all(result.document).map((block) => block.id)).toEqual(["same", "new1", "new2"]);
+    expect(result.warnings).toEqual([
+      "Slate [1]: Duplicate source ID same; generated a replacement",
+      "Slate [2]: paragraph field id does not fit the GoTipe schema; kept in unmapped",
     ]);
-    expect(new Set(all(result.document).map((block) => block.id)).size).toBe(2);
-    expect(result.warnings[0]).toContain("Duplicate");
+    // The replaced source IDs stay in the report, so references to them can be remapped.
+    expect(result.unmapped).toEqual([
+      { blockId: "new1", path: "[1]", sourceType: "paragraph", fields: { id: "same" } },
+      { blockId: "new2", path: "[2]", sourceType: "paragraph", fields: { id: 7 } },
+    ]);
     expect(() =>
       convertSlateToGoTipe([{ children: [] }, { children: [] }], { createId: () => "same" }),
     ).toThrow("unique");

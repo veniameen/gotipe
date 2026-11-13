@@ -1,0 +1,210 @@
+{
+  "type": "doc",
+  "content": [
+    {
+      "type": "heading",
+      "attrs": { "textAlign": "center", "level": 1 },
+      "content": [{ "type": "text", "text": "Release notes" }]
+    },
+    {
+      "type": "paragraph",
+      "attrs": { "textAlign": "left" },
+      "content": [
+        { "type": "text", "text": "GoTipe " },
+        { "type": "text", "marks": [{ "type": "bold" }], "text": "migrates" },
+        { "type": "text", "text": " documents with " },
+        {
+          "type": "text",
+          "marks": [
+            {
+              "type": "link",
+              "attrs": {
+                "href": "https://example.com/docs",
+                "target": "_blank",
+                "rel": "noopener noreferrer nofollow",
+                "class": null
+              }
+            }
+          ],
+          "text": "links"
+        },
+        { "type": "text", "text": ", " },
+        { "type": "text", "marks": [{ "type": "italic" }, { "type": "strike" }], "text": "marks" },
+        { "type": "text", "text": " and " },
+        { "type": "text", "marks": [{ "type": "code" }], "text": "code" },
+        { "type": "hardBreak" },
+        { "type": "text", "text": "Кириллица и эмодзи 😀" }
+      ]
+    },
+    { "type": "paragraph", "attrs": { "textAlign": "left" } },
+    {
+      "type": "bulletList",
+      "content": [
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "attrs": { "textAlign": "left" },
+              "content": [{ "type": "text", "text": "Lists" }]
+            },
+            {
+              "type": "orderedList",
+              "attrs": { "start": 3, "type": null },
+              "content": [
+                {
+                  "type": "listItem",
+                  "content": [
+                    {
+                      "type": "paragraph",
+                      "attrs": { "textAlign": "left" },
+                      "content": [{ "type": "text", "text": "nest" }]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "taskList",
+      "content": [
+        {
+          "type": "taskItem",
+          "attrs": { "checked": true },
+          "content": [
+            {
+              "type": "paragraph",
+              "attrs": { "textAlign": "left" },
+              "content": [{ "type": "text", "text": "Convert" }]
+            },
+            {
+              "type": "taskList",
+              "content": [
+                {
+                  "type": "taskItem",
+                  "attrs": { "checked": false },
+                  "content": [
+                    {
+                      "type": "paragraph",
+                      "attrs": { "textAlign": "left" },
+                      "content": [{ "type": "text", "text": "Validate" }]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "blockquote",
+      "content": [
+        {
+          "type": "paragraph",
+          "attrs": { "textAlign": "left" },
+          "content": [{ "type": "text", "text": "Quoted" }]
+        },
+        {
+          "type": "paragraph",
+          "attrs": { "textAlign": "left" },
+          "content": [{ "type": "text", "text": "twice" }]
+        }
+      ]
+    },
+    {
+      "type": "codeBlock",
+      "attrs": { "language": "ts" },
+      "content": [{ "type": "text", "text": "const answer = 42;\nconsole.log(answer);" }]
+    },
+    {
+      "type": "codeBlock",
+      "attrs": { "language": null },
+      "content": [{ "type": "text", "text": "plain" }]
+    },
+    { "type": "horizontalRule" },
+    {
+      "type": "image",
+      "attrs": { "src": "https://example.com/cover.png", "alt": "Cover", "title": "Release cover" }
+    },
+    {
+      "type": "table",
+      "content": [
+        {
+          "type": "tableRow",
+          "content": [
+            {
+              "type": "tableHeader",
+              "attrs": { "colspan": 1, "rowspan": 1, "colwidth": [180] },
+              "content": [
+                {
+                  "type": "paragraph",
+                  "attrs": { "textAlign": "left" },
+                  "content": [{ "type": "text", "text": "Package" }]
+                }
+              ]
+            },
+            {
+              "type": "tableHeader",
+              "attrs": { "colspan": 1, "rowspan": 1, "colwidth": null },
+              "content": [
+                {
+                  "type": "paragraph",
+                  "attrs": { "textAlign": "left" },
+                  "content": [{ "type": "text", "text": "Notes" }]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "tableRow",
+          "content": [
+            {
+              "type": "tableCell",
+              "attrs": { "colspan": 1, "rowspan": 1, "colwidth": [180] },
+              "content": [
+                {
+                  "type": "paragraph",
+                  "attrs": { "textAlign": "left" },
+                  "content": [
+                    { "type": "text", "marks": [{ "type": "code" }], "text": "@gotipe/migration" }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "tableCell",
+              "attrs": { "colspan": 1, "rowspan": 1, "colwidth": null },
+              "content": [
+                {
+                  "type": "paragraph",
+                  "attrs": { "textAlign": "left" },
+                  "content": [{ "type": "text", "text": "first" }]
+                },
+                {
+                  "type": "paragraph",
+                  "attrs": { "textAlign": "left" },
+                  "content": [{ "type": "text", "marks": [{ "type": "bold" }], "text": "second" }]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "tableRow",
+          "content": [
+            {
+              "type": "tableCell",
+              "attrs": { "colspan": 2, "rowspan": 1, "colwidth": null },
+              "content": [{ "type": "paragraph", "attrs": { "textAlign": "left" } }]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

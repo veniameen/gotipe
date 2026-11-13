@@ -1,4 +1,10 @@
 export { convertProseMirrorToGoTipe } from "./prosemirror";
 export { convertSlateToGoTipe } from "./slate";
 export { convertLexicalToGoTipe } from "./lexical";
-export type { MigrationOptions, MigrationResult } from "./types";
+export { UnsupportedContent } from "./unsupported";
+export type {
+  MigrationOptions,
+  MigrationResult,
+  PreservedSource,
+  UnmappedSource,
+} from "./types";
