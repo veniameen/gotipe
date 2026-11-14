@@ -4,7 +4,11 @@
 //! is written whole (docs/development/inline-atoms.md).
 use gotipe_core::{AttrValue, Mark, TextSpan};
 
-use super::{escape_entities, link_destination, spans::key, Emoji};
+use super::{
+    links::{escape_entities, link_destination},
+    spans::key,
+    Emoji,
+};
 use crate::markdown_parse::atoms;
 
 /// Where the rich text is written.
