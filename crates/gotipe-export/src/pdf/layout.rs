@@ -23,6 +23,8 @@ pub(crate) fn attr<'a>(block: &'a Block, key: &str) -> &'a str {
         _ => "",
     }
 }
+pub(crate) use crate::table_span::cell_span as span;
+
 pub(crate) fn number(block: &Block, key: &str, fallback: usize) -> usize {
     match block.attrs.get(key) {
         Some(AttrValue::Number(n)) if n.is_finite() && *n >= 0.0 => *n as usize,

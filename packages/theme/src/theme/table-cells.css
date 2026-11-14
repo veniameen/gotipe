@@ -1,0 +1,57 @@
+/* Merged table cells — Atlas frame 29. A header over two columns keeps its rule under those
+   columns only; a cell over two rows breaks the rule between them. Cells selected together take
+   the selection's tint; «Объединить ячейки» and «Разделить ячейку» stand in the table menus and an
+   unavailable one is paler, its reason in the tip. Shared by BlockEditor and PageEditor. */
+
+.gotipe-table-wrapper th[rowspan] {
+  vertical-align: bottom;
+}
+/* a row that starts under a cell from above: its first own cell is not at the table's edge */
+.gotipe-table-wrapper tr.is-continued > td:first-child {
+  padding: var(--gt-cell-pad);
+}
+.gotipe-table-wrapper tr.is-continued > th:first-child {
+  padding: var(--gt-head-cell-pad);
+}
+
+/* cells selected together: the tint over the whole cell, above a hovered row; the text selection
+   and caret inside them step back while the cells are the selection */
+.gotipe-table-wrapper :is(thead, tbody) > tr > :is(th, td).gotipe-table-cell-selected {
+  background: var(--gt-selection);
+}
+.gotipe-table-wrapper:has(.gotipe-table-cell-selected) :is(th, td) {
+  caret-color: transparent;
+}
+.gotipe-table-wrapper:has(.gotipe-table-cell-selected) :is(th, td)::selection,
+.gotipe-table-wrapper:has(.gotipe-table-cell-selected) :is(th, td) *::selection {
+  background: transparent;
+}
+
+/* an unavailable menu row: paler, still focusable; the reason shows beside it */
+.gotipe-column-menu button[aria-disabled="true"],
+.gotipe-column-menu button[aria-disabled="true"] > svg {
+  color: var(--gt-text-3);
+  cursor: default;
+}
+.gotipe-column-menu button[aria-disabled="true"]:hover {
+  background: transparent;
+}
+.gotipe-column-menu button > .gotipe-tip {
+  top: 50%;
+  left: calc(100% + var(--gt-overlay-gap));
+  transform: translateY(-50%);
+}
+.gotipe-column-menu .gotipe-table-menu-group > .gotipe-column-menu-label {
+  margin-top: var(--gt-toolbar-pad);
+}
+.gotipe-column-menu .gotipe-table-menu-group:first-child > .gotipe-column-menu-label {
+  margin-top: 0;
+}
+/* while a drag selects cells, text in them is not selected */
+.gotipe-table-scroll[data-cell-drag] :is(th, td) {
+  user-select: none;
+}
+/* a cell over rows that reaches the bottom of the table ends it, as the last row does */
+.gotipe-table-wrapper tbody > tr > td[data-last-row] {
+  border-bottom: 0;
+}

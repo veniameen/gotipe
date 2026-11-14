@@ -133,9 +133,24 @@ export function useFormattingMenu(
       editor.reportError(new GoTipeError("TRANSFORM_ERROR", message));
     }
   };
+  /** Runs an editor command (e.g. `setTextAlign`) on the selection the popup was opened on. */
+  const apply = (action: () => unknown) => {
+    if (!editor.isEditable || editor.isDestroyed || !selection.current) return;
+    try {
+      editor.chain().setSelection(selection.current).focus().run();
+      // `false` means nothing changed (the block is aligned so already): the menu just closes.
+      action();
+      close();
+    } catch (failure) {
+      const message = failure instanceof Error ? failure.message : String(failure);
+      setError(message);
+      editor.reportError(new GoTipeError("TRANSFORM_ERROR", message));
+    }
+  };
   return {
     open,
     editable,
+    apply,
     error,
     setError,
     trigger,

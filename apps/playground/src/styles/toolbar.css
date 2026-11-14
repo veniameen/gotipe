@@ -14,6 +14,11 @@
   line-height: var(--gt-ui-leading);
 }
 
+/* A list open from the bar (font, alignment) stands over the bubble of the selection. */
+.gotipe-static-toolbar:has([aria-expanded="true"]) {
+  z-index: var(--gt-z-slash);
+}
+
 /* When narrow, the tools scroll sideways on a track and the side with more fades out, a tool
    wide (`data-more`, as on a wide table). The mask is on the track, so the page under the sticky
    bar stays hidden. */
@@ -94,4 +99,9 @@
 /* Simple editor: the toolbar over its editor */
 .gotipe-simple-editor .gotipe-editor {
   border-radius: 0 0 var(--gt-radius-block) var(--gt-radius-block);
+}
+
+/* the track lets the open list out (Atlas frame 27): its fade would mask the list away */
+.gotipe-static-toolbar-track:has([aria-expanded="true"]) {
+  mask-image: none;
 }

@@ -175,3 +175,17 @@ export function alignmentOf(block: BlockView): string | null {
   const value = block.attrs.align;
   return typeof value === "string" && ALIGNMENTS.has(value) ? value : null;
 }
+
+const DIRECTIONS = new Set(["ltr", "rtl", "auto"]);
+/** Text blocks that follow their own text's direction unless `dir` says otherwise. */
+const DIRECTED = new Set(["paragraph", "heading", "listItem", "todoItem"]);
+
+/**
+ * The `dir` of a block's root (`TextDirection`): its own `dir`, else `auto` for a text block, so
+ * an Arabic or Hebrew paragraph runs right to left from its first strong character.
+ */
+export function directionOf(block: BlockView): string | null {
+  const value = block.attrs.dir;
+  if (typeof value === "string" && DIRECTIONS.has(value)) return value;
+  return DIRECTED.has(block.type) ? "auto" : null;
+}

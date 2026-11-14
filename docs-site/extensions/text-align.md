@@ -1,7 +1,7 @@
 ---
-title: Text alignment
-description: TextAlign aligns paragraphs and headings left, center, right or justified through the align attribute, with commands, shortcuts and HTML output.
-packages: ["@gotipe/core"]
+title: Text alignment and direction
+description: TextAlign aligns paragraphs and headings left, center, right or justified; TextDirection sets a block's direction. Commands, shortcuts, the More menu and HTML output.
+packages: ["@gotipe/core", "@gotipe/block-editor"]
 license: MIT
 ---
 
@@ -59,6 +59,30 @@ A new paragraph made by Enter keeps the alignment of the paragraph it was split 
 - **DOCX** writes the paragraph's justification (`left`, `center`, `right`, `both`).
 - **Markdown** has no syntax for alignment. `editor.getMarkdown()` writes an aligned block as an ordinary paragraph or heading, and the alignment is not read back. Keep the JSON document when alignment must survive.
 - **Migration** maps Tiptap's `textAlign`, Lexical's element `format` and Slate's `align` to `align`; see [Migration](/docs/conversion/migration).
+
+## Alignment in the interface
+
+- The bubble's **More** menu of `BlockEditor` starts with an **Alignment** group (GoTipe Atlas, frame 27): the four alignments, the current one ticked and the others with their keys. The group is disabled when the caret is not in a paragraph or heading.
+- `AlignPicker` from `@gotipe/block-editor` is the same list for a fixed toolbar, such as the modern view's: the current alignment's glyph and a chevron.
+- Show the keys only with `TextAlign` installed: the menu lists `Mod+Shift+L/E/R/J`, which the extension binds.
+
+## Text direction
+
+`TextDirection` adds the block attribute `dir` (`"ltr"`, `"rtl"` or `"auto"`) to paragraphs, headings, list items and tasks; `Paragraph`, `Heading`, `ListItem` and `TodoList` declare it.
+
+```ts title="direction.ts"
+import { TextDirection, getTextDirection, setTextDirection, unsetTextDirection } from "@gotipe/core/extensions";
+
+setTextDirection(editor, "rtl"); // the selected blocks, one undo step
+getTextDirection(editor); // "rtl" | "ltr" | "auto" | null
+unsetTextDirection(editor);
+```
+
+- **Automatic direction.** Without `dir` the React and Vue renderers give every paragraph, heading and list item `dir="auto"`: a block whose first strong character is Arabic or Hebrew runs right to left, and a Russian line in an Arabic interface runs left to right. Set `dir` only to override that.
+- **Handle.** In `BlockEditor` the handle of a right-to-left block stands in the right gutter, where its lines start, with its buttons mirrored (frame 28). In a container too narrow for a right gutter it stays on the left rather than cover the text.
+- **Keys and caret.** The arrow keys follow the visual order, as the browser moves them; the document keeps logical UTF-16 offsets, so Backspace, Delete, selection and typing in a right-to-left paragraph mean the same on the JavaScript and WASM engines.
+- **HTML** writes `dir` before the alignment, `<p dir="rtl" style="text-align:right">`, and reading HTML takes the `dir` attribute of `<p>`, `<h1>`–`<h6>` and `<li>` back. **Markdown** has no syntax for it: blocks you do not edit keep their source bytes, an edited block is written without `dir`. PDF and DOCX ignore it.
+- Changing a block's type (a paragraph to a heading or a list item and back) keeps `dir` when the new type declares it.
 
 ## Limitations
 

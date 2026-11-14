@@ -122,6 +122,11 @@ pub(super) fn block(n: &Node, read: Read) -> Block {
             }
             table
         }
+        // the writer's HTML table of merged cells comes back as a table
+        "html" => source
+            .get(n.start..n.end)
+            .and_then(super::table_html::read)
+            .unwrap_or_else(|| raw(n, source)),
         _ => raw(n, source),
     }
 }

@@ -1,7 +1,11 @@
 import { type BlockViews, Editor } from "@gotipe/react";
 import type React from "react";
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { AtomUI } from "../atoms/atom-ui";
 import { type DragPoint, useTouchDrag } from "../interaction/use-touch-drag";
+import { handleRail, inHandleReach } from "../text/direction";
+import { FindBar } from "../text/find-bar";
+import { StatusLine } from "../text/status-line";
 import { codeBlockViewFor } from "../views/code-block-view";
 import { TableCellView } from "../views/table-cell-view";
 import { AiCommandBar } from "./ai-command-bar";
@@ -14,7 +18,6 @@ import {
   findBlockLocation,
   getBlockElById,
   getBlockFirstLineMetrics,
-  getBlockTextLeft,
   getDropIndexForParent,
   getDropIndicatorHorizontalInsets,
   getDropIndicatorYForParent,
@@ -32,6 +35,7 @@ import {
   useOverlayPeers,
 } from "./collaboration-cursors";
 import { DocsOutline } from "./docs-outline";
+import { EditorProviders } from "./editor-providers";
 import { EditorErrorToast, EditorSkeleton, EditorStarters } from "./editor-states";
 import { GhostText } from "./ghost-text";
 import { SlashMenu } from "./slash-menu";
@@ -46,7 +50,7 @@ const TOOLBAR_HOVER_X_MAX_OFFSET = 560;
 
 export type { BlockEditorProps } from "./block-editor-props";
 
-export function BlockEditor({
+function BlockEditorView({
   editor,
   className,
   style,
@@ -70,6 +74,8 @@ export function BlockEditor({
   slashCommands,
   ariaLabel,
   errorToast = true,
+  find = true,
+  status = false,
   children,
 }: BlockEditorProps) {
   const [editable, setEditable] = useState(editor?.isEditable ?? false);
@@ -83,7 +89,11 @@ export function BlockEditor({
     addBlockId: string;
     dragBlockId: string;
   } | null>(null);
-  const [toolbarPos, setToolbarPos] = useState<{ top: number; left: number } | null>(null);
+  const [toolbarPos, setToolbarPos] = useState<{
+    top: number;
+    left: number;
+    right: number | null;
+  } | null>(null);
   const [suggestionIndex, setSuggestionIndex] = useState(0);
   const containerRef = useRef<HTMLDivElement>(null);
   const overlayPeers = useOverlayPeers(editor, remotePeers);
@@ -143,10 +153,12 @@ export function BlockEditor({
       const line = getBlockFirstLineMetrics(block);
       const next = {
         top: line.top - container.top + line.height / 2,
-        left: getToolbarRailLeft(root),
+        ...handleRail(root, block, getToolbarRailLeft),
       };
       setToolbarPos((previous) =>
-        previous?.top === next.top && previous.left === next.left ? previous : next,
+        previous?.top === next.top && previous.left === next.left && previous.right === next.right
+          ? previous
+          : next,
       );
     };
     const observer = new ResizeObserver(update);
@@ -199,11 +211,16 @@ export function BlockEditor({
         anchorType === "listItem" || anchorType === "todoItem" ? anchorBlockId : actionBlockId;
       const dragBlockId =
         anchorType === "listItem" || anchorType === "todoItem" ? anchorBlockId : actionBlockId;
-      const textLeft = getBlockTextLeft(anchorEl);
-      const inGutterEnvelope =
-        e.clientX >= textLeft - TOOLBAR_HOVER_X_MIN_OFFSET &&
-        e.clientX <= textLeft + TOOLBAR_HOVER_X_MAX_OFFSET;
-      if (!inGutterEnvelope) {
+      // Atlas frame 28: an RTL block's handle and reach are on its right, where its lines start.
+      if (
+        !inHandleReach(
+          containerRef.current,
+          anchorEl,
+          e.clientX,
+          TOOLBAR_HOVER_X_MIN_OFFSET,
+          TOOLBAR_HOVER_X_MAX_OFFSET,
+        )
+      ) {
         scheduleHideToolbar();
         return;
       }
@@ -219,12 +236,8 @@ export function BlockEditor({
       if (containerRef.current) {
         const containerRect = containerRef.current.getBoundingClientRect();
         const firstLine = getBlockFirstLineMetrics(anchorEl);
-        const left = getToolbarRailLeft(containerRef.current);
         const top = firstLine.top - containerRect.top + firstLine.height / 2;
-        setToolbarPos({
-          top,
-          left,
-        });
+        setToolbarPos({ top, ...handleRail(containerRef.current, anchorEl, getToolbarRailLeft) });
       }
     },
     [clearHideToolbarTimer, draggingBlockId, hoveredToolbarTarget, scheduleHideToolbar],
@@ -477,6 +490,7 @@ export function BlockEditor({
         ariaLabel={ariaLabel}
         slotBefore={
           <>
+            {find && <FindBar editor={editor} root={containerRef} />}
             {showThemeToggle && (
               <div className="gotipe-block-editor-tools">
                 <ThemeToggle />
@@ -488,9 +502,11 @@ export function BlockEditor({
       >
         {starters && <EditorStarters editor={editor} />}
         {errorToast && <EditorErrorToast editor={editor} />}
+        {status && <StatusLine editor={editor} {...(status === true ? {} : status)} />}
         {showSlashMenu && (
           <SlashMenu editor={editor} commands={slashCommands ?? editor.getSlashCommands()} />
         )}
+        <AtomUI editor={editor} />
         {showBubbleMenu && <BlockEditorBubbleMenu editor={editor} enableAI={showAiCommandBar} />}
         {children}
       </Editor>
@@ -504,7 +520,12 @@ export function BlockEditor({
       {showBlockToolbar && editable && hoveredToolbarTarget && toolbarPos && (
         <div
           className="gotipe-block-toolbar-wrapper"
-          style={{ top: toolbarPos.top, left: toolbarPos.left }}
+          dir={toolbarPos.right === null ? undefined : "rtl"}
+          style={
+            toolbarPos.right === null
+              ? { top: toolbarPos.top, left: toolbarPos.left }
+              : { top: toolbarPos.top, right: toolbarPos.right }
+          }
           onMouseEnter={clearHideToolbarTimer}
           onMouseLeave={(e) => {
             const related = e.relatedTarget as HTMLElement | null;
@@ -570,3 +591,9 @@ export function BlockEditor({
     </div>
   );
 }
+
+export const BlockEditor = (props: BlockEditorProps) => (
+  <EditorProviders mentions={props.mentions} emoji={props.emoji}>
+    <BlockEditorView {...props} />
+  </EditorProviders>
+);

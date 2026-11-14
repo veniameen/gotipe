@@ -1,4 +1,5 @@
 import type React from "react";
+import { AtomIcon } from "../../atoms/icons";
 import { PageIcon, type PageIconName } from "../../page/icons";
 
 /** Icons of slash commands from the shared GoTipe set (Atlas frame 7). */
@@ -23,6 +24,7 @@ const ICONS: Record<string, PageIconName> = {
   columns: "columns",
   "external-link": "link",
   "function-square": "math",
+  function: "math",
 };
 
 /** The Markdown shortcut that inserts the same block, shown at the right of its row. */
@@ -39,6 +41,7 @@ const SHORTCUTS: Record<string, string> = {
 };
 
 export function renderIcon(icon: string, name: string): React.ReactNode {
+  if (icon.toLowerCase() === "smile") return <AtomIcon name="smile" />;
   const known = ICONS[icon.toLowerCase()];
   if (known) return <PageIcon name={known} />;
   const fallback = name.trim().charAt(0).toUpperCase() || "•";

@@ -1,3 +1,4 @@
+import { repairTable } from "../table/repair";
 import { isUtf16Boundary } from "../text";
 import type { Block, Document, TextSpan } from "../types/block";
 import type { SelectionView } from "../types/view";
@@ -51,7 +52,7 @@ export function copySelection(
   const flat = entries(document.blocks);
   if (selection.type === "block" || selection.type === "multi") {
     const selected = selectedBlockIds(document, selection);
-    return selected ? { blocks: selectedBlockTree(document.blocks, selected) } : null;
+    return selected ? { blocks: clipTables(selectedBlockTree(document.blocks, selected)) } : null;
   }
   const range = rangeOf(document, selection);
   if (!range) return null;
@@ -75,7 +76,16 @@ export function copySelection(
         : sliceContent(block.content, 0, 0);
       return [{ ...structuredClone(block), content, children }];
     });
-  return { blocks: clip(document.blocks) };
+  return { blocks: clipTables(clip(document.blocks)) };
+}
+
+/** A clipped table keeps the spans that still fit: a copied row does not reach rows left behind. */
+function clipTables(blocks: Block[]): Block[] {
+  return blocks.map((block) =>
+    block.type === "table"
+      ? repairTable(block, { fill: false })
+      : { ...block, children: clipTables(block.children) },
+  );
 }
 
 /** Returns a new document and caret. The caller commits the whole change atomically. */

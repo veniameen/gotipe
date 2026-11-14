@@ -66,6 +66,27 @@ export {
   unsetTextAlign,
 } from "./text-align";
 export type { TextAlignOptions, TextAlignment } from "./text-align";
+export {
+  FONT_FAMILIES,
+  FONT_SIZE_LIMITS,
+  FontFamily,
+  FontSize,
+  getFontFamily,
+  getFontSize,
+  setFontFamily,
+  setFontSize,
+  unsetFontFamily,
+  unsetFontSize,
+} from "./text-style";
+export type { FontFamilyName, FontSizeOptions } from "./text-style";
+export {
+  TEXT_DIRECTIONS,
+  TextDirection,
+  getTextDirection,
+  setTextDirection,
+  unsetTextDirection,
+} from "./text-direction";
+export type { TextDirectionOptions } from "./text-direction";
 export { TrailingNode } from "./trailing-node";
 export type { TrailingNodeOptions } from "./trailing-node";
 export {
@@ -105,6 +126,7 @@ export {
   insertMention,
   mentionText,
   normalizeRemoteAtoms,
+  toSafeImageSrc,
   updateAtom,
   updateInlineMath,
   updateMention,

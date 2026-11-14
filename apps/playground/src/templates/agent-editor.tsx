@@ -12,7 +12,8 @@ import type { AiProofreadSuggestion } from "@gotipe/ai";
 import { AiStatusIndicator, GhostText, SuggestionToolbar } from "@gotipe/block-editor";
 import type { Suggestion } from "@gotipe/block-editor";
 import { FullPreset } from "@gotipe/core/presets";
-import { Editor, useEditor } from "@gotipe/react";
+import { Editor, MediaBlocksContext, useEditor } from "@gotipe/react";
+import { mediaBlocks } from "@gotipe/react/media";
 import { useCallback, useEffect, useState } from "react";
 import { ExampleWrapper } from "../shared/example-wrapper";
 import { mockAiProvider } from "../shared/mock-ai-provider";
@@ -173,7 +174,9 @@ export function AgentEditor() {
         <div className="gotipe-agent-editor-area" data-gotipe-block-editor="">
           <StaticToolbar editor={editor} showExtras showTheme />
           <div className="gotipe-agent-editor-scroll">
-            <Editor editor={editor} />
+            <MediaBlocksContext.Provider value={mediaBlocks}>
+              <Editor editor={editor} />
+            </MediaBlocksContext.Provider>
             {editor && <GhostText editor={editor} />}
           </div>
 

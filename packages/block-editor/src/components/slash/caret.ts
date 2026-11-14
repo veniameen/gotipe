@@ -67,7 +67,7 @@ function getPreviousCharacterRect(range: Range, blockEl: HTMLElement): DOMRect |
   return null;
 }
 
-function getRangeCaretRect(collapsedRange: Range): DOMRect | null {
+export function getRangeCaretRect(collapsedRange: Range): DOMRect | null {
   const blockEl = getBlockElementFromNode(collapsedRange.startContainer);
 
   const rects = Array.from(collapsedRange.getClientRects());
@@ -88,12 +88,18 @@ function getRangeCaretRect(collapsedRange: Range): DOMRect | null {
   return null;
 }
 
-function resolveDomPointInBlock(
+export function resolveDomPointInBlock(
   blockEl: HTMLElement,
   targetOffset: number,
 ): { node: Node; offset: number } {
   const textHost = getTextHostForBlock(blockEl);
-  const walker = document.createTreeWalker(textHost, NodeFilter.SHOW_TEXT);
+  // Widgets (an atom's drawing, a remote caret) are not document text.
+  const walker = document.createTreeWalker(textHost, NodeFilter.SHOW_TEXT, {
+    acceptNode: (node) =>
+      node.parentElement?.closest("[data-gotipe-widget]")
+        ? NodeFilter.FILTER_REJECT
+        : NodeFilter.FILTER_ACCEPT,
+  });
   let accumulated = 0;
   let lastTextNode: Node | null = null;
   let textNode: Node | null;

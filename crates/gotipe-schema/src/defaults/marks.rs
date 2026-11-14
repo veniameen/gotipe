@@ -3,7 +3,7 @@ use std::collections::HashMap;
 
 pub(super) fn default_marks() -> HashMap<String, MarkSpec> {
     let mut marks = HashMap::new();
-    // === Marks (9) ===
+    // === Marks (12) ===
 
     marks.insert(
         "bold".into(),
@@ -143,6 +143,46 @@ pub(super) fn default_marks() -> HashMap<String, MarkSpec> {
                 },
             )]),
             rank: 6,
+            atomic: false,
+        },
+    );
+
+    // Theme face and size of text (`FontFamily`/`FontSize` of @gotipe/core): renderers
+    // honour only `system`/`serif`/`mono` and integer sizes of 6..=96 px.
+    marks.insert(
+        "fontFamily".into(),
+        MarkSpec {
+            name: "fontFamily".into(),
+            exclusive_group: None,
+            attrs: HashMap::from([(
+                "family".into(),
+                AttrSpec {
+                    attr_type: AttrType::Enum(
+                        ["system", "serif", "mono"].map(String::from).to_vec(),
+                    ),
+                    default: None,
+                    required: true,
+                },
+            )]),
+            rank: 90,
+            atomic: false,
+        },
+    );
+
+    marks.insert(
+        "fontSize".into(),
+        MarkSpec {
+            name: "fontSize".into(),
+            exclusive_group: None,
+            attrs: HashMap::from([(
+                "size".into(),
+                AttrSpec {
+                    attr_type: AttrType::Number,
+                    default: None,
+                    required: true,
+                },
+            )]),
+            rank: 91,
             atomic: false,
         },
     );

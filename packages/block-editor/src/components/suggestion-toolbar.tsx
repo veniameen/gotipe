@@ -1,6 +1,6 @@
 import type { GoTipeEditor } from "@gotipe/core";
-import { useGoTipeI18n } from "@gotipe/react";
 import { useCallback, useEffect, useState } from "react";
+import { useBlockEditorI18n } from "../i18n/strings";
 import { PageIcon } from "../page/icons";
 
 export interface Suggestion {
@@ -34,7 +34,7 @@ export function SuggestionToolbar({
   onAcceptAll,
   onRejectAll,
 }: SuggestionToolbarProps) {
-  const i18n = useGoTipeI18n();
+  const i18n = useBlockEditorI18n();
   const total = suggestions.length;
   const index = Math.min(Math.max(currentIndex, 0), Math.max(0, total - 1));
   const current = suggestions[index];

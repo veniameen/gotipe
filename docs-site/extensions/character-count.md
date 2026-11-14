@@ -67,6 +67,25 @@ With a `limit` the extension registers a transaction filter (see [filters](/docs
 - A filter makes every local `dispatch` build detached copies of the document before and after the change. On very large documents set a `limit` only where you need it.
 - A cancelled change gives no signal of its own. To tell the user, compare `remaining` with `0`.
 
+## The counter line of BlockEditor
+
+`BlockEditor` (and `PageEditor`, which installs `CharacterCount`) draws the quiet line of the GoTipe Atlas (frame 26) under the document with the `status` prop: «1 204 words · 7 830 characters», plural forms of the interface language and its digit grouping.
+
+```tsx title="counter.tsx"
+<BlockEditor
+  editor={editor}
+  status={{ limit: 8000, warning: 0.9, reason: "Release notes stay within 8 000 characters" }}
+/>
+```
+
+| Field | Type | Default | Description |
+| --- | --- | --- | --- |
+| `limit` | `number \| null` | the extension's `limit` | The limit the line shows. A limit given only here is shown, not enforced: the text may grow past it. |
+| `warning` | `number` | `0.9` | Share of the limit from which the count takes the warning tone: «7 830 of 8 000 characters». |
+| `reason` | `string` | «At most N characters» | Shown in a tooltip over the count past the limit (hover or keyboard focus). |
+
+Past the limit the count takes the danger tone, and the text that does not fit is tinted where it stands: the decoration layer `characterLimit` (`OVER_LIMIT_LAYER`) wraps it in `.gotipe-over-limit`, counted in grapheme clusters as the extension counts them. `status={true}` shows the counts without a limit. `StatusLine` is exported for a host's own layout. The line needs `CharacterCount`; without it nothing is drawn.
+
 ## Related
 
 - [Transactions](/docs/concepts/transactions#filters): transaction filters.

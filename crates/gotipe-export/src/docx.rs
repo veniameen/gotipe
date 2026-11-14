@@ -203,21 +203,85 @@ impl Renderer {
         result.push_str("</w:p>");
         Ok(result)
     }
+    /// Merged cells as Word writes them: `gridSpan` across columns; a cell over rows starts a
+    /// vertical merge and each row it covers gets an empty continuation cell in its place.
     fn table(&mut self, node: &Block, depth: usize) -> Result<String, ConvertError> {
-        let columns = node
-            .children
-            .iter()
-            .map(|row| {
-                row.children
-                    .iter()
-                    .map(|cell| match cell.attrs.get("colspan") {
-                        Some(AttrValue::Number(n)) => (*n as usize).clamp(1, 100),
-                        _ => 1,
-                    })
-                    .sum::<usize>()
-            })
-            .max()
-            .unwrap_or(1);
+        use crate::table_span::cell_span as span;
+        /// An empty cell where a short row has no cell of its own.
+        const FILLER: &str = "<w:tc><w:p/></w:tc>";
+        fn continuation(columns: usize) -> String {
+            let grid = if columns > 1 {
+                format!("<w:gridSpan w:val=\"{columns}\"/>")
+            } else {
+                String::new()
+            };
+            format!("<w:tc><w:tcPr>{grid}<w:vMerge/></w:tcPr><w:p/></w:tc>")
+        }
+        // start column → (first row after the merge, its columns)
+        let mut merges = BTreeMap::<usize, (usize, usize)>::new();
+        let mut columns = 1;
+        let mut rows = String::new();
+        let total = node.children.len();
+        for (y, row) in node.children.iter().enumerate() {
+            merges.retain(|_, (end, _)| *end > y);
+            rows.push_str("<w:tr>");
+            rows.push_str(&self.anchor(row));
+            let empty = rows.len();
+            let mut cells = row.children.iter();
+            let mut x = 0;
+            loop {
+                if let Some(&(_, width)) = merges.get(&x) {
+                    rows.push_str(&continuation(width));
+                    x += width;
+                    continue;
+                }
+                let Some(cell) = cells.next() else { break };
+                // a cell never reaches past the last row
+                let (width, height) = (span(cell, "colspan"), span(cell, "rowspan").min(total - y));
+                rows.push_str("<w:tc><w:tcPr>");
+                if width > 1 {
+                    rows.push_str(&format!("<w:gridSpan w:val=\"{width}\"/>"));
+                }
+                if height > 1 {
+                    rows.push_str("<w:vMerge w:val=\"restart\"/>");
+                    merges.insert(x, (y + height, width));
+                }
+                rows.push_str("</w:tcPr>");
+                rows.push_str(&self.anchor(cell));
+                rows.push_str(&self.paragraph(cell, 0, "")?);
+                rows.push_str(&self.elements(&cell.children, depth)?);
+                if cell
+                    .children
+                    .last()
+                    .is_some_and(|child| child.block_type == "table")
+                {
+                    rows.push_str("<w:p/>");
+                }
+                rows.push_str("</w:tc>");
+                x += width;
+            }
+            // merges from above to the right of this row's last cell, each at its own column:
+            // the gap before one is filled with empty cells
+            let after: Vec<(usize, usize)> = merges
+                .range(x..)
+                .map(|(start, &(_, width))| (*start, width))
+                .collect();
+            for (start, width) in after {
+                while x < start {
+                    rows.push_str(FILLER);
+                    x += 1;
+                }
+                rows.push_str(&continuation(width));
+                x = start + width;
+            }
+            // a row needs a cell: one with nothing of its own and nothing from above gets one
+            if rows.len() == empty {
+                rows.push_str(FILLER);
+                x = 1;
+            }
+            columns = columns.max(x);
+            rows.push_str("</w:tr>");
+        }
         let mut result = String::from(
             "<w:tbl><w:tblPr><w:tblW w:w=\"0\" w:type=\"auto\"/></w:tblPr><w:tblGrid>",
         );
@@ -225,37 +289,7 @@ impl Renderer {
             result.push_str("<w:gridCol/>");
         }
         result.push_str("</w:tblGrid>");
-        for row in &node.children {
-            result.push_str("<w:tr>");
-            result.push_str(&self.anchor(row));
-            for cell in &row.children {
-                if matches!(cell.attrs.get("rowspan"), Some(AttrValue::Number(n)) if *n > 1.0) {
-                    return Err(ConvertError::Encoding(
-                        "DOCX table row spans require explicit continuation cells".into(),
-                    ));
-                }
-                result.push_str("<w:tc><w:tcPr>");
-                if let Some(AttrValue::Number(n)) = cell.attrs.get("colspan") {
-                    result.push_str(&format!(
-                        "<w:gridSpan w:val=\"{}\"/>",
-                        (*n as usize).clamp(1, 100)
-                    ));
-                }
-                result.push_str("</w:tcPr>");
-                result.push_str(&self.anchor(cell));
-                result.push_str(&self.paragraph(cell, 0, "")?);
-                result.push_str(&self.elements(&cell.children, depth)?);
-                if cell
-                    .children
-                    .last()
-                    .is_some_and(|child| child.block_type == "table")
-                {
-                    result.push_str("<w:p/>");
-                }
-                result.push_str("</w:tc>");
-            }
-            result.push_str("</w:tr>");
-        }
+        result.push_str(&rows);
         result.push_str("</w:tbl>");
         Ok(result)
     }

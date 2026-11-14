@@ -1,5 +1,5 @@
-import { useGoTipeI18n } from "@gotipe/react";
 import { useCallback, useEffect, useRef } from "react";
+import { useBlockEditorI18n } from "../i18n/strings";
 import type { useTouchDrag } from "../interaction/use-touch-drag";
 import { PageIcon } from "../page/icons";
 
@@ -21,7 +21,7 @@ export function DragHandle({
   touchDrag,
   onClick,
 }: DragHandleProps) {
-  const i18n = useGoTipeI18n();
+  const i18n = useBlockEditorI18n();
   const buttonRef = useRef<HTMLButtonElement>(null);
   const activeBlockId = useRef(blockId);
   const findBlock = useCallback(() => {

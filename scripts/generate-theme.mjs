@@ -49,8 +49,12 @@ const palette = `${rules(':root,\n[data-theme="light"]', { ...sharedThemed, ...t
 
 // Views: notion's values are the base of every view; a view changes only what makes it itself.
 // A narrow container changes the tokens of the editor's children, never the markup.
-const aliases = pick(tokens.view, ([, value]) => value.includes("var("));
-const containers = ":is(.gotipe-block-editor, .gotipe-editor)";
+// A narrow container re-declares the aliases, so they resolve with its values; an alias that a
+// narrow container sets itself (a layout of its own) keeps that value.
+const narrowOwn = new Set(tokens.narrow.flatMap(({ tokens: values }) => Object.keys(values)));
+const aliases = pick(tokens.view, ([key, value]) => value.includes("var(") && !narrowOwn.has(key));
+// the version history is a container of its own: on a phone its list and comparison are two screens
+const containers = ":is(.gotipe-block-editor, .gotipe-editor, .gotipe-history-shell)";
 const viewSelector = (name) => `[data-gt-view="${name}"]`;
 const narrow = tokens.narrow.map(({ max, tokens: values, views: own = {} }) => {
   const inner = [

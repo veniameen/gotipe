@@ -91,6 +91,8 @@ root shows a loading skeleton with `role="status"`.
 | `slashCommands` | `SlashCommandDef[]` | `editor.getSlashCommands()` | Commands of the `/` menu. |
 | `ariaLabel` | `string` | `"Document content"` | Accessible name of the document. |
 | `errorToast` | `boolean` | `true` | A toast for errors a person can act on. |
+| `find` | `boolean` | `true` | The [find bar](/docs/extensions/find-replace#the-find-bar-of-blockeditor) (`Mod+F`, `Mod+Alt+F`) when the editor has `FindReplace`. |
+| `status` | `boolean \| StatusLineOptions` | `false` | Words and characters under the document, with an optional limit; see [the counter line](/docs/extensions/character-count#the-counter-line-of-blockeditor). Needs `CharacterCount`. |
 | `className` | `string` | — | Added to the root `.gotipe-block-editor`. |
 | `style` | `CSSProperties` | — | Style of the root; `position: relative` is kept. |
 | `children` | `ReactNode` | — | Rendered inside the editor after the document. |

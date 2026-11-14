@@ -61,8 +61,40 @@ describe("version snapshots", () => {
       added: ["c"],
       removed: [],
       modified: ["b"],
-      moved: ["b", "a"],
+      moved: ["b"],
     });
+  });
+  it("does not report siblings after an insertion or removal as moved (D-45)", () => {
+    const before: Document = {
+      version: 1,
+      blocks: ["a", "b", "c", "d"].map((id) => block(id, id)),
+    };
+    const inserted: Document = {
+      version: 1,
+      blocks: ["a", "x", "b", "c", "d"].map((id) => block(id, id)),
+    };
+    expect(compareDocuments(before, inserted)).toEqual({
+      added: ["x"],
+      removed: [],
+      modified: [],
+      moved: [],
+    });
+    const removed: Document = { version: 1, blocks: ["b", "c", "d"].map((id) => block(id, id)) };
+    expect(compareDocuments(before, removed).moved).toEqual([]);
+    const swapped: Document = {
+      version: 1,
+      blocks: ["a", "c", "b", "d"].map((id) => block(id, id)),
+    };
+    expect(compareDocuments(before, swapped).moved).toHaveLength(1);
+    const nested: Document = {
+      version: 1,
+      blocks: [
+        { ...block("a", "a"), children: [block("b", "b")] },
+        block("c", "c"),
+        block("d", "d"),
+      ],
+    };
+    expect(compareDocuments(before, nested).moved).toEqual(["b"]);
   });
   it("auto-saves only changes, enforces retention and stops when the editor is destroyed", async () => {
     vi.useFakeTimers();

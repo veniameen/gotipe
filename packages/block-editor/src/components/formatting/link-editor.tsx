@@ -1,6 +1,6 @@
 import { type GoTipeEditor, toSafeHref } from "@gotipe/core";
-import { useGoTipeI18n } from "@gotipe/react";
 import { useEffect, useRef, useState } from "react";
+import { useBlockEditorI18n } from "../../i18n/strings";
 import { PageIcon } from "../../page/icons";
 import { MARK_KEYS, ariaKeys } from "./keys";
 import { currentMarks } from "./selection";
@@ -12,7 +12,7 @@ export function LinkEditor({ editor }: { editor: GoTipeEditor }) {
   const [url, setUrl] = useState("");
   const input = useRef<HTMLInputElement>(null);
   const mark = currentMarks(editor).find((item) => item.type === "link");
-  const i18n = useGoTipeI18n();
+  const i18n = useBlockEditorI18n();
   const open = () => {
     setUrl(typeof mark?.attrs?.href === "string" ? mark.attrs.href : "");
     menu.show();

@@ -37,6 +37,16 @@
       "types": "./dist/emoji.d.ts",
       "import": "./dist/emoji.js",
       "require": "./dist/emoji.cjs"
+    },
+    "./emoji/ru": {
+      "types": "./dist/emoji/ru.d.ts",
+      "import": "./dist/emoji/ru.js",
+      "require": "./dist/emoji/ru.cjs"
+    },
+    "./math": {
+      "types": "./dist/math.d.ts",
+      "import": "./dist/math.js",
+      "require": "./dist/math.cjs"
     }
   },
   "main": "./dist/index.cjs",

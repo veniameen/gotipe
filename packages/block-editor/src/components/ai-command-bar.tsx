@@ -1,6 +1,6 @@
 import type { GoTipeEditor } from "@gotipe/core";
-import { useGoTipeI18n } from "@gotipe/react";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useBlockEditorI18n } from "../i18n/strings";
 import { PageIcon } from "../page/icons";
 
 export interface AiCommandBarProps {
@@ -9,7 +9,7 @@ export interface AiCommandBarProps {
 }
 
 export function AiCommandBar({ editor, onSubmit }: AiCommandBarProps) {
-  const i18n = useGoTipeI18n();
+  const i18n = useBlockEditorI18n();
   const [visible, setVisible] = useState(false);
   const [value, setValue] = useState("");
   const [busy, setBusy] = useState(false);

@@ -17,6 +17,7 @@ mod nodes;
 mod rich;
 mod source;
 mod syntax;
+mod table_html;
 pub use atoms::MarkdownAtoms;
 use gotipe_core::{AttrValue, Document};
 use nodes::Node;

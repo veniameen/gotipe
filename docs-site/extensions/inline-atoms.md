@@ -1,7 +1,7 @@
 ---
 title: Inline atoms and suggestions
 description: Mentions, inline formulas, custom emoji and inline images as atomic marks, their commands, Markdown and HTML, and the headless suggestion utility for @ and : menus.
-packages: ["@gotipe/core"]
+packages: ["@gotipe/core", "@gotipe/react", "@gotipe/vue", "@gotipe/block-editor"]
 license: MIT
 ---
 
@@ -143,6 +143,83 @@ const emoji = defineSuggestion({
 
 For your own emoji, return `{ name, src }` items and select them with `insertCustomEmoji(editor, item, range)`.
 
+The table is grouped by the picker's categories: `EMOJI_CATEGORIES` (`people`, `nature`, `food`, `activities`, `travel`, `objects`, `symbols`, `flags`) and `EMOJI_TABLE[category]`. `emojiItems(category)` lists one category, `findEmoji("🎉")` finds an entry by its character (a missing or extra U+FE0F still matches) and every item carries its `category`. `searchEmoji(query, limit, names)` also matches localized names: `@gotipe/core/emoji/ru` exports `EMOJI_NAMES_RU` (shortcode → Russian name), so `searchEmoji("пра", 8, EMOJI_NAMES_RU)` finds 🎉 «праздник» and ✅ «правильно». A name's start or the start of one of its words ranks first; `ё` and `е` are the same letter.
+
+## How atoms look
+
+`EditorContent` of `@gotipe/react` and `@gotipe/vue` draws each atom as one element with `contenteditable="false"`, `data-gotipe-atom` and `data-type` (GoTipe Atlas, frames 22–24). The fallback text stays inside it, visually hidden, so offsets, search and screen readers keep working; the drawing beside it is a widget (`data-gotipe-widget`) whose text does not count.
+
+| Atom | Element | Drawing |
+| --- | --- | --- |
+| `mention`, `kind: "user"` | `span.gotipe-mention[data-kind="person"]` | initials on one of the person colours, then the name |
+| `mention`, `kind: "page"` | `span.gotipe-mention[data-kind="page"]` | the page glyph, then the underlined title |
+| `inlineMath` | `span.gotipe-math-inline[role="math"]`, `aria-label` = the TeX | MathML in the document font (below) |
+| `inlineMath` that cannot be read | `.gotipe-math-inline.is-invalid[aria-invalid="true"]` | the TeX on a red tint; the reason in a tooltip under the pointer |
+| `customEmoji` | `span.gotipe-emoji-custom[role="img"]`, `aria-label` = `:name:` | the image at the size of a letter; `:name:` in a tooltip |
+| `inlineImage` | `span.gotipe-inline-image[role="img"]`, `aria-label` = the alt | the image |
+
+Formulas are drawn only when the view has a TeX reader, so a host without formulas never loads the converter. `BlockEditor` and `PageEditor` give it; with `EditorContent` of React pass `parseTex` through `MathRendererContext`, with Vue through the `math` prop (`errorText` words the reason in your language; the English message otherwise):
+
+```tsx title="content.tsx"
+import { parseTex } from "@gotipe/core/math";
+import { EditorContent, MathRendererContext } from "@gotipe/react";
+
+<MathRendererContext.Provider value={parseTex}>
+  <EditorContent editor={editor} />
+</MathRendererContext.Provider>;
+```
+
+```ts title="content.vue.ts"
+h(EditorContent, { editor, math: { parse: parseTex, errorText: (error) => t(error.code) } });
+```
+
+Without it a formula is its TeX in `span.gotipe-math-inline`, and a math block shows its source.
+
+Image addresses go through the same check as image blocks (`toSafeImageSrc`, exported from `@gotipe/core/extensions`); an unsafe one shows the fallback text. An unknown atomic mark is drawn as its text in `span.gotipe-atom`. The look comes from `@gotipe/theme` (`theme/atoms.css`); the Vue adapter uses the same classes.
+
+The caret steps over an atom with the arrow keys, Backspace and Delete take it whole, and a click before or after a chip puts the caret there: the DOM selection maps the edge of an atom element to the position before or after it, never into its text.
+
+### Formulas
+
+`@gotipe/core/math` is GoTipe's own TeX → MathML converter, outside the core bundle. `parseTex(tex, { display? })` returns `{ ok: true, math }` with a tree of allowed MathML elements, or `{ ok: false, error }` with `code`, `detail`, `from`, `to` and an English `message`. `mathToDOM(math, document)` and `mathToString(math)` build DOM elements or escaped markup from that tree only; `isMathElement` validates a tree you got elsewhere. See [Math](/docs/extensions/math#rendering-formulas) for the supported TeX.
+
+## The block editor's interface
+
+`@gotipe/block-editor` adds the lists and popovers of frames 22–24. Create the editor with `atomExtensions()` and give `BlockEditor` the data:
+
+```tsx title="editor.tsx"
+import { BlockEditor, atomExtensions } from "@gotipe/block-editor";
+import { FullPreset } from "@gotipe/core/presets";
+import { useEditor } from "@gotipe/react";
+
+const mentions = {
+  // people first, then pages; a newer query aborts `signal`
+  items: (query: string, { signal }: { signal: AbortSignal }) => directory.search(query, { signal }),
+};
+
+export function DocumentEditor() {
+  const editor = useEditor({ extensions: [FullPreset, ...atomExtensions()] });
+  return (
+    <BlockEditor
+      editor={editor}
+      mentions={mentions}
+      emoji={{ custom: [{ name: "gotipe", src: "/emoji/gotipe.png" }], onRecentChange: saveRecent }}
+    />
+  );
+}
+```
+
+`atomExtensions()` is the four atom marks plus `MentionSuggestion` («@»), `EmojiSuggestion` («:»), `EmojiCommand` («/» → Emoji) and `InlineMathCommands` («/» → Inline formula and `$…$`). Russian emoji names (`@gotipe/core/emoji/ru`) load on first use, only with a Russian interface. `PageEditor` takes the same `mentions` and `emoji` props: the «:» list and the picker are always on there, mentions only with `mentions` (written as `[@name](mention:user-id)` or `[title](mention:page-id)` and read back); inline formulas are not part of a Markdown page.
+
+| Prop | Type | Description |
+| --- | --- | --- |
+| `mentions` | `{ items(query, { signal }): MentionItem[] \| Promise<MentionItem[]> }` | People and pages. `MentionItem` is `{ id, label, kind?: "user" \| "page" }`. Without it the list answers «No one found». |
+| `emoji.custom` | `{ name, src }[]` | The team's emoji: in the «:» list after the Unicode ones and in the picker's last tab. |
+| `emoji.recent` | `string[]` | Recent emoji to start with: characters, or `:name:` for custom ones. |
+| `emoji.onRecentChange` | `(recent: string[]) => void` | Called after each insert with the new list, newest first (at most 18). The list itself lives in memory. |
+
+The lists, the picker and the formula popover are described in [Menus and controls](/docs/ui/menus#mentions-emoji-and-formulas). `AtomProvider` (the TeX reader and the host data), `AtomUI`, `MentionMenu`, `EmojiMenu`, `EmojiPicker` and `MathPopover` are exported for an editor of your own, and `requestAtomUI(editor, request)` opens the picker or the popover from your code.
+
 ## Collaboration
 
 A client without these rules can type into an atom. After every `receiveCollaborationUpdate` the editor repairs that: text inserted between the old edges of an atom — the same type and `key` — loses the atomic mark, and so does the text left of an atom that was deleted here while a peer typed into it. New atoms, atoms rewritten as a whole and untouched atoms are kept. The repair is a local transaction with `metadata: { addToHistory: false, origin: "repair" }`, so every replica receives it and it is not undone. The pure function behind it, `normalizeRemoteAtoms(before, after, isAtomic, known?)`, is exported from `@gotipe/core/extensions`.
@@ -151,7 +228,8 @@ The repair and the HTML read-back come with the extensions: `Mention`, `InlineMa
 
 ## Limitations
 
-- Atoms render as text until the atom views are designed; a host can render `MarkView.atomic` marks itself.
+- Svelte and Solid adapters still draw atoms as their text.
+- The Vue adapter draws the same elements but has no lists, picker or formula popover.
 - Atoms without a `key` (documents written before keys) that meet can still join.
 - An atom deleted here is recognised as an orphan only when this editor saw it while collaborating.
 - An atom shortened by a remote deletion keeps its mark with the shorter text.

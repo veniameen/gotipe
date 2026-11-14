@@ -1,0 +1,195 @@
+/* ============================================================
+   Atoms of a line — Atlas frames 22–24: a mention, a team's emoji, an image, a formula. Each is
+   one piece of the text: the caret steps over it, a deletion takes it whole, under the pointer a
+   fill appears around it. Its document text stays in the DOM, hidden; the drawing is a widget.
+   ============================================================ */
+
+[data-gotipe-atom] {
+  position: relative;
+  cursor: default;
+  user-select: none;
+}
+
+/* ---- a chip appears around an atom under the pointer; a formula being edited is selected ---- */
+:is(.gotipe-mention, .gotipe-math-inline:not(.is-invalid), .gotipe-emoji-custom):is(
+    :hover,
+    .is-selected
+  ) {
+  margin-inline: calc(-1 * var(--gt-chip-pad-x));
+  padding-inline: var(--gt-chip-pad-x);
+  border-radius: var(--gt-radius-inline);
+}
+:is(.gotipe-mention, .gotipe-math-inline:not(.is-invalid), .gotipe-emoji-custom):hover {
+  background: var(--gt-fill-2);
+}
+.gotipe-math-inline.is-selected,
+.gotipe-atom-selected .gotipe-math-inline {
+  margin-inline: calc(-1 * var(--gt-chip-pad-x));
+  padding-inline: var(--gt-chip-pad-x);
+  border-radius: var(--gt-radius-inline);
+  background: var(--gt-selection);
+}
+.gotipe-content:focus-within [data-gotipe-atom]:focus-visible {
+  outline: var(--gt-focus-width) solid var(--gt-focus);
+  outline-offset: var(--gt-focus-gap);
+}
+
+/* ---- mentions: a person is their avatar and name; a page is its glyph and title ---- */
+.gotipe-mention {
+  white-space: nowrap;
+}
+.gotipe-mention-view {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--gt-mention-gap);
+  color: inherit;
+  font-weight: var(--gt-weight-medium);
+}
+.gotipe-mention-view > .gotipe-avatar {
+  align-self: center;
+  width: var(--gt-avatar-inline);
+  height: var(--gt-avatar-inline);
+  line-height: var(--gt-avatar-inline);
+}
+.gotipe-mention-view > .gotipe-icon {
+  align-self: center;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: var(--gt-icon-stroke);
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  width: var(--gt-icon-size);
+  height: var(--gt-icon-size);
+  color: var(--gt-text-2);
+}
+.gotipe-mention[data-kind="page"] .gotipe-mention-label {
+  text-decoration-line: underline;
+  text-decoration-thickness: var(--gt-underline);
+  text-decoration-color: var(--gt-link-line);
+  text-underline-offset: var(--gt-underline-offset);
+}
+
+/* ---- the team's emoji: an image the size of an emoji, its name on hover; an image in a line ---- */
+.gotipe-emoji-custom {
+  display: inline-block;
+  vertical-align: var(--gt-emoji-inline-shift);
+}
+.gotipe-emoji-image {
+  display: block;
+  width: var(--gt-emoji-inline);
+  height: var(--gt-emoji-inline);
+  object-fit: contain;
+}
+.gotipe-inline-image img {
+  max-width: 100%;
+  height: auto;
+  vertical-align: middle;
+}
+
+/* ---- a tooltip inside an atom: an inverted label, shown under the pointer ---- */
+[data-gotipe-atom] .gotipe-tooltip {
+  position: absolute;
+  z-index: var(--gt-z-tooltip);
+  display: none;
+  max-width: var(--gt-tooltip-max);
+  padding: var(--gt-tooltip-pad);
+  border-radius: var(--gt-radius-control);
+  background: var(--gt-inverse);
+  color: var(--gt-inverse-text);
+  font-family: var(--gt-font-ui);
+  font-size: var(--gt-ui-small);
+  font-style: normal;
+  font-weight: var(--gt-weight-regular);
+  line-height: var(--gt-ui-small-leading);
+  letter-spacing: normal;
+  white-space: nowrap;
+  pointer-events: none;
+}
+[data-gotipe-atom]:hover .gotipe-tooltip {
+  display: block;
+}
+[data-gotipe-atom] .gotipe-tooltip[data-place="above"] {
+  bottom: calc(100% + var(--gt-overlay-gap));
+  left: 50%;
+  transform: translateX(-50%);
+}
+[data-gotipe-atom] .gotipe-tooltip[data-place="below"] {
+  top: calc(100% + var(--gt-overlay-gap));
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+/* ---- a formula: typeset in the document's own font — variables italic, operators upright
+   with room around them, a fraction stacked on its rule ---- */
+.gotipe-math-inline {
+  white-space: nowrap;
+}
+:is(.gotipe-math-inline, .gotipe-math-render, .gotipe-math-preview) math {
+  font-family: var(--gt-font-body);
+  font-size: inherit;
+}
+:is(.gotipe-math-inline, .gotipe-math-render, .gotipe-math-preview) mi {
+  text-transform: none;
+}
+:is(.gotipe-math-inline, .gotipe-math-render, .gotipe-math-preview) mi:not([mathvariant]) {
+  font-style: italic;
+}
+.gotipe-math-inline mfrac > * {
+  padding-inline: var(--gt-math-frac-pad);
+  font-size: var(--gt-math-frac);
+  line-height: var(--gt-math-frac-leading);
+}
+.gotipe-math-inline :is(msup, msub, msubsup) > :not(:first-child) {
+  font-size: var(--gt-math-script);
+}
+
+/* a formula that cannot be drawn shows its TeX, tinted; the reason is in the tooltip */
+.gotipe-math-inline.is-invalid {
+  padding: var(--gt-inline-pad);
+  border-radius: var(--gt-radius-inline);
+  background: var(--gt-danger-tint);
+  box-shadow: inset 0 calc(-1 * var(--gt-hairline)) 0 var(--gt-danger);
+  font-family: var(--gt-font-mono);
+  font-size: var(--gt-inline-code-size);
+  letter-spacing: normal;
+}
+
+/* ---- the formula block (frame 18): its label, then the drawing; with the caret in it the TeX
+   shows and the drawing follows. At rest the TeX stays in place, transparent, over the drawing:
+   a click or the arrow keys still reach it ---- */
+.gotipe-math {
+  position: relative;
+}
+.gotipe-math-render {
+  padding: 0 var(--gt-code-pad-x) var(--gt-code-pad-bottom);
+  overflow-x: auto;
+  color: var(--gt-text);
+  font-size: var(--gt-math-preview-size);
+  line-height: var(--gt-math-preview-leading);
+  letter-spacing: var(--gt-body-tracking);
+  text-align: center;
+}
+.gotipe-math-render mfrac > * {
+  padding-inline: var(--gt-math-frac-pad);
+  font-size: var(--gt-math-display-frac);
+  line-height: var(--gt-math-display-leading);
+}
+.gotipe-math-render.is-invalid {
+  color: var(--gt-danger);
+  font-family: var(--gt-font-ui);
+  font-size: var(--gt-ui-small);
+  line-height: var(--gt-ui-small-leading);
+  letter-spacing: normal;
+}
+.gotipe-math[data-state="rendered"] > .gotipe-math-source {
+  position: absolute;
+  inset: 0;
+  padding-top: var(--gt-code-head);
+  overflow: hidden;
+  opacity: 0;
+}
+.gotipe-math[data-state="editing"] > .gotipe-math-render:not(.is-invalid) {
+  margin: 0 var(--gt-code-pad-x) var(--gt-code-pad-bottom);
+  padding: var(--gt-math-preview-pad);
+  border-top: var(--gt-hairline) solid var(--gt-line);
+}

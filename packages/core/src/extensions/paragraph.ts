@@ -7,8 +7,11 @@ export const Paragraph = defineExtension({
       name: "paragraph",
       group: ["block"],
       content: "richText",
-      // `TextAlign` sets it; any paragraph may hold it.
-      attrs: { align: { type: "enum", values: ["left", "center", "right", "justify"] } },
+      // `TextAlign` and `TextDirection` set them; any paragraph may hold them.
+      attrs: {
+        align: { type: "enum", values: ["left", "center", "right", "justify"] },
+        dir: { type: "enum", values: ["ltr", "rtl", "auto"] },
+      },
       topLevel: true,
       marksAllowed: "all",
       leaf: false,

@@ -31,6 +31,8 @@ function heading(options: HeadingOptions): Extension<HeadingOptions> {
           level: { type: "number", default: levels[0] ?? 1, required: true, values: levels },
           // `TextAlign` sets it; any heading may hold it.
           align: { type: "enum", values: ["left", "center", "right", "justify"] },
+          // `TextDirection` sets it.
+          dir: { type: "enum", values: ["ltr", "rtl", "auto"] },
         },
         topLevel: true,
         marksAllowed: "all",
@@ -46,9 +48,13 @@ function heading(options: HeadingOptions): Extension<HeadingOptions> {
               const { selection, blocks } = editor.getViewState();
               const blockId = selection.anchor.blockId;
               const level = match[1]!.length;
-              // The typed block keeps its alignment as a heading.
-              const align = findBlockInTree(blocks, blockId)?.attrs.align;
-              const attrs = typeof align === "string" ? { level, align } : { level };
+              // The typed block keeps its alignment and direction as a heading.
+              const typed = findBlockInTree(blocks, blockId)?.attrs ?? {};
+              const attrs: Record<string, string | number> = { level };
+              for (const key of ["align", "dir"]) {
+                const value = typed[key];
+                if (typeof value === "string") attrs[key] = value;
+              }
               editor.dispatch({
                 steps: [
                   { type: "deleteText", blockId, from: 0, to: match[0].length },

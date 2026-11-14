@@ -264,7 +264,9 @@ describe.each(ENGINES)("defineSuggestion on %s", (engine) => {
     const editor = await open(engine, "", [people.suggestion, emoji]);
     type(editor, 0, "@А :tad");
     expect(people.suggestion.state(editor)).toBeNull();
-    expect(emoji.state(editor)?.items).toEqual([{ name: "tada", emoji: "🎉" }]);
+    expect(emoji.state(editor)?.items).toEqual([
+      { name: "tada", emoji: "🎉", category: "activities" },
+    ]);
     expect(emoji.select(editor)).toBe(true);
     expect(editor.getText()).toBe("@А 🎉");
     expect(emoji.state(editor)).toBeNull();
@@ -358,8 +360,8 @@ describe("emoji shortcodes", () => {
       "purple_heart",
     ]);
     expect(searchEmoji("THUMBS", 5)).toEqual([
-      { name: "+1", emoji: "👍" },
-      { name: "-1", emoji: "👎" },
+      { name: "+1", emoji: "👍", category: "people" },
+      { name: "-1", emoji: "👎", category: "people" },
     ]);
     expect(searchEmoji("party").map(({ name }) => name)).toEqual(["partying_face", "tada"]);
     expect(searchEmoji("", 3)).toHaveLength(3);

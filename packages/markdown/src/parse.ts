@@ -22,6 +22,7 @@ import {
   trimInlineStart,
 } from "./inline-parse";
 import { fingerprint, normalizeAlign } from "./model";
+import { readHtmlTable } from "./table-html-read";
 import type {
   Block,
   InlineAtoms,
@@ -144,6 +145,8 @@ class Converter {
         return this.list(node, s, e) ?? this.raw(node.type, s, e);
       case "table":
         return this.table(node, s, e);
+      case "html":
+        return this.htmlTable(s, e) ?? this.raw(node.type, s, e);
       default:
         return this.raw(node.type, s, e);
     }
@@ -342,6 +345,33 @@ class Converter {
     if (marker === "-" || marker === "*" || marker === "+") attrs.marker = marker;
     attrs.spread = spread;
     return mk("bulletList", attrs, null, s, e, [], kids);
+  }
+
+  /** The writer's HTML table of merged cells, read back as a table. */
+  htmlTable(s: number, e: number): PNode | null {
+    const table = readHtmlTable(this.text.slice(s, e), s);
+    if (!table) return null;
+    const rows = table.rows.map((row) =>
+      mk(
+        "tableRow",
+        {},
+        null,
+        row.start,
+        row.end,
+        [],
+        row.cells.map((cell) =>
+          mk(
+            cell.type,
+            cell.attrs,
+            cell.spans,
+            cell.start,
+            cell.end,
+            this.ctx.segments ? cell.segs : [],
+          ),
+        ),
+      ),
+    );
+    return mk("table", { align: table.align }, null, s, e, [], rows);
   }
 
   table(node: Table, s: number, e: number): PNode {

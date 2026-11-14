@@ -5,6 +5,12 @@
  */
 export const WIDGET_ATTR = "data-gotipe-widget";
 
+/**
+ * An inline atom's element (`contenteditable="false"`): its fallback text counts in offsets,
+ * but a point at its edge maps to the DOM position before or after the element.
+ */
+export const ATOM = "[data-gotipe-atom]";
+
 /** True when the node lives inside a widget subtree (below `root`). */
 export function isInsideWidget(node: Node, root?: Node | null): boolean {
   let el: Element | null = node.nodeType === 1 ? (node as Element) : node.parentElement;

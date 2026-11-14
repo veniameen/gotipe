@@ -4,9 +4,11 @@ import {
   Bold,
   BulletList,
   Callout,
+  CharacterCount,
   CodeBlock,
   Divider,
   File,
+  FindReplace,
   Heading,
   Highlight,
   History,
@@ -15,6 +17,7 @@ import {
   Italic,
   Link,
   ListItem,
+  Mention,
   OrderedList,
   Paragraph,
   Strikethrough,
@@ -28,7 +31,7 @@ import {
 import { createEditor, defineExtension, saveAsset } from "@gotipe/core/js";
 import type { I18n } from "@gotipe/i18n";
 import { markdownRawNodeSpec } from "@gotipe/markdown";
-import { type BlockViews, GoTipeI18nProvider, useGoTipeI18n } from "@gotipe/react";
+import { type BlockViews, GoTipeI18nProvider, TableMergeGuardProvider } from "@gotipe/react";
 import {
   type CommentState,
   type ProposalState,
@@ -46,10 +49,13 @@ import {
   useRef,
   useState,
 } from "react";
-import { BlockEditor } from "../components/block-editor";
+import { EmojiCommand, EmojiSuggestion, MentionSuggestion } from "../atoms/extensions";
+import { BlockEditor, type BlockEditorProps } from "../components/block-editor";
 import type { CodeHighlighter } from "../highlight/types";
+import { useBlockEditorI18n } from "../i18n/strings";
 import { ReviewBar } from "../review/review-bar";
 import { type PageReviewProps, type ReviewApi, ReviewLayer } from "../review/review-layer";
+import { markdownTableGuard } from "../table/markdown-guard";
 import { MarkdownSession } from "./markdown-session";
 import { PageOverlayContext } from "./overlay";
 import {
@@ -72,8 +78,12 @@ export const MarkdownRawMark = defineExtension({
   marks: [{ name: "mdRaw", attrs: {}, rank: 90 }],
 });
 
-/** Extensions for a Markdown document (GFM blocks and marks). */
-export function pageExtensions() {
+/**
+ * Extensions for a Markdown document (GFM blocks and marks), the «:» emoji list and «/» →
+ * Emoji; with `mentions` also mentions and the «@» list (written as `[@name](mention:user-id)`).
+ */
+export function pageExtensions(options: { mentions?: boolean } = {}) {
+  const atoms = options.mentions ? [Mention, MentionSuggestion] : [];
   return [
     Paragraph,
     Heading.configure({ levels: [1, 2, 3, 4, 5, 6] }),
@@ -99,8 +109,15 @@ export function pageExtensions() {
     Superscript,
     Subscript,
     History,
+    // Find (Mod+F) and the counter change no document: Markdown keeps every byte. Alignment,
+    // direction and fonts are not added: Markdown cannot hold them.
+    FindReplace,
+    CharacterCount,
     MarkdownRawExtension,
     MarkdownRawMark,
+    EmojiSuggestion,
+    EmojiCommand,
+    ...atoms,
   ];
 }
 
@@ -157,6 +174,15 @@ export interface PageEditorProps {
   onReady?: (editor: GoTipeEditor) => void;
   /** Called when the editor reports an error (same as `host.onError`). */
   onError?: EditorHost["onError"];
+  /**
+   * People and pages of the «@» list (Atlas frame 22), as `BlockEditor`'s `mentions`. Read when
+   * the page opens: with it the page reads and writes `[@name](mention:user-id)` as mentions.
+   */
+  mentions?: BlockEditorProps["mentions"];
+  /** The team's emoji and the recent list (Atlas frame 23), as `BlockEditor`'s `emoji`. */
+  emoji?: BlockEditorProps["emoji"];
+  /** Words and characters under the page (Atlas frame 26), as `BlockEditor`'s `status`. */
+  status?: BlockEditorProps["status"];
 }
 
 const PageEditorInner = forwardRef<PageEditorHandle, PageEditorProps>(
@@ -179,12 +205,16 @@ const PageEditorInner = forwardRef<PageEditorHandle, PageEditorProps>(
       onReady,
       onError,
     } = props;
-    const i18n = useGoTipeI18n();
+    const i18n = useBlockEditorI18n();
     const [editor, setEditor] = useState<GoTipeEditor | null>(null);
     const [root, setRoot] = useState<HTMLDivElement | null>(null);
     const [overlay, setOverlay] = useState<HTMLDivElement | null>(null);
     const sessionRef = useRef<MarkdownSession | null>(null);
-    if (!sessionRef.current) sessionRef.current = new MarkdownSession({ ensureTitle: true });
+    if (!sessionRef.current)
+      sessionRef.current = new MarkdownSession({
+        ensureTitle: true,
+        atoms: props.mentions ? { mention: true } : undefined,
+      });
     const session = sessionRef.current;
     const reviewApi = useRef<ReviewApi | null>(null);
     const [resolved, setResolved] = useState<Set<string>>(() => new Set());
@@ -202,7 +232,7 @@ const PageEditorInner = forwardRef<PageEditorHandle, PageEditorProps>(
     hostRef.current = host;
     const onErrorRef = useRef(onError);
     onErrorRef.current = onError;
-    const initial = useRef({ markdown, readOnly, autoFocus });
+    const initial = useRef({ markdown, readOnly, autoFocus, mentions: !!props.mentions });
 
     // Create the editor once (JS engine: no WASM, no eval).
     useEffect(() => {
@@ -230,7 +260,7 @@ const PageEditorInner = forwardRef<PageEditorHandle, PageEditorProps>(
       };
       void (async () => {
         const ed = await createEditor({
-          extensions: pageExtensions(),
+          extensions: pageExtensions({ mentions: initial.current.mentions }),
           content: session.parse(initial.current.markdown),
           editable: !initial.current.readOnly,
           engine: "js",
@@ -287,6 +317,10 @@ const PageEditorInner = forwardRef<PageEditorHandle, PageEditorProps>(
     const commands = useMemo<PageBlockCommand[]>(
       () => pageBlockCommands(i18n, allowedBlocks),
       [i18n, allowedBlocks],
+    );
+    const slashCommands = useMemo(
+      () => [...commands, ...(EmojiCommand.slashCommands ?? [])],
+      [commands],
     );
     const blockViews = useMemo<BlockViews>(
       () => ({ ...createPageBlockViews({ highlight, titlePlaceholder }), ...hostViews }),
@@ -361,6 +395,9 @@ const PageEditorInner = forwardRef<PageEditorHandle, PageEditorProps>(
       [editor, session, markdown],
     );
 
+    // merged cells only where the Markdown page can keep the table (an HTML table read back)
+    const mergeGuard = useMemo(() => markdownTableGuard(i18n.t("table.mergeMarkdownHint")), [i18n]);
+
     return (
       <div
         ref={setRoot}
@@ -381,17 +418,22 @@ const PageEditorInner = forwardRef<PageEditorHandle, PageEditorProps>(
             />
           ) : null}
           {/* the shared editor: its panel, «/», handle, block and column menus (Atlas, frame 19) */}
-          <BlockEditor
-            editor={editor}
-            view={view}
-            className="gotipe-page-editor"
-            highlight={highlight}
-            blockViews={blockViews}
-            slashCommands={commands}
-            ariaLabel={i18n.t("page.ariaLabel")}
-            errorToast={!host?.onError && !onError}
-            showAiCommandBar={false}
-          />
+          <TableMergeGuardProvider value={mergeGuard}>
+            <BlockEditor
+              editor={editor}
+              view={view}
+              className="gotipe-page-editor"
+              highlight={highlight}
+              blockViews={blockViews}
+              slashCommands={slashCommands}
+              mentions={props.mentions}
+              emoji={props.emoji}
+              ariaLabel={i18n.t("page.ariaLabel")}
+              errorToast={!host?.onError && !onError}
+              showAiCommandBar={false}
+              status={props.status}
+            />
+          </TableMergeGuardProvider>
           {editor && effectiveReview ? (
             <ReviewLayer
               editor={editor}

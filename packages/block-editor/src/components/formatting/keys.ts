@@ -12,6 +12,14 @@ export const MARK_KEYS = {
   highlight: "mod-shift-h",
 } as const;
 
+/** `TextAlign` (Atlas frame 27: the alignment group of «More»). */
+export const ALIGN_KEYS = {
+  left: "mod-shift-l",
+  center: "mod-shift-e",
+  right: "mod-shift-r",
+  justify: "mod-shift-j",
+} as const;
+
 export const BLOCK_KEYS: Record<string, string> = {
   "heading:1": "mod-alt-1",
   "heading:2": "mod-alt-2",

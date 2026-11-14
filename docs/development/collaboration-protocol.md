@@ -81,6 +81,26 @@ local copy under the same peer ID, travel together with the next transaction. Th
 newest own operation always ends a result, so nothing waits for an end that never
 comes.
 
+### Blocks inside deleted blocks
+
+A block whose ancestor is deleted is not projected: a cell added to a row that
+another peer deleted meanwhile (`insertColumn`, `splitCell` against `deleteRow`) is
+deleted with the row on every replica, never moved to the root, where no schema
+accepts a row or a cell. A block whose parent is not known yet waits the same way.
+Its operations stay in the log, and a later local edit does not delete it for good,
+so undoing the delete brings it back with its content. Only blocks that concurrent
+moves put into a cycle are shown at the root. `ReplicaState::placement` decides it.
+
+Concurrent row, column, merge and split edits can still leave a table whose grid is
+not valid (a span past the last row, overlapping cells, rows without a cell at some
+position). After a remote update that changed a table, `receiveCollaborationUpdate`
+runs `normalizeTableGeometry` (`packages/core/src/table/repair.ts`) and dispatches
+its steps as a local transaction with `{ addToHistory: false, origin: "repair" }`,
+so every replica receives the repair. The rules are deterministic, and a cell the
+repair adds is named after its place (a hash of its row and its index there,
+`editor/remote-table-repair.ts`), so replicas that repair the same table the same way
+create the same block rather than two.
+
 ### Mark order
 
 A character's marks are an ordered list, in the order the local engine produces

@@ -13,7 +13,7 @@ export interface TextAlignOptions {
 }
 
 /** Blocks of `types` the selection covers: from the anchor to the head, or selected blocks. */
-function selectedBlocks(editor: GoTipeEditor, types: readonly string[]): BlockView[] {
+export function selectedBlocks(editor: GoTipeEditor, types: readonly string[]): BlockView[] {
   const { selection, blocks } = editor.getViewState();
   const flat = flattenBlocks(blocks);
   let covered: BlockView[];

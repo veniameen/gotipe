@@ -6,8 +6,8 @@ import {
   toSafeColor,
 } from "@gotipe/core";
 import { useEditorState } from "@gotipe/react";
-import { useGoTipeI18n } from "@gotipe/react";
 import type React from "react";
+import { useBlockEditorI18n } from "../i18n/strings";
 import { PageIcon } from "../page/icons";
 import { currentMarks } from "./formatting/selection";
 import { Tip } from "./formatting/tip";
@@ -30,7 +30,7 @@ export function TextColorPicker({ editor }: TextColorPickerProps) {
   const textColor = stored("textColor");
   const highlight = stored("highlight");
   const current = documentColorStyle(textColor ?? highlight);
-  const i18n = useGoTipeI18n();
+  const i18n = useBlockEditorI18n();
   const colorName = (name: string) => i18n.t(`color.${name}` as Parameters<typeof i18n.t>[0]);
   return (
     <div>

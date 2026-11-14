@@ -4,7 +4,9 @@ import { FullPreset } from "@gotipe/core/presets";
 import { act } from "react";
 import { type Root, createRoot } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { MediaBlocksContext } from "./content/media-blocks";
 import { EditorContent } from "./editor-content";
+import { mediaBlocks } from "./media";
 
 let editor: GoTipeEditor;
 let container: HTMLDivElement;
@@ -108,7 +110,11 @@ describe("EditorContent rendering contracts", () => {
 
   it("makes image captions and edit controls inactive in read-only mode", () => {
     act(() => {
-      root.render(<EditorContent editor={editor} />);
+      root.render(
+        <MediaBlocksContext.Provider value={mediaBlocks}>
+          <EditorContent editor={editor} />
+        </MediaBlocksContext.Provider>,
+      );
       editor.setEditable(false);
     });
     expect(

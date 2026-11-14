@@ -1,7 +1,7 @@
 //! Logical cell occupancy and paginatable table rows, including row/column spans.
 use super::{
     flow::{self, Row},
-    layout::{number, Layout},
+    layout::{span, Layout},
     model::{DrawOp, Tag},
 };
 use crate::ConvertError;
@@ -51,8 +51,8 @@ pub(crate) fn layout(
             while occupied.get(x).is_some_and(|end| *end > y) {
                 x += 1;
             }
-            let colspan = number(cell, "colspan", 1).clamp(1, 100);
-            let rowspan = number(cell, "rowspan", 1).clamp(1, 100);
+            let colspan = span(cell, "colspan");
+            let rowspan = span(cell, "rowspan");
             if occupied.iter().skip(x).take(colspan).any(|end| *end > y) {
                 return Err(ConvertError::Encoding("Overlapping PDF table spans".into()));
             }

@@ -1,5 +1,6 @@
 import { DefaultPreset } from "@gotipe/core/presets";
-import { Editor, useEditor } from "@gotipe/react";
+import { Editor, MediaBlocksContext, useEditor } from "@gotipe/react";
+import { mediaBlocks } from "@gotipe/react/media";
 import { ExampleWrapper } from "../shared/example-wrapper";
 import { SIMPLE_CONTENT } from "../shared/sample-content";
 import { StaticToolbar } from "../shared/toolbar";
@@ -18,7 +19,9 @@ export function SimpleEditor() {
     >
       <div className="gotipe-simple-editor">
         <StaticToolbar editor={editor} showTheme />
-        <Editor editor={editor} />
+        <MediaBlocksContext.Provider value={mediaBlocks}>
+          <Editor editor={editor} />
+        </MediaBlocksContext.Provider>
       </div>
     </ExampleWrapper>
   );

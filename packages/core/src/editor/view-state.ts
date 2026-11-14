@@ -140,24 +140,22 @@ export function createViewState(port: ViewStatePort) {
     const isCollapsed =
       sel.anchor.blockId === sel.head.blockId && sel.anchor.offset === sel.head.offset;
 
-    let activeMarks: string[];
+    let active: { type: string; attrs?: Record<string, unknown> }[];
     if (storedMarks !== null) {
-      activeMarks = storedMarks.map((m) => m.type);
+      active = storedMarks;
     } else if (activeBlockId) {
-      activeMarks = isCollapsed
-        ? getMarksAt(blocks, activeBlockId, sel.anchor.offset).map((m) => m.type)
-        : getMarksAt(
-            blocks,
-            activeBlockId,
-            Math.min(sel.anchor.offset, sel.head.offset),
-            false,
-          ).map((m) => m.type);
+      active = isCollapsed
+        ? getMarksAt(blocks, activeBlockId, sel.anchor.offset)
+        : getMarksAt(blocks, activeBlockId, Math.min(sel.anchor.offset, sel.head.offset), false);
     } else {
-      activeMarks = [];
+      active = [];
     }
+    const activeMarks = active.map((m) => m.type);
+    const activeMarkAttrs = Object.fromEntries(active.map((m) => [m.type, m.attrs ?? {}]));
 
     const toolbar: ViewState["toolbar"] = {
       activeMarks,
+      activeMarkAttrs,
       activeBlockType: currentBlock?.type ?? "paragraph",
       activeBlockAttrs: (currentBlock?.attrs ?? {}) as Record<string, unknown>,
       canUndo: port.canUndo(),

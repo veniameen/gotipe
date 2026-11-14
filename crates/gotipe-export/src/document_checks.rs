@@ -46,6 +46,8 @@ pub(crate) fn validate_marks(blocks: &[Block]) -> Result<(), ConvertError> {
                     match mark.mark_type.as_str() {
                         "bold" | "italic" | "underline" | "strikethrough" | "code"
                         | "superscript" | "subscript" => {}
+                        // Theme faces and sizes of the editor: the file keeps its own.
+                        "fontFamily" | "fontSize" => {}
                         "highlight" | "textColor" => {
                             let value = match mark.attrs.get("color") {
                                 Some(AttrValue::String(value)) => value.as_str(),

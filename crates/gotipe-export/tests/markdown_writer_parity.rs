@@ -90,3 +90,65 @@ fn formulas_come_back_identical_and_embeds_as_link_paragraphs() {
         ]
     );
 }
+
+#[test]
+fn a_merged_table_comes_back_as_a_table_and_is_written_again_byte_for_byte() {
+    let fixture: Value =
+        serde_json::from_str(include_str!("fixtures/markdown-writer.json")).unwrap();
+    let case = fixture["cases"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|case| case["id"] == "merged-cells-as-html")
+        .unwrap();
+    let markdown = case["markdown"].as_str().unwrap();
+    let mut parsed = from_markdown(markdown, &default_block_editor()).unwrap();
+    let kinds: Vec<&str> = parsed
+        .blocks
+        .iter()
+        .map(|b| b.block_type.as_str())
+        .collect();
+    assert_eq!(kinds, ["paragraph", "table", "table", "paragraph"]);
+    // without the kept source the writer writes the tables again from the blocks
+    parsed.blocks[0].attrs.remove("markdownDocumentSource");
+    parsed.blocks[0].attrs.remove("markdownDocumentModel");
+    assert_eq!(to_markdown(&parsed), markdown);
+}
+
+#[test]
+fn html_that_is_not_the_writers_table_stays_raw() {
+    for source in [
+        "<table>\n<tr>\n<td>a</td>\n</tr>\n</table>\n",
+        "<table>\n<tr>\n<td colspan=\"2\"><b>a</b></td>\n</tr>\n</table>\n",
+        "<table>\n<tr>\n<td colspan=\"2\">a &nbsp; b</td>\n</tr>\n</table>\n",
+        "<table class=\"x\">\n<tr>\n<td colspan=\"2\">a</td>\n</tr>\n</table>\n",
+    ] {
+        let parsed = from_markdown(source, &default_block_editor()).unwrap();
+        assert_eq!(parsed.blocks[0].block_type, "markdownRaw", "{source}");
+        assert_eq!(to_markdown(&parsed), source);
+    }
+}
+
+#[test]
+fn a_table_whose_first_row_has_no_cells_is_written_as_the_ts_writer_writes_it() {
+    let document = document_from_json(
+        &serde_json::json!({"blocks": [
+            {"id": "t", "type": "table", "attrs": {"align": [null, "right"]}, "children": [
+                {"id": "r0", "type": "tableRow", "children": []},
+                {"id": "r1", "type": "tableRow", "children": [
+                    {"id": "c", "type": "tableCell", "content": [{"text": "1"}]},
+                    {"id": "d", "type": "tableCell", "content": [{"text": "2"}]}
+                ]},
+                {"id": "r2", "type": "tableRow", "children": []}
+            ]},
+            {"id": "e", "type": "table", "children": [{"id": "e0", "type": "tableRow", "children": []}]}
+        ]})
+        .to_string(),
+    )
+    .unwrap();
+    // packages/markdown/src/table-html.test.ts expects the same bytes
+    assert_eq!(
+        to_markdown(&document),
+        "|  |  |\n| --- | ---: |\n| 1 | 2 |\n|  |  |\n"
+    );
+}

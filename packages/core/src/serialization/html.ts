@@ -1,3 +1,4 @@
+import { fontFamilyCss, isFontSize, isTextDirection } from "../document/text-style";
 import { sameValue } from "../engine/mark-rules";
 import { toSafeColor } from "../security/colors";
 import { toSafeHref, toSafeImageSrc } from "../security/urls";
@@ -89,6 +90,16 @@ function wrapMarks(inner: string, marks: readonly HtmlMark[]): string {
         if (href) html = `<a href="${escapeHtml(href)}"${title}>${html}</a>`;
         break;
       }
+      case "fontFamily": {
+        const family = fontFamilyCss(mark.attrs?.family);
+        if (family) html = `<span style="font-family:${family}">${html}</span>`;
+        break;
+      }
+      case "fontSize": {
+        const size = mark.attrs?.size;
+        if (isFontSize(size)) html = `<span style="font-size:${size}px">${html}</span>`;
+        break;
+      }
       case "textColor":
       case "highlight": {
         const color = toSafeColor(mark.attrs?.color);
@@ -165,10 +176,10 @@ function blockToHtml(block: HtmlBlock, options: HtmlSerializationOptions): strin
 
   switch (block.type) {
     case "paragraph":
-      return `<p${textAlign(block.attrs)}>${inner}</p>${after}`;
+      return `<p${direction(block.attrs)}${textAlign(block.attrs)}>${inner}</p>${after}`;
     case "heading": {
       const level = Math.min(Math.max(Math.trunc(Number(block.attrs.level)) || 1, 1), 6);
-      return `<h${level}${textAlign(block.attrs)}>${inner}</h${level}>${after}`;
+      return `<h${level}${direction(block.attrs)}${textAlign(block.attrs)}>${inner}</h${level}>${after}`;
     }
     case "bulletList":
       return `<ul>\n${childrenHtml}\n</ul>`;
@@ -178,12 +189,12 @@ function blockToHtml(block: HtmlBlock, options: HtmlSerializationOptions): strin
       return `<ol${attr}>\n${childrenHtml}\n</ol>`;
     }
     case "listItem":
-      return `<li>${inner}${childrenHtml ? `\n${childrenHtml}` : ""}</li>`;
+      return `<li${direction(block.attrs)}>${inner}${childrenHtml ? `\n${childrenHtml}` : ""}</li>`;
     case "todoList":
       return `<ul class="todo-list">\n${childrenHtml}\n</ul>`;
     case "todoItem": {
       const checked = block.attrs.checked ? " checked" : "";
-      return `<li><input type="checkbox"${checked} disabled> ${inner}${childrenHtml ? `\n${childrenHtml}` : ""}</li>`;
+      return `<li${direction(block.attrs)}><input type="checkbox"${checked} disabled> ${inner}${childrenHtml ? `\n${childrenHtml}` : ""}</li>`;
     }
     case "codeBlock": {
       // Older documents store plain text as `plain`/`plaintext`; it has no language class.
@@ -238,6 +249,11 @@ function blockToHtml(block: HtmlBlock, options: HtmlSerializationOptions): strin
     default:
       return (inner ? `<p>${inner}</p>` : "") + childrenHtml;
   }
+}
+
+/** `dir` of a paragraph, heading or list item (the `TextDirection` extension). */
+function direction(attrs: Record<string, unknown>): string {
+  return isTextDirection(attrs.dir) ? ` dir="${attrs.dir}"` : "";
 }
 
 /** `align` of a paragraph or heading (the `TextAlign` extension): one of four values. */

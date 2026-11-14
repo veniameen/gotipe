@@ -38,6 +38,7 @@
         "extensions/typography",
         "extensions/links-and-paste",
         "extensions/text-align",
+        "extensions/text-style",
         "extensions/editing-aids",
         "extensions/inline-atoms"
       ]

@@ -9,6 +9,8 @@ export default defineConfig({
     ssr: 'src/ssr.ts',
     vanilla: 'src/vanilla.ts',
     emoji: 'src/emoji.ts',
+    'emoji/ru': 'src/emoji-ru.ts',
+    math: 'src/math.ts',
   },
   format: ['esm', 'cjs'],
   dts: true,

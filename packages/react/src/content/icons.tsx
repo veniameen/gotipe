@@ -15,7 +15,8 @@ export type ContentIconName =
   | "note"
   | "plus"
   | "link"
-  | "external";
+  | "external"
+  | "page";
 
 const PATHS: Record<ContentIconName, ReactNode> = {
   copy: (
@@ -59,6 +60,9 @@ const PATHS: Record<ContentIconName, ReactNode> = {
   plus: <path d="M8 3.5v9M3.5 8h9" />,
   link: (
     <path d="M7 9a3 3 0 0 0 4.25.25l1.75-1.75a3 3 0 0 0-4.25-4.25l-.9.9M9 7a3 3 0 0 0-4.25-.25L3 8.5a3 3 0 0 0 4.25 4.25l.9-.9" />
+  ),
+  page: (
+    <path d="M5 2.75h3.75l3 3v6.5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-8.5a1 1 0 0 1 1-1ZM8.75 2.75v2a1 1 0 0 0 1 1h2M6.25 8.75h3.5M6.25 10.75h2.5" />
   ),
   external: (
     <path d="M9.25 3.25h3.5v3.5M12.75 3.25 7.5 8.5M11 9.75V12a1 1 0 0 1-1 1H4.25a1 1 0 0 1-1-1V6.25a1 1 0 0 1 1-1H6.5" />

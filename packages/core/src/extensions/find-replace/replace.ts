@@ -1,3 +1,4 @@
+import { viewAtoms } from "../../engine/atoms";
 import type { Mark } from "../../types/block";
 import type { Step } from "../../types/state";
 import type { BlockView } from "../../types/view";
@@ -9,6 +10,27 @@ export const blockText = (block: BlockView) =>
     : typeof block.content === "string"
       ? block.content
       : "";
+
+/**
+ * The range a match takes in the interface. A match that touches an inline atom (a mention's
+ * label, a formula's TeX) grows to the whole atom: the atom is drawn, scrolled to and selected
+ * as one element, and it is never replaced (`atom: true`).
+ */
+export function shownRange(
+  block: BlockView | undefined,
+  match: SearchMatch,
+): { from: number; to: number; atom: boolean } {
+  let { from, to } = match;
+  let atom = false;
+  if (block && Array.isArray(block.content))
+    for (const range of viewAtoms(block.content)) {
+      if (range.from >= match.to || match.from >= range.to) continue;
+      from = Math.min(from, range.from);
+      to = Math.max(to, range.to);
+      atom = true;
+    }
+  return { from, to, atom };
+}
 
 /**
  * Marks of the match's first character for the new text, without atomic marks: a mention's

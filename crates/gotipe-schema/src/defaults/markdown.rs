@@ -60,11 +60,15 @@ pub(super) fn extend(nodes: &mut HashMap<String, NodeSpec>, marks: &mut HashMap<
             .attrs
             .insert(key.into(), optional(AttrType::String));
     }
-    nodes
-        .get_mut("table")
-        .unwrap()
-        .attrs
-        .insert("align".into(), optional(AttrType::Array));
+    let table = &mut nodes.get_mut("table").unwrap().attrs;
+    table.insert("align".into(), optional(AttrType::Array));
+    // as the JS `Table` extension: the widths of the columns
+    table.insert("colWidths".into(), optional(AttrType::Array));
+    // as the JS `Table` extension: a cell's own alignment, which a merged table in Markdown keeps
+    for cell in ["tableCell", "tableHeader"] {
+        let attrs = &mut nodes.get_mut(cell).unwrap().attrs;
+        attrs.insert("align".into(), optional(AttrType::String));
+    }
     for node in nodes.values_mut() {
         node.attrs
             .insert("markdownDocumentSource".into(), optional(AttrType::String));

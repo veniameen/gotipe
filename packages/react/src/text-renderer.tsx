@@ -7,7 +7,10 @@ import type {
 } from "@gotipe/core";
 import { documentColorStyle, toSafeHref } from "@gotipe/core";
 import React from "react";
+import { AtomView, type TextUnit, textUnits } from "./content/atoms";
 import { type TextWidget, textDecorations } from "./content/decorations";
+
+const FONT_FACES = new Set(["system", "serif", "mono"]);
 
 export interface TextRendererProps {
   spans: TextSpanView[];
@@ -82,6 +85,26 @@ function renderMarks(text: React.ReactNode, marks: MarkView[], key: string): Rea
           </span>
         );
         break;
+      // `FontFamily` / `FontSize`: a family names a theme face (`--gt-font-*` via `data-font`), a
+      // size is a whole number of px within 6–96 — the HTML output writes the same values.
+      case "fontFamily":
+        if (FONT_FACES.has(mark.attrs?.family as string))
+          element = (
+            <span key={`${key}-font`} className="gotipe-font" data-font={mark.attrs?.family}>
+              {element}
+            </span>
+          );
+        break;
+      case "fontSize": {
+        const size = mark.attrs?.size;
+        if (typeof size === "number" && Number.isInteger(size) && size >= 6 && size <= 96)
+          element = (
+            <span key={`${key}-size`} style={{ fontSize: `${size}px` }}>
+              {element}
+            </span>
+          );
+        break;
+      }
       case "mdRaw":
         element = (
           <span key={`${key}-raw`} className="gotipe-md-raw" data-gotipe-md-raw="">
@@ -155,31 +178,39 @@ export function splitTextDecorations(decorations: Decoration[] | undefined): {
 
 export function TextRenderer({ spans, decorations }: TextRendererProps) {
   const { inline, widgets } = textDecorations(decorations);
+  // An atom (a run of spans with one atomic mark) is drawn whole, never split.
+  const units = textUnits(spans);
+  const draw = (unit: TextUnit, text: string, key: string) =>
+    renderMarks(unit.atom ? <AtomView atom={unit.atom} text={unit.text} /> : text, unit.marks, key);
 
-  // Fast path: no decorations — one node per span, as before.
+  // Fast path: no decorations — one node per span or atom.
   if (inline.length === 0 && widgets.length === 0) {
     return (
       <>
-        {spans.map((span, i) => (
-          <React.Fragment key={i}>{renderMarks(span.text, span.marks, String(i))}</React.Fragment>
+        {units.map((unit, i) => (
+          <React.Fragment key={i}>{draw(unit, unit.text, String(i))}</React.Fragment>
         ))}
       </>
     );
   }
 
-  const total = spans.reduce((n, s) => n + s.text.length, 0);
+  const total = units.reduce((n, s) => n + s.text.length, 0);
   const points = new Set<number>([0, total]);
+  const atoms: { from: number; to: number }[] = [];
   let pos = 0;
-  for (const span of spans) {
+  for (const unit of units) {
     points.add(pos);
-    pos += span.text.length;
+    if (unit.atom) atoms.push({ from: pos, to: pos + unit.text.length });
+    pos += unit.text.length;
     points.add(pos);
   }
+  // A point inside an atom moves to its end: decorations and widgets go around it.
+  const edge = (at: number) => atoms.find((a) => a.from < at && at < a.to)?.to ?? at;
   const ranges = inline
     .map((d) => ({
       d,
-      from: Math.max(0, Math.min(d.from, total)),
-      to: Math.max(0, Math.min(d.to, total)),
+      from: edge(Math.max(0, Math.min(d.from, total))),
+      to: edge(Math.max(0, Math.min(d.to, total))),
     }))
     .filter((r) => r.to > r.from);
   for (const r of ranges) {
@@ -188,7 +219,7 @@ export function TextRenderer({ spans, decorations }: TextRendererProps) {
   }
   const widgetsAt = new Map<number, TextWidget[]>();
   for (const w of widgets) {
-    const at = Math.max(0, Math.min(w.offset, total));
+    const at = edge(Math.max(0, Math.min(w.offset, total)));
     points.add(at);
     const list = widgetsAt.get(at);
     if (list) list.push(w);
@@ -200,17 +231,17 @@ export function TextRenderer({ spans, decorations }: TextRendererProps) {
   const sorted = [...points].sort((a, b) => a - b);
 
   const out: React.ReactNode[] = [];
-  const spanAt = (offset: number): TextSpanView | null => {
+  const spanAt = (offset: number): TextUnit | null => {
     let p = 0;
-    for (const span of spans) {
-      if (offset >= p && offset < p + span.text.length) return span;
-      p += span.text.length;
+    for (const unit of units) {
+      if (offset >= p && offset < p + unit.text.length) return unit;
+      p += unit.text.length;
     }
     return null;
   };
-  const spanStart = (span: TextSpanView): number => {
+  const spanStart = (span: TextUnit): number => {
     let p = 0;
-    for (const s of spans) {
+    for (const s of units) {
       if (s === span) return p;
       p += s.text.length;
     }
@@ -236,7 +267,7 @@ export function TextRenderer({ spans, decorations }: TextRendererProps) {
     if (!span) continue;
     const start = spanStart(span);
     const text = span.text.slice(a - start, b - start);
-    let node = renderMarks(text, span.marks, `s${a}`);
+    let node = draw(span, text, `s${a}`);
     const active = ranges
       .filter((r) => r.from <= a && r.to >= b)
       .sort((x, y) => x.d.key.localeCompare(y.d.key));

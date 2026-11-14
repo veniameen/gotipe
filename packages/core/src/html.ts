@@ -1,6 +1,8 @@
+import { fontFamilyFromCss, fontSizeFromCss, isTextDirection } from "./document/text-style";
 import { GoTipeError } from "./error";
 import { toSafeColor } from "./security/colors";
 import { toSafeHref, toSafeImageSrc } from "./security/urls";
+import { repairTable } from "./table/repair";
 import type { HtmlAtomReader, InlineAtomSupport } from "./types/atoms";
 import type { Block, Document, Mark, TextSpan } from "./types/block";
 
@@ -75,6 +77,20 @@ const textAtoms = (schema?: HtmlImportSchema): HtmlAtomReader => ({
 
 /** Atoms of the schema of the import in progress (`parseHtmlDocument` is synchronous). */
 let atoms = textAtoms();
+/** The schema of the import in progress; without one every mark and attribute is read. */
+let importSchema: HtmlImportSchema | undefined;
+const declaresMark = (type: string) => !importSchema || Object.hasOwn(importSchema.marks, type);
+function declaresAttr(nodeType: string, attr: string): boolean {
+  if (!importSchema) return true;
+  const node = importSchema.nodes[nodeType] as { attrs?: Record<string, unknown> } | undefined;
+  return !!node?.attrs && Object.hasOwn(node.attrs, attr);
+}
+
+/** `dir` (`ltr`, `rtl`, `auto`) of an element, when the block type declares it. */
+function direction(element: Element, nodeType: string): Block["attrs"] {
+  const value = (element.getAttribute("dir") ?? "").trim().toLowerCase();
+  return isTextDirection(value) && declaresAttr(nodeType, "dir") ? { dir: value } : {};
+}
 
 function appendSpan(spans: TextSpan[], text: string, marks: Mark[]) {
   if (!text) return;
@@ -131,6 +147,11 @@ function inline(nodes: Node[], inherited: Mark[] = []): TextSpan[] {
     const color = toSafeColor(node.style.color);
     const background = toSafeColor(node.style.backgroundColor);
     if (color) add("textColor", { color });
+    // Theme faces and whole-pixel sizes only (see `fontFamilyFromCss`/`fontSizeFromCss`).
+    const family = fontFamilyFromCss(node.style.fontFamily);
+    if (family && declaresMark("fontFamily")) add("fontFamily", { family });
+    const size = fontSizeFromCss(node.style.fontSize);
+    if (size !== null && declaresMark("fontSize")) add("fontSize", { size });
     if (background) add("highlight", { color: background });
     if (node.style.textDecoration.includes("underline")) add("underline");
     if (node.style.textDecoration.includes("line-through")) add("strikethrough");
@@ -172,12 +193,23 @@ function parseElement(element: HTMLElement): Block[] {
   const nodes = Array.from(element.childNodes);
   if (IGNORED.has(tag)) return [];
   if (/^h[1-6]$/.test(tag))
-    return [makeBlock("heading", inline(nodes), { level: Number(tag[1]), ...textAlign(element) })];
+    return [
+      makeBlock("heading", inline(nodes), {
+        level: Number(tag[1]),
+        ...direction(element, "heading"),
+        ...textAlign(element),
+      }),
+    ];
   if (tag === "p") {
     return element.querySelector("img") &&
       !atoms.inlineImages(Array.from(element.querySelectorAll("img")))
       ? parseNodes(nodes)
-      : [makeBlock("paragraph", inline(nodes), textAlign(element))];
+      : [
+          makeBlock("paragraph", inline(nodes), {
+            ...direction(element, "paragraph"),
+            ...textAlign(element),
+          }),
+        ];
   }
   if (tag === "hr") return [makeBlock("divider", null)];
   if (tag === "img")
@@ -223,9 +255,12 @@ function parseElement(element: HTMLElement): Block[] {
         makeBlock(
           task ? "todoItem" : "listItem",
           inline(ownNodes),
-          task
-            ? { checked: checkbox?.checked ?? child.getAttribute("data-checked") === "true" }
-            : {},
+          {
+            ...direction(child, task ? "todoItem" : "listItem"),
+            ...(task
+              ? { checked: checkbox?.checked ?? child.getAttribute("data-checked") === "true" }
+              : {}),
+          },
           nested.flatMap((node) => parseElement(node as HTMLElement)),
         ),
       );
@@ -236,35 +271,39 @@ function parseElement(element: HTMLElement): Block[] {
     const rows = Array.from(element.querySelectorAll("tr")).filter(
       (row) => row.closest("table") === element,
     );
+    // spans as browsers draw them: cut at the last row and before cells from above
     return [
-      makeBlock(
-        "table",
-        null,
-        {},
-        rows.map((row) =>
-          makeBlock(
-            "tableRow",
-            null,
-            {},
-            Array.from(row.children)
-              .filter((cell) => cell.tagName === "TD" || cell.tagName === "TH")
-              .map((cell) => {
-                const attrs: Block["attrs"] = {
-                  colspan: positiveInteger(cell.getAttribute("colspan")),
-                  rowspan: positiveInteger(cell.getAttribute("rowspan")),
-                };
-                const alignment =
-                  (cell as HTMLElement).style.textAlign || cell.getAttribute("align");
-                if (alignment === "left" || alignment === "center" || alignment === "right")
-                  attrs.align = alignment;
-                return makeBlock(
-                  cell.tagName === "TH" ? "tableHeader" : "tableCell",
-                  inline(Array.from(cell.childNodes)),
-                  attrs,
-                );
-              }),
+      repairTable(
+        makeBlock(
+          "table",
+          null,
+          {},
+          rows.map((row) =>
+            makeBlock(
+              "tableRow",
+              null,
+              {},
+              Array.from(row.children)
+                .filter((cell) => cell.tagName === "TD" || cell.tagName === "TH")
+                .map((cell) => {
+                  const attrs: Block["attrs"] = {
+                    colspan: positiveInteger(cell.getAttribute("colspan")),
+                    rowspan: positiveInteger(cell.getAttribute("rowspan")),
+                  };
+                  const alignment =
+                    (cell as HTMLElement).style.textAlign || cell.getAttribute("align");
+                  if (alignment === "left" || alignment === "center" || alignment === "right")
+                    attrs.align = alignment;
+                  return makeBlock(
+                    cell.tagName === "TH" ? "tableHeader" : "tableCell",
+                    inline(Array.from(cell.childNodes)),
+                    attrs,
+                  );
+                }),
+            ),
           ),
         ),
+        { fill: false },
       ),
     ];
   }
@@ -321,11 +360,17 @@ export function parseHtmlDocument(html: string, schema?: HtmlImportSchema): Docu
   const document = new DOMParser().parseFromString(html, "text/html");
   const support = schema?.atoms;
   atoms = schema && support ? support.readHtml(schema) : textAtoms(schema);
+  // An empty schema validates nothing (engine/validate.ts): it is read as no schema.
+  importSchema =
+    schema && (Object.keys(schema.nodes).length || Object.keys(schema.marks).length)
+      ? schema
+      : undefined;
   let blocks: Block[];
   try {
     blocks = parseNodes(Array.from(document.body.childNodes));
   } finally {
     atoms = textAtoms();
+    importSchema = undefined;
   }
   return { version: 1, blocks: blocks.length ? blocks : [makeBlock("paragraph", [])] };
 }

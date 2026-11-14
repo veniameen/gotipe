@@ -7,6 +7,7 @@ pub mod json;
 #[cfg(any(feature = "pdf", feature = "docx"))]
 mod links;
 pub mod plaintext;
+mod table_span;
 
 #[cfg(feature = "html")]
 pub mod html;

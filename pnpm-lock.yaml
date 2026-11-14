@@ -176,6 +176,9 @@ importers:
       '@gotipe/theme':
         specifier: workspace:*
         version: link:../theme
+      '@gotipe/versions':
+        specifier: workspace:*
+        version: link:../versions
       '@types/react':
         specifier: ^19.3.0
         version: 19.3.0

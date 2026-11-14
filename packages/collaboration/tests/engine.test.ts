@@ -97,7 +97,9 @@ describe("stored records", () => {
       { protocol: "gotipe.crdt/1", base: baseline, operations: list.operations },
     ];
     const oneByOne = replica("one-by-one");
-    expect(() => oneByOne.receive_update(encodeJSON(rows[0]))).toThrow(/TopLevelNotAllowed/);
+    // Alone, the item has no list yet: it waits unprojected instead of reaching the root.
+    oneByOne.receive_update(encodeJSON(rows[0]));
+    expect(blocks(oneByOne).some((b: { id: string }) => b.id === "l2")).toBe(false);
     const loaded = replica("loaded");
     applyCollaborationState(editor(loaded), { baseline, updates: rows }, "loaded");
     expect(blocks(loaded)).toEqual(blocks(author));

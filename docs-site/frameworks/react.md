@@ -6,8 +6,9 @@ license: MIT
 ---
 
 `@gotipe/react` creates and destroys the editor with your component, subscribes to its
-state and renders the document as React elements, including the table controls and the
-image and file UI. It ships no CSS. The ready [BlockEditor](/docs/ui/block-editor) and
+state and renders the document as React elements, including the table controls. Images
+and files are shown read-only; their editing UI is the separate `@gotipe/react/media`
+entry. It ships no CSS. The ready [BlockEditor](/docs/ui/block-editor) and
 [PageEditor](/docs/ui/page-editor) are built on it.
 
 ## Install
@@ -54,6 +55,8 @@ headless
 ```
 
 `onMouseDown` with `preventDefault` keeps the selection in the document while you click.
+Images and files in this editor are read-only until you provide `@gotipe/react/media`; see
+[Image and file editing](#image-and-file-editing).
 
 ## Hooks
 
@@ -140,9 +143,35 @@ by default they come from the `placeholder.*` strings. `blockRenderer` is an old
 API; prefer `blockViews`.
 
 The building blocks of the default views are exported for your own views: `TableBlock`,
-`TableColumnResizeHandle`, `CodeBlock`, `ImageBlock`, `FileBlock`, `ToggleBlock`,
-`CalloutBlock`, `TextRenderer` and `FloatingPortal`. `useResolvedAsset` and
+`TableColumnResizeHandle`, `CodeBlock`, `ToggleBlock`, `CalloutBlock`, `TextRenderer`
+and `FloatingPortal`; `ImageBlock` and `FileBlock` come from `@gotipe/react/media`. `useResolvedAsset` and
 `saveAssetWithHost` go through the [host](/docs/concepts/host) asset callbacks.
+
+## Image and file editing
+
+`EditorContent` shows images and files as the reader sees them: the picture with its
+width and caption, the failed state, and a file card whose name opens or downloads the
+file. Editing them (upload, link, resize, crop, caption, alt text, preview and the image
+actions menu) lives in `@gotipe/react/media`, so an app that only displays documents does
+not load it. Turn it on with `MediaBlocksContext`:
+
+```tsx title="MediaEditor.tsx"
+import type { GoTipeEditor } from "@gotipe/core";
+import { Editor, MediaBlocksContext } from "@gotipe/react";
+import { mediaBlocks } from "@gotipe/react/media";
+
+export function MediaEditor({ editor }: { editor: GoTipeEditor | null }) {
+  return (
+    <MediaBlocksContext.Provider value={mediaBlocks}>
+      <Editor editor={editor} />
+    </MediaBlocksContext.Provider>
+  );
+}
+```
+
+`BlockEditor` and `PageEditor` provide it themselves. `@gotipe/react/media` also exports
+`ImageBlock` and `FileBlock` for your own block views; `MediaBlocks` and `MediaBlockProps`
+type a replacement pair.
 
 ## Server rendering
 

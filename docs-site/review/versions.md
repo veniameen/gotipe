@@ -1,14 +1,14 @@
 ---
 title: Versions
-description: Save named and automatic snapshots with VersionsManager, compare them block by block, restore one as an undoable change, and decide where versions are stored.
-packages: ["@gotipe/versions"]
-license: MIT
+description: Save named and automatic snapshots with VersionsManager, compare them block by block, restore one as an undoable change, show them in the VersionHistory panel, and decide where versions are stored.
+packages: ["@gotipe/versions", "@gotipe/block-editor"]
 ---
 
 `VersionsManager` saves snapshots of the document while it is open, by name or on a timer.
 You can compare two snapshots block by block and restore one; a restore is an ordinary edit
-that undo reverts. Snapshots live in memory, so your app or GoTipe Cloud stores them. The
-package has no history UI; the demo builds one from the public API.
+that undo reverts. Snapshots live in memory, so your app or GoTipe Cloud stores them.
+`@gotipe/versions` is MIT and has no UI; the history panel, `VersionHistory`, is part of the
+commercial `@gotipe/block-editor`.
 
 ```demo
 versions
@@ -89,16 +89,73 @@ whole document as public JSON.
 | `added` | Only in `b`. |
 | `removed` | Only in `a`. |
 | `modified` | In both, with a different type, attributes or content. A change inside a child is reported on the child only. |
-| `moved` | In both, with a different parent or a different index under the same parent. |
+| `moved` | In both, with a different parent, or out of order among the siblings both documents share. Inserting or removing a sibling moves nothing. |
 
-The result holds block IDs. Showing the text before and after is up to you; the demo prints
-the old and new text of each changed block.
+The result holds block IDs. For the text, `diffText(before, after)` compares two texts word by
+word and returns runs of `equal`, `delete` and `insert`; a no-break space keeps «10 %» one
+unit. `countWordChanges(a, b)` counts the words added and removed between two documents, and
+`blockText(block)` is a block's own text.
 
 ## Restore
 
 `restoreVersion(id)` sets the snapshot as the document in one undoable step and keeps the
 caret where its block still exists. The version list stays as it was, and later versions
 are kept.
+
+## History panel
+
+`VersionHistory` (GoTipe Atlas, frame 30) stands beside the page. It lists versions by day —
+name, words added and removed, the author's initials and the time — and leads with the page
+as it is now. Choosing a version shows the page compared with it: a rule in the margin marks a
+block added (green), removed (red, struck through) or changed (blue), and a changed text shows
+the words that went and came. **Restore** puts the version back as one undo step and answers
+with a toast whose **Undo** takes it back. In a container narrower than 640 px the list and the
+comparison are two screens, the comparison with a back arrow.
+
+```tsx title="history.tsx"
+import { PageEditor, VersionHistory } from "@gotipe/block-editor";
+import { VersionsManager } from "@gotipe/versions";
+
+function Page() {
+  const [editor, setEditor] = useState<GoTipeEditor | null>(null);
+  const [open, setOpen] = useState(false);
+  const manager = useMemo(() => (editor ? new VersionsManager(editor) : null), [editor]);
+  return (
+    <VersionHistory
+      editor={editor}
+      source={manager ?? undefined}
+      user={{ name: "Мария Лебедева" }}
+      open={open}
+      onClose={() => setOpen(false)}
+    >
+      <PageEditor markdown={markdown} onReady={setEditor} />
+    </VersionHistory>
+  );
+}
+```
+
+| Prop | Type | Description |
+| --- | --- | --- |
+| `editor` | `GoTipeEditor \| null` | The live page. While it is `null` only the page is shown. |
+| `source` | `VersionHistorySource` | A `VersionsManager` or the same shape: `getVersions`, `subscribe`, optional `createVersion` and `restoreVersion`. |
+| `versions` | `HistoryVersion[]` | Versions your app owns, in any order; used instead of `source`. |
+| `user` | `{ name, person? }` | Who works on the page: the row of the unsaved page and the entries of a restore are theirs. `person` (1–3) picks the avatar colour. |
+| `onRestore` | `(version, { unsaved, names }) => void \| Promise` | Called after the version is on the page. `unsaved` is the page before the restore when no saved version held it. A rejection undoes the restore and shows an error. |
+| `open` | `boolean` | Default `true`. Closed, only the page stays, mounted as it was. |
+| `onClose` | `() => void` | The close button and Escape. Focus returns to the control that opened the panel. |
+| `loading`, `error`, `onRetry` | | The panel's loading and error states; `onRetry` adds a **Try again** button. |
+| `children` | `ReactNode` | The live page. It stays mounted while a version is compared. |
+
+A `HistoryVersion` is a `Version` with optional `auto` (listed as **Auto-save** with its author)
+and `person`. A `VersionsManager` auto-save, created by `system`, is listed as **Auto-save**
+without an author.
+
+When a version is restored from a `source`, the panel first saves the unsaved page as
+**Before restore**, then the result as **Back to “…”**, which leads the list. With `versions`,
+your app saves them in `onRestore`; `names` holds both names in the panel's language.
+
+The list is a listbox: the arrows, Home and End move along it, Enter chooses. Strings come
+from `@gotipe/i18n` (`history.*`). Styles are in `@gotipe/theme` (`theme/history.css`).
 
 ## Store versions
 
@@ -119,9 +176,8 @@ are kept.
 
 - Versions live in memory and disappear with the manager.
 - Every version holds a full copy of the document.
-- `moved` compares indexes, so the siblings after an inserted or removed block are
-  reported as moved too.
-- There is no packaged version history UI.
+- The comparison shows a changed block's text without its marks; a change of marks alone
+  marks the block as changed.
 
 ## Related
 

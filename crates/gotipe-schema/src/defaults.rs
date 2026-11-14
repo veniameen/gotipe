@@ -20,6 +20,15 @@ fn text_align() -> AttrSpec {
     }
 }
 
+/// Base direction of a paragraph, heading or list item, as the `TextDirection` extension sets it.
+fn text_direction() -> AttrSpec {
+    AttrSpec {
+        attr_type: AttrType::Enum(["ltr", "rtl", "auto"].map(String::from).to_vec()),
+        default: None,
+        required: false,
+    }
+}
+
 /// Create the standard schema with Notion-like block types
 pub fn default_block_editor() -> Schema {
     let mut nodes = HashMap::new();
@@ -525,6 +534,12 @@ pub fn default_block_editor() -> Schema {
         },
     );
 
+    // Before the Markdown extension: its `todoItem` is a copy of `listItem`.
+    for kind in ["paragraph", "heading", "listItem"] {
+        if let Some(node) = nodes.get_mut(kind) {
+            node.attrs.insert("dir".into(), text_direction());
+        }
+    }
     let mut marks = marks::default_marks();
     markdown::extend(&mut nodes, &mut marks);
 

@@ -137,7 +137,9 @@ try {
   const list = read(author.get_local_update_after(parts.at(-1).operations.at(-1).id.lamport, 0));
   author.apply(tr([{InsertBlock:{parent_id:'l',index:1,block:block('l2','listItem',{},'two')}}]));
   const item = read(author.get_local_update_after(list.operations.at(-1).id.lamport, 0));
-  assert.throws(() => bootstrap.receive_update(envelope(item.operations)), /TopLevelNotAllowed/);
+  // The item alone has no list yet: it waits unprojected instead of surfacing at the root.
+  bootstrap.receive_update(envelope(item.operations));
+  assert.ok(!blocks(bootstrap).some(b => b.id === 'l2'));
   bootstrap.receive_update(envelope([...item.operations, ...list.operations, ...parts.flatMap(part => part.operations)]));
   assert.deepEqual(blocks(bootstrap), blocks(author));
   console.log('WASM integrity: transaction-bounded frames, continued parts and order-free stored records passed.');

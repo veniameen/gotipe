@@ -1,0 +1,50 @@
+/* The counter — Atlas frame 26: a quiet line under the document, words and characters. Near a
+   host's limit the characters take the warning tone, past it the danger tone with the reason in a
+   tooltip; the text that does not fit is tinted where it stands. */
+
+.gotipe-content:where(:not(.gotipe-page *)):has(~ .gotipe-status) {
+  padding-bottom: 0;
+}
+.gotipe-status {
+  box-sizing: border-box;
+  max-width: calc(var(--gt-page-width) + 2 * var(--gt-page-pad-x));
+  margin: 0 auto;
+  padding: var(--gt-status-gap) var(--gt-page-pad-x) var(--gt-page-pad-bottom);
+  color: var(--gt-text-3);
+  font-family: var(--gt-font-ui);
+  font-size: var(--gt-ui-small);
+  line-height: var(--gt-ui-small-leading);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: normal;
+}
+.gotipe-status-part {
+  position: relative;
+  white-space: nowrap;
+}
+.gotipe-status-part.is-near {
+  color: var(--gt-warning);
+}
+.gotipe-status-part.is-over {
+  color: var(--gt-danger);
+}
+.gotipe-status-part:focus-visible {
+  border-radius: var(--gt-radius-inline);
+  outline: var(--gt-focus-width) solid var(--gt-focus);
+  outline-offset: var(--gt-focus-gap);
+}
+/* the reason of the limit: the tooltip above the count, on hover and on keyboard focus */
+.gotipe-status-tip {
+  top: auto;
+  bottom: calc(100% + var(--gt-overlay-gap));
+  width: max-content;
+  white-space: normal;
+}
+.gotipe-status-part:is(:hover, :focus-visible) > .gotipe-status-tip {
+  display: flex;
+  opacity: 1;
+}
+
+/* text past the limit */
+.gotipe-over-limit {
+  background: var(--gt-over-limit);
+}

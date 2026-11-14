@@ -1,7 +1,8 @@
 import type { BlockView, GoTipeEditor, ViewState } from "@gotipe/core";
-import { useEditorState, useGoTipeI18n } from "@gotipe/react";
+import { useEditorState } from "@gotipe/react";
 import type React from "react";
 import { useEffect, useRef, useState } from "react";
+import { useBlockEditorI18n } from "../i18n/strings";
 
 /** A heading of the page as its outline shows it. */
 export interface OutlineHeading {
@@ -109,7 +110,7 @@ function pin(pinned: { current: Pin }, id: string) {
  * headings draw nothing; a narrow container hides it through `--gt-outline-display`.
  */
 export function DocsOutline({ editor }: { editor: GoTipeEditor }) {
-  const i18n = useGoTipeI18n();
+  const i18n = useBlockEditorI18n();
   const headings = useEditorState(editor, selectHeadings, sameHeadings) ?? [];
   const nav = useRef<HTMLElement>(null);
   const pinned = useRef<Pin>(null);

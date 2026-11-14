@@ -74,6 +74,17 @@ export type { SavedAsset } from "./assets";
 export type { GoTipeErrorCode } from "./error";
 export { editTable } from "./tables";
 export type { TableEdit } from "./tables";
+export {
+  tableGrid,
+  cellRange,
+  rangeCells,
+  headerRows,
+  columnEdges,
+  cellSpan,
+} from "./table/grid";
+export type { TableGrid, GridCell, CellPosition, CellRange, TableNode } from "./table/grid";
+export { normalizeTableGeometry, repairTable } from "./table/repair";
+export type { TableRepairOptions } from "./table/repair";
 export { copySelection } from "./clipboard/selection";
 export type { ClipboardPayload } from "./clipboard/selection";
 

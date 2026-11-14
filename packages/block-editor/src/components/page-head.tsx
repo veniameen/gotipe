@@ -1,6 +1,6 @@
-import { useGoTipeI18n } from "@gotipe/react";
 import type React from "react";
 import { useEffect, useRef } from "react";
+import { useBlockEditorI18n } from "../i18n/strings";
 import { PageIcon } from "../page/icons";
 import { Tip } from "./formatting/tip";
 
@@ -39,7 +39,7 @@ export function PageHead({
   labels,
 }: PageHeadProps) {
   const titleRef = useRef<HTMLHeadingElement>(null);
-  const i18n = useGoTipeI18n();
+  const i18n = useBlockEditorI18n();
   const hint = placeholder ?? i18n.t("page.titlePlaceholder");
   const editable = !!onTitleChange && !readOnly;
   // The title is uncontrolled while it has focus: React never rewrites text under the caret.

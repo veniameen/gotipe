@@ -1,4 +1,15 @@
-import { type BlockView, type GoTipeEditor, GoTipeError, editTable } from "@gotipe/core";
+import {
+  type BlockView,
+  type CellPosition,
+  type CellRange,
+  type GoTipeEditor,
+  GoTipeError,
+  type TableGrid,
+  cellRange,
+  columnEdges,
+  editTable,
+  rangeCells,
+} from "@gotipe/core";
 import {
   type ReactNode,
   type RefObject,
@@ -6,6 +17,7 @@ import {
   useCallback,
   useContext,
   useEffect,
+  useMemo,
   useRef,
   useState,
 } from "react";
@@ -13,30 +25,75 @@ import { useGoTipeI18n } from "../i18n-context";
 import { usePhantom } from "./context";
 import { ContentIcon } from "./icons";
 
-interface TableLayout {
+/** Cells selected together, from the cell where the selection began to the one it reached. */
+export interface SelectedTableCells {
+  anchor: CellPosition;
+  head: CellPosition;
+}
+export interface TableLayout {
   table: BlockView;
   editor: GoTipeEditor;
   readOnly: boolean;
+  /** The table laid out as HTML does: spans, and the cell over every position. */
+  grid: TableGrid<BlockView>;
+  /** The column each cell carries the width handle of: the topmost cell ending there. */
+  edges: Map<string, number>;
   widths: number[];
   /** The scrolling area, so a new column can be brought into view. */
   scroll: RefObject<HTMLDivElement | null>;
+  /** Selected cells: the rectangle reaches over every merged cell it cuts. */
+  selection: SelectedTableCells | null;
+  range: CellRange | null;
+  select(selection: SelectedTableCells | null): void;
   preview(column: number, width: number | null): void;
   report(error: unknown): void;
 }
 const Context = createContext<TableLayout | null>(null);
 
+/**
+ * A host's reason not to merge cells in a table, or null to allow it: a Markdown page refuses a
+ * merge that its format could not keep. The menus show the reason; the merge key does nothing.
+ */
+export type TableMergeGuard = (layout: TableLayout) => string | null;
+const GuardContext = createContext<TableMergeGuard | null>(null);
+export const TableMergeGuardProvider = GuardContext.Provider;
+export function useTableMergeGuard(): TableMergeGuard | null {
+  return useContext(GuardContext);
+}
+
+/** The layout of the table around a cell, for its views and menus; null outside a table. */
+export function useTableLayout(): TableLayout | null {
+  return useContext(Context);
+}
+
 export function TableLayoutProvider({
   block,
+  grid,
   editor,
   children,
-}: { block: BlockView; editor: GoTipeEditor; children: ReactNode }) {
+}: { block: BlockView; grid: TableGrid<BlockView>; editor: GoTipeEditor; children: ReactNode }) {
   const [draft, setDraft] = useState<{ column: number; width: number } | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [selection, select] = useState<SelectedTableCells | null>(null);
   const scroll = useRef<HTMLDivElement | null>(null);
-  const widths = Array.from({ length: block.children[0]?.children.length ?? 0 }, (_, column) => {
-    const value = Array.isArray(block.attrs.colWidths) ? block.attrs.colWidths[column] : null;
-    return draft?.column === column ? draft.width : typeof value === "number" ? value : 160;
-  });
+  const stored = block.attrs.colWidths;
+  const widths = useMemo(
+    () =>
+      Array.from({ length: grid.columns }, (_, column) => {
+        const value = Array.isArray(stored) ? stored[column] : null;
+        return draft?.column === column ? draft.width : typeof value === "number" ? value : 160;
+      }),
+    [grid.columns, stored, draft],
+  );
+  const edges = useMemo(() => columnEdges(grid as TableGrid), [grid]);
+  // a structural change ends a selection of cells: its positions name other cells now
+  const shape = grid.cells.map((cell) => `${cell.node.id}@${cell.row},${cell.column}`).join(" ");
+  // biome-ignore lint/correctness/useExhaustiveDependencies: the shape is the trigger
+  useEffect(() => select(null), [shape]);
+  const range = useMemo(
+    () => (selection ? cellRange(grid as TableGrid, selection.anchor, selection.head) : null),
+    [grid, selection],
+  );
   const preview = useCallback(
     (column: number, width: number | null) => setDraft(width === null ? null : { column, width }),
     [],
@@ -56,9 +113,33 @@ export function TableLayoutProvider({
     [editor],
   );
   const readOnly = usePhantom() || !editor.isEditable;
+  // one value per change of the table, so cells and handles re-render only with it
+  const value = useMemo(
+    () => ({
+      table: block,
+      editor,
+      readOnly,
+      grid,
+      edges,
+      widths,
+      scroll,
+      selection,
+      range,
+      select,
+      preview,
+      report,
+    }),
+    [block, editor, readOnly, grid, edges, widths, selection, range, preview, report],
+  );
+  const selected = range ? rangeCells(grid as TableGrid, range).length : 0;
+  const i18n = useGoTipeI18n();
   return (
-    <Context.Provider value={{ table: block, editor, readOnly, widths, scroll, preview, report }}>
+    <Context.Provider value={value}>
       {children}
+      {/* cells selected together, said once for screen readers */}
+      <p className="gotipe-sr-only" contentEditable={false} aria-live="polite">
+        {selected > 1 ? i18n.t("table.cellsSelected", { count: selected }) : ""}
+      </p>
       {/* the editor's toast shows the error; this line is for screen readers only */}
       {error && (
         <p className="gotipe-sr-only" contentEditable={false} role="alert">
@@ -74,7 +155,7 @@ export function TableColumns() {
   return layout ? (
     <colgroup>
       {layout.widths.map((width, column) => (
-        <col key={layout.table.children[0]?.children[column]?.id ?? column} style={{ width }} />
+        <col key={column} style={{ width }} />
       ))}
     </colgroup>
   ) : null;
@@ -126,13 +207,12 @@ export function TableToolbar() {
   const layout = useContext(Context);
   const i18n = useGoTipeI18n();
   if (!layout || layout.readOnly) return null;
-  const { editor, table, report, scroll } = layout;
+  const { editor, table, report, scroll, grid } = layout;
   const apply = (type: "insertRow" | "insertColumn") => {
     try {
       editTable(editor, table.id, {
         type,
-        index:
-          type === "insertRow" ? table.children.length : (table.children[0]?.children.length ?? 0),
+        index: type === "insertRow" ? grid.rows : grid.columns,
       });
     } catch (error) {
       report(error);
@@ -174,11 +254,15 @@ export function TableToolbar() {
   );
 }
 
-/** One keyboard/pointer handle per first-row cell; a drag commits one undo step. */
+/**
+ * One keyboard/pointer handle per column, in the topmost cell whose right edge is the column's:
+ * a header over two columns hands the first column's handle to the cell under it. A drag commits
+ * one undo step.
+ */
 export function TableColumnResizeHandle({ cellId }: { cellId: string }) {
   const layout = useContext(Context);
   const i18n = useGoTipeI18n();
-  const column = layout?.table.children[0]?.children.findIndex((cell) => cell.id === cellId) ?? -1;
+  const column = layout?.edges.get(cellId) ?? -1;
   const drag = useRef<{ x: number; width: number; next: number; pointerId: number } | null>(null);
   const [active, setActive] = useState(false);
   const latest = useRef(layout);
@@ -245,10 +329,9 @@ export function TableColumnResizeHandle({ cellId }: { cellId: string }) {
         if (event.button !== 0) return;
         event.preventDefault();
         event.stopPropagation();
-        const width =
-          event.currentTarget.parentElement?.getBoundingClientRect().width ??
-          layout.widths[column] ??
-          160;
+        // the column's own width: a merged cell is wider than the column it resizes
+        const col = event.currentTarget.closest("table")?.querySelectorAll("col")[column];
+        const width = col?.getBoundingClientRect().width || layout.widths[column] || 160;
         drag.current = { x: event.clientX, width, next: width, pointerId: event.pointerId };
         setActive(true);
       }}

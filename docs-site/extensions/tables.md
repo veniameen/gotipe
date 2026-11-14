@@ -1,6 +1,6 @@
 ---
 title: Tables
-description: Table nodes with a header row, column widths and alignment, and atomic structural edits through editTable.
+description: Table nodes with header rows, column widths and alignment, merged cells, and atomic structural edits through editTable.
 packages: ["@gotipe/core", "@gotipe/block-editor"]
 ---
 
@@ -23,7 +23,9 @@ The `Table` extension is in `DefaultPreset`, `FullPreset` and `PageEditor`. It c
 | | | `rowspan` | `number` | `1` | Rows the cell spans. |
 | | | `align` | `string` | — | Alignment of this cell. |
 
-A header row is a first row made of `tableHeader` cells.
+A header row is a first row made of `tableHeader` cells. Several rows of header cells at the top are all header rows.
+
+Spans follow HTML: a cell takes `colspan` columns and `rowspan` rows from the first free position of its row, and the positions it covers have **no cell of their own** in the rows and columns after it. A span is a whole number from 1 to 1000; anything else (2.7, 0, a negative, above 1000) counts as 1. Every reader and writer uses this rule: the grid, HTML, Markdown, PDF and DOCX. A stored table is laid out as browsers draw it: a cell over rows stops at the last row, and a cell over columns stops before a position a cell from above covers. Such a table stays editable, and its next edit writes the spans as drawn.
 
 ## Insert a table
 
@@ -62,13 +64,23 @@ editTable(editor, tableId, { type: "deleteRow", index: 2 });
 
 | Action | Description |
 | --- | --- |
-| `{ type: "insertRow", index }` | Inserts an empty row of plain cells at `index` (0 to the row count). |
-| `{ type: "deleteRow", index }` | Deletes a row. Deleting the only row deletes the table. |
-| `{ type: "insertColumn", index }` | Inserts a column at `index` (0 to the column count) in every row; a header row gets a header cell. The new column is 160 px wide and unaligned. |
-| `{ type: "deleteColumn", index }` | Deletes a column from every row, with its width and alignment. Deleting the only column deletes the table. |
+| `{ type: "insertRow", index }` | Inserts an empty row of plain cells at `index` (0 to the row count). A row never goes above the header rows: index 0 in a table with a header lands under them. A cell over rows that the new row passes through grows by one row. |
+| `{ type: "deleteRow", index, count? }` | Deletes `count` rows (default 1) from `index` in one step. A cell over several rows shrinks; if its top row goes, the cell moves down to the next row with its text and ID. Deleting every row deletes the table. |
+| `{ type: "insertColumn", index }` | Inserts a column at `index` (0 to the column count) in every row; a header row gets a header cell. A cell over several columns that the new column passes through grows by one column. The new column is 160 px wide and unaligned. |
+| `{ type: "deleteColumn", index, count? }` | Deletes `count` columns (default 1) from `index` in one step, with their widths and alignment. A cell over several columns shrinks. Deleting every column deletes the table. |
 | `{ type: "resizeColumn", index, width }` | Sets a column width. The width is rounded and kept between 64 and 1600 px. |
+| `{ type: "mergeCells", from, to }` | Merges the rectangle between two grid positions (`{ row, column }`, counted from 0) into its top-left cell. The other cells' text follows the top-left cell's, each on a new line (a line break, `\n`), with its marks. The caret goes to the end of the merged cell. |
+| `{ type: "splitCell", row, column }` | Splits the merged cell over this grid position back into one cell per position. The text stays in the top-left cell; the new cells are empty and of the same kind (header or body). |
 
-`editTable` checks everything before it writes. It throws a `GoTipeError` with the code `VALIDATION_ERROR` when the table no longer exists, the index is out of range, a width is not finite, a row lacks the cell to delete, or the table has merged cells.
+`editTable` plans the whole edit on a copy of the table's grid and checks it before it writes: no two cells may overlap, no cell may reach past the last row, every cell must stay in its column, and after a structural edit every position has a cell. A structural edit on a table with short rows fills them with empty cells first. The staged result is compared with the plan, so the JS and WASM engines write the same table, and every edit is one undo step.
+
+It throws a `GoTipeError` with the code `VALIDATION_ERROR` when the table no longer exists, an index or position is out of range or not a whole number, a width is not finite, a merge range cuts through a merged cell or holds a single cell, or a split targets a cell that is not merged. Nothing is written then.
+
+The Rust core has the same edits as `gotipe_core::table::edit_table`, with the same JSON form of the action. The TypeScript planner (applied by the JS and the WASM engine) and the Rust planner run the shared cases in `crates/gotipe-core/tests/fixtures/table-edits.json`.
+
+### Repair
+
+`repairTable(table, { fill?, createId? })` returns a table with a valid grid: spans as drawn, and with `fill` (the default) an empty cell in every position that has none. HTML import and copying part of a table use it without `fill`. `normalizeTableGeometry(document, { createId? })` returns the steps that repair every table of a document (none when all are valid); collaboration runs it after a remote update, as it repairs inline atoms.
 
 ## Widths and alignment
 
@@ -105,19 +117,28 @@ setColumnType(editor, tableId, 2, "number", { yes: "yes", no: "no" });
 | Shift+Tab | Previous cell, with its text selected |
 | Enter | Cell below; nothing in the last row |
 | Shift+Enter | Line break inside the cell |
+| Shift+Left / Right / Up / Down at a cell's edge | Selects cells together, then extends the selection by a cell |
+| Delete / Backspace with cells selected | Empties the selected cells, in one step |
+| Escape with cells selected | Ends the cell selection |
+| ⌘⇧M (Ctrl+Shift+M) | Merges the selected cells; in a merged cell, splits it |
 | Left / Right on a column resize handle | Narrow or widen the column by 16 px |
 | Escape during a resize drag | Cancel the resize |
 
-Tab in the last cell does not add a row.
+Tab in the last cell does not add a row. Tab skips the positions a merged cell covers: they have no cell of their own.
 
 ## In the editor UI
 
 `BlockEditor` and `PageEditor` draw the table in a horizontally scrolling area, with:
 
 - a bar under the table that adds a row and a bar on its right that adds a column;
-- a resize handle on every column of the first row; a drag commits one undo step;
-- a menu on each header cell: column type, add a row, add a column, delete the column;
-- a menu on the first cell of each body row: add a row above or below, delete the row.
+- a resize handle on every column, in the topmost cell whose right edge is the column's (under a header over two columns, the cell below carries the first column's handle); a drag commits one undo step;
+- a menu on each header cell: column type, cells, add a row, add a column, delete the column. A header over several columns has no type, and its delete takes all its columns;
+- a menu on the first cell of each body row: add a row above or below, cells, delete the row;
+- a selection of cells: drag across cells, Shift+click a cell, or Shift+arrows from the edge of a cell's text. Selected cells take the selection colour.
+
+The **Cells** group of both menus has **Merge cells**, available while two or more cells are selected, and **Split cell**, available when the menu's cell or the caret's cell is merged. An unavailable row is paler and says why in its tooltip; both rows show ⌘⇧M. Screen readers hear how many cells are selected. A host can refuse merging in a table with `TableMergeGuardProvider` from `@gotipe/react`: `PageEditor` refuses it where Markdown could not keep the merged table (see below), and the menu says so.
+
+All renderers draw the spans: `EditorContent` of `@gotipe/react` (MIT), the `BlockEditor`/`PageEditor` views and the Vue renderer. Header rows and every row a header reaches into go in `<thead>`, and one `<col>` per grid column carries the width. `@gotipe/react` exports `useTableLayout()` (the grid, the selected cells and `select()`) and `useTableCell(id)` for custom cell views.
 
 A table without a header row has no column menus.
 
@@ -131,12 +152,20 @@ A table is a GFM table. The first row is always written as the header row, and `
 | core | 0.1.0 | yes |
 ```
 
-Column widths, cell spans and per-cell `align` are not part of GFM and are not written.
+Column widths are not part of GFM and are not written. A table with merged cells has no GFM form: it is written as an HTML `<table>` block, one cell per line, with its spans, header cells, alignment and inline formatting (bold, italic, underline, strikethrough, code, sub/superscript, links, text colour and highlight). Reading that HTML back gives the same table again, so write → read → write keeps the bytes. Other HTML stays a raw block, byte for byte.
+
+What an HTML table cannot hold keeps only its text: mentions, inline formulas, custom emoji, inline images, font face and size, link titles. A merged table inside a list or quote reads back as raw HTML. `PageEditor` therefore offers **Merge cells** only for a top-level table without such marks.
 
 ## Merged cells
 
-> [!NOTE]
-> Merged cells (`colspan` or `rowspan` above 1) can enter a document from pasted HTML, an HTML `content` string or a migrated document. They are kept, but structural edits are blocked: `editTable` throws "Unmerge table cells before changing its structure", and there is no command that unmerges cells. The React views draw such cells unmerged, Markdown drops the spans, and DOCX export fails on row spans. HTML and PDF export keep them.
+```ts title="merge.ts"
+editTable(editor, tableId, { type: "mergeCells", from: { row: 1, column: 0 }, to: { row: 2, column: 1 } });
+editTable(editor, tableId, { type: "splitCell", row: 1, column: 0 });
+```
+
+Merged cells may also come from pasted HTML, an HTML `content` string or a migrated document. Every structural edit keeps them valid (see the table of actions). Export keeps the spans: HTML as `colspan`/`rowspan`, PDF as one box over the merged area, DOCX as `gridSpan` and vertical merges (with filler cells for short rows), Markdown as an HTML table that reads back as the table. Two replicas that merge and split cells at the same time converge, and an undo on one reaches the other.
+
+To read the layout, `tableGrid(table)` from `@gotipe/core` returns the grid: `rows`, `columns`, `cells` with their positions and spans, `at(row, column)` and `find(id)`. `cellRange(grid, a, b)` widens a rectangle over every merged cell it cuts, which is what a merge needs.
 
 ## Related
 

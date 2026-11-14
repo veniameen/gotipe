@@ -1,11 +1,11 @@
-import { useGoTipeI18n } from "@gotipe/react";
 import { type ThemeMode, getTheme, onThemeChange, setTheme } from "@gotipe/theme";
 import { useCallback, useEffect, useState } from "react";
+import { useBlockEditorI18n } from "../i18n/strings";
 import { PageIcon } from "../page/icons";
 
 export function ThemeToggle() {
   const [mode, setMode] = useState<ThemeMode>(() => getTheme().mode);
-  const i18n = useGoTipeI18n();
+  const i18n = useBlockEditorI18n();
 
   useEffect(() => {
     return onThemeChange((newMode) => setMode(newMode));

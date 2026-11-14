@@ -1,7 +1,7 @@
 import { flattenBlocks } from "../document/tree";
 import type { BlockView } from "../types/view";
 import { ownsInputTarget } from "./input-owner";
-import { createTextWalker, isInsideWidget } from "./text-walker";
+import { ATOM, createTextWalker, isInsideWidget } from "./text-walker";
 
 export interface TextSelection {
   anchor: { blockId: string; offset: number };
@@ -28,6 +28,11 @@ export function installDOMSelection(
   // offset even when formatting, lists, or table wrappers add DOM levels.
   const boundaryLeaf = (node: Node, end: boolean): { node: Node; offset: number } | null => {
     if (isInsideWidget(node, element)) return null;
+    // An atom is not editable, but its text counts: the point before or after it.
+    if (node instanceof Element && node.matches(ATOM)) {
+      const text = createTextWalker(node).nextNode();
+      return text ? { node: text, offset: end ? (text.textContent ?? "").length : 0 } : null;
+    }
     if (node instanceof Element && node.matches("button, input, textarea, select")) return null;
     if (node instanceof Element && node !== element && node.hasAttribute("data-gotipe-editor"))
       return null;
@@ -63,9 +68,17 @@ export function installDOMSelection(
       const following = children.slice(Math.min(offset, childCount));
       const preceding = children.slice(0, Math.min(offset, childCount)).reverse();
       let point: ReturnType<typeof boundaryLeaf> = null;
+      // A nested block's text is not this point's: the own text before it wins (an atom
+      // ending an item); without one, the nested text as before.
+      const owner = el.closest("[data-block-id]");
+      let foreign: ReturnType<typeof boundaryLeaf> = null;
       for (const child of following) {
         point = boundaryLeaf(child, false);
-        if (point) break;
+        if (point && owner && point.node.parentElement?.closest("[data-block-id]") !== owner) {
+          foreign = point;
+          point = null;
+        }
+        if (point || foreign) break;
       }
       if (!point) {
         for (const child of preceding) {
@@ -73,6 +86,7 @@ export function installDOMSelection(
           if (point) break;
         }
       }
+      point ??= foreign;
       if (point) {
         resolvedNode = point.node;
         resolvedOffset = point.offset;
@@ -181,6 +195,10 @@ export function installDOMSelection(
       !ownsInputTarget(element, anchor)
     );
   };
+  const beside = (atom: Element, after: number) => ({
+    node: atom.parentNode!,
+    offset: Array.prototype.indexOf.call(atom.parentNode!.childNodes, atom) + after,
+  });
   const resolveDomPoint = (
     blockId: string,
     targetOffset: number,
@@ -220,10 +238,20 @@ export function installDOMSelection(
       const len = (textNode.textContent ?? "").length;
       if (accumulated + len >= targetOffset) {
         const localOffset = targetOffset - accumulated;
-        return { node: textNode, offset: Math.min(localOffset, len) };
+        const atom = textNode.parentElement?.closest(ATOM);
+        // The caret stands beside an atom, never in its text: the following text's start
+        // after it when that text is this block's own (not a nested block's), else the
+        // element boundary.
+        if (!atom) return { node: textNode, offset: Math.min(localOffset, len) };
+        if (localOffset <= 0) return beside(atom, 0);
+        const next = walker.nextNode();
+        if (next?.parentElement?.closest("[data-block-id]") !== blockEl) return beside(atom, 1);
+        walker.previousNode();
       }
       accumulated += len;
     }
+    const last = lastTextNode?.parentElement?.closest(ATOM);
+    if (last) return beside(last, 1);
 
     // Empty block (or no text nodes yet):
     // for todo items, place caret in the text content area after checkbox.
