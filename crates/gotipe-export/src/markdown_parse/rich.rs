@@ -1,13 +1,10 @@
 //! Rich text of a block: inline nodes to spans with marks, including the inline atoms the
 //! reader was asked for (docs/development/inline-atoms.md).
 use super::{atoms, convert::string, MarkdownAtoms, Node};
-use gotipe_core::{AttrValue, Mark, TextSpan};
-use std::collections::HashMap;
+use gotipe_core::{Mark, TextSpan};
 #[derive(Default)]
 pub(super) struct Inline {
     pub spans: Vec<TextSpan>,
-    hard: bool,
-    soft: bool,
     /// Atoms read so far: each gets its own `key`, renumbered in document order later.
     atoms: usize,
 }
@@ -50,13 +47,6 @@ impl Inline {
                 text: text.into(),
                 marks,
             })
-        }
-    }
-    pub fn attrs(&self) -> HashMap<String, AttrValue> {
-        if self.hard && !self.soft {
-            HashMap::from([("breaks".into(), string("hard"))])
-        } else {
-            HashMap::new()
         }
     }
     pub fn text(&self) -> String {
@@ -107,8 +97,11 @@ fn paired(value: &str) -> Option<(String, Mark)> {
     Some((tag, mark))
 }
 fn plain_inline(node: &Node) -> String {
-    if node.kind == "image" || node.kind == "break" {
+    if node.kind == "image" {
         String::new()
+    } else if node.kind == "break" {
+        // a line break is text: a link of a hard break alone is not empty
+        "\n".into()
     } else if !node.value.is_empty() {
         node.value.clone()
     } else {
@@ -164,14 +157,9 @@ fn walk(children: &[Node], marks: &[Mark], read: Read, br: bool, out: &mut Inlin
             }
         }
         match n.kind {
-            "text" => {
-                out.soft |= n.value.contains('\n');
-                out.push(&n.value, marks)
-            }
-            "break" => {
-                out.hard = true;
-                out.push("\n", marks)
-            }
+            // a soft line break is a space of the text; a hard one is "\n"
+            "text" => out.push(&n.value, marks),
+            "break" => out.push("\n", marks),
             "inlineCode" => {
                 let mut nested = marks.to_vec();
                 nested.push(Mark::new("code"));

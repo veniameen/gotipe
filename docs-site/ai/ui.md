@@ -87,7 +87,7 @@ export function InstructionEditor() {
         if (!ai) return;
         const target = ai.captureTarget();
         const content = await ai.executeCommand(prompt);
-        const id = crypto.randomUUID();
+        const id = createId();
         ai.applySuggestion({ id, type: "rewrite", content, confidence: 1 }, target);
       }}
     />
@@ -218,7 +218,7 @@ running command.
 ```tsx title="ai-palette.tsx"
 import type { AiCommand } from "@gotipe/ai";
 import { AiCommandPalette } from "@gotipe/ai-ui";
-import type { GoTipeEditor } from "@gotipe/core";
+import { type GoTipeEditor, createId } from "@gotipe/core";
 import { backendProvider } from "./ai-provider";
 
 const commands: AiCommand[] = [
@@ -227,7 +227,7 @@ const commands: AiCommand[] = [
     description: "Replace the selection with a summary",
     async execute(_editor, context) {
       const content = await backendProvider.executeCommand("summarize", context);
-      return [{ id: crypto.randomUUID(), type: "summarize", content, confidence: 1 }];
+      return [{ id: createId(), type: "summarize", content, confidence: 1 }];
     },
   },
 ];

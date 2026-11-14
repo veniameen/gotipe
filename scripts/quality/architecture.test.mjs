@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { checkBudgets, checkImports, checkManifest } from "./architecture.mjs";
+import { checkBudgets, checkImports, checkManifest, checkPlatformCalls } from "./architecture.mjs";
 import { cyclesOf, importsOf } from "./imports.mjs";
 
 test("runtime imports include side effects and lazy imports but exclude type-only edges", () => {
@@ -94,5 +94,24 @@ test("public entrypoints cannot hide a package runtime cycle", () => {
       { name: "packages/versions/src/x.ts", source: 'import "@gotipe/comments";' },
     ]).filter((error) => error.startsWith("Runtime package cycle")).length,
     1,
+  );
+});
+test("IDs come from createId: crypto.randomUUID is missing on plain HTTP", () => {
+  const call = "const id = crypto.randomUUID();";
+  assert.equal(
+    checkPlatformCalls([{ name: "packages/comments/src/manager.ts", source: call }]).length,
+    1,
+  );
+  assert.equal(
+    checkPlatformCalls([{ name: "packages/core/src/document/id.ts", source: call }]).length,
+    0,
+  );
+  // a mention in a comment and code outside the packages are not calls of a package
+  assert.equal(
+    checkPlatformCalls([
+      { name: "packages/core/src/polyfills.ts", source: "// crypto.randomUUID needs HTTPS" },
+      { name: "apps/playground/src/main.ts", source: call },
+    ]).length,
+    0,
   );
 });

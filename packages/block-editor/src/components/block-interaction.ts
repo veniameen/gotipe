@@ -1,4 +1,4 @@
-import type { GoTipeEditor, Transaction } from "@gotipe/core";
+import { type GoTipeEditor, type Transaction, createId } from "@gotipe/core";
 export { getBlockTextLeft, getBlockFirstLineMetrics } from "../interaction/block-text-metrics";
 
 export const LIST_CONTAINER_TYPES = new Set(["bulletList", "orderedList", "todoList"]);
@@ -387,7 +387,7 @@ export function moveDraggedBlock(
 
   const steps: Transaction["steps"] = [];
   if (LIST_ITEM_TYPES.has(currentLocation.blockType) && target.parentId === null) {
-    const newListId = crypto.randomUUID();
+    const newListId = createId();
     steps.push(
       {
         type: "insertBlock",

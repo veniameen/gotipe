@@ -43,6 +43,8 @@ export interface PNode {
   end: number;
   /** Segments of this block's own text (md offsets absolute). */
   segs: RawSegment[];
+  /** Offsets of the spaces of its own text that are soft line breaks (with segments only). */
+  softBreaks?: number[];
   children: PNode[];
 }
 
@@ -55,7 +57,13 @@ export interface ParsedInternal {
   nodes: PNode[];
 }
 
-const ALERT_RE = /^\[!(NOTE|TIP|IMPORTANT|WARNING|CAUTION)\][ \t]*(?:\n|$)/i;
+/**
+ * A GitHub alert: `[!KIND]` alone on the first line of a quote. In the text the line ends with a
+ * soft break (one space: a "\n" after it is text of the body), a hard one ("\n") or the end;
+ * `ALERT_LINE_END` checks the source.
+ */
+const ALERT_RE = /^\[!(NOTE|TIP|IMPORTANT|WARNING|CAUTION)\](?: |[ \t]*\n|[ \t]*$)/i;
+const ALERT_LINE_END = /[ \t]*\\?(?:\r\n|\r|\n|$)/y;
 
 function mk(
   type: string,
@@ -75,14 +83,10 @@ function mk(
   };
 }
 
-function breaksAttr(r: InlineResult): Record<string, unknown> {
-  let hard = false;
-  let soft = false;
-  for (const n of r.newlines) {
-    if (n.hard) hard = true;
-    else soft = true;
-  }
-  return hard && !soft ? { breaks: "hard" } : {};
+/** The node of rich text `r`, with its soft line breaks for the writer. */
+function rich(node: PNode, r: InlineResult): PNode {
+  if (r.softBreaks.length > 0) node.softBreaks = r.softBreaks;
+  return node;
 }
 
 class Converter {
@@ -169,7 +173,7 @@ class Converter {
       if (name !== null) return mk("file", { url: only.url, name }, null, s, e);
     }
     const r = this.inline(node.children, s, e);
-    return mk("paragraph", breaksAttr(r), r.spans, s, e, r.segs);
+    return rich(mk("paragraph", {}, r.spans, s, e, r.segs), r);
   }
 
   heading(node: Heading, s: number, e: number): PNode {
@@ -214,27 +218,22 @@ class Converter {
       const fs = this.start(first);
       const m = ALERT_RE.exec(r.text);
       const head = r.spans[0];
+      ALERT_LINE_END.lastIndex = fs === null || !m ? 0 : fs + m[1]!.length + 3;
       if (
         m &&
         fs !== null &&
         this.text.startsWith("[!", fs) &&
+        ALERT_LINE_END.test(this.text) &&
         head &&
         head.marks.length === 0 &&
         head.text.length >= m[0].length
       ) {
         const t = trimInlineStart(r, m[0].length);
         const alert = m[1]!.toUpperCase();
-        return mk(
-          "callout",
-          { type: alert.toLowerCase(), alert, ...breaksAttr(t) },
-          t.spans,
-          s,
-          e,
-          t.segs,
-        );
+        return rich(mk("callout", { type: alert.toLowerCase(), alert }, t.spans, s, e, t.segs), t);
       }
     }
-    return mk("blockquote", breaksAttr(r), r.spans, s, e, r.segs);
+    return rich(mk("blockquote", {}, r.spans, s, e, r.segs), r);
   }
 
   taskState(item: ListItem): boolean | null {
@@ -296,15 +295,7 @@ class Converter {
         if (!nested) return null;
         const r = this.inline(p.children, this.start(p) ?? is, this.end(p) ?? ie);
         kids.push(
-          mk(
-            "todoItem",
-            { checked: item.checked, ...breaksAttr(r) },
-            r.spans,
-            is,
-            ie,
-            r.segs,
-            nested,
-          ),
+          rich(mk("todoItem", { checked: item.checked }, r.spans, is, ie, r.segs, nested), r),
         );
       }
       const attrs: Record<string, unknown> = { spread };
@@ -315,21 +306,15 @@ class Converter {
     for (const item of items) {
       const is = this.start(item) ?? s;
       const ie = this.end(item) ?? e;
-      let content: Span[] = [];
-      let segs: RawSegment[] = [];
-      let attrs: Record<string, unknown> = {};
-      let idx = 0;
+      let r: InlineResult | null = null;
       const first = item.children[0];
       if (first?.type === "paragraph") {
-        const r = this.inline(first.children, this.start(first) ?? is, this.end(first) ?? ie);
-        content = r.spans;
-        segs = r.segs;
-        attrs = breaksAttr(r);
-        idx = 1;
+        r = this.inline(first.children, this.start(first) ?? is, this.end(first) ?? ie);
       }
-      const nested = this.nestedLists(item, idx);
+      const nested = this.nestedLists(item, r ? 1 : 0);
       if (!nested) return null;
-      kids.push(mk("listItem", attrs, content, is, ie, segs, nested));
+      const node = mk("listItem", {}, r?.spans ?? [], is, ie, r?.segs ?? [], nested);
+      kids.push(r ? rich(node, r) : node);
     }
     if (node.ordered) {
       let p = firstStart;

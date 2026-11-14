@@ -235,6 +235,15 @@ button.gotipe-media-placeholder:hover:not(:disabled) {
   align-items: center;
   max-width: 100%;
 }
+/* a picture without a width of its own (an SVG without width and height) would shrink to 0 px in
+   the shell: it fills the column until a width is set by resizing */
+.gotipe-image-loaded-shell[data-natural-width="none"] {
+  display: flex;
+  width: 100%;
+}
+.gotipe-image-loaded-shell[data-natural-width="none"] > img {
+  width: 100%;
+}
 .gotipe-image-toolbar {
   position: absolute;
   top: var(--gt-resize-inset);

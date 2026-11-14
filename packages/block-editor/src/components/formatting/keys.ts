@@ -12,6 +12,12 @@ export const MARK_KEYS = {
   highlight: "mod-shift-h",
 } as const;
 
+/** `History` (Atlas frame 31: the first tools of the fixed toolbar). */
+export const HISTORY_KEYS = {
+  undo: "mod-z",
+  redo: "mod-shift-z",
+} as const;
+
 /** `TextAlign` (Atlas frame 27: the alignment group of «More»). */
 export const ALIGN_KEYS = {
   left: "mod-shift-l",

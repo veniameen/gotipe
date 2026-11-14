@@ -52,7 +52,8 @@ describe("owned Markdown grammar", () => {
   it("keeps lazy quote continuation as prose instead of turning it into a heading", () => {
     const quote = parseMarkdown("> first line\nnext line\n===\n").doc.blocks[0]!;
     expect(quote.type).toBe("blockquote");
-    expect(text(quote)).toBe("first line\nnext line\n===");
+    // soft line breaks are spaces (CommonMark)
+    expect(text(quote)).toBe("first line next line ===");
   });
 
   it("decodes the full named-reference table, numeric replacement and escaped autolinks", () => {

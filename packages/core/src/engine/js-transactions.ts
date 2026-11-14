@@ -1,3 +1,4 @@
+import { createId } from "../document/id";
 import { GoTipeError } from "../error";
 import { isUtf16Boundary } from "../text";
 import { normalizeAtomStep } from "./atoms";
@@ -343,7 +344,7 @@ function applySplitBlock(doc: FallbackDoc, step: { block_id: string; offset: num
     newContent = { type: "RichText", value: normalizeSpans(after) };
   }
   const newBlock: FallbackBlock = {
-    id: crypto.randomUUID(),
+    id: createId(),
     block_type: block.block_type === "heading" ? "paragraph" : block.block_type,
     attrs: block.block_type === "heading" ? {} : { ...block.attrs },
     content: newContent,

@@ -57,6 +57,8 @@ Pasting or dropping image files on the editor inserts image blocks. Each file mu
 
 In the editor UI an empty image offers **Upload**, **By link** (an http or https address) and one tab per image catalog your host supplies, and accepts a dropped file. A placed image has resize handles on both sides (drag, or Left and Right for 16 px steps), a caption field and a toolbar: alternative text, original size, fit to width, caption, zoom, download, and a menu with crop, replace, copy URL, copy link to block, duplicate, move up or down and delete. Crop draws on a canvas, saves a PNG through the same storage path and is undone with Undo; it needs CORS for remote images, keeps only the first frame of an animation and is limited to 16 megapixels.
 
+Without `width` an image is shown at its own size, at most the width of the column. An image without a size of its own, such as an SVG with a `viewBox` and no `width` or `height`, fills the column, and "original size" sets the column's width; resizing gives it a width like any other image.
+
 > [!NOTE]
 > `Image.configure` options apply to paste and drop only. The Upload button and the drop zone of an empty image always store files through `host.saveAsset` (or the inline fallback) and accept PNG, JPEG, GIF and WebP. Implement `host.saveAsset` to have one storage path for every upload.
 

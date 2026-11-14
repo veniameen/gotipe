@@ -2,9 +2,13 @@ import { createEditor } from "@gotipe/core/js";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { CommentsManager } from "./manager";
 
+/** The platform crypto, kept before a test stubs the global. */
+const platform = globalThis.crypto;
+
 const cleanup: (() => void)[] = [];
 afterEach(() => {
   for (const stop of cleanup.splice(0)) stop();
+  vi.unstubAllGlobals();
 });
 async function setup(options = {}) {
   const editor = await createEditor({
@@ -161,5 +165,34 @@ describe("owned comment lifecycle", () => {
     manager.destroy();
     expect(editor.getDecorations()).toEqual([]);
     expect(() => manager.resolveComment("id", "a")).toThrow("destroyed");
+  });
+});
+
+describe("a page served over plain HTTP (D-85)", () => {
+  it("creates a manager, comments and replies without crypto.randomUUID", async () => {
+    const { editor } = await setup();
+    // the editor is ready; the page has getRandomValues only, as outside a secure context
+    vi.stubGlobal("crypto", {
+      getRandomValues: (array: Uint8Array) => platform.getRandomValues(array),
+    });
+    const manager = new CommentsManager(editor);
+    cleanup.push(() => manager.destroy());
+    const comment = manager.addComment({
+      blockId: "a",
+      from: 6,
+      to: 11,
+      authorId: "alice",
+      authorName: "Alice",
+      content: "Review this phrase",
+    });
+    const reply = manager.addReply(comment.id, {
+      authorId: "bob",
+      authorName: "Bob",
+      content: "Done",
+    })!;
+    const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
+    expect(comment.id).toMatch(uuid);
+    expect(reply.id).toMatch(uuid);
+    expect(editor.getDecorations().length).toBeGreaterThan(0);
   });
 });

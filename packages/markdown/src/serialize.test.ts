@@ -66,18 +66,19 @@ describe("blockToMarkdown", () => {
       "\\*not\\* \\[a\\](b) \\`c\\` \\<div> \\&amp; \\\\\\* #tag",
     );
     expect(md(para(plain("# not a heading")))).toBe("\\# not a heading");
+    // "\n" is a line break of the document: `\` + line ending (a bare one reads as a space)
     expect(md(para(plain("- not a list\n1. nor this\n> nor a quote")))).toBe(
-      "\\- not a list\n1\\. nor this\n\\> nor a quote",
+      "\\- not a list\\\n1\\. nor this\\\n\\> nor a quote",
     );
-    expect(md(para(plain("line\n===")))).toBe("line\n\\===");
+    expect(md(para(plain("line\n===")))).toBe("line\\\n\\===");
     expect(md(para(plain("a | b")))).toBe("a | b");
-    expect(md(para(plain("a | b\n-|-")))).toBe("a \\| b\n\\-\\|-");
+    expect(md(para(plain("a | b\n-|-")))).toBe("a \\| b\\\n\\-\\|-");
   });
 
   it("encodes whitespace that Markdown would strip", () => {
     expect(md(para(plain("  indented ")))).toBe("&#32; indented&#32;");
     expect(md(para(plain("\ttab")))).toBe("&#9;tab");
-    expect(md(para(plain("a\n\nb")))).toBe("a\n&#10;b");
+    expect(md(para(plain("a\n\nb")))).toBe("a\\\n&#10;b");
     expect(md(para(plain("\nlead")))).toBe("&#10;lead");
   });
 
@@ -141,7 +142,9 @@ describe("blockToMarkdown", () => {
   it("serializes headings, quotes and callouts", () => {
     expect(md(b("heading", { level: 3 }, plain("Заголовок #")))).toBe("### Заголовок \\#");
     expect(md(b("heading", { level: 2 }, plain("a\nb")))).toBe("## a<br>b");
-    expect(md(b("blockquote", {}, plain("цитата\nв две строки")))).toBe("> цитата\n> в две строки");
+    expect(md(b("blockquote", {}, plain("цитата\nв две строки")))).toBe(
+      "> цитата\\\n> в две строки",
+    );
     expect(md(b("callout", { type: "warning", alert: "WARNING" }, plain("Осторожно")))).toBe(
       "> [!WARNING]\n> Осторожно",
     );
@@ -232,7 +235,7 @@ describe("blockToMarkdown", () => {
     expect(blockToMarkdown(b("listItem", {}, plain("пункт")))).toBe("- пункт");
     expect(blockToMarkdown(b("todoItem", { checked: true }, plain("x")))).toBe("- [x] x");
     expect(blockToMarkdown(b("tableCell", {}, plain("a|b")))).toBe("a\\|b");
-    expect(blockToMarkdown(b("paragraph", {}, plain("a\nb")), "\r\n")).toBe("a\r\nb");
+    expect(blockToMarkdown(b("paragraph", {}, plain("a\nb")), "\r\n")).toBe("a\\\r\nb");
   });
 });
 

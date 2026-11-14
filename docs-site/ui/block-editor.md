@@ -123,6 +123,7 @@ sign. The host owns the title's value; it is not part of the document.
 | Prop | Type | Default | Description |
 |---|---|---|---|
 | `title` | `string` | — | Plain-text title. |
+| `titleLevel` | `1 \| 2 \| 3 \| 4 \| 5 \| 6` | `1` | The HTML level of the title: `h1` by default. It looks the same at any level; pass `2` when your page has its own `h1`. |
 | `onTitleChange` | `(title: string) => void` | — | Makes the title editable (unless `readOnly`). |
 | `onTitleEnter` | `() => void` | — | Enter in the title, for example to move the caret into the document. |
 | `placeholder` | `string` | `"Untitled"` | Shown while the title is empty. |

@@ -1,3 +1,4 @@
+import { createId } from "../document/id";
 import { atomKeys, rekeyAtoms } from "../engine/atom-keys";
 import { GoTipeError } from "../error";
 import { blocksToText } from "../text";
@@ -156,7 +157,7 @@ function splitAt(blocks: Block[], id: string, offset: number): [Block[], Block[]
       const prefix = { ...block, content: sliceContent(block.content, 0, offset), children: [] };
       const suffix = {
         ...block,
-        id: crypto.randomUUID(),
+        id: createId(),
         content: sliceContent(block.content, offset),
       };
       return [
@@ -172,7 +173,7 @@ function splitAt(blocks: Block[], id: string, offset: number): [Block[], Block[]
       const left = { ...block, children: before };
       const right = {
         ...block,
-        id: crypto.randomUUID(),
+        id: createId(),
         content: sliceContent(block.content, 0, 0),
         children: after,
       };

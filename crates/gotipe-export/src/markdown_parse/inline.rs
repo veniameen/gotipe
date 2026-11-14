@@ -292,18 +292,20 @@ pub(super) fn read(source: &Source, context: &Context, depth: usize) -> Vec<Node
                 end += n;
             }
             if let Some(close) = close {
-                let mut value = &text[p + count..close];
+                // CommonMark: line endings of a code span are spaces, then one space is
+                // stripped from each side of content that is not all spaces
+                let mut value = text[p + count..close].replace('\n', " ");
                 if value.len() > 1
-                    && value.starts_with([' ', '\n'])
-                    && value.ends_with([' ', '\n'])
-                    && value.chars().any(|c| c != ' ' && c != '\n')
+                    && value.starts_with(' ')
+                    && value.ends_with(' ')
+                    && value.chars().any(|c| c != ' ')
                 {
-                    value = &value[1..value.len() - 1]
+                    value = value[1..value.len() - 1].to_owned()
                 }
                 let value = if context.in_cell {
                     value.replace("\\|", "|")
                 } else {
-                    value.into()
+                    value
                 };
                 end = close + count;
                 tokens.push(Token::node(Node::text(
@@ -400,6 +402,7 @@ pub(super) fn read(source: &Source, context: &Context, depth: usize) -> Vec<Node
                 end += 1
             }
             if text.as_bytes().get(end) == Some(&b'\n') {
+                // two spaces make a hard break; otherwise a soft one, which is a space
                 if text[p..end].ends_with("  ") {
                     tokens.push(Token::node(Node::new(
                         "break",
@@ -407,7 +410,7 @@ pub(super) fn read(source: &Source, context: &Context, depth: usize) -> Vec<Node
                         source.point(end + 1),
                     )))
                 } else {
-                    push(&mut tokens, source, "\n", p, end + 1)
+                    push(&mut tokens, source, " ", p, end + 1)
                 }
                 p = end + 1;
                 while text
@@ -427,6 +430,7 @@ pub(super) fn read(source: &Source, context: &Context, depth: usize) -> Vec<Node
             continue;
         }
         if c == '\n' {
+            // a soft line break is a space; the next line's indentation is not text
             let mut end = p + 1;
             while text
                 .as_bytes()
@@ -435,7 +439,7 @@ pub(super) fn read(source: &Source, context: &Context, depth: usize) -> Vec<Node
             {
                 end += 1
             }
-            push(&mut tokens, source, "\n", p, end);
+            push(&mut tokens, source, " ", p, end);
             p = end;
             continue;
         }

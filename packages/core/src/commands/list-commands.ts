@@ -1,4 +1,5 @@
 import { cloneAttributes } from "../document/attributes";
+import { createId } from "../document/id";
 import { findBlockInTree, findBlockLocation, findParentBlock } from "../document/tree";
 import type { BlockView } from "../types/view";
 import {
@@ -61,7 +62,7 @@ export class ListCommands {
         if (after.length)
           replacements.push({
             ...list,
-            id: before.length ? crypto.randomUUID() : list.id,
+            id: before.length ? createId() : list.id,
             children: after.map((child) => cloneBlockTree(child, false)),
           });
         this.port.append({ type: "deleteBlock", blockId: parent.id });
@@ -219,7 +220,7 @@ export class ListCommands {
         parentId: location.parentId,
         index: location.index,
         block: {
-          id: crypto.randomUUID(),
+          id: createId(),
           type: listType,
           attrs: this.port.schema.withDefaults("node", listType, listAttrs),
           content: null,
@@ -270,7 +271,7 @@ export class ListCommands {
       return this;
     }
 
-    const nestedListId = crypto.randomUUID();
+    const nestedListId = createId();
     this.port.append({
       type: "insertBlock",
       parentId: prevBlock.id,

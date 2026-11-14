@@ -43,7 +43,11 @@ export function useImageResize(
   const reset = useCallback(() => setWidth(getMaxWidth()), [setWidth, getMaxWidth]);
   const original = useCallback(() => {
     const image = imageRef.current;
-    if (image) setWidth(Math.round(Math.min(image.naturalWidth || image.width, getMaxWidth())));
+    if (!image) return;
+    // an SVG without width and height has no size of its own (naturalWidth 0, or Chromium's 300):
+    // without one it takes the column, as it is drawn (D-86)
+    const max = getMaxWidth();
+    setWidth(Math.round(image.naturalWidth > 0 ? Math.min(image.naturalWidth, max) : max));
   }, [imageRef, getMaxWidth, setWidth]);
   const nudge = useCallback(
     (delta: number) => {

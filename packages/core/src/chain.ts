@@ -8,6 +8,7 @@ import type { CommandPort } from "./commands/port";
 import { type AllowsChild, type CommandSchema, chainSchema } from "./commands/schema";
 import { StructureCommands } from "./commands/structure-commands";
 import { cloneAttributes } from "./document/attributes";
+import { createId } from "./document/id";
 import { findBlockInTree, findBlockLocation, flattenBlocks } from "./document/tree";
 import type { Document } from "./types/block";
 import type { GoTipeEditor } from "./types/editor";
@@ -221,7 +222,7 @@ export class ChainableCommands {
       type: "insertBlock",
       ...location,
       block: {
-        id: crypto.randomUUID(),
+        id: createId(),
         type,
         attrs: filled,
         content: blockContent(type),

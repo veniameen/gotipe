@@ -7,6 +7,7 @@ import {
   textOf,
 } from "../clipboard/document";
 import { removeSelection } from "../clipboard/selection";
+import { createId } from "../document/id";
 import { ENTER_EXITS_TO_PARAGRAPH_TYPES, findBlockInTree } from "../document/tree";
 import { GoTipeError } from "../error";
 import type { Block, Document } from "../types/block";
@@ -36,7 +37,7 @@ function exitEmptyList(
       children: [],
     };
     if (row.type === "todoItem") row.attrs.checked = false;
-    if (after.length) row.children.push({ ...list, id: crypto.randomUUID(), children: after });
+    if (after.length) row.children.push({ ...list, id: createId(), children: after });
     list.children = before;
     if (!before.length) listEntry.siblings.splice(listEntry.index, 1);
     parentEntry.siblings.splice(parentEntry.index + 1, 0, row);
@@ -49,7 +50,7 @@ function exitEmptyList(
   if (after.length)
     replacement.push({
       ...list,
-      id: before.length ? crypto.randomUUID() : list.id,
+      id: before.length ? createId() : list.id,
       children: after,
     });
   listEntry.siblings.splice(listEntry.index, 1, ...replacement);
@@ -93,7 +94,7 @@ export function handleParagraphInput(event: InputEvent, host: InputHost): void {
       else {
         const type = ENTER_EXITS_TO_PARAGRAPH_TYPES.has(block.type) ? "paragraph" : block.type;
         const next: Block = {
-          id: crypto.randomUUID(),
+          id: createId(),
           type,
           attrs: type === block.type ? { ...block.attrs } : {},
           content: sliceContent(block.content, caret.offset) ?? [],

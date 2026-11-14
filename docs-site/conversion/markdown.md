@@ -98,7 +98,9 @@ For each top-level block of the document:
 1. If the snapshot has a block with the same id and the same fingerprint, its original source is copied verbatim.
 2. Otherwise the block is written in canonical syntax, parsed again and compared with the input. The first rendering that reads back identically wins: plain delimiters, then `<url>` autolinks, then HTML tags such as `<strong>`, `<em>` and `<s>`.
 
-A fingerprint is the canonical JSON of a block without ids. It ignores Markdown style attributes (`marker`, `delimiter`, `spread`, `breaks`) and attributes Markdown cannot hold, such as a callout's `emoji` or an image's `width`, so changing those does not rewrite a block.
+A soft line break is read as a space, so the document does not hold the lines of a paragraph. When an edited block was in the snapshot, the writer reads its old source again and puts each line ending back where the words around it are still there: an edit rewrites the lines it touches, and the other lines of the block stay byte for byte. Two lines become one only when the words on both sides of the break changed. A block new to the file is written on one line.
+
+A fingerprint is the canonical JSON of a block without ids. It ignores Markdown style attributes (`marker`, `delimiter`, `spread`, and `breaks` of older documents) and attributes Markdown cannot hold, such as a callout's `emoji` or an image's `width`, so changing those does not rewrite a block.
 
 Between two blocks that were neighbours in the source, the original gap is kept, unless a block changed type and the gap has no blank line. Other blocks are separated by a blank line. The BOM, the front matter and the text before the first block are always kept; the text after the last block is kept when the last block is still the original last one, otherwise the file ends with one line break. Rewritten blocks use the file's line ending. Empty paragraphs and headings are skipped unless they are kept verbatim.
 
@@ -108,7 +110,7 @@ The writer also avoids structural accidents: two adjacent lists that would merge
 
 | Markdown | Block |
 | --- | --- |
-| Paragraph | `paragraph` (`breaks: "hard"` when all its breaks are hard breaks) |
+| Paragraph | `paragraph`; a soft line break is a space, a hard one (`\` or two spaces at the end of the line) is `"\n"` |
 | `#` to `######`, setext headings | `heading` with `level` |
 | `-`, `*`, `+` list | `bulletList` (`marker`, `spread`) of `listItem` |
 | `1.`, `1)` list | `orderedList` (`start`, `delimiter`, `spread`) of `listItem` |
@@ -123,7 +125,7 @@ The writer also avoids structural accidents: two adjacent lists that would merge
 | `$$` on its own line, the TeX, `$$` on its own line; a ```` ```math ```` fence | `math` with `display: "block"`; content is the TeX as written |
 | HTML blocks, link reference definitions, footnote definitions, everything else | `markdownRaw` with `kind`; content is the exact source |
 
-A list item holds rich text and nested lists only. In headings and table cells a line break is `<br>`.
+A list item holds rich text and nested lists only. A line ending inside inline code is a space, as in CommonMark. A `"\n"` of a paragraph, quote, callout or list item is written as a hard break: `\` and a line ending, or `&#10;` at the start or end of the text. In headings and table cells a line break is `<br>`.
 
 | Inline Markdown | Mark |
 | --- | --- |
@@ -190,7 +192,7 @@ A `<details>` element is split by CommonMark into HTML blocks with editable para
 `serializeMarkdown` also returns a map between the Markdown text and the document:
 
 - `map.blocks` lists every block, nested ones too, with its `start`, `end` and `depth` in the text;
-- `map.segments` maps ranges of a block's flat text (its span texts joined, or the raw string of a code or raw block) to ranges of the Markdown. In an `exact` segment every character maps to one character. Escapes, character references, soft breaks with stripped continuation prefixes and `<br>` in cells get their own non-exact segments.
+- `map.segments` maps ranges of a block's flat text (its span texts joined, or the raw string of a code or raw block) to ranges of the Markdown. In an `exact` segment every character maps to one character. Escapes, character references, soft breaks (a space of the text over a line ending and the stripped prefix of the next line) and `<br>` in cells get their own non-exact segments.
 
 ```ts title="map.ts"
 import { mdOffsetToText, parseMarkdown, serializeMarkdown, textOffsetToMd } from "@gotipe/markdown";
@@ -233,7 +235,7 @@ The package also exports the types `Doc`, `Block`, `Span`, `Mark`, `ParseOptions
 > [!NOTE]
 > The codec keeps what it cannot edit, but Markdown cannot hold everything a GoTipe document can. Check the points below before you make Markdown the only storage of your documents.
 
-- **Soft line breaks.** A line break inside a paragraph is kept as a line break and shown as one in the editor; GitHub and most renderers show it as a space.
+- **Line breaks.** A soft line break reads as a space and a hard one as a line break, as in CommonMark. Reference links, footnote references and other text kept verbatim (`mdRaw`) keep the line endings of their source.
 - **Canonical rewrite.** An edited block is written in canonical syntax: ATX headings, fenced code, `*`, `**` and `~~`, `| a |` tables, `<url>` or bare autolinks. List markers, numbering delimiters, start numbers and loose or tight spacing are kept.
 - **Bare addresses.** Plain text such as `https://…`, `www.…` or an e-mail address becomes a link when an edited block is read again; escaping cannot prevent it.
 - **Raw blocks.** Multi-paragraph list items and quotes, mixed and numbered task lists stay read-only raw blocks.
@@ -243,7 +245,7 @@ The package also exports the types `Doc`, `Block`, `Span`, `Mark`, `ParseOptions
 - **Callout types.** Types without a GFM alert are written as the closest alert: `info` as `NOTE`, `success` as `TIP`, `error` as `CAUTION`; others as `NOTE`.
 - **Files.** A `file` block is written as a link line labelled by its name, or by its address without one. It reads back as a file only when its name equals the decoded file name of a scheme-less path. A paragraph that holds only such a link, or only an image, is read as a file or image block.
 - **Plain text code.** Code whose language is `plain` or `plaintext`, as older documents store it, is written with a bare fence; an untouched block keeps its source.
-- **Inline code.** A line break in inline code is written as a line break only where that is safe, otherwise as a space, and never in headings or cells. A backslash right before `|` inside code in a table cell cannot be expressed in GFM and reads back with an extra backslash.
+- **Inline code.** Markdown has no line break inside inline code: a `"\n"` in code text is written as a line ending where that is safe, otherwise as a space, and reads back as a space. A backslash right before `|` inside code in a table cell cannot be expressed in GFM and reads back with an extra backslash.
 - **Front matter.** Only YAML-style front matter (`---` … `---` or `...` at the start of the file) is recognized.
 
 ## Performance

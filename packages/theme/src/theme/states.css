@@ -75,8 +75,9 @@
   overflow-wrap: break-word;
   white-space: pre-wrap;
 }
-/* a Markdown page's title is its leading «# heading», drawn as the page's title (Atlas frame 19) */
-.gotipe-content > h1.gotipe-page-title:first-child {
+/* a Markdown page's title is its leading «# heading», drawn as the page's title (Atlas frame 19);
+   its HTML level is the host's (`titleLevel`), the look is the same at any level */
+.gotipe-content > .gotipe-page-title:first-child {
   margin: 0 0 var(--gt-head-after);
   color: var(--gt-text);
   font-size: var(--gt-title-size);

@@ -139,9 +139,9 @@ snapshot)` to write untouched blocks back byte for byte. [PageEditor](/docs/ui/p
 does all of this for you. The syntax mapping is in [Markdown](/docs/conversion/markdown).
 
 > [!NOTE]
-> A `\n` inside a paragraph is written as a plain line break unless the block has the
-> attribute `breaks: "hard"`. GoTipe reads it back as a line break, but other Markdown
-> renderers show a plain line break as a space.
+> A `\n` inside a paragraph is written as a hard break, `\` before the line ending, which
+> every CommonMark renderer shows as a line break. A plain line ending inside a paragraph of
+> a file is a soft break and reads as a space.
 
 ## Plain text
 
@@ -152,11 +152,13 @@ images, give empty lines.
 To load plain text, build paragraphs:
 
 ```ts
+import { createId } from "@gotipe/core";
+
 const text = "First line\nSecond line";
 editor.setContent({
   version: 1,
   blocks: text.split("\n").map((line) => ({
-    id: crypto.randomUUID(),
+    id: createId(),
     type: "paragraph",
     attrs: {},
     content: line ? [{ text: line, marks: [] }] : [],

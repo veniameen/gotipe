@@ -1,4 +1,12 @@
-import type { AttrValue, Block, BlockContent, Mark, NodeSpec, TextSpan } from "@gotipe/core";
+import {
+  type AttrValue,
+  type Block,
+  type BlockContent,
+  type Mark,
+  type NodeSpec,
+  type TextSpan,
+  createId,
+} from "@gotipe/core";
 import { type BlockRef, MigrationReport, type Quiet, type ReportMark, blockJSON } from "./report";
 import {
   ITEM_LISTS,
@@ -229,7 +237,7 @@ export class MigrationContext {
         );
     }
     const fromSource = id !== undefined;
-    id ??= this.options.createId?.() ?? crypto.randomUUID();
+    id ??= this.options.createId?.() ?? createId();
     if (typeof id !== "string" || id === "" || this.byId.has(id))
       throw new Error("Migration ID factory must return unique nonempty strings");
     const order = this.frames.at(-1) ?? -1;

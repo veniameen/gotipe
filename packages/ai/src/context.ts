@@ -1,4 +1,4 @@
-import { type GoTipeEditor, defineExtension } from "@gotipe/core";
+import { type GoTipeEditor, createId, defineExtension } from "@gotipe/core";
 import { collectText, getRuntime, runAiTask } from "./runtime";
 import type { AiContextOptions } from "./types";
 
@@ -45,7 +45,7 @@ export const defineAiContext = defineExtension<AiContextOptions>({
             const result = await collectText(manager.streamRewrite(selected));
             if (result)
               manager.applySuggestion(
-                { id: crypto.randomUUID(), type: "rewrite", content: result, confidence: 1 },
+                { id: createId(), type: "rewrite", content: result, confidence: 1 },
                 target,
               );
           } else {

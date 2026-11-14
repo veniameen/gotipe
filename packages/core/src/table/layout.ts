@@ -1,3 +1,4 @@
+import { createId as newId } from "../document/id";
 import { GoTipeError } from "../error";
 import type { AttrValue, Block, TextSpan } from "../types/block";
 import {
@@ -56,7 +57,7 @@ function emptyCell(id: string, header: boolean): Block {
 export function planTable(
   table: Block,
   fill: boolean,
-  createId: () => string = () => crypto.randomUUID(),
+  createId: () => string = newId,
 ): PlannedTable {
   const grid = tableGrid(table);
   const plan: PlannedTable = {

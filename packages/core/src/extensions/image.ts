@@ -1,5 +1,6 @@
 import { saveAsset } from "../assets";
 import { insertDraftPayload } from "../clipboard/paste-rules";
+import { createId } from "../document/id";
 import { GoTipeError } from "../error";
 import { defineExtension } from "../types/extension";
 
@@ -54,7 +55,7 @@ export const Image = defineExtension<ImageOptions>({
         insertDraftPayload(editor, {
           blocks: [
             {
-              id: crypto.randomUUID(),
+              id: createId(),
               type: "image",
               attrs: { src: saved.src, alt: saved.name, caption: "" },
               content: null,

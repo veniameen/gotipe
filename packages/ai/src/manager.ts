@@ -1,4 +1,4 @@
-import type { GoTipeEditor, Selection } from "@gotipe/core";
+import { type GoTipeEditor, type Selection, createId } from "@gotipe/core";
 import {
   type AiTarget,
   assertTarget,
@@ -225,7 +225,7 @@ export class AiManager {
     if (!text) return;
     const location = blockLocation(this.editor.getJSON().blocks, target.selection.anchor.blockId);
     if (!location) throw new Error("The AI insertion block no longer exists");
-    const id = crypto.randomUUID();
+    const id = createId();
     const item = location.block.type === "listItem" || location.block.type === "todoItem";
     if (
       !this.editor.dispatch({

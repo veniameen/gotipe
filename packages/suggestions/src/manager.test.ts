@@ -3,9 +3,13 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { SuggestionsManager } from "./manager";
 import type { Suggestion } from "./types";
 
+/** The platform crypto, kept before a test stubs the global. */
+const platform = globalThis.crypto;
+
 const cleanup: (() => void)[] = [];
 afterEach(() => {
   for (const stop of cleanup.splice(0)) stop();
+  vi.unstubAllGlobals();
 });
 async function setup(text = "Hello world") {
   const editor = await createEditor({
@@ -105,5 +109,34 @@ describe("suggestion acceptance integrity", () => {
     expect(editor.getText()).toBe("Hello world");
     manager.destroy();
     expect(() => add()).toThrow("destroyed");
+  });
+});
+
+describe("a page served over plain HTTP (D-85)", () => {
+  it("creates a manager, proposals and tracked changes without crypto.randomUUID", async () => {
+    const { editor } = await setup();
+    vi.stubGlobal("crypto", {
+      getRandomValues: (array: Uint8Array) => platform.getRandomValues(array),
+    });
+    const manager = new SuggestionsManager(editor);
+    cleanup.push(() => manager.destroy());
+    const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
+    const proposal = manager.addSuggestion({
+      type: "replace",
+      blockId: "p",
+      from: 0,
+      to: 5,
+      newContent: "Hi",
+      authorId: "a",
+      authorName: "A",
+    });
+    expect(proposal.id).toMatch(uuid);
+    manager.enable();
+    const end = { blockId: "p", offset: 11 };
+    editor.setSelection({ anchor: end, head: end });
+    expect(editor.chain().insertText("!").run()).toBe(true);
+    const tracked = manager.getSuggestions().filter((item) => item.id !== proposal.id);
+    expect(tracked).toHaveLength(1);
+    expect(tracked[0]!.id).toMatch(uuid);
   });
 });

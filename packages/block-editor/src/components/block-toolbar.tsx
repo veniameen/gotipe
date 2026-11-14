@@ -1,4 +1,4 @@
-import type { Block, GoTipeEditor, Transaction } from "@gotipe/core";
+import { type Block, type GoTipeEditor, type Transaction, createId } from "@gotipe/core";
 import { useFloatingPosition } from "@gotipe/react";
 import type React from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -153,7 +153,7 @@ export function BlockToolbar({
       if (!location) return;
 
       const insertAbove = e.altKey;
-      const newBlockId = crypto.randomUUID();
+      const newBlockId = createId();
       const newBlock = createInsertedBlock(location.parentType, newBlockId);
 
       const steps: Transaction["steps"] = [

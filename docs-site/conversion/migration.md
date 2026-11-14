@@ -68,7 +68,7 @@ Keep the source data until you have checked the result on your own documents.
 | `onWarning` | `(message: string) => void` | — | Called with each warning of the result when the conversion has finished. |
 | `blockTypeMap` | `Record<string, string>` | — | Maps more source node names to block types, for example `{ callout: "callout" }`. |
 | `markTypeMap` | `Record<string, string>` | — | Maps more source mark names to mark types. |
-| `createId` | `() => string` | `crypto.randomUUID()` | Makes IDs for blocks without a usable source ID. Must return unique, non-empty strings. |
+| `createId` | `() => string` | `createId()` of `@gotipe/core` | Makes IDs for blocks without a usable source ID. Must return unique, non-empty strings. |
 
 The maps rename types; they do not convert attributes or add behavior. A GoTipe type, such as
 `callout`, gets the attributes its schema declares and the rest goes to `unmapped`. A type of

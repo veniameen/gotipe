@@ -1,10 +1,11 @@
 use gotipe_core::{AttrValue, Block, Document};
 
+mod breaks;
 mod inline;
 pub(crate) mod table_html;
 
 pub use crate::markdown_parse::MarkdownAtoms;
-use inline::content_to_markdown;
+use inline::{content_to_markdown, line_to_markdown};
 
 /// Convert a Document to Markdown
 pub fn to_markdown(doc: &Document) -> String {
@@ -80,6 +81,8 @@ fn block_to_markdown(block: &Block, emoji: &Emoji) -> String {
                 _ => 1,
             }
             .clamp(1, 6);
+            // a heading is one line: its line breaks are `<br>`, as the TS writer writes them
+            let content = line_to_markdown(&block.content, emoji);
             format!("{} {content}\n{nested}", "#".repeat(level))
         }
         "bulletList" | "orderedList" | "todoList" => {
@@ -113,7 +116,13 @@ fn block_to_markdown(block: &Block, emoji: &Emoji) -> String {
                         format!("{marker} ")
                     };
                     let text = content_to_markdown(&item.content, emoji);
-                    let indent = " ".repeat(prefix.len());
+                    // continuation lines and nested blocks stand under the item's text; a task's
+                    // `[ ] ` is part of its text, so the indent is the marker's, as the TS writer
+                    let indent = if prefix.ends_with("] ") {
+                        " ".repeat(marker.len() + 1)
+                    } else {
+                        " ".repeat(prefix.len())
+                    };
                     let mut rendered =
                         format!("{prefix}{}\n", text.replace('\n', &format!("\n{indent}")));
                     for child in shown(item) {

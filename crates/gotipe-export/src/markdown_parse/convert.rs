@@ -25,10 +25,7 @@ fn raw(n: &Node, source: &str) -> Block {
     block
 }
 fn rich(kind: &str, r: Inline) -> Block {
-    let attrs = r.attrs();
-    let mut block = node(kind, BlockContent::RichText(r.spans));
-    block.attrs = attrs;
-    block
+    node(kind, BlockContent::RichText(r.spans))
 }
 fn math(value: &str) -> Block {
     let mut block = node("math", BlockContent::Raw(value.into()));
@@ -140,12 +137,20 @@ fn quote(n: &Node, read: Read) -> Option<Block> {
     let first = para.children.first();
     let text = r.text();
     if let Some(first) = first.filter(|f| f.kind == "text") {
+        // `[!KIND]` alone on the quote's first line: in the text the line ends with a soft break
+        // (one space: a "\n" after it is text of the body), a hard one or the end; the source
+        // shows which, as @gotipe/markdown checks it
         if let Some(m) =
-            re!(r"(?i-u)^\[!(NOTE|TIP|IMPORTANT|WARNING|CAUTION)\][ \t]*(?:\n|$)").captures(&text)
+            re!(r"(?i-u)^\[!(NOTE|TIP|IMPORTANT|WARNING|CAUTION)\](?: |[ \t]*\n|[ \t]*$)")
+                .captures(&text)
         {
+            let alone = source
+                .get(first.start + m[1].len() + 3..)
+                .is_some_and(|rest| re!(r"^[ \t]*\\?(?:\r\n|\r|\n|$)").is_match(rest));
             if source
                 .get(first.start..)
                 .is_some_and(|s| s.starts_with("[!"))
+                && alone
                 && r.spans
                     .first()
                     .is_some_and(|s| s.marks.is_empty() && s.text.len() >= m[0].len())

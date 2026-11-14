@@ -1,4 +1,5 @@
 import { saveAsset } from "../assets";
+import { createId } from "../document/id";
 import { findBlockInTree } from "../document/tree";
 import { GoTipeError } from "../error";
 import { toSafeHref, toSafeImageSrc } from "../security/urls";
@@ -126,7 +127,7 @@ export class ClipboardHandler {
     const kind = file.type.startsWith("image/") ? "image" : "file";
     const saved = await saveAsset(this.editor.host, file, kind);
     return {
-      id: crypto.randomUUID(),
+      id: createId(),
       type: kind,
       content: null,
       children: [],

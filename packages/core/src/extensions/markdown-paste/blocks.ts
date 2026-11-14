@@ -1,5 +1,6 @@
 import { type InlineAtoms, parseMarkdown } from "@gotipe/markdown";
 import { INLINE_ASSET_LIMIT } from "../../assets";
+import { createId } from "../../document/id";
 import type { AttrValue, Block, Mark, TextSpan } from "../../types/block";
 import type { PasteTextContext } from "../../types/extension";
 
@@ -7,7 +8,7 @@ type Parsed = ReturnType<typeof parseMarkdown>["doc"]["blocks"][number];
 type Schema = Pick<PasteTextContext, "nodes" | "marks" | "safeHref" | "safeImageSrc">;
 
 const paragraph = (text: string): Block => ({
-  id: crypto.randomUUID(),
+  id: createId(),
   type: "paragraph",
   attrs: {},
   content: text ? [{ text, marks: [] }] : [],
@@ -74,7 +75,7 @@ function fit(block: Parsed, schema: Schema): Block | null {
   }
   const content = Array.isArray(block.content) ? spans(block.content, schema) : block.content;
   if (Array.isArray(block.content) && !content) return null;
-  return { id: crypto.randomUUID(), type: block.type, attrs, content, children };
+  return { id: createId(), type: block.type, attrs, content, children };
 }
 
 /**
@@ -115,7 +116,7 @@ export function markdownBlocks(
     return raw
       ? [
           {
-            id: crypto.randomUUID(),
+            id: createId(),
             type: "markdownRaw",
             attrs: { kind },
             content: value,

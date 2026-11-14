@@ -51,6 +51,7 @@ React/content/table-layout владеет временной шириной пр
 | Поток | Владелец |
 |---|---|
 | Public document JSON / атрибуты / selection | `document/decode.ts`, `attributes.ts`, `selection.ts` |
+| ID блоков и записей всех пакетов (UUID v4 и без безопасного контекста, HTTP) | `document/id.ts` — публичный `createId()`; прямой `crypto.randomUUID()` в `packages/` отклоняет `check:architecture` |
 | Схема и предварительная атомарная проверка JS/WASM | `engine/schema.ts`, `validate.ts`, `js-transactions.ts`, `wasm-bridge.ts` |
 | История, фильтры и события транзакций | `editor/transactions.ts`, `transaction-hooks.ts` |
 | Lifecycle extensions/plugins и decoration layers | `editor/extension-lifecycle.ts` |
@@ -111,6 +112,13 @@ pointer, таймером удержания, capture, edge scroll и cleanup. P
 выделение остаётся во владении ядра. Перерисовка токенов откладывается до завершения
 native composition и её DOM reconciliation; listeners/frame очищаются при смене
 редактора, destroy и unmount.
+
+Переносы строк Markdown (D-88): мягкий перенос читается пробелом в обоих читателях
+(`markdown/src/grammar/inline.ts`, `crates/gotipe-export/src/markdown_parse/inline.rs`);
+`"\n"` документа пишется жёстким переносом — правило и экранирование начала следующей строки
+в `inline-serialize.ts` и `crates/gotipe-export/src/markdown/breaks.rs`. Концы строк правленого
+блока по снимку возвращает `markdown/src/serialization/line-breaks.ts`. Общие случаи —
+`crates/gotipe-export/tests/fixtures/markdown-line-breaks.json`.
 
 HTML/SSR: `packages/core/src/serialization/html.ts` owns the canonical serializer;
 `html-styles.ts` supplies optional neutral export styles. `getHTML()` on both engines

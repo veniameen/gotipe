@@ -2,6 +2,7 @@ import type React from "react";
 import { useEffect, useRef } from "react";
 import { useBlockEditorI18n } from "../i18n/strings";
 import { PageIcon } from "../page/icons";
+import type { PageTitleLevel } from "../page/page-views";
 import { Tip } from "./formatting/tip";
 
 export interface PageHeadProps {
@@ -11,6 +12,11 @@ export interface PageHeadProps {
   onAddIcon?: () => void;
   /** Plain-text title. It is editable when `onTitleChange` is given and the page is not read-only. */
   title: string;
+  /**
+   * The HTML level of the title (default 1: an `h1`). It looks the same at any level; pass 2 when
+   * the host page has its own `h1`.
+   */
+  titleLevel?: PageTitleLevel;
   onTitleChange?: (title: string) => void;
   /** Enter in the title, e.g. to move the caret into the document. */
   onTitleEnter?: () => void;
@@ -31,6 +37,7 @@ export function PageHead({
   icon,
   onAddIcon,
   title,
+  titleLevel = 1,
   onTitleChange,
   onTitleEnter,
   placeholder,
@@ -50,6 +57,7 @@ export function PageHead({
   }, [title]);
   const reason =
     typeof readOnly === "string" ? readOnly : (labels?.readOnly ?? i18n.t("page.readOnly"));
+  const Title = `h${titleLevel}` as "h1";
   return (
     <header className="gotipe-page-head" data-gotipe-page-head="">
       {icon ? (
@@ -61,7 +69,7 @@ export function PageHead({
         </button>
       ) : null}
       <div className="gotipe-page-head-line">
-        <h1
+        <Title
           ref={titleRef}
           className="gotipe-page-head-title"
           data-empty={title ? undefined : ""}

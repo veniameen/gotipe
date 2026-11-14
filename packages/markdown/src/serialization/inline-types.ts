@@ -12,10 +12,16 @@ export type InlineKind = "block" | "midline" | "heading" | "cell" | "alt";
 export interface InlineOptions {
   kind: InlineKind;
   eol: string;
-  /** Line break for soft/hard breaks: EOL + continuation prefix. */
+  /**
+   * A line ending with the continuation prefix: after a `\` for a line break ("\n") of `block`
+   * and `midline` text, alone for a soft break.
+   */
   newline: string;
-  /** Write "\n" as hard breaks (`\` + EOL). */
-  hard: boolean;
+  /**
+   * Text offsets of spaces to write as soft line breaks: where the source had them, while the
+   * words around stay (D-88, `line-breaks.ts`). Only `block` and `midline` text has them.
+   */
+  softBreaks?: ReadonlySet<number>;
   /** 0: bare autolink literals allowed; 1: `<url>` autolinks; 2: tags for emphasis, `[t](u)` links. */
   tier: number;
   /** The first line continues a paragraph started before the content (alert callouts). */
@@ -36,7 +42,8 @@ export interface EmoPair {
 
 export type Unit =
   | { k: "t"; ch: string; ti: number }
-  | { k: "nl"; ti: number }
+  /** A line break ("\n"), or a space that the source wrote as a line ending (`soft`). */
+  | { k: "nl"; ti: number; soft?: true }
   /** Syntax; `math` marks the `$` that opens (1) or closes (2) an inline formula. */
   | { k: "syn"; s: string; math?: 1 | 2 }
   /**

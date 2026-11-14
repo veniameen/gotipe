@@ -1,3 +1,4 @@
+import { createId } from "./document/id";
 import { blocksToHtml } from "./serialization/html";
 import type { GoTipeEditor } from "./types/editor";
 import type { Extension } from "./types/extension";
@@ -29,7 +30,7 @@ export async function renderToHtml(
       const replaceCustomBlock = (block: BlockView): BlockView => {
         const renderer = renderers[block.type];
         if (renderer) {
-          const marker = `gotipe-ssr-${crypto.randomUUID()}`;
+          const marker = `gotipe-ssr-${createId()}`;
           const placeholder: BlockView = {
             ...block,
             type: "paragraph",

@@ -1,11 +1,12 @@
 import { toSafeHref } from "@gotipe/core";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useResolvedAsset } from "../host-assets";
 import { useGoTipeI18n } from "../i18n-context";
 import { downloadAsset } from "../media/download";
 import { MediaGlyph, PlaceholderFileIcon, PlaceholderImageIcon } from "../media/icons";
 import { formatFileSize } from "../media/links";
 import { type MediaBlockProps, useMediaBlocks } from "./media-blocks";
+import { useMissingNaturalWidth } from "./natural-width";
 
 function rootClass(base: string, rootProps: Record<string, unknown>): string {
   return [base, rootProps.className].filter(Boolean).join(" ");
@@ -34,6 +35,8 @@ function ImageView({ block, editor, rootProps }: MediaBlockProps) {
   const { url, failed: assetFailed } = useResolvedAsset(editor, src);
   const [failedSource, setFailedSource] = useState<string | null>(null);
   const failed = assetFailed || (url !== null && failedSource === url);
+  const image = useRef<HTMLImageElement | null>(null);
+  const noNaturalWidth = useMissingNaturalWidth(image, url);
   return (
     <figure
       {...rootProps}
@@ -50,8 +53,12 @@ function ImageView({ block, editor, rootProps }: MediaBlockProps) {
           </span>
         </div>
       ) : src ? (
-        <div className="gotipe-image-loaded-shell">
+        <div
+          className="gotipe-image-loaded-shell"
+          data-natural-width={noNaturalWidth && !width ? "none" : undefined}
+        >
           <img
+            ref={image}
             src={url ?? undefined}
             alt={alt}
             onError={() => setFailedSource(url)}

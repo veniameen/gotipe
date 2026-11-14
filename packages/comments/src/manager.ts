@@ -1,4 +1,4 @@
-import { type GoTipeEditor, GoTipeError } from "@gotipe/core";
+import { type GoTipeEditor, GoTipeError, createId } from "@gotipe/core";
 import { captureRange, commentDecorations, resolveComment } from "./anchors";
 import { decodeCommentsSnapshot, nonempty } from "./persistence";
 import type {
@@ -18,7 +18,7 @@ export class CommentsManager {
   private listeners = new Set<() => void>();
   private destroyed = false;
   private cleanup: (() => void)[];
-  private layer = `comments-${crypto.randomUUID()}`;
+  private layer = `comments-${createId()}`;
 
   constructor(
     private editor: EditorPort,
@@ -92,7 +92,7 @@ export class CommentsManager {
   ): Comment {
     this.assertLive();
     const comment: Comment = {
-      id: crypto.randomUUID(),
+      id: createId(),
       ...captureRange(this.editor.getJSON(), options),
       authorId: nonempty(options.authorId, "Author ID"),
       authorName: nonempty(options.authorName, "Author name"),
@@ -165,7 +165,7 @@ export class CommentsManager {
     const comment = this.comments.get(id);
     if (!comment) return null;
     const reply: CommentReply = {
-      id: crypto.randomUUID(),
+      id: createId(),
       authorId: nonempty(options.authorId, "Author ID"),
       authorName: nonempty(options.authorName, "Author name"),
       content: nonempty(options.content, "Reply"),

@@ -1,3 +1,4 @@
+import { createId } from "../document/id";
 import { GoTipeError } from "../error";
 import type { GoTipeEditor } from "../types/editor";
 import { defineExtension } from "../types/extension";
@@ -82,7 +83,7 @@ class TrailingNodeController {
     const { blocks } = editor.getViewState();
     const last = blocks.at(-1);
     if (!last || options.notAfter.includes(last.type)) return;
-    const id = crypto.randomUUID();
+    const id = createId();
     this.loaded = ownEdit ? null : id;
     this.dispatch([
       {

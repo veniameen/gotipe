@@ -69,6 +69,7 @@ export type { EditorEvents } from "./types/events";
 export { ChainableCommands } from "./chain";
 export { GoTipeError } from "./error";
 export { decodeDocument } from "./document/decode";
+export { createId } from "./document/id";
 export { saveAsset, encodeInlineAsset, INLINE_ASSET_LIMIT, IMAGE_MEDIA_TYPES } from "./assets";
 export type { SavedAsset } from "./assets";
 export type { GoTipeErrorCode } from "./error";

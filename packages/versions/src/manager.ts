@@ -1,4 +1,4 @@
-import { type GoTipeEditor, GoTipeError } from "@gotipe/core";
+import { type GoTipeEditor, GoTipeError, createId } from "@gotipe/core";
 import { compareDocuments, snapshotKey } from "./diff";
 import type { Version, VersionDiff, VersionsOptions } from "./types";
 
@@ -63,7 +63,7 @@ export class VersionsManager {
     this.assertLive();
     if (!name.trim()) throw new Error("A version name is required");
     const version: Version = {
-      id: crypto.randomUUID(),
+      id: createId(),
       name: name.trim(),
       description,
       createdAt: new Date().toISOString(),
