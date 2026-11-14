@@ -150,8 +150,18 @@ const LIST_TOOLS: {
   label: "toolbar.bulletList" | "toolbar.orderedList" | "toolbar.todoList";
   toggle: (chain: Chain) => void;
 }[] = [
-  { type: "bulletList", icon: "bullet", label: "toolbar.bulletList", toggle: (c) => c.toggleBulletList() },
-  { type: "orderedList", icon: "numbered", label: "toolbar.orderedList", toggle: (c) => c.toggleOrderedList() },
+  {
+    type: "bulletList",
+    icon: "bullet",
+    label: "toolbar.bulletList",
+    toggle: (c) => c.toggleBulletList(),
+  },
+  {
+    type: "orderedList",
+    icon: "numbered",
+    label: "toolbar.orderedList",
+    toggle: (c) => c.toggleOrderedList(),
+  },
   { type: "todoList", icon: "todo", label: "toolbar.todoList", toggle: (c) => c.toggleTodoList() },
 ];
 

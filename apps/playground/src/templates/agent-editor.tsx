@@ -9,7 +9,13 @@ import {
   rejectProofreadSuggestion,
 } from "@gotipe/ai";
 import type { AiProofreadSuggestion } from "@gotipe/ai";
-import { AiStatusIndicator, GhostText, SuggestionToolbar } from "@gotipe/block-editor";
+import {
+  AiStatusIndicator,
+  FixedToolbar,
+  GhostText,
+  SuggestionToolbar,
+  ThemeToggle,
+} from "@gotipe/block-editor";
 import type { Suggestion } from "@gotipe/block-editor";
 import { FullPreset } from "@gotipe/core/presets";
 import { Editor, MediaBlocksContext, useEditor } from "@gotipe/react";
@@ -18,7 +24,6 @@ import { useCallback, useEffect, useState } from "react";
 import { ExampleWrapper } from "../shared/example-wrapper";
 import { mockAiProvider } from "../shared/mock-ai-provider";
 import { AGENT_CONTENT } from "../shared/sample-content";
-import { StaticToolbar } from "../shared/toolbar";
 
 const AI_ACTIONS = [
   { id: "review", icon: "\uD83D\uDCAC", label: "Add AI comment", command: "review" },
@@ -172,7 +177,11 @@ export function AgentEditor() {
 
         {/* Editor area: toolbar + editor + AI input */}
         <div className="gotipe-agent-editor-area" data-gotipe-block-editor="">
-          <StaticToolbar editor={editor} showExtras showTheme />
+          {editor && (
+            <FixedToolbar editor={editor}>
+              <ThemeToggle />
+            </FixedToolbar>
+          )}
           <div className="gotipe-agent-editor-scroll">
             <MediaBlocksContext.Provider value={mediaBlocks}>
               <Editor editor={editor} />

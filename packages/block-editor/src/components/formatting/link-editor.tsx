@@ -1,8 +1,9 @@
 import { type GoTipeEditor, toSafeHref } from "@gotipe/core";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { useBlockEditorI18n } from "../../i18n/strings";
 import { PageIcon } from "../../page/icons";
 import { MARK_KEYS, ariaKeys } from "./keys";
+import { useFormatReason } from "./reasons";
 import { currentMarks } from "./selection";
 import { Tip } from "./tip";
 import { useFormattingMenu } from "./use-formatting-menu";
@@ -13,6 +14,8 @@ export function LinkEditor({ editor }: { editor: GoTipeEditor }) {
   const input = useRef<HTMLInputElement>(null);
   const mark = currentMarks(editor).find((item) => item.type === "link");
   const i18n = useBlockEditorI18n();
+  const reason = useFormatReason(editor);
+  const tip = useId();
   const open = () => {
     setUrl(typeof mark?.attrs?.href === "string" ? mark.attrs.href : "");
     menu.show();
@@ -39,13 +42,23 @@ export function LinkEditor({ editor }: { editor: GoTipeEditor }) {
         aria-haspopup="dialog"
         aria-expanded={menu.open}
         aria-pressed={!!mark}
+        aria-disabled={reason ? true : undefined}
+        aria-describedby={reason ? tip : undefined}
         data-mark="link"
-        className={mark ? "active" : ""}
-        disabled={!menu.editable}
-        onClick={() => (menu.open ? menu.close() : open())}
+        className={mark ? "gotipe-format-tool active" : "gotipe-format-tool"}
+        onMouseDown={(event) => event.preventDefault()}
+        onClick={() => {
+          if (reason) return;
+          if (menu.open) menu.close();
+          else open();
+        }}
       >
         <PageIcon name="link" />
-        <Tip label={i18n.t("toolbar.link")} binding={MARK_KEYS.link} />
+        <Tip
+          id={tip}
+          label={reason ?? i18n.t("toolbar.link")}
+          binding={reason ? undefined : MARK_KEYS.link}
+        />
       </button>
       {menu.open && (
         <div

@@ -63,7 +63,7 @@ Each `set`/`unset` returns `false` when nothing changes, the value is invalid or
 
 ## In the toolbar
 
-`FontFamilyPicker` and `FontSizeStepper` from `@gotipe/block-editor` are the GoTipe Atlas tools (frame 27) for a fixed toolbar such as the modern view's: the current face by name with a list where each face is named in itself, and minus, the size, plus. The size field takes a typed number: Enter or leaving it applies it, the arrow keys step it, Escape returns to the text. Without a mark the field shows the size the theme gives the text at the caret.
+[FixedToolbar](/docs/ui/fixed-toolbar) shows these two tools when the editor has both marks. `FontFamilyPicker` and `FontSizeStepper` from `@gotipe/block-editor` are the GoTipe Atlas tools (frame 27) for your own toolbar as well: the current face by name with a list where each face is named in itself, and minus, the size, plus. The size field takes a typed number: Enter or leaving it applies it, the arrow keys step it, Escape returns to the text. Without a mark the field shows the size the theme gives the text at the caret. Where text takes no marks, the editor is read-only or the size is at its limit, the tools stay focusable and their tooltips say why.
 
 ```tsx title="toolbar.tsx"
 import { AlignPicker, FontFamilyPicker, FontSizeStepper, InvisiblesToggle } from "@gotipe/block-editor";

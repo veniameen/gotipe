@@ -12,7 +12,7 @@ import { useNearViewport } from "./use-near-viewport";
 const LOOKS: { view: ThemePreset; name: string; note: string }[] = [
   { view: "notion", name: "Notion", note: "Familiar and focused. The default." },
   { view: "docs", name: "Docs", note: "Reference pages with an outline." },
-  { view: "modern", name: "Modern", note: "Forms and CMS fields under a toolbar." },
+  { view: "modern", name: "Modern", note: "A fixed toolbar and more room." },
   { view: "minimal", name: "Minimal", note: "Just the words." },
 ];
 

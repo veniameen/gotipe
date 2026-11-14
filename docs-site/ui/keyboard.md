@@ -117,7 +117,10 @@ struck-through and code text as you type the closing delimiter; see
 when read-only. The slash menu is a `dialog` holding a `listbox` of `option`s in labelled
 groups, with `aria-activedescendant` on the active one. The bubble is a `toolbar`: mark
 buttons carry `aria-pressed` and `aria-keyshortcuts`, Link and Colour open `dialog`s, More
-opens a `menu`, Block type a `listbox`. The block handle is a `toolbar` with named buttons,
+opens a `menu`, Block type a `listbox`. The [fixed toolbar](/docs/ui/fixed-toolbar) is one
+`toolbar` and one Tab stop: ← and → move between its tools, Home and End go to the ends, ↓
+opens a list or More, Escape closes it; a tool that can't act is `aria-disabled` and
+described by the reason. The block handle is a `toolbar` with named buttons,
 and its menu uses `menu` and `menuitem`. Table handles have `aria-haspopup="menu"` and
 column types are `menuitemradio`. The theme toggle is a `radiogroup`, the docs outline a
 `nav` with `aria-current`, the loading skeleton a `status` with `aria-busy`. Task boxes are

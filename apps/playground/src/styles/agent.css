@@ -56,12 +56,6 @@
   flex-shrink: 0;
 }
 
-.gotipe-agent-layout .gotipe-static-toolbar {
-  border: none;
-  border-bottom: 1px solid var(--gt-border, #e5e5e5);
-  border-radius: 0;
-}
-
 .gotipe-agent-layout .gotipe-editor {
   border: none;
   border-radius: 0;

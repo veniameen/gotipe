@@ -77,7 +77,7 @@
   height: var(--gt-icon-size);
   flex: none;
 }
-.gotipe-bubble-menu button:hover:not(:disabled),
+.gotipe-bubble-menu button:hover:not(:disabled, [aria-disabled="true"]),
 .gotipe-bubble-menu button:is(.active, [aria-pressed="true"], [aria-expanded="true"]) {
   background: var(--gt-fill-2);
   color: var(--gt-text);
@@ -85,6 +85,12 @@
 .gotipe-bubble-menu button:disabled {
   opacity: var(--gt-disabled-opacity);
   cursor: default;
+}
+.gotipe-bubble-menu button[aria-disabled="true"] {
+  cursor: default;
+}
+.gotipe-bubble-menu button[aria-disabled="true"] > :not(.gotipe-tip) {
+  opacity: var(--gt-disabled-opacity);
 }
 .gotipe-bubble-menu button:focus-visible {
   outline: var(--gt-focus-width) solid var(--gt-focus);

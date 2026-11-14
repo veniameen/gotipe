@@ -1,0 +1,99 @@
+/* The fixed toolbar — Atlas frames 3 and 31: one bar over the document in the view modern. Its
+   tools are the shared format tools (text-style.css); a hairline stands between groups; what does
+   not fit goes to «More», a second bar on the overlay surface under its button. */
+
+.gotipe-fixed-toolbar {
+  position: sticky;
+  top: 0;
+  z-index: var(--gt-z-toolbar);
+  box-sizing: border-box;
+  border-bottom: var(--gt-hairline) solid var(--gt-line);
+  background: var(--gt-page-bg);
+  color: var(--gt-text);
+  font-family: var(--gt-font-ui);
+  font-size: var(--gt-ui-size);
+  line-height: var(--gt-ui-leading);
+  letter-spacing: normal;
+}
+/* a list open from the bar (font, alignment, «Insert», «More») stands over the selection's bubble */
+.gotipe-fixed-toolbar:has([aria-expanded="true"]) {
+  z-index: var(--gt-z-slash);
+}
+.gotipe-fixed-toolbar-track {
+  display: flex;
+  align-items: center;
+  gap: var(--gt-toolbar-gap);
+  min-width: 0;
+  padding: var(--gt-fixed-toolbar-pad);
+}
+/* even the tools that never leave do not fit: the line scrolls sideways instead of overlapping */
+.gotipe-fixed-toolbar-track[data-cramped] {
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.gotipe-fixed-toolbar-unit,
+.gotipe-fixed-toolbar-unit > div {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: var(--gt-toolbar-gap);
+}
+.gotipe-fixed-toolbar-sep {
+  flex: none;
+  box-sizing: border-box;
+  width: var(--gt-hairline);
+  height: var(--gt-tool-sep-h);
+  margin: 0 var(--gt-tool-sep-gap);
+  border: 0;
+  background: var(--gt-line-strong);
+}
+.gotipe-fixed-toolbar-space {
+  flex: 1;
+}
+
+/* «More»: the tools that did not fit, in the bar's order, a row of groups per line */
+.gotipe-fixed-toolbar-panel {
+  z-index: var(--gt-z-slash);
+  display: grid;
+  justify-items: start;
+  row-gap: var(--gt-toolbar-row-gap);
+  box-sizing: border-box;
+  padding: var(--gt-toolbar-pad);
+  border-radius: var(--gt-radius-overlay);
+  background: var(--gt-overlay);
+  box-shadow: var(--gt-shadow-overlay);
+  color: var(--gt-text);
+  font-family: var(--gt-font-ui);
+  font-size: var(--gt-ui-size);
+  line-height: var(--gt-ui-leading);
+  letter-spacing: normal;
+}
+.gotipe-fixed-toolbar-row {
+  display: flex;
+  align-items: center;
+  gap: var(--gt-toolbar-gap);
+  white-space: nowrap;
+}
+
+/* the block type is a text tool; a long name ends in an ellipsis */
+.gotipe-fixed-toolbar .gotipe-block-type-trigger {
+  max-width: var(--gt-menu-w-narrow);
+}
+/* «Insert»: both its glyphs are quieter than its name */
+.gotipe-format-tool[data-gotipe-insert] > svg {
+  color: var(--gt-text-3);
+}
+
+/* tooltips stand right under their tool and never past the bar's edges */
+.gotipe-fixed-toolbar .gotipe-tip {
+  top: calc(100% + var(--gt-overlay-gap));
+}
+.gotipe-fixed-toolbar-track > :first-child .gotipe-tip {
+  left: 0;
+  transform: none;
+}
+.gotipe-fixed-toolbar-space ~ * .gotipe-tip {
+  right: 0;
+  left: auto;
+  transform: none;
+}

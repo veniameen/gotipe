@@ -209,24 +209,21 @@ export function AIExample() {
         <div style={{ display: "flex", gap: 8, marginBottom: 12, flexWrap: "wrap" }}>
           <button
             type="button"
-            className="gotipe-toolbar-btn"
-            style={{ width: "auto", padding: "0 12px", fontSize: 13 }}
+            className="gotipe-example-button"
             onClick={() => editor?.emit("executeAiCommand", { commandId: "proofread" })}
           >
             Proofread
           </button>
           <button
             type="button"
-            className="gotipe-toolbar-btn"
-            style={{ width: "auto", padding: "0 12px", fontSize: 13 }}
+            className="gotipe-example-button"
             onClick={() => editor?.emit("executeAiCommand", { commandId: "review" })}
           >
             AI Review
           </button>
           <button
             type="button"
-            className="gotipe-toolbar-btn"
-            style={{ width: "auto", padding: "0 12px", fontSize: 13 }}
+            className="gotipe-example-button"
             onClick={() =>
               editor?.emit("executeAiCommand", {
                 commandId: "addParagraph",

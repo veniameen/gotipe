@@ -1,4 +1,4 @@
-import { BlockEditor, PageHead } from "@gotipe/block-editor";
+import { BlockEditor, FixedToolbar, PageHead } from "@gotipe/block-editor";
 import {
   codeLanguageAliases,
   codeLanguages,
@@ -20,7 +20,6 @@ import { GoTipeI18nProvider, useEditor } from "@gotipe/react";
 import type { ThemePreset } from "@gotipe/theme";
 import { useEffect, useState } from "react";
 import { ExampleWrapper } from "../shared/example-wrapper";
-import { StaticToolbar } from "../shared/toolbar";
 import { useDebugEditor } from "../shared/use-debug-editor";
 import { ATLAS_DOCUMENT, ATLAS_TITLE } from "./views/document";
 
@@ -187,9 +186,7 @@ export function ViewsExample() {
       </fieldset>
       <GoTipeI18nProvider locale={language}>
         <div className="gotipe-views-frame" data-gt-view={view}>
-          {view === "modern" && editor && state !== "loading" && (
-            <StaticToolbar editor={editor} showTextLayout />
-          )}
+          {view === "modern" && editor && state !== "loading" && <FixedToolbar editor={editor} />}
           <BlockEditor
             editor={state === "loading" ? null : editor}
             view={view}
