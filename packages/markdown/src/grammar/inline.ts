@@ -1,9 +1,10 @@
 import { emojiEnd, mathEnd } from "../atoms";
+import { AutolinkScanner, charBefore } from "./autolinks";
 import { REFERENCE, decodeReference, punctuation } from "./decode";
 import { INLINE_HTML } from "./html";
 import { type InlineContext, readAutolink, readLink } from "./links";
 import { type Source, range } from "./source";
-import type { PhrasingContent } from "./types";
+import type { PhrasingContent, Text } from "./types";
 
 interface Delimiter {
   marker: string;
@@ -15,14 +16,17 @@ interface Delimiter {
 }
 type Token = PhrasingContent | Delimiter;
 const isDelimiter = (node: Token): node is Delimiter => "marker" in node;
-const whitespace = (char: string | undefined): boolean => !char || /\s/u.test(char);
+/** CommonMark's Unicode whitespace (Zs, tab, line feed, form feed, carriage return) or an edge. */
+const whitespace = (char: string | undefined): boolean => !char || /^[\t\n\f\r\p{Zs}]$/u.test(char);
 const unicodePunctuation = (char: string | undefined): boolean =>
   !!char && /[\p{P}\p{S}]/u.test(char);
 
 function delimiter(text: string, start: number, count: number): Delimiter {
   const marker = text[start]!;
-  const before = text[start - 1];
-  const after = text[start + count];
+  // whole code points: an emoji is punctuation for flanking, not half of a surrogate pair
+  const before = charBefore(text, start);
+  const next = text.codePointAt(start + count);
+  const after = next === undefined ? undefined : String.fromCodePoint(next);
   const left =
     !whitespace(after) &&
     (!unicodePunctuation(after) || whitespace(before) || unicodePunctuation(before));
@@ -88,14 +92,28 @@ function resolve(tokens: Token[], source: Source): PhrasingContent[] {
   return coalesce(tokens.map((token) => toNode(token, source)));
 }
 
-function coalesce(input: PhrasingContent[]): PhrasingContent[] {
+/**
+ * Text nodes that touch in the source as one node. Until autolinks are read, the text of escapes
+ * and character references stays apart (`decoded`); `final` joins it and drops the flag.
+ */
+function coalesce(input: PhrasingContent[], final = false): PhrasingContent[] {
   const nodes: PhrasingContent[] = [];
-  for (const node of input) {
+  for (const item of input) {
+    let node = item;
+    if (final && (node.type === "emphasis" || node.type === "strong" || node.type === "delete")) {
+      node = { ...node, children: coalesce(node.children, true) };
+    }
+    if (final && node.type === "text" && node.decoded) {
+      const { decoded: _, ...plain } = node;
+      node = plain;
+    }
     const previous = nodes.at(-1);
     if (
       node.type === "text" &&
       previous?.type === "text" &&
-      previous.position?.end.offset === node.position?.start.offset
+      (final || !previous.decoded === !node.decoded) &&
+      previous.position?.end.offset === node.position?.start.offset &&
+      previous.position !== undefined
     ) {
       previous.value += node.value;
       previous.position!.end = node.position!.end;
@@ -104,29 +122,61 @@ function coalesce(input: PhrasingContent[]): PhrasingContent[] {
   return nodes;
 }
 
+/**
+ * GFM autolink literals in a run of text nodes (`autolinks.ts`): the text of escapes and
+ * references, which stays apart until now, may be part of an address but cannot start one.
+ */
 function decodedAutolinks(nodes: PhrasingContent[], context: InlineContext): PhrasingContent[] {
-  return nodes.flatMap((node): PhrasingContent[] => {
+  if (context.inLink || context.inLabel) return nodes;
+  const out: PhrasingContent[] = [];
+  for (let i = 0; i < nodes.length; ) {
+    const node = nodes[i]!;
     if (node.type === "emphasis" || node.type === "strong" || node.type === "delete") {
-      return [{ ...node, children: decodedAutolinks(node.children, context) }];
+      out.push({ ...node, children: decodedAutolinks(node.children, context) });
+      i++;
+      continue;
     }
-    if (node.type !== "text" || !/[@:]|www\./.test(node.value)) return [node];
-    const result: PhrasingContent[] = [];
-    const source = { text: node.value, offsets: [] };
-    let from = 0;
-    for (let p = 0; p < node.value.length; p++) {
-      const match = readAutolink(source, p, context, true);
-      if (!match || match.node.type !== "link") continue;
-      if (p > from) result.push({ type: "text", value: node.value.slice(from, p) });
-      match.node.position = undefined;
-      for (const child of match.node.children) child.position = undefined;
-      result.push(match.node);
-      from = match.end;
-      p = from - 1;
+    if (node.type !== "text") {
+      out.push(node);
+      i++;
+      continue;
     }
-    if (!result.length) return [node];
-    if (from < node.value.length) result.push({ type: "text", value: node.value.slice(from) });
-    return result;
-  });
+    // the run of text nodes from here: one text for the reader of addresses
+    let end = i;
+    let text = "";
+    const decoded: boolean[] = [];
+    for (; nodes[end]?.type === "text"; end++) {
+      const part = nodes[end] as Text;
+      text += part.value;
+      for (let k = 0; k < part.value.length; k++) decoded.push(part.decoded === true);
+    }
+    const links = /[@:]|www\./.test(text) ? literalLinks(text, decoded) : [];
+    if (links.length === 0) out.push(...nodes.slice(i, end));
+    else out.push(...links);
+    i = end;
+  }
+  return out;
+}
+
+/** The text and links of `text`, or nothing when it holds no autolink literal. */
+function literalLinks(text: string, decoded: readonly boolean[]): PhrasingContent[] {
+  const result: PhrasingContent[] = [];
+  const scanner = new AutolinkScanner(text, (index) => !decoded[index]);
+  let from = 0;
+  for (let p = 0; p < text.length; ) {
+    const link = scanner.at(p, charBefore(text, p));
+    if (!link) {
+      p++;
+      continue;
+    }
+    if (p > from) result.push({ type: "text", value: text.slice(from, p) });
+    const label = text.slice(p, link.end);
+    result.push({ type: "link", url: link.url, children: [{ type: "text", value: label }] });
+    from = p = link.end;
+  }
+  if (result.length === 0) return result;
+  if (from < text.length) result.push({ type: "text", value: text.slice(from) });
+  return result;
 }
 
 export function readInline(source: Source, options: InlineContext): PhrasingContent[] {
@@ -135,17 +185,21 @@ export function readInline(source: Source, options: InlineContext): PhrasingCont
   if ((context.depth ?? 0) > 64)
     return [{ type: "text", value: text, position: range(source, 0, text.length) }];
   const tokens: Token[] = [];
-  const pushText = (value: string, start: number, end: number): void => {
+  /** `decoded`: the text of an escape or a reference (never part of an autolink literal). */
+  const pushText = (value: string, start: number, end: number, decoded = false): void => {
     if (!value) return;
     const previous = tokens.at(-1);
     if (
       previous &&
       !isDelimiter(previous) &&
       previous.type === "text" &&
+      !previous.decoded === !decoded &&
       previous.position?.end.offset === source.offsets[start]
     ) {
       previous.value += value;
       previous.position!.end = range(source, start, end).end;
+    } else if (decoded) {
+      tokens.push({ type: "text", value, position: range(source, start, end), decoded });
     } else tokens.push({ type: "text", value, position: range(source, start, end) });
   };
   for (let p = 0; p < text.length; ) {
@@ -162,7 +216,7 @@ export function readInline(source: Source, options: InlineContext): PhrasingCont
         continue;
       }
       if (punctuation(text[p + 1])) {
-        pushText(text[p + 1]!, p, p + 2);
+        pushText(text[p + 1]!, p, p + 2, true);
         p += 2;
         continue;
       }
@@ -171,7 +225,7 @@ export function readInline(source: Source, options: InlineContext): PhrasingCont
       REFERENCE.lastIndex = p;
       const match = REFERENCE.exec(text);
       if (match) {
-        pushText(decodeReference(match[0]), p, p + match[0].length);
+        pushText(decodeReference(match[0]), p, p + match[0].length, true);
         p += match[0].length;
         continue;
       }
@@ -302,5 +356,5 @@ export function readInline(source: Source, options: InlineContext): PhrasingCont
     pushText(c === "\0" ? "�" : c, p, p + 1);
     p++;
   }
-  return decodedAutolinks(resolve(tokens, source), context);
+  return coalesce(decodedAutolinks(resolve(tokens, source), context), true);
 }

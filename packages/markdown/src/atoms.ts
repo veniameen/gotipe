@@ -30,7 +30,8 @@ export function mathEnd(text: string, open: number): number {
   if (first === undefined || first === "$" || space(first)) return -1;
   for (let p = open + 1; p < text.length; p++) {
     const c = text[p];
-    if (c === "\n") return -1;
+    // a line ending ends the line: "\r" too, which the writer would write as one (D-94)
+    if (c === "\n" || c === "\r") return -1;
     if (c === "\\" && text[p + 1] !== "\n") p++;
     else if (c === "$") return !space(text[p - 1]) && !/[0-9]/.test(text[p + 1] ?? "") ? p : -1;
   }

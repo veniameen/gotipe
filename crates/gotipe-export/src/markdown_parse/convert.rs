@@ -144,18 +144,45 @@ fn quote(n: &Node, read: Read) -> Option<Block> {
             re!(r"(?i-u)^\[!(NOTE|TIP|IMPORTANT|WARNING|CAUTION)\](?: |[ \t]*\n|[ \t]*$)")
                 .captures(&text)
         {
-            let alone = source
-                .get(first.start + m[1].len() + 3..)
-                .is_some_and(|rest| re!(r"^[ \t]*\\?(?:\r\n|\r|\n|$)").is_match(rest));
-            if source
-                .get(first.start..)
-                .is_some_and(|s| s.starts_with("[!"))
-                && alone
+            // where the text starts in the source: a text split by an autolink has no position,
+            // and it starts the quote's text, after its `>`
+            let mut start = first.start;
+            if start == usize::MAX {
+                let blanks = |at: usize| {
+                    at + source.as_bytes()[at.min(source.len())..]
+                        .iter()
+                        .take_while(|b| matches!(b, b' ' | b'\t'))
+                        .count()
+                };
+                start = blanks(n.start);
+                if source.as_bytes().get(start) == Some(&b'>') {
+                    start += 1;
+                }
+                start = blanks(start);
+            }
+            // what follows `]` on the marker line: blanks, a `\` and the line ending, or the end
+            let end = source
+                .get(start + m[1].len() + 3..)
+                .and_then(|rest| re!(r"^([ \t]*)(\\?)(\r\n|\r|\n|$)").captures(rest));
+            // the marker line is this much of the text: what the pattern found, unless a hard
+            // break by `\` keeps the blanks before it (D-90)
+            let length = end.as_ref().map_or(0, |end| {
+                if end[2].is_empty() || end[3].is_empty() {
+                    m[0].len()
+                } else {
+                    m[1].len() + 4 + end[1].len()
+                }
+            });
+            if source.get(start..).is_some_and(|s| s.starts_with("[!"))
+                && end.is_some()
                 && r.spans
                     .first()
-                    .is_some_and(|s| s.marks.is_empty() && s.text.len() >= m[0].len())
+                    .is_some_and(|s| s.marks.is_empty() && s.text.len() >= length)
+                && text
+                    .get(m[1].len() + 3..length)
+                    .is_some_and(|rest| re!(r"^[ \t]*\n?$").is_match(rest))
             {
-                r.trim(m[0].len());
+                r.trim(length);
                 let mut block = rich("callout", r);
                 block
                     .attrs

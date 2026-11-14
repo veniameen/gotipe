@@ -13,6 +13,55 @@ import type { Block, InlineAtoms, SnapshotBlock, SnapshotNode } from "../types";
 export interface SnapshotLines {
   text: string;
   breaks: number[];
+  /**
+   * How the source spelled each line break, soft or hard, by the offset of its space or "\n":
+   * the blanks, the `\`, the line ending and the prefix of the next line between the words
+   * around it, without the syntax the writer writes itself (D-93).
+   */
+  spelling: Map<number, string>;
+}
+
+/** The line breaks an edited block keeps (`keptBreaks`). */
+export interface KeptBreaks {
+  /** The spaces to write as soft line breaks. */
+  soft: ReadonlySet<number>;
+  /** The source to write for a line break, by the offset of its space or "\n" (D-93). */
+  spelling: ReadonlyMap<number, string>;
+}
+
+/** The end of the source between two words: blanks, a `\`, a line ending, the next prefix. */
+const SPELLING = /[ \t]*\\?(?:\r\n|\r|\n)[ \t>]*$/;
+
+/** How the source of `node` spells each of its line breaks (`SnapshotLines.spelling`). */
+function spellings(source: string, node: PNode, text: string): Map<number, string> {
+  // where each character of the text starts and ends in the source, where segments tell it
+  const start = new Int32Array(text.length).fill(-1);
+  const end = new Int32Array(text.length).fill(-1);
+  for (const s of node.segs) {
+    if (!s.exact) {
+      start[s.textFrom] = s.mdFrom;
+      end[s.textTo - 1] = s.mdTo;
+      continue;
+    }
+    for (let i = s.textFrom; i < s.textTo; i++) {
+      start[i] = s.mdFrom + i - s.textFrom;
+      end[i] = start[i]! + 1;
+    }
+  }
+  const out = new Map<number, string>();
+  const soft = new Set(node.softBreaks);
+  for (let t = 1; t + 1 < text.length; t++) {
+    if (text[t] !== "\n" && !soft.has(t)) continue;
+    const from = end[t - 1]!;
+    const to = start[t + 1]!;
+    if (from < 0 || to < from) continue;
+    // syntax before the line ending (`**`, `](u)`), which the writer writes itself, is left
+    // out; a gap with another line ending in it is not spelled again
+    const gap = source.slice(from, to);
+    const spelled = SPELLING.exec(gap);
+    if (spelled && !/[\r\n]/.test(gap.slice(0, spelled.index))) out.set(t, spelled[0]);
+  }
+  return out;
 }
 
 /** The rich or raw text of a block, as offsets count it. */
@@ -46,8 +95,10 @@ export function snapshotLines(
   };
   const visit = (old: SnapshotNode, read: PNode): boolean => {
     if (old.type !== read.block.type || old.children.length !== read.children.length) return false;
-    if (read.softBreaks?.length) {
-      lines.set(old.id, { text: blockText(read.block), breaks: read.softBreaks });
+    const text = blockText(read.block);
+    if (read.softBreaks?.length || (Array.isArray(read.block.content) && text.includes("\n"))) {
+      const spelling = spellings(source, read, text);
+      lines.set(old.id, { text, breaks: read.softBreaks ?? [], spelling });
     }
     return old.children.every((child, index) => visit(child, read.children[index]!));
   };
@@ -122,25 +173,31 @@ function matchWords(a: readonly string[], b: readonly string[]): Int32Array {
 }
 
 /**
- * The spaces of `text` to write as soft line breaks. A break of the snapshot stays after the
- * word before it while that word is still there, so the line it ends is kept and words typed at
- * the start of the next line stay on the next line; with that word edited it stays before the
- * word after it. With both edited the two lines are written as one.
+ * The line breaks `text` keeps of its snapshot. A break of the snapshot stays after the word
+ * before it while that word is still there, so the line it ends is kept and words typed at the
+ * start of the next line stay on the next line; with that word edited it stays before the word
+ * after it. With both edited the two lines are written as one. A kept break, and a "\n" of the
+ * text where the snapshot had one, keeps its spelling (D-93).
  */
-export function softBreaksFor(old: SnapshotLines, text: string): Set<number> {
-  if (old.text === text) return new Set(old.breaks);
+export function keptBreaks(old: SnapshotLines, text: string): KeptBreaks {
+  if (old.text === text) return { soft: new Set(old.breaks), spelling: old.spelling };
   const before = words(old.text);
   const after = words(text);
   const match = matchWords(before.words, after.words);
   const breaks = new Set(old.breaks);
-  const out = new Set<number>();
+  const soft = new Set<number>();
+  const spelling = new Map<number, string>();
   before.gaps.forEach((offset, index) => {
-    if (!breaks.has(offset)) return;
+    const isSoft = breaks.has(offset);
+    if (!isSoft && old.text[offset] !== "\n") return;
     const left = match[index]!;
     const right = match[index + 1]!;
     const gap = left >= 0 ? after.gaps[left] : right > 0 ? after.gaps[right - 1] : undefined;
     // a typed line break there already ends the line
-    if (gap !== undefined && text[gap] === " ") out.add(gap);
+    if (gap === undefined || text[gap] !== (isSoft ? " " : "\n")) return;
+    if (isSoft) soft.add(gap);
+    const spelled = old.spelling.get(offset);
+    if (spelled !== undefined) spelling.set(gap, spelled);
   });
-  return out;
+  return { soft, spelling };
 }

@@ -590,6 +590,100 @@
           ]
         }
       ]
+    },
+    {
+      "id": "callout-marker-blanks-before-a-hard-break",
+      "markdown": "> [!NOTE] \\\n> body\n",
+      "blocks": [
+        {
+          "type": "callout",
+          "attrs": {
+            "type": "note",
+            "alert": "NOTE"
+          },
+          "content": [
+            {
+              "text": "body",
+              "marks": []
+            }
+          ],
+          "children": []
+        }
+      ]
+    },
+    {
+      "id": "task-text-on-the-next-line",
+      "markdown": "- [ ]\n  task\n- [x] \n  done\n",
+      "blocks": [
+        {
+          "type": "todoList",
+          "attrs": {
+            "spread": false,
+            "marker": "-"
+          },
+          "content": null,
+          "children": [
+            {
+              "type": "todoItem",
+              "attrs": {
+                "checked": false
+              },
+              "content": [
+                {
+                  "text": "task",
+                  "marks": []
+                }
+              ],
+              "children": []
+            },
+            {
+              "type": "todoItem",
+              "attrs": {
+                "checked": true
+              },
+              "content": [
+                {
+                  "text": "done",
+                  "marks": []
+                }
+              ],
+              "children": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "carriage-return-reference",
+      "markdown": "a&#13;b and c&#13;&#10;d\n",
+      "blocks": [
+        {
+          "type": "paragraph",
+          "attrs": {},
+          "content": [
+            {
+              "text": "a\nb and c\nd",
+              "marks": []
+            }
+          ],
+          "children": []
+        }
+      ]
+    },
+    {
+      "id": "carriage-return-in-a-code-fence-meta",
+      "markdown": "```ts a&#13;b\nx\n```\n",
+      "blocks": [
+        {
+          "type": "codeBlock",
+          "attrs": {
+            "language": "ts",
+            "meta": "a\rb"
+          },
+          "content": "x",
+          "children": []
+        }
+      ]
     }
   ],
   "write": [
@@ -1314,6 +1408,536 @@
           "content": [
             {
               "text": "Привет 😀\nмир",
+              "marks": []
+            }
+          ],
+          "children": []
+        }
+      ]
+    },
+    {
+      "id": "code-line-break",
+      "document": {
+        "version": 1,
+        "blocks": [
+          {
+            "id": "n101",
+            "type": "paragraph",
+            "attrs": {},
+            "content": [
+              {
+                "text": "a ",
+                "marks": []
+              },
+              {
+                "text": "x\ny",
+                "marks": [
+                  {
+                    "type": "code"
+                  }
+                ]
+              },
+              {
+                "text": " b",
+                "marks": []
+              }
+            ],
+            "children": []
+          },
+          {
+            "id": "n102",
+            "type": "paragraph",
+            "attrs": {},
+            "content": [
+              {
+                "text": "\nx",
+                "marks": [
+                  {
+                    "type": "code"
+                  }
+                ]
+              }
+            ],
+            "children": []
+          }
+        ]
+      },
+      "markdown": "a `x`\\\n`y` b\n\n&#10;`x`\n",
+      "reparsed": [
+        {
+          "type": "paragraph",
+          "attrs": {},
+          "content": [
+            {
+              "text": "a ",
+              "marks": []
+            },
+            {
+              "text": "x",
+              "marks": [
+                {
+                  "type": "code"
+                }
+              ]
+            },
+            {
+              "text": "\n",
+              "marks": []
+            },
+            {
+              "text": "y",
+              "marks": [
+                {
+                  "type": "code"
+                }
+              ]
+            },
+            {
+              "text": " b",
+              "marks": []
+            }
+          ],
+          "children": []
+        },
+        {
+          "type": "paragraph",
+          "attrs": {},
+          "content": [
+            {
+              "text": "\n",
+              "marks": []
+            },
+            {
+              "text": "x",
+              "marks": [
+                {
+                  "type": "code"
+                }
+              ]
+            }
+          ],
+          "children": []
+        }
+      ]
+    },
+    {
+      "id": "code-line-break-in-a-cell",
+      "document": {
+        "version": 1,
+        "blocks": [
+          {
+            "id": "n103",
+            "type": "table",
+            "attrs": {},
+            "content": null,
+            "children": [
+              {
+                "id": "n104",
+                "type": "tableRow",
+                "attrs": {},
+                "content": null,
+                "children": [
+                  {
+                    "id": "n105",
+                    "type": "tableHeader",
+                    "attrs": {},
+                    "content": [
+                      {
+                        "text": "h",
+                        "marks": []
+                      }
+                    ],
+                    "children": []
+                  },
+                  {
+                    "id": "n106",
+                    "type": "tableHeader",
+                    "attrs": {},
+                    "content": [
+                      {
+                        "text": "h",
+                        "marks": []
+                      }
+                    ],
+                    "children": []
+                  }
+                ]
+              },
+              {
+                "id": "n107",
+                "type": "tableRow",
+                "attrs": {},
+                "content": null,
+                "children": [
+                  {
+                    "id": "n108",
+                    "type": "tableCell",
+                    "attrs": {},
+                    "content": [
+                      {
+                        "text": "x\ny",
+                        "marks": [
+                          {
+                            "type": "code"
+                          }
+                        ]
+                      }
+                    ],
+                    "children": []
+                  },
+                  {
+                    "id": "n109",
+                    "type": "tableCell",
+                    "attrs": {},
+                    "content": [
+                      {
+                        "text": "z",
+                        "marks": []
+                      }
+                    ],
+                    "children": []
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "markdown": "| h | h |\n| --- | --- |\n| `x`<br>`y` | z |\n",
+      "reparsed": [
+        {
+          "type": "table",
+          "attrs": {
+            "align": [
+              null,
+              null
+            ]
+          },
+          "content": null,
+          "children": [
+            {
+              "type": "tableRow",
+              "attrs": {},
+              "content": null,
+              "children": [
+                {
+                  "type": "tableHeader",
+                  "attrs": {},
+                  "content": [
+                    {
+                      "text": "h",
+                      "marks": []
+                    }
+                  ],
+                  "children": []
+                },
+                {
+                  "type": "tableHeader",
+                  "attrs": {},
+                  "content": [
+                    {
+                      "text": "h",
+                      "marks": []
+                    }
+                  ],
+                  "children": []
+                }
+              ]
+            },
+            {
+              "type": "tableRow",
+              "attrs": {},
+              "content": null,
+              "children": [
+                {
+                  "type": "tableCell",
+                  "attrs": {},
+                  "content": [
+                    {
+                      "text": "x",
+                      "marks": [
+                        {
+                          "type": "code"
+                        }
+                      ]
+                    },
+                    {
+                      "text": "\n",
+                      "marks": []
+                    },
+                    {
+                      "text": "y",
+                      "marks": [
+                        {
+                          "type": "code"
+                        }
+                      ]
+                    }
+                  ],
+                  "children": []
+                },
+                {
+                  "type": "tableCell",
+                  "attrs": {},
+                  "content": [
+                    {
+                      "text": "z",
+                      "marks": []
+                    }
+                  ],
+                  "children": []
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "mark-around-a-line-break",
+      "document": {
+        "version": 1,
+        "blocks": [
+          {
+            "id": "n110",
+            "type": "paragraph",
+            "attrs": {},
+            "content": [
+              {
+                "text": "a\n",
+                "marks": [
+                  {
+                    "type": "bold"
+                  }
+                ]
+              },
+              {
+                "text": "b",
+                "marks": []
+              }
+            ],
+            "children": []
+          },
+          {
+            "id": "n111",
+            "type": "paragraph",
+            "attrs": {},
+            "content": [
+              {
+                "text": "a",
+                "marks": []
+              },
+              {
+                "text": "\nb",
+                "marks": [
+                  {
+                    "type": "italic"
+                  }
+                ]
+              }
+            ],
+            "children": []
+          }
+        ]
+      },
+      "markdown": "<strong>a\\\n</strong>b\n\na<em>\\\nb</em>\n",
+      "reparsed": [
+        {
+          "type": "paragraph",
+          "attrs": {},
+          "content": [
+            {
+              "text": "a\n",
+              "marks": [
+                {
+                  "type": "bold"
+                }
+              ]
+            },
+            {
+              "text": "b",
+              "marks": []
+            }
+          ],
+          "children": []
+        },
+        {
+          "type": "paragraph",
+          "attrs": {},
+          "content": [
+            {
+              "text": "a",
+              "marks": []
+            },
+            {
+              "text": "\nb",
+              "marks": [
+                {
+                  "type": "italic"
+                }
+              ]
+            }
+          ],
+          "children": []
+        }
+      ]
+    },
+    {
+      "id": "carriage-return",
+      "document": {
+        "version": 1,
+        "blocks": [
+          {
+            "id": "n112",
+            "type": "paragraph",
+            "attrs": {},
+            "content": [
+              {
+                "text": "a\rb c\r\nd",
+                "marks": []
+              }
+            ],
+            "children": []
+          }
+        ]
+      },
+      "markdown": "a\\\nb c\\\nd\n",
+      "reparsed": [
+        {
+          "type": "paragraph",
+          "attrs": {},
+          "content": [
+            {
+              "text": "a\nb c\nd",
+              "marks": []
+            }
+          ],
+          "children": []
+        }
+      ]
+    },
+    {
+      "id": "an-address-before-a-line-break",
+      "document": {
+        "version": 1,
+        "blocks": [
+          {
+            "id": "n113",
+            "type": "paragraph",
+            "attrs": {},
+            "content": [
+              {
+                "text": "https://e.x",
+                "marks": [
+                  {
+                    "type": "link",
+                    "attrs": {
+                      "href": "https://e.x"
+                    }
+                  }
+                ]
+              },
+              {
+                "text": "/a ",
+                "marks": []
+              },
+              {
+                "text": "x\ny",
+                "marks": [
+                  {
+                    "type": "code"
+                  }
+                ]
+              }
+            ],
+            "children": []
+          },
+          {
+            "id": "n114",
+            "type": "paragraph",
+            "attrs": {},
+            "content": [
+              {
+                "text": "https://e.x",
+                "marks": [
+                  {
+                    "type": "link",
+                    "attrs": {
+                      "href": "https://e.x"
+                    }
+                  }
+                ]
+              },
+              {
+                "text": "/a b\r\nc",
+                "marks": []
+              }
+            ],
+            "children": []
+          }
+        ]
+      },
+      "markdown": "<https://e.x>/a `x`\\\n`y`\n\n<https://e.x>/a b\\\nc\n",
+      "reparsed": [
+        {
+          "type": "paragraph",
+          "attrs": {},
+          "content": [
+            {
+              "text": "https://e.x",
+              "marks": [
+                {
+                  "type": "link",
+                  "attrs": {
+                    "href": "https://e.x"
+                  }
+                }
+              ]
+            },
+            {
+              "text": "/a ",
+              "marks": []
+            },
+            {
+              "text": "x",
+              "marks": [
+                {
+                  "type": "code"
+                }
+              ]
+            },
+            {
+              "text": "\n",
+              "marks": []
+            },
+            {
+              "text": "y",
+              "marks": [
+                {
+                  "type": "code"
+                }
+              ]
+            }
+          ],
+          "children": []
+        },
+        {
+          "type": "paragraph",
+          "attrs": {},
+          "content": [
+            {
+              "text": "https://e.x",
+              "marks": [
+                {
+                  "type": "link",
+                  "attrs": {
+                    "href": "https://e.x"
+                  }
+                }
+              ]
+            },
+            {
+              "text": "/a b\nc",
               "marks": []
             }
           ],

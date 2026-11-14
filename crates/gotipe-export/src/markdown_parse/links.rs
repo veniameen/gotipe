@@ -289,76 +289,23 @@ fn angle(text: &str) -> Option<(usize, String)> {
         m.get(1).or_else(|| m.get(2))?.as_str().into(),
     ))
 }
-pub(super) fn autolink(
-    source: &Source,
-    start: usize,
-    context: &Context,
-    literal_only: bool,
-) -> Option<(Node, usize)> {
+/// An autolink in angle brackets, `<https://…>` or `<a@b.c>`; GFM literals are `autolinks.rs`.
+pub(super) fn autolink(source: &Source, start: usize, context: &Context) -> Option<(Node, usize)> {
     if context.in_link {
         return None;
     }
-    let tail = &source.text[start..];
-    if !literal_only {
-        if let Some((len, label)) = angle(tail) {
-            let mut node = Node::new("link", source.point(start), source.point(start + len));
-            node.url = if re!(r"^[A-Za-z][A-Za-z0-9+.-]*:").is_match(&label) {
-                label.clone()
-            } else {
-                format!("mailto:{label}")
-            };
-            node.children.push(Node::text(
-                "text",
-                &label,
-                source.point(start + 1),
-                source.point(start + 1 + label.len()),
-            ));
-            return Some((node, start + len));
-        }
-    }
-    if context.in_label {
-        return None;
-    }
-    if source.text[..start]
-        .chars()
-        .next_back()
-        .is_some_and(|c| re!(r"[\p{L}\p{N}_]").is_match(&c.to_string()))
-    {
-        return None;
-    }
-    let m = re!(r"^(?i-u:https?://|www\.)[^\s<>]+")
-        .find(tail)
-        .or_else(|| {
-            re!(r"^[A-Za-z0-9.!#$%&'*+/=?^_`{|}~-]+@[A-Za-z0-9](?:[A-Za-z0-9.-]*\.)[A-Za-z]{2,}")
-                .find(tail)
-        })?;
-    let mut label = m
-        .as_str()
-        .trim_end_matches(['?', '!', '.', ',', ':', '*', '_', '~']);
-    let opens = label.matches('(').count();
-    let mut closes = label.matches(')').count();
-    while closes > opens && label.ends_with(')') {
-        label = &label[..label.len() - 1];
-        closes -= 1
-    }
-    let label = re!(r"&[A-Za-z0-9]+;$").replace(label, "");
-    if label.is_empty() {
-        return None;
-    }
-    let end = start + label.len();
-    let mut node = Node::new("link", source.point(start), source.point(end));
-    node.url = if label.starts_with("www.") {
-        format!("http://{label}")
-    } else if label.contains("://") {
-        label.to_string()
+    let (len, label) = angle(&source.text[start..])?;
+    let mut node = Node::new("link", source.point(start), source.point(start + len));
+    node.url = if re!(r"^[A-Za-z][A-Za-z0-9+.-]*:").is_match(&label) {
+        label.clone()
     } else {
         format!("mailto:{label}")
     };
     node.children.push(Node::text(
         "text",
-        label.as_ref(),
-        source.point(start),
-        source.point(end),
+        &label,
+        source.point(start + 1),
+        source.point(start + 1 + label.len()),
     ));
-    Some((node, end))
+    Some((node, start + len))
 }

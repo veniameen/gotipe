@@ -10,6 +10,11 @@ interface Node<T extends string> {
 }
 export interface Text extends Node<"text"> {
   value: string;
+  /**
+   * Text of a backslash escape or a character reference while the inline reader runs: as in
+   * GFM it is never part of an autolink literal, so `www\.a.b` stays text (D-97).
+   */
+  decoded?: true;
 }
 export interface InlineCode extends Node<"inlineCode"> {
   value: string;

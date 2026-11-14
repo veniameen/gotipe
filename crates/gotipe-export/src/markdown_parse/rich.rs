@@ -19,6 +19,7 @@ impl Inline {
         if text.is_empty() {
             return;
         }
+
         let mut marks = marks.to_vec();
         let rank = |s: &str| {
             [
@@ -108,6 +109,15 @@ fn plain_inline(node: &Node) -> String {
         node.children.iter().map(plain_inline).collect()
     }
 }
+/// "\r\n" and "\r" (of a character reference) are a line break of the text, as the
+/// TypeScript reader reads them (D-94).
+fn line_breaks(text: &str) -> std::borrow::Cow<'_, str> {
+    if text.contains('\r') {
+        text.replace("\r\n", "\n").replace('\r', "\n").into()
+    } else {
+        text.into()
+    }
+}
 /// A mention's text is plain or formatted text: no HTML, images, references or other atoms.
 fn plain_children(children: &[Node]) -> bool {
     children.iter().all(|child| match child.kind {
@@ -158,12 +168,12 @@ fn walk(children: &[Node], marks: &[Mark], read: Read, br: bool, out: &mut Inlin
         }
         match n.kind {
             // a soft line break is a space of the text; a hard one is "\n"
-            "text" => out.push(&n.value, marks),
+            "text" => out.push(&line_breaks(&n.value), marks),
             "break" => out.push("\n", marks),
             "inlineCode" => {
                 let mut nested = marks.to_vec();
                 nested.push(Mark::new("code"));
-                out.push(&n.value, &nested)
+                out.push(&line_breaks(&n.value), &nested)
             }
             "emphasis" | "strong" | "delete" => {
                 let mut nested = marks.to_vec();

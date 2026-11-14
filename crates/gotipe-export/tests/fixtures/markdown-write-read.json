@@ -1,0 +1,1787 @@
+{
+  "version": 1,
+  "read": [
+    {
+      "id": "escaped-addresses-are-text",
+      "markdown": "www\\.e.x, http\\://e.x, x\\@e.xb and www&#46;e.x\n",
+      "blocks": [
+        {
+          "type": "paragraph",
+          "attrs": {},
+          "content": [
+            {
+              "text": "www.e.x, http://e.x, x@e.xb and www.e.x",
+              "marks": []
+            }
+          ],
+          "children": []
+        }
+      ]
+    },
+    {
+      "id": "an-address-goes-on-over-an-escape",
+      "markdown": "https://e.x/a\\_b?c=1&amp;d=2, www.e.x\\_y and <person\\+tag@docs.example>\n",
+      "blocks": [
+        {
+          "type": "paragraph",
+          "attrs": {},
+          "content": [
+            {
+              "text": "https://e.x/a_b?c=1&d=2",
+              "marks": [
+                {
+                  "type": "link",
+                  "attrs": {
+                    "href": "https://e.x/a_b?c=1&d=2"
+                  }
+                }
+              ]
+            },
+            {
+              "text": ", ",
+              "marks": []
+            },
+            {
+              "text": "www.e.x_y",
+              "marks": [
+                {
+                  "type": "link",
+                  "attrs": {
+                    "href": "http://www.e.x_y"
+                  }
+                }
+              ]
+            },
+            {
+              "text": " and <",
+              "marks": []
+            },
+            {
+              "text": "person+tag@docs.example",
+              "marks": [
+                {
+                  "type": "link",
+                  "attrs": {
+                    "href": "mailto:person+tag@docs.example"
+                  }
+                }
+              ]
+            },
+            {
+              "text": ">",
+              "marks": []
+            }
+          ],
+          "children": []
+        }
+      ]
+    },
+    {
+      "id": "not-an-address",
+      "markdown": "www.! www. http://. WWW.e.x\n",
+      "blocks": [
+        {
+          "type": "paragraph",
+          "attrs": {},
+          "content": [
+            {
+              "text": "www.! www. http://. WWW.e.x",
+              "marks": []
+            }
+          ],
+          "children": []
+        }
+      ]
+    },
+    {
+      "id": "emoji-next-to-emphasis",
+      "markdown": "😀~~,~~ *😀*a\n",
+      "blocks": [
+        {
+          "type": "paragraph",
+          "attrs": {},
+          "content": [
+            {
+              "text": "😀",
+              "marks": []
+            },
+            {
+              "text": ",",
+              "marks": [
+                {
+                  "type": "strikethrough"
+                }
+              ]
+            },
+            {
+              "text": " *😀*a",
+              "marks": []
+            }
+          ],
+          "children": []
+        }
+      ]
+    },
+    {
+      "id": "alert-with-an-address",
+      "markdown": "> [!TIP]\n> see www.e.x\n",
+      "blocks": [
+        {
+          "type": "callout",
+          "attrs": {
+            "type": "tip",
+            "alert": "TIP"
+          },
+          "content": [
+            {
+              "text": "see ",
+              "marks": []
+            },
+            {
+              "text": "www.e.x",
+              "marks": [
+                {
+                  "type": "link",
+                  "attrs": {
+                    "href": "http://www.e.x"
+                  }
+                }
+              ]
+            }
+          ],
+          "children": []
+        }
+      ]
+    },
+    {
+      "id": "alert-after-a-tab",
+      "markdown": ">\t[!NOTE]\n> see www.e.x\n",
+      "blocks": [
+        {
+          "type": "callout",
+          "attrs": {
+            "type": "note",
+            "alert": "NOTE"
+          },
+          "content": [
+            {
+              "text": "see ",
+              "marks": []
+            },
+            {
+              "text": "www.e.x",
+              "marks": [
+                {
+                  "type": "link",
+                  "attrs": {
+                    "href": "http://www.e.x"
+                  }
+                }
+              ]
+            }
+          ],
+          "children": []
+        }
+      ]
+    },
+    {
+      "id": "emphasis-next-to-blanks-of-other-kinds",
+      "markdown": "**﻿** and **\n",
+      "blocks": [
+        {
+          "type": "paragraph",
+          "attrs": {},
+          "content": [
+            {
+              "text": "﻿",
+              "marks": [
+                {
+                  "type": "bold"
+                }
+              ]
+            },
+            {
+              "text": " and ",
+              "marks": []
+            },
+            {
+              "text": "",
+              "marks": [
+                {
+                  "type": "italic"
+                }
+              ]
+            }
+          ],
+          "children": []
+        }
+      ]
+    },
+    {
+      "id": "no-break-spaces-at-the-edges",
+      "markdown": "## a \n\n| h |\n| - |\n|  abc  |\n",
+      "blocks": [
+        {
+          "type": "heading",
+          "attrs": {
+            "level": 2
+          },
+          "content": [
+            {
+              "text": "a ",
+              "marks": []
+            }
+          ],
+          "children": []
+        },
+        {
+          "type": "table",
+          "attrs": {
+            "align": [
+              null
+            ]
+          },
+          "content": null,
+          "children": [
+            {
+              "type": "tableRow",
+              "attrs": {},
+              "content": null,
+              "children": [
+                {
+                  "type": "tableHeader",
+                  "attrs": {},
+                  "content": [
+                    {
+                      "text": "h",
+                      "marks": []
+                    }
+                  ],
+                  "children": []
+                }
+              ]
+            },
+            {
+              "type": "tableRow",
+              "attrs": {},
+              "content": null,
+              "children": [
+                {
+                  "type": "tableCell",
+                  "attrs": {},
+                  "content": [
+                    {
+                      "text": " abc ",
+                      "marks": []
+                    }
+                  ],
+                  "children": []
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "write": [
+    {
+      "id": "blanks-at-the-edges",
+      "document": {
+        "version": 1,
+        "blocks": [
+          {
+            "id": "n1",
+            "type": "paragraph",
+            "attrs": {},
+            "content": [
+              {
+                "text": " a\t",
+                "marks": []
+              }
+            ],
+            "children": []
+          },
+          {
+            "id": "n2",
+            "type": "paragraph",
+            "attrs": {},
+            "content": [
+              {
+                "text": " a",
+                "marks": [
+                  {
+                    "type": "bold"
+                  }
+                ]
+              }
+            ],
+            "children": []
+          },
+          {
+            "id": "n3",
+            "type": "heading",
+            "attrs": {
+              "level": 2
+            },
+            "content": [
+              {
+                "text": " a ",
+                "marks": []
+              }
+            ],
+            "children": []
+          },
+          {
+            "id": "n5",
+            "type": "bulletList",
+            "attrs": {},
+            "content": null,
+            "children": [
+              {
+                "id": "n4",
+                "type": "listItem",
+                "attrs": {},
+                "content": [
+                  {
+                    "text": " a ",
+                    "marks": []
+                  }
+                ],
+                "children": []
+              }
+            ]
+          },
+          {
+            "id": "n6",
+            "type": "blockquote",
+            "attrs": {},
+            "content": [
+              {
+                "text": " a ",
+                "marks": []
+              }
+            ],
+            "children": []
+          },
+          {
+            "id": "n7",
+            "type": "callout",
+            "attrs": {
+              "type": "note"
+            },
+            "content": [
+              {
+                "text": " a ",
+                "marks": []
+              }
+            ],
+            "children": []
+          }
+        ]
+      },
+      "markdown": "&#32;a&#9;\n\n<strong> a</strong>\n\n## &#32;a&#32;\n\n- &#32;a&#32;\n\n> &#32;a&#32;\n\n> [!NOTE]\n> &#32;a&#32;\n",
+      "reparsed": [
+        {
+          "type": "paragraph",
+          "attrs": {},
+          "content": [
+            {
+              "text": " a\t",
+              "marks": []
+            }
+          ],
+          "children": []
+        },
+        {
+          "type": "paragraph",
+          "attrs": {},
+          "content": [
+            {
+              "text": " a",
+              "marks": [
+                {
+                  "type": "bold"
+                }
+              ]
+            }
+          ],
+          "children": []
+        },
+        {
+          "type": "heading",
+          "attrs": {
+            "level": 2
+          },
+          "content": [
+            {
+              "text": " a ",
+              "marks": []
+            }
+          ],
+          "children": []
+        },
+        {
+          "type": "bulletList",
+          "attrs": {
+            "marker": "-",
+            "spread": false
+          },
+          "content": null,
+          "children": [
+            {
+              "type": "listItem",
+              "attrs": {},
+              "content": [
+                {
+                  "text": " a ",
+                  "marks": []
+                }
+              ],
+              "children": []
+            }
+          ]
+        },
+        {
+          "type": "blockquote",
+          "attrs": {},
+          "content": [
+            {
+              "text": " a ",
+              "marks": []
+            }
+          ],
+          "children": []
+        },
+        {
+          "type": "callout",
+          "attrs": {
+            "type": "note",
+            "alert": "NOTE"
+          },
+          "content": [
+            {
+              "text": " a ",
+              "marks": []
+            }
+          ],
+          "children": []
+        }
+      ]
+    },
+    {
+      "id": "blanks-at-the-edges-of-a-cell",
+      "document": {
+        "version": 1,
+        "blocks": [
+          {
+            "id": "n8",
+            "type": "table",
+            "attrs": {},
+            "content": null,
+            "children": [
+              {
+                "id": "n9",
+                "type": "tableRow",
+                "attrs": {},
+                "content": null,
+                "children": [
+                  {
+                    "id": "n10",
+                    "type": "tableHeader",
+                    "attrs": {},
+                    "content": [
+                      {
+                        "text": "h",
+                        "marks": []
+                      }
+                    ],
+                    "children": []
+                  },
+                  {
+                    "id": "n11",
+                    "type": "tableHeader",
+                    "attrs": {},
+                    "content": [
+                      {
+                        "text": "h",
+                        "marks": []
+                      }
+                    ],
+                    "children": []
+                  }
+                ]
+              },
+              {
+                "id": "n12",
+                "type": "tableRow",
+                "attrs": {},
+                "content": null,
+                "children": [
+                  {
+                    "id": "n13",
+                    "type": "tableCell",
+                    "attrs": {},
+                    "content": [
+                      {
+                        "text": " a ",
+                        "marks": []
+                      }
+                    ],
+                    "children": []
+                  },
+                  {
+                    "id": "n14",
+                    "type": "tableCell",
+                    "attrs": {},
+                    "content": [
+                      {
+                        "text": "b",
+                        "marks": []
+                      },
+                      {
+                        "text": " ",
+                        "marks": [
+                          {
+                            "type": "bold"
+                          }
+                        ]
+                      }
+                    ],
+                    "children": []
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "markdown": "| h | h |\n| --- | --- |\n| &#32;a&#32; | b<strong> </strong> |\n",
+      "reparsed": [
+        {
+          "type": "table",
+          "attrs": {
+            "align": [
+              null,
+              null
+            ]
+          },
+          "content": null,
+          "children": [
+            {
+              "type": "tableRow",
+              "attrs": {},
+              "content": null,
+              "children": [
+                {
+                  "type": "tableHeader",
+                  "attrs": {},
+                  "content": [
+                    {
+                      "text": "h",
+                      "marks": []
+                    }
+                  ],
+                  "children": []
+                },
+                {
+                  "type": "tableHeader",
+                  "attrs": {},
+                  "content": [
+                    {
+                      "text": "h",
+                      "marks": []
+                    }
+                  ],
+                  "children": []
+                }
+              ]
+            },
+            {
+              "type": "tableRow",
+              "attrs": {},
+              "content": null,
+              "children": [
+                {
+                  "type": "tableCell",
+                  "attrs": {},
+                  "content": [
+                    {
+                      "text": " a ",
+                      "marks": []
+                    }
+                  ],
+                  "children": []
+                },
+                {
+                  "type": "tableCell",
+                  "attrs": {},
+                  "content": [
+                    {
+                      "text": "b",
+                      "marks": []
+                    },
+                    {
+                      "text": " ",
+                      "marks": [
+                        {
+                          "type": "bold"
+                        }
+                      ]
+                    }
+                  ],
+                  "children": []
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "emphasis-at-word-edges",
+      "document": {
+        "version": 1,
+        "blocks": [
+          {
+            "id": "n15",
+            "type": "paragraph",
+            "attrs": {},
+            "content": [
+              {
+                "text": "a.",
+                "marks": [
+                  {
+                    "type": "bold"
+                  }
+                ]
+              },
+              {
+                "text": "b",
+                "marks": []
+              }
+            ],
+            "children": []
+          },
+          {
+            "id": "n16",
+            "type": "paragraph",
+            "attrs": {},
+            "content": [
+              {
+                "text": "a",
+                "marks": []
+              },
+              {
+                "text": ".b",
+                "marks": [
+                  {
+                    "type": "bold"
+                  }
+                ]
+              }
+            ],
+            "children": []
+          },
+          {
+            "id": "n17",
+            "type": "paragraph",
+            "attrs": {},
+            "content": [
+              {
+                "text": "(",
+                "marks": [
+                  {
+                    "type": "italic"
+                  }
+                ]
+              },
+              {
+                "text": "a",
+                "marks": []
+              }
+            ],
+            "children": []
+          },
+          {
+            "id": "n18",
+            "type": "paragraph",
+            "attrs": {},
+            "content": [
+              {
+                "text": "a",
+                "marks": [
+                  {
+                    "type": "bold"
+                  },
+                  {
+                    "type": "italic"
+                  }
+                ]
+              },
+              {
+                "text": "b",
+                "marks": [
+                  {
+                    "type": "bold"
+                  }
+                ]
+              }
+            ],
+            "children": []
+          },
+          {
+            "id": "n19",
+            "type": "paragraph",
+            "attrs": {},
+            "content": [
+              {
+                "text": "😀",
+                "marks": []
+              },
+              {
+                "text": ",",
+                "marks": [
+                  {
+                    "type": "strikethrough"
+                  }
+                ]
+              }
+            ],
+            "children": []
+          }
+        ]
+      },
+      "markdown": "<strong>a.</strong>b\n\na<strong>.b</strong>\n\n<em>(</em>a\n\n***a*b**\n\n😀~~,~~\n",
+      "reparsed": [
+        {
+          "type": "paragraph",
+          "attrs": {},
+          "content": [
+            {
+              "text": "a.",
+              "marks": [
+                {
+                  "type": "bold"
+                }
+              ]
+            },
+            {
+              "text": "b",
+              "marks": []
+            }
+          ],
+          "children": []
+        },
+        {
+          "type": "paragraph",
+          "attrs": {},
+          "content": [
+            {
+              "text": "a",
+              "marks": []
+            },
+            {
+              "text": ".b",
+              "marks": [
+                {
+                  "type": "bold"
+                }
+              ]
+            }
+          ],
+          "children": []
+        },
+        {
+          "type": "paragraph",
+          "attrs": {},
+          "content": [
+            {
+              "text": "(",
+              "marks": [
+                {
+                  "type": "italic"
+                }
+              ]
+            },
+            {
+              "text": "a",
+              "marks": []
+            }
+          ],
+          "children": []
+        },
+        {
+          "type": "paragraph",
+          "attrs": {},
+          "content": [
+            {
+              "text": "a",
+              "marks": [
+                {
+                  "type": "bold"
+                },
+                {
+                  "type": "italic"
+                }
+              ]
+            },
+            {
+              "text": "b",
+              "marks": [
+                {
+                  "type": "bold"
+                }
+              ]
+            }
+          ],
+          "children": []
+        },
+        {
+          "type": "paragraph",
+          "attrs": {},
+          "content": [
+            {
+              "text": "😀",
+              "marks": []
+            },
+            {
+              "text": ",",
+              "marks": [
+                {
+                  "type": "strikethrough"
+                }
+              ]
+            }
+          ],
+          "children": []
+        }
+      ]
+    },
+    {
+      "id": "addresses-in-text",
+      "document": {
+        "version": 1,
+        "blocks": [
+          {
+            "id": "n20",
+            "type": "paragraph",
+            "attrs": {},
+            "content": [
+              {
+                "text": "www.e.x, see http://e.x. or x@e.xb",
+                "marks": []
+              }
+            ],
+            "children": []
+          },
+          {
+            "id": "n21",
+            "type": "paragraph",
+            "attrs": {},
+            "content": [
+              {
+                "text": "a.www.b@c.de",
+                "marks": []
+              }
+            ],
+            "children": []
+          },
+          {
+            "id": "n22",
+            "type": "paragraph",
+            "attrs": {},
+            "content": [
+              {
+                "text": "**www.e.x**",
+                "marks": []
+              }
+            ],
+            "children": []
+          },
+          {
+            "id": "n23",
+            "type": "paragraph",
+            "attrs": {},
+            "content": [
+              {
+                "text": "www.e.x",
+                "marks": [
+                  {
+                    "type": "bold"
+                  }
+                ]
+              }
+            ],
+            "children": []
+          }
+        ]
+      },
+      "markdown": "www\\.e.x, see http\\://e.x. or x\\@e.xb\n\na.www\\.b\\@c.de\n\n\\*\\*www\\.e.x\\*\\*\n\n**www\\.e.x**\n",
+      "reparsed": [
+        {
+          "type": "paragraph",
+          "attrs": {},
+          "content": [
+            {
+              "text": "www.e.x, see http://e.x. or x@e.xb",
+              "marks": []
+            }
+          ],
+          "children": []
+        },
+        {
+          "type": "paragraph",
+          "attrs": {},
+          "content": [
+            {
+              "text": "a.www.b@c.de",
+              "marks": []
+            }
+          ],
+          "children": []
+        },
+        {
+          "type": "paragraph",
+          "attrs": {},
+          "content": [
+            {
+              "text": "**www.e.x**",
+              "marks": []
+            }
+          ],
+          "children": []
+        },
+        {
+          "type": "paragraph",
+          "attrs": {},
+          "content": [
+            {
+              "text": "www.e.x",
+              "marks": [
+                {
+                  "type": "bold"
+                }
+              ]
+            }
+          ],
+          "children": []
+        }
+      ]
+    },
+    {
+      "id": "addresses-in-a-cell-and-a-heading",
+      "document": {
+        "version": 1,
+        "blocks": [
+          {
+            "id": "n24",
+            "type": "table",
+            "attrs": {},
+            "content": null,
+            "children": [
+              {
+                "id": "n25",
+                "type": "tableRow",
+                "attrs": {},
+                "content": null,
+                "children": [
+                  {
+                    "id": "n26",
+                    "type": "tableHeader",
+                    "attrs": {},
+                    "content": [
+                      {
+                        "text": "h",
+                        "marks": []
+                      }
+                    ],
+                    "children": []
+                  },
+                  {
+                    "id": "n27",
+                    "type": "tableHeader",
+                    "attrs": {},
+                    "content": [
+                      {
+                        "text": "h",
+                        "marks": []
+                      }
+                    ],
+                    "children": []
+                  }
+                ]
+              },
+              {
+                "id": "n28",
+                "type": "tableRow",
+                "attrs": {},
+                "content": null,
+                "children": [
+                  {
+                    "id": "n29",
+                    "type": "tableCell",
+                    "attrs": {},
+                    "content": [
+                      {
+                        "text": "www.e.x",
+                        "marks": []
+                      }
+                    ],
+                    "children": []
+                  },
+                  {
+                    "id": "n30",
+                    "type": "tableCell",
+                    "attrs": {},
+                    "content": [
+                      {
+                        "text": "x@e.xb",
+                        "marks": []
+                      }
+                    ],
+                    "children": []
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "n31",
+            "type": "heading",
+            "attrs": {
+              "level": 3
+            },
+            "content": [
+              {
+                "text": "https://e.x",
+                "marks": []
+              }
+            ],
+            "children": []
+          }
+        ]
+      },
+      "markdown": "| h | h |\n| --- | --- |\n| www\\.e.x | x\\@e.xb |\n\n### https\\://e.x\n",
+      "reparsed": [
+        {
+          "type": "table",
+          "attrs": {
+            "align": [
+              null,
+              null
+            ]
+          },
+          "content": null,
+          "children": [
+            {
+              "type": "tableRow",
+              "attrs": {},
+              "content": null,
+              "children": [
+                {
+                  "type": "tableHeader",
+                  "attrs": {},
+                  "content": [
+                    {
+                      "text": "h",
+                      "marks": []
+                    }
+                  ],
+                  "children": []
+                },
+                {
+                  "type": "tableHeader",
+                  "attrs": {},
+                  "content": [
+                    {
+                      "text": "h",
+                      "marks": []
+                    }
+                  ],
+                  "children": []
+                }
+              ]
+            },
+            {
+              "type": "tableRow",
+              "attrs": {},
+              "content": null,
+              "children": [
+                {
+                  "type": "tableCell",
+                  "attrs": {},
+                  "content": [
+                    {
+                      "text": "www.e.x",
+                      "marks": []
+                    }
+                  ],
+                  "children": []
+                },
+                {
+                  "type": "tableCell",
+                  "attrs": {},
+                  "content": [
+                    {
+                      "text": "x@e.xb",
+                      "marks": []
+                    }
+                  ],
+                  "children": []
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "heading",
+          "attrs": {
+            "level": 3
+          },
+          "content": [
+            {
+              "text": "https://e.x",
+              "marks": []
+            }
+          ],
+          "children": []
+        }
+      ]
+    },
+    {
+      "id": "block-starts",
+      "document": {
+        "version": 1,
+        "blocks": [
+          {
+            "id": "n32",
+            "type": "paragraph",
+            "attrs": {},
+            "content": [
+              {
+                "text": "- a",
+                "marks": []
+              }
+            ],
+            "children": []
+          },
+          {
+            "id": "n33",
+            "type": "paragraph",
+            "attrs": {},
+            "content": [
+              {
+                "text": "1. a",
+                "marks": []
+              }
+            ],
+            "children": []
+          },
+          {
+            "id": "n34",
+            "type": "paragraph",
+            "attrs": {},
+            "content": [
+              {
+                "text": "---",
+                "marks": []
+              }
+            ],
+            "children": []
+          },
+          {
+            "id": "n35",
+            "type": "paragraph",
+            "attrs": {},
+            "content": [
+              {
+                "text": "+",
+                "marks": []
+              }
+            ],
+            "children": []
+          },
+          {
+            "id": "n36",
+            "type": "paragraph",
+            "attrs": {},
+            "content": [
+              {
+                "text": "    a",
+                "marks": []
+              }
+            ],
+            "children": []
+          },
+          {
+            "id": "n38",
+            "type": "bulletList",
+            "attrs": {},
+            "content": null,
+            "children": [
+              {
+                "id": "n37",
+                "type": "listItem",
+                "attrs": {},
+                "content": [
+                  {
+                    "text": "- a",
+                    "marks": []
+                  }
+                ],
+                "children": []
+              }
+            ]
+          },
+          {
+            "id": "n39",
+            "type": "blockquote",
+            "attrs": {},
+            "content": [
+              {
+                "text": "- a",
+                "marks": []
+              }
+            ],
+            "children": []
+          },
+          {
+            "id": "n40",
+            "type": "callout",
+            "attrs": {
+              "type": "tip"
+            },
+            "content": [
+              {
+                "text": "=",
+                "marks": []
+              }
+            ],
+            "children": []
+          }
+        ]
+      },
+      "markdown": "\\- a\n\n1\\. a\n\n\\---\n\n\\+\n\n&#32;   a\n\n- \\- a\n\n> \\- a\n\n> [!TIP]\n> \\=\n",
+      "reparsed": [
+        {
+          "type": "paragraph",
+          "attrs": {},
+          "content": [
+            {
+              "text": "- a",
+              "marks": []
+            }
+          ],
+          "children": []
+        },
+        {
+          "type": "paragraph",
+          "attrs": {},
+          "content": [
+            {
+              "text": "1. a",
+              "marks": []
+            }
+          ],
+          "children": []
+        },
+        {
+          "type": "paragraph",
+          "attrs": {},
+          "content": [
+            {
+              "text": "---",
+              "marks": []
+            }
+          ],
+          "children": []
+        },
+        {
+          "type": "paragraph",
+          "attrs": {},
+          "content": [
+            {
+              "text": "+",
+              "marks": []
+            }
+          ],
+          "children": []
+        },
+        {
+          "type": "paragraph",
+          "attrs": {},
+          "content": [
+            {
+              "text": "    a",
+              "marks": []
+            }
+          ],
+          "children": []
+        },
+        {
+          "type": "bulletList",
+          "attrs": {
+            "marker": "-",
+            "spread": false
+          },
+          "content": null,
+          "children": [
+            {
+              "type": "listItem",
+              "attrs": {},
+              "content": [
+                {
+                  "text": "- a",
+                  "marks": []
+                }
+              ],
+              "children": []
+            }
+          ]
+        },
+        {
+          "type": "blockquote",
+          "attrs": {},
+          "content": [
+            {
+              "text": "- a",
+              "marks": []
+            }
+          ],
+          "children": []
+        },
+        {
+          "type": "callout",
+          "attrs": {
+            "type": "tip",
+            "alert": "TIP"
+          },
+          "content": [
+            {
+              "text": "=",
+              "marks": []
+            }
+          ],
+          "children": []
+        }
+      ]
+    },
+    {
+      "id": "link-title-with-a-blank-line",
+      "document": {
+        "version": 1,
+        "blocks": [
+          {
+            "id": "n41",
+            "type": "paragraph",
+            "attrs": {},
+            "content": [
+              {
+                "text": "a",
+                "marks": [
+                  {
+                    "type": "link",
+                    "attrs": {
+                      "href": "https://e.x",
+                      "title": "x\n\ny"
+                    }
+                  }
+                ]
+              }
+            ],
+            "children": []
+          }
+        ]
+      },
+      "markdown": "[a](https://e.x \"x&#10;&#10;y\")\n",
+      "reparsed": [
+        {
+          "type": "paragraph",
+          "attrs": {},
+          "content": [
+            {
+              "text": "a",
+              "marks": [
+                {
+                  "type": "link",
+                  "attrs": {
+                    "href": "https://e.x",
+                    "title": "x\n\ny"
+                  }
+                }
+              ]
+            }
+          ],
+          "children": []
+        }
+      ]
+    },
+    {
+      "id": "a-table-without-alignment",
+      "document": {
+        "version": 1,
+        "blocks": [
+          {
+            "id": "n42",
+            "type": "table",
+            "attrs": {},
+            "content": null,
+            "children": [
+              {
+                "id": "n43",
+                "type": "tableRow",
+                "attrs": {},
+                "content": null,
+                "children": [
+                  {
+                    "id": "n44",
+                    "type": "tableHeader",
+                    "attrs": {},
+                    "content": [
+                      {
+                        "text": "h",
+                        "marks": []
+                      }
+                    ],
+                    "children": []
+                  }
+                ]
+              },
+              {
+                "id": "n45",
+                "type": "tableRow",
+                "attrs": {},
+                "content": null,
+                "children": [
+                  {
+                    "id": "n46",
+                    "type": "tableCell",
+                    "attrs": {},
+                    "content": [
+                      {
+                        "text": "https://e.x",
+                        "marks": [
+                          {
+                            "type": "link",
+                            "attrs": {
+                              "href": "https://e.x"
+                            }
+                          }
+                        ]
+                      },
+                      {
+                        "text": "/a",
+                        "marks": []
+                      }
+                    ],
+                    "children": []
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "markdown": "| h |\n| --- |\n| <https://e.x>/a |\n",
+      "reparsed": [
+        {
+          "type": "table",
+          "attrs": {
+            "align": [
+              null
+            ]
+          },
+          "content": null,
+          "children": [
+            {
+              "type": "tableRow",
+              "attrs": {},
+              "content": null,
+              "children": [
+                {
+                  "type": "tableHeader",
+                  "attrs": {},
+                  "content": [
+                    {
+                      "text": "h",
+                      "marks": []
+                    }
+                  ],
+                  "children": []
+                }
+              ]
+            },
+            {
+              "type": "tableRow",
+              "attrs": {},
+              "content": null,
+              "children": [
+                {
+                  "type": "tableCell",
+                  "attrs": {},
+                  "content": [
+                    {
+                      "text": "https://e.x",
+                      "marks": [
+                        {
+                          "type": "link",
+                          "attrs": {
+                            "href": "https://e.x"
+                          }
+                        }
+                      ]
+                    },
+                    {
+                      "text": "/a",
+                      "marks": []
+                    }
+                  ],
+                  "children": []
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "verbatim-source-over-two-lines-in-a-quote",
+      "document": {
+        "version": 1,
+        "blocks": [
+          {
+            "id": "n47",
+            "type": "blockquote",
+            "attrs": {},
+            "content": [
+              {
+                "text": "a ",
+                "marks": []
+              },
+              {
+                "text": "<b\n> c>",
+                "marks": [
+                  {
+                    "type": "mdRaw"
+                  }
+                ]
+              },
+              {
+                "text": " d",
+                "marks": []
+              }
+            ],
+            "children": []
+          }
+        ]
+      },
+      "markdown": "> a <b\n> c> d\n",
+      "reparsed": [
+        {
+          "type": "blockquote",
+          "attrs": {},
+          "content": [
+            {
+              "text": "a ",
+              "marks": []
+            },
+            {
+              "text": "<b\n> c>",
+              "marks": [
+                {
+                  "type": "mdRaw"
+                }
+              ]
+            },
+            {
+              "text": " d",
+              "marks": []
+            }
+          ],
+          "children": []
+        }
+      ]
+    },
+    {
+      "id": "no-break-spaces-at-the-edges",
+      "document": {
+        "version": 1,
+        "blocks": [
+          {
+            "id": "n48",
+            "type": "heading",
+            "attrs": {
+              "level": 2
+            },
+            "content": [
+              {
+                "text": "a ",
+                "marks": []
+              }
+            ],
+            "children": []
+          },
+          {
+            "id": "n49",
+            "type": "table",
+            "attrs": {},
+            "content": null,
+            "children": [
+              {
+                "id": "n50",
+                "type": "tableRow",
+                "attrs": {},
+                "content": null,
+                "children": [
+                  {
+                    "id": "n51",
+                    "type": "tableHeader",
+                    "attrs": {},
+                    "content": [
+                      {
+                        "text": "h",
+                        "marks": []
+                      }
+                    ],
+                    "children": []
+                  },
+                  {
+                    "id": "n52",
+                    "type": "tableHeader",
+                    "attrs": {},
+                    "content": [
+                      {
+                        "text": "h",
+                        "marks": []
+                      }
+                    ],
+                    "children": []
+                  }
+                ]
+              },
+              {
+                "id": "n53",
+                "type": "tableRow",
+                "attrs": {},
+                "content": null,
+                "children": [
+                  {
+                    "id": "n54",
+                    "type": "tableCell",
+                    "attrs": {},
+                    "content": [
+                      {
+                        "text": " a ",
+                        "marks": []
+                      }
+                    ],
+                    "children": []
+                  },
+                  {
+                    "id": "n55",
+                    "type": "tableCell",
+                    "attrs": {},
+                    "content": [
+                      {
+                        "text": "b",
+                        "marks": []
+                      }
+                    ],
+                    "children": []
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "markdown": "## a \n\n| h | h |\n| --- | --- |\n|  a  | b |\n",
+      "reparsed": [
+        {
+          "type": "heading",
+          "attrs": {
+            "level": 2
+          },
+          "content": [
+            {
+              "text": "a ",
+              "marks": []
+            }
+          ],
+          "children": []
+        },
+        {
+          "type": "table",
+          "attrs": {
+            "align": [
+              null,
+              null
+            ]
+          },
+          "content": null,
+          "children": [
+            {
+              "type": "tableRow",
+              "attrs": {},
+              "content": null,
+              "children": [
+                {
+                  "type": "tableHeader",
+                  "attrs": {},
+                  "content": [
+                    {
+                      "text": "h",
+                      "marks": []
+                    }
+                  ],
+                  "children": []
+                },
+                {
+                  "type": "tableHeader",
+                  "attrs": {},
+                  "content": [
+                    {
+                      "text": "h",
+                      "marks": []
+                    }
+                  ],
+                  "children": []
+                }
+              ]
+            },
+            {
+              "type": "tableRow",
+              "attrs": {},
+              "content": null,
+              "children": [
+                {
+                  "type": "tableCell",
+                  "attrs": {},
+                  "content": [
+                    {
+                      "text": " a ",
+                      "marks": []
+                    }
+                  ],
+                  "children": []
+                },
+                {
+                  "type": "tableCell",
+                  "attrs": {},
+                  "content": [
+                    {
+                      "text": "b",
+                      "marks": []
+                    }
+                  ],
+                  "children": []
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

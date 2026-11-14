@@ -1,5 +1,7 @@
 use super::{
-    atoms, decode,
+    atoms,
+    autolinks::AutolinkScanner,
+    decode,
     links::{self, Context},
     syntax, Node, Source,
 };
@@ -22,8 +24,16 @@ impl Token {
         Self::Node(Box::new(node))
     }
 }
+/// CommonMark's Unicode whitespace (Zs, tab, line feed, form feed, carriage return) or an edge,
+/// as the TypeScript reader takes it.
 fn ws(c: Option<char>) -> bool {
-    c.is_none_or(char::is_whitespace)
+    c.is_none_or(|c| {
+        matches!(
+            c,
+            '\t' | '\n' | '\u{c}' | '\r' | ' ' | '\u{a0}' | '\u{1680}' | '\u{2000}'
+                ..='\u{200a}' | '\u{202f}' | '\u{205f}' | '\u{3000}'
+        )
+    })
 }
 fn punctuation(c: Option<char>) -> bool {
     c.is_some_and(|c| re!(r"[\p{P}\p{S}]").is_match(&c.to_string()))
@@ -54,15 +64,26 @@ fn to_node(token: Token, source: &Source) -> Node {
         ),
     }
 }
-fn coalesce(nodes: Vec<Node>) -> Vec<Node> {
+/// Text nodes that touch in the source as one node. Until autolinks are read, the text of
+/// escapes and character references stays apart (`decoded`); `last` joins it and drops the flag.
+fn coalesce(nodes: Vec<Node>, last: bool) -> Vec<Node> {
     let mut out: Vec<Node> = vec![];
-    for n in nodes {
-        if let Some(last) = out
-            .last_mut()
-            .filter(|last| last.kind == "text" && n.kind == "text" && last.end == n.start)
-        {
-            last.value.push_str(&n.value);
-            last.end = n.end;
+    for mut n in nodes {
+        if last && ["emphasis", "strong", "delete"].contains(&n.kind) {
+            n.children = coalesce(std::mem::take(&mut n.children), true);
+        }
+        if last {
+            n.decoded = false;
+        }
+        if let Some(previous) = out.last_mut().filter(|previous| {
+            previous.kind == "text"
+                && n.kind == "text"
+                && (last || previous.decoded == n.decoded)
+                && previous.end == n.start
+                && previous.end != usize::MAX
+        }) {
+            previous.value.push_str(&n.value);
+            previous.end = n.end;
         } else {
             out.push(n)
         }
@@ -125,6 +146,7 @@ fn resolve(mut tokens: Vec<Token>, source: &Source) -> Vec<Node> {
                     .cloned()
                     .map(|t| to_node(t, source))
                     .collect(),
+                false,
             );
             start.count -= size;
             start.end -= size;
@@ -148,83 +170,106 @@ fn resolve(mut tokens: Vec<Token>, source: &Source) -> Vec<Node> {
             closer += 1;
         }
     }
-    coalesce(tokens.into_iter().map(|t| to_node(t, source)).collect())
+    coalesce(
+        tokens.into_iter().map(|t| to_node(t, source)).collect(),
+        false,
+    )
 }
-fn decoded(nodes: Vec<Node>, context: &Context) -> Vec<Node> {
-    let mut out = vec![];
-    for mut node in nodes {
-        if ["emphasis", "strong", "delete"].contains(&node.kind) {
-            node.children = decoded(node.children, context);
-            out.push(node);
-            continue;
-        }
-        if node.kind != "text" || !node.value.contains(['@', ':']) && !node.value.contains("www.") {
-            out.push(node);
-            continue;
-        }
-        let source = Source {
-            text: node.value.clone(),
-            offsets: vec![],
-        };
-        let mut from = 0;
-        let mut p = 0;
-        let mut result = vec![];
-        while p < source.text.len() {
-            if let Some((mut found, end)) = links::autolink(&source, p, context, true) {
-                if p > from {
-                    result.push(Node::text(
-                        "text",
-                        &source.text[from..p],
-                        usize::MAX,
-                        usize::MAX,
-                    ))
-                }
-                found.start = usize::MAX;
-                found.end = usize::MAX;
-                for c in &mut found.children {
-                    c.start = usize::MAX;
-                    c.end = usize::MAX
-                }
-                result.push(found);
-                from = end;
-                p = end;
-            } else {
-                p += source.text[p..].chars().next().unwrap().len_utf8();
-            }
-        }
-        if result.is_empty() {
-            out.push(node)
-        } else {
-            if from < source.text.len() {
-                result.push(Node::text(
-                    "text",
-                    &source.text[from..],
-                    usize::MAX,
-                    usize::MAX,
-                ))
-            }
-            out.extend(result)
-        }
+/// GFM autolink literals in a run of text nodes (`autolinks.rs`): the text of escapes and
+/// references, which stays apart until now, may be part of an address but cannot start one.
+fn literal_links(nodes: Vec<Node>, context: &Context) -> Vec<Node> {
+    if context.in_link || context.in_label {
+        return nodes;
     }
+    let mut out = vec![];
+    let mut run: Vec<Node> = vec![];
+    for mut node in nodes {
+        if node.kind == "text" {
+            run.push(node);
+            continue;
+        }
+        out.extend(links_in(std::mem::take(&mut run)));
+        if ["emphasis", "strong", "delete"].contains(&node.kind) {
+            node.children = literal_links(std::mem::take(&mut node.children), context);
+        }
+        out.push(node);
+    }
+    out.extend(links_in(run));
     out
 }
-fn push(tokens: &mut Vec<Token>, source: &Source, value: &str, start: usize, end: usize) {
+
+/// A run of text nodes with its addresses as links: one text for the reader of addresses.
+fn links_in(run: Vec<Node>) -> Vec<Node> {
+    let mut text = String::new();
+    let mut decoded = vec![];
+    for node in &run {
+        text.push_str(&node.value);
+        decoded.extend(std::iter::repeat_n(node.decoded, node.value.len()));
+    }
+    if !text.contains(['@', ':']) && !text.contains("www.") {
+        return run;
+    }
+    let literal = |at: usize| !decoded[at];
+    let mut scanner = AutolinkScanner::new(&text);
+    let positionless = |kind, value: &str| Node::text(kind, value, usize::MAX, usize::MAX);
+    let mut result = vec![];
+    let mut from = 0;
+    let mut p = 0;
+    while p < text.len() {
+        let Some(link) = scanner.at(p, text[..p].chars().next_back(), &literal) else {
+            p += text[p..].chars().next().map_or(1, char::len_utf8);
+            continue;
+        };
+        if p > from {
+            result.push(positionless("text", &text[from..p]));
+        }
+        let mut found = Node::new("link", usize::MAX, usize::MAX);
+        found.url = link.url;
+        found
+            .children
+            .push(positionless("text", &text[p..link.end]));
+        result.push(found);
+        from = link.end;
+        p = link.end;
+    }
+    if result.is_empty() {
+        return run;
+    }
+    if from < text.len() {
+        result.push(positionless("text", &text[from..]));
+    }
+    result
+}
+
+/// Text of the source; `decoded`: of an escape or a reference, never part of an autolink
+/// literal.
+fn push_text(
+    tokens: &mut Vec<Token>,
+    source: &Source,
+    value: &str,
+    (start, end): (usize, usize),
+    decoded: bool,
+) {
     if value.is_empty() {
         return;
     }
     if let Some(Token::Node(previous)) = tokens.last_mut() {
-        if previous.kind == "text" && previous.end == source.point(start) {
+        if previous.kind == "text"
+            && previous.decoded == decoded
+            && previous.end == source.point(start)
+        {
             previous.value.push_str(value);
             previous.end = source.point(end);
             return;
         }
     }
-    tokens.push(Token::node(Node::text(
-        "text",
-        value,
-        source.point(start),
-        source.point(end),
-    )))
+    let mut node = Node::text("text", value, source.point(start), source.point(end));
+    node.decoded = decoded;
+    tokens.push(Token::node(node))
+}
+
+fn push(tokens: &mut Vec<Token>, source: &Source, value: &str, start: usize, end: usize) {
+    push_text(tokens, source, value, (start, end), false)
 }
 pub(super) fn read(source: &Source, context: &Context, depth: usize) -> Vec<Node> {
     let text = &source.text;
@@ -263,14 +308,14 @@ pub(super) fn read(source: &Source, context: &Context, depth: usize) -> Vec<Node
                 continue;
             }
             if decode::punctuation(after) {
-                push(&mut tokens, source, &text[p + 1..p + 2], p, p + 2);
+                push_text(&mut tokens, source, &text[p + 1..p + 2], (p, p + 2), true);
                 p += 2;
                 continue;
             }
         }
         if c == '&' {
             if let Some((value, len)) = decode::reference(&text[p..]) {
-                push(&mut tokens, source, &value, p, p + len);
+                push_text(&mut tokens, source, &value, (p, p + len), true);
                 p += len;
                 continue;
             }
@@ -366,7 +411,7 @@ pub(super) fn read(source: &Source, context: &Context, depth: usize) -> Vec<Node
             }
         }
         if c == '<' {
-            if let Some((node, end)) = links::autolink(source, p, context, false) {
+            if let Some((node, end)) = links::autolink(source, p, context) {
                 tokens.push(Token::node(node));
                 p = end;
                 continue;
@@ -453,5 +498,5 @@ pub(super) fn read(source: &Source, context: &Context, depth: usize) -> Vec<Node
         );
         p += len;
     }
-    decoded(resolve(tokens, source), context)
+    coalesce(literal_links(resolve(tokens, source), context), true)
 }

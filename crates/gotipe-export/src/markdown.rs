@@ -1,11 +1,17 @@
 use gotipe_core::{AttrValue, Block, Document};
 
-mod breaks;
+mod autolink_escapes;
+mod characters;
+mod escapes;
 mod inline;
+mod spans;
 pub(crate) mod table_html;
+mod units;
+mod verify;
 
 pub use crate::markdown_parse::MarkdownAtoms;
-use inline::{content_to_markdown, line_to_markdown};
+use inline::content_to_markdown;
+use units::{Kind, Options};
 
 /// Convert a Document to Markdown
 pub fn to_markdown(doc: &Document) -> String {
@@ -36,9 +42,14 @@ pub fn to_markdown(doc: &Document) -> String {
     doc.blocks
         .iter()
         .filter(|block| !omitted(block))
-        .map(|block| block_to_markdown(block, &emoji))
+        .map(|block| verified(block, &emoji))
         .collect::<Vec<_>>()
         .join("\n")
+}
+
+/// The first rendering of a top-level block that reads back as the block (`verify.rs`).
+fn verified(block: &Block, emoji: &Emoji) -> String {
+    verify::first_reading_back(block, emoji, |tier| block_to_markdown(block, emoji, tier))
 }
 
 /// Registered custom emoji names and their image addresses.
@@ -63,10 +74,33 @@ fn shown(block: &Block) -> impl Iterator<Item = &Block> {
     block.children.iter().filter(|child| !omitted(child))
 }
 
-fn block_to_markdown(block: &Block, emoji: &Emoji) -> String {
-    let content = content_to_markdown(&block.content, emoji);
+fn block_to_markdown(block: &Block, emoji: &Emoji, tier: u8) -> String {
+    let options = |kind| Options {
+        kind,
+        tier,
+        continuation: false,
+        newline: "\n",
+        emoji,
+    };
+    // a heading is one line: its line breaks are `<br>`, as the TS writer writes them; the text
+    // of a callout continues the paragraph its marker line starts; a line of a quote's text
+    // starts with `> `, written after each line break (a line ending of verbatim source keeps
+    // the prefix it was read with, as in the TS writer)
+    let quote = matches!(block.block_type.as_str(), "blockquote" | "callout");
+    let content = content_to_markdown(
+        &block.content,
+        &Options {
+            continuation: block.block_type == "callout",
+            newline: if quote { "\n> " } else { "\n" },
+            ..options(if block.block_type == "heading" {
+                Kind::Heading
+            } else {
+                Kind::Block
+            })
+        },
+    );
     let nested = shown(block)
-        .map(|child| block_to_markdown(child, emoji))
+        .map(|child| block_to_markdown(child, emoji, tier))
         .collect::<Vec<_>>()
         .join("\n");
     let attr = |name: &str| match block.attrs.get(name) {
@@ -81,8 +115,6 @@ fn block_to_markdown(block: &Block, emoji: &Emoji) -> String {
                 _ => 1,
             }
             .clamp(1, 6);
-            // a heading is one line: its line breaks are `<br>`, as the TS writer writes them
-            let content = line_to_markdown(&block.content, emoji);
             format!("{} {content}\n{nested}", "#".repeat(level))
         }
         "bulletList" | "orderedList" | "todoList" => {
@@ -115,7 +147,12 @@ fn block_to_markdown(block: &Block, emoji: &Emoji) -> String {
                     } else {
                         format!("{marker} ")
                     };
-                    let text = content_to_markdown(&item.content, emoji);
+                    // a task's text follows its `[ ] ` on the marker's line
+                    let kind = if prefix.ends_with("] ") {
+                        Kind::Midline
+                    } else {
+                        Kind::Block
+                    };
                     // continuation lines and nested blocks stand under the item's text; a task's
                     // `[ ] ` is part of its text, so the indent is the marker's, as the TS writer
                     let indent = if prefix.ends_with("] ") {
@@ -123,10 +160,17 @@ fn block_to_markdown(block: &Block, emoji: &Emoji) -> String {
                     } else {
                         " ".repeat(prefix.len())
                     };
-                    let mut rendered =
-                        format!("{prefix}{}\n", text.replace('\n', &format!("\n{indent}")));
+                    let newline = format!("\n{indent}");
+                    let text = content_to_markdown(
+                        &item.content,
+                        &Options {
+                            newline: &newline,
+                            ..options(kind)
+                        },
+                    );
+                    let mut rendered = format!("{prefix}{text}\n");
                     for child in shown(item) {
-                        for line in block_to_markdown(child, emoji).lines() {
+                        for line in block_to_markdown(child, emoji, tier).lines() {
                             rendered.push_str(&format!("{indent}{line}\n"))
                         }
                     }
@@ -158,9 +202,9 @@ fn block_to_markdown(block: &Block, emoji: &Emoji) -> String {
             let head = if content.is_empty() {
                 ">".to_owned()
             } else {
-                quoted(&content)
+                format!("> {content}")
             };
-            quote_children(head, block, emoji)
+            quote_children(head, block, emoji, tier)
         }
         "callout" => {
             let kind = match attr("type") {
@@ -172,15 +216,15 @@ fn block_to_markdown(block: &Block, emoji: &Emoji) -> String {
             };
             let mut head = format!("> [!{kind}]");
             if !content.is_empty() {
-                head.push('\n');
-                head.push_str(&quoted(&content));
+                head.push_str("\n> ");
+                head.push_str(&content);
             }
-            quote_children(head, block, emoji)
+            quote_children(head, block, emoji, tier)
         }
         "divider" => "---\n".into(),
         "image" => format!(
             "![{}](<{}>{})\n{nested}",
-            inline::typed(attr("alt")),
+            escapes::typed(attr("alt")),
             destination(attr("src")),
             title_suffix(attr("caption"))
         ),
@@ -212,20 +256,20 @@ fn block_to_markdown(block: &Block, emoji: &Emoji) -> String {
                     }
                     continue;
                 }
+                // a cell's text keeps its blanks (`&#32;`, D-97); blocks inside a cell, which
+                // the TS writer leaves out, follow it on the same line
                 let cells = row
                     .children
                     .iter()
                     .map(|cell| {
+                        let nested = shown(cell)
+                            .map(|child| block_to_markdown(child, emoji, tier))
+                            .collect::<String>();
                         format!(
                             "{}{}",
-                            inline::cell_to_markdown(&cell.content, emoji),
-                            shown(cell)
-                                .map(|child| block_to_markdown(child, emoji))
-                                .collect::<String>()
+                            content_to_markdown(&cell.content, &options(Kind::Cell)),
+                            nested.trim().replace('|', "\\|").replace('\n', "<br>")
                         )
-                        .trim()
-                        .replace('|', "\\|")
-                        .replace('\n', "<br>")
                     })
                     .collect::<Vec<_>>();
                 result.push_str(&format!("| {} |\n", cells.join(" | ")));
@@ -264,11 +308,11 @@ fn quoted(text: &str) -> String {
 }
 
 /// A quote's children follow its text after a `>` line, as in the TS writer.
-fn quote_children(mut quote: String, block: &Block, emoji: &Emoji) -> String {
+fn quote_children(mut quote: String, block: &Block, emoji: &Emoji, tier: u8) -> String {
     for child in shown(block) {
         quote.push_str("\n>\n");
         quote.push_str(&quoted(
-            block_to_markdown(child, emoji).trim_end_matches('\n'),
+            block_to_markdown(child, emoji, tier).trim_end_matches('\n'),
         ));
     }
     quote.push('\n');

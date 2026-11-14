@@ -115,10 +115,14 @@ native composition и её DOM reconciliation; listeners/frame очищаютс�
 
 Переносы строк Markdown (D-88): мягкий перенос читается пробелом в обоих читателях
 (`markdown/src/grammar/inline.ts`, `crates/gotipe-export/src/markdown_parse/inline.rs`);
-`"\n"` документа пишется жёстким переносом — правило и экранирование начала следующей строки
-в `inline-serialize.ts` и `crates/gotipe-export/src/markdown/breaks.rs`. Концы строк правленого
-блока по снимку возвращает `markdown/src/serialization/line-breaks.ts`. Общие случаи —
-`crates/gotipe-export/tests/fixtures/markdown-line-breaks.json`.
+`"\n"` документа пишется жёстким переносом в `inline-serialize.ts`. Rust-писатель текста — перенос
+`writeInline` (D-97): единицы `crates/gotipe-export/src/markdown/units.rs` (как
+`serialization/inline-units.ts`), шаги `inline.rs`, `characters.rs` (как пишется набранный
+символ), `escapes.rs` (как `serialization/escapes.ts`) и `autolink_escapes.rs`; уровень записи
+выбирает проверка чтением `verify.rs` (как `renderVerified`). Голые адреса GFM находят `markdown/src/grammar/autolinks.ts` и
+`markdown_parse/autolinks.rs` — одни правила для читателя и писателя. Концы строк правленого блока
+и их написание по снимку возвращает `markdown/src/serialization/line-breaks.ts`. Общие случаи —
+`markdown-line-breaks.json` и `markdown-write-read.json` в `crates/gotipe-export/tests/fixtures/`.
 
 HTML/SSR: `packages/core/src/serialization/html.ts` owns the canonical serializer;
 `html-styles.ts` supplies optional neutral export styles. `getHTML()` on both engines

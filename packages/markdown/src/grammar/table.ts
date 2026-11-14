@@ -21,7 +21,8 @@ export function tableCells(text: string): Cell[] {
     if (p === text.length || text[p] === "|") {
       const raw = text.slice(from, p);
       const leading = /^[ \t]*/.exec(raw)![0].length;
-      const value = raw.trim();
+      // only spaces and tabs: a no-break space at an edge is text
+      const value = raw.replace(/^[ \t]+|[ \t]+$/g, "");
       cells.push({
         text: value,
         from: from + leading,

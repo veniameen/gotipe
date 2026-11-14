@@ -1,9 +1,10 @@
-import { emojiEnd, mathEnd } from "./atoms";
 import { normalizeSpans } from "./model";
+import { escapeAutolinks } from "./serialization/autolink-escapes";
+import { escapeFollowing } from "./serialization/escapes";
 import type { InlineOptions, Unit } from "./serialization/inline-types";
 import { inlineUnits } from "./serialization/inline-units";
 import type { RawSegment, Span } from "./types";
-import { classify, isAsciiPunct } from "./util";
+import { classify } from "./util";
 export { linkDestination, linkTitle } from "./serialization/inline-units";
 export type { InlineKind, InlineOptions } from "./serialization/inline-types";
 
@@ -12,10 +13,11 @@ const THEMATIC_RE = /^([-*_])[ \t]*(?:\1[ \t]*){2,}$/;
 /** A line that could be a GFM table delimiter row (turns the previous line into a table header). */
 const DELIM_ROW_RE = /^:?-+:?[ \t]*(?:\||$)/;
 
-/** Can a "\n" inside an inline code span be written as a real line break before `rest`? */
-function codeBreakOk(rest: string): boolean {
-  const nextPart = rest.split("\n", 1)[0] ?? "";
-  return /^[ \t]*(?:\p{L}|\p{N}(?!\p{N}*[.)]))/u.test(nextPart);
+const CODE_BREAK = /[ \t]*(?:\p{L}|\p{N}(?!\p{N}*[.)]))/uy;
+/** Can a soft break inside an inline code span be a line ending before `text[from]`? */
+function codeBreakOk(text: string, from: number): boolean {
+  CODE_BREAK.lastIndex = from;
+  return CODE_BREAK.test(text);
 }
 
 /**
@@ -209,25 +211,26 @@ export function writeInline(
     const s = rend[k + 1] ?? "";
     return s === "" ? null : String.fromCodePoint(s.codePointAt(0)!);
   };
-  let lineSoFar = "";
-  let out = "";
+  // What is written so far, kept small: a block of any size is written in linear time (D-96).
+  // `lastChar`: the last character written; `lineDigits`: how many characters the line has so
+  // far while all are digits, else -1.
+  let lastChar: string | null = null;
+  let lineDigits = 0;
+  const wrote = (r: string): void => {
+    if (r === "") return;
+    lastChar = r.length > 1 && /[\uDC00-\uDFFF]$/.test(r) ? r.slice(-2) : r.slice(-1);
+    lineDigits = lineDigits >= 0 && /^[0-9]*$/.test(r) ? lineDigits + r.length : -1;
+  };
   for (let k = 0; k < n; k++) {
     const u = units[k]!;
     if (u.k !== "t") {
       if (isBreak(k)) {
-        lineSoFar = "";
-        out += "\n";
-      } else {
-        lineSoFar += rend[k];
-        out += rend[k];
-      }
+        lastChar = "\n";
+        lineDigits = 0;
+      } else wrote(rend[k]!);
       continue;
     }
-    const prevChar = atLineStart[k]
-      ? null
-      : out.length > 0
-        ? Array.from(out.slice(-2)).pop()!
-        : null;
+    const prevChar = atLineStart[k] ? null : lastChar;
     const prevWs = prevChar === null || classify(prevChar) === 1;
     const c = u.ch;
     let mode: "lit" | "esc" | "ent" = "lit";
@@ -298,7 +301,7 @@ export function writeInline(
         break;
       case ".":
       case ")": {
-        if (blockRules(lineStartOf[k]!) && /^\d{1,9}$/.test(lineSoFar) && nextIsWs(k)) {
+        if (blockRules(lineStartOf[k]!) && lineDigits >= 1 && lineDigits <= 9 && nextIsWs(k)) {
           mode = "esc";
         }
         break;
@@ -344,62 +347,14 @@ export function writeInline(
       mode = "ent";
     rend[k] =
       mode === "lit" ? c : mode === "esc" ? `\\${c}` : `&#${c.codePointAt(0)!.toString(10)};`;
-    lineSoFar += rend[k];
-    out += rend[k];
+    wrote(rend[k]!);
   }
 
-  // 6. backslashes (right to left: depends on the rendering of the next unit)
-  for (let k = n - 1; k >= 0; k--) {
-    const u = units[k]!;
-    if (u.k !== "t" || u.ch !== "\\") continue;
-    let next: string | null = null;
-    if (k + 1 < n) {
-      if (isBreak(k + 1)) next = "\n";
-      else {
-        const s = rend[k + 1] ?? "";
-        next = s === "" ? null : s[0]!;
-      }
-    }
-    rend[k] = next === null || next === "\n" || isAsciiPunct(next) ? "\\\\" : "\\";
-  }
+  // 5b. typed text that would read as an autolink literal (D-97)
+  escapeAutolinks(units, rend);
 
-  // 6b. dollars (right to left): a typed `$` that would open a formula for a reader of
-  // inline formulas is escaped; `$5 and $6` stays as typed.
-  const typedDollar = (k: number): boolean => {
-    const u = units[k];
-    return u?.k === "t" && u.ch === "$";
-  };
-  for (let k = n - 1; k >= 0; k--) {
-    if (!typedDollar(k)) continue;
-    let from = k;
-    while (typedDollar(from - 1)) from--;
-    let rest = "";
-    for (let q = k + 1; q < n && !isBreak(q); q++) rest += rend[q];
-    // Two or more typed dollars in a row are text for the reader as well, unless the `$`
-    // of a formula follows them: joined with it they would make the formula text.
-    if (rest[0] === "$" || (from === k && mathEnd(`$${rest}`, 0) > 0))
-      for (let q = from; q <= k; q++) rend[q] = "\\$";
-    k = from;
-  }
-
-  // 6c. colons (left to right): typed `:name:` of a registered custom emoji is escaped, as a
-  // reader of custom emoji would take it for one.
-  if (o.emoji) {
-    let line = "";
-    for (let k = 0; k < n; k++) {
-      if (isBreak(k)) {
-        line = "";
-        continue;
-      }
-      const u = units[k]!;
-      if (u.k === "t" && u.ch === ":" && rend[k] === ":") {
-        let rest = "";
-        for (let q = k + 1; q < n && !isBreak(q) && rest.length < 100; q++) rest += rend[q];
-        if (emojiEnd(`${line}:${rest}`, line.length, o.emoji) > 0) rend[k] = "\\:";
-      }
-      line += rend[k] ?? "";
-    }
-  }
+  // 6. backslashes, dollars and colons, by what is written after them
+  escapeFollowing(units, rend, isBreak, o.emoji);
 
   // 7. render with segments
   let md = "";
@@ -427,10 +382,16 @@ export function writeInline(
         const m = nlMode[k];
         if (m === "newline") {
           // "\n" is a line break of the document: `\` + EOL, which every reader keeps (a bare
-          // line ending is a space, D-88); a soft break goes back to the bare line ending
-          const r = (u.soft ? "" : "\\") + o.newline;
+          // line ending is a space, D-88); a soft break goes back to the bare line ending. A
+          // break the snapshot had keeps its spelling there (D-93).
+          const spelled = o.spelling?.get(u.ti);
+          const r = spelled ?? (u.soft ? "" : "\\") + o.newline;
           md += r;
-          addSeg(u.ti, u.ti + 1, pos, pos + (u.soft ? 0 : 1) + o.eol.length, false);
+          const lineEnd =
+            spelled === undefined
+              ? (u.soft ? 0 : 1) + o.eol.length
+              : spelled.length - /[ \t>]*$/.exec(spelled)![0].length;
+          addSeg(u.ti, u.ti + 1, pos, pos + lineEnd, false);
         } else {
           const r = rend[k]!;
           md += r;
@@ -459,9 +420,9 @@ export function writeInline(
 }
 
 /**
- * Inline code. A reader makes every line ending in it a space, so "\n" is written as a line
- * ending where it can be and as a space where it cannot; a space at `softBreaks` (from `ti`, the
- * code's offset in the block text) goes back to the line ending it was.
+ * Inline code without line breaks (`inline-units.ts` writes those between two code spans). A
+ * space at `softBreaks` (from `ti`, the code's offset in the block text) goes back to the line
+ * ending it was where that is safe; a reader makes it a space again.
  */
 function renderCode(text: string, o: InlineOptions, ti: number): { s: string; segs: RawSegment[] } {
   let s = "";
@@ -471,19 +432,19 @@ function renderCode(text: string, o: InlineOptions, ti: number): { s: string; se
     const c = text[i]!;
     const pos = s.length;
     const soft = c === " " && o.softBreaks?.has(ti + i) === true;
-    if (c === "\n" || (soft && i > 0 && i < text.length - 1)) {
-      if (lineKinds && codeBreakOk(text.slice(i + 1))) {
+    if (soft && i > 0 && i < text.length - 1) {
+      if (lineKinds && codeBreakOk(text, i + 1)) {
         s += o.newline;
         segs.push({
           textFrom: i,
           textTo: i + 1,
           mdFrom: pos,
           mdTo: pos + o.eol.length,
-          exact: !soft && o.eol === "\n",
+          exact: false,
         });
       } else {
         s += " ";
-        segs.push({ textFrom: i, textTo: i + 1, mdFrom: pos, mdTo: pos + 1, exact: soft });
+        segs.push({ textFrom: i, textTo: i + 1, mdFrom: pos, mdTo: pos + 1, exact: true });
       }
       continue;
     }

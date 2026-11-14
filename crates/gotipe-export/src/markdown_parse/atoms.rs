@@ -51,7 +51,8 @@ pub(crate) fn math_end(text: &str, open: usize) -> Option<usize> {
     let mut p = open + 1;
     while p < bytes.len() {
         match bytes[p] {
-            b'\n' => return None,
+            // a line ending ends the line: "\r" too, which the writer would write as one (D-94)
+            b'\n' | b'\r' => return None,
             // The escaped character is skipped; a byte inside a longer one is never `$`.
             b'\\' if bytes.get(p + 1) != Some(&b'\n') => p += 1,
             b'$' => {
@@ -200,13 +201,6 @@ pub(crate) fn image_text(src: &str, alt: &str) -> String {
         Some(name) if !name.is_empty() => name.into(),
         _ => "image".into(),
     }
-}
-
-/// The atomic mark of a span, when it has one of the built-in atoms.
-pub(crate) fn atom_mark(marks: &[Mark]) -> Option<&Mark> {
-    marks
-        .iter()
-        .find(|mark| TYPES.contains(&mark.mark_type.as_str()))
 }
 
 pub(crate) fn attr<'a>(mark: &'a Mark, name: &str) -> Option<&'a str> {

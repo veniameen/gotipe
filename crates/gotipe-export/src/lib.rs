@@ -12,6 +12,14 @@ mod table_span;
 #[cfg(feature = "html")]
 pub mod html;
 
+/// A static regular expression of the Markdown reader and writer, compiled once.
+#[cfg(feature = "markdown")]
+macro_rules! re {
+    ($pattern:literal) => {{
+        static RE: std::sync::OnceLock<regex::Regex> = std::sync::OnceLock::new();
+        RE.get_or_init(|| regex::Regex::new($pattern).expect("static grammar pattern"))
+    }};
+}
 #[cfg(feature = "markdown")]
 pub mod markdown;
 #[cfg(feature = "markdown")]
