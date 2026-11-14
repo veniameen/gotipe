@@ -27,7 +27,8 @@
   background: var(--gt-fill-2);
   color: var(--gt-text);
 }
-.gotipe-tool[aria-disabled="true"] {
+/* a tool that cannot act now: its glyphs fade, the tooltip with the reason stays solid */
+.gotipe-tool[aria-disabled="true"] > :is(.gt-icon, .gotipe-color-tool) {
   opacity: var(--gt-disabled-opacity);
 }
 .gotipe-tool.is-text {
@@ -62,6 +63,19 @@
 }
 .gotipe-tool-spacer {
   flex: 1;
+}
+
+/* «More» of a fixed bar that is too narrow: the tools that did not fit, in the bar's order, a row
+   of groups per line */
+.gotipe-toolbar-more {
+  display: grid;
+  justify-items: start;
+  row-gap: var(--gt-toolbar-row-gap);
+}
+.gotipe-toolbar-row {
+  display: flex;
+  align-items: center;
+  gap: var(--gt-toolbar-gap);
 }
 
 /* the text colour button: the letter with a bar of the colour it applies */

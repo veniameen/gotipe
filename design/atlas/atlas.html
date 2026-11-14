@@ -536,6 +536,7 @@
   --gt-tool-sep-h: 16px;
   --gt-tool-sep-gap: 4px;
   --gt-fixed-toolbar-pad: 6px 12px;
+  --gt-toolbar-row-gap: 4px;
   --gt-color-bar-w: 10px;
   --gt-color-bar-h: 2px;
   --gt-color-bar-gap: 1px;
@@ -2086,7 +2087,8 @@ ol.gotipe-list > li::before {
   background: var(--gt-fill-2);
   color: var(--gt-text);
 }
-.gotipe-tool[aria-disabled="true"] {
+/* a tool that cannot act now: its glyphs fade, the tooltip with the reason stays solid */
+.gotipe-tool[aria-disabled="true"] > :is(.gt-icon, .gotipe-color-tool) {
   opacity: var(--gt-disabled-opacity);
 }
 .gotipe-tool.is-text {
@@ -2121,6 +2123,19 @@ ol.gotipe-list > li::before {
 }
 .gotipe-tool-spacer {
   flex: 1;
+}
+
+/* «More» of a fixed bar that is too narrow: the tools that did not fit, in the bar's order, a row
+   of groups per line */
+.gotipe-toolbar-more {
+  display: grid;
+  justify-items: start;
+  row-gap: var(--gt-toolbar-row-gap);
+}
+.gotipe-toolbar-row {
+  display: flex;
+  align-items: center;
+  gap: var(--gt-toolbar-gap);
 }
 
 /* the text colour button: the letter with a bar of the colour it applies */
@@ -3959,7 +3974,7 @@ ol.gotipe-list > li::before {
 <div class="at-index-group"><p>Состояния</p><a href="#f17"><span class="at-num">17</span>Загрузка, ошибки, только чтение, фокус</a></div>
 <div class="at-index-group"><p>Блоки</p><a href="#f18"><span class="at-num">18</span>Задачи, раскрывающиеся блоки, файл, вставка и формула</a></div>
 <div class="at-index-group"><p>PageEditor</p><a href="#f19"><span class="at-num">19</span>Страница вики: PageEditor в общем виде</a></div>
-<div class="at-index-group"><p>Новые возможности</p><a href="#f22"><span class="at-num">22</span>Упоминания</a><a href="#f23"><span class="at-num">23</span>Эмодзи</a><a href="#f24"><span class="at-num">24</span>Формула в строке</a><a href="#f25"><span class="at-num">25</span>Поиск и замена</a><a href="#f26"><span class="at-num">26</span>Счётчик слов и символов</a><a href="#f27"><span class="at-num">27</span>Выравнивание, шрифт и размер</a><a href="#f28"><span class="at-num">28</span>Невидимые символы и направление текста</a><a href="#f29"><span class="at-num">29</span>Таблица: объединённые ячейки</a><a href="#f30"><span class="at-num">30</span>История версий</a></div>
+<div class="at-index-group"><p>Новые возможности</p><a href="#f22"><span class="at-num">22</span>Упоминания</a><a href="#f23"><span class="at-num">23</span>Эмодзи</a><a href="#f24"><span class="at-num">24</span>Формула в строке</a><a href="#f25"><span class="at-num">25</span>Поиск и замена</a><a href="#f26"><span class="at-num">26</span>Счётчик слов и символов</a><a href="#f27"><span class="at-num">27</span>Выравнивание, шрифт и размер</a><a href="#f28"><span class="at-num">28</span>Невидимые символы и направление текста</a><a href="#f29"><span class="at-num">29</span>Таблица: объединённые ячейки</a><a href="#f30"><span class="at-num">30</span>История версий</a><a href="#f31"><span class="at-num">31</span>Закреплённая панель</a></div>
       </nav>
       <h2 class="at-section">Документ</h2>
 <figure class="at-figure" id="f1" data-section="Документ">
@@ -8318,6 +8333,423 @@ editor<span class="tk-pun">.</span>on<span class="tk-pun">(</span><span class="t
     <aside class="gotipe-panel" aria-label="История версий">
       <div class="gotipe-panel-head"><p class="gotipe-panel-title">История</p></div>
     </aside>
+  </div>
+</div>
+</section>
+</figure>
+<figure class="at-figure" id="f31" data-section="Новые возможности">
+  <figcaption class="at-figure-head">
+    <span class="at-num">31</span>
+    <h2 class="at-figure-title">Закреплённая панель</h2>
+    <p class="at-caption">
+      Панель над документом для вида modern. Включённое — на заливке, у недоступного причина — в подсказке. Что не поместилось, уходит в «Ещё»: сначала ¶, шрифт и размер, затем вставка,
+      выравнивание с задачами и остальная разметка. История, тип блока, жирный, курсив,
+      подчёркивание и списки остаются.
+    </p>
+  </figcaption>
+  <section class="at-stage" data-w="1024">
+<p class="at-stage-label">панель и «Вставить» · 1024</p>
+<div class="at-frame gotipe-root" data-gt-view="modern" data-frame="fixed-toolbar" data-w="1024" data-min="400">
+<div class="gotipe-modern">
+    <div class="gotipe-toolbar gotipe-toolbar-fixed" role="toolbar" aria-label="Форматирование">
+      <div class="gotipe-toolbar-track is-open">
+        <span class="gotipe-tool"><svg class="gt-icon"><use href="#i-undo" /></svg></span>
+        <span class="gotipe-tool" aria-disabled="true"><svg class="gt-icon"><use href="#i-redo" /></svg></span>
+        <span class="gotipe-tool-sep"></span>
+        <span class="gotipe-tool is-text">Текст<svg class="gt-icon"><use href="#i-chevron-down" /></svg></span>
+        <span class="gotipe-tool-sep"></span>
+        <span class="gotipe-tool is-text">Системный<svg class="gt-icon"><use href="#i-chevron-down" /></svg></span>
+        <span class="gotipe-tool"><svg class="gt-icon"><use href="#i-minus" /></svg></span>
+        <span class="gotipe-size-field">15</span>
+        <span class="gotipe-tool"><svg class="gt-icon"><use href="#i-plus" /></svg></span>
+        <span class="gotipe-tool-sep"></span>
+        <span class="gotipe-tool is-active"><svg class="gt-icon"><use href="#i-bold" /></svg></span>
+        <span class="gotipe-tool"><svg class="gt-icon"><use href="#i-italic" /></svg></span>
+        <span class="gotipe-tool"><svg class="gt-icon"><use href="#i-underline" /></svg></span>
+        <span class="gotipe-tool"><svg class="gt-icon"><use href="#i-strike" /></svg></span>
+        <span class="gotipe-tool"><svg class="gt-icon"><use href="#i-code" /></svg></span>
+        <span class="gotipe-tool"><svg class="gt-icon"><use href="#i-link" /></svg></span>
+        <span class="gotipe-tool"
+          ><span class="gotipe-color-tool"
+            ><svg class="gt-icon"><use href="#i-letter" /></svg><span class="gotipe-color-bar"></span></span
+        ></span>
+        <span class="gotipe-tool-sep"></span>
+        <span class="gotipe-tool is-pick"
+          ><svg class="gt-icon"><use href="#i-align-left" /></svg><svg class="gt-icon"><use href="#i-chevron-down" /></svg
+        ></span>
+        <span class="gotipe-tool"><svg class="gt-icon"><use href="#i-list" /></svg></span>
+        <span class="gotipe-tool"><svg class="gt-icon"><use href="#i-list-num" /></svg></span>
+        <span class="gotipe-tool"><svg class="gt-icon"><use href="#i-todo" /></svg></span>
+        <span class="gotipe-tool-sep"></span>
+        <span class="gotipe-tool is-text is-active"
+          ><svg class="gt-icon"><use href="#i-plus" /></svg>Вставить<svg class="gt-icon"><use href="#i-chevron-down" /></svg
+          ><span class="gotipe-overlay gotipe-menu" data-place="below"><span class="gotipe-menu-group"><span class="gotipe-menu-label">Блоки</span><span class="gotipe-menu-item"><svg class="gt-icon"><use href="#i-quote" /></svg><span class="gotipe-menu-text">Цитата</span><span class="gotipe-key">&gt;</span></span><span class="gotipe-menu-item"><svg class="gt-icon"><use href="#i-callout" /></svg><span class="gotipe-menu-text">Выноска</span></span><span class="gotipe-menu-item"><svg class="gt-icon"><use href="#i-toggle" /></svg><span class="gotipe-menu-text">Раскрывающийся блок</span></span><span class="gotipe-menu-item"><svg class="gt-icon"><use href="#i-code" /></svg><span class="gotipe-menu-text">Код</span><span class="gotipe-key">```</span></span><span class="gotipe-menu-item is-selected"><svg class="gt-icon"><use href="#i-table" /></svg><span class="gotipe-menu-text">Таблица</span><svg class="at-pointer"><use href="#i-pointer" /></svg></span><span class="gotipe-menu-item"><svg class="gt-icon"><use href="#i-divider" /></svg><span class="gotipe-menu-text">Разделитель</span><span class="gotipe-key">---</span></span></span><span class="gotipe-menu-group"><span class="gotipe-menu-label">Медиа</span><span class="gotipe-menu-item"><svg class="gt-icon"><use href="#i-image" /></svg><span class="gotipe-menu-text">Изображение</span></span><span class="gotipe-menu-item"><svg class="gt-icon"><use href="#i-file" /></svg><span class="gotipe-menu-text">Файл</span></span></span></span
+        ></span>
+        <span class="gotipe-tool-spacer"></span>
+        <span class="gotipe-tool"><svg class="gt-icon"><use href="#i-pilcrow" /></svg></span>
+      </div>
+    </div>
+    <article class="gotipe-page" lang="ru">
+      <header class="gotipe-page-head">
+  <h1 class="gotipe-page-title">Офлайн-черновики</h1>
+</header>
+      <div class="gotipe-doc">
+        <p>
+          Правка, сделанная без сети, сейчас пропадает, если закрыть вкладку до того, как связь
+          вернётся. В выпуске 2.8 редактор пишет каждую транзакцию в локальный журнал, а сервер
+          принимает <strong class="gotipe-selection">пачку целиком или отклоняет её</strong>.
+        </p>
+        <h3>Порядок выката</h3>
+        <ol class="gotipe-list">
+          <li>Включить журнал для 5 % пользователей веб-версии.</li>
+          <li>Неделю сравнивать долю потерянных правок с контрольной группой.</li>
+          <li>Открыть всем, начиная с приложения для macOS.</li>
+        </ol>
+      </div>
+    </article>
+  </div>
+</div>
+</section>
+  <section class="at-stage" data-w="768">
+<p class="at-stage-label">недоступно: причина в подсказке · 768</p>
+<div class="at-frame gotipe-root" data-gt-view="modern" data-frame="fixed-toolbar-disabled" data-w="768" data-min="320">
+<div class="gotipe-modern">
+    <div class="gotipe-toolbar gotipe-toolbar-fixed" role="toolbar" aria-label="Форматирование">
+      <div class="gotipe-toolbar-track is-open">
+        <span class="gotipe-tool"><svg class="gt-icon"><use href="#i-undo" /></svg></span>
+        <span class="gotipe-tool" aria-disabled="true"><svg class="gt-icon"><use href="#i-redo" /></svg></span>
+        <span class="gotipe-tool-sep"></span>
+        <span class="gotipe-tool is-text">Цитата<svg class="gt-icon"><use href="#i-chevron-down" /></svg></span>
+        <span class="gotipe-tool-sep"></span>
+        <span class="gotipe-tool"><svg class="gt-icon"><use href="#i-bold" /></svg></span>
+        <span class="gotipe-tool"><svg class="gt-icon"><use href="#i-italic" /></svg></span>
+        <span class="gotipe-tool"><svg class="gt-icon"><use href="#i-underline" /></svg></span>
+        <span class="gotipe-tool"><svg class="gt-icon"><use href="#i-strike" /></svg></span>
+        <span class="gotipe-tool"><svg class="gt-icon"><use href="#i-code" /></svg></span>
+        <span class="gotipe-tool"><svg class="gt-icon"><use href="#i-link" /></svg></span>
+        <span class="gotipe-tool"
+          ><span class="gotipe-color-tool"
+            ><svg class="gt-icon"><use href="#i-letter" /></svg><span class="gotipe-color-bar"></span></span
+        ></span>
+        <span class="gotipe-tool-sep"></span>
+        <span class="gotipe-tool is-pick" aria-disabled="true"
+          ><svg class="gt-icon"><use href="#i-align-left" /></svg><svg class="gt-icon"><use href="#i-chevron-down" /></svg
+          ><span class="gotipe-tooltip" data-place="below">Выравниваются абзацы и заголовки</span
+          ><svg class="at-pointer"><use href="#i-pointer" /></svg
+        ></span>
+        <span class="gotipe-tool"><svg class="gt-icon"><use href="#i-list" /></svg></span>
+        <span class="gotipe-tool"><svg class="gt-icon"><use href="#i-list-num" /></svg></span>
+        <span class="gotipe-tool"><svg class="gt-icon"><use href="#i-todo" /></svg></span>
+        <span class="gotipe-tool-sep"></span>
+        <span class="gotipe-tool is-text"
+          ><svg class="gt-icon"><use href="#i-plus" /></svg>Вставить<svg class="gt-icon"><use href="#i-chevron-down" /></svg
+        ></span>
+        <span class="gotipe-tool-spacer"></span>
+        <span class="gotipe-tool"><svg class="gt-icon"><use href="#i-more" /></svg></span>
+      </div>
+    </div>
+    <article class="gotipe-page" lang="ru">
+      <header class="gotipe-page-head">
+  <h1 class="gotipe-page-title">Офлайн-черновики</h1>
+</header>
+      <div class="gotipe-doc">
+        <p>
+          Правка, сделанная без сети, сейчас пропадает, если закрыть вкладку до того, как связь
+          вернётся.
+        </p>
+        <blockquote class="gotipe-quote">
+          <p lang="en">
+            I wrote two pages on the train, and when I got off they were just gone.<span
+              class="gotipe-caret"
+            ></span>
+          </p>
+          <p><span class="gotipe-color-gray">— интервью с пользователем Pro, 14 октября</span></p>
+        </blockquote>
+      </div>
+    </article>
+  </div>
+</div>
+</section>
+  <section class="at-stage" data-w="375">
+<p class="at-stage-label">узко: «Ещё» · 375</p>
+<div class="at-frame gotipe-root" data-gt-view="modern" data-frame="fixed-toolbar-more" data-w="375" data-h="720">
+<div class="gotipe-modern">
+    <div class="gotipe-toolbar gotipe-toolbar-fixed" role="toolbar" aria-label="Форматирование">
+      <div class="gotipe-toolbar-track is-open">
+        <span class="gotipe-tool"><svg class="gt-icon"><use href="#i-undo" /></svg></span>
+        <span class="gotipe-tool" aria-disabled="true"><svg class="gt-icon"><use href="#i-redo" /></svg></span>
+        <span class="gotipe-tool-sep"></span>
+        <span class="gotipe-tool is-text">Текст<svg class="gt-icon"><use href="#i-chevron-down" /></svg></span>
+        <span class="gotipe-tool-sep"></span>
+        <span class="gotipe-tool"><svg class="gt-icon"><use href="#i-bold" /></svg></span>
+        <span class="gotipe-tool"><svg class="gt-icon"><use href="#i-italic" /></svg></span>
+        <span class="gotipe-tool"><svg class="gt-icon"><use href="#i-underline" /></svg></span>
+        <span class="gotipe-tool-sep"></span>
+        <span class="gotipe-tool"><svg class="gt-icon"><use href="#i-list" /></svg></span>
+        <span class="gotipe-tool"><svg class="gt-icon"><use href="#i-list-num" /></svg></span>
+        <span class="gotipe-tool-spacer"></span>
+        <span class="gotipe-tool is-active"
+          ><svg class="gt-icon"><use href="#i-more" /></svg
+          ><span class="gotipe-overlay gotipe-toolbar gotipe-toolbar-more" data-place="below-end" role="toolbar" aria-label="Ещё"
+            ><span class="gotipe-toolbar-row"
+              ><span class="gotipe-tool is-text">Системный<svg class="gt-icon"><use href="#i-chevron-down" /></svg></span
+              ><span class="gotipe-tool"><svg class="gt-icon"><use href="#i-minus" /></svg></span
+              ><span class="gotipe-size-field">15</span
+              ><span class="gotipe-tool"><svg class="gt-icon"><use href="#i-plus" /></svg></span
+              ><span class="gotipe-tool-sep"></span
+              ><span class="gotipe-tool"><svg class="gt-icon"><use href="#i-strike" /></svg></span
+              ><span class="gotipe-tool"><svg class="gt-icon"><use href="#i-code" /></svg></span
+              ><span class="gotipe-tool"><svg class="gt-icon"><use href="#i-link" /></svg></span
+              ><span class="gotipe-tool"
+                ><span class="gotipe-color-tool"
+                  ><svg class="gt-icon"><use href="#i-letter" /></svg><span class="gotipe-color-bar"></span></span
+              ></span
+            ></span
+            ><span class="gotipe-toolbar-row"
+              ><span class="gotipe-tool is-pick"
+                ><svg class="gt-icon"><use href="#i-align-left" /></svg><svg class="gt-icon"><use href="#i-chevron-down" /></svg
+              ></span
+              ><span class="gotipe-tool"><svg class="gt-icon"><use href="#i-todo" /></svg></span
+              ><span class="gotipe-tool-sep"></span
+              ><span class="gotipe-tool is-text"
+                ><svg class="gt-icon"><use href="#i-plus" /></svg>Вставить<svg class="gt-icon"><use href="#i-chevron-down" /></svg
+              ></span
+              ><span class="gotipe-tool-sep"></span
+              ><span class="gotipe-tool"><svg class="gt-icon"><use href="#i-pilcrow" /></svg></span
+            ></span
+          ></span
+        ></span>
+      </div>
+    </div>
+    <article class="gotipe-page" lang="ru">
+      <header class="gotipe-page-head">
+  <h1 class="gotipe-page-title">Офлайн-черновики</h1>
+</header>
+      <div class="gotipe-doc">
+  <p>
+  Правка, сделанная без сети, сейчас пропадает, если закрыть вкладку до того, как связь
+  вернётся. В выпуске 2.8 редактор пишет каждую транзакцию в локальный журнал и отправляет его,
+  как только сеть появится. Решение опирается на
+  <a class="gotipe-mention" data-kind="page"
+    ><svg class="gt-icon" aria-hidden="true"><use href="#i-page" /></svg><span>ADR-0031</span></a
+  >
+  и на обращения в поддержку за октябрь — их разобрал
+  <span class="gotipe-mention" data-kind="person"
+    ><span class="gotipe-avatar" data-person="1">ИО</span>Илья Орлов</span
+  >.
+</p>
+
+<div class="gotipe-callout" data-variant="info">
+  <span class="gotipe-callout-icon"
+    ><svg class="gt-icon" aria-hidden="true"><use href="#i-lock" /></svg
+  ></span>
+  <div class="gotipe-callout-content">
+    <p>
+      Черновик хранится только на устройстве и зашифрован ключом сессии. При выходе из аккаунта
+      он удаляется вместе с ключом.
+    </p>
+  </div>
+</div>
+
+<h1>Как это работает</h1>
+<p class="is-hovered">
+  Журнал лежит в <code class="gotipe-inline-code">IndexedDB</code> и переживает перезапуск
+  приложения. Сервер принимает пачку транзакций целиком или отклоняет её:
+  <mark class="gotipe-highlight">половина пачки записаться не может</mark>.
+  <span class="gotipe-block-handle" aria-hidden="true"
+    ><span class="gotipe-handle-button"><svg class="gt-icon"><use href="#i-plus" /></svg></span
+    ><span class="gotipe-handle-button"><svg class="gt-icon"><use href="#i-grip" /></svg></span
+  ></span>
+</p>
+
+<figure class="gotipe-figure">
+  <div class="gotipe-image">
+    <svg class="dg" viewBox="0 0 632 180" role="img" aria-label="Редактор, журнал и сервер">
+  <rect class="dg-node" x="0.5" y="28.5" width="147" height="123" rx="10" />
+  <text class="dg-title" x="74" y="84">Редактор</text>
+  <text class="dg-sub" x="74" y="102">вкладка или приложение</text>
+
+  <path class="dg-edge" d="M156 90h76M226 85l6 5-6 5" />
+  <text class="dg-note" x="194" y="80">транзакции</text>
+
+  <rect class="dg-node" x="242.5" y="28.5" width="147" height="123" rx="10" />
+  <text class="dg-title" x="316" y="62">Журнал</text>
+  <text class="dg-sub dg-mono" x="316" y="80">IndexedDB</text>
+  <rect class="dg-queue" x="270" y="94" width="92" height="6" rx="3" />
+  <rect class="dg-queue" x="270" y="105" width="76" height="6" rx="3" />
+  <rect class="dg-queue" x="270" y="116" width="86" height="6" rx="3" />
+  <rect class="dg-queue" x="270" y="127" width="58" height="6" rx="3" />
+
+  <path class="dg-edge dg-off" d="M398 70h76" />
+  <text class="dg-note" x="436" y="60">нет сети</text>
+  <path class="dg-edge dg-go" d="M398 112h76M468 107l6 5-6 5" />
+  <text class="dg-note" x="436" y="134">одной пачкой</text>
+
+  <rect class="dg-node" x="484.5" y="28.5" width="147" height="123" rx="10" />
+  <text class="dg-title" x="558" y="84">Сервер</text>
+  <text class="dg-sub" x="558" y="102">новая версия документа</text>
+</svg>
+  </div>
+  <figcaption>
+    Транзакции копятся в журнале, пока нет сети, и уходят на сервер одной пачкой.
+  </figcaption>
+</figure>
+  <h2>Что меняется</h2>
+<ul class="gotipe-list">
+  <li>Каждая транзакция сначала попадает в журнал и только потом — на сервер.</li>
+  <li>
+    Когда связь вернулась, журнал уходит пачкой, а сервер отвечает новой версией документа.
+  </li>
+  <li>
+    Конфликт решается по блокам:
+    <ul class="gotipe-list">
+      <li>чужая правка блока не перезаписывает вашу;</li>
+      <li>обе версии остаются, ваша — предложением правки.</li>
+    </ul>
+  </li>
+</ul>
+
+<div class="gotipe-code-block">
+  <div class="gotipe-code-block-header">
+    <span>TypeScript</span>
+    <span class="gotipe-code-copy"
+      ><svg class="gt-icon" aria-hidden="true"><use href="#i-copy" /></svg
+    ></span>
+  </div>
+  <pre
+    class="gotipe-code-block-scroll"
+  ><span class="gotipe-code-lines" aria-hidden="true">1
+2
+3
+4
+5</span><code><span class="tk-com">// Журнал пишется до отправки: закрытая вкладка ничего не теряет.</span>
+editor<span class="tk-pun">.</span>on<span class="tk-pun">(</span><span class="tk-str">"transaction"</span><span class="tk-pun">,</span> <span class="tk-key">async</span> <span class="tk-pun">({</span> steps<span class="tk-pun">,</span> version <span class="tk-pun">}:</span> <span class="tk-type">Transaction</span><span class="tk-pun">)</span> <span class="tk-key">=&gt;</span> <span class="tk-pun">{</span>
+  <span class="tk-key">await</span> drafts<span class="tk-pun">.</span>append<span class="tk-pun">(</span>documentId<span class="tk-pun">, {</span> steps<span class="tk-pun">,</span> version <span class="tk-pun">});</span>
+  <span class="tk-key">if</span> <span class="tk-pun">(</span>navigator<span class="tk-pun">.</span>onLine<span class="tk-pun">)</span> <span class="tk-key">await</span> drafts<span class="tk-pun">.</span>flush<span class="tk-pun">(</span>documentId<span class="tk-pun">, {</span> retries<span class="tk-pun">:</span> <span class="tk-num">3</span> <span class="tk-pun">});</span>
+<span class="tk-pun">});</span></code></pre>
+</div>
+
+<h3>Порядок выката</h3>
+<ol class="gotipe-list">
+  <li>Включить журнал для 5 % пользователей веб-версии.</li>
+  <li>Неделю сравнивать долю потерянных правок с контрольной группой.</li>
+  <li>Открыть всем, начиная с приложения для macOS.</li>
+</ol>
+
+<div class="gotipe-callout" data-variant="warning">
+  <span class="gotipe-callout-icon"
+    ><svg class="gt-icon" aria-hidden="true"><use href="#i-warning" /></svg
+  ></span>
+  <div class="gotipe-callout-content">
+    <p>
+      До выпуска 2.9 черновик не переносится между устройствами: правка с ноутбука не появится
+      на телефоне, пока не отправлена.
+    </p>
+  </div>
+</div>
+  <h2 class="has-anchor">
+  <span class="gotipe-heading-anchor" aria-hidden="true"
+    ><svg class="gt-icon"><use href="#i-hash" /></svg></span
+  >Конфликты
+</h2>
+<div class="gotipe-table-block">
+  <div class="gotipe-table-wrap">
+    <table class="gotipe-table">
+      <thead>
+        <tr>
+          <th>Ситуация</th>
+          <th>Что видит автор</th>
+          <th>Что сохраняется</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Блок изменён только у вас</td>
+          <td>Ничего</td>
+          <td>Ваша версия</td>
+        </tr>
+        <tr>
+          <td>Блок изменён у обоих</td>
+          <td>Предложение правки</td>
+          <td>Обе версии</td>
+        </tr>
+        <tr>
+          <td>Блок удалён на сервере</td>
+          <td>Тост «Блок удалён»</td>
+          <td>Ваша версия — в истории</td>
+        </tr>
+        <tr>
+          <td>Документ удалён</td>
+          <td>Окно восстановления</td>
+          <td>Копия в «Черновиках»</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <span class="gotipe-table-add is-column"><svg class="gt-icon"><use href="#i-plus" /></svg></span>
+  <span class="gotipe-table-add is-row"><svg class="gt-icon"><use href="#i-plus" /></svg></span>
+</div>
+
+<blockquote class="gotipe-quote">
+  <p lang="en">I wrote two pages on the train, and when I got off they were just gone.</p>
+  <p><span class="gotipe-color-gray">— интервью с пользователем Pro, 14 октября</span></p>
+</blockquote>
+
+<details class="gotipe-toggle" open>
+  <summary>
+    <span class="gotipe-toggle-button"
+      ><svg class="gt-icon" aria-hidden="true"><use href="#i-chevron-down" /></svg
+    ></span>
+    <span lang="en">Why not Background Sync?</span>
+  </summary>
+  <div class="gotipe-toggle-content" lang="en">
+    <p>
+      Background Sync isn’t available in Safari, and our macOS app runs in WKWebView. A journal
+      in IndexedDB behaves the same on every platform we ship, and the editor can read it back
+      without the network.
+    </p>
+  </div>
+</details>
+  <h2>Задачи</h2>
+<ul class="gotipe-todo-list">
+  <li class="gotipe-todo-item" data-checked="true">
+    <span class="gotipe-check" role="checkbox" aria-checked="true"
+      ><svg class="gt-icon" aria-hidden="true"><use href="#i-check" /></svg
+    ></span>
+    <span class="gotipe-todo-item-content">Схема журнала и миграция IndexedDB</span>
+  </li>
+  <li class="gotipe-todo-item" data-checked="true">
+    <span class="gotipe-check" role="checkbox" aria-checked="true"
+      ><svg class="gt-icon" aria-hidden="true"><use href="#i-check" /></svg
+    ></span>
+    <span class="gotipe-todo-item-content">Шифрование черновика ключом сессии</span>
+  </li>
+  <li class="gotipe-todo-item" data-checked="false">
+    <span class="gotipe-check" role="checkbox" aria-checked="false"
+      ><svg class="gt-icon" aria-hidden="true"><use href="#i-check" /></svg
+    ></span>
+    <span class="gotipe-todo-item-content"
+      >Индикатор «Не отправлено» в шапке документа —
+      <span class="gotipe-mention" data-kind="person"
+        ><span class="gotipe-avatar" data-person="2">МЛ</span>Мария Лебедева</span
+      ></span
+    >
+  </li>
+  <li class="gotipe-todo-item" data-checked="false">
+    <span class="gotipe-check" role="checkbox" aria-checked="false"
+      ><svg class="gt-icon" aria-hidden="true"><use href="#i-check" /></svg
+    ></span>
+    <span class="gotipe-todo-item-content">Метрика потерянных правок на дашборде выпуска</span>
+  </li>
+</ul>
+
+<hr />
+<p>
+  Возражения принимаем до 18 ноября — в обсуждении ADR-0031 или в
+  <a class="gotipe-link">треде выпуска 2.8</a>.
+</p>
+</div>
+    </article>
   </div>
 </div>
 </section>
