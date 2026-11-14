@@ -3,6 +3,7 @@ use gotipe_core::{AttrValue, Block, Document};
 mod autolink_escapes;
 mod characters;
 mod escapes;
+mod hazards;
 mod inline;
 mod links;
 mod spans;
@@ -11,6 +12,7 @@ mod units;
 mod verify;
 
 pub use crate::markdown_parse::MarkdownAtoms;
+use hazards::Top;
 use inline::content_to_markdown;
 use links::{destination, link_line, title_suffix};
 use units::{Kind, Options};
@@ -41,10 +43,12 @@ pub fn to_markdown(doc: &Document) -> String {
     for block in &doc.blocks {
         inline::collect_emoji(block, &mut emoji);
     }
-    doc.blocks
+    hazards::top_blocks(&doc.blocks)
         .iter()
-        .filter(|block| !omitted(block))
-        .map(|block| verified(block, &emoji))
+        .map(|top| match top {
+            Top::Block(block) => verified(block, &emoji),
+            Top::Stars => "***\n".into(),
+        })
         .collect::<Vec<_>>()
         .join("\n")
 }
@@ -74,6 +78,108 @@ fn omitted(block: &Block) -> bool {
 /// The children a writer shows, without omitted placeholders.
 fn shown(block: &Block) -> impl Iterator<Item = &Block> {
     block.children.iter().filter(|child| !omitted(child))
+}
+
+/// The number the first item of a numbered list is written with, as `listStart` of the TS
+/// writer: a whole number from 0, a string read as `parseInt` reads it, and 1 otherwise.
+fn list_start(list: &Block) -> usize {
+    let start = match list.attrs.get("start") {
+        Some(AttrValue::Number(number)) => *number,
+        Some(AttrValue::String(text)) => parse_int(text),
+        None | Some(AttrValue::Null) => 1.0,
+        Some(_) => f64::NAN,
+    };
+    if start.is_finite() && start >= 0.0 {
+        start.trunc() as usize
+    } else {
+        1
+    }
+}
+
+/// `Number.parseInt(text, 10)` of JavaScript: leading blanks, a sign, then decimal digits.
+fn parse_int(text: &str) -> f64 {
+    let text =
+        text.trim_start_matches(|c: char| (c.is_whitespace() && c != '\u{85}') || c == '\u{feff}');
+    let (negative, rest) = match text.strip_prefix('-') {
+        Some(rest) => (true, rest),
+        None => (false, text.strip_prefix('+').unwrap_or(text)),
+    };
+    let digits = rest.bytes().take_while(u8::is_ascii_digit).count();
+    match rest[..digits].parse::<f64>() {
+        Ok(value) if negative => -value,
+        Ok(value) => value,
+        Err(_) => f64::NAN,
+    }
+}
+
+/// A list, each line after `outer`, the indentation of the items around it. A nested list is
+/// written the same way, not indented afterwards, so the blank line before a list that cannot
+/// interrupt the text of its item stays empty at any depth, as in the TS writer.
+fn list_to_markdown(list: &Block, emoji: &Emoji, tier: u8, outer: &str) -> String {
+    let attr = |name: &str| match list.attrs.get(name) {
+        Some(AttrValue::String(value)) => value.as_str(),
+        _ => "",
+    };
+    let start = list_start(list);
+    let marker = match attr("marker") {
+        "+" => "+",
+        "*" => "*",
+        _ => "-",
+    };
+    let mut rendered = String::new();
+    for (i, item) in list.children.iter().enumerate() {
+        let prefix = if list.block_type == "orderedList" {
+            let delimiter = if attr("delimiter") == ")" { ")" } else { "." };
+            format!("{}{delimiter} ", start + i)
+        } else if list.block_type == "todoList" || item.attrs.contains_key("checked") {
+            if matches!(item.attrs.get("checked"), Some(AttrValue::Bool(true))) {
+                format!("{marker} [x] ")
+            } else {
+                format!("{marker} [ ] ")
+            }
+        } else {
+            format!("{marker} ")
+        };
+        // a task's text follows its `[ ] ` on the marker's line; continuation lines and nested
+        // blocks stand under the item's text, and as `[ ] ` is part of a task's text, its indent
+        // is the marker's, as the TS writer
+        let task = prefix.ends_with("] ");
+        let width = if task { marker.len() + 1 } else { prefix.len() };
+        let indent = format!("{outer}{}", " ".repeat(width));
+        let newline = format!("\n{indent}");
+        let options = Options {
+            kind: if task { Kind::Midline } else { Kind::Block },
+            tier,
+            continuation: false,
+            newline: &newline,
+            emoji,
+        };
+        let text = content_to_markdown(&item.content, &options);
+        // an item without text is its marker alone, as the TS writer writes it
+        rendered.push_str(outer);
+        rendered.push_str(if text.is_empty() {
+            prefix.trim_end()
+        } else {
+            &prefix
+        });
+        rendered.push_str(&text);
+        rendered.push('\n');
+        for child in shown(item) {
+            // a list that cannot interrupt the text of the item, or the `[ ]` of a task, starts
+            // after a blank line
+            if (task || !text.is_empty()) && hazards::cannot_interrupt(child) {
+                rendered.push('\n');
+            }
+            if hazards::is_list(child) {
+                rendered.push_str(&list_to_markdown(child, emoji, tier, &indent));
+                continue;
+            }
+            for line in block_to_markdown(child, emoji, tier).lines() {
+                rendered.push_str(&format!("{indent}{line}\n"));
+            }
+        }
+    }
+    rendered
 }
 
 fn block_to_markdown(block: &Block, emoji: &Emoji, tier: u8) -> String {
@@ -119,67 +225,7 @@ fn block_to_markdown(block: &Block, emoji: &Emoji, tier: u8) -> String {
             .clamp(1, 6);
             format!("{} {content}\n{nested}", "#".repeat(level))
         }
-        "bulletList" | "orderedList" | "todoList" => {
-            let start = match block.attrs.get("start") {
-                Some(AttrValue::Number(n)) => *n as usize,
-                _ => 1,
-            };
-            block
-                .children
-                .iter()
-                .enumerate()
-                .map(|(i, item)| {
-                    let marker = match attr("marker") {
-                        "+" => "+",
-                        "*" => "*",
-                        _ => "-",
-                    };
-                    let prefix = if block.block_type == "orderedList" {
-                        format!(
-                            "{}{} ",
-                            start + i,
-                            if attr("delimiter") == ")" { ")" } else { "." }
-                        )
-                    } else if block.block_type == "todoList" || item.attrs.contains_key("checked") {
-                        if matches!(item.attrs.get("checked"), Some(AttrValue::Bool(true))) {
-                            format!("{marker} [x] ")
-                        } else {
-                            format!("{marker} [ ] ")
-                        }
-                    } else {
-                        format!("{marker} ")
-                    };
-                    // a task's text follows its `[ ] ` on the marker's line
-                    let kind = if prefix.ends_with("] ") {
-                        Kind::Midline
-                    } else {
-                        Kind::Block
-                    };
-                    // continuation lines and nested blocks stand under the item's text; a task's
-                    // `[ ] ` is part of its text, so the indent is the marker's, as the TS writer
-                    let indent = if prefix.ends_with("] ") {
-                        " ".repeat(marker.len() + 1)
-                    } else {
-                        " ".repeat(prefix.len())
-                    };
-                    let newline = format!("\n{indent}");
-                    let text = content_to_markdown(
-                        &item.content,
-                        &Options {
-                            newline: &newline,
-                            ..options(kind)
-                        },
-                    );
-                    let mut rendered = format!("{prefix}{text}\n");
-                    for child in shown(item) {
-                        for line in block_to_markdown(child, emoji, tier).lines() {
-                            rendered.push_str(&format!("{indent}{line}\n"))
-                        }
-                    }
-                    rendered
-                })
-                .collect()
-        }
+        "bulletList" | "orderedList" | "todoList" => list_to_markdown(block, emoji, tier, ""),
         "listItem" | "todoItem" => format!("{content}\n{nested}"),
         "codeBlock" => {
             let raw = crate::plaintext::block_text(block);

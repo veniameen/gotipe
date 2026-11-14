@@ -13,10 +13,13 @@ function strip(block: Block): unknown {
   };
 }
 
-/** The rich text of every block, in order: what writing and reading must not change. */
+/**
+ * The rich text of every block with text, in order: what writing and reading must not change
+ * (an empty paragraph or heading is not written).
+ */
 const texts = (blocks: readonly Block[]): unknown[] =>
   blocks.flatMap((block) => [
-    ...(Array.isArray(block.content) ? [block.content] : []),
+    ...(Array.isArray(block.content) && block.content.length > 0 ? [block.content] : []),
     ...texts(block.children ?? []),
   ]);
 

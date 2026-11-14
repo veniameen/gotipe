@@ -32,10 +32,11 @@ fn docx_pdf_markdown_and_text_accept_font_marks_and_direction() {
     assert!(to_pdf(&document, &PdfOptions::default())
         .unwrap()
         .starts_with(b"%PDF"));
-    // Markdown has no syntax for them: the text and the other marks stay.
+    // Markdown has no syntax for them: the text and the other marks stay. The task list takes
+    // another marker than the list before it, so the two are not read as one list (D-100).
     assert_eq!(
         to_markdown(&document),
-        "## عنوان\n\na **b** c\n\n- שלום\n\n- [x] done\n"
+        "## عنوان\n\na **b** c\n\n- שלום\n\n* [x] done\n"
     );
     assert!(to_plaintext(&document).contains("a b c"));
 }
