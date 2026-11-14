@@ -116,6 +116,9 @@ export { AlignPicker } from "./text/align";
 export { FontFamilyPicker, FontSizeStepper } from "./text/font";
 export type { FontSizeStepperProps } from "./text/font";
 export { InvisiblesToggle } from "./text/invisibles";
+export { FixedToolbar } from "./toolbar/fixed-toolbar";
+export type { FixedToolbarProps } from "./toolbar/fixed-toolbar";
+export type { FixedToolbarTool } from "./toolbar/units";
 export { OVER_LIMIT_LAYER } from "./text/over-limit";
 // The block editor's own interface strings (English and Russian) and their layering
 export {

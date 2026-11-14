@@ -1,4 +1,10 @@
-import { type FocusEvent, type KeyboardEvent, type RefObject, useLayoutEffect, useRef } from "react";
+import {
+  type FocusEvent,
+  type KeyboardEvent,
+  type RefObject,
+  useLayoutEffect,
+  useRef,
+} from "react";
 
 /** Lists the tools open (a font list, «Insert»): their rows keep their own keys. */
 const POPUP = "[data-gotipe-formatting-popup]";

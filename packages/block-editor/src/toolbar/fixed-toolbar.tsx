@@ -46,9 +46,7 @@ const CLOSED: CSSProperties = {
 };
 
 function Separator() {
-  return (
-    <span className="gotipe-fixed-toolbar-sep" role="separator" aria-orientation="vertical" />
-  );
+  return <hr className="gotipe-fixed-toolbar-sep" aria-orientation="vertical" />;
 }
 
 /**
@@ -206,12 +204,17 @@ export function FixedToolbar({
           ref={panel}
           id={panelId}
           className="gotipe-fixed-toolbar-panel"
-          role="group"
+          role="toolbar"
           aria-label={i18n.t("toolbar.moreTools")}
           data-open={open ? "" : undefined}
           style={
             open && position
-              ? { position: "fixed", left: position.left, top: position.top, maxWidth: position.maxWidth }
+              ? {
+                  position: "fixed",
+                  left: position.left,
+                  top: position.top,
+                  maxWidth: position.maxWidth,
+                }
               : CLOSED
           }
           onFocus={extra.onFocus}

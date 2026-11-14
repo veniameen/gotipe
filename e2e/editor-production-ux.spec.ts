@@ -134,8 +134,8 @@ test.describe('Production UX regressions', () => {
         };
       });
 
-      await page.locator('.gotipe-toolbar-btn[title^="Bold"]').first().click();
-      await page.locator('.gotipe-toolbar-btn[title^="Italic"]').first().click();
+      await page.locator('.gotipe-fixed-toolbar [data-mark="bold"]').first().click();
+      await page.locator('.gotipe-fixed-toolbar [data-mark="italic"]').first().click();
 
       expect(before.isCollapsed).toBe(false);
       await expect.poll(async () => {

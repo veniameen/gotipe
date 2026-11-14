@@ -7,8 +7,10 @@ import {
 } from "@gotipe/core";
 import { useEditorState } from "@gotipe/react";
 import type React from "react";
+import { useId } from "react";
 import { useBlockEditorI18n } from "../i18n/strings";
 import { PageIcon } from "../page/icons";
+import { useFormatReason } from "./formatting/reasons";
 import { currentMarks } from "./formatting/selection";
 import { Tip } from "./formatting/tip";
 import { useFormattingMenu } from "./formatting/use-formatting-menu";
@@ -24,6 +26,8 @@ export interface TextColorPickerProps {
 export function TextColorPicker({ editor }: TextColorPickerProps) {
   useEditorState(editor, (value) => value);
   const menu = useFormattingMenu(editor);
+  const reason = useFormatReason(editor);
+  const tip = useId();
   const marks = currentMarks(editor);
   const stored = (type: string) =>
     toSafeColor(marks.find((mark) => mark.type === type)?.attrs.color);
@@ -37,9 +41,15 @@ export function TextColorPicker({ editor }: TextColorPickerProps) {
       <button
         type="button"
         ref={menu.trigger}
-        className="gotipe-color-trigger"
-        disabled={!menu.editable}
-        onClick={() => (menu.open ? menu.close() : menu.show())}
+        className="gotipe-color-trigger gotipe-format-tool"
+        aria-disabled={reason ? true : undefined}
+        aria-describedby={reason ? tip : undefined}
+        onMouseDown={(event) => event.preventDefault()}
+        onClick={() => {
+          if (reason) return;
+          if (menu.open) menu.close();
+          else menu.show();
+        }}
         aria-haspopup="dialog"
         aria-expanded={menu.open}
         aria-label={i18n.t("editor.textColor")}
@@ -47,7 +57,7 @@ export function TextColorPicker({ editor }: TextColorPickerProps) {
       >
         <PageIcon name="letter" />
         <span className="gotipe-color-bar" aria-hidden="true" />
-        <Tip label={i18n.t("editor.color")} />
+        <Tip id={tip} label={reason ?? i18n.t("editor.color")} />
       </button>
 
       {menu.open && (

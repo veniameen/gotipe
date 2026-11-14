@@ -51,7 +51,7 @@
   width: var(--gt-icon-size);
   height: var(--gt-icon-size);
 }
-.gotipe-format-tool:hover:not(:disabled) {
+.gotipe-format-tool:hover:not(:disabled, [aria-disabled="true"]) {
   background: var(--gt-fill-1);
   color: var(--gt-text);
 }
@@ -62,6 +62,14 @@
 .gotipe-format-tool:disabled {
   opacity: var(--gt-disabled-opacity);
   cursor: default;
+}
+/* a tool that says why it can't act (frame 31): its glyphs fade, the tooltip with the reason
+   stays solid, and it stays in the keyboard path */
+.gotipe-format-tool[aria-disabled="true"] {
+  cursor: default;
+}
+.gotipe-format-tool[aria-disabled="true"] > :not(.gotipe-tip) {
+  opacity: var(--gt-disabled-opacity);
 }
 .gotipe-format-tool:focus-visible {
   outline: var(--gt-focus-width) solid var(--gt-focus);
@@ -114,7 +122,7 @@
   outline: var(--gt-focus-width) solid var(--gt-focus);
   outline-offset: var(--gt-focus-gap);
 }
-.gotipe-size-field:disabled {
+.gotipe-size-field:is(:disabled, [aria-disabled="true"]) {
   opacity: var(--gt-disabled-opacity);
 }
 
@@ -133,6 +141,7 @@
 .gotipe-menu-sep {
   flex: none;
   height: var(--gt-hairline);
+  border: 0;
   margin: var(--gt-menu-sep-gap) calc(-1 * var(--gt-menu-pad));
   background: var(--gt-line);
 }

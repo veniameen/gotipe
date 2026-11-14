@@ -128,13 +128,14 @@ export function InsertMenu({ editor }: { editor: GoTipeEditor }) {
           style={menu.style}
           onKeyDown={menu.keydown}
         >
-          {groups.map((group) => (
+          {groups.map((group, index) => (
             <div
               key={group.id}
               className="gotipe-menu-group"
               role="group"
               aria-label={i18n.t(GROUP_NAMES[group.id])}
             >
+              {index > 0 ? <hr className="gotipe-menu-sep" /> : null}
               <span className="gotipe-menu-label" aria-hidden="true">
                 {i18n.t(GROUP_NAMES[group.id])}
               </span>

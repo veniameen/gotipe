@@ -113,7 +113,8 @@ editor. Colours, fonts and dark mode are covered in [theming](/docs/ui/theming).
 | `minimal` | An editor as a field in another interface | 640 px column, body 14/22 px, no handle |
 
 The `docs` outline appears with two or more headings and hides in containers 640 px wide or
-less. The `modern` view expects a fixed toolbar above it; GoTipe does not ship that toolbar.
+less. The `modern` view expects a fixed toolbar above it:
+[FixedToolbar](/docs/ui/fixed-toolbar).
 
 ## Page head
 
@@ -153,6 +154,7 @@ If you report errors yourself through `host.onError`, set `errorToast={false}`.
 |---|---|
 | `SlashMenu`, `BlockToolbar`, `DragHandle`, `BlockContextMenu` | The parts of the `/` menu and the handle; see [menus](/docs/ui/menus). |
 | `BlockEditorBubbleMenu`, `BlockTypeDropdown`, `TextColorPicker` | The formatting bubble and its parts. |
+| `FixedToolbar` | The toolbar over the document of the `modern` view; see [fixed toolbar](/docs/ui/fixed-toolbar). |
 | `TableColumnButton`, `TableRowButton` | Column and row menus of tables. |
 | `CollaborationCursors` | Remote cursors; see [collaboration](/docs/collaboration/overview). |
 | `CommentSidebar`, `SuggestionToolbar` | Review UI; see [comments](/docs/review/comments). |

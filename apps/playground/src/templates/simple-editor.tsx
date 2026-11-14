@@ -1,9 +1,9 @@
+import { FixedToolbar, ThemeToggle } from "@gotipe/block-editor";
 import { DefaultPreset } from "@gotipe/core/presets";
 import { Editor, MediaBlocksContext, useEditor } from "@gotipe/react";
 import { mediaBlocks } from "@gotipe/react/media";
 import { ExampleWrapper } from "../shared/example-wrapper";
 import { SIMPLE_CONTENT } from "../shared/sample-content";
-import { StaticToolbar } from "../shared/toolbar";
 
 export function SimpleEditor() {
   const editor = useEditor({
@@ -18,7 +18,11 @@ export function SimpleEditor() {
       tags={["MIT"]}
     >
       <div className="gotipe-simple-editor">
-        <StaticToolbar editor={editor} showTheme />
+        {editor && (
+          <FixedToolbar editor={editor}>
+            <ThemeToggle />
+          </FixedToolbar>
+        )}
         <MediaBlocksContext.Provider value={mediaBlocks}>
           <Editor editor={editor} />
         </MediaBlocksContext.Provider>

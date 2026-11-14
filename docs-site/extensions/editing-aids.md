@@ -86,7 +86,7 @@ Code blocks and other raw-text blocks are not decorated.
 
 ### The ¶ switch
 
-`InvisiblesToggle` from `@gotipe/block-editor` is the switch of the GoTipe Atlas (frame 28) for a fixed toolbar: a ¶ button with a tooltip, pressed while the characters are shown. The theme (`text-style.css`) draws them in `--gt-text-3`, quieter than the text: a dot over a space, ° over a no-break space, ↵ at a line break and ¶ at the end of a paragraph. The marks are generated content: the document, the caret and copying are not changed.
+`InvisiblesToggle` from `@gotipe/block-editor` is the switch of the GoTipe Atlas (frame 28) for a fixed toolbar; [FixedToolbar](/docs/ui/fixed-toolbar) shows it at its end when the editor has `InvisibleCharacters`. It is a ¶ button with a tooltip, pressed while the characters are shown. The theme (`text-style.css`) draws them in `--gt-text-3`, quieter than the text: a dot over a space, ° over a no-break space, ↵ at a line break and ¶ at the end of a paragraph. The marks are generated content: the document, the caret and copying are not changed.
 
 ```tsx title="toolbar.tsx"
 import { InvisiblesToggle } from "@gotipe/block-editor";

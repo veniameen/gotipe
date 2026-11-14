@@ -149,6 +149,13 @@ the model snapshot or implementing a second DOM-to-document mapper.
 (`font.tsx`), переключатель ¶ (`invisibles.tsx`), ручка блока справа налево (`direction.ts`).
 `BlockEditor` только подключает их; вид — `theme/src/theme/{find,status,text-style}.css`.
 
+Закреплённая панель вида modern (Атлас, кадр 31): `block-editor/src/toolbar/`. `fixed-toolbar.tsx`
+(`FixedToolbar`) связывает полосу и «Ещё»; состав и порядок ухода — `units.tsx`; что уходит в «Ещё» —
+чистый `overflow.ts`, измерение — `measure.ts`; одна остановка Tab и стрелки — `roving.ts`;
+«Вставить» по командам «/» — `insert-menu.tsx`; что умеет редактор (шрифты, ¶) — `support.ts`.
+Причина недоступного инструмента — `components/formatting/reasons.ts`, она же подсказка и
+`aria-describedby`. Вид — `theme/src/theme/toolbar.css`.
+
 Картинки и файлы в React: `react/src/content/media-view.tsx` рисует их только для чтения,
 `content/media-blocks.ts` — `MediaBlocksContext`. Редактирование (загрузка, ссылка, размер,
 кадрирование, подпись, alt, просмотр, меню действий) — отдельный вход `@gotipe/react/media`

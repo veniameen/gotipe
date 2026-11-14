@@ -63,7 +63,7 @@ A new paragraph made by Enter keeps the alignment of the paragraph it was split 
 ## Alignment in the interface
 
 - The bubble's **More** menu of `BlockEditor` starts with an **Alignment** group (GoTipe Atlas, frame 27): the four alignments, the current one ticked and the others with their keys. The group is disabled when the caret is not in a paragraph or heading.
-- `AlignPicker` from `@gotipe/block-editor` is the same list for a fixed toolbar, such as the modern view's: the current alignment's glyph and a chevron.
+- `AlignPicker` from `@gotipe/block-editor` is the same list for a fixed toolbar: the current alignment's glyph and a chevron. [FixedToolbar](/docs/ui/fixed-toolbar) has it; where the block takes no alignment, its tooltip says so.
 - Show the keys only with `TextAlign` installed: the menu lists `Mod+Shift+L/E/R/J`, which the extension binds.
 
 ## Text direction

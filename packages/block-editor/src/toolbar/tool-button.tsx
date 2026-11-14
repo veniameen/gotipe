@@ -18,7 +18,10 @@ export function runTool(editor: GoTipeEditor, command: (chain: Chain) => void): 
     chain.run();
   } catch (failure) {
     editor.reportError(
-      new GoTipeError("TRANSFORM_ERROR", failure instanceof Error ? failure.message : String(failure)),
+      new GoTipeError(
+        "TRANSFORM_ERROR",
+        failure instanceof Error ? failure.message : String(failure),
+      ),
     );
   }
 }
@@ -42,7 +45,15 @@ export interface ToolButtonProps {
  * A square tool of the fixed toolbar (Atlas frame 31). It never takes the focus from the text on
  * press, so the selection it acts on stays where it was.
  */
-export function ToolButton({ icon, label, binding, pressed, reason, onRun, data }: ToolButtonProps) {
+export function ToolButton({
+  icon,
+  label,
+  binding,
+  pressed,
+  reason,
+  onRun,
+  data,
+}: ToolButtonProps) {
   const tip = useId();
   return (
     <button
