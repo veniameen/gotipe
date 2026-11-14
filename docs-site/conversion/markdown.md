@@ -98,7 +98,11 @@ For each top-level block of the document:
 1. If the snapshot has a block with the same id and the same fingerprint, its original source is copied verbatim.
 2. Otherwise the block is written in canonical syntax, parsed again and compared with the input. The first rendering that reads back identically wins: plain delimiters, then `<url>` autolinks, then HTML tags such as `<strong>`, `<em>` and `<s>`.
 
-A soft line break is read as a space, so the document does not hold the lines of a paragraph. When an edited block was in the snapshot, the writer reads its old source again and puts each line ending back where the words around it are still there: an edit rewrites the lines it touches, and the other lines of the block stay byte for byte. Two lines become one only when the words on both sides of the break changed. A block new to the file is written on one line.
+A soft line break is read as a space, so the document does not hold the lines of a paragraph. When an edited block was in the snapshot, the writer reads its old source again and puts each line ending back where the words around it are still there, spelled as the file spelled it: a hard break of two trailing spaces stays two spaces, a blank before a soft break stays, and a lazy or deeper-indented continuation line keeps its indentation. An edit rewrites the lines it touches, and the other lines of the block stay byte for byte. Two lines become one only when the words on both sides of the break changed. A block new to the file is written on one line.
+
+### Documents read by earlier versions
+
+Earlier versions of `@gotipe/markdown` read a soft line break as `"\n"`, and documents stored from them still hold it. The writer now writes every `"\n"` as a hard break (`\` before the line ending), so once such a document is saved, a paragraph wrapped by hand shows a line break at every wrap where GitHub showed one paragraph. When you still have the Markdown file, read it again (`parseMarkdown(text, { previous: snapshot })` keeps the ids): soft breaks become spaces and the file is written back as it was. A document stored only as JSON cannot tell a soft break from a line break typed in the editor; the package ships no migration for it, so if your files were wrapped by hand, replace the `"\n"` between words with spaces in your own one-off script and review the result.
 
 A fingerprint is the canonical JSON of a block without ids. It ignores Markdown style attributes (`marker`, `delimiter`, `spread`, and `breaks` of older documents) and attributes Markdown cannot hold, such as a callout's `emoji` or an image's `width`, so changing those does not rewrite a block.
 
@@ -125,7 +129,7 @@ The writer also avoids structural accidents: two adjacent lists that would merge
 | `$$` on its own line, the TeX, `$$` on its own line; a ```` ```math ```` fence | `math` with `display: "block"`; content is the TeX as written |
 | HTML blocks, link reference definitions, footnote definitions, everything else | `markdownRaw` with `kind`; content is the exact source |
 
-A list item holds rich text and nested lists only. A line ending inside inline code is a space, as in CommonMark. A `"\n"` of a paragraph, quote, callout or list item is written as a hard break: `\` and a line ending, or `&#10;` at the start or end of the text. In headings and table cells a line break is `<br>`.
+A list item holds rich text and nested lists only. A line ending inside inline code is a space, as in CommonMark. Only spaces and tabs are trimmed from the ends of a heading or a table cell: a no-break space there is text. A `"\n"` of a paragraph, quote, callout or list item is written as a hard break: `\` and a line ending, or `&#10;` at the start or end of the text. In headings and table cells a line break is `<br>`. `"\r\n"` and `"\r"` in text, and the references `&#13;` and `&#13;&#10;`, are line breaks too.
 
 | Inline Markdown | Mark |
 | --- | --- |
@@ -237,7 +241,7 @@ The package also exports the types `Doc`, `Block`, `Span`, `Mark`, `ParseOptions
 
 - **Line breaks.** A soft line break reads as a space and a hard one as a line break, as in CommonMark. Reference links, footnote references and other text kept verbatim (`mdRaw`) keep the line endings of their source.
 - **Canonical rewrite.** An edited block is written in canonical syntax: ATX headings, fenced code, `*`, `**` and `~~`, `| a |` tables, `<url>` or bare autolinks. List markers, numbering delimiters, start numbers and loose or tight spacing are kept.
-- **Bare addresses.** Plain text such as `https://…`, `www.…` or an e-mail address becomes a link when an edited block is read again; escaping cannot prevent it.
+- **Bare addresses.** Plain text such as `www.example.com`, `https://…` or an e-mail address is written with the character that would start a GFM autolink escaped (`www\.example.com`, `https\://…`, `name\@example.com`), so it reads back as text. The reader takes an address only where the source writes its start as it is: an escape or a character reference in `www.`, in `scheme://` or in the `@` keeps the words text, while one in the rest of an address is part of it (`https://example.com/a\_b` is one link). `www.` starts an address in lower case only.
 - **Raw blocks.** Multi-paragraph list items and quotes, mixed and numbered task lists stay read-only raw blocks.
 - **Not stored.** Image sizes, table column widths and cell spans, callout emoji and other attributes outside the mapping are not written. `toggle` and `columns` are written as their content.
 - **Formulas.** A formula is written as a `$$` block, which GitHub and most renderers show as math, or as a ```` ```math ```` fence when its TeX has a line of its own `$$`; both read back as the same formula. A `$$` block needs its closing line and does not interrupt a paragraph, so other dollar signs stay text.
@@ -245,16 +249,16 @@ The package also exports the types `Doc`, `Block`, `Span`, `Mark`, `ParseOptions
 - **Callout types.** Types without a GFM alert are written as the closest alert: `info` as `NOTE`, `success` as `TIP`, `error` as `CAUTION`; others as `NOTE`.
 - **Files.** A `file` block is written as a link line labelled by its name, or by its address without one. It reads back as a file only when its name equals the decoded file name of a scheme-less path. A paragraph that holds only such a link, or only an image, is read as a file or image block.
 - **Plain text code.** Code whose language is `plain` or `plaintext`, as older documents store it, is written with a bare fence; an untouched block keeps its source.
-- **Inline code.** Markdown has no line break inside inline code: a `"\n"` in code text is written as a line ending where that is safe, otherwise as a space, and reads back as a space. A backslash right before `|` inside code in a table cell cannot be expressed in GFM and reads back with an extra backslash.
+- **Inline code.** Markdown has no line break inside inline code: a line ending in a code span reads as a space (CommonMark). A `"\n"` in code text is therefore written as a hard break between two code spans, `` `a`\ `` and `` `b` `` on the next line (`<br>` in headings and cells); the text comes back, but the line break itself has no code mark. A backslash right before `|` inside code in a table cell cannot be expressed in GFM and reads back with an extra backslash.
 - **Front matter.** Only YAML-style front matter (`---` … `---` or `...` at the start of the file) is recognized.
 
 ## Performance
 
-In GoTipe's own measurement, an 80 KB page of about 2,000 blocks parses in about 190 ms, and serializing it after an edit takes about 16 ms, because untouched blocks are copied, not rendered. Measure on your own content and hardware.
+In GoTipe's own measurement, an 80 KB page of about 2,000 blocks parses in about 190 ms, and serializing it after an edit takes about 16 ms, because untouched blocks are copied, not rendered. Writing a block takes time in proportion to its length: one paragraph of 100,000 words is written in about 0.1 s. Measure on your own content and hardware.
 
 ## Related
 
 - [Page editor](/docs/ui/page-editor): Markdown in and out with model suggestions.
 - [Content formats](/docs/concepts/content-formats): JSON, HTML and Markdown in the editor.
 - [Model edits](/docs/review/model-edits): anchoring proposed edits in Markdown text.
-- [Server conversion](/docs/conversion/server): the Rust converter, which has its own Markdown reader and writer.
+- [Server conversion](/docs/conversion/server): the Rust converter, which has its own Markdown reader and writer. Its writer writes inline text as this package does, byte for byte on the shared cases (`crates/gotipe-export/tests/fixtures/markdown-line-breaks.json`, `markdown-write-read.json`).

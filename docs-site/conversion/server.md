@@ -83,7 +83,7 @@ with status 1.
 
 For `pdf` and `docx`, images must already be embedded as `data:` URLs: the binary has no
 `resolveImage`, and a URL image fails. The `html` command writes the same HTML as the
-`serializeHtml` function of `@gotipe/core`; `markdown` maps formulas and embeds as
+`serializeHtml` function of `@gotipe/core`; `markdown` writes text, formulas and embeds as
 `@gotipe/markdown` does. Errors name the same causes as the
 [`ExportError` codes](/docs/conversion/pdf#errors).
 

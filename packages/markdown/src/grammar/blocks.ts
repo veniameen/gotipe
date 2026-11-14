@@ -63,7 +63,8 @@ class Reader {
           next++;
         }
         const info = decodeString(opening[2]!.trim());
-        const split = /^(\S+)(?:[ \t]+(.*))?$/.exec(info);
+        // the meta is the rest, a "\r" of a reference too (JavaScript `.` would stop there)
+        const split = /^(\S+)(?:[ \t]+([^\n]*))?$/.exec(info);
         const last = next < lines.length ? next++ : Math.max(i, next - 1);
         nodes.push({
           type: "code",
@@ -97,7 +98,8 @@ class Reader {
       if (heading) {
         const prefix = heading[0].length - (heading[2]?.length ?? 0);
         const raw = heading[2] ?? "";
-        const value = raw.replace(/(?:^|[ \t]+)#+[ \t]*$/, "").trimEnd();
+        // only spaces and tabs end the text: a no-break space at its end is text
+        const value = raw.replace(/(?:^|[ \t]+)#+[ \t]*$/, "").replace(/[ \t]+$/, "");
         const content = {
           text: value,
           start: line.start + prefix,
@@ -245,6 +247,10 @@ class Reader {
         paragraph.push(stripIndent(current, indentWidth(current.text, current.column)));
         next++;
       }
+      // a task's text may start on the next line: the empty rest of the marker line is no line
+      // of the paragraph, or its line ending would start the text with a space (D-91)
+      if (i === 0 && taskPrefix && !setext && paragraph.length > 1 && blank(paragraph[0]!))
+        paragraph.shift();
       const children = this.inline(paragraph);
       const pos = position(start, lines[next - 1]!.end);
       nodes.push(

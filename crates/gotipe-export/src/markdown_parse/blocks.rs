@@ -97,7 +97,8 @@ impl Reader {
                 let raw = m.get(2).map_or("", |m| m.as_str());
                 let prefix = m.get(0).unwrap().len() - raw.len();
                 let value = closing_heading.replace(raw, "");
-                let value = value.trim_end();
+                // only spaces and tabs end the text: a no-break space at its end is text
+                let value = value.trim_end_matches([' ', '\t']);
                 let content = Line::new(
                     value,
                     line.start + prefix,
@@ -271,6 +272,16 @@ impl Reader {
                 paragraph.push(current.indent(width(&current.text, current.column)));
                 next += 1;
             }
+            // a task's text may start on the next line: the empty rest of the marker line is no
+            // line of the paragraph, or its line ending would start the text with a space (D-91)
+            if i == 0
+                && task_prefix > 0
+                && setext == 0
+                && paragraph.len() > 1
+                && paragraph[0].blank()
+            {
+                paragraph.remove(0);
+            }
             let mut node = self.inline(
                 if setext > 0 { "heading" } else { "paragraph" },
                 &paragraph,
@@ -314,7 +325,8 @@ fn cells(text: &str) -> Vec<(String, usize, usize)> {
                 .bytes()
                 .take_while(|c| *c == b' ' || *c == b'\t')
                 .count();
-            let value = raw.trim();
+            // only spaces and tabs: a no-break space at an edge is text
+            let value = raw.trim_matches([' ', '\t']);
             cells.push((value.into(), from + lead, from + lead + value.len()));
             from = p + 1;
         }

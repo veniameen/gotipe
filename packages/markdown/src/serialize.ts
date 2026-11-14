@@ -1,9 +1,9 @@
 import { atomsIn, carried } from "./atoms";
 import { writeInline } from "./inline-serialize";
-import { RICH_TYPES, fingerprint, isBlockEmpty, listStart, richContent } from "./model";
+import { RICH_TYPES, asWritten, fingerprint, isBlockEmpty, listStart, richContent } from "./model";
 import { parseInternal } from "./parse";
 import { type RNode, type RenderOpts, bulletMarker, renderTop } from "./serialization/blocks";
-import { blockText, snapshotLines, softBreaksFor } from "./serialization/line-breaks";
+import { type KeptBreaks, blockText, keptBreaks, snapshotLines } from "./serialization/line-breaks";
 import type {
   Block,
   Doc,
@@ -50,7 +50,10 @@ function verificationTiers(block: Block): number[] | null {
 function renderVerified(
   block: Block,
   eol: string,
-  options: Pick<RenderOpts, "dividerAlt" | "markerOverride" | "emoji" | "softBreaks"> = {},
+  options: Pick<
+    RenderOpts,
+    "dividerAlt" | "markerOverride" | "emoji" | "softBreaks" | "spelling"
+  > = {},
 ): { md: string; node: RNode } {
   const emoji = options.emoji ?? atomsIn(block)?.customEmoji;
   const extra = emoji ? { ...options, emoji } : options;
@@ -61,7 +64,7 @@ function renderVerified(
   const found = atomsIn(block);
   const atoms =
     found || emoji ? { ...found, ...(emoji ? { customEmoji: { ...emoji } } : {}) } : undefined;
-  const print = (b: Block): string => fingerprint(atoms ? carried(b) : b);
+  const print = (b: Block): string => fingerprint(asWritten(atoms ? carried(b) : b));
   const target = print(block);
   let first: { md: string; node: RNode } | null = null;
   for (const tier of tiers) {
@@ -71,7 +74,10 @@ function renderVerified(
     if (p.nodes.length === 1 && print(p.nodes[0]!.block) === target) return r;
   }
   // a kept line ending that does not read back the same (a space at an edge, in code before
-  // indentation): the block is written without the snapshot's lines rather than changed
+  // indentation): the block is written with the kept lines in canonical syntax, then without the
+  // snapshot's lines rather than changed
+  if (options.softBreaks && options.spelling !== false)
+    return renderVerified(block, eol, { ...options, spelling: false });
   if (options.softBreaks) return renderVerified(block, eol, { ...options, softBreaks: undefined });
   return first!;
 }
@@ -110,8 +116,9 @@ export function blockToMarkdown(block: Block, eol = "\n"): string {
 }
 
 /**
- * Where an edited block keeps the line endings of its soft breaks (D-88): read from its source
- * in the snapshot, with the atoms its text was read with; once per block.
+ * Where an edited block keeps the line endings of its soft breaks (D-88) and how its source
+ * spelled its line breaks (D-93): read from its source in the snapshot, with the atoms its text
+ * was read with; once per block.
  */
 function keptLines(
   text: string,
@@ -124,11 +131,11 @@ function keptLines(
     found || emoji ? { ...found, ...(emoji ? { customEmoji: { ...emoji } } : {}) } : undefined;
   const lines = snapshotLines(text, old, atoms);
   if (lines.size === 0) return undefined;
-  const cache = new Map<string, ReadonlySet<number> | undefined>();
+  const cache = new Map<string, KeptBreaks | undefined>();
   return (inner) => {
     if (!cache.has(inner.id)) {
       const before = lines.get(inner.id);
-      cache.set(inner.id, before && softBreaksFor(before, blockText(inner)));
+      cache.set(inner.id, before && keptBreaks(before, blockText(inner)));
     }
     return cache.get(inner.id);
   };

@@ -109,7 +109,7 @@ gotipe-convert parse-markdown < notes.md > notes.json
 
 A converter built without the `pdf` or `docx` feature answers those formats with "unsupported export format". For `pdf` and `docx`, images must already be embedded as base64 data, as described above.
 
-The converter's Markdown reader and writer are a separate Rust implementation. The reader follows the document mapping of `@gotipe/markdown`; the writer produces canonical Markdown and does not keep the source of untouched blocks after an edit. Where file bytes matter, use [`@gotipe/markdown`](/docs/conversion/markdown).
+The converter's Markdown reader and writer are a separate Rust implementation. The reader follows the document mapping of `@gotipe/markdown`; the writer produces canonical Markdown and does not keep the source of untouched blocks after an edit. It writes the text of a block as `@gotipe/markdown` writes it, with the same escapes, the same choice between `**` delimiters and `<strong>` tags and the same check that the block reads back. Where file bytes matter, use [`@gotipe/markdown`](/docs/conversion/markdown).
 
 ## Checks
 

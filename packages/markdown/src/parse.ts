@@ -59,11 +59,20 @@ export interface ParsedInternal {
 
 /**
  * A GitHub alert: `[!KIND]` alone on the first line of a quote. In the text the line ends with a
- * soft break (one space: a "\n" after it is text of the body), a hard one ("\n") or the end;
- * `ALERT_LINE_END` checks the source.
+ * soft break (one space: a "\n" after it is text of the body), a hard one ("\n", after the
+ * blanks before a `\\`) or the end; `ALERT_LINE_END` reads which from the source.
  */
 const ALERT_RE = /^\[!(NOTE|TIP|IMPORTANT|WARNING|CAUTION)\](?: |[ \t]*\n|[ \t]*$)/i;
-const ALERT_LINE_END = /[ \t]*\\?(?:\r\n|\r|\n|$)/y;
+const ALERT_LINE_END = /([ \t]*)(\\?)(\r\n|\r|\n|$)/y;
+
+/**
+ * How much of the quote's text the marker line `[!KIND]…` is: what `ALERT_RE` found, unless the
+ * line ends with a hard break by `\\`, which keeps the blanks before it in the text (D-90).
+ */
+function alertLength(marker: RegExpExecArray, end: RegExpExecArray): number {
+  const [, blanks = "", backslash, eol] = end;
+  return backslash && eol ? marker[1]!.length + 4 + blanks.length : marker[0].length;
+}
 
 function mk(
   type: string,
@@ -215,20 +224,28 @@ class Converter {
     const r = this.inline(para.children, ps, pe);
     const first = para.children[0];
     if (first?.type === "text") {
-      const fs = this.start(first);
+      // a text split by an autolink has no position: it starts the quote's text, after its `>`
+      let fs = this.start(first);
+      if (fs === null) {
+        fs = s;
+        while (this.text[fs] === " " || this.text[fs] === "\t") fs++;
+        if (this.text[fs] === ">") fs++;
+        while (this.text[fs] === " " || this.text[fs] === "\t") fs++;
+      }
       const m = ALERT_RE.exec(r.text);
       const head = r.spans[0];
-      ALERT_LINE_END.lastIndex = fs === null || !m ? 0 : fs + m[1]!.length + 3;
+      ALERT_LINE_END.lastIndex = m ? fs + m[1]!.length + 3 : 0;
+      const end = m && this.text.startsWith("[!", fs) ? ALERT_LINE_END.exec(this.text) : null;
+      const length = m && end ? alertLength(m, end) : 0;
       if (
         m &&
-        fs !== null &&
-        this.text.startsWith("[!", fs) &&
-        ALERT_LINE_END.test(this.text) &&
+        end &&
         head &&
         head.marks.length === 0 &&
-        head.text.length >= m[0].length
+        head.text.length >= length &&
+        /^[ \t]*\n?$/.test(r.text.slice(m[1]!.length + 3, length))
       ) {
-        const t = trimInlineStart(r, m[0].length);
+        const t = trimInlineStart(r, length);
         const alert = m[1]!.toUpperCase();
         return rich(mk("callout", { type: alert.toLowerCase(), alert }, t.spans, s, e, t.segs), t);
       }

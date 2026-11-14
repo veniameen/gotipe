@@ -177,10 +177,12 @@ function semanticAttrs(block: Block): Record<string, unknown> {
       };
     case "file":
       return { url: str(attrs.url), name: str(attrs.name) };
-    case "table":
-      return {
-        align: Array.isArray(attrs.align) ? attrs.align.map((a) => normalizeAlign(a)) : [],
-      };
+    case "table": {
+      // a column without alignment is `---` whether `align` names it (null) or not
+      const align = Array.isArray(attrs.align) ? attrs.align.map((a) => normalizeAlign(a)) : [];
+      while (align.length > 0 && align[align.length - 1] === null) align.pop();
+      return { align };
+    }
     case "markdownRaw":
       return { kind: str(attrs.kind) };
     default: {
@@ -230,6 +232,35 @@ export function canonicalBlock(block: Block): unknown {
 /** Stable JSON of the block without ids (recursively) and without Markdown style attrs. */
 export function fingerprint(block: Block): string {
   return stableStringify(canonicalBlock(block));
+}
+
+/**
+ * `block` as its Markdown reads back, by what the writer writes on purpose: a line ending of
+ * the text is "\n" (D-94), a line break inside inline code has no code mark (D-89), and a line
+ * break of a link destination is `%0A`. A rendering is compared with this.
+ */
+export function asWritten(block: Block): Block {
+  const content = Array.isArray(block.content)
+    ? block.content.flatMap((span): Span[] => {
+        const text = span.text.replace(/\r\n?/g, "\n");
+        const marks = (span.marks ?? []).map((mark) =>
+          mark.type === "link" && typeof mark.attrs?.href === "string"
+            ? {
+                ...mark,
+                attrs: { ...mark.attrs, href: mark.attrs.href.replace(/\r\n?|\n/g, "%0A") },
+              }
+            : mark,
+        );
+        if (!marks.some((mark) => mark.type === "code") || !text.includes("\n"))
+          return [{ text, marks }];
+        const plain = marks.filter((mark) => mark.type !== "code");
+        return text
+          .split(/(\n)/)
+          .filter((part) => part !== "")
+          .map((part) => ({ text: part, marks: part === "\n" ? plain : marks }));
+      })
+    : block.content;
+  return { ...block, content, children: (block.children ?? []).map(asWritten) };
 }
 
 /**

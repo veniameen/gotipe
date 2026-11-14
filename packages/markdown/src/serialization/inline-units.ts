@@ -42,7 +42,8 @@ const TAGS: Record<string, string> = {
 const ENTITY_GLOBAL = /&(?=(?:#[0-9]{1,7}|#[xX][0-9a-fA-F]{1,6}|[A-Za-z][A-Za-z0-9]{1,31});)/g;
 const EMAIL_RE =
   /^[A-Za-z0-9.!#$%'*+/=?^_`{|}~-]+@[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?(?:\.[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?)+$/;
-const BARE_URL_RE = /^(?:https?:\/\/|www\.)[^\s<>()&*_~`|[\]\\"'{}]+$/i;
+/** A scheme in any case, `www.` in lower case, as the readers take an address (`autolinks.ts`). */
+const BARE_URL_RE = /^(?:[Hh][Tt][Tt][Pp][Ss]?:\/\/|www\.)[^\s<>()&*_~`|[\]\\"'{}]+$/;
 /** Link destination: raw form when safe, `<...>` otherwise. */
 export function linkDestination(href: string): string {
   if (href === "") return "<>";
@@ -69,8 +70,10 @@ export function linkDestination(href: string): string {
 
 const lineBreakReference = (c: string): string => (c === "\r" ? "&#13;" : "&#10;");
 
+/** A link title; its line breaks are references, so a blank line in it cannot end the paragraph. */
 export function linkTitle(title: string): string {
-  return `"${title.replace(/[\\"]/g, "\\$&").replace(ENTITY_GLOBAL, "\\&")}"`;
+  const escaped = title.replace(/[\\"]/g, "\\$&").replace(ENTITY_GLOBAL, "\\&");
+  return `"${escaped.replace(/\r|\n/g, lineBreakReference)}"`;
 }
 
 function longestRun(s: string, ch: string): number {
@@ -147,23 +150,43 @@ function emphasisPair(type: string): EmoPair | null {
 
 function buildUnits(root: MarkNode, o: InlineOptions): Unit[] {
   const units: Unit[] = [];
+  const leaves = (node: MarkNode): Leaf[] =>
+    node.children.flatMap((child) => (child.leaf ? [child] : leaves(child)));
+  /** The length of the block's text: an image that is all of it is written apart. */
+  const total = leaves(root).reduce((n, leaf) => n + leaf.span.text.length, 0);
+  /** Inline code; `ti` is where `text` starts in the block text. */
+  const emitCode = (text: string, ti: number): void => {
+    const fence = "`".repeat(longestRun(text, "`") + 1);
+    const pad =
+      text.startsWith("`") ||
+      text.endsWith("`") ||
+      (text.startsWith(" ") && text.endsWith(" ") && /[^ ]/.test(text))
+        ? " "
+        : "";
+    units.push({ k: "syn", s: fence + pad });
+    units.push({ k: "code", s: text, ti });
+    units.push({ k: "syn", s: pad + fence });
+  };
   const emitLeaf = (leaf: Leaf): void => {
     const text = leaf.span.text;
     if (leaf.kind === "raw") {
       units.push({ k: "lit", s: text, ti: leaf.ti });
       return;
     }
+    // A line ending is "\n", "\r\n" or "\r" of the text (D-94): one line break of the document.
     if (leaf.kind === "code") {
-      const fence = "`".repeat(longestRun(text, "`") + 1);
-      const pad =
-        text.startsWith("`") ||
-        text.endsWith("`") ||
-        (text.startsWith(" ") && text.endsWith(" ") && /[^ ]/.test(text))
-          ? " "
-          : "";
-      units.push({ k: "syn", s: fence + pad });
-      units.push({ k: "code", s: text, ti: leaf.ti });
-      units.push({ k: "syn", s: pad + fence });
+      // A reader makes a line ending inside code a space (CommonMark), so a line break of
+      // code text closes the code, is written as a line break and opens it again (D-89).
+      let from = 0;
+      for (let i = 0; i <= text.length; i++) {
+        const c = text[i];
+        if (i < text.length && c !== "\n" && c !== "\r") continue;
+        if (i > from) emitCode(text.slice(from, i), leaf.ti + from);
+        if (i === text.length) break;
+        if (c === "\r" && text[i + 1] === "\n") i++;
+        units.push({ k: "nl", ti: leaf.ti + i });
+        from = i + 1;
+      }
       return;
     }
     let ti = leaf.ti;
@@ -171,14 +194,12 @@ function buildUnits(root: MarkNode, o: InlineOptions): Unit[] {
       if (ch === "\n") units.push({ k: "nl", ti });
       else if (ch === " " && o.softBreaks?.has(ti)) units.push({ k: "nl", ti, soft: true });
       else if (ch === "\r") {
-        /* dropped: model uses "\n" */
+        if (text[ti - leaf.ti + 1] !== "\n") units.push({ k: "nl", ti });
       } else units.push({ k: "t", ch, ti });
       ti += ch.length;
     }
   };
   const cell = (s: string): string => (o.kind === "cell" ? s.replace(/\|/g, "\\|") : s);
-  const leaves = (node: MarkNode): Leaf[] =>
-    node.children.flatMap((child) => (child.leaf ? [child] : leaves(child)));
   /** An atom is written whole; false when its attributes or text cannot be, then it is text. */
   const emitAtom = (node: MarkNode): boolean => {
     const { type, attrs = {} } = node.mark;
@@ -197,8 +218,7 @@ function buildUnits(root: MarkNode, o: InlineOptions): Unit[] {
       if (!href) return false;
       const label = attrs.label;
       const named = typeof label === "string" && label && label !== mentionLabel(attrs.kind, text);
-      // Line breaks of the label are references: a blank line would end the paragraph.
-      const title = named ? ` ${cell(linkTitle(label).replace(/\r|\n/g, lineBreakReference))}` : "";
+      const title = named ? ` ${cell(linkTitle(label))}` : "";
       around("[", `](${href}${title})`);
     } else if (type === "inlineMath") {
       // `$x$5` is not a formula: a digit of text after it is written as a reference, and
@@ -223,7 +243,7 @@ function buildUnits(root: MarkNode, o: InlineOptions): Unit[] {
       const alt = typeof attrs.alt === "string" ? attrs.alt : text;
       // An image alone in its block takes an empty title: alone without one it is the image
       // block when read back.
-      const sole = text.length === leaves(root).reduce((n, leaf) => n + leaf.span.text.length, 0);
+      const sole = text.length === total;
       const close = `](${cell(linkDestination(String(attrs.src ?? "")))}${sole ? ' ""' : ""})`;
       if (alt === text) around("![", close);
       else whole(`![${alt.replace(/\r\n?|\n/g, " ").replace(/[!-/:-@[-`{-~]/g, "\\$&")}${close}`);

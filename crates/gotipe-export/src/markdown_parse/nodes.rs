@@ -18,6 +18,9 @@ pub(super) struct Node {
     pub align: Vec<Option<String>>,
     pub url: String,
     pub title: Option<String>,
+    /// Text of a backslash escape or a character reference while the inline reader runs: as
+    /// in GFM it is never part of an autolink literal (D-97).
+    pub decoded: bool,
 }
 impl Node {
     pub fn new(kind: &'static str, start: usize, end: usize) -> Self {

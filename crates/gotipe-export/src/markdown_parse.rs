@@ -1,11 +1,6 @@
 //! Own bounded Markdown reader, sharing the public document semantics of @gotipe/markdown.
-macro_rules! re {
-    ($pattern:literal) => {{
-        static RE: std::sync::OnceLock<regex::Regex> = std::sync::OnceLock::new();
-        RE.get_or_init(|| regex::Regex::new($pattern).expect("static grammar pattern"))
-    }};
-}
 pub(crate) mod atoms;
+pub(crate) mod autolinks;
 mod blocks;
 mod convert;
 mod decode;

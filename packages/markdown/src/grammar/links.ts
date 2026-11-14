@@ -219,63 +219,25 @@ function containsLink(nodes: PhrasingContent[]): boolean {
   );
 }
 
-export function readAutolink(
-  source: Source,
-  start: number,
-  context: InlineContext,
-  literalOnly = false,
-): Match | null {
+/** An autolink in angle brackets, `<https://…>` or `<a@b.c>`; GFM literals are `autolinks.ts`. */
+export function readAutolink(source: Source, start: number, context: InlineContext): Match | null {
   if (context.inLink) return null;
-  const tail = source.text.slice(start);
-  const angle = literalOnly ? null : ANGLE_LINK.exec(tail);
-  if (angle) {
-    const label = (angle[1] ?? angle[2])!;
-    return {
-      node: {
-        type: "link",
-        url: /^[A-Za-z][A-Za-z\d+.-]*:/.test(label) ? label : `mailto:${label}`,
-        children: [
-          {
-            type: "text",
-            value: label,
-            position: range(source, start + 1, start + 1 + label.length),
-          },
-        ],
-        position: range(source, start, start + angle[0].length),
-      },
-      end: start + angle[0].length,
-    };
-  }
-  if (context.inLabel) return null;
-  const before = source.text[start - 1];
-  if (before && /[\p{L}\p{N}_]/u.test(before)) return null;
-  const match =
-    /^(?:https?:\/\/|www\.)[^\s<>]+/i.exec(tail) ??
-    /^[A-Za-z\d.!#$%&'*+/=?^_`{|}~-]+@[A-Za-z\d](?:[A-Za-z\d.-]*\.)[A-Za-z]{2,}/.exec(tail);
-  if (!match) return null;
-  let label = match[0].replace(/[?!.,:*_~]+$/, "");
-  // A closing parenthesis is part of a URL only when it balances an opening one.
-  const opens = (label.match(/\(/g) ?? []).length;
-  let closes = (label.match(/\)/g) ?? []).length;
-  while (closes > opens && label.endsWith(")")) {
-    label = label.slice(0, -1);
-    closes--;
-  }
-  label = label.replace(/&[A-Za-z\d]+;$/, "");
-  if (!label) return null;
-  const url = label.startsWith("www.")
-    ? `http://${label}`
-    : label.includes("://")
-      ? label
-      : `mailto:${label}`;
-  const end = start + label.length;
+  const angle = ANGLE_LINK.exec(source.text.slice(start));
+  if (!angle) return null;
+  const label = (angle[1] ?? angle[2])!;
   return {
     node: {
       type: "link",
-      url,
-      children: [{ type: "text", value: label, position: range(source, start, end) }],
-      position: range(source, start, end),
+      url: /^[A-Za-z][A-Za-z\d+.-]*:/.test(label) ? label : `mailto:${label}`,
+      children: [
+        {
+          type: "text",
+          value: label,
+          position: range(source, start + 1, start + 1 + label.length),
+        },
+      ],
+      position: range(source, start, start + angle[0].length),
     },
-    end,
+    end: start + angle[0].length,
   };
 }

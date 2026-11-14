@@ -22,6 +22,11 @@ export interface InlineOptions {
    * words around stay (D-88, `line-breaks.ts`). Only `block` and `midline` text has them.
    */
   softBreaks?: ReadonlySet<number>;
+  /**
+   * The source to write for a line break, by the offset of its space or "\n": how the snapshot
+   * spelled it (D-93). Only `block` and `midline` text has it.
+   */
+  spelling?: ReadonlyMap<number, string>;
   /** 0: bare autolink literals allowed; 1: `<url>` autolinks; 2: tags for emphasis, `[t](u)` links. */
   tier: number;
   /** The first line continues a paragraph started before the content (alert callouts). */

@@ -53,6 +53,11 @@ describe("an edited block keeps the lines of its soft breaks (D-88)", () => {
     change(doc);
     return serializeMarkdown(doc, snapshot);
   }
+  /** Types `!` at the end of a block's text. */
+  function append(block: Block) {
+    const spans = block.content as Span[];
+    spans[spans.length - 1]!.text += "!";
+  }
 
   it("rewrites only the line an edit touches", () => {
     // the landing page's sample: the demo counts the lines the writer rewrites
@@ -130,6 +135,44 @@ describe("an edited block keeps the lines of its soft breaks (D-88)", () => {
         "",
       ].join("\n"),
     );
+  });
+
+  it("keeps how untouched lines spell their line endings (D-93)", () => {
+    const cases: [string, string, (doc: Doc) => void][] = [
+      // a hard break of two spaces, a blank before a soft break, a tab
+      ["a  \nb\nc\n", "a  \nb\nc!\n", (doc) => append(doc.blocks[0]!)],
+      ["a \nb\n", "a \nb!\n", (doc) => append(doc.blocks[0]!)],
+      ["**a**  \nb\n", "**a**  \nb!\n", (doc) => append(doc.blocks[0]!)],
+      ["a\\\n  b\nc\n", "a\\\n  b\nc!\n", (doc) => append(doc.blocks[0]!)],
+      // lazy and over-indented continuation lines
+      ["- x\nlazy\n  y\n", "- x\nlazy\n  y!\n", (doc) => append(doc.blocks[0]!.children[0]!)],
+      ["a\n     b\n", "a\n     b!\n", (doc) => append(doc.blocks[0]!)],
+      ["> a\nb\n> c\n", "> a\nb\n> c!\n", (doc) => append(doc.blocks[0]!)],
+      [
+        "1. one\n   two  \n   three\n",
+        "1. one\n   two  \n   three!\n",
+        (doc) => append(doc.blocks[0]!.children[0]!),
+      ],
+    ];
+    for (const [source, expected, change] of cases) {
+      const { text } = edit(source, change);
+      expect(text).toBe(expected);
+      expect(rewritten(source, text)).toHaveLength(1);
+    }
+  });
+
+  it("spells a line ending again only while a word next to it stays", () => {
+    // the word after the hard break is still there: the break keeps its two spaces
+    const one = edit("a  \nb\n", (doc) => {
+      doc.blocks[0]!.content = plain("a!\nb");
+    }).text;
+    expect(one).toBe("a!  \nb\n");
+    // both words changed: the break is written in canonical syntax
+    const both = edit("a  \nb\n", (doc) => {
+      doc.blocks[0]!.content = plain("a!\nb!");
+    }).text;
+    expect(both).toBe("a!\\\nb!\n");
+    expect(parseMarkdown(both).doc.blocks[0]!.content).toEqual(plain("a!\nb!"));
   });
 
   it("keeps them over a second edit, from the snapshot the writer returned", () => {

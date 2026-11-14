@@ -1,193 +1,278 @@
-//! Rich text of a block as Markdown: marks, verbatim source and inline atoms
-//! (docs/development/inline-atoms.md). Atoms are written as `packages/markdown` writes them.
-use gotipe_core::{AttrValue, Block, BlockContent, Mark, TextSpan};
+//! Rich text of a block as Markdown, as `writeInline` of `packages/markdown` writes it: the same
+//! units, decisions and escapes, so both writers write the same bytes (D-97). A "\n" of the
+//! document is a hard break (`\` and a line ending) where its line has text and more text
+//! follows, `&#10;` where it has not (D-88); the block writer puts the continuation prefix after
+//! each line ending.
+use gotipe_core::{Block, BlockContent, TextSpan};
 
 use super::{
-    breaks::{self, Piece},
-    code_fence, destination, escape_entities, escape_text, link_destination, title_suffix, Emoji,
+    autolink_escapes::escape_autolinks,
+    characters::{self, Lines},
+    escapes,
+    spans::normalize,
+    units::{units, Kind, Options, Pair, Unit, Units},
+    Emoji,
 };
 use crate::markdown_parse::atoms;
 
-/// Markdown under construction and the byte offsets of its typed dollars, colons, line breaks
-/// and pipes: text of the document, as opposed to the `$` of a formula, the `:` of an emoji,
-/// syntax or verbatim source.
-#[derive(Default)]
-struct Written {
-    text: String,
-    dollars: Vec<usize>,
-    colons: Vec<usize>,
-    newlines: Vec<usize>,
-    pipes: Vec<usize>,
-    /// Whether each typed line break is a hard one (`breaks::decide`); unset outside a block.
-    hard: Vec<bool>,
-    /// Escaped document text, as opposed to syntax or verbatim source.
-    typed: bool,
+/// How a line break of the text is written.
+#[derive(Clone, Copy, PartialEq, Eq)]
+pub(super) enum Break {
+    /// `\` and a line ending.
+    Hard,
+    /// `&#10;`: no text before it on its line, or none after it.
+    Reference,
+    /// `<br>`, in a heading or a table cell.
+    Tag,
 }
 
-impl Written {
-    fn verbatim(text: String) -> Self {
-        Self {
-            text,
-            ..Self::default()
+/// CommonMark's class of a character next to emphasis: 1 whitespace (and the edges of the
+/// text), 2 punctuation, 0 any other.
+pub(super) fn class(c: Option<char>) -> u8 {
+    match c {
+        None => 1,
+        Some(
+            '\t'
+            | '\n'
+            | '\u{c}'
+            | '\r'
+            | ' '
+            | '\u{a0}'
+            | '\u{1680}'
+            | '\u{2000}'..='\u{200a}'
+            | '\u{202f}'
+            | '\u{205f}'
+            | '\u{3000}',
+        ) => 1,
+        Some(c) if punctuation(c) => 2,
+        Some(_) => 0,
+    }
+}
+
+fn punctuation(c: char) -> bool {
+    let mut buffer = [0; 4];
+    re!(r"^[\p{P}\p{S}]$").is_match(c.encode_utf8(&mut buffer))
+}
+
+/// Inline code; a cell writes `|` as `\|`.
+fn render_code(text: &str, o: &Options) -> String {
+    if o.kind == Kind::Cell {
+        text.replace('|', "\\|")
+    } else {
+        text.to_owned()
+    }
+}
+
+pub(super) fn write_inline(spans: &[TextSpan], o: &Options) -> String {
+    let spans = normalize(spans);
+    let Units { units, mut pairs } = units(&spans, o);
+    let n = units.len();
+    let content =
+        |unit: &Unit| matches!(unit, Unit::Text(_) | Unit::Verbatim { .. } | Unit::Code(_));
+
+    // 1. line breaks: written as such where the line already has text (not only delimiters or
+    // tags: `<em>` alone on a line would start an HTML block) and more text follows
+    let mut content_after = vec![false; n + 1];
+    for k in (0..n).rev() {
+        content_after[k] = content_after[k + 1] || content(&units[k]);
+    }
+    let mut breaks: Vec<Option<Break>> = vec![None; n];
+    let mut line_has_content = false;
+    for k in 0..n {
+        if !matches!(units[k], Unit::Newline) {
+            line_has_content |= content(&units[k]);
+            continue;
         }
-    }
-
-    /// Document text with Markdown's own characters escaped.
-    fn typed(text: &str) -> Self {
-        let text = escape_text(text);
-        let at = |c| text.match_indices(c).map(|(index, _)| index).collect();
-        Self {
-            dollars: at('$'),
-            colons: at(':'),
-            newlines: at('\n'),
-            pipes: at('|'),
-            typed: true,
-            text,
-            ..Self::default()
+        if matches!(o.kind, Kind::Heading | Kind::Cell) {
+            breaks[k] = Some(Break::Tag);
+        } else if line_has_content && content_after[k + 1] {
+            breaks[k] = Some(Break::Hard);
+            line_has_content = false;
+            continue;
+        } else {
+            breaks[k] = Some(Break::Reference);
         }
+        line_has_content = true;
     }
+    let is_break = |k: usize| breaks.get(k).copied().flatten() == Some(Break::Hard);
+    let multiline =
+        matches!(o.kind, Kind::Block | Kind::Midline) && breaks.contains(&Some(Break::Hard));
 
-    /// The byte offsets of the typed characters, to move with an insertion.
-    fn offsets(&mut self) -> impl Iterator<Item = &mut usize> {
-        self.dollars
-            .iter_mut()
-            .chain(&mut self.colons)
-            .chain(&mut self.newlines)
-            .chain(&mut self.pipes)
+    // 2. lines
+    let mut line_index = vec![0; n];
+    let mut at_line_start = vec![false; n];
+    let mut line_start_of = vec![0; n];
+    let (mut line, mut start, mut first) = (0, true, 0);
+    for k in 0..n {
+        if start {
+            first = k;
+        }
+        line_index[k] = line;
+        at_line_start[k] = start;
+        line_start_of[k] = first;
+        start = is_break(k);
+        line += usize::from(start);
     }
+    let strips_leading =
+        |k: usize| at_line_start[k] && (o.kind != Kind::Midline || line_index[k] > 0);
+    let block_rules = |k: usize| {
+        at_line_start[k] && (o.kind == Kind::Block || o.kind == Kind::Midline && line_index[k] > 0)
+    };
 
-    /// The ASCII letter or digit at byte `at` written as a character reference, so that it
-    /// does not touch a custom emoji.
-    fn reference(&mut self, at: usize) {
-        let reference = format!("&#{};", self.text.as_bytes()[at]);
-        self.text.replace_range(at..at + 1, &reference);
-        for offset in self.offsets() {
-            if *offset > at {
-                *offset += reference.len() - 1;
+    // 3. whitespace that a reader would drop is written as a reference
+    let reference: Vec<bool> = (0..n)
+        .map(|k| {
+            matches!(units[k], Unit::Text(' ' | '\t'))
+                && (strips_leading(k) || k + 1 == n || is_break(k + 1))
+        })
+        .collect();
+
+    let fixed = |k: usize, pairs: &[Pair]| -> String {
+        match &units[k] {
+            Unit::Syntax { text, .. } | Unit::Verbatim { text, .. } | Unit::Code(text) => {
+                text.clone()
+            }
+            Unit::Emphasis { pair, open } => {
+                let pair = &pairs[*pair];
+                match (pair.tag, open) {
+                    (true, true) => pair.open_tag,
+                    (true, false) => pair.close_tag,
+                    _ => pair.delim,
+                }
+                .into()
+            }
+            Unit::Newline => match breaks[k] {
+                Some(Break::Hard) => "\n",
+                Some(Break::Reference) => "&#10;",
+                _ => "<br>",
+            }
+            .into(),
+            Unit::Text(_) => String::new(),
+        }
+    };
+    let class_at = |k: Option<usize>, first: bool, pairs: &[Pair]| -> u8 {
+        let Some(k) = k.filter(|k| *k < n) else {
+            return 1;
+        };
+        match &units[k] {
+            Unit::Emphasis { .. } => 2,
+            Unit::Text(_) if reference[k] => 2,
+            Unit::Text(c) => class(Some(*c)),
+            Unit::Newline if is_break(k) => 1,
+            Unit::Newline => 2,
+            _ => {
+                let text = fixed(k, pairs);
+                if text.is_empty() {
+                    1
+                } else if first {
+                    class(text.chars().next())
+                } else {
+                    class(text.chars().next_back())
+                }
             }
         }
-    }
+    };
 
-    /// `open` and `close` around everything from byte `from` to byte `to`. A line break of
-    /// the leading or trailing whitespace a mark leaves out stays outside.
-    fn wrap(&mut self, from: usize, to: usize, open: &str, close: &str) {
-        self.text.insert_str(to, close);
-        self.text.insert_str(from, open);
-        for offset in self.offsets() {
-            let before = *offset;
-            if before >= to {
-                *offset += close.len();
-            }
-            if before >= from {
-                *offset += open.len();
-            }
+    // 4. emphasis delimiters or tags. Neighbouring delimiters of one character are one run, so
+    // flanking is checked per run; a run of closers and openers (`*a***b**`) is ambiguous and
+    // its openers fall back to tags. To a fixed point: a pair switched to tags changes its runs.
+    if o.tier >= 2 {
+        for pair in &mut pairs {
+            pair.tag = true;
         }
-    }
-
-    fn around(mut self, open: &str, close: &str) -> Self {
-        let end = self.text.len();
-        self.wrap(0, end, open, close);
-        self
-    }
-
-    fn append(&mut self, other: Written) {
-        let base = self.text.len();
-        self.dollars
-            .extend(other.dollars.iter().map(|dollar| base + dollar));
-        self.colons
-            .extend(other.colons.iter().map(|colon| base + colon));
-        self.newlines
-            .extend(other.newlines.iter().map(|newline| base + newline));
-        self.pipes
-            .extend(other.pipes.iter().map(|pipe| base + pipe));
-        self.text.push_str(&other.text);
-    }
-
-    /// A typed `$` that would open a formula for a reader of inline formulas is escaped;
-    /// `$5 and $6` stays as typed. Right to left: a later escape changes what follows.
-    /// A table cell is one line, its breaks are written as `<br>`.
-    fn finish(mut self, cell: bool, emoji: &Emoji) -> String {
-        // Typed `:name:` of a registered custom emoji is escaped, left to right: a reader of
-        // custom emoji would take it for one.
-        for index in 0..self.colons.len() {
-            let at = self.colons[index];
-            let start = self.text[..at]
-                .rfind('\n')
-                .filter(|_| !cell)
-                .map_or(0, |n| n + 1);
-            let end = self.text[at..]
-                .find('\n')
-                .filter(|_| !cell)
-                .map_or(self.text.len(), |n| at + n);
-            let line = self.text[start..end].replace('\n', ">");
-            if atoms::emoji_at(&line, at - start, emoji).is_some() {
-                self.text.insert(at, '\\');
-                for offset in self.offsets() {
-                    if *offset >= at {
-                        *offset += 1;
+    } else {
+        let mut changed = true;
+        let mut guard = 0;
+        while changed && guard < n + 2 {
+            guard += 1;
+            changed = false;
+            let mut k = 0;
+            while k < n {
+                let Unit::Emphasis { pair, .. } = units[k] else {
+                    k += 1;
+                    continue;
+                };
+                if pairs[pair].tag {
+                    k += 1;
+                    continue;
+                }
+                let delim = pairs[pair].delim.as_bytes()[0];
+                let mut end = k;
+                while let Some(Unit::Emphasis { pair, .. }) = units.get(end) {
+                    if pairs[*pair].tag || pairs[*pair].delim.as_bytes()[0] != delim {
+                        break;
+                    }
+                    end += 1;
+                }
+                let before = class_at(k.checked_sub(1), false, &pairs);
+                let after = class_at(Some(end), true, &pairs);
+                let has_close = units[k..end]
+                    .iter()
+                    .any(|unit| matches!(unit, Unit::Emphasis { open: false, .. }));
+                let left = after != 1 && (after != 2 || before != 0);
+                let right = before != 1 && (before != 2 || after != 0);
+                for unit in &units[k..end] {
+                    if let Unit::Emphasis { pair, open } = unit {
+                        let bad = if *open { has_close || !left } else { !right };
+                        if bad && !pairs[*pair].tag {
+                            pairs[*pair].tag = true;
+                            changed = true;
+                        }
                     }
                 }
+                k = end;
             }
         }
-        // where backslashes went in before dollars, right to left: the offsets of the text
-        let mut escaped = vec![];
-        let mut index = self.dollars.len();
-        while index > 0 {
-            // A run of typed dollars, the last one first.
-            let last = index - 1;
-            let mut first = last;
-            while first > 0 && self.dollars[first - 1] + 1 == self.dollars[first] {
-                first -= 1;
-            }
-            let rest = &self.text[self.dollars[last]..];
-            let line = match rest.find('\n') {
-                Some(end) if !cell => rest[..end].to_owned(),
-                _ => rest.replace('\n', ">"),
-            };
-            // Two or more typed dollars in a row are text for the reader as well, unless the
-            // `$` of a formula follows them: joined with it they would make the formula text.
-            if line[1..].starts_with('$') || first == last && atoms::math_end(&line, 0).is_some() {
-                for dollar in (first..=last).rev() {
-                    self.text.insert(self.dollars[dollar], '\\');
-                    escaped.push(self.dollars[dollar]);
-                }
-            }
-            index = first;
-        }
-        for offset in self.newlines.iter_mut().chain(&mut self.pipes) {
-            *offset += escaped.iter().filter(|at| **at <= *offset).count();
-        }
-        if !cell && !self.hard.is_empty() && self.hard.len() == self.newlines.len() {
-            breaks::apply(&mut self.text, &self.newlines, &self.hard, &self.pipes);
-        }
-        self.text
     }
+
+    // 5. how each typed character is written, left to right
+    let mut rend: Vec<String> = (0..n)
+        .map(|k| match &units[k] {
+            Unit::Code(text) => render_code(text, o),
+            Unit::Text(_) => String::new(),
+            _ => fixed(k, &pairs),
+        })
+        .collect();
+    characters::decide(
+        &units,
+        &mut rend,
+        &Lines {
+            o,
+            reference: &reference,
+            breaks: &breaks,
+            line_index: &line_index,
+            at_line_start: &at_line_start,
+            line_start_of: &line_start_of,
+            multiline,
+            block_rules: &block_rules,
+        },
+    );
+
+    // 5b. typed text that would read as an autolink literal (D-97)
+    escape_autolinks(&units, &mut rend);
+    // 6. backslashes, dollars and colons
+    escapes::following(&units, &mut rend, &is_break, o.emoji);
+
+    // 7. the Markdown
+    let mut out = String::new();
+    for (k, written) in rend.iter().enumerate() {
+        if is_break(k) {
+            out.push('\\');
+            out.push_str(o.newline);
+        } else {
+            out.push_str(written);
+        }
+    }
+    out
 }
 
-pub(super) fn content_to_markdown(content: &BlockContent, emoji: &Emoji) -> String {
+/// The Markdown of a block's content written as `kind`.
+pub(super) fn content_to_markdown(content: &BlockContent, o: &Options) -> String {
     match content {
-        BlockContent::RichText(spans) => spans_to_markdown(spans).finish(false, emoji),
+        BlockContent::RichText(spans) => write_inline(spans, o),
         BlockContent::Raw(raw) => raw.clone(),
         BlockContent::Empty => String::new(),
     }
-}
-
-/// The text of a table cell before its `|` and line breaks are escaped.
-pub(super) fn cell_to_markdown(content: &BlockContent, emoji: &Emoji) -> String {
-    match content {
-        BlockContent::RichText(spans) => spans_to_markdown(spans).finish(true, emoji),
-        other => content_to_markdown(other, emoji),
-    }
-}
-
-/// The text of a heading: one line, its line breaks written as `<br>`.
-pub(super) fn line_to_markdown(content: &BlockContent, emoji: &Emoji) -> String {
-    cell_to_markdown(content, emoji).replace('\n', "<br>")
-}
-
-/// Document text outside rich text (the alt of an image block).
-pub(super) fn typed(text: &str) -> String {
-    Written::typed(text).finish(false, &Emoji::new())
 }
 
 /// The names and addresses of the custom emoji in `block` and its children.
@@ -203,240 +288,5 @@ pub(super) fn collect_emoji(block: &Block, emoji: &mut Emoji) {
     }
     for child in &block.children {
         collect_emoji(child, emoji);
-    }
-}
-
-/// `linkTitle` of @gotipe/markdown. Line breaks are references: a blank line in a title
-/// would end the paragraph.
-fn link_title(title: &str) -> String {
-    format!(
-        "\"{}\"",
-        escape_entities(&title.replace('\\', "\\\\").replace('"', "\\\""))
-            .replace('\r', "&#13;")
-            .replace('\n', "&#10;")
-    )
-}
-
-/// An atom written whole, or `None` when its attributes or text cannot be: then it is text.
-/// The flag says that it is a formula, whose closing `$` a digit must not follow.
-/// `sole`: the atom is all the text of its block.
-fn atom(
-    mark: &Mark,
-    text: &str,
-    inner: Written,
-    next: Option<&TextSpan>,
-    sole: bool,
-) -> Option<(Written, bool)> {
-    let verbatim = |text: String| Some((Written::verbatim(text), false));
-    match mark.mark_type.as_str() {
-        "mention" => {
-            let href = atoms::mention_href(mark)?;
-            let title = match atoms::attr(mark, "label") {
-                Some(label)
-                    if !label.is_empty()
-                        && label != atoms::mention_label(atoms::mention_kind(mark), text) =>
-                {
-                    format!(" {}", link_title(label))
-                }
-                _ => String::new(),
-            };
-            Some((inner.around("[", &format!("]({href}{title})")), false))
-        }
-        "inlineMath" => {
-            // `$x$5` is not a formula: a digit of text after it is written as a reference,
-            // and verbatim source that starts with one leaves the formula as text.
-            let raw_digit = next.is_some_and(|span| {
-                span.marks.iter().any(|mark| mark.mark_type == "mdRaw")
-                    && span.text.starts_with(|c: char| c.is_ascii_digit())
-            });
-            (atoms::math_writable(text) && !raw_digit)
-                .then(|| (Written::verbatim(format!("${text}$")), true))
-        }
-        "customEmoji" => {
-            let name = atoms::attr(mark, "name").filter(|name| atoms::emoji_name(name))?;
-            // Text that repeats the shortcode is that many emoji; any other text is one.
-            let code = format!(":{name}:");
-            let repeated = code.repeat(text.len() / code.len()) == text;
-            verbatim(if repeated { text.to_owned() } else { code })
-        }
-        _ => {
-            let alt = atoms::attr(mark, "alt").unwrap_or(text);
-            let alt = alt.replace("\r\n", " ").replace(['\r', '\n'], " ");
-            let src = link_destination(atoms::attr(mark, "src").unwrap_or(""));
-            // An image alone in its block takes an empty title: alone without one it is the
-            // image block when read back.
-            let title = if sole { " \"\"" } else { "" };
-            Some((
-                Written::typed(&alt).around("![", &format!("]({src}{title})")),
-                false,
-            ))
-        }
-    }
-}
-
-fn spans_to_markdown(spans: &[TextSpan]) -> Written {
-    let mut out = Written::default();
-    // the document text of every piece written and whether it is typed (`breaks::decide`)
-    let mut written_text: Vec<(String, bool)> = vec![];
-    // Where the closing `$` of the formula written last ends.
-    let mut formula_end = None;
-    // Where the custom emoji written last ends, and whether typed text was written last.
-    let mut emoji_end = None;
-    let mut typed_end = false;
-    let total: usize = spans.iter().map(|span| span.text.len()).sum();
-    let mut index = 0;
-    while index < spans.len() {
-        let span = &spans[index];
-        // An atom is the run of spans with the same atomic mark.
-        let mark = atoms::atom_mark(&span.marks);
-        let mut end = index + 1;
-        while mark.is_some()
-            && spans.get(end).map(|next| atoms::atom_mark(&next.marks)) == Some(mark)
-        {
-            end += 1;
-        }
-        let whole: String = spans[index..end].iter().map(|s| s.text.as_str()).collect();
-        // Code or verbatim source inside a one-span mention is written as such.
-        let inner = |span| {
-            if end == index + 1 {
-                plain(span)
-            } else {
-                Written::typed(&whole)
-            }
-        };
-        let sole = whole.len() == total;
-        let written = mark.and_then(|mark| atom(mark, &whole, inner(span), spans.get(end), sole));
-        let emoji = written.is_some() && mark.is_some_and(|mark| mark.mark_type == "customEmoji");
-        // An atom that cannot be written is the text of its spans.
-        let pieces = match written {
-            Some((text, formula)) => vec![(span, whole.as_str(), text, formula)],
-            None => spans[index..end]
-                .iter()
-                .map(|span| (span, span.text.as_str(), plain(span), false))
-                .collect(),
-        };
-        for (span, source, mut text, formula) in pieces {
-            let mention = span.marks.iter().any(|mark| mark.mark_type == "mention");
-            for mark in &span.marks {
-                wrap(&mut text, mark, mention);
-            }
-            if formula_end == Some(out.text.len())
-                && text.text.bytes().next().is_some_and(|c| c.is_ascii_digit())
-            {
-                text.reference(0);
-            }
-            // No letter or digit of typed text may touch a custom emoji.
-            let alnum = |byte: Option<&u8>| byte.is_some_and(u8::is_ascii_alphanumeric);
-            let bare = emoji && text.text.starts_with(':') && text.text.ends_with(':');
-            if bare && typed_end && alnum(out.text.as_bytes().last()) {
-                out.reference(out.text.len() - 1);
-            }
-            if emoji_end == Some(out.text.len())
-                && text.typed
-                && alnum(text.text.as_bytes().first())
-            {
-                text.reference(0);
-            }
-            typed_end = text.typed
-                && text
-                    .text
-                    .as_bytes()
-                    .last()
-                    .is_some_and(u8::is_ascii_alphanumeric);
-            written_text.push((source.to_owned(), text.typed));
-            out.append(text);
-            emoji_end = Some(out.text.len()).filter(|_| bare);
-            formula_end = Some(out.text.len()).filter(|_| formula && out.text.ends_with('$'));
-        }
-        index = end;
-    }
-    let pieces: Vec<Piece> = written_text
-        .iter()
-        .map(|(text, typed)| Piece {
-            text,
-            typed: *typed,
-        })
-        .collect();
-    out.hard = breaks::decide(&pieces);
-    out
-}
-
-/// A span that is not an atom: verbatim source, inline code or escaped text.
-fn plain(span: &TextSpan) -> Written {
-    if span.marks.iter().any(|mark| mark.mark_type == "mdRaw") {
-        return Written::verbatim(span.text.clone());
-    }
-    if span.marks.iter().any(|mark| mark.mark_type == "code") {
-        // a line ending in a code span reads as a space and could start a block: write the space
-        let text = span.text.replace('\n', " ");
-        let span = &TextSpan {
-            text,
-            marks: span.marks.clone(),
-        };
-        let fence = code_fence(&span.text, 1);
-        let padding = if span.text.starts_with('`')
-            || span.text.ends_with('`')
-            || span.text.starts_with(' ')
-                && span.text.ends_with(' ')
-                && span.text.chars().any(|c| c != ' ')
-        {
-            " "
-        } else {
-            ""
-        };
-        return Written::verbatim(format!("{fence}{padding}{}{padding}{fence}", span.text));
-    }
-    Written::typed(&span.text)
-}
-
-/// The Markdown of one mark around `text`. A mention is written as a link, so it takes
-/// the place of a link on the same text.
-fn wrap(text: &mut Written, mark: &Mark, mention: bool) {
-    let (open, close) = match mark.mark_type.as_str() {
-        "bold" => ("**", "**"),
-        "italic" => ("*", "*"),
-        "strikethrough" => ("~~", "~~"),
-        "underline" => ("<u>", "</u>"),
-        "highlight" => ("<mark>", "</mark>"),
-        "superscript" => ("<sup>", "</sup>"),
-        "subscript" => ("<sub>", "</sub>"),
-        _ => ("", ""),
-    };
-    let colored;
-    let (open, close) = match mark.attrs.get("color") {
-        Some(AttrValue::String(color))
-            if matches!(mark.mark_type.as_str(), "textColor" | "highlight")
-                && crate::html::safe_color(color) =>
-        {
-            let (tag, property) = if mark.mark_type == "textColor" {
-                ("span", "color")
-            } else {
-                ("mark", "background-color")
-            };
-            colored = format!("<{tag} style=\"{property}:{color}\">");
-            (
-                colored.as_str(),
-                if tag == "span" { "</span>" } else { "</mark>" },
-            )
-        }
-        _ => (open, close),
-    };
-    if !open.is_empty() {
-        let leading = text.text.len() - text.text.trim_start().len();
-        let end = text.text.trim_end().len();
-        if end > leading {
-            text.wrap(leading, end, open, close);
-        }
-    }
-    if mark.mark_type == "link" && !mention {
-        if let Some(AttrValue::String(href)) = mark.attrs.get("href") {
-            let title = match mark.attrs.get("title") {
-                Some(AttrValue::String(title)) => title.as_str(),
-                _ => "",
-            };
-            let close = format!("](<{}>{})", destination(href), title_suffix(title));
-            let end = text.text.len();
-            text.wrap(0, end, "[", &close);
-        }
     }
 }
