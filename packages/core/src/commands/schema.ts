@@ -23,6 +23,8 @@ export interface CommandSchema {
   ): Record<string, AttrValue>;
   /** False when a value lies outside the `values` a non-enum attribute declares. */
   acceptsAttrs(nodeType: string, attrs: Record<string, unknown>): boolean;
+  /** Whether the block type declares the attribute. */
+  declares(nodeType: string, attr: string): boolean;
 }
 
 export function commandSchema(schema: AssembledSchema): CommandSchema {
@@ -55,6 +57,7 @@ export function commandSchema(schema: AssembledSchema): CommandSchema {
           result[name] = cloneAttributes({ value: spec.default }).value!;
       return result;
     },
+    declares: (nodeType, attr) => attr in specs("node", nodeType),
     acceptsAttrs(nodeType, attrs) {
       const declared = specs("node", nodeType);
       return Object.entries(attrs).every(([name, value]) => {

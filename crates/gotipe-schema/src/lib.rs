@@ -1,3 +1,4 @@
+pub mod atoms;
 pub mod attr;
 mod creation;
 pub mod defaults;

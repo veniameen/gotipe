@@ -20,8 +20,10 @@ issuer/audience, expiration, a token ID, and matching subject/user identity. API
 scopes, current account plan, document restrictions and database permissions are
 checked before resource access. Revocation fails closed when its store fails.
 
-Browser WebSockets use subprotocols `gotipe.v1` and
-`gotipe.auth.<base64url UTF-8 bearer token>`. The authentication subprotocol is
+Browser WebSockets use subprotocols `gotipe.v2` (operations by generation) or
+`gotipe.v1` (every update repeats the baseline) and
+`gotipe.auth.<base64url UTF-8 bearer token>`. The server selects `gotipe.v2` when it
+is offered and then requires the `generation` query parameter. The authentication subprotocol is
 removed before upgrade and never selected or logged. Tokens in query parameters
 are not accepted. Active sockets enforce JWT expiration, recheck credential
 revocation and the current editor role before data reads/writes, and check idle
@@ -44,21 +46,36 @@ and the sync handler receives it, so one document never opens two rooms.
 ## Durable collaboration and read consistency
 
 `documents.r2_key` references an immutable ordinary document baseline. CRDT
-checkpoints and deltas live separately, tagged with that baseline generation.
-A durable write precedes a collaboration acknowledgement/broadcast. Each new
-durable delta atomically advances the REST document revision and modification
-time; replayed duplicates do not. Checkpoints leave the revision unchanged. Late writes
-from an old generation are ignored after REST replacement or version restore.
+records live separately in `document_updates`, tagged with that baseline
+generation and stored without the baseline. A durable write precedes a
+collaboration acknowledgement/broadcast. Each new durable record atomically
+advances the REST document revision and modification time; replayed duplicates do
+not. A transaction a client sends in parts (`continues`) is buffered per connection
+up to `SYNC_TRANSACTION_LIMIT` (16 MiB, at most 30 MiB; a process buffers at most
+eight such limits at once) and becomes one record with its last part; a disconnect,
+a 30-second pause or an error on any part drops the parts unsaved and closes the
+connection. A save that would make the stored state larger than a read applies
+(60 MiB) is refused with `DOCUMENT_TOO_LARGE`. Log compaction merges the records of a
+generation into one, in a transaction that deletes exactly the rows it merged, and
+leaves the revision unchanged. It runs beside a room's event loop, at most two at
+once per process. The merged row has a new ID, so stored records are a union in no
+particular order: readers apply them together. Late
+writes from an old generation are ignored after REST replacement or version restore.
 
-GET, version creation and exports project the current baseline plus checkpoint
-and deltas through the same native CRDT engine. GET returns materialized `content`
-and an opaque `collaboration_state` containing the original `baseline` and
-`updates`. Initialize a new collaborative editor with that baseline, then apply
-all supplied updates before editing; the materialized preview is not a substitute
-for the replica's baseline. The SDK exposes this as `collaborationState`.
+GET, version creation and exports project the current baseline plus its stored
+records through the same native CRDT engine. GET returns materialized `content`
+and an opaque `collaboration_state` containing the original `baseline`, the
+`updates` and `generation`, the token of that baseline. Initialize a new
+collaborative editor with that baseline, then apply all supplied updates, as one
+merged update, before editing; the materialized preview is not a substitute for the replica's baseline.
+A `gotipe.v2` connection names the generation at its handshake and is refused with
+`BASELINE_REPLACED` when the document has another one. The SDK exposes the state as
+`collaborationState`.
 
 `RATE_LIMIT_WS` limits messages per connection in an exact sliding window;
-exhaustion closes with code 1008. REST, AI and WebSocket handshakes have separate
+exhaustion closes with code 1008. `@gotipe/collaboration` sends at most 300 update
+frames and 600 presence frames in any minute, so the default of 1000 is not reached
+by typing; a lower limit needs a matching client. REST, AI and WebSocket handshakes have separate
 per-user rate namespaces. Authentication attempts are limited per client address
 (IPv6 per /64). The client is the socket peer unless the peer is listed in
 `TRUSTED_PROXIES`; then it is the nearest untrusted `X-Forwarded-For` hop (else
@@ -138,7 +155,8 @@ docker build -f apps/cloud/Dockerfile -t gotipe-cloud:local .
 ```
 
 Integration coverage includes roles/scopes, actual PostgreSQL constraints,
-concurrent quota reservations, late old-generation CRDT inserts, materialized
+concurrent quota reservations, late old-generation CRDT inserts, log compaction
+(a row committed during the merge, concurrent saves, old checkpoints), materialized
 reads, worker claims/retries/cleanup and subscription reconciliation. Browser
 acceptance additionally connects two actual WASM editors to the local service,
 edits offline, reconnects, and verifies persisted replay and exported Unicode.

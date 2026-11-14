@@ -1,7 +1,7 @@
 use super::{Change, ContentKind, Position, ReplicaOp, ReplicaState};
 use crate::ops::OpId;
 use gotipe_core::{Block, BlockContent, BlockId, Document, Mark, TransformError};
-use std::collections::{BTreeMap, BTreeSet};
+use std::collections::BTreeSet;
 
 struct Writer<'a> {
     state: &'a mut ReplicaState,
@@ -152,21 +152,15 @@ impl Writer<'_> {
                 .iter()
                 .zip(&desired[desired.len() - suffix..]),
         );
+        // Mark writes follow the target's order, so the projection keeps it too.
         for (ch, (_, marks)) in retained {
-            let marks: BTreeMap<_, _> = marks
-                .iter()
-                .map(|m| (m.mark_type.clone(), m.clone()))
-                .collect();
-            let keys: BTreeSet<_> = ch.marks.keys().chain(marks.keys()).collect();
-            for key in keys {
-                if ch.marks.get(key) != marks.get(key) {
-                    self.emit(Change::SetMark {
-                        block_id: block.id.clone(),
-                        target: ch.id.clone(),
-                        mark_type: key.clone(),
-                        mark: marks.get(key).cloned(),
-                    })?;
-                }
+            for (mark_type, mark) in ch.marks.changes_to(marks) {
+                self.emit(Change::SetMark {
+                    block_id: block.id.clone(),
+                    target: ch.id.clone(),
+                    mark_type,
+                    mark,
+                })?;
             }
         }
         Ok(())

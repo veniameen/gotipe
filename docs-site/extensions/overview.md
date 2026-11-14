@@ -82,6 +82,18 @@ The name in the second column is the extension's `name` and, unless noted, the n
 | `Placeholder` | `placeholder` | Default, Full | [Behaviours](/docs/extensions/behaviors#placeholder) |
 | `SlashCommands` | `slashCommands` | Default, Full | [Behaviours](/docs/extensions/behaviors#slash-commands) |
 | `DragAndDrop` | `dragAndDrop` | Default, Full | [Behaviours](/docs/extensions/behaviors#drag-and-drop) |
+| `FindReplace` | `findReplace` | — | [Find and replace](/docs/extensions/find-replace) |
+| `CharacterCount` | `characterCount` | — | [Character count](/docs/extensions/character-count) |
+| `Typography` | `typography` | — | [Typography](/docs/extensions/typography) |
+| `Autolink` | `autolink` | — | [Links and paste](/docs/extensions/links-and-paste#autolink) |
+| `LinkOnPaste` | `linkOnPaste` | — | [Links and paste](/docs/extensions/links-and-paste#link-on-paste) |
+| `MarkdownPaste` | `markdownPaste` | — | [Links and paste](/docs/extensions/links-and-paste#markdown-paste) |
+| `TextAlign` | `textAlign` (attribute `align` of `paragraph` and `heading`) | — | [Text alignment](/docs/extensions/text-align) |
+| `TrailingNode` | `trailingNode` | — | [Editing aids](/docs/extensions/editing-aids#trailing-node) |
+| `InvisibleCharacters` | `invisibleCharacters` | — | [Editing aids](/docs/extensions/editing-aids#invisible-characters) |
+| `Focus` | `focus` | — | [Editing aids](/docs/extensions/editing-aids#focus) |
+
+The extensions without a preset add no nodes or marks. Add them after a preset.
 
 ## Configure an extension
 

@@ -1,3 +1,4 @@
+import { sameValue } from "../engine/mark-rules";
 import { toSafeColor } from "../security/colors";
 import { toSafeHref, toSafeImageSrc } from "../security/urls";
 import { BLOCK_STYLES } from "./html-styles";
@@ -22,57 +23,134 @@ export function escapeHtml(text: string): string {
     .replace(/"/g, "&quot;");
 }
 
-export function spansToHtml(spans: readonly HtmlSpan[]): string {
-  return spans
-    .map((span) => {
-      let html = escapeHtml(span.text).replace(/\n/g, "<br>");
-      for (const mark of span.marks) {
-        switch (mark.type) {
-          case "bold":
-            html = `<strong>${html}</strong>`;
-            break;
-          case "italic":
-            html = `<em>${html}</em>`;
-            break;
-          case "underline":
-            html = `<u>${html}</u>`;
-            break;
-          case "strikethrough":
-            html = `<s>${html}</s>`;
-            break;
-          case "code":
-            html = `<code>${html}</code>`;
-            break;
-          case "superscript":
-            html = `<sup>${html}</sup>`;
-            break;
-          case "subscript":
-            html = `<sub>${html}</sub>`;
-            break;
-          case "link": {
-            const href = toSafeHref(String(mark.attrs?.href ?? ""));
-            const title = mark.attrs?.title
-              ? ` title="${escapeHtml(String(mark.attrs.title))}"`
-              : "";
-            if (href) html = `<a href="${escapeHtml(href)}"${title}>${html}</a>`;
-            break;
-          }
-          case "textColor":
-          case "highlight": {
-            const color = toSafeColor(mark.attrs?.color);
-            if (mark.type === "textColor") {
-              if (color) html = `<span style="color:${color}">${html}</span>`;
-            } else
-              html = color
-                ? `<mark style="background:${color}">${html}</mark>`
-                : `<mark>${html}</mark>`;
-            break;
-          }
-        }
+/** Positive integers up to 10000: the only image sizes written into HTML. */
+function size(name: string, value: unknown): string {
+  return typeof value === "number" && Number.isInteger(value) && value > 0 && value <= 10000
+    ? ` ${name}="${value}"`
+    : "";
+}
+
+type HtmlMark = HtmlSpan["marks"][number];
+const ATOMS = ["mention", "inlineMath", "customEmoji", "inlineImage"];
+const atomMarks = (span: HtmlSpan) => span.marks.filter((mark) => ATOMS.includes(mark.type));
+const sameMark = (a: HtmlMark, b: HtmlMark) =>
+  a.type === b.type && sameValue(a.attrs ?? {}, b.attrs ?? {});
+
+/**
+ * The element of one atom (docs/development/inline-atoms.md): `inner` is the HTML of its
+ * text, `text` the plain fallback. Null when its attributes are not valid: the text stays.
+ */
+function atomElement(mark: HtmlMark, inner: string, text: string): string | null {
+  const attrs = mark.attrs ?? {};
+  if (mark.type === "inlineMath") return `<span data-type="math">${inner}</span>`;
+  if (mark.type === "mention") {
+    if (typeof attrs.id !== "string" || !attrs.id) return null;
+    const label = typeof attrs.label === "string" ? ` data-label="${escapeHtml(attrs.label)}"` : "";
+    return `<span data-type="mention" data-kind="${attrs.kind === "page" ? "page" : "user"}" data-id="${escapeHtml(attrs.id)}"${label}>${inner}</span>`;
+  }
+  const safe = toSafeImageSrc(String(attrs.src ?? ""));
+  if (!safe) return null;
+  const src = escapeHtml(safe);
+  if (mark.type === "customEmoji")
+    return `<img data-type="emoji" alt="${escapeHtml(text)}" src="${src}">`;
+  const alt = escapeHtml(typeof attrs.alt === "string" ? attrs.alt : text);
+  return `<img src="${src}" alt="${alt}"${size("width", attrs.width)}${size("height", attrs.height)}>`;
+}
+
+/** `html` inside the elements of `marks`, the first innermost. Atomic marks add none. */
+function wrapMarks(inner: string, marks: readonly HtmlMark[]): string {
+  let html = inner;
+  for (const mark of marks) {
+    switch (mark.type) {
+      case "bold":
+        html = `<strong>${html}</strong>`;
+        break;
+      case "italic":
+        html = `<em>${html}</em>`;
+        break;
+      case "underline":
+        html = `<u>${html}</u>`;
+        break;
+      case "strikethrough":
+        html = `<s>${html}</s>`;
+        break;
+      case "code":
+        html = `<code>${html}</code>`;
+        break;
+      case "superscript":
+        html = `<sup>${html}</sup>`;
+        break;
+      case "subscript":
+        html = `<sub>${html}</sub>`;
+        break;
+      case "link": {
+        const href = toSafeHref(String(mark.attrs?.href ?? ""));
+        const title = mark.attrs?.title ? ` title="${escapeHtml(String(mark.attrs.title))}"` : "";
+        if (href) html = `<a href="${escapeHtml(href)}"${title}>${html}</a>`;
+        break;
       }
-      return html;
-    })
+      case "textColor":
+      case "highlight": {
+        const color = toSafeColor(mark.attrs?.color);
+        if (mark.type === "textColor") {
+          if (color) html = `<span style="color:${color}">${html}</span>`;
+        } else
+          html = color
+            ? `<mark style="background:${color}">${html}</mark>`
+            : `<mark>${html}</mark>`;
+        break;
+      }
+    }
+  }
+  return html;
+}
+
+const spanHtml = (span: HtmlSpan, marks: readonly HtmlMark[] = span.marks) =>
+  wrapMarks(escapeHtml(span.text).replace(/\n/g, "<br>"), marks);
+
+/**
+ * One atom — the longest run of spans with equal atomic marks — is one element. Marks every
+ * span of it has wrap the element; the others stay inside it.
+ */
+function atomHtml(group: readonly HtmlSpan[], mark: HtmlMark): string {
+  const common = group[0]!.marks.filter(
+    (item) =>
+      !ATOMS.includes(item.type) &&
+      group.every((span) => span.marks.some((other) => sameMark(other, item))),
+  );
+  const inner = group
+    .map((span) =>
+      spanHtml(
+        span,
+        span.marks.filter(
+          (item) => !ATOMS.includes(item.type) && !common.some((c) => sameMark(c, item)),
+        ),
+      ),
+    )
     .join("");
+  const text = group.map((span) => span.text).join("");
+  const element = atomElement(mark, inner, text);
+  return element === null
+    ? group.map((span) => spanHtml(span)).join("")
+    : wrapMarks(element, common);
+}
+
+export function spansToHtml(spans: readonly HtmlSpan[]): string {
+  let html = "";
+  for (let i = 0; i < spans.length; ) {
+    const atoms = atomMarks(spans[i]!);
+    let j = i + 1;
+    if (atoms.length) {
+      const same = (span: HtmlSpan) => {
+        const other = atomMarks(span);
+        return other.length === atoms.length && other.every((m, k) => sameMark(m, atoms[k]!));
+      };
+      while (j < spans.length && same(spans[j]!)) j++;
+      html += atomHtml(spans.slice(i, j), atoms[0]!);
+    } else html += spanHtml(spans[i]!);
+    i = j;
+  }
+  return html;
 }
 
 function blockToHtml(block: HtmlBlock, options: HtmlSerializationOptions): string {
@@ -87,10 +165,10 @@ function blockToHtml(block: HtmlBlock, options: HtmlSerializationOptions): strin
 
   switch (block.type) {
     case "paragraph":
-      return `<p>${inner}</p>${after}`;
+      return `<p${textAlign(block.attrs)}>${inner}</p>${after}`;
     case "heading": {
       const level = Math.min(Math.max(Math.trunc(Number(block.attrs.level)) || 1, 1), 6);
-      return `<h${level}>${inner}</h${level}>${after}`;
+      return `<h${level}${textAlign(block.attrs)}>${inner}</h${level}>${after}`;
     }
     case "bulletList":
       return `<ul>\n${childrenHtml}\n</ul>`;
@@ -160,6 +238,14 @@ function blockToHtml(block: HtmlBlock, options: HtmlSerializationOptions): strin
     default:
       return (inner ? `<p>${inner}</p>` : "") + childrenHtml;
   }
+}
+
+/** `align` of a paragraph or heading (the `TextAlign` extension): one of four values. */
+function textAlign(attrs: Record<string, unknown>): string {
+  const { align } = attrs;
+  return align === "left" || align === "center" || align === "right" || align === "justify"
+    ? ` style="text-align:${align}"`
+    : "";
 }
 
 function cellAttributes(attrs: Record<string, unknown>): string {

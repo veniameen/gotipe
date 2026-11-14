@@ -83,8 +83,9 @@ Fixed limits that apply to large content:
 > [!NOTE]
 > Cloud reads a document that has saved collaboration updates by running the native converter
 > over its baseline and all those updates, in a separate process for each read, version and
-> export. Updates are not compacted in this release, so the cost of reading a document grows
-> with its editing history until its content is replaced.
+> export. The server merges a document's updates into one record as they accumulate, but it
+> never drops an operation, so the cost of reading a document still grows with its editing
+> history until its content is replaced.
 
 ## Related
 

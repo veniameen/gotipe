@@ -1,6 +1,6 @@
 import type { ChainableCommands } from "../chain";
 import type { GoTipeError } from "../error";
-import type { EngineMode } from "../wasm-bridge";
+import type { CollaborationUpdateOptions, EngineMode } from "../wasm-bridge";
 import type { Document } from "./block";
 import type { EditorEvents } from "./events";
 import type { Extension, SlashCommandDef } from "./extension";
@@ -87,6 +87,12 @@ export interface GoTipeEditor {
   readonly host: EditorHost;
   /** Whether the document accepts input. */
   readonly isEditable: boolean;
+  /**
+   * The browser is composing text (IME, dead keys) in the mounted editor. Until it ends, the
+   * text of the composing block belongs to the browser: decoration layers wait, and renderers
+   * must not redraw that block or move the native selection.
+   */
+  readonly isComposing: boolean;
   /** Switch read-only mode at runtime. Emits `editableChange`. */
   setEditable(editable: boolean): void;
   /**
@@ -106,7 +112,12 @@ export interface GoTipeEditor {
   getText(): string;
   /** Enable the owned CRDT engine. Requires WASM; the replica peer ID stays fixed. */
   enableCollaboration(peerId: string): void;
-  getCollaborationUpdate(): Uint8Array;
+  /**
+   * Without options: the full state, baseline included. `{ after }` returns only
+   * this replica's operations after a Lamport clock; `{ missingFrom }` those a
+   * peer's full state lacks.
+   */
+  getCollaborationUpdate(options?: CollaborationUpdateOptions): Uint8Array;
   receiveCollaborationUpdate(update: Uint8Array): void;
   focus(position?: "start" | "end"): void;
   setSelection(selection: {

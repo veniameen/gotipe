@@ -1,6 +1,7 @@
 import type { BlockView, BlocksDecoration, NodeDecoration } from "@gotipe/core";
 import { type I18n, createI18n, en } from "@gotipe/i18n";
 import { TextRenderer } from "../text-renderer";
+import { alignmentOf, textDecorations } from "./decorations";
 
 export function rootPropsOf(block: BlockView, phantom: boolean): Record<string, unknown> {
   const props: Record<string, unknown> = phantom
@@ -11,9 +12,15 @@ export function rootPropsOf(block: BlockView, phantom: boolean): Record<string, 
         suppressContentEditableWarning: true,
       }
     : { "data-block-id": block.id };
+  // `TextAlign`: the block's own alignment, as the HTML output writes it.
+  const align = alignmentOf(block);
+  if (align) {
+    props["data-align"] = align;
+    props.style = { textAlign: align };
+  }
   const decorations = block.decorations;
   if (decorations && decorations.length > 0) {
-    let style: Record<string, string> | undefined;
+    let style = props.style as Record<string, string> | undefined;
     for (const d of decorations) {
       if (d.type !== "node") continue;
       const node = d as NodeDecoration;
@@ -54,9 +61,8 @@ export function BlockContent({ block }: { block: BlockView }) {
   if (typeof block.content === "string") return <>{block.content}</>;
   if (Array.isArray(block.content)) {
     const hasVisibleText = block.content.some((span) => span.text.length > 0);
-    const hasTextDecorations = (block.decorations ?? []).some(
-      (d) => d.type === "widget" || d.type === "inline",
-    );
+    const { inline, widgets } = textDecorations(block.decorations);
+    const hasTextDecorations = inline.length > 0 || widgets.length > 0;
     if (hasVisibleText || hasTextDecorations) {
       return (
         <>

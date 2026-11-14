@@ -34,6 +34,15 @@ export interface Image extends Node<"image"> {
 export interface Reference extends Node<"linkReference" | "imageReference" | "footnoteReference"> {
   value: string;
 }
+/** `$…$`: TeX taken as written, when the reader is asked for inline formulas. */
+export interface InlineMath extends Node<"inlineMath"> {
+  value: string;
+}
+/** `:name:` of a registered custom emoji; `value` is the source text. */
+export interface Emoji extends Node<"emoji"> {
+  value: string;
+  name: string;
+}
 export type PhrasingContent =
   | Text
   | InlineCode
@@ -42,7 +51,9 @@ export type PhrasingContent =
   | Emphasis
   | Link
   | Image
-  | Reference;
+  | Reference
+  | InlineMath
+  | Emoji;
 export interface Paragraph extends Node<"paragraph"> {
   children: PhrasingContent[];
 }

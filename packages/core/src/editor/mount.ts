@@ -15,7 +15,7 @@ export interface MountPort {
   clipboard: Pick<ClipboardHandler, "onPaste" | "onCopy" | "onCut" | "onDrop">;
   getViewState(): ViewState;
   getDocument(): Document;
-  dispatch(transaction: object): void;
+  dispatch(transaction: object): boolean;
   liftListItem(): boolean;
   publishSelection(): void;
   redrawBlocks(ids: string[]): void;
@@ -136,7 +136,10 @@ export function mountSurface(
     isEditable: () => port.editable,
     prepareSelection: () => {
       if (domSelection.pending) restoreDomSelection();
-      return domSelection.pending ? port.selection : (readSelectionFromDOM?.() ?? port.selection);
+      const dom = domSelection.pending ? null : readSelectionFromDOM?.();
+      // Composition starts where the model caret is: never inside an inline atom.
+      if (dom?.anchor.blockId) port.selection = { type: "text", ...dom };
+      return port.selection;
     },
     getBlock: (id) => findBlockInTree(port.getViewState().blocks, id),
     getDocument: () => port.getDocument(),
@@ -377,5 +380,8 @@ export function mountSurface(
     ...domSelection,
     interrupt: composition.interrupt,
     deferPresentation: composition.deferPresentation,
+    get composing() {
+      return composition.blockId !== null;
+    },
   };
 }

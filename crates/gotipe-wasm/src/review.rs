@@ -27,6 +27,8 @@ pub(crate) fn replicate_review(
                 .map_err(|e| JsError::new(&e.to_string()))?;
         }
     }
+    // Review data and the edit it accompanies reach peers together.
+    crdt.end_transaction();
     Ok(Some(crdt))
 }
 pub(crate) fn read_review(crdt: &CrdtDocument) -> Result<ReviewStore, JsError> {

@@ -171,6 +171,7 @@ def validate(path, fixture, require_producer=None):
             failures.append(f"Page {page_number} image overflow: {x0,y0,x1,y1}")
     all_words = []
     word_lines = []
+    page_widths = {}
     for number, page in enumerate(geometry.findall(".//p:page", ns), 1):
         width, height = float(page.attrib["width"]), float(page.attrib["height"])
         words = []
@@ -186,10 +187,11 @@ def validate(path, fixture, require_producer=None):
                 failures.append(f"Page {number} vertical body overflow: {value[:50]!r}")
             if not is_header_footer and (x0 < margins["left"] - 4 or x1 > width - margins["right"] + 4):
                 failures.append(f"Page {number} horizontal body overflow: {value[:50]!r}")
+        page_widths[number] = width
         for line in page.findall(".//p:line", ns):
             word_lines.append([
                 (unicodedata.normalize("NFC", (word.text or "").strip()),
-                 float(word.attrib["xMin"]), float(word.attrib["xMax"]))
+                 float(word.attrib["xMin"]), float(word.attrib["xMax"]), number)
                 for word in line.findall("p:word", ns)
             ])
         # Duplicate boxes commonly reveal repeated text drawn on top of itself.
@@ -221,6 +223,29 @@ def validate(path, fixture, require_producer=None):
             failures.append(
                 f"Word boxes do not have distinct ordered nonoverlapping positions: {line!r}"
             )
+    # Paragraph and heading alignment: a token's box against the margins of its page.
+    for token, side in expected.get("alignment", []):
+        word = next((word for word in all_words if word[0] == token), None)
+        if word is None:
+            failures.append(f"Missing aligned token: {token}")
+            continue
+        _, x0, _, x1, _, number = word
+        left, right = margins["left"], page_widths[number] - margins["right"]
+        offset = {"left": x0 - left, "right": x1 - right, "center": (x0 + x1) / 2 - (left + right) / 2}[side]
+        if abs(offset) > 2:
+            failures.append(f"{token} is not aligned {side}: off by {offset:.1f} pt")
+    if expected.get("justified"):
+        first, last = expected["justified"]
+        start = next((line for line in word_lines if line and line[0][0] == first), None)
+        end = next((line for line in word_lines if line and line[-1][0] == last), None)
+        if start is None or end is None or start is end:
+            failures.append(f"Justified paragraph needs several lines from {first} to {last}")
+        else:
+            right = page_widths[start[0][3]] - margins["right"]
+            if abs(start[0][1] - margins["left"]) > 2 or abs(start[-1][2] - right) > 2:
+                failures.append(f"Justified line does not reach both margins: {start[0][1]:.1f}..{start[-1][2]:.1f}")
+            if abs(end[0][1] - margins["left"]) > 2 or end[-1][2] > right - 10:
+                failures.append("The last line of a justified paragraph is stretched")
     if expected.get("columns"):
         positions = []
         for token in expected["columns"]:

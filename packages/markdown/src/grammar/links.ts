@@ -1,3 +1,4 @@
+import type { InlineAtoms } from "../types";
 import { decodeString, punctuation, referenceLabel } from "./decode";
 import { ANGLE_LINK, INLINE_HTML } from "./html";
 import { type Source, range, sliceSource } from "./source";
@@ -5,6 +6,8 @@ import type { PhrasingContent } from "./types";
 
 export interface InlineContext {
   references: Set<string>;
+  /** Inline atoms the reader was asked for. */
+  atoms?: InlineAtoms;
   inCell?: boolean;
   inLink?: boolean;
   inLabel?: boolean;

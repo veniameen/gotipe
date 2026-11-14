@@ -7,6 +7,19 @@ use crate::attr::{AttrSpec, AttrType, AttrValue};
 use crate::node_spec::{ContentRule, MarksRule, NodeSpec};
 use crate::validate::Schema;
 
+/// Text alignment of a paragraph or heading, as the `TextAlign` extension of @gotipe/core sets it.
+fn text_align() -> AttrSpec {
+    AttrSpec {
+        attr_type: AttrType::Enum(
+            ["left", "center", "right", "justify"]
+                .map(String::from)
+                .to_vec(),
+        ),
+        default: None,
+        required: false,
+    }
+}
+
 /// Create the standard schema with Notion-like block types
 pub fn default_block_editor() -> Schema {
     let mut nodes = HashMap::new();
@@ -19,7 +32,7 @@ pub fn default_block_editor() -> Schema {
             name: "paragraph".into(),
             group: vec!["block".into()],
             content: ContentRule::RichText,
-            attrs: HashMap::new(),
+            attrs: HashMap::from([("align".into(), text_align())]),
             top_level: true,
             marks_allowed: MarksRule::All,
             leaf: false,
@@ -34,14 +47,17 @@ pub fn default_block_editor() -> Schema {
             name: "heading".into(),
             group: vec!["block".into()],
             content: ContentRule::RichText,
-            attrs: HashMap::from([(
-                "level".into(),
-                AttrSpec {
-                    attr_type: AttrType::Number,
-                    default: Some(AttrValue::Number(1.0)),
-                    required: true,
-                },
-            )]),
+            attrs: HashMap::from([
+                (
+                    "level".into(),
+                    AttrSpec {
+                        attr_type: AttrType::Number,
+                        default: Some(AttrValue::Number(1.0)),
+                        required: true,
+                    },
+                ),
+                ("align".into(), text_align()),
+            ]),
             top_level: true,
             marks_allowed: MarksRule::All,
             leaf: false,

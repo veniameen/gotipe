@@ -8294,6 +8294,113 @@
           "😀"
         ]
       }
+    },
+    {
+      "id": "text-align",
+      "document": {
+        "version": 1,
+        "blocks": [
+          {
+            "id": "al",
+            "type": "paragraph",
+            "attrs": {
+              "align": "left"
+            },
+            "content": [
+              {
+                "text": "ALIGN-LEFT",
+                "marks": []
+              }
+            ],
+            "children": []
+          },
+          {
+            "id": "ac",
+            "type": "heading",
+            "attrs": {
+              "level": 2,
+              "align": "center"
+            },
+            "content": [
+              {
+                "text": "ALIGN-CENTER",
+                "marks": []
+              }
+            ],
+            "children": []
+          },
+          {
+            "id": "ar",
+            "type": "paragraph",
+            "attrs": {
+              "align": "right"
+            },
+            "content": [
+              {
+                "text": "Право ALIGN-RIGHT",
+                "marks": [
+                  {
+                    "type": "bold",
+                    "attrs": {}
+                  }
+                ]
+              }
+            ],
+            "children": []
+          },
+          {
+            "id": "aj",
+            "type": "paragraph",
+            "attrs": {
+              "align": "justify"
+            },
+            "content": [
+              {
+                "text": "JUSTIFY-START Выравнивание по ширине растягивает пробелы между словами так, что строка доходит до обоих полей страницы, а последняя строка абзаца остаётся у левого поля. Justified text widens the spaces between words until each line reaches both margins of the page, while the last line keeps its natural spacing JUSTIFY-END",
+                "marks": []
+              }
+            ],
+            "children": []
+          },
+          {
+            "id": "an",
+            "type": "paragraph",
+            "attrs": {},
+            "content": [
+              {
+                "text": "ALIGN-DEFAULT",
+                "marks": []
+              }
+            ],
+            "children": []
+          }
+        ]
+      },
+      "options": {},
+      "expect": {
+        "alignment": [
+          [
+            "ALIGN-LEFT",
+            "left"
+          ],
+          [
+            "ALIGN-CENTER",
+            "center"
+          ],
+          [
+            "ALIGN-RIGHT",
+            "right"
+          ],
+          [
+            "ALIGN-DEFAULT",
+            "left"
+          ]
+        ],
+        "justified": [
+          "JUSTIFY-START",
+          "JUSTIFY-END"
+        ]
+      }
     }
   ]
 }

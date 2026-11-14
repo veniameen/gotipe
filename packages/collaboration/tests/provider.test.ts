@@ -1,154 +1,20 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { type Operation, type Update, decodeJSON, encodeJSON, frame, readUpdate } from "./protocol";
-import { CollaborationProvider } from "./provider";
-import type { AwarenessUser, CollaborationEditor, CollaborationOptions } from "./types";
+import { decodeJSON, frame } from "../src/protocol";
+import { CollaborationProvider } from "../src/provider";
+import type { AwarenessUser } from "../src/types";
+import {
+  destroyProviders,
+  editorFixture,
+  envelope,
+  fixture,
+  operation,
+  replacedBaseline,
+  track,
+  user,
+} from "./fixture";
 
-class Socket {
-  readyState = 0;
-  binaryType = "";
-  onopen: (() => void) | null = null;
-  onmessage: ((event: { data: ArrayBuffer }) => void) | null = null;
-  onclose: (() => void) | null = null;
-  onerror: (() => void) | null = null;
-  sent: Uint8Array[] = [];
-  send(value: Uint8Array) {
-    this.sent.push(value.slice());
-  }
-  close() {
-    this.readyState = 3;
-    this.onclose?.();
-  }
-  open() {
-    this.readyState = 1;
-    this.onopen?.();
-  }
-  receive(kind: number, value?: unknown) {
-    this.receiveRaw(frame(kind, value === undefined ? undefined : encodeJSON(value)));
-  }
-  receiveRaw(bytes: Uint8Array<ArrayBuffer>) {
-    this.onmessage?.({ data: bytes.buffer });
-  }
-  updates(): Update[] {
-    return this.sent.filter((data) => data[0] === 3).map((data) => readUpdate(data.subarray(1)));
-  }
-  presence(): Record<string, unknown>[] {
-    return this.sent
-      .filter((data) => data[0] === 4)
-      .map((data) => decodeJSON(data.subarray(1)) as Record<string, unknown>);
-  }
-}
-const base = { version: 1, blocks: [] };
-const envelope = (operations: Operation[] = []): Update => ({
-  protocol: "gotipe.crdt/1",
-  base,
-  operations,
-});
-const replacedBaseline = {
-  version: 0,
-  blocks: [{ id: "r1", block_type: "paragraph", attrs: {}, content: { type: "Empty" } }],
-};
-const operation = (lamport: number, peer = "alice"): Operation => ({
-  id: { lamport, peer_id: peer },
-  change: { SetData: { key: "test", value: lamport } },
-});
-const user: AwarenessUser = { name: "Alice", color: "#123456" };
-/** Like the WASM editor: rejects another baseline and conflicting IDs, and reports a remote merge as a selection change. */
-function editorFixture() {
-  const events = new Map<string, Set<() => void>>();
-  let update = envelope();
-  let selection = { anchor: { blockId: "a", offset: 0 }, head: { blockId: "a", offset: 2 } };
-  const emit = (name: string) => {
-    for (const callback of events.get(name) ?? []) callback();
-  };
-  const editor: CollaborationEditor = {
-    isDestroyed: false,
-    enableCollaboration: vi.fn(),
-    getCollaborationUpdate: () => encodeJSON(update),
-    receiveCollaborationUpdate: vi.fn((bytes) => {
-      const incoming = readUpdate(bytes);
-      const { version: _incoming, ...incomingBase } = incoming.base as typeof base;
-      const { version: _local, ...localBase } = update.base as typeof base;
-      if (JSON.stringify(incomingBase) !== JSON.stringify(localBase))
-        throw new Error("CRDT error: Peers must start from the same document snapshot");
-      const ops = new Map(update.operations.map((op) => [JSON.stringify(op.id), op]));
-      const before = ops.size;
-      for (const op of incoming.operations) {
-        const prior = ops.get(JSON.stringify(op.id));
-        if (prior && JSON.stringify(prior) !== JSON.stringify(op))
-          throw new Error("CRDT error: Conflicting operation identity");
-        ops.set(JSON.stringify(op.id), op);
-      }
-      if (ops.size === before) return;
-      update = envelope([...ops.values()]);
-      emit("selectionChange");
-      emit("update");
-    }),
-    getViewState: () => ({
-      blocks: [],
-      decorations: [],
-      version: 1,
-      toolbar: {
-        activeMarks: [],
-        activeBlockType: "paragraph",
-        activeBlockAttrs: {},
-        canUndo: false,
-        canRedo: false,
-      },
-      selection: { type: "text", anchor: { ...selection.anchor }, head: { ...selection.head } },
-    }),
-    setDecorations: vi.fn(),
-    on: (name, callback) => {
-      const set = events.get(name) ?? new Set();
-      const invoke = () => Reflect.apply(callback, undefined, []);
-      set.add(invoke);
-      events.set(name, set);
-      return () => {
-        set.delete(invoke);
-      };
-    },
-  };
-  return {
-    editor,
-    emit,
-    change: (op: Operation) => {
-      update.operations.push(op);
-      emit("update");
-    },
-    select: (caret: { blockId: string; offset: number }) => {
-      selection = { anchor: caret, head: caret };
-      emit("selectionChange");
-    },
-  };
-}
-const providers: CollaborationProvider[] = [];
-function fixture(options: Partial<CollaborationOptions> = {}) {
-  const sockets: Socket[] = [];
-  const urls: string[] = [];
-  const protocols: string[][] = [];
-  const errors: Error[] = [];
-  const fixture = editorFixture();
-  const provider = new CollaborationProvider({
-    documentId: "document",
-    wsUrl: "wss://example.test/sync",
-    peerId: "alice",
-    user,
-    reconnectInterval: 5,
-    onError: (error) => errors.push(error),
-    ...options,
-    createWebSocket: (url, subprotocols) => {
-      const socket = new Socket();
-      sockets.push(socket);
-      urls.push(url);
-      protocols.push(subprotocols);
-      return socket as unknown as WebSocket;
-    },
-  });
-  providers.push(provider);
-  provider.connect(fixture.editor);
-  return { ...fixture, provider, sockets, urls, protocols, errors };
-}
 afterEach(() => {
-  for (const provider of providers.splice(0)) provider.destroy();
+  destroyProviders();
   vi.useRealTimers();
 });
 
@@ -162,13 +28,16 @@ describe("durable collaboration transport", () => {
     expect(f.protocols[0]).toEqual(["gotipe.v1", "gotipe.auth.cHJpdmF0ZS10b2tlbg"]);
     f.sockets[0]!.open();
     expect(f.provider.getState()).toBe("connecting");
+    // Without a generation the provider speaks the first protocol and asks for the state.
+    expect(f.sockets[0]!.frames(1)).toHaveLength(1);
     f.sockets[0]!.receive(2, envelope([operation(1, "bob")]));
     expect(f.editor.receiveCollaborationUpdate).toHaveBeenCalledOnce();
     expect(f.provider.getState()).toBe("connected");
     expect(f.sockets[0]!.updates()).toEqual([]);
   });
 
-  it("sends only unacknowledged operations, one batch at a time", () => {
+  it("sends only unacknowledged operations, one batch at a time", async () => {
+    vi.useFakeTimers();
     const f = fixture();
     const socket = f.sockets[0]!;
     f.change(operation(1));
@@ -179,6 +48,8 @@ describe("durable collaboration transport", () => {
     expect(socket.updates()).toHaveLength(1);
     expect(f.provider.getSyncState()).toEqual({ pendingOperations: 2, saving: true });
     socket.receive(9);
+    expect(f.provider.getSyncState()).toEqual({ pendingOperations: 1, saving: false });
+    await vi.advanceTimersByTimeAsync(50);
     expect(socket.updates().map((update) => update.operations.map((op) => op.id.lamport))).toEqual([
       [1],
       [2],
@@ -492,7 +363,7 @@ describe("configuration", () => {
         throw new DOMException("An insecure WebSocket from an HTTPS page", "SecurityError");
       },
     });
-    providers.push(provider);
+    track(provider);
     provider.connect(editorFixture().editor);
     await vi.advanceTimersByTimeAsync(60000);
     expect(attempts).toBe(1);

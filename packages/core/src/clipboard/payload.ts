@@ -1,5 +1,5 @@
 import { cloneAttributes } from "../document/attributes";
-import { parseHtmlDocument } from "../html";
+import { type HtmlImportSchema, parseHtmlDocument } from "../html";
 import { blocksToText } from "../text";
 import type { Block, Mark, TextSpan } from "../types/block";
 import { plainTextPayload } from "./insertion";
@@ -73,7 +73,15 @@ export function decodeInternalPayload(json: string): ClipboardPayload | null {
   return null;
 }
 
-export function readClipboardPayload(data: Pick<DataTransfer, "getData">): ClipboardPayload | null {
+/**
+ * GoTipe data first, then HTML (read into the editor's `schema`, see `parseHtmlDocument`),
+ * then plain text through `plain` (paragraphs by default).
+ */
+export function readClipboardPayload(
+  data: Pick<DataTransfer, "getData">,
+  plain: (text: string) => ClipboardPayload | null = plainTextPayload,
+  schema?: HtmlImportSchema,
+): ClipboardPayload | null {
   const internal = data.getData("application/x-gotipe");
   if (internal) {
     const decoded = decodeInternalPayload(internal);
@@ -81,7 +89,7 @@ export function readClipboardPayload(data: Pick<DataTransfer, "getData">): Clipb
   }
   const html = data.getData("text/html");
   if (html) {
-    const blocks = parseHtmlDocument(html).blocks;
+    const blocks = parseHtmlDocument(html, schema).blocks;
     if (
       blocks.some((block) => block.type !== "paragraph" || block.children.length) ||
       blocksToText(blocks).length
@@ -89,6 +97,6 @@ export function readClipboardPayload(data: Pick<DataTransfer, "getData">): Clipb
       return { blocks };
     }
   }
-  const plain = data.getData("text/plain");
-  return plain ? plainTextPayload(plain) : null;
+  const text = data.getData("text/plain");
+  return text ? plain(text) : null;
 }

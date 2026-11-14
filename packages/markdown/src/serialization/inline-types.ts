@@ -20,6 +20,11 @@ export interface InlineOptions {
   tier: number;
   /** The first line continues a paragraph started before the content (alert callouts). */
   continuation?: boolean;
+  /**
+   * Registered custom emoji names (those of the document's `customEmoji` marks): typed
+   * `:name:` that a reader would take for one is written as `\:name:`.
+   */
+  emoji?: Readonly<Record<string, string>>;
 }
 
 export interface EmoPair {
@@ -32,7 +37,12 @@ export interface EmoPair {
 export type Unit =
   | { k: "t"; ch: string; ti: number }
   | { k: "nl"; ti: number }
-  | { k: "syn"; s: string }
-  | { k: "lit"; s: string; ti: number }
+  /** Syntax; `math` marks the `$` that opens (1) or closes (2) an inline formula. */
+  | { k: "syn"; s: string; math?: 1 | 2 }
+  /**
+   * Source written as is for `len` characters of text (as many as it has when omitted);
+   * `emoji` marks a custom emoji, which no letter or digit may touch.
+   */
+  | { k: "lit"; s: string; ti: number; len?: number; emoji?: true }
   | { k: "code"; s: string; ti: number }
   | { k: "emo"; pair: EmoPair; open: boolean };

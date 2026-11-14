@@ -1,6 +1,6 @@
-use super::{Change, ContentKind, Position, ReplicaOp};
+use super::{Change, ContentKind, MarkList, Position, ReplicaOp};
 use crate::ops::OpId;
-use gotipe_core::{AttrValue, Block, BlockContent, BlockId, Document, Mark, TextSpan};
+use gotipe_core::{AttrValue, Block, BlockContent, BlockId, Document, TextSpan};
 use std::collections::{BTreeMap, BTreeSet};
 
 #[derive(Debug, Clone)]
@@ -8,7 +8,7 @@ pub(crate) struct Character {
     pub id: OpId,
     pub position: Position,
     pub value: char,
-    pub marks: BTreeMap<String, Mark>,
+    pub marks: MarkList,
     pub deleted: bool,
 }
 #[derive(Debug, Clone)]
@@ -64,10 +64,7 @@ impl ReplicaState {
                         id,
                         position: Position::initial(index),
                         value,
-                        marks: marks
-                            .iter()
-                            .map(|m| (m.mark_type.clone(), m.clone()))
-                            .collect(),
+                        marks: MarkList::from_marks(marks),
                         deleted: false,
                     },
                 );
@@ -183,10 +180,7 @@ impl ReplicaState {
                             id: op.id.clone(),
                             position: position.clone(),
                             value: *value,
-                            marks: marks
-                                .iter()
-                                .map(|m| (m.mark_type.clone(), m.clone()))
-                                .collect(),
+                            marks: MarkList::from_marks(marks),
                             deleted: false,
                         },
                     );
@@ -215,11 +209,7 @@ impl ReplicaState {
                     .values_mut()
                     .find_map(|node| node.chars.get_mut(target))
                 {
-                    if let Some(mark) = mark {
-                        ch.marks.insert(mark_type.clone(), mark.clone());
-                    } else {
-                        ch.marks.remove(mark_type);
-                    }
+                    ch.marks.set(mark_type, mark.as_ref());
                 }
             }
         }
@@ -275,7 +265,7 @@ impl ReplicaState {
                     ContentKind::RichText => {
                         let mut spans: Vec<TextSpan> = vec![];
                         for ch in chars {
-                            let marks: Vec<_> = ch.marks.values().cloned().collect();
+                            let marks = ch.marks.marks();
                             if let Some(last) = spans.last_mut().filter(|last| last.marks == marks)
                             {
                                 last.text.push(ch.value);

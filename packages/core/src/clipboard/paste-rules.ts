@@ -1,6 +1,7 @@
+import type { HtmlImportSchema } from "../html";
 import type { Document } from "../types/block";
 import type { GoTipeEditor } from "../types/editor";
-import type { PasteRule } from "../types/extension";
+import type { ExtensionConfig, PasteRule, PasteTextContext } from "../types/extension";
 import type { SelectionView } from "../types/view";
 import { documentTransaction } from "./document";
 import { insertPayload } from "./insertion";
@@ -10,10 +11,19 @@ export interface ConfiguredPasteRule {
   rule: PasteRule;
   options: unknown;
 }
+/** The pasted-text hooks of the extensions, in extension order, with their options. */
+export interface PastedTextHooks {
+  transforms: { run: NonNullable<ExtensionConfig["transformPastedText"]>; options: unknown }[];
+  parsers: { run: NonNullable<ExtensionConfig["parsePastedText"]>; options: unknown }[];
+  schema: Pick<PasteTextContext, "nodes" | "marks">;
+}
 export interface ClipboardOptions {
   rules?: ConfiguredPasteRule[];
   /** An isolated editor with the same schema, without extension lifecycle side effects. */
   createDraft?: (document: Document, selection: SelectionView) => Promise<GoTipeEditor>;
+  text?: PastedTextHooks;
+  /** The editor's schema, so pasted HTML reads back the inline atoms it declares. */
+  schema?: HtmlImportSchema;
 }
 export function findPasteRule(
   options: ClipboardOptions,

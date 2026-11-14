@@ -392,7 +392,7 @@ describe("Lexical serialized editor state", () => {
 });
 
 describe("Slate schema migration", () => {
-  it("retains leaf marks, inline links and image attributes, and reports alignment", () => {
+  it("retains leaf marks, inline links, image attributes and alignment", () => {
     const result = convertSlateToGoTipe([
       {
         type: "heading-two",
@@ -417,18 +417,14 @@ describe("Slate schema migration", () => {
       },
       { type: "heading-six", children: [{ text: "Small" }] },
     ]);
-    expect(result.warnings).toEqual([
-      "Slate [0]: heading-two field align does not fit the GoTipe schema; kept in unmapped",
-    ]);
+    expect(result.warnings).toEqual([]);
     expect(result.document.blocks[3]?.attrs).toEqual({ level: 6 });
     expect(result.document.blocks[0]).toMatchObject({
       id: "heading",
       type: "heading",
-      attrs: { level: 2 },
+      attrs: { level: 2, align: "center" },
     });
-    expect(result.unmapped).toEqual([
-      { blockId: "heading", path: "[0]", sourceType: "heading-two", fields: { align: "center" } },
-    ]);
+    expect(result.unmapped).toEqual([]);
     expect(spans(result.document.blocks[1])[1]?.marks.map((mark) => mark.type)).toEqual([
       "link",
       "italic",

@@ -5,19 +5,32 @@ import type { FallbackMark } from "./types";
  * is the Rust engine's copy; both engines must produce the same spans.
  */
 
-/** The exclusive group of a mark type, or null. */
-export type MarkGroups = (markType: string) => string | null;
+/**
+ * The exclusive group of a mark type, or null. `atomic` lists the mark types the schema
+ * declares atomic (docs/development/inline-atoms.md); without it there are none.
+ */
+export type MarkGroups = ((markType: string) => string | null) & {
+  atomic?: ReadonlySet<string>;
+};
 
 export const NO_MARK_GROUPS: MarkGroups = () => null;
 
-/** Exclusive groups declared by the wire schema; an empty name is no group. */
+/** Exclusive groups and atomic marks declared by the wire schema; an empty name is no group. */
 export function markGroups(
-  schema: { marks: Record<string, { exclusive_group?: string | null }> } | null,
+  schema: {
+    marks: Record<string, { exclusive_group?: string | null; atomic?: boolean }>;
+  } | null,
 ): MarkGroups {
   const groups = new Map<string, string>();
-  for (const [name, spec] of Object.entries(schema?.marks ?? {}))
+  const atomic = new Set<string>();
+  for (const [name, spec] of Object.entries(schema?.marks ?? {})) {
     if (spec.exclusive_group) groups.set(name, spec.exclusive_group);
-  return groups.size ? (markType) => groups.get(markType) ?? null : NO_MARK_GROUPS;
+    if (spec.atomic === true) atomic.add(name);
+  }
+  if (!groups.size && !atomic.size) return NO_MARK_GROUPS;
+  const rules: MarkGroups = (markType) => groups.get(markType) ?? null;
+  if (atomic.size) rules.atomic = atomic;
+  return rules;
 }
 
 const cloneMark = (mark: FallbackMark): FallbackMark => ({

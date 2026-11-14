@@ -6,6 +6,8 @@ import type { Decoration, MarkView, SelectionView, ViewState } from "../types/vi
 interface ViewStatePort {
   getDocumentJSON(): string;
   getSelection(): SelectionView;
+  /** Marks declared `atomic` carry `atomic: true` in the view (MarkView). */
+  isAtomic?(markType: string): boolean;
   getStoredMarks(): MarkView[] | null;
   canUndo(): boolean;
   canRedo(): boolean;
@@ -102,8 +104,23 @@ export function createViewState(port: ViewStatePort) {
     const json = port.getDocumentJSON();
     if (json !== lastStateJson || !lastParsed) {
       const document = fromWasmDoc(JSON.parse(json));
+      const atomic = port.isAtomic;
+      const content = (block: Block): Block["content"] =>
+        atomic && Array.isArray(block.content)
+          ? block.content.map((span) =>
+              span.marks.some((mark) => atomic(mark.type))
+                ? {
+                    ...span,
+                    marks: span.marks.map((mark) =>
+                      atomic(mark.type) ? { ...mark, atomic: true as const } : mark,
+                    ),
+                  }
+                : span,
+            )
+          : block.content;
       const toView = (block: Block): ViewState["blocks"][number] => ({
         ...block,
+        content: content(block) as ViewState["blocks"][number]["content"],
         children: block.children.map(toView),
         decorations: EMPTY_DECORATIONS,
       });

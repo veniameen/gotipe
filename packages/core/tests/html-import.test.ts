@@ -22,6 +22,27 @@ describe("HTML document input", () => {
     editor.destroy();
   });
 
+  it("reads text-align of paragraphs and headings and writes it back the same", async () => {
+    const html =
+      '<h2 style="text-align:center">Заголовок</h2>\n<p style="text-align:justify">Текст 😀</p>\n<p style="text-align:right">r</p>\n<p>plain</p>';
+    const doc = parseHtmlDocument(
+      `${html}<p align="LEFT">l</p><p style="text-align:start">s</p><h1 style="text-align:middle">m</h1>`,
+    );
+    expect(doc.blocks.map((block) => [block.type, block.attrs.align ?? null])).toEqual([
+      ["heading", "center"],
+      ["paragraph", "justify"],
+      ["paragraph", "right"],
+      ["paragraph", null],
+      ["paragraph", "left"],
+      ["paragraph", null],
+      ["heading", null],
+    ]);
+    const { DefaultPreset } = await import("../src/presets");
+    const editor = await createEditor({ extensions: [DefaultPreset], content: html });
+    expect(editor.getHTML()).toBe(html);
+    editor.destroy();
+  });
+
   it("keeps nested lists, ordered starts, task states and rich text", () => {
     const doc = parseHtmlDocument(
       '<ol start="3"><li><p>A <b>bold</b></p><ul><li>Nested</li></ul></li><li>B</li></ol>' +

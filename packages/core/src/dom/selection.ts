@@ -458,8 +458,14 @@ export function installDOMSelection(
       prevSelection.head.offset === selection.head.offset;
 
     if (!sameSelection) port.updateSelection(selection);
+    // The model may have moved the caret off an inline atom: put the DOM caret there too.
+    const model = port.getSelection();
+    const snapped =
+      !sameSelection &&
+      (model.anchor.offset !== selection.anchor.offset ||
+        model.head.offset !== selection.head.offset);
 
-    if (normalizeTodoCaret || normalizeRootCaret) {
+    if (normalizeTodoCaret || normalizeRootCaret || snapped) {
       const restoredNow = restoreDomSelection();
       if (!restoredNow) {
         scheduleSelectionRestore();

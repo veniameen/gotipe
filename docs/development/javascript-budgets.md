@@ -31,6 +31,14 @@ On the audit build, with this exact definition:
 On the merge build of 2026-11-12 the same graphs measure 95,659 (core and Markdown,
 6.6% under its ceiling), 36,441 (React) and 7,536 (AI) bytes.
 
+Decision of 2026-11-14: the core and Markdown ceiling is 112,640 (110 KiB). Inline atoms
+(atomic marks in both engines, their Markdown reader and writer, the atom HTML writer),
+the hooks of the headless extensions and the collaboration deltas measured 106,511 bytes
+after moving everything atom- or extension-only out of the core graph (extensions carry
+`atomSupport`; find-replace, typography, emoji and the rest live only in their entries).
+The same work shrank the core WASM from ~605 KB to ~300 KB gzip, so a WASM consumer
+loads far less than before. Headroom is about 5%.
+
 Decision of 2026-11-12: the React increment ceiling is 40,960 (40 KiB). The
 GoTipe Atlas frames added the embed and math renderers, the table layout with
 its handles, media states, content icons and the strings of the new UI in both

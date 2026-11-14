@@ -5,6 +5,7 @@ macro_rules! re {
         RE.get_or_init(|| regex::Regex::new($pattern).expect("static grammar pattern"))
     }};
 }
+pub(crate) mod atoms;
 mod blocks;
 mod convert;
 mod decode;
@@ -13,20 +14,22 @@ mod inline;
 mod links;
 mod lists;
 mod nodes;
+mod rich;
 mod source;
 mod syntax;
+pub use atoms::MarkdownAtoms;
 use gotipe_core::{AttrValue, Document};
 use nodes::Node;
 use source::{Line, Source};
 use std::collections::HashSet;
 
-pub(crate) fn parse(md: &str) -> Document {
+pub(crate) fn parse(md: &str, atoms: &MarkdownAtoms) -> Document {
     let base = front_matter(md);
     let mut reader = blocks::Reader {
         references: HashSet::new(),
     };
     let mut nodes = reader.blocks(&source::lines(&md[base..], base), 0, 0);
-    fn fill(nodes: &mut [Node], references: &HashSet<String>) {
+    fn fill(nodes: &mut [Node], references: &HashSet<String>, atoms: &MarkdownAtoms) {
         for node in nodes {
             if let Some(source) = node.source.take() {
                 let budget =
@@ -35,20 +38,24 @@ pub(crate) fn parse(md: &str) -> Document {
                     &source,
                     &links::Context {
                         in_cell: node.in_cell,
-                        ..links::Context::new(references, &budget)
+                        ..links::Context::new(references, &budget, atoms)
                     },
                     0,
                 );
             } else {
-                fill(&mut node.children, references)
+                fill(&mut node.children, references, atoms)
             }
         }
     }
-    fill(&mut nodes, &reader.references);
+    fill(&mut nodes, &reader.references, atoms);
     let mut doc = Document {
-        blocks: nodes.iter().map(|n| convert::block(n, md)).collect(),
+        blocks: nodes
+            .iter()
+            .map(|n| convert::block(n, rich::Read { source: md, atoms }))
+            .collect(),
         version: 0,
     };
+    atoms::number_atoms(&mut doc.blocks, &mut 0);
     let original =
         serde_json::to_string(&serde_json::to_value(&doc).expect("serializable document"))
             .expect("serializable model");

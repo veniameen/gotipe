@@ -1,8 +1,9 @@
 import { align, alignInlineCode, alignLoose } from "./align";
-import type { Nodes, PhrasingContent } from "./grammar/types";
+import { imageText, mentionLabel, mentionOf } from "./atoms";
+import type { Link, Nodes, PhrasingContent } from "./grammar/types";
 import { inlineHtmlMark } from "./inline-html";
 import { normalizeSpans } from "./model";
-import type { Mark, RawSegment, Span } from "./types";
+import type { InlineAtoms, Mark, RawSegment, Span } from "./types";
 import { normalizeEol } from "./util";
 
 export interface InlineParseCtx {
@@ -12,6 +13,8 @@ export interface InlineParseCtx {
   base: number;
   /** Compute segments (false for internal verification parses). */
   segments: boolean;
+  /** Inline atoms the reader was asked for. */
+  atoms?: InlineAtoms;
 }
 
 export interface InlineFlags {
@@ -36,6 +39,16 @@ class Builder {
   text = "";
   segs: RawSegment[] = [];
   newlines: { at: number; hard: boolean }[] = [];
+  /** Atoms read so far: each gets its own `key`, renumbered in document order later. */
+  private atoms = 0;
+
+  /**
+   * The mark of the atom that starts here. Its `key` keeps it apart from an equal neighbour;
+   * `numberAtoms` (atoms.ts) gives the final keys once the whole document is read.
+   */
+  atom(type: string, attrs?: Record<string, unknown>): Mark {
+    return { type, attrs: { ...attrs, key: String(++this.atoms) } };
+  }
 
   push(text: string, marks: Mark[], segs: RawSegment[] | null, range: [number, number] | null) {
     if (text.length === 0) return;
@@ -77,6 +90,17 @@ function endOf(node: Nodes, ctx: InlineParseCtx): number | null {
 function hasPos(node: Nodes): boolean {
   return (
     typeof node.position?.start.offset === "number" && typeof node.position?.end.offset === "number"
+  );
+}
+
+/** A mention's text is plain or formatted text: no HTML, images, references or other atoms. */
+function plainChildren(node: Link | { children: PhrasingContent[] }): boolean {
+  return node.children.every(
+    (child) =>
+      child.type === "text" ||
+      child.type === "inlineCode" ||
+      child.type === "break" ||
+      ("children" in child && child.type !== "link" && plainChildren(child)),
   );
 }
 
@@ -232,6 +256,14 @@ function walkNode(
     }
     case "link": {
       if (plainText(node) === "") break;
+      const mention = ctx.atoms?.mention && plainChildren(node) ? mentionOf(node.url) : null;
+      if (mention) {
+        const label = node.title || mentionLabel(mention.kind, plainText(node));
+        const atom = b.atom("mention", { ...mention, label });
+        const [from, to] = range ?? [0, 0];
+        walk(node.children, [...marks, atom], b, ctx, flags, from, to, noSegs);
+        return;
+      }
       const attrs: Record<string, unknown> = { href: node.url };
       if (typeof node.title === "string" && node.title !== "") attrs.title = node.title;
       walk(
@@ -252,6 +284,29 @@ function walkNode(
         return;
       }
       break;
+    }
+    case "inlineMath":
+    case "emoji": {
+      // The grammar reads these only when asked; the text is the source as written.
+      const math = node.type === "inlineMath";
+      const atom = math
+        ? b.atom("inlineMath")
+        : b.atom("customEmoji", { name: node.name, src: ctx.atoms?.customEmoji?.[node.name] });
+      const pad = math ? 1 : 0;
+      const [mdFrom, mdTo] = wantSegs ? [range[0] + pad, range[1] - pad] : [0, 0];
+      // An escaped `|` of a table cell makes the source longer than the text.
+      const exact = mdTo - mdFrom === node.value.length;
+      const segs: RawSegment[] | null = wantSegs
+        ? [{ textFrom: 0, textTo: node.value.length, mdFrom, mdTo, exact }]
+        : null;
+      b.push(node.value, [...marks, atom], segs, null);
+      return;
+    }
+    case "image": {
+      if (!ctx.atoms?.inlineImage || node.title) break;
+      const atom = b.atom("inlineImage", { src: node.url, alt: node.alt });
+      b.push(imageText(node.url, node.alt), [...marks, atom], null, wantSegs ? range : null);
+      return;
     }
     default:
       break;

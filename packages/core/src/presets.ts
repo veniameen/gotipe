@@ -53,7 +53,7 @@ const standard = (heading: typeof Heading) => [
   Highlight,
   TextColor,
   History,
-  Placeholder.configure({ text: 'Type "/" for commands...' }),
+  Placeholder,
   DragAndDrop,
   SlashCommands,
 ];

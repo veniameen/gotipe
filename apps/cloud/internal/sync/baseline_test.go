@@ -15,7 +15,7 @@ func updateOn(base []byte, block, peer string, clock uint64, value string) []byt
 	change, _ := json.Marshal(map[string]any{"InsertChar": map[string]any{
 		"block_id": block, "position": []positionPart{{Digit: 2, ID: id}}, "value": value, "marks": []any{},
 	}})
-	data, _ := json.Marshal(replicaUpdate{Protocol: replicaProtocol, Base: base, Operations: []replicaOperation{{ID: id, Change: change}}})
+	data, _ := json.Marshal(replicaUpdate{Protocol: fullStateProtocol, Base: base, Operations: []replicaOperation{{ID: id, Change: change}}})
 	return data
 }
 
@@ -124,7 +124,7 @@ func TestReplacementFoundWhileSavingResynchronizesInsteadOfFailing(t *testing.T)
 	waitDone(t, room)
 	store.mu.Lock()
 	defer store.mu.Unlock()
-	if len(store.updates) != 0 || len(store.snapshots) != 0 {
+	if len(store.updates) != 0 {
 		t.Fatal("an edit of the old baseline entered the new generation")
 	}
 }

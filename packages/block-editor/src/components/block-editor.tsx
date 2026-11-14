@@ -26,7 +26,11 @@ import {
 } from "./block-interaction";
 import { BlockToolbar } from "./block-toolbar";
 import { BlockEditorBubbleMenu } from "./bubble-menu";
-import { CollaborationCursors } from "./collaboration-cursors";
+import {
+  COLLABORATION_LAYER,
+  CollaborationCursors,
+  useOverlayPeers,
+} from "./collaboration-cursors";
 import { DocsOutline } from "./docs-outline";
 import { EditorErrorToast, EditorSkeleton, EditorStarters } from "./editor-states";
 import { GhostText } from "./ghost-text";
@@ -34,6 +38,8 @@ import { SlashMenu } from "./slash-menu";
 import { SuggestionToolbar } from "./suggestion-toolbar";
 import { ThemeToggle } from "./theme-toggle";
 
+/** The overlay draws other people (Atlas frame 12); the document renderer must not repeat them. */
+const HOST_LAYERS = [COLLABORATION_LAYER];
 const TOOLBAR_HIDE_DELAY_MS = 20;
 const TOOLBAR_HOVER_X_MIN_OFFSET = 120;
 const TOOLBAR_HOVER_X_MAX_OFFSET = 560;
@@ -80,6 +86,7 @@ export function BlockEditor({
   const [toolbarPos, setToolbarPos] = useState<{ top: number; left: number } | null>(null);
   const [suggestionIndex, setSuggestionIndex] = useState(0);
   const containerRef = useRef<HTMLDivElement>(null);
+  const overlayPeers = useOverlayPeers(editor, remotePeers);
   // shared cells carry the column menu (Atlas frame 9); the host's views win
   const blockViews = useMemo<BlockViews>(
     () => ({
@@ -466,6 +473,7 @@ export function BlockEditor({
       <Editor
         editor={editor}
         blockViews={blockViews}
+        hostLayers={HOST_LAYERS}
         ariaLabel={ariaLabel}
         slotBefore={
           <>
@@ -488,8 +496,8 @@ export function BlockEditor({
       </Editor>
 
       {/* Remote collaboration cursors */}
-      {remotePeers && remotePeers.length > 0 && (
-        <CollaborationCursors peers={remotePeers} containerRef={containerRef} />
+      {overlayPeers.length > 0 && (
+        <CollaborationCursors peers={overlayPeers} containerRef={containerRef} />
       )}
 
       {/* Floating block toolbar — positioned in the left padding gutter */}

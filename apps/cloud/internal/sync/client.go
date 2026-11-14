@@ -26,6 +26,13 @@ type Client struct {
 	peerID    string
 	userID    string
 	log       *slog.Logger
+	// deltas marks a gotipe.v2 connection: it named its baseline by generation
+	// at the handshake and exchanges operations without the baseline.
+	deltas     bool
+	generation string
+	// partial holds the parts of a transaction larger than one message; the
+	// room's event loop owns it.
+	partial *partialTransaction
 }
 
 func NewClient(room *Room, conn *websocket.Conn, peerID, userID string, log *slog.Logger) *Client {

@@ -63,6 +63,9 @@ type Config struct {
 	RateLimitAPI string // "100/min"
 	RateLimitWS  string // "1000/min"
 	RateLimitAI  string // "60/min"
+	// SyncTransactionLimit bounds the bytes of one client's sync transaction that
+	// a room buffers while it arrives in parts.
+	SyncTransactionLimit int
 
 	// Stripe
 	StripeSecretKey       string
@@ -131,6 +134,8 @@ func LoadFrom(lookup func(string) (string, bool)) (*Config, error) {
 		RateLimitAPI: env.text("RATE_LIMIT_API", "100/min"),
 		RateLimitWS:  env.text("RATE_LIMIT_WS", "1000/min"),
 		RateLimitAI:  env.text("RATE_LIMIT_AI", "60/min"),
+
+		SyncTransactionLimit: env.integer("SYNC_TRANSACTION_LIMIT", 16<<20),
 
 		StripeSecretKey:       env.text("STRIPE_SECRET_KEY", ""),
 		StripeWebhookSecret:   env.text("STRIPE_WEBHOOK_SECRET", ""),

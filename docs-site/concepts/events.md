@@ -68,6 +68,7 @@ For values derived from the view state, `useEditorState` from `@gotipe/react` or
 | `decorationsChange` | `{ layer }` | A decoration layer changed. |
 | `error` | `GoTipeError` | Any reported error; see [host](/docs/concepts/host#errors). |
 | `compositionInterrupted` | — | An external change ended an IME composition; a `COMPOSITION_CONFLICT` error follows. |
+| `beforeCollaboration` | — | Right before the first `enableCollaboration` takes the document as the baseline every replica shares. A listener can still undo what it added to the loaded document, as `TrailingNode` does. |
 | `destroy` | `{ editor }` | During `destroy()`, after extensions have cleaned up. |
 
 `before` and `after` in `transaction` are detached copies of the document; changing them

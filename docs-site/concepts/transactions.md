@@ -173,6 +173,11 @@ undo or redo, and `getViewState().toolbar` reports `canUndo` and `canRedo`.
   undo step.
 - `setContent` clears the history. Pass `{ addToHistory: true }` to make the replacement
   one undo step instead.
+- A transaction with `metadata: { addToHistory: false }` is committed without an undo
+  step and leaves the redo stack as it is. Use it for changes the user did not make, as
+  [TrailingNode](/docs/extensions/editing-aids#trailing-node) does. Without collaboration,
+  Undo of an earlier step restores the document from before that step, so such a change
+  goes with it.
 - After `enableCollaboration`, history moves to the CRDT: Undo reverts your own changes and
   keeps the other peers' edits.
 

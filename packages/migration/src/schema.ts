@@ -1,4 +1,4 @@
-import type { AttrSpec, AttrValue, MarkSpec, NodeSpec } from "@gotipe/core";
+import type { AttrSpec, AttrValue, Extension, MarkSpec, NodeSpec } from "@gotipe/core";
 import * as extensions from "@gotipe/core/extensions";
 import { hasLines } from "./text";
 
@@ -35,7 +35,10 @@ function specs(): Specs {
   if (stock) return stock;
   const nodes = new Map<string, NodeSpec>();
   const marks = new Map<string, MarkSpec>();
-  for (const extension of Object.values(extensions)) {
+  // The entry also exports commands, controllers and constants next to the extensions.
+  for (const value of Object.values(extensions)) {
+    if (typeof value !== "object" || value === null || !("configure" in value)) continue;
+    const extension = value as Extension;
     for (const spec of extension.nodes ?? []) nodes.set(spec.name, spec);
     for (const spec of extension.marks ?? []) marks.set(spec.name, spec);
   }

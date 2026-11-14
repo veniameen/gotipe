@@ -9,7 +9,12 @@ export type {
   ImageSource,
   ImageSourceItem,
 } from "./types/editor";
-export type { EngineMode, WasmModuleLoader, WasmModuleLike } from "./wasm-bridge";
+export type {
+  CollaborationUpdateOptions,
+  EngineMode,
+  WasmModuleLoader,
+  WasmModuleLike,
+} from "./wasm-bridge";
 export { WIDGET_ATTR, createTextWalker, documentTextOf, isInsideWidget } from "./dom/text-walker";
 export { defineExtension } from "./types/extension";
 export type {
@@ -26,7 +31,9 @@ export type {
   Plugin,
   WhenCondition,
   ExtensionStorage,
+  PasteTextContext,
 } from "./types/extension";
+export type { InlineAtomSupport, HtmlAtomReader, IsAtomic } from "./types/atoms";
 export type {
   AttrValue,
   Mark,

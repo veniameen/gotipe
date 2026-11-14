@@ -39,6 +39,7 @@ pub fn suggestion_mark_spec() -> MarkSpec {
             ),
         ]),
         rank: 95,
+        atomic: false,
     }
 }
 

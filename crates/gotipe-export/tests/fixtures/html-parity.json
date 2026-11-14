@@ -2001,6 +2001,764 @@
         "inlineStyles": true
       },
       "html": "<p class=\"_x-1paragraph\" style=\"margin:0 0 0.75em;line-height:1.5;overflow-wrap:anywhere\">p</p>\n<h2 class=\"_x-1heading\" style=\"margin:1em 0 0.5em;line-height:1.25;overflow-wrap:anywhere\">h</h2>\n<div class=\"callout _x-1callout\" style=\"padding:1em;border:1px solid #a0a0a0;border-radius:0.375em\"><span class=\"callout-emoji\">!</span>c</div>\n<pre class=\"_x-1codeBlock\" style=\"white-space:pre;overflow-x:auto;max-width:100%;padding:1em;background:#f5f5f5;color:#202020\"><code class=\"language-js\">x</code></pre>\n<ul class=\"todo-list _x-1todoList\" style=\"list-style:none;padding-left:0;margin:0.5em 0\">\n<li class=\"_x-1todoItem\" style=\"line-height:1.5;list-style:none\"><input type=\"checkbox\" checked disabled> t</li>\n</ul>\n<table class=\"_x-1table\" style=\"border-collapse:collapse;max-width:100%\">\n<tr class=\"_x-1tableRow\">\n<td style=\"padding:0.5em;border:1px solid #a0a0a0;vertical-align:top;text-align:right\" class=\"_x-1tableCell\">cell</td>\n</tr>\n</table>\n<p class=\"_x-1paragraph _x-1widget\" style=\"margin:0 0 0.75em;line-height:1.5;overflow-wrap:anywhere\">first child gets the class</p>\n<figure class=\"_x-1image\" style=\"margin:1em 0;max-width:100%;overflow:auto\"><img src=\"a.png\" alt=\"\"><figcaption>c</figcaption></figure>"
+    },
+    {
+      "id": "inline-atoms",
+      "document": {
+        "version": 1,
+        "blocks": [
+          {
+            "id": "a1",
+            "type": "paragraph",
+            "attrs": {},
+            "content": [
+              {
+                "text": "Привет, ",
+                "marks": []
+              },
+              {
+                "text": "@Анна",
+                "marks": [
+                  {
+                    "type": "mention",
+                    "attrs": {
+                      "id": "42",
+                      "label": "Анна",
+                      "kind": "user"
+                    }
+                  }
+                ]
+              },
+              {
+                "text": " и ",
+                "marks": []
+              },
+              {
+                "text": "Спека <v2>",
+                "marks": [
+                  {
+                    "type": "mention",
+                    "attrs": {
+                      "id": "p/7 \"x\"",
+                      "label": "Спека <v2>",
+                      "kind": "page",
+                      "key": "2"
+                    }
+                  }
+                ]
+              },
+              {
+                "text": "!",
+                "marks": []
+              }
+            ],
+            "children": []
+          },
+          {
+            "id": "a2",
+            "type": "paragraph",
+            "attrs": {},
+            "content": [
+              {
+                "text": "E = ",
+                "marks": []
+              },
+              {
+                "text": "x^2 < y & \"z\"",
+                "marks": [
+                  {
+                    "type": "inlineMath",
+                    "attrs": {}
+                  }
+                ]
+              },
+              {
+                "text": " ",
+                "marks": []
+              },
+              {
+                "text": "a\nb",
+                "marks": [
+                  {
+                    "type": "bold",
+                    "attrs": {}
+                  },
+                  {
+                    "type": "inlineMath",
+                    "attrs": {
+                      "key": "k"
+                    }
+                  }
+                ]
+              }
+            ],
+            "children": []
+          },
+          {
+            "id": "a3",
+            "type": "paragraph",
+            "attrs": {},
+            "content": [
+              {
+                "text": ":party:",
+                "marks": [
+                  {
+                    "type": "customEmoji",
+                    "attrs": {
+                      "name": "party",
+                      "src": "https://cdn.test/party.png?a=1&b=2"
+                    }
+                  }
+                ]
+              },
+              {
+                "text": ":tada😀:",
+                "marks": [
+                  {
+                    "type": "italic",
+                    "attrs": {}
+                  },
+                  {
+                    "type": "customEmoji",
+                    "attrs": {
+                      "name": "tada",
+                      "src": "data:image/png;base64,iVBORw0KGgo="
+                    }
+                  }
+                ]
+              },
+              {
+                "text": ":bad:",
+                "marks": [
+                  {
+                    "type": "customEmoji",
+                    "attrs": {
+                      "name": "bad",
+                      "src": "javascript:alert(1)"
+                    }
+                  }
+                ]
+              },
+              {
+                "text": ":mail:",
+                "marks": [
+                  {
+                    "type": "customEmoji",
+                    "attrs": {
+                      "name": "mail",
+                      "src": "mailto:a@b.test"
+                    }
+                  }
+                ]
+              }
+            ],
+            "children": []
+          },
+          {
+            "id": "a4",
+            "type": "paragraph",
+            "attrs": {},
+            "content": [
+              {
+                "text": "Схема",
+                "marks": [
+                  {
+                    "type": "inlineImage",
+                    "attrs": {
+                      "src": "img/схема 1.png",
+                      "alt": "Схема",
+                      "width": 120,
+                      "height": 80
+                    }
+                  }
+                ]
+              },
+              {
+                "text": "diagram.png",
+                "marks": [
+                  {
+                    "type": "inlineImage",
+                    "attrs": {
+                      "src": "https://a.test/diagram.png",
+                      "alt": ""
+                    }
+                  }
+                ]
+              },
+              {
+                "text": "alt \"q\" <b>",
+                "marks": [
+                  {
+                    "type": "inlineImage",
+                    "attrs": {
+                      "src": "a.png"
+                    }
+                  }
+                ]
+              },
+              {
+                "text": "fallback",
+                "marks": [
+                  {
+                    "type": "inlineImage",
+                    "attrs": {
+                      "src": "data:text/html;base64,PHNjcmlwdD4=",
+                      "alt": "x"
+                    }
+                  }
+                ]
+              },
+              {
+                "text": "sized",
+                "marks": [
+                  {
+                    "type": "inlineImage",
+                    "attrs": {
+                      "src": "a.png",
+                      "alt": "sized",
+                      "width": 0,
+                      "height": 10001
+                    }
+                  }
+                ]
+              },
+              {
+                "text": "odd",
+                "marks": [
+                  {
+                    "type": "inlineImage",
+                    "attrs": {
+                      "src": "a.png",
+                      "alt": "odd",
+                      "width": 12.5,
+                      "height": "40"
+                    }
+                  }
+                ]
+              }
+            ],
+            "children": []
+          },
+          {
+            "id": "a5",
+            "type": "paragraph",
+            "attrs": {},
+            "content": [
+              {
+                "text": "@Борис",
+                "marks": [
+                  {
+                    "type": "link",
+                    "attrs": {
+                      "href": "https://a.test/u/7"
+                    }
+                  },
+                  {
+                    "type": "mention",
+                    "attrs": {
+                      "id": "7",
+                      "label": "Борис"
+                    }
+                  },
+                  {
+                    "type": "bold",
+                    "attrs": {}
+                  }
+                ]
+              },
+              {
+                "text": "@нет",
+                "marks": [
+                  {
+                    "type": "mention",
+                    "attrs": {
+                      "id": "",
+                      "label": "нет"
+                    }
+                  }
+                ]
+              },
+              {
+                "text": "@число",
+                "marks": [
+                  {
+                    "type": "mention",
+                    "attrs": {
+                      "id": 5,
+                      "label": "число"
+                    }
+                  }
+                ]
+              },
+              {
+                "text": "@x",
+                "marks": [
+                  {
+                    "type": "mention",
+                    "attrs": {
+                      "id": "x",
+                      "label": null,
+                      "kind": "robot"
+                    }
+                  }
+                ]
+              },
+              {
+                "text": ":wide:",
+                "marks": [
+                  {
+                    "type": "code",
+                    "attrs": {}
+                  },
+                  {
+                    "type": "customEmoji",
+                    "attrs": {
+                      "name": "wide",
+                      "src": " HTTPS://cdn.test/w.gif "
+                    }
+                  },
+                  {
+                    "type": "highlight",
+                    "attrs": {
+                      "color": "#fef9c3"
+                    }
+                  }
+                ]
+              }
+            ],
+            "children": []
+          },
+          {
+            "id": "a6",
+            "type": "heading",
+            "attrs": {
+              "level": 2
+            },
+            "content": [
+              {
+                "text": "Раздел ",
+                "marks": []
+              },
+              {
+                "text": "\\frac{1}{2}",
+                "marks": [
+                  {
+                    "type": "inlineMath",
+                    "attrs": {}
+                  }
+                ]
+              },
+              {
+                "text": " ",
+                "marks": []
+              },
+              {
+                "text": "@Анна",
+                "marks": [
+                  {
+                    "type": "mention",
+                    "attrs": {
+                      "id": "42",
+                      "label": "Анна",
+                      "kind": "user"
+                    }
+                  }
+                ]
+              }
+            ],
+            "children": []
+          }
+        ]
+      },
+      "html": "<p>Привет, <span data-type=\"mention\" data-kind=\"user\" data-id=\"42\" data-label=\"Анна\">@Анна</span> и <span data-type=\"mention\" data-kind=\"page\" data-id=\"p/7 &quot;x&quot;\" data-label=\"Спека &lt;v2&gt;\">Спека &lt;v2&gt;</span>!</p>\n<p>E = <span data-type=\"math\">x^2 &lt; y &amp; &quot;z&quot;</span> <strong><span data-type=\"math\">a<br>b</span></strong></p>\n<p><img data-type=\"emoji\" alt=\":party:\" src=\"https://cdn.test/party.png?a=1&amp;b=2\"><em><img data-type=\"emoji\" alt=\":tada😀:\" src=\"data:image/png;base64,iVBORw0KGgo=\"></em>:bad::mail:</p>\n<p><img src=\"img/схема 1.png\" alt=\"Схема\" width=\"120\" height=\"80\"><img src=\"https://a.test/diagram.png\" alt=\"\"><img src=\"a.png\" alt=\"alt &quot;q&quot; &lt;b&gt;\">fallback<img src=\"a.png\" alt=\"sized\"><img src=\"a.png\" alt=\"odd\"></p>\n<p><strong><a href=\"https://a.test/u/7\"><span data-type=\"mention\" data-kind=\"user\" data-id=\"7\" data-label=\"Борис\">@Борис</span></a></strong>@нет@число<span data-type=\"mention\" data-kind=\"user\" data-id=\"x\">@x</span><mark style=\"background:#fef9c3\"><code><img data-type=\"emoji\" alt=\":wide:\" src=\"HTTPS://cdn.test/w.gif\"></code></mark></p>\n<h2>Раздел <span data-type=\"math\">\\frac{1}{2}</span> <span data-type=\"mention\" data-kind=\"user\" data-id=\"42\" data-label=\"Анна\">@Анна</span></h2>"
+    },
+    {
+      "id": "text-align",
+      "document": {
+        "version": 1,
+        "blocks": [
+          {
+            "id": "t1",
+            "type": "paragraph",
+            "attrs": {
+              "align": "left"
+            },
+            "content": [
+              {
+                "text": "l",
+                "marks": []
+              }
+            ],
+            "children": []
+          },
+          {
+            "id": "t2",
+            "type": "paragraph",
+            "attrs": {
+              "align": "center"
+            },
+            "content": [
+              {
+                "text": "Центр 😀",
+                "marks": []
+              }
+            ],
+            "children": []
+          },
+          {
+            "id": "t3",
+            "type": "paragraph",
+            "attrs": {
+              "align": "right"
+            },
+            "content": [
+              {
+                "text": "r",
+                "marks": [
+                  {
+                    "type": "bold",
+                    "attrs": {}
+                  }
+                ]
+              }
+            ],
+            "children": []
+          },
+          {
+            "id": "t4",
+            "type": "paragraph",
+            "attrs": {
+              "align": "justify"
+            },
+            "content": [
+              {
+                "text": "j",
+                "marks": []
+              }
+            ],
+            "children": []
+          },
+          {
+            "id": "t5",
+            "type": "heading",
+            "attrs": {
+              "level": 3,
+              "align": "center"
+            },
+            "content": [
+              {
+                "text": "Заголовок",
+                "marks": []
+              }
+            ],
+            "children": []
+          },
+          {
+            "id": "t6",
+            "type": "paragraph",
+            "attrs": {
+              "align": "middle"
+            },
+            "content": [
+              {
+                "text": "middle",
+                "marks": []
+              }
+            ],
+            "children": []
+          },
+          {
+            "id": "t7",
+            "type": "paragraph",
+            "attrs": {
+              "align": null
+            },
+            "content": [
+              {
+                "text": "null",
+                "marks": []
+              }
+            ],
+            "children": []
+          },
+          {
+            "id": "t8",
+            "type": "paragraph",
+            "attrs": {
+              "align": 1
+            },
+            "content": [
+              {
+                "text": "number",
+                "marks": []
+              }
+            ],
+            "children": []
+          },
+          {
+            "id": "t9",
+            "type": "paragraph",
+            "attrs": {
+              "align": "CENTER"
+            },
+            "content": [
+              {
+                "text": "upper",
+                "marks": []
+              }
+            ],
+            "children": []
+          },
+          {
+            "id": "t10",
+            "type": "blockquote",
+            "attrs": {
+              "align": "center"
+            },
+            "content": [
+              {
+                "text": "quote",
+                "marks": []
+              }
+            ],
+            "children": []
+          }
+        ]
+      },
+      "html": "<p style=\"text-align:left\">l</p>\n<p style=\"text-align:center\">Центр 😀</p>\n<p style=\"text-align:right\"><strong>r</strong></p>\n<p style=\"text-align:justify\">j</p>\n<h3 style=\"text-align:center\">Заголовок</h3>\n<p>middle</p>\n<p>null</p>\n<p>number</p>\n<p>upper</p>\n<blockquote>quote</blockquote>"
+    },
+    {
+      "id": "text-align-options",
+      "document": {
+        "version": 1,
+        "blocks": [
+          {
+            "id": "o1",
+            "type": "paragraph",
+            "attrs": {
+              "align": "center"
+            },
+            "content": [
+              {
+                "text": "p",
+                "marks": []
+              }
+            ],
+            "children": []
+          },
+          {
+            "id": "o2",
+            "type": "heading",
+            "attrs": {
+              "level": 2,
+              "align": "right"
+            },
+            "content": [
+              {
+                "text": "h",
+                "marks": []
+              }
+            ],
+            "children": []
+          }
+        ]
+      },
+      "options": {
+        "classPrefix": "doc-",
+        "inlineStyles": true
+      },
+      "html": "<p style=\"margin:0 0 0.75em;line-height:1.5;overflow-wrap:anywhere;text-align:center\" class=\"doc-paragraph\">p</p>\n<h2 style=\"margin:1em 0 0.5em;line-height:1.25;overflow-wrap:anywhere;text-align:right\" class=\"doc-heading\">h</h2>"
+    },
+    {
+      "id": "inline-atom-spans-one-element",
+      "document": {
+        "version": 1,
+        "blocks": [
+          {
+            "id": "p",
+            "type": "paragraph",
+            "attrs": {},
+            "content": [
+              {
+                "text": "@",
+                "marks": [
+                  {
+                    "type": "mention",
+                    "attrs": {
+                      "id": "42",
+                      "label": "Анна",
+                      "kind": "user",
+                      "key": "1"
+                    }
+                  }
+                ]
+              },
+              {
+                "text": "Ан",
+                "marks": [
+                  {
+                    "type": "bold",
+                    "attrs": {}
+                  },
+                  {
+                    "type": "mention",
+                    "attrs": {
+                      "id": "42",
+                      "label": "Анна",
+                      "kind": "user",
+                      "key": "1"
+                    }
+                  }
+                ]
+              },
+              {
+                "text": "на",
+                "marks": [
+                  {
+                    "type": "mention",
+                    "attrs": {
+                      "id": "42",
+                      "label": "Анна",
+                      "kind": "user",
+                      "key": "1"
+                    }
+                  }
+                ]
+              },
+              {
+                "text": "@Анна",
+                "marks": [
+                  {
+                    "type": "mention",
+                    "attrs": {
+                      "id": "42",
+                      "label": "Анна",
+                      "kind": "user",
+                      "key": "2"
+                    }
+                  }
+                ]
+              },
+              {
+                "text": " ",
+                "marks": []
+              },
+              {
+                "text": "@B",
+                "marks": [
+                  {
+                    "type": "bold",
+                    "attrs": {}
+                  },
+                  {
+                    "type": "link",
+                    "attrs": {
+                      "href": "https://a.test"
+                    }
+                  },
+                  {
+                    "type": "mention",
+                    "attrs": {
+                      "id": "7",
+                      "label": "Bob",
+                      "kind": "user"
+                    }
+                  }
+                ]
+              },
+              {
+                "text": "ob",
+                "marks": [
+                  {
+                    "type": "bold",
+                    "attrs": {}
+                  },
+                  {
+                    "type": "link",
+                    "attrs": {
+                      "href": "https://a.test"
+                    }
+                  },
+                  {
+                    "type": "mention",
+                    "attrs": {
+                      "id": "7",
+                      "label": "Bob",
+                      "kind": "user"
+                    }
+                  },
+                  {
+                    "type": "italic",
+                    "attrs": {}
+                  }
+                ]
+              },
+              {
+                "text": " ",
+                "marks": []
+              },
+              {
+                "text": "Сх",
+                "marks": [
+                  {
+                    "type": "inlineImage",
+                    "attrs": {
+                      "src": "a.png"
+                    }
+                  }
+                ]
+              },
+              {
+                "text": "ема",
+                "marks": [
+                  {
+                    "type": "italic",
+                    "attrs": {}
+                  },
+                  {
+                    "type": "inlineImage",
+                    "attrs": {
+                      "src": "a.png"
+                    }
+                  }
+                ]
+              },
+              {
+                "text": " ",
+                "marks": []
+              },
+              {
+                "text": "@x",
+                "marks": [
+                  {
+                    "type": "mention",
+                    "attrs": {
+                      "label": "x"
+                    }
+                  }
+                ]
+              },
+              {
+                "text": "y",
+                "marks": [
+                  {
+                    "type": "bold",
+                    "attrs": {}
+                  },
+                  {
+                    "type": "mention",
+                    "attrs": {
+                      "label": "x"
+                    }
+                  }
+                ]
+              }
+            ],
+            "children": []
+          }
+        ]
+      },
+      "html": "<p><span data-type=\"mention\" data-kind=\"user\" data-id=\"42\" data-label=\"Анна\">@<strong>Ан</strong>на</span><span data-type=\"mention\" data-kind=\"user\" data-id=\"42\" data-label=\"Анна\">@Анна</span> <a href=\"https://a.test\"><strong><span data-type=\"mention\" data-kind=\"user\" data-id=\"7\" data-label=\"Bob\">@B<em>ob</em></span></strong></a> <img src=\"a.png\" alt=\"Схема\"> @x<strong>y</strong></p>"
     }
   ]
 }

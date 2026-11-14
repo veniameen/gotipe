@@ -1220,11 +1220,8 @@ export function validateDocument(docJson: string): { valid: boolean; errors: str
   }
 }
 
-export function renderToHtml(docJson: string): string {
-  const schema = JSON.stringify(Schema.defaultBlockEditor());
-  const editor = new WasmEditor(schema, docJson);
-  return editor.export_html();
-}
+// HTML comes from @gotipe/core (editor.getHTML()) or, on a server, from gotipe-convert;
+// the WASM module carries no HTML serializer or sanitizer.
 ```
 
 ### Rust (native, server)
@@ -1258,8 +1255,9 @@ export class WasmEditor {
   enable_collaboration(peer_id: string): void;
   receive_update(update: Uint8Array): string;
   get_update(): Uint8Array;
-  export_html(): string;
-  export_markdown(): string;
+  get_local_update_after(after: number, max_bytes: number): Uint8Array;
+  get_update_missing_from(remote: Uint8Array): Uint8Array;
+  // HTML and Markdown are serialized, and HTML sanitized, by @gotipe/core in TypeScript.
   export_json(): string;
 }
 

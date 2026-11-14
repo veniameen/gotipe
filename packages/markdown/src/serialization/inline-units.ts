@@ -1,3 +1,4 @@
+import { EMOJI_NAME, isAtom, mathWritable, mentionHref, mentionLabel } from "../atoms";
 import { cssColor } from "../inline-html";
 import { linkAttrs, markKey } from "../model";
 import type { Mark, Span } from "../types";
@@ -8,6 +9,8 @@ interface Leaf {
   span: Span;
   ti: number;
   kind: "text" | "code" | "raw";
+  /** The leaf of the next span. */
+  next?: Leaf;
 }
 
 interface MarkNode {
@@ -18,6 +21,7 @@ interface MarkNode {
 
 const OPEN_ORDER: Record<string, number> = {
   link: 0,
+  mention: 0,
   underline: 1,
   textColor: 1,
   highlight: 2,
@@ -63,6 +67,8 @@ export function linkDestination(href: string): string {
   return `<${inner}>`;
 }
 
+const lineBreakReference = (c: string): string => (c === "\r" ? "&#13;" : "&#10;");
+
 export function linkTitle(title: string): string {
   return `"${title.replace(/[\\"]/g, "\\$&").replace(ENTITY_GLOBAL, "\\&")}"`;
 }
@@ -83,7 +89,8 @@ function longestRun(s: string, ch: string): number {
 function buildTree(spans: Span[]): MarkNode {
   const root: MarkNode = { mark: { type: "" }, children: [] };
   const containerMarks = spans.map((s) => {
-    let linkSeen = false;
+    // A mention is written as a link, so it takes the place of a link on the same text.
+    let linkSeen = s.marks.some((m) => m.type === "mention");
     const out: Mark[] = [];
     for (const m of s.marks) {
       if (m.type === "code" || m.type === "mdRaw") continue;
@@ -103,6 +110,7 @@ function buildTree(spans: Span[]): MarkNode {
   };
   const stack: { key: string; node: MarkNode }[] = [];
   let ti = 0;
+  let previous: Leaf | undefined;
   spans.forEach((span, i) => {
     const ks = keys[i]!;
     let keep = 0;
@@ -120,6 +128,8 @@ function buildTree(spans: Span[]): MarkNode {
     const raw = span.marks.some((m) => m.type === "mdRaw");
     const code = !raw && span.marks.some((m) => m.type === "code");
     const leaf: Leaf = { leaf: true, span, ti, kind: raw ? "raw" : code ? "code" : "text" };
+    if (previous) previous.next = leaf;
+    previous = leaf;
     (stack[stack.length - 1]?.node ?? root).children.push(leaf);
     ti += span.text.length;
   });
@@ -165,12 +175,67 @@ function buildUnits(root: MarkNode, o: InlineOptions): Unit[] {
       ti += ch.length;
     }
   };
+  const cell = (s: string): string => (o.kind === "cell" ? s.replace(/\|/g, "\\|") : s);
+  const leaves = (node: MarkNode): Leaf[] =>
+    node.children.flatMap((child) => (child.leaf ? [child] : leaves(child)));
+  /** An atom is written whole; false when its attributes or text cannot be, then it is text. */
+  const emitAtom = (node: MarkNode): boolean => {
+    const { type, attrs = {} } = node.mark;
+    const inner = leaves(node);
+    const ti = inner[0]!.ti;
+    const text = inner.map((leaf) => leaf.span.text).join("");
+    const whole = (s: string): number =>
+      units.push(s === text ? { k: "lit", s, ti } : { k: "lit", s, ti, len: text.length });
+    const around = (open: string, close: string): void => {
+      units.push({ k: "syn", s: open });
+      emit(node);
+      units.push({ k: "syn", s: close });
+    };
+    if (type === "mention") {
+      const href = mentionHref(attrs);
+      if (!href) return false;
+      const label = attrs.label;
+      const named = typeof label === "string" && label && label !== mentionLabel(attrs.kind, text);
+      // Line breaks of the label are references: a blank line would end the paragraph.
+      const title = named ? ` ${cell(linkTitle(label).replace(/\r|\n/g, lineBreakReference))}` : "";
+      around("[", `](${href}${title})`);
+    } else if (type === "inlineMath") {
+      // `$x$5` is not a formula: a digit of text after it is written as a reference, and
+      // verbatim source that starts with one leaves the formula as text.
+      const after = inner[inner.length - 1]!.next;
+      if (!mathWritable(text) || (after?.kind === "raw" && /^[0-9]/.test(after.span.text)))
+        return false;
+      units.push({ k: "syn", s: "$", math: 1 });
+      whole(cell(text));
+      units.push({ k: "syn", s: "$", math: 2 });
+    } else if (type === "customEmoji") {
+      if (typeof attrs.name !== "string" || !EMOJI_NAME.test(attrs.name)) return false;
+      // Text that repeats the shortcode is that many emoji; any other text is one.
+      const code = `:${attrs.name}:`;
+      const s = code.repeat(text.length / code.length) === text ? text : code;
+      units.push(
+        s === text
+          ? { k: "lit", s, ti, emoji: true }
+          : { k: "lit", s, ti, len: text.length, emoji: true },
+      );
+    } else {
+      const alt = typeof attrs.alt === "string" ? attrs.alt : text;
+      // An image alone in its block takes an empty title: alone without one it is the image
+      // block when read back.
+      const sole = text.length === leaves(root).reduce((n, leaf) => n + leaf.span.text.length, 0);
+      const close = `](${cell(linkDestination(String(attrs.src ?? "")))}${sole ? ' ""' : ""})`;
+      if (alt === text) around("![", close);
+      else whole(`![${alt.replace(/\r\n?|\n/g, " ").replace(/[!-/:-@[-`{-~]/g, "\\$&")}${close}`);
+    }
+    return true;
+  };
   const emit = (node: MarkNode): void => {
     for (const child of node.children) {
       if (child.leaf) {
         emitLeaf(child);
         continue;
       }
+      if (isAtom(child.mark) && emitAtom(child)) continue;
       const type = child.mark.type;
       const pair = emphasisPair(type);
       if (pair) {

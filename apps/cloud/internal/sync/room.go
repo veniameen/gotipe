@@ -7,14 +7,26 @@ import (
 	"log/slog"
 	"sync/atomic"
 	"time"
+
+	"github.com/gotipe/cloud/internal/document"
 )
 
-const snapshotInterval = 5 * time.Minute
+const (
+	snapshotInterval = 5 * time.Minute
+	// compactWhileServing bounds a compaction on the tick. It runs beside the
+	// event loop, so updates are saved and acknowledged meanwhile.
+	compactWhileServing = time.Minute
+	// compactAfterClose bounds the one after the last client left, when the
+	// room is already done and a new room may serve the document.
+	compactAfterClose = 2 * time.Minute
+)
 
 type roomEvent struct {
 	client *Client
 	kind   byte
 	data   []byte
+	// partial is the transaction a partExpired event refers to.
+	partial *partialTransaction
 }
 
 // Room's event loop exclusively owns membership, awareness, the update log and
@@ -37,14 +49,30 @@ type Room struct {
 	dirty      bool
 	// stale is set when storage was replaced but could not be reloaded.
 	stale bool
-	// tick saves a checkpoint, or checks the stored generation when nothing changed.
+	// tick compacts the stored log after updates, or checks the stored generation
+	// when nothing changed.
 	tick time.Duration
+	// transactionLimit bounds the buffered parts of one client's transaction;
+	// budget, shared by the rooms of a server, bounds those of all clients.
+	transactionLimit int
+	budget           *byteBudget
+	// partTimeout drops a transaction whose next part does not come in time;
+	// storedLimit bounds the stored state a read applies.
+	partTimeout time.Duration
+	storedLimit int
+	// compacting is set while a compaction runs off the event loop; compacted
+	// receives its result.
+	compacting bool
+	compacted  chan error
 }
 
 func NewRoom(documentID string, persist PersistenceStore, log *slog.Logger) *Room {
 	return &Room{documentID: documentID, clients: make(map[*Client]bool), register: make(chan *Client),
 		unregister: make(chan *Client), events: make(chan roomEvent, 256), replaced: make(chan struct{}, 1),
-		persist: persist, log: log, awareness: make(map[string][]byte), done: make(chan struct{}), tick: snapshotInterval}
+		persist: persist, log: log, awareness: make(map[string][]byte), done: make(chan struct{}), tick: snapshotInterval,
+		transactionLimit: DefaultTransactionLimit, compacted: make(chan error, 1),
+		budget:      newByteBudget(DefaultTransactionLimit * transactionsPerProcess),
+		partTimeout: defaultPartTimeout, storedLimit: document.MaterializationLimit}
 }
 
 // loadState reads one storage generation without changing the live room.
@@ -53,20 +81,36 @@ func (r *Room) loadState(ctx context.Context) (*updateLog, string, error) {
 	if err != nil {
 		return nil, "", err
 	}
-	state, err := newUpdateLog(stored.Document)
+	state, err := newUpdateLog(stored.Document, document.GenerationToken(stored.Generation))
 	if err != nil {
 		return nil, "", err
 	}
+	state.stored = len(stored.Document)
 	for _, update := range stored.Updates {
-		staged, _, _, err := state.prepare(update)
-		if err != nil {
+		if err := state.restore(update); err != nil {
 			return nil, "", err
 		}
-		state = staged
+		state.stored += len(update)
 	}
 	return state, stored.Generation, nil
 }
+
+// Run serves the room until it is empty or stopped, then merges the stored log
+// if it has grown. The room is done before that merge starts; a compaction the
+// tick started finishes first, so a room never runs two at once.
 func (r *Room) Run(ctx context.Context) {
+	left := r.serve(ctx)
+	if r.compacting {
+		<-r.compacted
+		r.compacting = false
+	}
+	if left {
+		r.compact(ctx, compactAfterClose)
+	}
+}
+
+// serve reports whether the room ended because its last client left.
+func (r *Room) serve(ctx context.Context) bool {
 	defer close(r.done)
 	defer func() {
 		for client := range r.clients {
@@ -76,7 +120,7 @@ func (r *Room) Run(ctx context.Context) {
 	state, generation, err := r.loadState(ctx)
 	if err != nil {
 		r.log.Error("failed to load collaboration state", "document_id", r.documentID, "error", err)
-		return
+		return false
 	}
 	r.state, r.generation = state, generation
 	ticker := time.NewTicker(r.tick)
@@ -99,6 +143,11 @@ func (r *Room) Run(ctx context.Context) {
 			if r.stale {
 				break // The loop stops below and closes this connection.
 			}
+			if client.deltas && client.generation != r.state.generation {
+				// The replica was loaded from a baseline the document no longer has.
+				r.resynchronize(client)
+				break
+			}
 			r.send(client, 0x02, r.state.encode())
 			for _, awareness := range r.awareness {
 				r.send(client, 0x04, awareness)
@@ -119,18 +168,25 @@ func (r *Room) Run(ctx context.Context) {
 		case <-ticker.C:
 			if !r.dirty {
 				r.verifyGeneration(ctx)
-			} else if errors.Is(r.saveState(ctx), ErrBaselineReplaced) {
+			} else if !r.compacting {
+				r.startCompaction(ctx)
+			}
+		case err := <-r.compacted:
+			r.compacting = false
+			if errors.Is(err, ErrBaselineReplaced) {
 				r.adoptStoredBaseline(ctx)
+			} else if err != nil {
+				r.dirty = true // Retried on a later tick.
 			}
 		case <-ctx.Done():
-			saveCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-			r.saveState(saveCtx)
-			cancel()
-			return
+			// Every acknowledged update is already durable: nothing to save.
+			return false
 		}
-		if r.stale || (hadClients && len(r.clients) == 0) {
-			r.saveState(ctx)
-			return
+		if r.stale {
+			return false
+		}
+		if hadClients && len(r.clients) == 0 {
+			return true
 		}
 	}
 }
@@ -146,6 +202,7 @@ func (r *Room) leave(client *Client, abort bool) bool {
 	}
 	delete(r.clients, client)
 	delete(r.awareness, client.peerID)
+	r.dropPartial(client)
 	r.count.Store(int64(len(r.clients)))
 	close(client.send)
 	if abort && client.conn != nil {
@@ -156,12 +213,21 @@ func (r *Room) leave(client *Client, abort bool) bool {
 	return true
 }
 func (r *Room) send(client *Client, kind byte, payload []byte) {
-	if !r.clients[client] {
-		return
-	}
+	r.sendFramed(client, framed(kind, payload))
+}
+func framed(kind byte, payload []byte) []byte {
 	message := make([]byte, 1+len(payload))
 	message[0] = kind
 	copy(message[1:], payload)
+	return message
+}
+
+// sendFramed queues a message that write pumps only read, so one message may be
+// shared by every recipient.
+func (r *Room) sendFramed(client *Client, message []byte) {
+	if !r.clients[client] {
+		return
+	}
 	select {
 	case client.send <- message:
 	default:
@@ -184,33 +250,13 @@ func (r *Room) handleEvent(ctx context.Context, event roomEvent) {
 	case 0x01:
 		r.send(event.client, 0x02, r.state.encode())
 	case 0x02, 0x03:
-		staged, delta, changed, err := r.state.prepare(event.data)
-		if errors.Is(err, ErrBaselineReplaced) {
-			r.foreignBaseline(ctx, event.client)
-			return
+		r.receiveUpdate(ctx, event.client, event.data)
+	case partExpired:
+		if event.client.partial == event.partial {
+			r.dropPartial(event.client)
+			r.error(event.client, "UPDATE_NOT_SAVED", "The parts of a transaction stopped arriving; send it again.")
+			r.release(event.client)
 		}
-		if err != nil {
-			r.error(event.client, "INVALID_UPDATE", err.Error())
-			return
-		}
-		if changed {
-			saveCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
-			saveErr := r.persist.SaveUpdate(saveCtx, r.documentID, r.generation, delta)
-			cancel()
-			if errors.Is(saveErr, ErrBaselineReplaced) {
-				r.adoptStoredBaseline(ctx)
-				return
-			}
-			if err := saveErr; err != nil {
-				r.log.Error("failed to persist collaboration update", "document_id", r.documentID, "error", err)
-				r.error(event.client, "UPDATE_NOT_SAVED", "The update was not saved; reconnect and retry.")
-				return
-			}
-			r.state = staged
-			r.dirty = true
-			r.broadcastExcept(event.client, 0x03, delta)
-		}
-		r.send(event.client, 0x09, nil)
 	case 0x04:
 		data, err := readPresence(event.client.peerID, event.data)
 		if err != nil {
@@ -240,12 +286,56 @@ func (r *Room) handleSyncStep2(client *Client, data []byte) { r.enqueue(client, 
 func (r *Room) handleUpdate(client *Client, data []byte)    { r.enqueue(client, 0x03, data) }
 func (r *Room) handleAwareness(client *Client, data []byte) { r.enqueue(client, 0x04, data) }
 func (r *Room) handleAwarenessQuery(client *Client)         { r.enqueue(client, 0x05, nil) }
-func (r *Room) saveState(ctx context.Context) error {
-	if r.state == nil || !r.dirty {
+
+// relay sends saved operations to the other clients: as stored to gotipe.v2
+// clients, and behind a copy of the baseline to gotipe.v1 clients.
+func (r *Room) relay(sender *Client, operations []replicaOperation, record []byte) {
+	// Built once and shared: a relayed transaction may be many megabytes.
+	var deltas, withBaseline []byte
+	for client := range r.clients {
+		switch {
+		case client == sender:
+		case client.deltas:
+			if deltas == nil {
+				deltas = framed(0x03, record)
+			}
+			r.sendFramed(client, deltas)
+		default:
+			if withBaseline == nil {
+				withBaseline = framed(0x03, r.state.encodeWithBaseline(operations))
+			}
+			r.sendFramed(client, withBaseline)
+		}
+	}
+}
+
+// startCompaction merges the stored log beside the event loop: storage makes a
+// concurrent save safe, and the room keeps saving and acknowledging meanwhile.
+// Updates saved during it set dirty again for the next tick.
+func (r *Room) startCompaction(ctx context.Context) {
+	r.compacting, r.dirty = true, false
+	generation := r.generation
+	go func() {
+		compactCtx, cancel := context.WithTimeout(ctx, compactWhileServing)
+		defer cancel()
+		err := r.persist.CompactLog(compactCtx, r.documentID, generation)
+		if err != nil {
+			r.log.Error("failed to compact the collaboration log", "document_id", r.documentID, "error", err)
+		}
+		r.compacted <- err // Buffered: never blocks, even after the room ended.
+	}()
+}
+
+// compact asks storage to merge the log it has grown. Updates are durable
+// before their ACK, so a failure here loses nothing and is retried later.
+func (r *Room) compact(ctx context.Context, limit time.Duration) error {
+	if r.state == nil {
 		return nil
 	}
-	if err := r.persist.SaveSnapshot(ctx, r.documentID, r.generation, r.state.encode()); err != nil {
-		r.log.Error("failed to checkpoint collaboration", "document_id", r.documentID, "error", err)
+	compactCtx, cancel := context.WithTimeout(ctx, limit)
+	defer cancel()
+	if err := r.persist.CompactLog(compactCtx, r.documentID, r.generation); err != nil {
+		r.log.Error("failed to compact the collaboration log", "document_id", r.documentID, "error", err)
 		return err
 	}
 	r.dirty = false

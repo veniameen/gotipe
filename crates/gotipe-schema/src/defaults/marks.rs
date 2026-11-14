@@ -12,6 +12,7 @@ pub(super) fn default_marks() -> HashMap<String, MarkSpec> {
             exclusive_group: None,
             attrs: HashMap::new(),
             rank: 10,
+            atomic: false,
         },
     );
 
@@ -22,6 +23,7 @@ pub(super) fn default_marks() -> HashMap<String, MarkSpec> {
             exclusive_group: None,
             attrs: HashMap::new(),
             rank: 20,
+            atomic: false,
         },
     );
 
@@ -32,6 +34,7 @@ pub(super) fn default_marks() -> HashMap<String, MarkSpec> {
             exclusive_group: None,
             attrs: HashMap::new(),
             rank: 30,
+            atomic: false,
         },
     );
 
@@ -42,6 +45,7 @@ pub(super) fn default_marks() -> HashMap<String, MarkSpec> {
             exclusive_group: None,
             attrs: HashMap::new(),
             rank: 40,
+            atomic: false,
         },
     );
 
@@ -52,6 +56,7 @@ pub(super) fn default_marks() -> HashMap<String, MarkSpec> {
             exclusive_group: Some("code".into()),
             attrs: HashMap::new(),
             rank: 50,
+            atomic: false,
         },
     );
 
@@ -79,6 +84,7 @@ pub(super) fn default_marks() -> HashMap<String, MarkSpec> {
                 ),
             ]),
             rank: 60,
+            atomic: false,
         },
     );
 
@@ -97,6 +103,7 @@ pub(super) fn default_marks() -> HashMap<String, MarkSpec> {
                 },
             )]),
             rank: 5,
+            atomic: false,
         },
     );
 
@@ -107,6 +114,7 @@ pub(super) fn default_marks() -> HashMap<String, MarkSpec> {
             exclusive_group: Some("script".into()),
             attrs: HashMap::new(),
             rank: 70,
+            atomic: false,
         },
     );
 
@@ -117,6 +125,7 @@ pub(super) fn default_marks() -> HashMap<String, MarkSpec> {
             exclusive_group: Some("script".into()),
             attrs: HashMap::new(),
             rank: 80,
+            atomic: false,
         },
     );
 
@@ -134,6 +143,7 @@ pub(super) fn default_marks() -> HashMap<String, MarkSpec> {
                 },
             )]),
             rank: 6,
+            atomic: false,
         },
     );
 

@@ -47,10 +47,13 @@ if (editor.validate(result.document)) editor.setContent(result.document);
 
 Атрибуты. Блок и mark получают атрибуты, объявленные схемой, со значением
 объявленного типа: `level`, `start`, `checked`, `language`/`meta`,
-`colspan`/`rowspan`/`align`, `colWidths`, `src`/`alt`/`width`/`height`,
-`href`/`title`/`target`/`rel`, `color`. Известные поля источника переименовываются:
-`order` и `params` (prosemirror-markdown), `colSpan`, `rowSpan`, `altText`, `tag` и
-`format` ячейки (Lexical), `url` картинки (Slate). Остальное попадает в `unmapped`:
+`colspan`/`rowspan`/`align`, `align` абзаца и заголовка, `colWidths`,
+`src`/`alt`/`width`/`height`, `href`/`title`/`target`/`rel`, `color`. Известные поля
+источника переименовываются: `order` и `params` (prosemirror-markdown), `textAlign`
+абзаца, заголовка и ячейки (Tiptap), `colSpan`, `rowSpan`, `altText`, `tag` и `format`
+ячейки, абзаца и заголовка со значениями left/center/right/justify (Lexical), `url`
+картинки (Slate); `align` Slate уже совпадает. Выравнивание абзаца, ставшего текстом
+контейнера (пункта списка, ячейки), записывается в `unmapped`. Остальное попадает в `unmapped`:
 поля узлов, marks и inline-элементов, корня, а также повторные, нестроковые ID и ID
 абзаца, ставшего текстом контейнера. Запись — `{ blockId, path, sourceType, fields }`:
 блок, который держит узел (`null` для корня), путь к объекту источника, тип источника
@@ -58,7 +61,7 @@ if (editor.validate(result.document)) editor.setContent(result.document);
 `null` означает «не задано» и не переносится. На каждую пару «тип источника + поле»
 со значением — одно предупреждение. Значения по умолчанию редактора-источника
 (`version`, `direction: "ltr"`, `indent: 0`, `format: ""` у Lexical,
-`textAlign: "left"` у Tiptap) записываются без предупреждения.
+`textAlign: "left"` у Tiptap, также под именем `align`) записываются без предупреждения.
 
 `blockTypeMap` и `markTypeMap` переименовывают типы, но не реализуют новую семантику.
 Тип GoTipe получает атрибуты по своей схеме; тип, которого нет среди extensions

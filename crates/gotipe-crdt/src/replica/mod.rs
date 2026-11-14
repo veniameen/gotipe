@@ -3,6 +3,7 @@
 mod anchors;
 mod diff;
 pub use anchors::TextAnchor;
+mod marks;
 mod position;
 mod projection;
 mod routing;
@@ -11,6 +12,7 @@ mod types;
 pub(crate) use structural::prepare;
 
 pub(crate) use diff::reconcile;
+pub(crate) use marks::MarkList;
 pub use position::{Position, PositionPart};
 pub(crate) use projection::ReplicaState;
 pub use types::{Change, ContentKind, ReplicaOp};

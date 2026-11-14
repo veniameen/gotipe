@@ -80,7 +80,7 @@ root shows a loading skeleton with `role="status"`.
 | `showAiCommandBar` | `boolean` | `true` | AI command bar (Mod+J), ghost text, AI status and the bubble's Improve button. |
 | `onAiCommand` | `(prompt: string) => void` | — | Receives the bar's prompt instead of the AI extension. |
 | `showThemeToggle` | `boolean` | `false` | Light, dark and system switch above the header. |
-| `remotePeers` | `RemotePeer[]` | — | Collaborators' cursors and selections, drawn when the array is not empty. |
+| `remotePeers` | `RemotePeer[]` | — | Collaborators' cursors and selections to draw besides those of the editor's `collaboration` decoration layer, which the [provider](/docs/collaboration/provider) fills. Each peer is drawn once. |
 | `showCollaborationCursors` | `boolean` | — | Declared but not read; see the note below. |
 | `suggestions` | `Suggestion[]` | — | Proofreading suggestions for the suggestion bar. |
 | `onSuggestionAccept` | `(suggestion: Suggestion) => void` | — | With `onSuggestionReject`, shows the suggestion bar. |
@@ -161,8 +161,8 @@ languages; see [i18n](/docs/ui/i18n).
 
 ## Limitations
 
-- `showCollaborationCursors` has no effect: cursors are drawn whenever `remotePeers` has
-  entries.
+- `showCollaborationCursors` has no effect: cursors are drawn whenever `remotePeers` or the
+  editor's `collaboration` decoration layer has entries.
 - `showAiCommandBar` is on by default and adds the Improve button and Mod+J even when no
   AI extension is installed. Turn it off unless you use [AI](/docs/ai/overview).
 - The bubble's More menu always offers superscript and subscript. Load those extensions

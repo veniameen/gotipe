@@ -1,5 +1,12 @@
-import type { GoTipeEditor } from "@gotipe/core";
-import React, { useCallback, useEffect, useRef, useSyncExternalStore } from "react";
+import type { BlockView, GoTipeEditor } from "@gotipe/core";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useReducer,
+  useRef,
+  useSyncExternalStore,
+} from "react";
 import type { BlockRendererProps } from "./block-renderer";
 import { BlockComponent, PhantomBlocks } from "./content/blocks";
 import {
@@ -9,7 +16,9 @@ import {
   PlaceholderContext,
   type PlaceholderFn,
 } from "./content/context";
+import { holdComposing, withoutLayers } from "./content/decorations";
 import { blockKey } from "./content/presentation";
+import { SelectionKeeper } from "./content/selection-keeper";
 export { usePhantom } from "./content/context";
 export type {
   BlockViewProps,
@@ -40,6 +49,7 @@ export function EditorContent({
   blockRenderer,
   blockViews,
   placeholder,
+  hostLayers,
   ariaLabel = "Document content",
 }: {
   editor: GoTipeEditor | null;
@@ -48,6 +58,11 @@ export function EditorContent({
   blockViews?: BlockViews;
   /** Placeholder of empty blocks (shown on the focused empty block and on headings). */
   placeholder?: PlaceholderFn;
+  /**
+   * Decoration layers the host draws itself, e.g. `["collaboration"]` when it has its own
+   * cursor overlay. Their decorations are left out; every other layer is drawn.
+   */
+  hostLayers?: readonly string[];
   ariaLabel?: string;
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -72,8 +87,30 @@ export function EditorContent({
     }
   }, [editor]);
 
-  const blocks = viewState?.blocks ?? [];
+  // Decorations held while the browser composed are drawn once the composition ends.
+  const [, redraw] = useReducer((count: number) => count + 1, 0);
+  useEffect(() => {
+    const element = containerRef.current;
+    if (!element || !editor) return;
+    element.addEventListener("compositionend", redraw);
+    return () => element.removeEventListener("compositionend", redraw);
+  }, [editor]);
+
+  const layers = hostLayers?.join("\n") ?? "";
+  // biome-ignore lint/correctness/useExhaustiveDependencies: the layer names, not the array's identity.
+  const blocks = useMemo(
+    () => (editor ? withoutLayers(editor, viewState?.blocks ?? [], hostLayers) : []),
+    [editor, viewState, layers],
+  );
   const selectedBlockId = viewState?.selection.anchor.blockId ?? "";
+  // The composing block is where the selection was when the composition started.
+  const drawn = useRef<BlockView[] | null>(null);
+  const shown = editor?.isComposing
+    ? holdComposing(blocks, drawn.current, selectedBlockId)
+    : blocks;
+  useEffect(() => {
+    drawn.current = shown;
+  });
 
   return (
     <>
@@ -93,18 +130,21 @@ export function EditorContent({
         <BlockViewsContext.Provider value={blockViews ?? null}>
           <LegacyRendererContext.Provider value={blockRenderer ?? null}>
             <PlaceholderContext.Provider value={placeholder ?? null}>
-              {editor &&
-                blocks.map((block) => (
-                  <React.Fragment key={blockKey(block)}>
-                    <PhantomBlocks block={block} editor={editor} position="before" />
-                    <BlockComponent
-                      block={block}
-                      editor={editor}
-                      selectedBlockId={selectedBlockId}
-                    />
-                    <PhantomBlocks block={block} editor={editor} position="after" />
-                  </React.Fragment>
-                ))}
+              {editor && (
+                <SelectionKeeper editor={editor} state={viewState}>
+                  {shown.map((block) => (
+                    <React.Fragment key={blockKey(block)}>
+                      <PhantomBlocks block={block} editor={editor} position="before" />
+                      <BlockComponent
+                        block={block}
+                        editor={editor}
+                        selectedBlockId={selectedBlockId}
+                      />
+                      <PhantomBlocks block={block} editor={editor} position="after" />
+                    </React.Fragment>
+                  ))}
+                </SelectionKeeper>
+              )}
             </PlaceholderContext.Provider>
           </LegacyRendererContext.Provider>
         </BlockViewsContext.Provider>

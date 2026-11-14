@@ -25,6 +25,10 @@ export interface BlockEditorProps {
   showBlockToolbar?: boolean;
   showBubbleMenu?: boolean;
   showCollaborationCursors?: boolean;
+  /**
+   * Other people to draw besides those of the editor's `collaboration` decoration layer,
+   * which the collaboration provider fills. Each peer ID is drawn once.
+   */
   remotePeers?: RemotePeer[];
   showAiCommandBar?: boolean;
   showThemeToggle?: boolean;

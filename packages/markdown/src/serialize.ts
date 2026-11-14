@@ -1,3 +1,4 @@
+import { atomsIn, carried } from "./atoms";
 import { writeInline } from "./inline-serialize";
 import { RICH_TYPES, fingerprint, isBlockEmpty, listStart, richContent } from "./model";
 import { parseInternal } from "./parse";
@@ -5,6 +6,7 @@ import { type RNode, type RenderOpts, bulletMarker, renderTop } from "./serializ
 import type {
   Block,
   Doc,
+  InlineAtoms,
   MapBlock,
   MarkdownMap,
   MarkdownSnapshot,
@@ -47,17 +49,25 @@ function verificationTiers(block: Block): number[] | null {
 function renderVerified(
   block: Block,
   eol: string,
-  extra: Pick<RenderOpts, "dividerAlt" | "markerOverride"> = {},
+  options: Pick<RenderOpts, "dividerAlt" | "markerOverride" | "emoji"> = {},
 ): { md: string; node: RNode } {
+  const emoji = options.emoji ?? atomsIn(block)?.customEmoji;
+  const extra = emoji ? { ...options, emoji } : options;
   const tiers = verificationTiers(block);
   if (!tiers) return renderTop(block, { eol, tier: 1, ...extra });
-  const target = fingerprint(block);
+  // Atoms are read back when asked for, with the reader's own keys: compare what is carried.
+  // Custom emoji are read with every name the document registers.
+  const found = atomsIn(block);
+  const atoms =
+    found || emoji ? { ...found, ...(emoji ? { customEmoji: { ...emoji } } : {}) } : undefined;
+  const print = (b: Block): string => fingerprint(atoms ? carried(b) : b);
+  const target = print(block);
   let first: { md: string; node: RNode } | null = null;
   for (const tier of tiers) {
     const r = renderTop(block, { eol, tier, ...extra });
     if (!first) first = r;
-    const p = parseInternal(r.md, false);
-    if (p.nodes.length === 1 && fingerprint(p.nodes[0]!.block) === target) return r;
+    const p = parseInternal(r.md, false, atoms);
+    if (p.nodes.length === 1 && print(p.nodes[0]!.block) === target) return r;
   }
   return first!;
 }
@@ -83,6 +93,7 @@ export function blockToMarkdown(block: Block, eol = "\n"): string {
         newline: " ",
         hard: false,
         tier: 1,
+        emoji: atomsIn(block)?.customEmoji,
       }).md;
     case "tableRow": {
       const cells = (block.children ?? []).map(
@@ -255,6 +266,10 @@ export function serializeMarkdown(doc: Doc, snapshot?: MarkdownSnapshot): Serial
     items.push({ block, oi, preserved, fp, md: "", start: 0, end: 0 });
   }
   resolveHazards(items, snap, fm);
+  // Names of the document's custom emoji: typed text that looks like one is escaped.
+  const registry: InlineAtoms = {};
+  for (const block of doc?.blocks ?? []) if (block) atomsIn(block, registry);
+  const emoji = registry.customEmoji;
 
   const render = (item: Item): void => {
     if (item.preserved && snap) {
@@ -265,6 +280,7 @@ export function serializeMarkdown(doc: Doc, snapshot?: MarkdownSnapshot): Serial
       const r = renderVerified(item.block, eol, {
         dividerAlt: item.dividerAlt,
         markerOverride: item.markerOverride,
+        emoji,
       });
       item.md = r.md;
       item.node = r.node;

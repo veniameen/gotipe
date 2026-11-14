@@ -25,10 +25,13 @@ collaboration
 - An operation ID is a Lamport counter plus the `peerId` of the replica that made it. A
   repeated operation changes nothing. A different operation under an existing ID fails the
   whole update, and nothing from that update is applied.
-- An update is the replica's complete operation log on top of a baseline document. Updates
-  are replay-safe: you can apply one more than once and in any order.
+- An update is a set of operations. Updates are replay-safe: you can apply one more than
+  once and in any order. The full state adds the baseline document to every operation; an
+  edit travels as its new operations only.
+- Marks keep the order they were applied in, on every replica: `italic` then `bold` is the
+  same JSON and the same HTML nesting for everyone, and undo restores it.
 - All replicas start from the same baseline. A replica that already has operations rejects
-  an update built on a different baseline. Replacing the content over REST starts a new
+  a full state built on a different baseline. Replacing the content over REST starts a new
   baseline, and every open editor must load the document again (see
   [When the document is replaced](/docs/collaboration/provider#when-the-document-is-replaced)).
 - Undo and redo stay per replica: undo reverts your own operations and keeps everyone
@@ -125,20 +128,25 @@ Call `provider.destroy()` and `editor.destroy()` when the view closes.
 ## Architecture with GoTipe Cloud
 
 1. **Load.** `GET /v1/documents/{id}` returns the rendered `content` and
-   `collaboration_state: { baseline, updates }`. Rendered content has no CRDT identities,
-   so it cannot serve as a baseline.
+   `collaboration_state: { baseline, updates, generation }`. Rendered content has no CRDT
+   identities, so it cannot serve as a baseline. `generation` is Cloud's name for this
+   baseline.
 2. **Replay.** You create the editor from `baseline`; the provider applies every stored
    update before input.
 3. **Connect.** The provider opens a WebSocket to the sync endpoint (`/sync`, port 8081 by
-   default) with the subprotocol `gotipe.v1`. Cloud checks the token, the `documents:write`
-   scope and editor access before the upgrade.
-4. **Handshake.** The provider asks for the current state, merges it and reports
-   `connected`.
-5. **Edit.** Each local change sends an update with the operations the server has not
-   confirmed. Cloud validates the update, writes it to PostgreSQL, confirms it with an ACK
-   and forwards it to the other peers of the document.
+   default) with the subprotocol `gotipe.v2` and the `generation`. Cloud checks the token,
+   the `documents:write` scope and editor access before the upgrade.
+4. **Handshake.** Cloud refuses a generation the document no longer has; otherwise it
+   sends the current state. The provider merges it, works out what the server lacks and
+   reports `connected`.
+5. **Edit.** Local changes are sent as their operations alone, the ones the server has not
+   confirmed, in frames of at most 512 KiB however large the document is, and only whole
+   transactions; a larger transaction goes in parts that Cloud saves together. Cloud
+   validates a frame, writes it to PostgreSQL, confirms it with an ACK and forwards it to
+   the other peers of the document.
 6. **Read.** REST reads and exports run the baseline plus every stored update through the
-   same Rust engine.
+   same Rust engine. Cloud merges a document's stored updates into one record as they
+   accumulate.
 
 Frames are binary: one type byte followed by a UTF-8 JSON payload.
 [Realtime](/docs/cloud/realtime) describes each frame.
@@ -151,8 +159,15 @@ editor's collaboration methods directly:
 | Method | Description |
 | --- | --- |
 | `enableCollaboration(peerId)` | Starts a replica at the current document. The peer ID cannot change afterwards. |
-| `getCollaborationUpdate()` | Returns the complete, replay-safe update as UTF-8 JSON bytes. Reading it does not drain it. |
+| `getCollaborationUpdate()` | Returns the full state, the baseline and every operation, as UTF-8 JSON bytes. Reading it does not drain it. |
+| `getCollaborationUpdate({ after, maxBytes? })` | Returns only this replica's operations after the Lamport clock `after`, oldest first, without the baseline. `remaining` in the result counts the later ones that `maxBytes` left out. |
+| `getCollaborationUpdate({ missingFrom })` | Takes a peer's full state and returns the operations it lacks, except this replica's own after `acknowledged`, the newest of them in that state. |
 | `receiveCollaborationUpdate(bytes)` | Merges an update atomically. Emits `update`, never `transaction`. |
+
+A transport that confirms what it delivered can send `{ after }` updates: remember the
+clock of the last operation the other side confirmed and ask for the operations after it.
+Operations of one replica are confirmed in order, so that one number is enough. Without
+confirmations, send the full state: it is larger and always safe.
 
 This example keeps the tabs of one browser in sync with `BroadcastChannel`. Every tab must
 create its editor from the same baseline.

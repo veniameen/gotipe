@@ -16,7 +16,11 @@ conflict GoTipe hands back to you instead of merging it.
   after every local edit. `saving` is `true` while an update waits for its ACK.
 - Remote carets disappear: `onPeersChange` receives an empty list.
 - The provider reconnects with growing delays. It merges the server's state first, then
-  sends only the operations the server does not have. Edits made on both sides converge.
+  sends only the operations the server does not have, in order, in frames of at most
+  512 KiB that never split an edit. A long offline session takes several frames, never one
+  too large to accept; an edit larger than a message, such as a long paste, goes in parts
+  that the server saves together or not at all.
+  Edits made on both sides converge.
 - After `maxReconnectAttempts` the provider reports `error` and stops trying. The edits
   stay in the editor. Call `connect(editor)` to resume, for example on the browser's
   `online` event; while the provider is still trying, `connect` does nothing.
@@ -56,8 +60,8 @@ export function connectWithStatus(
 
 The provider keeps unconfirmed operations in memory only. It does not write to IndexedDB or
 any other storage, so edits the server has not confirmed are lost when the tab closes,
-unless your app saved them. Save the baseline you loaded together with the replica's
-update log:
+unless your app saved them. Save the baseline you loaded and its `generation` together
+with the replica's full state:
 
 ```ts title="local-copy.ts"
 import type { CollaborationState } from "@gotipe/collaboration";
@@ -65,11 +69,17 @@ import type { GoTipeEditor } from "@gotipe/core";
 
 const decoder = new TextDecoder();
 
-export function keepLocalCopy(editor: GoTipeEditor, key: string, baseline: object): () => void {
+export function keepLocalCopy(
+  editor: GoTipeEditor,
+  key: string,
+  loaded: CollaborationState,
+): () => void {
   let timer: ReturnType<typeof setTimeout> | undefined;
   const save = () => {
     const state: CollaborationState = {
-      baseline,
+      baseline: loaded.baseline,
+      generation: loaded.generation,
+      // Without options: the full state, which a new replica can start from.
       updates: [decoder.decode(editor.getCollaborationUpdate())],
     };
     localStorage.setItem(key, JSON.stringify(state));
@@ -90,8 +100,9 @@ export function readLocalCopy(key: string): CollaborationState | null {
 }
 ```
 
-On the next start, prefer the local copy. The provider replays it and then merges whatever
-the server has:
+On the next start, prefer the local copy. The provider replays it, merges whatever the
+server has, and at the handshake sends the restored operations the server lacks, once,
+although another tab made them under another peer ID:
 
 ```ts title="start.ts"
 import { CollaborationProvider, type CollaborationState } from "@gotipe/collaboration";
@@ -125,7 +136,7 @@ const provider = new CollaborationProvider({
   user: { name: "Alice", color: "#3264ab" },
 });
 provider.connect(editor);
-keepLocalCopy(editor, key, initialState.baseline);
+keepLocalCopy(editor, key, initialState);
 editor.mount(document.querySelector<HTMLElement>("#editor")!);
 ```
 
@@ -136,6 +147,8 @@ Rules for the stored copy:
 - Let every editor get a new `peerId` (the default). Restored operations keep the IDs they
   were made with; reusing an old peer ID can create IDs that the server already holds with
   different content.
+- Keep `generation` with the copy. Without it the provider falls back to the first
+  protocol, whose frames repeat the baseline and cannot carry a large document.
 - The log only grows: it holds every operation since the baseline. Prefer IndexedDB to
   `localStorage` for large documents.
 - If the server's baseline changed, because the document was replaced over REST or a
@@ -144,7 +157,8 @@ Rules for the stored copy:
   (see [When the document is replaced](/docs/collaboration/provider#when-the-document-is-replaced)).
 
 Without a provider, `applyCollaborationState(editor, state, peerId)` performs the same
-replay for a transport of your own.
+replay for a transport of your own. It applies all stored updates as one: apply them that
+way in your own code too, never one by one.
 
 ## Conflicts during IME input
 
@@ -184,7 +198,12 @@ ends.
 
 - Unconfirmed edits live in memory. Keeping them across reloads is your app's job.
 - An interrupted composition is not merged automatically.
-- The client never compacts its log, and every update carries the whole log.
+- The client never compacts its log: `getCollaborationUpdate()` without options, and so a
+  local copy, holds the baseline and every operation. Only what the provider sends is
+  incremental.
+- One operation larger than a sync message (1 MiB), such as a file embedded in an
+  attribute as a `data:` URL, cannot be synced. The provider reports it and stops; keep
+  files in [host storage](/docs/concepts/host).
 
 ## Related
 

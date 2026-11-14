@@ -30,4 +30,9 @@ export interface EditorEvents {
   compositionInterrupted: () => void;
   editableChange: (editable: boolean) => void;
   decorationsChange: (payload: { layer: string }) => void;
+  /**
+   * Right before `enableCollaboration` takes the document as the baseline every replica
+   * shares. A listener may still undo what it added to the loaded document.
+   */
+  beforeCollaboration: () => void;
 }

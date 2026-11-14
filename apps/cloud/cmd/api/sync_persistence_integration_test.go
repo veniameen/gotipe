@@ -67,7 +67,10 @@ func TestSyncGenerationFiltersUpdateCommittedAfterRESTReplacement(t *testing.T) 
 			finished := make(chan error, 1)
 			go func() {
 				if checkpoint {
-					finished <- store.SaveSnapshot(ctx, docID, "old-generation", syncEnvelope(base))
+					// A server from before log compaction still writes checkpoints.
+					_, err := delayed.Exec(ctx, `INSERT INTO document_snapshots(document_id,data,version,generation_key)
+					 SELECT id,$2,0,r2_key FROM documents WHERE id=$1 AND r2_key=$3`, docID, syncEnvelope(base), "old-generation")
+					finished <- err
 				} else {
 					// Model an old in-flight writer during rolling upgrade. The new
 					// SaveUpdate also changes metadata, serializing its row lock with REST.
@@ -196,7 +199,12 @@ func TestDurableSyncUpdateAdvancesRESTRevisionAtomically(t *testing.T) {
 	if err := store.SaveUpdate(ctx, docID, "baseline", syncEnvelope(base)); err != nil {
 		t.Fatal(err)
 	}
-	if err := store.SaveSnapshot(ctx, docID, "baseline", syncEnvelope(base)); err != nil {
+	// Compaction is maintenance: it never advances the REST revision.
+	store.compactRows = 1
+	if err := store.SaveUpdate(ctx, docID, "baseline", syncEnvelope(base)); err != nil {
+		t.Fatal(err)
+	}
+	if err := store.CompactLog(ctx, docID, "baseline"); err != nil {
 		t.Fatal(err)
 	}
 	var version int64
@@ -206,7 +214,7 @@ func TestDurableSyncUpdateAdvancesRESTRevisionAtomically(t *testing.T) {
 	if err := db.Pool.QueryRow(ctx, `SELECT version,r2_key,updated_at>now()-interval '1 minute',(SELECT count(*) FROM document_updates WHERE document_id=$1) FROM documents WHERE id=$1`, docID).Scan(&version, &key, &recent, &count); err != nil {
 		t.Fatal(err)
 	}
-	if version != 2 || key != "baseline" || !recent || count != 1 {
+	if version != 3 || key != "baseline" || !recent || count != 1 {
 		t.Fatalf("version=%d key=%s recent=%t deltas=%d", version, key, recent, count)
 	}
 	// A metadata failure must roll back the delta insertion in the same statement.

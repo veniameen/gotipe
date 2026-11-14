@@ -13,6 +13,8 @@ export interface EditorProps {
   blockViews?: BlockViews;
   /** Placeholder of empty blocks. */
   placeholder?: PlaceholderFn;
+  /** Decoration layers the host draws itself; see `EditorContent`. */
+  hostLayers?: readonly string[];
   /** Accessible name of the document. */
   ariaLabel?: string;
   slotBefore?: React.ReactNode;
@@ -27,6 +29,7 @@ export function Editor({
   blockRenderer,
   blockViews,
   placeholder,
+  hostLayers,
   ariaLabel,
   slotBefore,
   slotAfter,
@@ -43,6 +46,7 @@ export function Editor({
           blockRenderer={blockRenderer}
           blockViews={blockViews}
           placeholder={placeholder}
+          hostLayers={hostLayers}
           ariaLabel={ariaLabel}
         />
         {children}

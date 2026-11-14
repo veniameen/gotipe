@@ -5,6 +5,7 @@ export { blockToMarkdown, serializeMarkdown } from "./serialize";
 export type {
   Block,
   Doc,
+  InlineAtoms,
   MapBlock,
   MarkdownMap,
   MarkdownSnapshot,

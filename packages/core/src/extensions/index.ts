@@ -30,3 +30,90 @@ export {
 } from "./marks";
 export { History, Placeholder, DragAndDrop, SlashCommands } from "./behaviors";
 export type { PlaceholderOptions } from "./behaviors";
+export { FindReplace, FindReplaceController, SEARCH_LAYER, getFindReplace } from "./find-replace";
+export type {
+  FindReplaceOptions,
+  FindReplaceState,
+  SearchErrorCode,
+  SearchFailure,
+  SearchMatch,
+  SearchQuery,
+} from "./find-replace";
+export {
+  CharacterCount,
+  CharacterCountController,
+  countCharacters,
+  countText,
+  countWords,
+  fitCharacters,
+  getCharacterCount,
+} from "./character-count";
+export type { CharacterCountOptions, CharacterCountState } from "./character-count";
+export { Typography } from "./typing/typography";
+export type { TypographyOptions } from "./typing/typography";
+export { Autolink } from "./links/autolink";
+export type { AutolinkOptions } from "./links/autolink";
+export { LinkOnPaste } from "./links/link-on-paste";
+export type { LinkOnPasteOptions } from "./links/link-on-paste";
+export { linkHref } from "./links/url";
+export { MarkdownPaste, looksLikeMarkdown } from "./markdown-paste";
+export type { MarkdownPasteOptions } from "./markdown-paste";
+export {
+  TEXT_ALIGNMENTS,
+  TextAlign,
+  getTextAlign,
+  setTextAlign,
+  unsetTextAlign,
+} from "./text-align";
+export type { TextAlignOptions, TextAlignment } from "./text-align";
+export { TrailingNode } from "./trailing-node";
+export type { TrailingNodeOptions } from "./trailing-node";
+export {
+  INVISIBLES_LAYER,
+  InvisibleCharacters,
+  isInvisibleCharactersVisible,
+  setInvisibleCharacters,
+  toggleInvisibleCharacters,
+} from "./decorations/invisible-characters";
+export type { InvisibleCharactersOptions } from "./decorations/invisible-characters";
+export { FOCUS_LAYER, Focus } from "./decorations/focus";
+export type { FocusOptions } from "./decorations/focus";
+export { defineSuggestion } from "./suggestion";
+export type {
+  Suggestion,
+  SuggestionCloseReason,
+  SuggestionEvent,
+  SuggestionOptions,
+  SuggestionRange,
+  SuggestionSelectContext,
+  SuggestionSource,
+  SuggestionState,
+} from "./suggestion";
+export {
+  CustomEmoji,
+  InlineImage,
+  InlineMath,
+  Mention,
+  findAtom,
+  getInlineMath,
+  getMention,
+  inlineImageText,
+  insertAtom,
+  insertCustomEmoji,
+  insertInlineImage,
+  insertInlineMath,
+  insertMention,
+  mentionText,
+  normalizeRemoteAtoms,
+  updateAtom,
+  updateInlineMath,
+  updateMention,
+} from "./atoms";
+export type {
+  AtomInfo,
+  AtomTarget,
+  CustomEmojiAttrs,
+  InlineImageAttrs,
+  MentionAttrs,
+  MentionKind,
+} from "./atoms";

@@ -48,6 +48,8 @@ export function replaceStructuredSelection(
     : removeSelection(before, selection);
   if (!change) throw new GoTipeError("TRANSFORM_ERROR", "The selection is no longer valid");
   host.handled = true;
-  host.dispatch(documentTransaction(before, change.document, change.caret));
-  return change.caret;
+  // `null`: a transaction filter rejected the change.
+  return host.dispatch(documentTransaction(before, change.document, change.caret))
+    ? change.caret
+    : null;
 }

@@ -5,7 +5,11 @@ export type { SlashMenuProps } from "./components/slash-menu";
 export { BlockToolbar } from "./components/block-toolbar";
 export type { BlockToolbarProps } from "./components/block-toolbar";
 export { DragHandle } from "./components/drag-handle";
-export { CollaborationCursors } from "./components/collaboration-cursors";
+export {
+  COLLABORATION_LAYER,
+  CollaborationCursors,
+  peersFromDecorations,
+} from "./components/collaboration-cursors";
 export type { CollaborationCursorsProps, RemotePeer } from "./components/collaboration-cursors";
 export { CommentSidebar } from "./components/comment-sidebar";
 export type { CommentSidebarProps, CommentData, ReplyData } from "./components/comment-sidebar";

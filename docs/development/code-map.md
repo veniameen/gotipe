@@ -49,8 +49,15 @@ React/content/table-layout владеет временной шириной пр
 | История, фильтры и события транзакций | `editor/transactions.ts`, `transaction-hooks.ts` |
 | Lifecycle extensions/plugins и decoration layers | `editor/extension-lifecycle.ts` |
 | Настроенные paste rules и изолированный draft | `editor/clipboard-options.ts`, `clipboard/paste-rules.ts` |
+| Хуки вставки простого текста (`transformPastedText`, `parsePastedText`) | `clipboard/handler.ts` (`pasteText`), контекст со схемой — `editor/clipboard-options.ts` |
+| Состояние расширения вне документа (поиск, счётчик, слои) — один контроллер на редактор | `extensions/scoped.ts`; владельцы — `extensions/find-replace`, `character-count`, `decorations`, `trailing-node.ts` |
+| Правила ввода у каретки (типографика, автоссылки) | `extensions/typing/caret.ts`, `typing/typography.ts`, `links/` |
+| Поиск регулярным выражением: Worker с прерыванием по таймауту, без Worker — статическая проверка | `extensions/find-replace/worker.ts`, `scan.ts` (общий сканер страницы и Worker), `guard.ts` |
+| IME в рендерерах: `editor.isComposing`, удержание декораций составляемого блока | `editor/mount.ts`; React `content/decorations.ts` (`holdComposing`), Vue `decorations.ts` |
 | Вставка с учётом разрешённых детей контейнера | `commands/insertion-point.ts`, `commands/structure-commands.ts` |
 | Наложение mark на span: замена того же типа, exclusive group | `engine/mark-rules.ts` = `crates/gotipe-core/src/transform/marks.rs` |
+| Атомарная разметка: атомы, нормализация шагов, края | `engine/atoms.ts` = `crates/gotipe-core/src/atoms.rs`; выделение — `editor/atom-selection.ts`; ключи — `engine/atom-keys.ts`; поддержка атомов (`atomSupport`: чужой текст `engine/remote-atoms.ts` и `editor/remote-atom-repair.ts`, HTML `document/html-atoms.ts`) — `extensions/atoms/support.ts`, вне графа ядра |
+| Атомы строки и подсказки по символу | `extensions/atoms/`, `extensions/suggestion/`; эмодзи — вход `emoji.ts` |
 
 `editor.ts` связывает владельцев. Команды получают узкий query собранной схемы
 (`commands/schema.ts`: разрешённые дети, marks блока, exclusive group, defaults атрибутов,
@@ -86,6 +93,11 @@ pointer, таймером удержания, capture, edge scroll и cleanup. P
 `interaction/block-text-metrics.ts` измеряет только собственный текст блока;
 `data-gotipe-text-content` имеет приоритет, controls/widgets и чужие вложенные блоки
 не могут смещать ручку или область наведения.
+
+`react/src/content/decorations.ts` и `vue/src/decorations.ts` приводят все виды декораций
+ядра к диапазонам, виджетам и атрибутам блока с одними классами; `text-renderer.tsx` и
+`vue/src/text.ts` их рисуют. `react/src/content/selection-keeper.tsx` (во Vue — хуки
+`EditorContent`) сохраняет native selection, когда изменился только слой декораций.
 
 `react/src/content/code-text.tsx` сохраняет native selection при смене только
 подсветки, используя чистое чтение `editor.getDOMSelection()`. Транзакционное

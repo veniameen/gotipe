@@ -7,10 +7,14 @@ import type {
 } from "@gotipe/core";
 import { documentColorStyle, toSafeHref } from "@gotipe/core";
 import React from "react";
+import { type TextWidget, textDecorations } from "./content/decorations";
 
 export interface TextRendererProps {
   spans: TextSpanView[];
-  /** Decorations of the block: `inline` ranges and `widget`s are rendered. */
+  /**
+   * Decorations of the block. Ranges and widgets of every layer are drawn: `inline`,
+   * `widget`, comments, proposals, other people's selections and carets, ghost text.
+   */
   decorations?: Decoration[];
 }
 
@@ -117,23 +121,40 @@ export function Widget({ decoration }: { decoration: WidgetDecoration }) {
   );
 }
 
-/** Splits `decorations` of a block into inline ranges and widgets. */
+/** Another person's caret: a line in their color with their name above it. */
+function RemoteCaret({ decoration }: { decoration: TextWidget }) {
+  const color = decoration.caret?.color ?? undefined;
+  return (
+    <span
+      {...decorationProps(decoration)}
+      data-gotipe-widget=""
+      contentEditable={false}
+      suppressContentEditableWarning
+    >
+      {/* The zero-width space gives the caret the line's height without literal sizes. */}
+      <span
+        className="gotipe-remote-cursor-caret"
+        style={{ display: "inline-block", backgroundColor: color }}
+      >
+        {"\u200b"}
+      </span>
+      <span className="gotipe-remote-cursor-label" style={{ backgroundColor: color }}>
+        {decoration.caret?.name}
+      </span>
+    </span>
+  );
+}
+
+/** Splits `decorations` of a block into inline ranges and widgets, from every layer. */
 export function splitTextDecorations(decorations: Decoration[] | undefined): {
   inline: InlineDecoration[];
   widgets: WidgetDecoration[];
 } {
-  const inline: InlineDecoration[] = [];
-  const widgets: WidgetDecoration[] = [];
-  if (!decorations) return { inline, widgets };
-  for (const d of decorations) {
-    if (d.type === "inline") inline.push(d);
-    else if (d.type === "widget") widgets.push(d);
-  }
-  return { inline, widgets };
+  return textDecorations(decorations);
 }
 
 export function TextRenderer({ spans, decorations }: TextRendererProps) {
-  const { inline, widgets } = splitTextDecorations(decorations);
+  const { inline, widgets } = textDecorations(decorations);
 
   // Fast path: no decorations — one node per span, as before.
   if (inline.length === 0 && widgets.length === 0) {
@@ -165,7 +186,7 @@ export function TextRenderer({ spans, decorations }: TextRendererProps) {
     points.add(r.from);
     points.add(r.to);
   }
-  const widgetsAt = new Map<number, WidgetDecoration[]>();
+  const widgetsAt = new Map<number, TextWidget[]>();
   for (const w of widgets) {
     const at = Math.max(0, Math.min(w.offset, total));
     points.add(at);
@@ -200,7 +221,14 @@ export function TextRenderer({ spans, decorations }: TextRendererProps) {
     const a = sorted[i]!;
     const here = widgetsAt.get(a);
     if (here) {
-      for (const w of here) out.push(<Widget key={`w:${w.key}`} decoration={w} />);
+      for (const w of here)
+        out.push(
+          w.caret ? (
+            <RemoteCaret key={`w:${w.key}`} decoration={w} />
+          ) : (
+            <Widget key={`w:${w.key}`} decoration={w} />
+          ),
+        );
     }
     const b = sorted[i + 1];
     if (b === undefined || b <= a) continue;

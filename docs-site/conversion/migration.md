@@ -100,12 +100,15 @@ without maps.
 
 - **Attributes.** A block or mark gets the attributes the GoTipe schema declares, with a value
   of the declared type: heading `level`, list `start`, task `checked`, code `language` (and
-  `meta` from a prosemirror-markdown info string), cell `colspan`, `rowspan` and `align`, table
-  `colWidths`, image `src`, `alt`, `width` and `height`, link `href`, `title`, `target` and
-  `rel`, highlight and text `color`. Lexical's `colSpan`, `rowSpan`, `altText`, a cell's
-  `format` and a heading's `tag` are renamed to these.
+  `meta` from a prosemirror-markdown info string), cell `colspan`, `rowspan` and `align`,
+  paragraph and heading `align`, table `colWidths`, image `src`, `alt`, `width` and `height`,
+  link `href`, `title`, `target` and `rel`, highlight and text `color`. Tiptap's `textAlign`,
+  Lexical's `colSpan`, `rowSpan`, `altText`, the `format` of a cell, paragraph or heading
+  (`left`, `center`, `right`, `justify`) and a heading's `tag` are renamed to these; Slate's
+  `align` already is one.
 - **Everything else** goes to `result.unmapped`, tied to the block by `blockId`: Tiptap's
-  `colwidth` and image `title`, alignment and direction of paragraphs, Lexical's `indent`,
+  `colwidth` and image `title`, text direction, the alignment of a paragraph that became a
+  list item's or cell's text, Lexical's `indent`,
   `version`, cell `width` and image `caption`, font family and size, other node fields. A
   `null` value counts as unset and is left out. Each field that holds a value gets one warning
   per source type, such as `Lexical root.children[3]: paragraph field indent does not fit the
@@ -192,9 +195,10 @@ data later, or read the fields your application has its own attributes for by `b
 - Slate code blocks made of `code-line` elements are kept as JSON.
 - Saved as Markdown, a preserved block is written as its JSON text, like any `markdownRaw`
   block.
-- Alignment and indentation of paragraphs and headings, text direction, column widths of
-  Tiptap tables, image titles and captions, and font family and size have no GoTipe
-  attribute. They are in `unmapped`, not in the document.
+- Indentation of paragraphs and headings, text direction, column widths of Tiptap tables,
+  image titles and captions, and font family and size have no GoTipe attribute. They are in
+  `unmapped`, not in the document. Alignment is kept (`align`), except on a paragraph that
+  became a list item's or cell's text.
 
 ## Related
 

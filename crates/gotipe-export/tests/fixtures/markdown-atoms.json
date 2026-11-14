@@ -1,0 +1,2754 @@
+{
+  "version": 1,
+  "read": [
+    {
+      "id": "mention",
+      "markdown": "Привет, [@Анна](mention:user-42) и [Спека v2](mention:page-7)!\n",
+      "atoms": {
+        "mention": true
+      },
+      "blocks": [
+        {
+          "type": "paragraph",
+          "attrs": {},
+          "content": [
+            {
+              "text": "Привет, ",
+              "marks": []
+            },
+            {
+              "text": "@Анна",
+              "marks": [
+                {
+                  "type": "mention",
+                  "attrs": {
+                    "kind": "user",
+                    "id": "42",
+                    "label": "Анна",
+                    "key": "1"
+                  }
+                }
+              ]
+            },
+            {
+              "text": " и ",
+              "marks": []
+            },
+            {
+              "text": "Спека v2",
+              "marks": [
+                {
+                  "type": "mention",
+                  "attrs": {
+                    "kind": "page",
+                    "id": "7",
+                    "label": "Спека v2",
+                    "key": "2"
+                  }
+                }
+              ]
+            },
+            {
+              "text": "!",
+              "marks": []
+            }
+          ],
+          "children": []
+        }
+      ]
+    },
+    {
+      "id": "mention-encoded-id",
+      "markdown": "[@Ёж 😀](mention:user-%D1%91%D0%B6%2F1%20%28a%29~x.y_z-0)\n",
+      "atoms": {
+        "mention": true
+      },
+      "blocks": [
+        {
+          "type": "paragraph",
+          "attrs": {},
+          "content": [
+            {
+              "text": "@Ёж 😀",
+              "marks": [
+                {
+                  "type": "mention",
+                  "attrs": {
+                    "kind": "user",
+                    "id": "ёж/1 (a)~x.y_z-0",
+                    "label": "Ёж 😀",
+                    "key": "1"
+                  }
+                }
+              ]
+            }
+          ],
+          "children": []
+        }
+      ]
+    },
+    {
+      "id": "mention-title-is-the-label",
+      "markdown": "[@Аня](mention:user-42 \"Анна Петрова\") и [@@x](mention:user-1)\n",
+      "atoms": {
+        "mention": true
+      },
+      "blocks": [
+        {
+          "type": "paragraph",
+          "attrs": {},
+          "content": [
+            {
+              "text": "@Аня",
+              "marks": [
+                {
+                  "type": "mention",
+                  "attrs": {
+                    "kind": "user",
+                    "id": "42",
+                    "label": "Анна Петрова",
+                    "key": "1"
+                  }
+                }
+              ]
+            },
+            {
+              "text": " и ",
+              "marks": []
+            },
+            {
+              "text": "@@x",
+              "marks": [
+                {
+                  "type": "mention",
+                  "attrs": {
+                    "kind": "user",
+                    "id": "1",
+                    "label": "@x",
+                    "key": "2"
+                  }
+                }
+              ]
+            }
+          ],
+          "children": []
+        }
+      ]
+    },
+    {
+      "id": "mention-inner-marks",
+      "markdown": "[**@Анна**](mention:user-42) *[@Б`о`б](mention:user-7)*\n",
+      "atoms": {
+        "mention": true
+      },
+      "blocks": [
+        {
+          "type": "paragraph",
+          "attrs": {},
+          "content": [
+            {
+              "text": "@Анна",
+              "marks": [
+                {
+                  "type": "bold"
+                },
+                {
+                  "type": "mention",
+                  "attrs": {
+                    "kind": "user",
+                    "id": "42",
+                    "label": "Анна",
+                    "key": "1"
+                  }
+                }
+              ]
+            },
+            {
+              "text": " ",
+              "marks": []
+            },
+            {
+              "text": "@Б",
+              "marks": [
+                {
+                  "type": "italic"
+                },
+                {
+                  "type": "mention",
+                  "attrs": {
+                    "kind": "user",
+                    "id": "7",
+                    "label": "Боб",
+                    "key": "2"
+                  }
+                }
+              ]
+            },
+            {
+              "text": "о",
+              "marks": [
+                {
+                  "type": "italic"
+                },
+                {
+                  "type": "code"
+                },
+                {
+                  "type": "mention",
+                  "attrs": {
+                    "kind": "user",
+                    "id": "7",
+                    "label": "Боб",
+                    "key": "2"
+                  }
+                }
+              ]
+            },
+            {
+              "text": "б",
+              "marks": [
+                {
+                  "type": "italic"
+                },
+                {
+                  "type": "mention",
+                  "attrs": {
+                    "kind": "user",
+                    "id": "7",
+                    "label": "Боб",
+                    "key": "2"
+                  }
+                }
+              ]
+            }
+          ],
+          "children": []
+        }
+      ]
+    },
+    {
+      "id": "mention-adjacent-equal-get-keys",
+      "markdown": "[@A](mention:user-1)[@A](mention:user-1)[@A](mention:user-1) [@A](mention:user-1)\n",
+      "atoms": {
+        "mention": true
+      },
+      "blocks": [
+        {
+          "type": "paragraph",
+          "attrs": {},
+          "content": [
+            {
+              "text": "@A",
+              "marks": [
+                {
+                  "type": "mention",
+                  "attrs": {
+                    "kind": "user",
+                    "id": "1",
+                    "label": "A",
+                    "key": "1"
+                  }
+                }
+              ]
+            },
+            {
+              "text": "@A",
+              "marks": [
+                {
+                  "type": "mention",
+                  "attrs": {
+                    "kind": "user",
+                    "id": "1",
+                    "label": "A",
+                    "key": "2"
+                  }
+                }
+              ]
+            },
+            {
+              "text": "@A",
+              "marks": [
+                {
+                  "type": "mention",
+                  "attrs": {
+                    "kind": "user",
+                    "id": "1",
+                    "label": "A",
+                    "key": "3"
+                  }
+                }
+              ]
+            },
+            {
+              "text": " ",
+              "marks": []
+            },
+            {
+              "text": "@A",
+              "marks": [
+                {
+                  "type": "mention",
+                  "attrs": {
+                    "kind": "user",
+                    "id": "1",
+                    "label": "A",
+                    "key": "4"
+                  }
+                }
+              ]
+            }
+          ],
+          "children": []
+        }
+      ]
+    },
+    {
+      "id": "mention-like-links-stay-links",
+      "markdown": "[a](mention:robot-1) [b](mention:user-) [c](mention:user-%ZZ) [d](mention:user-%FF) [e](Mention:user-1) [f![g](h.png)](mention:user-1)\n",
+      "atoms": {
+        "mention": true
+      },
+      "blocks": [
+        {
+          "type": "paragraph",
+          "attrs": {},
+          "content": [
+            {
+              "text": "a",
+              "marks": [
+                {
+                  "type": "link",
+                  "attrs": {
+                    "href": "mention:robot-1"
+                  }
+                }
+              ]
+            },
+            {
+              "text": " ",
+              "marks": []
+            },
+            {
+              "text": "b",
+              "marks": [
+                {
+                  "type": "link",
+                  "attrs": {
+                    "href": "mention:user-"
+                  }
+                }
+              ]
+            },
+            {
+              "text": " ",
+              "marks": []
+            },
+            {
+              "text": "c",
+              "marks": [
+                {
+                  "type": "link",
+                  "attrs": {
+                    "href": "mention:user-%ZZ"
+                  }
+                }
+              ]
+            },
+            {
+              "text": " ",
+              "marks": []
+            },
+            {
+              "text": "d",
+              "marks": [
+                {
+                  "type": "link",
+                  "attrs": {
+                    "href": "mention:user-%FF"
+                  }
+                }
+              ]
+            },
+            {
+              "text": " ",
+              "marks": []
+            },
+            {
+              "text": "e",
+              "marks": [
+                {
+                  "type": "link",
+                  "attrs": {
+                    "href": "Mention:user-1"
+                  }
+                }
+              ]
+            },
+            {
+              "text": " ",
+              "marks": []
+            },
+            {
+              "text": "f",
+              "marks": [
+                {
+                  "type": "link",
+                  "attrs": {
+                    "href": "mention:user-1"
+                  }
+                }
+              ]
+            },
+            {
+              "text": "![g](h.png)",
+              "marks": [
+                {
+                  "type": "link",
+                  "attrs": {
+                    "href": "mention:user-1"
+                  }
+                },
+                {
+                  "type": "mdRaw"
+                }
+              ]
+            }
+          ],
+          "children": []
+        }
+      ]
+    },
+    {
+      "id": "mention-disabled",
+      "markdown": "[@Анна](mention:user-42)\n",
+      "atoms": {},
+      "blocks": [
+        {
+          "type": "paragraph",
+          "attrs": {},
+          "content": [
+            {
+              "text": "@Анна",
+              "marks": [
+                {
+                  "type": "link",
+                  "attrs": {
+                    "href": "mention:user-42"
+                  }
+                }
+              ]
+            }
+          ],
+          "children": []
+        }
+      ]
+    },
+    {
+      "id": "math",
+      "markdown": "Формула $x^2$ и $\\frac{a}{b}$, затем $α+β$😀 и $a_1 * b_2 * c$ и $a &amp; \\$b$.\n",
+      "atoms": {
+        "inlineMath": true
+      },
+      "blocks": [
+        {
+          "type": "paragraph",
+          "attrs": {},
+          "content": [
+            {
+              "text": "Формула ",
+              "marks": []
+            },
+            {
+              "text": "x^2",
+              "marks": [
+                {
+                  "type": "inlineMath",
+                  "attrs": {
+                    "key": "1"
+                  }
+                }
+              ]
+            },
+            {
+              "text": " и ",
+              "marks": []
+            },
+            {
+              "text": "\\frac{a}{b}",
+              "marks": [
+                {
+                  "type": "inlineMath",
+                  "attrs": {
+                    "key": "2"
+                  }
+                }
+              ]
+            },
+            {
+              "text": ", затем ",
+              "marks": []
+            },
+            {
+              "text": "α+β",
+              "marks": [
+                {
+                  "type": "inlineMath",
+                  "attrs": {
+                    "key": "3"
+                  }
+                }
+              ]
+            },
+            {
+              "text": "😀 и ",
+              "marks": []
+            },
+            {
+              "text": "a_1 * b_2 * c",
+              "marks": [
+                {
+                  "type": "inlineMath",
+                  "attrs": {
+                    "key": "4"
+                  }
+                }
+              ]
+            },
+            {
+              "text": " и ",
+              "marks": []
+            },
+            {
+              "text": "a &amp; \\$b",
+              "marks": [
+                {
+                  "type": "inlineMath",
+                  "attrs": {
+                    "key": "5"
+                  }
+                }
+              ]
+            },
+            {
+              "text": ".",
+              "marks": []
+            }
+          ],
+          "children": []
+        }
+      ]
+    },
+    {
+      "id": "math-dollars-in-plain-text",
+      "markdown": "$5 and $6\n\n$a$5\n\n\\$x$ и $$y$$\n\n$ z$ и $w $\n\nодна $a\nb$ строка\n\nцена 5$\n",
+      "atoms": {
+        "inlineMath": true
+      },
+      "blocks": [
+        {
+          "type": "paragraph",
+          "attrs": {},
+          "content": [
+            {
+              "text": "$5 and $6",
+              "marks": []
+            }
+          ],
+          "children": []
+        },
+        {
+          "type": "paragraph",
+          "attrs": {},
+          "content": [
+            {
+              "text": "$a$5",
+              "marks": []
+            }
+          ],
+          "children": []
+        },
+        {
+          "type": "paragraph",
+          "attrs": {},
+          "content": [
+            {
+              "text": "$x$ и $$y$$",
+              "marks": []
+            }
+          ],
+          "children": []
+        },
+        {
+          "type": "paragraph",
+          "attrs": {},
+          "content": [
+            {
+              "text": "$ z$ и $w $",
+              "marks": []
+            }
+          ],
+          "children": []
+        },
+        {
+          "type": "paragraph",
+          "attrs": {},
+          "content": [
+            {
+              "text": "одна $a\nb$ строка",
+              "marks": []
+            }
+          ],
+          "children": []
+        },
+        {
+          "type": "paragraph",
+          "attrs": {},
+          "content": [
+            {
+              "text": "цена 5$",
+              "marks": []
+            }
+          ],
+          "children": []
+        }
+      ]
+    },
+    {
+      "id": "math-adjacent-and-code",
+      "markdown": "$x$$x$ `$c$` $`y`$\n",
+      "atoms": {
+        "inlineMath": true
+      },
+      "blocks": [
+        {
+          "type": "paragraph",
+          "attrs": {},
+          "content": [
+            {
+              "text": "x",
+              "marks": [
+                {
+                  "type": "inlineMath",
+                  "attrs": {
+                    "key": "1"
+                  }
+                }
+              ]
+            },
+            {
+              "text": "x",
+              "marks": [
+                {
+                  "type": "inlineMath",
+                  "attrs": {
+                    "key": "2"
+                  }
+                }
+              ]
+            },
+            {
+              "text": " ",
+              "marks": []
+            },
+            {
+              "text": "$c$",
+              "marks": [
+                {
+                  "type": "code"
+                }
+              ]
+            },
+            {
+              "text": " ",
+              "marks": []
+            },
+            {
+              "text": "`y`",
+              "marks": [
+                {
+                  "type": "inlineMath",
+                  "attrs": {
+                    "key": "3"
+                  }
+                }
+              ]
+            }
+          ],
+          "children": []
+        }
+      ]
+    },
+    {
+      "id": "math-in-heading-bold-and-cell",
+      "markdown": "## Раздел $E=mc^2$\n\n**$x$** и *жирный $y$ текст*\n\n| $a|b$ | [@A](mention:user-1) |\n| --- | --- | --- |\n| :party: | ![с](i.png) | $x\\|y$ |\n",
+      "atoms": {
+        "mention": true,
+        "inlineMath": true,
+        "inlineImage": true,
+        "customEmoji": {
+          "party": "https://cdn.test/party.png",
+          "thumbs_up": "emoji/thumbs_up.png",
+          "+1": "emoji/plus.png"
+        }
+      },
+      "blocks": [
+        {
+          "type": "heading",
+          "attrs": {
+            "level": 2
+          },
+          "content": [
+            {
+              "text": "Раздел ",
+              "marks": []
+            },
+            {
+              "text": "E=mc^2",
+              "marks": [
+                {
+                  "type": "inlineMath",
+                  "attrs": {
+                    "key": "1"
+                  }
+                }
+              ]
+            }
+          ],
+          "children": []
+        },
+        {
+          "type": "paragraph",
+          "attrs": {},
+          "content": [
+            {
+              "text": "x",
+              "marks": [
+                {
+                  "type": "bold"
+                },
+                {
+                  "type": "inlineMath",
+                  "attrs": {
+                    "key": "2"
+                  }
+                }
+              ]
+            },
+            {
+              "text": " и ",
+              "marks": []
+            },
+            {
+              "text": "жирный ",
+              "marks": [
+                {
+                  "type": "italic"
+                }
+              ]
+            },
+            {
+              "text": "y",
+              "marks": [
+                {
+                  "type": "italic"
+                },
+                {
+                  "type": "inlineMath",
+                  "attrs": {
+                    "key": "3"
+                  }
+                }
+              ]
+            },
+            {
+              "text": " текст",
+              "marks": [
+                {
+                  "type": "italic"
+                }
+              ]
+            }
+          ],
+          "children": []
+        },
+        {
+          "type": "table",
+          "attrs": {
+            "align": [
+              null,
+              null,
+              null
+            ]
+          },
+          "content": null,
+          "children": [
+            {
+              "type": "tableRow",
+              "attrs": {},
+              "content": null,
+              "children": [
+                {
+                  "type": "tableHeader",
+                  "attrs": {},
+                  "content": [
+                    {
+                      "text": "$a",
+                      "marks": []
+                    }
+                  ],
+                  "children": []
+                },
+                {
+                  "type": "tableHeader",
+                  "attrs": {},
+                  "content": [
+                    {
+                      "text": "b$",
+                      "marks": []
+                    }
+                  ],
+                  "children": []
+                },
+                {
+                  "type": "tableHeader",
+                  "attrs": {},
+                  "content": [
+                    {
+                      "text": "@A",
+                      "marks": [
+                        {
+                          "type": "mention",
+                          "attrs": {
+                            "kind": "user",
+                            "id": "1",
+                            "label": "A",
+                            "key": "4"
+                          }
+                        }
+                      ]
+                    }
+                  ],
+                  "children": []
+                }
+              ]
+            },
+            {
+              "type": "tableRow",
+              "attrs": {},
+              "content": null,
+              "children": [
+                {
+                  "type": "tableCell",
+                  "attrs": {},
+                  "content": [
+                    {
+                      "text": ":party:",
+                      "marks": [
+                        {
+                          "type": "customEmoji",
+                          "attrs": {
+                            "name": "party",
+                            "src": "https://cdn.test/party.png",
+                            "key": "5"
+                          }
+                        }
+                      ]
+                    }
+                  ],
+                  "children": []
+                },
+                {
+                  "type": "tableCell",
+                  "attrs": {},
+                  "content": [
+                    {
+                      "text": "с",
+                      "marks": [
+                        {
+                          "type": "inlineImage",
+                          "attrs": {
+                            "src": "i.png",
+                            "alt": "с",
+                            "key": "6"
+                          }
+                        }
+                      ]
+                    }
+                  ],
+                  "children": []
+                },
+                {
+                  "type": "tableCell",
+                  "attrs": {},
+                  "content": [
+                    {
+                      "text": "x|y",
+                      "marks": [
+                        {
+                          "type": "inlineMath",
+                          "attrs": {
+                            "key": "7"
+                          }
+                        }
+                      ]
+                    }
+                  ],
+                  "children": []
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "math-disabled",
+      "markdown": "Формула $x^2$\n",
+      "atoms": {},
+      "blocks": [
+        {
+          "type": "paragraph",
+          "attrs": {},
+          "content": [
+            {
+              "text": "Формула $x^2$",
+              "marks": []
+            }
+          ],
+          "children": []
+        }
+      ]
+    },
+    {
+      "id": "emoji",
+      "markdown": "Ура :party: и :unknown: и 10:30:45 :thumbs_up::+1: \\:party: :constructor:\n",
+      "atoms": {
+        "customEmoji": {
+          "party": "https://cdn.test/party.png",
+          "thumbs_up": "emoji/thumbs_up.png",
+          "+1": "emoji/plus.png"
+        }
+      },
+      "blocks": [
+        {
+          "type": "paragraph",
+          "attrs": {},
+          "content": [
+            {
+              "text": "Ура ",
+              "marks": []
+            },
+            {
+              "text": ":party:",
+              "marks": [
+                {
+                  "type": "customEmoji",
+                  "attrs": {
+                    "name": "party",
+                    "src": "https://cdn.test/party.png",
+                    "key": "1"
+                  }
+                }
+              ]
+            },
+            {
+              "text": " и :unknown: и 10:30:45 ",
+              "marks": []
+            },
+            {
+              "text": ":thumbs_up:",
+              "marks": [
+                {
+                  "type": "customEmoji",
+                  "attrs": {
+                    "name": "thumbs_up",
+                    "src": "emoji/thumbs_up.png",
+                    "key": "2"
+                  }
+                }
+              ]
+            },
+            {
+              "text": ":+1:",
+              "marks": [
+                {
+                  "type": "customEmoji",
+                  "attrs": {
+                    "name": "+1",
+                    "src": "emoji/plus.png",
+                    "key": "3"
+                  }
+                }
+              ]
+            },
+            {
+              "text": " :party: :constructor:",
+              "marks": []
+            }
+          ],
+          "children": []
+        }
+      ]
+    },
+    {
+      "id": "emoji-adjacent-equal-get-keys",
+      "markdown": ":party::party:**:party:**\n",
+      "atoms": {
+        "customEmoji": {
+          "party": "https://cdn.test/party.png",
+          "thumbs_up": "emoji/thumbs_up.png",
+          "+1": "emoji/plus.png"
+        }
+      },
+      "blocks": [
+        {
+          "type": "paragraph",
+          "attrs": {},
+          "content": [
+            {
+              "text": ":party:",
+              "marks": [
+                {
+                  "type": "customEmoji",
+                  "attrs": {
+                    "name": "party",
+                    "src": "https://cdn.test/party.png",
+                    "key": "1"
+                  }
+                }
+              ]
+            },
+            {
+              "text": ":party:",
+              "marks": [
+                {
+                  "type": "customEmoji",
+                  "attrs": {
+                    "name": "party",
+                    "src": "https://cdn.test/party.png",
+                    "key": "2"
+                  }
+                }
+              ]
+            },
+            {
+              "text": ":party:",
+              "marks": [
+                {
+                  "type": "bold"
+                },
+                {
+                  "type": "customEmoji",
+                  "attrs": {
+                    "name": "party",
+                    "src": "https://cdn.test/party.png",
+                    "key": "3"
+                  }
+                }
+              ]
+            }
+          ],
+          "children": []
+        }
+      ]
+    },
+    {
+      "id": "emoji-disabled",
+      "markdown": "Ура :party:\n",
+      "atoms": {
+        "mention": true,
+        "inlineMath": true,
+        "inlineImage": true
+      },
+      "blocks": [
+        {
+          "type": "paragraph",
+          "attrs": {},
+          "content": [
+            {
+              "text": "Ура :party:",
+              "marks": []
+            }
+          ],
+          "children": []
+        }
+      ]
+    },
+    {
+      "id": "image",
+      "markdown": "Смотри ![Схема 😀](img/a.png) и ![](https://a.test/dir/diagram.png?x=1#y) и ![](data:image/png;base64,AAAA) и ![](https://a.test/) и ![t](a.png \"title\")\n",
+      "atoms": {
+        "inlineImage": true
+      },
+      "blocks": [
+        {
+          "type": "paragraph",
+          "attrs": {},
+          "content": [
+            {
+              "text": "Смотри ",
+              "marks": []
+            },
+            {
+              "text": "Схема 😀",
+              "marks": [
+                {
+                  "type": "inlineImage",
+                  "attrs": {
+                    "src": "img/a.png",
+                    "alt": "Схема 😀",
+                    "key": "1"
+                  }
+                }
+              ]
+            },
+            {
+              "text": " и ",
+              "marks": []
+            },
+            {
+              "text": "diagram.png",
+              "marks": [
+                {
+                  "type": "inlineImage",
+                  "attrs": {
+                    "src": "https://a.test/dir/diagram.png?x=1#y",
+                    "alt": "",
+                    "key": "2"
+                  }
+                }
+              ]
+            },
+            {
+              "text": " и ",
+              "marks": []
+            },
+            {
+              "text": "image",
+              "marks": [
+                {
+                  "type": "inlineImage",
+                  "attrs": {
+                    "src": "data:image/png;base64,AAAA",
+                    "alt": "",
+                    "key": "3"
+                  }
+                }
+              ]
+            },
+            {
+              "text": " и ",
+              "marks": []
+            },
+            {
+              "text": "image",
+              "marks": [
+                {
+                  "type": "inlineImage",
+                  "attrs": {
+                    "src": "https://a.test/",
+                    "alt": "",
+                    "key": "4"
+                  }
+                }
+              ]
+            },
+            {
+              "text": " и ",
+              "marks": []
+            },
+            {
+              "text": "![t](a.png \"title\")",
+              "marks": [
+                {
+                  "type": "mdRaw"
+                }
+              ]
+            }
+          ],
+          "children": []
+        }
+      ]
+    },
+    {
+      "id": "image-alone-stays-a-block",
+      "markdown": "![Схема](img/a.png)\n\n# ![a](b.png)![a](b.png)\n",
+      "atoms": {
+        "inlineImage": true
+      },
+      "blocks": [
+        {
+          "type": "image",
+          "attrs": {
+            "src": "img/a.png",
+            "alt": "Схема",
+            "caption": ""
+          },
+          "content": null,
+          "children": []
+        },
+        {
+          "type": "heading",
+          "attrs": {
+            "level": 1
+          },
+          "content": [
+            {
+              "text": "a",
+              "marks": [
+                {
+                  "type": "inlineImage",
+                  "attrs": {
+                    "src": "b.png",
+                    "alt": "a",
+                    "key": "1"
+                  }
+                }
+              ]
+            },
+            {
+              "text": "a",
+              "marks": [
+                {
+                  "type": "inlineImage",
+                  "attrs": {
+                    "src": "b.png",
+                    "alt": "a",
+                    "key": "2"
+                  }
+                }
+              ]
+            }
+          ],
+          "children": []
+        }
+      ]
+    },
+    {
+      "id": "atom-syntax-inside-a-mention-or-an-alt",
+      "markdown": "[$x$ :party:](mention:user-1) и ![a \\$b\\$ c](i.png) x\n",
+      "atoms": {
+        "mention": true,
+        "inlineMath": true,
+        "inlineImage": true,
+        "customEmoji": {
+          "party": "https://cdn.test/party.png",
+          "thumbs_up": "emoji/thumbs_up.png",
+          "+1": "emoji/plus.png"
+        }
+      },
+      "blocks": [
+        {
+          "type": "paragraph",
+          "attrs": {},
+          "content": [
+            {
+              "text": "x",
+              "marks": [
+                {
+                  "type": "link",
+                  "attrs": {
+                    "href": "mention:user-1"
+                  }
+                },
+                {
+                  "type": "inlineMath",
+                  "attrs": {
+                    "key": "1"
+                  }
+                }
+              ]
+            },
+            {
+              "text": " ",
+              "marks": [
+                {
+                  "type": "link",
+                  "attrs": {
+                    "href": "mention:user-1"
+                  }
+                }
+              ]
+            },
+            {
+              "text": ":party:",
+              "marks": [
+                {
+                  "type": "link",
+                  "attrs": {
+                    "href": "mention:user-1"
+                  }
+                },
+                {
+                  "type": "customEmoji",
+                  "attrs": {
+                    "name": "party",
+                    "src": "https://cdn.test/party.png",
+                    "key": "2"
+                  }
+                }
+              ]
+            },
+            {
+              "text": " и ",
+              "marks": []
+            },
+            {
+              "text": "a $b$ c",
+              "marks": [
+                {
+                  "type": "inlineImage",
+                  "attrs": {
+                    "src": "i.png",
+                    "alt": "a $b$ c",
+                    "key": "3"
+                  }
+                }
+              ]
+            },
+            {
+              "text": " x",
+              "marks": []
+            }
+          ],
+          "children": []
+        }
+      ]
+    },
+    {
+      "id": "image-disabled",
+      "markdown": "Смотри ![Схема](img/a.png)\n",
+      "atoms": {
+        "mention": true
+      },
+      "blocks": [
+        {
+          "type": "paragraph",
+          "attrs": {},
+          "content": [
+            {
+              "text": "Смотри ",
+              "marks": []
+            },
+            {
+              "text": "![Схема](img/a.png)",
+              "marks": [
+                {
+                  "type": "mdRaw"
+                }
+              ]
+            }
+          ],
+          "children": []
+        }
+      ]
+    },
+    {
+      "id": "emoji-boundaries",
+      "markdown": "10:30:45 a:party: :party:b <https://x.test/:party:> https://x.test/:party: www.x.test/:party: [x](https://x.test/:party:) (:party:) и :30:!\n",
+      "atoms": {
+        "mention": true,
+        "inlineMath": true,
+        "inlineImage": true,
+        "customEmoji": {
+          "30": "https://cdn.test/30.png",
+          "party": "https://cdn.test/party.png"
+        }
+      },
+      "blocks": [
+        {
+          "type": "paragraph",
+          "attrs": {},
+          "content": [
+            {
+              "text": "10:30:45 a:party: :party:b ",
+              "marks": []
+            },
+            {
+              "text": "https://x.test/:party:",
+              "marks": [
+                {
+                  "type": "link",
+                  "attrs": {
+                    "href": "https://x.test/:party:"
+                  }
+                }
+              ]
+            },
+            {
+              "text": " ",
+              "marks": []
+            },
+            {
+              "text": "https://x.test/:party",
+              "marks": [
+                {
+                  "type": "link",
+                  "attrs": {
+                    "href": "https://x.test/:party"
+                  }
+                }
+              ]
+            },
+            {
+              "text": ": ",
+              "marks": []
+            },
+            {
+              "text": "www.x.test/:party",
+              "marks": [
+                {
+                  "type": "link",
+                  "attrs": {
+                    "href": "http://www.x.test/:party"
+                  }
+                }
+              ]
+            },
+            {
+              "text": ": ",
+              "marks": []
+            },
+            {
+              "text": "x",
+              "marks": [
+                {
+                  "type": "link",
+                  "attrs": {
+                    "href": "https://x.test/:party:"
+                  }
+                }
+              ]
+            },
+            {
+              "text": " (",
+              "marks": []
+            },
+            {
+              "text": ":party:",
+              "marks": [
+                {
+                  "type": "customEmoji",
+                  "attrs": {
+                    "name": "party",
+                    "src": "https://cdn.test/party.png",
+                    "key": "1"
+                  }
+                }
+              ]
+            },
+            {
+              "text": ") и ",
+              "marks": []
+            },
+            {
+              "text": ":30:",
+              "marks": [
+                {
+                  "type": "customEmoji",
+                  "attrs": {
+                    "name": "30",
+                    "src": "https://cdn.test/30.png",
+                    "key": "2"
+                  }
+                }
+              ]
+            },
+            {
+              "text": "!",
+              "marks": []
+            }
+          ],
+          "children": []
+        }
+      ]
+    },
+    {
+      "id": "emoji-escaped-colon",
+      "markdown": "\\:party: и :party:\n",
+      "atoms": {
+        "mention": true,
+        "inlineMath": true,
+        "inlineImage": true,
+        "customEmoji": {
+          "30": "https://cdn.test/30.png",
+          "party": "https://cdn.test/party.png"
+        }
+      },
+      "blocks": [
+        {
+          "type": "paragraph",
+          "attrs": {},
+          "content": [
+            {
+              "text": ":party: и ",
+              "marks": []
+            },
+            {
+              "text": ":party:",
+              "marks": [
+                {
+                  "type": "customEmoji",
+                  "attrs": {
+                    "name": "party",
+                    "src": "https://cdn.test/party.png",
+                    "key": "1"
+                  }
+                }
+              ]
+            }
+          ],
+          "children": []
+        }
+      ]
+    },
+    {
+      "id": "image-alone-with-an-empty-title-stays-inline",
+      "markdown": "![Схема](i.png \"\")\n\n![Схема](i.png)\n",
+      "atoms": {
+        "mention": true,
+        "inlineMath": true,
+        "inlineImage": true,
+        "customEmoji": {
+          "30": "https://cdn.test/30.png",
+          "party": "https://cdn.test/party.png"
+        }
+      },
+      "blocks": [
+        {
+          "type": "paragraph",
+          "attrs": {},
+          "content": [
+            {
+              "text": "Схема",
+              "marks": [
+                {
+                  "type": "inlineImage",
+                  "attrs": {
+                    "src": "i.png",
+                    "alt": "Схема",
+                    "key": "1"
+                  }
+                }
+              ]
+            }
+          ],
+          "children": []
+        },
+        {
+          "type": "image",
+          "attrs": {
+            "src": "i.png",
+            "alt": "Схема",
+            "caption": ""
+          },
+          "content": null,
+          "children": []
+        }
+      ]
+    },
+    {
+      "id": "mention-title-line-breaks",
+      "markdown": "[@Аня](mention:user-42 \"Анна&#10;&#10;Петрова\")\n",
+      "atoms": {
+        "mention": true,
+        "inlineMath": true,
+        "inlineImage": true,
+        "customEmoji": {
+          "30": "https://cdn.test/30.png",
+          "party": "https://cdn.test/party.png"
+        }
+      },
+      "blocks": [
+        {
+          "type": "paragraph",
+          "attrs": {},
+          "content": [
+            {
+              "text": "@Аня",
+              "marks": [
+                {
+                  "type": "mention",
+                  "attrs": {
+                    "kind": "user",
+                    "id": "42",
+                    "label": "Анна\n\nПетрова",
+                    "key": "1"
+                  }
+                }
+              ]
+            }
+          ],
+          "children": []
+        }
+      ]
+    }
+  ],
+  "write": [
+    {
+      "id": "mentions",
+      "document": {
+        "version": 1,
+        "blocks": [
+          {
+            "id": "w1",
+            "type": "paragraph",
+            "attrs": {},
+            "content": [
+              {
+                "text": "Привет, ",
+                "marks": []
+              },
+              {
+                "text": "@Анна",
+                "marks": [
+                  {
+                    "type": "mention",
+                    "attrs": {
+                      "id": "42",
+                      "label": "Анна",
+                      "kind": "user"
+                    }
+                  }
+                ]
+              },
+              {
+                "text": " и ",
+                "marks": []
+              },
+              {
+                "text": "Спека",
+                "marks": [
+                  {
+                    "type": "mention",
+                    "attrs": {
+                      "id": "p/7 ж",
+                      "label": "Спека",
+                      "kind": "page",
+                      "key": "k1"
+                    }
+                  }
+                ]
+              },
+              {
+                "text": ".",
+                "marks": []
+              }
+            ],
+            "children": []
+          },
+          {
+            "id": "w2",
+            "type": "paragraph",
+            "attrs": {},
+            "content": [
+              {
+                "text": "@Аня",
+                "marks": [
+                  {
+                    "type": "mention",
+                    "attrs": {
+                      "id": "42",
+                      "label": "Анна Петрова"
+                    }
+                  }
+                ]
+              },
+              {
+                "text": "@Аня",
+                "marks": [
+                  {
+                    "type": "link",
+                    "attrs": {
+                      "href": "https://a.test"
+                    }
+                  },
+                  {
+                    "type": "mention",
+                    "attrs": {
+                      "id": "42",
+                      "label": "Аня",
+                      "kind": "user",
+                      "key": "x"
+                    }
+                  }
+                ]
+              },
+              {
+                "text": " ",
+                "marks": []
+              },
+              {
+                "text": "@нет",
+                "marks": [
+                  {
+                    "type": "mention",
+                    "attrs": {
+                      "id": "",
+                      "label": "нет"
+                    }
+                  }
+                ]
+              }
+            ],
+            "children": []
+          }
+        ]
+      },
+      "markdown": "Привет, [@Анна](mention:user-42) и [Спека](mention:page-p%2F7%20%D0%B6).\n\n[@Аня](mention:user-42 \"Анна Петрова\")[@Аня](mention:user-42) @нет\n",
+      "atoms": {
+        "mention": true
+      },
+      "reparsed": [
+        {
+          "type": "paragraph",
+          "attrs": {},
+          "content": [
+            {
+              "text": "Привет, ",
+              "marks": []
+            },
+            {
+              "text": "@Анна",
+              "marks": [
+                {
+                  "type": "mention",
+                  "attrs": {
+                    "kind": "user",
+                    "id": "42",
+                    "label": "Анна",
+                    "key": "1"
+                  }
+                }
+              ]
+            },
+            {
+              "text": " и ",
+              "marks": []
+            },
+            {
+              "text": "Спека",
+              "marks": [
+                {
+                  "type": "mention",
+                  "attrs": {
+                    "kind": "page",
+                    "id": "p/7 ж",
+                    "label": "Спека",
+                    "key": "2"
+                  }
+                }
+              ]
+            },
+            {
+              "text": ".",
+              "marks": []
+            }
+          ],
+          "children": []
+        },
+        {
+          "type": "paragraph",
+          "attrs": {},
+          "content": [
+            {
+              "text": "@Аня",
+              "marks": [
+                {
+                  "type": "mention",
+                  "attrs": {
+                    "kind": "user",
+                    "id": "42",
+                    "label": "Анна Петрова",
+                    "key": "3"
+                  }
+                }
+              ]
+            },
+            {
+              "text": "@Аня",
+              "marks": [
+                {
+                  "type": "mention",
+                  "attrs": {
+                    "kind": "user",
+                    "id": "42",
+                    "label": "Аня",
+                    "key": "4"
+                  }
+                }
+              ]
+            },
+            {
+              "text": " @нет",
+              "marks": []
+            }
+          ],
+          "children": []
+        }
+      ]
+    },
+    {
+      "id": "formulas",
+      "document": {
+        "version": 1,
+        "blocks": [
+          {
+            "id": "w1",
+            "type": "paragraph",
+            "attrs": {},
+            "content": [
+              {
+                "text": "E = ",
+                "marks": []
+              },
+              {
+                "text": "mc^2",
+                "marks": [
+                  {
+                    "type": "inlineMath"
+                  }
+                ]
+              },
+              {
+                "text": ", ",
+                "marks": []
+              },
+              {
+                "text": "x",
+                "marks": [
+                  {
+                    "type": "bold"
+                  },
+                  {
+                    "type": "inlineMath",
+                    "attrs": {
+                      "key": "b"
+                    }
+                  }
+                ]
+              },
+              {
+                "text": " и ",
+                "marks": []
+              },
+              {
+                "text": "n",
+                "marks": [
+                  {
+                    "type": "inlineMath"
+                  }
+                ]
+              },
+              {
+                "text": "2 раза",
+                "marks": []
+              }
+            ],
+            "children": []
+          },
+          {
+            "id": "w2",
+            "type": "paragraph",
+            "attrs": {},
+            "content": [
+              {
+                "text": "до ",
+                "marks": []
+              },
+              {
+                "text": "a$b",
+                "marks": [
+                  {
+                    "type": "inlineMath"
+                  }
+                ]
+              },
+              {
+                "text": " после, ",
+                "marks": []
+              },
+              {
+                "text": "x",
+                "marks": [
+                  {
+                    "type": "inlineMath"
+                  }
+                ]
+              },
+              {
+                "text": "x",
+                "marks": [
+                  {
+                    "type": "inlineMath",
+                    "attrs": {
+                      "key": "2"
+                    }
+                  }
+                ]
+              }
+            ],
+            "children": []
+          },
+          {
+            "id": "w3",
+            "type": "paragraph",
+            "attrs": {},
+            "content": [
+              {
+                "text": "цена $5 and $6",
+                "marks": []
+              }
+            ],
+            "children": []
+          },
+          {
+            "id": "w4",
+            "type": "paragraph",
+            "attrs": {},
+            "content": [
+              {
+                "text": "итого $x$ ок",
+                "marks": []
+              }
+            ],
+            "children": []
+          },
+          {
+            "id": "w6",
+            "type": "paragraph",
+            "attrs": {},
+            "content": [
+              {
+                "text": "$a$5",
+                "marks": []
+              }
+            ],
+            "children": []
+          },
+          {
+            "id": "w7",
+            "type": "paragraph",
+            "attrs": {},
+            "content": [
+              {
+                "text": "в $$",
+                "marks": []
+              },
+              {
+                "text": "x",
+                "marks": [
+                  {
+                    "type": "inlineMath"
+                  }
+                ]
+              },
+              {
+                "text": "$ и ",
+                "marks": []
+              },
+              {
+                "text": "y",
+                "marks": [
+                  {
+                    "type": "inlineMath"
+                  }
+                ]
+              }
+            ],
+            "children": []
+          },
+          {
+            "id": "w8",
+            "type": "paragraph",
+            "attrs": {},
+            "content": [
+              {
+                "text": "до",
+                "marks": []
+              },
+              {
+                "text": " a",
+                "marks": [
+                  {
+                    "type": "inlineMath"
+                  }
+                ]
+              },
+              {
+                "text": "b",
+                "marks": [
+                  {
+                    "type": "inlineMath"
+                  }
+                ]
+              },
+              {
+                "text": " после",
+                "marks": []
+              }
+            ],
+            "children": []
+          },
+          {
+            "id": "w5",
+            "type": "heading",
+            "attrs": {
+              "level": 2
+            },
+            "content": [
+              {
+                "text": "Раздел ",
+                "marks": []
+              },
+              {
+                "text": "\\frac{1}{2}",
+                "marks": [
+                  {
+                    "type": "inlineMath"
+                  }
+                ]
+              }
+            ],
+            "children": []
+          }
+        ]
+      },
+      "markdown": "E = $mc^2$, **$x$** и $n$&#50; раза\n\nдо a$b после, $x$$x$\n\nцена $5 and $6\n\nитого \\$x$ ок\n\n$a$5\n\nв \\$\\$$x$$ и $y$\n\nдо ab после\n\n## Раздел $\\frac{1}{2}$\n",
+      "atoms": {
+        "inlineMath": true
+      },
+      "reparsed": [
+        {
+          "type": "paragraph",
+          "attrs": {},
+          "content": [
+            {
+              "text": "E = ",
+              "marks": []
+            },
+            {
+              "text": "mc^2",
+              "marks": [
+                {
+                  "type": "inlineMath",
+                  "attrs": {
+                    "key": "1"
+                  }
+                }
+              ]
+            },
+            {
+              "text": ", ",
+              "marks": []
+            },
+            {
+              "text": "x",
+              "marks": [
+                {
+                  "type": "bold"
+                },
+                {
+                  "type": "inlineMath",
+                  "attrs": {
+                    "key": "2"
+                  }
+                }
+              ]
+            },
+            {
+              "text": " и ",
+              "marks": []
+            },
+            {
+              "text": "n",
+              "marks": [
+                {
+                  "type": "inlineMath",
+                  "attrs": {
+                    "key": "3"
+                  }
+                }
+              ]
+            },
+            {
+              "text": "2 раза",
+              "marks": []
+            }
+          ],
+          "children": []
+        },
+        {
+          "type": "paragraph",
+          "attrs": {},
+          "content": [
+            {
+              "text": "до a$b после, ",
+              "marks": []
+            },
+            {
+              "text": "x",
+              "marks": [
+                {
+                  "type": "inlineMath",
+                  "attrs": {
+                    "key": "4"
+                  }
+                }
+              ]
+            },
+            {
+              "text": "x",
+              "marks": [
+                {
+                  "type": "inlineMath",
+                  "attrs": {
+                    "key": "5"
+                  }
+                }
+              ]
+            }
+          ],
+          "children": []
+        },
+        {
+          "type": "paragraph",
+          "attrs": {},
+          "content": [
+            {
+              "text": "цена $5 and $6",
+              "marks": []
+            }
+          ],
+          "children": []
+        },
+        {
+          "type": "paragraph",
+          "attrs": {},
+          "content": [
+            {
+              "text": "итого $x$ ок",
+              "marks": []
+            }
+          ],
+          "children": []
+        },
+        {
+          "type": "paragraph",
+          "attrs": {},
+          "content": [
+            {
+              "text": "$a$5",
+              "marks": []
+            }
+          ],
+          "children": []
+        },
+        {
+          "type": "paragraph",
+          "attrs": {},
+          "content": [
+            {
+              "text": "в $$",
+              "marks": []
+            },
+            {
+              "text": "x",
+              "marks": [
+                {
+                  "type": "inlineMath",
+                  "attrs": {
+                    "key": "6"
+                  }
+                }
+              ]
+            },
+            {
+              "text": "$ и ",
+              "marks": []
+            },
+            {
+              "text": "y",
+              "marks": [
+                {
+                  "type": "inlineMath",
+                  "attrs": {
+                    "key": "7"
+                  }
+                }
+              ]
+            }
+          ],
+          "children": []
+        },
+        {
+          "type": "paragraph",
+          "attrs": {},
+          "content": [
+            {
+              "text": "до ab после",
+              "marks": []
+            }
+          ],
+          "children": []
+        },
+        {
+          "type": "heading",
+          "attrs": {
+            "level": 2
+          },
+          "content": [
+            {
+              "text": "Раздел ",
+              "marks": []
+            },
+            {
+              "text": "\\frac{1}{2}",
+              "marks": [
+                {
+                  "type": "inlineMath",
+                  "attrs": {
+                    "key": "8"
+                  }
+                }
+              ]
+            }
+          ],
+          "children": []
+        }
+      ]
+    },
+    {
+      "id": "emoji",
+      "document": {
+        "version": 1,
+        "blocks": [
+          {
+            "id": "w1",
+            "type": "paragraph",
+            "attrs": {},
+            "content": [
+              {
+                "text": ":party:",
+                "marks": [
+                  {
+                    "type": "customEmoji",
+                    "attrs": {
+                      "name": "party",
+                      "src": "https://cdn.test/party.png"
+                    }
+                  }
+                ]
+              },
+              {
+                "text": " ура ",
+                "marks": []
+              },
+              {
+                "text": ":party:",
+                "marks": [
+                  {
+                    "type": "customEmoji",
+                    "attrs": {
+                      "name": "party",
+                      "src": "https://cdn.test/party.png",
+                      "key": "a"
+                    }
+                  }
+                ]
+              },
+              {
+                "text": ":party:",
+                "marks": [
+                  {
+                    "type": "customEmoji",
+                    "attrs": {
+                      "name": "party",
+                      "src": "https://cdn.test/party.png",
+                      "key": "b"
+                    }
+                  }
+                ]
+              },
+              {
+                "text": " ",
+                "marks": []
+              },
+              {
+                "text": "(ok)",
+                "marks": [
+                  {
+                    "type": "customEmoji",
+                    "attrs": {
+                      "name": "+1",
+                      "src": "emoji/plus.png"
+                    }
+                  }
+                ]
+              },
+              {
+                "text": " ",
+                "marks": []
+              },
+              {
+                "text": ":bad name:",
+                "marks": [
+                  {
+                    "type": "customEmoji",
+                    "attrs": {
+                      "name": "bad name",
+                      "src": "x.png"
+                    }
+                  }
+                ]
+              }
+            ],
+            "children": []
+          },
+          {
+            "id": "w2",
+            "type": "paragraph",
+            "attrs": {},
+            "content": [
+              {
+                "text": "три ",
+                "marks": []
+              },
+              {
+                "text": ":party::party::party:",
+                "marks": [
+                  {
+                    "type": "customEmoji",
+                    "attrs": {
+                      "name": "party",
+                      "src": "https://cdn.test/party.png"
+                    }
+                  }
+                ]
+              }
+            ],
+            "children": []
+          }
+        ]
+      },
+      "markdown": ":party: ура :party::party: :+1: :bad name:\n\nтри :party::party::party:\n",
+      "atoms": {
+        "customEmoji": {
+          "party": "https://cdn.test/party.png",
+          "thumbs_up": "emoji/thumbs_up.png",
+          "+1": "emoji/plus.png"
+        }
+      },
+      "reparsed": [
+        {
+          "type": "paragraph",
+          "attrs": {},
+          "content": [
+            {
+              "text": ":party:",
+              "marks": [
+                {
+                  "type": "customEmoji",
+                  "attrs": {
+                    "name": "party",
+                    "src": "https://cdn.test/party.png",
+                    "key": "1"
+                  }
+                }
+              ]
+            },
+            {
+              "text": " ура ",
+              "marks": []
+            },
+            {
+              "text": ":party:",
+              "marks": [
+                {
+                  "type": "customEmoji",
+                  "attrs": {
+                    "name": "party",
+                    "src": "https://cdn.test/party.png",
+                    "key": "2"
+                  }
+                }
+              ]
+            },
+            {
+              "text": ":party:",
+              "marks": [
+                {
+                  "type": "customEmoji",
+                  "attrs": {
+                    "name": "party",
+                    "src": "https://cdn.test/party.png",
+                    "key": "3"
+                  }
+                }
+              ]
+            },
+            {
+              "text": " ",
+              "marks": []
+            },
+            {
+              "text": ":+1:",
+              "marks": [
+                {
+                  "type": "customEmoji",
+                  "attrs": {
+                    "name": "+1",
+                    "src": "emoji/plus.png",
+                    "key": "4"
+                  }
+                }
+              ]
+            },
+            {
+              "text": " :bad name:",
+              "marks": []
+            }
+          ],
+          "children": []
+        },
+        {
+          "type": "paragraph",
+          "attrs": {},
+          "content": [
+            {
+              "text": "три ",
+              "marks": []
+            },
+            {
+              "text": ":party:",
+              "marks": [
+                {
+                  "type": "customEmoji",
+                  "attrs": {
+                    "name": "party",
+                    "src": "https://cdn.test/party.png",
+                    "key": "5"
+                  }
+                }
+              ]
+            },
+            {
+              "text": ":party:",
+              "marks": [
+                {
+                  "type": "customEmoji",
+                  "attrs": {
+                    "name": "party",
+                    "src": "https://cdn.test/party.png",
+                    "key": "6"
+                  }
+                }
+              ]
+            },
+            {
+              "text": ":party:",
+              "marks": [
+                {
+                  "type": "customEmoji",
+                  "attrs": {
+                    "name": "party",
+                    "src": "https://cdn.test/party.png",
+                    "key": "7"
+                  }
+                }
+              ]
+            }
+          ],
+          "children": []
+        }
+      ]
+    },
+    {
+      "id": "images",
+      "document": {
+        "version": 1,
+        "blocks": [
+          {
+            "id": "w1",
+            "type": "paragraph",
+            "attrs": {},
+            "content": [
+              {
+                "text": "См. ",
+                "marks": []
+              },
+              {
+                "text": "Схема",
+                "marks": [
+                  {
+                    "type": "inlineImage",
+                    "attrs": {
+                      "src": "img/a b.png",
+                      "alt": "Схема",
+                      "width": 120,
+                      "height": 80
+                    }
+                  }
+                ]
+              },
+              {
+                "text": " и ",
+                "marks": []
+              },
+              {
+                "text": "diagram.png",
+                "marks": [
+                  {
+                    "type": "inlineImage",
+                    "attrs": {
+                      "src": "https://a.test/diagram.png",
+                      "alt": ""
+                    }
+                  }
+                ]
+              },
+              {
+                "text": " и ",
+                "marks": []
+              },
+              {
+                "text": "подпись",
+                "marks": [
+                  {
+                    "type": "inlineImage",
+                    "attrs": {
+                      "src": "c.png"
+                    }
+                  }
+                ]
+              }
+            ],
+            "children": []
+          }
+        ]
+      },
+      "markdown": "См. ![Схема](<img/a b.png>) и ![](https://a.test/diagram.png) и ![подпись](c.png)\n",
+      "atoms": {
+        "inlineImage": true
+      },
+      "reparsed": [
+        {
+          "type": "paragraph",
+          "attrs": {},
+          "content": [
+            {
+              "text": "См. ",
+              "marks": []
+            },
+            {
+              "text": "Схема",
+              "marks": [
+                {
+                  "type": "inlineImage",
+                  "attrs": {
+                    "src": "img/a b.png",
+                    "alt": "Схема",
+                    "key": "1"
+                  }
+                }
+              ]
+            },
+            {
+              "text": " и ",
+              "marks": []
+            },
+            {
+              "text": "diagram.png",
+              "marks": [
+                {
+                  "type": "inlineImage",
+                  "attrs": {
+                    "src": "https://a.test/diagram.png",
+                    "alt": "",
+                    "key": "2"
+                  }
+                }
+              ]
+            },
+            {
+              "text": " и ",
+              "marks": []
+            },
+            {
+              "text": "подпись",
+              "marks": [
+                {
+                  "type": "inlineImage",
+                  "attrs": {
+                    "src": "c.png",
+                    "alt": "подпись",
+                    "key": "3"
+                  }
+                }
+              ]
+            }
+          ],
+          "children": []
+        }
+      ]
+    },
+    {
+      "id": "review-fixes",
+      "document": {
+        "version": 1,
+        "blocks": [
+          {
+            "id": "r1",
+            "type": "paragraph",
+            "attrs": {},
+            "content": [
+              {
+                "text": "Время 10:30:45 и :party: текстом, a",
+                "marks": []
+              },
+              {
+                "text": ":party:",
+                "marks": [
+                  {
+                    "type": "customEmoji",
+                    "attrs": {
+                      "name": "party",
+                      "src": "https://cdn.test/party.png"
+                    }
+                  }
+                ]
+              },
+              {
+                "text": "b ок",
+                "marks": []
+              }
+            ],
+            "children": []
+          },
+          {
+            "id": "r2",
+            "type": "paragraph",
+            "attrs": {},
+            "content": [
+              {
+                "text": "@Аня",
+                "marks": [
+                  {
+                    "type": "mention",
+                    "attrs": {
+                      "id": "42",
+                      "kind": "user",
+                      "label": "Анна\n\nПетрова"
+                    }
+                  }
+                ]
+              }
+            ],
+            "children": []
+          },
+          {
+            "id": "r3",
+            "type": "paragraph",
+            "attrs": {},
+            "content": [
+              {
+                "text": "Схема",
+                "marks": [
+                  {
+                    "type": "inlineImage",
+                    "attrs": {
+                      "src": "i.png",
+                      "alt": "Схема"
+                    }
+                  }
+                ]
+              }
+            ],
+            "children": []
+          }
+        ]
+      },
+      "markdown": "Время 10:30:45 и \\:party: текстом, &#97;:party:&#98; ок\n\n[@Аня](mention:user-42 \"Анна&#10;&#10;Петрова\")\n\n![Схема](i.png \"\")\n",
+      "atoms": {
+        "mention": true,
+        "inlineMath": true,
+        "inlineImage": true,
+        "customEmoji": {
+          "30": "https://cdn.test/30.png",
+          "party": "https://cdn.test/party.png"
+        }
+      },
+      "reparsed": [
+        {
+          "type": "paragraph",
+          "attrs": {},
+          "content": [
+            {
+              "text": "Время 10:30:45 и :party: текстом, a",
+              "marks": []
+            },
+            {
+              "text": ":party:",
+              "marks": [
+                {
+                  "type": "customEmoji",
+                  "attrs": {
+                    "name": "party",
+                    "src": "https://cdn.test/party.png",
+                    "key": "1"
+                  }
+                }
+              ]
+            },
+            {
+              "text": "b ок",
+              "marks": []
+            }
+          ],
+          "children": []
+        },
+        {
+          "type": "paragraph",
+          "attrs": {},
+          "content": [
+            {
+              "text": "@Аня",
+              "marks": [
+                {
+                  "type": "mention",
+                  "attrs": {
+                    "kind": "user",
+                    "id": "42",
+                    "label": "Анна\n\nПетрова",
+                    "key": "2"
+                  }
+                }
+              ]
+            }
+          ],
+          "children": []
+        },
+        {
+          "type": "paragraph",
+          "attrs": {},
+          "content": [
+            {
+              "text": "Схема",
+              "marks": [
+                {
+                  "type": "inlineImage",
+                  "attrs": {
+                    "src": "i.png",
+                    "alt": "Схема",
+                    "key": "3"
+                  }
+                }
+              ]
+            }
+          ],
+          "children": []
+        }
+      ]
+    }
+  ]
+}

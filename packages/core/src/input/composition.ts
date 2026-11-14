@@ -3,6 +3,7 @@ import { insertPayload } from "../clipboard/insertion";
 import { cloneAttributes } from "../document/attributes";
 import { ownsInputTarget } from "../dom/input-owner";
 import { createTextWalker } from "../dom/text-walker";
+import { atomAt, viewAtoms } from "../engine/atoms";
 import { GoTipeError } from "../error";
 import { isUtf16Boundary } from "../text";
 import type { Document } from "../types/block";
@@ -19,7 +20,8 @@ interface Selection {
 }
 interface ComposingBlock {
   type: string;
-  content: { text: string }[] | string | null;
+  /** View spans; atomic marks carry `atomic: true`. */
+  content: { text: string; marks?: { atomic?: true }[] }[] | string | null;
 }
 
 export interface CompositionPort {
@@ -205,6 +207,22 @@ export function installComposition(
           : (block.content ?? "");
         let change = compositionChange(model, ownText(blockElement, blockId));
         snapshot.restoreDOM();
+        // The browser composed where its caret was, maybe inside an inline atom. The model
+        // caret was moved off the atom at compositionstart: the text goes there instead.
+        const atoms = Array.isArray(block.content)
+          ? viewAtoms(block.content.map((span) => ({ text: span.text, marks: span.marks ?? [] })))
+          : [];
+        if (
+          (change.text || change.from !== change.to) &&
+          (atomAt(atoms, change.from) || atomAt(atoms, change.to)) &&
+          selection.anchor.blockId === blockId &&
+          selection.head.blockId === blockId
+        )
+          change = {
+            from: Math.min(selection.anchor.offset, selection.head.offset),
+            to: Math.max(selection.anchor.offset, selection.head.offset),
+            text: event.data || change.text,
+          };
         if (!change.text && change.from === change.to) {
           if (
             !event.data ||

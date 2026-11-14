@@ -245,6 +245,10 @@ func main() {
 		log.Error("invalid sync message rate", "error", err)
 		os.Exit(1)
 	}
+	if err := syncServer.SetTransactionLimit(cfg.SyncTransactionLimit); err != nil {
+		log.Error("invalid SYNC_TRANSACTION_LIMIT", "error", err)
+		os.Exit(1)
+	}
 	if err := syncServer.SetAllowedOrigins(cfg.SyncAllowedOrigins); err != nil {
 		log.Error("invalid sync origins", "error", err)
 		os.Exit(1)

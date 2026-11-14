@@ -4,7 +4,7 @@ import { parseHtmlDocument } from "../html";
 import { applyPolyfills } from "../polyfills";
 import type { CreateEditorOptions } from "../types/editor";
 import { type EngineMode, WasmBridge, type WasmModuleLoader } from "../wasm-bridge";
-import { buildSchema, resolveExtensions } from "./extensions";
+import { atomSupport, buildSchema, resolveExtensions } from "./extensions";
 
 /** Engine/extension creation happens once before a live editor owns events and state. */
 export async function initializeEditor(
@@ -19,12 +19,14 @@ export async function initializeEditor(
 
   const resolved = resolveExtensions(options.extensions);
   const schema = buildSchema(resolved);
+  // What HTML imports read into: the schema and the atom support of the extensions.
+  const htmlSchema = { ...schema, atoms: atomSupport(resolved) };
   const schemaJson = JSON.stringify(toWasmSchema(schema));
 
   const initialContent =
     options.content != null
       ? typeof options.content === "string"
-        ? parseHtmlDocument(options.content)
+        ? parseHtmlDocument(options.content, htmlSchema)
         : options.content
       : {
           blocks: [
@@ -46,5 +48,5 @@ export async function initializeEditor(
   // consistently instead of silently accepting the same input in another engine.
   bridge.create(schemaJson, JSON.stringify(wasmContent));
 
-  return { bridge, resolved, schema, schemaJson, initialContent };
+  return { bridge, resolved, schema, htmlSchema, schemaJson, initialContent };
 }

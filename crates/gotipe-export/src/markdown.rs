@@ -1,4 +1,9 @@
-use gotipe_core::{AttrValue, Block, BlockContent, Document, TextSpan};
+use gotipe_core::{AttrValue, Block, Document};
+
+mod inline;
+
+pub use crate::markdown_parse::MarkdownAtoms;
+use inline::content_to_markdown;
 
 /// Convert a Document to Markdown
 pub fn to_markdown(doc: &Document) -> String {
@@ -21,13 +26,21 @@ pub fn to_markdown(doc: &Document) -> String {
             }
         }
     }
+    // Names of the document's custom emoji: typed text that looks like one is escaped.
+    let mut emoji = Emoji::new();
+    for block in &doc.blocks {
+        inline::collect_emoji(block, &mut emoji);
+    }
     doc.blocks
         .iter()
         .filter(|block| !omitted(block))
-        .map(block_to_markdown)
+        .map(|block| block_to_markdown(block, &emoji))
         .collect::<Vec<_>>()
         .join("\n")
 }
+
+/// Registered custom emoji names and their image addresses.
+type Emoji = std::collections::BTreeMap<String, String>;
 
 /// An empty formula or an embed without an address has no Markdown at any depth, as in the
 /// TS writer.
@@ -46,10 +59,10 @@ fn shown(block: &Block) -> impl Iterator<Item = &Block> {
     block.children.iter().filter(|child| !omitted(child))
 }
 
-fn block_to_markdown(block: &Block) -> String {
-    let content = content_to_markdown(&block.content);
+fn block_to_markdown(block: &Block, emoji: &Emoji) -> String {
+    let content = content_to_markdown(&block.content, emoji);
     let nested = shown(block)
-        .map(block_to_markdown)
+        .map(|child| block_to_markdown(child, emoji))
         .collect::<Vec<_>>()
         .join("\n");
     let attr = |name: &str| match block.attrs.get(name) {
@@ -96,12 +109,12 @@ fn block_to_markdown(block: &Block) -> String {
                     } else {
                         format!("{marker} ")
                     };
-                    let text = content_to_markdown(&item.content);
+                    let text = content_to_markdown(&item.content, emoji);
                     let indent = " ".repeat(prefix.len());
                     let mut rendered =
                         format!("{prefix}{}\n", text.replace('\n', &format!("\n{indent}")));
                     for child in shown(item) {
-                        for line in block_to_markdown(child).lines() {
+                        for line in block_to_markdown(child, emoji).lines() {
                             rendered.push_str(&format!("{indent}{line}\n"))
                         }
                     }
@@ -135,7 +148,7 @@ fn block_to_markdown(block: &Block) -> String {
             } else {
                 quoted(&content)
             };
-            quote_children(head, block)
+            quote_children(head, block, emoji)
         }
         "callout" => {
             let kind = match attr("type") {
@@ -150,12 +163,12 @@ fn block_to_markdown(block: &Block) -> String {
                 head.push('\n');
                 head.push_str(&quoted(&content));
             }
-            quote_children(head, block)
+            quote_children(head, block, emoji)
         }
         "divider" => "---\n".into(),
         "image" => format!(
             "![{}](<{}>{})\n{nested}",
-            escape_text(attr("alt")),
+            inline::typed(attr("alt")),
             destination(attr("src")),
             title_suffix(attr("caption"))
         ),
@@ -171,8 +184,10 @@ fn block_to_markdown(block: &Block) -> String {
                     .map(|cell| {
                         format!(
                             "{}{}",
-                            content_to_markdown(&cell.content),
-                            shown(cell).map(block_to_markdown).collect::<String>()
+                            inline::cell_to_markdown(&cell.content, emoji),
+                            shown(cell)
+                                .map(|child| block_to_markdown(child, emoji))
+                                .collect::<String>()
                         )
                         .trim()
                         .replace('|', "\\|")
@@ -210,10 +225,12 @@ fn quoted(text: &str) -> String {
 }
 
 /// A quote's children follow its text after a `>` line, as in the TS writer.
-fn quote_children(mut quote: String, block: &Block) -> String {
+fn quote_children(mut quote: String, block: &Block, emoji: &Emoji) -> String {
     for child in shown(block) {
         quote.push_str("\n>\n");
-        quote.push_str(&quoted(block_to_markdown(child).trim_end_matches('\n')));
+        quote.push_str(&quoted(
+            block_to_markdown(child, emoji).trim_end_matches('\n'),
+        ));
     }
     quote.push('\n');
     quote
@@ -375,88 +392,24 @@ fn code_fence(text: &str, minimum: usize) -> String {
     }
     "`".repeat(minimum.max(longest + 1))
 }
-fn content_to_markdown(content: &BlockContent) -> String {
-    match content {
-        BlockContent::RichText(spans) => spans_to_markdown(spans),
-        BlockContent::Raw(raw) => raw.clone(),
-        BlockContent::Empty => String::new(),
-    }
-}
-fn spans_to_markdown(spans: &[TextSpan]) -> String {
-    spans
-        .iter()
-        .map(|span| {
-            let raw = span.marks.iter().any(|mark| mark.mark_type == "mdRaw");
-            let mut text = if raw {
-                span.text.clone()
-            } else if span.marks.iter().any(|mark| mark.mark_type == "code") {
-                let fence = code_fence(&span.text, 1);
-                let padding = if span.text.starts_with('`')
-                    || span.text.ends_with('`')
-                    || span.text.starts_with(' ')
-                        && span.text.ends_with(' ')
-                        && span.text.chars().any(|c| c != ' ')
-                {
-                    " "
-                } else {
-                    ""
-                };
-                format!("{fence}{padding}{}{padding}{fence}", span.text)
-            } else {
-                escape_text(&span.text)
-            };
-            for mark in &span.marks {
-                let (open, close) = match mark.mark_type.as_str() {
-                    "bold" => ("**", "**"),
-                    "italic" => ("*", "*"),
-                    "strikethrough" => ("~~", "~~"),
-                    "underline" => ("<u>", "</u>"),
-                    "highlight" => ("<mark>", "</mark>"),
-                    "superscript" => ("<sup>", "</sup>"),
-                    "subscript" => ("<sub>", "</sub>"),
-                    _ => ("", ""),
-                };
-                let colored;
-                let (open, close) = if matches!(mark.mark_type.as_str(), "textColor" | "highlight") {
-                    if let Some(AttrValue::String(color)) = mark.attrs.get("color").filter(|value| matches!(value, AttrValue::String(color) if crate::html::safe_color(color))) {
-                        let (tag, property) = if mark.mark_type == "textColor" { ("span", "color") } else { ("mark", "background-color") };
-                        colored = format!("<{tag} style=\"{property}:{color}\">");
-                        (colored.as_str(), if tag == "span" { "</span>" } else { "</mark>" })
-                    } else { (open, close) }
-                } else { (open, close) };
-                if !open.is_empty() {
-                    let leading = text.len() - text.trim_start().len();
-                    let end = text.trim_end().len();
-                    if end > leading {
-                        text = format!(
-                            "{}{open}{}{close}{}",
-                            &text[..leading],
-                            &text[leading..end],
-                            &text[end..]
-                        )
-                    }
-                }
-                if mark.mark_type == "link" {
-                    if let Some(AttrValue::String(href)) = mark.attrs.get("href") {
-                        let title = match mark.attrs.get("title") {
-                            Some(AttrValue::String(title)) => title.as_str(),
-                            _ => "",
-                        };
-                        text = format!("[{text}](<{}>{})", destination(href), title_suffix(title))
-                    }
-                }
-            }
-            text
-        })
-        .collect()
-}
-
 /// Parse supported Markdown into GoTipe blocks, retaining unknown syntax as raw content.
+/// Mentions, inline formulas and inline images are read as atoms when `schema` declares
+/// their marks atomic; see `from_markdown_with_atoms` for custom emoji.
 pub fn from_markdown(
     md: &str,
-    _schema: &gotipe_core::Schema,
+    schema: &gotipe_core::Schema,
 ) -> Result<Document, crate::ConvertError> {
-    Ok(crate::markdown_parse::parse(md))
+    from_markdown_with_atoms(md, schema, &MarkdownAtoms::from_schema(schema))
+}
+
+/// `from_markdown` reading exactly the inline atoms in `atoms`; `:name:` of a registered
+/// custom emoji is one of them.
+pub fn from_markdown_with_atoms(
+    md: &str,
+    _schema: &gotipe_core::Schema,
+    atoms: &MarkdownAtoms,
+) -> Result<Document, crate::ConvertError> {
+    Ok(crate::markdown_parse::parse(md, atoms))
 }
 
 #[cfg(test)]

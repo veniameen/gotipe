@@ -37,6 +37,9 @@ is unchanged.
 | `keybindings` | `Keybinding[]` | Keyboard shortcuts. |
 | `inputRules` | `InputRule[]` | Rules that run after typing. |
 | `pasteRules` | `PasteRule[]` | Rules that handle pasted text or files. |
+| `transformPastedText` | `(text, context) => string` | Changes plain pasted text before it is inserted. |
+| `parsePastedText` | `(text, context) => Block[] \| null` | Turns plain pasted text into blocks. |
+| `atomSupport` | `InlineAtomSupport` | Collaboration repair and HTML read-back of atomic marks. The built-in atom extensions carry it; reuse theirs for your own (`atomSupport: Mention.atomSupport`). |
 | `slashCommands` | `SlashCommandDef[]` | Entries for the slash menu. |
 | `plugin` | `(options) => Plugin` | State, transaction hooks and decorations. |
 | `options` | `Options` | Default options. |
@@ -207,6 +210,40 @@ export const PasteLinks = defineExtension({
   `CLIPBOARD_FAILED` error. If a handler throws, nothing is inserted and the error is
   reported; the paste doesn't fall back to plain insertion.
 
+## Pasted text
+
+Two hooks act on plain clipboard text, after the paste rules and only when the clipboard holds neither content copied from a GoTipe editor nor HTML:
+
+```ts title="paste-hooks.ts"
+import { defineExtension } from "@gotipe/core";
+
+export const PasteHooks = defineExtension({
+  name: "pasteHooks",
+  // Runs first, in extension order. Returning "" pastes nothing.
+  transformPastedText: (text) => text.replace(/\u00a0/g, " "),
+  // The first extension that returns blocks decides; null leaves the text to the next one.
+  parsePastedText: (text, { nodes }) =>
+    "heading" in nodes && /^TITLE: /.test(text)
+      ? [
+          {
+            id: crypto.randomUUID(),
+            type: "heading",
+            attrs: { level: 1 },
+            content: [{ text: text.slice(7), marks: [] }],
+            children: [],
+          },
+        ]
+      : null,
+});
+```
+
+`context` is `{ editor, nodes, marks, options, safeHref, safeImageSrc }`: the live editor, the node and mark specs of its schema by name, this extension's options, and the editor's own address checks for links and images (they return the address, or `null` when it is unsafe).
+
+- Without a parser, or when all return `null`, the text becomes one paragraph per line, as without the hooks.
+- Parsers are not asked when the caret is in a raw-text block such as code: the text is inserted as it is.
+- The blocks get new IDs and are inserted as one undoable transaction. If they cannot go where the caret is (block structure inside a table cell) or the result does not match the schema, the text is pasted as plain paragraphs instead.
+- [CharacterCount](/docs/extensions/character-count) uses the first hook, [MarkdownPaste](/docs/extensions/links-and-paste#markdown-paste) the second.
+
 ## Slash commands
 
 | Field | Type | Description |
@@ -240,6 +277,35 @@ changing the document: `inline` wraps text `[from, to)` with a class or attribut
 `widget` shows non-editable text at an offset, `node` adds a class or attributes to a
 block, and `blocks` shows read-only blocks before or after a block. Outside plugins, set a
 layer with `editor.setDecorations(layer, decorations)`.
+
+`EditorContent` of `@gotipe/react` and of `@gotipe/vue` draw every layer. Besides the four
+generic kinds they draw the decorations of the built-in features with fixed classes:
+
+| Decoration | Drawn as |
+|---|---|
+| `placeholder` | `data-placeholder` on the empty block, while editable |
+| `comment-highlight` | `<span class="gotipe-comment-highlight" data-comment-id>`, plus `resolved` |
+| `suggestion-insert`, `suggestion-delete` | `<span class="gotipe-suggestion-insert">` or `-delete`, with `data-suggestion-id` |
+| `remote-selection` | `<span class="gotipe-remote-range" data-peer-id>` tinted with the person's color |
+| `remote-cursor` | A widget `<span class="gotipe-remote-cursor" data-peer-id>` with `gotipe-remote-cursor-caret` and `gotipe-remote-cursor-label` |
+| `ghost-text` | A widget `<span class="gotipe-ghost-text" data-gotipe-ghost-text>` |
+
+A range is wrapped in `<span data-gotipe-decoration>`; a widget is `contenteditable="false"`
+with `data-gotipe-widget` and never counts in offsets. Colors of people pass `toSafeColor`.
+When only decorations change, both renderers keep the native caret where it was.
+
+While the browser composes text with an IME (`editor.isComposing`), the composing block
+belongs to the browser: `setDecorations` waits until the composition ends, both renderers
+keep the block's decorations as they were drawn and leave the native selection alone, and
+the new decorations are drawn when the composition ends.
+
+A `placeholder` decoration with an empty `text` asks for the renderer's own words: React
+shows its placeholder for that block in the interface language, Vue asks the `placeholder`
+function you pass to `EditorContent`.
+
+To draw a layer yourself, pass its name in `hostLayers` (`EditorContent` of both adapters,
+and `Editor` of `@gotipe/react`): the renderer leaves that layer out and still draws the
+rest. `BlockEditor` does this for `collaboration` and draws those people with its overlay.
 
 ## Lifecycle
 
@@ -404,8 +470,6 @@ export function Editor() {
 - `rank` is stored in the schema but not used yet.
 - The React and Vue renderers draw only the built-in marks; text with your own mark
   renders unformatted. Use an `inline` decoration to show it.
-- The React renderer draws `inline`, `widget`, `node` and `blocks` decorations. The Vue
-  renderer doesn't draw decorations yet.
 - HTML and Markdown output write an unknown block as a paragraph with its text, without
   its type and attributes. Server rendering can take your own HTML for it; see
   [content formats](/docs/concepts/content-formats#server-rendering).

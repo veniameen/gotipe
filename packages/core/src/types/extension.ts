@@ -1,3 +1,5 @@
+import type { InlineAtomSupport } from "./atoms";
+import type { Block } from "./block";
 import type { GoTipeEditor } from "./editor";
 import type { EditorState, Transaction } from "./state";
 import type { BlockView, Decoration } from "./view";
@@ -31,6 +33,13 @@ export interface MarkSpec {
   exclusiveGroup?: string;
   attrs: Record<string, AttrSpec>;
   rank: number;
+  /**
+   * Text with this mark is one indivisible inline element (a mention, an inline formula).
+   * The text is its fallback: what search, export and screen readers see. The caret never
+   * stays inside it, typing at its edge does not extend it, and deleting or formatting a
+   * part of it applies to the whole. A `key` attribute tells apart equal neighbours.
+   */
+  atomic?: boolean;
 }
 
 export interface Keybinding {
@@ -88,6 +97,18 @@ export interface ExtensionStorage {
   remove(key: string): void;
 }
 
+/** What a pasted-text hook reads: the live editor, its schema and the extension's options. */
+export interface PasteTextContext {
+  editor: GoTipeEditor;
+  nodes: Readonly<Record<string, Omit<NodeSpec, "name">>>;
+  marks: Readonly<Record<string, Omit<MarkSpec, "name">>>;
+  options: unknown;
+  /** The editor's own link check (`toSafeHref`): the address, or `null` when unsafe. */
+  safeHref(href: string): string | null;
+  /** The editor's own image check: web, relative or raster `data:` sources, else `null`. */
+  safeImageSrc(src: string): string | null;
+}
+
 export interface ExtensionConfig<Options = unknown> {
   name: string;
   dependencies?: string[];
@@ -96,6 +117,17 @@ export interface ExtensionConfig<Options = unknown> {
   keybindings?: Keybinding[];
   inputRules?: InputRule[];
   pasteRules?: PasteRule[];
+  /**
+   * Plain clipboard text (no GoTipe or HTML data, no matching paste rule) before it is
+   * inserted. Returns the text to insert; `""` inserts nothing. Runs in extension order.
+   */
+  transformPastedText?: (text: string, context: PasteTextContext) => string;
+  /**
+   * Blocks for plain clipboard text after `transformPastedText`, or `null` to leave it to the
+   * next extension and finally to plain paragraphs. Not asked when pasting into raw text;
+   * blocks that cannot go at the caret or outside the schema are pasted as plain text.
+   */
+  parsePastedText?: (text: string, context: PasteTextContext) => Block[] | null;
   slashCommands?: SlashCommandDef[];
   onCreate?: (editor: GoTipeEditor) => void;
   onUpdate?: (editor: GoTipeEditor) => void;
@@ -104,6 +136,14 @@ export interface ExtensionConfig<Options = unknown> {
   options?: Options;
   accessibility?: BlockA11yConfig;
   storageKey?: string;
+  /**
+   * The collaboration repair and HTML read-back of atomic marks
+   * (docs/development/inline-atoms.md). `Mention`, `InlineMath`, `CustomEmoji` and
+   * `InlineImage` carry it; an extension with its own atomic mark reuses theirs
+   * (`atomSupport: Mention.atomSupport`). Without it the caret, typing, deletion,
+   * formatting and paste-key rules of `MarkSpec.atomic` still apply.
+   */
+  atomSupport?: InlineAtomSupport;
 }
 
 export interface Extension<Options = unknown> extends ExtensionConfig<Options> {

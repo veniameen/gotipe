@@ -1,3 +1,4 @@
+import { emojiEnd, mathEnd } from "../atoms";
 import { REFERENCE, decodeReference, punctuation } from "./decode";
 import { INLINE_HTML } from "./html";
 import { type InlineContext, readAutolink, readLink } from "./links";
@@ -201,6 +202,39 @@ export function readInline(source: Source, options: InlineContext): PhrasingCont
       pushText(run, p, p + run.length);
       p += run.length;
       continue;
+    }
+    if (c === "$" && context.atoms?.inlineMath) {
+      // A run of dollars is text; a single one may open a formula (see `mathEnd`).
+      let run = 1;
+      while (text[p + run] === "$") run++;
+      const close = run === 1 ? mathEnd(text, p) : -1;
+      if (close > 0) {
+        // A cell writes `|` as `\|`, as in inline code.
+        const value = text.slice(p + 1, close);
+        tokens.push({
+          type: "inlineMath",
+          value: context.inCell ? value.replace(/\\\|/g, "|") : value,
+          position: range(source, p, close + 1),
+        });
+        p = close + 1;
+      } else {
+        pushText(text.slice(p, p + run), p, p + run);
+        p += run;
+      }
+      continue;
+    }
+    if (c === ":" && context.atoms?.customEmoji) {
+      const end = emojiEnd(text, p, context.atoms.customEmoji);
+      if (end > 0) {
+        tokens.push({
+          type: "emoji",
+          value: text.slice(p, end),
+          name: text.slice(p + 1, end - 1),
+          position: range(source, p, end),
+        });
+        p = end;
+        continue;
+      }
     }
     if (c === "[" || (c === "!" && text[p + 1] === "[")) {
       const link = readLink(source, p, context, readInline);

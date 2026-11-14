@@ -1,3 +1,4 @@
+pub mod atoms;
 pub mod clipboard;
 pub mod command;
 pub mod error;

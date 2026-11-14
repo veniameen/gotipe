@@ -19,12 +19,16 @@ export const History = defineExtension({
 });
 
 export interface PlaceholderOptions {
+  /**
+   * The words of the placeholder. Empty (the default) leaves them to the renderer, which
+   * shows its own placeholder in the language of the interface.
+   */
   text: string;
 }
 
 export const Placeholder = defineExtension<PlaceholderOptions>({
   name: "placeholder",
-  options: { text: 'Type "/" for commands...' },
+  options: { text: "" },
   plugin: (options) => ({
     decorations(state) {
       const placeholderOptions = options as PlaceholderOptions;
@@ -40,7 +44,7 @@ export const Placeholder = defineExtension<PlaceholderOptions>({
         if (isEmpty) {
           decorations.push({
             type: "placeholder",
-            text: placeholderOptions.text,
+            text: placeholderOptions?.text ?? "",
             blockId: block.id,
           });
         }

@@ -48,7 +48,8 @@ describe("public collaboration boundary", () => {
         getState: () => current,
         getUpdate: () => update,
         setSelection: () => {},
-        getSelection: () => JSON.stringify({ Cursor: { block_id: JSON.parse(current).blocks[0].id, offset: 1 } }),
+        getSelection: () =>
+          JSON.stringify({ Cursor: { block_id: JSON.parse(current).blocks[0].id, offset: 1 } }),
         receiveUpdate: () => {
           current = incoming;
           return incoming;
@@ -67,6 +68,10 @@ describe("public collaboration boundary", () => {
           histories++;
         },
         changed: () => notifications.push(selection),
+        isAtomic: null,
+        repair: () => {
+          throw new Error("A schema without atomic marks never repairs");
+        },
       },
     );
     expect(() => collaboration.getUpdate()).toThrow("Enable collaboration");
