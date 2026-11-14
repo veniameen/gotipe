@@ -35,6 +35,9 @@ export const STYLES = [
   "ui/layout.css",
   "ui/history.css",
   "site/landing.css",
+  "site/landing-window.css",
+  "site/landing-sections.css",
+  "site/landing-closing.css",
   "site/docs.css",
   "content/diagram.css",
 ];
