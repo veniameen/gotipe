@@ -249,6 +249,9 @@
   font-size: var(--site-small-size);
   line-height: var(--site-small-leading);
 }
+.site-licence-free > a {
+  color: var(--gt-accent);
+}
 .site-licence-free > strong {
   color: var(--gt-text);
   font-weight: var(--gt-weight-medium);

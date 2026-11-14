@@ -13,6 +13,7 @@
     "clean": "turbo run clean && cargo clean",
     "check:packages": "node scripts/check-packages.mjs",
     "check:exports": "node scripts/validate-export-formats.mjs",
+    "check:docs-site": "node scripts/check-docs-site.mjs",
     "generate:theme": "node scripts/generate-theme.mjs",
     "check:theme": "node scripts/generate-theme.mjs --check",
     "check:architecture": "node --test scripts/quality/architecture.test.mjs && node scripts/quality/architecture.mjs",

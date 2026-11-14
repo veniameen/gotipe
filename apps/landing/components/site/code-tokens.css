@@ -1,0 +1,23 @@
+/* The colours of highlighted code, one set for the site: the docs' code blocks and the landing's
+   sample. lib/docs/highlight.ts writes a token as the one-letter class of its kind — keyword,
+   string, number, type, punctuation, comment — and the library's --gt-syn-* tokens colour them,
+   so one HTML serves light and dark (Atlas frames 20–21). */
+
+pre > code .k {
+  color: var(--gt-syn-keyword);
+}
+pre > code .s {
+  color: var(--gt-syn-string);
+}
+pre > code .n {
+  color: var(--gt-syn-number);
+}
+pre > code .t {
+  color: var(--gt-syn-type);
+}
+pre > code .p {
+  color: var(--gt-syn-punct);
+}
+pre > code .c {
+  color: var(--gt-syn-comment);
+}

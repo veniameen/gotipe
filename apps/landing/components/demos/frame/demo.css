@@ -1,0 +1,198 @@
+/* Inside the demo window: the row of controls, the scrolling editor, and the few layouts the
+   demos share (a page over its Markdown, two panes, a page beside its panel). Loaded with a
+   demo's chunk; the window itself is island.css. Widths fold by intrinsic sizing, not container
+   queries: a container would become the containing block of the editor's fixed menus. */
+
+.site-demo-tools {
+  display: flex;
+  flex: none;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--site-gap-s);
+  padding: var(--site-gap-s) var(--site-gap);
+  border-bottom: var(--gt-hairline) solid var(--gt-line);
+  font-size: var(--site-small-size);
+}
+.site-demo-choice {
+  display: flex;
+  min-inline-size: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--site-gap-xs);
+}
+/* a floated legend is an ordinary flex item, not drawn in the fieldset's border */
+.site-demo-choice-label {
+  float: left;
+  padding: 0;
+  margin-right: var(--site-gap-xs);
+  color: var(--gt-text-2);
+  font-family: var(--site-font-mono);
+  font-size: var(--site-label-size);
+}
+.site-demo-note {
+  min-width: 0;
+  color: var(--gt-text-2);
+}
+.site-demo-note:empty {
+  display: none;
+}
+.site-demo-alert {
+  margin: 0;
+  padding: var(--site-gap-s) var(--site-gap);
+  color: var(--gt-danger);
+}
+.site-demo-form {
+  display: flex;
+  flex: 1;
+  flex-wrap: wrap;
+  gap: var(--site-gap-s);
+  min-width: 0;
+}
+.site-demo-input {
+  flex: 1;
+  min-width: var(--site-demo-input-min);
+  height: var(--site-demo-control-h);
+  padding: 0 var(--gt-space-2);
+  border: 0;
+  border-radius: var(--gt-radius-control);
+  background: var(--site-card);
+  box-shadow: inset 0 0 0 var(--gt-hairline) var(--gt-line-strong);
+  color: var(--gt-text);
+  font: inherit;
+}
+.site-demo-input:focus-visible {
+  outline: var(--gt-focus-width) solid var(--gt-accent);
+  outline-offset: var(--gt-focus-gap);
+}
+
+/* the editor fills the window, which grows with it: no scroll of its own, so the wheel always
+   moves the page; the document keeps the library's own look */
+.site-demo-scroll {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+}
+/* The host's values through the library's tokens: a window needs less air around the document
+   than a page, so the document and a table use its width (the block handle still fits) and the
+   window ends where the document does. The
+   library sets these on the editor's children (and again in its narrow container query), so the
+   override names the same elements. */
+.site-demo :is(.gotipe-block-editor, .gotipe-editor, .gotipe-history-shell) > * {
+  --gt-page-pad-top: var(--site-gap-l);
+  --gt-page-pad-x: var(--site-demo-pad-x);
+  --gt-page-pad-bottom: var(--site-gap-l);
+  --gt-editor-min-height: var(--site-demo-editor-min-h);
+}
+.site-demo-scroll > .gotipe-page,
+.site-demo-scroll .gotipe-block-editor {
+  max-width: none;
+}
+/* the Editor of @gotipe/react fills the window, so a click below the text still lands in it */
+.site-demo-headless {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+}
+.site-demo-headless > .gotipe-content {
+  flex: 1;
+}
+
+/* a page over its Markdown */
+.site-demo-stack {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+}
+.site-demo-output {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  border-top: var(--gt-hairline) solid var(--gt-line);
+  background: var(--gt-sunken);
+}
+.site-demo-output-title {
+  margin: 0;
+  padding: var(--site-gap-s) var(--site-gap) 0;
+  color: var(--gt-text-2);
+  font-family: var(--site-font-mono);
+  font-size: var(--site-label-size);
+  font-weight: var(--gt-weight-regular);
+  line-height: var(--site-label-leading);
+  letter-spacing: var(--site-label-tracking);
+  text-transform: uppercase;
+}
+.site-demo-output-code {
+  margin: 0;
+  padding: var(--site-gap-s) var(--site-gap) var(--site-gap);
+  color: var(--gt-text);
+  font-family: var(--site-font-mono);
+  font-size: var(--site-label-size);
+  line-height: var(--site-small-leading);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+/* two editors side by side, one above the other when the column is narrow */
+.site-demo-panes {
+  display: grid;
+  flex: 1;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, var(--site-demo-pane-min)), 1fr));
+}
+.site-demo-panes > .site-demo-alert {
+  grid-column: 1 / -1;
+}
+.site-demo-pane {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  border-right: var(--gt-hairline) solid var(--gt-line);
+  border-bottom: var(--gt-hairline) solid var(--gt-line);
+}
+.site-demo-pane-head {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: var(--site-gap-s);
+  padding: var(--site-gap-s) var(--site-gap);
+  border-bottom: var(--gt-hairline) solid var(--gt-line);
+  font-size: var(--site-small-size);
+  font-weight: var(--gt-weight-medium);
+}
+.site-demo-pane-note {
+  margin-left: auto;
+  color: var(--gt-text-3);
+  font-weight: var(--gt-weight-regular);
+}
+.site-demo-person {
+  width: var(--site-demo-person);
+  height: var(--site-demo-person);
+  border-radius: var(--gt-radius-round);
+  background: var(--gt-person-1);
+}
+.site-demo-person[data-person="2"] {
+  background: var(--gt-person-2);
+}
+
+/* a page beside its panel (comments); the panel goes under the page when the column is narrow */
+.site-demo-side {
+  display: flex;
+  flex: 1;
+  flex-wrap: wrap;
+}
+.site-demo-side > .site-demo-scroll {
+  flex: 999 1 var(--site-demo-pane-min);
+}
+.site-demo-aside {
+  flex: 1 1 var(--site-demo-aside-w);
+  min-width: 0;
+  border-left: var(--gt-hairline) solid var(--gt-line);
+}
+
+/* the version history lays out the page and its panel itself */
+.site-demo-history {
+  flex: 1;
+}

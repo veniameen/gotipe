@@ -48,10 +48,10 @@
   /* type: Inter 500 with tight tracking for headings, quiet text, mono labels */
   --site-hero-size: 80px;
   --site-hero-leading: 82px;
-  --site-hero-tracking: -0.048em;
+  --site-hero-tracking: -0.065em;
   --site-h2-size: 58px;
   --site-h2-leading: 63px;
-  --site-h2-tracking: -0.042em;
+  --site-h2-tracking: -0.05em;
   --site-panel-h2-size: 50px;
   --site-panel-h2-leading: 55px;
   --site-h3-l-size: 30px;
@@ -79,8 +79,10 @@
   --site-mono-leading: 18px;
   --site-code-size: 13px;
   --site-code-leading: 22px;
-  --site-fact-size: 58px;
-  --site-fact-leading: 62px;
+  /* the facts shrink with the frame so the widest figure («652 / 652», about 4em) keeps air in
+     its cell of four columns below 1280 px; 58px from there on. The site uses 100vw. */
+  --site-fact-size: min(58px, calc((100cqi - 168px) / 18.4));
+  --site-fact-leading: calc(var(--site-fact-size) * 1.07);
   --site-big-size: 48px;
   --site-big-leading: 52px;
   --site-big-tracking: -0.04em;
@@ -127,8 +129,9 @@
   --site-feature-pad: 28px 0;
   --site-feature-gap-x: 48px;
   --site-look-pad: 14px 16px;
-  --site-looks-cols: minmax(0, 0.68fr) minmax(0, 1fr);
-  --site-looks-gap: 72px;
+  /* the page of the looks stays wider than 640px at 1280 and up, under the library's own fold */
+  --site-looks-cols: minmax(0, 0.62fr) minmax(0, 1fr);
+  --site-looks-gap: 56px;
   --site-look-page-pad: 40px 48px 36px;
   --site-panel-radius: 24px;
   --site-panel-pad: 48px 44px;
@@ -160,6 +163,8 @@
   --site-search-button-display: none;
   --site-src-display: block;
   --site-strip-labels-display: flex;
+  --site-window-tag-display: inline;
+  --site-window-trail-display: inline-flex;
 
   /* the documentation: navigation, page, outline */
   --site-side-w: 248px;
@@ -192,6 +197,15 @@
 /* ---- a laptop: the outline of the page steps away first ---- */
 @container (max-width: 1279px) {
   .gotipe-root > * {
+    /* two columns of the hero still fit from 1024 px: the headline and the stack step down */
+    --site-hero-size: 64px;
+    --site-hero-leading: 66px;
+    --site-hero-gap: 56px;
+    --site-stack-w: 400px;
+    /* the dark panel splits evenly so «to your first edit.» keeps one line */
+    --site-panel-cols: minmax(0, 1fr) minmax(0, 1fr);
+    --site-panel-h2-size: 42px;
+    --site-panel-h2-leading: 46px;
     --site-docs-cols: var(--site-side-w) minmax(0, 1fr);
     --site-toc-display: none;
   }
@@ -206,6 +220,10 @@
     --site-hero-top: 136px;
     --site-hero-size: 64px;
     --site-hero-leading: 66px;
+    --site-hero-gap: 88px;
+    --site-panel-h2-size: 50px;
+    --site-panel-h2-leading: 55px;
+    --site-fact-size: 58px;
     --site-h2-size: 46px;
     --site-h2-leading: 50px;
     --site-cols-3: 1;
@@ -247,8 +265,7 @@
     --site-h3-l-leading: 30px;
     --site-lede-size: 16px;
     --site-lede-leading: 26px;
-    --site-fact-size: 40px;
-    --site-fact-leading: 44px;
+    --site-fact-size: min(40px, calc((100cqi - 64px) / 9));
     --site-big-size: 40px;
     --site-big-leading: 44px;
     --site-cols-2: 1;
@@ -261,6 +278,8 @@
     --site-band-pad: 56px 20px;
     --site-wide-display: none;
     --site-strip-labels-display: none;
+    --site-window-tag-display: none;
+    --site-window-trail-display: none;
     --site-search-button-display: inline-flex;
     --site-doc-top: 24px;
     --site-cta-pad: 0 20px;
@@ -280,6 +299,8 @@
   --site-sage-ink: #2f7559;
   --site-sand: #f5f1e9;
   --site-accent-tint: rgb(44 98 212 / 0.09);
+  /* the accent one step darker, same hue: small text on a tint (the Commercial badge) */
+  --site-accent-ink: #2656ba;
   --site-accent-soft: rgb(44 98 212 / 0.14);
   --site-cta-bg: #2c62d4;
   --site-cta-text: #ffffff;
@@ -318,6 +339,7 @@
   --site-sage-ink: #86c9a8;
   --site-sand: #23211d;
   --site-accent-tint: rgb(107 156 255 / 0.14);
+  --site-accent-ink: var(--gt-accent);
   --site-accent-soft: rgb(107 156 255 / 0.22);
   --site-cta-bg: #6b9cff;
   --site-cta-text: #0d1424;

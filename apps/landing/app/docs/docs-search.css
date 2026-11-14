@@ -1,0 +1,143 @@
+/* The search dialog (Atlas frame 21): a modal over a scrim, the field, results grouped by
+   section with the query marked, and the keys at the foot. */
+
+.site-dialog {
+  width: min(var(--site-dialog-w), calc(100% - 2 * var(--site-pad-x)));
+  max-width: none;
+  max-height: calc(100vh - 2 * var(--site-dialog-top));
+  margin: var(--site-dialog-top) auto auto;
+  padding: 0;
+  overflow: hidden;
+  border: 0;
+  border-radius: var(--site-dialog-radius);
+  background: var(--gt-overlay);
+  box-shadow: var(--gt-shadow-overlay);
+  color: var(--gt-text);
+  font-family: var(--site-font-text);
+  font-size: var(--site-body-size);
+  line-height: var(--site-small-leading);
+}
+.site-dialog[open] {
+  display: flex;
+  flex-direction: column;
+}
+.site-dialog::backdrop {
+  background: var(--site-scrim);
+}
+.site-dialog-input {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: var(--site-gap-m);
+  height: var(--site-dialog-input-h);
+  padding: 0 var(--site-gap-l);
+  border-bottom: var(--gt-hairline) solid var(--gt-line);
+  font-size: var(--site-text-size);
+}
+.site-dialog-input > .site-icon {
+  color: var(--gt-accent);
+}
+.site-dialog-input > input {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  padding: 0;
+  border: 0;
+  outline: none;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  appearance: none;
+}
+.site-dialog-input > input::-webkit-search-cancel-button {
+  appearance: none;
+}
+.site-dialog-input > input::placeholder {
+  color: var(--gt-text-3);
+}
+.site-dialog-close {
+  border: 0;
+  cursor: pointer;
+}
+.site-results {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: var(--site-gap-s) var(--site-gap-m) var(--site-gap-m);
+}
+.site-results-title {
+  margin: var(--site-gap-m) 0 var(--site-gap-xs);
+  padding: 0 var(--site-gap-m);
+  color: var(--gt-text-2);
+  font-family: var(--site-font-mono);
+  font-size: var(--site-label-size);
+  font-weight: var(--gt-weight-medium);
+  line-height: var(--site-label-leading);
+  letter-spacing: var(--site-label-tracking);
+  text-transform: uppercase;
+}
+.site-results-status {
+  margin: 0;
+  padding: 0 var(--site-gap-m);
+  color: var(--gt-text-2);
+}
+.site-results-status:empty {
+  display: none;
+}
+.site-result {
+  display: flex;
+  align-items: center;
+  gap: var(--site-gap-m);
+  padding: var(--site-result-pad);
+  border-radius: var(--site-result-radius);
+  cursor: pointer;
+}
+.site-result.is-active {
+  background: var(--site-accent-tint);
+}
+.site-result > .site-icon {
+  color: var(--gt-text-3);
+}
+.site-result.is-active > .site-icon {
+  color: var(--gt-accent);
+}
+.site-result-text {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.site-result small {
+  display: block;
+  overflow: hidden;
+  color: var(--gt-text-2);
+  font-size: var(--gt-ui-small);
+  line-height: var(--gt-ui-small-leading);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.site-result mark {
+  border-radius: var(--gt-radius-match);
+  background: var(--gt-highlight);
+  color: inherit;
+}
+.site-result-go {
+  margin-left: auto;
+}
+.site-dialog-foot {
+  display: flex;
+  flex: none;
+  gap: var(--site-gap-l);
+  padding: var(--site-gap-m) var(--site-gap-l);
+  border-top: var(--gt-hairline) solid var(--gt-line);
+  background: var(--site-surface);
+  color: var(--gt-text-2);
+  font-family: var(--site-font-mono);
+  font-size: var(--site-label-size);
+  line-height: var(--site-label-leading);
+}
+.site-dialog-foot > span {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--site-gap-xs);
+}

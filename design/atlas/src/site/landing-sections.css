@@ -99,14 +99,19 @@
 }
 .site-diagram-engine {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: var(--site-gap);
+  gap: var(--site-gap-xs) var(--site-gap);
   padding: var(--site-diagram-engine-pad);
   background: var(--site-cta-bg);
   color: var(--site-cta-text);
   font-size: var(--site-small-size);
   line-height: var(--site-small-leading);
+}
+/* the name and the engines wrap as whole phrases when the tile is narrow */
+.site-diagram-engine > * {
+  white-space: nowrap;
 }
 .site-diagram-engine > strong {
   font-weight: var(--gt-weight-strong);

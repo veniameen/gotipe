@@ -1,0 +1,309 @@
+/* The documentation around its pages (Atlas frame 21, design/atlas/src/site/docs.css): the
+   navigation of all pages, the page in the library's `docs` view, its outline on the right.
+   The head is the site's (styles/head.css); sizes and colours are tokens (styles/tokens-site.css,
+   @gotipe/theme). The folds follow --site-docs-cols, --site-side-display and --site-toc-display. */
+
+html:has(.site-docs) {
+  scroll-padding-top: calc(var(--site-docs-head-h) + var(--site-gap-l));
+}
+.site-docs {
+  min-height: 100vh;
+}
+.site-docs .site-docs-head .site-search {
+  border: 0;
+  font-family: inherit;
+  cursor: pointer;
+}
+.site-docs .site-docs-head .site-search:hover {
+  box-shadow: inset 0 0 0 var(--gt-hairline) var(--gt-line-strong);
+}
+.site-docs-head .site-menu-button {
+  display: var(--site-menu-display);
+}
+
+/* ---- three columns: navigation · page · outline ---- */
+.site-docs-body {
+  display: grid;
+  grid-template-columns: var(--site-docs-cols);
+  column-gap: var(--site-docs-gap);
+  justify-content: center;
+  box-sizing: border-box;
+  max-width: var(--site-docs-max);
+  margin: 0 auto;
+  padding: 0 var(--site-pad-x);
+  background: transparent;
+}
+.site-docs-body > * {
+  min-width: 0;
+}
+.site-docs-main:focus {
+  outline: none;
+}
+
+/* ---- the navigation: open sections list their pages, the others fold behind their names ---- */
+.site-side {
+  display: var(--site-side-display);
+  position: sticky;
+  top: var(--site-docs-head-h);
+  align-self: start;
+  max-height: calc(100vh - var(--site-docs-head-h));
+  box-sizing: border-box;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: var(--site-side-pad);
+  font-size: var(--site-body-size);
+  line-height: var(--site-small-leading);
+  scrollbar-width: thin;
+}
+.site-side-group + .site-side-group[open],
+.site-side-group[open] + .site-side-group {
+  margin-top: var(--site-side-group-gap);
+}
+.site-side-title {
+  display: flex;
+  align-items: center;
+  gap: var(--site-gap-s);
+  padding: var(--site-side-item-pad);
+  border-radius: var(--site-head-button-radius);
+  color: var(--gt-text);
+  list-style: none;
+  cursor: pointer;
+}
+.site-side-title::-webkit-details-marker {
+  display: none;
+}
+.site-side-title > span:first-child {
+  flex: 1;
+  min-width: 0;
+}
+.site-side-title:hover {
+  background: var(--gt-fill-1);
+}
+.site-side-chevron {
+  color: var(--gt-text-3);
+  transition: transform var(--site-transition);
+}
+/* an open section: its name a small mono label above its pages, as in the frame */
+.site-side-group[open] > .site-side-title {
+  margin-bottom: var(--site-gap-s);
+  padding-top: 0;
+  padding-bottom: 0;
+  color: var(--gt-text-2);
+  font-family: var(--site-font-mono);
+  font-size: var(--site-label-size);
+  font-weight: var(--gt-weight-medium);
+  line-height: var(--site-label-leading);
+  letter-spacing: var(--site-label-tracking);
+  text-transform: uppercase;
+}
+.site-side-group[open] > .site-side-title:hover {
+  background: transparent;
+  color: var(--gt-text);
+}
+/* the open section reads as a label (frame 21); its name still folds it */
+.site-side-group[open] > .site-side-title > .site-side-chevron {
+  display: none;
+}
+.site-side-title > .site-badge {
+  letter-spacing: normal;
+  text-transform: none;
+}
+.site-side-pages {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.site-side-pages a {
+  display: block;
+  padding: var(--site-side-item-pad);
+  border-radius: var(--site-head-button-radius);
+  color: var(--gt-text-2);
+}
+.site-side-pages a:hover {
+  background: var(--gt-fill-1);
+  color: var(--gt-text);
+}
+.site-side-pages a.is-current {
+  background: var(--site-accent-tint);
+  color: var(--gt-accent);
+  font-weight: var(--gt-weight-medium);
+}
+
+/* ---- the drawer of tablets and phones: the same navigation, opened from the menu button ---- */
+/* stretched from top to bottom (the column's `align-self: start` would size it to its content)
+   and scrolled on its own */
+.site-side[data-open] {
+  display: block;
+  position: fixed;
+  inset: 0 auto 0 0;
+  align-self: stretch;
+  height: auto;
+  overflow-y: auto;
+  z-index: var(--site-z-skip);
+  width: min(calc(var(--site-side-w) + 2 * var(--site-pad-x)), 100vw);
+  max-height: none;
+  padding: 0 var(--site-pad-x) var(--site-gap-xl);
+  background: var(--site-bg);
+  box-shadow: var(--gt-shadow-overlay);
+}
+.site-drawer-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: var(--site-z-menu);
+  background: var(--site-scrim);
+}
+.site-drawer-head {
+  position: sticky;
+  top: 0;
+  z-index: var(--site-z-head);
+  display: flex;
+  align-items: center;
+  gap: var(--site-gap-xs);
+  height: var(--site-docs-head-h);
+  margin-bottom: var(--site-gap-s);
+  background: var(--site-bg);
+}
+.site-drawer-head > .site-drawer-title {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.site-drawer-title {
+  color: var(--gt-text-2);
+  font-family: var(--site-font-mono);
+  font-size: var(--site-label-size);
+  line-height: var(--site-label-leading);
+  letter-spacing: var(--site-label-tracking);
+  text-transform: uppercase;
+}
+
+/* ---- the page: crumbs, title, lede, badges and tools, the document, the pager ---- */
+.site-doc {
+  padding: var(--site-doc-top) 0 var(--site-section-gap);
+}
+.site-crumbs > ol {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--site-gap-xs);
+  margin: 0 0 var(--site-gap-m);
+  padding: 0;
+  list-style: none;
+  color: var(--gt-text-2);
+  font-family: var(--site-font-mono);
+  font-size: var(--site-label-size);
+  line-height: var(--site-label-leading);
+  letter-spacing: var(--site-label-tracking);
+  text-transform: uppercase;
+}
+.site-crumbs li {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--site-gap-xs);
+}
+.site-crumbs li[aria-current] {
+  color: var(--gt-accent);
+}
+.site-crumbs .site-icon {
+  width: var(--gt-icon-small);
+  height: var(--gt-icon-small);
+  color: var(--gt-text-3);
+}
+.site-doc-title {
+  margin: 0;
+  color: var(--gt-text);
+  font-size: var(--gt-title-size);
+  font-weight: var(--gt-weight-title);
+  line-height: var(--gt-title-leading);
+  letter-spacing: var(--gt-title-tracking);
+  text-wrap: balance;
+}
+.site-doc-lede {
+  margin: var(--site-gap-s) 0 0;
+  color: var(--gt-text-2);
+  font-size: var(--site-text-size);
+  line-height: var(--site-text-leading);
+}
+.site-doc-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--site-gap-s);
+  margin: var(--site-gap-l) 0 var(--site-gap-xl);
+  padding-bottom: var(--site-gap-l);
+  border-bottom: var(--gt-hairline) solid var(--gt-line);
+}
+.site-doc-tools {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--site-gap-s);
+  margin-left: auto;
+}
+.site .site-tool-button {
+  border-radius: var(--site-badge-radius);
+  box-shadow: inset 0 0 0 var(--gt-hairline) var(--gt-line);
+}
+
+.site-pager {
+  display: grid;
+  grid-template-columns: repeat(var(--site-cols-2), minmax(0, 1fr));
+  gap: var(--site-gap);
+  margin-top: var(--site-section-gap);
+}
+.site-pager a {
+  display: block;
+  padding: var(--site-pager-pad);
+  border-radius: var(--site-card-radius-s);
+  box-shadow: inset 0 0 0 var(--gt-hairline) var(--gt-line);
+  font-size: var(--site-text-size);
+  font-weight: var(--gt-weight-medium);
+  line-height: var(--site-body-leading);
+  transition: box-shadow var(--site-transition);
+}
+.site-pager a:hover {
+  box-shadow: inset 0 0 0 var(--gt-hairline) var(--gt-line-strong);
+}
+.site-pager a > small {
+  display: flex;
+  align-items: center;
+  gap: var(--site-gap-xs);
+  margin-bottom: var(--site-gap-xs);
+  color: var(--gt-text-2);
+  font-family: var(--site-font-mono);
+  font-size: var(--site-label-size);
+  font-weight: var(--gt-weight-regular);
+  line-height: var(--site-label-leading);
+  letter-spacing: var(--site-label-tracking);
+  text-transform: uppercase;
+}
+.site-pager a > small > .site-icon {
+  width: var(--gt-icon-small);
+  height: var(--gt-icon-small);
+}
+.site-pager a.is-next {
+  grid-column: -2;
+  text-align: right;
+}
+.site-pager a.is-next > small {
+  justify-content: flex-end;
+}
+
+/* ---- the outline: the docs view's, standing to the right of the page ---- */
+.site-toc {
+  display: var(--site-toc-display);
+  position: sticky;
+  top: var(--site-docs-head-h);
+  align-self: start;
+  max-height: calc(100vh - var(--site-docs-head-h));
+  overflow-y: auto;
+  scrollbar-width: thin;
+}
+.site-toc > .gotipe-outline {
+  display: block;
+  padding: var(--site-doc-top) 0 var(--site-gap-xl);
+  color: var(--gt-text-2);
+  font-size: var(--gt-ui-size);
+  line-height: var(--gt-small-leading);
+}

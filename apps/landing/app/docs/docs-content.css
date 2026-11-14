@@ -1,0 +1,123 @@
+/* The document of a docs page: the library's content (@gotipe/theme base.css, code.css) in the
+   `docs` view, set into the site's column. The site adds the heading anchor, the code block's
+   caption, copy button and tabs, and the colours of highlighted tokens. */
+
+/* the document runs between live demos (each its own .site-doc-editor, so nothing here reaches a
+   demo); a demo keeps the flow's block gap on both sides */
+.site-doc-body > * + * {
+  margin-top: var(--gt-flow-block);
+}
+.site-doc-editor > .gotipe-content {
+  max-width: none;
+  min-height: 0;
+  padding: 0;
+  /* static HTML: the line breaks between serialized elements are not text (code keeps its own) */
+  white-space: normal;
+}
+/* a list item places its bullet, as the editor's blocks do ([data-block-id]) */
+.site-doc-editor li {
+  position: relative;
+}
+
+/* a heading links to itself: its text, coloured as the heading; a quiet # in the gutter shows
+   with the pointer or the keyboard on it (lib/docs/render.ts) */
+.site-doc-editor :is(h2, h3, h4)[id] {
+  position: relative;
+}
+.site-doc-editor .site-heading-link {
+  color: inherit;
+  text-decoration: none;
+}
+.site-doc-editor .site-heading-link::before {
+  content: "#";
+  /* empty alternative text: the mark is not part of the heading's name */
+  content: "#" / "";
+  position: absolute;
+  top: 50%;
+  left: calc(-1 * var(--gt-anchor-offset));
+  color: var(--gt-text-3);
+  font-weight: var(--gt-weight-regular);
+  opacity: 0;
+  transform: translateY(-50%);
+  transition: opacity var(--site-transition);
+}
+.site-doc-editor .site-heading-link:is(:hover, :focus-visible)::before {
+  opacity: 1;
+}
+
+/* a code block's head: its caption, the tabs, the copy button at the end */
+.site-doc-editor .gotipe-code-block-header {
+  justify-content: flex-start;
+}
+.site-code-title {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--gt-text-3);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.site-code-copy {
+  margin-left: auto;
+}
+/* the numbers are one text, a line each (lib/docs/code.ts) */
+.site-doc-editor .gotipe-code-block-line-numbers {
+  white-space: pre;
+}
+/* many tabs on a narrow screen: the list shrinks and scrolls, the copy button stays */
+.site-doc-editor .gotipe-seg {
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.site-doc-editor .gotipe-seg > button {
+  display: inline;
+  min-width: 0;
+  height: auto;
+  padding: var(--gt-seg-item-pad);
+  border-radius: var(--gt-radius-inline);
+  color: var(--gt-text-2);
+  font: inherit;
+  white-space: nowrap;
+}
+.site-doc-editor .gotipe-seg > button.is-on {
+  background: var(--gt-overlay);
+  box-shadow: var(--gt-shadow-card);
+  color: var(--gt-text);
+}
+.site-doc-editor .gotipe-seg {
+  display: inline-flex;
+  padding: var(--gt-seg-pad);
+  border-radius: var(--gt-radius-control);
+  background: var(--gt-fill-2);
+  font-size: var(--gt-ui-small);
+  line-height: var(--gt-ui-small-leading);
+}
+.site-doc-editor .gotipe-seg + .site-code-title {
+  margin-left: var(--site-gap-s);
+}
+.site-doc-editor .gotipe-code-block-scroll[hidden] {
+  display: none;
+}
+
+/* the glyph of a callout */
+.site-doc-editor .gotipe-callout-icon > .site-icon {
+  color: var(--gt-callout-glyph, var(--gt-text-2));
+}
+
+/* a static table fits the column and wraps its cells (frame 21); the editor's table sizes its
+   columns for editing (max-content), which a read-only page does not need. A table whose
+   longest words cannot fit still scrolls in its own box. */
+.site-doc-editor .gotipe-table-wrapper {
+  max-width: 100%;
+  overflow-x: auto;
+}
+.site-doc-editor .gotipe-table-wrapper > .gotipe-table {
+  table-layout: auto;
+  width: 100%;
+  min-width: 0;
+}
+.site-doc-editor .gotipe-table-wrapper :where(th, td) {
+  overflow-wrap: break-word;
+}
+/* a long signature in a cell may break after its punctuation (<wbr>, lib/docs/render.ts) */

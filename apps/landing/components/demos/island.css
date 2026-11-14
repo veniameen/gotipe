@@ -1,0 +1,161 @@
+/* The live demo window of a docs page (Atlas frame 21, «Try it»): a thin bar with a mono label,
+   the hint and Reset, and the editor inside. The window hugs the demo: while it loads it holds
+   the mounted demo's height (--site-demo-h-<name>, set on the window), so nothing moves; typing
+   may grow it like any document. Sizes are the «demo windows» tokens of styles/tokens-site.css. */
+
+.site-demo {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  margin: var(--site-gap-l) 0;
+  overflow: hidden;
+  border-radius: var(--site-window-radius);
+  background: var(--site-card);
+  box-shadow: 0 0 0 var(--gt-hairline) var(--gt-line), var(--site-window-shadow);
+  color: var(--gt-text);
+  font-family: var(--site-font-text);
+}
+
+.site-demo-bar {
+  display: flex;
+  align-items: center;
+  gap: var(--site-gap-m);
+  box-sizing: border-box;
+  height: var(--site-window-bar-h);
+  padding: var(--site-window-bar-pad);
+  border-bottom: var(--gt-hairline) solid var(--gt-line);
+  color: var(--gt-text-2);
+  font-size: var(--site-small-size);
+  line-height: var(--site-small-leading);
+}
+.site-demo-tag {
+  flex: none;
+  padding: var(--site-chip-tag-pad);
+  border-radius: var(--gt-radius-control);
+  background: var(--gt-fill-1);
+  box-shadow: inset 0 0 0 var(--gt-hairline) var(--gt-line);
+  color: var(--gt-text-2);
+  font-family: var(--site-font-mono);
+  font-size: var(--site-label-size);
+  line-height: var(--site-label-leading);
+  white-space: nowrap;
+}
+.site-demo-tag.is-accent {
+  background: var(--site-accent-tint);
+  box-shadow: none;
+  color: var(--gt-accent);
+}
+.site-demo-hint {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* the bar's action and the demos' own small controls share one look */
+.site-demo-reset,
+.site-demo-button {
+  flex: none;
+  box-sizing: border-box;
+  height: var(--site-demo-control-h);
+  padding: 0 var(--gt-space-3);
+  border: 0;
+  border-radius: var(--gt-radius-control);
+  background: transparent;
+  box-shadow: inset 0 0 0 var(--gt-hairline) var(--gt-line);
+  color: var(--gt-text);
+  font: inherit;
+  font-size: var(--site-small-size);
+  cursor: pointer;
+}
+.site-demo-reset {
+  margin-left: auto;
+}
+.site-demo-reset:hover:not(:disabled),
+.site-demo-button:hover:not(:disabled) {
+  background: var(--gt-fill-1);
+}
+.site-demo-button[aria-pressed="true"] {
+  background: var(--site-accent-tint);
+  box-shadow: inset 0 0 0 var(--gt-hairline) var(--gt-accent);
+  color: var(--gt-accent);
+}
+.site-demo-reset:disabled,
+.site-demo-button:disabled {
+  color: var(--gt-text-3);
+  cursor: default;
+}
+.site-demo-reset:focus-visible,
+.site-demo-button:focus-visible {
+  outline: var(--gt-focus-width) solid var(--gt-accent);
+  outline-offset: var(--gt-focus-gap);
+}
+
+/* the editor at its own height; until it mounts the placeholder holds the mounted demo's height,
+   so loading never moves the page (Reset remounts in one commit, nothing to hold) */
+.site-demo-body {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+}
+
+/* a container, so the lines can take the window's -wide height past the library's fold */
+.site-demo-placeholder {
+  display: block;
+  container-type: inline-size;
+}
+.site-demo-lines {
+  display: flex;
+  flex-direction: column;
+  gap: var(--site-demo-line-gap);
+  box-sizing: border-box;
+  height: var(--site-demo-h-fold, var(--site-demo-h, var(--site-demo-h-default)));
+  overflow: hidden;
+  padding: var(--site-try-pad);
+}
+.site-demo-line {
+  display: block;
+  width: 100%;
+  height: var(--site-demo-line-h);
+  border-radius: var(--gt-radius-control);
+  background: var(--gt-fill-1);
+}
+.site-demo-line.is-title {
+  width: var(--site-demo-line-title-w);
+  height: var(--site-demo-line-title-h);
+}
+.site-demo-line.is-short {
+  width: var(--site-demo-line-short-w);
+}
+@media (prefers-reduced-motion: no-preference) {
+  .site-demo-line {
+    animation: site-demo-breathe var(--site-demo-breathe) ease-in-out infinite alternate;
+  }
+}
+@keyframes site-demo-breathe {
+  to {
+    background: var(--gt-fill-2);
+  }
+}
+
+.site-demo-state {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--site-gap-m);
+  box-sizing: border-box;
+  min-height: var(--site-demo-h, var(--site-demo-h-default));
+  padding: var(--site-try-pad);
+  color: var(--gt-text-2);
+  font-size: var(--site-small-size);
+}
+.site-demo-state > p {
+  margin: 0;
+}
+
+.site-demo-missing {
+  margin: var(--site-gap-l) 0;
+  color: var(--gt-text-3);
+  font-size: var(--site-small-size);
+}

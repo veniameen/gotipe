@@ -1,0 +1,186 @@
+// The rules of a documentation page (docs-site/README.md), shared by the site's build and by
+// `pnpm check:docs-site`: the front matter, the heading slug, the meta of a
+// code fence and the names of the live demos. Plain JavaScript, so the repository check runs it
+// in Node without a build step. Pure functions: the browser bundle may import them too;
+// reading the disk is files.mjs.
+
+/**
+ * @typedef {{ title?: string, description?: string, packages?: string[], license?: string }} FrontMatter
+ */
+
+/**
+ * Splits `---` front matter off a page. The keys are `key: value` lines; a value is a bare or
+ * quoted string, or a JSON array of strings. The body keeps its own bytes.
+ * @param {string} source
+ * @returns {{ data: FrontMatter, body: string, errors: string[] }}
+ */
+export function splitFrontMatter(source) {
+  const match = /^---\r?\n([\s\S]*?)\r?\n---\r?\n?/.exec(source);
+  if (!match) return { data: {}, body: source, errors: ["no front matter"] };
+  /** @type {Record<string, unknown>} */
+  const data = {};
+  const errors = [];
+  for (const line of match[1].split(/\r?\n/)) {
+    if (!line.trim()) continue;
+    const pair = /^([A-Za-z][\w-]*):\s*(.*)$/.exec(line);
+    if (!pair) {
+      errors.push(`front matter line not understood: ${line}`);
+      continue;
+    }
+    const [, key, raw] = pair;
+    const value = raw.trim();
+    if (value.startsWith("[")) {
+      try {
+        const list = JSON.parse(value);
+        if (!Array.isArray(list) || list.some((item) => typeof item !== "string"))
+          throw new Error("not a list of strings");
+        data[key] = list;
+      } catch {
+        errors.push(`front matter \`${key}\` is not a JSON list of strings`);
+      }
+    } else if (/^".*"$/.test(value)) {
+      try {
+        data[key] = JSON.parse(value);
+      } catch {
+        errors.push(`front matter \`${key}\` is not one quoted string: ${value}`);
+      }
+    } else if (/^'.*'$/.test(value)) {
+      data[key] = value.slice(1, -1);
+    } else data[key] = value;
+  }
+  errors.push(...frontMatterErrors(data));
+  return { data: /** @type {FrontMatter} */ (data), body: source.slice(match[0].length), errors };
+}
+
+/**
+ * What a page's front matter must hold (docs-site/README.md): a title and a one-sentence
+ * description as text, packages as a list of names, license MIT or Commercial.
+ * @param {Record<string, unknown>} data
+ * @returns {string[]}
+ */
+export function frontMatterErrors(data) {
+  const errors = [];
+  for (const key of ["title", "description"]) {
+    if (data[key] === undefined || data[key] === "") errors.push(`front matter has no ${key}`);
+    else if (typeof data[key] !== "string") errors.push(`front matter \`${key}\` is not text`);
+  }
+  if (typeof data.description === "string" && /`|\]\(|\*\*|__/.test(data.description))
+    errors.push("front matter `description` holds Markdown");
+  if (
+    data.packages !== undefined &&
+    (!Array.isArray(data.packages) || data.packages.some((name) => typeof name !== "string"))
+  )
+    errors.push("front matter `packages` is not a list of package names");
+  if (data.license !== undefined && data.license !== "MIT" && data.license !== "Commercial")
+    errors.push(
+      `front matter \`license\` is ${JSON.stringify(data.license)}, not MIT or Commercial`,
+    );
+  return errors;
+}
+
+/**
+ * The id of a heading, as GitHub writes it, so `/docs/page#anchor` links in the sources stay
+ * valid on GitHub too: lower case (locale-free, Cyrillic included), punctuation dropped,
+ * each space a hyphen.
+ * @param {string} text
+ */
+export function headingSlug(text) {
+  return text
+    .trim()
+    .toLowerCase()
+    .replace(/[^\p{L}\p{M}\p{N}\s_-]/gu, "")
+    .replace(/\s/g, "-");
+}
+
+/** Unique heading ids within one page: the second "Usage" becomes `usage-1`. */
+export function createSlugger() {
+  /** @type {Map<string, number>} */
+  const seen = new Map();
+  return (/** @type {string} */ text) => {
+    const base = headingSlug(text) || "section";
+    const count = seen.get(base) ?? 0;
+    seen.set(base, count + 1);
+    return count === 0 ? base : `${base}-${count}`;
+  };
+}
+
+/**
+ * The meta of a code fence: `title="editor.ts" tab="React"`.
+ * @param {unknown} meta
+ * @returns {{ title?: string, tab?: string }}
+ */
+export function parseFenceMeta(meta) {
+  /** @type {{ title?: string, tab?: string }} */
+  const result = {};
+  if (typeof meta !== "string") return result;
+  for (const match of meta.matchAll(/(\w+)=(?:"([^"]*)"|'([^']*)'|(\S+))/g)) {
+    const key = match[1];
+    const value = match[2] ?? match[3] ?? match[4] ?? "";
+    if (key === "title" || key === "tab") result[key] = value;
+  }
+  return result;
+}
+
+/** The fence language of a live demo. */
+export const DEMO_LANGUAGE = "demo";
+
+/**
+ * The demo names listed in docs-site/README.md («Names: `block-editor`, …»), the contract
+ * between the pages and the site's demos.
+ * @param {string} readme
+ * @returns {string[]}
+ */
+export function readmeDemoNames(readme) {
+  const flat = readme.replace(/\s+/g, " ");
+  const list = /Names: (.*?)\. At most one per page/.exec(flat);
+  if (!list) return [];
+  return [...list[1].matchAll(/`([a-z0-9-]+)`/g)].map((match) => match[1]);
+}
+
+/** The site path of a page. */
+export const pageHref = (/** @type {string} */ slug) => `/docs/${slug}`;
+
+/**
+ * An internal docs link (`/docs/page` or `/docs/page#anchor`, or `#anchor` on the same page),
+ * split into its page slug and anchor; null for any other link.
+ * @param {string} href
+ * @param {string} currentSlug
+ * @returns {{ slug: string, anchor: string } | null}
+ */
+export function internalTarget(href, currentSlug) {
+  if (href.startsWith("#")) return { slug: currentSlug, anchor: decodeAnchor(href.slice(1)) };
+  const match = /^\/docs\/([^#?]*?)\/?(?:#(.*))?$/.exec(href);
+  if (!match) return null;
+  return { slug: match[1], anchor: match[2] ? decodeAnchor(match[2]) : "" };
+}
+
+/** A percent-encoded anchor as text; a malformed one (`#100%`) stays as written. */
+function decodeAnchor(/** @type {string} */ anchor) {
+  try {
+    return decodeURIComponent(anchor);
+  } catch {
+    return anchor;
+  }
+}
+
+/** The address of a page, with the trailing slash of the static export: `/docs/a/b/`. */
+export const docsPath = (/** @type {string} */ slug) => `${pageHref(slug)}/`;
+
+/** Text as HTML content, the one escape of the docs pipeline; quotes stay, they are text. */
+export function escapeText(/** @type {string} */ text) {
+  return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+
+/** Text as an attribute value (in double quotes) or as content. */
+export const escapeHtml = (/** @type {string} */ text) => escapeText(text).replace(/"/g, "&quot;");
+
+/**
+ * The text of a block's content with soft line breaks joined by a space (the site's display rule).
+ * @param {unknown} content rich text spans, raw text or null
+ * @returns {string}
+ */
+export function plainText(content) {
+  if (typeof content === "string") return content;
+  if (!Array.isArray(content)) return "";
+  return content.map((span) => String(span.text).replace(/\n/g, " ")).join("");
+}

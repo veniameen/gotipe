@@ -1,0 +1,470 @@
+/* Site tokens: the landing and the documentation of GoTipe. Ported from the accepted Atlas file
+   design/atlas/src/tokens-site.css (frames 20–21); keep the two in step. The only file of the site
+   with literal colours and sizes, besides the library's own tokens from @gotipe/theme.
+
+   Differences from the Atlas file, both forced by a page instead of a frame:
+   - the folds are media queries on the viewport, not container queries on a frame: a container
+     would become the containing block of the editor's fixed menus;
+   - Inter is self-hosted now (fonts.css), so the display tracking is back at the concept's
+     (-0.065em for the hero, -0.05em for section titles; the Atlas drew -0.048em / -0.042em with
+     system fonts). */
+
+:root {
+  /* type families of the site */
+  --site-font-text: Inter, var(--gt-font-ui);
+  --site-font-display: Inter, var(--gt-font-ui);
+  --site-font-mono: "JetBrains Mono", var(--gt-font-mono);
+  --site-weight-display: 500;
+
+  /* the page */
+  --site-max: 1200px;
+  --site-docs-max: 1440px;
+  --site-pad-x: 48px;
+  --site-stage-inset: 12px;
+  --site-stage-radius: 28px;
+  --site-head-top: 16px;
+  --site-head-max: 1056px;
+  --site-dot: 6px;
+  --site-head-pad-x: 32px;
+  --site-head-h: 60px;
+  --site-head-in-pad: 0 12px 0 20px;
+  --site-head-radius: 16px;
+  --site-docs-head-h: 60px;
+  --site-logo: 26px;
+  --site-logo-l: 32px;
+  --site-hero-top: 172px;
+  --site-hero-bottom: 40px;
+  --site-hero-gap: 88px;
+  --site-hero-strip-top: 104px;
+  --site-section-y: 112px;
+  --site-section-gap: 56px;
+  --site-gap-xs: 4px;
+  --site-gap-s: 8px;
+  --site-gap-m: 12px;
+  --site-gap: 16px;
+  --site-gap-l: 24px;
+  --site-gap-xl: 32px;
+  --site-gap-2xl: 40px;
+  --site-gap-3xl: 64px;
+  --site-title-max: 680px;
+  --site-lede-max: 520px;
+  --site-aside-max: 380px;
+
+  /* type: Inter 500 with tight tracking for headings, quiet text, mono labels */
+  --site-hero-size: 80px;
+  --site-hero-leading: 82px;
+  --site-hero-tracking: -0.065em;
+  --site-h2-size: 58px;
+  --site-h2-leading: 63px;
+  --site-h2-tracking: -0.05em;
+  --site-panel-h2-size: 50px;
+  --site-panel-h2-leading: 55px;
+  --site-h3-l-size: 30px;
+  --site-h3-l-leading: 37px;
+  --site-h3-m-size: 26px;
+  --site-h3-m-leading: 33px;
+  --site-h3-tracking: -0.032em;
+  --site-h3-size: 16px;
+  --site-h3-leading: 24px;
+  --site-h4-size: 14px;
+  --site-h4-leading: 21px;
+  --site-title-tracking: -0.02em;
+  --site-lede-size: 18px;
+  --site-lede-leading: 30px;
+  --site-text-size: 15px;
+  --site-text-leading: 24px;
+  --site-body-size: 14px;
+  --site-body-leading: 22px;
+  --site-small-size: 13px;
+  --site-small-leading: 20px;
+  --site-label-size: 11px;
+  --site-label-leading: 16px;
+  --site-label-tracking: 0.12em;
+  --site-mono-size: 12px;
+  --site-mono-leading: 18px;
+  --site-code-size: 13px;
+  --site-code-leading: 22px;
+  /* the facts shrink with the screen so the widest figure («652 / 652», about 4em) keeps air in
+     its cell of four columns below 1280 px; 58px from there on */
+  --site-fact-size: min(58px, calc((100vw - 168px) / 18.4));
+  --site-fact-leading: calc(var(--site-fact-size) * 1.07);
+  --site-big-size: 48px;
+  --site-big-leading: 52px;
+  --site-big-tracking: -0.04em;
+  --site-preview-title-size: 30px;
+  --site-preview-title-leading: 36px;
+  --site-pair-size: 24px;
+  --site-pair-leading: 36px;
+
+  /* controls of the site */
+  --site-cta-h: 48px;
+  --site-cta-pad: 0 24px;
+  --site-cta-radius: 12px;
+  --site-head-button-h: 36px;
+  --site-head-button-pad: 0 14px;
+  --site-head-button-radius: 10px;
+  --site-chip-pad: 4px 12px 4px 4px;
+  --site-chip-tag-pad: 1px 7px;
+  --site-badge-pad: 3px 8px;
+  --site-badge-radius: 8px;
+  --site-icon-box: 36px;
+  --site-icon-box-radius: 10px;
+
+  /* cards and windows */
+  --site-card-radius: 22px;
+  --site-card-radius-s: 16px;
+  --site-window-radius: 14px;
+  --site-card-pad: 36px;
+  --site-card-pad-s: 20px;
+  --site-run-pad: 32px;
+  --site-bento-h: 424px;
+  --site-stack-pad: 28px;
+  --site-stack-w: 484px;
+  --site-plinth-pad: 40px;
+  --site-plinth-radius: 24px;
+  --site-window-bar-h: 48px;
+  --site-window-bar-pad: 0 16px;
+  --site-pane-pad: 28px 32px;
+  --site-pane-pad-src: 28px 0;
+  --site-src-line-pad: 0 28px;
+  --site-src-num-w: 24px;
+  --site-src-cols: minmax(0, 0.9fr) minmax(0, 1fr);
+  --site-window-foot-pad: 12px 28px;
+  --site-toolbar-room: 52px;
+  --site-feature-pad: 28px 0;
+  --site-feature-gap-x: 48px;
+  --site-look-pad: 14px 16px;
+  /* the page of the looks stays wider than 640px at 1280 and up, under the library's own fold */
+  --site-looks-cols: minmax(0, 0.62fr) minmax(0, 1fr);
+  --site-looks-gap: 56px;
+  --site-look-page-pad: 40px 48px 36px;
+  --site-panel-radius: 24px;
+  --site-panel-pad: 48px 44px;
+  --site-panel-cols: minmax(0, 0.85fr) minmax(0, 1.15fr);
+  --site-step-num-w: 28px;
+  --site-licence-pad: 32px;
+  --site-licence-row-pad: 14px 0;
+  --site-band-pad: 88px 40px;
+  --site-band-radius: 26px;
+  --site-diagram-w: 352px;
+  --site-diagram-pad: 12px 20px;
+  --site-diagram-engine-pad: 16px 20px;
+  --site-md-card-pad: 20px;
+  --site-pair-pad: 32px;
+  --site-arrow: 28px;
+  --site-tile-icon: 20px;
+
+  /* columns that fold */
+  --site-hero-cols: minmax(0, 1fr) var(--site-stack-w);
+  --site-head-cols: minmax(0, 1fr) var(--site-aside-max);
+  --site-cols-3: 3;
+  --site-cols-2: 2;
+  --site-cols-4: 4;
+  --site-bento-wide-cols: minmax(0, 1fr) minmax(0, 0.9fr);
+  --site-foot-cols: minmax(0, 1.5fr) repeat(3, minmax(0, 1fr));
+  --site-nav-display: flex;
+  --site-menu-display: none;
+  --site-wide-display: inline-flex;
+  --site-search-button-display: none;
+  --site-src-display: block;
+  --site-strip-labels-display: flex;
+  --site-window-tag-display: inline;
+  --site-window-trail-display: inline-flex;
+
+  /* the documentation: navigation, page, outline */
+  --site-side-w: 248px;
+  --site-docs-gap: 56px;
+  --site-side-display: block;
+  --site-toc-display: block;
+  --site-side-pad: 32px 0 48px;
+  --site-side-item-pad: 5px 12px;
+  --site-side-group-gap: 24px;
+  --site-search-w: 280px;
+  --site-search-h: 36px;
+  --site-search-pad: 0 6px 0 12px;
+  --site-search-radius: 10px;
+  --site-doc-top: 40px;
+  --site-pager-pad: 16px 20px;
+  --site-dialog-w: 620px;
+  --site-dialog-top: 80px;
+  --site-dialog-radius: 18px;
+  --site-dialog-input-h: 56px;
+  --site-result-pad: 10px 12px;
+  --site-result-radius: 10px;
+  --site-try-pad: 24px 28px;
+}
+
+/* the docs columns name the docs view's own widths, so they are set on the body and inside a view */
+body,
+[data-gt-view] {
+  --site-docs-cols: var(--site-side-w) minmax(0, var(--gt-page-width)) var(--gt-outline-width);
+}
+
+/* ---- a laptop: the outline of the page steps away first ---- */
+@media (max-width: 1279px) {
+  :root {
+    /* two columns of the hero still fit from 1024 px: the headline and the stack step down */
+    --site-hero-size: 64px;
+    --site-hero-leading: 66px;
+    --site-hero-gap: 56px;
+    --site-stack-w: 400px;
+    /* the dark panel splits evenly so «to your first edit.» keeps one line */
+    --site-panel-cols: minmax(0, 1fr) minmax(0, 1fr);
+    --site-panel-h2-size: 42px;
+    --site-panel-h2-leading: 46px;
+    --site-toc-display: none;
+  }
+  body,
+  [data-gt-view] {
+    --site-docs-cols: var(--site-side-w) minmax(0, 1fr);
+  }
+}
+
+/* ---- a tablet: one column, the navigation goes behind the menu button ---- */
+@media (max-width: 1023px) {
+  :root {
+    --site-pad-x: 32px;
+    --site-hero-cols: minmax(0, 1fr);
+    --site-head-cols: minmax(0, 1fr);
+    --site-hero-top: 136px;
+    --site-hero-size: 64px;
+    --site-hero-leading: 66px;
+    --site-hero-gap: 88px;
+    --site-panel-h2-size: 50px;
+    --site-panel-h2-leading: 55px;
+    --site-fact-size: 58px;
+    --site-h2-size: 46px;
+    --site-h2-leading: 50px;
+    --site-cols-3: 1;
+    --site-cols-4: 2;
+    --site-bento-wide-cols: minmax(0, 1fr);
+    --site-looks-cols: minmax(0, 1fr);
+    --site-panel-cols: minmax(0, 1fr);
+    --site-foot-cols: repeat(2, minmax(0, 1fr));
+    --site-nav-display: none;
+    --site-menu-display: inline-flex;
+    --site-side-display: none;
+    --site-bento-h: auto;
+  }
+  body,
+  [data-gt-view] {
+    --site-docs-cols: minmax(0, 1fr);
+  }
+}
+
+/* ---- a phone ---- */
+@media (max-width: 640px) {
+  :root {
+    --site-pad-x: 20px;
+    --site-stage-inset: 8px;
+    --site-stage-radius: 22px;
+    --site-head-top: 12px;
+    --site-head-pad-x: 16px;
+    --site-head-h: 56px;
+    --site-head-in-pad: 0 8px 0 14px;
+    --site-hero-top: 112px;
+    --site-hero-gap: 48px;
+    --site-hero-strip-top: 48px;
+    --site-section-y: 72px;
+    --site-section-gap: 32px;
+    --site-hero-size: 46px;
+    --site-hero-leading: 48px;
+    --site-h2-size: 36px;
+    --site-h2-leading: 40px;
+    --site-panel-h2-size: 34px;
+    --site-panel-h2-leading: 38px;
+    --site-h3-l-size: 24px;
+    --site-h3-l-leading: 30px;
+    --site-lede-size: 16px;
+    --site-lede-leading: 26px;
+    --site-fact-size: min(40px, calc((100vw - 64px) / 9));
+    --site-big-size: 40px;
+    --site-big-leading: 44px;
+    --site-cols-2: 1;
+    --site-cols-4: 2;
+    --site-card-pad: 24px;
+    --site-plinth-pad: 12px;
+    --site-src-cols: minmax(0, 1fr);
+    --site-src-display: none;
+    --site-panel-pad: 32px 24px;
+    --site-band-pad: 56px 20px;
+    --site-wide-display: none;
+    --site-strip-labels-display: none;
+    --site-window-tag-display: none;
+    --site-window-trail-display: none;
+    --site-search-button-display: inline-flex;
+    --site-doc-top: 24px;
+    --site-cta-pad: 0 20px;
+  }
+}
+
+/* ---- light: blue-tinted stages, a cool grey panel, sage and sand cards ---- */
+[data-theme="light"] {
+  --site-bg: #ffffff;
+  --site-card: #ffffff;
+  --site-surface: #f6f7f9;
+  --site-surface-line: rgb(25 30 45 / 0.08);
+  --site-stage: #e4ebf8;
+  --site-tint: #edf2fd;
+  --site-tint-line: rgb(44 98 212 / 0.12);
+  --site-sage: #edf1e8;
+  --site-sage-ink: #2f7559;
+  --site-sand: #f5f1e9;
+  --site-accent-tint: rgb(44 98 212 / 0.09);
+  /* the accent one step darker, same hue: small text on a tint (the Commercial badge) */
+  --site-accent-ink: #2656ba;
+  --site-accent-soft: rgb(44 98 212 / 0.14);
+  --site-cta-bg: #2c62d4;
+  --site-cta-text: #ffffff;
+  --site-cta-2-bg: #ffffff;
+  --site-cta-2-line: rgb(25 30 45 / 0.1);
+  --site-glass: rgb(255 255 255 / 0.9);
+  --site-glass-line: rgb(25 30 45 / 0.08);
+  --site-glass-shadow: 0 1px 2px rgb(25 30 45 / 0.04), 0 12px 32px -16px rgb(25 30 45 / 0.18);
+  --site-stack: rgb(255 255 255 / 0.56);
+  --site-stack-line: rgb(255 255 255 / 0.8);
+  --site-stack-shadow: 0 24px 60px -32px rgb(30 60 130 / 0.3);
+  --site-item-shadow: 0 1px 2px rgb(25 30 45 / 0.04), 0 6px 16px -10px rgb(25 30 45 / 0.14);
+  --site-window-shadow: 0 1px 2px rgb(25 30 45 / 0.05), 0 28px 60px -30px rgb(30 60 130 / 0.32);
+  --site-streaks: linear-gradient(
+      122deg,
+      transparent 16%,
+      rgb(255 255 255 / 0.32) 16.2%,
+      transparent 31%
+    ), linear-gradient(122deg, transparent 48%, rgb(255 255 255 / 0.4) 48.2%, transparent 65%),
+    linear-gradient(122deg, transparent 77%, rgb(44 98 212 / 0.06) 77.2%, transparent 94%);
+  --site-plinth: linear-gradient(135deg, #e7eefb, #f6f7f9 70%, #e4ebf8);
+  --site-scrim: rgb(25 30 45 / 0.22);
+}
+
+/* ---- dark: the same stages in deep blue-grey, cards a step above the page ---- */
+[data-theme="dark"] {
+  --site-bg: #191918;
+  --site-card: #222221;
+  --site-surface: #1f1f1e;
+  --site-surface-line: rgb(255 255 255 / 0.07);
+  --site-stage: #19202d;
+  --site-tint: #1c2333;
+  --site-tint-line: rgb(107 156 255 / 0.16);
+  --site-sage: #1c221e;
+  --site-sage-ink: #86c9a8;
+  --site-sand: #23211d;
+  --site-accent-tint: rgb(107 156 255 / 0.14);
+  --site-accent-ink: var(--gt-accent);
+  --site-accent-soft: rgb(107 156 255 / 0.22);
+  --site-cta-bg: #6b9cff;
+  --site-cta-text: #0d1424;
+  --site-cta-2-bg: rgb(255 255 255 / 0.06);
+  --site-cta-2-line: rgb(255 255 255 / 0.12);
+  --site-glass: rgb(34 34 33 / 0.9);
+  --site-glass-line: rgb(255 255 255 / 0.09);
+  --site-glass-shadow: 0 1px 2px rgb(0 0 0 / 0.3), 0 12px 32px -16px rgb(0 0 0 / 0.6);
+  --site-stack: rgb(255 255 255 / 0.035);
+  --site-stack-line: rgb(255 255 255 / 0.08);
+  --site-stack-shadow: 0 24px 60px -32px rgb(0 0 0 / 0.7);
+  --site-item-shadow: 0 0 0 1px rgb(255 255 255 / 0.05), 0 6px 16px -10px rgb(0 0 0 / 0.6);
+  --site-window-shadow: 0 0 0 1px rgb(255 255 255 / 0.06), 0 28px 60px -30px rgb(0 0 0 / 0.8);
+  --site-streaks: linear-gradient(
+      122deg,
+      transparent 16%,
+      rgb(255 255 255 / 0.025) 16.2%,
+      transparent 31%
+    ), linear-gradient(122deg, transparent 48%, rgb(255 255 255 / 0.035) 48.2%, transparent 65%),
+    linear-gradient(122deg, transparent 77%, rgb(107 156 255 / 0.07) 77.2%, transparent 94%);
+  --site-plinth: linear-gradient(135deg, #1c2333, #1f1f1e 70%, #19202d);
+  --site-scrim: rgb(0 0 0 / 0.55);
+}
+
+/* the dark panel of the landing wears the library's dark theme (data-theme="dark" on the panel);
+   its own ground is set by the page's theme, one step darker than the dark page */
+html[data-theme="light"] .site-panel {
+  --site-panel-bg: #17181b;
+  --site-panel-line: rgb(255 255 255 / 0.08);
+}
+html[data-theme="dark"] .site-panel {
+  --site-panel-bg: #111112;
+  --site-panel-line: rgb(255 255 255 / 0.09);
+}
+
+/* ---- the site's own additions: layers, the theme menu and motion ---- */
+:root {
+  --site-z-head: 20;
+  --site-z-menu: 30;
+  --site-z-skip: 40;
+  --site-icon: var(--gt-icon-size);
+  --site-menu-w: 184px;
+  --site-nav-menu-w: 240px;
+  --site-skip-top: 8px;
+  --site-transition: var(--gt-duration-fast) var(--gt-ease-out);
+}
+
+/* ---- demo windows: the live editors of the docs (components/demos) ---- */
+:root {
+  /* The window's height while a demo loads: the height of the mounted demo, measured in the
+     built docs, so the page does not move when the editor appears. Typing may grow it. The
+     library's views fold at a 640 px container, so a demo is taller or shorter in a window wider
+     than that (1440 and 768 here) than in one at the fold (1024 and 1280): the -wide heights. */
+  --site-demo-h-default: 240px;
+  --site-demo-h-block-editor: 260px;
+  --site-demo-h-page-editor: 606px;
+  --site-demo-h-page-editor-wide: 626px;
+  --site-demo-h-headless: 172px;
+  --site-demo-h-views: 287px;
+  --site-demo-h-views-wide: 263px;
+  --site-demo-h-lists: 316px;
+  --site-demo-h-marks: 116px;
+  --site-demo-h-tables: 257px;
+  --site-demo-h-tables-wide: 261px;
+  --site-demo-h-media: 466px;
+  --site-demo-h-media-wide: 482px;
+  --site-demo-h-code: 336px;
+  --site-demo-h-collaboration: 166px;
+  --site-demo-h-collaboration-wide: 142px;
+  --site-demo-h-comments: 413px;
+  --site-demo-h-suggestions: 177px;
+  --site-demo-h-versions: 385px;
+  --site-demo-h-versions-wide: 416px;
+  --site-demo-h-ai: 177px;
+  --site-demo-h-i18n: 177px;
+  /* the document's side room in a window (the block handle fits in it); no minimum height */
+  --site-demo-pad-x: 16px;
+  --site-demo-editor-min-h: 0px;
+  /* the placeholder's lines */
+  --site-demo-line-h: 12px;
+  --site-demo-line-title-h: 20px;
+  --site-demo-line-gap: 14px;
+  --site-demo-line-title-w: 45%;
+  --site-demo-line-short-w: 62%;
+  --site-demo-breathe: 1.6s;
+  /* controls and layouts inside the window */
+  --site-demo-control-h: 28px;
+  --site-demo-pane-min: 260px;
+  --site-demo-aside-w: 280px;
+  --site-demo-input-min: 160px;
+  --site-demo-person: 8px;
+}
+/* a phone: the narrow column wraps the text, panes and panels stack */
+@media (max-width: 640px) {
+  :root {
+    --site-demo-h-marks: 164px;
+    --site-demo-h-block-editor: 332px;
+    --site-demo-h-page-editor: 604px;
+    --site-demo-h-headless: 230px;
+    --site-demo-h-views: 367px;
+    --site-demo-h-media: 315px;
+    --site-demo-h-code: 332px;
+    --site-demo-h-collaboration: 284px;
+    --site-demo-h-comments: 527px;
+    --site-demo-h-suggestions: 233px;
+    --site-demo-h-ai: 237px;
+    --site-demo-h-i18n: 233px;
+  }
+}
+/* a window past the library's 640 px fold: the placeholder (its own container, gone once the
+   demo mounts, so the editor's fixed menus keep the page as their containing block) takes the
+   -wide height where a demo has one */
+@container (min-width: 641px) {
+  .site-demo-lines {
+    --site-demo-h-fold: var(--site-demo-h-wide);
+  }
+}

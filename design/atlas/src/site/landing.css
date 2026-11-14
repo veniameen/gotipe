@@ -103,7 +103,8 @@
     inset 0 0 0 var(--gt-hairline) var(--site-glass-line),
     var(--site-glass-shadow);
 }
-.site-head-in > .site-brand,
+/* the mark sits in a flexible start column; the link itself is only as wide as the mark */
+.site-head-in > .site-head-start,
 .site-head-in > .site-head-end {
   flex: 1 0 0;
 }
@@ -124,6 +125,11 @@
   border-radius: var(--site-stage-radius);
   background: var(--site-streaks), var(--site-stage);
 }
+/* a stage is set in from the page's edges; its content keeps the plain sections' left edge */
+.site-stage > .site-wrap {
+  max-width: calc(var(--site-max) - 2 * var(--site-stage-inset));
+  padding: 0 calc(var(--site-pad-x) - var(--site-stage-inset));
+}
 .site-stage.is-grey {
   padding: var(--site-section-y) 0;
   background: var(--site-surface);
@@ -142,6 +148,8 @@
   line-height: var(--site-label-leading);
   letter-spacing: var(--site-label-tracking);
   text-transform: uppercase;
+  /* a two-word label never leaves one word alone on its line */
+  text-wrap: balance;
 }
 .site-eyebrow {
   color: var(--gt-accent);
@@ -187,7 +195,7 @@
 .site-badge.is-commercial {
   background: var(--site-accent-tint);
   box-shadow: none;
-  color: var(--gt-accent);
+  color: var(--site-accent-ink);
 }
 
 /* ---- calls to action ---- */
@@ -395,6 +403,15 @@
   font-family: var(--site-font-mono);
   font-size: var(--site-label-size);
   line-height: var(--site-label-leading);
+}
+/* «Shipped in 0.1» stays one phrase; the note beside it wraps on the right */
+.site-facts-head > :first-child {
+  flex: none;
+  white-space: nowrap;
+}
+.site-facts-head > :last-child {
+  text-align: right;
+  text-wrap: balance;
 }
 .site-facts {
   display: grid;

@@ -1,0 +1,91 @@
+/* The site's self-hosted faces: the single place for @font-face rules. The files, their SIL OFL
+   licences and how the subsets were made live in public/fonts (README.md). The tokens name the
+   families first and fall back to the library's system families (--site-font-* in
+   tokens-site.css).
+
+   Inter comes in three files per style. Where several faces share a family and style, the browser
+   tries the last declared one first and fetches a file only for the characters on the page: the
+   Latin subset (preloaded by the layout) serves the site's copy, the Cyrillic subset loads with
+   Russian text, and the full file stays the fallback for anything else. JetBrains Mono works the
+   same way with a Latin subset per weight; the regular one is preloaded as well. */
+
+@font-face {
+  font-family: Inter;
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url("/fonts/InterVariable.woff2") format("woff2");
+}
+@font-face {
+  font-family: Inter;
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url("/fonts/InterVariable-cyrillic.woff2") format("woff2");
+  unicode-range: U+0400-04FF, U+2116;
+}
+@font-face {
+  font-family: Inter;
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url("/fonts/InterVariable-latin.woff2") format("woff2");
+  unicode-range: U+0000-017F, U+2000-206F, U+20AC, U+2122, U+2190-21FF, U+2212, U+2215, U+2318,
+    U+2713, U+2715;
+}
+@font-face {
+  font-family: Inter;
+  font-style: italic;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url("/fonts/InterVariable-Italic.woff2") format("woff2");
+}
+@font-face {
+  font-family: Inter;
+  font-style: italic;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url("/fonts/InterVariable-Italic-cyrillic.woff2") format("woff2");
+  unicode-range: U+0400-04FF, U+2116;
+}
+@font-face {
+  font-family: Inter;
+  font-style: italic;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url("/fonts/InterVariable-Italic-latin.woff2") format("woff2");
+  unicode-range: U+0000-017F, U+2000-206F, U+20AC, U+2122, U+2190-21FF, U+2212, U+2215, U+2318,
+    U+2713, U+2715;
+}
+@font-face {
+  font-family: "JetBrains Mono";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/JetBrainsMono-Regular.woff2") format("woff2");
+}
+@font-face {
+  font-family: "JetBrains Mono";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/JetBrainsMono-Regular-latin.woff2") format("woff2");
+  unicode-range: U+0000-017F, U+2000-206F, U+20AC, U+2122, U+2190-21FF, U+2212, U+2215, U+2318,
+    U+2713, U+2715;
+}
+@font-face {
+  font-family: "JetBrains Mono";
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url("/fonts/JetBrainsMono-Medium.woff2") format("woff2");
+}
+@font-face {
+  font-family: "JetBrains Mono";
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url("/fonts/JetBrainsMono-Medium-latin.woff2") format("woff2");
+  unicode-range: U+0000-017F, U+2000-206F, U+20AC, U+2122, U+2190-21FF, U+2212, U+2215, U+2318,
+    U+2713, U+2715;
+}

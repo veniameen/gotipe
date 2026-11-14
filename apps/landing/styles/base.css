@@ -1,0 +1,139 @@
+/* The ground every page of the site stands on: the page, links, icons, the site's buttons, focus,
+   the skip link and reduced motion. Sizes and colours are tokens (--site-* in tokens-site.css,
+   --gt-* from @gotipe/theme). Buttons and icons repeat the Atlas controls (ui/overlay.css,
+   document.css) under the site's own names, so they never collide with the library's classes. */
+
+html {
+  background: var(--site-bg);
+  color-scheme: light;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+html[data-theme="dark"] {
+  color-scheme: dark;
+}
+body {
+  margin: 0;
+  background: var(--site-bg);
+  color: var(--gt-text);
+  font-family: var(--site-font-text);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+::selection {
+  background: var(--gt-selection);
+}
+
+/* ---- icons: one stroke for all, it never scales with the glyph ---- */
+.site-icon {
+  display: inline-block;
+  flex: none;
+  width: var(--site-icon);
+  height: var(--site-icon);
+  fill: none;
+  stroke: currentColor;
+  stroke-width: var(--gt-icon-stroke);
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* ---- the site's buttons: the library's control, links and buttons alike ---- */
+.site-button {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  gap: var(--gt-button-gap);
+  box-sizing: border-box;
+  height: var(--gt-button-h);
+  margin: 0;
+  padding: var(--gt-button-pad);
+  border: 0;
+  border-radius: var(--gt-radius-control);
+  background: var(--gt-fill-2);
+  color: var(--gt-text);
+  font: inherit;
+  font-size: var(--gt-ui-size);
+  font-weight: var(--gt-weight-medium);
+  line-height: var(--gt-ui-leading);
+  letter-spacing: normal;
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background-color var(--site-transition), color var(--site-transition), box-shadow
+    var(--site-transition);
+}
+.site-button.is-primary {
+  background: var(--gt-ink);
+  color: var(--gt-ink-text);
+}
+.site-button.is-primary:hover {
+  background: var(--gt-ink-hover);
+}
+.site-button.is-quiet {
+  background: transparent;
+  color: var(--gt-text-2);
+}
+.site-button.is-quiet:hover,
+.site-button.is-quiet[aria-expanded="true"] {
+  background: var(--gt-fill-1);
+  color: var(--gt-text);
+}
+
+/* ---- focus: the library's ring on everything a keyboard reaches ---- */
+/* :where keeps it weightless: the library's own rules (an editor's page draws no ring) win */
+:where(:focus-visible) {
+  outline: var(--gt-focus-width) solid var(--gt-focus);
+  outline-offset: var(--gt-focus-gap);
+}
+/* a skip link's target takes the focus without a ring around the whole page */
+:where(main[tabindex="-1"]:focus) {
+  outline: none;
+}
+.site a:focus-visible,
+.site button:focus-visible {
+  border-radius: var(--gt-radius-control);
+}
+
+/* ---- the skip link: hidden until a keyboard reaches it ---- */
+.site-skip {
+  position: absolute;
+  top: var(--site-skip-top);
+  left: var(--site-skip-top);
+  z-index: var(--site-z-skip);
+  padding: var(--site-head-button-pad);
+  border-radius: var(--site-head-button-radius);
+  background: var(--gt-ink);
+  color: var(--gt-ink-text);
+  font-size: var(--site-small-size);
+  line-height: var(--site-head-button-h);
+  text-decoration: none;
+  transform: translateY(-200%);
+}
+.site-skip:focus {
+  transform: none;
+}
+
+/* text for screen readers only */
+.site-sr {
+  position: absolute;
+  width: var(--gt-hairline);
+  height: var(--gt-hairline);
+  margin: calc(-1 * var(--gt-hairline));
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  border: 0;
+  white-space: nowrap;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0s !important;
+    animation-duration: 0s !important;
+    animation-iteration-count: 1 !important;
+  }
+}

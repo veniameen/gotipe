@@ -1,0 +1,151 @@
+/* What the Atlas draws as pictures and the site makes work: buttons and links in the places of
+   the frame's spans, the static documents the server sends before an editor arrives, the live
+   editors inside the windows, the syntax colours of the sample. */
+
+/* ---- controls in the places of the frame's spans ---- */
+.site-chip {
+  width: fit-content;
+}
+.site-chip:hover > .site-icon {
+  color: var(--gt-accent);
+}
+.site .site-cta:not(.is-second):hover {
+  background: var(--gt-accent-hover);
+}
+.site .site-cta.is-second:hover {
+  box-shadow: inset 0 0 0 var(--gt-hairline) var(--gt-line-strong);
+}
+.site-install > .site-button {
+  color: var(--gt-text-2);
+}
+.site-look {
+  width: 100%;
+  margin: 0;
+  border: 0;
+  background: transparent;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.site-look:hover:not(.is-on) {
+  background: var(--gt-fill-1);
+}
+.site-licence-free > a {
+  color: var(--gt-accent);
+}
+
+/* ---- the documents in the windows: the window pads them, the page sets only its type ----
+   The same rule holds the server's static document (the library's own markup) and the live editor
+   that replaces it, so the window keeps its height when the editor arrives. */
+.site-render .gotipe-content {
+  max-width: none;
+  min-height: 0;
+  padding: 0;
+}
+/* the static document's title: an h2 (the landing has one h1) drawn as the page's title */
+.site-static-doc .gotipe-content > .site-static-title {
+  margin: 0 0 var(--gt-head-after);
+  font-size: var(--gt-title-size);
+  font-weight: var(--gt-weight-title);
+  line-height: var(--gt-title-leading);
+  letter-spacing: var(--gt-title-tracking);
+}
+.site-static-doc .gotipe-content > .site-static-title + * {
+  margin-top: 0;
+}
+/* the look window shows the page as the view draws it, only shorter at the foot */
+.site-look-page .gotipe-content {
+  min-height: 0;
+  padding-bottom: var(--site-gap-xl);
+}
+
+/* the copy chip of the frame, over the library's icon button of the code head */
+.site-panel .gotipe-code-block-header .site-copy {
+  display: inline-flex;
+  min-width: 0;
+  height: auto;
+  padding: var(--site-badge-pad);
+  border-radius: var(--site-badge-radius);
+  color: var(--gt-text-2);
+  font-family: var(--site-font-mono);
+  font-size: var(--site-label-size);
+  line-height: var(--site-label-leading);
+}
+.site-panel .gotipe-code-block-header .site-copy:hover {
+  color: var(--gt-text);
+}
+.site-panel .gotipe-code-block-scroll {
+  overflow: hidden;
+}
+.site-panel .gotipe-code-block-scroll > pre {
+  margin: 0;
+  padding: 0;
+  overflow-x: auto;
+  font: inherit;
+}
+.site-panel .gotipe-code-block-line-numbers {
+  display: block;
+  flex: none;
+  min-width: var(--gt-code-gutter);
+  margin-right: var(--gt-code-gutter-gap);
+  padding: 0;
+  color: var(--gt-text-3);
+  text-align: right;
+  white-space: pre;
+  user-select: none;
+}
+
+/* ---- two people in one paragraph: the library's remote selection and caret ---- */
+.site-pair-selection {
+  background: var(--gt-person-1-sel);
+}
+.site-pair-caret {
+  position: relative;
+  display: inline-block;
+  width: var(--gt-caret-w);
+  height: var(--gt-caret-h);
+  margin: 0 calc(-0.5 * var(--gt-caret-w));
+  vertical-align: var(--gt-caret-shift);
+  background: var(--gt-person-1);
+}
+.site-pair-flag {
+  position: absolute;
+  bottom: 100%;
+  left: 0;
+  padding: var(--gt-flag-pad);
+  border-radius: var(--gt-flag-radius);
+  background: var(--gt-person-1);
+  color: var(--gt-flag-text);
+  font-family: var(--gt-font-ui);
+  font-size: var(--gt-ui-tiny);
+  font-weight: var(--gt-weight-medium);
+  line-height: var(--gt-ui-tiny-leading);
+  letter-spacing: normal;
+  white-space: nowrap;
+}
+
+/* the look list is a fieldset of buttons */
+fieldset.site-look-list {
+  min-width: 0;
+  margin-right: 0;
+  margin-bottom: 0;
+  margin-left: 0;
+  padding: 0;
+  border: 0;
+}
+
+/* the source pane scrolls sideways where the window is narrower than its longest line */
+.site-src-lines {
+  overflow-x: auto;
+}
+.site-src-lines > li {
+  min-width: fit-content;
+}
+
+/* a phone's window bar keeps the path and drops the file tag; the foot wraps instead of squeezing */
+.site-window-bar > .site-window-end > .site-tag {
+  display: var(--site-window-tag-display);
+}
+.site-window-foot {
+  flex-wrap: wrap;
+}

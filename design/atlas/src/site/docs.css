@@ -319,11 +319,19 @@
 .site-result.is-active > .gt-icon {
   color: var(--gt-accent);
 }
+.site-result-text {
+  flex: 1;
+  min-width: 0;
+}
+/* a page shows its description, a section «Page · excerpt»: one line, cut with an ellipsis */
 .site-result small {
   display: block;
+  overflow: hidden;
   color: var(--gt-text-2);
   font-size: var(--gt-ui-small);
   line-height: var(--gt-ui-small-leading);
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .site-result mark {
   border-radius: var(--gt-radius-match);
