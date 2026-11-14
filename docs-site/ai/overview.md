@@ -147,7 +147,7 @@ exposed, so create one of your own for host-driven calls:
 
 ```ts title="summarize.ts"
 import { AiManager } from "@gotipe/ai";
-import type { GoTipeEditor } from "@gotipe/core";
+import { type GoTipeEditor, createId } from "@gotipe/core";
 import { backendProvider } from "./ai-provider";
 
 export async function summarizeSelection(editor: GoTipeEditor) {
@@ -155,7 +155,7 @@ export async function summarizeSelection(editor: GoTipeEditor) {
   try {
     const target = ai.captureTarget(); // the document and selection to change
     const content = await ai.executeCommand("summarize");
-    const id = crypto.randomUUID();
+    const id = createId();
     ai.applySuggestion({ id, type: "summarize", content, confidence: 1 }, target);
   } finally {
     ai.destroy();

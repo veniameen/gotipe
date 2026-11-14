@@ -99,6 +99,10 @@
 .gotipe-content > :where(h3, h4, h5, h6) + * {
   margin-top: var(--gt-flow-after-h3);
 }
+/* a page title is spaced as an h1 at any HTML level (PageEditor `titleLevel`) */
+.gotipe-content > :where(.gotipe-page-title) + * {
+  margin-top: var(--gt-flow-after-h1);
+}
 .gotipe-content > :where(hr),
 .gotipe-content > :where(hr) + * {
   margin-top: var(--gt-flow-rule);
@@ -512,7 +516,7 @@
     content: " (" attr(href) ")";
     color: GrayText;
   }
-  .gotipe-content :where(h1, h2, h3) {
+  .gotipe-content :where(h1, h2, h3, .gotipe-page-title) {
     break-after: avoid;
   }
   .gotipe-content :where(pre, blockquote, table, img) {

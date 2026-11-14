@@ -1,3 +1,4 @@
+import { createId } from "./document/id";
 import { fontFamilyFromCss, fontSizeFromCss, isTextDirection } from "./document/text-style";
 import { GoTipeError } from "./error";
 import { toSafeColor } from "./security/colors";
@@ -60,7 +61,7 @@ function makeBlock(
   attrs: Block["attrs"] = {},
   children: Block[] = [],
 ): Block {
-  return { id: crypto.randomUUID(), type, content, attrs, children };
+  return { id: createId(), type, content, attrs, children };
 }
 
 /**

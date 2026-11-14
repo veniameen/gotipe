@@ -132,7 +132,7 @@ describe("incremental serialization", () => {
     p.content = plain("строка 1\nстрока 2");
     const out = serializeMarkdown(doc, snapshot).text;
     const { start, end } = sliceOf(snapshot, p.id);
-    expect(replacedSlice(text, out, start, end)).toBe("строка 1\r\nстрока 2");
+    expect(replacedSlice(text, out, start, end)).toBe("строка 1\\\r\nстрока 2");
   });
 
   it("editing the last block of a file without trailing newline keeps it that way", () => {
@@ -143,7 +143,7 @@ describe("incremental serialization", () => {
 
   it("hard-break paragraphs are re-serialized with backslash breaks", () => {
     const { doc, snapshot } = setup("a\\\nb\n");
-    expect(doc.blocks[0]!.attrs).toEqual({ breaks: "hard" });
+    expect(doc.blocks[0]!.content).toEqual(plain("a\nb"));
     doc.blocks[0]!.content = plain("a\nb\nc");
     expect(serializeMarkdown(doc, snapshot).text).toBe("a\\\nb\\\nc\n");
   });

@@ -1,4 +1,4 @@
-import type { GoTipeEditor } from "@gotipe/core";
+import { type GoTipeEditor, createId } from "@gotipe/core";
 import { type AiTarget, flatten, textOf } from "./document";
 import type { AiManager } from "./manager";
 import { reportAiError } from "./runtime";
@@ -83,7 +83,7 @@ export function installAutocomplete(
       clear();
       try {
         manager.applySuggestion(
-          { id: crypto.randomUUID(), type: "completion", content: captured.text, confidence: 1 },
+          { id: createId(), type: "completion", content: captured.text, confidence: 1 },
           captured.target,
         );
       } catch (error) {

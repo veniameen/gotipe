@@ -1,4 +1,10 @@
-import { type GoTipeEditor, GoTipeError, type Step, type TransactionContext } from "@gotipe/core";
+import {
+  type GoTipeEditor,
+  GoTipeError,
+  type Step,
+  type TransactionContext,
+  createId,
+} from "@gotipe/core";
 import { type TextAnchor, anchorAt, editsOverlap } from "./anchors";
 import { findBlock, locateSuggestion, suggestionSteps, textOf, validateRange } from "./apply";
 import {
@@ -39,7 +45,7 @@ export class SuggestionsManager {
   private applying = false;
   private lastCapture: { id: string; at: number } | null = null;
   private cleanup: (() => void)[];
-  private layer = `suggestions-${crypto.randomUUID()}`;
+  private layer = `suggestions-${createId()}`;
 
   constructor(
     private editor: EditorPort,
@@ -153,7 +159,7 @@ export class SuggestionsManager {
     const before = patch ? plain(patch.before) : "";
     const after = patch ? plain(patch.after) : "";
     const suggestion: Suggestion = {
-      id: existing?.id ?? crypto.randomUUID(),
+      id: existing?.id ?? createId(),
       createdAt: existing?.createdAt ?? new Date().toISOString(),
       status: "pending",
       applied: true,
@@ -199,7 +205,7 @@ export class SuggestionsManager {
       );
     const suggestion: Suggestion = {
       ...structuredClone(options),
-      id: crypto.randomUUID(),
+      id: createId(),
       createdAt: new Date().toISOString(),
       status: "pending",
     };

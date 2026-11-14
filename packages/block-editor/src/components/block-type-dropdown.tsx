@@ -1,16 +1,24 @@
 import type { GoTipeEditor } from "@gotipe/core";
 import type { TranslationKey } from "@gotipe/i18n";
 import { useEditorState } from "@gotipe/react";
+import { useId } from "react";
 import { useBlockEditorI18n } from "../i18n/strings";
 import { PageIcon, type PageIconName } from "../page/icons";
 import { BLOCK_KEYS } from "./formatting/keys";
 import { blockPath } from "./formatting/selection";
-import { MenuKey } from "./formatting/tip";
+import { MenuKey, Tip } from "./formatting/tip";
 import { useFormattingMenu } from "./formatting/use-formatting-menu";
 
 export interface BlockTypeDropdownProps {
   editor: GoTipeEditor;
+  /**
+   * Whether lists count as block types: the label names the list the caret is in and the menu
+   * offers the list types. Default `true`; a toolbar with its own list buttons turns it off.
+   */
+  lists?: boolean;
 }
+
+const LIST_TYPES = ["bulletList", "orderedList", "todoList"];
 interface BlockTypeOption {
   type: string;
   label: string;
@@ -50,16 +58,25 @@ const BLOCK_TYPES: BlockTypeOption[] = [
 const keyOf = (option: { type: string; attrs?: Record<string, unknown> }) =>
   option.type === "heading" ? `heading:${option.attrs?.level}` : option.type;
 
-export function BlockTypeDropdown({ editor }: BlockTypeDropdownProps) {
+export function BlockTypeDropdown({ editor, lists = true }: BlockTypeDropdownProps) {
   const state = useEditorState(editor, (value) => value) ?? editor.getViewState();
   const menu = useFormattingMenu(editor);
   const i18n = useBlockEditorI18n();
   const path = blockPath(state.blocks, state.selection.anchor.blockId);
   const block = path.at(-1);
   const structuralCell = !!block && ["tableCell", "tableHeader"].includes(block.type);
-  const list = [...path]
-    .reverse()
-    .find((item) => ["bulletList", "orderedList", "todoList"].includes(item.type));
+  const list = lists
+    ? [...path].reverse().find((item) => LIST_TYPES.includes(item.type))
+    : undefined;
+  const options = lists
+    ? BLOCK_TYPES
+    : BLOCK_TYPES.filter((option) => !LIST_TYPES.includes(option.type));
+  const tip = useId();
+  const reason = !menu.editable
+    ? i18n.t("toolbar.readOnly")
+    : structuralCell
+      ? i18n.t("editor.blockTypeInCell")
+      : null;
   const label =
     block?.type === "heading"
       ? `Heading ${block.attrs.level ?? 1}`
@@ -82,14 +99,20 @@ export function BlockTypeDropdown({ editor }: BlockTypeDropdownProps) {
       <button
         ref={menu.trigger}
         type="button"
-        className="gotipe-block-type-trigger"
-        disabled={!menu.editable || structuralCell}
-        onClick={() => (menu.open ? menu.close() : menu.show())}
+        className="gotipe-block-type-trigger gotipe-format-tool is-text"
+        aria-disabled={reason ? true : undefined}
+        aria-describedby={reason ? tip : undefined}
+        onMouseDown={(event) => event.preventDefault()}
+        onClick={() => {
+          if (reason) return;
+          if (menu.open) menu.close();
+          else menu.show();
+        }}
         aria-haspopup="listbox"
         aria-expanded={menu.open}
         aria-label={i18n.t("editor.blockType")}
         onKeyDown={(event) => {
-          if (event.key === "ArrowDown") {
+          if (event.key === "ArrowDown" && !reason) {
             event.preventDefault();
             menu.show();
             requestAnimationFrame(() =>
@@ -107,6 +130,7 @@ export function BlockTypeDropdown({ editor }: BlockTypeDropdownProps) {
         <span className="gotipe-block-type-trigger-chevron" aria-hidden="true">
           <PageIcon name="chevron" />
         </span>
+        {reason ? <Tip id={tip} label={reason} /> : null}
       </button>
       {menu.open && (
         <div
@@ -119,7 +143,7 @@ export function BlockTypeDropdown({ editor }: BlockTypeDropdownProps) {
           style={menu.style}
           onKeyDown={menu.keydown}
         >
-          {BLOCK_TYPES.map((option) => (
+          {options.map((option) => (
             <button
               key={option.label}
               type="button"

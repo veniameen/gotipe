@@ -18,16 +18,21 @@ function textOf(block: BlockView): string {
   return "";
 }
 
+/** The HTML level of a page title: `h1`…`h6`. */
+export type PageTitleLevel = 1 | 2 | 3 | 4 | 5 | 6;
+
 /**
  * Headings of a Markdown page: the file's leading `# heading` is the page's title (GoTipe Atlas,
  * frame 19); an empty title shows the host's name for the file. Other headings are as anywhere.
+ * The title is an `h${titleLevel}` that looks the same at any level: a host page with its own
+ * `h1` passes 2 (D-84).
  */
-function headingView(titlePlaceholder: string | undefined) {
+function headingView(titlePlaceholder: string | undefined, titleLevel: PageTitleLevel) {
   return function PageHeadingView({ block, editor, rootProps, content, readOnly }: BlockViewProps) {
     const i18n = useBlockEditorI18n();
     const level = Math.min(Math.max(Number(block.attrs.level) || 1, 1), 6);
-    const Tag = `h${level}` as "h1";
     const isTitle = level === 1 && editor.getViewState().blocks[0]?.id === block.id;
+    const Tag = `h${isTitle ? titleLevel : level}` as "h1";
     const empty = textOf(block).length === 0;
     const placeholder =
       empty && !readOnly
@@ -76,10 +81,14 @@ function MarkdownRawView({ block, rootProps }: BlockViewProps) {
  * blocks, and highlighted code when a highlighter is given.
  */
 export function createPageBlockViews(
-  options: { highlight?: CodeHighlighter; titlePlaceholder?: string } = {},
+  options: {
+    highlight?: CodeHighlighter;
+    titlePlaceholder?: string;
+    titleLevel?: PageTitleLevel;
+  } = {},
 ): BlockViews {
   return {
-    heading: headingView(options.titlePlaceholder),
+    heading: headingView(options.titlePlaceholder, options.titleLevel ?? 1),
     markdownRaw: MarkdownRawView,
     ...(options.highlight ? { codeBlock: codeBlockViewFor(options.highlight) } : {}),
   };

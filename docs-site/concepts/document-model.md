@@ -108,8 +108,14 @@ the first edit. Raw text has no marks, and `\n` separates its lines.
 Every block has an ID, including list items and table cells. Comments, suggestions,
 selections and collaboration refer to blocks by ID, so keep them stable. Commands keep a
 block's ID when they change its type or move it into a list. New blocks get IDs from
-`crypto.randomUUID()`; the Markdown parser creates UUID v7 IDs and can reuse the IDs of a
-previous version of the file.
+`createId()` of `@gotipe/core`, a UUID v4; the Markdown parser creates UUID v7 IDs and can
+reuse the IDs of a previous version of the file.
+
+`createId()` takes `crypto.randomUUID()` where the page has it and makes the same UUID from
+`crypto.getRandomValues()` where it does not: `randomUUID` exists only in a secure context
+(HTTPS or localhost), and every package of the library uses `createId()`, so editors,
+comments, suggestions, versions and AI work on a page served over plain HTTP too. Use it for
+the IDs of blocks you build.
 
 When you build a document yourself, choose the IDs. Duplicate or empty IDs are rejected,
 and an `insertBlock` step can't reuse an ID that is already in the document.
@@ -127,7 +133,8 @@ rejected, never dropped silently.
   doesn't have it, and each renderer uses its own fallback. Pass the values you rely on.
 - Every node type also accepts five attributes that the core adds: `style`, `marker`,
   `delimiter` and `breaks` (strings) and `spread` (boolean). The Markdown codec uses them
-  to keep the source syntax, such as `*` bullets or `1)` numbering.
+  to keep the source syntax, such as `*` bullets or `1)` numbering; `breaks` is only kept
+  for older documents and no longer read or written.
 
 ## Marks
 

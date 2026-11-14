@@ -1,3 +1,4 @@
+import { createId } from "../document/id";
 import { defineExtension } from "../types/extension";
 
 export const Divider = defineExtension({
@@ -31,7 +32,7 @@ export const Divider = defineExtension({
               parentId: null,
               index: blockIndex,
               block: {
-                id: crypto.randomUUID(),
+                id: createId(),
                 type: "divider",
                 attrs: {},
                 content: null,
@@ -43,7 +44,7 @@ export const Divider = defineExtension({
               parentId: null,
               index: blockIndex + 1,
               block: {
-                id: crypto.randomUUID(),
+                id: createId(),
                 type: "paragraph",
                 attrs: {},
                 content: [],

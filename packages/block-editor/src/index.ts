@@ -79,6 +79,7 @@ export type { PageEditorProps, PageEditorHandle } from "./page/page-editor";
 export { pageBlockCommands, pageSlashGroups, insertPageBlock } from "./page/page-commands";
 export type { PageBlockCommand, PageBlockKind } from "./page/page-commands";
 export { createPageBlockViews } from "./page/page-views";
+export type { PageTitleLevel } from "./page/page-views";
 export { PageIcon } from "./page/icons";
 export type { PageIconName } from "./page/icons";
 export { MarkdownSession } from "./page/markdown-session";

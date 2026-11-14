@@ -13,6 +13,9 @@ import { defineAi } from "./extension";
 import { AiManager } from "./manager";
 import type { AiProofreadSuggestion, AiProvider } from "./types";
 
+/** The platform crypto, kept before a test stubs the global. */
+const platform = globalThis.crypto;
+
 const paragraph = (id: string, text: string, children: Block[] = []): Block => ({
   id,
   type: "paragraph",
@@ -25,6 +28,7 @@ const managers: AiManager[] = [];
 afterEach(() => {
   for (const manager of managers.splice(0)) manager.destroy();
   for (const editor of editors.splice(0)) editor.destroy();
+  vi.unstubAllGlobals();
 });
 function deferred<T>() {
   let resolve!: (value: T) => void;
@@ -243,5 +247,29 @@ describe("AI proofreading integrity", () => {
     );
     await expect(ai.proofread()).rejects.toThrow("original text");
     expect(editor.getText()).toBe("Ж😀 text");
+  });
+});
+
+describe("a page served over plain HTTP (D-85)", () => {
+  it("inserts generated paragraphs without crypto.randomUUID", async () => {
+    const editor = await create(
+      undefined,
+      provider({
+        async *generateParagraph() {
+          yield "hello";
+        },
+      }),
+    );
+    vi.stubGlobal("crypto", {
+      getRandomValues: (array: Uint8Array) => platform.getRandomValues(array),
+    });
+    const errors: unknown[] = [];
+    editor.on("error", (error) => errors.push(error));
+    editor.emit("executeAiCommand", { commandId: "addParagraph", prompt: "topic" });
+    await vi.waitFor(() => expect(editor.getJSON().blocks).toHaveLength(3));
+    expect(errors).toEqual([]);
+    expect(editor.getJSON().blocks[1]!.id).toMatch(
+      /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/,
+    );
   });
 });

@@ -84,6 +84,7 @@ Details of the codec are in [Markdown](/docs/conversion/markdown).
 | `locale` | `string` | `"en"` | UI language; `"ru"` is built in. |
 | `i18n` | `I18n` | — | A ready dictionary from `createI18n`; wins over `locale`. |
 | `titlePlaceholder` | `string` | `"Untitled"` | Shown in an empty title, for example the file name. |
+| `titleLevel` | `1 \| 2 \| 3 \| 4 \| 5 \| 6` | `1` | The HTML level of the title: `h1` by default. It looks the same at any level; pass `2` when your page has its own `h1`. Other headings of the file keep their levels. |
 | `view` | `"notion" \| "docs" \| "modern" \| "minimal"` | `"notion"` | One of the shared [views](/docs/ui/theming). |
 | `highlight` | `CodeHighlighter` | — | Code highlighter (`@gotipe/block-editor/shiki`). |
 | `blockViews` | `BlockViews` | — | Your views; they win over the page's and the shared ones. |
@@ -177,6 +178,7 @@ handle and menus, and opens links on a plain click.
   the `/` menu.
 - `onReady` is an effect dependency: a new function on each render calls it again and,
   with `autoFocus`, moves the caret to the end again. Wrap it in `useCallback`.
+- `titleLevel` changes the title only: a `# heading` further down the file is still an `h1`.
 
 ## Related
 

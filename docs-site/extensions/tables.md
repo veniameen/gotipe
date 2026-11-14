@@ -90,6 +90,12 @@ Column widths live in the table's `colWidths` array and alignment in its `align`
 editor.chain().setBlockAttrs(tableId, { align: ["left", null, "right"] }).run();
 ```
 
+In the editor a column without a width is 160 px wide, and the table fills at least the width of
+the text; a wider table scrolls in its own box. A table drawn without `<col>` widths — the HTML of
+`serializeHtml` or a server render inside `.gotipe-table-wrapper`, or the version comparison —
+fits the text column with `@gotipe/theme`: its columns share the width by their content and the
+cells wrap, and only words that cannot fit make it scroll.
+
 ## Column types
 
 `@gotipe/block-editor` gives columns a type that lives in the cells themselves, so it survives Markdown without an extra attribute:

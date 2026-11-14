@@ -28,8 +28,12 @@ export interface InlineResult {
   text: string;
   /** Text offsets relative to the block text, md offsets absolute in `src`. */
   segs: RawSegment[];
-  /** Line breaks in the text: soft (from text values) or hard (`break` nodes). */
-  newlines: { at: number; hard: boolean }[];
+  /**
+   * Text offsets of the spaces that are soft line breaks of the source (D-88): the writer puts
+   * the line ending back while the words around them stay (`serialization/line-breaks.ts`).
+   * Found through the segments, so only when they are computed.
+   */
+  softBreaks: number[];
 }
 
 const BR_RE = /^<br[ \t]*\/?>$/i;
@@ -38,7 +42,7 @@ class Builder {
   spans: Span[] = [];
   text = "";
   segs: RawSegment[] = [];
-  newlines: { at: number; hard: boolean }[] = [];
+  softBreaks: number[] = [];
   /** Atoms read so far: each gets its own `key`, renumbered in document order later. */
   private atoms = 0;
 
@@ -106,6 +110,8 @@ function plainChildren(node: Link | { children: PhrasingContent[] }): boolean {
 
 function plainText(node: Nodes): string {
   if ("value" in node && typeof node.value === "string") return node.value;
+  // a line break is text: a link of a hard break alone is not empty
+  if (node.type === "break") return "\n";
   if ("children" in node) return (node.children as Nodes[]).map((c) => plainText(c)).join("");
   return "";
 }
@@ -120,7 +126,12 @@ export function parseInline(
 ): InlineResult {
   const b = new Builder();
   walk(children, [], b, ctx, flags, parentFrom, parentTo, false);
-  return { spans: normalizeSpans(b.spans), text: b.text, segs: b.segs, newlines: b.newlines };
+  return {
+    spans: normalizeSpans(b.spans),
+    text: b.text,
+    segs: b.segs,
+    softBreaks: b.softBreaks,
+  };
 }
 
 function walk(
@@ -153,6 +164,7 @@ function walk(
           for (const s of r) {
             b.segs.push({ ...s, textFrom: s.textFrom + t0, textTo: s.textTo + t0 });
           }
+          softBreaksOf(r, runText, ctx.src, t0, b.softBreaks);
         } else if (runText.length > 0) {
           b.segs.push({
             textFrom: t0,
@@ -216,24 +228,20 @@ function walkNode(
   switch (node.type) {
     case "text": {
       const value = normalizeEol(node.value);
-      const at = b.text.length;
-      for (let i = value.indexOf("\n"); i !== -1; i = value.indexOf("\n", i + 1)) {
-        b.newlines.push({ at: at + i, hard: false });
-      }
       const segs = wantSegs ? align(value, ctx.src, range[0], range[1], "text") : null;
+      if (segs) softBreaksOf(segs, value, ctx.src, b.text.length, b.softBreaks);
       b.push(value, marks, segs, wantSegs ? range : null);
       return;
     }
-    case "break": {
-      b.newlines.push({ at: b.text.length, hard: true });
+    case "break":
       b.push("\n", marks, null, wantSegs ? range : null);
       return;
-    }
     case "inlineCode": {
       const value = normalizeEol(node.value);
       const segs = wantSegs
         ? alignInlineCode(value, ctx.src, range[0], range[1], flags.inCell)
         : null;
+      if (segs) softBreaksOf(segs, value, ctx.src, b.text.length, b.softBreaks);
       b.push(value, [...marks, { type: "code" }], segs, wantSegs ? range : null);
       return;
     }
@@ -354,6 +362,23 @@ export function trimInlineStart(r: InlineResult, k: number): InlineResult {
     spans: normalizeSpans(spans),
     text: r.text.slice(k),
     segs,
-    newlines: r.newlines.filter((n) => n.at >= k).map((n) => ({ at: n.at - k, hard: n.hard })),
+    softBreaks: r.softBreaks.filter((at) => at >= k).map((at) => at - k),
   };
+}
+
+/**
+ * The soft line breaks among aligned segments: a space of the value that stands for a line
+ * ending of the source. `base` is where the value starts in the block text.
+ */
+function softBreaksOf(
+  segs: readonly RawSegment[],
+  value: string,
+  src: string,
+  base: number,
+  out: number[],
+): void {
+  for (const s of segs) {
+    if (s.exact || s.textTo - s.textFrom !== 1 || value[s.textFrom] !== " ") continue;
+    if (/[\r\n]/.test(src.slice(s.mdFrom, s.mdTo))) out.push(base + s.textFrom);
+  }
 }

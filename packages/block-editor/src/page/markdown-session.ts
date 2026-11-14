@@ -1,4 +1,4 @@
-import type { BlockView, GoTipeEditor } from "@gotipe/core";
+import { type BlockView, type GoTipeEditor, createId } from "@gotipe/core";
 import {
   type InlineAtoms,
   type MarkdownMap,
@@ -68,7 +68,7 @@ export class MarkdownSession {
         const id =
           previousDoc?.blocks[0] && isEmptyTitle(previousDoc.blocks[0])
             ? previousDoc.blocks[0].id
-            : crypto.randomUUID();
+            : createId();
         blocks.unshift({ id, type: "heading", attrs: { level: 1 }, content: [], children: [] });
         this.syntheticTitleId = id;
       }

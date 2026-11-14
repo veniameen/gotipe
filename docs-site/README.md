@@ -46,8 +46,8 @@ The body starts at H2 (`##`). Headings H2–H3 form the outline beside the page.
 - **One paragraph** in an alert and in a list item. The GoTipe codec keeps a list, code or
   a second paragraph inside them as raw Markdown, so put such content after the alert;
   a page of limitations is a `## Limitations` section with a plain list.
-- **Line breaks**: wrap prose as you like; the site joins the soft breaks of a paragraph
-  with a space.
+- **Line breaks**: wrap prose as you like; a soft break of a paragraph reads as a space
+  (CommonMark), in the codec and on the site.
 - **Live demo**: a fenced block with the language `demo` and one demo name:
   ```` ```demo ```` / `tables` / ```` ``` ````. Names: `block-editor`, `page-editor`,
   `headless`, `views`, `lists`, `marks`, `tables`, `media`, `code`, `collaboration`,

@@ -1,6 +1,7 @@
 import { type BlockView, type GoTipeEditor, GoTipeError } from "@gotipe/core";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { usePhantom } from "../content/context";
+import { useMissingNaturalWidth } from "../content/natural-width";
 import { useResolvedAsset } from "../host-assets";
 import { useGoTipeI18n } from "../i18n-context";
 import { useFloatingPosition } from "../use-floating-position";
@@ -60,6 +61,10 @@ export function ImageBlock({
     original,
     nudge,
   } = useImageResize(editor, block.id, imageRef, imageShellRef, readOnly);
+  const noNaturalWidth = useMissingNaturalWidth(
+    imageRef,
+    displaySrc === null ? null : `${attempt}:${displaySrc}`,
+  );
   const resetImageWidth = () => {
     reset();
     setIsOptionsOpen(false);
@@ -305,6 +310,7 @@ export function ImageBlock({
         <div
           ref={imageShellRef}
           className="gotipe-image-loaded-shell"
+          data-natural-width={noNaturalWidth && !renderWidth ? "none" : undefined}
           onMouseEnter={onEnter}
           onMouseLeave={onLeave}
         >

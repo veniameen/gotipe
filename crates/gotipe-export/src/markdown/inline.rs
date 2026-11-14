@@ -3,17 +3,23 @@
 use gotipe_core::{AttrValue, Block, BlockContent, Mark, TextSpan};
 
 use super::{
+    breaks::{self, Piece},
     code_fence, destination, escape_entities, escape_text, link_destination, title_suffix, Emoji,
 };
 use crate::markdown_parse::atoms;
 
-/// Markdown under construction and the byte offsets of its typed dollars and colons: text of
-/// the document, as opposed to the `$` of a formula, the `:` of an emoji or verbatim source.
+/// Markdown under construction and the byte offsets of its typed dollars, colons, line breaks
+/// and pipes: text of the document, as opposed to the `$` of a formula, the `:` of an emoji,
+/// syntax or verbatim source.
 #[derive(Default)]
 struct Written {
     text: String,
     dollars: Vec<usize>,
     colons: Vec<usize>,
+    newlines: Vec<usize>,
+    pipes: Vec<usize>,
+    /// Whether each typed line break is a hard one (`breaks::decide`); unset outside a block.
+    hard: Vec<bool>,
     /// Escaped document text, as opposed to syntax or verbatim source.
     typed: bool,
 }
@@ -33,9 +39,21 @@ impl Written {
         Self {
             dollars: at('$'),
             colons: at(':'),
+            newlines: at('\n'),
+            pipes: at('|'),
             typed: true,
             text,
+            ..Self::default()
         }
+    }
+
+    /// The byte offsets of the typed characters, to move with an insertion.
+    fn offsets(&mut self) -> impl Iterator<Item = &mut usize> {
+        self.dollars
+            .iter_mut()
+            .chain(&mut self.colons)
+            .chain(&mut self.newlines)
+            .chain(&mut self.pipes)
     }
 
     /// The ASCII letter or digit at byte `at` written as a character reference, so that it
@@ -43,19 +61,26 @@ impl Written {
     fn reference(&mut self, at: usize) {
         let reference = format!("&#{};", self.text.as_bytes()[at]);
         self.text.replace_range(at..at + 1, &reference);
-        for offset in self.dollars.iter_mut().chain(&mut self.colons) {
+        for offset in self.offsets() {
             if *offset > at {
                 *offset += reference.len() - 1;
             }
         }
     }
 
-    /// `open` and `close` around everything from byte `from` to byte `to`.
+    /// `open` and `close` around everything from byte `from` to byte `to`. A line break of
+    /// the leading or trailing whitespace a mark leaves out stays outside.
     fn wrap(&mut self, from: usize, to: usize, open: &str, close: &str) {
         self.text.insert_str(to, close);
         self.text.insert_str(from, open);
-        for offset in self.dollars.iter_mut().chain(&mut self.colons) {
-            *offset += open.len();
+        for offset in self.offsets() {
+            let before = *offset;
+            if before >= to {
+                *offset += close.len();
+            }
+            if before >= from {
+                *offset += open.len();
+            }
         }
     }
 
@@ -71,6 +96,10 @@ impl Written {
             .extend(other.dollars.iter().map(|dollar| base + dollar));
         self.colons
             .extend(other.colons.iter().map(|colon| base + colon));
+        self.newlines
+            .extend(other.newlines.iter().map(|newline| base + newline));
+        self.pipes
+            .extend(other.pipes.iter().map(|pipe| base + pipe));
         self.text.push_str(&other.text);
     }
 
@@ -93,13 +122,15 @@ impl Written {
             let line = self.text[start..end].replace('\n', ">");
             if atoms::emoji_at(&line, at - start, emoji).is_some() {
                 self.text.insert(at, '\\');
-                for offset in self.dollars.iter_mut().chain(&mut self.colons) {
+                for offset in self.offsets() {
                     if *offset >= at {
                         *offset += 1;
                     }
                 }
             }
         }
+        // where backslashes went in before dollars, right to left: the offsets of the text
+        let mut escaped = vec![];
         let mut index = self.dollars.len();
         while index > 0 {
             // A run of typed dollars, the last one first.
@@ -118,9 +149,16 @@ impl Written {
             if line[1..].starts_with('$') || first == last && atoms::math_end(&line, 0).is_some() {
                 for dollar in (first..=last).rev() {
                     self.text.insert(self.dollars[dollar], '\\');
+                    escaped.push(self.dollars[dollar]);
                 }
             }
             index = first;
+        }
+        for offset in self.newlines.iter_mut().chain(&mut self.pipes) {
+            *offset += escaped.iter().filter(|at| **at <= *offset).count();
+        }
+        if !cell && !self.hard.is_empty() && self.hard.len() == self.newlines.len() {
+            breaks::apply(&mut self.text, &self.newlines, &self.hard, &self.pipes);
         }
         self.text
     }
@@ -140,6 +178,11 @@ pub(super) fn cell_to_markdown(content: &BlockContent, emoji: &Emoji) -> String 
         BlockContent::RichText(spans) => spans_to_markdown(spans).finish(true, emoji),
         other => content_to_markdown(other, emoji),
     }
+}
+
+/// The text of a heading: one line, its line breaks written as `<br>`.
+pub(super) fn line_to_markdown(content: &BlockContent, emoji: &Emoji) -> String {
+    cell_to_markdown(content, emoji).replace('\n', "<br>")
 }
 
 /// Document text outside rich text (the alt of an image block).
@@ -233,6 +276,8 @@ fn atom(
 
 fn spans_to_markdown(spans: &[TextSpan]) -> Written {
     let mut out = Written::default();
+    // the document text of every piece written and whether it is typed (`breaks::decide`)
+    let mut written_text: Vec<(String, bool)> = vec![];
     // Where the closing `$` of the formula written last ends.
     let mut formula_end = None;
     // Where the custom emoji written last ends, and whether typed text was written last.
@@ -264,25 +309,21 @@ fn spans_to_markdown(spans: &[TextSpan]) -> Written {
         let emoji = written.is_some() && mark.is_some_and(|mark| mark.mark_type == "customEmoji");
         // An atom that cannot be written is the text of its spans.
         let pieces = match written {
-            Some((text, formula)) => vec![(span, text, formula)],
+            Some((text, formula)) => vec![(span, whole.as_str(), text, formula)],
             None => spans[index..end]
                 .iter()
-                .map(|span| (span, plain(span), false))
+                .map(|span| (span, span.text.as_str(), plain(span), false))
                 .collect(),
         };
-        for (span, mut text, formula) in pieces {
+        for (span, source, mut text, formula) in pieces {
             let mention = span.marks.iter().any(|mark| mark.mark_type == "mention");
             for mark in &span.marks {
                 wrap(&mut text, mark, mention);
             }
-            if formula_end == Some(out.text.len()) {
-                if let Some(digit) = text.text.bytes().next().filter(u8::is_ascii_digit) {
-                    let reference = format!("&#{digit};");
-                    text.text.replace_range(..1, &reference);
-                    for dollar in &mut text.dollars {
-                        *dollar += reference.len() - 1;
-                    }
-                }
+            if formula_end == Some(out.text.len())
+                && text.text.bytes().next().is_some_and(|c| c.is_ascii_digit())
+            {
+                text.reference(0);
             }
             // No letter or digit of typed text may touch a custom emoji.
             let alnum = |byte: Option<&u8>| byte.is_some_and(u8::is_ascii_alphanumeric);
@@ -302,12 +343,21 @@ fn spans_to_markdown(spans: &[TextSpan]) -> Written {
                     .as_bytes()
                     .last()
                     .is_some_and(u8::is_ascii_alphanumeric);
+            written_text.push((source.to_owned(), text.typed));
             out.append(text);
             emoji_end = Some(out.text.len()).filter(|_| bare);
             formula_end = Some(out.text.len()).filter(|_| formula && out.text.ends_with('$'));
         }
         index = end;
     }
+    let pieces: Vec<Piece> = written_text
+        .iter()
+        .map(|(text, typed)| Piece {
+            text,
+            typed: *typed,
+        })
+        .collect();
+    out.hard = breaks::decide(&pieces);
     out
 }
 
@@ -317,6 +367,12 @@ fn plain(span: &TextSpan) -> Written {
         return Written::verbatim(span.text.clone());
     }
     if span.marks.iter().any(|mark| mark.mark_type == "code") {
+        // a line ending in a code span reads as a space and could start a block: write the space
+        let text = span.text.replace('\n', " ");
+        let span = &TextSpan {
+            text,
+            marks: span.marks.clone(),
+        };
         let fence = code_fence(&span.text, 1);
         let padding = if span.text.starts_with('`')
             || span.text.ends_with('`')

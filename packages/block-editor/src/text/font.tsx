@@ -11,7 +11,8 @@ import {
 import type { TranslationKey } from "@gotipe/i18n";
 import { useEditorState } from "@gotipe/react";
 import type React from "react";
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useId, useLayoutEffect, useRef, useState } from "react";
+import { useFormatReason } from "../components/formatting/reasons";
 import { capturedSelection } from "../components/formatting/selection";
 import { Tip } from "../components/formatting/tip";
 import { useFormattingMenu } from "../components/formatting/use-formatting-menu";
@@ -27,11 +28,14 @@ const FAMILY_NAMES: Record<FontFamilyName, TranslationKey> = {
 /**
  * The font of a selection in a fixed toolbar (Atlas frame 27, modern view): the current face by
  * name, and a list where each face is named in itself. The system face is the document's own, so
- * choosing it removes the mark. Needs the `FontFamily` extension.
+ * choosing it removes the mark. Needs the `FontFamily` extension. Where text takes no marks, or
+ * the editor is read-only, the tooltip says why (frame 31).
  */
 export function FontFamilyPicker({ editor }: { editor: GoTipeEditor }) {
   const i18n = useBlockEditorI18n();
   const menu = useFormattingMenu(editor);
+  const reason = useFormatReason(editor);
+  const tip = useId();
   const current = useEditorState(editor, () => getFontFamily(editor) ?? "system") ?? "system";
   const pick = (family: FontFamilyName) =>
     menu.apply(() =>
@@ -46,11 +50,16 @@ export function FontFamilyPicker({ editor }: { editor: GoTipeEditor }) {
         aria-label={`${i18n.t("font.family")}: ${i18n.t(FAMILY_NAMES[current])}`}
         aria-haspopup="listbox"
         aria-expanded={menu.open}
-        disabled={!menu.editable}
+        aria-disabled={reason ? true : undefined}
+        aria-describedby={reason ? tip : undefined}
         onMouseDown={(event) => event.preventDefault()}
-        onClick={() => (menu.open ? menu.close() : menu.show())}
+        onClick={() => {
+          if (reason) return;
+          if (menu.open) menu.close();
+          else menu.show();
+        }}
         onKeyDown={(event) => {
-          if (event.key === "ArrowDown" && !menu.open) {
+          if (event.key === "ArrowDown" && !menu.open && !reason) {
             event.preventDefault();
             menu.show();
           }
@@ -58,7 +67,7 @@ export function FontFamilyPicker({ editor }: { editor: GoTipeEditor }) {
       >
         <span className="gotipe-format-tool-label">{i18n.t(FAMILY_NAMES[current])}</span>
         <PageIcon name="chevron" />
-        <Tip label={i18n.t("font.family")} />
+        <Tip id={tip} label={reason ?? i18n.t("font.family")} />
       </button>
       {menu.open && (
         <div
@@ -129,20 +138,22 @@ export interface FontSizeStepperProps {
 /**
  * The size of a selection in a fixed toolbar (Atlas frame 27): minus, the size, plus; one step a
  * press. The size can be typed: Enter or leaving the field applies it, arrows step it, Escape
- * returns to the text. Needs the `FontSize` extension.
+ * returns to the text. Needs the `FontSize` extension. At the smallest or largest size, where
+ * text takes no marks or the editor is read-only, minus and plus say why in their tooltips.
  */
 export function FontSizeStepper({ editor, min = 10, max = 48 }: FontSizeStepperProps) {
   const i18n = useBlockEditorI18n();
   const size = useShownSize(editor);
+  const reason = useFormatReason(editor);
+  const tips = { smaller: useId(), larger: useId(), field: useId() };
   const [draft, setDraft] = useState<string | null>(null);
-  const [editable, setEditable] = useState(editor.isEditable);
   const selection = useRef<Selection | null>(null);
-  useEffect(() => {
-    setEditable(editor.isEditable);
-    return editor.on("editableChange", setEditable);
-  }, [editor]);
+  const why = (edge: boolean, text: string) =>
+    reason ?? (size === null ? i18n.t("toolbar.noText") : edge ? text : null);
+  const smaller = why(size !== null && size <= min, i18n.t("font.smallest", { size: min }));
+  const larger = why(size !== null && size >= max, i18n.t("font.largest", { size: max }));
   const apply = (value: number, refocus: boolean) => {
-    if (!Number.isFinite(value) || !editor.isEditable) return;
+    if (!Number.isFinite(value) || !editor.isEditable || reason) return;
     if (selection.current) editor.chain().setSelection(selection.current).run();
     setFontSize(editor, Math.min(max, Math.max(min, Math.round(value))));
     if (refocus) editor.focus();
@@ -157,12 +168,15 @@ export function FontSizeStepper({ editor, min = 10, max = 48 }: FontSizeStepperP
         type="button"
         className="gotipe-format-tool"
         aria-label={i18n.t("font.smaller")}
-        disabled={!editable || size === null || size <= min}
+        aria-disabled={smaller ? true : undefined}
+        aria-describedby={smaller ? tips.smaller : undefined}
         onMouseDown={keep}
-        onClick={() => step(-1)}
+        onClick={() => {
+          if (!smaller) step(-1);
+        }}
       >
         <PageIcon name="minus" />
-        <Tip label={i18n.t("font.smaller")} />
+        <Tip id={tips.smaller} label={smaller ?? i18n.t("font.smaller")} />
       </button>
       <input
         className="gotipe-size-field"
@@ -173,7 +187,9 @@ export function FontSizeStepper({ editor, min = 10, max = 48 }: FontSizeStepperP
         aria-valuemin={min}
         aria-valuemax={max}
         aria-valuenow={size ?? undefined}
-        disabled={!editable}
+        aria-disabled={reason ? true : undefined}
+        aria-describedby={reason ? tips.field : undefined}
+        readOnly={!!reason}
         value={draft ?? (size === null ? "" : String(size))}
         onFocus={(event) => {
           selection.current = capturedSelection(editor.getViewState().selection);
@@ -202,16 +218,24 @@ export function FontSizeStepper({ editor, min = 10, max = 48 }: FontSizeStepperP
           }
         }}
       />
+      {reason ? (
+        <span id={tips.field} className="gotipe-sr-only">
+          {reason}
+        </span>
+      ) : null}
       <button
         type="button"
         className="gotipe-format-tool"
         aria-label={i18n.t("font.larger")}
-        disabled={!editable || size === null || size >= max}
+        aria-disabled={larger ? true : undefined}
+        aria-describedby={larger ? tips.larger : undefined}
         onMouseDown={keep}
-        onClick={() => step(1)}
+        onClick={() => {
+          if (!larger) step(1);
+        }}
       >
         <PageIcon name="plus" />
-        <Tip label={i18n.t("font.larger")} />
+        <Tip id={tips.larger} label={larger ?? i18n.t("font.larger")} />
       </button>
     </span>
   );

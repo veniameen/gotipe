@@ -277,7 +277,7 @@
           }
         ]
       },
-      "markdown": "$$\na \\\\ b\n\\{x\\} = *a* + _b_ + `c`\n$$\n\n$$\n\\begin{aligned}\na &= b\n\n- c &= d\n+ e\n# f\n> g\n\\end{aligned}\n$$\n\n```math\na\n$$\nb\n```\n\n````math\nx\n  $$  \n```\ny\n````\n\n$$\n  leading\n    four spaces\ntrailing  \n$$\n\nCosts $5, $$10$$ inline and $ alone\n\nBefore\n$$\nstill text\n",
+      "markdown": "$$\na \\\\ b\n\\{x\\} = *a* + _b_ + `c`\n$$\n\n$$\n\\begin{aligned}\na &= b\n\n- c &= d\n+ e\n# f\n> g\n\\end{aligned}\n$$\n\n```math\na\n$$\nb\n```\n\n````math\nx\n  $$  \n```\ny\n````\n\n$$\n  leading\n    four spaces\ntrailing  \n$$\n\nCosts $5, $$10$$ inline and $ alone\n\nBefore\\\n$$\\\nstill text\n",
       "reparsed": [
         {
           "type": "math",
@@ -660,7 +660,7 @@
               "attrs": {},
               "content": [
                 {
-                  "text": "second\n",
+                  "text": "second ",
                   "marks": []
                 },
                 {

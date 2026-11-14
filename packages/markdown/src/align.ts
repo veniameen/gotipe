@@ -6,9 +6,9 @@ import { isAsciiPunct } from "./util";
  * text <-> markdown segments for blocks that are kept verbatim.
  *
  * Modes:
- * - `text`: backslash escapes, character references, soft line breaks
- *   (trailing whitespace + line ending + stripped continuation prefix).
- * - `code`: inline code (line endings + continuation prefix).
+ * - `text`: backslash escapes, character references, soft line breaks: trailing whitespace +
+ *   line ending + stripped continuation prefix, which the reader makes a space (D-88).
+ * - `code`: inline code (a line ending, read as a space, + continuation prefix).
  * - `cellCode`: inline code inside a GFM table cell (`\|` -> `|`).
  */
 export type AlignMode = "text" | "code" | "cellCode";
@@ -97,12 +97,12 @@ export function align(
           }
         }
       }
-      if (v === "\n") pushLineEnding(out, true);
+      if (v === "\n" || v === " ") pushLineEnding(out, true);
     } else {
       if (mode === "cellCode" && s === "\\" && src[j + 1] === "|" && v === "|" && j + 1 < to) {
         out.push({ ni: i + 1, nj: j + 2, mf: j, mt: j + 2, exact: false });
       }
-      if (v === "\n") pushLineEnding(out, false);
+      if (v === "\n" || v === " ") pushLineEnding(out, false);
     }
     if (s === v) out.push({ ni: i + 1, nj: j + 1, mf: j, mt: j + 1, exact: true });
     return out;
@@ -118,7 +118,7 @@ export function align(
     if (src.charCodeAt(k) === 13 && src.charCodeAt(e) === 10) e++;
     let p = e;
     while (p < to && (src[p] === " " || src[p] === "\t" || src[p] === ">")) p++;
-    const exact = e - j === 1 && src[j] === "\n";
+    const exact = value[i] === "\n" && e - j === 1 && src[j] === "\n";
     for (let q = p; q >= e; q--) {
       out.push({ ni: i + 1, nj: q, mf: j, mt: e, exact: exact && q === e });
     }

@@ -176,10 +176,7 @@ Shift+Enter inserts a line break (`"\n"`) in the current block; `insertHardBreak
 editor.chain().insertHardBreak().run();
 ```
 
-In Markdown a line break in a paragraph, quote, callout or list item is written as a line break. A block read from a file in which every break was a hard break (a trailing `\` or two spaces) carries `breaks: "hard"`, and its breaks are written with a trailing `\`. In headings and table cells a line break is written as `<br>`.
-
-> [!NOTE]
-> A soft line break read from Markdown stays a line break in the editor, while GitHub and most renderers display it as a space.
+In Markdown a line break in a paragraph, quote, callout or list item is written as a hard break, a trailing `\` before the line ending, so GitHub and other renderers show it too. In headings and table cells it is written as `<br>`. Reading Markdown, a hard break (a trailing `\` or two spaces) becomes a line break and a soft one, a plain line ending inside a paragraph, becomes a space, as in CommonMark; `PageEditor` keeps the line endings of the file when you edit around them.
 
 ## Related
 

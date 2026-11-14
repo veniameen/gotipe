@@ -4,6 +4,9 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { compareDocuments } from "./diff";
 import { VersionsManager } from "./manager";
 
+/** The platform crypto, kept before a test stubs the global. */
+const platform = globalThis.crypto;
+
 const block = (id: string, text: string): Block => ({
   id,
   type: "paragraph",
@@ -16,6 +19,7 @@ const cleanup: (() => void)[] = [];
 afterEach(() => {
   for (const stop of cleanup.splice(0)) stop();
   vi.useRealTimers();
+  vi.unstubAllGlobals();
 });
 async function setup(options = {}) {
   const editor = await createEditor({ extensions: [], content: initial });
@@ -131,5 +135,17 @@ describe("version snapshots", () => {
     unsubscribe();
     manager.createVersion("Next", "user");
     expect(changed).toHaveBeenCalledTimes(2);
+  });
+});
+
+describe("a page served over plain HTTP (D-85)", () => {
+  it("saves versions without crypto.randomUUID", async () => {
+    const { manager } = await setup();
+    vi.stubGlobal("crypto", {
+      getRandomValues: (array: Uint8Array) => platform.getRandomValues(array),
+    });
+    const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
+    expect(manager.createVersion("First", "user").id).toMatch(uuid);
+    expect(manager.getVersions()).toHaveLength(1);
   });
 });

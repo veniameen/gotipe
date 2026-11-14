@@ -101,6 +101,29 @@ export function checkImports(files) {
   return errors;
 }
 
+/**
+ * Platform calls a package may not make directly. `crypto.randomUUID` is missing outside a
+ * secure context (a page over plain HTTP), so IDs come from `createId` of @gotipe/core (D-85).
+ */
+const OWNED_CALLS = [
+  {
+    call: /\bcrypto\s*\.\s*randomUUID\s*\(/,
+    owner: "packages/core/src/document/id.ts",
+    use: "createId() of @gotipe/core",
+  },
+];
+
+export function checkPlatformCalls(files) {
+  const errors = [];
+  for (const { name, source } of files) {
+    if (!name.startsWith("packages/") || !/\.[cm]?[jt]sx?$/.test(name)) continue;
+    for (const { call, owner, use } of OWNED_CALLS) {
+      if (name !== owner && call.test(source)) errors.push(`${name}: use ${use} instead`);
+    }
+  }
+  return errors;
+}
+
 export function checkManifest(manifest) {
   const errors = [];
   const owner = manifest.name?.replace("@gotipe/", "");
@@ -136,6 +159,7 @@ export function main() {
   const errors = [
     ...checkBudgets(files, baseline, strict),
     ...checkImports(files),
+    ...checkPlatformCalls(files),
     ...manifests.flatMap((manifest) => checkManifest(manifest)),
   ];
   if (errors.length) {

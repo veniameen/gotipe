@@ -1,3 +1,4 @@
+import { createId } from "../document/id";
 import { GoTipeError } from "../error";
 import { insertionPoint } from "./insertion-point";
 import type { CommandPort } from "./port";
@@ -28,7 +29,7 @@ export class StructureCommands {
       const cells: import("../types/block").Block[] = [];
       for (let c = 0; c < options.cols; c++) {
         cells.push({
-          id: crypto.randomUUID(),
+          id: createId(),
           type: r === 0 && options.withHeader ? "tableHeader" : "tableCell",
           attrs: {},
           content: [],
@@ -36,7 +37,7 @@ export class StructureCommands {
         });
       }
       rows.push({
-        id: crypto.randomUUID(),
+        id: createId(),
         type: "tableRow",
         attrs: {},
         content: null,
@@ -48,7 +49,7 @@ export class StructureCommands {
       type: "insertBlock",
       ...location,
       block: {
-        id: crypto.randomUUID(),
+        id: createId(),
         type: "table",
         attrs: {},
         content: null,
@@ -75,13 +76,13 @@ export class StructureCommands {
     const columns: import("../types/block").Block[] = [];
     for (let i = 0; i < count; i++) {
       columns.push({
-        id: crypto.randomUUID(),
+        id: createId(),
         type: "column",
         attrs: {},
         content: null,
         children: [
           {
-            id: crypto.randomUUID(),
+            id: createId(),
             type: "paragraph",
             attrs: {},
             content: [],
@@ -95,7 +96,7 @@ export class StructureCommands {
       type: "insertBlock",
       ...location,
       block: {
-        id: crypto.randomUUID(),
+        id: createId(),
         type: "columns",
         attrs: { count },
         content: null,
@@ -120,13 +121,13 @@ export class StructureCommands {
       type: "insertBlock",
       ...location,
       block: {
-        id: crypto.randomUUID(),
+        id: createId(),
         type: "toggle",
         attrs: { open: true },
         content: [{ text: "Toggle heading", marks: [] }],
         children: [
           {
-            id: crypto.randomUUID(),
+            id: createId(),
             type: "paragraph",
             attrs: {},
             content: [],

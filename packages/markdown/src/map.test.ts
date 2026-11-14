@@ -64,7 +64,7 @@ describe("markdown <-> text mapping", () => {
     const { doc, snapshot } = parseMarkdown(md);
     const { map } = serializeMarkdown(doc, snapshot);
     const quote = doc.blocks[0]!;
-    expect(flatText(quote)).toBe("первая\nвторая");
+    expect(flatText(quote)).toBe("первая вторая");
     expect(textOffsetToMd(map, quote.id, 7)).toBe(md.indexOf("вторая"));
     expect(mdOffsetToText(map, md.indexOf("вторая") + 2)).toEqual({ blockId: quote.id, offset: 9 });
     const item = doc.blocks[1]!.children[0]!;

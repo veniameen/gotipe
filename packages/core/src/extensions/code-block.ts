@@ -1,3 +1,4 @@
+import { createId } from "../document/id";
 import { defineExtension } from "../types/extension";
 
 export interface CodeBlockOptions {
@@ -102,7 +103,7 @@ export const CodeBlock = defineExtension<CodeBlockOptions>({
         const blockIndex = state.blocks.findIndex((b) => b.id === blockId);
         if (blockIndex === -1) return false;
 
-        const paragraphId = crypto.randomUUID();
+        const paragraphId = createId();
         editor.dispatch({
           steps: [
             {

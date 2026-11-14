@@ -2,9 +2,10 @@
  * Keys of inline atoms (docs/development/inline-atoms.md): every new atom gets a unique
  * `key`, so equal atoms never join; a pasted copy takes a new one.
  */
+import { createId } from "../document/id";
 
 /** A fresh `key` for a new atom: random, so atoms made anywhere never share one. */
-export const newAtomKey = (): string => crypto.randomUUID().replace(/-/g, "").slice(0, 12);
+export const newAtomKey = (): string => createId().replace(/-/g, "").slice(0, 12);
 
 interface KeyedSpan {
   marks: { type: string; attrs: Record<string, unknown> }[];

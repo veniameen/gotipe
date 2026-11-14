@@ -1,3 +1,4 @@
+import { createId } from "@gotipe/core";
 import {
   localAwareness,
   peerDecorations,
@@ -101,7 +102,7 @@ export class CollaborationProvider {
 
   /** Throws for configuration that can never connect, instead of retrying it. */
   constructor(private options: CollaborationOptions) {
-    this.peerId = options.peerId ?? crypto.randomUUID();
+    this.peerId = options.peerId ?? createId();
     if (!this.peerId || !options.documentId)
       throw new Error("A document and peer identity are required");
     if (!validPeerId(this.peerId))

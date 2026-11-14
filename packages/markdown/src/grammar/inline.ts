@@ -191,8 +191,10 @@ export function readInline(source: Source, options: InlineContext): PhrasingCont
         end += count;
       }
       if (close >= 0) {
-        let value = text.slice(p + run.length, close);
-        if (/^[ \n].+[ \n]$/s.test(value) && /[^ \n]/.test(value)) value = value.slice(1, -1);
+        // CommonMark: line endings of a code span are spaces, then one space is stripped from
+        // each side of content that is not all spaces
+        let value = text.slice(p + run.length, close).replace(/\n/g, " ");
+        if (/^ .+ $/s.test(value) && /[^ ]/.test(value)) value = value.slice(1, -1);
         if (context.inCell) value = value.replace(/\\\|/g, "|");
         end = close + run.length;
         tokens.push({ type: "inlineCode", value, position: range(source, p, end) });
@@ -276,9 +278,10 @@ export function readInline(source: Source, options: InlineContext): PhrasingCont
       let end = p + 1;
       while (text[end] === " " || text[end] === "\t") end++;
       if (text[end] === "\n") {
+        // two spaces make a hard break; otherwise a soft one, which is a space (CommonMark)
         if (/ {2,}$/.test(text.slice(p, end)))
           tokens.push({ type: "break", position: range(source, p, end + 1) });
-        else pushText("\n", p, end + 1);
+        else pushText(" ", p, end + 1);
         p = end + 1;
         while (text[p] === " " || text[p] === "\t") p++;
         continue;
@@ -289,9 +292,10 @@ export function readInline(source: Source, options: InlineContext): PhrasingCont
       continue;
     }
     if (c === "\n") {
+      // a soft line break is a space; the next line's indentation is not text
       let end = p + 1;
       while (text[end] === " " || text[end] === "\t") end++;
-      pushText("\n", p, end);
+      pushText(" ", p, end);
       p = end;
       continue;
     }

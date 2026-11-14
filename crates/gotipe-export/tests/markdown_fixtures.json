@@ -91,7 +91,7 @@
         },
         "content": [
           {
-            "text": "Title\ncontinuation",
+            "text": "Title continuation",
             "marks": []
           }
         ],
@@ -146,7 +146,7 @@
             ]
           },
           {
-            "text": "\ncontinued 😀",
+            "text": " continued 😀",
             "marks": []
           }
         ],
@@ -603,7 +603,7 @@
             "marks": []
           },
           {
-            "text": "a\nb",
+            "text": "a b",
             "marks": [
               {
                 "type": "code"
@@ -701,7 +701,7 @@
         "attrs": {},
         "content": [
           {
-            "text": "Space\nnext\nlast",
+            "text": "Space next\nlast",
             "marks": []
           }
         ],
@@ -991,7 +991,7 @@
         "attrs": {},
         "content": [
           {
-            "text": "One\nTwo\nThree",
+            "text": "One Two Three",
             "marks": []
           }
         ],

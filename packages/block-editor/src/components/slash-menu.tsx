@@ -17,8 +17,7 @@ export interface SlashMenuProps {
   className?: string;
 }
 
-import type { BlockEditorTranslationKey, TranslationKey } from "@gotipe/i18n";
-import { blockEditorEn } from "../i18n/en";
+import type { TranslationKey } from "@gotipe/i18n";
 import { useBlockEditorI18n } from "../i18n/strings";
 import { getCaretClientRect, getCaretClientRectFromTrigger } from "./slash/caret";
 import { useListOwner } from "./slash/combobox";
@@ -34,6 +33,7 @@ import {
   getSlashTrigger,
   resolveCaretBlock,
 } from "./slash/model";
+import { localizeCommand } from "./slash/names";
 import { highlightMatch, scoreCommand } from "./slash/search";
 
 const GROUP_ORDER: SlashCommandDef["group"][] = ["ai", "style", "insert", "upload"];
@@ -43,30 +43,6 @@ const GROUP_LABELS: Record<string, TranslationKey> = {
   style: "slashMenu.group.style",
   insert: "slashMenu.group.insert",
   upload: "slashMenu.group.upload",
-};
-
-/** Built-in commands by icon; a command is translated only when its name is the core's own. */
-const COMMAND_NAMES: Record<string, BlockEditorTranslationKey> = {
-  type: "slashMenu.text",
-  "heading-1": "slashMenu.heading1",
-  "heading-2": "slashMenu.heading2",
-  "heading-3": "slashMenu.heading3",
-  list: "slashMenu.bulletList",
-  "list-ordered": "slashMenu.orderedList",
-  "check-square": "slashMenu.todoList",
-  quote: "slashMenu.blockquote",
-  code: "slashMenu.codeBlock",
-  table: "slashMenu.table",
-  minus: "slashMenu.divider",
-  image: "slashMenu.image",
-  paperclip: "slashMenu.fileBlock",
-  "alert-circle": "slashMenu.callout",
-  "chevron-right": "slashMenu.toggle",
-  columns: "slashMenu.columns",
-  "external-link": "slashMenu.embed",
-  "function-square": "slashMenu.math",
-  smile: "slashMenu.emoji",
-  function: "slashMenu.inlineMath",
 };
 
 export function SlashMenu({
@@ -88,13 +64,7 @@ export function SlashMenu({
   const i18n = useBlockEditorI18n();
   // Built-in commands speak the editor's language; their English name stays a search alias.
   const localized = useMemo(
-    () =>
-      commands.map((cmd) => {
-        const key = COMMAND_NAMES[cmd.icon.toLowerCase()];
-        if (!key || blockEditorEn[key] !== cmd.name) return cmd;
-        const name = i18n.t(key);
-        return name === cmd.name ? cmd : { ...cmd, name, aliases: [...cmd.aliases, cmd.name] };
-      }),
+    () => commands.map((cmd) => localizeCommand(cmd, i18n)),
     [commands, i18n],
   );
   const triggerRef = useRef<SlashTrigger | null>(null);

@@ -24,6 +24,7 @@ This React component shows the carets of other people in `BlockEditor` from the 
 ```tsx title="shared-document.tsx"
 import { BlockEditor } from "@gotipe/block-editor";
 import { CollaborationProvider, type CollaborationState } from "@gotipe/collaboration";
+import { createId } from "@gotipe/core";
 import { FullPreset } from "@gotipe/core/presets";
 import { useEditor } from "@gotipe/react";
 import { useEffect, useMemo } from "react";
@@ -36,7 +37,7 @@ export function SharedDocument(props: {
   const { documentId, state, getToken } = props;
   const editor = useEditor({ engine: "wasm", content: state.baseline, extensions: [FullPreset] });
   // One peer ID per editor replica, kept across reconnects.
-  const peerId = useMemo(() => crypto.randomUUID(), [editor]);
+  const peerId = useMemo(() => createId(), [editor]);
 
   useEffect(() => {
     if (!editor) return;
@@ -64,7 +65,7 @@ export function SharedDocument(props: {
 | `documentId` | `string` | — | Required. Sent as the `document_id` query parameter. |
 | `wsUrl` | `string` | — | An absolute `ws:` or `wss:` URL of the sync endpoint, for example `wss://sync.example.com/sync`. No user info and no `token` parameter. |
 | `user` | `AwarenessUser` | — | `{ name, color, avatar? }` that other peers see. `name` has at most 256 characters, `color` is `#rgb` or `#rrggbb`, `avatar` an `http:`, `https:` or `data:image/` URL of at most 16 384 characters. Other fields are not sent. |
-| `peerId` | `string` | `crypto.randomUUID()` | The replica's ID: not blank, at most 256 bytes in UTF-8, not starting with `@base`. Stays the same across reconnects; every editor and every tab needs its own. |
+| `peerId` | `string` | `createId()` | The replica's ID: not blank, at most 256 bytes in UTF-8, not starting with `@base`. Stays the same across reconnects; every editor and every tab needs its own. |
 | `initialState` | `CollaborationState` | — | `{ baseline, updates, generation }` from Cloud. Applied once, on the first `connect()`. Create the editor from `baseline`. With `generation` the provider sends operations without the baseline; without it every frame repeats the baseline. |
 | `token` | `string \| () => string \| Promise<string>` | — | The credential. A function is called before every connection attempt. |
 | `reconnectInterval` | `number` | `1000` | First reconnect delay in ms. It doubles on each attempt, up to 30 000. |

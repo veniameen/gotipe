@@ -48,8 +48,9 @@ block ranges and text segments, plus the gaps between blocks and the trailing te
 `MarkdownMap.blocks` lists every block (nested too) with its range in `text`;
 `MarkdownMap.segments` maps ranges of a block's flat text (concatenated span texts, or the raw
 string of a code/raw block) to Markdown ranges. `exact: true` segments map char by char;
-escapes (`\*`), character references (`&amp;`), soft breaks with stripped continuation prefixes,
-`<br>` in cells etc. get their own non-exact segment.
+escapes (`\*`), character references (`&amp;`), soft breaks (a space of the text over a line
+ending and the stripped prefix of the next line), `<br>` in cells etc. get their own non-exact
+segment.
 
 ## How serialization works
 
@@ -57,9 +58,13 @@ For each top-level block of `doc`:
 
 1. The snapshot has a block with the same id **and** the same fingerprint → its original source
    slice is emitted verbatim. Fingerprints ignore ids and Markdown style attrs (`marker`,
-   `delimiter`, `spread`, `breaks`) and attrs the codec does not use (e.g. a callout `emoji`).
+   `delimiter`, `spread`, and `breaks` of older documents) and attrs the codec does not use
+   (e.g. a callout `emoji`).
 2. Otherwise the block is serialized, re-parsed and compared with the input; the first rendering
    strategy that round-trips wins (delimiters → `<url>` autolinks → `<strong>`/`<em>`/`<s>` tags).
+   A soft break is a space in the document, so the writer reads the block's old source from the
+   snapshot again and writes a space back as the line ending it was while the words around it
+   are still there (`serialization/line-breaks.ts`): an edit rewrites only the lines it touches.
 
 Between two blocks that were adjacent in the original the original gap is kept (unless a block
 changed type and the gap has no blank line); otherwise `EOL EOL`. BOM, front matter and the
@@ -75,7 +80,7 @@ after a list is re-fenced, nested ordered lists not starting at 1 get a blank li
 
 | Markdown | Block |
 | --- | --- |
-| paragraph | `paragraph` (`breaks: "hard"` when it only has hard breaks) |
+| paragraph | `paragraph`: a soft line break is a space, a hard one (`\` or two spaces) is `"\n"` |
 | `#`…`######`, setext | `heading {level}` |
 | `-`/`*`/`+` list | `bulletList {marker, spread}` → `listItem` (rich text, nested lists only) |
 | `1.`/`1)` list | `orderedList {start, delimiter, spread}` → `listItem` |
@@ -92,8 +97,10 @@ after a list is re-fenced, nested ordered lists not starting at 1 get a blank li
 Marks: `bold`, `italic`, `strikethrough`, `code`, `link {href, title?}`, and paired simple inline
 tags `<u>` → `underline`, `<mark>` → `highlight`, `<sup>`, `<sub>`, `<em>/<i>`, `<strong>/<b>`,
 `<s>/<del>`. Other inline HTML, footnote references, reference links/images and inline images
-are kept verbatim as text with the `mdRaw` mark. Line breaks are `"\n"` in text; in table cells
-and headings `"\n"` ⇄ `<br>`.
+are kept verbatim as text with the `mdRaw` mark. Line breaks follow CommonMark: a soft break and
+a line ending inside inline code read as a space, a hard break as `"\n"`. The writer writes a
+`"\n"` as a hard break (`\` + EOL, `&#10;` at the start or end of the text); in table cells and
+headings `"\n"` ⇄ `<br>`. Verbatim `mdRaw` text keeps the line endings of its source.
 
 Register the raw block and the raw mark in the editor:
 
@@ -115,8 +122,8 @@ this package, because core depends on it and not the other way round.
 
 - Plain text that GFM autolinks (`https://…`, `www.…`, e-mail addresses) becomes a link when the
   file is parsed again: the GFM transform works on decoded text, escaping cannot prevent it.
-- Inline code: `"\n"` is written as a line break only where that is safe (otherwise a space),
-  never in headings/cells. In table cells a backslash directly before `|` inside code cannot be
+- Inline code: Markdown has no line break inside code; `"\n"` is written as a line ending only
+  where that is safe (otherwise a space), never in headings/cells, and reads back as a space. In table cells a backslash directly before `|` inside code cannot be
   expressed in GFM (it is written as `\\\|` and reads back with an extra backslash).
 - `file` blocks round-trip only when `name` equals the decoded basename of a relative `url`;
   otherwise they read back as a paragraph with a link. Conversely a paragraph that is only such a

@@ -1,0 +1,1325 @@
+{
+  "version": 1,
+  "read": [
+    {
+      "id": "soft-break",
+      "markdown": "One line\nnext line\n",
+      "blocks": [
+        {
+          "type": "paragraph",
+          "attrs": {},
+          "content": [
+            {
+              "text": "One line next line",
+              "marks": []
+            }
+          ],
+          "children": []
+        }
+      ]
+    },
+    {
+      "id": "soft-break-trailing-space",
+      "markdown": "a \nb\n",
+      "blocks": [
+        {
+          "type": "paragraph",
+          "attrs": {},
+          "content": [
+            {
+              "text": "a b",
+              "marks": []
+            }
+          ],
+          "children": []
+        }
+      ]
+    },
+    {
+      "id": "soft-break-tab",
+      "markdown": "a\t\nb\n",
+      "blocks": [
+        {
+          "type": "paragraph",
+          "attrs": {},
+          "content": [
+            {
+              "text": "a b",
+              "marks": []
+            }
+          ],
+          "children": []
+        }
+      ]
+    },
+    {
+      "id": "soft-break-indented-continuation",
+      "markdown": "a\n    b\n",
+      "blocks": [
+        {
+          "type": "paragraph",
+          "attrs": {},
+          "content": [
+            {
+              "text": "a b",
+              "marks": []
+            }
+          ],
+          "children": []
+        }
+      ]
+    },
+    {
+      "id": "soft-break-crlf-cr",
+      "markdown": "Один\r\nдва\rтри\n",
+      "blocks": [
+        {
+          "type": "paragraph",
+          "attrs": {},
+          "content": [
+            {
+              "text": "Один два три",
+              "marks": []
+            }
+          ],
+          "children": []
+        }
+      ]
+    },
+    {
+      "id": "soft-break-unicode",
+      "markdown": "Привет 😀\nмир\n",
+      "blocks": [
+        {
+          "type": "paragraph",
+          "attrs": {},
+          "content": [
+            {
+              "text": "Привет 😀 мир",
+              "marks": []
+            }
+          ],
+          "children": []
+        }
+      ]
+    },
+    {
+      "id": "hard-break-backslash",
+      "markdown": "a\\\nb\n",
+      "blocks": [
+        {
+          "type": "paragraph",
+          "attrs": {},
+          "content": [
+            {
+              "text": "a\nb",
+              "marks": []
+            }
+          ],
+          "children": []
+        }
+      ]
+    },
+    {
+      "id": "hard-break-spaces",
+      "markdown": "a  \nb\n",
+      "blocks": [
+        {
+          "type": "paragraph",
+          "attrs": {},
+          "content": [
+            {
+              "text": "a\nb",
+              "marks": []
+            }
+          ],
+          "children": []
+        }
+      ]
+    },
+    {
+      "id": "entity-newline-stays",
+      "markdown": "a&#10;b\n",
+      "blocks": [
+        {
+          "type": "paragraph",
+          "attrs": {},
+          "content": [
+            {
+              "text": "a\nb",
+              "marks": []
+            }
+          ],
+          "children": []
+        }
+      ]
+    },
+    {
+      "id": "emphasis-across-lines",
+      "markdown": "*a\nb* and **c\nd**\n",
+      "blocks": [
+        {
+          "type": "paragraph",
+          "attrs": {},
+          "content": [
+            {
+              "text": "a b",
+              "marks": [
+                {
+                  "type": "italic"
+                }
+              ]
+            },
+            {
+              "text": " and ",
+              "marks": []
+            },
+            {
+              "text": "c d",
+              "marks": [
+                {
+                  "type": "bold"
+                }
+              ]
+            }
+          ],
+          "children": []
+        }
+      ]
+    },
+    {
+      "id": "link-across-lines",
+      "markdown": "[a\nb](https://e.x) and text\n",
+      "blocks": [
+        {
+          "type": "paragraph",
+          "attrs": {},
+          "content": [
+            {
+              "text": "a b",
+              "marks": [
+                {
+                  "type": "link",
+                  "attrs": {
+                    "href": "https://e.x"
+                  }
+                }
+              ]
+            },
+            {
+              "text": " and text",
+              "marks": []
+            }
+          ],
+          "children": []
+        }
+      ]
+    },
+    {
+      "id": "reference-link-stays-raw",
+      "markdown": "[c\nd][ref]\n\n[ref]: https://e.x/r\n",
+      "blocks": [
+        {
+          "type": "paragraph",
+          "attrs": {},
+          "content": [
+            {
+              "text": "[c\nd][ref]",
+              "marks": [
+                {
+                  "type": "mdRaw"
+                }
+              ]
+            }
+          ],
+          "children": []
+        },
+        {
+          "type": "markdownRaw",
+          "attrs": {
+            "kind": "definition"
+          },
+          "content": "[ref]: https://e.x/r",
+          "children": []
+        }
+      ]
+    },
+    {
+      "id": "link-of-a-hard-break",
+      "markdown": "x [\\\n](https://e.x) y\n",
+      "blocks": [
+        {
+          "type": "paragraph",
+          "attrs": {},
+          "content": [
+            {
+              "text": "x ",
+              "marks": []
+            },
+            {
+              "text": "\n",
+              "marks": [
+                {
+                  "type": "link",
+                  "attrs": {
+                    "href": "https://e.x"
+                  }
+                }
+              ]
+            },
+            {
+              "text": " y",
+              "marks": []
+            }
+          ],
+          "children": []
+        }
+      ]
+    },
+    {
+      "id": "code-span-line-ending",
+      "markdown": "before `a\nb` after\n",
+      "blocks": [
+        {
+          "type": "paragraph",
+          "attrs": {},
+          "content": [
+            {
+              "text": "before ",
+              "marks": []
+            },
+            {
+              "text": "a b",
+              "marks": [
+                {
+                  "type": "code"
+                }
+              ]
+            },
+            {
+              "text": " after",
+              "marks": []
+            }
+          ],
+          "children": []
+        }
+      ]
+    },
+    {
+      "id": "code-span-trailing-space",
+      "markdown": "`foo   bar \nbaz`\n",
+      "blocks": [
+        {
+          "type": "paragraph",
+          "attrs": {},
+          "content": [
+            {
+              "text": "foo   bar  baz",
+              "marks": [
+                {
+                  "type": "code"
+                }
+              ]
+            }
+          ],
+          "children": []
+        }
+      ]
+    },
+    {
+      "id": "blockquote",
+      "markdown": "> first\n> second\n",
+      "blocks": [
+        {
+          "type": "blockquote",
+          "attrs": {},
+          "content": [
+            {
+              "text": "first second",
+              "marks": []
+            }
+          ],
+          "children": []
+        }
+      ]
+    },
+    {
+      "id": "callout",
+      "markdown": "> [!NOTE]\n> line one\n> line two\n",
+      "blocks": [
+        {
+          "type": "callout",
+          "attrs": {
+            "type": "note",
+            "alert": "NOTE"
+          },
+          "content": [
+            {
+              "text": "line one line two",
+              "marks": []
+            }
+          ],
+          "children": []
+        }
+      ]
+    },
+    {
+      "id": "callout-marker-hard-break",
+      "markdown": "> [!TIP]  \n> body\n",
+      "blocks": [
+        {
+          "type": "callout",
+          "attrs": {
+            "type": "tip",
+            "alert": "TIP"
+          },
+          "content": [
+            {
+              "text": "body",
+              "marks": []
+            }
+          ],
+          "children": []
+        }
+      ]
+    },
+    {
+      "id": "callout-body-starts-with-newline",
+      "markdown": "> [!WARNING]\n> &#10;body\n",
+      "blocks": [
+        {
+          "type": "callout",
+          "attrs": {
+            "type": "warning",
+            "alert": "WARNING"
+          },
+          "content": [
+            {
+              "text": "\nbody",
+              "marks": []
+            }
+          ],
+          "children": []
+        }
+      ]
+    },
+    {
+      "id": "callout-marker-not-alone",
+      "markdown": "> [!NOTE] same line\n",
+      "blocks": [
+        {
+          "type": "blockquote",
+          "attrs": {},
+          "content": [
+            {
+              "text": "[!NOTE] same line",
+              "marks": []
+            }
+          ],
+          "children": []
+        }
+      ]
+    },
+    {
+      "id": "list-item",
+      "markdown": "- item\n  continued\n- next\n",
+      "blocks": [
+        {
+          "type": "bulletList",
+          "attrs": {
+            "marker": "-",
+            "spread": false
+          },
+          "content": null,
+          "children": [
+            {
+              "type": "listItem",
+              "attrs": {},
+              "content": [
+                {
+                  "text": "item continued",
+                  "marks": []
+                }
+              ],
+              "children": []
+            },
+            {
+              "type": "listItem",
+              "attrs": {},
+              "content": [
+                {
+                  "text": "next",
+                  "marks": []
+                }
+              ],
+              "children": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "task-item",
+      "markdown": "- [ ] task\n  more\n",
+      "blocks": [
+        {
+          "type": "todoList",
+          "attrs": {
+            "spread": false,
+            "marker": "-"
+          },
+          "content": null,
+          "children": [
+            {
+              "type": "todoItem",
+              "attrs": {
+                "checked": false
+              },
+              "content": [
+                {
+                  "text": "task more",
+                  "marks": []
+                }
+              ],
+              "children": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "nested-items",
+      "markdown": "1. one\n   two\n   - nested\n     line\n",
+      "blocks": [
+        {
+          "type": "orderedList",
+          "attrs": {
+            "start": 1,
+            "delimiter": ".",
+            "spread": false
+          },
+          "content": null,
+          "children": [
+            {
+              "type": "listItem",
+              "attrs": {},
+              "content": [
+                {
+                  "text": "one two",
+                  "marks": []
+                }
+              ],
+              "children": [
+                {
+                  "type": "bulletList",
+                  "attrs": {
+                    "marker": "-",
+                    "spread": false
+                  },
+                  "content": null,
+                  "children": [
+                    {
+                      "type": "listItem",
+                      "attrs": {},
+                      "content": [
+                        {
+                          "text": "nested line",
+                          "marks": []
+                        }
+                      ],
+                      "children": []
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "setext-heading",
+      "markdown": "Title\nmore\n===\n",
+      "blocks": [
+        {
+          "type": "heading",
+          "attrs": {
+            "level": 1
+          },
+          "content": [
+            {
+              "text": "Title more",
+              "marks": []
+            }
+          ],
+          "children": []
+        }
+      ]
+    },
+    {
+      "id": "table-cell-br",
+      "markdown": "| a<br>b |\n| --- |\n",
+      "blocks": [
+        {
+          "type": "table",
+          "attrs": {
+            "align": [
+              null
+            ]
+          },
+          "content": null,
+          "children": [
+            {
+              "type": "tableRow",
+              "attrs": {},
+              "content": null,
+              "children": [
+                {
+                  "type": "tableHeader",
+                  "attrs": {},
+                  "content": [
+                    {
+                      "text": "a\nb",
+                      "marks": []
+                    }
+                  ],
+                  "children": []
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "write": [
+    {
+      "id": "paragraph",
+      "document": {
+        "version": 1,
+        "blocks": [
+          {
+            "id": "b1",
+            "type": "paragraph",
+            "attrs": {},
+            "content": [
+              {
+                "text": "a\nb",
+                "marks": []
+              }
+            ],
+            "children": []
+          }
+        ]
+      },
+      "markdown": "a\\\nb\n",
+      "reparsed": [
+        {
+          "type": "paragraph",
+          "attrs": {},
+          "content": [
+            {
+              "text": "a\nb",
+              "marks": []
+            }
+          ],
+          "children": []
+        }
+      ]
+    },
+    {
+      "id": "paragraph-edges",
+      "document": {
+        "version": 1,
+        "blocks": [
+          {
+            "id": "b2",
+            "type": "paragraph",
+            "attrs": {},
+            "content": [
+              {
+                "text": "\nlead",
+                "marks": []
+              }
+            ],
+            "children": []
+          },
+          {
+            "id": "b3",
+            "type": "paragraph",
+            "attrs": {},
+            "content": [
+              {
+                "text": "a\n\nb",
+                "marks": []
+              }
+            ],
+            "children": []
+          },
+          {
+            "id": "b4",
+            "type": "paragraph",
+            "attrs": {},
+            "content": [
+              {
+                "text": "end\n",
+                "marks": []
+              }
+            ],
+            "children": []
+          }
+        ]
+      },
+      "markdown": "&#10;lead\n\na\\\n&#10;b\n\nend&#10;\n",
+      "reparsed": [
+        {
+          "type": "paragraph",
+          "attrs": {},
+          "content": [
+            {
+              "text": "\nlead",
+              "marks": []
+            }
+          ],
+          "children": []
+        },
+        {
+          "type": "paragraph",
+          "attrs": {},
+          "content": [
+            {
+              "text": "a\n\nb",
+              "marks": []
+            }
+          ],
+          "children": []
+        },
+        {
+          "type": "paragraph",
+          "attrs": {},
+          "content": [
+            {
+              "text": "end\n",
+              "marks": []
+            }
+          ],
+          "children": []
+        }
+      ]
+    },
+    {
+      "id": "bullet-item",
+      "document": {
+        "version": 1,
+        "blocks": [
+          {
+            "id": "b6",
+            "type": "bulletList",
+            "attrs": {},
+            "content": null,
+            "children": [
+              {
+                "id": "b5",
+                "type": "listItem",
+                "attrs": {},
+                "content": [
+                  {
+                    "text": "one\ntwo",
+                    "marks": []
+                  }
+                ],
+                "children": []
+              }
+            ]
+          }
+        ]
+      },
+      "markdown": "- one\\\n  two\n",
+      "reparsed": [
+        {
+          "type": "bulletList",
+          "attrs": {
+            "marker": "-",
+            "spread": false
+          },
+          "content": null,
+          "children": [
+            {
+              "type": "listItem",
+              "attrs": {},
+              "content": [
+                {
+                  "text": "one\ntwo",
+                  "marks": []
+                }
+              ],
+              "children": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "ordered-item",
+      "document": {
+        "version": 1,
+        "blocks": [
+          {
+            "id": "b8",
+            "type": "orderedList",
+            "attrs": {
+              "start": 1
+            },
+            "content": null,
+            "children": [
+              {
+                "id": "b7",
+                "type": "listItem",
+                "attrs": {},
+                "content": [
+                  {
+                    "text": "one\ntwo",
+                    "marks": []
+                  }
+                ],
+                "children": []
+              }
+            ]
+          }
+        ]
+      },
+      "markdown": "1. one\\\n   two\n",
+      "reparsed": [
+        {
+          "type": "orderedList",
+          "attrs": {
+            "start": 1,
+            "delimiter": ".",
+            "spread": false
+          },
+          "content": null,
+          "children": [
+            {
+              "type": "listItem",
+              "attrs": {},
+              "content": [
+                {
+                  "text": "one\ntwo",
+                  "marks": []
+                }
+              ],
+              "children": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "task-item",
+      "document": {
+        "version": 1,
+        "blocks": [
+          {
+            "id": "b10",
+            "type": "todoList",
+            "attrs": {},
+            "content": null,
+            "children": [
+              {
+                "id": "b9",
+                "type": "todoItem",
+                "attrs": {
+                  "checked": false
+                },
+                "content": [
+                  {
+                    "text": "task\nmore",
+                    "marks": []
+                  }
+                ],
+                "children": []
+              }
+            ]
+          }
+        ]
+      },
+      "markdown": "- [ ] task\\\n  more\n",
+      "reparsed": [
+        {
+          "type": "todoList",
+          "attrs": {
+            "spread": false,
+            "marker": "-"
+          },
+          "content": null,
+          "children": [
+            {
+              "type": "todoItem",
+              "attrs": {
+                "checked": false
+              },
+              "content": [
+                {
+                  "text": "task\nmore",
+                  "marks": []
+                }
+              ],
+              "children": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "blockquote",
+      "document": {
+        "version": 1,
+        "blocks": [
+          {
+            "id": "b11",
+            "type": "blockquote",
+            "attrs": {},
+            "content": [
+              {
+                "text": "a\nb",
+                "marks": []
+              }
+            ],
+            "children": []
+          }
+        ]
+      },
+      "markdown": "> a\\\n> b\n",
+      "reparsed": [
+        {
+          "type": "blockquote",
+          "attrs": {},
+          "content": [
+            {
+              "text": "a\nb",
+              "marks": []
+            }
+          ],
+          "children": []
+        }
+      ]
+    },
+    {
+      "id": "callout",
+      "document": {
+        "version": 1,
+        "blocks": [
+          {
+            "id": "b12",
+            "type": "callout",
+            "attrs": {
+              "type": "note",
+              "alert": "NOTE"
+            },
+            "content": [
+              {
+                "text": "a\nb",
+                "marks": []
+              }
+            ],
+            "children": []
+          }
+        ]
+      },
+      "markdown": "> [!NOTE]\n> a\\\n> b\n",
+      "reparsed": [
+        {
+          "type": "callout",
+          "attrs": {
+            "type": "note",
+            "alert": "NOTE"
+          },
+          "content": [
+            {
+              "text": "a\nb",
+              "marks": []
+            }
+          ],
+          "children": []
+        }
+      ]
+    },
+    {
+      "id": "bold-across",
+      "document": {
+        "version": 1,
+        "blocks": [
+          {
+            "id": "b13",
+            "type": "paragraph",
+            "attrs": {},
+            "content": [
+              {
+                "text": "a\nb",
+                "marks": [
+                  {
+                    "type": "bold"
+                  }
+                ]
+              }
+            ],
+            "children": []
+          }
+        ]
+      },
+      "markdown": "**a\\\nb**\n",
+      "reparsed": [
+        {
+          "type": "paragraph",
+          "attrs": {},
+          "content": [
+            {
+              "text": "a\nb",
+              "marks": [
+                {
+                  "type": "bold"
+                }
+              ]
+            }
+          ],
+          "children": []
+        }
+      ]
+    },
+    {
+      "id": "line-starts",
+      "document": {
+        "version": 1,
+        "blocks": [
+          {
+            "id": "b14",
+            "type": "paragraph",
+            "attrs": {},
+            "content": [
+              {
+                "text": "a\n- b",
+                "marks": []
+              }
+            ],
+            "children": []
+          },
+          {
+            "id": "b15",
+            "type": "paragraph",
+            "attrs": {},
+            "content": [
+              {
+                "text": "a\n+ b",
+                "marks": []
+              }
+            ],
+            "children": []
+          },
+          {
+            "id": "b16",
+            "type": "paragraph",
+            "attrs": {},
+            "content": [
+              {
+                "text": "a\n1. b",
+                "marks": []
+              }
+            ],
+            "children": []
+          },
+          {
+            "id": "b17",
+            "type": "paragraph",
+            "attrs": {},
+            "content": [
+              {
+                "text": "a\n2) b",
+                "marks": []
+              }
+            ],
+            "children": []
+          },
+          {
+            "id": "b18",
+            "type": "paragraph",
+            "attrs": {},
+            "content": [
+              {
+                "text": "a\n===",
+                "marks": []
+              }
+            ],
+            "children": []
+          },
+          {
+            "id": "b19",
+            "type": "paragraph",
+            "attrs": {},
+            "content": [
+              {
+                "text": "a\n---",
+                "marks": []
+              }
+            ],
+            "children": []
+          },
+          {
+            "id": "b20",
+            "type": "paragraph",
+            "attrs": {},
+            "content": [
+              {
+                "text": "a\n:---|",
+                "marks": []
+              }
+            ],
+            "children": []
+          }
+        ]
+      },
+      "markdown": "a\\\n\\- b\n\na\\\n\\+ b\n\na\\\n1\\. b\n\na\\\n2\\) b\n\na\\\n\\===\n\na\\\n\\---\n\na\\\n\\:---\\|\n",
+      "reparsed": [
+        {
+          "type": "paragraph",
+          "attrs": {},
+          "content": [
+            {
+              "text": "a\n- b",
+              "marks": []
+            }
+          ],
+          "children": []
+        },
+        {
+          "type": "paragraph",
+          "attrs": {},
+          "content": [
+            {
+              "text": "a\n+ b",
+              "marks": []
+            }
+          ],
+          "children": []
+        },
+        {
+          "type": "paragraph",
+          "attrs": {},
+          "content": [
+            {
+              "text": "a\n1. b",
+              "marks": []
+            }
+          ],
+          "children": []
+        },
+        {
+          "type": "paragraph",
+          "attrs": {},
+          "content": [
+            {
+              "text": "a\n2) b",
+              "marks": []
+            }
+          ],
+          "children": []
+        },
+        {
+          "type": "paragraph",
+          "attrs": {},
+          "content": [
+            {
+              "text": "a\n===",
+              "marks": []
+            }
+          ],
+          "children": []
+        },
+        {
+          "type": "paragraph",
+          "attrs": {},
+          "content": [
+            {
+              "text": "a\n---",
+              "marks": []
+            }
+          ],
+          "children": []
+        },
+        {
+          "type": "paragraph",
+          "attrs": {},
+          "content": [
+            {
+              "text": "a\n:---|",
+              "marks": []
+            }
+          ],
+          "children": []
+        }
+      ]
+    },
+    {
+      "id": "whitespace-around",
+      "document": {
+        "version": 1,
+        "blocks": [
+          {
+            "id": "b21",
+            "type": "paragraph",
+            "attrs": {},
+            "content": [
+              {
+                "text": "a\n b",
+                "marks": []
+              }
+            ],
+            "children": []
+          },
+          {
+            "id": "b22",
+            "type": "paragraph",
+            "attrs": {},
+            "content": [
+              {
+                "text": "a \nb",
+                "marks": []
+              }
+            ],
+            "children": []
+          }
+        ]
+      },
+      "markdown": "a\\\n&#32;b\n\na&#32;\\\nb\n",
+      "reparsed": [
+        {
+          "type": "paragraph",
+          "attrs": {},
+          "content": [
+            {
+              "text": "a\n b",
+              "marks": []
+            }
+          ],
+          "children": []
+        },
+        {
+          "type": "paragraph",
+          "attrs": {},
+          "content": [
+            {
+              "text": "a \nb",
+              "marks": []
+            }
+          ],
+          "children": []
+        }
+      ]
+    },
+    {
+      "id": "pipes-of-several-lines",
+      "document": {
+        "version": 1,
+        "blocks": [
+          {
+            "id": "b23",
+            "type": "paragraph",
+            "attrs": {},
+            "content": [
+              {
+                "text": "a | b\nc",
+                "marks": []
+              }
+            ],
+            "children": []
+          }
+        ]
+      },
+      "markdown": "a \\| b\\\nc\n",
+      "reparsed": [
+        {
+          "type": "paragraph",
+          "attrs": {},
+          "content": [
+            {
+              "text": "a | b\nc",
+              "marks": []
+            }
+          ],
+          "children": []
+        }
+      ]
+    },
+    {
+      "id": "heading",
+      "document": {
+        "version": 1,
+        "blocks": [
+          {
+            "id": "b24",
+            "type": "heading",
+            "attrs": {
+              "level": 2
+            },
+            "content": [
+              {
+                "text": "a\nb",
+                "marks": []
+              }
+            ],
+            "children": []
+          }
+        ]
+      },
+      "markdown": "## a<br>b\n",
+      "reparsed": [
+        {
+          "type": "heading",
+          "attrs": {
+            "level": 2
+          },
+          "content": [
+            {
+              "text": "a\nb",
+              "marks": []
+            }
+          ],
+          "children": []
+        }
+      ]
+    },
+    {
+      "id": "unicode",
+      "document": {
+        "version": 1,
+        "blocks": [
+          {
+            "id": "b25",
+            "type": "paragraph",
+            "attrs": {},
+            "content": [
+              {
+                "text": "Привет 😀\nмир",
+                "marks": []
+              }
+            ],
+            "children": []
+          }
+        ]
+      },
+      "markdown": "Привет 😀\\\nмир\n",
+      "reparsed": [
+        {
+          "type": "paragraph",
+          "attrs": {},
+          "content": [
+            {
+              "text": "Привет 😀\nмир",
+              "marks": []
+            }
+          ],
+          "children": []
+        }
+      ]
+    }
+  ]
+}

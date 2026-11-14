@@ -64,7 +64,7 @@ import {
   insertPageBlock,
   pageBlockCommands,
 } from "./page-commands";
-import { createPageBlockViews } from "./page-views";
+import { type PageTitleLevel, createPageBlockViews } from "./page-views";
 
 /** Raw Markdown the editor keeps as is (HTML, footnotes, definitions…). */
 export const MarkdownRawExtension = defineExtension({
@@ -149,6 +149,11 @@ export interface PageEditorProps {
   i18n?: I18n;
   /** Shown in the title when the file has no `# heading` (the file name). */
   titlePlaceholder?: string;
+  /**
+   * The HTML level of the page title, the file's leading `# heading` (default 1: an `h1`). It looks
+   * the same at any level; pass 2 when the host page has its own `h1`. Other headings keep theirs.
+   */
+  titleLevel?: PageTitleLevel;
   /** Suggestions, comments and collaborator cursors supplied by the host. */
   review?: PageReviewProps;
   /** Show the edit bar above the page. */
@@ -193,6 +198,7 @@ const PageEditorInner = forwardRef<PageEditorHandle, PageEditorProps>(
       readOnly = false,
       host,
       titlePlaceholder,
+      titleLevel = 1,
       review,
       reviewBar,
       view = "notion",
@@ -323,8 +329,11 @@ const PageEditorInner = forwardRef<PageEditorHandle, PageEditorProps>(
       [commands],
     );
     const blockViews = useMemo<BlockViews>(
-      () => ({ ...createPageBlockViews({ highlight, titlePlaceholder }), ...hostViews }),
-      [highlight, titlePlaceholder, hostViews],
+      () => ({
+        ...createPageBlockViews({ highlight, titlePlaceholder, titleLevel }),
+        ...hostViews,
+      }),
+      [highlight, titlePlaceholder, titleLevel, hostViews],
     );
 
     const localAccept = useCallback(

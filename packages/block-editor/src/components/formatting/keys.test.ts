@@ -1,7 +1,7 @@
 import { TextAlign } from "@gotipe/core/extensions";
 import { FullPreset } from "@gotipe/core/presets";
 import { describe, expect, it } from "vitest";
-import { ALIGN_KEYS, BLOCK_KEYS, MARK_KEYS, ariaKeys, keyLabel } from "./keys";
+import { ALIGN_KEYS, BLOCK_KEYS, HISTORY_KEYS, MARK_KEYS, ariaKeys, keyLabel } from "./keys";
 
 type WithKeys = { keybindings?: { key: string }[] };
 const bound = new Set(
@@ -12,7 +12,11 @@ const bound = new Set(
 
 describe("shown keys", () => {
   it("are bound by the core extensions", () => {
-    for (const key of [...Object.values(MARK_KEYS), ...Object.values(BLOCK_KEYS)])
+    for (const key of [
+      ...Object.values(MARK_KEYS),
+      ...Object.values(BLOCK_KEYS),
+      ...Object.values(HISTORY_KEYS),
+    ])
       expect(bound, key).toContain(key);
     const align = (TextAlign.keybindings ?? []).map((binding) => binding.key.toLowerCase());
     for (const key of Object.values(ALIGN_KEYS)) expect(align, key).toContain(key);

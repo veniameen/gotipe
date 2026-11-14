@@ -2,6 +2,7 @@ import type { GoTipeEditor } from "@gotipe/core";
 import { type TextAlignment, getTextAlign, setTextAlign } from "@gotipe/core/extensions";
 import type { TranslationKey } from "@gotipe/i18n";
 import { useEditorState } from "@gotipe/react";
+import { useId } from "react";
 import { ALIGN_KEYS, ariaKeys } from "../components/formatting/keys";
 import { MenuKey, Tip } from "../components/formatting/tip";
 import { useFormattingMenu } from "../components/formatting/use-formatting-menu";
@@ -83,14 +84,21 @@ export function AlignOptions({
 
 /**
  * The alignment list of a fixed toolbar (Atlas frame 27, modern view): the current alignment's
- * glyph and a chevron; the list holds the same rows as «More».
+ * glyph and a chevron; the list holds the same rows as «More». Where a block takes no alignment,
+ * or the editor is read-only, the tool stays focusable and its tooltip says why (frame 31).
  */
 export function AlignPicker({ editor }: { editor: GoTipeEditor }) {
   const i18n = useBlockEditorI18n();
   const menu = useFormattingMenu(editor);
   const current = useTextAlign(editor);
   const alignable = useAlignable(editor);
+  const tip = useId();
   const icon = ALIGN_OPTIONS.find((option) => option.value === current)?.icon ?? "alignLeft";
+  const reason = !menu.editable
+    ? i18n.t("toolbar.readOnly")
+    : alignable
+      ? null
+      : i18n.t("align.unavailable");
   return (
     <div className="gotipe-format-anchor">
       <button
@@ -100,11 +108,16 @@ export function AlignPicker({ editor }: { editor: GoTipeEditor }) {
         aria-label={i18n.t("align.label")}
         aria-haspopup="listbox"
         aria-expanded={menu.open}
-        disabled={!menu.editable || !alignable}
+        aria-disabled={reason ? true : undefined}
+        aria-describedby={reason ? tip : undefined}
         onMouseDown={(event) => event.preventDefault()}
-        onClick={() => (menu.open ? menu.close() : menu.show())}
+        onClick={() => {
+          if (reason) return;
+          if (menu.open) menu.close();
+          else menu.show();
+        }}
         onKeyDown={(event) => {
-          if (event.key === "ArrowDown" && !menu.open) {
+          if (event.key === "ArrowDown" && !menu.open && !reason) {
             event.preventDefault();
             menu.show();
           }
@@ -112,7 +125,7 @@ export function AlignPicker({ editor }: { editor: GoTipeEditor }) {
       >
         <PageIcon name={icon} />
         <PageIcon name="chevron" />
-        <Tip label={i18n.t("align.label")} />
+        <Tip id={tip} label={reason ?? i18n.t("align.label")} />
       </button>
       {menu.open && (
         <div

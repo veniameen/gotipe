@@ -114,7 +114,7 @@ describe("document model of the fixture", () => {
       { text: "по вторникам", marks: [{ type: "bold" }] },
       { text: ", если нет ", marks: [] },
       { text: "блокеров", marks: [{ type: "italic" }] },
-      { text: ". Ответственный — дежурный инженер.\nПодробнее в ", marks: [] },
+      { text: ". Ответственный — дежурный инженер. Подробнее в ", marks: [] },
       {
         text: "вики",
         marks: [
@@ -191,9 +191,9 @@ describe("document model of the fixture", () => {
       { text: "[^1]", marks: [{ type: "mdRaw" }] },
       { text: " и ссылка на ", marks: [] },
       { text: "[регламент][reg]", marks: [{ type: "mdRaw" }] },
-      { text: ".\nПервая строка с жёстким переносом\nвторая строка.", marks: [] },
+      { text: ". Первая строка с жёстким переносом\nвторая строка.", marks: [] },
     ]);
-    // Mixed soft and hard breaks: soft serialization.
+    // The soft break is a space, the hard one a line break; no attribute records them.
     expect(p.attrs).toEqual({});
   });
 
@@ -201,7 +201,8 @@ describe("document model of the fixture", () => {
     const { doc: d } = parseMarkdown(
       "a <u>u</u> <mark>m</mark> x<sup>2</sup> H<sub>2</sub>O <b>b</b> <span>s</span>\\\nnext",
     );
-    expect(d.blocks[0]!.attrs).toEqual({ breaks: "hard" });
+    // a hard break is "\n" in the text; nothing else marks it (the writer writes every "\n" so)
+    expect(d.blocks[0]!.attrs).toEqual({});
     expect(d.blocks[0]!.content).toEqual([
       { text: "a ", marks: [] },
       { text: "u", marks: [{ type: "underline" }] },

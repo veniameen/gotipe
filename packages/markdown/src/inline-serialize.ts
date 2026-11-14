@@ -42,6 +42,7 @@ export function writeInline(
     // A line break is only written when the current line already has text (not just
     // delimiters/tags: `<em>` alone on a line would start an HTML block) and more
     // text follows. An initial "\n" is always encoded, also in `midline` content.
+    // A soft break (a space the source wrote as a line ending) that cannot be one is a space.
     let lineHasContent = false;
     for (let k = 0; k < n; k++) {
       const u = units[k]!;
@@ -49,13 +50,13 @@ export function writeInline(
         if (u.k === "t" || u.k === "lit" || u.k === "code") lineHasContent = true;
         continue;
       }
-      if (o.kind === "heading" || o.kind === "cell") nlMode[k] = "br";
+      if (o.kind === "heading" || o.kind === "cell") nlMode[k] = u.soft ? "space" : "br";
       else if (o.kind === "alt") nlMode[k] = "space";
       else if (lineHasContent && contentAfter[k + 1]) {
         nlMode[k] = "newline";
         lineHasContent = false;
         continue;
-      } else nlMode[k] = "entity";
+      } else nlMode[k] = u.soft ? "space" : "entity";
       lineHasContent = true;
     }
   }
@@ -182,7 +183,7 @@ export function writeInline(
   const rend: string[] = new Array(n).fill("");
   for (let k = 0; k < n; k++) {
     const u = units[k]!;
-    if (u.k === "code") rend[k] = renderCode(u.s, o).s;
+    if (u.k === "code") rend[k] = renderCode(u.s, o, u.ti).s;
     else if (u.k !== "t") rend[k] = unitFixed(k) ?? "";
   }
   const lineRest = (k: number): string => {
@@ -425,14 +426,15 @@ export function writeInline(
       case "nl": {
         const m = nlMode[k];
         if (m === "newline") {
-          const r = (o.hard ? "\\" : "") + o.newline;
+          // "\n" is a line break of the document: `\` + EOL, which every reader keeps (a bare
+          // line ending is a space, D-88); a soft break goes back to the bare line ending
+          const r = (u.soft ? "" : "\\") + o.newline;
           md += r;
-          const mapped = (o.hard ? 1 : 0) + o.eol.length;
-          addSeg(u.ti, u.ti + 1, pos, pos + mapped, !o.hard && o.eol === "\n");
+          addSeg(u.ti, u.ti + 1, pos, pos + (u.soft ? 0 : 1) + o.eol.length, false);
         } else {
           const r = rend[k]!;
           md += r;
-          addSeg(u.ti, u.ti + 1, pos, pos + r.length, false);
+          addSeg(u.ti, u.ti + 1, pos, pos + r.length, u.soft === true && r === " ");
         }
         break;
       }
@@ -442,7 +444,7 @@ export function writeInline(
           addSeg(u.ti, u.ti + (u.len ?? u.s.length), pos, pos + u.s.length, u.len === undefined);
         break;
       case "code": {
-        const r = renderCode(u.s, o);
+        const r = renderCode(u.s, o, u.ti);
         md += r.s;
         for (const s of r.segs) {
           addSeg(u.ti + s.textFrom, u.ti + s.textTo, pos + s.mdFrom, pos + s.mdTo, s.exact);
@@ -456,14 +458,20 @@ export function writeInline(
   return { md, segs };
 }
 
-function renderCode(text: string, o: InlineOptions): { s: string; segs: RawSegment[] } {
+/**
+ * Inline code. A reader makes every line ending in it a space, so "\n" is written as a line
+ * ending where it can be and as a space where it cannot; a space at `softBreaks` (from `ti`, the
+ * code's offset in the block text) goes back to the line ending it was.
+ */
+function renderCode(text: string, o: InlineOptions, ti: number): { s: string; segs: RawSegment[] } {
   let s = "";
   const segs: RawSegment[] = [];
   const lineKinds = o.kind === "block" || o.kind === "midline";
   for (let i = 0; i < text.length; i++) {
     const c = text[i]!;
     const pos = s.length;
-    if (c === "\n") {
+    const soft = c === " " && o.softBreaks?.has(ti + i) === true;
+    if (c === "\n" || (soft && i > 0 && i < text.length - 1)) {
       if (lineKinds && codeBreakOk(text.slice(i + 1))) {
         s += o.newline;
         segs.push({
@@ -471,11 +479,11 @@ function renderCode(text: string, o: InlineOptions): { s: string; segs: RawSegme
           textTo: i + 1,
           mdFrom: pos,
           mdTo: pos + o.eol.length,
-          exact: o.eol === "\n",
+          exact: !soft && o.eol === "\n",
         });
       } else {
         s += " ";
-        segs.push({ textFrom: i, textTo: i + 1, mdFrom: pos, mdTo: pos + 1, exact: false });
+        segs.push({ textFrom: i, textTo: i + 1, mdFrom: pos, mdTo: pos + 1, exact: soft });
       }
       continue;
     }

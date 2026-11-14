@@ -169,6 +169,7 @@ function buildUnits(root: MarkNode, o: InlineOptions): Unit[] {
     let ti = leaf.ti;
     for (const ch of text) {
       if (ch === "\n") units.push({ k: "nl", ti });
+      else if (ch === " " && o.softBreaks?.has(ti)) units.push({ k: "nl", ti, soft: true });
       else if (ch === "\r") {
         /* dropped: model uses "\n" */
       } else units.push({ k: "t", ch, ti });

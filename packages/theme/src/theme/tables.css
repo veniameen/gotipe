@@ -54,6 +54,20 @@
   vertical-align: top;
   overflow-wrap: anywhere;
 }
+/* A table without column widths: the editor gives every column a <col> (its stored width, 160 px
+   without one), the table of serializeHtml, a server render or the version comparison has none.
+   Its columns share the text column by their content and the cells wrap, instead of the table
+   growing as wide as its longest line; words that cannot fit scroll the table in its own box. */
+.gotipe-table-wrapper:not(:has(col)) {
+  overflow-x: auto;
+}
+.gotipe-table-wrapper table:not(:has(> colgroup > col)) {
+  table-layout: auto;
+  width: 100%;
+}
+.gotipe-table-wrapper table:not(:has(> colgroup > col)) :where(th, td) {
+  overflow-wrap: break-word;
+}
 .gotipe-table-wrapper th {
   padding: var(--gt-head-cell-pad);
   border-bottom-color: var(--gt-line-strong);

@@ -30,6 +30,8 @@ export interface RenderOpts {
   markerOverride?: string;
   /** Registered custom emoji names of the document (see `InlineOptions.emoji`). */
   emoji?: Readonly<Record<string, string>>;
+  /** The spaces of a block's text to write as soft line breaks (D-88, `line-breaks.ts`). */
+  softBreaks?: (block: Block) => ReadonlySet<number> | undefined;
 }
 
 class Writer {
@@ -86,7 +88,6 @@ function plainAlt(text: string, ro: RenderOpts): string {
     kind: "alt",
     eol: ro.eol,
     newline: " ",
-    hard: false,
     tier: 2,
   }).md;
 }
@@ -164,7 +165,7 @@ function renderList(w: Writer, block: Block, indent: string, ro: RenderOpts, nod
     w.write(marker);
     const contIndent = indent + " ".repeat(marker.length + 1);
     const spans = richContent(item);
-    const hard = item.attrs?.breaks === "hard";
+    const softBreaks = ro.softBreaks?.(item);
     if (todo) {
       w.write(item.attrs?.checked === true ? " [x]" : " [ ]");
       if (spans.length > 0) {
@@ -172,7 +173,7 @@ function renderList(w: Writer, block: Block, indent: string, ro: RenderOpts, nod
         itemNode.segs = inline(
           w,
           spans,
-          { kind: "midline", newline: ro.eol + contIndent, hard },
+          { kind: "midline", newline: ro.eol + contIndent, softBreaks },
           inner,
         );
       }
@@ -182,7 +183,7 @@ function renderList(w: Writer, block: Block, indent: string, ro: RenderOpts, nod
         itemNode.segs = inline(
           w,
           spans,
-          { kind: "block", newline: ro.eol + contIndent, hard },
+          { kind: "block", newline: ro.eol + contIndent, softBreaks },
           inner,
         );
       }
@@ -262,7 +263,7 @@ function renderTable(w: Writer, block: Block, indent: string, ro: RenderOpts, no
         segs: [],
         children: [],
       };
-      cellNode.segs = inline(w, richContent(cell), { kind: "cell", newline: " ", hard: false }, ro);
+      cellNode.segs = inline(w, richContent(cell), { kind: "cell", newline: " " }, ro);
       cellNode.end = w.pos;
       rowNode.children.push(cellNode);
       w.write(" |");
@@ -297,23 +298,24 @@ function renderBlock(w: Writer, block: Block, indent: string, ro: RenderOpts): R
   };
   const attrs = block.attrs ?? {};
   const spans = Array.isArray(block.content) ? richContent(block) : [];
-  const hard = attrs.breaks === "hard";
+  const softBreaks = ro.softBreaks?.(block);
   switch (block.type) {
     case "paragraph":
-      node.segs = inline(w, spans, { kind: "block", newline: ro.eol + indent, hard }, ro);
+      node.segs = inline(w, spans, { kind: "block", newline: ro.eol + indent, softBreaks }, ro);
       break;
     case "heading":
       w.write("#".repeat(clampLevel(attrs.level)));
       if (spans.length > 0) {
         w.write(" ");
-        node.segs = inline(w, spans, { kind: "heading", newline: " ", hard: false }, ro);
+        node.segs = inline(w, spans, { kind: "heading", newline: " " }, ro);
       }
       break;
     case "blockquote":
       if (spans.length === 0) w.write(">");
       else {
         w.write("> ");
-        node.segs = inline(w, spans, { kind: "block", newline: `${ro.eol + indent}> `, hard }, ro);
+        const newline = `${ro.eol + indent}> `;
+        node.segs = inline(w, spans, { kind: "block", newline, softBreaks }, ro);
       }
       break;
     case "callout": {
@@ -321,7 +323,8 @@ function renderBlock(w: Writer, block: Block, indent: string, ro: RenderOpts): R
       w.write(`> [!${calloutKind(attrs)}]`);
       if (spans.length > 0) {
         w.write(newline);
-        node.segs = inline(w, spans, { kind: "block", newline, hard, continuation: true }, ro);
+        const options = { kind: "block", newline, softBreaks, continuation: true } as const;
+        node.segs = inline(w, spans, options, ro);
       }
       break;
     }
@@ -405,7 +408,7 @@ function renderBlock(w: Writer, block: Block, indent: string, ro: RenderOpts): R
     default: {
       if (typeof block.content === "string") w.write(block.content);
       else if (Array.isArray(block.content)) {
-        node.segs = inline(w, spans, { kind: "block", newline: ro.eol + indent, hard }, ro);
+        node.segs = inline(w, spans, { kind: "block", newline: ro.eol + indent, softBreaks }, ro);
       }
     }
   }

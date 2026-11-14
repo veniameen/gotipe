@@ -173,13 +173,13 @@ This example keeps the tabs of one browser in sync with `BroadcastChannel`. Ever
 create its editor from the same baseline.
 
 ```ts title="tab-sync.ts"
-import type { GoTipeEditor } from "@gotipe/core";
+import { type GoTipeEditor, createId } from "@gotipe/core";
 
 export function syncTabs(editor: GoTipeEditor, documentId: string): () => void {
   const channel = new BroadcastChannel(`gotipe:${documentId}`);
   let receiving = false;
   const publish = () => channel.postMessage(editor.getCollaborationUpdate());
-  editor.enableCollaboration(crypto.randomUUID());
+  editor.enableCollaboration(createId());
   const stop = editor.on("update", () => {
     // Do not send back an update that just arrived.
     if (!receiving) publish();

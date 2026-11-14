@@ -215,7 +215,7 @@ export const PasteLinks = defineExtension({
 Two hooks act on plain clipboard text, after the paste rules and only when the clipboard holds neither content copied from a GoTipe editor nor HTML:
 
 ```ts title="paste-hooks.ts"
-import { defineExtension } from "@gotipe/core";
+import { createId, defineExtension } from "@gotipe/core";
 
 export const PasteHooks = defineExtension({
   name: "pasteHooks",
@@ -226,7 +226,7 @@ export const PasteHooks = defineExtension({
     "heading" in nodes && /^TITLE: /.test(text)
       ? [
           {
-            id: crypto.randomUUID(),
+            id: createId(),
             type: "heading",
             attrs: { level: 1 },
             content: [{ text: text.slice(7), marks: [] }],

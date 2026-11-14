@@ -139,6 +139,7 @@ minute by default), 503 `SERVICE_UNAVAILABLE` when no key is configured or the m
 
 ```ts title="cloud-ai-provider.ts"
 import type { AiContext, AiProvider } from "@gotipe/ai";
+import { createId } from "@gotipe/core";
 
 const textOf = (context: AiContext): string =>
   context.selectedText ??
@@ -195,7 +196,7 @@ export function cloudAiProvider(apiUrl: string, getToken: () => Promise<string>)
     executeCommand: (command, context) => collect(complete("rewrite", command, context)),
     generateSuggestions: async (prompt, context) => [
       {
-        id: crypto.randomUUID(),
+        id: createId(),
         type: "rewrite",
         content: await collect(complete("rewrite", prompt, context)),
         confidence: 1,

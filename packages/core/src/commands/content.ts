@@ -1,4 +1,5 @@
 import { cloneAttributes } from "../document/attributes";
+import { createId } from "../document/id";
 import type { BlockContent } from "../types/block";
 import type { BlockView } from "../types/view";
 
@@ -50,7 +51,7 @@ export function cloneBlockTree(block: BlockView, freshIds = true): import("../ty
         ? block.content
         : cloneInlineContent(block.content);
   return {
-    id: freshIds ? crypto.randomUUID() : block.id,
+    id: freshIds ? createId() : block.id,
     type: block.type,
     attrs: cloneAttributes(block.attrs),
     content: clonedContent,

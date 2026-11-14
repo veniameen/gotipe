@@ -1,3 +1,4 @@
+import { createId } from "../document/id";
 import { toWasmDoc } from "../engine/conversion";
 import { toWasmSchema } from "../engine/schema";
 import { parseHtmlDocument } from "../html";
@@ -31,7 +32,7 @@ export async function initializeEditor(
       : {
           blocks: [
             {
-              id: crypto.randomUUID(),
+              id: createId(),
               type: "paragraph",
               attrs: {},
               content: [],

@@ -28,7 +28,7 @@ describe("id reuse after an external change", () => {
     expect(nb[3]!.content).toEqual([
       { text: "Релиз выпускается по пятницам, если нет ", marks: [] },
       { text: "блокеров", marks: [{ type: "italic" }] },
-      { text: ". Ответственный — дежурный инженер.\nПодробнее в ", marks: [] },
+      { text: ". Ответственный — дежурный инженер. Подробнее в ", marks: [] },
       {
         text: "вики",
         marks: [

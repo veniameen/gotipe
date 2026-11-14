@@ -1,3 +1,4 @@
+import { createId } from "../document/id";
 import type { Block, BlockContent, Document, TextSpan } from "../types/block";
 import type { Transaction } from "../types/state";
 
@@ -57,7 +58,7 @@ export function joinContent(left: BlockContent, right: BlockContent): BlockConte
 
 export function paragraph(text = ""): Block {
   return {
-    id: crypto.randomUUID(),
+    id: createId(),
     type: "paragraph",
     attrs: {},
     content: text ? [{ text, marks: [] }] : [],
@@ -68,7 +69,7 @@ export function paragraph(text = ""): Block {
 export function cloneWithFreshIds(block: Block): Block {
   return {
     ...structuredClone(block),
-    id: crypto.randomUUID(),
+    id: createId(),
     children: block.children.map(cloneWithFreshIds),
   };
 }

@@ -70,8 +70,8 @@ describe("formulas, embeds, files, quotes and plain code in Markdown", () => {
       ["math", "y"],
       ["codeBlock", "z"],
       ["paragraph", [{ text: "Costs $5 and $$10$$", marks: [] }]],
-      ["paragraph", [{ text: "Text\n$$", marks: [] }]],
-      ["paragraph", [{ text: "$$\nno closing line", marks: [] }]],
+      ["paragraph", [{ text: "Text $$", marks: [] }]],
+      ["paragraph", [{ text: "$$ no closing line", marks: [] }]],
     ]);
     expect(serializeMarkdown(doc, snapshot).text).toBe(source);
   });
