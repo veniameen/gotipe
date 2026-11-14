@@ -32,7 +32,14 @@
         "extensions/media",
         "extensions/math",
         "extensions/marks",
-        "extensions/behaviors"
+        "extensions/behaviors",
+        "extensions/find-replace",
+        "extensions/character-count",
+        "extensions/typography",
+        "extensions/links-and-paste",
+        "extensions/text-align",
+        "extensions/editing-aids",
+        "extensions/inline-atoms"
       ]
     },
     {

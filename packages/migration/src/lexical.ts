@@ -30,6 +30,8 @@ const formats: [number, string][] = [
   [64, "superscript"],
   [128, "highlight"],
 ];
+/** Lexical element formats that are GoTipe's `align` of a paragraph or heading. */
+const ALIGNMENTS = new Set(["left", "center", "right", "justify"]);
 /** Fields every Lexical element serializes; GoTipe has no direction or indentation. */
 const ELEMENT_FIELDS = ["direction", "format", "indent", "version", "textFormat", "textStyle"];
 
@@ -159,6 +161,12 @@ export function convertLexicalToGoTipe(
       attrs.level = Number(String(value.tag)[1]);
       drop(attrs, ["tag"]);
     }
+    // Element alignment of a paragraph or heading; "start", "end" and "" stay reported.
+    if (
+      (sourceType === "paragraph" || sourceType === "heading") &&
+      ALIGNMENTS.has(String(attrs.format))
+    )
+      rename(attrs, "format", "align");
     if (sourceType === "tablecell") {
       take(attrs, ["headerState"], unmapped);
       rename(attrs, "colSpan", "colspan");

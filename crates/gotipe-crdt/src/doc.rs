@@ -1,20 +1,14 @@
+use crate::boundaries::Boundaries;
 use crate::replica::{prepare, reconcile, Change, ReplicaOp, ReplicaState};
+use crate::wire::{self, Envelope, OperationsWriter};
 use crate::{
     history::CrdtHistory,
     ops::{CrdtOp, OpId},
     version::VersionVector,
 };
 use gotipe_core::{Document, Step, TransformError};
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 use std::collections::{BTreeMap, BTreeSet};
-
-const PROTOCOL: &str = "gotipe.crdt/1";
-#[derive(Debug, Clone, Serialize, Deserialize)]
-struct Update {
-    protocol: String,
-    base: Document,
-    operations: Vec<ReplicaOp>,
-}
 
 /// A document replica. The update log is an idempotent union of causally stamped
 /// changes; projection uses identities and dense positions, never remote offsets.
@@ -27,6 +21,9 @@ pub struct CrdtDocument {
     version: VersionVector,
     history: CrdtHistory,
     lamport: u64,
+    /// The newest clock of this replica's own operations.
+    own_lamport: u64,
+    boundaries: Boundaries,
 }
 impl CrdtDocument {
     pub fn new(peer_id: &str, doc: &Document) -> Self {
@@ -51,6 +48,8 @@ impl CrdtDocument {
             version: VersionVector::new(),
             history: CrdtHistory::new(),
             lamport: 0,
+            own_lamport: 0,
+            boundaries: Boundaries::default(),
         })
     }
     /// Compatibility entry point for callers which already validated the steps.
@@ -67,6 +66,7 @@ impl CrdtDocument {
             operations
                 .extend(staged.apply_local_steps_result(std::slice::from_ref(step), &target)?);
         }
+        staged.end_transaction();
         *self = staged;
         Ok(operations)
     }
@@ -75,7 +75,23 @@ impl CrdtDocument {
         &mut self,
         target: &Document,
     ) -> Result<Vec<CrdtOp>, TransformError> {
-        self.apply_local_steps_result(&[], target)
+        let operations = self.apply_local_steps_result(&[], target)?;
+        self.end_transaction();
+        Ok(operations)
+    }
+    /// Ends a local transaction: an update frame may end after its operations,
+    /// never inside them. `try_apply_local`, `apply_local_document` and
+    /// `apply_local_operations` end their own; a caller that combines
+    /// `apply_local_steps_result` and `try_set_data` into one edit ends it here.
+    /// Own operations not yet ended travel together with the next transaction.
+    pub fn end_transaction(&mut self) {
+        self.boundaries.seal(self.own_lamport);
+    }
+    /// A peer confirmed every own operation up to `clock`: forget where the
+    /// transactions up to it ended. `encode_local_update_after` never starts at
+    /// or below a confirmed clock again.
+    pub fn forget_boundaries_through(&mut self, clock: u64) {
+        self.boundaries.forget_through(clock);
     }
     pub fn apply_local_steps_result(
         &mut self,
@@ -147,6 +163,10 @@ impl CrdtDocument {
 
     fn remember(&mut self, op: ReplicaOp) {
         self.lamport = self.lamport.max(op.id.lamport);
+        if op.id.peer_id == self.peer_id {
+            self.own_lamport = self.own_lamport.max(op.id.lamport);
+            self.boundaries.observe(op.id.lamport);
+        }
         self.version.observe(&op.id.peer_id, op.id.lamport);
         self.operations.insert(op.id.clone(), op);
     }
@@ -198,6 +218,7 @@ impl CrdtDocument {
                 change,
             });
         }
+        self.end_transaction();
         self.replay();
         Ok(())
     }
@@ -207,26 +228,41 @@ impl CrdtDocument {
         #[derive(Deserialize)]
         #[serde(untagged)]
         enum Wire {
-            Update(Update),
+            Update(Envelope),
             Operations(Vec<CrdtOp>),
         }
         let wire: Wire = serde_json::from_slice(bytes)?;
         let mut adopted_base = None;
         let ops = match wire {
             Wire::Update(update) => {
-                if update.protocol != PROTOCOL {
-                    return Err(invalid("Unsupported collaboration protocol"));
-                }
-                let mut base = update.base;
-                if base.duplicate_block_id().is_some() {
-                    return Err(invalid("Duplicate block ID in collaboration baseline"));
-                }
-                base.version = self.base.version;
-                if serde_json::to_value(&base)? != serde_json::to_value(&self.base)? {
-                    if !self.operations.is_empty() {
-                        return Err(invalid("Peers must start from the same document snapshot"));
+                match (update.protocol.as_str(), update.base) {
+                    (wire::FULL_STATE, Some(mut base)) => {
+                        if base.duplicate_block_id().is_some() {
+                            return Err(invalid("Duplicate block ID in collaboration baseline"));
+                        }
+                        base.version = self.base.version;
+                        if serde_json::to_value(&base)? != serde_json::to_value(&self.base)? {
+                            if !self.operations.is_empty() {
+                                return Err(invalid(
+                                    "Peers must start from the same document snapshot",
+                                ));
+                            }
+                            adopted_base = Some(base);
+                        }
                     }
-                    adopted_base = Some(base);
+                    (wire::FULL_STATE, None) => {
+                        return Err(invalid(
+                            "A gotipe.crdt/1 update must carry its baseline document",
+                        ))
+                    }
+                    // The transport checked the generation; there is no document to compare.
+                    (wire::OPERATIONS, None) => {}
+                    (wire::OPERATIONS, Some(_)) => {
+                        return Err(invalid(
+                            "A gotipe.crdt/2 update names its baseline by generation only",
+                        ))
+                    }
+                    _ => return Err(invalid("Unsupported collaboration protocol")),
                 }
                 update.operations
             }
@@ -246,6 +282,7 @@ impl CrdtDocument {
         if let Some(base) = adopted_base {
             staged.base = base;
         }
+        let mut merged = false;
         for op in ops {
             if op.id.peer_id.trim().is_empty()
                 || op.id.peer_id.len() > 256
@@ -262,7 +299,12 @@ impl CrdtDocument {
                 }
             } else {
                 staged.remember(op);
+                merged = true;
             }
+        }
+        // A repeated delivery holds nothing new: skip the replay of the whole log.
+        if !merged && !adopting {
+            return Ok(vec![]);
         }
         staged.replay();
         let after = staged.to_document();
@@ -294,15 +336,81 @@ impl CrdtDocument {
         *self = staged;
         Ok(steps)
     }
-    /// Updates are replay-safe. Sending the complete log also covers out-of-order
-    /// gaps that a maximum-only version vector cannot describe.
+    /// The full state: the baseline and every operation (`gotipe.crdt/1`). It is
+    /// replay-safe and also covers out-of-order gaps that a maximum-only version
+    /// vector cannot describe, so the version argument omits nothing. Use it for
+    /// local copies and first contact; `encode_local_update_after` sends edits.
     pub fn encode_update_since(&self, _since: &VersionVector) -> Vec<u8> {
-        serde_json::to_vec(&Update {
-            protocol: PROTOCOL.into(),
-            base: self.base.clone(),
-            operations: self.operations.values().cloned().collect(),
-        })
-        .expect("Serializable CRDT update")
+        wire::full_state(&self.base, self.operations.values())
+    }
+    /// This replica's own operations after the Lamport clock `after`, oldest
+    /// first, as `gotipe.crdt/2` without the baseline, plus `remaining` (later
+    /// own operations left out) and `continues`. A positive `max_bytes` bounds
+    /// the result, which ends only after the last operation of a transaction
+    /// (`end_transaction`), so a peer never receives half of one. When the next
+    /// transaction alone exceeds `max_bytes`, the result is the part of it that
+    /// fits (at least one operation) and `continues` is true: read the rest with
+    /// `after` set to the part's last clock. Own clocks only grow and a
+    /// transport confirms them in order, so one clock marks everything a peer has.
+    pub fn encode_local_update_after(&self, after: u64, max_bytes: usize) -> Vec<u8> {
+        let total = self.local_operations_after(after).count();
+        let mut local = self.local_operations_after(after).peekable();
+        let mut writer = OperationsWriter::new(max_bytes);
+        let mut taken = 0;
+        // The writer's state after the last operation a frame may end with.
+        let mut end = None;
+        let mut continues = false;
+        while let Some(operation) = local.peek() {
+            if !writer.push(operation) {
+                match end {
+                    Some((mark, count)) => {
+                        writer.truncate(mark);
+                        taken = count;
+                    }
+                    None => continues = true,
+                }
+                break;
+            }
+            let clock = operation.id.lamport;
+            local.next();
+            taken += 1;
+            // Nothing newer exists yet, so the newest operation always ends a frame.
+            if local.peek().is_none() || self.boundaries.ends_after(clock) {
+                end = Some((writer.mark(), taken));
+            }
+        }
+        writer.finish(&format!(
+            r#""remaining":{},"continues":{continues}"#,
+            total - taken
+        ))
+    }
+    fn local_operations_after(&self, after: u64) -> impl Iterator<Item = &ReplicaOp> {
+        let first = OpId::new(after.saturating_add(1), "");
+        self.operations
+            .range(first..)
+            .filter(move |(id, _)| id.lamport > after && id.peer_id == self.peer_id)
+            .map(|(_, operation)| operation)
+    }
+    /// Operations this replica holds and the state `remote` lacks, except its own
+    /// operations newer than `acknowledged`, the newest of them in `remote`: those
+    /// follow through `encode_local_update_after(acknowledged, …)`. The rest was
+    /// restored from a local copy under another peer ID, or is a gap in `remote`.
+    pub fn encode_missing_from(&self, remote: &[u8]) -> Result<Vec<u8>, serde_json::Error> {
+        let known = wire::identities(remote)?;
+        let acknowledged = known
+            .iter()
+            .filter(|id| id.peer_id == self.peer_id)
+            .map(|id| id.lamport)
+            .max()
+            .unwrap_or(0);
+        let mut writer = OperationsWriter::new(0);
+        for (id, operation) in &self.operations {
+            let pending = id.peer_id == self.peer_id && id.lamport > acknowledged;
+            if !pending && !known.contains(id) {
+                writer.push(operation);
+            }
+        }
+        Ok(writer.finish(&format!(r#""acknowledged":{acknowledged}"#)))
     }
     /// Plain document snapshots are intentionally separate from network updates.
     pub fn encode_snapshot(&self) -> Vec<u8> {

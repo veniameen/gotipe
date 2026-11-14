@@ -17,9 +17,14 @@ type memoryPersistence struct {
 	generation string
 	document   []byte
 	updates    [][]byte
-	snapshots  [][]byte
-	fail       bool
-	loadFails  bool
+	// compactions counts merges; compactAt is the row count that triggers one.
+	compactions int
+	compactAt   int
+	// compactGate, when set, holds every compaction until it is closed.
+	compactGate chan struct{}
+	started     chan struct{}
+	fail        bool
+	loadFails   bool
 }
 
 func (s *memoryPersistence) LoadState(context.Context, string) (StoredState, error) {
@@ -32,8 +37,7 @@ func (s *memoryPersistence) LoadState(context.Context, string) (StoredState, err
 	if document == nil {
 		document = testDocument
 	}
-	out := append([][]byte{}, s.snapshots...)
-	return StoredState{Generation: s.generation, Document: append([]byte(nil), document...), Updates: append(out, s.updates...)}, nil
+	return StoredState{Generation: s.generation, Document: append([]byte(nil), document...), Updates: append([][]byte{}, s.updates...)}, nil
 }
 func (s *memoryPersistence) CurrentGeneration(context.Context, string) (string, error) {
 	s.mu.Lock()
@@ -55,13 +59,28 @@ func (s *memoryPersistence) SaveUpdate(_ context.Context, _ string, generation s
 	s.updates = append(s.updates, append([]byte(nil), data...))
 	return nil
 }
-func (s *memoryPersistence) SaveSnapshot(_ context.Context, _ string, generation string, data []byte) error {
+func (s *memoryPersistence) CompactLog(_ context.Context, _ string, generation string) error {
+	if s.compactGate != nil {
+		select {
+		case s.started <- struct{}{}:
+		default:
+		}
+		<-s.compactGate
+	}
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	if generation != s.generation {
 		return ErrBaselineReplaced
 	}
-	s.snapshots = append(s.snapshots, append([]byte(nil), data...))
+	if s.compactAt == 0 || len(s.updates) < s.compactAt {
+		return nil
+	}
+	merged, err := MergeUpdates(s.updates)
+	if err != nil {
+		return err
+	}
+	s.updates = [][]byte{merged}
+	s.compactions++
 	return nil
 }
 
@@ -72,7 +91,7 @@ func (s *memoryPersistence) replace(document []byte) {
 	defer s.mu.Unlock()
 	s.generation += "+"
 	s.document = append([]byte(nil), document...)
-	s.updates, s.snapshots = nil, nil
+	s.updates = nil
 }
 func startRoom(t *testing.T, store *memoryPersistence) *Room {
 	t.Helper()
@@ -153,10 +172,9 @@ func TestRoomPersistsBeforeBroadcastAndReplaysAfterReconnect(t *testing.T) {
 	}
 	store.mu.Lock()
 	saved := len(store.updates)
-	checkpoints := len(store.snapshots)
 	store.mu.Unlock()
-	if saved != 2 || checkpoints == 0 {
-		t.Fatal("updates/checkpoint not durable")
+	if saved != 2 {
+		t.Fatal("updates not durable")
 	}
 	restarted := startRoom(t, store)
 	c := join(t, restarted, "c")

@@ -62,6 +62,24 @@ describe("Cloud SDK contracts", () => {
       to: 7,
     });
   });
+  it("returns the collaboration state with its generation and untouched updates", async () => {
+    const state = {
+      baseline: { version: 1, blocks: [] },
+      updates: [
+        {
+          protocol: "gotipe.crdt/2",
+          operations: [
+            { id: { lamport: 1, peer_id: "a" }, change: { DeleteBlock: { block_id: "b" } } },
+          ],
+        },
+      ],
+      generation: "6c0d6e3f5a1b4c2d8e9f0a1b2c3d4e5f",
+    };
+    respond({ id: "doc", size_bytes: 2, collaboration_state: state });
+    const document = await client().getDocument("doc");
+    expect(document.collaborationState).toEqual(state);
+    expect(document.collaborationState?.generation).toBe(state.generation);
+  });
   it("uses the top-level export endpoints", async () => {
     const fetch = respond({ id: "job", document_id: "doc", created_at: "today" }, 202);
     expect(await client().createExportJob("doc", "pdf")).toMatchObject({

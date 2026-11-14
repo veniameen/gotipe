@@ -92,6 +92,25 @@ func TestSnapshotKeepsReplicaBaselineSeparateFromMaterializedContent(t *testing.
 	if string(snapshot.Content) != string(projected) || string(snapshot.CollaborationState.Baseline) != string(base) || len(snapshot.CollaborationState.Updates) != 2 {
 		t.Fatalf("inconsistent bootstrap: %+v", snapshot)
 	}
+	if snapshot.CollaborationState.Generation != GenerationToken("base") {
+		t.Fatalf("bootstrap does not name its baseline: %q", snapshot.CollaborationState.Generation)
+	}
+}
+
+func TestGenerationTokenIsStableOpaqueAndChangesWithTheBaseline(t *testing.T) {
+	key := "documents/0f9d7a52-6f0b-4c11-9b52-3d5f0e6f7a10/8a0f1c1e.json"
+	token := GenerationToken(key)
+	if token != GenerationToken(key) || token == GenerationToken(key+"x") {
+		t.Fatal("the token must follow the object key")
+	}
+	// Short and safe in a URL; it reveals neither the document ID nor the key.
+	if len(token) != 32 || strings.Trim(token, "0123456789abcdef") != "" || strings.Contains(key, token) {
+		t.Fatalf("unexpected token %q", token)
+	}
+	encoded, err := json.Marshal(CollaborationState{Baseline: json.RawMessage(`{}`), Updates: []json.RawMessage{}, Generation: token})
+	if err != nil || !strings.Contains(string(encoded), `"generation":"`+token+`"`) {
+		t.Fatalf("REST field: %s %v", encoded, err)
+	}
 }
 
 func TestSnapshotWithoutEditsDoesNotStartConverter(t *testing.T) {

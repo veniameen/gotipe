@@ -88,6 +88,37 @@ ordinary insertion. A later document/selection change, unmount, destruction or n
 paste prevents a stale result from committing. Internal GoTipe clipboard payloads keep
 their structured format instead of running text rules.
 
+Plain clipboard text (no GoTipe payload, no HTML, no matching rule) passes the extensions'
+`transformPastedText(text, context)` hooks in order, then the first `parsePastedText` that
+returns blocks; an empty transform result pastes nothing. Parsers are skipped when the
+caret is in raw text. Parsed blocks commit as one transaction; a structural refusal
+(`CLIPBOARD_FAILED`: blocks in a table cell, a result outside the schema) falls back to
+plain paragraphs of the same text, never to a partial insert. The context carries the
+schema and the editor's own `safeHref`/`safeImageSrc`, so a parser applies the same URL
+policy as the renderers. GoTipe and HTML clipboard data keep their priority.
+
+A dispatch with `metadata.addToHistory === false` commits without an undo step and keeps
+the redo stack in the JS history; the native collaboration history reads the same key.
+`metadata.origin` names who made a transaction that is not the user's edit. The editor
+sets `origin: "repair"` (with `addToHistory: false`) on the transaction that repairs remote
+text inside inline atoms after `receiveCollaborationUpdate`; listeners such as
+`TrailingNode` must not treat it as a local edit.
+`TrailingNode` uses it, so loading a document adds no undo step.
+
+`beforeCollaboration` is emitted right before the first `enableCollaboration` on the WASM
+engine fixes the CRDT baseline, which must be identical on every replica. An extension that
+changed the loaded document restores it there: `TrailingNode` removes its untouched
+paragraph. While collaborating it appends only after the replica's own dispatch (a
+`transaction` event precedes that `update`), never after a remote update, Undo, Redo or
+`setContent`, so peers do not each add a block.
+
+Renderers draw every decoration layer. `EditorContent` of React and Vue map the built-in
+kinds (`placeholder`, `comment-highlight`, `suggestion-*`, `remote-cursor`,
+`remote-selection`, `ghost-text`) to the generic range/widget/node forms with fixed
+classes and data attributes; peer colors pass `toSafeColor`. A presentation-only render
+(same document version and selection) restores the native selection it read before the
+DOM changed, through `getDOMSelection()`/`setSelection()`, not a second DOM mapper.
+
 `Image.configure({ maxSize, allowedTypes, upload })` is enforced for paste/drop images.
 Configured upload takes precedence for that rule; otherwise `host.saveAsset` or the
 bounded durable inline asset fallback is used. Raster media limits still apply.
@@ -141,6 +172,30 @@ Markdown sessions retain their original bytes; edited blocks use canonical synta
 forms. `toSafeColor` accepts inert color tokens and rejects declarations, URLs and CSS
 variables; serializers escape text and validate links separately. Framework adapters
 must apply the same boundaries to untrusted mark attributes.
+
+## Inline atoms
+
+A mark spec with `atomic: true` makes its text one inline element (decision record
+[inline-atoms.md](inline-atoms.md)). An atom is the maximal run of spans with the same
+atomic marks and equal attrs; `key` separates equal neighbours. Both engines normalize
+each step against the staged document before applying it — `engine/atoms.ts` and
+`crates/gotipe-core/src/atoms.rs` hold the same rules: `insertText`/`splitBlock` inside an
+atom move to the nearer edge (tie → end); `deleteText`/`deleteRange`/`addMark`/`removeMark`
+touching part of an atom cover the whole atom. Range and UTF-16 checks run on the
+normalized offsets. Rust records the normalized steps in `last_steps`, so CRDT operations
+and typing groups see what happened. Every selection the editor takes passes
+`editor/atom-selection.ts`: points inside an atom go to the edge in the direction of
+movement from the previous point, else to the nearer edge; the DOM caret follows. Atomic
+marks carry `atomic: true` in the view and are never inherited by typed text, composed
+text, `insertionMarks` or stored marks. Delete input expands its range before dispatch so
+the caret is exact; a composition the browser began inside an atom commits at the snapped
+caret. A range within one atom selects the whole atom. Every new atom has a unique `key`
+(commands, HTML import, Markdown readers, paste re-keys duplicates), so equal atoms never
+join. `normalizeRemoteAtoms` repairs remote text inside an atom by identity (type and
+`key`); the collaboration receive path dispatches it with `origin: "repair"`. That repair
+and the HTML read-back of atoms come from the extension field `atomSupport`
+(`InlineAtomSupport`), which the built-in atom extensions carry; the core entry does not
+import them, and without the field atoms are read from HTML as their text and not repaired.
 
 ## Block handles and touch
 

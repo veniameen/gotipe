@@ -80,7 +80,65 @@ try {
   assert.throws(() => schemaEditor.apply(tr([{InsertText:{block_id:'a',offset:0,text:'rollback',marks:[]}},{SetBlockAttrs:{block_id:'a',attrs:{unknown:true}}}])));
   assert.equal(schemaEditor.export_json(),before);
   schemaEditor.apply(tr([{AddMark:{block_id:'a',from:0,to:1,mark:{mark_type:'textColor',attrs:{color:'#1d4ed8'}}}}]));
-  assert.match(schemaEditor.export_html(), /style="color:#1d4ed8"/);
-  assert.match(schemaEditor.export_markdown(), /span style="color:#1d4ed8"/);
-  console.log('WASM integrity: strict schemas reject atomically and text color exports preserve marks.');
+  assert.deepEqual(JSON.parse(schemaEditor.export_json()).blocks[0].content.value[0].marks, [{mark_type:'textColor',attrs:{color:'#1d4ed8'}}]);
+  // HTML, Markdown and sanitizing live in @gotipe/core; the module does not carry them.
+  for (const name of ['export_html', 'export_markdown', 'sanitize_html']) assert.equal(schemaEditor[name], undefined);
+  console.log('WASM integrity: strict schemas reject atomically and text color marks are kept.');
 } finally { schemaEditor.free(); }
+
+const deltaA = WasmEditor.withDefaultSchema(base), deltaB = WasmEditor.withDefaultSchema(base);
+try {
+  const read = bytes => JSON.parse(new TextDecoder().decode(bytes));
+  assert.throws(() => deltaA.get_local_update_after(0, 0), /Collaboration not enabled/);
+  deltaA.enable_collaboration('a'); deltaB.enable_collaboration('b');
+  deltaA.apply(tr([{AddMark:{block_id:'a',from:0,to:1,mark:{mark_type:'italic',attrs:{}}}}]));
+  deltaA.apply(tr([{AddMark:{block_id:'a',from:0,to:1,mark:{mark_type:'bold',attrs:{}}}}]));
+  const first = deltaA.get_local_update_after(0, 0), full = deltaA.get_update();
+  assert.equal(read(first).protocol, 'gotipe.crdt/2'); assert.equal(read(first).base, undefined);
+  assert.equal(read(first).remaining, 0); assert.equal(read(first).continues, false); assert.ok(first.length < full.length);
+  assert.deepEqual(read(first).operations, read(full).operations);
+  for (const clock of [-1, 0.5, Number.MAX_SAFE_INTEGER + 1, Number.NaN])
+    assert.throws(() => deltaA.get_local_update_after(clock, 0), /Invalid collaboration clock/);
+  const one = read(deltaA.get_local_update_after(0, 1));
+  assert.equal(one.operations.length, 1); assert.equal(one.remaining, 1);
+  assert.deepEqual(read(deltaA.get_local_update_after(one.operations[0].id.lamport, 0)).operations, read(full).operations.slice(1));
+  deltaB.receive_update(first);
+  assert.deepEqual(blocks(deltaB), blocks(deltaA));
+  assert.deepEqual(blocks(deltaB)[0].content.value[0].marks.map(mark => mark.mark_type), ['italic', 'bold']);
+  assert.equal(JSON.stringify(blocks(deltaB)), JSON.stringify(blocks(deltaA)));
+  const missing = read(deltaA.get_update_missing_from(deltaB.get_update()));
+  assert.deepEqual(missing.operations, []); assert.equal(missing.acknowledged, 2);
+  assert.throws(() => deltaA.get_update_missing_from(new TextEncoder().encode('{"protocol":"other","operations":[]}')), /Unsupported collaboration protocol/);
+  console.log('WASM integrity: incremental updates, exact clocks, missing operations and replicated mark order passed.');
+} finally { deltaA.free(); deltaB.free(); }
+
+// A frame ends only after a whole transaction; a larger one is read in parts
+// that a peer applies together. One part alone would not satisfy the schema.
+const author = WasmEditor.withDefaultSchema(base), reader = WasmEditor.withDefaultSchema(base), bootstrap = WasmEditor.withDefaultSchema(base);
+try {
+  const read = bytes => JSON.parse(new TextDecoder().decode(bytes));
+  author.enable_collaboration('author'); reader.enable_collaboration('reader'); bootstrap.enable_collaboration('bootstrap');
+  const block = (id, block_type, attrs, text) => ({id,block_type,attrs,content:{type:'RichText',value:[{text,marks:[]}]},children:[]});
+  author.apply(tr([{InsertBlock:{parent_id:null,index:1,block:block('h','heading',{level:2},'z'.repeat(40))}},
+    {InsertBlock:{parent_id:null,index:2,block:{id:'i',block_type:'image',attrs:{src:'https://example.test/i.png'},content:{type:'Empty'},children:[]}}}]));
+  const parts = [];
+  for (let after = 0;;) {
+    const part = read(author.get_local_update_after(after, 300));
+    parts.push(part); after = part.operations.at(-1).id.lamport;
+    if (!part.continues) break;
+  }
+  assert.ok(parts.length > 2); assert.equal(parts.at(-1).remaining, 0);
+  const envelope = operations => new TextEncoder().encode(JSON.stringify({protocol:'gotipe.crdt/2',operations}));
+  assert.throws(() => reader.receive_update(envelope(parts[0].operations)), /Schema validation/);
+  reader.receive_update(envelope(parts.flatMap(part => part.operations)));
+  assert.deepEqual(blocks(reader), blocks(author));
+  // Stored rows out of causal order: the child row alone fails, their union does not.
+  author.apply(tr([{InsertBlock:{parent_id:null,index:3,block:{id:'l',block_type:'orderedList',attrs:{},content:{type:'Empty'},children:[block('l1','listItem',{},'one')]}}}]));
+  const list = read(author.get_local_update_after(parts.at(-1).operations.at(-1).id.lamport, 0));
+  author.apply(tr([{InsertBlock:{parent_id:'l',index:1,block:block('l2','listItem',{},'two')}}]));
+  const item = read(author.get_local_update_after(list.operations.at(-1).id.lamport, 0));
+  assert.throws(() => bootstrap.receive_update(envelope(item.operations)), /TopLevelNotAllowed/);
+  bootstrap.receive_update(envelope([...item.operations, ...list.operations, ...parts.flatMap(part => part.operations)]));
+  assert.deepEqual(blocks(bootstrap), blocks(author));
+  console.log('WASM integrity: transaction-bounded frames, continued parts and order-free stored records passed.');
+} finally { author.free(); reader.free(); bootstrap.free(); }

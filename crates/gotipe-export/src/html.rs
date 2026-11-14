@@ -1,12 +1,13 @@
 //! Canonical HTML. For the same document and options the output is byte-identical to
 //! `serializeHtml` in @gotipe/core, which `editor.getHTML()` uses on both engines;
 //! `tests/fixtures/html-parity.json` holds the cases both test suites check.
+mod atoms;
 mod js;
 mod safety;
 mod sanitizer;
 mod styles;
 
-use gotipe_core::{AttrValue, Block, BlockContent, Document, TextSpan};
+use gotipe_core::{AttrValue, Block, BlockContent, Document, Mark, TextSpan};
 
 use crate::{ConvertError, ExportOptions};
 use safety::escape;
@@ -128,7 +129,7 @@ fn block_to_html(block: &Block, options: &Options) -> String {
         }
     };
     match block.block_type.as_str() {
-        "paragraph" => format!("<p>{inner}</p>{after}"),
+        "paragraph" => format!("<p{}>{inner}</p>{after}", text_align(block)),
         "heading" => {
             let level = js::number(attr("level")).trunc();
             let level = if level == 0.0 || level.is_nan() {
@@ -137,7 +138,7 @@ fn block_to_html(block: &Block, options: &Options) -> String {
                 level
             };
             let level = level.clamp(1.0, 6.0) as u8;
-            format!("<h{level}>{inner}</h{level}>{after}")
+            format!("<h{level}{}>{inner}</h{level}>{after}", text_align(block))
         }
         "bulletList" => format!("<ul>\n{children}\n</ul>"),
         "orderedList" => {
@@ -229,6 +230,18 @@ fn attachment(block: &Block) -> String {
     }
 }
 
+/// `align` of a paragraph or heading (the `TextAlign` extension): one of four values.
+fn text_align(block: &Block) -> String {
+    match block.attrs.get("align") {
+        Some(AttrValue::String(align))
+            if matches!(align.as_str(), "left" | "center" | "right" | "justify") =>
+        {
+            format!(" style=\"text-align:{align}\"")
+        }
+        _ => String::new(),
+    }
+}
+
 fn cell_attributes(block: &Block) -> String {
     let mut html = String::new();
     for name in ["colspan", "rowspan"] {
@@ -245,48 +258,70 @@ fn cell_attributes(block: &Block) -> String {
     html
 }
 
+/// `html` inside the elements of `marks`, the first innermost. Atomic marks add none.
+fn wrap_marks(mut html: String, marks: &[&Mark]) -> String {
+    for mark in marks {
+        let color = match mark.attrs.get("color") {
+            Some(AttrValue::String(color)) if safety::safe_color(color) => Some(color),
+            _ => None,
+        };
+        html = match mark.mark_type.as_str() {
+            "bold" => format!("<strong>{html}</strong>"),
+            "italic" => format!("<em>{html}</em>"),
+            "underline" => format!("<u>{html}</u>"),
+            "strikethrough" => format!("<s>{html}</s>"),
+            "code" => format!("<code>{html}</code>"),
+            "superscript" => format!("<sup>{html}</sup>"),
+            "subscript" => format!("<sub>{html}</sub>"),
+            "link" => {
+                let href = safety::safe_href(&js::string_or(mark.attrs.get("href"), ""));
+                let title = mark.attrs.get("title");
+                let title = if js::truthy(title) {
+                    format!(" title=\"{}\"", escape(&js::string_or(title, "")))
+                } else {
+                    String::new()
+                };
+                match href {
+                    Some(href) => format!("<a href=\"{}\"{title}>{html}</a>", escape(&href)),
+                    None => html,
+                }
+            }
+            "textColor" => match color {
+                Some(color) => format!("<span style=\"color:{color}\">{html}</span>"),
+                None => html,
+            },
+            "highlight" => match color {
+                Some(color) => format!("<mark style=\"background:{color}\">{html}</mark>"),
+                None => format!("<mark>{html}</mark>"),
+            },
+            _ => html,
+        };
+    }
+    html
+}
+
+fn span_html(span: &TextSpan, marks: &[&Mark]) -> String {
+    wrap_marks(escape(&span.text).replace('\n', "<br>"), marks)
+}
+
 fn spans_to_html(spans: &[TextSpan]) -> String {
     let mut result = String::new();
-    for span in spans {
-        let mut html = escape(&span.text).replace('\n', "<br>");
-        for mark in &span.marks {
-            let color = match mark.attrs.get("color") {
-                Some(AttrValue::String(color)) if safety::safe_color(color) => Some(color),
-                _ => None,
-            };
-            html = match mark.mark_type.as_str() {
-                "bold" => format!("<strong>{html}</strong>"),
-                "italic" => format!("<em>{html}</em>"),
-                "underline" => format!("<u>{html}</u>"),
-                "strikethrough" => format!("<s>{html}</s>"),
-                "code" => format!("<code>{html}</code>"),
-                "superscript" => format!("<sup>{html}</sup>"),
-                "subscript" => format!("<sub>{html}</sub>"),
-                "link" => {
-                    let href = safety::safe_href(&js::string_or(mark.attrs.get("href"), ""));
-                    let title = mark.attrs.get("title");
-                    let title = if js::truthy(title) {
-                        format!(" title=\"{}\"", escape(&js::string_or(title, "")))
-                    } else {
-                        String::new()
-                    };
-                    match href {
-                        Some(href) => format!("<a href=\"{}\"{title}>{html}</a>", escape(&href)),
-                        None => html,
-                    }
-                }
-                "textColor" => match color {
-                    Some(color) => format!("<span style=\"color:{color}\">{html}</span>"),
-                    None => html,
-                },
-                "highlight" => match color {
-                    Some(color) => format!("<mark style=\"background:{color}\">{html}</mark>"),
-                    None => format!("<mark>{html}</mark>"),
-                },
-                _ => html,
-            };
+    let mut i = 0;
+    while i < spans.len() {
+        let atom = atoms::atom_marks(&spans[i]);
+        let mut j = i + 1;
+        if let Some(first) = atom.first() {
+            while j < spans.len() && atoms::atom_marks(&spans[j]) == atom {
+                j += 1;
+            }
+            result.push_str(&atoms::atom_html(&spans[i..j], first));
+        } else {
+            result.push_str(&span_html(
+                &spans[i],
+                &spans[i].marks.iter().collect::<Vec<_>>(),
+            ));
         }
-        result.push_str(&html);
+        i = j;
     }
     result
 }

@@ -5,7 +5,6 @@ import { markGroups } from "./engine/mark-rules";
 import { replacementTransaction } from "./engine/replacement";
 import { validateEngineDocument, validateEngineStep } from "./engine/validate";
 import { GoTipeError } from "./error";
-import { sanitizeHtml as sanitizeHtmlJs } from "./security/sanitizer";
 import { blocksToHtml } from "./serialization/html";
 
 /**
@@ -18,10 +17,12 @@ export interface WasmEditorLike {
   apply(transactionJson: string): string;
   validate(docJson: string): boolean;
   export_json(): string;
-  sanitize_html(html: string): string;
   enable_collaboration(peerId: string): void;
   receive_update(binary: Uint8Array): string;
   get_update(): Uint8Array;
+  /** Missing in `@gotipe/wasm` builds from before incremental updates. */
+  get_local_update_after?(after: number, maxBytes: number): Uint8Array;
+  get_update_missing_from?(remote: Uint8Array): Uint8Array;
   undo_collaboration(): string | undefined;
   redo_collaboration(): string | undefined;
   can_undo_collaboration(): boolean;
@@ -44,6 +45,31 @@ export interface WasmModuleLike {
 
 /** Loads and initialises the WASM module. `null` means "JS engine only". */
 export type WasmModuleLoader = () => Promise<WasmModuleLike>;
+
+/**
+ * Which collaboration update to read. Without options it is the full state: the
+ * baseline and every operation (`gotipe.crdt/1`), for local copies and peers that
+ * meet for the first time. A transport sends the other two forms, which are
+ * `gotipe.crdt/2`: operations only, for replicas of the same baseline.
+ */
+export type CollaborationUpdateOptions =
+  | {
+      /**
+       * This replica's own operations after this Lamport clock, oldest first.
+       * The result's `remaining` counts the later ones `maxBytes` left out.
+       */
+      after: number;
+      /** Approximate size limit in bytes; one operation is always included. */
+      maxBytes?: number;
+    }
+  | {
+      /**
+       * A full state of a peer or server. The result holds the operations it
+       * lacks, except this replica's own after `acknowledged`, the newest of
+       * them in that state: read those with `after: acknowledged`.
+       */
+      missingFrom: Uint8Array;
+    };
 
 /** Engine selection: `auto` tries WASM and falls back to JS; `js` never touches WASM. */
 export type EngineMode = "auto" | "wasm" | "js";
@@ -211,12 +237,6 @@ export class WasmBridge {
     return serializeMarkdown(fromWasmDoc(JSON.parse(this.getState()))).text;
   }
 
-  sanitizeHtml(html: string): string {
-    if (this.fallbackMode) return sanitizeHtmlJs(html);
-    if (!this.editor) throw new GoTipeError("EDITOR_NOT_INITIALIZED");
-    return this.editor.sanitize_html(html);
-  }
-
   enableCollaboration(peerId: string): void {
     if (!this.editor) throw new GoTipeError("EDITOR_NOT_INITIALIZED");
     this.editor.enable_collaboration(peerId);
@@ -228,9 +248,20 @@ export class WasmBridge {
     return this.editor.receive_update(binary);
   }
 
-  getUpdate(): Uint8Array {
-    if (!this.editor) throw new GoTipeError("EDITOR_NOT_INITIALIZED");
-    return this.editor.get_update();
+  getUpdate(options?: CollaborationUpdateOptions): Uint8Array {
+    const editor = this.editor;
+    if (!editor) throw new GoTipeError("EDITOR_NOT_INITIALIZED");
+    if (!options) return editor.get_update();
+    const update =
+      "missingFrom" in options
+        ? editor.get_update_missing_from?.(options.missingFrom)
+        : editor.get_local_update_after?.(options.after, options.maxBytes ?? 0);
+    if (!update)
+      throw new GoTipeError(
+        "COLLABORATION_UNAVAILABLE",
+        "This @gotipe/wasm build has no incremental collaboration updates; update @gotipe/wasm",
+      );
+    return update;
   }
 
   addComment(json: string): string {

@@ -16,7 +16,8 @@ export interface InputHost {
   getViewState(): ViewState;
   getDocument(): Document;
   reportError(error: GoTipeError): void;
-  dispatch(transaction: object): void;
+  /** `false` when a transaction filter or the engine rejected the change. */
+  dispatch(transaction: object): boolean;
   liftListItem(): boolean;
   publishSelection(): void;
   scheduleSelectionRestore(): void;

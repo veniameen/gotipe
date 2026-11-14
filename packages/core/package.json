@@ -32,6 +32,11 @@
       "types": "./dist/vanilla.d.ts",
       "import": "./dist/vanilla.js",
       "require": "./dist/vanilla.cjs"
+    },
+    "./emoji": {
+      "types": "./dist/emoji.d.ts",
+      "import": "./dist/emoji.js",
+      "require": "./dist/emoji.cjs"
     }
   },
   "main": "./dist/index.cjs",

@@ -172,6 +172,7 @@ are `<count>/<s|sec|min|h|hour>`. An invalid value stops the API at startup.
 | `LISTEN_ADDR`, `SYNC_LISTEN_ADDR`, `METRICS_LISTEN_ADDR` | `:8080`, `:8081`, `:9090` | Listen addresses. |
 | `PROMETHEUS_ENABLED` | `true` | Serve `/metrics`. |
 | `RATE_LIMIT_API`, `RATE_LIMIT_AI`, `RATE_LIMIT_WS` | `100/min`, `60/min`, `1000/min` | Requests per user, AI requests per user, messages per WebSocket. |
+| `SYNC_TRANSACTION_LIMIT` | `16777216` | Bytes of one collaboration transaction a client may send in parts, 1 MiB to 30 MiB. One API process buffers at most eight such transactions at once. |
 | `EXPORT_WORKERS` | `4` | Parallel export jobs, 1–16. |
 | `EXPORT_POLL_INTERVAL` | `1s` | How often idle workers look for jobs. |
 | `EXPORT_MAX_DOCUMENT_SIZE` | `10485760` | Largest document body in bytes, at most 64 MiB. Request bodies may be 1 MiB larger. |
@@ -212,8 +213,9 @@ rules and the Grafana dashboards use only the metrics above. `ValkeyMemoryHigh` 
 Valkey uses more than 80% of `maxmemory`, and the overview dashboard shows the same ratio. For
 PostgreSQL, PgBouncer or disk alerts, add the matching exporter and scrape job.
 
-On `SIGTERM` the API stops accepting requests, finishes open ones for up to 30 seconds, saves
-collaboration checkpoints and stops the workers.
+On `SIGTERM` the API stops accepting requests, finishes open ones for up to 30 seconds, closes
+the collaboration rooms and stops the workers. Every acknowledged collaboration update is
+already in PostgreSQL, so nothing is saved at shutdown.
 
 ## Valkey
 

@@ -38,7 +38,21 @@ impl Layout<'_> {
         }
     }
     pub fn text(&self, spans: &[Span], width: f32, size: f32) -> Result<Vec<Row>, ConvertError> {
-        inline::wrap(self.fonts, spans, width, size)
+        inline::wrap(self.fonts, spans, width, size, inline::Align::Start)
+    }
+    /// Text of a paragraph or heading, aligned by its `align` attribute.
+    fn aligned(
+        &self,
+        block: &Block,
+        spans: &[Span],
+        width: f32,
+        size: f32,
+    ) -> Result<Vec<Row>, ConvertError> {
+        let align = match block.block_type.as_str() {
+            "paragraph" | "heading" => inline::Align::of(attr(block, "align")),
+            _ => inline::Align::Start,
+        };
+        inline::wrap(self.fonts, spans, width, size, align)
     }
     pub fn blocks(
         &self,
@@ -73,7 +87,7 @@ impl Layout<'_> {
                 {
                     Vec::new()
                 } else {
-                    let mut rows = self.text(&source, width, style.size)?;
+                    let mut rows = self.aligned(block, &source, width, style.size)?;
                     rows.push(Row::gap(self.size * 0.5));
                     rows
                 };
@@ -84,8 +98,8 @@ impl Layout<'_> {
                 let level = number(block, "level", 1).clamp(1, 6);
                 style.size *= [1.7, 1.45, 1.25, 1.1, 1.0, 0.9][level - 1];
                 style.font = FontStyle::SerifBold;
-                let mut rows =
-                    self.text(&inline::spans(block, &style, self.links), width, style.size)?;
+                let source = inline::spans(block, &style, self.links);
+                let mut rows = self.aligned(block, &source, width, style.size)?;
                 let reserve = flow::height(&rows) + self.size * 2.0;
                 if let Some(first) = rows.first_mut() {
                     first.keep = reserve;

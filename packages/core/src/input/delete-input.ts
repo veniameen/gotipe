@@ -5,6 +5,7 @@ import {
   findParentBlock,
   isBlockEmpty,
 } from "../document/tree";
+import { expandRange, viewAtoms } from "../engine/atoms";
 import type { Step } from "../types/state";
 import { deletionBoundary } from "./delete-boundary";
 import { hasSelection, replaceStructuredSelection } from "./selection-edit";
@@ -42,8 +43,14 @@ function handleDelete(event: InputEvent, host: InputHost, direction: -1 | 1): vo
     } else if (direction < 0 ? offset > 0 : offset < text.length) {
       const boundary = deletionBoundary(text, offset, direction, event.inputType);
       if (boundary === offset) return;
-      const from = Math.min(offset, boundary);
-      steps.push({ type: "deleteText", blockId, from, to: Math.max(offset, boundary) });
+      // Deleting into an inline atom deletes all of it; the engine expands the step the same way.
+      const atoms = Array.isArray(block.content) ? viewAtoms(block.content) : [];
+      const { from, to } = expandRange(
+        atoms,
+        Math.min(offset, boundary),
+        Math.max(offset, boundary),
+      );
+      steps.push({ type: "deleteText", blockId, from, to });
       caret.offset = from;
     } else {
       const parent = findParentBlock(state.blocks, blockId);

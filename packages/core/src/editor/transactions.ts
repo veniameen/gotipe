@@ -100,7 +100,11 @@ export function createTransactions(port: TransactionPort) {
     dispatch(transaction: object): boolean {
       if (port.destroyed) return false;
 
-      const tr = transaction as { steps: Record<string, unknown>[]; selection?: Selection };
+      const tr = transaction as {
+        steps: Record<string, unknown>[];
+        selection?: Selection;
+        metadata?: Record<string, unknown>;
+      };
       const steps = tr.steps ?? [];
       if (steps.length === 0 && !tr.selection) return true;
       const wasmTr = toWasmTransaction(transaction as Record<string, unknown>);
@@ -175,8 +179,10 @@ export function createTransactions(port: TransactionPort) {
 
       try {
         if (candidate !== beforeJson) port.beforeMutation("dispatch");
-        // Snapshot current state for undo before applying
-        const snapshot = port.collaboration.isCollaborating ? null : captureHistory();
+        // Snapshot current state for undo before applying. `metadata.addToHistory: false`
+        // (also read by the native history) commits without an undo step.
+        const recorded = tr.metadata?.addToHistory !== false;
+        const snapshot = port.collaboration.isCollaborating || !recorded ? null : captureHistory();
         if (port.collaboration.isCollaborating && port.selection.anchor.blockId)
           port.collaboration.setSelection(JSON.stringify(viewToEngineSelection(port.selection)));
         const before = port.getViewState().blocks;
@@ -196,7 +202,7 @@ export function createTransactions(port: TransactionPort) {
 
         if (snapshot) undoStack.push(snapshot);
         if (undoStack.length > MAX_HISTORY) undoStack.shift();
-        redoStack.length = 0; // new mutation clears redo
+        if (recorded) redoStack.length = 0; // new mutation clears redo
 
         port.invalidate();
         if (context)

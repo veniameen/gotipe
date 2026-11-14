@@ -23,7 +23,7 @@ block-editor
 
 ## Paragraph
 
-`paragraph` holds rich text and has no attributes of its own. It is the block a new document starts with and the block Enter creates after a heading, quote or callout.
+`paragraph` holds rich text. Its one attribute is `align` (`"left"`, `"center"`, `"right"` or `"justify"`), set by [TextAlign](/docs/extensions/text-align). It is the block a new document starts with and the block Enter creates after a heading, quote or callout.
 
 | Command | Description |
 | --- | --- |
@@ -53,6 +53,7 @@ editor.chain().setBlockType("heading", { level: 2 }).run();
 | Attribute | Type | Default | Description |
 | --- | --- | --- | --- |
 | `level` | `number` | The lowest of `levels` | Heading level. Renderers clamp it to 1–6. |
+| `align` | `"left" \| "center" \| "right" \| "justify"` | — | Alignment of the text, set by [TextAlign](/docs/extensions/text-align). |
 
 | Command | Description |
 | --- | --- |

@@ -83,6 +83,7 @@ pub(super) fn extend(nodes: &mut HashMap<String, NodeSpec>, marks: &mut HashMap<
             exclusive_group: None,
             attrs: HashMap::new(),
             rank: 100,
+            atomic: false,
         },
     );
 }

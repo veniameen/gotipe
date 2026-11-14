@@ -50,19 +50,10 @@ export const SANITIZER_CONFIG = {
 };
 
 /**
- * Sanitize HTML: WASM ammonia (primary) + DOMParser-based fallback.
+ * Sanitize HTML with the browser's DOMParser and an allowlist. The same code runs
+ * on both engines: the WASM module carries no HTML sanitizer.
  */
-export function sanitizeHtml(
-  html: string,
-  bridge?: { sanitizeHtml: (h: string) => string },
-): string {
-  if (bridge) {
-    try {
-      return bridge.sanitizeHtml(html);
-    } catch {
-      // Fall through to DOMParser
-    }
-  }
+export function sanitizeHtml(html: string): string {
   return sanitizeWithDOMParser(html);
 }
 

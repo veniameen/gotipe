@@ -665,7 +665,6 @@ dependencies = [
  "gotipe-comments",
  "gotipe-core",
  "gotipe-crdt",
- "gotipe-export",
  "gotipe-schema",
  "gotipe-versioning",
  "js-sys",

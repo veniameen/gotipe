@@ -1,3 +1,4 @@
+import { atomKeys, rekeyAtoms } from "../engine/atom-keys";
 import { GoTipeError } from "../error";
 import { blocksToText } from "../text";
 import type { Block, Document, TextSpan } from "../types/block";
@@ -56,14 +57,17 @@ export function insertPayload(
   if (!target) throw new GoTipeError("CLIPBOARD_FAILED", "The paste target no longer exists");
   const { block } = target;
   const offset = removed.caret.offset;
+  // A pasted atom never shares a key with one already in the document (inline-atoms.md).
+  const taken = atomKeys(removed.document.blocks);
 
   if ("spans" in payload) {
-    return {
-      document: removed.document,
-      caret: insertSpans(block, offset, structuredClone(payload.spans)),
-    };
+    const spans = structuredClone(payload.spans);
+    rekeyAtoms(spans, taken);
+    return { document: removed.document, caret: insertSpans(block, offset, spans) };
   }
   const incoming = payload.blocks.map(cloneWithFreshIds);
+  for (const { block: pasted } of entries(incoming))
+    if (Array.isArray(pasted.content)) rekeyAtoms(pasted.content, taken);
   if (!incoming.length) return removed;
   if (typeof block.content === "string") {
     return {

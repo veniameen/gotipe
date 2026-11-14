@@ -23,8 +23,13 @@ export interface Document {
   version: number;
   sizeBytes: number;
   content?: object;
-  /** Initialize the replica from baseline and replay these opaque updates before editing. */
-  collaborationState?: { baseline: object; updates: object[] };
+  /**
+   * Initialize the replica from baseline and replay these opaque updates before
+   * editing. `generation` names that baseline: pass the whole state to the
+   * collaboration provider, which connects with it. A server from before
+   * generations returns none.
+   */
+  collaborationState?: { baseline: object; updates: object[]; generation?: string };
   createdAt: string;
   updatedAt: string;
   collaborators?: unknown[];

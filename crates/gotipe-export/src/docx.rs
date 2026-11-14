@@ -155,6 +155,19 @@ impl Renderer {
             rpr.insert(50, format!("<w:sz w:val=\"{}\"/>", 48 - level * 4));
         }
         ppr.push_str(&format!("<w:ind w:left=\"{}\"/>", depth.min(20) * 360));
+        // `align` of a paragraph or heading (`TextAlign`); CT_PPr places w:jc after w:ind.
+        if matches!(node.block_type.as_str(), "paragraph" | "heading") {
+            let justification = match attr(node, "align") {
+                "left" => "left",
+                "center" => "center",
+                "right" => "right",
+                "justify" => "both",
+                _ => "",
+            };
+            if !justification.is_empty() {
+                ppr.push_str(&format!("<w:jc w:val=\"{justification}\"/>"));
+            }
+        }
         if node.block_type == "codeBlock" {
             rpr.insert(
                 0,

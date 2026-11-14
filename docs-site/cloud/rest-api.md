@@ -206,7 +206,8 @@ A document resource:
   "content": { "version": 1, "blocks": [{ "id": "p1", "type": "paragraph", "attrs": {}, "content": [{ "text": "Hello", "marks": [] }], "children": [] }] },
   "collaboration_state": {
     "baseline": { "version": 1, "blocks": [{ "id": "p1", "type": "paragraph", "attrs": {}, "content": [{ "text": "Hello", "marks": [] }], "children": [] }] },
-    "updates": []
+    "updates": [],
+    "generation": "6c0d6e3f5a1b4c2d8e9f0a1b2c3d4e5f"
   },
   "created_at": "2026-11-12T09:30:00Z",
   "updated_at": "2026-11-12T10:02:11Z"
@@ -216,6 +217,8 @@ A document resource:
 `version` grows with every change: a `PATCH`, a restore, or a saved collaboration update.
 `content` is the current document, with collaboration updates applied. `collaboration_state`
 is what a real-time editor starts from — see [Real-time sync](/docs/cloud/realtime#start-from-rest).
+Its `generation` is an opaque token that names `baseline`; it changes whenever the content is
+replaced, and a real-time editor passes it to `/sync`.
 
 ### Create
 

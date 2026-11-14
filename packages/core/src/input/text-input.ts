@@ -7,7 +7,7 @@ export function insertInputText(data: string, host: InputHost): void {
   if (!selection.anchor.blockId) return;
   try {
     const marks = insertionMarks(host, selection);
-    let caret: { blockId: string; offset: number };
+    let caret: { blockId: string; offset: number } | null;
     if (selection.type !== "text" || selection.anchor.blockId !== selection.head.blockId) {
       caret = replaceStructuredSelection(host, selection, [{ text: data, marks }]);
     } else {
@@ -17,12 +17,15 @@ export function insertInputText(data: string, host: InputHost): void {
       const steps: Step[] = [];
       if (from !== to) steps.push({ type: "deleteText", blockId, from, to });
       steps.push({ type: "insertText", blockId, offset: from, text: data, marks });
-      caret = { blockId, offset: from + data.length };
+      const after = { blockId, offset: from + data.length };
       host.handled = true;
-      host.dispatch({ steps, selection: { type: "cursor", ...caret } });
+      caret = host.dispatch({ steps, selection: { type: "cursor", ...after } }) ? after : null;
     }
-    host.storedMarks = null;
     host.scheduleSelectionRestore();
+    // A rejected input (a filter, a character limit) changed nothing: no input rule runs on
+    // the text that was there, and stored marks wait for the next character.
+    if (!caret) return;
+    host.storedMarks = null;
     host.runInputRules(caret.blockId, caret.offset, data);
   } catch (error) {
     reportInputError(host, error);

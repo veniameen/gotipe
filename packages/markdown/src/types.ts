@@ -101,6 +101,21 @@ export interface MarkdownSnapshot {
   trailing: string;
 }
 
+/**
+ * Inline atoms a reader may produce: text with an atomic mark whose text is the fallback.
+ * Each one is off unless asked for, so a document only gets the marks its editor declares.
+ */
+export interface InlineAtoms {
+  /** `[@Анна](mention:user-42)` is text with a `mention` mark (`id`, `kind`, `label`). */
+  mention?: boolean;
+  /** `$x^2$` is the TeX source with an `inlineMath` mark. */
+  inlineMath?: boolean;
+  /** `![alt](src)` among other inline content is the alt text with an `inlineImage` mark. */
+  inlineImage?: boolean;
+  /** Registered names and their image addresses: `:name:` is text with a `customEmoji` mark. */
+  customEmoji?: Record<string, string>;
+}
+
 export interface ParseOptions {
   /** Snapshot of the previous version of the file: ids are reused for matching blocks. */
   previous?: MarkdownSnapshot;
@@ -108,6 +123,8 @@ export interface ParseOptions {
   previousDoc?: Doc;
   /** Id factory for new blocks (default: UUID v7). */
   createId?: () => string;
+  /** Inline atoms to read; without it mentions, formulas, emoji and inline images stay as before. */
+  atoms?: InlineAtoms;
 }
 
 export interface ParseResult {

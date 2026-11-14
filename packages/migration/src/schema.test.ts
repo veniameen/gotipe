@@ -75,7 +75,6 @@ describe("migrated documents fit the stock GoTipe schema", () => {
     expect(result.preserved).toEqual([]);
     const at = "does not fit the GoTipe schema; kept in unmapped";
     expect(result.warnings).toEqual([
-      `ProseMirror/Tiptap content[0].attrs: heading field textAlign ${at}`,
       `ProseMirror/Tiptap content[9].attrs: image field title ${at}`,
       `ProseMirror/Tiptap content[10].content[0].content[0].attrs: tableHeader field colwidth ${at}`,
       `ProseMirror/Tiptap content[10].content[1].content[0].attrs: tableCell field colwidth ${at}`,
@@ -88,7 +87,9 @@ describe("migrated documents fit the stock GoTipe schema", () => {
 
     const [heading, intro, empty, bullets, tasks, quote, code, plain, divider, image, table] =
       result.document.blocks;
-    expect(heading).toMatchObject({ type: "heading", attrs: { level: 1 } });
+    // Tiptap's TextAlign is GoTipe's `align` of paragraphs and headings.
+    expect(heading).toMatchObject({ type: "heading", attrs: { level: 1, align: "center" } });
+    expect(intro?.attrs).toEqual({ align: "left" });
     expect(spans(intro).find((span) => span.text === "links")?.marks).toEqual([
       {
         type: "link",
@@ -141,11 +142,12 @@ describe("migrated documents fit the stock GoTipe schema", () => {
       sourceType: "image",
       fields: { title: "Release cover" },
     });
+    // A paragraph that became a list item's text has no alignment of its own any more.
     expect(result.unmapped).toContainEqual({
       blockId: item?.id,
-      path: "content[3].content[0].content[0].attrs",
+      path: "content[3].content[0].content[0]",
       sourceType: "paragraph",
-      fields: { textAlign: "left" },
+      fields: { align: "left" },
     });
     expect(result.unmapped.map((entry) => entry.path)).toEqual(
       [...result.unmapped.map((entry) => entry.path)].sort((a, b) =>
@@ -158,9 +160,7 @@ describe("migrated documents fit the stock GoTipe schema", () => {
     const result = convertSlateToGoTipe(slate, { createId: ids() });
     expect(editors.default.validate(result.document)).toBe(true);
     expect(editors.full.validate(result.document)).toBe(true);
-    expect(result.warnings).toEqual([
-      "Slate [1]: paragraph field align does not fit the GoTipe schema; kept in unmapped",
-    ]);
+    expect(result.warnings).toEqual([]);
     const blocks = result.document.blocks;
     expect(blocks.map((block) => block.type)).toEqual([
       "heading",
@@ -176,10 +176,9 @@ describe("migrated documents fit the stock GoTipe schema", () => {
       "paragraph",
     ]);
     expect(blocks[0]?.attrs).toEqual({ level: 1 });
-    expect(blocks[1]?.attrs).toEqual({});
-    expect(result.unmapped).toEqual([
-      { blockId: blocks[1]?.id, path: "[1]", sourceType: "paragraph", fields: { align: "center" } },
-    ]);
+    // Slate's `align` is already GoTipe's attribute of paragraphs and headings.
+    expect(blocks[1]?.attrs).toEqual({ align: "center" });
+    expect(result.unmapped).toEqual([]);
     expect(spans(blocks[2])[1]).toEqual({
       text: "docs",
       marks: [
@@ -211,7 +210,6 @@ describe("migrated documents fit the stock GoTipe schema", () => {
       `Lexical root.children[7].children[0]: image field caption ${at}`,
       `Lexical root.children[9].children[0].children[0]: tablecell field width ${at} (4 times)`,
       `Lexical root.children[9].children[1].children[1]: tablecell field backgroundColor ${at}`,
-      `Lexical root.children[10]: paragraph field format ${at}`,
       `Lexical root.children[10]: paragraph field indent ${at}`,
       `Lexical root.children[10].children[0]: text field style ${at}`,
     ]);
@@ -240,7 +238,8 @@ describe("migrated documents fit the stock GoTipe schema", () => {
       { src: "https://example.com/flower.jpg", alt: "Yellow flower" },
       {},
       { colWidths: [120, 120] },
-      {},
+      // Lexical's element format "center" is the paragraph's alignment.
+      { align: "center" },
     ]);
     expect(spans(blocks[1])).toEqual([
       { text: "Read the ", marks: [] },

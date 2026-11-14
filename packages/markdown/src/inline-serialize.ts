@@ -1,3 +1,4 @@
+import { emojiEnd, mathEnd } from "./atoms";
 import { normalizeSpans } from "./model";
 import type { InlineOptions, Unit } from "./serialization/inline-types";
 import { inlineUnits } from "./serialization/inline-units";
@@ -330,6 +331,16 @@ export function writeInline(
       default:
         mode = "lit";
     }
+    // A digit right after a formula would make its closing `$` literal.
+    const before = units[k - 1];
+    if (c >= "0" && c <= "9" && before?.k === "syn" && before.math === 2) mode = "ent";
+    // No letter or digit may touch a custom emoji: `a:party:` is not one when read back.
+    const after = units[k + 1];
+    if (
+      /[A-Za-z0-9]/.test(c) &&
+      ((before?.k === "lit" && before.emoji) || (after?.k === "lit" && after.emoji))
+    )
+      mode = "ent";
     rend[k] =
       mode === "lit" ? c : mode === "esc" ? `\\${c}` : `&#${c.codePointAt(0)!.toString(10)};`;
     lineSoFar += rend[k];
@@ -349,6 +360,44 @@ export function writeInline(
       }
     }
     rend[k] = next === null || next === "\n" || isAsciiPunct(next) ? "\\\\" : "\\";
+  }
+
+  // 6b. dollars (right to left): a typed `$` that would open a formula for a reader of
+  // inline formulas is escaped; `$5 and $6` stays as typed.
+  const typedDollar = (k: number): boolean => {
+    const u = units[k];
+    return u?.k === "t" && u.ch === "$";
+  };
+  for (let k = n - 1; k >= 0; k--) {
+    if (!typedDollar(k)) continue;
+    let from = k;
+    while (typedDollar(from - 1)) from--;
+    let rest = "";
+    for (let q = k + 1; q < n && !isBreak(q); q++) rest += rend[q];
+    // Two or more typed dollars in a row are text for the reader as well, unless the `$`
+    // of a formula follows them: joined with it they would make the formula text.
+    if (rest[0] === "$" || (from === k && mathEnd(`$${rest}`, 0) > 0))
+      for (let q = from; q <= k; q++) rend[q] = "\\$";
+    k = from;
+  }
+
+  // 6c. colons (left to right): typed `:name:` of a registered custom emoji is escaped, as a
+  // reader of custom emoji would take it for one.
+  if (o.emoji) {
+    let line = "";
+    for (let k = 0; k < n; k++) {
+      if (isBreak(k)) {
+        line = "";
+        continue;
+      }
+      const u = units[k]!;
+      if (u.k === "t" && u.ch === ":" && rend[k] === ":") {
+        let rest = "";
+        for (let q = k + 1; q < n && !isBreak(q) && rest.length < 100; q++) rest += rend[q];
+        if (emojiEnd(`${line}:${rest}`, line.length, o.emoji) > 0) rend[k] = "\\:";
+      }
+      line += rend[k] ?? "";
+    }
   }
 
   // 7. render with segments
@@ -389,7 +438,8 @@ export function writeInline(
       }
       case "lit":
         md += u.s;
-        if (u.s.length > 0) addSeg(u.ti, u.ti + u.s.length, pos, pos + u.s.length, true);
+        if (u.s.length > 0)
+          addSeg(u.ti, u.ti + (u.len ?? u.s.length), pos, pos + u.s.length, u.len === undefined);
         break;
       case "code": {
         const r = renderCode(u.s, o);

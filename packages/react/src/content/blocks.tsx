@@ -10,6 +10,7 @@ import {
   PhantomContext,
   PlaceholderContext,
 } from "./context";
+import { placeholderOf } from "./decorations";
 import { EmbedBlock } from "./embed-block";
 import { CalloutBlock, ToggleBlock } from "./interactive-blocks";
 import { MathBlock } from "./math-block";
@@ -261,12 +262,16 @@ function BlockComponentInner({
   const isSelected = selectedBlockId === block.id;
   const isEmpty = isBlockContentEmpty(block);
   // An empty block says what it will become (Atlas frame 11); an empty paragraph only under the
-  // caret, so a page of empty lines stays quiet.
-  const shouldShowPlaceholder = isEmpty && !readOnly && (isSelected || block.type !== "paragraph");
+  // caret, so a page of empty lines stays quiet. A `placeholder` decoration (the Placeholder
+  // extension) also shows it away from the caret. The host's function decides the words, then
+  // the decoration's own text, then the interface language.
+  const decorated = isEmpty && !readOnly ? placeholderOf(block) : null;
+  const shouldShowPlaceholder =
+    isEmpty && !readOnly && (isSelected || block.type !== "paragraph" || decorated !== null);
   const placeholder = shouldShowPlaceholder
     ? placeholderFn
       ? placeholderFn(block, parentType)
-      : getEmptyBlockPlaceholder(block, parentType, i18n)
+      : decorated || getEmptyBlockPlaceholder(block, parentType, i18n)
     : null;
 
   switch (block.type) {

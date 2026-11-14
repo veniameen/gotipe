@@ -27,6 +27,8 @@ export interface RenderOpts {
   dividerAlt?: boolean;
   /** Marker (bullet char or ordered delimiter) to use for a top-level list. */
   markerOverride?: string;
+  /** Registered custom emoji names of the document (see `InlineOptions.emoji`). */
+  emoji?: Readonly<Record<string, string>>;
 }
 
 class Writer {
@@ -49,7 +51,7 @@ function inline(
   o: Omit<InlineOptions, "tier" | "eol">,
   ro: RenderOpts,
 ): RawSegment[] {
-  const r = writeInline(spans, { ...o, eol: ro.eol, tier: ro.tier });
+  const r = writeInline(spans, { ...o, eol: ro.eol, tier: ro.tier, emoji: ro.emoji });
   const at = w.pos;
   w.write(r.md);
   return r.segs.map((s) => ({ ...s, mdFrom: s.mdFrom + at, mdTo: s.mdTo + at }));

@@ -16,6 +16,11 @@ impl Schema {
             .filter(|group| !group.is_empty())
     }
 
+    /// Whether text with this mark is one indivisible inline element (an atom).
+    pub fn is_atomic(&self, mark_type: &str) -> bool {
+        self.marks.get(mark_type).is_some_and(|spec| spec.atomic)
+    }
+
     /// A new mark with the declared default of every attribute it leaves out.
     pub fn mark_with_defaults(&self, mut mark: Mark) -> Mark {
         if let Some(spec) = self.marks.get(&mark.mark_type) {

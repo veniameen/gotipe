@@ -1,23 +1,30 @@
 use super::{
     decode::{self, punctuation},
     syntax::inline_html,
-    Node, Source,
+    MarkdownAtoms, Node, Source,
 };
 use std::collections::HashSet;
 #[derive(Clone, Copy)]
 pub(super) struct Context<'a> {
     pub references: &'a HashSet<String>,
     pub budget: &'a std::cell::Cell<usize>,
+    /// Inline atoms the reader was asked for.
+    pub atoms: &'a MarkdownAtoms,
     pub in_cell: bool,
     pub in_label: bool,
     pub in_link: bool,
     pub preserve_trailing: bool,
 }
 impl<'a> Context<'a> {
-    pub fn new(references: &'a HashSet<String>, budget: &'a std::cell::Cell<usize>) -> Self {
+    pub fn new(
+        references: &'a HashSet<String>,
+        budget: &'a std::cell::Cell<usize>,
+        atoms: &'a MarkdownAtoms,
+    ) -> Self {
         Self {
             references,
             budget,
+            atoms,
             in_cell: false,
             in_label: false,
             in_link: false,

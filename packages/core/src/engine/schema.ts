@@ -58,6 +58,7 @@ export function toWasmSchema(schema: PublicSchema) {
           exclusive_group: mark.exclusiveGroup ?? null,
           attrs: attributes(mark.attrs),
           rank: mark.rank,
+          atomic: mark.atomic === true,
         },
       ]),
     ),

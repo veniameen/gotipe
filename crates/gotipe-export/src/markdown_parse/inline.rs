@@ -1,5 +1,5 @@
 use super::{
-    decode,
+    atoms, decode,
     links::{self, Context},
     syntax, Node, Source,
 };
@@ -318,6 +318,43 @@ pub(super) fn read(source: &Source, context: &Context, depth: usize) -> Vec<Node
             push(&mut tokens, source, &text[p..p + count], p, p + count);
             p += count;
             continue;
+        }
+        if c == '$' && context.atoms.inline_math {
+            // A run of dollars is text; a single one may open a formula (see `math_end`).
+            let run = text[p..].bytes().take_while(|b| *b == b'$').count();
+            let close = Some(p).filter(|_| run == 1);
+            if let Some(close) = close.and_then(|open| atoms::math_end(text, open)) {
+                // A cell writes `|` as `\|`, as in inline code.
+                let value = &text[p + 1..close];
+                let value = if context.in_cell {
+                    value.replace("\\|", "|")
+                } else {
+                    value.into()
+                };
+                tokens.push(Token::node(Node::text(
+                    "inlineMath",
+                    value,
+                    source.point(p),
+                    source.point(close + 1),
+                )));
+                p = close + 1;
+            } else {
+                push(&mut tokens, source, &text[p..p + run], p, p + run);
+                p += run;
+            }
+            continue;
+        }
+        if c == ':' && !context.atoms.custom_emoji.is_empty() {
+            if let Some(len) = atoms::emoji_at(text, p, &context.atoms.custom_emoji) {
+                tokens.push(Token::node(Node::text(
+                    "emoji",
+                    &text[p..p + len],
+                    source.point(p),
+                    source.point(p + len),
+                )));
+                p += len;
+                continue;
+            }
         }
         if c == '[' || c == '!' && after == Some('[') {
             if let Some((node, end)) = links::read(source, p, context, depth) {

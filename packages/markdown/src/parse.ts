@@ -1,4 +1,5 @@
 import { alignCodeBlock } from "./align";
+import { numberAtoms } from "./atoms";
 import { readMarkdown } from "./grammar/blocks";
 import type {
   Blockquote,
@@ -23,6 +24,7 @@ import {
 import { fingerprint, normalizeAlign } from "./model";
 import type {
   Block,
+  InlineAtoms,
   ParseOptions,
   ParseResult,
   RawSegment,
@@ -89,8 +91,9 @@ class Converter {
     readonly text: string,
     readonly base: number,
     segments: boolean,
+    atoms?: InlineAtoms,
   ) {
-    this.ctx = { src: text, base, segments };
+    this.ctx = { src: text, base, segments, atoms };
   }
 
   start(node: Nodes): number | null {
@@ -148,7 +151,8 @@ class Converter {
 
   paragraph(node: Paragraph, s: number, e: number): PNode {
     const only = node.children.length === 1 ? node.children[0] : undefined;
-    if (only?.type === "image") {
+    // An empty title keeps an inline image alone in its paragraph (see `atoms.ts`).
+    if (only?.type === "image" && !(this.ctx.atoms?.inlineImage && only.title === "")) {
       return mk(
         "image",
         { src: only.url, alt: only.alt ?? "", caption: only.title ?? "" },
@@ -388,13 +392,17 @@ function fileLinkName(link: Link): string | null {
 
 const CONTENT_RE = /[^ \t\r\n]/;
 
-export function parseInternal(text: string, segments: boolean): ParsedInternal {
+export function parseInternal(
+  text: string,
+  segments: boolean,
+  atoms?: InlineAtoms,
+): ParsedInternal {
   const bom = text.charCodeAt(0) === 0xfeff ? "﻿" : "";
   const fmEnd = detectFrontMatter(text, bom.length);
   const frontMatter = text.slice(bom.length, fmEnd);
   const base = fmEnd;
-  const conv = new Converter(text, base, segments);
-  const root = readMarkdown(text.slice(base));
+  const conv = new Converter(text, base, segments, atoms);
+  const root = readMarkdown(text.slice(base), atoms);
   const nodes: PNode[] = [];
   let cursor = base;
   const gapRaw = (a: number, b: number): void => {
@@ -414,6 +422,7 @@ export function parseInternal(text: string, segments: boolean): ParsedInternal {
     cursor = ce;
   }
   gapRaw(cursor, text.length);
+  if (atoms) numberAtoms(nodes.map((n) => n.block));
   return { text, bom, frontMatter, base, eol: detectEol(text), nodes };
 }
 
@@ -448,7 +457,7 @@ export function collectSegments(n: PNode, origin: number, out: TextSegment[]): T
  */
 export function parseMarkdown(text: string, options: ParseOptions = {}): ParseResult {
   const src = typeof text === "string" ? text : String(text ?? "");
-  const p = parseInternal(src, true);
+  const p = parseInternal(src, true, options.atoms);
   const createId = options.createId ?? uuidv7;
   if (options.previous) {
     const prev = options.previous;

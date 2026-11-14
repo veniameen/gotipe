@@ -13,4 +13,8 @@ pub struct MarkSpec {
     pub attrs: HashMap<String, AttrSpec>,
     /// Приоритет рендеринга (порядок вложенности в HTML)
     pub rank: u32,
+    /// Отрезок с этой разметкой — один неделимый элемент строки (упоминание, формула).
+    /// Его текст — запасное представление; см. docs/development/inline-atoms.md.
+    #[serde(default)]
+    pub atomic: bool,
 }

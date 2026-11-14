@@ -1,10 +1,9 @@
 import {
   type BlockView,
+  type BlocksDecoration,
   type GoTipeEditor,
   GoTipeError,
-  type MarkView,
   type ViewState,
-  toSafeColor,
   toSafeHref,
 } from "@gotipe/core";
 import {
@@ -13,10 +12,16 @@ import {
   type VNodeChild,
   defineComponent,
   h,
+  mergeProps,
+  onBeforeUpdate,
+  onMounted,
+  onUpdated,
   shallowRef,
   unref,
   watch,
 } from "vue";
+import { blockPresentation, holdComposing, withoutLayers } from "./decorations";
+import { decoratedText } from "./text";
 
 export type VueEditorSource = GoTipeEditor | ShallowRef<GoTipeEditor | null> | null;
 export interface VueBlockViewProps {
@@ -28,48 +33,21 @@ export interface VueBlockViewProps {
   readOnly: boolean;
 }
 export type VueBlockViews = Record<string, (props: VueBlockViewProps) => VNodeChild>;
+/** Words for the block that carries a `placeholder` decoration; `null` shows none. */
+export type VuePlaceholder = (block: BlockView, parentType: string | undefined) => string | null;
 
-function markedText(text: string, marks: MarkView[]): VNodeChild {
-  let node: VNodeChild = text;
-  const tags: Record<string, string> = {
-    bold: "strong",
-    italic: "em",
-    underline: "u",
-    strikethrough: "s",
-    code: "code",
-    superscript: "sup",
-    subscript: "sub",
-    mdRaw: "span",
-  };
-  for (const mark of marks) {
-    const tag = tags[mark.type];
-    if (tag) node = h(tag, mark.type === "code" ? { spellcheck: false } : {}, [node]);
-    else if (mark.type === "link") {
-      const href = toSafeHref(String(mark.attrs?.href ?? ""));
-      node = h(
-        "a",
-        { href: href ?? undefined, title: mark.attrs?.title, rel: "noopener noreferrer" },
-        [node],
-      );
-    } else if (mark.type === "highlight") {
-      node = h(
-        "mark",
-        { style: { backgroundColor: toSafeColor(mark.attrs?.color) ?? undefined } },
-        [node],
-      );
-    } else if (mark.type === "textColor") {
-      node = h("span", { style: { color: toSafeColor(mark.attrs?.color) ?? undefined } }, [node]);
-    }
-  }
-  return node;
+interface RenderContext {
+  editor: GoTipeEditor;
+  views: VueBlockViews;
+  placeholder?: VuePlaceholder;
 }
 
 function textContent(block: BlockView): VNodeChild[] {
   if (typeof block.content === "string") return [block.content];
-  if (!Array.isArray(block.content) || block.content.every((span) => !span.text)) {
-    return [h("br", { "data-gotipe-trailing-break": "" })];
-  }
-  return block.content.map((span) => markedText(span.text, span.marks));
+  const empty = !Array.isArray(block.content) || block.content.every((span) => !span.text);
+  const text = Array.isArray(block.content) ? decoratedText(block.content, block.decorations) : [];
+  // Keep empty editable blocks caret-addressable next to their widgets.
+  return empty ? [...text, h("br", { "data-gotipe-trailing-break": "" })] : text;
 }
 
 function displayAsset(src: string): string | null {
@@ -111,19 +89,77 @@ const EditorImage = defineComponent({
   },
 });
 
+/** Suggested blocks of a `blocks` decoration: read-only, outside the document's offsets. */
+function phantoms(
+  block: BlockView,
+  position: "before" | "after",
+  context: RenderContext,
+  parentType?: string,
+): VNodeChild[] {
+  return (block.decorations ?? [])
+    .filter((d): d is BlocksDecoration => d.type === "blocks" && d.position === position)
+    .flatMap((group) =>
+      group.blocks.map((phantom) =>
+        renderBlock(
+          {
+            ...phantom,
+            decorations: [
+              ...(phantom.decorations ?? []),
+              {
+                type: "node",
+                key: group.key,
+                blockId: phantom.id,
+                className: group.className,
+                attrs: group.attrs,
+                style: group.style,
+              },
+            ],
+          },
+          context,
+          parentType,
+          true,
+        ),
+      ),
+    );
+}
+
+function renderBlocks(
+  blocks: BlockView[],
+  context: RenderContext,
+  parentType?: string,
+): VNodeChild[] {
+  return blocks.flatMap((block) => [
+    ...phantoms(block, "before", context, parentType),
+    renderBlock(block, context, parentType),
+    ...phantoms(block, "after", context, parentType),
+  ]);
+}
+
 function renderBlock(
   block: BlockView,
-  editor: GoTipeEditor,
-  views: VueBlockViews,
+  context: RenderContext,
   parentType?: string,
+  phantom = false,
 ): VNodeChild {
+  const { editor, views, placeholder } = context;
+  const key = block.renderKey === undefined ? block.id : `${block.id}:${block.renderKey}`;
+  const presentation = blockPresentation(
+    block,
+    editor.isEditable && !phantom,
+    placeholder && ((item) => placeholder(item, parentType)),
+  );
   const rootProps: Record<string, unknown> = {
-    key: block.renderKey === undefined ? block.id : `${block.id}:${block.renderKey}`,
-    "data-block-id": block.id,
+    key: phantom ? `phantom:${key}` : key,
+    ...(phantom
+      ? { "data-gotipe-phantom-id": block.id, "data-gotipe-widget": "", contenteditable: false }
+      : { "data-block-id": block.id }),
     "data-block-type": block.type,
+    ...presentation.attrs,
+    class: presentation.class,
+    style: presentation.style,
   };
   const content = textContent(block);
-  const children = block.children.map((child) => renderBlock(child, editor, views, block.type));
+  const children = renderBlocks(block.children, context, block.type);
   if (views[block.type])
     return views[block.type]!({
       block,
@@ -131,10 +167,10 @@ function renderBlock(
       content,
       children,
       rootProps,
-      readOnly: !editor.isEditable,
+      readOnly: !editor.isEditable || phantom,
     });
   const node = (tag: string, props = {}, value: VNodeChild[] = [...content, ...children]) =>
-    h(tag, { ...rootProps, ...props }, value);
+    h(tag, mergeProps(rootProps, props), value);
   switch (block.type) {
     case "heading":
       return node(`h${Math.max(1, Math.min(6, Number(block.attrs.level) || 1))}`);
@@ -267,6 +303,10 @@ export const EditorContent = defineComponent({
     editor: { type: Object as PropType<VueEditorSource>, default: null },
     blockViews: { type: Object as PropType<VueBlockViews>, default: () => ({}) },
     ariaLabel: { type: String, default: "Document content" },
+    /** Decoration layers the host draws itself (e.g. `collaboration`); they are left out. */
+    hostLayers: { type: Array as PropType<string[]>, default: () => [] },
+    /** Words for the block with a `placeholder` decoration; wins over the decoration's text. */
+    placeholder: { type: Function as PropType<VuePlaceholder>, default: undefined },
   },
   setup(props) {
     const element = shallowRef<HTMLElement | null>(null);
@@ -292,15 +332,62 @@ export const EditorContent = defineComponent({
       },
       { immediate: true },
     );
+    // Decorations held while the browser composed are drawn once the composition ends.
+    const compositions = shallowRef(0);
+    const ended = () => compositions.value++;
     watch(
       [current, element],
       ([editor, content], _previous, onCleanup) => {
         if (!editor || !content) return;
         editor.mount(content);
-        onCleanup(() => editor.unmount());
+        content.addEventListener("compositionend", ended);
+        onCleanup(() => {
+          content.removeEventListener("compositionend", ended);
+          editor.unmount();
+        });
       },
       { flush: "post" },
     );
+    // A presentation-only patch (a decoration layer changed; the document and the selection
+    // did not) can move the native caret: the selection read before it is restored after it.
+    // Never while the browser composes: the selection is the IME's then.
+    let rendered: { editor: GoTipeEditor; state: ViewState } | null = null;
+    let kept: ReturnType<GoTipeEditor["getDOMSelection"]> = null;
+    const remember = () => {
+      const editor = current();
+      rendered = editor && state.value ? { editor, state: state.value } : null;
+    };
+    onMounted(remember);
+    onBeforeUpdate(() => {
+      kept = null;
+      const editor = current();
+      const next = state.value;
+      if (!editor || !next || !rendered || rendered.editor !== editor || editor.isDestroyed) return;
+      if (editor.isComposing) return;
+      const before = rendered.state;
+      if (before === next || before.version !== next.version) return;
+      if (JSON.stringify(before.selection) !== JSON.stringify(next.selection)) return;
+      const active = editor.element?.ownerDocument.activeElement;
+      if (active && editor.element?.contains(active)) kept = editor.getDOMSelection();
+    });
+    onUpdated(() => {
+      const editor = current();
+      const selection = kept;
+      kept = null;
+      remember();
+      if (!editor || !selection || editor.isDestroyed || editor.isComposing) return;
+      const now = editor.getDOMSelection();
+      if (!now || JSON.stringify(now) !== JSON.stringify(selection)) editor.setSelection(selection);
+    });
+    /** The blocks drawn last; the composing block keeps their decorations. */
+    let drawn: BlockView[] | null = null;
+    const blocks = (editor: GoTipeEditor, view: ViewState) => {
+      void compositions.value;
+      const next = withoutLayers(editor, view.blocks, props.hostLayers);
+      const composing = editor.isComposing ? view.selection.anchor.blockId : null;
+      drawn = composing ? holdComposing(next, drawn, composing) : next;
+      return drawn;
+    };
     return () =>
       h(
         "div",
@@ -315,7 +402,11 @@ export const EditorContent = defineComponent({
           contenteditable: editable.value,
         },
         current() && state.value
-          ? state.value.blocks.map((block) => renderBlock(block, current()!, props.blockViews))
+          ? renderBlocks(blocks(current()!, state.value), {
+              editor: current()!,
+              views: props.blockViews,
+              placeholder: props.placeholder,
+            })
           : [],
       );
   },

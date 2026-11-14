@@ -8,6 +8,7 @@ export default defineConfig({
     presets: 'src/presets.ts',
     ssr: 'src/ssr.ts',
     vanilla: 'src/vanilla.ts',
+    emoji: 'src/emoji.ts',
   },
   format: ['esm', 'cjs'],
   dts: true,

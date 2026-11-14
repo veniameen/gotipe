@@ -17,7 +17,8 @@ type StoredState struct {
 	// Generation identifies the baseline. Replacing content always changes it.
 	Generation string
 	Document   []byte
-	// Updates holds the latest checkpoint, if any, then updates in order.
+	// Updates holds a checkpoint of before log compaction, if one is left, then
+	// the stored records in order. Records are either protocol; replay is a union.
 	Updates [][]byte
 }
 
@@ -31,7 +32,10 @@ type PersistenceStore interface {
 	// SaveUpdate durably appends an update to generation and returns
 	// ErrBaselineReplaced when generation is no longer current.
 	SaveUpdate(ctx context.Context, documentID, generation string, update []byte) error
-	// SaveSnapshot stores a checkpoint of generation and returns
-	// ErrBaselineReplaced when generation is no longer current.
-	SaveSnapshot(ctx context.Context, documentID, generation string, snapshot []byte) error
+	// CompactLog merges the stored records of generation into one when the log
+	// has grown past the store's thresholds, and removes exactly the records it
+	// merged, so a record committed meanwhile survives. Below the thresholds it
+	// does nothing. It returns ErrBaselineReplaced when generation is no longer
+	// current. Nothing a client was acknowledged for depends on it.
+	CompactLog(ctx context.Context, documentID, generation string) error
 }

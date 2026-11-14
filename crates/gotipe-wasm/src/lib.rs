@@ -5,6 +5,7 @@ use gotipe_comments::store::ReviewStore;
 mod history;
 mod review;
 mod review_anchors;
+mod updates;
 use gotipe_core::{defaults, Document, EditorState, Schema, Transaction};
 use gotipe_crdt::CrdtDocument;
 use gotipe_versioning::manager::VersionManager;
@@ -98,6 +99,8 @@ impl WasmEditor {
                         .map_err(|e| JsError::new(&format!("CRDT error: {e}")))?,
                 );
             }
+            // Peers receive the whole transaction or nothing of it.
+            crdt.end_transaction();
             if self.collaboration_enabled && add_to_history {
                 if !history::same_typing_group(self.state.last_steps(), next_state.last_steps()) {
                     crdt.history_mut().end_group();
@@ -208,7 +211,8 @@ impl WasmEditor {
         Ok(doc_json)
     }
 
-    /// Get pending CRDT update to send to peers
+    /// The full state: the baseline and every operation (`gotipe.crdt/1`).
+    /// A transport sends `get_local_update_after` instead.
     pub fn get_update(&mut self) -> Result<Vec<u8>, JsError> {
         if !self.collaboration_enabled {
             return Err(JsError::new("Collaboration not enabled"));
@@ -221,26 +225,12 @@ impl WasmEditor {
     }
 
     // === Export ===
-
-    /// Export document as HTML
-    pub fn export_html(&self) -> Result<String, JsError> {
-        gotipe_export::to_html(self.state.doc())
-            .map_err(|e| JsError::new(&format!("HTML export error: {e}")))
-    }
-
-    /// Export document as Markdown
-    pub fn export_markdown(&self) -> String {
-        gotipe_export::to_markdown(self.state.doc())
-    }
+    // HTML and Markdown are serialized and HTML is sanitized by `@gotipe/core` in
+    // TypeScript; `gotipe-export` serves native and server conversion.
 
     /// Export document as JSON
     pub fn export_json(&self) -> String {
-        gotipe_export::to_json(self.state.doc())
-    }
-
-    /// Sanitize HTML using the strict sanitizer
-    pub fn sanitize_html(&self, html: &str) -> String {
-        gotipe_export::html::HtmlSanitizer::sanitize(html)
+        serde_json::to_string_pretty(self.state.doc()).unwrap_or_else(|_| "{}".into())
     }
 
     // === Versions ===

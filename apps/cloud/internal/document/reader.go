@@ -21,6 +21,9 @@ type ContentReader interface {
 type CollaborationState struct {
 	Baseline json.RawMessage   `json:"baseline"`
 	Updates  []json.RawMessage `json:"updates"`
+	// Generation names Baseline: a replica started from it connects to /sync
+	// with this token and sends operations without repeating the baseline.
+	Generation string `json:"generation"`
 }
 
 type Snapshot struct {
@@ -83,7 +86,7 @@ func (r *Reader) LoadSnapshot(ctx context.Context, documentID, key string) (Snap
 			return Snapshot{}, err
 		}
 		totalBytes += len(data)
-		if totalBytes > 60*1024*1024 {
+		if totalBytes > MaterializationLimit {
 			return Snapshot{}, errors.New("collaboration state exceeds materialization limit")
 		}
 		updates = append(updates, json.RawMessage(data))
@@ -98,7 +101,7 @@ func (r *Reader) LoadSnapshot(ctx context.Context, documentID, key string) (Snap
 	if currentKey != key {
 		return Snapshot{}, errors.New("document changed while loading content")
 	}
-	snapshot := Snapshot{Content: baseline, CollaborationState: &CollaborationState{Baseline: json.RawMessage(baseline), Updates: updates}}
+	snapshot := Snapshot{Content: baseline, CollaborationState: &CollaborationState{Baseline: json.RawMessage(baseline), Updates: updates, Generation: GenerationToken(key)}}
 	if len(updates) == 0 {
 		return snapshot, nil
 	}

@@ -10,14 +10,20 @@ import (
 	"github.com/jackc/pgx/v5"
 )
 
-// Collaboration checkpoints never replace the document's ordinary JSON object.
-// Updates are retained so checkpoints cannot hide an update from another writer.
+// Collaboration records never replace the document's ordinary JSON object.
+// document_updates is the log: every acknowledged operation is in one of its
+// rows, and compaction replaces rows only by a row that holds their union.
 // A generation is the immutable object key in documents.r2_key: REST replacement
 // writes a new object, so a write pinned to the room's key can never enter the
-// log of another baseline.
+// log of another baseline. document_snapshots holds checkpoints written before
+// compaction existed; the latest is still read and the first compaction of a
+// generation merges and removes them.
 type dbPersistenceStore struct {
 	db *storage.PostgresStore
 	r2 storage.ObjectStore
+	// Compaction thresholds; zero values mean the defaults.
+	compactRows  int64
+	compactBytes int64
 }
 
 func (p *dbPersistenceStore) LoadState(ctx context.Context, documentID string) (cloudsync.StoredState, error) {
@@ -74,16 +80,6 @@ func (p *dbPersistenceStore) SaveUpdate(ctx context.Context, documentID, generat
 	}
 	if tag.RowsAffected() != 1 {
 		return fmt.Errorf("%w: the document generation changed before the update was saved", cloudsync.ErrBaselineReplaced)
-	}
-	return nil
-}
-func (p *dbPersistenceStore) SaveSnapshot(ctx context.Context, documentID, generation string, snapshot []byte) error {
-	tag, err := p.db.Pool.Exec(ctx, `INSERT INTO document_snapshots (document_id, data, version, created_at, generation_key) SELECT d.id, $2, COALESCE((SELECT MAX(id) FROM document_updates WHERE document_id = d.id AND generation_key = d.r2_key), 0), now(), d.r2_key FROM documents d WHERE d.id = $1 AND d.r2_key = $3`, documentID, snapshot, generation)
-	if err != nil {
-		return err
-	}
-	if tag.RowsAffected() != 1 {
-		return fmt.Errorf("%w: the document generation changed before the checkpoint was saved", cloudsync.ErrBaselineReplaced)
 	}
 	return nil
 }

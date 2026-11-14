@@ -109,7 +109,66 @@ fn push_span(line: &mut Vec<Span>, text: &str, style: &TextStyle) {
     }
 }
 
-fn line(fonts: &Fonts, source: &[Span], base_size: f32, width: f32) -> Result<Row, ConvertError> {
+/// Horizontal alignment of a paragraph's or heading's lines (`align`, the `TextAlign`
+/// extension). `Start` is the reading direction's own edge, as before alignment existed.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub(crate) enum Align {
+    #[default]
+    Start,
+    Left,
+    Center,
+    Right,
+    Justify,
+}
+
+impl Align {
+    pub(crate) fn of(value: &str) -> Self {
+        match value {
+            "left" => Self::Left,
+            "center" => Self::Center,
+            "right" => Self::Right,
+            "justify" => Self::Justify,
+            _ => Self::Start,
+        }
+    }
+}
+
+/// A space a line may stretch at: breakable whitespace, not a no-break space.
+fn stretchable(text: &str) -> bool {
+    !text.is_empty()
+        && text
+            .chars()
+            .all(|c| c.is_whitespace() && c != '\u{a0}' && c != '\u{202f}')
+}
+
+/// A styled part of one line split into words and the spaces between them.
+fn pieces(part: &str) -> Vec<(usize, &str)> {
+    let mut result = Vec::new();
+    let mut start = 0;
+    let mut space = None;
+    for (index, grapheme) in part.grapheme_indices(true) {
+        let is_space = stretchable(grapheme);
+        if space.is_some_and(|previous| previous != is_space) {
+            result.push((start, &part[start..index]));
+            start = index;
+        }
+        space = Some(is_space);
+    }
+    if start < part.len() {
+        result.push((start, &part[start..]));
+    }
+    result
+}
+
+/// `last`: the line ends the paragraph or a hard break, so a justified line is not stretched.
+fn line(
+    fonts: &Fonts,
+    source: &[Span],
+    base_size: f32,
+    width: f32,
+    align: Align,
+    last: bool,
+) -> Result<Row, ConvertError> {
     let text: String = source.iter().map(|span| span.text.as_str()).collect();
     let bidi = BidiInfo::new(&text, None);
     let mut chunks = Vec::new();
@@ -119,6 +178,10 @@ fn line(fonts: &Fonts, source: &[Span], base_size: f32, width: f32) -> Result<Ro
         offsets.push(offset);
         offset += span.text.len();
     }
+    // An aligned line places words and spaces separately: spaces at its edges do not count,
+    // and a justified line widens the spaces between its words.
+    let split = align != Align::Start;
+    let mut spaces = Vec::new();
     if let Some(paragraph) = bidi.paragraphs.first() {
         let (levels, runs) = bidi.visual_runs(paragraph, paragraph.range.clone());
         for run in runs {
@@ -128,13 +191,20 @@ fn line(fonts: &Fonts, source: &[Span], base_size: f32, width: f32) -> Result<Ro
                 let lo = run.start.max(*start);
                 let hi = run.end.min(start + span.text.len());
                 if lo < hi {
-                    parts.push((&text[lo..hi], &span.style, lo));
+                    if split {
+                        for (at, piece) in pieces(&text[lo..hi]) {
+                            parts.push((piece, &span.style, lo + at));
+                        }
+                    } else {
+                        parts.push((&text[lo..hi], &span.style, lo));
+                    }
                 }
             }
             if rtl {
                 parts.reverse();
             }
             for (part, style, offset) in parts {
+                spaces.push(split && stretchable(part));
                 chunks.push((fonts.shape_direction(part, style, rtl)?, style, offset));
             }
         }
@@ -147,14 +217,36 @@ fn line(fonts: &Fonts, source: &[Span], base_size: f32, width: f32) -> Result<Ro
     });
     let leading = base_size * 0.25;
     let height = (ascent + descent + leading).max(base_size * 1.35);
-    let used: f32 = chunks.iter().map(|(run, _, _)| run.width()).sum();
-    let mut x = if bidi.paragraphs.first().is_some_and(|p| p.level.is_rtl()) {
-        (width - used).max(0.0)
-    } else {
-        0.0
+    let widths: Vec<f32> = chunks.iter().map(|(run, _, _)| run.width()).collect();
+    let used: f32 = widths.iter().sum();
+    // The visible words: from the first to the last chunk that is not a space.
+    let first = spaces.iter().position(|space| !space);
+    let end = spaces.iter().rposition(|space| !space);
+    let (mut x, gap) = match (align, first, end) {
+        (Align::Start, ..) | (_, None, _) | (_, _, None) => (
+            if bidi.paragraphs.first().is_some_and(|p| p.level.is_rtl()) {
+                (width - used).max(0.0)
+            } else {
+                0.0
+            },
+            0.0,
+        ),
+        (align, Some(first), Some(end)) => {
+            let before: f32 = widths[..first].iter().sum();
+            let visible: f32 = widths[first..=end].iter().sum();
+            let room = (width - visible).max(0.0);
+            let inner = spaces[first..=end].iter().filter(|space| **space).count();
+            let (left, gap) = match align {
+                Align::Center => (room / 2.0, 0.0),
+                Align::Right => (room, 0.0),
+                Align::Justify if !last && inner > 0 => (0.0, room / inner as f32),
+                _ => (0.0, 0.0),
+            };
+            (left - before, gap)
+        }
     };
     let mut ops = Vec::new();
-    for (run, style, offset) in chunks {
+    for (index, (run, style, offset)) in chunks.into_iter().enumerate() {
         let advance = run.width();
         ops.push((
             offset,
@@ -166,6 +258,12 @@ fn line(fonts: &Fonts, source: &[Span], base_size: f32, width: f32) -> Result<Ro
             },
         ));
         x += advance;
+        if spaces[index]
+            && first.is_some_and(|first| index > first)
+            && end.is_some_and(|end| index < end)
+        {
+            x += gap;
+        }
     }
     // Placement is visual, but the PDF content stream retains source reading order.
     ops.sort_by_key(|(offset, _)| *offset);
@@ -191,6 +289,7 @@ pub(crate) fn wrap(
     source: &[Span],
     width: f32,
     base_size: f32,
+    align: Align,
 ) -> Result<Vec<Row>, ConvertError> {
     if width < 1.0 || !width.is_finite() {
         return Err(ConvertError::Encoding(
@@ -231,14 +330,14 @@ pub(crate) fn wrap(
         }
         for token in tokens {
             if token == "\n" {
-                rows.push(line(fonts, &current, base_size, width)?);
+                rows.push(line(fonts, &current, base_size, width, align, true)?);
                 current.clear();
                 used = 0.0;
                 continue;
             }
             let token_width = fonts.shape(&token, &span.style)?.width();
             if used > 0.0 && used + token_width > width + 0.01 {
-                rows.push(line(fonts, &current, base_size, width)?);
+                rows.push(line(fonts, &current, base_size, width, align, false)?);
                 current.clear();
                 used = 0.0;
             }
@@ -254,7 +353,7 @@ pub(crate) fn wrap(
                         ));
                     }
                     if used > 0.0 && used + advance > width + 0.01 {
-                        rows.push(line(fonts, &current, base_size, width)?);
+                        rows.push(line(fonts, &current, base_size, width, align, false)?);
                         current.clear();
                         used = 0.0;
                     }
@@ -265,6 +364,6 @@ pub(crate) fn wrap(
         }
     }
     // Empty paragraphs and a trailing hard break retain their line box.
-    rows.push(line(fonts, &current, base_size, width)?);
+    rows.push(line(fonts, &current, base_size, width, align, true)?);
     Ok(rows)
 }

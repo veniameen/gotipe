@@ -59,7 +59,12 @@ const marks: Record<string, string> = {
 };
 
 /** Tiptap's TextAlign writes `left` by default; GoTipe aligns only table cells. */
-const quiet: Quiet = (_type, field, value) => field === "textAlign" && value === "left";
+/**
+ * Tiptap's TextAlign writes "left" on every block. Where it cannot be kept (a paragraph that
+ * became a list item's text) that default is reported in `unmapped` without a warning.
+ */
+const quiet: Quiet = (_type, field, value) =>
+  (field === "textAlign" || field === "align") && value === "left";
 
 function idOf(value: SourceNode): AttrValue | undefined {
   return object(value.attrs) && value.attrs.id !== undefined ? value.attrs.id : value.id;
@@ -150,7 +155,9 @@ export function convertProseMirrorToGoTipe(
         attrs.start ??= 1;
       }
       if (type === "codeBlock") codeInfo(attrs);
-      if (type === "tableCell" || type === "tableHeader") rename(attrs, "textAlign", "align");
+      // Tiptap's TextAlign: the same four values GoTipe's `align` takes.
+      if (["paragraph", "heading", "tableCell", "tableHeader"].includes(type))
+        rename(attrs, "textAlign", "align");
       const level = attrs.level;
       if (
         type === "heading" &&

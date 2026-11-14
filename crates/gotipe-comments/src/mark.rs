@@ -26,6 +26,7 @@ pub fn comment_mark_spec() -> MarkSpec {
             ),
         ]),
         rank: 90,
+        atomic: false,
     }
 }
 

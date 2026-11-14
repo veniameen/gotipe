@@ -45,14 +45,19 @@ editor.on("viewStateChange", (state) => {
 
 | Option | Type | Default | Description |
 | --- | --- | --- | --- |
-| `text` | `string` | `'Type "/" for commands...'` | Text of the placeholder decoration. |
+| `text` | `string` | `""` | Words of the placeholder. Empty leaves them to the renderer. |
 
-While the whole document is one empty paragraph, `Placeholder` adds a decoration `{ type: "placeholder", text, blockId }` to that paragraph. A custom renderer reads it from `block.decorations` in `editor.getViewState()`.
+While the whole document is one empty paragraph, `Placeholder` adds a decoration `{ type: "placeholder", text, blockId }` to that paragraph. A custom renderer reads it from `block.decorations` in `editor.getViewState()`. The presets include `Placeholder` without a text, so the extension itself never puts words of one language on screen.
 
-> [!NOTE]
-> The React and Vue views do not draw this decoration. The React views show their own localized placeholders instead: on the empty paragraph under the caret and on other empty blocks such as headings and list items. `BlockEditor` and `PageEditor` always use those.
+The React and Vue views draw the decoration as `data-placeholder` on the paragraph, while the editor is editable. Which words are shown:
 
-With `Editor` or `EditorContent` from `@gotipe/react`, pass a `placeholder` function to replace them. It receives the empty block and its parent's type, and returns the text, or `null` for none:
+1. The answer of the `placeholder` function you pass to the renderer.
+2. The extension's `text`, when you configured one.
+3. In React, the placeholder of that block in the interface language (`placeholder.*` strings, see [Localization](/docs/ui/i18n)). `@gotipe/vue` has no strings of its own and shows nothing.
+
+Without the extension the React views still show their localized placeholders on the empty paragraph under the caret and on other empty blocks such as headings and list items. `Placeholder` adds the empty document's paragraph when the caret is elsewhere. `PageEditor` does not include `Placeholder`.
+
+With `Editor` or `EditorContent` from `@gotipe/react`, the `placeholder` function receives the empty block and its parent's type, and returns the text, or `null` for none:
 
 ```tsx title="editor.tsx"
 import { FullPreset } from "@gotipe/core/presets";

@@ -1,7 +1,10 @@
 import { engineToViewSelection, viewToEngineSelection } from "../document/selection";
+import { fromWasmDoc } from "../engine/conversion";
 import { GoTipeError } from "../error";
+import type { InlineAtomSupport, IsAtomic } from "../types/atoms";
+import type { Step } from "../types/state";
 import type { SelectionView } from "../types/view";
-import type { WasmBridge } from "../wasm-bridge";
+import type { CollaborationUpdateOptions, WasmBridge } from "../wasm-bridge";
 
 interface CollaborationPort {
   readonly destroyed: boolean;
@@ -9,6 +12,12 @@ interface CollaborationPort {
   resetHistory(): void;
   changed(): void;
   beforeMutation(reason: string): void;
+  /** Atomic marks of the schema; null when it declares none. */
+  readonly isAtomic: IsAtomic | null;
+  /** The repair of atoms, from the extensions that supply atom support. */
+  readonly atoms?: Pick<InlineAtomSupport, "repairRemote"> | null;
+  /** Dispatches a local repair transaction. */
+  repair(transaction: { steps: Step[]; metadata: { addToHistory: false } }): void;
 }
 
 function orderedJson(value: unknown): string {
@@ -21,6 +30,24 @@ function orderedJson(value: unknown): string {
       .join(",")}}`;
   }
   return JSON.stringify(value);
+}
+
+/** Rejects a request the engine would coerce: clocks and sizes are exact integers. */
+function assertUpdateOptions(options: CollaborationUpdateOptions): void {
+  const invalid = (message: string) => new GoTipeError("COLLABORATION_ERROR", message);
+  if ("missingFrom" in options) {
+    if (!(options.missingFrom instanceof Uint8Array))
+      throw invalid("missingFrom must be the bytes of a full collaboration state");
+    return;
+  }
+  if (!Number.isSafeInteger(options.after) || options.after < 0)
+    throw invalid("after must be a Lamport clock: a non-negative safe integer");
+  const { maxBytes } = options;
+  if (
+    maxBytes !== undefined &&
+    (!Number.isInteger(maxBytes) || maxBytes < 0 || maxBytes > 2 ** 32 - 1)
+  )
+    throw invalid("maxBytes must be a non-negative 32-bit integer");
 }
 
 /** Transport-free collaboration lifecycle; callers own sockets and rebroadcast suppression. */
@@ -66,9 +93,10 @@ export function createCollaboration(
       peer = peerId;
       port.resetHistory();
     },
-    getUpdate(): Uint8Array {
+    getUpdate(options?: CollaborationUpdateOptions): Uint8Array {
       assertEnabled();
-      return bridge.getUpdate().slice();
+      if (options) assertUpdateOptions(options);
+      return bridge.getUpdate(options).slice();
     },
     receiveUpdate(update: Uint8Array): void {
       assertEnabled();
@@ -87,6 +115,12 @@ export function createCollaboration(
           };
       // Native history owns identity-based undo; remote changes must preserve local entries.
       port.changed();
+      // Text a peer typed into an inline atom it did not know loses the atomic marks
+      // (docs/development/inline-atoms.md). The repair is a local transaction, so every
+      // replica receives it; concurrent repairs remove the same marks and converge.
+      if (!port.isAtomic || !port.atoms) return;
+      const steps = port.atoms.repairRemote(fromWasmDoc(before), fromWasmDoc(next), port.isAtomic);
+      if (steps.length) port.repair({ steps, metadata: { addToHistory: false } });
     },
   };
 }

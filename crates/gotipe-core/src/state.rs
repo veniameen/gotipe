@@ -37,9 +37,12 @@ impl EditorState {
     }
 
     /// Set an explicit selection without changing document or transaction history.
+    /// A text point inside an inline atom moves to the atom's edge in the direction of
+    /// movement from the current selection.
     pub fn with_valid_selection(mut self, selection: Selection) -> Result<Self, TransformError> {
         crate::selection_mapping::validate(&selection, &self.doc)?;
-        self.selection = selection;
+        self.selection =
+            crate::atoms::snap_selection(selection, Some(&self.selection), &self.doc, &self.schema);
         Ok(self)
     }
 
@@ -69,17 +72,21 @@ impl EditorState {
         let mut doc = self.doc.clone();
         let mut selection = self.selection.clone();
         let mut trace = Vec::new();
+        let mut steps = Vec::with_capacity(tr.steps.len());
 
         // Later steps can refer to blocks inserted or converted earlier in this transaction.
-        // Nothing is committed to the original state if any step fails.
+        // Nothing is committed to the original state if any step fails. A step that touches
+        // an inline atom is applied, mapped and recorded as it acts: on whole atoms.
         for step in &tr.steps {
             self.validate_step(step, &doc)?;
-            let mapping = crate::selection_mapping::SelectionMap::new(&selection, step, &doc);
+            let step = crate::atoms::normalize_step(step, &doc, &self.schema);
+            let mapping = crate::selection_mapping::SelectionMap::new(&selection, &step, &doc);
             doc = step.apply_with_schema(doc, Some(&self.schema))?;
-            selection = mapping.finish(step, &doc);
+            selection = mapping.finish(&step, &doc);
             if capture {
                 trace.push(doc.clone());
             }
+            steps.push(step);
         }
 
         // The complete staged document must satisfy the declared schema, even when
@@ -93,7 +100,8 @@ impl EditorState {
         // 3) Map selection through the steps
         if let Some(explicit) = tr.selection {
             crate::selection_mapping::validate(&explicit, &doc)?;
-            selection = explicit;
+            selection =
+                crate::atoms::snap_selection(explicit, Some(&selection), &doc, &self.schema);
         }
 
         Ok((
@@ -101,7 +109,7 @@ impl EditorState {
                 doc,
                 selection,
                 schema: self.schema.clone(),
-                last_steps: tr.steps,
+                last_steps: steps,
             },
             trace,
         ))

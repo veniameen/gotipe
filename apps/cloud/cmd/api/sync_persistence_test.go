@@ -96,10 +96,7 @@ func TestSyncPersistenceNeverOverwritesOrDownloadsDocumentContent(t *testing.T) 
 	if err := store.SaveUpdate(context.Background(), "doc", "generation-one", syncEnvelope(base)); err != nil {
 		t.Fatal(err)
 	}
-	if err := store.SaveSnapshot(context.Background(), "doc", "generation-one", syncEnvelope(base)); err != nil {
-		t.Fatal(err)
-	}
-	if pool.inserts != 2 || objects.puts != 0 {
+	if pool.inserts != 1 || objects.puts != 0 {
 		t.Fatal("collaboration changed the ordinary document object")
 	}
 	if len(objects.keys) != 0 {
@@ -111,17 +108,8 @@ func TestSyncPersistenceReportsReplacedBaselineAndPointerRace(t *testing.T) {
 	pool := &syncTestPool{key: "generation-two"}
 	objects := &syncTestObjects{data: base}
 	store := &dbPersistenceStore{db: &storage.PostgresStore{Pool: pool}, r2: objects}
-	for _, save := range []func() error{
-		func() error {
-			return store.SaveUpdate(context.Background(), "doc", "generation-one", syncEnvelope(base))
-		},
-		func() error {
-			return store.SaveSnapshot(context.Background(), "doc", "generation-one", syncEnvelope(base))
-		},
-	} {
-		if err := save(); !errors.Is(err, cloudsync.ErrBaselineReplaced) {
-			t.Fatalf("stale generation was not reported as replaced: %v", err)
-		}
+	if err := store.SaveUpdate(context.Background(), "doc", "generation-one", syncEnvelope(base)); !errors.Is(err, cloudsync.ErrBaselineReplaced) {
+		t.Fatalf("stale generation was not reported as replaced: %v", err)
 	}
 	if pool.inserts != 0 {
 		t.Fatal("stale log was persisted")

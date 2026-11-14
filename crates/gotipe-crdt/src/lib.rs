@@ -1,4 +1,5 @@
 pub mod awareness;
+mod boundaries;
 mod clock;
 pub mod doc;
 pub mod history;
@@ -11,6 +12,7 @@ pub mod sync;
 pub mod text;
 pub mod tree;
 pub mod version;
+mod wire;
 
 pub use awareness::{AwarenessProtocol, AwarenessState, CursorPosition, SelectionRange, UserInfo};
 pub use doc::CrdtDocument;

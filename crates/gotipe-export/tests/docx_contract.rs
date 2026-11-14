@@ -169,3 +169,43 @@ fn editor_content_exports_with_text_for_unlinkable_references() {
         assert!(png.starts_with(b"\x89PNG\r\n\x1a\n"));
     }
 }
+
+#[test]
+fn paragraphs_and_headings_keep_their_alignment() {
+    let block = |id: &str, kind: &str, align: serde_json::Value| {
+        json!({"id": id, "type": kind, "attrs": {"level": 2, "align": align}, "children": [],
+            "content": [{"text": format!("Текст {id}"), "marks": []}]})
+    };
+    let document = document_from_json(
+        &json!({"version":1,"blocks":[
+            block("l", "paragraph", json!("left")),
+            block("c", "heading", json!("center")),
+            block("r", "paragraph", json!("right")),
+            block("j", "paragraph", json!("justify")),
+            block("n", "paragraph", json!(null)),
+            block("x", "paragraph", json!("middle")),
+            block("q", "blockquote", json!("center")),
+        ]})
+        .to_string(),
+    )
+    .unwrap();
+    let xml = part(
+        &to_docx(&document, &DocxOptions::default()).unwrap(),
+        "word/document.xml",
+    );
+    let paragraph = |text: &str| {
+        let end = xml.find(text).unwrap();
+        let start = xml[..end].rfind("<w:p>").unwrap();
+        xml[start..end].to_owned()
+    };
+    // w:jc follows w:ind, as the schema orders paragraph properties.
+    assert!(paragraph("Текст l").contains("<w:ind w:left=\"0\"/><w:jc w:val=\"left\"/></w:pPr>"));
+    assert!(paragraph("Текст c")
+        .contains("<w:pStyle w:val=\"Heading2\"/><w:ind w:left=\"0\"/><w:jc w:val=\"center\"/>"));
+    assert!(paragraph("Текст r").contains("<w:jc w:val=\"right\"/>"));
+    assert!(paragraph("Текст j").contains("<w:jc w:val=\"both\"/>"));
+    for plain in ["Текст n", "Текст x", "Текст q"] {
+        assert!(!paragraph(plain).contains("<w:jc"), "{plain}");
+    }
+    assert_eq!(xml.matches("<w:jc ").count(), 4);
+}

@@ -1,5 +1,10 @@
 import { GoTipeError } from "../error";
+import type { InlineAtomSupport } from "../types/atoms";
 import type { Extension, MarkSpec, NodeSpec } from "../types/extension";
+
+/** The atom support the first extension that has one supplies (`ExtensionConfig.atomSupport`). */
+export const atomSupport = (extensions: readonly Extension[]): InlineAtomSupport | null =>
+  extensions.find((extension) => extension.atomSupport)?.atomSupport ?? null;
 
 export function resolveExtensions(extensions: (Extension | Extension[])[]): Extension[] {
   // Flatten nested arrays so presets (which are Extension[]) work with [DefaultPreset, MyExt]

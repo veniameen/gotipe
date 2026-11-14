@@ -98,11 +98,20 @@ export class ListCommands {
       this.port.select({ type: "cursor", blockId, offset });
     }
 
+    // Alignment belongs to the text, not to the kind of block: a paragraph turned into a
+    // heading (or back) stays aligned when the new type declares `align`.
+    const { align } = block.attrs;
+    const kept =
+      typeof align === "string" &&
+      !("align" in normalizedAttrs) &&
+      this.port.schema.declares(type, "align")
+        ? { align }
+        : {};
     this.port.append({
       type: "setBlockType",
       blockId,
       newType: type,
-      attrs: this.port.schema.withDefaults("node", type, normalizedAttrs),
+      attrs: this.port.schema.withDefaults("node", type, { ...kept, ...normalizedAttrs }),
     });
     return this;
   }

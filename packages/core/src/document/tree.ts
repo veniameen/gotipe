@@ -20,6 +20,8 @@ export function findBlockInTree(
  * Get marks at a cursor position by inheriting from the character to the LEFT.
  * At offset 0 (start of block), returns [] since there's nothing to the left.
  * This matches standard rich text editor behavior (ProseMirror, Notion, etc.)
+ * Atomic marks (MarkView.atomic) are never inherited: text typed beside an atom is not
+ * part of it (docs/development/inline-atoms.md).
  */
 export function getMarksAt(
   blocks: ViewState["blocks"],
@@ -37,7 +39,9 @@ export function getMarksAt(
   for (const span of block.content) {
     const spanEnd = pos + span.text.length;
     if (charIndex >= pos && charIndex < spanEnd) {
-      return span.marks.map((m) => ({ type: m.type, attrs: m.attrs ?? {} }));
+      return span.marks
+        .filter((m) => !m.atomic)
+        .map((m) => ({ type: m.type, attrs: m.attrs ?? {} }));
     }
     pos = spanEnd;
   }

@@ -27,3 +27,19 @@ export function createExtensionEvents(extensions: Extension[], editor: GoTipeEdi
     },
   };
 }
+
+/**
+ * `enableCollaboration` makes the current document the CRDT baseline, which every replica must
+ * share. Before the first start extensions hear `beforeCollaboration` and can return the
+ * document to its loaded form: `TrailingNode` takes back the paragraph it added on load.
+ */
+export function startCollaboration(
+  editor: Pick<GoTipeEditor, "emit">,
+  bridge: { readonly engine: string; readonly isCollaborating: boolean },
+  enable: (peerId: string) => void,
+  peerId: string,
+): void {
+  if (bridge.engine === "wasm" && !bridge.isCollaborating && peerId.trim())
+    editor.emit("beforeCollaboration");
+  enable(peerId);
+}

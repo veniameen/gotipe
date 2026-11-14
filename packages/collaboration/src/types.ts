@@ -35,7 +35,10 @@ export interface CollaborationOptions {
   user: AwarenessUser;
   /** Stable for one editor replica, including reconnects. Separate tabs need separate IDs. */
   peerId?: string;
-  /** Replay Cloud GET state before connecting; the editor must be created from its baseline. */
+  /**
+   * Replay Cloud GET state before connecting; the editor must be created from its
+   * baseline. Its `generation` selects the `gotipe.v2` connection.
+   */
   initialState?: CollaborationState;
   /** Short-lived token; a function is called again on every connection attempt. */
   token?: string | (() => string | Promise<string>);
@@ -64,4 +67,10 @@ export interface CollaborationOptions {
 export interface CollaborationState {
   baseline: object;
   updates: unknown[];
+  /**
+   * Opaque name of this baseline in Cloud. With it the provider sends operations
+   * without repeating the baseline, and Cloud refuses the handshake of a replica
+   * whose baseline was replaced. Keep it with a local copy of the state.
+   */
+  generation?: string;
 }

@@ -14,7 +14,6 @@ gotipe-crdt = { version = "0.1.0", path = "../gotipe-crdt", default-features = f
 gotipe-comments = { version = "0.1.0", path = "../gotipe-comments" }
 gotipe-versioning = { version = "0.1.0", path = "../gotipe-versioning", default-features = false }
 gotipe-ai = { version = "0.1.0", path = "../gotipe-ai" }
-gotipe-export = { version = "0.1.0", path = "../gotipe-export" }
 wasm-bindgen = { workspace = true }
 serde-wasm-bindgen = "0.6"
 serde_json = { workspace = true }

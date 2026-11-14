@@ -1,5 +1,7 @@
 import { saveAsset } from "../assets";
+import { findBlockInTree } from "../document/tree";
 import { GoTipeError } from "../error";
+import { toSafeHref, toSafeImageSrc } from "../security/urls";
 import { blocksToHtml, spansToHtml } from "../serialization/html";
 import { blocksToText } from "../text";
 import type { Block, Document } from "../types/block";
@@ -44,12 +46,54 @@ export class ClipboardHandler {
         void this.pasteUsingRules([text]);
         return;
       }
-      const payload = event.clipboardData && readClipboardPayload(event.clipboardData);
+      // GoTipe data and HTML keep their priority; only plain text reaches the text hooks.
+      const payload =
+        event.clipboardData &&
+        readClipboardPayload(event.clipboardData, () => null, this.options.schema);
       if (payload) this.apply(payload);
+      else if (text) this.pasteText(text);
       else this.pasteFromSystemClipboard();
     } catch (error) {
       this.report(error);
     }
+  }
+
+  /**
+   * Plain text: extensions may shorten it, then parse it into blocks. Parsed blocks that
+   * cannot go at the caret or outside the schema are pasted as plain paragraphs instead.
+   */
+  private pasteText(text: string): void {
+    const hooks = this.options.text;
+    if (!hooks) {
+      this.apply(plainTextPayload(text));
+      return;
+    }
+    const context = (options: unknown) => ({
+      editor: this.editor,
+      ...hooks.schema,
+      options,
+      safeHref: toSafeHref,
+      safeImageSrc: toSafeImageSrc,
+    });
+    let value = text;
+    for (const { run, options } of hooks.transforms) value = run(value, context(options));
+    if (!value) return;
+    const { blocks, selection } = this.editor.getViewState();
+    const raw = [selection.anchor.blockId, selection.head.blockId].some(
+      (id) => typeof findBlockInTree(blocks, id)?.content === "string",
+    );
+    for (const { run, options } of raw ? [] : hooks.parsers) {
+      const parsed = run(value, context(options));
+      if (!parsed?.length) continue;
+      try {
+        this.apply({ blocks: parsed });
+        return;
+      } catch (error) {
+        if (!(error instanceof GoTipeError) || error.code !== "CLIPBOARD_FAILED") throw error;
+        break;
+      }
+    }
+    this.apply(plainTextPayload(value));
   }
 
   /** The native paste event owns insertion; a timer fallback can duplicate a delayed event. */
@@ -201,7 +245,7 @@ export class ClipboardHandler {
         });
         if (snapshot !== current) return; // A late clipboard response must not replace a newer edit/selection.
         if (this.hasRule(text)) void this.pasteUsingRules([text]);
-        else this.apply(plainTextPayload(text));
+        else this.pasteText(text);
       })
       .catch((error) => {
         if (!this.disposed && request === this.request) this.report(error);

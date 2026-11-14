@@ -1,7 +1,15 @@
 import { GoTipeError } from "./error";
 import { toSafeColor } from "./security/colors";
 import { toSafeHref, toSafeImageSrc } from "./security/urls";
+import type { HtmlAtomReader, InlineAtomSupport } from "./types/atoms";
 import type { Block, Document, Mark, TextSpan } from "./types/block";
+
+/** The schema an HTML import reads into, and the atom support of its extensions. */
+export interface HtmlImportSchema {
+  nodes: Readonly<Record<string, unknown>>;
+  marks: Readonly<Record<string, unknown>>;
+  atoms?: InlineAtomSupport | null;
+}
 
 const IGNORED = new Set(["script", "style", "noscript", "template", "iframe", "object", "embed"]);
 const BLOCK_TAGS = new Set([
@@ -53,6 +61,21 @@ function makeBlock(
   return { id: crypto.randomUUID(), type, content, attrs, children };
 }
 
+/**
+ * Without atom support inline atoms are their text: images are inline only as emoji or
+ * when the schema has no image block.
+ */
+const textAtoms = (schema?: HtmlImportSchema): HtmlAtomReader => ({
+  inlineImages: (images) =>
+    images.every((image) => image.getAttribute("data-type") === "emoji") ||
+    (!!schema && !Object.hasOwn(schema.nodes, "image")),
+  span: () => null,
+  image: (element) => ({ text: element.getAttribute("alt") ?? "", mark: null }),
+});
+
+/** Atoms of the schema of the import in progress (`parseHtmlDocument` is synchronous). */
+let atoms = textAtoms();
+
 function appendSpan(spans: TextSpan[], text: string, marks: Mark[]) {
   if (!text) return;
   const previous = spans[spans.length - 1];
@@ -75,7 +98,8 @@ function inline(nodes: Node[], inherited: Mark[] = []): TextSpan[] {
       return;
     }
     if (tag === "img") {
-      appendSpan(spans, node.getAttribute("alt") ?? "", marks);
+      const image = atoms.image(node);
+      appendSpan(spans, image.text, image.mark ? [...marks, image.mark] : marks);
       return;
     }
     const next = marks.slice();
@@ -110,6 +134,8 @@ function inline(nodes: Node[], inherited: Mark[] = []): TextSpan[] {
     if (background) add("highlight", { color: background });
     if (node.style.textDecoration.includes("underline")) add("underline");
     if (node.style.textDecoration.includes("line-through")) add("strikethrough");
+    const atom = tag === "span" ? atoms.span(node) : null;
+    if (atom) next.push(atom);
     if (tag === "p" && spans.length > 0) appendSpan(spans, "\n", marks);
     for (const child of Array.from(node.childNodes)) visit(child, next);
   };
@@ -133,18 +159,31 @@ function imageBlock(image: HTMLElement, caption = ""): Block {
   return makeBlock("image", null, attrs);
 }
 
+/** `text-align` (or the `align` attribute) of a paragraph or heading, as `TextAlign` stores it. */
+function textAlign(element: HTMLElement): Block["attrs"] {
+  const value = (element.style.textAlign || element.getAttribute("align") || "").toLowerCase();
+  return value === "left" || value === "center" || value === "right" || value === "justify"
+    ? { align: value }
+    : {};
+}
+
 function parseElement(element: HTMLElement): Block[] {
   const tag = element.tagName.toLowerCase();
   const nodes = Array.from(element.childNodes);
   if (IGNORED.has(tag)) return [];
-  if (/^h[1-6]$/.test(tag)) return [makeBlock("heading", inline(nodes), { level: Number(tag[1]) })];
+  if (/^h[1-6]$/.test(tag))
+    return [makeBlock("heading", inline(nodes), { level: Number(tag[1]), ...textAlign(element) })];
   if (tag === "p") {
-    return element.querySelector("img")
+    return element.querySelector("img") &&
+      !atoms.inlineImages(Array.from(element.querySelectorAll("img")))
       ? parseNodes(nodes)
-      : [makeBlock("paragraph", inline(nodes))];
+      : [makeBlock("paragraph", inline(nodes), textAlign(element))];
   }
   if (tag === "hr") return [makeBlock("divider", null)];
-  if (tag === "img") return [imageBlock(element)];
+  if (tag === "img")
+    return atoms.inlineImages([element])
+      ? [makeBlock("paragraph", inline([element]))]
+      : [imageBlock(element)];
   if (tag === "figure") {
     const image = element.querySelector<HTMLElement>("img");
     if (image) return [imageBlock(image, element.querySelector("figcaption")?.textContent ?? "")];
@@ -261,8 +300,12 @@ function parseNodes(nodes: Node[]): Block[] {
   return blocks;
 }
 
-/** Import the HTML accepted by createEditor/content and setContent. Never inserts HTML into a live DOM. */
-export function parseHtmlDocument(html: string): Document {
+/**
+ * Import the HTML accepted by createEditor/content and setContent. Never inserts HTML into a
+ * live DOM. With the editor's `schema` and its atom support, inline atoms written by
+ * `serializeHtml` are read back when it declares their marks; otherwise they are their text.
+ */
+export function parseHtmlDocument(html: string, schema?: HtmlImportSchema): Document {
   if (typeof DOMParser === "undefined") {
     if (/<\/?[a-z][^>]*>/i.test(html)) {
       throw new GoTipeError(
@@ -276,6 +319,13 @@ export function parseHtmlDocument(html: string): Document {
     };
   }
   const document = new DOMParser().parseFromString(html, "text/html");
-  const blocks = parseNodes(Array.from(document.body.childNodes));
+  const support = schema?.atoms;
+  atoms = schema && support ? support.readHtml(schema) : textAtoms(schema);
+  let blocks: Block[];
+  try {
+    blocks = parseNodes(Array.from(document.body.childNodes));
+  } finally {
+    atoms = textAtoms();
+  }
   return { version: 1, blocks: blocks.length ? blocks : [makeBlock("paragraph", [])] };
 }

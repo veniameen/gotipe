@@ -12,8 +12,16 @@ import (
 	"github.com/gotipe/cloud/internal/handler"
 )
 
+const (
+	// deltaSubprotocol clients name their baseline by generation and exchange
+	// operations only; baselineSubprotocol clients repeat the baseline in every
+	// update. The server prefers the first one a client offers.
+	deltaSubprotocol    = "gotipe.v2"
+	baselineSubprotocol = "gotipe.v1"
+)
+
 var upgrader = websocket.Upgrader{
-	Subprotocols:    []string{"gotipe.v1"},
+	Subprotocols:    []string{deltaSubprotocol, baselineSubprotocol},
 	ReadBufferSize:  4096,
 	WriteBufferSize: 4096,
 }
@@ -24,18 +32,23 @@ type Server struct {
 	allowedOrigins map[string]bool
 	messageLimit   int
 	messageWindow  time.Duration
-	rooms          map[string]*Room
-	persist        PersistenceStore
-	log            *slog.Logger
-	mu             sync.RWMutex
-	ctx            context.Context
-	cancel         context.CancelFunc
+	// transactionLimit bounds the buffered parts of one client's transaction;
+	// budget bounds those of every client of the process.
+	transactionLimit int
+	budget           *byteBudget
+	rooms            map[string]*Room
+	persist          PersistenceStore
+	log              *slog.Logger
+	mu               sync.RWMutex
+	ctx              context.Context
+	cancel           context.CancelFunc
 }
 
 func NewServer(persist PersistenceStore, log *slog.Logger) *Server {
 	ctx, cancel := context.WithCancel(context.Background())
 	return &Server{
-		messageLimit: 1000, messageWindow: time.Minute,
+		messageLimit: 1000, messageWindow: time.Minute, transactionLimit: DefaultTransactionLimit,
+		budget:  newByteBudget(DefaultTransactionLimit * transactionsPerProcess),
 		rooms:   make(map[string]*Room),
 		persist: persist,
 		log:     log,
@@ -69,6 +82,13 @@ func (s *Server) HandleWebSocket() http.HandlerFunc {
 			return
 		}
 
+		// A gotipe.v2 client states which baseline its replica started from.
+		generation := r.URL.Query().Get("generation")
+		if offersDeltas(r) && !validGeneration(generation) {
+			http.Error(w, "generation required: the collaboration_state.generation of the loaded document", http.StatusBadRequest)
+			return
+		}
+
 		connectionUpgrader := upgrader
 		connectionUpgrader.CheckOrigin = s.checkOrigin
 		conn, err := connectionUpgrader.Upgrade(w, r, nil)
@@ -79,6 +99,9 @@ func (s *Server) HandleWebSocket() http.HandlerFunc {
 
 		room := s.getOrCreateRoom(roomKey(documentID))
 		client := NewClient(room, conn, peerID, user.UserID, s.log)
+		if conn.Subprotocol() == deltaSubprotocol {
+			client.deltas, client.generation = true, generation
+		}
 		s.mu.RLock()
 		client.limiter = newMessageWindow(s.messageLimit, s.messageWindow)
 		client.expiresAt = user.ExpiresAt
@@ -133,6 +156,7 @@ func (s *Server) getOrCreateRoom(documentID string) *Room {
 	}
 
 	room = NewRoom(documentID, s.persist, s.log)
+	room.transactionLimit, room.budget = s.transactionLimit, s.budget
 	s.rooms[documentID] = room
 
 	handler.WebSocketRooms.Inc()

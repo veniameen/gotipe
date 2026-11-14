@@ -1,10 +1,68 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import type { Decoration, GoTipeEditor } from "@gotipe/core";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 export interface RemotePeer {
   peerId: string;
   user: { name: string; color: string };
   cursor?: { blockId: string; offset: number };
   selection?: { blockId: string; from: number; to: number };
+}
+
+/**
+ * The decoration layer the collaboration provider writes other people into. `BlockEditor`
+ * draws it with its own overlay (Atlas frame 12), so the document renderer leaves it out.
+ */
+export const COLLABORATION_LAYER = "collaboration";
+
+/** People of `remote-cursor` and `remote-selection` decorations, one entry per peer. */
+export function peersFromDecorations(decorations: readonly Decoration[]): RemotePeer[] {
+  const peers = new Map<string, RemotePeer>();
+  const peer = (peerId: string, color: string) => {
+    let entry = peers.get(peerId);
+    if (!entry) {
+      entry = { peerId, user: { name: "", color } };
+      peers.set(peerId, entry);
+    }
+    return entry;
+  };
+  for (const d of decorations) {
+    if (d.type === "remote-cursor") {
+      const entry = peer(d.peerId, d.user.color);
+      entry.user = { name: d.user.name, color: d.user.color };
+      entry.cursor = { blockId: d.blockId, offset: d.offset };
+    } else if (d.type === "remote-selection")
+      peer(d.peerId, d.color).selection = { blockId: d.blockId, from: d.from, to: d.to };
+  }
+  return [...peers.values()];
+}
+
+/**
+ * Everyone the overlay draws, each person once: the host's `remotePeers` and the people of
+ * the editor's collaboration layer; for the same peer ID the host's entry is drawn.
+ */
+export function useOverlayPeers(
+  editor: GoTipeEditor | null,
+  remotePeers: RemotePeer[] | undefined,
+): RemotePeer[] {
+  const [layerPeers, setLayerPeers] = useState<RemotePeer[]>([]);
+  useEffect(() => {
+    if (!editor) {
+      setLayerPeers([]);
+      return;
+    }
+    const read = () =>
+      setLayerPeers(peersFromDecorations(editor.getDecorations(COLLABORATION_LAYER)));
+    read();
+    return editor.on("decorationsChange", ({ layer }) => {
+      if (layer === COLLABORATION_LAYER) read();
+    });
+  }, [editor]);
+  return useMemo(() => {
+    if (!layerPeers.length) return remotePeers ?? [];
+    const byId = new Map(layerPeers.map((peer) => [peer.peerId, peer]));
+    for (const peer of remotePeers ?? []) byId.set(peer.peerId, peer);
+    return [...byId.values()];
+  }, [layerPeers, remotePeers]);
 }
 
 interface CursorPosition {

@@ -1,3 +1,4 @@
+import { findBlockInTree } from "../document/tree";
 import { type Extension, defineExtension } from "../types/extension";
 
 export interface HeadingOptions {
@@ -28,6 +29,8 @@ function heading(options: HeadingOptions): Extension<HeadingOptions> {
         attrs: {
           // `values` keeps commands to the configured levels; validation accepts any number.
           level: { type: "number", default: levels[0] ?? 1, required: true, values: levels },
+          // `TextAlign` sets it; any heading may hold it.
+          align: { type: "enum", values: ["left", "center", "right", "justify"] },
         },
         topLevel: true,
         marksAllowed: "all",
@@ -40,12 +43,16 @@ function heading(options: HeadingOptions): Extension<HeadingOptions> {
           {
             pattern: new RegExp(`^(${marker})\\s$`),
             handler: (editor, match) => {
-              const blockId = editor.getViewState().selection.anchor.blockId;
+              const { selection, blocks } = editor.getViewState();
+              const blockId = selection.anchor.blockId;
               const level = match[1]!.length;
+              // The typed block keeps its alignment as a heading.
+              const align = findBlockInTree(blocks, blockId)?.attrs.align;
+              const attrs = typeof align === "string" ? { level, align } : { level };
               editor.dispatch({
                 steps: [
                   { type: "deleteText", blockId, from: 0, to: match[0].length },
-                  { type: "setBlockType", blockId, newType: "heading", attrs: { level } },
+                  { type: "setBlockType", blockId, newType: "heading", attrs },
                 ],
               });
             },

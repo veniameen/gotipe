@@ -28,6 +28,8 @@ export interface TextSpanView {
 export interface MarkView {
   type: string;
   attrs: Record<string, unknown>;
+  /** Set for a mark declared `atomic`: its text is one inline element, not editable text. */
+  atomic?: true;
 }
 
 export interface SelectionView {

@@ -1,5 +1,6 @@
 import { GoTipeError } from "../error";
 import { isUtf16Boundary } from "../text";
+import { normalizeAtomStep } from "./atoms";
 import {
   type MarkGroups,
   NO_MARK_GROUPS,
@@ -384,8 +385,17 @@ export function fallbackApply(
   const doc = JSON.parse(docJson) as FallbackDoc;
   const tr = JSON.parse(transactionJson) as { steps: Record<string, unknown>[] };
 
-  for (const step of tr.steps) {
-    validateStep?.(step, doc);
+  const atomic = groups.atomic;
+  for (const raw of tr.steps) {
+    validateStep?.(raw, doc);
+    // Offsets inside an atom move to its edges (atoms.ts); the Rust engine does the same.
+    const step = atomic
+      ? normalizeAtomStep(
+          raw,
+          (id) => findBlockById(doc.blocks, id),
+          (type) => atomic.has(type),
+        )
+      : raw;
     // Steps are externally-tagged: { "InsertText": { ... } }
     const tag = Object.keys(step)[0]!;
     const data = step[tag] as Record<string, unknown>;

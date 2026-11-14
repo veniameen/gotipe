@@ -2,10 +2,16 @@ import { ChainableCommands } from "./chain";
 import { ClipboardHandler } from "./clipboard/handler";
 import { commandSchema } from "./commands/schema";
 import { viewToEngineSelection } from "./document/selection";
-import { findBlockInTree, findFirstSelectableBlock, mapSelectionToDocument } from "./document/tree";
+import {
+  blockTextLength,
+  findBlockInTree,
+  findFirstSelectableBlock,
+  mapSelectionToDocument,
+} from "./document/tree";
+import { createAtomSelection } from "./editor/atom-selection";
 import { clipboardOptions } from "./editor/clipboard-options";
 import { createCollaboration } from "./editor/collaboration";
-import { createExtensionEvents } from "./editor/extension-events";
+import { createExtensionEvents, startCollaboration } from "./editor/extension-events";
 import { createExtensionLifecycle } from "./editor/extension-lifecycle";
 import { createHostActions } from "./editor/host";
 import { initializeEditor } from "./editor/initialize";
@@ -46,7 +52,10 @@ export async function createEditorWithLoader(
   options: CreateEditorOptions,
   loader: WasmModuleLoader | null,
 ): Promise<GoTipeEditor> {
-  const { bridge, resolved, schema, schemaJson } = await initializeEditor(options, loader);
+  const { bridge, resolved, schema, htmlSchema, schemaJson } = await initializeEditor(
+    options,
+    loader,
+  );
   const schemaForCommands = commandSchema(schema);
   const host: EditorHost = options.host ?? {};
   let editable = options.editable !== false;
@@ -61,13 +70,26 @@ export async function createEditorWithLoader(
   let scheduleDomSelectionRestore: (() => void) | null = null;
   let restoreDomSelectionImmediately: (() => boolean) | null = null;
   let readSelectionFromDOM: GoTipeEditor["getDOMSelection"] | null = null;
-  let currentSelection: ViewState["selection"] = {
+  const caretAt = (blockId: string, offset = 0): ViewState["selection"] => ({
     type: "text",
-    anchor: { blockId: "", offset: 0 },
-    head: { blockId: "", offset: 0 },
-  };
+    anchor: { blockId, offset },
+    head: { blockId, offset },
+  });
+  let currentSelection = caretAt("");
 
   let storedMarks: { type: string; attrs: Record<string, unknown> }[] | null = null;
+  // Every selection the editor takes moves off inline atoms (editor/atom-selection.ts).
+  const atoms = createAtomSelection(schema.marks, () => view.get().blocks);
+  // `changed`: the document changed since the view was last read (a transaction, a merge).
+  const select = (value: ViewState["selection"], changed = false) => {
+    if (!atoms.enabled) {
+      currentSelection = value;
+      return;
+    }
+    if (changed) view.invalidate();
+    currentSelection = atoms.snap(value, currentSelection);
+    view.invalidate(); // the view read above holds the previous selection
+  };
 
   let extensionLifecycle: ReturnType<typeof createExtensionLifecycle> | null = null;
   const transactionFilters = createTransactionFilters();
@@ -81,16 +103,20 @@ export async function createEditorWithLoader(
       return currentSelection;
     },
     set selection(value) {
-      currentSelection = value;
+      select(value, true);
     },
     get storedMarks() {
       return storedMarks;
     },
     set storedMarks(value) {
-      storedMarks = value;
+      storedMarks = atoms.marks(value);
     },
     getDocumentJSON: () => bridge.getState(),
-    apply: (transaction) => bridge.apply(transaction),
+    apply: (transaction) => {
+      if (bridge.isCollaborating && atoms.enabled)
+        htmlSchema.atoms?.rememberLocal(view.get().blocks, transaction, atoms.isAtomic);
+      return bridge.apply(transaction);
+    },
     preview: (transaction) => bridge.preview(transaction),
     restoreDocument: (state) => bridge.restoreState(schemaJson, state),
     getViewState: () => editor.getViewState(),
@@ -111,6 +137,7 @@ export async function createEditorWithLoader(
   const view = createViewState({
     getDocumentJSON: () => bridge.getState(),
     getSelection: () => currentSelection,
+    isAtomic: atoms.isAtomic,
     getStoredMarks: () => storedMarks,
     canUndo: () => transactions.canUndo,
     canRedo: () => transactions.canRedo,
@@ -130,11 +157,18 @@ export async function createEditorWithLoader(
       return currentSelection;
     },
     set selection(value) {
-      currentSelection = value;
+      select(value, true);
     },
     resetHistory: () => {
       transactions.resetHistory();
       view.invalidate();
+    },
+    isAtomic: atoms.enabled ? atoms.isAtomic : null,
+    atoms: htmlSchema.atoms,
+    // `origin: "repair"` tells listeners (TrailingNode) this is not a local edit.
+    repair: (transaction) => {
+      const metadata = { ...transaction.metadata, origin: "repair" };
+      transactions.dispatch({ ...transaction, metadata });
     },
     changed: () => {
       storedMarks = null;
@@ -166,6 +200,10 @@ export async function createEditorWithLoader(
       return editable;
     },
 
+    get isComposing() {
+      return mountedInput?.composing ?? false;
+    },
+
     setEditable(next: boolean): void {
       if (next === editable) return;
       mountedInput?.interrupt("setEditable");
@@ -193,7 +231,8 @@ export async function createEditorWithLoader(
 
     reportError: hostActions.reportError,
     openLink: hostActions.openLink,
-    enableCollaboration: collaboration.enable,
+    enableCollaboration: (peerId) =>
+      startCollaboration(editor, bridge, collaboration.enable, peerId),
     getCollaborationUpdate: collaboration.getUpdate,
     receiveCollaborationUpdate: collaboration.receiveUpdate,
 
@@ -225,35 +264,16 @@ export async function createEditorWithLoader(
       const state = this.getViewState();
       if (state.blocks.length === 0) return;
 
-      const textLength = (block: ViewState["blocks"][0]) =>
-        Array.isArray(block.content)
-          ? block.content.reduce((sum, span) => sum + span.text.length, 0)
-          : typeof block.content === "string"
-            ? block.content.length
-            : 0;
-
       if (position === "start") {
         const first = state.blocks[0]!;
-        currentSelection = {
-          type: "text",
-          anchor: { blockId: first.id, offset: 0 },
-          head: { blockId: first.id, offset: 0 },
-        };
+        currentSelection = caretAt(first.id);
       } else if (position === "end") {
         const last = state.blocks[state.blocks.length - 1]!;
-        const end = textLength(last);
-        currentSelection = {
-          type: "text",
-          anchor: { blockId: last.id, offset: end },
-          head: { blockId: last.id, offset: end },
-        };
+        const end = blockTextLength(last);
+        currentSelection = caretAt(last.id, end);
       } else if (!currentSelection.anchor.blockId) {
         const first = state.blocks[0]!;
-        currentSelection = {
-          type: "text",
-          anchor: { blockId: first.id, offset: 0 },
-          head: { blockId: first.id, offset: 0 },
-        };
+        currentSelection = caretAt(first.id);
       }
 
       mountedElement.focus({ preventScroll: true });
@@ -262,11 +282,11 @@ export async function createEditorWithLoader(
     },
 
     setSelection(selection): void {
-      currentSelection = {
+      select({
         type: "text",
         anchor: { ...selection.anchor },
         head: { ...selection.head },
-      };
+      });
       view.invalidate();
       this.emit("selectionChange", { editor: this });
       this.emit("viewStateChange", this.getViewState());
@@ -282,11 +302,7 @@ export async function createEditorWithLoader(
     syncSelectionFromDOM(): void {
       const selection = readSelectionFromDOM?.();
       if (!selection) return;
-      currentSelection = {
-        type: "text",
-        anchor: { ...selection.anchor },
-        head: { ...selection.head },
-      };
+      select({ type: "text", anchor: { ...selection.anchor }, head: { ...selection.head } });
       view.invalidate();
     },
 
@@ -323,7 +339,7 @@ export async function createEditorWithLoader(
     },
 
     setContent(content: string | object, setOptions?: SetContentOptions): void {
-      const json = typeof content === "string" ? parseHtmlDocument(content) : content;
+      const json = typeof content === "string" ? parseHtmlDocument(content, htmlSchema) : content;
       const wasmJson = toWasmDoc(json as Record<string, unknown>);
       mountedInput?.interrupt("setContent");
       const previousState =
@@ -331,13 +347,12 @@ export async function createEditorWithLoader(
       // The DOM may be ahead of the model (selectionchange is async): sync first.
       if (setOptions?.preserveSelection) {
         const domSelection = readSelectionFromDOM?.();
-        if (domSelection?.anchor.blockId) {
-          currentSelection = {
+        if (domSelection?.anchor.blockId)
+          select({
             type: "text",
             anchor: { ...domSelection.anchor },
             head: { ...domSelection.head },
-          };
-        }
+          });
       }
       const previousSelection = currentSelection;
       const hadFocus =
@@ -370,25 +385,10 @@ export async function createEditorWithLoader(
               )
             : null;
         const first = mapped ? null : findFirstSelectableBlock(blocks);
-        currentSelection = mapped
-          ? mapped
-          : first
-            ? {
-                type: "text",
-                anchor: { blockId: first.id, offset: 0 },
-                head: { blockId: first.id, offset: 0 },
-              }
-            : {
-                type: "text",
-                anchor: { blockId: "", offset: 0 },
-                head: { blockId: "", offset: 0 },
-              };
+        if (mapped) select(mapped);
+        else currentSelection = first ? caretAt(first.id) : caretAt("");
       } catch {
-        currentSelection = {
-          type: "text",
-          anchor: { blockId: "", offset: 0 },
-          head: { blockId: "", offset: 0 },
-        };
+        currentSelection = caretAt("");
       }
 
       this.emit("update", { editor: this });
@@ -499,13 +499,13 @@ export async function createEditorWithLoader(
             return currentSelection;
           },
           set selection(value) {
-            currentSelection = value;
+            select(value);
           },
           get storedMarks() {
             return storedMarks;
           },
           set storedMarks(value) {
-            storedMarks = value;
+            storedMarks = atoms.marks(value);
           },
           clipboard: clipboardHandler,
           getViewState: () => this.getViewState(),
@@ -566,11 +566,7 @@ export async function createEditorWithLoader(
 
   const initialBlock = findFirstSelectableBlock(editor.getViewState().blocks);
   if (initialBlock) {
-    currentSelection = {
-      type: "text",
-      anchor: { blockId: initialBlock.id, offset: 0 },
-      head: { blockId: initialBlock.id, offset: 0 },
-    };
+    currentSelection = caretAt(initialBlock.id);
     view.invalidate();
   }
 

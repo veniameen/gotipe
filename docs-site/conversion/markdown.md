@@ -138,6 +138,38 @@ A list item holds rich text and nested lists only. In headings and table cells a
 
 Named and numeric character references are decoded into text.
 
+## Inline atoms
+
+A mention, an inline formula, a custom emoji and an inline image are text with an atomic mark: the text is the fallback that search, export and screen readers see. The writer always writes these marks. The reader produces them only when asked with the `atoms` option, so a document gets only the marks its editor declares; without it the same source reads as in the tables above.
+
+```ts
+const { doc } = parseMarkdown(text, {
+  atoms: {
+    mention: true,
+    inlineMath: true,
+    inlineImage: true,
+    customEmoji: { party: "https://cdn.example.com/party.png" },
+  },
+});
+```
+
+| Inline Markdown | Text | Mark |
+| --- | --- | --- |
+| `[@Anna](mention:user-42)`, `[Roadmap](mention:page-7)` | `@Anna`, `Roadmap` | `mention` with `id`, `kind` (`"user"` or `"page"`) and `label` |
+| `$x^2$` | `x^2` | `inlineMath` |
+| `:party:`, when `party` is a key of `customEmoji` | `:party:` | `customEmoji` with `name` and `src` from the registry |
+| `![alt](src)` among other inline content | `alt`, or the file name of `src`, or `image` | `inlineImage` with `src` and `alt` |
+
+- **Mention.** The address is `mention:`, the kind, `-` and the id; every byte of the id outside `A-Za-z0-9-._~` is written as `%XX`. The label is the text without the leading `@` of a user, or the link title when there is one: `[@Ann](mention:user-42 "Anna Smith")`. Line breaks of a label are written as `&#10;` (`&#13;`), so a blank line never ends the paragraph. A link with another kind, an empty or malformed id, or with an image or HTML in its text stays a link.
+- **Inline formula.** The rule is pandoc's: the opening `$` is followed by a character that is neither a space nor `$`; the first `$` after it on the same line that no backslash precedes must follow a non-space character and must not be followed by a digit. So `$5 and $6` and `$a$5` are text, and `\$` is a dollar sign. The TeX is taken as written. In a table cell `|` is written as `\|`.
+- **Typed dollars.** When a block is rewritten, a `$` of plain text that would open a formula under this rule is written as `\$`, so text never turns into a formula on reload; other dollars stay as typed. A digit right after a formula is written as a character reference: `$n$&#50;`.
+- **Custom emoji.** A name is `[A-Za-z0-9_+-]+`. A shortcode is read only when no ASCII letter or digit touches it on either side and it is not part of an address: `10:30:45`, `a:party:`, `https://example.com/:party:` and link destinations stay text. The writer escapes typed text that would read as one of the document's custom emoji (`\:party:`) and writes a letter or digit right beside an emoji as a character reference (`&#97;:party:`).
+- **Inline image.** A paragraph that holds only an image is the `image` block, as before, unless the image has an empty title: `![alt](src "")` alone is a paragraph with an inline image when inline images are read, and the writer writes an inline image that is all of its block that way. An image with a non-empty title stays verbatim text. Width and height are not written.
+- **Keys.** Every atom the reader makes gets a `key` attribute numbered in document order (`"1"`, `"2"`, … over blocks depth-first and spans left to right), so no two atoms of a document are equal and equal neighbours never join. The writer ignores `key`.
+- **What cannot be written** stays as text: a formula that breaks the rule above (a leading or trailing space, a line break, a bare `$`), an emoji whose name has other characters, a mention without an id.
+
+The Rust reader takes the same choice from the schema: `from_markdown(md, &schema)` reads a mention, an inline formula and an inline image when the schema declares that mark `atomic`, and `from_markdown_with_atoms(md, &schema, &MarkdownAtoms { .. })` also takes the emoji registry. Both readers and writers check one fixture, `crates/gotipe-export/tests/fixtures/markdown-atoms.json`.
+
 ## Raw Markdown
 
 Whatever the editor cannot edit stays in the document as raw Markdown, so nothing is lost when the file is saved:
@@ -192,8 +224,9 @@ textOffsetToMd(map, paragraph, 6); // 17, the offset of "world" in the source
 | `previous` | `MarkdownSnapshot` | — | Snapshot of the previous version of the file. Blocks with the same source keep their ids. |
 | `previousDoc` | `Doc` | — | Previous document, used when there is no snapshot. Blocks with the same fingerprint keep their ids. |
 | `createId` | `() => string` | UUID v7 | Id factory for new blocks. |
+| `atoms` | `InlineAtoms` | — | Inline atoms to read: `mention`, `inlineMath`, `inlineImage` (booleans) and `customEmoji` (names and their image addresses). See [Inline atoms](/docs/conversion/markdown#inline-atoms). |
 
-The package also exports the types `Doc`, `Block`, `Span`, `Mark`, `ParseOptions`, `ParseResult`, `SerializeResult`, `MarkdownSnapshot`, `SnapshotBlock`, `SnapshotNode`, `MarkdownMap`, `MapBlock` and `TextSegment`.
+The package also exports the types `Doc`, `Block`, `Span`, `Mark`, `ParseOptions`, `InlineAtoms`, `ParseResult`, `SerializeResult`, `MarkdownSnapshot`, `SnapshotBlock`, `SnapshotNode`, `MarkdownMap`, `MapBlock` and `TextSegment`.
 
 ## Limits
 

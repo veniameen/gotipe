@@ -1,3 +1,4 @@
+import type { InlineAtoms } from "../types";
 import {
   atx,
   fence,
@@ -21,11 +22,12 @@ class Reader {
   readonly references = new Set<string>();
   readonly inlineJobs: (() => void)[] = [];
 
+  constructor(readonly atoms?: InlineAtoms) {}
+
   inline(lines: Line[], options: Partial<InlineContext> = {}): PhrasingContent[] {
     const children: PhrasingContent[] = [];
-    this.inlineJobs.push(() =>
-      children.push(...readInline(sourceFrom(lines), { references: this.references, ...options })),
-    );
+    const context = { references: this.references, atoms: this.atoms, ...options };
+    this.inlineJobs.push(() => children.push(...readInline(sourceFrom(lines), context)));
     return children;
   }
 
@@ -257,8 +259,8 @@ class Reader {
 }
 
 /** Read block structure first, so references declared later resolve in earlier inline text. */
-export function readMarkdown(text: string): Root {
-  const reader = new Reader();
+export function readMarkdown(text: string, atoms?: InlineAtoms): Root {
+  const reader = new Reader(atoms);
   const children = reader.blocks(linesFrom(text));
   for (const read of reader.inlineJobs) read();
   return { type: "root", children };
