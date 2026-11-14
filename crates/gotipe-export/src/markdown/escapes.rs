@@ -1,6 +1,6 @@
 //! Step 6 of `writeInline` (`packages/markdown/src/inline-serialize.ts`): the escapes that depend
 //! on what is written after a character, right to left where a later escape changes it.
-use super::{characters::length16, escape_text, units::Unit, Emoji};
+use super::{characters::length16, links::escape_text, units::Unit, Emoji};
 use crate::markdown_parse::atoms;
 
 /// Step 6 of `writeInline`: typed backslashes, the dollars that would open a formula and the

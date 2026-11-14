@@ -118,7 +118,8 @@ native composition и её DOM reconciliation; listeners/frame очищаютс�
 `"\n"` документа пишется жёстким переносом в `inline-serialize.ts`. Rust-писатель текста — перенос
 `writeInline` (D-97): единицы `crates/gotipe-export/src/markdown/units.rs` (как
 `serialization/inline-units.ts`), шаги `inline.rs`, `characters.rs` (как пишется набранный
-символ), `escapes.rs` (как `serialization/escapes.ts`) и `autolink_escapes.rs`; уровень записи
+символ), `escapes.rs` (как `serialization/escapes.ts`) и `autolink_escapes.rs`; строки ссылок,
+адреса и подписи ссылок и картинок — `links.rs`; уровень записи
 выбирает проверка чтением `verify.rs` (как `renderVerified`). Голые адреса GFM находят `markdown/src/grammar/autolinks.ts` и
 `markdown_parse/autolinks.rs` — одни правила для читателя и писателя. Концы строк правленого блока
 и их написание по снимку возвращает `markdown/src/serialization/line-breaks.ts`. Общие случаи —
