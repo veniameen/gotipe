@@ -42,7 +42,7 @@ export interface DocsSite {
   bySlug: Map<string, DocPage>;
 }
 
-/** The text of rich content with soft line breaks joined by a space (docs-site/README.md). */
+/** The text of rich content on one line (headings, search); see `plainText`. */
 export const spansText = (content: Block["content"]): string => plainText(content);
 
 function headingsOf(blocks: Block[]): DocHeading[] {

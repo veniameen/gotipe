@@ -105,19 +105,6 @@
   color: var(--gt-callout-glyph, var(--gt-text-2));
 }
 
-/* a static table fits the column and wraps its cells (frame 21); the editor's table sizes its
-   columns for editing (max-content), which a read-only page does not need. A table whose
-   longest words cannot fit still scrolls in its own box. */
-.site-doc-editor .gotipe-table-wrapper {
-  max-width: 100%;
-  overflow-x: auto;
-}
-.site-doc-editor .gotipe-table-wrapper > .gotipe-table {
-  table-layout: auto;
-  width: 100%;
-  min-width: 0;
-}
-.site-doc-editor .gotipe-table-wrapper :where(th, td) {
-  overflow-wrap: break-word;
-}
-/* a long signature in a cell may break after its punctuation (<wbr>, lib/docs/render.ts) */
+/* Static tables fit the column and wrap their cells (frame 21) by the theme's rule for a table
+   without column widths (D-87); a long signature in a cell may also break after its punctuation,
+   where lib/docs/render.ts puts <wbr>. */

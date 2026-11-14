@@ -175,7 +175,7 @@ export function escapeText(/** @type {string} */ text) {
 export const escapeHtml = (/** @type {string} */ text) => escapeText(text).replace(/"/g, "&quot;");
 
 /**
- * The text of a block's content with soft line breaks joined by a space (the site's display rule).
+ * The text of a block's content on one line, a hard break ("\n") read as a space: for anchors and search.
  * @param {unknown} content rich text spans, raw text or null
  * @returns {string}
  */

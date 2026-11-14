@@ -57,11 +57,11 @@ class PageRenderer {
     private readonly page: DocPage,
   ) {}
 
-  /** Soft breaks joined with a space; internal links checked and written as site URLs. */
+  /** The spans with internal links checked and written as site URLs. */
   private spans(content: Block["content"]): Span[] {
     if (!Array.isArray(content)) return [];
     return content.map((span) => ({
-      text: span.text.replace(/\n/g, " "),
+      text: span.text,
       marks: span.marks.map((mark) =>
         mark.type === "link"
           ? { ...mark, attrs: { ...mark.attrs, href: this.href(mark.attrs) } }
