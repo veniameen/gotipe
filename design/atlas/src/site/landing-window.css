@@ -1,0 +1,216 @@
+/* Windows of the landing: Markdown beside the document it becomes, and one document in its view.
+   The documents inside are the library's own markup; the site draws only the window around them. */
+
+.site-title-row {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--site-gap-l);
+  margin-bottom: var(--site-gap-2xl);
+}
+.site-title-arrow.gt-icon {
+  width: var(--site-arrow);
+  height: var(--site-arrow);
+  color: var(--gt-accent);
+}
+
+/* a soft plinth under the window */
+.site-plinth {
+  padding: var(--site-plinth-pad);
+  border-radius: var(--site-plinth-radius);
+  background: var(--site-plinth);
+}
+.site-plinth-note {
+  margin: var(--site-gap-l) 0 0;
+  color: var(--gt-text-2);
+  font-size: var(--site-small-size);
+  line-height: var(--site-small-leading);
+  text-align: center;
+}
+
+/* ---- the window: a bar, panes, a foot ---- */
+.site-window {
+  min-width: 0;
+  margin: 0;
+  overflow: hidden;
+  border-radius: var(--site-window-radius);
+  background: var(--site-card);
+  box-shadow:
+    0 0 0 var(--gt-hairline) var(--gt-line),
+    var(--site-window-shadow);
+}
+.site-window-bar {
+  display: flex;
+  align-items: center;
+  gap: var(--site-gap-m);
+  height: var(--site-window-bar-h);
+  padding: var(--site-window-bar-pad);
+  border-bottom: var(--gt-hairline) solid var(--gt-line);
+  color: var(--gt-text-2);
+  font-size: var(--site-small-size);
+  line-height: var(--site-small-leading);
+}
+.site-window-path {
+  display: inline-flex;
+  gap: var(--site-gap-s);
+  min-width: 0;
+  white-space: nowrap;
+}
+.site-window-path > span {
+  color: var(--gt-text-3);
+}
+.site-window-path > strong {
+  color: var(--gt-text);
+  font-weight: var(--gt-weight-medium);
+}
+.site-window-end {
+  display: flex;
+  align-items: center;
+  gap: var(--site-gap-m);
+  margin-left: auto;
+}
+.site-tag {
+  padding: var(--site-chip-tag-pad);
+  border-radius: var(--gt-radius-control);
+  background: var(--gt-fill-1);
+  box-shadow: inset 0 0 0 var(--gt-hairline) var(--gt-line);
+  color: var(--gt-text-2);
+  font-family: var(--site-font-mono);
+  font-size: var(--site-label-size);
+  line-height: var(--site-label-leading);
+}
+.site-code-attr {
+  color: var(--gt-text-2);
+  font-family: var(--site-font-mono);
+  font-size: var(--site-label-size);
+  line-height: var(--site-label-leading);
+}
+.site-window-foot {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--site-gap-l);
+  padding: var(--site-window-foot-pad);
+  border-top: var(--gt-hairline) solid var(--gt-line);
+  color: var(--gt-text-2);
+  font-family: var(--site-font-mono);
+  font-size: var(--site-label-size);
+  line-height: var(--site-label-leading);
+}
+.site-window-foot > .is-accent,
+.site-pane-head > .is-live {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--site-gap-s);
+}
+.site-window-foot > .is-accent {
+  color: var(--gt-accent);
+}
+.site-window-foot > .is-accent::before,
+.site-pane-head > .is-live::before,
+.site-pane-foot > .is-dot::before {
+  content: "";
+  width: var(--site-dot);
+  height: var(--site-dot);
+  border-radius: var(--gt-radius-round);
+  background: currentColor;
+}
+
+/* ---- Markdown on the left, the document on the right ---- */
+.site-split {
+  display: grid;
+  grid-template-columns: var(--site-src-cols);
+}
+.site-src {
+  display: var(--site-src-display);
+  padding: var(--site-pane-pad-src);
+  border-right: var(--gt-hairline) solid var(--gt-line);
+  background: var(--site-surface);
+}
+.site-src,
+.site-render {
+  min-width: 0;
+}
+.site-pane-head,
+.site-pane-foot {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--site-gap);
+  margin: 0;
+  color: var(--gt-text-2);
+  font-family: var(--site-font-mono);
+  font-size: var(--site-label-size);
+  line-height: var(--site-label-leading);
+  letter-spacing: var(--site-label-tracking);
+  text-transform: uppercase;
+}
+.site-src > .site-pane-head,
+.site-src > .site-pane-foot {
+  padding: var(--site-src-line-pad);
+}
+.site-pane-head {
+  margin-bottom: var(--site-gap-l);
+}
+.site-pane-head > .is-live {
+  color: var(--site-sage-ink);
+}
+.site-pane-foot {
+  margin-top: var(--site-gap-l);
+}
+.site-pane-foot > .is-dot {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--site-gap-s);
+}
+.site-pane-foot > .is-dot::before {
+  color: var(--site-sage-ink);
+}
+.site-src-lines {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: line;
+  color: var(--gt-text-2);
+  font-family: var(--site-font-mono);
+  font-size: var(--site-code-size);
+  line-height: var(--site-code-leading);
+  white-space: nowrap;
+}
+.site-src-lines > li {
+  display: grid;
+  grid-template-columns: var(--site-src-num-w) minmax(0, 1fr);
+  gap: var(--site-gap);
+  min-height: var(--site-code-leading);
+  padding: var(--site-src-line-pad);
+  counter-increment: line;
+}
+.site-src-lines code {
+  font: inherit;
+}
+.site-src-lines > li::before {
+  content: counter(line);
+  color: var(--gt-text-3);
+  text-align: right;
+}
+.site-src-lines > li.is-current {
+  background: var(--site-accent-tint);
+  color: var(--gt-text);
+}
+.site-src-lines .is-mark {
+  color: var(--gt-accent);
+}
+.site-render {
+  padding: var(--site-pane-pad);
+}
+.site-render > .gotipe-page {
+  max-width: none;
+  padding: 0;
+}
+.site-render .site-has-toolbar {
+  margin-top: var(--site-toolbar-room);
+}
+
+/* ---- the look: one document of the frame's view ---- */
+.site-window.is-look > .gotipe-page {
+  max-width: none;
+  padding: var(--site-look-page-pad);
+}

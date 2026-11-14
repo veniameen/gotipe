@@ -1,243 +1,314 @@
-<div class="site" lang="en">
+<div class="site site-landing" lang="en">
   <!-- @include content/site/head.html -->
 
-  <section class="site-hero">
-    <div class="site-wrap site-hero-grid">
-      <div>
-        <p class="site-eyebrow">Version 0.1 · MIT core</p>
-        <h1>The editor you own, down to the engine.</h1>
-        <p class="site-lede">
-          GoTipe is a document editor framework with its own engine in TypeScript and Rust/WASM:
-          lossless Markdown, a ready block editor, review and real-time collaboration — and no
-          third-party editor underneath.
-        </p>
-        <div class="site-actions">
-          <span class="gotipe-button is-primary is-cta">Get started<svg class="gt-icon" aria-hidden="true"><use href="#i-arrow-right" /></svg></span>
-          <span class="gotipe-button is-cta">Open the playground</span>
-        </div>
-        <div class="site-install">
-          <code>npm i @gotipe/core @gotipe/react</code>
-          <span class="gotipe-button is-quiet" aria-label="Copy"><svg class="gt-icon" aria-hidden="true"><use href="#i-copy" /></svg></span>
-        </div>
-      </div>
-
-      <div class="site-demo is-hero">
-        <div class="site-demo-bar">
-          <span>Live editor</span>
-          <span class="gotipe-seg"><span class="is-on">Block</span><span>Page</span><span>Views</span></span>
-        </div>
-        <article class="gotipe-page">
-          <div class="gotipe-doc">
-            <p>
-              <span class="gotipe-anchor is-inline"
-                ><strong class="gotipe-selection">Everything here syncs live</strong
-                ><span class="gotipe-overlay gotipe-toolbar" data-place="above-start" role="toolbar"
-                  ><span class="gotipe-tool is-model-icon"><svg class="gt-icon"><use href="#i-sparkle" /></svg></span
-                  ><span class="gotipe-tool-sep"></span
-                  ><span class="gotipe-tool is-active"><svg class="gt-icon"><use href="#i-bold" /></svg></span
-                  ><span class="gotipe-tool"><svg class="gt-icon"><use href="#i-italic" /></svg></span
-                  ><span class="gotipe-tool"><svg class="gt-icon"><use href="#i-underline" /></svg></span
-                  ><span class="gotipe-tool"><svg class="gt-icon"><use href="#i-code" /></svg></span
-                  ><span class="gotipe-tool-sep"></span
-                  ><span class="gotipe-tool"><svg class="gt-icon"><use href="#i-link" /></svg></span
-                  ><span class="gotipe-tool"><svg class="gt-icon"><use href="#i-comment" /></svg></span></span
-              ></span>
-              — two people's edits merge without conflicts. The beta ships on Thursday.
-            </p>
-            <h3>Launch checklist</h3>
-            <ul class="gotipe-todo-list">
-              <li class="gotipe-todo-item" data-checked="true">
-                <span class="gotipe-check" role="checkbox" aria-checked="true"
-                  ><svg class="gt-icon" aria-hidden="true"><use href="#i-check" /></svg
-                ></span>
-                <span class="gotipe-todo-item-content">Freeze the public API</span>
-              </li>
-              <li class="gotipe-todo-item" data-checked="false">
-                <span class="gotipe-check" role="checkbox" aria-checked="false"
-                  ><svg class="gt-icon" aria-hidden="true"><use href="#i-check" /></svg
-                ></span>
-                <span class="gotipe-todo-item-content">Write the migration guide</span>
-              </li>
-              <li class="gotipe-todo-item" data-checked="false">
-                <span class="gotipe-check" role="checkbox" aria-checked="false"
-                  ><svg class="gt-icon" aria-hidden="true"><use href="#i-check" /></svg
-                ></span>
-                <span class="gotipe-todo-item-content">Run the browser suite</span>
-              </li>
-            </ul>
-            <div class="gotipe-callout" data-variant="info">
-              <span class="gotipe-callout-icon"
-                ><svg class="gt-icon" aria-hidden="true"><use href="#i-hash" /></svg
-              ></span>
-              <div class="gotipe-callout-content">
-                <p>Blocks nobody touched keep their Markdown byte for byte.</p>
-              </div>
-            </div>
+  <section class="site-stage site-hero">
+    <div class="site-wrap">
+      <div class="site-hero-grid">
+        <div class="site-hero-copy">
+          <p class="site-chip"><span>v0.1</span>Open source. Built from scratch.<svg class="gt-icon" aria-hidden="true"><use href="#i-arrow-right" /></svg></p>
+          <h1>Your editor.<br />Your engine.<br /><span class="site-accent">Your rules.</span></h1>
+          <p class="site-lede">
+            A document editor framework built from the engine up. Lossless Markdown, real-time
+            collaboration, and an interface that’s entirely yours.
+          </p>
+          <div class="site-actions">
+            <span class="gotipe-button site-cta">Start building<svg class="gt-icon" aria-hidden="true"><use href="#i-arrow-right" /></svg></span>
+            <span class="gotipe-button site-cta is-second">Try the playground<svg class="gt-icon" aria-hidden="true"><use href="#i-arrow-right" /></svg></span>
           </div>
-        </article>
+          <div class="site-install">
+            <code>npm i @gotipe/core @gotipe/react</code>
+            <span class="gotipe-button is-quiet" aria-label="Copy"><svg class="gt-icon" aria-hidden="true"><use href="#i-copy" /></svg></span>
+          </div>
+        </div>
+
+        <div class="site-stack">
+          <p class="site-stack-head"><span class="site-label">The GoTipe stack</span><svg class="gt-icon" aria-hidden="true"><use href="#i-layers" /></svg></p>
+          <div class="site-stack-item">
+            <p class="site-stack-title"><svg class="gt-icon" aria-hidden="true"><use href="#i-braces" /></svg><strong>Your own engine</strong><span>01</span></p>
+            <p>TypeScript and Rust/WASM. No editor underneath.</p>
+            <span class="site-badge">MIT</span>
+          </div>
+          <div class="site-stack-item">
+            <p class="site-stack-title"><svg class="gt-icon" aria-hidden="true"><use href="#i-page" /></svg><strong>Markdown, untouched</strong><span>02</span></p>
+            <p>The same file in. Untouched blocks come back byte for byte.</p>
+            <span class="site-badge">Lossless</span>
+          </div>
+          <div class="site-stack-item">
+            <p class="site-stack-title"><svg class="gt-icon" aria-hidden="true"><use href="#i-nodes" /></svg><strong>Built to work together</strong><span>03</span></p>
+            <p>Real-time sync, review and offline editing.</p>
+            <span class="site-badge">MIT</span>
+          </div>
+          <p class="site-stack-foot"><svg class="gt-icon" aria-hidden="true"><use href="#i-arrow-down" /></svg>Your interface. Your infrastructure.</p>
+        </div>
+      </div>
+
+      <div class="site-strip">
+        <span>Not a wrapper. A foundation.</span>
+        <span class="site-strip-labels">
+          <span>TypeScript</span><span>Rust / WASM</span><span>React</span><span>Vue</span>
+          <span><svg class="gt-icon" aria-hidden="true"><use href="#i-lock" /></svg>MIT core</span>
+        </span>
       </div>
     </div>
   </section>
 
-  <div class="site-wrap">
-    <div class="site-facts">
-      <p class="site-fact"><strong>905</strong>browser scenarios, run in Chromium, Firefox and WebKit</p>
-      <p class="site-fact"><strong>652 / 652</strong>CommonMark examples parsed like the reference</p>
-      <p class="site-fact"><strong>96 KB</strong>gzip for the engine together with Markdown</p>
-      <p class="site-fact"><strong>0</strong>third-party runtime dependencies in the engine</p>
-    </div>
-  </div>
-
-  <section class="site-section">
+  <section class="site-section is-signature">
     <div class="site-wrap">
-      <div class="site-section-head">
-        <p class="site-eyebrow">What's inside</p>
-        <h2>Everything a document needs. Most of it MIT.</h2>
-        <p>The engine and every service around it are open source. Only the ready-made interface has a commercial license.</p>
-      </div>
-      <div class="site-grid">
-        <article class="site-card">
-          <div class="site-card-top"><span class="site-card-icon"><svg class="gt-icon" aria-hidden="true"><use href="#i-code" /></svg></span><span class="site-badge">MIT</span></div>
-          <h3>Own engine</h3>
-          <p>Transactions, history, selection and IME in TypeScript, with the same contract in Rust/WASM.</p>
-        </article>
-        <article class="site-card">
-          <div class="site-card-top"><span class="site-card-icon"><svg class="gt-icon" aria-hidden="true"><use href="#i-hash" /></svg></span><span class="site-badge">MIT</span></div>
-          <h3>Lossless Markdown</h3>
-          <p>Our own parser: an edit rewrites only the block it touched, the rest of the file stays as written.</p>
-        </article>
-        <article class="site-card">
-          <div class="site-card-top"><span class="site-card-icon"><svg class="gt-icon" aria-hidden="true"><use href="#i-grip" /></svg></span><span class="site-badge is-commercial">Commercial</span></div>
-          <h3>Block editor</h3>
-          <p>Slash menu, drag handle, bubble toolbar, tables, media and code — ready for React.</p>
-        </article>
-        <article class="site-card">
-          <div class="site-card-top"><span class="site-card-icon"><svg class="gt-icon" aria-hidden="true"><use href="#i-page" /></svg></span><span class="site-badge is-commercial">Commercial</span></div>
-          <h3>Page editor</h3>
-          <p>A Markdown page with review lanes, anchored proposals and comments in the margin.</p>
-        </article>
-        <article class="site-card">
-          <div class="site-card-top"><span class="site-card-icon"><svg class="gt-icon" aria-hidden="true"><use href="#i-swap" /></svg></span><span class="site-badge">MIT</span></div>
-          <h3>Real-time collaboration</h3>
-          <p>Our own CRDT in Rust: concurrent edits, cursors, reconnect and durable sync.</p>
-        </article>
-        <article class="site-card">
-          <div class="site-card-top"><span class="site-card-icon"><svg class="gt-icon" aria-hidden="true"><use href="#i-comment" /></svg></span><span class="site-badge">MIT</span></div>
-          <h3>Comments and suggestions</h3>
-          <p>Anchored threads and tracked changes, accepted or rejected in one step.</p>
-        </article>
-        <article class="site-card">
-          <div class="site-card-top"><span class="site-card-icon"><svg class="gt-icon" aria-hidden="true"><use href="#i-clock" /></svg></span><span class="site-badge">MIT</span></div>
-          <h3>Versions</h3>
-          <p>Snapshots, a block-level compare and a restore you can undo.</p>
-        </article>
-        <article class="site-card">
-          <div class="site-card-top"><span class="site-card-icon"><svg class="gt-icon" aria-hidden="true"><use href="#i-sparkle" /></svg></span><span class="site-badge">MIT</span></div>
-          <h3>AI layer</h3>
-          <p>Bring your model: streaming, cancel, proofreading, ghost text and a guard for personal data.</p>
-        </article>
-        <article class="site-card">
-          <div class="site-card-top"><span class="site-card-icon"><svg class="gt-icon" aria-hidden="true"><use href="#i-download" /></svg></span><span class="site-badge">MIT</span></div>
-          <h3>PDF and DOCX</h3>
-          <p>Our own PDF layout and Word writer, in the browser through WebAssembly or on the server.</p>
-        </article>
-        <article class="site-card">
-          <div class="site-card-top"><span class="site-card-icon"><svg class="gt-icon" aria-hidden="true"><use href="#i-upload" /></svg></span><span class="site-badge">MIT</span></div>
-          <h3>Migration</h3>
-          <p>Bring ProseMirror, Tiptap, Slate or Lexical JSON; content we can't map is kept, not dropped.</p>
-        </article>
-        <article class="site-card">
-          <div class="site-card-top"><span class="site-card-icon"><svg class="gt-icon" aria-hidden="true"><use href="#i-sun" /></svg></span><span class="site-badge is-commercial">Commercial</span></div>
-          <h3>Views and themes</h3>
-          <p>Four looks over one markup, light and dark; your colours through CSS variables.</p>
-        </article>
-        <article class="site-card">
-          <div class="site-card-top"><span class="site-card-icon"><svg class="gt-icon" aria-hidden="true"><use href="#i-lock" /></svg></span><span class="site-badge">MIT</span></div>
-          <h3>Your own cloud</h3>
-          <p>Documents, permissions, sync, exports and an AI proxy in one Go service you run.</p>
-        </article>
-      </div>
-    </div>
-  </section>
-
-  <section class="site-section is-sunken">
-    <div class="site-wrap">
-      <div class="site-section-head">
-        <p class="site-eyebrow">Four views</p>
-        <h2>One markup, four looks.</h2>
-        <p>Notion, docs, modern and minimal are sets of tokens over the same document. Switch them with one attribute.</p>
-      </div>
-      <div class="site-grid is-4">
-        <div class="site-view-card" data-gt-view="notion">
-          <p class="site-view-name">notion<span>default</span></p>
-          <article class="gotipe-page is-slice">
-            <div class="gotipe-doc">
-              <h2>Offline drafts</h2>
-              <p>A draft is kept on the device and sent when the network returns.</p>
-              <ul class="gotipe-list"><li>Saved every second</li><li>Encrypted at rest</li></ul>
-            </div>
-          </article>
-        </div>
-        <div class="site-view-card" data-gt-view="docs">
-          <p class="site-view-name">docs<span>reference</span></p>
-          <article class="gotipe-page is-slice">
-            <div class="gotipe-doc">
-              <h2>Offline drafts</h2>
-              <p>A draft is kept on the device and sent when the network returns.</p>
-              <ul class="gotipe-list"><li>Saved every second</li><li>Encrypted at rest</li></ul>
-            </div>
-          </article>
-        </div>
-        <div class="site-view-card" data-gt-view="modern">
-          <p class="site-view-name">modern<span>fixed toolbar</span></p>
-          <article class="gotipe-page is-slice">
-            <div class="gotipe-doc">
-              <h2>Offline drafts</h2>
-              <p>A draft is kept on the device and sent when the network returns.</p>
-              <ul class="gotipe-list"><li>Saved every second</li><li>Encrypted at rest</li></ul>
-            </div>
-          </article>
-        </div>
-        <div class="site-view-card" data-gt-view="minimal">
-          <p class="site-view-name">minimal<span>just text</span></p>
-          <article class="gotipe-page is-slice">
-            <div class="gotipe-doc">
-              <h2>Offline drafts</h2>
-              <p>A draft is kept on the device and sent when the network returns.</p>
-              <ul class="gotipe-list"><li>Saved every second</li><li>Encrypted at rest</li></ul>
-            </div>
-          </article>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <section class="site-section">
-    <div class="site-wrap">
-      <div class="site-section-head">
-        <p class="site-eyebrow">Get started</p>
-        <h2>From npm install to a working editor.</h2>
-      </div>
-      <div class="site-steps">
+      <div class="site-title-row">
         <div>
-          <div class="site-step">
-            <span class="site-step-num">1</span>
-            <div><h3>Install</h3><p>The engine, the React adapter and the ready editor. Add the theme's CSS once.</p></div>
+          <p class="site-eyebrow">Made for the way you build</p>
+          <h2>Plain text. Rich possibilities.</h2>
+        </div>
+        <svg class="gt-icon site-title-arrow" aria-hidden="true"><use href="#i-arrow-down-right" /></svg>
+      </div>
+
+      <div class="site-plinth">
+        <figure class="site-window">
+          <div class="site-window-bar">
+            <svg class="gt-icon" aria-hidden="true"><use href="#i-page" /></svg>
+            <span class="site-window-path">Workspace<span>/</span><strong>Launch notes</strong></span>
+            <span class="site-window-end">
+              <span class="site-tag">notes.md</span>
+              <span class="gotipe-avatars" aria-hidden="true">
+                <span class="gotipe-avatar" data-person="2">M</span>
+                <span class="gotipe-avatar" data-person="1">J</span>
+              </span>
+              <svg class="gt-icon" aria-hidden="true"><use href="#i-more" /></svg>
+            </span>
           </div>
-          <div class="site-step">
-            <span class="site-step-num">2</span>
-            <div><h3>Create the editor</h3><p>Pick a preset or your own extensions; the engine is chosen for you.</p></div>
+          <div class="site-split">
+            <div class="site-src">
+              <p class="site-pane-head"><span>Markdown source</span><span>.md</span></p>
+              <ol class="site-src-lines">
+                <li><code><span class="is-mark"># Everything here syncs live</span></code></li>
+                <li></li>
+                <li class="is-current"><code><span class="is-mark">**Every block is a transaction**</span> the engine</code></li>
+                <li><code>replays. Two cursors, one document.</code></li>
+                <li></li>
+                <li><code><span class="is-mark">### Launch checklist</span></code></li>
+                <li></li>
+                <li><code>- [x] Engine compiles to WASM</code></li>
+                <li><code>- [x] Docs run on 0.1</code></li>
+                <li><code>- [ ] Cut the release note</code></li>
+                <li></li>
+                <li><code>&gt; Paste a link — Markdown stays intact.</code></li>
+              </ol>
+              <p class="site-pane-foot"><span class="is-dot">UTF-8</span><span>CommonMark</span></p>
+            </div>
+            <div class="site-render">
+              <p class="site-pane-head"><span>Document</span><span class="is-live">Synced</span></p>
+              <article class="gotipe-page is-slice">
+                <div class="gotipe-doc">
+                  <h1>Everything here syncs live</h1>
+                  <p class="site-has-toolbar">
+                    <span class="gotipe-anchor is-inline"
+                      ><strong class="gotipe-selection">Every block is a transaction</strong
+                      ><span class="gotipe-overlay gotipe-toolbar" data-place="above-start" role="toolbar"
+                        ><span class="gotipe-tool is-active"><svg class="gt-icon"><use href="#i-bold" /></svg></span
+                        ><span class="gotipe-tool"><svg class="gt-icon"><use href="#i-italic" /></svg></span
+                        ><span class="gotipe-tool"><svg class="gt-icon"><use href="#i-link" /></svg></span
+                        ><span class="gotipe-tool"><svg class="gt-icon"><use href="#i-comment" /></svg></span></span
+                    ></span>
+                    the engine replays. Two cursors, one document.
+                  </p>
+                  <h3>Launch checklist</h3>
+                  <ul class="gotipe-todo-list">
+                    <li class="gotipe-todo-item" data-checked="true">
+                      <span class="gotipe-check" role="checkbox" aria-checked="true"><svg class="gt-icon" aria-hidden="true"><use href="#i-check" /></svg></span>
+                      <span class="gotipe-todo-item-content">Engine compiles to WASM</span>
+                    </li>
+                    <li class="gotipe-todo-item" data-checked="true">
+                      <span class="gotipe-check" role="checkbox" aria-checked="true"><svg class="gt-icon" aria-hidden="true"><use href="#i-check" /></svg></span>
+                      <span class="gotipe-todo-item-content">Docs run on 0.1</span>
+                    </li>
+                    <li class="gotipe-todo-item" data-checked="false">
+                      <span class="gotipe-check" role="checkbox" aria-checked="false"><svg class="gt-icon" aria-hidden="true"><use href="#i-check" /></svg></span>
+                      <span class="gotipe-todo-item-content">Cut the release note<span class="gotipe-remote" data-person="2"><span class="gotipe-remote-flag">Mira</span></span></span>
+                    </li>
+                  </ul>
+                  <blockquote class="gotipe-quote"><p>Paste a link — Markdown stays intact.</p></blockquote>
+                </div>
+              </article>
+            </div>
           </div>
-          <div class="site-step">
-            <span class="site-step-num">3</span>
-            <div><h3>Save the document</h3><p>JSON, HTML or Markdown from every update — your storage, your format.</p></div>
+          <figcaption class="site-window-foot">
+            <span>12 lines in · 12 lines out · 0 rewritten</span>
+            <span class="is-accent">Lossless by design</span>
+          </figcaption>
+        </figure>
+      </div>
+      <p class="site-plinth-note">Markdown source and the document it becomes. One model, nothing lost.</p>
+
+      <div class="site-facts-head">
+        <span>Shipped in 0.1</span>
+        <span>Numbers from the test suite and the build.</span>
+      </div>
+      <div class="site-facts">
+        <p class="site-fact"><strong>905</strong>browser scenarios in Chromium, Firefox and WebKit</p>
+        <p class="site-fact"><strong>652 / 652</strong>CommonMark examples parsed like the reference</p>
+        <p class="site-fact"><strong>~100 KB</strong>gzip for the JavaScript engine with Markdown</p>
+        <p class="site-fact"><strong class="site-accent">0</strong>third-party runtime dependencies in the engine</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="site-section is-features">
+    <div class="site-wrap">
+      <div class="site-head-row">
+        <div>
+          <p class="site-eyebrow">The whole document stack</p>
+          <h2>Everything you need.<br />Nothing in your way.</h2>
+        </div>
+        <p class="site-sub">The engine and every service around it are open source. Only the ready-made interface has a commercial license.</p>
+      </div>
+
+      <div class="site-bento">
+        <article class="site-tile is-tint">
+          <div class="site-tile-top"><svg class="gt-icon" aria-hidden="true"><use href="#i-braces" /></svg><span class="site-badge">MIT</span></div>
+          <h3>An engine. Not a wrapper.</h3>
+          <p>Transactions, history, selection and IME in TypeScript, with the same contract in Rust/WASM. No ProseMirror, Tiptap or Slate underneath.</p>
+          <div class="site-diagram">
+            <span class="site-diagram-box">Your interface</span>
+            <svg class="gt-icon" aria-hidden="true"><use href="#i-arrow-down" /></svg>
+            <span class="site-diagram-engine"><strong>GoTipe engine</strong><span>TypeScript · Rust/WASM</span></span>
+            <span class="site-diagram-note">No third-party runtime dependencies.</span>
+          </div>
+        </article>
+        <article class="site-tile is-sage">
+          <div class="site-tile-top"><svg class="gt-icon" aria-hidden="true"><use href="#i-page" /></svg><span class="site-badge">MIT</span></div>
+          <h3>Your Markdown stays yours.</h3>
+          <p>Our own parser keeps the file intact: an edit rewrites only the block it touched, your spacing and formatting are written back as they were.</p>
+          <div class="site-md-card">
+            <p class="is-head"># Offline drafts</p>
+            <p>Drafts write first, sync later.</p>
+            <p>- [x] keep my spacing</p>
+            <p class="site-md-foot"><span>written back</span><span class="is-ok"><svg class="gt-icon" aria-hidden="true"><use href="#i-check-16" /></svg>0 lines changed</span></p>
+          </div>
+        </article>
+        <article class="site-tile is-sand is-wide">
+          <div>
+            <div class="site-tile-top"><svg class="gt-icon" aria-hidden="true"><use href="#i-nodes" /></svg><span class="site-badge">MIT</span></div>
+            <h3>Better, together.</h3>
+            <p>Our own CRDT in Rust. Concurrent and offline edits merge on reconnect; cursors and selections included.</p>
+          </div>
+          <div class="site-pair">
+            <p class="site-pair-text">Two people,<br /><span class="gotipe-remote-selection" data-person="1">one paragraph.</span><span class="gotipe-remote" data-person="1"><span class="gotipe-remote-flag">Jonas</span></span></p>
+            <p class="site-pair-note">two edits · one merge · no conflict</p>
+          </div>
+        </article>
+      </div>
+
+      <div class="site-features">
+        <article class="site-feature">
+          <div class="site-feature-top"><svg class="gt-icon" aria-hidden="true"><use href="#i-edit" /></svg><span class="site-badge is-commercial">Commercial</span></div>
+          <h3>Block editor</h3>
+          <p>Slash menu, drag handle, bubble toolbar, tables and media.</p>
+        </article>
+        <article class="site-feature">
+          <div class="site-feature-top"><svg class="gt-icon" aria-hidden="true"><use href="#i-page" /></svg><span class="site-badge is-commercial">Commercial</span></div>
+          <h3>Page editor</h3>
+          <p>A Markdown page with comments in the margin.</p>
+        </article>
+        <article class="site-feature">
+          <div class="site-feature-top"><svg class="gt-icon" aria-hidden="true"><use href="#i-comment" /></svg><span class="site-badge">MIT</span></div>
+          <h3>Comments and suggestions</h3>
+          <p>Anchored threads and tracked changes.</p>
+        </article>
+        <article class="site-feature">
+          <div class="site-feature-top"><svg class="gt-icon" aria-hidden="true"><use href="#i-restore" /></svg><span class="site-badge">MIT</span></div>
+          <h3>Versions</h3>
+          <p>Snapshots, block-level compare, a restore you can undo.</p>
+        </article>
+        <article class="site-feature">
+          <div class="site-feature-top"><svg class="gt-icon" aria-hidden="true"><use href="#i-sparkle" /></svg><span class="site-badge">MIT</span></div>
+          <h3>AI layer</h3>
+          <p>Your model: streaming, cancel, proofreading.</p>
+        </article>
+        <article class="site-feature">
+          <div class="site-feature-top"><svg class="gt-icon" aria-hidden="true"><use href="#i-download" /></svg><span class="site-badge">MIT</span></div>
+          <h3>PDF and DOCX</h3>
+          <p>Our own writers, in the browser or on the server.</p>
+        </article>
+        <article class="site-feature">
+          <div class="site-feature-top"><svg class="gt-icon" aria-hidden="true"><use href="#i-swap" /></svg><span class="site-badge">MIT</span></div>
+          <h3>Migration</h3>
+          <p>ProseMirror, Tiptap, Slate and Lexical JSON.</p>
+        </article>
+        <article class="site-feature">
+          <div class="site-feature-top"><svg class="gt-icon" aria-hidden="true"><use href="#i-palette" /></svg><span class="site-badge is-commercial">Commercial</span></div>
+          <h3>Views and themes</h3>
+          <p>Four looks, light and dark, your CSS variables.</p>
+        </article>
+        <article class="site-feature">
+          <div class="site-feature-top"><svg class="gt-icon" aria-hidden="true"><use href="#i-cloud" /></svg><span class="site-badge">MIT</span></div>
+          <h3>Your own cloud</h3>
+          <p>Documents, sync, exports and an AI proxy in one Go service.</p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section class="site-stage is-grey">
+    <div class="site-wrap">
+      <div class="site-looks">
+        <div>
+          <p class="site-eyebrow">Make it your own</p>
+          <h2>One markup.<br />Four looks.</h2>
+          <p class="site-sub">Notion, docs, modern and minimal are sets of tokens over the same document. Switch them with one attribute.</p>
+          <div class="site-look-list">
+            <span class="site-look is-on"><span><strong>Notion</strong><small>Familiar and focused. The default.</small></span><svg class="gt-icon" aria-hidden="true"><use href="#i-arrow-up-right" /></svg></span>
+            <span class="site-look"><span><strong>Docs</strong><small>Reference pages with an outline.</small></span><svg class="gt-icon" aria-hidden="true"><use href="#i-arrow-up-right" /></svg></span>
+            <span class="site-look"><span><strong>Modern</strong><small>A fixed toolbar and more room.</small></span><svg class="gt-icon" aria-hidden="true"><use href="#i-arrow-up-right" /></svg></span>
+            <span class="site-look"><span><strong>Minimal</strong><small>Just the words.</small></span><svg class="gt-icon" aria-hidden="true"><use href="#i-arrow-up-right" /></svg></span>
           </div>
         </div>
-        <div class="site-code" data-gt-view="docs">
+        <figure class="site-window is-look" data-gt-view="notion">
+          <div class="site-window-bar">
+            <span class="site-tag">draft.md</span>
+            <span class="site-window-end"><code class="site-code-attr">data-gt-view="notion"</code></span>
+          </div>
+          <article class="gotipe-page is-slice">
+            <header class="gotipe-page-head">
+              <h1 class="gotipe-page-title">Offline drafts</h1>
+            </header>
+            <div class="gotipe-doc">
+              <p>A draft is kept on the device and sent when the network returns. Close the tab mid-sentence and nothing is lost.</p>
+              <ul class="gotipe-todo-list">
+                <li class="gotipe-todo-item" data-checked="true">
+                  <span class="gotipe-check" role="checkbox" aria-checked="true"><svg class="gt-icon" aria-hidden="true"><use href="#i-check" /></svg></span>
+                  <span class="gotipe-todo-item-content">Saved every second</span>
+                </li>
+                <li class="gotipe-todo-item" data-checked="false">
+                  <span class="gotipe-check" role="checkbox" aria-checked="false"><svg class="gt-icon" aria-hidden="true"><use href="#i-check" /></svg></span>
+                  <span class="gotipe-todo-item-content">Encrypted at rest</span>
+                </li>
+              </ul>
+            </div>
+          </article>
+          <figcaption class="site-window-foot"><span>one document · four token sets</span><span>source unchanged</span></figcaption>
+        </figure>
+      </div>
+    </div>
+  </section>
+
+  <section class="site-section">
+    <div class="site-wrap">
+      <div class="site-panel" data-theme="dark">
+        <div class="site-panel-copy">
+          <p class="site-eyebrow">Less setup. More building.</p>
+          <h2>From install<br />to your first edit.</h2>
+          <ol class="site-panel-steps">
+            <li><span>01</span><div><h3>Install</h3><p>The engine, the React adapter and the ready editor. Add the theme’s CSS once.</p></div></li>
+            <li><span>02</span><div><h3>Create</h3><p>Pick a preset or your own extensions; the engine is chosen for you.</p></div></li>
+            <li><span>03</span><div><h3>Save</h3><p>JSON, HTML or Markdown from every update — your storage, your format.</p></div></li>
+          </ol>
+          <p class="site-panel-note"><span>14 lines · one component</span><span>No editor to configure.</span></p>
+        </div>
+        <div class="site-panel-code" data-gt-view="docs">
           <div class="gotipe-code-block">
             <div class="gotipe-code-block-header">
-              <span class="gotipe-seg"><span class="is-on">React</span><span>Vue</span><span>Headless</span></span>
-              <span class="gotipe-code-copy"><svg class="gt-icon" aria-hidden="true"><use href="#i-copy" /></svg></span>
+              <span class="site-file">Notes.tsx</span>
+              <span class="site-copy"><svg class="gt-icon" aria-hidden="true"><use href="#i-copy" /></svg>copy</span>
             </div>
             <pre class="gotipe-code-block-scroll"><span class="gotipe-code-lines" aria-hidden="true">1
 2
@@ -272,36 +343,81 @@
     </div>
   </section>
 
-  <section class="site-section is-sunken">
+  <section class="site-section is-run">
     <div class="site-wrap">
-      <div class="site-section-head">
+      <div class="site-center-head">
         <p class="site-eyebrow">Run it your way</p>
-        <h2>In the browser, in WebAssembly, on your servers.</h2>
+        <h2>Same document.<br />Different ways to run.</h2>
+        <p class="site-sub">In the browser, in WebAssembly, on your servers. One document model, wherever you need it.</p>
       </div>
-      <div class="site-grid">
-        <article class="site-card">
-          <div class="site-card-top"><h3>JavaScript engine</h3><span class="site-badge">MIT</span></div>
+      <div class="site-run-grid">
+        <article class="site-run">
+          <div class="site-tile-top"><svg class="gt-icon" aria-hidden="true"><use href="#i-globe" /></svg><span class="site-badge">MIT</span></div>
+          <p class="site-label">JavaScript</p>
+          <p class="site-big">~100 KB</p>
+          <h3>JavaScript engine</h3>
           <p>The default. The whole editing model in TypeScript, nothing extra to load.</p>
-          <ul>
-            <li><svg class="gt-icon" aria-hidden="true"><use href="#i-check" /></svg>About 96 KB gzip with Markdown</li>
-            <li><svg class="gt-icon" aria-hidden="true"><use href="#i-check" /></svg>Server rendering to HTML, Markdown and text</li>
-          </ul>
+          <p class="site-run-foot">TypeScript · gzip, with Markdown</p>
         </article>
-        <article class="site-card">
-          <div class="site-card-top"><h3>Rust/WASM engine</h3><span class="site-badge">MIT</span></div>
+        <article class="site-run is-tint">
+          <div class="site-tile-top"><svg class="gt-icon" aria-hidden="true"><use href="#i-chip" /></svg><span class="site-badge">MIT</span></div>
+          <p class="site-label">Rust / WASM</p>
+          <p class="site-big">~600 KB</p>
+          <h3>Rust/WASM engine</h3>
           <p>The same API and document contract, compiled from Rust. Required for real-time collaboration.</p>
+          <p class="site-run-foot">Rust · gzip · CRDT, cursors, reconnect</p>
+        </article>
+        <article class="site-run">
+          <div class="site-tile-top"><svg class="gt-icon" aria-hidden="true"><use href="#i-server" /></svg><span class="site-badge">MIT</span></div>
+          <p class="site-label">Go · self-hosted</p>
+          <p class="site-big">1 service</p>
+          <h3>GoTipe Cloud</h3>
+          <p>Documents, permissions, sync, exports and an AI proxy, on your servers.</p>
+          <p class="site-run-foot">PostgreSQL · Valkey · Docker Compose</p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section class="site-stage is-grey">
+    <div class="site-wrap">
+      <div class="site-head-row">
+        <div>
+          <p class="site-eyebrow">A clear line. No fine print.</p>
+          <h2>Open where it matters.</h2>
+        </div>
+        <p class="site-sub">The engine and every service around it are MIT. Only the ready-made interface is commercial, and it is free for most teams.</p>
+      </div>
+      <div class="site-licences">
+        <article class="site-licence">
+          <div class="site-licence-top"><span class="site-label">Build it your way</span><span class="site-badge">MIT</span></div>
+          <h3>Engine and services</h3>
+          <p class="site-licence-meta">8 parts · use, fork, ship</p>
           <ul>
-            <li><svg class="gt-icon" aria-hidden="true"><use href="#i-check" /></svg>About 590 KB gzip</li>
-            <li><svg class="gt-icon" aria-hidden="true"><use href="#i-check" /></svg>CRDT, cursors and reconnect</li>
+            <li><svg class="gt-icon" aria-hidden="true"><use href="#i-check-16" /></svg><span>Transaction engine<small>selection, history, IME</small></span></li>
+            <li><svg class="gt-icon" aria-hidden="true"><use href="#i-check-16" /></svg><span>Markdown parser<small>lossless, 652 / 652 CommonMark</small></span></li>
+            <li><svg class="gt-icon" aria-hidden="true"><use href="#i-check-16" /></svg><span>Framework adapters<small>React and Vue</small></span></li>
+            <li><svg class="gt-icon" aria-hidden="true"><use href="#i-check-16" /></svg><span>Real-time collaboration<small>CRDT in Rust/WASM</small></span></li>
+            <li><svg class="gt-icon" aria-hidden="true"><use href="#i-check-16" /></svg><span>Comments, suggestions, versions<small>anchored threads, block compare</small></span></li>
+            <li><svg class="gt-icon" aria-hidden="true"><use href="#i-check-16" /></svg><span>AI layer, PDF and DOCX<small>your model; browser and server writers</small></span></li>
+            <li><svg class="gt-icon" aria-hidden="true"><use href="#i-check-16" /></svg><span>Migration<small>ProseMirror, Tiptap, Slate, Lexical</small></span></li>
+            <li><svg class="gt-icon" aria-hidden="true"><use href="#i-check-16" /></svg><span>GoTipe Cloud and the SDK<small>Go service, Docker Compose</small></span></li>
           </ul>
         </article>
-        <article class="site-card">
-          <div class="site-card-top"><h3>GoTipe Cloud</h3><span class="site-badge">MIT</span></div>
-          <p>A Go service you run: documents, permissions, sync, exports and an AI proxy.</p>
+        <article class="site-licence is-tint">
+          <div class="site-licence-top"><span class="site-label">Ship a little sooner</span><span class="site-badge is-commercial">Commercial</span></div>
+          <h3>Ready-made interface</h3>
+          <p class="site-licence-meta">4 parts · one licence per product</p>
           <ul>
-            <li><svg class="gt-icon" aria-hidden="true"><use href="#i-check" /></svg>PostgreSQL and Valkey</li>
-            <li><svg class="gt-icon" aria-hidden="true"><use href="#i-check" /></svg>One Docker Compose file</li>
+            <li><svg class="gt-icon" aria-hidden="true"><use href="#i-check-16" /></svg><span>BlockEditor and PageEditor<small>for React</small></span></li>
+            <li><svg class="gt-icon" aria-hidden="true"><use href="#i-check-16" /></svg><span>The block editor for Vue<small>slash menu, drag handle, toolbar</small></span></li>
+            <li><svg class="gt-icon" aria-hidden="true"><use href="#i-check-16" /></svg><span>AI interface components<small>command line, suggestions</small></span></li>
+            <li><svg class="gt-icon" aria-hidden="true"><use href="#i-check-16" /></svg><span>The theme and its four views<small>notion, docs, modern, minimal</small></span></li>
           </ul>
+          <p class="site-licence-free">
+            <strong>Free</strong> for individuals, open source, non-profits and companies under $1M
+            revenue. Above that, one licence per product.
+          </p>
         </article>
       </div>
     </div>
@@ -309,59 +425,31 @@
 
   <section class="site-section">
     <div class="site-wrap">
-      <div class="site-section-head">
-        <p class="site-eyebrow">Licensing</p>
-        <h2>Open where it matters.</h2>
-      </div>
-      <div class="site-grid is-2">
-        <article class="site-card">
-          <div class="site-card-top"><h3>Engine and services</h3><span class="site-badge">MIT</span></div>
-          <ul>
-            <li><svg class="gt-icon" aria-hidden="true"><use href="#i-check" /></svg>Engine, Markdown and framework adapters</li>
-            <li><svg class="gt-icon" aria-hidden="true"><use href="#i-check" /></svg>Collaboration, comments, suggestions, versions</li>
-            <li><svg class="gt-icon" aria-hidden="true"><use href="#i-check" /></svg>AI layer, PDF and DOCX export, migration</li>
-            <li><svg class="gt-icon" aria-hidden="true"><use href="#i-check" /></svg>GoTipe Cloud and the SDK</li>
-          </ul>
-        </article>
-        <article class="site-card">
-          <div class="site-card-top"><h3>Ready-made interface</h3><span class="site-badge is-commercial">Commercial</span></div>
-          <ul>
-            <li><svg class="gt-icon" aria-hidden="true"><use href="#i-check" /></svg>Free for personal, open-source and non-profit work, and for companies under $1M revenue</li>
-            <li><svg class="gt-icon" aria-hidden="true"><use href="#i-check" /></svg>BlockEditor and PageEditor for React</li>
-            <li><svg class="gt-icon" aria-hidden="true"><use href="#i-check" /></svg>The block editor for Vue</li>
-            <li><svg class="gt-icon" aria-hidden="true"><use href="#i-check" /></svg>AI interface components</li>
-            <li><svg class="gt-icon" aria-hidden="true"><use href="#i-check" /></svg>The theme and its four views</li>
-          </ul>
-        </article>
+      <div class="site-stage site-band">
+        <p class="site-eyebrow">The next chapter is yours</p>
+        <h2>Build on an engine<br />you own.</h2>
+        <p class="site-sub">Start with the quick start, or open the playground and edit a real document.</p>
+        <div class="site-actions">
+          <span class="gotipe-button site-cta">Read the docs<svg class="gt-icon" aria-hidden="true"><use href="#i-arrow-right" /></svg></span>
+          <span class="gotipe-button site-cta is-second">Open the playground</span>
+        </div>
+        <p class="site-band-legend"><span>Engine <strong>MIT</strong></span><span>Services <strong>MIT</strong></span><span>Interface <strong>Commercial</strong></span></p>
       </div>
     </div>
   </section>
-
-  <div class="site-wrap">
-    <div class="site-band">
-      <div>
-        <h2>Build on an engine you own.</h2>
-        <p>Start with the quick start, or open the playground and edit a real document.</p>
-      </div>
-      <div class="site-actions">
-        <span class="gotipe-button is-cta is-on-inverse">Read the docs</span>
-        <span class="gotipe-button is-cta is-quiet">Open the playground</span>
-      </div>
-    </div>
-  </div>
 
   <footer class="site-foot">
     <div class="site-wrap">
       <div class="site-foot-grid">
         <div>
-          <a class="site-brand"><svg class="site-logo" aria-hidden="true"><use href="#i-logo" /></svg>GoTipe</a>
-          <p>A document editor framework with its own engine.</p>
+          <a class="site-brand is-large"><svg class="site-logo" aria-hidden="true"><use href="#i-logo" /></svg>GoTipe</a>
+          <p>A document editor framework with its own engine. TypeScript and Rust/WASM.</p>
         </div>
-        <div><h4>Product</h4><a>Docs</a><a>Playground</a><a>Changelog</a></div>
-        <div><h4>Resources</h4><a>Licensing</a><a>Security</a><a>Browser support</a></div>
-        <div><h4>Project</h4><a>GitHub</a><a>Contributing</a><a>Report a vulnerability</a></div>
+        <div><h4>Product</h4><a>Docs</a><a>Playground</a><a>Licensing</a><a>Changelog</a></div>
+        <div><h4>Resources</h4><a>Quick start</a><a>Security</a><a>Browser support</a></div>
+        <div><h4>Project</h4><a>GitHub</a><a>npm</a><a>Contributing</a><a>Report a vulnerability</a></div>
       </div>
-      <p class="site-foot-base">© 2026 GoTipe contributors · MIT and commercial licenses</p>
+      <p class="site-foot-base"><span>© 2026 GoTipe contributors · MIT and commercial licences</span><span class="site-mono">0.1</span></p>
     </div>
   </footer>
 </div>

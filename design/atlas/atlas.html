@@ -662,92 +662,190 @@
 }
 
 /* tokens-site.css */
-/* Site tokens: the landing and the documentation of GoTipe. The site wears the library's palette
-   (--gt-*), so light and dark come for free; here live only its sizes and how its columns fold on a
-   narrow screen. A frame is a container, so the folds are container queries. */
+/* Site tokens: the landing and the documentation of GoTipe. The site keeps the library's text,
+   lines and accent (--gt-*) and adds its own voice: Inter for headings and text, JetBrains Mono for
+   labels and code, tinted stages and cards. The faces are named first and fall back to the
+   library's system families; nothing is loaded here, the site will host the files itself.
+   A frame is a container, so the folds are container queries. */
 
 :root {
+  /* type families of the site */
+  --site-font-text: Inter, var(--gt-font-ui);
+  --site-font-display: Inter, var(--gt-font-ui);
+  --site-font-mono: "JetBrains Mono", var(--gt-font-mono);
+  --site-weight-display: 500;
+
   /* the page */
-  --site-max: 1160px;
-  --site-docs-max: 1400px;
-  --site-pad-x: 40px;
-  --site-head-h: 56px;
-  --site-logo: 24px;
-  --site-hero-top: 88px;
-  --site-hero-gap: 56px;
-  --site-section-y: 104px;
-  --site-section-gap: 48px;
+  --site-max: 1200px;
+  --site-docs-max: 1440px;
+  --site-pad-x: 48px;
+  --site-stage-inset: 12px;
+  --site-stage-radius: 28px;
+  --site-head-top: 16px;
+  --site-head-max: 1056px;
+  --site-dot: 6px;
+  --site-head-pad-x: 32px;
+  --site-head-h: 60px;
+  --site-head-in-pad: 0 12px 0 20px;
+  --site-head-radius: 16px;
+  --site-docs-head-h: 60px;
+  --site-logo: 26px;
+  --site-logo-l: 32px;
+  --site-hero-top: 172px;
+  --site-hero-bottom: 40px;
+  --site-hero-gap: 88px;
+  --site-hero-strip-top: 104px;
+  --site-section-y: 112px;
+  --site-section-gap: 56px;
+  --site-gap-xs: 4px;
   --site-gap-s: 8px;
+  --site-gap-m: 12px;
   --site-gap: 16px;
   --site-gap-l: 24px;
   --site-gap-xl: 32px;
-  --site-head-max: 760px;
-  --site-lede-max: 540px;
+  --site-gap-2xl: 40px;
+  --site-gap-3xl: 64px;
+  --site-title-max: 680px;
+  --site-lede-max: 520px;
+  --site-aside-max: 380px;
 
-  /* type: the editor's family, only larger at the top of the page */
-  --site-hero-size: 56px;
-  --site-hero-leading: 60px;
-  --site-hero-tracking: -0.025em;
-  --site-h2-size: 36px;
-  --site-h2-leading: 42px;
-  --site-h2-tracking: -0.02em;
+  /* type: Inter 500 with tight tracking for headings, quiet text, mono labels */
+  --site-hero-size: 80px;
+  --site-hero-leading: 82px;
+  --site-hero-tracking: -0.048em;
+  --site-h2-size: 58px;
+  --site-h2-leading: 63px;
+  --site-h2-tracking: -0.042em;
+  --site-panel-h2-size: 50px;
+  --site-panel-h2-leading: 55px;
+  --site-h3-l-size: 30px;
+  --site-h3-l-leading: 37px;
+  --site-h3-m-size: 26px;
+  --site-h3-m-leading: 33px;
+  --site-h3-tracking: -0.032em;
   --site-h3-size: 16px;
   --site-h3-leading: 24px;
+  --site-h4-size: 14px;
+  --site-h4-leading: 21px;
+  --site-title-tracking: -0.02em;
   --site-lede-size: 18px;
-  --site-lede-leading: 28px;
+  --site-lede-leading: 30px;
   --site-text-size: 15px;
   --site-text-leading: 24px;
+  --site-body-size: 14px;
+  --site-body-leading: 22px;
   --site-small-size: 13px;
   --site-small-leading: 20px;
-  --site-eyebrow-size: 12px;
-  --site-eyebrow-leading: 16px;
-  --site-eyebrow-pad: 3px 10px;
-  --site-fact-size: 28px;
-  --site-fact-leading: 34px;
+  --site-label-size: 11px;
+  --site-label-leading: 16px;
+  --site-label-tracking: 0.12em;
+  --site-mono-size: 12px;
+  --site-mono-leading: 18px;
+  --site-code-size: 13px;
+  --site-code-leading: 22px;
+  --site-fact-size: 58px;
+  --site-fact-leading: 62px;
+  --site-big-size: 48px;
+  --site-big-leading: 52px;
+  --site-big-tracking: -0.04em;
+  --site-preview-title-size: 30px;
+  --site-preview-title-leading: 36px;
+  --site-pair-size: 24px;
+  --site-pair-leading: 36px;
 
-  /* controls of the site: a larger call to action, the install line, badges */
-  --site-cta-h: 40px;
-  --site-cta-pad: 0 16px;
-  --site-install-h: 40px;
-  --site-install-pad: 0 4px 0 14px;
-  --site-badge-pad: 1px 6px;
-  --site-card-pad: 20px;
-  --site-card-icon: 32px;
-  --site-demo-bar-h: 40px;
-  --site-demo-bar-pad: 0 12px;
-  --site-band-pad: 56px;
-  --site-demo-pad: 20px 28px 28px;
-  --site-demo-top: 64px;
+  /* controls of the site */
+  --site-cta-h: 48px;
+  --site-cta-pad: 0 24px;
+  --site-cta-radius: 12px;
+  --site-head-button-h: 36px;
+  --site-head-button-pad: 0 14px;
+  --site-head-button-radius: 10px;
+  --site-chip-pad: 4px 12px 4px 4px;
+  --site-chip-tag-pad: 1px 7px;
+  --site-badge-pad: 3px 8px;
+  --site-badge-radius: 8px;
+  --site-icon-box: 36px;
+  --site-icon-box-radius: 10px;
+
+  /* cards and windows */
+  --site-card-radius: 22px;
+  --site-card-radius-s: 16px;
+  --site-window-radius: 14px;
+  --site-card-pad: 36px;
+  --site-card-pad-s: 20px;
+  --site-run-pad: 32px;
+  --site-bento-h: 424px;
+  --site-stack-pad: 28px;
+  --site-stack-w: 484px;
+  --site-plinth-pad: 40px;
+  --site-plinth-radius: 24px;
+  --site-window-bar-h: 48px;
+  --site-window-bar-pad: 0 16px;
+  --site-pane-pad: 28px 32px;
+  --site-pane-pad-src: 28px 0;
+  --site-src-line-pad: 0 28px;
+  --site-src-num-w: 24px;
+  --site-src-cols: minmax(0, 0.9fr) minmax(0, 1fr);
+  --site-window-foot-pad: 12px 28px;
+  --site-toolbar-room: 52px;
+  --site-feature-pad: 28px 0;
+  --site-feature-gap-x: 48px;
+  --site-look-pad: 14px 16px;
+  --site-looks-cols: minmax(0, 0.68fr) minmax(0, 1fr);
+  --site-looks-gap: 72px;
+  --site-look-page-pad: 40px 48px 36px;
+  --site-panel-radius: 24px;
+  --site-panel-pad: 48px 44px;
+  --site-panel-cols: minmax(0, 0.85fr) minmax(0, 1.15fr);
+  --site-step-num-w: 28px;
+  --site-licence-pad: 32px;
+  --site-licence-row-pad: 14px 0;
+  --site-band-pad: 88px 40px;
+  --site-band-radius: 26px;
+  --site-diagram-w: 352px;
+  --site-diagram-pad: 12px 20px;
+  --site-diagram-engine-pad: 16px 20px;
+  --site-md-card-pad: 20px;
+  --site-pair-pad: 32px;
+  --site-arrow: 28px;
+  --site-tile-icon: 20px;
 
   /* columns that fold */
-  --site-hero-cols: minmax(0, 1fr) minmax(0, 1.08fr);
-  --site-cols-4: 4;
+  --site-hero-cols: minmax(0, 1fr) var(--site-stack-w);
+  --site-head-cols: minmax(0, 1fr) var(--site-aside-max);
   --site-cols-3: 3;
   --site-cols-2: 2;
-  --site-steps-cols: minmax(0, 0.8fr) minmax(0, 1.2fr);
-  --site-foot-cols: minmax(0, 1.4fr) repeat(3, minmax(0, 1fr));
+  --site-cols-4: 4;
+  --site-bento-wide-cols: minmax(0, 1fr) minmax(0, 0.9fr);
+  --site-foot-cols: minmax(0, 1.5fr) repeat(3, minmax(0, 1fr));
   --site-nav-display: flex;
   --site-menu-display: none;
   --site-wide-display: inline-flex;
   --site-search-button-display: none;
+  --site-src-display: block;
+  --site-strip-labels-display: flex;
 
   /* the documentation: navigation, page, outline */
-  --site-side-w: 232px;
-  --site-docs-gap: 48px;
+  --site-side-w: 248px;
+  --site-docs-gap: 56px;
   --site-side-display: block;
   --site-toc-display: block;
-  --site-side-pad: 28px 0 48px;
-  --site-side-item-pad: 4px 10px;
-  --site-side-group-gap: 20px;
-  --site-search-w: 240px;
-  --site-search-h: 32px;
-  --site-search-pad: 0 4px 0 10px;
+  --site-side-pad: 32px 0 48px;
+  --site-side-item-pad: 5px 12px;
+  --site-side-group-gap: 24px;
+  --site-search-w: 280px;
+  --site-search-h: 36px;
+  --site-search-pad: 0 6px 0 12px;
+  --site-search-radius: 10px;
   --site-doc-top: 40px;
-  --site-pager-pad: 12px 16px;
-  --site-dialog-w: 600px;
-  --site-dialog-top: 72px;
-  --site-dialog-input-h: 48px;
-  --site-result-pad: 8px 12px;
+  --site-pager-pad: 16px 20px;
+  --site-dialog-w: 620px;
+  --site-dialog-top: 80px;
+  --site-dialog-radius: 18px;
+  --site-dialog-input-h: 56px;
+  --site-result-pad: 10px 12px;
+  --site-result-radius: 10px;
+  --site-try-pad: 24px 28px;
 }
 
 /* the docs columns name the docs view's own widths, so they are set inside the view, not at the root */
@@ -768,15 +866,23 @@
   .gotipe-root > * {
     --site-pad-x: 32px;
     --site-hero-cols: minmax(0, 1fr);
-    --site-hero-top: 64px;
+    --site-head-cols: minmax(0, 1fr);
+    --site-hero-top: 136px;
+    --site-hero-size: 64px;
+    --site-hero-leading: 66px;
+    --site-h2-size: 46px;
+    --site-h2-leading: 50px;
+    --site-cols-3: 1;
     --site-cols-4: 2;
-    --site-cols-3: 2;
-    --site-steps-cols: minmax(0, 1fr);
+    --site-bento-wide-cols: minmax(0, 1fr);
+    --site-looks-cols: minmax(0, 1fr);
+    --site-panel-cols: minmax(0, 1fr);
     --site-foot-cols: repeat(2, minmax(0, 1fr));
     --site-nav-display: none;
     --site-menu-display: inline-flex;
     --site-docs-cols: minmax(0, 1fr);
     --site-side-display: none;
+    --site-bento-h: auto;
   }
 }
 
@@ -784,35 +890,132 @@
 @container (max-width: 640px) {
   .gotipe-root > * {
     --site-pad-x: 20px;
-    --site-hero-top: 40px;
-    --site-hero-gap: 40px;
+    --site-stage-inset: 8px;
+    --site-stage-radius: 22px;
+    --site-head-top: 12px;
+    --site-head-pad-x: 16px;
+    --site-head-h: 56px;
+    --site-head-in-pad: 0 8px 0 14px;
+    --site-hero-top: 112px;
+    --site-hero-gap: 48px;
+    --site-hero-strip-top: 48px;
     --site-section-y: 72px;
     --site-section-gap: 32px;
-    --site-hero-size: 38px;
-    --site-hero-leading: 42px;
-    --site-h2-size: 28px;
-    --site-h2-leading: 34px;
+    --site-hero-size: 46px;
+    --site-hero-leading: 48px;
+    --site-h2-size: 36px;
+    --site-h2-leading: 40px;
+    --site-panel-h2-size: 34px;
+    --site-panel-h2-leading: 38px;
+    --site-h3-l-size: 24px;
+    --site-h3-l-leading: 30px;
     --site-lede-size: 16px;
     --site-lede-leading: 26px;
-    --site-fact-size: 22px;
-    --site-fact-leading: 28px;
-    --site-cols-3: 1;
+    --site-fact-size: 40px;
+    --site-fact-leading: 44px;
+    --site-big-size: 40px;
+    --site-big-leading: 44px;
     --site-cols-2: 1;
-    --site-band-pad: 32px;
+    --site-cols-4: 2;
+    --site-card-pad: 24px;
+    --site-plinth-pad: 12px;
+    --site-src-cols: minmax(0, 1fr);
+    --site-src-display: none;
+    --site-panel-pad: 32px 24px;
+    --site-band-pad: 56px 20px;
     --site-wide-display: none;
+    --site-strip-labels-display: none;
     --site-search-button-display: inline-flex;
     --site-doc-top: 24px;
-    --site-demo-pad: 16px 20px 20px;
-    --site-demo-top: 56px;
+    --site-cta-pad: 0 20px;
   }
 }
 
-/* the dim behind the search dialog: the page stays readable under it */
+/* ---- light: blue-tinted stages, a cool grey panel, sage and sand cards ---- */
 [data-theme="light"] {
-  --site-scrim: rgb(35 35 34 / 0.2);
+  --site-bg: #ffffff;
+  --site-card: #ffffff;
+  --site-surface: #f6f7f9;
+  --site-surface-line: rgb(25 30 45 / 0.08);
+  --site-stage: #e4ebf8;
+  --site-tint: #edf2fd;
+  --site-tint-line: rgb(44 98 212 / 0.12);
+  --site-sage: #edf1e8;
+  --site-sage-ink: #2f7559;
+  --site-sand: #f5f1e9;
+  --site-accent-tint: rgb(44 98 212 / 0.09);
+  --site-accent-soft: rgb(44 98 212 / 0.14);
+  --site-cta-bg: #2c62d4;
+  --site-cta-text: #ffffff;
+  --site-cta-2-bg: #ffffff;
+  --site-cta-2-line: rgb(25 30 45 / 0.1);
+  --site-glass: rgb(255 255 255 / 0.9);
+  --site-glass-line: rgb(25 30 45 / 0.08);
+  --site-glass-shadow: 0 1px 2px rgb(25 30 45 / 0.04), 0 12px 32px -16px rgb(25 30 45 / 0.18);
+  --site-stack: rgb(255 255 255 / 0.56);
+  --site-stack-line: rgb(255 255 255 / 0.8);
+  --site-stack-shadow: 0 24px 60px -32px rgb(30 60 130 / 0.3);
+  --site-item-shadow: 0 1px 2px rgb(25 30 45 / 0.04), 0 6px 16px -10px rgb(25 30 45 / 0.14);
+  --site-window-shadow: 0 1px 2px rgb(25 30 45 / 0.05), 0 28px 60px -30px rgb(30 60 130 / 0.32);
+  --site-streaks: linear-gradient(
+      122deg,
+      transparent 16%,
+      rgb(255 255 255 / 0.32) 16.2%,
+      transparent 31%
+    ),
+    linear-gradient(122deg, transparent 48%, rgb(255 255 255 / 0.4) 48.2%, transparent 65%),
+    linear-gradient(122deg, transparent 77%, rgb(44 98 212 / 0.06) 77.2%, transparent 94%);
+  --site-plinth: linear-gradient(135deg, #e7eefb, #f6f7f9 70%, #e4ebf8);
+  --site-scrim: rgb(25 30 45 / 0.22);
 }
+
+/* ---- dark: the same stages in deep blue-grey, cards a step above the page ---- */
 [data-theme="dark"] {
-  --site-scrim: rgb(0 0 0 / 0.5);
+  --site-bg: #191918;
+  --site-card: #222221;
+  --site-surface: #1f1f1e;
+  --site-surface-line: rgb(255 255 255 / 0.07);
+  --site-stage: #19202d;
+  --site-tint: #1c2333;
+  --site-tint-line: rgb(107 156 255 / 0.16);
+  --site-sage: #1c221e;
+  --site-sage-ink: #86c9a8;
+  --site-sand: #23211d;
+  --site-accent-tint: rgb(107 156 255 / 0.14);
+  --site-accent-soft: rgb(107 156 255 / 0.22);
+  --site-cta-bg: #6b9cff;
+  --site-cta-text: #0d1424;
+  --site-cta-2-bg: rgb(255 255 255 / 0.06);
+  --site-cta-2-line: rgb(255 255 255 / 0.12);
+  --site-glass: rgb(34 34 33 / 0.9);
+  --site-glass-line: rgb(255 255 255 / 0.09);
+  --site-glass-shadow: 0 1px 2px rgb(0 0 0 / 0.3), 0 12px 32px -16px rgb(0 0 0 / 0.6);
+  --site-stack: rgb(255 255 255 / 0.035);
+  --site-stack-line: rgb(255 255 255 / 0.08);
+  --site-stack-shadow: 0 24px 60px -32px rgb(0 0 0 / 0.7);
+  --site-item-shadow: 0 0 0 1px rgb(255 255 255 / 0.05), 0 6px 16px -10px rgb(0 0 0 / 0.6);
+  --site-window-shadow: 0 0 0 1px rgb(255 255 255 / 0.06), 0 28px 60px -30px rgb(0 0 0 / 0.8);
+  --site-streaks: linear-gradient(
+      122deg,
+      transparent 16%,
+      rgb(255 255 255 / 0.025) 16.2%,
+      transparent 31%
+    ),
+    linear-gradient(122deg, transparent 48%, rgb(255 255 255 / 0.035) 48.2%, transparent 65%),
+    linear-gradient(122deg, transparent 77%, rgb(107 156 255 / 0.07) 77.2%, transparent 94%);
+  --site-plinth: linear-gradient(135deg, #1c2333, #1f1f1e 70%, #19202d);
+  --site-scrim: rgb(0 0 0 / 0.55);
+}
+
+/* the dark panel of the landing wears the library's dark theme (data-theme="dark" on the panel);
+   its own ground is set by the page's theme, one step darker than the dark page */
+html[data-theme="light"] .site-panel {
+  --site-panel-bg: #17181b;
+  --site-panel-line: rgb(255 255 255 / 0.08);
+}
+html[data-theme="dark"] .site-panel {
+  --site-panel-bg: #111112;
+  --site-panel-line: rgb(255 255 255 / 0.09);
 }
 
 /* atlas.css */
@@ -3589,14 +3792,15 @@ ol.gotipe-list > li::before {
 }
 
 /* site/landing.css */
-/* The site of GoTipe: the shell shared by the landing and the documentation, then the landing.
-   The site speaks in the editor's family and palette; it is larger only where a page needs a voice. */
+/* The site of GoTipe: the shell shared by the landing and the documentation, then the first screens
+   of the landing. The site keeps the library's text, lines and accent and speaks in its own type:
+   Inter 500 headings with tight tracking, quiet text, small mono labels; tinted rounded stages. */
 
 .site {
   position: relative;
-  background: var(--gt-page-bg);
+  background: var(--site-bg);
   color: var(--gt-text);
-  font-family: var(--gt-font-ui);
+  font-family: var(--site-font-text);
   font-size: var(--site-text-size);
   line-height: var(--site-text-leading);
   letter-spacing: normal;
@@ -3606,36 +3810,37 @@ ol.gotipe-list > li::before {
   text-decoration: none;
 }
 .site-wrap {
+  box-sizing: border-box;
   max-width: var(--site-max);
   margin: 0 auto;
   padding: 0 var(--site-pad-x);
 }
+.site-accent {
+  color: var(--gt-accent);
+}
+.site-mono {
+  font-family: var(--site-font-mono);
+}
+/* the site's code reads as typed: no ligature turns => into an arrow */
+.site-install,
+.site-src-lines,
+.site-panel .gotipe-code-block-scroll {
+  font-variant-ligatures: none;
+}
 
-/* ---- the head of every page: the mark, the sections, the actions ---- */
-.site-head {
-  position: sticky;
-  top: 0;
-  z-index: var(--gt-z-handle);
-  border-bottom: var(--gt-hairline) solid var(--gt-line);
-  background: var(--gt-page-bg);
-}
-.site-head-in {
-  display: flex;
-  align-items: center;
-  gap: var(--site-gap-l);
-  height: var(--site-head-h);
-}
+/* ---- the mark and the controls every head shares ---- */
 .site-brand {
   display: inline-flex;
-  flex: none;
   align-items: center;
   gap: var(--site-gap-s);
+  font-family: var(--site-font-display);
   font-size: var(--site-h3-size);
-  font-weight: var(--gt-weight-title);
+  font-weight: var(--gt-weight-strong);
   line-height: var(--site-h3-leading);
+  letter-spacing: var(--site-title-tracking);
 }
 .site-brand > small {
-  color: var(--gt-text-3);
+  color: var(--gt-text-2);
   font-size: var(--site-h3-size);
   font-weight: var(--gt-weight-regular);
 }
@@ -3644,28 +3849,13 @@ ol.gotipe-list > li::before {
   width: var(--site-logo);
   height: var(--site-logo);
   color: var(--gt-accent);
-  fill: var(--gt-page-bg);
-}
-.site-nav {
-  display: var(--site-nav-display);
-  gap: var(--site-gap-s);
-}
-.site-nav a {
-  padding: var(--gt-button-pad);
-  border-radius: var(--gt-radius-control);
-  color: var(--gt-text-2);
-  font-size: var(--gt-ui-size);
-  line-height: var(--gt-button-h);
-}
-.site-nav a.is-current {
-  color: var(--gt-text);
-  font-weight: var(--gt-weight-medium);
+  fill: var(--site-bg);
 }
 .site-head-end {
   display: flex;
   align-items: center;
-  gap: var(--site-gap-s);
-  margin-left: auto;
+  justify-content: flex-end;
+  gap: var(--site-gap-xs);
 }
 .site-head-end > .is-wide {
   display: var(--site-wide-display);
@@ -3673,82 +3863,175 @@ ol.gotipe-list > li::before {
 .site-menu-button {
   display: var(--site-menu-display);
 }
-
-/* ---- calls to action ---- */
-.site .gotipe-button.is-cta {
-  height: var(--site-cta-h);
-  padding: var(--site-cta-pad);
-  font-size: var(--site-text-size);
+.site .site-head-button {
+  height: var(--site-head-button-h);
+  padding: var(--site-head-button-pad);
+  border-radius: var(--site-head-button-radius);
 }
-.site-install {
-  display: inline-flex;
+.site .site-head-button.is-icon {
+  width: var(--site-head-button-h);
+  padding: 0;
+}
+
+/* ---- the landing's head: a pill floating over the first stage ---- */
+.site-head {
+  position: absolute;
+  top: var(--site-head-top);
+  right: 0;
+  left: 0;
+  z-index: var(--gt-z-handle);
+  padding: 0 var(--site-head-pad-x);
+}
+.site-head-in {
+  display: flex;
   align-items: center;
   gap: var(--site-gap);
   box-sizing: border-box;
-  height: var(--site-install-h);
-  padding: var(--site-install-pad);
-  border-radius: var(--gt-radius-block);
-  box-shadow: inset 0 0 0 var(--gt-hairline) var(--gt-line-strong);
-  max-width: 100%;
-  font-family: var(--gt-font-mono);
+  max-width: var(--site-head-max);
+  height: var(--site-head-h);
+  margin: 0 auto;
+  padding: var(--site-head-in-pad);
+  border-radius: var(--site-head-radius);
+  background: var(--site-glass);
+  box-shadow:
+    inset 0 0 0 var(--gt-hairline) var(--site-glass-line),
+    var(--site-glass-shadow);
+}
+.site-head-in > .site-brand,
+.site-head-in > .site-head-end {
+  flex: 1 0 0;
+}
+.site-nav {
+  display: var(--site-nav-display);
+  gap: var(--site-gap-xs);
+}
+.site-nav a {
+  padding: 0 var(--site-gap-m);
+  color: var(--gt-text-2);
   font-size: var(--site-small-size);
+  line-height: var(--site-head-button-h);
+}
+
+/* ---- a stage: a rounded tinted ground set in from the frame's edges ---- */
+.site-stage {
+  margin: 0 var(--site-stage-inset);
+  border-radius: var(--site-stage-radius);
+  background: var(--site-streaks), var(--site-stage);
+}
+.site-stage.is-grey {
+  padding: var(--site-section-y) 0;
+  background: var(--site-surface);
+}
+.site-section {
+  padding: var(--site-section-y) 0;
+}
+
+/* ---- words every section uses: the mono eyebrow, the big title, the quiet line under it ---- */
+.site-eyebrow,
+.site-label {
+  margin: 0;
+  font-family: var(--site-font-mono);
+  font-size: var(--site-label-size);
+  font-weight: var(--gt-weight-medium);
+  line-height: var(--site-label-leading);
+  letter-spacing: var(--site-label-tracking);
+  text-transform: uppercase;
+}
+.site-eyebrow {
+  color: var(--gt-accent);
+}
+.site-label {
+  color: var(--gt-text-2);
+}
+.site-landing h2:not(.gotipe-doc h2) {
+  margin: var(--site-gap) 0 0;
+  font-family: var(--site-font-display);
+  font-size: var(--site-h2-size);
+  font-weight: var(--site-weight-display);
+  line-height: var(--site-h2-leading);
+  letter-spacing: var(--site-h2-tracking);
+}
+.site-sub {
+  max-width: var(--site-lede-max);
+  margin: var(--site-gap-l) 0 0;
+  color: var(--gt-text-2);
+  font-size: var(--site-text-size);
+  line-height: var(--site-body-leading);
+}
+.site-head-row {
+  display: grid;
+  grid-template-columns: var(--site-head-cols);
+  gap: var(--site-gap-l) var(--site-gap-3xl);
+  align-items: end;
+  margin-bottom: var(--site-section-gap);
+}
+.site-head-row > .site-sub {
+  margin: 0;
+}
+.site-badge {
+  flex: none;
+  padding: var(--site-badge-pad);
+  border-radius: var(--site-badge-radius);
+  box-shadow: inset 0 0 0 var(--gt-hairline) var(--gt-line-strong);
+  color: var(--gt-text-2);
+  font-family: var(--site-font-mono);
+  font-size: var(--site-label-size);
+  line-height: var(--site-label-leading);
+}
+.site-badge.is-commercial {
+  background: var(--site-accent-tint);
+  box-shadow: none;
+  color: var(--gt-accent);
+}
+
+/* ---- calls to action ---- */
+.site-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--site-gap-m);
+  margin-top: var(--site-gap-2xl);
+}
+.site .site-cta {
+  gap: var(--site-gap-s);
+  height: var(--site-cta-h);
+  padding: var(--site-cta-pad);
+  border-radius: var(--site-cta-radius);
+  background: var(--site-cta-bg);
+  color: var(--site-cta-text);
+  font-size: var(--site-body-size);
+}
+.site .site-cta.is-second {
+  background: var(--site-cta-2-bg);
+  box-shadow: inset 0 0 0 var(--gt-hairline) var(--site-cta-2-line);
+  color: var(--gt-text);
+}
+.site-install {
+  display: flex;
+  align-items: center;
+  gap: var(--site-gap-l);
+  max-width: 100%;
+  margin-top: var(--site-gap-l);
+  color: var(--gt-text-2);
+  font-family: var(--site-font-mono);
+  font-size: var(--site-mono-size);
+  line-height: var(--site-mono-leading);
   white-space: nowrap;
 }
 .site-install > code {
   min-width: 0;
   overflow-x: auto;
+  font: inherit;
   scrollbar-width: none;
 }
 .site-install > code::before {
   content: "$ ";
-  color: var(--gt-text-3);
-}
-.site-install > .gotipe-button {
-  color: var(--gt-text-2);
+  color: var(--gt-accent);
 }
 
-/* ---- section heads ---- */
-.site-eyebrow {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--site-gap-s);
-  margin: 0;
-  padding: var(--site-eyebrow-pad);
-  border-radius: var(--gt-radius-round);
-  background: var(--gt-fill-1);
-  color: var(--gt-text-2);
-  font-size: var(--site-eyebrow-size);
-  font-weight: var(--gt-weight-medium);
-  line-height: var(--site-eyebrow-leading);
-}
-.site-section {
-  padding: var(--site-section-y) 0;
-}
-.site-section.is-sunken {
-  background: var(--gt-sunken);
-}
-.site-section-head {
-  max-width: var(--site-head-max);
-  margin-bottom: var(--site-section-gap);
-}
-.site-section-head h2,
-.site-band h2 {
-  margin: var(--site-gap) 0 0;
-  font-size: var(--site-h2-size);
-  font-weight: var(--gt-weight-title);
-  line-height: var(--site-h2-leading);
-  letter-spacing: var(--site-h2-tracking);
-}
-.site-section-head h2 + p {
-  margin: var(--site-gap) 0 0;
-  color: var(--gt-text-2);
-  font-size: var(--site-lede-size);
-  line-height: var(--site-lede-leading);
-}
-
-/* ---- the hero: the promise on the left, a working editor on the right ---- */
+/* ---- the hero: three lines and the stack ---- */
 .site-hero {
-  padding: var(--site-hero-top) 0 var(--site-section-y);
+  padding: var(--site-hero-top) 0 var(--site-hero-bottom);
 }
 .site-hero-grid {
   display: grid;
@@ -3756,66 +4039,162 @@ ol.gotipe-list > li::before {
   gap: var(--site-hero-gap);
   align-items: center;
 }
+.site-hero-grid > * {
+  min-width: 0;
+}
+.site-chip {
+  display: flex;
+  align-items: center;
+  gap: var(--site-gap-s);
+  margin: 0;
+  color: var(--gt-text-2);
+  font-size: var(--site-small-size);
+  line-height: var(--site-small-leading);
+}
+.site-chip > span {
+  padding: var(--site-chip-tag-pad);
+  border-radius: var(--gt-radius-control);
+  background: var(--site-card);
+  box-shadow: var(--site-item-shadow);
+  color: var(--gt-text);
+  font-family: var(--site-font-mono);
+  font-size: var(--site-label-size);
+  font-weight: var(--gt-weight-medium);
+  line-height: var(--site-label-leading);
+}
+.site-chip > .gt-icon {
+  color: var(--gt-text-3);
+}
 .site-hero h1 {
-  margin: var(--site-gap-l) 0 0;
+  margin: var(--site-gap-xl) 0 0;
+  font-family: var(--site-font-display);
   font-size: var(--site-hero-size);
-  font-weight: var(--gt-weight-title);
+  font-weight: var(--site-weight-display);
   line-height: var(--site-hero-leading);
   letter-spacing: var(--site-hero-tracking);
 }
 .site-lede {
   max-width: var(--site-lede-max);
-  margin: var(--site-gap-l) 0 0;
+  margin: var(--site-gap-xl) 0 0;
   color: var(--gt-text-2);
   font-size: var(--site-lede-size);
   line-height: var(--site-lede-leading);
 }
-.site-actions {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--site-gap-s);
-  margin-top: var(--site-gap-xl);
+
+/* the stack: a frosted card with the three parts GoTipe stands on */
+.site-stack {
+  display: grid;
+  gap: var(--site-gap-m);
+  padding: var(--site-stack-pad);
+  border-radius: var(--site-card-radius);
+  background: var(--site-stack);
+  box-shadow:
+    inset 0 0 0 var(--gt-hairline) var(--site-stack-line),
+    var(--site-stack-shadow);
 }
-.site-hero .site-install {
-  margin-top: var(--site-gap-l);
+.site-stack-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 0 0 var(--site-gap-xs);
+  color: var(--gt-accent);
+}
+.site-stack-item {
+  padding: var(--site-card-pad-s);
+  border-radius: var(--site-card-radius-s);
+  background: var(--site-card);
+  box-shadow: var(--site-item-shadow);
+}
+.site-stack-title {
+  display: flex;
+  align-items: center;
+  gap: var(--site-gap-m);
+  margin: 0;
+  color: var(--gt-accent);
+}
+.site-stack-title > strong {
+  color: var(--gt-text);
+  font-size: var(--site-h4-size);
+  font-weight: var(--gt-weight-strong);
+  line-height: var(--site-h4-leading);
+  letter-spacing: var(--site-title-tracking);
+}
+.site-stack-title > span {
+  margin-left: auto;
+  color: var(--gt-text-3);
+  font-family: var(--site-font-mono);
+  font-size: var(--site-label-size);
+  line-height: var(--site-label-leading);
+}
+.site-stack-item > p:not(.site-stack-title) {
+  margin: var(--site-gap-s) 0 var(--site-gap-m);
+  color: var(--gt-text-2);
+  font-size: var(--site-small-size);
+  line-height: var(--site-small-leading);
+}
+.site-stack-item > .site-badge {
+  display: inline-block;
+  background: var(--gt-fill-1);
+  box-shadow: none;
+}
+.site-stack-foot {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--site-gap-s);
+  margin: var(--site-gap-s) 0 0;
+  color: var(--gt-text-2);
+  font-size: var(--site-small-size);
+  line-height: var(--site-small-leading);
+}
+.site-stack-foot > .gt-icon {
+  color: var(--gt-accent);
 }
 
-/* a window with the real editor in it: the document is the library's own markup */
-.site-demo {
-  min-width: 0;
-  border-radius: var(--gt-radius-card);
-  background: var(--gt-page-bg);
-  box-shadow: var(--gt-shadow-card);
-}
-.site-demo-bar {
+/* the foot of the first stage: the promise and what it is made of */
+.site-strip {
   display: flex;
   align-items: center;
-  gap: var(--site-gap-s);
-  height: var(--site-demo-bar-h);
-  padding: var(--site-demo-bar-pad);
-  border-bottom: var(--gt-hairline) solid var(--gt-line);
+  justify-content: space-between;
+  gap: var(--site-gap-l);
+  margin-top: var(--site-hero-strip-top);
+  padding-top: var(--site-gap-l);
+  border-top: var(--gt-hairline) solid var(--gt-line);
   color: var(--gt-text-2);
-  font-size: var(--gt-ui-small);
+  font-size: var(--site-small-size);
+  line-height: var(--site-small-leading);
 }
-.site-demo-bar > .gotipe-seg {
-  margin-left: auto;
+.site-strip-labels {
+  display: var(--site-strip-labels-display);
+  align-items: center;
+  gap: var(--site-gap-xl);
+  font-family: var(--site-font-mono);
+  font-size: var(--site-mono-size);
 }
-.site-demo > .gotipe-page {
-  max-width: none;
-  padding: var(--site-demo-pad);
-}
-.site-demo.is-hero > .gotipe-page {
-  padding-top: var(--site-demo-top);
+.site-strip-labels > span {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--site-gap-s);
 }
 
 /* ---- facts that can be checked ---- */
+.site-facts-head {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--site-gap-l);
+  margin-top: var(--site-section-y);
+  padding-bottom: var(--site-gap-l);
+  border-bottom: var(--gt-hairline) solid var(--gt-line);
+  color: var(--gt-text-2);
+  font-family: var(--site-font-mono);
+  font-size: var(--site-label-size);
+  line-height: var(--site-label-leading);
+}
 .site-facts {
   display: grid;
   grid-template-columns: repeat(var(--site-cols-4), minmax(0, 1fr));
-  gap: var(--site-gap-l);
-  padding: var(--site-gap-xl) 0;
-  border-top: var(--gt-hairline) solid var(--gt-line);
+  gap: var(--site-gap-xl) var(--site-gap-l);
+  padding: var(--site-gap-2xl) 0;
   border-bottom: var(--gt-hairline) solid var(--gt-line);
 }
 .site-fact {
@@ -3826,200 +4205,805 @@ ol.gotipe-list > li::before {
 }
 .site-fact > strong {
   display: block;
-  margin-bottom: var(--site-gap-s);
-  color: var(--gt-text);
-  font-size: var(--site-fact-size);
-  font-weight: var(--gt-weight-title);
-  line-height: var(--site-fact-leading);
-  letter-spacing: var(--site-h2-tracking);
-}
-
-/* ---- cards ---- */
-.site-grid {
-  display: grid;
-  grid-template-columns: repeat(var(--site-cols-3), minmax(0, 1fr));
-  gap: var(--site-gap);
-}
-.site-grid.is-2 {
-  grid-template-columns: repeat(var(--site-cols-2), minmax(0, 1fr));
-}
-.site-grid.is-4 {
-  grid-template-columns: repeat(var(--site-cols-4), minmax(0, 1fr));
-}
-.site-card {
-  min-width: 0;
-  padding: var(--site-card-pad);
-  border-radius: var(--gt-radius-card);
-  background: var(--gt-page-bg);
-  box-shadow: inset 0 0 0 var(--gt-hairline) var(--gt-line);
-}
-.site-card-top {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
   margin-bottom: var(--site-gap);
+  color: var(--gt-text);
+  font-family: var(--site-font-display);
+  font-size: var(--site-fact-size);
+  font-weight: var(--site-weight-display);
+  line-height: var(--site-fact-leading);
+  letter-spacing: var(--site-big-tracking);
+  white-space: nowrap;
 }
-.site-card-icon {
-  display: grid;
-  place-items: center;
-  width: var(--site-card-icon);
-  height: var(--site-card-icon);
-  border-radius: var(--gt-radius-control);
-  background: var(--gt-fill-1);
-  color: var(--gt-text-2);
-}
-.site-card h3 {
-  margin: 0;
-  font-size: var(--site-h3-size);
-  font-weight: var(--gt-weight-strong);
-  line-height: var(--site-h3-leading);
-}
-.site-card p {
-  margin: var(--site-gap-s) 0 0;
-  color: var(--gt-text-2);
-  font-size: var(--site-small-size);
-  line-height: var(--site-small-leading);
-}
-.site-card ul {
-  margin: var(--site-gap) 0 0;
-  padding: 0;
-  list-style: none;
-  font-size: var(--site-small-size);
-  line-height: var(--site-small-leading);
-}
-.site-card li {
-  display: flex;
-  gap: var(--site-gap-s);
-  padding: var(--gt-hairline) 0;
-}
-.site-card li > .gt-icon {
-  margin-top: var(--gt-hairline);
-  color: var(--gt-text-3);
-}
-.site-badge {
-  flex: none;
-  padding: var(--site-badge-pad);
-  border-radius: var(--gt-radius-inline);
-  background: var(--gt-fill-2);
-  color: var(--gt-text-2);
-  font-size: var(--site-eyebrow-size);
-  font-weight: var(--gt-weight-medium);
-  line-height: var(--site-eyebrow-leading);
-}
-.site-badge.is-commercial {
-  background: var(--gt-info-tint);
+.site-fact > strong.site-accent {
   color: var(--gt-accent);
 }
 
-/* the same document in the four views: each card is a page of its view */
-.site-view-card {
+/* site/landing-window.css */
+/* Windows of the landing: Markdown beside the document it becomes, and one document in its view.
+   The documents inside are the library's own markup; the site draws only the window around them. */
+
+.site-title-row {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--site-gap-l);
+  margin-bottom: var(--site-gap-2xl);
+}
+.site-title-arrow.gt-icon {
+  width: var(--site-arrow);
+  height: var(--site-arrow);
+  color: var(--gt-accent);
+}
+
+/* a soft plinth under the window */
+.site-plinth {
+  padding: var(--site-plinth-pad);
+  border-radius: var(--site-plinth-radius);
+  background: var(--site-plinth);
+}
+.site-plinth-note {
+  margin: var(--site-gap-l) 0 0;
+  color: var(--gt-text-2);
+  font-size: var(--site-small-size);
+  line-height: var(--site-small-leading);
+  text-align: center;
+}
+
+/* ---- the window: a bar, panes, a foot ---- */
+.site-window {
   min-width: 0;
+  margin: 0;
   overflow: hidden;
-  background: var(--gt-page-bg);
-  font-size: var(--gt-body-size);
-  line-height: var(--gt-body-leading);
-  letter-spacing: var(--gt-body-tracking);
-  border-radius: var(--gt-radius-card);
+  border-radius: var(--site-window-radius);
+  background: var(--site-card);
+  box-shadow:
+    0 0 0 var(--gt-hairline) var(--gt-line),
+    var(--site-window-shadow);
+}
+.site-window-bar {
+  display: flex;
+  align-items: center;
+  gap: var(--site-gap-m);
+  height: var(--site-window-bar-h);
+  padding: var(--site-window-bar-pad);
+  border-bottom: var(--gt-hairline) solid var(--gt-line);
+  color: var(--gt-text-2);
+  font-size: var(--site-small-size);
+  line-height: var(--site-small-leading);
+}
+.site-window-path {
+  display: inline-flex;
+  gap: var(--site-gap-s);
+  min-width: 0;
+  white-space: nowrap;
+}
+.site-window-path > span {
+  color: var(--gt-text-3);
+}
+.site-window-path > strong {
+  color: var(--gt-text);
+  font-weight: var(--gt-weight-medium);
+}
+.site-window-end {
+  display: flex;
+  align-items: center;
+  gap: var(--site-gap-m);
+  margin-left: auto;
+}
+.site-tag {
+  padding: var(--site-chip-tag-pad);
+  border-radius: var(--gt-radius-control);
+  background: var(--gt-fill-1);
   box-shadow: inset 0 0 0 var(--gt-hairline) var(--gt-line);
+  color: var(--gt-text-2);
+  font-family: var(--site-font-mono);
+  font-size: var(--site-label-size);
+  line-height: var(--site-label-leading);
 }
-.site-view-card > .gotipe-page {
+.site-code-attr {
+  color: var(--gt-text-2);
+  font-family: var(--site-font-mono);
+  font-size: var(--site-label-size);
+  line-height: var(--site-label-leading);
+}
+.site-window-foot {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--site-gap-l);
+  padding: var(--site-window-foot-pad);
+  border-top: var(--gt-hairline) solid var(--gt-line);
+  color: var(--gt-text-2);
+  font-family: var(--site-font-mono);
+  font-size: var(--site-label-size);
+  line-height: var(--site-label-leading);
+}
+.site-window-foot > .is-accent,
+.site-pane-head > .is-live {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--site-gap-s);
+}
+.site-window-foot > .is-accent {
+  color: var(--gt-accent);
+}
+.site-window-foot > .is-accent::before,
+.site-pane-head > .is-live::before,
+.site-pane-foot > .is-dot::before {
+  content: "";
+  width: var(--site-dot);
+  height: var(--site-dot);
+  border-radius: var(--gt-radius-round);
+  background: currentColor;
+}
+
+/* ---- Markdown on the left, the document on the right ---- */
+.site-split {
+  display: grid;
+  grid-template-columns: var(--site-src-cols);
+}
+.site-src {
+  display: var(--site-src-display);
+  padding: var(--site-pane-pad-src);
+  border-right: var(--gt-hairline) solid var(--gt-line);
+  background: var(--site-surface);
+}
+.site-src,
+.site-render {
+  min-width: 0;
+}
+.site-pane-head,
+.site-pane-foot {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--site-gap);
+  margin: 0;
+  color: var(--gt-text-2);
+  font-family: var(--site-font-mono);
+  font-size: var(--site-label-size);
+  line-height: var(--site-label-leading);
+  letter-spacing: var(--site-label-tracking);
+  text-transform: uppercase;
+}
+.site-src > .site-pane-head,
+.site-src > .site-pane-foot {
+  padding: var(--site-src-line-pad);
+}
+.site-pane-head {
+  margin-bottom: var(--site-gap-l);
+}
+.site-pane-head > .is-live {
+  color: var(--site-sage-ink);
+}
+.site-pane-foot {
+  margin-top: var(--site-gap-l);
+}
+.site-pane-foot > .is-dot {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--site-gap-s);
+}
+.site-pane-foot > .is-dot::before {
+  color: var(--site-sage-ink);
+}
+.site-src-lines {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: line;
+  color: var(--gt-text-2);
+  font-family: var(--site-font-mono);
+  font-size: var(--site-code-size);
+  line-height: var(--site-code-leading);
+  white-space: nowrap;
+}
+.site-src-lines > li {
+  display: grid;
+  grid-template-columns: var(--site-src-num-w) minmax(0, 1fr);
+  gap: var(--site-gap);
+  min-height: var(--site-code-leading);
+  padding: var(--site-src-line-pad);
+  counter-increment: line;
+}
+.site-src-lines code {
+  font: inherit;
+}
+.site-src-lines > li::before {
+  content: counter(line);
+  color: var(--gt-text-3);
+  text-align: right;
+}
+.site-src-lines > li.is-current {
+  background: var(--site-accent-tint);
+  color: var(--gt-text);
+}
+.site-src-lines .is-mark {
+  color: var(--gt-accent);
+}
+.site-render {
+  padding: var(--site-pane-pad);
+}
+.site-render > .gotipe-page {
   max-width: none;
-  padding: var(--site-card-pad);
+  padding: 0;
 }
-.site-view-name {
+.site-render .site-has-toolbar {
+  margin-top: var(--site-toolbar-room);
+}
+
+/* ---- the look: one document of the frame's view ---- */
+.site-window.is-look > .gotipe-page {
+  max-width: none;
+  padding: var(--site-look-page-pad);
+}
+
+/* site/landing-sections.css */
+/* The rest of the landing: the bento of features, the looks, the dark panel with the code, the ways
+   to run, the licences, the closing band and the foot. */
+
+.site-section.is-features {
+  padding-top: 0;
+}
+
+/* ---- the bento: three tinted tiles, each with a small drawing of what it says ---- */
+.site-bento {
+  display: grid;
+  grid-template-columns: repeat(var(--site-cols-2), minmax(0, 1fr));
+  gap: var(--site-gap-l);
+}
+.site-tile {
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  min-width: 0;
+  min-height: var(--site-bento-h);
+  padding: var(--site-card-pad);
+  border-radius: var(--site-card-radius);
+  background: var(--site-tint);
+}
+.site-tile.is-sage {
+  background: var(--site-sage);
+}
+.site-tile.is-sand {
+  background: var(--site-sand);
+}
+.site-tile.is-wide {
+  display: grid;
+  grid-column: 1 / -1;
+  grid-template-columns: var(--site-bento-wide-cols);
+  gap: var(--site-gap-xl) var(--site-gap-3xl);
+  align-items: center;
+  min-height: 0;
+}
+.site-tile-top {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  height: var(--site-demo-bar-h);
-  padding: var(--site-demo-bar-pad);
-  border-bottom: var(--gt-hairline) solid var(--gt-line);
+  color: var(--gt-accent);
+}
+.site-tile-top > .gt-icon,
+.site-run .site-tile-top > .gt-icon {
+  width: var(--site-tile-icon);
+  height: var(--site-tile-icon);
+}
+.site-tile.is-sage .site-tile-top {
+  color: var(--site-sage-ink);
+}
+.site-tile.is-sand .site-tile-top {
   color: var(--gt-text-2);
-  font-family: var(--gt-font-ui);
+}
+.site-tile h3 {
+  margin: var(--site-gap-2xl) 0 0;
+  font-family: var(--site-font-display);
+  font-size: var(--site-h3-l-size);
+  font-weight: var(--site-weight-display);
+  line-height: var(--site-h3-l-leading);
+  letter-spacing: var(--site-h3-tracking);
+}
+.site-tile p {
+  max-width: var(--site-aside-max);
+  margin: var(--site-gap-m) 0 0;
+  color: var(--gt-text-2);
+  font-size: var(--site-body-size);
+  line-height: var(--site-body-leading);
+}
+
+/* the engine under your interface */
+.site-diagram {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--site-gap-s);
+  align-self: center;
+  box-sizing: border-box;
+  width: min(var(--site-diagram-w), 100%);
+  margin-top: auto;
+  padding-top: var(--site-gap-xl);
+  color: var(--gt-text-3);
+}
+.site-diagram-box,
+.site-diagram-engine {
+  box-sizing: border-box;
+  width: 100%;
+  border-radius: var(--site-cta-radius);
+}
+.site-diagram-box {
+  padding: var(--site-diagram-pad);
+  background: var(--site-card);
+  box-shadow: var(--site-item-shadow);
+  color: var(--gt-text);
+  font-size: var(--site-small-size);
+  font-weight: var(--gt-weight-medium);
+  line-height: var(--site-small-leading);
+  text-align: center;
+}
+.site-diagram-engine {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--site-gap);
+  padding: var(--site-diagram-engine-pad);
+  background: var(--site-cta-bg);
+  color: var(--site-cta-text);
+  font-size: var(--site-small-size);
+  line-height: var(--site-small-leading);
+}
+.site-diagram-engine > strong {
+  font-weight: var(--gt-weight-strong);
+}
+.site-diagram-engine > span {
+  font-family: var(--site-font-mono);
+  font-size: var(--site-label-size);
+}
+.site-diagram-note {
+  margin-top: var(--site-gap-xs);
+  color: var(--gt-text-2);
+  font-family: var(--site-font-mono);
+  font-size: var(--site-label-size);
+  line-height: var(--site-label-leading);
+}
+
+/* the file written back */
+.site-md-card {
+  margin-top: auto;
+  padding: var(--site-md-card-pad);
+  border-radius: var(--site-cta-radius);
+  background: var(--site-card);
+  box-shadow: var(--site-item-shadow);
+  font-family: var(--site-font-mono);
+}
+.site-tile .site-md-card p {
+  max-width: none;
+  margin: 0;
+  font-size: var(--site-mono-size);
+  line-height: var(--site-code-leading);
+}
+.site-tile .site-md-card p.is-head {
+  color: var(--gt-text);
+}
+.site-tile .site-md-card .site-md-foot {
+  display: flex;
+  justify-content: space-between;
+  margin-top: var(--site-gap-m);
+  padding-top: var(--site-gap-m);
+  border-top: var(--gt-hairline) solid var(--gt-line);
+  font-size: var(--site-label-size);
+  line-height: var(--site-label-leading);
+}
+.site-md-foot > .is-ok {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--site-gap-xs);
+  color: var(--site-sage-ink);
+}
+.site-md-foot > .is-ok > .gt-icon {
+  width: var(--gt-icon-small);
+  height: var(--gt-icon-small);
+}
+
+/* two people in one paragraph */
+.site-pair {
+  min-width: 0;
+  padding: var(--site-pair-pad);
+  border-radius: var(--site-cta-radius);
+  background: var(--site-card);
+  box-shadow: var(--site-item-shadow);
+}
+.site-tile .site-pair-text {
+  max-width: none;
+  margin: 0;
+  color: var(--gt-text);
+  font-family: var(--site-font-display);
+  font-size: var(--site-pair-size);
+  font-weight: var(--site-weight-display);
+  line-height: var(--site-pair-leading);
+  letter-spacing: var(--site-title-tracking);
+}
+.site-tile .site-pair-note {
+  margin: var(--site-gap) 0 0;
+  font-family: var(--site-font-mono);
+  font-size: var(--site-label-size);
+  line-height: var(--site-label-leading);
+}
+
+/* ---- nine smaller features on hairlines ---- */
+.site-features {
+  display: grid;
+  grid-template-columns: repeat(var(--site-cols-3), minmax(0, 1fr));
+  column-gap: var(--site-feature-gap-x);
+  margin-top: var(--site-gap-3xl);
+}
+.site-feature {
+  min-width: 0;
+  padding: var(--site-feature-pad);
+  border-bottom: var(--gt-hairline) solid var(--gt-line);
+}
+.site-feature-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.site-feature h3 {
+  margin: var(--site-gap) 0 0;
+  font-size: var(--site-text-size);
+  font-weight: var(--gt-weight-medium);
+  line-height: var(--site-body-leading);
+  letter-spacing: var(--site-title-tracking);
+}
+.site-feature p {
+  margin: var(--site-gap-xs) 0 0;
+  color: var(--gt-text-2);
+  font-size: var(--site-small-size);
+  line-height: var(--site-small-leading);
+}
+
+/* ---- the looks: a list that switches, the document beside it ---- */
+.site-looks {
+  display: grid;
+  grid-template-columns: var(--site-looks-cols);
+  gap: var(--site-section-gap) var(--site-looks-gap);
+  align-items: start;
+}
+.site-looks > * {
+  min-width: 0;
+}
+.site-look-list {
+  display: grid;
+  gap: var(--site-gap-xs);
+  margin-top: var(--site-gap-2xl);
+}
+.site-look {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--site-gap);
+  padding: var(--site-look-pad);
+  border-radius: var(--site-cta-radius);
+  color: var(--gt-text-2);
+}
+.site-look strong {
+  display: block;
+  font-size: var(--site-body-size);
+  font-weight: var(--gt-weight-medium);
+  line-height: var(--site-small-leading);
+}
+.site-look small {
+  display: block;
   font-size: var(--gt-ui-small);
   line-height: var(--gt-ui-small-leading);
 }
+.site-look.is-on {
+  background: var(--site-card);
+  box-shadow: var(--site-item-shadow);
+}
+.site-look.is-on strong {
+  color: var(--gt-text);
+}
+.site-look > .gt-icon {
+  color: var(--gt-text-3);
+}
+.site-look.is-on > .gt-icon {
+  color: var(--gt-accent);
+}
 
-/* ---- three steps beside the code ---- */
-.site-steps {
+/* site/landing-closing.css */
+/* The end of the landing: the dark panel with the code, the ways to run, the licences, the closing
+   band and the foot. */
+
+/* ---- the dark panel: the library's dark theme on its own darker ground ---- */
+.site-panel {
   display: grid;
-  grid-template-columns: var(--site-steps-cols);
-  gap: var(--site-hero-gap);
-  align-items: start;
+  grid-template-columns: var(--site-panel-cols);
+  overflow: hidden;
+  border-radius: var(--site-panel-radius);
+  background: var(--site-panel-bg);
+  box-shadow: inset 0 0 0 var(--gt-hairline) var(--site-panel-line);
+  color: var(--gt-text);
 }
-.site-step {
+.site-panel > * {
+  min-width: 0;
+}
+.site-panel-copy {
+  display: flex;
+  flex-direction: column;
+  padding: var(--site-panel-pad);
+}
+.site-panel h2 {
+  margin-top: var(--site-gap-l);
+  font-size: var(--site-panel-h2-size);
+  line-height: var(--site-panel-h2-leading);
+}
+.site-panel-steps {
   display: grid;
-  grid-template-columns: var(--site-card-icon) minmax(0, 1fr);
+  gap: var(--site-gap-l);
+  margin: var(--site-gap-2xl) 0 0;
+  padding: 0;
+  list-style: none;
+}
+.site-panel-steps > li {
+  display: grid;
+  grid-template-columns: var(--site-step-num-w) minmax(0, 1fr);
   gap: var(--site-gap);
-  padding: var(--site-gap) 0;
-  border-top: var(--gt-hairline) solid var(--gt-line);
 }
-.site-step:first-child {
-  border-top: 0;
+.site-panel-steps > li > span {
+  color: var(--gt-accent);
+  font-family: var(--site-font-mono);
+  font-size: var(--site-mono-size);
+  line-height: var(--site-body-leading);
 }
-.site-step-num {
-  display: grid;
-  place-items: center;
-  width: var(--site-card-icon);
-  height: var(--site-card-icon);
-  border-radius: var(--gt-radius-round);
-  background: var(--gt-fill-2);
-  font-size: var(--site-small-size);
-  font-weight: var(--gt-weight-strong);
-}
-.site-step h3 {
+.site-panel-steps h3 {
   margin: 0;
-  font-size: var(--site-h3-size);
-  font-weight: var(--gt-weight-strong);
-  line-height: var(--site-h3-leading);
+  font-size: var(--site-text-size);
+  font-weight: var(--gt-weight-medium);
+  line-height: var(--site-body-leading);
 }
-.site-step p {
+.site-panel-steps p {
+  margin: var(--site-gap-xs) 0 0;
+  color: var(--gt-text-2);
+  font-size: var(--site-small-size);
+  line-height: var(--site-small-leading);
+}
+.site-panel-note {
+  margin: auto 0 0;
+  padding-top: var(--site-gap-l);
+  border-top: var(--gt-hairline) solid var(--gt-line);
+  color: var(--gt-text-2);
+  font-family: var(--site-font-mono);
+  font-size: var(--site-label-size);
+  line-height: var(--site-mono-leading);
+}
+.site-panel-steps {
+  margin-bottom: var(--site-gap-2xl);
+}
+.site-panel-note > span {
+  display: block;
+}
+.site-panel-code {
+  border-left: var(--gt-hairline) solid var(--site-panel-line);
+}
+.site-panel-code > .gotipe-code-block {
+  height: 100%;
+  border-radius: 0;
+  background: transparent;
+}
+.site-panel .gotipe-code-block-header {
+  height: var(--site-window-bar-h);
+  padding: var(--site-window-bar-pad);
+  border-bottom: var(--gt-hairline) solid var(--site-panel-line);
+}
+.site-file {
+  color: var(--gt-text-2);
+  font-family: var(--site-font-mono);
+  font-size: var(--site-mono-size);
+}
+.site-copy {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--site-gap-xs);
+  padding: var(--site-badge-pad);
+  border-radius: var(--site-badge-radius);
+  box-shadow: inset 0 0 0 var(--gt-hairline) var(--gt-line-strong);
+  color: var(--gt-text-2);
+  font-family: var(--site-font-mono);
+  font-size: var(--site-label-size);
+  line-height: var(--site-label-leading);
+}
+.site-copy > .gt-icon {
+  width: var(--gt-icon-small);
+  height: var(--gt-icon-small);
+}
+.site-panel .gotipe-code-block-scroll {
+  padding: var(--site-try-pad);
+  font-family: var(--site-font-mono);
+  font-size: var(--site-code-size);
+  line-height: var(--site-code-leading);
+}
+
+/* ---- the ways to run: one big number each ---- */
+.site-center-head {
+  max-width: var(--site-title-max);
+  margin: 0 auto var(--site-section-gap);
+  text-align: center;
+}
+.site-center-head > .site-sub {
+  margin-right: auto;
+  margin-left: auto;
+}
+.site-run-grid {
+  display: grid;
+  grid-template-columns: repeat(var(--site-cols-3), minmax(0, 1fr));
+  gap: var(--site-gap-l);
+}
+.site-run {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  padding: var(--site-run-pad);
+  border-radius: var(--site-card-radius);
+  background: var(--site-surface);
+}
+.site-run.is-tint {
+  background: var(--site-tint);
+}
+.site-run > .site-label {
+  margin-top: var(--site-gap-xl);
+}
+.site-big {
+  margin: var(--site-gap-s) 0 0;
+  font-family: var(--site-font-display);
+  font-size: var(--site-big-size);
+  font-weight: var(--site-weight-display);
+  line-height: var(--site-big-leading);
+  letter-spacing: var(--site-big-tracking);
+  white-space: nowrap;
+}
+.site-run h3 {
+  margin: var(--site-gap) 0 0;
+  font-size: var(--site-h3-size);
+  font-weight: var(--gt-weight-medium);
+  line-height: var(--site-h3-leading);
+  letter-spacing: var(--site-title-tracking);
+}
+.site-run > p:not([class]) {
   margin: var(--site-gap-s) 0 0;
   color: var(--gt-text-2);
   font-size: var(--site-small-size);
   line-height: var(--site-small-leading);
 }
-.site-code {
-  min-width: 0;
+.site-run-foot {
+  margin: auto 0 0;
+  padding-top: var(--site-gap);
+  border-top: var(--gt-hairline) solid var(--gt-line);
+  color: var(--gt-text-2);
+  font-family: var(--site-font-mono);
+  font-size: var(--site-label-size);
+  line-height: var(--site-label-leading);
 }
-.site-code .gotipe-code-block {
-  margin: 0;
+.site-run > p:not([class]) {
+  margin-bottom: var(--site-gap-l);
 }
 
-/* ---- the closing band, the one dark surface of the page ---- */
-.site-band {
+/* ---- the licences: two lists side by side ---- */
+.site-licences {
+  display: grid;
+  grid-template-columns: repeat(var(--site-cols-2), minmax(0, 1fr));
+  gap: var(--site-gap-l);
+  align-items: start;
+}
+.site-licence {
+  min-width: 0;
+  padding: var(--site-licence-pad);
+  border-radius: var(--site-card-radius);
+  background: var(--site-card);
+  box-shadow: inset 0 0 0 var(--gt-hairline) var(--gt-line);
+}
+.site-licence.is-tint {
+  background: var(--site-tint);
+  box-shadow: inset 0 0 0 var(--gt-hairline) var(--site-tint-line);
+}
+.site-licence-top {
   display: flex;
-  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: var(--site-gap-l);
+  gap: var(--site-gap);
+}
+.site-licence h3 {
+  margin: var(--site-gap-l) 0 0;
+  font-family: var(--site-font-display);
+  font-size: var(--site-h3-m-size);
+  font-weight: var(--site-weight-display);
+  line-height: var(--site-h3-m-leading);
+  letter-spacing: var(--site-h3-tracking);
+}
+.site-licence-meta {
+  margin: var(--site-gap-s) 0 0;
+  color: var(--gt-text-2);
+  font-family: var(--site-font-mono);
+  font-size: var(--site-label-size);
+  line-height: var(--site-label-leading);
+}
+.site-licence ul {
+  margin: var(--site-gap-l) 0 0;
+  padding: 0;
+  border-top: var(--gt-hairline) solid var(--gt-line);
+  list-style: none;
+}
+.site-licence li {
+  display: flex;
+  gap: var(--site-gap-m);
+  padding: var(--site-licence-row-pad);
+  border-bottom: var(--gt-hairline) solid var(--gt-line);
+  font-size: var(--site-body-size);
+  font-weight: var(--gt-weight-medium);
+  line-height: var(--site-small-leading);
+}
+.site-licence li > .gt-icon {
+  margin-top: var(--gt-hairline);
+  color: var(--gt-accent);
+}
+.site-licence li small {
+  display: block;
+  margin-top: var(--gt-hairline);
+  color: var(--gt-text-2);
+  font-size: var(--gt-ui-small);
+  font-weight: var(--gt-weight-regular);
+  line-height: var(--gt-ui-small-leading);
+}
+.site-licence-free {
+  margin: var(--site-gap-l) 0 0;
+  padding: var(--site-card-pad-s);
+  border-radius: var(--site-cta-radius);
+  background: var(--site-card);
+  color: var(--gt-text-2);
+  font-size: var(--site-small-size);
+  line-height: var(--site-small-leading);
+}
+.site-licence-free > strong {
+  color: var(--gt-text);
+  font-weight: var(--gt-weight-medium);
+}
+
+/* ---- the closing band: the first stage again, centred ---- */
+.site-stage.site-band {
+  margin: 0;
   padding: var(--site-band-pad);
-  border-radius: var(--gt-radius-card);
-  background: var(--gt-inverse);
-  color: var(--gt-inverse-text);
+  border-radius: var(--site-band-radius);
+  text-align: center;
 }
 .site-band h2 {
-  max-width: var(--site-head-max);
-  margin: 0;
+  margin-top: var(--site-gap-l);
+  font-size: var(--site-hero-size);
+  line-height: var(--site-hero-leading);
+  letter-spacing: var(--site-hero-tracking);
 }
-.site-band p {
-  margin: var(--site-gap-s) 0 0;
-  color: var(--gt-inverse-text-2);
-  font-size: var(--site-lede-size);
-  line-height: var(--site-lede-leading);
+.site-band > .site-sub {
+  margin-right: auto;
+  margin-left: auto;
 }
-.site-band .gotipe-button.is-on-inverse {
-  background: var(--gt-inverse-text);
-  color: var(--gt-inverse);
+.site-band > .site-actions {
+  justify-content: center;
 }
-.site-band .gotipe-button.is-quiet {
-  color: var(--gt-inverse-text);
+.site-band-legend {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--site-gap-s) var(--site-gap-l);
+  margin: var(--site-gap-xl) 0 0;
+  color: var(--gt-text-2);
+  font-size: var(--gt-ui-small);
+  line-height: var(--gt-ui-small-leading);
+}
+.site-band-legend strong {
+  margin-left: var(--site-gap-xs);
+  color: var(--gt-text);
+  font-family: var(--site-font-mono);
+  font-weight: var(--gt-weight-medium);
 }
 
 /* ---- the foot ---- */
 .site-foot {
-  padding: var(--site-section-gap) 0;
+  padding: var(--site-gap-3xl) 0 var(--site-gap-xl);
   border-top: var(--gt-hairline) solid var(--gt-line);
-  font-size: var(--site-small-size);
+  font-size: var(--site-body-size);
   line-height: var(--site-small-leading);
 }
 .site-foot-grid {
@@ -4027,47 +5011,91 @@ ol.gotipe-list > li::before {
   grid-template-columns: var(--site-foot-cols);
   gap: var(--site-gap-xl);
 }
-.site-foot h4 {
-  margin: 0 0 var(--site-gap-s);
+.site-foot .site-brand.is-large {
+  gap: var(--site-gap-m);
+  font-size: var(--site-pair-size);
+  font-weight: var(--site-weight-display);
+  line-height: var(--site-pair-leading);
+}
+.site-brand.is-large > .site-logo {
+  width: var(--site-logo-l);
+  height: var(--site-logo-l);
+}
+.site-foot-grid p {
+  max-width: var(--site-diagram-w);
+  margin: var(--site-gap) 0 0;
+  color: var(--gt-text-2);
   font-size: var(--site-small-size);
-  font-weight: var(--gt-weight-strong);
   line-height: var(--site-small-leading);
 }
-.site-foot p,
-.site-foot a {
-  display: block;
-  margin: 0;
-  padding: var(--gt-hairline) 0;
+.site-foot h4 {
+  margin: 0 0 var(--site-gap);
   color: var(--gt-text-2);
+  font-size: var(--site-small-size);
+  font-weight: var(--gt-weight-regular);
+  line-height: var(--site-small-leading);
+}
+.site-foot-grid a:not(.site-brand) {
+  display: block;
+  padding: var(--site-gap-xs) 0;
 }
 .site-foot-base {
-  margin-top: var(--site-section-gap);
-  color: var(--gt-text-3);
-}
-.site-foot .site-brand {
-  display: inline-flex;
-  margin-bottom: var(--site-gap-s);
-  color: var(--gt-text);
+  display: flex;
+  justify-content: space-between;
+  gap: var(--site-gap-l);
+  margin: var(--site-section-gap) 0 0;
+  padding-top: var(--site-gap-l);
+  border-top: var(--gt-hairline) solid var(--gt-line);
+  color: var(--gt-text-2);
+  font-size: var(--gt-ui-small);
+  line-height: var(--gt-ui-small-leading);
 }
 
 /* site/docs.css */
 /* The documentation: the navigation of all pages, the page in the library's `docs` view, its
    outline on the right; search over everything behind ⌘K. The page itself is a GoTipe document:
-   the site draws only what stands around it. */
+   the site draws only what stands around it, in the landing's type, calmer — docs need density. */
 
-.site-docs-head .site-head-in {
+/* ---- the head: the mark, the version, the search field, a few links ---- */
+.site-docs-head {
+  position: sticky;
+  top: 0;
+  z-index: var(--gt-z-handle);
+  border-bottom: var(--gt-hairline) solid var(--gt-line);
+  background: var(--site-glass);
+}
+.site-docs-head-in {
+  display: flex;
+  align-items: center;
+  gap: var(--site-gap);
+  box-sizing: border-box;
   max-width: var(--site-docs-max);
+  height: var(--site-docs-head-h);
   margin: 0 auto;
   padding: 0 var(--site-pad-x);
 }
+.site-docs-head-in > .site-head-end {
+  margin-left: auto;
+}
 .site-version {
-  padding: var(--site-badge-pad);
-  border-radius: var(--gt-radius-inline);
-  background: var(--gt-fill-2);
+  padding: var(--site-chip-tag-pad);
+  border-radius: var(--gt-radius-control);
+  background: var(--gt-fill-1);
+  box-shadow: inset 0 0 0 var(--gt-hairline) var(--gt-line);
   color: var(--gt-text-2);
-  font-size: var(--site-eyebrow-size);
-  font-weight: var(--gt-weight-medium);
-  line-height: var(--site-eyebrow-leading);
+  font-family: var(--site-font-mono);
+  font-size: var(--site-label-size);
+  line-height: var(--site-label-leading);
+}
+.site-kbd {
+  padding: var(--site-chip-tag-pad);
+  border-radius: var(--gt-radius-control);
+  background: var(--site-card);
+  box-shadow: inset 0 0 0 var(--gt-hairline) var(--gt-line-strong);
+  color: var(--gt-text-2);
+  font-family: var(--site-font-mono);
+  font-size: var(--site-label-size);
+  line-height: var(--site-label-leading);
 }
 
 /* the search field: a button that opens the dialog */
@@ -4078,15 +5106,19 @@ ol.gotipe-list > li::before {
   box-sizing: border-box;
   width: var(--site-search-w);
   height: var(--site-search-h);
+  margin-left: var(--site-gap-l);
   padding: var(--site-search-pad);
-  border-radius: var(--gt-radius-control);
-  background: var(--gt-fill-1);
+  border-radius: var(--site-search-radius);
+  background: var(--site-surface);
   box-shadow: inset 0 0 0 var(--gt-hairline) var(--gt-line);
   color: var(--gt-text-2);
-  font-size: var(--gt-ui-size);
+  font-size: var(--site-small-size);
 }
-.site-search > .gotipe-kbd {
+.site-search > .site-kbd {
   margin-left: auto;
+}
+.site-search-button {
+  display: var(--site-search-button-display);
 }
 
 /* ---- three columns: navigation · page · outline ---- */
@@ -4095,6 +5127,7 @@ ol.gotipe-list > li::before {
   grid-template-columns: var(--site-docs-cols);
   column-gap: var(--site-docs-gap);
   justify-content: center;
+  box-sizing: border-box;
   max-width: var(--site-docs-max);
   margin: 0 auto;
   padding: 0 var(--site-pad-x);
@@ -4105,11 +5138,11 @@ ol.gotipe-list > li::before {
 .site-side {
   display: var(--site-side-display);
   position: sticky;
-  top: var(--site-head-h);
+  top: var(--site-docs-head-h);
   align-self: start;
   padding: var(--site-side-pad);
-  font-size: var(--gt-ui-size);
-  line-height: var(--gt-small-leading);
+  font-size: var(--site-body-size);
+  line-height: var(--site-small-leading);
 }
 .site-side-group + .site-side-group {
   margin-top: var(--site-side-group-gap);
@@ -4117,24 +5150,51 @@ ol.gotipe-list > li::before {
 .site-side-title {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: var(--site-gap-s);
   margin: 0 0 var(--site-gap-s);
-  padding: 0 var(--site-gap-s);
-  font-weight: var(--gt-weight-strong);
+  padding: 0 var(--site-gap-m);
+  color: var(--gt-text-2);
+  font-family: var(--site-font-mono);
+  font-size: var(--site-label-size);
+  font-weight: var(--gt-weight-medium);
+  line-height: var(--site-label-leading);
+  letter-spacing: var(--site-label-tracking);
+  text-transform: uppercase;
+}
+.site-side-title > .site-badge {
+  letter-spacing: normal;
+  text-transform: none;
 }
 .site-side a {
   display: block;
   padding: var(--site-side-item-pad);
-  border-radius: var(--gt-radius-control);
+  border-radius: var(--site-head-button-radius);
   color: var(--gt-text-2);
 }
 .site-side a.is-current {
-  background: var(--gt-fill-2);
-  color: var(--gt-text);
+  background: var(--site-accent-tint);
+  color: var(--gt-accent);
   font-weight: var(--gt-weight-medium);
 }
+/* a folded section: its name, a chevron, the pages behind a click */
+.site-side a.site-side-title.is-folded {
+  display: flex;
+  margin: 0;
+  padding: var(--site-side-item-pad);
+  color: var(--gt-text);
+  font-family: var(--site-font-text);
+  font-size: var(--site-body-size);
+  font-weight: var(--gt-weight-regular);
+  line-height: var(--site-small-leading);
+  letter-spacing: normal;
+  text-transform: none;
+}
+.site-side-title.is-folded > .gt-icon {
+  color: var(--gt-text-3);
+}
 
-/* the page: the docs view's own document; the site adds the crumbs, the badges and the pager */
+/* ---- the page: the docs view's own document; the site adds crumbs, badges, the pager ---- */
 .site-docs-main > .gotipe-page {
   max-width: none;
   padding: var(--site-doc-top) 0 var(--site-section-gap);
@@ -4142,15 +5202,27 @@ ol.gotipe-list > li::before {
 .site-crumbs {
   display: flex;
   align-items: center;
-  gap: var(--gt-hairline);
-  margin: 0 0 var(--site-gap-s);
+  gap: var(--site-gap-xs);
+  margin: 0 0 var(--site-gap-m);
   color: var(--gt-text-2);
-  font-size: var(--gt-ui-small);
-  line-height: var(--gt-ui-small-leading);
+  font-family: var(--site-font-mono);
+  font-size: var(--site-label-size);
+  line-height: var(--site-label-leading);
+  letter-spacing: var(--site-label-tracking);
+  text-transform: uppercase;
+}
+.site-crumbs > span {
+  color: var(--gt-accent);
+}
+.site-crumbs > .gt-icon {
+  width: var(--gt-icon-small);
+  height: var(--gt-icon-small);
+  color: var(--gt-text-3);
 }
 .site-doc-lede {
   margin: var(--site-gap-s) 0 0;
   color: var(--gt-text-2);
+  font-family: var(--site-font-text);
   font-size: var(--site-text-size);
   line-height: var(--site-text-leading);
 }
@@ -4159,43 +5231,76 @@ ol.gotipe-list > li::before {
   flex-wrap: wrap;
   align-items: center;
   gap: var(--site-gap-s);
-  margin: var(--site-gap) 0 var(--site-gap-xl);
+  margin: var(--site-gap-l) 0 var(--site-gap-xl);
+  padding-bottom: var(--site-gap-l);
+  border-bottom: var(--gt-hairline) solid var(--gt-line);
+  font-family: var(--site-font-text);
 }
-.site-doc-meta > .gotipe-button {
+.site-doc-meta > .site-tool-button {
   margin-left: auto;
 }
-.site-doc-meta > .gotipe-button + .gotipe-button {
+.site-doc-meta > .site-tool-button + .site-tool-button {
   margin-left: 0;
 }
+.site .site-tool-button {
+  border-radius: var(--site-badge-radius);
+  box-shadow: inset 0 0 0 var(--gt-hairline) var(--gt-line);
+}
+
+/* the live example: a small window around a slice of the document */
+.site-try > .gotipe-page {
+  max-width: none;
+  padding: var(--site-try-pad);
+}
+.site-try > .site-window-bar {
+  font-family: var(--site-font-text);
+}
+
 .site-pager {
   display: grid;
   grid-template-columns: repeat(var(--site-cols-2), minmax(0, 1fr));
   gap: var(--site-gap);
   margin-top: var(--site-section-gap);
+  font-family: var(--site-font-text);
 }
 .site-pager a {
   display: block;
   padding: var(--site-pager-pad);
-  border-radius: var(--gt-radius-block);
+  border-radius: var(--site-card-radius-s);
   box-shadow: inset 0 0 0 var(--gt-hairline) var(--gt-line);
+  font-size: var(--site-text-size);
   font-weight: var(--gt-weight-medium);
+  line-height: var(--site-body-leading);
 }
 .site-pager a > small {
-  display: block;
+  display: flex;
+  align-items: center;
+  gap: var(--site-gap-xs);
+  margin-bottom: var(--site-gap-xs);
   color: var(--gt-text-2);
-  font-size: var(--gt-ui-small);
+  font-family: var(--site-font-mono);
+  font-size: var(--site-label-size);
   font-weight: var(--gt-weight-regular);
-  line-height: var(--gt-ui-small-leading);
+  line-height: var(--site-label-leading);
+  letter-spacing: var(--site-label-tracking);
+  text-transform: uppercase;
+}
+.site-pager a > small > .gt-icon {
+  width: var(--gt-icon-small);
+  height: var(--gt-icon-small);
 }
 .site-pager a.is-next {
   text-align: right;
+}
+.site-pager a.is-next > small {
+  justify-content: flex-end;
 }
 
 /* the outline: the docs view's, standing to the right of the page */
 .site-toc {
   display: var(--site-toc-display);
   position: sticky;
-  top: var(--site-head-h);
+  top: var(--site-docs-head-h);
   align-self: start;
 }
 .site-toc > .gotipe-outline {
@@ -4217,50 +5322,56 @@ ol.gotipe-list > li::before {
   align-self: start;
   width: min(var(--site-dialog-w), calc(100% - 2 * var(--site-pad-x)));
   overflow: hidden;
-  border-radius: var(--gt-radius-overlay);
+  border-radius: var(--site-dialog-radius);
   background: var(--gt-overlay);
   box-shadow: var(--gt-shadow-overlay);
-  font-size: var(--gt-ui-size);
-  line-height: var(--gt-small-leading);
+  font-size: var(--site-body-size);
+  line-height: var(--site-small-leading);
 }
 .site-dialog-input {
   display: flex;
   align-items: center;
-  gap: var(--site-gap-s);
+  gap: var(--site-gap-m);
   height: var(--site-dialog-input-h);
-  padding: 0 var(--site-gap);
+  padding: 0 var(--site-gap-l);
   border-bottom: var(--gt-hairline) solid var(--gt-line);
   font-size: var(--site-text-size);
 }
 .site-dialog-input > .gt-icon {
-  color: var(--gt-text-2);
+  color: var(--gt-accent);
 }
-.site-dialog-input > .gotipe-kbd {
+.site-dialog-input > .site-kbd {
   margin-left: auto;
 }
 .site-results {
-  padding: var(--site-gap-s);
+  padding: var(--site-gap-s) var(--site-gap-m) var(--site-gap-m);
 }
 .site-results-title {
-  margin: var(--site-gap-s) 0 var(--gt-hairline);
-  padding: 0 var(--site-gap-s);
+  margin: var(--site-gap-m) 0 var(--site-gap-xs);
+  padding: 0 var(--site-gap-m);
   color: var(--gt-text-2);
-  font-size: var(--gt-ui-small);
+  font-family: var(--site-font-mono);
+  font-size: var(--site-label-size);
   font-weight: var(--gt-weight-medium);
-  line-height: var(--gt-ui-small-leading);
+  line-height: var(--site-label-leading);
+  letter-spacing: var(--site-label-tracking);
+  text-transform: uppercase;
 }
 .site-result {
   display: flex;
   align-items: center;
-  gap: var(--site-gap-s);
+  gap: var(--site-gap-m);
   padding: var(--site-result-pad);
-  border-radius: var(--gt-radius-control);
+  border-radius: var(--site-result-radius);
 }
 .site-result.is-active {
-  background: var(--gt-fill-2);
+  background: var(--site-accent-tint);
 }
 .site-result > .gt-icon {
   color: var(--gt-text-3);
+}
+.site-result.is-active > .gt-icon {
+  color: var(--gt-accent);
 }
 .site-result small {
   display: block;
@@ -4269,31 +5380,28 @@ ol.gotipe-list > li::before {
   line-height: var(--gt-ui-small-leading);
 }
 .site-result mark {
+  border-radius: var(--gt-radius-match);
   background: var(--gt-highlight);
   color: inherit;
 }
+.site-result-go {
+  margin-left: auto;
+}
 .site-dialog-foot {
   display: flex;
-  gap: var(--site-gap);
-  padding: var(--site-gap-s) var(--site-gap);
+  gap: var(--site-gap-l);
+  padding: var(--site-gap-m) var(--site-gap-l);
   border-top: var(--gt-hairline) solid var(--gt-line);
+  background: var(--site-surface);
   color: var(--gt-text-2);
-  font-size: var(--gt-ui-small);
-  line-height: var(--gt-ui-small-leading);
+  font-family: var(--site-font-mono);
+  font-size: var(--site-label-size);
+  line-height: var(--site-label-leading);
 }
-.site-search-button {
-  display: var(--site-search-button-display);
-}
-/* a folded section: its name, a chevron, the pages behind a click */
-.site-side a.site-side-title.is-folded {
-  display: flex;
-  justify-content: space-between;
-  margin: 0;
-  padding: var(--site-side-item-pad);
-  color: var(--gt-text);
-}
-.site-side-title.is-folded > .gt-icon {
-  color: var(--gt-text-3);
+.site-dialog-foot > span {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--site-gap-xs);
 }
 
 /* content/diagram.css */
@@ -4744,6 +5852,59 @@ ol.gotipe-list > li::before {
   </symbol>
   <symbol id="i-arrow-right" viewBox="0 0 16 16">
     <path vector-effect="non-scaling-stroke" d="M3.25 8h9.5M9 4.25 12.75 8 9 11.75" />
+  </symbol>
+  <!-- the site: the stack, the ways to run, the features of the landing -->
+  <symbol id="i-braces" viewBox="0 0 16 16">
+    <path
+      vector-effect="non-scaling-stroke"
+      d="M5.5 2.75h-.75a1.5 1.5 0 0 0-1.5 1.5v2.25L2.25 8l1 1.5v2.25a1.5 1.5 0 0 0 1.5 1.5h.75M10.5 2.75h.75a1.5 1.5 0 0 1 1.5 1.5v2.25l1 1.5-1 1.5v2.25a1.5 1.5 0 0 1-1.5 1.5h-.75"
+    />
+  </symbol>
+  <symbol id="i-layers" viewBox="0 0 16 16">
+    <path vector-effect="non-scaling-stroke" d="M8 2.5 13.75 5.5 8 8.5 2.25 5.5Z" />
+    <path vector-effect="non-scaling-stroke" d="m2.25 8.25 5.75 3 5.75-3M2.25 11 8 14l5.75-3" />
+  </symbol>
+  <symbol id="i-nodes" viewBox="0 0 16 16">
+    <rect vector-effect="non-scaling-stroke" x="6" y="2.25" width="4" height="3.5" rx="1" />
+    <rect vector-effect="non-scaling-stroke" x="2" y="10.25" width="4" height="3.5" rx="1" />
+    <rect vector-effect="non-scaling-stroke" x="10" y="10.25" width="4" height="3.5" rx="1" />
+    <path vector-effect="non-scaling-stroke" d="M8 5.75V8M4 10.25V8h8v2.25" />
+  </symbol>
+  <symbol id="i-globe" viewBox="0 0 16 16">
+    <circle vector-effect="non-scaling-stroke" cx="8" cy="8" r="5.75" />
+    <path vector-effect="non-scaling-stroke" d="M2.25 8h11.5M8 2.25c1.6 1.6 2.4 3.5 2.4 5.75S9.6 12.15 8 13.75C6.4 12.15 5.6 10.25 5.6 8S6.4 3.85 8 2.25Z" />
+  </symbol>
+  <symbol id="i-chip" viewBox="0 0 16 16">
+    <rect vector-effect="non-scaling-stroke" x="4" y="4" width="8" height="8" rx="1.5" />
+    <rect vector-effect="non-scaling-stroke" x="6.5" y="6.5" width="3" height="3" rx="0.5" />
+    <path vector-effect="non-scaling-stroke" d="M6.5 2v2M9.5 2v2M6.5 12v2M9.5 12v2M2 6.5h2M2 9.5h2M12 6.5h2M12 9.5h2" />
+  </symbol>
+  <symbol id="i-server" viewBox="0 0 16 16">
+    <rect vector-effect="non-scaling-stroke" x="2.5" y="2.75" width="11" height="4.5" rx="1.25" />
+    <rect vector-effect="non-scaling-stroke" x="2.5" y="8.75" width="11" height="4.5" rx="1.25" />
+    <path vector-effect="non-scaling-stroke" d="M5 5h.5M5 11h.5" />
+  </symbol>
+  <symbol id="i-edit" viewBox="0 0 16 16">
+    <path vector-effect="non-scaling-stroke" d="M7.25 3H4.25a1.25 1.25 0 0 0-1.25 1.25v7.5A1.25 1.25 0 0 0 4.25 13h7.5A1.25 1.25 0 0 0 13 11.75V8.75" />
+    <path vector-effect="non-scaling-stroke" d="m11.5 2.5 2 2-5.25 5.25-2.5.5.5-2.5Z" />
+  </symbol>
+  <symbol id="i-palette" viewBox="0 0 16 16">
+    <path vector-effect="non-scaling-stroke" d="M8 2.25a5.75 5.75 0 0 0 0 11.5c.9 0 1.25-.6 1.25-1.2 0-.9-.75-1.15-.75-1.8 0-.6.45-1 1.1-1h1.4a2.75 2.75 0 0 0 2.75-2.75C13.75 4.45 11.2 2.25 8 2.25Z" />
+    <circle vector-effect="non-scaling-stroke" cx="5.25" cy="7.25" r="0.75" />
+    <circle vector-effect="non-scaling-stroke" cx="7.75" cy="5" r="0.75" />
+    <circle vector-effect="non-scaling-stroke" cx="10.5" cy="6" r="0.75" />
+  </symbol>
+  <symbol id="i-cloud" viewBox="0 0 16 16">
+    <path vector-effect="non-scaling-stroke" d="M4.75 12.75a2.75 2.75 0 0 1-.4-5.47 3.75 3.75 0 0 1 7.3-.78 3.13 3.13 0 0 1-.4 6.25Z" />
+  </symbol>
+  <symbol id="i-arrow-left" viewBox="0 0 16 16">
+    <path vector-effect="non-scaling-stroke" d="M12.75 8h-9.5M7 4.25 3.25 8 7 11.75" />
+  </symbol>
+  <symbol id="i-arrow-up-right" viewBox="0 0 16 16">
+    <path vector-effect="non-scaling-stroke" d="M4.75 11.25 11.25 4.75M5.75 4.75h5.5v5.5" />
+  </symbol>
+  <symbol id="i-arrow-down-right" viewBox="0 0 16 16">
+    <path vector-effect="non-scaling-stroke" d="M4.75 4.75 11.25 11.25M11.25 5.75v5.5h-5.5" />
   </symbol>
   <!-- the mark: a square of the accent with the letter cut in the page's colour (`fill` of the use) -->
   <symbol id="i-logo" viewBox="0 0 32 32">
@@ -8177,9 +9338,9 @@ editor<span class="tk-pun">.</span>on<span class="tk-pun">(</span><span class="t
   <section class="at-stage" data-w="1440">
 <p class="at-stage-label">главная · 1440</p>
 <div class="at-frame gotipe-root" data-gt-view="notion" data-frame="landing" data-w="1440">
-<div class="site" lang="en">
+<div class="site site-landing" lang="en">
   <header class="site-head">
-  <div class="site-wrap site-head-in">
+  <div class="site-head-in">
     <a class="site-brand"><svg class="site-logo" aria-hidden="true"><use href="#i-logo" /></svg>GoTipe</a>
     <nav class="site-nav" aria-label="Site">
       <a>Docs</a>
@@ -8188,251 +9349,322 @@ editor<span class="tk-pun">.</span>on<span class="tk-pun">(</span><span class="t
       <a>Changelog</a>
     </nav>
     <div class="site-head-end">
-      <span class="gotipe-button is-quiet is-wide">GitHub<svg class="gt-icon" aria-hidden="true"><use href="#i-external" /></svg></span>
-      <span class="gotipe-button is-quiet is-wide" aria-label="Dark theme"><svg class="gt-icon" aria-hidden="true"><use href="#i-moon" /></svg></span>
-      <span class="gotipe-button is-primary">Get started</span>
-      <span class="gotipe-button is-quiet site-menu-button" aria-label="Menu"><svg class="gt-icon" aria-hidden="true"><use href="#i-menu" /></svg></span>
+      <span class="gotipe-button is-quiet site-head-button is-wide">GitHub<svg class="gt-icon" aria-hidden="true"><use href="#i-external" /></svg></span>
+      <span class="gotipe-button is-quiet site-head-button is-icon is-wide" aria-label="Dark theme"><svg class="gt-icon" aria-hidden="true"><use href="#i-moon" /></svg></span>
+      <span class="gotipe-button is-primary site-head-button">Get started<svg class="gt-icon" aria-hidden="true"><use href="#i-arrow-up-right" /></svg></span>
+      <span class="gotipe-button is-quiet site-head-button is-icon site-menu-button" aria-label="Menu"><svg class="gt-icon" aria-hidden="true"><use href="#i-menu" /></svg></span>
     </div>
   </div>
 </header>
 
-  <section class="site-hero">
-    <div class="site-wrap site-hero-grid">
-      <div>
-        <p class="site-eyebrow">Version 0.1 · MIT core</p>
-        <h1>The editor you own, down to the engine.</h1>
-        <p class="site-lede">
-          GoTipe is a document editor framework with its own engine in TypeScript and Rust/WASM:
-          lossless Markdown, a ready block editor, review and real-time collaboration — and no
-          third-party editor underneath.
-        </p>
-        <div class="site-actions">
-          <span class="gotipe-button is-primary is-cta">Get started<svg class="gt-icon" aria-hidden="true"><use href="#i-arrow-right" /></svg></span>
-          <span class="gotipe-button is-cta">Open the playground</span>
-        </div>
-        <div class="site-install">
-          <code>npm i @gotipe/core @gotipe/react</code>
-          <span class="gotipe-button is-quiet" aria-label="Copy"><svg class="gt-icon" aria-hidden="true"><use href="#i-copy" /></svg></span>
-        </div>
-      </div>
-
-      <div class="site-demo is-hero">
-        <div class="site-demo-bar">
-          <span>Live editor</span>
-          <span class="gotipe-seg"><span class="is-on">Block</span><span>Page</span><span>Views</span></span>
-        </div>
-        <article class="gotipe-page">
-          <div class="gotipe-doc">
-            <p>
-              <span class="gotipe-anchor is-inline"
-                ><strong class="gotipe-selection">Everything here syncs live</strong
-                ><span class="gotipe-overlay gotipe-toolbar" data-place="above-start" role="toolbar"
-                  ><span class="gotipe-tool is-model-icon"><svg class="gt-icon"><use href="#i-sparkle" /></svg></span
-                  ><span class="gotipe-tool-sep"></span
-                  ><span class="gotipe-tool is-active"><svg class="gt-icon"><use href="#i-bold" /></svg></span
-                  ><span class="gotipe-tool"><svg class="gt-icon"><use href="#i-italic" /></svg></span
-                  ><span class="gotipe-tool"><svg class="gt-icon"><use href="#i-underline" /></svg></span
-                  ><span class="gotipe-tool"><svg class="gt-icon"><use href="#i-code" /></svg></span
-                  ><span class="gotipe-tool-sep"></span
-                  ><span class="gotipe-tool"><svg class="gt-icon"><use href="#i-link" /></svg></span
-                  ><span class="gotipe-tool"><svg class="gt-icon"><use href="#i-comment" /></svg></span></span
-              ></span>
-              — two people's edits merge without conflicts. The beta ships on Thursday.
-            </p>
-            <h3>Launch checklist</h3>
-            <ul class="gotipe-todo-list">
-              <li class="gotipe-todo-item" data-checked="true">
-                <span class="gotipe-check" role="checkbox" aria-checked="true"
-                  ><svg class="gt-icon" aria-hidden="true"><use href="#i-check" /></svg
-                ></span>
-                <span class="gotipe-todo-item-content">Freeze the public API</span>
-              </li>
-              <li class="gotipe-todo-item" data-checked="false">
-                <span class="gotipe-check" role="checkbox" aria-checked="false"
-                  ><svg class="gt-icon" aria-hidden="true"><use href="#i-check" /></svg
-                ></span>
-                <span class="gotipe-todo-item-content">Write the migration guide</span>
-              </li>
-              <li class="gotipe-todo-item" data-checked="false">
-                <span class="gotipe-check" role="checkbox" aria-checked="false"
-                  ><svg class="gt-icon" aria-hidden="true"><use href="#i-check" /></svg
-                ></span>
-                <span class="gotipe-todo-item-content">Run the browser suite</span>
-              </li>
-            </ul>
-            <div class="gotipe-callout" data-variant="info">
-              <span class="gotipe-callout-icon"
-                ><svg class="gt-icon" aria-hidden="true"><use href="#i-hash" /></svg
-              ></span>
-              <div class="gotipe-callout-content">
-                <p>Blocks nobody touched keep their Markdown byte for byte.</p>
-              </div>
-            </div>
+  <section class="site-stage site-hero">
+    <div class="site-wrap">
+      <div class="site-hero-grid">
+        <div class="site-hero-copy">
+          <p class="site-chip"><span>v0.1</span>Open source. Built from scratch.<svg class="gt-icon" aria-hidden="true"><use href="#i-arrow-right" /></svg></p>
+          <h1>Your editor.<br />Your engine.<br /><span class="site-accent">Your rules.</span></h1>
+          <p class="site-lede">
+            A document editor framework built from the engine up. Lossless Markdown, real-time
+            collaboration, and an interface that’s entirely yours.
+          </p>
+          <div class="site-actions">
+            <span class="gotipe-button site-cta">Start building<svg class="gt-icon" aria-hidden="true"><use href="#i-arrow-right" /></svg></span>
+            <span class="gotipe-button site-cta is-second">Try the playground<svg class="gt-icon" aria-hidden="true"><use href="#i-arrow-right" /></svg></span>
           </div>
-        </article>
+          <div class="site-install">
+            <code>npm i @gotipe/core @gotipe/react</code>
+            <span class="gotipe-button is-quiet" aria-label="Copy"><svg class="gt-icon" aria-hidden="true"><use href="#i-copy" /></svg></span>
+          </div>
+        </div>
+
+        <div class="site-stack">
+          <p class="site-stack-head"><span class="site-label">The GoTipe stack</span><svg class="gt-icon" aria-hidden="true"><use href="#i-layers" /></svg></p>
+          <div class="site-stack-item">
+            <p class="site-stack-title"><svg class="gt-icon" aria-hidden="true"><use href="#i-braces" /></svg><strong>Your own engine</strong><span>01</span></p>
+            <p>TypeScript and Rust/WASM. No editor underneath.</p>
+            <span class="site-badge">MIT</span>
+          </div>
+          <div class="site-stack-item">
+            <p class="site-stack-title"><svg class="gt-icon" aria-hidden="true"><use href="#i-page" /></svg><strong>Markdown, untouched</strong><span>02</span></p>
+            <p>The same file in. Untouched blocks come back byte for byte.</p>
+            <span class="site-badge">Lossless</span>
+          </div>
+          <div class="site-stack-item">
+            <p class="site-stack-title"><svg class="gt-icon" aria-hidden="true"><use href="#i-nodes" /></svg><strong>Built to work together</strong><span>03</span></p>
+            <p>Real-time sync, review and offline editing.</p>
+            <span class="site-badge">MIT</span>
+          </div>
+          <p class="site-stack-foot"><svg class="gt-icon" aria-hidden="true"><use href="#i-arrow-down" /></svg>Your interface. Your infrastructure.</p>
+        </div>
+      </div>
+
+      <div class="site-strip">
+        <span>Not a wrapper. A foundation.</span>
+        <span class="site-strip-labels">
+          <span>TypeScript</span><span>Rust / WASM</span><span>React</span><span>Vue</span>
+          <span><svg class="gt-icon" aria-hidden="true"><use href="#i-lock" /></svg>MIT core</span>
+        </span>
       </div>
     </div>
   </section>
 
-  <div class="site-wrap">
-    <div class="site-facts">
-      <p class="site-fact"><strong>905</strong>browser scenarios, run in Chromium, Firefox and WebKit</p>
-      <p class="site-fact"><strong>652 / 652</strong>CommonMark examples parsed like the reference</p>
-      <p class="site-fact"><strong>96 KB</strong>gzip for the engine together with Markdown</p>
-      <p class="site-fact"><strong>0</strong>third-party runtime dependencies in the engine</p>
-    </div>
-  </div>
-
-  <section class="site-section">
+  <section class="site-section is-signature">
     <div class="site-wrap">
-      <div class="site-section-head">
-        <p class="site-eyebrow">What's inside</p>
-        <h2>Everything a document needs. Most of it MIT.</h2>
-        <p>The engine and every service around it are open source. Only the ready-made interface has a commercial license.</p>
-      </div>
-      <div class="site-grid">
-        <article class="site-card">
-          <div class="site-card-top"><span class="site-card-icon"><svg class="gt-icon" aria-hidden="true"><use href="#i-code" /></svg></span><span class="site-badge">MIT</span></div>
-          <h3>Own engine</h3>
-          <p>Transactions, history, selection and IME in TypeScript, with the same contract in Rust/WASM.</p>
-        </article>
-        <article class="site-card">
-          <div class="site-card-top"><span class="site-card-icon"><svg class="gt-icon" aria-hidden="true"><use href="#i-hash" /></svg></span><span class="site-badge">MIT</span></div>
-          <h3>Lossless Markdown</h3>
-          <p>Our own parser: an edit rewrites only the block it touched, the rest of the file stays as written.</p>
-        </article>
-        <article class="site-card">
-          <div class="site-card-top"><span class="site-card-icon"><svg class="gt-icon" aria-hidden="true"><use href="#i-grip" /></svg></span><span class="site-badge is-commercial">Commercial</span></div>
-          <h3>Block editor</h3>
-          <p>Slash menu, drag handle, bubble toolbar, tables, media and code — ready for React.</p>
-        </article>
-        <article class="site-card">
-          <div class="site-card-top"><span class="site-card-icon"><svg class="gt-icon" aria-hidden="true"><use href="#i-page" /></svg></span><span class="site-badge is-commercial">Commercial</span></div>
-          <h3>Page editor</h3>
-          <p>A Markdown page with review lanes, anchored proposals and comments in the margin.</p>
-        </article>
-        <article class="site-card">
-          <div class="site-card-top"><span class="site-card-icon"><svg class="gt-icon" aria-hidden="true"><use href="#i-swap" /></svg></span><span class="site-badge">MIT</span></div>
-          <h3>Real-time collaboration</h3>
-          <p>Our own CRDT in Rust: concurrent edits, cursors, reconnect and durable sync.</p>
-        </article>
-        <article class="site-card">
-          <div class="site-card-top"><span class="site-card-icon"><svg class="gt-icon" aria-hidden="true"><use href="#i-comment" /></svg></span><span class="site-badge">MIT</span></div>
-          <h3>Comments and suggestions</h3>
-          <p>Anchored threads and tracked changes, accepted or rejected in one step.</p>
-        </article>
-        <article class="site-card">
-          <div class="site-card-top"><span class="site-card-icon"><svg class="gt-icon" aria-hidden="true"><use href="#i-clock" /></svg></span><span class="site-badge">MIT</span></div>
-          <h3>Versions</h3>
-          <p>Snapshots, a block-level compare and a restore you can undo.</p>
-        </article>
-        <article class="site-card">
-          <div class="site-card-top"><span class="site-card-icon"><svg class="gt-icon" aria-hidden="true"><use href="#i-sparkle" /></svg></span><span class="site-badge">MIT</span></div>
-          <h3>AI layer</h3>
-          <p>Bring your model: streaming, cancel, proofreading, ghost text and a guard for personal data.</p>
-        </article>
-        <article class="site-card">
-          <div class="site-card-top"><span class="site-card-icon"><svg class="gt-icon" aria-hidden="true"><use href="#i-download" /></svg></span><span class="site-badge">MIT</span></div>
-          <h3>PDF and DOCX</h3>
-          <p>Our own PDF layout and Word writer, in the browser through WebAssembly or on the server.</p>
-        </article>
-        <article class="site-card">
-          <div class="site-card-top"><span class="site-card-icon"><svg class="gt-icon" aria-hidden="true"><use href="#i-upload" /></svg></span><span class="site-badge">MIT</span></div>
-          <h3>Migration</h3>
-          <p>Bring ProseMirror, Tiptap, Slate or Lexical JSON; content we can't map is kept, not dropped.</p>
-        </article>
-        <article class="site-card">
-          <div class="site-card-top"><span class="site-card-icon"><svg class="gt-icon" aria-hidden="true"><use href="#i-sun" /></svg></span><span class="site-badge is-commercial">Commercial</span></div>
-          <h3>Views and themes</h3>
-          <p>Four looks over one markup, light and dark; your colours through CSS variables.</p>
-        </article>
-        <article class="site-card">
-          <div class="site-card-top"><span class="site-card-icon"><svg class="gt-icon" aria-hidden="true"><use href="#i-lock" /></svg></span><span class="site-badge">MIT</span></div>
-          <h3>Your own cloud</h3>
-          <p>Documents, permissions, sync, exports and an AI proxy in one Go service you run.</p>
-        </article>
-      </div>
-    </div>
-  </section>
-
-  <section class="site-section is-sunken">
-    <div class="site-wrap">
-      <div class="site-section-head">
-        <p class="site-eyebrow">Four views</p>
-        <h2>One markup, four looks.</h2>
-        <p>Notion, docs, modern and minimal are sets of tokens over the same document. Switch them with one attribute.</p>
-      </div>
-      <div class="site-grid is-4">
-        <div class="site-view-card" data-gt-view="notion">
-          <p class="site-view-name">notion<span>default</span></p>
-          <article class="gotipe-page is-slice">
-            <div class="gotipe-doc">
-              <h2>Offline drafts</h2>
-              <p>A draft is kept on the device and sent when the network returns.</p>
-              <ul class="gotipe-list"><li>Saved every second</li><li>Encrypted at rest</li></ul>
-            </div>
-          </article>
-        </div>
-        <div class="site-view-card" data-gt-view="docs">
-          <p class="site-view-name">docs<span>reference</span></p>
-          <article class="gotipe-page is-slice">
-            <div class="gotipe-doc">
-              <h2>Offline drafts</h2>
-              <p>A draft is kept on the device and sent when the network returns.</p>
-              <ul class="gotipe-list"><li>Saved every second</li><li>Encrypted at rest</li></ul>
-            </div>
-          </article>
-        </div>
-        <div class="site-view-card" data-gt-view="modern">
-          <p class="site-view-name">modern<span>fixed toolbar</span></p>
-          <article class="gotipe-page is-slice">
-            <div class="gotipe-doc">
-              <h2>Offline drafts</h2>
-              <p>A draft is kept on the device and sent when the network returns.</p>
-              <ul class="gotipe-list"><li>Saved every second</li><li>Encrypted at rest</li></ul>
-            </div>
-          </article>
-        </div>
-        <div class="site-view-card" data-gt-view="minimal">
-          <p class="site-view-name">minimal<span>just text</span></p>
-          <article class="gotipe-page is-slice">
-            <div class="gotipe-doc">
-              <h2>Offline drafts</h2>
-              <p>A draft is kept on the device and sent when the network returns.</p>
-              <ul class="gotipe-list"><li>Saved every second</li><li>Encrypted at rest</li></ul>
-            </div>
-          </article>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <section class="site-section">
-    <div class="site-wrap">
-      <div class="site-section-head">
-        <p class="site-eyebrow">Get started</p>
-        <h2>From npm install to a working editor.</h2>
-      </div>
-      <div class="site-steps">
+      <div class="site-title-row">
         <div>
-          <div class="site-step">
-            <span class="site-step-num">1</span>
-            <div><h3>Install</h3><p>The engine, the React adapter and the ready editor. Add the theme's CSS once.</p></div>
+          <p class="site-eyebrow">Made for the way you build</p>
+          <h2>Plain text. Rich possibilities.</h2>
+        </div>
+        <svg class="gt-icon site-title-arrow" aria-hidden="true"><use href="#i-arrow-down-right" /></svg>
+      </div>
+
+      <div class="site-plinth">
+        <figure class="site-window">
+          <div class="site-window-bar">
+            <svg class="gt-icon" aria-hidden="true"><use href="#i-page" /></svg>
+            <span class="site-window-path">Workspace<span>/</span><strong>Launch notes</strong></span>
+            <span class="site-window-end">
+              <span class="site-tag">notes.md</span>
+              <span class="gotipe-avatars" aria-hidden="true">
+                <span class="gotipe-avatar" data-person="2">M</span>
+                <span class="gotipe-avatar" data-person="1">J</span>
+              </span>
+              <svg class="gt-icon" aria-hidden="true"><use href="#i-more" /></svg>
+            </span>
           </div>
-          <div class="site-step">
-            <span class="site-step-num">2</span>
-            <div><h3>Create the editor</h3><p>Pick a preset or your own extensions; the engine is chosen for you.</p></div>
+          <div class="site-split">
+            <div class="site-src">
+              <p class="site-pane-head"><span>Markdown source</span><span>.md</span></p>
+              <ol class="site-src-lines">
+                <li><code><span class="is-mark"># Everything here syncs live</span></code></li>
+                <li></li>
+                <li class="is-current"><code><span class="is-mark">**Every block is a transaction**</span> the engine</code></li>
+                <li><code>replays. Two cursors, one document.</code></li>
+                <li></li>
+                <li><code><span class="is-mark">### Launch checklist</span></code></li>
+                <li></li>
+                <li><code>- [x] Engine compiles to WASM</code></li>
+                <li><code>- [x] Docs run on 0.1</code></li>
+                <li><code>- [ ] Cut the release note</code></li>
+                <li></li>
+                <li><code>&gt; Paste a link — Markdown stays intact.</code></li>
+              </ol>
+              <p class="site-pane-foot"><span class="is-dot">UTF-8</span><span>CommonMark</span></p>
+            </div>
+            <div class="site-render">
+              <p class="site-pane-head"><span>Document</span><span class="is-live">Synced</span></p>
+              <article class="gotipe-page is-slice">
+                <div class="gotipe-doc">
+                  <h1>Everything here syncs live</h1>
+                  <p class="site-has-toolbar">
+                    <span class="gotipe-anchor is-inline"
+                      ><strong class="gotipe-selection">Every block is a transaction</strong
+                      ><span class="gotipe-overlay gotipe-toolbar" data-place="above-start" role="toolbar"
+                        ><span class="gotipe-tool is-active"><svg class="gt-icon"><use href="#i-bold" /></svg></span
+                        ><span class="gotipe-tool"><svg class="gt-icon"><use href="#i-italic" /></svg></span
+                        ><span class="gotipe-tool"><svg class="gt-icon"><use href="#i-link" /></svg></span
+                        ><span class="gotipe-tool"><svg class="gt-icon"><use href="#i-comment" /></svg></span></span
+                    ></span>
+                    the engine replays. Two cursors, one document.
+                  </p>
+                  <h3>Launch checklist</h3>
+                  <ul class="gotipe-todo-list">
+                    <li class="gotipe-todo-item" data-checked="true">
+                      <span class="gotipe-check" role="checkbox" aria-checked="true"><svg class="gt-icon" aria-hidden="true"><use href="#i-check" /></svg></span>
+                      <span class="gotipe-todo-item-content">Engine compiles to WASM</span>
+                    </li>
+                    <li class="gotipe-todo-item" data-checked="true">
+                      <span class="gotipe-check" role="checkbox" aria-checked="true"><svg class="gt-icon" aria-hidden="true"><use href="#i-check" /></svg></span>
+                      <span class="gotipe-todo-item-content">Docs run on 0.1</span>
+                    </li>
+                    <li class="gotipe-todo-item" data-checked="false">
+                      <span class="gotipe-check" role="checkbox" aria-checked="false"><svg class="gt-icon" aria-hidden="true"><use href="#i-check" /></svg></span>
+                      <span class="gotipe-todo-item-content">Cut the release note<span class="gotipe-remote" data-person="2"><span class="gotipe-remote-flag">Mira</span></span></span>
+                    </li>
+                  </ul>
+                  <blockquote class="gotipe-quote"><p>Paste a link — Markdown stays intact.</p></blockquote>
+                </div>
+              </article>
+            </div>
           </div>
-          <div class="site-step">
-            <span class="site-step-num">3</span>
-            <div><h3>Save the document</h3><p>JSON, HTML or Markdown from every update — your storage, your format.</p></div>
+          <figcaption class="site-window-foot">
+            <span>12 lines in · 12 lines out · 0 rewritten</span>
+            <span class="is-accent">Lossless by design</span>
+          </figcaption>
+        </figure>
+      </div>
+      <p class="site-plinth-note">Markdown source and the document it becomes. One model, nothing lost.</p>
+
+      <div class="site-facts-head">
+        <span>Shipped in 0.1</span>
+        <span>Numbers from the test suite and the build.</span>
+      </div>
+      <div class="site-facts">
+        <p class="site-fact"><strong>905</strong>browser scenarios in Chromium, Firefox and WebKit</p>
+        <p class="site-fact"><strong>652 / 652</strong>CommonMark examples parsed like the reference</p>
+        <p class="site-fact"><strong>~100 KB</strong>gzip for the JavaScript engine with Markdown</p>
+        <p class="site-fact"><strong class="site-accent">0</strong>third-party runtime dependencies in the engine</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="site-section is-features">
+    <div class="site-wrap">
+      <div class="site-head-row">
+        <div>
+          <p class="site-eyebrow">The whole document stack</p>
+          <h2>Everything you need.<br />Nothing in your way.</h2>
+        </div>
+        <p class="site-sub">The engine and every service around it are open source. Only the ready-made interface has a commercial license.</p>
+      </div>
+
+      <div class="site-bento">
+        <article class="site-tile is-tint">
+          <div class="site-tile-top"><svg class="gt-icon" aria-hidden="true"><use href="#i-braces" /></svg><span class="site-badge">MIT</span></div>
+          <h3>An engine. Not a wrapper.</h3>
+          <p>Transactions, history, selection and IME in TypeScript, with the same contract in Rust/WASM. No ProseMirror, Tiptap or Slate underneath.</p>
+          <div class="site-diagram">
+            <span class="site-diagram-box">Your interface</span>
+            <svg class="gt-icon" aria-hidden="true"><use href="#i-arrow-down" /></svg>
+            <span class="site-diagram-engine"><strong>GoTipe engine</strong><span>TypeScript · Rust/WASM</span></span>
+            <span class="site-diagram-note">No third-party runtime dependencies.</span>
+          </div>
+        </article>
+        <article class="site-tile is-sage">
+          <div class="site-tile-top"><svg class="gt-icon" aria-hidden="true"><use href="#i-page" /></svg><span class="site-badge">MIT</span></div>
+          <h3>Your Markdown stays yours.</h3>
+          <p>Our own parser keeps the file intact: an edit rewrites only the block it touched, your spacing and formatting are written back as they were.</p>
+          <div class="site-md-card">
+            <p class="is-head"># Offline drafts</p>
+            <p>Drafts write first, sync later.</p>
+            <p>- [x] keep my spacing</p>
+            <p class="site-md-foot"><span>written back</span><span class="is-ok"><svg class="gt-icon" aria-hidden="true"><use href="#i-check-16" /></svg>0 lines changed</span></p>
+          </div>
+        </article>
+        <article class="site-tile is-sand is-wide">
+          <div>
+            <div class="site-tile-top"><svg class="gt-icon" aria-hidden="true"><use href="#i-nodes" /></svg><span class="site-badge">MIT</span></div>
+            <h3>Better, together.</h3>
+            <p>Our own CRDT in Rust. Concurrent and offline edits merge on reconnect; cursors and selections included.</p>
+          </div>
+          <div class="site-pair">
+            <p class="site-pair-text">Two people,<br /><span class="gotipe-remote-selection" data-person="1">one paragraph.</span><span class="gotipe-remote" data-person="1"><span class="gotipe-remote-flag">Jonas</span></span></p>
+            <p class="site-pair-note">two edits · one merge · no conflict</p>
+          </div>
+        </article>
+      </div>
+
+      <div class="site-features">
+        <article class="site-feature">
+          <div class="site-feature-top"><svg class="gt-icon" aria-hidden="true"><use href="#i-edit" /></svg><span class="site-badge is-commercial">Commercial</span></div>
+          <h3>Block editor</h3>
+          <p>Slash menu, drag handle, bubble toolbar, tables and media.</p>
+        </article>
+        <article class="site-feature">
+          <div class="site-feature-top"><svg class="gt-icon" aria-hidden="true"><use href="#i-page" /></svg><span class="site-badge is-commercial">Commercial</span></div>
+          <h3>Page editor</h3>
+          <p>A Markdown page with comments in the margin.</p>
+        </article>
+        <article class="site-feature">
+          <div class="site-feature-top"><svg class="gt-icon" aria-hidden="true"><use href="#i-comment" /></svg><span class="site-badge">MIT</span></div>
+          <h3>Comments and suggestions</h3>
+          <p>Anchored threads and tracked changes.</p>
+        </article>
+        <article class="site-feature">
+          <div class="site-feature-top"><svg class="gt-icon" aria-hidden="true"><use href="#i-restore" /></svg><span class="site-badge">MIT</span></div>
+          <h3>Versions</h3>
+          <p>Snapshots, block-level compare, a restore you can undo.</p>
+        </article>
+        <article class="site-feature">
+          <div class="site-feature-top"><svg class="gt-icon" aria-hidden="true"><use href="#i-sparkle" /></svg><span class="site-badge">MIT</span></div>
+          <h3>AI layer</h3>
+          <p>Your model: streaming, cancel, proofreading.</p>
+        </article>
+        <article class="site-feature">
+          <div class="site-feature-top"><svg class="gt-icon" aria-hidden="true"><use href="#i-download" /></svg><span class="site-badge">MIT</span></div>
+          <h3>PDF and DOCX</h3>
+          <p>Our own writers, in the browser or on the server.</p>
+        </article>
+        <article class="site-feature">
+          <div class="site-feature-top"><svg class="gt-icon" aria-hidden="true"><use href="#i-swap" /></svg><span class="site-badge">MIT</span></div>
+          <h3>Migration</h3>
+          <p>ProseMirror, Tiptap, Slate and Lexical JSON.</p>
+        </article>
+        <article class="site-feature">
+          <div class="site-feature-top"><svg class="gt-icon" aria-hidden="true"><use href="#i-palette" /></svg><span class="site-badge is-commercial">Commercial</span></div>
+          <h3>Views and themes</h3>
+          <p>Four looks, light and dark, your CSS variables.</p>
+        </article>
+        <article class="site-feature">
+          <div class="site-feature-top"><svg class="gt-icon" aria-hidden="true"><use href="#i-cloud" /></svg><span class="site-badge">MIT</span></div>
+          <h3>Your own cloud</h3>
+          <p>Documents, sync, exports and an AI proxy in one Go service.</p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section class="site-stage is-grey">
+    <div class="site-wrap">
+      <div class="site-looks">
+        <div>
+          <p class="site-eyebrow">Make it your own</p>
+          <h2>One markup.<br />Four looks.</h2>
+          <p class="site-sub">Notion, docs, modern and minimal are sets of tokens over the same document. Switch them with one attribute.</p>
+          <div class="site-look-list">
+            <span class="site-look is-on"><span><strong>Notion</strong><small>Familiar and focused. The default.</small></span><svg class="gt-icon" aria-hidden="true"><use href="#i-arrow-up-right" /></svg></span>
+            <span class="site-look"><span><strong>Docs</strong><small>Reference pages with an outline.</small></span><svg class="gt-icon" aria-hidden="true"><use href="#i-arrow-up-right" /></svg></span>
+            <span class="site-look"><span><strong>Modern</strong><small>A fixed toolbar and more room.</small></span><svg class="gt-icon" aria-hidden="true"><use href="#i-arrow-up-right" /></svg></span>
+            <span class="site-look"><span><strong>Minimal</strong><small>Just the words.</small></span><svg class="gt-icon" aria-hidden="true"><use href="#i-arrow-up-right" /></svg></span>
           </div>
         </div>
-        <div class="site-code" data-gt-view="docs">
+        <figure class="site-window is-look" data-gt-view="notion">
+          <div class="site-window-bar">
+            <span class="site-tag">draft.md</span>
+            <span class="site-window-end"><code class="site-code-attr">data-gt-view="notion"</code></span>
+          </div>
+          <article class="gotipe-page is-slice">
+            <header class="gotipe-page-head">
+              <h1 class="gotipe-page-title">Offline drafts</h1>
+            </header>
+            <div class="gotipe-doc">
+              <p>A draft is kept on the device and sent when the network returns. Close the tab mid-sentence and nothing is lost.</p>
+              <ul class="gotipe-todo-list">
+                <li class="gotipe-todo-item" data-checked="true">
+                  <span class="gotipe-check" role="checkbox" aria-checked="true"><svg class="gt-icon" aria-hidden="true"><use href="#i-check" /></svg></span>
+                  <span class="gotipe-todo-item-content">Saved every second</span>
+                </li>
+                <li class="gotipe-todo-item" data-checked="false">
+                  <span class="gotipe-check" role="checkbox" aria-checked="false"><svg class="gt-icon" aria-hidden="true"><use href="#i-check" /></svg></span>
+                  <span class="gotipe-todo-item-content">Encrypted at rest</span>
+                </li>
+              </ul>
+            </div>
+          </article>
+          <figcaption class="site-window-foot"><span>one document · four token sets</span><span>source unchanged</span></figcaption>
+        </figure>
+      </div>
+    </div>
+  </section>
+
+  <section class="site-section">
+    <div class="site-wrap">
+      <div class="site-panel" data-theme="dark">
+        <div class="site-panel-copy">
+          <p class="site-eyebrow">Less setup. More building.</p>
+          <h2>From install<br />to your first edit.</h2>
+          <ol class="site-panel-steps">
+            <li><span>01</span><div><h3>Install</h3><p>The engine, the React adapter and the ready editor. Add the theme’s CSS once.</p></div></li>
+            <li><span>02</span><div><h3>Create</h3><p>Pick a preset or your own extensions; the engine is chosen for you.</p></div></li>
+            <li><span>03</span><div><h3>Save</h3><p>JSON, HTML or Markdown from every update — your storage, your format.</p></div></li>
+          </ol>
+          <p class="site-panel-note"><span>14 lines · one component</span><span>No editor to configure.</span></p>
+        </div>
+        <div class="site-panel-code" data-gt-view="docs">
           <div class="gotipe-code-block">
             <div class="gotipe-code-block-header">
-              <span class="gotipe-seg"><span class="is-on">React</span><span>Vue</span><span>Headless</span></span>
-              <span class="gotipe-code-copy"><svg class="gt-icon" aria-hidden="true"><use href="#i-copy" /></svg></span>
+              <span class="site-file">Notes.tsx</span>
+              <span class="site-copy"><svg class="gt-icon" aria-hidden="true"><use href="#i-copy" /></svg>copy</span>
             </div>
             <pre class="gotipe-code-block-scroll"><span class="gotipe-code-lines" aria-hidden="true">1
 2
@@ -8467,36 +9699,81 @@ editor<span class="tk-pun">.</span>on<span class="tk-pun">(</span><span class="t
     </div>
   </section>
 
-  <section class="site-section is-sunken">
+  <section class="site-section is-run">
     <div class="site-wrap">
-      <div class="site-section-head">
+      <div class="site-center-head">
         <p class="site-eyebrow">Run it your way</p>
-        <h2>In the browser, in WebAssembly, on your servers.</h2>
+        <h2>Same document.<br />Different ways to run.</h2>
+        <p class="site-sub">In the browser, in WebAssembly, on your servers. One document model, wherever you need it.</p>
       </div>
-      <div class="site-grid">
-        <article class="site-card">
-          <div class="site-card-top"><h3>JavaScript engine</h3><span class="site-badge">MIT</span></div>
+      <div class="site-run-grid">
+        <article class="site-run">
+          <div class="site-tile-top"><svg class="gt-icon" aria-hidden="true"><use href="#i-globe" /></svg><span class="site-badge">MIT</span></div>
+          <p class="site-label">JavaScript</p>
+          <p class="site-big">~100 KB</p>
+          <h3>JavaScript engine</h3>
           <p>The default. The whole editing model in TypeScript, nothing extra to load.</p>
-          <ul>
-            <li><svg class="gt-icon" aria-hidden="true"><use href="#i-check" /></svg>About 96 KB gzip with Markdown</li>
-            <li><svg class="gt-icon" aria-hidden="true"><use href="#i-check" /></svg>Server rendering to HTML, Markdown and text</li>
-          </ul>
+          <p class="site-run-foot">TypeScript · gzip, with Markdown</p>
         </article>
-        <article class="site-card">
-          <div class="site-card-top"><h3>Rust/WASM engine</h3><span class="site-badge">MIT</span></div>
+        <article class="site-run is-tint">
+          <div class="site-tile-top"><svg class="gt-icon" aria-hidden="true"><use href="#i-chip" /></svg><span class="site-badge">MIT</span></div>
+          <p class="site-label">Rust / WASM</p>
+          <p class="site-big">~600 KB</p>
+          <h3>Rust/WASM engine</h3>
           <p>The same API and document contract, compiled from Rust. Required for real-time collaboration.</p>
+          <p class="site-run-foot">Rust · gzip · CRDT, cursors, reconnect</p>
+        </article>
+        <article class="site-run">
+          <div class="site-tile-top"><svg class="gt-icon" aria-hidden="true"><use href="#i-server" /></svg><span class="site-badge">MIT</span></div>
+          <p class="site-label">Go · self-hosted</p>
+          <p class="site-big">1 service</p>
+          <h3>GoTipe Cloud</h3>
+          <p>Documents, permissions, sync, exports and an AI proxy, on your servers.</p>
+          <p class="site-run-foot">PostgreSQL · Valkey · Docker Compose</p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section class="site-stage is-grey">
+    <div class="site-wrap">
+      <div class="site-head-row">
+        <div>
+          <p class="site-eyebrow">A clear line. No fine print.</p>
+          <h2>Open where it matters.</h2>
+        </div>
+        <p class="site-sub">The engine and every service around it are MIT. Only the ready-made interface is commercial, and it is free for most teams.</p>
+      </div>
+      <div class="site-licences">
+        <article class="site-licence">
+          <div class="site-licence-top"><span class="site-label">Build it your way</span><span class="site-badge">MIT</span></div>
+          <h3>Engine and services</h3>
+          <p class="site-licence-meta">8 parts · use, fork, ship</p>
           <ul>
-            <li><svg class="gt-icon" aria-hidden="true"><use href="#i-check" /></svg>About 590 KB gzip</li>
-            <li><svg class="gt-icon" aria-hidden="true"><use href="#i-check" /></svg>CRDT, cursors and reconnect</li>
+            <li><svg class="gt-icon" aria-hidden="true"><use href="#i-check-16" /></svg><span>Transaction engine<small>selection, history, IME</small></span></li>
+            <li><svg class="gt-icon" aria-hidden="true"><use href="#i-check-16" /></svg><span>Markdown parser<small>lossless, 652 / 652 CommonMark</small></span></li>
+            <li><svg class="gt-icon" aria-hidden="true"><use href="#i-check-16" /></svg><span>Framework adapters<small>React and Vue</small></span></li>
+            <li><svg class="gt-icon" aria-hidden="true"><use href="#i-check-16" /></svg><span>Real-time collaboration<small>CRDT in Rust/WASM</small></span></li>
+            <li><svg class="gt-icon" aria-hidden="true"><use href="#i-check-16" /></svg><span>Comments, suggestions, versions<small>anchored threads, block compare</small></span></li>
+            <li><svg class="gt-icon" aria-hidden="true"><use href="#i-check-16" /></svg><span>AI layer, PDF and DOCX<small>your model; browser and server writers</small></span></li>
+            <li><svg class="gt-icon" aria-hidden="true"><use href="#i-check-16" /></svg><span>Migration<small>ProseMirror, Tiptap, Slate, Lexical</small></span></li>
+            <li><svg class="gt-icon" aria-hidden="true"><use href="#i-check-16" /></svg><span>GoTipe Cloud and the SDK<small>Go service, Docker Compose</small></span></li>
           </ul>
         </article>
-        <article class="site-card">
-          <div class="site-card-top"><h3>GoTipe Cloud</h3><span class="site-badge">MIT</span></div>
-          <p>A Go service you run: documents, permissions, sync, exports and an AI proxy.</p>
+        <article class="site-licence is-tint">
+          <div class="site-licence-top"><span class="site-label">Ship a little sooner</span><span class="site-badge is-commercial">Commercial</span></div>
+          <h3>Ready-made interface</h3>
+          <p class="site-licence-meta">4 parts · one licence per product</p>
           <ul>
-            <li><svg class="gt-icon" aria-hidden="true"><use href="#i-check" /></svg>PostgreSQL and Valkey</li>
-            <li><svg class="gt-icon" aria-hidden="true"><use href="#i-check" /></svg>One Docker Compose file</li>
+            <li><svg class="gt-icon" aria-hidden="true"><use href="#i-check-16" /></svg><span>BlockEditor and PageEditor<small>for React</small></span></li>
+            <li><svg class="gt-icon" aria-hidden="true"><use href="#i-check-16" /></svg><span>The block editor for Vue<small>slash menu, drag handle, toolbar</small></span></li>
+            <li><svg class="gt-icon" aria-hidden="true"><use href="#i-check-16" /></svg><span>AI interface components<small>command line, suggestions</small></span></li>
+            <li><svg class="gt-icon" aria-hidden="true"><use href="#i-check-16" /></svg><span>The theme and its four views<small>notion, docs, modern, minimal</small></span></li>
           </ul>
+          <p class="site-licence-free">
+            <strong>Free</strong> for individuals, open source, non-profits and companies under $1M
+            revenue. Above that, one licence per product.
+          </p>
         </article>
       </div>
     </div>
@@ -8504,59 +9781,31 @@ editor<span class="tk-pun">.</span>on<span class="tk-pun">(</span><span class="t
 
   <section class="site-section">
     <div class="site-wrap">
-      <div class="site-section-head">
-        <p class="site-eyebrow">Licensing</p>
-        <h2>Open where it matters.</h2>
-      </div>
-      <div class="site-grid is-2">
-        <article class="site-card">
-          <div class="site-card-top"><h3>Engine and services</h3><span class="site-badge">MIT</span></div>
-          <ul>
-            <li><svg class="gt-icon" aria-hidden="true"><use href="#i-check" /></svg>Engine, Markdown and framework adapters</li>
-            <li><svg class="gt-icon" aria-hidden="true"><use href="#i-check" /></svg>Collaboration, comments, suggestions, versions</li>
-            <li><svg class="gt-icon" aria-hidden="true"><use href="#i-check" /></svg>AI layer, PDF and DOCX export, migration</li>
-            <li><svg class="gt-icon" aria-hidden="true"><use href="#i-check" /></svg>GoTipe Cloud and the SDK</li>
-          </ul>
-        </article>
-        <article class="site-card">
-          <div class="site-card-top"><h3>Ready-made interface</h3><span class="site-badge is-commercial">Commercial</span></div>
-          <ul>
-            <li><svg class="gt-icon" aria-hidden="true"><use href="#i-check" /></svg>Free for personal, open-source and non-profit work, and for companies under $1M revenue</li>
-            <li><svg class="gt-icon" aria-hidden="true"><use href="#i-check" /></svg>BlockEditor and PageEditor for React</li>
-            <li><svg class="gt-icon" aria-hidden="true"><use href="#i-check" /></svg>The block editor for Vue</li>
-            <li><svg class="gt-icon" aria-hidden="true"><use href="#i-check" /></svg>AI interface components</li>
-            <li><svg class="gt-icon" aria-hidden="true"><use href="#i-check" /></svg>The theme and its four views</li>
-          </ul>
-        </article>
+      <div class="site-stage site-band">
+        <p class="site-eyebrow">The next chapter is yours</p>
+        <h2>Build on an engine<br />you own.</h2>
+        <p class="site-sub">Start with the quick start, or open the playground and edit a real document.</p>
+        <div class="site-actions">
+          <span class="gotipe-button site-cta">Read the docs<svg class="gt-icon" aria-hidden="true"><use href="#i-arrow-right" /></svg></span>
+          <span class="gotipe-button site-cta is-second">Open the playground</span>
+        </div>
+        <p class="site-band-legend"><span>Engine <strong>MIT</strong></span><span>Services <strong>MIT</strong></span><span>Interface <strong>Commercial</strong></span></p>
       </div>
     </div>
   </section>
-
-  <div class="site-wrap">
-    <div class="site-band">
-      <div>
-        <h2>Build on an engine you own.</h2>
-        <p>Start with the quick start, or open the playground and edit a real document.</p>
-      </div>
-      <div class="site-actions">
-        <span class="gotipe-button is-cta is-on-inverse">Read the docs</span>
-        <span class="gotipe-button is-cta is-quiet">Open the playground</span>
-      </div>
-    </div>
-  </div>
 
   <footer class="site-foot">
     <div class="site-wrap">
       <div class="site-foot-grid">
         <div>
-          <a class="site-brand"><svg class="site-logo" aria-hidden="true"><use href="#i-logo" /></svg>GoTipe</a>
-          <p>A document editor framework with its own engine.</p>
+          <a class="site-brand is-large"><svg class="site-logo" aria-hidden="true"><use href="#i-logo" /></svg>GoTipe</a>
+          <p>A document editor framework with its own engine. TypeScript and Rust/WASM.</p>
         </div>
-        <div><h4>Product</h4><a>Docs</a><a>Playground</a><a>Changelog</a></div>
-        <div><h4>Resources</h4><a>Licensing</a><a>Security</a><a>Browser support</a></div>
-        <div><h4>Project</h4><a>GitHub</a><a>Contributing</a><a>Report a vulnerability</a></div>
+        <div><h4>Product</h4><a>Docs</a><a>Playground</a><a>Licensing</a><a>Changelog</a></div>
+        <div><h4>Resources</h4><a>Quick start</a><a>Security</a><a>Browser support</a></div>
+        <div><h4>Project</h4><a>GitHub</a><a>npm</a><a>Contributing</a><a>Report a vulnerability</a></div>
       </div>
-      <p class="site-foot-base">© 2026 GoTipe contributors · MIT and commercial licenses</p>
+      <p class="site-foot-base"><span>© 2026 GoTipe contributors · MIT and commercial licences</span><span class="site-mono">0.1</span></p>
     </div>
   </footer>
 </div>
@@ -8565,9 +9814,9 @@ editor<span class="tk-pun">.</span>on<span class="tk-pun">(</span><span class="t
   <section class="at-stage" data-w="375">
 <p class="at-stage-label">первый экран на телефоне · 375</p>
 <div class="at-frame gotipe-root" data-gt-view="notion" data-frame="landing-phone" data-w="375" data-h="960">
-<div class="site" lang="en">
+<div class="site site-landing" lang="en">
   <header class="site-head">
-  <div class="site-wrap site-head-in">
+  <div class="site-head-in">
     <a class="site-brand"><svg class="site-logo" aria-hidden="true"><use href="#i-logo" /></svg>GoTipe</a>
     <nav class="site-nav" aria-label="Site">
       <a>Docs</a>
@@ -8576,251 +9825,322 @@ editor<span class="tk-pun">.</span>on<span class="tk-pun">(</span><span class="t
       <a>Changelog</a>
     </nav>
     <div class="site-head-end">
-      <span class="gotipe-button is-quiet is-wide">GitHub<svg class="gt-icon" aria-hidden="true"><use href="#i-external" /></svg></span>
-      <span class="gotipe-button is-quiet is-wide" aria-label="Dark theme"><svg class="gt-icon" aria-hidden="true"><use href="#i-moon" /></svg></span>
-      <span class="gotipe-button is-primary">Get started</span>
-      <span class="gotipe-button is-quiet site-menu-button" aria-label="Menu"><svg class="gt-icon" aria-hidden="true"><use href="#i-menu" /></svg></span>
+      <span class="gotipe-button is-quiet site-head-button is-wide">GitHub<svg class="gt-icon" aria-hidden="true"><use href="#i-external" /></svg></span>
+      <span class="gotipe-button is-quiet site-head-button is-icon is-wide" aria-label="Dark theme"><svg class="gt-icon" aria-hidden="true"><use href="#i-moon" /></svg></span>
+      <span class="gotipe-button is-primary site-head-button">Get started<svg class="gt-icon" aria-hidden="true"><use href="#i-arrow-up-right" /></svg></span>
+      <span class="gotipe-button is-quiet site-head-button is-icon site-menu-button" aria-label="Menu"><svg class="gt-icon" aria-hidden="true"><use href="#i-menu" /></svg></span>
     </div>
   </div>
 </header>
 
-  <section class="site-hero">
-    <div class="site-wrap site-hero-grid">
-      <div>
-        <p class="site-eyebrow">Version 0.1 · MIT core</p>
-        <h1>The editor you own, down to the engine.</h1>
-        <p class="site-lede">
-          GoTipe is a document editor framework with its own engine in TypeScript and Rust/WASM:
-          lossless Markdown, a ready block editor, review and real-time collaboration — and no
-          third-party editor underneath.
-        </p>
-        <div class="site-actions">
-          <span class="gotipe-button is-primary is-cta">Get started<svg class="gt-icon" aria-hidden="true"><use href="#i-arrow-right" /></svg></span>
-          <span class="gotipe-button is-cta">Open the playground</span>
-        </div>
-        <div class="site-install">
-          <code>npm i @gotipe/core @gotipe/react</code>
-          <span class="gotipe-button is-quiet" aria-label="Copy"><svg class="gt-icon" aria-hidden="true"><use href="#i-copy" /></svg></span>
-        </div>
-      </div>
-
-      <div class="site-demo is-hero">
-        <div class="site-demo-bar">
-          <span>Live editor</span>
-          <span class="gotipe-seg"><span class="is-on">Block</span><span>Page</span><span>Views</span></span>
-        </div>
-        <article class="gotipe-page">
-          <div class="gotipe-doc">
-            <p>
-              <span class="gotipe-anchor is-inline"
-                ><strong class="gotipe-selection">Everything here syncs live</strong
-                ><span class="gotipe-overlay gotipe-toolbar" data-place="above-start" role="toolbar"
-                  ><span class="gotipe-tool is-model-icon"><svg class="gt-icon"><use href="#i-sparkle" /></svg></span
-                  ><span class="gotipe-tool-sep"></span
-                  ><span class="gotipe-tool is-active"><svg class="gt-icon"><use href="#i-bold" /></svg></span
-                  ><span class="gotipe-tool"><svg class="gt-icon"><use href="#i-italic" /></svg></span
-                  ><span class="gotipe-tool"><svg class="gt-icon"><use href="#i-underline" /></svg></span
-                  ><span class="gotipe-tool"><svg class="gt-icon"><use href="#i-code" /></svg></span
-                  ><span class="gotipe-tool-sep"></span
-                  ><span class="gotipe-tool"><svg class="gt-icon"><use href="#i-link" /></svg></span
-                  ><span class="gotipe-tool"><svg class="gt-icon"><use href="#i-comment" /></svg></span></span
-              ></span>
-              — two people's edits merge without conflicts. The beta ships on Thursday.
-            </p>
-            <h3>Launch checklist</h3>
-            <ul class="gotipe-todo-list">
-              <li class="gotipe-todo-item" data-checked="true">
-                <span class="gotipe-check" role="checkbox" aria-checked="true"
-                  ><svg class="gt-icon" aria-hidden="true"><use href="#i-check" /></svg
-                ></span>
-                <span class="gotipe-todo-item-content">Freeze the public API</span>
-              </li>
-              <li class="gotipe-todo-item" data-checked="false">
-                <span class="gotipe-check" role="checkbox" aria-checked="false"
-                  ><svg class="gt-icon" aria-hidden="true"><use href="#i-check" /></svg
-                ></span>
-                <span class="gotipe-todo-item-content">Write the migration guide</span>
-              </li>
-              <li class="gotipe-todo-item" data-checked="false">
-                <span class="gotipe-check" role="checkbox" aria-checked="false"
-                  ><svg class="gt-icon" aria-hidden="true"><use href="#i-check" /></svg
-                ></span>
-                <span class="gotipe-todo-item-content">Run the browser suite</span>
-              </li>
-            </ul>
-            <div class="gotipe-callout" data-variant="info">
-              <span class="gotipe-callout-icon"
-                ><svg class="gt-icon" aria-hidden="true"><use href="#i-hash" /></svg
-              ></span>
-              <div class="gotipe-callout-content">
-                <p>Blocks nobody touched keep their Markdown byte for byte.</p>
-              </div>
-            </div>
+  <section class="site-stage site-hero">
+    <div class="site-wrap">
+      <div class="site-hero-grid">
+        <div class="site-hero-copy">
+          <p class="site-chip"><span>v0.1</span>Open source. Built from scratch.<svg class="gt-icon" aria-hidden="true"><use href="#i-arrow-right" /></svg></p>
+          <h1>Your editor.<br />Your engine.<br /><span class="site-accent">Your rules.</span></h1>
+          <p class="site-lede">
+            A document editor framework built from the engine up. Lossless Markdown, real-time
+            collaboration, and an interface that’s entirely yours.
+          </p>
+          <div class="site-actions">
+            <span class="gotipe-button site-cta">Start building<svg class="gt-icon" aria-hidden="true"><use href="#i-arrow-right" /></svg></span>
+            <span class="gotipe-button site-cta is-second">Try the playground<svg class="gt-icon" aria-hidden="true"><use href="#i-arrow-right" /></svg></span>
           </div>
-        </article>
+          <div class="site-install">
+            <code>npm i @gotipe/core @gotipe/react</code>
+            <span class="gotipe-button is-quiet" aria-label="Copy"><svg class="gt-icon" aria-hidden="true"><use href="#i-copy" /></svg></span>
+          </div>
+        </div>
+
+        <div class="site-stack">
+          <p class="site-stack-head"><span class="site-label">The GoTipe stack</span><svg class="gt-icon" aria-hidden="true"><use href="#i-layers" /></svg></p>
+          <div class="site-stack-item">
+            <p class="site-stack-title"><svg class="gt-icon" aria-hidden="true"><use href="#i-braces" /></svg><strong>Your own engine</strong><span>01</span></p>
+            <p>TypeScript and Rust/WASM. No editor underneath.</p>
+            <span class="site-badge">MIT</span>
+          </div>
+          <div class="site-stack-item">
+            <p class="site-stack-title"><svg class="gt-icon" aria-hidden="true"><use href="#i-page" /></svg><strong>Markdown, untouched</strong><span>02</span></p>
+            <p>The same file in. Untouched blocks come back byte for byte.</p>
+            <span class="site-badge">Lossless</span>
+          </div>
+          <div class="site-stack-item">
+            <p class="site-stack-title"><svg class="gt-icon" aria-hidden="true"><use href="#i-nodes" /></svg><strong>Built to work together</strong><span>03</span></p>
+            <p>Real-time sync, review and offline editing.</p>
+            <span class="site-badge">MIT</span>
+          </div>
+          <p class="site-stack-foot"><svg class="gt-icon" aria-hidden="true"><use href="#i-arrow-down" /></svg>Your interface. Your infrastructure.</p>
+        </div>
+      </div>
+
+      <div class="site-strip">
+        <span>Not a wrapper. A foundation.</span>
+        <span class="site-strip-labels">
+          <span>TypeScript</span><span>Rust / WASM</span><span>React</span><span>Vue</span>
+          <span><svg class="gt-icon" aria-hidden="true"><use href="#i-lock" /></svg>MIT core</span>
+        </span>
       </div>
     </div>
   </section>
 
-  <div class="site-wrap">
-    <div class="site-facts">
-      <p class="site-fact"><strong>905</strong>browser scenarios, run in Chromium, Firefox and WebKit</p>
-      <p class="site-fact"><strong>652 / 652</strong>CommonMark examples parsed like the reference</p>
-      <p class="site-fact"><strong>96 KB</strong>gzip for the engine together with Markdown</p>
-      <p class="site-fact"><strong>0</strong>third-party runtime dependencies in the engine</p>
-    </div>
-  </div>
-
-  <section class="site-section">
+  <section class="site-section is-signature">
     <div class="site-wrap">
-      <div class="site-section-head">
-        <p class="site-eyebrow">What's inside</p>
-        <h2>Everything a document needs. Most of it MIT.</h2>
-        <p>The engine and every service around it are open source. Only the ready-made interface has a commercial license.</p>
-      </div>
-      <div class="site-grid">
-        <article class="site-card">
-          <div class="site-card-top"><span class="site-card-icon"><svg class="gt-icon" aria-hidden="true"><use href="#i-code" /></svg></span><span class="site-badge">MIT</span></div>
-          <h3>Own engine</h3>
-          <p>Transactions, history, selection and IME in TypeScript, with the same contract in Rust/WASM.</p>
-        </article>
-        <article class="site-card">
-          <div class="site-card-top"><span class="site-card-icon"><svg class="gt-icon" aria-hidden="true"><use href="#i-hash" /></svg></span><span class="site-badge">MIT</span></div>
-          <h3>Lossless Markdown</h3>
-          <p>Our own parser: an edit rewrites only the block it touched, the rest of the file stays as written.</p>
-        </article>
-        <article class="site-card">
-          <div class="site-card-top"><span class="site-card-icon"><svg class="gt-icon" aria-hidden="true"><use href="#i-grip" /></svg></span><span class="site-badge is-commercial">Commercial</span></div>
-          <h3>Block editor</h3>
-          <p>Slash menu, drag handle, bubble toolbar, tables, media and code — ready for React.</p>
-        </article>
-        <article class="site-card">
-          <div class="site-card-top"><span class="site-card-icon"><svg class="gt-icon" aria-hidden="true"><use href="#i-page" /></svg></span><span class="site-badge is-commercial">Commercial</span></div>
-          <h3>Page editor</h3>
-          <p>A Markdown page with review lanes, anchored proposals and comments in the margin.</p>
-        </article>
-        <article class="site-card">
-          <div class="site-card-top"><span class="site-card-icon"><svg class="gt-icon" aria-hidden="true"><use href="#i-swap" /></svg></span><span class="site-badge">MIT</span></div>
-          <h3>Real-time collaboration</h3>
-          <p>Our own CRDT in Rust: concurrent edits, cursors, reconnect and durable sync.</p>
-        </article>
-        <article class="site-card">
-          <div class="site-card-top"><span class="site-card-icon"><svg class="gt-icon" aria-hidden="true"><use href="#i-comment" /></svg></span><span class="site-badge">MIT</span></div>
-          <h3>Comments and suggestions</h3>
-          <p>Anchored threads and tracked changes, accepted or rejected in one step.</p>
-        </article>
-        <article class="site-card">
-          <div class="site-card-top"><span class="site-card-icon"><svg class="gt-icon" aria-hidden="true"><use href="#i-clock" /></svg></span><span class="site-badge">MIT</span></div>
-          <h3>Versions</h3>
-          <p>Snapshots, a block-level compare and a restore you can undo.</p>
-        </article>
-        <article class="site-card">
-          <div class="site-card-top"><span class="site-card-icon"><svg class="gt-icon" aria-hidden="true"><use href="#i-sparkle" /></svg></span><span class="site-badge">MIT</span></div>
-          <h3>AI layer</h3>
-          <p>Bring your model: streaming, cancel, proofreading, ghost text and a guard for personal data.</p>
-        </article>
-        <article class="site-card">
-          <div class="site-card-top"><span class="site-card-icon"><svg class="gt-icon" aria-hidden="true"><use href="#i-download" /></svg></span><span class="site-badge">MIT</span></div>
-          <h3>PDF and DOCX</h3>
-          <p>Our own PDF layout and Word writer, in the browser through WebAssembly or on the server.</p>
-        </article>
-        <article class="site-card">
-          <div class="site-card-top"><span class="site-card-icon"><svg class="gt-icon" aria-hidden="true"><use href="#i-upload" /></svg></span><span class="site-badge">MIT</span></div>
-          <h3>Migration</h3>
-          <p>Bring ProseMirror, Tiptap, Slate or Lexical JSON; content we can't map is kept, not dropped.</p>
-        </article>
-        <article class="site-card">
-          <div class="site-card-top"><span class="site-card-icon"><svg class="gt-icon" aria-hidden="true"><use href="#i-sun" /></svg></span><span class="site-badge is-commercial">Commercial</span></div>
-          <h3>Views and themes</h3>
-          <p>Four looks over one markup, light and dark; your colours through CSS variables.</p>
-        </article>
-        <article class="site-card">
-          <div class="site-card-top"><span class="site-card-icon"><svg class="gt-icon" aria-hidden="true"><use href="#i-lock" /></svg></span><span class="site-badge">MIT</span></div>
-          <h3>Your own cloud</h3>
-          <p>Documents, permissions, sync, exports and an AI proxy in one Go service you run.</p>
-        </article>
-      </div>
-    </div>
-  </section>
-
-  <section class="site-section is-sunken">
-    <div class="site-wrap">
-      <div class="site-section-head">
-        <p class="site-eyebrow">Four views</p>
-        <h2>One markup, four looks.</h2>
-        <p>Notion, docs, modern and minimal are sets of tokens over the same document. Switch them with one attribute.</p>
-      </div>
-      <div class="site-grid is-4">
-        <div class="site-view-card" data-gt-view="notion">
-          <p class="site-view-name">notion<span>default</span></p>
-          <article class="gotipe-page is-slice">
-            <div class="gotipe-doc">
-              <h2>Offline drafts</h2>
-              <p>A draft is kept on the device and sent when the network returns.</p>
-              <ul class="gotipe-list"><li>Saved every second</li><li>Encrypted at rest</li></ul>
-            </div>
-          </article>
-        </div>
-        <div class="site-view-card" data-gt-view="docs">
-          <p class="site-view-name">docs<span>reference</span></p>
-          <article class="gotipe-page is-slice">
-            <div class="gotipe-doc">
-              <h2>Offline drafts</h2>
-              <p>A draft is kept on the device and sent when the network returns.</p>
-              <ul class="gotipe-list"><li>Saved every second</li><li>Encrypted at rest</li></ul>
-            </div>
-          </article>
-        </div>
-        <div class="site-view-card" data-gt-view="modern">
-          <p class="site-view-name">modern<span>fixed toolbar</span></p>
-          <article class="gotipe-page is-slice">
-            <div class="gotipe-doc">
-              <h2>Offline drafts</h2>
-              <p>A draft is kept on the device and sent when the network returns.</p>
-              <ul class="gotipe-list"><li>Saved every second</li><li>Encrypted at rest</li></ul>
-            </div>
-          </article>
-        </div>
-        <div class="site-view-card" data-gt-view="minimal">
-          <p class="site-view-name">minimal<span>just text</span></p>
-          <article class="gotipe-page is-slice">
-            <div class="gotipe-doc">
-              <h2>Offline drafts</h2>
-              <p>A draft is kept on the device and sent when the network returns.</p>
-              <ul class="gotipe-list"><li>Saved every second</li><li>Encrypted at rest</li></ul>
-            </div>
-          </article>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <section class="site-section">
-    <div class="site-wrap">
-      <div class="site-section-head">
-        <p class="site-eyebrow">Get started</p>
-        <h2>From npm install to a working editor.</h2>
-      </div>
-      <div class="site-steps">
+      <div class="site-title-row">
         <div>
-          <div class="site-step">
-            <span class="site-step-num">1</span>
-            <div><h3>Install</h3><p>The engine, the React adapter and the ready editor. Add the theme's CSS once.</p></div>
+          <p class="site-eyebrow">Made for the way you build</p>
+          <h2>Plain text. Rich possibilities.</h2>
+        </div>
+        <svg class="gt-icon site-title-arrow" aria-hidden="true"><use href="#i-arrow-down-right" /></svg>
+      </div>
+
+      <div class="site-plinth">
+        <figure class="site-window">
+          <div class="site-window-bar">
+            <svg class="gt-icon" aria-hidden="true"><use href="#i-page" /></svg>
+            <span class="site-window-path">Workspace<span>/</span><strong>Launch notes</strong></span>
+            <span class="site-window-end">
+              <span class="site-tag">notes.md</span>
+              <span class="gotipe-avatars" aria-hidden="true">
+                <span class="gotipe-avatar" data-person="2">M</span>
+                <span class="gotipe-avatar" data-person="1">J</span>
+              </span>
+              <svg class="gt-icon" aria-hidden="true"><use href="#i-more" /></svg>
+            </span>
           </div>
-          <div class="site-step">
-            <span class="site-step-num">2</span>
-            <div><h3>Create the editor</h3><p>Pick a preset or your own extensions; the engine is chosen for you.</p></div>
+          <div class="site-split">
+            <div class="site-src">
+              <p class="site-pane-head"><span>Markdown source</span><span>.md</span></p>
+              <ol class="site-src-lines">
+                <li><code><span class="is-mark"># Everything here syncs live</span></code></li>
+                <li></li>
+                <li class="is-current"><code><span class="is-mark">**Every block is a transaction**</span> the engine</code></li>
+                <li><code>replays. Two cursors, one document.</code></li>
+                <li></li>
+                <li><code><span class="is-mark">### Launch checklist</span></code></li>
+                <li></li>
+                <li><code>- [x] Engine compiles to WASM</code></li>
+                <li><code>- [x] Docs run on 0.1</code></li>
+                <li><code>- [ ] Cut the release note</code></li>
+                <li></li>
+                <li><code>&gt; Paste a link — Markdown stays intact.</code></li>
+              </ol>
+              <p class="site-pane-foot"><span class="is-dot">UTF-8</span><span>CommonMark</span></p>
+            </div>
+            <div class="site-render">
+              <p class="site-pane-head"><span>Document</span><span class="is-live">Synced</span></p>
+              <article class="gotipe-page is-slice">
+                <div class="gotipe-doc">
+                  <h1>Everything here syncs live</h1>
+                  <p class="site-has-toolbar">
+                    <span class="gotipe-anchor is-inline"
+                      ><strong class="gotipe-selection">Every block is a transaction</strong
+                      ><span class="gotipe-overlay gotipe-toolbar" data-place="above-start" role="toolbar"
+                        ><span class="gotipe-tool is-active"><svg class="gt-icon"><use href="#i-bold" /></svg></span
+                        ><span class="gotipe-tool"><svg class="gt-icon"><use href="#i-italic" /></svg></span
+                        ><span class="gotipe-tool"><svg class="gt-icon"><use href="#i-link" /></svg></span
+                        ><span class="gotipe-tool"><svg class="gt-icon"><use href="#i-comment" /></svg></span></span
+                    ></span>
+                    the engine replays. Two cursors, one document.
+                  </p>
+                  <h3>Launch checklist</h3>
+                  <ul class="gotipe-todo-list">
+                    <li class="gotipe-todo-item" data-checked="true">
+                      <span class="gotipe-check" role="checkbox" aria-checked="true"><svg class="gt-icon" aria-hidden="true"><use href="#i-check" /></svg></span>
+                      <span class="gotipe-todo-item-content">Engine compiles to WASM</span>
+                    </li>
+                    <li class="gotipe-todo-item" data-checked="true">
+                      <span class="gotipe-check" role="checkbox" aria-checked="true"><svg class="gt-icon" aria-hidden="true"><use href="#i-check" /></svg></span>
+                      <span class="gotipe-todo-item-content">Docs run on 0.1</span>
+                    </li>
+                    <li class="gotipe-todo-item" data-checked="false">
+                      <span class="gotipe-check" role="checkbox" aria-checked="false"><svg class="gt-icon" aria-hidden="true"><use href="#i-check" /></svg></span>
+                      <span class="gotipe-todo-item-content">Cut the release note<span class="gotipe-remote" data-person="2"><span class="gotipe-remote-flag">Mira</span></span></span>
+                    </li>
+                  </ul>
+                  <blockquote class="gotipe-quote"><p>Paste a link — Markdown stays intact.</p></blockquote>
+                </div>
+              </article>
+            </div>
           </div>
-          <div class="site-step">
-            <span class="site-step-num">3</span>
-            <div><h3>Save the document</h3><p>JSON, HTML or Markdown from every update — your storage, your format.</p></div>
+          <figcaption class="site-window-foot">
+            <span>12 lines in · 12 lines out · 0 rewritten</span>
+            <span class="is-accent">Lossless by design</span>
+          </figcaption>
+        </figure>
+      </div>
+      <p class="site-plinth-note">Markdown source and the document it becomes. One model, nothing lost.</p>
+
+      <div class="site-facts-head">
+        <span>Shipped in 0.1</span>
+        <span>Numbers from the test suite and the build.</span>
+      </div>
+      <div class="site-facts">
+        <p class="site-fact"><strong>905</strong>browser scenarios in Chromium, Firefox and WebKit</p>
+        <p class="site-fact"><strong>652 / 652</strong>CommonMark examples parsed like the reference</p>
+        <p class="site-fact"><strong>~100 KB</strong>gzip for the JavaScript engine with Markdown</p>
+        <p class="site-fact"><strong class="site-accent">0</strong>third-party runtime dependencies in the engine</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="site-section is-features">
+    <div class="site-wrap">
+      <div class="site-head-row">
+        <div>
+          <p class="site-eyebrow">The whole document stack</p>
+          <h2>Everything you need.<br />Nothing in your way.</h2>
+        </div>
+        <p class="site-sub">The engine and every service around it are open source. Only the ready-made interface has a commercial license.</p>
+      </div>
+
+      <div class="site-bento">
+        <article class="site-tile is-tint">
+          <div class="site-tile-top"><svg class="gt-icon" aria-hidden="true"><use href="#i-braces" /></svg><span class="site-badge">MIT</span></div>
+          <h3>An engine. Not a wrapper.</h3>
+          <p>Transactions, history, selection and IME in TypeScript, with the same contract in Rust/WASM. No ProseMirror, Tiptap or Slate underneath.</p>
+          <div class="site-diagram">
+            <span class="site-diagram-box">Your interface</span>
+            <svg class="gt-icon" aria-hidden="true"><use href="#i-arrow-down" /></svg>
+            <span class="site-diagram-engine"><strong>GoTipe engine</strong><span>TypeScript · Rust/WASM</span></span>
+            <span class="site-diagram-note">No third-party runtime dependencies.</span>
+          </div>
+        </article>
+        <article class="site-tile is-sage">
+          <div class="site-tile-top"><svg class="gt-icon" aria-hidden="true"><use href="#i-page" /></svg><span class="site-badge">MIT</span></div>
+          <h3>Your Markdown stays yours.</h3>
+          <p>Our own parser keeps the file intact: an edit rewrites only the block it touched, your spacing and formatting are written back as they were.</p>
+          <div class="site-md-card">
+            <p class="is-head"># Offline drafts</p>
+            <p>Drafts write first, sync later.</p>
+            <p>- [x] keep my spacing</p>
+            <p class="site-md-foot"><span>written back</span><span class="is-ok"><svg class="gt-icon" aria-hidden="true"><use href="#i-check-16" /></svg>0 lines changed</span></p>
+          </div>
+        </article>
+        <article class="site-tile is-sand is-wide">
+          <div>
+            <div class="site-tile-top"><svg class="gt-icon" aria-hidden="true"><use href="#i-nodes" /></svg><span class="site-badge">MIT</span></div>
+            <h3>Better, together.</h3>
+            <p>Our own CRDT in Rust. Concurrent and offline edits merge on reconnect; cursors and selections included.</p>
+          </div>
+          <div class="site-pair">
+            <p class="site-pair-text">Two people,<br /><span class="gotipe-remote-selection" data-person="1">one paragraph.</span><span class="gotipe-remote" data-person="1"><span class="gotipe-remote-flag">Jonas</span></span></p>
+            <p class="site-pair-note">two edits · one merge · no conflict</p>
+          </div>
+        </article>
+      </div>
+
+      <div class="site-features">
+        <article class="site-feature">
+          <div class="site-feature-top"><svg class="gt-icon" aria-hidden="true"><use href="#i-edit" /></svg><span class="site-badge is-commercial">Commercial</span></div>
+          <h3>Block editor</h3>
+          <p>Slash menu, drag handle, bubble toolbar, tables and media.</p>
+        </article>
+        <article class="site-feature">
+          <div class="site-feature-top"><svg class="gt-icon" aria-hidden="true"><use href="#i-page" /></svg><span class="site-badge is-commercial">Commercial</span></div>
+          <h3>Page editor</h3>
+          <p>A Markdown page with comments in the margin.</p>
+        </article>
+        <article class="site-feature">
+          <div class="site-feature-top"><svg class="gt-icon" aria-hidden="true"><use href="#i-comment" /></svg><span class="site-badge">MIT</span></div>
+          <h3>Comments and suggestions</h3>
+          <p>Anchored threads and tracked changes.</p>
+        </article>
+        <article class="site-feature">
+          <div class="site-feature-top"><svg class="gt-icon" aria-hidden="true"><use href="#i-restore" /></svg><span class="site-badge">MIT</span></div>
+          <h3>Versions</h3>
+          <p>Snapshots, block-level compare, a restore you can undo.</p>
+        </article>
+        <article class="site-feature">
+          <div class="site-feature-top"><svg class="gt-icon" aria-hidden="true"><use href="#i-sparkle" /></svg><span class="site-badge">MIT</span></div>
+          <h3>AI layer</h3>
+          <p>Your model: streaming, cancel, proofreading.</p>
+        </article>
+        <article class="site-feature">
+          <div class="site-feature-top"><svg class="gt-icon" aria-hidden="true"><use href="#i-download" /></svg><span class="site-badge">MIT</span></div>
+          <h3>PDF and DOCX</h3>
+          <p>Our own writers, in the browser or on the server.</p>
+        </article>
+        <article class="site-feature">
+          <div class="site-feature-top"><svg class="gt-icon" aria-hidden="true"><use href="#i-swap" /></svg><span class="site-badge">MIT</span></div>
+          <h3>Migration</h3>
+          <p>ProseMirror, Tiptap, Slate and Lexical JSON.</p>
+        </article>
+        <article class="site-feature">
+          <div class="site-feature-top"><svg class="gt-icon" aria-hidden="true"><use href="#i-palette" /></svg><span class="site-badge is-commercial">Commercial</span></div>
+          <h3>Views and themes</h3>
+          <p>Four looks, light and dark, your CSS variables.</p>
+        </article>
+        <article class="site-feature">
+          <div class="site-feature-top"><svg class="gt-icon" aria-hidden="true"><use href="#i-cloud" /></svg><span class="site-badge">MIT</span></div>
+          <h3>Your own cloud</h3>
+          <p>Documents, sync, exports and an AI proxy in one Go service.</p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section class="site-stage is-grey">
+    <div class="site-wrap">
+      <div class="site-looks">
+        <div>
+          <p class="site-eyebrow">Make it your own</p>
+          <h2>One markup.<br />Four looks.</h2>
+          <p class="site-sub">Notion, docs, modern and minimal are sets of tokens over the same document. Switch them with one attribute.</p>
+          <div class="site-look-list">
+            <span class="site-look is-on"><span><strong>Notion</strong><small>Familiar and focused. The default.</small></span><svg class="gt-icon" aria-hidden="true"><use href="#i-arrow-up-right" /></svg></span>
+            <span class="site-look"><span><strong>Docs</strong><small>Reference pages with an outline.</small></span><svg class="gt-icon" aria-hidden="true"><use href="#i-arrow-up-right" /></svg></span>
+            <span class="site-look"><span><strong>Modern</strong><small>A fixed toolbar and more room.</small></span><svg class="gt-icon" aria-hidden="true"><use href="#i-arrow-up-right" /></svg></span>
+            <span class="site-look"><span><strong>Minimal</strong><small>Just the words.</small></span><svg class="gt-icon" aria-hidden="true"><use href="#i-arrow-up-right" /></svg></span>
           </div>
         </div>
-        <div class="site-code" data-gt-view="docs">
+        <figure class="site-window is-look" data-gt-view="notion">
+          <div class="site-window-bar">
+            <span class="site-tag">draft.md</span>
+            <span class="site-window-end"><code class="site-code-attr">data-gt-view="notion"</code></span>
+          </div>
+          <article class="gotipe-page is-slice">
+            <header class="gotipe-page-head">
+              <h1 class="gotipe-page-title">Offline drafts</h1>
+            </header>
+            <div class="gotipe-doc">
+              <p>A draft is kept on the device and sent when the network returns. Close the tab mid-sentence and nothing is lost.</p>
+              <ul class="gotipe-todo-list">
+                <li class="gotipe-todo-item" data-checked="true">
+                  <span class="gotipe-check" role="checkbox" aria-checked="true"><svg class="gt-icon" aria-hidden="true"><use href="#i-check" /></svg></span>
+                  <span class="gotipe-todo-item-content">Saved every second</span>
+                </li>
+                <li class="gotipe-todo-item" data-checked="false">
+                  <span class="gotipe-check" role="checkbox" aria-checked="false"><svg class="gt-icon" aria-hidden="true"><use href="#i-check" /></svg></span>
+                  <span class="gotipe-todo-item-content">Encrypted at rest</span>
+                </li>
+              </ul>
+            </div>
+          </article>
+          <figcaption class="site-window-foot"><span>one document · four token sets</span><span>source unchanged</span></figcaption>
+        </figure>
+      </div>
+    </div>
+  </section>
+
+  <section class="site-section">
+    <div class="site-wrap">
+      <div class="site-panel" data-theme="dark">
+        <div class="site-panel-copy">
+          <p class="site-eyebrow">Less setup. More building.</p>
+          <h2>From install<br />to your first edit.</h2>
+          <ol class="site-panel-steps">
+            <li><span>01</span><div><h3>Install</h3><p>The engine, the React adapter and the ready editor. Add the theme’s CSS once.</p></div></li>
+            <li><span>02</span><div><h3>Create</h3><p>Pick a preset or your own extensions; the engine is chosen for you.</p></div></li>
+            <li><span>03</span><div><h3>Save</h3><p>JSON, HTML or Markdown from every update — your storage, your format.</p></div></li>
+          </ol>
+          <p class="site-panel-note"><span>14 lines · one component</span><span>No editor to configure.</span></p>
+        </div>
+        <div class="site-panel-code" data-gt-view="docs">
           <div class="gotipe-code-block">
             <div class="gotipe-code-block-header">
-              <span class="gotipe-seg"><span class="is-on">React</span><span>Vue</span><span>Headless</span></span>
-              <span class="gotipe-code-copy"><svg class="gt-icon" aria-hidden="true"><use href="#i-copy" /></svg></span>
+              <span class="site-file">Notes.tsx</span>
+              <span class="site-copy"><svg class="gt-icon" aria-hidden="true"><use href="#i-copy" /></svg>copy</span>
             </div>
             <pre class="gotipe-code-block-scroll"><span class="gotipe-code-lines" aria-hidden="true">1
 2
@@ -8855,36 +10175,81 @@ editor<span class="tk-pun">.</span>on<span class="tk-pun">(</span><span class="t
     </div>
   </section>
 
-  <section class="site-section is-sunken">
+  <section class="site-section is-run">
     <div class="site-wrap">
-      <div class="site-section-head">
+      <div class="site-center-head">
         <p class="site-eyebrow">Run it your way</p>
-        <h2>In the browser, in WebAssembly, on your servers.</h2>
+        <h2>Same document.<br />Different ways to run.</h2>
+        <p class="site-sub">In the browser, in WebAssembly, on your servers. One document model, wherever you need it.</p>
       </div>
-      <div class="site-grid">
-        <article class="site-card">
-          <div class="site-card-top"><h3>JavaScript engine</h3><span class="site-badge">MIT</span></div>
+      <div class="site-run-grid">
+        <article class="site-run">
+          <div class="site-tile-top"><svg class="gt-icon" aria-hidden="true"><use href="#i-globe" /></svg><span class="site-badge">MIT</span></div>
+          <p class="site-label">JavaScript</p>
+          <p class="site-big">~100 KB</p>
+          <h3>JavaScript engine</h3>
           <p>The default. The whole editing model in TypeScript, nothing extra to load.</p>
-          <ul>
-            <li><svg class="gt-icon" aria-hidden="true"><use href="#i-check" /></svg>About 96 KB gzip with Markdown</li>
-            <li><svg class="gt-icon" aria-hidden="true"><use href="#i-check" /></svg>Server rendering to HTML, Markdown and text</li>
-          </ul>
+          <p class="site-run-foot">TypeScript · gzip, with Markdown</p>
         </article>
-        <article class="site-card">
-          <div class="site-card-top"><h3>Rust/WASM engine</h3><span class="site-badge">MIT</span></div>
+        <article class="site-run is-tint">
+          <div class="site-tile-top"><svg class="gt-icon" aria-hidden="true"><use href="#i-chip" /></svg><span class="site-badge">MIT</span></div>
+          <p class="site-label">Rust / WASM</p>
+          <p class="site-big">~600 KB</p>
+          <h3>Rust/WASM engine</h3>
           <p>The same API and document contract, compiled from Rust. Required for real-time collaboration.</p>
+          <p class="site-run-foot">Rust · gzip · CRDT, cursors, reconnect</p>
+        </article>
+        <article class="site-run">
+          <div class="site-tile-top"><svg class="gt-icon" aria-hidden="true"><use href="#i-server" /></svg><span class="site-badge">MIT</span></div>
+          <p class="site-label">Go · self-hosted</p>
+          <p class="site-big">1 service</p>
+          <h3>GoTipe Cloud</h3>
+          <p>Documents, permissions, sync, exports and an AI proxy, on your servers.</p>
+          <p class="site-run-foot">PostgreSQL · Valkey · Docker Compose</p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section class="site-stage is-grey">
+    <div class="site-wrap">
+      <div class="site-head-row">
+        <div>
+          <p class="site-eyebrow">A clear line. No fine print.</p>
+          <h2>Open where it matters.</h2>
+        </div>
+        <p class="site-sub">The engine and every service around it are MIT. Only the ready-made interface is commercial, and it is free for most teams.</p>
+      </div>
+      <div class="site-licences">
+        <article class="site-licence">
+          <div class="site-licence-top"><span class="site-label">Build it your way</span><span class="site-badge">MIT</span></div>
+          <h3>Engine and services</h3>
+          <p class="site-licence-meta">8 parts · use, fork, ship</p>
           <ul>
-            <li><svg class="gt-icon" aria-hidden="true"><use href="#i-check" /></svg>About 590 KB gzip</li>
-            <li><svg class="gt-icon" aria-hidden="true"><use href="#i-check" /></svg>CRDT, cursors and reconnect</li>
+            <li><svg class="gt-icon" aria-hidden="true"><use href="#i-check-16" /></svg><span>Transaction engine<small>selection, history, IME</small></span></li>
+            <li><svg class="gt-icon" aria-hidden="true"><use href="#i-check-16" /></svg><span>Markdown parser<small>lossless, 652 / 652 CommonMark</small></span></li>
+            <li><svg class="gt-icon" aria-hidden="true"><use href="#i-check-16" /></svg><span>Framework adapters<small>React and Vue</small></span></li>
+            <li><svg class="gt-icon" aria-hidden="true"><use href="#i-check-16" /></svg><span>Real-time collaboration<small>CRDT in Rust/WASM</small></span></li>
+            <li><svg class="gt-icon" aria-hidden="true"><use href="#i-check-16" /></svg><span>Comments, suggestions, versions<small>anchored threads, block compare</small></span></li>
+            <li><svg class="gt-icon" aria-hidden="true"><use href="#i-check-16" /></svg><span>AI layer, PDF and DOCX<small>your model; browser and server writers</small></span></li>
+            <li><svg class="gt-icon" aria-hidden="true"><use href="#i-check-16" /></svg><span>Migration<small>ProseMirror, Tiptap, Slate, Lexical</small></span></li>
+            <li><svg class="gt-icon" aria-hidden="true"><use href="#i-check-16" /></svg><span>GoTipe Cloud and the SDK<small>Go service, Docker Compose</small></span></li>
           </ul>
         </article>
-        <article class="site-card">
-          <div class="site-card-top"><h3>GoTipe Cloud</h3><span class="site-badge">MIT</span></div>
-          <p>A Go service you run: documents, permissions, sync, exports and an AI proxy.</p>
+        <article class="site-licence is-tint">
+          <div class="site-licence-top"><span class="site-label">Ship a little sooner</span><span class="site-badge is-commercial">Commercial</span></div>
+          <h3>Ready-made interface</h3>
+          <p class="site-licence-meta">4 parts · one licence per product</p>
           <ul>
-            <li><svg class="gt-icon" aria-hidden="true"><use href="#i-check" /></svg>PostgreSQL and Valkey</li>
-            <li><svg class="gt-icon" aria-hidden="true"><use href="#i-check" /></svg>One Docker Compose file</li>
+            <li><svg class="gt-icon" aria-hidden="true"><use href="#i-check-16" /></svg><span>BlockEditor and PageEditor<small>for React</small></span></li>
+            <li><svg class="gt-icon" aria-hidden="true"><use href="#i-check-16" /></svg><span>The block editor for Vue<small>slash menu, drag handle, toolbar</small></span></li>
+            <li><svg class="gt-icon" aria-hidden="true"><use href="#i-check-16" /></svg><span>AI interface components<small>command line, suggestions</small></span></li>
+            <li><svg class="gt-icon" aria-hidden="true"><use href="#i-check-16" /></svg><span>The theme and its four views<small>notion, docs, modern, minimal</small></span></li>
           </ul>
+          <p class="site-licence-free">
+            <strong>Free</strong> for individuals, open source, non-profits and companies under $1M
+            revenue. Above that, one licence per product.
+          </p>
         </article>
       </div>
     </div>
@@ -8892,59 +10257,31 @@ editor<span class="tk-pun">.</span>on<span class="tk-pun">(</span><span class="t
 
   <section class="site-section">
     <div class="site-wrap">
-      <div class="site-section-head">
-        <p class="site-eyebrow">Licensing</p>
-        <h2>Open where it matters.</h2>
-      </div>
-      <div class="site-grid is-2">
-        <article class="site-card">
-          <div class="site-card-top"><h3>Engine and services</h3><span class="site-badge">MIT</span></div>
-          <ul>
-            <li><svg class="gt-icon" aria-hidden="true"><use href="#i-check" /></svg>Engine, Markdown and framework adapters</li>
-            <li><svg class="gt-icon" aria-hidden="true"><use href="#i-check" /></svg>Collaboration, comments, suggestions, versions</li>
-            <li><svg class="gt-icon" aria-hidden="true"><use href="#i-check" /></svg>AI layer, PDF and DOCX export, migration</li>
-            <li><svg class="gt-icon" aria-hidden="true"><use href="#i-check" /></svg>GoTipe Cloud and the SDK</li>
-          </ul>
-        </article>
-        <article class="site-card">
-          <div class="site-card-top"><h3>Ready-made interface</h3><span class="site-badge is-commercial">Commercial</span></div>
-          <ul>
-            <li><svg class="gt-icon" aria-hidden="true"><use href="#i-check" /></svg>Free for personal, open-source and non-profit work, and for companies under $1M revenue</li>
-            <li><svg class="gt-icon" aria-hidden="true"><use href="#i-check" /></svg>BlockEditor and PageEditor for React</li>
-            <li><svg class="gt-icon" aria-hidden="true"><use href="#i-check" /></svg>The block editor for Vue</li>
-            <li><svg class="gt-icon" aria-hidden="true"><use href="#i-check" /></svg>AI interface components</li>
-            <li><svg class="gt-icon" aria-hidden="true"><use href="#i-check" /></svg>The theme and its four views</li>
-          </ul>
-        </article>
+      <div class="site-stage site-band">
+        <p class="site-eyebrow">The next chapter is yours</p>
+        <h2>Build on an engine<br />you own.</h2>
+        <p class="site-sub">Start with the quick start, or open the playground and edit a real document.</p>
+        <div class="site-actions">
+          <span class="gotipe-button site-cta">Read the docs<svg class="gt-icon" aria-hidden="true"><use href="#i-arrow-right" /></svg></span>
+          <span class="gotipe-button site-cta is-second">Open the playground</span>
+        </div>
+        <p class="site-band-legend"><span>Engine <strong>MIT</strong></span><span>Services <strong>MIT</strong></span><span>Interface <strong>Commercial</strong></span></p>
       </div>
     </div>
   </section>
-
-  <div class="site-wrap">
-    <div class="site-band">
-      <div>
-        <h2>Build on an engine you own.</h2>
-        <p>Start with the quick start, or open the playground and edit a real document.</p>
-      </div>
-      <div class="site-actions">
-        <span class="gotipe-button is-cta is-on-inverse">Read the docs</span>
-        <span class="gotipe-button is-cta is-quiet">Open the playground</span>
-      </div>
-    </div>
-  </div>
 
   <footer class="site-foot">
     <div class="site-wrap">
       <div class="site-foot-grid">
         <div>
-          <a class="site-brand"><svg class="site-logo" aria-hidden="true"><use href="#i-logo" /></svg>GoTipe</a>
-          <p>A document editor framework with its own engine.</p>
+          <a class="site-brand is-large"><svg class="site-logo" aria-hidden="true"><use href="#i-logo" /></svg>GoTipe</a>
+          <p>A document editor framework with its own engine. TypeScript and Rust/WASM.</p>
         </div>
-        <div><h4>Product</h4><a>Docs</a><a>Playground</a><a>Changelog</a></div>
-        <div><h4>Resources</h4><a>Licensing</a><a>Security</a><a>Browser support</a></div>
-        <div><h4>Project</h4><a>GitHub</a><a>Contributing</a><a>Report a vulnerability</a></div>
+        <div><h4>Product</h4><a>Docs</a><a>Playground</a><a>Licensing</a><a>Changelog</a></div>
+        <div><h4>Resources</h4><a>Quick start</a><a>Security</a><a>Browser support</a></div>
+        <div><h4>Project</h4><a>GitHub</a><a>npm</a><a>Contributing</a><a>Report a vulnerability</a></div>
       </div>
-      <p class="site-foot-base">© 2026 GoTipe contributors · MIT and commercial licenses</p>
+      <p class="site-foot-base"><span>© 2026 GoTipe contributors · MIT and commercial licences</span><span class="site-mono">0.1</span></p>
     </div>
   </footer>
 </div>
@@ -8966,17 +10303,17 @@ editor<span class="tk-pun">.</span>on<span class="tk-pun">(</span><span class="t
 <p class="at-stage-label">страница расширения · 1440</p>
 <div class="at-frame gotipe-root" data-gt-view="docs" data-frame="docs-page" data-w="1440">
 <div class="site" lang="en">
-    <header class="site-head site-docs-head">
-  <div class="site-head-in">
+    <header class="site-docs-head">
+  <div class="site-docs-head-in">
     <a class="site-brand"><svg class="site-logo" aria-hidden="true"><use href="#i-logo" /></svg>GoTipe <small>Docs</small></a>
-    <span class="site-version">0.1</span>
-    <span class="site-search"><svg class="gt-icon" aria-hidden="true"><use href="#i-search" /></svg>Search docs<span class="gotipe-kbd">⌘K</span></span>
+    <span class="site-version">v0.1</span>
+    <span class="site-search"><svg class="gt-icon" aria-hidden="true"><use href="#i-search" /></svg>Search docs<span class="site-kbd">⌘K</span></span>
     <div class="site-head-end">
-      <span class="gotipe-button is-quiet is-wide">Playground</span>
-      <span class="gotipe-button is-quiet is-wide">GitHub<svg class="gt-icon" aria-hidden="true"><use href="#i-external" /></svg></span>
-      <span class="gotipe-button is-quiet is-wide" aria-label="Dark theme"><svg class="gt-icon" aria-hidden="true"><use href="#i-moon" /></svg></span>
-      <span class="gotipe-button is-quiet site-search-button" aria-label="Search"><svg class="gt-icon" aria-hidden="true"><use href="#i-search" /></svg></span>
-      <span class="gotipe-button is-quiet site-menu-button" aria-label="Menu"><svg class="gt-icon" aria-hidden="true"><use href="#i-menu" /></svg></span>
+      <span class="gotipe-button is-quiet site-head-button is-wide">Playground</span>
+      <span class="gotipe-button is-quiet site-head-button is-wide">GitHub<svg class="gt-icon" aria-hidden="true"><use href="#i-external" /></svg></span>
+      <span class="gotipe-button is-quiet site-head-button is-icon is-wide" aria-label="Dark theme"><svg class="gt-icon" aria-hidden="true"><use href="#i-moon" /></svg></span>
+      <span class="gotipe-button is-quiet site-head-button is-icon site-search-button" aria-label="Search"><svg class="gt-icon" aria-hidden="true"><use href="#i-search" /></svg></span>
+      <span class="gotipe-button is-quiet site-head-button is-icon site-menu-button" aria-label="Menu"><svg class="gt-icon" aria-hidden="true"><use href="#i-menu" /></svg></span>
     </div>
   </div>
 </header>
@@ -9011,19 +10348,19 @@ editor<span class="tk-pun">.</span>on<span class="tk-pun">(</span><span class="t
 
   <main class="site-docs-main">
     <article class="gotipe-page">
-      <p class="site-crumbs">Extensions<svg class="gt-icon" aria-hidden="true"><use href="#i-chevron-right" /></svg>Tables</p>
+      <p class="site-crumbs">Extensions<svg class="gt-icon" aria-hidden="true"><use href="#i-chevron-right" /></svg><span>Tables</span></p>
       <h1 class="gotipe-page-title">Tables</h1>
       <p class="site-doc-lede">Header rows, column widths, alignment and resizable columns, with every edit undone in one step.</p>
       <div class="site-doc-meta">
         <span class="site-badge">@gotipe/core</span>
         <span class="site-badge">MIT</span>
-        <span class="gotipe-button is-quiet"><svg class="gt-icon" aria-hidden="true"><use href="#i-copy" /></svg>Copy Markdown</span>
-        <span class="gotipe-button is-quiet"><svg class="gt-icon" aria-hidden="true"><use href="#i-external" /></svg>Edit on GitHub</span>
+        <span class="gotipe-button is-quiet site-tool-button"><svg class="gt-icon" aria-hidden="true"><use href="#i-copy" /></svg>Copy Markdown</span>
+        <span class="gotipe-button is-quiet site-tool-button"><svg class="gt-icon" aria-hidden="true"><use href="#i-external" /></svg>Edit on GitHub</span>
       </div>
       <div class="gotipe-doc">
         <h2 class="has-anchor"><span class="gotipe-heading-anchor" aria-hidden="true">#</span>Try it</h2>
-        <div class="site-demo">
-          <div class="site-demo-bar"><span>Live editor · type, Tab between cells</span></div>
+        <div class="site-window site-try">
+          <div class="site-window-bar"><span class="site-tag">Live editor</span><span>Type, Tab between cells</span></div>
           <article class="gotipe-page is-slice">
             <div class="gotipe-doc">
               <div class="gotipe-table-block">
@@ -9092,8 +10429,8 @@ editor<span class="tk-pun">.</span>chain<span class="tk-pun">().</span>insertTab
         </div>
       </div>
       <nav class="site-pager" aria-label="Pages">
-        <a><small>Previous</small>Code block</a>
-        <a class="is-next"><small>Next</small>Media</a>
+        <a><small><svg class="gt-icon" aria-hidden="true"><use href="#i-arrow-left" /></svg>Previous</small>Code block</a>
+        <a class="is-next"><small>Next<svg class="gt-icon" aria-hidden="true"><use href="#i-arrow-right" /></svg></small>Media</a>
       </nav>
     </article>
   </main>
@@ -9119,17 +10456,17 @@ editor<span class="tk-pun">.</span>chain<span class="tk-pun">().</span>insertTab
 <p class="at-stage-label">поиск · 1024</p>
 <div class="at-frame gotipe-root" data-gt-view="docs" data-frame="docs-search" data-w="1024" data-h="720">
 <div class="site" lang="en">
-    <header class="site-head site-docs-head">
-  <div class="site-head-in">
+    <header class="site-docs-head">
+  <div class="site-docs-head-in">
     <a class="site-brand"><svg class="site-logo" aria-hidden="true"><use href="#i-logo" /></svg>GoTipe <small>Docs</small></a>
-    <span class="site-version">0.1</span>
-    <span class="site-search"><svg class="gt-icon" aria-hidden="true"><use href="#i-search" /></svg>Search docs<span class="gotipe-kbd">⌘K</span></span>
+    <span class="site-version">v0.1</span>
+    <span class="site-search"><svg class="gt-icon" aria-hidden="true"><use href="#i-search" /></svg>Search docs<span class="site-kbd">⌘K</span></span>
     <div class="site-head-end">
-      <span class="gotipe-button is-quiet is-wide">Playground</span>
-      <span class="gotipe-button is-quiet is-wide">GitHub<svg class="gt-icon" aria-hidden="true"><use href="#i-external" /></svg></span>
-      <span class="gotipe-button is-quiet is-wide" aria-label="Dark theme"><svg class="gt-icon" aria-hidden="true"><use href="#i-moon" /></svg></span>
-      <span class="gotipe-button is-quiet site-search-button" aria-label="Search"><svg class="gt-icon" aria-hidden="true"><use href="#i-search" /></svg></span>
-      <span class="gotipe-button is-quiet site-menu-button" aria-label="Menu"><svg class="gt-icon" aria-hidden="true"><use href="#i-menu" /></svg></span>
+      <span class="gotipe-button is-quiet site-head-button is-wide">Playground</span>
+      <span class="gotipe-button is-quiet site-head-button is-wide">GitHub<svg class="gt-icon" aria-hidden="true"><use href="#i-external" /></svg></span>
+      <span class="gotipe-button is-quiet site-head-button is-icon is-wide" aria-label="Dark theme"><svg class="gt-icon" aria-hidden="true"><use href="#i-moon" /></svg></span>
+      <span class="gotipe-button is-quiet site-head-button is-icon site-search-button" aria-label="Search"><svg class="gt-icon" aria-hidden="true"><use href="#i-search" /></svg></span>
+      <span class="gotipe-button is-quiet site-head-button is-icon site-menu-button" aria-label="Menu"><svg class="gt-icon" aria-hidden="true"><use href="#i-menu" /></svg></span>
     </div>
   </div>
 </header>
@@ -9164,19 +10501,19 @@ editor<span class="tk-pun">.</span>chain<span class="tk-pun">().</span>insertTab
 
   <main class="site-docs-main">
     <article class="gotipe-page">
-      <p class="site-crumbs">Extensions<svg class="gt-icon" aria-hidden="true"><use href="#i-chevron-right" /></svg>Tables</p>
+      <p class="site-crumbs">Extensions<svg class="gt-icon" aria-hidden="true"><use href="#i-chevron-right" /></svg><span>Tables</span></p>
       <h1 class="gotipe-page-title">Tables</h1>
       <p class="site-doc-lede">Header rows, column widths, alignment and resizable columns, with every edit undone in one step.</p>
       <div class="site-doc-meta">
         <span class="site-badge">@gotipe/core</span>
         <span class="site-badge">MIT</span>
-        <span class="gotipe-button is-quiet"><svg class="gt-icon" aria-hidden="true"><use href="#i-copy" /></svg>Copy Markdown</span>
-        <span class="gotipe-button is-quiet"><svg class="gt-icon" aria-hidden="true"><use href="#i-external" /></svg>Edit on GitHub</span>
+        <span class="gotipe-button is-quiet site-tool-button"><svg class="gt-icon" aria-hidden="true"><use href="#i-copy" /></svg>Copy Markdown</span>
+        <span class="gotipe-button is-quiet site-tool-button"><svg class="gt-icon" aria-hidden="true"><use href="#i-external" /></svg>Edit on GitHub</span>
       </div>
       <div class="gotipe-doc">
         <h2 class="has-anchor"><span class="gotipe-heading-anchor" aria-hidden="true">#</span>Try it</h2>
-        <div class="site-demo">
-          <div class="site-demo-bar"><span>Live editor · type, Tab between cells</span></div>
+        <div class="site-window site-try">
+          <div class="site-window-bar"><span class="site-tag">Live editor</span><span>Type, Tab between cells</span></div>
           <article class="gotipe-page is-slice">
             <div class="gotipe-doc">
               <div class="gotipe-table-block">
@@ -9245,8 +10582,8 @@ editor<span class="tk-pun">.</span>chain<span class="tk-pun">().</span>insertTab
         </div>
       </div>
       <nav class="site-pager" aria-label="Pages">
-        <a><small>Previous</small>Code block</a>
-        <a class="is-next"><small>Next</small>Media</a>
+        <a><small><svg class="gt-icon" aria-hidden="true"><use href="#i-arrow-left" /></svg>Previous</small>Code block</a>
+        <a class="is-next"><small>Next<svg class="gt-icon" aria-hidden="true"><use href="#i-arrow-right" /></svg></small>Media</a>
       </nav>
     </article>
   </main>
@@ -9269,13 +10606,14 @@ editor<span class="tk-pun">.</span>chain<span class="tk-pun">().</span>insertTab
       <div class="site-dialog" role="dialog" aria-label="Search the documentation">
         <div class="site-dialog-input">
           <svg class="gt-icon" aria-hidden="true"><use href="#i-search" /></svg>table<span class="gotipe-caret"></span>
-          <span class="gotipe-kbd">esc</span>
+          <span class="site-kbd">esc</span>
         </div>
         <div class="site-results">
           <p class="site-results-title">Extensions</p>
           <div class="site-result is-active">
             <svg class="gt-icon" aria-hidden="true"><use href="#i-table" /></svg>
             <span><mark>Table</mark>s<small>Header rows, column widths, alignment</small></span>
+            <span class="site-kbd site-result-go">↵</span>
           </div>
           <div class="site-result">
             <svg class="gt-icon" aria-hidden="true"><use href="#i-hash" /></svg>
@@ -9293,8 +10631,8 @@ editor<span class="tk-pun">.</span>chain<span class="tk-pun">().</span>insertTab
           </div>
         </div>
         <div class="site-dialog-foot">
-          <span><span class="gotipe-kbd">↑</span> <span class="gotipe-kbd">↓</span> move</span>
-          <span><span class="gotipe-kbd">↵</span> open</span>
+          <span><span class="site-kbd">↑</span><span class="site-kbd">↓</span> move</span>
+          <span><span class="site-kbd">↵</span> open</span>
         </div>
       </div>
     </div>
@@ -9305,17 +10643,17 @@ editor<span class="tk-pun">.</span>chain<span class="tk-pun">().</span>insertTab
 <p class="at-stage-label">страница на телефоне · 375</p>
 <div class="at-frame gotipe-root" data-gt-view="docs" data-frame="docs-phone" data-w="375" data-h="900">
 <div class="site" lang="en">
-    <header class="site-head site-docs-head">
-  <div class="site-head-in">
+    <header class="site-docs-head">
+  <div class="site-docs-head-in">
     <a class="site-brand"><svg class="site-logo" aria-hidden="true"><use href="#i-logo" /></svg>GoTipe <small>Docs</small></a>
-    <span class="site-version">0.1</span>
-    <span class="site-search"><svg class="gt-icon" aria-hidden="true"><use href="#i-search" /></svg>Search docs<span class="gotipe-kbd">⌘K</span></span>
+    <span class="site-version">v0.1</span>
+    <span class="site-search"><svg class="gt-icon" aria-hidden="true"><use href="#i-search" /></svg>Search docs<span class="site-kbd">⌘K</span></span>
     <div class="site-head-end">
-      <span class="gotipe-button is-quiet is-wide">Playground</span>
-      <span class="gotipe-button is-quiet is-wide">GitHub<svg class="gt-icon" aria-hidden="true"><use href="#i-external" /></svg></span>
-      <span class="gotipe-button is-quiet is-wide" aria-label="Dark theme"><svg class="gt-icon" aria-hidden="true"><use href="#i-moon" /></svg></span>
-      <span class="gotipe-button is-quiet site-search-button" aria-label="Search"><svg class="gt-icon" aria-hidden="true"><use href="#i-search" /></svg></span>
-      <span class="gotipe-button is-quiet site-menu-button" aria-label="Menu"><svg class="gt-icon" aria-hidden="true"><use href="#i-menu" /></svg></span>
+      <span class="gotipe-button is-quiet site-head-button is-wide">Playground</span>
+      <span class="gotipe-button is-quiet site-head-button is-wide">GitHub<svg class="gt-icon" aria-hidden="true"><use href="#i-external" /></svg></span>
+      <span class="gotipe-button is-quiet site-head-button is-icon is-wide" aria-label="Dark theme"><svg class="gt-icon" aria-hidden="true"><use href="#i-moon" /></svg></span>
+      <span class="gotipe-button is-quiet site-head-button is-icon site-search-button" aria-label="Search"><svg class="gt-icon" aria-hidden="true"><use href="#i-search" /></svg></span>
+      <span class="gotipe-button is-quiet site-head-button is-icon site-menu-button" aria-label="Menu"><svg class="gt-icon" aria-hidden="true"><use href="#i-menu" /></svg></span>
     </div>
   </div>
 </header>
@@ -9350,19 +10688,19 @@ editor<span class="tk-pun">.</span>chain<span class="tk-pun">().</span>insertTab
 
   <main class="site-docs-main">
     <article class="gotipe-page">
-      <p class="site-crumbs">Extensions<svg class="gt-icon" aria-hidden="true"><use href="#i-chevron-right" /></svg>Tables</p>
+      <p class="site-crumbs">Extensions<svg class="gt-icon" aria-hidden="true"><use href="#i-chevron-right" /></svg><span>Tables</span></p>
       <h1 class="gotipe-page-title">Tables</h1>
       <p class="site-doc-lede">Header rows, column widths, alignment and resizable columns, with every edit undone in one step.</p>
       <div class="site-doc-meta">
         <span class="site-badge">@gotipe/core</span>
         <span class="site-badge">MIT</span>
-        <span class="gotipe-button is-quiet"><svg class="gt-icon" aria-hidden="true"><use href="#i-copy" /></svg>Copy Markdown</span>
-        <span class="gotipe-button is-quiet"><svg class="gt-icon" aria-hidden="true"><use href="#i-external" /></svg>Edit on GitHub</span>
+        <span class="gotipe-button is-quiet site-tool-button"><svg class="gt-icon" aria-hidden="true"><use href="#i-copy" /></svg>Copy Markdown</span>
+        <span class="gotipe-button is-quiet site-tool-button"><svg class="gt-icon" aria-hidden="true"><use href="#i-external" /></svg>Edit on GitHub</span>
       </div>
       <div class="gotipe-doc">
         <h2 class="has-anchor"><span class="gotipe-heading-anchor" aria-hidden="true">#</span>Try it</h2>
-        <div class="site-demo">
-          <div class="site-demo-bar"><span>Live editor · type, Tab between cells</span></div>
+        <div class="site-window site-try">
+          <div class="site-window-bar"><span class="site-tag">Live editor</span><span>Type, Tab between cells</span></div>
           <article class="gotipe-page is-slice">
             <div class="gotipe-doc">
               <div class="gotipe-table-block">
@@ -9431,8 +10769,8 @@ editor<span class="tk-pun">.</span>chain<span class="tk-pun">().</span>insertTab
         </div>
       </div>
       <nav class="site-pager" aria-label="Pages">
-        <a><small>Previous</small>Code block</a>
-        <a class="is-next"><small>Next</small>Media</a>
+        <a><small><svg class="gt-icon" aria-hidden="true"><use href="#i-arrow-left" /></svg>Previous</small>Code block</a>
+        <a class="is-next"><small>Next<svg class="gt-icon" aria-hidden="true"><use href="#i-arrow-right" /></svg></small>Media</a>
       </nav>
     </article>
   </main>
