@@ -10,7 +10,7 @@
       "exclude": [
         "@gotipe/wasm"
       ],
-      "gzipBytes": 122880
+      "gzipBytes": 128000
     },
     {
       "name": "react-incremental",

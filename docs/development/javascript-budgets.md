@@ -31,6 +31,22 @@ On the audit build, with this exact definition:
 On the merge build of 2026-11-12 the same graphs measure 95,659 (core and Markdown,
 6.6% under its ceiling), 36,441 (React) and 7,536 (AI) bytes.
 
+Decision of 2026-11-15: the core and Markdown ceiling is 128,000 (125 KiB), on the owner's
+instruction to raise it when needed. The fixes D-84…D-100 took the graph from 116,181 to
+121,208 bytes, 1.4% under 122,880. Both ends are measured with this checker; the tree of the
+decision below (344339f), rebuilt as it was, gives its 116,181 again.
+
+- Core +350 (64,522 → 64,872): the findings D-84…D-88 (07b97ca), chiefly `createId()` with a
+  fallback where `crypto.randomUUID` is missing (D-84).
+- Markdown +4,677 (51,659 → 56,336): the soft line break read as a space, with the writer
+  keeping the source's line endings (D-88, +1,139); write → read keeping the document — edge
+  spaces as `&#32;`, emphasis as tags where `**` cannot open, escaped line starts, GFM
+  bare-address rules and the linear writer (D-89…D-97, +3,265); the block-gap fixes D-99 and
+  D-100 (+273).
+
+All of it is codec behaviour that output read back depends on, not UI, so no subpath takes it
+out of the graph. Headroom is about 5%.
+
 Decision of 2026-11-14 (second): the core and Markdown ceiling is 122,880 (120 KiB).
 The accepted Atlas frames 22–30 needed engine features: merged table cells with span-aware
 edits and the geometry repair used by HTML import, clipboard and collaboration (about
