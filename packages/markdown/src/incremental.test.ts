@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { clone, counterIds, plain, replacedSlice } from "./__fixtures__/helpers";
 import { WIKI_PAGE } from "./__fixtures__/wiki-page";
-import { isBlockEmpty, parseMarkdown, serializeMarkdown } from "./index";
+import { fingerprint, isBlockEmpty, parseMarkdown, serializeMarkdown } from "./index";
 import type { Block } from "./types";
 
 const FM = "---\ntitle: Регламент релиза\ntags: [release, wiki]\n---\n";
@@ -259,5 +259,96 @@ describe("structural hazards", () => {
     // A type change cannot keep a single line break.
     doc.blocks[1] = { ...doc.blocks[1]!, type: "paragraph", attrs: {} };
     expect(serializeMarkdown(doc, snapshot).text).toBe("new text\n\nheading\n");
+  });
+
+  // D-99: the `>` line that ended the quote's paragraph kept the next block out of the quote
+  it.each([
+    ["a quote", "> a\n>\nb\n", "> a!\n\nb\n"],
+    ["a quote with CRLF", "> a\r\n>\r\n>\r\nb\r\n", "> a!\r\n\r\nb\r\n"],
+    ["a callout", "> [!NOTE]\n> a\n>\nb\n", "> [!NOTE]\n> a!\n\nb\n"],
+    ["a quote before indented code", "> a\n>\n    code\n", "> a!\n\n    code\n"],
+  ])("an edited %s that loses its closing `>` line is followed by a blank line", (_, text, out) => {
+    const { doc, snapshot } = setup(text);
+    expect(doc.blocks).toHaveLength(2);
+    doc.blocks[0]!.content = plain("a!");
+    expect(serializeMarkdown(doc, snapshot).text).toBe(out);
+    expect(parseMarkdown(out).doc.blocks.map((b) => [b.type, b.content])).toEqual(
+      doc.blocks.map((b) => [b.type, b.content]),
+    );
+  });
+
+  // the blanks before the next line belong to the block that starts there: a rewritten block or
+  // one that does not need them is written without them, a preserved one that does keeps them
+  it.each<[string, string, (blocks: Block[]) => void, string]>([
+    [
+      "a heading turned into a list",
+      "# h\n  text\n",
+      (blocks) => {
+        blocks[0] = {
+          ...blocks[0]!,
+          type: "bulletList",
+          attrs: {},
+          content: null,
+          children: [{ id: "i", type: "listItem", attrs: {}, content: plain("h"), children: [] }],
+        };
+      },
+      "- h\n\ntext\n",
+    ],
+    [
+      "an indented list that cannot interrupt",
+      "# h\n 2. o\n    - n\n",
+      (blocks) => {
+        blocks[1]!.children[0]!.content = plain("o!");
+      },
+      "# h\n\n2. o!\n   - n\n",
+    ],
+    [
+      "indented code turned into a paragraph",
+      "# h\n    code\n",
+      (blocks) => {
+        blocks[1] = { ...blocks[1]!, type: "paragraph", attrs: {}, content: plain("code") };
+      },
+      "# h\n\ncode\n",
+    ],
+    [
+      "an indented paragraph turned into code",
+      "# h\n   a\n",
+      (blocks) => {
+        blocks[1] = { ...blocks[1]!, type: "codeBlock", attrs: {}, content: "x\ny" };
+      },
+      "# h\n\n```\nx\ny\n```\n",
+    ],
+    [
+      "a heading turned into a paragraph before an indented fence",
+      "# h\n   ```\n   x\n   ```\n",
+      (blocks) => {
+        blocks[0] = { ...blocks[0]!, type: "paragraph", attrs: {} };
+      },
+      "h\n\n   ```\n   x\n   ```\n",
+    ],
+    [
+      "a paragraph after indented code",
+      "    code\na\n",
+      (blocks) => {
+        blocks[1]!.content = plain("a!");
+      },
+      "    code\na!\n",
+    ],
+  ])("%s keeps only the blanks a block needs", (_, text, edit, out) => {
+    const { doc, snapshot } = setup(text);
+    edit(doc.blocks);
+    expect(serializeMarkdown(doc, snapshot).text).toBe(out);
+    expect(parseMarkdown(out).doc.blocks.map((b) => fingerprint(b))).toEqual(
+      doc.blocks.map((b) => fingerprint(b)),
+    );
+  });
+
+  it("a table rewritten as HTML is followed by a blank line: HTML ends only there", () => {
+    const { doc, snapshot } = setup("| h | i |\n| - | - |\n| c | d |\n# x\n");
+    const row = doc.blocks[0]!.children[1]!;
+    row.children = [{ ...row.children[0]!, attrs: { colspan: 2 } }];
+    const out = serializeMarkdown(doc, snapshot).text;
+    expect(out).toMatch(/<\/table>\n\n# x\n$/);
+    expect(parseMarkdown(out).doc.blocks.map((b) => b.type)).toEqual(["table", "heading"]);
   });
 });

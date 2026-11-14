@@ -39,11 +39,15 @@ fn blocks(markdown: &str) -> Value {
     blocks
 }
 
-/// The rich text of every block, in order: what writing and reading must not change.
+/// The rich text of every block with text, in order: what writing and reading must not change
+/// (an empty paragraph or heading is not written).
 fn texts(blocks: &Value) -> Vec<Value> {
     let mut out = vec![];
     for block in blocks.as_array().unwrap() {
-        if block["content"].is_array() {
+        if block["content"]
+            .as_array()
+            .is_some_and(|spans| !spans.is_empty())
+        {
             out.push(block["content"].clone());
         }
         out.extend(texts(&block["children"]));

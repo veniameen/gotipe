@@ -122,7 +122,10 @@ native composition и её DOM reconciliation; listeners/frame очищаютс�
 адреса и подписи ссылок и картинок — `links.rs`; уровень записи
 выбирает проверка чтением `verify.rs` (как `renderVerified`). Голые адреса GFM находят `markdown/src/grammar/autolinks.ts` и
 `markdown_parse/autolinks.rs` — одни правила для читателя и писателя. Концы строк правленого блока
-и их написание по снимку возвращает `markdown/src/serialization/line-breaks.ts`. Общие случаи —
+и их написание по снимку возвращает `markdown/src/serialization/line-breaks.ts`; промежуток без
+пустой строки у переписанного соседа `serialize.ts` оставляет, только если пара читается с ним так
+же, как с пустой строкой (D-99). Блочные защиты TS без снимка (`resolveHazards`, `isBlockEmpty`,
+`cannotInterrupt`) Rust-писатель повторяет в `markdown/hazards.rs` (D-100). Общие случаи —
 `markdown-line-breaks.json` и `markdown-write-read.json` в `crates/gotipe-export/tests/fixtures/`.
 
 HTML/SSR: `packages/core/src/serialization/html.ts` owns the canonical serializer;

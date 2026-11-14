@@ -203,7 +203,8 @@ function renderList(w: Writer, block: Block, indent: string, ro: RenderOpts, nod
     for (const child of item.children ?? []) {
       if (omitted(child)) continue;
       w.write(ro.eol);
-      if (spread || (spans.length > 0 && cannotInterrupt(child))) w.write(ro.eol);
+      // the `[ ]` of a task is text that a nested list has to interrupt as well
+      if (spread || ((spans.length > 0 || todo) && cannotInterrupt(child))) w.write(ro.eol);
       w.write(contIndent);
       itemNode.children.push(renderBlock(w, child, contIndent, inner));
     }

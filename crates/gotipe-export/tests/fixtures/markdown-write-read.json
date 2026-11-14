@@ -1782,6 +1782,1220 @@
           ]
         }
       ]
+    },
+    {
+      "id": "neighbouring-lists-with-one-marker",
+      "document": {
+        "version": 1,
+        "blocks": [
+          {
+            "id": "n202",
+            "type": "bulletList",
+            "attrs": {},
+            "content": null,
+            "children": [
+              {
+                "id": "n201",
+                "type": "listItem",
+                "attrs": {},
+                "content": [
+                  {
+                    "text": "a",
+                    "marks": []
+                  }
+                ],
+                "children": []
+              }
+            ]
+          },
+          {
+            "id": "n204",
+            "type": "bulletList",
+            "attrs": {},
+            "content": null,
+            "children": [
+              {
+                "id": "n203",
+                "type": "listItem",
+                "attrs": {},
+                "content": [
+                  {
+                    "text": "b",
+                    "marks": []
+                  }
+                ],
+                "children": []
+              }
+            ]
+          },
+          {
+            "id": "n206",
+            "type": "bulletList",
+            "attrs": {
+              "marker": "*"
+            },
+            "content": null,
+            "children": [
+              {
+                "id": "n205",
+                "type": "listItem",
+                "attrs": {},
+                "content": [
+                  {
+                    "text": "c",
+                    "marks": []
+                  }
+                ],
+                "children": []
+              }
+            ]
+          },
+          {
+            "id": "n208",
+            "type": "orderedList",
+            "attrs": {},
+            "content": null,
+            "children": [
+              {
+                "id": "n207",
+                "type": "listItem",
+                "attrs": {},
+                "content": [
+                  {
+                    "text": "x",
+                    "marks": []
+                  }
+                ],
+                "children": []
+              }
+            ]
+          },
+          {
+            "id": "n210",
+            "type": "orderedList",
+            "attrs": {},
+            "content": null,
+            "children": [
+              {
+                "id": "n209",
+                "type": "listItem",
+                "attrs": {},
+                "content": [
+                  {
+                    "text": "y",
+                    "marks": []
+                  }
+                ],
+                "children": []
+              }
+            ]
+          },
+          {
+            "id": "n212",
+            "type": "todoList",
+            "attrs": {},
+            "content": null,
+            "children": [
+              {
+                "id": "n211",
+                "type": "todoItem",
+                "attrs": {
+                  "checked": false
+                },
+                "content": [
+                  {
+                    "text": "t",
+                    "marks": []
+                  }
+                ],
+                "children": []
+              }
+            ]
+          },
+          {
+            "id": "n214",
+            "type": "bulletList",
+            "attrs": {},
+            "content": null,
+            "children": [
+              {
+                "id": "n213",
+                "type": "listItem",
+                "attrs": {},
+                "content": [
+                  {
+                    "text": "u",
+                    "marks": []
+                  }
+                ],
+                "children": []
+              }
+            ]
+          }
+        ]
+      },
+      "markdown": "- a\n\n+ b\n\n* c\n\n1. x\n\n1) y\n\n- [ ] t\n\n* u\n",
+      "reparsed": [
+        {
+          "type": "bulletList",
+          "attrs": {
+            "marker": "-",
+            "spread": false
+          },
+          "content": null,
+          "children": [
+            {
+              "type": "listItem",
+              "attrs": {},
+              "content": [
+                {
+                  "text": "a",
+                  "marks": []
+                }
+              ],
+              "children": []
+            }
+          ]
+        },
+        {
+          "type": "bulletList",
+          "attrs": {
+            "marker": "+",
+            "spread": false
+          },
+          "content": null,
+          "children": [
+            {
+              "type": "listItem",
+              "attrs": {},
+              "content": [
+                {
+                  "text": "b",
+                  "marks": []
+                }
+              ],
+              "children": []
+            }
+          ]
+        },
+        {
+          "type": "bulletList",
+          "attrs": {
+            "marker": "*",
+            "spread": false
+          },
+          "content": null,
+          "children": [
+            {
+              "type": "listItem",
+              "attrs": {},
+              "content": [
+                {
+                  "text": "c",
+                  "marks": []
+                }
+              ],
+              "children": []
+            }
+          ]
+        },
+        {
+          "type": "orderedList",
+          "attrs": {
+            "start": 1,
+            "delimiter": ".",
+            "spread": false
+          },
+          "content": null,
+          "children": [
+            {
+              "type": "listItem",
+              "attrs": {},
+              "content": [
+                {
+                  "text": "x",
+                  "marks": []
+                }
+              ],
+              "children": []
+            }
+          ]
+        },
+        {
+          "type": "orderedList",
+          "attrs": {
+            "start": 1,
+            "delimiter": ")",
+            "spread": false
+          },
+          "content": null,
+          "children": [
+            {
+              "type": "listItem",
+              "attrs": {},
+              "content": [
+                {
+                  "text": "y",
+                  "marks": []
+                }
+              ],
+              "children": []
+            }
+          ]
+        },
+        {
+          "type": "todoList",
+          "attrs": {
+            "spread": false,
+            "marker": "-"
+          },
+          "content": null,
+          "children": [
+            {
+              "type": "todoItem",
+              "attrs": {
+                "checked": false
+              },
+              "content": [
+                {
+                  "text": "t",
+                  "marks": []
+                }
+              ],
+              "children": []
+            }
+          ]
+        },
+        {
+          "type": "bulletList",
+          "attrs": {
+            "marker": "*",
+            "spread": false
+          },
+          "content": null,
+          "children": [
+            {
+              "type": "listItem",
+              "attrs": {},
+              "content": [
+                {
+                  "text": "u",
+                  "marks": []
+                }
+              ],
+              "children": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "lists-around-an-empty-paragraph-and-a-raw-list",
+      "document": {
+        "version": 1,
+        "blocks": [
+          {
+            "id": "n216",
+            "type": "bulletList",
+            "attrs": {},
+            "content": null,
+            "children": [
+              {
+                "id": "n215",
+                "type": "listItem",
+                "attrs": {},
+                "content": [
+                  {
+                    "text": "a",
+                    "marks": []
+                  }
+                ],
+                "children": []
+              }
+            ]
+          },
+          {
+            "id": "n217",
+            "type": "paragraph",
+            "attrs": {},
+            "content": [],
+            "children": []
+          },
+          {
+            "id": "n219",
+            "type": "bulletList",
+            "attrs": {},
+            "content": null,
+            "children": [
+              {
+                "id": "n218",
+                "type": "listItem",
+                "attrs": {},
+                "content": [
+                  {
+                    "text": "b",
+                    "marks": []
+                  }
+                ],
+                "children": []
+              }
+            ]
+          },
+          {
+            "id": "n220",
+            "type": "markdownRaw",
+            "attrs": {
+              "kind": "list"
+            },
+            "content": "* x\n\n  > q",
+            "children": []
+          }
+        ]
+      },
+      "markdown": "- a\n\n+ b\n\n* x\n\n  > q\n",
+      "reparsed": [
+        {
+          "type": "bulletList",
+          "attrs": {
+            "marker": "-",
+            "spread": false
+          },
+          "content": null,
+          "children": [
+            {
+              "type": "listItem",
+              "attrs": {},
+              "content": [
+                {
+                  "text": "a",
+                  "marks": []
+                }
+              ],
+              "children": []
+            }
+          ]
+        },
+        {
+          "type": "bulletList",
+          "attrs": {
+            "marker": "+",
+            "spread": false
+          },
+          "content": null,
+          "children": [
+            {
+              "type": "listItem",
+              "attrs": {},
+              "content": [
+                {
+                  "text": "b",
+                  "marks": []
+                }
+              ],
+              "children": []
+            }
+          ]
+        },
+        {
+          "type": "markdownRaw",
+          "attrs": {
+            "kind": "list"
+          },
+          "content": "* x\n\n  > q",
+          "children": []
+        }
+      ]
+    },
+    {
+      "id": "a-divider-that-starts-the-file",
+      "document": {
+        "version": 1,
+        "blocks": [
+          {
+            "id": "n221",
+            "type": "paragraph",
+            "attrs": {},
+            "content": [],
+            "children": []
+          },
+          {
+            "id": "n222",
+            "type": "heading",
+            "attrs": {
+              "level": 2
+            },
+            "content": [],
+            "children": []
+          },
+          {
+            "id": "n223",
+            "type": "divider",
+            "attrs": {},
+            "content": null,
+            "children": []
+          },
+          {
+            "id": "n224",
+            "type": "paragraph",
+            "attrs": {},
+            "content": [
+              {
+                "text": "a",
+                "marks": []
+              }
+            ],
+            "children": []
+          },
+          {
+            "id": "n225",
+            "type": "divider",
+            "attrs": {},
+            "content": null,
+            "children": []
+          },
+          {
+            "id": "n226",
+            "type": "paragraph",
+            "attrs": {},
+            "content": [
+              {
+                "text": "b",
+                "marks": []
+              }
+            ],
+            "children": []
+          }
+        ]
+      },
+      "markdown": "***\n\na\n\n---\n\nb\n",
+      "reparsed": [
+        {
+          "type": "divider",
+          "attrs": {},
+          "content": null,
+          "children": []
+        },
+        {
+          "type": "paragraph",
+          "attrs": {},
+          "content": [
+            {
+              "text": "a",
+              "marks": []
+            }
+          ],
+          "children": []
+        },
+        {
+          "type": "divider",
+          "attrs": {},
+          "content": null,
+          "children": []
+        },
+        {
+          "type": "paragraph",
+          "attrs": {},
+          "content": [
+            {
+              "text": "b",
+              "marks": []
+            }
+          ],
+          "children": []
+        }
+      ]
+    },
+    {
+      "id": "a-nested-list-that-cannot-interrupt-the-text",
+      "document": {
+        "version": 1,
+        "blocks": [
+          {
+            "id": "n234",
+            "type": "bulletList",
+            "attrs": {},
+            "content": null,
+            "children": [
+              {
+                "id": "n230",
+                "type": "listItem",
+                "attrs": {},
+                "content": [
+                  {
+                    "text": "x",
+                    "marks": []
+                  }
+                ],
+                "children": [
+                  {
+                    "id": "n229",
+                    "type": "orderedList",
+                    "attrs": {
+                      "start": 2
+                    },
+                    "content": null,
+                    "children": [
+                      {
+                        "id": "n227",
+                        "type": "listItem",
+                        "attrs": {},
+                        "content": [
+                          {
+                            "text": "a",
+                            "marks": []
+                          }
+                        ],
+                        "children": []
+                      },
+                      {
+                        "id": "n228",
+                        "type": "listItem",
+                        "attrs": {},
+                        "content": [
+                          {
+                            "text": "b",
+                            "marks": []
+                          }
+                        ],
+                        "children": []
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "id": "n233",
+                "type": "listItem",
+                "attrs": {},
+                "content": [
+                  {
+                    "text": "y",
+                    "marks": []
+                  }
+                ],
+                "children": [
+                  {
+                    "id": "n232",
+                    "type": "orderedList",
+                    "attrs": {
+                      "start": 1,
+                      "delimiter": ")"
+                    },
+                    "content": null,
+                    "children": [
+                      {
+                        "id": "n231",
+                        "type": "listItem",
+                        "attrs": {},
+                        "content": [
+                          {
+                            "text": "c",
+                            "marks": []
+                          }
+                        ],
+                        "children": []
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "markdown": "- x\n\n  2. a\n  3. b\n- y\n  1) c\n",
+      "reparsed": [
+        {
+          "type": "bulletList",
+          "attrs": {
+            "marker": "-",
+            "spread": true
+          },
+          "content": null,
+          "children": [
+            {
+              "type": "listItem",
+              "attrs": {},
+              "content": [
+                {
+                  "text": "x",
+                  "marks": []
+                }
+              ],
+              "children": [
+                {
+                  "type": "orderedList",
+                  "attrs": {
+                    "start": 2,
+                    "delimiter": ".",
+                    "spread": false
+                  },
+                  "content": null,
+                  "children": [
+                    {
+                      "type": "listItem",
+                      "attrs": {},
+                      "content": [
+                        {
+                          "text": "a",
+                          "marks": []
+                        }
+                      ],
+                      "children": []
+                    },
+                    {
+                      "type": "listItem",
+                      "attrs": {},
+                      "content": [
+                        {
+                          "text": "b",
+                          "marks": []
+                        }
+                      ],
+                      "children": []
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "listItem",
+              "attrs": {},
+              "content": [
+                {
+                  "text": "y",
+                  "marks": []
+                }
+              ],
+              "children": [
+                {
+                  "type": "orderedList",
+                  "attrs": {
+                    "start": 1,
+                    "delimiter": ")",
+                    "spread": false
+                  },
+                  "content": null,
+                  "children": [
+                    {
+                      "type": "listItem",
+                      "attrs": {},
+                      "content": [
+                        {
+                          "text": "c",
+                          "marks": []
+                        }
+                      ],
+                      "children": []
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "items-without-text",
+      "document": {
+        "version": 1,
+        "blocks": [
+          {
+            "id": "n254",
+            "type": "orderedList",
+            "attrs": {},
+            "content": null,
+            "children": [
+              {
+                "id": "n252",
+                "type": "listItem",
+                "attrs": {},
+                "content": [],
+                "children": []
+              },
+              {
+                "id": "n253",
+                "type": "listItem",
+                "attrs": {},
+                "content": [
+                  {
+                    "text": "b",
+                    "marks": []
+                  }
+                ],
+                "children": []
+              }
+            ]
+          },
+          {
+            "id": "n256",
+            "type": "todoList",
+            "attrs": {},
+            "content": null,
+            "children": [
+              {
+                "id": "n255",
+                "type": "todoItem",
+                "attrs": {
+                  "checked": true
+                },
+                "content": [],
+                "children": []
+              }
+            ]
+          }
+        ]
+      },
+      "markdown": "1.\n2. b\n\n- [x]\n",
+      "reparsed": [
+        {
+          "type": "orderedList",
+          "attrs": {
+            "start": 1,
+            "delimiter": ".",
+            "spread": false
+          },
+          "content": null,
+          "children": [
+            {
+              "type": "listItem",
+              "attrs": {},
+              "content": [],
+              "children": []
+            },
+            {
+              "type": "listItem",
+              "attrs": {},
+              "content": [
+                {
+                  "text": "b",
+                  "marks": []
+                }
+              ],
+              "children": []
+            }
+          ]
+        },
+        {
+          "type": "todoList",
+          "attrs": {
+            "spread": false,
+            "marker": "-"
+          },
+          "content": null,
+          "children": [
+            {
+              "type": "todoItem",
+              "attrs": {
+                "checked": true
+              },
+              "content": [],
+              "children": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "a-list-that-cannot-interrupt-two-levels-deep",
+      "document": {
+        "version": 1,
+        "blocks": [
+          {
+            "id": "n240",
+            "type": "bulletList",
+            "attrs": {},
+            "content": null,
+            "children": [
+              {
+                "id": "n239",
+                "type": "listItem",
+                "attrs": {},
+                "content": [
+                  {
+                    "text": "x",
+                    "marks": []
+                  }
+                ],
+                "children": [
+                  {
+                    "id": "n238",
+                    "type": "bulletList",
+                    "attrs": {},
+                    "content": null,
+                    "children": [
+                      {
+                        "id": "n237",
+                        "type": "listItem",
+                        "attrs": {},
+                        "content": [
+                          {
+                            "text": "a",
+                            "marks": []
+                          }
+                        ],
+                        "children": [
+                          {
+                            "id": "n236",
+                            "type": "orderedList",
+                            "attrs": {
+                              "start": 7
+                            },
+                            "content": null,
+                            "children": [
+                              {
+                                "id": "n235",
+                                "type": "listItem",
+                                "attrs": {},
+                                "content": [
+                                  {
+                                    "text": "b",
+                                    "marks": []
+                                  }
+                                ],
+                                "children": []
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "markdown": "- x\n  - a\n\n    7. b\n",
+      "reparsed": [
+        {
+          "type": "bulletList",
+          "attrs": {
+            "marker": "-",
+            "spread": true
+          },
+          "content": null,
+          "children": [
+            {
+              "type": "listItem",
+              "attrs": {},
+              "content": [
+                {
+                  "text": "x",
+                  "marks": []
+                }
+              ],
+              "children": [
+                {
+                  "type": "bulletList",
+                  "attrs": {
+                    "marker": "-",
+                    "spread": true
+                  },
+                  "content": null,
+                  "children": [
+                    {
+                      "type": "listItem",
+                      "attrs": {},
+                      "content": [
+                        {
+                          "text": "a",
+                          "marks": []
+                        }
+                      ],
+                      "children": [
+                        {
+                          "type": "orderedList",
+                          "attrs": {
+                            "start": 7,
+                            "delimiter": ".",
+                            "spread": false
+                          },
+                          "content": null,
+                          "children": [
+                            {
+                              "type": "listItem",
+                              "attrs": {},
+                              "content": [
+                                {
+                                  "text": "b",
+                                  "marks": []
+                                }
+                              ],
+                              "children": []
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "a-task-without-text-before-a-nested-list",
+      "document": {
+        "version": 1,
+        "blocks": [
+          {
+            "id": "n244",
+            "type": "todoList",
+            "attrs": {},
+            "content": null,
+            "children": [
+              {
+                "id": "n243",
+                "type": "todoItem",
+                "attrs": {
+                  "checked": false
+                },
+                "content": [],
+                "children": [
+                  {
+                    "id": "n242",
+                    "type": "orderedList",
+                    "attrs": {
+                      "start": 2
+                    },
+                    "content": null,
+                    "children": [
+                      {
+                        "id": "n241",
+                        "type": "listItem",
+                        "attrs": {},
+                        "content": [
+                          {
+                            "text": "a",
+                            "marks": []
+                          }
+                        ],
+                        "children": []
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "markdown": "- [ ]\n\n  2. a\n",
+      "reparsed": [
+        {
+          "type": "todoList",
+          "attrs": {
+            "spread": true,
+            "marker": "-"
+          },
+          "content": null,
+          "children": [
+            {
+              "type": "todoItem",
+              "attrs": {
+                "checked": false
+              },
+              "content": [],
+              "children": [
+                {
+                  "type": "orderedList",
+                  "attrs": {
+                    "start": 2,
+                    "delimiter": ".",
+                    "spread": false
+                  },
+                  "content": null,
+                  "children": [
+                    {
+                      "type": "listItem",
+                      "attrs": {},
+                      "content": [
+                        {
+                          "text": "a",
+                          "marks": []
+                        }
+                      ],
+                      "children": []
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "numbered-lists-with-unusual-starts",
+      "document": {
+        "version": 1,
+        "blocks": [
+          {
+            "id": "n251",
+            "type": "bulletList",
+            "attrs": {},
+            "content": null,
+            "children": [
+              {
+                "id": "n247",
+                "type": "listItem",
+                "attrs": {},
+                "content": [
+                  {
+                    "text": "x",
+                    "marks": []
+                  }
+                ],
+                "children": [
+                  {
+                    "id": "n246",
+                    "type": "orderedList",
+                    "attrs": {
+                      "start": "2"
+                    },
+                    "content": null,
+                    "children": [
+                      {
+                        "id": "n245",
+                        "type": "listItem",
+                        "attrs": {},
+                        "content": [
+                          {
+                            "text": "a",
+                            "marks": []
+                          }
+                        ],
+                        "children": []
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "id": "n250",
+                "type": "listItem",
+                "attrs": {},
+                "content": [
+                  {
+                    "text": "y",
+                    "marks": []
+                  }
+                ],
+                "children": [
+                  {
+                    "id": "n249",
+                    "type": "orderedList",
+                    "attrs": {
+                      "start": -1
+                    },
+                    "content": null,
+                    "children": [
+                      {
+                        "id": "n248",
+                        "type": "listItem",
+                        "attrs": {},
+                        "content": [
+                          {
+                            "text": "b",
+                            "marks": []
+                          }
+                        ],
+                        "children": []
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "markdown": "- x\n\n  2. a\n- y\n  1. b\n",
+      "reparsed": [
+        {
+          "type": "bulletList",
+          "attrs": {
+            "marker": "-",
+            "spread": true
+          },
+          "content": null,
+          "children": [
+            {
+              "type": "listItem",
+              "attrs": {},
+              "content": [
+                {
+                  "text": "x",
+                  "marks": []
+                }
+              ],
+              "children": [
+                {
+                  "type": "orderedList",
+                  "attrs": {
+                    "start": 2,
+                    "delimiter": ".",
+                    "spread": false
+                  },
+                  "content": null,
+                  "children": [
+                    {
+                      "type": "listItem",
+                      "attrs": {},
+                      "content": [
+                        {
+                          "text": "a",
+                          "marks": []
+                        }
+                      ],
+                      "children": []
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "listItem",
+              "attrs": {},
+              "content": [
+                {
+                  "text": "y",
+                  "marks": []
+                }
+              ],
+              "children": [
+                {
+                  "type": "orderedList",
+                  "attrs": {
+                    "start": 1,
+                    "delimiter": ".",
+                    "spread": false
+                  },
+                  "content": null,
+                  "children": [
+                    {
+                      "type": "listItem",
+                      "attrs": {},
+                      "content": [
+                        {
+                          "text": "b",
+                          "marks": []
+                        }
+                      ],
+                      "children": []
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
     }
   ]
 }

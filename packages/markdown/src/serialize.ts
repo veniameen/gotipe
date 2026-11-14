@@ -233,18 +233,64 @@ function riskyStart(item: Item): boolean {
   return false;
 }
 
+/** The blocks `text` reads as; a line ending first, so that a leading `---` opens no front matter. */
+function readBlocks(text: string, eol: string): string {
+  return JSON.stringify(parseInternal(eol + text, false).nodes.map((n) => fingerprint(n.block)));
+}
+
+/** The first lines of a block: how a block starts decides how it reads after another. */
+function head(md: string): string {
+  const breaks = /\r\n?|\n/g;
+  for (let n = 0; n < 8; n++) if (!breaks.exec(md)) return md;
+  return md.slice(0, breaks.lastIndex);
+}
+
+/**
+ * The blanks before the first line of a preserved block that it needs to read as itself. The
+ * snapshot keeps them in the gap before the block (in `leading` before the first one); without
+ * them an indented code block reads as a paragraph, and an indented fence keeps them in its code.
+ */
+function ownIndent(item: Item, snap: MarkdownSnapshot, eol: string): string {
+  if (!item.preserved) return "";
+  const blanks = /[ \t]*$/.exec(item.oi === 0 ? snap.leading : (snap.gaps[item.oi - 1] ?? ""))![0];
+  const start = head(item.md);
+  return blanks && readBlocks(start, eol) !== readBlocks(blanks + start, eol) ? blanks : "";
+}
+
+/**
+ * Whether two blocks, one of them rewritten, read the same with the gap of their source between
+ * them as with `apart`, a blank line. A gap without a blank line may hold on how the source of a
+ * block ended: the `>` line that ends the paragraph of a quote keeps the next paragraph out of it
+ * (D-99), while a table with merged cells, rewritten as HTML, ends only at a blank line.
+ */
+function gapHolds(
+  a: Item,
+  b: Item,
+  [gap, apart]: [string, string],
+  snap: MarkdownSnapshot,
+  eol: string,
+): boolean {
+  const before = ownIndent(a, snap, eol) + a.md;
+  const after = head(b.md);
+  return readBlocks(before + gap + after, eol) === readBlocks(before + apart + after, eol);
+}
+
 function gapBetween(a: Item, b: Item, snap: MarkdownSnapshot | undefined, eol: string): string {
   if (snap && a.oi >= 0 && b.oi === a.oi + 1) {
     const g = snap.gaps[a.oi] ?? eol + eol;
     if (countLineEndings(g) >= 2) return g;
     if (a.preserved && b.preserved) return g;
+    // a blank line, and the blanks the first line of a preserved block needs
+    const apart = eol + eol + ownIndent(b, snap, eol);
     if (
       a.block.type === snap.blocks[a.oi]!.type &&
       b.block.type === snap.blocks[b.oi]!.type &&
-      !riskyStart(b)
+      !riskyStart(b) &&
+      gapHolds(a, b, [g, apart], snap, eol)
     ) {
       return g;
     }
+    return apart;
   }
   return eol + eol;
 }
