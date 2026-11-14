@@ -2759,6 +2759,809 @@
         ]
       },
       "html": "<p><span data-type=\"mention\" data-kind=\"user\" data-id=\"42\" data-label=\"Анна\">@<strong>Ан</strong>на</span><span data-type=\"mention\" data-kind=\"user\" data-id=\"42\" data-label=\"Анна\">@Анна</span> <a href=\"https://a.test\"><strong><span data-type=\"mention\" data-kind=\"user\" data-id=\"7\" data-label=\"Bob\">@B<em>ob</em></span></strong></a> <img src=\"a.png\" alt=\"Схема\"> @x<strong>y</strong></p>"
+    },
+    {
+      "id": "merged-cells",
+      "document": {
+        "version": 1,
+        "blocks": [
+          {
+            "id": "t",
+            "type": "table",
+            "attrs": {
+              "align": [
+                null,
+                null,
+                "right",
+                null
+              ],
+              "colWidths": [
+                160,
+                160,
+                120,
+                160
+              ]
+            },
+            "content": null,
+            "children": [
+              {
+                "id": "r0",
+                "type": "tableRow",
+                "attrs": {},
+                "content": null,
+                "children": [
+                  {
+                    "id": "h0",
+                    "type": "tableHeader",
+                    "attrs": {
+                      "rowspan": 2
+                    },
+                    "content": [
+                      {
+                        "text": "Платформа",
+                        "marks": []
+                      }
+                    ],
+                    "children": []
+                  },
+                  {
+                    "id": "h1",
+                    "type": "tableHeader",
+                    "attrs": {
+                      "colspan": 2,
+                      "align": "center"
+                    },
+                    "content": [
+                      {
+                        "text": "Журнал",
+                        "marks": []
+                      }
+                    ],
+                    "children": []
+                  },
+                  {
+                    "id": "h2",
+                    "type": "tableHeader",
+                    "attrs": {
+                      "rowspan": 2
+                    },
+                    "content": [
+                      {
+                        "text": "Шифрование",
+                        "marks": []
+                      }
+                    ],
+                    "children": []
+                  }
+                ]
+              },
+              {
+                "id": "r1",
+                "type": "tableRow",
+                "attrs": {},
+                "content": null,
+                "children": [
+                  {
+                    "id": "h3",
+                    "type": "tableHeader",
+                    "attrs": {},
+                    "content": [
+                      {
+                        "text": "Ключ",
+                        "marks": []
+                      }
+                    ],
+                    "children": []
+                  },
+                  {
+                    "id": "h4",
+                    "type": "tableHeader",
+                    "attrs": {},
+                    "content": [
+                      {
+                        "text": "В очереди",
+                        "marks": []
+                      }
+                    ],
+                    "children": []
+                  }
+                ]
+              },
+              {
+                "id": "r2",
+                "type": "tableRow",
+                "attrs": {},
+                "content": null,
+                "children": [
+                  {
+                    "id": "c0",
+                    "type": "tableCell",
+                    "attrs": {},
+                    "content": [
+                      {
+                        "text": "Веб",
+                        "marks": []
+                      }
+                    ],
+                    "children": []
+                  },
+                  {
+                    "id": "c1",
+                    "type": "tableCell",
+                    "attrs": {},
+                    "content": [
+                      {
+                        "text": "drafts.web",
+                        "marks": [
+                          {
+                            "type": "code",
+                            "attrs": {}
+                          }
+                        ]
+                      }
+                    ],
+                    "children": []
+                  },
+                  {
+                    "id": "c2",
+                    "type": "tableCell",
+                    "attrs": {},
+                    "content": [
+                      {
+                        "text": "1 284",
+                        "marks": []
+                      }
+                    ],
+                    "children": []
+                  },
+                  {
+                    "id": "c3",
+                    "type": "tableCell",
+                    "attrs": {
+                      "rowspan": 2,
+                      "colspan": 1
+                    },
+                    "content": [
+                      {
+                        "text": "Ключ ",
+                        "marks": []
+                      },
+                      {
+                        "text": "сессии",
+                        "marks": [
+                          {
+                            "type": "bold",
+                            "attrs": {}
+                          }
+                        ]
+                      }
+                    ],
+                    "children": []
+                  }
+                ]
+              },
+              {
+                "id": "r3",
+                "type": "tableRow",
+                "attrs": {},
+                "content": null,
+                "children": [
+                  {
+                    "id": "c4",
+                    "type": "tableCell",
+                    "attrs": {},
+                    "content": [
+                      {
+                        "text": "macOS",
+                        "marks": []
+                      }
+                    ],
+                    "children": []
+                  },
+                  {
+                    "id": "c5",
+                    "type": "tableCell",
+                    "attrs": {},
+                    "content": [
+                      {
+                        "text": "a | b <x>",
+                        "marks": []
+                      }
+                    ],
+                    "children": []
+                  },
+                  {
+                    "id": "c6",
+                    "type": "tableCell",
+                    "attrs": {},
+                    "content": [
+                      {
+                        "text": "312",
+                        "marks": []
+                      }
+                    ],
+                    "children": []
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "html": "<table>\n<tr>\n<th rowspan=\"2\">Платформа</th>\n<th colspan=\"2\" style=\"text-align:center\">Журнал</th>\n<th rowspan=\"2\">Шифрование</th>\n</tr>\n<tr>\n<th>Ключ</th>\n<th>В очереди</th>\n</tr>\n<tr>\n<td>Веб</td>\n<td><code>drafts.web</code></td>\n<td>1 284</td>\n<td rowspan=\"2\">Ключ <strong>сессии</strong></td>\n</tr>\n<tr>\n<td>macOS</td>\n<td>a | b &lt;x&gt;</td>\n<td>312</td>\n</tr>\n</table>"
+    },
+    {
+      "id": "font-family",
+      "document": {
+        "version": 1,
+        "blocks": [
+          {
+            "id": "p",
+            "type": "paragraph",
+            "attrs": {},
+            "content": [
+              {
+                "text": "s",
+                "marks": [
+                  {
+                    "type": "fontFamily",
+                    "attrs": {
+                      "family": "system"
+                    }
+                  }
+                ]
+              },
+              {
+                "text": "e",
+                "marks": [
+                  {
+                    "type": "fontFamily",
+                    "attrs": {
+                      "family": "serif"
+                    }
+                  }
+                ]
+              },
+              {
+                "text": "m",
+                "marks": [
+                  {
+                    "type": "fontFamily",
+                    "attrs": {
+                      "family": "mono"
+                    }
+                  }
+                ]
+              },
+              {
+                "text": "x",
+                "marks": [
+                  {
+                    "type": "fontFamily",
+                    "attrs": {
+                      "family": "comic"
+                    }
+                  }
+                ]
+              },
+              {
+                "text": "y",
+                "marks": [
+                  {
+                    "type": "fontFamily",
+                    "attrs": {}
+                  }
+                ]
+              },
+              {
+                "text": "z",
+                "marks": [
+                  {
+                    "type": "fontFamily",
+                    "attrs": {
+                      "family": "Serif"
+                    }
+                  }
+                ]
+              }
+            ],
+            "children": []
+          }
+        ]
+      },
+      "html": "<p><span style=\"font-family:system-ui\">s</span><span style=\"font-family:serif\">e</span><span style=\"font-family:monospace\">m</span>xyz</p>"
+    },
+    {
+      "id": "font-size",
+      "document": {
+        "version": 1,
+        "blocks": [
+          {
+            "id": "p",
+            "type": "paragraph",
+            "attrs": {},
+            "content": [
+              {
+                "text": "a",
+                "marks": [
+                  {
+                    "type": "fontSize",
+                    "attrs": {
+                      "size": 15
+                    }
+                  }
+                ]
+              },
+              {
+                "text": "b",
+                "marks": [
+                  {
+                    "type": "fontSize",
+                    "attrs": {
+                      "size": 6
+                    }
+                  }
+                ]
+              },
+              {
+                "text": "c",
+                "marks": [
+                  {
+                    "type": "fontSize",
+                    "attrs": {
+                      "size": 96
+                    }
+                  }
+                ]
+              },
+              {
+                "text": "d",
+                "marks": [
+                  {
+                    "type": "fontSize",
+                    "attrs": {
+                      "size": 15.5
+                    }
+                  }
+                ]
+              },
+              {
+                "text": "e",
+                "marks": [
+                  {
+                    "type": "fontSize",
+                    "attrs": {
+                      "size": 5
+                    }
+                  }
+                ]
+              },
+              {
+                "text": "f",
+                "marks": [
+                  {
+                    "type": "fontSize",
+                    "attrs": {
+                      "size": 97
+                    }
+                  }
+                ]
+              },
+              {
+                "text": "g",
+                "marks": [
+                  {
+                    "type": "fontSize",
+                    "attrs": {
+                      "size": "15"
+                    }
+                  }
+                ]
+              },
+              {
+                "text": "h",
+                "marks": [
+                  {
+                    "type": "fontSize",
+                    "attrs": {
+                      "size": 0
+                    }
+                  }
+                ]
+              },
+              {
+                "text": "i",
+                "marks": [
+                  {
+                    "type": "fontSize",
+                    "attrs": {
+                      "size": -12
+                    }
+                  }
+                ]
+              },
+              {
+                "text": "j",
+                "marks": [
+                  {
+                    "type": "fontSize",
+                    "attrs": {}
+                  }
+                ]
+              }
+            ],
+            "children": []
+          }
+        ]
+      },
+      "html": "<p><span style=\"font-size:15px\">a</span><span style=\"font-size:6px\">b</span><span style=\"font-size:96px\">c</span>defghij</p>"
+    },
+    {
+      "id": "font-nested",
+      "document": {
+        "version": 1,
+        "blocks": [
+          {
+            "id": "p",
+            "type": "paragraph",
+            "attrs": {},
+            "content": [
+              {
+                "text": "Шрифт 😀",
+                "marks": [
+                  {
+                    "type": "bold",
+                    "attrs": {}
+                  },
+                  {
+                    "type": "fontFamily",
+                    "attrs": {
+                      "family": "serif"
+                    }
+                  },
+                  {
+                    "type": "link",
+                    "attrs": {
+                      "href": "https://a.example/x?a=1&b=2"
+                    }
+                  },
+                  {
+                    "type": "textColor",
+                    "attrs": {
+                      "color": "#c4382f"
+                    }
+                  },
+                  {
+                    "type": "fontSize",
+                    "attrs": {
+                      "size": 18
+                    }
+                  }
+                ]
+              },
+              {
+                "text": " и ",
+                "marks": [
+                  {
+                    "type": "fontSize",
+                    "attrs": {
+                      "size": 18
+                    }
+                  }
+                ]
+              },
+              {
+                "text": "код",
+                "marks": [
+                  {
+                    "type": "fontSize",
+                    "attrs": {
+                      "size": 12
+                    }
+                  },
+                  {
+                    "type": "italic",
+                    "attrs": {}
+                  },
+                  {
+                    "type": "fontFamily",
+                    "attrs": {
+                      "family": "mono"
+                    }
+                  },
+                  {
+                    "type": "textColor",
+                    "attrs": {
+                      "color": "red;position:fixed"
+                    }
+                  }
+                ]
+              }
+            ],
+            "children": []
+          }
+        ]
+      },
+      "html": "<p><span style=\"font-size:18px\"><span style=\"color:#c4382f\"><a href=\"https://a.example/x?a=1&amp;b=2\"><span style=\"font-family:serif\"><strong>Шрифт 😀</strong></span></a></span></span><span style=\"font-size:18px\"> и </span><span style=\"font-family:monospace\"><em><span style=\"font-size:12px\">код</span></em></span></p>"
+    },
+    {
+      "id": "direction",
+      "document": {
+        "version": 1,
+        "blocks": [
+          {
+            "id": "p1",
+            "type": "paragraph",
+            "attrs": {
+              "dir": "rtl"
+            },
+            "content": [
+              {
+                "text": "مرحبا 😀",
+                "marks": []
+              }
+            ],
+            "children": []
+          },
+          {
+            "id": "p2",
+            "type": "paragraph",
+            "attrs": {
+              "dir": "ltr",
+              "align": "center"
+            },
+            "content": [
+              {
+                "text": "l",
+                "marks": []
+              }
+            ],
+            "children": []
+          },
+          {
+            "id": "h1",
+            "type": "heading",
+            "attrs": {
+              "level": 1,
+              "dir": "auto",
+              "align": "right"
+            },
+            "content": [
+              {
+                "text": "h",
+                "marks": []
+              }
+            ],
+            "children": []
+          },
+          {
+            "id": "h2",
+            "type": "heading",
+            "attrs": {
+              "level": 2,
+              "dir": "rtl"
+            },
+            "content": [
+              {
+                "text": "n",
+                "marks": []
+              }
+            ],
+            "children": []
+          },
+          {
+            "id": "h3",
+            "type": "heading",
+            "attrs": {
+              "level": 3
+            },
+            "content": [
+              {
+                "text": "x",
+                "marks": []
+              }
+            ],
+            "children": []
+          },
+          {
+            "id": "ul",
+            "type": "bulletList",
+            "attrs": {},
+            "content": null,
+            "children": [
+              {
+                "id": "i1",
+                "type": "listItem",
+                "attrs": {
+                  "dir": "rtl"
+                },
+                "content": [
+                  {
+                    "text": "שלום",
+                    "marks": []
+                  }
+                ],
+                "children": [
+                  {
+                    "id": "ol",
+                    "type": "orderedList",
+                    "attrs": {},
+                    "content": null,
+                    "children": [
+                      {
+                        "id": "i2",
+                        "type": "listItem",
+                        "attrs": {
+                          "dir": "ltr"
+                        },
+                        "content": [
+                          {
+                            "text": "n",
+                            "marks": []
+                          }
+                        ],
+                        "children": []
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "id": "i3",
+                "type": "listItem",
+                "attrs": {
+                  "dir": "RTL"
+                },
+                "content": [
+                  {
+                    "text": "u",
+                    "marks": []
+                  }
+                ],
+                "children": []
+              }
+            ]
+          },
+          {
+            "id": "tl",
+            "type": "todoList",
+            "attrs": {},
+            "content": null,
+            "children": [
+              {
+                "id": "t1",
+                "type": "todoItem",
+                "attrs": {
+                  "dir": "rtl",
+                  "checked": true
+                },
+                "content": [
+                  {
+                    "text": "t",
+                    "marks": []
+                  }
+                ],
+                "children": []
+              },
+              {
+                "id": "t2",
+                "type": "todoItem",
+                "attrs": {
+                  "dir": "auto",
+                  "checked": false
+                },
+                "content": [
+                  {
+                    "text": "o",
+                    "marks": []
+                  }
+                ],
+                "children": []
+              }
+            ]
+          },
+          {
+            "id": "p3",
+            "type": "paragraph",
+            "attrs": {
+              "dir": "sideways"
+            },
+            "content": [
+              {
+                "text": "s",
+                "marks": []
+              }
+            ],
+            "children": []
+          },
+          {
+            "id": "p4",
+            "type": "paragraph",
+            "attrs": {
+              "dir": 5
+            },
+            "content": [
+              {
+                "text": "n",
+                "marks": []
+              }
+            ],
+            "children": []
+          },
+          {
+            "id": "q",
+            "type": "blockquote",
+            "attrs": {
+              "dir": "rtl"
+            },
+            "content": [
+              {
+                "text": "q",
+                "marks": []
+              }
+            ],
+            "children": []
+          }
+        ]
+      },
+      "html": "<p dir=\"rtl\">مرحبا 😀</p>\n<p dir=\"ltr\" style=\"text-align:center\">l</p>\n<h1 dir=\"auto\" style=\"text-align:right\">h</h1>\n<h2 dir=\"rtl\">n</h2>\n<h3>x</h3>\n<ul>\n<li dir=\"rtl\">שלום\n<ol>\n<li dir=\"ltr\">n</li>\n</ol></li>\n<li>u</li>\n</ul>\n<ul class=\"todo-list\">\n<li dir=\"rtl\"><input type=\"checkbox\" checked disabled> t</li>\n<li dir=\"auto\"><input type=\"checkbox\" disabled> o</li>\n</ul>\n<p>s</p>\n<p>n</p>\n<blockquote>q</blockquote>"
+    },
+    {
+      "id": "direction-options",
+      "options": {
+        "classPrefix": "doc-",
+        "inlineStyles": true
+      },
+      "document": {
+        "version": 1,
+        "blocks": [
+          {
+            "id": "p",
+            "type": "paragraph",
+            "attrs": {
+              "dir": "rtl",
+              "align": "right"
+            },
+            "content": [
+              {
+                "text": "r",
+                "marks": [
+                  {
+                    "type": "fontSize",
+                    "attrs": {
+                      "size": 20
+                    }
+                  }
+                ]
+              }
+            ],
+            "children": []
+          },
+          {
+            "id": "ul",
+            "type": "bulletList",
+            "attrs": {},
+            "content": null,
+            "children": [
+              {
+                "id": "i",
+                "type": "listItem",
+                "attrs": {
+                  "dir": "rtl"
+                },
+                "content": [
+                  {
+                    "text": "i",
+                    "marks": []
+                  }
+                ],
+                "children": []
+              }
+            ]
+          }
+        ]
+      },
+      "html": "<p dir=\"rtl\" style=\"margin:0 0 0.75em;line-height:1.5;overflow-wrap:anywhere;text-align:right\" class=\"doc-paragraph\"><span style=\"font-size:20px\">r</span></p>\n<ul class=\"doc-bulletList\" style=\"padding-left:1.5em;margin:0.5em 0\">\n<li dir=\"rtl\" class=\"doc-listItem\" style=\"line-height:1.5\">i</li>\n</ul>"
     }
   ]
 }

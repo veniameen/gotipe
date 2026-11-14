@@ -1,7 +1,7 @@
 import { type GoTipeEditor, GoTipeError } from "@gotipe/core";
 import { BubbleMenu } from "@gotipe/react";
-import { useGoTipeI18n } from "@gotipe/react";
 import { useCallback } from "react";
+import { useBlockEditorI18n } from "../i18n/strings";
 import { PageIcon, type PageIconName } from "../page/icons";
 import { BlockTypeDropdown } from "./block-type-dropdown";
 import { MARK_KEYS, ariaKeys } from "./formatting/keys";
@@ -67,7 +67,7 @@ function FormatButton({ label, mark, icon, binding, active, onClick }: FormatBut
 /* ------------------------------------------------------------------ */
 
 export function BlockEditorBubbleMenu({ editor, enableAI = false }: BlockEditorBubbleMenuProps) {
-  const i18n = useGoTipeI18n();
+  const i18n = useBlockEditorI18n();
   const runWithFocus = useCallback(
     (apply: (chain: ReturnType<GoTipeEditor["chain"]>) => void) => {
       if (!editor.isEditable || editor.isDestroyed) return;

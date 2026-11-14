@@ -1,6 +1,7 @@
 import { Heading } from "@gotipe/core/extensions";
 import { DefaultPreset } from "@gotipe/core/presets";
-import { Editor, useEditor } from "@gotipe/react";
+import { Editor, MediaBlocksContext, useEditor } from "@gotipe/react";
+import { mediaBlocks } from "@gotipe/react/media";
 import { ExampleWrapper } from "../shared/example-wrapper";
 import { HeadlessControls } from "../shared/headless-controls";
 import { SIMPLE_CONTENT } from "../shared/sample-content";
@@ -21,7 +22,9 @@ export function HeadlessEditor() {
       tags={["MIT"]}
     >
       <HeadlessControls editor={editor} headingLevels={HEADING.options?.levels ?? []} />
-      <Editor editor={editor} className="gotipe-headless-editor" />
+      <MediaBlocksContext.Provider value={mediaBlocks}>
+        <Editor editor={editor} className="gotipe-headless-editor" />
+      </MediaBlocksContext.Provider>
     </ExampleWrapper>
   );
 }

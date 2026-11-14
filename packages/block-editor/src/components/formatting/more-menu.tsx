@@ -1,17 +1,21 @@
 import { type Block, type GoTipeEditor, GoTipeError, copySelection } from "@gotipe/core";
+import { setTextAlign } from "@gotipe/core/extensions";
 import { serializeMarkdown } from "@gotipe/markdown";
-import { useGoTipeI18n } from "@gotipe/react";
 import { useEffect, useRef, useState } from "react";
+import { useBlockEditorI18n } from "../../i18n/strings";
 import { PageIcon } from "../../page/icons";
+import { AlignOptions, useAlignable, useTextAlign } from "../../text/align";
 import { Tip } from "./tip";
 import { useFormattingMenu } from "./use-formatting-menu";
 
 export function MoreMenu({ editor }: { editor: GoTipeEditor }) {
   const menu = useFormattingMenu(editor);
-  const i18n = useGoTipeI18n();
+  const i18n = useBlockEditorI18n();
   const markdown = useRef("");
   const generation = useRef(0);
   const [copying, setCopying] = useState(false);
+  const align = useTextAlign(editor);
+  const alignable = useAlignable(editor);
   useEffect(() => {
     if (!menu.open) {
       generation.current++;
@@ -93,6 +97,18 @@ export function MoreMenu({ editor }: { editor: GoTipeEditor }) {
           style={menu.style}
           onKeyDown={menu.keydown}
         >
+          {/* Atlas frame 27: alignment belongs to the block, its keys beside each row */}
+          <div className="gotipe-menu-group" role="group" aria-label={i18n.t("align.label")}>
+            <span className="gotipe-menu-label" aria-hidden="true">
+              {i18n.t("align.label")}
+            </span>
+            <AlignOptions
+              current={align}
+              disabled={!alignable}
+              pick={(value) => menu.apply(() => setTextAlign(editor, value))}
+            />
+          </div>
+          <div className="gotipe-menu-sep" role="separator" />
           <button
             type="button"
             role="menuitem"

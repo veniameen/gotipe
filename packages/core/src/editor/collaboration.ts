@@ -5,6 +5,7 @@ import type { InlineAtomSupport, IsAtomic } from "../types/atoms";
 import type { Step } from "../types/state";
 import type { SelectionView } from "../types/view";
 import type { CollaborationUpdateOptions, WasmBridge } from "../wasm-bridge";
+import { remoteTableRepair } from "./remote-table-repair";
 
 interface CollaborationPort {
   readonly destroyed: boolean;
@@ -118,9 +119,15 @@ export function createCollaboration(
       // Text a peer typed into an inline atom it did not know loses the atomic marks
       // (docs/development/inline-atoms.md). The repair is a local transaction, so every
       // replica receives it; concurrent repairs remove the same marks and converge.
-      if (!port.isAtomic || !port.atoms) return;
-      const steps = port.atoms.repairRemote(fromWasmDoc(before), fromWasmDoc(next), port.isAtomic);
-      if (steps.length) port.repair({ steps, metadata: { addToHistory: false } });
+      const previous = fromWasmDoc(before);
+      if (port.isAtomic && port.atoms) {
+        const steps = port.atoms.repairRemote(previous, fromWasmDoc(next), port.isAtomic);
+        if (steps.length) port.repair({ steps, metadata: { addToHistory: false } });
+      }
+      // Concurrent row, column and merge edits can leave a table without a valid grid. The
+      // repair fills and trims it the same way on every replica (table/repair.ts).
+      const tables = remoteTableRepair(previous, fromWasmDoc(JSON.parse(bridge.getState())));
+      if (tables.length) port.repair({ steps: tables, metadata: { addToHistory: false } });
     },
   };
 }

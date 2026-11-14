@@ -312,7 +312,8 @@ mod tests {
         let schema = default_schema();
         assert_eq!(schema.nodes.len(), 23);
         assert!(schema.nodes.contains_key("markdownRaw"));
-        assert_eq!(schema.marks.len(), 11);
+        assert_eq!(schema.marks.len(), 13);
+        assert!(schema.marks.contains_key("fontFamily") && schema.marks.contains_key("fontSize"));
         assert!(schema.nodes.contains_key("paragraph"));
         assert!(schema.nodes.contains_key("heading"));
         assert!(schema.nodes.contains_key("table"));

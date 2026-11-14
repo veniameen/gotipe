@@ -1,7 +1,7 @@
 import type { BlockView, BlocksDecoration, NodeDecoration } from "@gotipe/core";
 import { type I18n, createI18n, en } from "@gotipe/i18n";
 import { TextRenderer } from "../text-renderer";
-import { alignmentOf, textDecorations } from "./decorations";
+import { alignmentOf, directionOf, textDecorations } from "./decorations";
 
 export function rootPropsOf(block: BlockView, phantom: boolean): Record<string, unknown> {
   const props: Record<string, unknown> = phantom
@@ -18,6 +18,9 @@ export function rootPropsOf(block: BlockView, phantom: boolean): Record<string, 
     props["data-align"] = align;
     props.style = { textAlign: align };
   }
+  // `TextDirection`: the block's own direction, or `auto` for a text block.
+  const dir = directionOf(block);
+  if (dir) props.dir = dir;
   const decorations = block.decorations;
   if (decorations && decorations.length > 0) {
     let style = props.style as Record<string, string> | undefined;

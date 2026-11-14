@@ -28,6 +28,7 @@
     "@gotipe/react": "^0.1.0",
     "@gotipe/suggestions": "^0.1.0",
     "@gotipe/theme": "^0.1.0",
+    "@gotipe/versions": "^0.1.0",
     "react": ">=18",
     "react-dom": ">=18",
     "shiki": "^1.22.0"
@@ -44,6 +45,7 @@
     "@gotipe/react": "workspace:*",
     "@gotipe/suggestions": "workspace:*",
     "@gotipe/theme": "workspace:*",
+    "@gotipe/versions": "workspace:*",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
     "react": "^19.3.1",

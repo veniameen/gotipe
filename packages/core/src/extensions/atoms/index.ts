@@ -9,3 +9,5 @@ export { InlineImage, inlineImageText, insertInlineImage } from "./inline-image"
 export type { InlineImageAttrs } from "./inline-image";
 // The pure function behind the collaboration repair of `atomSupport`.
 export { normalizeRemoteAtoms } from "../../engine/remote-atoms";
+// The image check of custom emoji and inline images, for views that draw them.
+export { toSafeImageSrc } from "../../security/urls";

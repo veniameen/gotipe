@@ -2,7 +2,9 @@ import type { GoTipeEditor, SlashCommandDef } from "@gotipe/core";
 import type { BlockViews } from "@gotipe/react";
 import type { ThemePreset } from "@gotipe/theme";
 import type React from "react";
+import type { EmojiOptions, MentionOptions } from "../atoms/host";
 import type { CodeHighlighter } from "../highlight/types";
+import type { StatusLineOptions } from "../text/status-line";
 import type { RemotePeer } from "./collaboration-cursors";
 import type { Suggestion } from "./suggestion-toolbar";
 
@@ -45,6 +47,13 @@ export interface BlockEditorProps {
   blockViews?: BlockViews;
   /** Commands of the «/» menu. Default: the editor's own (`editor.getSlashCommands()`). */
   slashCommands?: SlashCommandDef[];
+  /**
+   * People and pages of the «@» list (GoTipe Atlas, frame 22), e.g.
+   * `{ items: (query) => directory.search(query) }`. The editor needs `atomExtensions()`.
+   */
+  mentions?: MentionOptions;
+  /** The team's own emoji and the recent list of the «:» list and the emoji picker (frame 23). */
+  emoji?: EmojiOptions;
   /** The accessible name of the document. */
   ariaLabel?: string;
   /**
@@ -52,5 +61,15 @@ export interface BlockEditorProps {
    * off when the host shows them itself (`host.onError`).
    */
   errorToast?: boolean;
+  /**
+   * The find and replace bar (Atlas frame 25): `Mod+F`, or `Mod+Alt+F` with replace, while the
+   * editor has focus. Default: on when the editor has the `FindReplace` extension.
+   */
+  find?: boolean;
+  /**
+   * The words and characters line under the document (Atlas frame 26), with an optional limit,
+   * the warning share and the reason shown past it. Needs `CharacterCount`. Default: off.
+   */
+  status?: boolean | StatusLineOptions;
   children?: React.ReactNode;
 }

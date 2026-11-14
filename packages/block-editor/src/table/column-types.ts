@@ -1,4 +1,4 @@
-import { type BlockView, type GoTipeEditor, editTable } from "@gotipe/core";
+import { type BlockView, type GoTipeEditor, editTable, headerRows, tableGrid } from "@gotipe/core";
 
 /**
  * Column types are read from and written to Markdown cell content and
@@ -33,11 +33,16 @@ export function findTable(editor: GoTipeEditor, tableId: string): BlockView | nu
   return visit(editor.getViewState().blocks);
 }
 
+/** The body cells of one column: a cell merged over several columns belongs to none of them. */
 function bodyCells(table: BlockView, column: number): BlockView[] {
-  return table.children
-    .slice(table.children[0]?.children.some((c) => c.type === "tableHeader") ? 1 : 0)
-    .map((row) => row.children[column])
-    .filter((c): c is BlockView => !!c);
+  const grid = tableGrid(table);
+  const head = Math.max(
+    headerRows(grid),
+    table.children[0]?.children.some((c) => c.type === "tableHeader") ? 1 : 0,
+  );
+  return grid.cells
+    .filter((cell) => cell.row >= head && cell.column === column && cell.columns === 1)
+    .map((cell) => cell.node);
 }
 
 export function columnTypeOf(
@@ -70,7 +75,7 @@ export function setColumnType(
   if (!table) return;
   const steps: Record<string, unknown>[] = [];
   const align = [...((table.attrs.align as Align[] | undefined) ?? [])];
-  const width = Math.max(align.length, ...table.children.map((r) => r.children.length));
+  const width = Math.max(align.length, tableGrid(table).columns);
   while (align.length < width) align.push(null);
   align[column] =
     type === "number" ? "right" : align[column] === "right" ? null : (align[column] ?? null);
@@ -114,7 +119,7 @@ export function addRow(editor: GoTipeEditor, tableId: string): void {
   if (table) editTable(editor, tableId, { type: "insertRow", index: table.children.length });
 }
 
-/** A new row at `index` (0 — above the first row); a header row stays on top. */
+/** A new row at `index` (0 — above the first row); the header rows stay on top. */
 export function insertRow(editor: GoTipeEditor, tableId: string, index: number): void {
   editTable(editor, tableId, { type: "insertRow", index });
 }
@@ -128,6 +133,12 @@ export function addColumn(editor: GoTipeEditor, tableId: string, after: number):
   editTable(editor, tableId, { type: "insertColumn", index: after + 1 });
 }
 
-export function deleteColumn(editor: GoTipeEditor, tableId: string, column: number): void {
-  editTable(editor, tableId, { type: "deleteColumn", index: column });
+/** The column away, or every column a merged header spans, in one step. */
+export function deleteColumn(
+  editor: GoTipeEditor,
+  tableId: string,
+  column: number,
+  count = 1,
+): void {
+  editTable(editor, tableId, { type: "deleteColumn", index: column, count });
 }

@@ -1,9 +1,9 @@
 import { type GoTipeEditor, GoTipeError } from "@gotipe/core";
 import type { TranslationKey } from "@gotipe/i18n";
 import { useFloatingPosition } from "@gotipe/react";
-import { useGoTipeI18n } from "@gotipe/react";
 import type React from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useBlockEditorI18n } from "../i18n/strings";
 import { PageIcon, type PageIconName } from "../page/icons";
 import { BLOCK_KEYS } from "./formatting/keys";
 import { MenuKey } from "./formatting/tip";
@@ -82,7 +82,7 @@ export function BlockContextMenu({ editor, blockId, open, onClose }: BlockContex
   const submenuTriggerRef = useRef<HTMLButtonElement>(null);
   const [turnIntoOpen, setTurnIntoOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const i18n = useGoTipeI18n();
+  const i18n = useBlockEditorI18n();
   const nameOf = (label: string) => (NAMES[label] ? i18n.t(NAMES[label]) : label);
   const anchor = useCallback(
     () => menuRef.current?.parentElement?.getBoundingClientRect() ?? null,

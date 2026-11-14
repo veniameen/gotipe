@@ -33,6 +33,29 @@ export { ThemeToggle } from "./components/theme-toggle";
 export { PageHead } from "./components/page-head";
 export type { PageHeadProps } from "./components/page-head";
 export { EditorSkeleton, EditorErrorToast, EditorStarters } from "./components/editor-states";
+// Inline atoms: mentions, emoji, formulas (Atlas frames 22–24)
+export {
+  atomExtensions,
+  EmojiCommand,
+  InlineMathCommands,
+  EmojiSuggestion,
+  MentionSuggestion,
+  insertEmoji,
+} from "./atoms/extensions";
+export type { EmojiChoice } from "./atoms/extensions";
+export { AtomProvider, AtomUI } from "./atoms/atom-ui";
+export type { AtomUIProps } from "./atoms/atom-ui";
+export { EmojiPicker } from "./atoms/emoji-picker";
+export { MathPopover } from "./atoms/math-popover";
+export { EmojiMenu, MentionMenu } from "./atoms/suggestion-menus";
+export { requestAtomUI } from "./atoms/host";
+export type {
+  AtomRequest,
+  CustomEmojiItem,
+  EmojiOptions,
+  MentionItem,
+  MentionOptions,
+} from "./atoms/host";
 // Block views
 export { ParagraphView } from "./views/paragraph-view";
 export { HeadingView } from "./views/heading-view";
@@ -74,3 +97,31 @@ export { TableColumnButton, TableRowButton } from "./components/table-column-men
 export { ReviewLayer, acceptAllInOrder } from "./review/review-layer";
 export type { PageReviewProps, ReviewApi, ReviewAction, ReviewResult } from "./review/review-layer";
 export { ReviewBar, LaneAvatars } from "./review/review-bar";
+// Version history panel (Atlas frame 30)
+export { VersionHistory } from "./history/version-history";
+export type {
+  RestoreContext,
+  VersionHistoryProps,
+  VersionHistorySource,
+} from "./history/version-history";
+export type { HistoryVersion } from "./history/history-model";
+// Find, counter, alignment, font, invisibles (Atlas frames 25–28)
+export { FindBar } from "./text/find-bar";
+export type { FindBarProps } from "./text/find-bar";
+export { FIND_KEYS } from "./text/find-keys";
+export { StatusLine } from "./text/status-line";
+export type { StatusLineOptions } from "./text/status-line";
+export { AlignPicker } from "./text/align";
+export { FontFamilyPicker, FontSizeStepper } from "./text/font";
+export type { FontSizeStepperProps } from "./text/font";
+export { InvisiblesToggle } from "./text/invisibles";
+export { OVER_LIMIT_LAYER } from "./text/over-limit";
+// The block editor's own interface strings (English and Russian) and their layering
+export {
+  BlockEditorStrings,
+  blockEditorEn,
+  blockEditorRu,
+  useBlockEditorI18n,
+  withBlockEditorStrings,
+} from "./i18n";
+export type { BlockEditorLocale } from "./i18n";

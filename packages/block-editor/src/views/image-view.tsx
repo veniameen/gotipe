@@ -1,5 +1,5 @@
 import type { BlockView, GoTipeEditor } from "@gotipe/core";
-import { ImageBlock } from "@gotipe/react";
+import { ImageBlock } from "@gotipe/react/media";
 
 /** The standalone view and EditorContent share the same host-aware image implementation. */
 export function ImageView({ block, editor }: { block: BlockView; editor: GoTipeEditor }) {

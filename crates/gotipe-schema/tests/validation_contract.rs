@@ -90,3 +90,104 @@ fn paragraphs_and_headings_take_one_of_four_alignments() {
     };
     assert!(schema.validate(&undeclared).is_err());
 }
+
+fn styled(marks: Vec<Mark>) -> BlockContent {
+    BlockContent::RichText(vec![TextSpan {
+        text: "مرحبا 😀".into(),
+        marks,
+    }])
+}
+
+fn mark(kind: &str, name: &str, value: AttrValue) -> Mark {
+    Mark {
+        mark_type: kind.into(),
+        attrs: HashMap::from([(name.into(), value)]),
+    }
+}
+
+#[test]
+fn font_family_and_size_marks_validate_their_attributes() {
+    let schema = defaults::default_block_editor();
+    let doc = |marks: Vec<Mark>| Document {
+        version: 0,
+        blocks: vec![Block::new_with_type("paragraph", styled(marks))],
+    };
+    for family in ["system", "serif", "mono"] {
+        let family = mark("fontFamily", "family", AttrValue::String(family.into()));
+        assert!(schema.validate(&doc(vec![family])).is_ok());
+    }
+    // Any number is a valid document value; only renderers apply the bounds.
+    for size in [15.0, 15.5, 400.0] {
+        let size = mark("fontSize", "size", AttrValue::Number(size));
+        assert!(schema.validate(&doc(vec![size])).is_ok());
+    }
+    let both = vec![
+        mark("fontFamily", "family", AttrValue::String("mono".into())),
+        mark("fontSize", "size", AttrValue::Number(18.0)),
+    ];
+    assert!(schema.validate(&doc(both)).is_ok());
+    for invalid in [
+        mark("fontFamily", "family", AttrValue::String("comic".into())),
+        mark("fontFamily", "family", AttrValue::Number(1.0)),
+        mark("fontSize", "size", AttrValue::String("15px".into())),
+        Mark {
+            mark_type: "fontSize".into(),
+            attrs: HashMap::new(),
+        },
+        Mark {
+            mark_type: "fontFamily".into(),
+            attrs: HashMap::new(),
+        },
+    ] {
+        assert!(
+            schema.validate(&doc(vec![invalid.clone()])).is_err(),
+            "{invalid:?}"
+        );
+    }
+}
+
+#[test]
+fn paragraphs_headings_and_list_items_take_a_direction() {
+    let schema = defaults::default_block_editor();
+    let with_dir = |kind: &str, dir: AttrValue| {
+        let mut block = Block::new_with_type(kind, styled(vec![]));
+        if kind == "heading" {
+            block.attrs.insert("level".into(), AttrValue::Number(1.0));
+        }
+        block.attrs.insert("dir".into(), dir);
+        block
+    };
+    let wrap = |list: &str, item: Block| {
+        let mut parent = Block::new_with_type(list, BlockContent::Empty);
+        parent.children.push(item);
+        parent
+    };
+    for dir in ["ltr", "rtl", "auto"] {
+        let value = || AttrValue::String(dir.into());
+        let doc = Document {
+            version: 0,
+            blocks: vec![
+                with_dir("paragraph", value()),
+                with_dir("heading", value()),
+                wrap("bulletList", with_dir("listItem", value())),
+                wrap("todoList", with_dir("todoItem", value())),
+            ],
+        };
+        assert!(schema.validate(&doc).is_ok(), "{dir}");
+    }
+    for invalid in [
+        with_dir("paragraph", AttrValue::String("RTL".into())),
+        with_dir("heading", AttrValue::Number(1.0)),
+        wrap(
+            "todoList",
+            with_dir("todoItem", AttrValue::String("sideways".into())),
+        ),
+        with_dir("blockquote", AttrValue::String("rtl".into())),
+    ] {
+        let doc = Document {
+            version: 0,
+            blocks: vec![invalid],
+        };
+        assert!(schema.validate(&doc).is_err());
+    }
+}

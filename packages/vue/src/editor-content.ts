@@ -4,6 +4,9 @@ import {
   type GoTipeEditor,
   GoTipeError,
   type ViewState,
+  cellSpan,
+  headerRows,
+  tableGrid,
   toSafeHref,
 } from "@gotipe/core";
 import {
@@ -20,6 +23,7 @@ import {
   unref,
   watch,
 } from "vue";
+import type { VueMath } from "./atoms";
 import { blockPresentation, holdComposing, withoutLayers } from "./decorations";
 import { decoratedText } from "./text";
 
@@ -40,12 +44,15 @@ interface RenderContext {
   editor: GoTipeEditor;
   views: VueBlockViews;
   placeholder?: VuePlaceholder;
+  math?: VueMath;
 }
 
-function textContent(block: BlockView): VNodeChild[] {
+function textContent(block: BlockView, math?: VueMath): VNodeChild[] {
   if (typeof block.content === "string") return [block.content];
   const empty = !Array.isArray(block.content) || block.content.every((span) => !span.text);
-  const text = Array.isArray(block.content) ? decoratedText(block.content, block.decorations) : [];
+  const text = Array.isArray(block.content)
+    ? decoratedText(block.content, block.decorations, math)
+    : [];
   // Keep empty editable blocks caret-addressable next to their widgets.
   return empty ? [...text, h("br", { "data-gotipe-trailing-break": "" })] : text;
 }
@@ -158,7 +165,7 @@ function renderBlock(
     class: presentation.class,
     style: presentation.style,
   };
-  const content = textContent(block);
+  const content = textContent(block, context.math);
   const children = renderBlocks(block.children, context, block.type);
   if (views[block.type])
     return views[block.type]!({
@@ -215,15 +222,33 @@ function renderBlock(
       return node("blockquote");
     case "divider":
       return node("hr", { contenteditable: false }, []);
-    case "table":
-      return node("table", { class: "gotipe-table" }, [h("tbody", {}, children)]);
+    case "table": {
+      // as the React renderer: header rows (and the rows a header reaches into) in the head,
+      // one column element per grid column with its stored width
+      const grid = tableGrid(block);
+      const first = block.children[0]?.children.some((cell) => cell.type === "tableHeader");
+      const top = grid.cells.filter((cell) => cell.row === 0).map((cell) => cell.rows);
+      const head = Math.max(headerRows(grid), first ? Math.max(1, ...top) : 0);
+      const widths = Array.isArray(block.attrs.colWidths) ? block.attrs.colWidths : [];
+      const columns = Array.from({ length: grid.columns }, (_, column) => {
+        const width = widths[column];
+        return h("col", { style: { width: `${typeof width === "number" ? width : 160}px` } });
+      });
+      const rows = (from: number, to?: number) =>
+        renderBlocks(block.children.slice(from, to), context, block.type);
+      return node("table", { class: "gotipe-table" }, [
+        h("colgroup", {}, columns),
+        ...(head > 0 ? [h("thead", {}, rows(0, head))] : []),
+        ...(head < block.children.length ? [h("tbody", {}, rows(head))] : []),
+      ]);
+    }
     case "tableRow":
       return node("tr", {}, children);
     case "tableCell":
     case "tableHeader":
       return node(block.type === "tableHeader" ? "th" : "td", {
-        colspan: Number(block.attrs.colspan) || 1,
-        rowspan: Number(block.attrs.rowspan) || 1,
+        colspan: cellSpan(block.attrs.colspan),
+        rowspan: cellSpan(block.attrs.rowspan),
         style: { textAlign: block.attrs.align },
       });
     case "callout":
@@ -307,6 +332,8 @@ export const EditorContent = defineComponent({
     hostLayers: { type: Array as PropType<string[]>, default: () => [] },
     /** Words for the block with a `placeholder` decoration; wins over the decoration's text. */
     placeholder: { type: Function as PropType<VuePlaceholder>, default: undefined },
+    /** Formulas drawn as MathML: `{ parse: parseTex }` from `@gotipe/core/math`. */
+    math: { type: Object as PropType<VueMath>, default: undefined },
   },
   setup(props) {
     const element = shallowRef<HTMLElement | null>(null);
@@ -406,6 +433,7 @@ export const EditorContent = defineComponent({
               editor: current()!,
               views: props.blockViews,
               placeholder: props.placeholder,
+              math: props.math,
             })
           : [],
       );

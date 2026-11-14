@@ -3,7 +3,7 @@ import type { GoTipeEditor } from "../../types/editor";
 import type { Step } from "../../types/state";
 import type { Decoration } from "../../types/view";
 import { stateListeners } from "../scoped";
-import { replaceSteps } from "./replace";
+import { replaceSteps, shownRange } from "./replace";
 import {
   type CompiledSearch,
   type SearchCache,
@@ -132,13 +132,15 @@ export class FindReplaceController {
     return this.step(-1);
   }
 
-  /** Puts the editor selection on the current match. */
+  /** Puts the editor selection on the current match; on the whole atom for a match in one. */
   selectCurrent(): boolean {
     const match = this.state.matches[this.state.index];
     if (!match || this.destroyed) return false;
+    const block = findBlockInTree(this.editor.getViewState().blocks, match.blockId) ?? undefined;
+    const { from, to } = shownRange(block, match);
     this.editor.setSelection({
-      anchor: { blockId: match.blockId, offset: match.from },
-      head: { blockId: match.blockId, offset: match.to },
+      anchor: { blockId: match.blockId, offset: from },
+      head: { blockId: match.blockId, offset: to },
     });
     return true;
   }
@@ -153,6 +155,11 @@ export class FindReplaceController {
     const match = this.state.matches[this.state.index];
     if (!match || !this.editor.isEditable || this.destroyed) return false;
     const block = findBlockInTree(this.editor.getViewState().blocks, match.blockId);
+    // An atom (a mention, a formula) is never rewritten: its match is passed over.
+    if (block && shownRange(block, match).atom) {
+      this.step(1);
+      return false;
+    }
     const steps = block ? replaceSteps(block, match, replacement, this.regex()) : null;
     if (!steps) return false;
     const inserted = steps.length > 1 ? (steps[1] as { text: string }).text.length : 0;
@@ -182,7 +189,8 @@ export class FindReplaceController {
     for (let index = matches.length - 1; index >= 0; index--) {
       const match = matches[index]!;
       const block = byId.get(match.blockId);
-      const replaced = block && replaceSteps(block, match, replacement, this.regex());
+      if (!block || shownRange(block, match).atom) continue;
+      const replaced = replaceSteps(block, match, replacement, this.regex());
       if (!replaced) continue;
       steps.push(...replaced);
       count++;
@@ -357,7 +365,11 @@ export class FindReplaceController {
   /** Replaces the state object only when something in it changed. */
   private publish(state: FindReplaceState): void {
     const key = this.key(state);
-    if (key === this.published) return;
+    if (key === this.published) {
+      // The same matches may now touch an atom made since: the drawn ranges follow it.
+      this.paint();
+      return;
+    }
     this.published = key;
     this.state = state;
     this.paint();
@@ -366,20 +378,41 @@ export class FindReplaceController {
 
   private paint(): void {
     const { matches, index } = this.state;
-    const painted = JSON.stringify([index, matches]);
+    // Matches in one atom are drawn as the whole atom, once: the renderers keep atoms whole.
+    const blocks = matches.length
+      ? new Map(flattenBlocks(this.editor.getViewState().blocks).map((block) => [block.id, block]))
+      : null;
+    const ranges: { blockId: string; from: number; to: number; first: number; current: boolean }[] =
+      [];
+    matches.forEach((match, position) => {
+      const { from, to } = shownRange(blocks?.get(match.blockId), match);
+      const last = ranges[ranges.length - 1];
+      if (last && last.blockId === match.blockId && from < last.to) {
+        last.to = Math.max(last.to, to);
+        last.current ||= position === index;
+      } else
+        ranges.push({
+          blockId: match.blockId,
+          from,
+          to,
+          first: position,
+          current: position === index,
+        });
+    });
+    const painted = JSON.stringify(ranges);
     if (painted === this.painted) return;
     this.painted = painted;
     const { matchClass, currentClass } = this.options;
-    const decorations: Decoration[] = matches.map((match, position) => ({
+    const decorations: Decoration[] = ranges.map((range) => ({
       type: "inline",
-      key: `search-${position}`,
-      blockId: match.blockId,
-      from: match.from,
-      to: match.to,
-      className: position === index ? `${matchClass} ${currentClass}` : matchClass,
+      key: `search-${range.first}`,
+      blockId: range.blockId,
+      from: range.from,
+      to: range.to,
+      className: range.current ? `${matchClass} ${currentClass}` : matchClass,
       attrs: {
-        "data-gotipe-search-match": String(position),
-        ...(position === index ? { "data-gotipe-search-current": "" } : {}),
+        "data-gotipe-search-match": String(range.first),
+        ...(range.current ? { "data-gotipe-search-current": "" } : {}),
       },
     }));
     this.editor.setDecorations(SEARCH_LAYER, decorations);

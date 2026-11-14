@@ -61,7 +61,20 @@ export type PageIconName =
   | "undo"
   | "redo"
   | "indent"
-  | "outdent";
+  | "outdent"
+  // merged table cells (Atlas frame 29)
+  | "merge"
+  | "split"
+  // text layout and find (Atlas frames 25–28)
+  | "alignLeft"
+  | "alignCenter"
+  | "alignRight"
+  | "alignJustify"
+  | "pilcrow"
+  | "case"
+  | "word"
+  | "regex"
+  | "minus";
 
 const PATHS: Record<PageIconName, React.ReactNode> = {
   image: (
@@ -239,6 +252,37 @@ const PATHS: Record<PageIconName, React.ReactNode> = {
   redo: <path d="M10.25 4 13 6.75 10.25 9.5M13 6.75H6.5a3.25 3.25 0 0 0 0 6.5h2" />,
   indent: <path d="M2.75 3.75h10.5M7.25 8h6M2.75 12.25h10.5M2.75 6.25 4.75 8l-2 1.75" />,
   outdent: <path d="M2.75 3.75h10.5M7.25 8h6M2.75 12.25h10.5M4.75 6.25 2.75 8l2 1.75" />,
+  // merged table cells (Atlas frame 29)
+  merge: (
+    <path d="M2.75 3.25v9.5M13.25 3.25v9.5M4.75 8h2.75M5.75 6l2 2-2 2M11.25 8H8.5M10.25 6l-2 2 2 2" />
+  ),
+  split: <path d="M8 3.25v9.5M6.25 8H3M4.75 6l-2 2 2 2M9.75 8H13M11.25 6l2 2-2 2" />,
+  // text layout and find (Atlas frames 25–28)
+  alignLeft: <path d="M2.75 3.75h10.5M2.75 8h7M2.75 12.25h9" />,
+  alignCenter: <path d="M2.75 3.75h10.5M4.5 8h7M3.5 12.25h9" />,
+  alignRight: <path d="M2.75 3.75h10.5M6.25 8h7M4.25 12.25h9" />,
+  alignJustify: <path d="M2.75 3.75h10.5M2.75 8h10.5M2.75 12.25h6.5" />,
+  pilcrow: <path d="M12.75 3.25h-5.5a2.625 2.625 0 0 0 0 5.25h1.5M8.75 3.25v9.5M11.25 3.25v9.5" />,
+  case: (
+    <>
+      <path d="M1.75 12.5 4.88 3.75 8 12.5M2.9 9.25h3.95M13.5 7.75v4.75" />
+      <circle cx="11.25" cy="10.25" r="2.25" />
+    </>
+  ),
+  word: (
+    <>
+      <circle cx="4.75" cy="7.25" r="2" />
+      <circle cx="11.25" cy="7.25" r="2" />
+      <path d="M6.75 5.25v4M9.25 3v6.25M2.25 11.25V13h11.5v-1.75" />
+    </>
+  ),
+  regex: (
+    <>
+      <path d="M10.75 2.75v6M8.15 4.25l5.2 3M8.15 7.25l5.2-3" />
+      <circle cx="4.25" cy="11.75" r="1.25" fill="currentColor" stroke="none" />
+    </>
+  ),
+  minus: <path d="M3.5 8h9" />,
 };
 
 export function PageIcon({ name, className }: { name: PageIconName; className?: string }) {

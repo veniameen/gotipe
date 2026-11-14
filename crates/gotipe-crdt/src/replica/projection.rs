@@ -215,32 +215,45 @@ impl ReplicaState {
         }
     }
     pub fn document(&self, version: u64) -> Document {
-        // Concurrent moves may form a cycle; expose its nodes at root instead of hiding data.
         let mut parents = BTreeMap::new();
         for (id, node) in &self.nodes {
             if node.deleted {
                 continue;
             }
-            let mut seen = BTreeSet::from([id.as_str()]);
-            let mut cursor = node.parent.as_ref();
-            let mut valid = true;
-            while let Some(parent) = cursor {
-                let Some(ancestor) = self.nodes.get(&parent.0).filter(|n| !n.deleted) else {
-                    valid = false;
-                    break;
-                };
-                if !seen.insert(parent.0.as_str()) {
-                    valid = false;
-                    break;
-                }
-                cursor = ancestor.parent.as_ref();
+            if let Some(parent) = self.placement(id, node) {
+                parents.insert(id.clone(), parent);
             }
-            parents.insert(id.clone(), if valid { node.parent.clone() } else { None });
         }
         Document {
             blocks: self.children(None, &parents),
             version,
         }
+    }
+    /// Where a live block is projected, the same on every replica:
+    /// - under its parent while every ancestor is live;
+    /// - nowhere while an ancestor is deleted or not (yet) known: a block added
+    ///   concurrently inside a deleted one, such as a cell in a deleted row,
+    ///   is deleted with it. Hoisting it to the root would make it a
+    ///   top-level row or cell that no schema accepts. Its operations stay in
+    ///   the log, so undoing the delete brings it back with its content;
+    /// - at the root when concurrent moves made it part of a cycle.
+    pub(super) fn placement(&self, id: &str, node: &Node) -> Option<Option<BlockId>> {
+        let mut seen = BTreeSet::from([id]);
+        let mut cursor = node.parent.as_ref();
+        while let Some(parent) = cursor {
+            let ancestor = self.nodes.get(&parent.0).filter(|n| !n.deleted)?;
+            if !seen.insert(parent.0.as_str()) {
+                // A cycle: this block is in it when the walk came back to it;
+                // otherwise the cycle is above, and its members go to the root.
+                return Some(if parent.0 == id {
+                    None
+                } else {
+                    node.parent.clone()
+                });
+            }
+            cursor = ancestor.parent.as_ref();
+        }
+        Some(node.parent.clone())
     }
     fn children(
         &self,

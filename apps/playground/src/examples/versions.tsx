@@ -1,245 +1,174 @@
-import { PageEditor } from "@gotipe/block-editor";
-import type { GoTipeEditor } from "@gotipe/core";
-import { serializeMarkdown } from "@gotipe/markdown";
-import { VersionsManager } from "@gotipe/versions";
-import { useCallback, useEffect, useId, useMemo, useState } from "react";
-import { VersionChanges } from "./versions/version-diff";
+import { type HistoryVersion, PageEditor, VersionHistory } from "@gotipe/block-editor";
+import type { Block, Document, GoTipeEditor } from "@gotipe/core";
+import { GoTipeI18nProvider } from "@gotipe/react";
+import { useCallback, useState } from "react";
 import "./versions/versions.css";
 
-const INITIAL =
-  "# Document history\n\nEdit this page, then save a named version. Open history to preview an earlier draft, compare changes and restore it.\n\n## Release checklist\n\n- [x] Write the first draft\n- [ ] Review the changes\n- [ ] Save the approved version\n";
+const PAGE = `### Порядок выката
 
-export function VersionsExample() {
-  const id = useId();
-  const [markdown, setMarkdown] = useState(INITIAL);
-  const [editor, setEditor] = useState<GoTipeEditor | null>(null);
-  const [manager, setManager] = useState<VersionsManager | null>(null);
-  const [, setRevision] = useState(0);
-  const [name, setName] = useState("");
-  const [showHistory, setShowHistory] = useState(false);
-  const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [tab, setTab] = useState<"preview" | "changes">("changes");
-  const [status, setStatus] = useState("");
-  const [error, setError] = useState("");
-  const ready = useCallback((value: GoTipeEditor) => setEditor(value), []);
-  useEffect(() => {
-    if (!editor || editor.isDestroyed) return;
-    const next = new VersionsManager(editor, {
-      autoSave: true,
-      autoSaveInterval: 30000,
-      maxVersions: 100,
-    });
-    const first = next.createVersion("Initial draft", "You");
-    setSelectedId(first.id);
-    setManager(next);
-    const off = next.subscribe(() => setRevision((value) => value + 1));
-    const offUpdate = editor.on("update", () => setRevision((value) => value + 1));
-    return () => {
-      off();
-      offUpdate();
-      next.destroy();
-    };
-  }, [editor]);
-  const versions = manager?.getVersions().reverse() ?? [];
-  const selected = versions.find((version) => version.id === selectedId) ?? versions[0];
-  const preview = useMemo(
-    () => (selected ? serializeMarkdown(selected.snapshot).text : ""),
-    [selected],
+Журнал включают по шагам, каждый — после недели наблюдения.
+
+1. Включить журнал для 5\u00a0% пользователей веб-версии.
+2. Неделю сравнивать долю потерянных правок с контрольной группой.
+3. Открыть всем, начиная с приложения для macOS.
+
+Черновик шифруется ключом сессии с первого дня.
+
+Возражения принимаем до 18 ноября — в обсуждении ADR-0031.
+`;
+
+const ME = { name: "Мария Лебедева", person: 2 as const };
+
+/** A copy of the page with one block's text replaced, a block removed or a block put after another. */
+function edit(page: Document, change: (blocks: Block[]) => Block[]): Document {
+  return { ...page, blocks: change(structuredClone(page.blocks)) };
+}
+const setText = (block: Block, text: string): Block => ({
+  ...block,
+  content: [{ text, marks: [] }],
+});
+const paragraph = (id: string, text: string): Block => ({
+  id,
+  type: "paragraph",
+  attrs: {},
+  content: [{ text, marks: [] }],
+  children: [],
+});
+const at = (daysAgo: number, hours: number, minutes: number) => {
+  const date = new Date();
+  date.setDate(date.getDate() - daysAgo);
+  date.setHours(hours, minutes, 0, 0);
+  // a version saved «today» is never later than now: two hours back at the latest
+  const latest = Date.now() - 2 * 60 * 60 * 1000;
+  return new Date(Math.min(date.getTime(), latest)).toISOString();
+};
+
+/**
+ * The host's saved versions, made from the page as it opened: the same block ids, so the panel
+ * compares blocks, not texts. A real host loads them from its storage.
+ */
+function seed(page: Document): HistoryVersion[] {
+  const text = (block: Block) =>
+    Array.isArray(block.content) ? block.content.map((span) => span.text).join("") : "";
+  const release = edit(page, (blocks) =>
+    blocks.map((block) => {
+      if (block.type === "orderedList" && block.children.length > 2)
+        return {
+          ...block,
+          children: [
+            setText(block.children[0]!, "Включить журнал для 10\u00a0% пользователей веб-версии."),
+            ...block.children.slice(1, -1),
+          ],
+        };
+      if (text(block).startsWith("Черновик шифруется"))
+        return paragraph("history-encryption", "Шифрование черновика — после выпуска.");
+      return block;
+    }),
   );
-  const current = editor && !editor.isDestroyed ? editor.getJSON() : null;
-  const run = (action: () => void) => {
-    setError("");
-    try {
-      action();
-    } catch (failure) {
-      setError(failure instanceof Error ? failure.message : "The version could not be updated.");
-    }
-  };
+  const review = edit(release, (blocks) => blocks.slice(0, 3));
+  const yesterday = edit(release, (blocks) => blocks.slice(0, 4));
+  const morning = edit(page, (blocks) => blocks.slice(0, -1));
+  return [
+    {
+      id: "review",
+      name: "Черновик для ревью",
+      createdAt: at(7, 16, 20),
+      createdBy: ME.name,
+      person: 2,
+      snapshot: review,
+    },
+    {
+      id: "noon",
+      name: "",
+      auto: true,
+      createdAt: at(1, 12, 5),
+      createdBy: "Анна Ковалёва",
+      person: 3,
+      snapshot: yesterday,
+    },
+    {
+      id: "release",
+      name: "Выпуск 2.8",
+      createdAt: at(1, 18, 40),
+      createdBy: "Илья Орлов",
+      person: 1,
+      snapshot: release,
+    },
+    {
+      id: "morning",
+      name: "",
+      auto: true,
+      createdAt: at(0, 11, 5),
+      createdBy: "Илья Орлов",
+      person: 1,
+      snapshot: morning,
+    },
+  ];
+}
+
+/**
+ * Version history (GoTipe Atlas, frame 30): the library's panel beside a page. The host owns the
+ * versions — here a list in memory; it saves a version and keeps the entries of a restore.
+ */
+export function VersionsExample() {
+  const [markdown, setMarkdown] = useState(PAGE);
+  const [editor, setEditor] = useState<GoTipeEditor | null>(null);
+  const [versions, setVersions] = useState<HistoryVersion[]>([]);
+  const [open, setOpen] = useState(true);
+  const ready = useCallback((value: GoTipeEditor) => {
+    setEditor(value);
+    setVersions(seed(value.getJSON()));
+  }, []);
+  const save = (name: string, snapshot: Document) =>
+    setVersions((list) => [
+      ...list,
+      {
+        id: crypto.randomUUID(),
+        name,
+        createdAt: new Date().toISOString(),
+        createdBy: ME.name,
+        person: ME.person,
+        snapshot,
+      },
+    ]);
 
   return (
-    <div data-gotipe-example="versions" className="gotipe-versions-example">
-      <div className="gotipe-versions-toolbar">
-        <form
-          onSubmit={(event) => {
-            event.preventDefault();
-            run(() => {
-              if (!manager) return;
-              const version = manager.createVersion(
-                name.trim() || `Version ${versions.length + 1}`,
-                "You",
-              );
-              setName("");
-              setSelectedId(version.id);
-              setStatus(`Saved “${version.name}”.`);
-            });
+    <GoTipeI18nProvider locale="ru">
+      <div data-gotipe-example="versions" className="gotipe-versions-example">
+        <div className="gotipe-versions-actions">
+          <button
+            type="button"
+            className="gotipe-btn"
+            data-gotipe-action="create-version"
+            disabled={!editor}
+            onClick={() => editor && save(`Версия ${versions.length + 1}`, editor.getJSON())}
+          >
+            Сохранить версию
+          </button>
+          <button
+            type="button"
+            className="gotipe-btn"
+            data-gotipe-action="show-history"
+            aria-pressed={open}
+            onClick={() => setOpen((value) => !value)}
+          >
+            История
+          </button>
+        </div>
+        <VersionHistory
+          editor={editor}
+          versions={versions}
+          user={ME}
+          open={open}
+          onClose={() => setOpen(false)}
+          onRestore={(_, { unsaved, names }) => {
+            if (unsaved) save(names.unsaved, unsaved);
+            if (editor) save(names.restored, editor.getJSON());
           }}
         >
-          <label htmlFor={`${id}-name`}>
-            Version name
-            <input
-              id={`${id}-name`}
-              value={name}
-              onChange={(event) => setName(event.target.value)}
-              placeholder="e.g. Ready for review"
-              maxLength={120}
-              disabled={!manager}
-            />
-          </label>
-          <button
-            type="submit"
-            className="gotipe-version-button"
-            data-gotipe-action="create-version"
-            disabled={!manager}
-          >
-            Save version
-          </button>
-        </form>
-        <button
-          type="button"
-          className="gotipe-version-button"
-          data-gotipe-action="show-history"
-          aria-expanded={showHistory}
-          aria-controls={`${id}-history`}
-          onClick={() => setShowHistory((value) => !value)}
-          disabled={!manager}
-        >
-          {showHistory ? "Hide history" : "Show history"} ({versions.length})
-        </button>
+          <PageEditor markdown={markdown} onChange={setMarkdown} onReady={ready} locale="ru" />
+        </VersionHistory>
       </div>
-      <p className="gotipe-versions-meta">
-        Changes are saved every 30 seconds. This example keeps up to 100 versions during the current
-        session.
-      </p>
-      <p
-        className={`gotipe-versions-status${error ? " gotipe-versions-error" : ""}`}
-        role={error ? "alert" : "status"}
-      >
-        {error || status}
-      </p>
-      <div className="gotipe-versions-layout" data-history={showHistory}>
-        <section className="gotipe-version-document" aria-label="Current document">
-          <PageEditor
-            markdown={markdown}
-            onChange={setMarkdown}
-            onReady={ready}
-            locale="en"
-            onError={(failure) => setError(failure.message)}
-          />
-        </section>
-        {showHistory && (
-          <aside
-            id={`${id}-history`}
-            className="gotipe-version-history"
-            aria-label="Version history"
-          >
-            <h2>Version history</h2>
-            {!versions.length ? (
-              <p className="gotipe-version-empty">Save a version to start the history.</p>
-            ) : (
-              <ul>
-                {versions.map((version) => (
-                  <li key={version.id}>
-                    <button
-                      type="button"
-                      className="gotipe-version-entry"
-                      aria-pressed={selected?.id === version.id}
-                      onClick={() => setSelectedId(version.id)}
-                    >
-                      <strong>{version.name}</strong>
-                      <time dateTime={version.createdAt}>
-                        {new Date(version.createdAt).toLocaleString()}
-                      </time>
-                      <span>
-                        {version.createdBy === "system" ? "Automatic save" : version.createdBy}
-                      </span>
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </aside>
-        )}
-      </div>
-      {showHistory && selected && (
-        <section className="gotipe-version-preview" aria-label="Saved version">
-          <div className="gotipe-version-preview-header">
-            <h2>{selected.name}</h2>
-            <button
-              type="button"
-              className="gotipe-version-button"
-              data-gotipe-action="restore-version"
-              onClick={() =>
-                run(() => {
-                  if (manager?.restoreVersion(selected.id))
-                    setStatus(
-                      `Restored “${selected.name}”. Use Undo in the document to reverse this change.`,
-                    );
-                })
-              }
-            >
-              Restore this version
-            </button>
-          </div>
-          <div
-            className="gotipe-version-tabs"
-            role="tablist"
-            aria-label="Version view"
-            onKeyDown={(event) => {
-              if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) return;
-              event.preventDefault();
-              const next =
-                event.key === "Home"
-                  ? "changes"
-                  : event.key === "End"
-                    ? "preview"
-                    : tab === "changes"
-                      ? "preview"
-                      : "changes";
-              setTab(next);
-              event.currentTarget.querySelector<HTMLButtonElement>(`[data-tab="${next}"]`)?.focus();
-            }}
-          >
-            <button
-              type="button"
-              role="tab"
-              data-tab="changes"
-              id={`${id}-changes-tab`}
-              aria-controls={`${id}-view`}
-              aria-selected={tab === "changes"}
-              tabIndex={tab === "changes" ? 0 : -1}
-              className="gotipe-version-button"
-              onClick={() => setTab("changes")}
-            >
-              Changes from this version
-            </button>
-            <button
-              type="button"
-              role="tab"
-              data-tab="preview"
-              id={`${id}-preview-tab`}
-              aria-controls={`${id}-view`}
-              aria-selected={tab === "preview"}
-              tabIndex={tab === "preview" ? 0 : -1}
-              className="gotipe-version-button"
-              onClick={() => setTab("preview")}
-            >
-              Preview
-            </button>
-          </div>
-          <div
-            id={`${id}-view`}
-            role="tabpanel"
-            aria-labelledby={`${id}-${tab}-tab`}
-            className="gotipe-version-preview-body"
-          >
-            {tab === "preview" ? (
-              <PageEditor markdown={preview} readOnly locale="en" />
-            ) : (
-              current && <VersionChanges before={selected.snapshot} after={current} />
-            )}
-          </div>
-        </section>
-      )}
-    </div>
+    </GoTipeI18nProvider>
   );
 }

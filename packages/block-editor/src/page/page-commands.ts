@@ -1,5 +1,6 @@
 import type { GoTipeEditor, SlashCommandDef } from "@gotipe/core";
 import type { I18n, TranslationKey } from "@gotipe/i18n";
+import { withBlockEditorStrings } from "../i18n/strings";
 import type { PageIconName } from "./icons";
 
 /** A block the page editor can insert (the «/» menu and the blocks button). */
@@ -195,7 +196,8 @@ const SLASH_ICONS: Partial<Record<PageIconName, string>> = {
 };
 
 /** Groups of the «/» menu in display order — the shared menu's own: «Основные», «Блоки», «Медиа». */
-export function pageSlashGroups(i18n: I18n): { id: string; label: string }[] {
+export function pageSlashGroups(host: I18n): { id: string; label: string }[] {
+  const i18n = withBlockEditorStrings(host);
   return [
     { id: "style", label: i18n.t("slashMenu.group.style") },
     { id: "insert", label: i18n.t("slashMenu.group.insert") },
@@ -204,7 +206,8 @@ export function pageSlashGroups(i18n: I18n): { id: string; label: string }[] {
 }
 
 /** The page editor's blocks, localized. */
-export function pageBlockCommands(i18n: I18n, kinds?: PageBlockKind[]): PageBlockCommand[] {
+export function pageBlockCommands(host: I18n, kinds?: PageBlockKind[]): PageBlockCommand[] {
+  const i18n = withBlockEditorStrings(host);
   const allowed = kinds ? new Set(kinds) : null;
   return SPECS.filter((s) => !allowed || allowed.has(s.kind)).map((s) => ({
     name: i18n.t(s.label),

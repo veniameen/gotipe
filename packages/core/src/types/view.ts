@@ -42,6 +42,11 @@ export interface SelectionView {
 
 export interface ToolbarState {
   activeMarks: string[];
+  /**
+   * Attributes of the active marks by type: the stored marks at a caret, else the marks
+   * `activeMarks` names. The editor always sets it; hand-built states may leave it out.
+   */
+  activeMarkAttrs?: Record<string, Record<string, unknown>>;
   activeBlockType: string;
   activeBlockAttrs: Record<string, unknown>;
   canUndo: boolean;

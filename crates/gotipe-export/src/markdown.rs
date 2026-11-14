@@ -1,6 +1,7 @@
 use gotipe_core::{AttrValue, Block, Document};
 
 mod inline;
+pub(crate) mod table_html;
 
 pub use crate::markdown_parse::MarkdownAtoms;
 use inline::content_to_markdown;
@@ -50,6 +51,8 @@ fn omitted(block: &Block) -> bool {
         "embed" => {
             !matches!(block.attrs.get("url"), Some(AttrValue::String(url)) if !url.is_empty())
         }
+        // a table without a single cell, as the TS writer
+        "table" => block.children.iter().all(|row| row.children.is_empty()),
         _ => false,
     }
 }
@@ -175,9 +178,31 @@ fn block_to_markdown(block: &Block, emoji: &Emoji) -> String {
         "file" | "embed" => format!("{}\n{nested}", link_line(block)),
         "math" => format!("{}\n{nested}", math(&crate::plaintext::block_text(block))),
         "markdownRaw" => format!("{}\n{nested}", crate::plaintext::block_text(block)),
+        "table" if table_html::has_merged_cells(block) => {
+            format!("{}\n", table_html::table_html(block, "\n"))
+        }
         "table" => {
+            // the header row sets the columns; an empty one takes the widest row's, as the TS
+            // writer; a row without cells keeps its place with one empty cell per column
+            let columns = match block.children.first().map(|row| row.children.len()) {
+                Some(count) if count > 0 => count,
+                _ => block
+                    .children
+                    .iter()
+                    .map(|row| row.children.len())
+                    .max()
+                    .unwrap_or(0)
+                    .max(1),
+            };
             let mut result = String::new();
             for (index, row) in block.children.iter().enumerate() {
+                if row.children.is_empty() {
+                    result.push_str(&format!("| {} |\n", vec![""; columns].join(" | ")));
+                    if index == 0 {
+                        result.push_str(&delimiters(block, columns));
+                    }
+                    continue;
+                }
                 let cells = row
                     .children
                     .iter()
@@ -196,19 +221,7 @@ fn block_to_markdown(block: &Block, emoji: &Emoji) -> String {
                     .collect::<Vec<_>>();
                 result.push_str(&format!("| {} |\n", cells.join(" | ")));
                 if index == 0 {
-                    let alignment = match block.attrs.get("align") {
-                        Some(AttrValue::Array(values)) => values.as_slice(),
-                        _ => &[],
-                    };
-                    let delimiters: Vec<_> = (0..cells.len())
-                        .map(|column| match alignment.get(column) {
-                            Some(AttrValue::String(value)) if value == "left" => ":---",
-                            Some(AttrValue::String(value)) if value == "right" => "---:",
-                            Some(AttrValue::String(value)) if value == "center" => ":---:",
-                            _ => "---",
-                        })
-                        .collect();
-                    result.push_str(&format!("| {} |\n", delimiters.join(" | ")))
+                    result.push_str(&delimiters(block, cells.len()));
                 }
             }
             result
@@ -216,6 +229,23 @@ fn block_to_markdown(block: &Block, emoji: &Emoji) -> String {
         _ => format!("{content}\n{nested}"),
     }
 }
+/// The delimiter row of a pipe table: one `---` per column, with its alignment.
+fn delimiters(table: &Block, columns: usize) -> String {
+    let alignment = match table.attrs.get("align") {
+        Some(AttrValue::Array(values)) => values.as_slice(),
+        _ => &[],
+    };
+    let cells: Vec<_> = (0..columns)
+        .map(|column| match alignment.get(column) {
+            Some(AttrValue::String(value)) if value == "left" => ":---",
+            Some(AttrValue::String(value)) if value == "right" => "---:",
+            Some(AttrValue::String(value)) if value == "center" => ":---:",
+            _ => "---",
+        })
+        .collect();
+    format!("| {} |\n", cells.join(" | "))
+}
+
 /// Every line of a quote's own text behind `> `.
 fn quoted(text: &str) -> String {
     text.split('\n')

@@ -209,3 +209,152 @@ fn paragraphs_and_headings_keep_their_alignment() {
     }
     assert_eq!(xml.matches("<w:jc ").count(), 4);
 }
+
+/// A header over two columns and cells over two rows (Atlas frame 29): every row of the Word
+/// table fills the whole grid, a merge over rows starts once and continues in the rows below.
+#[test]
+fn merged_cells_over_rows_become_vertical_merges() {
+    let cell = |id: &str, kind: &str, text: &str, attrs: serde_json::Value| json!({"id":id,"type":kind,"attrs":attrs,"content":[{"text":text,"marks":[]}],"children":[]});
+    let row = |id: &str, cells: Vec<serde_json::Value>| json!({"id":id,"type":"tableRow","attrs":{},"content":null,"children":cells});
+    let document = document_from_json(
+        &json!({"version":1,"blocks":[{
+            "id":"t","type":"table","attrs":{},"content":null,"children":[
+                row("r0", vec![
+                    cell("h0", "tableHeader", "Платформа", json!({"rowspan":2})),
+                    cell("h1", "tableHeader", "Журнал", json!({"colspan":2})),
+                    cell("h2", "tableHeader", "Шифрование", json!({"rowspan":2})),
+                ]),
+                row("r1", vec![
+                    cell("h3", "tableHeader", "Ключ", json!({})),
+                    cell("h4", "tableHeader", "В очереди", json!({})),
+                ]),
+                row("r2", vec![
+                    cell("c0", "tableCell", "Веб", json!({})),
+                    cell("c1", "tableCell", "drafts.web", json!({})),
+                    cell("c2", "tableCell", "1 284", json!({})),
+                    cell("c3", "tableCell", "Ключ сессии", json!({"rowspan":2})),
+                ]),
+                row("r3", vec![
+                    cell("c4", "tableCell", "macOS", json!({})),
+                    cell("c5", "tableCell", "drafts.mac", json!({})),
+                    cell("c6", "tableCell", "312", json!({})),
+                ]),
+                row("r4", vec![
+                    cell("c7", "tableCell", "", json!({"colspan":2,"rowspan":2})),
+                    cell("c8", "tableCell", "0", json!({})),
+                    cell("c9", "tableCell", "Нет", json!({})),
+                ]),
+                row(
+                    "r5",
+                    vec![
+                        cell("c10", "tableCell", "27", json!({})),
+                        cell("c11", "tableCell", "Ключ устройства", json!({})),
+                    ],
+                ),
+            ]
+        }]})
+        .to_string(),
+    )
+    .unwrap();
+    let xml = part(
+        &to_docx(&document, &DocxOptions::default()).unwrap(),
+        "word/document.xml",
+    );
+    assert_eq!(xml.matches("<w:gridCol/>").count(), 4);
+    assert_eq!(xml.matches("<w:vMerge w:val=\"restart\"/>").count(), 4);
+    assert_eq!(xml.matches("<w:vMerge/>").count(), 4);
+    let rows: Vec<&str> = xml.split("<w:tr>").skip(1).collect();
+    assert_eq!(rows.len(), 6);
+    for row in &rows {
+        let row = &row[..row.find("</w:tr>").unwrap()];
+        let width: usize = row
+            .split("<w:tc>")
+            .skip(1)
+            .map(|cell| {
+                cell.split("<w:gridSpan w:val=\"")
+                    .nth(1)
+                    .map_or(1, |rest| rest[..rest.find('"').unwrap()].parse().unwrap())
+            })
+            .sum();
+        assert_eq!(width, 4, "{row}");
+    }
+    // the second header row: «Платформа» continues before «Ключ», «Шифрование» after the rest
+    let second = rows[1];
+    let key = second.find("Ключ").unwrap();
+    assert!(second[..key].contains("<w:vMerge/>"));
+    assert!(second[key..].contains("<w:vMerge/>"));
+    // the last row: the cell over two columns continues as one cell over the same two columns
+    assert!(rows[5]
+        .starts_with("<w:tc><w:tcPr><w:gridSpan w:val=\"2\"/><w:vMerge/></w:tcPr><w:p/></w:tc>"));
+    for text in ["Платформа", "Журнал", "Ключ сессии", "27"] {
+        assert!(xml.contains(text), "{text}");
+    }
+}
+
+/// Each cell of a row: (`v` for a vertical-merge continuation, `t` for a cell of the table,
+/// `f` for a filler), its columns.
+fn row_layout(row: &str) -> Vec<(char, usize)> {
+    let row = &row[..row.find("</w:tr>").unwrap()];
+    row.split("<w:tc>")
+        .skip(1)
+        .map(|cell| {
+            let width = cell
+                .split("<w:gridSpan w:val=\"")
+                .nth(1)
+                .map_or(1, |rest| rest[..rest.find('"').unwrap()].parse().unwrap());
+            let kind = if cell.contains("<w:vMerge/>") {
+                'v'
+            } else if cell.starts_with("<w:p/>") {
+                'f'
+            } else {
+                't'
+            };
+            (kind, width)
+        })
+        .collect()
+}
+
+#[test]
+fn short_rows_keep_continuations_in_their_column_and_no_row_is_empty() {
+    let cell = |id: &str, text: &str, attrs: serde_json::Value| json!({"id":id,"type":"tableCell","attrs":attrs,"content":[{"text":text,"marks":[]}],"children":[]});
+    let row = |id: &str, cells: Vec<serde_json::Value>| json!({"id":id,"type":"tableRow","attrs":{},"content":null,"children":cells});
+    let document = document_from_json(
+        &json!({"version":1,"blocks":[{
+            "id":"t","type":"table","attrs":{},"content":null,"children":[
+                row("r0", vec![
+                    cell("a", "A", json!({})),
+                    cell("b", "B", json!({"colspan": 2.7})),
+                    cell("c", "C", json!({"rowspan": 2})),
+                    cell("d", "D", json!({"rowspan": 9, "colspan": 1500})),
+                ]),
+                // short: «C» continues in column 3, after an empty cell in columns 1–2
+                row("r1", vec![cell("e", "E", json!({}))]),
+                // nothing of its own and nothing from above but «D»
+                row("r2", vec![]),
+            ]
+        }, {
+            "id":"u","type":"table","attrs":{},"content":null,"children":[
+                row("s0", vec![cell("x", "X", json!({}))]),
+                row("s1", vec![]),
+            ]
+        }]})
+        .to_string(),
+    )
+    .unwrap();
+    let xml = part(
+        &to_docx(&document, &DocxOptions::default()).unwrap(),
+        "word/document.xml",
+    );
+    let tables: Vec<&str> = xml.split("<w:tbl>").skip(1).collect();
+    let rows: Vec<Vec<(char, usize)>> = tables[0].split("<w:tr>").skip(1).map(row_layout).collect();
+    // 2.7 and 1500 are no spans: one column each; «D» reaches only to the last row
+    assert_eq!(rows[0], [('t', 1), ('t', 1), ('t', 1), ('t', 1)]);
+    assert_eq!(rows[1], [('t', 1), ('f', 1), ('v', 1), ('v', 1)]);
+    assert_eq!(rows[2], [('f', 1), ('f', 1), ('f', 1), ('v', 1)]);
+    assert_eq!(tables[0].matches("<w:gridCol/>").count(), 4);
+    // a row with nothing at all still has a cell
+    assert!(!xml.contains("<w:tr></w:tr>"));
+    let second: Vec<Vec<(char, usize)>> =
+        tables[1].split("<w:tr>").skip(1).map(row_layout).collect();
+    assert_eq!(second, [vec![('t', 1)], vec![('f', 1)]]);
+}

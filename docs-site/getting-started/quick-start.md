@@ -232,6 +232,10 @@ What happens here:
 - `EditorContent` mounts the editor on its element and renders the blocks. Toolbar buttons
   call [commands](/docs/concepts/commands); `focus()` returns the caret to the document
   before the command runs.
+- `EditorContent` shows images and files read-only. To upload, resize, crop or caption
+  them, wrap it in `<MediaBlocksContext.Provider value={mediaBlocks}>` with `mediaBlocks`
+  from `@gotipe/react/media` (see [React](/docs/frameworks/react#image-and-file-editing));
+  `BlockEditor` and `PageEditor` already include it.
 
 ## Editor options
 

@@ -6,12 +6,18 @@ mod js;
 mod safety;
 mod sanitizer;
 mod styles;
+mod text_style;
 
 use gotipe_core::{AttrValue, Block, BlockContent, Document, Mark, TextSpan};
 
 use crate::{ConvertError, ExportOptions};
 use safety::escape;
 pub(crate) use safety::safe_color;
+// the Markdown writer's HTML table of merged cells (markdown/table_html.rs)
+#[cfg(feature = "markdown")]
+pub(crate) use js::string_or;
+#[cfg(feature = "markdown")]
+pub(crate) use safety::{escape as escape_html, safe_href};
 pub use sanitizer::HtmlSanitizer;
 
 struct Options<'a> {
@@ -129,7 +135,11 @@ fn block_to_html(block: &Block, options: &Options) -> String {
         }
     };
     match block.block_type.as_str() {
-        "paragraph" => format!("<p{}>{inner}</p>{after}", text_align(block)),
+        "paragraph" => format!(
+            "<p{}{}>{inner}</p>{after}",
+            text_style::direction(block),
+            text_align(block)
+        ),
         "heading" => {
             let level = js::number(attr("level")).trunc();
             let level = if level == 0.0 || level.is_nan() {
@@ -138,7 +148,11 @@ fn block_to_html(block: &Block, options: &Options) -> String {
                 level
             };
             let level = level.clamp(1.0, 6.0) as u8;
-            format!("<h{level}{}>{inner}</h{level}>{after}", text_align(block))
+            format!(
+                "<h{level}{}{}>{inner}</h{level}>{after}",
+                text_style::direction(block),
+                text_align(block)
+            )
         }
         "bulletList" => format!("<ul>\n{children}\n</ul>"),
         "orderedList" => {
@@ -150,7 +164,7 @@ fn block_to_html(block: &Block, options: &Options) -> String {
             };
             format!("<ol{start}>\n{children}\n</ol>")
         }
-        "listItem" => format!("<li>{inner}{after}</li>"),
+        "listItem" => format!("<li{}>{inner}{after}</li>", text_style::direction(block)),
         "todoList" => format!("<ul class=\"todo-list\">\n{children}\n</ul>"),
         "todoItem" => {
             let checked = if js::truthy(attr("checked")) {
@@ -158,7 +172,10 @@ fn block_to_html(block: &Block, options: &Options) -> String {
             } else {
                 ""
             };
-            format!("<li><input type=\"checkbox\"{checked} disabled> {inner}{after}</li>")
+            format!(
+                "<li{}><input type=\"checkbox\"{checked} disabled> {inner}{after}</li>",
+                text_style::direction(block)
+            )
         }
         "codeBlock" => {
             // Older documents store plain text as `plain`/`plaintext`; no language class.
@@ -286,6 +303,8 @@ fn wrap_marks(mut html: String, marks: &[&Mark]) -> String {
                     None => html,
                 }
             }
+            "fontFamily" => text_style::font_family(mark, &html).unwrap_or(html),
+            "fontSize" => text_style::font_size(mark, &html).unwrap_or(html),
             "textColor" => match color {
                 Some(color) => format!("<span style=\"color:{color}\">{html}</span>"),
                 None => html,

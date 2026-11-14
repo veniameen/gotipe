@@ -1,36 +1,19 @@
-import type { BlockView, GoTipeEditor } from "@gotipe/core";
-import { type BlockViewProps, TableColumnResizeHandle } from "@gotipe/react";
+import {
+  type BlockViewProps,
+  TableColumnResizeHandle,
+  useTableCell,
+  useTableLayout,
+} from "@gotipe/react";
 import type React from "react";
 import { TableColumnButton, TableRowButton } from "../components/table-column-menu";
 
 type Align = "left" | "right" | "center" | null;
 
-/** The table, column and row of a cell, found in the editor's view state. */
-function cellPosition(
-  editor: GoTipeEditor,
-  cellId: string,
-): { table: BlockView; column: number; row: number } | null {
-  const visit = (blocks: BlockView[]): { table: BlockView; column: number; row: number } | null => {
-    for (const block of blocks) {
-      if (block.type === "table") {
-        for (let row = 0; row < block.children.length; row++) {
-          const column = block.children[row]!.children.findIndex((cell) => cell.id === cellId);
-          if (column !== -1) return { table: block, column, row };
-        }
-        continue;
-      }
-      const inner = visit(block.children);
-      if (inner) return inner;
-    }
-    return null;
-  };
-  return visit(editor.getViewState().blocks);
-}
-
 /**
- * A table cell of the shared views (GoTipe Atlas, frame 9): it follows its column's alignment,
- * the first row carries the width handle, a header cell carries the column's menu and the first
- * cell of a body row carries the row's.
+ * A table cell of the shared views (GoTipe Atlas, frames 9 and 29): it follows its column's
+ * alignment, takes the columns and rows it is merged over, is tinted while selected with other
+ * cells; the cell ending a column carries the width handle, a header cell carries the menu of its
+ * columns and the first cell of a body row carries the row's.
  */
 export function TableCellView({
   block,
@@ -40,16 +23,26 @@ export function TableCellView({
   readOnly,
   phantom,
 }: BlockViewProps) {
-  const position = cellPosition(editor, block.id);
+  const layout = useTableLayout();
+  const position = layout?.grid.find(block.id) ?? null;
+  const { colSpan, rowSpan, selected, lastRow } = useTableCell(block.id);
   const align = position
-    ? ((position.table.attrs.align as Align[] | undefined)?.[position.column] ?? null)
+    ? ((layout?.table.attrs.align as Align[] | undefined)?.[position.column] ?? null)
     : null;
   const isHeader = block.type === "tableHeader";
   const Tag = isHeader ? "th" : "td";
   const editable = !readOnly && !phantom;
+  const className = [rootProps.className, selected ? "gotipe-table-cell-selected" : null]
+    .filter(Boolean)
+    .join(" ");
   return (
     <Tag
       {...(rootProps as React.HTMLAttributes<HTMLTableCellElement>)}
+      className={className || undefined}
+      colSpan={colSpan}
+      rowSpan={rowSpan}
+      aria-selected={selected || undefined}
+      data-last-row={lastRow && rowSpan ? "" : undefined}
       data-block-type={block.type}
       contentEditable={editable}
       suppressContentEditableWarning
@@ -61,11 +54,23 @@ export function TableCellView({
     >
       {content}
       {editable && <TableColumnResizeHandle cellId={block.id} />}
-      {isHeader && editable && position ? (
-        <TableColumnButton editor={editor} tableId={position.table.id} column={position.column} />
+      {isHeader && editable && layout && position ? (
+        <TableColumnButton
+          editor={editor}
+          tableId={layout.table.id}
+          cellId={block.id}
+          column={position.column}
+          columns={position.columns}
+        />
       ) : null}
-      {!isHeader && editable && position?.column === 0 ? (
-        <TableRowButton editor={editor} tableId={position.table.id} row={position.row} />
+      {!isHeader && editable && layout && position?.column === 0 ? (
+        <TableRowButton
+          editor={editor}
+          tableId={layout.table.id}
+          cellId={block.id}
+          row={position.row}
+          rows={position.rows}
+        />
       ) : null}
     </Tag>
   );

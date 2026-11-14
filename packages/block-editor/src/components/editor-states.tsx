@@ -1,12 +1,13 @@
 import type { GoTipeEditor, GoTipeError, GoTipeErrorCode } from "@gotipe/core";
 import type { TranslationKey } from "@gotipe/i18n";
-import { useEditorState, useGoTipeI18n } from "@gotipe/react";
+import { useEditorState } from "@gotipe/react";
 import { useEffect, useState } from "react";
+import { useBlockEditorI18n } from "../i18n/strings";
 import { PageIcon, type PageIconName } from "../page/icons";
 
 /** The shape of a page while the editor loads (GoTipe Atlas, frame 17): no shimmer. */
 export function EditorSkeleton({ label }: { label?: string }) {
-  const i18n = useGoTipeI18n();
+  const i18n = useBlockEditorI18n();
   return (
     <div className="gotipe-skeleton" role="status" aria-busy="true" data-gotipe-skeleton="">
       <span className="gotipe-sr-only">{label ?? i18n.t("state.loading")}</span>
@@ -45,7 +46,7 @@ export function EditorErrorToast({
   duration = 4000,
 }: { editor: GoTipeEditor; duration?: number }) {
   const [shown, setShown] = useState<{ error: GoTipeError; id: number } | null>(null);
-  const i18n = useGoTipeI18n();
+  const i18n = useBlockEditorI18n();
   useEffect(() => {
     let id = 0;
     return editor.on("error", (error) => {
@@ -82,7 +83,7 @@ const STARTERS: { command: string; icon: PageIconName; label: TranslationKey }[]
 
 export function EditorStarters({ editor }: { editor: GoTipeEditor }) {
   const blocks = useEditorState(editor, (state) => state.blocks) ?? editor.getViewState().blocks;
-  const i18n = useGoTipeI18n();
+  const i18n = useBlockEditorI18n();
   const only = blocks.length === 1 ? blocks[0] : undefined;
   const empty =
     only?.type === "paragraph" &&

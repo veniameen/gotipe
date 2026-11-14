@@ -1,4 +1,10 @@
-import { ThemeToggle } from "@gotipe/block-editor";
+import {
+  AlignPicker,
+  FontFamilyPicker,
+  FontSizeStepper,
+  InvisiblesToggle,
+  ThemeToggle,
+} from "@gotipe/block-editor";
 import { PageIcon } from "@gotipe/block-editor";
 import type { GoTipeEditor } from "@gotipe/core";
 import { useEditorState } from "@gotipe/react";
@@ -17,6 +23,11 @@ interface StaticToolbarProps {
   showLink?: boolean;
   showInsert?: boolean;
   showTheme?: boolean;
+  /**
+   * Font, size, alignment and the ¶ switch of the library (Atlas frames 27–28). The editor needs
+   * `FontFamily`, `FontSize`, `TextAlign` and `InvisibleCharacters`.
+   */
+  showTextLayout?: boolean;
 }
 
 interface ToolbarState {
@@ -40,6 +51,7 @@ export function StaticToolbar({
   showLink = true,
   showInsert = true,
   showTheme = false,
+  showTextLayout = false,
 }: StaticToolbarProps) {
   const toolbar = useEditorState<ToolbarState | null>(editor, (state) => state.toolbar ?? null);
   const [track, setTrack] = useState<HTMLDivElement | null>(null);
@@ -133,7 +145,23 @@ export function StaticToolbar({
           </div>
         )}
 
+        {showTextLayout && (
+          <>
+            <span className="gotipe-toolbar-separator" />
+            <div className="gotipe-toolbar-group">
+              <FontFamilyPicker editor={editor} />
+              <FontSizeStepper editor={editor} />
+            </div>
+          </>
+        )}
+
         <span className="gotipe-toolbar-separator" />
+
+        {showTextLayout && (
+          <div className="gotipe-toolbar-group">
+            <AlignPicker editor={editor} />
+          </div>
+        )}
 
         {/* Lists */}
         {showLists && (
@@ -405,6 +433,12 @@ export function StaticToolbar({
               <option value="divider">Divider</option>
               <option value="callout">Callout</option>
             </select>
+          </div>
+        )}
+
+        {showTextLayout && (
+          <div className="gotipe-toolbar-group is-end">
+            <InvisiblesToggle editor={editor} />
           </div>
         )}
 

@@ -93,6 +93,7 @@ Details of the codec are in [Markdown](/docs/conversion/markdown).
 | `autoFocus` | `boolean` | — | Put the caret at the end once the editor exists. |
 | `onReady` | `(editor: GoTipeEditor) => void` | — | Called once the editor exists. Pass a stable function. |
 | `onError` | `(error: GoTipeError) => void` | — | Every editor error, like `host.onError`. |
+| `status` | `boolean \| StatusLineOptions` | `false` | Words and characters under the page ([counter line](/docs/extensions/character-count#the-counter-line-of-blockeditor)). The page has `FindReplace` and `CharacterCount`, so `Mod+F` opens the find bar. |
 | `className`, `style` | | — | On the root `.gotipe-page`. |
 
 `markdown` and `readOnly` apply at any time; `host` is read on each call. The extensions are

@@ -1,7 +1,7 @@
-import { useGoTipeI18n } from "@gotipe/react";
 import type { LaneCursor, ProposalState, ReviewLane } from "@gotipe/suggestions";
 import type React from "react";
 import { useState } from "react";
+import { useBlockEditorI18n } from "../i18n/strings";
 import { PageIcon, type PageIconName } from "../page/icons";
 
 const LANE_ICON: Record<ReviewLane["kind"], PageIconName> = {
@@ -19,7 +19,7 @@ export function LaneAvatars({
   lanes,
   cursors = [],
 }: { lanes: ReviewLane[]; cursors?: LaneCursor[] }) {
-  const i18n = useGoTipeI18n();
+  const i18n = useBlockEditorI18n();
   const busy = new Set(cursors.map((c) => c.laneId));
   return (
     <span className="gotipe-lane-avatars" role="group" aria-label={i18n.t("review.onPage")}>
@@ -62,7 +62,7 @@ export function ReviewBar({
   /** Shows a close button instead of the actions when nothing waits. */
   onClose?: () => void;
 }) {
-  const i18n = useGoTipeI18n();
+  const i18n = useBlockEditorI18n();
   const [busy, setBusy] = useState(false);
   const pending = states.filter((s) => s.status === "pending").length;
   const stale = states.filter((s) => s.status === "stale").length;

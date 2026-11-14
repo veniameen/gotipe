@@ -1,7 +1,7 @@
 import type { GoTipeEditor } from "@gotipe/core";
 import type { TranslationKey } from "@gotipe/i18n";
 import { useEditorState } from "@gotipe/react";
-import { useGoTipeI18n } from "@gotipe/react";
+import { useBlockEditorI18n } from "../i18n/strings";
 import { PageIcon, type PageIconName } from "../page/icons";
 import { BLOCK_KEYS } from "./formatting/keys";
 import { blockPath } from "./formatting/selection";
@@ -53,7 +53,7 @@ const keyOf = (option: { type: string; attrs?: Record<string, unknown> }) =>
 export function BlockTypeDropdown({ editor }: BlockTypeDropdownProps) {
   const state = useEditorState(editor, (value) => value) ?? editor.getViewState();
   const menu = useFormattingMenu(editor);
-  const i18n = useGoTipeI18n();
+  const i18n = useBlockEditorI18n();
   const path = blockPath(state.blocks, state.selection.anchor.blockId);
   const block = path.at(-1);
   const structuralCell = !!block && ["tableCell", "tableHeader"].includes(block.type);

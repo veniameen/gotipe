@@ -8,6 +8,7 @@
 .gotipe-link-editor,
 .gotipe-text-color-picker,
 .gotipe-block-more-menu,
+.gotipe-format-menu,
 .gotipe-block-context-menu,
 .gotipe-context-submenu,
 .gotipe-column-menu {
@@ -135,6 +136,7 @@
 :is(
     .gotipe-block-type-dropdown,
     .gotipe-block-more-menu,
+    .gotipe-format-menu,
     .gotipe-block-context-menu,
     .gotipe-context-submenu,
     .gotipe-column-menu
@@ -147,6 +149,7 @@
 :is(
     .gotipe-block-type-dropdown,
     .gotipe-block-more-menu,
+    .gotipe-format-menu,
     .gotipe-block-context-menu,
     .gotipe-context-submenu,
     .gotipe-column-menu
@@ -170,6 +173,7 @@
 :is(
     .gotipe-block-type-dropdown,
     .gotipe-block-more-menu,
+    .gotipe-format-menu,
     .gotipe-block-context-menu,
     .gotipe-context-submenu,
     .gotipe-column-menu
@@ -184,6 +188,7 @@
 :is(
     .gotipe-block-type-dropdown,
     .gotipe-block-more-menu,
+    .gotipe-format-menu,
     .gotipe-block-context-menu,
     .gotipe-context-submenu,
     .gotipe-column-menu
@@ -195,6 +200,7 @@
 :is(
     .gotipe-block-type-dropdown,
     .gotipe-block-more-menu,
+    .gotipe-format-menu,
     .gotipe-block-context-menu,
     .gotipe-context-submenu,
     .gotipe-column-menu

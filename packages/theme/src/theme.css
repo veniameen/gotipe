@@ -7,11 +7,18 @@
 @import "./theme/panels.css";
 @import "./theme/motion.css";
 @import "./theme/tables.css";
+@import "./theme/table-cells.css";
 
 @import "./theme/code.css";
 @import "./theme/embeds.css";
+@import "./theme/atoms.css";
+@import "./theme/atom-menus.css";
 
 @import "./theme/comments.css";
 @import "./theme/review.css";
 @import "./theme/states.css";
 @import "./theme/outline.css";
+@import "./theme/history.css";
+@import "./theme/find.css";
+@import "./theme/status.css";
+@import "./theme/text-style.css";

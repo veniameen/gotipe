@@ -17,6 +17,7 @@ MIT packages.
 | Table bars, resize handles, media controls | `@gotipe/react` | Editable tables, image and file blocks |
 | `BubbleMenu`, `FloatingMenu` | `@gotipe/react` | Your own React menus; see [React](/docs/frameworks/react) |
 | `createBubbleMenu`, `createFloatingMenu` | `@gotipe/core/menus` | Your own menus without a framework |
+| «@» and «:» lists, emoji picker, formula popover | `@gotipe/block-editor` | Typing `@` or `:`, «/» → Emoji, a click on a formula; needs `atomExtensions()` |
 
 ## Slash menu
 
@@ -69,6 +70,52 @@ To change groups, labels or row icons, render `SlashMenu` yourself as a child of
 | `labels` | `{ menu?, list?, empty?, results?(count) }` | i18n strings | Accessible names, the empty state and the result count. |
 | `className` | `string` | — | Added to `.gotipe-slash-menu`. |
 
+## Mentions, emoji and formulas
+
+GoTipe Atlas, frames 22–24. All four need the editor to include `atomExtensions()` from
+`@gotipe/block-editor`; the data comes from the `mentions` and `emoji` props of `BlockEditor`
+and `PageEditor` ([Inline atoms](/docs/extensions/inline-atoms#the-block-editors-interface)).
+
+**The «@» list.** Typing `@` at the start of a word opens it at the caret with the host's
+people and pages for the text after `@`: initials for a person, the page glyph for a page,
+the match in bold, a group label wherever the kind changes («People», «Pages»). The first row
+is chosen and shows ↵. ArrowDown and ArrowUp move the choice, Enter or a click inserts the
+mention in place of `@query`, Escape closes the list until the caret leaves the trigger, and
+so does moving the focus away. An empty answer is one line: «No one found». Return people
+before pages from `mentions.items`, as the list groups consecutive rows.
+
+**The «:» list.** Typing `:` at the start of a word lists Unicode emoji by shortcode and, with
+the Russian interface, by Russian name (`:пра` → 🎉 праздник, ✅ правильно, ✍️ правка, 👉 направо),
+then the team's emoji from `emoji.custom`. Right after `:` it shows the recent emoji. The keys
+are those of the «@» list; Enter inserts the character (a custom emoji as an atom) and moves it
+to the front of the recent list.
+
+**The emoji picker.** «/» → Emoji opens it at the caret: a search field with the focus, the
+categories as glyphs (recent, faces, nature, food, activities, travel, objects, symbols, flags,
+the team's own), the recent row first, then a grid of nine columns. A tab scrolls to its
+category and the tab of the category in view is marked. ArrowDown from the field enters the
+grid; the arrow keys walk it row by row across the categories, ArrowUp from the first row goes
+back to the field; Enter or Space inserts, Enter in the field inserts the first result. The
+name of the emoji under the pointer or the focus shows in a tooltip. Escape or a click outside
+closes it and returns the caret.
+
+**The formula popover.** A click on a formula, Enter with a formula selected, «/» → Inline
+formula and typing `$x^2$` open it under the formula. The closing `$` makes the formula only when
+the opening one starts a word and is followed by neither a space nor a digit, so `costs $5-$`
+stays text, and Escape right after it brings the typed dollars back. The popover holds the
+TeX in a monospace field with the caret at its end, a confirm button and the drawing under it as
+you type. TeX that cannot be read marks the field red and names the reason in a tooltip
+(«Missing closing “}”»); it can still be confirmed and then shows in the line as TeX on a red
+tint. Enter or the button confirms in one undo step (`updateInlineMath` or `insertInlineMath`),
+Escape or a click outside cancels. The formula stays selected while the popover is open.
+
+Every list and popover is measured before it shows, flips above the caret when there is no
+room below and follows the caret on scroll and resize. The lists keep the focus in the document:
+the editor element carries `aria-controls`, `aria-expanded` and `aria-activedescendant` of the
+chosen row, as the slash menu does. In the picker and the formula popover Tab cycles through their
+own controls; when the focus leaves them (a click elsewhere) they close and leave it there. Keys
+of an input method's composition never choose or move.
+
 ## Block handle
 
 In the `notion` view a handle appears beside the block under the pointer, from about
@@ -118,13 +165,19 @@ The bubble appears over a selection while the editor is editable. From left to r
 |---|---|---|
 | Add row bar | Under the table | Adds a row at the end |
 | Add column bar | Right of the table | Adds a column at the end and scrolls to it |
-| Resize handle | Right edge of each first-row cell | Drag between 64 and 1600 px, or ← and → by 16 px |
-| Column menu | Chevron in a header cell | Type: Text, Code, Number, Yes / no; Add row; Add column after it; Delete column |
-| Row menu | Beside the first cell of a body row | Add row above, Add row below, Delete row |
+| Resize handle | Right edge of the topmost cell ending each column | Drag between 64 and 1600 px, or ← and → by 16 px |
+| Column menu | Chevron in a header cell | Type: Text, Code, Number, Yes / no; Cells: Merge cells, Split cell; Add row; Add column after it; Delete column (Delete columns under a header over several columns, which has no type) |
+| Row menu | Beside the first cell of a body row | Row: Add row above, Add row below; Cells: Merge cells, Split cell; Delete row |
 
 Number aligns the column right. Code puts every body cell in inline code. Yes / no turns
 values such as `yes`, `true`, `1` or `x` into the UI's word for yes, and empty or negative
 values into its word for no; other values stay. Deleting the last row deletes the table.
+**Merge cells** is available while two or more cells are selected (drag across cells,
+Shift+click or Shift+arrows); **Split cell** while the menu's cell or the caret's cell is
+merged; ⌘⇧M (Ctrl+Shift+M) does either from the table. An unavailable row stays focusable,
+is paler and shows the reason in its tooltip. `PageEditor` refuses a merge that Markdown could
+not keep (a table with mentions, formulas or fonts, or inside a list or quote).
+After an action the document takes the keys back, so ⌘Z undoes it.
 A wide table scrolls inside its block. Each action is one undo step. The bars and resize
 handles come with `@gotipe/react`; the column and row menus need the ready editors. More
 in [tables](/docs/extensions/tables).

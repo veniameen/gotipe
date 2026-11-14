@@ -17,7 +17,7 @@ media
 | `File` | `file` | Full, `PageEditor` |
 | `Embed` | `embed` | Full |
 
-The React views described below (`ImageBlock`, `FileBlock` and the embed card) are used by `@gotipe/react`'s `EditorContent` and by `BlockEditor` and `PageEditor`.
+The React views described below (`ImageBlock`, `FileBlock` and the embed card) are used by `BlockEditor` and `PageEditor`. `ImageBlock` and `FileBlock` come from `@gotipe/react/media`: `@gotipe/react`'s `EditorContent` shows images and files read-only unless that entry is provided through `MediaBlocksContext` (see [React](/docs/frameworks/react)).
 
 ## Image
 

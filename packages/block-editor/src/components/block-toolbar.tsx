@@ -1,8 +1,8 @@
 import type { Block, GoTipeEditor, Transaction } from "@gotipe/core";
 import { useFloatingPosition } from "@gotipe/react";
-import { useGoTipeI18n } from "@gotipe/react";
 import type React from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useBlockEditorI18n } from "../i18n/strings";
 import { PageIcon } from "../page/icons";
 import { BlockContextMenu } from "./block-context-menu";
 import { DragHandle, type DragHandleProps } from "./drag-handle";
@@ -83,7 +83,7 @@ export function BlockToolbar({
   touchDrag,
   openSlashMenuOnAdd = false,
 }: BlockToolbarProps) {
-  const i18n = useGoTipeI18n();
+  const i18n = useBlockEditorI18n();
   const [contextMenuOpen, setContextMenuOpen] = useState(false);
   const [tooltipKind, setTooltipKind] = useState<"add" | "drag">("add");
   const [tooltipVisible, setTooltipVisible] = useState(false);

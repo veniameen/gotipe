@@ -84,6 +84,16 @@ The layer is named `invisibles`. In rich-text blocks it has an `inline` decorati
 
 Code blocks and other raw-text blocks are not decorated.
 
+### The ¶ switch
+
+`InvisiblesToggle` from `@gotipe/block-editor` is the switch of the GoTipe Atlas (frame 28) for a fixed toolbar: a ¶ button with a tooltip, pressed while the characters are shown. The theme (`text-style.css`) draws them in `--gt-text-3`, quieter than the text: a dot over a space, ° over a no-break space, ↵ at a line break and ¶ at the end of a paragraph. The marks are generated content: the document, the caret and copying are not changed.
+
+```tsx title="toolbar.tsx"
+import { InvisiblesToggle } from "@gotipe/block-editor";
+
+<InvisiblesToggle editor={editor} />;
+```
+
 ## Focus
 
 Marks the block that holds the caret, so you can dim the rest of the page or outline the current block.

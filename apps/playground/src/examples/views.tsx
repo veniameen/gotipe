@@ -5,6 +5,16 @@ import {
   createShikiHighlighter,
   gotipeCodeThemeLoader,
 } from "@gotipe/block-editor/shiki";
+import {
+  CharacterCount,
+  FindReplace,
+  FontFamily,
+  FontSize,
+  InvisibleCharacters,
+  TextAlign,
+  TextDirection,
+  getCharacterCount,
+} from "@gotipe/core/extensions";
 import { FullPreset } from "@gotipe/core/presets";
 import { GoTipeI18nProvider, useEditor } from "@gotipe/react";
 import type { ThemePreset } from "@gotipe/theme";
@@ -23,6 +33,19 @@ const highlight = createShikiHighlighter({
 });
 const STATES = ["document", "empty page", "loading", "read only"] as const;
 const LANGUAGES = ["ru", "en"] as const;
+/** The counter under the document (Atlas frame 26): off, plain, or near and over a host limit. */
+const COUNTERS = ["off", "words", "near limit", "over limit"] as const;
+type Counter = (typeof COUNTERS)[number];
+/** Find, the counter, alignment, direction, fonts and invisibles (Atlas frames 25–28). */
+const TEXT_EXTENSIONS = [
+  FindReplace,
+  CharacterCount,
+  TextAlign,
+  TextDirection,
+  FontFamily,
+  FontSize,
+  InvisibleCharacters,
+];
 type State = (typeof STATES)[number];
 
 /** The page glyph of the Atlas document: a cloud with a gap. The host chooses it. */
@@ -60,7 +83,12 @@ function Byline() {
 
 /** One document in the four views of the GoTipe Atlas (frames 1–5, 11 and 17). */
 export function ViewsExample() {
-  const editor = useEditor({ extensions: [FullPreset], content: ATLAS_DOCUMENT });
+  const editor = useEditor({
+    extensions: [FullPreset, ...TEXT_EXTENSIONS],
+    content: ATLAS_DOCUMENT,
+  });
+  const [counter, setCounter] = useState<Counter>("off");
+  const characters = (editor && getCharacterCount(editor)?.characters()) ?? 0;
   const [view, setView] = useState<ThemePreset>("notion");
   const [state, setState] = useState<State>("document");
   const [title, setTitle] = useState(ATLAS_TITLE);
@@ -143,15 +171,45 @@ export function ViewsExample() {
           </button>
         ))}
       </fieldset>
+      <fieldset className="gotipe-example-actions">
+        <legend>Counter</legend>
+        {COUNTERS.map((name) => (
+          <button
+            key={name}
+            type="button"
+            className="gotipe-example-button"
+            aria-pressed={counter === name}
+            onClick={() => setCounter(name)}
+          >
+            {name}
+          </button>
+        ))}
+      </fieldset>
       <GoTipeI18nProvider locale={language}>
         <div className="gotipe-views-frame" data-gt-view={view}>
-          {view === "modern" && editor && state !== "loading" && <StaticToolbar editor={editor} />}
+          {view === "modern" && editor && state !== "loading" && (
+            <StaticToolbar editor={editor} showTextLayout />
+          )}
           <BlockEditor
             editor={state === "loading" ? null : editor}
             view={view}
             header={state === "loading" ? undefined : header}
             highlight={highlight}
             showAiCommandBar={false}
+            status={
+              counter === "off"
+                ? false
+                : counter === "words"
+                  ? true
+                  : {
+                      // a host's limit shown, not enforced: a little above or below the text
+                      limit: Math.round(characters * (counter === "near limit" ? 1.02 : 0.9)),
+                      reason:
+                        language === "ru"
+                          ? "Описание выпуска — не больше этого числа символов"
+                          : "Release notes stay within this many characters",
+                    }
+            }
           />
         </div>
       </GoTipeI18nProvider>

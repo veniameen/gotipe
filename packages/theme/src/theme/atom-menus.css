@@ -1,0 +1,329 @@
+/* ============================================================
+   Lists and popovers of the line's atoms — Atlas frames 22–24. The «@» and «:» lists are rows
+   of the slash menu with an avatar or an emoji in front; the emoji picker and the formula field
+   are popovers at the caret. One overlay recipe: a ring and a shadow, never a frame.
+   ============================================================ */
+
+.gotipe-suggest,
+.gotipe-emoji-picker,
+.gotipe-math-pop {
+  z-index: var(--gt-z-slash);
+  box-sizing: border-box;
+  border: 0;
+  border-radius: var(--gt-radius-overlay);
+  background: var(--gt-overlay);
+  box-shadow: var(--gt-shadow-overlay);
+  color: var(--gt-text);
+  font-family: var(--gt-font-ui);
+  font-size: var(--gt-ui-size);
+  font-weight: var(--gt-weight-regular);
+  line-height: var(--gt-ui-leading);
+  letter-spacing: normal;
+  animation: gotipe-fade-in var(--gt-duration-normal) var(--gt-ease-out);
+}
+
+/* ---- the «@» and «:» lists ---- */
+.gotipe-suggest {
+  width: min(var(--gt-menu-w), calc(100vw - 2 * var(--gt-space-2)));
+  padding: var(--gt-menu-pad);
+}
+.gotipe-suggest-list {
+  max-height: var(--gt-menu-max-h);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+}
+.gotipe-suggest-label {
+  padding: var(--gt-menu-label-pad);
+  color: var(--gt-text-3);
+  font-size: var(--gt-ui-small);
+  font-weight: var(--gt-weight-medium);
+  line-height: var(--gt-ui-small-leading);
+}
+/* a new group: a hairline with the separator's gap on both sides */
+.gotipe-suggest-item + .gotipe-suggest-label {
+  margin-top: var(--gt-menu-sep-gap);
+  border-top: var(--gt-hairline) solid var(--gt-line);
+}
+.gotipe-suggest-item + .gotipe-suggest-label::before {
+  content: "";
+  display: block;
+  height: var(--gt-menu-sep-gap);
+}
+.gotipe-suggest-item {
+  display: flex;
+  align-items: center;
+  gap: var(--gt-menu-gap);
+  min-width: 0;
+  height: var(--gt-menu-item-h);
+  padding: var(--gt-menu-item-pad);
+  border-radius: var(--gt-radius-control);
+  cursor: pointer;
+}
+.gotipe-suggest-item:hover,
+.gotipe-suggest-item.is-selected {
+  background: var(--gt-fill-2);
+}
+.gotipe-suggest-item > .gotipe-icon {
+  flex: none;
+  width: var(--gt-icon-size);
+  height: var(--gt-icon-size);
+  color: var(--gt-text-2);
+}
+/* a page among people keeps its glyph in the avatar's column */
+.gotipe-suggest.has-avatars .gotipe-suggest-item > .gotipe-icon {
+  margin-inline: var(--gt-menu-avatar-inset);
+}
+.gotipe-suggest-item.is-selected > .gotipe-icon {
+  color: var(--gt-text);
+}
+.gotipe-suggest-item > .gotipe-avatar {
+  width: var(--gt-avatar);
+  height: var(--gt-avatar);
+  line-height: var(--gt-avatar);
+}
+.gotipe-suggest-text {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.gotipe-suggest-text mark {
+  background: none;
+  color: inherit;
+  font-weight: var(--gt-weight-strong);
+}
+/* on the chosen row's fill the key steps up one tone, so it still reads */
+.gotipe-suggest-key {
+  margin-left: auto;
+  color: var(--gt-text-2);
+  font-size: var(--gt-ui-small);
+}
+.gotipe-suggest-empty {
+  padding: var(--gt-menu-label-pad);
+  color: var(--gt-text-3);
+}
+.gotipe-suggest-emoji {
+  display: inline-grid;
+  flex: none;
+  place-items: center;
+  width: var(--gt-avatar);
+  font-size: var(--gt-emoji-menu);
+  line-height: var(--gt-emoji-menu-leading);
+  letter-spacing: normal;
+}
+.gotipe-suggest-emoji > img {
+  width: var(--gt-emoji-menu-leading);
+  height: var(--gt-emoji-menu-leading);
+  object-fit: contain;
+}
+
+/* ---- fields of the popovers: a hairline at rest, one step darker while typing ---- */
+.gotipe-emoji-search,
+.gotipe-math-field {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--gt-menu-gap);
+  box-sizing: border-box;
+  min-width: 0;
+  height: var(--gt-field-h);
+  padding: var(--gt-field-pad);
+  border-radius: var(--gt-radius-control);
+  box-shadow: inset 0 0 0 var(--gt-hairline) var(--gt-line-control);
+  color: var(--gt-text);
+}
+.gotipe-emoji-search:focus-within,
+.gotipe-math-field:focus-within {
+  box-shadow: inset 0 0 0 var(--gt-hairline) var(--gt-line-active);
+}
+.gotipe-math-field.is-invalid {
+  background: var(--gt-danger-tint);
+  box-shadow: inset 0 0 0 var(--gt-hairline) var(--gt-danger);
+}
+.gotipe-emoji-search > .gotipe-icon {
+  flex: none;
+  width: var(--gt-icon-size);
+  height: var(--gt-icon-size);
+  color: var(--gt-text-3);
+}
+:is(.gotipe-emoji-search, .gotipe-math-field) > input {
+  flex: 1;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  outline: none;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  letter-spacing: inherit;
+}
+:is(.gotipe-emoji-search, .gotipe-math-field) > input::placeholder {
+  color: var(--gt-text-3);
+}
+.gotipe-emoji-search > input::-webkit-search-cancel-button {
+  display: none;
+}
+
+/* ---- the emoji picker: search, categories as glyphs, a grid that scrolls under them ---- */
+.gotipe-emoji-picker {
+  display: grid;
+  gap: var(--gt-popover-pad);
+  width: min(var(--gt-emoji-picker-w), calc(100vw - 2 * var(--gt-space-2)));
+  padding: var(--gt-popover-pad);
+}
+.gotipe-emoji-tabs {
+  display: flex;
+  justify-content: space-between;
+  padding-bottom: var(--gt-popover-pad);
+  border-bottom: var(--gt-hairline) solid var(--gt-line);
+}
+.gotipe-emoji-tabs:empty {
+  display: none;
+}
+.gotipe-emoji-tabs > button,
+.gotipe-math-confirm {
+  display: inline-grid;
+  flex: none;
+  place-items: center;
+  min-width: var(--gt-tool);
+  height: var(--gt-tool);
+  padding: 0;
+  border: 0;
+  border-radius: var(--gt-radius-control);
+  background: transparent;
+  color: var(--gt-text-2);
+  cursor: pointer;
+}
+:is(.gotipe-emoji-tabs > button, .gotipe-math-confirm) > svg {
+  width: var(--gt-icon-size);
+  height: var(--gt-icon-size);
+}
+.gotipe-emoji-tabs > button:hover {
+  background: var(--gt-fill-1);
+  color: var(--gt-text);
+}
+.gotipe-emoji-tabs > button.is-active,
+.gotipe-math-confirm {
+  background: var(--gt-fill-2);
+  color: var(--gt-text);
+}
+.gotipe-math-confirm:disabled {
+  opacity: var(--gt-disabled-opacity);
+  cursor: default;
+}
+:is(.gotipe-emoji-tabs > button, .gotipe-math-confirm, .gotipe-emoji-cell):focus-visible {
+  outline: var(--gt-focus-width) solid var(--gt-focus);
+  outline-offset: calc(-1 * var(--gt-focus-width));
+}
+.gotipe-emoji-scroll {
+  max-height: var(--gt-emoji-scroll-h);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+}
+.gotipe-emoji-label,
+.gotipe-emoji-empty {
+  padding: var(--gt-menu-label-pad);
+  padding-inline: var(--gt-toolbar-pad);
+  color: var(--gt-text-3);
+  font-size: var(--gt-ui-small);
+  font-weight: var(--gt-weight-medium);
+  line-height: var(--gt-ui-small-leading);
+}
+.gotipe-emoji-grid {
+  display: grid;
+  grid-template-columns: repeat(9, minmax(0, 1fr));
+}
+.gotipe-emoji-cell {
+  display: grid;
+  place-items: center;
+  height: var(--gt-emoji-cell);
+  padding: 0;
+  border: 0;
+  border-radius: var(--gt-radius-control);
+  background: transparent;
+  color: inherit;
+  font-family: inherit;
+  font-size: var(--gt-emoji-grid);
+  line-height: var(--gt-emoji-grid-leading);
+  letter-spacing: normal;
+  cursor: pointer;
+}
+.gotipe-emoji-cell:is(:hover, :focus-visible) {
+  background: var(--gt-fill-2);
+}
+.gotipe-emoji-cell > img {
+  width: var(--gt-emoji-grid-leading);
+  height: var(--gt-emoji-grid-leading);
+  object-fit: contain;
+}
+/* the name of the emoji under the pointer or the focus, above it */
+.gotipe-emoji-tip,
+.gotipe-math-reason {
+  position: absolute;
+  z-index: var(--gt-z-tooltip);
+  max-width: var(--gt-tooltip-max);
+  padding: var(--gt-tooltip-pad);
+  border-radius: var(--gt-radius-control);
+  background: var(--gt-inverse);
+  color: var(--gt-inverse-text);
+  font-size: var(--gt-ui-small);
+  line-height: var(--gt-ui-small-leading);
+  white-space: nowrap;
+  pointer-events: none;
+}
+.gotipe-emoji-tip {
+  transform: translate(-50%, calc(-100% - var(--gt-overlay-gap)));
+}
+
+/* ---- the formula popover: TeX in a field, the drawing under it as it is typed ---- */
+.gotipe-math-pop {
+  display: grid;
+  gap: var(--gt-popover-pad);
+  width: min(var(--gt-math-pop-w), calc(100vw - 2 * var(--gt-space-2)));
+  padding: var(--gt-popover-pad);
+}
+.gotipe-math-pop-row {
+  display: flex;
+  align-items: center;
+  gap: var(--gt-toolbar-gap);
+}
+.gotipe-math-pop-row > .gotipe-math-field {
+  flex: 1;
+}
+.gotipe-math-field {
+  font-family: var(--gt-font-mono);
+  font-size: var(--gt-code-size);
+}
+.gotipe-math-reason {
+  top: calc(100% + var(--gt-overlay-gap));
+  left: 0;
+  font-family: var(--gt-font-ui);
+  white-space: normal;
+}
+.gotipe-math-preview {
+  display: grid;
+  place-items: center;
+  min-width: 0;
+  padding: var(--gt-math-preview-pad);
+  overflow-x: auto;
+  border-radius: var(--gt-radius-control);
+  background: var(--gt-sunken);
+  font-family: var(--gt-font-body);
+  font-size: var(--gt-math-preview-size);
+  line-height: var(--gt-math-preview-leading);
+  letter-spacing: var(--gt-body-tracking);
+}
+.gotipe-math-preview mfrac > * {
+  padding-inline: var(--gt-math-frac-pad);
+  font-size: var(--gt-math-display-frac);
+  line-height: var(--gt-math-display-leading);
+}
+.gotipe-math-preview-empty {
+  color: var(--gt-text-3);
+  font-family: var(--gt-font-mono);
+  font-size: var(--gt-code-size);
+  letter-spacing: normal;
+}

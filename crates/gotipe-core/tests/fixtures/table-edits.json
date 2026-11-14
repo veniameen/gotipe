@@ -1,0 +1,189 @@
+{
+  "version": 1,
+  "about": "Table edits checked by both engines: packages/core/tests/table-edits.test.ts and crates/gotipe-core/tests/table_edits.rs. A cell is `id:text|colspan|rowspan`; `#` marks a header cell. `grid` names the cell over each position, `new` a cell the edit created; `kinds` gives h (header) or c per position.",
+  "tables": {
+    "frame": [
+      ["#p:Платформа||2", "#j:Журнал|2", "#e:Шифрование||2"],
+      ["#k:Ключ", "#q:В очереди"],
+      ["w:Веб", "wk:drafts.web", "wq:1 284", "ws:Ключ сессии||2"],
+      ["m:macOS", "mk:drafts.mac", "mq:312"],
+      ["i:iOS", "ik:drafts.ios", "iq:0", "is:Нет"]
+    ],
+    "plain": [
+      ["#h1:A", "#h2:B", "#h3:C"],
+      ["a:Один", "b:", "c:Три"],
+      ["d:", "e:Пять 😀", "f:Шесть"]
+    ],
+    "short": [["a:1", "b:2", "c:3"], ["d:4"]],
+    "overlap": [["a:1", "b:2||2"], ["c:3|2"]],
+    "tall-past-the-end": [["a:1||3", "b:2"], ["c:3"]]
+  },
+  "cases": [
+    {
+      "id": "merge-rectangle-joins-text-line-by-line",
+      "table": "plain",
+      "edit": { "type": "mergeCells", "from": { "row": 1, "column": 0 }, "to": { "row": 2, "column": 1 } },
+      "expect": {
+        "grid": [["h1", "h2", "h3"], ["a", "a", "c"], ["a", "a", "f"]],
+        "text": { "a": "Один\nПять 😀" },
+        "caret": ["a", 12]
+      }
+    },
+    {
+      "id": "merge-a-row-of-headers",
+      "table": "plain",
+      "edit": { "type": "mergeCells", "from": { "row": 0, "column": 2 }, "to": { "row": 0, "column": 0 } },
+      "expect": { "grid": [["h1", "h1", "h1"], ["a", "b", "c"], ["d", "e", "f"]], "text": { "h1": "A\nB\nC" } }
+    },
+    {
+      "id": "merge-refuses-a-range-cutting-a-merged-cell",
+      "table": "frame",
+      "edit": { "type": "mergeCells", "from": { "row": 0, "column": 1 }, "to": { "row": 1, "column": 1 } },
+      "expect": { "error": "merged cell" }
+    },
+    {
+      "id": "merge-refuses-one-cell",
+      "table": "frame",
+      "edit": { "type": "mergeCells", "from": { "row": 2, "column": 3 }, "to": { "row": 3, "column": 3 } },
+      "expect": { "error": "two cells" }
+    },
+    {
+      "id": "split-a-header-over-two-columns",
+      "table": "frame",
+      "edit": { "type": "splitCell", "row": 0, "column": 2 },
+      "expect": {
+        "grid": [["p", "j", "new", "e"], ["p", "k", "q", "e"], ["w", "wk", "wq", "ws"], ["m", "mk", "mq", "ws"], ["i", "ik", "iq", "is"]],
+        "kinds": ["hhhh", "hhhh", "cccc", "cccc", "cccc"],
+        "text": { "j": "Журнал" }
+      }
+    },
+    {
+      "id": "split-a-cell-over-two-rows",
+      "table": "frame",
+      "edit": { "type": "splitCell", "row": 3, "column": 3 },
+      "expect": {
+        "grid": [["p", "j", "j", "e"], ["p", "k", "q", "e"], ["w", "wk", "wq", "ws"], ["m", "mk", "mq", "new"], ["i", "ik", "iq", "is"]]
+      }
+    },
+    {
+      "id": "split-refuses-a-plain-cell",
+      "table": "frame",
+      "edit": { "type": "splitCell", "row": 4, "column": 0 },
+      "expect": { "error": "not merged" }
+    },
+    {
+      "id": "insert-row-through-a-span-grows-it",
+      "table": "frame",
+      "edit": { "type": "insertRow", "index": 3 },
+      "expect": {
+        "grid": [["p", "j", "j", "e"], ["p", "k", "q", "e"], ["w", "wk", "wq", "ws"], ["new", "new", "new", "ws"], ["m", "mk", "mq", "ws"], ["i", "ik", "iq", "is"]]
+      }
+    },
+    {
+      "id": "insert-row-above-the-first-row-keeps-the-header-on-top",
+      "table": "frame",
+      "edit": { "type": "insertRow", "index": 0 },
+      "expect": {
+        "grid": [["p", "j", "j", "e"], ["p", "k", "q", "e"], ["new", "new", "new", "new"], ["w", "wk", "wq", "ws"], ["m", "mk", "mq", "ws"], ["i", "ik", "iq", "is"]],
+        "kinds": ["hhhh", "hhhh", "cccc", "cccc", "cccc", "cccc"]
+      }
+    },
+    {
+      "id": "insert-column-through-a-span-grows-it",
+      "table": "frame",
+      "edit": { "type": "insertColumn", "index": 2 },
+      "expect": {
+        "grid": [["p", "j", "j", "j", "e"], ["p", "k", "new", "q", "e"], ["w", "wk", "new", "wq", "ws"], ["m", "mk", "new", "mq", "ws"], ["i", "ik", "new", "iq", "is"]],
+        "kinds": ["hhhhh", "hhhhh", "ccccc", "ccccc", "ccccc"],
+        "colWidths": null
+      }
+    },
+    {
+      "id": "delete-the-top-row-of-a-tall-cell-moves-it-down",
+      "table": "frame",
+      "colWidths": [100, 120, 140, 160],
+      "edit": { "type": "deleteRow", "index": 2 },
+      "expect": {
+        "grid": [["p", "j", "j", "e"], ["p", "k", "q", "e"], ["m", "mk", "mq", "ws"], ["i", "ik", "iq", "is"]],
+        "text": { "ws": "Ключ сессии" },
+        "colWidths": [100, 120, 140, 160]
+      }
+    },
+    {
+      "id": "delete-a-column-through-a-wide-header-shrinks-it",
+      "table": "frame",
+      "colWidths": [100, 120, 140, 160],
+      "edit": { "type": "deleteColumn", "index": 1 },
+      "expect": {
+        "grid": [["p", "j", "e"], ["p", "q", "e"], ["w", "wq", "ws"], ["m", "mq", "ws"], ["i", "iq", "is"]],
+        "colWidths": [100, 140, 160]
+      }
+    },
+    {
+      "id": "delete-both-columns-under-a-wide-header-as-one-step",
+      "table": "frame",
+      "edit": { "type": "deleteColumn", "index": 1, "count": 2 },
+      "expect": { "grid": [["p", "e"], ["p", "e"], ["w", "ws"], ["m", "ws"], ["i", "is"]] }
+    },
+    {
+      "id": "delete-the-row-under-tall-headers-shrinks-them",
+      "table": "frame",
+      "edit": { "type": "deleteRow", "index": 1 },
+      "expect": { "grid": [["p", "j", "j", "e"], ["w", "wk", "wq", "ws"], ["m", "mk", "mq", "ws"], ["i", "ik", "iq", "is"]] }
+    },
+    {
+      "id": "delete-every-row-takes-the-table",
+      "table": "plain",
+      "edit": { "type": "deleteRow", "index": 0, "count": 3 },
+      "expect": { "removed": true }
+    },
+    {
+      "id": "a-structural-edit-fills-short-rows",
+      "table": "short",
+      "edit": { "type": "insertColumn", "index": 3 },
+      "expect": { "grid": [["a", "b", "c", "new"], ["d", "new", "new", "new"]] }
+    },
+    {
+      "id": "resize-writes-widths-only",
+      "table": "short",
+      "edit": { "type": "resizeColumn", "index": 1, "width": 200.4 },
+      "expect": { "grid": [["a", "b", "c"], ["d", "-", "-"]], "colWidths": [160, 200, 160] }
+    },
+    {
+      "id": "overlapping-cells-are-read-as-drawn-and-repaired",
+      "table": "overlap",
+      "edit": { "type": "insertRow", "index": 1 },
+      "expect": { "grid": [["a", "b"], ["new", "b"], ["c", "b"]], "stored": { "c": { "colspan": 1 }, "b": { "rowspan": 3 } } }
+    },
+    {
+      "id": "a-span-past-the-last-row-does-not-block-edits",
+      "table": "tall-past-the-end",
+      "edit": { "type": "insertRow", "index": 2 },
+      "expect": { "grid": [["a", "b"], ["a", "c"], ["new", "new"]], "stored": { "a": { "rowspan": 2 } } }
+    },
+    {
+      "id": "a-span-past-the-last-row-splits-as-drawn",
+      "table": "tall-past-the-end",
+      "edit": { "type": "splitCell", "row": 1, "column": 0 },
+      "expect": { "grid": [["a", "b"], ["new", "c"]], "stored": { "a": { "rowspan": 1 } } }
+    },
+    {
+      "id": "a-resize-writes-repaired-spans",
+      "table": "tall-past-the-end",
+      "edit": { "type": "resizeColumn", "index": 0, "width": 100 },
+      "expect": { "grid": [["a", "b"], ["a", "c"]], "stored": { "a": { "rowspan": 2 } }, "colWidths": [100, 160] }
+    },
+    {
+      "id": "a-huge-index-is-out-of-range",
+      "table": "plain",
+      "edit": { "type": "deleteRow", "index": 18446744073709551615, "count": 2 },
+      "expect": { "error": "out of range" }
+    },
+    {
+      "id": "refuses-a-position-out-of-range",
+      "table": "plain",
+      "edit": { "type": "deleteColumn", "index": 2, "count": 2 },
+      "expect": { "error": "out of range" }
+    }
+  ]
+}

@@ -10,7 +10,9 @@
 host storage. Основные image types — PNG/JPEG/GIF/WebP; executable SVG не принимается
 как inline upload. Data attachments скачиваются, а не открываются как HTML-страницы.
 
-React и PageEditor используют общие ImageBlock/FileBlock. Upload не заменяет
+Редактирование картинок и файлов — общие ImageBlock/FileBlock из `@gotipe/react/media`;
+BlockEditor и PageEditor подключают их через `MediaBlocksContext`, а `EditorContent` без
+этого входа показывает их только для чтения. Upload не заменяет
 изменённый источник и не воскрешает удалённый блок. File paste/drop сохраняет
 пакет одним undoable изменением; если за время загрузки изменились документ или
 selection, поздняя вставка отменяется с явной ошибкой. Повтор должен быть явным.

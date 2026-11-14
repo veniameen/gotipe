@@ -64,7 +64,8 @@ export const ListItem = defineExtension({
       name: "listItem",
       group: ["listItem"],
       content: "richText",
-      attrs: {},
+      // `TextDirection` sets it.
+      attrs: { dir: { type: "enum", values: ["ltr", "rtl", "auto"] } },
       topLevel: false,
       marksAllowed: "all",
       leaf: false,
@@ -93,6 +94,7 @@ export const TodoList = defineExtension({
       content: "richText",
       attrs: {
         checked: { type: "bool", default: false },
+        dir: { type: "enum", values: ["ltr", "rtl", "auto"] },
       },
       topLevel: false,
       marksAllowed: "all",

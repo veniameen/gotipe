@@ -9,6 +9,7 @@ import {
 } from "../model";
 import type { Block, RawSegment, Span } from "../types";
 import { normalizeEol } from "../util";
+import { hasMergedCells, tableHtml } from "./table-html";
 
 /** Rendered block tree (offsets relative to the top-level block start). */
 export interface RNode {
@@ -103,7 +104,10 @@ function linkLine(attrs: Record<string, unknown>): string {
 
 /** An empty formula or an embed without an address has no Markdown at any depth. */
 function omitted(block: Block): boolean {
-  return (block.type === "math" || block.type === "embed") && isBlockEmpty(block);
+  return (
+    (block.type === "math" || block.type === "embed" || block.type === "table") &&
+    isBlockEmpty(block)
+  );
 }
 
 /** A `$$` block; TeX with a line of its own `$$` uses a ```` ```math ```` fence instead. */
@@ -195,9 +199,45 @@ function renderList(w: Writer, block: Block, indent: string, ro: RenderOpts, nod
   });
 }
 
+/** A table with merged cells, as an HTML block (see `table-html.ts`). */
+function renderHtmlTable(w: Writer, block: Block, indent: string, ro: RenderOpts, node: RNode) {
+  const at = w.pos;
+  const { text, rows } = tableHtml(block, ro.eol + indent);
+  w.write(text);
+  for (const row of rows) {
+    node.children.push({
+      id: row.id,
+      type: row.type,
+      start: at + row.start,
+      end: at + row.end,
+      segs: [],
+      children: row.cells.map((cell) => ({
+        id: cell.id,
+        type: cell.type,
+        start: at + cell.start,
+        end: at + cell.end,
+        segs: cell.segs.map((s) => ({
+          ...s,
+          mdFrom: s.mdFrom + at + cell.start,
+          mdTo: s.mdTo + at + cell.start,
+        })),
+        children: [],
+      })),
+    });
+  }
+}
+
 function renderTable(w: Writer, block: Block, indent: string, ro: RenderOpts, node: RNode): void {
+  if (hasMergedCells(block)) {
+    renderHtmlTable(w, block, indent, ro, node);
+    return;
+  }
   const rows = block.children ?? [];
-  const cols = Math.max(1, rows[0]?.children?.length ?? 0);
+  // the header row sets the columns; an empty one takes the widest row's, as the Rust writer
+  const cols = Math.max(
+    1,
+    rows[0]?.children?.length || Math.max(0, ...rows.map((row) => row.children?.length ?? 0)),
+  );
   const align = Array.isArray(block.attrs?.align) ? block.attrs.align : [];
   const writeRow = (row: Block): void => {
     const rowNode: RNode = {
@@ -210,7 +250,8 @@ function renderTable(w: Writer, block: Block, indent: string, ro: RenderOpts, no
     };
     w.write("|");
     const cells = row.children ?? [];
-    if (cells.length === 0) w.write(" |");
+    // a row without cells keeps its place: one empty cell per column
+    if (cells.length === 0) w.write("  |".repeat(cols));
     for (const cell of cells) {
       w.write(" ");
       const cellNode: RNode = {

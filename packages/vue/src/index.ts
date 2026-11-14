@@ -9,3 +9,4 @@ export type {
   VueBlockViews,
   VuePlaceholder,
 } from "./editor-content";
+export type { VueMath } from "./atoms";

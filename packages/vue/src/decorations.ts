@@ -151,6 +151,8 @@ export function holdComposing(
 }
 
 const ALIGNMENTS = new Set(["left", "center", "right", "justify"]);
+const DIRECTIONS = new Set(["ltr", "rtl", "auto"]);
+const DIRECTED = new Set(["paragraph", "heading", "listItem", "todoItem"]);
 
 /**
  * Attributes of a block's root from its decorations and its `align` (`TextAlign`): node
@@ -170,6 +172,10 @@ export function blockPresentation(
     attrs["data-align"] = align;
     style = { textAlign: align };
   }
+  // `TextDirection`: the block's own `dir`, else `auto` for a text block (Arabic, Hebrew run RTL).
+  const dir = block.attrs.dir;
+  if (typeof dir === "string" && DIRECTIONS.has(dir)) attrs.dir = dir;
+  else if (DIRECTED.has(block.type)) attrs.dir = "auto";
   for (const d of block.decorations ?? []) {
     if (d.type === "node") {
       const node = d as NodeDecoration;

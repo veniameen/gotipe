@@ -1,0 +1,272 @@
+/* Version history — GoTipe Atlas, frame 30. A component of the library: versions by day — who, when
+   and how much changed; the page compares the chosen version with the current one block by block;
+   «Восстановить» answers with a toast that takes it back. The shell is a size container: on a narrow
+   one the list and the comparison are two screens. */
+
+.gotipe-history-shell {
+  container-type: inline-size;
+  height: 100%;
+  color: var(--gt-text);
+  font-family: var(--gt-font-ui);
+}
+.gotipe-history {
+  display: grid;
+  grid-template-columns: var(--gt-history-columns);
+  min-height: 100%;
+}
+.gotipe-history > * {
+  min-width: 0;
+}
+.gotipe-history-main {
+  position: relative;
+}
+.gotipe-history[data-screen="list"] > .gotipe-history-main {
+  display: var(--gt-history-list-main-display);
+}
+
+/* ---- the panel beside the page ---- */
+.gotipe-history > .gotipe-panel {
+  display: var(--gt-history-panel-display);
+}
+.gotipe-history[data-screen="list"] > .gotipe-panel {
+  display: block;
+}
+.gotipe-panel {
+  box-sizing: border-box;
+  width: auto;
+  padding: var(--gt-panel-pad);
+  border-left: var(--gt-hairline) solid var(--gt-line);
+  font-size: var(--gt-ui-size);
+  line-height: var(--gt-ui-leading);
+  letter-spacing: normal;
+}
+.gotipe-panel-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--gt-menu-gap);
+  margin-bottom: var(--gt-card-pad);
+}
+.gotipe-panel-title {
+  margin: 0;
+  font-size: var(--gt-ui-size);
+  font-weight: var(--gt-weight-strong);
+}
+.gotipe-history-note {
+  margin: 0;
+  padding: var(--gt-card-pad) var(--gt-menu-gap);
+  color: var(--gt-text-3);
+}
+.gotipe-history-note.is-error {
+  color: var(--gt-danger);
+}
+.gotipe-history-note > .gotipe-btn {
+  margin-top: var(--gt-card-gap);
+}
+.gotipe-tool-spacer {
+  flex: 1;
+}
+
+/* ---- the head over the comparison: what is compared, how much, and the one action ---- */
+.gotipe-version-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--gt-menu-gap);
+  row-gap: var(--gt-toolbar-pad);
+  padding: var(--gt-bar-pad);
+  border-bottom: var(--gt-hairline) solid var(--gt-line);
+  font-size: var(--gt-ui-size);
+  line-height: var(--gt-ui-leading);
+  letter-spacing: normal;
+}
+.gotipe-history-back {
+  display: var(--gt-history-back-display);
+  margin-inline-start: calc(-1 * var(--gt-toolbar-pad));
+}
+.gotipe-review-title {
+  font-weight: var(--gt-weight-strong);
+}
+.gotipe-review-fact {
+  color: var(--gt-text-2);
+  font-variant-numeric: tabular-nums;
+}
+.gotipe-history-facts {
+  display: flex;
+  flex-basis: var(--gt-history-facts-basis);
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--gt-menu-gap);
+  order: var(--gt-history-facts-order);
+  min-width: 0;
+}
+.gotipe-diff-stat {
+  color: var(--gt-text-2);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.gotipe-diff-stat > .is-add {
+  color: var(--gt-add);
+}
+.gotipe-diff-stat > .is-del {
+  color: var(--gt-del);
+}
+.gotipe-diff-stat > .is-change {
+  color: var(--gt-info);
+}
+
+/* ---- the list: a quiet day, then versions — name or time, its size, the author ---- */
+.gotipe-history-list {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.gotipe-history-list:focus-visible {
+  outline: none;
+}
+.gotipe-history-day {
+  margin: var(--gt-card-pad) 0 var(--gt-toolbar-pad);
+  padding: 0 var(--gt-menu-gap);
+  color: var(--gt-text-3);
+  font-size: var(--gt-ui-small);
+  font-weight: var(--gt-weight-medium);
+  line-height: var(--gt-ui-small-leading);
+}
+.gotipe-history-list > :first-child > .gotipe-history-day {
+  margin-top: 0;
+}
+.gotipe-history-item {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: baseline;
+  gap: var(--gt-toolbar-gap) var(--gt-menu-gap);
+  padding: var(--gt-card-gap) var(--gt-menu-gap);
+  border-radius: var(--gt-radius-control);
+  cursor: pointer;
+}
+.gotipe-history-item + .gotipe-history-item {
+  margin-top: var(--gt-toolbar-gap);
+}
+.gotipe-history-item:hover {
+  background: var(--gt-fill-1);
+}
+.gotipe-history-item.is-current {
+  background: var(--gt-fill-2);
+}
+.gotipe-history-item:focus-visible {
+  outline: var(--gt-focus-width) solid var(--gt-focus);
+  outline-offset: calc(-1 * var(--gt-focus-width));
+}
+.gotipe-version-name {
+  min-width: 0;
+  overflow: hidden;
+  font-weight: var(--gt-weight-medium);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.gotipe-version-meta {
+  color: var(--gt-text-3);
+  font-size: var(--gt-ui-small);
+  line-height: var(--gt-ui-small-leading);
+}
+.gotipe-history-item.is-current > .gotipe-version-meta {
+  color: var(--gt-text-2);
+}
+.gotipe-history-item > .gotipe-diff-stat {
+  font-size: var(--gt-ui-small);
+  line-height: var(--gt-ui-small-leading);
+}
+.gotipe-history-item > .gotipe-version-meta {
+  display: flex;
+  grid-column: 1 / -1;
+  align-items: center;
+  gap: var(--gt-mention-gap);
+  min-width: 0;
+}
+.gotipe-history-item > .gotipe-version-meta > .gotipe-avatar {
+  width: var(--gt-avatar-inline);
+  height: var(--gt-avatar-inline);
+  line-height: var(--gt-avatar-inline);
+}
+
+/* ---- the comparison: a rule in the gutter marks a block added, removed or changed ---- */
+.gotipe-history-compare [data-diff] {
+  position: relative;
+}
+.gotipe-history-compare [data-diff]::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: calc(-1 * var(--gt-diff-bar-gap));
+  width: var(--gt-rule);
+  border-radius: var(--gt-radius-round);
+  background: var(--gt-add);
+}
+/* a numbered item starts after its list's indent; its rule stands with the paragraphs' */
+.gotipe-history-compare ol > li[data-diff]::after {
+  left: calc(-1 * var(--gt-diff-bar-gap) - var(--gt-indent));
+}
+.gotipe-history-compare [data-diff="removed"]::after {
+  background: var(--gt-del);
+}
+.gotipe-history-compare [data-diff="changed"]::after {
+  background: var(--gt-info);
+}
+.gotipe-history-compare [data-diff="removed"] {
+  color: var(--gt-text-3);
+  text-decoration-line: line-through;
+  text-decoration-thickness: var(--gt-underline);
+  text-decoration-color: var(--gt-del);
+}
+.gotipe-history-compare .gotipe-insert {
+  background: var(--gt-add-tint);
+  box-shadow: inset 0 calc(-1 * var(--gt-rule)) 0 var(--gt-add);
+  color: inherit;
+  text-decoration: none;
+}
+.gotipe-history-compare .gotipe-delete {
+  color: var(--gt-text-3);
+  text-decoration-line: line-through;
+  text-decoration-thickness: var(--gt-underline);
+  text-decoration-color: var(--gt-del);
+}
+.gotipe-history-same {
+  color: var(--gt-text-3);
+}
+
+/* ---- the toast after restoring: what happened and the way back ---- */
+.gotipe-history-main > .gotipe-toast {
+  position: absolute;
+  z-index: var(--gt-z-toast);
+  gap: var(--gt-toast-gap);
+  padding: var(--gt-toast-pad);
+  white-space: nowrap;
+  pointer-events: auto;
+}
+.gotipe-toast.is-done > svg {
+  color: var(--gt-inverse-text-2);
+}
+.gotipe-toast > .gotipe-btn {
+  height: var(--gt-button-h);
+  background: transparent;
+  color: var(--gt-inverse-accent);
+}
+.gotipe-toast > .gotipe-btn:hover:not(:disabled) {
+  background: transparent;
+  color: var(--gt-inverse-accent);
+  text-decoration: underline;
+}
+.gotipe-toast .gotipe-key {
+  color: var(--gt-inverse-text-2);
+  font-size: var(--gt-ui-small);
+  font-weight: var(--gt-weight-regular);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: normal;
+}
+
+/* ---- a closed history keeps only the page, mounted as it was ---- */
+.gotipe-history[data-open="false"] {
+  display: block;
+}

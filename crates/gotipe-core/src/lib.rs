@@ -6,6 +6,7 @@ pub mod extension;
 pub mod selection;
 mod selection_mapping;
 pub mod state;
+pub mod table;
 pub mod transaction;
 pub mod transform;
 

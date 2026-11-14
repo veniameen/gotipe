@@ -99,6 +99,10 @@
   --gt-warning-tint: rgb(234 179 8 / 0.1);
   --gt-danger: #c4382f;
   --gt-danger-tint: rgb(196 56 47 / 0.07);
+  --gt-find: rgb(234 179 8 / 0.22);
+  --gt-find-current: rgb(234 179 8 / 0.5);
+  --gt-find-ring: rgb(154 101 0 / 0.6);
+  --gt-over-limit: rgb(196 56 47 / 0.13);
   --gt-success: #2b7547;
   --gt-success-tint: rgb(43 117 71 / 0.08);
   --gt-add: #2b7a48;
@@ -247,6 +251,10 @@
   --gt-warning-tint: rgb(226 173 69 / 0.1);
   --gt-danger: #f06b60;
   --gt-danger-tint: rgb(240 107 96 / 0.1);
+  --gt-find: rgb(226 173 69 / 0.16);
+  --gt-find-current: rgb(226 173 69 / 0.32);
+  --gt-find-ring: rgb(226 173 69 / 0.75);
+  --gt-over-limit: rgb(240 107 96 / 0.2);
   --gt-success: #6cc48a;
   --gt-success-tint: rgb(108 196 138 / 0.1);
   --gt-add: #7fd09b;
@@ -396,6 +404,10 @@
     --gt-warning-tint: rgb(226 173 69 / 0.1);
     --gt-danger: #f06b60;
     --gt-danger-tint: rgb(240 107 96 / 0.1);
+    --gt-find: rgb(226 173 69 / 0.16);
+    --gt-find-current: rgb(226 173 69 / 0.32);
+    --gt-find-ring: rgb(226 173 69 / 0.75);
+    --gt-over-limit: rgb(240 107 96 / 0.2);
     --gt-success: #6cc48a;
     --gt-success-tint: rgb(108 196 138 / 0.1);
     --gt-add: #7fd09b;

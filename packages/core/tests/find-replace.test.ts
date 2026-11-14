@@ -270,3 +270,46 @@ describe.each(ENGINES)("%s find and replace", (engine) => {
     expect(getFindReplace(editor)).toBeNull();
   });
 });
+
+describe.each(ENGINES)("%s find over inline atoms", (engine) => {
+  it("draws, selects and passes over a match inside a mention or a formula whole", async () => {
+    const { InlineMath, Mention, insertInlineMath, insertMention } = await import(
+      "../src/extensions"
+    );
+    const editor = await createOn(engine, {
+      extensions: [Paragraph, Mention, InlineMath, FindReplace],
+      content: doc(paragraph("p", "Анна и ")),
+    });
+    editors.push(editor);
+    editor.setSelection({ anchor: { blockId: "p", offset: 7 }, head: { blockId: "p", offset: 7 } });
+    insertMention(editor, { id: "u1", label: "Анна" });
+    insertInlineMath(editor, "x^2+x");
+    // "Анна и @Аннаx^2+x": the mention is [7, 12), the formula [12, 17).
+    const search = getFindReplace(editor)!;
+    expect(search.setSearch({ query: "нн" }).total).toBe(2);
+    const drawn = () =>
+      editor
+        .getDecorations("search")
+        .map((d) => [(d as { from: number }).from, (d as { to: number }).to]);
+    expect(drawn()).toEqual([
+      [1, 3],
+      [7, 12],
+    ]);
+    search.next();
+    search.selectCurrent();
+    expect(editor.getViewState().selection.anchor.offset).toBe(7);
+    expect(editor.getViewState().selection.head.offset).toBe(12);
+
+    // Two matches in one formula: counted twice, drawn once, as the whole formula.
+    expect(search.setSearch({ query: "x" }).total).toBe(2);
+    expect(drawn()).toEqual([[12, 17]]);
+    expect(await search.replace("y")).toBe(false);
+    expect(await search.replaceAll("y")).toBe(0);
+    expect(editor.getText()).toBe("Анна и @Аннаx^2+x");
+
+    // Plain matches are replaced, atoms are kept.
+    search.setSearch({ query: "Анна" });
+    expect(await search.replaceAll("Мария")).toBe(1);
+    expect(editor.getText()).toBe("Мария и @Аннаx^2+x");
+  });
+});

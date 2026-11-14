@@ -250,10 +250,9 @@ export function isBlockEmpty(block: Block): boolean {
         : spansText(richContent(block)).length === 0;
     case "embed":
       return str(block.attrs?.url) === "";
-    case "table": {
-      const first = block.children?.[0];
-      return !first || !first.children || first.children.length === 0;
-    }
+    case "table":
+      // a table is kept while any row has a cell, even when its first row has none
+      return !(block.children ?? []).some((row) => (row.children?.length ?? 0) > 0);
     default:
       return false;
   }

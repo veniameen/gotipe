@@ -3,6 +3,7 @@ import { FullPreset } from "@gotipe/core/presets";
 import { useEditor } from "@gotipe/react";
 import { useCallback, useState } from "react";
 import { useDebugEditor } from "../shared/use-debug-editor";
+import { MERGED_TABLE_BLOCKS } from "./merged-table";
 
 const INITIAL_CONTENT = {
   version: 1,
@@ -290,6 +291,8 @@ const INITIAL_CONTENT = {
         },
       ],
     },
+    // merged cells, Atlas frame 29
+    ...MERGED_TABLE_BLOCKS,
     // --- Phase 3.12: Toggle ---
     {
       id: "b14",

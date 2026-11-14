@@ -68,7 +68,8 @@ describe("HTML document input", () => {
       content: "  const x = 1;\n\n  x++;",
     });
     expect(doc.blocks[1]!.children[0]!.children[0]!.type).toBe("tableHeader");
-    expect(doc.blocks[1]!.children[1]!.children[0]!.attrs.rowspan).toBe(2);
+    // a cell over rows past the last row is cut there, as browsers draw it
+    expect(doc.blocks[1]!.children[1]!.children[0]!.attrs.rowspan).toBe(1);
     expect(doc.blocks[1]!.children[1]!.children[1]!.attrs.align).toBe("right");
     expect(blocksToText(doc.blocks)).toContain("Name\tValue\nA\t42");
   });

@@ -36,7 +36,13 @@ GoTipe не владеет Wiki приложения-хоста: страниц�
 Медиа: core/assets отвечает за durable storage boundary; React/media — загрузку,
 отмену, диалоги, preview/crop/resize. PageEditor переиспользует эти компоненты.
 Таблицы: core/tables планирует одну атомарную структурную операцию;
-React/content/table-layout владеет временной шириной при drag и controls.
+`core/table/grid.ts` — сетка HTML (охваты, позиции, диапазон по объединённым ячейкам),
+`table/layout.ts` — план правки и проверка сетки, `table/steps.ts` — шаги с сохранением
+ID; Rust-копия — `crates/gotipe-core/src/table` (`edit_table`), общие случаи —
+`crates/gotipe-core/tests/fixtures/table-edits.json`.
+React/content/table-layout владеет временной шириной при drag и controls,
+`table-cells.tsx` — охватами ячеек и выделением ячеек; меню «Ячейки» —
+`block-editor/src/table/cell-actions.ts`.
 
 
 Контракты редактора и review: [editor-contracts.md](editor-contracts.md).
@@ -53,11 +59,12 @@ React/content/table-layout владеет временной шириной пр
 | Состояние расширения вне документа (поиск, счётчик, слои) — один контроллер на редактор | `extensions/scoped.ts`; владельцы — `extensions/find-replace`, `character-count`, `decorations`, `trailing-node.ts` |
 | Правила ввода у каретки (типографика, автоссылки) | `extensions/typing/caret.ts`, `typing/typography.ts`, `links/` |
 | Поиск регулярным выражением: Worker с прерыванием по таймауту, без Worker — статическая проверка | `extensions/find-replace/worker.ts`, `scan.ts` (общий сканер страницы и Worker), `guard.ts` |
+| Шрифт, размер и направление текста: значения и проверки одни для команд, HTML и импорта | `document/text-style.ts`; команды — `extensions/text-style.ts`, `text-direction.ts`; Rust — `gotipe-export/src/html/text_style.rs` |
 | IME в рендерерах: `editor.isComposing`, удержание декораций составляемого блока | `editor/mount.ts`; React `content/decorations.ts` (`holdComposing`), Vue `decorations.ts` |
 | Вставка с учётом разрешённых детей контейнера | `commands/insertion-point.ts`, `commands/structure-commands.ts` |
 | Наложение mark на span: замена того же типа, exclusive group | `engine/mark-rules.ts` = `crates/gotipe-core/src/transform/marks.rs` |
 | Атомарная разметка: атомы, нормализация шагов, края | `engine/atoms.ts` = `crates/gotipe-core/src/atoms.rs`; выделение — `editor/atom-selection.ts`; ключи — `engine/atom-keys.ts`; поддержка атомов (`atomSupport`: чужой текст `engine/remote-atoms.ts` и `editor/remote-atom-repair.ts`, HTML `document/html-atoms.ts`) — `extensions/atoms/support.ts`, вне графа ядра |
-| Атомы строки и подсказки по символу | `extensions/atoms/`, `extensions/suggestion/`; эмодзи — вход `emoji.ts` |
+| Атомы строки и подсказки по символу | `extensions/atoms/`, `extensions/suggestion/`; эмодзи — вход `emoji.ts` (русские имена — `emoji-ru.ts`); TeX → MathML — вход `math.ts` (`math/`); каретка у атома — `dom/selection.ts`. Вид атомов — React `content/atoms.tsx`, Vue `atoms.ts`; списки, выбор эмодзи и поле формулы — `block-editor/src/atoms/` |
 
 `editor.ts` связывает владельцев. Команды получают узкий query собранной схемы
 (`commands/schema.ts`: разрешённые дети, marks блока, exclusive group, defaults атрибутов,
@@ -127,3 +134,20 @@ consuming the application error channel.
 `editor.getDOMSelection()` — чистый public read через существующий `core/src/dom/selection.ts`;
 React captures native selection before presentation-only DOM replacement without changing
 the model snapshot or implementing a second DOM-to-document mapper.
+
+Поиск, счётчик и раскладка текста в UI (Атлас, кадры 25–28): `block-editor/src/text/` — строка
+поиска (`find-bar.tsx`, клавиши `find-keys.ts`), строка счётчика и слой текста за пределом
+(`status-line.tsx`, `over-limit.ts`), выравнивание в «Ещё» и в панели (`align.tsx`), шрифт и размер
+(`font.tsx`), переключатель ¶ (`invisibles.tsx`), ручка блока справа налево (`direction.ts`).
+`BlockEditor` только подключает их; вид — `theme/src/theme/{find,status,text-style}.css`.
+
+Картинки и файлы в React: `react/src/content/media-view.tsx` рисует их только для чтения,
+`content/media-blocks.ts` — `MediaBlocksContext`. Редактирование (загрузка, ссылка, размер,
+кадрирование, подпись, alt, просмотр, меню действий) — отдельный вход `@gotipe/react/media`
+(`react/src/media/index.ts`); основной вход React его не импортирует (`media-entry.test.tsx`).
+`block-editor/src/components/editor-providers.tsx` подключает его вместе со строками и атомами.
+
+Строки интерфейса: `@gotipe/i18n` (`i18n/src/locales/`) несёт то, что рисует `@gotipe/react`,
+и общие слова; строки самого блочного редактора — `block-editor/src/i18n/{en,ru}.ts` (ключи —
+тип `BlockEditorTranslationKey`, `i18n/src/block-editor-keys.ts`). `withBlockEditorStrings`
+кладёт их под `I18n` хоста; компоненты блочного редактора читают `useBlockEditorI18n()`.

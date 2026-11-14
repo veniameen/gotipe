@@ -185,7 +185,11 @@ pub(crate) fn reconcile(
         .state
         .nodes
         .iter()
-        .filter(|(id, n)| !n.deleted && !ids.contains(*id))
+        // A block hidden under a deleted ancestor is not in the target either;
+        // deleting it too would make undoing that delete lose it.
+        .filter(|(id, n)| {
+            !n.deleted && !ids.contains(*id) && writer.state.placement(id, n).is_some()
+        })
         .map(|(id, _)| BlockId(id.clone()))
         .collect();
     for block_id in removed {

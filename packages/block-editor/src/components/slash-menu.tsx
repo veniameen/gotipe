@@ -17,9 +17,11 @@ export interface SlashMenuProps {
   className?: string;
 }
 
-import { type TranslationKey, createI18n, en } from "@gotipe/i18n";
-import { useGoTipeI18n } from "@gotipe/react";
+import type { BlockEditorTranslationKey, TranslationKey } from "@gotipe/i18n";
+import { blockEditorEn } from "../i18n/en";
+import { useBlockEditorI18n } from "../i18n/strings";
 import { getCaretClientRect, getCaretClientRectFromTrigger } from "./slash/caret";
+import { useListOwner } from "./slash/combobox";
 import { isAccentIcon, markdownShortcut, renderIcon } from "./slash/icons";
 import {
   LIST_CONTAINER_TYPES,
@@ -44,7 +46,7 @@ const GROUP_LABELS: Record<string, TranslationKey> = {
 };
 
 /** Built-in commands by icon; a command is translated only when its name is the core's own. */
-const COMMAND_NAMES: Record<string, TranslationKey> = {
+const COMMAND_NAMES: Record<string, BlockEditorTranslationKey> = {
   type: "slashMenu.text",
   "heading-1": "slashMenu.heading1",
   "heading-2": "slashMenu.heading2",
@@ -63,8 +65,9 @@ const COMMAND_NAMES: Record<string, TranslationKey> = {
   columns: "slashMenu.columns",
   "external-link": "slashMenu.embed",
   "function-square": "slashMenu.math",
+  smile: "slashMenu.emoji",
+  function: "slashMenu.inlineMath",
 };
-const englishNames = createI18n({ locale: "en", locales: { en } });
 
 export function SlashMenu({
   editor,
@@ -82,13 +85,13 @@ export function SlashMenu({
   const menuRef = useRef<HTMLDivElement>(null);
   const listId = useId();
   const queryRef = useRef("");
-  const i18n = useGoTipeI18n();
+  const i18n = useBlockEditorI18n();
   // Built-in commands speak the editor's language; their English name stays a search alias.
   const localized = useMemo(
     () =>
       commands.map((cmd) => {
         const key = COMMAND_NAMES[cmd.icon.toLowerCase()];
-        if (!key || englishNames.t(key) !== cmd.name) return cmd;
+        if (!key || blockEditorEn[key] !== cmd.name) return cmd;
         const name = i18n.t(key);
         return name === cmd.name ? cmd : { ...cmd, name, aliases: [...cmd.aliases, cmd.name] };
       }),
@@ -394,6 +397,11 @@ export function SlashMenu({
     }
   }, [selectedIndex, visible]);
 
+  useListOwner(
+    editor,
+    visible ? listId : null,
+    visible && flatItems.length ? `${listId}-item-${selectedIndex}` : null,
+  );
   if (!visible) return null;
 
   let flatIdx = 0;
@@ -425,8 +433,6 @@ export function SlashMenu({
         id={listId}
         className="gotipe-slash-menu-list"
         role="listbox"
-        tabIndex={0}
-        aria-activedescendant={flatItems.length ? `${listId}-item-${selectedIndex}` : undefined}
         aria-label={labels?.list ?? i18n.t("slashMenu.list")}
       >
         {grouped.map((group, gi) => (

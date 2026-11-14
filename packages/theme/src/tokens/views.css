@@ -5,6 +5,7 @@
     "Segoe UI", system-ui, "Helvetica Neue", Arial, sans-serif;
   --gt-font-mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, "Liberation Mono",
     monospace;
+  --gt-font-serif: ui-serif, "Iowan Old Style", Charter, Georgia, "Times New Roman", serif;
   --gt-font-body: var(--gt-font-ui);
   --gt-font-heading: var(--gt-font-ui);
   --gt-font-features: normal;
@@ -13,6 +14,7 @@
   --gt-weight-strong: 600;
   --gt-weight-title: 700;
   --gt-radius-inline: 4px;
+  --gt-radius-match: 3px;
   --gt-radius-check: 4px;
   --gt-radius-control: 6px;
   --gt-radius-block: 8px;
@@ -300,6 +302,44 @@
   --gt-block-gap: var(--gt-flow);
   --gt-block-indent: var(--gt-indent);
   --gt-control-height: var(--gt-menu-item-h);
+  --gt-diff-bar-gap: 16px;
+  --gt-history-columns: minmax(0, 1fr) var(--gt-panel-w);
+  --gt-history-panel-display: block;
+  --gt-history-list-main-display: block;
+  --gt-history-back-display: none;
+  --gt-history-facts-basis: auto;
+  --gt-history-facts-order: 0;
+  --gt-find-w: 452px;
+  --gt-find-inset: 12px;
+  --gt-find-columns: auto minmax(0, 1fr) auto;
+  --gt-find-tools-column: auto;
+  --gt-find-sep-end: var(--gt-tool-sep-gap);
+  --gt-status-gap: 40px;
+  --gt-space-mark-shift: -0.14em;
+  --gt-size-field-w: 36px;
+  --gt-chip-pad-x: 3px;
+  --gt-menu-avatar-inset: 2px;
+  --gt-emoji-menu: 15px;
+  --gt-emoji-menu-leading: 20px;
+  --gt-emoji-picker-w: 344px;
+  --gt-emoji-cell: 36px;
+  --gt-emoji-grid: 22px;
+  --gt-emoji-grid-leading: 28px;
+  --gt-emoji-scroll-h: 214px;
+  --gt-emoji-inline: 1.25em;
+  --gt-emoji-inline-shift: -0.24em;
+  --gt-math-op: 0.28em;
+  --gt-math-frac: 0.8em;
+  --gt-math-frac-leading: 1;
+  --gt-math-frac-pad: 0.14em;
+  --gt-math-script: 0.7em;
+  --gt-math-display-frac: 1em;
+  --gt-math-display-leading: 1.25;
+  --gt-math-pop-w: 288px;
+  --gt-math-preview-pad: 12px;
+  --gt-math-preview-size: 18px;
+  --gt-math-preview-leading: 26px;
+  --gt-find-sticky-top: 0px;
 }
 
 [data-gt-view="docs"] {
@@ -384,7 +424,7 @@
 }
 
 @container (max-width: 640px) {
-  :is(.gotipe-block-editor, .gotipe-editor) > * {
+  :is(.gotipe-block-editor, .gotipe-editor, .gotipe-history-shell) > * {
     --gt-page-pad-top: 40px;
     --gt-page-pad-x: 20px;
     --gt-table-add: 12px;
@@ -402,6 +442,17 @@
     --gt-head-after: 24px;
     --gt-callout-pad: 12px 14px;
     --gt-outline-display: none;
+    --gt-history-columns: minmax(0, 1fr);
+    --gt-history-panel-display: none;
+    --gt-history-list-main-display: none;
+    --gt-history-back-display: inline-flex;
+    --gt-history-facts-basis: 100%;
+    --gt-history-facts-order: 1;
+    --gt-find-inset: 8px;
+    --gt-find-w: calc(100% - 2 * var(--gt-find-inset));
+    --gt-find-columns: auto minmax(0, 1fr);
+    --gt-find-tools-column: 1 / -1;
+    --gt-find-sep-end: auto;
     --gt-row-handle-full: calc(var(--gt-handle-w) + var(--gt-table-add-gap));
     --gt-text-prose: var(--gt-body-size);
     --gt-leading-prose: var(--gt-body-leading);
@@ -427,8 +478,8 @@
     --gt-control-height: var(--gt-menu-item-h);
   }
 
-  [data-gt-view="minimal"]:is(.gotipe-block-editor, .gotipe-editor) > *,
-  [data-gt-view="minimal"] :is(.gotipe-block-editor, .gotipe-editor) > * {
+  [data-gt-view="minimal"]:is(.gotipe-block-editor, .gotipe-editor, .gotipe-history-shell) > *,
+  [data-gt-view="minimal"] :is(.gotipe-block-editor, .gotipe-editor, .gotipe-history-shell) > * {
     --gt-page-pad-top: 24px;
     --gt-page-pad-x: 16px;
     --gt-page-pad-bottom: 32px;
@@ -441,7 +492,6 @@
     --gt-flow-h1: 24px;
     --gt-flow-h2: 20px;
     --gt-row-handle-full: calc(var(--gt-handle-w) + var(--gt-table-add-gap));
-    --gt-row-handle-room: min(var(--gt-row-handle-full), var(--gt-page-pad-x));
     --gt-text-prose: var(--gt-body-size);
     --gt-leading-prose: var(--gt-body-leading);
     --gt-tracking-prose: var(--gt-body-tracking);
@@ -468,7 +518,7 @@
 }
 
 @container (max-width: 359px) {
-  :is(.gotipe-block-editor, .gotipe-editor) > * {
+  :is(.gotipe-block-editor, .gotipe-editor, .gotipe-history-shell) > * {
     --gt-page-pad-x: 16px;
     --gt-title-size: 24px;
     --gt-title-leading: 30px;
@@ -476,7 +526,6 @@
     --gt-code-pad-bottom: 12px;
     --gt-code-head-pad: 0 4px 0 12px;
     --gt-row-handle-full: calc(var(--gt-handle-w) + var(--gt-table-add-gap));
-    --gt-row-handle-room: min(var(--gt-row-handle-full), var(--gt-page-pad-x));
     --gt-text-prose: var(--gt-body-size);
     --gt-leading-prose: var(--gt-body-leading);
     --gt-tracking-prose: var(--gt-body-tracking);
@@ -501,12 +550,11 @@
     --gt-control-height: var(--gt-menu-item-h);
   }
 
-  [data-gt-view="minimal"]:is(.gotipe-block-editor, .gotipe-editor) > *,
-  [data-gt-view="minimal"] :is(.gotipe-block-editor, .gotipe-editor) > * {
+  [data-gt-view="minimal"]:is(.gotipe-block-editor, .gotipe-editor, .gotipe-history-shell) > *,
+  [data-gt-view="minimal"] :is(.gotipe-block-editor, .gotipe-editor, .gotipe-history-shell) > * {
     --gt-title-size: 22px;
     --gt-title-leading: 28px;
     --gt-row-handle-full: calc(var(--gt-handle-w) + var(--gt-table-add-gap));
-    --gt-row-handle-room: min(var(--gt-row-handle-full), var(--gt-page-pad-x));
     --gt-text-prose: var(--gt-body-size);
     --gt-leading-prose: var(--gt-body-leading);
     --gt-tracking-prose: var(--gt-body-tracking);

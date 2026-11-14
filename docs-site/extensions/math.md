@@ -1,11 +1,11 @@
 ---
 title: Math
-description: The Math node stores a formula as TeX source; GoTipe shows and edits the source, and you plug in your own renderer to draw it.
+description: The Math node stores a formula as TeX source; GoTipe draws it with its own TeX → MathML converter and edits the source, or you plug in your own renderer.
 packages: ["@gotipe/core", "@gotipe/react"]
 license: MIT
 ---
 
-`math` stores a formula as raw TeX text. GoTipe ships no TeX renderer: the editor shows the source in a monospace block and edits it as text. To draw formulas, give the editor your own view for `math`, and your server-side HTML a renderer for it.
+`math` stores a formula as raw TeX text. The block editor draws it with GoTipe's own TeX → MathML converter (`@gotipe/core/math`) and shows the source for editing while the caret is in the block; without a TeX reader the React view shows the source only. To draw formulas another way, give the editor your own view for `math`, and your server-side HTML a renderer for it.
 
 The `Math` extension is in `FullPreset` only. `DefaultPreset` and `PageEditor` do not include it. Its export name shadows the global `Math`, so import it under another name:
 
@@ -43,7 +43,39 @@ The "/" menu lists **Math Equation** (it also answers to `math`, `equation`, `la
 
 ## What the editor shows
 
-The React view draws the block with the label "Formula · TeX" and the source below it, edited like code. The Vue adapter draws the source in a `<pre class="gotipe-math">`. Neither typesets the formula.
+With a TeX reader — `BlockEditor` and `PageEditor` give one, with `EditorContent` pass `parseTex` through `MathRendererContext` ([Inline atoms](/docs/extensions/inline-atoms#how-atoms-look)) — the React view draws the block with the label "Formula · TeX" and the typeset formula, centred, in the document's font (GoTipe Atlas, frames 18 and 24). With the caret in the block the source shows, edited like code, with the drawing under it; TeX that cannot be read shows the source and the reason. At rest the source stays in place, transparent over the drawing, so a click or the arrow keys still reach it. The Vue adapter draws the source in a `<pre class="gotipe-math">`.
+
+## Rendering formulas
+
+`@gotipe/core/math` is an optional entry, outside the core bundle and free of frameworks:
+
+```ts title="formula.ts"
+import { mathToDOM, mathToString, parseTex } from "@gotipe/core/math";
+
+const result = parseTex("p = \\frac{L}{N}", { display: true });
+if (result.ok) {
+  element.append(mathToDOM(result.math, document)); // MathML elements
+  const html = mathToString(result.math); // escaped markup for server HTML
+} else {
+  console.log(result.error.code, result.error.detail, result.error.from, result.error.to);
+}
+```
+
+It covers a practical subset: digits, Latin and Greek letters (`\alpha`…`\omega`, `\Gamma`…`\Omega`), operators and relations (`\cdot \times \le \ge \ne \approx \equiv \in \to \infty`…), `\frac` (`\dfrac`, `\tfrac`), `^` and `_` with groups, primes, `\sqrt` and `\sqrt[n]`, `\sum \prod \int \lim` and function names (`\sin`, `\log`, `\max`…) with limits under and over them in display mode and beside them in a line, `\left`/`\middle`/`\right` with `( ) [ ] \{ \} | \| \langle \rangle .`, `\text`, font commands (`\mathbf`, `\mathbb`, `\mathcal`, `\mathrm`, `\operatorname`…), accents (`\hat \bar \vec \tilde \dot \overline \underline`…) and spaces (`\, \; \quad`…).
+
+The result is built from an allowed set of MathML elements and attributes; text from the source only ever becomes text, and no attribute value comes from it. Anything else is an error, never raw output:
+
+| `error.code` | Example |
+| --- | --- |
+| `unclosedGroup` | `\frac{L}{N` (`detail`: `}`) |
+| `unexpectedClose` | `a}` |
+| `unknownCommand` | `\href{…}`, `\color`, `\begin` |
+| `missingArgument` | `\frac{a}` |
+| `unmatchedLeft`, `unmatchedRight`, `badDelimiter` | `\left( a`, `a \right)`, `\left< a \right>` |
+| `doubleScript` | `x^2^3` |
+| `tooLong`, `tooDeep` | more than 2000 characters, more than 64 nested groups |
+
+`%` starts a TeX comment; write `\%` for a percent sign. Not supported: environments and matrices (`\begin…\end`), `\binom`, `\big` sizes, `\color`, `\not`, `\overset`, line breaks.
 
 ## Your own renderer
 
@@ -141,7 +173,7 @@ GoTipe escapes ordinary document text, but the HTML a block renderer returns is 
 | `getText()` | The source |
 
 > [!NOTE]
-> Math is always a block node: there is no inline math mark, and `display: "inline"` is only a hint for your renderer. The `$$` rule keeps the two dollar signs as the start of the TeX source; delete them after the conversion. `getMarkdown()` writes a formula as a `$$` block, which GitHub and most Markdown renderers show as math, and `parseMarkdown` reads `$$` blocks and ```` ```math ```` fences back as formulas with the source unchanged.
+> Math is always a block node; a formula inside a line is the `InlineMath` atom ([Inline atoms](/docs/extensions/inline-atoms)), and `display: "inline"` is only a hint for your renderer. The `$$` rule keeps the two dollar signs as the start of the TeX source; delete them after the conversion. `getMarkdown()` writes a formula as a `$$` block, which GitHub and most Markdown renderers show as math, and `parseMarkdown` reads `$$` blocks and ```` ```math ```` fences back as formulas with the source unchanged.
 
 ## Related
 

@@ -1,7 +1,7 @@
 //! Document semantics survive pagination independently of visual row fragments.
 use super::{
     flow::Row,
-    layout::{attr, number, Layout},
+    layout::{attr, number, span, Layout},
     model::{DrawOp, Tag},
 };
 use gotipe_core::Block;
@@ -60,8 +60,8 @@ pub(crate) fn wrap(context: &Layout<'_>, block: &Block, rows: &mut [Row]) {
         tag.alt = Some(attr(block, "alt").into());
     }
     if role == "TD" || role == "TH" {
-        tag.colspan = number(block, "colspan", 1).clamp(1, 100) as u32;
-        tag.rowspan = number(block, "rowspan", 1).clamp(1, 100) as u32;
+        tag.colspan = span(block, "colspan") as u32;
+        tag.rowspan = span(block, "rowspan") as u32;
     }
     let body = (role == "LI").then(|| context.tag("LBody"));
     for row in rows {

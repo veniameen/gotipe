@@ -800,6 +800,740 @@
           "children": []
         }
       ]
+    },
+    {
+      "id": "merged-cells-as-html",
+      "document": {
+        "version": 1,
+        "blocks": [
+          {
+            "id": "p",
+            "type": "paragraph",
+            "attrs": {},
+            "content": [
+              {
+                "text": "До",
+                "marks": []
+              }
+            ],
+            "children": []
+          },
+          {
+            "id": "t",
+            "type": "table",
+            "attrs": {
+              "align": [
+                null,
+                null,
+                "right",
+                null
+              ],
+              "colWidths": [
+                160,
+                160,
+                120,
+                160
+              ]
+            },
+            "content": null,
+            "children": [
+              {
+                "id": "r0",
+                "type": "tableRow",
+                "attrs": {},
+                "content": null,
+                "children": [
+                  {
+                    "id": "h0",
+                    "type": "tableHeader",
+                    "attrs": {
+                      "rowspan": 2
+                    },
+                    "content": [
+                      {
+                        "text": "Платформа",
+                        "marks": []
+                      }
+                    ],
+                    "children": []
+                  },
+                  {
+                    "id": "h1",
+                    "type": "tableHeader",
+                    "attrs": {
+                      "colspan": 2,
+                      "align": "center"
+                    },
+                    "content": [
+                      {
+                        "text": "Журнал",
+                        "marks": []
+                      }
+                    ],
+                    "children": []
+                  },
+                  {
+                    "id": "h2",
+                    "type": "tableHeader",
+                    "attrs": {
+                      "rowspan": 2
+                    },
+                    "content": [
+                      {
+                        "text": "Шифрование",
+                        "marks": []
+                      }
+                    ],
+                    "children": []
+                  }
+                ]
+              },
+              {
+                "id": "r1",
+                "type": "tableRow",
+                "attrs": {},
+                "content": null,
+                "children": [
+                  {
+                    "id": "h3",
+                    "type": "tableHeader",
+                    "attrs": {},
+                    "content": [
+                      {
+                        "text": "Ключ",
+                        "marks": []
+                      }
+                    ],
+                    "children": []
+                  },
+                  {
+                    "id": "h4",
+                    "type": "tableHeader",
+                    "attrs": {},
+                    "content": [
+                      {
+                        "text": "В очереди",
+                        "marks": []
+                      }
+                    ],
+                    "children": []
+                  }
+                ]
+              },
+              {
+                "id": "r2",
+                "type": "tableRow",
+                "attrs": {},
+                "content": null,
+                "children": [
+                  {
+                    "id": "c0",
+                    "type": "tableCell",
+                    "attrs": {},
+                    "content": [
+                      {
+                        "text": "Веб",
+                        "marks": []
+                      }
+                    ],
+                    "children": []
+                  },
+                  {
+                    "id": "c1",
+                    "type": "tableCell",
+                    "attrs": {},
+                    "content": [
+                      {
+                        "text": "drafts.web",
+                        "marks": [
+                          {
+                            "type": "code",
+                            "attrs": {}
+                          }
+                        ]
+                      }
+                    ],
+                    "children": []
+                  },
+                  {
+                    "id": "c2",
+                    "type": "tableCell",
+                    "attrs": {},
+                    "content": [
+                      {
+                        "text": "1 284",
+                        "marks": []
+                      }
+                    ],
+                    "children": []
+                  },
+                  {
+                    "id": "c3",
+                    "type": "tableCell",
+                    "attrs": {
+                      "rowspan": 2,
+                      "colspan": 1
+                    },
+                    "content": [
+                      {
+                        "text": "Ключ ",
+                        "marks": []
+                      },
+                      {
+                        "text": "сессии",
+                        "marks": [
+                          {
+                            "type": "bold",
+                            "attrs": {}
+                          }
+                        ]
+                      }
+                    ],
+                    "children": []
+                  }
+                ]
+              },
+              {
+                "id": "r3",
+                "type": "tableRow",
+                "attrs": {},
+                "content": null,
+                "children": [
+                  {
+                    "id": "c4",
+                    "type": "tableCell",
+                    "attrs": {},
+                    "content": [
+                      {
+                        "text": "macOS",
+                        "marks": []
+                      }
+                    ],
+                    "children": []
+                  },
+                  {
+                    "id": "c5",
+                    "type": "tableCell",
+                    "attrs": {},
+                    "content": [
+                      {
+                        "text": "a | b <x>",
+                        "marks": []
+                      }
+                    ],
+                    "children": []
+                  },
+                  {
+                    "id": "c6",
+                    "type": "tableCell",
+                    "attrs": {},
+                    "content": [
+                      {
+                        "text": "312",
+                        "marks": []
+                      }
+                    ],
+                    "children": []
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "t2",
+            "type": "table",
+            "attrs": {},
+            "content": null,
+            "children": [
+              {
+                "id": "s0",
+                "type": "tableRow",
+                "attrs": {},
+                "content": null,
+                "children": [
+                  {
+                    "id": "d0",
+                    "type": "tableCell",
+                    "attrs": {
+                      "colspan": "2"
+                    },
+                    "content": [
+                      {
+                        "text": "сайт",
+                        "marks": [
+                          {
+                            "type": "link",
+                            "attrs": {
+                              "href": "https://gotipe.test/a?b=1&c=\"2\""
+                            }
+                          },
+                          {
+                            "type": "bold",
+                            "attrs": {}
+                          }
+                        ]
+                      },
+                      {
+                        "text": " и ",
+                        "marks": []
+                      },
+                      {
+                        "text": "скрипт",
+                        "marks": [
+                          {
+                            "type": "link",
+                            "attrs": {
+                              "href": "javascript:alert(1)"
+                            }
+                          }
+                        ]
+                      },
+                      {
+                        "text": "\nвторая ",
+                        "marks": []
+                      },
+                      {
+                        "text": "красная",
+                        "marks": [
+                          {
+                            "type": "textColor",
+                            "attrs": {
+                              "color": "#c4382f"
+                            }
+                          }
+                        ]
+                      },
+                      {
+                        "text": "жёлтая",
+                        "marks": [
+                          {
+                            "type": "highlight",
+                            "attrs": {}
+                          }
+                        ]
+                      },
+                      {
+                        "text": "@Анна",
+                        "marks": [
+                          {
+                            "type": "mention",
+                            "attrs": {
+                              "id": "42",
+                              "label": "Анна",
+                              "kind": "user"
+                            }
+                          }
+                        ]
+                      },
+                      {
+                        "text": "a",
+                        "marks": [
+                          {
+                            "type": "italic",
+                            "attrs": {}
+                          },
+                          {
+                            "type": "underline",
+                            "attrs": {}
+                          }
+                        ]
+                      },
+                      {
+                        "text": "b",
+                        "marks": [
+                          {
+                            "type": "underline",
+                            "attrs": {}
+                          },
+                          {
+                            "type": "italic",
+                            "attrs": {}
+                          }
+                        ]
+                      }
+                    ],
+                    "children": []
+                  }
+                ]
+              },
+              {
+                "id": "s1",
+                "type": "tableRow",
+                "attrs": {},
+                "content": null,
+                "children": [
+                  {
+                    "id": "d1",
+                    "type": "tableCell",
+                    "attrs": {},
+                    "content": [],
+                    "children": []
+                  },
+                  {
+                    "id": "d2",
+                    "type": "tableCell",
+                    "attrs": {
+                      "align": "center"
+                    },
+                    "content": [
+                      {
+                        "text": "x²",
+                        "marks": [
+                          {
+                            "type": "superscript",
+                            "attrs": {}
+                          }
+                        ]
+                      }
+                    ],
+                    "children": []
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "p2",
+            "type": "paragraph",
+            "attrs": {},
+            "content": [
+              {
+                "text": "После",
+                "marks": []
+              }
+            ],
+            "children": []
+          }
+        ]
+      },
+      "markdown": "До\n\n<table>\n<tr>\n<th rowspan=\"2\">Платформа</th>\n<th colspan=\"2\" style=\"text-align:center\">Журнал</th>\n<th rowspan=\"2\">Шифрование</th>\n</tr>\n<tr>\n<th>Ключ</th>\n<th style=\"text-align:right\">В очереди</th>\n</tr>\n<tr>\n<td>Веб</td>\n<td><code>drafts.web</code></td>\n<td style=\"text-align:right\">1 284</td>\n<td rowspan=\"2\">Ключ <strong>сессии</strong></td>\n</tr>\n<tr>\n<td>macOS</td>\n<td>a | b &lt;x&gt;</td>\n<td style=\"text-align:right\">312</td>\n</tr>\n</table>\n\n<table>\n<tr>\n<td colspan=\"2\"><a href=\"https://gotipe.test/a?b=1&amp;c=&quot;2&quot;\"><strong>сайт</strong></a> и скрипт<br>вторая <span style=\"color:#c4382f\">красная</span><mark>жёлтая</mark>@Анна<em><u>ab</u></em></td>\n</tr>\n<tr>\n<td></td>\n<td style=\"text-align:center\"><sup>x²</sup></td>\n</tr>\n</table>\n\nПосле\n",
+      "reparsed": [
+        {
+          "type": "paragraph",
+          "attrs": {},
+          "content": [
+            {
+              "text": "До",
+              "marks": []
+            }
+          ],
+          "children": []
+        },
+        {
+          "type": "table",
+          "attrs": {
+            "align": [
+              null,
+              null,
+              "right",
+              null
+            ]
+          },
+          "content": null,
+          "children": [
+            {
+              "type": "tableRow",
+              "attrs": {},
+              "content": null,
+              "children": [
+                {
+                  "type": "tableHeader",
+                  "attrs": {
+                    "rowspan": 2
+                  },
+                  "content": [
+                    {
+                      "text": "Платформа",
+                      "marks": []
+                    }
+                  ],
+                  "children": []
+                },
+                {
+                  "type": "tableHeader",
+                  "attrs": {
+                    "colspan": 2,
+                    "align": "center"
+                  },
+                  "content": [
+                    {
+                      "text": "Журнал",
+                      "marks": []
+                    }
+                  ],
+                  "children": []
+                },
+                {
+                  "type": "tableHeader",
+                  "attrs": {
+                    "rowspan": 2
+                  },
+                  "content": [
+                    {
+                      "text": "Шифрование",
+                      "marks": []
+                    }
+                  ],
+                  "children": []
+                }
+              ]
+            },
+            {
+              "type": "tableRow",
+              "attrs": {},
+              "content": null,
+              "children": [
+                {
+                  "type": "tableHeader",
+                  "attrs": {},
+                  "content": [
+                    {
+                      "text": "Ключ",
+                      "marks": []
+                    }
+                  ],
+                  "children": []
+                },
+                {
+                  "type": "tableHeader",
+                  "attrs": {},
+                  "content": [
+                    {
+                      "text": "В очереди",
+                      "marks": []
+                    }
+                  ],
+                  "children": []
+                }
+              ]
+            },
+            {
+              "type": "tableRow",
+              "attrs": {},
+              "content": null,
+              "children": [
+                {
+                  "type": "tableCell",
+                  "attrs": {},
+                  "content": [
+                    {
+                      "text": "Веб",
+                      "marks": []
+                    }
+                  ],
+                  "children": []
+                },
+                {
+                  "type": "tableCell",
+                  "attrs": {},
+                  "content": [
+                    {
+                      "text": "drafts.web",
+                      "marks": [
+                        {
+                          "type": "code"
+                        }
+                      ]
+                    }
+                  ],
+                  "children": []
+                },
+                {
+                  "type": "tableCell",
+                  "attrs": {},
+                  "content": [
+                    {
+                      "text": "1 284",
+                      "marks": []
+                    }
+                  ],
+                  "children": []
+                },
+                {
+                  "type": "tableCell",
+                  "attrs": {
+                    "rowspan": 2
+                  },
+                  "content": [
+                    {
+                      "text": "Ключ ",
+                      "marks": []
+                    },
+                    {
+                      "text": "сессии",
+                      "marks": [
+                        {
+                          "type": "bold"
+                        }
+                      ]
+                    }
+                  ],
+                  "children": []
+                }
+              ]
+            },
+            {
+              "type": "tableRow",
+              "attrs": {},
+              "content": null,
+              "children": [
+                {
+                  "type": "tableCell",
+                  "attrs": {},
+                  "content": [
+                    {
+                      "text": "macOS",
+                      "marks": []
+                    }
+                  ],
+                  "children": []
+                },
+                {
+                  "type": "tableCell",
+                  "attrs": {},
+                  "content": [
+                    {
+                      "text": "a | b <x>",
+                      "marks": []
+                    }
+                  ],
+                  "children": []
+                },
+                {
+                  "type": "tableCell",
+                  "attrs": {},
+                  "content": [
+                    {
+                      "text": "312",
+                      "marks": []
+                    }
+                  ],
+                  "children": []
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "attrs": {
+            "align": [
+              null,
+              "center"
+            ]
+          },
+          "content": null,
+          "children": [
+            {
+              "type": "tableRow",
+              "attrs": {},
+              "content": null,
+              "children": [
+                {
+                  "type": "tableCell",
+                  "attrs": {
+                    "colspan": 2
+                  },
+                  "content": [
+                    {
+                      "text": "сайт",
+                      "marks": [
+                        {
+                          "type": "link",
+                          "attrs": {
+                            "href": "https://gotipe.test/a?b=1&c=\"2\""
+                          }
+                        },
+                        {
+                          "type": "bold"
+                        }
+                      ]
+                    },
+                    {
+                      "text": " и скрипт\nвторая ",
+                      "marks": []
+                    },
+                    {
+                      "text": "красная",
+                      "marks": [
+                        {
+                          "type": "textColor",
+                          "attrs": {
+                            "color": "#c4382f"
+                          }
+                        }
+                      ]
+                    },
+                    {
+                      "text": "жёлтая",
+                      "marks": [
+                        {
+                          "type": "highlight"
+                        }
+                      ]
+                    },
+                    {
+                      "text": "@Анна",
+                      "marks": []
+                    },
+                    {
+                      "text": "ab",
+                      "marks": [
+                        {
+                          "type": "italic"
+                        },
+                        {
+                          "type": "underline"
+                        }
+                      ]
+                    }
+                  ],
+                  "children": []
+                }
+              ]
+            },
+            {
+              "type": "tableRow",
+              "attrs": {},
+              "content": null,
+              "children": [
+                {
+                  "type": "tableCell",
+                  "attrs": {},
+                  "content": [],
+                  "children": []
+                },
+                {
+                  "type": "tableCell",
+                  "attrs": {},
+                  "content": [
+                    {
+                      "text": "x²",
+                      "marks": [
+                        {
+                          "type": "superscript"
+                        }
+                      ]
+                    }
+                  ],
+                  "children": []
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "attrs": {},
+          "content": [
+            {
+              "text": "После",
+              "marks": []
+            }
+          ],
+          "children": []
+        }
+      ]
     }
   ]
 }

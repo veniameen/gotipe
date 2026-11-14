@@ -1,8 +1,6 @@
-import type { BlockView, GoTipeEditor } from "@gotipe/core";
-import React, { useContext } from "react";
+import { type BlockView, type GoTipeEditor, headerRows, tableGrid } from "@gotipe/core";
+import React, { useContext, useMemo } from "react";
 import { useGoTipeI18n } from "../i18n-context";
-import { FileBlock } from "../media/file-block";
-import { ImageBlock } from "../media/image-block";
 import { CodeBlock } from "./code-block";
 import {
   BlockViewsContext,
@@ -14,6 +12,7 @@ import { placeholderOf } from "./decorations";
 import { EmbedBlock } from "./embed-block";
 import { CalloutBlock, ToggleBlock } from "./interactive-blocks";
 import { MathBlock } from "./math-block";
+import { MediaBlock } from "./media-view";
 import {
   BlockContent,
   blockKey,
@@ -23,13 +22,8 @@ import {
   phantomBlocksOf,
   rootPropsOf,
 } from "./presentation";
-import {
-  TableColumnResizeHandle,
-  TableColumns,
-  TableLayoutProvider,
-  TableScroll,
-  TableToolbar,
-} from "./table-layout";
+import { TableCell, TableCellSelection, TableRow } from "./table-cells";
+import { TableColumns, TableLayoutProvider, TableScroll, TableToolbar } from "./table-layout";
 
 /** Suggested blocks around `block` (a `blocks` decoration). */
 export function PhantomBlocks({
@@ -116,14 +110,30 @@ export function TableBlock({
   selectedBlockId?: string;
   rootProps?: Record<string, unknown>;
 }) {
-  const children = (
-    <BlockChildren block={block} editor={editor} selectedBlockId={selectedBlockId} />
+  const grid = useMemo(() => tableGrid(block), [block]);
+  // the head holds the header rows on top and every row a header cell reaches down into
+  const first = block.children[0]?.children.some((cell) => cell.type === "tableHeader");
+  const head = Math.max(
+    headerRows(grid),
+    first
+      ? Math.max(1, ...grid.cells.filter((cell) => cell.row === 0).map((cell) => cell.rows))
+      : 0,
   );
-  const hasHeader =
-    block.children.length > 0 && block.children[0]!.children.some((c) => c.type === "tableHeader");
+  const rows = (from: number, to?: number) =>
+    block.children
+      .slice(from, to)
+      .map((child) => (
+        <BlockComponent
+          key={child.id}
+          block={child}
+          editor={editor}
+          selectedBlockId={selectedBlockId}
+          parentType={block.type}
+        />
+      ));
 
   return (
-    <TableLayoutProvider block={block} editor={editor}>
+    <TableLayoutProvider block={block} grid={grid} editor={editor}>
       <div
         {...rootProps}
         data-block-type={block.type}
@@ -133,33 +143,11 @@ export function TableBlock({
         <TableScroll>
           <table className="gotipe-table">
             <TableColumns />
-            {hasHeader ? (
-              <>
-                <thead>
-                  <BlockComponent
-                    block={block.children[0]!}
-                    editor={editor}
-                    selectedBlockId={selectedBlockId}
-                    parentType={block.type}
-                  />
-                </thead>
-                <tbody>
-                  {block.children.slice(1).map((child) => (
-                    <BlockComponent
-                      key={child.id}
-                      block={child}
-                      editor={editor}
-                      selectedBlockId={selectedBlockId}
-                      parentType={block.type}
-                    />
-                  ))}
-                </tbody>
-              </>
-            ) : (
-              <tbody>{children}</tbody>
-            )}
+            {head > 0 ? <thead>{rows(0, head)}</thead> : null}
+            {head < block.children.length ? <tbody>{rows(head)}</tbody> : null}
           </table>
         </TableScroll>
+        <TableCellSelection />
         <TableToolbar />
       </div>
     </TableLayoutProvider>
@@ -396,10 +384,8 @@ function BlockComponentInner({
       return <hr {...rootProps} data-block-type={block.type} />;
 
     case "image":
-      return <ImageBlock block={block} editor={editor} rootProps={rootProps} />;
-
     case "file":
-      return <FileBlock block={block} editor={editor} rootProps={rootProps} />;
+      return <MediaBlock block={block} editor={editor} rootProps={rootProps} />;
 
     case "embed":
       return <EmbedBlock block={block} editor={editor} rootProps={rootProps} />;
@@ -419,35 +405,17 @@ function BlockComponentInner({
 
     case "tableRow":
       return (
-        <tr {...rootProps} data-block-type={block.type}>
+        <TableRow block={block} rootProps={rootProps}>
           {children}
-        </tr>
+        </TableRow>
       );
 
     case "tableHeader":
-      return (
-        <th
-          {...rootProps}
-          data-block-type={block.type}
-          contentEditable={!readOnly}
-          suppressContentEditableWarning
-        >
-          {content}
-          <TableColumnResizeHandle cellId={block.id} />
-        </th>
-      );
-
     case "tableCell":
       return (
-        <td
-          {...rootProps}
-          data-block-type={block.type}
-          contentEditable={!readOnly}
-          suppressContentEditableWarning
-        >
+        <TableCell block={block} rootProps={rootProps} readOnly={readOnly}>
           {content}
-          <TableColumnResizeHandle cellId={block.id} />
-        </td>
+        </TableCell>
       );
 
     case "callout":

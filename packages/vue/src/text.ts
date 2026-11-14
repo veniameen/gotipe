@@ -6,6 +6,7 @@ import {
   toSafeHref,
 } from "@gotipe/core";
 import { type VNodeChild, h } from "vue";
+import { type TextUnit, type VueMath, atomView, textUnits } from "./atoms";
 import { type TextWidget, textDecorations } from "./decorations";
 
 const TAGS: Record<string, string> = {
@@ -19,7 +20,9 @@ const TAGS: Record<string, string> = {
   mdRaw: "span",
 };
 
-export function markedText(text: string, marks: MarkView[]): VNodeChild {
+const FONT_FACES = new Set(["system", "serif", "mono"]);
+
+export function markedText(text: VNodeChild, marks: MarkView[]): VNodeChild {
   let node: VNodeChild = text;
   for (const mark of marks) {
     const tag = TAGS[mark.type];
@@ -39,6 +42,14 @@ export function markedText(text: string, marks: MarkView[]): VNodeChild {
       );
     } else if (mark.type === "textColor") {
       node = h("span", { style: { color: toSafeColor(mark.attrs?.color) ?? undefined } }, [node]);
+    } else if (mark.type === "fontFamily" && FONT_FACES.has(mark.attrs?.family as string)) {
+      // `FontFamily`: a theme face by name (`--gt-font-*` via `data-font`), as React draws it.
+      node = h("span", { class: "gotipe-font", "data-font": mark.attrs?.family }, [node]);
+    } else if (mark.type === "fontSize") {
+      // `FontSize`: whole px within 6–96, the values the HTML output writes.
+      const size = mark.attrs?.size;
+      if (typeof size === "number" && Number.isInteger(size) && size >= 6 && size <= 96)
+        node = h("span", { style: { fontSize: `${size}px` } }, [node]);
     }
   }
   return node;
@@ -86,20 +97,28 @@ function widget(decoration: TextWidget): VNodeChild {
 export function decoratedText(
   spans: TextSpanView[],
   decorations: Decoration[] | undefined,
+  math?: VueMath,
 ): VNodeChild[] {
   const { inline, widgets } = textDecorations(decorations);
-  if (!inline.length && !widgets.length)
-    return spans.map((span) => markedText(span.text, span.marks));
-  const total = spans.reduce((sum, span) => sum + span.text.length, 0);
-  const clamp = (value: number) => Math.max(0, Math.min(value, total));
-  const points = new Set<number>([0, total]);
+  // An atom is drawn whole: a point inside it moves to its end.
+  const units = textUnits(spans);
+  const draw = (unit: TextUnit, text: string) =>
+    markedText(unit.atom ? atomView(unit.atom, unit.text, math) : text, unit.marks);
+  if (!inline.length && !widgets.length) return units.map((unit) => draw(unit, unit.text));
+  const total = units.reduce((sum, unit) => sum + unit.text.length, 0);
   const starts: number[] = [];
+  const atoms: { from: number; to: number }[] = [];
   let position = 0;
-  for (const span of spans) {
+  for (const unit of units) {
     starts.push(position);
-    points.add(position);
-    position += span.text.length;
+    if (unit.atom) atoms.push({ from: position, to: position + unit.text.length });
+    position += unit.text.length;
   }
+  const clamp = (value: number) => {
+    const at = Math.max(0, Math.min(value, total));
+    return atoms.find((a) => a.from < at && at < a.to)?.to ?? at;
+  };
+  const points = new Set<number>([0, total, ...starts]);
   const ranges = inline
     .map((d) => ({ d, from: clamp(d.from), to: clamp(d.to) }))
     .filter((range) => range.to > range.from);
@@ -119,13 +138,13 @@ export function decoratedText(
     for (const w of widgetsAt.get(from) ?? []) out.push(widget(w));
     const to = sorted[index + 1];
     if (to === undefined || to <= from) continue;
-    const spanIndex = spans.findIndex(
-      (span, at) => from >= starts[at]! && from < starts[at]! + span.text.length,
+    const spanIndex = units.findIndex(
+      (unit, at) => from >= starts[at]! && from < starts[at]! + unit.text.length,
     );
-    const span = spans[spanIndex];
+    const span = units[spanIndex];
     if (!span) continue;
     const start = starts[spanIndex]!;
-    let node = markedText(span.text.slice(from - start, to - start), span.marks);
+    let node = draw(span, span.text.slice(from - start, to - start));
     const active = ranges
       .filter((range) => range.from <= from && range.to >= to)
       .sort((a, b) => a.d.key.localeCompare(b.d.key));

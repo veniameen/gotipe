@@ -1,0 +1,142 @@
+/* Find and replace — Atlas frame 25. The bar is docked at the top right of the editor and stays
+   there while the page scrolls: the query with «3 of 12» in its end, the three switches, previous
+   and next, close; replace opens a second row under the query. Every match is tinted, the current
+   one stronger and ringed. On a narrow container the bar spans it and the tools step under. */
+
+.gotipe-find-dock {
+  position: sticky;
+  top: var(--gt-find-sticky-top);
+  z-index: var(--gt-z-bubble);
+  height: 0;
+}
+.gotipe-find {
+  position: absolute;
+  top: var(--gt-find-inset);
+  right: var(--gt-find-inset);
+  box-sizing: border-box;
+  display: grid;
+  grid-template-columns: var(--gt-find-columns);
+  align-items: center;
+  gap: var(--gt-toolbar-gap);
+  width: var(--gt-find-w);
+  max-width: calc(100% - 2 * var(--gt-find-inset));
+  padding: var(--gt-toolbar-pad);
+  border-radius: var(--gt-radius-overlay);
+  background: var(--gt-overlay);
+  box-shadow: var(--gt-shadow-overlay);
+  color: var(--gt-text);
+  font-family: var(--gt-font-ui);
+  font-size: var(--gt-ui-size);
+  font-weight: var(--gt-weight-regular);
+  line-height: var(--gt-ui-leading);
+  letter-spacing: normal;
+  white-space: nowrap;
+  animation: gotipe-fade-in var(--gt-duration-normal) var(--gt-ease-out);
+}
+.gotipe-find-tools {
+  display: flex;
+  grid-column: var(--gt-find-tools-column);
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--gt-toolbar-gap);
+}
+.gotipe-find-sep {
+  flex: none;
+  width: var(--gt-hairline);
+  height: var(--gt-tool-sep-h);
+  margin: 0 var(--gt-find-sep-end) 0 var(--gt-tool-sep-gap);
+  background: var(--gt-line-strong);
+}
+.gotipe-find-replace {
+  grid-column: 2;
+}
+
+/* ---- the field: a hairline at rest, darker while typing, the danger colour when nothing fits ---- */
+.gotipe-find-field {
+  display: flex;
+  align-items: center;
+  gap: var(--gt-menu-gap);
+  box-sizing: border-box;
+  min-width: 0;
+  height: var(--gt-field-h);
+  padding: var(--gt-field-pad);
+  border-radius: var(--gt-radius-control);
+  box-shadow: inset 0 0 0 var(--gt-hairline) var(--gt-line-control);
+  color: var(--gt-text);
+}
+.gotipe-find-field:focus-within {
+  box-shadow: inset 0 0 0 var(--gt-hairline) var(--gt-line-active);
+}
+.gotipe-find-field.is-invalid {
+  background: var(--gt-danger-tint);
+  box-shadow: inset 0 0 0 var(--gt-hairline) var(--gt-danger);
+}
+.gotipe-find-field > input {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  outline: none;
+}
+.gotipe-find-field > input::placeholder {
+  color: var(--gt-text-3);
+}
+.gotipe-find-count {
+  flex: none;
+  color: var(--gt-text-3);
+  font-size: var(--gt-ui-small);
+  font-variant-numeric: tabular-nums;
+}
+/* on the highlighted field of an empty search the count steps up a tone, so it still reads */
+.gotipe-find-field.is-invalid > .gotipe-find-count {
+  color: var(--gt-text-2);
+}
+
+/* ---- replace: the buttons stand on a fill ---- */
+.gotipe-find-button {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  gap: var(--gt-button-gap);
+  box-sizing: border-box;
+  height: var(--gt-button-h);
+  padding: var(--gt-button-pad);
+  border: 0;
+  border-radius: var(--gt-radius-control);
+  background: var(--gt-fill-2);
+  color: var(--gt-text);
+  font: inherit;
+  font-weight: var(--gt-weight-medium);
+  white-space: nowrap;
+  cursor: pointer;
+}
+.gotipe-find-button:hover:not(:disabled) {
+  background: var(--gt-fill-3);
+}
+.gotipe-find-button:disabled {
+  opacity: var(--gt-disabled-opacity);
+  cursor: default;
+}
+.gotipe-find :is(button, input):focus-visible {
+  outline: var(--gt-focus-width) solid var(--gt-focus);
+  outline-offset: calc(-1 * var(--gt-focus-width));
+}
+.gotipe-find-field > input:focus-visible {
+  outline: none;
+}
+
+/* ---- matches in the text ---- */
+.gotipe-match {
+  border-radius: var(--gt-radius-match);
+  background: var(--gt-find);
+  color: inherit;
+}
+.gotipe-match.is-current {
+  background: var(--gt-find-current);
+  box-shadow: 0 0 0 var(--gt-hairline) var(--gt-find-ring);
+}

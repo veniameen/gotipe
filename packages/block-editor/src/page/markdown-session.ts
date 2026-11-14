@@ -1,5 +1,6 @@
 import type { BlockView, GoTipeEditor } from "@gotipe/core";
 import {
+  type InlineAtoms,
   type MarkdownMap,
   type MarkdownSnapshot,
   parseMarkdown,
@@ -45,13 +46,15 @@ export class MarkdownSession {
   /** Last text loaded from the host or emitted to it. */
   lastText: string | null = null;
 
-  constructor(private readonly options: { ensureTitle: boolean }) {}
+  /** `atoms`: inline atoms the reader makes (a page with mentions reads them back). */
+  constructor(private readonly options: { ensureTitle: boolean; atoms?: InlineAtoms }) {}
 
   /** Parses `text` into a document (ids reused from the previous load). */
   parse(text: string, previousDoc?: Doc): Doc {
     const { doc, snapshot } = parseMarkdown(text, {
       previous: this.snapshot,
       previousDoc: previousDoc as never,
+      atoms: this.options.atoms,
     });
     this.snapshot = snapshot;
     this.lastText = text;

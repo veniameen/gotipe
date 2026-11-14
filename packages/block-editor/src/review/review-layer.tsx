@@ -1,5 +1,4 @@
 import { type Decoration, type GoTipeEditor, GoTipeError } from "@gotipe/core";
-import { useGoTipeI18n } from "@gotipe/react";
 import {
   type CommentState,
   type LaneCursor,
@@ -16,6 +15,7 @@ import {
 import type React from "react";
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import { useBlockEditorI18n } from "../i18n/strings";
 import type { PageIconName } from "../page/icons";
 import type { MarkdownSession } from "../page/markdown-session";
 import { usePageOverlay } from "../page/overlay";
@@ -95,7 +95,7 @@ export function ReviewLayer({
   apiRef?: React.MutableRefObject<ReviewApi | null>;
   onStates?: (states: { proposals: ProposalState[]; comments: CommentState[] }) => void;
 }) {
-  const i18n = useGoTipeI18n();
+  const i18n = useBlockEditorI18n();
   const overlay = usePageOverlay();
   const [activeId, setActiveId] = useState<string | null>(null);
   const [states, setStates] = useState<{ proposals: ProposalState[]; comments: CommentState[] }>({

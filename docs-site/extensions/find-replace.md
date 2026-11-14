@@ -113,6 +113,36 @@ To scroll to the current match, find `[data-gotipe-search-current]` in `editor.e
 - A replacement in regex mode runs the expression once more on the page, at each match the Worker found.
 - Replacing inside a mention or another atomic element is not possible; replace the whole element.
 
+## The find bar of BlockEditor
+
+`BlockEditor` and `PageEditor` from `@gotipe/block-editor` draw the find bar of the GoTipe Atlas (frame 25) when the editor has `FindReplace`. `PageEditor` installs the extension itself; for `BlockEditor` add it to the editor's extensions. Turn the bar off with `find={false}`, or put `<FindBar editor root>` into your own layout.
+
+```tsx title="find.tsx"
+import { BlockEditor } from "@gotipe/block-editor";
+import { FindReplace } from "@gotipe/core/extensions";
+import { FullPreset } from "@gotipe/core/presets";
+import { useEditor } from "@gotipe/react";
+
+export function Page() {
+  const editor = useEditor({ extensions: [FullPreset, FindReplace] });
+  return <BlockEditor editor={editor} />;
+}
+```
+
+The bar is docked at the top right of the editor and stays there while the page scrolls. It holds the query with «3 of 12» at its end, switches for match case, whole word and regular expression, previous and next, close, and a second row with the replacement, **Replace** and **Replace all**. A query that finds nothing tints the field and disables the arrows; an invalid or unsafe pattern says why in the field's title and to screen readers. In a container narrower than 640 px the bar spans it and its tools step under the field.
+
+| Key | Where | Action |
+| --- | --- | --- |
+| `Mod+F` | in the editor or the bar | Opens the bar with the selected text (one block) or the last query, and selects the field. |
+| `Mod+Alt+F` | in the editor or the bar | Opens the bar with the replace row. |
+| `Enter`, `Shift+Enter` | query field | Next and previous match. The current match scrolls into view. |
+| `Enter`, `Mod+Enter` | replacement field | Replace the current match; replace all. |
+| `Escape` | anywhere in the bar | Closes the bar, clears the highlights, selects the current match and returns the keys to the text. |
+
+`Mod+F` and `Mod+Alt+F` are taken only while the focus is in the editor or the bar, so the browser's own search works everywhere else on the page. `Mod+H` is not used: it hides the window on macOS. The keys are read by their physical position, so they work in any keyboard layout. `FIND_KEYS` exports them.
+
+The theme draws every match with `--gt-find` and the current one with `--gt-find-current` and a `--gt-find-ring` hairline (`packages/theme/src/theme/find.css`); the bar's size and the narrow layout are `--gt-find-*` tokens. `--gt-find-sticky-top` moves the docked bar below a host's own sticky header.
+
 ## Related
 
 - [Extensions](/docs/concepts/extensions#plugins-and-decorations): decoration layers.

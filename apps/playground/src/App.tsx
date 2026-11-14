@@ -3,6 +3,7 @@ import { getTheme, setTheme } from "@gotipe/theme";
 import { useEffect, useState } from "react";
 
 import { AIExample } from "./examples/ai";
+import { AtomsExample } from "./examples/atoms";
 // Existing examples
 import { BasicExample } from "./examples/basic";
 import { CollaborationExample } from "./examples/collaboration";
@@ -45,6 +46,7 @@ const ROUTES: Record<string, RouteEntry> = {
   ai: { name: "AI Features", category: "Extensions", component: AIExample },
   custom: { name: "Custom", category: "Extensions", component: CustomExample },
   i18n: { name: "i18n & RTL", category: "Extensions", component: I18nExample },
+  atoms: { name: "Mentions, emoji, math", category: "Extensions", component: AtomsExample },
 };
 
 const CATEGORIES = ["Templates", "Extensions"] as const;

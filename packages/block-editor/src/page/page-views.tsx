@@ -1,8 +1,9 @@
 import type { BlockView } from "@gotipe/core";
-import { type BlockViewProps, type BlockViews, useGoTipeI18n } from "@gotipe/react";
+import type { BlockViewProps, BlockViews } from "@gotipe/react";
 import type React from "react";
 import { Tip } from "../components/formatting/tip";
 import type { CodeHighlighter } from "../highlight/types";
+import { useBlockEditorI18n } from "../i18n/strings";
 import { codeBlockViewFor } from "../views/code-block-view";
 import { PageIcon } from "./icons";
 
@@ -23,7 +24,7 @@ function textOf(block: BlockView): string {
  */
 function headingView(titlePlaceholder: string | undefined) {
   return function PageHeadingView({ block, editor, rootProps, content, readOnly }: BlockViewProps) {
-    const i18n = useGoTipeI18n();
+    const i18n = useBlockEditorI18n();
     const level = Math.min(Math.max(Number(block.attrs.level) || 1, 1), 6);
     const Tag = `h${level}` as "h1";
     const isTitle = level === 1 && editor.getViewState().blocks[0]?.id === block.id;
@@ -49,7 +50,7 @@ function headingView(titlePlaceholder: string | undefined) {
 
 /** Markdown the editor keeps as it is (HTML, footnotes, definitions): read-only, Atlas frame 17. */
 function MarkdownRawView({ block, rootProps }: BlockViewProps) {
-  const i18n = useGoTipeI18n();
+  const i18n = useBlockEditorI18n();
   const source = typeof block.content === "string" ? block.content : "";
   const kept = i18n.t("block.markdownKept");
   return (
