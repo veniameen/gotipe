@@ -21,7 +21,7 @@ The document engine, the collaboration CRDT, versions, review state and the PDF 
 | `gotipe-ai` | AI command types, context building with token estimates, the provider trait, streaming settings, ghost-text state and the PII detector (e-mail addresses, phone numbers, Luhn-checked card numbers). | core |
 | `gotipe-export` | HTML, Markdown, plain-text and JSON writers, a Markdown reader, an HTML sanitizer; PDF and DOCX behind features; the `gotipe-convert` binary. | core |
 | `gotipe-export-wasm` | WebAssembly bindings `exportPdf` and `exportDocx`. | export |
-| `gotipe-wasm` | The `WasmEditor` that the WASM engine of `@gotipe/core` drives: transactions, validation, HTML export and sanitizing, collaboration, versions, review and PII detection. | all of the above except export-wasm |
+| `gotipe-wasm` | The `WasmEditor` that the WASM engine of `@gotipe/core` drives: transactions, validation, collaboration, versions, review and PII detection. HTML and Markdown output and HTML sanitizing are not in it: `@gotipe/core` does them in TypeScript on both engines. | schema, core, crdt, comments, versioning, ai |
 
 `gotipe-export` features:
 

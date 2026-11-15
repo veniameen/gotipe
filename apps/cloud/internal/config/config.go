@@ -206,10 +206,6 @@ func splitValues(value string) []string {
 	return values
 }
 
-func (c *Config) IsProduction() bool {
-	return c.Environment == "production"
-}
-
 // ParseRateLimit parses "100/min" -> (100, time.Minute)
 func ParseRateLimit(s string) (int, time.Duration, error) {
 	parts := strings.SplitN(s, "/", 2)

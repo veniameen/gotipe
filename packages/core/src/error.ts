@@ -4,12 +4,9 @@ export type GoTipeErrorCode =
   | "TRANSFORM_ERROR"
   | "COMPOSITION_CONFLICT"
   | "VALIDATION_ERROR"
-  | "SCHEMA_ERROR"
   | "PARSE_ERROR"
   | "EXTENSION_ERROR"
   | "EXTENSION_DEPENDENCY_CYCLE"
-  | "UNKNOWN_BLOCK_TYPE"
-  | "UNKNOWN_MARK_TYPE"
   // Host integration (reported through the `error` event / `host.onError`)
   | "ASSET_SAVE_FAILED"
   | "ASSET_RESOLVE_FAILED"
