@@ -2,6 +2,7 @@ import { type BlockViews, Editor } from "@gotipe/react";
 import type React from "react";
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { AtomUI } from "../atoms/atom-ui";
+import { useToolbarHover } from "../interaction/use-toolbar-hover";
 import { type DragPoint, useTouchDrag } from "../interaction/use-touch-drag";
 import { handleRail, inHandleReach } from "../text/direction";
 import { FindBar } from "../text/find-bar";
@@ -45,7 +46,6 @@ import { ThemeToggle } from "./theme-toggle";
 
 /** The overlay draws other people (Atlas frame 12); the document renderer must not repeat them. */
 const HOST_LAYERS = [COLLABORATION_LAYER];
-const TOOLBAR_HIDE_DELAY_MS = 20;
 const TOOLBAR_HOVER_X_MIN_OFFSET = 120;
 const TOOLBAR_HOVER_X_MAX_OFFSET = 560;
 
@@ -85,17 +85,15 @@ function BlockEditorView({
   const [draggingBlockType, setDraggingBlockType] = useState<string | null>(null);
   const [draggingParentId, setDraggingParentId] = useState<string | null>(null);
   const [dropTarget, setDropTarget] = useState<DropTarget | null>(null);
-  const [hoveredToolbarTarget, setHoveredToolbarTarget] = useState<{
-    actionBlockId: string;
-    anchorBlockId: string;
-    addBlockId: string;
-    dragBlockId: string;
-  } | null>(null);
-  const [toolbarPos, setToolbarPos] = useState<{
-    top: number;
-    left: number;
-    right: number | null;
-  } | null>(null);
+  const {
+    target: hoveredToolbarTarget,
+    setTarget: setHoveredToolbarTarget,
+    position: toolbarPos,
+    setPosition: setToolbarPos,
+    cancelHide: clearHideToolbarTimer,
+    hideNow: hideToolbarNow,
+    scheduleHide: scheduleHideToolbar,
+  } = useToolbarHover();
   const [suggestionIndex, setSuggestionIndex] = useState(0);
   const containerRef = useRef<HTMLDivElement>(null);
   const overlayPeers = useOverlayPeers(editor, remotePeers);
@@ -110,33 +108,10 @@ function BlockEditorView({
     }),
     [highlight, hostViews],
   );
-  const hideToolbarTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const draggingBlockIdRef = useRef<string | null>(null);
   const draggingBlockTypeRef = useRef<string | null>(null);
   const draggingParentIdRef = useRef<string | null>(null);
   const dropTargetRef = useRef<DropTarget | null>(null);
-
-  const clearHideToolbarTimer = useCallback(() => {
-    if (hideToolbarTimerRef.current) {
-      clearTimeout(hideToolbarTimerRef.current);
-      hideToolbarTimerRef.current = null;
-    }
-  }, []);
-
-  const hideToolbarNow = useCallback(() => {
-    setHoveredToolbarTarget(null);
-    setToolbarPos(null);
-  }, []);
-
-  const scheduleHideToolbar = useCallback(() => {
-    clearHideToolbarTimer();
-    hideToolbarTimerRef.current = setTimeout(() => {
-      hideToolbarTimerRef.current = null;
-      hideToolbarNow();
-    }, TOOLBAR_HIDE_DELAY_MS);
-  }, [clearHideToolbarTimer, hideToolbarNow]);
-
-  useEffect(() => () => clearHideToolbarTimer(), [clearHideToolbarTimer]);
 
   useEffect(() => {
     setEditable(editor?.isEditable ?? false);
@@ -176,7 +151,7 @@ function BlockEditorView({
       window.removeEventListener("resize", update);
       window.removeEventListener("scroll", update, true);
     };
-  }, [editor, hoveredToolbarTarget, hideToolbarNow]);
+  }, [editor, hoveredToolbarTarget, hideToolbarNow, setToolbarPos]);
 
   // Track hovered block for floating toolbar
   const handleMouseMove = useCallback(
@@ -241,7 +216,14 @@ function BlockEditorView({
         setToolbarPos({ top, ...handleRail(containerRef.current, anchorEl, getToolbarRailLeft) });
       }
     },
-    [clearHideToolbarTimer, draggingBlockId, hoveredToolbarTarget, scheduleHideToolbar],
+    [
+      clearHideToolbarTimer,
+      draggingBlockId,
+      hoveredToolbarTarget,
+      scheduleHideToolbar,
+      setHoveredToolbarTarget,
+      setToolbarPos,
+    ],
   );
 
   const handleMouseLeave = useCallback(
