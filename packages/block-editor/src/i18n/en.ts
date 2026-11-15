@@ -154,6 +154,8 @@ export const blockEditorEn: BlockEditorLocale = {
   "error.linkOpen": "Could not open the link",
   "error.collaboration": "Changes are not syncing",
   "error.proposal": "Could not apply the suggestion",
+  "error.proposalStale": "The suggestion is out of date",
+  "error.proposalStaleDetail": "The text around it has changed. Reject it or ask for a new one.",
   "error.comment": "Could not update the comment",
   "ai.bar": "AI command bar",
   "ai.prompt": "AI prompt",

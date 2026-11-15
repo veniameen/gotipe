@@ -259,7 +259,8 @@ editor's events instead.
 - Without `onAiCommand`, a command bar prompt never rewrites the selection: it adds a
   paragraph, proofreads or reviews.
 - Errors of Improve and of slash commands reach `host.onError` and the `error` event, but
-  `BlockEditor`'s error toast does not show them.
+  `BlockEditor`'s error toast does not show them: `EXTENSION_ERROR` stays out of the toast by
+  design ([errors](/docs/ui/block-editor#errors)); the command bar shows its own.
 - `@gotipe/theme` has no styles for `AiCommandPalette` and `AiToolbar`; style
   `.gotipe-ai-command-palette` and `.gotipe-ai-toolbar` yourself. Their labels are in
   English only.
