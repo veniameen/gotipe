@@ -2497,5 +2497,298 @@
         "children": []
       }
     ]
+  },
+  {
+    "markdown": "a\n:-:\n",
+    "blocks": [
+      {
+        "type": "table",
+        "attrs": {
+          "align": [
+            "center"
+          ]
+        },
+        "content": null,
+        "children": [
+          {
+            "type": "tableRow",
+            "attrs": {},
+            "content": null,
+            "children": [
+              {
+                "type": "tableHeader",
+                "attrs": {},
+                "content": [
+                  {
+                    "text": "a",
+                    "marks": []
+                  }
+                ],
+                "children": []
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "markdown": "a\n-:\nb\n",
+    "blocks": [
+      {
+        "type": "table",
+        "attrs": {
+          "align": [
+            "right"
+          ]
+        },
+        "content": null,
+        "children": [
+          {
+            "type": "tableRow",
+            "attrs": {},
+            "content": null,
+            "children": [
+              {
+                "type": "tableHeader",
+                "attrs": {},
+                "content": [
+                  {
+                    "text": "a",
+                    "marks": []
+                  }
+                ],
+                "children": []
+              }
+            ]
+          },
+          {
+            "type": "tableRow",
+            "attrs": {},
+            "content": null,
+            "children": [
+              {
+                "type": "tableCell",
+                "attrs": {},
+                "content": [
+                  {
+                    "text": "b",
+                    "marks": []
+                  }
+                ],
+                "children": []
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "markdown": "a\n|:-|\n",
+    "blocks": [
+      {
+        "type": "table",
+        "attrs": {
+          "align": [
+            "left"
+          ]
+        },
+        "content": null,
+        "children": [
+          {
+            "type": "tableRow",
+            "attrs": {},
+            "content": null,
+            "children": [
+              {
+                "type": "tableHeader",
+                "attrs": {},
+                "content": [
+                  {
+                    "text": "a",
+                    "marks": []
+                  }
+                ],
+                "children": []
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "markdown": "a | b\n- | -\n",
+    "blocks": [
+      {
+        "type": "paragraph",
+        "attrs": {},
+        "content": [
+          {
+            "text": "a | b",
+            "marks": []
+          }
+        ],
+        "children": []
+      },
+      {
+        "type": "bulletList",
+        "attrs": {
+          "marker": "-",
+          "spread": false
+        },
+        "content": null,
+        "children": [
+          {
+            "type": "listItem",
+            "attrs": {},
+            "content": [
+              {
+                "text": "| -",
+                "marks": []
+              }
+            ],
+            "children": []
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "markdown": "| a | b |\n- | - |\n",
+    "blocks": [
+      {
+        "type": "paragraph",
+        "attrs": {},
+        "content": [
+          {
+            "text": "| a | b |",
+            "marks": []
+          }
+        ],
+        "children": []
+      },
+      {
+        "type": "bulletList",
+        "attrs": {
+          "marker": "-",
+          "spread": false
+        },
+        "content": null,
+        "children": [
+          {
+            "type": "listItem",
+            "attrs": {},
+            "content": [
+              {
+                "text": "| - |",
+                "marks": []
+              }
+            ],
+            "children": []
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "markdown": "a | b\n   - | -\n",
+    "blocks": [
+      {
+        "type": "paragraph",
+        "attrs": {},
+        "content": [
+          {
+            "text": "a | b",
+            "marks": []
+          }
+        ],
+        "children": []
+      },
+      {
+        "type": "bulletList",
+        "attrs": {
+          "marker": "-",
+          "spread": false
+        },
+        "content": null,
+        "children": [
+          {
+            "type": "listItem",
+            "attrs": {},
+            "content": [
+              {
+                "text": "| -",
+                "marks": []
+              }
+            ],
+            "children": []
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "markdown": "a | b\n    - | -\n",
+    "blocks": [
+      {
+        "type": "paragraph",
+        "attrs": {},
+        "content": [
+          {
+            "text": "a | b - | -",
+            "marks": []
+          }
+        ],
+        "children": []
+      }
+    ]
+  },
+  {
+    "markdown": "a | b\n-- | --\n",
+    "blocks": [
+      {
+        "type": "table",
+        "attrs": {
+          "align": [
+            null,
+            null
+          ]
+        },
+        "content": null,
+        "children": [
+          {
+            "type": "tableRow",
+            "attrs": {},
+            "content": null,
+            "children": [
+              {
+                "type": "tableHeader",
+                "attrs": {},
+                "content": [
+                  {
+                    "text": "a",
+                    "marks": []
+                  }
+                ],
+                "children": []
+              },
+              {
+                "type": "tableHeader",
+                "attrs": {},
+                "content": [
+                  {
+                    "text": "b",
+                    "marks": []
+                  }
+                ],
+                "children": []
+              }
+            ]
+          }
+        ]
+      }
+    ]
   }
 ]
