@@ -97,6 +97,24 @@ fn paired(value: &str) -> Option<(String, Mark)> {
     mark.attrs.insert("color".into(), string(color));
     Some((tag, mark))
 }
+/// An opening tag named `tag`, with attributes or without, as `findClose` of the TS reader reads
+/// it: each one nests, so a mark ends at its own end tag, not at the end tag of a plain `<span>`
+/// inside it (D-122).
+fn opens(value: &str, tag: &str) -> bool {
+    let Some(rest) = value.strip_prefix('<') else {
+        return false;
+    };
+    if !rest
+        .get(..tag.len())
+        .is_some_and(|name| name.eq_ignore_ascii_case(tag))
+    {
+        return false;
+    }
+    let Some(inner) = rest[tag.len()..].strip_suffix('>') else {
+        return false;
+    };
+    inner.is_empty() || inner.starts_with(char::is_whitespace) && !inner.contains('>')
+}
 fn plain_inline(node: &Node) -> String {
     if node.kind == "image" {
         String::new()
@@ -147,7 +165,7 @@ fn walk(children: &[Node], marks: &[Mark], read: Read, br: bool, out: &mut Inlin
                     if item.kind != "html" {
                         continue;
                     }
-                    if paired(&item.value).is_some_and(|(nested, _)| nested == tag) {
+                    if opens(&item.value, &tag) {
                         depth += 1
                     } else if item.value.eq_ignore_ascii_case(&close) {
                         depth -= 1;
