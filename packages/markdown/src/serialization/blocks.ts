@@ -117,6 +117,15 @@ function linkLine(attrs: Record<string, unknown>): string {
   return `[${text}](${linkDestination(url)})`;
 }
 
+/**
+ * Raw source written after `indent`: each of its later lines after the indentation and the `>` of
+ * the blocks around it, as the Rust writer writes it (D-114). Without them its lines left the item
+ * or the quote, and the rest of the block with them.
+ */
+function rawLines(source: string, indent: string): string {
+  return indent ? source.replace(/(?:\r\n|\r(?!\n)|\n)(?=[^])/g, (eol) => eol + indent) : source;
+}
+
 /** An empty formula or an embed without an address has no Markdown at any depth. */
 function omitted(block: Block): boolean {
   return (
@@ -451,10 +460,10 @@ function renderBlock(w: Writer, block: Block, indent: string, ro: RenderOpts): R
       renderList(w, block, indent, ro, node);
       break;
     case "markdownRaw":
-      w.write(typeof block.content === "string" ? block.content : "");
+      w.write(rawLines(typeof block.content === "string" ? block.content : "", indent));
       break;
     default: {
-      if (typeof block.content === "string") w.write(block.content);
+      if (typeof block.content === "string") w.write(rawLines(block.content, indent));
       else if (Array.isArray(block.content)) {
         node.segs = inline(w, spans, { kind: "block", newline: ro.eol + indent, ...lines }, ro);
       }
