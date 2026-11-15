@@ -43,13 +43,13 @@ describe("the error toast", () => {
     const reason = "The suggestion anchor is ambiguous";
     expect(report("ru", "PROPOSAL_STALE", reason)).toEqual([
       "Предложение устарело",
-      "Текст вокруг него изменился. Отклоните его или попросите новое.",
+      "Текст вокруг него изменился.",
     ]);
     act(() => root.unmount());
     root = createRoot(container);
     expect(report("en", "PROPOSAL_STALE", reason)).toEqual([
       "The suggestion is out of date",
-      "The text around it has changed. Reject it or ask for a new one.",
+      "The text around it has changed.",
     ]);
   });
 

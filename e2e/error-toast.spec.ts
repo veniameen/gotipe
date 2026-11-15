@@ -29,7 +29,5 @@ test("a stale suggestion shows a toast in the interface's words; extension error
   await page.evaluate(report, ["PROPOSAL_STALE", "The suggestion anchor is ambiguous"] as const);
   await expect(toast).toBeVisible();
   await expect(toast.locator(".gotipe-toast-title")).toHaveText("The suggestion is out of date");
-  await expect(toast.locator(".gotipe-toast-detail")).toHaveText(
-    "The text around it has changed. Reject it or ask for a new one.",
-  );
+  await expect(toast.locator(".gotipe-toast-detail")).toHaveText("The text around it has changed.");
 });
