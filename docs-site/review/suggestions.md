@@ -23,14 +23,14 @@ npm install @gotipe/suggestions
 ## Example
 
 ```tsx title="track-changes.tsx"
-import { BlockEditor, type Suggestion as ToolbarItem } from "@gotipe/block-editor";
+import { BlockEditor, type ToolbarSuggestion } from "@gotipe/block-editor";
 import { DefaultPreset } from "@gotipe/core/presets";
 import { useEditor } from "@gotipe/react";
 import { type Suggestion, SuggestionsManager } from "@gotipe/suggestions";
 import { useEffect, useState } from "react";
 
 // The toolbar steps through text changes; Accept All and Reject All cover every kind.
-const toToolbar = (records: Suggestion[]): ToolbarItem[] =>
+const toToolbar = (records: Suggestion[]): ToolbarSuggestion[] =>
   records.flatMap((s) =>
     s.type === "insert" || s.type === "delete" || s.type === "replace"
       ? [
@@ -198,7 +198,7 @@ ones. Load it after the document.
 | Option | Type | Default | Description |
 | --- | --- | --- | --- |
 | `editor` | `GoTipeEditor` | — | The editor. |
-| `suggestions` | `Suggestion[]` | — | `{ id, type, blockId, from, to, originalText, suggestedText }` with `type` `insert`, `delete` or `replace`. |
+| `suggestions` | `ToolbarSuggestion[]` | — | `{ id, type, blockId, from, to, originalText, suggestedText }` with `type` `insert`, `delete` or `replace`. |
 | `currentIndex` | `number` | — | Position shown as `n/total`. |
 | `onNavigate` | `(index: number) => void` | — | Previous and Next. |
 | `onAccept`, `onReject` | `(suggestion) => void` | — | The current suggestion. |
@@ -213,8 +213,6 @@ the editor is read-only. The same shape serves [AI proofreading](/docs/ai/ui#pro
   backend if others must see them.
 - `SuggestionToolbar` shows a counter and buttons. It does not show the suggested text or
   move the caret to it.
-- `@gotipe/suggestions` and `@gotipe/block-editor` both export a type named
-  `Suggestion`, with different fields. Import one under another name.
 
 ## Related
 

@@ -24,7 +24,11 @@ export type { BlockContextMenuProps } from "./components/block-context-menu";
 export { AiCommandBar } from "./components/ai-command-bar";
 export type { AiCommandBarProps } from "./components/ai-command-bar";
 export { SuggestionToolbar } from "./components/suggestion-toolbar";
-export type { SuggestionToolbarProps, Suggestion } from "./components/suggestion-toolbar";
+export type {
+  SuggestionToolbarProps,
+  Suggestion,
+  ToolbarSuggestion,
+} from "./components/suggestion-toolbar";
 export { AiStatusIndicator } from "./components/ai-status-indicator";
 export type { AiStatusIndicatorProps } from "./components/ai-status-indicator";
 export { GhostText } from "./components/ghost-text";

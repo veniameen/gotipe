@@ -18,7 +18,8 @@ export interface Suggestion {
   status: "pending" | "accepted" | "rejected";
 }
 
-export type SuggestionState = "tracking" | "viewing" | "off";
+/** Whether local edits are recorded as suggestions (`enable()`/`disable()`). */
+export type SuggestionState = "tracking" | "off";
 
 export interface SuggestionsOptions {
   enabled?: boolean;
