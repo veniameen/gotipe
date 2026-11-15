@@ -291,19 +291,21 @@ export function mountSurface(
       }
 
       // Some browsers do not dispatch beforeinput(deleteContentBackward)
-      // at list-item boundaries. Handle this path on keydown.
-      if (e.key === "Backspace" && !e.metaKey && !e.ctrlKey && !e.altKey && readSelectionFromDOM) {
-        const domSelection = readSelectionFromDOM();
+      // at list-item boundaries. Handle this path on keydown. Until a pending
+      // restore puts the native caret where the model's is, the model's counts,
+      // as for `beforeinput` (input/session.ts).
+      if (e.key === "Backspace" && !e.metaKey && !e.ctrlKey && !e.altKey) {
+        const caret = domSelection.pending ? port.selection : readSelectionFromDOM();
         if (
-          domSelection &&
-          domSelection.anchor.blockId === domSelection.head.blockId &&
-          domSelection.anchor.offset === domSelection.head.offset &&
-          domSelection.anchor.offset === 0
+          caret &&
+          caret.anchor.blockId === caret.head.blockId &&
+          caret.anchor.offset === caret.head.offset &&
+          caret.anchor.offset === 0
         ) {
           const state = port.getViewState();
-          const currentBlock = findBlockInTree(state.blocks, domSelection.anchor.blockId);
+          const currentBlock = findBlockInTree(state.blocks, caret.anchor.blockId);
           const parentInfo = currentBlock
-            ? findParentBlock(state.blocks, domSelection.anchor.blockId)
+            ? findParentBlock(state.blocks, caret.anchor.blockId)
             : null;
           const insideListItem =
             !!currentBlock &&

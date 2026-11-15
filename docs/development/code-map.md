@@ -56,6 +56,7 @@ React/content/table-layout владеет временной шириной пр
 | Схема и предварительная атомарная проверка JS/WASM | `engine/schema.ts`, `validate.ts`, `js-transactions.ts`, `wasm-bridge.ts` |
 | История, фильтры и события транзакций | `editor/transactions.ts`, `editor/transaction-filters.ts` |
 | Шаг набора: подряд набранный или удалённый текст — один шаг отмены (пауза 500 мс, смена выделения, другой вид правки) | `editor/typing-group.ts`; вид ввода (`TypingKind`) передают обработчики `input/` через порт монтирования, выделение с прежним значением сохраняет объект (`select` в `editor.ts`) |
+| Каретка после правки: родная встаёт на место каретки модели, как только рендерер заменил узлы или переписал их текст, иначе в следующем кадре; до этого ввод и Backspace берут каретку модели | `dom/selection.ts` (`renderObserver`, `scheduleSelectionRestore`); `input/session.ts` (`resolveSelectionForInput`), Backspace по keydown — `editor/mount.ts` |
 | Lifecycle extensions/plugins и decoration layers | `editor/extension-lifecycle.ts` |
 | Настроенные paste rules и изолированный draft | `editor/clipboard-options.ts`, `clipboard/paste-rules.ts` |
 | Хуки вставки простого текста (`transformPastedText`, `parsePastedText`) | `clipboard/handler.ts` (`pasteText`), контекст со схемой — `editor/clipboard-options.ts` |
