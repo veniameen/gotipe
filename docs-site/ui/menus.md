@@ -243,6 +243,9 @@ editability. `destroy()` hides the element and stops listening.
   More).
 - The block handle and block menu have no keyboard path, and show only in the `notion`
   view.
+- Reset formatting is offered on every block. On a block without text it still turns the
+  block into a paragraph: an image or a divider becomes an empty paragraph (⌘Z brings it
+  back), and on a table the menu and the toast report a schema error.
 - The Vue package has only a minimal slash menu and toolbar; see [Vue](/docs/frameworks/vue).
 
 ## Related
