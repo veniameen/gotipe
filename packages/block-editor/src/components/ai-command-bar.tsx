@@ -70,7 +70,7 @@ function CommandBar({ editor, onSubmit }: AiCommandBarProps) {
     };
     const update = editor.on("update", completed);
     const proofread = editor.on("aiProofreadChange", completed);
-    const review = editor.on("commentAdded", completed);
+    const review = editor.on("aiReviewChange", completed);
     const editable = editor.on("editableChange", (enabled) => {
       if (!enabled) close();
     });

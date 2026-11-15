@@ -118,7 +118,7 @@ export async function createEditorWithLoader(
     restoreDocument: (state) => bridge.restoreState(schemaJson, state),
     getViewState: () => editor.getViewState(),
     invalidate: () => view.invalidate(),
-    publishUpdate: () => editor.emit("update", { editor }),
+    publishUpdate: (origin) => editor.emit("update", { editor, origin }),
     publishSelection: () => editor.emit("selectionChange", { editor }),
     publishView: () => editor.emit("viewStateChange", editor.getViewState()),
     scheduleSelectionRestore: () => scheduleDomSelectionRestore?.(),
@@ -171,7 +171,7 @@ export async function createEditorWithLoader(
       storedMarks = null;
       view.invalidate();
       editor.emit("selectionChange", { editor });
-      editor.emit("update", { editor });
+      editor.emit("update", { editor, origin: "remote" });
       editor.emit("viewStateChange", editor.getViewState());
       scheduleDomSelectionRestore?.();
     },
@@ -376,7 +376,7 @@ export async function createEditorWithLoader(
         currentSelection = caretAt("");
       }
 
-      this.emit("update", { editor: this });
+      this.emit("update", { editor: this, origin: "local" });
       this.emit("selectionChange", { editor: this });
       this.emit("viewStateChange", this.getViewState());
       // Never pull focus into the editor: restore the DOM selection only when

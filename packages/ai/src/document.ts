@@ -2,6 +2,11 @@ import type { Block, GoTipeEditor, SelectionView } from "@gotipe/core";
 import type { AiContext } from "./types";
 
 export interface AiTarget {
+  /**
+   * The blocks the result applies to, as they were when the target was captured: the blocks
+   * of the selected text, or the selected blocks. Edits elsewhere — another replica's while
+   * the provider works — leave the target valid (D-46).
+   */
   readonly document: string;
   readonly selection: SelectionView;
 }
@@ -13,14 +18,28 @@ export function textOf(block: Block): string {
     ? block.content
     : (block.content ?? []).map((span) => span.text).join("");
 }
-export function documentKey(editor: GoTipeEditor): string {
-  return JSON.stringify(editor.getJSON().blocks);
+/** The blocks `selection` covers, in document order; for text, without their children. */
+function targetKey(editor: GoTipeEditor, selection: SelectionView): string {
+  const all = flatten(editor.getJSON().blocks);
+  if (selection.type !== "text") {
+    const ids = new Set(selection.blockIds ?? [selection.anchor.blockId]);
+    return JSON.stringify(all.filter((block) => ids.has(block.id)));
+  }
+  const from = all.findIndex((block) => block.id === selection.anchor.blockId);
+  const to = all.findIndex((block) => block.id === selection.head.blockId);
+  if (from < 0 || to < 0) return "";
+  const covered = all.slice(Math.min(from, to), Math.max(from, to) + 1);
+  return JSON.stringify(covered.map(({ children: _, ...block }) => block));
+}
+/** Each block as JSON by ID: what a request about the whole document was asked about. */
+export function blockSnapshots(editor: GoTipeEditor): Map<string, string> {
+  return new Map(
+    flatten(editor.getJSON().blocks).map((block) => [block.id, JSON.stringify(block)]),
+  );
 }
 export function captureTarget(editor: GoTipeEditor): AiTarget {
-  return {
-    document: documentKey(editor),
-    selection: structuredClone(editor.getViewState().selection),
-  };
+  const selection = structuredClone(editor.getViewState().selection);
+  return { document: targetKey(editor, selection), selection };
 }
 export function assertWritable(editor: GoTipeEditor): void {
   if (editor.isDestroyed) throw new Error("The editor has been destroyed");
@@ -28,7 +47,7 @@ export function assertWritable(editor: GoTipeEditor): void {
 }
 export function assertTarget(editor: GoTipeEditor, target: AiTarget): void {
   assertWritable(editor);
-  if (documentKey(editor) !== target.document) {
+  if (targetKey(editor, target.selection) !== target.document) {
     throw new Error("The document changed while AI was working. Run the command again.");
   }
 }

@@ -4,7 +4,12 @@ import type { TransactionContext } from "./state";
 import type { ViewState } from "./view";
 
 export interface EditorEvents {
-  update: (props: { editor: GoTipeEditor }) => void;
+  /**
+   * The document or the stored marks changed. `origin`: `"remote"` — another replica's edit
+   * (`receiveCollaborationUpdate`) and the repair the editor makes after it; `"local"` —
+   * everything else: input, commands, `dispatch`, Undo and Redo, `setContent`.
+   */
+  update: (props: { editor: GoTipeEditor; origin: "local" | "remote" }) => void;
   /** Emitted after a local dispatch commits, before its update event. */
   transaction: (props: TransactionContext & { editor: GoTipeEditor }) => void;
   selectionChange: (props: { editor: GoTipeEditor }) => void;
@@ -23,6 +28,8 @@ export interface EditorEvents {
   aiStatusChange: (status: { active: boolean; label?: string }) => void;
   aiGhostTextChange: (ghost: { text: string; blockId: string; offset: number } | null) => void;
   aiProofreadChange: (payload: { suggestions: unknown[]; currentIndex: number }) => void;
+  /** AI review comments: their own list, apart from the comments of `commentAdded` and others. */
+  aiReviewChange: (payload: { comments: unknown[] }) => void;
   scrollToBlock: (payload: { blockId: string }) => void;
   /** Every editor error. The editor never renders error text itself. */
   error: (error: GoTipeError) => void;

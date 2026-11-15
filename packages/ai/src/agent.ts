@@ -33,7 +33,8 @@ export const defineAiAgent = defineExtension<AiAgentOptions>({
             });
           } else if (command === "review") {
             runtime.comments = await runtime.manager.reviewComments();
-            for (const comment of runtime.comments) editor.emit("commentAdded", comment.id);
+            // Their own event: these comments are not in the comment store (D-46).
+            editor.emit("aiReviewChange", { comments: getAiReviewComments(editor) });
             editor.emit("aiStatusChange", { active: false });
           } else {
             if (!prompt) throw new Error("Enter an AI prompt");

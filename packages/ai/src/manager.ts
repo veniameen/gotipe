@@ -4,6 +4,7 @@ import {
   assertTarget,
   assertWritable,
   blockLocation,
+  blockSnapshots,
   buildAiContext,
   captureTarget,
   flatten,
@@ -150,29 +151,39 @@ export class AiManager {
       else yield await provider.executeCommand(`addParagraph:${prompt}`, context);
     });
   }
+  /**
+   * Drops results for blocks that another replica changed while the provider worked (`seen`:
+   * the blocks it was asked about); the rest still apply (D-46).
+   */
+  private unchanged<T extends { blockId: string }>(seen: Map<string, string>, results: T[]): T[] {
+    assertWritable(this.editor);
+    const now = blockSnapshots(this.editor);
+    return results.filter(
+      (item) => !seen.has(item.blockId) || now.get(item.blockId) === seen.get(item.blockId),
+    );
+  }
   async proofread(): Promise<AiProofreadSuggestion[]> {
-    const target = this.captureTarget();
-    const suggestions = await this.run("Proofreading...", true, (provider, context) => {
+    const seen = blockSnapshots(this.editor);
+    const result = await this.run("Proofreading...", true, (provider, context) => {
       if (!provider.proofread) throw new Error("This AI provider does not support proofreading");
       return provider.proofread(context);
     });
-    assertTarget(this.editor, target);
+    const suggestions = this.unchanged(seen, result);
     // Validate provider coordinates before exposing anything to review controls.
     proofreadSteps(this.editor, suggestions, new Map());
     this.proofreadBaselines.clear();
-    const blocks = new Map(flatten(this.editor.getJSON().blocks).map((block) => [block.id, block]));
     for (const suggestion of suggestions)
-      this.proofreadBaselines.set(suggestion.id, JSON.stringify(blocks.get(suggestion.blockId)));
+      this.proofreadBaselines.set(suggestion.id, seen.get(suggestion.blockId)!);
     return suggestions;
   }
   async reviewComments(): Promise<AiComment[]> {
-    const target = this.captureTarget();
-    const comments = await this.run("Reviewing...", true, (provider, context) => {
+    const seen = blockSnapshots(this.editor);
+    const result = await this.run("Reviewing...", true, (provider, context) => {
       if (!provider.reviewComments)
         throw new Error("This AI provider does not support review comments");
       return provider.reviewComments(context);
     });
-    assertTarget(this.editor, target);
+    const comments = this.unchanged(seen, result);
     const blocks = new Map(flatten(this.editor.getJSON().blocks).map((block) => [block.id, block]));
     const ids = new Set<string>();
     for (const comment of comments) {
