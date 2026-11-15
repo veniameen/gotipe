@@ -80,7 +80,7 @@ editor.emit("executeAiCommand", { commandId: "askAi", prompt: "the risks of this
 | `addParagraph` | Same as `askAi` with a `prompt`. |
 | `freeText` | `prompt` `proofread`, `proofread document` or `check grammar` runs `proofread`; `review`, `review document` or `check document` runs `review`; any other prompt adds a paragraph, without a leading `add paragraph about` or `add paragraph:`. |
 | `proofread` | Gets edits from `proofread`, validates them and emits `aiProofreadChange`. Read them with `getProofreadSuggestions(editor)`; apply them with `acceptProofreadSuggestion`, `rejectProofreadSuggestion`, `acceptAllProofreadSuggestions` or `rejectAllProofreadSuggestions`. |
-| `review` | Gets comments from `reviewComments`, validates them and emits `aiReviewChange` with them. Read them with `getAiReviewComments(editor)`. They are not in the comments manager and emit none of its events; any edit clears them. |
+| `review` | Gets comments from `reviewComments`, validates them and emits `aiReviewChange` with them. Read them with `getAiReviewComments(editor)`. They are not in the comments manager and emit none of its events. They follow the text of their blocks: an edit before a comment's quote, yours or a collaborator's, moves it, an edit elsewhere leaves it, and it goes when the edit touches the quote or removes the block; each change emits `aiReviewChange`. |
 | `cancelAi` | Cancels the running request. |
 
 Generated text is collected completely before it is inserted, so an error or a
@@ -186,10 +186,10 @@ manager of your own, with its own request, which you release with `destroy()`.
 
 ## Limitations
 
-- Proofreading edits and review comments refer to offsets in one version of the
-  document. A proofreading edit goes stale when its block changes, and review comments are
-  dropped on the next change. Keep lasting discussions in
-  [`CommentsManager`](/docs/review/comments).
+- Proofreading edits refer to offsets in one version of the document and go stale when
+  their block changes. Review comments move with the text of their block, but they are not
+  collaborative anchors: an edit that touches a quote removes its comment, and each client
+  keeps its own. Keep lasting discussions in [`CommentsManager`](/docs/review/comments).
 - In a collaborative document, a collaborator's edit cancels your running request.
 - The PII check covers the patterns above only. It is not a full classifier of personal
   data.

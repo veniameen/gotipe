@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { useBlockEditorI18n } from "../../i18n/strings";
 import type { CommentData, CommentSidebarProps } from "./types";
 
 type Props = Pick<
@@ -15,6 +16,7 @@ export function CommentThread({
   onDelete,
   onLocate,
 }: Props) {
+  const i18n = useBlockEditorI18n();
   const [reply, setReply] = useState("");
   const [replyOpen, setReplyOpen] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -39,7 +41,7 @@ export function CommentThread({
       if (alive.current) done?.();
     } catch (failure) {
       if (alive.current)
-        setError(failure instanceof Error ? failure.message : "The comment could not be updated.");
+        setError(failure instanceof Error ? failure.message : i18n.t("error.comment"));
     } finally {
       if (alive.current) setBusy(false);
     }
@@ -73,19 +75,17 @@ export function CommentThread({
       {comment.quotedText && (
         <blockquote className="gotipe-comment-quote">{comment.quotedText}</blockquote>
       )}
-      {comment.orphaned && (
-        <p className="gotipe-comment-orphaned">The quoted text has changed or was removed.</p>
-      )}
+      {comment.orphaned && <p className="gotipe-comment-orphaned">{i18n.t("comments.orphaned")}</p>}
       <p className="gotipe-comment-body">{comment.body}</p>
       <div className="gotipe-comment-actions">
         {comment.anchorBlockId && (
           <button
             type="button"
             disabled={comment.orphaned}
-            aria-label="Scroll to comment"
+            aria-label={i18n.t("comments.locateLabel")}
             onClick={() => onLocate(comment)}
           >
-            Show quote
+            {i18n.t("comments.locate")}
           </button>
         )}
         {comment.resolved
@@ -93,30 +93,29 @@ export function CommentThread({
               <button
                 type="button"
                 disabled={busy}
-                aria-label="Unresolve"
+                aria-label={i18n.t("comments.reopenLabel")}
                 onClick={() => void run(() => onUnresolve(comment.id))}
               >
-                Reopen
+                {i18n.t("comments.reopen")}
               </button>
             )
           : onResolve && (
               <button
                 type="button"
                 disabled={busy}
-                aria-label="Resolve"
                 onClick={() => void run(() => onResolve(comment.id))}
               >
-                Resolve
+                {i18n.t("comments.resolve")}
               </button>
             )}
         {onDelete && (
           <button
             type="button"
             disabled={busy}
-            aria-label="Delete comment"
+            aria-label={i18n.t("comments.deleteLabel")}
             onClick={() => void run(() => onDelete(comment.id))}
           >
-            Delete
+            {i18n.t("comments.delete")}
           </button>
         )}
       </div>
@@ -148,9 +147,11 @@ export function CommentThread({
             }}
           >
             <label>
-              Reply{currentUser ? ` as ${currentUser}` : ""}
+              {currentUser
+                ? i18n.t("comments.replyAs", { name: currentUser })
+                : i18n.t("comments.replyField")}
               <textarea
-                aria-label="Reply"
+                aria-label={i18n.t("comments.replyField")}
                 ref={replyInput}
                 rows={3}
                 maxLength={10000}
@@ -168,12 +169,12 @@ export function CommentThread({
                   }
                   if (event.key === "Escape") setReplyOpen(false);
                 }}
-                placeholder="Reply..."
+                placeholder={i18n.t("comments.replyPlaceholder")}
               />
             </label>
             <div className="gotipe-comment-actions">
               <button type="submit" disabled={busy || !reply.trim()}>
-                Send reply
+                {i18n.t("comments.send")}
               </button>
               <button
                 type="button"
@@ -183,7 +184,7 @@ export function CommentThread({
                   setReplyOpen(false);
                 }}
               >
-                Cancel
+                {i18n.t("comments.cancel")}
               </button>
             </div>
           </form>
@@ -194,7 +195,7 @@ export function CommentThread({
             disabled={busy}
             onClick={() => setReplyOpen(true)}
           >
-            Reply
+            {i18n.t("comments.reply")}
           </button>
         ))}
       {error && (

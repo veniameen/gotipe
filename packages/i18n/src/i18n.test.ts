@@ -21,7 +21,7 @@ describe("i18n", () => {
   it("translates with explicit locales and falls back to English", () => {
     const i18n = createI18n({ locale: "ru", locales: { ru, en } });
     expect(i18n.t("code.copy")).toBe(ru["code.copy"]);
-    expect(i18n.t("review.editing", { name: "GigaChat 2" })).toBe("Правит GigaChat 2");
+    expect(i18n.t("table.resizeColumn", { index: 2 })).toBe("Ширина столбца 2");
     const partial = createI18n({
       locale: "xx",
       locales: { xx: { ...ru, "code.copy": undefined as never }, en },
