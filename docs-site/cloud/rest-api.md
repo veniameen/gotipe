@@ -12,7 +12,8 @@ calls.
 
 ## Conventions
 
-- Send bodies as JSON with `Content-Type: application/json`. Lists come back as `{ "data": [...] }`.
+- Send bodies as JSON with `Content-Type: application/json`. Lists come back as `{ "data": [...] }`;
+  long lists come in pages — see [Pages](#pages).
 - Every response carries `X-Request-ID`. Send your own to correlate logs; otherwise the server
   creates one.
 - Browsers may call the API from the origins in `HTTP_ALLOWED_ORIGINS` (with credentials). The
@@ -21,6 +22,24 @@ calls.
 - A request body may be up to `EXPORT_MAX_DOCUMENT_SIZE` plus 1 MiB (11 MiB by default).
 - A document you cannot access answers `404`, the same as one that does not exist. Actions
   your role does not allow on a document you can see answer `403` or `404`, as noted below.
+
+## Pages
+
+Documents are listed with `limit` and `offset` (see [List](#list)). Comments and versions come
+one page at a time after a cursor:
+
+```json
+{ "data": [...], "has_more": true, "next_cursor": "MjAyNi0xMS0xNVQxMDowNTowMC4xMjM0NTZaIGM0MWU…" }
+```
+
+`limit` is 1–100; any other value means 50. When `has_more` is `true`, pass `next_cursor` as
+`cursor` to read the next page; the last page has `has_more: false` and no `next_cursor`. The
+cursor is opaque: it names the last item of the page, and the next page starts strictly after
+it in the list's order (creation time, then ID). Items created, resolved or deleted between the
+requests therefore neither repeat nor shift the rest of the list. A comment created while you
+read the pages comes on a later page, because the server stamps it with a later time; with
+several API processes, that holds while their clocks agree. A cursor that is not one the
+server issued answers `400 VALIDATION_ERROR`.
 
 ## Errors
 
@@ -292,9 +311,10 @@ Replies have `parent_id`; resolved comments have `resolved_at` and `resolved_by`
 | `from`, `to` | `number` | Required for `inline`: text offsets with `0 ≤ from ≤ to`. |
 | `metadata` | any JSON | Stored and returned as is. |
 
-`GET /v1/documents/{docId}/comments?include_resolved=true&limit=50` — `{ "data": [...] }`,
-oldest first, replies included as separate items. Unresolved only unless `include_resolved=true`;
-`limit` is 1–100 (otherwise 50).
+`GET /v1/documents/{docId}/comments?include_resolved=true&limit=50&cursor=…` — a
+[page](#pages) of comments, oldest first, replies included as separate items. Unresolved only
+unless `include_resolved=true`. A comment resolved while you read the pages leaves the
+remaining pages as they were.
 
 `POST …/comments/{commentId}/replies` — `{ "content": "…" }` → `201` with the reply, which takes
 its parent's anchor.
@@ -317,8 +337,10 @@ A version:
 → `201`. `name` is required; `version_type` is `named` (default) or `milestone`. The version
 is a snapshot of the current content, collaboration updates included.
 
-`GET /v1/documents/{docId}/versions?limit=50` — `{ "data": [...] }`, newest first; `limit` 1–100.
-Restore points have `version_type` `restore_point`.
+`GET /v1/documents/{docId}/versions?limit=50&cursor=…` — a [page](#pages) of versions,
+newest first. A version created while you read the pages appears on the first page of a new
+listing, not again on the next page. Restore points have `version_type` `restore_point` and no
+`description`.
 
 `POST /v1/documents/{docId}/versions/{versionId}/restore` → `{"status": "restored", "version_id": "…"}`.
 The current content is first saved as a `restore_point` version named
@@ -436,9 +458,9 @@ retries. Subscription, checkout and invoice events update the account's plan.
 
 > [!NOTE]
 > Not in this release: sign-up, OAuth or SSO, outgoing webhooks, an endpoint for a version's
-> content or a diff between versions, comment editing, pagination beyond `limit` for comments
-> and versions, and document import. `apps/cloud/api/openapi.yaml` in the repository is out of
-> date; this page follows the server code.
+> content or a diff between versions, comment editing and document import.
+> `apps/cloud/api/openapi.yaml` in the repository is out of date; this page follows the server
+> code.
 
 ## Related
 

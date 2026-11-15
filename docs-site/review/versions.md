@@ -6,7 +6,8 @@ packages: ["@gotipe/versions", "@gotipe/block-editor"]
 
 `VersionsManager` saves snapshots of the document while it is open, by name or on a timer.
 You can compare two snapshots block by block and restore one; a restore is an ordinary edit
-that undo reverts. Snapshots live in memory, so your app or GoTipe Cloud stores them.
+that undo reverts. Snapshots live in memory: `exportState()` hands them to your storage and
+`loadState()` reads them back.
 `@gotipe/versions` is MIT and has no UI; the history panel, `VersionHistory`, is part of the
 commercial `@gotipe/block-editor`.
 
@@ -54,6 +55,7 @@ options; `getVersionsManager(editor)` returns it.
 
 | Option | Type | Default | Description |
 | --- | --- | --- | --- |
+| `initialState` | `unknown` | — | A stored snapshot to start with, read as `loadState()` reads it. `undefined` starts empty; anything else that is not a snapshot, `null` included, throws from the constructor, and no auto-save starts. |
 | `autoSave` | `boolean` | `false` | Save a version on a timer. |
 | `autoSaveInterval` | `number` | `300000` | Timer period in ms. Must be positive. |
 | `maxVersions` | `number` | `100` | Versions kept. When a new one exceeds the limit, the oldest are dropped. Must be a positive integer. |
@@ -73,7 +75,9 @@ only when the document differs from the last saved version; it is named
 | `getVersions()` / `getVersion(id)` | Detached copies, oldest first. |
 | `deleteVersion(id)` | Removes a version. Returns `false` for an unknown ID. |
 | `compareVersions(a, b)` | `compareDocuments` of two saved versions, or `null` when one is missing. |
-| `subscribe(listener)` | Called after every create, restore and delete. Returns an unsubscribe function. |
+| `exportState()` | `{ version: 1, versions }`: every version, oldest first, detached and ready for JSON. |
+| `loadState(snapshot)` | Replaces the versions with a stored snapshot. See [Store versions](#store-versions). |
+| `subscribe(listener)` | Called after every create, restore, delete and load. Returns an unsubscribe function. |
 | `getRevision()` | A counter that grows with every change, for UI memoization. |
 | `destroy()` | Stops the timer and drops every version. Destroying the editor destroys the manager. |
 
@@ -159,22 +163,37 @@ from `@gotipe/i18n` (`history.*`). Styles are in `@gotipe/theme` (`theme/history
 
 ## Store versions
 
-- **Your storage.** Save each version from `onVersionCreated`. The manager has no method that
-  loads versions back, so after a reload keep the list in your app: compare with
-  `compareDocuments()`, and restore with
-  `editor.setContent(snapshot, { addToHistory: true, preserveSelection: true })`, which is
-  what `restoreVersion()` does.
-- **GoTipe Cloud.** `POST /v1/documents/{docId}/versions` with `{ name, description?,
-  version_type? }` (`named` or `milestone`) saves the document as Cloud stores it, not the
-  editor's local state. `GET` lists versions, and
-  `POST /v1/documents/{docId}/versions/{versionId}/restore` replaces the document. Before
-  it does, Cloud saves the previous content as a `restore_point` version. A restore starts a
-  new collaboration log, so open editors must load the document again. Cloud has no endpoint
-  that returns a version's content. See [REST API](/docs/cloud/rest-api).
+**Your storage.** Save `exportState()` whenever the list changes and pass it back as
+`initialState` (or to `loadState()`) when the document opens again:
+
+```ts title="stored-history.ts"
+const versions = new VersionsManager(editor, {
+  autoSave: true,
+  initialState: (await storage.read(documentId)) ?? undefined, // nothing stored yet
+});
+versions.subscribe(() => storage.write(documentId, versions.exportState()));
+```
+
+`loadState()` checks the whole snapshot before it changes anything: an unknown format, a
+repeated ID, an empty name, a date `Date.parse` cannot read or an invalid document throws a
+`GoTipeError` with code `VALIDATION_ERROR`, and the versions stay as they were. Versions are
+put oldest first by `createdAt` (equal times keep their order), and the newest `maxVersions`
+are kept, as when a new version exceeds the limit. A snapshot may hold up to 10,000 versions,
+or `maxVersions` when that is larger, so a manager always reads back what it exported. Auto-save then compares the document with
+the newest loaded version. Listeners are called; `onVersionCreated` is not.
+
+**GoTipe Cloud.** `POST /v1/documents/{docId}/versions` with `{ name, description?,
+version_type? }` (`named` or `milestone`) saves the document as Cloud stores it, not the
+editor's local state. `GET` lists versions a page at a time, and
+`POST /v1/documents/{docId}/versions/{versionId}/restore` replaces the document. Before it
+does, Cloud saves the previous content as a `restore_point` version. A restore starts a new
+collaboration log, so open editors must load the document again. Cloud has no endpoint that
+returns a version's content, so its versions cannot be loaded into `VersionsManager`. See
+[REST API](/docs/cloud/rest-api).
 
 ## Limitations
 
-- Versions live in memory and disappear with the manager.
+- Versions live in memory and disappear with the manager unless you store `exportState()`.
 - Every version holds a full copy of the document.
 - The comparison shows a changed block's text without its marks; a change of marks alone
   marks the block as changed.

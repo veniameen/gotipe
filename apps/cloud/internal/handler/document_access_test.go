@@ -81,10 +81,17 @@ func TestAuthorizedChildReadsReturnEmptyLists(t *testing.T) {
 		return testRow(func(dest ...any) error { *dest[0].(*string) = "owner"; return nil })
 	}, query: func(string, ...any) (pgx.Rows, error) { return &emptyRows{}, nil }}
 	db := &storage.PostgresStore{Pool: pool}
-	for _, handle := range []http.HandlerFunc{NewCommentsHandler(db, nil).ListComments(), NewVersionsHandler(db, nil, nil).ListVersions(), NewPermissionsHandler(db, nil).ListPermissions()} {
+	for _, tc := range []struct {
+		handle http.HandlerFunc
+		body   string
+	}{
+		{NewCommentsHandler(db, nil).ListComments(), `{"data":[],"has_more":false}`},
+		{NewVersionsHandler(db, nil, nil).ListVersions(), `{"data":[],"has_more":false}`},
+		{NewPermissionsHandler(db, nil).ListPermissions(), `{"data":[]}`},
+	} {
 		w := httptest.NewRecorder()
-		handle(w, requestAs("GET", "/", "", &auth.UserContext{UserID: "caller"}))
-		if w.Code != 200 || strings.TrimSpace(w.Body.String()) != `{"data":[]}` {
+		tc.handle(w, requestAs("GET", "/", "", &auth.UserContext{UserID: "caller"}))
+		if w.Code != 200 || strings.TrimSpace(w.Body.String()) != tc.body {
 			t.Fatalf("bad list: %d %s", w.Code, w.Body)
 		}
 	}
