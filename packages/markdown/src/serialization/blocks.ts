@@ -7,6 +7,7 @@ import {
   listStart,
   normalizeAlign,
   richContent,
+  spansText,
 } from "../model";
 import type { Block, RawSegment, Span } from "../types";
 import { normalizeEol } from "../util";
@@ -121,10 +122,11 @@ function linkLine(attrs: Record<string, unknown>): string {
 /**
  * Raw source written after `indent`: each of its later lines after the indentation and the `>` of
  * the blocks around it, as the Rust writer writes it (D-114). Without them its lines left the item
- * or the quote, and the rest of the block with them.
+ * or the quote, and the rest of the block with them. The line its last line ending starts is one
+ * of them (D-155): an empty line would end a quote.
  */
 function rawLines(source: string, indent: string): string {
-  return indent ? source.replace(/(?:\r\n|\r(?!\n)|\n)(?!$)/g, (eol) => eol + indent) : source;
+  return indent ? source.replace(/\r\n|\r|\n/g, (eol) => eol + indent) : source;
 }
 
 /** An empty formula or an embed without an address has no Markdown at any depth. */
@@ -155,18 +157,37 @@ function blankLine(indent: string): string {
   return quote < 0 ? "" : `${indent.slice(0, quote + 1)} `;
 }
 
+/** Blocks written in syntax of their own: without text they still write a line. */
+const OWN_LINE = new Set([
+  "heading",
+  "codeBlock",
+  "blockquote",
+  "callout",
+  "divider",
+  "image",
+  "file",
+  "embed",
+  "math",
+  "table",
+]);
+
 /**
- * A child that writes no line but blanks of its own, so it keeps no lists apart and is not
- * written: a paragraph without text, raw source of blanks, a list without items. Its blank line
+ * A block that writes no line but blanks of its own, so it keeps no lists apart and is not
+ * written: raw source of blanks, a list without items, and a block without syntax of its own (a
+ * paragraph, a toggle, columns) without text whose children write none (D-157). Its blank line
  * after the marker of an item without text would end the item (D-117).
  */
 export function writesNoLine(block: Block): boolean {
   if (omitted(block)) return true;
   if (block.type === "markdownRaw")
     return typeof block.content !== "string" || !/[^ \t\r\n]/.test(block.content);
-  if (["bulletList", "orderedList", "todoList"].includes(block.type))
-    return !block.children?.length;
-  return block.type === "paragraph" && isBlockEmpty(block) && !block.children?.length;
+  if (LIST_TYPES.has(block.type)) return !block.children?.length;
+  if (OWN_LINE.has(block.type)) return false;
+  const text =
+    typeof block.content === "string"
+      ? /[^ \t\r\n]/.test(block.content)
+      : spansText(richContent(block)).length > 0;
+  return !text && (block.children ?? []).every(writesNoLine);
 }
 
 /**
@@ -235,7 +256,9 @@ function renderList(w: Writer, block: Block, indent: string, ro: RenderOpts, nod
     const contIndent = indent + " ".repeat(marker.length + 1);
     const spans = richContent(item);
     const lines = kept(item, ro);
-    if (todo) {
+    // an item of a bullet list with `checked` is a task, as the Rust editor makes one (D-156)
+    const task = todo || (!ordered && item.attrs?.checked !== undefined);
+    if (task) {
       w.write(item.attrs?.checked === true ? " [x]" : " [ ]");
       if (spans.length > 0) {
         w.write(" ");
@@ -258,7 +281,7 @@ function renderList(w: Writer, block: Block, indent: string, ro: RenderOpts, nod
       }
     }
     // the `[ ]` of a task is text that a nested list has to interrupt as well
-    const text = spans.length > 0 || todo;
+    const text = spans.length > 0 || task;
     let first = true;
     // a line before the child that a line without a blank one before it would continue
     let open = text;
@@ -521,8 +544,8 @@ function renderBlock(w: Writer, block: Block, indent: string, ro: RenderOpts): R
  */
 function closer(child: Block, indent: string, ro: RenderOpts): string {
   if (!copiesOpener(child)) return "";
-  const line = closingLine(renderTop(child, ro).md, "", ro.eol);
-  return line && (/^[\r\n]/.test(line) ? "" : indent) + rawLines(line, indent);
+  // after a line ending that ends the child its indentation is written already (D-155)
+  return rawLines(closingLine(renderTop(child, ro).md, "", ro.eol), indent);
 }
 
 export function renderTop(block: Block, ro: RenderOpts): { md: string; node: RNode } {
