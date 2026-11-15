@@ -7,7 +7,7 @@
 | WASM | `crates/gotipe-wasm`, `packages/wasm`, core/wasm-bridge | тот же контракт, явная загрузка; в Node — условие `node` (`packages/wasm/node.js`) читает бинарник из пакета |
 | Markdown | `packages/markdown/src` | parser/serializer/source-map, нетронутые байты |
 | Синхронизация | `crates/gotipe-crdt`, `packages/collaboration` | convergence, transport, awareness |
-| Адаптеры | `packages/react`, `vue`, `svelte`, `solid` | render/subscription/lifecycle, один документ; отказ создания в React и Svelte — `error` и `onError`, Svelte создаёт только в браузере |
+| Адаптеры | `packages/react`, `vue`, `svelte`, `solid` | render/subscription/lifecycle, один документ; отказ создания — `error` и `onError` во всех четырёх (React, Vue и Solid — ещё и `useEditorStatus`), Svelte создаёт только в браузере |
 | UI | `packages/block-editor`, `block-editor-vue`, `ai-ui` | views/commands через публичный core |
 | Тема | `packages/theme/src/design-tokens.json`, generated CSS и presets | один источник tokens; scoped theme lifecycle |
 | Review/версии | `packages/comments`, `suggestions`, `versions` | IDs, anchors, apply/reject/restore |
