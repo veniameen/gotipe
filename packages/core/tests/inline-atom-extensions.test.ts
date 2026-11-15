@@ -65,6 +65,23 @@ describe.each(ENGINES)("inline atom extensions on the %s engine", (engine) => {
     expect(content(editor).at(-1)).toEqual({ text: "!", marks: [] });
   });
 
+  it("clears formatting around and inside atoms but keeps the atoms", async () => {
+    const editor = await open(engine);
+    insertMention(editor, { id: "42", label: "Анна" });
+    insertInlineMath(editor, "x^2");
+    insertCustomEmoji(editor, { name: "party", src: "https://cdn.test/p.png" });
+    insertInlineImage(editor, { src: "https://cdn.test/a.png", alt: "Схема" });
+    const atoms = (content(editor) as TextSpan[]).slice(1);
+    const all = { blockId: "p", offset: 0 };
+    const end = { blockId: "p", offset: editor.getText().length };
+    editor.setSelection({ anchor: all, head: end });
+    expect(editor.chain().addMark("bold").run()).toBe(true);
+    expect(editor.chain().clearFormatting().run()).toBe(true);
+    // Mentions, formulas, custom emoji and inline images are content, not formatting.
+    expect(content(editor)).toEqual([{ text: "Привет ", marks: [] }, ...atoms]);
+    expect(editor.getText()).toBe("Привет @Аннаx^2:party:Схема");
+  });
+
   it("refuses unsafe addresses, bad names and empty fallbacks", async () => {
     const editor = await open(engine);
     expect(insertCustomEmoji(editor, { name: "a b", src: "https://cdn.test/p.png" })).toBe(false);

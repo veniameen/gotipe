@@ -186,6 +186,7 @@ export class ChainableCommands {
   unsetMark(markType: string): this {
     return this.removeMark(markType);
   }
+  /** Removes the formatting marks of the selection; inline atoms keep their atomic marks. */
   clearFormatting(): this {
     this.marks.clear();
     return this;

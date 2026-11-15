@@ -94,7 +94,7 @@ text, `toggle*` commands switch the mark on or off for the next text the user ty
 | `unsetMark(type)` | `removeMark` on the selection. |
 | `setLink(href, target?)` | Add a `link` mark with `href` and `target` (`"_blank"` by default). |
 | `removeLink()` | Remove links from the selection. |
-| `clearFormatting()` | Remove every mark from the selected text. |
+| `clearFormatting()` | Remove every formatting mark from the selected text; inline atoms (mentions, formulas, custom emoji, inline images) stay. |
 
 Adding a mark replaces a mark of the same type, so `setLink(href)` changes the address of
 a link and `setMark("textColor", { color })` recolours text, as one undo step. Attributes
