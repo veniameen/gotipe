@@ -69,7 +69,8 @@ page-editor
   paragraph with only a relative link named after its file, such as
   `[report.pdf](assets/report.pdf)`, a file block.
 - **Table column types** are not stored: Number is right alignment (`---:`), Code wraps
-  cells in backticks, Yes / no writes the words of the UI language.
+  cells in backticks, Yes / no writes `✓` and `—` in every UI language. A column of the words
+  an earlier version wrote there (`yes`, `да`) still reads as Yes / no.
 
 Details of the codec are in [Markdown](/docs/conversion/markdown).
 
