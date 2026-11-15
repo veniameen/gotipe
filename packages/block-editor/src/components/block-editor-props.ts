@@ -32,6 +32,11 @@ export interface BlockEditorProps {
    * which the collaboration provider fills. Each peer ID is drawn once.
    */
   remotePeers?: RemotePeer[];
+  /**
+   * The AI controls: Improve in the bubble, the ⌘J command bar, ghost text and the status line.
+   * Default: on, and each shows only when an extension of `@gotipe/ai` answers it — without
+   * `defineAi` none of them appears. `false` hides them all.
+   */
   showAiCommandBar?: boolean;
   showThemeToggle?: boolean;
   suggestions?: Suggestion[];

@@ -22,7 +22,11 @@ export function EditorSkeleton({ label }: { label?: string }) {
   );
 }
 
-/** Errors a person can act on; the editor's internal conflicts stay in the error event. */
+/**
+ * Errors a person can act on. `EXTENSION_ERROR` and `COMPOSITION_CONFLICT` stay in the error
+ * event and the console by decision: an extension's own interface reports its failures (the AI
+ * bar does), and the host recovers the composed text that a conflict carries.
+ */
 const TOAST_TITLES: Partial<Record<GoTipeErrorCode, TranslationKey>> = {
   TRANSFORM_ERROR: "error.transform",
   CLIPBOARD_FAILED: "error.clipboard",
@@ -34,7 +38,12 @@ const TOAST_TITLES: Partial<Record<GoTipeErrorCode, TranslationKey>> = {
   LINK_OPEN_FAILED: "error.linkOpen",
   COLLABORATION_ERROR: "error.collaboration",
   PROPOSAL_ACTION_FAILED: "error.proposal",
+  PROPOSAL_STALE: "error.proposalStale",
   COMMENT_ACTION_FAILED: "error.comment",
+};
+/** Codes whose message is the engine's reason in English: the strings say it to a person. */
+const TOAST_DETAILS: Partial<Record<GoTipeErrorCode, TranslationKey>> = {
+  PROPOSAL_STALE: "error.proposalStaleDetail",
 };
 
 /**
@@ -62,13 +71,13 @@ export function EditorErrorToast({
   }, [shown, duration]);
   const title = shown ? TOAST_TITLES[shown.error.code] : undefined;
   if (!shown || !title) return null;
+  const own = TOAST_DETAILS[shown.error.code];
+  const detail = own ? i18n.t(own) : shown.error.message;
   return (
     <div className="gotipe-toast" aria-hidden="true" data-gotipe-toast="">
       <PageIcon name="warning" />
       <span className="gotipe-toast-title">{i18n.t(title)}</span>
-      {shown.error.message ? (
-        <span className="gotipe-toast-detail">{shown.error.message}</span>
-      ) : null}
+      {detail ? <span className="gotipe-toast-detail">{detail}</span> : null}
     </div>
   );
 }

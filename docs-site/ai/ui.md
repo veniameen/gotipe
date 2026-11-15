@@ -30,14 +30,26 @@ The second command is needed only for `AiCommandPalette`, `AiToolbar` and the co
 
 | Option | Type | Default | Description |
 | --- | --- | --- | --- |
-| `showAiCommandBar` | `boolean` | `true` | Shows the command bar, the Improve button, ghost text and the status line. |
+| `showAiCommandBar` | `boolean` | `true` | Shows the command bar, the Improve button, ghost text and the status line where an AI extension answers them; `false` hides them all. |
 | `onAiCommand` | `(prompt: string) => void \| Promise<void>` | — | Handles a command bar prompt yourself instead of the built-in `freeText` command. |
 | `suggestions` | `Suggestion[]` | — | Proofreading suggestions for the toolbar. |
 | `onSuggestionAccept`, `onSuggestionReject` | `(suggestion) => void` | — | Required, with `suggestions`, for the toolbar to appear. |
 | `onSuggestionAcceptAll`, `onSuggestionRejectAll` | `() => void` | — | Accept All and Reject All. |
 
-Set `showAiCommandBar={false}` in an editor without the AI extensions: otherwise the
-Improve button appears and does nothing. `PageEditor` shows no AI controls.
+### Which controls show
+
+Each control appears only when an extension answers it, so an editor without `defineAi` has no
+AI controls at all: no Improve, no ⌘J (the key stays the browser's), no ghost text and no
+status line.
+
+| Control | Shown when the editor has |
+| --- | --- |
+| Improve | `defineAi` and `defineAiContext` |
+| Command bar and ⌘J | `defineAi` with `defineAiAgent` or `defineAiContext`, or `defineAi` and your `onAiCommand` |
+| Ghost text, status line | `defineAi` |
+
+`AiPreset` has all three. `BlockEditor` asks `editor.hasExtension(name)`, so the answer is
+fixed when the editor is created. `PageEditor` shows no AI controls.
 
 ## Command bar
 
@@ -46,9 +58,10 @@ key works on any keyboard layout. The Ask AI slash item opens it too. Enter send
 prompt; Escape, the close button or a click outside closes the bar and cancels a running
 request. The shortcut does nothing in read-only mode.
 
-Without `onAiCommand`, the bar runs `freeText`: `proofread`, `proofread document` or
-`check grammar` start proofreading, `review`, `review document` or `check document` start
-a review, and any other prompt adds a paragraph after the current block. The bar shows
+Without `onAiCommand`, the bar runs `freeText` of `defineAiAgent`: `proofread`, `proofread
+document` or `check grammar` start proofreading, `review`, `review document` or `check
+document` start a review, and any other prompt adds a paragraph after the current block. With
+`defineAiContext` but no agent it runs `askAi`, and every prompt adds a paragraph. The bar shows
 "Processing..." and the error message of a failed request, and closes once the result has
 arrived. To rewrite the selection by an instruction, handle the prompt yourself:
 
@@ -181,12 +194,13 @@ a status of your own.
 ## Components
 
 `@gotipe/block-editor` exports each control for an editor surface of your own. Every one
-takes `editor` and works with the AI extensions.
+takes `editor` and draws nothing for an editor without the extensions it needs (see
+[which controls show](#which-controls-show)).
 
 | Component | Props | Description |
 | --- | --- | --- |
 | `AiCommandBar` | `editor`, `onSubmit?` | The command bar with its shortcut. `onSubmit` works like `onAiCommand`. |
-| `BlockEditorBubbleMenu` | `editor`, `enableAI?` | The formatting bar; `enableAI` adds Improve. |
+| `BlockEditorBubbleMenu` | `editor`, `enableAI?` | The formatting bar; `enableAI` adds Improve when the editor has `defineAi` and `defineAiContext`. |
 | `GhostText` | `editor` | The ghost text overlay. |
 | `AiStatusIndicator` | `editor` | The status line. |
 | `SuggestionToolbar` | see [Suggestions](/docs/review/suggestions#suggestiontoolbar) | The proofreading toolbar. |
@@ -246,7 +260,8 @@ editor's events instead.
 - Without `onAiCommand`, a command bar prompt never rewrites the selection: it adds a
   paragraph, proofreads or reviews.
 - Errors of Improve and of slash commands reach `host.onError` and the `error` event, but
-  `BlockEditor`'s error toast does not show them.
+  `BlockEditor`'s error toast does not show them: `EXTENSION_ERROR` stays out of the toast by
+  design ([errors](/docs/ui/block-editor#errors)); the command bar shows its own.
 - `@gotipe/theme` has no styles for `AiCommandPalette` and `AiToolbar`; style
   `.gotipe-ai-command-palette` and `.gotipe-ai-toolbar` yourself. Their labels are in
   English only.

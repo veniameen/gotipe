@@ -1,5 +1,6 @@
 import type { GoTipeEditor } from "@gotipe/core";
 import { useEffect, useState } from "react";
+import { aiControls } from "./ai-controls";
 
 export interface AiStatusIndicatorProps {
   editor: GoTipeEditor;
@@ -10,7 +11,12 @@ interface AiStatus {
   label?: string;
 }
 
+/** The footer line of a running AI request; it needs `defineAi`, which reports the status. */
 export function AiStatusIndicator({ editor }: AiStatusIndicatorProps) {
+  return aiControls(editor).status ? <Status editor={editor} /> : null;
+}
+
+function Status({ editor }: AiStatusIndicatorProps) {
   const [status, setStatus] = useState<AiStatus>({ active: false });
 
   useEffect(() => {

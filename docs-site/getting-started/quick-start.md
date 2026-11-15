@@ -225,7 +225,8 @@ What happens here:
   unmount. It returns `null` (React) or a ref holding `null` (Vue) until the editor is
   ready. Options are read once; later changes to them are ignored.
 - `BlockEditor` shows a loading skeleton while `editor` is `null`. `showAiCommandBar` is
-  turned off because no [AI provider](/docs/ai/overview) is configured.
+  turned off here; without the [AI extensions](/docs/ai/overview) the editor shows no AI
+  controls anyway.
 - `PageEditor` creates its own editor. After edits it calls `onChange` with the whole
   Markdown text, at most once per animation frame; debounce saving in your code. Blocks you
   did not touch keep their original bytes.

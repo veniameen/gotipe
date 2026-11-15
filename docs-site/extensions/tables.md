@@ -105,15 +105,15 @@ cells wrap, and only words that cannot fit make it scroll.
 | `text` | Cells as they are |
 | `number` | Right alignment (`---:` in Markdown) |
 | `code` | Every body cell in inline code |
-| `boolean` | Body cells reading the UI words for yes and no (`yes`/`no` in English) |
+| `boolean` | Body cells `✓` and `—`, the same in every interface language |
 
 ```ts title="column-type.ts"
 import { columnTypeOf, setColumnType } from "@gotipe/block-editor";
 
-setColumnType(editor, tableId, 2, "number", { yes: "yes", no: "no" });
+setColumnType(editor, tableId, 2, "boolean");
 ```
 
-`setColumnType` rewrites one column in one transaction. Switching to `boolean` turns values such as `true`, `1`, `x` and `✓` into the yes word, and `false`, `0`, `-` or an empty cell into the no word. `columnTypeOf(table, column, yes, no)` reads the type back from a table's view block. The package also exports `addRow`, `insertRow`, `deleteRow`, `addColumn` and `deleteColumn`, thin wrappers over `editTable` used by its menus.
+`setColumnType` rewrites one column in one transaction. Switching to `boolean` turns values such as `yes`, `да`, `true`, `1`, `x` and `✔` into `✓`, and `no`, `нет`, `false`, `0`, `-` or an empty cell into `—`; other values stay. Earlier versions wrote the interface's word for yes and no instead: the words of the block editor's dictionaries (`table.yes` and `table.no`: `yes`/`no`, `да`/`нет`) still read as `✓` and `—`, and so do yours when you pass them as the last argument, `{ yes, no }` (the column menu passes the interface's). `columnTypeOf(table, column, yes?, no?)` reads the type back from a table's view block: a column of `✓`, `—` and those words is `boolean`. The package also exports `addRow`, `insertRow`, `deleteRow`, `addColumn` and `deleteColumn`, thin wrappers over `editTable` used by its menus.
 
 ## Keyboard
 

@@ -77,7 +77,7 @@ root shows a loading skeleton with `role="status"`.
 | `showSlashMenu` | `boolean` | `true` | The `/` menu. The `+` button opens it only when this is on. |
 | `showBlockToolbar` | `boolean` | `true` | The block handle: `+`, drag grip and block menu. |
 | `showBubbleMenu` | `boolean` | `true` | The formatting bubble over a selection. |
-| `showAiCommandBar` | `boolean` | `true` | AI command bar (Mod+J), ghost text, AI status and the bubble's Improve button. |
+| `showAiCommandBar` | `boolean` | `true` | AI command bar (Mod+J), ghost text, AI status and the bubble's Improve button, each only when an [AI extension](/docs/ai/ui#which-controls-show) answers it; `false` hides them all. |
 | `onAiCommand` | `(prompt: string) => void` | — | Receives the bar's prompt instead of the AI extension. |
 | `showThemeToggle` | `boolean` | `false` | Light, dark and system switch above the header. |
 | `remotePeers` | `RemotePeer[]` | — | Collaborators' cursors and selections to draw besides those of the editor's `collaboration` decoration layer, which the [provider](/docs/collaboration/provider) fills. Each peer is drawn once. |
@@ -145,8 +145,18 @@ button appears only when the editor has that command.
 The toast shows errors with these codes for four seconds: `TRANSFORM_ERROR`,
 `CLIPBOARD_FAILED`, `ASSET_SAVE_FAILED`, `ASSET_RESOLVE_FAILED`, `ASSET_UNSUPPORTED`,
 `ASSET_TOO_LARGE`, `LINK_BLOCKED`, `LINK_OPEN_FAILED`, `COLLABORATION_ERROR`,
-`PROPOSAL_ACTION_FAILED` and `COMMENT_ACTION_FAILED`. Other errors go to `console.error`.
-If you report errors yourself through `host.onError`, set `errorToast={false}`.
+`PROPOSAL_ACTION_FAILED`, `PROPOSAL_STALE` and `COMMENT_ACTION_FAILED`. Under a translated
+title it shows the error's own message, except for `PROPOSAL_STALE`: its message names the
+engine's reason, so the toast says in the interface's language that the suggestion is out of
+date because the text around it changed. Other errors go to `console.error`. If you report
+errors yourself through `host.onError`, set `errorToast={false}`.
+
+`EXTENSION_ERROR` and `COMPOSITION_CONFLICT` never show in the toast; this is by design. An
+extension's or a listener's failure belongs to the extension's own interface, which reports
+it where it happened (the AI command bar shows its errors). A `COMPOSITION_CONFLICT` carries
+the text an outside change interrupted, which your app offers back (see
+[conflicts during IME input](/docs/collaboration/offline#conflicts-during-ime-input)). Both
+reach the `error` event, `host.onError` and, without a listener of yours, the console.
 
 ## Other components
 
@@ -168,8 +178,6 @@ languages; see [i18n](/docs/ui/i18n).
 
 - `showCollaborationCursors` has no effect: cursors are drawn whenever `remotePeers` or the
   editor's `collaboration` decoration layer has entries.
-- `showAiCommandBar` is on by default and adds the Improve button and Mod+J even when no
-  AI extension is installed. Turn it off unless you use [AI](/docs/ai/overview).
 - The block handle is shown only in the `notion` view.
 - To change the `/` menu's groups or labels, set `showSlashMenu={false}` and render your
   own `SlashMenu` as a child; the `+` button then adds an empty block without the menu.

@@ -1,11 +1,53 @@
 import { type BlockView, type GoTipeEditor, editTable, headerRows, tableGrid } from "@gotipe/core";
+import { blockEditorEn } from "../i18n/en";
+import { blockEditorRu } from "../i18n/ru";
 
 /**
  * Column types are read from and written to Markdown cell content and
  * alignment. «Число» — right alignment `---:`; «Код» — every body cell in
- * backticks; «Да / нет» — cells «да»/«нет»; «Текст» — as is.
+ * backticks; «Да / нет» — cells `✓` and `—`, the same in every interface
+ * language; «Текст» — as is.
  */
 export type ColumnType = "text" | "code" | "number" | "boolean";
+
+/**
+ * Words for yes and no that a «Да / нет» column of an earlier version may hold: it wrote the
+ * interface language's word. The block editor's own dictionaries (`table.yes`, `table.no`) are
+ * always read; pass a host dictionary's words to read them too.
+ */
+export interface BooleanWords {
+  yes: string;
+  no: string;
+}
+
+const YES = "✓";
+const NO = "—";
+const DICTIONARIES = [blockEditorEn, blockEditorRu];
+/** Values switching a column to «Да / нет» turns into `✓` or `—`; other values stay. */
+const TRUTHY = /^(?:✓|✔|да|yes|true|1|\+|x|y)$/i;
+const FALSY = /^(?:—|-|нет|no|false|0|n|)$/i;
+
+const normal = (value: string) => value.trim().toLowerCase();
+
+/** The exact values a «Да / нет» cell means: the marks and the dictionaries' words. */
+function booleanValues(extra?: BooleanWords): { yes: Set<string>; no: Set<string> } {
+  const words = (key: "table.yes" | "table.no", mark: string, own?: string) =>
+    new Set(
+      [mark, ...DICTIONARIES.map((table) => table[key]), own ?? ""].filter(Boolean).map(normal),
+    );
+  return { yes: words("table.yes", YES, extra?.yes), no: words("table.no", NO, extra?.no) };
+}
+
+/**
+ * `✓`, `—`, or `null` for a value that stays. The exact words — the marks, the dictionaries' and
+ * the host's — come first, so a host's «no» that looks like a built-in yes (`x`) still means no.
+ */
+function booleanOf(value: string, values: { yes: Set<string>; no: Set<string> }): string | null {
+  if (values.yes.has(value)) return YES;
+  if (values.no.has(value)) return NO;
+  if (TRUTHY.test(value)) return YES;
+  return FALSY.test(value) ? NO : null;
+}
 
 type Align = "left" | "right" | "center" | null;
 
@@ -45,35 +87,42 @@ function bodyCells(table: BlockView, column: number): BlockView[] {
     .map((cell) => cell.node);
 }
 
+/**
+ * A column of `✓` and `—` is «Да / нет»; so is one of an earlier version's words (`yes`, `да`,
+ * a host's `yes` and `no`). `yes` and `no` are a host dictionary's words to read besides.
+ */
 export function columnTypeOf(
   table: BlockView,
   column: number,
-  yes: string,
-  no: string,
+  yes?: string,
+  no?: string,
 ): ColumnType {
   const align = (table.attrs.align as Align[] | undefined)?.[column] ?? null;
   const cells = bodyCells(table, column).filter((c) => cellText(c).length > 0);
   if (cells.length > 0 && cells.every(isFullyCode)) return "code";
   if (align === "right") return "number";
-  const values = new Set([yes, no]);
-  if (cells.length > 0 && cells.every((c) => values.has(cellText(c).trim().toLowerCase())))
-    return "boolean";
+  const values = booleanValues(yes !== undefined && no !== undefined ? { yes, no } : undefined);
+  const known = (value: string) => values.yes.has(value) || values.no.has(value);
+  if (cells.length > 0 && cells.every((c) => known(normal(cellText(c))))) return "boolean";
   return "text";
 }
 
-const TRUTHY = /^(да|yes|true|1|\+|x|✓|✔|y)$/i;
-const FALSY = /^(нет|no|false|0|-|—|n|)$/i;
-
+/**
+ * Rewrites one column in one transaction. «Да / нет» stores `✓` and `—`, not a word of the
+ * interface language: yes-like values (`yes`, `да`, `true`, `1`, `x`, `✔`, the dictionaries'
+ * and `words`' yes) become `✓`, no-like and empty ones `—`; other values stay.
+ */
 export function setColumnType(
   editor: GoTipeEditor,
   tableId: string,
   column: number,
   type: ColumnType,
-  words: { yes: string; no: string },
+  words?: BooleanWords,
 ): void {
   const table = findTable(editor, tableId);
   if (!table) return;
   const steps: Record<string, unknown>[] = [];
+  const values = booleanValues(words);
   const align = [...((table.attrs.align as Align[] | undefined) ?? [])];
   const width = Math.max(align.length, tableGrid(table).columns);
   while (align.length < width) align.push(null);
@@ -102,8 +151,7 @@ export function setColumnType(
       });
     }
     if (type === "boolean") {
-      const value = text.trim();
-      const next = TRUTHY.test(value) ? words.yes : FALSY.test(value) ? words.no : null;
+      const next = booleanOf(normal(text), values);
       if (next !== null && next !== text) {
         if (text.length > 0)
           steps.push({ type: "deleteText", blockId: cell.id, from: 0, to: text.length });

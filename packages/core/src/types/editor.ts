@@ -131,6 +131,11 @@ export interface GoTipeEditor {
   } | null;
   syncSelectionFromDOM(): void;
   getSlashCommands(): SlashCommandDef[];
+  /**
+   * Whether the editor was created with an extension of this name, alone or in a preset. A UI
+   * asks before it offers what only an extension answers, as `BlockEditor` does for AI controls.
+   */
+  hasExtension(name: string): boolean;
   chain(): ChainableCommands;
   /** Returns false when a registered filter cancels the transaction. */
   dispatch(transaction: object): boolean;

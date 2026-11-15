@@ -1,4 +1,5 @@
 import { type GoTipeEditor, type Transaction, createId } from "@gotipe/core";
+import { refillColumn } from "../interaction/block-actions";
 export { getBlockTextLeft, getBlockFirstLineMetrics } from "../interaction/block-text-metrics";
 
 export const LIST_CONTAINER_TYPES = new Set(["bulletList", "orderedList", "todoList"]);
@@ -95,6 +96,24 @@ export function getTopLevelAncestorBlockId(
     blockEl = parent;
   }
   return blockEl?.getAttribute("data-block-id") ?? null;
+}
+
+/**
+ * What the handle beside `anchorBlockId` acts on. `actionBlockId` is the top-level block, which
+ * Alt-drag moves. A list row is its own unit for `+`, the grip and the block menu, and so is the
+ * row a block inside it belongs to (a paragraph after the row's text); elsewhere the unit is the
+ * top-level block.
+ */
+export function handleTargets(
+  containerEl: HTMLElement,
+  anchorBlockId: string,
+): { actionBlockId: string; addBlockId: string; dragBlockId: string } {
+  const actionBlockId = getTopLevelAncestorBlockId(containerEl, anchorBlockId) ?? anchorBlockId;
+  const row = getBlockElById(containerEl, anchorBlockId)?.closest<HTMLElement>(
+    '[data-block-type="listItem"], [data-block-type="todoItem"]',
+  );
+  const unit = row && containerEl.contains(row) ? row.getAttribute("data-block-id") : null;
+  return { actionBlockId, addBlockId: unit ?? actionBlockId, dragBlockId: unit ?? actionBlockId };
 }
 
 export function findNearestRowInList(listEl: HTMLElement, clientY: number): string | null {
@@ -426,6 +445,9 @@ export function moveDraggedBlock(
   ) {
     // Keep moving the last row and removing its empty wrapper in one undo step.
     steps.push({ type: "deleteBlock", blockId: sourceParent.id });
+    // A column left without blocks gets an empty paragraph, as the block menu's Delete does.
+    const refill = refillColumn(blocks, sourceParent.id);
+    if (refill) steps.push(refill.step);
   }
   editor.dispatch({ steps });
   return true;

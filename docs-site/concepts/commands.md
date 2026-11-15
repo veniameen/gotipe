@@ -201,6 +201,7 @@ Interfaces decide what to show from the view state:
 | `editor.isActive(name, attrs?)` | `true` when `name` is an active mark at the selection, or the current block has type `name` and the given attribute values. |
 | `editor.getCurrentBlock()` | `{ type, id, attrs, isEmpty }` of the block at the selection anchor, or `null`. |
 | `editor.getViewState().toolbar` | `activeMarks`, `activeBlockType`, `activeBlockAttrs`, `canUndo`, `canRedo`. |
+| `editor.hasExtension(name)` | `true` when the editor was created with an extension of that name, alone or in a preset; fixed for the editor's life. |
 
 Active marks are read at the caret, or at the start of the selected range. In React,
 `useEditorState(editor, (state) => state.toolbar)` re-renders when they change.
