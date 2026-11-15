@@ -4,9 +4,32 @@ use super::{
     syntax::*,
     Line, Node,
 };
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
+/// The lines a container hands to `blocks`, as a key, as `linesKey` of the TS reader: depth, task
+/// prefix, how many lines, where the first starts and its column, where the last ends, how long
+/// and how many lazy. One container reads its own lines, and reads them again only without the
+/// last ones, so no two containers share a key.
+type Key = (usize, usize, usize, usize, usize, usize, usize, usize);
+fn key(lines: &[Line], depth: usize, task_prefix: usize) -> Key {
+    let first = lines.first();
+    (
+        depth,
+        task_prefix,
+        lines.len(),
+        first.map_or(0, |line| line.start),
+        first.map_or(0, |line| line.column),
+        lines.last().map_or(0, |line| line.end),
+        lines.iter().map(|line| line.text.len()).sum(),
+        lines.iter().filter(|line| line.lazy).count(),
+    )
+}
+#[derive(Default)]
 pub(super) struct Reader {
     pub references: HashSet<String>,
+    /// The content of quotes and items already read. A quote or an item that a lazy line ends
+    /// reads its content again without that line; the quotes and items inside read the same
+    /// lines, and are taken from here, so nested levels do not read again in turn (D-160).
+    contents: HashMap<Key, Vec<Node>>,
 }
 impl Reader {
     fn inline(&self, kind: &'static str, lines: &[Line], start: usize, end: usize) -> Node {
@@ -15,6 +38,18 @@ impl Reader {
         n
     }
     pub fn blocks(&mut self, lines: &[Line], depth: usize, task_prefix: usize) -> Vec<Node> {
+        if depth == 0 {
+            return self.read(lines, depth, task_prefix);
+        }
+        let key = key(lines, depth, task_prefix);
+        if let Some(nodes) = self.contents.get(&key) {
+            return nodes.clone();
+        }
+        let nodes = self.read(lines, depth, task_prefix);
+        self.contents.insert(key, nodes.clone());
+        nodes
+    }
+    fn read(&mut self, lines: &[Line], depth: usize, task_prefix: usize) -> Vec<Node> {
         if depth > 64 && !lines.is_empty() {
             return vec![Node::text(
                 "html",
