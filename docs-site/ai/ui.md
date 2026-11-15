@@ -24,7 +24,9 @@ npm install @gotipe/ai-ui
 ```
 
 The second command is needed only for `AiCommandPalette`, `AiToolbar` and the controlled
-`GhostText`.
+`GhostText`. `@gotipe/ai-ui` takes `@gotipe/react` as a peer: the palette and the toolbar say
+their words in the language of `GoTipeI18nProvider` (`ai.*` keys of `@gotipe/i18n`, English
+without a provider).
 
 ## BlockEditor props
 
@@ -263,8 +265,8 @@ editor's events instead.
   `BlockEditor`'s error toast does not show them: `EXTENSION_ERROR` stays out of the toast by
   design ([errors](/docs/ui/block-editor#errors)); the command bar shows its own.
 - `@gotipe/theme` has no styles for `AiCommandPalette` and `AiToolbar`; style
-  `.gotipe-ai-command-palette` and `.gotipe-ai-toolbar` yourself. Their labels are in
-  English only.
+  `.gotipe-ai-command-palette` and `.gotipe-ai-toolbar` yourself. A command's own `name` and
+  `description` are shown as you wrote them.
 - `@gotipe/block-editor` and `@gotipe/ai-ui` both export a `GhostText` with different
   props.
 

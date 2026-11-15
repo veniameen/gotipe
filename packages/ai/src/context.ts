@@ -2,7 +2,10 @@ import { type GoTipeEditor, createId, defineExtension } from "@gotipe/core";
 import { collectText, getRuntime, runAiTask } from "./runtime";
 import type { AiContextOptions } from "./types";
 
-/** Context commands capture their insertion/selection before requesting any provider work. */
+/**
+ * Context commands capture their insertion/selection before requesting any provider work. Their
+ * `/` rows draw the sparkle of the shared icon set (GoTipe Atlas, frame 7).
+ */
 export const defineAiContext = defineExtension<AiContextOptions>({
   name: "ai-context",
   dependencies: ["ai"],
@@ -11,7 +14,7 @@ export const defineAiContext = defineExtension<AiContextOptions>({
       name: "Continue Writing",
       aliases: ["continue", "write", "generate"],
       description: "AI generates the next paragraph",
-      icon: "✨",
+      icon: "sparkles",
       group: "ai",
       execute(editor: GoTipeEditor) {
         editor.emit("executeAiCommand", { commandId: "continueWriting" });
@@ -21,7 +24,7 @@ export const defineAiContext = defineExtension<AiContextOptions>({
       name: "Ask AI",
       aliases: ["ai", "ask", "prompt"],
       description: "Free prompt — AI generates content",
-      icon: "💬",
+      icon: "sparkles",
       group: "ai",
       execute(editor: GoTipeEditor) {
         editor.emit("executeAiCommand", { commandId: "askAi" });
