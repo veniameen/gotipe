@@ -634,50 +634,15 @@
           }
         ]
       },
-      "markdown": "- item\n- second\n  [https://example.test/v](https://example.test/v)\n\n> quote\n\nafter\n",
+      "markdown": "- item\n- second\n\n  [https://example.test/v](https://example.test/v)\n\n> quote\n\nafter\n",
       "reparsed": [
         {
-          "type": "bulletList",
+          "type": "markdownRaw",
           "attrs": {
-            "marker": "-",
-            "spread": false
+            "kind": "list"
           },
-          "content": null,
-          "children": [
-            {
-              "type": "listItem",
-              "attrs": {},
-              "content": [
-                {
-                  "text": "item",
-                  "marks": []
-                }
-              ],
-              "children": []
-            },
-            {
-              "type": "listItem",
-              "attrs": {},
-              "content": [
-                {
-                  "text": "second ",
-                  "marks": []
-                },
-                {
-                  "text": "https://example.test/v",
-                  "marks": [
-                    {
-                      "type": "link",
-                      "attrs": {
-                        "href": "https://example.test/v"
-                      }
-                    }
-                  ]
-                }
-              ],
-              "children": []
-            }
-          ]
+          "content": "- item\n- second\n\n  [https://example.test/v](https://example.test/v)",
+          "children": []
         },
         {
           "type": "blockquote",

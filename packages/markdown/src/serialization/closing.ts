@@ -1,8 +1,22 @@
 import { htmlEnd, openingFence } from "../grammar/block-syntax";
 import { readBlockNodes } from "../grammar/blocks";
+import type { Block } from "../types";
 
 /** A line that starts a fence or HTML: only such a block can take in what follows a blank line. */
 const OPENER = /(?:^|[\r\n]) {0,3}(?:`{3}|~{3}|<)/;
+
+/**
+ * Whether `block` or a block inside it is source written as it is with a line that opens a fence
+ * or HTML: only such a block can run on to the end of its file (D-106, D-111). The writer ends a
+ * code block and a formula itself.
+ */
+export function copiesOpener(block: Block): boolean {
+  const copied =
+    typeof block.content === "string" && block.type !== "codeBlock" && block.type !== "math";
+  return (
+    (copied && OPENER.test(block.content as string)) || (block.children ?? []).some(copiesOpener)
+  );
+}
 
 /**
  * Where the block that ends `text` starts when it takes in a paragraph after a blank line: a fence
