@@ -107,6 +107,7 @@ struck-through and code text as you type the closing delimiter; see
 | Block menu | ↑ ↓ | Move through the items |
 | Block menu | → on Turn into, ← | Open the submenu, go back |
 | Block menu | Escape | Close the submenu, then the menu; focus returns to the grip |
+| Heading anchor (`docs` view) | — | Not a Tab stop and not part of the heading's name; copy a heading's link with the block menu's Copy link to block |
 | Table column and row menus | ↑ ↓; Escape | Move; close and return focus to the handle |
 | Column resize handle | ← → | Narrow or widen the column by 16 px |
 | Image side handle | ← → | Narrow or widen the image by 16 px |

@@ -115,8 +115,8 @@ the previous error is cleared.
 
 | Component | Props | Description |
 |---|---|---|
-| `Editor` | `editor`, `blockViews`, `blockRenderer`, `placeholder`, `ariaLabel`, `slotBefore`, `slotAfter`, `className`, `style`, `children` | `.gotipe-editor` with context, the document and slots. Renders nothing while `editor` is `null`. |
-| `EditorContent` | `editor`, `blockViews`, `blockRenderer`, `placeholder`, `ariaLabel` | Only the document surface; it mounts the editor on its element. |
+| `Editor` | `editor`, `blockViews`, `blockRenderer`, `placeholder`, `afterText`, `ariaLabel`, `slotBefore`, `slotAfter`, `className`, `style`, `children` | `.gotipe-editor` with context, the document and slots. Renders nothing while `editor` is `null`. |
+| `EditorContent` | `editor`, `blockViews`, `blockRenderer`, `placeholder`, `afterText`, `ariaLabel` | Only the document surface; it mounts the editor on its element. |
 | `BubbleMenu` | `editor`, `children`, `shouldShow`, `offset`, `className`, `ariaLabel` | A `toolbar` above a selection in an editable editor. |
 | `FloatingMenu` | `editor`, `children`, `shouldShow` | A `toolbar` left of the focused, empty paragraph under a collapsed caret. |
 | `GoTipeI18nProvider` | `locale` or `i18n`, `children` | UI language; see [i18n](/docs/ui/i18n). |
@@ -176,6 +176,12 @@ export function Quote({ block, rootProps, content, children }: BlockViewProps) {
 `placeholder` is `(block, parentType) => string | null` and replaces the empty-block hints;
 by default they come from the `placeholder.*` strings. `blockRenderer` is an older wrapper
 API; prefer `blockViews`.
+
+`afterText` (`AfterTextFn`) is `(block) => ReactNode`: what a block with text shows right after
+its last character, inside its element — `BlockEditor` draws the `docs` view's heading anchors with
+it. The node is wrapped as a widget (`data-gotipe-widget`, not editable): it is not part of the
+document's text, offsets or copy, and the caret never enters it. A block without text and a
+suggested block show nothing. A custom view gets it inside `content`.
 
 A block type with no view, such as your own node without `blockViews`, is drawn as a `<p>`
 with its text; with child blocks, as a `<div>` with its text and then the children.

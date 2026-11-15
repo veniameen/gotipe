@@ -182,7 +182,9 @@
   --gt-handle-display: flex;
   --gt-handle-rail: 56px;
   --gt-anchor-display: none;
-  --gt-anchor-offset: 20px;
+  --gt-anchor-gap: 4px;
+  --gt-anchor-room: 0px;
+  --gt-heading-wrap: balance;
   --gt-outline-display: none;
   --gt-docs-columns: minmax(0, 1fr);
   --gt-ui-size: 13px;
@@ -368,12 +370,12 @@
   --gt-check-top: 3px;
   --gt-head-after: 24px;
   --gt-code-lines-display: block;
-  --gt-anchor-display: block;
-  --gt-handle-display: none;
-  --gt-handle-rail: 0px;
+  --gt-anchor-display: inline;
+  --gt-anchor-room: calc(var(--gt-anchor-gap) + var(--gt-handle-w));
+  --gt-heading-wrap: pretty;
   --gt-outline-display: block;
   --gt-outline-width: 184px;
-  --gt-outline-gap: 48px;
+  --gt-outline-gap: 64px;
   --gt-outline-top: 52px;
   --gt-outline-sticky-top: 0px;
   --gt-outline-item-pad: 3px 0 3px 12px;

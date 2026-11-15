@@ -371,7 +371,14 @@
   --gt-outline-display: none;
   --gt-docs-columns: minmax(0, 1fr);
   --gt-handle-display: flex;
+  /* a narrow page keeps this much room on the left for the handle: notion in the library */
+  --gt-handle-rail: 56px;
+  /* the anchor of a heading: no width of its own, it hangs after the last word in the room the
+     heading keeps at the end of its lines; its button is a handle's */
   --gt-anchor-display: none;
+  --gt-anchor-gap: 4px;
+  --gt-anchor-room: 0px;
+  --gt-heading-wrap: balance;
 }
 
 /* ---- docs: a reference page — denser text, an outline beside it, numbered code ---- */
@@ -398,16 +405,20 @@
   --gt-check-top: 3px;
   --gt-head-after: 24px;
   --gt-outline-width: 184px;
-  --gt-outline-gap: 48px;
+  /* notion's gutter: the handle (54) stands in it and never reaches the outline */
+  --gt-outline-gap: 64px;
   --gt-outline-top: 52px;
   --gt-outline-item-pad: 3px 0 3px 12px;
   --gt-outline-indent: 24px;
   --gt-outline-indent-2: 36px;
   --gt-outline-display: block;
   --gt-docs-columns: var(--gt-outline-width) minmax(0, var(--gt-page-width));
-  --gt-anchor-offset: 20px;
-  --gt-anchor-display: block;
-  --gt-handle-display: none;
+  /* the handle as in notion; the anchor after the heading's last word. A balanced heading would
+     lose it: Chromium moves an empty inline at the end of a balanced block onto a line of its own,
+     so a heading with an anchor wraps as a paragraph does */
+  --gt-anchor-display: inline;
+  --gt-anchor-room: calc(var(--gt-anchor-gap) + var(--gt-handle-w));
+  --gt-heading-wrap: pretty;
   --gt-code-lines-display: block;
 }
 
@@ -487,6 +498,11 @@
     --gt-history-back-display: inline-flex;
     --gt-history-facts-order: 1;
     --gt-history-facts-basis: 100%;
+  }
+  /* docs keeps its handle, as notion does in the library (owner, docs/18): a finger drags a block
+     by it, and the page keeps the rail on the left for it */
+  .gotipe-root[data-gt-view="docs"] > * {
+    --gt-handle-display: flex;
   }
 }
 @container (max-width: 359px) {
@@ -892,6 +908,9 @@ body {
   top: 64%;
   left: 86%;
 }
+.at-pointer.is-start {
+  left: 12%;
+}
 
 /* document.css */
 /* Document blocks shared by every view. A view sets the sizes through its tokens; colours come
@@ -1035,7 +1054,7 @@ body {
   margin-bottom: 0;
   color: var(--gt-text);
   font-weight: var(--gt-weight-strong);
-  text-wrap: balance;
+  text-wrap: var(--gt-heading-wrap);
 }
 .gotipe-doc h1 {
   font-size: var(--gt-h1-size);
@@ -1656,14 +1675,15 @@ ol.gotipe-list > li::before {
 
 /* views/docs.css */
 /* View «docs»: a reference page — the outline of headings beside a denser column, numbered code,
-   an anchor at the heading under the pointer. On a narrow container the outline steps away. */
+   the block handle as in notion and an anchor after the heading under the pointer. On a narrow
+   container the outline steps away and the handle keeps its rail on the left. */
 
 .gotipe-docs {
   display: grid;
   grid-template-columns: var(--gt-docs-columns);
   column-gap: var(--gt-outline-gap);
   justify-content: center;
-  padding: 0 var(--gt-page-pad-x);
+  padding: 0 var(--gt-page-pad-x) 0 max(var(--gt-page-pad-x), var(--gt-handle-rail));
 }
 .gotipe-docs > * {
   min-width: 0;
@@ -1710,17 +1730,37 @@ ol.gotipe-list > li::before {
   color: var(--gt-text);
 }
 
-/* the anchor of the heading under the pointer: a quiet # in the gutter */
-.gotipe-doc > .has-anchor {
+/* ---- the anchor of a heading: a quiet # after its last word; a click copies a link to it ---- */
+/* The heading keeps room for the anchor at the end of every line, so it wraps the same at rest and
+   under the pointer. The anchor has no width of its own: it stays with the last word and its
+   button hangs in that room. It shows under the pointer; a touch makes the heading so. */
+.gotipe-doc > :is(h1, h2, h3):has(> .gotipe-heading-anchor) {
   position: relative;
+  padding-right: var(--gt-anchor-room);
 }
 .gotipe-heading-anchor {
   display: var(--gt-anchor-display);
+  position: relative;
+  visibility: hidden;
+}
+.gotipe-doc > .is-hovered > .gotipe-heading-anchor {
+  visibility: visible;
+}
+.gotipe-anchor-button {
   position: absolute;
   top: 50%;
-  left: calc(-1 * var(--gt-anchor-offset));
+  left: var(--gt-anchor-gap);
+  display: grid;
+  place-items: center;
+  width: var(--gt-handle-w);
+  height: var(--gt-handle-h);
+  border-radius: var(--gt-radius-control);
   color: var(--gt-text-3);
-  transform: translateY(-50%);
+  translate: 0 -50%;
+}
+.gotipe-anchor-button.is-hover {
+  background: var(--gt-fill-2);
+  color: var(--gt-text);
 }
 
 /* views/modern.css */
@@ -4035,7 +4075,7 @@ ol.gotipe-list > li::before {
   </div>
 </div>
 
-<h1>Как это работает</h1>
+<h1>Как это работает<span class="gotipe-heading-anchor" aria-hidden="true"><span class="gotipe-anchor-button"><svg class="gt-icon"><use href="#i-hash" /></svg></span></span></h1>
 <p class="is-hovered">
   Журнал лежит в <code class="gotipe-inline-code">IndexedDB</code> и переживает перезапуск
   приложения. Сервер принимает пачку транзакций целиком или отклоняет её:
@@ -4078,7 +4118,7 @@ ol.gotipe-list > li::before {
     Транзакции копятся в журнале, пока нет сети, и уходят на сервер одной пачкой.
   </figcaption>
 </figure>
-  <h2>Что меняется</h2>
+  <h2>Что меняется<span class="gotipe-heading-anchor" aria-hidden="true"><span class="gotipe-anchor-button"><svg class="gt-icon"><use href="#i-hash" /></svg></span></span></h2>
 <ul class="gotipe-list">
   <li>Каждая транзакция сначала попадает в журнал и только потом — на сервер.</li>
   <li>
@@ -4113,7 +4153,7 @@ editor<span class="tk-pun">.</span>on<span class="tk-pun">(</span><span class="t
 <span class="tk-pun">});</span></code></pre>
 </div>
 
-<h3>Порядок выката</h3>
+<h3>Порядок выката<span class="gotipe-heading-anchor" aria-hidden="true"><span class="gotipe-anchor-button"><svg class="gt-icon"><use href="#i-hash" /></svg></span></span></h3>
 <ol class="gotipe-list">
   <li>Включить журнал для 5 % пользователей веб-версии.</li>
   <li>Неделю сравнивать долю потерянных правок с контрольной группой.</li>
@@ -4131,11 +4171,7 @@ editor<span class="tk-pun">.</span>on<span class="tk-pun">(</span><span class="t
     </p>
   </div>
 </div>
-  <h2 class="has-anchor">
-  <span class="gotipe-heading-anchor" aria-hidden="true"
-    ><svg class="gt-icon"><use href="#i-hash" /></svg></span
-  >Конфликты
-</h2>
+  <h2>Конфликты<span class="gotipe-heading-anchor" aria-hidden="true"><span class="gotipe-anchor-button"><svg class="gt-icon"><use href="#i-hash" /></svg></span></span></h2>
 <div class="gotipe-table-block">
   <div class="gotipe-table-wrap">
     <table class="gotipe-table">
@@ -4194,7 +4230,7 @@ editor<span class="tk-pun">.</span>on<span class="tk-pun">(</span><span class="t
     </p>
   </div>
 </details>
-  <h2>Задачи</h2>
+  <h2>Задачи<span class="gotipe-heading-anchor" aria-hidden="true"><span class="gotipe-anchor-button"><svg class="gt-icon"><use href="#i-hash" /></svg></span></span></h2>
 <ul class="gotipe-todo-list">
   <li class="gotipe-todo-item" data-checked="true">
     <span class="gotipe-check" role="checkbox" aria-checked="true"
@@ -4243,11 +4279,14 @@ editor<span class="tk-pun">.</span>on<span class="tk-pun">(</span><span class="t
     <h2 class="at-figure-title">Вид docs</h2>
     <p class="at-caption">
       Справочная страница: текст плотнее, 14/22; оглавление рядом и уходит на узком экране; номера
-      строк в коде; якорь у заголовка под указателем. Ручка блока — как в notion.
+      строк в коде. Ручка блока — как в notion: у блока под указателем, в поле 64 между оглавлением
+      и текстом. Якорь # — после последнего слова заголовка под указателем; место под него заголовок
+      держит всегда, поэтому не переносится заново; щелчок копирует ссылку, адрес строит хост. На узком экране ручка остаётся в поле 56, якорь — у заголовка, которого коснулись. Принят 15
+      ноября (D-30).
     </p>
   </figcaption>
   <section class="at-stage" data-w="1024">
-<p class="at-stage-label">1024</p>
+<p class="at-stage-label">абзац под указателем, заголовки в покое · 1024</p>
 <div class="at-frame gotipe-root" data-gt-view="docs" data-frame="docs-document" data-w="1024">
 <div class="gotipe-docs">
     <nav class="gotipe-outline" aria-label="Оглавление">
@@ -4295,7 +4334,7 @@ editor<span class="tk-pun">.</span>on<span class="tk-pun">(</span><span class="t
   </div>
 </div>
 
-<h1>Как это работает</h1>
+<h1>Как это работает<span class="gotipe-heading-anchor" aria-hidden="true"><span class="gotipe-anchor-button"><svg class="gt-icon"><use href="#i-hash" /></svg></span></span></h1>
 <p class="is-hovered">
   Журнал лежит в <code class="gotipe-inline-code">IndexedDB</code> и переживает перезапуск
   приложения. Сервер принимает пачку транзакций целиком или отклоняет её:
@@ -4338,7 +4377,7 @@ editor<span class="tk-pun">.</span>on<span class="tk-pun">(</span><span class="t
     Транзакции копятся в журнале, пока нет сети, и уходят на сервер одной пачкой.
   </figcaption>
 </figure>
-  <h2>Что меняется</h2>
+  <h2>Что меняется<span class="gotipe-heading-anchor" aria-hidden="true"><span class="gotipe-anchor-button"><svg class="gt-icon"><use href="#i-hash" /></svg></span></span></h2>
 <ul class="gotipe-list">
   <li>Каждая транзакция сначала попадает в журнал и только потом — на сервер.</li>
   <li>
@@ -4373,7 +4412,7 @@ editor<span class="tk-pun">.</span>on<span class="tk-pun">(</span><span class="t
 <span class="tk-pun">});</span></code></pre>
 </div>
 
-<h3>Порядок выката</h3>
+<h3>Порядок выката<span class="gotipe-heading-anchor" aria-hidden="true"><span class="gotipe-anchor-button"><svg class="gt-icon"><use href="#i-hash" /></svg></span></span></h3>
 <ol class="gotipe-list">
   <li>Включить журнал для 5 % пользователей веб-версии.</li>
   <li>Неделю сравнивать долю потерянных правок с контрольной группой.</li>
@@ -4391,11 +4430,7 @@ editor<span class="tk-pun">.</span>on<span class="tk-pun">(</span><span class="t
     </p>
   </div>
 </div>
-  <h2 class="has-anchor">
-  <span class="gotipe-heading-anchor" aria-hidden="true"
-    ><svg class="gt-icon"><use href="#i-hash" /></svg></span
-  >Конфликты
-</h2>
+  <h2>Конфликты<span class="gotipe-heading-anchor" aria-hidden="true"><span class="gotipe-anchor-button"><svg class="gt-icon"><use href="#i-hash" /></svg></span></span></h2>
 <div class="gotipe-table-block">
   <div class="gotipe-table-wrap">
     <table class="gotipe-table">
@@ -4454,7 +4489,7 @@ editor<span class="tk-pun">.</span>on<span class="tk-pun">(</span><span class="t
     </p>
   </div>
 </details>
-  <h2>Задачи</h2>
+  <h2>Задачи<span class="gotipe-heading-anchor" aria-hidden="true"><span class="gotipe-anchor-button"><svg class="gt-icon"><use href="#i-hash" /></svg></span></span></h2>
 <ul class="gotipe-todo-list">
   <li class="gotipe-todo-item" data-checked="true">
     <span class="gotipe-check" role="checkbox" aria-checked="true"
@@ -4493,6 +4528,88 @@ editor<span class="tk-pun">.</span>on<span class="tk-pun">(</span><span class="t
   <a class="gotipe-link">треде выпуска 2.8</a>.
 </p>
 </div>
+    </article>
+  </div>
+</div>
+</section>
+  <section class="at-stage" data-w="1024">
+<p class="at-stage-label">заголовок под указателем: ручка в поле, якорь после текста · 1024</p>
+<div class="at-frame gotipe-root" data-gt-view="docs" data-frame="docs-heading" data-w="1024">
+<div class="gotipe-docs">
+    <nav class="gotipe-outline" aria-label="Оглавление">
+      <p class="gotipe-outline-title">На этой странице</p>
+      <a>Как это работает</a>
+      <a data-level="2">Что меняется</a>
+      <a data-level="3">Порядок выката</a>
+      <a data-level="2" class="is-current">Конфликты</a>
+      <a data-level="3">Что видит автор</a>
+      <a data-level="2">Задачи</a>
+    </nav>
+    <article class="gotipe-page is-slice" lang="ru">
+      <div class="gotipe-doc">
+        <h2 class="is-hovered">Конфликты<span class="gotipe-heading-anchor" aria-hidden="true"><span class="gotipe-anchor-button"><svg class="gt-icon"><use href="#i-hash" /></svg></span></span><span class="gotipe-block-handle" aria-hidden="true"><span class="gotipe-handle-button"><svg class="gt-icon"><use href="#i-plus" /></svg></span><span class="gotipe-handle-button"><svg class="gt-icon"><use href="#i-grip" /></svg></span></span><svg class="at-pointer is-start"><use href="#i-pointer" /></svg></h2>
+        <p>
+          Конфликт решается по блокам: чужая правка блока не перезаписывает вашу, обе версии
+          остаются, ваша — предложением правки.
+        </p>
+        <h3>Что видит автор<span class="gotipe-heading-anchor" aria-hidden="true"><span class="gotipe-anchor-button"><svg class="gt-icon"><use href="#i-hash" /></svg></span></span></h3>
+        <p>
+          Блок, изменённый только у вас, сохраняется без вопросов. Изменённый у обоих приходит
+          предложением правки, удалённый на сервере — тостом «Блок удалён».
+        </p>
+      </div>
+    </article>
+  </div>
+</div>
+</section>
+  <section class="at-stage" data-w="1024">
+<p class="at-stage-label">указатель на якоре · 1024</p>
+<div class="at-frame gotipe-root" data-gt-view="docs" data-frame="docs-anchor" data-w="1024">
+<div class="gotipe-docs">
+    <nav class="gotipe-outline" aria-label="Оглавление">
+      <p class="gotipe-outline-title">На этой странице</p>
+      <a>Как это работает</a>
+      <a data-level="2">Что меняется</a>
+      <a data-level="3">Порядок выката</a>
+      <a data-level="2" class="is-current">Конфликты</a>
+      <a data-level="3">Что видит автор</a>
+      <a data-level="2">Задачи</a>
+    </nav>
+    <article class="gotipe-page is-slice" lang="ru">
+      <div class="gotipe-doc">
+        <h2 class="is-hovered">Конфликты<span class="gotipe-heading-anchor" aria-hidden="true"><span class="gotipe-anchor-button is-hover"><svg class="gt-icon"><use href="#i-hash" /></svg><span class="gotipe-tooltip" data-place="above">Скопировать ссылку</span><svg class="at-pointer"><use href="#i-pointer" /></svg></span></span><span class="gotipe-block-handle" aria-hidden="true"><span class="gotipe-handle-button"><svg class="gt-icon"><use href="#i-plus" /></svg></span><span class="gotipe-handle-button"><svg class="gt-icon"><use href="#i-grip" /></svg></span></span></h2>
+        <p>
+          Конфликт решается по блокам: чужая правка блока не перезаписывает вашу, обе версии
+          остаются, ваша — предложением правки.
+        </p>
+        <h3>Что видит автор<span class="gotipe-heading-anchor" aria-hidden="true"><span class="gotipe-anchor-button"><svg class="gt-icon"><use href="#i-hash" /></svg></span></span></h3>
+        <p>
+          Блок, изменённый только у вас, сохраняется без вопросов. Изменённый у обоих приходит
+          предложением правки, удалённый на сервере — тостом «Блок удалён».
+        </p>
+      </div>
+    </article>
+  </div>
+</div>
+</section>
+  <section class="at-stage" data-w="375">
+<p class="at-stage-label">касание заголовка: ручка в поле 56 · 375</p>
+<div class="at-frame gotipe-root" data-gt-view="docs" data-frame="docs-375" data-w="375">
+<div class="gotipe-docs">
+    <article class="gotipe-page is-scrolled" lang="ru">
+      <div class="gotipe-doc">
+        <h2>Конфликты<span class="gotipe-heading-anchor" aria-hidden="true"><span class="gotipe-anchor-button"><svg class="gt-icon"><use href="#i-hash" /></svg></span></span></h2>
+        <p>Конфликт решается по блокам: чужая правка блока не перезаписывает вашу.</p>
+        <h3 class="is-hovered">Что видит автор, когда блок изменён<span class="gotipe-caret"></span> у обоих<span class="gotipe-heading-anchor" aria-hidden="true"><span class="gotipe-anchor-button"><svg class="gt-icon"><use href="#i-hash" /></svg></span></span><span class="gotipe-block-handle" aria-hidden="true"><span class="gotipe-handle-button"><svg class="gt-icon"><use href="#i-plus" /></svg></span><span class="gotipe-handle-button"><svg class="gt-icon"><use href="#i-grip" /></svg></span></span></h3>
+        <p>
+          Обе версии остаются: ваша приходит предложением правки, его можно принять или отклонить.
+        </p>
+        <h3>Порядок выката<span class="gotipe-heading-anchor" aria-hidden="true"><span class="gotipe-anchor-button"><svg class="gt-icon"><use href="#i-hash" /></svg></span></span></h3>
+        <ol class="gotipe-list">
+          <li>Включить журнал для 5 % пользователей веб-версии.</li>
+          <li>Открыть всем, начиная с приложения для macOS.</li>
+        </ol>
+      </div>
     </article>
   </div>
 </div>
@@ -4578,7 +4695,7 @@ editor<span class="tk-pun">.</span>on<span class="tk-pun">(</span><span class="t
   </div>
 </div>
 
-<h1>Как это работает</h1>
+<h1>Как это работает<span class="gotipe-heading-anchor" aria-hidden="true"><span class="gotipe-anchor-button"><svg class="gt-icon"><use href="#i-hash" /></svg></span></span></h1>
 <p class="is-hovered">
   Журнал лежит в <code class="gotipe-inline-code">IndexedDB</code> и переживает перезапуск
   приложения. Сервер принимает пачку транзакций целиком или отклоняет её:
@@ -4621,7 +4738,7 @@ editor<span class="tk-pun">.</span>on<span class="tk-pun">(</span><span class="t
     Транзакции копятся в журнале, пока нет сети, и уходят на сервер одной пачкой.
   </figcaption>
 </figure>
-  <h2>Что меняется</h2>
+  <h2>Что меняется<span class="gotipe-heading-anchor" aria-hidden="true"><span class="gotipe-anchor-button"><svg class="gt-icon"><use href="#i-hash" /></svg></span></span></h2>
 <ul class="gotipe-list">
   <li>Каждая транзакция сначала попадает в журнал и только потом — на сервер.</li>
   <li>
@@ -4656,7 +4773,7 @@ editor<span class="tk-pun">.</span>on<span class="tk-pun">(</span><span class="t
 <span class="tk-pun">});</span></code></pre>
 </div>
 
-<h3>Порядок выката</h3>
+<h3>Порядок выката<span class="gotipe-heading-anchor" aria-hidden="true"><span class="gotipe-anchor-button"><svg class="gt-icon"><use href="#i-hash" /></svg></span></span></h3>
 <ol class="gotipe-list">
   <li>Включить журнал для 5 % пользователей веб-версии.</li>
   <li>Неделю сравнивать долю потерянных правок с контрольной группой.</li>
@@ -4674,11 +4791,7 @@ editor<span class="tk-pun">.</span>on<span class="tk-pun">(</span><span class="t
     </p>
   </div>
 </div>
-  <h2 class="has-anchor">
-  <span class="gotipe-heading-anchor" aria-hidden="true"
-    ><svg class="gt-icon"><use href="#i-hash" /></svg></span
-  >Конфликты
-</h2>
+  <h2>Конфликты<span class="gotipe-heading-anchor" aria-hidden="true"><span class="gotipe-anchor-button"><svg class="gt-icon"><use href="#i-hash" /></svg></span></span></h2>
 <div class="gotipe-table-block">
   <div class="gotipe-table-wrap">
     <table class="gotipe-table">
@@ -4737,7 +4850,7 @@ editor<span class="tk-pun">.</span>on<span class="tk-pun">(</span><span class="t
     </p>
   </div>
 </details>
-  <h2>Задачи</h2>
+  <h2>Задачи<span class="gotipe-heading-anchor" aria-hidden="true"><span class="gotipe-anchor-button"><svg class="gt-icon"><use href="#i-hash" /></svg></span></span></h2>
 <ul class="gotipe-todo-list">
   <li class="gotipe-todo-item" data-checked="true">
     <span class="gotipe-check" role="checkbox" aria-checked="true"
@@ -4831,7 +4944,7 @@ editor<span class="tk-pun">.</span>on<span class="tk-pun">(</span><span class="t
   </div>
 </div>
 
-<h1>Как это работает</h1>
+<h1>Как это работает<span class="gotipe-heading-anchor" aria-hidden="true"><span class="gotipe-anchor-button"><svg class="gt-icon"><use href="#i-hash" /></svg></span></span></h1>
 <p class="is-hovered">
   Журнал лежит в <code class="gotipe-inline-code">IndexedDB</code> и переживает перезапуск
   приложения. Сервер принимает пачку транзакций целиком или отклоняет её:
@@ -4874,7 +4987,7 @@ editor<span class="tk-pun">.</span>on<span class="tk-pun">(</span><span class="t
     Транзакции копятся в журнале, пока нет сети, и уходят на сервер одной пачкой.
   </figcaption>
 </figure>
-  <h2>Что меняется</h2>
+  <h2>Что меняется<span class="gotipe-heading-anchor" aria-hidden="true"><span class="gotipe-anchor-button"><svg class="gt-icon"><use href="#i-hash" /></svg></span></span></h2>
 <ul class="gotipe-list">
   <li>Каждая транзакция сначала попадает в журнал и только потом — на сервер.</li>
   <li>
@@ -4909,7 +5022,7 @@ editor<span class="tk-pun">.</span>on<span class="tk-pun">(</span><span class="t
 <span class="tk-pun">});</span></code></pre>
 </div>
 
-<h3>Порядок выката</h3>
+<h3>Порядок выката<span class="gotipe-heading-anchor" aria-hidden="true"><span class="gotipe-anchor-button"><svg class="gt-icon"><use href="#i-hash" /></svg></span></span></h3>
 <ol class="gotipe-list">
   <li>Включить журнал для 5 % пользователей веб-версии.</li>
   <li>Неделю сравнивать долю потерянных правок с контрольной группой.</li>
@@ -4927,11 +5040,7 @@ editor<span class="tk-pun">.</span>on<span class="tk-pun">(</span><span class="t
     </p>
   </div>
 </div>
-  <h2 class="has-anchor">
-  <span class="gotipe-heading-anchor" aria-hidden="true"
-    ><svg class="gt-icon"><use href="#i-hash" /></svg></span
-  >Конфликты
-</h2>
+  <h2>Конфликты<span class="gotipe-heading-anchor" aria-hidden="true"><span class="gotipe-anchor-button"><svg class="gt-icon"><use href="#i-hash" /></svg></span></span></h2>
 <div class="gotipe-table-block">
   <div class="gotipe-table-wrap">
     <table class="gotipe-table">
@@ -4990,7 +5099,7 @@ editor<span class="tk-pun">.</span>on<span class="tk-pun">(</span><span class="t
     </p>
   </div>
 </details>
-  <h2>Задачи</h2>
+  <h2>Задачи<span class="gotipe-heading-anchor" aria-hidden="true"><span class="gotipe-anchor-button"><svg class="gt-icon"><use href="#i-hash" /></svg></span></span></h2>
 <ul class="gotipe-todo-list">
   <li class="gotipe-todo-item" data-checked="true">
     <span class="gotipe-check" role="checkbox" aria-checked="true"
@@ -5076,7 +5185,7 @@ editor<span class="tk-pun">.</span>on<span class="tk-pun">(</span><span class="t
   </div>
 </div>
 
-<h1>Как это работает</h1>
+<h1>Как это работает<span class="gotipe-heading-anchor" aria-hidden="true"><span class="gotipe-anchor-button"><svg class="gt-icon"><use href="#i-hash" /></svg></span></span></h1>
 <p class="is-hovered">
   Журнал лежит в <code class="gotipe-inline-code">IndexedDB</code> и переживает перезапуск
   приложения. Сервер принимает пачку транзакций целиком или отклоняет её:
@@ -5119,7 +5228,7 @@ editor<span class="tk-pun">.</span>on<span class="tk-pun">(</span><span class="t
     Транзакции копятся в журнале, пока нет сети, и уходят на сервер одной пачкой.
   </figcaption>
 </figure>
-  <h2>Что меняется</h2>
+  <h2>Что меняется<span class="gotipe-heading-anchor" aria-hidden="true"><span class="gotipe-anchor-button"><svg class="gt-icon"><use href="#i-hash" /></svg></span></span></h2>
 <ul class="gotipe-list">
   <li>Каждая транзакция сначала попадает в журнал и только потом — на сервер.</li>
   <li>
@@ -5154,7 +5263,7 @@ editor<span class="tk-pun">.</span>on<span class="tk-pun">(</span><span class="t
 <span class="tk-pun">});</span></code></pre>
 </div>
 
-<h3>Порядок выката</h3>
+<h3>Порядок выката<span class="gotipe-heading-anchor" aria-hidden="true"><span class="gotipe-anchor-button"><svg class="gt-icon"><use href="#i-hash" /></svg></span></span></h3>
 <ol class="gotipe-list">
   <li>Включить журнал для 5 % пользователей веб-версии.</li>
   <li>Неделю сравнивать долю потерянных правок с контрольной группой.</li>
@@ -5172,11 +5281,7 @@ editor<span class="tk-pun">.</span>on<span class="tk-pun">(</span><span class="t
     </p>
   </div>
 </div>
-  <h2 class="has-anchor">
-  <span class="gotipe-heading-anchor" aria-hidden="true"
-    ><svg class="gt-icon"><use href="#i-hash" /></svg></span
-  >Конфликты
-</h2>
+  <h2>Конфликты<span class="gotipe-heading-anchor" aria-hidden="true"><span class="gotipe-anchor-button"><svg class="gt-icon"><use href="#i-hash" /></svg></span></span></h2>
 <div class="gotipe-table-block">
   <div class="gotipe-table-wrap">
     <table class="gotipe-table">
@@ -5235,7 +5340,7 @@ editor<span class="tk-pun">.</span>on<span class="tk-pun">(</span><span class="t
     </p>
   </div>
 </details>
-  <h2>Задачи</h2>
+  <h2>Задачи<span class="gotipe-heading-anchor" aria-hidden="true"><span class="gotipe-anchor-button"><svg class="gt-icon"><use href="#i-hash" /></svg></span></span></h2>
 <ul class="gotipe-todo-list">
   <li class="gotipe-todo-item" data-checked="true">
     <span class="gotipe-check" role="checkbox" aria-checked="true"
@@ -5329,7 +5434,7 @@ editor<span class="tk-pun">.</span>on<span class="tk-pun">(</span><span class="t
   </div>
 </div>
 
-<h1>Как это работает</h1>
+<h1>Как это работает<span class="gotipe-heading-anchor" aria-hidden="true"><span class="gotipe-anchor-button"><svg class="gt-icon"><use href="#i-hash" /></svg></span></span></h1>
 <p class="is-hovered">
   Журнал лежит в <code class="gotipe-inline-code">IndexedDB</code> и переживает перезапуск
   приложения. Сервер принимает пачку транзакций целиком или отклоняет её:
@@ -5372,7 +5477,7 @@ editor<span class="tk-pun">.</span>on<span class="tk-pun">(</span><span class="t
     Транзакции копятся в журнале, пока нет сети, и уходят на сервер одной пачкой.
   </figcaption>
 </figure>
-  <h2>Что меняется</h2>
+  <h2>Что меняется<span class="gotipe-heading-anchor" aria-hidden="true"><span class="gotipe-anchor-button"><svg class="gt-icon"><use href="#i-hash" /></svg></span></span></h2>
 <ul class="gotipe-list">
   <li>Каждая транзакция сначала попадает в журнал и только потом — на сервер.</li>
   <li>
@@ -5407,7 +5512,7 @@ editor<span class="tk-pun">.</span>on<span class="tk-pun">(</span><span class="t
 <span class="tk-pun">});</span></code></pre>
 </div>
 
-<h3>Порядок выката</h3>
+<h3>Порядок выката<span class="gotipe-heading-anchor" aria-hidden="true"><span class="gotipe-anchor-button"><svg class="gt-icon"><use href="#i-hash" /></svg></span></span></h3>
 <ol class="gotipe-list">
   <li>Включить журнал для 5 % пользователей веб-версии.</li>
   <li>Неделю сравнивать долю потерянных правок с контрольной группой.</li>
@@ -5425,11 +5530,7 @@ editor<span class="tk-pun">.</span>on<span class="tk-pun">(</span><span class="t
     </p>
   </div>
 </div>
-  <h2 class="has-anchor">
-  <span class="gotipe-heading-anchor" aria-hidden="true"
-    ><svg class="gt-icon"><use href="#i-hash" /></svg></span
-  >Конфликты
-</h2>
+  <h2>Конфликты<span class="gotipe-heading-anchor" aria-hidden="true"><span class="gotipe-anchor-button"><svg class="gt-icon"><use href="#i-hash" /></svg></span></span></h2>
 <div class="gotipe-table-block">
   <div class="gotipe-table-wrap">
     <table class="gotipe-table">
@@ -5488,7 +5589,7 @@ editor<span class="tk-pun">.</span>on<span class="tk-pun">(</span><span class="t
     </p>
   </div>
 </details>
-  <h2>Задачи</h2>
+  <h2>Задачи<span class="gotipe-heading-anchor" aria-hidden="true"><span class="gotipe-anchor-button"><svg class="gt-icon"><use href="#i-hash" /></svg></span></span></h2>
 <ul class="gotipe-todo-list">
   <li class="gotipe-todo-item" data-checked="true">
     <span class="gotipe-check" role="checkbox" aria-checked="true"
@@ -5535,7 +5636,7 @@ editor<span class="tk-pun">.</span>on<span class="tk-pun">(</span><span class="t
 <div class="at-frame gotipe-root" data-gt-view="notion" data-frame="notion-375-code" data-w="375" data-h="720">
 <article class="gotipe-page is-scrolled" lang="ru">
     <div class="gotipe-doc">
-      <h2>Что меняется</h2>
+      <h2>Что меняется<span class="gotipe-heading-anchor" aria-hidden="true"><span class="gotipe-anchor-button"><svg class="gt-icon"><use href="#i-hash" /></svg></span></span></h2>
 <ul class="gotipe-list">
   <li>Каждая транзакция сначала попадает в журнал и только потом — на сервер.</li>
   <li>
@@ -5570,7 +5671,7 @@ editor<span class="tk-pun">.</span>on<span class="tk-pun">(</span><span class="t
 <span class="tk-pun">});</span></code></pre>
 </div>
 
-<h3>Порядок выката</h3>
+<h3>Порядок выката<span class="gotipe-heading-anchor" aria-hidden="true"><span class="gotipe-anchor-button"><svg class="gt-icon"><use href="#i-hash" /></svg></span></span></h3>
 <ol class="gotipe-list">
   <li>Включить журнал для 5 % пользователей веб-версии.</li>
   <li>Неделю сравнивать долю потерянных правок с контрольной группой.</li>
@@ -5597,11 +5698,7 @@ editor<span class="tk-pun">.</span>on<span class="tk-pun">(</span><span class="t
 <div class="at-frame gotipe-root" data-gt-view="notion" data-frame="notion-320-table" data-w="320" data-h="640">
 <article class="gotipe-page is-scrolled" lang="ru">
     <div class="gotipe-doc">
-      <h2 class="has-anchor">
-  <span class="gotipe-heading-anchor" aria-hidden="true"
-    ><svg class="gt-icon"><use href="#i-hash" /></svg></span
-  >Конфликты
-</h2>
+      <h2>Конфликты<span class="gotipe-heading-anchor" aria-hidden="true"><span class="gotipe-anchor-button"><svg class="gt-icon"><use href="#i-hash" /></svg></span></span></h2>
 <div class="gotipe-table-block">
   <div class="gotipe-table-wrap">
     <table class="gotipe-table">
@@ -5705,7 +5802,7 @@ editor<span class="tk-pun">.</span>on<span class="tk-pun">(</span><span class="t
   </div>
 </div>
 
-<h1>Как это работает</h1>
+<h1>Как это работает<span class="gotipe-heading-anchor" aria-hidden="true"><span class="gotipe-anchor-button"><svg class="gt-icon"><use href="#i-hash" /></svg></span></span></h1>
 <p class="is-hovered">
   Журнал лежит в <code class="gotipe-inline-code">IndexedDB</code> и переживает перезапуск
   приложения. Сервер принимает пачку транзакций целиком или отклоняет её:
@@ -5748,7 +5845,7 @@ editor<span class="tk-pun">.</span>on<span class="tk-pun">(</span><span class="t
     Транзакции копятся в журнале, пока нет сети, и уходят на сервер одной пачкой.
   </figcaption>
 </figure>
-  <h2>Что меняется</h2>
+  <h2>Что меняется<span class="gotipe-heading-anchor" aria-hidden="true"><span class="gotipe-anchor-button"><svg class="gt-icon"><use href="#i-hash" /></svg></span></span></h2>
 <ul class="gotipe-list">
   <li>Каждая транзакция сначала попадает в журнал и только потом — на сервер.</li>
   <li>
@@ -5783,7 +5880,7 @@ editor<span class="tk-pun">.</span>on<span class="tk-pun">(</span><span class="t
 <span class="tk-pun">});</span></code></pre>
 </div>
 
-<h3>Порядок выката</h3>
+<h3>Порядок выката<span class="gotipe-heading-anchor" aria-hidden="true"><span class="gotipe-anchor-button"><svg class="gt-icon"><use href="#i-hash" /></svg></span></span></h3>
 <ol class="gotipe-list">
   <li>Включить журнал для 5 % пользователей веб-версии.</li>
   <li>Неделю сравнивать долю потерянных правок с контрольной группой.</li>
@@ -5801,11 +5898,7 @@ editor<span class="tk-pun">.</span>on<span class="tk-pun">(</span><span class="t
     </p>
   </div>
 </div>
-  <h2 class="has-anchor">
-  <span class="gotipe-heading-anchor" aria-hidden="true"
-    ><svg class="gt-icon"><use href="#i-hash" /></svg></span
-  >Конфликты
-</h2>
+  <h2>Конфликты<span class="gotipe-heading-anchor" aria-hidden="true"><span class="gotipe-anchor-button"><svg class="gt-icon"><use href="#i-hash" /></svg></span></span></h2>
 <div class="gotipe-table-block">
   <div class="gotipe-table-wrap">
     <table class="gotipe-table">
@@ -5864,7 +5957,7 @@ editor<span class="tk-pun">.</span>on<span class="tk-pun">(</span><span class="t
     </p>
   </div>
 </details>
-  <h2>Задачи</h2>
+  <h2>Задачи<span class="gotipe-heading-anchor" aria-hidden="true"><span class="gotipe-anchor-button"><svg class="gt-icon"><use href="#i-hash" /></svg></span></span></h2>
 <ul class="gotipe-todo-list">
   <li class="gotipe-todo-item" data-checked="true">
     <span class="gotipe-check" role="checkbox" aria-checked="true"
@@ -5947,7 +6040,7 @@ editor<span class="tk-pun">.</span>on<span class="tk-pun">(</span><span class="t
   </div>
 </div>
 
-<h1>Как это работает</h1>
+<h1>Как это работает<span class="gotipe-heading-anchor" aria-hidden="true"><span class="gotipe-anchor-button"><svg class="gt-icon"><use href="#i-hash" /></svg></span></span></h1>
 <p class="is-hovered">
   Журнал лежит в <code class="gotipe-inline-code">IndexedDB</code> и переживает перезапуск
   приложения. Сервер принимает пачку транзакций целиком или отклоняет её:
@@ -5990,7 +6083,7 @@ editor<span class="tk-pun">.</span>on<span class="tk-pun">(</span><span class="t
     Транзакции копятся в журнале, пока нет сети, и уходят на сервер одной пачкой.
   </figcaption>
 </figure>
-  <h2>Что меняется</h2>
+  <h2>Что меняется<span class="gotipe-heading-anchor" aria-hidden="true"><span class="gotipe-anchor-button"><svg class="gt-icon"><use href="#i-hash" /></svg></span></span></h2>
 <ul class="gotipe-list">
   <li>Каждая транзакция сначала попадает в журнал и только потом — на сервер.</li>
   <li>
@@ -6025,7 +6118,7 @@ editor<span class="tk-pun">.</span>on<span class="tk-pun">(</span><span class="t
 <span class="tk-pun">});</span></code></pre>
 </div>
 
-<h3>Порядок выката</h3>
+<h3>Порядок выката<span class="gotipe-heading-anchor" aria-hidden="true"><span class="gotipe-anchor-button"><svg class="gt-icon"><use href="#i-hash" /></svg></span></span></h3>
 <ol class="gotipe-list">
   <li>Включить журнал для 5 % пользователей веб-версии.</li>
   <li>Неделю сравнивать долю потерянных правок с контрольной группой.</li>
@@ -6043,11 +6136,7 @@ editor<span class="tk-pun">.</span>on<span class="tk-pun">(</span><span class="t
     </p>
   </div>
 </div>
-  <h2 class="has-anchor">
-  <span class="gotipe-heading-anchor" aria-hidden="true"
-    ><svg class="gt-icon"><use href="#i-hash" /></svg></span
-  >Конфликты
-</h2>
+  <h2>Конфликты<span class="gotipe-heading-anchor" aria-hidden="true"><span class="gotipe-anchor-button"><svg class="gt-icon"><use href="#i-hash" /></svg></span></span></h2>
 <div class="gotipe-table-block">
   <div class="gotipe-table-wrap">
     <table class="gotipe-table">
@@ -6106,7 +6195,7 @@ editor<span class="tk-pun">.</span>on<span class="tk-pun">(</span><span class="t
     </p>
   </div>
 </details>
-  <h2>Задачи</h2>
+  <h2>Задачи<span class="gotipe-heading-anchor" aria-hidden="true"><span class="gotipe-anchor-button"><svg class="gt-icon"><use href="#i-hash" /></svg></span></span></h2>
 <ul class="gotipe-todo-list">
   <li class="gotipe-todo-item" data-checked="true">
     <span class="gotipe-check" role="checkbox" aria-checked="true"
@@ -8553,7 +8642,7 @@ editor<span class="tk-pun">.</span>on<span class="tk-pun">(</span><span class="t
   </div>
 </div>
 
-<h1>Как это работает</h1>
+<h1>Как это работает<span class="gotipe-heading-anchor" aria-hidden="true"><span class="gotipe-anchor-button"><svg class="gt-icon"><use href="#i-hash" /></svg></span></span></h1>
 <p class="is-hovered">
   Журнал лежит в <code class="gotipe-inline-code">IndexedDB</code> и переживает перезапуск
   приложения. Сервер принимает пачку транзакций целиком или отклоняет её:
@@ -8596,7 +8685,7 @@ editor<span class="tk-pun">.</span>on<span class="tk-pun">(</span><span class="t
     Транзакции копятся в журнале, пока нет сети, и уходят на сервер одной пачкой.
   </figcaption>
 </figure>
-  <h2>Что меняется</h2>
+  <h2>Что меняется<span class="gotipe-heading-anchor" aria-hidden="true"><span class="gotipe-anchor-button"><svg class="gt-icon"><use href="#i-hash" /></svg></span></span></h2>
 <ul class="gotipe-list">
   <li>Каждая транзакция сначала попадает в журнал и только потом — на сервер.</li>
   <li>
@@ -8631,7 +8720,7 @@ editor<span class="tk-pun">.</span>on<span class="tk-pun">(</span><span class="t
 <span class="tk-pun">});</span></code></pre>
 </div>
 
-<h3>Порядок выката</h3>
+<h3>Порядок выката<span class="gotipe-heading-anchor" aria-hidden="true"><span class="gotipe-anchor-button"><svg class="gt-icon"><use href="#i-hash" /></svg></span></span></h3>
 <ol class="gotipe-list">
   <li>Включить журнал для 5 % пользователей веб-версии.</li>
   <li>Неделю сравнивать долю потерянных правок с контрольной группой.</li>
@@ -8649,11 +8738,7 @@ editor<span class="tk-pun">.</span>on<span class="tk-pun">(</span><span class="t
     </p>
   </div>
 </div>
-  <h2 class="has-anchor">
-  <span class="gotipe-heading-anchor" aria-hidden="true"
-    ><svg class="gt-icon"><use href="#i-hash" /></svg></span
-  >Конфликты
-</h2>
+  <h2>Конфликты<span class="gotipe-heading-anchor" aria-hidden="true"><span class="gotipe-anchor-button"><svg class="gt-icon"><use href="#i-hash" /></svg></span></span></h2>
 <div class="gotipe-table-block">
   <div class="gotipe-table-wrap">
     <table class="gotipe-table">
@@ -8712,7 +8797,7 @@ editor<span class="tk-pun">.</span>on<span class="tk-pun">(</span><span class="t
     </p>
   </div>
 </details>
-  <h2>Задачи</h2>
+  <h2>Задачи<span class="gotipe-heading-anchor" aria-hidden="true"><span class="gotipe-anchor-button"><svg class="gt-icon"><use href="#i-hash" /></svg></span></span></h2>
 <ul class="gotipe-todo-list">
   <li class="gotipe-todo-item" data-checked="true">
     <span class="gotipe-check" role="checkbox" aria-checked="true"

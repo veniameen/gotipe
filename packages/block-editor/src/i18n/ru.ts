@@ -126,6 +126,8 @@ export const blockEditorRu: BlockEditorLocale = {
   "slashMenu.empty": "Ничего не найдено",
   "slashMenu.results": "Найдено: {count}",
   "block.copyLink": "Скопировать ссылку на блок",
+  "block.copyHeadingLink": "Скопировать ссылку",
+  "block.headingLinkCopied": "Ссылка скопирована",
   "block.resetFormatting": "Сбросить форматирование",
   "block.copy": "Скопировать",
   "block.blockquote": "Цитата",

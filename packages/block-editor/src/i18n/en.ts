@@ -126,6 +126,8 @@ export const blockEditorEn: BlockEditorLocale = {
   "slashMenu.empty": "No results",
   "slashMenu.results": "{count} results available",
   "block.copyLink": "Copy link to block",
+  "block.copyHeadingLink": "Copy link",
+  "block.headingLinkCopied": "Link copied",
   "block.resetFormatting": "Reset Formatting",
   "block.copy": "Copy to Clipboard",
   "block.blockquote": "Blockquote",

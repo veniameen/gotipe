@@ -227,3 +227,6 @@ body {
   top: 64%;
   left: 86%;
 }
+.at-pointer.is-start {
+  left: 12%;
+}
