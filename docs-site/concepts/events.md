@@ -92,7 +92,7 @@ code.
 | `aiStatusChange` | `{ active, label? }` | `@gotipe/ai` when a request starts, ends or fails. |
 | `aiGhostTextChange` | `{ text, blockId, offset } \| null` | `@gotipe/ai` autocomplete. |
 | `aiProofreadChange` | `{ suggestions, currentIndex }` | `@gotipe/ai` proofreading. |
-| `aiReviewChange` | `{ comments }` | AI review found comments, or an edit cleared them. Read them with `getAiReviewComments(editor)`. |
+| `aiReviewChange` | `{ comments }` | AI review found comments, or an edit moved or removed some. Read them with `getAiReviewComments(editor)`. |
 
 `editor.emit(event, payload)` sends any of these events to all listeners, for example
 `editor.emit("openSlashMenu")` from a toolbar button.

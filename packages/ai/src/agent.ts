@@ -32,7 +32,7 @@ export const defineAiAgent = defineExtension<AiAgentOptions>({
               label: `Found ${runtime.suggestions.length} suggestions`,
             });
           } else if (command === "review") {
-            runtime.comments = await runtime.manager.reviewComments();
+            runtime.review.set(await runtime.manager.reviewComments());
             // Their own event: these comments are not in the comment store (D-46).
             editor.emit("aiReviewChange", { comments: getAiReviewComments(editor) });
             editor.emit("aiStatusChange", { active: false });
@@ -90,5 +90,5 @@ export function rejectAllProofreadSuggestions(editor: GoTipeEditor): void {
   publish(editor);
 }
 export function getAiReviewComments(editor: GoTipeEditor): AiComment[] {
-  return structuredClone(getRuntime(editor)?.comments ?? []);
+  return structuredClone(getRuntime(editor)?.review.comments ?? []);
 }

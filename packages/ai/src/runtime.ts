@@ -1,11 +1,13 @@
 import { type GoTipeEditor, GoTipeError } from "@gotipe/core";
 import type { AiManager } from "./manager";
-import type { AiComment, AiProofreadSuggestion } from "./types";
+import { AiReview } from "./review";
+import type { AiProofreadSuggestion } from "./types";
 
 export interface AiRuntime {
   manager: AiManager;
   suggestions: AiProofreadSuggestion[];
-  comments: AiComment[];
+  /** The last review's comments; they follow the text of their blocks (D-181). */
+  review: AiReview;
   cleanup: (() => void)[];
 }
 const runtimes = new WeakMap<GoTipeEditor, AiRuntime>();
@@ -13,13 +15,13 @@ export function getRuntime(editor: GoTipeEditor): AiRuntime | undefined {
   return runtimes.get(editor);
 }
 export function registerRuntime(editor: GoTipeEditor, manager: AiManager): AiRuntime {
-  const runtime: AiRuntime = { manager, suggestions: [], comments: [], cleanup: [] };
+  const review = new AiReview(editor);
+  const runtime: AiRuntime = { manager, suggestions: [], review, cleanup: [] };
   runtime.cleanup.push(
+    // Any edit, this replica's or another's, moves the comments with their text.
     editor.on("update", () => {
-      // Provider review coordinates are snapshot-relative, not collaborative anchors.
-      if (!runtime.comments.length) return;
-      runtime.comments = [];
-      editor.emit("aiReviewChange", { comments: [] });
+      if (review.follow())
+        editor.emit("aiReviewChange", { comments: structuredClone(review.comments) });
     }),
   );
   runtimes.set(editor, runtime);
