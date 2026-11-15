@@ -73,6 +73,19 @@ export function htmlBlock(text: string, interrupt = false): RegExp | null | fals
   return typeof end === "string" ? new RegExp(end.replace(/[?[\]]/g, "\\$&"), "i") : end;
 }
 
+/**
+ * A line that starts a block where no paragraph is open, so a table row ends before it (GFM): any
+ * list item, HTML, indented code, and what interrupts a paragraph.
+ */
+export function startsBlock(line: Line): boolean {
+  return (
+    interrupts(line) ||
+    !!listMarker(line.text) ||
+    htmlBlock(line.text) !== false ||
+    indentWidth(line.text) >= 4
+  );
+}
+
 export function interrupts(line: Line): boolean {
   const text = line.text;
   const marker = listMarker(text);

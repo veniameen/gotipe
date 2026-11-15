@@ -7,6 +7,7 @@ import {
   mathFence,
   openingFence,
   quotePrefix,
+  startsBlock,
   thematic,
 } from "./block-syntax";
 import { decodeString } from "./decode";
@@ -235,7 +236,7 @@ class Reader {
           tableRow(value, alignment.length, (cell, options) => this.inline([cell], options));
         const children = [row(line)];
         let next = i + 2;
-        while (next < lines.length && !blank(lines[next]!) && !interrupts(lines[next]!))
+        while (next < lines.length && !blank(lines[next]!) && !startsBlock(lines[next]!))
           children.push(row(lines[next++]!));
         nodes.push({
           type: "table",

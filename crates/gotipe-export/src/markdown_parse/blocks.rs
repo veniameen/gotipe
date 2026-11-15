@@ -258,7 +258,8 @@ impl Reader {
                     node.align = alignment;
                     node.children.push(self.row(line, node.align.len()));
                     let mut next = i + 2;
-                    while next < lines.len() && !lines[next].blank() && !interrupts(&lines[next]) {
+                    while next < lines.len() && !lines[next].blank() && !starts_block(&lines[next])
+                    {
                         node.children.push(self.row(&lines[next], node.align.len()));
                         next += 1;
                     }
@@ -365,7 +366,8 @@ fn cells(text: &str) -> Vec<(String, usize, usize)> {
     cells
 }
 fn alignment(text: &str) -> Option<Vec<Option<String>>> {
-    if !text.contains('|') && !re!(r"^ {0,3}:?-+:?[ \t]*$").is_match(text) {
+    // without `|` a run of `-` is the underline of a setext heading (GFM): a colon makes it a row
+    if !text.contains('|') && !re!(r"^ {0,3}(?::-+:?|-+:)[ \t]*$").is_match(text) {
         return None;
     }
     let cells = cells(text);
