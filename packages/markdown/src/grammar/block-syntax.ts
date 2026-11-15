@@ -4,7 +4,6 @@ export interface ListMarker {
   ordered: boolean;
   marker: string;
   start: number;
-  prefix: number;
   indent: number;
   content: string;
 }
@@ -22,7 +21,6 @@ export function listMarker(text: string, column = 0): ListMarker | null {
     ordered: marker.length > 1,
     marker: marker.at(-1)!,
     start: marker.length > 1 ? Number.parseInt(marker, 10) : 1,
-    prefix,
     indent: before.length + (padding > 4 || !padding ? 1 : padding),
     content: text.slice(prefix),
   };
@@ -73,6 +71,19 @@ export function htmlEnd(text: string, interrupt = false): string | null | false 
 export function htmlBlock(text: string, interrupt = false): RegExp | null | false {
   const end = htmlEnd(text, interrupt);
   return typeof end === "string" ? new RegExp(end.replace(/[?[\]]/g, "\\$&"), "i") : end;
+}
+
+/**
+ * A line that starts a block where no paragraph is open, so a table row ends before it (GFM): any
+ * list item, HTML, indented code, and what interrupts a paragraph.
+ */
+export function startsBlock(line: Line): boolean {
+  return (
+    interrupts(line) ||
+    !!listMarker(line.text) ||
+    htmlBlock(line.text) !== false ||
+    indentWidth(line.text) >= 4
+  );
 }
 
 export function interrupts(line: Line): boolean {

@@ -7,20 +7,44 @@ import {
   mathFence,
   openingFence,
   quotePrefix,
+  startsBlock,
   thematic,
 } from "./block-syntax";
 import { decodeString } from "./decode";
 import { readDefinition } from "./definitions";
 import { readInline } from "./inline";
 import type { InlineContext } from "./links";
-import { readList } from "./lists";
+import { lazyReading, readList } from "./lists";
 import { type Line, blank, indentWidth, linesFrom, sourceFrom, strip, stripIndent } from "./source";
 import { tableAlignment, tableCells, tableRow } from "./table";
 import { type PhrasingContent, type Root, type RootContent, position } from "./types";
 
+/**
+ * The lines a container hands to `blocks`, as a key: where they start and end in the source, how
+ * many there are, how long and how many lazy. One container reads its own lines, and reads them
+ * again only without the last ones, so no two containers share a key.
+ */
+function linesKey(lines: readonly Line[], depth: number, taskPrefix: number): string {
+  let length = 0;
+  let lazy = 0;
+  for (const line of lines) {
+    length += line.text.length;
+    if (line.lazy) lazy++;
+  }
+  const first = lines[0];
+  const last = lines.at(-1);
+  return `${depth} ${taskPrefix} ${lines.length} ${first?.start} ${first?.column ?? 0} ${last?.end} ${length} ${lazy}`;
+}
+
 class Reader {
   readonly references = new Set<string>();
   readonly inlineJobs: (() => void)[] = [];
+  /**
+   * The content of quotes and items already read. A quote or an item that a lazy line ends reads
+   * its content again without that line; the quotes and items inside read the same lines, and are
+   * taken from here, so nested levels do not read again in turn (twice per level, D-160).
+   */
+  private readonly contents = new Map<string, RootContent[]>();
 
   constructor(readonly atoms?: InlineAtoms) {}
 
@@ -32,6 +56,16 @@ class Reader {
   }
 
   blocks(lines: Line[], depth = 0, taskPrefix = 0): RootContent[] {
+    if (depth === 0) return this.read(lines, depth, taskPrefix);
+    const key = linesKey(lines, depth, taskPrefix);
+    const known = this.contents.get(key);
+    if (known) return known;
+    const nodes = this.read(lines, depth, taskPrefix);
+    this.contents.set(key, nodes);
+    return nodes;
+  }
+
+  private read(lines: Line[], depth: number, taskPrefix: number): RootContent[] {
     const nodes: RootContent[] = [];
     if (depth > 64 && lines.length)
       return [
@@ -42,6 +76,9 @@ class Reader {
         },
       ];
     let i = 0;
+    // A definition is read out of paragraph text: the line right after one that does not
+    // interrupt a paragraph continues that text, whatever block it would start (D-119).
+    let afterDefinition = -1;
     while (i < lines.length) {
       const line = lines[i]!;
       if (blank(line)) {
@@ -49,6 +86,7 @@ class Reader {
         continue;
       }
       const start = line.start + /^ */.exec(line.text)![0].length;
+      const continuesText = i === afterDefinition && !interrupts(line);
       const opening = openingFence(line.text);
       if (opening) {
         const marker = opening[1]!;
@@ -78,9 +116,10 @@ class Reader {
       }
       // `$$` … `$$`: the body is taken raw, without inline parsing. Without a closing
       // line the `$$` stays ordinary paragraph text.
-      const mathEnd = mathFence(line.text)
-        ? lines.findIndex((candidate, index) => index > i && mathFence(candidate.text))
-        : -1;
+      const mathEnd =
+        !continuesText && mathFence(line.text)
+          ? lines.findIndex((candidate, index) => index > i && mathFence(candidate.text))
+          : -1;
       if (mathEnd > 0) {
         const indentation = /^ */.exec(line.text)![0].length;
         nodes.push({
@@ -121,38 +160,49 @@ class Reader {
       }
       if (quotePrefix(line.text)) {
         const quoted: Line[] = [];
+        // the first line of each run of lines without `>`: its index in the quote and in `lines`
+        const lazy: { at: number; next: number }[] = [];
+        let run = false;
         let next = i;
-        let lazy = false;
-        while (next < lines.length) {
+        for (; next < lines.length; next++) {
           const current = lines[next]!;
           const prefix = quotePrefix(current.text);
           if (prefix) {
             const marker = /^ {0,3}>/.exec(current.text)![0].length;
-            const unquoted = stripIndent(strip(current, marker), prefix > marker ? 1 : 0);
-            quoted.push(unquoted);
-            let inner = unquoted;
-            for (let n = 0; n < 64; n++) {
-              const quote = quotePrefix(inner.text);
-              const list = listMarker(inner.text, inner.column);
-              if (quote) inner = strip(inner, quote);
-              else if (list) inner = strip(inner, list.prefix);
-              else break;
-            }
-            lazy = !blank(inner) && indentWidth(inner.text, inner.column) < 4 && !interrupts(inner);
-          } else if (lazy && !blank(current) && !interrupts(current))
-            quoted.push({ ...current, lazy: true });
-          else break;
-          next++;
+            quoted.push(stripIndent(strip(current, marker), prefix > marker ? 1 : 0));
+            run = false;
+            continue;
+          }
+          // a line that starts a block here — any list item too — ends the quote
+          if (blank(current) || interrupts(current) || listMarker(current.text)) break;
+          if (!run) lazy.push({ at: quoted.length, next });
+          run = true;
+          quoted.push({ ...current, lazy: true });
+        }
+        let children = this.blocks(quoted, depth + 1);
+        // A line without `>` continues the paragraph the quote has open. Where the quote reads it
+        // otherwise — after a blank line, in code or a table — the quote ends before it, as in
+        // CommonMark (D-118); its blocks before that line read the same without it.
+        for (const { at, next: stray } of lazy) {
+          const reading = lazyReading(children, quoted[at]!.start, true);
+          if (reading === "text") continue;
+          quoted.length = at;
+          children =
+            typeof reading === "number"
+              ? children.slice(0, reading)
+              : this.blocks(quoted, depth + 1);
+          next = stray;
+          break;
         }
         nodes.push({
           type: "blockquote",
-          children: this.blocks(quoted, depth + 1),
+          children,
           position: position(start, lines[next - 1]!.end),
         });
         i = next;
         continue;
       }
-      if (listMarker(line.text)) {
+      if (!continuesText && listMarker(line.text)) {
         const list = readList(lines, i, (children, prefix) =>
           this.blocks(children, depth + 1, prefix),
         );
@@ -160,7 +210,7 @@ class Reader {
         i = list.end;
         continue;
       }
-      const html = htmlBlock(line.text);
+      const html = continuesText ? false : htmlBlock(line.text);
       if (html !== false) {
         let next = i + 1;
         if (html) {
@@ -187,10 +237,10 @@ class Reader {
       const definition = readDefinition(lines, i, this.references);
       if (definition) {
         nodes.push(definition.node);
-        i = definition.end;
+        i = afterDefinition = definition.end;
         continue;
       }
-      if (indentWidth(line.text) >= 4) {
+      if (!continuesText && indentWidth(line.text) >= 4) {
         const content: Line[] = [];
         let next = i;
         while (next < lines.length && (blank(lines[next]!) || indentWidth(lines[next]!.text) >= 4))
@@ -219,7 +269,7 @@ class Reader {
           tableRow(value, alignment.length, (cell, options) => this.inline([cell], options));
         const children = [row(line)];
         let next = i + 2;
-        while (next < lines.length && !blank(lines[next]!) && !interrupts(lines[next]!))
+        while (next < lines.length && !blank(lines[next]!) && !startsBlock(lines[next]!))
           children.push(row(lines[next++]!));
         nodes.push({
           type: "table",
@@ -233,7 +283,12 @@ class Reader {
       const paragraph: Line[] = [
         i === 0 && taskPrefix
           ? strip(line, taskPrefix)
-          : stripIndent(line, Math.min(3, indentWidth(line.text))),
+          : stripIndent(
+              line,
+              continuesText
+                ? indentWidth(line.text, line.column)
+                : Math.min(3, indentWidth(line.text)),
+            ),
       ];
       let next = i + 1;
       let setext = 0;

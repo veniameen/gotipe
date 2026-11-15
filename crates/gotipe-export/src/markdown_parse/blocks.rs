@@ -4,9 +4,32 @@ use super::{
     syntax::*,
     Line, Node,
 };
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
+/// The lines a container hands to `blocks`, as a key, as `linesKey` of the TS reader: depth, task
+/// prefix, how many lines, where the first starts and its column, where the last ends, how long
+/// and how many lazy. One container reads its own lines, and reads them again only without the
+/// last ones, so no two containers share a key.
+type Key = (usize, usize, usize, usize, usize, usize, usize, usize);
+fn key(lines: &[Line], depth: usize, task_prefix: usize) -> Key {
+    let first = lines.first();
+    (
+        depth,
+        task_prefix,
+        lines.len(),
+        first.map_or(0, |line| line.start),
+        first.map_or(0, |line| line.column),
+        lines.last().map_or(0, |line| line.end),
+        lines.iter().map(|line| line.text.len()).sum(),
+        lines.iter().filter(|line| line.lazy).count(),
+    )
+}
+#[derive(Default)]
 pub(super) struct Reader {
     pub references: HashSet<String>,
+    /// The content of quotes and items already read. A quote or an item that a lazy line ends
+    /// reads its content again without that line; the quotes and items inside read the same
+    /// lines, and are taken from here, so nested levels do not read again in turn (D-160).
+    contents: HashMap<Key, Vec<Node>>,
 }
 impl Reader {
     fn inline(&self, kind: &'static str, lines: &[Line], start: usize, end: usize) -> Node {
@@ -15,6 +38,18 @@ impl Reader {
         n
     }
     pub fn blocks(&mut self, lines: &[Line], depth: usize, task_prefix: usize) -> Vec<Node> {
+        if depth == 0 {
+            return self.read(lines, depth, task_prefix);
+        }
+        let key = key(lines, depth, task_prefix);
+        if let Some(nodes) = self.contents.get(&key) {
+            return nodes.clone();
+        }
+        let nodes = self.read(lines, depth, task_prefix);
+        self.contents.insert(key, nodes.clone());
+        nodes
+    }
+    fn read(&mut self, lines: &[Line], depth: usize, task_prefix: usize) -> Vec<Node> {
         if depth > 64 && !lines.is_empty() {
             return vec![Node::text(
                 "html",
@@ -29,6 +64,9 @@ impl Reader {
         let setext_marker = re!(r"^ {0,3}(=+|-+)[ \t]*$");
         let mut nodes = vec![];
         let mut i = 0;
+        // A definition is read out of paragraph text: the line right after one that does not
+        // interrupt a paragraph continues that text, whatever block it would start (D-119).
+        let mut after_definition = usize::MAX;
         while i < lines.len() {
             let line = &lines[i];
             if line.blank() {
@@ -36,6 +74,7 @@ impl Reader {
                 continue;
             }
             let start = line.start + line.text.bytes().take_while(|c| *c == b' ').count();
+            let continues_text = i == after_definition && !interrupts(line);
             if let Some(open) = opening_fence(&line.text) {
                 let marker = &open[1];
                 let indentation = line.text.find(marker).unwrap();
@@ -78,7 +117,7 @@ impl Reader {
             }
             // `$$` … `$$`: the body is taken raw, without inline parsing. Without a closing
             // line the `$$` stays ordinary paragraph text.
-            if let Some(end) = math_fence(&line.text)
+            if let Some(end) = (!continues_text && math_fence(&line.text))
                 .then(|| (i + 1..lines.len()).find(|&next| math_fence(&lines[next].text)))
                 .flatten()
             {
@@ -114,52 +153,67 @@ impl Reader {
                 continue;
             }
             if quote(&line.text) > 0 {
-                let mut quoted = vec![];
+                let mut quoted: Vec<Line> = vec![];
+                // the first line of each run of lines without `>`: its index in the quote and in
+                // `lines`
+                let mut lazy_runs: Vec<(usize, usize)> = vec![];
+                let mut run = false;
                 let mut next = i;
-                let mut lazy = false;
                 while next < lines.len() {
                     let current = &lines[next];
                     let prefix = quote(&current.text);
                     if prefix > 0 {
                         let marker = quote_marker.find(&current.text).unwrap().end();
-                        let unquoted = current.strip(marker).indent(usize::from(prefix > marker));
-                        let mut inner = unquoted.clone();
-                        for _ in 0..64 {
-                            let q = quote(&inner.text);
-                            if q > 0 {
-                                inner = inner.strip(q)
-                            } else if let Some(l) = list_marker(&inner.text, inner.column) {
-                                inner = inner.strip(l.prefix)
-                            } else {
-                                break;
-                            }
+                        quoted.push(current.strip(marker).indent(usize::from(prefix > marker)));
+                        run = false;
+                    // a line that starts a block here — any list item too — ends the quote
+                    } else if current.blank()
+                        || interrupts(current)
+                        || list_marker(&current.text, 0).is_some()
+                    {
+                        break;
+                    } else {
+                        if !run {
+                            lazy_runs.push((quoted.len(), next));
                         }
-                        lazy = !inner.blank()
-                            && width(&inner.text, inner.column) < 4
-                            && !interrupts(&inner);
-                        quoted.push(unquoted);
-                    } else if lazy && !current.blank() && !interrupts(current) {
+                        run = true;
                         let mut line = current.clone();
                         line.lazy = true;
                         quoted.push(line)
-                    } else {
-                        break;
                     }
                     next += 1;
                 }
+                let mut children = self.blocks(&quoted, depth + 1, 0);
+                // A line without `>` continues the paragraph the quote has open. Where the quote
+                // reads it otherwise — after a blank line, in code or a table — the quote ends
+                // before it, as in CommonMark (D-118); its blocks before that line read the same
+                // without it.
+                for (at, stray) in lazy_runs {
+                    let reading = lists::lazy_reading(&children, quoted[at].start, true);
+                    if reading == lists::Lazy::Text {
+                        continue;
+                    }
+                    quoted.truncate(at);
+                    match reading {
+                        lists::Lazy::Start(index) => children.truncate(index),
+                        _ => children = self.blocks(&quoted, depth + 1, 0),
+                    }
+                    next = stray;
+                    break;
+                }
                 let mut n = Node::new("blockquote", start, lines[next - 1].end);
-                n.children = self.blocks(&quoted, depth + 1, 0);
+                n.children = children;
                 nodes.push(n);
                 i = next;
                 continue;
             }
-            if list_marker(&line.text, 0).is_some() {
+            if !continues_text && list_marker(&line.text, 0).is_some() {
                 let (node, next) = lists::read(self, lines, i, depth);
                 nodes.push(node);
                 i = next;
                 continue;
             }
-            if let Some(html) = html_block(&line.text, false) {
+            if let Some(html) = html_block(&line.text, false).filter(|_| !continues_text) {
                 let mut next = i + 1;
                 match &html {
                     HtmlEnd::Blank => {
@@ -201,9 +255,10 @@ impl Reader {
             if let Some((node, next)) = definitions::read(lines, i, &mut self.references) {
                 nodes.push(node);
                 i = next;
+                after_definition = next;
                 continue;
             }
-            if width(&line.text, 0) >= 4 {
+            if !continues_text && width(&line.text, 0) >= 4 {
                 let mut content = vec![];
                 let mut next = i;
                 while next < lines.len()
@@ -238,7 +293,8 @@ impl Reader {
                     node.align = alignment;
                     node.children.push(self.row(line, node.align.len()));
                     let mut next = i + 2;
-                    while next < lines.len() && !lines[next].blank() && !interrupts(&lines[next]) {
+                    while next < lines.len() && !lines[next].blank() && !starts_block(&lines[next])
+                    {
                         node.children.push(self.row(&lines[next], node.align.len()));
                         next += 1;
                     }
@@ -250,6 +306,8 @@ impl Reader {
             }
             let mut paragraph = vec![if i == 0 && task_prefix > 0 {
                 line.strip(task_prefix)
+            } else if continues_text {
+                line.indent(width(&line.text, line.column))
             } else {
                 line.indent(3.min(width(&line.text, 0)))
             }];
@@ -343,7 +401,8 @@ fn cells(text: &str) -> Vec<(String, usize, usize)> {
     cells
 }
 fn alignment(text: &str) -> Option<Vec<Option<String>>> {
-    if !text.contains('|') && !re!(r"^ {0,3}:?-+:?[ \t]*$").is_match(text) {
+    // without `|` a run of `-` is the underline of a setext heading (GFM): a colon makes it a row
+    if !text.contains('|') && !re!(r"^ {0,3}(?::-+:?|-+:)[ \t]*$").is_match(text) {
         return None;
     }
     let cells = cells(text);
