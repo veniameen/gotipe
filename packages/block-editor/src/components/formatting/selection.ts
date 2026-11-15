@@ -1,4 +1,11 @@
-import type { BlockView, GoTipeEditor, MarkView, Selection, SelectionView } from "@gotipe/core";
+import type {
+  BlockView,
+  GoTipeEditor,
+  MarkView,
+  Selection,
+  SelectionView,
+  ViewState,
+} from "@gotipe/core";
 
 export function blockPath(blocks: BlockView[], id: string): BlockView[] {
   for (const block of blocks) {
@@ -9,7 +16,10 @@ export function blockPath(blocks: BlockView[], id: string): BlockView[] {
   return [];
 }
 export function currentMarks(editor: GoTipeEditor): MarkView[] {
-  const state = editor.getViewState();
+  return marksAt(editor.getViewState());
+}
+/** The marks of the text at the selection's anchor, read from a view state. */
+export function marksAt(state: ViewState): MarkView[] {
   const block = blockPath(state.blocks, state.selection.anchor.blockId).at(-1);
   if (!block || !Array.isArray(block.content)) return [];
   const offset = state.selection.anchor.offset;

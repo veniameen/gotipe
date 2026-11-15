@@ -251,15 +251,16 @@ function renderBlock(
         rowspan: cellSpan(block.attrs.rowspan),
         style: { textAlign: block.attrs.align },
       });
-    case "callout":
+    case "callout": {
+      // the callout's own emoji; without one no glyph (React draws the kind's icon)
+      const emoji = String(block.attrs.emoji ?? "");
       return node("div", { class: "gotipe-callout" }, [
-        h(
-          "span",
-          { class: "gotipe-callout-icon", contenteditable: false },
-          String(block.attrs.icon ?? "💡"),
-        ),
+        ...(emoji
+          ? [h("span", { class: "gotipe-callout-icon", contenteditable: false }, emoji)]
+          : []),
         h("div", { class: "gotipe-callout-content" }, [...content, ...children]),
       ]);
+    }
     case "toggle":
       return node(
         "details",
@@ -300,9 +301,8 @@ function renderBlock(
         ),
       ]);
     case "math":
-      return node("pre", { class: "gotipe-math" }, [
-        String(block.attrs.latex ?? block.content ?? ""),
-      ]);
+      // the block's raw text is its TeX
+      return node("pre", { class: "gotipe-math" }, content);
     case "embed":
       return node("div", { class: "gotipe-embed", contenteditable: false }, [
         h(

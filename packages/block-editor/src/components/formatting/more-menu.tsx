@@ -5,8 +5,12 @@ import { useEffect, useRef, useState } from "react";
 import { useBlockEditorI18n } from "../../i18n/strings";
 import { PageIcon } from "../../page/icons";
 import { AlignOptions, useAlignable, useTextAlign } from "../../text/align";
+import { hasMark } from "./schema";
 import { Tip } from "./tip";
 import { useFormattingMenu } from "./use-formatting-menu";
+
+/** Marks «More» offers when the editor has them (`Superscript`, `Subscript`: not in DefaultPreset). */
+const SCRIPTS = ["superscript", "subscript"] as const;
 
 export function MoreMenu({ editor }: { editor: GoTipeEditor }) {
   const menu = useFormattingMenu(editor);
@@ -16,6 +20,7 @@ export function MoreMenu({ editor }: { editor: GoTipeEditor }) {
   const [copying, setCopying] = useState(false);
   const align = useTextAlign(editor);
   const alignable = useAlignable(editor);
+  const scripts = SCRIPTS.filter((mark) => hasMark(editor, mark));
   useEffect(() => {
     if (!menu.open) {
       generation.current++;
@@ -109,20 +114,17 @@ export function MoreMenu({ editor }: { editor: GoTipeEditor }) {
             />
           </div>
           <div className="gotipe-menu-sep" role="separator" />
-          <button
-            type="button"
-            role="menuitem"
-            onClick={() => menu.run((chain) => chain.toggleMark("superscript"))}
-          >
-            {i18n.t("format.superscript")}
-          </button>
-          <button
-            type="button"
-            role="menuitem"
-            onClick={() => menu.run((chain) => chain.toggleMark("subscript"))}
-          >
-            {i18n.t("format.subscript")}
-          </button>
+          {scripts.map((mark) => (
+            <button
+              key={mark}
+              type="button"
+              role="menuitem"
+              data-mark={mark}
+              onClick={() => menu.run((chain) => chain.toggleMark(mark))}
+            >
+              {i18n.t(`format.${mark}`)}
+            </button>
+          ))}
           <button
             type="button"
             role="menuitem"

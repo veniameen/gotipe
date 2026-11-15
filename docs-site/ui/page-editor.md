@@ -92,7 +92,7 @@ Details of the codec are in [Markdown](/docs/conversion/markdown).
 | `review` | `PageReviewProps` | — | Suggestions, comments and cursors. Without it there is no review layer. |
 | `reviewBar` | `{ title?: ReactNode; extra?: ReactNode[] } \| false` | not shown | Pass an object to show the review bar above the page. |
 | `autoFocus` | `boolean` | — | Put the caret at the end once the editor exists. |
-| `onReady` | `(editor: GoTipeEditor) => void` | — | Called once the editor exists. Pass a stable function. |
+| `onReady` | `(editor: GoTipeEditor) => void` | — | Called once per editor, when it exists. A new function on a later render is not called. |
 | `onError` | `(error: GoTipeError) => void` | — | Every editor error, like `host.onError`. |
 | `status` | `boolean \| StatusLineOptions` | `false` | Words and characters under the page ([counter line](/docs/extensions/character-count#the-counter-line-of-blockeditor)). The page has `FindReplace` and `CharacterCount`, so `Mod+F` opens the find bar. |
 | `className`, `style` | | — | On the root `.gotipe-page`. |
@@ -176,8 +176,6 @@ handle and menus, and opens links on a plain click.
   `BlockEditor` with the WASM engine for [collaboration](/docs/collaboration/overview).
 - The AI command bar is off, and the extensions cannot be changed; `blocks` only filters
   the `/` menu.
-- `onReady` is an effect dependency: a new function on each render calls it again and,
-  with `autoFocus`, moves the caret to the end again. Wrap it in `useCallback`.
 - `titleLevel` changes the title only: a `# heading` further down the file is still an `h1`.
 
 ## Related
