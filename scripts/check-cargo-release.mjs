@@ -1,7 +1,10 @@
 import { execFileSync } from "node:child_process";
 
-// Cargo patches do not propagate into downstream registry consumers. A local
-// security fix must have a published version before any source crate is released.
+// The crates are not published (only npm is), but the Rust graph is compiled into
+// @gotipe/wasm, @gotipe/export-wasm and the Cloud converter. Every source must be a
+// registry release: a Git checkout is mutable, outside yanking and registry
+// advisories, and its notices describe no published version. A security fix that
+// exists only in Git waits for a registry release (docs/development/dependencies.md).
 const metadata = JSON.parse(
   execFileSync("cargo", ["metadata", "--locked", "--format-version", "1"], {
     encoding: "utf8",
@@ -15,9 +18,9 @@ if (unpublished.length) {
     console.error(`${pkg.name}@${pkg.version} uses ${pkg.source}`);
   }
   console.error(
-    "Cargo source release is blocked: publishable registry versions must replace Git patches before publishing any package.",
+    "Release is blocked: the Rust graph built into the npm packages must use registry versions instead of Git sources.",
   );
   process.exitCode = 1;
 } else {
-  console.log("Cargo dependency sources are registry-publishable.");
+  console.log("Cargo dependency sources are registry releases.");
 }

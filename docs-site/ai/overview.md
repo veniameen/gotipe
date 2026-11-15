@@ -47,7 +47,7 @@ Improve, ghost text and proofreading controls.
 
 | Extension | Adds |
 | --- | --- |
-| `defineAi` | The manager, ghost text (opt-in) and the `cancelAi` command. The other two need it. |
+| `defineAi` | The manager (`getAiManager(editor)`), ghost text (opt-in) and the `cancelAi` command. The other two need it. |
 | `defineAiContext` | `rewrite`, `continueWriting`, `askAi`, and the slash items Continue Writing (`/continue`, `/write`, `/generate`) and Ask AI (`/ai`, `/ask`, `/prompt`). |
 | `defineAiAgent` | `freeText`, `proofread`, `addParagraph`, `review`. |
 | `AiPreset` | The three extensions without options. It sets no provider, so most apps configure `defineAi` instead. |
@@ -142,26 +142,29 @@ matches as `{ pii_type, start, end, matched_text }` with UTF-16 offsets.
 
 ## Use the manager directly
 
-`AiManager` works without the extensions. The manager that `defineAi` creates is not
-exposed, so create one of your own for host-driven calls:
+`getAiManager(editor)` returns the manager that `defineAi` created for the editor, or
+`undefined` without the extension and after the editor is destroyed. It is the manager the
+commands, ghost text and `cancelAi` use, with their provider (also one set by
+`defineAiContext` or `defineAiAgent`). It runs one request at a time, yours or theirs: a new
+request cancels the running one, and so do closing the command bar and any change to the
+document. A cancelled request rejects with an `AbortError`. The extension owns the manager and
+releases it with the editor, so do not call `destroy()` on it.
 
 ```ts title="summarize.ts"
-import { AiManager } from "@gotipe/ai";
+import { getAiManager } from "@gotipe/ai";
 import { type GoTipeEditor, createId } from "@gotipe/core";
-import { backendProvider } from "./ai-provider";
 
 export async function summarizeSelection(editor: GoTipeEditor) {
-  const ai = new AiManager(editor, { provider: backendProvider });
-  try {
-    const target = ai.captureTarget(); // the document and selection to change
-    const content = await ai.executeCommand("summarize");
-    const id = createId();
-    ai.applySuggestion({ id, type: "summarize", content, confidence: 1 }, target);
-  } finally {
-    ai.destroy();
-  }
+  const ai = getAiManager(editor);
+  if (!ai) throw new Error("Add defineAi to the editor");
+  const target = ai.captureTarget(); // the document and selection to change
+  const content = await ai.executeCommand("summarize");
+  ai.applySuggestion({ id: createId(), type: "summarize", content, confidence: 1 }, target);
 }
 ```
+
+`AiManager` also works without the extensions: `new AiManager(editor, { provider })` is a
+manager of your own, with its own request, which you release with `destroy()`.
 
 | Method | Description |
 | --- | --- |

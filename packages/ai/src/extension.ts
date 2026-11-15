@@ -3,8 +3,18 @@ import { defineAiAgent } from "./agent";
 import { installAutocomplete } from "./autocomplete";
 import { defineAiContext } from "./context";
 import { AiManager } from "./manager";
-import { destroyRuntime, registerRuntime } from "./runtime";
+import { destroyRuntime, getRuntime, registerRuntime } from "./runtime";
 import type { AiOptions } from "./types";
+
+/**
+ * The manager `defineAi` created for this editor: the one its commands, ghost text and
+ * `cancelAi` use, with the provider they use. `undefined` without the extension and after
+ * the editor is destroyed. The extension owns it and releases it with the editor, so do
+ * not call `destroy()` on it.
+ */
+export function getAiManager(editor: GoTipeEditor): AiManager | undefined {
+  return getRuntime(editor)?.manager;
+}
 
 export const defineAi = defineExtension<AiOptions>({
   name: "ai",

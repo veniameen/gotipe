@@ -44,12 +44,64 @@ describe("Cloud SDK contracts", () => {
     await expect(client().deleteDocument("id/with space")).resolves.toBeUndefined();
     expect(fetch.mock.calls[0]?.[0]).toBe("https://cloud.example/v1/documents/id%2Fwith%20space");
   });
-  it("unwraps comment lists and derives resolved state", async () => {
-    respond({ data: [{ id: "a", resolved_at: "today", block_id: "b" }, { id: "c" }] });
-    expect(await client().listComments("doc", true)).toEqual([
-      { id: "a", resolvedAt: "today", blockId: "b", resolved: true },
-      { id: "c", resolved: false },
+  it("unwraps comment pages and derives resolved state", async () => {
+    const fetch = respond({
+      data: [{ id: "a", resolved_at: "today", block_id: "b" }, { id: "c" }],
+      has_more: true,
+      next_cursor: "after-c",
+    });
+    expect(
+      await client().listComments("doc", { includeResolved: true, limit: 2, cursor: "after/a" }),
+    ).toEqual({
+      data: [
+        { id: "a", resolvedAt: "today", blockId: "b", resolved: true },
+        { id: "c", resolved: false },
+      ],
+      hasMore: true,
+      nextCursor: "after-c",
+    });
+    expect(fetch.mock.calls[0]?.[0]).toBe(
+      "https://cloud.example/v1/documents/doc/comments?include_resolved=true&limit=2&cursor=after%2Fa",
+    );
+  });
+  it("reads every page by passing nextCursor back", async () => {
+    const fetch = respond({});
+    fetch
+      .mockResolvedValueOnce(
+        new Response('{"data":[{"id":"v2","size_bytes":2}],"has_more":true,"next_cursor":"c1"}'),
+      )
+      .mockResolvedValueOnce(
+        new Response('{"data":[{"id":"v1","size_bytes":1}],"has_more":false}'),
+      );
+    const versions = [];
+    let cursor: string | undefined;
+    do {
+      const page = await client().listVersions("doc", { cursor });
+      versions.push(...page.data);
+      cursor = page.nextCursor;
+    } while (cursor);
+    expect(versions).toEqual([
+      { id: "v2", sizeBytes: 2 },
+      { id: "v1", sizeBytes: 1 },
     ]);
+    expect(fetch.mock.calls.map((call) => call[0])).toEqual([
+      "https://cloud.example/v1/documents/doc/versions",
+      "https://cloud.example/v1/documents/doc/versions?cursor=c1",
+    ]);
+  });
+  it("rejects a page that has more items but no cursor to them", async () => {
+    respond({ data: [], has_more: true });
+    await expect(client().listVersions("doc")).rejects.toMatchObject({
+      name: "GoTipeApiError",
+      code: "INVALID_RESPONSE",
+    });
+  });
+  it("treats a list without has_more as the last page", async () => {
+    respond({ data: [{ id: "c" }], next_cursor: "ignored" });
+    expect(await client().listComments("doc")).toEqual({
+      data: [{ id: "c", resolved: false }],
+      hasMore: false,
+    });
   });
   it("sends comment anchors with server field names", async () => {
     const fetch = respond({ id: "comment", block_id: "block" }, 201);
@@ -162,6 +214,12 @@ describe("Cloud SDK contracts", () => {
     const fetch = respond({});
     await expect(client().listDocuments(0)).rejects.toThrow(RangeError);
     await expect(client().listDocuments(1, 101)).rejects.toThrow(RangeError);
+    await expect(client().listComments("doc", { limit: 0 })).rejects.toThrow(RangeError);
+    await expect(client().listVersions("doc", { limit: 1.5 })).rejects.toThrow(RangeError);
+    await expect(client().listVersions("doc", { limit: 101 })).rejects.toThrow(RangeError);
+    // The former listComments(docId, includeResolved) from JavaScript.
+    await expect(client().listComments("doc", true as never)).rejects.toThrow(TypeError);
+    await expect(client().listVersions("doc", null as never)).rejects.toThrow(TypeError);
     expect(fetch).not.toHaveBeenCalled();
   });
 });

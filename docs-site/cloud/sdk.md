@@ -57,10 +57,10 @@ with a fresh one. In browsers, pass short-lived access tokens, never API keys.
 | `createDocument({ id?, title, content? })` | `POST /v1/documents` | `Document` |
 | `updateDocument(id, { title?, content? })` | `PATCH /v1/documents/{id}` | `Document` without `content` |
 | `deleteDocument(id)` | `DELETE /v1/documents/{id}` | `undefined` |
-| `listVersions(docId)` | `GET …/versions` | `Version[]`, newest 50 |
+| `listVersions(docId, { limit?, cursor? })` | `GET …/versions` | `{ data, hasMore, nextCursor? }`, newest first |
 | `createVersion(docId, name)` | `POST …/versions` | `Version` of type `named` |
 | `restoreVersion(docId, versionId)` | `POST …/versions/{versionId}/restore`, then `GET` | The restored `Document` |
-| `listComments(docId, includeResolved = false)` | `GET …/comments` | `ApiComment[]`, first 50, each with `resolved` |
+| `listComments(docId, { includeResolved?, limit?, cursor? })` | `GET …/comments` | `{ data, hasMore, nextCursor? }`, oldest first, each comment with `resolved` |
 | `addComment(docId, { content, blockId?, from?, to? })` | `POST …/comments` | `ApiComment` |
 | `resolveComment(docId, commentId)` | `POST …/comments/{commentId}/resolve` | `undefined` |
 | `deleteComment(docId, commentId)` | `DELETE …/comments/{commentId}` | `undefined` |
@@ -69,6 +69,25 @@ with a fresh one. In browsers, pass short-lived access tokens, never API keys.
 | `aiGenerate(docId, request)` | `POST /v1/ai/complete` | `AiResponse` |
 | `getOrganization(id)` | `GET /v1/organizations/{id}` | `Organization` |
 | `getUsage()` | `GET /v1/billing/usage` | `Usage` for the current month |
+
+`listComments` and `listVersions` return one [page](/docs/cloud/rest-api#pages): `limit` is
+1–100 (50 by default; another number is a `RangeError` before any request). Pass `nextCursor`
+back as `cursor` until it is absent:
+
+```ts
+const comments = [];
+let cursor: string | undefined;
+do {
+  const page = await client.listComments(documentId, { includeResolved: true, cursor });
+  comments.push(...page.data);
+  cursor = page.nextCursor;
+} while (cursor);
+```
+
+A page continues after the previous page's last item, so a comment resolved or a version
+created between the requests does not make the loop skip or repeat items. A response that
+says `has_more` without a `next_cursor` rejects with `GoTipeApiError` code
+`INVALID_RESPONSE` instead of ending the loop early.
 
 `addComment` anchors the comment to text when `from` is set (then `blockId` and `to` are
 required), to the block when only `blockId` is set, and to the document otherwise. `format` is
@@ -90,9 +109,9 @@ metadata, `AiResponse.usage` (`prompt_tokens`, `completion_tokens`) and `Usage.u
 (`documents`, `ai_requests`, `exports`, each `{ current, limit }`). Request bodies are sent as
 you pass them.
 
-The package exports the types `GoTipeClientOptions`, `PaginatedResponse`, `Document`,
-`Version`, `ApiComment`, `ExportJob`, `AiRequest`, `AiResponse`, `Organization`, `Usage` and
-`ApiError`.
+The package exports the types `GoTipeClientOptions`, `PaginatedResponse`, `CursorPage`,
+`PageOptions`, `ListCommentsOptions`, `Document`, `Version`, `ApiComment`, `ExportJob`,
+`AiRequest`, `AiResponse`, `Organization`, `Usage` and `ApiError`.
 
 ## Errors
 

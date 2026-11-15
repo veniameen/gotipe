@@ -1,4 +1,4 @@
-import type { ApiError, GoTipeClientOptions } from "./types";
+import type { ApiError, CursorPage, GoTipeClientOptions } from "./types";
 
 export class GoTipeApiError extends Error implements ApiError {
   readonly name = "GoTipeApiError";
@@ -71,8 +71,20 @@ export class Transport {
     return resource<T>(await this.request(method, path, body));
   }
 
-  async list<T>(path: string): Promise<T[]> {
-    const response = await this.request<{ data: Record<string, unknown>[] }>("GET", path);
-    return response.data.map((item) => resource<T>(item));
+  async page<T>(path: string): Promise<CursorPage<T>> {
+    const response = await this.request<{
+      data: Record<string, unknown>[];
+      has_more?: boolean;
+      next_cursor?: string;
+    }>("GET", path);
+    const page: CursorPage<T> = {
+      data: response.data.map((item) => resource<T>(item)),
+      hasMore: response.has_more === true,
+    };
+    if (!page.hasMore) return page;
+    if (typeof response.next_cursor !== "string" || !response.next_cursor)
+      throw new GoTipeApiError("INVALID_RESPONSE", "The page has more items but no cursor", 200);
+    page.nextCursor = response.next_cursor;
+    return page;
   }
 }

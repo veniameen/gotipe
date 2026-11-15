@@ -1,4 +1,4 @@
-export { defineAi, AiPreset } from "./extension";
+export { defineAi, AiPreset, getAiManager } from "./extension";
 export { defineAiContext } from "./context";
 export {
   defineAiAgent,

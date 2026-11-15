@@ -471,7 +471,7 @@ Full-St ░░░░░░░░░░░░░░░░░░░░░░██
 
 ### Launch
 - [ ] npm: все @gotipe/* packages опубликованы
-- [ ] crates.io: все gotipe-* crates опубликованы
+- [x] crates.io: gotipe-* crates не публикуются — решение владельца, выпускается только npm (D-71)
 - [ ] GitHub: README, templates, labels, milestones
 - [ ] GoTipe Cloud: регистрация, API keys, working sync
 - [ ] Мониторинг: Prometheus, alerts, health checks

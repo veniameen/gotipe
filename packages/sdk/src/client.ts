@@ -3,10 +3,13 @@ import type {
   AiRequest,
   AiResponse,
   Comment,
+  CursorPage,
   Document,
   ExportJob,
   GoTipeClientOptions,
+  ListCommentsOptions,
   Organization,
+  PageOptions,
   PaginatedResponse,
   Usage,
   Version,
@@ -14,6 +17,23 @@ import type {
 
 const idPath = (id: string) => encodeURIComponent(id);
 const documentPath = (id: string) => `/v1/documents/${idPath(id)}`;
+
+function pageQuery(query: URLSearchParams, options: PageOptions): string {
+  // A JavaScript caller of the former listComments(docId, includeResolved) must not get
+  // a different list without an error.
+  if (!options || typeof options !== "object")
+    throw new TypeError("List options must be an object such as { limit, cursor }");
+  const { limit, cursor } = options;
+  if (limit !== undefined) {
+    if (!Number.isSafeInteger(limit) || limit < 1 || limit > 100) {
+      throw new RangeError("limit must be between 1 and 100");
+    }
+    query.set("limit", String(limit));
+  }
+  if (cursor) query.set("cursor", cursor);
+  const text = query.toString();
+  return text ? `?${text}` : "";
+}
 
 export class GoTipeClient {
   private readonly transport: Transport;
@@ -59,8 +79,10 @@ export class GoTipeClient {
     return this.transport.request("DELETE", documentPath(id));
   }
 
-  listVersions(docId: string): Promise<Version[]> {
-    return this.transport.list(`${documentPath(docId)}/versions`);
+  /** Newest first, one page at a time. */
+  async listVersions(docId: string, options: PageOptions = {}): Promise<CursorPage<Version>> {
+    const query = pageQuery(new URLSearchParams(), options);
+    return this.transport.page(`${documentPath(docId)}/versions${query}`);
   }
   createVersion(docId: string, name: string): Promise<Version> {
     return this.transport.resource("POST", `${documentPath(docId)}/versions`, {
@@ -76,11 +98,20 @@ export class GoTipeClient {
     return this.getDocument(docId);
   }
 
-  async listComments(docId: string, includeResolved = false): Promise<Comment[]> {
-    const comments = await this.transport.list<Comment>(
-      `${documentPath(docId)}/comments?include_resolved=${includeResolved}`,
+  /** Oldest first, replies as separate items, one page at a time. */
+  async listComments(
+    docId: string,
+    options: ListCommentsOptions = {},
+  ): Promise<CursorPage<Comment>> {
+    const query = pageQuery(
+      new URLSearchParams({ include_resolved: String(options.includeResolved === true) }),
+      options,
     );
-    return comments.map((comment) => ({ ...comment, resolved: !!comment.resolvedAt }));
+    const page = await this.transport.page<Comment>(`${documentPath(docId)}/comments${query}`);
+    return {
+      ...page,
+      data: page.data.map((comment) => ({ ...comment, resolved: !!comment.resolvedAt })),
+    };
   }
   async addComment(
     docId: string,
