@@ -104,18 +104,21 @@ describe("JS bridge document integrity", () => {
     expect(doc.blocks).toEqual([raw("a", "first\nsecond")]);
   });
 
-  it.each(["AddMark", "RemoveMark"])("%s leaves non-rich content untouched", async (tag) => {
+  // One contract with the Rust engine (D-03): a mark step needs rich text, raw text stays as is.
+  it.each(["AddMark", "RemoveMark"])("%s rejects non-rich content untouched", async (tag) => {
     const bridge = await createBridge([raw("code", "const x = 1;")]);
     const before = bridge.getState();
-    apply(bridge, {
-      [tag]: {
-        block_id: "code",
-        from: 0,
-        to: 5,
-        mark: { mark_type: "bold", attrs: {} },
-        mark_type: "bold",
-      },
-    });
+    expect(() =>
+      apply(bridge, {
+        [tag]: {
+          block_id: "code",
+          from: 0,
+          to: 5,
+          mark: { mark_type: "bold", attrs: {} },
+          mark_type: "bold",
+        },
+      }),
+    ).toThrow("Invalid content type for this operation");
     expect(bridge.getState()).toBe(before);
   });
 

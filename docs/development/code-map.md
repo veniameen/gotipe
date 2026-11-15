@@ -64,6 +64,7 @@ React/content/table-layout владеет временной шириной пр
 | Шрифт, размер и направление текста: значения и проверки одни для команд, HTML и импорта | `document/text-style.ts`; команды — `extensions/text-style.ts`, `text-direction.ts`; Rust — `gotipe-export/src/html/text_style.rs` |
 | IME в рендерерах: `editor.isComposing`, удержание декораций составляемого блока | `editor/mount.ts`; React `content/decorations.ts` (`holdComposing`), Vue `decorations.ts` |
 | Вставка с учётом разрешённых детей контейнера | `commands/insertion-point.ts`, `commands/structure-commands.ts` |
+| Выделение после цепочки, если её шаги удалили блок или укоротили текст | `commands/chain-selection.ts` (из `chain.ts`, `run()`) |
 | Наложение mark на span: замена того же типа, exclusive group | `engine/mark-rules.ts` = `crates/gotipe-core/src/transform/marks.rs` |
 | Атомарная разметка: атомы, нормализация шагов, края | `engine/atoms.ts` = `crates/gotipe-core/src/atoms.rs`; выделение — `editor/atom-selection.ts`; ключи — `engine/atom-keys.ts`; поддержка атомов (`atomSupport`: чужой текст `engine/remote-atoms.ts` и `editor/remote-atom-repair.ts`, HTML `document/html-atoms.ts`) — `extensions/atoms/support.ts`, вне графа ядра |
 | Атомы строки и подсказки по символу | `extensions/atoms/`, `extensions/suggestion/`; эмодзи — вход `emoji.ts` (русские имена — `emoji-ru.ts`); TeX → MathML — вход `math.ts` (`math/`); каретка у атома — `dom/selection.ts`. Вид атомов — React `content/atoms.tsx`, Vue `atoms.ts`; списки, выбор эмодзи и поле формулы — `block-editor/src/atoms/` |

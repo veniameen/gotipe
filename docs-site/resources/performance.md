@@ -17,7 +17,7 @@ tree shaking, and CSS, fonts and WASM are not included.
 
 | Graph | gzip | Budget |
 |---|---:|---:|
-| `@gotipe/core` with the Markdown parser | 95,659 B | 100 KiB |
+| `@gotipe/core` with the Markdown parser | 95,659 B | 125 KiB |
 | `@gotipe/react`, including `@gotipe/i18n` (on top of core) | 36,441 B | 40 KiB |
 | `@gotipe/vue` | 3,104 B | 8 KiB |
 | `@gotipe/svelte` | 491 B | 7 KiB |
