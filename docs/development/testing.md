@@ -57,7 +57,8 @@ overflow страницы, но доступную ширину редактор
 в отдельный каталог с отключёнными workspace links и строгими peer dependencies.
 Локальные overrides разрешают только внутренние ещё не опубликованные версии;
 исходники не подменяют содержимое архивов. Проверяются все JS exports ESM/CJS,
-декларации без `skipLibCheck`, headless SSR/Markdown и вызов PDF/DOCX.
+декларации без `skipLibCheck`, headless SSR/Markdown, вызов PDF/DOCX и один
+`GoTipeError` на все входы `@gotipe/core` в ESM и CJS (D-166).
 Команда требует предварительной сборки JS, core WASM и optional export WASM.
 
 
