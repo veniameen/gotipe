@@ -103,6 +103,14 @@
   position: relative;
   white-space: nowrap;
 }
+/* A formula is one box: a fraction is taller than a line of text, so the box — and the plate that
+   appears around it under the pointer or when selected — has to enclose all of it. An inline
+   element's plate is only the strip of text; `normal` keeps the box of a formula without a
+   fraction as high as that strip, and the line keeps its height. */
+.gotipe-math-inline:not(.is-invalid) {
+  display: inline-block;
+  line-height: normal;
+}
 .gotipe-math-inline i {
   font-style: italic;
 }
