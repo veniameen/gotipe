@@ -1,3 +1,5 @@
+use std::borrow::Cow;
+
 use gotipe_core::{AttrValue, Block, Document};
 
 mod autolink_escapes;
@@ -175,19 +177,61 @@ fn list_to_markdown(list: &Block, emoji: &Emoji, tier: u8, outer: &str) -> Strin
             if (task || !text.is_empty()) && hazards::cannot_interrupt(&child) {
                 rendered.push('\n');
             }
-            if hazards::is_list(&child) {
-                rendered.push_str(&list_to_markdown(&child, emoji, tier, &indent));
-                continue;
-            }
-            for line in block_to_markdown(&child, emoji, tier).lines() {
-                rendered.push_str(&format!("{indent}{line}\n"));
-            }
+            indented(&child, emoji, tier, &indent, &mut rendered);
         }
     }
     rendered
 }
 
+/// A block, then its children after a blank line, as the TS writer writes them: on the next line
+/// a paragraph would continue the text before it (D-112). A block without lines of its own starts
+/// with its first child.
 fn block_to_markdown(block: &Block, emoji: &Emoji, tier: u8) -> String {
+    if hazards::is_list(block) {
+        return list_to_markdown(block, emoji, tier, "");
+    }
+    let mut out = own_lines(block, emoji, tier);
+    for child in followers(block) {
+        if !out.is_empty() {
+            out.push('\n');
+        }
+        out.push_str(&block_to_markdown(&child, emoji, tier));
+    }
+    out
+}
+
+/// `block` as a child of a list item, each line after `indent`, as `block_to_markdown` writes it;
+/// the blank line before a child stays empty, as the TS writer leaves it (`blankLine`).
+fn indented(block: &Block, emoji: &Emoji, tier: u8, indent: &str, out: &mut String) {
+    if hazards::is_list(block) {
+        out.push_str(&list_to_markdown(block, emoji, tier, indent));
+        return;
+    }
+    let start = out.len();
+    for line in own_lines(block, emoji, tier).lines() {
+        out.push_str(indent);
+        out.push_str(line);
+        out.push('\n');
+    }
+    for child in followers(block) {
+        if out.len() > start {
+            out.push('\n');
+        }
+        indented(&child, emoji, tier, indent, out);
+    }
+}
+
+/// The children written after the lines of a block: a quote writes its children itself, the
+/// children of a table are its rows.
+fn followers(block: &Block) -> Vec<Cow<'_, Block>> {
+    match block.block_type.as_str() {
+        "blockquote" | "callout" | "table" => vec![],
+        _ => hazards::children(shown(block)),
+    }
+}
+
+/// The lines a block writes itself, each with its line ending; "" for a block without any.
+fn own_lines(block: &Block, emoji: &Emoji, tier: u8) -> String {
     let options = |kind| Options {
         kind,
         tier,
@@ -212,27 +256,27 @@ fn block_to_markdown(block: &Block, emoji: &Emoji, tier: u8) -> String {
             })
         },
     );
-    let nested = hazards::children(shown(block))
-        .iter()
-        .map(|child| block_to_markdown(child, emoji, tier))
-        .collect::<Vec<_>>()
-        .join("\n");
+    // a line of text, or nothing for a block without text
+    let line = |text: String| if text.is_empty() { text } else { text + "\n" };
     let attr = |name: &str| match block.attrs.get(name) {
         Some(AttrValue::String(value)) => value.as_str(),
         _ => "",
     };
     match block.block_type.as_str() {
-        "paragraph" => format!("{content}\n{nested}"),
         "heading" => {
             let level = match block.attrs.get("level") {
                 Some(AttrValue::Number(n)) => *n as usize,
                 _ => 1,
             }
             .clamp(1, 6);
-            format!("{} {content}\n{nested}", "#".repeat(level))
+            let marks = "#".repeat(level);
+            // a heading without text is its marks alone, as the TS writer writes it
+            if content.is_empty() {
+                format!("{marks}\n")
+            } else {
+                format!("{marks} {content}\n")
+            }
         }
-        "bulletList" | "orderedList" | "todoList" => list_to_markdown(block, emoji, tier, ""),
-        "listItem" | "todoItem" => format!("{content}\n{nested}"),
         "codeBlock" => {
             let raw = crate::plaintext::block_text(block);
             let fence = code_fence(&raw, 3);
@@ -250,7 +294,12 @@ fn block_to_markdown(block: &Block, emoji: &Emoji, tier: u8) -> String {
                 info.push(' ');
                 info.push_str(&attr("meta").replace(['\n', '\r', '`'], ""));
             }
-            format!("{fence}{info}\n{raw}\n{fence}\n{nested}")
+            // an empty block is its two fences, as the TS writer writes it
+            if raw.is_empty() {
+                format!("{fence}{info}\n{fence}\n")
+            } else {
+                format!("{fence}{info}\n{raw}\n{fence}\n")
+            }
         }
         "blockquote" => {
             let head = if content.is_empty() {
@@ -277,14 +326,14 @@ fn block_to_markdown(block: &Block, emoji: &Emoji, tier: u8) -> String {
         }
         "divider" => "---\n".into(),
         "image" => format!(
-            "![{}](<{}>{})\n{nested}",
+            "![{}](<{}>{})\n",
             escapes::typed(attr("alt")),
             destination(attr("src")),
             title_suffix(attr("caption"))
         ),
-        "file" | "embed" => format!("{}\n{nested}", link_line(block)),
-        "math" => format!("{}\n{nested}", math(&crate::plaintext::block_text(block))),
-        "markdownRaw" => format!("{}\n{nested}", crate::plaintext::block_text(block)),
+        "file" | "embed" => format!("{}\n", link_line(block)),
+        "math" => format!("{}\n", math(&crate::plaintext::block_text(block))),
+        "markdownRaw" => line(crate::plaintext::block_text(block)),
         "table" if table_html::has_merged_cells(block) => {
             format!("{}\n", table_html::table_html(block, "\n"))
         }
@@ -333,9 +382,11 @@ fn block_to_markdown(block: &Block, emoji: &Emoji, tier: u8) -> String {
             }
             result
         }
-        _ => format!("{content}\n{nested}"),
+        // a paragraph, an item outside a list, a toggle, columns and other blocks of text
+        _ => line(content),
     }
 }
+
 /// The delimiter row of a pipe table: one `---` per column, with its alignment.
 fn delimiters(table: &Block, columns: usize) -> String {
     let alignment = match table.attrs.get("align") {
