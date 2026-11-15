@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import nested from "../../../crates/gotipe-export/tests/fixtures/markdown-nested-write-read.json";
-import blocks from "../../../crates/gotipe-export/tests/fixtures/markdown-writer-blocks.json";
 import fixture from "../../../crates/gotipe-export/tests/fixtures/markdown-write-read.json";
+import blocks from "../../../crates/gotipe-export/tests/fixtures/markdown-writer-blocks.json";
 import { parseMarkdown, serializeMarkdown } from "./index";
 import type { Block, Doc, Span } from "./types";
 
