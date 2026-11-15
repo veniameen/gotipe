@@ -209,16 +209,6 @@ function resolveHazards(items: Item[], snap: MarkdownSnapshot | undefined, fm: s
         a.markerOverride = alternateMarker(sa, [i >= 2 ? listSig(items[i - 2]!, snap) : null]);
       }
     }
-    // An indented code block after a list would become part of the last list item.
-    if (
-      sa &&
-      b.preserved &&
-      b.block.type === "codeBlock" &&
-      snap &&
-      /^[ \t]/.test(snap.text.slice(snap.blocks[b.oi]!.start, snap.blocks[b.oi]!.end))
-    ) {
-      b.preserved = false;
-    }
   }
 }
 
@@ -234,8 +224,12 @@ function riskyStart(item: Item): boolean {
 }
 
 /** The blocks `text` reads as; a line ending first, so that a leading `---` opens no front matter. */
+function blockPrints(text: string, eol: string): string[] {
+  return parseInternal(eol + text, false).nodes.map((n) => fingerprint(n.block));
+}
+
 function readBlocks(text: string, eol: string): string {
-  return JSON.stringify(parseInternal(eol + text, false).nodes.map((n) => fingerprint(n.block)));
+  return JSON.stringify(blockPrints(text, eol));
 }
 
 /** The first lines of a block: how a block starts decides how it reads after another. */
@@ -245,16 +239,36 @@ function head(md: string): string {
   return md.slice(0, breaks.lastIndex);
 }
 
+/** The blanks that end `s`: at the end of a gap, those before the first line of the next block. */
+function indentOf(s: string): string {
+  let i = s.length;
+  while (i > 0 && (s[i - 1] === " " || s[i - 1] === "\t")) i--;
+  return s.slice(i);
+}
+
+const withoutIndent = (s: string): string => s.slice(0, s.length - indentOf(s).length);
+
 /**
- * The blanks before the first line of a preserved block that it needs to read as itself. The
- * snapshot keeps them in the gap before the block (in `leading` before the first one); without
- * them an indented code block reads as a paragraph, and an indented fence keeps them in its code.
+ * The blanks before the first line of a block in its source. The snapshot keeps them at the end
+ * of the gap before the block (of `leading` before the first one), not in the block (D-102).
+ */
+function sourceIndent(item: Item, snap: MarkdownSnapshot): string {
+  return indentOf(item.oi === 0 ? snap.leading : (snap.gaps[item.oi - 1] ?? ""));
+}
+
+/**
+ * The blanks before its first line that a preserved block needs to read as itself: without them
+ * an indented code block reads as a paragraph, and an indented fence keeps them in its code. They
+ * move the first item of a list too, and its later lines with it: the whole block is read when
+ * its first lines read the same. Raw source keeps them: what they mean in it is not read.
  */
 function ownIndent(item: Item, snap: MarkdownSnapshot, eol: string): string {
   if (!item.preserved) return "";
-  const blanks = /[ \t]*$/.exec(item.oi === 0 ? snap.leading : (snap.gaps[item.oi - 1] ?? ""))![0];
+  const blanks = sourceIndent(item, snap);
+  if (!blanks || item.block.type === "markdownRaw") return blanks;
+  const differs = (md: string): boolean => readBlocks(md, eol) !== readBlocks(blanks + md, eol);
   const start = head(item.md);
-  return blanks && readBlocks(start, eol) !== readBlocks(blanks + start, eol) ? blanks : "";
+  return differs(start) || (start !== item.md && differs(item.md)) ? blanks : "";
 }
 
 /**
@@ -263,36 +277,118 @@ function ownIndent(item: Item, snap: MarkdownSnapshot, eol: string): string {
  * block ended: the `>` line that ends the paragraph of a quote keeps the next paragraph out of it
  * (D-99), while a table with merged cells, rewritten as HTML, ends only at a blank line.
  */
-function gapHolds(
-  a: Item,
-  b: Item,
-  [gap, apart]: [string, string],
-  snap: MarkdownSnapshot,
-  eol: string,
-): boolean {
-  const before = ownIndent(a, snap, eol) + a.md;
+function gapHolds(before: string, b: Item, [gap, apart]: [string, string], eol: string): boolean {
   const after = head(b.md);
   return readBlocks(before + gap + after, eol) === readBlocks(before + apart + after, eol);
 }
 
-function gapBetween(a: Item, b: Item, snap: MarkdownSnapshot | undefined, eol: string): string {
-  if (snap && a.oi >= 0 && b.oi === a.oi + 1) {
-    const g = snap.gaps[a.oi] ?? eol + eol;
-    if (countLineEndings(g) >= 2) return g;
-    if (a.preserved && b.preserved) return g;
-    // a blank line, and the blanks the first line of a preserved block needs
-    const apart = eol + eol + ownIndent(b, snap, eol);
-    if (
+/**
+ * Whether `b`, written after `before` and `gap`, starts blocks of its own: blanks before its first
+ * line can carry it into the block before it, code into the last item of a list or into code.
+ * Where blocks begin and end is read, not what they hold: references resolve only in context.
+ */
+function standsApart(before: string, gap: string, b: Item, eol: string): boolean {
+  const line = eol.length + before.length + withoutIndent(gap).length;
+  const { nodes } = parseInternal(eol + before + gap + head(b.md), false);
+  return nodes.some((n) => n.start >= line) && nodes.every((n) => n.start >= line || n.end <= line);
+}
+
+/**
+ * The text between `a`, written after the blanks `aIndent`, and `b`; `null` when the blanks that
+ * start `b` would carry it into `a`. Neighbours in the source keep their gap, and its blanks belong
+ * to `b`: an untouched block keeps them where it stands apart with them, or else where it needs
+ * them; a rewritten block is written without them.
+ */
+function gapBetween(
+  a: Item,
+  aIndent: string,
+  b: Item,
+  snap: MarkdownSnapshot | undefined,
+  eol: string,
+): string | null {
+  if (!snap) return eol + eol;
+  const near = a.oi >= 0 && b.oi === a.oi + 1;
+  const g = near ? (snap.gaps[a.oi] ?? eol + eol) : eol + eol;
+  if (near && a.preserved && b.preserved && aIndent === sourceIndent(a, snap)) return g;
+  const own = ownIndent(b, snap, eol);
+  const before = aIndent + a.md;
+  const lines = near && countLineEndings(g) >= 2 ? withoutIndent(g) : eol + eol;
+  let tries = b.preserved ? [lines + sourceIndent(b, snap), lines + own] : [lines];
+  if (near && countLineEndings(g) < 2) {
+    // a blank line, and the blanks a preserved block needs; a rewritten block does not take the
+    // blanks of the gap: its lines are not those of its source
+    const kept = b.preserved ? g : withoutIndent(g);
+    const holds =
       a.block.type === snap.blocks[a.oi]!.type &&
       b.block.type === snap.blocks[b.oi]!.type &&
       !riskyStart(b) &&
-      gapHolds(a, b, [g, apart], snap, eol)
-    ) {
-      return g;
-    }
-    return apart;
+      gapHolds(before, b, [kept, eol + eol + own], eol);
+    tries = [holds ? kept : eol + eol + own];
   }
-  return eol + eol;
+  // a preserved block may start with blanks of its own: indented code keeps a tab
+  const blank = b.preserved && /^[ \t]/.test(b.md);
+  for (const gap of new Set(tries)) {
+    if (!b.preserved || !(blank || indentOf(gap)) || standsApart(before, gap, b, eol)) return gap;
+  }
+  return null;
+}
+
+/**
+ * The text before each block: the gaps, and before the first block the empty lines of `leading`.
+ * Where a preserved block would go into the block before it or lose the blanks of its source,
+ * that block takes back its own blanks; failing that, the preserved block loses blanks it does
+ * not need or is rewritten: indented code after a list or after indented code becomes a fence.
+ */
+function separators(
+  items: Item[],
+  snap: MarkdownSnapshot | undefined,
+  eol: string,
+  rewrite: (i: number) => void,
+): string[] {
+  const first = items[0];
+  if (!first) return [];
+  const seps = [snap ? withoutIndent(snap.leading) : ""];
+  if (snap && first.preserved) seps[0] += sourceIndent(first, snap);
+  // A block takes back the blanks of its source where it reads the same with them and stands
+  // apart from the block before it, which may take back its own for that; more blanks before a
+  // block take nothing after it in. What a failed attempt took back is given up again.
+  const blanksOf = (x: Item): string => (snap && x.oi >= 0 ? sourceIndent(x, snap) : "");
+  const takeBack = (j: number, taken: [number, string][]): boolean => {
+    const x = items[j]!;
+    const blanks = blanksOf(x);
+    if (!blanks || blanks === indentOf(seps[j]!)) return false;
+    const lead = withoutIndent(seps[j]!) + blanks;
+    const prev = items[j - 1];
+    const apart = (): boolean =>
+      !prev || standsApart(indentOf(seps[j - 1]!) + prev.md, lead, x, eol);
+    if (!x.preserved && readBlocks(blanks + x.md, eol) !== readBlocks(x.md, eol)) return false;
+    if (!apart() && !(takeBack(j - 1, taken) && apart())) return false;
+    taken.push([j, seps[j]!]);
+    seps[j] = lead;
+    return true;
+  };
+  for (let i = 1; i < items.length; i++) {
+    const [a, b] = [items[i - 1]!, items[i]!];
+    let gap = gapBetween(a, indentOf(seps[i - 1]!), b, snap, eol);
+    // `b` would go into `a` or lose the blanks of its source: those of `a` may keep them
+    const own = snap && b.preserved ? sourceIndent(b, snap) : "";
+    const blanks = blanksOf(a);
+    if ((gap === null || indentOf(gap) !== own) && blanks && blanks !== indentOf(seps[i - 1]!)) {
+      const back = gapBetween(a, blanks, b, snap, eol);
+      const taken: [number, string][] = [];
+      if (back !== null && (gap === null || indentOf(back) === own)) {
+        if (takeBack(i - 1, taken)) gap = back;
+        else for (const [j, sep] of taken.reverse()) seps[j] = sep;
+      }
+    }
+    if (gap === null) {
+      rewrite(i);
+      // a rewritten block is written without blanks: nothing carries it into `a`
+      gap = gapBetween(a, indentOf(seps[i - 1]!), b, snap, eol)!;
+    }
+    seps.push(gap);
+  }
+  return seps;
 }
 
 function remapTree(sn: SnapshotNode, b: Block, ids: Map<string, string>): SnapshotNode {
@@ -371,6 +467,17 @@ export function serializeMarkdown(doc: Doc, snapshot?: MarkdownSnapshot): Serial
     }
   };
   for (const item of items) render(item);
+  const rewrite = (i: number): void => {
+    const item = items[i]!;
+    item.preserved = false;
+    // its marker now comes from its attributes: not the marker of a list next to it
+    const sig = listSig(item, snap);
+    const around = [items[i - 1], items[i + 1]].map((n) => (n ? listSig(n, snap) : null));
+    if (sig && LIST_TYPES.has(item.block.type) && around.includes(sig)) {
+      item.markerOverride = alternateMarker(sig, around);
+    }
+    render(item);
+  };
 
   const assemble = (): string => {
     let text = bom + fm;
@@ -379,9 +486,9 @@ export function serializeMarkdown(doc: Doc, snapshot?: MarkdownSnapshot): Serial
       if (!snap || snap.blocks.length === 0) text += (snap?.leading ?? "") + (snap?.trailing ?? "");
       return text;
     }
-    text += snap?.leading ?? "";
+    const seps = separators(items, snap, eol, rewrite);
     items.forEach((item, i) => {
-      if (i > 0) text += gapBetween(items[i - 1]!, item, snap, eol);
+      text += seps[i]!;
       item.start = text.length;
       text += item.md;
       item.end = text.length;
