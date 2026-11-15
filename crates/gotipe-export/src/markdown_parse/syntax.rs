@@ -4,7 +4,6 @@ pub(super) struct Marker {
     pub ordered: bool,
     pub marker: char,
     pub start: usize,
-    pub prefix: usize,
     pub indent: usize,
     pub marker_width: usize,
     pub content: String,
@@ -28,7 +27,6 @@ pub(super) fn list_marker(text: &str, column: usize) -> Option<Marker> {
         } else {
             1
         },
-        prefix,
         indent: before
             + if padding > 4 || padding == 0 {
                 1

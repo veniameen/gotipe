@@ -114,41 +114,56 @@ impl Reader {
                 continue;
             }
             if quote(&line.text) > 0 {
-                let mut quoted = vec![];
+                let mut quoted: Vec<Line> = vec![];
+                // the first line of each run of lines without `>`: its index in the quote and in
+                // `lines`
+                let mut lazy_runs: Vec<(usize, usize)> = vec![];
+                let mut run = false;
                 let mut next = i;
-                let mut lazy = false;
                 while next < lines.len() {
                     let current = &lines[next];
                     let prefix = quote(&current.text);
                     if prefix > 0 {
                         let marker = quote_marker.find(&current.text).unwrap().end();
-                        let unquoted = current.strip(marker).indent(usize::from(prefix > marker));
-                        let mut inner = unquoted.clone();
-                        for _ in 0..64 {
-                            let q = quote(&inner.text);
-                            if q > 0 {
-                                inner = inner.strip(q)
-                            } else if let Some(l) = list_marker(&inner.text, inner.column) {
-                                inner = inner.strip(l.prefix)
-                            } else {
-                                break;
-                            }
+                        quoted.push(current.strip(marker).indent(usize::from(prefix > marker)));
+                        run = false;
+                    // a line that starts a block here — any list item too — ends the quote
+                    } else if current.blank()
+                        || interrupts(current)
+                        || list_marker(&current.text, 0).is_some()
+                    {
+                        break;
+                    } else {
+                        if !run {
+                            lazy_runs.push((quoted.len(), next));
                         }
-                        lazy = !inner.blank()
-                            && width(&inner.text, inner.column) < 4
-                            && !interrupts(&inner);
-                        quoted.push(unquoted);
-                    } else if lazy && !current.blank() && !interrupts(current) {
+                        run = true;
                         let mut line = current.clone();
                         line.lazy = true;
                         quoted.push(line)
-                    } else {
-                        break;
                     }
                     next += 1;
                 }
+                let mut children = self.blocks(&quoted, depth + 1, 0);
+                // A line without `>` continues the paragraph the quote has open. Where the quote
+                // reads it otherwise — after a blank line, in code or a table — the quote ends
+                // before it, as in CommonMark (D-118); its blocks before that line read the same
+                // without it.
+                for (at, stray) in lazy_runs {
+                    let reading = lists::lazy_reading(&children, quoted[at].start, true);
+                    if reading == lists::Lazy::Text {
+                        continue;
+                    }
+                    quoted.truncate(at);
+                    match reading {
+                        lists::Lazy::Start(index) => children.truncate(index),
+                        _ => children = self.blocks(&quoted, depth + 1, 0),
+                    }
+                    next = stray;
+                    break;
+                }
                 let mut n = Node::new("blockquote", start, lines[next - 1].end);
-                n.children = self.blocks(&quoted, depth + 1, 0);
+                n.children = children;
                 nodes.push(n);
                 i = next;
                 continue;
