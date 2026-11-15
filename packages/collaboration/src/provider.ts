@@ -54,17 +54,27 @@ const DEFERRED_BYTES = 32 << 20;
 const DELTAS = "gotipe.v2";
 const BASELINES = "gotipe.v1";
 
+// The private fields are described here: comments inside the class body would ship in
+// the bundle (D-167).
+// - `generation`: the baseline's name in Cloud; without it only `gotipe.v1` is offered.
+// - `deltas`: the server chose `gotipe.v2` for this connection.
+// - `backlog`: the frame in flight left operations behind, so the next one need not wait.
+// - `deferred`: relayed updates the editor refused as an invalid document — pieces of an
+//   edit a peer had to send in standalone frames. They are merged with later updates until
+//   the union is valid. The next full state contains them all.
+// - `sentPresence`: what peers last received from this connection; null forces the next send.
+// - `attempt`: counts connection attempts, so a late event of an older socket is ignored.
 /**
  * Durable operation-log transport. Exactly one update frame awaits each empty
  * server ACK; a frame holds only whole transactions the server has not
  * confirmed. A transaction larger than a message leaves as parts that Cloud
- * acknowledges together.
+ * acknowledges together. The constructor throws for configuration that can never
+ * connect, instead of retrying it.
  */
 export class CollaborationProvider {
   readonly peerId: string;
   private readonly endpoint: URL;
   private readonly user: AwarenessUser;
-  /** The baseline's name in Cloud; without it only `gotipe.v1` is offered. */
   private readonly generation: string | null;
   private ws: WebSocket | null = null;
   private editor: CollaborationEditor | null = null;
@@ -73,9 +83,7 @@ export class CollaborationProvider {
   private readonly outbox = new Outbox();
   private readonly pacer = new FramePacer();
   private inFlight: Receipt | null = null;
-  /** The server chose `gotipe.v2` for this connection. */
   private deltas = false;
-  /** The frame in flight left operations behind: the next one need not wait. */
   private backlog = false;
   private unsubscribes: (() => void)[] = [];
   private reconnectTimer: ReturnType<typeof setTimeout> | null = null;
@@ -83,16 +91,9 @@ export class CollaborationProvider {
   private awarenessTimer: ReturnType<typeof setTimeout> | null = null;
   private flushTimer: ReturnType<typeof setTimeout> | null = null;
   private uploadTimer: ReturnType<typeof setTimeout> | null = null;
-  /**
-   * Relayed updates the editor refused as an invalid document: pieces of an edit
-   * a peer had to send in standalone frames. They are merged with later updates
-   * until the union is valid. The next full state contains them all.
-   */
   private deferred: { update: Update; bytes: number }[] = [];
-  /** What peers last received from this connection; null forces the next send. */
   private sentPresence: string | null = null;
   private reconnectAttempts = 0;
-  /** Counts connection attempts: a late event of an older socket is ignored. */
   private attempt = 0;
   private active = false;
   private destroyed = false;
@@ -100,7 +101,6 @@ export class CollaborationProvider {
   private receiving = false;
   private bootstrapped = false;
 
-  /** Throws for configuration that can never connect, instead of retrying it. */
   constructor(private options: CollaborationOptions) {
     this.peerId = options.peerId ?? createId();
     if (!this.peerId || !options.documentId)
@@ -128,13 +128,13 @@ export class CollaborationProvider {
     this.editor = editor;
     this.active = true;
     this.reconnectAttempts = 0;
+    // Core also reports remote updates as selection changes; unchanged presence is not resent.
     this.unsubscribes = [
       editor.on("update", () => {
         if (this.receiving) return;
         this.notifySync();
         this.requestFlush();
       }),
-      // Core also reports remote updates as selection changes; unchanged presence is not resent.
       editor.on("selectionChange", () => this.scheduleAwareness()),
       editor.on("focus", () => this.scheduleAwareness()),
       editor.on("destroy", () => this.destroy()),
@@ -275,16 +275,14 @@ export class CollaborationProvider {
     }
   }
 
-  /**
-   * Returns false when the server's full state starts from another baseline: the
-   * document was replaced while this replica was offline or before it connected.
-   * The engine validates the payload; a full state is not parsed here as well.
-   */
   private applyRemote(
     editor: CollaborationEditor,
     payload: Uint8Array,
     fullState: boolean,
   ): boolean {
+    // Returns false when the server's full state starts from another baseline: the document was
+    // replaced while this replica was offline or before it connected. The engine validates the
+    // payload; a full state is not parsed here as well.
     this.receiving = true;
     try {
       editor.receiveCollaborationUpdate(payload);
@@ -297,12 +295,10 @@ export class CollaborationProvider {
       this.receiving = false;
     }
   }
-  /**
-   * A relayed update. One the editor refuses as an invalid document (schema) is a
-   * piece of an edit sent in standalone frames; it waits, merged with the
-   * following updates, until their union is valid.
-   */
   private receiveRelayed(editor: CollaborationEditor, update: Update, payload: Uint8Array): void {
+    // A relayed update. One the editor refuses as an invalid document (schema) is a piece of an
+    // edit sent in standalone frames; it waits, merged with the following updates, until their
+    // union is valid.
     const bytes = payload.length;
     const pending = this.deferred.length
       ? unionOf([...this.deferred.map((entry) => entry.update), update])
@@ -328,8 +324,8 @@ export class CollaborationProvider {
     return !!incoming && !!local && !sameBaseline(incoming, local);
   }
 
-  /** An invalid presence drops only that peer; it never stops the document. */
   private receivePresence(payload: Uint8Array): void {
+    // An invalid presence drops only that peer; it never stops the document.
     let value: unknown;
     let peer: ReturnType<typeof readAwareness>;
     try {
@@ -348,11 +344,9 @@ export class CollaborationProvider {
     this.notifyPeers();
   }
 
-  /**
-   * Sends the next frame as soon as pacing allows: at once after a pause, one
-   * frame per burst of typing, and without the wait while a backlog drains.
-   */
   private requestFlush(): void {
+    // Sends the next frame as soon as pacing allows: at once after a pause, one frame per burst of
+    // typing, and without the wait while a backlog drains.
     if (this.flushTimer || !this.synchronized || this.inFlight) return;
     const wait = this.pacer.delay(Date.now(), this.backlog);
     if (wait <= 0) {
@@ -383,12 +377,10 @@ export class CollaborationProvider {
     }
   }
 
-  /**
-   * The ACK deadline starts once the socket has handed the frames to the network,
-   * so a large transaction on a slow uplink is not taken for a lost ACK. An upload
-   * that makes no progress for the same time fails like a missing ACK.
-   */
   private awaitAcknowledgement(): void {
+    // The ACK deadline starts once the socket has handed the frames to the network, so a large
+    // transaction on a slow uplink is not taken for a lost ACK. An upload that makes no progress
+    // for the same time fails like a missing ACK.
     const timeout = this.options.acknowledgementTimeout ?? 15000;
     const waitForAck = () =>
       this.armDeadline(timeout, "The server did not confirm saving the update");
@@ -489,8 +481,8 @@ export class CollaborationProvider {
       if (ws.readyState < 2) ws.close();
     }
   }
-  /** A failure that leaves the connection and the provider running. */
   private report(error: Error): void {
+    // A failure that leaves the connection and the provider running.
     this.options.onError?.(error);
   }
   private fail(error: unknown, retry: boolean): void {
@@ -502,11 +494,9 @@ export class CollaborationProvider {
     if (retry) this.scheduleReconnect();
     else this.stop();
   }
-  /**
-   * Cloud no longer has this replica's baseline. Reconnecting cannot help, and
-   * unconfirmed operations cannot be saved: the host loads the document again.
-   */
   private baselineReplaced(): void {
+    // Cloud no longer has this replica's baseline. Reconnecting cannot help, and unconfirmed
+    // operations cannot be saved: the host loads the document again.
     this.attempt++;
     this.releaseSocket();
     this.clearPeers();
