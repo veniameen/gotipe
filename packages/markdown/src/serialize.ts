@@ -144,9 +144,29 @@ function keptLines(
   return (inner) => {
     if (!cache.has(inner.id)) {
       const before = lines.get(inner.id);
-      cache.set(inner.id, before && keptBreaks(before, blockText(inner)));
+      const text = blockText(inner);
+      cache.set(inner.id, before && withoutMathLine(keptBreaks(before, text), text));
     }
     return cache.get(inner.id);
+  };
+}
+
+/** A first line of its own `$$`, which a later such line closes as a formula (`mathFence`). */
+const MATH_OPENER = /^ {0,3}\$\$[ \t]*(?:\r\n?|\n)/;
+/** A later line of its own `$$`. */
+const MATH_LINE = /(?:\r\n?|\n) {0,3}\$\$[ \t]*(?:\r\n?|\n|$)/;
+
+/**
+ * The kept line breaks of a text that starts with `$$`, without those after it (D-109): a line
+ * of its own `$$` reads as text only while no later line closes it as a formula.
+ */
+function withoutMathLine(kept: KeptBreaks, text: string): KeptBreaks {
+  const lead = /^\$\$[ \t\n]+/.exec(text);
+  if (!lead) return kept;
+  const after = (offset: number): boolean => offset >= lead[0].length;
+  return {
+    soft: new Set([...kept.soft].filter(after)),
+    spelling: new Map([...kept.spelling].filter(([offset]) => after(offset))),
   };
 }
 
@@ -456,6 +476,21 @@ export function serializeMarkdown(doc: Doc, snapshot?: MarkdownSnapshot): Serial
       text = assemble();
     }
   }
+
+  // an untouched paragraph whose first line is `$$` read as text: a later line of its own `$$`
+  // would make a formula of everything between them, so it is written again without that line
+  const opened = items.filter(
+    (item) =>
+      item.preserved &&
+      item.block.type === "paragraph" &&
+      MATH_OPENER.test(item.md) &&
+      MATH_LINE.test(text.slice(item.end)),
+  );
+  for (const item of opened) {
+    item.preserved = false;
+    render(item);
+  }
+  if (opened.length > 0) text = assemble();
 
   const blocks: SnapshotBlock[] = [];
   const mapBlocks: MapBlock[] = [];
