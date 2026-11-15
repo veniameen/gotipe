@@ -73,7 +73,9 @@ React/content/table-layout владеет временной шириной пр
 
 `editor.ts` связывает владельцев. Команды получают узкий query собранной схемы
 (`commands/schema.ts`: разрешённые дети, marks блока, exclusive group, defaults атрибутов,
-`values`); кастомные контейнеры не требуют веток по имени приложения.
+`values`, вид содержимого); кастомные контейнеры не требуют веток по имени приложения. Вид
+содержимого (`content` узла) и JS-движок берёт из схемы — `ContentOf` в `js-transactions.ts`,
+как `content_rule` в `crates/gotipe-core/src/transform.rs`.
 
 DOCX: `crates/gotipe-export/src/docx.rs` owns OOXML rendering; `docx/package.rs`
 owns OPC parts and relationships. ZIP is a container codec, not a document model.

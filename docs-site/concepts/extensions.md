@@ -72,7 +72,7 @@ const nodes: NodeSpec[] = [
 |---|---|---|
 | `name` | `string` | The value of `Block.type`. |
 | `group` | `string[]` | Group names, such as `["block"]`. Stored in the schema; nesting is checked with `childTypes`. |
-| `content` | `"richText" \| "rawText" \| "empty"` | What `Block.content` holds: spans, a string or `null`. |
+| `content` | `"richText" \| "rawText" \| "empty"` | What `Block.content` holds: spans, a string or `null`. Commands and both engines convert content by it, as for the built-in types. |
 | `attrs` | `Record<string, AttrSpec>` | Declared attributes. |
 | `topLevel` | `boolean` | Whether the block may appear at the top level of the document. |
 | `marksAllowed` | `"all" \| "none" \| string[]` | Marks allowed in the block's text. |
@@ -470,9 +470,6 @@ export function Editor() {
 
 ## Limitations
 
-- `insertBlockAfter`, `insertBlockBefore` and `setBlockType` choose content from the
-  built-in type names, so they fail for your own `rawText` and `empty` node types. Insert
-  such blocks with an `insertBlock` step that carries the content.
 - `rank` is stored in the schema but not used yet.
 - The React and Vue renderers draw only the built-in marks; text with your own mark
   renders unformatted. Use an `inline` decoration to show it.
