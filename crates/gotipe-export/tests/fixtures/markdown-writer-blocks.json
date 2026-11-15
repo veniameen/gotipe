@@ -1204,14 +1204,14 @@
           }
         ]
       },
-      "markdown": "- x\n  <div>\n  a\n  \n  b\n  </div>\n\nafter\n",
+      "markdown": "- x\n\n  <div>\n  a\n  \n  b\n  </div>\n\nafter\n",
       "reparsed": [
         {
           "type": "markdownRaw",
           "attrs": {
             "kind": "list"
           },
-          "content": "- x\n  <div>\n  a\n  \n  b\n  </div>",
+          "content": "- x\n\n  <div>\n  a\n  \n  b\n  </div>",
           "children": []
         },
         {
@@ -1454,6 +1454,335 @@
             "kind": "list"
           },
           "content": "- x\n\n  ---\n\n- y",
+          "children": []
+        }
+      ],
+      "readAsRaw": true
+    },
+    {
+      "id": "a-paragraph-after-a-nested-list-in-a-tight-item",
+      "document": {
+        "version": 1,
+        "blocks": [
+          {
+            "id": "n78",
+            "type": "bulletList",
+            "attrs": {},
+            "content": null,
+            "children": [
+              {
+                "id": "n77",
+                "type": "listItem",
+                "attrs": {},
+                "content": [
+                  {
+                    "text": "x",
+                    "marks": []
+                  }
+                ],
+                "children": [
+                  {
+                    "id": "n75",
+                    "type": "bulletList",
+                    "attrs": {},
+                    "content": null,
+                    "children": [
+                      {
+                        "id": "n74",
+                        "type": "listItem",
+                        "attrs": {},
+                        "content": [
+                          {
+                            "text": "a",
+                            "marks": []
+                          }
+                        ],
+                        "children": []
+                      }
+                    ]
+                  },
+                  {
+                    "id": "n76",
+                    "type": "paragraph",
+                    "attrs": {},
+                    "content": [
+                      {
+                        "text": "p",
+                        "marks": []
+                      }
+                    ],
+                    "children": []
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "markdown": "- x\n  - a\n\n  p\n",
+      "reparsed": [
+        {
+          "type": "markdownRaw",
+          "attrs": {
+            "kind": "list"
+          },
+          "content": "- x\n  - a\n\n  p",
+          "children": []
+        }
+      ],
+      "readAsRaw": true
+    },
+    {
+      "id": "a-paragraph-under-the-text-of-a-tight-item",
+      "document": {
+        "version": 1,
+        "blocks": [
+          {
+            "id": "n81",
+            "type": "bulletList",
+            "attrs": {},
+            "content": null,
+            "children": [
+              {
+                "id": "n80",
+                "type": "listItem",
+                "attrs": {},
+                "content": [
+                  {
+                    "text": "x",
+                    "marks": []
+                  }
+                ],
+                "children": [
+                  {
+                    "id": "n79",
+                    "type": "paragraph",
+                    "attrs": {},
+                    "content": [
+                      {
+                        "text": "p",
+                        "marks": []
+                      }
+                    ],
+                    "children": []
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "markdown": "- x\n\n  p\n",
+      "reparsed": [
+        {
+          "type": "markdownRaw",
+          "attrs": {
+            "kind": "list"
+          },
+          "content": "- x\n\n  p",
+          "children": []
+        }
+      ],
+      "readAsRaw": true
+    },
+    {
+      "id": "a-formula-after-a-nested-list",
+      "document": {
+        "version": 1,
+        "blocks": [
+          {
+            "id": "n86",
+            "type": "bulletList",
+            "attrs": {},
+            "content": null,
+            "children": [
+              {
+                "id": "n85",
+                "type": "listItem",
+                "attrs": {},
+                "content": [
+                  {
+                    "text": "x",
+                    "marks": []
+                  }
+                ],
+                "children": [
+                  {
+                    "id": "n83",
+                    "type": "bulletList",
+                    "attrs": {},
+                    "content": null,
+                    "children": [
+                      {
+                        "id": "n82",
+                        "type": "listItem",
+                        "attrs": {},
+                        "content": [
+                          {
+                            "text": "a",
+                            "marks": []
+                          }
+                        ],
+                        "children": []
+                      }
+                    ]
+                  },
+                  {
+                    "id": "n84",
+                    "type": "math",
+                    "attrs": {},
+                    "content": "y",
+                    "children": []
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "markdown": "- x\n  - a\n\n  $$\n  y\n  $$\n",
+      "reparsed": [
+        {
+          "type": "markdownRaw",
+          "attrs": {
+            "kind": "list"
+          },
+          "content": "- x\n  - a\n\n  $$\n  y\n  $$",
+          "children": []
+        }
+      ],
+      "readAsRaw": true
+    },
+    {
+      "id": "code-after-a-nested-list-takes-no-blank-line",
+      "document": {
+        "version": 1,
+        "blocks": [
+          {
+            "id": "n91",
+            "type": "bulletList",
+            "attrs": {},
+            "content": null,
+            "children": [
+              {
+                "id": "n90",
+                "type": "listItem",
+                "attrs": {},
+                "content": [
+                  {
+                    "text": "x",
+                    "marks": []
+                  }
+                ],
+                "children": [
+                  {
+                    "id": "n88",
+                    "type": "bulletList",
+                    "attrs": {},
+                    "content": null,
+                    "children": [
+                      {
+                        "id": "n87",
+                        "type": "listItem",
+                        "attrs": {},
+                        "content": [
+                          {
+                            "text": "a",
+                            "marks": []
+                          }
+                        ],
+                        "children": []
+                      }
+                    ]
+                  },
+                  {
+                    "id": "n89",
+                    "type": "codeBlock",
+                    "attrs": {
+                      "language": ""
+                    },
+                    "content": "c",
+                    "children": []
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "markdown": "- x\n  - a\n  ```\n  c\n  ```\n",
+      "reparsed": [
+        {
+          "type": "markdownRaw",
+          "attrs": {
+            "kind": "list"
+          },
+          "content": "- x\n  - a\n  ```\n  c\n  ```",
+          "children": []
+        }
+      ],
+      "readAsRaw": true
+    },
+    {
+      "id": "a-paragraph-after-a-quote-in-an-item",
+      "document": {
+        "version": 1,
+        "blocks": [
+          {
+            "id": "n95",
+            "type": "bulletList",
+            "attrs": {},
+            "content": null,
+            "children": [
+              {
+                "id": "n94",
+                "type": "listItem",
+                "attrs": {},
+                "content": [
+                  {
+                    "text": "x",
+                    "marks": []
+                  }
+                ],
+                "children": [
+                  {
+                    "id": "n92",
+                    "type": "blockquote",
+                    "attrs": {},
+                    "content": [
+                      {
+                        "text": "q",
+                        "marks": []
+                      }
+                    ],
+                    "children": []
+                  },
+                  {
+                    "id": "n93",
+                    "type": "paragraph",
+                    "attrs": {},
+                    "content": [
+                      {
+                        "text": "p",
+                        "marks": []
+                      }
+                    ],
+                    "children": []
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "markdown": "- x\n  > q\n\n  p\n",
+      "reparsed": [
+        {
+          "type": "markdownRaw",
+          "attrs": {
+            "kind": "list"
+          },
+          "content": "- x\n  > q\n\n  p",
           "children": []
         }
       ],

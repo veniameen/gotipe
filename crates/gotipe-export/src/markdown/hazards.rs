@@ -275,6 +275,29 @@ pub(super) fn cannot_interrupt(list: &Block) -> bool {
     }
 }
 
+/// Whether the first line of `block` reads as more of the text before it, the item's or that of
+/// the last line of a nested list or a quote, as `continuesText` of the TS writer (D-116): a
+/// paragraph, a link line, a table, `$$` and raw HTML do not interrupt it; raw source of a list
+/// or a quote does. Lists have `cannot_interrupt`.
+pub(super) fn continues_text(block: &Block) -> bool {
+    match block.block_type.as_str() {
+        "markdownRaw" => !matches!(
+            block.attrs.get("kind"),
+            Some(AttrValue::String(kind)) if kind == "list" || kind == "blockquote"
+        ),
+        "heading" | "codeBlock" | "blockquote" | "callout" | "divider" => false,
+        _ => !is_list(block),
+    }
+}
+
+/// Whether the last line of `block` ends it, so that a line after it starts a block of its own.
+pub(super) fn closed(block: &Block) -> bool {
+    matches!(
+        block.block_type.as_str(),
+        "heading" | "codeBlock" | "math" | "divider"
+    )
+}
+
 /// `isBlockEmpty` of the TS writer: a block it leaves out at the top level. A list without items
 /// has no Markdown (D-124).
 fn empty(block: &Block) -> bool {

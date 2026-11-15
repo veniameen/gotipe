@@ -10,7 +10,7 @@ import {
 } from "../model";
 import type { Block, RawSegment, Span } from "../types";
 import { normalizeEol } from "../util";
-import { siblingBlocks } from "./hazards";
+import { LIST_TYPES, siblingBlocks } from "./hazards";
 import type { KeptBreaks } from "./line-breaks";
 import { hasMergedCells, tableHtml } from "./table-html";
 
@@ -187,6 +187,24 @@ function cannotInterrupt(list: Block): boolean {
   return false;
 }
 
+/** Blocks whose first line interrupts a paragraph: after a line of text they need no blank line. */
+const INTERRUPTS = new Set(["heading", "codeBlock", "blockquote", "callout", "divider"]);
+/** Blocks whose last line ends them: a line after them starts a block of its own. */
+const CLOSED = new Set(["heading", "codeBlock", "math", "divider"]);
+
+/** Raw source that starts with a list item or a `>`, which interrupt a paragraph. */
+const RAW_INTERRUPTS = new Set(["list", "blockquote"]);
+
+/**
+ * Whether the first line of `child` reads as more of the text before it, the item's or that of
+ * the last line of a nested list or a quote (D-116): a paragraph, a link line, a table, `$$` and
+ * raw HTML do not interrupt it. Lists have their own rule (`cannotInterrupt`).
+ */
+function continuesText(child: Block): boolean {
+  if (child.type === "markdownRaw") return !RAW_INTERRUPTS.has(str(child.attrs?.kind));
+  return !LIST_TYPES.has(child.type) && !INTERRUPTS.has(child.type);
+}
+
 function renderList(w: Writer, block: Block, indent: string, ro: RenderOpts, node: RNode): void {
   const attrs = block.attrs ?? {};
   const items = block.children ?? [];
@@ -241,12 +259,17 @@ function renderList(w: Writer, block: Block, indent: string, ro: RenderOpts, nod
     // the `[ ]` of a task is text that a nested list has to interrupt as well
     const text = spans.length > 0 || todo;
     let first = true;
+    // a line before the child that a line without a blank one before it would continue
+    let open = text;
     for (const child of written(item.children)) {
       if (writesNoLine(child)) continue;
       w.write(ro.eol);
       // an item starts with at most one empty line: after its marker alone a blank line ends it
-      // (D-117)
-      const apart = (spread && (text || !first)) || (text && cannotInterrupt(child));
+      // (D-117); a block that would continue the text before it starts after one (D-116)
+      const apart =
+        (spread && (text || !first)) ||
+        ((text || open) && cannotInterrupt(child)) ||
+        (open && continuesText(child));
       if (apart) w.write(blankLine(indent) + ro.eol);
       w.write(contIndent);
       // a divider right under a line of the item is `***`: `---` would underline the text above
@@ -254,6 +277,7 @@ function renderList(w: Writer, block: Block, indent: string, ro: RenderOpts, nod
       const under = { ...inner, dividerAlt: !apart && child.type === "divider" };
       itemNode.children.push(renderBlock(w, child, contIndent, under));
       first = false;
+      open = !CLOSED.has(child.type);
     }
     itemNode.end = w.pos;
     node.children.push(itemNode);
