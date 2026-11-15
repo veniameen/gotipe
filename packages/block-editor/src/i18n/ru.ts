@@ -155,7 +155,7 @@ export const blockEditorRu: BlockEditorLocale = {
   "error.collaboration": "Изменения не синхронизируются",
   "error.proposal": "Не удалось применить предложение",
   "error.proposalStale": "Предложение устарело",
-  "error.proposalStaleDetail": "Текст вокруг него изменился. Отклоните его или попросите новое.",
+  "error.proposalStaleDetail": "Текст вокруг него изменился.",
   "error.comment": "Не удалось обновить комментарий",
   "ai.bar": "Строка команды модели",
   "ai.prompt": "Запрос модели",
