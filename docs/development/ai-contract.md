@@ -31,12 +31,17 @@ Accept All — одна атомарная транзакция и один undo
 UTF-16 start/end; общие тесты сравнивают результат с собранным WASM детектором.
 
 AI UI показывает loading/error/retry/cancel, предотвращает повторный submit,
-учитывает read-only/destroy. Tab для ghost и Mod-K для command bar принадлежат
-конкретному editor surface. Autocomplete возникает только в конце текстового
+учитывает read-only/destroy. Tab для ghost и ⌘J (Ctrl+J; физическая клавиша J на
+любой раскладке) для command bar принадлежат конкретному editor surface; ⌘K — это
+ссылка (`openLinkDialog`). Элементы ИИ блочного редактора — Improve, строка ⌘J,
+ghost text и строка состояния — показываются, только когда им отвечает расширение
+`@gotipe/ai` (`block-editor/src/components/ai-controls.ts`); без него их нет, и ⌘J
+остаётся браузеру. Autocomplete возникает только в конце текстового
 блока с фокусом редактора; overlay обрезается внутри доступной строки и следует
 за scroll/resize. Команды и listeners освобождаются владельцем extension.
 
 Проверки: `packages/ai/src/manager.test.ts`, `packages/ai/tests/pii.test.ts`,
 `packages/ai-ui/src/command-palette.test.tsx`,
 `packages/block-editor/src/components/ai-command-bar.test.tsx`, существующий
-`e2e/ai-features.spec.ts` с настоящим редактором и mock provider, включая 320px.
+`e2e/ai-features.spec.ts` с настоящим редактором и mock provider, включая 320px, и
+`e2e/ai-availability.spec.ts` — элементы ИИ есть только с расширением.

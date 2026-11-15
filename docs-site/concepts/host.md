@@ -168,11 +168,6 @@ Each error is a `GoTipeError` with `code`, `message` and optional `details`:
 your own calls and are thrown, not reported. A `COMPOSITION_CONFLICT` doesn't insert the
 interrupted text again; offer the user `details.text` to recover it.
 
-> [!NOTE]
-> `SCHEMA_ERROR`, `UNKNOWN_BLOCK_TYPE` and `UNKNOWN_MARK_TYPE` exist in the
-> `GoTipeErrorCode` type but are not raised in this release; schema problems use
-> `VALIDATION_ERROR`.
-
 ## Related
 
 - [Security and CSP](/docs/resources/security)

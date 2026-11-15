@@ -1,14 +1,10 @@
 import { darkTheme, lightTheme } from "./presets";
-import type { IconSet, ThemeConfig } from "./types";
+import type { ThemeConfig } from "./types";
 
 export type ThemeMode = "light" | "dark" | "system";
 
 export function defineTheme(config: ThemeConfig): ThemeConfig {
   return config;
-}
-
-export function defineIcons(icons: IconSet): IconSet {
-  return icons;
 }
 
 export function applyTheme(config: ThemeConfig, root?: HTMLElement): void {

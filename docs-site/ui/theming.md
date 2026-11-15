@@ -142,8 +142,9 @@ print them as written. The editor draws a palette colour through its `--gt-tc-*`
 - Under a Content Security Policy, `style-src` needs `'unsafe-inline'`: menu and cursor
   positions, lane colours and cell alignment are `style` attributes.
 - The stylesheets use physical left and right; right-to-left layout is not supported.
-- `defineIcons` and `ThemeConfig.componentOverrides` are typed, but no component reads
-  them yet.
+- `@gotipe/theme` themes with tokens only. It has no icon-set or component-override API
+  (`defineIcons` and `ThemeConfig.componentOverrides` were removed before they did anything);
+  to change how a block looks, pass `blockViews` to the editor.
 
 ## Related
 

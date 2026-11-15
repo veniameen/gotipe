@@ -30,7 +30,8 @@ const STYLE = `${STYLES.map(readPart).join("\n")}
 .probe-contain { contain: paint; }
 .probe-fixed { position: fixed; top: 200px; left: 400px; transform: none; }
 .gotipe-code-block { .probe-nested { display: block; margin: 0; white-space: pre; overflow-x: auto; } }
-.probe-list { display: block; max-height: 240px; overflow: auto; }`;
+.probe-list { display: block; max-height: 240px; overflow: auto; }
+.gotipe-math-inline.probe-inline { display: inline; }`;
 
 let browser;
 let page;
@@ -254,15 +255,15 @@ test("a line's box may pass a plate by a quarter of its font size, its letters m
     `<article class="gotipe-page"><div class="gotipe-doc"><p>ниже ${atom}, где</p></div></article>`;
   const hover = '<span class="gotipe-math-inline is-hover">10<sup>−3</sup></span>';
   assert.deepEqual(await audit(line(hover), { view: "notion" }), []);
-  const fraction = await audit(
-    line(
-      '<span class="gotipe-math-inline is-selected"><i>p</i><span class="gotipe-mo">=</span><span class="gotipe-frac"><span><i>L</i></span><span><i>N</i></span></span></span>',
-    ),
-    { view: "notion" },
-  );
+  const fraction = (extra) =>
+    `<span class="gotipe-math-inline is-selected${extra}"><i>p</i><span class="gotipe-mo">=</span><span class="gotipe-frac"><span><i>L</i></span><span><i>N</i></span></span></span>`;
+  // The atlas draws a formula as one box, so its plate encloses the fraction.
+  assert.deepEqual(await audit(line(fraction("")), { view: "notion" }), []);
+  // An inline atom's plate is only the strip of text: the letters of the fraction leave it.
+  const inline = await audit(line(fraction(" probe-inline")), { view: "notion" });
   assert.ok(
-    fraction.some((problem) => /^#f0\/probe\/light: «N» leaves/.test(problem)),
-    fraction.join("\n"),
+    inline.some((problem) => /^#f0\/probe\/light: «N» leaves/.test(problem)),
+    inline.join("\n"),
   );
-  assert.ok(fraction.every((problem) => off("span.gotipe-math-inline", "\\w+").test(problem)));
+  assert.ok(inline.every((problem) => off("span.gotipe-math-inline", "\\w+").test(problem)));
 });
