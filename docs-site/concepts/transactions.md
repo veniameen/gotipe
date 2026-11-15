@@ -182,8 +182,11 @@ such as an image, is replaced or deleted in a step of its own. The step ends whe
 - any other change commits: Enter, a line break, paste, an input rule, a command or a
   `dispatch`, a formatting toggle at the caret, Undo or Redo.
 
-An IME composition is one undo step of its own. Only the editor's own input is grouped:
-every `dispatch` is a step of its own, even one that inserts a character at the caret.
+An IME composition is typing too: it goes on with the step of the typing before it, and
+typing after it goes on with its step. The pause before a composition counts from its start,
+so Korean, where every syllable is a composition of its own, is one step however long each
+syllable takes to compose. Only the editor's own input is grouped: every `dispatch` is a step
+of its own, even one that inserts a character at the caret.
 
 - A new dispatch clears the redo stack. The editor keeps the last 100 steps, and text typed
   in a row is one of them however long it is.
@@ -212,9 +215,7 @@ and commands still change the document, so programmatic edits keep working.
 > [!NOTE]
 > With collaboration, the CRDT history groups typing by the pause and the block alone:
 > typing and deleting go into one step, moving the caret inside the block doesn't end it,
-> and typing over a selection is two steps, the first character and the rest. Without
-> collaboration each IME composition is its own undo step, so Korean, where every syllable
-> is a composition, is undone a syllable at a time.
+> and typing over a selection is two steps, the first character and the rest.
 
 ## Related
 

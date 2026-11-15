@@ -59,7 +59,7 @@ For values derived from the view state, `useEditorState` from `@gotipe/react` or
 | Event | Payload | When |
 |---|---|---|
 | `create` | `{ editor }` | Once, after extensions are set up, before `createEditor` resolves. |
-| `update` | `{ editor }` | After the document changes: a dispatch, Undo or Redo, `setContent`, a remote collaboration update. Also after toggling a mark at a caret. |
+| `update` | `{ editor, origin }` | After the document changes: a dispatch, Undo or Redo, `setContent`, a remote collaboration update. Also after toggling a mark at a caret. `origin` is `"remote"` for another replica's update (`receiveCollaborationUpdate`) and the repair the editor makes after it, `"local"` for everything else. |
 | `transaction` | `{ editor, transaction, before, after }` | After a local `dispatch` commits, before `update`. Not for Undo, Redo, `setContent` or remote updates. |
 | `selectionChange` | `{ editor }` | The selection changed: by the user, `setSelection`, a transaction, Undo or `setContent`. |
 | `viewStateChange` | `ViewState` | Anything `getViewState()` returns changed: document, selection, decorations, editability. |
@@ -87,11 +87,12 @@ code.
 | `openSlashMenu` | — | Typing `/` at the start of a block or after a space. |
 | `openLinkDialog` | — | `Mod-K` from the `Link` extension. Over selected text one link field opens: the bubble's, else the fixed toolbar's. |
 | `scrollToBlock` | `{ blockId }` | `CommentSidebar` in `@gotipe/block-editor` when a comment is chosen. |
-| `commentAdded`, `commentUpdated`, `commentResolved`, `commentDeleted` | `commentId: string` | The comments manager in `@gotipe/comments`, and AI review. |
+| `commentAdded`, `commentUpdated`, `commentResolved`, `commentDeleted` | `commentId: string` | The comments manager in `@gotipe/comments`. |
 | `executeAiCommand` | `{ commandId, prompt? }` | AI menus and commands; handled by `@gotipe/ai`. |
 | `aiStatusChange` | `{ active, label? }` | `@gotipe/ai` when a request starts, ends or fails. |
 | `aiGhostTextChange` | `{ text, blockId, offset } \| null` | `@gotipe/ai` autocomplete. |
 | `aiProofreadChange` | `{ suggestions, currentIndex }` | `@gotipe/ai` proofreading. |
+| `aiReviewChange` | `{ comments }` | AI review found comments, or an edit cleared them. Read them with `getAiReviewComments(editor)`. |
 
 `editor.emit(event, payload)` sends any of these events to all listeners, for example
 `editor.emit("openSlashMenu")` from a toolbar button.
