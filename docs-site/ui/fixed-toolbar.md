@@ -101,8 +101,9 @@ tooltip, which is also its accessible description, says why:
 The toolbar is one Tab stop. ← and → move between the tools, Home and End go to the first
 and the last one; the size field keeps the arrows while its caret is inside the number. ↓
 opens a tool's list or More; Escape closes it and returns to its button, Escape on the bar
-returns to the text. Pressing a tool with the pointer keeps the text's selection. See
-[keyboard](/docs/ui/keyboard).
+returns to the text. Pressing a tool with the pointer keeps the text's selection. Mod+K
+over selected text opens the Link field when no formatting bubble is shown (with
+`BlockEditor`'s bubble, the bubble's field opens). See [keyboard](/docs/ui/keyboard).
 
 ## Styling
 
@@ -118,6 +119,7 @@ surface with `--gt-toolbar-row-gap` between its rows. The classes are
 - React only: the [Vue](/docs/frameworks/vue) block editor has no fixed toolbar.
 - Insert lists the `/` commands that add a block. A command of your extension that turns the
   current block into another one is not listed.
+- Mod+K opens nothing while Link is in a closed More, and nothing at a caret alone.
 
 ## Related
 

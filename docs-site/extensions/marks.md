@@ -105,10 +105,10 @@ editor.on("openLinkDialog", () => {
 });
 ```
 
-In `BlockEditor` the bubble menu's link button opens a field that validates the address the same way.
+In `BlockEditor` the bubble menu's link button and `Mod+K` open a field that validates the address the same way; `FixedToolbar` opens its own field when there is no bubble. The key opens a field only over selected text: with a caret alone it opens nothing.
 
 > [!NOTE]
-> The `BlockEditor` bubble menu does not listen to `openLinkDialog` in this release, so `Mod+K` does not open its link field.
+> `BlockEditor` and `FixedToolbar` listen to `openLinkDialog` themselves. Listen to it for your own link interface only where you do not render them, or both open.
 
 ## Colours
 

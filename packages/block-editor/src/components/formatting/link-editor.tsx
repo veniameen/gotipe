@@ -3,12 +3,20 @@ import { useEffect, useId, useRef, useState } from "react";
 import { useBlockEditorI18n } from "../../i18n/strings";
 import { PageIcon } from "../../page/icons";
 import { MARK_KEYS, ariaKeys } from "./keys";
+import { offerLinkField, reachable } from "./link-shortcut";
 import { useFormatReason } from "./reasons";
 import { currentMarks } from "./selection";
 import { Tip } from "./tip";
 import { useFormattingMenu } from "./use-formatting-menu";
 
-export function LinkEditor({ editor }: { editor: GoTipeEditor }) {
+/**
+ * The Link tool and its field. Mod+K opens the field too (`openLinkDialog`); `atSelection` marks
+ * the tool that stands at the selection (the bubble), whose field the key opens first.
+ */
+export function LinkEditor({
+  editor,
+  atSelection = false,
+}: { editor: GoTipeEditor; atSelection?: boolean }) {
   const menu = useFormattingMenu(editor, { returnTo: "text" });
   const [url, setUrl] = useState("");
   const input = useRef<HTMLInputElement>(null);
@@ -17,12 +25,26 @@ export function LinkEditor({ editor }: { editor: GoTipeEditor }) {
   const reason = useFormatReason(editor);
   const tip = useId();
   const open = () => {
-    setUrl(typeof mark?.attrs?.href === "string" ? mark.attrs.href : "");
+    // the link under the caret now: a tool that did not draw since (the toolbar's) is not stale
+    const href = currentMarks(editor).find((item) => item.type === "link")?.attrs?.href;
+    setUrl(typeof href === "string" ? href : "");
     menu.show();
   };
   useEffect(() => {
     if (menu.open) input.current?.focus();
   }, [menu.open]);
+  // the key reads this render's state: why the tool can't act, whether the field is open
+  const byKey = useRef<() => boolean>(() => false);
+  byKey.current = () => {
+    if (reason || !reachable(menu.trigger.current)) return false;
+    if (menu.open) input.current?.focus();
+    else open();
+    return true;
+  };
+  useEffect(
+    () => offerLinkField(editor, { atSelection, open: () => byKey.current() }),
+    [editor, atSelection],
+  );
   const apply = () => {
     const href = toSafeHref(url);
     if (!href) {

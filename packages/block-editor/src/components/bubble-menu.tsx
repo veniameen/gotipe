@@ -176,7 +176,7 @@ export function BlockEditorBubbleMenu({ editor, enableAI = false }: BlockEditorB
               })
             }
           />
-          <LinkEditor editor={editor} />
+          <LinkEditor editor={editor} atSelection />
           <Separator />
 
           {/* Text Color picker */}
