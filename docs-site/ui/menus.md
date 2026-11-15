@@ -125,8 +125,8 @@ hidden while the editor is read-only.
 - **`+`** adds an empty block below; Alt-click (Option-click on macOS) adds it above. On a
   list row the new block is a row of the same list. With the slash menu on, the new block
   starts with `/` and the menu opens; the insertion is one undo step.
-- **The grip** drags the block. On a list row it moves the row; Alt-drag moves the whole
-  list. With touch or a pen, hold the grip for 300 ms, then drag; moving more than 10 px
+- **The grip** drags the block. On a list row it moves the row, with the blocks inside it;
+  Alt-drag moves the whole list. A column left without blocks gets an empty paragraph. With touch or a pen, hold the grip for 300 ms, then drag; moving more than 10 px
   before that cancels. Near the top or bottom edge the page scrolls. Escape cancels a touch
   drag. A drop is one undo step.
 - **Clicking the grip** (or a short tap) opens the block menu.
@@ -136,14 +136,15 @@ hidden while the editor is read-only.
 | Turn into | Text, Heading 1–3, Bullet list, Numbered list, To-do list, Quote, Code block |
 | Copy link to block | Copies the page URL with `?gotipe-block=<id>`; a page opened with it scrolls to the block |
 | Duplicate | Copies the block below itself, with its children and new IDs |
-| Reset formatting | Turns the block into a paragraph and removes the marks of its text — bold, colours, links; mentions, formulas and custom emoji stay |
+| Reset formatting | Turns the block into a paragraph and removes the marks of its text — bold, colours, links; mentions, formulas and custom emoji stay. A block with children (a toggle, a callout) keeps its type and loses only the marks; a block without text of its own (an image, a divider, a table) is left as it is |
 | Copy to clipboard | Copies the plain text of the block and its children |
-| Delete | Removes the block with its children; a list's only row takes the list with it |
+| Delete | Removes the block with its children; a list's only row takes the list with it, and a column left without blocks gets an empty paragraph |
 
 The menu acts on the block its grip moves. On a list row — a bullet, numbered or to-do item,
-nested or inside a column — that is the row with its nested rows, never the whole list: Duplicate
-puts the copy into the same list, Turn into and Reset formatting lift the row out of the list.
-Elsewhere it is the top-level block under the pointer. Each action is one undo step.
+nested or inside a column — that is the row with its nested rows, never the whole list, and a
+block inside a row (a paragraph after the row's text) belongs to that row. Duplicate puts the
+copy into the same list; Turn into and Reset formatting lift the row out of the list. Elsewhere
+it is the top-level block under the pointer. Each action is one undo step.
 
 ## Formatting bubble
 
@@ -243,9 +244,8 @@ editability. `destroy()` hides the element and stops listening.
   More).
 - The block handle and block menu have no keyboard path, and show only in the `notion`
   view.
-- Reset formatting is offered on every block. On a block without text it still turns the
-  block into a paragraph: an image or a divider becomes an empty paragraph (⌘Z brings it
-  back), and on a table the menu and the toast report a schema error.
+- Reset formatting is offered on every block, and on a block without text of its own (an image,
+  a divider, a table) it does nothing.
 - The Vue package has only a minimal slash menu and toolbar; see [Vue](/docs/frameworks/vue).
 
 ## Related

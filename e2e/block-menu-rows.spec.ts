@@ -76,13 +76,16 @@ const find = (blocks: Node[], id: string): Node | undefined =>
 const rows = async (page: Page, id: string) =>
   (find(await json(page), id)?.children ?? []).map(text);
 
-/** Points at the first line of the row, opens its handle's menu and chooses `label`. */
-async function choose(page: Page, id: string, label: string) {
+/**
+ * Points at the first line of the block, opens its handle's menu and chooses `label`. The grip
+ * belongs to `unit`: the block itself, or the row it sits in.
+ */
+async function choose(page: Page, id: string, label: string, unit = id) {
   const target = page.locator(`[data-block-id="${id}"]`);
   await target.scrollIntoViewIfNeeded();
   await target.hover({ position: { x: 24, y: 6 } });
   const grip = page.locator("[data-gotipe-drag-handle]");
-  await expect(grip).toHaveAttribute("data-block-drag", id);
+  await expect(grip).toHaveAttribute("data-block-drag", unit);
   await grip.click();
   const menu = page.locator("[data-gotipe-context-menu]");
   await expect(menu).toBeVisible();
@@ -125,6 +128,43 @@ test.describe("Block menu on a list row", () => {
     await choose(page, "x", "Duplicate");
     expect(await rows(page, "CL")).toEqual(["left one", "left one", "left two"]);
     expect(await rows(page, "K2")).toEqual(["right"]);
+  });
+
+  test("the handle of a paragraph inside a row acts on that row, not the list", async ({
+    page,
+  }) => {
+    await page.evaluate(() => {
+      const editor = (window as unknown as { __GOTIPE_NOTION_EDITOR__: Notion })
+        .__GOTIPE_NOTION_EDITOR__;
+      const blocks = editor.getJSON().blocks;
+      const b = blocks[0]!.children[1]!;
+      // A loose item: the row's own text, then a paragraph of its own.
+      b.children = [
+        {
+          id: "more",
+          type: "paragraph",
+          attrs: {},
+          content: [{ text: "more", marks: [] }],
+          children: [],
+        },
+      ];
+      editor.setContent({ version: 1, blocks });
+    });
+    await choose(page, "more", "Duplicate", "b");
+    expect(await rows(page, "L")).toEqual(["alpha", "beta", "beta", "delta"]);
+    expect((await json(page)).filter((node) => node.type === "bulletList")).toHaveLength(1);
+  });
+
+  test("Delete on the only row of a column's list leaves a paragraph to type in", async ({
+    page,
+  }) => {
+    await choose(page, "x", "Delete");
+    await choose(page, "y", "Delete");
+    const column = find(await json(page), "K1")!;
+    expect(column.children.map((node) => node.type)).toEqual(["paragraph"]);
+    await page.locator(`[data-block-id="${column.children[0]!.id}"]`).click();
+    await page.keyboard.type("Z");
+    await expect.poll(async () => find(await json(page), "K1")!.children.map(text)).toEqual(["Z"]);
   });
 
   test("Reset Formatting leaves plain text without marks; one ⌘Z undoes it", async ({ page }) => {

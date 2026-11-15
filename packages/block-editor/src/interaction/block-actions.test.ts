@@ -3,6 +3,7 @@ import { Mention } from "@gotipe/core/extensions";
 import { createEditor } from "@gotipe/core/js";
 import { FullPreset } from "@gotipe/core/presets";
 import { afterEach, describe, expect, it } from "vitest";
+import { moveDraggedBlock } from "../components/block-interaction";
 import { deleteMenuBlock, duplicateMenuBlock, resetMenuBlock } from "./block-actions";
 
 const bold: Mark = { type: "bold", attrs: {} };
@@ -120,6 +121,43 @@ describe("Delete in the block menu", () => {
   });
 });
 
+describe("a column is never left without blocks", () => {
+  const lonely = () => [
+    block("C", "columns", null, [
+      block("K1", "column", null, [list("CL", [row("x", "only")])]),
+      block("K2", "column", null, [block("r", "paragraph", text("right"))]),
+    ]),
+    block("P", "paragraph", text("after")),
+  ];
+  const firstColumn = (editor: GoTipeEditor) => find(editor.getJSON().blocks as Block[], "K1")!;
+
+  it("gets an empty paragraph when Delete takes its only list; the caret follows from it", async () => {
+    const editor = await editorWith(lonely());
+    editor.setSelection({ anchor: { blockId: "x", offset: 2 }, head: { blockId: "x", offset: 2 } });
+    oneStep(editor, () => deleteMenuBlock(editor, "x"));
+    const [paragraph, ...rest] = firstColumn(editor).children;
+    expect(rest).toEqual([]);
+    expect(paragraph).toMatchObject({ type: "paragraph", content: [], children: [] });
+    expect(editor.getViewState().selection.anchor).toEqual({ blockId: paragraph!.id, offset: 0 });
+    // A caret elsewhere stays where it is.
+    editor.undo();
+    editor.setSelection({ anchor: { blockId: "P", offset: 3 }, head: { blockId: "P", offset: 3 } });
+    expect(deleteMenuBlock(editor, "x")).toBe(true);
+    expect(editor.getViewState().selection.anchor).toEqual({ blockId: "P", offset: 3 });
+  });
+
+  it("gets an empty paragraph when its only row is dragged out, in one undo step", async () => {
+    const editor = await editorWith(lonely());
+    oneStep(editor, () => moveDraggedBlock(editor, "x", { parentId: null, index: 2 }));
+    expect(firstColumn(editor).children).toMatchObject([
+      { type: "paragraph", content: [], children: [] },
+    ]);
+    const top = editor.getJSON().blocks as Block[];
+    expect(top.map((item) => item.type)).toEqual(["columns", "paragraph", "bulletList"]);
+    expect(top[2]!.children.map((item) => item.id)).toEqual(["x"]);
+  });
+});
+
 describe("Duplicate in the block menu", () => {
   it("copies a row with its nested rows into the same list, with new IDs", async () => {
     const editor = await editorWith();
@@ -197,6 +235,43 @@ describe("Reset formatting in the block menu", () => {
       .map((mark) => mark.type);
     expect(marks).toEqual(["mention"]);
     expect(editor.getViewState().selection.anchor).toEqual({ blockId: "b", offset: 4 });
+  });
+
+  it("keeps the type of a block with children, a toggle, and removes the marks of its title", async () => {
+    const editor = await editorWith([
+      block(
+        "G",
+        "toggle",
+        [{ text: "Title", marks: [bold] }],
+        [block("g1", "paragraph", text("in"))],
+      ),
+    ]);
+    oneStep(editor, () => resetMenuBlock(editor, "G"));
+    expect(editor.getJSON().blocks[0]).toMatchObject({
+      id: "G",
+      type: "toggle",
+      content: [{ text: "Title", marks: [] }],
+      children: [{ id: "g1", type: "paragraph" }],
+    });
+    // Nothing left to reset: no change, no undo step.
+    const before = editor.getJSON();
+    expect(resetMenuBlock(editor, "G")).toBe(false);
+    expect(editor.getJSON()).toEqual(before);
+  });
+
+  it("leaves a block without text of its own as it is: an image, a divider, a table", async () => {
+    const cell = (id: string, value: string) => block(id, "tableHeader", text(value));
+    const editor = await editorWith([
+      block("I", "image", null, [], { src: "https://example.com/a.png", alt: "a" }),
+      block("D", "divider", null),
+      block("T", "table", null, [
+        block("tr", "tableRow", null, [cell("c1", "a"), cell("c2", "b")]),
+      ]),
+    ]);
+    const before = editor.getJSON();
+    for (const id of ["I", "D", "T"]) expect(resetMenuBlock(editor, id)).toBe(false);
+    expect(editor.getJSON()).toEqual(before);
+    expect(editor.undo()).toBe(false);
   });
 
   it("resets a task, and a numbered row inside a column (columns take no task lists)", async () => {
