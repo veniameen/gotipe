@@ -46,10 +46,32 @@ fn adversarial_nesting_and_delimiters_are_bounded_and_preserved() {
         "[".repeat(50_000),
         format!("{}text{}", "* ".repeat(5000), " *".repeat(5000)),
         format!("{}Ж😀", "> ".repeat(100)),
+        nested_lazy_ends(true),
+        nested_lazy_ends(false),
     ] {
         let doc = from_markdown(&source, &default_block_editor()).unwrap();
         assert_eq!(to_markdown(&doc), source);
     }
+}
+
+/// Level k: a fence in quote or item k, then a line without its `>` or indentation that the fence
+/// would take in, so each level reads its content again without that line: once per level, not
+/// twice per level in turn (D-160).
+fn nested_lazy_ends(quotes: bool) -> String {
+    let mut source = String::new();
+    if !quotes {
+        for k in 1..=30 {
+            source += &format!("{}- a\n", "  ".repeat(k - 1));
+        }
+    }
+    for k in (1..=30).rev() {
+        source += &if quotes {
+            format!("{} ```\n{}x\n", ">".repeat(k), "> ".repeat(k - 1))
+        } else {
+            format!("{}```\n{}x\n", "  ".repeat(k), "  ".repeat(k - 1))
+        };
+    }
+    source
 }
 
 #[test]

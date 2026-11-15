@@ -19,9 +19,32 @@ import { type Line, blank, indentWidth, linesFrom, sourceFrom, strip, stripInden
 import { tableAlignment, tableCells, tableRow } from "./table";
 import { type PhrasingContent, type Root, type RootContent, position } from "./types";
 
+/**
+ * The lines a container hands to `blocks`, as a key: where they start and end in the source, how
+ * many there are, how long and how many lazy. One container reads its own lines, and reads them
+ * again only without the last ones, so no two containers share a key.
+ */
+function linesKey(lines: readonly Line[], depth: number, taskPrefix: number): string {
+  let length = 0;
+  let lazy = 0;
+  for (const line of lines) {
+    length += line.text.length;
+    if (line.lazy) lazy++;
+  }
+  const first = lines[0];
+  const last = lines.at(-1);
+  return `${depth} ${taskPrefix} ${lines.length} ${first?.start} ${first?.column ?? 0} ${last?.end} ${length} ${lazy}`;
+}
+
 class Reader {
   readonly references = new Set<string>();
   readonly inlineJobs: (() => void)[] = [];
+  /**
+   * The content of quotes and items already read. A quote or an item that a lazy line ends reads
+   * its content again without that line; the quotes and items inside read the same lines, and are
+   * taken from here, so nested levels do not read again in turn (twice per level, D-160).
+   */
+  private readonly contents = new Map<string, RootContent[]>();
 
   constructor(readonly atoms?: InlineAtoms) {}
 
@@ -33,6 +56,16 @@ class Reader {
   }
 
   blocks(lines: Line[], depth = 0, taskPrefix = 0): RootContent[] {
+    if (depth === 0) return this.read(lines, depth, taskPrefix);
+    const key = linesKey(lines, depth, taskPrefix);
+    const known = this.contents.get(key);
+    if (known) return known;
+    const nodes = this.read(lines, depth, taskPrefix);
+    this.contents.set(key, nodes);
+    return nodes;
+  }
+
+  private read(lines: Line[], depth: number, taskPrefix: number): RootContent[] {
     const nodes: RootContent[] = [];
     if (depth > 64 && lines.length)
       return [
