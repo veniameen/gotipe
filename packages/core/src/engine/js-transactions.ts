@@ -41,16 +41,41 @@ function requireIndex(index: number): void {
   }
 }
 
-function promoteEmptyText(block: FallbackBlock): void {
-  if (block.content.type !== "Empty" || EMPTY_CONTENT_TYPES.has(block.block_type)) return;
-  block.content = RAW_CONTENT_TYPES.has(block.block_type)
-    ? { type: "Raw", value: "" }
-    : { type: "RichText", value: [] };
+/**
+ * What a block type's content holds by the editor's schema (`RichText`, `RawText`, `Empty`);
+ * `undefined` for a type it does not declare. The Rust engine reads it from its schema too.
+ */
+export type ContentOf = (blockType: string) => string | undefined;
+
+/** As `convert_content` in Rust: the content the declared `kind` holds; no kind keeps it. */
+function convertContent(block: FallbackBlock, kind: string | undefined): void {
+  const { content } = block;
+  if (kind === "Empty") block.content = { type: "Empty" };
+  else if (kind === "RawText" && content.type !== "Raw")
+    block.content = {
+      type: "Raw",
+      value: content.type === "RichText" ? content.value.map((span) => span.text).join("") : "",
+    };
+  else if (kind === "RichText" && content.type !== "RichText")
+    block.content = {
+      type: "RichText",
+      value: content.type === "Raw" && content.value ? [{ text: content.value, marks: [] }] : [],
+    };
 }
 
-/** As in Rust, inserting or splitting gives an empty block text; deleting (`promote` off) does not. */
-function requireTextRange(block: FallbackBlock, from: number, to = from, promote = true): void {
-  if (promote) promoteEmptyText(block);
+/** Empty content becomes the text its type declares, as `promote_empty_content` in Rust. */
+function promoteEmpty(block: FallbackBlock, contentOf: ContentOf): void {
+  if (block.content.type === "Empty") convertContent(block, contentOf(block.block_type));
+}
+
+/** As in Rust, inserting or splitting (`contentOf` given) gives an empty block text; deleting does not. */
+function requireTextRange(
+  block: FallbackBlock,
+  from: number,
+  to = from,
+  contentOf?: ContentOf,
+): void {
+  if (contentOf) promoteEmpty(block, contentOf);
   if (block.content.type === "Empty") {
     throw new GoTipeError("TRANSFORM_ERROR", "Block does not contain text");
   }
@@ -139,9 +164,10 @@ function applyInsertText(
   doc: FallbackDoc,
   step: { block_id: string; offset: number; text: string; marks: FallbackMark[] },
   groups: MarkGroups,
+  contentOf: ContentOf,
 ): void {
   const block = requireBlock(doc, step.block_id);
-  requireTextRange(block, step.offset);
+  requireTextRange(block, step.offset, step.offset, contentOf);
   if (block.content.type === "Raw") {
     const text = block.content.value;
     block.content.value = text.slice(0, step.offset) + step.text + text.slice(step.offset);
@@ -158,7 +184,7 @@ function applyDeleteText(
   step: { block_id: string; from: number; to: number },
 ): void {
   const block = requireBlock(doc, step.block_id);
-  requireTextRange(block, step.from, step.to, false);
+  requireTextRange(block, step.from, step.to);
   if (block.content.type === "Raw") {
     const text = block.content.value;
     block.content.value = text.slice(0, step.from) + text.slice(step.to);
@@ -249,48 +275,16 @@ function applyDeleteBlock(doc: FallbackDoc, step: { block_id: string }): void {
   removeBlockById(doc.blocks, step.block_id);
 }
 
-/** Block types that use Raw (string) content. */
-const RAW_CONTENT_TYPES = new Set(["codeBlock", "math", "markdownRaw"]);
-/** Block types that use Empty content. */
-const EMPTY_CONTENT_TYPES = new Set([
-  "divider",
-  "image",
-  "file",
-  "embed",
-  "columns",
-  "column",
-  "table",
-  "tableRow",
-  "bulletList",
-  "orderedList",
-  "todoList",
-]);
-
+/** The content takes the kind the new type declares (D-05), as in Rust. */
 function applySetBlockType(
   doc: FallbackDoc,
   step: { block_id: string; new_type: string; attrs: Record<string, unknown> },
+  contentOf: ContentOf,
 ): void {
   const block = requireBlock(doc, step.block_id);
+  convertContent(block, contentOf(step.new_type));
   block.block_type = step.new_type;
   block.attrs = step.attrs;
-
-  // Convert content type when switching between block categories
-  if (RAW_CONTENT_TYPES.has(step.new_type) && block.content.type !== "Raw") {
-    // RichText/Empty → Raw: join span texts into a plain string
-    const text =
-      block.content.type === "RichText" ? block.content.value.map((s) => s.text).join("") : "";
-    block.content = { type: "Raw", value: text };
-  } else if (EMPTY_CONTENT_TYPES.has(step.new_type) && block.content.type !== "Empty") {
-    block.content = { type: "Empty" };
-  } else if (
-    !RAW_CONTENT_TYPES.has(step.new_type) &&
-    !EMPTY_CONTENT_TYPES.has(step.new_type) &&
-    block.content.type === "Raw"
-  ) {
-    // Raw → RichText: wrap string in a single span
-    const text = block.content.value;
-    block.content = { type: "RichText", value: text ? [{ text, marks: [] }] : [] };
-  }
 }
 
 function applySetBlockAttrs(
@@ -319,9 +313,13 @@ function applyMoveBlock(
   target.splice(Math.min(step.new_index, target.length), 0, block);
 }
 
-function applySplitBlock(doc: FallbackDoc, step: { block_id: string; offset: number }): void {
+function applySplitBlock(
+  doc: FallbackDoc,
+  step: { block_id: string; offset: number },
+  contentOf: ContentOf,
+): void {
   const block = requireBlock(doc, step.block_id);
-  requireTextRange(block, step.offset);
+  requireTextRange(block, step.offset, step.offset, contentOf);
 
   // Find block in parent array
   const findInParent = (blocks: FallbackBlock[]): { arr: FallbackBlock[]; idx: number } | null => {
@@ -356,7 +354,11 @@ function applySplitBlock(doc: FallbackDoc, step: { block_id: string; offset: num
   loc.arr.splice(loc.idx + 1, 0, newBlock);
 }
 
-function applyMergeBlocks(doc: FallbackDoc, step: { block_id: string; target_id: string }): void {
+function applyMergeBlocks(
+  doc: FallbackDoc,
+  step: { block_id: string; target_id: string },
+  contentOf: ContentOf,
+): void {
   const source = requireBlock(doc, step.block_id);
   const target = requireBlock(doc, step.target_id);
   if (
@@ -366,8 +368,8 @@ function applyMergeBlocks(doc: FallbackDoc, step: { block_id: string; target_id:
   ) {
     throw new GoTipeError("TRANSFORM_ERROR", "Cannot merge a block with itself or an ancestor");
   }
-  promoteEmptyText(source);
-  promoteEmptyText(target);
+  promoteEmpty(source, contentOf);
+  promoteEmpty(target, contentOf);
   if (target.content.type === "Raw" && source.content.type === "Raw") {
     target.content.value += source.content.value;
   } else if (target.content.type === "RichText" && source.content.type === "RichText") {
@@ -379,12 +381,16 @@ function applyMergeBlocks(doc: FallbackDoc, step: { block_id: string; target_id:
   removeBlockById(doc.blocks, step.block_id);
 }
 
-/** `groups` are the schema's exclusive mark groups; the Rust engine reads them from its schema. */
+/**
+ * `groups` are the schema's exclusive mark groups and `contentOf` its content kinds; the Rust
+ * engine reads both from its schema. Without them no mark has a group and no type a kind.
+ */
 export function fallbackApply(
   docJson: string,
   transactionJson: string,
   validateStep?: (step: Record<string, unknown>, document: FallbackDoc) => void,
   groups: MarkGroups = NO_MARK_GROUPS,
+  contentOf: ContentOf = () => undefined,
 ): string {
   const doc = JSON.parse(docJson) as FallbackDoc;
   const tr = JSON.parse(transactionJson) as { steps: Record<string, unknown>[] };
@@ -406,7 +412,7 @@ export function fallbackApply(
 
     switch (tag) {
       case "InsertText":
-        applyInsertText(doc, data as Parameters<typeof applyInsertText>[1], groups);
+        applyInsertText(doc, data as Parameters<typeof applyInsertText>[1], groups, contentOf);
         break;
       case "DeleteText":
         applyDeleteText(doc, data as Parameters<typeof applyDeleteText>[1]);
@@ -424,7 +430,7 @@ export function fallbackApply(
         applyDeleteBlock(doc, data as Parameters<typeof applyDeleteBlock>[1]);
         break;
       case "SetBlockType":
-        applySetBlockType(doc, data as Parameters<typeof applySetBlockType>[1]);
+        applySetBlockType(doc, data as Parameters<typeof applySetBlockType>[1], contentOf);
         break;
       case "SetBlockAttrs":
         applySetBlockAttrs(doc, data as Parameters<typeof applySetBlockAttrs>[1]);
@@ -433,10 +439,10 @@ export function fallbackApply(
         applyMoveBlock(doc, data as Parameters<typeof applyMoveBlock>[1]);
         break;
       case "SplitBlock":
-        applySplitBlock(doc, data as Parameters<typeof applySplitBlock>[1]);
+        applySplitBlock(doc, data as Parameters<typeof applySplitBlock>[1], contentOf);
         break;
       case "MergeBlocks":
-        applyMergeBlocks(doc, data as Parameters<typeof applyMergeBlocks>[1]);
+        applyMergeBlocks(doc, data as Parameters<typeof applyMergeBlocks>[1], contentOf);
         break;
       case "DeleteRange":
         applyDeleteRange(doc, data as Parameters<typeof applyDeleteRange>[1]);

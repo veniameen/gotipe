@@ -5,7 +5,7 @@ import { installDOMSelection } from "../dom/selection";
 import type { GoTipeError } from "../error";
 import { installBeforeInput } from "../input/before-input";
 import { installComposition } from "../input/composition";
-import type { TypingKind } from "../input/session";
+import type { InputHost, TypingKind } from "../input/session";
 import type { Document } from "../types/block";
 import type { MarkView, SelectionView, ViewState } from "../types/view";
 
@@ -16,6 +16,7 @@ export interface MountPort {
   clipboard: Pick<ClipboardHandler, "onPaste" | "onCopy" | "onCut" | "onDrop">;
   getViewState(): ViewState;
   getDocument(): Document;
+  content: InputHost["content"];
   /** `typing`: the input goes on with the undo step of the typing before it. */
   dispatch(transaction: object, typing?: TypingKind): boolean;
   liftListItem(): boolean;
@@ -221,6 +222,7 @@ export function mountSurface(
     readSelectionFromDOM: () => readSelectionFromDOM?.() ?? null,
     getViewState: () => port.getViewState(),
     getDocument: () => port.getDocument(),
+    content: port.content,
     reportError: (error) => port.reportError(error),
     dispatch: (transaction, typing) => port.dispatch(transaction, typing),
     liftListItem: () => port.liftListItem(),

@@ -345,4 +345,20 @@ describe.each(["js", "wasm"] as const)("%s commands preserve document structure"
     editor.destroy();
   });
 
+  it("insertToggle inserts an empty summary, as other insert commands insert empty blocks (D-15)", async () => {
+    const editor = await create([block("p", "Text")]);
+    editor.setSelection({
+      anchor: { blockId: "p", offset: 2 },
+      head: { blockId: "p", offset: 2 },
+    });
+    expect(editor.chain().insertToggle().run()).toBe(true);
+    const [, toggle] = editor.getJSON().blocks;
+    expect(toggle).toMatchObject({
+      type: "toggle",
+      attrs: { open: true },
+      content: [],
+      children: [{ type: "paragraph", attrs: {}, content: [], children: [] }],
+    });
+    editor.destroy();
+  });
 });

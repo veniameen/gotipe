@@ -107,6 +107,8 @@ export class StructureCommands {
   }
 
   insertToggle(): this {
+    // An empty summary, as other insert commands give empty blocks (D-15): a view shows its
+    // placeholder in the language of the interface.
     const state = this.port.getState();
     const blockId = state.selection.anchor.blockId;
     const location = insertionPoint(
@@ -124,7 +126,7 @@ export class StructureCommands {
         id: createId(),
         type: "toggle",
         attrs: { open: true },
-        content: [{ text: "Toggle heading", marks: [] }],
+        content: [],
         children: [
           {
             id: createId(),

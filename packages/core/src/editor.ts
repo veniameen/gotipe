@@ -512,6 +512,7 @@ export async function createEditorWithLoader(
           clipboard: clipboardHandler,
           getViewState: () => this.getViewState(),
           getDocument: () => this.getJSON(),
+          content: schemaForCommands.content,
           dispatch: (transaction, typing) => {
             transactionFilters.assertIdle();
             return transactions.dispatch(transaction, typing);

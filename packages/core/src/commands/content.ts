@@ -1,21 +1,8 @@
 import { cloneAttributes } from "../document/attributes";
 import { createId } from "../document/id";
 import type { BlockContent } from "../types/block";
+import type { NodeSpec } from "../types/extension";
 import type { BlockView } from "../types/view";
-
-const EMPTY_CONTENT_TYPES = new Set([
-  "divider",
-  "file",
-  "embed",
-  "bulletList",
-  "orderedList",
-  "todoList",
-  "image",
-  "columns",
-  "column",
-  "table",
-  "tableRow",
-]);
 
 export function listItemAttrs(
   itemType: "listItem" | "todoItem",
@@ -59,21 +46,18 @@ export function cloneBlockTree(block: BlockView, freshIds = true): import("../ty
   };
 }
 
-export function contentForTargetType(
-  type: string,
-  sourceContent: BlockView["content"],
+/**
+ * The content of a block whose type declares `kind` (`CommandSchema.content`), made from
+ * `source`: raw text keeps the text without marks, a type without content drops it (D-05). A type
+ * the schema does not declare — in an editor without a schema — gets rich text.
+ */
+export function contentFor(
+  kind: NodeSpec["content"] | undefined,
+  source: BlockView["content"] = null,
 ): BlockContent {
-  if (["codeBlock", "math", "markdownRaw"].includes(type)) {
-    if (typeof sourceContent === "string") return sourceContent;
-    if (Array.isArray(sourceContent)) {
-      return sourceContent.map((s) => s.text).join("");
-    }
-    return "";
-  }
-  if (EMPTY_CONTENT_TYPES.has(type)) {
-    return null;
-  }
-  return cloneInlineContent(sourceContent);
+  if (kind === "rawText")
+    return Array.isArray(source) ? source.map((span) => span.text).join("") : (source ?? "");
+  return kind === "empty" ? null : cloneInlineContent(source);
 }
 
 export function blockContentTextLength(content: BlockContent): number {
@@ -82,12 +66,4 @@ export function blockContentTextLength(content: BlockContent): number {
   }
   if (typeof content === "string") return content.length;
   return 0;
-}
-
-export function blockContent(type: string): BlockContent | null {
-  return EMPTY_CONTENT_TYPES.has(type)
-    ? null
-    : ["codeBlock", "math", "markdownRaw"].includes(type)
-      ? ""
-      : [];
 }

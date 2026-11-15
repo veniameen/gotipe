@@ -3,7 +3,7 @@ import { FullPreset } from "../src/presets";
 import type { Block, Document } from "../src/types/block";
 import type { GoTipeEditor } from "../src/types/editor";
 import type { BlockView } from "../src/types/view";
-import { type Engine, ENGINES, block, createOn, doc, paragraph } from "./engines";
+import { ENGINES, type Engine, block, createOn, doc, paragraph } from "./engines";
 
 const active: { editor: GoTipeEditor; element: HTMLElement }[] = [];
 afterEach(() => {
@@ -36,7 +36,10 @@ async function typing(engine: Engine, content: Document, caret: string) {
   document.body.append(element);
   editor.mount(element);
   active.push({ editor, element });
-  editor.setSelection({ anchor: { blockId: caret, offset: 0 }, head: { blockId: caret, offset: 0 } });
+  editor.setSelection({
+    anchor: { blockId: caret, offset: 0 },
+    head: { blockId: caret, offset: 0 },
+  });
   return {
     editor,
     errors,
@@ -84,9 +87,7 @@ describe.each(ENGINES)("%s block input rules (D-11)", (engine) => {
     list.children[0]!.content = [{ text: "Ready", marks: [] }];
     const view = await typing(engine, doc(list), "p");
     view.type("[x] ");
-    expect(view.blocks()).toEqual([
-      { ...list, children: [list.children[0], task("p", true)] },
-    ]);
+    expect(view.blocks()).toEqual([{ ...list, children: [list.children[0], task("p", true)] }]);
     expect(view.errors).toEqual([]);
   });
 
@@ -197,6 +198,111 @@ describe.each(ENGINES)("%s list rules in a list of the same kind (D-127)", (engi
     expect(view.blocks()).toMatchObject([
       { type: "bulletList", children: [{ id: "p", type: "listItem", content: [] }] },
     ]);
+    expect(view.errors).toEqual([]);
+  });
+});
+
+describe.each(ENGINES)("%s `[] ` in a checked task (D-137)", (engine) => {
+  it("`[] ` in an empty checked task unchecks it and keeps the list", async () => {
+    const done = task("done", true);
+    done.content = [{ text: "Done", marks: [] }];
+    const list = block("tasks", "todoList", null, {}, [done, task("p", true)]);
+    const view = await typing(engine, doc(list), "p");
+    view.type("[] ");
+    expect(view.blocks()).toEqual([{ ...list, children: [done, task("p", false)] }]);
+    expect(view.editor.getViewState().selection.anchor).toEqual({ blockId: "p", offset: 0 });
+    expect(view.editor.undo()).toBe(true);
+    expect(view.blocks()[0]!.children[1]).toMatchObject({ attrs: { checked: true } });
+    expect(view.errors).toEqual([]);
+  });
+
+  it("`[x] ` still checks it, and `[] ` makes an unchecked task of a bullet item", async () => {
+    const list = block("list", "bulletList", null, {}, [
+      listItem("first", "First"),
+      listItem("p", ""),
+    ]);
+    const view = await typing(engine, doc(list), "p");
+    view.type("[] ");
+    expect(view.blocks()).toMatchObject([
+      {
+        type: "todoList",
+        children: [
+          { id: "first", attrs: { checked: false } },
+          { id: "p", attrs: { checked: false } },
+        ],
+      },
+    ]);
+    view.type("[x] ");
+    expect(view.blocks()[0]!.children[1]).toMatchObject({ id: "p", attrs: { checked: true } });
+    expect(view.errors).toEqual([]);
+  });
+});
+
+/** A table of one row: the cell `c` and a neighbour with text. */
+const table = () =>
+  block("table", "table", null, {}, [
+    block("row", "tableRow", null, {}, [
+      block("c", "tableCell", [], {}),
+      block("d", "tableCell", [{ text: "Keep", marks: [] }], {}),
+    ]),
+  ]);
+
+describe.each(ENGINES)("%s block rules where the block can't stand (D-128)", (engine) => {
+  it.each(["- ", "* ", "1. ", "[] ", "[x] ", "> ", "```js ", "$$", "# ", "---"])(
+    "`%s` in a table cell stays typed text, without an error",
+    async (trigger) => {
+      const before = doc(table());
+      const view = await typing(engine, before, "c");
+      view.type(trigger);
+      const typed = structuredClone(before.blocks);
+      typed[0]!.children[0]!.children[0]!.content = [{ text: trigger, marks: [] }];
+      expect(view.blocks()).toEqual(typed);
+      expect(view.errors).toEqual([]);
+      view.type("x");
+      expect(view.blocks()[0]!.children[0]!.children[0]!.content).toEqual([
+        { text: `${trigger}x`, marks: [] },
+      ]);
+    },
+  );
+
+  it.each(["> ", "[] ", "$$"])(
+    "`%s` in a column that doesn't take its block stays typed text",
+    async (trigger) => {
+      const columns = block("cols", "columns", null, { count: 1 }, [
+        block("col", "column", null, {}, [paragraph("p", "")]),
+      ]);
+      const view = await typing(engine, doc(columns), "p");
+      view.type(trigger);
+      expect(view.blocks()[0]!.children[0]!.children).toEqual([paragraph("p", trigger)]);
+      expect(view.errors).toEqual([]);
+    },
+  );
+
+  it("`- ` in a column still makes a list there", async () => {
+    const columns = block("cols", "columns", null, { count: 1 }, [
+      block("col", "column", null, {}, [paragraph("p", "")]),
+    ]);
+    const view = await typing(engine, doc(columns), "p");
+    view.type("- ");
+    expect(view.blocks()[0]!.children[0]!.children).toMatchObject([
+      { type: "bulletList", children: [{ id: "p", type: "listItem", content: [] }] },
+    ]);
+    expect(view.errors).toEqual([]);
+  });
+
+  it.each([
+    ["- ", "bulletList"],
+    ["1. ", "orderedList"],
+    ["[x] ", "todoList"],
+    ["> ", "blockquote"],
+    ["```js ", "codeBlock"],
+    ["$$", "math"],
+  ])("`%s` changes the block and drops the trigger in one undo step", async (trigger, type) => {
+    const view = await typing(engine, doc(paragraph("before", "Text"), paragraph("p", "")), "p");
+    view.type(trigger);
+    expect(view.blocks()[1]!.type).toBe(type);
+    expect(view.editor.undo()).toBe(true);
+    expect(view.blocks()).toEqual([paragraph("before", "Text"), paragraph("p", trigger)]);
     expect(view.errors).toEqual([]);
   });
 });

@@ -1,4 +1,5 @@
 import { findBlockInTree } from "../document/tree";
+import { givesWay } from "../input/block-rule";
 import { type Extension, defineExtension } from "../types/extension";
 
 export interface HeadingOptions {
@@ -55,12 +56,14 @@ function heading(options: HeadingOptions): Extension<HeadingOptions> {
                 const value = typed[key];
                 if (typeof value === "string") attrs[key] = value;
               }
-              editor.dispatch({
-                steps: [
-                  { type: "deleteText", blockId, from: 0, to: match[0].length },
-                  { type: "setBlockType", blockId, newType: "heading", attrs },
-                ],
-              });
+              return givesWay(() =>
+                editor.dispatch({
+                  steps: [
+                    { type: "deleteText", blockId, from: 0, to: match[0].length },
+                    { type: "setBlockType", blockId, newType: "heading", attrs },
+                  ],
+                }),
+              );
             },
           },
         ]

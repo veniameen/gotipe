@@ -45,6 +45,7 @@ editing shortcuts are ignored. Menus and tooltips show only keys that are bound.
 | Code block | Tab | Insert two spaces |
 | Code block | Shift+Tab | Remove up to two spaces at the start of the line |
 | Code block | Escape | Add a paragraph after a top-level code block and move there |
+| Formula | Escape | Add a paragraph after a top-level formula and move there (`Math`) |
 
 Elsewhere Tab is not captured and moves focus to the next control, usually out of the
 editor. Tab in the last cell of a table and Shift+Tab in its first are not captured either:
@@ -58,7 +59,7 @@ reaches the table's Add row button.
 | Enter | Split the block. A heading, quote or callout continues as a paragraph; a list item continues as an item. |
 | Enter on an empty list item | Leave the list, or go one level up in a nested list. |
 | Enter in a table cell | Move to the cell below. |
-| Enter in a code block | New line. |
+| Enter in a code block, a formula or another raw-text block | New line, as Shift+Enter. |
 | Shift+Enter | Line break inside the same block. |
 | Backspace at the start of a list item with text | Turn the item into a paragraph. |
 
@@ -82,7 +83,11 @@ Type these in an empty paragraph:
 | `/` | Slash menu; also after a space inside a line | UI |
 
 In an empty list item, a list shortcut of another kind turns the whole list into its kind; one
-of the list's own kind is only removed, and `[x]` checks the item.
+of the list's own kind is only removed; `[x]` checks a task and `[]` unchecks it.
+
+A shortcut changes the block and removes what you typed in one step: one Undo brings the typed
+text back. Where its block can't go — a table cell, or a column, toggle or quote that doesn't
+take that block — a shortcut stays the text you typed, and nothing is reported.
 
 Anywhere in a line, `**text**`, `*text*`, `~~text~~` and `` `text` `` become bold, italic,
 struck-through and code text as you type the closing delimiter; see

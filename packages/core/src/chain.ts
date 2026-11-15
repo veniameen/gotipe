@@ -1,7 +1,7 @@
 import { documentTransaction } from "./clipboard/document";
 import { insertPayload } from "./clipboard/insertion";
 import { chainSelection, mayMoveSelection } from "./commands/chain-selection";
-import { blockContent, cloneBlockTree } from "./commands/content";
+import { cloneBlockTree, contentFor } from "./commands/content";
 import { insertionPoint } from "./commands/insertion-point";
 import { ListCommands } from "./commands/list-commands";
 import { MarkCommands } from "./commands/mark-commands";
@@ -227,7 +227,7 @@ export class ChainableCommands {
         id: createId(),
         type,
         attrs: filled,
-        content: blockContent(type),
+        content: contentFor(this.schema.content(type)),
         children: [],
       },
     });

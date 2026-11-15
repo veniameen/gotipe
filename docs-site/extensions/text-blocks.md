@@ -141,15 +141,12 @@ A valid `alert` takes precedence over `type`. Reading `> [!WARNING]` gives `{ ty
 
 | Command | Description |
 | --- | --- |
-| `insertToggle()` | Inserts an open toggle after the current block, with the summary "Toggle heading" and an empty paragraph inside. |
+| `insertToggle()` | Inserts an open toggle after the current block, with an empty summary and an empty paragraph inside. The editor UI shows the summary's placeholder in the interface language. |
 | `setBlockAttrs(blockId, { open: false })` | Opens or closes a toggle. |
 
 The "/" menu lists it as **Toggle**. In the editor UI the chevron opens and closes it; that writes `open` to the document as an undoable change. In read-only mode the chevron opens the toggle for the reader only and leaves the document unchanged.
 
 Markdown has no toggle: the summary is written as a paragraph, followed by the content.
-
-> [!NOTE]
-> The summary text "Toggle heading" that `insertToggle()` inserts is English whatever the UI locale is.
 
 ## Columns
 

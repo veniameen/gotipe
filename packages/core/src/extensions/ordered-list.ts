@@ -1,3 +1,4 @@
+import { convertTyped } from "../input/block-rule";
 import { defineExtension } from "../types/extension";
 
 export const OrderedList = defineExtension({
@@ -21,18 +22,11 @@ export const OrderedList = defineExtension({
     {
       pattern: /^(\d+)\.\s$/,
       handler: (editor, match) => {
-        const state = editor.getViewState();
-        const blockId = state.selection.anchor.blockId;
-        const triggerLen = match[0]!.length;
         const start = Number.parseInt(match[1]!, 10) || 1;
-        editor.dispatch({
-          steps: [{ type: "deleteText", blockId, from: 0, to: triggerLen }],
-        });
         // In a numbered list the item stays as it is, and so does the list's numbering.
-        editor
-          .chain()
-          .setOrderedList(start !== 1 ? { start } : undefined)
-          .run();
+        return convertTyped(editor, match[0].length, (chain) =>
+          chain.setOrderedList(start !== 1 ? { start } : undefined),
+        );
       },
     },
   ],
