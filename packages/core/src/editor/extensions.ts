@@ -31,11 +31,16 @@ export function resolveExtensions(extensions: (Extension | Extension[])[]): Exte
 
     visiting.add(ext.name);
 
-    if (ext.dependencies) {
-      for (const depName of ext.dependencies) {
-        const dep = extMap.get(depName);
-        if (dep) visit(dep);
-      }
+    // A dependency nobody passed would leave the extension half set up (D-13).
+    for (const name of ext.dependencies ?? []) {
+      const dep = extMap.get(name);
+      if (!dep)
+        throw new GoTipeError(
+          "EXTENSION_ERROR",
+          `Extension ${ext.name} needs ${name}, which is not in the extension list`,
+          { extension: ext.name, dependency: name },
+        );
+      visit(dep);
     }
 
     visiting.delete(ext.name);
