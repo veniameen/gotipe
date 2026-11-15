@@ -158,7 +158,8 @@ The bubble appears over a selection while the editor is editable. From left to r
 - **Colour**: text Gray, Red, Amber, Green, Blue; highlight Yellow, Green, Blue, Red, Gray;
   and Reset. A mark stores the colour for a light page; the editor draws it through the
   `--gt-tc-*` and `--gt-bg-*` tokens, so it follows dark mode.
-- **More**: Superscript, Subscript, Clear formatting, Copy as Markdown.
+- **More**: alignment; Superscript and Subscript when the editor has those marks
+  (`FullPreset` does, `DefaultPreset` does not); Clear formatting; Copy as Markdown.
 
 ## Tables
 
