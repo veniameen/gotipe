@@ -81,11 +81,17 @@ async function open(engine: Engine, blocks: Block[], caret: { blockId: string; o
         }),
       );
     },
-    /** Mod+V as a browser sends it: the `paste` event follows `keydown`. */
-    paste(data: string) {
-      send(
-        new KeyboardEvent("keydown", { key: "v", metaKey: true, bubbles: true, cancelable: true }),
-      );
+    /** Mod+V as a browser sends it: the `paste` event follows `keydown`; a menu sends no key. */
+    paste(data: string, shortcut = true) {
+      if (shortcut)
+        send(
+          new KeyboardEvent("keydown", {
+            key: "v",
+            metaKey: true,
+            bubbles: true,
+            cancelable: true,
+          }),
+        );
       const event = new Event("paste", { bubbles: true, cancelable: true });
       Object.defineProperty(event, "clipboardData", {
         value: { files: [], getData: (type: string) => (type === "text/plain" ? data : "") },
@@ -153,6 +159,23 @@ describe.each(ENGINES)("%s keys right after an edit (D-132)", (engine) => {
     view.render();
     await nextTask();
     view.paste("X");
+    expect(view.editor.getJSON().blocks).toEqual([paragraph("p", "abcX")]);
+  });
+
+  it("before the renderer draws the typing, Mod+V pastes after it (D-136)", async () => {
+    const view = await open(engine, [paragraph("p", "ab")], { blockId: "p", offset: 2 });
+    view.type("c");
+    await nextTask();
+    view.paste("X");
+    expect(view.editor.getJSON().blocks).toEqual([paragraph("p", "abcX")]);
+    expect(view.editor.getViewState().selection.anchor).toEqual({ blockId: "p", offset: 4 });
+  });
+
+  it("before the renderer draws the typing, a paste without a key goes after it too (D-136)", async () => {
+    const view = await open(engine, [paragraph("p", "ab")], { blockId: "p", offset: 2 });
+    view.type("c");
+    await nextTask();
+    view.paste("X", false);
     expect(view.editor.getJSON().blocks).toEqual([paragraph("p", "abcX")]);
   });
 

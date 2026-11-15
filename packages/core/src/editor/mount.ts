@@ -54,7 +54,9 @@ export function mountSurface(
         e.preventDefault();
         return;
       }
-      port.clipboard.onPaste(e);
+      // Until a pending restore puts the native caret where the model's is, the model's
+      // counts, as for typing (D-136).
+      port.clipboard.onPaste(e, domSelection.pending);
     },
     { signal },
   );
@@ -285,14 +287,10 @@ export function mountSurface(
         const inEditor =
           (selectionAnchor ? element.contains(selectionAnchor) : false) ||
           (eventTarget ? element.contains(eventTarget) : false);
-        if (inEditor) {
-          const domSelection = readSelectionFromDOM?.();
-          if (domSelection?.anchor.blockId) {
-            port.selection = {
-              type: "text",
-              anchor: { ...domSelection.anchor },
-              head: { ...domSelection.head },
-            };
+        if (inEditor && !domSelection.pending) {
+          const dom = readSelectionFromDOM?.();
+          if (dom?.anchor.blockId) {
+            port.selection = { type: "text", anchor: { ...dom.anchor }, head: { ...dom.head } };
           }
         }
       }
