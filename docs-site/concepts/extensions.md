@@ -31,7 +31,7 @@ is unchanged.
 | Field | Type | Description |
 |---|---|---|
 | `name` | `string` | Unique name. A later extension with the same name replaces the earlier one. |
-| `dependencies` | `string[]` | Names of extensions to set up first, when they are in the list. |
+| `dependencies` | `string[]` | Names of extensions this one needs; they are set up first. A name that isn't in the list rejects `createEditor`. |
 | `nodes` | `NodeSpec[]` | Block types. |
 | `marks` | `MarkSpec[]` | Mark types. |
 | `keybindings` | `Keybinding[]` | Keyboard shortcuts. |
@@ -311,7 +311,8 @@ rest. `BlockEditor` does this for `collaboration` and draws those people with it
 
 1. The editor flattens the extension list, keeps the last extension of each name and
    orders dependencies first. A dependency cycle rejects `createEditor` with
-   `EXTENSION_DEPENDENCY_CYCLE`.
+   `EXTENSION_DEPENDENCY_CYCLE`; a dependency that isn't in the list, with
+   `EXTENSION_ERROR` whose `details` name the `extension` and the missing `dependency`.
 2. It builds the schema from all node and mark types and validates the document.
 3. For each extension in order: `plugin(options)`, `plugin.init(state)`, then
    `onCreate(editor)`. An exception here rejects `createEditor`; what was created is
@@ -327,7 +328,6 @@ Errors in `apply`, `decorations`, `onUpdate` and `destroy` are reported as
 name, passed alone or in a preset. The set is fixed at creation and is the same on both
 engines. A UI asks it before offering what only an extension answers: `BlockEditor` shows
 its AI controls only for `defineAi` and its companions ([AI UI](/docs/ai/ui#which-controls-show)).
-A dependency nobody passed is not installed, even though the extension that names it is.
 
 Only `plugin` and paste-rule handlers receive the options as an argument. Lifecycle hooks
 written as methods can read them as `this.options`. Shortcuts, input rules and slash

@@ -9,8 +9,8 @@ The engine holds the document, applies transactions and checks them against the 
 GoTipe has two implementations of one contract: a TypeScript engine inside `@gotipe/core`
 and a Rust engine compiled to WebAssembly in `@gotipe/wasm`. Both take the same document
 JSON and steps, count offsets in UTF-16 code units and use the same error codes, so you
-switch engines without changing your code. The few behavioural differences in this
-release are listed under [known differences](#known-differences).
+switch engines without changing your code. No behavioural differences are known in this
+release; see [known differences](#known-differences).
 
 ## Choose an engine
 
@@ -105,12 +105,15 @@ Pass `null` as the loader for a JS-only editor.
 
 ## Known differences
 
-In this release the engines are known to differ in two places:
-- `Document.version` grows with every applied step on WASM and stays as loaded on JS.
-  Listen to `update` to detect changes.
-- `getJSON()` writes `attrs` keys in sorted order on WASM, so every collaboration peer
-  returns the same JSON, and in the order they were set on JS. Compare documents by value,
-  not by their JSON string, when the engine may change.
+None are known in this release.
+
+Both engines add one to `Document.version` for every step they apply, as many as the
+transaction has; a rejected transaction leaves it as it was, and undo brings back the
+version from before the change. Listen to `update` to detect changes.
+
+Both engines write the keys of block and mark `attrs`, and of objects inside them, in code
+point order, whatever order they were set in: the same document is the same `getJSON()`
+string on either engine and on every collaboration peer.
 
 Both engines reject a step for a block that doesn't exist, and nothing of its transaction
 applies or enters the undo history:

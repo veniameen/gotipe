@@ -73,7 +73,7 @@ list and the divider have no text of their own.
 
 | Field | Type | Description |
 |---|---|---|
-| `Document.version` | `number` | Non-negative integer, `1` when omitted. Its growth depends on the engine; see [engines](/docs/getting-started/engines#known-differences). |
+| `Document.version` | `number` | Non-negative integer, `1` when omitted. Grows by one with every applied step on both engines; see [engines](/docs/getting-started/engines#known-differences). |
 | `Document.blocks` | `Block[]` | Top-level blocks in order. |
 | `Block.id` | `string` | Non-empty and unique in the document. |
 | `Block.type` | `string` | A node type of the schema, such as `paragraph`. |
