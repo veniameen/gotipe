@@ -5,7 +5,7 @@ use gotipe_core::{AttrValue, Block};
 use super::{
     block_to_markdown, followers, hazards,
     inline::content_to_markdown,
-    own_lines, shown,
+    own_lines, prefixed, shown,
     units::{Kind, Options},
     Emoji,
 };
@@ -128,7 +128,9 @@ pub(super) fn list_to_markdown(list: &Block, emoji: &Emoji, tier: u8, outer: &st
     rendered
 }
 
-/// The closing line of `child` under a list item, each line after `indent` (`close`).
+/// The closing line of `child` under a list item, each line after `indent`: right after the text
+/// of the child, before its line ending, as `close` writes it at the top level and the TS writer
+/// under an item (`closer`, D-155).
 fn close_indented(child: &Block, emoji: &Emoji, tier: u8, indent: &str, out: &mut String) {
     if !hazards::copies_opener(child) {
         return;
@@ -136,16 +138,13 @@ fn close_indented(child: &Block, emoji: &Emoji, tier: u8, indent: &str, out: &mu
     let markdown = block_to_markdown(child, emoji, tier);
     let end = markdown.strip_suffix('\n').map_or(markdown.len(), str::len);
     let line = crate::markdown_parse::structure::closing_line(&markdown[..end]);
-    for text in line.split(['\r', '\n']).filter(|text| !text.is_empty()) {
-        out.push_str(indent);
-        out.push_str(text);
-        out.push('\n');
-    }
+    let at = out.strip_suffix('\n').map_or(out.len(), str::len);
+    out.insert_str(at, &prefixed(&line, indent));
 }
 
-/// `block` as a child of a list item, each line after `indent`, as `block_to_markdown` writes it;
-/// the blank line before a child stays empty, as the TS writer leaves it (`blankLine`). With
-/// `stars` a divider is `***`.
+/// `block` as a child of a list item, each line after `indent`, as `block_to_markdown` writes it,
+/// with the line endings of its source (D-155); the blank line before a child stays empty, as the
+/// TS writer leaves it (`blankLine`). With `stars` a divider is `***`.
 fn indented(block: &Block, emoji: &Emoji, tier: u8, indent: &str, stars: bool, out: &mut String) {
     if hazards::is_list(block) {
         out.push_str(&list_to_markdown(block, emoji, tier, indent));
@@ -156,9 +155,9 @@ fn indented(block: &Block, emoji: &Emoji, tier: u8, indent: &str, stars: bool, o
         "divider" if stars => "***\n".to_owned(),
         _ => own_lines(block, emoji, tier),
     };
-    for line in own.lines() {
+    if let Some(text) = own.strip_suffix('\n') {
         out.push_str(indent);
-        out.push_str(line);
+        out.push_str(&prefixed(text, indent));
         out.push('\n');
     }
     let children = followers(block);

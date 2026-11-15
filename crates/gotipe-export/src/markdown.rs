@@ -197,7 +197,10 @@ fn own_lines(block: &Block, emoji: &Emoji, tier: u8) -> String {
             }
         }
         "codeBlock" => {
-            let raw = crate::plaintext::block_text(block);
+            // its lines end with line feeds, as the TS writer writes them (`normalizeEol`)
+            let raw = crate::plaintext::block_text(block)
+                .replace("\r\n", "\n")
+                .replace('\r', "\n");
             let fence = code_fence(&raw, 3);
             // Older documents store plain text as `plain`/`plaintext`; new ones store "".
             let plain = ["plain", "plaintext"]
@@ -325,13 +328,28 @@ fn delimiters(table: &Block, columns: usize) -> String {
 
 /// Every line of a quote's own text behind `> `.
 fn quoted(text: &str) -> String {
-    text.split('\n')
-        .map(|line| format!("> {line}"))
-        .collect::<Vec<_>>()
-        .join("\n")
+    format!("> {}", prefixed(text, "> "))
 }
 
-/// A quote's children follow its text after a `>` line, as in the TS writer.
+/// `text` with `prefix` after each of its line endings (`\r\n`, `\r`, `\n`), kept as they are:
+/// the indentation of an item or the `>` of a quote before each later line of a block, as
+/// `rawLines` of the TS writer. The line the last line ending of raw source starts is one of them
+/// (D-155): an empty line would end a quote.
+fn prefixed(text: &str, prefix: &str) -> String {
+    let mut out = String::with_capacity(text.len());
+    let mut rest = text;
+    while let Some(at) = rest.find(['\r', '\n']) {
+        let end = at + if rest[at..].starts_with("\r\n") { 2 } else { 1 };
+        out.push_str(&rest[..end]);
+        out.push_str(prefix);
+        rest = &rest[end..];
+    }
+    out.push_str(rest);
+    out
+}
+
+/// A quote's children follow its text after a `>` line, as in the TS writer; a child keeps the
+/// line endings that end its source (D-155).
 fn quote_children(mut quote: String, block: &Block, emoji: &Emoji, tier: u8) -> String {
     let children = hazards::children(shown(block));
     for (index, child) in children.iter().enumerate() {
@@ -340,7 +358,7 @@ fn quote_children(mut quote: String, block: &Block, emoji: &Emoji, tier: u8) -> 
         if index + 1 < children.len() {
             close(&mut markdown);
         }
-        quote.push_str(&quoted(markdown.trim_end_matches('\n')));
+        quote.push_str(&quoted(markdown.strip_suffix('\n').unwrap_or(&markdown)));
     }
     quote.push('\n');
     quote

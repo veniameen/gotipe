@@ -121,10 +121,11 @@ function linkLine(attrs: Record<string, unknown>): string {
 /**
  * Raw source written after `indent`: each of its later lines after the indentation and the `>` of
  * the blocks around it, as the Rust writer writes it (D-114). Without them its lines left the item
- * or the quote, and the rest of the block with them.
+ * or the quote, and the rest of the block with them. The line its last line ending starts is one
+ * of them (D-155): an empty line would end a quote.
  */
 function rawLines(source: string, indent: string): string {
-  return indent ? source.replace(/(?:\r\n|\r(?!\n)|\n)(?!$)/g, (eol) => eol + indent) : source;
+  return indent ? source.replace(/\r\n|\r|\n/g, (eol) => eol + indent) : source;
 }
 
 /** An empty formula or an embed without an address has no Markdown at any depth. */
@@ -521,8 +522,8 @@ function renderBlock(w: Writer, block: Block, indent: string, ro: RenderOpts): R
  */
 function closer(child: Block, indent: string, ro: RenderOpts): string {
   if (!copiesOpener(child)) return "";
-  const line = closingLine(renderTop(child, ro).md, "", ro.eol);
-  return line && (/^[\r\n]/.test(line) ? "" : indent) + rawLines(line, indent);
+  // after a line ending that ends the child its indentation is written already (D-155)
+  return rawLines(closingLine(renderTop(child, ro).md, "", ro.eol), indent);
 }
 
 export function renderTop(block: Block, ro: RenderOpts): { md: string; node: RNode } {
