@@ -1,10 +1,4 @@
-import type {
-  Decoration,
-  InlineDecoration,
-  MarkView,
-  TextSpanView,
-  WidgetDecoration,
-} from "@gotipe/core";
+import type { Decoration, MarkView, TextSpanView, WidgetDecoration } from "@gotipe/core";
 import { documentColorStyle, toSafeHref } from "@gotipe/core";
 import React from "react";
 import { AtomView, type TextUnit, textUnits } from "./content/atoms";
@@ -166,14 +160,6 @@ function RemoteCaret({ decoration }: { decoration: TextWidget }) {
       </span>
     </span>
   );
-}
-
-/** Splits `decorations` of a block into inline ranges and widgets, from every layer. */
-export function splitTextDecorations(decorations: Decoration[] | undefined): {
-  inline: InlineDecoration[];
-  widgets: WidgetDecoration[];
-} {
-  return textDecorations(decorations);
 }
 
 export function TextRenderer({ spans, decorations }: TextRendererProps) {

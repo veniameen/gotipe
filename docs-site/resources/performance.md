@@ -33,8 +33,12 @@ measurements.
 
 | Module | Raw | gzip | Loaded |
 |---|---:|---:|---|
-| `@gotipe/wasm`, the core engine | 1,497,834 B | 589,986 B (budget 600 KiB) | When `createEditor` uses the WASM engine |
+| `@gotipe/wasm`, the core engine | 825,703 B | 302,506 B (budget 325 KiB) | When `createEditor` uses the WASM engine |
 | `@gotipe/export-wasm`, PDF and DOCX with fonts | 14,676,786 B | about 8.6 MB | On the first `exportToPdf` or `exportToDocx` |
+
+The core engine row was measured on 2026-11-15. HTML, Markdown and HTML cleaning left the
+module for the core JavaScript, one code for both engines; the 0.1.0 build of 2026-11-12
+had 1,497,834 B and 589,986 B gzip under a 600 KiB budget.
 
 The JS engine needs no WASM at all. Choose it with `engine: "js"` or import from
 `@gotipe/core/js`, which has no reference to `@gotipe/wasm`; see [Engines](/docs/getting-started/engines).

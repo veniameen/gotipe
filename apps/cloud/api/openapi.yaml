@@ -468,18 +468,28 @@ components:
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/APIError'
+            $ref: '#/components/schemas/ErrorResponse'
     QuotaExceeded:
       description: Plan quota exceeded
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/APIError'
+            $ref: '#/components/schemas/ErrorResponse'
 
   schemas:
+    ErrorResponse:
+      description: The body of every error response (apierror.APIError.Write).
+      type: object
+      required: [error]
+      additionalProperties: false
+      properties:
+        error: { $ref: '#/components/schemas/APIError' }
+
     APIError:
+      description: The error has only a code and a message; there are no details.
       type: object
       required: [code, message]
+      additionalProperties: false
       properties:
         code: { type: string, example: 'NOT_FOUND' }
         message: { type: string, example: 'Resource not found' }
