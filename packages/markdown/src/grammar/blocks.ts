@@ -42,6 +42,9 @@ class Reader {
         },
       ];
     let i = 0;
+    // A definition is read out of paragraph text: the line right after one that does not
+    // interrupt a paragraph continues that text, whatever block it would start (D-119).
+    let afterDefinition = -1;
     while (i < lines.length) {
       const line = lines[i]!;
       if (blank(line)) {
@@ -49,6 +52,7 @@ class Reader {
         continue;
       }
       const start = line.start + /^ */.exec(line.text)![0].length;
+      const continuesText = i === afterDefinition && !interrupts(line);
       const opening = openingFence(line.text);
       if (opening) {
         const marker = opening[1]!;
@@ -78,9 +82,10 @@ class Reader {
       }
       // `$$` … `$$`: the body is taken raw, without inline parsing. Without a closing
       // line the `$$` stays ordinary paragraph text.
-      const mathEnd = mathFence(line.text)
-        ? lines.findIndex((candidate, index) => index > i && mathFence(candidate.text))
-        : -1;
+      const mathEnd =
+        !continuesText && mathFence(line.text)
+          ? lines.findIndex((candidate, index) => index > i && mathFence(candidate.text))
+          : -1;
       if (mathEnd > 0) {
         const indentation = /^ */.exec(line.text)![0].length;
         nodes.push({
@@ -163,7 +168,7 @@ class Reader {
         i = next;
         continue;
       }
-      if (listMarker(line.text)) {
+      if (!continuesText && listMarker(line.text)) {
         const list = readList(lines, i, (children, prefix) =>
           this.blocks(children, depth + 1, prefix),
         );
@@ -171,7 +176,7 @@ class Reader {
         i = list.end;
         continue;
       }
-      const html = htmlBlock(line.text);
+      const html = continuesText ? false : htmlBlock(line.text);
       if (html !== false) {
         let next = i + 1;
         if (html) {
@@ -198,10 +203,10 @@ class Reader {
       const definition = readDefinition(lines, i, this.references);
       if (definition) {
         nodes.push(definition.node);
-        i = definition.end;
+        i = afterDefinition = definition.end;
         continue;
       }
-      if (indentWidth(line.text) >= 4) {
+      if (!continuesText && indentWidth(line.text) >= 4) {
         const content: Line[] = [];
         let next = i;
         while (next < lines.length && (blank(lines[next]!) || indentWidth(lines[next]!.text) >= 4))
@@ -244,7 +249,12 @@ class Reader {
       const paragraph: Line[] = [
         i === 0 && taskPrefix
           ? strip(line, taskPrefix)
-          : stripIndent(line, Math.min(3, indentWidth(line.text))),
+          : stripIndent(
+              line,
+              continuesText
+                ? indentWidth(line.text, line.column)
+                : Math.min(3, indentWidth(line.text)),
+            ),
       ];
       let next = i + 1;
       let setext = 0;

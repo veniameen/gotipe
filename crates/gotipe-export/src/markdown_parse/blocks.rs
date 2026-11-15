@@ -29,6 +29,9 @@ impl Reader {
         let setext_marker = re!(r"^ {0,3}(=+|-+)[ \t]*$");
         let mut nodes = vec![];
         let mut i = 0;
+        // A definition is read out of paragraph text: the line right after one that does not
+        // interrupt a paragraph continues that text, whatever block it would start (D-119).
+        let mut after_definition = usize::MAX;
         while i < lines.len() {
             let line = &lines[i];
             if line.blank() {
@@ -36,6 +39,7 @@ impl Reader {
                 continue;
             }
             let start = line.start + line.text.bytes().take_while(|c| *c == b' ').count();
+            let continues_text = i == after_definition && !interrupts(line);
             if let Some(open) = opening_fence(&line.text) {
                 let marker = &open[1];
                 let indentation = line.text.find(marker).unwrap();
@@ -78,7 +82,7 @@ impl Reader {
             }
             // `$$` … `$$`: the body is taken raw, without inline parsing. Without a closing
             // line the `$$` stays ordinary paragraph text.
-            if let Some(end) = math_fence(&line.text)
+            if let Some(end) = (!continues_text && math_fence(&line.text))
                 .then(|| (i + 1..lines.len()).find(|&next| math_fence(&lines[next].text)))
                 .flatten()
             {
@@ -168,13 +172,13 @@ impl Reader {
                 i = next;
                 continue;
             }
-            if list_marker(&line.text, 0).is_some() {
+            if !continues_text && list_marker(&line.text, 0).is_some() {
                 let (node, next) = lists::read(self, lines, i, depth);
                 nodes.push(node);
                 i = next;
                 continue;
             }
-            if let Some(html) = html_block(&line.text, false) {
+            if let Some(html) = html_block(&line.text, false).filter(|_| !continues_text) {
                 let mut next = i + 1;
                 match &html {
                     HtmlEnd::Blank => {
@@ -216,9 +220,10 @@ impl Reader {
             if let Some((node, next)) = definitions::read(lines, i, &mut self.references) {
                 nodes.push(node);
                 i = next;
+                after_definition = next;
                 continue;
             }
-            if width(&line.text, 0) >= 4 {
+            if !continues_text && width(&line.text, 0) >= 4 {
                 let mut content = vec![];
                 let mut next = i;
                 while next < lines.len()
@@ -265,6 +270,8 @@ impl Reader {
             }
             let mut paragraph = vec![if i == 0 && task_prefix > 0 {
                 line.strip(task_prefix)
+            } else if continues_text {
+                line.indent(width(&line.text, line.column))
             } else {
                 line.indent(3.min(width(&line.text, 0)))
             }];
