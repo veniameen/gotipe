@@ -18,3 +18,5 @@ as GFM does.
   blocks are empty — is left out at any depth, as an empty paragraph is. At the top level it was
   written as an empty line between two blank ones; between two lists with one marker it joined
   them into one list, and in an item without text its blank line took the item's blocks out of it.
+- A paragraph or heading without text at the top level keeps the blocks under it: both writers
+  left it out together with them.

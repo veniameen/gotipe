@@ -333,10 +333,11 @@ pub(super) fn closed(block: &Block) -> bool {
 
 /// `isBlockEmpty` of the TS writer: a block it leaves out at the top level. A block that writes no
 /// line, a list without items (D-124), raw source of blanks or a toggle without text and children,
-/// keeps no lists apart (D-123) and takes no blank lines (D-157).
+/// keeps no lists apart (D-123) and takes no blank lines (D-157). A heading without text is left
+/// out too, but not the blocks under it (D-190).
 fn empty(block: &Block) -> bool {
     match block.block_type.as_str() {
-        "paragraph" | "heading" => !has_text(block),
+        "heading" => !has_text(block) && block.children.iter().all(writes_no_line),
         _ => writes_no_line(block),
     }
 }

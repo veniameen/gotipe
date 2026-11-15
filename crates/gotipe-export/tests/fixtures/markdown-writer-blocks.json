@@ -4046,6 +4046,266 @@
           "children": []
         }
       ]
+    },
+    {
+      "id": "a-paragraph-without-text-keeps-its-children",
+      "document": {
+        "version": 1,
+        "blocks": [
+          {
+            "id": "b1",
+            "type": "paragraph",
+            "attrs": {},
+            "content": [
+              {
+                "text": "a",
+                "marks": []
+              }
+            ],
+            "children": []
+          },
+          {
+            "id": "e1",
+            "type": "paragraph",
+            "attrs": {},
+            "content": [],
+            "children": [
+              {
+                "id": "b2",
+                "type": "paragraph",
+                "attrs": {},
+                "content": [
+                  {
+                    "text": "c",
+                    "marks": []
+                  }
+                ],
+                "children": []
+              }
+            ]
+          },
+          {
+            "id": "b3",
+            "type": "paragraph",
+            "attrs": {},
+            "content": [
+              {
+                "text": "b",
+                "marks": []
+              }
+            ],
+            "children": []
+          }
+        ]
+      },
+      "markdown": "a\n\nc\n\nb\n",
+      "reparsed": [
+        {
+          "type": "paragraph",
+          "attrs": {},
+          "content": [
+            {
+              "text": "a",
+              "marks": []
+            }
+          ],
+          "children": []
+        },
+        {
+          "type": "paragraph",
+          "attrs": {},
+          "content": [
+            {
+              "text": "c",
+              "marks": []
+            }
+          ],
+          "children": []
+        },
+        {
+          "type": "paragraph",
+          "attrs": {},
+          "content": [
+            {
+              "text": "b",
+              "marks": []
+            }
+          ],
+          "children": []
+        }
+      ]
+    },
+    {
+      "id": "a-heading-without-text-keeps-its-children",
+      "document": {
+        "version": 1,
+        "blocks": [
+          {
+            "id": "b4",
+            "type": "paragraph",
+            "attrs": {},
+            "content": [
+              {
+                "text": "a",
+                "marks": []
+              }
+            ],
+            "children": []
+          },
+          {
+            "id": "h1",
+            "type": "heading",
+            "attrs": {
+              "level": 2
+            },
+            "content": [],
+            "children": [
+              {
+                "id": "b5",
+                "type": "paragraph",
+                "attrs": {},
+                "content": [
+                  {
+                    "text": "c",
+                    "marks": []
+                  }
+                ],
+                "children": []
+              }
+            ]
+          },
+          {
+            "id": "b6",
+            "type": "paragraph",
+            "attrs": {},
+            "content": [
+              {
+                "text": "b",
+                "marks": []
+              }
+            ],
+            "children": []
+          }
+        ]
+      },
+      "markdown": "a\n\n##\n\nc\n\nb\n",
+      "reparsed": [
+        {
+          "type": "paragraph",
+          "attrs": {},
+          "content": [
+            {
+              "text": "a",
+              "marks": []
+            }
+          ],
+          "children": []
+        },
+        {
+          "type": "heading",
+          "attrs": {
+            "level": 2
+          },
+          "content": [],
+          "children": []
+        },
+        {
+          "type": "paragraph",
+          "attrs": {},
+          "content": [
+            {
+              "text": "c",
+              "marks": []
+            }
+          ],
+          "children": []
+        },
+        {
+          "type": "paragraph",
+          "attrs": {},
+          "content": [
+            {
+              "text": "b",
+              "marks": []
+            }
+          ],
+          "children": []
+        }
+      ]
+    },
+    {
+      "id": "a-heading-without-text-and-empty-children-is-left-out",
+      "document": {
+        "version": 1,
+        "blocks": [
+          {
+            "id": "b7",
+            "type": "paragraph",
+            "attrs": {},
+            "content": [
+              {
+                "text": "a",
+                "marks": []
+              }
+            ],
+            "children": []
+          },
+          {
+            "id": "h2",
+            "type": "heading",
+            "attrs": {
+              "level": 2
+            },
+            "content": [],
+            "children": [
+              {
+                "id": "e2",
+                "type": "paragraph",
+                "attrs": {},
+                "content": [],
+                "children": []
+              }
+            ]
+          },
+          {
+            "id": "b8",
+            "type": "paragraph",
+            "attrs": {},
+            "content": [
+              {
+                "text": "b",
+                "marks": []
+              }
+            ],
+            "children": []
+          }
+        ]
+      },
+      "markdown": "a\n\nb\n",
+      "reparsed": [
+        {
+          "type": "paragraph",
+          "attrs": {},
+          "content": [
+            {
+              "text": "a",
+              "marks": []
+            }
+          ],
+          "children": []
+        },
+        {
+          "type": "paragraph",
+          "attrs": {},
+          "content": [
+            {
+              "text": "b",
+              "marks": []
+            }
+          ],
+          "children": []
+        }
+      ]
     }
   ]
 }
