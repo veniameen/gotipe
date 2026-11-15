@@ -25,6 +25,9 @@ const (
 // compactionSlots is the per-process semaphore of concurrentCompactions.
 var compactionSlots = make(chan struct{}, concurrentCompactions)
 
+// errCompactionReplaced refuses a generation that is no longer current.
+var errCompactionReplaced = fmt.Errorf("%w: the document generation changed before the log was compacted", cloudsync.ErrBaselineReplaced)
+
 type transactional interface {
 	BeginTx(context.Context, pgx.TxOptions) (pgx.Tx, error)
 }
@@ -43,8 +46,15 @@ type transactional interface {
 // it may depend on: readers apply all rows as one union, never one by one, and
 // see the same operations before, during and after. At most
 // concurrentCompactions merges run in one process; a waiting one gives up when
-// ctx ends.
+// ctx ends. A generation that is no longer current is refused before anything
+// else, even when its log needs no merge: the room adopts the new baseline on
+// that error.
 func (p *dbPersistenceStore) CompactLog(ctx context.Context, documentID, generation string) error {
+	if current, err := p.CurrentGeneration(ctx, documentID); err != nil {
+		return err
+	} else if current != generation {
+		return errCompactionReplaced
+	}
 	var rows, size, largest, checkpoints int64
 	if err := p.db.Pool.QueryRow(ctx, `SELECT count(*), COALESCE(sum(octet_length(data)),0), COALESCE(max(octet_length(data)),0),
 	 (SELECT count(*) FROM document_snapshots WHERE document_id=$1 AND generation_key=$2)
@@ -95,7 +105,7 @@ func (p *dbPersistenceStore) CompactLog(ctx context.Context, documentID, generat
 		return err
 	}
 	if current != generation {
-		return fmt.Errorf("%w: the document generation changed before the log was compacted", cloudsync.ErrBaselineReplaced)
+		return errCompactionReplaced
 	}
 	removed, err := tx.Exec(ctx, `DELETE FROM document_updates WHERE id = ANY($1)`, merged)
 	if err != nil {
