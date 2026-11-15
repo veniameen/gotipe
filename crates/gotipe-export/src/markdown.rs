@@ -133,8 +133,14 @@ fn list_to_markdown(list: &Block, emoji: &Emoji, tier: u8, outer: &str) -> Strin
         "*" => "*",
         _ => "-",
     };
+    // a loose list has a blank line between its items and before the children of an item, as in
+    // the TS writer (D-113)
+    let spread = matches!(list.attrs.get("spread"), Some(AttrValue::Bool(true)));
     let mut rendered = String::new();
     for (i, item) in list.children.iter().enumerate() {
+        if spread && i > 0 {
+            rendered.push('\n');
+        }
         let prefix = if list.block_type == "orderedList" {
             let delimiter = if attr("delimiter") == ")" { ")" } else { "." };
             format!("{}{delimiter} ", start + i)
@@ -171,13 +177,15 @@ fn list_to_markdown(list: &Block, emoji: &Emoji, tier: u8, outer: &str) -> Strin
         });
         rendered.push_str(&text);
         rendered.push('\n');
-        for child in hazards::children(shown(item)) {
+        let lines = task || !text.is_empty();
+        for (index, child) in hazards::children(shown(item)).iter().enumerate() {
             // a list that cannot interrupt the text of the item, or the `[ ]` of a task, starts
-            // after a blank line
-            if (task || !text.is_empty()) && hazards::cannot_interrupt(&child) {
+            // after a blank line; right after the marker of an item without text a blank line
+            // would end the item (D-117)
+            if (spread && (lines || index > 0)) || (lines && hazards::cannot_interrupt(child)) {
                 rendered.push('\n');
             }
-            indented(&child, emoji, tier, &indent, &mut rendered);
+            indented(child, emoji, tier, &indent, &mut rendered);
         }
     }
     rendered
