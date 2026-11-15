@@ -23,7 +23,7 @@ import {
   getDropIndicatorYForParent,
   getRowAnchorBlockIdAtPoint,
   getToolbarRailLeft,
-  getTopLevelAncestorBlockId,
+  handleTargets,
   moveDraggedBlock,
   resolveListRowDropTarget,
 } from "./block-interaction";
@@ -200,17 +200,15 @@ function BlockEditorView({
         scheduleHideToolbar();
         return;
       }
-      const actionBlockId =
-        getTopLevelAncestorBlockId(containerRef.current, anchorBlockId) ?? anchorBlockId;
       clearHideToolbarTimer();
 
       const anchorEl = getBlockElById(containerRef.current, anchorBlockId);
       if (!anchorEl) return;
-      const anchorType = anchorEl.getAttribute("data-block-type") ?? "";
-      const addBlockId =
-        anchorType === "listItem" || anchorType === "todoItem" ? anchorBlockId : actionBlockId;
-      const dragBlockId =
-        anchorType === "listItem" || anchorType === "todoItem" ? anchorBlockId : actionBlockId;
+      // A list row (or the row a block sits in) is its own unit; elsewhere the top-level block.
+      const { actionBlockId, addBlockId, dragBlockId } = handleTargets(
+        containerRef.current,
+        anchorBlockId,
+      );
       // Atlas frame 28: an RTL block's handle and reach are on its right, where its lines start.
       if (
         !inHandleReach(

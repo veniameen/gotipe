@@ -3,6 +3,7 @@ import { BubbleMenu } from "@gotipe/react";
 import { useCallback } from "react";
 import { useBlockEditorI18n } from "../i18n/strings";
 import { PageIcon, type PageIconName } from "../page/icons";
+import { aiControls } from "./ai-controls";
 import { BlockTypeDropdown } from "./block-type-dropdown";
 import { MARK_KEYS, ariaKeys } from "./formatting/keys";
 import { LinkEditor } from "./formatting/link-editor";
@@ -12,6 +13,7 @@ import { TextColorPicker } from "./text-color-picker";
 
 export interface BlockEditorBubbleMenuProps {
   editor: GoTipeEditor;
+  /** Improve first, when the editor has `defineAi` and `defineAiContext`, which answer it. */
   enableAI?: boolean;
 }
 
@@ -90,13 +92,14 @@ export function BlockEditorBubbleMenu({ editor, enableAI = false }: BlockEditorB
   const handleAIImprove = useCallback(() => {
     editor.emit("executeAiCommand", { commandId: "rewrite" });
   }, [editor]);
+  const improve = enableAI && aiControls(editor).improve;
 
   return (
     <BubbleMenu editor={editor}>
       {() => (
         <>
-          {/* AI Improve — only when AI extension loaded */}
-          {enableAI && (
+          {/* AI Improve — only when an AI extension answers it */}
+          {improve && (
             <>
               <button
                 type="button"

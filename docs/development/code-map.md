@@ -102,6 +102,12 @@ pointer, таймером удержания, capture, edge scroll и cleanup. P
 передают hit testing/indicator/move callbacks; `components/block-interaction.ts` остаётся
 владельцем разрешённого перемещения строки и одной undoable транзакции.
 
+Меню ручки (`components/block-context-menu.tsx`) действует на блок, который двигает ручка: на
+пункте списка и на блоке внутри пункта — на пункт, не на весь список (`handleTargets` в
+`components/block-interaction.ts`). Удаление (последний пункт уносит опустевший список), копия и
+сброс форматирования — `interaction/block-actions.ts`, каждое одной транзакцией; колонку без
+блоков и там, и при переносе заполняет пустой абзац (`refillColumn`).
+
 `interaction/block-text-metrics.ts` измеряет только собственный текст блока;
 `data-gotipe-text-content` имеет приоритет, controls/widgets и чужие вложенные блоки
 не могут смещать ручку или область наведения.
@@ -183,6 +189,10 @@ the model snapshot or implementing a second DOM-to-document mapper.
 `aria-describedby`; есть ли mark в схеме (шрифты панели, индексы «Ещё») — `formatting/schema.ts`.
 ⌘K (`openLinkDialog`) слушает один владелец на редактор, `formatting/link-shortcut.ts`: поле
 открывает `LinkEditor` пузыря, без пузыря — панели. Вид — `theme/src/theme/toolbar.css`.
+
+Элементы ИИ блочного редактора (Improve в пузыре, строка ⌘J, ghost text, строка состояния) есть,
+только когда им отвечает расширение `@gotipe/ai`: решает `block-editor/src/components/ai-controls.ts`
+по `editor.hasExtension(name)` ядра; компоненты без него ничего не рисуют и не слушают.
 
 Картинки и файлы в React: `react/src/content/media-view.tsx` рисует их только для чтения,
 `content/media-blocks.ts` — `MediaBlocksContext`. Редактирование (загрузка, ссылка, размер,

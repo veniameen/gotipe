@@ -2,13 +2,25 @@ import type { GoTipeEditor } from "@gotipe/core";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useBlockEditorI18n } from "../i18n/strings";
 import { PageIcon } from "../page/icons";
+import { aiControls } from "./ai-controls";
 
 export interface AiCommandBarProps {
   editor: GoTipeEditor;
   onSubmit?: (prompt: string) => void | Promise<void>;
 }
 
-export function AiCommandBar({ editor, onSubmit }: AiCommandBarProps) {
+/**
+ * The ⌘J bar. It exists only while something answers its prompt — `defineAi` with
+ * `defineAiAgent` or `defineAiContext`, or `onSubmit` with `defineAi`; otherwise there is no
+ * bar and no ⌘J.
+ */
+export function AiCommandBar(props: AiCommandBarProps) {
+  return aiControls(props.editor, props.onSubmit !== undefined).commandBar ? (
+    <CommandBar {...props} />
+  ) : null;
+}
+
+function CommandBar({ editor, onSubmit }: AiCommandBarProps) {
   const i18n = useBlockEditorI18n();
   const [visible, setVisible] = useState(false);
   const [value, setValue] = useState("");
@@ -134,7 +146,7 @@ export function AiCommandBar({ editor, onSubmit }: AiCommandBarProps) {
         await onSubmit(prompt);
         if (alive.current && generation.current === current) close(true);
       } else {
-        editor.emit("executeAiCommand", { commandId: "freeText", prompt });
+        editor.emit("executeAiCommand", { commandId: aiControls(editor).prompt, prompt });
         if (!statusSeen.current && !errorSeen.current) {
           throw new Error("AI is not available in this editor");
         }

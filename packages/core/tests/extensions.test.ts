@@ -1,5 +1,7 @@
 import { describe, it, expect } from 'vitest';
+import { DefaultPreset } from '../src/presets';
 import { defineExtension } from '../src/types/extension';
+import { ENGINES, createOn } from './engines';
 
 describe('defineExtension', () => {
   it('should create an extension with name', () => {
@@ -48,4 +50,20 @@ describe('defineExtension', () => {
     expect(ext.nodes).toHaveLength(1);
     expect(ext.marks).toHaveLength(1);
   });
+});
+
+describe('editor.hasExtension', () => {
+  for (const engine of ENGINES)
+    it(`names the extensions the editor was created with (${engine})`, async () => {
+      const own = defineExtension({ name: 'own', dependencies: ['missing'] });
+      const editor = await createOn(engine, { extensions: [DefaultPreset, [own]] });
+      // Alone, nested in an array, or in a preset.
+      expect(editor.hasExtension('own')).toBe(true);
+      expect(editor.hasExtension('paragraph')).toBe(true);
+      // A dependency nobody passed is not installed; the extension still is.
+      expect(editor.hasExtension('missing')).toBe(false);
+      expect(editor.hasExtension('ai')).toBe(false);
+      expect(editor.hasExtension('')).toBe(false);
+      editor.destroy();
+    });
 });
