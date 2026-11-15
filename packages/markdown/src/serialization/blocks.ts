@@ -7,6 +7,7 @@ import {
   listStart,
   normalizeAlign,
   richContent,
+  spansText,
 } from "../model";
 import type { Block, RawSegment, Span } from "../types";
 import { normalizeEol } from "../util";
@@ -156,18 +157,37 @@ function blankLine(indent: string): string {
   return quote < 0 ? "" : `${indent.slice(0, quote + 1)} `;
 }
 
+/** Blocks written in syntax of their own: without text they still write a line. */
+const OWN_LINE = new Set([
+  "heading",
+  "codeBlock",
+  "blockquote",
+  "callout",
+  "divider",
+  "image",
+  "file",
+  "embed",
+  "math",
+  "table",
+]);
+
 /**
- * A child that writes no line but blanks of its own, so it keeps no lists apart and is not
- * written: a paragraph without text, raw source of blanks, a list without items. Its blank line
+ * A block that writes no line but blanks of its own, so it keeps no lists apart and is not
+ * written: raw source of blanks, a list without items, and a block without syntax of its own (a
+ * paragraph, a toggle, columns) without text whose children write none (D-157). Its blank line
  * after the marker of an item without text would end the item (D-117).
  */
 export function writesNoLine(block: Block): boolean {
   if (omitted(block)) return true;
   if (block.type === "markdownRaw")
     return typeof block.content !== "string" || !/[^ \t\r\n]/.test(block.content);
-  if (["bulletList", "orderedList", "todoList"].includes(block.type))
-    return !block.children?.length;
-  return block.type === "paragraph" && isBlockEmpty(block) && !block.children?.length;
+  if (LIST_TYPES.has(block.type)) return !block.children?.length;
+  if (OWN_LINE.has(block.type)) return false;
+  const text =
+    typeof block.content === "string"
+      ? /[^ \t\r\n]/.test(block.content)
+      : spansText(richContent(block)).length > 0;
+  return !text && (block.children ?? []).every(writesNoLine);
 }
 
 /**

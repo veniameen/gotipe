@@ -188,16 +188,27 @@ fn separate(written: &mut [Written]) {
     }
 }
 
-/// A child that writes no line but blanks of its own, so it keeps no lists apart: a paragraph
-/// without text, raw source of blanks, a list without items.
+/// A block that writes no line but blanks of its own, so it keeps no lists apart: raw source of
+/// blanks, a list without items, and a block without syntax of its own (a paragraph, a toggle,
+/// columns) without text whose children write none (D-157), as `writesNoLine` of the TS writer.
 pub(super) fn writes_no_line(block: &Block) -> bool {
     match block.block_type.as_str() {
-        "paragraph" => !has_text(block) && block.children.is_empty(),
-        "markdownRaw" => crate::plaintext::block_text(block)
-            .trim_matches([' ', '\t', '\r', '\n'])
-            .is_empty(),
+        // as the TS writer, which writes raw source only from a string
+        "markdownRaw" => !matches!(block.content, BlockContent::Raw(_)) || !writes_text(block),
         _ if is_list(block) => block.children.is_empty(),
-        _ => super::omitted(block),
+        // syntax of its own is a line without text too
+        "heading" | "codeBlock" | "blockquote" | "callout" | "divider" | "image" | "file"
+        | "embed" | "math" | "table" => super::omitted(block),
+        _ => !writes_text(block) && block.children.iter().all(writes_no_line),
+    }
+}
+
+/// Whether the content of a block without syntax of its own writes a line: rich text with a
+/// character, or source with more than blanks.
+fn writes_text(block: &Block) -> bool {
+    match &block.content {
+        BlockContent::Raw(source) => !source.trim_matches([' ', '\t', '\r', '\n']).is_empty(),
+        _ => has_text(block),
     }
 }
 
@@ -321,16 +332,12 @@ pub(super) fn closed(block: &Block) -> bool {
 }
 
 /// `isBlockEmpty` of the TS writer: a block it leaves out at the top level. A block that writes no
-/// line, a list without items (D-124) or raw source of blanks, keeps no lists apart (D-123).
+/// line, a list without items (D-124), raw source of blanks or a toggle without text and children,
+/// keeps no lists apart (D-123) and takes no blank lines (D-157).
 fn empty(block: &Block) -> bool {
-    match (block.block_type.as_str(), &block.content) {
-        ("paragraph" | "heading", _) => !has_text(block),
-        _ if is_list(block) => block.children.is_empty(),
-        ("markdownRaw", BlockContent::Raw(source)) => {
-            source.trim_matches([' ', '\t', '\r', '\n']).is_empty()
-        }
-        ("markdownRaw", _) => true,
-        _ => super::omitted(block),
+    match block.block_type.as_str() {
+        "paragraph" | "heading" => !has_text(block),
+        _ => writes_no_line(block),
     }
 }
 
