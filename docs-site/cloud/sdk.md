@@ -85,7 +85,9 @@ do {
 ```
 
 A page continues after the previous page's last item, so a comment resolved or a version
-created between the requests does not make the loop skip or repeat items.
+created between the requests does not make the loop skip or repeat items. A response that
+says `has_more` without a `next_cursor` rejects with `GoTipeApiError` code
+`INVALID_RESPONSE` instead of ending the loop early.
 
 `addComment` anchors the comment to text when `from` is set (then `blockId` and `to` are
 required), to the block when only `blockId` is set, and to the document otherwise. `format` is

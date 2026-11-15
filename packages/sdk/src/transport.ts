@@ -81,7 +81,10 @@ export class Transport {
       data: response.data.map((item) => resource<T>(item)),
       hasMore: response.has_more === true,
     };
-    if (page.hasMore && response.next_cursor) page.nextCursor = response.next_cursor;
+    if (!page.hasMore) return page;
+    if (typeof response.next_cursor !== "string" || !response.next_cursor)
+      throw new GoTipeApiError("INVALID_RESPONSE", "The page has more items but no cursor", 200);
+    page.nextCursor = response.next_cursor;
     return page;
   }
 }

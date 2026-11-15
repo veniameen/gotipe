@@ -89,6 +89,13 @@ describe("Cloud SDK contracts", () => {
       "https://cloud.example/v1/documents/doc/versions?cursor=c1",
     ]);
   });
+  it("rejects a page that has more items but no cursor to them", async () => {
+    respond({ data: [], has_more: true });
+    await expect(client().listVersions("doc")).rejects.toMatchObject({
+      name: "GoTipeApiError",
+      code: "INVALID_RESPONSE",
+    });
+  });
   it("treats a list without has_more as the last page", async () => {
     respond({ data: [{ id: "c" }], next_cursor: "ignored" });
     expect(await client().listComments("doc")).toEqual({
