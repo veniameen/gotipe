@@ -5,6 +5,7 @@ import type React from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useBlockEditorI18n } from "../i18n/strings";
 import { deleteMenuBlock, duplicateMenuBlock, resetMenuBlock } from "../interaction/block-actions";
+import { copyBlockLink } from "../interaction/block-link";
 import { PageIcon, type PageIconName } from "../page/icons";
 import { BLOCK_KEYS } from "./formatting/keys";
 import { MenuKey } from "./formatting/tip";
@@ -185,13 +186,12 @@ export function BlockContextMenu({ editor, blockId, open, onClose }: BlockContex
     onClose();
   }, [editor, onClose, resolveTransformTarget]);
 
+  // the same link a heading's anchor copies; a refused clipboard is the editor's error
   const handleCopyBlockLink = useCallback(async () => {
-    const url = new URL(window.location.href);
-    url.searchParams.set("gotipe-block", blockId);
-    await navigator.clipboard.writeText(url.toString());
+    await copyBlockLink(editor, blockId, i18n.t("media.clipboardUnavailable"));
     setTurnIntoOpen(false);
     onClose();
-  }, [blockId, onClose]);
+  }, [editor, blockId, i18n, onClose]);
 
   const handleCopyToClipboard = useCallback(async () => {
     const state = editor.getViewState();

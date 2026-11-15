@@ -134,7 +134,7 @@ hidden while the editor is read-only.
 | Block menu item | Action |
 |---|---|
 | Turn into | Text, Heading 1–3, Bullet list, Numbered list, To-do list, Quote, Code block |
-| Copy link to block | Copies the page URL with `?gotipe-block=<id>`; a page opened with it scrolls to the block |
+| Copy link to block | Copies the page URL with `?gotipe-block=<id>`; a page opened with it scrolls to the block. A heading's anchor in the `docs` view copies the same link. A refused clipboard is a `CLIPBOARD_FAILED` error in the toast |
 | Duplicate | Copies the block below itself, with its children and new IDs |
 | Reset formatting | Turns the block into a paragraph and removes the marks of its text — bold, colours, links; mentions, formulas and custom emoji stay. A block with children (a toggle, a callout) keeps its type and loses only the marks; a block without text of its own (an image, a divider, a table) is left as it is |
 | Copy to clipboard | Copies the plain text of the block and its children |

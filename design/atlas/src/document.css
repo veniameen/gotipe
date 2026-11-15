@@ -139,7 +139,7 @@
   margin-bottom: 0;
   color: var(--gt-text);
   font-weight: var(--gt-weight-strong);
-  text-wrap: balance;
+  text-wrap: var(--gt-heading-wrap);
 }
 .gotipe-doc h1 {
   font-size: var(--gt-h1-size);

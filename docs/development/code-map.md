@@ -114,6 +114,13 @@ pointer, таймером удержания, capture, edge scroll и cleanup. P
 сброс форматирования — `interaction/block-actions.ts`, каждое одной транзакцией; колонку без
 блоков и там, и при переносе заполняет пустой абзац (`refillColumn`).
 
+Якорь заголовка вида docs (кадр 2, D-30): `views/heading-anchor.tsx` даёт `afterText` заголовкам,
+что перечисляет оглавление (`outlineHeadings`), и держит блок, у которого стоит ручка, — так якорь
+виден и у заголовка, которого коснулись. Ссылку на блок строит и копирует
+`interaction/block-link.ts`, общий с пунктом меню «Скопировать ссылку на блок»; открытую ссылку
+читает `react/src/editor-content.tsx`. `react/src/content/presentation.tsx` рисует `afterText`
+виджетом сразу после текста блока: вне текста и смещений документа.
+
 `interaction/block-text-metrics.ts` измеряет только собственный текст блока;
 `data-gotipe-text-content` имеет приоритет, controls/widgets и чужие вложенные блоки
 не могут смещать ручку или область наведения.

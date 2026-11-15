@@ -36,6 +36,13 @@ export const LegacyRendererContext = createContext<
 /** Placeholder text of an empty block; `null` hides it. */
 export type PlaceholderFn = (block: BlockView, parentType: string | undefined) => string | null;
 export const PlaceholderContext = createContext<PlaceholderFn | null>(null);
+
+/**
+ * What a block shows after its text, inside its element — a heading's anchor link. It is drawn
+ * as a widget: outside the document's text and offsets, and not editable. `null` draws nothing.
+ */
+export type AfterTextFn = (block: BlockView) => React.ReactNode;
+export const AfterTextContext = createContext<AfterTextFn | null>(null);
 export const PhantomContext = createContext(false);
 
 /** True while rendering suggested (phantom) blocks. */

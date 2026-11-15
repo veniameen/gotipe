@@ -10,6 +10,8 @@ import React, {
 import type { BlockRendererProps } from "./block-renderer";
 import { BlockComponent, PhantomBlocks } from "./content/blocks";
 import {
+  AfterTextContext,
+  type AfterTextFn,
   type BlockViews,
   BlockViewsContext,
   LegacyRendererContext,
@@ -21,6 +23,7 @@ import { blockKey } from "./content/presentation";
 import { SelectionKeeper } from "./content/selection-keeper";
 export { usePhantom } from "./content/context";
 export type {
+  AfterTextFn,
   BlockViewProps,
   BlockViewComponent,
   BlockViews,
@@ -49,6 +52,7 @@ export function EditorContent({
   blockRenderer,
   blockViews,
   placeholder,
+  afterText,
   hostLayers,
   ariaLabel = "Document content",
 }: {
@@ -58,6 +62,8 @@ export function EditorContent({
   blockViews?: BlockViews;
   /** Placeholder of empty blocks (shown on the focused empty block and on headings). */
   placeholder?: PlaceholderFn;
+  /** What a block with text shows after it, as a widget: a heading's anchor link. */
+  afterText?: AfterTextFn;
   /**
    * Decoration layers the host draws itself, e.g. `["collaboration"]` when it has its own
    * cursor overlay. Their decorations are left out; every other layer is drawn.
@@ -130,21 +136,23 @@ export function EditorContent({
         <BlockViewsContext.Provider value={blockViews ?? null}>
           <LegacyRendererContext.Provider value={blockRenderer ?? null}>
             <PlaceholderContext.Provider value={placeholder ?? null}>
-              {editor && (
-                <SelectionKeeper editor={editor} state={viewState}>
-                  {shown.map((block) => (
-                    <React.Fragment key={blockKey(block)}>
-                      <PhantomBlocks block={block} editor={editor} position="before" />
-                      <BlockComponent
-                        block={block}
-                        editor={editor}
-                        selectedBlockId={selectedBlockId}
-                      />
-                      <PhantomBlocks block={block} editor={editor} position="after" />
-                    </React.Fragment>
-                  ))}
-                </SelectionKeeper>
-              )}
+              <AfterTextContext.Provider value={afterText ?? null}>
+                {editor && (
+                  <SelectionKeeper editor={editor} state={viewState}>
+                    {shown.map((block) => (
+                      <React.Fragment key={blockKey(block)}>
+                        <PhantomBlocks block={block} editor={editor} position="before" />
+                        <BlockComponent
+                          block={block}
+                          editor={editor}
+                          selectedBlockId={selectedBlockId}
+                        />
+                        <PhantomBlocks block={block} editor={editor} position="after" />
+                      </React.Fragment>
+                    ))}
+                  </SelectionKeeper>
+                )}
+              </AfterTextContext.Provider>
             </PlaceholderContext.Provider>
           </LegacyRendererContext.Provider>
         </BlockViewsContext.Provider>

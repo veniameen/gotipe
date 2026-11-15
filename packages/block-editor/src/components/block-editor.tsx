@@ -7,6 +7,7 @@ import { handleRail, inHandleReach } from "../text/direction";
 import { FindBar } from "../text/find-bar";
 import { StatusLine } from "../text/status-line";
 import { codeBlockViewFor } from "../views/code-block-view";
+import { useHeadingAnchors } from "../views/heading-anchor";
 import { TableCellView } from "../views/table-cell-view";
 import { AiCommandBar } from "./ai-command-bar";
 import { AiStatusIndicator } from "./ai-status-indicator";
@@ -98,6 +99,7 @@ function BlockEditorView({
   const [suggestionIndex, setSuggestionIndex] = useState(0);
   const containerRef = useRef<HTMLDivElement>(null);
   const overlayPeers = useOverlayPeers(editor, remotePeers);
+  const afterText = useHeadingAnchors(editor, view, hoveredToolbarTarget?.anchorBlockId ?? null);
   // shared cells carry the column menu (Atlas frame 9); the host's views win
   const blockViews = useMemo<BlockViews>(
     () => ({
@@ -485,6 +487,7 @@ function BlockEditorView({
       <Editor
         editor={editor}
         blockViews={blockViews}
+        afterText={afterText}
         hostLayers={HOST_LAYERS}
         ariaLabel={ariaLabel}
         slotBefore={

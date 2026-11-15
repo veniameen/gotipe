@@ -2,7 +2,12 @@ import type { GoTipeEditor } from "@gotipe/core";
 import type React from "react";
 import type { BlockRendererProps } from "./block-renderer";
 import { EditorContext } from "./context";
-import { type BlockViews, EditorContent, type PlaceholderFn } from "./editor-content";
+import {
+  type AfterTextFn,
+  type BlockViews,
+  EditorContent,
+  type PlaceholderFn,
+} from "./editor-content";
 
 export interface EditorProps {
   editor: GoTipeEditor | null;
@@ -13,6 +18,8 @@ export interface EditorProps {
   blockViews?: BlockViews;
   /** Placeholder of empty blocks. */
   placeholder?: PlaceholderFn;
+  /** What a block with text shows after it; see `EditorContent`. */
+  afterText?: AfterTextFn;
   /** Decoration layers the host draws itself; see `EditorContent`. */
   hostLayers?: readonly string[];
   /** Accessible name of the document. */
@@ -29,6 +36,7 @@ export function Editor({
   blockRenderer,
   blockViews,
   placeholder,
+  afterText,
   hostLayers,
   ariaLabel,
   slotBefore,
@@ -46,6 +54,7 @@ export function Editor({
           blockRenderer={blockRenderer}
           blockViews={blockViews}
           placeholder={placeholder}
+          afterText={afterText}
           hostLayers={hostLayers}
           ariaLabel={ariaLabel}
         />
