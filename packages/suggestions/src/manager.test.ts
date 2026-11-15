@@ -1,7 +1,7 @@
 import { createEditor } from "@gotipe/core/js";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { SuggestionsManager } from "./manager";
-import type { Suggestion } from "./types";
+import type { Suggestion, SuggestionState } from "./types";
 
 /** The platform crypto, kept before a test stubs the global. */
 const platform = globalThis.crypto;
@@ -138,5 +138,21 @@ describe("a page served over plain HTTP (D-85)", () => {
     const tracked = manager.getSuggestions().filter((item) => item.id !== proposal.id);
     expect(tracked).toHaveLength(1);
     expect(tracked[0]!.id).toMatch(uuid);
+  });
+});
+
+describe("SuggestionState (D-47)", () => {
+  it("is what getState() returns: tracking or off, never the unused viewing", async () => {
+    const editor = await createEditor({ extensions: [] });
+    const manager = new SuggestionsManager(editor, {});
+    const seen: SuggestionState[] = [manager.getState()];
+    manager.enable();
+    seen.push(manager.getState());
+    manager.destroy();
+    editor.destroy();
+    expect(seen).toEqual(["off", "tracking"]);
+    // @ts-expect-error "viewing" was declared but never reached; typecheck fails if it returns
+    const viewing: SuggestionState = "viewing";
+    expect(viewing).toBe("viewing");
   });
 });

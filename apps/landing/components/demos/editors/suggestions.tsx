@@ -1,4 +1,4 @@
-import { BlockEditor, type Suggestion as ToolbarItem } from "@gotipe/block-editor";
+import { BlockEditor, type ToolbarSuggestion as ToolbarItem } from "@gotipe/block-editor";
 import { DefaultPreset } from "@gotipe/core/presets";
 import { useEditor } from "@gotipe/react";
 import { type Suggestion, SuggestionsManager } from "@gotipe/suggestions";

@@ -7,7 +7,7 @@ import { act } from "react";
 import { type Root, createRoot } from "react-dom/client";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { AiCommandPalette } from "./command-palette";
-import { GhostText } from "./ghost-text";
+import { AiGhostText, GhostText } from "./ghost-text";
 import { AiToolbar } from "./toolbar";
 
 let editor: GoTipeEditor;
@@ -140,7 +140,7 @@ it("ghost text only consumes unmodified Tab inside its own editable editor", () 
   const dismiss = vi.fn();
   act(() =>
     root.render(
-      <GhostText editor={editor} text="suggestion" onAccept={accept} onDismiss={dismiss} />,
+      <AiGhostText editor={editor} text="suggestion" onAccept={accept} onDismiss={dismiss} />,
     ),
   );
   const outside = new KeyboardEvent("keydown", { key: "Tab", bubbles: true, cancelable: true });
@@ -181,4 +181,9 @@ it("draws the palette's and the toolbar's words in the provider's language (D-34
     "Исправить грамматику",
     "Перевести",
   ]);
+});
+
+it("names its ghost text AiGhostText, apart from BlockEditor's GhostText (D-47)", () => {
+  // the earlier name stays as a deprecated alias of the same component
+  expect(GhostText).toBe(AiGhostText);
 });
