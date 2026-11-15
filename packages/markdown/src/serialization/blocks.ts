@@ -10,6 +10,7 @@ import {
 } from "../model";
 import type { Block, RawSegment, Span } from "../types";
 import { normalizeEol } from "../util";
+import { closingLine, copiesOpener } from "./closing";
 import { LIST_TYPES, siblingBlocks } from "./hazards";
 import type { KeptBreaks } from "./line-breaks";
 import { hasMergedCells, tableHtml } from "./table-html";
@@ -261,8 +262,8 @@ function renderList(w: Writer, block: Block, indent: string, ro: RenderOpts, nod
     let first = true;
     // a line before the child that a line without a blank one before it would continue
     let open = text;
-    for (const child of written(item.children)) {
-      if (writesNoLine(child)) continue;
+    const children = written(item.children).filter((child) => !writesNoLine(child));
+    children.forEach((child, index) => {
       w.write(ro.eol);
       // an item starts with at most one empty line: after its marker alone a blank line ends it
       // (D-117); a block that would continue the text before it starts after one (D-116)
@@ -276,9 +277,10 @@ function renderList(w: Writer, block: Block, indent: string, ro: RenderOpts, nod
       // it as a heading (D-115)
       const under = { ...inner, dividerAlt: !apart && child.type === "divider" };
       itemNode.children.push(renderBlock(w, child, contIndent, under));
+      if (index < children.length - 1) w.write(closer(child, contIndent, inner));
       first = false;
       open = !CLOSED.has(child.type);
-    }
+    });
     itemNode.end = w.pos;
     node.children.push(itemNode);
   });
@@ -500,14 +502,27 @@ function renderBlock(w: Writer, block: Block, indent: string, ro: RenderOpts): R
     const quoted = block.type === "blockquote" || block.type === "callout";
     const childIndent = quoted ? `${indent}> ` : indent;
     const gap = ro.eol + (quoted ? `${indent}>` : blankLine(indent)) + ro.eol + childIndent;
-    for (const child of written(block.children)) {
-      if (writesNoLine(child)) continue;
+    const inner = { ...ro, markerOverride: undefined };
+    const children = written(block.children).filter((child) => !writesNoLine(child));
+    children.forEach((child, index) => {
       if (w.pos > node.start) w.write(gap);
-      node.children.push(renderBlock(w, child, childIndent, { ...ro, markerOverride: undefined }));
-    }
+      node.children.push(renderBlock(w, child, childIndent, inner));
+      if (index < children.length - 1) w.write(closer(child, childIndent, inner));
+    });
   }
   node.end = w.pos;
   return node;
+}
+
+/**
+ * The closing line of `child`, written after `indent`, where another block follows it in its
+ * container (D-111): raw source that only the end of its file ends, at any depth of a block
+ * without syntax of its own, reads the next block as its part. "" for a block that ends itself.
+ */
+function closer(child: Block, indent: string, ro: RenderOpts): string {
+  if (!copiesOpener(child)) return "";
+  const line = closingLine(renderTop(child, ro).md, "", ro.eol);
+  return line && (/^[\r\n]/.test(line) ? "" : indent) + rawLines(line, indent);
 }
 
 export function renderTop(block: Block, ro: RenderOpts): { md: string; node: RNode } {

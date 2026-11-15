@@ -3,7 +3,7 @@
 use gotipe_core::{AttrValue, Block};
 
 use super::{
-    followers, hazards,
+    block_to_markdown, followers, hazards,
     inline::content_to_markdown,
     own_lines, shown,
     units::{Kind, Options},
@@ -103,7 +103,8 @@ pub(super) fn list_to_markdown(list: &Block, emoji: &Emoji, tier: u8, outer: &st
         let lines = task || !text.is_empty();
         // a line before the child that a line without a blank one before it would continue
         let mut open = lines;
-        for (index, child) in hazards::children(shown(item)).iter().enumerate() {
+        let children = hazards::children(shown(item));
+        for (index, child) in children.iter().enumerate() {
             // a list that cannot interrupt the text of the item, or the `[ ]` of a task, starts
             // after a blank line, as a block that would continue the text before it (D-116);
             // right after the marker of an item without text a blank line would end the item
@@ -118,10 +119,28 @@ pub(super) fn list_to_markdown(list: &Block, emoji: &Emoji, tier: u8, outer: &st
             // above it as a heading (D-115)
             let stars = !apart && child.block_type == "divider";
             indented(child, emoji, tier, &indent, stars, &mut rendered);
+            if index + 1 < children.len() {
+                close_indented(child, emoji, tier, &indent, &mut rendered);
+            }
             open = !hazards::closed(child);
         }
     }
     rendered
+}
+
+/// The closing line of `child` under a list item, each line after `indent` (`close`).
+fn close_indented(child: &Block, emoji: &Emoji, tier: u8, indent: &str, out: &mut String) {
+    if !hazards::copies_opener(child) {
+        return;
+    }
+    let markdown = block_to_markdown(child, emoji, tier);
+    let end = markdown.strip_suffix('\n').map_or(markdown.len(), str::len);
+    let line = crate::markdown_parse::structure::closing_line(&markdown[..end]);
+    for text in line.split(['\r', '\n']).filter(|text| !text.is_empty()) {
+        out.push_str(indent);
+        out.push_str(text);
+        out.push('\n');
+    }
 }
 
 /// `block` as a child of a list item, each line after `indent`, as `block_to_markdown` writes it;
@@ -142,10 +161,14 @@ fn indented(block: &Block, emoji: &Emoji, tier: u8, indent: &str, stars: bool, o
         out.push_str(line);
         out.push('\n');
     }
-    for child in followers(block) {
+    let children = followers(block);
+    for (index, child) in children.iter().enumerate() {
         if out.len() > start {
             out.push('\n');
         }
-        indented(&child, emoji, tier, indent, false, out);
+        indented(child, emoji, tier, indent, false, out);
+        if index + 1 < children.len() {
+            close_indented(child, emoji, tier, indent, out);
+        }
     }
 }
