@@ -190,7 +190,7 @@ fn separate(written: &mut [Written]) {
 
 /// A child that writes no line but blanks of its own, so it keeps no lists apart: a paragraph
 /// without text, raw source of blanks, a list without items.
-fn writes_no_line(block: &Block) -> bool {
+pub(super) fn writes_no_line(block: &Block) -> bool {
     match block.block_type.as_str() {
         "paragraph" => !has_text(block) && block.children.is_empty(),
         "markdownRaw" => crate::plaintext::block_text(block)
@@ -268,18 +268,67 @@ fn remarked_source(source: &str, marker: char) -> Option<String> {
 /// text of a list item it starts after a blank line.
 pub(super) fn cannot_interrupt(list: &Block) -> bool {
     match list.block_type.as_str() {
-        "orderedList" if super::list_start(list) != 1 => true,
+        "orderedList" if super::lists::list_start(list) != 1 => true,
         "bulletList" | "orderedList" => list.children.first().is_none_or(|item| !has_text(item)),
         "todoList" => list.children.is_empty(),
         _ => false,
     }
 }
 
-/// `isBlockEmpty` of the TS writer: a block it leaves out at the top level.
+/// Whether the first line of `block` reads as more of the text before it, the item's or that of
+/// the last line of a nested list or a quote, as `continuesText` of the TS writer (D-116): a
+/// paragraph, a link line, a table, `$$` and raw HTML do not interrupt it; raw source of a list
+/// or a quote does. Lists have `cannot_interrupt`.
+pub(super) fn continues_text(block: &Block) -> bool {
+    match block.block_type.as_str() {
+        "markdownRaw" => !matches!(
+            block.attrs.get("kind"),
+            Some(AttrValue::String(kind)) if kind == "list" || kind == "blockquote"
+        ),
+        "heading" | "codeBlock" | "blockquote" | "callout" | "divider" => false,
+        _ => !is_list(block),
+    }
+}
+
+/// Whether `block` or a block inside it is source written as it is with a line that opens a fence
+/// or HTML, as `copiesOpener` of the TS writer: only such a block can run on to the end of its
+/// file (D-106, D-111). The writer ends a code block and a formula itself.
+pub(super) fn copies_opener(block: &Block) -> bool {
+    let copied = match &block.content {
+        BlockContent::Raw(source) => {
+            !matches!(block.block_type.as_str(), "codeBlock" | "math") && opens(source)
+        }
+        _ => false,
+    };
+    copied || block.children.iter().any(copies_opener)
+}
+
+/// Whether a line of `source` starts a fence or HTML, after at most three spaces.
+fn opens(source: &str) -> bool {
+    source.split(['\r', '\n']).any(|line| {
+        let rest = line.trim_start_matches(' ');
+        line.len() - rest.len() <= 3
+            && (rest.starts_with("```") || rest.starts_with("~~~") || rest.starts_with('<'))
+    })
+}
+
+/// Whether the last line of `block` ends it, so that a line after it starts a block of its own.
+pub(super) fn closed(block: &Block) -> bool {
+    matches!(
+        block.block_type.as_str(),
+        "heading" | "codeBlock" | "math" | "divider"
+    )
+}
+
+/// `isBlockEmpty` of the TS writer: a block it leaves out at the top level. A block that writes no
+/// line, a list without items (D-124) or raw source of blanks, keeps no lists apart (D-123).
 fn empty(block: &Block) -> bool {
     match (block.block_type.as_str(), &block.content) {
         ("paragraph" | "heading", _) => !has_text(block),
-        ("markdownRaw", BlockContent::Raw(source)) => source.is_empty(),
+        _ if is_list(block) => block.children.is_empty(),
+        ("markdownRaw", BlockContent::Raw(source)) => {
+            source.trim_matches([' ', '\t', '\r', '\n']).is_empty()
+        }
         ("markdownRaw", _) => true,
         _ => super::omitted(block),
     }

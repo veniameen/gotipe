@@ -124,10 +124,10 @@ describe("neighbouring lists in an item (D-105)", () => {
   });
 
   it("take other markers around a list without items, which writes no line", () => {
-    // the Rust writer writes the empty list as nothing (tests/markdown_write_read.rs)
+    // neither writer writes the empty list (D-117, tests/markdown_write_read.rs)
     const around = list([item("x", [list([item("a")]), list([]), list([item("b")])])]);
     const written = serializeMarkdown(doc(around)).text;
-    expect(written).toBe("- x\n  - a\n\n  \n  * b\n");
+    expect(written).toBe("- x\n  - a\n  * b\n");
     const nested = parseMarkdown(written).doc.blocks[0]!.children[0]!.children;
     expect(nested.map((block) => block.attrs.marker)).toEqual(["-", "*"]);
   });

@@ -2,8 +2,8 @@ import { atomsIn, carried } from "./atoms";
 import { writeInline } from "./inline-serialize";
 import { RICH_TYPES, asWritten, fingerprint, isBlockEmpty, richContent } from "./model";
 import { parseInternal } from "./parse";
-import { type RNode, type RenderOpts, renderTop } from "./serialization/blocks";
-import { closingLine } from "./serialization/closing";
+import { type RNode, type RenderOpts, renderTop, writesNoLine } from "./serialization/blocks";
+import { closingLine, copiesOpener } from "./serialization/closing";
 import {
   LIST_TYPES,
   type Neighbour,
@@ -144,9 +144,29 @@ function keptLines(
   return (inner) => {
     if (!cache.has(inner.id)) {
       const before = lines.get(inner.id);
-      cache.set(inner.id, before && keptBreaks(before, blockText(inner)));
+      const text = blockText(inner);
+      cache.set(inner.id, before && withoutMathLine(keptBreaks(before, text), text));
     }
     return cache.get(inner.id);
+  };
+}
+
+/** A first line of its own `$$`, which a later such line closes as a formula (`mathFence`). */
+const MATH_OPENER = /^ {0,3}\$\$[ \t]*(?:\r\n?|\n)/;
+/** A later line of its own `$$`. */
+const MATH_LINE = /(?:\r\n?|\n) {0,3}\$\$[ \t]*(?:\r\n?|\n|$)/;
+
+/**
+ * The kept line breaks of a text that starts with `$$`, without those after it (D-109): a line
+ * of its own `$$` reads as text only while no later line closes it as a formula.
+ */
+function withoutMathLine(kept: KeptBreaks, text: string): KeptBreaks {
+  const lead = /^\$\$[ \t\n]+/.exec(text);
+  if (!lead) return kept;
+  const after = (offset: number): boolean => offset >= lead[0].length;
+  return {
+    soft: new Set([...kept.soft].filter(after)),
+    spelling: new Map([...kept.spelling].filter(([offset]) => after(offset))),
   };
 }
 
@@ -373,7 +393,9 @@ export function serializeMarkdown(doc: Doc, snapshot?: MarkdownSnapshot): Serial
     if (oi >= 0) usedOrig.add(oi);
     const fp = fingerprint(block);
     const preserved = oi >= 0 && snap!.blocks[oi]!.fingerprint === fp;
-    if (!preserved && isBlockEmpty(block)) continue;
+    // a block that writes no line, such as a list without items (D-124) or raw source of blanks,
+    // keeps no lists apart (D-123): it is not written
+    if (!preserved && (isBlockEmpty(block) || writesNoLine(block))) continue;
     items.push({ block, oi, preserved, fp, md: "", start: 0, end: 0 });
   }
   resolveHazards(items, snap, fm, (item) => (snap ? sourceIndent(item, snap) : ""));
@@ -401,10 +423,9 @@ export function serializeMarkdown(doc: Doc, snapshot?: MarkdownSnapshot): Serial
       item.node = r.node;
     }
     // a block the end of its file ended takes in the next one: written as it is, it gets its end
-    // (D-106); the writer ends a code block and a formula itself
-    const copied = item.preserved
-      ? item.oi === snap!.blocks.length - 1
-      : typeof item.block.content === "string" && !["codeBlock", "math"].includes(item.block.type);
+    // (D-106), as a block whose last child is such source (D-111); the writer ends a code block
+    // and a formula itself
+    const copied = item.preserved ? item.oi === snap!.blocks.length - 1 : copiesOpener(item.block);
     if (copied && item !== items[items.length - 1]) {
       item.md += closingLine(item.md, item.preserved ? sourceIndent(item, snap!) : "", eol);
     }
@@ -437,7 +458,10 @@ export function serializeMarkdown(doc: Doc, snapshot?: MarkdownSnapshot): Serial
       item.end = text.length;
     });
     const last = items[items.length - 1]!;
-    text += snap && last.oi >= 0 && last.oi === snap.blocks.length - 1 ? snap.trailing : eol;
+    if (snap && last.oi >= 0 && last.oi === snap.blocks.length - 1) text += snap.trailing;
+    // a block the end of its file ends (`<pre>` without `</pre>`) takes in the line ending of the
+    // file: with one, each writing and reading would add a line to it (D-110)
+    else if (!closingLine(last.md, "", eol)) text += eol;
     return text;
   };
   let text = assemble();
@@ -451,6 +475,21 @@ export function serializeMarkdown(doc: Doc, snapshot?: MarkdownSnapshot): Serial
       text = assemble();
     }
   }
+
+  // an untouched paragraph whose first line is `$$` read as text: a later line of its own `$$`
+  // would make a formula of everything between them, so it is written again without that line
+  const opened = items.filter(
+    (item) =>
+      item.preserved &&
+      item.block.type === "paragraph" &&
+      MATH_OPENER.test(item.md) &&
+      MATH_LINE.test(text.slice(item.end)),
+  );
+  for (const item of opened) {
+    item.preserved = false;
+    render(item);
+  }
+  if (opened.length > 0) text = assemble();
 
   const blocks: SnapshotBlock[] = [];
   const mapBlocks: MapBlock[] = [];

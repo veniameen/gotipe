@@ -1,7 +1,8 @@
 //! A document written as Markdown reads back as the same document (D-97): blanks at the edges
 //! of text and cells, emphasis at the edges of words, typed addresses, the start of a block and
 //! a link title with a blank line; lines after list items, verbatim text in merged cells, lists
-//! in quotes and in items (D-101, D-103–D-105). The fixtures are written by `@gotipe/markdown`;
+//! in quotes and in items (D-101, D-103–D-105); children of blocks, spread lists, raw source in
+//! items and quotes (D-109–D-124). The fixtures are written by `@gotipe/markdown`;
 //! its own test (`packages/markdown/src/write-read.test.ts`) checks the same cases.
 use gotipe_core::defaults::default_block_editor;
 use gotipe_export::{
@@ -28,10 +29,11 @@ fn normalize(value: &mut Value) {
     }
 }
 
-fn fixtures() -> [Value; 2] {
+fn fixtures() -> [Value; 3] {
     [
         include_str!("fixtures/markdown-write-read.json"),
         include_str!("fixtures/markdown-nested-write-read.json"),
+        include_str!("fixtures/markdown-writer-blocks.json"),
     ]
     .map(|text| serde_json::from_str(text).unwrap())
 }
@@ -300,7 +302,8 @@ fn two_raw_lists_in_a_toggle_are_kept_apart() {
 #[test]
 fn a_list_without_items_keeps_no_lists_apart() {
     // D-105: it writes no line, so the lists around it take other markers, as
-    // `packages/markdown/src/lists.test.ts` checks for the TS writer
+    // `packages/markdown/src/lists.test.ts` checks for the TS writer; neither writer writes it
+    // (D-117)
     let none = bullets("n", serde_json::json!([]), "-");
     let a = bullets(
         "a",
@@ -318,7 +321,7 @@ fn a_list_without_items_keeps_no_lists_apart() {
         serde_json::json!([x]),
         "-"
     )]));
-    assert_eq!(markdown, "- x\n  - a\n\n  * b\n");
+    assert_eq!(markdown, "- x\n  - a\n  * b\n");
     let nested = &blocks(&markdown)[0]["children"][0]["children"];
     assert_eq!(nested[0]["attrs"]["marker"], "-");
     assert_eq!(nested[1]["attrs"]["marker"], "*");
