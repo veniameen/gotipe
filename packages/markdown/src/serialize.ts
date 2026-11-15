@@ -3,6 +3,7 @@ import { writeInline } from "./inline-serialize";
 import { RICH_TYPES, asWritten, fingerprint, isBlockEmpty, richContent } from "./model";
 import { parseInternal } from "./parse";
 import { type RNode, type RenderOpts, renderTop } from "./serialization/blocks";
+import { closingLine } from "./serialization/closing";
 import {
   LIST_TYPES,
   type Neighbour,
@@ -186,7 +187,7 @@ const withoutIndent = (s: string): string => s.slice(0, s.length - indentOf(s).l
  * The blanks before the first line of a block in its source. The snapshot keeps them at the end
  * of the gap before the block (of `leading` before the first one), not in the block (D-102).
  */
-function sourceIndent(item: Item, snap: MarkdownSnapshot): string {
+function sourceIndent(item: Neighbour, snap: MarkdownSnapshot): string {
   return indentOf(item.oi === 0 ? snap.leading : (snap.gaps[item.oi - 1] ?? ""));
 }
 
@@ -375,7 +376,7 @@ export function serializeMarkdown(doc: Doc, snapshot?: MarkdownSnapshot): Serial
     if (!preserved && isBlockEmpty(block)) continue;
     items.push({ block, oi, preserved, fp, md: "", start: 0, end: 0 });
   }
-  resolveHazards(items, snap, fm);
+  resolveHazards(items, snap, fm, (item) => (snap ? sourceIndent(item, snap) : ""));
   // Names of the document's custom emoji: typed text that looks like one is escaped.
   const registry: InlineAtoms = {};
   for (const block of doc?.blocks ?? []) if (block) atomsIn(block, registry);
@@ -384,7 +385,7 @@ export function serializeMarkdown(doc: Doc, snapshot?: MarkdownSnapshot): Serial
   const render = (item: Item): void => {
     if (item.preserved && snap) {
       const sb = snap.blocks[item.oi]!;
-      item.md = snap.text.slice(sb.start, sb.end);
+      item.md = item.raw ?? snap.text.slice(sb.start, sb.end);
       item.node = undefined;
     } else {
       const r = renderVerified(item.block, eol, {
@@ -396,8 +397,16 @@ export function serializeMarkdown(doc: Doc, snapshot?: MarkdownSnapshot): Serial
             ? keptLines(snap.text, snap.blocks[item.oi]!, item.block, emoji)
             : undefined,
       });
-      item.md = r.md;
+      item.md = item.raw ?? r.md;
       item.node = r.node;
+    }
+    // a block the end of its file ended takes in the next one: written as it is, it gets its end
+    // (D-106); the writer ends a code block and a formula itself
+    const copied = item.preserved
+      ? item.oi === snap!.blocks.length - 1
+      : typeof item.block.content === "string" && !["codeBlock", "math"].includes(item.block.type);
+    if (copied && item !== items[items.length - 1]) {
+      item.md += closingLine(item.md, item.preserved ? sourceIndent(item, snap!) : "", eol);
     }
   };
   for (const item of items) render(item);
@@ -462,6 +471,8 @@ export function serializeMarkdown(doc: Doc, snapshot?: MarkdownSnapshot): Serial
       segs = [];
       tree = rnodeToSnapshot(item.node!, segs);
     }
+    // the block with the end it got (D-106)
+    tree.end = item.end - item.start;
     blocks.push({
       id: item.block.id,
       type: item.block.type,

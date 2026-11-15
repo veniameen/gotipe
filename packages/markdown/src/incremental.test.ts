@@ -590,3 +590,237 @@ describe("structural hazards", () => {
     expect(parseMarkdown(out).doc.blocks.map((b) => b.type)).toEqual(["table", "heading"]);
   });
 });
+
+// D-106: a fence, or HTML that ends only at its own end, which the end of its file ended takes in
+// a block written after it; with another block after it, it gets its end
+describe("a block the end of its file ended (D-106)", () => {
+  const para = (text: string): Block => ({
+    id: `new-${text}`,
+    type: "paragraph",
+    attrs: {},
+    content: plain(text),
+    children: [],
+  });
+  const append = (blocks: Block[]): void => {
+    blocks.push(para("new"));
+  };
+  const lastFirst = (blocks: Block[]): void => {
+    blocks.unshift(blocks.pop()!);
+  };
+  const shape = (blocks: Block[]): unknown[] =>
+    blocks.map((b) => [b.type, typeof b.content === "string" ? b.content : fingerprint(b)]);
+
+  it.each<[string, string, (blocks: Block[]) => void, string]>([
+    ["a fence", "a\n\n```\nx\n", append, "a\n\n```\nx\n```\n\nnew\n"],
+    ["a fence without a last line ending", "a\n\n```\nx", append, "a\n\n```\nx\n```\n\nnew\n"],
+    [
+      "a fence with empty lines at its end",
+      "a\n\n```\nx\n\n\n",
+      append,
+      "a\n\n```\nx\n\n\n```\n\nnew\n",
+    ],
+    ["a fence of tildes with info", "a\n\n~~~~ js\nx\n", append, "a\n\n~~~~ js\nx\n~~~~\n\nnew\n"],
+    ["an indented fence", "a\n\n  ```\n  x\n", append, "a\n\n  ```\n  x\n```\n\nnew\n"],
+    ["a formula fence", "a\n\n```math\nx\n", append, "a\n\n```math\nx\n```\n\nnew\n"],
+    ["a fence moved before a block", "a\n\n```\nx\n", lastFirst, "```\nx\n```\n\na\n"],
+    [
+      "a fence with CRLF",
+      "a\r\n\r\n```\r\nx\r\n",
+      append,
+      "a\r\n\r\n```\r\nx\r\n```\r\n\r\nnew\r\n",
+    ],
+    [
+      "a fence that ends with a lone CR in an LF file",
+      "a\n\nb\n\n```\rx\r\r",
+      append,
+      "a\n\nb\n\n```\rx\r\r```\n\nnew\n",
+    ],
+  ])("D-106: %s gets its closing fence", (_, text, edit, out) => {
+    const { doc, snapshot } = setup(text);
+    edit(doc.blocks);
+    expect(serializeMarkdown(doc, snapshot).text).toBe(out);
+    expect(parseMarkdown(out).doc.blocks.map((b) => fingerprint(b))).toEqual(
+      doc.blocks.map((b) => fingerprint(b)),
+    );
+  });
+
+  it.each<[string, string, (blocks: Block[]) => void, string, string]>([
+    ["raw <pre>", "a\n\n<pre>\nx\n", append, "a\n\n<pre>\nx\n</pre>\n\nnew\n", "<pre>\nx\n</pre>"],
+    [
+      "raw <pre> moved before a block",
+      "a\n\n<pre>\nx",
+      lastFirst,
+      "<pre>\nx\n</pre>\n\na\n",
+      "<pre>\nx\n</pre>",
+    ],
+    [
+      "a raw comment with CRLF",
+      "a\r\n\r\n<!-- x\r\n",
+      append,
+      "a\r\n\r\n<!-- x\r\n-->\r\n\r\nnew\r\n",
+      "<!-- x\r\n-->",
+    ],
+    [
+      "raw <SCRIPT>",
+      "a\n\n<SCRIPT>\nx\n",
+      append,
+      "a\n\n<SCRIPT>\nx\n</script>\n\nnew\n",
+      "<SCRIPT>\nx\n</script>",
+    ],
+    [
+      "a raw declaration",
+      "a\n\n<!DOCTYPE x\n",
+      append,
+      "a\n\n<!DOCTYPE x\n>\n\nnew\n",
+      "<!DOCTYPE x\n>",
+    ],
+  ])("D-106: %s gets its end on a line of its own", (_, text, edit, out, raw) => {
+    const { doc, snapshot } = setup(text);
+    edit(doc.blocks);
+    expect(serializeMarkdown(doc, snapshot).text).toBe(out);
+    // the raw source gains its end; the blocks stay apart
+    const read = parseMarkdown(out).doc.blocks;
+    const want = doc.blocks.map((b) => (b.type === "markdownRaw" ? { ...b, content: raw } : b));
+    expect(shape(read)).toEqual(shape(want));
+  });
+
+  it.each<[string, string, (blocks: Block[]) => void, string]>([
+    [
+      "an open fence that stays the last block",
+      "a\n\n```\nx\n",
+      (b) => {
+        b[0]!.content = plain("a!");
+      },
+      "a!\n\n```\nx\n",
+    ],
+    [
+      "indented code that looks like a fence",
+      "a\n\n    ```\n    x\n",
+      append,
+      "a\n\n    ```\n    x\n\nnew\n",
+    ],
+    ["a closed fence", "a\n\n```\nx\n```\n", append, "a\n\n```\nx\n```\n\nnew\n"],
+    ["HTML that ends at a blank line", "a\n\n<div>\nx\n", append, "a\n\n<div>\nx\n\nnew\n"],
+    ["a fence inside a list", "- a\n  ```\n  x\n", append, "- a\n  ```\n  x\n\nnew\n"],
+  ])("D-106: %s gets nothing", (_, text, edit, out) => {
+    const { doc, snapshot } = setup(text);
+    edit(doc.blocks);
+    expect(serializeMarkdown(doc, snapshot).text).toBe(out);
+    expect(shape(parseMarkdown(out).doc.blocks)).toEqual(shape(doc.blocks));
+  });
+
+  it("D-106: the returned snapshot and its map hold the end the block got", () => {
+    const { doc, snapshot } = setup("a\n\n```\nx\n");
+    doc.blocks.push(para("new"));
+    const first = serializeMarkdown(doc, snapshot);
+    const code = first.snapshot.blocks[1]!;
+    expect(first.text.slice(code.start, code.end)).toBe("```\nx\n```");
+    expect(first.map.blocks.find((b) => b.blockId === code.id)).toMatchObject({
+      start: code.start,
+      end: code.end,
+    });
+    expect(serializeMarkdown(doc, first.snapshot).text).toBe(first.text);
+    // the last block again, the fence keeps its end
+    doc.blocks.pop();
+    expect(serializeMarkdown(doc, first.snapshot).text).toBe("a\n\n```\nx\n```\n");
+  });
+});
+
+// D-107: raw source is written as it is, so a raw list keeps its marker; next to a raw list of
+// the same marker, the items of the later one take another marker
+describe("neighbouring raw lists with one marker (D-107)", () => {
+  /** The source of a raw list without the markers of its items, which the writer may change. */
+  const items = (blocks: Block[]): unknown[] =>
+    blocks.map((b) =>
+      typeof b.content === "string"
+        ? [b.type, b.content.replace(/^([ \t]*\d{0,9})[-*+.)](?=[ \t\r\n]|$)/gm, "$1•")]
+        : fingerprint(b),
+    );
+  const deleteSecond = (blocks: Block[]): void => {
+    blocks.splice(1, 1);
+  };
+
+  it.each([
+    ["raw bullet lists", "- a\n\n  b\n-\n\n   - c\n\n     d\n"],
+    ["raw numbered lists", "1. a\n\n   b\n2.\n\n   3. c\n\n      d\n"],
+    ["lists", "- a\n-\n\n   - c\n"],
+  ])("D-107: neighbouring %s that read apart in the source keep their bytes", (_, text) => {
+    const { doc, snapshot } = setup(text);
+    expect(doc.blocks).toHaveLength(2);
+    expect(serializeMarkdown(doc, snapshot).text).toBe(text);
+  });
+
+  it.each<[string, string, (blocks: Block[]) => void, string]>([
+    [
+      "items of paragraphs",
+      "- a\n\n  b\n\nq\n\n- c\n\n  d\n",
+      deleteSecond,
+      "- a\n\n  b\n\n* c\n\n  d\n",
+    ],
+    [
+      "mixed tasks",
+      "- [ ] a\n- b\n\nq\n\n- [x] c\n- d\n",
+      deleteSecond,
+      "- [ ] a\n- b\n\n* [x] c\n* d\n",
+    ],
+    [
+      "numbered items",
+      "1. a\n\n   b\n\nq\n\n1. c\n\n   d\n",
+      deleteSecond,
+      "1. a\n\n   b\n\n1) c\n\n   d\n",
+    ],
+    [
+      "a list moved away from between them",
+      "- a\n\n  b\n\n* x\n\n- c\n\n  d\n",
+      (b) => b.push(...b.splice(1, 1)),
+      "- a\n\n  b\n\n+ c\n\n  d\n\n* x\n",
+    ],
+    [
+      "three lists",
+      "- a\n\n  b\n\nq\n\n- c\n\n  d\n\nr\n\n- e\n\n  f\n",
+      (b) => {
+        b.splice(3, 1);
+        b.splice(1, 1);
+      },
+      "- a\n\n  b\n\n* c\n\n  d\n\n- e\n\n  f\n",
+    ],
+    [
+      "an item that `*` would make a thematic break",
+      "- a\n\n  b\n\nq\n\n- * *\n\n  c\n",
+      deleteSecond,
+      "- a\n\n  b\n\n+ * *\n\n  c\n",
+    ],
+    [
+      "no marker that keeps the later one list: the earlier takes another",
+      "+ a\n\n  b\n\nq\n\n+ - -\n+ * *\n\n  c\n",
+      deleteSecond,
+      "- a\n\n  b\n\n+ - -\n+ * *\n\n  c\n",
+    ],
+    [
+      "a numbered list between them that cannot take another delimiter",
+      "1. o\n1) o\n1. a\n\n   b\n",
+      (b) => b.unshift(...b.splice(1, 1)),
+      "1) o\n\n1. o\n\n1) a\n\n   b\n",
+    ],
+    [
+      "an indented list",
+      "- a\n\n  b\n\nq\n\n - c\n\n   d\n",
+      deleteSecond,
+      "- a\n\n  b\n\n * c\n\n   d\n",
+    ],
+    [
+      "a CRLF file",
+      "- a\r\n\r\n  b\r\n\r\nq\r\n\r\n- c\r\n\r\n  d\r\n",
+      deleteSecond,
+      "- a\r\n\r\n  b\r\n\r\n* c\r\n\r\n  d\r\n",
+    ],
+  ])("D-107: raw lists stay apart from their neighbours: %s", (_, text, edit, out) => {
+    const { doc, snapshot } = setup(text);
+    edit(doc.blocks);
+    const written = serializeMarkdown(doc, snapshot);
+    expect(written.text).toBe(out);
+    expect(items(parseMarkdown(out).doc.blocks)).toEqual(items(doc.blocks));
+    // the returned snapshot writes them the same way again
+    expect(serializeMarkdown(doc, written.snapshot).text).toBe(out);
+  });
+});
