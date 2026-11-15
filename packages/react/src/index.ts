@@ -19,6 +19,7 @@ export { TextRenderer, Widget } from "./text-renderer";
 export type { TextRendererProps } from "./text-renderer";
 export { usePhantom } from "./editor-content";
 export type {
+  AfterTextFn,
   BlockViewProps,
   BlockViewComponent,
   BlockViews,

@@ -64,7 +64,7 @@
 }
 .gotipe-heading-anchor {
   display: var(--gt-anchor-display);
-  position: var(--gt-anchor-holder);
+  position: relative;
   visibility: hidden;
 }
 .gotipe-doc > .is-hovered > .gotipe-heading-anchor {
@@ -73,7 +73,7 @@
 .gotipe-anchor-button {
   position: absolute;
   top: 50%;
-  left: var(--gt-anchor-x);
+  left: var(--gt-anchor-gap);
   display: grid;
   place-items: center;
   width: var(--gt-handle-w);
@@ -85,15 +85,4 @@
 .gotipe-anchor-button.is-hover {
   background: var(--gt-fill-2);
   color: var(--gt-text);
-}
-
-/* ---- D-30, the variant «the handle at every block»: at rest the grip alone, quieter ---- */
-.gotipe-doc > :has(> .gotipe-block-handle.is-rest) {
-  position: relative;
-}
-.gotipe-block-handle.is-rest {
-  color: var(--gt-handle-rest);
-}
-.gotipe-block-handle.is-rest > :first-child {
-  visibility: hidden;
 }

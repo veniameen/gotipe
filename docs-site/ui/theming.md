@@ -42,13 +42,17 @@ Pass `view` to `BlockEditor` or `PageEditor`; it becomes `data-gt-view` on the e
 | View | Column | Body | Title | Also |
 |---|---|---|---|---|
 | `notion` (default) | 680 px | 15/24 px | 32 px | Block handle in the gutter |
-| `docs` | 680 px | 14/22 px | 28 px | Outline of headings beside the text, line numbers in code, no handle |
+| `docs` | 680 px | 14/22 px | 28 px | Outline of headings beside the text, line numbers in code, block handle in the gutter, `#` anchor after each heading |
 | `modern` | 680 px | 15/24 px | 28 px | Less space above the title, no handle |
 | `minimal` | 640 px | 14/22 px | 22 px | Tighter spacing and 24 px side padding, no handle |
 
 The editor root is a size container. In a container 640 px wide or less, the side padding,
 heading sizes and title shrink and the `docs` outline hides; at 359 px or less they shrink
-again. The editor takes its width from its parent: in a layout that sizes by content, give
+again. There `notion` and `docs` keep a rail of `--gt-handle-rail` (56 px) on the left for the
+block handle. In `docs`,
+`--gt-outline-gap` (64 px) is the gutter the handle stands in, `--gt-anchor-display` shows the
+heading anchors (`none` hides them), `--gt-anchor-room` is the room a heading keeps for its anchor
+at the end of its lines and `--gt-heading-wrap` how such a heading wraps (`pretty`). The editor takes its width from its parent: in a layout that sizes by content, give
 the parent a width.
 
 ## Light and dark

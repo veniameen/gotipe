@@ -108,6 +108,82 @@ describe("EditorContent rendering contracts", () => {
     expect(container.querySelector("[data-block-id=body]")?.textContent).toBe("legacy");
   });
 
+  it("draws afterText right after a block's text as a widget, in default and custom views", () => {
+    const after = (block: { id: string; type: string }) =>
+      block.type === "heading" ? <b className="after">#</b> : null;
+    act(() => root.render(<EditorContent editor={editor} afterText={after} />));
+    const heading = container.querySelector("[data-block-id=heading]")!;
+    const widget = heading.lastElementChild!;
+    // outside the document's text and offsets, and not editable
+    expect(widget.matches("span[data-gotipe-widget][contenteditable=false]")).toBe(true);
+    expect(widget.innerHTML).toBe('<b class="after">#</b>');
+    expect(heading.textContent).toBe("Title#");
+    expect(editor.getText()).toContain("Title");
+    expect(editor.getText()).not.toContain("#");
+    expect(container.querySelector("[data-block-id=body] [data-gotipe-widget]")).toBeNull();
+
+    // a custom view gets it with its `content`
+    act(() =>
+      root.render(
+        <EditorContent
+          editor={editor}
+          afterText={after}
+          blockViews={{
+            heading: ({ rootProps, content }) => (
+              <h3 {...rootProps} className="custom">
+                {content}
+              </h3>
+            ),
+          }}
+        />,
+      ),
+    );
+    expect(container.querySelector("h3.custom .after")).not.toBeNull();
+  });
+
+  it("draws no afterText in a block without text or in a suggested block", () => {
+    act(() => {
+      editor.setContent({
+        version: 1,
+        blocks: [
+          { id: "empty", type: "heading", attrs: { level: 2 }, content: [], children: [] },
+          {
+            id: "full",
+            type: "heading",
+            attrs: { level: 2 },
+            content: [{ text: "Full", marks: [] }],
+            children: [],
+          },
+        ],
+      });
+      root.render(<EditorContent editor={editor} afterText={() => <b className="after" />} />);
+      editor.setDecorations("review", [
+        {
+          type: "blocks",
+          key: "suggested",
+          blockId: "full",
+          position: "after",
+          blocks: [
+            {
+              id: "suggested",
+              type: "heading",
+              attrs: { level: 2 },
+              content: [{ text: "Proposed", marks: [] }],
+              children: [],
+              decorations: [],
+            },
+          ],
+        },
+      ]);
+    });
+    expect(container.querySelector("[data-block-id=empty] .after")).toBeNull();
+    expect(container.querySelector("[data-block-id=full] .after")).not.toBeNull();
+    expect(container.querySelector("[data-gotipe-phantom-id=suggested]")?.textContent).toBe(
+      "Proposed",
+    );
+    expect(container.querySelector("[data-gotipe-phantom-id=suggested] .after")).toBeNull();
+  });
+
   it("makes image captions and edit controls inactive in read-only mode", () => {
     act(() => {
       root.render(

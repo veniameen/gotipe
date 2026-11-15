@@ -1,6 +1,8 @@
 import type { BlockView, BlocksDecoration, NodeDecoration } from "@gotipe/core";
 import { type I18n, createI18n, en } from "@gotipe/i18n";
+import { useContext } from "react";
 import { TextRenderer } from "../text-renderer";
+import { AfterTextContext, PhantomContext } from "./context";
 import { alignmentOf, directionOf, textDecorations } from "./decorations";
 
 export function rootPropsOf(block: BlockView, phantom: boolean): Record<string, unknown> {
@@ -59,6 +61,22 @@ export function blockKey(block: BlockView): string {
   return block.renderKey ? `${block.id}:${block.renderKey}` : block.id;
 }
 
+/**
+ * The `afterText` of a block with text, right after its last character: a widget, so it is not
+ * part of the text and takes no offsets. A suggested (phantom) block shows none.
+ */
+function AfterText({ block }: { block: BlockView }) {
+  const after = useContext(AfterTextContext);
+  const phantom = useContext(PhantomContext);
+  const node = after && !phantom ? after(block) : null;
+  if (node === null || node === undefined || node === false) return null;
+  return (
+    <span data-gotipe-widget="" contentEditable={false} suppressContentEditableWarning>
+      {node}
+    </span>
+  );
+}
+
 export function BlockContent({ block }: { block: BlockView }) {
   if (block.content === null) return null;
   if (typeof block.content === "string") return <>{block.content}</>;
@@ -70,7 +88,7 @@ export function BlockContent({ block }: { block: BlockView }) {
       return (
         <>
           <TextRenderer spans={block.content} decorations={block.decorations} />
-          {hasVisibleText ? null : <br data-gotipe-trailing-break="" />}
+          {hasVisibleText ? <AfterText block={block} /> : <br data-gotipe-trailing-break="" />}
         </>
       );
     }
