@@ -8,9 +8,9 @@ fn compatible(a: &Marker, b: &Marker) -> bool {
     a.ordered == b.ordered && a.marker == b.marker
 }
 
-/// How the content of an item reads a lazy line, as `lazyReading` of the TS reader.
+/// How the content of an item or a quote reads a lazy line, as `lazyReading` of the TS reader.
 #[derive(PartialEq, Debug)]
-enum Lazy {
+pub(super) enum Lazy {
     /// Text of a paragraph open before it: the only block a lazy line continues in CommonMark.
     Text,
     /// The start of the item's block at this index.
@@ -24,7 +24,7 @@ const DEFINITIONS: [&str; 2] = ["definition", "footnoteDefinition"];
 /// How `nodes`, the content of an item, read a lazy line that starts at `offset`. A definition
 /// is read out of paragraph text, so a line right after one continues that text, whatever block
 /// it starts here.
-fn lazy_reading(nodes: &[Node], offset: usize, top: bool) -> Lazy {
+pub(super) fn lazy_reading(nodes: &[Node], offset: usize, top: bool) -> Lazy {
     let Some(at) = nodes
         .partition_point(|node| node.start <= offset)
         .checked_sub(1)
@@ -80,7 +80,8 @@ pub(super) fn read(
         let mut lazy_runs: Vec<(usize, usize)> = vec![];
         let mut run = false;
         let mut next = cursor + 1;
-        let mut separated = false;
+        // the first blank line between the lines of the item: from it on the item is loose
+        let mut first_blank: Option<usize> = None;
         let mut item_spread = false;
         let mut item_end = first.end;
         while next < lines.len() {
@@ -104,7 +105,7 @@ pub(super) fn read(
                 if item_lines.iter().all(Line::blank) || width(&following.text, 0) < marker.indent {
                     break;
                 }
-                separated = true;
+                first_blank.get_or_insert(item_lines.len());
                 item_spread = true;
                 let mut empty = line.clone();
                 empty.text.clear();
@@ -120,7 +121,8 @@ pub(super) fn read(
                 next += 1;
                 continue;
             }
-            if list_marker(&line.text, 0).is_some() || separated || interrupts(line) {
+            // after a blank line too: what the content reads as text stays in the item (D-121)
+            if list_marker(&line.text, 0).is_some() || interrupts(line) {
                 break;
             }
             // lazy continuation of the item's initial paragraph, checked once the item is read
@@ -153,7 +155,7 @@ pub(super) fn read(
                 _ => content = reader.blocks(&item_lines, depth + 1, prefix),
             }
             item_end = item_lines.last().map_or(first.end, |line| line.end);
-            item_spread = false;
+            item_spread = first_blank.is_some_and(|blank| blank < at);
             node.spread = spread_before;
             next = stray;
             break;

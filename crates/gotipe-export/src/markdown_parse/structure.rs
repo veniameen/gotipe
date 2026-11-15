@@ -2,13 +2,9 @@
 //! reads it (`readBlockNodes`): what a block that runs on to the end of the file needs to end
 //! (D-106), and where the items of a list begin and end (D-107). Inline text is not read.
 use super::{blocks::Reader, source, syntax, Node};
-use std::collections::HashSet;
 
 fn nodes(text: &str) -> Vec<Node> {
-    Reader {
-        references: HashSet::new(),
-    }
-    .blocks(&source::lines(text, 0), 0, 0)
+    Reader::default().blocks(&source::lines(text, 0), 0, 0)
 }
 
 /// Where the block that ends `text` starts when it takes in a paragraph after a blank line: a

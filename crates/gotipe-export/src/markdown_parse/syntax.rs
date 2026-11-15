@@ -4,7 +4,6 @@ pub(super) struct Marker {
     pub ordered: bool,
     pub marker: char,
     pub start: usize,
-    pub prefix: usize,
     pub indent: usize,
     pub marker_width: usize,
     pub content: String,
@@ -28,7 +27,6 @@ pub(super) fn list_marker(text: &str, column: usize) -> Option<Marker> {
         } else {
             1
         },
-        prefix,
         indent: before
             + if padding > 4 || padding == 0 {
                 1
@@ -101,6 +99,14 @@ pub(super) fn html_block(text: &str, interrupt: bool) -> Option<HtmlEnd> {
 }
 pub(super) fn inline_html(text: &str) -> Option<usize> {
     re!(r#"^(?:<!--(?:>|->|[\s\S]*?-->)|<\?[\s\S]*?\?>|<!\[CDATA\[[\s\S]*?\]\]>|<![A-Z][^>]*>|</[A-Za-z][A-Za-z0-9-]*\s*>|<[A-Za-z][A-Za-z0-9-]*(?:\s+[A-Za-z_:][A-Za-z0-9_.:-]*(?:\s*=\s*(?:[^\s"'=<>`]+|'[^']*'|"[^"]*"))?)*\s*/?>)"#).find(text).map(|m|m.end())
+}
+/// A line that starts a block where no paragraph is open, so a table row ends before it (GFM): any
+/// list item, HTML, indented code, and what interrupts a paragraph.
+pub(super) fn starts_block(line: &Line) -> bool {
+    interrupts(line)
+        || list_marker(&line.text, 0).is_some()
+        || html_block(&line.text, false).is_some()
+        || width(&line.text, 0) >= 4
 }
 pub(super) fn interrupts(line: &Line) -> bool {
     let text = &line.text;

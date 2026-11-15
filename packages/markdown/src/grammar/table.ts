@@ -39,7 +39,8 @@ export function tableCells(text: string): Cell[] {
 }
 
 export function tableAlignment(line: Line): Table["align"] | null {
-  if (!line.text.includes("|") && !/^ {0,3}:?-+:?[ \t]*$/.test(line.text)) return null;
+  // without `|` a run of `-` is the underline of a setext heading (GFM): a colon makes it a row
+  if (!line.text.includes("|") && !/^ {0,3}(?::-+:?|-+:)[ \t]*$/.test(line.text)) return null;
   const cells = tableCells(line.text);
   if (!cells.length || cells.some((cell) => !/^:?-+:?$/.test(cell.text))) return null;
   return cells.map((cell) =>

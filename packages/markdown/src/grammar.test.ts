@@ -80,4 +80,26 @@ describe("owned Markdown grammar", () => {
     expect(serializeMarkdown(parsed.doc, parsed.snapshot).text).toBe(source);
     expect(text(parsed.doc.blocks[0]!)).toBe(`${"[".repeat(20_000)}tail`);
   });
+
+  it(
+    "reads nested quotes and items that lazy lines end once per level (D-160)",
+    { timeout: 60_000 },
+    () => {
+      // level k: a fence in quote or item k, then a line without its `>` or indentation that the
+      // fence would take in, so each level reads its content again without that line
+      let quotes = "";
+      let items = "";
+      for (let k = 1; k <= 30; k++) items += `${"  ".repeat(k - 1)}- a\n`;
+      for (let k = 30; k >= 1; k--) {
+        quotes += `${">".repeat(k)} \`\`\`\n${"> ".repeat(k - 1)}x\n`;
+        items += `${"  ".repeat(k)}\`\`\`\n${"  ".repeat(k - 1)}x\n`;
+      }
+      for (const source of [quotes, items]) {
+        const started = performance.now();
+        const parsed = parseMarkdown(source);
+        expect(performance.now() - started).toBeLessThan(5_000);
+        expect(serializeMarkdown(parsed.doc, parsed.snapshot).text).toBe(source);
+      }
+    },
+  );
 });

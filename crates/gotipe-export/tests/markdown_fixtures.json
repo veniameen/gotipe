@@ -1199,5 +1199,1303 @@
         ]
       }
     ]
+  },
+  {
+    "markdown": "> a\n*\nb\n",
+    "blocks": [
+      {
+        "type": "blockquote",
+        "attrs": {},
+        "content": [
+          {
+            "text": "a",
+            "marks": []
+          }
+        ],
+        "children": []
+      },
+      {
+        "type": "bulletList",
+        "attrs": {
+          "marker": "*",
+          "spread": false
+        },
+        "content": null,
+        "children": [
+          {
+            "type": "listItem",
+            "attrs": {},
+            "content": [],
+            "children": []
+          }
+        ]
+      },
+      {
+        "type": "paragraph",
+        "attrs": {},
+        "content": [
+          {
+            "text": "b",
+            "marks": []
+          }
+        ],
+        "children": []
+      }
+    ]
+  },
+  {
+    "markdown": "> a\n2. x\n",
+    "blocks": [
+      {
+        "type": "blockquote",
+        "attrs": {},
+        "content": [
+          {
+            "text": "a",
+            "marks": []
+          }
+        ],
+        "children": []
+      },
+      {
+        "type": "orderedList",
+        "attrs": {
+          "start": 2,
+          "delimiter": ".",
+          "spread": false
+        },
+        "content": null,
+        "children": [
+          {
+            "type": "listItem",
+            "attrs": {},
+            "content": [
+              {
+                "text": "x",
+                "marks": []
+              }
+            ],
+            "children": []
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "markdown": "> | a |\n> | - |\nb\n",
+    "blocks": [
+      {
+        "type": "markdownRaw",
+        "attrs": {
+          "kind": "blockquote"
+        },
+        "content": "> | a |\n> | - |",
+        "children": []
+      },
+      {
+        "type": "paragraph",
+        "attrs": {},
+        "content": [
+          {
+            "text": "b",
+            "marks": []
+          }
+        ],
+        "children": []
+      }
+    ]
+  },
+  {
+    "markdown": "> a\n>     code\nb\n",
+    "blocks": [
+      {
+        "type": "blockquote",
+        "attrs": {},
+        "content": [
+          {
+            "text": "a code b",
+            "marks": []
+          }
+        ],
+        "children": []
+      }
+    ]
+  },
+  {
+    "markdown": "> ```\n> code\nb\n",
+    "blocks": [
+      {
+        "type": "markdownRaw",
+        "attrs": {
+          "kind": "blockquote"
+        },
+        "content": "> ```\n> code",
+        "children": []
+      },
+      {
+        "type": "paragraph",
+        "attrs": {},
+        "content": [
+          {
+            "text": "b",
+            "marks": []
+          }
+        ],
+        "children": []
+      }
+    ]
+  },
+  {
+    "markdown": "> a\n>\nb\n",
+    "blocks": [
+      {
+        "type": "blockquote",
+        "attrs": {},
+        "content": [
+          {
+            "text": "a",
+            "marks": []
+          }
+        ],
+        "children": []
+      },
+      {
+        "type": "paragraph",
+        "attrs": {},
+        "content": [
+          {
+            "text": "b",
+            "marks": []
+          }
+        ],
+        "children": []
+      }
+    ]
+  },
+  {
+    "markdown": "> > a\nb\n",
+    "blocks": [
+      {
+        "type": "markdownRaw",
+        "attrs": {
+          "kind": "blockquote"
+        },
+        "content": "> > a\nb",
+        "children": []
+      }
+    ]
+  },
+  {
+    "markdown": "[a]: /u\n2. x\n",
+    "blocks": [
+      {
+        "type": "markdownRaw",
+        "attrs": {
+          "kind": "definition"
+        },
+        "content": "[a]: /u",
+        "children": []
+      },
+      {
+        "type": "paragraph",
+        "attrs": {},
+        "content": [
+          {
+            "text": "2. x",
+            "marks": []
+          }
+        ],
+        "children": []
+      }
+    ]
+  },
+  {
+    "markdown": "[a]: /u\n    code\n",
+    "blocks": [
+      {
+        "type": "markdownRaw",
+        "attrs": {
+          "kind": "definition"
+        },
+        "content": "[a]: /u",
+        "children": []
+      },
+      {
+        "type": "paragraph",
+        "attrs": {},
+        "content": [
+          {
+            "text": "code",
+            "marks": []
+          }
+        ],
+        "children": []
+      }
+    ]
+  },
+  {
+    "markdown": "- [d]: /u\n  -\nb\n",
+    "blocks": [
+      {
+        "type": "markdownRaw",
+        "attrs": {
+          "kind": "list"
+        },
+        "content": "- [d]: /u\n  -\nb",
+        "children": []
+      }
+    ]
+  },
+  {
+    "markdown": "[a]: /u\n-\n",
+    "blocks": [
+      {
+        "type": "markdownRaw",
+        "attrs": {
+          "kind": "definition"
+        },
+        "content": "[a]: /u",
+        "children": []
+      },
+      {
+        "type": "paragraph",
+        "attrs": {},
+        "content": [
+          {
+            "text": "-",
+            "marks": []
+          }
+        ],
+        "children": []
+      }
+    ]
+  },
+  {
+    "markdown": "[a]: /u\n<custom>\n",
+    "blocks": [
+      {
+        "type": "markdownRaw",
+        "attrs": {
+          "kind": "definition"
+        },
+        "content": "[a]: /u",
+        "children": []
+      },
+      {
+        "type": "paragraph",
+        "attrs": {},
+        "content": [
+          {
+            "text": "<custom>",
+            "marks": [
+              {
+                "type": "mdRaw"
+              }
+            ]
+          }
+        ],
+        "children": []
+      }
+    ]
+  },
+  {
+    "markdown": "[a]: /u\n$$\nx\n$$\n",
+    "blocks": [
+      {
+        "type": "markdownRaw",
+        "attrs": {
+          "kind": "definition"
+        },
+        "content": "[a]: /u",
+        "children": []
+      },
+      {
+        "type": "paragraph",
+        "attrs": {},
+        "content": [
+          {
+            "text": "$$ x $$",
+            "marks": []
+          }
+        ],
+        "children": []
+      }
+    ]
+  },
+  {
+    "markdown": "[a]: /u\n[b]: /v\n2. x\n",
+    "blocks": [
+      {
+        "type": "markdownRaw",
+        "attrs": {
+          "kind": "definition"
+        },
+        "content": "[a]: /u",
+        "children": []
+      },
+      {
+        "type": "markdownRaw",
+        "attrs": {
+          "kind": "definition"
+        },
+        "content": "[b]: /v",
+        "children": []
+      },
+      {
+        "type": "paragraph",
+        "attrs": {},
+        "content": [
+          {
+            "text": "2. x",
+            "marks": []
+          }
+        ],
+        "children": []
+      }
+    ]
+  },
+  {
+    "markdown": "[a]: /u\nb\n===\n",
+    "blocks": [
+      {
+        "type": "markdownRaw",
+        "attrs": {
+          "kind": "definition"
+        },
+        "content": "[a]: /u",
+        "children": []
+      },
+      {
+        "type": "heading",
+        "attrs": {
+          "level": 1
+        },
+        "content": [
+          {
+            "text": "b",
+            "marks": []
+          }
+        ],
+        "children": []
+      }
+    ]
+  },
+  {
+    "markdown": "[a]: /u\n\n2. x\n",
+    "blocks": [
+      {
+        "type": "markdownRaw",
+        "attrs": {
+          "kind": "definition"
+        },
+        "content": "[a]: /u",
+        "children": []
+      },
+      {
+        "type": "orderedList",
+        "attrs": {
+          "start": 2,
+          "delimiter": ".",
+          "spread": false
+        },
+        "content": null,
+        "children": [
+          {
+            "type": "listItem",
+            "attrs": {},
+            "content": [
+              {
+                "text": "x",
+                "marks": []
+              }
+            ],
+            "children": []
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "markdown": "[a]: /u\n| x |\n| - |\n",
+    "blocks": [
+      {
+        "type": "markdownRaw",
+        "attrs": {
+          "kind": "definition"
+        },
+        "content": "[a]: /u",
+        "children": []
+      },
+      {
+        "type": "table",
+        "attrs": {
+          "align": [
+            null
+          ]
+        },
+        "content": null,
+        "children": [
+          {
+            "type": "tableRow",
+            "attrs": {},
+            "content": null,
+            "children": [
+              {
+                "type": "tableHeader",
+                "attrs": {},
+                "content": [
+                  {
+                    "text": "x",
+                    "marks": []
+                  }
+                ],
+                "children": []
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "markdown": "[a]: /u\n---\n",
+    "blocks": [
+      {
+        "type": "markdownRaw",
+        "attrs": {
+          "kind": "definition"
+        },
+        "content": "[a]: /u",
+        "children": []
+      },
+      {
+        "type": "divider",
+        "attrs": {},
+        "content": null,
+        "children": []
+      }
+    ]
+  },
+  {
+    "markdown": "| a |\n-\n",
+    "blocks": [
+      {
+        "type": "heading",
+        "attrs": {
+          "level": 2
+        },
+        "content": [
+          {
+            "text": "| a |",
+            "marks": []
+          }
+        ],
+        "children": []
+      }
+    ]
+  },
+  {
+    "markdown": "| a |\n---\n",
+    "blocks": [
+      {
+        "type": "heading",
+        "attrs": {
+          "level": 2
+        },
+        "content": [
+          {
+            "text": "| a |",
+            "marks": []
+          }
+        ],
+        "children": []
+      }
+    ]
+  },
+  {
+    "markdown": "| a |\n:-:\n",
+    "blocks": [
+      {
+        "type": "table",
+        "attrs": {
+          "align": [
+            "center"
+          ]
+        },
+        "content": null,
+        "children": [
+          {
+            "type": "tableRow",
+            "attrs": {},
+            "content": null,
+            "children": [
+              {
+                "type": "tableHeader",
+                "attrs": {},
+                "content": [
+                  {
+                    "text": "a",
+                    "marks": []
+                  }
+                ],
+                "children": []
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "markdown": "| a |\n| - |\n*\n",
+    "blocks": [
+      {
+        "type": "table",
+        "attrs": {
+          "align": [
+            null
+          ]
+        },
+        "content": null,
+        "children": [
+          {
+            "type": "tableRow",
+            "attrs": {},
+            "content": null,
+            "children": [
+              {
+                "type": "tableHeader",
+                "attrs": {},
+                "content": [
+                  {
+                    "text": "a",
+                    "marks": []
+                  }
+                ],
+                "children": []
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "type": "bulletList",
+        "attrs": {
+          "marker": "*",
+          "spread": false
+        },
+        "content": null,
+        "children": [
+          {
+            "type": "listItem",
+            "attrs": {},
+            "content": [],
+            "children": []
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "markdown": "| a |\n| - |\n2. x\n",
+    "blocks": [
+      {
+        "type": "table",
+        "attrs": {
+          "align": [
+            null
+          ]
+        },
+        "content": null,
+        "children": [
+          {
+            "type": "tableRow",
+            "attrs": {},
+            "content": null,
+            "children": [
+              {
+                "type": "tableHeader",
+                "attrs": {},
+                "content": [
+                  {
+                    "text": "a",
+                    "marks": []
+                  }
+                ],
+                "children": []
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "type": "orderedList",
+        "attrs": {
+          "start": 2,
+          "delimiter": ".",
+          "spread": false
+        },
+        "content": null,
+        "children": [
+          {
+            "type": "listItem",
+            "attrs": {},
+            "content": [
+              {
+                "text": "x",
+                "marks": []
+              }
+            ],
+            "children": []
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "markdown": "| a |\n| - |\n-\n",
+    "blocks": [
+      {
+        "type": "table",
+        "attrs": {
+          "align": [
+            null
+          ]
+        },
+        "content": null,
+        "children": [
+          {
+            "type": "tableRow",
+            "attrs": {},
+            "content": null,
+            "children": [
+              {
+                "type": "tableHeader",
+                "attrs": {},
+                "content": [
+                  {
+                    "text": "a",
+                    "marks": []
+                  }
+                ],
+                "children": []
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "type": "bulletList",
+        "attrs": {
+          "marker": "-",
+          "spread": false
+        },
+        "content": null,
+        "children": [
+          {
+            "type": "listItem",
+            "attrs": {},
+            "content": [],
+            "children": []
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "markdown": "| a |\n| - |\n<custom>\n",
+    "blocks": [
+      {
+        "type": "table",
+        "attrs": {
+          "align": [
+            null
+          ]
+        },
+        "content": null,
+        "children": [
+          {
+            "type": "tableRow",
+            "attrs": {},
+            "content": null,
+            "children": [
+              {
+                "type": "tableHeader",
+                "attrs": {},
+                "content": [
+                  {
+                    "text": "a",
+                    "marks": []
+                  }
+                ],
+                "children": []
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "type": "markdownRaw",
+        "attrs": {
+          "kind": "html"
+        },
+        "content": "<custom>",
+        "children": []
+      }
+    ]
+  },
+  {
+    "markdown": "| a |\n| - |\n    code\n",
+    "blocks": [
+      {
+        "type": "table",
+        "attrs": {
+          "align": [
+            null
+          ]
+        },
+        "content": null,
+        "children": [
+          {
+            "type": "tableRow",
+            "attrs": {},
+            "content": null,
+            "children": [
+              {
+                "type": "tableHeader",
+                "attrs": {},
+                "content": [
+                  {
+                    "text": "a",
+                    "marks": []
+                  }
+                ],
+                "children": []
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "type": "codeBlock",
+        "attrs": {
+          "language": ""
+        },
+        "content": "code",
+        "children": []
+      }
+    ]
+  },
+  {
+    "markdown": "| a |\n| - |\n===\n",
+    "blocks": [
+      {
+        "type": "table",
+        "attrs": {
+          "align": [
+            null
+          ]
+        },
+        "content": null,
+        "children": [
+          {
+            "type": "tableRow",
+            "attrs": {},
+            "content": null,
+            "children": [
+              {
+                "type": "tableHeader",
+                "attrs": {},
+                "content": [
+                  {
+                    "text": "a",
+                    "marks": []
+                  }
+                ],
+                "children": []
+              }
+            ]
+          },
+          {
+            "type": "tableRow",
+            "attrs": {},
+            "content": null,
+            "children": [
+              {
+                "type": "tableCell",
+                "attrs": {},
+                "content": [
+                  {
+                    "text": "===",
+                    "marks": []
+                  }
+                ],
+                "children": []
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "markdown": "| a | b |\n|---|--:|\n| c | d |\ne\n",
+    "blocks": [
+      {
+        "type": "table",
+        "attrs": {
+          "align": [
+            null,
+            "right"
+          ]
+        },
+        "content": null,
+        "children": [
+          {
+            "type": "tableRow",
+            "attrs": {},
+            "content": null,
+            "children": [
+              {
+                "type": "tableHeader",
+                "attrs": {},
+                "content": [
+                  {
+                    "text": "a",
+                    "marks": []
+                  }
+                ],
+                "children": []
+              },
+              {
+                "type": "tableHeader",
+                "attrs": {},
+                "content": [
+                  {
+                    "text": "b",
+                    "marks": []
+                  }
+                ],
+                "children": []
+              }
+            ]
+          },
+          {
+            "type": "tableRow",
+            "attrs": {},
+            "content": null,
+            "children": [
+              {
+                "type": "tableCell",
+                "attrs": {},
+                "content": [
+                  {
+                    "text": "c",
+                    "marks": []
+                  }
+                ],
+                "children": []
+              },
+              {
+                "type": "tableCell",
+                "attrs": {},
+                "content": [
+                  {
+                    "text": "d",
+                    "marks": []
+                  }
+                ],
+                "children": []
+              }
+            ]
+          },
+          {
+            "type": "tableRow",
+            "attrs": {},
+            "content": null,
+            "children": [
+              {
+                "type": "tableCell",
+                "attrs": {},
+                "content": [
+                  {
+                    "text": "e",
+                    "marks": []
+                  }
+                ],
+                "children": []
+              },
+              {
+                "type": "tableCell",
+                "attrs": {},
+                "content": [],
+                "children": []
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "markdown": "- a\n\n  b\nc\n",
+    "blocks": [
+      {
+        "type": "markdownRaw",
+        "attrs": {
+          "kind": "list"
+        },
+        "content": "- a\n\n  b\nc",
+        "children": []
+      }
+    ]
+  },
+  {
+    "markdown": "- a\n\n  b\nc\nd\n- e\n",
+    "blocks": [
+      {
+        "type": "markdownRaw",
+        "attrs": {
+          "kind": "list"
+        },
+        "content": "- a\n\n  b\nc\nd\n- e",
+        "children": []
+      }
+    ]
+  },
+  {
+    "markdown": "- a\n\n  b\n\nc\n",
+    "blocks": [
+      {
+        "type": "markdownRaw",
+        "attrs": {
+          "kind": "list"
+        },
+        "content": "- a\n\n  b",
+        "children": []
+      },
+      {
+        "type": "paragraph",
+        "attrs": {},
+        "content": [
+          {
+            "text": "c",
+            "marks": []
+          }
+        ],
+        "children": []
+      }
+    ]
+  },
+  {
+    "markdown": "- a\n\n      code\nc\n",
+    "blocks": [
+      {
+        "type": "markdownRaw",
+        "attrs": {
+          "kind": "list"
+        },
+        "content": "- a\n\n      code",
+        "children": []
+      },
+      {
+        "type": "paragraph",
+        "attrs": {},
+        "content": [
+          {
+            "text": "c",
+            "marks": []
+          }
+        ],
+        "children": []
+      }
+    ]
+  },
+  {
+    "markdown": "- a\n\n  > q\nc\n",
+    "blocks": [
+      {
+        "type": "markdownRaw",
+        "attrs": {
+          "kind": "list"
+        },
+        "content": "- a\n\n  > q\nc",
+        "children": []
+      }
+    ]
+  },
+  {
+    "markdown": "1. a\n\n   - b\n\n     c\nd\n",
+    "blocks": [
+      {
+        "type": "markdownRaw",
+        "attrs": {
+          "kind": "list"
+        },
+        "content": "1. a\n\n   - b\n\n     c\nd",
+        "children": []
+      }
+    ]
+  },
+  {
+    "markdown": "- a\n\n  - b\n  -\nc\n",
+    "blocks": [
+      {
+        "type": "bulletList",
+        "attrs": {
+          "marker": "-",
+          "spread": true
+        },
+        "content": null,
+        "children": [
+          {
+            "type": "listItem",
+            "attrs": {},
+            "content": [
+              {
+                "text": "a",
+                "marks": []
+              }
+            ],
+            "children": [
+              {
+                "type": "bulletList",
+                "attrs": {
+                  "marker": "-",
+                  "spread": false
+                },
+                "content": null,
+                "children": [
+                  {
+                    "type": "listItem",
+                    "attrs": {},
+                    "content": [
+                      {
+                        "text": "b",
+                        "marks": []
+                      }
+                    ],
+                    "children": []
+                  },
+                  {
+                    "type": "listItem",
+                    "attrs": {},
+                    "content": [],
+                    "children": []
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "type": "paragraph",
+        "attrs": {},
+        "content": [
+          {
+            "text": "c",
+            "marks": []
+          }
+        ],
+        "children": []
+      }
+    ]
+  },
+  {
+    "markdown": "<span style=\"color:red\"><span>a</span></span>b\n",
+    "blocks": [
+      {
+        "type": "paragraph",
+        "attrs": {},
+        "content": [
+          {
+            "text": "<span>",
+            "marks": [
+              {
+                "type": "mdRaw"
+              },
+              {
+                "type": "textColor",
+                "attrs": {
+                  "color": "red"
+                }
+              }
+            ]
+          },
+          {
+            "text": "a",
+            "marks": [
+              {
+                "type": "textColor",
+                "attrs": {
+                  "color": "red"
+                }
+              }
+            ]
+          },
+          {
+            "text": "</span>",
+            "marks": [
+              {
+                "type": "mdRaw"
+              },
+              {
+                "type": "textColor",
+                "attrs": {
+                  "color": "red"
+                }
+              }
+            ]
+          },
+          {
+            "text": "b",
+            "marks": []
+          }
+        ],
+        "children": []
+      }
+    ]
+  },
+  {
+    "markdown": "<u><u class=\"x\">a</u></u>b\n",
+    "blocks": [
+      {
+        "type": "paragraph",
+        "attrs": {},
+        "content": [
+          {
+            "text": "<u class=\"x\">",
+            "marks": [
+              {
+                "type": "underline"
+              },
+              {
+                "type": "mdRaw"
+              }
+            ]
+          },
+          {
+            "text": "a",
+            "marks": [
+              {
+                "type": "underline"
+              }
+            ]
+          },
+          {
+            "text": "</u>",
+            "marks": [
+              {
+                "type": "underline"
+              },
+              {
+                "type": "mdRaw"
+              }
+            ]
+          },
+          {
+            "text": "b",
+            "marks": []
+          }
+        ],
+        "children": []
+      }
+    ]
+  },
+  {
+    "markdown": "<mark style=\"background:yellow\"><mark>a</mark></mark>b\n",
+    "blocks": [
+      {
+        "type": "paragraph",
+        "attrs": {},
+        "content": [
+          {
+            "text": "a",
+            "marks": [
+              {
+                "type": "highlight",
+                "attrs": {
+                  "color": "yellow"
+                }
+              },
+              {
+                "type": "highlight"
+              }
+            ]
+          },
+          {
+            "text": "b",
+            "marks": []
+          }
+        ],
+        "children": []
+      }
+    ]
+  },
+  {
+    "markdown": "<b>x<b>y</b>z</b>w\n",
+    "blocks": [
+      {
+        "type": "paragraph",
+        "attrs": {},
+        "content": [
+          {
+            "text": "xyz",
+            "marks": [
+              {
+                "type": "bold"
+              }
+            ]
+          },
+          {
+            "text": "w",
+            "marks": []
+          }
+        ],
+        "children": []
+      }
+    ]
+  },
+  {
+    "markdown": "<span style=\"color:red\"><spanx>a</span>b\n",
+    "blocks": [
+      {
+        "type": "paragraph",
+        "attrs": {},
+        "content": [
+          {
+            "text": "<spanx>",
+            "marks": [
+              {
+                "type": "mdRaw"
+              },
+              {
+                "type": "textColor",
+                "attrs": {
+                  "color": "red"
+                }
+              }
+            ]
+          },
+          {
+            "text": "a",
+            "marks": [
+              {
+                "type": "textColor",
+                "attrs": {
+                  "color": "red"
+                }
+              }
+            ]
+          },
+          {
+            "text": "b",
+            "marks": []
+          }
+        ],
+        "children": []
+      }
+    ]
   }
 ]

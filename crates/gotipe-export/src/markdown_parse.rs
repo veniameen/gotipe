@@ -22,9 +22,7 @@ use std::collections::HashSet;
 
 pub(crate) fn parse(md: &str, atoms: &MarkdownAtoms) -> Document {
     let base = front_matter(md);
-    let mut reader = blocks::Reader {
-        references: HashSet::new(),
-    };
+    let mut reader = blocks::Reader::default();
     let mut nodes = reader.blocks(&source::lines(&md[base..], base), 0, 0);
     fn fill(nodes: &mut [Node], references: &HashSet<String>, atoms: &MarkdownAtoms) {
         for node in nodes {
