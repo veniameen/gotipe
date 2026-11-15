@@ -21,7 +21,7 @@ gotipe/
 ├── .github/
 │   └── workflows/
 │       ├── ci.yml                # PR checks: lint, test, build
-│       ├── release.yml           # npm publish + crate publish
+│       ├── release.yml           # npm publish (crates не публикуются)
 │       └── wasm-build.yml        # WASM build + size check
 │
 ├── crates/                       # Rust workspace
@@ -701,14 +701,8 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
-      # Publish Rust crates
-      - run: cargo publish -p gotipe-schema
-        env:
-          CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_TOKEN }}
-      - run: cargo publish -p gotipe-core
-        env:
-          CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_TOKEN }}
-      # ... remaining crates in dependency order
+      # Rust crates are not published to crates.io: they ship compiled
+      # inside @gotipe/wasm and @gotipe/export-wasm (D-71)
 
       # Create GitHub Release
       - uses: softprops/action-gh-release@v2

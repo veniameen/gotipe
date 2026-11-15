@@ -157,7 +157,10 @@ entire graph: citationberg, bincode, paste, rustybuzz, ttf-parser, unsafe-libyam
 and yaml-rust are absent from Cargo.lock. No advisory is suppressed and no
 replacement is sourced from Git. `pnpm check:cargo-release` still rejects any
 future Git dependency; `cargo deny check advisories` still rejects unmaintained
-packages. Both checks passed for the new resolved graph on 2026-11-10; fresh
+packages. The crates themselves are not published (owner decision, D-71: only npm),
+but the release keeps the source check: the same graph is compiled into
+`@gotipe/wasm`, `@gotipe/export-wasm` and the Cloud `gotipe-convert`, and a Git
+checkout is mutable and outside registry yanking and advisories. Both checks passed for the new resolved graph on 2026-11-10; fresh
 checks and runtime export acceptance remain mandatory for each release.
 
 Original Cargo notices are regenerated for the exact current normal/build graph;
