@@ -134,6 +134,19 @@ import { createRequire } from 'node:module';
 const required = createRequire(import.meta.url);
 for (const specifier of ${JSON.stringify(specifiers)}) await import(specifier);
 for (const specifier of ${JSON.stringify(cjsSpecifiers)}) required(specifier);
+// One GoTipeError class per package in CJS as in ESM: an error raised by one entry is an
+// instance of the class that another entry exports (D-166).
+for (const [format, load] of [['CJS', async (specifier) => required(specifier)], ['ESM', (specifier) => import(specifier)]]) {
+  const { GoTipeError } = await load('@gotipe/core');
+  const { defineSuggestion } = await load('@gotipe/core/extensions');
+  const raised = {
+    '@gotipe/core/js': await (await load('@gotipe/core/js')).createEditor({ extensions: [], engine: 'wasm' }).catch((error) => error),
+    '@gotipe/core/server': await (await load('@gotipe/core/server')).renderToHtml({ blocks: 5 }).catch((error) => error),
+    '@gotipe/core/extensions': (() => { try { defineSuggestion({}); } catch (error) { return error; } })(),
+  };
+  for (const [entry, error] of Object.entries(raised))
+    assert.ok(error instanceof GoTipeError, format + ': ' + entry + ' raised ' + (error?.code ?? error) + ', not the GoTipeError of @gotipe/core');
+}
 const { createHeadlessEditor, renderToHtml } = await import('@gotipe/core/server');
 const exports = await import('@gotipe/export');
 const document = { version: 1, blocks: [{ id: 'p', type: 'paragraph', attrs: {}, children: [], content: [{ text: 'Tarball Привет 😀', marks: [] }] }] };

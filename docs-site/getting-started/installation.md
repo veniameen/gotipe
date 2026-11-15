@@ -41,7 +41,9 @@ npm install @gotipe/wasm
 ```
 
 Every package ships ES modules, CommonJS and TypeScript types; `@gotipe/wasm` and
-`@gotipe/export-wasm` are ES modules only. You don't need `@types` packages.
+`@gotipe/export-wasm` are ES modules only. You don't need `@types` packages. The entries of a
+package share one copy of its code in both formats, so an error raised through
+`@gotipe/core/js` or `@gotipe/core/server` is an `instanceof GoTipeError` from `@gotipe/core`.
 
 ## Peer dependencies
 
