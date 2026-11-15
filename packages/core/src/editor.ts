@@ -512,9 +512,9 @@ export async function createEditorWithLoader(
           clipboard: clipboardHandler,
           getViewState: () => this.getViewState(),
           getDocument: () => this.getJSON(),
-          dispatch: (transaction, typing) => {
+          dispatch: (transaction, typing, since) => {
             transactionFilters.assertIdle();
-            return transactions.dispatch(transaction, typing);
+            return transactions.dispatch(transaction, typing, since);
           },
           liftListItem: () => this.chain().setBlockType("paragraph").run(),
           publishSelection: () => {

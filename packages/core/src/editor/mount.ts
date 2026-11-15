@@ -16,8 +16,11 @@ export interface MountPort {
   clipboard: Pick<ClipboardHandler, "onPaste" | "onCopy" | "onCut" | "onDrop">;
   getViewState(): ViewState;
   getDocument(): Document;
-  /** `typing`: the input goes on with the undo step of the typing before it. */
-  dispatch(transaction: object, typing?: TypingKind): boolean;
+  /**
+   * `typing`: the input goes on with the undo step of the typing before it; `since`: when it
+   * began (a composition: at `compositionstart`).
+   */
+  dispatch(transaction: object, typing?: TypingKind, since?: number): boolean;
   liftListItem(): boolean;
   publishSelection(): void;
   redrawBlocks(ids: string[]): void;
@@ -134,9 +137,11 @@ export function mountSurface(
   // native mutation leaked through.
   let inputHandledByWasm = false;
   let pendingEnterMode: "plain" | "shift" | null = null;
+  let composedSince = 0;
   const composition = installComposition(element, signal, {
     isEditable: () => port.editable,
     prepareSelection: () => {
+      composedSince = Date.now();
       if (domSelection.pending) restoreDomSelection();
       const dom = domSelection.pending ? null : readSelectionFromDOM?.();
       // Composition starts where the model caret is: never inside an inline atom.
@@ -150,8 +155,8 @@ export function mountSurface(
       port.storedMarks ?? getMarksAt(port.getViewState().blocks, id, offset),
     commit: (steps, caret) => {
       inputHandledByWasm = true;
-      // A composition is an undo step of its own: no `typing`.
-      port.dispatch({ steps, selection: { type: "cursor", ...caret } });
+      // A composition goes on with the typing step from its start (D-131).
+      port.dispatch({ steps, selection: { type: "cursor", ...caret } }, "insert", composedSince);
       port.storedMarks = null;
       scheduleSelectionRestore();
     },
