@@ -1,6 +1,7 @@
 import type { TextSelection } from "../dom/selection";
 import { GoTipeError } from "../error";
 import type { Document } from "../types/block";
+import type { NodeSpec } from "../types/extension";
 import type { MarkView, SelectionView, ViewState } from "../types/view";
 
 /**
@@ -21,6 +22,8 @@ export interface InputHost {
   readSelectionFromDOM(): TextSelection | null;
   getViewState(): ViewState;
   getDocument(): Document;
+  /** What the block type's content holds; `undefined` when the schema does not declare it. */
+  content(nodeType: string): NodeSpec["content"] | undefined;
   reportError(error: GoTipeError): void;
   /**
    * `false` when a transaction filter or the engine rejected the change. `typing` lets it

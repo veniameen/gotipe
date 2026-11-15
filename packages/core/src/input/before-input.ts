@@ -1,8 +1,7 @@
-import { findBlockInTree } from "../document/tree";
 import { ownsInputTarget } from "../dom/input-owner";
 import { handleBackwardDelete, handleForwardDelete } from "./delete-input";
 import { handleParagraphInput } from "./paragraph-input";
-import { type InputHost, resolveSelectionForInput } from "./session";
+import type { InputHost } from "./session";
 import { handleTextInput, insertInputText } from "./text-input";
 
 export function installBeforeInput(
@@ -35,19 +34,11 @@ export function installBeforeInput(
           return;
         }
       }
-      let paragraphBreak = type === "insertParagraph";
-      if (type === "insertLineBreak") {
-        const selection = resolveSelectionForInput(host);
-        const block = findBlockInTree(host.getViewState().blocks, selection.anchor.blockId);
-        paragraphBreak = enterMode !== "shift" && block?.type !== "codeBlock";
-      }
-      if (
-        type === "insertText" ||
-        type === "insertCompositionText" ||
-        (type === "insertLineBreak" && !paragraphBreak)
-      )
-        handleTextInput(event, host);
-      else if (paragraphBreak) handleParagraphInput(event, host);
+      if (type === "insertText" || type === "insertCompositionText") handleTextInput(event, host);
+      // A line break here is Enter without Shift: it splits the block, and raw text takes it as a
+      // line break (paragraph-input.ts).
+      else if (type === "insertParagraph" || type === "insertLineBreak")
+        handleParagraphInput(event, host);
       else if (
         [
           "deleteContentBackward",

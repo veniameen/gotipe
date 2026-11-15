@@ -122,6 +122,38 @@ test.describe("Phase 3.5-3.8 Block Types", () => {
     expect(blocks[0]).toMatchObject({ id: "target", type: "math", content: "" });
   });
 
+  test("Math: Enter adds a line to the formula, and Escape leaves it (D-11)", async ({ page }) => {
+    const formula = { id: "formula", type: "math", attrs: { display: "block" }, content: "a+b", children: [] };
+    const after = { id: "after", type: "paragraph", attrs: {}, content: [{ text: "After", marks: [] }], children: [] };
+    const blocks = () => page.evaluate(() => window.__GOTIPE_EDITOR__!.getJSON().blocks);
+    await page.evaluate((value) => window.__GOTIPE_EDITOR__!.setContent({ version: 1, blocks: value }), [formula, after]);
+    // The source is centred, and End scrolls on macOS in Firefox and WebKit: click past its end.
+    const source = page.locator('[data-block-id="formula"] pre');
+    const box = (await source.boundingBox())!;
+    await source.click({ position: { x: box.width - 4, y: box.height / 2 } });
+    await expect
+      .poll(() => page.evaluate(() => window.__GOTIPE_EDITOR__!.getViewState().selection.anchor))
+      .toEqual({ blockId: "formula", offset: 3 });
+
+    await page.keyboard.press("Enter");
+    await page.keyboard.type("c", { delay: 50 });
+    await expect.poll(blocks).toEqual([{ ...formula, content: "a+b\nc" }, after]);
+    await page.keyboard.press("Shift+Enter");
+    await page.keyboard.type("d", { delay: 50 });
+    await expect.poll(blocks).toEqual([{ ...formula, content: "a+b\nc\nd" }, after]);
+
+    await page.keyboard.press("Escape");
+    await page.keyboard.type("x", { delay: 50 });
+    await expect
+      .poll(blocks)
+      .toMatchObject([
+        { ...formula, content: "a+b\nc\nd" },
+        { type: "paragraph", content: [{ text: "x", marks: [] }] },
+        after,
+      ]);
+    expect(await blocks()).toHaveLength(3);
+  });
+
   test("Todo list checkbox toggles checked state", async ({ page }) => {
     // Create a todoList programmatically
     await page.evaluate(() => {

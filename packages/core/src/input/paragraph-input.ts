@@ -57,11 +57,18 @@ function exitEmptyList(
   return { blockId: empty.id, offset: 0 };
 }
 
+/**
+ * Enter: a line break in raw text — a code block, a formula, a `rawText` node of yours (D-11);
+ * a type the schema does not declare goes by what it holds. Elsewhere the block splits.
+ */
 export function handleParagraphInput(event: InputEvent, host: InputHost): void {
   event.preventDefault();
   const selection = resolveSelectionForInput(host);
   if (!selection.anchor.blockId) return;
-  if (findBlockInTree(host.getViewState().blocks, selection.anchor.blockId)?.type === "codeBlock") {
+  const block = findBlockInTree(host.getViewState().blocks, selection.anchor.blockId);
+  const kind =
+    block && (host.content(block.type) ?? (typeof block.content === "string" && "rawText"));
+  if (kind === "rawText") {
     insertInputText("\n", host);
     return;
   }
