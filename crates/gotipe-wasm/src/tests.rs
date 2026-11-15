@@ -303,6 +303,76 @@ fn collaboration_history_restores_directional_selection_and_clear_keeps_log() {
     assert_eq!(editor.get_update().unwrap(), log);
 }
 
+fn typed(steps: Vec<gotipe_core::Step>, typing: Option<&str>) -> String {
+    let mut transaction = Transaction::new();
+    for step in steps {
+        transaction = transaction.with_step(step);
+    }
+    if let Some(kind) = typing {
+        let kind = gotipe_core::AttrValue::String(kind.into());
+        transaction.metadata.insert("typing".into(), kind);
+    }
+    serde_json::to_string(&transaction).unwrap()
+}
+
+/// D-130: the native history groups typing as the editor marks it, not by step shape.
+#[test]
+fn collaboration_history_joins_only_typing_marked_as_going_on() {
+    use gotipe_core::{BlockId, Step};
+    let text = |editor: &WasmEditor| {
+        let spans = blocks(editor)[0]["content"]["value"].clone();
+        let spans = spans.as_array().unwrap().iter();
+        spans
+            .map(|span| span["text"].as_str().unwrap().to_string())
+            .collect::<String>()
+    };
+    let insert = |offset, text: &str| Step::InsertText {
+        block_id: BlockId("b1".into()),
+        offset,
+        text: text.into(),
+        marks: vec![],
+    };
+    let delete = |from, to| Step::DeleteText {
+        block_id: BlockId("b1".into()),
+        from,
+        to,
+    };
+    let mut editor = WasmEditor::with_default_schema(&simple_doc_json()).unwrap();
+    editor.enable_collaboration("a").unwrap();
+    // Typing over the selected "World" starts the step the following typing joins.
+    editor
+        .apply(&typed(vec![delete(6, 11), insert(6, "t")], None))
+        .unwrap();
+    editor
+        .apply(&typed(vec![insert(7, "h")], Some("insert")))
+        .unwrap();
+    editor
+        .apply(&typed(vec![insert(8, "e")], Some("insert")))
+        .unwrap();
+    // Backspace after typing starts a step of its own; the next Backspace joins it.
+    editor.apply(&typed(vec![delete(8, 9)], None)).unwrap();
+    editor
+        .apply(&typed(vec![delete(7, 8)], Some("delete")))
+        .unwrap();
+    // A host change is a step of its own, even one character in the same block.
+    editor.apply(&typed(vec![insert(7, "X")], None)).unwrap();
+    assert_eq!(text(&editor), "Hello tX");
+    editor.undo_collaboration().unwrap().unwrap();
+    assert_eq!(text(&editor), "Hello t");
+    editor.undo_collaboration().unwrap().unwrap();
+    assert_eq!(text(&editor), "Hello the");
+    editor.undo_collaboration().unwrap().unwrap();
+    assert_eq!(text(&editor), "Hello World");
+    assert!(!editor.can_undo_collaboration());
+    // After Undo, typing marked as going on has no open step to join.
+    editor.redo_collaboration().unwrap().unwrap();
+    editor
+        .apply(&typed(vec![insert(9, "y")], Some("insert")))
+        .unwrap();
+    editor.undo_collaboration().unwrap().unwrap();
+    assert_eq!(text(&editor), "Hello the");
+}
+
 #[test]
 fn batched_structural_edits_keep_concurrent_text_in_the_transferred_block() {
     use gotipe_core::{BlockId, Mark, Step};
