@@ -68,12 +68,32 @@ a blocked link or a paste that does not fit, go to `host.onError` and the `error
 {/if}
 ```
 
-Solid has two hooks:
+Solid has three hooks:
 
 | Hook | Returns | Description |
 |---|---|---|
 | `useEditor(options)` | `Accessor<GoTipeEditor \| null>` | Creates the editor in `onMount` and destroys it in `onCleanup`. |
+| `useEditorStatus(options)` | `{ editor, error }` | Two accessors: the same editor, and why it could not be created. |
 | `useEditorState(editor, selector)` | `Accessor<T \| undefined>` | `selector(viewState)`, updated on every view change. |
+
+`useEditor` and `useEditorStatus` take the `createEditor` options and `onError`. A failed
+creation works as in Svelte: `error` becomes the failure, `onError(error)` is called once and,
+without it, the failure is logged; one that fails after `onCleanup` reports nothing.
+
+```tsx title="EditorError.tsx" tab="Solid"
+import { DefaultPreset } from "@gotipe/core/presets";
+import { useEditorStatus } from "@gotipe/solid";
+import { Show } from "solid-js";
+
+export function EditorError() {
+  const { editor, error } = useEditorStatus({ extensions: [DefaultPreset], engine: "wasm" });
+  return (
+    <Show when={error()} fallback={<p>{editor() ? "Ready" : "Loading…"}</p>}>
+      {(failure) => <p role="alert">The editor could not start: {failure().message}</p>}
+    </Show>
+  );
+}
+```
 
 ## Render the document yourself
 
@@ -210,9 +230,8 @@ HTML built from its structure, with text escaped and links checked.
 
 - GoTipe tests these adapters' lifecycle and subscriptions, not a renderer for Svelte or
   Solid. Check typing, IME, undo, selection and paste in yours.
-- Solid's `useEditor` has no `onError` and no `error`: when the editor cannot be created,
-  the accessor stays `null` and the rejection goes unhandled.
-- A store whose editor could not be created does not try again: create a new store.
+- A store whose editor could not be created does not try again: create a new store. In
+  Solid, mount the component anew.
 - Placeholders, review highlights, remote cursors, table controls, media UI and menus
   come with the React renderer only. With Svelte or Solid you build them from
   `block.decorations` and the core commands, or use
