@@ -84,7 +84,7 @@ Input rules apply when you type the trigger at the start of an empty block:
 | `- ` or `* ` | Bullet list |
 | `1. ` (any number) | Numbered list that starts at that number |
 | `[] ` | Task list |
-| `[x] ` | Task list (see the note below) |
+| `[x] ` | Task list with the task checked; in an empty task, checks it |
 
 The "/" menu lists **Bullet List**, **Numbered List** and **To-do List**. In the editor UI, the block handle drags one item; hold Alt while dragging to move the whole list.
 
@@ -148,7 +148,7 @@ Loose lists (items separated by blank lines) keep their `spread` attribute. When
 A Markdown item holds one paragraph followed by nested lists. Lists that do not fit that shape are kept byte for byte as a read-only raw block: lists mixing task and plain items, numbered task lists, and items with several paragraphs, code or quotes.
 
 > [!NOTE]
-> `[x] ` creates an unchecked task, the same as `[] `; check it with the checkbox. Child blocks of an item other than lists do not survive Markdown: a child paragraph is read back as a line of the item's text. `outdent()` and Shift+Tab do nothing for a top-level item; use Backspace at its start, Enter in an empty item or `setBlockType("paragraph")` to take it out of the list.
+> Child blocks of an item other than lists do not survive Markdown: a child paragraph is read back as a line of the item's text. `outdent()` and Shift+Tab do nothing for a top-level item; use Backspace at its start, Enter in an empty item or `setBlockType("paragraph")` to take it out of the list.
 
 ## Related
 

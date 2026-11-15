@@ -1,6 +1,25 @@
-import { test, expect } from "@playwright/test";
+import type { GoTipeEditor } from "@gotipe/core";
+import { test, expect, type Page } from "@playwright/test";
+
+declare global {
+  interface Window {
+    __GOTIPE_EDITOR__?: GoTipeEditor;
+  }
+}
 
 const BASE = "/?view=block#basic";
+
+/** One empty paragraph, the caret in it, then the keys typed one by one. */
+async function typeIntoEmptyParagraph(page: Page, keys: string) {
+  await page.evaluate(() => {
+    window.__GOTIPE_EDITOR__!.setContent({
+      version: 1,
+      blocks: [{ id: "target", type: "paragraph", attrs: {}, content: [], children: [] }],
+    });
+  });
+  await page.locator('[data-block-id="target"]').click();
+  await page.keyboard.type(keys, { delay: 50 });
+}
 
 test.describe("Phase 3.5-3.8 Block Types", () => {
   test.beforeEach(async ({ page }) => {
@@ -52,6 +71,27 @@ test.describe("Phase 3.5-3.8 Block Types", () => {
     const checkbox = todoItem.last().locator('input[type="checkbox"]');
     expect(await checkbox.count()).toBe(1);
     expect(await checkbox.isChecked()).toBe(false);
+  });
+
+  test("Todo list input rule: [x] creates a checked task (D-11)", async ({ page }) => {
+    await typeIntoEmptyParagraph(page, "[x] ");
+
+    const item = page.locator('[data-block-id="target"]');
+    await expect(item).toHaveAttribute("data-block-type", "todoItem");
+    await expect(item.locator('input[type="checkbox"]')).toBeChecked();
+    const blocks = await page.evaluate(() => window.__GOTIPE_EDITOR__!.getJSON().blocks);
+    expect(blocks[0]).toMatchObject({
+      type: "todoList",
+      children: [{ id: "target", type: "todoItem", attrs: { checked: true }, content: [] }],
+    });
+  });
+
+  test("Math input rule: $$ opens an empty formula without the trigger (D-11)", async ({ page }) => {
+    await typeIntoEmptyParagraph(page, "$$");
+
+    await expect(page.locator('[data-block-id="target"]')).toHaveAttribute("data-block-type", "math");
+    const blocks = await page.evaluate(() => window.__GOTIPE_EDITOR__!.getJSON().blocks);
+    expect(blocks[0]).toMatchObject({ id: "target", type: "math", content: "" });
   });
 
   test("Todo list checkbox toggles checked state", async ({ page }) => {

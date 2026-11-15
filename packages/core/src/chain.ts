@@ -10,10 +10,10 @@ import { StructureCommands } from "./commands/structure-commands";
 import { cloneAttributes } from "./document/attributes";
 import { createId } from "./document/id";
 import { findBlockInTree, findBlockLocation, flattenBlocks } from "./document/tree";
+import { adjacentCell } from "./table/navigation";
 import type { Document } from "./types/block";
 import type { GoTipeEditor } from "./types/editor";
 import type { Selection, Step, Transaction } from "./types/state";
-import type { BlockView } from "./types/view";
 
 export class ChainableCommands {
   private steps: Step[] = [];
@@ -381,10 +381,10 @@ export class ChainableCommands {
     return this;
   }
 
+  /** Within the cell's own table; at its edge nothing happens and `run()` returns false. */
   private navigateCell(direction: "next" | "prev"): void {
     const state = this.getViewState();
-    const blockId = state.selection.anchor.blockId;
-    const cell = this.findCellNavTarget(state.blocks, blockId, direction);
+    const cell = adjacentCell(state.blocks, state.selection.anchor.blockId, direction);
     if (!cell) return;
 
     this.selectionOverride = {
@@ -398,28 +398,6 @@ export class ChainableCommands {
 
     // Mark that navigation happened so the keybinding can preventDefault
     this._cellNavigated = true;
-  }
-
-  private findCellNavTarget(
-    blocks: BlockView[],
-    currentCellId: string,
-    direction: "next" | "prev",
-  ): BlockView | null {
-    // Collect all cells in document order
-    const cells: BlockView[] = [];
-    const collectCells = (bs: BlockView[]) => {
-      for (const b of bs) {
-        if (b.type === "tableCell" || b.type === "tableHeader") {
-          cells.push(b);
-        }
-        collectCells(b.children);
-      }
-    };
-    collectCells(blocks);
-    const idx = cells.findIndex((c) => c.id === currentCellId);
-    if (idx === -1) return null;
-    if (direction === "next") return cells[idx + 1] ?? null;
-    return cells[idx - 1] ?? null;
   }
 
   // Selection

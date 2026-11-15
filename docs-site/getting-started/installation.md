@@ -140,10 +140,10 @@ fails on the unresolved optional import needs the alias.
 ## Node
 
 The core runs in Node for server rendering, scripts and tests. `@gotipe/core/server` and
-`@gotipe/core/js` use the JS engine and need no DOM. The default WASM loader can't fetch
-the binary from disk in Node, so `createEditor` from `@gotipe/core` falls back to JS there
-(or rejects with `engine: "wasm"`); to run the Rust engine in Node,
-[load the binary yourself](/docs/getting-started/engines#loading-the-binary-yourself).
+`@gotipe/core/js` use the JS engine and need no DOM. `createEditor` from `@gotipe/core`
+runs the Rust engine in Node too: the `node` export condition of `@gotipe/wasm` reads the
+binary from the installed package, so `engine: "auto"` and `engine: "wasm"` need no loader
+of your own. See [loading the binary](/docs/getting-started/engines#loading-the-binary).
 
 Pass documents as JSON in Node: HTML import uses the browser's `DOMParser` and throws
 `PARSE_ERROR` without it. See [content formats](/docs/concepts/content-formats).

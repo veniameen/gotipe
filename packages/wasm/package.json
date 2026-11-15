@@ -7,12 +7,14 @@
   "exports": {
     ".": {
       "types": "./pkg/gotipe_wasm.d.ts",
+      "node": "./node.js",
       "import": "./pkg/gotipe_wasm.js"
     },
     "./pkg/*": "./pkg/*"
   },
   "sideEffects": false,
   "files": [
+    "node.js",
     "pkg/gotipe_wasm.js",
     "pkg/gotipe_wasm_bg.wasm",
     "pkg/gotipe_wasm.d.ts",
@@ -22,7 +24,7 @@
     "licenses"
   ],
   "scripts": {
-    "test": "node tests/integrity.mjs"
+    "test": "node tests/integrity.mjs && node tests/node-entry.mjs"
   },
   "license": "MIT",
   "publishConfig": {

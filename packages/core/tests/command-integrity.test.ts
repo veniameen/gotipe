@@ -175,6 +175,54 @@ describe.each(["js", "wasm"] as const)("%s commands preserve document structure"
     other.destroy();
   });
 
+  it("keeps Tab and Shift-Tab inside the table of the current cell (D-10)", async () => {
+    const table = (id: string, header: boolean): Block => ({
+      id,
+      type: "table",
+      attrs: {},
+      content: null,
+      children: [0, 1].map((row) => ({
+        id: `${id}-row-${row}`,
+        type: "tableRow",
+        attrs: {},
+        content: null,
+        children: [0, 1].map((column) =>
+          block(
+            `${id}-${row}-${column}`,
+            `${row}:${column}`,
+            header && row === 0 ? "tableHeader" : "tableCell",
+          ),
+        ),
+      })),
+    });
+    const editor = await create([table("first", true), table("second", false)]);
+    const caret = (blockId: string) =>
+      editor.setSelection({ anchor: { blockId, offset: 1 }, head: { blockId, offset: 1 } });
+    const anchor = () => editor.getViewState().selection.anchor.blockId;
+
+    caret("first-0-1");
+    expect(editor.chain().goToNextCell().run()).toBe(true);
+    expect(anchor()).toBe("first-1-0");
+    expect(editor.chain().goToPrevCell().run()).toBe(true);
+    expect(anchor()).toBe("first-0-1");
+
+    caret("first-1-1");
+    const before = editor.getJSON();
+    expect(editor.chain().goToNextCell().run()).toBe(false);
+    expect(editor.getViewState().selection).toMatchObject({
+      anchor: { blockId: "first-1-1", offset: 1 },
+      head: { blockId: "first-1-1", offset: 1 },
+    });
+
+    caret("second-0-0");
+    expect(editor.chain().goToPrevCell().run()).toBe(false);
+    expect(anchor()).toBe("second-0-0");
+    expect(editor.chain().goToNextCell().run()).toBe(true);
+    expect(anchor()).toBe("second-0-1");
+    expect(editor.getJSON()).toEqual(before);
+    editor.destroy();
+  });
+
   it("lifts a middle list item in place while preserving IDs and nested descendants", async () => {
     const list: Block = {
       id: "list",
