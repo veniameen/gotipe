@@ -293,26 +293,76 @@ describe.each(ENGINES)("%s typing history", (engine) => {
     expect(editor.undo()).toBe(false);
   });
 
-  it("an IME composition is one step of its own", async () => {
-    const { editor, surface, texts, undone } = await open(paragraph("p", ""));
+  /**
+   * The browser composes `data` at the model caret: the renderer drew the model text, the IME
+   * writes into the DOM between compositionstart and compositionend, `ms` after the start.
+   */
+  function compose(view: Awaited<ReturnType<typeof open>>, data: string, ms = 0) {
+    const { editor, surface } = view;
+    const { blockId, offset } = editor.getViewState().selection.anchor;
+    const node = surface.element.querySelector(`[data-block-id="${blockId}"]`)!;
+    const block = editor.getJSON().blocks.find((item) => item.id === blockId)!;
+    const value = Array.isArray(block.content)
+      ? block.content.map((span) => span.text).join("")
+      : "";
+    node.textContent = value;
+    surface.caret(blockId, offset);
+    surface.element.dispatchEvent(new CompositionEvent("compositionstart", { bubbles: true }));
+    pause(ms);
+    node.textContent = value.slice(0, offset) + data + value.slice(offset);
+    surface.element.dispatchEvent(new CompositionEvent("compositionend", { bubbles: true, data }));
+  }
+
+  it("an IME composition goes on with the typing step, and typing goes on after it (D-131)", async () => {
+    const view = await open(paragraph("p", ""));
+    const { editor, surface, texts, undone } = view;
     surface.caret("p", 0);
     surface.type("ab");
-    // The browser composes in the DOM; the editor reads the result at compositionend.
-    const node = surface.element.querySelector('[data-block-id="p"]')!;
-    node.textContent = "ab";
-    surface.caret("p", 2);
-    surface.element.dispatchEvent(new CompositionEvent("compositionstart", { bubbles: true }));
-    node.firstChild!.nodeValue = "abにほん";
-    node.firstChild!.nodeValue = "ab日本";
-    surface.element.dispatchEvent(
-      new CompositionEvent("compositionend", { bubbles: true, data: "日本" }),
-    );
+    compose(view, "日本");
     expect(texts()).toEqual(["ab日本"]);
     surface.type("c");
     expect(texts()).toEqual(["ab日本c"]);
-    expect(undone()).toEqual(["ab日本"]);
+    expect(undone()).toEqual([""]);
+    expect(editor.undo()).toBe(false);
+  });
+
+  it("syllables composed one by one are one step, however long each takes (D-131)", async () => {
+    const view = await open(paragraph("p", "Слово: "));
+    const { editor, surface, texts, undone } = view;
+    surface.caret("p", 7);
+    // Korean input commits a syllable when the next one starts: no pause between them.
+    for (const syllable of ["한", "국", "어"]) compose(view, syllable, 700);
+    expect(texts()).toEqual(["Слово: 한국어"]);
+    expect(undone()).toEqual(["Слово: "]);
+    expect(editor.undo()).toBe(false);
+  });
+
+  it("a pause before a composition still starts a new step", async () => {
+    const view = await open(paragraph("p", ""));
+    const { editor, surface, undone } = view;
+    surface.caret("p", 0);
+    surface.type("ab");
+    pause(500);
+    compose(view, "한");
+    compose(view, "국", 300);
     expect(undone()).toEqual(["ab"]);
     expect(undone()).toEqual([""]);
+    expect(editor.undo()).toBe(false);
+  });
+
+  it("a caret move or another block before a composition still starts a new step", async () => {
+    const view = await open(paragraph("a", ""), paragraph("b", ""));
+    const { editor, surface, texts, undone } = view;
+    surface.caret("a", 0);
+    surface.type("12");
+    surface.caret("a", 1);
+    compose(view, "한");
+    surface.caret("b", 0);
+    compose(view, "국");
+    expect(texts()).toEqual(["1한2", "국"]);
+    expect(undone()).toEqual(["1한2", ""]);
+    expect(undone()).toEqual(["12", ""]);
+    expect(undone()).toEqual(["", ""]);
     expect(editor.undo()).toBe(false);
   });
 

@@ -5,7 +5,8 @@ import { installDOMSelection } from "../dom/selection";
 import type { GoTipeError } from "../error";
 import { installBeforeInput } from "../input/before-input";
 import { installComposition } from "../input/composition";
-import type { InputHost, TypingKind } from "../input/session";
+import { replaceStructuredSelection } from "../input/selection-edit";
+import { type InputHost, type TypingKind, reportInputError } from "../input/session";
 import type { Document } from "../types/block";
 import type { MarkView, SelectionView, ViewState } from "../types/view";
 
@@ -17,8 +18,11 @@ export interface MountPort {
   getViewState(): ViewState;
   getDocument(): Document;
   content: InputHost["content"];
-  /** `typing`: the input goes on with the undo step of the typing before it. */
-  dispatch(transaction: object, typing?: TypingKind): boolean;
+  /**
+   * `typing`: the input goes on with the undo step of the typing before it; `since`: when it
+   * began (a composition: at `compositionstart`).
+   */
+  dispatch(transaction: object, typing?: TypingKind, since?: number): boolean;
   liftListItem(): boolean;
   publishSelection(): void;
   redrawBlocks(ids: string[]): void;
@@ -31,12 +35,7 @@ export interface MountPort {
 }
 
 /** Connects one DOM surface to model/input ports; AbortSignal owns every listener. */
-export function mountSurface(
-  element: HTMLElement,
-  signal: AbortSignal,
-  port: MountPort,
-  autofocus: boolean,
-) {
+export function mountSurface(element: HTMLElement, signal: AbortSignal, port: MountPort) {
   element.setAttribute("contenteditable", port.editable ? "true" : "false");
   element.setAttribute("role", "textbox");
   element.setAttribute("aria-multiline", "true");
@@ -51,7 +50,9 @@ export function mountSurface(
         e.preventDefault();
         return;
       }
-      port.clipboard.onPaste(e);
+      // Until a pending restore puts the native caret where the model's is, the model's
+      // counts, as for typing (D-136).
+      port.clipboard.onPaste(e, domSelection.pending);
     },
     { signal },
   );
@@ -135,9 +136,11 @@ export function mountSurface(
   // native mutation leaked through.
   let inputHandledByWasm = false;
   let pendingEnterMode: "plain" | "shift" | null = null;
+  let composedSince = 0;
   const composition = installComposition(element, signal, {
     isEditable: () => port.editable,
     prepareSelection: () => {
+      composedSince = Date.now();
       if (domSelection.pending) restoreDomSelection();
       const dom = domSelection.pending ? null : readSelectionFromDOM?.();
       // Composition starts where the model caret is: never inside an inline atom.
@@ -151,8 +154,8 @@ export function mountSurface(
       port.storedMarks ?? getMarksAt(port.getViewState().blocks, id, offset),
     commit: (steps, caret) => {
       inputHandledByWasm = true;
-      // A composition is an undo step of its own: no `typing`.
-      port.dispatch({ steps, selection: { type: "cursor", ...caret } });
+      // A composition goes on with the typing step from its start (D-131).
+      port.dispatch({ steps, selection: { type: "cursor", ...caret } }, "insert", composedSince);
       port.storedMarks = null;
       scheduleSelectionRestore();
     },
@@ -185,7 +188,7 @@ export function mountSurface(
     }
   };
 
-  installBeforeInput(element, signal, {
+  const input: InputHost = {
     get editable() {
       return port.editable;
     },
@@ -230,7 +233,8 @@ export function mountSurface(
     scheduleSelectionRestore,
     cancelSelectionRestore,
     runInputRules,
-  });
+  };
+  installBeforeInput(element, signal, input);
 
   // Keyboard shortcuts from extensions
   element.addEventListener(
@@ -280,23 +284,37 @@ export function mountSurface(
         const inEditor =
           (selectionAnchor ? element.contains(selectionAnchor) : false) ||
           (eventTarget ? element.contains(eventTarget) : false);
-        if (inEditor) {
-          const domSelection = readSelectionFromDOM?.();
-          if (domSelection?.anchor.blockId) {
-            port.selection = {
-              type: "text",
-              anchor: { ...domSelection.anchor },
-              head: { ...domSelection.head },
-            };
+        if (inEditor && !domSelection.pending) {
+          const dom = readSelectionFromDOM?.();
+          if (dom?.anchor.blockId) {
+            port.selection = { type: "text", anchor: { ...dom.anchor }, head: { ...dom.head } };
           }
         }
+      }
+
+      const plainKey = !e.metaKey && !e.ctrlKey && !e.altKey;
+      // A selected block goes as a whole, a list item too. Its anchor and head are its
+      // start, which `beforeinput` would read back from the DOM as a caret there (D-135).
+      if (
+        (e.key === "Backspace" || e.key === "Delete") &&
+        plainKey &&
+        port.selection.type !== "text"
+      ) {
+        e.preventDefault();
+        try {
+          replaceStructuredSelection(input, port.selection, "delete");
+          scheduleSelectionRestore();
+        } catch (error) {
+          reportInputError(input, error);
+        }
+        return;
       }
 
       // Some browsers do not dispatch beforeinput(deleteContentBackward)
       // at list-item boundaries. Handle this path on keydown. Until a pending
       // restore puts the native caret where the model's is, the model's counts,
       // as for `beforeinput` (input/session.ts).
-      if (e.key === "Backspace" && !e.metaKey && !e.ctrlKey && !e.altKey) {
+      if (e.key === "Backspace" && plainKey) {
         const caret = domSelection.pending ? port.selection : readSelectionFromDOM();
         if (
           caret &&
@@ -380,9 +398,6 @@ export function mountSurface(
     { signal },
   );
 
-  if (autofocus) {
-    element.focus();
-  }
   return {
     ...domSelection,
     interrupt: composition.interrupt,

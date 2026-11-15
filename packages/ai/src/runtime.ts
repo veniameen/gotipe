@@ -17,9 +17,9 @@ export function registerRuntime(editor: GoTipeEditor, manager: AiManager): AiRun
   runtime.cleanup.push(
     editor.on("update", () => {
       // Provider review coordinates are snapshot-relative, not collaborative anchors.
-      const comments = runtime.comments;
+      if (!runtime.comments.length) return;
       runtime.comments = [];
-      for (const comment of comments) editor.emit("commentDeleted", comment.id);
+      editor.emit("aiReviewChange", { comments: [] });
     }),
   );
   runtimes.set(editor, runtime);

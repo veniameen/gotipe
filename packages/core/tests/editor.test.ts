@@ -95,10 +95,10 @@ describe('createEditor', () => {
     const editor = await createEditor({ extensions: [testExt] });
     const handler = vi.fn();
     const unsub = editor.on('update', handler);
-    editor.emit('update', { editor });
+    editor.emit('update', { editor, origin: 'local' });
     expect(handler).toHaveBeenCalledTimes(1);
     unsub();
-    editor.emit('update', { editor });
+    editor.emit('update', { editor, origin: 'local' });
     expect(handler).toHaveBeenCalledTimes(1);
   });
 

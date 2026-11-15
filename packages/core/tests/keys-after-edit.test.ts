@@ -81,11 +81,17 @@ async function open(engine: Engine, blocks: Block[], caret: { blockId: string; o
         }),
       );
     },
-    /** Mod+V as a browser sends it: the `paste` event follows `keydown`. */
-    paste(data: string) {
-      send(
-        new KeyboardEvent("keydown", { key: "v", metaKey: true, bubbles: true, cancelable: true }),
-      );
+    /** Mod+V as a browser sends it: the `paste` event follows `keydown`; a menu sends no key. */
+    paste(data: string, shortcut = true) {
+      if (shortcut)
+        send(
+          new KeyboardEvent("keydown", {
+            key: "v",
+            metaKey: true,
+            bubbles: true,
+            cancelable: true,
+          }),
+        );
       const event = new Event("paste", { bubbles: true, cancelable: true });
       Object.defineProperty(event, "clipboardData", {
         value: { files: [], getData: (type: string) => (type === "text/plain" ? data : "") },
@@ -156,6 +162,23 @@ describe.each(ENGINES)("%s keys right after an edit (D-132)", (engine) => {
     expect(view.editor.getJSON().blocks).toEqual([paragraph("p", "abcX")]);
   });
 
+  it("before the renderer draws the typing, Mod+V pastes after it (D-136)", async () => {
+    const view = await open(engine, [paragraph("p", "ab")], { blockId: "p", offset: 2 });
+    view.type("c");
+    await nextTask();
+    view.paste("X");
+    expect(view.editor.getJSON().blocks).toEqual([paragraph("p", "abcX")]);
+    expect(view.editor.getViewState().selection.anchor).toEqual({ blockId: "p", offset: 4 });
+  });
+
+  it("before the renderer draws the typing, a paste without a key goes after it too (D-136)", async () => {
+    const view = await open(engine, [paragraph("p", "ab")], { blockId: "p", offset: 2 });
+    view.type("c");
+    await nextTask();
+    view.paste("X", false);
+    expect(view.editor.getJSON().blocks).toEqual([paragraph("p", "abcX")]);
+  });
+
   it("before the renderer draws the edit, Backspace in a list item acts at the model caret", async () => {
     const view = await open(engine, [list("list", item("item", ""))], {
       blockId: "item",
@@ -195,5 +218,57 @@ describe.each(ENGINES)("%s keys right after an edit (D-132)", (engine) => {
       list("list", item("first", "First")),
       paragraph("item", "abc"),
     ]);
+  });
+});
+
+describe.each(ENGINES)("%s Backspace on a block selected as a whole (D-135)", (engine) => {
+  it("deletes a selected list item, as it deletes a selected paragraph", async () => {
+    const view = await open(
+      engine,
+      [paragraph("p", "Текст"), list("list", item("first", "First"), item("item", "ab😀"))],
+      { blockId: "item", offset: 1 },
+    );
+    expect(view.editor.chain().selectBlock("item").run()).toBe(true);
+    nextFrame();
+    view.backspace();
+    expect(view.editor.getJSON().blocks).toEqual([
+      paragraph("p", "Текст"),
+      list("list", item("first", "First")),
+    ]);
+    expect(view.editor.chain().selectBlock("p").run()).toBe(true);
+    nextFrame();
+    view.backspace();
+    expect(view.editor.getJSON().blocks).toEqual([list("list", item("first", "First"))]);
+  });
+
+  it("Delete removes a selected block as well, not the character after its start", async () => {
+    const view = await open(engine, [paragraph("a", "ab"), paragraph("b", "cd")], {
+      blockId: "a",
+      offset: 1,
+    });
+    expect(view.editor.chain().selectBlock("a").run()).toBe(true);
+    nextFrame();
+    const target = view.editor.element!;
+    const key = new KeyboardEvent("keydown", { key: "Delete", bubbles: true, cancelable: true });
+    target.dispatchEvent(key);
+    if (!key.defaultPrevented)
+      target.dispatchEvent(
+        new InputEvent("beforeinput", {
+          bubbles: true,
+          cancelable: true,
+          inputType: "deleteContentForward",
+        }),
+      );
+    expect(view.editor.getJSON().blocks).toEqual([paragraph("b", "cd")]);
+  });
+
+  it("deletes it also while the caret restore waits for a frame", async () => {
+    const view = await open(engine, [list("list", item("first", "First"), item("item", "ab"))], {
+      blockId: "item",
+      offset: 2,
+    });
+    expect(view.editor.chain().selectBlock("item").run()).toBe(true);
+    view.backspace();
+    expect(view.editor.getJSON().blocks).toEqual([list("list", item("first", "First"))]);
   });
 });

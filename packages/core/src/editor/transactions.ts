@@ -33,7 +33,7 @@ interface TransactionPort {
   restoreDocument(state: string): void;
   getViewState(): ViewState;
   invalidate(): void;
-  publishUpdate(): void;
+  publishUpdate(origin: "local" | "remote"): void;
   publishSelection(): void;
   publishView(): void;
   scheduleSelectionRestore(): void;
@@ -45,8 +45,9 @@ interface TransactionPort {
 }
 
 /**
- * Owns transaction acceptance and document/selection undo boundaries. `dispatch(tr, kind)`:
- * `kind` is typing from the input layer, which may go on with the open undo step.
+ * Owns transaction acceptance and document/selection undo boundaries. `dispatch(tr, kind,
+ * since)`: `kind` is typing from the input layer, which may go on with the open undo step;
+ * `since` is when it began (a composition: at `compositionstart`).
  */
 export function createTransactions(port: TransactionPort) {
   const MAX_HISTORY = 100;
@@ -88,7 +89,7 @@ export function createTransactions(port: TransactionPort) {
       : { type: "text", anchor: { blockId: "", offset: 0 }, head: { blockId: "", offset: 0 } };
     port.storedMarks = null;
     port.invalidate();
-    port.publishUpdate();
+    port.publishUpdate("local");
     port.publishSelection();
     port.publishView();
     if (port.selection.anchor.blockId) port.scheduleSelectionRestore();
@@ -103,7 +104,7 @@ export function createTransactions(port: TransactionPort) {
         ),
       );
     },
-    dispatch(transaction: object, kind?: TypingKind): boolean {
+    dispatch(transaction: object, kind?: TypingKind, since?: number): boolean {
       if (port.destroyed) return false;
 
       const tr = transaction as {
@@ -176,7 +177,7 @@ export function createTransactions(port: TransactionPort) {
         }
         port.invalidate();
         if (context) port.publishTransaction(context);
-        port.publishUpdate();
+        port.publishUpdate("local");
         port.publishView();
         if (port.selection.anchor.blockId) {
           port.scheduleSelectionRestore();
@@ -191,7 +192,8 @@ export function createTransactions(port: TransactionPort) {
         // typing step open; typing that goes on with it needs no snapshot of its own.
         const recorded = tr.metadata?.addToHistory !== false;
         const local = recorded && !port.collaboration.isCollaborating;
-        const snapshot = local && !typing.continues(kind, port.selection) ? captureHistory() : null;
+        const snapshot =
+          local && !typing.continues(kind, port.selection, since) ? captureHistory() : null;
         if (port.collaboration.isCollaborating && port.selection.anchor.blockId)
           port.collaboration.setSelection(JSON.stringify(viewToEngineSelection(port.selection)));
         const before = port.getViewState().blocks;
@@ -222,7 +224,8 @@ export function createTransactions(port: TransactionPort) {
           JSON.stringify(previousSelection) !== JSON.stringify(port.selection)
         )
           port.publishSelection();
-        port.publishUpdate();
+        // A repair after another replica's edit (`origin: "repair"`) is that edit's.
+        port.publishUpdate(tr.metadata?.origin === "repair" ? "remote" : "local");
         port.publishView();
         if (port.selection.anchor.blockId) {
           port.scheduleSelectionRestore();
@@ -244,7 +247,7 @@ export function createTransactions(port: TransactionPort) {
       const prev = undoStack.pop()!;
       redoStack.push(captureHistory());
       restoreHistory(prev);
-      port.publishUpdate();
+      port.publishUpdate("local");
       port.publishSelection();
       port.publishView();
       if (port.selection.anchor.blockId) {
@@ -261,7 +264,7 @@ export function createTransactions(port: TransactionPort) {
       const next = redoStack.pop()!;
       undoStack.push(captureHistory());
       restoreHistory(next);
-      port.publishUpdate();
+      port.publishUpdate("local");
       port.publishSelection();
       port.publishView();
       if (port.selection.anchor.blockId) {
