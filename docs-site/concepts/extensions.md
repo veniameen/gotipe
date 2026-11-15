@@ -323,6 +323,12 @@ rest. `BlockEditor` does this for `collaboration` and draws those people with it
 Errors in `apply`, `decorations`, `onUpdate` and `destroy` are reported as
 `EXTENSION_ERROR` through the `error` event; the editor keeps running.
 
+`editor.hasExtension(name)` tells whether the editor was created with an extension of that
+name, passed alone or in a preset. The set is fixed at creation and is the same on both
+engines. A UI asks it before offering what only an extension answers: `BlockEditor` shows
+its AI controls only for `defineAi` and its companions ([AI UI](/docs/ai/ui#which-controls-show)).
+A dependency nobody passed is not installed, even though the extension that names it is.
+
 Only `plugin` and paste-rule handlers receive the options as an argument. Lifecycle hooks
 written as methods can read them as `this.options`. Shortcuts, input rules and slash
 commands don't see options; build the extension in a function if they need them.

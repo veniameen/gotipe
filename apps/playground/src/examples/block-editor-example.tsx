@@ -479,7 +479,6 @@ export function BlockEditorExample() {
         showSlashMenu={true}
         showBlockToolbar={true}
         showThemeToggle={true}
-        showAiCommandBar={false}
       />
 
       {/* Export bar */}

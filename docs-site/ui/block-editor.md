@@ -77,7 +77,7 @@ root shows a loading skeleton with `role="status"`.
 | `showSlashMenu` | `boolean` | `true` | The `/` menu. The `+` button opens it only when this is on. |
 | `showBlockToolbar` | `boolean` | `true` | The block handle: `+`, drag grip and block menu. |
 | `showBubbleMenu` | `boolean` | `true` | The formatting bubble over a selection. |
-| `showAiCommandBar` | `boolean` | `true` | AI command bar (Mod+J), ghost text, AI status and the bubble's Improve button. |
+| `showAiCommandBar` | `boolean` | `true` | AI command bar (Mod+J), ghost text, AI status and the bubble's Improve button, each only when an [AI extension](/docs/ai/ui#which-controls-show) answers it; `false` hides them all. |
 | `onAiCommand` | `(prompt: string) => void` | — | Receives the bar's prompt instead of the AI extension. |
 | `showThemeToggle` | `boolean` | `false` | Light, dark and system switch above the header. |
 | `remotePeers` | `RemotePeer[]` | — | Collaborators' cursors and selections to draw besides those of the editor's `collaboration` decoration layer, which the [provider](/docs/collaboration/provider) fills. Each peer is drawn once. |
@@ -168,8 +168,6 @@ languages; see [i18n](/docs/ui/i18n).
 
 - `showCollaborationCursors` has no effect: cursors are drawn whenever `remotePeers` or the
   editor's `collaboration` decoration layer has entries.
-- `showAiCommandBar` is on by default and adds the Improve button and Mod+J even when no
-  AI extension is installed. Turn it off unless you use [AI](/docs/ai/overview).
 - The block handle is shown only in the `notion` view.
 - To change the `/` menu's groups or labels, set `showSlashMenu={false}` and render your
   own `SlashMenu` as a child; the `+` button then adds an empty block without the menu.

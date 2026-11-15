@@ -30,14 +30,26 @@ The second command is needed only for `AiCommandPalette`, `AiToolbar` and the co
 
 | Option | Type | Default | Description |
 | --- | --- | --- | --- |
-| `showAiCommandBar` | `boolean` | `true` | Shows the command bar, the Improve button, ghost text and the status line. |
+| `showAiCommandBar` | `boolean` | `true` | Shows the command bar, the Improve button, ghost text and the status line where an AI extension answers them; `false` hides them all. |
 | `onAiCommand` | `(prompt: string) => void \| Promise<void>` | — | Handles a command bar prompt yourself instead of the built-in `freeText` command. |
 | `suggestions` | `Suggestion[]` | — | Proofreading suggestions for the toolbar. |
 | `onSuggestionAccept`, `onSuggestionReject` | `(suggestion) => void` | — | Required, with `suggestions`, for the toolbar to appear. |
 | `onSuggestionAcceptAll`, `onSuggestionRejectAll` | `() => void` | — | Accept All and Reject All. |
 
-Set `showAiCommandBar={false}` in an editor without the AI extensions: otherwise the
-Improve button appears and does nothing. `PageEditor` shows no AI controls.
+### Which controls show
+
+Each control appears only when an extension answers it, so an editor without `defineAi` has no
+AI controls at all: no Improve, no ⌘J, no ghost text and no status line, and the keys stay
+the browser's.
+
+| Control | Shown when the editor has |
+| --- | --- |
+| Improve | `defineAi` and `defineAiContext` |
+| Command bar and ⌘J | `defineAi` and `defineAiAgent`, or `defineAi` and your `onAiCommand` |
+| Ghost text, status line | `defineAi` |
+
+`AiPreset` has all three. `BlockEditor` asks `editor.hasExtension(name)`, so the answer is
+fixed when the editor is created. `PageEditor` shows no AI controls.
 
 ## Command bar
 
@@ -181,12 +193,13 @@ a status of your own.
 ## Components
 
 `@gotipe/block-editor` exports each control for an editor surface of your own. Every one
-takes `editor` and works with the AI extensions.
+takes `editor` and draws nothing for an editor without the extensions it needs (see
+[which controls show](#which-controls-show)).
 
 | Component | Props | Description |
 | --- | --- | --- |
 | `AiCommandBar` | `editor`, `onSubmit?` | The command bar with its shortcut. `onSubmit` works like `onAiCommand`. |
-| `BlockEditorBubbleMenu` | `editor`, `enableAI?` | The formatting bar; `enableAI` adds Improve. |
+| `BlockEditorBubbleMenu` | `editor`, `enableAI?` | The formatting bar; `enableAI` adds Improve when the editor has `defineAi` and `defineAiContext`. |
 | `GhostText` | `editor` | The ghost text overlay. |
 | `AiStatusIndicator` | `editor` | The status line. |
 | `SuggestionToolbar` | see [Suggestions](/docs/review/suggestions#suggestiontoolbar) | The proofreading toolbar. |

@@ -183,6 +183,10 @@ the model snapshot or implementing a second DOM-to-document mapper.
 ⌘K (`openLinkDialog`) слушает один владелец на редактор, `formatting/link-shortcut.ts`: поле
 открывает `LinkEditor` пузыря, без пузыря — панели. Вид — `theme/src/theme/toolbar.css`.
 
+Элементы ИИ блочного редактора (Improve в пузыре, строка ⌘J, ghost text, строка состояния) есть,
+только когда им отвечает расширение `@gotipe/ai`: решает `block-editor/src/components/ai-controls.ts`
+по `editor.hasExtension(name)` ядра; компоненты без него ничего не рисуют и не слушают.
+
 Картинки и файлы в React: `react/src/content/media-view.tsx` рисует их только для чтения,
 `content/media-blocks.ts` — `MediaBlocksContext`. Редактирование (загрузка, ссылка, размер,
 кадрирование, подпись, alt, просмотр, меню действий) — отдельный вход `@gotipe/react/media`

@@ -147,7 +147,9 @@ apply to the whole list, and Turn into to the row with the caret or the first ro
 
 The bubble appears over a selection while the editor is editable. From left to right:
 
-- **Improve** asks the AI extension to rewrite the selection. Shown with `showAiCommandBar`.
+- **Improve** asks the AI extension to rewrite the selection. Shown with `showAiCommandBar`
+  when the editor has `defineAi` and `defineAiContext`; without them the bubble starts with the
+  block type.
 - **Block type**: Paragraph, Heading 1–3, Bullet list, Numbered list, Todo list, Quote, Code.
   Disabled in table cells.
 - **Bold, Italic, Underline, Strikethrough, Code**; each tooltip shows its shortcut.

@@ -1,6 +1,7 @@
 import type { GoTipeEditor } from "@gotipe/core";
 import { FloatingPortal, useFloatingPosition } from "@gotipe/react";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { aiControls } from "./ai-controls";
 
 export interface GhostTextProps {
   editor: GoTipeEditor;
@@ -11,8 +12,15 @@ interface GhostState {
   offset: number;
 }
 
-/** A clipped line at the caret follows the editor on scroll/container resize. */
+/**
+ * A clipped line at the caret follows the editor on scroll/container resize. Only an editor with
+ * `defineAi` suggests a continuation; without it there is nothing to draw or listen to.
+ */
 export function GhostText({ editor }: GhostTextProps) {
+  return aiControls(editor).status ? <Ghost editor={editor} /> : null;
+}
+
+function Ghost({ editor }: GhostTextProps) {
   const [ghost, setGhost] = useState<GhostState | null>(null);
   const overlay = useRef<HTMLSpanElement>(null);
   const width = useRef(0);
