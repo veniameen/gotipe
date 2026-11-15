@@ -8,6 +8,7 @@ mod escapes;
 mod hazards;
 mod inline;
 mod links;
+mod lists;
 mod spans;
 pub(crate) mod table_html;
 mod units;
@@ -17,6 +18,7 @@ pub use crate::markdown_parse::MarkdownAtoms;
 use hazards::Top;
 use inline::content_to_markdown;
 use links::{destination, link_line, title_suffix};
+use lists::list_to_markdown;
 use units::{Kind, Options};
 
 /// Convert a Document to Markdown
@@ -95,120 +97,6 @@ fn shown(block: &Block) -> impl Iterator<Item = &Block> {
         .filter(|child| !hazards::writes_no_line(child))
 }
 
-/// The number the first item of a numbered list is written with, as `listStart` of the TS
-/// writer: a whole number from 0, a string read as `parseInt` reads it, and 1 otherwise.
-fn list_start(list: &Block) -> usize {
-    let start = match list.attrs.get("start") {
-        Some(AttrValue::Number(number)) => *number,
-        Some(AttrValue::String(text)) => parse_int(text),
-        None | Some(AttrValue::Null) => 1.0,
-        Some(_) => f64::NAN,
-    };
-    if start.is_finite() && start >= 0.0 {
-        start.trunc() as usize
-    } else {
-        1
-    }
-}
-
-/// `Number.parseInt(text, 10)` of JavaScript: leading blanks, a sign, then decimal digits.
-fn parse_int(text: &str) -> f64 {
-    let text =
-        text.trim_start_matches(|c: char| (c.is_whitespace() && c != '\u{85}') || c == '\u{feff}');
-    let (negative, rest) = match text.strip_prefix('-') {
-        Some(rest) => (true, rest),
-        None => (false, text.strip_prefix('+').unwrap_or(text)),
-    };
-    let digits = rest.bytes().take_while(u8::is_ascii_digit).count();
-    match rest[..digits].parse::<f64>() {
-        Ok(value) if negative => -value,
-        Ok(value) => value,
-        Err(_) => f64::NAN,
-    }
-}
-
-/// A list, each line after `outer`, the indentation of the items around it. A nested list is
-/// written the same way, not indented afterwards, so the blank line before a list that cannot
-/// interrupt the text of its item stays empty at any depth, as in the TS writer.
-fn list_to_markdown(list: &Block, emoji: &Emoji, tier: u8, outer: &str) -> String {
-    let attr = |name: &str| match list.attrs.get(name) {
-        Some(AttrValue::String(value)) => value.as_str(),
-        _ => "",
-    };
-    let start = list_start(list);
-    let marker = match attr("marker") {
-        "+" => "+",
-        "*" => "*",
-        _ => "-",
-    };
-    // a loose list has a blank line between its items and before the children of an item, as in
-    // the TS writer (D-113)
-    let spread = matches!(list.attrs.get("spread"), Some(AttrValue::Bool(true)));
-    let mut rendered = String::new();
-    for (i, item) in list.children.iter().enumerate() {
-        if spread && i > 0 {
-            rendered.push('\n');
-        }
-        let prefix = if list.block_type == "orderedList" {
-            let delimiter = if attr("delimiter") == ")" { ")" } else { "." };
-            format!("{}{delimiter} ", start + i)
-        } else if list.block_type == "todoList" || item.attrs.contains_key("checked") {
-            if matches!(item.attrs.get("checked"), Some(AttrValue::Bool(true))) {
-                format!("{marker} [x] ")
-            } else {
-                format!("{marker} [ ] ")
-            }
-        } else {
-            format!("{marker} ")
-        };
-        // a task's text follows its `[ ] ` on the marker's line; continuation lines and nested
-        // blocks stand under the item's text, and as `[ ] ` is part of a task's text, its indent
-        // is the marker's, as the TS writer
-        let task = prefix.ends_with("] ");
-        let width = if task { marker.len() + 1 } else { prefix.len() };
-        let indent = format!("{outer}{}", " ".repeat(width));
-        let newline = format!("\n{indent}");
-        let options = Options {
-            kind: if task { Kind::Midline } else { Kind::Block },
-            tier,
-            continuation: false,
-            newline: &newline,
-            emoji,
-        };
-        let text = content_to_markdown(&item.content, &options);
-        // an item without text is its marker alone, as the TS writer writes it
-        rendered.push_str(outer);
-        rendered.push_str(if text.is_empty() {
-            prefix.trim_end()
-        } else {
-            &prefix
-        });
-        rendered.push_str(&text);
-        rendered.push('\n');
-        let lines = task || !text.is_empty();
-        // a line before the child that a line without a blank one before it would continue
-        let mut open = lines;
-        for (index, child) in hazards::children(shown(item)).iter().enumerate() {
-            // a list that cannot interrupt the text of the item, or the `[ ]` of a task, starts
-            // after a blank line, as a block that would continue the text before it (D-116);
-            // right after the marker of an item without text a blank line would end the item
-            // (D-117)
-            let apart = (spread && (lines || index > 0))
-                || ((lines || open) && hazards::cannot_interrupt(child))
-                || (open && hazards::continues_text(child));
-            if apart {
-                rendered.push('\n');
-            }
-            // a divider right under a line of the item is `***`: `---` would underline the text
-            // above it as a heading (D-115)
-            let stars = !apart && child.block_type == "divider";
-            indented(child, emoji, tier, &indent, stars, &mut rendered);
-            open = !hazards::closed(child);
-        }
-    }
-    rendered
-}
-
 /// A block, then its children after a blank line, as the TS writer writes them: on the next line
 /// a paragraph would continue the text before it (D-112). A block without lines of its own starts
 /// with its first child.
@@ -224,32 +112,6 @@ fn block_to_markdown(block: &Block, emoji: &Emoji, tier: u8) -> String {
         out.push_str(&block_to_markdown(&child, emoji, tier));
     }
     out
-}
-
-/// `block` as a child of a list item, each line after `indent`, as `block_to_markdown` writes it;
-/// the blank line before a child stays empty, as the TS writer leaves it (`blankLine`). With
-/// `stars` a divider is `***`.
-fn indented(block: &Block, emoji: &Emoji, tier: u8, indent: &str, stars: bool, out: &mut String) {
-    if hazards::is_list(block) {
-        out.push_str(&list_to_markdown(block, emoji, tier, indent));
-        return;
-    }
-    let start = out.len();
-    let own = match block.block_type.as_str() {
-        "divider" if stars => "***\n".to_owned(),
-        _ => own_lines(block, emoji, tier),
-    };
-    for line in own.lines() {
-        out.push_str(indent);
-        out.push_str(line);
-        out.push('\n');
-    }
-    for child in followers(block) {
-        if out.len() > start {
-            out.push('\n');
-        }
-        indented(&child, emoji, tier, indent, false, out);
-    }
 }
 
 /// The children written after the lines of a block: a quote writes its children itself, the
