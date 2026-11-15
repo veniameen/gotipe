@@ -11,6 +11,21 @@
         "!.next/cache/**"
       ]
     },
+    "@gotipe/landing#build": {
+      "dependsOn": [
+        "^build"
+      ],
+      "inputs": [
+        "$TURBO_DEFAULT$",
+        "$TURBO_ROOT$/docs-site/**"
+      ],
+      "outputs": [
+        ".next/**",
+        "!.next/cache/**",
+        "out/**",
+        "public/docs/**"
+      ]
+    },
     "dev": {
       "cache": false,
       "persistent": true
