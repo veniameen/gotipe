@@ -1,8 +1,12 @@
 import { type GoTipeEditor, GoTipeError, createId } from "@gotipe/core";
 import { compareDocuments, snapshotKey } from "./diff";
-import type { Version, VersionDiff, VersionsOptions } from "./types";
+import { decodeVersionsSnapshot } from "./persistence";
+import type { Version, VersionDiff, VersionsOptions, VersionsSnapshot } from "./types";
 
-/** Session snapshots. Hosts own persistence; all returned data is detached from internal state. */
+/**
+ * Session snapshots. Hosts own persistence (`exportState`/`loadState`); all returned data is
+ * detached from internal state.
+ */
 export class VersionsManager {
   private versions: Version[] = [];
   private timer: ReturnType<typeof setInterval> | null = null;
@@ -28,6 +32,14 @@ export class VersionsManager {
       throw new RangeError("autoSaveInterval must be positive");
     this.savedKey = snapshotKey(editor.getJSON());
     this.unsubscribeDestroy = editor.on("destroy", () => this.destroy());
+    if (options.initialState !== undefined) {
+      try {
+        this.loadState(options.initialState);
+      } catch (error) {
+        this.destroy();
+        throw error;
+      }
+    }
     if (options.autoSave) this.timer = setInterval(() => this.autoSave(), interval);
   }
   private assertLive(): void {
@@ -104,6 +116,24 @@ export class VersionsManager {
     this.versions.splice(index, 1);
     this.changed();
     return true;
+  }
+  /** Every version, oldest first, detached from the manager: store it as JSON. */
+  exportState(): VersionsSnapshot {
+    this.assertLive();
+    return { version: 1, versions: structuredClone(this.versions) };
+  }
+  /**
+   * Replaces the versions with a stored snapshot, oldest first by `createdAt`. The whole
+   * snapshot is checked before anything changes. Like `createVersion`, the manager keeps the
+   * newest `maxVersions`; auto-save compares the document with the newest one loaded.
+   */
+  loadState(value: unknown): void {
+    this.assertLive();
+    const versions = decodeVersionsSnapshot(value).slice(-this.maxVersions);
+    this.versions = versions;
+    const newest = versions.at(-1);
+    if (newest) this.savedKey = snapshotKey(newest.snapshot);
+    this.changed();
   }
   compareVersions(a: string, b: string): VersionDiff | null {
     const before = this.versions.find((entry) => entry.id === a);
