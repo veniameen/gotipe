@@ -373,7 +373,12 @@ export function serializeMarkdown(doc: Doc, snapshot?: MarkdownSnapshot): Serial
     if (oi >= 0) usedOrig.add(oi);
     const fp = fingerprint(block);
     const preserved = oi >= 0 && snap!.blocks[oi]!.fingerprint === fp;
-    if (!preserved && isBlockEmpty(block)) continue;
+    // a list without items has no Markdown (D-124)
+    if (
+      !preserved &&
+      (isBlockEmpty(block) || (LIST_TYPES.has(block.type) && !block.children?.length))
+    )
+      continue;
     items.push({ block, oi, preserved, fp, md: "", start: 0, end: 0 });
   }
   resolveHazards(items, snap, fm, (item) => (snap ? sourceIndent(item, snap) : ""));

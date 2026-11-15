@@ -507,6 +507,256 @@
         }
       ],
       "readAsRaw": true
+    },
+    {
+      "id": "children-of-a-paragraph-after-a-blank-line",
+      "document": {
+        "version": 1,
+        "blocks": [
+          {
+            "id": "n28",
+            "type": "paragraph",
+            "attrs": {},
+            "content": [
+              {
+                "text": "p",
+                "marks": []
+              }
+            ],
+            "children": [
+              {
+                "id": "n27",
+                "type": "paragraph",
+                "attrs": {},
+                "content": [
+                  {
+                    "text": "c",
+                    "marks": []
+                  }
+                ],
+                "children": []
+              }
+            ]
+          }
+        ]
+      },
+      "markdown": "p\n\nc\n",
+      "reparsed": [
+        {
+          "type": "paragraph",
+          "attrs": {},
+          "content": [
+            {
+              "text": "p",
+              "marks": []
+            }
+          ],
+          "children": []
+        },
+        {
+          "type": "paragraph",
+          "attrs": {},
+          "content": [
+            {
+              "text": "c",
+              "marks": []
+            }
+          ],
+          "children": []
+        }
+      ]
+    },
+    {
+      "id": "children-of-a-heading-after-a-blank-line",
+      "document": {
+        "version": 1,
+        "blocks": [
+          {
+            "id": "n30",
+            "type": "heading",
+            "attrs": {
+              "level": 2
+            },
+            "content": [
+              {
+                "text": "h",
+                "marks": []
+              }
+            ],
+            "children": [
+              {
+                "id": "n29",
+                "type": "paragraph",
+                "attrs": {},
+                "content": [
+                  {
+                    "text": "c",
+                    "marks": []
+                  }
+                ],
+                "children": []
+              }
+            ]
+          }
+        ]
+      },
+      "markdown": "## h\n\nc\n",
+      "reparsed": [
+        {
+          "type": "heading",
+          "attrs": {
+            "level": 2
+          },
+          "content": [
+            {
+              "text": "h",
+              "marks": []
+            }
+          ],
+          "children": []
+        },
+        {
+          "type": "paragraph",
+          "attrs": {},
+          "content": [
+            {
+              "text": "c",
+              "marks": []
+            }
+          ],
+          "children": []
+        }
+      ]
+    },
+    {
+      "id": "children-of-a-paragraph-in-a-quote",
+      "document": {
+        "version": 1,
+        "blocks": [
+          {
+            "id": "n33",
+            "type": "blockquote",
+            "attrs": {},
+            "content": [
+              {
+                "text": "q",
+                "marks": []
+              }
+            ],
+            "children": [
+              {
+                "id": "n32",
+                "type": "paragraph",
+                "attrs": {},
+                "content": [
+                  {
+                    "text": "p",
+                    "marks": []
+                  }
+                ],
+                "children": [
+                  {
+                    "id": "n31",
+                    "type": "paragraph",
+                    "attrs": {},
+                    "content": [
+                      {
+                        "text": "c",
+                        "marks": []
+                      }
+                    ],
+                    "children": []
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "markdown": "> q\n>\n> p\n> \n> c\n",
+      "reparsed": [
+        {
+          "type": "markdownRaw",
+          "attrs": {
+            "kind": "blockquote"
+          },
+          "content": "> q\n>\n> p\n> \n> c",
+          "children": []
+        }
+      ],
+      "readAsRaw": true
+    },
+    {
+      "id": "a-list-without-items-is-not-written",
+      "document": {
+        "version": 1,
+        "blocks": [
+          {
+            "id": "n36",
+            "type": "paragraph",
+            "attrs": {},
+            "content": [
+              {
+                "text": "p",
+                "marks": []
+              }
+            ],
+            "children": [
+              {
+                "id": "n34",
+                "type": "bulletList",
+                "attrs": {},
+                "content": null,
+                "children": []
+              },
+              {
+                "id": "n35",
+                "type": "paragraph",
+                "attrs": {},
+                "content": [
+                  {
+                    "text": "c",
+                    "marks": []
+                  }
+                ],
+                "children": []
+              }
+            ]
+          },
+          {
+            "id": "n37",
+            "type": "bulletList",
+            "attrs": {},
+            "content": null,
+            "children": []
+          }
+        ]
+      },
+      "markdown": "p\n\nc\n",
+      "reparsed": [
+        {
+          "type": "paragraph",
+          "attrs": {},
+          "content": [
+            {
+              "text": "p",
+              "marks": []
+            }
+          ],
+          "children": []
+        },
+        {
+          "type": "paragraph",
+          "attrs": {},
+          "content": [
+            {
+              "text": "c",
+              "marks": []
+            }
+          ],
+          "children": []
+        }
+      ]
     }
   ]
 }

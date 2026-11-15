@@ -275,10 +275,12 @@ pub(super) fn cannot_interrupt(list: &Block) -> bool {
     }
 }
 
-/// `isBlockEmpty` of the TS writer: a block it leaves out at the top level.
+/// `isBlockEmpty` of the TS writer: a block it leaves out at the top level. A list without items
+/// has no Markdown (D-124).
 fn empty(block: &Block) -> bool {
     match (block.block_type.as_str(), &block.content) {
         ("paragraph" | "heading", _) => !has_text(block),
+        _ if is_list(block) => block.children.is_empty(),
         ("markdownRaw", BlockContent::Raw(source)) => source.is_empty(),
         ("markdownRaw", _) => true,
         _ => super::omitted(block),
