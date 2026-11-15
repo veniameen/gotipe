@@ -487,3 +487,13 @@ WebKit, D-132 — и на сборке до D-08. Не исправлялись.
 | ID | Ур. | Что | Где |
 |---|---|---|---|
 | D-150 | М | Атлас переносит заголовки и название страницы по балансу (`text-wrap: balance`), библиотека — нет: многострочный заголовок в notion, modern и minimal переносится жадно, и последняя строка бывает из одного слова. Токен `--gt-heading-wrap` (`balance`, в docs — `pretty`) теперь есть в теме, но тема применяет его только к заголовкам с якорем вида docs | design/atlas/src/document.css:100,142; theme/src/base.css:118 |
+
+## Найдено при исправлении D-34 и D-181 (2026-11-15)
+
+Проверено чтением кода; не исправлялись — вне файлов этих находок.
+
+| ID | Ур. | Что | Где |
+|---|---|---|---|
+| D-195 | М | Имена по умолчанию у компонентов `@gotipe/react` — английский текст в коде: `BubbleMenu` «Text formatting», `EditorContent` «Document content», `FloatingMenu` «Insert block». Имя документа получает и `BlockEditor` без `ariaLabel`: в русском интерфейсе документ для чтения с экрана называется по-английски (`PageEditor` передаёт `page.ariaLabel`). Подписи Vue — тоже английские. Пузырь блок-редактора после D-34 назван ключом `a11y.toolbarLabel`; для документа нужен ключ (`a11y.editorLabel` убран в D-34: его никто не читал) | react/src/bubble-menu.tsx:23; react/src/editor-content.tsx:57; react/src/floating-menu.tsx:84; vue/src/editor-content.ts:338; block-editor-vue/src/block-editor-vue.ts:17 |
+| D-196 | М | Подписи хода запросов ИИ — английский текст `@gotipe/ai`: `aiStatusChange` несёт «Proofreading...», «Reviewing...», «Generating suggestions...», «Processing...» и «Found N suggestions», а `AiStatusIndicator` блок-редактора показывает `label` как есть (без него — «Using AI toolkit...»): в русском интерфейсе строка состояния ИИ по-английски. Headless-пакет не зависит от i18n — событию нужен вид запроса, а слова — ключам `ai.*` в индикаторе | ai/src/manager.ts:109,167,181,210; ai/src/agent.ts:32; block-editor/src/components/ai-status-indicator.tsx:37,40 |
+| D-197 | М | Время реплик в `CommentSidebar` пишется языком браузера (`toLocaleString()` без локали), а не языком интерфейса: русский интерфейс на английской системе показывает «11/15/2026, 10:00:00 PM» рядом с русскими подписями | block-editor/src/components/comments/comment-thread.tsx (`toLocaleString`) |
