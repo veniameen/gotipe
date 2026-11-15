@@ -83,9 +83,9 @@ A view receives `block`, `editor`, `content` and `children` (arrays of vnodes), 
 and `readOnly`.
 
 `EditorContent` renders paragraphs, headings, all three list kinds with task checkboxes,
-code blocks, quotes, dividers, tables, callouts, toggles as `<details>`, columns, images
-(through `host.resolveAsset`), files and embeds as buttons that open their link, math as
-TeX source, and raw Markdown blocks. Marks: bold, italic, underline, strikethrough, code,
+code blocks, quotes, dividers, tables, callouts with their emoji, toggles as `<details>`,
+columns, images (through `host.resolveAsset`), files and embeds as buttons that open their
+link, math as its TeX source (the block's text), and raw Markdown blocks. Marks: bold, italic, underline, strikethrough, code,
 superscript, subscript, links with safe addresses only, highlight and text colour.
 
 ## Block editor for Vue
@@ -128,10 +128,12 @@ element. An editor that finishes after the component is gone is destroyed.
 
 ## Limitations
 
-- `EditorContent` draws no decorations: no empty-block placeholders, comment or
-  suggestion highlights, remote cursors or ghost text. It has no code highlighting,
-  table bars, resize handles or menus, and no image toolbar or upload UI. Callouts show
-  a fixed icon.
+- `EditorContent` draws the decorations (comment and suggestion highlights, collaborators'
+  cursors and selections, ghost text, the `Placeholder` text) but not React's own hints in
+  empty blocks. It has no code highlighting, table bars, resize handles or menus, and no
+  image toolbar or upload UI.
+- A callout without its own emoji (the default) has no icon: the icons of the callout kinds
+  that React draws are not in `@gotipe/vue`.
 - `SlashMenuVue` does not filter as you type, has no keyboard navigation or positioning,
   does not close on Escape or an outside click, and leaves the `/` in the text. Its rows
   show the icon name as text.

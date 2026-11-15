@@ -109,4 +109,50 @@ describe("Vue document renderer", () => {
     await nextTick();
     expect(document.querySelector('[data-block-id="p"]')).toBeNull();
   });
+
+  it("draws a callout's own emoji and a formula's TeX, the block's text (D-32)", async () => {
+    const editor = await createEditor({
+      extensions: [FullPreset],
+      engine: "js",
+      content: {
+        version: 1,
+        blocks: [
+          {
+            id: "rocket",
+            type: "callout",
+            attrs: { emoji: "🚀", type: "tip" },
+            content: [{ text: "Ship it", marks: [] }],
+            children: [],
+          },
+          {
+            id: "plain",
+            type: "callout",
+            attrs: { type: "info" },
+            content: [{ text: "Note", marks: [] }],
+            children: [],
+          },
+          { id: "tex", type: "math", attrs: {}, content: "e^{i\\pi} + 1 = 0", children: [] },
+        ],
+      },
+    });
+    editors.push(editor);
+    const { root } = mount(shallowRef<GoTipeEditor | null>(editor));
+    await nextTick();
+    const icon = (id: string) =>
+      root.querySelector(`[data-block-id="${id}"] .gotipe-callout-icon`)?.textContent ?? null;
+    expect(icon("rocket")).toBe("🚀");
+    expect(
+      root.querySelector('[data-block-id="rocket"] .gotipe-callout-content')?.textContent,
+    ).toBe("Ship it");
+    // the default emoji is empty: no glyph instead of an icon
+    expect(icon("plain")).toBeNull();
+    const formula = root.querySelector('[data-block-id="tex"]');
+    expect(formula?.tagName).toBe("PRE");
+    expect(formula?.textContent).toBe("e^{i\\pi} + 1 = 0");
+    editor.dispatch({
+      steps: [{ type: "setBlockAttrs", blockId: "plain", attrs: { emoji: "📌" } }],
+    });
+    await nextTick();
+    expect(icon("plain")).toBe("📌");
+  });
 });
