@@ -154,8 +154,9 @@ Rust-писатель повторяет в `markdown/hazards.rs` (D-100). Пу�
 HTML/SSR: `packages/core/src/serialization/html.ts` owns the canonical serializer;
 `html-styles.ts` supplies optional neutral export styles. `getHTML()` on both engines
 (`wasm-bridge.ts`), core `serializeHtml`, server rendering and the HTML export wrapper
-call this implementation. The native `crates/gotipe-export/src/html.rs` (Cloud,
-`gotipe-convert html`) is a separate port that must stay byte-identical: both suites
+call this implementation; the WASM module has no HTML, Markdown or sanitizer exports
+(D-73). The native `crates/gotipe-export/src/html.rs` (Cloud, `gotipe-convert html`) is
+the only other writer, a separate port that must stay byte-identical: both suites
 check `crates/gotipe-export/tests/fixtures/html-parity.json`. `html/js.rs` mirrors the
 JavaScript attribute conversions, `html/safety.rs` the URL and color checks.
 
