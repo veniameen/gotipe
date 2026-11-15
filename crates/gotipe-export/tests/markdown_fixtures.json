@@ -2301,5 +2301,201 @@
         "children": []
       }
     ]
+  },
+  {
+    "markdown": "<span style=\"color:red\"><span>a</span></span>b\n",
+    "blocks": [
+      {
+        "type": "paragraph",
+        "attrs": {},
+        "content": [
+          {
+            "text": "<span>",
+            "marks": [
+              {
+                "type": "mdRaw"
+              },
+              {
+                "type": "textColor",
+                "attrs": {
+                  "color": "red"
+                }
+              }
+            ]
+          },
+          {
+            "text": "a",
+            "marks": [
+              {
+                "type": "textColor",
+                "attrs": {
+                  "color": "red"
+                }
+              }
+            ]
+          },
+          {
+            "text": "</span>",
+            "marks": [
+              {
+                "type": "mdRaw"
+              },
+              {
+                "type": "textColor",
+                "attrs": {
+                  "color": "red"
+                }
+              }
+            ]
+          },
+          {
+            "text": "b",
+            "marks": []
+          }
+        ],
+        "children": []
+      }
+    ]
+  },
+  {
+    "markdown": "<u><u class=\"x\">a</u></u>b\n",
+    "blocks": [
+      {
+        "type": "paragraph",
+        "attrs": {},
+        "content": [
+          {
+            "text": "<u class=\"x\">",
+            "marks": [
+              {
+                "type": "underline"
+              },
+              {
+                "type": "mdRaw"
+              }
+            ]
+          },
+          {
+            "text": "a",
+            "marks": [
+              {
+                "type": "underline"
+              }
+            ]
+          },
+          {
+            "text": "</u>",
+            "marks": [
+              {
+                "type": "underline"
+              },
+              {
+                "type": "mdRaw"
+              }
+            ]
+          },
+          {
+            "text": "b",
+            "marks": []
+          }
+        ],
+        "children": []
+      }
+    ]
+  },
+  {
+    "markdown": "<mark style=\"background:yellow\"><mark>a</mark></mark>b\n",
+    "blocks": [
+      {
+        "type": "paragraph",
+        "attrs": {},
+        "content": [
+          {
+            "text": "a",
+            "marks": [
+              {
+                "type": "highlight",
+                "attrs": {
+                  "color": "yellow"
+                }
+              },
+              {
+                "type": "highlight"
+              }
+            ]
+          },
+          {
+            "text": "b",
+            "marks": []
+          }
+        ],
+        "children": []
+      }
+    ]
+  },
+  {
+    "markdown": "<b>x<b>y</b>z</b>w\n",
+    "blocks": [
+      {
+        "type": "paragraph",
+        "attrs": {},
+        "content": [
+          {
+            "text": "xyz",
+            "marks": [
+              {
+                "type": "bold"
+              }
+            ]
+          },
+          {
+            "text": "w",
+            "marks": []
+          }
+        ],
+        "children": []
+      }
+    ]
+  },
+  {
+    "markdown": "<span style=\"color:red\"><spanx>a</span>b\n",
+    "blocks": [
+      {
+        "type": "paragraph",
+        "attrs": {},
+        "content": [
+          {
+            "text": "<spanx>",
+            "marks": [
+              {
+                "type": "mdRaw"
+              },
+              {
+                "type": "textColor",
+                "attrs": {
+                  "color": "red"
+                }
+              }
+            ]
+          },
+          {
+            "text": "a",
+            "marks": [
+              {
+                "type": "textColor",
+                "attrs": {
+                  "color": "red"
+                }
+              }
+            ]
+          },
+          {
+            "text": "b",
+            "marks": []
+          }
+        ],
+        "children": []
+      }
+    ]
   }
 ]
