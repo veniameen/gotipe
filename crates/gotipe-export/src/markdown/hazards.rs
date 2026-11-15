@@ -190,7 +190,7 @@ fn separate(written: &mut [Written]) {
 
 /// A child that writes no line but blanks of its own, so it keeps no lists apart: a paragraph
 /// without text, raw source of blanks, a list without items.
-fn writes_no_line(block: &Block) -> bool {
+pub(super) fn writes_no_line(block: &Block) -> bool {
     match block.block_type.as_str() {
         "paragraph" => !has_text(block) && block.children.is_empty(),
         "markdownRaw" => crate::plaintext::block_text(block)

@@ -146,8 +146,9 @@ function blankLine(indent: string): string {
 }
 
 /**
- * A child that writes no line but blanks of its own, so it keeps no lists apart: a paragraph
- * without text, raw source of blanks, a list without items.
+ * A child that writes no line but blanks of its own, so it keeps no lists apart and is not
+ * written: a paragraph without text, raw source of blanks, a list without items. Its blank line
+ * after the marker of an item without text would end the item (D-117).
  */
 function writesNoLine(block: Block): boolean {
   if (omitted(block)) return true;
@@ -228,14 +229,19 @@ function renderList(w: Writer, block: Block, indent: string, ro: RenderOpts, nod
         );
       }
     }
+    // the `[ ]` of a task is text that a nested list has to interrupt as well
+    const text = spans.length > 0 || todo;
+    let first = true;
     for (const child of written(item.children)) {
-      if (omitted(child)) continue;
+      if (writesNoLine(child)) continue;
       w.write(ro.eol);
-      // the `[ ]` of a task is text that a nested list has to interrupt as well
-      if (spread || ((spans.length > 0 || todo) && cannotInterrupt(child)))
+      // an item starts with at most one empty line: after its marker alone a blank line ends it
+      // (D-117)
+      if ((spread && (text || !first)) || (text && cannotInterrupt(child)))
         w.write(blankLine(indent) + ro.eol);
       w.write(contIndent);
       itemNode.children.push(renderBlock(w, child, contIndent, inner));
+      first = false;
     }
     itemNode.end = w.pos;
     node.children.push(itemNode);
@@ -459,7 +465,7 @@ function renderBlock(w: Writer, block: Block, indent: string, ro: RenderOpts): R
     const childIndent = quoted ? `${indent}> ` : indent;
     const gap = ro.eol + (quoted ? `${indent}>` : blankLine(indent)) + ro.eol + childIndent;
     for (const child of written(block.children)) {
-      if (omitted(child)) continue;
+      if (writesNoLine(child)) continue;
       if (w.pos > node.start) w.write(gap);
       node.children.push(renderBlock(w, child, childIndent, { ...ro, markerOverride: undefined }));
     }

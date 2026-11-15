@@ -75,9 +75,14 @@ fn omitted(block: &Block) -> bool {
     }
 }
 
-/// The children a writer shows, without omitted placeholders.
+/// The children a writer shows: not omitted placeholders, nor children that write no line, as
+/// in the TS writer; the blank line of one after the marker of an item without text would end
+/// the item (D-117).
 fn shown(block: &Block) -> impl Iterator<Item = &Block> {
-    block.children.iter().filter(|child| !omitted(child))
+    block
+        .children
+        .iter()
+        .filter(|child| !hazards::writes_no_line(child))
 }
 
 /// The number the first item of a numbered list is written with, as `listStart` of the TS
