@@ -197,3 +197,55 @@ describe.each(ENGINES)("%s keys right after an edit (D-132)", (engine) => {
     ]);
   });
 });
+
+describe.each(ENGINES)("%s Backspace on a block selected as a whole (D-135)", (engine) => {
+  it("deletes a selected list item, as it deletes a selected paragraph", async () => {
+    const view = await open(
+      engine,
+      [paragraph("p", "Текст"), list("list", item("first", "First"), item("item", "ab😀"))],
+      { blockId: "item", offset: 1 },
+    );
+    expect(view.editor.chain().selectBlock("item").run()).toBe(true);
+    nextFrame();
+    view.backspace();
+    expect(view.editor.getJSON().blocks).toEqual([
+      paragraph("p", "Текст"),
+      list("list", item("first", "First")),
+    ]);
+    expect(view.editor.chain().selectBlock("p").run()).toBe(true);
+    nextFrame();
+    view.backspace();
+    expect(view.editor.getJSON().blocks).toEqual([list("list", item("first", "First"))]);
+  });
+
+  it("Delete removes a selected block as well, not the character after its start", async () => {
+    const view = await open(engine, [paragraph("a", "ab"), paragraph("b", "cd")], {
+      blockId: "a",
+      offset: 1,
+    });
+    expect(view.editor.chain().selectBlock("a").run()).toBe(true);
+    nextFrame();
+    const target = view.editor.element!;
+    const key = new KeyboardEvent("keydown", { key: "Delete", bubbles: true, cancelable: true });
+    target.dispatchEvent(key);
+    if (!key.defaultPrevented)
+      target.dispatchEvent(
+        new InputEvent("beforeinput", {
+          bubbles: true,
+          cancelable: true,
+          inputType: "deleteContentForward",
+        }),
+      );
+    expect(view.editor.getJSON().blocks).toEqual([paragraph("b", "cd")]);
+  });
+
+  it("deletes it also while the caret restore waits for a frame", async () => {
+    const view = await open(engine, [list("list", item("first", "First"), item("item", "ab"))], {
+      blockId: "item",
+      offset: 2,
+    });
+    expect(view.editor.chain().selectBlock("item").run()).toBe(true);
+    view.backspace();
+    expect(view.editor.getJSON().blocks).toEqual([list("list", item("first", "First"))]);
+  });
+});

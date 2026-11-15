@@ -5,7 +5,8 @@ import { installDOMSelection } from "../dom/selection";
 import type { GoTipeError } from "../error";
 import { installBeforeInput } from "../input/before-input";
 import { installComposition } from "../input/composition";
-import type { TypingKind } from "../input/session";
+import { replaceStructuredSelection } from "../input/selection-edit";
+import { type InputHost, type TypingKind, reportInputError } from "../input/session";
 import type { Document } from "../types/block";
 import type { MarkView, SelectionView, ViewState } from "../types/view";
 
@@ -189,7 +190,7 @@ export function mountSurface(
     }
   };
 
-  installBeforeInput(element, signal, {
+  const input: InputHost = {
     get editable() {
       return port.editable;
     },
@@ -233,7 +234,8 @@ export function mountSurface(
     scheduleSelectionRestore,
     cancelSelectionRestore,
     runInputRules,
-  });
+  };
+  installBeforeInput(element, signal, input);
 
   // Keyboard shortcuts from extensions
   element.addEventListener(
@@ -295,11 +297,29 @@ export function mountSurface(
         }
       }
 
+      const plainKey = !e.metaKey && !e.ctrlKey && !e.altKey;
+      // A selected block goes as a whole, a list item too. Its anchor and head are its
+      // start, which `beforeinput` would read back from the DOM as a caret there (D-135).
+      if (
+        (e.key === "Backspace" || e.key === "Delete") &&
+        plainKey &&
+        port.selection.type !== "text"
+      ) {
+        e.preventDefault();
+        try {
+          replaceStructuredSelection(input, port.selection, "delete");
+          scheduleSelectionRestore();
+        } catch (error) {
+          reportInputError(input, error);
+        }
+        return;
+      }
+
       // Some browsers do not dispatch beforeinput(deleteContentBackward)
       // at list-item boundaries. Handle this path on keydown. Until a pending
       // restore puts the native caret where the model's is, the model's counts,
       // as for `beforeinput` (input/session.ts).
-      if (e.key === "Backspace" && !e.metaKey && !e.ctrlKey && !e.altKey) {
+      if (e.key === "Backspace" && plainKey) {
         const caret = domSelection.pending ? port.selection : readSelectionFromDOM();
         if (
           caret &&
