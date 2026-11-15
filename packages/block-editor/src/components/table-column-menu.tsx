@@ -9,6 +9,7 @@ import {
 } from "@gotipe/react";
 import type React from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useBlockEditorI18n } from "../i18n/strings";
 import { PageIcon, type PageIconName } from "../page/icons";
 import { cellActions } from "../table/cell-actions";
 import {
@@ -70,6 +71,7 @@ function TableHandleMenu({
   groups: () => MenuGroup[];
   marker: "data-gotipe-column-menu" | "data-gotipe-row-menu";
 }) {
+  const i18n = useBlockEditorI18n();
   const [open, setOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
@@ -122,7 +124,7 @@ function TableHandleMenu({
           ? cause
           : new GoTipeError(
               "TRANSFORM_ERROR",
-              cause instanceof Error ? cause.message : "Table operation failed",
+              cause instanceof Error ? cause.message : i18n.t("table.actionFailed"),
             );
       setError(failure.message);
       editor.reportError(failure);

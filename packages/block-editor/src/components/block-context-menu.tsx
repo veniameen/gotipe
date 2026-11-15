@@ -284,7 +284,7 @@ export function BlockContextMenu({ editor, blockId, open, onClose }: BlockContex
     } catch (cause) {
       const error = new GoTipeError(
         "TRANSFORM_ERROR",
-        cause instanceof Error ? cause.message : "Block action failed",
+        cause instanceof Error ? cause.message : i18n.t("block.actionFailed"),
       );
       setError(error.message);
       editor.reportError(error);

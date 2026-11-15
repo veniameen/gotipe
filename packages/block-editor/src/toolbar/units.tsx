@@ -108,7 +108,8 @@ function HistoryTools({ editor }: { editor: GoTipeEditor }) {
   );
 }
 
-type MarkName = keyof typeof MARK_KEYS;
+/** The marks with a button of their own; highlight is in the colour picker, link in its tool. */
+type MarkName = Exclude<keyof typeof MARK_KEYS, "highlight" | "link">;
 const MARK_TOOLS: Record<"marks" | "moreMarks", { mark: MarkName; icon: PageIconName }[]> = {
   marks: [
     { mark: "bold", icon: "bold" },
