@@ -145,8 +145,18 @@ button appears only when the editor has that command.
 The toast shows errors with these codes for four seconds: `TRANSFORM_ERROR`,
 `CLIPBOARD_FAILED`, `ASSET_SAVE_FAILED`, `ASSET_RESOLVE_FAILED`, `ASSET_UNSUPPORTED`,
 `ASSET_TOO_LARGE`, `LINK_BLOCKED`, `LINK_OPEN_FAILED`, `COLLABORATION_ERROR`,
-`PROPOSAL_ACTION_FAILED` and `COMMENT_ACTION_FAILED`. Other errors go to `console.error`.
-If you report errors yourself through `host.onError`, set `errorToast={false}`.
+`PROPOSAL_ACTION_FAILED`, `PROPOSAL_STALE` and `COMMENT_ACTION_FAILED`. Under a translated
+title it shows the error's own message, except for `PROPOSAL_STALE`: its message names the
+engine's reason, so the toast says in the interface's language that the suggestion is out of
+date because the text around it changed. Other errors go to `console.error`. If you report
+errors yourself through `host.onError`, set `errorToast={false}`.
+
+`EXTENSION_ERROR` and `COMPOSITION_CONFLICT` never show in the toast; this is by design. An
+extension's or a listener's failure belongs to the extension's own interface, which reports
+it where it happened (the AI command bar shows its errors). A `COMPOSITION_CONFLICT` carries
+the text an outside change interrupted, which your app offers back (see
+[conflicts during IME input](/docs/collaboration/offline#conflicts-during-ime-input)). Both
+reach the `error` event, `host.onError` and, without a listener of yours, the console.
 
 ## Other components
 

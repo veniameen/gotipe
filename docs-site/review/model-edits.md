@@ -152,7 +152,8 @@ and scroll. Without `onAccept`, `PageEditor` applies an accepted proposal itself
   `prefers-reduced-motion` it appears at once.
 - A proposal whose anchor is no longer found exactly once is stale. A dashed hint stays near
   where its text was, and its card offers only Reject. Accepting it reports
-  `PROPOSAL_STALE`.
+  `PROPOSAL_STALE`; without your `onError` the toast says in the interface's language that the
+  suggestion is out of date.
 - An error thrown by your callbacks reaches `host.onError` / `onError` as
   `PROPOSAL_ACTION_FAILED` or `COMMENT_ACTION_FAILED`.
 

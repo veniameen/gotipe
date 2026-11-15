@@ -157,6 +157,8 @@ export type BlockEditorTranslationKey =
   | "error.linkOpen"
   | "error.collaboration"
   | "error.proposal"
+  | "error.proposalStale"
+  | "error.proposalStaleDetail"
   | "error.comment"
   | "ai.bar"
   | "ai.prompt"
