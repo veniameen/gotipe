@@ -148,12 +148,52 @@ describe("a table with merged cells in Markdown", () => {
     expect(serializeMarkdown(edited, snapshot).text).toBe(first.replace("В очереди", "Очередь"));
   });
 
+  it("keeps text kept verbatim in its cells as it is (D-103)", () => {
+    const raw = (text: string, ...marks: { type: string }[]) => ({
+      text,
+      marks: [...marks, { type: "mdRaw" }],
+    });
+    const verbatim = table([
+      row("r0", [cell("a", "h", { colspan: 2 }, "tableHeader")]),
+      row("r1", [
+        // neighbouring verbatim runs of one mark share a `<span>`, as they read back as one
+        {
+          ...cell("b", ""),
+          content: [raw("![i](u.png)"), raw("<br>"), raw("x", { type: "bold" })],
+        },
+        { ...cell("c", ""), content: [{ text: "<kbd> ", marks: [] }, raw("<kbd>")] },
+      ]),
+    ]);
+    const { text, map } = serializeMarkdown({ version: 1, blocks: [verbatim] });
+    expect(text).toContain(
+      "<td><span>![i](u.png)&lt;br&gt;</span><strong><span>x</span></strong></td>",
+    );
+    expect(text).toContain(
+      '<td style="text-align:right">&lt;kbd&gt; <span>&lt;kbd&gt;</span></td>',
+    );
+    const segment = map.segments.find((entry) => entry.blockId === "b")!;
+    expect(text.slice(segment.mdFrom, segment.mdTo)).toBe("![i](u.png)");
+    expect(segment.exact).toBe(true);
+    const { doc, snapshot } = parseMarkdown(text);
+    expect(doc.blocks[0]!.children[1]!.children.map((c) => c.content)).toEqual([
+      [raw("![i](u.png)<br>"), raw("x", { type: "bold" })],
+      [{ text: "<kbd> ", marks: [] }, raw("<kbd>")],
+    ]);
+    expect(serializeMarkdown(doc, snapshot).text).toBe(text);
+    expect(serializeMarkdown(doc).text).toBe(text);
+  });
+
   it("keeps HTML that is not the writer's table raw, byte for byte", () => {
     for (const source of [
       "<table>\n<tr>\n<td>a</td>\n</tr>\n</table>\n",
       '<table>\n<tr>\n<td colspan="2"><b>a</b></td>\n</tr>\n</table>\n',
       '<table>\n<tr>\n<td colspan="2">a &nbsp; b</td>\n</tr>\n</table>\n',
       '<table class="x">\n<tr>\n<td colspan="2">a</td>\n</tr>\n</table>\n',
+      // a `<span>` holds text kept verbatim: text and line breaks, which the writer escapes
+      '<table>\n<tr>\n<td colspan="2"><span><b>a</b></span></td>\n</tr>\n</table>\n',
+      '<table>\n<tr>\n<td colspan="2"><span></span>a</td>\n</tr>\n</table>\n',
+      '<table>\n<tr>\n<td colspan="2"><span>a</td>\n</tr>\n</table>\n',
+      '<table>\n<tr>\n<td colspan="2"><span>a</span><span>b</span></td>\n</tr>\n</table>\n',
     ]) {
       const { doc, snapshot } = parseMarkdown(source);
       expect(doc.blocks[0]).toMatchObject({ type: "markdownRaw", content: source.trimEnd() });

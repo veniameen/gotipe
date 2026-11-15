@@ -82,14 +82,24 @@ function openTag(tag: string): Mark | null {
   return { type: color[1] === "span" ? "textColor" : "highlight", attrs: { color: color[3]! } };
 }
 
-/** A cell's inline HTML: text with its marks, and where each run of text stands. */
+/**
+ * A cell's inline HTML: text with its marks, and where each run of text stands. A `<span>` without
+ * attributes holds text kept verbatim (`mdRaw`, D-103): text and line breaks, no tags.
+ */
 function readInline(html: string, at: number): { spans: Span[]; segs: RawSegment[] } | null {
   const spans: Span[] = [];
   const segs: RawSegment[] = [];
   const stack: { name: string; mark: Mark }[] = [];
   let textAt = 0;
   let i = 0;
+  let verbatim = false;
   while (i < html.length) {
+    if (html.startsWith(verbatim ? "</span>" : "<span>", i)) {
+      i += verbatim ? 7 : 6;
+      verbatim = !verbatim;
+      continue;
+    }
+    if (verbatim && html[i] === "<" && !html.startsWith("<br>", i)) return null;
     if (html.startsWith("</", i)) {
       const end = html.indexOf(">", i);
       const top = stack.pop();
@@ -114,6 +124,7 @@ function readInline(html: string, at: number): { spans: Span[]; segs: RawSegment
     if (text === null) return null;
     const marks = stack.map((entry) => entry.mark);
     marks.sort((a, b) => RANK.indexOf(a.type) - RANK.indexOf(b.type));
+    if (verbatim) marks.push({ type: "mdRaw" });
     const last = spans.at(-1);
     if (last && JSON.stringify(last.marks) === JSON.stringify(marks)) last.text += text;
     else spans.push({ text, marks });
@@ -127,7 +138,7 @@ function readInline(html: string, at: number): { spans: Span[]; segs: RawSegment
     textAt += text.length;
     i = stop;
   }
-  return stack.length ? null : { spans, segs };
+  return stack.length || verbatim ? null : { spans, segs };
 }
 
 const CELL =

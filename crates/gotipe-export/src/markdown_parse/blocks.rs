@@ -229,7 +229,8 @@ impl Reader {
                 i = next;
                 continue;
             }
-            if i + 1 < lines.len() && line.text.contains('|') {
+            // a lazy line continues text: it is no delimiter row (GFM)
+            if i + 1 < lines.len() && !lines[i + 1].lazy && line.text.contains('|') {
                 if let Some(alignment) =
                     alignment(&lines[i + 1].text).filter(|a| a.len() == cells(&line.text).len())
                 {

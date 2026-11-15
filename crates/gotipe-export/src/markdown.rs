@@ -164,17 +164,17 @@ fn list_to_markdown(list: &Block, emoji: &Emoji, tier: u8, outer: &str) -> Strin
         });
         rendered.push_str(&text);
         rendered.push('\n');
-        for child in shown(item) {
+        for child in hazards::children(shown(item)) {
             // a list that cannot interrupt the text of the item, or the `[ ]` of a task, starts
             // after a blank line
-            if (task || !text.is_empty()) && hazards::cannot_interrupt(child) {
+            if (task || !text.is_empty()) && hazards::cannot_interrupt(&child) {
                 rendered.push('\n');
             }
-            if hazards::is_list(child) {
-                rendered.push_str(&list_to_markdown(child, emoji, tier, &indent));
+            if hazards::is_list(&child) {
+                rendered.push_str(&list_to_markdown(&child, emoji, tier, &indent));
                 continue;
             }
-            for line in block_to_markdown(child, emoji, tier).lines() {
+            for line in block_to_markdown(&child, emoji, tier).lines() {
                 rendered.push_str(&format!("{indent}{line}\n"));
             }
         }
@@ -207,7 +207,8 @@ fn block_to_markdown(block: &Block, emoji: &Emoji, tier: u8) -> String {
             })
         },
     );
-    let nested = shown(block)
+    let nested = hazards::children(shown(block))
+        .iter()
         .map(|child| block_to_markdown(child, emoji, tier))
         .collect::<Vec<_>>()
         .join("\n");
@@ -357,10 +358,10 @@ fn quoted(text: &str) -> String {
 
 /// A quote's children follow its text after a `>` line, as in the TS writer.
 fn quote_children(mut quote: String, block: &Block, emoji: &Emoji, tier: u8) -> String {
-    for child in shown(block) {
+    for child in hazards::children(shown(block)) {
         quote.push_str("\n>\n");
         quote.push_str(&quoted(
-            block_to_markdown(child, emoji, tier).trim_end_matches('\n'),
+            block_to_markdown(&child, emoji, tier).trim_end_matches('\n'),
         ));
     }
     quote.push('\n');

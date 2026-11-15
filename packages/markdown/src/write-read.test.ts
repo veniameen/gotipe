@@ -1,7 +1,26 @@
 import { describe, expect, it } from "vitest";
+import nested from "../../../crates/gotipe-export/tests/fixtures/markdown-nested-write-read.json";
 import fixture from "../../../crates/gotipe-export/tests/fixtures/markdown-write-read.json";
 import { parseMarkdown, serializeMarkdown } from "./index";
 import type { Block, Doc, Span } from "./types";
+
+interface Fixture {
+  read: { id: string; markdown: string; blocks: unknown[] }[];
+  /** `readAsRaw`: the reader keeps the blocks as raw source (a list in a quote, D-104). */
+  write: {
+    id: string;
+    document: unknown;
+    markdown: string;
+    reparsed: unknown[];
+    readAsRaw?: boolean;
+  }[];
+}
+
+/** The shared cases: the Rust reader and writer check them too (tests/markdown_write_read.rs). */
+const FIXTURES: [string, Fixture][] = [
+  ["D-97", fixture],
+  ["D-101, D-103, D-104, D-105", nested],
+];
 
 /** Blocks without ids: what a parse means, independent of generated ids. */
 function strip(block: Block): unknown {
@@ -23,23 +42,24 @@ const texts = (blocks: readonly Block[]): unknown[] =>
     ...texts(block.children ?? []),
   ]);
 
-describe("a written document reads back as itself (D-97)", () => {
-  // The Rust reader and writer check the same fixture (tests/markdown_write_read.rs).
-  it.each(fixture.read)("reads $id as the Rust reader does and keeps its bytes", (entry) => {
+describe.each(FIXTURES)("a written document reads back as itself (%s)", (_name, cases) => {
+  it.each(cases.read)("reads $id as the Rust reader does and keeps its bytes", (entry) => {
     const { doc, snapshot } = parseMarkdown(entry.markdown);
     expect(doc.blocks.map(strip)).toEqual(entry.blocks);
     expect(serializeMarkdown(doc, snapshot).text).toBe(entry.markdown);
   });
 
-  it.each(fixture.write)("writes $id as the Rust writer does and reads it back", (entry) => {
+  it.each(cases.write)("writes $id as the Rust writer does and reads it back", (entry) => {
     const document = entry.document as Doc;
     const text = serializeMarkdown(document).text;
     expect(text).toBe(entry.markdown);
     const read = parseMarkdown(text).doc.blocks;
     expect(read.map(strip)).toEqual(entry.reparsed);
-    expect(texts(read)).toEqual(texts(document.blocks));
+    if (!entry.readAsRaw) expect(texts(read)).toEqual(texts(document.blocks));
   });
+});
 
+describe("typed addresses (D-97)", () => {
   it("writes typed addresses so that no reader takes them for links", () => {
     const text = "see www.e.x, https://e.x/a?b=1 and a.www.b@c.de";
     const written = serializeMarkdown({

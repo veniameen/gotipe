@@ -87,13 +87,24 @@ fn open_tag(tag: &str) -> Option<(Mark, &'static str)> {
     })
 }
 
-/// A cell's inline HTML: text with its marks.
+/// A cell's inline HTML: text with its marks. A `<span>` without attributes holds text kept
+/// verbatim (`mdRaw`, D-103): text and line breaks, no tags.
 fn read_inline(html: &str) -> Option<Vec<TextSpan>> {
     let mut spans: Vec<TextSpan> = Vec::new();
     let mut stack: Vec<(Mark, &str)> = Vec::new();
+    let mut verbatim = false;
     let mut i = 0;
     while i < html.len() {
         let rest = &html[i..];
+        let tag = if verbatim { "</span>" } else { "<span>" };
+        if rest.starts_with(tag) {
+            i += tag.len();
+            verbatim = !verbatim;
+            continue;
+        }
+        if verbatim && rest.starts_with('<') && !rest.starts_with("<br>") {
+            return None;
+        }
         if let Some(close) = rest.strip_prefix("</") {
             let end = close.find('>')?;
             let (_, name) = stack.pop()?;
@@ -124,13 +135,16 @@ fn read_inline(html: &str) -> Option<Vec<TextSpan>> {
         let text = decode(&html[i..stop].replace("<br>", "\n"))?;
         let mut marks: Vec<Mark> = stack.iter().map(|(mark, _)| mark.clone()).collect();
         marks.sort_by_key(|mark| RANK.iter().position(|kind| *kind == mark.mark_type));
+        if verbatim {
+            marks.push(mark("mdRaw", &[]));
+        }
         match spans.last_mut() {
             Some(last) if last.marks == marks => last.text.push_str(&text),
             _ => spans.push(TextSpan { text, marks }),
         }
         i = stop;
     }
-    stack.is_empty().then_some(spans)
+    (stack.is_empty() && !verbatim).then_some(spans)
 }
 
 fn block(kind: &str, attrs: HashMap<String, AttrValue>, content: BlockContent) -> Block {

@@ -1,8 +1,9 @@
 //! Markdown has no syntax for merged cells, so a table with a `colspan`/`rowspan` above 1 is
 //! written as an HTML `<table>` block: spans, cells and text survive. Inline marks become HTML
 //! tags; a mark without a tag of its own (a mention, a custom emoji, an unknown mark) keeps only
-//! its text. Each cell is one line, so a blank line never ends the HTML block early. Byte for
-//! byte the TS writer (`packages/markdown/src/serialization/table-html.ts`).
+//! its text, and text kept verbatim (`mdRaw`) stands as text in a `<span>` of its own. Each cell
+//! is one line, so a blank line never ends the HTML block early. Byte for byte the TS writer
+//! (`packages/markdown/src/serialization/table-html.ts`).
 use gotipe_core::{AttrValue, Block, BlockContent, Mark};
 
 use crate::html::{escape_html, safe_color, safe_href, string_or};
@@ -73,23 +74,37 @@ fn tags(marks: &[Mark]) -> (String, String) {
     (open, close)
 }
 
+/// One cell's text. Text kept verbatim (`mdRaw`) is Markdown, which HTML does not read: it is
+/// written as text inside a `<span>` of its own and read back verbatim (D-103).
 fn cell_html(content: &BlockContent) -> String {
     let BlockContent::RichText(spans) = content else {
         return String::new();
     };
     let mut html = String::new();
     let mut wrap: Option<(String, String)> = None;
+    let mut verbatim = false;
     for span in spans.iter().filter(|span| !span.text.is_empty()) {
         let next = tags(&span.marks);
         if wrap.as_ref().map(|(open, _)| open) != Some(&next.0) {
+            if std::mem::take(&mut verbatim) {
+                html.push_str("</span>");
+            }
             if let Some((_, close)) = wrap.take() {
                 html.push_str(&close);
             }
             html.push_str(&next.0);
             wrap = Some(next);
         }
+        let raw = span.marks.iter().any(|mark| mark.mark_type == "mdRaw");
+        if raw != verbatim {
+            html.push_str(if raw { "<span>" } else { "</span>" });
+            verbatim = raw;
+        }
         let text = span.text.replace("\r\n", "\n").replace('\r', "\n");
         html.push_str(&escape_html(&text).replace('\n', "<br>"));
+    }
+    if verbatim {
+        html.push_str("</span>");
     }
     if let Some((_, close)) = wrap {
         html.push_str(&close);
