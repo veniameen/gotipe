@@ -2944,6 +2944,30 @@ ol.gotipe-list > li::before {
   gap: var(--gt-button-gap);
 }
 
+/* ---- an editor that could not be created: the element that failed is the editor, a box in its
+   place. As the library draws it (PageEditor, D-142): the box takes the whole width of the editor,
+   its glyph and words in red. The proposal stands in the page's column, its words neutral, as an
+   image's — it waits for the owner's decision (D-165) ---- */
+:is(.gotipe-block-editor, .gotipe-page) > .gotipe-editor-error {
+  display: grid;
+  grid-auto-flow: column;
+  place-content: center;
+  place-items: center;
+  gap: var(--gt-menu-gap);
+  min-height: var(--gt-image-empty-h);
+  margin: 0;
+  border-radius: var(--gt-radius-block);
+  background: var(--gt-danger-tint);
+  box-shadow: inset 0 0 0 var(--gt-hairline) var(--gt-danger);
+  color: var(--gt-danger);
+  font-size: var(--gt-ui-size);
+  line-height: var(--gt-ui-leading);
+  letter-spacing: normal;
+}
+.gotipe-editor-error-text {
+  color: var(--gt-text-2);
+}
+
 /* ---- Markdown the editor keeps as it is: quiet, read-only, with its reason on hover ---- */
 .gotipe-raw {
   position: relative;
@@ -7060,7 +7084,9 @@ editor<span class="tk-pun">.</span>on<span class="tk-pun">(</span><span class="t
     <h2 class="at-figure-title">Загрузка, ошибки, только чтение, фокус</h2>
     <p class="at-caption">
       Загрузка — силуэт страницы без мерцания. Ошибка — тост или сам элемент, без строки под полем.
-      Причина «нельзя» — в подсказке. Фокус с клавиатуры — кольцо темы, не браузера.
+      Редактор, который не создался, — сам элемент на месте страницы: так его показывает PageEditor;
+      рядом предложение — плашка в колонке документа, слова нейтральные, как у изображения, — ждёт
+      решения. Причина «нельзя» — в подсказке. Фокус с клавиатуры — кольцо темы, не браузера.
     </p>
   </figcaption>
   <section class="at-stage" data-w="480">
@@ -7103,6 +7129,24 @@ editor<span class="tk-pun">.</span>on<span class="tk-pun">(</span><span class="t
         >
       </div>
     </div>
+  </article>
+</div>
+</section>
+  <section class="at-stage" data-w="480">
+<p class="at-stage-label">документ не открылся</p>
+<div class="at-frame gotipe-root" data-gt-view="notion" data-frame="editor-error" data-w="480">
+<div class="gotipe-block-editor">
+    <p class="gotipe-editor-error" role="alert"><svg class="gt-icon"><use href="#i-warning" /></svg>Документ не открылся</p>
+  </div>
+</div>
+</section>
+  <section class="at-stage" data-w="480">
+<p class="at-stage-label">документ не открылся: предложение</p>
+<div class="at-frame gotipe-root" data-gt-view="notion" data-frame="editor-error-proposal" data-w="480">
+<article class="gotipe-page" lang="ru">
+    <p class="gotipe-editor-error" role="alert"
+      ><svg class="gt-icon"><use href="#i-warning" /></svg><span class="gotipe-editor-error-text">Документ не открылся</span></p
+    >
   </article>
 </div>
 </section>
