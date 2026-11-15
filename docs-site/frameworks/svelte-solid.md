@@ -23,18 +23,50 @@ Svelte 5 or newer; Solid 1.8 or newer.
 
 ## API
 
-Svelte has one function, `createEditorState(options)`, with the `createEditor` options. It
-returns a store:
+Svelte has one function, `createEditorState(options)`. It takes the `createEditor` options
+and `onError`, and returns a store:
 
 | Member | Description |
 |---|---|
-| `subscribe(fn)` | Calls `fn({ editor, state })` at once and after every view change; returns an unsubscribe function. Works with `$store`. |
-| `editor` | The `GoTipeEditor`, or `null` before it exists and after `destroy()`. |
+| `subscribe(fn)` | Calls `fn({ editor, state, error })` at once and after every change; returns an unsubscribe function. Works with `$store`. |
+| `editor` | The `GoTipeEditor`, or `null` before it exists, after `destroy()` and when creation failed. |
 | `state` | The latest `ViewState`, or `undefined`. |
-| `destroy()` | Destroys the editor and tells subscribers `{ editor: null, state: undefined }`. |
+| `error` | Why the editor could not be created, or `null`. |
+| `destroy()` | Destroys the editor and tells subscribers `{ editor: null, state: undefined, error }`. |
 
-The editor is created as soon as you call `createEditorState`, so call it in `onMount` and
-destroy the store in its cleanup. An editor that resolves after `destroy()` is destroyed.
+The editor is created when you call `createEditorState`, and only in the browser: during a
+server render the store stays empty, with `editor` and `error` both `null`, and nothing is
+created. Call it in the component's script or in `onMount`, and destroy the store when the
+component goes away. An editor that resolves after `destroy()` is destroyed.
+
+When the editor cannot be created, for example `WASM_INIT_FAILED` with `engine: "wasm"` or
+`VALIDATION_ERROR` for a JSON document the schema rejects, the store sets `error`, tells its
+subscribers and passes the failure to `onError(error)` once; without `onError`, it logs the
+failure to the console. `error` is an `Error`; a `GoTipeError` also has a `code`. A creation
+that fails after `destroy()` reports nothing.
+
+`onError` reports only the creation. Errors of a working editor, such as a failed upload,
+a blocked link or a paste that does not fit, go to `host.onError` and the `error` event; see
+[Errors](/docs/concepts/host#errors).
+
+```svelte title="EditorError.svelte"
+<script lang="ts">
+  import { DefaultPreset } from "@gotipe/core/presets";
+  import { createEditorState } from "@gotipe/svelte";
+  import { onDestroy } from "svelte";
+
+  const store = createEditorState({
+    extensions: [DefaultPreset],
+    engine: "wasm",
+    onError: (error) => console.warn("The editor is unavailable:", error.message),
+  });
+  onDestroy(() => store.destroy());
+</script>
+
+{#if $store.error}
+  <p role="alert">The editor could not start: {$store.error.message}</p>
+{/if}
+```
 
 Solid has two hooks:
 
@@ -178,6 +210,9 @@ HTML built from its structure, with text escaped and links checked.
 
 - GoTipe tests these adapters' lifecycle and subscriptions, not a renderer for Svelte or
   Solid. Check typing, IME, undo, selection and paste in yours.
+- Solid's `useEditor` has no `onError` and no `error`: when the editor cannot be created,
+  the accessor stays `null` and the rejection goes unhandled.
+- A store whose editor could not be created does not try again: create a new store.
 - Placeholders, review highlights, remote cursors, table controls, media UI and menus
   come with the React renderer only. With Svelte or Solid you build them from
   `block.decorations` and the core commands, or use

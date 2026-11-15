@@ -1,5 +1,5 @@
-export { useEditor } from "./use-editor";
-export type { UseEditorOptions } from "./use-editor";
+export { useEditor, useEditorStatus } from "./use-editor";
+export type { EditorStatus, UseEditorOptions } from "./use-editor";
 export { useEditorState } from "./use-editor-state";
 export { useFloatingPosition } from "./use-floating-position";
 export type { FloatingPositionOptions } from "./use-floating-position";
