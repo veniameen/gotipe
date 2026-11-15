@@ -159,7 +159,7 @@ function blankLine(indent: string): string {
  * written: a paragraph without text, raw source of blanks, a list without items. Its blank line
  * after the marker of an item without text would end the item (D-117).
  */
-function writesNoLine(block: Block): boolean {
+export function writesNoLine(block: Block): boolean {
   if (omitted(block)) return true;
   if (block.type === "markdownRaw")
     return typeof block.content !== "string" || !/[^ \t\r\n]/.test(block.content);

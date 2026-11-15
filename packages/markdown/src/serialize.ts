@@ -2,7 +2,7 @@ import { atomsIn, carried } from "./atoms";
 import { writeInline } from "./inline-serialize";
 import { RICH_TYPES, asWritten, fingerprint, isBlockEmpty, richContent } from "./model";
 import { parseInternal } from "./parse";
-import { type RNode, type RenderOpts, renderTop } from "./serialization/blocks";
+import { type RNode, type RenderOpts, renderTop, writesNoLine } from "./serialization/blocks";
 import { closingLine } from "./serialization/closing";
 import {
   LIST_TYPES,
@@ -373,12 +373,9 @@ export function serializeMarkdown(doc: Doc, snapshot?: MarkdownSnapshot): Serial
     if (oi >= 0) usedOrig.add(oi);
     const fp = fingerprint(block);
     const preserved = oi >= 0 && snap!.blocks[oi]!.fingerprint === fp;
-    // a list without items has no Markdown (D-124)
-    if (
-      !preserved &&
-      (isBlockEmpty(block) || (LIST_TYPES.has(block.type) && !block.children?.length))
-    )
-      continue;
+    // a block that writes no line, such as a list without items (D-124) or raw source of blanks,
+    // keeps no lists apart (D-123): it is not written
+    if (!preserved && (isBlockEmpty(block) || writesNoLine(block))) continue;
     items.push({ block, oi, preserved, fp, md: "", start: 0, end: 0 });
   }
   resolveHazards(items, snap, fm, (item) => (snap ? sourceIndent(item, snap) : ""));
