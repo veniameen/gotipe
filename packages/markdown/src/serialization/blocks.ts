@@ -246,10 +246,13 @@ function renderList(w: Writer, block: Block, indent: string, ro: RenderOpts, nod
       w.write(ro.eol);
       // an item starts with at most one empty line: after its marker alone a blank line ends it
       // (D-117)
-      if ((spread && (text || !first)) || (text && cannotInterrupt(child)))
-        w.write(blankLine(indent) + ro.eol);
+      const apart = (spread && (text || !first)) || (text && cannotInterrupt(child));
+      if (apart) w.write(blankLine(indent) + ro.eol);
       w.write(contIndent);
-      itemNode.children.push(renderBlock(w, child, contIndent, inner));
+      // a divider right under a line of the item is `***`: `---` would underline the text above
+      // it as a heading (D-115)
+      const under = { ...inner, dividerAlt: !apart && child.type === "divider" };
+      itemNode.children.push(renderBlock(w, child, contIndent, under));
       first = false;
     }
     itemNode.end = w.pos;

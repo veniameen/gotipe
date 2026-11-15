@@ -11,6 +11,8 @@ Blocks inside list items, toggles, columns and quotes read back as they were wri
 - Every line of raw source inside a list item or a quote (HTML, a list kept as written) is
   written with the item's indentation and the quote's `>`. Only its first line had them, so the
   rest left the item or ended the quote.
+- A divider right under a line of a list item is written `***`: `---` there turned the text above
+  it into a heading.
 
 The Rust converter (`gotipe-convert`) writes the same bytes on the shared cases
 (`crates/gotipe-export/tests/fixtures/markdown-writer-blocks.json`):

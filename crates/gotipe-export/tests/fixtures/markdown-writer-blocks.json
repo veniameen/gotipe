@@ -1292,6 +1292,172 @@
         }
       ],
       "readAsRaw": true
+    },
+    {
+      "id": "a-divider-under-the-text-of-an-item",
+      "document": {
+        "version": 1,
+        "blocks": [
+          {
+            "id": "n66",
+            "type": "bulletList",
+            "attrs": {},
+            "content": null,
+            "children": [
+              {
+                "id": "n64",
+                "type": "listItem",
+                "attrs": {},
+                "content": [
+                  {
+                    "text": "x",
+                    "marks": []
+                  }
+                ],
+                "children": [
+                  {
+                    "id": "n63",
+                    "type": "divider",
+                    "attrs": {},
+                    "content": null,
+                    "children": []
+                  }
+                ]
+              },
+              {
+                "id": "n65",
+                "type": "listItem",
+                "attrs": {},
+                "content": [
+                  {
+                    "text": "y",
+                    "marks": []
+                  }
+                ],
+                "children": []
+              }
+            ]
+          }
+        ]
+      },
+      "markdown": "- x\n  ***\n- y\n",
+      "reparsed": [
+        {
+          "type": "markdownRaw",
+          "attrs": {
+            "kind": "list"
+          },
+          "content": "- x\n  ***\n- y",
+          "children": []
+        }
+      ],
+      "readAsRaw": true
+    },
+    {
+      "id": "a-divider-under-an-empty-task",
+      "document": {
+        "version": 1,
+        "blocks": [
+          {
+            "id": "n68",
+            "type": "todoList",
+            "attrs": {},
+            "content": null,
+            "children": [
+              {
+                "id": "n67",
+                "type": "todoItem",
+                "attrs": {
+                  "checked": false
+                },
+                "content": [],
+                "children": [
+                  {
+                    "id": "n69",
+                    "type": "divider",
+                    "attrs": {},
+                    "content": null,
+                    "children": []
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "markdown": "- [ ]\n  ***\n",
+      "reparsed": [
+        {
+          "type": "markdownRaw",
+          "attrs": {
+            "kind": "list"
+          },
+          "content": "- [ ]\n  ***",
+          "children": []
+        }
+      ]
+    },
+    {
+      "id": "a-divider-after-a-blank-line-in-a-loose-item",
+      "document": {
+        "version": 1,
+        "blocks": [
+          {
+            "id": "n73",
+            "type": "bulletList",
+            "attrs": {
+              "spread": true
+            },
+            "content": null,
+            "children": [
+              {
+                "id": "n71",
+                "type": "listItem",
+                "attrs": {},
+                "content": [
+                  {
+                    "text": "x",
+                    "marks": []
+                  }
+                ],
+                "children": [
+                  {
+                    "id": "n70",
+                    "type": "divider",
+                    "attrs": {},
+                    "content": null,
+                    "children": []
+                  }
+                ]
+              },
+              {
+                "id": "n72",
+                "type": "listItem",
+                "attrs": {},
+                "content": [
+                  {
+                    "text": "y",
+                    "marks": []
+                  }
+                ],
+                "children": []
+              }
+            ]
+          }
+        ]
+      },
+      "markdown": "- x\n\n  ---\n\n- y\n",
+      "reparsed": [
+        {
+          "type": "markdownRaw",
+          "attrs": {
+            "kind": "list"
+          },
+          "content": "- x\n\n  ---\n\n- y",
+          "children": []
+        }
+      ],
+      "readAsRaw": true
     }
   ]
 }
