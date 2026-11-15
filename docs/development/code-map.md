@@ -133,8 +133,12 @@ Rust-писатель повторяет в `markdown/hazards.rs` (D-100). Пу�
 списком того же маркера получают другой маркер (D-107); ограждение или HTML, которые закрыл конец
 файла, получают свою закрывающую строку, когда за ними есть блок (D-106,
 `serialization/closing.ts`). Что читается после такой правки, писатели проверяют чтением структуры
-блоков: `readBlockNodes` в `grammar/blocks.ts`, в Rust — `markdown_parse/structure.rs`. Общие
-случаи — `markdown-line-breaks.json` и `markdown-write-read.json` в
+блоков: `readBlockNodes` в `grammar/blocks.ts`, в Rust — `markdown_parse/structure.rs`. Защиту
+соседних списков (`separateLists`, в Rust `separate`) писатели применяют и к детям любого блока
+(`siblingBlocks` в `serialization/hazards.ts`, `hazards::children`, D-105). Ленивую строку пункт
+списка берёт, только если его содержимое читает её текстом абзаца (`lazyReading` в
+`grammar/lists.ts`, `lazy_reading` в `markdown_parse/lists.rs`, D-101). Общие случаи —
+`markdown-line-breaks.json`, `markdown-write-read.json` и `markdown-nested-write-read.json` в
 `crates/gotipe-export/tests/fixtures/`.
 
 HTML/SSR: `packages/core/src/serialization/html.ts` owns the canonical serializer;

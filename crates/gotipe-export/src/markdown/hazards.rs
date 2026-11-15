@@ -6,8 +6,9 @@
 //! (the earlier one, beside a raw list, unless that joins it to the list before it), and of two
 //! raw lists the source of the later (or else of the earlier) gets another marker at each item
 //! (D-107); raw text that the writer copies as it is and that the end of its file ended gets its
-//! end before another block (D-106). The other protections of `serialize.ts` keep the gaps of a
-//! snapshot.
+//! end before another block (D-106). The lists among the children of a block stay apart the same
+//! way at any depth (`children`, D-105). The other protections of `serialize.ts` keep the gaps of
+//! a snapshot.
 use std::borrow::Cow;
 
 use gotipe_core::{AttrValue, Block, BlockContent};
@@ -58,13 +59,42 @@ struct Written<'a> {
     raw: Option<String>,
 }
 
-impl Written<'_> {
+impl<'a> Written<'a> {
+    fn new(block: &'a Block) -> Self {
+        Self {
+            block,
+            marker: None,
+            raw: None,
+        }
+    }
+
     /// The source of a block written as it is: raw text, which the writer copies.
     fn source(&self) -> Option<&str> {
         match (&self.raw, &self.block.content) {
             (Some(raw), _) => Some(raw),
             (None, BlockContent::Raw(source)) => Some(source),
             _ => None,
+        }
+    }
+
+    /// The block as it is written: with its raw source or its list marker changed.
+    fn applied(self) -> Cow<'a, Block> {
+        match self {
+            Written {
+                block,
+                raw: Some(raw),
+                ..
+            } => {
+                let mut block = block.clone();
+                block.content = BlockContent::Raw(raw);
+                Cow::Owned(block)
+            }
+            Written {
+                block,
+                marker: Some(marker),
+                ..
+            } => Cow::Owned(remarked(block, marker)),
+            Written { block, .. } => Cow::Borrowed(block),
         }
     }
 }
@@ -74,37 +104,9 @@ pub(super) fn top_blocks(blocks: &[Block]) -> Vec<Top<'_>> {
     let mut written: Vec<Written> = blocks
         .iter()
         .filter(|block| !empty(block))
-        .map(|block| Written {
-            block,
-            marker: None,
-            raw: None,
-        })
+        .map(Written::new)
         .collect();
-    for index in 1..written.len() {
-        let Some(before) = signature(&written[index - 1]) else {
-            continue;
-        };
-        if signature(&written[index]) != Some(before) {
-            continue;
-        }
-        if is_list(written[index].block) {
-            let next = written.get(index + 1).and_then(signature);
-            written[index].marker = Some(alternate(before, next));
-        } else if is_list(written[index - 1].block) {
-            // a numbered list has one other delimiter: where it would join the list before it,
-            // the raw list after it takes another marker instead
-            let earlier = index.checked_sub(2).and_then(|at| signature(&written[at]));
-            let marker = alternate(before, earlier);
-            if earlier == Some(with_marker(before, marker))
-                && remark_raw(&mut written, index, before, Some(index + 1), false)
-            {
-                continue;
-            }
-            written[index - 1].marker = Some(marker);
-        } else if !remark_raw(&mut written, index, before, Some(index + 1), false) {
-            remark_raw(&mut written, index - 1, before, index.checked_sub(2), true);
-        }
-    }
+    separate(&mut written);
     // raw source that the end of its file ended takes in the next block: written as it is, it
     // gets its end (D-106); the writer ends the blocks of its own syntax itself
     let last = written.len().saturating_sub(1);
@@ -122,25 +124,81 @@ pub(super) fn top_blocks(blocks: &[Block]) -> Vec<Top<'_>> {
     written
         .into_iter()
         .enumerate()
-        .map(|(index, item)| match item {
-            _ if index == 0 && item.block.block_type == "divider" => Top::Stars,
-            Written {
-                block,
-                raw: Some(raw),
-                ..
-            } => {
-                let mut block = block.clone();
-                block.content = BlockContent::Raw(raw);
-                Top::Block(Cow::Owned(block))
+        .map(|(index, item)| {
+            if index == 0 && item.block.block_type == "divider" {
+                Top::Stars
+            } else {
+                Top::Block(item.applied())
             }
-            Written {
-                block,
-                marker: Some(marker),
-                ..
-            } => Top::Block(Cow::Owned(remarked(block, marker))),
-            Written { block, .. } => Top::Block(Cow::Borrowed(block)),
         })
         .collect()
+}
+
+/// The children of a block, written one after another, with the protection of lists of the top
+/// level at any depth (`siblingBlocks` of the TS writer, D-105). A child that writes no line of
+/// its own keeps no lists apart.
+pub(super) fn children<'a>(blocks: impl Iterator<Item = &'a Block>) -> Vec<Cow<'a, Block>> {
+    let blocks: Vec<&Block> = blocks.collect();
+    let mut written: Vec<Written> = blocks
+        .iter()
+        .filter(|block| !writes_no_line(block))
+        .map(|&block| Written::new(block))
+        .collect();
+    separate(&mut written);
+    let mut written = written.into_iter().peekable();
+    blocks
+        .into_iter()
+        .map(
+            |block| match written.next_if(|item| std::ptr::eq(item.block, block)) {
+                Some(item) => item.applied(),
+                None => Cow::Borrowed(block),
+            },
+        )
+        .collect()
+}
+
+/// Of two neighbouring lists with one marker, which read as one list, the later takes another
+/// marker (the earlier one, beside a raw list, unless that joins it to the list before it), and
+/// of two raw lists the source of the later (or else of the earlier) gets another marker.
+fn separate(written: &mut [Written]) {
+    for index in 1..written.len() {
+        let Some(before) = signature(&written[index - 1]) else {
+            continue;
+        };
+        if signature(&written[index]) != Some(before) {
+            continue;
+        }
+        if is_list(written[index].block) {
+            let next = written.get(index + 1).and_then(signature);
+            written[index].marker = Some(alternate(before, next));
+        } else if is_list(written[index - 1].block) {
+            // a numbered list has one other delimiter: where it would join the list before it,
+            // the raw list after it takes another marker instead
+            let earlier = index.checked_sub(2).and_then(|at| signature(&written[at]));
+            let marker = alternate(before, earlier);
+            if earlier == Some(with_marker(before, marker))
+                && remark_raw(written, index, before, Some(index + 1), false)
+            {
+                continue;
+            }
+            written[index - 1].marker = Some(marker);
+        } else if !remark_raw(written, index, before, Some(index + 1), false) {
+            remark_raw(written, index - 1, before, index.checked_sub(2), true);
+        }
+    }
+}
+
+/// A child that writes no line but blanks of its own, so it keeps no lists apart: a paragraph
+/// without text, raw source of blanks, a list without items.
+fn writes_no_line(block: &Block) -> bool {
+    match block.block_type.as_str() {
+        "paragraph" => !has_text(block) && block.children.is_empty(),
+        "markdownRaw" => crate::plaintext::block_text(block)
+            .trim_matches([' ', '\t', '\r', '\n'])
+            .is_empty(),
+        _ if is_list(block) => block.children.is_empty(),
+        _ => super::omitted(block),
+    }
 }
 
 /// Gives the raw list at `index`, of `signature`, another marker at each of its items than its

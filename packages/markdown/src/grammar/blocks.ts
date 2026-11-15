@@ -210,8 +210,10 @@ class Reader {
         i = next;
         continue;
       }
+      // a lazy line continues text: it is no delimiter row (GFM)
+      const delimiter = lines[i + 1];
       const alignment =
-        i + 1 < lines.length && line.text.includes("|") ? tableAlignment(lines[i + 1]!) : null;
+        delimiter && !delimiter.lazy && line.text.includes("|") ? tableAlignment(delimiter) : null;
       if (alignment && alignment.length === tableCells(line.text).length) {
         const row = (value: Line) =>
           tableRow(value, alignment.length, (cell, options) => this.inline([cell], options));

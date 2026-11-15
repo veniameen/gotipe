@@ -5,8 +5,9 @@ import type { Block, Mark, RawSegment, Span } from "../types";
  * Markdown has no syntax for merged cells, so a table with a `colspan`/`rowspan` above 1 is written
  * as an HTML `<table>` block instead of a pipe table: spans, cells and text survive, and readers
  * that show HTML draw it merged. Inline marks become HTML tags; a mark without a tag of its own
- * (a mention, a custom emoji, an unknown mark) keeps only its text. Each cell is one line, so a
- * blank line never ends the HTML block early. The Rust writer
+ * (a mention, a custom emoji, an unknown mark) keeps only its text, and text kept verbatim
+ * (`mdRaw`) stands as text in a `<span>` of its own. Each cell is one line, so a blank line never
+ * ends the HTML block early. The Rust writer
  * (`crates/gotipe-export/src/markdown/table_html.rs`) writes the same bytes.
  */
 
@@ -105,24 +106,40 @@ function tags(marks: readonly Mark[]): { open: string; close: string } {
   return { open, close };
 }
 
-/** Writes one cell's text; returns its segments relative to the start of the written HTML. */
+/**
+ * Writes one cell's text; returns its segments relative to the start of the written HTML. Text
+ * kept verbatim (`mdRaw`) is Markdown, which HTML does not read: it is written as text inside a
+ * `<span>` of its own and read back verbatim (D-103).
+ */
 function cellHtml(content: Block["content"]): { html: string; segs: RawSegment[] } {
   const spans: Span[] = Array.isArray(content) ? content : [];
   const segs: RawSegment[] = [];
   let html = "";
   let textAt = 0;
   let wrap: { open: string; close: string } | null = null;
+  let verbatim = false;
+  const endVerbatim = () => {
+    if (verbatim) html += "</span>";
+    verbatim = false;
+  };
   const flush = () => {
+    endVerbatim();
     if (wrap) html += wrap.close;
     wrap = null;
   };
   for (const span of spans) {
     if (!span || typeof span.text !== "string" || span.text.length === 0) continue;
-    const next = tags(Array.isArray(span.marks) ? span.marks : []);
+    const marks = Array.isArray(span.marks) ? span.marks : [];
+    const next = tags(marks);
     if (!wrap || wrap.open !== next.open) {
       flush();
       html += next.open;
       wrap = next;
+    }
+    if (!marks.some((mark) => mark.type === "mdRaw")) endVerbatim();
+    else if (!verbatim) {
+      html += "<span>";
+      verbatim = true;
     }
     const pending = escape(span.text).replace(/\r\n|\r|\n/g, "<br>");
     segs.push({

@@ -1,5 +1,6 @@
 import { type InlineOptions, linkDestination, linkTitle, writeInline } from "../inline-serialize";
 import {
+  bulletMarker,
   calloutKind,
   clampLevel,
   isBlockEmpty,
@@ -9,6 +10,7 @@ import {
 } from "../model";
 import type { Block, RawSegment, Span } from "../types";
 import { normalizeEol } from "../util";
+import { siblingBlocks } from "./hazards";
 import type { KeptBreaks } from "./line-breaks";
 import { hasMergedCells, tableHtml } from "./table-html";
 
@@ -27,7 +29,7 @@ export interface RenderOpts {
   tier: number;
   /** Write a divider as `***` (first block of a file without front matter). */
   dividerAlt?: boolean;
-  /** Marker (bullet char or ordered delimiter) to use for a top-level list. */
+  /** Marker (bullet char or ordered delimiter) a list is written with instead of its own. */
   markerOverride?: string;
   /** Registered custom emoji names of the document (see `InlineOptions.emoji`). */
   emoji?: Readonly<Record<string, string>>;
@@ -134,9 +136,35 @@ function writeMath(w: Writer, tex: string, indent: string, ro: RenderOpts): void
   w.write(ro.eol + indent + (fence || "$$"));
 }
 
-export function bulletMarker(attrs: Record<string, unknown>, override?: string): string {
-  const m = override ?? attrs.marker;
-  return m === "*" || m === "+" || m === "-" ? m : "-";
+/**
+ * A blank line at `indent`: the `>` of the quotes around it, which an empty line would end
+ * (D-104). Each keeps its space, as the Rust writer quotes a line.
+ */
+function blankLine(indent: string): string {
+  const quote = indent.lastIndexOf(">");
+  return quote < 0 ? "" : `${indent.slice(0, quote + 1)} `;
+}
+
+/**
+ * A child that writes no line but blanks of its own, so it keeps no lists apart: a paragraph
+ * without text, raw source of blanks, a list without items.
+ */
+function writesNoLine(block: Block): boolean {
+  if (omitted(block)) return true;
+  if (block.type === "markdownRaw")
+    return typeof block.content !== "string" || !/[^ \t\r\n]/.test(block.content);
+  if (["bulletList", "orderedList", "todoList"].includes(block.type))
+    return !block.children?.length;
+  return block.type === "paragraph" && isBlockEmpty(block) && !block.children?.length;
+}
+
+/**
+ * `children` as they are written: neighbouring lists with one marker would read as one list, so
+ * one takes another marker (D-105).
+ */
+function written(children: readonly Block[] = []): Block[] {
+  const changed = siblingBlocks(children.filter((child) => !writesNoLine(child)));
+  return children.map((child) => changed.get(child) ?? child);
 }
 
 /** Ordered lists not starting at 1 and lists starting with an empty item cannot interrupt a paragraph. */
@@ -162,7 +190,7 @@ function renderList(w: Writer, block: Block, indent: string, ro: RenderOpts, nod
   items.forEach((item, idx) => {
     if (idx > 0) {
       w.write(ro.eol);
-      if (spread) w.write(ro.eol);
+      if (spread) w.write(blankLine(indent) + ro.eol);
       w.write(indent);
     }
     const itemNode: RNode = {
@@ -200,11 +228,12 @@ function renderList(w: Writer, block: Block, indent: string, ro: RenderOpts, nod
         );
       }
     }
-    for (const child of item.children ?? []) {
+    for (const child of written(item.children)) {
       if (omitted(child)) continue;
       w.write(ro.eol);
       // the `[ ]` of a task is text that a nested list has to interrupt as well
-      if (spread || ((spans.length > 0 || todo) && cannotInterrupt(child))) w.write(ro.eol);
+      if (spread || ((spans.length > 0 || todo) && cannotInterrupt(child)))
+        w.write(blankLine(indent) + ro.eol);
       w.write(contIndent);
       itemNode.children.push(renderBlock(w, child, contIndent, inner));
     }
@@ -428,10 +457,11 @@ function renderBlock(w: Writer, block: Block, indent: string, ro: RenderOpts): R
   if (!["bulletList", "orderedList", "todoList", "table"].includes(block.type)) {
     const quoted = block.type === "blockquote" || block.type === "callout";
     const childIndent = quoted ? `${indent}> ` : indent;
-    for (const child of block.children ?? []) {
+    const gap = ro.eol + (quoted ? `${indent}>` : blankLine(indent)) + ro.eol + childIndent;
+    for (const child of written(block.children)) {
       if (omitted(child)) continue;
-      if (w.pos > node.start) w.write(ro.eol + (quoted ? `${indent}>` : "") + ro.eol + childIndent);
-      node.children.push(renderBlock(w, child, childIndent, ro));
+      if (w.pos > node.start) w.write(gap);
+      node.children.push(renderBlock(w, child, childIndent, { ...ro, markerOverride: undefined }));
     }
   }
   node.end = w.pos;

@@ -1,8 +1,7 @@
 import { readBlockNodes } from "../grammar/blocks";
 import type { List } from "../grammar/types";
-import { listStart, richContent } from "../model";
+import { bulletMarker, listStart, richContent } from "../model";
 import type { Block, MarkdownSnapshot } from "../types";
-import { bulletMarker } from "./blocks";
 
 /**
  * What the protections of a file against its blocks reading as one another know of a top-level
@@ -129,11 +128,9 @@ function remarkRaw(
 }
 
 /**
- * Neighbours that would read as one block: a divider that starts the file is `***`, and of two
- * lists with one marker the later takes another, the earlier one beside a raw list (unless that
- * joins it to the list before it), and of two raw lists the source of the later (or else of the
- * earlier) gets another marker. Neighbours in the source written as their source stay as they
- * are. `blanks` gives the blanks before the first line of an untouched block in its source.
+ * Neighbours that would read as one block: a divider that starts the file is `***`, and lists stay
+ * apart (`separateLists`). `blanks` gives the blanks before the first line of an untouched block in
+ * its source.
  */
 export function resolveHazards(
   items: Neighbour[],
@@ -143,6 +140,39 @@ export function resolveHazards(
 ): void {
   const first = items[0];
   if (first && !fm && first.block.type === "divider" && !first.preserved) first.dividerAlt = true;
+  separateLists(items, snap, blanks);
+}
+
+/**
+ * The children `blocks` of one block as they are written one after another, where the protection
+ * of lists of the top level changes them, at any depth (D-105): a list with another marker, raw
+ * source of a list with another marker at each item.
+ */
+export function siblingBlocks(blocks: readonly Block[]): Map<Block, Block> {
+  const items: Neighbour[] = blocks.map((block) => ({ block, oi: -1, preserved: false }));
+  separateLists(items, undefined, () => "");
+  const written = new Map<Block, Block>();
+  for (const { block, markerOverride, raw } of items) {
+    if (raw !== undefined) written.set(block, { ...block, content: raw });
+    else if (markerOverride) {
+      const name = block.type === "orderedList" ? "delimiter" : "marker";
+      written.set(block, { ...block, attrs: { ...block.attrs, [name]: markerOverride } });
+    }
+  }
+  return written;
+}
+
+/**
+ * Of two lists with one marker the later takes another, the earlier one beside a raw list (unless
+ * that joins it to the list before it), and of two raw lists the source of the later (or else of
+ * the earlier) gets another marker. Neighbours in the source written as their source stay as they
+ * are.
+ */
+function separateLists(
+  items: Neighbour[],
+  snap: MarkdownSnapshot | undefined,
+  blanks: (item: Neighbour) => string,
+): void {
   for (let i = 1; i < items.length; i++) {
     const a = items[i - 1]!;
     const b = items[i]!;

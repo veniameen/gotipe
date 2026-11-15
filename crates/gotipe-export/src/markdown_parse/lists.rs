@@ -7,6 +7,48 @@ use super::{
 fn compatible(a: &Marker, b: &Marker) -> bool {
     a.ordered == b.ordered && a.marker == b.marker
 }
+
+/// How the content of an item reads a lazy line, as `lazyReading` of the TS reader.
+#[derive(PartialEq, Debug)]
+enum Lazy {
+    /// Text of a paragraph open before it: the only block a lazy line continues in CommonMark.
+    Text,
+    /// The start of the item's block at this index.
+    Start(usize),
+    /// Code, a table, a block nested deeper.
+    Other,
+}
+
+const DEFINITIONS: [&str; 2] = ["definition", "footnoteDefinition"];
+
+/// How `nodes`, the content of an item, read a lazy line that starts at `offset`. A definition
+/// is read out of paragraph text, so a line right after one continues that text, whatever block
+/// it starts here.
+fn lazy_reading(nodes: &[Node], offset: usize, top: bool) -> Lazy {
+    let Some(at) = nodes
+        .partition_point(|node| node.start <= offset)
+        .checked_sub(1)
+    else {
+        return Lazy::Other;
+    };
+    let node = &nodes[at];
+    if node.start == offset {
+        if at > 0 && DEFINITIONS.contains(&nodes[at - 1].kind) {
+            return Lazy::Text;
+        }
+        return if top { Lazy::Start(at) } else { Lazy::Other };
+    }
+    if node.end < offset {
+        return Lazy::Other;
+    }
+    match node.kind {
+        // blocks read from paragraph text: a lazy line is never the first line of an ATX heading
+        "paragraph" | "heading" | "definition" | "footnoteDefinition" => Lazy::Text,
+        "list" | "listItem" | "blockquote" => lazy_reading(&node.children, offset, false),
+        _ => Lazy::Other,
+    }
+}
+
 pub(super) fn read(
     reader: &mut Reader,
     lines: &[Line],
@@ -33,6 +75,10 @@ pub(super) fn read(
         let mut item_lines = vec![first
             .strip(marker.marker_width)
             .indent(marker.indent - marker.marker_width)];
+        let spread_before = node.spread;
+        // the first line of each run of lazy lines: its index in the item and in `lines`
+        let mut lazy_runs: Vec<(usize, usize)> = vec![];
+        let mut run = false;
         let mut next = cursor + 1;
         let mut separated = false;
         let mut item_spread = false;
@@ -70,12 +116,18 @@ pub(super) fn read(
             if width(&line.text, 0) >= marker.indent {
                 item_lines.push(line.indent(marker.indent));
                 item_end = line.end;
+                run = false;
                 next += 1;
                 continue;
             }
             if list_marker(&line.text, 0).is_some() || separated || interrupts(line) {
                 break;
             }
+            // lazy continuation of the item's initial paragraph, checked once the item is read
+            if !run {
+                lazy_runs.push((item_lines.len(), next));
+            }
+            run = true;
             let mut lazy = line.indent(width(&line.text, line.column));
             lazy.lazy = true;
             item_lines.push(lazy);
@@ -86,6 +138,26 @@ pub(super) fn read(
         let prefix = task.as_ref().map_or(0, |m| m.get(0).unwrap().len());
         let checked = task.as_ref().map(|m| m[1].eq_ignore_ascii_case("x"));
         let mut content = reader.blocks(&item_lines, depth + 1, prefix);
+        // A lazy line continues the paragraph the item has open. Where the item reads it
+        // otherwise — after an empty item or a heading, in code or a table — the item ends
+        // before it, as in CommonMark (D-101); its blocks before that line read the same
+        // without it.
+        for (at, stray) in lazy_runs {
+            let reading = lazy_reading(&content, item_lines[at].start, true);
+            if reading == Lazy::Text {
+                continue;
+            }
+            item_lines.truncate(at);
+            match reading {
+                Lazy::Start(index) => content.truncate(index),
+                _ => content = reader.blocks(&item_lines, depth + 1, prefix),
+            }
+            item_end = item_lines.last().map_or(first.end, |line| line.end);
+            item_spread = false;
+            node.spread = spread_before;
+            next = stray;
+            break;
+        }
         if checked.is_some() && content.is_empty() {
             content.push(Node::new(
                 "paragraph",

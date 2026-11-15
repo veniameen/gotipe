@@ -212,6 +212,12 @@ export function listStart(v: unknown): number {
   return Number.isFinite(n) && n >= 0 ? Math.trunc(n) : 1;
 }
 
+/** The bullet a list is written with: `override`, else its `marker`, else `-`. */
+export function bulletMarker(attrs: Record<string, unknown>, override?: string): string {
+  const m = override ?? attrs.marker;
+  return m === "*" || m === "+" || m === "-" ? m : "-";
+}
+
 function contentForFingerprint(block: Block): unknown {
   const c = block.content;
   if (Array.isArray(c)) return normalizeSpans(c);
