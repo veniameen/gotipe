@@ -1,6 +1,6 @@
 ---
 title: React
-description: The MIT React adapter: useEditor and useEditorState, the Editor and EditorContent renderer, BubbleMenu and FloatingMenu, custom block views and server rendering.
+description: The MIT React adapter: useEditor, useEditorStatus and useEditorState, the Editor and EditorContent renderer, BubbleMenu and FloatingMenu, custom block views and server rendering.
 packages: ["@gotipe/react"]
 license: MIT
 ---
@@ -63,18 +63,53 @@ Images and files in this editor are read-only until you provide `@gotipe/react/m
 | Hook | Returns | Description |
 |---|---|---|
 | `useEditor(options)` | `GoTipeEditor \| null` | Creates the editor after mount, destroys it on unmount. `null` until it exists. |
+| `useEditorStatus(options)` | `{ editor, error }` | The same editor, and why it could not be created; see [Creation errors](#creation-errors). |
 | `useEditorState(editor, selector, isEqual?)` | `T \| undefined` | Re-renders when `selector(viewState)` changes. `isEqual` compares results (default `Object.is`). |
 | `useEditorContext()` | `GoTipeEditor` | The editor of the surrounding `Editor`; throws outside it. |
 | `useGoTipeI18n()` | `I18n` | UI strings; English without a provider. |
 | `useFloatingPosition(options)` | position or `null` | Places a panel by an anchor inside the visible viewport and follows scroll and resize. |
 
-`useEditor` takes the options of `createEditor` (see
-[quick start](/docs/getting-started/quick-start)) and reads them once. Later changes to
-`content` or callbacks are ignored: call `editor.setContent()` or subscribe with
-`editor.on()`. A creation error is logged to the console. In Strict Mode, an editor that
-finishes after the first unmount is destroyed.
+`useEditor` and `useEditorStatus` take the options of `createEditor` (see
+[quick start](/docs/getting-started/quick-start)) and `onError`. They read the editor options
+once, when they create the editor: later changes to `content` or callbacks are ignored, so
+call `editor.setContent()` or subscribe with `editor.on()`. `onError` is read when a failure
+arrives, so the latest one is used. In Strict Mode, an editor that finishes after the first
+unmount is destroyed.
 
 Selectors run on every view change, so return small values; with an object, pass `isEqual`.
+
+## Creation errors
+
+Creating the editor can fail: `WASM_INIT_FAILED` with `engine: "wasm"`, `VALIDATION_ERROR`
+for a JSON document the schema rejects, `EXTENSION_DEPENDENCY_CYCLE`. `useEditorStatus`
+returns the editor with the reason. `error` is `null` while the editor is created and once
+it exists, and an `Error` when creation failed; a `GoTipeError` also has a `code`. Both hooks
+pass the failure to `onError(error)` once; without `onError`, they log it to the console.
+
+```tsx title="NotesEditor.tsx"
+import { DefaultPreset } from "@gotipe/core/presets";
+import { Editor, useEditorStatus } from "@gotipe/react";
+
+export function NotesEditor({ report }: { report: (error: Error) => void }) {
+  const { editor, error } = useEditorStatus({
+    extensions: [DefaultPreset],
+    engine: "wasm",
+    onError: report,
+  });
+
+  if (error) return <p role="alert">The editor could not start: {error.message}</p>;
+  return <Editor editor={editor} ariaLabel="Notes" />;
+}
+```
+
+`onError` reports only the creation. Errors of a working editor, such as a failed upload,
+a blocked link or a paste that does not fit, go to `host.onError` and the `error` event; see
+[Errors](/docs/concepts/host#errors).
+
+A creation that fails after unmount reports nothing, so Strict Mode, which creates the editor
+twice, reports a failure once. When React runs the hook's effect again, after Fast Refresh or
+when an `Activity` is shown again, the editor is created anew from the current options and
+the previous error is cleared.
 
 ## Components
 
@@ -178,14 +213,22 @@ type a replacement pair.
 
 ## Server rendering
 
-The editor is created in an effect, so a server render outputs no document: `Editor`
-renders nothing and `BlockEditor` renders its loading skeleton. To serve the content as
-HTML, render it with [renderToHtml](/docs/conversion/server) from `@gotipe/core/server`
-and replace it on the client.
+The editor is created in an effect, so a server render outputs no document and creates
+nothing: `useEditorStatus` returns `{ editor: null, error: null }`, `Editor` renders nothing
+and `BlockEditor` renders its loading skeleton. To serve the content as HTML, render it with
+[renderToHtml](/docs/conversion/server) from `@gotipe/core/server` and replace it on the
+client.
 
 > [!NOTE]
 > The packages carry no `"use client"` directive. In a framework with React Server
 > Components, import them from a client component.
+
+## Limitations
+
+- A failed creation is not tried again by itself. To retry, mount the component anew, for
+  example with a new `key`.
+- Changing `content`, `extensions` or `engine` after mount does not create a new editor; the
+  hooks read the options only when they create one.
 
 ## Related
 
