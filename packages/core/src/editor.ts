@@ -2,17 +2,13 @@ import { ChainableCommands } from "./chain";
 import { ClipboardHandler } from "./clipboard/handler";
 import { commandSchema } from "./commands/schema";
 import { viewToEngineSelection } from "./document/selection";
-import {
-  blockTextLength,
-  findBlockInTree,
-  findFirstSelectableBlock,
-  mapSelectionToDocument,
-} from "./document/tree";
+import { findBlockInTree, findFirstSelectableBlock, mapSelectionToDocument } from "./document/tree";
 import { createAtomSelection } from "./editor/atom-selection";
 import { clipboardOptions } from "./editor/clipboard-options";
 import { createCollaboration } from "./editor/collaboration";
 import { createExtensionEvents, startCollaboration } from "./editor/extension-events";
 import { createExtensionLifecycle } from "./editor/extension-lifecycle";
+import { focusCaret } from "./editor/focus";
 import { createHostActions } from "./editor/host";
 import { initializeEditor } from "./editor/initialize";
 import { mountSurface } from "./editor/mount";
@@ -261,22 +257,9 @@ export async function createEditorWithLoader(
 
     focus(position?: "start" | "end"): void {
       if (!mountedElement) return;
-
-      const state = this.getViewState();
-      if (state.blocks.length === 0) return;
-
-      if (position === "start") {
-        const first = state.blocks[0]!;
-        currentSelection = caretAt(first.id);
-      } else if (position === "end") {
-        const last = state.blocks[state.blocks.length - 1]!;
-        const end = blockTextLength(last);
-        currentSelection = caretAt(last.id, end);
-      } else if (!currentSelection.anchor.blockId) {
-        const first = state.blocks[0]!;
-        currentSelection = caretAt(first.id);
-      }
-
+      const caret = focusCaret(this.getViewState().blocks, position, currentSelection.anchor);
+      if (!caret) return;
+      if (caret !== currentSelection.anchor) this.setSelection({ anchor: caret, head: caret });
       mountedElement.focus({ preventScroll: true });
       restoreDomSelectionImmediately?.();
       scheduleDomSelectionRestore?.();
@@ -490,55 +473,51 @@ export async function createEditorWithLoader(
         clipboardOptions(resolved, this, (draft) => createEditorWithLoader(draft, null)),
       );
       const extensions = createExtensionEvents(resolved, this);
-      const selection = mountSurface(
-        element,
-        mountAbort.signal,
-        {
-          get editable() {
-            return editable;
-          },
-          get selection() {
-            return currentSelection;
-          },
-          set selection(value) {
-            select(value);
-          },
-          get storedMarks() {
-            return storedMarks;
-          },
-          set storedMarks(value) {
-            storedMarks = atoms.marks(value);
-          },
-          clipboard: clipboardHandler,
-          getViewState: () => this.getViewState(),
-          getDocument: () => this.getJSON(),
-          dispatch: (transaction, typing, since) => {
-            transactionFilters.assertIdle();
-            return transactions.dispatch(transaction, typing, since);
-          },
-          liftListItem: () => this.chain().setBlockType("paragraph").run(),
-          publishSelection: () => {
-            view.invalidate();
-            this.emit("selectionChange", { editor: this });
-            this.emit("viewStateChange", this.getViewState());
-          },
-          redrawBlocks: (ids) => {
-            view.redraw(ids);
-            this.emit("viewStateChange", this.getViewState());
-          },
-          openLink: (href, options) => this.openLink(href, options),
-          reportError: (error) => this.reportError(error),
-          notifyFocus: (focused) => this.emit(focused ? "focus" : "blur", { editor: this }),
-          openSlashMenu: () => this.emit("openSlashMenu"),
-          applyInputRules: extensions.input,
-          handleKeybinding: extensions.keydown,
+      const selection = mountSurface(element, mountAbort.signal, {
+        get editable() {
+          return editable;
         },
-        !!options.autofocus,
-      );
+        get selection() {
+          return currentSelection;
+        },
+        set selection(value) {
+          select(value);
+        },
+        get storedMarks() {
+          return storedMarks;
+        },
+        set storedMarks(value) {
+          storedMarks = atoms.marks(value);
+        },
+        clipboard: clipboardHandler,
+        getViewState: () => this.getViewState(),
+        getDocument: () => this.getJSON(),
+        dispatch: (transaction, typing, since) => {
+          transactionFilters.assertIdle();
+          return transactions.dispatch(transaction, typing, since);
+        },
+        liftListItem: () => this.chain().setBlockType("paragraph").run(),
+        publishSelection: () => {
+          view.invalidate();
+          this.emit("selectionChange", { editor: this });
+          this.emit("viewStateChange", this.getViewState());
+        },
+        redrawBlocks: (ids) => {
+          view.redraw(ids);
+          this.emit("viewStateChange", this.getViewState());
+        },
+        openLink: (href, options) => this.openLink(href, options),
+        reportError: (error) => this.reportError(error),
+        notifyFocus: (focused) => this.emit(focused ? "focus" : "blur", { editor: this }),
+        openSlashMenu: () => this.emit("openSlashMenu"),
+        applyInputRules: extensions.input,
+        handleKeybinding: extensions.keydown,
+      });
       readSelectionFromDOM = selection.read;
       mountedInput = selection;
       restoreDomSelectionImmediately = selection.restore;
       scheduleDomSelectionRestore = selection.schedule;
+      if (options.autofocus) this.focus(options.autofocus === true ? undefined : options.autofocus);
     },
 
     unmount(): void {

@@ -34,12 +34,7 @@ export interface MountPort {
 }
 
 /** Connects one DOM surface to model/input ports; AbortSignal owns every listener. */
-export function mountSurface(
-  element: HTMLElement,
-  signal: AbortSignal,
-  port: MountPort,
-  autofocus: boolean,
-) {
+export function mountSurface(element: HTMLElement, signal: AbortSignal, port: MountPort) {
   element.setAttribute("contenteditable", port.editable ? "true" : "false");
   element.setAttribute("role", "textbox");
   element.setAttribute("aria-multiline", "true");
@@ -401,9 +396,6 @@ export function mountSurface(
     { signal },
   );
 
-  if (autofocus) {
-    element.focus();
-  }
   return {
     ...domSelection,
     interrupt: composition.interrupt,
