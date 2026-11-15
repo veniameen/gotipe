@@ -210,6 +210,303 @@
           ]
         }
       ]
+    },
+    {
+      "id": "children-of-a-toggle-after-a-blank-line",
+      "document": {
+        "version": 1,
+        "blocks": [
+          {
+            "id": "n13",
+            "type": "toggle",
+            "attrs": {},
+            "content": [
+              {
+                "text": "T",
+                "marks": []
+              }
+            ],
+            "children": [
+              {
+                "id": "n12",
+                "type": "paragraph",
+                "attrs": {},
+                "content": [
+                  {
+                    "text": "c",
+                    "marks": []
+                  }
+                ],
+                "children": []
+              }
+            ]
+          },
+          {
+            "id": "n14",
+            "type": "paragraph",
+            "attrs": {},
+            "content": [
+              {
+                "text": "after",
+                "marks": []
+              }
+            ],
+            "children": []
+          }
+        ]
+      },
+      "markdown": "T\n\nc\n\nafter\n",
+      "reparsed": [
+        {
+          "type": "paragraph",
+          "attrs": {},
+          "content": [
+            {
+              "text": "T",
+              "marks": []
+            }
+          ],
+          "children": []
+        },
+        {
+          "type": "paragraph",
+          "attrs": {},
+          "content": [
+            {
+              "text": "c",
+              "marks": []
+            }
+          ],
+          "children": []
+        },
+        {
+          "type": "paragraph",
+          "attrs": {},
+          "content": [
+            {
+              "text": "after",
+              "marks": []
+            }
+          ],
+          "children": []
+        }
+      ]
+    },
+    {
+      "id": "columns-start-with-their-first-child",
+      "document": {
+        "version": 1,
+        "blocks": [
+          {
+            "id": "n18",
+            "type": "columns",
+            "attrs": {},
+            "content": null,
+            "children": [
+              {
+                "id": "n19",
+                "type": "column",
+                "attrs": {},
+                "content": null,
+                "children": [
+                  {
+                    "id": "n15",
+                    "type": "paragraph",
+                    "attrs": {},
+                    "content": [
+                      {
+                        "text": "a",
+                        "marks": []
+                      }
+                    ],
+                    "children": []
+                  },
+                  {
+                    "id": "n16",
+                    "type": "paragraph",
+                    "attrs": {},
+                    "content": [
+                      {
+                        "text": "b",
+                        "marks": []
+                      }
+                    ],
+                    "children": []
+                  }
+                ]
+              },
+              {
+                "id": "n20",
+                "type": "column",
+                "attrs": {},
+                "content": null,
+                "children": [
+                  {
+                    "id": "n17",
+                    "type": "paragraph",
+                    "attrs": {},
+                    "content": [
+                      {
+                        "text": "c",
+                        "marks": []
+                      }
+                    ],
+                    "children": []
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "markdown": "a\n\nb\n\nc\n",
+      "reparsed": [
+        {
+          "type": "paragraph",
+          "attrs": {},
+          "content": [
+            {
+              "text": "a",
+              "marks": []
+            }
+          ],
+          "children": []
+        },
+        {
+          "type": "paragraph",
+          "attrs": {},
+          "content": [
+            {
+              "text": "b",
+              "marks": []
+            }
+          ],
+          "children": []
+        },
+        {
+          "type": "paragraph",
+          "attrs": {},
+          "content": [
+            {
+              "text": "c",
+              "marks": []
+            }
+          ],
+          "children": []
+        }
+      ]
+    },
+    {
+      "id": "an-empty-code-block-is-two-fences",
+      "document": {
+        "version": 1,
+        "blocks": [
+          {
+            "id": "n21",
+            "type": "codeBlock",
+            "attrs": {
+              "language": ""
+            },
+            "content": "",
+            "children": []
+          },
+          {
+            "id": "n22",
+            "type": "paragraph",
+            "attrs": {},
+            "content": [
+              {
+                "text": "after",
+                "marks": []
+              }
+            ],
+            "children": []
+          }
+        ]
+      },
+      "markdown": "```\n```\n\nafter\n",
+      "reparsed": [
+        {
+          "type": "codeBlock",
+          "attrs": {
+            "language": ""
+          },
+          "content": "",
+          "children": []
+        },
+        {
+          "type": "paragraph",
+          "attrs": {},
+          "content": [
+            {
+              "text": "after",
+              "marks": []
+            }
+          ],
+          "children": []
+        }
+      ]
+    },
+    {
+      "id": "children-of-a-toggle-in-an-empty-item",
+      "document": {
+        "version": 1,
+        "blocks": [
+          {
+            "id": "n26",
+            "type": "bulletList",
+            "attrs": {},
+            "content": null,
+            "children": [
+              {
+                "id": "n25",
+                "type": "listItem",
+                "attrs": {},
+                "content": [],
+                "children": [
+                  {
+                    "id": "n24",
+                    "type": "toggle",
+                    "attrs": {},
+                    "content": [
+                      {
+                        "text": "T",
+                        "marks": []
+                      }
+                    ],
+                    "children": [
+                      {
+                        "id": "n23",
+                        "type": "paragraph",
+                        "attrs": {},
+                        "content": [
+                          {
+                            "text": "c",
+                            "marks": []
+                          }
+                        ],
+                        "children": []
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "markdown": "-\n  T\n\n  c\n",
+      "reparsed": [
+        {
+          "type": "markdownRaw",
+          "attrs": {
+            "kind": "list"
+          },
+          "content": "-\n  T\n\n  c",
+          "children": []
+        }
+      ],
+      "readAsRaw": true
     }
   ]
 }
