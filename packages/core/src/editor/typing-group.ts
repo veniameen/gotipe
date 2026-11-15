@@ -16,16 +16,18 @@ const TYPING_PAUSE_MS = 500;
  * kind, the selection its last input left and when. The editor replaces the selection
  * object whenever the selection changes and keeps it while it does not, so a caret moved
  * away (even back to the same place), another block or a new selection ends the step.
- * `continues` tells whether typing of `kind` at `selection` goes on with the open step;
- * `record` follows a recorded change: typing keeps the step open after it, anything else
- * ends it.
+ * `continues` tells whether typing of `kind` at `selection`, begun at `since`, goes on with
+ * the open step; `record` follows a recorded change: typing keeps the step open after it,
+ * anything else ends it. An IME composition is typing that began at `compositionstart`:
+ * composing a syllable takes longer than a pause between keys, so only the pause before it
+ * counts (D-131).
  */
 export function createTypingGroup() {
   let open: { kind: TypingKind; selection: SelectionView; at: number } | null = null;
   return {
-    continues(kind: TypingKind | undefined, selection: SelectionView): boolean {
+    continues(kind: TypingKind | undefined, selection: SelectionView, since = Date.now()): boolean {
       if (!open || open.kind !== kind || open.selection !== selection) return false;
-      const pause = Date.now() - open.at;
+      const pause = since - open.at;
       return pause >= 0 && pause < TYPING_PAUSE_MS;
     },
     record(kind: TypingKind | undefined, selection: SelectionView): void {

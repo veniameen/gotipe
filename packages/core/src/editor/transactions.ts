@@ -45,8 +45,9 @@ interface TransactionPort {
 }
 
 /**
- * Owns transaction acceptance and document/selection undo boundaries. `dispatch(tr, kind)`:
- * `kind` is typing from the input layer, which may go on with the open undo step.
+ * Owns transaction acceptance and document/selection undo boundaries. `dispatch(tr, kind,
+ * since)`: `kind` is typing from the input layer, which may go on with the open undo step;
+ * `since` is when it began (a composition: at `compositionstart`).
  */
 export function createTransactions(port: TransactionPort) {
   const MAX_HISTORY = 100;
@@ -103,7 +104,7 @@ export function createTransactions(port: TransactionPort) {
         ),
       );
     },
-    dispatch(transaction: object, kind?: TypingKind): boolean {
+    dispatch(transaction: object, kind?: TypingKind, since?: number): boolean {
       if (port.destroyed) return false;
 
       const tr = transaction as {
@@ -191,7 +192,8 @@ export function createTransactions(port: TransactionPort) {
         // typing step open; typing that goes on with it needs no snapshot of its own.
         const recorded = tr.metadata?.addToHistory !== false;
         const local = recorded && !port.collaboration.isCollaborating;
-        const snapshot = local && !typing.continues(kind, port.selection) ? captureHistory() : null;
+        const snapshot =
+          local && !typing.continues(kind, port.selection, since) ? captureHistory() : null;
         if (port.collaboration.isCollaborating && port.selection.anchor.blockId)
           port.collaboration.setSelection(JSON.stringify(viewToEngineSelection(port.selection)));
         const before = port.getViewState().blocks;
