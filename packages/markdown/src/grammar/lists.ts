@@ -70,7 +70,8 @@ export function readList(
     const lazy: { at: number; next: number }[] = [];
     let run = false;
     let next = cursor + 1;
-    let separated = false;
+    // the first blank line between the lines of the item: from it on the item is loose
+    let firstBlank = -1;
     let itemSpread = false;
     let itemEnd = first.end;
     for (; next < lines.length; next++) {
@@ -92,7 +93,7 @@ export function readList(
         }
         if (itemLines.every(blank)) break;
         if (indentWidth(following.text) < marker.indent) break;
-        separated = true;
+        if (firstBlank < 0) firstBlank = itemLines.length;
         itemSpread = true;
         itemLines.push({ ...line, text: "", start: line.end });
         continue;
@@ -103,7 +104,8 @@ export function readList(
         run = false;
         continue;
       }
-      if (listMarker(line.text) || separated || interrupts(line)) break;
+      // after a blank line too: what the content reads as text stays in the item (D-121)
+      if (listMarker(line.text) || interrupts(line)) break;
       // Lazy continuation of the item's initial paragraph, checked once the item is read.
       if (!run) lazy.push({ at: itemLines.length, next });
       run = true;
@@ -122,7 +124,7 @@ export function readList(
       itemLines.length = at;
       content = typeof reading === "number" ? content.slice(0, reading) : parse(itemLines, prefix);
       itemEnd = itemLines.at(-1)!.end;
-      itemSpread = false;
+      itemSpread = firstBlank >= 0 && firstBlank < at;
       spread = spreadBefore;
       next = stray;
       break;
