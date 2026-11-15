@@ -462,15 +462,20 @@ function BlockComponentInner({
         </div>
       );
 
-    default:
+    default: {
+      // A paragraph, or a type without a view of its own: its children stay in it (a `<p>` can't
+      // hold blocks), and a block without children keeps its `<p>`.
+      const Tag = block.children.length > 0 ? "div" : "p";
       return (
-        <p
+        <Tag
           {...rootProps}
           data-block-type={block.type || "paragraph"}
           data-placeholder={placeholder ?? undefined}
         >
           {content}
-        </p>
+          {children}
+        </Tag>
       );
+    }
   }
 }
