@@ -7,5 +7,6 @@ first 50 items. Both take `{ limit?, cursor? }` — `listComments` also `include
 replaces its positional boolean — and resolve to a `CursorPage`: `{ data, hasMore, nextCursor? }`.
 Pass `nextCursor` back as `cursor` to read the next page. A page continues after the previous
 page's last item, so a comment resolved or a version created between the requests is neither
-skipped nor repeated. A `limit` outside 1–100 is a `RangeError` before any request. New exported
-types: `CursorPage`, `PageOptions`, `ListCommentsOptions`.
+skipped nor repeated. A `limit` outside 1–100 is a `RangeError` before any request, and a page
+that announces more items without a cursor rejects with `GoTipeApiError` code
+`INVALID_RESPONSE`. New exported types: `CursorPage`, `PageOptions`, `ListCommentsOptions`.
