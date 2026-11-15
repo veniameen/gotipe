@@ -21,7 +21,10 @@ export interface VersionsSnapshot {
 }
 
 export interface VersionsOptions {
-  /** A stored snapshot to start with, read as `loadState()` reads it; an invalid one throws. */
+  /**
+   * A stored snapshot to start with, read as `loadState()` reads it. `undefined` starts
+   * empty; anything else must be a snapshot (pass `?? undefined` for a `null` from storage).
+   */
   initialState?: unknown;
   autoSave?: boolean;
   autoSaveInterval?: number;

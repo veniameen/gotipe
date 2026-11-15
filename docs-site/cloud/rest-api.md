@@ -36,7 +36,9 @@ one page at a time after a cursor:
 `cursor` to read the next page; the last page has `has_more: false` and no `next_cursor`. The
 cursor is opaque: it names the last item of the page, and the next page starts strictly after
 it in the list's order (creation time, then ID). Items created, resolved or deleted between the
-requests therefore neither repeat nor shift the rest of the list. A cursor that is not one the
+requests therefore neither repeat nor shift the rest of the list. A comment created while you
+read the pages comes on a later page, because the server stamps it with a later time; with
+several API processes, that holds while their clocks agree. A cursor that is not one the
 server issued answers `400 VALIDATION_ERROR`.
 
 ## Errors

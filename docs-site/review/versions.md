@@ -55,7 +55,7 @@ options; `getVersionsManager(editor)` returns it.
 
 | Option | Type | Default | Description |
 | --- | --- | --- | --- |
-| `initialState` | `unknown` | — | A stored snapshot to start with, read as `loadState()` reads it. An invalid one throws from the constructor, and no auto-save starts. |
+| `initialState` | `unknown` | — | A stored snapshot to start with, read as `loadState()` reads it. `undefined` starts empty; anything else that is not a snapshot, `null` included, throws from the constructor, and no auto-save starts. |
 | `autoSave` | `boolean` | `false` | Save a version on a timer. |
 | `autoSaveInterval` | `number` | `300000` | Timer period in ms. Must be positive. |
 | `maxVersions` | `number` | `100` | Versions kept. When a new one exceeds the limit, the oldest are dropped. Must be a positive integer. |
@@ -169,7 +169,7 @@ from `@gotipe/i18n` (`history.*`). Styles are in `@gotipe/theme` (`theme/history
 ```ts title="stored-history.ts"
 const versions = new VersionsManager(editor, {
   autoSave: true,
-  initialState: await storage.read(documentId), // undefined the first time
+  initialState: (await storage.read(documentId)) ?? undefined, // nothing stored yet
 });
 versions.subscribe(() => storage.write(documentId, versions.exportState()));
 ```
@@ -178,7 +178,8 @@ versions.subscribe(() => storage.write(documentId, versions.exportState()));
 repeated ID, an empty name, a date `Date.parse` cannot read or an invalid document throws a
 `GoTipeError` with code `VALIDATION_ERROR`, and the versions stay as they were. Versions are
 put oldest first by `createdAt` (equal times keep their order), and the newest `maxVersions`
-are kept, as when a new version exceeds the limit. Auto-save then compares the document with
+are kept, as when a new version exceeds the limit. A snapshot may hold up to 10,000 versions,
+or `maxVersions` when that is larger, so a manager always reads back what it exported. Auto-save then compares the document with
 the newest loaded version. Listeners are called; `onVersionCreated` is not.
 
 **GoTipe Cloud.** `POST /v1/documents/{docId}/versions` with `{ name, description?,

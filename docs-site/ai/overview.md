@@ -144,10 +144,11 @@ matches as `{ pii_type, start, end, matched_text }` with UTF-16 offsets.
 
 `getAiManager(editor)` returns the manager that `defineAi` created for the editor, or
 `undefined` without the extension and after the editor is destroyed. It is the manager the
-commands, ghost text and `cancelAi` use: it has their provider (also one set by
-`defineAiContext` or `defineAiAgent`), your request and theirs run one at a time, and closing
-the command bar cancels yours too. The extension owns it and releases it with the editor, so
-do not call `destroy()` on it.
+commands, ghost text and `cancelAi` use, with their provider (also one set by
+`defineAiContext` or `defineAiAgent`). It runs one request at a time, yours or theirs: a new
+request cancels the running one, and so do closing the command bar and any change to the
+document. A cancelled request rejects with an `AbortError`. The extension owns the manager and
+releases it with the editor, so do not call `destroy()` on it.
 
 ```ts title="summarize.ts"
 import { getAiManager } from "@gotipe/ai";

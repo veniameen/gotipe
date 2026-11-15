@@ -217,6 +217,9 @@ describe("Cloud SDK contracts", () => {
     await expect(client().listComments("doc", { limit: 0 })).rejects.toThrow(RangeError);
     await expect(client().listVersions("doc", { limit: 1.5 })).rejects.toThrow(RangeError);
     await expect(client().listVersions("doc", { limit: 101 })).rejects.toThrow(RangeError);
+    // The former listComments(docId, includeResolved) from JavaScript.
+    await expect(client().listComments("doc", true as never)).rejects.toThrow(TypeError);
+    await expect(client().listVersions("doc", null as never)).rejects.toThrow(TypeError);
     expect(fetch).not.toHaveBeenCalled();
   });
 });
