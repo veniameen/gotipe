@@ -17,7 +17,7 @@ function handleDelete(event: InputEvent, host: InputHost, direction: -1 | 1): vo
   if (!selection.anchor.blockId) return;
   try {
     if (selection.type !== "text" || selection.anchor.blockId !== selection.head.blockId) {
-      replaceStructuredSelection(host, selection);
+      replaceStructuredSelection(host, selection, "delete");
       host.scheduleSelectionRestore();
       return;
     }
@@ -88,7 +88,10 @@ function handleDelete(event: InputEvent, host: InputHost, direction: -1 | 1): vo
     }
     if (!steps.length) return;
     host.handled = true;
-    host.dispatch({ steps, selection: { type: "cursor", ...caret } });
+    // Text deleted inside the block goes on with the deleting step; joining blocks is a step
+    // of its own.
+    const typing = steps[0]!.type === "deleteText" ? "delete" : undefined;
+    host.dispatch({ steps, selection: { type: "cursor", ...caret } }, typing);
     host.scheduleSelectionRestore();
   } catch (error) {
     reportInputError(host, error);
