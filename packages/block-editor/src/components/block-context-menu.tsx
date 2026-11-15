@@ -4,12 +4,14 @@ import { useFloatingPosition } from "@gotipe/react";
 import type React from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useBlockEditorI18n } from "../i18n/strings";
+import { deleteMenuBlock, duplicateMenuBlock, resetMenuBlock } from "../interaction/block-actions";
 import { PageIcon, type PageIconName } from "../page/icons";
 import { BLOCK_KEYS } from "./formatting/keys";
 import { MenuKey } from "./formatting/tip";
 
 export interface BlockContextMenuProps {
   editor: GoTipeEditor;
+  /** The block the actions apply to; on a list, pass the row (`BlockToolbar` does). */
   blockId: string;
   open: boolean;
   onClose: () => void;
@@ -164,20 +166,24 @@ export function BlockContextMenu({ editor, blockId, open, onClose }: BlockContex
   );
 
   const handleDelete = useCallback(() => {
-    editor.chain().deleteBlock(blockId).run();
+    deleteMenuBlock(editor, blockId);
     setTurnIntoOpen(false);
     onClose();
   }, [editor, blockId, onClose]);
 
   const handleDuplicate = useCallback(() => {
-    editor.chain().duplicateBlock(blockId).run();
+    duplicateMenuBlock(editor, blockId);
     setTurnIntoOpen(false);
     onClose();
   }, [editor, blockId, onClose]);
 
   const handleResetFormatting = useCallback(() => {
-    applyTurnInto({ label: "Text", icon: "text", type: "paragraph" });
-  }, [applyTurnInto]);
+    const target = resolveTransformTarget();
+    if (target) resetMenuBlock(editor, target.id, target.offset);
+    editor.focus();
+    setTurnIntoOpen(false);
+    onClose();
+  }, [editor, onClose, resolveTransformTarget]);
 
   const handleCopyBlockLink = useCallback(async () => {
     const url = new URL(window.location.href);
