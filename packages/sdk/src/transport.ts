@@ -6,7 +6,6 @@ export class GoTipeApiError extends Error implements ApiError {
     readonly code: string,
     message: string,
     readonly status: number,
-    readonly details?: Record<string, unknown>,
   ) {
     super(message);
   }
@@ -56,7 +55,6 @@ export class Transport {
             ? error.message
             : response.statusText || `HTTP ${response.status}`,
           response.status,
-          error?.details,
         );
       }
       if (response.status === 204 || response.status === 205) return undefined as T;

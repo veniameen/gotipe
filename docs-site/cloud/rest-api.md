@@ -43,7 +43,7 @@ server issued answers `400 VALIDATION_ERROR`.
 
 ## Errors
 
-Errors use one envelope:
+Errors use one envelope, and the error has only `code` and `message`:
 
 ```json
 { "error": { "code": "VALIDATION_ERROR", "message": "title is required" } }

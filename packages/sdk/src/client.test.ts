@@ -172,16 +172,20 @@ describe("Cloud SDK contracts", () => {
       "https://cloud.example/v1/documents/doc",
     ]);
   });
-  it("throws an Error with status, code and details", async () => {
-    respond({ error: { code: "NOT_FOUND", message: "Missing", details: { id: "doc" } } }, 404);
-    await expect(client().getDocument("doc")).rejects.toMatchObject({
+  it("throws an Error with the server's code and message and the status", async () => {
+    // The Cloud error object has only `code` and `message` (apierror.APIError).
+    respond({ error: { code: "NOT_FOUND", message: "Missing" } }, 404);
+    const error = await client()
+      .getDocument("doc")
+      .catch((reason: unknown) => reason);
+    expect(error).toBeInstanceOf(GoTipeApiError);
+    expect(error).toMatchObject({
       name: "GoTipeApiError",
       code: "NOT_FOUND",
       message: "Missing",
       status: 404,
-      details: { id: "doc" },
     });
-    await expect(client().getDocument("doc")).rejects.toBeInstanceOf(GoTipeApiError);
+    expect(Object.keys(error as object).sort()).toEqual(["code", "name", "status"]);
   });
   it("normalizes non-JSON proxy errors", async () => {
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response("unavailable", { status: 502 })));

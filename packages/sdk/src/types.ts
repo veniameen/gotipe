@@ -5,10 +5,10 @@ export interface GoTipeClientOptions {
   timeout?: number;
 }
 
+/** The error object of a Cloud response outside 2xx: `{ "error": { "code", "message" } }`. */
 export interface ApiError {
   code: string;
   message: string;
-  details?: Record<string, unknown>;
 }
 export interface PaginatedResponse<T> {
   data: T[];
