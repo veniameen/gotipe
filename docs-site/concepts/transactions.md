@@ -66,7 +66,7 @@ console.log(editor.getMarkdown()); // "**Hello** world!\n"
 | `insertBlock` | `parentId`, `index`, `block` | Inserts a block tree; `parentId: null` means top level. Every ID in the tree must be new. An `index` past the end appends. |
 | `deleteBlock` | `blockId` | Removes the block with its children. |
 | `moveBlock` | `blockId`, `newParentId`, `newIndex` | Moves a block with its children. It can't move into its own subtree. |
-| `setBlockType` | `blockId`, `newType`, `attrs` | Changes the type and replaces all attributes. Content converts between rich text, raw text and none; converting to a type without content drops the text. |
+| `setBlockType` | `blockId`, `newType`, `attrs` | Changes the type and replaces all attributes. Content converts to the `content` the new type declares: rich text, raw text or none; converting to a type without content drops the text. Without a schema the content stays as it is. |
 | `setBlockAttrs` | `blockId`, `attrs` | Merges `attrs` into the existing attributes. |
 | `splitBlock` | `blockId`, `offset` | Moves the text after `offset` into a new block below, with a new ID. A heading continues as a paragraph; other types keep type and attributes. Children stay in the first block. |
 | `mergeBlocks` | `blockId`, `targetId` | Appends the text of `blockId` to `targetId`, moves its children to the end of the target's children and removes it. Both must hold rich text, or both raw text. |

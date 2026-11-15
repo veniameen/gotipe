@@ -6,7 +6,7 @@ import {
   blockContentTextLength,
   cloneBlockTree,
   cloneInlineContent,
-  contentForTargetType,
+  contentFor,
   listItemAttrs,
 } from "./content";
 import type { CommandPort } from "./port";
@@ -38,7 +38,7 @@ export class ListCommands {
     if (insideList && !LIST_ITEM_TYPES.has(type)) {
       const listLoc = findBlockLocation(state.blocks, parent.id);
       if (listLoc && parentInfo) {
-        const content = contentForTargetType(type, block.content);
+        const content = contentFor(this.port.schema.content(type), block.content);
         const lifted = {
           id: block.id,
           type,
@@ -97,7 +97,7 @@ export class ListCommands {
         : ((attrs ?? {}) as Record<string, string | number | boolean | null>);
 
     if (type === "codeBlock") {
-      const targetContent = contentForTargetType(type, block.content);
+      const targetContent = contentFor(this.port.schema.content(type), block.content);
       const maxOffset = blockContentTextLength(targetContent);
       const offset = Math.max(0, Math.min(sourceOffset, maxOffset));
       this.port.select({ type: "cursor", blockId, offset });

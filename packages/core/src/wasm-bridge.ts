@@ -188,6 +188,7 @@ export class WasmBridge {
           );
       },
       markGroups(this.schema),
+      (type) => this.schema?.nodes[type]?.content,
     );
     if (!this.schema || !validateEngineDocument(this.schema, JSON.parse(after)))
       throw new GoTipeError(

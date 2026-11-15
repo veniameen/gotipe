@@ -25,6 +25,8 @@ export interface CommandSchema {
   acceptsAttrs(nodeType: string, attrs: Record<string, unknown>): boolean;
   /** Whether the block type declares the attribute. */
   declares(nodeType: string, attr: string): boolean;
+  /** What the block type's content holds; `undefined` when the schema does not declare the type. */
+  content(nodeType: string): NodeSpec["content"] | undefined;
 }
 
 export function commandSchema(schema: AssembledSchema): CommandSchema {
@@ -58,6 +60,7 @@ export function commandSchema(schema: AssembledSchema): CommandSchema {
       return result;
     },
     declares: (nodeType, attr) => attr in specs("node", nodeType),
+    content: (nodeType) => schema.nodes[nodeType]?.content,
     acceptsAttrs(nodeType, attrs) {
       const declared = specs("node", nodeType);
       return Object.entries(attrs).every(([name, value]) => {

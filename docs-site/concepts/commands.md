@@ -123,6 +123,12 @@ callout or `language: ""` (plain text) for a code block. A heading level that th
 extension doesn't offer stages nothing (see `values` in
 [attributes](/docs/concepts/extensions#attributes)).
 
+The content follows the `content` the type declares, for built-in node types and your own
+alike: a new block starts with empty rich text (`[]`), raw text (`""`) or none (`null`), and
+`setBlockType` keeps the text as spans or as raw text without marks, or drops it for a type
+without content. In an editor without a schema (`extensions: []`) no type declares one: a new
+block gets rich text and `setBlockType` leaves the content as it is.
+
 ## Lists
 
 | Command | Description |
@@ -209,9 +215,6 @@ Active marks are read at the caret, or at the start of the selected range. In Re
 ## Limitations
 
 - `insertText` inserts unformatted text; it ignores marks toggled with a caret.
-- `insertBlockAfter`, `insertBlockBefore` and `setBlockType` pick a new block's content
-  kind from the built-in type names. For your own `rawText` or `empty` node types,
-  dispatch an `insertBlock` step with the content yourself.
 
 ## Related
 
