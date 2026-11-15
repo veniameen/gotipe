@@ -74,6 +74,8 @@
   letter-spacing: var(--gt-title-tracking);
   overflow-wrap: break-word;
   white-space: pre-wrap;
+  /* the title wraps balanced in every view, docs included: it has no anchor */
+  text-wrap: balance;
 }
 /* a Markdown page's title is its leading «# heading», drawn as the page's title (Atlas frame 19);
    its HTML level is the host's (`titleLevel`), the look is the same at any level */
@@ -84,6 +86,7 @@
   font-weight: var(--gt-weight-title);
   line-height: var(--gt-title-leading);
   letter-spacing: var(--gt-title-tracking);
+  text-wrap: balance;
 }
 .gotipe-page-head-title:not([contenteditable]) {
   flex: 0 1 auto;

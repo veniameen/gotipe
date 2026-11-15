@@ -115,11 +115,14 @@
 .gotipe-content p:empty {
   min-height: var(--gt-body-leading);
 }
+/* a heading wraps balanced, so its last line is not one lone word; in docs, as a paragraph — a
+   balanced heading would carry its anchor onto a line of its own (--gt-heading-wrap) */
 .gotipe-content :where(h1, h2, h3, h4, h5, h6) {
   margin-bottom: 0;
   color: var(--gt-text);
   font-family: var(--gt-font-ui);
   font-weight: var(--gt-weight-strong);
+  text-wrap: var(--gt-heading-wrap);
 }
 .gotipe-content h1 {
   font-size: var(--gt-h1-size);
