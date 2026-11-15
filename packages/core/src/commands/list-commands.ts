@@ -203,45 +203,37 @@ export class ListCommands {
       return this;
     }
 
-    // Wrap top-level text-capable blocks in list while preserving inline content.
-    if (
-      block.type === "paragraph" ||
-      block.type === "heading" ||
-      block.type === "blockquote" ||
-      block.type === "codeBlock" ||
-      block.type === "callout"
-    ) {
-      const location = findBlockLocation(state.blocks, blockId);
-      if (!location) return this;
-
-      this.port.append({ type: "deleteBlock", blockId });
-      this.port.append({
-        type: "insertBlock",
-        parentId: location.parentId,
-        index: location.index,
-        block: {
-          id: createId(),
-          type: listType,
-          attrs: this.port.schema.withDefaults("node", listType, listAttrs),
-          content: null,
-          children: [
-            {
-              id: block.id,
-              type: itemType,
-              attrs: {
-                ...this.direction(itemType, block),
-                ...listItemAttrs(itemType as "listItem" | "todoItem", block),
-              },
-              content: cloneInlineContent(block.content),
-              children: block.children.map((child) => cloneBlockTree(child, false)),
+    if (LIST_TYPES.has(block.type)) return this.setBlockType(listType, listAttrs);
+    // Any other block with text — rich or raw by its schema, as `contentFor` decides — becomes
+    // the list's only item with its text and children; a block without text stays (D-143).
+    const kind = this.port.schema.content(block.type);
+    const location = findBlockLocation(state.blocks, blockId);
+    if ((kind ? kind === "empty" : block.content === null) || !location) return this;
+    this.port.append({ type: "deleteBlock", blockId });
+    this.port.append({
+      type: "insertBlock",
+      parentId: location.parentId,
+      index: location.index,
+      block: {
+        id: createId(),
+        type: listType,
+        attrs: this.port.schema.withDefaults("node", listType, listAttrs),
+        content: null,
+        children: [
+          {
+            id: block.id,
+            type: itemType,
+            attrs: {
+              ...this.direction(itemType, block),
+              ...listItemAttrs(itemType as "listItem" | "todoItem", block),
             },
-          ],
-        },
-      });
-      return this;
-    }
-
-    return this.setBlockType(listType, listAttrs);
+            content: cloneInlineContent(block.content),
+            children: block.children.map((child) => cloneBlockTree(child, false)),
+          },
+        ],
+      },
+    });
+    return this;
   }
 
   indent(): this {
