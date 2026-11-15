@@ -37,7 +37,12 @@ test.describe('Owned comment discussion', () => {
     const { thread } = await comment(page, 'Проверить оба абзаца 😀', true);
     await expect(thread.locator('.gotipe-comment-quote')).toContainText('a phrase to start');
     await expect(thread.locator('.gotipe-comment-quote')).toContainText('Reply with details');
-    await expect(page.locator('[data-comment-id]')).toHaveCount(1);
+    // One discussion for the quote; its highlight marks the text in both paragraphs.
+    await expect(page.locator('.gotipe-comment-thread[data-comment-id]')).toHaveCount(1);
+    const highlight = `.gotipe-comment-highlight[data-comment-id="${await thread.getAttribute('data-comment-id')}"]`;
+    const paragraphs = page.locator('[data-gotipe-example="comments"] [data-block-type="paragraph"]');
+    await expect(paragraphs.nth(0).locator(highlight)).not.toHaveCount(0);
+    await expect(paragraphs.nth(1).locator(highlight)).not.toHaveCount(0);
     await thread.getByRole('button', { name: 'Reply', exact: true }).click();
     await expect(thread.getByRole('textbox', { name: 'Reply', exact: true })).toBeFocused();
     await thread.getByRole('textbox', { name: 'Reply', exact: true }).fill('Добавлено — 🦀');
