@@ -18,7 +18,12 @@ import type {
 const idPath = (id: string) => encodeURIComponent(id);
 const documentPath = (id: string) => `/v1/documents/${idPath(id)}`;
 
-function pageQuery(query: URLSearchParams, { limit, cursor }: PageOptions): string {
+function pageQuery(query: URLSearchParams, options: PageOptions): string {
+  // A JavaScript caller of the former listComments(docId, includeResolved) must not get
+  // a different list without an error.
+  if (!options || typeof options !== "object")
+    throw new TypeError("List options must be an object such as { limit, cursor }");
+  const { limit, cursor } = options;
   if (limit !== undefined) {
     if (!Number.isSafeInteger(limit) || limit < 1 || limit > 100) {
       throw new RangeError("limit must be between 1 and 100");

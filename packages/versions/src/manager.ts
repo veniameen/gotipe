@@ -3,6 +3,9 @@ import { compareDocuments, snapshotKey } from "./diff";
 import { decodeVersionsSnapshot } from "./persistence";
 import type { Version, VersionDiff, VersionsOptions, VersionsSnapshot } from "./types";
 
+/** Entries a stored snapshot may hold beyond `maxVersions` (the newest `maxVersions` are kept). */
+const MAX_STORED_VERSIONS = 10000;
+
 /**
  * Session snapshots. Hosts own persistence (`exportState`/`loadState`); all returned data is
  * detached from internal state.
@@ -129,7 +132,8 @@ export class VersionsManager {
    */
   loadState(value: unknown): void {
     this.assertLive();
-    const versions = decodeVersionsSnapshot(value).slice(-this.maxVersions);
+    const limit = Math.max(MAX_STORED_VERSIONS, this.maxVersions);
+    const versions = decodeVersionsSnapshot(value, limit).slice(-this.maxVersions);
     this.versions = versions;
     const newest = versions.at(-1);
     if (newest) this.savedKey = snapshotKey(newest.snapshot);

@@ -134,6 +134,23 @@ describe("stored versions (D-44)", () => {
     vi.advanceTimersByTime(100);
     expect(behind.getVersions().map((version) => version.createdBy)).toEqual(["user", "system"]);
   });
+  it("reads back every snapshot it exports, also above 10000 versions", async () => {
+    const many = (count: number) => ({
+      version: 1,
+      versions: Array.from({ length: count }, (_, index) =>
+        stored(String(index), new Date(Date.UTC(2026, 0, 1, 0, 0, index)).toISOString(), "x"),
+      ),
+    });
+    const { manager: large } = await setup({ maxVersions: 10001, initialState: many(10001) });
+    const { manager: copy } = await setup({ maxVersions: 10001 });
+    copy.loadState(large.exportState());
+    expect(copy.getVersions()).toHaveLength(10001);
+    const { manager: small } = await setup();
+    small.loadState(many(10000));
+    expect(small.getVersions().map((version) => version.id)[0]).toBe("9900");
+    expect(() => small.loadState(many(10001))).toThrow("Unsupported versions snapshot");
+    expect(() => small.loadState(null)).toThrow("Unsupported versions snapshot");
+  });
   it("refuses state calls after destroy", async () => {
     const { manager } = await setup();
     manager.destroy();

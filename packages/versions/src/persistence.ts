@@ -30,12 +30,15 @@ function version(value: unknown): Version {
 
 /**
  * Checks a stored `{ version: 1, versions }` snapshot as a whole and returns its versions
- * oldest first by `createdAt` (equal times keep their order). Nothing is half loaded.
+ * oldest first by `createdAt` (equal times keep their order). Nothing is half loaded. At most
+ * `limit` entries are read, so a manager always reads back what it exported.
  */
-export function decodeVersionsSnapshot(value: unknown): Version[] {
-  const source = object(value);
-  if (source.version !== 1 || !Array.isArray(source.versions) || source.versions.length > 10000)
-    throw new GoTipeError("VALIDATION_ERROR", "Unsupported versions snapshot");
+export function decodeVersionsSnapshot(value: unknown, limit: number): Version[] {
+  const unsupported = () => new GoTipeError("VALIDATION_ERROR", "Unsupported versions snapshot");
+  if (!value || typeof value !== "object" || Array.isArray(value)) throw unsupported();
+  const source = value as Record<string, unknown>;
+  if (source.version !== 1 || !Array.isArray(source.versions) || source.versions.length > limit)
+    throw unsupported();
   const ids = new Set<string>();
   const versions = source.versions.map((entry) => {
     const result = version(entry);
