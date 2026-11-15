@@ -1,11 +1,24 @@
 import type { GoTipeEditor } from "@gotipe/core";
+import type { TranslationKey } from "@gotipe/i18n";
+import { useGoTipeI18n } from "@gotipe/react";
 import { useEffect, useState } from "react";
 
 export interface AiToolbarProps {
   editor: GoTipeEditor;
   onCommand: (command: string) => void;
 }
+/** The commands and the words of their buttons. */
+const ACTIONS: [command: string, label: TranslationKey][] = [
+  ["rewrite", "ai.rewrite"],
+  ["summarize", "ai.summarize"],
+  ["expand", "ai.expand"],
+  ["fixGrammar", "ai.fixGrammar"],
+  ["translate", "ai.translate"],
+];
+
+/** Its words come from `GoTipeI18nProvider` (`@gotipe/react`), English without one. */
 export function AiToolbar({ editor, onCommand }: AiToolbarProps) {
+  const i18n = useGoTipeI18n();
   const [editable, setEditable] = useState(editor.isEditable);
   const [busy, setBusy] = useState(false);
   useEffect(() => {
@@ -20,24 +33,18 @@ export function AiToolbar({ editor, onCommand }: AiToolbarProps) {
     };
   }, [editor]);
   return (
-    <div className="gotipe-ai-toolbar" role="toolbar" aria-label="AI actions">
-      {[
-        ["rewrite", "Rewrite"],
-        ["summarize", "Summarize"],
-        ["expand", "Expand"],
-        ["fixGrammar", "Fix grammar"],
-        ["translate", "Translate"],
-      ].map(([command, label]) => (
+    <div className="gotipe-ai-toolbar" role="toolbar" aria-label={i18n.t("ai.actions")}>
+      {ACTIONS.map(([command, label]) => (
         <button
           type="button"
           key={command}
           disabled={!editable || busy}
           onMouseDown={(event) => event.preventDefault()}
           onClick={() => {
-            if (editor.isEditable && !editor.isDestroyed && !busy) onCommand(command!);
+            if (editor.isEditable && !editor.isDestroyed && !busy) onCommand(command);
           }}
         >
-          {label}
+          {i18n.t(label)}
         </button>
       ))}
     </div>

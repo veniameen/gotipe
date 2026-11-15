@@ -2,11 +2,13 @@ import type { AiCommand } from "@gotipe/ai";
 // @vitest-environment jsdom
 import { type GoTipeEditor, createEditor } from "@gotipe/core/js";
 import { FullPreset } from "@gotipe/core/presets";
+import { GoTipeI18nProvider } from "@gotipe/react";
 import { act } from "react";
 import { type Root, createRoot } from "react-dom/client";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { AiCommandPalette } from "./command-palette";
 import { GhostText } from "./ghost-text";
+import { AiToolbar } from "./toolbar";
 
 let editor: GoTipeEditor;
 let container: HTMLDivElement;
@@ -153,4 +155,30 @@ it("ghost text only consumes unmodified Tab inside its own editable editor", () 
     new KeyboardEvent("keydown", { key: "Tab", bubbles: true, cancelable: true }),
   );
   expect(accept).toHaveBeenCalledOnce();
+});
+
+it("draws the palette's and the toolbar's words in the provider's language (D-34)", () => {
+  act(() =>
+    root.render(
+      <GoTipeI18nProvider locale="ru">
+        <AiCommandPalette editor={editor} commands={[]} onClose={() => {}} />
+        <AiToolbar editor={editor} onCommand={() => {}} />
+      </GoTipeI18nProvider>,
+    ),
+  );
+  expect(container.querySelector("dialog")?.getAttribute("aria-label")).toBe("Команды модели");
+  expect(container.querySelector("input")?.placeholder).toBe("Спросить модель…");
+  expect(container.querySelector("input")?.getAttribute("aria-label")).toBe(
+    "Искать команды модели",
+  );
+  expect(container.querySelector("dialog")?.textContent).toBe("Нет подходящих командЗакрыть");
+  const toolbar = container.querySelector("[role=toolbar]")!;
+  expect(toolbar.getAttribute("aria-label")).toBe("Действия модели");
+  expect([...toolbar.querySelectorAll("button")].map((button) => button.textContent)).toEqual([
+    "Переписать",
+    "Резюмировать",
+    "Расширить",
+    "Исправить грамматику",
+    "Перевести",
+  ]);
 });
