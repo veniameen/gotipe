@@ -298,13 +298,15 @@ pub(super) fn closed(block: &Block) -> bool {
     )
 }
 
-/// `isBlockEmpty` of the TS writer: a block it leaves out at the top level. A list without items
-/// has no Markdown (D-124).
+/// `isBlockEmpty` of the TS writer: a block it leaves out at the top level. A block that writes no
+/// line, a list without items (D-124) or raw source of blanks, keeps no lists apart (D-123).
 fn empty(block: &Block) -> bool {
     match (block.block_type.as_str(), &block.content) {
         ("paragraph" | "heading", _) => !has_text(block),
         _ if is_list(block) => block.children.is_empty(),
-        ("markdownRaw", BlockContent::Raw(source)) => source.is_empty(),
+        ("markdownRaw", BlockContent::Raw(source)) => {
+            source.trim_matches([' ', '\t', '\r', '\n']).is_empty()
+        }
         ("markdownRaw", _) => true,
         _ => super::omitted(block),
     }
