@@ -13,7 +13,7 @@ import { decodeString } from "./decode";
 import { readDefinition } from "./definitions";
 import { readInline } from "./inline";
 import type { InlineContext } from "./links";
-import { readList } from "./lists";
+import { lazyReading, readList } from "./lists";
 import { type Line, blank, indentWidth, linesFrom, sourceFrom, strip, stripIndent } from "./source";
 import { tableAlignment, tableCells, tableRow } from "./table";
 import { type PhrasingContent, type Root, type RootContent, position } from "./types";
@@ -121,32 +121,43 @@ class Reader {
       }
       if (quotePrefix(line.text)) {
         const quoted: Line[] = [];
+        // the first line of each run of lines without `>`: its index in the quote and in `lines`
+        const lazy: { at: number; next: number }[] = [];
+        let run = false;
         let next = i;
-        let lazy = false;
-        while (next < lines.length) {
+        for (; next < lines.length; next++) {
           const current = lines[next]!;
           const prefix = quotePrefix(current.text);
           if (prefix) {
             const marker = /^ {0,3}>/.exec(current.text)![0].length;
-            const unquoted = stripIndent(strip(current, marker), prefix > marker ? 1 : 0);
-            quoted.push(unquoted);
-            let inner = unquoted;
-            for (let n = 0; n < 64; n++) {
-              const quote = quotePrefix(inner.text);
-              const list = listMarker(inner.text, inner.column);
-              if (quote) inner = strip(inner, quote);
-              else if (list) inner = strip(inner, list.prefix);
-              else break;
-            }
-            lazy = !blank(inner) && indentWidth(inner.text, inner.column) < 4 && !interrupts(inner);
-          } else if (lazy && !blank(current) && !interrupts(current))
-            quoted.push({ ...current, lazy: true });
-          else break;
-          next++;
+            quoted.push(stripIndent(strip(current, marker), prefix > marker ? 1 : 0));
+            run = false;
+            continue;
+          }
+          // a line that starts a block here — any list item too — ends the quote
+          if (blank(current) || interrupts(current) || listMarker(current.text)) break;
+          if (!run) lazy.push({ at: quoted.length, next });
+          run = true;
+          quoted.push({ ...current, lazy: true });
+        }
+        let children = this.blocks(quoted, depth + 1);
+        // A line without `>` continues the paragraph the quote has open. Where the quote reads it
+        // otherwise — after a blank line, in code or a table — the quote ends before it, as in
+        // CommonMark (D-118); its blocks before that line read the same without it.
+        for (const { at, next: stray } of lazy) {
+          const reading = lazyReading(children, quoted[at]!.start, true);
+          if (reading === "text") continue;
+          quoted.length = at;
+          children =
+            typeof reading === "number"
+              ? children.slice(0, reading)
+              : this.blocks(quoted, depth + 1);
+          next = stray;
+          break;
         }
         nodes.push({
           type: "blockquote",
-          children: this.blocks(quoted, depth + 1),
+          children,
           position: position(start, lines[next - 1]!.end),
         });
         i = next;

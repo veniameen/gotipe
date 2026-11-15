@@ -1199,5 +1199,190 @@
         ]
       }
     ]
+  },
+  {
+    "markdown": "> a\n*\nb\n",
+    "blocks": [
+      {
+        "type": "blockquote",
+        "attrs": {},
+        "content": [
+          {
+            "text": "a",
+            "marks": []
+          }
+        ],
+        "children": []
+      },
+      {
+        "type": "bulletList",
+        "attrs": {
+          "marker": "*",
+          "spread": false
+        },
+        "content": null,
+        "children": [
+          {
+            "type": "listItem",
+            "attrs": {},
+            "content": [],
+            "children": []
+          }
+        ]
+      },
+      {
+        "type": "paragraph",
+        "attrs": {},
+        "content": [
+          {
+            "text": "b",
+            "marks": []
+          }
+        ],
+        "children": []
+      }
+    ]
+  },
+  {
+    "markdown": "> a\n2. x\n",
+    "blocks": [
+      {
+        "type": "blockquote",
+        "attrs": {},
+        "content": [
+          {
+            "text": "a",
+            "marks": []
+          }
+        ],
+        "children": []
+      },
+      {
+        "type": "orderedList",
+        "attrs": {
+          "start": 2,
+          "delimiter": ".",
+          "spread": false
+        },
+        "content": null,
+        "children": [
+          {
+            "type": "listItem",
+            "attrs": {},
+            "content": [
+              {
+                "text": "x",
+                "marks": []
+              }
+            ],
+            "children": []
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "markdown": "> | a |\n> | - |\nb\n",
+    "blocks": [
+      {
+        "type": "markdownRaw",
+        "attrs": {
+          "kind": "blockquote"
+        },
+        "content": "> | a |\n> | - |",
+        "children": []
+      },
+      {
+        "type": "paragraph",
+        "attrs": {},
+        "content": [
+          {
+            "text": "b",
+            "marks": []
+          }
+        ],
+        "children": []
+      }
+    ]
+  },
+  {
+    "markdown": "> a\n>     code\nb\n",
+    "blocks": [
+      {
+        "type": "blockquote",
+        "attrs": {},
+        "content": [
+          {
+            "text": "a code b",
+            "marks": []
+          }
+        ],
+        "children": []
+      }
+    ]
+  },
+  {
+    "markdown": "> ```\n> code\nb\n",
+    "blocks": [
+      {
+        "type": "markdownRaw",
+        "attrs": {
+          "kind": "blockquote"
+        },
+        "content": "> ```\n> code",
+        "children": []
+      },
+      {
+        "type": "paragraph",
+        "attrs": {},
+        "content": [
+          {
+            "text": "b",
+            "marks": []
+          }
+        ],
+        "children": []
+      }
+    ]
+  },
+  {
+    "markdown": "> a\n>\nb\n",
+    "blocks": [
+      {
+        "type": "blockquote",
+        "attrs": {},
+        "content": [
+          {
+            "text": "a",
+            "marks": []
+          }
+        ],
+        "children": []
+      },
+      {
+        "type": "paragraph",
+        "attrs": {},
+        "content": [
+          {
+            "text": "b",
+            "marks": []
+          }
+        ],
+        "children": []
+      }
+    ]
+  },
+  {
+    "markdown": "> > a\nb\n",
+    "blocks": [
+      {
+        "type": "markdownRaw",
+        "attrs": {
+          "kind": "blockquote"
+        },
+        "content": "> > a\nb",
+        "children": []
+      }
+    ]
   }
 ]

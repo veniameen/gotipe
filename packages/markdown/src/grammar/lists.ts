@@ -24,13 +24,13 @@ function lastFrom(nodes: readonly Block[], offset: number): number {
 }
 
 /**
- * How `nodes`, the content of an item, read a lazy line that starts at `offset`: as text of a
- * paragraph open before it, the only block a lazy line continues in CommonMark (`"text"`); as the
- * start of the item's block at the returned index; or else (`"other"`): in code, a table, or a
- * block nested deeper. A definition is read out of paragraph text, so a line right after one
- * continues that text, whatever block it starts here.
+ * How `nodes`, the content of an item or a quote, read a lazy line that starts at `offset`: as
+ * text of a paragraph open before it, the only block a lazy line continues in CommonMark
+ * (`"text"`); as the start of their block at the returned index; or else (`"other"`): in code, a
+ * table, or a block nested deeper. A definition is read out of paragraph text, so a line right
+ * after one continues that text, whatever block it starts here.
  */
-function lazyReading(
+export function lazyReading(
   nodes: readonly Block[],
   offset: number,
   top: boolean,

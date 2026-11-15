@@ -8,9 +8,9 @@ fn compatible(a: &Marker, b: &Marker) -> bool {
     a.ordered == b.ordered && a.marker == b.marker
 }
 
-/// How the content of an item reads a lazy line, as `lazyReading` of the TS reader.
+/// How the content of an item or a quote reads a lazy line, as `lazyReading` of the TS reader.
 #[derive(PartialEq, Debug)]
-enum Lazy {
+pub(super) enum Lazy {
     /// Text of a paragraph open before it: the only block a lazy line continues in CommonMark.
     Text,
     /// The start of the item's block at this index.
@@ -24,7 +24,7 @@ const DEFINITIONS: [&str; 2] = ["definition", "footnoteDefinition"];
 /// How `nodes`, the content of an item, read a lazy line that starts at `offset`. A definition
 /// is read out of paragraph text, so a line right after one continues that text, whatever block
 /// it starts here.
-fn lazy_reading(nodes: &[Node], offset: usize, top: bool) -> Lazy {
+pub(super) fn lazy_reading(nodes: &[Node], offset: usize, top: bool) -> Lazy {
     let Some(at) = nodes
         .partition_point(|node| node.start <= offset)
         .checked_sub(1)

@@ -4,7 +4,6 @@ export interface ListMarker {
   ordered: boolean;
   marker: string;
   start: number;
-  prefix: number;
   indent: number;
   content: string;
 }
@@ -22,7 +21,6 @@ export function listMarker(text: string, column = 0): ListMarker | null {
     ordered: marker.length > 1,
     marker: marker.at(-1)!,
     start: marker.length > 1 ? Number.parseInt(marker, 10) : 1,
-    prefix,
     indent: before.length + (padding > 4 || !padding ? 1 : padding),
     content: text.slice(prefix),
   };
