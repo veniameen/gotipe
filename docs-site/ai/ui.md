@@ -45,7 +45,7 @@ status line.
 | Control | Shown when the editor has |
 | --- | --- |
 | Improve | `defineAi` and `defineAiContext` |
-| Command bar and ⌘J | `defineAi` and `defineAiAgent`, or `defineAi` and your `onAiCommand` |
+| Command bar and ⌘J | `defineAi` with `defineAiAgent` or `defineAiContext`, or `defineAi` and your `onAiCommand` |
 | Ghost text, status line | `defineAi` |
 
 `AiPreset` has all three. `BlockEditor` asks `editor.hasExtension(name)`, so the answer is
@@ -58,9 +58,10 @@ key works on any keyboard layout. The Ask AI slash item opens it too. Enter send
 prompt; Escape, the close button or a click outside closes the bar and cancels a running
 request. The shortcut does nothing in read-only mode.
 
-Without `onAiCommand`, the bar runs `freeText`: `proofread`, `proofread document` or
-`check grammar` start proofreading, `review`, `review document` or `check document` start
-a review, and any other prompt adds a paragraph after the current block. The bar shows
+Without `onAiCommand`, the bar runs `freeText` of `defineAiAgent`: `proofread`, `proofread
+document` or `check grammar` start proofreading, `review`, `review document` or `check
+document` start a review, and any other prompt adds a paragraph after the current block. With
+`defineAiContext` but no agent it runs `askAi`, and every prompt adds a paragraph. The bar shows
 "Processing..." and the error message of a failed request, and closes once the result has
 arrived. To rewrite the selection by an instruction, handle the prompt yourself:
 

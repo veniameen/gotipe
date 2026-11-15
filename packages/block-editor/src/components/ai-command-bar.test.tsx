@@ -86,6 +86,8 @@ it("prevents repeated submission and retains errors and prompt for retry", async
   expect((button as HTMLButtonElement).disabled).toBe(false);
 });
 it("opens from Ask AI and reports when the agent does not answer", async () => {
+  const sent = vi.fn();
+  editor.on("executeAiCommand", sent);
   act(() => root.render(<AiCommandBar editor={editor} />));
   act(() => editor.emit("executeAiCommand", { commandId: "askAi" }));
   act(() => enter("Create text"));
@@ -95,6 +97,7 @@ it("opens from Ask AI and reports when the agent does not answer", async () => {
       .dispatchEvent(new MouseEvent("click", { bubbles: true })),
   );
   expect(container.querySelector("[role=alert]")?.textContent).toContain("not available");
+  expect(sent).toHaveBeenLastCalledWith({ commandId: "freeText", prompt: "Create text" });
 });
 
 describe("AI controls exist only with an extension that answers them", () => {
@@ -134,8 +137,8 @@ describe("AI controls exist only with an extension that answers them", () => {
     expect(container.textContent).toBe("");
   });
 
-  it("needs the agent, or the host's own prompt handler, besides defineAi", async () => {
-    const manager = await editorWith([FullPreset, ai, aiContext]);
+  it("needs, besides defineAi, the agent, the context or the host's own prompt handler", async () => {
+    const manager = await editorWith([FullPreset, ai]);
     act(() => root.render(<AiCommandBar editor={manager} />));
     act(() => keyJ(surface));
     expect(container.querySelector("dialog")).toBeNull();
@@ -145,6 +148,25 @@ describe("AI controls exist only with an extension that answers them", () => {
     // The host's handler goes away: so does the bar.
     act(() => root.render(<AiCommandBar editor={manager} />));
     expect(container.querySelector("dialog")).toBeNull();
+  });
+
+  it("sends Ask AI's prompt to defineAiContext when there is no agent", async () => {
+    const context = await editorWith([FullPreset, ai, aiContext]);
+    const sent = vi.fn();
+    context.on("executeAiCommand", sent);
+    act(() => root.render(<AiCommandBar editor={context} />));
+    act(() => context.emit("executeAiCommand", { commandId: "askAi" }));
+    expect(container.querySelector("dialog")).not.toBeNull();
+    act(() => enter("A paragraph about tides"));
+    await act(async () =>
+      container
+        .querySelector("[aria-label='Submit AI command']")!
+        .dispatchEvent(new MouseEvent("click", { bubbles: true })),
+    );
+    expect(sent).toHaveBeenLastCalledWith({
+      commandId: "askAi",
+      prompt: "A paragraph about tides",
+    });
   });
 
   it("draws ghost text and the AI status only for an editor with defineAi", async () => {

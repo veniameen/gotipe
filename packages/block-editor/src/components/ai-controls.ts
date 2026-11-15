@@ -8,8 +8,13 @@ import type { GoTipeEditor } from "@gotipe/core";
 export interface AiControls {
   /** Improve sends `rewrite`, which `defineAiContext` answers. */
   improve: boolean;
-  /** The ⌘J bar sends `freeText`, which `defineAiAgent` answers, unless the host takes the prompt. */
+  /** The ⌘J bar, which Ask AI of `defineAiContext` opens too: something answers its prompt. */
   commandBar: boolean;
+  /**
+   * What the bar sends without the host's handler: `freeText`, which `defineAiAgent` answers
+   * (proofreading, a review or a paragraph), else `askAi`, which `defineAiContext` answers.
+   */
+  prompt: "freeText" | "askAi";
   /** Ghost text and the status line show what `defineAi` reports. */
   status: boolean;
 }
@@ -17,9 +22,12 @@ export interface AiControls {
 /** `hostPrompt`: the host handles the bar's prompt itself (`onAiCommand`). */
 export function aiControls(editor: GoTipeEditor, hostPrompt = false): AiControls {
   const ai = editor.hasExtension("ai");
+  const context = editor.hasExtension("ai-context");
+  const agent = editor.hasExtension("ai-agent");
   return {
-    improve: ai && editor.hasExtension("ai-context"),
-    commandBar: ai && (hostPrompt || editor.hasExtension("ai-agent")),
+    improve: ai && context,
+    commandBar: ai && (hostPrompt || agent || context),
+    prompt: agent ? "freeText" : "askAi",
     status: ai,
   };
 }

@@ -11,7 +11,8 @@ export interface AiCommandBarProps {
 
 /**
  * The ⌘J bar. It exists only while something answers its prompt — `defineAi` with
- * `defineAiAgent`, or `onSubmit` with `defineAi`; otherwise there is no bar and no ⌘J.
+ * `defineAiAgent` or `defineAiContext`, or `onSubmit` with `defineAi`; otherwise there is no
+ * bar and no ⌘J.
  */
 export function AiCommandBar(props: AiCommandBarProps) {
   return aiControls(props.editor, props.onSubmit !== undefined).commandBar ? (
@@ -145,7 +146,7 @@ function CommandBar({ editor, onSubmit }: AiCommandBarProps) {
         await onSubmit(prompt);
         if (alive.current && generation.current === current) close(true);
       } else {
-        editor.emit("executeAiCommand", { commandId: "freeText", prompt });
+        editor.emit("executeAiCommand", { commandId: aiControls(editor).prompt, prompt });
         if (!statusSeen.current && !errorSeen.current) {
           throw new Error("AI is not available in this editor");
         }
