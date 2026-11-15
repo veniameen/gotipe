@@ -68,14 +68,14 @@ export class AiReview {
     return this.list;
   }
 
-  /** The comments of a new review, about the document as it is now. */
   set(comments: AiComment[]): void {
+    // The comments of a new review, about the document as it is now.
     this.list = comments;
     this.texts = blockTexts(this.editor, comments);
   }
 
-  /** Follows the last edit; true when a comment moved or went. */
   follow(): boolean {
+    // Follows the last edit; true when a comment moved or went.
     if (!this.list.length) return false;
     const now = blockTexts(this.editor, this.list);
     const next = this.list.flatMap((comment) => {

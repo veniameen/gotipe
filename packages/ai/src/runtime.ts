@@ -17,8 +17,8 @@ export function getRuntime(editor: GoTipeEditor): AiRuntime | undefined {
 export function registerRuntime(editor: GoTipeEditor, manager: AiManager): AiRuntime {
   const review = new AiReview(editor);
   const runtime: AiRuntime = { manager, suggestions: [], review, cleanup: [] };
+  // Any edit, this replica's or another's, moves the comments with their text.
   runtime.cleanup.push(
-    // Any edit, this replica's or another's, moves the comments with their text.
     editor.on("update", () => {
       if (review.follow())
         editor.emit("aiReviewChange", { comments: structuredClone(review.comments) });

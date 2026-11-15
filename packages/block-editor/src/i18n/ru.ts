@@ -295,7 +295,6 @@ export const blockEditorRu: BlockEditorLocale = {
   "table.splitHint": "Ячейка не объединена",
   "table.mergeMarkdownHint":
     "Markdown-страница хранит объединённые ячейки HTML-таблицей, в которой не сохранятся упоминания, формулы и шрифты этой таблицы или таблица внутри списка либо цитаты",
-  // --- comment sidebar, failures of the block and table menus ---
   "comments.label": "Комментарии",
   "comments.count": "Комментарии ({count})",
   "comments.expand": "Развернуть комментарии",
