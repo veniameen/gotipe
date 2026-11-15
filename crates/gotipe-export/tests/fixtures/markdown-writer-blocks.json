@@ -2586,6 +2586,561 @@
         }
       ],
       "readAsRaw": true
+    },
+    {
+      "id": "raw-source-ending-with-a-line-ending-in-an-item",
+      "document": {
+        "version": 1,
+        "blocks": [
+          {
+            "id": "b4",
+            "type": "bulletList",
+            "attrs": {},
+            "content": null,
+            "children": [
+              {
+                "id": "b2",
+                "type": "listItem",
+                "attrs": {},
+                "content": [
+                  {
+                    "text": "a",
+                    "marks": []
+                  }
+                ],
+                "children": [
+                  {
+                    "id": "b1",
+                    "type": "markdownRaw",
+                    "attrs": {
+                      "kind": "html"
+                    },
+                    "content": "<div>\nx\n",
+                    "children": []
+                  }
+                ]
+              },
+              {
+                "id": "b3",
+                "type": "listItem",
+                "attrs": {},
+                "content": [
+                  {
+                    "text": "b",
+                    "marks": []
+                  }
+                ],
+                "children": []
+              }
+            ]
+          }
+        ]
+      },
+      "markdown": "- a\n\n  <div>\n  x\n  \n- b\n",
+      "reparsed": [
+        {
+          "type": "markdownRaw",
+          "attrs": {
+            "kind": "list"
+          },
+          "content": "- a\n\n  <div>\n  x\n  \n- b",
+          "children": []
+        }
+      ],
+      "readAsRaw": true
+    },
+    {
+      "id": "raw-source-ending-with-a-line-ending-in-a-quote",
+      "document": {
+        "version": 1,
+        "blocks": [
+          {
+            "id": "b7",
+            "type": "blockquote",
+            "attrs": {},
+            "content": [
+              {
+                "text": "q",
+                "marks": []
+              }
+            ],
+            "children": [
+              {
+                "id": "b5",
+                "type": "markdownRaw",
+                "attrs": {
+                  "kind": "html"
+                },
+                "content": "<div>\nx\n",
+                "children": []
+              },
+              {
+                "id": "b6",
+                "type": "paragraph",
+                "attrs": {},
+                "content": [
+                  {
+                    "text": "c",
+                    "marks": []
+                  }
+                ],
+                "children": []
+              }
+            ]
+          }
+        ]
+      },
+      "markdown": "> q\n>\n> <div>\n> x\n> \n>\n> c\n",
+      "reparsed": [
+        {
+          "type": "markdownRaw",
+          "attrs": {
+            "kind": "blockquote"
+          },
+          "content": "> q\n>\n> <div>\n> x\n> \n>\n> c",
+          "children": []
+        }
+      ],
+      "readAsRaw": true
+    },
+    {
+      "id": "raw-source-with-crlf-in-an-item",
+      "document": {
+        "version": 1,
+        "blocks": [
+          {
+            "id": "b11",
+            "type": "bulletList",
+            "attrs": {},
+            "content": null,
+            "children": [
+              {
+                "id": "b9",
+                "type": "listItem",
+                "attrs": {},
+                "content": [
+                  {
+                    "text": "a",
+                    "marks": []
+                  }
+                ],
+                "children": [
+                  {
+                    "id": "b8",
+                    "type": "markdownRaw",
+                    "attrs": {
+                      "kind": "html"
+                    },
+                    "content": "<div>\r\nx\r\n",
+                    "children": []
+                  }
+                ]
+              },
+              {
+                "id": "b10",
+                "type": "listItem",
+                "attrs": {},
+                "content": [
+                  {
+                    "text": "b",
+                    "marks": []
+                  }
+                ],
+                "children": []
+              }
+            ]
+          }
+        ]
+      },
+      "markdown": "- a\n\n  <div>\r\n  x\r\n  \n- b\n",
+      "reparsed": [
+        {
+          "type": "markdownRaw",
+          "attrs": {
+            "kind": "list"
+          },
+          "content": "- a\n\n  <div>\r\n  x\r\n  \n- b",
+          "children": []
+        }
+      ],
+      "readAsRaw": true
+    },
+    {
+      "id": "raw-source-with-lone-carriage-returns-in-an-item",
+      "document": {
+        "version": 1,
+        "blocks": [
+          {
+            "id": "b15",
+            "type": "bulletList",
+            "attrs": {},
+            "content": null,
+            "children": [
+              {
+                "id": "b13",
+                "type": "listItem",
+                "attrs": {},
+                "content": [
+                  {
+                    "text": "a",
+                    "marks": []
+                  }
+                ],
+                "children": [
+                  {
+                    "id": "b12",
+                    "type": "markdownRaw",
+                    "attrs": {
+                      "kind": "html"
+                    },
+                    "content": "<div>\rx\r",
+                    "children": []
+                  }
+                ]
+              },
+              {
+                "id": "b14",
+                "type": "listItem",
+                "attrs": {},
+                "content": [
+                  {
+                    "text": "b",
+                    "marks": []
+                  }
+                ],
+                "children": []
+              }
+            ]
+          }
+        ]
+      },
+      "markdown": "- a\n\n  <div>\r  x\r  \n- b\n",
+      "reparsed": [
+        {
+          "type": "markdownRaw",
+          "attrs": {
+            "kind": "list"
+          },
+          "content": "- a\n\n  <div>\r  x\r  \n- b",
+          "children": []
+        }
+      ],
+      "readAsRaw": true
+    },
+    {
+      "id": "raw-source-with-lone-carriage-returns-in-a-quote",
+      "document": {
+        "version": 1,
+        "blocks": [
+          {
+            "id": "b18",
+            "type": "blockquote",
+            "attrs": {},
+            "content": [
+              {
+                "text": "q",
+                "marks": []
+              }
+            ],
+            "children": [
+              {
+                "id": "b16",
+                "type": "markdownRaw",
+                "attrs": {
+                  "kind": "html"
+                },
+                "content": "<div>\rx",
+                "children": []
+              },
+              {
+                "id": "b17",
+                "type": "paragraph",
+                "attrs": {},
+                "content": [
+                  {
+                    "text": "c",
+                    "marks": []
+                  }
+                ],
+                "children": []
+              }
+            ]
+          }
+        ]
+      },
+      "markdown": "> q\n>\n> <div>\r> x\n>\n> c\n",
+      "reparsed": [
+        {
+          "type": "markdownRaw",
+          "attrs": {
+            "kind": "blockquote"
+          },
+          "content": "> q\n>\n> <div>\r> x\n>\n> c",
+          "children": []
+        }
+      ],
+      "readAsRaw": true
+    },
+    {
+      "id": "unclosed-pre-ending-with-a-line-ending-in-an-item-before-a-child",
+      "document": {
+        "version": 1,
+        "blocks": [
+          {
+            "id": "b22",
+            "type": "bulletList",
+            "attrs": {},
+            "content": null,
+            "children": [
+              {
+                "id": "b21",
+                "type": "listItem",
+                "attrs": {},
+                "content": [
+                  {
+                    "text": "a",
+                    "marks": []
+                  }
+                ],
+                "children": [
+                  {
+                    "id": "b19",
+                    "type": "markdownRaw",
+                    "attrs": {
+                      "kind": "html"
+                    },
+                    "content": "<pre>\nx\n",
+                    "children": []
+                  },
+                  {
+                    "id": "b20",
+                    "type": "paragraph",
+                    "attrs": {},
+                    "content": [
+                      {
+                        "text": "c",
+                        "marks": []
+                      }
+                    ],
+                    "children": []
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "markdown": "- a\n\n  <pre>\n  x\n  </pre>\n\n  c\n",
+      "reparsed": [
+        {
+          "type": "markdownRaw",
+          "attrs": {
+            "kind": "list"
+          },
+          "content": "- a\n\n  <pre>\n  x\n  </pre>\n\n  c",
+          "children": []
+        }
+      ],
+      "readAsRaw": true
+    },
+    {
+      "id": "unclosed-pre-ending-with-a-line-ending-in-a-toggle-in-an-item",
+      "document": {
+        "version": 1,
+        "blocks": [
+          {
+            "id": "b27",
+            "type": "bulletList",
+            "attrs": {},
+            "content": null,
+            "children": [
+              {
+                "id": "b26",
+                "type": "listItem",
+                "attrs": {},
+                "content": [
+                  {
+                    "text": "a",
+                    "marks": []
+                  }
+                ],
+                "children": [
+                  {
+                    "id": "b24",
+                    "type": "toggle",
+                    "attrs": {},
+                    "content": [
+                      {
+                        "text": "T",
+                        "marks": []
+                      }
+                    ],
+                    "children": [
+                      {
+                        "id": "b23",
+                        "type": "markdownRaw",
+                        "attrs": {
+                          "kind": "html"
+                        },
+                        "content": "<pre>\nx\n",
+                        "children": []
+                      }
+                    ]
+                  },
+                  {
+                    "id": "b25",
+                    "type": "paragraph",
+                    "attrs": {},
+                    "content": [
+                      {
+                        "text": "c",
+                        "marks": []
+                      }
+                    ],
+                    "children": []
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "markdown": "- a\n\n  T\n\n  <pre>\n  x\n  </pre>\n\n  c\n",
+      "reparsed": [
+        {
+          "type": "markdownRaw",
+          "attrs": {
+            "kind": "list"
+          },
+          "content": "- a\n\n  T\n\n  <pre>\n  x\n  </pre>\n\n  c",
+          "children": []
+        }
+      ],
+      "readAsRaw": true
+    },
+    {
+      "id": "code-with-crlf-in-an-item",
+      "document": {
+        "version": 1,
+        "blocks": [
+          {
+            "id": "b29",
+            "type": "bulletList",
+            "attrs": {},
+            "content": null,
+            "children": [
+              {
+                "id": "b28",
+                "type": "listItem",
+                "attrs": {},
+                "content": [
+                  {
+                    "text": "a",
+                    "marks": []
+                  }
+                ],
+                "children": [
+                  {
+                    "id": "code",
+                    "type": "codeBlock",
+                    "attrs": {
+                      "language": ""
+                    },
+                    "content": "x\r\ny",
+                    "children": []
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "b30",
+            "type": "paragraph",
+            "attrs": {},
+            "content": [
+              {
+                "text": "after",
+                "marks": []
+              }
+            ],
+            "children": []
+          }
+        ]
+      },
+      "markdown": "- a\n  ```\n  x\n  y\n  ```\n\nafter\n",
+      "reparsed": [
+        {
+          "type": "markdownRaw",
+          "attrs": {
+            "kind": "list"
+          },
+          "content": "- a\n  ```\n  x\n  y\n  ```",
+          "children": []
+        },
+        {
+          "type": "paragraph",
+          "attrs": {},
+          "content": [
+            {
+              "text": "after",
+              "marks": []
+            }
+          ],
+          "children": []
+        }
+      ],
+      "readAsRaw": true
+    },
+    {
+      "id": "code-with-carriage-returns-has-line-feeds",
+      "document": {
+        "version": 1,
+        "blocks": [
+          {
+            "id": "code",
+            "type": "codeBlock",
+            "attrs": {
+              "language": ""
+            },
+            "content": "x\r\ny\rz",
+            "children": []
+          },
+          {
+            "id": "b1",
+            "type": "paragraph",
+            "attrs": {},
+            "content": [
+              {
+                "text": "after",
+                "marks": []
+              }
+            ],
+            "children": []
+          }
+        ]
+      },
+      "markdown": "```\nx\ny\nz\n```\n\nafter\n",
+      "reparsed": [
+        {
+          "type": "codeBlock",
+          "attrs": {
+            "language": ""
+          },
+          "content": "x\ny\nz",
+          "children": []
+        },
+        {
+          "type": "paragraph",
+          "attrs": {},
+          "content": [
+            {
+              "text": "after",
+              "marks": []
+            }
+          ],
+          "children": []
+        }
+      ]
     }
   ]
 }
