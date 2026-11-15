@@ -1,11 +1,11 @@
 import type { InlineAtoms } from "../types";
 import {
   atx,
-  fence,
   htmlBlock,
   interrupts,
   listMarker,
   mathFence,
+  openingFence,
   quotePrefix,
   thematic,
 } from "./block-syntax";
@@ -49,8 +49,8 @@ class Reader {
         continue;
       }
       const start = line.start + /^ */.exec(line.text)![0].length;
-      const opening = fence(line.text);
-      if (opening && !(opening[1]![0] === "`" && opening[2]!.includes("`"))) {
+      const opening = openingFence(line.text);
+      if (opening) {
         const marker = opening[1]!;
         const close = new RegExp(
           `^ {0,3}${marker[0] === "`" ? "`" : "~"}{${marker.length},}[ \\t]*$`,

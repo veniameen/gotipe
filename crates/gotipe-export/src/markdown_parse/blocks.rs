@@ -36,9 +36,7 @@ impl Reader {
                 continue;
             }
             let start = line.start + line.text.bytes().take_while(|c| *c == b' ').count();
-            if let Some(open) =
-                fence(&line.text).filter(|m| !m[1].starts_with('`') || !m[2].contains('`'))
-            {
+            if let Some(open) = opening_fence(&line.text) {
                 let marker = &open[1];
                 let indentation = line.text.find(marker).unwrap();
                 let mut content = vec![];

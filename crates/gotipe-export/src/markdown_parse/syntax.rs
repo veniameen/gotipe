@@ -48,6 +48,10 @@ pub(super) fn atx(text: &str) -> Option<regex::Captures<'_>> {
 pub(super) fn fence(text: &str) -> Option<regex::Captures<'_>> {
     re!(r"^ {0,3}(`{3,}|~{3,})([^\n]*)$").captures(text)
 }
+/// The line that opens a code fence: backticks without a backtick in the info string, or tildes.
+pub(super) fn opening_fence(text: &str) -> Option<regex::Captures<'_>> {
+    fence(text).filter(|m| !m[1].starts_with('`') || !m[2].contains('`'))
+}
 /// A line of its own `$$` opens or closes a math block; it does not interrupt a paragraph.
 pub(super) fn math_fence(text: &str) -> bool {
     re!(r"^ {0,3}\$\$[ \t]*$").is_match(text)
@@ -103,7 +107,7 @@ pub(super) fn interrupts(line: &Line) -> bool {
     atx(text).is_some()
         || thematic(text)
         || quote(text) > 0
-        || fence(text).is_some_and(|m| !m[1].starts_with('`') || !m[2].contains('`'))
+        || opening_fence(text).is_some()
         || list_marker(text, 0)
             .is_some_and(|m| !m.content.trim().is_empty() && (!m.ordered || m.start == 1))
         || html_block(text, true).is_some()

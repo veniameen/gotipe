@@ -128,8 +128,8 @@ native composition и её DOM reconciliation; listeners/frame очищаютс�
 ним; `separators` в `serialize.ts` пишет его с блоком: сохранённый блок держит его, пока остаётся
 отдельным блоком, переписанный пишется без него; блок, который ушёл бы в предыдущий, удерживает
 исходный отступ предыдущего, иначе переписывается (D-102). Блочные защиты TS без снимка
-(`resolveHazards`, `isBlockEmpty`, `cannotInterrupt`) Rust-писатель повторяет в `markdown/hazards.rs`
-(D-100). Общие случаи — `markdown-line-breaks.json` и `markdown-write-read.json` в
+(`resolveHazards` в `markdown/src/serialization/hazards.ts`, `isBlockEmpty`, `cannotInterrupt`)
+Rust-писатель повторяет в `markdown/hazards.rs` (D-100). Общие случаи — `markdown-line-breaks.json` и `markdown-write-read.json` в
 `crates/gotipe-export/tests/fixtures/`.
 
 HTML/SSR: `packages/core/src/serialization/html.ts` owns the canonical serializer;

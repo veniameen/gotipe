@@ -1,8 +1,16 @@
 import { atomsIn, carried } from "./atoms";
 import { writeInline } from "./inline-serialize";
-import { RICH_TYPES, asWritten, fingerprint, isBlockEmpty, listStart, richContent } from "./model";
+import { RICH_TYPES, asWritten, fingerprint, isBlockEmpty, richContent } from "./model";
 import { parseInternal } from "./parse";
-import { type RNode, type RenderOpts, bulletMarker, renderTop } from "./serialization/blocks";
+import { type RNode, type RenderOpts, renderTop } from "./serialization/blocks";
+import {
+  LIST_TYPES,
+  type Neighbour,
+  alternateMarker,
+  listSig,
+  resolveHazards,
+  riskyStart,
+} from "./serialization/hazards";
 import { type KeptBreaks, blockText, keptBreaks, snapshotLines } from "./serialization/line-breaks";
 import type {
   Block,
@@ -141,86 +149,12 @@ function keptLines(
   };
 }
 
-interface Item {
-  block: Block;
-  oi: number;
-  preserved: boolean;
+interface Item extends Neighbour {
   fp: string;
   md: string;
   node?: RNode;
-  dividerAlt?: boolean;
-  markerOverride?: string;
   start: number;
   end: number;
-}
-
-const LIST_TYPES = new Set(["bulletList", "orderedList", "todoList"]);
-
-function listSig(item: Item, snap: MarkdownSnapshot | undefined): string | null {
-  const t = item.block.type;
-  const src =
-    item.preserved && snap
-      ? snap.text.slice(snap.blocks[item.oi]!.start, snap.blocks[item.oi]!.end)
-      : null;
-  const fromSource = (s: string): string | null => {
-    const b = /^[ \t]*([-*+])(?:[ \t]|\r|\n|$)/.exec(s);
-    if (b) return `b${b[1]}`;
-    const o = /^[ \t]*\d{1,9}([.)])/.exec(s);
-    if (o) return `o${o[1]}`;
-    return null;
-  };
-  if (t === "markdownRaw") {
-    return item.block.attrs?.kind === "list" && typeof item.block.content === "string"
-      ? fromSource(item.block.content)
-      : null;
-  }
-  if (!LIST_TYPES.has(t)) return null;
-  if (src !== null) return fromSource(src);
-  if (t === "orderedList") {
-    return `o${(item.markerOverride ?? item.block.attrs?.delimiter) === ")" ? ")" : "."}`;
-  }
-  return `b${bulletMarker(item.block.attrs ?? {}, item.markerOverride)}`;
-}
-
-function alternateMarker(sig: string, avoid: (string | null)[]): string {
-  if (sig[0] === "o") return sig[1] === "." ? ")" : ".";
-  for (const m of ["-", "*", "+"]) {
-    if (`b${m}` !== sig && !avoid.includes(`b${m}`)) return m;
-  }
-  return sig[1] === "-" ? "*" : "-";
-}
-
-function resolveHazards(items: Item[], snap: MarkdownSnapshot | undefined, fm: string): void {
-  const first = items[0];
-  if (first && !fm && first.block.type === "divider" && !first.preserved) first.dividerAlt = true;
-  for (let i = 1; i < items.length; i++) {
-    const a = items[i - 1]!;
-    const b = items[i]!;
-    const sa = listSig(a, snap);
-    const sb = listSig(b, snap);
-    if (sa && sb && sa === sb) {
-      if (LIST_TYPES.has(b.block.type)) {
-        b.preserved = false;
-        b.markerOverride = alternateMarker(sa, [
-          items[i + 1] ? listSig(items[i + 1]!, snap) : null,
-        ]);
-      } else if (LIST_TYPES.has(a.block.type)) {
-        a.preserved = false;
-        a.markerOverride = alternateMarker(sa, [i >= 2 ? listSig(items[i - 2]!, snap) : null]);
-      }
-    }
-  }
-}
-
-function riskyStart(item: Item): boolean {
-  if (item.preserved) return false;
-  const b = item.block;
-  if (b.type === "orderedList" && listStart(b.attrs?.start) !== 1) return true;
-  if (LIST_TYPES.has(b.type)) {
-    const firstItem = b.children?.[0];
-    if (!firstItem || richContent(firstItem).length === 0) return true;
-  }
-  return false;
 }
 
 /** The blocks `text` reads as; a line ending first, so that a leading `---` opens no front matter. */
