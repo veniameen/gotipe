@@ -53,42 +53,28 @@ a review, and any other prompt adds a paragraph after the current block. The bar
 arrived. To rewrite the selection by an instruction, handle the prompt yourself:
 
 ```tsx title="instruction-bar.tsx"
-import { AiManager, defineAi, defineAiContext } from "@gotipe/ai";
+import { defineAi, defineAiContext, getAiManager } from "@gotipe/ai";
 import { BlockEditor } from "@gotipe/block-editor";
+import { createId } from "@gotipe/core";
 import { DefaultPreset } from "@gotipe/core/presets";
 import { useEditor } from "@gotipe/react";
-import { useEffect, useState } from "react";
 import { backendProvider } from "./ai-provider";
 
 export function InstructionEditor() {
   const editor = useEditor({
     extensions: [DefaultPreset, defineAi.configure({ provider: backendProvider }), defineAiContext],
   });
-  const [ai, setAi] = useState<AiManager | null>(null);
-
-  useEffect(() => {
-    if (!editor) return;
-    const manager = new AiManager(editor, { provider: backendProvider });
-    // Closing the bar emits cancelAi; cancel this manager's request too.
-    const stop = editor.on("executeAiCommand", ({ commandId }) => {
-      if (commandId === "cancelAi") manager.cancelPending();
-    });
-    setAi(manager);
-    return () => {
-      stop();
-      manager.destroy();
-    };
-  }, [editor]);
 
   return (
     <BlockEditor
       editor={editor}
       onAiCommand={async (prompt) => {
+        // The manager of defineAi: closing the bar (cancelAi) cancels this request too.
+        const ai = editor && getAiManager(editor);
         if (!ai) return;
         const target = ai.captureTarget();
         const content = await ai.executeCommand(prompt);
-        const id = createId();
-        ai.applySuggestion({ id, type: "rewrite", content, confidence: 1 }, target);
+        ai.applySuggestion({ id: createId(), type: "rewrite", content, confidence: 1 }, target);
       }}
     />
   );
