@@ -112,10 +112,6 @@ published to crates.io. Licenses per package are in [Licensing](/docs/resources/
 - The bubble, menus, link field and color row share one overlay surface and icon set. The color
   picker offers the document palette.
 
-### @gotipe/block-editor-vue
-
-- Mounts editors that are supplied asynchronously and renders their blocks.
-
 ### @gotipe/theme
 
 - One source of design tokens: a system font stack (no web fonts), radii by role, and light and
