@@ -1989,6 +1989,137 @@
           ]
         }
       ]
+    },
+    {
+      "id": "unclosed-pre-at-the-end-of-the-file",
+      "document": {
+        "version": 1,
+        "blocks": [
+          {
+            "id": "n106",
+            "type": "paragraph",
+            "attrs": {},
+            "content": [
+              {
+                "text": "a",
+                "marks": []
+              }
+            ],
+            "children": []
+          },
+          {
+            "id": "n107",
+            "type": "markdownRaw",
+            "attrs": {
+              "kind": "html"
+            },
+            "content": "<pre>\nx",
+            "children": []
+          }
+        ]
+      },
+      "markdown": "a\n\n<pre>\nx",
+      "reparsed": [
+        {
+          "type": "paragraph",
+          "attrs": {},
+          "content": [
+            {
+              "text": "a",
+              "marks": []
+            }
+          ],
+          "children": []
+        },
+        {
+          "type": "markdownRaw",
+          "attrs": {
+            "kind": "html"
+          },
+          "content": "<pre>\nx",
+          "children": []
+        }
+      ]
+    },
+    {
+      "id": "unclosed-comment-at-the-end-of-the-file",
+      "document": {
+        "version": 1,
+        "blocks": [
+          {
+            "id": "n108",
+            "type": "markdownRaw",
+            "attrs": {
+              "kind": "html"
+            },
+            "content": "<!--\nx",
+            "children": []
+          }
+        ]
+      },
+      "markdown": "<!--\nx",
+      "reparsed": [
+        {
+          "type": "markdownRaw",
+          "attrs": {
+            "kind": "html"
+          },
+          "content": "<!--\nx",
+          "children": []
+        }
+      ]
+    },
+    {
+      "id": "unclosed-pre-at-the-end-of-a-toggle-at-the-end-of-the-file",
+      "document": {
+        "version": 1,
+        "blocks": [
+          {
+            "id": "n110",
+            "type": "toggle",
+            "attrs": {},
+            "content": [
+              {
+                "text": "T",
+                "marks": []
+              }
+            ],
+            "children": [
+              {
+                "id": "n109",
+                "type": "markdownRaw",
+                "attrs": {
+                  "kind": "html"
+                },
+                "content": "<pre>\nx",
+                "children": []
+              }
+            ]
+          }
+        ]
+      },
+      "markdown": "T\n\n<pre>\nx",
+      "reparsed": [
+        {
+          "type": "paragraph",
+          "attrs": {},
+          "content": [
+            {
+              "text": "T",
+              "marks": []
+            }
+          ],
+          "children": []
+        },
+        {
+          "type": "markdownRaw",
+          "attrs": {
+            "kind": "html"
+          },
+          "content": "<pre>\nx",
+          "children": []
+        }
+      ]
     }
   ]
 }

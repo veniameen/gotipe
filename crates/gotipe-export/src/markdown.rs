@@ -45,14 +45,22 @@ pub fn to_markdown(doc: &Document) -> String {
     for block in &doc.blocks {
         inline::collect_emoji(block, &mut emoji);
     }
-    hazards::top_blocks(&doc.blocks)
+    let mut markdown = hazards::top_blocks(&doc.blocks)
         .iter()
         .map(|top| match top {
             Top::Block(block) => verified(block, &emoji),
             Top::Stars => "***\n".into(),
         })
         .collect::<Vec<_>>()
-        .join("\n")
+        .join("\n");
+    // a block the end of its file ends (`<pre>` without `</pre>`) takes in the line ending of the
+    // file: with one, each writing and reading would add a line to it, as in the TS writer (D-110)
+    if let Some(body) = markdown.strip_suffix('\n') {
+        if !crate::markdown_parse::structure::closing_line(body).is_empty() {
+            markdown.pop();
+        }
+    }
+    markdown
 }
 
 /// The first rendering of a top-level block that reads back as the block (`verify.rs`).
