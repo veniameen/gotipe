@@ -56,6 +56,14 @@ for (const { dir, manifest } of packages) {
       ) {
         fail(`development artifact in tarball: ${file}`);
       }
+      // Jest and other require() loaders without ES modules cannot run import(), so a
+      // CJS file requires the package's own chunks (D-166).
+      if (
+        file.endsWith(".cjs") &&
+        /\bimport\(\s*["']\.\.?\//.test(readFileSync(path.join(dir, file), "utf8"))
+      ) {
+        fail(`${file} loads a file of its own package through import()`);
+      }
     }
 
     const entries = targets(manifest.exports);

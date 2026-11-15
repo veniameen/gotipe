@@ -1,0 +1,11 @@
+{
+  "reason": "D-167: comments esbuild keeps inside expressions and class bodies of emitted ESM, per package, not yet removed by the sessions that edit these packages. Never increase; lower when comments go; release requires none.",
+  "known": {
+    "@gotipe/ai": 2,
+    "@gotipe/block-editor": 26,
+    "@gotipe/core": 94,
+    "@gotipe/i18n": 4,
+    "@gotipe/markdown": 15,
+    "@gotipe/migration": 16
+  }
+}

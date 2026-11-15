@@ -116,8 +116,8 @@ The package exports the types `GoTipeClientOptions`, `PaginatedResponse`, `Curso
 ## Errors
 
 A response outside 2xx rejects with `GoTipeApiError`, which has the server's `code` and
-`message`, the HTTP `status` and `details` when present. A body that is not the error envelope
-gives the code `HTTP_ERROR`. A timeout or a network failure rejects with the error from `fetch`
+`message` and the HTTP `status`; the server sends no other error fields. A body that is not the
+error envelope gives the code `HTTP_ERROR`. A timeout or a network failure rejects with the error from `fetch`
 (an `AbortError` for timeouts).
 
 ```ts title="errors.ts"

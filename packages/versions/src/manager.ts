@@ -6,6 +6,8 @@ import type { Version, VersionDiff, VersionsOptions, VersionsSnapshot } from "./
 /** Entries a stored snapshot may hold beyond `maxVersions` (the newest `maxVersions` are kept). */
 const MAX_STORED_VERSIONS = 10000;
 
+// Public methods keep their JSDoc on a signature without a body: TypeScript keeps it in the
+// declarations, while a comment inside the class body would ship in the bundle (D-167).
 /**
  * Session snapshots. Hosts own persistence (`exportState`/`loadState`); all returned data is
  * detached from internal state.
@@ -121,6 +123,7 @@ export class VersionsManager {
     return true;
   }
   /** Every version, oldest first, detached from the manager: store it as JSON. */
+  exportState(): VersionsSnapshot;
   exportState(): VersionsSnapshot {
     this.assertLive();
     return { version: 1, versions: structuredClone(this.versions) };
@@ -130,6 +133,7 @@ export class VersionsManager {
    * snapshot is checked before anything changes. Like `createVersion`, the manager keeps the
    * newest `maxVersions`; auto-save compares the document with the newest one loaded.
    */
+  loadState(value: unknown): void;
   loadState(value: unknown): void {
     this.assertLive();
     const limit = Math.max(MAX_STORED_VERSIONS, this.maxVersions);

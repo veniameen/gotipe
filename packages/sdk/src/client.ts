@@ -35,6 +35,8 @@ function pageQuery(query: URLSearchParams, options: PageOptions): string {
   return text ? `?${text}` : "";
 }
 
+// Public methods keep their JSDoc on a signature without a body: TypeScript keeps it in the
+// declarations, while a comment inside the class body would ship in the bundle (D-167).
 export class GoTipeClient {
   private readonly transport: Transport;
   constructor(options: GoTipeClientOptions) {
@@ -80,6 +82,7 @@ export class GoTipeClient {
   }
 
   /** Newest first, one page at a time. */
+  listVersions(docId: string, options?: PageOptions): Promise<CursorPage<Version>>;
   async listVersions(docId: string, options: PageOptions = {}): Promise<CursorPage<Version>> {
     const query = pageQuery(new URLSearchParams(), options);
     return this.transport.page(`${documentPath(docId)}/versions${query}`);
@@ -99,6 +102,7 @@ export class GoTipeClient {
   }
 
   /** Oldest first, replies as separate items, one page at a time. */
+  listComments(docId: string, options?: ListCommentsOptions): Promise<CursorPage<Comment>>;
   async listComments(
     docId: string,
     options: ListCommentsOptions = {},
@@ -144,6 +148,7 @@ export class GoTipeClient {
     return this.transport.resource("POST", "/v1/exports", { document_id: docId, format });
   }
   /** docId is retained for compatibility; the server authenticates each export job. */
+  getExportJob(docId: string, jobId: string): Promise<ExportJob>;
   getExportJob(_docId: string, jobId: string): Promise<ExportJob> {
     return this.transport.resource("GET", `/v1/exports/${idPath(jobId)}`);
   }
@@ -164,6 +169,7 @@ export class GoTipeClient {
     return this.transport.resource("GET", `/v1/organizations/${idPath(id)}`);
   }
   /** Usage is the current billing month; historical periods are not supported. */
+  getUsage(): Promise<Usage>;
   getUsage(): Promise<Usage> {
     return this.transport.request("GET", "/v1/billing/usage");
   }

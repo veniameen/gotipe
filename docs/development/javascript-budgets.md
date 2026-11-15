@@ -20,6 +20,20 @@ per graph. Missing artifacts, unresolved imports and nonliteral dynamic imports
 fail the check. The output records every counted file, external boundary and
 non-JavaScript asset in ignored `output/bundle-sizes.json`.
 
+Decision of 2026-11-15 (D-167): the budgets keep measuring unminified output, and the same
+command fails on the comments esbuild keeps there. esbuild drops a comment that stands
+before a statement, but keeps one inside an expression or a class body: a JSDoc on an
+object property or a class member, a comment in an array, before an argument or a branch of
+`?:`. `scripts/quality/bundle-comments.mjs` parses every emitted ESM file of every package
+and lists such comments with file and line; annotations bundlers read (`@__PURE__`,
+`@vite-ignore`) and legal notices are not counted. Where a comment goes instead: before
+the statement, into the function body, and for a public class member onto a TypeScript
+signature without a body — TypeScript keeps that JSDoc in the declarations, esbuild drops
+it. Packages that other work still has to clean are listed with their counts in
+`config/bundle-comments.json`; a count may not grow and must be lowered when comments go.
+Cleaning collaboration, React, SDK and versions freed 1,789 gzip bytes of their ESM, of
+them 1,449 in the collaboration increment (10,364 → 8,915) and 34 in the React one.
+
 On the audit build, with this exact definition:
 
 | Graph | gzip9 bytes | Ceiling |

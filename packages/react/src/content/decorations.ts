@@ -57,6 +57,7 @@ export function textDecorations(decorations: readonly Decoration[] | undefined):
         });
         break;
       case "remote-selection": {
+        // The person's color at the theme's selection opacity.
         const color = toSafeColor(d.color);
         inline.push({
           type: "inline",
@@ -66,7 +67,6 @@ export function textDecorations(decorations: readonly Decoration[] | undefined):
           to: d.to,
           className: "gotipe-remote-range",
           attrs: { "data-peer-id": d.peerId },
-          // The person's color at the theme's selection opacity.
           style: color
             ? {
                 backgroundColor: `color-mix(in srgb, ${color} calc(var(--gt-remote-selection-opacity) * 100%), transparent)`,
