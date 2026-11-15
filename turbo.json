@@ -11,6 +11,18 @@
         "!.next/cache/**"
       ]
     },
+    "@gotipe/wasm#build": {
+      "inputs": [
+        "$TURBO_DEFAULT$",
+        "pkg/**"
+      ]
+    },
+    "@gotipe/export-wasm#build": {
+      "inputs": [
+        "$TURBO_DEFAULT$",
+        "pkg/**"
+      ]
+    },
     "@gotipe/landing#build": {
       "dependsOn": [
         "^build"

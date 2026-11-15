@@ -66,6 +66,11 @@ overflow страницы, но доступную ширину редактор
 `--concurrency=2`, Vitest `--maxWorkers=2`; WASM-скрипты используют
 не более двух Cargo/Binaryen workers по умолчанию.
 
+Собранные WASM-модули (`packages/wasm/pkg`, `packages/export-wasm/pkg`) — входы задач
+`@gotipe/wasm#build` и `@gotipe/export-wasm#build` в `turbo.json`. После `pnpm build:wasm`
+или `build:export-wasm` Turbo один раз заново собирает и проверяет всё, что от них зависит,
+и тесты движка не приходят из кэша, прогнанного на прежнем бинарнике.
+
 `check:pdf-regression` сохраняет native PDF из фиксированного corpus и сравнивает
 их с реальным public WASM export. Независимый validator использует Poppler
 (`pdfinfo`, `pdftotext`, `pdftohtml`) и Python `pypdf`: Unicode, page geometry,
