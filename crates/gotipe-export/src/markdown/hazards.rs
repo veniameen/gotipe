@@ -268,7 +268,7 @@ fn remarked_source(source: &str, marker: char) -> Option<String> {
 /// text of a list item it starts after a blank line.
 pub(super) fn cannot_interrupt(list: &Block) -> bool {
     match list.block_type.as_str() {
-        "orderedList" if super::list_start(list) != 1 => true,
+        "orderedList" if super::lists::list_start(list) != 1 => true,
         "bulletList" | "orderedList" => list.children.first().is_none_or(|item| !has_text(item)),
         "todoList" => list.children.is_empty(),
         _ => false,
