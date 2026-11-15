@@ -17,6 +17,27 @@ export interface PaginatedResponse<T> {
   perPage: number;
   hasMore: boolean;
 }
+/**
+ * One page of comments or versions. Pass `nextCursor` as `cursor` to read the next
+ * page: it continues after this page's last item, so items created, resolved or
+ * deleted in between are neither repeated nor skipped.
+ */
+export interface CursorPage<T> {
+  data: T[];
+  hasMore: boolean;
+  /** Present when `hasMore` is true. */
+  nextCursor?: string;
+}
+export interface PageOptions {
+  /** Items per page, 1–100; the server's default is 50. */
+  limit?: number;
+  /** `nextCursor` of the previous page; omit it for the first page. */
+  cursor?: string;
+}
+export interface ListCommentsOptions extends PageOptions {
+  /** Include resolved comments; by default only open ones are listed. */
+  includeResolved?: boolean;
+}
 export interface Document {
   id: string;
   title: string;
