@@ -124,7 +124,7 @@ function linkLine(attrs: Record<string, unknown>): string {
  * or the quote, and the rest of the block with them.
  */
 function rawLines(source: string, indent: string): string {
-  return indent ? source.replace(/(?:\r\n|\r(?!\n)|\n)(?=[^])/g, (eol) => eol + indent) : source;
+  return indent ? source.replace(/(?:\r\n|\r(?!\n)|\n)(?!$)/g, (eol) => eol + indent) : source;
 }
 
 /** An empty formula or an embed without an address has no Markdown at any depth. */
