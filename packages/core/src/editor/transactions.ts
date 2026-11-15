@@ -45,6 +45,15 @@ interface TransactionPort {
 }
 
 /**
+ * The native history of collaboration joins only typing that the editor marks as going on
+ * with the open typing step (`metadata.typing`, `continues_typing` in gotipe-wasm), so the
+ * same typing group decides the undo steps with and without collaboration. A host's own
+ * `metadata.typing` is not passed on: its `dispatch` stays a step of its own.
+ */
+const withNativeTyping = (transaction: Record<string, unknown>, typing?: TypingKind) =>
+  JSON.stringify({ ...transaction, metadata: { ...(transaction.metadata as object), typing } });
+
+/**
  * Owns transaction acceptance and document/selection undo boundaries. `dispatch(tr, kind)`:
  * `kind` is typing from the input layer, which may go on with the open undo step.
  */
@@ -191,12 +200,17 @@ export function createTransactions(port: TransactionPort) {
         // typing step open; typing that goes on with it needs no snapshot of its own.
         const recorded = tr.metadata?.addToHistory !== false;
         const local = recorded && !port.collaboration.isCollaborating;
-        const snapshot = local && !typing.continues(kind, port.selection) ? captureHistory() : null;
+        const continues = typing.continues(kind, port.selection);
+        const snapshot = local && !continues ? captureHistory() : null;
         if (port.collaboration.isCollaborating && port.selection.anchor.blockId)
           port.collaboration.setSelection(JSON.stringify(viewToEngineSelection(port.selection)));
         const before = port.getViewState().blocks;
         const previousSelection = port.selection;
-        const afterJson = port.apply(serializedTransaction);
+        const afterJson = port.apply(
+          port.collaboration.isCollaborating
+            ? withNativeTyping(wasmTr, continues ? kind : undefined)
+            : serializedTransaction,
+        );
         if (explicitSelection) {
           port.selection = explicitSelection;
           port.storedMarks = null;
@@ -212,7 +226,7 @@ export function createTransactions(port: TransactionPort) {
         if (snapshot) undoStack.push(snapshot);
         if (undoStack.length > MAX_HISTORY) undoStack.shift();
         if (recorded) redoStack.length = 0; // new mutation clears redo
-        if (local) typing.record(kind, port.selection);
+        if (recorded) typing.record(kind, port.selection);
 
         port.invalidate();
         if (context)
