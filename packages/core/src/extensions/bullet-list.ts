@@ -105,7 +105,11 @@ export const TodoList = defineExtension({
   inputRules: [
     {
       pattern: /^\[\]\s$/,
-      handler: (editor) => convertTyped(editor, 3, (chain) => chain.setTodoList()),
+      // `[ ]` in Markdown: an unchecked task; in an empty checked task the rule unchecks it.
+      handler: (editor) =>
+        convertTyped(editor, 3, (chain, id) =>
+          chain.setTodoList().setBlockAttrs(id, { checked: false }),
+        ),
     },
     {
       pattern: /^\[x\]\s$/,
