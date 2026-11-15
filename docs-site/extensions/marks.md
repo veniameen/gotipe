@@ -58,7 +58,7 @@ editor.chain().setLink("https://example.com/docs").run();
 | `removeMark(type, from?, to?)` | Removes a mark from such a range. |
 | `setLink(href, target?)` | Adds a link or changes the address of the selected one; `target` defaults to `"_blank"`. |
 | `removeLink()` | Removes links from the selection. |
-| `clearFormatting()` | Removes every mark from the selection. |
+| `clearFormatting()` | Removes every formatting mark from the selection. Mentions, inline formulas, custom emoji and inline images stay: their atomic marks are content. |
 
 `editor.isActive("bold")` tells whether a mark is active at the selection.
 
