@@ -122,6 +122,22 @@ describe("Mod+K opens the link field (openLinkDialog)", () => {
     expect(fields()[0]?.querySelector("input")?.value).toBe("https://example.com/");
   });
 
+  it("shows the link under the caret in the fixed toolbar as it moves (D-129)", async () => {
+    const editor = await editorWith("Правка без сети");
+    show(<FixedToolbar editor={editor} />);
+    const tool = () => container.querySelector('[data-gotipe-fixed-toolbar] [data-mark="link"]')!;
+    select(editor, 7, 10);
+    act(() => editor.chain().setMark("link", { href: "https://example.com/" }).run());
+    select(editor, 1, 1);
+    expect(tool().getAttribute("aria-pressed")).toBe("false");
+    // the toolbar draws nothing else on this change: the tool follows the caret by itself
+    select(editor, 8, 8);
+    expect(tool().getAttribute("aria-pressed")).toBe("true");
+    expect(tool().classList.contains("active")).toBe(true);
+    select(editor, 12, 12);
+    expect(tool().getAttribute("aria-pressed")).toBe("false");
+  });
+
   it("opens nothing at a caret alone: Atlas draws the field only over selected text", async () => {
     const editor = await editorWith("Правка без сети");
     show(
