@@ -85,6 +85,10 @@ Type these in an empty paragraph:
 In an empty list item, a list shortcut of another kind turns the whole list into its kind; one
 of the list's own kind is only removed, and `[x]` checks the item.
 
+A shortcut changes the block and removes what you typed in one step: one Undo brings the typed
+text back. Where its block can't go — a table cell, or a column, toggle or quote that doesn't
+take that block — a shortcut stays the text you typed, and nothing is reported.
+
 Anywhere in a line, `**text**`, `*text*`, `~~text~~` and `` `text` `` become bold, italic,
 struck-through and code text as you type the closing delimiter; see
 [marks](/docs/extensions/marks#input-rules).

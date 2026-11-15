@@ -1,3 +1,4 @@
+import { convertTyped } from "../input/block-rule";
 import { defineExtension } from "../types/extension";
 import { paragraphAfter } from "./code-block";
 
@@ -20,12 +21,9 @@ export const Math = defineExtension({
   inputRules: [
     {
       pattern: /^\$\$$/,
-      handler: (editor) => {
-        const blockId = editor.getViewState().selection.anchor.blockId;
-        // Delete the trigger first: the formula starts empty.
-        editor.dispatch({ steps: [{ type: "deleteText", blockId, from: 0, to: 2 }] });
-        editor.chain().setBlockType("math", { display: "block" }).run();
-      },
+      // The formula starts empty: the trigger goes with the change.
+      handler: (editor) =>
+        convertTyped(editor, 2, (chain) => chain.setBlockType("math", { display: "block" })),
     },
   ],
   keybindings: [
