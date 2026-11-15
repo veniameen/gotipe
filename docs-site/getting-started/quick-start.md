@@ -247,7 +247,7 @@ What happens here:
 | `extensions` | `(Extension \| Extension[])[]` | required | Block types, marks and behaviour. Presets are arrays and mix with single extensions. |
 | `content` | `object \| string` | one empty paragraph | Document JSON, or an HTML string (browser only). See [content formats](/docs/concepts/content-formats). |
 | `editable` | `boolean` | `true` | `false` blocks user input. Commands and `dispatch` still work. |
-| `autofocus` | `boolean \| "start" \| "end"` | `false` | Focus the surface when it is mounted. |
+| `autofocus` | `boolean \| "start" \| "end"` | `false` | Focus the surface when it is mounted: `"start"` puts the caret at the start of the first block with text, `"end"` at the end of the last one, `true` where the editor starts, the start of the first block. Same as `editor.focus(position)`. |
 | `engine` | `"auto" \| "js" \| "wasm"` | `"auto"` | Which engine runs the document. See [engines](/docs/getting-started/engines). |
 | `host` | `EditorHost` | `{}` | Asset storage, links and errors. See [host](/docs/concepts/host). |
 | `onCreate`, `onUpdate`, `onSelectionChange`, `onFocus`, `onBlur`, `onDestroy` | `({ editor }) => void` | — | Listeners for the matching [events](/docs/concepts/events). |
@@ -259,10 +259,6 @@ The presets come from `@gotipe/core/presets`:
 | `MinimalPreset` | Paragraph, bold, italic, history |
 | `DefaultPreset` | Paragraphs, headings, bullet, numbered and to-do lists, code blocks, images, quotes, callouts, dividers, tables, toggles; bold, italic, underline, strikethrough, inline code, links, highlight, text colour; history, placeholder, slash commands |
 | `FullPreset` | `DefaultPreset` plus columns, embeds, math, files, superscript and subscript |
-
-> [!NOTE]
-> `autofocus: "start"` and `"end"` currently behave like `true`: the surface gets focus and
-> the caret is not moved. Call `editor.focus("end")` after mounting to place it.
 
 ## Next steps
 

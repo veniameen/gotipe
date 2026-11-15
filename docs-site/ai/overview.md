@@ -80,7 +80,7 @@ editor.emit("executeAiCommand", { commandId: "askAi", prompt: "the risks of this
 | `addParagraph` | Same as `askAi` with a `prompt`. |
 | `freeText` | `prompt` `proofread`, `proofread document` or `check grammar` runs `proofread`; `review`, `review document` or `check document` runs `review`; any other prompt adds a paragraph, without a leading `add paragraph about` or `add paragraph:`. |
 | `proofread` | Gets edits from `proofread`, validates them and emits `aiProofreadChange`. Read them with `getProofreadSuggestions(editor)`; apply them with `acceptProofreadSuggestion`, `rejectProofreadSuggestion`, `acceptAllProofreadSuggestions` or `rejectAllProofreadSuggestions`. |
-| `review` | Gets comments from `reviewComments`, validates them and emits `commentAdded` for each. Read them with `getAiReviewComments(editor)`. |
+| `review` | Gets comments from `reviewComments`, validates them and emits `aiReviewChange` with them. Read them with `getAiReviewComments(editor)`. They are not in the comments manager and emit none of its events; any edit clears them. |
 | `cancelAi` | Cancels the running request. |
 
 Generated text is collected completely before it is inserted, so an error or a
@@ -107,11 +107,15 @@ works on detached copies.
 ## Cancellation
 
 - A manager runs one request at a time. A new request cancels the previous one.
-- A request is cancelled by `cancelAi`, by any document change (yours or a collaborator's),
-  by switching to read-only, by changing the provider and by destroying the editor.
+- A request is cancelled by `cancelAi`, by a change you make to the document (`update`
+  with `origin: "local"`), by switching to read-only, by changing the provider and by
+  destroying the editor. A collaborator's change doesn't cancel it.
 - The provider receives `context.signal`. Pass it to `fetch` to stop network work.
 - A late result is dropped even when the provider ignores the signal. Before applying
-  anything, the manager checks that the document is the one the request was made for.
+  anything, the manager checks the blocks the result applies to: a suggestion, a rewrite
+  or an added paragraph needs the selected blocks as they were, or it fails with "The
+  document changed while AI was working". Proofreading and review drop the results for
+  blocks a collaborator changed meanwhile and keep the rest.
 - A cancellation is silent: an `AbortError` is not reported as an error.
 
 ## Ghost text
@@ -146,8 +150,8 @@ matches as `{ pii_type, start, end, matched_text }` with UTF-16 offsets.
 `undefined` without the extension and after the editor is destroyed. It is the manager the
 commands, ghost text and `cancelAi` use, with their provider (also one set by
 `defineAiContext` or `defineAiAgent`). It runs one request at a time, yours or theirs: a new
-request cancels the running one, and so do closing the command bar and any change to the
-document. A cancelled request rejects with an `AbortError`. The extension owns the manager and
+request cancels the running one, and so do closing the command bar and any change you make
+to the document. A cancelled request rejects with an `AbortError`. The extension owns the manager and
 releases it with the editor, so do not call `destroy()` on it.
 
 ```ts title="summarize.ts"
