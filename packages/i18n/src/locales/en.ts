@@ -1,7 +1,7 @@
-import { defineLocale } from "../i18n";
 import type { Locale } from "../types";
 
-export const en: Locale = defineLocale("en", {
+/** English words of `@gotipe/i18n`; importing it registers nothing. */
+export const en: Locale = {
   "toolbar.highlight": "Highlight",
   "toolbar.heading": "Heading",
   "toolbar.table": "Table",
@@ -191,4 +191,4 @@ export const en: Locale = defineLocale("en", {
   "math.error.missingArgument": "{detail} needs an argument",
   // --- merged table cells (frame 29) ---
   "table.cellsSelected": "{count} cells selected",
-});
+};

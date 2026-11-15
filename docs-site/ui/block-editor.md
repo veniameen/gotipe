@@ -22,8 +22,7 @@ npm install @gotipe/block-editor @gotipe/core @gotipe/react @gotipe/theme @gotip
 ```
 
 Import the styles once. `base.css` draws the document, `theme.css` the menus, panels and
-states. `@gotipe/block-editor/styles` loads only `theme.css`, so you still need
-`base.css`.
+states; `import "@gotipe/block-editor/styles"` loads both.
 
 ```ts title="main.ts"
 import "@gotipe/theme/base.css";

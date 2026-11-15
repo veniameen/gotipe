@@ -1,1 +1,4 @@
+/* Everything BlockEditor and PageEditor draw: the document of every view (base.css), then the
+   menus, panels and states (theme.css). */
+@import "@gotipe/theme/base.css";
 @import "@gotipe/theme/theme.css";
