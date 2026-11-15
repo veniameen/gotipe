@@ -450,6 +450,8 @@ export function fallbackApply(
       default:
         throw new GoTipeError("TRANSFORM_ERROR", `Unsupported transaction step: ${tag}`);
     }
+    // One more for every applied step, as `next_version` in Rust (D-13).
+    doc.version += 1;
   }
 
   return JSON.stringify(doc);

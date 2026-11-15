@@ -49,8 +49,10 @@ export function createHostActions(
       }
       return;
     }
+    // Without a host `newTab` decides too: `false` goes to the link in this tab (D-13).
     if (typeof window !== "undefined") {
-      window.open(safe, "_blank", "noopener,noreferrer");
+      if (info.newTab) window.open(safe, "_blank", "noopener,noreferrer");
+      else window.location.assign(safe);
     }
   };
   return { reportError, openLink };

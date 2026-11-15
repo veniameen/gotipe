@@ -50,7 +50,7 @@ editor.chain().indent().run();
 
 | Command | Description |
 | --- | --- |
-| `toggleBulletList()` | Wraps the current paragraph, heading, quote, callout or code block in a bullet list. In a list of another kind, converts that whole list; in a bullet list, turns all its items back into paragraphs. |
+| `toggleBulletList()` | Wraps the current block in a bullet list when its type holds text (rich or raw, as the schema declares): a paragraph, heading, quote, callout, code block, formula, toggle or a node of your own. The block becomes the list's only item with its text and child blocks; raw text becomes plain text. A block without text, such as an image or a divider, stays as it is. In a list of another kind, converts that whole list; in a bullet list, turns all its items back into paragraphs. |
 | `toggleOrderedList(attrs?)` | The same for a numbered list. `attrs.start` sets the first number. |
 | `toggleTodoList()` | The same for a task list. The items start unchecked. |
 | `setBulletList()`, `setOrderedList(attrs?)`, `setTodoList()` | Like the toggles, but never unwrap a list of the same kind. The "/" menu uses them. |

@@ -133,7 +133,7 @@ block gets rich text and `setBlockType` leaves the content as it is.
 
 | Command | Description |
 |---|---|
-| `toggleBulletList()`, `toggleOrderedList({ start }?)`, `toggleTodoList()` | Wrap a paragraph, heading, quote, code block or callout in a list. In a list of another kind, convert that list. In a list of the same kind, turn all its items into paragraphs. |
+| `toggleBulletList()`, `toggleOrderedList({ start }?)`, `toggleTodoList()` | Wrap the current block in a list when its type holds text, rich or raw (a paragraph, heading, formula, toggle or a node of your own): the block becomes the only item with its text and child blocks. A block without text stays as it is. In a list of another kind, convert that list. In a list of the same kind, turn all its items into paragraphs. |
 | `setBulletList()`, `setOrderedList({ start }?)`, `setTodoList()` | Like the toggles, but never unwrap a list of the same kind. |
 | `indent()` | Nest the list item under the previous item. |
 | `outdent()` | Move a nested list item one level out. |

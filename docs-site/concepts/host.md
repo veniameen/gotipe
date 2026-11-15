@@ -53,7 +53,7 @@ const editor = await createEditor({ extensions: [DefaultPreset], host });
 |---|---|---|---|
 | `saveAsset` | `(file: Blob, info: { kind: "image" \| "file"; name: string; mediaType: string; size: number }) => Promise<{ src: string; name?: string }>` | Inline `data:` URL | Store a pasted, dropped or picked file. Return the path or URL to put into the document. Throw to report a failure. |
 | `resolveAsset` | `(src: string) => Promise<string \| null> \| string \| null` | `src` as stored | Turn a document path such as `assets/diagram.png` into a URL the page can show. Return `null` when the file is unavailable. |
-| `openLink` | `(href: string, info: { blockId: string \| null; newTab: boolean }) => void` | `window.open` in a new tab | Open a link the user activated. |
+| `openLink` | `(href: string, info: { blockId: string \| null; newTab: boolean }) => void` | A new tab with `window.open`; `newTab: false` goes to the link in this tab | Open a link the user activated. |
 | `onError` | `(error: GoTipeError) => void` | Console, when nothing else listens | Receive every reported error. |
 | `imageSources` | `ImageSource[]` | none | Image catalogs to search in the image dialog. |
 
@@ -165,7 +165,8 @@ Each error is a `GoTipeError` with `code`, `message` and optional `details`:
 
 `WASM_INIT_FAILED`, `PARSE_ERROR`, `EXTENSION_DEPENDENCY_CYCLE`,
 `EDITOR_NOT_INITIALIZED`, `COLLABORATION_UNAVAILABLE` and `COLLABORATION_ERROR` come from
-your own calls and are thrown, not reported. A `COMPOSITION_CONFLICT` doesn't insert the
+your own calls and are thrown, not reported. So does the `EXTENSION_ERROR` with which
+`createEditor` rejects an extension list that misses a dependency. A `COMPOSITION_CONFLICT` doesn't insert the
 interrupted text again; offer the user `details.text` to recover it.
 
 ## Related

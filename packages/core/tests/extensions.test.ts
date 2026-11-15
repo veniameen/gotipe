@@ -1,4 +1,5 @@
 import { describe, it, expect } from 'vitest';
+import { GoTipeError } from '../src/error';
 import { DefaultPreset } from '../src/presets';
 import { defineExtension } from '../src/types/extension';
 import { ENGINES, createOn } from './engines';
@@ -55,15 +56,45 @@ describe('defineExtension', () => {
 describe('editor.hasExtension', () => {
   for (const engine of ENGINES)
     it(`names the extensions the editor was created with (${engine})`, async () => {
-      const own = defineExtension({ name: 'own', dependencies: ['missing'] });
+      const own = defineExtension({ name: 'own', dependencies: ['paragraph'] });
       const editor = await createOn(engine, { extensions: [DefaultPreset, [own]] });
       // Alone, nested in an array, or in a preset.
       expect(editor.hasExtension('own')).toBe(true);
       expect(editor.hasExtension('paragraph')).toBe(true);
-      // A dependency nobody passed is not installed; the extension still is.
-      expect(editor.hasExtension('missing')).toBe(false);
       expect(editor.hasExtension('ai')).toBe(false);
       expect(editor.hasExtension('')).toBe(false);
       editor.destroy();
     });
+});
+
+describe.each(ENGINES)('%s engine: extension dependencies (D-13)', (engine) => {
+  it('a dependency nobody passed rejects createEditor and names both extensions', async () => {
+    const created: string[] = [];
+    const own = defineExtension({
+      name: 'own',
+      dependencies: ['paragraph', 'missing'],
+      onCreate: () => void created.push('own'),
+    });
+    const error = await createOn(engine, { extensions: [DefaultPreset, own] }).catch((e) => e);
+    expect(error).toBeInstanceOf(GoTipeError);
+    expect(error).toMatchObject({
+      code: 'EXTENSION_ERROR',
+      message: 'Extension own needs missing, which is not in the extension list',
+      details: { extension: 'own', dependency: 'missing' },
+    });
+    expect(created).toEqual([]);
+  });
+
+  it('a dependency passed after the extension is set up before it', async () => {
+    const created: string[] = [];
+    const own = defineExtension({
+      name: 'own',
+      dependencies: ['base'],
+      onCreate: () => void created.push('own'),
+    });
+    const base = defineExtension({ name: 'base', onCreate: () => void created.push('base') });
+    const editor = await createOn(engine, { extensions: [DefaultPreset, own, base] });
+    expect(created).toEqual(['base', 'own']);
+    editor.destroy();
+  });
 });

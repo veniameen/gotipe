@@ -272,3 +272,60 @@ describe.each(ENGINES)("%s Backspace on a block selected as a whole (D-135)", (e
     expect(view.editor.getJSON().blocks).toEqual([list("list", item("first", "First"))]);
   });
 });
+
+describe.each(ENGINES)("%s typing on a block selected as a whole (D-180)", (engine) => {
+  const shape = (blocks: Block[]) =>
+    blocks.map(({ type, content }) => [type, Array.isArray(content) ? content : []]);
+  /** Selects block `a` and sends `keys`, with the caret restore drawn or still waiting. */
+  async function onSelected(keys: (view: Awaited<ReturnType<typeof open>>) => void, frame: boolean) {
+    const view = await open(engine, [paragraph("a", "ab"), paragraph("b", "cd")], {
+      blockId: "a",
+      offset: 1,
+    });
+    expect(view.editor.chain().selectBlock("a").run()).toBe(true);
+    if (frame) nextFrame();
+    keys(view);
+    const blocks = view.editor.getJSON().blocks;
+    // The next run starts without this editor and its waiting restore.
+    for (const cleanup of cleanups.splice(0)) cleanup();
+    frames.length = 0;
+    return blocks;
+  }
+  const enter = (view: Awaited<ReturnType<typeof open>>) => {
+    const target = view.editor.element!;
+    const key = new KeyboardEvent("keydown", { key: "Enter", bubbles: true, cancelable: true });
+    target.dispatchEvent(key);
+    if (!key.defaultPrevented)
+      target.dispatchEvent(
+        new InputEvent("beforeinput", {
+          bubbles: true,
+          cancelable: true,
+          inputType: "insertParagraph",
+        }),
+      );
+  };
+
+  it("a character replaces the selected block after the frame, as before it", async () => {
+    const before = await onSelected((view) => view.type("x"), false);
+    expect(before).toEqual([paragraph("b", "xcd")]);
+    expect(await onSelected((view) => view.type("x"), true)).toEqual(before);
+  });
+
+  it("Enter acts on the selected block after the frame, as before it", async () => {
+    const before = await onSelected(enter, false);
+    expect(shape(before)).toEqual([
+      ["paragraph", []],
+      ["paragraph", text("cd")],
+    ]);
+    expect(shape(await onSelected(enter, true))).toEqual(shape(before));
+  });
+
+  it("a caret the user put in another block after the frame takes over", async () => {
+    const blocks = await onSelected((view) => {
+      const node = view.editor.element!.querySelector('[data-block-id="b"]')!.firstChild!;
+      document.getSelection()!.collapse(node, 1);
+      view.type("x");
+    }, true);
+    expect(blocks).toEqual([paragraph("a", "ab"), paragraph("b", "cxd")]);
+  });
+});
