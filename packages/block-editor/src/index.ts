@@ -93,7 +93,7 @@ export {
   addColumn,
   deleteColumn,
 } from "./table/column-types";
-export type { ColumnType } from "./table/column-types";
+export type { BooleanWords, ColumnType } from "./table/column-types";
 export { TableColumnButton, TableRowButton } from "./components/table-column-menu";
 export { ReviewLayer, acceptAllInOrder } from "./review/review-layer";
 export type { PageReviewProps, ReviewApi, ReviewAction, ReviewResult } from "./review/review-layer";
