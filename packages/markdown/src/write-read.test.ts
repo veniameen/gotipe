@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import nested from "../../../crates/gotipe-export/tests/fixtures/markdown-nested-write-read.json";
+import blocks from "../../../crates/gotipe-export/tests/fixtures/markdown-writer-blocks.json";
 import fixture from "../../../crates/gotipe-export/tests/fixtures/markdown-write-read.json";
 import { parseMarkdown, serializeMarkdown } from "./index";
 import type { Block, Doc, Span } from "./types";
@@ -20,6 +21,7 @@ interface Fixture {
 const FIXTURES: [string, Fixture][] = [
   ["D-97", fixture],
   ["D-101, D-103, D-104, D-105", nested],
+  ["D-109–D-124", blocks],
 ];
 
 /** Blocks without ids: what a parse means, independent of generated ids. */

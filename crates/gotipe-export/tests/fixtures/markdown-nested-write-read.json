@@ -1950,13 +1950,13 @@
           }
         ]
       },
-      "markdown": "- x\n  - a\n  \n  * b\n",
+      "markdown": "- x\n  - a\n  * b\n",
       "reparsed": [
         {
           "type": "bulletList",
           "attrs": {
             "marker": "-",
-            "spread": true
+            "spread": false
           },
           "content": null,
           "children": [
@@ -2180,13 +2180,13 @@
           }
         ]
       },
-      "markdown": "- x\n  - a\n    \n  * b\n",
+      "markdown": "- x\n  - a\n  * b\n",
       "reparsed": [
         {
           "type": "bulletList",
           "attrs": {
             "marker": "-",
-            "spread": true
+            "spread": false
           },
           "content": null,
           "children": [
