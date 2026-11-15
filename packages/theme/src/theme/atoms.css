@@ -10,7 +10,7 @@
   user-select: none;
 }
 
-/* ---- a chip appears around an atom under the pointer; a formula being edited is selected ---- */
+/* ---- a chip appears around an atom under the pointer; an edited formula is selected whole ---- */
 :is(.gotipe-mention, .gotipe-math-inline:not(.is-invalid), .gotipe-emoji-custom):is(
     :hover,
     .is-selected
@@ -123,6 +123,14 @@
    with room around them, a fraction stacked on its rule ---- */
 .gotipe-math-inline {
   white-space: nowrap;
+}
+/* A formula is one box (Atlas, D-108): a fraction is taller than a line of text, so the box — and
+   the plate that appears around it under the pointer or when selected — has to enclose all of it.
+   An inline element's plate is only the strip of text; `normal` keeps the box of a formula without
+   a fraction as high as that strip, and the line keeps its height. */
+.gotipe-math-inline:not(.is-invalid) {
+  display: inline-block;
+  line-height: normal;
 }
 :is(.gotipe-math-inline, .gotipe-math-render, .gotipe-math-preview) math {
   font-family: var(--gt-font-body);

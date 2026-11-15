@@ -123,6 +123,30 @@
   gap: var(--gt-button-gap);
 }
 
+/* ---- an editor that could not be created: the element that failed is the editor, a box in its
+   place. As the library draws it (PageEditor, D-142): the box takes the whole width of the editor,
+   its glyph and words in red. The proposal stands in the page's column, its words neutral, as an
+   image's — it waits for the owner's decision (D-165) ---- */
+:is(.gotipe-block-editor, .gotipe-page) > .gotipe-editor-error {
+  display: grid;
+  grid-auto-flow: column;
+  place-content: center;
+  place-items: center;
+  gap: var(--gt-menu-gap);
+  min-height: var(--gt-image-empty-h);
+  margin: 0;
+  border-radius: var(--gt-radius-block);
+  background: var(--gt-danger-tint);
+  box-shadow: inset 0 0 0 var(--gt-hairline) var(--gt-danger);
+  color: var(--gt-danger);
+  font-size: var(--gt-ui-size);
+  line-height: var(--gt-ui-leading);
+  letter-spacing: normal;
+}
+.gotipe-editor-error-text {
+  color: var(--gt-text-2);
+}
+
 /* ---- Markdown the editor keeps as it is: quiet, read-only, with its reason on hover ---- */
 .gotipe-raw {
   position: relative;

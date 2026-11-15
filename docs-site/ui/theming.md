@@ -52,9 +52,11 @@ heading sizes and title shrink and the `docs` outline hides; at 359 px or less t
 again. There `notion` and `docs` keep a rail of `--gt-handle-rail` (56 px) on the left for the
 block handle. In `docs`,
 `--gt-outline-gap` (64 px) is the gutter the handle stands in, `--gt-anchor-display` shows the
-heading anchors (`none` hides them), `--gt-anchor-room` is the room a heading keeps for its anchor
-at the end of its lines and `--gt-heading-wrap` how such a heading wraps (`pretty`). The editor takes its width from its parent: in a layout that sizes by content, give
-the parent a width.
+heading anchors (`none` hides them) and `--gt-anchor-room` is the room a heading keeps for its
+anchor at the end of its lines. `--gt-heading-wrap` is how headings wrap: `balance`, so the last
+line is not one lone word, and `pretty` in `docs`, where a balanced heading would carry its anchor
+away; the page title wraps balanced in every view. The editor takes its width from its parent: in
+a layout that sizes by content, give the parent a width.
 
 ## Light and dark
 

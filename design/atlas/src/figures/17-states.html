@@ -4,7 +4,9 @@
     <h2 class="at-figure-title">Загрузка, ошибки, только чтение, фокус</h2>
     <p class="at-caption">
       Загрузка — силуэт страницы без мерцания. Ошибка — тост или сам элемент, без строки под полем.
-      Причина «нельзя» — в подсказке. Фокус с клавиатуры — кольцо темы, не браузера.
+      Редактор, который не создался, — сам элемент на месте страницы: так его показывает PageEditor;
+      рядом предложение — плашка в колонке документа, слова нейтральные, как у изображения, — ждёт
+      решения. Причина «нельзя» — в подсказке. Фокус с клавиатуры — кольцо темы, не браузера.
     </p>
   </figcaption>
   <!-- @frame frame=loading view=notion w=480 label="загрузка" -->
@@ -39,6 +41,18 @@
         >
       </div>
     </div>
+  </article>
+  <!-- @end -->
+  <!-- @frame frame=editor-error view=notion w=480 label="документ не открылся" -->
+  <div class="gotipe-block-editor">
+    <p class="gotipe-editor-error" role="alert"><svg class="gt-icon"><use href="#i-warning" /></svg>Документ не открылся</p>
+  </div>
+  <!-- @end -->
+  <!-- @frame frame=editor-error-proposal view=notion w=480 label="документ не открылся: предложение" -->
+  <article class="gotipe-page" lang="ru">
+    <p class="gotipe-editor-error" role="alert"
+      ><svg class="gt-icon"><use href="#i-warning" /></svg><span class="gotipe-editor-error-text">Документ не открылся</span></p
+    >
   </article>
   <!-- @end -->
   <!-- @frame frame=read-only view=notion w=480 min=320 label="только чтение" -->
