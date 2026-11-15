@@ -20,3 +20,6 @@ as GFM does.
   them into one list, and in an item without text its blank line took the item's blocks out of it.
 - A paragraph or heading without text at the top level keeps the blocks under it: both writers
   left it out together with them.
+- Tables are read as GFM reads them: a head row needs no `|` (`a`, then `:-:` is a table of one
+  column), a delimiter row that starts a list item (`a | b`, then `- | -`) starts the list, and
+  one indented by four spaces continues the paragraph. Both were read the other way.
