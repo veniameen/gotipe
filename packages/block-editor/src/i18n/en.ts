@@ -143,6 +143,7 @@ export const blockEditorEn: BlockEditorLocale = {
   "page.addIcon": "Add icon",
   "page.readOnly": "Read only",
   "state.loading": "Loading document",
+  "state.failed": "The document could not be opened",
   "state.startWith": "Start with",
   "error.transform": "The change could not be applied",
   "error.clipboard": "Could not use the clipboard",
