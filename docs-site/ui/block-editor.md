@@ -170,8 +170,6 @@ languages; see [i18n](/docs/ui/i18n).
   editor's `collaboration` decoration layer has entries.
 - `showAiCommandBar` is on by default and adds the Improve button and Mod+J even when no
   AI extension is installed. Turn it off unless you use [AI](/docs/ai/overview).
-- The bubble's More menu always offers superscript and subscript. Load those extensions
-  (`FullPreset` has them, `DefaultPreset` does not), or the actions fail with an error.
 - The block handle is shown only in the `notion` view.
 - To change the `/` menu's groups or labels, set `showSlashMenu={false}` and render your
   own `SlashMenu` as a child; the `+` button then adds an empty block without the menu.
