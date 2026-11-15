@@ -203,8 +203,9 @@ thrown by a callback is reported as `COMMENT_ACTION_FAILED` and does not undo th
 | `destroy()` | Removes listeners and decorations. Destroying the editor destroys the manager. |
 
 The editor emits `commentAdded`, `commentUpdated` (text, replies, re-anchoring, reopening),
-`commentResolved` and `commentDeleted`, each with the comment ID. The AI `review` command
-emits `commentAdded` and `commentDeleted` for its own short-lived comments as well.
+`commentResolved` and `commentDeleted`, each with the comment ID. Comments of the AI `review`
+command are not in the manager and emit none of these; they have their own event,
+`aiReviewChange` (see [AI](/docs/ai/overview)).
 
 A comment has `id`, `blockId`, `from`, `to`, `endBlockId`, `quotedText`, `anchor`
 (`{ before, quote, after }`), `orphaned`, `authorId`, `authorName`, `content`,
