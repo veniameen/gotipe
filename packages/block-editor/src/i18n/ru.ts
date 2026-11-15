@@ -143,6 +143,7 @@ export const blockEditorRu: BlockEditorLocale = {
   "page.addIcon": "Добавить значок",
   "page.readOnly": "Только чтение",
   "state.loading": "Загрузка документа",
+  "state.failed": "Документ не открылся",
   "state.startWith": "Начать с",
   "error.transform": "Не удалось применить изменение",
   "error.clipboard": "Нет доступа к буферу обмена",

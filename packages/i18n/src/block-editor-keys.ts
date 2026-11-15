@@ -146,6 +146,7 @@ export type BlockEditorTranslationKey =
   | "page.addIcon"
   | "page.readOnly"
   | "state.loading"
+  | "state.failed"
   | "state.startWith"
   | "error.transform"
   | "error.clipboard"
