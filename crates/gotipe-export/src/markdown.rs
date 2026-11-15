@@ -178,12 +178,16 @@ fn list_to_markdown(list: &Block, emoji: &Emoji, tier: u8, outer: &str) -> Strin
         rendered.push_str(&text);
         rendered.push('\n');
         let lines = task || !text.is_empty();
+        // a line before the child that a line without a blank one before it would continue
+        let mut open = lines;
         for (index, child) in hazards::children(shown(item)).iter().enumerate() {
             // a list that cannot interrupt the text of the item, or the `[ ]` of a task, starts
-            // after a blank line; right after the marker of an item without text a blank line
-            // would end the item (D-117)
-            let apart =
-                (spread && (lines || index > 0)) || (lines && hazards::cannot_interrupt(child));
+            // after a blank line, as a block that would continue the text before it (D-116);
+            // right after the marker of an item without text a blank line would end the item
+            // (D-117)
+            let apart = (spread && (lines || index > 0))
+                || ((lines || open) && hazards::cannot_interrupt(child))
+                || (open && hazards::continues_text(child));
             if apart {
                 rendered.push('\n');
             }
@@ -191,6 +195,7 @@ fn list_to_markdown(list: &Block, emoji: &Emoji, tier: u8, outer: &str) -> Strin
             // above it as a heading (D-115)
             let stars = !apart && child.block_type == "divider";
             indented(child, emoji, tier, &indent, stars, &mut rendered);
+            open = !hazards::closed(child);
         }
     }
     rendered

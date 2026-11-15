@@ -13,6 +13,12 @@ Blocks inside list items, toggles, columns and quotes read back as they were wri
   rest left the item or ended the quote.
 - A divider right under a line of a list item is written `***`: `---` there turned the text above
   it into a heading.
+- In a tight list item, a block that would continue the text before it — a paragraph, a link
+  line, a table, a `$$` formula or raw HTML right under the item's text, after a nested list or
+  after a quote — is written after a blank line. It was read as more text of the item or of the
+  last nested item (`- x`, `  - a`, `  p` as the item `a p`). Such an item has blocks the editor's
+  list cannot hold, so the list now reads back as raw source instead of losing the block into the
+  text.
 
 The Rust converter (`gotipe-convert`) writes the same bytes on the shared cases
 (`crates/gotipe-export/tests/fixtures/markdown-writer-blocks.json`):
