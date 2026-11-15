@@ -3141,6 +3141,346 @@
           "children": []
         }
       ]
+    },
+    {
+      "id": "a-checked-item-of-a-bullet-list-is-a-task",
+      "document": {
+        "version": 1,
+        "blocks": [
+          {
+            "id": "b2",
+            "type": "bulletList",
+            "attrs": {},
+            "content": null,
+            "children": [
+              {
+                "id": "b1",
+                "type": "listItem",
+                "attrs": {
+                  "checked": true
+                },
+                "content": [
+                  {
+                    "text": "a",
+                    "marks": []
+                  }
+                ],
+                "children": []
+              }
+            ]
+          }
+        ]
+      },
+      "markdown": "- [x] a\n",
+      "reparsed": [
+        {
+          "type": "todoList",
+          "attrs": {
+            "spread": false,
+            "marker": "-"
+          },
+          "content": null,
+          "children": [
+            {
+              "type": "todoItem",
+              "attrs": {
+                "checked": true
+              },
+              "content": [
+                {
+                  "text": "a",
+                  "marks": []
+                }
+              ],
+              "children": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "unchecked-and-checked-items-of-a-bullet-list-are-tasks",
+      "document": {
+        "version": 1,
+        "blocks": [
+          {
+            "id": "b5",
+            "type": "bulletList",
+            "attrs": {
+              "marker": "*"
+            },
+            "content": null,
+            "children": [
+              {
+                "id": "b3",
+                "type": "listItem",
+                "attrs": {
+                  "checked": false
+                },
+                "content": [
+                  {
+                    "text": "a",
+                    "marks": []
+                  }
+                ],
+                "children": []
+              },
+              {
+                "id": "b4",
+                "type": "listItem",
+                "attrs": {
+                  "checked": true
+                },
+                "content": [
+                  {
+                    "text": "b",
+                    "marks": []
+                  }
+                ],
+                "children": []
+              }
+            ]
+          }
+        ]
+      },
+      "markdown": "* [ ] a\n* [x] b\n",
+      "reparsed": [
+        {
+          "type": "todoList",
+          "attrs": {
+            "spread": false,
+            "marker": "*"
+          },
+          "content": null,
+          "children": [
+            {
+              "type": "todoItem",
+              "attrs": {
+                "checked": false
+              },
+              "content": [
+                {
+                  "text": "a",
+                  "marks": []
+                }
+              ],
+              "children": []
+            },
+            {
+              "type": "todoItem",
+              "attrs": {
+                "checked": true
+              },
+              "content": [
+                {
+                  "text": "b",
+                  "marks": []
+                }
+              ],
+              "children": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "a-checked-item-among-plain-items-keeps-its-mark",
+      "document": {
+        "version": 1,
+        "blocks": [
+          {
+            "id": "b8",
+            "type": "bulletList",
+            "attrs": {},
+            "content": null,
+            "children": [
+              {
+                "id": "b6",
+                "type": "listItem",
+                "attrs": {
+                  "checked": true
+                },
+                "content": [
+                  {
+                    "text": "a",
+                    "marks": []
+                  }
+                ],
+                "children": []
+              },
+              {
+                "id": "b7",
+                "type": "listItem",
+                "attrs": {},
+                "content": [
+                  {
+                    "text": "b",
+                    "marks": []
+                  }
+                ],
+                "children": []
+              }
+            ]
+          }
+        ]
+      },
+      "markdown": "- [x] a\n- b\n",
+      "reparsed": [
+        {
+          "type": "markdownRaw",
+          "attrs": {
+            "kind": "list"
+          },
+          "content": "- [x] a\n- b",
+          "children": []
+        }
+      ],
+      "readAsRaw": true
+    },
+    {
+      "id": "a-checked-item-without-text-before-a-nested-list",
+      "document": {
+        "version": 1,
+        "blocks": [
+          {
+            "id": "b12",
+            "type": "bulletList",
+            "attrs": {},
+            "content": null,
+            "children": [
+              {
+                "id": "b11",
+                "type": "listItem",
+                "attrs": {
+                  "checked": true
+                },
+                "content": [],
+                "children": [
+                  {
+                    "id": "b10",
+                    "type": "bulletList",
+                    "attrs": {},
+                    "content": null,
+                    "children": [
+                      {
+                        "id": "b9",
+                        "type": "listItem",
+                        "attrs": {},
+                        "content": [
+                          {
+                            "text": "x",
+                            "marks": []
+                          }
+                        ],
+                        "children": []
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "markdown": "- [x]\n  - x\n",
+      "reparsed": [
+        {
+          "type": "todoList",
+          "attrs": {
+            "spread": false,
+            "marker": "-"
+          },
+          "content": null,
+          "children": [
+            {
+              "type": "todoItem",
+              "attrs": {
+                "checked": true
+              },
+              "content": [],
+              "children": [
+                {
+                  "type": "bulletList",
+                  "attrs": {
+                    "marker": "-",
+                    "spread": false
+                  },
+                  "content": null,
+                  "children": [
+                    {
+                      "type": "listItem",
+                      "attrs": {},
+                      "content": [
+                        {
+                          "text": "x",
+                          "marks": []
+                        }
+                      ],
+                      "children": []
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "a-task-item-in-a-bullet-list",
+      "document": {
+        "version": 1,
+        "blocks": [
+          {
+            "id": "b14",
+            "type": "bulletList",
+            "attrs": {},
+            "content": null,
+            "children": [
+              {
+                "id": "b13",
+                "type": "todoItem",
+                "attrs": {
+                  "checked": true
+                },
+                "content": [
+                  {
+                    "text": "a",
+                    "marks": []
+                  }
+                ],
+                "children": []
+              }
+            ]
+          }
+        ]
+      },
+      "markdown": "- [x] a\n",
+      "reparsed": [
+        {
+          "type": "todoList",
+          "attrs": {
+            "spread": false,
+            "marker": "-"
+          },
+          "content": null,
+          "children": [
+            {
+              "type": "todoItem",
+              "attrs": {
+                "checked": true
+              },
+              "content": [
+                {
+                  "text": "a",
+                  "marks": []
+                }
+              ],
+              "children": []
+            }
+          ]
+        }
+      ]
     }
   ]
 }

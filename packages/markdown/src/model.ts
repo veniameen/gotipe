@@ -162,6 +162,9 @@ function semanticAttrs(block: Block): Record<string, unknown> {
       return { start: listStart(attrs.start) };
     case "todoItem":
       return { checked: attrs.checked === true };
+    // a task of a bullet list (D-156): a change of its mark rewrites it
+    case "listItem":
+      return attrs.checked === undefined ? {} : { checked: attrs.checked === true };
     case "callout":
       return { kind: calloutKind(attrs) };
     case "codeBlock":
