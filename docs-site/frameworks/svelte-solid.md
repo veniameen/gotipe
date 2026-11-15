@@ -63,7 +63,11 @@ to the document through attributes. A renderer does this:
    When `block.renderKey` is set and changes, rebuild that block's element.
 
 Typing goes through the model: the core cancels the browser's change, applies a
-transaction and puts the caret back after your renderer has updated.
+transaction and puts the caret back once your renderer has updated: as soon as it replaces
+nodes or rewrites their text in the element, at the latest on the next animation frame.
+Draw a change before the next event, synchronously or in a microtask, so that a key pressed
+right after an edit meets the caret the edit left. Until the caret is back, typing, Enter,
+Backspace and Delete act at the editor's caret; paste goes to the browser's.
 
 Both sketches below render paragraphs with bold and italic, the schema of `MinimalPreset`:
 

@@ -411,16 +411,19 @@ export function installDOMSelection(
   };
 
   // A renderer can replace the selected DOM node before the next animation
-  // frame. Repair that pending caret at the commit's microtask boundary so an
-  // immediate native keystroke still targets document text. The scheduled
-  // frame retains ownership of reconciliation and pending-state cleanup.
+  // frame, or rewrite its text: React sets `nodeValue`, and a native caret in
+  // the node goes to its start. Repair that pending caret at the commit's
+  // microtask boundary so an immediate native keystroke still targets the model
+  // caret (WebKit sends no `beforeinput` for Backspace at the start of the
+  // editor). The scheduled frame retains ownership of reconciliation and
+  // pending-state cleanup.
   const renderObserver = new MutationObserver(() => {
     if (pendingSelectionRestore && !signal.aborted && !port.isComposing()) {
       restoreDomSelection();
     }
   });
   if (!signal.aborted) {
-    renderObserver.observe(element, { childList: true, subtree: true });
+    renderObserver.observe(element, { childList: true, characterData: true, subtree: true });
     signal.addEventListener("abort", () => renderObserver.disconnect(), { once: true });
   }
 
