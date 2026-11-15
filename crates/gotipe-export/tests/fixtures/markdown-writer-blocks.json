@@ -757,6 +757,403 @@
           "children": []
         }
       ]
+    },
+    {
+      "id": "a-loose-list-keeps-its-blank-lines",
+      "document": {
+        "version": 1,
+        "blocks": [
+          {
+            "id": "n40",
+            "type": "bulletList",
+            "attrs": {
+              "spread": true
+            },
+            "content": null,
+            "children": [
+              {
+                "id": "n38",
+                "type": "listItem",
+                "attrs": {},
+                "content": [
+                  {
+                    "text": "a",
+                    "marks": []
+                  }
+                ],
+                "children": []
+              },
+              {
+                "id": "n39",
+                "type": "listItem",
+                "attrs": {},
+                "content": [
+                  {
+                    "text": "b",
+                    "marks": []
+                  }
+                ],
+                "children": []
+              }
+            ]
+          }
+        ]
+      },
+      "markdown": "- a\n\n- b\n",
+      "reparsed": [
+        {
+          "type": "bulletList",
+          "attrs": {
+            "marker": "-",
+            "spread": true
+          },
+          "content": null,
+          "children": [
+            {
+              "type": "listItem",
+              "attrs": {},
+              "content": [
+                {
+                  "text": "a",
+                  "marks": []
+                }
+              ],
+              "children": []
+            },
+            {
+              "type": "listItem",
+              "attrs": {},
+              "content": [
+                {
+                  "text": "b",
+                  "marks": []
+                }
+              ],
+              "children": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "a-loose-list-with-a-nested-list",
+      "document": {
+        "version": 1,
+        "blocks": [
+          {
+            "id": "n46",
+            "type": "bulletList",
+            "attrs": {
+              "spread": true
+            },
+            "content": null,
+            "children": [
+              {
+                "id": "n44",
+                "type": "listItem",
+                "attrs": {},
+                "content": [
+                  {
+                    "text": "a",
+                    "marks": []
+                  }
+                ],
+                "children": [
+                  {
+                    "id": "n43",
+                    "type": "bulletList",
+                    "attrs": {},
+                    "content": null,
+                    "children": [
+                      {
+                        "id": "n41",
+                        "type": "listItem",
+                        "attrs": {},
+                        "content": [
+                          {
+                            "text": "x",
+                            "marks": []
+                          }
+                        ],
+                        "children": []
+                      },
+                      {
+                        "id": "n42",
+                        "type": "listItem",
+                        "attrs": {},
+                        "content": [
+                          {
+                            "text": "y",
+                            "marks": []
+                          }
+                        ],
+                        "children": []
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "id": "n45",
+                "type": "listItem",
+                "attrs": {},
+                "content": [
+                  {
+                    "text": "b",
+                    "marks": []
+                  }
+                ],
+                "children": []
+              }
+            ]
+          }
+        ]
+      },
+      "markdown": "- a\n\n  - x\n  - y\n\n- b\n",
+      "reparsed": [
+        {
+          "type": "bulletList",
+          "attrs": {
+            "marker": "-",
+            "spread": true
+          },
+          "content": null,
+          "children": [
+            {
+              "type": "listItem",
+              "attrs": {},
+              "content": [
+                {
+                  "text": "a",
+                  "marks": []
+                }
+              ],
+              "children": [
+                {
+                  "type": "bulletList",
+                  "attrs": {
+                    "marker": "-",
+                    "spread": false
+                  },
+                  "content": null,
+                  "children": [
+                    {
+                      "type": "listItem",
+                      "attrs": {},
+                      "content": [
+                        {
+                          "text": "x",
+                          "marks": []
+                        }
+                      ],
+                      "children": []
+                    },
+                    {
+                      "type": "listItem",
+                      "attrs": {},
+                      "content": [
+                        {
+                          "text": "y",
+                          "marks": []
+                        }
+                      ],
+                      "children": []
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "listItem",
+              "attrs": {},
+              "content": [
+                {
+                  "text": "b",
+                  "marks": []
+                }
+              ],
+              "children": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "an-empty-item-of-a-loose-list-keeps-its-children",
+      "document": {
+        "version": 1,
+        "blocks": [
+          {
+            "id": "n51",
+            "type": "bulletList",
+            "attrs": {
+              "spread": true
+            },
+            "content": null,
+            "children": [
+              {
+                "id": "n49",
+                "type": "listItem",
+                "attrs": {},
+                "content": [],
+                "children": [
+                  {
+                    "id": "n48",
+                    "type": "bulletList",
+                    "attrs": {},
+                    "content": null,
+                    "children": [
+                      {
+                        "id": "n47",
+                        "type": "listItem",
+                        "attrs": {},
+                        "content": [
+                          {
+                            "text": "x",
+                            "marks": []
+                          }
+                        ],
+                        "children": []
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "id": "n50",
+                "type": "listItem",
+                "attrs": {},
+                "content": [
+                  {
+                    "text": "b",
+                    "marks": []
+                  }
+                ],
+                "children": []
+              }
+            ]
+          }
+        ]
+      },
+      "markdown": "-\n  - x\n\n- b\n",
+      "reparsed": [
+        {
+          "type": "bulletList",
+          "attrs": {
+            "marker": "-",
+            "spread": true
+          },
+          "content": null,
+          "children": [
+            {
+              "type": "listItem",
+              "attrs": {},
+              "content": [],
+              "children": [
+                {
+                  "type": "bulletList",
+                  "attrs": {
+                    "marker": "-",
+                    "spread": false
+                  },
+                  "content": null,
+                  "children": [
+                    {
+                      "type": "listItem",
+                      "attrs": {},
+                      "content": [
+                        {
+                          "text": "x",
+                          "marks": []
+                        }
+                      ],
+                      "children": []
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "listItem",
+              "attrs": {},
+              "content": [
+                {
+                  "text": "b",
+                  "marks": []
+                }
+              ],
+              "children": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "a-loose-numbered-list-in-a-quote",
+      "document": {
+        "version": 1,
+        "blocks": [
+          {
+            "id": "n55",
+            "type": "blockquote",
+            "attrs": {},
+            "content": [
+              {
+                "text": "q",
+                "marks": []
+              }
+            ],
+            "children": [
+              {
+                "id": "n54",
+                "type": "orderedList",
+                "attrs": {
+                  "spread": true
+                },
+                "content": null,
+                "children": [
+                  {
+                    "id": "n52",
+                    "type": "listItem",
+                    "attrs": {},
+                    "content": [
+                      {
+                        "text": "a",
+                        "marks": []
+                      }
+                    ],
+                    "children": []
+                  },
+                  {
+                    "id": "n53",
+                    "type": "listItem",
+                    "attrs": {},
+                    "content": [
+                      {
+                        "text": "b",
+                        "marks": []
+                      }
+                    ],
+                    "children": []
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "markdown": "> q\n>\n> 1. a\n> \n> 2. b\n",
+      "reparsed": [
+        {
+          "type": "markdownRaw",
+          "attrs": {
+            "kind": "blockquote"
+          },
+          "content": "> q\n>\n> 1. a\n> \n> 2. b",
+          "children": []
+        }
+      ],
+      "readAsRaw": true
     }
   ]
 }

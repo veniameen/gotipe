@@ -15,3 +15,5 @@ The Rust converter (`gotipe-convert`) writes the same bytes on the shared cases
 - The children of a toggle, columns, a paragraph, a heading and other blocks follow a blank line,
   as in the TS writer; a paragraph child was read as more text of the block (`T` and its child
   `c` as `T c`). An empty code block is its two fences.
+- A loose list keeps its blank lines between items and before the children of an item; it was
+  written tight and read back as a tight list.
