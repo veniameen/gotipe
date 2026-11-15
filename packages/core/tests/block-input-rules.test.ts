@@ -200,3 +200,72 @@ describe.each(ENGINES)("%s list rules in a list of the same kind (D-127)", (engi
     expect(view.errors).toEqual([]);
   });
 });
+
+/** A table of one row: the cell `c` and a neighbour with text. */
+const table = () =>
+  block("table", "table", null, {}, [
+    block("row", "tableRow", null, {}, [
+      block("c", "tableCell", [], {}),
+      block("d", "tableCell", [{ text: "Keep", marks: [] }], {}),
+    ]),
+  ]);
+
+describe.each(ENGINES)("%s block rules where the block can't stand (D-128)", (engine) => {
+  it.each(["- ", "* ", "1. ", "[] ", "[x] ", "> ", "```js ", "$$", "# ", "---"])(
+    "`%s` in a table cell stays typed text, without an error",
+    async (trigger) => {
+      const before = doc(table());
+      const view = await typing(engine, before, "c");
+      view.type(trigger);
+      const typed = structuredClone(before.blocks);
+      typed[0]!.children[0]!.children[0]!.content = [{ text: trigger, marks: [] }];
+      expect(view.blocks()).toEqual(typed);
+      expect(view.errors).toEqual([]);
+      view.type("x");
+      expect(view.blocks()[0]!.children[0]!.children[0]!.content).toEqual([
+        { text: `${trigger}x`, marks: [] },
+      ]);
+    },
+  );
+
+  it.each(["> ", "[] ", "$$"])(
+    "`%s` in a column that doesn't take its block stays typed text",
+    async (trigger) => {
+      const columns = block("cols", "columns", null, { count: 1 }, [
+        block("col", "column", null, {}, [paragraph("p", "")]),
+      ]);
+      const view = await typing(engine, doc(columns), "p");
+      view.type(trigger);
+      expect(view.blocks()[0]!.children[0]!.children).toEqual([paragraph("p", trigger)]);
+      expect(view.errors).toEqual([]);
+    },
+  );
+
+  it("`- ` in a column still makes a list there", async () => {
+    const columns = block("cols", "columns", null, { count: 1 }, [
+      block("col", "column", null, {}, [paragraph("p", "")]),
+    ]);
+    const view = await typing(engine, doc(columns), "p");
+    view.type("- ");
+    expect(view.blocks()[0]!.children[0]!.children).toMatchObject([
+      { type: "bulletList", children: [{ id: "p", type: "listItem", content: [] }] },
+    ]);
+    expect(view.errors).toEqual([]);
+  });
+
+  it.each([
+    ["- ", "bulletList"],
+    ["1. ", "orderedList"],
+    ["[x] ", "todoList"],
+    ["> ", "blockquote"],
+    ["```js ", "codeBlock"],
+    ["$$", "math"],
+  ])("`%s` changes the block and drops the trigger in one undo step", async (trigger, type) => {
+    const view = await typing(engine, doc(paragraph("before", "Text"), paragraph("p", "")), "p");
+    view.type(trigger);
+    expect(view.blocks()[1]!.type).toBe(type);
+    expect(view.editor.undo()).toBe(true);
+    expect(view.blocks()).toEqual([paragraph("before", "Text"), paragraph("p", trigger)]);
+    expect(view.errors).toEqual([]);
+  });
+});

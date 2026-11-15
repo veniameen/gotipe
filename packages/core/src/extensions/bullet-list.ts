@@ -1,3 +1,4 @@
+import { convertTyped } from "../input/block-rule";
 import { defineExtension } from "../types/extension";
 
 export const BulletList = defineExtension({
@@ -18,15 +19,8 @@ export const BulletList = defineExtension({
   inputRules: [
     {
       pattern: /^[-*]\s$/,
-      handler: (editor) => {
-        const state = editor.getViewState();
-        const blockId = state.selection.anchor.blockId;
-        // Delete the trigger text first. In a bullet list the item stays as it is.
-        editor.dispatch({
-          steps: [{ type: "deleteText", blockId, from: 0, to: 2 }],
-        });
-        editor.chain().setBulletList().run();
-      },
+      // In a bullet list the item stays as it is.
+      handler: (editor) => convertTyped(editor, 2, (chain) => chain.setBulletList()),
     },
   ],
   keybindings: [
@@ -111,26 +105,15 @@ export const TodoList = defineExtension({
   inputRules: [
     {
       pattern: /^\[\]\s$/,
-      handler: (editor) => {
-        const state = editor.getViewState();
-        const blockId = state.selection.anchor.blockId;
-        editor.dispatch({
-          steps: [{ type: "deleteText", blockId, from: 0, to: 3 }],
-        });
-        editor.chain().setTodoList().run();
-      },
+      handler: (editor) => convertTyped(editor, 3, (chain) => chain.setTodoList()),
     },
     {
       pattern: /^\[x\]\s$/,
-      handler: (editor) => {
-        const state = editor.getViewState();
-        const blockId = state.selection.anchor.blockId;
-        editor.dispatch({
-          steps: [{ type: "deleteText", blockId, from: 0, to: 4 }],
-        });
-        // The task keeps the block's ID; in an empty task the rule checks it.
-        editor.chain().setTodoList().setBlockAttrs(blockId, { checked: true }).run();
-      },
+      // The task keeps the block's ID; in an empty task the rule checks it.
+      handler: (editor) =>
+        convertTyped(editor, 4, (chain, id) =>
+          chain.setTodoList().setBlockAttrs(id, { checked: true }),
+        ),
     },
   ],
   slashCommands: [

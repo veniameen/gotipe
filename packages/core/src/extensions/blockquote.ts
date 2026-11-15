@@ -1,3 +1,4 @@
+import { convertTyped } from "../input/block-rule";
 import { defineExtension } from "../types/extension";
 
 export const Blockquote = defineExtension({
@@ -18,15 +19,7 @@ export const Blockquote = defineExtension({
   inputRules: [
     {
       pattern: /^>\s$/,
-      handler: (editor) => {
-        const state = editor.getViewState();
-        const blockId = state.selection.anchor.blockId;
-        // Delete the trigger text first, then change block type
-        editor.dispatch({
-          steps: [{ type: "deleteText", blockId, from: 0, to: 2 }],
-        });
-        editor.chain().setBlockType("blockquote").run();
-      },
+      handler: (editor) => convertTyped(editor, 2, (chain) => chain.setBlockType("blockquote")),
     },
   ],
   keybindings: [

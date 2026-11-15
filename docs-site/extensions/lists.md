@@ -88,6 +88,8 @@ Input rules apply when you type the trigger at the start of an empty block:
 
 In an empty item of a list, a trigger works like `setBulletList()`, `setOrderedList()` and `setTodoList()`: one of another kind turns the whole list into its kind, and one of the list's own kind is only removed, leaving the item, the other items and the numbering as they were.
 
+The change and the removed trigger are one undo step. In a table cell, or in a column or toggle that doesn't take the list, a trigger stays typed text.
+
 The "/" menu lists **Bullet List**, **Numbered List** and **To-do List**. In the editor UI, the block handle drags one item; hold Alt while dragging to move the whole list.
 
 ## Nesting
