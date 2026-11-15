@@ -11,6 +11,7 @@ mod lists;
 mod nodes;
 mod rich;
 mod source;
+pub(crate) mod structure;
 mod syntax;
 mod table_html;
 pub use atoms::MarkdownAtoms;

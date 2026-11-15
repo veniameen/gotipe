@@ -129,7 +129,12 @@ native composition и её DOM reconciliation; listeners/frame очищаютс�
 отдельным блоком, переписанный пишется без него; блок, который ушёл бы в предыдущий, удерживает
 исходный отступ предыдущего, иначе переписывается (D-102). Блочные защиты TS без снимка
 (`resolveHazards` в `markdown/src/serialization/hazards.ts`, `isBlockEmpty`, `cannotInterrupt`)
-Rust-писатель повторяет в `markdown/hazards.rs` (D-100). Общие случаи — `markdown-line-breaks.json` и `markdown-write-read.json` в
+Rust-писатель повторяет в `markdown/hazards.rs` (D-100). Пункты сырого списка рядом с сырым
+списком того же маркера получают другой маркер (D-107); ограждение или HTML, которые закрыл конец
+файла, получают свою закрывающую строку, когда за ними есть блок (D-106,
+`serialization/closing.ts`). Что читается после такой правки, писатели проверяют чтением структуры
+блоков: `readBlockNodes` в `grammar/blocks.ts`, в Rust — `markdown_parse/structure.rs`. Общие
+случаи — `markdown-line-breaks.json` и `markdown-write-read.json` в
 `crates/gotipe-export/tests/fixtures/`.
 
 HTML/SSR: `packages/core/src/serialization/html.ts` owns the canonical serializer;

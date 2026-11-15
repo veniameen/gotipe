@@ -264,6 +264,11 @@ class Reader {
   }
 }
 
+/** Where the blocks of `text` begin and end; their inline text is not read. */
+export function readBlockNodes(text: string): RootContent[] {
+  return new Reader().blocks(linesFrom(text));
+}
+
 /** Read block structure first, so references declared later resolve in earlier inline text. */
 export function readMarkdown(text: string, atoms?: InlineAtoms): Root {
   const reader = new Reader(atoms);
