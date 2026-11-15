@@ -1,7 +1,7 @@
-import { defineLocale } from "../i18n";
 import type { Locale } from "../types";
 
-export const ru: Locale = defineLocale("ru", {
+/** Russian words of `@gotipe/i18n`; importing it registers nothing. */
+export const ru: Locale = {
   "toolbar.highlight": "Выделение",
   "toolbar.heading": "Заголовок",
   "toolbar.table": "Таблица",
@@ -192,4 +192,4 @@ export const ru: Locale = defineLocale("ru", {
   "math.error.missingArgument": "У {detail} нет аргумента",
   // --- merged table cells (frame 29) ---
   "table.cellsSelected": "Выделено ячеек: {count}",
-});
+};

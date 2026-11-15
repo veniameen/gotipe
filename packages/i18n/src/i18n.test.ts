@@ -1,6 +1,22 @@
 import { describe, expect, it } from "vitest";
 import { createI18n, en, pluralCategory, ru } from "./index";
 
+declare global {
+  interface ImportMeta {
+    glob(
+      pattern: string,
+      options: { query: string; import: string; eager: true },
+    ): Record<string, string>;
+  }
+}
+
+/** The dictionaries' sources, read by Vite at test time. */
+const LOCALE_SOURCES = import.meta.glob("./locales/*.ts", {
+  query: "?raw",
+  import: "default",
+  eager: true,
+});
+
 describe("i18n", () => {
   it("translates with explicit locales and falls back to English", () => {
     const i18n = createI18n({ locale: "ru", locales: { ru, en } });
@@ -43,5 +59,13 @@ describe("i18n", () => {
 
   it("has every key in both locales", () => {
     expect(Object.keys(ru).sort()).toEqual(Object.keys(en).sort());
+  });
+
+  it("registers nothing at import, as sideEffects: false says, and finds en and ru by name (D-72)", () => {
+    expect(Object.keys(LOCALE_SOURCES).sort()).toEqual(["./locales/en.ts", "./locales/ru.ts"]);
+    for (const [path, source] of Object.entries(LOCALE_SOURCES))
+      expect(source, path).not.toContain("defineLocale(");
+    expect(createI18n({ locale: "ru" }).t("code.copy")).toBe(ru["code.copy"]);
+    expect(createI18n({ locale: "de" }).t("code.copy")).toBe(en["code.copy"]);
   });
 });
