@@ -1,6 +1,8 @@
 import type { GoTipeEditor } from "@gotipe/core";
 import type { AwarenessUser, PeerState } from "./provider";
 
+// Public methods keep their JSDoc on a signature without a body: TypeScript keeps it in the
+// declarations, while a comment inside the class body would ship in the bundle (D-167).
 /**
  * In-memory collaboration bridge that syncs multiple editors
  * without a WebSocket server. Designed for local demos and testing.
@@ -22,6 +24,7 @@ export class LocalCollaborationBridge {
    * Join an editor to the collaboration session.
    * Changes from this editor will be broadcast to all others.
    */
+  join(peerId: string, editor: GoTipeEditor, user: AwarenessUser): void;
   join(peerId: string, editor: GoTipeEditor, user: AwarenessUser): void {
     if (editor.isDestroyed) throw new Error("Cannot join a destroyed editor");
     const existing = this.editors.get(peerId);
@@ -116,6 +119,7 @@ export class LocalCollaborationBridge {
   /**
    * Get all peers except the specified one (for showing remote cursors).
    */
+  getPeersFor(peerId: string): PeerState[];
   getPeersFor(peerId: string): PeerState[] {
     return Array.from(this.peers.values()).filter((p) => p.peerId !== peerId);
   }
@@ -123,6 +127,7 @@ export class LocalCollaborationBridge {
   /**
    * Get all peers.
    */
+  getAllPeers(): PeerState[];
   getAllPeers(): PeerState[] {
     return Array.from(this.peers.values());
   }
@@ -130,6 +135,7 @@ export class LocalCollaborationBridge {
   /**
    * Register a callback for peer state changes.
    */
+  onPeersChange(callback: (peers: PeerState[]) => void): () => void;
   onPeersChange(callback: (peers: PeerState[]) => void): () => void {
     this.peersChangeCallbacks.add(callback);
     return () => this.peersChangeCallbacks.delete(callback);
@@ -145,6 +151,7 @@ export class LocalCollaborationBridge {
   /**
    * Remove an editor from the session.
    */
+  leave(peerId: string): void;
   leave(peerId: string): void {
     const unsubs = this.unsubscribes.get(peerId);
     if (unsubs) {
@@ -159,6 +166,7 @@ export class LocalCollaborationBridge {
   /**
    * Disconnect all editors and clean up.
    */
+  destroy(): void;
   destroy(): void {
     for (const [peerId] of this.editors) {
       this.leave(peerId);

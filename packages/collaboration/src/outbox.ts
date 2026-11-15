@@ -35,22 +35,22 @@ type Read = ReturnType<typeof readOperations<"remaining">>;
  * under another peer ID) are found once per handshake and sent first, as one
  * transaction because where theirs ended is unknown. A frame never ends inside
  * a transaction, so a peer never projects half of one.
+ *
+ * `base` is the serialized baseline, read once: only `gotipe.crdt/1` frames repeat
+ * it. `splitting` is set when the server refused the next transaction whole
+ * (`UPDATE_TOO_LARGE`): it is sent in frames that each stand alone. Peers then see
+ * it in pieces, which their schema may refuse until the last piece arrives (see the
+ * provider), but the edit and every later one can still be saved. Comments inside
+ * the class body would ship in the bundle (D-167), so the fields are described here.
  */
 export class Outbox {
   private acknowledged = 0;
   private restored: { json: string; bytes: number }[] = [];
-  /** Serialized baseline, read once: only `gotipe.crdt/1` frames repeat it. */
   private base: { json: string; bytes: number } | null = null;
-  /**
-   * The server refused the next transaction whole (`UPDATE_TOO_LARGE`): send it
-   * in frames that each stand alone. Peers then see it in pieces, which their
-   * schema may refuse until the last piece arrives (see the provider), but the
-   * edit and every later one can still be saved.
-   */
   private splitting = false;
 
-  /** After the server's full state was merged into the editor. */
   synchronize(editor: CollaborationEditor, fullState: Uint8Array): void {
+    // After the server's full state was merged into the editor.
     const missing = readOperations(
       editor.getCollaborationUpdate({ missingFrom: fullState }),
       "acknowledged",
@@ -62,17 +62,14 @@ export class Outbox {
     });
   }
 
-  /** The connection ended: restored operations are found again by the next handshake. */
   disconnect(): void {
+    // The connection ended: restored operations are found again by the next handshake.
     this.restored = [];
   }
 
-  /**
-   * The next frame, or null when the server has everything. With a generation
-   * it is `gotipe.crdt/2`; without one the frame repeats the baseline and must
-   * fit into one message.
-   */
   next(editor: CollaborationEditor, generation: string | null): Frame | null {
+    // The next frame, or null when the server has everything. With a generation it is
+    // `gotipe.crdt/2`; without one the frame repeats the baseline and must fit into one message.
     const base = generation === null ? this.baseline(editor) : null;
     const overhead = base ? base.bytes + 64 : 256;
     const frame = Math.max(1, FRAME_BYTES - overhead);
@@ -133,8 +130,8 @@ export class Outbox {
     return { payloads, receipt, backlog };
   }
 
-  /** Sends the next transaction in standalone frames: the server cannot take it whole. */
   split(): void {
+    // Sends the next transaction in standalone frames: the server cannot take it whole.
     this.splitting = true;
   }
 
@@ -143,18 +140,15 @@ export class Outbox {
     else this.acknowledged = Math.max(this.acknowledged, receipt.through);
   }
 
-  /** Operations the server has not confirmed. */
   pending(editor: CollaborationEditor): number {
+    // Operations the server has not confirmed.
     const local = this.read(editor, this.acknowledged, 1);
     return this.restored.length + local.operations.length + local.remaining;
   }
 
-  /**
-   * Own operations after `acknowledged`: whole transactions up to a frame, a
-   * transaction larger than a frame whole when a message holds it, otherwise
-   * its parts in frames.
-   */
   private local(editor: CollaborationEditor, frame: number, message: number): Read[] | null {
+    // Own operations after `acknowledged`: whole transactions up to a frame, a transaction larger
+    // than a frame whole when a message holds it, otherwise its parts in frames.
     let read = this.read(editor, this.acknowledged, frame);
     if (!read.operations.length) return null;
     if (read.continues) read = this.read(editor, this.acknowledged, message);

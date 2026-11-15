@@ -17,8 +17,8 @@ export class FramePacer {
     this.tokens = burst;
   }
 
-  /** Milliseconds until a frame may leave; 0 means now. A backlog skips the spacing. */
   delay(now: number, backlog = false): number {
+    // Milliseconds until a frame may leave; 0 means now. A backlog skips the spacing.
     this.refill(now);
     const token = this.tokens >= 1 ? 0 : ((1 - this.tokens) * 1000) / this.perSecond;
     const spacing = backlog ? 0 : this.sent + this.spacing - now;
@@ -26,8 +26,8 @@ export class FramePacer {
     return Math.max(0, Math.ceil(Math.max(token, spacing) - 1e-6));
   }
 
-  /** Records a frame that left at `now`. */
   spend(now: number): void {
+    // Records a frame that left at `now`.
     this.refill(now);
     this.tokens -= 1;
     this.sent = now;

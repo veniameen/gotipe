@@ -4,6 +4,7 @@ import os from "node:os";
 import path from "node:path";
 import test from "node:test";
 import { gzipSync } from "node:zlib";
+import { checkComments, keptComments } from "./bundle-comments.mjs";
 import { measureClosure } from "./bundle-graph.mjs";
 
 test("entry shells cannot hide shared chunks, named lazy imports, or workspace dependencies", (context) => {
@@ -46,4 +47,59 @@ test("missing or dynamically unresolvable modules fail instead of shrinking the 
   );
   fs.writeFileSync(entry, 'import "external-package"');
   assert.throws(() => measureClosure(root, ["index.js"], [], new Map()), /Unmeasured dependency/);
+});
+
+test("comments esbuild keeps inside expressions and class bodies are found; statements, annotations and strings are not", () => {
+  const code = [
+    "// src/index.ts",
+    "var A = class {",
+    "  /** member */",
+    "  m() {",
+    "    // statement",
+    "    return 1;",
+    "  }",
+    "};",
+    "var o = {",
+    "  /** property */",
+    "  a: [",
+    "    // element",
+    "    1",
+    "  ],",
+    "  b: f(",
+    "    /* argument */",
+    "    2",
+    "  ),",
+    "  c: /* @__PURE__ */ g(),",
+    "  d: `// not ${'/* a */'} comment`,",
+    "  e: /\\/\\*x/,",
+    "};",
+    "/*! legal */",
+    "//# sourceMappingURL=index.js.map",
+  ].join("\n");
+  assert.deepEqual(
+    keptComments(code).map(({ line, text }) => [line, text]),
+    [
+      [3, "/** member */"],
+      [10, "/** property */"],
+      [12, "// element"],
+      [16, "/* argument */"],
+    ],
+  );
+});
+
+test("a package fails above its known count of kept comments and when the count can be lowered", () => {
+  const comment = { file: "a/dist/index.js", line: 1, text: "/** a */" };
+  const comments = new Map([
+    ["@gotipe/a", [comment]],
+    ["@gotipe/b", []],
+    ["@gotipe/c", [comment]],
+  ]);
+  const errors = checkComments(comments, { "@gotipe/b": 1, "@gotipe/c": 1, "@gotipe/gone": 1 });
+  assert.equal(errors.length, 3);
+  assert.match(errors.join("\n"), /@gotipe\/gone: no build/);
+  assert.match(
+    errors.join("\n"),
+    /@gotipe\/a: 1 comments inside[\s\S]*a\/dist\/index\.js:1 \/\*\* a \*\//,
+  );
+  assert.match(errors.join("\n"), /@gotipe\/b: 0 kept comments, fewer than the known 1/);
 });
