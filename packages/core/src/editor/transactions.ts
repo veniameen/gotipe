@@ -6,9 +6,11 @@ import {
 import { getMarksAt, mapSelectionToDocument } from "../document/tree";
 import { fromWasmDoc, toWasmTransaction } from "../engine/conversion";
 import { GoTipeError } from "../error";
+import type { TypingKind } from "../input/session";
 import type { Selection, Transaction, TransactionContext } from "../types/state";
 import type { MarkView, SelectionView, ViewState } from "../types/view";
 import type { WasmBridge } from "../wasm-bridge";
+import { createTypingGroup } from "./typing-group";
 
 interface TransactionPort {
   collaboration: Pick<
@@ -42,12 +44,16 @@ interface TransactionPort {
   beforeMutation(reason: string): void;
 }
 
-/** Owns transaction acceptance and document/selection undo boundaries. */
+/**
+ * Owns transaction acceptance and document/selection undo boundaries. `dispatch(tr, kind)`:
+ * `kind` is typing from the input layer, which may go on with the open undo step.
+ */
 export function createTransactions(port: TransactionPort) {
   const MAX_HISTORY = 100;
   type HistoryEntry = { state: string; selection: ViewState["selection"] };
   const undoStack: HistoryEntry[] = [];
   const redoStack: HistoryEntry[] = [];
+  const typing = createTypingGroup();
   const captureHistory = (state = port.getDocumentJSON()): HistoryEntry => ({
     state,
     selection: {
@@ -97,7 +103,7 @@ export function createTransactions(port: TransactionPort) {
         ),
       );
     },
-    dispatch(transaction: object): boolean {
+    dispatch(transaction: object, kind?: TypingKind): boolean {
       if (port.destroyed) return false;
 
       const tr = transaction as {
@@ -145,6 +151,7 @@ export function createTransactions(port: TransactionPort) {
         });
 
       if (isStoredMarkToggle) {
+        typing.close();
         if (explicitSelection) port.selection = explicitSelection;
         // Handle as stored marks toggle — no WASM dispatch needed
         const state = port.getViewState();
@@ -180,9 +187,11 @@ export function createTransactions(port: TransactionPort) {
       try {
         if (candidate !== beforeJson) port.beforeMutation("dispatch");
         // Snapshot current state for undo before applying. `metadata.addToHistory: false`
-        // (also read by the native history) commits without an undo step.
+        // (also read by the native history) commits without an undo step and leaves the
+        // typing step open; typing that goes on with it needs no snapshot of its own.
         const recorded = tr.metadata?.addToHistory !== false;
-        const snapshot = port.collaboration.isCollaborating || !recorded ? null : captureHistory();
+        const local = recorded && !port.collaboration.isCollaborating;
+        const snapshot = local && !typing.continues(kind, port.selection) ? captureHistory() : null;
         if (port.collaboration.isCollaborating && port.selection.anchor.blockId)
           port.collaboration.setSelection(JSON.stringify(viewToEngineSelection(port.selection)));
         const before = port.getViewState().blocks;
@@ -203,6 +212,7 @@ export function createTransactions(port: TransactionPort) {
         if (snapshot) undoStack.push(snapshot);
         if (undoStack.length > MAX_HISTORY) undoStack.shift();
         if (recorded) redoStack.length = 0; // new mutation clears redo
+        if (local) typing.record(kind, port.selection);
 
         port.invalidate();
         if (context)
@@ -227,6 +237,7 @@ export function createTransactions(port: TransactionPort) {
     },
 
     undo(): boolean {
+      typing.close();
       if (port.collaboration.isCollaborating) return nativeUndo(false);
       if (undoStack.length === 0) return false;
       port.beforeMutation("undo");
@@ -243,6 +254,7 @@ export function createTransactions(port: TransactionPort) {
     },
 
     redo(): boolean {
+      typing.close();
       if (port.collaboration.isCollaborating) return nativeUndo(true);
       if (redoStack.length === 0) return false;
       port.beforeMutation("redo");
@@ -269,6 +281,7 @@ export function createTransactions(port: TransactionPort) {
         : redoStack.length > 0;
     },
     resetHistory(previous?: HistoryEntry) {
+      typing.close();
       if (port.collaboration.isCollaborating) {
         undoStack.length = 0;
         redoStack.length = 0;

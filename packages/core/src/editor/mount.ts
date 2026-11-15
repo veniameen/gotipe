@@ -5,6 +5,7 @@ import { installDOMSelection } from "../dom/selection";
 import type { GoTipeError } from "../error";
 import { installBeforeInput } from "../input/before-input";
 import { installComposition } from "../input/composition";
+import type { TypingKind } from "../input/session";
 import type { Document } from "../types/block";
 import type { MarkView, SelectionView, ViewState } from "../types/view";
 
@@ -15,7 +16,8 @@ export interface MountPort {
   clipboard: Pick<ClipboardHandler, "onPaste" | "onCopy" | "onCut" | "onDrop">;
   getViewState(): ViewState;
   getDocument(): Document;
-  dispatch(transaction: object): boolean;
+  /** `typing`: the input goes on with the undo step of the typing before it. */
+  dispatch(transaction: object, typing?: TypingKind): boolean;
   liftListItem(): boolean;
   publishSelection(): void;
   redrawBlocks(ids: string[]): void;
@@ -148,6 +150,7 @@ export function mountSurface(
       port.storedMarks ?? getMarksAt(port.getViewState().blocks, id, offset),
     commit: (steps, caret) => {
       inputHandledByWasm = true;
+      // A composition is an undo step of its own: no `typing`.
       port.dispatch({ steps, selection: { type: "cursor", ...caret } });
       port.storedMarks = null;
       scheduleSelectionRestore();
@@ -219,7 +222,7 @@ export function mountSurface(
     getViewState: () => port.getViewState(),
     getDocument: () => port.getDocument(),
     reportError: (error) => port.reportError(error),
-    dispatch: (transaction) => port.dispatch(transaction),
+    dispatch: (transaction, typing) => port.dispatch(transaction, typing),
     liftListItem: () => port.liftListItem(),
     publishSelection,
     scheduleSelectionRestore,

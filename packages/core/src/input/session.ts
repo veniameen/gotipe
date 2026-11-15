@@ -3,6 +3,12 @@ import { GoTipeError } from "../error";
 import type { Document } from "../types/block";
 import type { MarkView, SelectionView, ViewState } from "../types/view";
 
+/**
+ * What an input transaction is for the undo history (editor/typing-group.ts): text typed at
+ * the caret or over selected text (`insert`), text deleted with Backspace or Delete (`delete`).
+ */
+export type TypingKind = "insert" | "delete";
+
 /** Mutable input state is owned by the mounted editor; handlers use this narrow port. */
 export interface InputHost {
   readonly editable: boolean;
@@ -16,8 +22,11 @@ export interface InputHost {
   getViewState(): ViewState;
   getDocument(): Document;
   reportError(error: GoTipeError): void;
-  /** `false` when a transaction filter or the engine rejected the change. */
-  dispatch(transaction: object): boolean;
+  /**
+   * `false` when a transaction filter or the engine rejected the change. `typing` lets it
+   * continue the undo step of the typing before it.
+   */
+  dispatch(transaction: object, typing?: TypingKind): boolean;
   liftListItem(): boolean;
   publishSelection(): void;
   scheduleSelectionRestore(): void;

@@ -54,7 +54,8 @@ React/content/table-layout владеет временной шириной пр
 | Public document JSON / атрибуты / selection | `document/decode.ts`, `attributes.ts`, `selection.ts` |
 | ID блоков и записей всех пакетов (UUID v4 и без безопасного контекста, HTTP) | `document/id.ts` — публичный `createId()`; прямой `crypto.randomUUID()` в `packages/` отклоняет `check:architecture` |
 | Схема и предварительная атомарная проверка JS/WASM | `engine/schema.ts`, `validate.ts`, `js-transactions.ts`, `wasm-bridge.ts` |
-| История, фильтры и события транзакций | `editor/transactions.ts`, `transaction-hooks.ts` |
+| История, фильтры и события транзакций | `editor/transactions.ts`, `editor/transaction-filters.ts` |
+| Шаг набора: подряд набранный или удалённый текст — один шаг отмены (пауза 500 мс, смена выделения, другой вид правки) | `editor/typing-group.ts`; вид ввода (`TypingKind`) передают обработчики `input/` через порт монтирования, выделение с прежним значением сохраняет объект (`select` в `editor.ts`) |
 | Lifecycle extensions/plugins и decoration layers | `editor/extension-lifecycle.ts` |
 | Настроенные paste rules и изолированный draft | `editor/clipboard-options.ts`, `clipboard/paste-rules.ts` |
 | Хуки вставки простого текста (`transformPastedText`, `parsePastedText`) | `clipboard/handler.ts` (`pasteText`), контекст со схемой — `editor/clipboard-options.ts` |
@@ -151,7 +152,8 @@ call this implementation. The native `crates/gotipe-export/src/html.rs` (Cloud,
 check `crates/gotipe-export/tests/fixtures/html-parity.json`. `html/js.rs` mirrors the
 JavaScript attribute conversions, `html/safety.rs` the URL and color checks.
 
-Нативный IME: `core/src/input/composition.ts` планирует одну транзакцию ввода,
+Нативный IME: `core/src/input/composition.ts` планирует одну транзакцию ввода — свой шаг
+отмены, шаг набора она не продолжает;
 `composition-dom.ts` временно сохраняет идентичность затронутых DOM-узлов до передачи
 документа обратно renderer. Браузерная перестройка DOM не является моделью документа.
 `composition-interruption.ts` owns recoverable `COMPOSITION_CONFLICT` and suppression of

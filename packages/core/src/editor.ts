@@ -82,13 +82,14 @@ export async function createEditorWithLoader(
   const atoms = createAtomSelection(schema.marks, () => view.get().blocks);
   // `changed`: the document changed since the view was last read (a transaction, a merge).
   const select = (value: ViewState["selection"], changed = false) => {
-    if (!atoms.enabled) {
-      currentSelection = value;
-      return;
+    let next = value;
+    if (atoms.enabled) {
+      if (changed) view.invalidate();
+      next = atoms.snap(value, currentSelection);
+      view.invalidate(); // the view read above holds the previous selection
     }
-    if (changed) view.invalidate();
-    currentSelection = atoms.snap(value, currentSelection);
-    view.invalidate(); // the view read above holds the previous selection
+    // The same selection keeps its object: the typing undo step follows it (typing-group.ts).
+    if (JSON.stringify(next) !== JSON.stringify(currentSelection)) currentSelection = next;
   };
 
   let extensionLifecycle: ReturnType<typeof createExtensionLifecycle> | null = null;
@@ -510,7 +511,10 @@ export async function createEditorWithLoader(
           clipboard: clipboardHandler,
           getViewState: () => this.getViewState(),
           getDocument: () => this.getJSON(),
-          dispatch: (transaction) => this.dispatch(transaction),
+          dispatch: (transaction, typing) => {
+            transactionFilters.assertIdle();
+            return transactions.dispatch(transaction, typing);
+          },
           liftListItem: () => this.chain().setBlockType("paragraph").run(),
           publishSelection: () => {
             view.invalidate();

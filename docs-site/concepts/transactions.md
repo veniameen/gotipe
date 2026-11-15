@@ -7,9 +7,10 @@ license: MIT
 
 Every change to a document is a transaction: an ordered list of steps plus an optional
 selection. The editor checks the whole result against the schema before anything changes,
-then commits it as one undo step. Typing, paste, [commands](/docs/concepts/commands) and
-collaboration all go through this path. Use transactions directly when a command doesn't
-fit, for example to edit a block by ID from outside the editor.
+then commits it as one undo step; text typed in a row shares one (see [History](#history)).
+Typing, paste, [commands](/docs/concepts/commands) and collaboration all go through this
+path. Use transactions directly when a command doesn't fit, for example to edit a block by
+ID from outside the editor.
 
 ## Dispatch a transaction
 
@@ -168,18 +169,36 @@ Each committed dispatch is one undo step that restores the document and the sele
 from before it. `editor.undo()` and `editor.redo()` return `false` when there is nothing to
 undo or redo, and `getViewState().toolbar` reports `canUndo` and `canRedo`.
 
-- A new dispatch clears the redo stack. The editor keeps the last 100 steps.
+Typing is the exception. Text typed in a row in one block is one undo step, and so is text
+deleted with Backspace or Delete in a row. Typing over selected text starts a step that the
+following typing joins, and deleting it one that the following deleting joins, also when
+the selection spans blocks: one Undo brings the selected text back. A whole selected block,
+such as an image, is replaced or deleted in a step of its own. The step ends when:
+
+- you pause for 500 ms, the gap the collaboration history groups by too;
+- the caret or the selection moves, even back to the same place, or typing goes to another
+  block;
+- typing turns into deleting, or deleting into typing;
+- any other change commits: Enter, a line break, paste, an input rule, a command or a
+  `dispatch`, a formatting toggle at the caret, Undo or Redo.
+
+An IME composition is one undo step of its own. Only the editor's own input is grouped:
+every `dispatch` is a step of its own, even one that inserts a character at the caret.
+
+- A new dispatch clears the redo stack. The editor keeps the last 100 steps, and text typed
+  in a row is one of them however long it is.
 - Selection-only transactions, stored-mark toggles, cancelled and failed dispatches add no
-  undo step.
+  undo step. A character a filter cancels doesn't end the typing step.
 - `setContent` clears the history. Pass `{ addToHistory: true }` to make the replacement
   one undo step instead.
 - A transaction with `metadata: { addToHistory: false }` is committed without an undo
-  step and leaves the redo stack as it is. Use it for changes the user did not make, as
-  [TrailingNode](/docs/extensions/editing-aids#trailing-node) does. Without collaboration,
-  Undo of an earlier step restores the document from before that step, so such a change
-  goes with it.
+  step, leaves the redo stack as it is and doesn't end the typing step. Use it for changes
+  the user did not make, as [TrailingNode](/docs/extensions/editing-aids#trailing-node)
+  does. Without collaboration, Undo of an earlier step restores the document from before
+  that step, so such a change goes with it.
 - After `enableCollaboration`, history moves to the CRDT: Undo reverts your own changes and
-  keeps the other peers' edits.
+  keeps the other peers' edits. It groups your typing by the same 500 ms pause within one
+  block; see [Limitations](#limitations) for where its steps differ.
 
 To make several changes one undo step, put them in one transaction or one command chain.
 
@@ -191,9 +210,11 @@ and commands still change the document, so programmatic edits keep working.
 ## Limitations
 
 > [!NOTE]
-> Native typing dispatches one transaction per input event, so Undo reverts typed text one
-> input at a time; there is no grouping by time. IME composition commits as one
-> transaction.
+> With collaboration, the CRDT history groups typing by the pause and the block alone:
+> typing and deleting go into one step, moving the caret inside the block doesn't end it,
+> and typing over a selection is two steps, the first character and the rest. Without
+> collaboration each IME composition is its own undo step, so Korean, where every syllable
+> is a composition, is undone a syllable at a time.
 
 ## Related
 

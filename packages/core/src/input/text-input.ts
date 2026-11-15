@@ -5,11 +5,13 @@ import { type InputHost, reportInputError, resolveSelectionForInput } from "./se
 export function insertInputText(data: string, host: InputHost): void {
   const selection = resolveSelectionForInput(host);
   if (!selection.anchor.blockId) return;
+  // A line break is an undo step of its own; other text goes on with the typing step.
+  const typing = data.includes("\n") ? undefined : "insert";
   try {
     const marks = insertionMarks(host, selection);
     let caret: { blockId: string; offset: number } | null;
     if (selection.type !== "text" || selection.anchor.blockId !== selection.head.blockId) {
-      caret = replaceStructuredSelection(host, selection, [{ text: data, marks }]);
+      caret = replaceStructuredSelection(host, selection, typing, [{ text: data, marks }]);
     } else {
       const from = Math.min(selection.anchor.offset, selection.head.offset);
       const to = Math.max(selection.anchor.offset, selection.head.offset);
@@ -19,7 +21,9 @@ export function insertInputText(data: string, host: InputHost): void {
       steps.push({ type: "insertText", blockId, offset: from, text: data, marks });
       const after = { blockId, offset: from + data.length };
       host.handled = true;
-      caret = host.dispatch({ steps, selection: { type: "cursor", ...after } }) ? after : null;
+      caret = host.dispatch({ steps, selection: { type: "cursor", ...after } }, typing)
+        ? after
+        : null;
     }
     host.scheduleSelectionRestore();
     // A rejected input (a filter, a character limit) changed nothing: no input rule runs on
