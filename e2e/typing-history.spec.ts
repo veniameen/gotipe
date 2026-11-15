@@ -8,7 +8,7 @@ declare global { interface Window { __GOTIPE_EDITOR__?: GoTipeEditor } }
 const START = new Date('2026-11-15T12:00:00Z').getTime();
 
 // Keys of the keyboard layout only: Playwright's Firefox types other characters as IME
-// compositions, and a composition is an undo step of its own. Unit tests cover Unicode.
+// compositions. Unit tests cover Unicode and compositions, which go on with the typing step.
 
 test.describe('Undo after typing', () => {
   test.beforeEach(async ({ page }) => {
