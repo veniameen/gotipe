@@ -40,8 +40,8 @@ editor.chain().insertTable({ rows: 3, cols: 3, withHeader: true }).run();
 | Command | Description |
 | --- | --- |
 | `insertTable({ rows, cols, withHeader })` | Inserts an empty table after the current block. `rows` and `cols` must be positive integers with at most 5,000 cells in all, otherwise the command throws `TRANSFORM_ERROR`. `withHeader` makes the first row a header row. |
-| `goToNextCell()` | Moves to the next cell in reading order and selects its text. |
-| `goToPrevCell()` | Moves to the previous cell and selects its text. |
+| `goToNextCell()` | Moves to the next cell of the same table in reading order and selects its text. In the table's last cell it does nothing, and `run()` returns `false`. |
+| `goToPrevCell()` | Moves to the previous cell of the same table and selects its text; in its first cell `run()` returns `false`. |
 
 The "/" menu lists **Table** and inserts a 3 × 3 table with a header row.
 
@@ -130,7 +130,7 @@ setColumnType(editor, tableId, 2, "number", { yes: "yes", no: "no" });
 | Left / Right on a column resize handle | Narrow or widen the column by 16 px |
 | Escape during a resize drag | Cancel the resize |
 
-Tab in the last cell does not add a row. Tab skips the positions a merged cell covers: they have no cell of their own.
+Tab in the last cell does not add a row and does not move into the next table: like Shift+Tab in the first cell, it leaves the key to the browser, which moves focus to the next control — in the editor UI, the table's Add row button. Tab skips the positions a merged cell covers: they have no cell of their own.
 
 ## In the editor UI
 

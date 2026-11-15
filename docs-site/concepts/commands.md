@@ -133,7 +133,7 @@ extension doesn't offer stages nothing (see `values` in
 | `insertTable({ rows, cols, withHeader? })` | Insert a table after the current block; `withHeader` makes the first row header cells. At most 5,000 cells. |
 | `insertColumns(count = 2)` | Insert 1 to 12 columns, each with an empty paragraph. Needs the `Columns` extension. |
 | `insertToggle()` | Insert an open toggle with the summary text "Toggle heading" and an empty paragraph. |
-| `goToNextCell()`, `goToPrevCell()` | Select the text of the next or previous table cell. |
+| `goToNextCell()`, `goToPrevCell()` | Select the text of the next or previous cell of the same table; at its last or first cell, return `false` from `run()`. |
 
 Rows and columns of an existing table change with `editTable`, a function rather than a
 chain command. It dispatches one transaction and returns its result:

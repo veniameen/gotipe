@@ -4,7 +4,7 @@
 |---|---|---|
 | Документ/транзакции | `crates/gotipe-core`, `gotipe-schema` | блоки, marks, UTF-16 offsets, атомарность |
 | JS и DOM-ввод | `packages/core/src` | createEditor, extensions, selection/history/clipboard |
-| WASM | `crates/gotipe-wasm`, `packages/wasm`, core/wasm-bridge | тот же контракт, явная загрузка |
+| WASM | `crates/gotipe-wasm`, `packages/wasm`, core/wasm-bridge | тот же контракт, явная загрузка; в Node — условие `node` (`packages/wasm/node.js`) читает бинарник из пакета |
 | Markdown | `packages/markdown/src` | parser/serializer/source-map, нетронутые байты |
 | Синхронизация | `crates/gotipe-crdt`, `packages/collaboration` | convergence, transport, awareness |
 | Адаптеры | `packages/react`, `vue`, `svelte`, `solid` | render/subscription/lifecycle, один документ |
@@ -38,7 +38,8 @@ GoTipe не владеет Wiki приложения SpecOrbit: страницы
 Таблицы: core/tables планирует одну атомарную структурную операцию;
 `core/table/grid.ts` — сетка HTML (охваты, позиции, диапазон по объединённым ячейкам),
 `table/layout.ts` — план правки и проверка сетки, `table/steps.ts` — шаги с сохранением
-ID; Rust-копия — `crates/gotipe-core/src/table` (`edit_table`), общие случаи —
+ID, `table/navigation.ts` — соседняя ячейка для Tab/Shift+Tab в пределах своей таблицы;
+Rust-копия — `crates/gotipe-core/src/table` (`edit_table`), общие случаи —
 `crates/gotipe-core/tests/fixtures/table-edits.json`.
 React/content/table-layout владеет временной шириной при drag и controls,
 `table-cells.tsx` — охватами ячеек и выделением ячеек; меню «Ячейки» —

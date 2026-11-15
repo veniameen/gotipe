@@ -36,7 +36,7 @@ The "/" menu lists **Math Equation** (it also answers to `math`, `equation`, `la
 
 | Key or input | Action |
 | --- | --- |
-| `$$` as the whole text of a block | Turns the block into a formula (see the note) |
+| `$$` as the whole text of a block | Turns the block into an empty formula, with the caret in its source |
 | Shift+Enter | New line in the source |
 | Enter | Splits the formula into two math blocks at the caret |
 | Tab, Shift+Tab, Escape | With `CodeBlock` installed, the same as in a code block: two spaces in, two spaces out, a paragraph after a top-level formula |
@@ -173,7 +173,7 @@ GoTipe escapes ordinary document text, but the HTML a block renderer returns is 
 | `getText()` | The source |
 
 > [!NOTE]
-> Math is always a block node; a formula inside a line is the `InlineMath` atom ([Inline atoms](/docs/extensions/inline-atoms)), and `display: "inline"` is only a hint for your renderer. The `$$` rule keeps the two dollar signs as the start of the TeX source; delete them after the conversion. `getMarkdown()` writes a formula as a `$$` block, which GitHub and most Markdown renderers show as math, and `parseMarkdown` reads `$$` blocks and ```` ```math ```` fences back as formulas with the source unchanged.
+> Math is always a block node; a formula inside a line is the `InlineMath` atom ([Inline atoms](/docs/extensions/inline-atoms)), and `display: "inline"` is only a hint for your renderer. Enter splits a formula into two math blocks; use Shift+Enter for a new line in the source. `getMarkdown()` writes a formula as a `$$` block, which GitHub and most Markdown renderers show as math, and `parseMarkdown` reads `$$` blocks and ```` ```math ```` fences back as formulas with the source unchanged.
 
 ## Related
 

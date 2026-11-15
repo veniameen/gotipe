@@ -128,7 +128,8 @@ export const TodoList = defineExtension({
         editor.dispatch({
           steps: [{ type: "deleteText", blockId, from: 0, to: 4 }],
         });
-        editor.chain().toggleTodoList().run();
+        // The task keeps the block's ID; in an empty task the rule checks it.
+        editor.chain().setTodoList().setBlockAttrs(blockId, { checked: true }).run();
       },
     },
   ],

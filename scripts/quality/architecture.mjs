@@ -36,6 +36,8 @@ export function checkBudgets(files, baseline, strict = false) {
 }
 
 const packageOf = (name) => name.match(/^packages\/([^/]+)\//)?.[1];
+/** The `node` export conditions of the WASM packages: Node cannot fetch a `file:` URL. */
+const NODE_BINARY_LOADERS = new Set(["packages/wasm/node.js", "packages/export-wasm/node.js"]);
 const framework = /^(?:react(?:-dom)?(?:\/.*)?|vue|svelte(?:\/.*)?|solid-js(?:\/.*)?)$/;
 const uiPackages = new Set([
   "react",
@@ -87,8 +89,8 @@ export function checkImports(files) {
         name === "packages/block-editor/src/highlight/shiki.ts"
       ) {
         // Explicit optional host adapter; kept out of the main/core entry.
-      } else if (name === "packages/export-wasm/node.js" && specifier === "node:fs/promises") {
-        // Native platform file loading is isolated in the Node condition of the optional exporter.
+      } else if (NODE_BINARY_LOADERS.has(name) && specifier === "node:fs/promises") {
+        // Native platform file loading is isolated in the Node condition of a WASM package.
       } else {
         errors.push(`${name}: unapproved runtime dependency ${specifier}`);
       }

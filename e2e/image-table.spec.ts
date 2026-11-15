@@ -120,6 +120,41 @@ test.describe('Table interactions', () => {
     await page.keyboard.press('Shift+Tab');
     expect(await page.evaluate(() => window.__GOTIPE_EDITOR__!.getViewState().selection.anchor.blockId)).toBe('cell-0-0');
   });
+  test('Tab and Shift+Tab stay in their table at its edges (D-10)', async ({ page }) => {
+    const before = await page.evaluate(() => {
+      const table = (id: string) => ({
+        id, type: 'table', attrs: {}, content: null, children: [0, 1].map((row) => ({
+          id: `${id}-row-${row}`, type: 'tableRow', attrs: {}, content: null, children: [0, 1].map((column) => ({
+            id: `${id}-${row}-${column}`, type: 'tableCell', attrs: {},
+            content: [{ text: `${id} ${row}:${column}`, marks: [] }], children: [],
+          })),
+        })),
+      });
+      window.__GOTIPE_EDITOR__!.setContent({ version: 1, blocks: [table('first'), table('second')] });
+      return window.__GOTIPE_EDITOR__!.getJSON();
+    });
+    const anchor = () => page.evaluate(() => window.__GOTIPE_EDITOR__!.getViewState().selection.anchor.blockId);
+    // At the edge the key is not captured: the browser moves focus to the next control, the
+    // table's own Add row button, and no cell of the other table takes the caret.
+    const focusedCell = () => page.evaluate(() =>
+      document.activeElement?.closest('td, th')?.getAttribute('data-block-id') ?? null);
+    await page.locator('[data-block-id="first-1-0"]').click();
+    await page.keyboard.press('Tab');
+    expect(await anchor()).toBe('first-1-1');
+    expect(await focusedCell()).toBe('first-1-1');
+    await page.keyboard.press('Tab');
+    expect(await anchor()).toBe('first-1-1');
+    expect(await focusedCell()).toBeNull();
+    await expect(page.getByRole('button', { name: 'Add row', exact: true }).first()).toBeFocused();
+    await page.locator('[data-block-id="second-0-0"]').click();
+    await page.keyboard.press('Shift+Tab');
+    expect(await anchor()).toBe('second-0-0');
+    expect(await focusedCell()).toBeNull();
+    await page.locator('[data-block-id="second-0-0"]').click();
+    await page.keyboard.press('Tab');
+    expect(await anchor()).toBe('second-0-1');
+    expect(await page.evaluate(() => window.__GOTIPE_EDITOR__!.getJSON())).toEqual(before);
+  });
   test('adding a row changes the document once and Undo restores it', async ({ page }) => {
     const table = page.locator('.gotipe-table-wrapper'); await table.hover();
     await table.getByRole('button', { name: 'Add row', exact: true }).click();

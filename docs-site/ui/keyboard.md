@@ -41,13 +41,15 @@ editing shortcuts are ignored. Menus and tooltips show only keys that are bound.
 | Where | Shortcut | Action |
 |---|---|---|
 | List | Tab / Shift+Tab | Indent / outdent the item (bound by `BulletList` for every list) |
-| Table | Tab / Shift+Tab | Next / previous cell in document order, with its text selected |
+| Table | Tab / Shift+Tab | Next / previous cell of the same table, row by row, with its text selected |
 | Code block | Tab | Insert two spaces |
 | Code block | Shift+Tab | Remove up to two spaces at the start of the line |
 | Code block | Escape | Add a paragraph after a top-level code block and move there |
 
-Elsewhere Tab is not captured and moves focus out of the editor, as it does in the last
-table cell.
+Elsewhere Tab is not captured and moves focus to the next control, usually out of the
+editor. Tab in the last cell of a table and Shift+Tab in its first are not captured either:
+they never move the caret into another table. In the editor UI, Tab from the last cell
+reaches the table's Add row button.
 
 ## Editing keys
 
@@ -72,11 +74,11 @@ Type these in an empty paragraph:
 | `-` or `*`, then a space | Bullet list | `BulletList` |
 | `1.` or any number and a dot, then a space | Numbered list starting at that number | `OrderedList` |
 | `[]`, then a space | To-do list | `TodoList` |
-| `[x]`, then a space | To-do list; the item starts unchecked | `TodoList` |
+| `[x]`, then a space | To-do list with the item checked | `TodoList` |
 | `>`, then a space | Quote | `Blockquote` |
 | ```` ``` ````, an optional language, then a space | Code block | `CodeBlock` |
 | `---` | Divider | `Divider` |
-| `$$` | Math block | `Math` |
+| `$$` | Empty math block | `Math` |
 | `/` | Slash menu; also after a space inside a line | UI |
 
 Anywhere in a line, `**text**`, `*text*`, `~~text~~` and `` `text` `` become bold, italic,

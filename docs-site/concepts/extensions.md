@@ -124,8 +124,8 @@ const keybindings: Keybinding[] = [
     key: "Mod-Alt-n",
     command: (editor) => editor.chain().setBlockType("note", { tone: "info" }).run(),
   },
-  // The Table extension's binding. At the last cell run() returns false,
-  // so Tab falls through to the browser.
+  // The Table extension's binding. At the table's last cell run() returns false,
+  // so Tab falls through to the browser instead of entering the next table.
   { key: "Tab", when: "inTable", command: (editor) => editor.chain().goToNextCell().run() },
 ];
 ```

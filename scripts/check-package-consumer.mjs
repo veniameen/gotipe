@@ -148,7 +148,17 @@ try {
   assert.equal(new TextDecoder().decode(pdf.subarray(0,5)), '%PDF-');
   assert.deepEqual([...docx.subarray(0,2)], [80,75]);
 } finally { editor.destroy(); }
-console.log('Clean tarball consumer: ESM, CJS, types, headless SSR, Markdown, PDF and DOCX passed.');
+// The default loader reads the binary through the node condition of @gotipe/wasm (D-12).
+const { createEditor } = await import('@gotipe/core');
+const { DefaultPreset } = await import('@gotipe/core/presets');
+const wasmEditor = await createEditor({ extensions: [DefaultPreset], engine: 'wasm', content: document });
+try {
+  assert.equal(wasmEditor.engine, 'wasm');
+  assert.ok(wasmEditor.dispatch({ steps: [{ type: 'insertText', blockId: 'p', offset: 0, text: 'Node ', marks: [] }] }));
+  assert.equal(wasmEditor.getText(), 'Node Tarball Привет 😀');
+  assert.match(exports.exportToMarkdown(wasmEditor), /^Node Tarball Привет/);
+} finally { wasmEditor.destroy(); }
+console.log('Clean tarball consumer: ESM, CJS, types, headless SSR, Markdown, PDF, DOCX and the WASM engine in Node passed.');
 `;
 writeFileSync(path.join(consumer, "smoke.mjs"), smoke);
 process.stdout.write(run(process.execPath, ["smoke.mjs"], consumer));

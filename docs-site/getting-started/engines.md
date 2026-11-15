@@ -65,9 +65,12 @@ remote ones.
 
 ## Loading the binary
 
-The first `createEditor` call that needs WASM imports `@gotipe/wasm`. The module locates
-`gotipe_wasm_bg.wasm` with `new URL(…, import.meta.url)` and fetches it. The module is
-loaded once per page; if loading fails, the next `createEditor` call tries again.
+The first `createEditor` call that needs WASM imports `@gotipe/wasm`. In the browser the
+module locates `gotipe_wasm_bg.wasm` with `new URL(…, import.meta.url)` and fetches it. In
+Node, which can't fetch a `file:` URL, the package's `node` export condition reads the
+binary from the installed package instead; browser bundles never include that entry. The
+module is loaded once per page or process; if loading fails, the next `createEditor` call
+tries again.
 
 - Your bundler must emit the `.wasm` file as an asset. Vite does in production builds; for
   its dev server, see [installation](/docs/getting-started/installation#the-wasm-engine).
@@ -78,10 +81,10 @@ loaded once per page; if loading fails, the next `createEditor` call tries again
 ### Loading the binary yourself
 
 `createEditorWithLoader(options, loader)` takes your own loader instead of the default
-one. Use it when the bundler can't emit the asset, when the binary lives on a CDN, or in
-Node, where the default loader can't fetch a `file:` URL.
+one. Use it when the bundler can't emit the asset or when the binary lives on a CDN. With
+Vite, for example:
 
-```ts tab="Vite" title="editor.ts"
+```ts title="editor.ts"
 import { createEditorWithLoader, type WasmModuleLoader } from "@gotipe/core";
 import { DefaultPreset } from "@gotipe/core/presets";
 import wasmUrl from "@gotipe/wasm/pkg/gotipe_wasm_bg.wasm?url";
@@ -89,24 +92,6 @@ import wasmUrl from "@gotipe/wasm/pkg/gotipe_wasm_bg.wasm?url";
 const loadWasm: WasmModuleLoader = async () => {
   const wasm = await import("@gotipe/wasm");
   await wasm.default({ module_or_path: wasmUrl });
-  return wasm;
-};
-
-const editor = await createEditorWithLoader(
-  { extensions: [DefaultPreset], engine: "wasm" },
-  loadWasm,
-);
-```
-
-```ts tab="Node" title="editor.ts"
-import { readFile } from "node:fs/promises";
-import { createEditorWithLoader, type WasmModuleLoader } from "@gotipe/core";
-import { DefaultPreset } from "@gotipe/core/presets";
-
-const loadWasm: WasmModuleLoader = async () => {
-  const wasm = await import("@gotipe/wasm");
-  const file = new URL(import.meta.resolve("@gotipe/wasm/pkg/gotipe_wasm_bg.wasm"));
-  await wasm.default({ module_or_path: await readFile(file) });
   return wasm;
 };
 

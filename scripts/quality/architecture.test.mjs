@@ -67,6 +67,18 @@ test("core cannot import UI or an external utility; adapter peers are allowed", 
     0,
   );
 });
+test("only the Node conditions of the WASM packages read files", () => {
+  const nodeEntry = 'import { readFile } from "node:fs/promises";';
+  for (const name of ["packages/wasm/node.js", "packages/export-wasm/node.js"])
+    assert.deepEqual(checkImports([{ name, source: nodeEntry }]), []);
+  for (const name of ["packages/core/src/wasm-loader.ts", "packages/wasm/src/index.ts"])
+    assert.equal(checkImports([{ name, source: nodeEntry }]).length, 1);
+  assert.equal(
+    checkImports([{ name: "packages/wasm/node.js", source: 'import "node:child_process";' }])
+      .length,
+    1,
+  );
+});
 test("third-party parser cannot be reintroduced even before release", () => {
   const files = [
     { name: "packages/markdown/src/parse.ts", source: 'import "mdast-util-from-markdown";' },

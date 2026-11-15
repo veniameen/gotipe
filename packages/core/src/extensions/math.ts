@@ -19,7 +19,12 @@ export const Math = defineExtension({
   inputRules: [
     {
       pattern: /^\$\$$/,
-      handler: (editor) => editor.chain().setBlockType("math", { display: "block" }).run(),
+      handler: (editor) => {
+        const blockId = editor.getViewState().selection.anchor.blockId;
+        // Delete the trigger first: the formula starts empty.
+        editor.dispatch({ steps: [{ type: "deleteText", blockId, from: 0, to: 2 }] });
+        editor.chain().setBlockType("math", { display: "block" }).run();
+      },
     },
   ],
   slashCommands: [
