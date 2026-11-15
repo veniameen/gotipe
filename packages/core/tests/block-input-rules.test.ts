@@ -58,6 +58,8 @@ async function typing(engine: Engine, content: Document, caret: string) {
 
 const task = (id: string, checked: boolean, children: Block[] = []): Block =>
   block(id, "todoItem", [], { checked }, children);
+const listItem = (id: string, text: string, children: Block[] = []): Block =>
+  block(id, "listItem", text ? [{ text, marks: [] }] : [], {}, children);
 
 describe.each(ENGINES)("%s block input rules (D-11)", (engine) => {
   it("`[x] ` turns an empty paragraph into a checked task", async () => {
@@ -120,6 +122,81 @@ describe.each(ENGINES)("%s block input rules (D-11)", (engine) => {
     expect(view.editor.getViewState().selection.anchor).toEqual({ blockId: "p", offset: 0 });
     view.type("x^2");
     expect(view.blocks()[1]!.content).toBe("x^2");
+    expect(view.errors).toEqual([]);
+  });
+});
+
+describe.each(ENGINES)("%s list rules in a list of the same kind (D-127)", (engine) => {
+  it.each(["- ", "* "])(
+    "`%s` in an empty bullet item removes the trigger and leaves the list as it was",
+    async (trigger) => {
+      const list = block("list", "bulletList", null, {}, [
+        listItem("first", "First"),
+        listItem("p", ""),
+        listItem("last", "Last"),
+      ]);
+      const view = await typing(engine, doc(list), "p");
+      view.type(trigger);
+      expect(view.blocks()).toEqual([list]);
+      expect(view.editor.getViewState().selection.anchor).toEqual({ blockId: "p", offset: 0 });
+      view.type("x");
+      expect(view.blocks()[0]!.children[1]).toEqual(listItem("p", "x"));
+      expect(view.errors).toEqual([]);
+    },
+  );
+
+  it("`1. ` in an empty numbered item keeps the list and its numbering", async () => {
+    const list = block("list", "orderedList", null, { start: 3 }, [
+      listItem("first", "Third"),
+      listItem("p", ""),
+    ]);
+    const view = await typing(engine, doc(list), "p");
+    view.type("1. ");
+    expect(view.blocks()).toEqual([list]);
+    expect(view.editor.getViewState().selection.anchor).toEqual({ blockId: "p", offset: 0 });
+    expect(view.errors).toEqual([]);
+  });
+
+  it("`[] ` in an empty task keeps the tasks and their marks", async () => {
+    const done = task("done", true);
+    done.content = [{ text: "Done", marks: [] }];
+    const list = block("tasks", "todoList", null, {}, [done, task("p", false)]);
+    const view = await typing(engine, doc(list), "p");
+    view.type("[] ");
+    expect(view.blocks()).toEqual([list]);
+    expect(view.editor.getViewState().selection.anchor).toEqual({ blockId: "p", offset: 0 });
+    expect(view.errors).toEqual([]);
+  });
+
+  it("`- ` in an empty item of a nested list keeps both lists", async () => {
+    const nested = block("nested", "bulletList", null, {}, [
+      listItem("inner", "Inner"),
+      listItem("p", ""),
+    ]);
+    const list = block("list", "bulletList", null, {}, [listItem("outer", "Outer", [nested])]);
+    const view = await typing(engine, doc(list), "p");
+    view.type("- ");
+    expect(view.blocks()).toEqual([list]);
+    expect(view.errors).toEqual([]);
+  });
+
+  it("`1. ` in an empty bullet item still turns the list into a numbered one", async () => {
+    const list = block("list", "bulletList", null, {}, [
+      listItem("first", "First"),
+      listItem("p", ""),
+    ]);
+    const view = await typing(engine, doc(list), "p");
+    view.type("1. ");
+    expect(view.blocks()).toEqual([{ ...list, type: "orderedList", attrs: { start: 1 } }]);
+    expect(view.errors).toEqual([]);
+  });
+
+  it("`- ` in an empty paragraph still makes a bullet list", async () => {
+    const view = await typing(engine, doc(paragraph("p", "")), "p");
+    view.type("- ");
+    expect(view.blocks()).toMatchObject([
+      { type: "bulletList", children: [{ id: "p", type: "listItem", content: [] }] },
+    ]);
     expect(view.errors).toEqual([]);
   });
 });

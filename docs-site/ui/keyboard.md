@@ -81,6 +81,9 @@ Type these in an empty paragraph:
 | `$$` | Empty math block | `Math` |
 | `/` | Slash menu; also after a space inside a line | UI |
 
+In an empty list item, a list shortcut of another kind turns the whole list into its kind; one
+of the list's own kind is only removed, and `[x]` checks the item.
+
 Anywhere in a line, `**text**`, `*text*`, `~~text~~` and `` `text` `` become bold, italic,
 struck-through and code text as you type the closing delimiter; see
 [marks](/docs/extensions/marks#input-rules).
