@@ -349,6 +349,22 @@ func TestCompactLogRefusesAReplacedGenerationAndFailsAtomically(t *testing.T) {
 	}
 }
 
+func TestCompactLogRefusesAReplacedGenerationWithNothingToMerge(t *testing.T) {
+	// The room adopts a REST replacement on this error, so a short log is no excuse.
+	db := &compactionDB{key: "new-generation"}
+	store := compactionStore(db, []byte(`{"blocks":[],"version":0}`))
+	db.add("old-generation", operationsRecord("a", 1))
+	if err := store.CompactLog(context.Background(), "doc", "old-generation"); !errors.Is(err, cloudsync.ErrBaselineReplaced) {
+		t.Fatalf("a replaced generation below the thresholds was reported current: %v", err)
+	}
+	if err := store.CompactLog(context.Background(), "doc", "new-generation"); err != nil {
+		t.Fatalf("an empty current log: %v", err)
+	}
+	if db.began != 0 || len(db.updates) != 1 {
+		t.Fatal("a log below the thresholds was touched")
+	}
+}
+
 func TestCompactLogAbsorbsRecordsFromBeforeGenerations(t *testing.T) {
 	// Every old row and checkpoint repeats the baseline: sixty rows of a large
 	// document were enough to pass the 60 MiB a REST read can apply.
