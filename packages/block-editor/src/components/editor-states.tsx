@@ -23,6 +23,20 @@ export function EditorSkeleton({ label }: { label?: string }) {
 }
 
 /**
+ * The page when its editor could not be created (GoTipe Atlas, frame 17: an error marks the
+ * element that failed). Why it failed goes to `onError` and `host.onError`, not to the person.
+ */
+export function EditorFailure() {
+  const i18n = useBlockEditorI18n();
+  return (
+    <p className="gotipe-editor-error" role="alert" data-gotipe-editor-error="">
+      <PageIcon name="warning" />
+      {i18n.t("state.failed")}
+    </p>
+  );
+}
+
+/**
  * Errors a person can act on. `EXTENSION_ERROR` and `COMPOSITION_CONFLICT` stay in the error
  * event and the console by decision: an extension's own interface reports its failures (the AI
  * bar does), and the host recovers the composed text that a conflict carries.

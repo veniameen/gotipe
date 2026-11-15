@@ -6,6 +6,7 @@ import {
   captureAiTarget,
 } from "@gotipe/ai";
 import type { GoTipeEditor } from "@gotipe/core";
+import { useGoTipeI18n } from "@gotipe/react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 export interface AiCommandPaletteProps {
@@ -14,7 +15,9 @@ export interface AiCommandPaletteProps {
   onClose: () => void;
 }
 
+/** Its words come from `GoTipeI18nProvider` (`@gotipe/react`), English without one. */
 export function AiCommandPalette({ editor, commands, onClose }: AiCommandPaletteProps) {
+  const i18n = useGoTipeI18n();
   const [query, setQuery] = useState("");
   const [loading, setLoading] = useState(false);
   const [editable, setEditable] = useState(editor.isEditable);
@@ -92,7 +95,7 @@ export function AiCommandPalette({ editor, commands, onClose }: AiCommandPalette
   return (
     <dialog
       className="gotipe-ai-command-palette"
-      aria-label="AI Commands"
+      aria-label={i18n.t("ai.commands")}
       aria-busy={loading}
       open
       onCancel={(event) => {
@@ -104,8 +107,8 @@ export function AiCommandPalette({ editor, commands, onClose }: AiCommandPalette
         type="text"
         value={query}
         onChange={(event) => setQuery(event.target.value)}
-        placeholder="Ask AI..."
-        aria-label="Search AI commands"
+        placeholder={i18n.t("ai.ask")}
+        aria-label={i18n.t("ai.searchCommands")}
         disabled={loading}
         onKeyDown={(event) => {
           if (event.key === "Enter" && filtered[0] && !event.nativeEvent.isComposing) {
@@ -116,7 +119,7 @@ export function AiCommandPalette({ editor, commands, onClose }: AiCommandPalette
       />
       {loading && (
         <output className="gotipe-ai-loading" aria-live="polite">
-          Processing...
+          {i18n.t("ai.running")}
         </output>
       )}
       {error && <p role="alert">{error}</p>}
@@ -146,10 +149,10 @@ export function AiCommandPalette({ editor, commands, onClose }: AiCommandPalette
                 </span>
               </button>
             ))}
-        {!suggestions.length && !filtered.length && <p>No matching commands</p>}
+        {!suggestions.length && !filtered.length && <p>{i18n.t("ai.noCommands")}</p>}
       </div>
       <button type="button" onClick={onClose}>
-        Close
+        {i18n.t("ai.closeCommands")}
       </button>
     </dialog>
   );

@@ -62,6 +62,7 @@ function BlockEditorView({
   showBlockToolbar = true,
   showBubbleMenu = true,
   showAiCommandBar = true,
+  showCollaborationCursors = true,
   showThemeToggle = false,
   remotePeers,
   suggestions,
@@ -510,7 +511,7 @@ function BlockEditorView({
       </Editor>
 
       {/* Remote collaboration cursors */}
-      {overlayPeers.length > 0 && (
+      {showCollaborationCursors && overlayPeers.length > 0 && (
         <CollaborationCursors peers={overlayPeers} containerRef={containerRef} />
       )}
 

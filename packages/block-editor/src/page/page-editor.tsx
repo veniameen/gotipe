@@ -28,7 +28,7 @@ import {
   TodoList,
   Underline,
 } from "@gotipe/core/extensions";
-import { createEditor, defineExtension, saveAsset } from "@gotipe/core/js";
+import { GoTipeError, createEditor, defineExtension, saveAsset } from "@gotipe/core/js";
 import type { I18n } from "@gotipe/i18n";
 import { markdownRawNodeSpec } from "@gotipe/markdown";
 import { type BlockViews, GoTipeI18nProvider, TableMergeGuardProvider } from "@gotipe/react";
@@ -51,6 +51,7 @@ import {
 } from "react";
 import { EmojiCommand, EmojiSuggestion, MentionSuggestion } from "../atoms/extensions";
 import { BlockEditor, type BlockEditorProps } from "../components/block-editor";
+import { EditorFailure } from "../components/editor-states";
 import type { CodeHighlighter } from "../highlight/types";
 import { useBlockEditorI18n } from "../i18n/strings";
 import { ReviewBar } from "../review/review-bar";
@@ -177,7 +178,7 @@ export interface PageEditorProps {
   style?: React.CSSProperties;
   /** Called once the editor exists. */
   onReady?: (editor: GoTipeEditor) => void;
-  /** Called when the editor reports an error (same as `host.onError`). */
+  /** Called when the editor reports an error and when it cannot be created (as `host.onError`). */
   onError?: EditorHost["onError"];
   /**
    * People and pages of the «@» list (Atlas frame 22), as `BlockEditor`'s `mentions`. Read when
@@ -213,6 +214,8 @@ const PageEditorInner = forwardRef<PageEditorHandle, PageEditorProps>(
     } = props;
     const i18n = useBlockEditorI18n();
     const [editor, setEditor] = useState<GoTipeEditor | null>(null);
+    /** The editor could not be created: the page shows that instead of loading forever. */
+    const [failed, setFailed] = useState(false);
     const [root, setRoot] = useState<HTMLDivElement | null>(null);
     const [overlay, setOverlay] = useState<HTMLDivElement | null>(null);
     const sessionRef = useRef<MarkdownSession | null>(null);
@@ -268,21 +271,32 @@ const PageEditorInner = forwardRef<PageEditorHandle, PageEditorProps>(
           onErrorRef.current?.(error);
         },
       };
-      void (async () => {
-        const ed = await createEditor({
+      // Reading the Markdown and checking the document can fail: that rejects the creation.
+      const create = async () =>
+        createEditor({
           extensions: pageExtensions({ mentions: initial.current.mentions }),
           content: session.parse(initial.current.markdown),
           editable: !initial.current.readOnly,
           engine: "js",
           host: stableHost,
         });
-        if (cancelled) {
-          ed.destroy();
-          return;
-        }
-        created = ed;
-        setEditor(ed);
-      })();
+      create().then(
+        (ed) => {
+          if (cancelled) {
+            ed.destroy();
+            return;
+          }
+          created = ed;
+          setEditor(ed);
+        },
+        (reason: unknown) => {
+          if (cancelled) return;
+          setFailed(true);
+          const error = creationError(reason);
+          if (hostRef.current?.onError || onErrorRef.current) stableHost.onError?.(error);
+          else console.error("GoTipe: Failed to create editor:", error);
+        },
+      );
       return () => {
         cancelled = true;
         created?.destroy();
@@ -434,22 +448,28 @@ const PageEditorInner = forwardRef<PageEditorHandle, PageEditorProps>(
             />
           ) : null}
           {/* the shared editor: its panel, «/», handle, block and column menus (Atlas, frame 19) */}
-          <TableMergeGuardProvider value={mergeGuard}>
-            <BlockEditor
-              editor={editor}
-              view={view}
-              className="gotipe-page-editor"
-              highlight={highlight}
-              blockViews={blockViews}
-              slashCommands={slashCommands}
-              mentions={props.mentions}
-              emoji={props.emoji}
-              ariaLabel={i18n.t("page.ariaLabel")}
-              errorToast={!host?.onError && !onError}
-              showAiCommandBar={false}
-              status={props.status}
-            />
-          </TableMergeGuardProvider>
+          {failed ? (
+            <div className="gotipe-block-editor" data-gotipe-block-failed="" data-gt-view={view}>
+              <EditorFailure />
+            </div>
+          ) : (
+            <TableMergeGuardProvider value={mergeGuard}>
+              <BlockEditor
+                editor={editor}
+                view={view}
+                className="gotipe-page-editor"
+                highlight={highlight}
+                blockViews={blockViews}
+                slashCommands={slashCommands}
+                mentions={props.mentions}
+                emoji={props.emoji}
+                ariaLabel={i18n.t("page.ariaLabel")}
+                errorToast={!host?.onError && !onError}
+                showAiCommandBar={false}
+                status={props.status}
+              />
+            </TableMergeGuardProvider>
+          )}
           {editor && effectiveReview ? (
             <ReviewLayer
               editor={editor}
@@ -467,6 +487,13 @@ const PageEditorInner = forwardRef<PageEditorHandle, PageEditorProps>(
     );
   },
 );
+
+/** A failed creation as an editor error: a reason that is not a `GoTipeError` becomes one. */
+function creationError(reason: unknown): GoTipeError {
+  if (reason instanceof GoTipeError) return reason;
+  const message = reason instanceof Error ? reason.message : String(reason);
+  return new GoTipeError("EDITOR_NOT_INITIALIZED", message, { cause: reason });
+}
 
 /**
  * A reusable document editor: GFM Markdown in, Markdown out (untouched blocks keep

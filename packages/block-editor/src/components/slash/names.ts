@@ -26,12 +26,20 @@ const COMMAND_NAMES: Record<string, BlockEditorTranslationKey> = {
   function: "slashMenu.inlineMath",
 };
 
+/** The commands of `defineAiContext` (`@gotipe/ai`) by their English name; both draw the sparkle. */
+const AI_COMMAND_NAMES: Record<string, BlockEditorTranslationKey> = {
+  "Continue Writing": "slashMenu.continueWriting",
+  "Ask AI": "slashMenu.askAi",
+};
+
 /**
  * A built-in command in the editor's language; its English name stays a search alias. A host's
  * own command, or one renamed by the host, keeps its name.
  */
 export function localizeCommand(cmd: SlashCommandDef, i18n: I18n): SlashCommandDef {
-  const key = COMMAND_NAMES[cmd.icon.toLowerCase()];
+  const key =
+    COMMAND_NAMES[cmd.icon.toLowerCase()] ??
+    (cmd.group === "ai" ? AI_COMMAND_NAMES[cmd.name] : undefined);
   if (!key || blockEditorEn[key] !== cmd.name) return cmd;
   const name = i18n.t(key);
   return name === cmd.name ? cmd : { ...cmd, name, aliases: [...cmd.aliases, cmd.name] };

@@ -72,8 +72,8 @@ function widget(decoration: TextWidget): VNodeChild {
       decoration.text ? [markedText(decoration.text, decoration.marks ?? [])] : [],
     );
   const color = caret.color ?? undefined;
+  // The zero-width space gives the caret the line's height without literal sizes.
   return h("span", props, [
-    // The zero-width space gives the caret the line's height without literal sizes.
     h(
       "span",
       {

@@ -70,13 +70,19 @@ function fullyMarked(range: TextRange, mark: string): boolean {
   });
 }
 
-function marksIn(range: TextRange): string[] {
+/**
+ * The formatting marks of the range. Atomic marks (a mention, a formula, a custom emoji, an
+ * inline image) make their text one element: they are content, so clearing leaves them.
+ */
+function formattingIn(range: TextRange): string[] {
   let position = 0;
   if (!Array.isArray(range.block.content)) return [];
   return range.block.content.flatMap((span) => {
     const start = position;
     position += span.text.length;
-    return position <= range.from || start >= range.to ? [] : span.marks.map((mark) => mark.type);
+    return position <= range.from || start >= range.to
+      ? []
+      : span.marks.filter((mark) => !mark.atomic).map((mark) => mark.type);
   });
 }
 
@@ -136,10 +142,12 @@ export class MarkCommands {
       });
   }
 
+  /** Removes the formatting of the selection; inline atoms keep their atomic marks. */
   clear(): void {
     const state = this.port.getState();
     for (const range of this.ranges(null)) {
-      const marks = range.from === range.to ? state.toolbar.activeMarks : marksIn(range);
+      // The caret's marks never include atomic ones (`getMarksAt`).
+      const marks = range.from === range.to ? state.toolbar.activeMarks : formattingIn(range);
       for (const markType of new Set(marks))
         this.port.append({
           type: "removeMark",

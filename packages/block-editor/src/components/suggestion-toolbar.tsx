@@ -3,7 +3,11 @@ import { useCallback, useEffect, useState } from "react";
 import { useBlockEditorI18n } from "../i18n/strings";
 import { PageIcon } from "../page/icons";
 
-export interface Suggestion {
+/**
+ * A proofreading suggestion the toolbar walks through. Not the tracked change of
+ * `@gotipe/suggestions` (`Suggestion` there): convert those to this shape.
+ */
+export interface ToolbarSuggestion {
   id: string;
   type: "insert" | "delete" | "replace";
   blockId: string;
@@ -15,11 +19,11 @@ export interface Suggestion {
 
 export interface SuggestionToolbarProps {
   editor: GoTipeEditor;
-  suggestions: Suggestion[];
+  suggestions: ToolbarSuggestion[];
   currentIndex: number;
   onNavigate: (index: number) => void;
-  onAccept: (suggestion: Suggestion) => void;
-  onReject: (suggestion: Suggestion) => void;
+  onAccept: (suggestion: ToolbarSuggestion) => void;
+  onReject: (suggestion: ToolbarSuggestion) => void;
   onAcceptAll: () => void;
   onRejectAll: () => void;
 }
@@ -140,3 +144,6 @@ export function SuggestionToolbar({
     </div>
   );
 }
+
+/** @deprecated Use `ToolbarSuggestion`; `@gotipe/suggestions` has a different `Suggestion`. */
+export type Suggestion = ToolbarSuggestion;

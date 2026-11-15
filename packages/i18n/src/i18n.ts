@@ -1,6 +1,16 @@
+import { en } from "./locales/en";
+import { ru } from "./locales/ru";
 import type { I18n, Locale, PluralKeyBase, TranslationKey } from "./types";
 
 const locales = new Map<string, Locale>();
+/**
+ * The dictionaries the package ships, found by name after the ones passed and registered.
+ * Importing the package registers nothing (`sideEffects: false`).
+ */
+const shipped = new Map<string, Locale>([
+  ["en", en],
+  ["ru", ru],
+]);
 
 /** Registers a locale globally (kept for compatibility; prefer `createI18n({ locales })`). */
 export function defineLocale(name: string, translations: Locale): Locale {
@@ -43,7 +53,8 @@ export interface CreateI18nOptions {
 
 export function createI18n(options: CreateI18nOptions = {}): I18n {
   const own = new Map<string, Locale>(Object.entries(options.locales ?? {}));
-  const lookup = (name: string): Locale | undefined => own.get(name) ?? locales.get(name);
+  const lookup = (name: string): Locale | undefined =>
+    own.get(name) ?? locales.get(name) ?? shipped.get(name);
   let currentLocale = options.locale ?? options.defaultLocale ?? "en";
   const fallback = options.fallbackLocale ?? "en";
 

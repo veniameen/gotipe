@@ -6,7 +6,7 @@ import type { EmojiOptions, MentionOptions } from "../atoms/host";
 import type { CodeHighlighter } from "../highlight/types";
 import type { StatusLineOptions } from "../text/status-line";
 import type { RemotePeer } from "./collaboration-cursors";
-import type { Suggestion } from "./suggestion-toolbar";
+import type { ToolbarSuggestion } from "./suggestion-toolbar";
 
 export interface BlockEditorProps {
   editor: GoTipeEditor | null;
@@ -26,6 +26,10 @@ export interface BlockEditorProps {
   showSlashMenu?: boolean;
   showBlockToolbar?: boolean;
   showBubbleMenu?: boolean;
+  /**
+   * Other people's carets and selections, from `remotePeers` and the editor's `collaboration`
+   * decoration layer. Default: `true`; `false` draws nobody.
+   */
   showCollaborationCursors?: boolean;
   /**
    * Other people to draw besides those of the editor's `collaboration` decoration layer,
@@ -39,10 +43,10 @@ export interface BlockEditorProps {
    */
   showAiCommandBar?: boolean;
   showThemeToggle?: boolean;
-  suggestions?: Suggestion[];
+  suggestions?: ToolbarSuggestion[];
   onAiCommand?: (prompt: string) => void;
-  onSuggestionAccept?: (suggestion: Suggestion) => void;
-  onSuggestionReject?: (suggestion: Suggestion) => void;
+  onSuggestionAccept?: (suggestion: ToolbarSuggestion) => void;
+  onSuggestionReject?: (suggestion: ToolbarSuggestion) => void;
   onSuggestionAcceptAll?: () => void;
   onSuggestionRejectAll?: () => void;
   /**

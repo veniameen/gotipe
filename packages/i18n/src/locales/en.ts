@@ -1,7 +1,7 @@
-import { defineLocale } from "../i18n";
 import type { Locale } from "../types";
 
-export const en: Locale = defineLocale("en", {
+/** English words of `@gotipe/i18n`; importing it registers nothing. */
+export const en: Locale = {
   "toolbar.highlight": "Highlight",
   "toolbar.heading": "Heading",
   "toolbar.table": "Table",
@@ -21,6 +21,14 @@ export const en: Locale = defineLocale("en", {
   "ai.summarize": "Summarize",
   "ai.translate": "Translate",
   "ai.fixGrammar": "Fix grammar",
+  "ai.expand": "Expand",
+  "ai.actions": "AI actions",
+  "ai.commands": "AI commands",
+  "ai.ask": "Ask AI...",
+  "ai.searchCommands": "Search AI commands",
+  "ai.running": "Processing...",
+  "ai.noCommands": "No matching commands",
+  "ai.closeCommands": "Close",
   "a11y.editorLabel": "Document editor",
   "a11y.toolbarLabel": "Formatting toolbar",
   "page.placeholder.paragraph": "Type “/” for blocks",
@@ -183,4 +191,4 @@ export const en: Locale = defineLocale("en", {
   "math.error.missingArgument": "{detail} needs an argument",
   // --- merged table cells (frame 29) ---
   "table.cellsSelected": "{count} cells selected",
-});
+};

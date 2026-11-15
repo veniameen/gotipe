@@ -1,7 +1,7 @@
-import { defineLocale } from "../i18n";
 import type { Locale } from "../types";
 
-export const ru: Locale = defineLocale("ru", {
+/** Russian words of `@gotipe/i18n`; importing it registers nothing. */
+export const ru: Locale = {
   "toolbar.highlight": "Выделение",
   "toolbar.heading": "Заголовок",
   "toolbar.table": "Таблица",
@@ -21,6 +21,14 @@ export const ru: Locale = defineLocale("ru", {
   "ai.summarize": "Резюмировать",
   "ai.translate": "Перевести",
   "ai.fixGrammar": "Исправить грамматику",
+  "ai.expand": "Расширить",
+  "ai.actions": "Действия модели",
+  "ai.commands": "Команды модели",
+  "ai.ask": "Спросить модель…",
+  "ai.searchCommands": "Искать команды модели",
+  "ai.running": "Модель пишет…",
+  "ai.noCommands": "Нет подходящих команд",
+  "ai.closeCommands": "Закрыть",
   "a11y.editorLabel": "Редактор документа",
   "a11y.toolbarLabel": "Панель форматирования",
   "page.placeholder.paragraph": "Введите «/» для блоков",
@@ -184,4 +192,4 @@ export const ru: Locale = defineLocale("ru", {
   "math.error.missingArgument": "У {detail} нет аргумента",
   // --- merged table cells (frame 29) ---
   "table.cellsSelected": "Выделено ячеек: {count}",
-});
+};

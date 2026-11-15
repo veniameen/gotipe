@@ -37,7 +37,10 @@ export interface VueBlockViewProps {
   readOnly: boolean;
 }
 export type VueBlockViews = Record<string, (props: VueBlockViewProps) => VNodeChild>;
-/** Words for the block that carries a `placeholder` decoration; `null` shows none. */
+/**
+ * Words for the block that carries a `placeholder` decoration, `EditorContent`'s `placeholder`
+ * prop; they win over the decoration's text, and `null` shows none.
+ */
 export type VuePlaceholder = (block: BlockView, parentType: string | undefined) => string | null;
 
 interface RenderContext {
@@ -321,18 +324,20 @@ function renderBlock(
   }
 }
 
-/** Reactive document renderer; owns mounting but never destroys a supplied editor. */
+/**
+ * Reactive document renderer; owns mounting but never destroys a supplied editor.
+ * `hostLayers` names the decoration layers the host draws itself (e.g. `collaboration`); they
+ * are left out. `placeholder` is a `VuePlaceholder`, `math` a `VueMath`. The props carry no
+ * comments of their own: inside the props object they would ship in the JavaScript.
+ */
 export const EditorContent = defineComponent({
   name: "GoTipeEditorContent",
   props: {
     editor: { type: Object as PropType<VueEditorSource>, default: null },
     blockViews: { type: Object as PropType<VueBlockViews>, default: () => ({}) },
     ariaLabel: { type: String, default: "Document content" },
-    /** Decoration layers the host draws itself (e.g. `collaboration`); they are left out. */
     hostLayers: { type: Array as PropType<string[]>, default: () => [] },
-    /** Words for the block with a `placeholder` decoration; wins over the decoration's text. */
     placeholder: { type: Function as PropType<VuePlaceholder>, default: undefined },
-    /** Formulas drawn as MathML: `{ parse: parseTex }` from `@gotipe/core/math`. */
     math: { type: Object as PropType<VueMath>, default: undefined },
   },
   setup(props) {

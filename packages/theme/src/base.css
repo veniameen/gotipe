@@ -524,10 +524,18 @@
   }
 }
 
+/* Reduced motion: every GoTipe element — the document, the AI bar and status, spinners, the drop
+   line, ghost text, menus and toasts, portals included — what it holds and its pseudo-elements.
+   An endless animation (a spinner) runs once and stops instead of flickering. */
 @media (prefers-reduced-motion: reduce) {
-  .gotipe-editor,
-  .gotipe-editor * {
+  [class*="gotipe-"],
+  [class*="gotipe-"] *,
+  [class*="gotipe-"]::before,
+  [class*="gotipe-"]::after,
+  [class*="gotipe-"] *::before,
+  [class*="gotipe-"] *::after {
     animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
   }
 }
