@@ -31,9 +31,13 @@ export class ClipboardHandler {
     this.drafts.clear();
   }
 
-  onPaste(event: ClipboardEvent): void {
+  /**
+   * `modelCaret`: the native caret is not where the model's is yet (a renderer has not drawn
+   * the last edit), so the paste goes to the model's caret, as typing does.
+   */
+  onPaste(event: ClipboardEvent, modelCaret = false): void {
     if (!this.editor.isEditable || this.disposed) return;
-    this.editor.syncSelectionFromDOM();
+    if (!modelCaret) this.editor.syncSelectionFromDOM();
     this.request++;
     event.preventDefault();
     const files = Array.from(event.clipboardData?.files ?? []);
@@ -53,7 +57,7 @@ export class ClipboardHandler {
         readClipboardPayload(event.clipboardData, () => null, this.options.schema);
       if (payload) this.apply(payload);
       else if (text) this.pasteText(text);
-      else this.pasteFromSystemClipboard();
+      else this.pasteFromSystemClipboard(modelCaret);
     } catch (error) {
       this.report(error);
     }
@@ -221,9 +225,9 @@ export class ClipboardHandler {
     return typeof navigator !== "undefined" && typeof navigator.clipboard?.readText === "function";
   }
 
-  pasteFromSystemClipboard(): void {
+  pasteFromSystemClipboard(modelCaret = false): void {
     if (!this.canReadClipboardText() || this.disposed || !this.editor.isEditable) return;
-    this.editor.syncSelectionFromDOM();
+    if (!modelCaret) this.editor.syncSelectionFromDOM();
     const request = ++this.request;
     const snapshot = JSON.stringify({
       document: this.editor.getJSON(),
