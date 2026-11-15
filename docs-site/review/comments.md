@@ -203,8 +203,9 @@ thrown by a callback is reported as `COMMENT_ACTION_FAILED` and does not undo th
 | `destroy()` | Removes listeners and decorations. Destroying the editor destroys the manager. |
 
 The editor emits `commentAdded`, `commentUpdated` (text, replies, re-anchoring, reopening),
-`commentResolved` and `commentDeleted`, each with the comment ID. The AI `review` command
-emits `commentAdded` and `commentDeleted` for its own short-lived comments as well.
+`commentResolved` and `commentDeleted`, each with the comment ID. Comments of the AI `review`
+command are not in the manager and emit none of these; they have their own event,
+`aiReviewChange` (see [AI](/docs/ai/overview)).
 
 A comment has `id`, `blockId`, `from`, `to`, `endBlockId`, `quotedText`, `anchor`
 (`{ before, quote, after }`), `orphaned`, `authorId`, `authorName`, `content`,
@@ -218,7 +219,7 @@ trimmed and limited to 100 000 characters; a snapshot holds up to 10 000 threads
 | --- | --- | --- | --- |
 | `editor` | `GoTipeEditor` | — | The editor the threads belong to. |
 | `comments` | `CommentData[]` | — | Threads to show, mapped from `Comment` as in the example. |
-| `currentUser` | `string` | — | Name in the reply button. |
+| `currentUser` | `string` | — | Name in the reply form's label. |
 | `collapsed` | `boolean` | `false` | Collapses the panel to an expand button with the number of open threads. |
 | `onAddReply` | `(id, body) => void \| Promise<void>` | — | Sends a reply. Without it, the reply form is hidden. |
 | `onResolve`, `onUnresolve`, `onDelete` | `(id) => void \| Promise<void>` | — | Thread actions. A missing callback hides its button. |
@@ -226,7 +227,9 @@ trimmed and limited to 100 000 characters; a snapshot holds up to 10 000 threads
 
 The sidebar filters open and resolved threads and steps through them. Locating a thread
 scrolls to its quote and selects it in the editor. The sidebar fills the width of its
-container.
+container. Its words come from `GoTipeI18nProvider` of `@gotipe/react` (the `comments.*` keys,
+English and Russian built in), English without one; see
+[Internationalization](/docs/ui/i18n).
 
 ## Save and share
 
@@ -248,7 +251,6 @@ container.
   comment.
 - `BlockEditor` and `PageEditor` do not draw `comment-highlight` decorations; use the
   helper above.
-- The labels of `CommentSidebar` are in English and do not follow the editor's locale.
 
 ## Related
 

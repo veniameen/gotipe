@@ -2,7 +2,7 @@
 import { type Block, type GoTipeEditor, createEditor } from "@gotipe/core/js";
 import { FullPreset } from "@gotipe/core/presets";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { defineAiAgent } from "./agent";
+import { defineAiAgent, getAiReviewComments } from "./agent";
 import { defineAiContext } from "./context";
 import { defineAi } from "./extension";
 import { AiManager } from "./manager";
@@ -131,7 +131,54 @@ describe("AI and another replica's edits (D-46)", () => {
     await vi.waitFor(() => expect(reviews).toEqual([[comment]]));
     editor.chain().insertText("!").run();
     await flush();
+    expect(reviews).toEqual([[comment]]);
+    editor.setSelection({ anchor: { blockId: "a", offset: 1 }, head: { blockId: "a", offset: 1 } });
+    editor.chain().insertText("!").run();
+    await flush();
     expect(reviews).toEqual([[comment], []]);
     expect(events).toEqual([]);
+  });
+
+  it("review comments stay through another replica's edits and move with the text (D-181)", async () => {
+    const comment = (id: string, blockId: string): AiComment => ({
+      id,
+      blockId,
+      from: 4,
+      to: 7,
+      quotedText: blockId === "a" ? "one" : "two",
+      body: "Say it better",
+    });
+    const { editor } = await create(
+      provider({ reviewComments: async () => [comment("c1", "a"), comment("c2", "b")] }),
+      true,
+    );
+    const reviews: AiComment[][] = [];
+    editor.on("aiReviewChange", ({ comments }) => reviews.push(comments as AiComment[]));
+    editor.emit("executeAiCommand", { commandId: "review" });
+    await vi.waitFor(() => expect(reviews).toHaveLength(1));
+    const quotes = () =>
+      getAiReviewComments(editor).map((item) => {
+        const block = editor.getJSON().blocks.find((entry) => entry.id === item.blockId);
+        const text = Array.isArray(block?.content) ? block.content.map((span) => span.text) : [];
+        return text.join("").slice(item.from, item.to);
+      });
+    remoteEdit(editor, "b");
+    expect(getAiReviewComments(editor).map(({ id, from, to }) => [id, from, to])).toEqual([
+      ["c1", 4, 7],
+      ["c2", 9, 12],
+    ]);
+    expect(quotes()).toEqual(["one", "two"]);
+    expect(reviews.at(-1)?.map((item) => item.from)).toEqual([4, 9]);
+    editor.dispatch({
+      steps: [{ type: "insertText", blockId: "a", offset: 5, text: "X", marks: [] }],
+      metadata: { origin: "repair", addToHistory: false },
+    });
+    expect(getAiReviewComments(editor).map((item) => item.id)).toEqual(["c2"]);
+    editor.dispatch({
+      steps: [{ type: "deleteBlock", blockId: "b" }],
+      metadata: { origin: "repair", addToHistory: false },
+    });
+    expect(getAiReviewComments(editor)).toEqual([]);
+    expect(reviews.at(-1)).toEqual([]);
   });
 });
