@@ -1154,6 +1154,144 @@
         }
       ],
       "readAsRaw": true
+    },
+    {
+      "id": "raw-html-in-an-item-keeps-the-indentation-of-the-item",
+      "document": {
+        "version": 1,
+        "blocks": [
+          {
+            "id": "n58",
+            "type": "bulletList",
+            "attrs": {},
+            "content": null,
+            "children": [
+              {
+                "id": "n57",
+                "type": "listItem",
+                "attrs": {},
+                "content": [
+                  {
+                    "text": "x",
+                    "marks": []
+                  }
+                ],
+                "children": [
+                  {
+                    "id": "n56",
+                    "type": "markdownRaw",
+                    "attrs": {
+                      "kind": "html"
+                    },
+                    "content": "<div>\na\n\nb\n</div>",
+                    "children": []
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "n59",
+            "type": "paragraph",
+            "attrs": {},
+            "content": [
+              {
+                "text": "after",
+                "marks": []
+              }
+            ],
+            "children": []
+          }
+        ]
+      },
+      "markdown": "- x\n  <div>\n  a\n  \n  b\n  </div>\n\nafter\n",
+      "reparsed": [
+        {
+          "type": "markdownRaw",
+          "attrs": {
+            "kind": "list"
+          },
+          "content": "- x\n  <div>\n  a\n  \n  b\n  </div>",
+          "children": []
+        },
+        {
+          "type": "paragraph",
+          "attrs": {},
+          "content": [
+            {
+              "text": "after",
+              "marks": []
+            }
+          ],
+          "children": []
+        }
+      ],
+      "readAsRaw": true
+    },
+    {
+      "id": "a-raw-list-in-a-quote-keeps-the-quote",
+      "document": {
+        "version": 1,
+        "blocks": [
+          {
+            "id": "n61",
+            "type": "blockquote",
+            "attrs": {},
+            "content": [
+              {
+                "text": "q",
+                "marks": []
+              }
+            ],
+            "children": [
+              {
+                "id": "n60",
+                "type": "markdownRaw",
+                "attrs": {
+                  "kind": "list"
+                },
+                "content": "- a\n- b",
+                "children": []
+              }
+            ]
+          },
+          {
+            "id": "n62",
+            "type": "paragraph",
+            "attrs": {},
+            "content": [
+              {
+                "text": "after",
+                "marks": []
+              }
+            ],
+            "children": []
+          }
+        ]
+      },
+      "markdown": "> q\n>\n> - a\n> - b\n\nafter\n",
+      "reparsed": [
+        {
+          "type": "markdownRaw",
+          "attrs": {
+            "kind": "blockquote"
+          },
+          "content": "> q\n>\n> - a\n> - b",
+          "children": []
+        },
+        {
+          "type": "paragraph",
+          "attrs": {},
+          "content": [
+            {
+              "text": "after",
+              "marks": []
+            }
+          ],
+          "children": []
+        }
+      ],
+      "readAsRaw": true
     }
   ]
 }
