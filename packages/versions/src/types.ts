@@ -14,7 +14,15 @@ export interface VersionDiff {
   moved: string[];
 }
 
+/** Every version for storage: `exportState()` returns it, `loadState()` reads it back. */
+export interface VersionsSnapshot {
+  version: 1;
+  versions: Version[];
+}
+
 export interface VersionsOptions {
+  /** A stored snapshot to start with, read as `loadState()` reads it; an invalid one throws. */
+  initialState?: unknown;
   autoSave?: boolean;
   autoSaveInterval?: number;
   maxVersions?: number;
