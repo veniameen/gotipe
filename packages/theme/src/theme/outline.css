@@ -68,3 +68,52 @@
   outline: var(--gt-focus-width) solid var(--gt-focus);
   outline-offset: var(--gt-focus-gap);
 }
+
+/* ---- the anchor of a heading (Atlas frame 2, D-30): a quiet # after its last word ----
+   BlockEditor gives it to the headings its outline lists. The heading keeps room for it at the end
+   of every line, so it wraps the same at rest and under the pointer; it wraps as a paragraph does,
+   because a balanced heading carries the empty anchor onto a line of its own. The anchor has no
+   width: its button hangs in that room. It shows under the pointer — the heading's own hover, or
+   the block the handle stands at, which a touch also chooses. */
+.gotipe-content :is(h1, h2, h3):has(.gotipe-heading-anchor) {
+  padding-inline-end: var(--gt-anchor-room);
+  text-wrap: var(--gt-heading-wrap);
+}
+.gotipe-heading-anchor {
+  position: relative;
+  display: var(--gt-anchor-display);
+  visibility: hidden;
+}
+.gotipe-content :is(h1, h2, h3):hover .gotipe-heading-anchor,
+.gotipe-heading-anchor.is-hovered {
+  visibility: visible;
+}
+.gotipe-heading-anchor > button {
+  position: absolute;
+  top: 50%;
+  inset-inline-start: var(--gt-anchor-gap);
+  display: grid;
+  place-items: center;
+  width: var(--gt-handle-w);
+  height: var(--gt-handle-h);
+  padding: 0;
+  border: 0;
+  border-radius: var(--gt-radius-control);
+  background: transparent;
+  color: var(--gt-text-3);
+  cursor: pointer;
+  translate: 0 -50%;
+}
+.gotipe-heading-anchor > button:hover {
+  background: var(--gt-fill-2);
+  color: var(--gt-text);
+}
+.gotipe-heading-anchor > button > .gotipe-icon {
+  width: var(--gt-icon-size);
+  height: var(--gt-icon-size);
+}
+/* the tip opens above the heading, away from the text under it */
+.gotipe-heading-anchor > button > .gotipe-tip {
+  top: auto;
+  bottom: calc(100% + var(--gt-overlay-gap));
+}

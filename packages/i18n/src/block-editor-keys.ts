@@ -127,6 +127,8 @@ export type BlockEditorTranslationKey =
   | "slashMenu.empty"
   | "slashMenu.results"
   | "block.copyLink"
+  | "block.copyHeadingLink"
+  | "block.headingLinkCopied"
   | "block.resetFormatting"
   | "block.copy"
   | "block.blockquote"

@@ -108,13 +108,23 @@ editor. Colours, fonts and dark mode are covered in [theming](/docs/ui/theming).
 | View | For | What changes |
 |---|---|---|
 | `notion` | Pages assembled block by block | 680 px column, body 15/24 px, block handle in the gutter |
-| `docs` | Reference pages | Body 14/22 px, outline of h1–h3 beside the text, line numbers in code, no handle |
+| `docs` | Reference pages | Body 14/22 px, outline of h1–h3 beside the text, line numbers in code, block handle in the gutter, a `#` anchor after each heading |
 | `modern` | Forms and CMS fields under a toolbar | Smaller title and top space, no handle |
 | `minimal` | An editor as a field in another interface | 640 px column, body 14/22 px, no handle |
 
 The `docs` outline appears with two or more headings and hides in containers 640 px wide or
-less. The `modern` view expects a fixed toolbar above it:
-[FixedToolbar](/docs/ui/fixed-toolbar).
+less. Its handle works as in `notion` and stands in the 64 px gutter between the outline and the
+text; a container 640 px wide or less keeps a 56 px rail for it on the left, as `notion` does.
+
+Every top-level heading h1–h3 with text has an anchor in `docs` — the headings the outline lists;
+a leading h1 that is the page's title has none. The anchor is a quiet `#` after the heading's last
+word, shown under the pointer and on the heading a touch chose. The heading keeps room for it at the end of its
+lines, so showing it moves nothing. Its tip says «Copy link»; a click copies the same link as
+**Copy link to block** in the [block menu](/docs/ui/menus#block-handle) — the page's address with
+`?gotipe-block=<id>` — and the tip says «Link copied». The host owns the address: the editor only
+adds the block's id, and a page opened with the link scrolls to the heading. The anchor stays out
+of the Tab order and of the heading's name; with the keyboard, copy the link from the block menu.
+The `modern` view expects a fixed toolbar above it: [FixedToolbar](/docs/ui/fixed-toolbar).
 
 ## Page head
 
@@ -178,7 +188,11 @@ languages; see [i18n](/docs/ui/i18n).
 
 - `showCollaborationCursors` has no effect: cursors are drawn whenever `remotePeers` or the
   editor's `collaboration` decoration layer has entries.
-- The block handle is shown only in the `notion` view.
+- The block handle is shown in the `notion` and `docs` views, heading anchors only in `docs`.
+- A heading with an anchor wraps as a paragraph (`text-wrap: pretty`), not balanced: a balanced
+  heading would carry the anchor away from its last word in Chromium.
+- A custom heading view gets the anchor only if it renders its `content`; see `afterText` in
+  [React](/docs/frameworks/react).
 - To change the `/` menu's groups or labels, set `showSlashMenu={false}` and render your
   own `SlashMenu` as a child; the `+` button then adds an empty block without the menu.
 
