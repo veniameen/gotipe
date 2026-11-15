@@ -46,10 +46,21 @@ export function reportInputError(host: InputHost, error: unknown): void {
   );
 }
 
+/**
+ * The selection an input acts on. After the caret restore the DOM's counts: the user may have
+ * moved it. A selected block shows in the DOM as a caret at its anchor and head, so only a
+ * caret elsewhere takes over from it, as on `keydown` (D-180).
+ */
 export function resolveSelectionForInput(host: InputHost): SelectionView {
   if (!host.pendingSelectionRestore) {
     const selection = host.readSelectionFromDOM();
-    if (selection?.anchor.blockId)
+    const { type, anchor, head } = host.selection;
+    const at = (point: { blockId: string; offset: number }, other: typeof point) =>
+      point.blockId === other.blockId && point.offset === other.offset;
+    if (
+      selection?.anchor.blockId &&
+      (type === "text" || !at(selection.anchor, anchor) || !at(selection.head, head))
+    )
       host.selection = {
         type: "text",
         anchor: { ...selection.anchor },
