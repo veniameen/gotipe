@@ -39,8 +39,8 @@ The second command is needed only for `AiCommandPalette`, `AiToolbar` and the co
 ### Which controls show
 
 Each control appears only when an extension answers it, so an editor without `defineAi` has no
-AI controls at all: no Improve, no ⌘J, no ghost text and no status line, and the keys stay
-the browser's.
+AI controls at all: no Improve, no ⌘J (the key stays the browser's), no ghost text and no
+status line.
 
 | Control | Shown when the editor has |
 | --- | --- |
