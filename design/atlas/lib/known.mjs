@@ -2,13 +2,7 @@
 // decision on its frame. The check prints it under its finding and passes. Once the frame is
 // fixed, the entry fails the check until it is removed here and the finding is closed in docs/24.
 
-export const KNOWN = [
-  {
-    finding: "D-108",
-    problem:
-      /^#f24\/math-edit\/(?:light|dark): «[LN]» leaves the background of <span\.gotipe-math-inline> /,
-  },
-];
+export const KNOWN = [];
 
 /** Known problems, each under its finding, and the ones that fail the check: the rest, and — when
     the frames were audited at all — a known entry that is no longer found. */
