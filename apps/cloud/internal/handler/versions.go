@@ -142,29 +142,32 @@ func (h *VersionsHandler) CreateVersion() http.HandlerFunc {
 	}
 }
 
-// ListVersions handles GET /v1/documents/{docId}/versions
+// ListVersions handles GET /v1/documents/{docId}/versions: newest first, one page
+// at a time (see list_page.go).
 func (h *VersionsHandler) ListVersions() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		user := auth.UserFromContext(r.Context())
-		if user == nil {
-			apierror.ErrUnauthorized.Write(w)
+		docID, ok := documentAccess(w, r, h.db.Pool, chi.URLParam(r, "docId"), "viewer")
+		if !ok {
+			return
+		}
+		limit, cursor, err := pageQuery(r)
+		if err != nil {
+			apierror.ErrValidation.WithMessage(err.Error()).Write(w)
 			return
 		}
 
-		docID := chi.URLParam(r, "docId")
-		if !requireDocumentAccess(w, r, h.db.Pool, docID, "viewer") {
-			return
+		// Restore points are stored without a description.
+		query := `SELECT id, document_id, name, COALESCE(description, ''), version_type, created_by, size_bytes, created_at
+			 FROM versions WHERE document_id = $1`
+		args := []any{docID}
+		if cursor != nil {
+			query += ` AND (created_at, id) < ($2::timestamptz, $3::uuid)`
+			args = append(args, cursor.createdAt, cursor.id)
 		}
-		limit, _ := strconv.Atoi(r.URL.Query().Get("limit"))
-		if limit <= 0 || limit > 100 {
-			limit = 50
-		}
+		args = append(args, limit+1)
+		query += ` ORDER BY created_at DESC, id DESC LIMIT $` + strconv.Itoa(len(args))
 
-		rows, err := h.db.Pool.Query(r.Context(),
-			`SELECT id, document_id, name, description, version_type, created_by, size_bytes, created_at
-			 FROM versions WHERE document_id = $1 ORDER BY created_at DESC LIMIT $2`,
-			docID, limit,
-		)
+		rows, err := h.db.Pool.Query(r.Context(), query, args...)
 		if err != nil {
 			apierror.ErrInternal.Write(w)
 			return
@@ -186,10 +189,8 @@ func (h *VersionsHandler) ListVersions() http.HandlerFunc {
 			return
 		}
 
-		if versions == nil {
-			versions = []VersionResponse{}
-		}
-
-		apierror.WriteJSON(w, http.StatusOK, map[string]interface{}{"data": versions})
+		apierror.WriteJSON(w, http.StatusOK, newListPage(versions, limit, func(v VersionResponse) (time.Time, string) {
+			return v.CreatedAt, v.ID
+		}))
 	}
 }

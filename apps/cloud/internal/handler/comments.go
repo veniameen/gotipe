@@ -128,36 +128,34 @@ func (h *CommentsHandler) CreateComment() http.HandlerFunc {
 	}
 }
 
-// ListComments handles GET /v1/documents/{docId}/comments
+// ListComments handles GET /v1/documents/{docId}/comments: oldest first, one page
+// at a time (see list_page.go).
 func (h *CommentsHandler) ListComments() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		user := auth.UserFromContext(r.Context())
-		if user == nil {
-			apierror.ErrUnauthorized.Write(w)
+		docID, ok := documentAccess(w, r, h.db.Pool, chi.URLParam(r, "docId"), "viewer")
+		if !ok {
 			return
 		}
-
-		docID := chi.URLParam(r, "docId")
-		if !requireDocumentAccess(w, r, h.db.Pool, docID, "viewer") {
+		limit, cursor, err := pageQuery(r)
+		if err != nil {
+			apierror.ErrValidation.WithMessage(err.Error()).Write(w)
 			return
-		}
-		includeResolved := r.URL.Query().Get("include_resolved") == "true"
-		limit, _ := strconv.Atoi(r.URL.Query().Get("limit"))
-		if limit <= 0 || limit > 100 {
-			limit = 50
 		}
 
 		query := `SELECT c.id, c.document_id, c.author_id, COALESCE(u.name, ''), c.content, c.anchor_type, COALESCE(c.block_id, ''),
 				  c.parent_id, c.resolved_at, c.resolved_by, c.metadata, c.anchor_from, c.anchor_to, c.created_at, c.updated_at
 				  FROM comments c LEFT JOIN users u ON c.author_id = u.id
 				  WHERE c.document_id = $1`
-		args := []interface{}{docID}
-
-		if !includeResolved {
+		args := []any{docID}
+		if r.URL.Query().Get("include_resolved") != "true" {
 			query += ` AND c.resolved_at IS NULL`
 		}
-		query += ` ORDER BY c.created_at ASC LIMIT $2`
-		args = append(args, limit)
+		if cursor != nil {
+			query += ` AND (c.created_at, c.id) > ($2::timestamptz, $3::uuid)`
+			args = append(args, cursor.createdAt, cursor.id)
+		}
+		args = append(args, limit+1)
+		query += ` ORDER BY c.created_at ASC, c.id ASC LIMIT $` + strconv.Itoa(len(args))
 
 		rows, err := h.db.Pool.Query(r.Context(), query, args...)
 		if err != nil {
@@ -183,11 +181,9 @@ func (h *CommentsHandler) ListComments() http.HandlerFunc {
 			return
 		}
 
-		if comments == nil {
-			comments = []CommentResponse{}
-		}
-
-		apierror.WriteJSON(w, http.StatusOK, map[string]interface{}{"data": comments})
+		apierror.WriteJSON(w, http.StatusOK, newListPage(comments, limit, func(c CommentResponse) (time.Time, string) {
+			return c.CreatedAt, c.ID
+		}))
 	}
 }
 
