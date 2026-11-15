@@ -104,7 +104,7 @@ struck-through and code text as you type the closing delimiter; see
 | Image side handle | ← → | Narrow or widen the image by 16 px |
 | Resize or touch drag in progress | Escape | Cancel |
 | Image dialogs and More options | Escape | Close |
-| Anywhere in the editor | Mod+J | Open or close the AI command bar (`showAiCommandBar`) |
+| Anywhere in the editor | Mod+J | Open or close the AI command bar (`showAiCommandBar`); only in an editor whose AI extensions answer the bar |
 | AI command bar | Enter; Escape | Send the prompt; close and cancel a running request |
 | AI ghost text | Tab; Escape | Accept; dismiss |
 | Theme toggle | ← → ↑ ↓, Home, End | Choose light, dark or system; one Tab stop |

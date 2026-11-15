@@ -316,6 +316,7 @@ export async function createEditorWithLoader(
       }
       return commands;
     },
+    hasExtension: (name) => resolved.some((extension) => extension.name === name),
 
     chain(): ChainableCommands {
       return new ChainableCommands(this, schemaForCommands);
