@@ -1,5 +1,6 @@
 use crate::WasmEditor;
-use gotipe_core::{EditorState, Step};
+use gotipe_core::{AttrValue, EditorState};
+use std::collections::HashMap;
 use wasm_bindgen::prelude::*;
 
 pub(crate) fn now_ms() -> u64 {
@@ -15,15 +16,17 @@ pub(crate) fn now_ms() -> u64 {
             .as_millis() as u64
     }
 }
-pub(crate) fn same_typing_group(before: &[Step], after: &[Step]) -> bool {
-    let block = |steps: &[Step]| match steps {
-        [Step::InsertText { block_id, .. }] | [Step::DeleteText { block_id, .. }] => {
-            Some(block_id.clone())
-        }
-        _ => None,
-    };
-    let previous = block(before);
-    previous.is_some() && previous == block(after)
+/// The editor marks typing that goes on with its open typing step with `metadata.typing`:
+/// `"insert"` for text typed at the caret, `"delete"` for text deleted with Backspace or Delete.
+/// It decides that by one rule with and without collaboration (`typing-group.ts` in
+/// `@gotipe/core`): a pause of 500 ms, a selection change, another block, a switch between
+/// typing and deleting and any other change end the step. Only a marked transaction joins the
+/// undo step before it, within the history's 500 ms window; any other one starts a new step.
+pub(crate) fn continues_typing(metadata: &HashMap<String, AttrValue>) -> bool {
+    matches!(
+        metadata.get("typing"),
+        Some(AttrValue::String(kind)) if kind == "insert" || kind == "delete"
+    )
 }
 impl WasmEditor {
     fn apply_collaboration_history(&mut self, redo: bool) -> Result<Option<String>, JsError> {

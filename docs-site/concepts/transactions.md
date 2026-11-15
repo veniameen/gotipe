@@ -175,7 +175,7 @@ following typing joins, and deleting it one that the following deleting joins, a
 the selection spans blocks: one Undo brings the selected text back. A whole selected block,
 such as an image, is replaced or deleted in a step of its own. The step ends when:
 
-- you pause for 500 ms, the gap the collaboration history groups by too;
+- you pause for 500 ms;
 - the caret or the selection moves, even back to the same place, or typing goes to another
   block;
 - typing turns into deleting, or deleting into typing;
@@ -197,8 +197,9 @@ every `dispatch` is a step of its own, even one that inserts a character at the 
   does. Without collaboration, Undo of an earlier step restores the document from before
   that step, so such a change goes with it.
 - After `enableCollaboration`, history moves to the CRDT: Undo reverts your own changes and
-  keeps the other peers' edits. It groups your typing by the same 500 ms pause within one
-  block; see [Limitations](#limitations) for where its steps differ.
+  keeps the other peers' edits. Your typing is grouped into the same steps as without
+  collaboration. A peer's edit ends your typing step only when it moves your caret, by
+  changing text before it in the same block.
 
 To make several changes one undo step, put them in one transaction or one command chain.
 
@@ -210,11 +211,8 @@ and commands still change the document, so programmatic edits keep working.
 ## Limitations
 
 > [!NOTE]
-> With collaboration, the CRDT history groups typing by the pause and the block alone:
-> typing and deleting go into one step, moving the caret inside the block doesn't end it,
-> and typing over a selection is two steps, the first character and the rest. Without
-> collaboration each IME composition is its own undo step, so Korean, where every syllable
-> is a composition, is undone a syllable at a time.
+> Each IME composition is its own undo step, so Korean, where every syllable is a
+> composition, is undone a syllable at a time.
 
 ## Related
 
