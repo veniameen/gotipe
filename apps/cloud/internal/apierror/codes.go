@@ -6,30 +6,19 @@ import (
 )
 
 type APIError struct {
-	Code    string      `json:"code"`
-	Message string      `json:"message"`
-	Details interface{} `json:"details,omitempty"`
-	Status  int         `json:"-"`
+	Code    string `json:"code"`
+	Message string `json:"message"`
+	Status  int    `json:"-"`
 }
 
 func (e *APIError) Error() string {
 	return e.Message
 }
 
-func (e *APIError) WithDetails(details interface{}) *APIError {
-	return &APIError{
-		Code:    e.Code,
-		Message: e.Message,
-		Details: details,
-		Status:  e.Status,
-	}
-}
-
 func (e *APIError) WithMessage(msg string) *APIError {
 	return &APIError{
 		Code:    e.Code,
 		Message: msg,
-		Details: e.Details,
 		Status:  e.Status,
 	}
 }
