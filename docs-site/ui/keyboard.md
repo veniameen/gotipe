@@ -142,11 +142,12 @@ region, and AI progress is a polite status. A failed action puts a visually hidd
 its control; the visible toast is hidden from assistive technology so the message is read
 once. Formatting changes, block moves and collaborators are not announced.
 
-**Reduced motion.** With `prefers-reduced-motion: reduce`, animations and transitions
-inside `.gotipe-editor` shrink to 0.01 ms, review cards and lane avatars stop animating,
-the docs outline jumps instead of scrolling smoothly, and review text appears at once.
-Elements outside `.gotipe-editor` still animate: the AI command bar and its spinner, the
-drop indicator, ghost text and the table menus.
+**Reduced motion.** With `prefers-reduced-motion: reduce`, animations and transitions of
+every GoTipe element (a `gotipe-*` class) and of what it holds shrink to 0.01 ms and run
+once: the document, the AI command bar, its status and spinner, the drop indicator, ghost
+text, menus and toasts, portals included. A spinner stands still instead of turning. Review
+cards and lane avatars stop animating, the docs outline jumps instead of scrolling smoothly,
+and review text appears at once. The rule is in `@gotipe/theme/base.css`.
 
 ## Limitations
 
