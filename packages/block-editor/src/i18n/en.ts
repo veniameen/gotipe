@@ -294,7 +294,6 @@ export const blockEditorEn: BlockEditorLocale = {
   "table.splitHint": "This cell is not merged",
   "table.mergeMarkdownHint":
     "A Markdown page keeps merged cells as an HTML table, which can't hold this table's mentions, formulas or fonts, or a table inside a list or quote",
-  // --- comment sidebar, failures of the block and table menus ---
   "comments.label": "Comments",
   "comments.count": "Comments ({count})",
   "comments.expand": "Expand comments",
