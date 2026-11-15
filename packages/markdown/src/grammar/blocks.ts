@@ -260,10 +260,13 @@ class Reader {
         i = next;
         continue;
       }
-      // a lazy line continues text: it is no delimiter row (GFM)
+      // a lazy or indented line continues the text and a list item `- | -` interrupts it: neither
+      // is a delimiter row; a head row needs no `|` (GFM, D-161)
       const delimiter = lines[i + 1];
       const alignment =
-        delimiter && !delimiter.lazy && line.text.includes("|") ? tableAlignment(delimiter) : null;
+        delimiter && !delimiter.lazy && !interrupts(delimiter) && indentWidth(delimiter.text) < 4
+          ? tableAlignment(delimiter)
+          : null;
       if (alignment && alignment.length === tableCells(line.text).length) {
         const row = (value: Line) =>
           tableRow(value, alignment.length, (cell, options) => this.inline([cell], options));

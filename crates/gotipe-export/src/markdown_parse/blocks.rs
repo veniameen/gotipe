@@ -284,8 +284,13 @@ impl Reader {
                 i = next;
                 continue;
             }
-            // a lazy line continues text: it is no delimiter row (GFM)
-            if i + 1 < lines.len() && !lines[i + 1].lazy && line.text.contains('|') {
+            // a lazy or indented line continues the text and a list item `- | -` interrupts it:
+            // neither is a delimiter row; a head row needs no `|` (GFM, D-161)
+            if i + 1 < lines.len()
+                && !lines[i + 1].lazy
+                && !interrupts(&lines[i + 1])
+                && width(&lines[i + 1].text, 0) < 4
+            {
                 if let Some(alignment) =
                     alignment(&lines[i + 1].text).filter(|a| a.len() == cells(&line.text).len())
                 {

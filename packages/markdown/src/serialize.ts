@@ -394,8 +394,10 @@ export function serializeMarkdown(doc: Doc, snapshot?: MarkdownSnapshot): Serial
     const fp = fingerprint(block);
     const preserved = oi >= 0 && snap!.blocks[oi]!.fingerprint === fp;
     // a block that writes no line, such as a list without items (D-124) or raw source of blanks,
-    // keeps no lists apart (D-123): it is not written
-    if (!preserved && (isBlockEmpty(block) || writesNoLine(block))) continue;
+    // keeps no lists apart (D-123): it is not written; a paragraph or heading without text is
+    // left out, but not the blocks under it (D-190)
+    const empty = isBlockEmpty(block) && (block.children ?? []).every(writesNoLine);
+    if (!preserved && (empty || writesNoLine(block))) continue;
     items.push({ block, oi, preserved, fp, md: "", start: 0, end: 0 });
   }
   resolveHazards(items, snap, fm, (item) => (snap ? sourceIndent(item, snap) : ""));
