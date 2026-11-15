@@ -129,10 +129,11 @@ itself.
 | Core with the Markdown codec | 125 KiB |
 | `@gotipe/react`, on top of the core | 40 KiB |
 | `@gotipe/vue`, on top of the core | 8 KiB |
-| `gotipe_wasm_bg.wasm` | 600 KiB |
+| `gotipe_wasm_bg.wasm` | 325 KiB |
 
-The WASM binary is about 1.5 MB before compression. It comes in addition to the core
-JavaScript, which still provides the API, validation and Markdown. Details are in
+The WASM binary is about 826 KB before compression and 302 KB gzip; the budget leaves about
+10% for growth. It comes in addition to the core JavaScript, which still provides the API,
+validation and Markdown. Details are in
 [performance](/docs/resources/performance).
 
 ## Related
