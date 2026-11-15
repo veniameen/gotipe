@@ -238,6 +238,10 @@ const PageEditorInner = forwardRef<PageEditorHandle, PageEditorProps>(
     hostRef.current = host;
     const onErrorRef = useRef(onError);
     onErrorRef.current = onError;
+    const onReadyRef = useRef(onReady);
+    onReadyRef.current = onReady;
+    /** The editor `onReady` and the first `autoFocus` were run for: once per editor. */
+    const readied = useRef<GoTipeEditor | null>(null);
     const initial = useRef({ markdown, readOnly, autoFocus, mentions: !!props.mentions });
 
     // Create the editor once (JS engine: no WASM, no eval).
@@ -285,10 +289,13 @@ const PageEditorInner = forwardRef<PageEditorHandle, PageEditorProps>(
       };
     }, [session]);
 
-    // Emit the draft after edits.
+    // Emit the draft after edits. A new `onReady` from the host does not run this again: the
+    // pending draft stays, and the caret stays where the person put it.
     useEffect(() => {
       if (!editor) return;
-      onReady?.(editor);
+      const first = readied.current !== editor;
+      readied.current = editor;
+      if (first) onReadyRef.current?.(editor);
       let frame: number | null = null;
       const flush = () => {
         frame = null;
@@ -302,12 +309,12 @@ const PageEditorInner = forwardRef<PageEditorHandle, PageEditorProps>(
         session.touch();
         if (frame === null) frame = requestAnimationFrame(flush);
       });
-      if (initial.current.autoFocus) editor.focus("end");
+      if (first && initial.current.autoFocus) editor.focus("end");
       return () => {
         off();
         if (frame !== null) cancelAnimationFrame(frame);
       };
-    }, [editor, session, onReady]);
+    }, [editor, session]);
 
     // External replacement (file changed on disk, accepted suggestion…).
     useEffect(() => {

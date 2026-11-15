@@ -181,7 +181,7 @@ The built-in extensions bind these keys. `Mod` is Cmd on macOS and Ctrl elsewher
 | `Tab`, `Shift-Tab` in a list | `indent`, `outdent` |
 | `Tab`, `Shift-Tab` in a table | `goToNextCell`, `goToPrevCell` |
 | `Mod-Z`; `Mod-Shift-Z` or `Mod-Y` | `undo`; `redo` |
-| `Mod-K` | Emits `openLinkDialog` for your link interface |
+| `Mod-K` | Emits `openLinkDialog`: the link field of `BlockEditor` or `FixedToolbar` opens over selected text, or your own link interface |
 
 The full list, including the editor UI's keys, is in [keyboard](/docs/ui/keyboard).
 

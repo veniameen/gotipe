@@ -142,6 +142,9 @@ export function Quote({ block, rootProps, content, children }: BlockViewProps) {
 by default they come from the `placeholder.*` strings. `blockRenderer` is an older wrapper
 API; prefer `blockViews`.
 
+A block type with no view, such as your own node without `blockViews`, is drawn as a `<p>`
+with its text; with child blocks, as a `<div>` with its text and then the children.
+
 The building blocks of the default views are exported for your own views: `TableBlock`,
 `TableColumnResizeHandle`, `CodeBlock`, `ToggleBlock`, `CalloutBlock`, `TextRenderer`
 and `FloatingPortal`; `ImageBlock` and `FileBlock` come from `@gotipe/react/media`. `useResolvedAsset` and
