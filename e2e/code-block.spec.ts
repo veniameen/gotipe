@@ -28,7 +28,9 @@ test.describe('Code block', () => {
     expect(await page.evaluate(() => window.__GOTIPE_EDITOR__!.getJSON().blocks[0]!.attrs.language)).toBe('typescript');
     await page.locator('.gotipe-code-block code').click();
     await page.keyboard.press('ControlOrMeta+z');
-    await expect(select).toHaveValue('plaintext');
+    // Plain text is the empty language (D-14): the menu's option for it has the value "".
+    await expect(select).toHaveValue('');
+    expect(await page.evaluate(() => window.__GOTIPE_EDITOR__!.getJSON().blocks[0]!.attrs.language)).toBe('');
     await expect(page.locator('.gotipe-code-block code')).toHaveText('let answer = 42;');
   });
   test('copy writes the raw source without language labels or line numbers', async ({ page, context, browserName }) => {
