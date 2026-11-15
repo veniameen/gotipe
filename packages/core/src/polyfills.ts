@@ -1,8 +1,10 @@
 import { uuidFromRandomValues } from "./document/id";
 
 /**
- * Browser compatibility: Chrome 90+, Firefox 90+, Safari 15+.
- * Provides polyfills for missing APIs.
+ * Fills the two platform functions that the library and its adapters call and that some
+ * contexts lack: `structuredClone` and `crypto.randomUUID`. GoTipe names no minimum browser
+ * versions (docs-site: Browser support); the code is built for ES2022 and tested in current
+ * Chromium, Firefox and WebKit.
  */
 export function applyPolyfills(): void {
   if (typeof globalThis.structuredClone === "undefined") {
