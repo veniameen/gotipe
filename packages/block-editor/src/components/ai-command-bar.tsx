@@ -148,7 +148,7 @@ function CommandBar({ editor, onSubmit }: AiCommandBarProps) {
       } else {
         editor.emit("executeAiCommand", { commandId: aiControls(editor).prompt, prompt });
         if (!statusSeen.current && !errorSeen.current) {
-          throw new Error("AI is not available in this editor");
+          throw new Error(i18n.t("ai.unavailable"));
         }
       }
     } catch (failure) {
@@ -158,7 +158,7 @@ function CommandBar({ editor, onSubmit }: AiCommandBarProps) {
         setError(failure instanceof Error ? failure.message : String(failure));
       }
     }
-  }, [value, editor, onSubmit, close]);
+  }, [value, editor, onSubmit, close, i18n]);
 
   if (!visible) return null;
   return (

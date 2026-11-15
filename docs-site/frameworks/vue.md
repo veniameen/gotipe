@@ -51,6 +51,7 @@ function toggleBold() {
 | Export | Description |
 |---|---|
 | `useEditor(options)` | `ShallowRef<GoTipeEditor \| null>`. Creates the editor in `onMounted`, destroys it in `onBeforeUnmount`. The options are read once. |
+| `useEditorStatus(options)` | `{ editor, error }`, two `ShallowRef`s: the same editor, and why it could not be created; see [Creation errors](#creation-errors). |
 | `useEditorState(editor, selector)` | `ShallowRef<T \| undefined>` with `selector(viewState)`, updated on every view change. |
 | `EditorContent` | The document surface. Mounts the editor on its element and unmounts it on change; never destroys an editor you pass. |
 | `editorKey`, `useEditorContext()` | Provide an editor to child components and read it; `useEditorContext` throws without one. |
@@ -126,6 +127,38 @@ const editor = useEditor({ extensions: [FullPreset], content: "<p>Type / for blo
 The editor is created in `onMounted`, so a server render outputs an empty `.gotipe-content`
 element. An editor that finishes after the component is gone is destroyed.
 
+### Creation errors
+
+`useEditor` and `useEditorStatus` take the options of `createEditor` and `onError`. When the
+editor cannot be created, for example `WASM_INIT_FAILED` with `engine: "wasm"` or
+`VALIDATION_ERROR` for a JSON document the schema rejects, `error` becomes the failure and
+`onError(error)` is called once; without `onError`, the failure is logged to the console.
+`error` is an `Error` (a rejection that is not one becomes one, with the reason as its
+`cause`); a `GoTipeError` also has a `code`. A creation that fails after unmount reports
+nothing.
+
+```vue title="EditorError.vue"
+<script setup lang="ts">
+import { DefaultPreset } from "@gotipe/core/presets";
+import { EditorContent, useEditorStatus } from "@gotipe/vue";
+
+const { editor, error } = useEditorStatus({
+  extensions: [DefaultPreset],
+  engine: "wasm",
+  onError: (failure) => console.warn("The editor is unavailable:", failure.message),
+});
+</script>
+
+<template>
+  <p v-if="error" role="alert">The editor could not start: {{ error.message }}</p>
+  <EditorContent v-else :editor="editor" aria-label="Notes" />
+</template>
+```
+
+`onError` reports only the creation. Errors of a working editor, such as a failed upload,
+a blocked link or a paste that does not fit, go to `host.onError` and the `error` event; see
+[Errors](/docs/concepts/host#errors).
+
 ## Limitations
 
 - `EditorContent` draws the decorations (comment and suggestion highlights, collaborators'
@@ -138,11 +171,8 @@ element. An editor that finishes after the component is gone is destroyed.
   does not close on Escape or an outside click, and leaves the `/` in the text. Its rows
   show the icon name as text.
 - `BlockToolbarVue` is not placed beside blocks, and its grip button does not drag.
-- `useEditor` has no `onError` and no `error`: when the editor cannot be created, the ref
-  stays `null` and the error goes to Vue's error handling (`onErrorCaptured`,
-  `app.config.errorHandler`). Without a handler, a production build logs it to the console
-  and a development build rethrows it as an unhandled rejection.
   Labels in both components are English.
+- An editor that could not be created is not created again: mount the component anew.
 - `BlockEditorVue` has no `view` prop. It uses the `notion` tokens unless a wrapper
   element carries `data-gt-view`.
 - There is no `PageEditor`, formatting bubble, block menu or review UI for Vue.

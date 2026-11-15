@@ -16,12 +16,15 @@
   "peerDependencies": {
     "@gotipe/ai": "^0.1.0",
     "@gotipe/core": "^0.1.0",
+    "@gotipe/react": "^0.1.0",
     "react": ">=18",
     "react-dom": ">=18"
   },
   "devDependencies": {
     "@gotipe/ai": "workspace:*",
     "@gotipe/core": "workspace:*",
+    "@gotipe/i18n": "workspace:*",
+    "@gotipe/react": "workspace:*",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
     "react": "^19.3.1",

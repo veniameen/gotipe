@@ -24,7 +24,9 @@ npm install @gotipe/ai-ui
 ```
 
 The second command is needed only for `AiCommandPalette`, `AiToolbar` and the controlled
-`GhostText`.
+`AiGhostText`. `@gotipe/ai-ui` takes `@gotipe/react` as a peer: the palette and the toolbar say
+their words in the language of `GoTipeI18nProvider` (`ai.*` keys of `@gotipe/i18n`, English
+without a provider).
 
 ## BlockEditor props
 
@@ -32,7 +34,7 @@ The second command is needed only for `AiCommandPalette`, `AiToolbar` and the co
 | --- | --- | --- | --- |
 | `showAiCommandBar` | `boolean` | `true` | Shows the command bar, the Improve button, ghost text and the status line where an AI extension answers them; `false` hides them all. |
 | `onAiCommand` | `(prompt: string) => void \| Promise<void>` | — | Handles a command bar prompt yourself instead of the built-in `freeText` command. |
-| `suggestions` | `Suggestion[]` | — | Proofreading suggestions for the toolbar. |
+| `suggestions` | `ToolbarSuggestion[]` | — | Proofreading suggestions for the toolbar. |
 | `onSuggestionAccept`, `onSuggestionReject` | `(suggestion) => void` | — | Required, with `suggestions`, for the toolbar to appear. |
 | `onSuggestionAcceptAll`, `onSuggestionRejectAll` | `() => void` | — | Accept All and Reject All. |
 
@@ -248,12 +250,13 @@ command is up to you, for example with `AiManager.executeCommand()` and `applySu
 as in the command bar example. The buttons are disabled while the editor is read-only or
 an AI request is running.
 
-### GhostText
+### AiGhostText
 
 A controlled ghost text. It takes `editor`, `text`, `onAccept` and `onDismiss`, and renders
 `text` as a span. Tab in the editor calls `onAccept`; any other key except a modifier
-calls `onDismiss`. Use it with your own completion state; `BlockEditor`'s `GhostText` reads the
-editor's events instead.
+calls `onDismiss`. Use it with your own completion state; `GhostText` of
+`@gotipe/block-editor` reads the editor's events instead. The earlier name `GhostText` of
+`@gotipe/ai-ui` still works and is deprecated.
 
 ## Limitations
 
@@ -263,10 +266,8 @@ editor's events instead.
   `BlockEditor`'s error toast does not show them: `EXTENSION_ERROR` stays out of the toast by
   design ([errors](/docs/ui/block-editor#errors)); the command bar shows its own.
 - `@gotipe/theme` has no styles for `AiCommandPalette` and `AiToolbar`; style
-  `.gotipe-ai-command-palette` and `.gotipe-ai-toolbar` yourself. Their labels are in
-  English only.
-- `@gotipe/block-editor` and `@gotipe/ai-ui` both export a `GhostText` with different
-  props.
+  `.gotipe-ai-command-palette` and `.gotipe-ai-toolbar` yourself. A command's own `name` and
+  `description` are shown as you wrote them.
 
 ## Related
 

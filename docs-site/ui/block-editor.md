@@ -22,8 +22,7 @@ npm install @gotipe/block-editor @gotipe/core @gotipe/react @gotipe/theme @gotip
 ```
 
 Import the styles once. `base.css` draws the document, `theme.css` the menus, panels and
-states. `@gotipe/block-editor/styles` loads only `theme.css`, so you still need
-`base.css`.
+states; `import "@gotipe/block-editor/styles"` loads both.
 
 ```ts title="main.ts"
 import "@gotipe/theme/base.css";
@@ -81,10 +80,10 @@ root shows a loading skeleton with `role="status"`.
 | `onAiCommand` | `(prompt: string) => void` | — | Receives the bar's prompt instead of the AI extension. |
 | `showThemeToggle` | `boolean` | `false` | Light, dark and system switch above the header. |
 | `remotePeers` | `RemotePeer[]` | — | Collaborators' cursors and selections to draw besides those of the editor's `collaboration` decoration layer, which the [provider](/docs/collaboration/provider) fills. Each peer is drawn once. |
-| `showCollaborationCursors` | `boolean` | — | Declared but not read; see the note below. |
-| `suggestions` | `Suggestion[]` | — | Proofreading suggestions for the suggestion bar. |
-| `onSuggestionAccept` | `(suggestion: Suggestion) => void` | — | With `onSuggestionReject`, shows the suggestion bar. |
-| `onSuggestionReject` | `(suggestion: Suggestion) => void` | — | See `onSuggestionAccept`. |
+| `showCollaborationCursors` | `boolean` | `true` | Draws other people's carets and selections, from `remotePeers` and the `collaboration` layer; `false` draws nobody. |
+| `suggestions` | `ToolbarSuggestion[]` | — | Proofreading suggestions for the suggestion bar. |
+| `onSuggestionAccept` | `(suggestion: ToolbarSuggestion) => void` | — | With `onSuggestionReject`, shows the suggestion bar. |
+| `onSuggestionReject` | `(suggestion: ToolbarSuggestion) => void` | — | See `onSuggestionAccept`. |
 | `onSuggestionAcceptAll` | `() => void` | no-op | Accept all button. |
 | `onSuggestionRejectAll` | `() => void` | no-op | Reject all button. |
 | `blockViews` | `BlockViews` | — | Your views by block type; they win over the editor's own. |
@@ -176,8 +175,6 @@ languages; see [i18n](/docs/ui/i18n).
 
 ## Limitations
 
-- `showCollaborationCursors` has no effect: cursors are drawn whenever `remotePeers` or the
-  editor's `collaboration` decoration layer has entries.
 - The block handle is shown only in the `notion` view.
 - To change the `/` menu's groups or labels, set `showSlashMenu={false}` and render your
   own `SlashMenu` as a child; the `+` button then adds an empty block without the menu.

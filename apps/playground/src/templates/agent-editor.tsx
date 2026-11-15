@@ -16,7 +16,7 @@ import {
   SuggestionToolbar,
   ThemeToggle,
 } from "@gotipe/block-editor";
-import type { Suggestion } from "@gotipe/block-editor";
+import type { ToolbarSuggestion as Suggestion } from "@gotipe/block-editor";
 import { FullPreset } from "@gotipe/core/presets";
 import { Editor, MediaBlocksContext, useEditor } from "@gotipe/react";
 import { mediaBlocks } from "@gotipe/react/media";

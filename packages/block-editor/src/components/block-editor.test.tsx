@@ -126,6 +126,29 @@ describe("other people in BlockEditor: one owner draws them", () => {
     expect(container.querySelectorAll(".gotipe-remote-cursor")).toHaveLength(2);
   });
 
+  it("draws nobody with showCollaborationCursors={false} (D-47)", async () => {
+    const editor = await editorWith("hello");
+    const bob: RemotePeer = {
+      peerId: "bob",
+      user: { name: "Bob", color: "#c2410c" },
+      cursor: { blockId: "p", offset: 4 },
+    };
+    act(() => {
+      root.render(
+        <BlockEditor
+          editor={editor}
+          remotePeers={[bob]}
+          showCollaborationCursors={false}
+          showBlockToolbar={false}
+        />,
+      );
+      editor.setDecorations("collaboration", [ann]);
+    });
+    await frame();
+    expect(container.querySelector(".gotipe-collaboration-cursors")).toBeNull();
+    expect(container.querySelectorAll(".gotipe-remote-cursor")).toHaveLength(0);
+  });
+
   it("EditorContent draws the layer inline unless the host takes it", async () => {
     const editor = await editorWith("hello");
     act(() => {

@@ -260,8 +260,9 @@
   white-space: nowrap;
 }
 
-/* the element that failed: an image that cannot be shown */
-.gotipe-image-block > .gotipe-image-error {
+/* the element that failed: an image that cannot be shown, an editor that could not be created */
+.gotipe-image-block > .gotipe-image-error,
+.gotipe-block-editor > .gotipe-editor-error {
   display: grid;
   place-items: center;
   min-height: var(--gt-image-empty-h);
@@ -273,6 +274,15 @@
   font-family: var(--gt-font-ui);
   font-size: var(--gt-ui-size);
   line-height: var(--gt-ui-leading);
+}
+.gotipe-block-editor > .gotipe-editor-error {
+  grid-auto-flow: column;
+  place-content: center;
+  gap: var(--gt-menu-gap);
+}
+.gotipe-editor-error > svg {
+  width: var(--gt-icon-size);
+  height: var(--gt-icon-size);
 }
 
 /* a reported error is shown by the toast (uploads included); the control keeps its alert for

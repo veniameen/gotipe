@@ -1,13 +1,17 @@
 import type { GoTipeEditor } from "@gotipe/core";
 import { useEffect } from "react";
 
-export interface GhostTextProps {
+export interface AiGhostTextProps {
   editor: GoTipeEditor;
   text: string;
   onAccept: () => void;
   onDismiss: () => void;
 }
-export function GhostText({ editor, text, onAccept, onDismiss }: GhostTextProps) {
+/**
+ * A controlled ghost text: your completion state draws it, Tab accepts it. Not `GhostText` of
+ * `@gotipe/block-editor`, which reads the editor's events itself.
+ */
+export function AiGhostText({ editor, text, onAccept, onDismiss }: AiGhostTextProps) {
   useEffect(() => {
     const owner = editor.element?.ownerDocument;
     if (!owner) return;
@@ -41,3 +45,8 @@ export function GhostText({ editor, text, onAccept, onDismiss }: GhostTextProps)
     </span>
   );
 }
+
+/** @deprecated Use `AiGhostText`; `@gotipe/block-editor` has a different `GhostText`. */
+export const GhostText = AiGhostText;
+/** @deprecated Use `AiGhostTextProps`. */
+export type GhostTextProps = AiGhostTextProps;

@@ -28,8 +28,9 @@ import "@gotipe/theme/base.css";
 import "@gotipe/theme/theme.css";
 ```
 
-`@gotipe/block-editor/styles` loads `theme.css` only. The headless MIT packages ship no
-CSS; with them, style `.gotipe-content` yourself or use `tokens.css` for your own UI.
+`@gotipe/block-editor/styles` loads `base.css` and `theme.css`, everything `BlockEditor` and
+`PageEditor` draw. The headless MIT packages ship no CSS; with them, style `.gotipe-content`
+yourself or use `tokens.css` for your own UI.
 
 ## Views
 

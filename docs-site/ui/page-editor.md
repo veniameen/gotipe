@@ -93,7 +93,7 @@ Details of the codec are in [Markdown](/docs/conversion/markdown).
 | `reviewBar` | `{ title?: ReactNode; extra?: ReactNode[] } \| false` | not shown | Pass an object to show the review bar above the page. |
 | `autoFocus` | `boolean` | — | Put the caret at the end once the editor exists. |
 | `onReady` | `(editor: GoTipeEditor) => void` | — | Called once per editor, when it exists. A new function on a later render is not called. |
-| `onError` | `(error: GoTipeError) => void` | — | Every editor error, like `host.onError`. |
+| `onError` | `(error: GoTipeError) => void` | — | Every editor error, like `host.onError`, and the failed creation of the editor ([Host](#host)). |
 | `status` | `boolean \| StatusLineOptions` | `false` | Words and characters under the page ([counter line](/docs/extensions/character-count#the-counter-line-of-blockeditor)). The page has `FindReplace` and `CharacterCount`, so `Mod+F` opens the find bar. |
 | `className`, `style` | | — | On the root `.gotipe-page`. |
 
@@ -123,6 +123,13 @@ The `/` menu groups them as Style, Insert and Upload.
 and uploaded images and files up to 10 MiB are stored in the file as `data:` URLs. Without
 `openLink`, a link opens in a new tab with `noopener`. Without `onError` and
 `host.onError`, errors show as a toast; with either of them the toast is off.
+
+When the editor cannot be created — the Markdown cannot be read or the document fails its
+check — the page shows "The document could not be opened" in place of the loading shape, and
+the failure goes once to `onError` and `host.onError` as a `GoTipeError`; a reason that is not
+one becomes `EDITOR_NOT_INITIALIZED` with the reason as `details.cause`. Without either of
+them it is logged to the console. A creation that fails after the page is gone reports
+nothing. Show the same `markdown` again in a new `PageEditor` (a new `key`) to try again.
 
 ## Review layer
 
