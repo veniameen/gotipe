@@ -138,6 +138,10 @@ element. An editor that finishes after the component is gone is destroyed.
   does not close on Escape or an outside click, and leaves the `/` in the text. Its rows
   show the icon name as text.
 - `BlockToolbarVue` is not placed beside blocks, and its grip button does not drag.
+- `useEditor` has no `onError` and no `error`: when the editor cannot be created, the ref
+  stays `null` and the error goes to Vue's error handling (`onErrorCaptured`,
+  `app.config.errorHandler`). Without a handler, a production build logs it to the console
+  and a development build rethrows it as an unhandled rejection.
   Labels in both components are English.
 - `BlockEditorVue` has no `view` prop. It uses the `notion` tokens unless a wrapper
   element carries `data-gt-view`.
