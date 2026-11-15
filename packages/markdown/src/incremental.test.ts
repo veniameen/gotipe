@@ -343,6 +343,244 @@ describe("structural hazards", () => {
     );
   });
 
+  // D-102: the snapshot keeps the blanks before the first line of a block at the end of the gap
+  // before it (of `leading` before the first block); they go with the block, where it needs them
+  const para = (text: string): Block => ({
+    id: `new-${text}`,
+    type: "paragraph",
+    attrs: {},
+    content: plain(text),
+    children: [],
+  });
+  const list = (text: string): Block => ({
+    id: `new-${text}`,
+    type: "bulletList",
+    attrs: {},
+    content: null,
+    children: [
+      { id: `new-${text}-i`, type: "listItem", attrs: {}, content: plain(text), children: [] },
+    ],
+  });
+  const editItem = (blocks: Block[]): void => {
+    blocks[0]!.children[0]!.content = plain("a!");
+  };
+  it.each<[string, string, (blocks: Block[]) => void, string]>([
+    [
+      "deleting the block before indented code",
+      "p\n\nq\n\n    code\n",
+      (b) => b.splice(1, 1),
+      "p\n\n    code\n",
+    ],
+    [
+      "deleting the first block before indented code",
+      "p\n\n    code\n",
+      (b) => b.splice(0, 1),
+      "    code\n",
+    ],
+    [
+      "a paragraph before indented code that starts the file",
+      "    code\n\np\n",
+      (b) => b.unshift(para("new")),
+      "new\n\n    code\n\np\n",
+    ],
+    [
+      "editing indented code after a blank line",
+      "p\n\n    code\n",
+      (b) => {
+        b[1]!.content = "code!";
+      },
+      "p\n\n```\ncode!\n```\n",
+    ],
+    [
+      "editing indented code that starts the file",
+      "    code\n",
+      (b) => {
+        b[0]!.content = "code!";
+      },
+      "```\ncode!\n```\n",
+    ],
+    [
+      "deleting before indented code with CRLF",
+      "p\r\n\r\nq\r\n\r\n    code\r\n",
+      (b) => b.splice(1, 1),
+      "p\r\n\r\n    code\r\n",
+    ],
+    [
+      "editing indented code with CRLF",
+      "p\r\n\r\n    code\r\n",
+      (b) => {
+        b[1]!.content = "code!";
+      },
+      "p\r\n\r\n```\r\ncode!\r\n```\r\n",
+    ],
+    ["a paragraph after an edited list", "-   a\n\n  p\n", editItem, "- a!\n\np\n"],
+    [
+      "a paragraph after an edited list with CRLF",
+      "-   a\r\n\r\n  p\r\n",
+      editItem,
+      "- a!\r\n\r\np\r\n",
+    ],
+    [
+      "indented code after an edited list",
+      "-    a\n\n    code\n",
+      editItem,
+      "- a!\n\n```\ncode\n```\n",
+    ],
+    [
+      "indented code after a list once the block between them is deleted",
+      "- a\n\nq\n\n    code\n",
+      (b) => b.splice(1, 1),
+      "- a\n\n```\ncode\n```\n",
+    ],
+    [
+      "code indented with a tab after a new list",
+      "a\n\n\tcode\n",
+      (b) => b.splice(1, 0, list("n")),
+      "a\n\n- n\n\n```\ncode\n```\n",
+    ],
+    [
+      "indented code after indented code once the block between them is deleted",
+      "    a\n\nq\n\n    b\n",
+      (b) => b.splice(1, 1),
+      "    a\n\n```\nb\n```\n",
+    ],
+    [
+      "a fence indented by one before a new first paragraph",
+      " ```\n x\n ```\n",
+      (b) => b.unshift(para("new")),
+      "new\n\n ```\n x\n ```\n",
+    ],
+    [
+      "a fence indented by two after an edited paragraph",
+      "p\n\n  ```\n  x\n  ```\n",
+      (b) => {
+        b[0]!.content = plain("p!");
+      },
+      "p!\n\n  ```\n  x\n  ```\n",
+    ],
+    [
+      "a fence indented by three once the block before it is deleted",
+      "p\n\nq\n\n   ```\n   x\n   ```\n",
+      (b) => b.splice(1, 1),
+      "p\n\n   ```\n   x\n   ```\n",
+    ],
+    [
+      "an edited fence indented by three",
+      "p\r\n\r\n   ```\r\n   x\r\n   ```\r\n",
+      (b) => {
+        b[1]!.content = "x!";
+      },
+      "p\r\n\r\n```\r\nx!\r\n```\r\n",
+    ],
+    [
+      "a list once the block before it is deleted",
+      "q\n\n  - x\n\n   p\n",
+      (b) => b.splice(0, 1),
+      "  - x\n\n   p\n",
+    ],
+    [
+      "a heading turned into a list before indented code",
+      "# h\n    code\n",
+      (b) => {
+        b[0] = list("h");
+      },
+      "- h\n\n```\ncode\n```\n",
+    ],
+  ])("D-102: %s keeps the blanks with the block", (_, text, edit, out) => {
+    const { doc, snapshot } = setup(text);
+    edit(doc.blocks);
+    expect(serializeMarkdown(doc, snapshot).text).toBe(out);
+    expect(parseMarkdown(out).doc.blocks.map((b) => fingerprint(b))).toEqual(
+      doc.blocks.map((b) => fingerprint(b)),
+    );
+  });
+
+  // the text of the last span gets a "!": links and other marks stay
+  const bang = (block: Block): void => {
+    const spans = Array.isArray(block.content) ? block.content : [];
+    const last = spans.at(-1)!;
+    block.content = [...spans.slice(0, -1), { ...last, text: `${last.text}!` }];
+  };
+  const lines = (prefix: string, n: number): string =>
+    Array.from({ length: n }, (_, i) => `${prefix}l${i}`).join("\n");
+  it.each<[string, string, (blocks: Block[]) => void, string]>([
+    [
+      "an edited fence after a list: the gap of the source does not indent it",
+      `  * s\n  \`\`\`\n${lines("  ", 8)}\n      deep\n  \`\`\`\n`,
+      (b) => {
+        b[1]!.content = `${b[1]!.content}!`;
+      },
+      `  * s\n\`\`\`\n${lines("", 8)}\n    deep!\n\`\`\`\n`,
+    ],
+    [
+      "an edited list with a long first item after a list",
+      `  - a\n   1. ${lines("      ", 9).trimStart()}\n      - n\n`,
+      (b) => bang(b[1]!.children[0]!),
+      `  - a\n1. ${lines("      ", 9).trimStart()}!\n   - n\n`,
+    ],
+    [
+      "a raw list after an edited list that gives back its blanks",
+      "  * s\n\n  - [x] t\n   - a\n",
+      (b) => bang(b[0]!.children[0]!),
+      "  * s!\n\n  - [x] t\n   - a\n",
+    ],
+    [
+      "a raw list whose blanks hold its code",
+      "  * s\n\n  - a\n\n      para\n",
+      (b) => bang(b[0]!.children[0]!),
+      "  * s!\n\n  - a\n\n      para\n",
+    ],
+    [
+      "definitions after an edited paragraph with references",
+      "See [the docs][docs] and [site] now.\n\n  [docs]: http://d\n  [site]: http://s\n",
+      (b) => bang(b[0]!),
+      "See [the docs][docs] and [site] now.!\n\n  [docs]: http://d\n  [site]: http://s\n",
+    ],
+    [
+      "a divider moved behind another: the first opens no front matter",
+      "  ---\n\n  ---\n\np\n",
+      (b) => b.splice(1, 0, ...b.splice(0, 1)),
+      "  ---\n\n  ---\n\np\n",
+    ],
+    [
+      "a list rewritten after a list takes another marker",
+      "- x\n\nq\n\n  * a\n      * n\n",
+      (b) => {
+        b.splice(1, 1);
+        b[1]!.attrs = { ...b[1]!.attrs, marker: "-" };
+      },
+      "- x\n\n* a\n  * n\n",
+    ],
+    [
+      "a fence after a list rewritten for its marker: both lists take back their blanks",
+      "  a\n\n   - l\n\n   ```\n   x\n   ```\n",
+      (b) => {
+        b[0] = { ...list("a"), id: b[0]!.id };
+      },
+      "  - a\n\n   * l\n\n   ```\n   x\n   ```\n",
+    ],
+    [
+      "a formula after an edited task list",
+      "  - [x] t\n\n  $$\n  x\n  $$\n",
+      (b) => bang(b[0]!.children[0]!),
+      "  - [x] t!\n\n  $$\n  x\n  $$\n",
+    ],
+  ])("D-102: %s", (_, text, edit, out) => {
+    const { doc, snapshot } = setup(text);
+    edit(doc.blocks);
+    expect(serializeMarkdown(doc, snapshot).text).toBe(out);
+    expect(parseMarkdown(out).doc.blocks.map((b) => fingerprint(b))).toEqual(
+      doc.blocks.map((b) => fingerprint(b)),
+    );
+  });
+
+  it("D-102: untouched blocks keep the blanks they do not need while they stand apart", () => {
+    const { doc, snapshot, text } = setup("  a\n\n  b\n\n-    c\n\n    code\n");
+    expect(serializeMarkdown(doc, snapshot).text).toBe(text);
+    doc.blocks[0]!.content = plain("a!");
+    expect(serializeMarkdown(doc, snapshot).text).toBe("a!\n\n  b\n\n-    c\n\n    code\n");
+  });
+
   it("a table rewritten as HTML is followed by a blank line: HTML ends only there", () => {
     const { doc, snapshot } = setup("| h | i |\n| - | - |\n| c | d |\n# x\n");
     const row = doc.blocks[0]!.children[1]!;
