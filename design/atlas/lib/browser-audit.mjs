@@ -1,10 +1,11 @@
 // Browser audit of the built atlas, once in each theme of the page's switch: it loads without
 // errors or network; every figure of the index has frames; nothing leaves its frame or clips;
-// blocks do not overlap and the block handle does not cover text; text keeps its contrast on the
-// background it really sits on.
+// blocks do not overlap and the block handle does not cover text; text stays on its plate
+// (text-plates.mjs) and keeps its contrast on the background it really sits on.
 import { mkdirSync } from "node:fs";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
+import { textOffPlates } from "./text-plates.mjs";
 
 /** [selector, least contrast, pseudo-element] — measured wherever the selector is present. */
 const CONTRAST = [
@@ -221,7 +222,7 @@ export async function browserAudit({ file, shotsDir, chromium }) {
     const chosen = await page.evaluate(() => document.documentElement.dataset.theme);
     if (chosen !== theme) problems.push(`the theme switch did not choose ${theme}`);
     const audit = await page.evaluate(auditPage, { roles: CONTRAST, theme });
-    problems.push(...audit.problems);
+    problems.push(...audit.problems, ...(await page.evaluate(textOffPlates, { theme })));
     frames.push(...audit.frames);
     if (!shotsDir) continue;
     const stages = page.locator(".at-stage");
