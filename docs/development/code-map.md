@@ -101,6 +101,10 @@ pointer, таймером удержания, capture, edge scroll и cleanup. P
 передают hit testing/indicator/move callbacks; `components/block-interaction.ts` остаётся
 владельцем разрешённого перемещения строки и одной undoable транзакции.
 
+Меню ручки (`components/block-context-menu.tsx`) действует на блок, который двигает ручка: на
+пункте списка — на пункт, не на весь список. Удаление (последний пункт уносит опустевший список),
+копия и сброс форматирования — `interaction/block-actions.ts`, каждое одной транзакцией.
+
 `interaction/block-text-metrics.ts` измеряет только собственный текст блока;
 `data-gotipe-text-content` имеет приоритет, controls/widgets и чужие вложенные блоки
 не могут смещать ручку или область наведения.

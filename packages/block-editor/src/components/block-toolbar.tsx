@@ -64,8 +64,10 @@ function createInsertedBlock(parentType: string | null, blockId: string): Block 
 
 export interface BlockToolbarProps {
   editor: GoTipeEditor;
+  /** The top-level block under the pointer: Alt-drag moves it. */
   blockId: string;
   addBlockId?: string;
+  /** The block the grip moves and the block menu acts on: a list row, else `blockId`. */
   dragBlockId?: string;
   onDragStart: (blockId: string) => void;
   onDragEnd: () => void;
@@ -245,7 +247,7 @@ export function BlockToolbar({
         />
         <BlockContextMenu
           editor={editor}
-          blockId={blockId}
+          blockId={dragBlockId ?? blockId}
           open={contextMenuOpen}
           onClose={handleCloseMenu}
         />

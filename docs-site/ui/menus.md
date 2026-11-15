@@ -135,13 +135,15 @@ hidden while the editor is read-only.
 |---|---|
 | Turn into | Text, Heading 1–3, Bullet list, Numbered list, To-do list, Quote, Code block |
 | Copy link to block | Copies the page URL with `?gotipe-block=<id>`; a page opened with it scrolls to the block |
-| Duplicate | Copies the block below itself |
-| Reset formatting | Turns the block into a paragraph |
+| Duplicate | Copies the block below itself, with its children and new IDs |
+| Reset formatting | Turns the block into a paragraph and removes the marks of its text — bold, colours, links; mentions, formulas and custom emoji stay |
 | Copy to clipboard | Copies the plain text of the block and its children |
-| Delete | Removes the block |
+| Delete | Removes the block with its children; a list's only row takes the list with it |
 
-The menu acts on the top-level block under the pointer. On a list row, Duplicate and Delete
-apply to the whole list, and Turn into to the row with the caret or the first row.
+The menu acts on the block its grip moves. On a list row — a bullet, numbered or to-do item,
+nested or inside a column — that is the row with its nested rows, never the whole list: Duplicate
+puts the copy into the same list, Turn into and Reset formatting lift the row out of the list.
+Elsewhere it is the top-level block under the pointer. Each action is one undo step.
 
 ## Formatting bubble
 
