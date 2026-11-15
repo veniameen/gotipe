@@ -3481,6 +3481,571 @@
           ]
         }
       ]
+    },
+    {
+      "id": "a-toggle-without-text-and-children-is-not-written",
+      "document": {
+        "version": 1,
+        "blocks": [
+          {
+            "id": "b1",
+            "type": "paragraph",
+            "attrs": {},
+            "content": [
+              {
+                "text": "a",
+                "marks": []
+              }
+            ],
+            "children": []
+          },
+          {
+            "id": "b2",
+            "type": "toggle",
+            "attrs": {},
+            "content": [],
+            "children": []
+          },
+          {
+            "id": "b3",
+            "type": "paragraph",
+            "attrs": {},
+            "content": [
+              {
+                "text": "b",
+                "marks": []
+              }
+            ],
+            "children": []
+          }
+        ]
+      },
+      "markdown": "a\n\nb\n",
+      "reparsed": [
+        {
+          "type": "paragraph",
+          "attrs": {},
+          "content": [
+            {
+              "text": "a",
+              "marks": []
+            }
+          ],
+          "children": []
+        },
+        {
+          "type": "paragraph",
+          "attrs": {},
+          "content": [
+            {
+              "text": "b",
+              "marks": []
+            }
+          ],
+          "children": []
+        }
+      ]
+    },
+    {
+      "id": "a-toggle-without-text-keeps-no-lists-apart",
+      "document": {
+        "version": 1,
+        "blocks": [
+          {
+            "id": "b5",
+            "type": "bulletList",
+            "attrs": {},
+            "content": null,
+            "children": [
+              {
+                "id": "b4",
+                "type": "listItem",
+                "attrs": {},
+                "content": [
+                  {
+                    "text": "a",
+                    "marks": []
+                  }
+                ],
+                "children": []
+              }
+            ]
+          },
+          {
+            "id": "b6",
+            "type": "toggle",
+            "attrs": {},
+            "content": [],
+            "children": []
+          },
+          {
+            "id": "b8",
+            "type": "bulletList",
+            "attrs": {},
+            "content": null,
+            "children": [
+              {
+                "id": "b7",
+                "type": "listItem",
+                "attrs": {},
+                "content": [
+                  {
+                    "text": "b",
+                    "marks": []
+                  }
+                ],
+                "children": []
+              }
+            ]
+          }
+        ]
+      },
+      "markdown": "- a\n\n* b\n",
+      "reparsed": [
+        {
+          "type": "bulletList",
+          "attrs": {
+            "marker": "-",
+            "spread": false
+          },
+          "content": null,
+          "children": [
+            {
+              "type": "listItem",
+              "attrs": {},
+              "content": [
+                {
+                  "text": "a",
+                  "marks": []
+                }
+              ],
+              "children": []
+            }
+          ]
+        },
+        {
+          "type": "bulletList",
+          "attrs": {
+            "marker": "*",
+            "spread": false
+          },
+          "content": null,
+          "children": [
+            {
+              "type": "listItem",
+              "attrs": {},
+              "content": [
+                {
+                  "text": "b",
+                  "marks": []
+                }
+              ],
+              "children": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "an-empty-toggle-in-an-item-without-text",
+      "document": {
+        "version": 1,
+        "blocks": [
+          {
+            "id": "b21",
+            "type": "bulletList",
+            "attrs": {},
+            "content": null,
+            "children": [
+              {
+                "id": "b20",
+                "type": "listItem",
+                "attrs": {},
+                "content": [],
+                "children": [
+                  {
+                    "id": "b17",
+                    "type": "toggle",
+                    "attrs": {},
+                    "content": [],
+                    "children": []
+                  },
+                  {
+                    "id": "b19",
+                    "type": "bulletList",
+                    "attrs": {},
+                    "content": null,
+                    "children": [
+                      {
+                        "id": "b18",
+                        "type": "listItem",
+                        "attrs": {},
+                        "content": [
+                          {
+                            "text": "b",
+                            "marks": []
+                          }
+                        ],
+                        "children": []
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "markdown": "-\n  - b\n",
+      "reparsed": [
+        {
+          "type": "bulletList",
+          "attrs": {
+            "marker": "-",
+            "spread": false
+          },
+          "content": null,
+          "children": [
+            {
+              "type": "listItem",
+              "attrs": {},
+              "content": [],
+              "children": [
+                {
+                  "type": "bulletList",
+                  "attrs": {
+                    "marker": "-",
+                    "spread": false
+                  },
+                  "content": null,
+                  "children": [
+                    {
+                      "type": "listItem",
+                      "attrs": {},
+                      "content": [
+                        {
+                          "text": "b",
+                          "marks": []
+                        }
+                      ],
+                      "children": []
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "an-empty-toggle-between-lists-in-an-item",
+      "document": {
+        "version": 1,
+        "blocks": [
+          {
+            "id": "b28",
+            "type": "bulletList",
+            "attrs": {},
+            "content": null,
+            "children": [
+              {
+                "id": "b27",
+                "type": "listItem",
+                "attrs": {},
+                "content": [
+                  {
+                    "text": "x",
+                    "marks": []
+                  }
+                ],
+                "children": [
+                  {
+                    "id": "b23",
+                    "type": "bulletList",
+                    "attrs": {},
+                    "content": null,
+                    "children": [
+                      {
+                        "id": "b22",
+                        "type": "listItem",
+                        "attrs": {},
+                        "content": [
+                          {
+                            "text": "a",
+                            "marks": []
+                          }
+                        ],
+                        "children": []
+                      }
+                    ]
+                  },
+                  {
+                    "id": "b24",
+                    "type": "toggle",
+                    "attrs": {},
+                    "content": [],
+                    "children": []
+                  },
+                  {
+                    "id": "b26",
+                    "type": "bulletList",
+                    "attrs": {},
+                    "content": null,
+                    "children": [
+                      {
+                        "id": "b25",
+                        "type": "listItem",
+                        "attrs": {},
+                        "content": [
+                          {
+                            "text": "b",
+                            "marks": []
+                          }
+                        ],
+                        "children": []
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "markdown": "- x\n  - a\n  * b\n",
+      "reparsed": [
+        {
+          "type": "bulletList",
+          "attrs": {
+            "marker": "-",
+            "spread": false
+          },
+          "content": null,
+          "children": [
+            {
+              "type": "listItem",
+              "attrs": {},
+              "content": [
+                {
+                  "text": "x",
+                  "marks": []
+                }
+              ],
+              "children": [
+                {
+                  "type": "bulletList",
+                  "attrs": {
+                    "marker": "-",
+                    "spread": false
+                  },
+                  "content": null,
+                  "children": [
+                    {
+                      "type": "listItem",
+                      "attrs": {},
+                      "content": [
+                        {
+                          "text": "a",
+                          "marks": []
+                        }
+                      ],
+                      "children": []
+                    }
+                  ]
+                },
+                {
+                  "type": "bulletList",
+                  "attrs": {
+                    "marker": "*",
+                    "spread": false
+                  },
+                  "content": null,
+                  "children": [
+                    {
+                      "type": "listItem",
+                      "attrs": {},
+                      "content": [
+                        {
+                          "text": "b",
+                          "marks": []
+                        }
+                      ],
+                      "children": []
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "a-toggle-of-empty-paragraphs-is-not-written",
+      "document": {
+        "version": 1,
+        "blocks": [
+          {
+            "id": "b1",
+            "type": "paragraph",
+            "attrs": {},
+            "content": [
+              {
+                "text": "a",
+                "marks": []
+              }
+            ],
+            "children": []
+          },
+          {
+            "id": "b3",
+            "type": "toggle",
+            "attrs": {},
+            "content": [],
+            "children": [
+              {
+                "id": "e66j9",
+                "type": "paragraph",
+                "attrs": {},
+                "content": [],
+                "children": []
+              },
+              {
+                "id": "b2",
+                "type": "toggle",
+                "attrs": {},
+                "content": [],
+                "children": []
+              }
+            ]
+          },
+          {
+            "id": "b4",
+            "type": "paragraph",
+            "attrs": {},
+            "content": [
+              {
+                "text": "b",
+                "marks": []
+              }
+            ],
+            "children": []
+          }
+        ]
+      },
+      "markdown": "a\n\nb\n",
+      "reparsed": [
+        {
+          "type": "paragraph",
+          "attrs": {},
+          "content": [
+            {
+              "text": "a",
+              "marks": []
+            }
+          ],
+          "children": []
+        },
+        {
+          "type": "paragraph",
+          "attrs": {},
+          "content": [
+            {
+              "text": "b",
+              "marks": []
+            }
+          ],
+          "children": []
+        }
+      ]
+    },
+    {
+      "id": "columns-of-empty-paragraphs-are-not-written",
+      "document": {
+        "version": 1,
+        "blocks": [
+          {
+            "id": "b5",
+            "type": "paragraph",
+            "attrs": {},
+            "content": [
+              {
+                "text": "a",
+                "marks": []
+              }
+            ],
+            "children": []
+          },
+          {
+            "id": "cols",
+            "type": "columns",
+            "attrs": {},
+            "content": null,
+            "children": [
+              {
+                "id": "col0",
+                "type": "column",
+                "attrs": {},
+                "content": null,
+                "children": [
+                  {
+                    "id": "eqya3",
+                    "type": "paragraph",
+                    "attrs": {},
+                    "content": [],
+                    "children": []
+                  }
+                ]
+              },
+              {
+                "id": "col1",
+                "type": "column",
+                "attrs": {},
+                "content": null,
+                "children": []
+              }
+            ]
+          },
+          {
+            "id": "b6",
+            "type": "paragraph",
+            "attrs": {},
+            "content": [
+              {
+                "text": "b",
+                "marks": []
+              }
+            ],
+            "children": []
+          }
+        ]
+      },
+      "markdown": "a\n\nb\n",
+      "reparsed": [
+        {
+          "type": "paragraph",
+          "attrs": {},
+          "content": [
+            {
+              "text": "a",
+              "marks": []
+            }
+          ],
+          "children": []
+        },
+        {
+          "type": "paragraph",
+          "attrs": {},
+          "content": [
+            {
+              "text": "b",
+              "marks": []
+            }
+          ],
+          "children": []
+        }
+      ]
     }
   ]
 }

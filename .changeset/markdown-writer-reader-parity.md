@@ -14,3 +14,7 @@ as GFM does.
 - An item of a bullet list with a `checked` attribute, the task of the Rust editor, is written as a
   task (`- [x] a`) and keeps its mark; it was written as a plain item. A change of that mark after
   reading rewrites the list instead of keeping its old source.
+- A block without syntax of its own that writes nothing — a toggle or columns without text whose
+  blocks are empty — is left out at any depth, as an empty paragraph is. At the top level it was
+  written as an empty line between two blank ones; between two lists with one marker it joined
+  them into one list, and in an item without text its blank line took the item's blocks out of it.
