@@ -60,7 +60,6 @@ export interface AiOptions {
   provider?: AiProvider;
   debounceMs?: number;
   maxContextBlocks?: number;
-  commands?: AiCommand[];
   enableAutoComplete?: boolean;
   /** Block outbound requests containing supported email/phone/Luhn-card patterns. Not a complete privacy classifier. */
   enablePiiDetection?: boolean;

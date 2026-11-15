@@ -1,5 +1,5 @@
 import type { GoTipeEditor } from "@gotipe/core";
-import { assertWritable, documentKey } from "./document";
+import { assertWritable } from "./document";
 
 export interface AiRequest {
   signal: AbortSignal;
@@ -11,14 +11,21 @@ export function cancelled(): Error {
   error.name = "AbortError";
   return error;
 }
-/** Owns one current provider operation; superseded completions cannot clear its status. */
+/**
+ * Owns one current provider operation; superseded completions cannot clear its status. A
+ * local edit cancels it: the result was asked for the document before the edit. Another
+ * replica's edit does not: the result checks the blocks it applies to (`AiTarget`).
+ */
 export class AiRequests {
   private current: AbortController | null = null;
   private destroyed = false;
   private cleanup: (() => void)[];
   constructor(private editor: GoTipeEditor) {
     this.cleanup = [
-      editor.on("update", () => this.cancel()),
+      // Only this replica's edits end the request; another replica's do not (D-46).
+      editor.on("update", ({ origin }) => {
+        if (origin === "local") this.cancel();
+      }),
       editor.on("editableChange", (editable) => {
         if (!editable) this.cancel();
       }),
@@ -32,7 +39,6 @@ export class AiRequests {
     assertWritable(this.editor);
     if (this.destroyed) throw new Error("AI manager has been destroyed");
     this.cancel();
-    const key = documentKey(this.editor);
     const controller = new AbortController();
     this.current = controller;
     const abort = () => {
@@ -50,8 +56,7 @@ export class AiRequests {
           this.editor.isDestroyed ||
           !this.editor.isEditable ||
           controller.signal.aborted ||
-          this.current !== controller ||
-          documentKey(this.editor) !== key
+          this.current !== controller
         ) {
           throw cancelled();
         }

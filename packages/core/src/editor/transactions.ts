@@ -33,7 +33,7 @@ interface TransactionPort {
   restoreDocument(state: string): void;
   getViewState(): ViewState;
   invalidate(): void;
-  publishUpdate(): void;
+  publishUpdate(origin: "local" | "remote"): void;
   publishSelection(): void;
   publishView(): void;
   scheduleSelectionRestore(): void;
@@ -89,7 +89,7 @@ export function createTransactions(port: TransactionPort) {
       : { type: "text", anchor: { blockId: "", offset: 0 }, head: { blockId: "", offset: 0 } };
     port.storedMarks = null;
     port.invalidate();
-    port.publishUpdate();
+    port.publishUpdate("local");
     port.publishSelection();
     port.publishView();
     if (port.selection.anchor.blockId) port.scheduleSelectionRestore();
@@ -177,7 +177,7 @@ export function createTransactions(port: TransactionPort) {
         }
         port.invalidate();
         if (context) port.publishTransaction(context);
-        port.publishUpdate();
+        port.publishUpdate("local");
         port.publishView();
         if (port.selection.anchor.blockId) {
           port.scheduleSelectionRestore();
@@ -224,7 +224,8 @@ export function createTransactions(port: TransactionPort) {
           JSON.stringify(previousSelection) !== JSON.stringify(port.selection)
         )
           port.publishSelection();
-        port.publishUpdate();
+        // A repair after another replica's edit (`origin: "repair"`) is that edit's.
+        port.publishUpdate(tr.metadata?.origin === "repair" ? "remote" : "local");
         port.publishView();
         if (port.selection.anchor.blockId) {
           port.scheduleSelectionRestore();
@@ -246,7 +247,7 @@ export function createTransactions(port: TransactionPort) {
       const prev = undoStack.pop()!;
       redoStack.push(captureHistory());
       restoreHistory(prev);
-      port.publishUpdate();
+      port.publishUpdate("local");
       port.publishSelection();
       port.publishView();
       if (port.selection.anchor.blockId) {
@@ -263,7 +264,7 @@ export function createTransactions(port: TransactionPort) {
       const next = redoStack.pop()!;
       undoStack.push(captureHistory());
       restoreHistory(next);
-      port.publishUpdate();
+      port.publishUpdate("local");
       port.publishSelection();
       port.publishView();
       if (port.selection.anchor.blockId) {
