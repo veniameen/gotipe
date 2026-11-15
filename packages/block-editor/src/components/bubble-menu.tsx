@@ -95,7 +95,7 @@ export function BlockEditorBubbleMenu({ editor, enableAI = false }: BlockEditorB
   const improve = enableAI && aiControls(editor).improve;
 
   return (
-    <BubbleMenu editor={editor}>
+    <BubbleMenu editor={editor} ariaLabel={i18n.t("a11y.toolbarLabel")}>
       {() => (
         <>
           {/* AI Improve — only when an AI extension answers it */}
