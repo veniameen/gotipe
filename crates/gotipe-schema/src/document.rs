@@ -1,7 +1,24 @@
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Serialize, Serializer};
 use std::collections::HashMap;
 
 use crate::attr::AttrValue;
+
+/// Writes attribute keys in sorted order. A `HashMap` iterates in an order of its own, so
+/// replicas with equal attributes wrote different JSON (D-82); nested objects are
+/// `BTreeMap`s already.
+fn sorted_attrs<S: Serializer>(
+    attrs: &HashMap<String, AttrValue>,
+    serializer: S,
+) -> Result<S::Ok, S::Error> {
+    serializer.collect_map(sorted_entries(attrs))
+}
+
+/// Not generic over the serializer: the sort is compiled once.
+fn sorted_entries(attrs: &HashMap<String, AttrValue>) -> Vec<(&String, &AttrValue)> {
+    let mut entries: Vec<_> = attrs.iter().collect();
+    entries.sort_unstable_by(|left, right| left.0.cmp(right.0));
+    entries
+}
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct BlockId(pub String);
@@ -140,6 +157,7 @@ impl Default for Document {
 pub struct Block {
     pub id: BlockId,
     pub block_type: String,
+    #[serde(serialize_with = "sorted_attrs")]
     pub attrs: HashMap<String, AttrValue>,
     pub content: BlockContent,
     pub children: Vec<Block>,
@@ -203,6 +221,7 @@ pub struct TextSpan {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct Mark {
     pub mark_type: String,
+    #[serde(serialize_with = "sorted_attrs")]
     pub attrs: HashMap<String, AttrValue>,
 }
 
