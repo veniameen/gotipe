@@ -72,7 +72,7 @@ const nodes: NodeSpec[] = [
 |---|---|---|
 | `name` | `string` | The value of `Block.type`. |
 | `group` | `string[]` | Group names, such as `["block"]`. Stored in the schema; nesting is checked with `childTypes`. |
-| `content` | `"richText" \| "rawText" \| "empty"` | What `Block.content` holds: spans, a string or `null`. Commands and both engines convert content by it, as for the built-in types. |
+| `content` | `"richText" \| "rawText" \| "empty"` | What `Block.content` holds: spans, a string or `null`. Commands and both engines convert content by it, as for the built-in types; Enter in a `rawText` block is a line break. |
 | `attrs` | `Record<string, AttrSpec>` | Declared attributes. |
 | `topLevel` | `boolean` | Whether the block may appear at the top level of the document. |
 | `marksAllowed` | `"all" \| "none" \| string[]` | Marks allowed in the block's text. |

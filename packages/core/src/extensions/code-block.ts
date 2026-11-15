@@ -1,5 +1,35 @@
 import { createId } from "../document/id";
+import type { GoTipeEditor } from "../types/editor";
 import { defineExtension } from "../types/extension";
+
+/**
+ * Escape in a code block or a formula: an empty paragraph after the top-level block with the
+ * caret, and the caret in it. Inside a nested block it does nothing and returns `false`.
+ */
+export function paragraphAfter(editor: GoTipeEditor): boolean {
+  const state = editor.getViewState();
+  const blockId = state.selection.anchor.blockId;
+  const blockIndex = state.blocks.findIndex((b) => b.id === blockId);
+  if (blockIndex === -1) return false;
+
+  const paragraphId = createId();
+  editor.dispatch({
+    steps: [
+      {
+        type: "insertBlock",
+        parentId: null,
+        index: blockIndex + 1,
+        block: { id: paragraphId, type: "paragraph", attrs: {}, content: [], children: [] },
+      },
+    ],
+  });
+  editor.setSelection({
+    anchor: { blockId: paragraphId, offset: 0 },
+    head: { blockId: paragraphId, offset: 0 },
+  });
+  editor.focus();
+  return true;
+}
 
 export interface CodeBlockOptions {
   languages: string[];
@@ -94,40 +124,7 @@ export const CodeBlock = defineExtension<CodeBlockOptions>({
         return true;
       },
     },
-    {
-      key: "Escape",
-      when: "inCodeBlock",
-      command: (editor) => {
-        const state = editor.getViewState();
-        const blockId = state.selection.anchor.blockId;
-        const blockIndex = state.blocks.findIndex((b) => b.id === blockId);
-        if (blockIndex === -1) return false;
-
-        const paragraphId = createId();
-        editor.dispatch({
-          steps: [
-            {
-              type: "insertBlock",
-              parentId: null,
-              index: blockIndex + 1,
-              block: {
-                id: paragraphId,
-                type: "paragraph",
-                attrs: {},
-                content: [],
-                children: [],
-              },
-            },
-          ],
-        });
-        editor.setSelection({
-          anchor: { blockId: paragraphId, offset: 0 },
-          head: { blockId: paragraphId, offset: 0 },
-        });
-        editor.focus();
-        return true;
-      },
-    },
+    { key: "Escape", when: "inCodeBlock", command: paragraphAfter },
   ],
   slashCommands: [
     {
