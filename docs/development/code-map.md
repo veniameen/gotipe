@@ -51,17 +51,17 @@ React/content/table-layout владеет временной шириной пр
 
 | Поток | Владелец |
 |---|---|
-| Public document JSON / атрибуты / selection | `document/decode.ts`, `attributes.ts`, `selection.ts` |
+| Public document JSON / атрибуты / selection; ключи `attrs` в порядке кодовых точек, как Rust | `document/decode.ts`, `attributes.ts` (`cloneAttributes`), `selection.ts` |
 | ID блоков и записей всех пакетов (UUID v4 и без безопасного контекста, HTTP) | `document/id.ts` — публичный `createId()`; прямой `crypto.randomUUID()` в `packages/` отклоняет `check:architecture` |
 | Схема и предварительная атомарная проверка JS/WASM | `engine/schema.ts`, `validate.ts`, `js-transactions.ts`, `wasm-bridge.ts` |
 | История, фильтры и события транзакций | `editor/transactions.ts`, `editor/transaction-filters.ts` |
 | Шаг набора: подряд набранный или удалённый текст — один шаг отмены (пауза 500 мс, смена выделения, другой вид правки); IME-композиция — набор, пауза до неё считается от `compositionstart` | `editor/typing-group.ts`; вид ввода (`TypingKind`) передают обработчики `input/` через порт монтирования, композицию — `editor/mount.ts` (`commit`), выделение с прежним значением сохраняет объект (`select` в `editor.ts`) |
 | Каретка после правки: родная встаёт на место каретки модели, как только рендерер заменил узлы или переписал их текст, иначе в следующем кадре; до этого ввод и Backspace берут каретку модели | `dom/selection.ts` (`renderObserver`, `scheduleSelectionRestore`); `input/session.ts` (`resolveSelectionForInput`), Backspace и вставка (Mod+V, `paste`) — `editor/mount.ts`, `clipboard/handler.ts` (`onPaste`) |
 | Правила Markdown-ярлыков блоков: смена блока и удаление триггера — одна транзакция; где блок нельзя, правило уступает без ошибки | `input/block-rule.ts` (`convertTyped`, `givesWay`), правила — в своих расширениях |
-| Выделенный блок (`selectBlock`) Backspace и Delete удаляют целиком | `editor/mount.ts` (keydown) → `input/selection-edit.ts` (`replaceStructuredSelection`) |
+| Выделенный блок (`selectBlock`) Backspace и Delete удаляют целиком, набор и Enter заменяют — и после кадра восстановления, пока каретка DOM стоит на его якоре | `editor/mount.ts` (keydown), `input/session.ts` (`resolveSelectionForInput`) → `input/selection-edit.ts` (`replaceStructuredSelection`) |
 | Каретка `focus(position)` и `autofocus`: начало первого блока с текстом, конец последнего | `editor/focus.ts` |
 | Откуда правка в событии `update`: `origin` `"local"` или `"remote"` (обновление другой реплики и починка после него) | `editor/transactions.ts` (`publishUpdate`), `editor.ts` (`setContent`, `changed` совместной работы) |
-| Lifecycle extensions/plugins и decoration layers | `editor/extension-lifecycle.ts` |
+| Lifecycle extensions/plugins и decoration layers; порядок и проверка `dependencies` | `editor/extension-lifecycle.ts`; `editor/extensions.ts` (`resolveExtensions`) |
 | Настроенные paste rules и изолированный draft | `editor/clipboard-options.ts`, `clipboard/paste-rules.ts` |
 | Хуки вставки простого текста (`transformPastedText`, `parsePastedText`) | `clipboard/handler.ts` (`pasteText`), контекст со схемой — `editor/clipboard-options.ts` |
 | Состояние расширения вне документа (поиск, счётчик, слои) — один контроллер на редактор | `extensions/scoped.ts`; владельцы — `extensions/find-replace`, `character-count`, `decorations`, `trailing-node.ts` |
@@ -79,7 +79,9 @@ React/content/table-layout владеет временной шириной пр
 (`commands/schema.ts`: разрешённые дети, marks блока, exclusive group, defaults атрибутов,
 `values`, вид содержимого); кастомные контейнеры не требуют веток по имени приложения. Вид
 содержимого (`content` узла) и JS-движок берёт из схемы — `ContentOf` в `js-transactions.ts`,
-как `content_rule` в `crates/gotipe-core/src/transform.rs`.
+как `content_rule` в `crates/gotipe-core/src/transform.rs`; по нему же команды списков решают,
+какой блок обернуть пунктом (`commands/list-commands.ts`). `Document.version` JS-движок
+наращивает за каждый шаг в `fallbackApply`, как `next_version` в Rust.
 
 DOCX: `crates/gotipe-export/src/docx.rs` owns OOXML rendering; `docx/package.rs`
 owns OPC parts and relationships. ZIP is a container codec, not a document model.
