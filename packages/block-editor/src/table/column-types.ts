@@ -38,6 +38,17 @@ function booleanValues(extra?: BooleanWords): { yes: Set<string>; no: Set<string
   return { yes: words("table.yes", YES, extra?.yes), no: words("table.no", NO, extra?.no) };
 }
 
+/**
+ * `✓`, `—`, or `null` for a value that stays. The exact words — the marks, the dictionaries' and
+ * the host's — come first, so a host's «no» that looks like a built-in yes (`x`) still means no.
+ */
+function booleanOf(value: string, values: { yes: Set<string>; no: Set<string> }): string | null {
+  if (values.yes.has(value)) return YES;
+  if (values.no.has(value)) return NO;
+  if (TRUTHY.test(value)) return YES;
+  return FALSY.test(value) ? NO : null;
+}
+
 type Align = "left" | "right" | "center" | null;
 
 function cellText(cell: BlockView): string {
@@ -140,13 +151,7 @@ export function setColumnType(
       });
     }
     if (type === "boolean") {
-      const value = normal(text);
-      const next =
-        values.yes.has(value) || TRUTHY.test(value)
-          ? YES
-          : values.no.has(value) || FALSY.test(value)
-            ? NO
-            : null;
+      const next = booleanOf(normal(text), values);
       if (next !== null && next !== text) {
         if (text.length > 0)
           steps.push({ type: "deleteText", blockId: cell.id, from: 0, to: text.length });

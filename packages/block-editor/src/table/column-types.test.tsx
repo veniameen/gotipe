@@ -102,6 +102,17 @@ describe("the «Да / нет» column stores ✓ and —", () => {
     expect(typeOf(editor)).toBe("boolean");
   });
 
+  it("takes the host's words before the built-in ones: its «no» may be «x»", async () => {
+    const editor = await editorWith("x", "ja");
+    expect(typeOf(editor, "ja", "x")).toBe("boolean");
+    setColumnType(editor, "t", 1, "boolean", { yes: "ja", no: "x" });
+    expect(values(editor)).toEqual(["—", "✓"]);
+    // Values that are not the host's words still follow the built-in ones.
+    const other = await editorWith("x", "1", "-");
+    setColumnType(other, "t", 1, "boolean", { yes: "ja", no: "x" });
+    expect(values(other)).toEqual(["—", "✓", "—"]);
+  });
+
   it("knows a column of ✓ and — whatever words the interface has", async () => {
     const editor = await editorWith("✓", "—", " ✓ ", "");
     expect(typeOf(editor)).toBe("boolean");
