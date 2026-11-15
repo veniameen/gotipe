@@ -290,6 +290,28 @@ pub(super) fn continues_text(block: &Block) -> bool {
     }
 }
 
+/// Whether `block` or a block inside it is source written as it is with a line that opens a fence
+/// or HTML, as `copiesOpener` of the TS writer: only such a block can run on to the end of its
+/// file (D-106, D-111). The writer ends a code block and a formula itself.
+pub(super) fn copies_opener(block: &Block) -> bool {
+    let copied = match &block.content {
+        BlockContent::Raw(source) => {
+            !matches!(block.block_type.as_str(), "codeBlock" | "math") && opens(source)
+        }
+        _ => false,
+    };
+    copied || block.children.iter().any(copies_opener)
+}
+
+/// Whether a line of `source` starts a fence or HTML, after at most three spaces.
+fn opens(source: &str) -> bool {
+    source.split(['\r', '\n']).any(|line| {
+        let rest = line.trim_start_matches(' ');
+        line.len() - rest.len() <= 3
+            && (rest.starts_with("```") || rest.starts_with("~~~") || rest.starts_with('<'))
+    })
+}
+
 /// Whether the last line of `block` ends it, so that a line after it starts a block of its own.
 pub(super) fn closed(block: &Block) -> bool {
     matches!(

@@ -3,7 +3,7 @@ import { writeInline } from "./inline-serialize";
 import { RICH_TYPES, asWritten, fingerprint, isBlockEmpty, richContent } from "./model";
 import { parseInternal } from "./parse";
 import { type RNode, type RenderOpts, renderTop, writesNoLine } from "./serialization/blocks";
-import { closingLine } from "./serialization/closing";
+import { closingLine, copiesOpener } from "./serialization/closing";
 import {
   LIST_TYPES,
   type Neighbour,
@@ -423,10 +423,9 @@ export function serializeMarkdown(doc: Doc, snapshot?: MarkdownSnapshot): Serial
       item.node = r.node;
     }
     // a block the end of its file ended takes in the next one: written as it is, it gets its end
-    // (D-106); the writer ends a code block and a formula itself
-    const copied = item.preserved
-      ? item.oi === snap!.blocks.length - 1
-      : typeof item.block.content === "string" && !["codeBlock", "math"].includes(item.block.type);
+    // (D-106), as a block whose last child is such source (D-111); the writer ends a code block
+    // and a formula itself
+    const copied = item.preserved ? item.oi === snap!.blocks.length - 1 : copiesOpener(item.block);
     if (copied && item !== items[items.length - 1]) {
       item.md += closingLine(item.md, item.preserved ? sourceIndent(item, snap!) : "", eol);
     }

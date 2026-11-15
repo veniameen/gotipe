@@ -47,10 +47,21 @@ pub fn to_markdown(doc: &Document) -> String {
     for block in &doc.blocks {
         inline::collect_emoji(block, &mut emoji);
     }
-    let mut markdown = hazards::top_blocks(&doc.blocks)
+    let tops = hazards::top_blocks(&doc.blocks);
+    let last = tops.len().saturating_sub(1);
+    let mut markdown = tops
         .iter()
-        .map(|top| match top {
-            Top::Block(block) => verified(block, &emoji),
+        .enumerate()
+        .map(|(index, top)| match top {
+            Top::Block(block) => {
+                let mut markdown = verified(block, &emoji);
+                // a block whose last child is source that only the end of its file ends gets
+                // that end before another block (D-111), as raw source does (D-106)
+                if index < last && hazards::copies_opener(block) {
+                    close(&mut markdown);
+                }
+                markdown
+            }
             Top::Stars => "***\n".into(),
         })
         .collect::<Vec<_>>()
@@ -105,13 +116,28 @@ fn block_to_markdown(block: &Block, emoji: &Emoji, tier: u8) -> String {
         return list_to_markdown(block, emoji, tier, "");
     }
     let mut out = own_lines(block, emoji, tier);
-    for child in followers(block) {
+    let children = followers(block);
+    for (index, child) in children.iter().enumerate() {
         if !out.is_empty() {
             out.push('\n');
         }
-        out.push_str(&block_to_markdown(&child, emoji, tier));
+        let mut markdown = block_to_markdown(child, emoji, tier);
+        if index + 1 < children.len() {
+            close(&mut markdown);
+        }
+        out.push_str(&markdown);
     }
     out
+}
+
+/// `markdown`, a block as `block_to_markdown` writes it, with its closing line where another
+/// block follows it in its container (D-111): source that only the end of its file ends, at any
+/// depth of a block without syntax of its own, reads the next block as its part (`closer` of the
+/// TS writer).
+fn close(markdown: &mut String) {
+    let end = markdown.strip_suffix('\n').map_or(markdown.len(), str::len);
+    let line = crate::markdown_parse::structure::closing_line(&markdown[..end]);
+    markdown.insert_str(end, &line);
 }
 
 /// The children written after the lines of a block: a quote writes its children itself, the
@@ -307,11 +333,14 @@ fn quoted(text: &str) -> String {
 
 /// A quote's children follow its text after a `>` line, as in the TS writer.
 fn quote_children(mut quote: String, block: &Block, emoji: &Emoji, tier: u8) -> String {
-    for child in hazards::children(shown(block)) {
+    let children = hazards::children(shown(block));
+    for (index, child) in children.iter().enumerate() {
         quote.push_str("\n>\n");
-        quote.push_str(&quoted(
-            block_to_markdown(&child, emoji, tier).trim_end_matches('\n'),
-        ));
+        let mut markdown = block_to_markdown(child, emoji, tier);
+        if index + 1 < children.len() {
+            close(&mut markdown);
+        }
+        quote.push_str(&quoted(markdown.trim_end_matches('\n')));
     }
     quote.push('\n');
     quote

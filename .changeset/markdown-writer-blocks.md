@@ -26,6 +26,9 @@ Blocks inside list items, toggles, columns and quotes read back as they were wri
 - A paragraph read from a line of its own `$$` without a closing one (text `$$ x`) is written
   with `$$` and its next word on one line once it is edited, and also untouched where a later line
   of its own `$$` now follows it in the file; that line made a formula of everything in between.
+- Raw source that only the end of the file ends (`<pre>` without `</pre>`, `<!--` without `-->`)
+  gets its end before the next block inside a toggle, columns, a list item or a quote too, as at
+  the top level. It took in the blocks after it.
 
 The Rust converter (`gotipe-convert`) writes the same bytes on the shared cases
 (`crates/gotipe-export/tests/fixtures/markdown-writer-blocks.json`):
