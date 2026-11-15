@@ -2136,5 +2136,170 @@
         ]
       }
     ]
+  },
+  {
+    "markdown": "- a\n\n  b\nc\n",
+    "blocks": [
+      {
+        "type": "markdownRaw",
+        "attrs": {
+          "kind": "list"
+        },
+        "content": "- a\n\n  b\nc",
+        "children": []
+      }
+    ]
+  },
+  {
+    "markdown": "- a\n\n  b\nc\nd\n- e\n",
+    "blocks": [
+      {
+        "type": "markdownRaw",
+        "attrs": {
+          "kind": "list"
+        },
+        "content": "- a\n\n  b\nc\nd\n- e",
+        "children": []
+      }
+    ]
+  },
+  {
+    "markdown": "- a\n\n  b\n\nc\n",
+    "blocks": [
+      {
+        "type": "markdownRaw",
+        "attrs": {
+          "kind": "list"
+        },
+        "content": "- a\n\n  b",
+        "children": []
+      },
+      {
+        "type": "paragraph",
+        "attrs": {},
+        "content": [
+          {
+            "text": "c",
+            "marks": []
+          }
+        ],
+        "children": []
+      }
+    ]
+  },
+  {
+    "markdown": "- a\n\n      code\nc\n",
+    "blocks": [
+      {
+        "type": "markdownRaw",
+        "attrs": {
+          "kind": "list"
+        },
+        "content": "- a\n\n      code",
+        "children": []
+      },
+      {
+        "type": "paragraph",
+        "attrs": {},
+        "content": [
+          {
+            "text": "c",
+            "marks": []
+          }
+        ],
+        "children": []
+      }
+    ]
+  },
+  {
+    "markdown": "- a\n\n  > q\nc\n",
+    "blocks": [
+      {
+        "type": "markdownRaw",
+        "attrs": {
+          "kind": "list"
+        },
+        "content": "- a\n\n  > q\nc",
+        "children": []
+      }
+    ]
+  },
+  {
+    "markdown": "1. a\n\n   - b\n\n     c\nd\n",
+    "blocks": [
+      {
+        "type": "markdownRaw",
+        "attrs": {
+          "kind": "list"
+        },
+        "content": "1. a\n\n   - b\n\n     c\nd",
+        "children": []
+      }
+    ]
+  },
+  {
+    "markdown": "- a\n\n  - b\n  -\nc\n",
+    "blocks": [
+      {
+        "type": "bulletList",
+        "attrs": {
+          "marker": "-",
+          "spread": true
+        },
+        "content": null,
+        "children": [
+          {
+            "type": "listItem",
+            "attrs": {},
+            "content": [
+              {
+                "text": "a",
+                "marks": []
+              }
+            ],
+            "children": [
+              {
+                "type": "bulletList",
+                "attrs": {
+                  "marker": "-",
+                  "spread": false
+                },
+                "content": null,
+                "children": [
+                  {
+                    "type": "listItem",
+                    "attrs": {},
+                    "content": [
+                      {
+                        "text": "b",
+                        "marks": []
+                      }
+                    ],
+                    "children": []
+                  },
+                  {
+                    "type": "listItem",
+                    "attrs": {},
+                    "content": [],
+                    "children": []
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "type": "paragraph",
+        "attrs": {},
+        "content": [
+          {
+            "text": "c",
+            "marks": []
+          }
+        ],
+        "children": []
+      }
+    ]
   }
 ]
