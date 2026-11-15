@@ -236,7 +236,9 @@ function renderList(w: Writer, block: Block, indent: string, ro: RenderOpts, nod
     const contIndent = indent + " ".repeat(marker.length + 1);
     const spans = richContent(item);
     const lines = kept(item, ro);
-    if (todo) {
+    // an item of a bullet list with `checked` is a task, as the Rust editor makes one (D-156)
+    const task = todo || (!ordered && item.attrs?.checked !== undefined);
+    if (task) {
       w.write(item.attrs?.checked === true ? " [x]" : " [ ]");
       if (spans.length > 0) {
         w.write(" ");
@@ -259,7 +261,7 @@ function renderList(w: Writer, block: Block, indent: string, ro: RenderOpts, nod
       }
     }
     // the `[ ]` of a task is text that a nested list has to interrupt as well
-    const text = spans.length > 0 || todo;
+    const text = spans.length > 0 || task;
     let first = true;
     // a line before the child that a line without a blank one before it would continue
     let open = text;

@@ -129,7 +129,7 @@ The writer also avoids structural accidents: two adjacent lists that would merge
 | `$$` on its own line, the TeX, `$$` on its own line; a ```` ```math ```` fence | `math` with `display: "block"`; content is the TeX as written |
 | HTML blocks, link reference definitions, footnote definitions, everything else | `markdownRaw` with `kind`; content is the exact source |
 
-A list item holds rich text and nested lists only. A line ending inside inline code is a space, as in CommonMark. Only spaces and tabs are trimmed from the ends of a heading or a table cell: a no-break space there is text. A `"\n"` of a paragraph, quote, callout or list item is written as a hard break: `\` and a line ending, or `&#10;` at the start or end of the text. In headings and table cells a line break is `<br>`. `"\r\n"` and `"\r"` in text, and the references `&#13;` and `&#13;&#10;`, are line breaks too.
+A list item holds rich text and nested lists only. An item of a bullet list with a `checked` attribute, as the Rust editor marks a task, is written as a task (`- [x] a`, `- [ ] a`) and reads back as a `todoItem`; next to plain items it makes the list a mixed one, which reads back as a raw block. A line ending inside inline code is a space, as in CommonMark. Only spaces and tabs are trimmed from the ends of a heading or a table cell: a no-break space there is text. A `"\n"` of a paragraph, quote, callout or list item is written as a hard break: `\` and a line ending, or `&#10;` at the start or end of the text. In headings and table cells a line break is `<br>`. `"\r\n"` and `"\r"` in text, and the references `&#13;` and `&#13;&#10;`, are line breaks too.
 
 | Inline Markdown | Mark |
 | --- | --- |

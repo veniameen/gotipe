@@ -11,3 +11,6 @@ as GFM does.
   written inside it. The Rust converter wrote a line after a lone `\r` without the indentation,
   which took it out of the item, and writes the lines of a code block with line feeds, as this
   package does.
+- An item of a bullet list with a `checked` attribute, the task of the Rust editor, is written as a
+  task (`- [x] a`) and keeps its mark; it was written as a plain item. A change of that mark after
+  reading rewrites the list instead of keeping its old source.

@@ -97,3 +97,16 @@ describe("a paragraph whose source starts with a line of its own `$$` (D-109)", 
     expect(text).toBe("$$\nx\n\nfoo\n\nbar\n");
   });
 });
+
+describe("an item of a bullet list with `checked`, a task (D-156)", () => {
+  it("is written again when its mark changes after reading", () => {
+    const { doc: read, snapshot } = parseMarkdown("- a\n\nb\n");
+    const [bullets, after] = read.blocks as [Block, Block];
+    const task = { ...bullets.children![0]!, attrs: { checked: false } };
+    const text = serializeMarkdown(
+      { ...read, blocks: [{ ...bullets, children: [task] }, after] },
+      snapshot,
+    ).text;
+    expect(text).toBe("- [ ] a\n\nb\n");
+  });
+});
