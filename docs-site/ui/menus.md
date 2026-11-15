@@ -175,9 +175,10 @@ The bubble appears over a selection while the editor is editable. From left to r
 | Column menu | Chevron in a header cell | Type: Text, Code, Number, Yes / no; Cells: Merge cells, Split cell; Add row; Add column after it; Delete column (Delete columns under a header over several columns, which has no type) |
 | Row menu | Beside the first cell of a body row | Row: Add row above, Add row below; Cells: Merge cells, Split cell; Delete row |
 
-Number aligns the column right. Code puts every body cell in inline code. Yes / no turns
-values such as `yes`, `true`, `1` or `x` into the UI's word for yes, and empty or negative
-values into its word for no; other values stay. Deleting the last row deletes the table.
+Number aligns the column right. Code puts every body cell in inline code. Yes / no stores `✓`
+and `—`, the same in every interface language: values such as `yes`, `да`, `true`, `1` or `x`
+become `✓`, empty or negative ones `—`; other values stay. A column holding the words an earlier
+version wrote — the interface's yes and no — still reads as Yes / no. Deleting the last row deletes the table.
 **Merge cells** is available while two or more cells are selected (drag across cells,
 Shift+click or Shift+arrows); **Split cell** while the menu's cell or the caret's cell is
 merged; ⌘⇧M (Ctrl+Shift+M) does either from the table. An unavailable row stays focusable,

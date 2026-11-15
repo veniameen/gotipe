@@ -273,6 +273,7 @@ export function TableColumnButton({
 }) {
   const i18n = useGoTipeI18n();
   const cells = useCellsGroup(cellId);
+  // The column stores ✓ and —; the interface's words are what earlier versions wrote there.
   const words = { yes: i18n.t("table.yes"), no: i18n.t("table.no") };
   return (
     <TableHandleMenu
