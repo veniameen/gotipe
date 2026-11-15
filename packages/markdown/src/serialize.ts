@@ -439,7 +439,10 @@ export function serializeMarkdown(doc: Doc, snapshot?: MarkdownSnapshot): Serial
       item.end = text.length;
     });
     const last = items[items.length - 1]!;
-    text += snap && last.oi >= 0 && last.oi === snap.blocks.length - 1 ? snap.trailing : eol;
+    if (snap && last.oi >= 0 && last.oi === snap.blocks.length - 1) text += snap.trailing;
+    // a block the end of its file ends (`<pre>` without `</pre>`) takes in the line ending of the
+    // file: with one, each writing and reading would add a line to it (D-110)
+    else if (!closingLine(last.md, "", eol)) text += eol;
     return text;
   };
   let text = assemble();

@@ -20,6 +20,9 @@ Blocks inside list items, toggles, columns and quotes read back as they were wri
   last nested item (`- x`, `  - a`, `  p` as the item `a p`). Such an item has blocks the editor's
   list cannot hold, so the list now reads back as raw source instead of losing the block into the
   text.
+- A file that ends with HTML that only the end of the file ends (`<pre>` without `</pre>`, `<!--`
+  without `-->`) is written without a line ending after it. The reader took that line ending into
+  the block, so each writing and reading added a line to it.
 
 The Rust converter (`gotipe-convert`) writes the same bytes on the shared cases
 (`crates/gotipe-export/tests/fixtures/markdown-writer-blocks.json`):

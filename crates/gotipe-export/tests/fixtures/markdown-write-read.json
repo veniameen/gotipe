@@ -3109,7 +3109,7 @@
           }
         ]
       },
-      "markdown": "a\n\n<pre>\nx\n</pre>\n\n<!-- c\n-->\n\n<?php p\n?>\n\n<![CDATA[ d\n]]>\n\n<!DOCTYPE e\n>\n\n<SCRIPT>\ns\n</script>\n\n<div>\nv\n\n<pre>w</pre>\n\nb\n\n<pre>\nlast\n",
+      "markdown": "a\n\n<pre>\nx\n</pre>\n\n<!-- c\n-->\n\n<?php p\n?>\n\n<![CDATA[ d\n]]>\n\n<!DOCTYPE e\n>\n\n<SCRIPT>\ns\n</script>\n\n<div>\nv\n\n<pre>w</pre>\n\nb\n\n<pre>\nlast",
       "reparsed": [
         {
           "type": "paragraph",
@@ -3202,7 +3202,7 @@
           "attrs": {
             "kind": "html"
           },
-          "content": "<pre>\nlast\n",
+          "content": "<pre>\nlast",
           "children": []
         }
       ]
