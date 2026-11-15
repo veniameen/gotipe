@@ -1,5 +1,6 @@
 import { documentTransaction } from "./clipboard/document";
 import { insertPayload } from "./clipboard/insertion";
+import { chainSelection, mayMoveSelection } from "./commands/chain-selection";
 import { blockContent, cloneBlockTree } from "./commands/content";
 import { insertionPoint } from "./commands/insertion-point";
 import { ListCommands } from "./commands/list-commands";
@@ -14,6 +15,7 @@ import { adjacentCell } from "./table/navigation";
 import type { Document } from "./types/block";
 import type { GoTipeEditor } from "./types/editor";
 import type { Selection, Step, Transaction } from "./types/state";
+import type { ViewState } from "./types/view";
 
 export class ChainableCommands {
   private steps: Step[] = [];
@@ -478,6 +480,21 @@ export class ChainableCommands {
     return this;
   }
 
+  /** The staged selection once this chain's steps apply (D-07): see `chainSelection`. */
+  private finalSelection(staged: Selection): Selection | undefined {
+    // Typing, marks and attributes leave every block and its text: nothing to preview.
+    if (!mayMoveSelection(this.steps)) return staged;
+    let after: Document;
+    try {
+      // A kept selection makes this the transaction the dispatch sends: its preview is reused.
+      after = this.editor.previewTransaction({ steps: this.steps, selection: staged });
+    } catch {
+      return staged; // the dispatch reports why the steps fail
+    }
+    const blocks = after.blocks as ViewState["blocks"]; // read for ids, text and children only
+    return chainSelection(staged, this.steps, this.editor.getViewState().blocks, blocks);
+  }
+
   // Execute all queued commands as single Transaction
   run(): boolean {
     let didFocus = false;
@@ -528,16 +545,15 @@ export class ChainableCommands {
           })()
         : null;
 
-      const tr: Transaction = selectionOverride
-        ? { steps: this.steps, selection: selectionOverride }
-        : { steps: this.steps };
+      const selection = selectionOverride ? this.finalSelection(selectionOverride) : undefined;
+      const tr: Transaction = selection ? { steps: this.steps, selection } : { steps: this.steps };
       if (!this.editor.dispatch(tr)) return false;
       if (selectionBefore) {
         this.editor.setSelection(selectionBefore);
-      } else if (selectionOverride?.type === "cursor") {
+      } else if (selection?.type === "cursor") {
         this.editor.setSelection({
-          anchor: { blockId: selectionOverride.blockId, offset: selectionOverride.offset },
-          head: { blockId: selectionOverride.blockId, offset: selectionOverride.offset },
+          anchor: { blockId: selection.blockId, offset: selection.offset },
+          head: { blockId: selection.blockId, offset: selection.offset },
         });
       } else if (didFocus) {
         // Re-apply DOM range after mutation/re-render to avoid native selection drift.

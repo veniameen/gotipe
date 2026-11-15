@@ -105,13 +105,15 @@ Pass `null` as the loader for a JS-only editor.
 
 ## Known differences
 
-In this release the engines differ in two places:
+In this release the engines are known to differ in one place: `Document.version` grows
+with every applied step on WASM and stays as loaded on JS. Listen to `update` to detect
+changes.
 
-- `Document.version` grows with every applied step on WASM and stays as loaded on JS.
-  Listen to `update` to detect changes.
-- A `deleteBlock`, `setBlockAttrs`, `setBlockType` or `removeMark` step for a block that
-  doesn't exist is ignored by the JS engine and rejected with `TRANSFORM_ERROR` by the
-  WASM engine. Check IDs before you dispatch.
+Both engines reject a step for a block that doesn't exist, and nothing of its transaction
+applies or enters the undo history:
+- `deleteBlock`, `setBlockType`, `setBlockAttrs`, `removeMark` and `deleteText` throw
+  `TRANSFORM_ERROR` (`Block not found: …`);
+- `insertText` and `addMark` fail schema validation first, with `VALIDATION_ERROR`.
 
 ## Sizes
 
@@ -121,7 +123,7 @@ itself.
 
 | Part | Budget, gzip |
 |---|---|
-| Core with the Markdown codec | 100 KiB |
+| Core with the Markdown codec | 125 KiB |
 | `@gotipe/react`, on top of the core | 40 KiB |
 | `@gotipe/vue`, on top of the core | 8 KiB |
 | `gotipe_wasm_bg.wasm` | 600 KiB |

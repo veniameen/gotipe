@@ -40,7 +40,14 @@ started; they don't see each other's changes.
 - `chain().insertBlockAfter("paragraph").insertBlockAfter("divider")` inserts both right
   after the current block, so the divider ends up first.
 - `setSelection()` is the exception: later commands in the chain use the staged
-  selection, and it becomes the selection after the transaction.
+  selection, and it becomes the selection after the transaction. The same holds for
+  `selectAll()` and `selectBlock()`. When the chain's own steps remove the staged block
+  or shorten its text, the selection moves as the caret does. Text merged into the
+  previous block keeps its place there. A removed block gives way to the start of the
+  next remaining text block, or the end of the previous one. An offset past the end of
+  the text goes to the end. A removed selected block leaves a caret. Chains such as
+  `chain().selectAll().deleteBlock().run()` and `setSelection(…).mergeWithPrevious()` rely
+  on this.
 - `undo()` and `redo()` replace the chain: `run()` performs only the undo or redo and
   drops the other staged commands.
 
@@ -204,8 +211,6 @@ Active marks are read at the caret, or at the start of the selected range. In Re
 - `insertBlockAfter`, `insertBlockBefore` and `setBlockType` pick a new block's content
   kind from the built-in type names. For your own `rawText` or `empty` node types,
   dispatch an `insertBlock` step with the content yourself.
-- A chain that stages a selection inside a block and then removes that block, such as
-  `setSelection(…).mergeWithPrevious()`, throws `TRANSFORM_ERROR`.
 
 ## Related
 

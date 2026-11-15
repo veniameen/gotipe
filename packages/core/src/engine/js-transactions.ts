@@ -26,6 +26,15 @@ function requireBlock(doc: FallbackDoc, id: string): FallbackBlock {
   return block;
 }
 
+/** Mark steps need rich text: the Rust engine answers `InvalidContentType` otherwise. */
+function requireRichText(doc: FallbackDoc, id: string): FallbackBlock {
+  const block = requireBlock(doc, id);
+  if (block.content.type !== "RichText") {
+    throw new GoTipeError("TRANSFORM_ERROR", "Invalid content type for this operation");
+  }
+  return block;
+}
+
 function requireIndex(index: number): void {
   if (!Number.isInteger(index) || index < 0) {
     throw new GoTipeError("TRANSFORM_ERROR", "Invalid block index");
@@ -39,8 +48,9 @@ function promoteEmptyText(block: FallbackBlock): void {
     : { type: "RichText", value: [] };
 }
 
-function requireTextRange(block: FallbackBlock, from: number, to = from): void {
-  promoteEmptyText(block);
+/** As in Rust, inserting or splitting gives an empty block text; deleting (`promote` off) does not. */
+function requireTextRange(block: FallbackBlock, from: number, to = from, promote = true): void {
+  if (promote) promoteEmptyText(block);
   if (block.content.type === "Empty") {
     throw new GoTipeError("TRANSFORM_ERROR", "Block does not contain text");
   }
@@ -148,7 +158,7 @@ function applyDeleteText(
   step: { block_id: string; from: number; to: number },
 ): void {
   const block = requireBlock(doc, step.block_id);
-  requireTextRange(block, step.from, step.to);
+  requireTextRange(block, step.from, step.to, false);
   if (block.content.type === "Raw") {
     const text = block.content.value;
     block.content.value = text.slice(0, step.from) + text.slice(step.to);
@@ -172,9 +182,7 @@ function applyAddMark(
   step: { block_id: string; from: number; to: number; mark: FallbackMark },
   groups: MarkGroups,
 ): void {
-  const block = findBlockById(doc.blocks, step.block_id);
-  if (!block) return;
-  if (block.content.type !== "RichText") return;
+  const block = requireRichText(doc, step.block_id);
   requireTextRange(block, step.from, step.to);
   const spans = getRichTextSpans(block);
   const [beforeFrom, rest] = splitSpansAt(spans, step.from);
@@ -192,9 +200,7 @@ function applyRemoveMark(
   doc: FallbackDoc,
   step: { block_id: string; from: number; to: number; mark_type: string },
 ): void {
-  const block = findBlockById(doc.blocks, step.block_id);
-  if (!block) return;
-  if (block.content.type !== "RichText") return;
+  const block = requireRichText(doc, step.block_id);
   requireTextRange(block, step.from, step.to);
   const spans = getRichTextSpans(block);
   const [beforeFrom, rest] = splitSpansAt(spans, step.from);
@@ -239,6 +245,7 @@ function applyInsertBlock(
 }
 
 function applyDeleteBlock(doc: FallbackDoc, step: { block_id: string }): void {
+  requireBlock(doc, step.block_id);
   removeBlockById(doc.blocks, step.block_id);
 }
 
@@ -263,9 +270,7 @@ function applySetBlockType(
   doc: FallbackDoc,
   step: { block_id: string; new_type: string; attrs: Record<string, unknown> },
 ): void {
-  const block = findBlockById(doc.blocks, step.block_id);
-  if (!block) return;
-
+  const block = requireBlock(doc, step.block_id);
   block.block_type = step.new_type;
   block.attrs = step.attrs;
 
@@ -292,9 +297,7 @@ function applySetBlockAttrs(
   doc: FallbackDoc,
   step: { block_id: string; attrs: Record<string, unknown> },
 ): void {
-  const block = findBlockById(doc.blocks, step.block_id);
-  if (!block) return;
-  Object.assign(block.attrs, step.attrs);
+  Object.assign(requireBlock(doc, step.block_id).attrs, step.attrs);
 }
 
 function applyMoveBlock(
