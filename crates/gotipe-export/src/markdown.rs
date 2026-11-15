@@ -182,10 +182,15 @@ fn list_to_markdown(list: &Block, emoji: &Emoji, tier: u8, outer: &str) -> Strin
             // a list that cannot interrupt the text of the item, or the `[ ]` of a task, starts
             // after a blank line; right after the marker of an item without text a blank line
             // would end the item (D-117)
-            if (spread && (lines || index > 0)) || (lines && hazards::cannot_interrupt(child)) {
+            let apart =
+                (spread && (lines || index > 0)) || (lines && hazards::cannot_interrupt(child));
+            if apart {
                 rendered.push('\n');
             }
-            indented(child, emoji, tier, &indent, &mut rendered);
+            // a divider right under a line of the item is `***`: `---` would underline the text
+            // above it as a heading (D-115)
+            let stars = !apart && child.block_type == "divider";
+            indented(child, emoji, tier, &indent, stars, &mut rendered);
         }
     }
     rendered
@@ -209,14 +214,19 @@ fn block_to_markdown(block: &Block, emoji: &Emoji, tier: u8) -> String {
 }
 
 /// `block` as a child of a list item, each line after `indent`, as `block_to_markdown` writes it;
-/// the blank line before a child stays empty, as the TS writer leaves it (`blankLine`).
-fn indented(block: &Block, emoji: &Emoji, tier: u8, indent: &str, out: &mut String) {
+/// the blank line before a child stays empty, as the TS writer leaves it (`blankLine`). With
+/// `stars` a divider is `***`.
+fn indented(block: &Block, emoji: &Emoji, tier: u8, indent: &str, stars: bool, out: &mut String) {
     if hazards::is_list(block) {
         out.push_str(&list_to_markdown(block, emoji, tier, indent));
         return;
     }
     let start = out.len();
-    for line in own_lines(block, emoji, tier).lines() {
+    let own = match block.block_type.as_str() {
+        "divider" if stars => "***\n".to_owned(),
+        _ => own_lines(block, emoji, tier),
+    };
+    for line in own.lines() {
         out.push_str(indent);
         out.push_str(line);
         out.push('\n');
@@ -225,7 +235,7 @@ fn indented(block: &Block, emoji: &Emoji, tier: u8, indent: &str, out: &mut Stri
         if out.len() > start {
             out.push('\n');
         }
-        indented(&child, emoji, tier, indent, out);
+        indented(&child, emoji, tier, indent, false, out);
     }
 }
 
