@@ -53,7 +53,6 @@ Every package ships ES modules, CommonJS and TypeScript types; `@gotipe/wasm` an
 | `@gotipe/svelte` | `@gotipe/core`, `svelte` ≥ 5 |
 | `@gotipe/solid` | `@gotipe/core`, `solid-js` ≥ 1.8 |
 | `@gotipe/block-editor` | `@gotipe/core`, `@gotipe/react`, `@gotipe/theme`, `@gotipe/i18n`, `@gotipe/markdown`, `@gotipe/suggestions`, `react` ≥ 18, `react-dom` ≥ 18; `shiki` ^1.22 (optional, code highlighting) |
-| `@gotipe/block-editor-vue` | `@gotipe/core`, `@gotipe/vue`, `@gotipe/theme`, `vue` ≥ 3.4 |
 | `@gotipe/ai-ui` | `@gotipe/ai`, `@gotipe/core`, `react` ≥ 18, `react-dom` ≥ 18 |
 | `@gotipe/export` | `@gotipe/core`; `@gotipe/export-wasm` (optional, PDF and DOCX) |
 | `@gotipe/ai`, `@gotipe/collaboration`, `@gotipe/comments`, `@gotipe/suggestions`, `@gotipe/versions`, `@gotipe/i18n`, `@gotipe/migration`, `@gotipe/theme` | `@gotipe/core` |

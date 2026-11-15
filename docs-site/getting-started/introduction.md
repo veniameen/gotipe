@@ -40,7 +40,6 @@ page-editor
 | `@gotipe/svelte`, `@gotipe/solid` | Adapter | MIT | Editor lifecycle and view state; no block renderer |
 | `@gotipe/i18n` | UI support | MIT | Interface strings; English and Russian built in |
 | `@gotipe/block-editor` | UI | Commercial | `BlockEditor`, `PageEditor`, menus and review UI for React |
-| `@gotipe/block-editor-vue` | UI | Commercial | `BlockEditorVue`, a slash menu and a block toolbar for Vue |
 | `@gotipe/theme` | UI | Commercial | `base.css`, `theme.css`, design tokens and the theme API |
 | `@gotipe/ai-ui` | UI | Commercial | React components for AI commands and ghost text |
 | `@gotipe/comments`, `@gotipe/suggestions`, `@gotipe/versions` | Review | MIT | Comment threads, tracked changes, snapshots and diffs |

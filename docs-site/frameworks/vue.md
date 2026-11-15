@@ -1,14 +1,13 @@
 ---
 title: Vue
-description: The MIT Vue adapter with useEditor, useEditorState and EditorContent, and the minimal commercial block editor shell for Vue.
-packages: ["@gotipe/vue", "@gotipe/block-editor-vue"]
+description: The MIT Vue adapter with useEditor, useEditorState and EditorContent.
+packages: ["@gotipe/vue"]
 ---
 
-Vue has two packages. `@gotipe/vue` (MIT) creates the editor with your component,
-subscribes to its state and renders the document. `@gotipe/block-editor-vue` (commercial)
-is an early block editor shell with a basic slash menu and toolbar. The full ready UI
-(formatting bubble, block menu, table and media controls, `PageEditor`, review) exists
-only for [React](/docs/frameworks/react) today.
+`@gotipe/vue` (MIT) creates the editor with your component, subscribes to its state and
+renders the document. The ready editor UI (formatting bubble, block menu, slash menu, table
+and media controls, `PageEditor`, review) exists only for [React](/docs/frameworks/react) in
+this release; the Vue block editor is in development and not published yet.
 
 ## Install
 
@@ -89,39 +88,6 @@ columns, images (through `host.resolveAsset`), files and embeds as buttons that 
 link, math as its TeX source (the block's text), and raw Markdown blocks. Marks: bold, italic, underline, strikethrough, code,
 superscript, subscript, links with safe addresses only, highlight and text colour.
 
-## Block editor for Vue
-
-```sh
-npm install @gotipe/block-editor-vue @gotipe/theme @gotipe/core @gotipe/vue vue
-```
-
-```vue title="DocumentEditor.vue"
-<script setup lang="ts">
-import "@gotipe/theme/base.css";
-import "@gotipe/theme/theme.css";
-import { BlockEditorVue, BlockToolbarVue, SlashMenuVue } from "@gotipe/block-editor-vue";
-import { FullPreset } from "@gotipe/core/presets";
-import { useEditor } from "@gotipe/vue";
-
-const editor = useEditor({ extensions: [FullPreset], content: "<p>Type / for blocks.</p>" });
-</script>
-
-<template>
-  <BlockEditorVue :editor="editor" aria-label="Document">
-    <template v-if="editor">
-      <BlockToolbarVue :editor="editor" />
-      <SlashMenuVue :editor="editor" :commands="editor.getSlashCommands()" />
-    </template>
-  </BlockEditorVue>
-</template>
-```
-
-| Component | Props | Description |
-|---|---|---|
-| `BlockEditorVue` | `editor`, `blockViews`, `ariaLabel`, `class` | `.gotipe-block-editor` around `EditorContent`. Provides the editor and renders its slot once the editor exists. |
-| `SlashMenuVue` | `editor`, `commands` | Opens when the editor emits `openSlashMenu` and lists every command; a click runs one. |
-| `BlockToolbarVue` | `editor` | A static toolbar: `+` adds a paragraph after the current block, the more button offers Duplicate and Delete for it. |
-
 ## Server rendering
 
 The editor is created in `onMounted`, so a server render outputs an empty `.gotipe-content`
@@ -167,15 +133,9 @@ a blocked link or a paste that does not fit, go to `host.onError` and the `error
   image toolbar or upload UI.
 - A callout without its own emoji (the default) has no icon: the icons of the callout kinds
   that React draws are not in `@gotipe/vue`.
-- `SlashMenuVue` does not filter as you type, has no keyboard navigation or positioning,
-  does not close on Escape or an outside click, and leaves the `/` in the text. Its rows
-  show the icon name as text.
-- `BlockToolbarVue` is not placed beside blocks, and its grip button does not drag.
-  Labels in both components are English.
 - An editor that could not be created is not created again: mount the component anew.
-- `BlockEditorVue` has no `view` prop. It uses the `notion` tokens unless a wrapper
-  element carries `data-gt-view`.
-- There is no `PageEditor`, formatting bubble, block menu or review UI for Vue.
+- There is no ready editor UI for Vue in this release: no `PageEditor`, formatting bubble,
+  block menu, slash menu or review UI.
 
 ## Related
 
