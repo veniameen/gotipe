@@ -8,7 +8,7 @@ CSS order, keys/mount, subscriptions и форматы. Тест не повто
 | Транзакции/схема/история | атомарность, неверные входы, raw/nested, undo/redo, Unicode |
 | JS/WASM | одинаковые семантические сценарии обоих движков |
 | Markdown/clipboard | структура/marks/байты, nested selection, safe cut, roundtrip |
-| Adapters | StrictMode/late resolve/destroy, subscriptions, stable snapshot, SSR |
+| Adapters | StrictMode/late resolve/destroy, отказ создания без unhandled rejection, subscriptions, stable snapshot, SSR |
 | UI/меню/DnD | реальные жесты, keyboard/focus/read-only, resize/scroll, light/dark |
 | CRDT | 2–3 peers, разные порядки доставки, дубликаты/reconnect, convergence |
 | Cloud/SDK | чужая роль/user/scope, malformed payload, storage failure, 204/errors |
