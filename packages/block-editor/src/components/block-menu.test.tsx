@@ -5,6 +5,7 @@ import { FullPreset } from "@gotipe/core/presets";
 import { act } from "react";
 import { type Root, createRoot } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { handleTargets } from "./block-interaction";
 import { BlockToolbar } from "./block-toolbar";
 
 let container: HTMLDivElement;
@@ -103,5 +104,33 @@ describe("the block menu of a list row acts on that row", () => {
     });
     editor.undo();
     expect(editor.getJSON()).toEqual(before);
+  });
+});
+
+describe("the handle of a block inside a list row acts on that row", () => {
+  it("gives +, the grip and the menu the row; Alt-drag keeps the whole list", () => {
+    // jsdom has no `CSS.escape`.
+    (globalThis as { CSS?: { escape(value: string): string } }).CSS ??= {
+      escape: (value) => value.replace(/["\\\]]/g, "\\$&"),
+    };
+    const root = document.createElement("div");
+    root.innerHTML = [
+      "<div data-gotipe-content>",
+      '<ul data-block-id="L" data-block-type="bulletList">',
+      '<li data-block-id="b" data-block-type="listItem">two',
+      '<p data-block-id="c" data-block-type="paragraph">more</p></li></ul>',
+      '<div data-block-id="C" data-block-type="columns"><div data-block-id="K" data-block-type="column">',
+      '<p data-block-id="k" data-block-type="paragraph">left</p></div></div>',
+      "</div>",
+    ].join("");
+    const row = { actionBlockId: "L", addBlockId: "b", dragBlockId: "b" };
+    expect(handleTargets(root, "c")).toEqual(row);
+    expect(handleTargets(root, "b")).toEqual(row);
+    // Outside lists the unit stays the top-level block.
+    expect(handleTargets(root, "k")).toEqual({
+      actionBlockId: "C",
+      addBlockId: "C",
+      dragBlockId: "C",
+    });
   });
 });
