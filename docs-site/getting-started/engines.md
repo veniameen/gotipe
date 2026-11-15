@@ -105,9 +105,12 @@ Pass `null` as the loader for a JS-only editor.
 
 ## Known differences
 
-In this release the engines are known to differ in one place: `Document.version` grows
-with every applied step on WASM and stays as loaded on JS. Listen to `update` to detect
-changes.
+In this release the engines are known to differ in two places:
+- `Document.version` grows with every applied step on WASM and stays as loaded on JS.
+  Listen to `update` to detect changes.
+- `getJSON()` writes `attrs` keys in sorted order on WASM, so every collaboration peer
+  returns the same JSON, and in the order they were set on JS. Compare documents by value,
+  not by their JSON string, when the engine may change.
 
 Both engines reject a step for a block that doesn't exist, and nothing of its transaction
 applies or enters the undo history:

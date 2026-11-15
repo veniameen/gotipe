@@ -82,6 +82,7 @@ impl WasmEditor {
             tr.metadata.get("addToHistory"),
             Some(gotipe_core::AttrValue::Bool(false))
         );
+        let continues_typing = history::continues_typing(&tr.metadata);
         // Validate the complete transaction before publishing it to collaboration state.
         let (next_state, trace) = if self.crdt.is_some() {
             self.state.apply_with_trace(tr)
@@ -102,7 +103,7 @@ impl WasmEditor {
             // Peers receive the whole transaction or nothing of it.
             crdt.end_transaction();
             if self.collaboration_enabled && add_to_history {
-                if !history::same_typing_group(self.state.last_steps(), next_state.last_steps()) {
+                if !continues_typing {
                     crdt.history_mut().end_group();
                 }
                 let after_selection = gotipe_crdt::selection::SelectionBookmark::capture(
