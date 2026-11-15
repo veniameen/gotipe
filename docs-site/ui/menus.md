@@ -151,9 +151,10 @@ The bubble appears over a selection while the editor is editable. From left to r
 - **Block type**: Paragraph, Heading 1–3, Bullet list, Numbered list, Todo list, Quote, Code.
   Disabled in table cells.
 - **Bold, Italic, Underline, Strikethrough, Code**; each tooltip shows its shortcut.
-- **Link** opens the link editor. It accepts `http:`, `https:`, `mailto:` and relative
-  links, and reports anything else in the field. Enter applies, Remove link appears when the
-  selection has a link, and Escape returns the caret to the selection.
+- **Link** opens the link editor; Mod+K opens it too. It accepts `http:`, `https:`,
+  `mailto:` and relative links, and reports anything else in the field. Enter applies,
+  Remove link appears when the selection has a link, and Escape returns the caret to the
+  selection.
 - **Colour**: text Gray, Red, Amber, Green, Blue; highlight Yellow, Green, Blue, Red, Gray;
   and Reset. A mark stores the colour for a light page; the editor draws it through the
   `--gt-tc-*` and `--gt-bg-*` tokens, so it follows dark mode.
@@ -230,8 +231,10 @@ editability. `destroy()` hides the element and stops listening.
 
 ## Limitations
 
-- Mod+K emits the `openLinkDialog` event, but no built-in control listens to it yet. Open
-  the link editor from the bubble, or handle the event yourself.
+- Mod+K opens the link field only over selected text: with a caret alone it opens nothing,
+  as GoTipe Atlas draws the field only over a selection. One field opens: the bubble's, or
+  without a bubble the `FixedToolbar` one while its Link tool is on the bar (not in a closed
+  More).
 - The block handle and block menu have no keyboard path, and show only in the `notion`
   view.
 - The Vue package has only a minimal slash menu and toolbar; see [Vue](/docs/frameworks/vue).

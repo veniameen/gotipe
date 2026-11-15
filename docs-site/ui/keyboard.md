@@ -22,7 +22,7 @@ editing shortcuts are ignored. Menus and tooltips show only keys that are bound.
 | Mod+Shift+H | Highlight | `Highlight` |
 | Mod+. | Superscript | `Superscript` |
 | Mod+, | Subscript | `Subscript` |
-| Mod+K | Emits the `openLinkDialog` event; see the note below | `Link` |
+| Mod+K | Link: opens the link field over selected text (the `openLinkDialog` event); see the note below | `Link` |
 
 ## Blocks and history
 
@@ -145,8 +145,8 @@ drop indicator, ghost text and the table menus.
 
 ## Limitations
 
-- Mod+K does not open the link editor yet: no built-in control listens to
-  `openLinkDialog`. Use the bubble's Link button, or listen to the event yourself.
+- Mod+K opens the link field of the bubble, or of `FixedToolbar` without a bubble, only
+  over selected text: with a caret alone it does nothing.
 - The block handle and block menu have no keyboard path. Change block types with the
   shortcuts, the slash menu or the bubble's Block type.
 - No shortcut moves focus into the formatting bubble.

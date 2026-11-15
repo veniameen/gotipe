@@ -77,14 +77,15 @@ has no effect.
 ## Requests to the interface
 
 These events carry requests between packages. `BlockEditor` listens to `openSlashMenu`,
-`executeAiCommand`, `aiStatusChange` and `aiGhostTextChange`. Nothing built in listens to
-`openLinkDialog` or `scrollToBlock`, so handle those, and any others your own interface
-needs, in your code.
+`openLinkDialog` (the bubble's link field), `executeAiCommand`, `aiStatusChange` and
+`aiGhostTextChange`; `FixedToolbar` listens to `openLinkDialog` too. Nothing built in
+listens to `scrollToBlock`, so handle it, and any others your own interface needs, in your
+code.
 
 | Event | Payload | Emitted by |
 |---|---|---|
 | `openSlashMenu` | — | Typing `/` at the start of a block or after a space. |
-| `openLinkDialog` | — | `Mod-K` from the `Link` extension. |
+| `openLinkDialog` | — | `Mod-K` from the `Link` extension. Over selected text one link field opens: the bubble's, else the fixed toolbar's. |
 | `scrollToBlock` | `{ blockId }` | `CommentSidebar` in `@gotipe/block-editor` when a comment is chosen. |
 | `commentAdded`, `commentUpdated`, `commentResolved`, `commentDeleted` | `commentId: string` | The comments manager in `@gotipe/comments`, and AI review. |
 | `executeAiCommand` | `{ commandId, prompt? }` | AI menus and commands; handled by `@gotipe/ai`. |
