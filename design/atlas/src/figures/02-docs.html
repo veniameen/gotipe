@@ -4,10 +4,14 @@
     <h2 class="at-figure-title">Вид docs</h2>
     <p class="at-caption">
       Справочная страница: текст плотнее, 14/22; оглавление рядом и уходит на узком экране; номера
-      строк в коде; якорь у заголовка под указателем. Ручка блока — как в notion.
+      строк в коде. Ручка блока — как в notion: у блока под указателем, в поле 64 между оглавлением
+      и текстом. Якорь # — после последнего слова заголовка под указателем; место под него заголовок
+      держит всегда, поэтому не переносится заново; щелчок копирует ссылку на заголовок. На узком
+      экране ручка остаётся в поле 56, как у notion в библиотеке; якорь — у заголовка, которого
+      коснулись. Кадры «вариант» — к решению D-30: невыбранный уйдёт.
     </p>
   </figcaption>
-  <!-- @frame frame=docs-document view=docs w=1024 -->
+  <!-- @frame frame=docs-document view=docs w=1024 label="абзац под указателем, заголовки в покое" -->
   <div class="gotipe-docs">
     <nav class="gotipe-outline" aria-label="Оглавление">
       <p class="gotipe-outline-title">На этой странице</p>
@@ -20,6 +24,169 @@
     <article class="gotipe-page" lang="ru">
       <!-- @include content/drafts/head-docs.html -->
       <!-- @include content/drafts/doc.html -->
+    </article>
+  </div>
+  <!-- @end -->
+  <!-- @frame frame=docs-handle-always view=docs w=1024 label="вариант: ручка у каждого блока всегда" -->
+  <div class="gotipe-docs at-variant-handle-always">
+    <nav class="gotipe-outline" aria-label="Оглавление">
+      <p class="gotipe-outline-title">На этой странице</p>
+      <a>Как это работает</a>
+      <a data-level="2" class="is-current">Что меняется</a>
+      <a data-level="3">Порядок выката</a>
+      <a data-level="2">Конфликты</a>
+      <a data-level="2">Задачи</a>
+    </nav>
+    <article class="gotipe-page is-slice" lang="ru">
+      <div class="gotipe-doc">
+        <h2>Что меняется<span class="gotipe-heading-anchor" aria-hidden="true"><span class="gotipe-anchor-button"><svg class="gt-icon"><use href="#i-hash" /></svg></span></span><span class="gotipe-block-handle is-rest" aria-hidden="true"><span class="gotipe-handle-button"><svg class="gt-icon"><use href="#i-plus" /></svg></span><span class="gotipe-handle-button"><svg class="gt-icon"><use href="#i-grip" /></svg></span></span></h2>
+        <p>
+          Каждая транзакция сначала попадает в журнал и только потом — на сервер.<span
+            class="gotipe-block-handle is-rest"
+            aria-hidden="true"
+            ><span class="gotipe-handle-button"><svg class="gt-icon"><use href="#i-plus" /></svg></span
+            ><span class="gotipe-handle-button"><svg class="gt-icon"><use href="#i-grip" /></svg></span
+          ></span>
+        </p>
+        <p class="is-hovered">
+          Когда связь вернулась, журнал уходит пачкой, а сервер отвечает новой версией документа.<span
+            class="gotipe-block-handle"
+            aria-hidden="true"
+            ><span class="gotipe-handle-button"><svg class="gt-icon"><use href="#i-plus" /></svg></span
+            ><span class="gotipe-handle-button"><svg class="gt-icon"><use href="#i-grip" /></svg></span
+          ></span>
+        </p>
+        <h3>Порядок выката<span class="gotipe-heading-anchor" aria-hidden="true"><span class="gotipe-anchor-button"><svg class="gt-icon"><use href="#i-hash" /></svg></span></span><span class="gotipe-block-handle is-rest" aria-hidden="true"><span class="gotipe-handle-button"><svg class="gt-icon"><use href="#i-plus" /></svg></span><span class="gotipe-handle-button"><svg class="gt-icon"><use href="#i-grip" /></svg></span></span></h3>
+        <p>
+          Журнал сначала включается для 5 % пользователей веб-версии, через неделю — для всех.<span
+            class="gotipe-block-handle is-rest"
+            aria-hidden="true"
+            ><span class="gotipe-handle-button"><svg class="gt-icon"><use href="#i-plus" /></svg></span
+            ><span class="gotipe-handle-button"><svg class="gt-icon"><use href="#i-grip" /></svg></span
+          ></span>
+        </p>
+      </div>
+    </article>
+  </div>
+  <!-- @end -->
+  <!-- @frame frame=docs-heading view=docs w=1024 label="заголовок под указателем: ручка в поле, якорь после текста" -->
+  <div class="gotipe-docs">
+    <nav class="gotipe-outline" aria-label="Оглавление">
+      <p class="gotipe-outline-title">На этой странице</p>
+      <a>Как это работает</a>
+      <a data-level="2">Что меняется</a>
+      <a data-level="3">Порядок выката</a>
+      <a data-level="2" class="is-current">Конфликты</a>
+      <a data-level="3">Что видит автор</a>
+      <a data-level="2">Задачи</a>
+    </nav>
+    <article class="gotipe-page is-slice" lang="ru">
+      <div class="gotipe-doc">
+        <h2 class="is-hovered">Конфликты<span class="gotipe-heading-anchor" aria-hidden="true"><span class="gotipe-anchor-button"><svg class="gt-icon"><use href="#i-hash" /></svg></span></span><span class="gotipe-block-handle" aria-hidden="true"><span class="gotipe-handle-button"><svg class="gt-icon"><use href="#i-plus" /></svg></span><span class="gotipe-handle-button"><svg class="gt-icon"><use href="#i-grip" /></svg></span></span><svg class="at-pointer is-start"><use href="#i-pointer" /></svg></h2>
+        <p>
+          Конфликт решается по блокам: чужая правка блока не перезаписывает вашу, обе версии
+          остаются, ваша — предложением правки.
+        </p>
+        <h3>Что видит автор<span class="gotipe-heading-anchor" aria-hidden="true"><span class="gotipe-anchor-button"><svg class="gt-icon"><use href="#i-hash" /></svg></span></span></h3>
+        <p>
+          Блок, изменённый только у вас, сохраняется без вопросов. Изменённый у обоих приходит
+          предложением правки, удалённый на сервере — тостом «Блок удалён».
+        </p>
+      </div>
+    </article>
+  </div>
+  <!-- @end -->
+  <!-- @frame frame=docs-anchor view=docs w=1024 label="указатель на якоре" -->
+  <div class="gotipe-docs">
+    <nav class="gotipe-outline" aria-label="Оглавление">
+      <p class="gotipe-outline-title">На этой странице</p>
+      <a>Как это работает</a>
+      <a data-level="2">Что меняется</a>
+      <a data-level="3">Порядок выката</a>
+      <a data-level="2" class="is-current">Конфликты</a>
+      <a data-level="3">Что видит автор</a>
+      <a data-level="2">Задачи</a>
+    </nav>
+    <article class="gotipe-page is-slice" lang="ru">
+      <div class="gotipe-doc">
+        <h2 class="is-hovered">Конфликты<span class="gotipe-heading-anchor" aria-hidden="true"><span class="gotipe-anchor-button is-hover"><svg class="gt-icon"><use href="#i-hash" /></svg><span class="gotipe-tooltip" data-place="above">Скопировать ссылку</span><svg class="at-pointer"><use href="#i-pointer" /></svg></span></span><span class="gotipe-block-handle" aria-hidden="true"><span class="gotipe-handle-button"><svg class="gt-icon"><use href="#i-plus" /></svg></span><span class="gotipe-handle-button"><svg class="gt-icon"><use href="#i-grip" /></svg></span></span></h2>
+        <p>
+          Конфликт решается по блокам: чужая правка блока не перезаписывает вашу, обе версии
+          остаются, ваша — предложением правки.
+        </p>
+        <h3>Что видит автор<span class="gotipe-heading-anchor" aria-hidden="true"><span class="gotipe-anchor-button"><svg class="gt-icon"><use href="#i-hash" /></svg></span></span></h3>
+        <p>
+          Блок, изменённый только у вас, сохраняется без вопросов. Изменённый у обоих приходит
+          предложением правки, удалённый на сервере — тостом «Блок удалён».
+        </p>
+      </div>
+    </article>
+  </div>
+  <!-- @end -->
+  <!-- @frame frame=docs-anchor-gutter view=docs w=1024 label="вариант: якорь слева в поле, ручка заголовка левее" -->
+  <div class="gotipe-docs at-variant-anchor-gutter">
+    <nav class="gotipe-outline" aria-label="Оглавление">
+      <p class="gotipe-outline-title">На этой странице</p>
+      <a>Как это работает</a>
+      <a data-level="2">Что меняется</a>
+      <a data-level="3">Порядок выката</a>
+      <a data-level="2" class="is-current">Конфликты</a>
+      <a data-level="3">Что видит автор</a>
+      <a data-level="2">Задачи</a>
+    </nav>
+    <article class="gotipe-page is-slice" lang="ru">
+      <div class="gotipe-doc">
+        <h2 class="is-hovered">Конфликты<span class="gotipe-heading-anchor" aria-hidden="true"><span class="gotipe-anchor-button"><svg class="gt-icon"><use href="#i-hash" /></svg></span></span><span class="gotipe-block-handle" aria-hidden="true"><span class="gotipe-handle-button"><svg class="gt-icon"><use href="#i-plus" /></svg></span><span class="gotipe-handle-button"><svg class="gt-icon"><use href="#i-grip" /></svg></span></span><svg class="at-pointer is-start"><use href="#i-pointer" /></svg></h2>
+        <p>
+          Конфликт решается по блокам: чужая правка блока не перезаписывает вашу, обе версии
+          остаются, ваша — предложением правки.
+        </p>
+        <h3>Что видит автор<span class="gotipe-heading-anchor" aria-hidden="true"><span class="gotipe-anchor-button"><svg class="gt-icon"><use href="#i-hash" /></svg></span></span></h3>
+        <p>
+          Блок, изменённый только у вас, сохраняется без вопросов. Изменённый у обоих приходит
+          предложением правки, удалённый на сервере — тостом «Блок удалён».
+        </p>
+      </div>
+    </article>
+  </div>
+  <!-- @end -->
+  <!-- @frame frame=docs-375 view=docs w=375 label="касание заголовка: ручка в поле 56" -->
+  <div class="gotipe-docs">
+    <article class="gotipe-page is-scrolled" lang="ru">
+      <div class="gotipe-doc">
+        <h2>Конфликты<span class="gotipe-heading-anchor" aria-hidden="true"><span class="gotipe-anchor-button"><svg class="gt-icon"><use href="#i-hash" /></svg></span></span></h2>
+        <p>Конфликт решается по блокам: чужая правка блока не перезаписывает вашу.</p>
+        <h3 class="is-hovered">Что видит автор, когда блок изменён<span class="gotipe-caret"></span> у обоих<span class="gotipe-heading-anchor" aria-hidden="true"><span class="gotipe-anchor-button"><svg class="gt-icon"><use href="#i-hash" /></svg></span></span><span class="gotipe-block-handle" aria-hidden="true"><span class="gotipe-handle-button"><svg class="gt-icon"><use href="#i-plus" /></svg></span><span class="gotipe-handle-button"><svg class="gt-icon"><use href="#i-grip" /></svg></span></span></h3>
+        <p>
+          Обе версии остаются: ваша приходит предложением правки, его можно принять или
+          отклонить.
+        </p>
+        <h3>Порядок выката<span class="gotipe-heading-anchor" aria-hidden="true"><span class="gotipe-anchor-button"><svg class="gt-icon"><use href="#i-hash" /></svg></span></span></h3>
+        <ol class="gotipe-list">
+          <li>Включить журнал для 5 % пользователей веб-версии.</li>
+          <li>Открыть всем, начиная с приложения для macOS.</li>
+        </ol>
+      </div>
+    </article>
+  </div>
+  <!-- @end -->
+  <!-- @frame frame=docs-375-no-handle view=docs w=375 label="вариант: без ручки, как notion в кадре 5" -->
+  <div class="gotipe-docs at-variant-no-handle">
+    <article class="gotipe-page is-scrolled" lang="ru">
+      <div class="gotipe-doc">
+        <h2>Конфликты<span class="gotipe-heading-anchor" aria-hidden="true"><span class="gotipe-anchor-button"><svg class="gt-icon"><use href="#i-hash" /></svg></span></span></h2>
+        <p>Конфликт решается по блокам: чужая правка блока не перезаписывает вашу.</p>
+        <h3 class="is-hovered">Что видит автор, когда блок изменён<span class="gotipe-caret"></span> у обоих<span class="gotipe-heading-anchor" aria-hidden="true"><span class="gotipe-anchor-button"><svg class="gt-icon"><use href="#i-hash" /></svg></span></span><span class="gotipe-block-handle" aria-hidden="true"><span class="gotipe-handle-button"><svg class="gt-icon"><use href="#i-plus" /></svg></span><span class="gotipe-handle-button"><svg class="gt-icon"><use href="#i-grip" /></svg></span></span></h3>
+        <p>
+          Обе версии остаются: ваша приходит предложением правки, его можно принять или
+          отклонить.
+        </p>
+        <h3>Порядок выката<span class="gotipe-heading-anchor" aria-hidden="true"><span class="gotipe-anchor-button"><svg class="gt-icon"><use href="#i-hash" /></svg></span></span></h3>
+        <ol class="gotipe-list">
+          <li>Включить журнал для 5 % пользователей веб-версии.</li>
+          <li>Открыть всем, начиная с приложения для macOS.</li>
+        </ol>
+      </div>
     </article>
   </div>
   <!-- @end -->
