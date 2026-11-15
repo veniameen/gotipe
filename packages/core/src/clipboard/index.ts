@@ -1,1 +1,0 @@
-export { ClipboardHandler } from "./handler";
