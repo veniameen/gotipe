@@ -28,9 +28,10 @@ export const OrderedList = defineExtension({
         editor.dispatch({
           steps: [{ type: "deleteText", blockId, from: 0, to: triggerLen }],
         });
+        // In a numbered list the item stays as it is, and so does the list's numbering.
         editor
           .chain()
-          .toggleOrderedList(start !== 1 ? { start } : undefined)
+          .setOrderedList(start !== 1 ? { start } : undefined)
           .run();
       },
     },

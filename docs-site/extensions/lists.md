@@ -86,6 +86,8 @@ Input rules apply when you type the trigger at the start of an empty block:
 | `[] ` | Task list |
 | `[x] ` | Task list with the task checked; in an empty task, checks it |
 
+In an empty item of a list, a trigger works like `setBulletList()`, `setOrderedList()` and `setTodoList()`: one of another kind turns the whole list into its kind, and one of the list's own kind is only removed, leaving the item, the other items and the numbering as they were.
+
 The "/" menu lists **Bullet List**, **Numbered List** and **To-do List**. In the editor UI, the block handle drags one item; hold Alt while dragging to move the whole list.
 
 ## Nesting

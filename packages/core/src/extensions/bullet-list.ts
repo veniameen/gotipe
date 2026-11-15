@@ -21,11 +21,11 @@ export const BulletList = defineExtension({
       handler: (editor) => {
         const state = editor.getViewState();
         const blockId = state.selection.anchor.blockId;
-        // Delete the trigger text first, then toggle
+        // Delete the trigger text first. In a bullet list the item stays as it is.
         editor.dispatch({
           steps: [{ type: "deleteText", blockId, from: 0, to: 2 }],
         });
-        editor.chain().toggleBulletList().run();
+        editor.chain().setBulletList().run();
       },
     },
   ],
@@ -117,7 +117,7 @@ export const TodoList = defineExtension({
         editor.dispatch({
           steps: [{ type: "deleteText", blockId, from: 0, to: 3 }],
         });
-        editor.chain().toggleTodoList().run();
+        editor.chain().setTodoList().run();
       },
     },
     {

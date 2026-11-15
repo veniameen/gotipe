@@ -86,6 +86,34 @@ test.describe("Phase 3.5-3.8 Block Types", () => {
     });
   });
 
+  test("List input rules in an empty item of their own kind of list keep the list (D-127)", async ({ page }) => {
+    const kinds = [
+      ["bulletList", "listItem", "- "],
+      ["orderedList", "listItem", "1. "],
+      ["todoList", "todoItem", "[] "],
+    ] as const;
+    for (const [type, itemType, trigger] of kinds) {
+      const attrs = itemType === "todoItem" ? { checked: false } : {};
+      const list = {
+        id: "list",
+        type,
+        attrs: type === "orderedList" ? { start: 1 } : {},
+        content: null,
+        children: [
+          { id: "first", type: itemType, attrs, content: [{ text: "First", marks: [] }], children: [] },
+          { id: "target", type: itemType, attrs, content: [], children: [] },
+        ],
+      };
+      await page.evaluate((value) => window.__GOTIPE_EDITOR__!.setContent({ version: 1, blocks: [value] }), list);
+      await page.locator('[data-block-id="target"]').click();
+      await page.keyboard.type(trigger, { delay: 50 });
+      await expect
+        .poll(() => page.evaluate(() => window.__GOTIPE_EDITOR__!.getJSON().blocks))
+        .toEqual([list]);
+      await expect(page.locator('[data-block-id="target"]')).toHaveAttribute("data-block-type", itemType);
+    }
+  });
+
   test("Math input rule: $$ opens an empty formula without the trigger (D-11)", async ({ page }) => {
     await typeIntoEmptyParagraph(page, "$$");
 
