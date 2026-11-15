@@ -83,7 +83,7 @@ Type these in an empty paragraph:
 | `/` | Slash menu; also after a space inside a line | UI |
 
 In an empty list item, a list shortcut of another kind turns the whole list into its kind; one
-of the list's own kind is only removed, and `[x]` checks the item.
+of the list's own kind is only removed; `[x]` checks a task and `[]` unchecks it.
 
 A shortcut changes the block and removes what you typed in one step: one Undo brings the typed
 text back. Where its block can't go — a table cell, or a column, toggle or quote that doesn't
