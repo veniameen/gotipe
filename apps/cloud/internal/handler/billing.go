@@ -198,7 +198,7 @@ func (h *BillingHandler) GetUsage() http.HandlerFunc {
 		var docCount, aiCount, exportCount int64
 		err := h.db.Pool.QueryRow(r.Context(), `SELECT
 		(SELECT COUNT(*) FROM documents WHERE owner_id=$1),
-		(SELECT COUNT(*) FROM usage_logs WHERE user_id=$1 AND action='ai.request' AND created_at>date_trunc('month',now())),
+		(SELECT COUNT(*) FROM usage_logs WHERE user_id=$1 AND action='ai.request' AND created_at>=date_trunc('month',now())),
 		(SELECT COUNT(*) FROM usage_logs WHERE user_id=$1 AND action='export.request' AND created_at>=date_trunc('month',now()))`, user.UserID).Scan(&docCount, &aiCount, &exportCount)
 		if err != nil {
 			apierror.ErrInternal.Write(w)

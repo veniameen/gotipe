@@ -147,9 +147,10 @@ paths:
       summary: Receive a Stripe event
       description: >-
         Public; authenticated by the `Stripe-Signature` header, which must verify against
-        `STRIPE_WEBHOOK_SECRET` within Stripe's 5-minute tolerance. The event's API version
-        must be of the release train that the server's stripe-go library pins (`acacia`:
-        stripe-go v81 pins `2024-11-20.acacia`); other events answer 400. A verified event is
+        `STRIPE_WEBHOOK_SECRET` within Stripe's 5-minute tolerance. The endpoint may use any
+        API version: the worker reads only the subscription ID from the event and fetches the
+        subscription again with the version stripe-go v81 is built for (`2024-11-20.acacia`).
+        A verified event is
         stored once by its ID and acknowledged with an empty 200, a repeated delivery included;
         a worker applies it with retries. Subscription, checkout and invoice events update the
         account's plan. Not rate-limited and not subject to `Idempotency-Key`.
@@ -169,7 +170,7 @@ paths:
             schema: { type: object, description: 'A Stripe `Event` object.' }
       responses:
         '200': { description: 'The event is stored, now or by an earlier delivery. Empty body.' }
-        '400': { $ref: '#/components/responses/BadRequest', description: '`INVALID_JSON` when the body exceeds 1 MiB or cannot be read; `VALIDATION_ERROR` (`Invalid webhook signature or event`) for a bad or expired signature, another API version, or an event without an ID.' }
+        '400': { $ref: '#/components/responses/BadRequest', description: '`INVALID_JSON` when the body exceeds 1 MiB or cannot be read; `VALIDATION_ERROR` (`Invalid webhook signature or event`) for a bad or expired signature or an event without an ID.' }
         '413': { $ref: '#/components/responses/PayloadTooLarge' }
         '503': { $ref: '#/components/responses/ServiceUnavailable', description: '`SERVICE_UNAVAILABLE`: `STRIPE_WEBHOOK_SECRET` is not set, or the event could not be stored.' }
 
