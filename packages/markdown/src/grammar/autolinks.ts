@@ -44,19 +44,19 @@ export function charBefore(text: string, index: number): string | undefined {
 /**
  * Autolink literals of one text, looked up offset by offset. `literal(i)` says whether the
  * source writes `text[i]` as it is (not as an escape or a reference); it may change between
- * lookups. What lookups share is computed once, so a scan of the whole text is linear (D-96).
+ * lookups. What lookups share is computed once, so a scan of the whole text is linear (D-96):
+ * per offset, where the run of address characters from it ends (`ends`) and where the run of
+ * e-mail local-part characters from it ends (`localEnd`); per end offset, where the run of
+ * trailing punctuation that ends there starts (`trails`); how many `(` and `)` there are before
+ * each offset (`opens`, `closes`); the end of the e-mail domain after each `@` (`domains`, 0:
+ * none), filled when asked.
  */
 export class AutolinkScanner {
-  /** Per offset: where the run of address characters from it ends. */
   private ends: Int32Array | null = null;
-  /** Per end offset: where the run of trailing punctuation that ends there starts. */
   private trails: Int32Array | null = null;
-  /** How many `(` and `)` there are before each offset. */
   private opens: Int32Array | null = null;
   private closes: Int32Array | null = null;
-  /** Per offset: where the run of e-mail local-part characters from it ends. */
   private localEnd: Int32Array | null = null;
-  /** The end of the e-mail domain after each `@` (0: none), filled when asked. */
   private readonly domains = new Map<number, number>();
 
   constructor(
@@ -64,11 +64,9 @@ export class AutolinkScanner {
     private readonly literal: (index: number) => boolean = () => true,
   ) {}
 
-  /**
-   * The literal that starts at `p`, when the character before it (`before`, undefined at the
-   * start of text) does not continue a word.
-   */
   at(p: number, before: string | undefined): LiteralLink | null {
+    // The literal that starts at `p`, when the character before it (`before`, undefined at the
+    // start of text) does not continue a word.
     if (before !== undefined && WORD.test(before)) return null;
     const c = this.text[p];
     if (c === "w" || c === "h" || c === "H") {
