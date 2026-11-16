@@ -7,7 +7,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 	"github.com/gotipe/cloud/internal/apierror"
 	"github.com/gotipe/cloud/internal/audit"
@@ -109,7 +108,10 @@ func (h *OrganizationsHandler) GetOrganization() http.HandlerFunc {
 			return
 		}
 
-		orgID := chi.URLParam(r, "id")
+		orgID, valid := pathUUID(w, r, "id")
+		if !valid {
+			return
+		}
 
 		var org OrgResponse
 		err := h.db.Pool.QueryRow(r.Context(),
@@ -137,7 +139,10 @@ func (h *OrganizationsHandler) ListMembers() http.HandlerFunc {
 			return
 		}
 
-		orgID := chi.URLParam(r, "id")
+		orgID, valid := pathUUID(w, r, "id")
+		if !valid {
+			return
+		}
 		var member bool
 		if err := h.db.Pool.QueryRow(r.Context(), `SELECT EXISTS(SELECT 1 FROM org_members WHERE org_id = $1 AND user_id = $2)`, orgID, user.UserID).Scan(&member); err != nil {
 			apierror.ErrInternal.Write(w)
@@ -192,7 +197,10 @@ func (h *OrganizationsHandler) AddMember() http.HandlerFunc {
 			return
 		}
 
-		orgID := chi.URLParam(r, "id")
+		orgID, valid := pathUUID(w, r, "id")
+		if !valid {
+			return
+		}
 
 		// Verify caller is admin
 		var callerRole string
@@ -258,10 +266,12 @@ func (h *OrganizationsHandler) RemoveMember() http.HandlerFunc {
 			return
 		}
 
-		orgID, validOrg := canonicalUUID(chi.URLParam(r, "id"))
-		memberID, validMember := canonicalUUID(chi.URLParam(r, "userId"))
-		if !validOrg || !validMember {
-			apierror.ErrValidation.WithMessage("organization and user IDs must be UUIDs").Write(w)
+		orgID, valid := pathUUID(w, r, "id")
+		if !valid {
+			return
+		}
+		memberID, valid := pathUUID(w, r, "userId")
+		if !valid {
 			return
 		}
 

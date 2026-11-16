@@ -370,9 +370,10 @@ paths:
         '200':
           description: 'The document with `content` and `collaboration_state`.'
           content: { application/json: { schema: { $ref: '#/components/schemas/Document' } } }
+        '400': { $ref: '#/components/responses/BadRequest', description: '`VALIDATION_ERROR`: `id` is not a UUID.' }
         '401': { $ref: '#/components/responses/Unauthorized' }
         '403': { $ref: '#/components/responses/Forbidden' }
-        '404': { $ref: '#/components/responses/NotFound', description: '`NOT_FOUND`: no such document, no role on it, or `id` is not a UUID.' }
+        '404': { $ref: '#/components/responses/NotFound', description: '`NOT_FOUND`: no such document, or no role on it.' }
         '429': { $ref: '#/components/responses/RateLimited' }
         '500': { $ref: '#/components/responses/InternalError' }
         '503': { $ref: '#/components/responses/ServiceUnavailable' }
@@ -501,10 +502,10 @@ paths:
         '201':
           description: 'The reply, with `parent_id`.'
           content: { application/json: { schema: { $ref: '#/components/schemas/Comment' } } }
-        '400': { $ref: '#/components/responses/BadRequest', description: '`INVALID_JSON`, or `VALIDATION_ERROR` when `docId` is not a UUID or `content` is missing (or a rejected `Idempotency-Key`).' }
+        '400': { $ref: '#/components/responses/BadRequest', description: '`INVALID_JSON`, or `VALIDATION_ERROR` when `docId` or `commentId` is not a UUID or `content` is missing (or a rejected `Idempotency-Key`).' }
         '401': { $ref: '#/components/responses/Unauthorized' }
         '403': { $ref: '#/components/responses/Forbidden' }
-        '404': { $ref: '#/components/responses/NotFound', description: '`NOT_FOUND`: no such document, the caller is not at least a commenter, or the document has no comment `commentId` (a `commentId` that is not a UUID included).' }
+        '404': { $ref: '#/components/responses/NotFound', description: '`NOT_FOUND`: no such document, the caller is not at least a commenter, or the document has no comment `commentId`.' }
         '409': { $ref: '#/components/responses/Conflict' }
         '413': { $ref: '#/components/responses/PayloadTooLarge' }
         '429': { $ref: '#/components/responses/RateLimited' }
@@ -535,13 +536,13 @@ paths:
                 required: [status]
                 properties:
                   status: { type: string, const: resolved }
-        '400': { $ref: '#/components/responses/BadRequest', description: '`VALIDATION_ERROR`: `docId` is not a UUID (or a rejected `Idempotency-Key`).' }
+        '400': { $ref: '#/components/responses/BadRequest', description: '`VALIDATION_ERROR`: `docId` or `commentId` is not a UUID (or a rejected `Idempotency-Key`).' }
         '401': { $ref: '#/components/responses/Unauthorized' }
         '403': { $ref: '#/components/responses/Forbidden' }
         '404': { $ref: '#/components/responses/NotFound', description: '`NOT_FOUND`: no such document, the caller is not at least a commenter, or the document has no unresolved comment `commentId` (an already resolved one included).' }
         '409': { $ref: '#/components/responses/Conflict' }
         '429': { $ref: '#/components/responses/RateLimited' }
-        '500': { $ref: '#/components/responses/InternalError', description: '`INTERNAL_ERROR`, also when `commentId` is not a UUID.' }
+        '500': { $ref: '#/components/responses/InternalError' }
         '503': { $ref: '#/components/responses/ServiceUnavailable' }
 
   /v1/documents/{docId}/comments/{commentId}:
@@ -560,13 +561,13 @@ paths:
         - $ref: '#/components/parameters/IdempotencyKey'
       responses:
         '204': { description: Deleted. }
-        '400': { $ref: '#/components/responses/BadRequest', description: '`VALIDATION_ERROR`: `docId` is not a UUID (or a rejected `Idempotency-Key`).' }
+        '400': { $ref: '#/components/responses/BadRequest', description: '`VALIDATION_ERROR`: `docId` or `commentId` is not a UUID (or a rejected `Idempotency-Key`).' }
         '401': { $ref: '#/components/responses/Unauthorized' }
         '403': { $ref: '#/components/responses/Forbidden' }
         '404': { $ref: '#/components/responses/NotFound', description: '`NOT_FOUND`: no such document or comment, or the caller is neither the author nor the owner.' }
         '409': { $ref: '#/components/responses/Conflict' }
         '429': { $ref: '#/components/responses/RateLimited' }
-        '500': { $ref: '#/components/responses/InternalError', description: '`INTERNAL_ERROR`, also when `commentId` is not a UUID.' }
+        '500': { $ref: '#/components/responses/InternalError' }
         '503': { $ref: '#/components/responses/ServiceUnavailable' }
 
   /v1/documents/{docId}/versions:
@@ -642,13 +643,13 @@ paths:
         '200':
           description: Restored.
           content: { application/json: { schema: { $ref: '#/components/schemas/RestoreResult' } } }
-        '400': { $ref: '#/components/responses/BadRequest', description: '`VALIDATION_ERROR`: `docId` is not a UUID (or a rejected `Idempotency-Key`).' }
+        '400': { $ref: '#/components/responses/BadRequest', description: '`VALIDATION_ERROR`: `docId` or `versionId` is not a UUID (or a rejected `Idempotency-Key`).' }
         '401': { $ref: '#/components/responses/Unauthorized' }
         '403': { $ref: '#/components/responses/Forbidden' }
         '404': { $ref: '#/components/responses/NotFound', description: '`NOT_FOUND`: no such document, the caller is not an editor of it, or the document has no version `versionId`.' }
         '409': { $ref: '#/components/responses/Conflict', description: '`CONFLICT`: `Document changed during restore`, or an `Idempotency-Key` conflict.' }
         '429': { $ref: '#/components/responses/RateLimited' }
-        '500': { $ref: '#/components/responses/InternalError', description: '`INTERNAL_ERROR`, also when `versionId` is not a UUID.' }
+        '500': { $ref: '#/components/responses/InternalError' }
         '503': { $ref: '#/components/responses/ServiceUnavailable' }
 
   /v1/documents/{docId}/permissions:
@@ -720,13 +721,13 @@ paths:
         - $ref: '#/components/parameters/IdempotencyKey'
       responses:
         '204': { description: The user has no role on the document. }
-        '400': { $ref: '#/components/responses/BadRequest', description: '`VALIDATION_ERROR`: `docId` is not a UUID (or a rejected `Idempotency-Key`).' }
+        '400': { $ref: '#/components/responses/BadRequest', description: '`VALIDATION_ERROR`: `docId` or `userId` is not a UUID (or a rejected `Idempotency-Key`).' }
         '401': { $ref: '#/components/responses/Unauthorized' }
         '403': { $ref: '#/components/responses/Forbidden' }
         '404': { $ref: '#/components/responses/NotFound', description: '`NOT_FOUND`: no such document, or the caller is not its owner.' }
         '409': { $ref: '#/components/responses/Conflict' }
         '429': { $ref: '#/components/responses/RateLimited' }
-        '500': { $ref: '#/components/responses/InternalError', description: '`INTERNAL_ERROR`, also when `userId` is not a UUID.' }
+        '500': { $ref: '#/components/responses/InternalError' }
         '503': { $ref: '#/components/responses/ServiceUnavailable' }
 
   /v1/organizations:
@@ -770,9 +771,11 @@ paths:
         '200':
           description: The organization.
           content: { application/json: { schema: { $ref: '#/components/schemas/Organization' } } }
+        '400': { $ref: '#/components/responses/BadRequest', description: '`VALIDATION_ERROR`: `id` is not a UUID.' }
+        '400': { $ref: '#/components/responses/BadRequest', description: '`VALIDATION_ERROR`: `id` is not a UUID.' }
         '401': { $ref: '#/components/responses/Unauthorized' }
         '403': { $ref: '#/components/responses/Forbidden' }
-        '404': { $ref: '#/components/responses/NotFound', description: '`NOT_FOUND`: no such organization, the caller is not a member, or `id` is not a UUID.' }
+        '404': { $ref: '#/components/responses/NotFound', description: '`NOT_FOUND`: no such organization, or the caller is not a member.' }
         '429': { $ref: '#/components/responses/RateLimited' }
         '503': { $ref: '#/components/responses/ServiceUnavailable' }
 
@@ -795,11 +798,12 @@ paths:
                 required: [data]
                 properties:
                   data: { type: array, items: { $ref: '#/components/schemas/OrganizationMember' } }
+        '400': { $ref: '#/components/responses/BadRequest', description: '`VALIDATION_ERROR`: `id` is not a UUID.' }
         '401': { $ref: '#/components/responses/Unauthorized' }
         '403': { $ref: '#/components/responses/Forbidden' }
         '404': { $ref: '#/components/responses/NotFound', description: '`NOT_FOUND`: no such organization, or the caller is not a member.' }
         '429': { $ref: '#/components/responses/RateLimited' }
-        '500': { $ref: '#/components/responses/InternalError', description: '`INTERNAL_ERROR`, also when `id` is not a UUID.' }
+        '500': { $ref: '#/components/responses/InternalError' }
         '503': { $ref: '#/components/responses/ServiceUnavailable' }
     post:
       tags: [Organizations]
@@ -818,9 +822,9 @@ paths:
         '201':
           description: The account is a member with this role.
           content: { application/json: { schema: { $ref: '#/components/schemas/MemberAdded' } } }
-        '400': { $ref: '#/components/responses/BadRequest', description: '`INVALID_JSON`, or `VALIDATION_ERROR` (`Invalid organization role`) (or a rejected `Idempotency-Key`).' }
+        '400': { $ref: '#/components/responses/BadRequest', description: '`INVALID_JSON`, or `VALIDATION_ERROR` when `id` is not a UUID or the role is invalid (`Invalid organization role`) (or a rejected `Idempotency-Key`).' }
         '401': { $ref: '#/components/responses/Unauthorized' }
-        '403': { $ref: '#/components/responses/Forbidden', description: '`FORBIDDEN`: no `account:manage`; the caller is not an admin member (a non-member, a missing organization or an `id` that is not a UUID included); or the request would demote the owner (`Cannot demote organization owner`).' }
+        '403': { $ref: '#/components/responses/Forbidden', description: '`FORBIDDEN`: no `account:manage`; the caller is not an admin member (a non-member or a missing organization included); or the request would demote the owner (`Cannot demote organization owner`).' }
         '404': { $ref: '#/components/responses/NotFound', description: '`NOT_FOUND`: no account has `email` (`User not found`), or an `Idempotency-Key` repeat finds that the caller is no longer a member.' }
         '409': { $ref: '#/components/responses/Conflict' }
         '413': { $ref: '#/components/responses/PayloadTooLarge' }
@@ -844,12 +848,12 @@ paths:
         - $ref: '#/components/parameters/IdempotencyKey'
       responses:
         '204': { description: The user is not a member. }
-        '400': { $ref: '#/components/responses/BadRequest', description: '`VALIDATION_ERROR` for a rejected `Idempotency-Key`.' }
+        '400': { $ref: '#/components/responses/BadRequest', description: '`VALIDATION_ERROR`: `id` or `userId` is not a UUID (or a rejected `Idempotency-Key`).' }
         '401': { $ref: '#/components/responses/Unauthorized' }
         '403': { $ref: '#/components/responses/Forbidden', description: '`FORBIDDEN`: no `account:manage`; the caller is not an admin member; or `userId` is the owner (`Cannot remove organization owner`).' }
         '409': { $ref: '#/components/responses/Conflict' }
         '429': { $ref: '#/components/responses/RateLimited' }
-        '500': { $ref: '#/components/responses/InternalError', description: '`INTERNAL_ERROR`, also when `userId` is not a UUID.' }
+        '500': { $ref: '#/components/responses/InternalError' }
         '503': { $ref: '#/components/responses/ServiceUnavailable' }
 
   /v1/exports:
@@ -899,9 +903,10 @@ paths:
         '200':
           description: The job.
           content: { application/json: { schema: { $ref: '#/components/schemas/ExportJob' } } }
+        '400': { $ref: '#/components/responses/BadRequest', description: '`VALIDATION_ERROR`: `id` is not a UUID.' }
         '401': { $ref: '#/components/responses/Unauthorized' }
         '403': { $ref: '#/components/responses/Forbidden' }
-        '404': { $ref: '#/components/responses/NotFound', description: '`NOT_FOUND`: no such job among the caller''s (an `id` that is not a UUID included), or the caller can no longer read its document.' }
+        '404': { $ref: '#/components/responses/NotFound', description: '`NOT_FOUND`: no such job among the caller''s, or the caller can no longer read its document.' }
         '429': { $ref: '#/components/responses/RateLimited' }
         '500': { $ref: '#/components/responses/InternalError' }
         '503': { $ref: '#/components/responses/ServiceUnavailable', description: '`SERVICE_UNAVAILABLE`: the download URL could not be signed, or Valkey failed.' }
