@@ -16,6 +16,9 @@ pub(super) struct Node {
     pub spread: bool,
     pub checked: Option<bool>,
     pub align: Vec<Option<String>>,
+    /// A table whose head row ended a paragraph: a lazy line there continues the paragraph's
+    /// text (D-216).
+    pub after_text: bool,
     pub url: String,
     pub title: Option<String>,
     /// Text of a backslash escape or a character reference while the inline reader runs: as

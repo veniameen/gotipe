@@ -284,6 +284,7 @@ class Reader {
           align: alignment,
           children,
           position: position(start, lines[next - 1]!.end),
+          afterText: i === header,
         });
         i = next;
         continue;
@@ -301,7 +302,8 @@ class Reader {
       let next = i + 1;
       let setext = 0;
       // A line followed by a delimiter row with as many cells ends the paragraph and heads a table,
-      // unless a delimiter row followed another line of the paragraph (cmark-gfm, D-192).
+      // unless a delimiter row followed another line of the paragraph (cmark-gfm, D-192). A lazy
+      // line does too (D-216), but not after blanks: cmark-gfm keeps them, before `|` as a cell.
       let visited = !!alignment;
       while (next < lines.length && !blank(lines[next]!)) {
         const current = lines[next]!;
@@ -313,7 +315,8 @@ class Reader {
         }
         if (interrupts(current) && !current.lazy) break;
         const row = delimiterRow(next + 1);
-        if (row && !visited && !current.lazy && row.length === tableCells(current.text).length) {
+        const indented = current.lazy && /^[ \t]/.test(current.text);
+        if (row && !visited && !indented && row.length === tableCells(current.text).length) {
           header = next;
           break;
         }
