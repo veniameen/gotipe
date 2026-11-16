@@ -258,8 +258,12 @@ func (h *OrganizationsHandler) RemoveMember() http.HandlerFunc {
 			return
 		}
 
-		orgID := chi.URLParam(r, "id")
-		memberID := chi.URLParam(r, "userId")
+		orgID, validOrg := canonicalUUID(chi.URLParam(r, "id"))
+		memberID, validMember := canonicalUUID(chi.URLParam(r, "userId"))
+		if !validOrg || !validMember {
+			apierror.ErrValidation.WithMessage("organization and user IDs must be UUIDs").Write(w)
+			return
+		}
 
 		// Verify caller is admin
 		var callerRole string
@@ -272,26 +276,27 @@ func (h *OrganizationsHandler) RemoveMember() http.HandlerFunc {
 			return
 		}
 
-		// Cannot remove org owner
-		var ownerID string
+		// PostgreSQL compares the owner as a UUID, so no spelling of the owner's ID
+		// passes, and the DELETE keeps the guard itself rather than trusting the check.
+		var removed, owner bool
 		err = h.db.Pool.QueryRow(r.Context(),
-			`SELECT owner_id FROM organizations WHERE id = $1`, orgID,
-		).Scan(&ownerID)
+			`WITH removed AS (
+				DELETE FROM org_members m USING organizations o
+				WHERE m.org_id = $1 AND m.user_id = $2 AND o.id = m.org_id AND o.owner_id <> m.user_id
+				RETURNING m.user_id
+			) SELECT EXISTS(SELECT 1 FROM removed), EXISTS(SELECT 1 FROM organizations WHERE id = $1 AND owner_id = $2)`,
+			orgID, memberID,
+		).Scan(&removed, &owner)
 		if err != nil {
 			apierror.ErrInternal.Write(w)
 			return
 		}
-		if memberID == ownerID {
+		if owner {
 			apierror.ErrForbidden.WithMessage("Cannot remove organization owner").Write(w)
 			return
 		}
-
-		_, err = h.db.Pool.Exec(r.Context(),
-			`DELETE FROM org_members WHERE org_id = $1 AND user_id = $2`,
-			orgID, memberID,
-		)
-		if err != nil {
-			apierror.ErrInternal.Write(w)
+		if !removed {
+			w.WriteHeader(http.StatusNoContent)
 			return
 		}
 
