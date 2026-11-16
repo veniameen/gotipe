@@ -38,19 +38,20 @@ export interface InlineResult {
 
 const BR_RE = /^<br[ \t]*\/?>$/i;
 
+/**
+ * The spans of one text as they are read. `atoms` counts the atoms read so far: each gets its own
+ * `key`, renumbered in document order later.
+ */
 class Builder {
   spans: Span[] = [];
   text = "";
   segs: RawSegment[] = [];
   softBreaks: number[] = [];
-  /** Atoms read so far: each gets its own `key`, renumbered in document order later. */
   private atoms = 0;
 
-  /**
-   * The mark of the atom that starts here. Its `key` keeps it apart from an equal neighbour;
-   * `numberAtoms` (atoms.ts) gives the final keys once the whole document is read.
-   */
   atom(type: string, attrs?: Record<string, unknown>): Mark {
+    // The mark of the atom that starts here. Its `key` keeps it apart from an equal neighbour;
+    // `numberAtoms` (atoms.ts) gives the final keys once the whole document is read.
     return { type, attrs: { ...attrs, key: String(++this.atoms) } };
   }
 

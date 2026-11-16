@@ -7,9 +7,11 @@
 //! raw lists the source of the later (or else of the earlier) gets another marker at each item
 //! (D-107); raw text that the writer copies as it is and that the end of its file ended gets its
 //! end before another block (D-106). The lists among the children of a block stay apart the same
-//! way at any depth (`children`, D-105). The other protections of `serialize.ts` keep the gaps of
-//! a snapshot.
+//! way at any depth (`children`, D-105), and so do the blocks written at one level, one after
+//! another: a toggle without text is its children (`flat`, D-191). The other protections of
+//! `serialize.ts` keep the gaps of a snapshot.
 use std::borrow::Cow;
+use std::collections::HashMap;
 
 use gotipe_core::{AttrValue, Block, BlockContent};
 
@@ -101,60 +103,129 @@ impl<'a> Written<'a> {
 
 /// The top-level blocks of `blocks` that are written, in order.
 pub(super) fn top_blocks(blocks: &[Block]) -> Vec<Top<'_>> {
-    let mut written: Vec<Written> = blocks
-        .iter()
-        .filter(|block| !empty(block))
-        .map(Written::new)
-        .collect();
-    separate(&mut written);
-    // raw source that the end of its file ended takes in the next block: written as it is, it
-    // gets its end (D-106); the writer ends the blocks of its own syntax itself
+    let written: Vec<&Block> = blocks.iter().filter(|block| !empty(block)).collect();
+    let changed = protect(&written);
     let last = written.len().saturating_sub(1);
-    for item in &mut written[..last] {
-        if OWN_SYNTAX.contains(&item.block.block_type.as_str()) {
-            continue;
-        }
-        if let Some(source) = item.source() {
-            let closer = closing_line(source);
-            if !closer.is_empty() {
-                item.raw = Some(format!("{source}{closer}"));
-            }
-        }
-    }
     written
         .into_iter()
         .enumerate()
-        .map(|(index, item)| {
-            if index == 0 && item.block.block_type == "divider" {
-                Top::Stars
-            } else {
-                Top::Block(item.applied())
+        .map(|(index, block)| {
+            if index == 0 && block.block_type == "divider" {
+                return Top::Stars;
             }
+            let mut block = rebuilt(block, &changed);
+            // raw source that the end of its file ended takes in the next block: written as it
+            // is, it gets its end (D-106); the writer ends the blocks of its own syntax itself
+            if index < last && !OWN_SYNTAX.contains(&block.block_type.as_str()) {
+                if let BlockContent::Raw(source) = &block.content {
+                    let closer = closing_line(source);
+                    if !closer.is_empty() {
+                        let closed = format!("{source}{closer}");
+                        block.to_mut().content = BlockContent::Raw(closed);
+                    }
+                }
+            }
+            Top::Block(block)
         })
         .collect()
 }
 
 /// The children of a block, written one after another, with the protection of lists of the top
-/// level at any depth (`siblingBlocks` of the TS writer, D-105). A child that writes no line of
-/// its own keeps no lists apart.
+/// level at any depth (`siblingBlocks` of the TS writer, D-105, D-191). A child that writes no
+/// line of its own keeps no lists apart.
 pub(super) fn children<'a>(blocks: impl Iterator<Item = &'a Block>) -> Vec<Cow<'a, Block>> {
-    let blocks: Vec<&Block> = blocks.collect();
-    let mut written: Vec<Written> = blocks
-        .iter()
-        .filter(|block| !writes_no_line(block))
-        .map(|&block| Written::new(block))
-        .collect();
-    separate(&mut written);
-    let mut written = written.into_iter().peekable();
+    let blocks: Vec<&Block> = blocks.filter(|block| !writes_no_line(block)).collect();
+    let changed = protect(&blocks);
     blocks
         .into_iter()
-        .map(
-            |block| match written.next_if(|item| std::ptr::eq(item.block, block)) {
-                Some(item) => item.applied(),
-                None => Cow::Borrowed(block),
-            },
-        )
+        .map(|block| rebuilt(block, &changed))
         .collect()
+}
+
+/// The blocks the protection of lists changed, by their place in the document, as they are
+/// written.
+type Changed = HashMap<*const Block, Block>;
+
+/// What the protection of lists changes among `blocks` and the blocks written at their level
+/// after each of them (`flat`).
+fn protect(blocks: &[&Block]) -> Changed {
+    let mut written = vec![];
+    for block in blocks {
+        flat(block, &mut written);
+    }
+    separate(&mut written);
+    written
+        .into_iter()
+        .filter_map(|item| {
+            let at = std::ptr::from_ref(item.block);
+            match item.applied() {
+                Cow::Owned(block) => Some((at, block)),
+                Cow::Borrowed(_) => None,
+            }
+        })
+        .collect()
+}
+
+/// The blocks `block` is written as, one after another, as `flat` of the TS writer (D-191): the
+/// children of a block that does not hold them in its syntax follow it at its level, and a block
+/// that writes nothing before them is only its children.
+fn flat<'a>(block: &'a Block, written: &mut Vec<Written<'a>>) {
+    if !transparent(block) {
+        written.push(Written::new(block));
+    }
+    if !inside(block) {
+        for child in block.children.iter().filter(|child| !writes_no_line(child)) {
+            flat(child, written);
+        }
+    }
+}
+
+/// `block` with what the protection of lists changed in it and in the blocks below it at its
+/// level.
+fn rebuilt<'a>(block: &'a Block, changed: &Changed) -> Cow<'a, Block> {
+    let mut out = changed
+        .get(&std::ptr::from_ref(block))
+        .map_or(Cow::Borrowed(block), |own| Cow::Owned(own.clone()));
+    if !inside(block) {
+        for (index, child) in block.children.iter().enumerate() {
+            if let Cow::Owned(child) = rebuilt(child, changed) {
+                out.to_mut().children[index] = child;
+            }
+        }
+    }
+    out
+}
+
+/// Whether `block` holds its children in its syntax: a list its items, a table its rows, a quote.
+fn inside(block: &Block) -> bool {
+    is_list(block)
+        || matches!(
+            block.block_type.as_str(),
+            "table" | "blockquote" | "callout"
+        )
+}
+
+/// Whether `block` writes nothing before its children: a block without syntax of its own (a
+/// paragraph, a toggle, columns) without text, as `transparent` of the TS writer (D-191).
+fn transparent(block: &Block) -> bool {
+    !is_list(block) && !own_line(block) && !writes_text(block)
+}
+
+/// The blocks written in syntax of their own: without text they still write a line.
+fn own_line(block: &Block) -> bool {
+    matches!(
+        block.block_type.as_str(),
+        "heading"
+            | "codeBlock"
+            | "blockquote"
+            | "callout"
+            | "divider"
+            | "image"
+            | "file"
+            | "embed"
+            | "math"
+            | "table"
+    )
 }
 
 /// Of two neighbouring lists with one marker, which read as one list, the later takes another
@@ -197,8 +268,7 @@ pub(super) fn writes_no_line(block: &Block) -> bool {
         "markdownRaw" => !matches!(block.content, BlockContent::Raw(_)) || !writes_text(block),
         _ if is_list(block) => block.children.is_empty(),
         // syntax of its own is a line without text too
-        "heading" | "codeBlock" | "blockquote" | "callout" | "divider" | "image" | "file"
-        | "embed" | "math" | "table" => super::omitted(block),
+        _ if own_line(block) => super::omitted(block),
         _ => !writes_text(block) && block.children.iter().all(writes_no_line),
     }
 }

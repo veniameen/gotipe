@@ -5,7 +5,7 @@
     "@gotipe/block-editor": 26,
     "@gotipe/core": 94,
     "@gotipe/i18n": 4,
-    "@gotipe/markdown": 15,
+    "@gotipe/markdown": 1,
     "@gotipe/migration": 16
   }
 }
