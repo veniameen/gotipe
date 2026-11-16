@@ -220,6 +220,33 @@ describe("counter (Atlas frame 26)", () => {
     expect(editor.getDecorations(OVER_LIMIT_LAYER)).toEqual([]);
   });
 
+  it("counts in the browser's language when the locale is no language tag (D-220)", async () => {
+    const editor = await editorWith("Один два три", "четыре");
+    act(() =>
+      root.render(
+        <GoTipeI18nProvider locale="de_DE">
+          <BlockEditor editor={editor} status={{ limit: 1000 }} />
+        </GoTipeI18nProvider>,
+      ),
+    );
+    await frame();
+    const number = new Intl.NumberFormat();
+    expect(container.querySelector(".gotipe-status")?.textContent).toBe(
+      `4 words · ${number.format(18)} characters`,
+    );
+    act(() =>
+      root.render(
+        <GoTipeI18nProvider locale="de_DE">
+          <BlockEditor editor={editor} status={{ limit: 10 }} />
+        </GoTipeI18nProvider>,
+      ),
+    );
+    await frame();
+    expect(container.querySelector(".gotipe-status .is-over")?.textContent).toContain(
+      `${number.format(18)} of ${number.format(10)} characters`,
+    );
+  });
+
   it("cuts the over-limit range between grapheme clusters", () => {
     const block = (id: string, text: string) => ({
       id,

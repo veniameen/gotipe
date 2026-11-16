@@ -5,6 +5,7 @@ import {
   getCharacterCount,
 } from "@gotipe/core/extensions";
 import { useCallback, useEffect, useId, useRef, useState, useSyncExternalStore } from "react";
+import { intlLocale } from "../i18n/intl-locale";
 import { useBlockEditorI18n } from "../i18n/strings";
 import { paintOverLimit } from "./over-limit";
 
@@ -51,7 +52,7 @@ function Status({
   const limit =
     ownLimit === undefined ? counts.limit : ownLimit === null ? null : Math.max(0, ownLimit);
   useEffect(() => paintOverLimit(editor, limit), [editor, limit]);
-  const number = new Intl.NumberFormat(i18n.locale);
+  const number = new Intl.NumberFormat(intlLocale(i18n.locale));
   const words = i18n.plural("status.words", counts.words, {
     count: number.format(counts.words),
   });
