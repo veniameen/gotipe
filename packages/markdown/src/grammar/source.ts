@@ -103,3 +103,6 @@ export function stripIndent(line: Line, width: number): Line {
 }
 
 export const blank = (line: Line): boolean => /^[ \t]*$/.test(line.text);
+
+/** Where a block read from `line` starts: after its spaces. */
+export const textStart = (line: Line): number => line.start + /^ */.exec(line.text)![0].length;

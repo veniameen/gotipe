@@ -10,7 +10,8 @@ interface Cell {
   rawTo: number;
 }
 
-export function tableCells(text: string): Cell[] {
+/** The cells of a row. cmark-gfm keeps the blanks of a lazy line: before `|` they are a cell. */
+export function tableCells(text: string, lazy?: boolean): Cell[] {
   const cells: Cell[] = [];
   let from = 0;
   for (let p = 0; p <= text.length; p++) {
@@ -33,7 +34,7 @@ export function tableCells(text: string): Cell[] {
       from = p + 1;
     }
   }
-  if (/^[ \t]*\|/.test(text)) cells.shift();
+  if (lazy ? text[0] === "|" : /^[ \t]*\|/.test(text)) cells.shift();
   if (/\|[ \t]*$/.test(text) && !/\\\|[ \t]*$/.test(text)) cells.pop();
   return cells;
 }
@@ -59,7 +60,7 @@ export function tableRow(
   columns: number,
   inline: (line: Line, context: Partial<InlineContext>) => PhrasingContent[],
 ): TableRow {
-  const cells = tableCells(line.text).slice(0, columns);
+  const cells = tableCells(line.text, line.lazy).slice(0, columns);
   const children: TableCell[] = cells.map((cell) => {
     const content = strip(
       { ...line, text: line.text.slice(0, cell.to), end: line.start + cell.to },
