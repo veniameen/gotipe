@@ -45,8 +45,13 @@
   outline-offset: var(--gt-focus-gap);
 }
 
-/* ---- mentions: a person is their avatar and name; a page is its glyph and title ---- */
+/* ---- mentions: a person is their avatar and name; a page is its glyph and title. The mention is
+   one box of the line, as in the Atlas (frame 22): a click past a line that ends with a mention
+   puts the caret after it. As an inline element it let Chrome look for the caret inside its
+   drawing, find none there and leave the caret where it was (D-240) ---- */
 .gotipe-mention {
+  display: inline-flex;
+  align-items: baseline;
   white-space: nowrap;
 }
 .gotipe-mention-view {

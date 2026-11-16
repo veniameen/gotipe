@@ -32,6 +32,16 @@ test.describe("a line with inline code or broken TeX keeps its height (D-225)", 
             text("Строка с "),
             text("p = \\frac{L}{N", [{ type: "inlineMath", attrs: { key: "f" } }]),
           ]),
+          // A mention is one box of the line (D-240) and keeps it as high as the others (D-200).
+          paragraph("mention", [
+            text("Строка с "),
+            text("@Анна Ковалёва", [
+              {
+                type: "mention",
+                attrs: { id: "u3", label: "Анна Ковалёва", kind: "user", key: "m" },
+              },
+            ]),
+          ]),
         ],
       });
     });
@@ -51,13 +61,15 @@ test.describe("a line with inline code or broken TeX keeps its height (D-225)", 
           plain: height("plain"),
           code: height("code"),
           invalid: height("invalid"),
-          lines: [lines("plain"), lines("code"), lines("invalid")],
+          mention: height("mention"),
+          lines: [lines("plain"), lines("code"), lines("invalid"), lines("mention")],
         };
       }, view);
-      expect(heights.lines).toEqual([1, 1, 1]);
+      expect(heights.lines).toEqual([1, 1, 1, 1]);
       expect(heights.plain).toBeGreaterThan(0);
       expect(heights.code).toBe(heights.plain);
       expect(heights.invalid).toBe(heights.plain);
+      expect(heights.mention).toBe(heights.plain);
     });
   }
 });
