@@ -121,6 +121,45 @@ describe("CommentSidebar (D-34)", () => {
     expect(words()).toEqual(["Комментарии", "Развернуть комментарии", "Комментарии (2)"]);
   });
 
+  it("writes the time of comments and replies in the interface's language (D-197)", () => {
+    const written = Date.UTC(2026, 10, 15, 21, 0, 0);
+    const replied = Date.UTC(2026, 10, 16, 9, 30, 5);
+    const discussed: CommentData = {
+      ...thread("1", false),
+      timestamp: written,
+      replies: [{ id: "r", author: "Борис", timestamp: replied, body: "Ответ" }],
+    };
+    const times = () => [...container.querySelectorAll("time")].map((time) => time.textContent);
+    for (const locale of ["ru", "en"]) {
+      act(() =>
+        root.render(
+          <GoTipeI18nProvider locale={locale}>
+            <CommentSidebar editor={editor} comments={[discussed]} {...actions} />
+          </GoTipeI18nProvider>,
+        ),
+      );
+      expect(times()).toEqual([
+        new Date(written).toLocaleString(locale),
+        new Date(replied).toLocaleString(locale),
+      ]);
+      expect(container.querySelector("time")?.getAttribute("dateTime")).toBe(
+        "2026-11-15T21:00:00.000Z",
+      );
+    }
+    // A dictionary named without a language tag keeps the browser's way of writing time.
+    act(() =>
+      root.render(
+        <GoTipeI18nProvider locale="de_DE">
+          <CommentSidebar editor={editor} comments={[discussed]} {...actions} />
+        </GoTipeI18nProvider>,
+      ),
+    );
+    expect(times()).toEqual([
+      new Date(written).toLocaleString(),
+      new Date(replied).toLocaleString(),
+    ]);
+  });
+
   it("keeps its English words without a provider's language", () => {
     render("en");
     expect(words().slice(0, 6)).toEqual([

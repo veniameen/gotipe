@@ -6,6 +6,27 @@ type Props = Pick<
   CommentSidebarProps,
   "currentUser" | "onAddReply" | "onResolve" | "onUnresolve" | "onDelete"
 > & { comment: CommentData; active: boolean; onLocate: (comment: CommentData) => void };
+
+/**
+ * When a comment or a reply was written, in the interface's language rather than the
+ * browser's (D-197). A locale name that is no language tag (`de_DE`) keeps the browser's.
+ */
+function Stamp({ timestamp, locale }: { timestamp: number; locale: string }) {
+  const date = new Date(timestamp);
+  let text: string;
+  try {
+    text = date.toLocaleString(locale);
+  } catch (error) {
+    if (!(error instanceof RangeError)) throw error;
+    text = date.toLocaleString();
+  }
+  return (
+    <time className="gotipe-comment-timestamp" dateTime={date.toISOString()}>
+      {text}
+    </time>
+  );
+}
+
 export function CommentThread({
   comment,
   active,
@@ -65,12 +86,7 @@ export function CommentThread({
     >
       <div className="gotipe-comment-heading">
         <span className="gotipe-comment-author">{comment.author}</span>
-        <time
-          className="gotipe-comment-timestamp"
-          dateTime={new Date(comment.timestamp).toISOString()}
-        >
-          {new Date(comment.timestamp).toLocaleString()}
-        </time>
+        <Stamp timestamp={comment.timestamp} locale={i18n.locale} />
       </div>
       {comment.quotedText && (
         <blockquote className="gotipe-comment-quote">{comment.quotedText}</blockquote>
@@ -125,12 +141,7 @@ export function CommentThread({
             <li key={entry.id}>
               <div className="gotipe-comment-heading">
                 <span className="gotipe-comment-author">{entry.author}</span>
-                <time
-                  className="gotipe-comment-timestamp"
-                  dateTime={new Date(entry.timestamp).toISOString()}
-                >
-                  {new Date(entry.timestamp).toLocaleString()}
-                </time>
+                <Stamp timestamp={entry.timestamp} locale={i18n.locale} />
               </div>
               <p className="gotipe-comment-body">{entry.body}</p>
             </li>
