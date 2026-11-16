@@ -9,6 +9,17 @@
   cursor: default;
   user-select: none;
 }
+/* The document text of a drawn atom stays in the line at zero size — Chrome loses an IME
+   composition after an atom whose text is out of the flow — and takes no height: with the
+   paragraph's leading it would stand a line high on its baseline and push the line down (D-200).
+   In an emoji, a box of its own, the text is a line of no height under the image: the image's foot
+   stays the emoji's baseline. */
+[data-gotipe-atom] > [data-gotipe-widget] + span {
+  line-height: 0;
+}
+.gotipe-emoji-custom > [data-gotipe-widget] + span {
+  display: block;
+}
 
 /* ---- a chip appears around an atom under the pointer; an edited formula is selected whole ---- */
 :is(.gotipe-mention, .gotipe-math-inline:not(.is-invalid), .gotipe-emoji-custom):is(
