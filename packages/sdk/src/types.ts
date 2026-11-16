@@ -5,6 +5,19 @@ export interface GoTipeClientOptions {
   timeout?: number;
 }
 
+/** Options of one call that changes data. */
+export interface RequestOptions {
+  /**
+   * Sent as `Idempotency-Key`. Repeating the call with the same key and the same arguments
+   * within 24 hours returns the first result instead of applying the change again, so a
+   * call whose outcome is unknown (a timeout, a dropped connection) can be retried safely.
+   * Use a new random key for every change, such as a UUID: 1–255 visible ASCII
+   * characters. The key belongs to the caller's account; reusing it for a different
+   * request, or retrying while the first one is still running, fails with `CONFLICT` (409).
+   */
+  idempotencyKey?: string;
+}
+
 /** The error object of a Cloud response outside 2xx: `{ "error": { "code", "message" } }`. */
 export interface ApiError {
   code: string;
@@ -78,7 +91,9 @@ export interface Comment {
   anchorType: "block" | "inline" | "document";
   from?: number;
   to?: number;
+  /** The comment this one replies to; replies are listed as separate items. */
   parentId?: string;
+  /** Stored and returned as sent, keys included. */
   metadata?: Record<string, unknown>;
   resolved: boolean;
   resolvedAt?: string;
