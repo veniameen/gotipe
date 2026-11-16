@@ -204,8 +204,8 @@ class Converter {
     return mk("codeBlock", attrs, value, s, e, segs);
   }
 
-  /** A `$$` block or a ```` ```math ```` fence; the editor's formula block. */
   math(source: string, s: number, e: number): PNode {
+    // A `$$` block or a ```` ```math ```` fence; the editor's formula block.
     const value = normalizeEol(source);
     let segs: RawSegment[] = [];
     if (this.ctx.segments) {
@@ -269,8 +269,8 @@ class Converter {
     return null;
   }
 
-  /** The lists nested in an item after its first `from` children; null when anything else is. */
   nestedLists(item: ListItem, from: number): PNode[] | null {
+    // The lists nested in an item after its first `from` children; null when anything else is.
     const nested: PNode[] = [];
     for (let idx = from; idx < item.children.length; idx++) {
       const c = item.children[idx]!;
@@ -349,8 +349,8 @@ class Converter {
     return mk("bulletList", attrs, null, s, e, [], kids);
   }
 
-  /** The writer's HTML table of merged cells, read back as a table. */
   htmlTable(s: number, e: number): PNode | null {
+    // The writer's HTML table of merged cells, read back as a table.
     const table = readHtmlTable(this.text.slice(s, e), s);
     if (!table) return null;
     const rows = table.rows.map((row) =>
