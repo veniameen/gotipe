@@ -9,7 +9,10 @@ import "./page-editor-example.css";
 
 declare global {
   interface Window {
-    __GOTIPE_PAGE_EXAMPLE__?: { replaceMarkdown(from: string, to: string): void };
+    __GOTIPE_PAGE_EXAMPLE__?: {
+      replaceMarkdown(from: string, to: string): void;
+      setMarkdown(markdown: string): void;
+    };
   }
 }
 
@@ -44,6 +47,7 @@ export function PageEditorExample() {
       replaceMarkdown(from: string, to: string) {
         setMarkdown((current) => (page.current?.getMarkdown() ?? current).replace(from, to));
       },
+      setMarkdown,
     };
     window.__GOTIPE_PAGE_EXAMPLE__ = inspection;
     return () => {
