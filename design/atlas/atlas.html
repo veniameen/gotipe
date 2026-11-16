@@ -883,6 +883,9 @@
   --site-marquee-wrap: nowrap;
   --site-marquee-track-w: max-content;
   --site-marquee-copy-display: flex;
+  --site-marquee-dot-display: block;
+  --site-marquee-chip-pad: 0;
+  --site-marquee-chip-line: transparent;
 
   /* where a switch's thumb and a tab's line stand, and where the pointer's light falls: the page's
      controls set them on their element (the first of each is chosen at rest) */
@@ -1070,7 +1073,10 @@
     --site-marquee-wrap: wrap;
     --site-marquee-track-w: auto;
     --site-marquee-copy-display: none;
-    --site-marquee-gap: var(--site-space-4);
+    --site-marquee-gap: var(--site-space-2);
+    --site-marquee-dot-display: none;
+    --site-marquee-chip-pad: var(--site-space-1) var(--site-space-2);
+    --site-marquee-chip-line: var(--site-line-strong);
     --site-licence-pad: var(--site-space-6);
   }
 }
@@ -4869,9 +4875,14 @@ html:not([data-theme="dark"]) .site-theme-to-light {
   display: inline-flex;
   align-items: center;
   gap: var(--site-marquee-gap);
+  padding: var(--site-marquee-chip-pad);
+  border-radius: var(--site-radius-1);
+  box-shadow: inset 0 0 0 var(--gt-hairline) var(--site-marquee-chip-line);
 }
+/* a dot between the words of the running strip; a phone's wrapped words are chips instead */
 .site-marquee-list > li::after {
   content: "";
+  display: var(--site-marquee-dot-display);
   width: var(--site-dot);
   height: var(--site-dot);
   border-radius: var(--site-radius-round);

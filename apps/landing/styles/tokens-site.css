@@ -199,6 +199,9 @@
   --site-marquee-wrap: nowrap;
   --site-marquee-track-w: max-content;
   --site-marquee-copy-display: flex;
+  --site-marquee-dot-display: block;
+  --site-marquee-chip-pad: 0;
+  --site-marquee-chip-line: transparent;
 
   /* where a switch's thumb and a tab's line stand, and where the pointer's light falls: the page's
      controls set them on their element (the first of each is chosen at rest) */
@@ -389,7 +392,10 @@ body,
     --site-marquee-wrap: wrap;
     --site-marquee-track-w: auto;
     --site-marquee-copy-display: none;
-    --site-marquee-gap: var(--site-space-4);
+    --site-marquee-gap: var(--site-space-2);
+    --site-marquee-dot-display: none;
+    --site-marquee-chip-pad: var(--site-space-1) var(--site-space-2);
+    --site-marquee-chip-line: var(--site-line-strong);
     --site-licence-pad: var(--site-space-6);
   }
 }

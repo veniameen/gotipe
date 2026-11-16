@@ -291,9 +291,14 @@
   display: inline-flex;
   align-items: center;
   gap: var(--site-marquee-gap);
+  padding: var(--site-marquee-chip-pad);
+  border-radius: var(--site-radius-1);
+  box-shadow: inset 0 0 0 var(--gt-hairline) var(--site-marquee-chip-line);
 }
+/* a dot between the words of the running strip; a phone's wrapped words are chips instead */
 .site-marquee-list > li::after {
   content: "";
+  display: var(--site-marquee-dot-display);
   width: var(--site-dot);
   height: var(--site-dot);
   border-radius: var(--site-radius-round);
