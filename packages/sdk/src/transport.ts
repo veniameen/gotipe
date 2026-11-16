@@ -1,4 +1,4 @@
-import type { ApiError, CursorPage, GoTipeClientOptions } from "./types";
+import type { ApiError, CursorPage, GoTipeClientOptions, RequestOptions } from "./types";
 
 export class GoTipeApiError extends Error implements ApiError {
   readonly name = "GoTipeApiError";
@@ -20,6 +20,19 @@ export function resource<T>(value: Record<string, unknown>): T {
   return result as T;
 }
 
+// The server takes at most 255 bytes. Visible ASCII keeps the byte count equal to the
+// length, and a header value keeps no leading or trailing space to trim.
+const idempotencyKey = /^[\x21-\x7e]{1,255}$/;
+
+function requestHeaders(base: Record<string, string>, options?: RequestOptions) {
+  const key = options?.idempotencyKey;
+  if (key === undefined) return base;
+  if (typeof key !== "string" || !idempotencyKey.test(key)) {
+    throw new TypeError("idempotencyKey must be 1-255 visible ASCII characters");
+  }
+  return { ...base, "Idempotency-Key": key };
+}
+
 export class Transport {
   private readonly baseUrl: string;
   private readonly headers: Record<string, string>;
@@ -36,13 +49,19 @@ export class Transport {
     if (credential) this.headers.Authorization = `Bearer ${credential}`;
   }
 
-  async request<T>(method: string, path: string, body?: unknown): Promise<T> {
+  async request<T>(
+    method: string,
+    path: string,
+    body?: unknown,
+    options?: RequestOptions,
+  ): Promise<T> {
+    const headers = requestHeaders(this.headers, options);
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), this.timeout);
     try {
       const response = await fetch(`${this.baseUrl}${path}`, {
         method,
-        headers: this.headers,
+        headers,
         body: body === undefined ? undefined : JSON.stringify(body),
         signal: controller.signal,
       });
@@ -65,8 +84,13 @@ export class Transport {
     }
   }
 
-  async resource<T>(method: string, path: string, body?: unknown): Promise<T> {
-    return resource<T>(await this.request(method, path, body));
+  async resource<T>(
+    method: string,
+    path: string,
+    body?: unknown,
+    options?: RequestOptions,
+  ): Promise<T> {
+    return resource<T>(await this.request(method, path, body, options));
   }
 
   async page<T>(path: string): Promise<CursorPage<T>> {

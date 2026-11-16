@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { GoTipeClient } from "./client";
 import { GoTipeApiError } from "./transport";
+import type { RequestOptions } from "./types";
 
 const client = () => new GoTipeClient({ baseUrl: "https://cloud.example/", apiKey: "gt_test_key" });
 function respond(body: unknown, status = 200) {
@@ -225,5 +226,114 @@ describe("Cloud SDK contracts", () => {
     await expect(client().listComments("doc", true as never)).rejects.toThrow(TypeError);
     await expect(client().listVersions("doc", null as never)).rejects.toThrow(TypeError);
     expect(fetch).not.toHaveBeenCalled();
+  });
+});
+
+describe("Comment replies, metadata and idempotency keys", () => {
+  it("replies on the server's replies route and returns the reply with its parent", async () => {
+    const fetch = respond(
+      { id: "reply", parent_id: "c/1", anchor_type: "block", block_id: "b", content: "Yes" },
+      201,
+    );
+    expect(await client().replyToComment("doc", "c/1", { content: "Yes" })).toEqual({
+      id: "reply",
+      parentId: "c/1",
+      anchorType: "block",
+      blockId: "b",
+      content: "Yes",
+      resolved: false,
+    });
+    expect(fetch.mock.calls[0]?.[0]).toBe(
+      "https://cloud.example/v1/documents/doc/comments/c%2F1/replies",
+    );
+    expect(fetch.mock.calls[0]?.[1].method).toBe("POST");
+    expect(JSON.parse(fetch.mock.calls[0]?.[1].body)).toEqual({ content: "Yes" });
+  });
+  it("sends comment metadata and returns it without renaming keys", async () => {
+    const metadata = { label: "question", source_ref: { ключ: [1, "✓"] } };
+    const fetch = respond({ id: "comment", metadata }, 201);
+    const comment = await client().addComment("doc", { content: "Why?", metadata });
+    expect(JSON.parse(fetch.mock.calls[0]?.[1].body)).toEqual({
+      content: "Why?",
+      anchor_type: "document",
+      metadata,
+    });
+    expect(comment.metadata).toEqual(metadata);
+  });
+  it("sends Idempotency-Key with every call that changes data", async () => {
+    const key = "4b1f7c0e-create-launch-plan";
+    const calls: [string, (client: GoTipeClient, options: RequestOptions) => Promise<unknown>][] = [
+      ["POST /v1/documents", (c, o) => c.createDocument({ title: "Plan" }, o)],
+      ["PATCH /v1/documents/doc", (c, o) => c.updateDocument("doc", { title: "Plan" }, o)],
+      ["DELETE /v1/documents/doc", (c, o) => c.deleteDocument("doc", o)],
+      ["POST /v1/documents/doc/versions", (c, o) => c.createVersion("doc", "v1", o)],
+      ["POST /v1/documents/doc/versions/v/restore", (c, o) => c.restoreVersion("doc", "v", o)],
+      ["POST /v1/documents/doc/comments", (c, o) => c.addComment("doc", { content: "Hi" }, o)],
+      [
+        "POST /v1/documents/doc/comments/c/replies",
+        (c, o) => c.replyToComment("doc", "c", { content: "Hi" }, o),
+      ],
+      ["POST /v1/documents/doc/comments/c/resolve", (c, o) => c.resolveComment("doc", "c", o)],
+      ["DELETE /v1/documents/doc/comments/c", (c, o) => c.deleteComment("doc", "c", o)],
+      ["POST /v1/exports", (c, o) => c.createExportJob("doc", "pdf", o)],
+      ["POST /v1/ai/complete", (c, o) => c.aiGenerate("doc", { prompt: "p" }, o)],
+    ];
+    for (const [route, call] of calls) {
+      const fetch = respond({ id: "x" });
+      await call(client(), { idempotencyKey: key });
+      const [url, init] = fetch.mock.calls[0] ?? [];
+      expect(`${init.method} ${String(url).replace("https://cloud.example", "")}`).toBe(route);
+      expect(init.headers).toEqual({
+        "Content-Type": "application/json",
+        Authorization: "Bearer gt_test_key",
+        "Idempotency-Key": key,
+      });
+    }
+  });
+  it("sends a retry exactly like the first call, so the server replays it", async () => {
+    const fetch = respond({ id: "comment" }, 201);
+    const data = { blockId: "b", content: "Hi", from: 1, to: 3, metadata: { label: "q" } };
+    await client().addComment("doc", data, { idempotencyKey: "comment-1" });
+    await client().addComment("doc", data, { idempotencyKey: "comment-1" });
+    const sent = fetch.mock.calls.map(([url, init]) => [url, init.method, init.headers, init.body]);
+    expect(sent[1]).toEqual(sent[0]);
+    expect(sent[0]?.[2]).toMatchObject({ "Idempotency-Key": "comment-1" });
+  });
+  it("keeps the key on the restore and reads the document without it", async () => {
+    const fetch = respond({});
+    fetch
+      .mockResolvedValueOnce(new Response('{"status":"restored"}'))
+      .mockResolvedValueOnce(new Response('{"id":"doc"}'));
+    await client().restoreVersion("doc", "v", { idempotencyKey: "restore-1" });
+    expect(fetch.mock.calls.map(([, init]) => init.headers["Idempotency-Key"])).toEqual([
+      "restore-1",
+      undefined,
+    ]);
+  });
+  it("rejects a key the server or a header would not keep, before any request", async () => {
+    const fetch = respond({});
+    const invalid = ["", " key", "key ", "a b", "ключ", "a\nb", "x".repeat(256), 42 as never];
+    for (const idempotencyKey of invalid) {
+      await expect(client().createDocument({ title: "Plan" }, { idempotencyKey })).rejects.toThrow(
+        TypeError,
+      );
+    }
+    expect(fetch).not.toHaveBeenCalled();
+    await client().createDocument({ title: "Plan" }, { idempotencyKey: "x".repeat(255) });
+    expect(fetch).toHaveBeenCalledTimes(1);
+  });
+  it("reports a key reused for another request as the server's CONFLICT", async () => {
+    respond(
+      {
+        error: {
+          code: "CONFLICT",
+          message: "Idempotency-Key was already used for a different request",
+        },
+      },
+      409,
+    );
+    await expect(
+      client().addComment("doc", { content: "Hi" }, { idempotencyKey: "comment-1" }),
+    ).rejects.toMatchObject({ name: "GoTipeApiError", code: "CONFLICT", status: 409 });
   });
 });

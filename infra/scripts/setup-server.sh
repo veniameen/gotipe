@@ -2,7 +2,8 @@
 # infra/scripts/setup-server.sh — full server provisioning
 set -euo pipefail
 
-REPO="gotipe/gotipe"
+# The GitHub repository this server deploys; set GOTIPE_REPO for a fork.
+REPO="${GOTIPE_REPO:-gotipe/gotipe}"
 
 echo "=== GoTipe Server Setup ==="
 
@@ -52,7 +53,8 @@ if [ ! -f /opt/gotipe/.env ]; then
   cp /opt/gotipe/.env.example /opt/gotipe/.env
   echo ""
   echo "  WARNING: EDIT /opt/gotipe/.env before starting services!"
-  echo "     Required: POSTGRES_PASSWORD, JWT keys, R2 credentials, Stripe keys"
+  echo "     Required: API_HOST, SYNC_HOST, HTTP_ALLOWED_ORIGINS, SYNC_ALLOWED_ORIGINS,"
+  echo "     POSTGRES_PASSWORD, JWT keys, R2 credentials, Stripe keys"
   echo ""
 fi
 
@@ -68,4 +70,5 @@ echo ""
 echo "=== Server ready ==="
 echo "   IP: ${SERVER_IP}"
 echo "   Next push to main -> automatic deploy"
-echo "   Health: curl https://api.gotipe.com/healthz"
+API_HOST="$(sed -n 's/^API_HOST=//p' /opt/gotipe/.env | tail -n 1)"
+echo "   Health: curl https://${API_HOST:-<API_HOST from /opt/gotipe/.env>}/healthz"
