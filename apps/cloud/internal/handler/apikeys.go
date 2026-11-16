@@ -10,6 +10,7 @@ import (
 	"github.com/gotipe/cloud/internal/apierror"
 	"github.com/gotipe/cloud/internal/audit"
 	internalAuth "github.com/gotipe/cloud/internal/auth"
+	"github.com/gotipe/cloud/internal/middleware"
 	"github.com/gotipe/cloud/internal/storage"
 )
 
@@ -98,6 +99,8 @@ func (h *APIKeysHandler) CreateAPIKey() http.HandlerFunc {
 
 		_ = h.audit.Log(r.Context(), user.UserID, audit.ActionAPIKeyCreate, "api_key", keyID, map[string]string{"name": req.Name})
 
+		// The key is shown once: an Idempotency-Key keeps only the status, not the key.
+		middleware.MarkSecretReply(r)
 		apierror.WriteJSON(w, http.StatusCreated, APIKeyResponse{
 			ID:        keyID,
 			Name:      req.Name,

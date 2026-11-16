@@ -148,7 +148,9 @@ func main() {
 	r.Use(middleware.RequestIDMiddleware)
 	r.Use(middleware.LoggerMiddleware(log, clients))
 	r.Use(middleware.MetricsMiddleware(handler.HTTPMetrics{}))
-	r.Use(middleware.BodyLimitMiddleware(cfg.ExportMaxDocSize + (1 << 20)))
+	// One body limit for every request, with or without an Idempotency-Key.
+	bodyLimit := cfg.ExportMaxDocSize + (1 << 20)
+	r.Use(middleware.BodyLimitMiddleware(bodyLimit))
 	r.Use(chiMiddleware.Recoverer)
 	r.Use(middleware.CORSMiddleware(cfg.HTTPAllowedOrigins))
 	r.Use(middleware.CSPMiddleware)
@@ -168,7 +170,7 @@ func main() {
 		if rateLimiter != nil {
 			r.Use(rateLimiter.Middleware())
 		}
-		r.Use(middleware.IdempotencyMiddleware(valkeyStore, handler.ReplayAccess(db.Pool)))
+		r.Use(middleware.IdempotencyMiddleware(valkeyStore, bodyLimit, handler.ReplayAccess(db.Pool)))
 
 		// Auth
 		r.Post("/v1/auth/revoke", authHandler.RevokeToken())
