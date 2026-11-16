@@ -147,7 +147,10 @@ func (h *PermissionsHandler) RevokePermission() http.HandlerFunc {
 		}
 
 		docID := chi.URLParam(r, "docId")
-		targetUserID := chi.URLParam(r, "userId")
+		targetUserID, valid := pathUUID(w, r, "userId")
+		if !valid {
+			return
+		}
 
 		if !requireDocumentAccess(w, r, h.db.Pool, docID, "owner") {
 			return

@@ -97,12 +97,16 @@ func (rl *RateLimiter) middleware(keyFor func(*http.Request) string) func(http.H
 				return
 			}
 
+			// A refusal is not the request's result: under IdempotencyMiddleware the
+			// key is released, so a retry with it after Retry-After runs.
 			allowed, err := rl.Allow(r.Context(), key)
 			if err != nil {
+				MarkNotRun(r)
 				apierror.ErrServiceDown.Write(w)
 				return
 			}
 			if !allowed {
+				MarkNotRun(r)
 				w.Header().Set("Retry-After", fmt.Sprintf("%d", int(rl.window.Seconds())))
 				apierror.ErrRateLimited.Write(w)
 				return

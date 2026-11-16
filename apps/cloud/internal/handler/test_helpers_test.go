@@ -54,6 +54,13 @@ func (r *emptyRows) Err() error { return r.err }
 // are validated as UUIDs before any database access.
 const testDocumentID = "6f1c2b8e-0d1a-4f5e-9a63-2a7d1e0b9c44"
 
+// The other route IDs of requestAs: like document IDs, they are UUIDs.
+const (
+	testCommentID = "0e7d6c5b-4a39-4281-9f0e-1d2c3b4a5968"
+	testVersionID = "7a8b9c0d-1e2f-4a3b-8c4d-5e6f7a8b9c0d"
+	testUserID    = "3c2b1a09-8f7e-4d6c-9b5a-4f3e2d1c0b9a"
+)
+
 func requestAs(method, path, body string, user *auth.UserContext) *http.Request {
 	r := httptest.NewRequest(method, path, strings.NewReader(body))
 	if user != nil {
@@ -62,8 +69,9 @@ func requestAs(method, path, body string, user *auth.UserContext) *http.Request 
 	ctx := chi.NewRouteContext()
 	ctx.URLParams.Add("docId", testDocumentID)
 	ctx.URLParams.Add("id", testDocumentID)
-	ctx.URLParams.Add("commentId", "comment")
-	ctx.URLParams.Add("versionId", "version")
+	ctx.URLParams.Add("commentId", testCommentID)
+	ctx.URLParams.Add("versionId", testVersionID)
+	ctx.URLParams.Add("userId", testUserID)
 	return r.WithContext(context.WithValue(r.Context(), chi.RouteCtxKey, ctx))
 }
 

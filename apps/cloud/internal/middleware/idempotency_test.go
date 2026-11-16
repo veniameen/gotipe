@@ -13,10 +13,13 @@ import (
 )
 
 type idempotencyStore struct {
-	mu                    sync.Mutex
-	data                  map[string][]byte
-	claimErr, errorOnSave error
+	mu                                sync.Mutex
+	data                              map[string][]byte
+	claimErr, errorOnSave, releaseErr error
 }
+
+// testBodyLimit is the router's limit with the default EXPORT_MAX_DOCUMENT_SIZE.
+const testBodyLimit = 11 << 20
 
 func (s *idempotencyStore) Get(_ context.Context, key string) ([]byte, error) {
 	s.mu.Lock()
@@ -32,9 +35,19 @@ func (s *idempotencyStore) Set(_ context.Context, key string, value []byte, _ ti
 	s.data[key] = append([]byte(nil), value...)
 	return nil
 }
-func (s *idempotencyStore) Eval(_ context.Context, _ string, keys []string, args ...interface{}) (int64, error) {
+func (s *idempotencyStore) Eval(_ context.Context, script string, keys []string, args ...interface{}) (int64, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
+	if script == releaseIdempotency {
+		if s.releaseErr != nil {
+			return 0, s.releaseErr
+		}
+		if string(s.data[keys[0]]) != args[0].(string) {
+			return 0, nil
+		}
+		delete(s.data, keys[0])
+		return 1, nil
+	}
 	if s.claimErr != nil {
 		return 0, s.claimErr
 	}
@@ -53,7 +66,7 @@ func idempotentRequest(path, body string) *http.Request {
 func TestIdempotencyReplaysOnlySameRequest(t *testing.T) {
 	store := &idempotencyStore{data: map[string][]byte{}}
 	calls := 0
-	h := IdempotencyMiddleware(store)(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+	h := IdempotencyMiddleware(store, testBodyLimit)(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		calls++
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(201)
@@ -78,7 +91,7 @@ func TestIdempotencyConcurrentRequestDoesNotDuplicateMutation(t *testing.T) {
 	started := make(chan struct{})
 	finish := make(chan struct{})
 	done := make(chan struct{})
-	h := IdempotencyMiddleware(store)(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) { close(started); <-finish; w.WriteHeader(201) }))
+	h := IdempotencyMiddleware(store, testBodyLimit)(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) { close(started); <-finish; w.WriteHeader(201) }))
 	go func() { defer close(done); h.ServeHTTP(httptest.NewRecorder(), idempotentRequest("/documents", `{}`)) }()
 	<-started
 	w := httptest.NewRecorder()
@@ -92,7 +105,7 @@ func TestIdempotencyConcurrentRequestDoesNotDuplicateMutation(t *testing.T) {
 func TestIdempotencyStorageFailuresPreserveUncertainClaim(t *testing.T) {
 	store := &idempotencyStore{data: map[string][]byte{}, errorOnSave: errors.New("unavailable")}
 	calls := 0
-	h := IdempotencyMiddleware(store)(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) { calls++; w.WriteHeader(201) }))
+	h := IdempotencyMiddleware(store, testBodyLimit)(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) { calls++; w.WriteHeader(201) }))
 	for _, want := range []int{503, 409} {
 		w := httptest.NewRecorder()
 		h.ServeHTTP(w, idempotentRequest("/documents", `{}`))
@@ -104,7 +117,7 @@ func TestIdempotencyStorageFailuresPreserveUncertainClaim(t *testing.T) {
 		t.Fatal("uncertain write repeated")
 	}
 	store = &idempotencyStore{data: map[string][]byte{}, claimErr: errors.New("unavailable")}
-	h = IdempotencyMiddleware(store)(http.HandlerFunc(func(http.ResponseWriter, *http.Request) { t.Fatal("mutation without durable claim") }))
+	h = IdempotencyMiddleware(store, testBodyLimit)(http.HandlerFunc(func(http.ResponseWriter, *http.Request) { t.Fatal("mutation without durable claim") }))
 	w := httptest.NewRecorder()
 	h.ServeHTTP(w, idempotentRequest("/documents", `{}`))
 	if w.Code != 503 {
@@ -112,7 +125,7 @@ func TestIdempotencyStorageFailuresPreserveUncertainClaim(t *testing.T) {
 	}
 }
 func TestIdempotencyRejectsStreamingAI(t *testing.T) {
-	h := IdempotencyMiddleware(&idempotencyStore{data: map[string][]byte{}})(http.HandlerFunc(func(http.ResponseWriter, *http.Request) { t.Fatal("stream buffered") }))
+	h := IdempotencyMiddleware(&idempotencyStore{data: map[string][]byte{}}, testBodyLimit)(http.HandlerFunc(func(http.ResponseWriter, *http.Request) { t.Fatal("stream buffered") }))
 	w := httptest.NewRecorder()
 	h.ServeHTTP(w, idempotentRequest("/v1/ai/complete", `{"stream":true}`))
 	if w.Code != 400 {
@@ -123,7 +136,7 @@ func TestIdempotencyRejectsStreamingAI(t *testing.T) {
 func TestIdempotencyDoesNotReplayAcrossRestrictedCredentials(t *testing.T) {
 	store := &idempotencyStore{data: map[string][]byte{}}
 	calls := 0
-	h := IdempotencyMiddleware(store)(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) { calls++; w.Write([]byte(`{"secret":"private"}`)) }))
+	h := IdempotencyMiddleware(store, testBodyLimit)(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) { calls++; w.Write([]byte(`{"secret":"private"}`)) }))
 	first := httptest.NewRecorder()
 	h.ServeHTTP(first, idempotentRequest("/documents", `{}`))
 	request := idempotentRequest("/documents", `{}`)
@@ -138,7 +151,7 @@ func TestIdempotencyChecksLiveAuthorizationBeforeReplay(t *testing.T) {
 	store := &idempotencyStore{data: map[string][]byte{}}
 	calls := 0
 	allowed := true
-	h := IdempotencyMiddleware(store, func(w http.ResponseWriter, _ *http.Request, _, _ []byte) bool {
+	h := IdempotencyMiddleware(store, testBodyLimit, func(w http.ResponseWriter, _ *http.Request, _, _ []byte) bool {
 		if !allowed {
 			http.Error(w, "revoked", 404)
 		}
@@ -157,7 +170,7 @@ func TestIdempotencyKeepsOnlyTheOutcomeOfOversizedReplies(t *testing.T) {
 	store := &idempotencyStore{data: map[string][]byte{}}
 	calls := 0
 	large := strings.Repeat("x", MaxReplayBody+1)
-	h := IdempotencyMiddleware(store, func(http.ResponseWriter, *http.Request, []byte, []byte) bool {
+	h := IdempotencyMiddleware(store, testBodyLimit, func(http.ResponseWriter, *http.Request, []byte, []byte) bool {
 		t.Fatal("an omitted reply has no body to authorize")
 		return false
 	})(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {

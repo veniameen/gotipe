@@ -2,15 +2,18 @@ package handler
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/gotipe/cloud/internal/audit"
 	"github.com/gotipe/cloud/internal/auth"
+	"github.com/gotipe/cloud/internal/middleware"
 	"github.com/gotipe/cloud/internal/storage"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
@@ -113,5 +116,50 @@ func TestDeleteAPIKeyRejectsMalformedIDsBeforeTheDatabase(t *testing.T) {
 				t.Fatalf("got %d %s", w.Code, w.Body)
 			}
 		})
+	}
+}
+
+// memoryReplayStore claims keys as Valkey does (SET NX) and keeps records in memory.
+type memoryReplayStore map[string][]byte
+
+func (s memoryReplayStore) Get(_ context.Context, key string) ([]byte, error) { return s[key], nil }
+func (s memoryReplayStore) Set(_ context.Context, key string, value []byte, _ time.Duration) error {
+	s[key] = value
+	return nil
+}
+func (s memoryReplayStore) Eval(_ context.Context, _ string, keys []string, args ...interface{}) (int64, error) {
+	if s[keys[0]] != nil {
+		return 0, nil
+	}
+	s[keys[0]] = []byte(args[0].(string))
+	return 1, nil
+}
+
+// A new API key must not rest in Valkey under an Idempotency-Key for 24 hours.
+func TestCreateAPIKeyKeepsTheKeyOutOfTheIdempotencyRecord(t *testing.T) {
+	pool := &testPool{exec: func(string, ...any) (pgconn.CommandTag, error) { return pgconn.NewCommandTag("INSERT 0 1"), nil }}
+	store := memoryReplayStore{}
+	h := middleware.IdempotencyMiddleware(store, 11<<20)(NewAPIKeysHandler(&storage.PostgresStore{Pool: pool}, audit.NewAuditLogger(pool), "production").CreateAPIKey())
+	request := func() *http.Request {
+		r := requestAs("POST", "/v1/api-keys", `{"name":"CI","scopes":["documents:read"]}`, keyManager)
+		r.Header.Set("Idempotency-Key", "create-ci-key")
+		return r
+	}
+	first := httptest.NewRecorder()
+	h.ServeHTTP(first, request())
+	var created APIKeyResponse
+	if err := json.Unmarshal(first.Body.Bytes(), &created); err != nil || first.Code != 201 || created.Key == "" {
+		t.Fatalf("create: %d %s", first.Code, first.Body)
+	}
+	for key, record := range store {
+		var saved struct{ Body []byte } // the body is base64 in the record
+		if json.Unmarshal(record, &saved) != nil || strings.Contains(string(record)+string(saved.Body), created.Key) {
+			t.Fatalf("record %s keeps the API key", key)
+		}
+	}
+	repeat := httptest.NewRecorder()
+	h.ServeHTTP(repeat, request())
+	if repeat.Code != 409 || strings.Contains(repeat.Body.String(), created.Key) {
+		t.Fatalf("repeat disclosed or recreated the key: %d %s", repeat.Code, repeat.Body)
 	}
 }

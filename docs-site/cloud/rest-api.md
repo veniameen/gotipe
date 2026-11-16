@@ -20,8 +20,8 @@ calls.
   allowed request headers are `Accept`, `Authorization`, `Content-Type`, `Idempotency-Key` and
   `X-Request-ID`; `X-Request-ID` and `Retry-After` are readable.
 - A request body may be up to `EXPORT_MAX_DOCUMENT_SIZE` plus 1 MiB (11 MiB by default).
-- A document you cannot access answers `404`, the same as one that does not exist. Actions
-  your role does not allow on a document you can see answer `403` or `404`, as noted below.
+- A document you cannot access answers `404`, the same as one that does not exist. An action
+  your role does not allow on a document you can see answers `404` too.
 
 ## Pages
 
@@ -99,11 +99,17 @@ curl -X POST https://api.example.com/v1/documents \
   document restriction or organization) answers `409 CONFLICT`.
 - While the first request is running, or when its result is unknown, the key answers
   `409 CONFLICT`. Check the resource's state instead of retrying with a new key.
-- A body sent with a key may be up to 10 MiB. A streaming AI request (`"stream": true`)
-  rejects keys with `400`.
+- A rate limit refusal is not a result: after a `429 RATE_LIMITED` (or a `503` because the
+  limit could not be checked) the key is free again, so repeat with the same key after
+  `Retry-After`. If even the key cannot be freed, the answer is `503` and the message asks
+  for a new key; the request did not run.
+- A body sent with a key has the same limit as any request. A streaming AI request
+  (`"stream": true`) rejects keys with `400`.
 - A stored response body is at most 256 KiB. When the first response was larger, the first
   caller still gets all of it, but a repeat answers `409 CONFLICT` with the original status in
   the message; read the resource instead of repeating the mutation.
+- A new API key is never stored: a repeat of `POST /v1/api-keys` answers `409 CONFLICT` with
+  status `201` in the message.
 - The [SDK](/docs/cloud/sdk#safe-retries) sends the header when you pass `idempotencyKey` to a
   call that changes data.
 
@@ -204,8 +210,9 @@ error itself is only in the server log.
 `name` and `scopes` are required (`400` without them); each scope must be one of the five
 grantable scopes and held by the caller (`403` otherwise). `"scopes": []` makes a key that can
 only call the routes without a scope, such as `GET /v1/users/me`. Returns `201` with the key,
-shown only in this response. Do not send an `Idempotency-Key` with this request: the reply,
-key included, would be kept in Valkey for 24 hours and returned to a repeat.
+shown only in this response. With an `Idempotency-Key`, only the status is kept: a repeat
+answers `409 CONFLICT` instead of showing the key again. If the first reply was lost, list
+your keys, delete the one you never received and create another.
 
 ```json
 { "id": "0b7c…", "name": "CI", "prefix": "gt_live_", "key": "gt_live_sk_3f9a…", "scopes": ["documents:read"], "created_at": "2026-11-12T12:00:00Z" }
@@ -272,8 +279,8 @@ most recently updated first, without `content`. `limit` is 1–100 (otherwise 20
 ### Update
 
 `PATCH /v1/documents/{id}` with `title`, `content` or both → `200` with the document, without
-`content`. New `content` replaces the stored document and discards its collaboration updates.
-Connected real-time editors receive `BASELINE_REPLACED` and must load the document again (see
+`content`. New `content` replaces the stored document and discards its collaboration updates;
+`"content": null` is rejected with `400` (omit `content` to keep it). Connected real-time editors receive `BASELINE_REPLACED` and must load the document again (see
 [Replaced content](/docs/cloud/realtime#replaced-content)).
 
 ### Delete
@@ -312,7 +319,7 @@ Replies have `parent_id`; resolved comments have `resolved_at` and `resolved_by`
 | `content` | `string` | Required. |
 | `anchor_type` | `"document" \| "block" \| "inline"` | Default `"block"` when `block_id` is set, else `"document"`. |
 | `block_id` | `string` | Required for `block` and `inline`. |
-| `from`, `to` | `number` | Required for `inline`: text offsets with `0 ≤ from ≤ to`. |
+| `from`, `to` | `number` | Required for `inline`: text offsets with `0 ≤ from ≤ to ≤ 2147483647`. |
 | `metadata` | any JSON | Stored and returned as is. |
 
 `GET /v1/documents/{docId}/comments?include_resolved=true&limit=50&cursor=…` — a
@@ -394,8 +401,8 @@ role. Organization admins only; demoting the owner answers `403`.
 
 `GET /v1/exports/{id}` — your own job. `status` is `pending`, `processing`, `completed` or
 `failed`; a completed job has `url` (a signed download URL valid for one hour) and
-`completed_at`, a failed one `error`. Jobs disappear 24 hours after completion (7 days after
-failure). See [Server-side conversion](/docs/conversion/server#cloud-export-jobs).
+`completed_at`, a failed one `error`. Jobs disappear 24 hours after completion; a failed job
+7 days after it was created. See [Server-side conversion](/docs/conversion/server#cloud-export-jobs).
 
 ## AI
 
@@ -459,7 +466,9 @@ A limit of `-1` means unlimited.
 
 `POST /v1/webhooks/stripe` receives Stripe events. It checks the `Stripe-Signature` header
 against `STRIPE_WEBHOOK_SECRET`, stores the event and answers `200`; a worker applies it with
-retries. Subscription, checkout and invoice events update the account's plan.
+retries. Subscription, checkout and invoice events update the account's plan. The webhook
+endpoint in Stripe may use any API version: the worker takes only the subscription ID from the
+event and reads the subscription again from Stripe.
 
 > [!NOTE]
 > Not in this release: sign-up, OAuth or SSO, outgoing webhooks, an endpoint for a version's
