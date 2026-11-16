@@ -2790,5 +2790,409 @@
         ]
       }
     ]
+  },
+  {
+    "markdown": "x\n| a | b |\n|---|---|\n",
+    "blocks": [
+      {
+        "type": "paragraph",
+        "attrs": {},
+        "content": [
+          {
+            "text": "x",
+            "marks": []
+          }
+        ],
+        "children": []
+      },
+      {
+        "type": "table",
+        "attrs": {
+          "align": [
+            null,
+            null
+          ]
+        },
+        "content": null,
+        "children": [
+          {
+            "type": "tableRow",
+            "attrs": {},
+            "content": null,
+            "children": [
+              {
+                "type": "tableHeader",
+                "attrs": {},
+                "content": [
+                  {
+                    "text": "a",
+                    "marks": []
+                  }
+                ],
+                "children": []
+              },
+              {
+                "type": "tableHeader",
+                "attrs": {},
+                "content": [
+                  {
+                    "text": "b",
+                    "marks": []
+                  }
+                ],
+                "children": []
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "markdown": "x\n| a | b |\n|---|---|\n| c | d |\n",
+    "blocks": [
+      {
+        "type": "paragraph",
+        "attrs": {},
+        "content": [
+          {
+            "text": "x",
+            "marks": []
+          }
+        ],
+        "children": []
+      },
+      {
+        "type": "table",
+        "attrs": {
+          "align": [
+            null,
+            null
+          ]
+        },
+        "content": null,
+        "children": [
+          {
+            "type": "tableRow",
+            "attrs": {},
+            "content": null,
+            "children": [
+              {
+                "type": "tableHeader",
+                "attrs": {},
+                "content": [
+                  {
+                    "text": "a",
+                    "marks": []
+                  }
+                ],
+                "children": []
+              },
+              {
+                "type": "tableHeader",
+                "attrs": {},
+                "content": [
+                  {
+                    "text": "b",
+                    "marks": []
+                  }
+                ],
+                "children": []
+              }
+            ]
+          },
+          {
+            "type": "tableRow",
+            "attrs": {},
+            "content": null,
+            "children": [
+              {
+                "type": "tableCell",
+                "attrs": {},
+                "content": [
+                  {
+                    "text": "c",
+                    "marks": []
+                  }
+                ],
+                "children": []
+              },
+              {
+                "type": "tableCell",
+                "attrs": {},
+                "content": [
+                  {
+                    "text": "d",
+                    "marks": []
+                  }
+                ],
+                "children": []
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "markdown": "x\ny\na\n--:\n",
+    "blocks": [
+      {
+        "type": "paragraph",
+        "attrs": {},
+        "content": [
+          {
+            "text": "x y",
+            "marks": []
+          }
+        ],
+        "children": []
+      },
+      {
+        "type": "table",
+        "attrs": {
+          "align": [
+            "right"
+          ]
+        },
+        "content": null,
+        "children": [
+          {
+            "type": "tableRow",
+            "attrs": {},
+            "content": null,
+            "children": [
+              {
+                "type": "tableHeader",
+                "attrs": {},
+                "content": [
+                  {
+                    "text": "a",
+                    "marks": []
+                  }
+                ],
+                "children": []
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "markdown": "| a |\n| b | c |\n|---|---|\n",
+    "blocks": [
+      {
+        "type": "paragraph",
+        "attrs": {},
+        "content": [
+          {
+            "text": "| a |",
+            "marks": []
+          }
+        ],
+        "children": []
+      },
+      {
+        "type": "table",
+        "attrs": {
+          "align": [
+            null,
+            null
+          ]
+        },
+        "content": null,
+        "children": [
+          {
+            "type": "tableRow",
+            "attrs": {},
+            "content": null,
+            "children": [
+              {
+                "type": "tableHeader",
+                "attrs": {},
+                "content": [
+                  {
+                    "text": "b",
+                    "marks": []
+                  }
+                ],
+                "children": []
+              },
+              {
+                "type": "tableHeader",
+                "attrs": {},
+                "content": [
+                  {
+                    "text": "c",
+                    "marks": []
+                  }
+                ],
+                "children": []
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "markdown": "x\n| a |\n|---|---|\n| c | d |\n|---|---|\n",
+    "blocks": [
+      {
+        "type": "paragraph",
+        "attrs": {},
+        "content": [
+          {
+            "text": "x | a | |---|---| | c | d | |---|---|",
+            "marks": []
+          }
+        ],
+        "children": []
+      }
+    ]
+  },
+  {
+    "markdown": "| a |\n|---|---|\n| b | c |\n|---|---|\n",
+    "blocks": [
+      {
+        "type": "paragraph",
+        "attrs": {},
+        "content": [
+          {
+            "text": "| a | |---|---| | b | c | |---|---|",
+            "marks": []
+          }
+        ],
+        "children": []
+      }
+    ]
+  },
+  {
+    "markdown": "x\n[a]: /u\n:-:\n\n[a]\n",
+    "blocks": [
+      {
+        "type": "paragraph",
+        "attrs": {},
+        "content": [
+          {
+            "text": "x",
+            "marks": []
+          }
+        ],
+        "children": []
+      },
+      {
+        "type": "table",
+        "attrs": {
+          "align": [
+            "center"
+          ]
+        },
+        "content": null,
+        "children": [
+          {
+            "type": "tableRow",
+            "attrs": {},
+            "content": null,
+            "children": [
+              {
+                "type": "tableHeader",
+                "attrs": {},
+                "content": [
+                  {
+                    "text": "[a]: /u",
+                    "marks": []
+                  }
+                ],
+                "children": []
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "type": "paragraph",
+        "attrs": {},
+        "content": [
+          {
+            "text": "[a]",
+            "marks": []
+          }
+        ],
+        "children": []
+      }
+    ]
+  },
+  {
+    "markdown": "x\n    | a |\n|---|\n",
+    "blocks": [
+      {
+        "type": "paragraph",
+        "attrs": {},
+        "content": [
+          {
+            "text": "x",
+            "marks": []
+          }
+        ],
+        "children": []
+      },
+      {
+        "type": "table",
+        "attrs": {
+          "align": [
+            null
+          ]
+        },
+        "content": null,
+        "children": [
+          {
+            "type": "tableRow",
+            "attrs": {},
+            "content": null,
+            "children": [
+              {
+                "type": "tableHeader",
+                "attrs": {},
+                "content": [
+                  {
+                    "text": "a",
+                    "marks": []
+                  }
+                ],
+                "children": []
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "markdown": "- x\n  | a |\n  |---|\n",
+    "blocks": [
+      {
+        "type": "markdownRaw",
+        "attrs": {
+          "kind": "list"
+        },
+        "content": "- x\n  | a |\n  |---|",
+        "children": []
+      }
+    ]
+  },
+  {
+    "markdown": "> x\n> | a |\n> |---|\n",
+    "blocks": [
+      {
+        "type": "markdownRaw",
+        "attrs": {
+          "kind": "blockquote"
+        },
+        "content": "> x\n> | a |\n> |---|",
+        "children": []
+      }
+    ]
   }
 ]

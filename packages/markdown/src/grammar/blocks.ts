@@ -36,14 +36,15 @@ function linesKey(lines: readonly Line[], depth: number, taskPrefix: number): st
   return `${depth} ${taskPrefix} ${lines.length} ${first?.start} ${first?.column ?? 0} ${last?.end} ${length} ${lazy}`;
 }
 
+/**
+ * Reads blocks. `contents` holds the content of quotes and items already read: a quote or an item
+ * that a lazy line ends reads its content again without that line; the quotes and items inside
+ * read the same lines, and are taken from there, so nested levels do not read again in turn
+ * (twice per level, D-160).
+ */
 class Reader {
   readonly references = new Set<string>();
   readonly inlineJobs: (() => void)[] = [];
-  /**
-   * The content of quotes and items already read. A quote or an item that a lazy line ends reads
-   * its content again without that line; the quotes and items inside read the same lines, and are
-   * taken from here, so nested levels do not read again in turn (twice per level, D-160).
-   */
   private readonly contents = new Map<string, RootContent[]>();
 
   constructor(readonly atoms?: InlineAtoms) {}
@@ -79,6 +80,16 @@ class Reader {
     // A definition is read out of paragraph text: the line right after one that does not
     // interrupt a paragraph continues that text, whatever block it would start (D-119).
     let afterDefinition = -1;
+    // The head row of a table that ends a paragraph: it starts no other block (D-192).
+    let header = -1;
+    // A lazy or indented line continues the text and a list item `- | -` interrupts it: neither
+    // is a delimiter row; a head row needs no `|` (GFM, D-161).
+    const delimiterRow = (at: number) => {
+      const row = lines[at];
+      return row && !row.lazy && !interrupts(row) && indentWidth(row.text) < 4
+        ? tableAlignment(row)
+        : null;
+    };
     while (i < lines.length) {
       const line = lines[i]!;
       if (blank(line)) {
@@ -86,7 +97,7 @@ class Reader {
         continue;
       }
       const start = line.start + /^ */.exec(line.text)![0].length;
-      const continuesText = i === afterDefinition && !interrupts(line);
+      const continuesText = (i === afterDefinition && !interrupts(line)) || i === header;
       const opening = openingFence(line.text);
       if (opening) {
         const marker = opening[1]!;
@@ -234,7 +245,7 @@ class Reader {
         i = next;
         continue;
       }
-      const definition = readDefinition(lines, i, this.references);
+      const definition = i !== header && readDefinition(lines, i, this.references);
       if (definition) {
         nodes.push(definition.node);
         i = afterDefinition = definition.end;
@@ -260,13 +271,7 @@ class Reader {
         i = next;
         continue;
       }
-      // a lazy or indented line continues the text and a list item `- | -` interrupts it: neither
-      // is a delimiter row; a head row needs no `|` (GFM, D-161)
-      const delimiter = lines[i + 1];
-      const alignment =
-        delimiter && !delimiter.lazy && !interrupts(delimiter) && indentWidth(delimiter.text) < 4
-          ? tableAlignment(delimiter)
-          : null;
+      const alignment = delimiterRow(i + 1);
       if (alignment && alignment.length === tableCells(line.text).length) {
         const row = (value: Line) =>
           tableRow(value, alignment.length, (cell, options) => this.inline([cell], options));
@@ -295,6 +300,9 @@ class Reader {
       ];
       let next = i + 1;
       let setext = 0;
+      // A line followed by a delimiter row with as many cells ends the paragraph and heads a table,
+      // unless a delimiter row followed another line of the paragraph (cmark-gfm, D-192).
+      let visited = !!alignment;
       while (next < lines.length && !blank(lines[next]!)) {
         const current = lines[next]!;
         const underline = /^ {0,3}(=+|-+)[ \t]*$/.exec(current.text);
@@ -304,6 +312,12 @@ class Reader {
           break;
         }
         if (interrupts(current) && !current.lazy) break;
+        const row = delimiterRow(next + 1);
+        if (row && !visited && !current.lazy && row.length === tableCells(current.text).length) {
+          header = next;
+          break;
+        }
+        visited ||= !!row;
         paragraph.push(stripIndent(current, indentWidth(current.text, current.column)));
         next++;
       }
