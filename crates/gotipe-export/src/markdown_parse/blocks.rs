@@ -83,7 +83,7 @@ impl Reader {
                 i += 1;
                 continue;
             }
-            let start = line.start + line.text.bytes().take_while(|c| *c == b' ').count();
+            let start = line.text_start();
             let continues_text = (i == after_definition && !interrupts(line)) || i == header;
             if let Some(open) = opening_fence(&line.text) {
                 let marker = &open[1];
@@ -131,10 +131,9 @@ impl Reader {
                 .then(|| (i + 1..lines.len()).find(|&next| math_fence(&lines[next].text)))
                 .flatten()
             {
-                let indentation = line.text.bytes().take_while(|c| *c == b' ').count();
                 let body: Vec<String> = lines[i + 1..end]
                     .iter()
-                    .map(|body| body.indent(indentation).text)
+                    .map(|body| body.indent(start - line.start).text)
                     .collect();
                 nodes.push(Node::text("math", body.join("\n"), start, lines[end].end));
                 i = end + 1;
@@ -199,7 +198,7 @@ impl Reader {
                 // before it, as in CommonMark (D-118); its blocks before that line read the same
                 // without it.
                 for (at, stray) in lazy_runs {
-                    let reading = lists::lazy_reading(&children, quoted[at].start, true);
+                    let reading = lists::lazy_reading(&children, quoted[at].text_start(), true);
                     if reading == lists::Lazy::Text {
                         continue;
                     }
@@ -291,14 +290,17 @@ impl Reader {
                         .map(|l| l.text.as_str())
                         .collect::<Vec<_>>()
                         .join("\n"),
-                    line.start + 4.min(line.text.bytes().take_while(|c| *c == b' ').count()),
+                    start.min(line.start + 4),
                     content.last().unwrap().end,
                 ));
                 i = next;
                 continue;
             }
             let row = delimiter_row(i + 1);
-            if let Some(alignment) = row.clone().filter(|a| a.len() == cells(&line.text).len()) {
+            if let Some(alignment) = row
+                .clone()
+                .filter(|a| a.len() == cells(&line.text, line.lazy).len())
+            {
                 let mut node = Node::new("table", start, line.end);
                 node.align = alignment;
                 node.after_text = i == header;
@@ -324,8 +326,8 @@ impl Reader {
             let mut setext = 0;
             // A line followed by a delimiter row with as many cells ends the paragraph and heads a
             // table, unless a delimiter row followed another line of the paragraph (cmark-gfm,
-            // D-192). A lazy line does too (D-216), but not after blanks: cmark-gfm keeps them,
-            // before `|` as a cell.
+            // D-192). A lazy line does too (D-216), with the blanks it has in its container
+            // (D-245).
             let mut visited = row.is_some();
             while next < lines.len() && !lines[next].blank() {
                 let current = &lines[next];
@@ -341,8 +343,7 @@ impl Reader {
                     break;
                 }
                 if let Some(row) = delimiter_row(next + 1) {
-                    let indented = current.lazy && current.text.starts_with([' ', '\t']);
-                    if !visited && !indented && row.len() == cells(&current.text).len() {
+                    if !visited && row.len() == cells(&current.text, current.lazy).len() {
                         header = next;
                         break;
                     }
@@ -375,7 +376,7 @@ impl Reader {
     }
     fn row(&self, line: &Line, columns: usize) -> Node {
         let mut node = Node::new("tableRow", line.start, line.end);
-        for (text, from, to) in cells(&line.text).into_iter().take(columns) {
+        for (text, from, to) in cells(&line.text, line.lazy).into_iter().take(columns) {
             let content = Line::new(&text, line.start + from, line.start + to);
             let mut cell = self.inline("tableCell", &[content], line.start + from, line.start + to);
             cell.in_cell = true;
@@ -388,7 +389,9 @@ impl Reader {
         node
     }
 }
-fn cells(text: &str) -> Vec<(String, usize, usize)> {
+/// The cells of a row. cmark-gfm keeps the blanks of a lazy line: before `|` they are a cell
+/// (D-245).
+fn cells(text: &str, lazy: bool) -> Vec<(String, usize, usize)> {
     let mut cells = vec![];
     let mut from = 0;
     let mut p = 0;
@@ -414,7 +417,11 @@ fn cells(text: &str) -> Vec<(String, usize, usize)> {
         }
         p += text[p..].chars().next().unwrap().len_utf8();
     }
-    if re!(r"^[ \t]*\|").is_match(text) {
+    if if lazy {
+        text.starts_with('|')
+    } else {
+        re!(r"^[ \t]*\|").is_match(text)
+    } {
         cells.remove(0);
     }
     if re!(r"\|[ \t]*$").is_match(text) && !re!(r"\\\|[ \t]*$").is_match(text) {
@@ -427,7 +434,7 @@ fn alignment(text: &str) -> Option<Vec<Option<String>>> {
     if !text.contains('|') && !re!(r"^ {0,3}(?::-+:?|-+:)[ \t]*$").is_match(text) {
         return None;
     }
-    let cells = cells(text);
+    let cells = cells(text, false);
     if cells.is_empty() || cells.iter().any(|(c, _, _)| !re!(r"^:?-+:?$").is_match(c)) {
         return None;
     }
@@ -445,4 +452,46 @@ fn alignment(text: &str) -> Option<Vec<Option<String>>> {
             })
             .collect(),
     )
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// The blocks of `text` as a tree: kinds, and the text of paragraphs and cells.
+    fn tree(text: &str) -> String {
+        fn shape(node: &Node) -> String {
+            match &node.source {
+                Some(source) => format!("{}[{}]", node.kind, source.text),
+                None => format!("{}({})", node.kind, shapes(&node.children)),
+            }
+        }
+        fn shapes(nodes: &[Node]) -> String {
+            nodes.iter().map(shape).collect::<Vec<_>>().join(" ")
+        }
+        shapes(&Reader::default().blocks(&source::lines(text, 0), 0, 0))
+    }
+
+    #[test]
+    fn a_lazy_line_heads_a_table_with_its_blanks_as_on_github() {
+        // cmark-gfm keeps a lazy line in the paragraph as its container passed it: blanks before
+        // `|` are one more cell (D-245). The TS reader checks the same trees (`grammar.test.ts`).
+        assert_eq!(
+            tree("> > x\n>   a | b\n> > --|--\n"),
+            "blockquote(blockquote(paragraph[x] table(tableRow(tableCell[a] tableCell[b]))))"
+        );
+        assert_eq!(
+            tree("> x\n  | a |\n> |---|---|\n> | b | c |\n"),
+            "blockquote(paragraph[x] table(tableRow(tableCell[] tableCell[a]) \
+             tableRow(tableCell[b] tableCell[c])))"
+        );
+        assert_eq!(
+            tree("> > x\n>   | a |\n> > |---|\n"),
+            "blockquote(blockquote(paragraph[x\n| a |\n|---|]))"
+        );
+        assert_eq!(
+            tree("-    > a\n    > b\n"),
+            "list(listItem(blockquote(paragraph[a\n> b])))"
+        );
+    }
 }

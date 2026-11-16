@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { readMarkdown } from "./grammar/blocks";
 import { parseMarkdown, serializeMarkdown } from "./index";
 import type { Block } from "./types";
 
@@ -6,6 +7,21 @@ const text = (block: Block): string =>
   typeof block.content === "string"
     ? block.content
     : (block.content ?? []).map((span) => span.text).join("");
+
+interface Node {
+  type: string;
+  value?: string;
+  children?: Node[];
+}
+const plain = (node: Node): string => node.value ?? (node.children ?? []).map(plain).join("");
+/** The blocks of `source` as a tree: types, and the text of paragraphs and cells. */
+const tree = (source: string) => {
+  const shape = (node: Node): unknown =>
+    node.type === "paragraph" || node.type === "tableCell"
+      ? `${node.type} ${plain(node)}`
+      : { [node.type]: (node.children ?? []).map(shape) };
+  return readMarkdown(source).children.map((node) => shape(node as Node));
+};
 
 describe("owned Markdown grammar", () => {
   it("keeps nested links outside the outer bracket text", () => {
@@ -54,6 +70,40 @@ describe("owned Markdown grammar", () => {
     expect(quote.type).toBe("blockquote");
     // soft line breaks are spaces (CommonMark)
     expect(text(quote)).toBe("first line next line ===");
+  });
+
+  it("counts the blanks of a lazy line in the row that heads a table, as GitHub does (D-245)", () => {
+    // cmark-gfm keeps a lazy line in the paragraph as its container passed it: blanks before `|`
+    // are one more cell. The Rust reader checks the same trees (markdown_parse/blocks.rs).
+    expect(tree("> > x\n>   a | b\n> > --|--\n")).toEqual([
+      {
+        blockquote: [
+          {
+            blockquote: ["paragraph x", { table: [{ tableRow: ["tableCell a", "tableCell b"] }] }],
+          },
+        ],
+      },
+    ]);
+    expect(tree("> x\n  | a |\n> |---|---|\n> | b | c |\n")).toEqual([
+      {
+        blockquote: [
+          "paragraph x",
+          {
+            table: [
+              { tableRow: ["tableCell ", "tableCell a"] },
+              { tableRow: ["tableCell b", "tableCell c"] },
+            ],
+          },
+        ],
+      },
+    ]);
+    expect(tree("> > x\n>   | a |\n> > |---|\n")).toEqual([
+      { blockquote: [{ blockquote: ["paragraph x | a | |---|"] }] },
+    ]);
+    // a line lazy in the item keeps its blanks there: `    > b` starts no quote
+    expect(tree("-    > a\n    > b\n")).toEqual([
+      { list: [{ listItem: [{ blockquote: ["paragraph a > b"] }] }] },
+    ]);
   });
 
   it("decodes the full named-reference table, numeric replacement and escaped autolinks", () => {
