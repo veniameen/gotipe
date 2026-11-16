@@ -21,6 +21,7 @@ import type {
   AiProofreadSuggestion,
   AiProvider,
   AiSuggestion,
+  AiTask,
 } from "./types";
 
 export class AiManager {
@@ -64,12 +65,12 @@ export class AiManager {
     return this.provider;
   }
   private async run<T>(
-    label: string,
+    task: AiTask,
     full: boolean,
     action: (provider: AiProvider, context: AiContext) => Promise<T>,
   ): Promise<T> {
     const provider = this.requireProvider();
-    const request = this.requests.start(label);
+    const request = this.requests.start(task);
     try {
       request.check();
       const context = full ? this.buildFullContext() : this.buildContext();
@@ -82,12 +83,12 @@ export class AiManager {
     }
   }
   private async *stream(
-    label: string,
+    task: AiTask,
     action: (provider: AiProvider, context: AiContext) => AsyncIterable<string>,
     signal?: AbortSignal,
   ): AsyncIterable<string> {
     const provider = this.requireProvider();
-    const request = this.requests.start(label, signal);
+    const request = this.requests.start(task, signal);
     try {
       request.check();
       const context = { ...this.buildContext(), signal: request.signal };
@@ -106,7 +107,7 @@ export class AiManager {
   async getSuggestions(prompt: string): Promise<AiSuggestion[]> {
     if (this.options.enablePiiDetection) assertNoPii(prompt);
     const target = this.captureTarget();
-    const result = await this.run("Generating suggestions...", false, (provider, context) =>
+    const result = await this.run("suggestions", false, (provider, context) =>
       provider.generateSuggestions(prompt, context),
     );
     assertTarget(this.editor, target);
@@ -129,24 +130,24 @@ export class AiManager {
   }
   streamCompletion(signal?: AbortSignal): AsyncIterable<string> {
     return this.stream(
-      "Generating...",
+      "completion",
       (provider, context) => provider.generateCompletion(context),
       signal,
     );
   }
   streamRewrite(text: string): AsyncIterable<string> {
     if (this.options.enablePiiDetection) assertNoPii(text);
-    return this.stream("Improving...", async function* (provider, context) {
+    return this.stream("rewrite", async function* (provider, context) {
       if (provider.streamRewrite) yield* provider.streamRewrite(text, context);
       else yield await provider.executeCommand("rewrite", { ...context, selectedText: text });
     });
   }
   streamContinueWriting(): AsyncIterable<string> {
-    return this.stream("Writing...", (provider, context) => provider.generateCompletion(context));
+    return this.stream("continue", (provider, context) => provider.generateCompletion(context));
   }
   streamGenerateParagraph(prompt: string): AsyncIterable<string> {
     if (this.options.enablePiiDetection) assertNoPii(prompt);
-    return this.stream("Generating paragraph...", async function* (provider, context) {
+    return this.stream("paragraph", async function* (provider, context) {
       if (provider.generateParagraph) yield* provider.generateParagraph(prompt, context);
       else yield await provider.executeCommand(`addParagraph:${prompt}`, context);
     });
@@ -164,7 +165,7 @@ export class AiManager {
   }
   async proofread(): Promise<AiProofreadSuggestion[]> {
     const seen = blockSnapshots(this.editor);
-    const result = await this.run("Proofreading...", true, (provider, context) => {
+    const result = await this.run("proofread", true, (provider, context) => {
       if (!provider.proofread) throw new Error("This AI provider does not support proofreading");
       return provider.proofread(context);
     });
@@ -178,7 +179,7 @@ export class AiManager {
   }
   async reviewComments(): Promise<AiComment[]> {
     const seen = blockSnapshots(this.editor);
-    const result = await this.run("Reviewing...", true, (provider, context) => {
+    const result = await this.run("review", true, (provider, context) => {
       if (!provider.reviewComments)
         throw new Error("This AI provider does not support review comments");
       return provider.reviewComments(context);
@@ -207,7 +208,7 @@ export class AiManager {
   }
   executeCommand(command: string): Promise<string> {
     if (this.options.enablePiiDetection) assertNoPii(command);
-    return this.run("Processing...", false, (provider, context) =>
+    return this.run("command", false, (provider, context) =>
       provider.executeCommand(command, context),
     );
   }

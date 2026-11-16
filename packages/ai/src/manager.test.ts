@@ -250,6 +250,70 @@ describe("AI proofreading integrity", () => {
   });
 });
 
+describe("the status says what runs, not English words (D-196)", () => {
+  const read = async (source: AsyncIterable<string>) => {
+    for await (const _ of source);
+  };
+  it("names each request by its task and keeps the English words in label", async () => {
+    const editor = await create([paragraph("a", "bad bad")]);
+    const ai = manager(
+      editor,
+      provider({ proofread: async () => [], reviewComments: async () => [] }),
+    );
+    const statuses: unknown[] = [];
+    editor.on("aiStatusChange", (status) => statuses.push(status));
+    await ai.getSuggestions("ideas");
+    await read(ai.streamCompletion());
+    await read(ai.streamRewrite("bad"));
+    await read(ai.streamContinueWriting());
+    await read(ai.streamGenerateParagraph("topic"));
+    await ai.proofread();
+    await ai.reviewComments();
+    await ai.executeCommand("shorter");
+    expect(statuses).toEqual(
+      [
+        ["suggestions", "Generating suggestions..."],
+        ["completion", "Generating..."],
+        ["rewrite", "Improving..."],
+        ["continue", "Writing..."],
+        ["paragraph", "Generating paragraph..."],
+        ["proofread", "Proofreading..."],
+        ["review", "Reviewing..."],
+        ["command", "Processing..."],
+      ].flatMap(([task, label]) => [{ active: true, task, label }, { active: false }]),
+    );
+  });
+  it("ends a proofread and a review with the task and how many results they found", async () => {
+    const found: AiProofreadSuggestion = {
+      id: "one",
+      type: "replace",
+      blockId: "a",
+      from: 0,
+      to: 3,
+      originalText: "bad",
+      suggestedText: "good",
+    };
+    const note = { id: "c", blockId: "a", from: 4, to: 7, quotedText: "bad", body: "Again?" };
+    const editor = await create(
+      [paragraph("a", "bad bad")],
+      provider({ proofread: async () => [found], reviewComments: async () => [note] }),
+    );
+    const statuses: unknown[] = [];
+    editor.on("aiStatusChange", (status) => statuses.push(status));
+    editor.emit("executeAiCommand", { commandId: "proofread" });
+    await flush();
+    expect(statuses.at(-1)).toEqual({
+      active: false,
+      task: "proofread",
+      count: 1,
+      label: "Found 1 suggestions",
+    });
+    editor.emit("executeAiCommand", { commandId: "review" });
+    await flush();
+    expect(statuses.at(-1)).toEqual({ active: false, task: "review", count: 1 });
+  });
+});
+
 describe("a page served over plain HTTP (D-85)", () => {
   it("inserts generated paragraphs without crypto.randomUUID", async () => {
     const editor = await create(

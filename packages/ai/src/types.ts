@@ -39,6 +39,35 @@ export interface AiComment {
   category?: "grammar" | "style" | "clarity" | "logic" | "general";
 }
 
+/**
+ * What an AI request does. `aiStatusChange` carries it, and the interface says it in its own
+ * words: `AiStatusIndicator` of `@gotipe/block-editor` reads the keys `ai.status.*`.
+ */
+export type AiTask =
+  | "suggestions"
+  | "completion"
+  | "rewrite"
+  | "continue"
+  | "paragraph"
+  | "proofread"
+  | "review"
+  | "command";
+
+/** What `aiStatusChange` carries (D-196). */
+export interface AiStatus {
+  /** A request runs. */
+  active: boolean;
+  /** What the request does, or did when a proofread or a review ends; none after a failure. */
+  task?: AiTask;
+  /** How many suggestions a proofread or comments a review found, when it ends. */
+  count?: number;
+  /**
+   * English words of the status ("Proofreading...", "Found 3 suggestions"), or the message of
+   * a failure. Kept for hosts that show it as it is; say `task` and `count` in your own words.
+   */
+  label?: string;
+}
+
 export interface AiCommand {
   name: string;
   description: string;
