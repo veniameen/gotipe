@@ -67,6 +67,16 @@ impl Reader {
         // A definition is read out of paragraph text: the line right after one that does not
         // interrupt a paragraph continues that text, whatever block it would start (D-119).
         let mut after_definition = usize::MAX;
+        // The head row of a table that ends a paragraph: it starts no other block (D-192).
+        let mut header = usize::MAX;
+        // A lazy or indented line continues the text and a list item `- | -` interrupts it:
+        // neither is a delimiter row; a head row needs no `|` (GFM, D-161).
+        let delimiter_row = |at: usize| {
+            lines
+                .get(at)
+                .filter(|row| !row.lazy && !interrupts(row) && width(&row.text, 0) < 4)
+                .and_then(|row| alignment(&row.text))
+        };
         while i < lines.len() {
             let line = &lines[i];
             if line.blank() {
@@ -74,7 +84,7 @@ impl Reader {
                 continue;
             }
             let start = line.start + line.text.bytes().take_while(|c| *c == b' ').count();
-            let continues_text = i == after_definition && !interrupts(line);
+            let continues_text = (i == after_definition && !interrupts(line)) || i == header;
             if let Some(open) = opening_fence(&line.text) {
                 let marker = &open[1];
                 let indentation = line.text.find(marker).unwrap();
@@ -252,7 +262,10 @@ impl Reader {
                 i = next;
                 continue;
             }
-            if let Some((node, next)) = definitions::read(lines, i, &mut self.references) {
+            if let Some((node, next)) = (i != header)
+                .then(|| definitions::read(lines, i, &mut self.references))
+                .flatten()
+            {
                 nodes.push(node);
                 i = next;
                 after_definition = next;
@@ -284,30 +297,20 @@ impl Reader {
                 i = next;
                 continue;
             }
-            // a lazy or indented line continues the text and a list item `- | -` interrupts it:
-            // neither is a delimiter row; a head row needs no `|` (GFM, D-161)
-            if i + 1 < lines.len()
-                && !lines[i + 1].lazy
-                && !interrupts(&lines[i + 1])
-                && width(&lines[i + 1].text, 0) < 4
-            {
-                if let Some(alignment) =
-                    alignment(&lines[i + 1].text).filter(|a| a.len() == cells(&line.text).len())
-                {
-                    let mut node = Node::new("table", start, line.end);
-                    node.align = alignment;
-                    node.children.push(self.row(line, node.align.len()));
-                    let mut next = i + 2;
-                    while next < lines.len() && !lines[next].blank() && !starts_block(&lines[next])
-                    {
-                        node.children.push(self.row(&lines[next], node.align.len()));
-                        next += 1;
-                    }
-                    node.end = lines[next - 1].end;
-                    nodes.push(node);
-                    i = next;
-                    continue;
+            let row = delimiter_row(i + 1);
+            if let Some(alignment) = row.clone().filter(|a| a.len() == cells(&line.text).len()) {
+                let mut node = Node::new("table", start, line.end);
+                node.align = alignment;
+                node.children.push(self.row(line, node.align.len()));
+                let mut next = i + 2;
+                while next < lines.len() && !lines[next].blank() && !starts_block(&lines[next]) {
+                    node.children.push(self.row(&lines[next], node.align.len()));
+                    next += 1;
                 }
+                node.end = lines[next - 1].end;
+                nodes.push(node);
+                i = next;
+                continue;
             }
             let mut paragraph = vec![if i == 0 && task_prefix > 0 {
                 line.strip(task_prefix)
@@ -318,6 +321,10 @@ impl Reader {
             }];
             let mut next = i + 1;
             let mut setext = 0;
+            // A line followed by a delimiter row with as many cells ends the paragraph and heads a
+            // table, unless a delimiter row followed another line of the paragraph (cmark-gfm,
+            // D-192).
+            let mut visited = row.is_some();
             while next < lines.len() && !lines[next].blank() {
                 let current = &lines[next];
                 if let Some(m) = setext_marker
@@ -330,6 +337,13 @@ impl Reader {
                 }
                 if interrupts(current) && !current.lazy {
                     break;
+                }
+                if let Some(row) = delimiter_row(next + 1) {
+                    if !visited && !current.lazy && row.len() == cells(&current.text).len() {
+                        header = next;
+                        break;
+                    }
+                    visited = true;
                 }
                 paragraph.push(current.indent(width(&current.text, current.column)));
                 next += 1;
