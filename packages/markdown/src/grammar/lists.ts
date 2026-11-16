@@ -28,7 +28,8 @@ function lastFrom(nodes: readonly Block[], offset: number): number {
  * text of a paragraph open before it, the only block a lazy line continues in CommonMark
  * (`"text"`); as the start of their block at the returned index; or else (`"other"`): in code, a
  * table, or a block nested deeper. A definition is read out of paragraph text, so a line right
- * after one continues that text, whatever block it starts here.
+ * after one continues that text, whatever block it starts here; so does the head row of a table
+ * that ends a paragraph (D-216).
  */
 export function lazyReading(
   nodes: readonly Block[],
@@ -39,7 +40,8 @@ export function lazyReading(
   const node = nodes[at];
   if (!node) return "other";
   if (startOf(node) === offset) {
-    if (DEFINITIONS.has(nodes[at - 1]?.type ?? "")) return "text";
+    if (DEFINITIONS.has(nodes[at - 1]?.type ?? "") || (node.type === "table" && node.afterText))
+      return "text";
     return top ? at : "other";
   }
   if ((node.position?.end.offset ?? 0) < offset) return "other";
