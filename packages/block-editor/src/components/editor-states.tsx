@@ -24,14 +24,15 @@ export function EditorSkeleton({ label }: { label?: string }) {
 
 /**
  * The page when its editor could not be created (GoTipe Atlas, frame 17: an error marks the
- * element that failed). Why it failed goes to `onError` and `host.onError`, not to the person.
+ * element that failed): a box in the page's column, its glyph red and its words quiet, as an image
+ * that cannot be shown. Why it failed goes to `onError` and `host.onError`, not to the person.
  */
 export function EditorFailure() {
   const i18n = useBlockEditorI18n();
   return (
     <p className="gotipe-editor-error" role="alert" data-gotipe-editor-error="">
       <PageIcon name="warning" />
-      {i18n.t("state.failed")}
+      <span className="gotipe-editor-error-text">{i18n.t("state.failed")}</span>
     </p>
   );
 }
