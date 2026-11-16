@@ -72,9 +72,9 @@ must exist.
 `SYNC_HOST` (the `/sync` WebSocket) in `infra/.env` are the host names Caddy serves and gets
 TLS certificates for; point their DNS records at the server before the first start. Compose
 passes both to Caddy and stops with a message when one is missing. It requires
-`HTTP_ALLOWED_ORIGINS` and `SYNC_ALLOWED_ORIGINS` as well, so the API never falls back to its
-built-in production origins; set them to your app's origins (an empty value allows no browser
-origin). After changing a host name on a running stack, recreate Caddy with
+`HTTP_ALLOWED_ORIGINS` and `SYNC_ALLOWED_ORIGINS` as well; set them to your app's origins (an
+empty value allows no browser origin). In production the API itself refuses to start without
+`HTTP_ALLOWED_ORIGINS`: it has no built-in production origins. After changing a host name on a running stack, recreate Caddy with
 `docker compose up -d caddy`.
 
 The API image is `ghcr.io/gotipe/cloud-api:$IMAGE_TAG`. To pull it from another registry, set
@@ -175,7 +175,7 @@ are `<count>/<s|sec|min|h|hour>`. An invalid value stops the API at startup.
 | `JWT_ISSUER`, `JWT_AUDIENCE` | `gotipe`, `gotipe-cloud` | Checked on every token. |
 | `JWT_EXPIRY` | `1h` | Access token lifetime. |
 | `ENVIRONMENT` | `development` | `development` or `production`. Sets default CORS origins and the API key prefix. |
-| `HTTP_ALLOWED_ORIGINS` | per environment | Exact browser origins for the REST API, comma-separated. Set it in production: the built-in production default is GoTipe's own domains. The compose stack requires it. |
+| `HTTP_ALLOWED_ORIGINS` | development: local dev servers | Exact browser origins for the REST API, comma-separated. Required in production: without it the API stops at startup; an empty value allows no browser origin. The compose stack requires it. |
 | `SYNC_ALLOWED_ORIGINS` | — | Exact browser origins for `/sync`, comma-separated. Wildcards are rejected. |
 | `TRUSTED_PROXIES` | — | Reverse proxies whose `X-Forwarded-For` (or `X-Real-IP`) names the client: IP addresses or CIDR ranges, comma-separated. The API reads the header right to left and takes the first address outside this list, so list every proxy that appends to it, or have the last proxy send only the client (as the compose stack's Caddy does). Empty trusts no proxy; a range that covers every address is rejected. |
 | `LISTEN_ADDR`, `SYNC_LISTEN_ADDR`, `METRICS_LISTEN_ADDR` | `:8080`, `:8081`, `:9090` | Listen addresses. |
@@ -196,7 +196,8 @@ are `<count>/<s|sec|min|h|hour>`. An invalid value stops the API at startup.
 
 `infra/.env` also holds variables that only Compose reads: `API_HOST` and `SYNC_HOST` (for
 Caddy), `CLOUD_IMAGE`, `POSTGRES_PASSWORD` and `GRAFANA_ADMIN_PASSWORD`. `IMAGE_TAG` comes
-from the shell; `infra/scripts/deploy.sh <tag>` sets it.
+from the shell; `infra/scripts/deploy.sh <tag>` sets it and pulls that tag of `CLOUD_IMAGE`.
+For the image built on the server in step 1, run `infra/scripts/deploy.sh --no-pull local`.
 
 Older drafts named `ENV`, `JWT_PRIVATE_KEY_PATH`, `STRIPE_PRICE_STARTER`, `S3_BUCKET`,
 `OAUTH_*`, `AI_CACHE_TTL`, `VALKEY_MAX_CONNS` and `R2_CDN_URL`; the API does not read them.

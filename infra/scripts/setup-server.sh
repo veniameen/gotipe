@@ -32,13 +32,15 @@ gh repo deploy-key add /home/deploy/.ssh/id_ed25519.pub \
    --repo "$REPO" --title "server-$(hostname)"
 
 # --- 5. Clone repository ---
+# /opt/gotipe is the checkout itself: deploy.sh, the deploy workflows (git pull in
+# /opt/gotipe), backup-cron and restore.sh all use /opt/gotipe/infra.
 echo "[5/9] Cloning repository..."
-sudo -u deploy git clone "git@github.com:${REPO}.git" /opt/gotipe/repo
+install -d -o deploy -g deploy /opt/gotipe
+sudo -u deploy git clone "git@github.com:${REPO}.git" /opt/gotipe
 
-# --- 6. Copy infra/ ---
+# --- 6. Prepare infra/ ---
 echo "[6/9] Setting up infra..."
-cp -r /opt/gotipe/repo/infra/* /opt/gotipe/
-mkdir -p /opt/gotipe/grafana/dashboards /opt/gotipe/grafana/datasources
+sudo -u deploy mkdir -p /opt/gotipe/infra/grafana/dashboards /opt/gotipe/infra/grafana/datasources
 
 # --- 7. GitHub Secrets ---
 echo "[7/9] Configuring GitHub Secrets for auto-deploy..."
@@ -49,26 +51,36 @@ gh secret set DEPLOY_KEY --repo "$REPO" --body "$(cat /home/deploy/.ssh/id_ed255
 
 # --- 8. .env ---
 echo "[8/9] Preparing environment..."
-if [ ! -f /opt/gotipe/.env ]; then
-  cp /opt/gotipe/.env.example /opt/gotipe/.env
-  echo ""
-  echo "  WARNING: EDIT /opt/gotipe/.env before starting services!"
-  echo "     Required: API_HOST, SYNC_HOST, HTTP_ALLOWED_ORIGINS, SYNC_ALLOWED_ORIGINS,"
-  echo "     POSTGRES_PASSWORD, JWT keys, R2 credentials, Stripe keys"
-  echo ""
+ENV_FILE=/opt/gotipe/infra/.env
+CREATED_ENV=0
+if [ ! -f "$ENV_FILE" ]; then
+  sudo -u deploy cp /opt/gotipe/infra/.env.example "$ENV_FILE"
+  CREATED_ENV=1
 fi
 
-# --- 9. Start services ---
-echo "[9/9] Starting services..."
-cd /opt/gotipe && docker compose up -d
-
 # --- Backups ---
-cp /opt/gotipe/scripts/backup-cron /etc/cron.d/gotipe-backup
+cp /opt/gotipe/infra/scripts/backup-cron /etc/cron.d/gotipe-backup
 chmod 644 /etc/cron.d/gotipe-backup
+
+# --- 9. Start services ---
+# The example .env names example.com and CHANGE_ME values: starting with it would
+# request certificates for hosts this server does not serve. Stop until it is edited.
+if [ "$CREATED_ENV" = 1 ]; then
+  echo ""
+  echo "  EDIT $ENV_FILE, then start the services:"
+  echo "     Required: API_HOST, SYNC_HOST, HTTP_ALLOWED_ORIGINS, SYNC_ALLOWED_ORIGINS,"
+  echo "     POSTGRES_PASSWORD, JWT keys, R2 credentials, Stripe keys"
+  echo "     cd /opt/gotipe && infra/scripts/deploy.sh <tag>"
+  echo "     IMAGE_TAG=<tag> docker compose -f infra/docker-compose.yml up -d"
+  echo ""
+  exit 0
+fi
+echo "[9/9] Starting services..."
+cd /opt/gotipe && docker compose -f infra/docker-compose.yml up -d
 
 echo ""
 echo "=== Server ready ==="
 echo "   IP: ${SERVER_IP}"
 echo "   Next push to main -> automatic deploy"
-API_HOST="$(sed -n 's/^API_HOST=//p' /opt/gotipe/.env | tail -n 1)"
-echo "   Health: curl https://${API_HOST:-<API_HOST from /opt/gotipe/.env>}/healthz"
+API_HOST="$(sed -n 's/^API_HOST=//p' /opt/gotipe/infra/.env | tail -n 1)"
+echo "   Health: curl https://${API_HOST:-<API_HOST from /opt/gotipe/infra/.env>}/healthz"

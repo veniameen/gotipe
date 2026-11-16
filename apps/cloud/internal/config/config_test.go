@@ -2,6 +2,7 @@ package config
 
 import (
 	"net/netip"
+	"strings"
 	"testing"
 	"time"
 )
@@ -29,7 +30,7 @@ func TestLoadFailsWithClearConfigurationErrors(t *testing.T) {
 	if _, err := from(required(map[string]string{"JWT_PRIVATE_KEY": ""})); err == nil {
 		t.Fatal("missing signing key accepted")
 	}
-	production := map[string]string{"ENVIRONMENT": "production", "DATABASE_MAX_CONNS": "4", "DATABASE_IDLE_CONNS": "0", "EXPORT_WORKERS": "0"}
+	production := map[string]string{"ENVIRONMENT": "production", "HTTP_ALLOWED_ORIGINS": "https://app.example.test", "DATABASE_MAX_CONNS": "4", "DATABASE_IDLE_CONNS": "0", "EXPORT_WORKERS": "0"}
 	if _, err := from(required(production)); err == nil {
 		t.Fatal("zero workers accepted")
 	}
@@ -72,6 +73,23 @@ func TestInvalidEnvironmentAndUntrustedOriginsFailClosed(t *testing.T) {
 	}
 	if c, err = from(required(map[string]string{"HTTP_ALLOWED_ORIGINS": ""})); err != nil || len(c.HTTPAllowedOrigins) != 0 {
 		t.Fatalf("explicitly empty origins replaced by defaults: %v %v", c.HTTPAllowedOrigins, err)
+	}
+}
+
+// Production has no built-in origins: no domain is right for every deployment.
+func TestProductionRequiresExplicitHTTPOrigins(t *testing.T) {
+	if c, err := from(required(map[string]string{"ENVIRONMENT": "production"})); err == nil || !strings.Contains(err.Error(), "HTTP_ALLOWED_ORIGINS") {
+		t.Fatalf("production started with origins nobody set: %v %v", c, err)
+	}
+	c, err := from(required(map[string]string{"ENVIRONMENT": "production", "HTTP_ALLOWED_ORIGINS": ""}))
+	if err != nil || len(c.HTTPAllowedOrigins) != 0 {
+		t.Fatalf("explicitly empty production origins: %v %v", c, err)
+	}
+	if c, err = from(required(map[string]string{"ENVIRONMENT": "production", "HTTP_ALLOWED_ORIGINS": "https://app.example.test"})); err != nil || len(c.HTTPAllowedOrigins) != 1 {
+		t.Fatalf("explicit production origins: %v %v", c, err)
+	}
+	if c, err = from(required(nil)); err != nil || len(c.HTTPAllowedOrigins) == 0 || !strings.HasPrefix(c.HTTPAllowedOrigins[0], "http://localhost") {
+		t.Fatalf("development defaults: %v %v", c, err)
 	}
 }
 
