@@ -90,12 +90,13 @@ curl -X POST https://api.example.com/v1/documents \
   -d '{"title": "Launch plan"}'
 ```
 
-- A key is at most 255 bytes and is kept per user for 24 hours.
+- A key is at most 255 bytes and is kept per user for 24 hours. It applies to the
+  authenticated routes; `POST /v1/auth/token` and the Stripe webhook ignore it.
 - Repeating the same request with the same key returns the first response — status, headers
   and body, errors included — after checking that you can still read the document or
   organization it concerns.
-- The same key with a different method, URL, content type, body or credential scopes answers
-  `409 CONFLICT`.
+- The same key with a different method, URL, content type, body, or credential (its scopes,
+  document restriction or organization) answers `409 CONFLICT`.
 - While the first request is running, or when its result is unknown, the key answers
   `409 CONFLICT`. Check the resource's state instead of retrying with a new key.
 - A body sent with a key may be up to 10 MiB. A streaming AI request (`"stream": true`)
@@ -203,7 +204,8 @@ error itself is only in the server log.
 `name` and `scopes` are required (`400` without them); each scope must be one of the five
 grantable scopes and held by the caller (`403` otherwise). `"scopes": []` makes a key that can
 only call the routes without a scope, such as `GET /v1/users/me`. Returns `201` with the key,
-shown only in this response:
+shown only in this response. Do not send an `Idempotency-Key` with this request: the reply,
+key included, would be kept in Valkey for 24 hours and returned to a repeat.
 
 ```json
 { "id": "0b7c…", "name": "CI", "prefix": "gt_live_", "key": "gt_live_sk_3f9a…", "scopes": ["documents:read"], "created_at": "2026-11-12T12:00:00Z" }
@@ -462,8 +464,8 @@ retries. Subscription, checkout and invoice events update the account's plan.
 > [!NOTE]
 > Not in this release: sign-up, OAuth or SSO, outgoing webhooks, an endpoint for a version's
 > content or a diff between versions, comment editing and document import.
-> `apps/cloud/api/openapi.yaml` in the repository is out of date; this page follows the server
-> code.
+> `apps/cloud/api/openapi.yaml` in the repository describes the same routes in OpenAPI 3.1,
+> with the scope, statuses and `Idempotency-Key` of each one.
 
 ## Related
 
