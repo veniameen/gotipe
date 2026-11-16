@@ -29,7 +29,3 @@ If you discover a security vulnerability in GoTipe, please report it responsibly
 - Third-party dependencies (report upstream)
 - GoTipe documentation site
 - Social engineering attacks
-
-### PGP Key
-
-For encrypted communication, use our PGP key: [security-pgp.asc](https://gotipe.com/.well-known/security-pgp.asc)
