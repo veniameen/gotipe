@@ -57,9 +57,9 @@ func outcomeOf(r *http.Request) *replayOutcome {
 }
 
 // MarkNotRun says that the request was refused before it ran and changed nothing,
-// such as a rate limit refusal. Such a reply is not the request's result:
-// IdempotencyMiddleware releases the key, so a retry with the same key runs. Outside
-// IdempotencyMiddleware it does nothing.
+// such as a rate limit refusal or an unavailable AI provider. Such a reply is not
+// the request's result: IdempotencyMiddleware releases the key, so a retry with the
+// same key runs. Outside IdempotencyMiddleware it does nothing.
 func MarkNotRun(r *http.Request) {
 	if outcome := outcomeOf(r); outcome != nil {
 		outcome.notRun = true
@@ -80,8 +80,10 @@ type ReplayAuthorizer func(http.ResponseWriter, *http.Request, []byte, []byte) b
 // IdempotencyMiddleware claims a key before invoking the mutation. An uncertain
 // write remains claimed, so retries cannot repeat an operation after storage or
 // process failure. Identical completed requests replay their original response; a
-// refusal marked with MarkNotRun releases the key instead. maxBody is the request
-// body limit of the router: a body the API accepts is accepted with a key too.
+// refusal marked with MarkNotRun releases the key instead. A 5xx reply is never
+// recorded: it is not a completed result, so unless it is marked with MarkNotRun
+// the claim stays uncertain. maxBody is the request body limit of the router: a
+// body the API accepts is accepted with a key too.
 func IdempotencyMiddleware(store IdempotencyStore, maxBody int64, authorize ...ReplayAuthorizer) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -190,6 +192,13 @@ func IdempotencyMiddleware(store IdempotencyStore, maxBody int64, authorize ...R
 					apierror.ErrServiceDown.WithMessage("The request did not run, but its Idempotency-Key could not be released; retry with a new key").Write(w)
 					return
 				}
+				writeCached(w, response)
+				return
+			}
+			if response.Status >= 500 {
+				// A server error may have stopped the request half-way. Neither replay
+				// it nor run the request again: the claim stays pending, and a repeat
+				// answers 409 until the claim expires.
 				writeCached(w, response)
 				return
 			}

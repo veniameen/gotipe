@@ -2,13 +2,42 @@ package handler
 
 import (
 	"encoding/json"
+	"errors"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/gotipe/cloud/internal/storage"
 	"github.com/jackc/pgx/v5"
 	"golang.org/x/crypto/bcrypt"
 )
+
+// Unknown credentials are 401; a database that does not answer is 503, because it
+// says nothing about the credential.
+func TestTokenGrantsTellUnknownCredentialsFromDatabaseFailures(t *testing.T) {
+	for _, tc := range []struct {
+		name, body string
+		err        error
+		status     int
+		code       string
+	}{
+		{"unknown email", `{"grant_type":"password","email":"nobody@example.test","password":"secret"}`, pgx.ErrNoRows, 401, `"UNAUTHORIZED"`},
+		{"password, database down", `{"grant_type":"password","email":"owner@example.test","password":"secret"}`, errors.New("dial tcp: connection refused"), 503, `"SERVICE_UNAVAILABLE"`},
+		{"unknown api key", `{"grant_type":"api_key","api_key":"gt_test_sk_unknown"}`, pgx.ErrNoRows, 401, `"INVALID_API_KEY"`},
+		{"api key, database down", `{"grant_type":"api_key","api_key":"gt_test_sk_valid"}`, errors.New("dial tcp: connection refused"), 503, `"SERVICE_UNAVAILABLE"`},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			pool := &testPool{row: func(string, ...any) pgx.Row {
+				return testRow(func(...any) error { return tc.err })
+			}}
+			w := httptest.NewRecorder()
+			NewAuthHandler(&storage.PostgresStore{Pool: pool}, testJWT(t), nil).CreateToken()(w, requestAs("POST", "/v1/auth/token", tc.body, nil))
+			if w.Code != tc.status || !strings.Contains(w.Body.String(), tc.code) {
+				t.Fatalf("got %d %s, want %d %s", w.Code, w.Body, tc.status, tc.code)
+			}
+		})
+	}
+}
 
 func TestPasswordGrantVerifiesPassword(t *testing.T) {
 	hash, err := bcrypt.GenerateFromPassword([]byte("correct-password"), bcrypt.MinCost)

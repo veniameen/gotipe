@@ -5,12 +5,18 @@ import (
 	"crypto/rand"
 	"crypto/sha256"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"strings"
 	"time"
 
 	"github.com/gotipe/cloud/internal/storage"
+	"github.com/jackc/pgx/v5"
 )
+
+// ErrUnknownAPIKey is ValidateKey's answer for a key that is malformed, unknown or
+// expired. Any other error means that the key could not be checked.
+var ErrUnknownAPIKey = errors.New("invalid api key")
 
 type APIKeyService struct {
 	pool storage.Database
@@ -23,7 +29,7 @@ func NewAPIKeyService(pool storage.Database) *APIKeyService {
 // ValidateKey checks API key against DB. Format: gt_live_sk_<32hex> or gt_test_sk_<32hex>
 func (s *APIKeyService) ValidateKey(ctx context.Context, key string) (*UserContext, error) {
 	if !strings.HasPrefix(key, "gt_") {
-		return nil, fmt.Errorf("invalid api key format")
+		return nil, ErrUnknownAPIKey
 	}
 
 	hash := sha256.Sum256([]byte(key))
@@ -37,9 +43,11 @@ func (s *APIKeyService) ValidateKey(ctx context.Context, key string) (*UserConte
 		 WHERE k.key_hash = $1 AND (k.expires_at IS NULL OR k.expires_at > now())`,
 		keyHash,
 	).Scan(&userID, &plan, &scopes)
-
+	if errors.Is(err, pgx.ErrNoRows) {
+		return nil, ErrUnknownAPIKey
+	}
 	if err != nil {
-		return nil, fmt.Errorf("invalid api key")
+		return nil, fmt.Errorf("look up api key: %w", err)
 	}
 
 	// Update last_used_at (fire and forget)

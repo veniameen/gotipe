@@ -3,6 +3,7 @@ package handler
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"golang.org/x/crypto/bcrypt"
 	"net/http"
 	"time"
@@ -10,6 +11,7 @@ import (
 	"github.com/gotipe/cloud/internal/apierror"
 	internalAuth "github.com/gotipe/cloud/internal/auth"
 	"github.com/gotipe/cloud/internal/storage"
+	"github.com/jackc/pgx/v5"
 )
 
 type AuthHandler struct {
@@ -57,14 +59,19 @@ func (h *AuthHandler) CreateToken() http.HandlerFunc {
 				apierror.ErrValidation.WithMessage("email and password are required").Write(w)
 				return
 			}
-			// Lookup user by email and verify password
+			// Lookup user by email and verify password. An account without a password
+			// has an empty hash, which no password matches.
 			var passwordHash string
 			err := h.db.Pool.QueryRow(r.Context(),
-				`SELECT id, plan, password_hash FROM users WHERE email = $1`,
+				`SELECT id, plan, COALESCE(password_hash, '') FROM users WHERE email = $1`,
 				req.Email,
 			).Scan(&userID, &plan, &passwordHash)
-			if err != nil {
+			if errors.Is(err, pgx.ErrNoRows) {
 				apierror.ErrUnauthorized.WithMessage("Invalid credentials").Write(w)
+				return
+			}
+			if err != nil {
+				apierror.ErrServiceDown.Write(w)
 				return
 			}
 			if bcrypt.CompareHashAndPassword([]byte(passwordHash), []byte(req.Password)) != nil {
@@ -85,8 +92,12 @@ func (h *AuthHandler) CreateToken() http.HandlerFunc {
 				 WHERE k.key_hash = $1 AND (k.expires_at IS NULL OR k.expires_at > now())`,
 				keyHash,
 			).Scan(&userID, &plan, &scopes)
-			if err != nil {
+			if errors.Is(err, pgx.ErrNoRows) {
 				apierror.ErrInvalidAPIKey.Write(w)
+				return
+			}
+			if err != nil {
+				apierror.ErrServiceDown.Write(w)
 				return
 			}
 

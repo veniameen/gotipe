@@ -41,8 +41,13 @@ func AuthMiddleware(jwtSvc *JWTService, apiKeySvc *APIKeyService, valkeyStore To
 			// API Key path: starts with "gt_"
 			if strings.HasPrefix(token, "gt_") {
 				user, err := apiKeySvc.ValidateKey(r.Context(), token)
-				if err != nil {
+				if errors.Is(err, ErrUnknownAPIKey) {
 					apierror.ErrInvalidAPIKey.Write(w)
+					return
+				}
+				if err != nil {
+					// The database did not answer: the key may be valid.
+					apierror.ErrServiceDown.Write(w)
 					return
 				}
 				ctx := WithUser(r.Context(), user)
