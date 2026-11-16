@@ -112,6 +112,10 @@
 }
 
 /* ---- text ---- */
+/* a paragraph wraps so its last line is not one lone word, as the Atlas sets it (D-201) */
+.gotipe-content :where(p) {
+  text-wrap: pretty;
+}
 .gotipe-content p:empty {
   min-height: var(--gt-body-leading);
 }
