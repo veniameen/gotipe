@@ -1,6 +1,7 @@
 import { BlockEditor } from "@gotipe/block-editor";
 import { FullPreset } from "@gotipe/core/presets";
 import { useEditor } from "@gotipe/react";
+import type { ThemePreset } from "@gotipe/theme";
 import { useCallback, useState } from "react";
 import { useDebugEditor } from "../shared/use-debug-editor";
 import { MERGED_TABLE_BLOCKS } from "./merged-table";
@@ -439,6 +440,7 @@ export function BlockEditorExample() {
     content: INITIAL_CONTENT,
   });
 
+  const [view, setView] = useState<ThemePreset>("notion");
   const [exportFormat, setExportFormat] = useState<ExportFormat>(null);
   const [exportOutput, setExportOutput] = useState("");
 
@@ -474,8 +476,23 @@ export function BlockEditorExample() {
       data-gotipe-example="basic"
       style={{ display: "flex", flexDirection: "column", height: "100%" }}
     >
+      <label className="gotipe-editor-view">
+        Вид
+        <select
+          value={view}
+          onChange={(event) => setView(event.target.value as ThemePreset)}
+          aria-label="Вид редактора"
+        >
+          {(["notion", "docs", "modern", "minimal"] as const).map((name) => (
+            <option key={name} value={name}>
+              {name}
+            </option>
+          ))}
+        </select>
+      </label>
       <BlockEditor
         editor={editor}
+        view={view}
         showSlashMenu={true}
         showBlockToolbar={true}
         showThemeToggle={true}
