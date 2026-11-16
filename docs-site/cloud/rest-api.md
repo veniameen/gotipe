@@ -103,6 +103,8 @@ curl -X POST https://api.example.com/v1/documents \
 - A stored response body is at most 256 KiB. When the first response was larger, the first
   caller still gets all of it, but a repeat answers `409 CONFLICT` with the original status in
   the message; read the resource instead of repeating the mutation.
+- The [SDK](/docs/cloud/sdk#safe-retries) sends the header when you pass `idempotencyKey` to a
+  call that changes data.
 
 ## Quotas
 
@@ -317,7 +319,8 @@ unless `include_resolved=true`. A comment resolved while you read the pages leav
 remaining pages as they were.
 
 `POST …/comments/{commentId}/replies` — `{ "content": "…" }` → `201` with the reply, which takes
-its parent's anchor.
+its parent's `anchor_type` and `block_id` and has `parent_id`. The server keeps only `content`
+for a reply: no `metadata`, `from` or `to`.
 
 `POST …/comments/{commentId}/resolve` → `{"status": "resolved"}`; `404` when it is already
 resolved.

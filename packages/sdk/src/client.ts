@@ -11,6 +11,7 @@ import type {
   Organization,
   PageOptions,
   PaginatedResponse,
+  RequestOptions,
   Usage,
   Version,
 } from "./types";
@@ -71,14 +72,21 @@ export class GoTipeClient {
   getDocument(id: string): Promise<Document> {
     return this.transport.resource("GET", documentPath(id));
   }
-  createDocument(data: { id?: string; title: string; content?: object }): Promise<Document> {
-    return this.transport.resource("POST", "/v1/documents", data);
+  createDocument(
+    data: { id?: string; title: string; content?: object },
+    options?: RequestOptions,
+  ): Promise<Document> {
+    return this.transport.resource("POST", "/v1/documents", data, options);
   }
-  updateDocument(id: string, data: { title?: string; content?: object }): Promise<Document> {
-    return this.transport.resource("PATCH", documentPath(id), data);
+  updateDocument(
+    id: string,
+    data: { title?: string; content?: object },
+    options?: RequestOptions,
+  ): Promise<Document> {
+    return this.transport.resource("PATCH", documentPath(id), data, options);
   }
-  deleteDocument(id: string): Promise<void> {
-    return this.transport.request("DELETE", documentPath(id));
+  deleteDocument(id: string, options?: RequestOptions): Promise<void> {
+    return this.transport.request("DELETE", documentPath(id), undefined, options);
   }
 
   /** Newest first, one page at a time. */
@@ -87,16 +95,26 @@ export class GoTipeClient {
     const query = pageQuery(new URLSearchParams(), options);
     return this.transport.page(`${documentPath(docId)}/versions${query}`);
   }
-  createVersion(docId: string, name: string): Promise<Version> {
-    return this.transport.resource("POST", `${documentPath(docId)}/versions`, {
-      name,
-      version_type: "named",
-    });
+  createVersion(docId: string, name: string, options?: RequestOptions): Promise<Version> {
+    return this.transport.resource(
+      "POST",
+      `${documentPath(docId)}/versions`,
+      { name, version_type: "named" },
+      options,
+    );
   }
-  async restoreVersion(docId: string, versionId: string): Promise<Document> {
+  /** The idempotency key goes with the restore; the document is then read without it. */
+  restoreVersion(docId: string, versionId: string, options?: RequestOptions): Promise<Document>;
+  async restoreVersion(
+    docId: string,
+    versionId: string,
+    options?: RequestOptions,
+  ): Promise<Document> {
     await this.transport.request(
       "POST",
       `${documentPath(docId)}/versions/${idPath(versionId)}/restore`,
+      undefined,
+      options,
     );
     return this.getDocument(docId);
   }
@@ -119,7 +137,14 @@ export class GoTipeClient {
   }
   async addComment(
     docId: string,
-    data: { blockId?: string; content: string; from?: number; to?: number },
+    data: {
+      blockId?: string;
+      content: string;
+      from?: number;
+      to?: number;
+      metadata?: Record<string, unknown>;
+    },
+    options?: RequestOptions,
   ): Promise<Comment> {
     const comment = await this.transport.resource<Comment>(
       "POST",
@@ -130,22 +155,56 @@ export class GoTipeClient {
         anchor_type: data.from === undefined ? (data.blockId ? "block" : "document") : "inline",
         from: data.from,
         to: data.to,
+        metadata: data.metadata,
       },
+      options,
     );
     return { ...comment, resolved: !!comment.resolvedAt };
   }
-  async resolveComment(docId: string, commentId: string): Promise<void> {
+  /** The reply takes the anchor of the comment it answers, which `parentId` names. */
+  replyToComment(
+    docId: string,
+    commentId: string,
+    data: { content: string },
+    options?: RequestOptions,
+  ): Promise<Comment>;
+  async replyToComment(
+    docId: string,
+    commentId: string,
+    data: { content: string },
+    options?: RequestOptions,
+  ): Promise<Comment> {
+    const reply = await this.transport.resource<Comment>(
+      "POST",
+      `${documentPath(docId)}/comments/${idPath(commentId)}/replies`,
+      { content: data.content },
+      options,
+    );
+    return { ...reply, resolved: !!reply.resolvedAt };
+  }
+  async resolveComment(docId: string, commentId: string, options?: RequestOptions): Promise<void> {
     await this.transport.request(
       "POST",
       `${documentPath(docId)}/comments/${idPath(commentId)}/resolve`,
+      undefined,
+      options,
     );
   }
-  deleteComment(docId: string, commentId: string): Promise<void> {
-    return this.transport.request("DELETE", `${documentPath(docId)}/comments/${idPath(commentId)}`);
+  deleteComment(docId: string, commentId: string, options?: RequestOptions): Promise<void> {
+    return this.transport.request(
+      "DELETE",
+      `${documentPath(docId)}/comments/${idPath(commentId)}`,
+      undefined,
+      options,
+    );
   }
 
-  createExportJob(docId: string, format: ExportJob["format"]): Promise<ExportJob> {
-    return this.transport.resource("POST", "/v1/exports", { document_id: docId, format });
+  createExportJob(
+    docId: string,
+    format: ExportJob["format"],
+    options?: RequestOptions,
+  ): Promise<ExportJob> {
+    return this.transport.resource("POST", "/v1/exports", { document_id: docId, format }, options);
   }
   /** docId is retained for compatibility; the server authenticates each export job. */
   getExportJob(docId: string, jobId: string): Promise<ExportJob>;
@@ -153,17 +212,22 @@ export class GoTipeClient {
     return this.transport.resource("GET", `/v1/exports/${idPath(jobId)}`);
   }
 
-  aiGenerate(docId: string, request: AiRequest): Promise<AiResponse> {
-    return this.transport.request("POST", "/v1/ai/complete", {
-      document_id: docId,
-      prompt: request.prompt,
-      context: request.context,
-      command: request.mode ?? "complete",
-      model: request.model,
-      provider: request.provider,
-      max_tokens: request.maxTokens,
-      stream: false,
-    });
+  aiGenerate(docId: string, request: AiRequest, options?: RequestOptions): Promise<AiResponse> {
+    return this.transport.request(
+      "POST",
+      "/v1/ai/complete",
+      {
+        document_id: docId,
+        prompt: request.prompt,
+        context: request.context,
+        command: request.mode ?? "complete",
+        model: request.model,
+        provider: request.provider,
+        max_tokens: request.maxTokens,
+        stream: false,
+      },
+      options,
+    );
   }
   getOrganization(id: string): Promise<Organization> {
     return this.transport.resource("GET", `/v1/organizations/${idPath(id)}`);
