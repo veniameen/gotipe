@@ -23,7 +23,7 @@ const DEFINITIONS: [&str; 2] = ["definition", "footnoteDefinition"];
 
 /// How `nodes`, the content of an item, read a lazy line that starts at `offset`. A definition
 /// is read out of paragraph text, so a line right after one continues that text, whatever block
-/// it starts here.
+/// it starts here; so does the head row of a table that ends a paragraph (D-216).
 pub(super) fn lazy_reading(nodes: &[Node], offset: usize, top: bool) -> Lazy {
     let Some(at) = nodes
         .partition_point(|node| node.start <= offset)
@@ -33,7 +33,7 @@ pub(super) fn lazy_reading(nodes: &[Node], offset: usize, top: bool) -> Lazy {
     };
     let node = &nodes[at];
     if node.start == offset {
-        if at > 0 && DEFINITIONS.contains(&nodes[at - 1].kind) {
+        if (at > 0 && DEFINITIONS.contains(&nodes[at - 1].kind)) || node.after_text {
             return Lazy::Text;
         }
         return if top { Lazy::Start(at) } else { Lazy::Other };
