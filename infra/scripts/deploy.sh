@@ -1,6 +1,12 @@
 #!/usr/bin/env bash
 # The current server owns API, sync rooms and workers in one process. Restarting
 # it briefly disconnects clients; durable replication supports their reconnect.
+#
+# Usage: infra/scripts/deploy.sh <image tag>. The script names no host, domain or
+# registry: Compose takes them from infra/.env (API_HOST, SYNC_HOST, the origins,
+# CLOUD_IMAGE). The configuration check below runs first, so a missing name
+# stops the script before anything changes. Caddy is not restarted here: after
+# changing API_HOST or SYNC_HOST, run docker compose up -d caddy.
 set -euo pipefail
 
 export IMAGE_TAG="${1:-latest}"

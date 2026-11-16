@@ -1,4 +1,9 @@
 # infra/docker-compose.yml (Production)
+#
+# Every address of the deployment comes from infra/.env (see .env.example):
+# API_HOST and SYNC_HOST for Caddy, HTTP_ALLOWED_ORIGINS and
+# SYNC_ALLOWED_ORIGINS for the API. Compose stops with a message when one is
+# missing; an empty origin list allows no browser origin.
 services:
   # --- Caddy (Reverse Proxy + Auto TLS) ---
   caddy:
@@ -6,6 +11,10 @@ services:
     ports:
       - "80:80"
       - "443:443"
+    environment:
+      # The Caddyfile reads them as {$API_HOST} and {$SYNC_HOST}.
+      API_HOST: "${API_HOST:?Set API_HOST in infra/.env to the REST API host name}"
+      SYNC_HOST: "${SYNC_HOST:?Set SYNC_HOST in infra/.env to the /sync host name}"
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
       - caddy_data:/data
@@ -23,7 +32,8 @@ services:
 
   # --- GoTipe API Server ---
   api:
-    image: ghcr.io/gotipe/cloud-api:${IMAGE_TAG:-latest}
+    # CLOUD_IMAGE names another registry or a local build; deploy.sh sets IMAGE_TAG.
+    image: ${CLOUD_IMAGE:-ghcr.io/gotipe/cloud-api}:${IMAGE_TAG:-latest}
     expose:
       - "8080"
       - "8081"
@@ -32,7 +42,10 @@ services:
     environment:
       LISTEN_ADDR: ":8080"
       SYNC_LISTEN_ADDR: ":8081"
-      SYNC_ALLOWED_ORIGINS: "${SYNC_ALLOWED_ORIGINS:-https://gotipe.com,https://app.gotipe.com}"
+      # Required here, so the API never falls back to its built-in production
+      # origins; set them to the app's origins.
+      HTTP_ALLOWED_ORIGINS: "${HTTP_ALLOWED_ORIGINS?Set HTTP_ALLOWED_ORIGINS in infra/.env}"
+      SYNC_ALLOWED_ORIGINS: "${SYNC_ALLOWED_ORIGINS?Set SYNC_ALLOWED_ORIGINS in infra/.env}"
       EXPORT_WORKERS: "${EXPORT_WORKERS:-2}"
       DATABASE_URL: "postgres://gotipe:${POSTGRES_PASSWORD}@pgbouncer:6432/gotipe?sslmode=disable"
       VALKEY_URL: "redis://valkey:6379/0"

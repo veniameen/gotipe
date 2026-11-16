@@ -1,6 +1,12 @@
 # infra/Caddyfile
 # Caddy reverse proxy — auto TLS via Let's Encrypt
 #
+# Host names: {$API_HOST} serves the REST API and {$SYNC_HOST} the /sync
+# WebSocket. Caddy reads both from its environment when it loads this file;
+# docker-compose.yml passes them from infra/.env and refuses to start without
+# them. Point their DNS records at this server before the first start: Caddy
+# gets a certificate for each name.
+#
 # Client addresses: every reverse_proxy below sends X-Forwarded-For with exactly
 # one address, {client_ip}: the client as Caddy resolved it. The API accepts that
 # header only from Caddy's fixed compose address (TRUSTED_PROXIES), so Caddy is
@@ -20,7 +26,7 @@
 # takes the leftmost entry, which the client can write. Do not add those ranges
 # to the API's TRUSTED_PROXIES.
 
-api.gotipe.com {
+{$API_HOST} {
 	reverse_proxy api:8080 {
 		header_up X-Forwarded-For {client_ip}
 		header_up -X-Real-IP
@@ -32,11 +38,11 @@ api.gotipe.com {
 		X-Frame-Options "DENY"
 		Referrer-Policy "strict-origin-when-cross-origin"
 		# CSP with WASM support
-		Content-Security-Policy "default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; connect-src 'self' wss://sync.gotipe.com https://api.gotipe.com; frame-src 'none'; object-src 'none'; base-uri 'self'"
+		Content-Security-Policy "default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; connect-src 'self' wss://{$SYNC_HOST} https://{$API_HOST}; frame-src 'none'; object-src 'none'; base-uri 'self'"
 	}
 }
 
-sync.gotipe.com {
+{$SYNC_HOST} {
 	reverse_proxy api:8081 {
 		header_up X-Forwarded-For {client_ip}
 		header_up -X-Real-IP

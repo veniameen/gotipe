@@ -53,4 +53,5 @@ curl -sf http://localhost:8081/healthz && echo "  Sync: OK" || echo "  Sync: FAI
 
 echo ""
 echo "=== Recovery complete ==="
-echo "   Verify: curl https://api.gotipe.com/readyz"
+API_HOST="$(sed -n 's/^API_HOST=//p' /opt/gotipe/.env | tail -n 1)"
+echo "   Verify: curl https://${API_HOST:-<API_HOST from /opt/gotipe/.env>}/readyz"

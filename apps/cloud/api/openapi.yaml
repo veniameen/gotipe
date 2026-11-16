@@ -2,479 +2,1185 @@ openapi: 3.1.0
 info:
   title: GoTipe Cloud API
   version: 1.0.0
+  summary: REST API of a self-hosted GoTipe Cloud server.
   description: |
-    GoTipe Cloud — managed backend for GoTipe editor.
-    Provides collaboration sync, AI proxy, document export, and analytics.
-  contact:
-    email: support@gotipe.com
-    url: https://gotipe.com
+    GoTipe Cloud is the MIT-licensed backend for collaborative GoTipe editors: documents,
+    comments, versions, sharing, exports, an AI proxy and Stripe billing. You run it yourself;
+    GoTipe does not operate a hosted instance, so the base URL is your own deployment's. This
+    description follows the Go server in `apps/cloud` (routes in `cmd/api/main.go`).
+
+    ## Conventions
+
+    - Request bodies are JSON; unknown fields are ignored. Responses are
+      `application/json; charset=utf-8` unless stated otherwise. Resource IDs are UUIDs; times
+      are RFC 3339 strings.
+    - Every response carries `X-Request-ID`: the value the client sent, or a new UUID.
+    - Browsers may call the API from the origins in `HTTP_ALLOWED_ORIGINS`, with credentials.
+      Allowed request headers: `Accept`, `Authorization`, `Content-Type`, `Idempotency-Key`,
+      `X-Request-ID`. Readable response headers: `X-Request-ID`, `Retry-After`.
+    - Every error body is `{"error": {"code": "…", "message": "…"}}` (`ErrorResponse`).
+    - Besides the statuses listed per operation, any request can get `404 NOT_FOUND` (unknown
+      path), `405` with an empty body and an `Allow` header (known path, other method),
+      `413 PAYLOAD_TOO_LARGE` (`Content-Length` above `EXPORT_MAX_DOCUMENT_SIZE` + 1 MiB,
+      11 MiB by default) and `500` with an empty body (a recovered panic).
+
+    ## Access
+
+    Authenticated routes take `Authorization: Bearer <access token or API key>`
+    (`BearerAuth`). The role list of an operation's security requirement names the scope the
+    credential needs; `admin` satisfies every scope. Document roles rank viewer < commenter <
+    editor < admin < owner. A document the caller cannot reach, or on which the caller's role
+    is too low, answers `404` like a missing one.
+
+    ## Limits
+
+    Authenticated requests are limited per user to `RATE_LIMIT_API` (100 per minute by
+    default) in a sliding window; `POST /v1/ai/complete` also to `RATE_LIMIT_AI` (60 per
+    minute); `POST /v1/auth/token` to 10 per minute per client address. Over a limit the
+    answer is `429 RATE_LIMITED` with `Retry-After`. Plan quotas (documents owned; AI requests
+    and export jobs per calendar month) answer `402 QUOTA_EXCEEDED`; see `GET /v1/billing/usage`.
+
+    ## Real-time sync
+
+    Collaborative editing goes through the WebSocket `GET /sync?document_id=…` (with `peer_id`
+    and `generation`) on the sync listener (`SYNC_LISTEN_ADDR`, port 8081 by default). It is
+    not a REST route and is not described here. It needs `documents:write` and the editor role;
+    the credential comes in `Authorization` or as the `gotipe.auth.<base64url>` subprotocol.
+    See `docs-site/cloud/realtime.md`.
   license:
-    name: Proprietary
-    url: https://gotipe.com/terms
+    name: MIT
+    identifier: MIT
 
 servers:
-  - url: https://api.gotipe.com/v1
-    description: Production
-  - url: http://localhost:8080/v1
-    description: Local development
+  - url: '{baseUrl}'
+    description: The REST listener of your GoTipe Cloud deployment (`LISTEN_ADDR`, port 8080 by default).
+    variables:
+      baseUrl:
+        default: 'http://localhost:8080'
+        description: 'Origin of your deployment''s REST API, for example https://api.example.com.'
 
 security:
   - BearerAuth: []
 
 tags:
-  - name: Documents
-    description: Document CRUD operations
-  - name: Comments
-    description: Document comments and threads
-  - name: Versions
-    description: Document version history
-  - name: Organizations
-    description: Organization and team management
-  - name: Billing
-    description: Subscription and billing management
-  - name: Exports
-    description: Document export (PDF, DOCX, HTML, Markdown)
-  - name: AI
-    description: AI proxy for completions and suggestions
-  - name: Auth
-    description: Authentication and API keys
-  - name: Health
-    description: Health and readiness checks
+  - { name: Health, description: Liveness and readiness probes. }
+  - { name: Auth, description: Access tokens and their revocation. }
+  - { name: Users, description: The caller's account. }
+  - { name: API keys, description: Long-lived credentials for servers and scripts. }
+  - { name: Documents, description: Documents and their content. }
+  - { name: Comments, description: Comment threads on a document. }
+  - { name: Versions, description: Saved versions and restore. }
+  - { name: Permissions, description: Per-document roles. }
+  - { name: Organizations, description: Named groups of accounts. }
+  - { name: Exports, description: Asynchronous document conversion. }
+  - { name: AI, description: Text commands through the configured AI provider. }
+  - { name: Billing, description: Stripe subscriptions and plan usage. }
+  - { name: Webhooks, description: Incoming Stripe events. }
 
 paths:
-  /documents:
-    post:
-      tags: [Documents]
-      summary: Create document
-      operationId: createDocument
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/CreateDocumentRequest'
-      responses:
-        '201':
-          description: Document created
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/DocumentResponse'
-        '402':
-          $ref: '#/components/responses/QuotaExceeded'
-    get:
-      tags: [Documents]
-      summary: List documents
-      operationId: listDocuments
-      parameters:
-        - name: limit
-          in: query
-          schema: { type: integer, default: 20, maximum: 100 }
-        - name: offset
-          in: query
-          schema: { type: integer, default: 0 }
-        - name: sort
-          in: query
-          schema: { type: string, default: 'updated_at:desc' }
-      responses:
-        '200':
-          description: Document list
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/DocumentListResponse'
-
-  /documents/{id}:
-    get:
-      tags: [Documents]
-      summary: Get document
-      operationId: getDocument
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema: { type: string }
-      responses:
-        '200':
-          description: Document details
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/DocumentDetailResponse'
-        '404':
-          $ref: '#/components/responses/NotFound'
-    delete:
-      tags: [Documents]
-      summary: Delete document
-      operationId: deleteDocument
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema: { type: string }
-      responses:
-        '204':
-          description: Document deleted
-        '404':
-          $ref: '#/components/responses/NotFound'
-
-  /documents/{documentId}/comments:
-    get:
-      tags: [Comments]
-      summary: List comments
-      description: Oldest first, replies as separate items, one page at a time.
-      operationId: listComments
-      parameters:
-        - name: documentId
-          in: path
-          required: true
-          schema: { type: string }
-        - name: include_resolved
-          in: query
-          schema: { type: boolean, default: false }
-        - $ref: '#/components/parameters/PageLimit'
-        - $ref: '#/components/parameters/PageCursor'
-      responses:
-        '200':
-          description: A page of comments
-          content:
-            application/json:
-              schema:
-                allOf:
-                  - $ref: '#/components/schemas/Page'
-                  - type: object
-                    properties:
-                      data:
-                        type: array
-                        items:
-                          $ref: '#/components/schemas/Comment'
-        '400':
-          description: Malformed cursor
-    post:
-      tags: [Comments]
-      summary: Create comment
-      operationId: createComment
-      parameters:
-        - name: documentId
-          in: path
-          required: true
-          schema: { type: string }
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/CreateCommentRequest'
-      responses:
-        '201':
-          description: Comment created
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Comment'
-
-  /documents/{documentId}/versions:
-    get:
-      tags: [Versions]
-      summary: List versions
-      description: Newest first, restore points included, one page at a time.
-      operationId: listVersions
-      parameters:
-        - name: documentId
-          in: path
-          required: true
-          schema: { type: string }
-        - $ref: '#/components/parameters/PageLimit'
-        - $ref: '#/components/parameters/PageCursor'
-      responses:
-        '200':
-          description: A page of versions
-          content:
-            application/json:
-              schema:
-                allOf:
-                  - $ref: '#/components/schemas/Page'
-                  - type: object
-                    properties:
-                      data:
-                        type: array
-                        items:
-                          $ref: '#/components/schemas/Version'
-        '400':
-          description: Malformed cursor
-    post:
-      tags: [Versions]
-      summary: Create named version
-      operationId: createVersion
-      parameters:
-        - name: documentId
-          in: path
-          required: true
-          schema: { type: string }
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/CreateVersionRequest'
-      responses:
-        '201':
-          description: Version created
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Version'
-
-  /documents/{documentId}/versions/{versionId}/restore:
-    post:
-      tags: [Versions]
-      summary: Restore version
-      operationId: restoreVersion
-      parameters:
-        - name: documentId
-          in: path
-          required: true
-          schema: { type: string }
-        - name: versionId
-          in: path
-          required: true
-          schema: { type: string }
-      responses:
-        '200':
-          description: Version restored
-
-  /exports:
-    post:
-      tags: [Exports]
-      summary: Create export job
-      operationId: createExport
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/CreateExportRequest'
-      responses:
-        '202':
-          description: Export job created
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ExportJob'
-
-  /exports/{id}:
-    get:
-      tags: [Exports]
-      summary: Get export status / download
-      description: Returns status JSON while pending/processing. Returns 302 redirect to download URL when completed.
-      operationId: getExport
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema: { type: string }
-      responses:
-        '200':
-          description: Export status (pending/processing)
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ExportJob'
-        '302':
-          description: Redirect to download URL (completed)
-
-  /ai/complete:
-    post:
-      tags: [AI]
-      summary: AI completion
-      description: Proxies request to AI provider (OpenAI/Anthropic/Gemini). Supports SSE streaming.
-      operationId: aiComplete
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/AICompleteRequest'
-      responses:
-        '200':
-          description: AI completion (SSE stream or JSON)
-          content:
-            text/event-stream:
-              schema:
-                type: string
-            application/json:
-              schema:
-                $ref: '#/components/schemas/AICompleteResponse'
-
-  /auth/token:
-    post:
-      tags: [Auth]
-      summary: Generate JWT token
-      description: Generate short-lived JWT for client-side use (WebSocket, restricted API access)
-      operationId: createToken
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/CreateTokenRequest'
-      responses:
-        '200':
-          description: JWT token
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/TokenResponse'
-
-  /api-keys:
-    post:
-      tags: [Auth]
-      summary: Create API key
-      operationId: createApiKey
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/CreateApiKeyRequest'
-      responses:
-        '201':
-          description: API key created (key shown only once)
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ApiKeyResponse'
-    get:
-      tags: [Auth]
-      summary: List API keys
-      operationId: listApiKeys
-      responses:
-        '200':
-          description: API key list
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  data:
-                    type: array
-                    items:
-                      $ref: '#/components/schemas/ApiKeySummary'
-
-  /users/me:
-    get:
-      tags: [Auth]
-      summary: Get current user
-      operationId: getCurrentUser
-      responses:
-        '200':
-          description: Current user with usage info
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/UserResponse'
-
-  /organizations:
-    post:
-      tags: [Organizations]
-      summary: Create organization
-      operationId: createOrganization
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/CreateOrganizationRequest'
-      responses:
-        '201':
-          description: Organization created
-
-  /billing/subscribe:
-    post:
-      tags: [Billing]
-      summary: Create subscription
-      operationId: createSubscription
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/CreateSubscriptionRequest'
-      responses:
-        '200':
-          description: Stripe checkout session URL
-
-  /billing/usage:
-    get:
-      tags: [Billing]
-      summary: Get usage summary
-      operationId: getUsage
-      responses:
-        '200':
-          description: Usage summary for current billing period
-
-  /billing/webhooks:
-    post:
-      tags: [Billing]
-      summary: Stripe webhook handler
-      description: Always returns 200 (never 5xx for Stripe webhooks)
-      security: []
-      responses:
-        '200':
-          description: Webhook processed
-
   /healthz:
     get:
       tags: [Health]
       summary: Liveness probe
+      operationId: getHealth
       security: []
       responses:
         '200':
-          description: Service is alive
+          description: The process serves requests.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [status]
+                properties:
+                  status: { type: string, const: ok }
 
   /readyz:
     get:
       tags: [Health]
       summary: Readiness probe
+      description: >-
+        Checks PostgreSQL, Valkey and the object store concurrently under one 3-second
+        deadline. Each check reports only `ok` or `unavailable`; the error goes to the server
+        log.
+      operationId: getReadiness
       security: []
       responses:
         '200':
-          description: All dependencies healthy
+          description: Every dependency answered.
+          content: { application/json: { schema: { $ref: '#/components/schemas/Readiness' } } }
         '503':
-          description: One or more dependencies unhealthy
+          description: 'A dependency failed; `status` is `degraded`.'
+          content: { application/json: { schema: { $ref: '#/components/schemas/Readiness' } } }
+
+  /v1/auth/token:
+    post:
+      tags: [Auth]
+      summary: Exchange a password or an API key for an access token
+      description: >-
+        Public: the credential is in the body, not in `Authorization`. The token is an ES256
+        JWT with the configured issuer and audience, valid for `JWT_EXPIRY` (1 hour by default);
+        there are no refresh tokens. A password token carries `documents:read`,
+        `documents:write`, `ai:use`, `export:use` and `account:manage`; an API-key token carries
+        the key's scopes. Limited to 10 requests per minute per client address (the socket
+        peer, or the `X-Forwarded-For` client when the peer is in `TRUSTED_PROXIES`; IPv6 per
+        /64). Not subject to `Idempotency-Key`.
+      operationId: createToken
+      security: []
+      requestBody:
+        required: true
+        content: { application/json: { schema: { $ref: '#/components/schemas/TokenRequest' } } }
+      responses:
+        '200':
+          description: The access token.
+          content: { application/json: { schema: { $ref: '#/components/schemas/Token' } } }
+        '400': { $ref: '#/components/responses/BadRequest', description: '`INVALID_JSON`, or `VALIDATION_ERROR` for an unsupported `grant_type` or a missing field.' }
+        '401': { $ref: '#/components/responses/Unauthorized', description: '`UNAUTHORIZED` with the message `Invalid credentials` (unknown email or wrong password), or `INVALID_API_KEY` (unknown or expired key).' }
+        '413': { $ref: '#/components/responses/PayloadTooLarge' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+        '500': { $ref: '#/components/responses/InternalError' }
+        '503': { $ref: '#/components/responses/ServiceUnavailable', description: '`SERVICE_UNAVAILABLE`: the rate limiter could not reach Valkey.' }
+
+  /v1/webhooks/stripe:
+    post:
+      tags: [Webhooks]
+      summary: Receive a Stripe event
+      description: >-
+        Public; authenticated by the `Stripe-Signature` header, which must verify against
+        `STRIPE_WEBHOOK_SECRET` within Stripe's 5-minute tolerance. The event's API version
+        must be of the release train that the server's stripe-go library pins (`acacia`:
+        stripe-go v81 pins `2024-11-20.acacia`); other events answer 400. A verified event is
+        stored once by its ID and acknowledged with an empty 200, a repeated delivery included;
+        a worker applies it with retries. Subscription, checkout and invoice events update the
+        account's plan. Not rate-limited and not subject to `Idempotency-Key`.
+      operationId: receiveStripeEvent
+      security: []
+      parameters:
+        - name: Stripe-Signature
+          in: header
+          required: true
+          description: Stripe's signature over the exact body bytes.
+          schema: { type: string }
+      requestBody:
+        required: true
+        description: The event exactly as Stripe sent it, at most 1 MiB.
+        content:
+          application/json:
+            schema: { type: object, description: 'A Stripe `Event` object.' }
+      responses:
+        '200': { description: 'The event is stored, now or by an earlier delivery. Empty body.' }
+        '400': { $ref: '#/components/responses/BadRequest', description: '`INVALID_JSON` when the body exceeds 1 MiB or cannot be read; `VALIDATION_ERROR` (`Invalid webhook signature or event`) for a bad or expired signature, another API version, or an event without an ID.' }
+        '413': { $ref: '#/components/responses/PayloadTooLarge' }
+        '503': { $ref: '#/components/responses/ServiceUnavailable', description: '`SERVICE_UNAVAILABLE`: `STRIPE_WEBHOOK_SECRET` is not set, or the event could not be stored.' }
+
+  /v1/auth/revoke:
+    post:
+      tags: [Auth]
+      summary: Revoke the access token of this call
+      description: >-
+        Needs no scope. Adds the token's ID (`jti`) to the revocation list in Valkey until the
+        token would expire. A token can only revoke itself: send `{}` or its own `token_id`.
+        An API key cannot be revoked here; delete it instead.
+      operationId: revokeToken
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        description: 'A JSON object; an empty body answers `400 INVALID_JSON`.'
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                token_id: { type: string, description: 'The `jti` of the token in `Authorization`; that token when omitted.' }
+      responses:
+        '200':
+          description: The token is revoked.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [status]
+                properties:
+                  status: { type: string, const: revoked }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden', description: '`FORBIDDEN` (`Only the current token can be revoked`): `token_id` names another token, or the credential is an API key.' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '413': { $ref: '#/components/responses/PayloadTooLarge' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+        '503': { $ref: '#/components/responses/ServiceUnavailable' }
+
+  /v1/users/me:
+    get:
+      tags: [Users]
+      summary: Get the caller's account
+      description: Needs no scope.
+      operationId: getCurrentUser
+      responses:
+        '200':
+          description: The account.
+          content: { application/json: { schema: { $ref: '#/components/schemas/User' } } }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound', description: '`NOT_FOUND`: the account could not be read.' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+        '503': { $ref: '#/components/responses/ServiceUnavailable' }
+
+  /v1/api-keys:
+    post:
+      tags: [API keys]
+      summary: Create an API key
+      description: >-
+        Each requested scope must be grantable and held by the caller; `admin` cannot be
+        granted. The secret `key` is returned only here, and the database keeps only its SHA-256
+        hash. With an `Idempotency-Key`, the reply, key included, is also kept in Valkey for 24
+        hours so that a repeat can replay it.
+      operationId: createApiKey
+      security: [{ BearerAuth: ['account:manage'] }]
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content: { application/json: { schema: { $ref: '#/components/schemas/CreateApiKeyRequest' } } }
+      responses:
+        '201':
+          description: The new key.
+          content: { application/json: { schema: { $ref: '#/components/schemas/CreatedApiKey' } } }
+        '400': { $ref: '#/components/responses/BadRequest', description: '`INVALID_JSON`, or `VALIDATION_ERROR` when `name` or `scopes` is missing or `expires_at` is not RFC 3339 (or a rejected `Idempotency-Key`).' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden', description: '`FORBIDDEN`: no `account:manage`, or a requested scope is unknown, `admin` or not held by the caller (`Cannot grant an unavailable scope`).' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '413': { $ref: '#/components/responses/PayloadTooLarge' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+        '500': { $ref: '#/components/responses/InternalError' }
+        '503': { $ref: '#/components/responses/ServiceUnavailable' }
+    get:
+      tags: [API keys]
+      summary: List the caller's API keys
+      description: Newest first. The secret is never returned.
+      operationId: listApiKeys
+      security: [{ BearerAuth: ['account:manage'] }]
+      responses:
+        '200':
+          description: 'The caller''s keys; `data` is `[]` when there are none.'
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data: { type: array, items: { $ref: '#/components/schemas/ApiKey' } }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+        '500': { $ref: '#/components/responses/InternalError' }
+        '503': { $ref: '#/components/responses/ServiceUnavailable' }
+
+  /v1/api-keys/{id}:
+    parameters:
+      - $ref: '#/components/parameters/ApiKeyId'
+    delete:
+      tags: [API keys]
+      summary: Delete an API key
+      description: The key stops working on the next request.
+      operationId: deleteApiKey
+      security: [{ BearerAuth: ['account:manage'] }]
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      responses:
+        '204': { description: Deleted. }
+        '400': { $ref: '#/components/responses/BadRequest', description: '`VALIDATION_ERROR`: `id` is not a UUID (or a rejected `Idempotency-Key`).' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound', description: '`NOT_FOUND`: the caller has no key with this ID.' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+        '500': { $ref: '#/components/responses/InternalError' }
+        '503': { $ref: '#/components/responses/ServiceUnavailable' }
+
+  /v1/documents:
+    post:
+      tags: [Documents]
+      summary: Create a document
+      description: >-
+        The caller becomes the owner. `content` is stored as sent, without schema validation,
+        and may be up to `EXPORT_MAX_DOCUMENT_SIZE` (10 MiB by default). The plan limits how
+        many documents a user owns.
+      operationId: createDocument
+      security: [{ BearerAuth: ['documents:write'] }]
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content: { application/json: { schema: { $ref: '#/components/schemas/CreateDocumentRequest' } } }
+      responses:
+        '201':
+          description: 'The document with `content`, without `collaboration_state`.'
+          content: { application/json: { schema: { $ref: '#/components/schemas/Document' } } }
+        '400': { $ref: '#/components/responses/BadRequest', description: '`INVALID_JSON`, or `VALIDATION_ERROR` when `title` is missing or empty or `id` is not a UUID (or a rejected `Idempotency-Key`).' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '402': { $ref: '#/components/responses/QuotaExceeded', description: '`QUOTA_EXCEEDED`: `Document limit reached for your plan`.' }
+        '403': { $ref: '#/components/responses/Forbidden', description: '`FORBIDDEN`: no `documents:write`, or the access token is limited to other documents.' }
+        '404': { $ref: '#/components/responses/NotFound', description: '`NOT_FOUND`, only when an `Idempotency-Key` repeat finds that the caller can no longer read the document.' }
+        '409': { $ref: '#/components/responses/Conflict', description: '`CONFLICT`: a document with this `id` exists, or an `Idempotency-Key` conflict.' }
+        '413': { $ref: '#/components/responses/PayloadTooLarge', description: '`PAYLOAD_TOO_LARGE`: `content` is above `EXPORT_MAX_DOCUMENT_SIZE`, or the body above the request limit.' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+        '500': { $ref: '#/components/responses/InternalError' }
+        '503': { $ref: '#/components/responses/ServiceUnavailable' }
+    get:
+      tags: [Documents]
+      summary: List documents
+      description: >-
+        Documents the caller owns or has a role on, most recently updated first, without
+        `content`.
+      operationId: listDocuments
+      security: [{ BearerAuth: ['documents:read'] }]
+      parameters:
+        - name: limit
+          in: query
+          description: Documents per page, 1–100; any other value, or none, means 20.
+          schema: { type: integer, minimum: 1, maximum: 100, default: 20 }
+        - name: offset
+          in: query
+          description: Documents to skip; a negative or non-numeric value means 0.
+          schema: { type: integer, minimum: 0, default: 0 }
+      responses:
+        '200':
+          description: A page of documents.
+          content: { application/json: { schema: { $ref: '#/components/schemas/DocumentList' } } }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+        '500': { $ref: '#/components/responses/InternalError' }
+        '503': { $ref: '#/components/responses/ServiceUnavailable' }
+
+  /v1/documents/{id}:
+    parameters:
+      - $ref: '#/components/parameters/DocumentId'
+    get:
+      tags: [Documents]
+      summary: Get a document with its content
+      description: >-
+        Needs at least the viewer role. `content` is the current document with saved
+        collaboration updates applied; `collaboration_state` is what a real-time editor starts
+        from.
+      operationId: getDocument
+      security: [{ BearerAuth: ['documents:read'] }]
+      responses:
+        '200':
+          description: 'The document with `content` and `collaboration_state`.'
+          content: { application/json: { schema: { $ref: '#/components/schemas/Document' } } }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound', description: '`NOT_FOUND`: no such document, no role on it, or `id` is not a UUID.' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+        '500': { $ref: '#/components/responses/InternalError' }
+        '503': { $ref: '#/components/responses/ServiceUnavailable' }
+    patch:
+      tags: [Documents]
+      summary: Change the title or the content
+      description: >-
+        Needs the editor role. New `content` replaces the stored document and discards its
+        collaboration updates; connected real-time editors receive `BASELINE_REPLACED`.
+        `version` grows by one.
+      operationId: updateDocument
+      security: [{ BearerAuth: ['documents:write'] }]
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content: { application/json: { schema: { $ref: '#/components/schemas/UpdateDocumentRequest' } } }
+      responses:
+        '200':
+          description: 'The document, without `content`.'
+          content: { application/json: { schema: { $ref: '#/components/schemas/DocumentSummary' } } }
+        '400': { $ref: '#/components/responses/BadRequest', description: '`INVALID_JSON`, or `VALIDATION_ERROR` when `id` is not a UUID, `title` is empty, or neither `title` nor `content` is sent (or a rejected `Idempotency-Key`).' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound', description: '`NOT_FOUND`: no such document, or the caller is not an editor of it.' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '413': { $ref: '#/components/responses/PayloadTooLarge', description: '`PAYLOAD_TOO_LARGE`: `content` is above `EXPORT_MAX_DOCUMENT_SIZE`, or the body above the request limit.' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+        '500': { $ref: '#/components/responses/InternalError' }
+        '503': { $ref: '#/components/responses/ServiceUnavailable' }
+    delete:
+      tags: [Documents]
+      summary: Delete a document
+      description: >-
+        Owner only; anyone else gets 404. Comments, versions, permissions and export jobs are
+        deleted with it.
+      operationId: deleteDocument
+      security: [{ BearerAuth: ['documents:write'] }]
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      responses:
+        '204': { description: Deleted. }
+        '400': { $ref: '#/components/responses/BadRequest', description: '`VALIDATION_ERROR`: `id` is not a UUID (or a rejected `Idempotency-Key`).' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound', description: '`NOT_FOUND`: no such document, or the caller is not its owner.' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+        '500': { $ref: '#/components/responses/InternalError' }
+        '503': { $ref: '#/components/responses/ServiceUnavailable' }
+
+  /v1/documents/{docId}/comments:
+    parameters:
+      - $ref: '#/components/parameters/DocId'
+    post:
+      tags: [Comments]
+      summary: Create a comment
+      description: Needs at least the commenter role.
+      operationId: createComment
+      security: [{ BearerAuth: ['documents:write'] }]
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content: { application/json: { schema: { $ref: '#/components/schemas/CreateCommentRequest' } } }
+      responses:
+        '201':
+          description: 'The comment, without `author_name`.'
+          content: { application/json: { schema: { $ref: '#/components/schemas/Comment' } } }
+        '400': { $ref: '#/components/responses/BadRequest', description: '`INVALID_JSON`, or `VALIDATION_ERROR` when `docId` is not a UUID, `content` is missing, `anchor_type` is unknown, or `block_id`, `from` or `to` is missing or invalid for the anchor (or a rejected `Idempotency-Key`).' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound', description: '`NOT_FOUND`: no such document, or the caller is not at least a commenter.' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '413': { $ref: '#/components/responses/PayloadTooLarge' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+        '500': { $ref: '#/components/responses/InternalError' }
+        '503': { $ref: '#/components/responses/ServiceUnavailable' }
+    get:
+      tags: [Comments]
+      summary: List comments
+      description: >-
+        Needs at least the viewer role. A cursor page, oldest first (creation time, then ID);
+        replies are separate items with `parent_id`. A comment resolved while you read the pages
+        leaves the remaining pages as they were.
+      operationId: listComments
+      security: [{ BearerAuth: ['documents:read'] }]
+      parameters:
+        - name: include_resolved
+          in: query
+          description: 'Only the exact value `true` includes resolved comments.'
+          schema: { type: boolean, default: false }
+        - $ref: '#/components/parameters/PageLimit'
+        - $ref: '#/components/parameters/PageCursor'
+      responses:
+        '200':
+          description: A page of comments.
+          content: { application/json: { schema: { $ref: '#/components/schemas/CommentPage' } } }
+        '400': { $ref: '#/components/responses/BadRequest', description: '`VALIDATION_ERROR`: `docId` is not a UUID, or `cursor` is malformed.' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+        '500': { $ref: '#/components/responses/InternalError' }
+        '503': { $ref: '#/components/responses/ServiceUnavailable' }
+
+  /v1/documents/{docId}/comments/{commentId}/replies:
+    parameters:
+      - $ref: '#/components/parameters/DocId'
+      - $ref: '#/components/parameters/CommentId'
+    post:
+      tags: [Comments]
+      summary: Reply to a comment
+      description: >-
+        Needs at least the commenter role. The reply takes `anchor_type` and `block_id` from
+        the parent (not `from`, `to` or `metadata`) and has `parent_id`. Any comment of the
+        document can be the parent, a reply or a resolved comment included.
+      operationId: replyToComment
+      security: [{ BearerAuth: ['documents:write'] }]
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content: { application/json: { schema: { $ref: '#/components/schemas/CreateReplyRequest' } } }
+      responses:
+        '201':
+          description: 'The reply, with `parent_id`.'
+          content: { application/json: { schema: { $ref: '#/components/schemas/Comment' } } }
+        '400': { $ref: '#/components/responses/BadRequest', description: '`INVALID_JSON`, or `VALIDATION_ERROR` when `docId` is not a UUID or `content` is missing (or a rejected `Idempotency-Key`).' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound', description: '`NOT_FOUND`: no such document, the caller is not at least a commenter, or the document has no comment `commentId` (a `commentId` that is not a UUID included).' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '413': { $ref: '#/components/responses/PayloadTooLarge' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+        '500': { $ref: '#/components/responses/InternalError' }
+        '503': { $ref: '#/components/responses/ServiceUnavailable' }
+
+  /v1/documents/{docId}/comments/{commentId}/resolve:
+    parameters:
+      - $ref: '#/components/parameters/DocId'
+      - $ref: '#/components/parameters/CommentId'
+    post:
+      tags: [Comments]
+      summary: Resolve a comment
+      description: >-
+        Needs at least the commenter role; any commenter may resolve any comment. Sets
+        `resolved_at` and `resolved_by`. No request body.
+      operationId: resolveComment
+      security: [{ BearerAuth: ['documents:write'] }]
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      responses:
+        '200':
+          description: The comment is resolved.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [status]
+                properties:
+                  status: { type: string, const: resolved }
+        '400': { $ref: '#/components/responses/BadRequest', description: '`VALIDATION_ERROR`: `docId` is not a UUID (or a rejected `Idempotency-Key`).' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound', description: '`NOT_FOUND`: no such document, the caller is not at least a commenter, or the document has no unresolved comment `commentId` (an already resolved one included).' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+        '500': { $ref: '#/components/responses/InternalError', description: '`INTERNAL_ERROR`, also when `commentId` is not a UUID.' }
+        '503': { $ref: '#/components/responses/ServiceUnavailable' }
+
+  /v1/documents/{docId}/comments/{commentId}:
+    parameters:
+      - $ref: '#/components/parameters/DocId'
+      - $ref: '#/components/parameters/CommentId'
+    delete:
+      tags: [Comments]
+      summary: Delete a comment
+      description: >-
+        Needs at least the viewer role and being the comment's author or the document's owner.
+        Replies are deleted with their comment.
+      operationId: deleteComment
+      security: [{ BearerAuth: ['documents:write'] }]
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      responses:
+        '204': { description: Deleted. }
+        '400': { $ref: '#/components/responses/BadRequest', description: '`VALIDATION_ERROR`: `docId` is not a UUID (or a rejected `Idempotency-Key`).' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound', description: '`NOT_FOUND`: no such document or comment, or the caller is neither the author nor the owner.' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+        '500': { $ref: '#/components/responses/InternalError', description: '`INTERNAL_ERROR`, also when `commentId` is not a UUID.' }
+        '503': { $ref: '#/components/responses/ServiceUnavailable' }
+
+  /v1/documents/{docId}/versions:
+    parameters:
+      - $ref: '#/components/parameters/DocId'
+    post:
+      tags: [Versions]
+      summary: Save a version
+      description: >-
+        Needs the editor role. Saves a snapshot of the current content, collaboration updates
+        included.
+      operationId: createVersion
+      security: [{ BearerAuth: ['documents:write'] }]
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content: { application/json: { schema: { $ref: '#/components/schemas/CreateVersionRequest' } } }
+      responses:
+        '201':
+          description: The version.
+          content: { application/json: { schema: { $ref: '#/components/schemas/Version' } } }
+        '400': { $ref: '#/components/responses/BadRequest', description: '`INVALID_JSON`, or `VALIDATION_ERROR` when `docId` is not a UUID, `name` is missing, or `version_type` is not `named` or `milestone` (or a rejected `Idempotency-Key`).' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound', description: '`NOT_FOUND`: no such document, or the caller is not an editor of it.' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '413': { $ref: '#/components/responses/PayloadTooLarge' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+        '500': { $ref: '#/components/responses/InternalError' }
+        '503': { $ref: '#/components/responses/ServiceUnavailable' }
+    get:
+      tags: [Versions]
+      summary: List versions
+      description: >-
+        Needs at least the viewer role. A cursor page, newest first (creation time, then ID),
+        restore points included. A version created while you read the pages appears on the
+        first page of a new listing, not again on the next page.
+      operationId: listVersions
+      security: [{ BearerAuth: ['documents:read'] }]
+      parameters:
+        - $ref: '#/components/parameters/PageLimit'
+        - $ref: '#/components/parameters/PageCursor'
+      responses:
+        '200':
+          description: A page of versions.
+          content: { application/json: { schema: { $ref: '#/components/schemas/VersionPage' } } }
+        '400': { $ref: '#/components/responses/BadRequest', description: '`VALIDATION_ERROR`: `docId` is not a UUID, or `cursor` is malformed.' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+        '500': { $ref: '#/components/responses/InternalError' }
+        '503': { $ref: '#/components/responses/ServiceUnavailable' }
+
+  /v1/documents/{docId}/versions/{versionId}/restore:
+    parameters:
+      - $ref: '#/components/parameters/DocId'
+      - $ref: '#/components/parameters/VersionId'
+    post:
+      tags: [Versions]
+      summary: Restore a version
+      description: >-
+        Needs the editor role. No request body. The current content is first saved as a
+        `restore_point` version named `Before restoring: <versionId>`, whose ID the response
+        returns; then the version's content becomes the document's, collaboration updates are
+        discarded and connected real-time editors receive `BASELINE_REPLACED`.
+      operationId: restoreVersion
+      security: [{ BearerAuth: ['documents:write'] }]
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      responses:
+        '200':
+          description: Restored.
+          content: { application/json: { schema: { $ref: '#/components/schemas/RestoreResult' } } }
+        '400': { $ref: '#/components/responses/BadRequest', description: '`VALIDATION_ERROR`: `docId` is not a UUID (or a rejected `Idempotency-Key`).' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound', description: '`NOT_FOUND`: no such document, the caller is not an editor of it, or the document has no version `versionId`.' }
+        '409': { $ref: '#/components/responses/Conflict', description: '`CONFLICT`: `Document changed during restore`, or an `Idempotency-Key` conflict.' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+        '500': { $ref: '#/components/responses/InternalError', description: '`INTERNAL_ERROR`, also when `versionId` is not a UUID.' }
+        '503': { $ref: '#/components/responses/ServiceUnavailable' }
+
+  /v1/documents/{docId}/permissions:
+    parameters:
+      - $ref: '#/components/parameters/DocId'
+    get:
+      tags: [Permissions]
+      summary: List the document's permissions
+      description: >-
+        Needs the admin role or ownership. The owner is listed only if someone granted the
+        owner a role explicitly.
+      operationId: listPermissions
+      security: [{ BearerAuth: ['documents:read'] }]
+      responses:
+        '200':
+          description: 'Every role granted on the document; `data` is `[]` when there are none.'
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data: { type: array, items: { $ref: '#/components/schemas/Permission' } }
+        '400': { $ref: '#/components/responses/BadRequest', description: '`VALIDATION_ERROR`: `docId` is not a UUID.' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound', description: '`NOT_FOUND`: no such document, or the caller is neither an admin of it nor its owner.' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+        '500': { $ref: '#/components/responses/InternalError' }
+        '503': { $ref: '#/components/responses/ServiceUnavailable' }
+    put:
+      tags: [Permissions]
+      summary: Grant or change a role
+      description: >-
+        Needs the admin role or ownership. Gives the account with `email` the role `role`, or
+        changes the role it has; an admin may grant `admin`.
+      operationId: setPermission
+      security: [{ BearerAuth: ['documents:write'] }]
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content: { application/json: { schema: { $ref: '#/components/schemas/SetPermissionRequest' } } }
+      responses:
+        '200':
+          description: The role is granted.
+          content: { application/json: { schema: { $ref: '#/components/schemas/PermissionGrant' } } }
+        '400': { $ref: '#/components/responses/BadRequest', description: '`INVALID_JSON`, or `VALIDATION_ERROR` when `docId` is not a UUID or `role` is invalid (or a rejected `Idempotency-Key`).' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound', description: '`NOT_FOUND`: no such document, the caller is neither an admin of it nor its owner, or no account has `email` (`User not found`).' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '413': { $ref: '#/components/responses/PayloadTooLarge' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+        '500': { $ref: '#/components/responses/InternalError' }
+        '503': { $ref: '#/components/responses/ServiceUnavailable' }
+
+  /v1/documents/{docId}/permissions/{userId}:
+    parameters:
+      - $ref: '#/components/parameters/DocId'
+      - $ref: '#/components/parameters/UserId'
+    delete:
+      tags: [Permissions]
+      summary: Revoke a user's role
+      description: Owner only. Answers 204 also when the user had no role.
+      operationId: revokePermission
+      security: [{ BearerAuth: ['documents:write'] }]
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      responses:
+        '204': { description: The user has no role on the document. }
+        '400': { $ref: '#/components/responses/BadRequest', description: '`VALIDATION_ERROR`: `docId` is not a UUID (or a rejected `Idempotency-Key`).' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound', description: '`NOT_FOUND`: no such document, or the caller is not its owner.' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+        '500': { $ref: '#/components/responses/InternalError', description: '`INTERNAL_ERROR`, also when `userId` is not a UUID.' }
+        '503': { $ref: '#/components/responses/ServiceUnavailable' }
+
+  /v1/organizations:
+    post:
+      tags: [Organizations]
+      summary: Create an organization
+      description: >-
+        The caller becomes the owner and an `admin` member. Membership does not give access to
+        documents, and quotas follow each user's own plan.
+      operationId: createOrganization
+      security: [{ BearerAuth: ['account:manage'] }]
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content: { application/json: { schema: { $ref: '#/components/schemas/CreateOrganizationRequest' } } }
+      responses:
+        '201':
+          description: The organization.
+          content: { application/json: { schema: { $ref: '#/components/schemas/Organization' } } }
+        '400': { $ref: '#/components/responses/BadRequest', description: '`INVALID_JSON`, or `VALIDATION_ERROR` when `name` or `slug` is missing or invalid (or a rejected `Idempotency-Key`).' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound', description: '`NOT_FOUND`, only when an `Idempotency-Key` repeat finds that the caller is no longer a member.' }
+        '409': { $ref: '#/components/responses/Conflict', description: '`CONFLICT`: `Organization slug already exists`, or an `Idempotency-Key` conflict.' }
+        '413': { $ref: '#/components/responses/PayloadTooLarge' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+        '500': { $ref: '#/components/responses/InternalError' }
+        '503': { $ref: '#/components/responses/ServiceUnavailable' }
+
+  /v1/organizations/{id}:
+    parameters:
+      - $ref: '#/components/parameters/OrganizationId'
+    get:
+      tags: [Organizations]
+      summary: Get an organization
+      description: Members only.
+      operationId: getOrganization
+      security: [{ BearerAuth: ['account:manage'] }]
+      responses:
+        '200':
+          description: The organization.
+          content: { application/json: { schema: { $ref: '#/components/schemas/Organization' } } }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound', description: '`NOT_FOUND`: no such organization, the caller is not a member, or `id` is not a UUID.' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+        '503': { $ref: '#/components/responses/ServiceUnavailable' }
+
+  /v1/organizations/{id}/members:
+    parameters:
+      - $ref: '#/components/parameters/OrganizationId'
+    get:
+      tags: [Organizations]
+      summary: List members
+      description: Members only. Oldest membership first.
+      operationId: listOrganizationMembers
+      security: [{ BearerAuth: ['account:manage'] }]
+      responses:
+        '200':
+          description: The members.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data: { type: array, items: { $ref: '#/components/schemas/OrganizationMember' } }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound', description: '`NOT_FOUND`: no such organization, or the caller is not a member.' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+        '500': { $ref: '#/components/responses/InternalError', description: '`INTERNAL_ERROR`, also when `id` is not a UUID.' }
+        '503': { $ref: '#/components/responses/ServiceUnavailable' }
+    post:
+      tags: [Organizations]
+      summary: Add a member or change a member's role
+      description: >-
+        Organization admins only. Adds the account with `email` with `role`, or changes the role
+        of an existing member. The owner keeps `admin`.
+      operationId: addOrganizationMember
+      security: [{ BearerAuth: ['account:manage'] }]
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content: { application/json: { schema: { $ref: '#/components/schemas/AddMemberRequest' } } }
+      responses:
+        '201':
+          description: The account is a member with this role.
+          content: { application/json: { schema: { $ref: '#/components/schemas/MemberAdded' } } }
+        '400': { $ref: '#/components/responses/BadRequest', description: '`INVALID_JSON`, or `VALIDATION_ERROR` (`Invalid organization role`) (or a rejected `Idempotency-Key`).' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden', description: '`FORBIDDEN`: no `account:manage`; the caller is not an admin member (a non-member, a missing organization or an `id` that is not a UUID included); or the request would demote the owner (`Cannot demote organization owner`).' }
+        '404': { $ref: '#/components/responses/NotFound', description: '`NOT_FOUND`: no account has `email` (`User not found`), or an `Idempotency-Key` repeat finds that the caller is no longer a member.' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '413': { $ref: '#/components/responses/PayloadTooLarge' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+        '500': { $ref: '#/components/responses/InternalError' }
+        '503': { $ref: '#/components/responses/ServiceUnavailable' }
+
+  /v1/organizations/{id}/members/{userId}:
+    parameters:
+      - $ref: '#/components/parameters/OrganizationId'
+      - $ref: '#/components/parameters/UserId'
+    delete:
+      tags: [Organizations]
+      summary: Remove a member
+      description: >-
+        Organization admins only. The owner cannot be removed. Answers 204 also when the user
+        was not a member.
+      operationId: removeOrganizationMember
+      security: [{ BearerAuth: ['account:manage'] }]
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      responses:
+        '204': { description: The user is not a member. }
+        '400': { $ref: '#/components/responses/BadRequest', description: '`VALIDATION_ERROR` for a rejected `Idempotency-Key`.' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden', description: '`FORBIDDEN`: no `account:manage`; the caller is not an admin member; or `userId` is the owner (`Cannot remove organization owner`).' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+        '500': { $ref: '#/components/responses/InternalError', description: '`INTERNAL_ERROR`, also when `userId` is not a UUID.' }
+        '503': { $ref: '#/components/responses/ServiceUnavailable' }
+
+  /v1/exports:
+    post:
+      tags: [Exports]
+      summary: Request an export
+      description: >-
+        Needs at least the viewer role on the document. Creates a `pending` job that a worker
+        converts; poll `GET /v1/exports/{id}`. Every request counts against the plan's monthly
+        export quota.
+      operationId: createExport
+      security: [{ BearerAuth: ['export:use'] }]
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content: { application/json: { schema: { $ref: '#/components/schemas/CreateExportRequest' } } }
+      responses:
+        '202':
+          description: 'The job, `pending`.'
+          content: { application/json: { schema: { $ref: '#/components/schemas/ExportJob' } } }
+        '400': { $ref: '#/components/responses/BadRequest', description: '`INVALID_JSON`, or `VALIDATION_ERROR` when `format` is invalid or `document_id` is missing or not a UUID (or a rejected `Idempotency-Key`).' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '402': { $ref: '#/components/responses/QuotaExceeded', description: '`QUOTA_EXCEEDED`: `Export limit reached for your plan`.' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound', description: '`NOT_FOUND`: no such document, or the caller has no role on it.' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '413': { $ref: '#/components/responses/PayloadTooLarge' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+        '500': { $ref: '#/components/responses/InternalError' }
+        '503': { $ref: '#/components/responses/ServiceUnavailable' }
+
+  /v1/exports/{id}:
+    parameters:
+      - $ref: '#/components/parameters/ExportId'
+    get:
+      tags: [Exports]
+      summary: Get an export job
+      description: >-
+        The caller's own jobs, while the caller can still read the document. A completed job
+        has `url`, a presigned download URL valid for one hour (a new one on every call).
+        Completed jobs are deleted 24 hours after completion, failed ones 7 days after
+        creation.
+      operationId: getExport
+      security: [{ BearerAuth: ['export:use'] }]
+      responses:
+        '200':
+          description: The job.
+          content: { application/json: { schema: { $ref: '#/components/schemas/ExportJob' } } }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound', description: '`NOT_FOUND`: no such job among the caller''s (an `id` that is not a UUID included), or the caller can no longer read its document.' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+        '500': { $ref: '#/components/responses/InternalError' }
+        '503': { $ref: '#/components/responses/ServiceUnavailable', description: '`SERVICE_UNAVAILABLE`: the download URL could not be signed, or Valkey failed.' }
+
+  /v1/ai/complete:
+    post:
+      tags: [AI]
+      summary: Run a text command through the AI provider
+      description: >-
+        With `document_id`, needs at least the viewer role on that document. The body may be up
+        to 1 MiB. Limited per user by `RATE_LIMIT_AI` on top of the API limit. The request
+        reserves one AI request of the monthly quota before the provider call, and it counts
+        only when it succeeds. Provider calls time out after 2 minutes. An `Idempotency-Key`
+        is accepted only without `"stream": true`.
+      operationId: completeAI
+      security: [{ BearerAuth: ['ai:use'] }]
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content: { application/json: { schema: { $ref: '#/components/schemas/AICompleteRequest' } } }
+      responses:
+        '200':
+          description: >-
+            Without `stream`, the completion as JSON. With `"stream": true`, server-sent events:
+            `start` with `model` and `provider`, a `content` event with `text` per chunk, then
+            `done` with `usage`. A failure after the stream started ends it with an `error`
+            event whose `code` is `AI_PROVIDER_ERROR` or `USAGE_RECORD_FAILED`, with a
+            `message`.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AICompletion' }
+            text/event-stream:
+              schema: { type: string, description: 'Events as `event: <name>` and `data: <JSON>` lines, separated by a blank line.' }
+        '400': { $ref: '#/components/responses/BadRequest', description: '`INVALID_JSON` (a body over 1 MiB included), or `VALIDATION_ERROR` for an unsupported `command`, neither `prompt` nor `context`, no `model` for a non-default `provider`, `max_tokens` or `temperature` out of range, a `document_id` that is not a UUID, or an `Idempotency-Key` with `"stream": true`.' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '402': { $ref: '#/components/responses/QuotaExceeded', description: '`QUOTA_EXCEEDED`: `AI request limit reached for your plan`.' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound', description: '`NOT_FOUND`: `document_id` names no document the caller has a role on.' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '413': { $ref: '#/components/responses/PayloadTooLarge' }
+        '429': { $ref: '#/components/responses/RateLimited', description: '`RATE_LIMITED` by `RATE_LIMIT_API` or `RATE_LIMIT_AI`. The `RATE_LIMIT_AI` check runs after the idempotency claim, so under an `Idempotency-Key` its refusal is recorded and a repeat with the same key gets it again for 24 hours.' }
+        '500': { $ref: '#/components/responses/InternalError', description: '`INTERNAL_ERROR`: the quota reservation or the usage record failed.' }
+        '503': { $ref: '#/components/responses/ServiceUnavailable', description: '`SERVICE_UNAVAILABLE`: the provider has no API key on the server or failed before the stream started, or Valkey failed.' }
+
+  /v1/billing/subscribe:
+    post:
+      tags: [Billing]
+      summary: Start a Stripe Checkout for a plan
+      description: >-
+        Needs Stripe settings on the server. Creates the Stripe customer on first use and a
+        Checkout Session for the plan's price; the plan changes when Stripe reports the
+        subscription. With an `Idempotency-Key`, the key (per user) also derives the
+        idempotency key of the Stripe request, so a retry that reaches Stripe again gets the
+        same session; without one, every call creates a new session.
+      operationId: createSubscription
+      security: [{ BearerAuth: ['account:manage'] }]
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content: { application/json: { schema: { $ref: '#/components/schemas/CreateSubscriptionRequest' } } }
+      responses:
+        '200':
+          description: The Checkout Session to send the user to.
+          content: { application/json: { schema: { $ref: '#/components/schemas/Checkout' } } }
+        '400': { $ref: '#/components/responses/BadRequest', description: '`INVALID_JSON`, or `VALIDATION_ERROR` for an unknown `plan` or a return URL that is neither HTTPS nor local HTTP (or a rejected `Idempotency-Key`).' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '413': { $ref: '#/components/responses/PayloadTooLarge' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+        '500': { $ref: '#/components/responses/InternalError', description: '`INTERNAL_ERROR`: a database or Stripe failure.' }
+        '503': { $ref: '#/components/responses/ServiceUnavailable', description: '`SERVICE_UNAVAILABLE`: no Stripe price is configured for the plan (`This billing plan is not configured`), or Valkey failed.' }
+
+  /v1/billing/cancel:
+    post:
+      tags: [Billing]
+      summary: Cancel the active subscription at the end of its period
+      description: >-
+        No request body. Asks Stripe to cancel the active subscription at the end of its period
+        and marks it `canceling`.
+      operationId: cancelSubscription
+      security: [{ BearerAuth: ['account:manage'] }]
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      responses:
+        '200':
+          description: The subscription ends at the end of its period.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [status]
+                properties:
+                  status: { type: string, const: canceling }
+        '400': { $ref: '#/components/responses/BadRequest', description: '`VALIDATION_ERROR` for a rejected `Idempotency-Key`.' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound', description: '`NOT_FOUND`: `No active subscription`.' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+        '500': { $ref: '#/components/responses/InternalError', description: '`INTERNAL_ERROR`: a database or Stripe failure.' }
+        '503': { $ref: '#/components/responses/ServiceUnavailable' }
+
+  /v1/billing/usage:
+    get:
+      tags: [Billing]
+      summary: Get the plan and this month's usage
+      description: >-
+        Documents owned now; AI requests and export jobs in the current calendar month of the
+        database clock.
+      operationId: getUsage
+      security: [{ BearerAuth: ['account:manage'] }]
+      responses:
+        '200':
+          description: The plan and its counters.
+          content: { application/json: { schema: { $ref: '#/components/schemas/Usage' } } }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+        '500': { $ref: '#/components/responses/InternalError' }
+        '503': { $ref: '#/components/responses/ServiceUnavailable' }
 
 components:
   securitySchemes:
     BearerAuth:
       type: http
       scheme: bearer
-      description: API key (gt_live_...) or JWT token
+      description: |
+        `Authorization: Bearer <credential>`. A credential that starts with `gt_` is an API key
+        (`gt_live_sk_…` in production, `gt_test_sk_…` in development); anything else must be an
+        access token from `POST /v1/auth/token`. The account's plan is read on every request.
+
+        The role list of an operation's security requirement names the scope the credential
+        needs (an empty list: any valid credential). `admin` satisfies every scope and cannot be
+        granted through the API. A missing scope answers `403 FORBIDDEN`. Credential errors:
+        `401 UNAUTHORIZED` (no bearer credential), `401 INVALID_API_KEY`, `401 INVALID_TOKEN`
+        (an invalid, expired or revoked token, or a deleted account), and `503` when the token
+        revocation list or the token's account lookup is unavailable.
 
   parameters:
+    IdempotencyKey:
+      name: Idempotency-Key
+      in: header
+      required: false
+      description: |
+        Makes a retry of this mutation safe. At most 255 bytes; scoped to the authenticated
+        user; the record lives 24 hours. Without the header, nothing is recorded.
+
+        - The server claims the key in Valkey before running the request, then records the
+          outcome. A later request with the same key and an identical request (method, URI
+          with query, `Content-Type`, body, and the credential's scopes, document restriction
+          and organization) gets the recorded status, headers and body again, errors included,
+          without running again. Before replaying a successful reply with a body that concerns
+          a document or an organization, the server checks that the caller can still read it
+          (viewer role or membership) and answers `404` otherwise.
+        - `409 CONFLICT` when the key was used for a different request; while the first
+          request is still running or its outcome is uncertain (read the resource instead of
+          repeating the mutation with a new key); or when the first reply was larger than
+          256 KiB and was not kept (the message gives its status).
+        - `400 VALIDATION_ERROR` when the key is longer than 255 bytes, the body is larger than
+          10 MiB or cannot be read, or the request is a streaming AI request (`"stream": true`).
+        - `503 SERVICE_UNAVAILABLE` when Valkey fails or the outcome could not be recorded; in
+          the latter case the request may have run, so keep the key.
+      schema: { type: string, maxLength: 255 }
     PageLimit:
       name: limit
       in: query
-      description: Items per page, 1–100; any other value means 50.
+      description: Items per page, 1–100; any other value, or none, means 50.
       schema: { type: integer, minimum: 1, maximum: 100, default: 50 }
     PageCursor:
       name: cursor
       in: query
-      description: The `next_cursor` of the previous page. Opaque; omit it for the first page.
+      description: >-
+        The `next_cursor` of the previous page; omit it for the first page. Opaque: it names the
+        last item of that page, and the next page starts strictly after it, so items created,
+        resolved or deleted in between neither repeat nor shift the rest. A malformed cursor
+        answers `400 VALIDATION_ERROR`.
       schema: { type: string }
+    DocumentId:
+      name: id
+      in: path
+      required: true
+      description: 'Document ID. A malformed ID answers 404 on `GET` and `400 VALIDATION_ERROR` on `PATCH` and `DELETE`.'
+      schema: { type: string, format: uuid }
+    DocId:
+      name: docId
+      in: path
+      required: true
+      description: 'Document ID in the 36-character form, any case; another spelling answers `400 VALIDATION_ERROR`.'
+      schema: { type: string, format: uuid }
+    CommentId:
+      name: commentId
+      in: path
+      required: true
+      description: Comment ID.
+      schema: { type: string, format: uuid }
+    VersionId:
+      name: versionId
+      in: path
+      required: true
+      description: Version ID.
+      schema: { type: string, format: uuid }
+    UserId:
+      name: userId
+      in: path
+      required: true
+      description: Account ID.
+      schema: { type: string, format: uuid }
+    ApiKeyId:
+      name: id
+      in: path
+      required: true
+      description: 'API key ID in the 36-character form, any case; another spelling answers `400 VALIDATION_ERROR`.'
+      schema: { type: string, format: uuid }
+    OrganizationId:
+      name: id
+      in: path
+      required: true
+      description: Organization ID.
+      schema: { type: string, format: uuid }
+    ExportId:
+      name: id
+      in: path
+      required: true
+      description: Export job ID.
+      schema: { type: string, format: uuid }
+
+  headers:
+    Retry-After:
+      description: The length of the rate-limit window in seconds (60 for a per-minute limit).
+      schema: { type: integer }
 
   responses:
-    NotFound:
-      description: Resource not found
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
+    BadRequest:
+      description: >-
+        `INVALID_JSON`: the body is not JSON, an empty body included. `VALIDATION_ERROR`: a
+        field, ID or query parameter is invalid (the message says which), or the
+        `Idempotency-Key` is rejected (see the header).
+      content: { application/json: { schema: { $ref: '#/components/schemas/ErrorResponse' } } }
+    Unauthorized:
+      description: >-
+        `UNAUTHORIZED`: no `Authorization: Bearer` credential. `INVALID_API_KEY`: an unknown or
+        expired API key. `INVALID_TOKEN`: an invalid, expired or revoked access token, or one
+        whose account no longer exists.
+      content: { application/json: { schema: { $ref: '#/components/schemas/ErrorResponse' } } }
     QuotaExceeded:
-      description: Plan quota exceeded
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
+      description: '`QUOTA_EXCEEDED`: the plan limit is reached.'
+      content: { application/json: { schema: { $ref: '#/components/schemas/ErrorResponse' } } }
+    Forbidden:
+      description: '`FORBIDDEN`: the credential lacks the scope this operation needs.'
+      content: { application/json: { schema: { $ref: '#/components/schemas/ErrorResponse' } } }
+    NotFound:
+      description: '`NOT_FOUND`: the resource does not exist or the caller cannot reach it.'
+      content: { application/json: { schema: { $ref: '#/components/schemas/ErrorResponse' } } }
+    Conflict:
+      description: >-
+        `CONFLICT` from the `Idempotency-Key`: the key was used for a different request, the
+        first request is still running or its outcome is uncertain, or its reply was larger
+        than 256 KiB and was not kept.
+      content: { application/json: { schema: { $ref: '#/components/schemas/ErrorResponse' } } }
+    PayloadTooLarge:
+      description: '`PAYLOAD_TOO_LARGE`: `Content-Length` is above `EXPORT_MAX_DOCUMENT_SIZE` + 1 MiB (11 MiB by default). A longer body sent without its length fails with `400` instead.'
+      content: { application/json: { schema: { $ref: '#/components/schemas/ErrorResponse' } } }
+    RateLimited:
+      description: '`RATE_LIMITED`: too many requests in the window; retry after `Retry-After` seconds.'
+      headers:
+        Retry-After: { $ref: '#/components/headers/Retry-After' }
+      content: { application/json: { schema: { $ref: '#/components/schemas/ErrorResponse' } } }
+    InternalError:
+      description: '`INTERNAL_ERROR`: an unexpected database, storage or provider failure.'
+      content: { application/json: { schema: { $ref: '#/components/schemas/ErrorResponse' } } }
+    ServiceUnavailable:
+      description: >-
+        `SERVICE_UNAVAILABLE`: Valkey (token revocation list, rate limiter or idempotency
+        record) or the token's account lookup failed. `Request outcome could not be recorded;
+        retain the same Idempotency-Key` means that the mutation may have run.
+      content: { application/json: { schema: { $ref: '#/components/schemas/ErrorResponse' } } }
 
   schemas:
     ErrorResponse:
@@ -494,205 +1200,427 @@ components:
         code: { type: string, example: 'NOT_FOUND' }
         message: { type: string, example: 'Resource not found' }
 
-    CreateDocumentRequest:
+    Readiness:
       type: object
-      required: [id, title]
+      required: [status, checks]
       properties:
-        id: { type: string, example: 'doc_k7x9m2' }
-        title: { type: string, example: 'Project Spec' }
-        content: { type: object, description: 'Initial document content (Block[] format)' }
-
-    DocumentResponse:
-      type: object
-      properties:
-        id: { type: string }
-        title: { type: string }
-        version: { type: integer }
-        size_bytes: { type: integer }
-        sync_url: { type: string, format: uri }
-        created_at: { type: string, format: date-time }
-        updated_at: { type: string, format: date-time }
-
-    Page:
-      type: object
-      required: [data, has_more]
-      properties:
-        has_more: { type: boolean, description: 'Another page follows' }
-        next_cursor: { type: string, description: 'Present when has_more is true; pass it as cursor' }
-
-    DocumentListResponse:
-      type: object
-      properties:
-        data: { type: array, items: { $ref: '#/components/schemas/DocumentResponse' } }
-        total: { type: integer }
-        limit: { type: integer }
-        offset: { type: integer }
-
-    DocumentDetailResponse:
-      allOf:
-        - $ref: '#/components/schemas/DocumentResponse'
-        - type: object
-          properties:
-            content: { type: object }
-            collaborators:
-              type: array
-              items:
-                type: object
-                properties:
-                  user_id: { type: string }
-                  role: { type: string, enum: [viewer, commenter, editor, admin] }
-                  added_at: { type: string, format: date-time }
-
-    Comment:
-      type: object
-      properties:
-        id: { type: string }
-        document_id: { type: string }
-        anchor_type: { type: string, enum: [inline, block, document] }
-        anchor_data: { type: object }
-        author_id: { type: string }
-        content: { type: string }
-        parent_id: { type: string, nullable: true }
-        resolved_at: { type: string, format: date-time, nullable: true }
-        created_at: { type: string, format: date-time }
-
-    CreateCommentRequest:
-      type: object
-      required: [anchor_type, content]
-      properties:
-        anchor_type: { type: string, enum: [inline, block, document] }
-        anchor_data: { type: object }
-        content: { type: string }
-        parent_id: { type: string, description: 'Reply to existing comment' }
-
-    Version:
-      type: object
-      properties:
-        id: { type: string }
-        document_id: { type: string }
-        name: { type: string }
-        version_type: { type: string, enum: [auto, manual] }
-        created_by: { type: string }
-        created_at: { type: string, format: date-time }
-        description: { type: string }
-
-    CreateVersionRequest:
-      type: object
-      required: [name]
-      properties:
-        name: { type: string }
-        description: { type: string }
-
-    CreateExportRequest:
-      type: object
-      required: [document_id, format]
-      properties:
-        document_id: { type: string }
-        format: { type: string, enum: [pdf, docx, html, md] }
-
-    ExportJob:
-      type: object
-      properties:
-        id: { type: string }
-        document_id: { type: string }
-        format: { type: string }
-        status: { type: string, enum: [pending, processing, completed, failed] }
-        created_at: { type: string, format: date-time }
-
-    AICompleteRequest:
-      type: object
-      required: [command]
-      properties:
-        provider: { type: string, enum: [openai, anthropic, gemini], default: openai }
-        model: { type: string, default: 'gpt-4o-mini' }
-        document_context:
+        status: { type: string, enum: [ok, degraded] }
+        checks:
           type: object
+          required: [postgres, valkey, r2]
           properties:
-            blocks_before: { type: array }
-            blocks_after: { type: array }
-            selection: { type: string }
-        command: { type: string, enum: [complete, rewrite, summarize, expand, translate, fix_grammar] }
-        prompt: { type: string }
-        stream: { type: boolean, default: true }
+            postgres: { type: string, enum: [ok, unavailable] }
+            valkey: { type: string, enum: [ok, unavailable] }
+            r2: { type: string, enum: [ok, unavailable], description: The object store (R2 or another S3 API). }
 
-    AICompleteResponse:
-      type: object
-      properties:
-        content: { type: string }
-        usage:
-          type: object
-          properties:
-            input_tokens: { type: integer }
-            output_tokens: { type: integer }
+    TokenRequest:
+      oneOf:
+        - $ref: '#/components/schemas/PasswordGrant'
+        - $ref: '#/components/schemas/ApiKeyGrant'
+      discriminator:
+        propertyName: grant_type
+        mapping:
+          password: '#/components/schemas/PasswordGrant'
+          api_key: '#/components/schemas/ApiKeyGrant'
 
-    CreateTokenRequest:
+    PasswordGrant:
       type: object
+      required: [grant_type, email, password]
       properties:
-        user_id: { type: string }
-        document_ids: { type: array, items: { type: string } }
-        scopes: { type: array, items: { type: string } }
-        expires_in: { type: integer, description: 'Seconds', default: 3600 }
+        grant_type: { type: string, const: password }
+        email: { type: string, minLength: 1 }
+        password: { type: string, minLength: 1 }
 
-    TokenResponse:
+    ApiKeyGrant:
       type: object
+      required: [grant_type, api_key]
       properties:
-        token: { type: string }
+        grant_type: { type: string, const: api_key }
+        api_key: { type: string, minLength: 1, description: 'An API key; the token gets its scopes.' }
+
+    Token:
+      type: object
+      required: [access_token, token_type, expires_at]
+      properties:
+        access_token: { type: string, description: 'An ES256 JWT; send it as `Authorization: Bearer <access_token>`.' }
+        token_type: { type: string, const: Bearer }
         expires_at: { type: string, format: date-time }
+
+    User:
+      type: object
+      required: [id, email, name, plan, created_at]
+      properties:
+        id: { type: string, format: uuid }
+        email: { type: string }
+        name: { type: string, description: May be empty. }
+        plan: { $ref: '#/components/schemas/PlanName' }
+        avatar_url: { type: string, description: Present when the account has one. }
+        created_at: { type: string, format: date-time }
+
+    PlanName:
+      type: string
+      description: '`free`, `starter`, `pro`, `business` or `enterprise`; another name has the limits of `free`.'
+
+    Scope:
+      type: string
+      enum: ['documents:read', 'documents:write', 'ai:use', 'export:use', 'account:manage', admin]
+
+    GrantableScope:
+      type: string
+      enum: ['documents:read', 'documents:write', 'ai:use', 'export:use', 'account:manage']
 
     CreateApiKeyRequest:
       type: object
       required: [name, scopes]
       properties:
-        name: { type: string }
-        scopes: { type: array, items: { type: string, enum: [documents, ai, export, admin] } }
+        name: { type: string, minLength: 1 }
+        scopes:
+          type: array
+          description: 'Each scope must also be held by the caller. `[]` makes a key that reaches only the routes without a scope.'
+          items: { $ref: '#/components/schemas/GrantableScope' }
+        expires_at: { type: string, format: date-time, description: 'RFC 3339. The key stops working then, and the hourly cleanup deletes it.' }
 
-    ApiKeyResponse:
+    ApiKey:
       type: object
+      required: [id, name, prefix, scopes, created_at]
       properties:
-        id: { type: string }
+        id: { type: string, format: uuid }
         name: { type: string }
-        key: { type: string, description: 'Shown only once at creation' }
-        key_prefix: { type: string }
-        scopes: { type: array, items: { type: string } }
+        prefix: { type: string, enum: [gt_live_, gt_test_], description: The first 8 characters of the key. }
+        scopes: { type: array, items: { $ref: '#/components/schemas/Scope' } }
+        last_used_at: { type: string, format: date-time, description: Present once the key was used. }
+        expires_at: { type: string, format: date-time, description: Present when the key expires. }
         created_at: { type: string, format: date-time }
 
-    ApiKeySummary:
-      type: object
-      properties:
-        id: { type: string }
-        name: { type: string }
-        key_prefix: { type: string }
-        scopes: { type: array, items: { type: string } }
-        last_used_at: { type: string, format: date-time, nullable: true }
-        created_at: { type: string, format: date-time }
-
-    UserResponse:
-      type: object
-      properties:
-        id: { type: string }
-        email: { type: string }
-        name: { type: string }
-        plan: { type: string }
-        usage:
-          type: object
+    CreatedApiKey:
+      description: 'The new key with its secret; `last_used_at` and `expires_at` are not included, even when `expires_at` was set.'
+      allOf:
+        - $ref: '#/components/schemas/ApiKey'
+        - type: object
+          required: [key]
           properties:
-            documents: { type: integer }
-            documents_limit: { type: integer }
-            ai_requests: { type: integer }
-            ai_requests_limit: { type: integer }
-            exports: { type: integer }
-            exports_limit: { type: integer }
+            key: { type: string, description: '`gt_live_sk_` or `gt_test_sk_` followed by 64 hex characters.' }
 
-    CreateOrganizationRequest:
+    DocumentContent:
+      description: >-
+        GoTipe document JSON, such as `{"version": 1, "blocks": [...]}`. Any JSON value is
+        accepted and stored as sent, without schema validation.
+
+    CreateDocumentRequest:
+      type: object
+      required: [title]
+      properties:
+        id: { type: string, format: uuid, description: 'An ID chosen by the client; a new UUID when omitted.' }
+        title: { type: string, minLength: 1 }
+        content:
+          $ref: '#/components/schemas/DocumentContent'
+          description: '`{"blocks": []}` when omitted. At most `EXPORT_MAX_DOCUMENT_SIZE` bytes.'
+
+    UpdateDocumentRequest:
+      type: object
+      description: '`title`, `content` or both.'
+      anyOf:
+        - required: [title]
+        - required: [content]
+      properties:
+        title: { type: string, minLength: 1 }
+        content:
+          $ref: '#/components/schemas/DocumentContent'
+          description: 'Replaces the stored document. At most `EXPORT_MAX_DOCUMENT_SIZE` bytes.'
+
+    DocumentSummary:
+      type: object
+      required: [id, title, version, size_bytes, created_at, updated_at]
+      properties:
+        id: { type: string, format: uuid }
+        title: { type: string }
+        version: { type: integer, format: int64, description: 'Grows with every change: a `PATCH`, a restore or a saved collaboration update.' }
+        size_bytes: { type: integer, format: int64, description: 'Bytes of the stored content; of the returned `content` in `GET /v1/documents/{id}`.' }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+
+    Document:
+      allOf:
+        - $ref: '#/components/schemas/DocumentSummary'
+        - type: object
+          required: [content]
+          properties:
+            content: { $ref: '#/components/schemas/DocumentContent' }
+            collaboration_state: { $ref: '#/components/schemas/CollaborationState' }
+
+    CollaborationState:
+      type: object
+      description: 'What a real-time editor starts from (`GET /v1/documents/{id}` only).'
+      required: [baseline, updates, generation]
+      properties:
+        baseline: { description: The stored document JSON that the updates apply to. }
+        updates: { type: array, items: {}, description: Saved collaboration updates, oldest first. }
+        generation: { type: string, description: 'Opaque token that names `baseline`; it changes whenever the content is replaced. A real-time editor sends it when it connects.' }
+
+    DocumentList:
+      type: object
+      required: [data, total, limit, offset]
+      properties:
+        data: { type: array, items: { $ref: '#/components/schemas/DocumentSummary' } }
+        total: { type: integer, format: int64, description: All documents the caller can list. }
+        limit: { type: integer, description: The limit applied. }
+        offset: { type: integer, description: The offset applied. }
+
+    Page:
+      type: object
+      description: 'A cursor page. The last page has `has_more: false` and no `next_cursor`.'
+      required: [data, has_more]
+      properties:
+        data: { type: array }
+        has_more: { type: boolean, description: Another page follows. }
+        next_cursor: { type: string, description: 'Present when `has_more` is true; pass it as `cursor`.' }
+
+    CommentPage:
+      allOf:
+        - $ref: '#/components/schemas/Page'
+        - type: object
+          properties:
+            data: { type: array, items: { $ref: '#/components/schemas/Comment' } }
+
+    VersionPage:
+      allOf:
+        - $ref: '#/components/schemas/Page'
+        - type: object
+          properties:
+            data: { type: array, items: { $ref: '#/components/schemas/Version' } }
+
+    Comment:
+      type: object
+      required: [id, document_id, author_id, content, anchor_type, created_at, updated_at]
+      properties:
+        id: { type: string, format: uuid }
+        document_id: { type: string, format: uuid }
+        author_id: { type: string, format: uuid }
+        author_name: { type: string, description: In lists, when the author has a name. }
+        content: { type: string }
+        anchor_type: { type: string, enum: [document, block, inline] }
+        block_id: { type: string, description: Present when the comment has one. }
+        from: { type: integer, format: int32, description: Inline anchors only. }
+        to: { type: integer, format: int32, description: Inline anchors only. }
+        parent_id: { type: string, format: uuid, description: Replies only. }
+        resolved_at: { type: string, format: date-time, description: Resolved comments only. }
+        resolved_by: { type: string, format: uuid, description: Resolved comments only. }
+        metadata: { description: 'Present when the comment was created with `metadata`: the same JSON value, stored as JSONB (object keys may come back reordered).' }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time, description: Changes when the comment is resolved. }
+
+    CreateCommentRequest:
+      type: object
+      required: [content]
+      properties:
+        content: { type: string, minLength: 1 }
+        anchor_type:
+          type: string
+          enum: [document, block, inline]
+          description: '`block` when omitted and `block_id` is set, otherwise `document`.'
+        block_id: { type: string, description: 'Required for `block` and `inline`; kept as sent for `document`.' }
+        from: { type: integer, format: int32, minimum: 0, description: 'Required for `inline`; ignored for other anchors.' }
+        to: { type: integer, format: int32, minimum: 0, description: 'Required for `inline`, at least `from`; ignored for other anchors.' }
+        metadata: { description: 'Any JSON value, stored as JSONB and returned with the comment.' }
+
+    CreateReplyRequest:
+      type: object
+      required: [content]
+      properties:
+        content: { type: string, minLength: 1 }
+
+    Version:
+      type: object
+      required: [id, document_id, name, version_type, created_by, size_bytes, created_at]
+      properties:
+        id: { type: string, format: uuid }
+        document_id: { type: string, format: uuid }
+        name: { type: string }
+        description: { type: string, description: 'Present when not empty; restore points have none.' }
+        version_type: { type: string, enum: [named, milestone, restore_point] }
+        created_by: { type: string, format: uuid }
+        size_bytes: { type: integer, format: int64 }
+        created_at: { type: string, format: date-time }
+
+    CreateVersionRequest:
       type: object
       required: [name]
       properties:
+        name: { type: string, minLength: 1 }
+        description: { type: string }
+        version_type: { type: string, enum: [named, milestone], default: named }
+
+    RestoreResult:
+      type: object
+      required: [status, version_id]
+      properties:
+        status: { type: string, const: restored }
+        version_id: { type: string, format: uuid, description: The restore point that holds the content from before the restore. }
+
+    Role:
+      type: string
+      enum: [viewer, commenter, editor, admin]
+
+    Permission:
+      type: object
+      required: [user_id, user_name, user_email, role, granted_at, granted_by]
+      properties:
+        user_id: { type: string, format: uuid }
+        user_name: { type: string }
+        user_email: { type: string }
+        role: { $ref: '#/components/schemas/Role' }
+        granted_at: { type: string, format: date-time }
+        granted_by: { type: string, description: 'The account that granted the role; empty when unknown.' }
+
+    SetPermissionRequest:
+      type: object
+      required: [email, role]
+      properties:
+        email: { type: string, description: 'The email of an existing account; another, or none, answers 404.' }
+        role: { $ref: '#/components/schemas/Role' }
+
+    PermissionGrant:
+      type: object
+      required: [status, user_id, role]
+      properties:
+        status: { type: string, const: granted }
+        user_id: { type: string, format: uuid }
+        role: { $ref: '#/components/schemas/Role' }
+
+    Organization:
+      type: object
+      required: [id, name, slug, owner_id, plan, created_at]
+      properties:
+        id: { type: string, format: uuid }
         name: { type: string }
+        slug: { type: string }
+        owner_id: { type: string, format: uuid }
+        plan: { $ref: '#/components/schemas/PlanName', description: 'The creator''s plan at creation; quotas follow each user''s own plan.' }
+        created_at: { type: string, format: date-time }
+
+    CreateOrganizationRequest:
+      type: object
+      required: [name, slug]
+      properties:
+        name: { type: string, minLength: 1, maxLength: 200, description: 'Trimmed; 1–200 bytes after trimming.' }
+        slug: { type: string, pattern: '^[a-z0-9](?:[a-z0-9-]{0,98}[a-z0-9])?$', description: 'Unique; 1–100 characters of `a-z`, `0-9` and `-`, not starting or ending with `-`.' }
+
+    OrganizationMember:
+      type: object
+      required: [user_id, name, email, role, joined_at]
+      properties:
+        user_id: { type: string, format: uuid }
+        name: { type: string }
+        email: { type: string }
+        role: { $ref: '#/components/schemas/Role' }
+        joined_at: { type: string, format: date-time }
+
+    AddMemberRequest:
+      type: object
+      required: [email, role]
+      properties:
+        email: { type: string, description: 'The email of an existing account; another, or none, answers 404.' }
+        role: { $ref: '#/components/schemas/Role' }
+
+    MemberAdded:
+      type: object
+      required: [status, user_id, role]
+      properties:
+        status: { type: string, const: added }
+        user_id: { type: string, format: uuid }
+        role: { $ref: '#/components/schemas/Role' }
+
+    ExportFormat:
+      type: string
+      enum: [html, markdown, plaintext, json, pdf, docx]
+
+    CreateExportRequest:
+      type: object
+      required: [document_id, format]
+      properties:
+        document_id: { type: string, format: uuid }
+        format: { $ref: '#/components/schemas/ExportFormat' }
+
+    ExportJob:
+      type: object
+      required: [id, document_id, format, status, created_at]
+      properties:
+        id: { type: string, format: uuid }
+        document_id: { type: string, format: uuid }
+        format: { $ref: '#/components/schemas/ExportFormat' }
+        status: { type: string, enum: [pending, processing, completed, failed] }
+        url: { type: string, format: uri, description: 'Completed jobs: a presigned download URL, valid for one hour.' }
+        error: { type: string, description: 'Failed jobs: the reason.' }
+        created_at: { type: string, format: date-time }
+        completed_at: { type: string, format: date-time, description: Completed and failed jobs. }
+
+    AICompleteRequest:
+      type: object
+      description: '`prompt` with non-space text or a non-null `context` is required.'
+      required: [command]
+      properties:
+        command: { type: string, enum: [complete, rewrite, summarize, translate, fix_grammar, change_tone] }
+        prompt: { type: string, description: The instruction. }
+        context: { description: 'Document context, any JSON; sent to the model as JSON text.' }
+        document_id: { type: string, format: uuid, description: 'The caller needs at least the viewer role on it.' }
+        provider: { type: string, enum: [openai, anthropic, google], description: '`AI_DEFAULT_PROVIDER` when omitted. A provider without an API key on the server answers 503.' }
+        model: { type: string, description: '`AI_DEFAULT_MODEL` when omitted; required when `provider` is not the default.' }
+        max_tokens: { type: integer, minimum: 0, description: 'At most `AI_MAX_TOKENS` (4096 by default); 0 or omitted means `AI_MAX_TOKENS`.' }
+        temperature: { type: number, minimum: 0, maximum: 2 }
+        stream: { type: boolean, default: false, description: Answer with server-sent events. }
+
+    AICompletion:
+      type: object
+      required: [content, model, provider, usage]
+      properties:
+        content: { type: string }
+        model: { type: string }
+        provider: { type: string }
+        usage: { $ref: '#/components/schemas/AIUsage' }
+
+    AIUsage:
+      type: object
+      required: [prompt_tokens, completion_tokens]
+      properties:
+        prompt_tokens: { type: integer }
+        completion_tokens: { type: integer }
+
+    BillingPlan:
+      type: string
+      enum: [starter, pro, business]
 
     CreateSubscriptionRequest:
       type: object
-      required: [plan]
+      required: [plan, success_url, cancel_url]
       properties:
-        plan: { type: string, enum: [starter, pro, business] }
-        success_url: { type: string, format: uri }
-        cancel_url: { type: string, format: uri }
+        plan: { $ref: '#/components/schemas/BillingPlan' }
+        success_url: { type: string, format: uri, description: 'HTTPS, or HTTP on `localhost`, `127.0.0.1` or `::1`; with a host and without user info.' }
+        cancel_url: { type: string, format: uri, description: 'The same rule as `success_url`.' }
+
+    Checkout:
+      type: object
+      required: [checkout_url, plan, status]
+      properties:
+        checkout_url: { type: string, format: uri, description: The Stripe Checkout page. }
+        plan: { $ref: '#/components/schemas/BillingPlan' }
+        status: { type: string, const: pending, description: The plan changes when Stripe reports the subscription. }
+
+    Usage:
+      type: object
+      required: [plan, usage]
+      properties:
+        plan: { $ref: '#/components/schemas/PlanName' }
+        usage:
+          type: object
+          required: [documents, ai_requests, exports]
+          properties:
+            documents: { $ref: '#/components/schemas/UsageCounter', description: Documents owned now. }
+            ai_requests: { $ref: '#/components/schemas/UsageCounter', description: Successful AI requests this month. }
+            exports: { $ref: '#/components/schemas/UsageCounter', description: Export jobs requested this month. }
+
+    UsageCounter:
+      type: object
+      required: [current, limit]
+      properties:
+        current: { type: integer, format: int64 }
+        limit: { type: integer, format: int64, description: '-1 means unlimited.' }
