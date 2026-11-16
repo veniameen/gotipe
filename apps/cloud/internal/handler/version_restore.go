@@ -15,12 +15,15 @@ import (
 // after preserving the pre-restore content. Failed database writes leave it intact.
 func (h *VersionsHandler) RestoreVersion() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		versionID, valid := pathUUID(w, r, "versionId")
+		if !valid {
+			return
+		}
 		docID := chi.URLParam(r, "docId")
 		if !requireDocumentAccess(w, r, h.db.Pool, docID, "editor") {
 			return
 		}
 		user := auth.UserFromContext(r.Context())
-		versionID := chi.URLParam(r, "versionId")
 		var snapshotKey string
 		err := h.db.Pool.QueryRow(r.Context(), `SELECT snapshot_key FROM versions WHERE id = $1 AND document_id = $2`, versionID, docID).Scan(&snapshotKey)
 		if errors.Is(err, pgx.ErrNoRows) {

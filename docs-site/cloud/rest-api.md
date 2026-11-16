@@ -20,8 +20,8 @@ calls.
   allowed request headers are `Accept`, `Authorization`, `Content-Type`, `Idempotency-Key` and
   `X-Request-ID`; `X-Request-ID` and `Retry-After` are readable.
 - A request body may be up to `EXPORT_MAX_DOCUMENT_SIZE` plus 1 MiB (11 MiB by default).
-- A document you cannot access answers `404`, the same as one that does not exist. Actions
-  your role does not allow on a document you can see answer `403` or `404`, as noted below.
+- A document you cannot access answers `404`, the same as one that does not exist. An action
+  your role does not allow on a document you can see answers `404` too.
 
 ## Pages
 
@@ -279,8 +279,8 @@ most recently updated first, without `content`. `limit` is 1–100 (otherwise 20
 ### Update
 
 `PATCH /v1/documents/{id}` with `title`, `content` or both → `200` with the document, without
-`content`. New `content` replaces the stored document and discards its collaboration updates.
-Connected real-time editors receive `BASELINE_REPLACED` and must load the document again (see
+`content`. New `content` replaces the stored document and discards its collaboration updates;
+`"content": null` is rejected with `400` (omit `content` to keep it). Connected real-time editors receive `BASELINE_REPLACED` and must load the document again (see
 [Replaced content](/docs/cloud/realtime#replaced-content)).
 
 ### Delete
@@ -319,7 +319,7 @@ Replies have `parent_id`; resolved comments have `resolved_at` and `resolved_by`
 | `content` | `string` | Required. |
 | `anchor_type` | `"document" \| "block" \| "inline"` | Default `"block"` when `block_id` is set, else `"document"`. |
 | `block_id` | `string` | Required for `block` and `inline`. |
-| `from`, `to` | `number` | Required for `inline`: text offsets with `0 ≤ from ≤ to`. |
+| `from`, `to` | `number` | Required for `inline`: text offsets with `0 ≤ from ≤ to ≤ 2147483647`. |
 | `metadata` | any JSON | Stored and returned as is. |
 
 `GET /v1/documents/{docId}/comments?include_resolved=true&limit=50&cursor=…` — a
@@ -401,8 +401,8 @@ role. Organization admins only; demoting the owner answers `403`.
 
 `GET /v1/exports/{id}` — your own job. `status` is `pending`, `processing`, `completed` or
 `failed`; a completed job has `url` (a signed download URL valid for one hour) and
-`completed_at`, a failed one `error`. Jobs disappear 24 hours after completion (7 days after
-failure). See [Server-side conversion](/docs/conversion/server#cloud-export-jobs).
+`completed_at`, a failed one `error`. Jobs disappear 24 hours after completion; a failed job
+7 days after it was created. See [Server-side conversion](/docs/conversion/server#cloud-export-jobs).
 
 ## AI
 
