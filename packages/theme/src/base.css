@@ -160,6 +160,8 @@
 .gotipe-content a:hover {
   text-decoration-color: currentColor;
 }
+/* Inline code's smaller monospace type stands at its own size: with the paragraph's leading in px
+   it would push the line down. The plate is drawn over the glyphs whatever the leading (D-225). */
 .gotipe-content :not(pre) > code {
   padding: var(--gt-inline-pad);
   border-radius: var(--gt-radius-inline);
@@ -167,6 +169,7 @@
   color: inherit;
   font-family: var(--gt-font-mono);
   font-size: var(--gt-inline-code-size);
+  line-height: var(--gt-inline-code-leading);
   letter-spacing: normal;
   -webkit-box-decoration-break: clone;
   box-decoration-break: clone;
