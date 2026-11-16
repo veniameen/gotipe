@@ -265,3 +265,53 @@ describe("an atom at the end of a block with nested blocks", () => {
     expect(editor.getViewState().selection.head).toEqual({ blockId: "parent", offset: 7 });
   });
 });
+
+describe("an IME composition right after an atom (D-226)", () => {
+  /**
+   * What the browser does while an IME composes: marked text at its own caret, then the commit.
+   * The atom's document text stays in the line (`HIDDEN`), so the caret beside it is a text place.
+   */
+  const compose = (text: string) => {
+    const target = editor.element!;
+    const range = document.getSelection()!.getRangeAt(0);
+    target.dispatchEvent(new CompositionEvent("compositionstart", { bubbles: true, data: "" }));
+    const { startContainer: node, startOffset: offset } = range;
+    if (node.nodeType === Node.TEXT_NODE) (node as Text).insertData(offset, text);
+    else node.insertBefore(document.createTextNode(text), node.childNodes[offset] ?? null);
+    target.dispatchEvent(new CompositionEvent("compositionupdate", { bubbles: true, data: text }));
+    target.dispatchEvent(new CompositionEvent("compositionend", { bubbles: true, data: text }));
+  };
+  const before = { text: "Ёж 😀 ", marks: [] };
+  it.each([
+    ["mention", { text: "@Анна Ковалёва", marks: [anna] }, " и всё"],
+    ["mention", { text: "@Анна Ковалёва", marks: [anna] }, ""],
+    ["page", { text: "ADR-0031", marks: [page] }, ""],
+    ["formula", { text: "x^2", marks: [math("1")] }, " и всё"],
+    ["formula", { text: "x^2", marks: [math("1")] }, ""],
+  ])("puts the text after the %s, then the caret (tail «%#»)", async (_name, atom, tail) => {
+    await open([before, atom, ...(tail ? [{ text: tail, marks: [] }] : [])]);
+    const end = before.text.length + atom.text.length;
+    act(() => {
+      editor.focus();
+      editor.setSelection({
+        anchor: { blockId: "p", offset: end },
+        head: { blockId: "p", offset: end },
+      });
+    });
+    // The DOM caret stands beside the atom, not in its text: the browser composes there.
+    const at = document.getSelection()!.anchorNode!;
+    expect(block().contains(at)).toBe(true);
+    expect(
+      (at instanceof Element ? at : at.parentElement!).closest("[data-gotipe-atom]"),
+    ).toBeNull();
+    act(() => compose("漢字"));
+    expect(editor.getJSON().blocks[0]!.content).toEqual([
+      before,
+      atom,
+      { text: `漢字${tail}`, marks: [] },
+    ]);
+    expect(editor.getViewState().selection.head).toEqual({ blockId: "p", offset: end + 2 });
+    expect(documentText(block())).toBe(`${before.text}${atom.text}漢字${tail}`);
+    expect(block().querySelectorAll("[data-gotipe-atom]")).toHaveLength(1);
+  });
+});
