@@ -105,14 +105,16 @@ func (h *DocumentsHandler) CreateDocument() http.HandlerFunc {
 			return
 		}
 
-		docID := req.ID
-		if docID == "" {
-			docID = uuid.New().String()
-		}
-
-		if _, err := uuid.Parse(docID); err != nil {
-			apierror.ErrValidation.WithMessage("id must be a UUID").Write(w)
-			return
+		docID := uuid.New().String()
+		if req.ID != "" {
+			// Only the 36-character form, returned in lower case: {…}, urn:uuid:… and
+			// 32 hex digits would come back as sent and name the document twice.
+			id, valid := canonicalUUID(req.ID)
+			if !valid {
+				apierror.ErrValidation.WithMessage("id must be a UUID").Write(w)
+				return
+			}
+			docID = id
 		}
 
 		if !user.AllowsDocument(docID) {
@@ -120,7 +122,7 @@ func (h *DocumentsHandler) CreateDocument() http.HandlerFunc {
 			return
 		}
 		contentBytes := req.Content
-		if contentBytes == nil {
+		if contentBytes == nil || string(contentBytes) == "null" {
 			contentBytes = json.RawMessage(`{"blocks":[]}`)
 		}
 
@@ -197,7 +199,10 @@ func (h *DocumentsHandler) GetDocument() http.HandlerFunc {
 			return
 		}
 
-		docID := chi.URLParam(r, "id")
+		docID, valid := pathUUID(w, r, "id")
+		if !valid {
+			return
+		}
 		if !user.AllowsDocument(docID) {
 			apierror.ErrNotFound.Write(w)
 			return
@@ -308,7 +313,10 @@ func (h *DocumentsHandler) UpdateDocument() http.HandlerFunc {
 			return
 		}
 
-		docID := chi.URLParam(r, "id")
+		docID, valid := pathUUID(w, r, "id")
+		if !valid {
+			return
+		}
 		if !user.AllowsDocument(docID) {
 			apierror.ErrNotFound.Write(w)
 			return
@@ -339,6 +347,11 @@ func (h *DocumentsHandler) UpdateDocument() http.HandlerFunc {
 		}
 		if req.Title == nil && req.Content == nil {
 			apierror.ErrValidation.WithMessage("title or content is required").Write(w)
+			return
+		}
+		// JSON null would be stored as the document and reset collaboration updates.
+		if req.Content != nil && string(req.Content) == "null" {
+			apierror.ErrValidation.WithMessage("content must be a document; omit it to keep the current content").Write(w)
 			return
 		}
 		var sizeBytes *int64

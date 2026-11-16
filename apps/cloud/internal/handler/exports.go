@@ -6,7 +6,6 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 	"github.com/gotipe/cloud/internal/apierror"
 	"github.com/gotipe/cloud/internal/audit"
@@ -118,7 +117,10 @@ func (h *ExportsHandler) GetExport() http.HandlerFunc {
 			return
 		}
 
-		jobID := chi.URLParam(r, "id")
+		jobID, valid := pathUUID(w, r, "id")
+		if !valid {
+			return
+		}
 
 		var resp ExportResponse
 		var r2Key *string

@@ -148,7 +148,11 @@ func LoadFrom(lookup func(string) (string, bool)) (*Config, error) {
 		LogFormat:         env.text("LOG_FORMAT", "json"),
 	}
 	origins, set := env.lookup("HTTP_ALLOWED_ORIGINS")
-	c.HTTPAllowedOrigins = httpOrigins(origins, set, c.Environment)
+	httpAllowed, err := httpOrigins(origins, set, c.Environment)
+	if err != nil {
+		env.fail("%v", err)
+	}
+	c.HTTPAllowedOrigins = httpAllowed
 	if env.err != nil {
 		return nil, env.err
 	}

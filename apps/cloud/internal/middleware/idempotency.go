@@ -6,6 +6,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -27,8 +28,10 @@ type cachedResponse struct {
 	Status      int         `json:"status"`
 	Headers     http.Header `json:"headers,omitempty"`
 	Body        []byte      `json:"body,omitempty"`
-	// Omitted marks a completed request whose reply exceeded MaxReplayBody.
+	// Omitted marks a completed request whose reply was not kept: it exceeded
+	// MaxReplayBody, or it carried a secret (Secret) that must not rest in Valkey.
 	Omitted bool `json:"omitted,omitempty"`
+	Secret  bool `json:"secret,omitempty"`
 }
 
 // MaxReplayBody bounds the reply one idempotency record keeps in Valkey for 24
@@ -38,12 +41,48 @@ const MaxReplayBody = 256 << 10
 
 const claimIdempotency = `if redis.call('SET',KEYS[1],ARGV[1],'NX','EX',86400) then return 1 else return 0 end`
 
+// releaseIdempotency drops a claim only while it is still the pending record of
+// the request that made it.
+const releaseIdempotency = `if redis.call('GET',KEYS[1])==ARGV[1] then return redis.call('DEL',KEYS[1]) else return 0 end`
+
+type outcomeKey struct{}
+
+// replayOutcome is how the layers below IdempotencyMiddleware describe the reply
+// they wrote. The handler chain runs in the request goroutine, so it needs no lock.
+type replayOutcome struct{ notRun, secret bool }
+
+func outcomeOf(r *http.Request) *replayOutcome {
+	outcome, _ := r.Context().Value(outcomeKey{}).(*replayOutcome)
+	return outcome
+}
+
+// MarkNotRun says that the request was refused before it ran and changed nothing,
+// such as a rate limit refusal. Such a reply is not the request's result:
+// IdempotencyMiddleware releases the key, so a retry with the same key runs. Outside
+// IdempotencyMiddleware it does nothing.
+func MarkNotRun(r *http.Request) {
+	if outcome := outcomeOf(r); outcome != nil {
+		outcome.notRun = true
+	}
+}
+
+// MarkSecretReply says that the reply carries a secret shown once, such as a new API
+// key. IdempotencyMiddleware then records only the status: the secret never rests in
+// Valkey, and a repeat answers 409 instead of showing it again.
+func MarkSecretReply(r *http.Request) {
+	if outcome := outcomeOf(r); outcome != nil {
+		outcome.secret = true
+	}
+}
+
 type ReplayAuthorizer func(http.ResponseWriter, *http.Request, []byte, []byte) bool
 
 // IdempotencyMiddleware claims a key before invoking the mutation. An uncertain
 // write remains claimed, so retries cannot repeat an operation after storage or
-// process failure. Identical completed requests replay their original response.
-func IdempotencyMiddleware(store IdempotencyStore, authorize ...ReplayAuthorizer) func(http.Handler) http.Handler {
+// process failure. Identical completed requests replay their original response; a
+// refusal marked with MarkNotRun releases the key instead. maxBody is the request
+// body limit of the router: a body the API accepts is accepted with a key too.
+func IdempotencyMiddleware(store IdempotencyStore, maxBody int64, authorize ...ReplayAuthorizer) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			key := r.Header.Get("Idempotency-Key")
@@ -60,9 +99,14 @@ func IdempotencyMiddleware(store IdempotencyStore, authorize ...ReplayAuthorizer
 				apierror.ErrUnauthorized.Write(w)
 				return
 			}
-			body, err := io.ReadAll(http.MaxBytesReader(w, r.Body, 10<<20))
+			body, err := io.ReadAll(http.MaxBytesReader(w, r.Body, maxBody))
+			var tooLarge *http.MaxBytesError
+			if errors.As(err, &tooLarge) {
+				errBodyTooLarge.Write(w)
+				return
+			}
 			if err != nil {
-				apierror.ErrValidation.WithMessage("Request body exceeds limit or cannot be read").Write(w)
+				apierror.ErrValidation.WithMessage("Request body cannot be read").Write(w)
 				return
 			}
 			r.Body = io.NopCloser(bytes.NewReader(body))
@@ -116,6 +160,10 @@ func IdempotencyMiddleware(store IdempotencyStore, authorize ...ReplayAuthorizer
 					apierror.ErrConflict.WithMessage("The original request is pending or its result is uncertain; do not repeat the mutation with a new key").Write(w)
 					return
 				}
+				if response.Secret {
+					apierror.ErrConflict.WithMessage(fmt.Sprintf("The original request completed with status %d; its response held a secret that is shown only once and is not kept for replay, so read the resource instead of repeating the mutation", response.Status)).Write(w)
+					return
+				}
 				if response.Omitted {
 					apierror.ErrConflict.WithMessage(fmt.Sprintf("The original request completed with status %d; its response was too large to keep for replay, so read the resource instead of repeating the mutation", response.Status)).Write(w)
 					return
@@ -131,12 +179,24 @@ func IdempotencyMiddleware(store IdempotencyStore, authorize ...ReplayAuthorizer
 				return
 			}
 			recorder := httptest.NewRecorder()
-			next.ServeHTTP(recorder, r)
+			outcome := &replayOutcome{}
+			next.ServeHTTP(recorder, r.WithContext(context.WithValue(r.Context(), outcomeKey{}, outcome)))
 			response := cachedResponse{Fingerprint: fingerprint, Status: recorder.Code, Headers: recorder.Header().Clone(), Body: recorder.Body.Bytes()}
+			if outcome.notRun {
+				// A detached context: a client that hung up must not leave the key claimed.
+				release, cancel := context.WithTimeout(context.WithoutCancel(r.Context()), 5*time.Second)
+				defer cancel()
+				if _, err := store.Eval(release, releaseIdempotency, []string{cacheKey}, string(pending)); err != nil {
+					apierror.ErrServiceDown.WithMessage("The request did not run, but its Idempotency-Key could not be released; retry with a new key").Write(w)
+					return
+				}
+				writeCached(w, response)
+				return
+			}
 			record := response
-			if len(record.Body) > MaxReplayBody {
+			if outcome.secret || len(record.Body) > MaxReplayBody {
 				// The caller still gets the full reply now; the record keeps only the outcome.
-				record = cachedResponse{Fingerprint: fingerprint, Status: response.Status, Omitted: true}
+				record = cachedResponse{Fingerprint: fingerprint, Status: response.Status, Omitted: true, Secret: outcome.secret}
 			}
 			data, err := json.Marshal(record)
 			if err != nil {

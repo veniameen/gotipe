@@ -2,6 +2,7 @@ package handler
 
 import (
 	"encoding/json"
+	"math"
 	"net/http"
 	"strconv"
 	"time"
@@ -89,7 +90,8 @@ func (h *CommentsHandler) CreateComment() http.HandlerFunc {
 			apierror.ErrValidation.WithMessage("block_id is required for this anchor").Write(w)
 			return
 		}
-		if req.AnchorType == "inline" && (req.From == nil || req.To == nil || *req.From < 0 || *req.To < *req.From) {
+		// The anchor columns are INTEGER: a larger offset would fail in PostgreSQL.
+		if req.AnchorType == "inline" && (req.From == nil || req.To == nil || *req.From < 0 || *req.To < *req.From || *req.To > math.MaxInt32) {
 			apierror.ErrValidation.WithMessage("valid from and to are required for inline anchors").Write(w)
 			return
 		}
@@ -196,11 +198,14 @@ func (h *CommentsHandler) ReplyToComment() http.HandlerFunc {
 			return
 		}
 
+		parentID, valid := pathUUID(w, r, "commentId")
+		if !valid {
+			return
+		}
 		docID := chi.URLParam(r, "docId")
 		if !requireDocumentAccess(w, r, h.db.Pool, docID, "commenter") {
 			return
 		}
-		parentID := chi.URLParam(r, "commentId")
 
 		var req struct {
 			Content string `json:"content"`
@@ -262,11 +267,14 @@ func (h *CommentsHandler) ResolveComment() http.HandlerFunc {
 			return
 		}
 
+		commentID, valid := pathUUID(w, r, "commentId")
+		if !valid {
+			return
+		}
 		docID := chi.URLParam(r, "docId")
 		if !requireDocumentAccess(w, r, h.db.Pool, docID, "commenter") {
 			return
 		}
-		commentID := chi.URLParam(r, "commentId")
 
 		result, err := h.db.Pool.Exec(r.Context(),
 			`UPDATE comments SET resolved_at = now(), resolved_by = $1, updated_at = now()
@@ -297,11 +305,14 @@ func (h *CommentsHandler) DeleteComment() http.HandlerFunc {
 			return
 		}
 
+		commentID, valid := pathUUID(w, r, "commentId")
+		if !valid {
+			return
+		}
 		docID := chi.URLParam(r, "docId")
 		if !requireDocumentAccess(w, r, h.db.Pool, docID, "viewer") {
 			return
 		}
-		commentID := chi.URLParam(r, "commentId")
 
 		// Only author or document owner can delete
 		result, err := h.db.Pool.Exec(r.Context(),

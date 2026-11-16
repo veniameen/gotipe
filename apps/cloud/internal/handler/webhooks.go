@@ -33,7 +33,11 @@ func (h *WebhooksHandler) StripeWebhook() http.HandlerFunc {
 			apierror.ErrInvalidJSON.Write(w)
 			return
 		}
-		event, err := webhook.ConstructEvent(body, r.Header.Get("Stripe-Signature"), h.webhookSecret)
+		// The signature and its 5-minute tolerance are checked; the API version is not.
+		// Processing reads only the subscription ID from the event and fetches the
+		// subscription again, so the endpoint may use any API version.
+		event, err := webhook.ConstructEventWithOptions(body, r.Header.Get("Stripe-Signature"), h.webhookSecret,
+			webhook.ConstructEventOptions{IgnoreAPIVersionMismatch: true})
 		if err != nil || event.ID == "" {
 			apierror.ErrValidation.WithMessage("Invalid webhook signature or event").Write(w)
 			return

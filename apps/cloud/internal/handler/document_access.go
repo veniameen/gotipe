@@ -2,6 +2,7 @@ package handler
 
 import (
 	"errors"
+	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 	"github.com/gotipe/cloud/internal/apierror"
 	"github.com/gotipe/cloud/internal/auth"
@@ -22,6 +23,16 @@ func canonicalUUID(id string) (string, bool) {
 		return "", false
 	}
 	return parsed.String(), true
+}
+
+// pathUUID reads a UUID route parameter in canonical form. Any other value answers
+// 400 before the database sees it; PostgreSQL would fail on it with a 500.
+func pathUUID(w http.ResponseWriter, r *http.Request, name string) (string, bool) {
+	id, valid := canonicalUUID(chi.URLParam(r, name))
+	if !valid {
+		apierror.ErrValidation.WithMessage(name + " must be a UUID").Write(w)
+	}
+	return id, valid
 }
 
 // requireDocumentAccess checks permissions before reading any child resource or
