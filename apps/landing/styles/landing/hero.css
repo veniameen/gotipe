@@ -1,7 +1,7 @@
 /* The first stage of the landing: blue light over a blueprint grid, the three lines, the calls to
    action, the install line, the live window and the strip of what GoTipe is made of. */
 
-/* ---- the stage: light from above, a grid that fades out below ---- */
+/* ---- the stage: light from above; the flowing light over it is drawn by the page ---- */
 .site-hero {
   padding: calc(var(--site-head-h) + var(--site-hero-top)) 0 var(--site-hero-bottom);
   background: radial-gradient(
@@ -11,25 +11,21 @@
     ), radial-gradient(var(--site-glow-shape-b) at 88% 8%, var(--site-glow-b), transparent 70%),
     linear-gradient(180deg, var(--site-stage-top), var(--site-stage-bottom));
 }
-.site-hero::before {
-  content: "";
+.site-hero-light {
   position: absolute;
   inset: 0;
   z-index: -1;
-  background-image: linear-gradient(var(--site-grid) var(--site-grid-line), transparent 0),
-    linear-gradient(90deg, var(--site-grid) var(--site-grid-line), transparent 0);
-  background-position: center top;
-  background-size: var(--site-grid-step) var(--site-grid-step);
-  -webkit-mask-image: radial-gradient(
-    var(--site-grid-fade) at 50% 0%,
-    var(--site-mask-on) 20%,
-    transparent 75%
-  );
-  mask-image: radial-gradient(
-    var(--site-grid-fade) at 50% 0%,
-    var(--site-mask-on) 20%,
-    transparent 75%
-  );
+  pointer-events: none;
+}
+.site-hero-light > canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  transition: opacity var(--site-dur-4) var(--site-ease);
+}
+.site-hero-light > canvas[data-ready] {
+  opacity: 1;
 }
 
 .site-hero-copy {

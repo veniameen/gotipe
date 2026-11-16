@@ -2,6 +2,7 @@ import Link from "next/link";
 import { CopyButton } from "../site/copy-button";
 import { Icon } from "../site/icon";
 import { LINKS } from "../site/links";
+import { HeroLight } from "./motion/hero-light";
 import { SignatureLive } from "./signature-live";
 
 const INSTALL = "npm i @gotipe/core @gotipe/react";
@@ -36,11 +37,13 @@ function MadeOf({ copy = false }: { copy?: boolean }) {
  * The first stage (Atlas frame 20): the three lines, the calls to action and the install line over
  * the live window — the Markdown file and the document it becomes — then the strip of what GoTipe
  * is made of. The stage stands off the window by the frame on every side; the head floats in it.
+ * Its light flows behind the content and gathers under the pointer (motion/hero-light.tsx).
  */
 export function Hero() {
   return (
     <div className="site-frame">
       <section className="site-stage site-hero" aria-labelledby="site-hero-title">
+        <HeroLight />
         <div className="site-wrap">
           <div className="site-hero-copy">
             <Link className="site-chip" href={LINKS.repo}>

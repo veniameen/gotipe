@@ -4,8 +4,8 @@ import { useEffect } from "react";
 import { figureAt, figureParts } from "./figures";
 
 /** How far the page scrolls before the head turns to glass; it turns back a little higher. */
-const SCROLLED_ON = 24;
-const SCROLLED_OFF = 8;
+const SCROLLED_ON = 12;
+const SCROLLED_OFF = 4;
 /** A figure counts for this long once it comes into view. */
 const COUNT_MS = 1400;
 /** Blocks start to rise a little before they reach the viewport's bottom edge. */
@@ -14,16 +14,20 @@ const REVEAL_MARGIN = "0px 0px -8% 0px";
 const reducedMotion = () =>
   window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false;
 
-/** The head's glass: `data-site-scrolled` on <html> past the first few pixels, with hysteresis. */
+/**
+ * The head's glass: `data-scrolled` on the landing's head past the first few pixels, with
+ * hysteresis, so a page resting near the threshold does not flicker between the two.
+ */
 function followScroll(): () => void {
-  const root = document.documentElement;
+  const heads = [...document.querySelectorAll<HTMLElement>(".site-head")];
   let frame = 0;
+  let scrolled = false;
   const update = () => {
     frame = 0;
-    const scrolled = root.hasAttribute("data-site-scrolled")
-      ? window.scrollY > SCROLLED_OFF
-      : window.scrollY > SCROLLED_ON;
-    root.toggleAttribute("data-site-scrolled", scrolled);
+    const next = scrolled ? window.scrollY > SCROLLED_OFF : window.scrollY > SCROLLED_ON;
+    if (next === scrolled) return;
+    scrolled = next;
+    for (const head of heads) head.toggleAttribute("data-scrolled", scrolled);
   };
   const onScroll = () => {
     if (!frame) frame = requestAnimationFrame(update);
@@ -33,7 +37,7 @@ function followScroll(): () => void {
   return () => {
     window.removeEventListener("scroll", onScroll);
     if (frame) cancelAnimationFrame(frame);
-    root.removeAttribute("data-site-scrolled");
+    for (const head of heads) head.removeAttribute("data-scrolled");
   };
 }
 

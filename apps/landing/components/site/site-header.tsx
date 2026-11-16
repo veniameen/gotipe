@@ -29,7 +29,7 @@ function GitHubLink() {
 
 /**
  * The landing's head (Atlas frame 20): a bar in the frame, clear over the first stage and glass
- * once the page scrolls (`data-site-scrolled`, motion/controller.tsx). The mark, the links in the
+ * once the page scrolls (`data-scrolled` on the head, motion/controller.tsx). The mark, the links in the
  * middle and the actions stand on one middle line.
  */
 export function SiteHeader() {
