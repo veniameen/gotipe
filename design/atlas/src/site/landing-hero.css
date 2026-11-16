@@ -3,7 +3,7 @@
    beam on its edge and the strip of what GoTipe is made of; then the facts. The site animates them
    (apps/landing/styles/landing/motion.css); the frame draws the state they settle in. */
 
-/* ---- the stage: light from above; the flowing light over it is drawn by the page ---- */
+/* ---- the stage: light from above; the Markdown lens over it is drawn by the page ---- */
 .site-hero {
   padding: calc(var(--site-head-h) + var(--site-hero-top)) 0 var(--site-hero-bottom);
   background: radial-gradient(
@@ -13,20 +13,20 @@
     ), radial-gradient(var(--site-glow-shape-b) at 88% 8%, var(--site-glow-b), transparent 70%),
     linear-gradient(180deg, var(--site-stage-top), var(--site-stage-bottom));
 }
-.site-hero-light {
+.site-hero-lens {
   position: absolute;
   inset: 0;
   z-index: -1;
   pointer-events: none;
 }
-.site-hero-light > canvas {
+.site-hero-lens > canvas {
   display: block;
   width: 100%;
   height: 100%;
   opacity: 0;
   transition: opacity var(--site-dur-4) var(--site-ease);
 }
-.site-hero-light > canvas[data-ready] {
+.site-hero-lens > canvas[data-ready] {
   opacity: 1;
 }
 

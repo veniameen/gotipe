@@ -1128,12 +1128,16 @@
   --site-window-shadow: 0 1px 2px rgb(18 30 60 / 0.05), 0 40px 80px -40px rgb(30 60 130 / 0.42);
   --site-scrim: rgb(18 30 60 / 0.24);
   --site-highlight: rgb(44 98 212 / 0.14);
-  /* the stage's flowing light (motion/hero-light.tsx): three colours, how much of them, the lines */
-  --site-light-1: #2c62d4;
-  --site-light-2: #0ea5e9;
-  --site-light-3: #8fb4ff;
-  --site-light-strength: 0.3;
-  --site-light-lines: 0.75;
+  /* the stage's Markdown lens (motion/hero-lens.tsx): the dim source and its syntax, the document
+     under the glass, the glass and its ring, the ground of code */
+  --site-lens-source: rgb(28 44 90 / 0.15);
+  --site-lens-mark: rgb(44 98 212 / 0.36);
+  --site-lens-ink: #1d2330;
+  --site-lens-quiet: #5d6475;
+  --site-lens-accent: #2c62d4;
+  --site-lens-fill: rgb(255 255 255 / 0.86);
+  --site-lens-ring: rgb(44 98 212 / 0.42);
+  --site-lens-code: rgb(44 98 212 / 0.09);
   --site-code-shade: rgb(18 30 60 / 0.14);
   --site-hub-glow: 0 0 48px -8px rgb(44 98 212 / 0.35), 0 16px 40px -24px rgb(18 30 60 / 0.3);
 }
@@ -1185,11 +1189,14 @@
   --site-window-shadow: 0 0 0 1px rgb(255 255 255 / 0.06), 0 48px 96px -40px rgb(0 0 0 / 0.9);
   --site-scrim: rgb(0 0 0 / 0.6);
   --site-highlight: rgb(107 156 255 / 0.2);
-  --site-light-1: #3d6fea;
-  --site-light-2: #22b3f0;
-  --site-light-3: #c2d6ff;
-  --site-light-strength: 0.55;
-  --site-light-lines: 0.55;
+  --site-lens-source: rgb(176 196 255 / 0.11);
+  --site-lens-mark: rgb(107 156 255 / 0.36);
+  --site-lens-ink: #e9edf6;
+  --site-lens-quiet: #9aa4ba;
+  --site-lens-accent: #7ba7ff;
+  --site-lens-fill: rgb(13 18 30 / 0.88);
+  --site-lens-ring: rgb(107 156 255 / 0.5);
+  --site-lens-code: rgb(107 156 255 / 0.12);
   --site-code-shade: rgb(0 0 0 / 0.5);
   --site-hub-glow: 0 0 56px -8px rgb(80 130 255 / 0.45), 0 16px 40px -24px rgb(0 0 0 / 0.8);
 }
@@ -4616,7 +4623,7 @@ html:not([data-theme="dark"]) .site-theme-to-light {
    beam on its edge and the strip of what GoTipe is made of; then the facts. The site animates them
    (apps/landing/styles/landing/motion.css); the frame draws the state they settle in. */
 
-/* ---- the stage: light from above; the flowing light over it is drawn by the page ---- */
+/* ---- the stage: light from above; the Markdown lens over it is drawn by the page ---- */
 .site-hero {
   padding: calc(var(--site-head-h) + var(--site-hero-top)) 0 var(--site-hero-bottom);
   background: radial-gradient(
@@ -4626,20 +4633,20 @@ html:not([data-theme="dark"]) .site-theme-to-light {
     ), radial-gradient(var(--site-glow-shape-b) at 88% 8%, var(--site-glow-b), transparent 70%),
     linear-gradient(180deg, var(--site-stage-top), var(--site-stage-bottom));
 }
-.site-hero-light {
+.site-hero-lens {
   position: absolute;
   inset: 0;
   z-index: -1;
   pointer-events: none;
 }
-.site-hero-light > canvas {
+.site-hero-lens > canvas {
   display: block;
   width: 100%;
   height: 100%;
   opacity: 0;
   transition: opacity var(--site-dur-4) var(--site-ease);
 }
-.site-hero-light > canvas[data-ready] {
+.site-hero-lens > canvas[data-ready] {
   opacity: 1;
 }
 
@@ -10513,8 +10520,10 @@ editor<span class="tk-pun">.</span>on<span class="tk-pun">(</span><span class="t
     <span class="at-num">20</span>
     <h2 class="at-figure-title">Главная страница</h2>
     <p class="at-caption">
-      Главная по образцу владельца (zydeo-web) голосом GoTipe. Подложка первого экрана отстоит от края окна одинаково со всех сторон, по ней течёт свет — тонкие линии потока в синих акцента
-      (шейдер на сайте), он собирается под курсором и стихает за заголовком; кадр рисует свет в покое. Шапка — полоса во всю рамку, прозрачная над первым экраном; когда страница начинает
+      Главная по образцу владельца (zydeo-web) голосом GoTipe. Подложка первого экрана отстоит от края окна одинаково со всех сторон. На сайте под первым экраном лежит исходник Markdown —
+      тусклые моно-строки нескольких файлов, одна из них набирается; линза под курсором показывает
+      те же строки документом: заголовки, списки, задачи, цитаты, код, таблицы. Без мыши линза
+      обходит заголовок сама, за текстом поле стихает, на телефоне она появляется только под указателем. Кадр рисует свет первого экрана без линзы. Шапка — полоса во всю рамку, прозрачная над первым экраном; когда страница начинает
       прокручиваться, её стекло плавно сжимается до колонки страницы, а знак, ссылки и кнопки не сдвигаются: они на одной средней линии и на краях колонки (третий кадр). «rules.» выделено,
       как в редакторе, за ним мигает каретка; живое окно —
       Markdown слева, документ справа, по краю бежит луч; на телефоне окно переключает «Document» и «Markdown». Дальше: факты, которые досчитываются при появлении; стек — ваш интерфейс и ваша

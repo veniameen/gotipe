@@ -446,12 +446,16 @@
   --site-window-shadow: 0 1px 2px rgb(18 30 60 / 0.05), 0 40px 80px -40px rgb(30 60 130 / 0.42);
   --site-scrim: rgb(18 30 60 / 0.24);
   --site-highlight: rgb(44 98 212 / 0.14);
-  /* the stage's flowing light (motion/hero-light.tsx): three colours, how much of them, the lines */
-  --site-light-1: #2c62d4;
-  --site-light-2: #0ea5e9;
-  --site-light-3: #8fb4ff;
-  --site-light-strength: 0.3;
-  --site-light-lines: 0.75;
+  /* the stage's Markdown lens (motion/hero-lens.tsx): the dim source and its syntax, the document
+     under the glass, the glass and its ring, the ground of code */
+  --site-lens-source: rgb(28 44 90 / 0.15);
+  --site-lens-mark: rgb(44 98 212 / 0.36);
+  --site-lens-ink: #1d2330;
+  --site-lens-quiet: #5d6475;
+  --site-lens-accent: #2c62d4;
+  --site-lens-fill: rgb(255 255 255 / 0.86);
+  --site-lens-ring: rgb(44 98 212 / 0.42);
+  --site-lens-code: rgb(44 98 212 / 0.09);
   --site-code-shade: rgb(18 30 60 / 0.14);
   --site-hub-glow: 0 0 48px -8px rgb(44 98 212 / 0.35), 0 16px 40px -24px rgb(18 30 60 / 0.3);
 }
@@ -503,11 +507,14 @@
   --site-window-shadow: 0 0 0 1px rgb(255 255 255 / 0.06), 0 48px 96px -40px rgb(0 0 0 / 0.9);
   --site-scrim: rgb(0 0 0 / 0.6);
   --site-highlight: rgb(107 156 255 / 0.2);
-  --site-light-1: #3d6fea;
-  --site-light-2: #22b3f0;
-  --site-light-3: #c2d6ff;
-  --site-light-strength: 0.55;
-  --site-light-lines: 0.55;
+  --site-lens-source: rgb(176 196 255 / 0.11);
+  --site-lens-mark: rgb(107 156 255 / 0.36);
+  --site-lens-ink: #e9edf6;
+  --site-lens-quiet: #9aa4ba;
+  --site-lens-accent: #7ba7ff;
+  --site-lens-fill: rgb(13 18 30 / 0.88);
+  --site-lens-ring: rgb(107 156 255 / 0.5);
+  --site-lens-code: rgb(107 156 255 / 0.12);
   --site-code-shade: rgb(0 0 0 / 0.5);
   --site-hub-glow: 0 0 56px -8px rgb(80 130 255 / 0.45), 0 16px 40px -24px rgb(0 0 0 / 0.8);
 }
