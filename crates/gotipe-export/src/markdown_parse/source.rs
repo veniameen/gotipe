@@ -39,6 +39,10 @@ impl Line {
     pub fn point(&self, i: usize) -> usize {
         self.offsets.get(i).copied().unwrap_or(self.start + i)
     }
+    /// Where a block read from the line starts: after its spaces.
+    pub fn text_start(&self) -> usize {
+        self.start + self.text.bytes().take_while(|c| *c == b' ').count()
+    }
     pub fn strip(&self, count: usize) -> Self {
         let mut result = self.clone();
         result.text = self.text[count..].into();

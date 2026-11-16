@@ -1,5 +1,5 @@
 import { type ListMarker, interrupts, listMarker, thematic } from "./block-syntax";
-import { type Line, blank, indentWidth, strip, stripIndent } from "./source";
+import { type Line, blank, indentWidth, strip, stripIndent, textStart } from "./source";
 import { type List, type ListItem, type RootContent, position } from "./types";
 
 const compatible = (a: ListMarker, b: ListMarker): boolean =>
@@ -24,8 +24,8 @@ function lastFrom(nodes: readonly Block[], offset: number): number {
 }
 
 /**
- * How `nodes`, the content of an item or a quote, read a lazy line that starts at `offset`: as
- * text of a paragraph open before it, the only block a lazy line continues in CommonMark
+ * How `nodes`, the content of an item or a quote, read a lazy line whose text starts at `offset`:
+ * as text of a paragraph open before it, the only block a lazy line continues in CommonMark
  * (`"text"`); as the start of their block at the returned index; or else (`"other"`): in code, a
  * table, or a block nested deeper. A definition is read out of paragraph text, so a line right
  * after one continues that text, whatever block it starts here; so does the head row of a table
@@ -100,8 +100,10 @@ export function readList(
         itemLines.push({ ...line, text: "", start: line.end });
         continue;
       }
+      // A lazy line, of the item or of a quote around it, keeps its blanks: cmark-gfm keeps them
+      // in the paragraph, and a row that heads a table counts them (D-245)
       if (indentWidth(line.text) >= marker.indent) {
-        itemLines.push(stripIndent(line, marker.indent));
+        itemLines.push(line.lazy ? line : stripIndent(line, marker.indent));
         itemEnd = line.end;
         run = false;
         continue;
@@ -111,7 +113,7 @@ export function readList(
       // Lazy continuation of the item's initial paragraph, checked once the item is read.
       if (!run) lazy.push({ at: itemLines.length, next });
       run = true;
-      itemLines.push({ ...stripIndent(line, indentWidth(line.text, line.column)), lazy: true });
+      itemLines.push({ ...line, lazy: true });
       itemEnd = line.end;
     }
     const task = /^\[([ xX])\](?:[ \t]|$)/.exec(itemLines[0]!.text);
@@ -121,7 +123,7 @@ export function readList(
     // after an empty item or a heading, in code or a table — the item ends before it, as in
     // CommonMark (D-101); its blocks before that line read the same without it.
     for (const { at, next: stray } of lazy) {
-      const reading = lazyReading(content, itemLines[at]!.start, true);
+      const reading = lazyReading(content, textStart(itemLines[at]!), true);
       if (reading === "text") continue;
       itemLines.length = at;
       content = typeof reading === "number" ? content.slice(0, reading) : parse(itemLines, prefix);
@@ -144,7 +146,7 @@ export function readList(
       children: content,
       checked: task ? task[1]!.toLowerCase() === "x" : null,
       spread: itemSpread,
-      position: position(first.start + /^ */.exec(first.text)![0].length, itemEnd),
+      position: position(textStart(first), itemEnd),
     });
     endOffset = itemEnd;
     cursor = next;
@@ -156,10 +158,7 @@ export function readList(
       start: initial.ordered ? initial.start : null,
       spread,
       children,
-      position: position(
-        lines[start]!.start + /^ */.exec(lines[start]!.text)![0].length,
-        endOffset,
-      ),
+      position: position(textStart(lines[start]!), endOffset),
     },
     end: cursor,
   };

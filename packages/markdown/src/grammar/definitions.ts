@@ -1,6 +1,6 @@
 import { punctuation, referenceLabel } from "./decode";
 import { readDestination } from "./links";
-import { type Line, blank, indentWidth } from "./source";
+import { type Line, blank, indentWidth, textStart } from "./source";
 import { type Definition, position } from "./types";
 
 function titleLines(
@@ -85,7 +85,7 @@ export function readDefinition(
         .slice(index, end)
         .map((l) => l.text)
         .join("\n"),
-      position: position(line.start + /^ */.exec(line.text)![0].length, lines[end - 1]!.end),
+      position: position(textStart(line), lines[end - 1]!.end),
     },
     end,
   };

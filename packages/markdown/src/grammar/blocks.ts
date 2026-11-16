@@ -15,7 +15,16 @@ import { readDefinition } from "./definitions";
 import { readInline } from "./inline";
 import type { InlineContext } from "./links";
 import { lazyReading, readList } from "./lists";
-import { type Line, blank, indentWidth, linesFrom, sourceFrom, strip, stripIndent } from "./source";
+import {
+  type Line,
+  blank,
+  indentWidth,
+  linesFrom,
+  sourceFrom,
+  strip,
+  stripIndent,
+  textStart,
+} from "./source";
 import { tableAlignment, tableCells, tableRow } from "./table";
 import { type PhrasingContent, type Root, type RootContent, position } from "./types";
 
@@ -96,7 +105,7 @@ class Reader {
         i++;
         continue;
       }
-      const start = line.start + /^ */.exec(line.text)![0].length;
+      const start = textStart(line);
       const continuesText = (i === afterDefinition && !interrupts(line)) || i === header;
       const opening = openingFence(line.text);
       if (opening) {
@@ -132,12 +141,11 @@ class Reader {
           ? lines.findIndex((candidate, index) => index > i && mathFence(candidate.text))
           : -1;
       if (mathEnd > 0) {
-        const indentation = /^ */.exec(line.text)![0].length;
         nodes.push({
           type: "math",
           value: lines
             .slice(i + 1, mathEnd)
-            .map((body) => stripIndent(body, indentation).text)
+            .map((body) => stripIndent(body, start - line.start).text)
             .join("\n"),
           position: position(start, lines[mathEnd]!.end),
         });
@@ -195,7 +203,7 @@ class Reader {
         // otherwise — after a blank line, in code or a table — the quote ends before it, as in
         // CommonMark (D-118); its blocks before that line read the same without it.
         for (const { at, next: stray } of lazy) {
-          const reading = lazyReading(children, quoted[at]!.start, true);
+          const reading = lazyReading(children, textStart(quoted[at]!), true);
           if (reading === "text") continue;
           quoted.length = at;
           children =
@@ -263,16 +271,13 @@ class Reader {
         nodes.push({
           type: "code",
           value: content.map((l) => l.text).join("\n"),
-          position: position(
-            line.start + Math.min(4, /^ */.exec(line.text)![0].length),
-            content.at(-1)!.end,
-          ),
+          position: position(Math.min(start, line.start + 4), content.at(-1)!.end),
         });
         i = next;
         continue;
       }
       const alignment = delimiterRow(i + 1);
-      if (alignment && alignment.length === tableCells(line.text).length) {
+      if (alignment && alignment.length === tableCells(line.text, line.lazy).length) {
         const row = (value: Line) =>
           tableRow(value, alignment.length, (cell, options) => this.inline([cell], options));
         const children = [row(line)];
@@ -303,7 +308,7 @@ class Reader {
       let setext = 0;
       // A line followed by a delimiter row with as many cells ends the paragraph and heads a table,
       // unless a delimiter row followed another line of the paragraph (cmark-gfm, D-192). A lazy
-      // line does too (D-216), but not after blanks: cmark-gfm keeps them, before `|` as a cell.
+      // line does too (D-216), with the blanks it has in its container (D-245).
       let visited = !!alignment;
       while (next < lines.length && !blank(lines[next]!)) {
         const current = lines[next]!;
@@ -315,8 +320,7 @@ class Reader {
         }
         if (interrupts(current) && !current.lazy) break;
         const row = delimiterRow(next + 1);
-        const indented = current.lazy && /^[ \t]/.test(current.text);
-        if (row && !visited && !indented && row.length === tableCells(current.text).length) {
+        if (row && !visited && row.length === tableCells(current.text, current.lazy).length) {
           header = next;
           break;
         }

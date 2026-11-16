@@ -109,7 +109,7 @@ pub(super) fn read(
                 .map(|l| l.text.as_str())
                 .collect::<Vec<_>>()
                 .join("\n"),
-            line.start + line.text.bytes().take_while(|c| *c == b' ').count(),
+            line.text_start(),
             lines[end - 1].end,
         ),
         end,

@@ -3391,5 +3391,125 @@
         "children": []
       }
     ]
+  },
+  {
+    "markdown": "> x\n  a | b\n> --|--\n",
+    "blocks": [
+      {
+        "type": "markdownRaw",
+        "attrs": {
+          "kind": "blockquote"
+        },
+        "content": "> x\n  a | b\n> --|--",
+        "children": []
+      }
+    ]
+  },
+  {
+    "markdown": "> x\n  | a |\n> |---|---|\n",
+    "blocks": [
+      {
+        "type": "markdownRaw",
+        "attrs": {
+          "kind": "blockquote"
+        },
+        "content": "> x\n  | a |\n> |---|---|",
+        "children": []
+      }
+    ]
+  },
+  {
+    "markdown": "> x\n\t| a |\n> |---|\n",
+    "blocks": [
+      {
+        "type": "blockquote",
+        "attrs": {},
+        "content": [
+          {
+            "text": "x | a | |---|",
+            "marks": []
+          }
+        ],
+        "children": []
+      }
+    ]
+  },
+  {
+    "markdown": "-   x\n  | a |\n    |---|\n",
+    "blocks": [
+      {
+        "type": "bulletList",
+        "attrs": {
+          "marker": "-",
+          "spread": false
+        },
+        "content": null,
+        "children": [
+          {
+            "type": "listItem",
+            "attrs": {},
+            "content": [
+              {
+                "text": "x | a | |---|",
+                "marks": []
+              }
+            ],
+            "children": []
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "markdown": "-   x\n  a | b\n    --|--\n",
+    "blocks": [
+      {
+        "type": "markdownRaw",
+        "attrs": {
+          "kind": "list"
+        },
+        "content": "-   x\n  a | b\n    --|--",
+        "children": []
+      }
+    ]
+  },
+  {
+    "markdown": "> - x\n  | a |\n>   |---|\n",
+    "blocks": [
+      {
+        "type": "markdownRaw",
+        "attrs": {
+          "kind": "blockquote"
+        },
+        "content": "> - x\n  | a |\n>   |---|",
+        "children": []
+      }
+    ]
+  },
+  {
+    "markdown": "> - x\n  a | b\n>   --|--\n",
+    "blocks": [
+      {
+        "type": "markdownRaw",
+        "attrs": {
+          "kind": "blockquote"
+        },
+        "content": "> - x\n  a | b\n>   --|--",
+        "children": []
+      }
+    ]
+  },
+  {
+    "markdown": "> [a]: /u\n  foo\n",
+    "blocks": [
+      {
+        "type": "markdownRaw",
+        "attrs": {
+          "kind": "blockquote"
+        },
+        "content": "> [a]: /u\n  foo",
+        "children": []
+      }
+    ]
   }
 ]
