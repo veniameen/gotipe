@@ -179,6 +179,33 @@ describe("other people in BlockEditor: one owner draws them", () => {
   });
 });
 
+describe("the document's name follows the interface language (D-195)", () => {
+  const name = () => container.querySelector("[data-gotipe-content]")?.getAttribute("aria-label");
+
+  it.each([
+    ["ru", "Содержимое документа"],
+    ["en", "Document content"],
+  ])("BlockEditor without ariaLabel in %s", async (locale, words) => {
+    const editor = await editorWith("Text");
+    act(() =>
+      root.render(
+        <GoTipeI18nProvider locale={locale}>
+          <BlockEditor editor={editor} showBlockToolbar={false} />
+        </GoTipeI18nProvider>,
+      ),
+    );
+    expect(name()).toBe(words);
+    act(() =>
+      root.render(
+        <GoTipeI18nProvider locale={locale}>
+          <BlockEditor editor={editor} showBlockToolbar={false} ariaLabel="Заметки" />
+        </GoTipeI18nProvider>,
+      ),
+    );
+    expect(name()).toBe("Заметки");
+  });
+});
+
 describe("placeholder words follow the interface language", () => {
   const placeholder = () =>
     container.querySelector('[data-block-id="p"]')?.getAttribute("data-placeholder");
