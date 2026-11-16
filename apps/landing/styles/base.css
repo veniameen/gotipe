@@ -72,7 +72,7 @@ body {
 }
 .site-button.is-quiet {
   background: transparent;
-  color: var(--gt-text-2);
+  color: var(--site-quiet-ink);
 }
 .site-button.is-quiet:hover,
 .site-button.is-quiet[aria-expanded="true"] {

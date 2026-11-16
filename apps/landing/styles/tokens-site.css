@@ -36,6 +36,8 @@
   --site-font-mono: "JetBrains Mono", var(--gt-font-mono);
   --site-weight-display: 600;
   --site-weight-title: 560;
+  /* the ink of quiet buttons and links; the head over the first stage takes a stronger one */
+  --site-quiet-ink: var(--gt-text-2);
 
   --site-hero-size: 80px;
   --site-hero-leading: 84px;
@@ -428,6 +430,9 @@ body,
   --site-accent-soft: rgb(44 98 212 / 0.16);
   --site-accent-2: #0b84c6;
   --site-title-fade: #3d4354;
+  /* the head's quiet links over the first stage: a step stronger than the page's quiet text, so
+     they read on the stage's glow (4.5:1 and more) */
+  --site-head-ink: #4a4a45;
   --site-cta-bg: #2c62d4;
   --site-cta-bg-hover: #2556c0;
   --site-cta-text: #ffffff;
@@ -447,16 +452,12 @@ body,
   --site-window-shadow: 0 1px 2px rgb(18 30 60 / 0.05), 0 40px 80px -40px rgb(30 60 130 / 0.42);
   --site-scrim: rgb(18 30 60 / 0.24);
   --site-highlight: rgb(44 98 212 / 0.14);
-  /* the stage's Markdown lens (motion/hero-lens.tsx): the dim source and its syntax, the document
-     under the glass, the glass and its ring, the ground of code */
-  --site-lens-source: rgb(28 44 90 / 0.15);
-  --site-lens-mark: rgb(44 98 212 / 0.36);
-  --site-lens-ink: #1d2330;
-  --site-lens-quiet: #5d6475;
-  --site-lens-accent: #2c62d4;
-  --site-lens-fill: rgb(255 255 255 / 0.86);
-  --site-lens-ring: rgb(44 98 212 / 0.42);
-  --site-lens-code: rgb(44 98 212 / 0.09);
+  /* the stage's liquid glass (motion/glass.ts), hex only: the bands the drops bend, from the deep
+     tone through the main tone and a second hue to the highlight of their rims */
+  --site-shade-deep: #b9c8ff;
+  --site-shade-main: #7fa6ff;
+  --site-shade-second: #8fd6ff;
+  --site-shade-light: #ffffff;
   --site-code-shade: rgb(18 30 60 / 0.14);
   --site-hub-glow: 0 0 48px -8px rgb(44 98 212 / 0.35), 0 16px 40px -24px rgb(18 30 60 / 0.3);
 }
@@ -489,6 +490,7 @@ body,
   --site-accent-soft: rgb(107 156 255 / 0.22);
   --site-accent-2: #5cc8f5;
   --site-title-fade: #a9afbf;
+  --site-head-ink: #b8b8b2;
   --site-cta-bg: #5b8ef8;
   --site-cta-bg-hover: #73a0ff;
   --site-cta-text: #0a0f1e;
@@ -508,14 +510,10 @@ body,
   --site-window-shadow: 0 0 0 1px rgb(255 255 255 / 0.06), 0 48px 96px -40px rgb(0 0 0 / 0.9);
   --site-scrim: rgb(0 0 0 / 0.6);
   --site-highlight: rgb(107 156 255 / 0.2);
-  --site-lens-source: rgb(176 196 255 / 0.11);
-  --site-lens-mark: rgb(107 156 255 / 0.36);
-  --site-lens-ink: #e9edf6;
-  --site-lens-quiet: #9aa4ba;
-  --site-lens-accent: #7ba7ff;
-  --site-lens-fill: rgb(13 18 30 / 0.88);
-  --site-lens-ring: rgb(107 156 255 / 0.5);
-  --site-lens-code: rgb(107 156 255 / 0.12);
+  --site-shade-deep: #1a2f8a;
+  --site-shade-main: #2f6bff;
+  --site-shade-second: #12a4e8;
+  --site-shade-light: #a9c4ff;
   --site-code-shade: rgb(0 0 0 / 0.5);
   --site-hub-glow: 0 0 56px -8px rgb(80 130 255 / 0.45), 0 16px 40px -24px rgb(0 0 0 / 0.8);
 }

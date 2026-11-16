@@ -7,6 +7,7 @@
    glass that closes in on the page's column. The content never moves: the bar's width and its
    padding change together, so the mark, the links and the actions keep the column's edges. ---- */
 .site-head {
+  --site-quiet-ink: var(--site-head-ink);
   position: fixed;
   top: var(--site-frame);
   right: var(--site-frame);
@@ -64,7 +65,7 @@
   height: var(--site-head-button-h);
   padding: var(--site-nav-pad);
   border-radius: var(--site-head-button-radius);
-  color: var(--gt-text-2);
+  color: var(--site-quiet-ink);
   font-size: var(--site-small-size);
   font-weight: var(--gt-weight-medium);
   line-height: var(--site-small-leading);

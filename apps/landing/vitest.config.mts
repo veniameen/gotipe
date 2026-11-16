@@ -2,7 +2,8 @@ import { defineConfig } from "vitest/config";
 
 /**
  * The landing's tests: the docs pipeline's pure logic (lib/) and the demos (components/demos).
- * Node, React's automatic JSX (the app's tsconfig keeps JSX for Next), the app's `@/` alias.
+ * Node, React's automatic JSX (the app's tsconfig keeps JSX for Next), the app's `@/` alias. The
+ * site's tokens are read as text (`?raw`): the stage shader's test checks the colours it reads.
  */
 export default defineConfig({
   esbuild: { jsx: "automatic" },
@@ -10,6 +11,7 @@ export default defineConfig({
   test: {
     root: import.meta.dirname,
     environment: "node",
+    css: { include: [/styles\/tokens-site\.css/] },
     include: ["lib/**/*.test.ts", "components/**/*.test.ts", "components/**/*.test.tsx"],
     testTimeout: 30_000,
   },
