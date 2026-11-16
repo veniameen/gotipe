@@ -210,8 +210,43 @@ export function resolveHazards(
 ): void {
   const first = items[0];
   if (first && !fm && first.block.type === "divider" && !first.preserved) first.dividerAlt = true;
-  const changed = separateLists(items, snap, blanks);
-  for (const item of items) item.block = rebuilt(item.block, changed);
+  const kept = items.map((item) => item.preserved);
+  for (;;) {
+    const changed = separateLists(items, snap, blanks);
+    // Source of a block whose children follow it at its level hides from the protection the list
+    // it starts or ends with: beside a block not written as its source, the block is written
+    // again, and the protection runs anew (D-215). The reader gives no such block: its source is
+    // the writer's own.
+    const stale = items.flatMap((item, i) =>
+      item.preserved &&
+      edgeList(item.block) &&
+      !(asSource(items[i - 1], item) && asSource(item, items[i + 1]))
+        ? [i]
+        : [],
+    );
+    if (!stale.length) {
+      for (const item of items) item.block = rebuilt(item.block, changed);
+      return;
+    }
+    for (const i of stale) kept[i] = false;
+    items.forEach((item, i) =>
+      Object.assign(item, { preserved: kept[i], markerOverride: undefined, raw: undefined }),
+    );
+  }
+}
+
+/** Whether `a` and `b` are neighbours in the source written as they are there, or one is none. */
+const asSource = (a: Neighbour | undefined, b: Neighbour | undefined): boolean =>
+  !a ||
+  !b ||
+  (a.preserved && b.preserved && b.oi === a.oi + 1 && a.raw === undefined && b.raw === undefined);
+
+/** Whether `block`, its children written after it at its level, starts or ends with a list. */
+function edgeList(block: Block): boolean {
+  const parts = INSIDE.has(block.type) ? [] : flat({ block, oi: -1, preserved: false });
+  return [parts[0], parts.at(-1)].some(
+    (part) => part && part.block !== block && listSig(part, undefined),
+  );
 }
 
 /**
@@ -242,8 +277,7 @@ function separateLists(
     const a = items[i - 1]!;
     const b = items[i]!;
     // neighbours in the source written as they are there read as they did there
-    const asSource = a.raw === undefined && b.raw === undefined;
-    if (a.preserved && b.preserved && b.oi === a.oi + 1 && asSource) continue;
+    if (asSource(a, b)) continue;
     const sa = listSig(a, snap);
     const sb = listSig(b, snap);
     if (sa && sb && sa === sb) {
