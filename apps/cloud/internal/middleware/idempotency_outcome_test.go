@@ -137,3 +137,54 @@ func TestIdempotencyAcceptsBodiesUpToTheRouterLimit(t *testing.T) {
 		t.Fatalf("calls=%d", calls)
 	}
 }
+
+// D-235: a 5xx is not a result and is never recorded. A client error is a result
+// and is replayed. A 5xx without MarkNotRun may have stopped half-way, so its claim
+// stays and a repeat answers 409 without running again; with MarkNotRun the key is
+// released and a repeat runs.
+func TestIdempotencyNeverRecordsAServerError(t *testing.T) {
+	for _, tc := range []struct {
+		name           string
+		status         int
+		notRun         bool
+		repeat, calls  int
+		recordedStatus int
+	}{
+		{"client error", 404, false, 404, 1, 404},
+		{"server error", 500, false, 409, 1, 0},
+		{"unavailable", 503, false, 409, 1, 0},
+		{"unavailable, did not run", 503, true, 503, 2, -1},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			store := &idempotencyStore{data: map[string][]byte{}}
+			calls := 0
+			h := IdempotencyMiddleware(store, testBodyLimit)(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				calls++
+				if tc.notRun {
+					MarkNotRun(r)
+				}
+				w.WriteHeader(tc.status)
+				w.Write([]byte(`{"error":{"code":"X","message":"failed"}}`))
+			}))
+			first := httptest.NewRecorder()
+			h.ServeHTTP(first, idempotentRequest("/v1/documents", `{}`))
+			if first.Code != tc.status || !strings.Contains(first.Body.String(), "failed") {
+				t.Fatalf("first reply: %d %s", first.Code, first.Body)
+			}
+			if tc.recordedStatus < 0 && len(store.data) != 0 {
+				t.Fatalf("the key was not released: %q", store.data)
+			}
+			for key, record := range store.data {
+				var saved cachedResponse
+				if json.Unmarshal(record, &saved) != nil || saved.Status != tc.recordedStatus {
+					t.Fatalf("record %s: %s, want status %d", key, record, tc.recordedStatus)
+				}
+			}
+			repeat := httptest.NewRecorder()
+			h.ServeHTTP(repeat, idempotentRequest("/v1/documents", `{}`))
+			if repeat.Code != tc.repeat || calls != tc.calls {
+				t.Fatalf("repeat: %d %s calls=%d", repeat.Code, repeat.Body, calls)
+			}
+		})
+	}
+}

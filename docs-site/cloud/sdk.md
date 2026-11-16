@@ -137,11 +137,14 @@ const comment = await add().catch((error) => {
   HTTPS pages, not on plain HTTP. Keys belong to the account that sends them.
 - Without a key, the SDK sends no `Idempotency-Key`, and a repeated call may apply the change
   twice.
-- The server repeats the first answer, errors included. To try again after an error answer,
-  such as `RATE_LIMITED` or `QUOTA_EXCEEDED`, use a new key.
+- The server repeats the first answer, errors below `500` included. To try again after such
+  an error, such as `QUOTA_EXCEEDED`, use a new key. A rate limit refusal and a `5xx` are not
+  repeated: [Idempotency keys](/docs/cloud/rest-api#idempotency-keys) lists when the same key
+  runs again.
 - `CONFLICT` (409) means the key was used for a different request, the first request is still
-  running or its outcome is unknown, or its answer was larger than 256 KiB and was not kept.
-  Read the resource before you decide; do not repeat the change with a new key.
+  running or its outcome is unknown (it ended with a `5xx`, or its outcome was not recorded),
+  or its answer was larger than 256 KiB and was not kept. Read the resource before you decide;
+  do not repeat the change with a new key.
 - `restoreVersion` sends the key with the restore and reads the document without it.
   `aiGenerate` accepts a key because it does not stream.
 
