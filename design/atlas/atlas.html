@@ -682,9 +682,9 @@
 /* tokens-site.css */
 /* Site tokens: the landing and the documentation of GoTipe (frames 20–21). The site keeps the
    library's text, lines and accent (--gt-*) and adds its own voice: Inter for headings and text,
-   JetBrains Mono for labels and code, framed stages with blue light over a blueprint grid, glass and
-   hairlines. The faces are named first and fall back to the library's system families; the site
-   hosts the files itself (apps/landing/public/fonts).
+   JetBrains Mono for labels and code, framed stages with blue light, glass and hairlines. The
+   faces are named first and fall back to the library's system families; the site hosts the files
+   itself (apps/landing/public/fonts).
 
    One scale: every distance is a step of --site-space-* (4 px rhythm, as the library's), every
    corner a step of --site-radius-*. Component tokens name a step of the scale, never a number.
@@ -720,6 +720,8 @@
   --site-font-mono: "JetBrains Mono", var(--gt-font-mono);
   --site-weight-display: 600;
   --site-weight-title: 560;
+  /* the ink of quiet buttons and links; the head over the first stage takes a stronger one */
+  --site-quiet-ink: var(--gt-text-2);
 
   --site-hero-size: 80px;
   --site-hero-leading: 84px;
@@ -1109,6 +1111,9 @@
   --site-accent-soft: rgb(44 98 212 / 0.16);
   --site-accent-2: #0b84c6;
   --site-title-fade: #3d4354;
+  /* the head's quiet links over the first stage: a step stronger than the page's quiet text, so
+     they read on the stage's glow (4.5:1 and more) */
+  --site-head-ink: #4a4a45;
   --site-cta-bg: #2c62d4;
   --site-cta-bg-hover: #2556c0;
   --site-cta-text: #ffffff;
@@ -1128,16 +1133,12 @@
   --site-window-shadow: 0 1px 2px rgb(18 30 60 / 0.05), 0 40px 80px -40px rgb(30 60 130 / 0.42);
   --site-scrim: rgb(18 30 60 / 0.24);
   --site-highlight: rgb(44 98 212 / 0.14);
-  /* the stage's Markdown lens (motion/hero-lens.tsx): the dim source and its syntax, the document
-     under the glass, the glass and its ring, the ground of code */
-  --site-lens-source: rgb(28 44 90 / 0.15);
-  --site-lens-mark: rgb(44 98 212 / 0.36);
-  --site-lens-ink: #1d2330;
-  --site-lens-quiet: #5d6475;
-  --site-lens-accent: #2c62d4;
-  --site-lens-fill: rgb(255 255 255 / 0.86);
-  --site-lens-ring: rgb(44 98 212 / 0.42);
-  --site-lens-code: rgb(44 98 212 / 0.09);
+  /* the stage's liquid glass (motion/glass.ts), hex only: the bands the drops bend, from the deep
+     tone through the main tone and a second hue to the highlight of their rims */
+  --site-shade-deep: #b9c8ff;
+  --site-shade-main: #7fa6ff;
+  --site-shade-second: #8fd6ff;
+  --site-shade-light: #ffffff;
   --site-code-shade: rgb(18 30 60 / 0.14);
   --site-hub-glow: 0 0 48px -8px rgb(44 98 212 / 0.35), 0 16px 40px -24px rgb(18 30 60 / 0.3);
 }
@@ -1170,6 +1171,7 @@
   --site-accent-soft: rgb(107 156 255 / 0.22);
   --site-accent-2: #5cc8f5;
   --site-title-fade: #a9afbf;
+  --site-head-ink: #b8b8b2;
   --site-cta-bg: #5b8ef8;
   --site-cta-bg-hover: #73a0ff;
   --site-cta-text: #0a0f1e;
@@ -1189,14 +1191,10 @@
   --site-window-shadow: 0 0 0 1px rgb(255 255 255 / 0.06), 0 48px 96px -40px rgb(0 0 0 / 0.9);
   --site-scrim: rgb(0 0 0 / 0.6);
   --site-highlight: rgb(107 156 255 / 0.2);
-  --site-lens-source: rgb(176 196 255 / 0.11);
-  --site-lens-mark: rgb(107 156 255 / 0.36);
-  --site-lens-ink: #e9edf6;
-  --site-lens-quiet: #9aa4ba;
-  --site-lens-accent: #7ba7ff;
-  --site-lens-fill: rgb(13 18 30 / 0.88);
-  --site-lens-ring: rgb(107 156 255 / 0.5);
-  --site-lens-code: rgb(107 156 255 / 0.12);
+  --site-shade-deep: #1a2f8a;
+  --site-shade-main: #2f6bff;
+  --site-shade-second: #12a4e8;
+  --site-shade-light: #a9c4ff;
   --site-code-shade: rgb(0 0 0 / 0.5);
   --site-hub-glow: 0 0 56px -8px rgb(80 130 255 / 0.45), 0 16px 40px -24px rgb(0 0 0 / 0.8);
 }
@@ -4339,6 +4337,7 @@ ol.gotipe-list > li::before {
    glass that closes in on the page's column. The content never moves: the bar's width and its
    padding change together, so the mark, the links and the actions keep the column's edges. ---- */
 .site-head {
+  --site-quiet-ink: var(--site-head-ink);
   position: absolute;
   top: var(--site-frame);
   right: var(--site-frame);
@@ -4396,7 +4395,7 @@ ol.gotipe-list > li::before {
   height: var(--site-head-button-h);
   padding: var(--site-nav-pad);
   border-radius: var(--site-head-button-radius);
-  color: var(--gt-text-2);
+  color: var(--site-quiet-ink);
   font-size: var(--site-small-size);
   font-weight: var(--gt-weight-medium);
   line-height: var(--site-small-leading);
@@ -4618,12 +4617,13 @@ html:not([data-theme="dark"]) .site-theme-to-light {
 }
 
 /* site/landing-hero.css */
-/* The first stage of the landing (frame 20): blue light over a blueprint grid, the three lines with
-   «rules.» selected as in the editor, the calls to action, the install line, the live window with a
-   beam on its edge and the strip of what GoTipe is made of; then the facts. The site animates them
-   (apps/landing/styles/landing/motion.css); the frame draws the state they settle in. */
+/* The first stage of the landing (frame 20): blue light, the three lines with «rules.» selected
+   as in the editor, the calls to action, the install line, the live window with a beam on its edge
+   and the strip of what GoTipe is made of; then the facts. The site animates them
+   (apps/landing/styles/landing/motion.css) and draws drops of liquid glass over the light
+   (motion/glass.ts); the frame draws the state they settle in, the light without the drops. */
 
-/* ---- the stage: light from above; the Markdown lens over it is drawn by the page ---- */
+/* ---- the stage: light from above; the shader over it is drawn by the page ---- */
 .site-hero {
   padding: calc(var(--site-head-h) + var(--site-hero-top)) 0 var(--site-hero-bottom);
   background: radial-gradient(
@@ -4633,20 +4633,20 @@ html:not([data-theme="dark"]) .site-theme-to-light {
     ), radial-gradient(var(--site-glow-shape-b) at 88% 8%, var(--site-glow-b), transparent 70%),
     linear-gradient(180deg, var(--site-stage-top), var(--site-stage-bottom));
 }
-.site-hero-lens {
+.site-hero-shade {
   position: absolute;
   inset: 0;
   z-index: -1;
   pointer-events: none;
 }
-.site-hero-lens > canvas {
+.site-hero-shade > canvas {
   display: block;
   width: 100%;
   height: 100%;
   opacity: 0;
   transition: opacity var(--site-dur-4) var(--site-ease);
 }
-.site-hero-lens > canvas[data-ready] {
+.site-hero-shade > canvas[data-ready] {
   opacity: 1;
 }
 
@@ -10520,11 +10520,15 @@ editor<span class="tk-pun">.</span>on<span class="tk-pun">(</span><span class="t
     <span class="at-num">20</span>
     <h2 class="at-figure-title">Главная страница</h2>
     <p class="at-caption">
-      Главная по образцу владельца (zydeo-web) голосом GoTipe. Подложка первого экрана отстоит от края окна одинаково со всех сторон. На сайте под первым экраном лежит исходник Markdown —
-      тусклые моно-строки нескольких файлов, одна из них набирается; линза под курсором показывает
-      те же строки документом: заголовки, списки, задачи, цитаты, код, таблицы. Без мыши линза
-      обходит заголовок сама, за текстом поле стихает, на телефоне она появляется только под указателем. Кадр рисует свет первого экрана без линзы. Шапка — полоса во всю рамку, прозрачная над первым экраном; когда страница начинает
-      прокручиваться, её стекло плавно сжимается до колонки страницы, а знак, ссылки и кнопки не сдвигаются: они на одной средней линии и на краях колонки (третий кадр). «rules.» выделено,
+      Главная по образцу владельца (zydeo-web) голосом GoTipe. Подложка первого экрана отстоит от края окна одинаково со всех сторон. На сайте по свету первого экрана плывут капли жидкого
+      стекла: сходятся и расходятся, скруглённые края преломляют полосы синего, ловят блик сверху
+      слева и светлый ободок. Курсор — своя капля: она вытягивается по движению, и стекло
+      перетекает к ней. Капли держатся по сторонам и ниже шапки, под текстом становятся прозрачнее,
+      ниже первого экрана гаснут. Кадр рисует свет первого экрана без капель. Шапка — полоса во всю
+      рамку, прозрачная над первым экраном, её тихие ссылки на ступень темнее тихого текста
+      страницы; когда страница начинает прокручиваться, её стекло плавно сжимается до колонки
+      страницы, а знак, ссылки и кнопки не сдвигаются: они на одной средней линии и на краях
+      колонки (третий кадр). «rules.» выделено,
       как в редакторе, за ним мигает каретка; живое окно —
       Markdown слева, документ справа, по краю бежит луч; на телефоне окно переключает «Document» и «Markdown». Дальше: факты, которые досчитываются при появлении; стек — ваш интерфейс и ваша
       инфраструктура, по лучам между ними и движком бегут импульсы; бенто с живыми картинками и девять частей стека, под указателем — свет; переключатель видов с ползунком над окном одной

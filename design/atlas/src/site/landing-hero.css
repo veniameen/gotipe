@@ -1,9 +1,10 @@
-/* The first stage of the landing (frame 20): blue light over a blueprint grid, the three lines with
-   «rules.» selected as in the editor, the calls to action, the install line, the live window with a
-   beam on its edge and the strip of what GoTipe is made of; then the facts. The site animates them
-   (apps/landing/styles/landing/motion.css); the frame draws the state they settle in. */
+/* The first stage of the landing (frame 20): blue light, the three lines with «rules.» selected
+   as in the editor, the calls to action, the install line, the live window with a beam on its edge
+   and the strip of what GoTipe is made of; then the facts. The site animates them
+   (apps/landing/styles/landing/motion.css) and draws drops of liquid glass over the light
+   (motion/glass.ts); the frame draws the state they settle in, the light without the drops. */
 
-/* ---- the stage: light from above; the Markdown lens over it is drawn by the page ---- */
+/* ---- the stage: light from above; the shader over it is drawn by the page ---- */
 .site-hero {
   padding: calc(var(--site-head-h) + var(--site-hero-top)) 0 var(--site-hero-bottom);
   background: radial-gradient(
@@ -13,20 +14,20 @@
     ), radial-gradient(var(--site-glow-shape-b) at 88% 8%, var(--site-glow-b), transparent 70%),
     linear-gradient(180deg, var(--site-stage-top), var(--site-stage-bottom));
 }
-.site-hero-lens {
+.site-hero-shade {
   position: absolute;
   inset: 0;
   z-index: -1;
   pointer-events: none;
 }
-.site-hero-lens > canvas {
+.site-hero-shade > canvas {
   display: block;
   width: 100%;
   height: 100%;
   opacity: 0;
   transition: opacity var(--site-dur-4) var(--site-ease);
 }
-.site-hero-lens > canvas[data-ready] {
+.site-hero-shade > canvas[data-ready] {
   opacity: 1;
 }
 
