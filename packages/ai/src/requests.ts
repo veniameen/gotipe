@@ -1,6 +1,6 @@
 import type { GoTipeEditor } from "@gotipe/core";
 import { assertWritable } from "./document";
-import type { AiStatus, AiTask } from "./types";
+import type { AiTask } from "./types";
 
 export interface AiRequest {
   signal: AbortSignal;
@@ -18,10 +18,6 @@ const LABELS: Record<AiTask, string> = {
   review: "Reviewing...",
   command: "Processing...",
 };
-/** Emits `aiStatusChange` with the request's code, which the core's event type leaves out. */
-export function emitAiStatus(editor: GoTipeEditor, status: AiStatus): void {
-  editor.emit("aiStatusChange", status);
-}
 export function cancelled(): Error {
   const error = new Error("AI request was cancelled");
   error.name = "AbortError";
@@ -63,7 +59,7 @@ export class AiRequests {
     };
     signal?.addEventListener("abort", abort, { once: true });
     if (signal?.aborted) abort();
-    else emitAiStatus(this.editor, { active: true, task, label: LABELS[task] });
+    else this.editor.emit("aiStatusChange", { active: true, task, label: LABELS[task] });
     return {
       signal: controller.signal,
       check: () => {
