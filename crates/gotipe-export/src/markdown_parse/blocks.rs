@@ -301,6 +301,7 @@ impl Reader {
             if let Some(alignment) = row.clone().filter(|a| a.len() == cells(&line.text).len()) {
                 let mut node = Node::new("table", start, line.end);
                 node.align = alignment;
+                node.after_text = i == header;
                 node.children.push(self.row(line, node.align.len()));
                 let mut next = i + 2;
                 while next < lines.len() && !lines[next].blank() && !starts_block(&lines[next]) {
@@ -323,7 +324,8 @@ impl Reader {
             let mut setext = 0;
             // A line followed by a delimiter row with as many cells ends the paragraph and heads a
             // table, unless a delimiter row followed another line of the paragraph (cmark-gfm,
-            // D-192).
+            // D-192). A lazy line does too (D-216), but not after blanks: cmark-gfm keeps them,
+            // before `|` as a cell.
             let mut visited = row.is_some();
             while next < lines.len() && !lines[next].blank() {
                 let current = &lines[next];
@@ -339,7 +341,8 @@ impl Reader {
                     break;
                 }
                 if let Some(row) = delimiter_row(next + 1) {
-                    if !visited && !current.lazy && row.len() == cells(&current.text).len() {
+                    let indented = current.lazy && current.text.starts_with([' ', '\t']);
+                    if !visited && !indented && row.len() == cells(&current.text).len() {
                         header = next;
                         break;
                     }

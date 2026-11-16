@@ -94,6 +94,8 @@ export interface TableRow extends Node<"tableRow"> {
 export interface Table extends Node<"table"> {
   children: TableRow[];
   align: ("left" | "right" | "center" | null)[];
+  /** Its head row ended a paragraph: a lazy line there continues the paragraph's text (D-216). */
+  afterText?: boolean;
 }
 export interface ThematicBreak extends Node<"thematicBreak"> {}
 /** A `$$` block: TeX between `$$` lines, taken as written. */

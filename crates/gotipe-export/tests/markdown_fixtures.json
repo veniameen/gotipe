@@ -3194,5 +3194,202 @@
         "children": []
       }
     ]
+  },
+  {
+    "markdown": "> x\n| a |\n> |---|\n",
+    "blocks": [
+      {
+        "type": "markdownRaw",
+        "attrs": {
+          "kind": "blockquote"
+        },
+        "content": "> x\n| a |\n> |---|",
+        "children": []
+      }
+    ]
+  },
+  {
+    "markdown": "- x\n| a |\n  |---|\n",
+    "blocks": [
+      {
+        "type": "markdownRaw",
+        "attrs": {
+          "kind": "list"
+        },
+        "content": "- x\n| a |\n  |---|",
+        "children": []
+      }
+    ]
+  },
+  {
+    "markdown": "> > x\n| a |\n> > |---|\n",
+    "blocks": [
+      {
+        "type": "markdownRaw",
+        "attrs": {
+          "kind": "blockquote"
+        },
+        "content": "> > x\n| a |\n> > |---|",
+        "children": []
+      }
+    ]
+  },
+  {
+    "markdown": "> - x\n| a |\n>   |---|\n",
+    "blocks": [
+      {
+        "type": "markdownRaw",
+        "attrs": {
+          "kind": "blockquote"
+        },
+        "content": "> - x\n| a |\n>   |---|",
+        "children": []
+      }
+    ]
+  },
+  {
+    "markdown": "> x\n> y\n| a |\n> |---|\n> | b |\n| c |\n",
+    "blocks": [
+      {
+        "type": "markdownRaw",
+        "attrs": {
+          "kind": "blockquote"
+        },
+        "content": "> x\n> y\n| a |\n> |---|\n> | b |",
+        "children": []
+      },
+      {
+        "type": "paragraph",
+        "attrs": {},
+        "content": [
+          {
+            "text": "| c |",
+            "marks": []
+          }
+        ],
+        "children": []
+      }
+    ]
+  },
+  {
+    "markdown": "> x\n>\n| a |\n> |---|\n",
+    "blocks": [
+      {
+        "type": "blockquote",
+        "attrs": {},
+        "content": [
+          {
+            "text": "x",
+            "marks": []
+          }
+        ],
+        "children": []
+      },
+      {
+        "type": "paragraph",
+        "attrs": {},
+        "content": [
+          {
+            "text": "| a |",
+            "marks": []
+          }
+        ],
+        "children": []
+      },
+      {
+        "type": "blockquote",
+        "attrs": {},
+        "content": [
+          {
+            "text": "|---|",
+            "marks": []
+          }
+        ],
+        "children": []
+      }
+    ]
+  },
+  {
+    "markdown": "> # h\n| a |\n> |---|\n",
+    "blocks": [
+      {
+        "type": "markdownRaw",
+        "attrs": {
+          "kind": "blockquote"
+        },
+        "content": "> # h",
+        "children": []
+      },
+      {
+        "type": "paragraph",
+        "attrs": {},
+        "content": [
+          {
+            "text": "| a |",
+            "marks": []
+          }
+        ],
+        "children": []
+      },
+      {
+        "type": "blockquote",
+        "attrs": {},
+        "content": [
+          {
+            "text": "|---|",
+            "marks": []
+          }
+        ],
+        "children": []
+      }
+    ]
+  },
+  {
+    "markdown": "> x\n| a |\n|---|\n",
+    "blocks": [
+      {
+        "type": "blockquote",
+        "attrs": {},
+        "content": [
+          {
+            "text": "x | a | |---|",
+            "marks": []
+          }
+        ],
+        "children": []
+      }
+    ]
+  },
+  {
+    "markdown": "> x\n  | a |\n> |---|\n",
+    "blocks": [
+      {
+        "type": "blockquote",
+        "attrs": {},
+        "content": [
+          {
+            "text": "x | a | |---|",
+            "marks": []
+          }
+        ],
+        "children": []
+      }
+    ]
+  },
+  {
+    "markdown": "> x\n| a | b |\n> |---|\n",
+    "blocks": [
+      {
+        "type": "blockquote",
+        "attrs": {},
+        "content": [
+          {
+            "text": "x | a | b | |---|",
+            "marks": []
+          }
+        ],
+        "children": []
+      }
+    ]
   }
 ]
