@@ -9,8 +9,27 @@
 }
 
 /* the handle of the block under the pointer: «+» and the grip, in the gutter */
-.gotipe-doc > .is-hovered {
+.gotipe-doc > .is-hovered,
+.gotipe-doc li.is-hovered {
   position: relative;
+}
+/* notion in the library keeps its handle on a narrow page (docs/18): the page keeps a rail of 56
+   on the left for it, and a table row's handle has its whole room there (frame 32) */
+.gotipe-page.is-rail {
+  --gt-handle-display: flex;
+  --gt-row-handle-room: min(
+    var(--gt-row-handle-full),
+    max(var(--gt-page-pad-x), var(--gt-handle-rail))
+  );
+  padding-left: max(var(--gt-page-pad-x), var(--gt-handle-rail));
+}
+/* a block without text of its own: the handle stands at the first line of what it starts with —
+   a file's name, a table's head (frame 32) */
+.gotipe-file > .gotipe-block-handle {
+  top: calc(var(--gt-card-pad) + (var(--gt-ui-leading) - var(--gt-handle-h)) / 2);
+}
+.gotipe-table-block > .gotipe-block-handle {
+  top: calc(var(--gt-head-cell-pad-y) + (var(--gt-small-leading) - var(--gt-handle-h)) / 2);
 }
 .gotipe-block-handle {
   position: absolute;

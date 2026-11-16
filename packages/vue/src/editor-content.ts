@@ -186,8 +186,18 @@ function renderBlock(
       return node(`h${Math.max(1, Math.min(6, Number(block.attrs.level) || 1))}`);
     case "bulletList":
       return node("ul", {}, children);
-    case "orderedList":
-      return node("ol", { start: Number(block.attrs.start) || 1 }, children);
+    case "orderedList": {
+      // its own first number, and the room its widest number needs (D-268, D-269)
+      const value = Number(block.attrs.start);
+      const start = Number.isInteger(value) ? value : 1;
+      const last = start + Math.max(0, block.children.length - 1);
+      const digits = Math.max(String(Math.abs(start)).length, String(Math.abs(last)).length);
+      return node(
+        "ol",
+        { start, style: digits > 2 ? { "--gt-list-digits": digits } : undefined },
+        children,
+      );
+    }
     case "todoList":
       return node("ul", { class: "gotipe-todo-list" }, children);
     case "listItem":

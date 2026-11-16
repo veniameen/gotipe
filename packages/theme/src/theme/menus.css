@@ -128,11 +128,16 @@
 }
 
 /* ============================================================
-   Block handle — Atlas frames 1 and 8: «+» and the grip in the gutter of the block under the
-   pointer. It never moves the text; a narrow notion page keeps a rail for it (touch drag).
+   Block handle — Atlas frames 1, 2 and 8: «+» and the grip in the gutter of the block under the
+   pointer. It never moves the text; a narrow page keeps a rail for it (touch drag), PageEditor's
+   too (D-260). The rail also gives a table's row handle its whole room.
    ============================================================ */
 
-.gotipe-block-editor--with-toolbar > .gotipe-editor > .gotipe-content:where(:not(.gotipe-page *)) {
+.gotipe-block-editor--with-toolbar > .gotipe-editor > .gotipe-content {
+  --gt-row-handle-room: min(
+    var(--gt-row-handle-full),
+    max(var(--gt-page-pad-x), var(--gt-handle-rail))
+  );
   padding-left: max(var(--gt-page-pad-x), var(--gt-handle-rail));
 }
 

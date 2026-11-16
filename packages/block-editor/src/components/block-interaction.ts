@@ -192,7 +192,12 @@ export function getRowAnchorBlockIdAtPoint(
   return topLevelId;
 }
 
-export function getToolbarRailLeft(containerEl: HTMLElement): number {
+/**
+ * The left of the handle in the container: `--gt-handle-offset` left of the text column, a rail
+ * shared by every block. `null` when the container keeps no such room on the left: the handle
+ * would cover the text, a task's box or a list's marker (D-260), so it is not drawn.
+ */
+export function getToolbarRailLeft(containerEl: HTMLElement): number | null {
   const contentEl = containerEl.querySelector("[data-gotipe-content]") as HTMLElement | null;
   const containerRect = containerEl.getBoundingClientRect();
   const contentRect = contentEl?.getBoundingClientRect() ?? containerRect;
@@ -203,15 +208,12 @@ export function getToolbarRailLeft(containerEl: HTMLElement): number {
   const columnLeft =
     columnLeftCandidates.length > 0 ? Math.min(...columnLeftCandidates) : contentRect.left;
 
-  // The handle stands --gt-handle-offset left of the text column; the view and the container
-  // width choose the token.
+  // the view and the container width choose the token
   const offset = Number.parseFloat(
     getComputedStyle(containerEl).getPropertyValue("--gt-handle-offset"),
   );
-  return Math.max(
-    0,
-    Math.round(columnLeft - containerRect.left - (Number.isFinite(offset) ? offset : 0)),
-  );
+  const left = columnLeft - containerRect.left - (Number.isFinite(offset) ? offset : 0);
+  return left < -0.5 ? null : Math.max(0, Math.round(left));
 }
 
 export function findBlockLocation(

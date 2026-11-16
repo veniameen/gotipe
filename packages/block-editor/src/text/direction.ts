@@ -37,7 +37,10 @@ export function rightRail(container: HTMLElement, block: HTMLElement): number | 
   return room < 0 ? null : Math.round(room);
 }
 
-/** The pointer is near enough to a block's start for its handle: before or over its text. */
+/**
+ * The pointer is near enough to a block's start for its handle: before or over its text. A block
+ * whose text stands away from its edge (a centred formula) is reached from its edge too.
+ */
 export function inHandleReach(
   container: HTMLElement,
   block: HTMLElement,
@@ -49,16 +52,22 @@ export function inHandleReach(
     const start = block.getBoundingClientRect().right;
     return clientX <= start + before && clientX >= start - after;
   }
-  const start = getBlockTextLeft(block);
-  return clientX >= start - before && clientX <= start + after;
+  const text = getBlockTextLeft(block);
+  const edge = block.getBoundingClientRect().left;
+  return clientX >= Math.min(text, edge) - before && clientX <= Math.max(text, edge) + after;
 }
 
-/** The handle's place beside `block`: the shared left rail, or the right gutter of an RTL block. */
+/**
+ * The handle's place beside `block`: the shared left rail, or the right gutter of an RTL block;
+ * `null` when neither has room for it.
+ */
 export function handleRail(
   container: HTMLElement,
   block: HTMLElement,
-  left: (container: HTMLElement) => number,
-): { left: number; right: number | null } {
+  left: (container: HTMLElement) => number | null,
+): { left: number; right: number | null } | null {
   const right = isRightToLeft(block) ? rightRail(container, block) : null;
-  return right === null ? { left: left(container), right: null } : { left: 0, right };
+  if (right !== null) return { left: 0, right };
+  const rail = left(container);
+  return rail === null ? null : { left: rail, right: null };
 }

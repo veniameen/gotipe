@@ -186,10 +186,15 @@ button.gotipe-media-placeholder:hover:not(:disabled) {
   text-decoration: underline;
   text-decoration-color: var(--gt-link-line);
 }
+/* one line, as the Atlas draws it (frame 18): the actions under the pointer narrow the card, and
+   the type must not break inside a word (D-264) */
 .gotipe-file-card-meta {
+  overflow: hidden;
   color: var(--gt-text-2);
   font-size: var(--gt-ui-small);
   font-variant-numeric: tabular-nums;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .gotipe-file-card.is-failed {
   background: var(--gt-danger-tint);
