@@ -118,8 +118,13 @@ the previous error is cleared.
 | `Editor` | `editor`, `blockViews`, `blockRenderer`, `placeholder`, `afterText`, `ariaLabel`, `slotBefore`, `slotAfter`, `className`, `style`, `children` | `.gotipe-editor` with context, the document and slots. Renders nothing while `editor` is `null`. |
 | `EditorContent` | `editor`, `blockViews`, `blockRenderer`, `placeholder`, `afterText`, `ariaLabel` | Only the document surface; it mounts the editor on its element. |
 | `BubbleMenu` | `editor`, `children`, `shouldShow`, `offset`, `className`, `ariaLabel` | A `toolbar` above a selection in an editable editor. |
-| `FloatingMenu` | `editor`, `children`, `shouldShow` | A `toolbar` left of the focused, empty paragraph under a collapsed caret. |
+| `FloatingMenu` | `editor`, `children`, `shouldShow`, `ariaLabel` | A `toolbar` left of the focused, empty paragraph under a collapsed caret. |
 | `GoTipeI18nProvider` | `locale` or `i18n`, `children` | UI language; see [i18n](/docs/ui/i18n). |
+
+Without `ariaLabel`, the document and both menus are named in the language of
+`GoTipeI18nProvider` — `a11y.editorLabel`, `a11y.toolbarLabel` and `a11y.insertLabel`:
+"Document content", "Text formatting" and "Insert block" in English and without a
+provider; see [i18n](/docs/ui/i18n).
 
 `children` of both menus can be a function `({ editor }) => ReactNode`. `BubbleMenu`
 renders into a layer on `<body>` that copies the editor's `--gt-*` tokens, font and

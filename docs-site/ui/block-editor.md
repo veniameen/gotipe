@@ -88,7 +88,7 @@ root shows a loading skeleton with `role="status"`.
 | `onSuggestionRejectAll` | `() => void` | no-op | Reject all button. |
 | `blockViews` | `BlockViews` | — | Your views by block type; they win over the editor's own. |
 | `slashCommands` | `SlashCommandDef[]` | `editor.getSlashCommands()` | Commands of the `/` menu. |
-| `ariaLabel` | `string` | `"Document content"` | Accessible name of the document. |
+| `ariaLabel` | `string` | `a11y.editorLabel` | Accessible name of the document; by default in the interface language: "Document content" in English. |
 | `errorToast` | `boolean` | `true` | A toast for errors a person can act on. |
 | `find` | `boolean` | `true` | The [find bar](/docs/extensions/find-replace#the-find-bar-of-blockeditor) (`Mod+F`, `Mod+Alt+F`) when the editor has `FindReplace`. |
 | `status` | `boolean \| StatusLineOptions` | `false` | Words and characters under the document, with an optional limit; see [the counter line](/docs/extensions/character-count#the-counter-line-of-blockeditor). Needs `CharacterCount`. |

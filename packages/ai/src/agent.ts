@@ -27,15 +27,23 @@ export const defineAiAgent = defineExtension<AiAgentOptions>({
           if (command === "proofread") {
             runtime.suggestions = await runtime.manager.proofread();
             editor.emit("aiProofreadChange", { suggestions: runtime.suggestions, currentIndex: 0 });
+            const count = runtime.suggestions.length;
             editor.emit("aiStatusChange", {
               active: false,
-              label: `Found ${runtime.suggestions.length} suggestions`,
+              task: "proofread",
+              count,
+              label: `Found ${count} suggestions`,
             });
           } else if (command === "review") {
             runtime.review.set(await runtime.manager.reviewComments());
             // Their own event: these comments are not in the comment store (D-46).
-            editor.emit("aiReviewChange", { comments: getAiReviewComments(editor) });
-            editor.emit("aiStatusChange", { active: false });
+            const comments = getAiReviewComments(editor);
+            editor.emit("aiReviewChange", { comments });
+            editor.emit("aiStatusChange", {
+              active: false,
+              task: "review",
+              count: comments.length,
+            });
           } else {
             if (!prompt) throw new Error("Enter an AI prompt");
             const target = runtime.manager.captureTarget();

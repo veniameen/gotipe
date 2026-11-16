@@ -124,7 +124,8 @@ struck-through and code text as you type the closing delimiter; see
 ## Accessibility
 
 **Roles and names.** The document is `role="textbox"` with `aria-multiline`, a name
-(`ariaLabel`, "Document content" by default and "Page" in `PageEditor`) and `aria-readonly`
+(`ariaLabel`; by default `a11y.editorLabel` of the interface language — "Document content" in
+English — and `page.ariaLabel`, "Page", in `PageEditor`) and `aria-readonly`
 when read-only. The slash menu is a `dialog` holding a `listbox` of `option`s in labelled
 groups, with `aria-activedescendant` on the active one. The bubble is a `toolbar`: mark
 buttons carry `aria-pressed` and `aria-keyshortcuts`, Link and Colour open `dialog`s, More

@@ -1,4 +1,4 @@
-import type { Block, GoTipeEditor } from "@gotipe/core";
+import type { Block, EditorEvents, GoTipeEditor } from "@gotipe/core";
 
 export interface AiContext {
   /** Providers should abort network/stream work when this signal is cancelled. */
@@ -38,6 +38,18 @@ export interface AiComment {
   body: string;
   category?: "grammar" | "style" | "clarity" | "logic" | "general";
 }
+
+/**
+ * What `aiStatusChange` carries, as the core's type of the event declares it (D-196). `task`
+ * says what the request does, and the interface says it in its own words: `AiStatusIndicator`
+ * of `@gotipe/block-editor` reads the keys `ai.status.*`. `count` is how many suggestions a
+ * proofread or comments a review found, when it ends. `label` keeps English words
+ * ("Proofreading...", "Found 3 suggestions") or the message of a failure for hosts that show
+ * it as it is.
+ */
+export type AiStatus = Parameters<EditorEvents["aiStatusChange"]>[0];
+/** What an AI request does: the codes of `AiStatus.task`. */
+export type AiTask = NonNullable<AiStatus["task"]>;
 
 export interface AiCommand {
   name: string;

@@ -22,7 +22,7 @@ export interface EditorProps {
   afterText?: AfterTextFn;
   /** Decoration layers the host draws itself; see `EditorContent`. */
   hostLayers?: readonly string[];
-  /** Accessible name of the document. */
+  /** Accessible name of the document; `a11y.editorLabel` of `GoTipeI18nProvider` by default. */
   ariaLabel?: string;
   slotBefore?: React.ReactNode;
   slotAfter?: React.ReactNode;

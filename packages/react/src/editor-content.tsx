@@ -21,6 +21,7 @@ import {
 import { holdComposing, withoutLayers } from "./content/decorations";
 import { blockKey } from "./content/presentation";
 import { SelectionKeeper } from "./content/selection-keeper";
+import { useGoTipeI18n } from "./i18n-context";
 export { usePhantom } from "./content/context";
 export type {
   AfterTextFn,
@@ -54,7 +55,7 @@ export function EditorContent({
   placeholder,
   afterText,
   hostLayers,
-  ariaLabel = "Document content",
+  ariaLabel,
 }: {
   editor: GoTipeEditor | null;
   blockRenderer?: (props: BlockRendererProps) => React.ReactNode;
@@ -69,8 +70,13 @@ export function EditorContent({
    * cursor overlay. Their decorations are left out; every other layer is drawn.
    */
   hostLayers?: readonly string[];
+  /**
+   * Accessible name of the document. By default `a11y.editorLabel` of `GoTipeI18nProvider`:
+   * "Document content" in English and without a provider.
+   */
   ariaLabel?: string;
 }) {
+  const i18n = useGoTipeI18n();
   const containerRef = useRef<HTMLDivElement>(null);
   const viewState = useViewState(editor);
 
@@ -124,7 +130,7 @@ export function EditorContent({
         ref={containerRef}
         role="textbox"
         aria-multiline={true}
-        aria-label={ariaLabel}
+        aria-label={ariaLabel ?? i18n.t("a11y.editorLabel")}
         aria-readonly={editor ? !editor.isEditable : undefined}
         tabIndex={0}
         className="gotipe-content"
