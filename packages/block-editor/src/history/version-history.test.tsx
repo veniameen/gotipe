@@ -27,7 +27,10 @@ afterEach(() => {
   document.body.innerHTML = "";
 });
 
-async function mount(props: Partial<VersionHistoryProps> & { editor?: GoTipeEditor } = {}) {
+async function mount(
+  props: Partial<VersionHistoryProps> & { editor?: GoTipeEditor; locale?: string } = {},
+) {
+  const { locale = "ru", ...own } = props;
   const editor =
     props.editor ??
     (await createEditor({ extensions: [], content: doc(p("a", "Журнал включают по шагам")) }));
@@ -37,8 +40,8 @@ async function mount(props: Partial<VersionHistoryProps> & { editor?: GoTipeEdit
   const render = (next: Partial<VersionHistoryProps> = {}) =>
     act(() =>
       root.render(
-        <GoTipeI18nProvider locale="ru">
-          <VersionHistory editor={editor} user={{ name: "Мария Лебедева" }} {...props} {...next}>
+        <GoTipeI18nProvider locale={locale}>
+          <VersionHistory editor={editor} user={{ name: "Мария Лебедева" }} {...own} {...next}>
             <div className="page">page</div>
           </VersionHistory>
         </GoTipeI18nProvider>,
@@ -257,5 +260,32 @@ describe("version history panel", () => {
     } finally {
       vi.useRealTimers();
     }
+  });
+
+  it("dates versions in the browser's language when the locale is no language tag (D-220)", async () => {
+    const editor = await createEditor({ extensions: [], content: doc(p("a", "один")) });
+    const created = new Date("2025-11-07T16:20:00Z");
+    const versions: HistoryVersion[] = [
+      {
+        id: "v1",
+        name: "First",
+        createdAt: created.toISOString(),
+        createdBy: "Anna",
+        snapshot: doc(p("a", "ноль")),
+      },
+    ];
+    const browser = (options: Intl.DateTimeFormatOptions) =>
+      new Intl.DateTimeFormat(undefined, options).format(created);
+    const time = browser({ hour: "2-digit", minute: "2-digit" });
+    const { host } = await mount({ editor, versions, locale: "de_DE" });
+    expect(rows(host).map((row) => row.name)).toEqual(["Current", "First"]);
+    expect(host.querySelectorAll(".gotipe-history-day")[1]?.textContent).toBe(
+      browser({ day: "numeric", month: "long", year: "numeric" }),
+    );
+    expect(host.querySelectorAll(".gotipe-version-meta time")[1]?.textContent).toBe(time);
+    await act(async () => host.querySelectorAll<HTMLElement>('[role="option"]')[1]!.click());
+    expect(host.querySelector(".gotipe-history-facts .gotipe-review-fact")?.textContent).toBe(
+      `${browser({ day: "numeric", month: "long" })}, ${time}`,
+    );
   });
 });

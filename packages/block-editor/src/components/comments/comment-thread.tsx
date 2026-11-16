@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { intlLocale } from "../../i18n/intl-locale";
 import { useBlockEditorI18n } from "../../i18n/strings";
 import type { CommentData, CommentSidebarProps } from "./types";
 
@@ -13,16 +14,9 @@ type Props = Pick<
  */
 function Stamp({ timestamp, locale }: { timestamp: number; locale: string }) {
   const date = new Date(timestamp);
-  let text: string;
-  try {
-    text = date.toLocaleString(locale);
-  } catch (error) {
-    if (!(error instanceof RangeError)) throw error;
-    text = date.toLocaleString();
-  }
   return (
     <time className="gotipe-comment-timestamp" dateTime={date.toISOString()}>
-      {text}
+      {date.toLocaleString(intlLocale(locale))}
     </time>
   );
 }
