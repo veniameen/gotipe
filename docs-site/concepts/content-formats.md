@@ -34,9 +34,10 @@ changing anything. It emits `update`, `selectionChange` and `viewStateChange`, b
 `transaction`, and transaction filters don't see it.
 
 > [!WARNING]
-> A string passed to `createEditor({ content })` or `setContent` is always read as HTML,
-> while `validate()` and the server functions read a string as JSON. Parse JSON strings
-> before loading them: `editor.setContent(JSON.parse(json))`.
+> A string passed to `createEditor({ content })` or `setContent` is always read as HTML.
+> `validate()` and the server functions take a document object only: a string returns
+> `false` from `validate()` and makes `renderToHtml`, `renderToMarkdown` and `renderToText`
+> reject with a `TypeError`. Parse JSON strings yourself: `editor.setContent(JSON.parse(json))`.
 
 ## HTML
 
@@ -198,8 +199,8 @@ const text = await renderToText(doc);
 | `renderToText(content)` | Plain text |
 | `createHeadlessEditor({ extensions })` | A full editor on the JS engine with no DOM and no user input |
 
-`content` is a document object or a JSON string. The render functions use no schema, so
-they accept any block type. `blockRenderers` maps a block type to a function that returns
+`content` is a document object; parse JSON with `JSON.parse` first. A string rejects with a
+`TypeError`. The render functions use no schema, so they accept any block type. `blockRenderers` maps a block type to a function that returns
 HTML for that block; the string is inserted as is, so escape what you put in it.
 
 `createHeadlessEditor` checks documents against the same extensions as your client and

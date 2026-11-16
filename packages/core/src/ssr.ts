@@ -13,14 +13,12 @@ export interface SSROptions {
 }
 
 /**
- * Render GoTipe document JSON to HTML string.
+ * Render a GoTipe document object to an HTML string. A string is not read and rejects with a
+ * `TypeError`: parse JSON yourself, `renderToHtml(JSON.parse(json))`.
  * Uses the JS engine and the same public-document conversion as the editor.
  * No browser or WASM binary is required.
  */
-export async function renderToHtml(
-  content: object | string,
-  options?: SSROptions,
-): Promise<string> {
+export async function renderToHtml(content: object, options?: SSROptions): Promise<string> {
   const editor = await createRenderingEditor(content);
 
   try {
@@ -56,9 +54,9 @@ export async function renderToHtml(
 }
 
 /**
- * Render GoTipe document to Markdown string.
+ * Render a GoTipe document object to a Markdown string; a string rejects, as in `renderToHtml`.
  */
-export async function renderToMarkdown(content: object | string): Promise<string> {
+export async function renderToMarkdown(content: object): Promise<string> {
   const editor = await createRenderingEditor(content);
   try {
     return editor.getMarkdown();
@@ -68,9 +66,9 @@ export async function renderToMarkdown(content: object | string): Promise<string
 }
 
 /**
- * Render GoTipe document to plain text.
+ * Render a GoTipe document object to plain text; a string rejects, as in `renderToHtml`.
  */
-export async function renderToText(content: object | string): Promise<string> {
+export async function renderToText(content: object): Promise<string> {
   const editor = await createRenderingEditor(content);
   try {
     return editor.getText();
@@ -79,13 +77,12 @@ export async function renderToText(content: object | string): Promise<string> {
   }
 }
 
-async function createRenderingEditor(content: object | string): Promise<GoTipeEditor> {
+async function createRenderingEditor(content: object): Promise<GoTipeEditor> {
+  // Only a document object (D-185): a string is HTML only in `content` and `setContent`.
+  if (typeof content === "string")
+    throw new TypeError("Server rendering takes a document object: pass JSON.parse(json)");
   const { createEditorWithLoader } = await import("./editor");
-  const doc = typeof content === "string" ? JSON.parse(content) : content;
-  return createEditorWithLoader(
-    { extensions: [], content: doc, editable: false, engine: "js" },
-    null,
-  );
+  return createEditorWithLoader({ extensions: [], content, editable: false, engine: "js" }, null);
 }
 
 /**

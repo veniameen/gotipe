@@ -8,14 +8,14 @@ import { installComposition } from "../input/composition";
 import { replaceStructuredSelection } from "../input/selection-edit";
 import { type InputHost, type TypingKind, reportInputError } from "../input/session";
 import type { Document } from "../types/block";
-import type { MarkView, SelectionView, ViewState } from "../types/view";
+import type { MarkView, SelectionView } from "../types/view";
+import { type LinkActivationPort, installLinkActivation } from "./link-activation";
 
-export interface MountPort {
+export interface MountPort extends LinkActivationPort {
   readonly editable: boolean;
   selection: SelectionView;
   storedMarks: MarkView[] | null;
   clipboard: Pick<ClipboardHandler, "onPaste" | "onCopy" | "onCut" | "onDrop">;
-  getViewState(): ViewState;
   getDocument(): Document;
   content: InputHost["content"];
   /**
@@ -26,7 +26,6 @@ export interface MountPort {
   liftListItem(): boolean;
   publishSelection(): void;
   redrawBlocks(ids: string[]): void;
-  openLink(href: string, options: { blockId: string | null; newTab: boolean }): void;
   reportError(error: GoTipeError): void;
   notifyFocus(focused: boolean): void;
   openSlashMenu(): void;
@@ -85,21 +84,6 @@ export function mountSurface(element: HTMLElement, signal: AbortSignal, port: Mo
     { signal },
   );
 
-  // Links never navigate the page: plain click places the caret while
-  // editing; Cmd/Ctrl+click (or any click when read-only) goes through
-  // host.openLink.
-  const onLinkActivate = (e: MouseEvent) => {
-    const target = e.target instanceof Element ? e.target : null;
-    const anchor = target?.closest("a[href]");
-    if (!anchor || !element.contains(anchor)) return;
-    e.preventDefault();
-    const wantsOpen = !port.editable || e.metaKey || e.ctrlKey || e.button === 1;
-    if (!wantsOpen) return;
-    const blockId = anchor.closest("[data-block-id]")?.getAttribute("data-block-id") ?? null;
-    port.openLink(anchor.getAttribute("href") ?? "", { blockId, newTab: true });
-  };
-  element.addEventListener("click", onLinkActivate, { signal });
-  element.addEventListener("auxclick", onLinkActivate, { signal });
   element.addEventListener("focus", () => port.notifyFocus(true), { signal });
   element.addEventListener("blur", () => port.notifyFocus(false), { signal });
 
@@ -124,6 +108,7 @@ export function mountSurface(element: HTMLElement, signal: AbortSignal, port: Mo
       return handled;
     },
   });
+  installLinkActivation(element, signal, port, domSelection.resolve);
   const readSelectionFromDOM = domSelection.read;
   const restoreDomSelection = domSelection.restore;
   const scheduleSelectionRestore = domSelection.schedule;

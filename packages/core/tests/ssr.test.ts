@@ -38,8 +38,8 @@ describe("server rendering", () => {
     );
   });
 
-  it("renders serialized JSON to Markdown and recursive plain text", async () => {
-    expect(await renderToMarkdown(JSON.stringify(doc))).toContain("**Nested**");
+  it("renders Markdown and recursive plain text", async () => {
+    expect(await renderToMarkdown(doc)).toContain("**Nested**");
     expect(await renderToText(doc)).toBe("Title\nNested");
   });
 

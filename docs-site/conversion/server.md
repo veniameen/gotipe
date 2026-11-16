@@ -45,7 +45,8 @@ try {
 
 The `resolveImage` above reads `file:` URLs; return bytes from wherever your images live.
 `renderToHtml`, `renderToMarkdown` and `renderToText` from `@gotipe/core/server` convert
-document JSON without creating an editor yourself. See [Import and export](/docs/conversion/overview).
+a document object without creating an editor yourself; parse JSON with `JSON.parse` first,
+a string rejects with a `TypeError`. See [Import and export](/docs/conversion/overview).
 
 ## gotipe-convert
 
