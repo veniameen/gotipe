@@ -11,7 +11,10 @@ import (
 const envExample = "../../../../infra/.env.example"
 
 // Compose interpolates these into docker-compose.yml; the API does not read them.
-var composeOnly = map[string]bool{"POSTGRES_PASSWORD": true, "GRAFANA_ADMIN_PASSWORD": true}
+// API_HOST and SYNC_HOST are Caddy's host names (infra/Caddyfile).
+var composeOnly = map[string]bool{
+	"POSTGRES_PASSWORD": true, "GRAFANA_ADMIN_PASSWORD": true, "API_HOST": true, "SYNC_HOST": true,
+}
 
 var (
 	envAssignment = regexp.MustCompile(`^([A-Z][A-Z0-9_]*)=(.*)$`)

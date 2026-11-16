@@ -56,9 +56,9 @@ the API's configuration loader), and replace every `CHANGE_ME` and `example.com`
 cp infra/.env.example infra/.env
 ```
 
-At least set `POSTGRES_PASSWORD`, `HTTP_ALLOWED_ORIGINS`, `SYNC_ALLOWED_ORIGINS`,
-`R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET` and
-`GRAFANA_ADMIN_PASSWORD`. Then append the keys as quoted multi-line values:
+At least set `API_HOST`, `SYNC_HOST`, `HTTP_ALLOWED_ORIGINS`, `SYNC_ALLOWED_ORIGINS`,
+`POSTGRES_PASSWORD`, `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET`
+and `GRAFANA_ADMIN_PASSWORD`. Then append the keys as quoted multi-line values:
 
 ```sh
 printf 'JWT_PRIVATE_KEY="%s"\nJWT_PUBLIC_KEY="%s"\n' "$(cat jwt-private.pem)" "$(cat jwt-public.pem)" >> infra/.env
@@ -68,8 +68,17 @@ For another S3 service, set `S3_ENDPOINT` (and `S3_USE_PATH_STYLE=true` if it ne
 URLs) instead of `R2_ACCOUNT_ID`; the access key variables keep their `R2_` names. The bucket
 must exist.
 
-**4. Set your host names.** Replace `api.gotipe.com` and `sync.gotipe.com` in
-`infra/Caddyfile` with yours.
+**4. Set your host names.** Nothing in `infra/` names a domain. `API_HOST` (the REST API) and
+`SYNC_HOST` (the `/sync` WebSocket) in `infra/.env` are the host names Caddy serves and gets
+TLS certificates for; point their DNS records at the server before the first start. Compose
+passes both to Caddy and stops with a message when one is missing. It requires
+`HTTP_ALLOWED_ORIGINS` and `SYNC_ALLOWED_ORIGINS` as well, so the API never falls back to its
+built-in production origins; set them to your app's origins (an empty value allows no browser
+origin). After changing a host name on a running stack, recreate Caddy with
+`docker compose up -d caddy`.
+
+The API image is `ghcr.io/gotipe/cloud-api:$IMAGE_TAG`. To pull it from another registry, set
+`CLOUD_IMAGE` (the name without the tag) in `infra/.env`.
 
 Caddy has the fixed address `172.30.240.2` on the compose `backend` network
 (`172.30.240.0/24`), and the API sets `TRUSTED_PROXIES=172.30.240.2/32`: it takes the client
@@ -166,7 +175,7 @@ are `<count>/<s|sec|min|h|hour>`. An invalid value stops the API at startup.
 | `JWT_ISSUER`, `JWT_AUDIENCE` | `gotipe`, `gotipe-cloud` | Checked on every token. |
 | `JWT_EXPIRY` | `1h` | Access token lifetime. |
 | `ENVIRONMENT` | `development` | `development` or `production`. Sets default CORS origins and the API key prefix. |
-| `HTTP_ALLOWED_ORIGINS` | per environment | Exact browser origins for the REST API, comma-separated. Set it in production: the built-in production default is GoTipe's own domains. |
+| `HTTP_ALLOWED_ORIGINS` | per environment | Exact browser origins for the REST API, comma-separated. Set it in production: the built-in production default is GoTipe's own domains. The compose stack requires it. |
 | `SYNC_ALLOWED_ORIGINS` | — | Exact browser origins for `/sync`, comma-separated. Wildcards are rejected. |
 | `TRUSTED_PROXIES` | — | Reverse proxies whose `X-Forwarded-For` (or `X-Real-IP`) names the client: IP addresses or CIDR ranges, comma-separated. The API reads the header right to left and takes the first address outside this list, so list every proxy that appends to it, or have the last proxy send only the client (as the compose stack's Caddy does). Empty trusts no proxy; a range that covers every address is rejected. |
 | `LISTEN_ADDR`, `SYNC_LISTEN_ADDR`, `METRICS_LISTEN_ADDR` | `:8080`, `:8081`, `:9090` | Listen addresses. |
@@ -184,6 +193,10 @@ are `<count>/<s|sec|min|h|hour>`. An invalid value stops the API at startup.
 | `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET` | — | Stripe billing; without the webhook secret the webhook answers `503`. |
 | `STRIPE_PRICE_STARTER_ID`, `STRIPE_PRICE_PRO_ID`, `STRIPE_PRICE_BUSINESS_ID` | — | Stripe prices of the paid plans. |
 | `LOG_LEVEL`, `LOG_FORMAT` | `info`, `json` | `debug`, `info`, `warn` or `error`; `json` or `text`. |
+
+`infra/.env` also holds variables that only Compose reads: `API_HOST` and `SYNC_HOST` (for
+Caddy), `CLOUD_IMAGE`, `POSTGRES_PASSWORD` and `GRAFANA_ADMIN_PASSWORD`. `IMAGE_TAG` comes
+from the shell; `infra/scripts/deploy.sh <tag>` sets it.
 
 Older drafts named `ENV`, `JWT_PRIVATE_KEY_PATH`, `STRIPE_PRICE_STARTER`, `S3_BUCKET`,
 `OAUTH_*`, `AI_CACHE_TTL`, `VALKEY_MAX_CONNS` and `R2_CDN_URL`; the API does not read them.
