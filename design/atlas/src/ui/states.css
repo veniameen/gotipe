@@ -124,10 +124,9 @@
 }
 
 /* ---- an editor that could not be created: the element that failed is the editor, a box in its
-   place. As the library draws it (PageEditor, D-142): the box takes the whole width of the editor,
-   its glyph and words in red. The proposal stands in the page's column, its words neutral, as an
-   image's — it waits for the owner's decision (D-165) ---- */
-:is(.gotipe-block-editor, .gotipe-page) > .gotipe-editor-error {
+   place. It stands in the page's column, with its margins, as the head and the quick blocks do;
+   only its glyph is red, its words are neutral, as an image's (D-165) ---- */
+.gotipe-page > .gotipe-editor-error {
   display: grid;
   grid-auto-flow: column;
   place-content: center;
