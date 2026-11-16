@@ -21,9 +21,9 @@ pub(super) enum Lazy {
 
 const DEFINITIONS: [&str; 2] = ["definition", "footnoteDefinition"];
 
-/// How `nodes`, the content of an item, read a lazy line that starts at `offset`. A definition
-/// is read out of paragraph text, so a line right after one continues that text, whatever block
-/// it starts here; so does the head row of a table that ends a paragraph (D-216).
+/// How `nodes`, the content of an item, read a lazy line whose text starts at `offset`. A
+/// definition is read out of paragraph text, so a line right after one continues that text,
+/// whatever block it starts here; so does the head row of a table that ends a paragraph (D-216).
 pub(super) fn lazy_reading(nodes: &[Node], offset: usize, top: bool) -> Lazy {
     let Some(at) = nodes
         .partition_point(|node| node.start <= offset)
@@ -57,11 +57,7 @@ pub(super) fn read(
 ) -> (Node, usize) {
     let task_marker = re!(r"^\[([ xX])\](?:[ \t]|$)");
     let initial = list_marker(&lines[start].text, 0).unwrap();
-    let mut node = Node::new(
-        "list",
-        lines[start].start + lines[start].text.bytes().take_while(|c| *c == b' ').count(),
-        lines[start].end,
-    );
+    let mut node = Node::new("list", lines[start].text_start(), lines[start].end);
     node.ordered = initial.ordered;
     node.number = initial.start;
     let mut cursor = start;
@@ -114,8 +110,14 @@ pub(super) fn read(
                 next += 1;
                 continue;
             }
+            // A lazy line, of the item or of a quote around it, keeps its blanks: cmark-gfm keeps
+            // them in the paragraph, and a row that heads a table counts them (D-245)
             if width(&line.text, 0) >= marker.indent {
-                item_lines.push(line.indent(marker.indent));
+                item_lines.push(if line.lazy {
+                    line.clone()
+                } else {
+                    line.indent(marker.indent)
+                });
                 item_end = line.end;
                 run = false;
                 next += 1;
@@ -130,7 +132,7 @@ pub(super) fn read(
                 lazy_runs.push((item_lines.len(), next));
             }
             run = true;
-            let mut lazy = line.indent(width(&line.text, line.column));
+            let mut lazy = line.clone();
             lazy.lazy = true;
             item_lines.push(lazy);
             item_end = line.end;
@@ -145,7 +147,7 @@ pub(super) fn read(
         // before it, as in CommonMark (D-101); its blocks before that line read the same
         // without it.
         for (at, stray) in lazy_runs {
-            let reading = lazy_reading(&content, item_lines[at].start, true);
+            let reading = lazy_reading(&content, item_lines[at].text_start(), true);
             if reading == Lazy::Text {
                 continue;
             }
@@ -167,11 +169,7 @@ pub(super) fn read(
                 item_lines[0].end,
             ));
         }
-        let mut item = Node::new(
-            "listItem",
-            first.start + first.text.bytes().take_while(|c| *c == b' ').count(),
-            item_end,
-        );
+        let mut item = Node::new("listItem", first.text_start(), item_end);
         item.checked = checked;
         item.spread = item_spread;
         item.children = content;
