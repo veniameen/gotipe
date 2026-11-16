@@ -26,10 +26,9 @@ describe.each(["js", "wasm"] as const)("%s document boundary", (engine) => {
     content: [{ text: "before", marks: [] }],
     children: [],
   };
-  it("validates canonical public documents and JSON, rejects schema errors, and permits a real paste", async () => {
+  it("validates canonical public documents, rejects schema errors and strings (D-185), and permits a real paste", async () => {
     const editor = await create({ version: 1, blocks: [block] });
     expect(editor.validate(editor.getJSON())).toBe(true);
-    expect(editor.validate(JSON.stringify(editor.getJSON()))).toBe(true);
     for (const invalid of [
       "{",
       {},

@@ -7,7 +7,10 @@ JSON attributes, rich text spans, raw text strings or `null` empty content. Attr
 values may contain finite JSON arrays/objects. Offsets are UTF-16 code units, and a
 selection/edit cannot split a surrogate pair.
 
-`editor.validate(documentOrJsonString)` returns a boolean. With configured nodes and
+`editor.validate(document)` returns a boolean. It takes a document object only: a string
+is not parsed and returns `false` (D-185); a string is HTML only in `content` and
+`setContent`, and `renderToHtml`, `renderToMarkdown` and `renderToText` reject one with a
+`TypeError`. With configured nodes and
 marks, creation, replacement and transaction results must satisfy that schema. A
 schema-free editor (`extensions: []`) still validates document shape, IDs and JSON.
 Custom attributes must be declared by an extension; undeclared values are rejected,
