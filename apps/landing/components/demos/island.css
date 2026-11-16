@@ -7,7 +7,7 @@
   display: flex;
   flex-direction: column;
   min-width: 0;
-  margin: var(--site-gap-l) 0;
+  margin: var(--site-space-6) 0;
   overflow: hidden;
   border-radius: var(--site-window-radius);
   background: var(--site-card);
@@ -19,7 +19,7 @@
 .site-demo-bar {
   display: flex;
   align-items: center;
-  gap: var(--site-gap-m);
+  gap: var(--site-space-3);
   box-sizing: border-box;
   height: var(--site-window-bar-h);
   padding: var(--site-window-bar-pad);
@@ -143,7 +143,7 @@
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: var(--site-gap-m);
+  gap: var(--site-space-3);
   box-sizing: border-box;
   min-height: var(--site-demo-h, var(--site-demo-h-default));
   padding: var(--site-try-pad);
@@ -155,7 +155,7 @@
 }
 
 .site-demo-missing {
-  margin: var(--site-gap-l) 0;
+  margin: var(--site-space-6) 0;
   color: var(--gt-text-3);
   font-size: var(--site-small-size);
 }

@@ -1,48 +1,63 @@
 import Link from "next/link";
 import { CopyButton } from "../site/copy-button";
-import { Icon, type IconName } from "../site/icon";
+import { Icon } from "../site/icon";
 import { LINKS } from "../site/links";
+import { SignatureLive } from "./signature-live";
 
 const INSTALL = "npm i @gotipe/core @gotipe/react";
 
-const STACK: { icon: IconName; title: string; text: string; badge: string }[] = [
-  {
-    icon: "braces",
-    title: "Your own engine",
-    text: "TypeScript and Rust/WASM. No editor underneath.",
-    badge: "MIT",
-  },
-  {
-    icon: "page",
-    title: "Markdown, untouched",
-    text: "The same file in. Untouched blocks come back byte for byte.",
-    badge: "Lossless",
-  },
-  {
-    icon: "nodes",
-    title: "Built to work together",
-    text: "Real-time sync, review and offline editing.",
-    badge: "MIT",
-  },
+/** What GoTipe is made of and works with: the strip under the first stage, one endless line. */
+const MADE_OF = [
+  "TypeScript",
+  "Rust / WASM",
+  "React",
+  "Vue",
+  "Svelte",
+  "Solid",
+  "CommonMark",
+  "GitHub Flavored Markdown",
+  "Real-time CRDT",
+  "PDF",
+  "DOCX",
+  "MIT core",
 ];
 
-/** The first stage: three lines, the calls to action, the install line, the stack, the strip. */
+function MadeOf({ copy = false }: { copy?: boolean }) {
+  return (
+    <ul className="site-marquee-list" aria-hidden={copy || undefined}>
+      {MADE_OF.map((item) => (
+        <li key={item}>{item}</li>
+      ))}
+    </ul>
+  );
+}
+
+/**
+ * The first stage (Atlas frame 20): the three lines, the calls to action and the install line over
+ * the live window — the Markdown file and the document it becomes — then the strip of what GoTipe
+ * is made of. The stage stands off the window by the frame on every side; the head floats in it.
+ */
 export function Hero() {
   return (
-    <section className="site-stage site-hero" aria-labelledby="site-hero-title">
-      <div className="site-wrap">
-        <div className="site-hero-grid">
+    <div className="site-frame">
+      <section className="site-stage site-hero" aria-labelledby="site-hero-title">
+        <div className="site-wrap">
           <div className="site-hero-copy">
             <Link className="site-chip" href={LINKS.repo}>
-              <span>v0.1</span>Open source. Built from scratch.
+              <span className="site-chip-tag">
+                <span className="site-pulse" aria-hidden="true" />
+                v0.1
+              </span>
+              Open source. Built from scratch.
               <Icon name="arrow-right" />
             </Link>
-            <h1 id="site-hero-title">
-              Your editor.
-              <br />
-              Your engine.
-              <br />
-              <span className="site-accent">Your rules.</span>
+            <h1 id="site-hero-title" className="site-hero-title">
+              <span className="site-hero-line">Your editor.</span>{" "}
+              <span className="site-hero-line">Your engine.</span>{" "}
+              <span className="site-hero-line is-accent">
+                Your <span className="site-hero-select">rules.</span>
+                <span className="site-hero-caret" aria-hidden="true" />
+              </span>
             </h1>
             <p className="site-lede">
               A document editor framework built from the engine up. Lossless Markdown, real-time
@@ -53,10 +68,15 @@ export function Hero() {
                 Start building
                 <Icon name="arrow-right" />
               </Link>
-              {LINKS.playground && (
+              {LINKS.playground ? (
                 <a className="site-button site-cta is-second" href={LINKS.playground}>
                   Try the playground
-                  <Icon name="arrow-right" />
+                  <Icon name="arrow-up-right" />
+                </a>
+              ) : (
+                <a className="site-button site-cta is-second" href={LINKS.repo}>
+                  View on GitHub
+                  <Icon name="arrow-up-right" />
                 </a>
               )}
             </div>
@@ -65,48 +85,30 @@ export function Hero() {
               <CopyButton
                 text={INSTALL}
                 label="Copy the install command"
-                className="site-button is-quiet"
+                className="site-button is-quiet site-install-copy"
               />
             </div>
           </div>
 
-          <div className="site-stack">
-            <p className="site-stack-head">
-              <span className="site-label">The GoTipe stack</span>
-              <Icon name="layers" />
-            </p>
-            {STACK.map((item, index) => (
-              <div key={item.title} className="site-stack-item">
-                <p className="site-stack-title">
-                  <Icon name={item.icon} />
-                  <strong>{item.title}</strong>
-                  <span aria-hidden="true">{String(index + 1).padStart(2, "0")}</span>
-                </p>
-                <p>{item.text}</p>
-                <span className="site-badge">{item.badge}</span>
-              </div>
-            ))}
-            <p className="site-stack-foot">
-              <Icon name="arrow-down" />
-              Your interface. Your infrastructure.
+          <div className="site-hero-window">
+            <SignatureLive />
+            <p className="site-hero-note">
+              Markdown source and the document it becomes. One model, nothing lost. Edit the
+              document: the source follows.
             </p>
           </div>
-        </div>
 
-        <div className="site-strip">
-          <span>Not a wrapper. A foundation.</span>
-          <span className="site-strip-labels">
-            <span>TypeScript</span>
-            <span>Rust / WASM</span>
-            <span>React</span>
-            <span>Vue</span>
-            <span>
-              <Icon name="lock" />
-              MIT core
-            </span>
-          </span>
+          <div className="site-strip" data-play>
+            <p className="site-strip-title">Not a wrapper. A foundation.</p>
+            <div className="site-marquee">
+              <div className="site-marquee-track">
+                <MadeOf />
+                <MadeOf copy />
+              </div>
+            </div>
+          </div>
         </div>
-      </div>
-    </section>
+      </section>
+    </div>
   );
 }

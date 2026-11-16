@@ -61,7 +61,7 @@ body {
   white-space: nowrap;
   cursor: pointer;
   transition: background-color var(--site-transition), color var(--site-transition), box-shadow
-    var(--site-transition);
+    var(--site-transition), transform var(--site-transition);
 }
 .site-button.is-primary {
   background: var(--gt-ink);
@@ -89,10 +89,6 @@ body {
 /* a skip link's target takes the focus without a ring around the whole page */
 :where(main[tabindex="-1"]:focus) {
   outline: none;
-}
-.site a:focus-visible,
-.site button:focus-visible {
-  border-radius: var(--gt-radius-control);
 }
 
 /* ---- the skip link: hidden until a keyboard reaches it ---- */

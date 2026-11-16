@@ -42,10 +42,13 @@ const ALERTS: Record<string, { variant: string; icon: IconName; label: string }>
 /**
  * Long code in a table cell (`Promise<AiSuggestion[]>`, `showCollaborationCursors`) may break
  * after its punctuation and between the words of a camelCase name, so the table fits its column;
- * short names stay whole, which `overflow-wrap: anywhere` would not keep.
+ * short names stay whole, which `overflow-wrap: anywhere` would not keep. An opening bracket keeps
+ * its closing one (`[]`, `()`, `{}`): a line never ends on `[` with `]` alone below it.
  */
-const breakable = (code: string) =>
-  code.replace(/(&lt;|[.,(\[|/:{])(?=[^\s])/g, "$1<wbr>").replace(/([a-z])(?=[A-Z])/g, "$1<wbr>");
+export const breakable = (code: string) =>
+  code
+    .replace(/(&lt;|[.,(\[|/:{])(?=[^\s)\]}])/g, "$1<wbr>")
+    .replace(/([a-z])(?=[A-Z])/g, "$1<wbr>");
 
 class PageRenderer {
   readonly errors: string[] = [];

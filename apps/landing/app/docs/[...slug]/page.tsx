@@ -1,5 +1,6 @@
 import { Badge } from "@/components/site/badge";
 import { Icon } from "@/components/site/icon";
+import { DocsFooter } from "@/components/site/site-footer";
 import { DocsHeader } from "@/components/site/site-header";
 import { docsUrl, editUrl, markdownUrl, siteUrl } from "@/lib/docs/paths";
 import { renderPage } from "@/lib/docs/render";
@@ -55,30 +56,38 @@ export default async function DocPage({ params }: Props) {
         </NavPanel>
         <main id="main" className="site-docs-main" tabIndex={-1}>
           <article className="site-doc" id="doc">
-            <nav className="site-crumbs" aria-label="Breadcrumb">
-              <ol>
-                <li>{page.section}</li>
-                <li aria-current="page">
-                  <Icon name="chevron-right" />
-                  {page.title}
-                </li>
-              </ol>
-            </nav>
-            <h1 className="site-doc-title">{page.title}</h1>
-            <p className="site-doc-lede">{page.description}</p>
-            <div className="site-doc-meta">
-              {page.packages.map((name) => (
-                <Badge key={name}>{name}</Badge>
-              ))}
-              {page.license && <Badge licence={page.license} />}
+            <div className="site-doc-top">
+              <nav className="site-crumbs" aria-label="Breadcrumb">
+                <ol>
+                  <li>{page.section}</li>
+                  <li aria-current="page">
+                    <Icon name="chevron-right" />
+                    {page.title}
+                  </li>
+                </ol>
+              </nav>
               <span className="site-doc-tools">
                 <CopyMarkdown url={markdownUrl(page.slug)} />
-                <a className="site-button is-quiet site-tool-button" href={editUrl(page.slug)}>
+                <a
+                  className="site-button is-quiet site-tool-button"
+                  href={editUrl(page.slug)}
+                  aria-label="Edit on GitHub"
+                >
                   <Icon name="external" />
-                  Edit on GitHub
+                  <span className="site-tool-label">Edit on GitHub</span>
                 </a>
               </span>
             </div>
+            <h1 className="site-doc-title">{page.title}</h1>
+            <p className="site-doc-lede">{page.description}</p>
+            {(page.packages.length > 0 || page.license) && (
+              <div className="site-doc-meta">
+                {page.packages.map((name) => (
+                  <Badge key={name}>{name}</Badge>
+                ))}
+                {page.license && <Badge licence={page.license} />}
+              </div>
+            )}
             <DocContent nodes={nodes} />
             <nav className="site-pager" aria-label="Pages">
               {previous ? (
@@ -103,6 +112,7 @@ export default async function DocPage({ params }: Props) {
               )}
             </nav>
           </article>
+          <DocsFooter />
         </main>
         <aside className="site-toc">
           <Outline items={outline} />

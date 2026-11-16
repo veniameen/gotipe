@@ -7,9 +7,9 @@ export function Closing() {
   return (
     <section className="site-section" aria-labelledby="site-closing-title">
       <div className="site-wrap">
-        <div className="site-stage site-band">
+        <div className="site-stage site-band" data-reveal data-play>
           <p className="site-eyebrow">The next chapter is yours</p>
-          <h2 id="site-closing-title">
+          <h2 id="site-closing-title" className="site-title">
             Build on an engine
             <br />
             you own.

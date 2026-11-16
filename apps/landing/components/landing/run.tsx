@@ -1,3 +1,4 @@
+import type { CSSProperties } from "react";
 import { Icon, type IconName } from "../site/icon";
 import { FACTS } from "./facts";
 import { Badge } from "./features";
@@ -43,9 +44,9 @@ export function Run() {
   return (
     <section className="site-section is-run" aria-labelledby="site-run-title">
       <div className="site-wrap">
-        <div className="site-center-head">
+        <div className="site-center-head" data-reveal>
           <p className="site-eyebrow">Run it your way</p>
-          <h2 id="site-run-title">
+          <h2 id="site-run-title" className="site-title">
             Same document.
             <br />
             Different ways to run.
@@ -55,15 +56,25 @@ export function Run() {
             it.
           </p>
         </div>
-        <div className="site-run-grid">
-          {WAYS.map((way) => (
-            <article key={way.title} className={`site-run${way.tint ? " is-tint" : ""}`}>
+        <div className="site-run-grid" data-glow>
+          {WAYS.map((way, index) => (
+            <article
+              key={way.title}
+              className={`site-run${way.tint ? " is-tint" : ""}`}
+              data-glow-card
+              data-reveal
+              style={{ "--site-i": index } as CSSProperties}
+            >
               <div className="site-tile-top">
-                <Icon name={way.icon} />
+                <span className="site-icon-box">
+                  <Icon name={way.icon} />
+                </span>
                 <Badge licence="MIT" />
               </div>
               <p className="site-label">{way.label}</p>
-              <p className="site-big">{way.big}</p>
+              <p className="site-big" data-count>
+                {way.big}
+              </p>
               <h3>{way.title}</h3>
               <p>{way.text}</p>
               <p className="site-run-foot">{way.foot}</p>

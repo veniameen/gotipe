@@ -1,7 +1,7 @@
 /* The site of GoTipe: the shell shared by the landing and the documentation. Ported from the
-   accepted Atlas (design/atlas/src/site/landing.css); the site keeps the library's text, lines and
-   accent and speaks in its own type: Inter 500 headings with tight tracking, quiet text, small mono
-   labels; tinted rounded stages. */
+   Atlas (design/atlas/src/site/landing.css); the site keeps the library's text, lines and accent
+   and speaks in its own type: Inter headings with tight tracking, quiet text, small mono labels;
+   framed stages with blue light. Every distance is a step of the scale (tokens-site.css). */
 
 .site {
   position: relative;
@@ -12,7 +12,8 @@
   line-height: var(--site-text-leading);
   letter-spacing: normal;
 }
-.site a {
+/* weightless, so the library's rules for a document's links (underlined) win inside documents */
+:where(.site) a {
   color: inherit;
   text-decoration: none;
 }
@@ -20,7 +21,7 @@
   box-sizing: border-box;
   max-width: var(--site-max);
   margin: 0 auto;
-  padding: 0 var(--site-pad-x);
+  padding: 0 var(--site-gutter);
 }
 .site-accent {
   color: var(--gt-accent);
@@ -31,7 +32,7 @@
 /* the site's code reads as typed: no ligature turns => into an arrow */
 .site-install,
 .site-src-lines,
-.site-panel .gotipe-code-block-scroll {
+.site-code {
   font-variant-ligatures: none;
 }
 
@@ -39,11 +40,11 @@
 .site-brand {
   display: inline-flex;
   align-items: center;
-  gap: var(--site-gap-s);
+  gap: var(--site-space-2);
   font-family: var(--site-font-display);
   font-size: var(--site-h3-size);
-  font-weight: var(--gt-weight-strong);
-  line-height: var(--site-h3-leading);
+  font-weight: var(--site-weight-display);
+  line-height: var(--site-logo);
   letter-spacing: var(--site-title-tracking);
 }
 .site-brand > small {
@@ -52,6 +53,7 @@
   font-weight: var(--gt-weight-regular);
 }
 .site-logo {
+  display: block;
   flex: none;
   width: var(--site-logo);
   height: var(--site-logo);
@@ -62,7 +64,7 @@
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  gap: var(--site-gap-xs);
+  gap: var(--site-space-1);
 }
 .site-head-end > .is-wide {
   display: var(--site-wide-display);
@@ -80,23 +82,33 @@
   padding: 0;
 }
 
-/* ---- a stage: a rounded tinted ground set in from the frame's edges ---- */
+/* ---- the frame: a stage stands off the window by the same distance on every side ---- */
+.site-frame {
+  padding: var(--site-frame) var(--site-frame) 0;
+}
 .site-stage {
-  margin: 0 var(--site-stage-inset);
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
   border-radius: var(--site-stage-radius);
-  background: var(--site-streaks), var(--site-stage);
 }
 /* a stage is set in from the page's edges; its content keeps the plain sections' left edge */
-.site-stage > .site-wrap {
-  max-width: calc(var(--site-max) - 2 * var(--site-stage-inset));
-  padding: 0 calc(var(--site-pad-x) - var(--site-stage-inset));
+.site-stage > .site-wrap,
+.site-frame .site-wrap {
+  max-width: calc(var(--site-max) - 2 * var(--site-frame));
+  padding: 0 calc(var(--site-gutter) - var(--site-frame));
 }
-.site-stage.is-grey {
+.site-stage.is-alt {
+  margin: 0 var(--site-frame);
   padding: var(--site-section-y) 0;
-  background: var(--site-surface);
+  background: var(--site-bg-alt);
 }
 .site-section {
   padding: var(--site-section-y) 0;
+}
+/* two plain sections share one distance between their contents */
+.site-section + .site-section {
+  padding-top: 0;
 }
 
 /* ---- words every section uses: the mono eyebrow, the big title, the quiet line under it ---- */
@@ -113,35 +125,55 @@
   text-wrap: balance;
 }
 .site-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--site-space-2);
   color: var(--gt-accent);
+}
+/* the eyebrow's mark: the editor's caret, the site's sign */
+.site-eyebrow::before {
+  content: "";
+  width: var(--gt-caret-w);
+  height: var(--site-label-leading);
+  border-radius: var(--gt-radius-round);
+  background: currentColor;
 }
 .site-label {
   color: var(--gt-text-2);
 }
-.site-landing h2:not(.gotipe-doc h2):not(.gotipe-editor h2):not(.site-foot h2) {
-  margin: var(--site-gap) 0 0;
+.site-title {
+  max-width: var(--site-title-max);
+  margin: var(--site-space-4) 0 0;
   font-family: var(--site-font-display);
   font-size: var(--site-h2-size);
   font-weight: var(--site-weight-display);
   line-height: var(--site-h2-leading);
   letter-spacing: var(--site-h2-tracking);
+  text-wrap: balance;
 }
 .site-sub {
-  max-width: var(--site-lede-max);
-  margin: var(--site-gap-l) 0 0;
+  max-width: var(--site-sub-max);
+  margin: var(--site-space-6) 0 0;
   color: var(--gt-text-2);
   font-size: var(--site-text-size);
-  line-height: var(--site-body-leading);
+  line-height: var(--site-text-leading);
+  text-wrap: pretty;
 }
 .site-head-row {
   display: grid;
   grid-template-columns: var(--site-head-cols);
-  gap: var(--site-gap-l) var(--site-gap-3xl);
+  gap: var(--site-space-6) var(--site-space-16);
   align-items: end;
   margin-bottom: var(--site-section-gap);
 }
 .site-head-row > .site-sub {
   margin: 0;
+}
+.site-center-head {
+  display: grid;
+  justify-items: center;
+  margin: 0 auto var(--site-section-gap);
+  text-align: center;
 }
 .site-badge {
   flex: none;
@@ -164,20 +196,34 @@
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: var(--site-gap-m);
-  margin-top: var(--site-gap-2xl);
+  gap: var(--site-space-3);
+  margin-top: var(--site-space-10);
 }
 .site .site-cta {
-  gap: var(--site-gap-s);
+  gap: var(--site-space-2);
   height: var(--site-cta-h);
   padding: var(--site-cta-pad);
   border-radius: var(--site-cta-radius);
   background: var(--site-cta-bg);
+  box-shadow: var(--site-cta-shadow);
   color: var(--site-cta-text);
   font-size: var(--site-body-size);
+}
+.site .site-cta:hover {
+  background: var(--site-cta-bg-hover);
+  transform: translateY(var(--site-lift));
+}
+.site .site-cta > .site-icon {
+  transition: transform var(--site-transition);
+}
+.site .site-cta:hover > .site-icon {
+  transform: translateX(var(--site-space-1));
 }
 .site .site-cta.is-second {
   background: var(--site-cta-2-bg);
   box-shadow: inset 0 0 0 var(--gt-hairline) var(--site-cta-2-line);
   color: var(--gt-text);
+}
+.site .site-cta.is-second:hover {
+  box-shadow: inset 0 0 0 var(--gt-hairline) var(--gt-line-active);
 }

@@ -1,37 +1,15 @@
-/* What the Atlas draws as pictures and the site makes work: buttons and links in the places of
-   the frame's spans, the static documents the server sends before an editor arrives, the live
-   editors inside the windows, the syntax colours of the sample. */
+/* What the Atlas draws as pictures and the site makes work: the static documents the server sends
+   before an editor arrives, the live editors inside the windows, the two people of «Better,
+   together.» with the library's remote carets. */
 
-/* ---- controls in the places of the frame's spans ---- */
 .site-chip {
   width: fit-content;
 }
-.site-chip:hover > .site-icon {
-  color: var(--gt-accent);
-}
-.site .site-cta:not(.is-second):hover {
-  background: var(--gt-accent-hover);
-}
-.site .site-cta.is-second:hover {
-  box-shadow: inset 0 0 0 var(--gt-hairline) var(--gt-line-strong);
-}
-.site-install > .site-button {
-  color: var(--gt-text-2);
-}
-.site-look {
-  width: 100%;
-  margin: 0;
-  border: 0;
-  background: transparent;
-  font: inherit;
-  text-align: left;
-  cursor: pointer;
-}
-.site-look:hover:not(.is-on) {
-  background: var(--gt-fill-1);
-}
 .site-licence-free > a {
   color: var(--gt-accent);
+  text-decoration-line: underline;
+  text-decoration-color: var(--site-tint-line);
+  text-underline-offset: var(--gt-underline-offset);
 }
 
 /* ---- the documents in the windows: the window pads them, the page sets only its type ----
@@ -56,46 +34,10 @@
 /* the look window shows the page as the view draws it, only shorter at the foot */
 .site-look-page .gotipe-content {
   min-height: 0;
-  padding-bottom: var(--site-gap-xl);
+  padding-bottom: var(--site-space-8);
 }
 
-/* the copy chip of the frame, over the library's icon button of the code head */
-.site-panel .gotipe-code-block-header .site-copy {
-  display: inline-flex;
-  min-width: 0;
-  height: auto;
-  padding: var(--site-badge-pad);
-  border-radius: var(--site-badge-radius);
-  color: var(--gt-text-2);
-  font-family: var(--site-font-mono);
-  font-size: var(--site-label-size);
-  line-height: var(--site-label-leading);
-}
-.site-panel .gotipe-code-block-header .site-copy:hover {
-  color: var(--gt-text);
-}
-.site-panel .gotipe-code-block-scroll {
-  overflow: hidden;
-}
-.site-panel .gotipe-code-block-scroll > pre {
-  margin: 0;
-  padding: 0;
-  overflow-x: auto;
-  font: inherit;
-}
-.site-panel .gotipe-code-block-line-numbers {
-  display: block;
-  flex: none;
-  min-width: var(--gt-code-gutter);
-  margin-right: var(--gt-code-gutter-gap);
-  padding: 0;
-  color: var(--gt-text-3);
-  text-align: right;
-  white-space: pre;
-  user-select: none;
-}
-
-/* ---- two people in one paragraph: the library's remote selection and caret ---- */
+/* ---- two people in one paragraph: the library's remote selection and carets ---- */
 .site-pair-selection {
   background: var(--gt-person-1-sel);
 }
@@ -107,6 +49,9 @@
   margin: 0 calc(-0.5 * var(--gt-caret-w));
   vertical-align: var(--gt-caret-shift);
   background: var(--gt-person-1);
+}
+.site-pair-caret.is-mira {
+  background: var(--gt-person-2);
 }
 .site-pair-flag {
   position: absolute;
@@ -123,29 +68,6 @@
   letter-spacing: normal;
   white-space: nowrap;
 }
-
-/* the look list is a fieldset of buttons */
-fieldset.site-look-list {
-  min-width: 0;
-  margin-right: 0;
-  margin-bottom: 0;
-  margin-left: 0;
-  padding: 0;
-  border: 0;
-}
-
-/* the source pane scrolls sideways where the window is narrower than its longest line */
-.site-src-lines {
-  overflow-x: auto;
-}
-.site-src-lines > li {
-  min-width: fit-content;
-}
-
-/* a phone's window bar keeps the path and drops the file tag; the foot wraps instead of squeezing */
-.site-window-bar > .site-window-end > .site-tag {
-  display: var(--site-window-tag-display);
-}
-.site-window-foot {
-  flex-wrap: wrap;
+.site-pair-caret.is-mira > .site-pair-flag {
+  background: var(--gt-person-2);
 }

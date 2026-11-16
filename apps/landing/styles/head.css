@@ -1,66 +1,110 @@
-/* The heads of the site: the landing's floating pill and the documentation's bar (Atlas frames 20
-   and 21), the theme menu and the navigation menu of narrow screens. */
+/* The heads of the site: the landing's floating bar and the documentation's bar (Atlas frames 20
+   and 21), the theme menu and the navigation menu of narrow screens. Every item of a head stands
+   on its middle line: the mark, the links and the buttons are boxes of their own height, centred
+   by the bar, never by a line of text. */
 
-/* ---- the landing's head: a pill floating over the first stage ---- */
+/* ---- the landing's head: a bar in the frame, clear over the first stage, glass once scrolled ---- */
 .site-head {
-  position: absolute;
-  top: var(--site-head-top);
-  right: 0;
-  left: 0;
+  position: fixed;
+  top: var(--site-frame);
+  right: var(--site-frame);
+  left: var(--site-frame);
   z-index: var(--site-z-head);
-  padding: 0 var(--site-head-pad-x);
-}
-.site-head-in {
-  display: flex;
-  align-items: center;
-  gap: var(--site-gap);
-  box-sizing: border-box;
-  max-width: var(--site-head-max);
   height: var(--site-head-h);
-  margin: 0 auto;
-  padding: var(--site-head-in-pad);
   border-radius: var(--site-head-radius);
-  background: var(--site-glass);
-  box-shadow: inset 0 0 0 var(--gt-hairline) var(--site-glass-line), var(--site-glass-shadow);
+  transition: background-color var(--site-dur-2) var(--site-ease), box-shadow var(--site-dur-2)
+    var(--site-ease), backdrop-filter var(--site-dur-2) var(--site-ease);
 }
-/* the mark sits in a flexible start column; the link itself is only as wide as the mark */
-.site-head-in > .site-head-start,
+html[data-site-scrolled] .site-head {
+  background: var(--site-glass-strong);
+  box-shadow: inset 0 0 0 var(--gt-hairline) var(--site-glass-line), var(--site-glass-shadow);
+  -webkit-backdrop-filter: blur(var(--site-glass-blur)) saturate(1.8);
+  backdrop-filter: blur(var(--site-glass-blur)) saturate(1.8);
+}
+/* three columns: the mark, the links in the very middle, the actions; the content keeps the
+   page's left and right edges */
+.site-head-in {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: var(--site-space-4);
+  box-sizing: border-box;
+  max-width: calc(var(--site-max) - 2 * var(--site-frame));
+  height: 100%;
+  margin: 0 auto;
+  padding: 0 calc(var(--site-gutter) - var(--site-frame));
+}
+.site-head-in > .site-brand {
+  justify-self: start;
+}
 .site-head-in > .site-head-end {
-  flex: 1 0 0;
+  grid-column: 3;
 }
 .site-nav {
   display: var(--site-nav-display);
-  gap: var(--site-gap-xs);
+  align-items: center;
+  gap: var(--site-nav-gap);
 }
 .site-nav a {
-  padding: 0 var(--site-gap-m);
+  display: inline-flex;
+  align-items: center;
+  height: var(--site-head-button-h);
+  padding: var(--site-nav-pad);
+  border-radius: var(--site-head-button-radius);
   color: var(--gt-text-2);
   font-size: var(--site-small-size);
-  line-height: var(--site-head-button-h);
+  font-weight: var(--gt-weight-medium);
+  line-height: var(--site-small-leading);
+  transition: color var(--site-transition), background-color var(--site-transition);
 }
 .site-nav a:hover {
+  background: var(--gt-fill-1);
   color: var(--gt-text);
 }
 
-/* ---- the head: the mark, the version, the search field, a few links ---- */
+/* ---- the documentation's head: the mark, the version, the search field, a few links ---- */
 .site-docs-head {
   position: sticky;
   top: 0;
   z-index: var(--site-z-head);
-  border-bottom: var(--gt-hairline) solid var(--gt-line);
-  background: var(--site-glass);
+  border-bottom: var(--gt-hairline) solid var(--site-line);
+  background: var(--site-glass-strong);
+  -webkit-backdrop-filter: blur(var(--site-glass-blur)) saturate(1.8);
+  backdrop-filter: blur(var(--site-glass-blur)) saturate(1.8);
 }
+/* the head stands on the columns of the page below it: the search field starts where the page
+   does; a tablet and a phone keep one row */
 .site-docs-head-in {
-  display: flex;
+  position: relative;
+  display: var(--site-docs-head-display);
+  grid-template-columns: var(--site-docs-cols);
+  column-gap: var(--site-docs-head-gap);
+  justify-content: center;
   align-items: center;
-  gap: var(--site-gap);
   box-sizing: border-box;
   max-width: var(--site-docs-max);
   height: var(--site-docs-head-h);
   margin: 0 auto;
-  padding: 0 var(--site-pad-x);
+  padding: 0 var(--site-gutter);
+}
+.site-docs-brand {
+  display: flex;
+  grid-row: 1;
+  align-items: center;
+  gap: var(--site-space-3);
+  min-width: 0;
+}
+.site-docs-head-in > .site-search {
+  grid-row: 1;
+  grid-column: 2;
+  justify-self: start;
+  margin-left: var(--site-search-offset);
 }
 .site-docs-head-in > .site-head-end {
+  grid-row: 1;
+  grid-column: -2;
+  justify-self: end;
   margin-left: auto;
 }
 .site-version {
@@ -88,15 +132,15 @@
 .site-search {
   display: var(--site-wide-display);
   align-items: center;
-  gap: var(--site-gap-s);
+  gap: var(--site-space-2);
   box-sizing: border-box;
   width: var(--site-search-w);
+  max-width: 100%;
   height: var(--site-search-h);
-  margin-left: var(--site-gap-l);
   padding: var(--site-search-pad);
   border-radius: var(--site-search-radius);
   background: var(--site-surface);
-  box-shadow: inset 0 0 0 var(--gt-hairline) var(--gt-line);
+  box-shadow: inset 0 0 0 var(--gt-hairline) var(--site-line);
   color: var(--gt-text-2);
   font-size: var(--site-small-size);
 }
@@ -169,12 +213,14 @@ html:not([data-theme="dark"]) .site-theme-to-light {
   color: var(--gt-accent);
 }
 
-/* the menu of narrow screens: the links, then the theme as three choices */
-.site-head-in {
-  position: relative;
-}
+/* the menu of narrow screens: the links, then the theme as three choices; it hangs under the
+   right edge of the head's content */
 .site-nav-menu {
+  right: calc(var(--site-gutter) - var(--site-frame));
   width: var(--site-nav-menu-w);
+}
+.site-docs-head-in .site-nav-menu {
+  right: var(--site-gutter);
 }
 .site-nav-menu > nav {
   display: grid;
@@ -182,7 +228,7 @@ html:not([data-theme="dark"]) .site-theme-to-light {
 .site-menu-themes {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: var(--site-gap-xs);
+  gap: var(--site-space-1);
   min-width: 0;
   margin: var(--gt-menu-sep-gap) 0 0;
   padding: var(--gt-menu-sep-gap) 0 0;
@@ -211,4 +257,12 @@ html:not([data-theme="dark"]) .site-theme-to-light {
 .site-menu-theme[aria-pressed="true"] {
   background: var(--gt-fill-2);
   color: var(--gt-text);
+}
+
+/* the head's call to action: the page's primary colour at the head's size */
+.site .site-head-button.site-cta {
+  height: var(--site-head-button-h);
+  padding: var(--site-head-button-pad);
+  border-radius: var(--site-head-button-radius);
+  font-size: var(--site-small-size);
 }

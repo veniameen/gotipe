@@ -59,6 +59,25 @@
 .site-code-copy {
   margin-left: auto;
 }
+/* code wider than its block scrolls inside it: a shade at the edge shows there is more, and the
+   block's own ground covers it at either end (the covers scroll with the code) */
+.site-doc-editor .gotipe-code-block-scroll > pre {
+  background:
+    linear-gradient(90deg, var(--gt-sunken) 40%, transparent) left center /
+    var(--site-code-fade) 100% no-repeat local, linear-gradient(
+      270deg,
+      var(--gt-sunken) 40%,
+      transparent
+    ) right center / var(--site-code-fade) 100% no-repeat local, linear-gradient(
+      90deg,
+      var(--site-code-shade),
+      transparent
+    ) left center / var(--site-code-shade-w) 100% no-repeat scroll, linear-gradient(
+      270deg,
+      var(--site-code-shade),
+      transparent
+    ) right center / var(--site-code-shade-w) 100% no-repeat scroll;
+}
 /* the numbers are one text, a line each (lib/docs/code.ts) */
 .site-doc-editor .gotipe-code-block-line-numbers {
   white-space: pre;
@@ -94,7 +113,7 @@
   line-height: var(--gt-ui-small-leading);
 }
 .site-doc-editor .gotipe-seg + .site-code-title {
-  margin-left: var(--site-gap-s);
+  margin-left: var(--site-space-2);
 }
 .site-doc-editor .gotipe-code-block-scroll[hidden] {
   display: none;

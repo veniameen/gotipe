@@ -8,8 +8,8 @@
   flex: none;
   flex-wrap: wrap;
   align-items: center;
-  gap: var(--site-gap-s);
-  padding: var(--site-gap-s) var(--site-gap);
+  gap: var(--site-space-2);
+  padding: var(--site-space-2) var(--site-space-4);
   border-bottom: var(--gt-hairline) solid var(--gt-line);
   font-size: var(--site-small-size);
 }
@@ -21,13 +21,13 @@
   border: 0;
   flex-wrap: wrap;
   align-items: center;
-  gap: var(--site-gap-xs);
+  gap: var(--site-space-1);
 }
 /* a floated legend is an ordinary flex item, not drawn in the fieldset's border */
 .site-demo-choice-label {
   float: left;
   padding: 0;
-  margin-right: var(--site-gap-xs);
+  margin-right: var(--site-space-1);
   color: var(--gt-text-2);
   font-family: var(--site-font-mono);
   font-size: var(--site-label-size);
@@ -41,14 +41,14 @@
 }
 .site-demo-alert {
   margin: 0;
-  padding: var(--site-gap-s) var(--site-gap);
+  padding: var(--site-space-2) var(--site-space-4);
   color: var(--gt-danger);
 }
 .site-demo-form {
   display: flex;
   flex: 1;
   flex-wrap: wrap;
-  gap: var(--site-gap-s);
+  gap: var(--site-space-2);
   min-width: 0;
 }
 .site-demo-input {
@@ -82,9 +82,9 @@
    library sets these on the editor's children (and again in its narrow container query), so the
    override names the same elements. */
 .site-demo :is(.gotipe-block-editor, .gotipe-editor, .gotipe-history-shell) > * {
-  --gt-page-pad-top: var(--site-gap-l);
+  --gt-page-pad-top: var(--site-space-6);
   --gt-page-pad-x: var(--site-demo-pad-x);
-  --gt-page-pad-bottom: var(--site-gap-l);
+  --gt-page-pad-bottom: var(--site-space-6);
   --gt-editor-min-height: var(--site-demo-editor-min-h);
 }
 .site-demo-scroll > .gotipe-page,
@@ -116,7 +116,7 @@
 }
 .site-demo-output-title {
   margin: 0;
-  padding: var(--site-gap-s) var(--site-gap) 0;
+  padding: var(--site-space-2) var(--site-space-4) 0;
   color: var(--gt-text-2);
   font-family: var(--site-font-mono);
   font-size: var(--site-label-size);
@@ -127,7 +127,7 @@
 }
 .site-demo-output-code {
   margin: 0;
-  padding: var(--site-gap-s) var(--site-gap) var(--site-gap);
+  padding: var(--site-space-2) var(--site-space-4) var(--site-space-4);
   color: var(--gt-text);
   font-family: var(--site-font-mono);
   font-size: var(--site-label-size);
@@ -156,8 +156,8 @@
   display: flex;
   flex: none;
   align-items: center;
-  gap: var(--site-gap-s);
-  padding: var(--site-gap-s) var(--site-gap);
+  gap: var(--site-space-2);
+  padding: var(--site-space-2) var(--site-space-4);
   border-bottom: var(--gt-hairline) solid var(--gt-line);
   font-size: var(--site-small-size);
   font-weight: var(--gt-weight-medium);

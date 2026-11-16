@@ -1,4 +1,6 @@
-import type { ReactNode } from "react";
+"use client";
+
+import { type ReactNode, useId, useState } from "react";
 import { Icon } from "../site/icon";
 import { type SourcePiece, piecesOf } from "./markdown-lines";
 
@@ -15,18 +17,39 @@ export interface SignatureWindowProps {
   children: ReactNode;
 }
 
+type Pane = "document" | "source";
+
 function Piece({ piece }: { piece: SourcePiece }) {
   return piece.mark ? <span className="is-mark">{piece.text}</span> : <>{piece.text}</>;
 }
 
 /**
- * The window of «Plain text. Rich possibilities.» (Atlas frame 20): the Markdown source with
- * line numbers on the left, the document on the right, the count of lines under both.
+ * The window of the first stage (Atlas frame 20): the Markdown source with line numbers on the
+ * left, the document on the right, the count of lines under both. A phone has room for one pane:
+ * a switch over them shows the document or its source (`data-pane`), both stay in the page.
  */
 export function SignatureWindow({ lines, current, summary, live, children }: SignatureWindowProps) {
+  const [pane, setPane] = useState<Pane>("document");
+  const ids = useId();
+  const tab = (value: Pane, label: string) => (
+    <button
+      type="button"
+      className="site-pane-tab"
+      aria-pressed={pane === value}
+      aria-controls={`${ids}-${value}`}
+      onClick={() => setPane(value)}
+    >
+      {label}
+    </button>
+  );
   return (
     <figure className="site-window" aria-label="Markdown source and the document it becomes">
       <div className="site-window-bar">
+        <span className="site-window-dots" aria-hidden="true">
+          <span />
+          <span />
+          <span />
+        </span>
         <Icon name="page" />
         <span className="site-window-path">
           <span className="site-window-trail">
@@ -44,11 +67,15 @@ export function SignatureWindow({ lines, current, summary, live, children }: Sig
               J
             </span>
           </span>
-          <Icon name="more" />
         </span>
       </div>
-      <div className="site-split">
-        <section className="site-src" aria-label="Markdown source">
+      <fieldset className="site-pane-tabs">
+        <legend className="site-sr">Pane</legend>
+        {tab("document", "Document")}
+        {tab("source", "Markdown")}
+      </fieldset>
+      <div className="site-split" data-pane={pane}>
+        <section id={`${ids}-source`} className="site-src" aria-label="Markdown source">
           <p className="site-pane-head">
             <span>Markdown source</span>
             <span>.md</span>
@@ -76,7 +103,7 @@ export function SignatureWindow({ lines, current, summary, live, children }: Sig
             <span>CommonMark</span>
           </p>
         </section>
-        <section className="site-render" aria-label="Document">
+        <section id={`${ids}-document`} className="site-render" aria-label="Document">
           <p className="site-pane-head">
             <span>Document</span>
             <span className={live ? "is-live" : undefined}>{live ? "Synced" : "Preview"}</span>

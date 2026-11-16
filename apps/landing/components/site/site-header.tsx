@@ -27,15 +27,17 @@ function GitHubLink() {
   );
 }
 
-/** The landing's head: a pill floating over the first stage (Atlas frame 20). */
+/**
+ * The landing's head (Atlas frame 20): a bar in the frame, clear over the first stage and glass
+ * once the page scrolls (`data-site-scrolled`, motion/controller.tsx). The mark, the links in the
+ * middle and the actions stand on one middle line.
+ */
 export function SiteHeader() {
   const links = primaryNav();
   return (
     <header className="site-head">
       <div className="site-head-in">
-        <div className="site-head-start">
-          <Brand />
-        </div>
+        <Brand />
         <nav className="site-nav" aria-label="Site">
           {links.map((link) =>
             link.external ? (
@@ -52,9 +54,9 @@ export function SiteHeader() {
         <div className="site-head-end">
           <GitHubLink />
           <ThemeMenu className="is-wide" />
-          <Link className="site-button is-primary site-head-button" href={LINKS.docs}>
+          <Link className="site-button site-cta site-head-button" href={LINKS.docs}>
             Get started
-            <Icon name="arrow-up-right" />
+            <Icon name="arrow-right" />
           </Link>
           <NavMenu links={links} />
         </div>
@@ -75,14 +77,19 @@ export interface DocsHeaderProps {
   menu?: ReactNode;
 }
 
-/** The documentation's head: a sticky bar with the version and search (Atlas frame 21). */
+/**
+ * The documentation's head (Atlas frame 21): a sticky bar with the version and search. It stands
+ * on the columns of the page: the search field starts where the page does.
+ */
 export function DocsHeader({ search, searchButton, menu }: DocsHeaderProps) {
   const links = primaryNav();
   return (
     <header className="site-docs-head">
       <div className="site-docs-head-in">
-        <Brand docs />
-        <span className="site-version">v0.1</span>
+        <div className="site-docs-brand">
+          <Brand docs />
+          <span className="site-version">v0.1</span>
+        </div>
         {search}
         <div className="site-head-end">
           {LINKS.playground && (

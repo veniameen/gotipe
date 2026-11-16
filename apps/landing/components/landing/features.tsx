@@ -1,5 +1,7 @@
+import type { CSSProperties } from "react";
 import { Badge } from "../site/badge";
 import { Icon, type IconName } from "../site/icon";
+import { MarkdownMock, PairMock, TransactionMock } from "./bento/mocks";
 
 type Licence = "MIT" | "Commercial";
 
@@ -63,24 +65,31 @@ const FEATURES: { icon: IconName; licence: Licence; title: string; text: string 
 // the site's one badge; the landing's other sections take it from here
 export { Badge };
 
+const order = (index: number) => ({ "--site-i": index }) as CSSProperties;
+
 function TileTop({ icon, licence }: { icon: IconName; licence: Licence }) {
   return (
     <div className="site-tile-top">
-      <Icon name={icon} />
+      <span className="site-icon-box">
+        <Icon name={icon} />
+      </span>
       <Badge licence={licence} />
     </div>
   );
 }
 
-/** «Everything you need. Nothing in your way.»: the bento of three, then nine on hairlines. */
+/**
+ * «Everything you need. Nothing in your way.»: three tiles with their live pictures, then the nine
+ * parts of the stack. Light follows the pointer over the cards (motion/controller.tsx).
+ */
 export function Features() {
   return (
     <section className="site-section is-features" aria-labelledby="site-features-title">
       <div className="site-wrap">
-        <div className="site-head-row">
+        <div className="site-head-row" data-reveal>
           <div>
             <p className="site-eyebrow">The whole document stack</p>
-            <h2 id="site-features-title">
+            <h2 id="site-features-title" className="site-title">
               Everything you need.
               <br />
               Nothing in your way.
@@ -92,44 +101,32 @@ export function Features() {
           </p>
         </div>
 
-        <div className="site-bento">
-          <article className="site-tile is-tint">
+        <div className="site-bento" data-glow>
+          <article className="site-tile is-engine" data-glow-card data-reveal style={order(0)}>
             <TileTop icon="braces" licence="MIT" />
             <h3>An engine. Not a wrapper.</h3>
             <p>
               Transactions, history, selection and IME in TypeScript, with the same contract in
               Rust/WASM. No ProseMirror, Tiptap or Slate underneath.
             </p>
-            <div className="site-diagram" aria-hidden="true">
-              <span className="site-diagram-box">Your interface</span>
-              <Icon name="arrow-down" />
-              <span className="site-diagram-engine">
-                <strong>GoTipe engine</strong>
-                <span>TypeScript · Rust/WASM</span>
-              </span>
-              <span className="site-diagram-note">No third-party runtime dependencies.</span>
-            </div>
+            <TransactionMock />
           </article>
-          <article className="site-tile is-sage">
+          <article className="site-tile is-markdown" data-glow-card data-reveal style={order(1)}>
             <TileTop icon="page" licence="MIT" />
             <h3>Your Markdown stays yours.</h3>
             <p>
               Our own parser keeps the file intact: an edit rewrites only the block it touched, your
               spacing and formatting are written back as they were.
             </p>
-            <div className="site-md-card">
-              <p className="is-head"># Offline drafts</p>
-              <p>Drafts write first, sync later.</p>
-              <p>- [x] keep my spacing</p>
-              <p className="site-md-foot">
-                <span>written back</span>
-                <span className="is-ok">
-                  <Icon name="check-16" />0 lines changed
-                </span>
-              </p>
-            </div>
+            <MarkdownMock />
           </article>
-          <article className="site-tile is-sand is-wide">
+          <article
+            className="site-tile is-together is-wide"
+            data-glow-card
+            data-reveal
+            data-play
+            style={order(2)}
+          >
             <div>
               <TileTop icon="nodes" licence="MIT" />
               <h3>Better, together.</h3>
@@ -138,27 +135,23 @@ export function Features() {
                 selections included.
               </p>
             </div>
-            <div className="site-pair">
-              <p className="site-pair-text">
-                Two people,
-                <br />
-                <span className="site-pair-selection">one paragraph.</span>
-                <span className="site-pair-caret" aria-hidden="true">
-                  <span className="site-pair-flag">Jonas</span>
-                </span>
-              </p>
-              <p className="site-pair-note">
-                two&nbsp;edits ·&nbsp;one&nbsp;merge ·&nbsp;no&nbsp;conflict
-              </p>
-            </div>
+            <PairMock />
           </article>
         </div>
 
-        <div className="site-features">
-          {FEATURES.map((feature) => (
-            <article key={feature.title} className="site-feature">
+        <div className="site-features" data-glow>
+          {FEATURES.map((feature, index) => (
+            <article
+              key={feature.title}
+              className="site-feature"
+              data-glow-card
+              data-reveal
+              style={order(index % 3)}
+            >
               <div className="site-feature-top">
-                <Icon name={feature.icon} />
+                <span className="site-icon-box">
+                  <Icon name={feature.icon} />
+                </span>
                 <Badge licence={feature.licence} />
               </div>
               <h3>{feature.title}</h3>

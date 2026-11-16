@@ -33,7 +33,7 @@ export function SignatureLive() {
   const root = useRef<HTMLDivElement>(null);
   const near = useNearViewport(root);
   return (
-    <div ref={root} className="site-plinth">
+    <div ref={root} className="site-showcase" data-play>
       {near ? <SignatureEditor /> : <Placeholder />}
     </div>
   );

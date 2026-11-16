@@ -2,7 +2,7 @@
    section with the query marked, and the keys at the foot. */
 
 .site-dialog {
-  width: min(var(--site-dialog-w), calc(100% - 2 * var(--site-pad-x)));
+  width: min(var(--site-dialog-w), calc(100% - 2 * var(--site-gutter)));
   max-width: none;
   max-height: calc(100vh - 2 * var(--site-dialog-top));
   margin: var(--site-dialog-top) auto auto;
@@ -28,9 +28,9 @@
   display: flex;
   flex: none;
   align-items: center;
-  gap: var(--site-gap-m);
+  gap: var(--site-space-3);
   height: var(--site-dialog-input-h);
-  padding: 0 var(--site-gap-l);
+  padding: 0 var(--site-space-6);
   border-bottom: var(--gt-hairline) solid var(--gt-line);
   font-size: var(--site-text-size);
 }
@@ -64,11 +64,11 @@
   min-height: 0;
   overflow-y: auto;
   overscroll-behavior: contain;
-  padding: var(--site-gap-s) var(--site-gap-m) var(--site-gap-m);
+  padding: var(--site-space-2) var(--site-space-3) var(--site-space-3);
 }
 .site-results-title {
-  margin: var(--site-gap-m) 0 var(--site-gap-xs);
-  padding: 0 var(--site-gap-m);
+  margin: var(--site-space-3) 0 var(--site-space-1);
+  padding: 0 var(--site-space-3);
   color: var(--gt-text-2);
   font-family: var(--site-font-mono);
   font-size: var(--site-label-size);
@@ -79,7 +79,7 @@
 }
 .site-results-status {
   margin: 0;
-  padding: 0 var(--site-gap-m);
+  padding: 0 var(--site-space-3);
   color: var(--gt-text-2);
 }
 .site-results-status:empty {
@@ -88,7 +88,7 @@
 .site-result {
   display: flex;
   align-items: center;
-  gap: var(--site-gap-m);
+  gap: var(--site-space-3);
   padding: var(--site-result-pad);
   border-radius: var(--site-result-radius);
   cursor: pointer;
@@ -127,8 +127,8 @@
 .site-dialog-foot {
   display: flex;
   flex: none;
-  gap: var(--site-gap-l);
-  padding: var(--site-gap-m) var(--site-gap-l);
+  gap: var(--site-space-6);
+  padding: var(--site-space-3) var(--site-space-6);
   border-top: var(--gt-hairline) solid var(--gt-line);
   background: var(--site-surface);
   color: var(--gt-text-2);
@@ -139,5 +139,5 @@
 .site-dialog-foot > span {
   display: inline-flex;
   align-items: center;
-  gap: var(--site-gap-xs);
+  gap: var(--site-space-1);
 }

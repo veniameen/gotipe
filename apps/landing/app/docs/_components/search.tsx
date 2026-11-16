@@ -256,46 +256,52 @@ function SearchDialog({ onClose }: { onClose: () => void }) {
         className="site-results"
         aria-label="Results"
       >
-        {groups.map((group, groupIndex) => (
-          // biome-ignore lint/a11y/useSemanticElements: a group of listbox options; <fieldset> is for form controls
-          <div key={group.section} role="group" aria-labelledby={`${id}-group-${groupIndex}`}>
-            <p className="site-results-title" id={`${id}-group-${groupIndex}`} role="presentation">
-              {group.section}
-            </p>
-            {group.hits.map((hit) => {
-              n += 1;
-              const mine = n;
-              return (
-                // biome-ignore lint/a11y/useKeyWithClickEvents: the input owns the keyboard (combobox, aria-activedescendant)
-                // biome-ignore lint/a11y/useFocusableInteractive: options are reached through aria-activedescendant, focus stays in the input
-                // biome-ignore lint/a11y/useSemanticElements: a rich option of a combobox's listbox; <option> holds text only
-                <div
-                  role="option"
-                  key={hit.entry.u}
-                  id={optionId(mine)}
-                  tabIndex={-1}
-                  aria-selected={mine === current}
-                  className={`site-result${mine === current ? " is-active" : ""}`}
-                  onMouseMove={() => mine !== current && setActive(mine)}
-                  onClick={() => go(hit)}
-                >
-                  <Icon name={hit.entry.k === "page" ? "page" : "hash"} />
-                  <span className="site-result-text">
-                    <Marked text={hit.entry.t} ranges={hit.titleRanges} />
-                    <small>
-                      <Marked text={hit.detail} ranges={hit.detailRanges} />
-                    </small>
-                  </span>
-                  {mine === current && (
-                    <span className="site-kbd site-result-go" aria-hidden="true">
-                      ↵
+        {groups.map((group, groupIndex) => {
+          // a section can return further down the list (only neighbours share a group): its name
+          // alone is not a unique key, and a repeated key leaves an earlier query's rows behind
+          const key = `${groupIndex}-${group.section}`;
+          const label = `${id}-group-${groupIndex}`;
+          return (
+            // biome-ignore lint/a11y/useSemanticElements: a group of listbox options; <fieldset> is for form controls
+            <div key={key} role="group" aria-labelledby={label}>
+              <p className="site-results-title" id={label} role="presentation">
+                {group.section}
+              </p>
+              {group.hits.map((hit) => {
+                n += 1;
+                const mine = n;
+                return (
+                  // biome-ignore lint/a11y/useKeyWithClickEvents: the input owns the keyboard (combobox, aria-activedescendant)
+                  // biome-ignore lint/a11y/useFocusableInteractive: options are reached through aria-activedescendant, focus stays in the input
+                  // biome-ignore lint/a11y/useSemanticElements: a rich option of a combobox's listbox; <option> holds text only
+                  <div
+                    role="option"
+                    key={hit.entry.u}
+                    id={optionId(mine)}
+                    tabIndex={-1}
+                    aria-selected={mine === current}
+                    className={`site-result${mine === current ? " is-active" : ""}`}
+                    onMouseMove={() => mine !== current && setActive(mine)}
+                    onClick={() => go(hit)}
+                  >
+                    <Icon name={hit.entry.k === "page" ? "page" : "hash"} />
+                    <span className="site-result-text">
+                      <Marked text={hit.entry.t} ranges={hit.titleRanges} />
+                      <small>
+                        <Marked text={hit.detail} ranges={hit.detailRanges} />
+                      </small>
                     </span>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        ))}
+                    {mine === current && (
+                      <span className="site-kbd site-result-go" aria-hidden="true">
+                        ↵
+                      </span>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          );
+        })}
       </div>
       <output className="site-results-status">{status}</output>
       <div className="site-dialog-foot" aria-hidden="true">

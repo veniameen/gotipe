@@ -1,11 +1,155 @@
-/* The first screens of the landing: the install line, the hero with the stack, the facts. */
+/* The first stage of the landing: blue light over a blueprint grid, the three lines, the calls to
+   action, the install line, the live window and the strip of what GoTipe is made of. */
 
-.site-install {
-  display: flex;
+/* ---- the stage: light from above, a grid that fades out below ---- */
+.site-hero {
+  padding: calc(var(--site-head-h) + var(--site-hero-top)) 0 var(--site-hero-bottom);
+  background: radial-gradient(
+      var(--site-glow-shape-a) at 50% 0%,
+      var(--site-glow-a),
+      transparent 70%
+    ), radial-gradient(var(--site-glow-shape-b) at 88% 8%, var(--site-glow-b), transparent 70%),
+    linear-gradient(180deg, var(--site-stage-top), var(--site-stage-bottom));
+}
+.site-hero::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background-image: linear-gradient(var(--site-grid) var(--site-grid-line), transparent 0),
+    linear-gradient(90deg, var(--site-grid) var(--site-grid-line), transparent 0);
+  background-position: center top;
+  background-size: var(--site-grid-step) var(--site-grid-step);
+  -webkit-mask-image: radial-gradient(
+    var(--site-grid-fade) at 50% 0%,
+    var(--site-mask-on) 20%,
+    transparent 75%
+  );
+  mask-image: radial-gradient(
+    var(--site-grid-fade) at 50% 0%,
+    var(--site-mask-on) 20%,
+    transparent 75%
+  );
+}
+
+.site-hero-copy {
+  display: grid;
+  justify-items: center;
+  max-width: var(--site-hero-copy-max);
+  margin: 0 auto;
+  text-align: center;
+}
+
+/* the chip: the version with a live dot, then the promise */
+.site-chip {
+  display: inline-flex;
   align-items: center;
-  gap: var(--site-gap-l);
+  gap: var(--site-space-2);
+  padding: var(--site-chip-pad);
+  border-radius: var(--site-radius-round);
+  background: var(--site-glass);
+  box-shadow: inset 0 0 0 var(--gt-hairline) var(--site-tint-line), var(--site-item-shadow);
+  color: var(--gt-text-2);
+  font-size: var(--site-small-size);
+  line-height: var(--site-small-leading);
+  transition: box-shadow var(--site-transition), color var(--site-transition);
+}
+.site-chip:hover {
+  box-shadow: inset 0 0 0 var(--gt-hairline) var(--site-glow-ring), var(--site-item-shadow);
+  color: var(--gt-text);
+}
+.site-chip-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--site-space-2);
+  padding: var(--site-chip-tag-pad);
+  border-radius: var(--site-radius-round);
+  background: var(--site-accent-tint);
+  color: var(--site-accent-ink);
+  font-family: var(--site-font-mono);
+  font-size: var(--site-label-size);
+  font-weight: var(--gt-weight-medium);
+  line-height: var(--site-label-leading);
+}
+.site-chip > .site-icon {
+  color: var(--gt-text-3);
+  transition: transform var(--site-transition), color var(--site-transition);
+}
+.site-chip:hover > .site-icon {
+  color: var(--gt-accent);
+  transform: translateX(var(--site-space-1));
+}
+.site-pulse {
+  position: relative;
+  width: var(--site-dot);
+  height: var(--site-dot);
+  border-radius: var(--site-radius-round);
+  background: var(--gt-accent);
+}
+
+/* the three lines: the last one is the reader's, selected as in the editor, the caret after it */
+.site-hero-title {
+  margin: var(--site-space-8) 0 0;
+  font-family: var(--site-font-display);
+  font-size: var(--site-hero-size);
+  font-weight: var(--site-weight-display);
+  line-height: var(--site-hero-leading);
+  letter-spacing: var(--site-hero-tracking);
+}
+.site-hero-line {
+  display: block;
+}
+.site-hero-line.is-accent {
+  color: var(--gt-accent);
+}
+.site-hero-select {
+  position: relative;
+  z-index: 0;
+}
+.site-hero-select::before {
+  content: "";
+  position: absolute;
+  inset: var(--site-select-inset);
+  z-index: -1;
+  border-radius: var(--site-radius-1);
+  background: var(--site-highlight);
+  transform-origin: left center;
+}
+.site-hero-caret {
+  display: inline-block;
+  width: var(--site-hero-caret-w);
+  height: var(--site-hero-caret-h);
+  margin-left: var(--site-hero-caret-gap);
+  border-radius: var(--site-radius-round);
+  vertical-align: var(--site-hero-caret-shift);
+  background: var(--gt-accent);
+}
+
+.site-lede {
+  max-width: var(--site-lede-max);
+  margin: var(--site-space-8) 0 0;
+  color: var(--gt-text-2);
+  font-size: var(--site-lede-size);
+  line-height: var(--site-lede-leading);
+  text-wrap: pretty;
+}
+.site-hero-copy > .site-actions {
+  justify-content: center;
+}
+
+/* the install line: a field with the prompt, the command and its copy button */
+.site-install {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--site-space-3);
+  box-sizing: border-box;
   max-width: 100%;
-  margin-top: var(--site-gap-l);
+  height: var(--site-install-h);
+  margin-top: var(--site-space-5);
+  padding: var(--site-install-pad);
+  border-radius: var(--site-radius-2);
+  background: var(--site-glass);
+  box-shadow: inset 0 0 0 var(--gt-hairline) var(--site-glass-line);
   color: var(--gt-text-2);
   font-family: var(--site-font-mono);
   font-size: var(--site-mono-size);
@@ -22,181 +166,160 @@
   content: "$ ";
   color: var(--gt-accent);
 }
+.site .site-install-copy {
+  width: var(--site-head-button-h);
+  height: var(--site-head-button-h);
+  padding: 0;
+  border-radius: var(--site-radius-1);
+}
 
-/* ---- the hero: three lines and the stack ---- */
-.site-hero {
-  padding: var(--site-hero-top) 0 var(--site-hero-bottom);
+/* ---- the live window: light under it, a beam running round its edge ---- */
+.site-hero-window {
+  position: relative;
+  margin-top: var(--site-hero-window-top);
 }
-.site-hero-grid {
-  display: grid;
-  grid-template-columns: var(--site-hero-cols);
-  gap: var(--site-hero-gap);
-  align-items: center;
+.site-hero-window::before {
+  content: "";
+  position: absolute;
+  inset: var(--site-window-glow-inset);
+  z-index: -1;
+  border-radius: var(--site-radius-round);
+  background: radial-gradient(closest-side, var(--site-glow-a), transparent);
+  filter: blur(var(--site-window-glow-blur));
 }
-.site-hero-grid > * {
-  min-width: 0;
+.site-showcase {
+  position: relative;
+  border-radius: var(--site-window-radius);
 }
-.site-chip {
-  display: flex;
-  align-items: center;
-  gap: var(--site-gap-s);
-  margin: 0;
-  color: var(--gt-text-2);
-  font-size: var(--site-small-size);
-  line-height: var(--site-small-leading);
+.site-showcase::before {
+  content: "";
+  position: absolute;
+  inset: calc(-1 * var(--site-beam-width));
+  z-index: 1;
+  padding: var(--site-beam-width);
+  border-radius: inherit;
+  background: conic-gradient(
+    from var(--site-beam-angle),
+    transparent 0%,
+    transparent 58%,
+    var(--site-beam) 74%,
+    var(--site-accent-2) 80%,
+    transparent 94%
+  );
+  -webkit-mask: linear-gradient(var(--site-mask-on) 0 0) content-box,
+    linear-gradient(var(--site-mask-on) 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(var(--site-mask-on) 0 0) content-box exclude,
+    linear-gradient(var(--site-mask-on) 0 0);
+  pointer-events: none;
 }
-.site-chip > span {
-  padding: var(--site-chip-tag-pad);
-  border-radius: var(--gt-radius-control);
-  background: var(--site-card);
-  box-shadow: var(--site-item-shadow);
-  color: var(--gt-text);
-  font-family: var(--site-font-mono);
-  font-size: var(--site-label-size);
-  font-weight: var(--gt-weight-medium);
-  line-height: var(--site-label-leading);
-}
-.site-chip > .site-icon {
-  color: var(--gt-text-3);
-}
-.site-hero h1 {
-  margin: var(--site-gap-xl) 0 0;
-  font-family: var(--site-font-display);
-  font-size: var(--site-hero-size);
-  font-weight: var(--site-weight-display);
-  line-height: var(--site-hero-leading);
-  letter-spacing: var(--site-hero-tracking);
-}
-.site-lede {
+.site-hero-note {
   max-width: var(--site-lede-max);
-  margin: var(--site-gap-xl) 0 0;
-  color: var(--gt-text-2);
-  font-size: var(--site-lede-size);
-  line-height: var(--site-lede-leading);
-}
-
-/* the stack: a frosted card with the three parts GoTipe stands on */
-.site-stack {
-  display: grid;
-  gap: var(--site-gap-m);
-  padding: var(--site-stack-pad);
-  border-radius: var(--site-card-radius);
-  background: var(--site-stack);
-  box-shadow: inset 0 0 0 var(--gt-hairline) var(--site-stack-line), var(--site-stack-shadow);
-}
-.site-stack-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin: 0 0 var(--site-gap-xs);
-  color: var(--gt-accent);
-}
-.site-stack-item {
-  padding: var(--site-card-pad-s);
-  border-radius: var(--site-card-radius-s);
-  background: var(--site-card);
-  box-shadow: var(--site-item-shadow);
-}
-.site-stack-title {
-  display: flex;
-  align-items: center;
-  gap: var(--site-gap-m);
-  margin: 0;
-  color: var(--gt-accent);
-}
-.site-stack-title > strong {
-  color: var(--gt-text);
-  font-size: var(--site-h4-size);
-  font-weight: var(--gt-weight-strong);
-  line-height: var(--site-h4-leading);
-  letter-spacing: var(--site-title-tracking);
-}
-.site-stack-title > span {
-  margin-left: auto;
-  color: var(--gt-text-3);
-  font-family: var(--site-font-mono);
-  font-size: var(--site-label-size);
-  line-height: var(--site-label-leading);
-}
-.site-stack-item > p:not(.site-stack-title) {
-  margin: var(--site-gap-s) 0 var(--site-gap-m);
+  margin: var(--site-space-5) auto 0;
   color: var(--gt-text-2);
   font-size: var(--site-small-size);
   line-height: var(--site-small-leading);
-}
-.site-stack-item > .site-badge {
-  display: inline-block;
-  background: var(--gt-fill-1);
-  box-shadow: none;
-}
-.site-stack-foot {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--site-gap-s);
-  margin: var(--site-gap-s) 0 0;
-  color: var(--gt-text-2);
-  font-size: var(--site-small-size);
-  line-height: var(--site-small-leading);
-}
-.site-stack-foot > .site-icon {
-  color: var(--gt-accent);
+  text-align: center;
+  text-wrap: balance;
 }
 
-/* the foot of the first stage: the promise and what it is made of */
+/* ---- the strip: the promise, then what GoTipe is made of, running by ---- */
 .site-strip {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  justify-content: space-between;
-  gap: var(--site-gap-l);
-  margin-top: var(--site-hero-strip-top);
-  padding-top: var(--site-gap-l);
-  border-top: var(--gt-hairline) solid var(--gt-line);
-  color: var(--gt-text-2);
+  gap: var(--site-space-4) var(--site-space-10);
+  margin-top: var(--site-space-16);
+  padding-top: var(--site-space-6);
+  border-top: var(--gt-hairline) solid var(--site-line);
+}
+.site-strip-title {
+  flex: none;
+  margin: 0;
+  color: var(--gt-text);
   font-size: var(--site-small-size);
+  font-weight: var(--gt-weight-medium);
   line-height: var(--site-small-leading);
 }
-.site-strip-labels {
-  display: var(--site-strip-labels-display);
-  align-items: center;
-  gap: var(--site-gap-xl);
-  font-family: var(--site-font-mono);
-  font-size: var(--site-mono-size);
+.site-marquee {
+  flex: 1 1 var(--site-marquee-min);
+  min-width: 0;
+  overflow: hidden;
+  -webkit-mask-image: linear-gradient(
+    90deg,
+    transparent,
+    var(--site-mask-on) var(--site-marquee-fade),
+    var(--site-mask-on) calc(100% - var(--site-marquee-fade)),
+    transparent
+  );
+  mask-image: linear-gradient(
+    90deg,
+    transparent,
+    var(--site-mask-on) var(--site-marquee-fade),
+    var(--site-mask-on) calc(100% - var(--site-marquee-fade)),
+    transparent
+  );
 }
-.site-strip-labels > span {
+.site-marquee-track {
+  display: flex;
+  width: var(--site-marquee-track-w);
+}
+.site-marquee-list {
+  display: flex;
+  flex: none;
+  box-sizing: border-box;
+  flex-wrap: var(--site-marquee-wrap);
+  max-width: 100%;
+  gap: var(--site-marquee-gap);
+  margin: 0;
+  padding: 0 var(--site-marquee-gap) 0 0;
+  list-style: none;
+  color: var(--gt-text-2);
+  font-family: var(--site-font-mono);
+  font-size: var(--site-label-size);
+  line-height: var(--site-label-leading);
+  letter-spacing: var(--site-label-tracking);
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.site-marquee-list[aria-hidden] {
+  display: var(--site-marquee-copy-display);
+}
+.site-marquee-list > li {
   display: inline-flex;
   align-items: center;
-  gap: var(--site-gap-s);
+  gap: var(--site-marquee-gap);
+}
+.site-marquee-list > li::after {
+  content: "";
+  width: var(--site-dot);
+  height: var(--site-dot);
+  border-radius: var(--site-radius-round);
+  background: var(--site-tint-line);
 }
 
 /* ---- facts that can be checked ---- */
+.site-facts-section {
+  padding-top: var(--site-space-16);
+}
 .site-facts-head {
   display: flex;
+  flex-wrap: wrap;
   justify-content: space-between;
-  gap: var(--site-gap-l);
-  margin-top: var(--site-section-y);
-  padding-bottom: var(--site-gap-l);
-  border-bottom: var(--gt-hairline) solid var(--gt-line);
+  gap: var(--site-space-2) var(--site-space-6);
+  padding-bottom: var(--site-space-6);
+  border-bottom: var(--gt-hairline) solid var(--site-line);
   color: var(--gt-text-2);
   font-family: var(--site-font-mono);
   font-size: var(--site-label-size);
   line-height: var(--site-label-leading);
-}
-/* «Shipped in 0.1» stays one phrase; the note beside it wraps on the right */
-.site-facts-head > :first-child {
-  flex: none;
-  white-space: nowrap;
-}
-.site-facts-head > :last-child {
-  text-align: right;
-  text-wrap: balance;
 }
 .site-facts {
   display: grid;
   grid-template-columns: repeat(var(--site-cols-4), minmax(0, 1fr));
-  gap: var(--site-gap-xl) var(--site-gap-l);
-  padding: var(--site-gap-2xl) 0;
-  border-bottom: var(--gt-hairline) solid var(--gt-line);
+  gap: var(--site-space-8) var(--site-space-6);
+  padding: var(--site-space-10) 0;
+  border-bottom: var(--gt-hairline) solid var(--site-line);
 }
 .site-fact {
   margin: 0;
@@ -206,11 +329,12 @@
 }
 .site-fact > strong {
   display: block;
-  margin-bottom: var(--site-gap);
+  margin-bottom: var(--site-space-3);
   color: var(--gt-text);
   font-family: var(--site-font-display);
   font-size: var(--site-fact-size);
   font-weight: var(--site-weight-display);
+  font-variant-numeric: tabular-nums;
   line-height: var(--site-fact-leading);
   letter-spacing: var(--site-big-tracking);
   white-space: nowrap;

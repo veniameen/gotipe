@@ -1,0 +1,262 @@
+/* The landing's motion. The page is complete without it: every block's resting state is its final
+   state, the Atlas draws that state (frame 20). Motion runs only for readers who have not asked
+   to reduce it; blocks rising into view wait for motion/controller.tsx (`data-motion`), and the
+   endless animations stop while their block is off screen (`data-play`, `data-playing`). */
+
+@property --site-beam-angle {
+  syntax: "<angle>";
+  inherits: false;
+  initial-value: 200deg;
+}
+
+@keyframes site-rise {
+  from {
+    opacity: 0;
+    filter: blur(var(--site-blur));
+    transform: translateY(var(--site-rise));
+  }
+}
+@keyframes site-rise-far {
+  from {
+    opacity: 0;
+    transform: translateY(var(--site-rise-far)) scale(0.98);
+  }
+}
+@keyframes site-select {
+  from {
+    transform: scaleX(0);
+  }
+}
+@keyframes site-appear {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes site-blink {
+  50% {
+    opacity: 0;
+  }
+}
+@keyframes site-ping {
+  from {
+    opacity: 0.6;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(2.6);
+  }
+}
+@keyframes site-turn {
+  to {
+    --site-beam-angle: 560deg;
+  }
+}
+@keyframes site-marquee {
+  to {
+    transform: translateX(-50%);
+  }
+}
+@keyframes site-beam-run {
+  0% {
+    opacity: 0;
+    stroke-dashoffset: var(--site-beam-dash);
+  }
+  15%,
+  85% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    stroke-dashoffset: -100;
+  }
+}
+@keyframes site-ring {
+  from {
+    box-shadow: 0 0 0 0 var(--site-glow-ring);
+  }
+  to {
+    box-shadow: 0 0 0 var(--site-ring-reach) transparent;
+  }
+}
+@keyframes site-step {
+  from {
+    opacity: 0;
+    transform: translateX(calc(-1 * var(--site-space-3)));
+  }
+}
+@keyframes site-pop {
+  from {
+    opacity: 0;
+    transform: scale(0.4);
+  }
+  70% {
+    transform: scale(1.15);
+  }
+}
+@keyframes site-sweep {
+  to {
+    transform: translateX(100%);
+  }
+}
+@keyframes site-scan {
+  0%,
+  100% {
+    background-color: transparent;
+  }
+  40% {
+    background-color: var(--site-highlight);
+  }
+}
+@keyframes site-grow {
+  from {
+    background-size: 0% 100%;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  /* ---- the first stage comes in on load: CSS alone, before any script ---- */
+  .site-hero-copy > .site-chip,
+  .site-hero-line,
+  .site-hero-copy > .site-lede,
+  .site-hero-copy > .site-actions,
+  .site-hero-copy > .site-install {
+    animation: site-rise var(--site-dur-4) var(--site-ease-out) both;
+  }
+  .site-hero-line:nth-child(1) {
+    animation-delay: calc(1 * var(--site-stagger));
+  }
+  .site-hero-line:nth-child(2) {
+    animation-delay: calc(2 * var(--site-stagger));
+  }
+  .site-hero-line:nth-child(3) {
+    animation-delay: calc(3 * var(--site-stagger));
+  }
+  .site-hero-copy > .site-lede {
+    animation-delay: calc(4 * var(--site-stagger));
+  }
+  .site-hero-copy > .site-actions {
+    animation-delay: calc(5 * var(--site-stagger));
+  }
+  .site-hero-copy > .site-install {
+    animation-delay: calc(6 * var(--site-stagger));
+  }
+  .site-hero-window {
+    animation: site-rise-far var(--site-dur-4) var(--site-ease-out) calc(7 * var(--site-stagger))
+      both;
+  }
+  /* «rules.» is selected as the lines settle, then the caret starts to blink after it */
+  .site-hero-select::before {
+    animation: site-select var(--site-dur-3) var(--site-ease-out) calc(10 * var(--site-stagger))
+      both;
+  }
+  .site-hero-caret {
+    animation: site-appear var(--site-dur-1) linear calc(14 * var(--site-stagger)) both, site-blink
+      var(--site-caret-blink) step-end calc(16 * var(--site-stagger)) infinite;
+  }
+  .site-pulse::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: inherit;
+    animation: site-ping var(--site-ping-run) var(--site-ease-out) infinite;
+  }
+  .site-showcase::before {
+    animation: site-turn var(--site-beam-turn) linear infinite;
+  }
+  .site-marquee-track {
+    animation: var(--site-marquee-name) var(--site-marquee-run) linear infinite;
+  }
+  .site-marquee:hover .site-marquee-track {
+    animation-play-state: paused;
+  }
+
+  /* ---- the stack: pulses run along the beams, the engine breathes ---- */
+  .site-beam-pulse {
+    animation: site-beam-run var(--site-beam-run) var(--site-ease) infinite;
+    animation-delay: calc(var(--site-beam-i, 0) * var(--site-beam-step));
+  }
+  .site-stack-hub::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    pointer-events: none;
+    animation: site-ring var(--site-ring-run) var(--site-ease-out) infinite;
+  }
+
+  /* ---- the bento's pictures play once their tile is in view ---- */
+  [data-revealed] .site-tx-steps > li {
+    animation: site-step var(--site-dur-3) var(--site-ease-out) both;
+  }
+  [data-revealed] .site-tx-steps > li > .site-icon {
+    animation: site-pop var(--site-dur-2) var(--site-ease-out) both;
+  }
+  [data-revealed] .site-tx-steps > li:nth-child(1),
+  [data-revealed] .site-tx-steps > li:nth-child(1) > .site-icon {
+    animation-delay: calc(4 * var(--site-stagger));
+  }
+  [data-revealed] .site-tx-steps > li:nth-child(2),
+  [data-revealed] .site-tx-steps > li:nth-child(2) > .site-icon {
+    animation-delay: calc(7 * var(--site-stagger));
+  }
+  [data-revealed] .site-tx-steps > li:nth-child(3),
+  [data-revealed] .site-tx-steps > li:nth-child(3) > .site-icon {
+    animation-delay: calc(10 * var(--site-stagger));
+  }
+  [data-revealed] .site-tx-link::after {
+    animation: site-sweep var(--site-sweep-run) var(--site-ease) calc(12 * var(--site-stagger))
+      infinite;
+  }
+  [data-revealed] .site-md p:not(.site-md-foot) {
+    animation: site-scan var(--site-dur-4) var(--site-ease) both;
+  }
+  [data-revealed] .site-md p:nth-child(1) {
+    animation-delay: calc(4 * var(--site-stagger));
+  }
+  [data-revealed] .site-md p:nth-child(2) {
+    animation-delay: calc(7 * var(--site-stagger));
+  }
+  [data-revealed] .site-md p:nth-child(3) {
+    animation-delay: calc(10 * var(--site-stagger));
+  }
+  [data-revealed] .site-md-foot > .is-ok {
+    animation: site-rise var(--site-dur-3) var(--site-ease-out) calc(16 * var(--site-stagger)) both;
+  }
+  .site-pair-selection {
+    background: linear-gradient(var(--gt-person-1-sel), var(--gt-person-1-sel)) no-repeat;
+    background-size: 100% 100%;
+  }
+  [data-revealed] .site-pair-selection {
+    animation: site-grow var(--site-dur-4) var(--site-ease-out) calc(5 * var(--site-stagger)) both;
+  }
+  .site-pair-caret {
+    animation: site-blink var(--site-caret-blink) step-end infinite;
+  }
+  .site-pair-caret.is-mira {
+    animation-delay: calc(-0.5 * var(--site-caret-blink));
+  }
+
+  /* ---- blocks rise into view once (the controller marks them) ---- */
+  html[data-motion] [data-reveal] {
+    transition-property: opacity, transform, box-shadow;
+    transition-duration: var(--site-dur-4), var(--site-dur-4), var(--site-dur-2);
+    transition-timing-function: var(--site-ease-out), var(--site-ease-out), var(--site-ease);
+    transition-delay: calc(var(--site-i, 0) * var(--site-stagger)),
+      calc(var(--site-i, 0) * var(--site-stagger)), 0s;
+  }
+  html[data-motion] [data-reveal]:not([data-revealed]) {
+    opacity: 0;
+    transform: translateY(var(--site-rise-far));
+  }
+}
+
+/* ---- endless animations rest while their block is off screen ---- */
+html[data-play-ready] [data-play]:not([data-playing]),
+html[data-play-ready] [data-play]:not([data-playing])::before,
+html[data-play-ready] [data-play]:not([data-playing]) *,
+html[data-play-ready] [data-play]:not([data-playing]) *::before,
+html[data-play-ready] [data-play]:not([data-playing]) *::after {
+  animation-play-state: paused;
+}

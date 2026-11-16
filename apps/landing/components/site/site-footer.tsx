@@ -49,3 +49,21 @@ export function SiteFooter() {
     </footer>
   );
 }
+
+/**
+ * The foot of a documentation page (Atlas frame 21): one line under the page's column with the
+ * licences and the project's own places, so a page never simply ends at the pager.
+ */
+export function DocsFooter() {
+  return (
+    <footer className="site-docs-foot">
+      <span>© 2026 GoTipe contributors · MIT and commercial licences</span>
+      <nav aria-label="Project">
+        <FootLink href={LINKS.licensing}>Licensing</FootLink>
+        <FootLink href={LINKS.security}>Security</FootLink>
+        <FootLink href={LINKS.repo}>GitHub</FootLink>
+        <FootLink href={LINKS.npm}>npm</FootLink>
+      </nav>
+    </footer>
+  );
+}

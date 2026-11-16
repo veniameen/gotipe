@@ -1,53 +1,90 @@
-/* The foot of every page of the site (Atlas frame 20). */
+/* The foot of the site (Atlas frames 20 and 21): the landing's three columns of links under the
+   mark, and the documentation's one line under the page. */
 
-/* ---- the foot ---- */
+/* ---- the landing's foot ---- */
 .site-foot {
-  padding: var(--site-gap-3xl) 0 var(--site-gap-xl);
-  border-top: var(--gt-hairline) solid var(--gt-line);
+  padding: var(--site-space-16) 0 var(--site-space-8);
+  border-top: var(--gt-hairline) solid var(--site-line);
   font-size: var(--site-body-size);
   line-height: var(--site-small-leading);
 }
 .site-foot-grid {
   display: grid;
   grid-template-columns: var(--site-foot-cols);
-  gap: var(--site-gap-xl);
+  gap: var(--site-space-8);
 }
 .site-foot .site-brand.is-large {
-  gap: var(--site-gap-m);
+  gap: var(--site-space-3);
   font-size: var(--site-pair-size);
-  font-weight: var(--site-weight-display);
-  line-height: var(--site-pair-leading);
+  line-height: var(--site-logo-l);
 }
 .site-brand.is-large > .site-logo {
   width: var(--site-logo-l);
   height: var(--site-logo-l);
 }
 .site-foot-grid p {
-  max-width: var(--site-diagram-w);
-  margin: var(--site-gap) 0 0;
+  max-width: var(--site-sub-max);
+  margin: var(--site-space-4) 0 0;
   color: var(--gt-text-2);
   font-size: var(--site-small-size);
   line-height: var(--site-small-leading);
 }
 .site-foot h2 {
-  margin: 0 0 var(--site-gap);
+  margin: 0 0 var(--site-space-3);
   color: var(--gt-text-2);
-  font-size: var(--site-small-size);
-  font-weight: var(--gt-weight-regular);
-  line-height: var(--site-small-leading);
+  font-family: var(--site-font-mono);
+  font-size: var(--site-label-size);
+  font-weight: var(--gt-weight-medium);
+  line-height: var(--site-label-leading);
+  letter-spacing: var(--site-label-tracking);
+  text-transform: uppercase;
 }
 .site-foot-grid a:not(.site-brand) {
   display: block;
-  padding: var(--site-gap-xs) 0;
+  width: fit-content;
+  padding: var(--site-space-1) 0;
+  color: var(--gt-text);
+  transition: color var(--site-transition);
+}
+.site-foot-grid a:not(.site-brand):hover {
+  color: var(--gt-accent);
 }
 .site-foot-base {
   display: flex;
+  flex-wrap: wrap;
   justify-content: space-between;
-  gap: var(--site-gap-l);
+  gap: var(--site-space-2) var(--site-space-6);
   margin: var(--site-section-gap) 0 0;
-  padding-top: var(--site-gap-l);
-  border-top: var(--gt-hairline) solid var(--gt-line);
+  padding-top: var(--site-space-6);
+  border-top: var(--gt-hairline) solid var(--site-line);
   color: var(--gt-text-2);
   font-size: var(--gt-ui-small);
   line-height: var(--gt-ui-small-leading);
+}
+
+/* ---- the documentation's foot: one line under the page ---- */
+.site-docs-foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--site-space-2) var(--site-space-6);
+  margin-top: var(--site-space-12);
+  padding: var(--site-space-6) 0 var(--site-space-10);
+  border-top: var(--gt-hairline) solid var(--site-line);
+  color: var(--gt-text-2);
+  font-size: var(--gt-ui-small);
+  line-height: var(--gt-ui-small-leading);
+}
+.site-docs-foot nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--site-space-1) var(--site-space-5);
+}
+.site-docs-foot a {
+  color: var(--gt-text-2);
+  transition: color var(--site-transition);
+}
+.site-docs-foot a:hover {
+  color: var(--gt-text);
 }

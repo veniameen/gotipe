@@ -44,20 +44,22 @@ function Parts({ parts }: { parts: Part[] }) {
 /** «Open where it matters.»: the two licences side by side, in the terms of the licence files. */
 export function Licences() {
   return (
-    <section className="site-stage is-grey" aria-labelledby="site-licences-title">
+    <section className="site-stage is-alt" aria-labelledby="site-licences-title">
       <div className="site-wrap">
-        <div className="site-head-row">
+        <div className="site-head-row" data-reveal>
           <div>
             <p className="site-eyebrow">A clear line. No fine print.</p>
-            <h2 id="site-licences-title">Open where it matters.</h2>
+            <h2 id="site-licences-title" className="site-title">
+              Open where it matters.
+            </h2>
           </div>
           <p className="site-sub">
             The engine and every service around it are MIT. Only the ready-made interface is
             commercial, and it is free for most teams.
           </p>
         </div>
-        <div className="site-licences">
-          <article className="site-licence">
+        <div className="site-licences" data-glow>
+          <article className="site-licence" data-glow-card data-reveal>
             <div className="site-licence-top">
               <span className="site-label">Build it your way</span>
               <Badge licence="MIT" />
@@ -66,7 +68,7 @@ export function Licences() {
             <p className="site-licence-meta">{OPEN.length} parts · use, fork, ship</p>
             <Parts parts={OPEN} />
           </article>
-          <article className="site-licence is-tint">
+          <article className="site-licence is-tint" data-glow-card data-reveal>
             <div className="site-licence-top">
               <span className="site-label">Ship a little sooner</span>
               <Badge licence="Commercial" />

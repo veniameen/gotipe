@@ -30,9 +30,14 @@ export function CopyMarkdown({ url }: { url: string }) {
   };
 
   return (
-    <button type="button" className="site-button is-quiet site-tool-button" onClick={copy}>
+    <button
+      type="button"
+      className="site-button is-quiet site-tool-button"
+      aria-label={SAY[state]}
+      onClick={copy}
+    >
       <Icon name={state === "copied" ? "check-16" : "copy"} />
-      {SAY[state]}
+      <span className="site-tool-label">{SAY[state]}</span>
     </button>
   );
 }
