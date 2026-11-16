@@ -233,8 +233,8 @@ paths:
       description: >-
         Each requested scope must be grantable and held by the caller; `admin` cannot be
         granted. The secret `key` is returned only here, and the database keeps only its SHA-256
-        hash. With an `Idempotency-Key`, the reply, key included, is also kept in Valkey for 24
-        hours so that a repeat can replay it.
+        hash. With an `Idempotency-Key`, only the status is recorded, never the key: a repeat
+        answers `409 CONFLICT` with status 201 in the message.
       operationId: createApiKey
       security: [{ BearerAuth: ['account:manage'] }]
       parameters:
@@ -943,7 +943,7 @@ paths:
         '404': { $ref: '#/components/responses/NotFound', description: '`NOT_FOUND`: `document_id` names no document the caller has a role on.' }
         '409': { $ref: '#/components/responses/Conflict' }
         '413': { $ref: '#/components/responses/PayloadTooLarge' }
-        '429': { $ref: '#/components/responses/RateLimited', description: '`RATE_LIMITED` by `RATE_LIMIT_API` or `RATE_LIMIT_AI`. The `RATE_LIMIT_AI` check runs after the idempotency claim, so under an `Idempotency-Key` its refusal is recorded and a repeat with the same key gets it again for 24 hours.' }
+        '429': { $ref: '#/components/responses/RateLimited', description: '`RATE_LIMITED` by `RATE_LIMIT_API` or `RATE_LIMIT_AI`. The `RATE_LIMIT_AI` check runs after the idempotency claim, but its refusal is not recorded: the key is released, and a repeat with the same key after `Retry-After` runs.' }
         '500': { $ref: '#/components/responses/InternalError', description: '`INTERNAL_ERROR`: the quota reservation or the usage record failed.' }
         '503': { $ref: '#/components/responses/ServiceUnavailable', description: '`SERVICE_UNAVAILABLE`: the provider has no API key on the server or failed before the stream started, or Valkey failed.' }
 
@@ -1062,9 +1062,14 @@ components:
         - `409 CONFLICT` when the key was used for a different request; while the first
           request is still running or its outcome is uncertain (read the resource instead of
           repeating the mutation with a new key); or when the first reply was larger than
-          256 KiB and was not kept (the message gives its status).
-        - `400 VALIDATION_ERROR` when the key is longer than 255 bytes, the body is larger than
-          10 MiB or cannot be read, or the request is a streaming AI request (`"stream": true`).
+          256 KiB or held a secret (a new API key) and was not kept (the message gives its
+          status).
+        - A rate limit refusal (`429`, or `503` when the limit could not be checked) is not
+          recorded: the key is released and a repeat with it runs. When the key cannot be
+          released, the answer is `503` asking for a new key; the request did not run.
+        - `400 VALIDATION_ERROR` when the key is longer than 255 bytes, the body cannot be read,
+          or the request is a streaming AI request (`"stream": true`); `413` when the body is
+          above the limit of every request.
         - `503 SERVICE_UNAVAILABLE` when Valkey fails or the outcome could not be recorded; in
           the latter case the request may have run, so keep the key.
       schema: { type: string, maxLength: 255 }

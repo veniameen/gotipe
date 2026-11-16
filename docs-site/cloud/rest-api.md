@@ -99,11 +99,17 @@ curl -X POST https://api.example.com/v1/documents \
   document restriction or organization) answers `409 CONFLICT`.
 - While the first request is running, or when its result is unknown, the key answers
   `409 CONFLICT`. Check the resource's state instead of retrying with a new key.
-- A body sent with a key may be up to 10 MiB. A streaming AI request (`"stream": true`)
-  rejects keys with `400`.
+- A rate limit refusal is not a result: after a `429 RATE_LIMITED` (or a `503` because the
+  limit could not be checked) the key is free again, so repeat with the same key after
+  `Retry-After`. If even the key cannot be freed, the answer is `503` and the message asks
+  for a new key; the request did not run.
+- A body sent with a key has the same limit as any request. A streaming AI request
+  (`"stream": true`) rejects keys with `400`.
 - A stored response body is at most 256 KiB. When the first response was larger, the first
   caller still gets all of it, but a repeat answers `409 CONFLICT` with the original status in
   the message; read the resource instead of repeating the mutation.
+- A new API key is never stored: a repeat of `POST /v1/api-keys` answers `409 CONFLICT` with
+  status `201` in the message.
 - The [SDK](/docs/cloud/sdk#safe-retries) sends the header when you pass `idempotencyKey` to a
   call that changes data.
 
@@ -204,8 +210,9 @@ error itself is only in the server log.
 `name` and `scopes` are required (`400` without them); each scope must be one of the five
 grantable scopes and held by the caller (`403` otherwise). `"scopes": []` makes a key that can
 only call the routes without a scope, such as `GET /v1/users/me`. Returns `201` with the key,
-shown only in this response. Do not send an `Idempotency-Key` with this request: the reply,
-key included, would be kept in Valkey for 24 hours and returned to a repeat.
+shown only in this response. With an `Idempotency-Key`, only the status is kept: a repeat
+answers `409 CONFLICT` instead of showing the key again. If the first reply was lost, list
+your keys, delete the one you never received and create another.
 
 ```json
 { "id": "0b7c…", "name": "CI", "prefix": "gt_live_", "key": "gt_live_sk_3f9a…", "scopes": ["documents:read"], "created_at": "2026-11-12T12:00:00Z" }
