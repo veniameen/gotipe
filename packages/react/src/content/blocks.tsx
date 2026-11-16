@@ -25,6 +25,12 @@ import {
 import { TableCell, TableCellSelection, TableRow } from "./table-cells";
 import { TableColumns, TableLayoutProvider, TableScroll, TableToolbar } from "./table-layout";
 
+/** Digits of the widest number of an ordered list from `start` with `count` items. */
+function listDigits(start: number, count: number): number {
+  const last = start + Math.max(0, count - 1);
+  return Math.max(String(Math.abs(start)).length, String(Math.abs(last)).length);
+}
+
 /** Suggested blocks around `block` (a `blocks` decoration). */
 export function PhantomBlocks({
   block,
@@ -284,12 +290,30 @@ function BlockComponentInner({
         </ul>
       );
 
-    case "orderedList":
+    case "orderedList": {
+      // the list counts from its own number (D-268); its widest number sets the room before the
+      // text (D-269)
+      const value = Number(block.attrs.start);
+      const start = Number.isInteger(value) ? value : 1;
+      const digits = listDigits(start, block.children.length);
       return (
-        <ol {...rootProps} data-block-type={block.type}>
+        <ol
+          {...rootProps}
+          data-block-type={block.type}
+          start={start !== 1 ? start : undefined}
+          style={
+            digits > 2
+              ? ({
+                  ...(rootProps.style as React.CSSProperties | undefined),
+                  "--gt-list-digits": digits,
+                } as React.CSSProperties)
+              : (rootProps.style as React.CSSProperties | undefined)
+          }
+        >
           {children}
         </ol>
       );
+    }
 
     case "listItem":
       return (

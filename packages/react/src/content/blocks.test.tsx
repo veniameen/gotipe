@@ -86,3 +86,45 @@ describe("a block type without a view (D-31)", () => {
     );
   });
 });
+
+describe("an ordered list (D-268)", () => {
+  const list = (id: string, attrs: Record<string, unknown>) => ({
+    id,
+    type: "orderedList",
+    attrs,
+    content: null,
+    children: [{ id: `${id}-item`, type: "listItem", attrs: {}, content: text(id), children: [] }],
+  });
+
+  it("counts from its own number", () => {
+    act(() =>
+      editor.setContent({
+        version: 1,
+        blocks: [list("from-99", { start: 99 }), list("from-0", { start: 0 }), list("from-1", {})],
+      }),
+    );
+    expect(container.querySelector('[data-block-id="from-99"]')?.getAttribute("start")).toBe("99");
+    expect(container.querySelector('[data-block-id="from-0"]')?.getAttribute("start")).toBe("0");
+    expect(container.querySelector('[data-block-id="from-1"]')?.hasAttribute("start")).toBe(false);
+  });
+
+  it("gives a number of three digits or more its room (D-269)", () => {
+    act(() =>
+      editor.setContent({
+        version: 1,
+        blocks: [
+          list("from-99", { start: 99 }),
+          list("from-100", { start: 100 }),
+          list("from-1", {}),
+        ],
+      }),
+    );
+    const digits = (id: string) =>
+      container
+        .querySelector<HTMLElement>(`[data-block-id="${id}"]`)
+        ?.style.getPropertyValue("--gt-list-digits");
+    expect(digits("from-99")).toBe("");
+    expect(digits("from-100")).toBe("3");
+    expect(digits("from-1")).toBe("");
+  });
+});

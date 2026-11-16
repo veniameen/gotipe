@@ -17,6 +17,10 @@
   font-variant-numeric: tabular-nums;
   letter-spacing: normal;
 }
+/* beside the handle's rail the counter stands in the text column, as the page's head does (D-266) */
+.gotipe-block-editor--with-toolbar .gotipe-status {
+  padding-left: max(var(--gt-page-pad-x), var(--gt-handle-rail));
+}
 .gotipe-status-part {
   position: relative;
   white-space: nowrap;

@@ -79,6 +79,12 @@ function getTextLength(block: ViewBlock): number {
   return 0;
 }
 
+/**
+ * A menu not measured yet waits hidden at the screen's corner, where it has the whole width: the
+ * theme's own offsets would put a fixed panel past the screen's edge and measure it there.
+ */
+const UNMEASURED = { left: 0, top: 0 };
+
 export function BlockContextMenu({ editor, blockId, open, onClose }: BlockContextMenuProps) {
   const menuRef = useRef<HTMLDivElement>(null);
   const submenuRef = useRef<HTMLDivElement>(null);
@@ -96,12 +102,14 @@ export function BlockContextMenu({ editor, blockId, open, onClose }: BlockContex
     [],
   );
   const position = useFloatingPosition({ open, element: menuRef, anchor });
+  // «Turn into» follows its menu: the menu moves without resizing, the trigger moves with it (D-267)
   const submenuPosition = useFloatingPosition({
     open: open && turnIntoOpen,
     element: submenuRef,
     anchor: submenuAnchor,
     placement: "left-start",
     gap: 0,
+    revision: position,
   });
 
   const turnIntoOptions = useMemo<TurnIntoOption[]>(
@@ -315,7 +323,7 @@ export function BlockContextMenu({ editor, blockId, open, onClose }: BlockContex
       aria-label={i18n.t("block.handle")}
       data-gotipe-context-menu=""
       style={{
-        ...position,
+        ...(position ?? UNMEASURED),
         position: "fixed",
         visibility: position ? "visible" : "hidden",
         overflowY: "auto",
@@ -361,7 +369,7 @@ export function BlockContextMenu({ editor, blockId, open, onClose }: BlockContex
             role="menu"
             aria-label={i18n.t("block.turnInto")}
             style={{
-              ...submenuPosition,
+              ...(submenuPosition ?? UNMEASURED),
               position: "fixed",
               visibility: submenuPosition ? "visible" : "hidden",
               overflowY: "auto",

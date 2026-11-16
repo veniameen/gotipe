@@ -126,13 +126,11 @@ function BlockEditorView({
     if (!root || !hoveredToolbarTarget || !editor) return;
     const update = () => {
       const block = getBlockElById(root, hoveredToolbarTarget.anchorBlockId);
-      if (!block) return hideToolbarNow();
+      const rail = block && handleRail(root, block, getToolbarRailLeft);
+      if (!block || !rail) return hideToolbarNow();
       const container = root.getBoundingClientRect();
       const line = getBlockFirstLineMetrics(block);
-      const next = {
-        top: line.top - container.top + line.height / 2,
-        ...handleRail(root, block, getToolbarRailLeft),
-      };
+      const next = { top: line.top - container.top + line.height / 2, ...rail };
       setToolbarPos((previous) =>
         previous?.top === next.top && previous.left === next.left && previous.right === next.right
           ? previous
@@ -207,14 +205,17 @@ function BlockEditorView({
         hoveredToolbarTarget?.addBlockId !== addBlockId ||
         hoveredToolbarTarget?.dragBlockId !== dragBlockId;
       if (!targetChanged) return;
+      // without room beside the text the handle is not drawn: it would cover the text (D-260)
+      const rail = handleRail(containerRef.current, anchorEl, getToolbarRailLeft);
+      if (!rail) {
+        scheduleHideToolbar();
+        return;
+      }
 
       setHoveredToolbarTarget({ actionBlockId, anchorBlockId, addBlockId, dragBlockId });
-      if (containerRef.current) {
-        const containerRect = containerRef.current.getBoundingClientRect();
-        const firstLine = getBlockFirstLineMetrics(anchorEl);
-        const top = firstLine.top - containerRect.top + firstLine.height / 2;
-        setToolbarPos({ top, ...handleRail(containerRef.current, anchorEl, getToolbarRailLeft) });
-      }
+      const containerRect = containerRef.current.getBoundingClientRect();
+      const firstLine = getBlockFirstLineMetrics(anchorEl);
+      setToolbarPos({ top: firstLine.top - containerRect.top + firstLine.height / 2, ...rail });
     },
     [
       clearHideToolbarTimer,

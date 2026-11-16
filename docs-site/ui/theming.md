@@ -50,7 +50,9 @@ Pass `view` to `BlockEditor` or `PageEditor`; it becomes `data-gt-view` on the e
 The editor root is a size container. In a container 640 px wide or less, the side padding,
 heading sizes and title shrink and the `docs` outline hides; at 359 px or less they shrink
 again. There `notion` and `docs` keep a rail of `--gt-handle-rail` (56 px) on the left for the
-block handle. In `docs`,
+block handle, in `BlockEditor` and `PageEditor` alike; a table's row handle stands in it too. A
+container that keeps less room than `--gt-handle-offset` left of the text shows no block handle:
+it would cover the text. In `docs`,
 `--gt-outline-gap` (64 px) is the gutter the handle stands in, `--gt-anchor-display` shows the
 heading anchors (`none` hides them) and `--gt-anchor-room` is the room a heading keeps for its
 anchor at the end of its lines. `--gt-heading-wrap` is how headings wrap: `balance`, so the last

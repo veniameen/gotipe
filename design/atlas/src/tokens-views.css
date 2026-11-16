@@ -51,6 +51,7 @@
   --gt-bullet-x: 8px;
   --gt-bullet-y: 9.5px;
   --gt-number-width: 18px;
+  --gt-number-digit: 0.6em;
 
   --gt-head-gap: 12px;
   --gt-head-after: 32px;
@@ -73,7 +74,8 @@
   --gt-code-gutter-gap: 16px;
   --gt-code-lines-display: none;
   --gt-cell-pad: 9px 12px;
-  --gt-head-cell-pad: 8px 12px;
+  --gt-head-cell-pad-y: 8px;
+  --gt-head-cell-pad: var(--gt-head-cell-pad-y) 12px;
   --gt-cell-min: 132px;
   --gt-table-add: 16px;
   --gt-table-add-gap: 4px;

@@ -238,8 +238,12 @@
   border: var(--gt-check-ring) solid currentColor;
   background: transparent;
 }
+/* a number longer than two digits gets a digit's room for each digit more, so it does not reach
+   into the gutter, where the block handle stands (D-269); the renderer sets --gt-list-digits */
 .gotipe-content ol {
-  padding-left: var(--gt-indent);
+  padding-left: calc(
+    var(--gt-indent) + max(0, var(--gt-list-digits, 2) - 2) * var(--gt-number-digit)
+  );
 }
 .gotipe-content ol > li::marker {
   color: var(--gt-text-2);

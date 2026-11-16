@@ -47,6 +47,16 @@ ol.gotipe-list > li::before {
   text-align: right;
   pointer-events: none;
 }
+/* a list that counts from its own number; three digits get a digit's more room (frame 32) */
+ol.gotipe-list > li[data-n]::before {
+  content: attr(data-n) ".";
+}
+ol.gotipe-list.is-three-digits > li {
+  padding-left: calc(var(--gt-indent) + var(--gt-number-digit));
+}
+ol.gotipe-list.is-three-digits > li::before {
+  width: calc(var(--gt-number-width) + var(--gt-number-digit));
+}
 
 /* ---- tasks ---- */
 .gotipe-todo-list {
@@ -340,6 +350,10 @@ ol.gotipe-list > li::before {
 }
 .gotipe-table :where(th, td):first-child {
   padding-left: 0;
+}
+/* a row's handle wider than the page margin: the first column gives it the rest (frame 32) */
+.gotipe-table-block:has(.gotipe-row-handle) .gotipe-table :where(th, td):first-child {
+  padding-left: calc(var(--gt-row-handle-full) - var(--gt-row-handle-room));
 }
 .gotipe-table tbody tr:last-child td {
   border-bottom: 0;

@@ -77,8 +77,14 @@
   line-height: var(--gt-small-leading);
   letter-spacing: normal;
 }
+/* the first column starts with the text column; when the page margin is narrower than the row
+   handle (a phone without the handle's rail), the first cell of a table with row handles gives
+   it the rest (D-263) */
 .gotipe-table-wrapper tr > :where(th, td):first-child {
   padding-left: 0;
+}
+.gotipe-table-wrapper:has(.gotipe-row-handle) tr > :where(th, td):first-child {
+  padding-left: calc(var(--gt-row-handle-full) - var(--gt-row-handle-room));
 }
 .gotipe-table-wrapper tbody > tr:last-child > td {
   border-bottom: 0;
