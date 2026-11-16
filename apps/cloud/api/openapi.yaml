@@ -139,7 +139,7 @@ paths:
         '413': { $ref: '#/components/responses/PayloadTooLarge' }
         '429': { $ref: '#/components/responses/RateLimited' }
         '500': { $ref: '#/components/responses/InternalError' }
-        '503': { $ref: '#/components/responses/ServiceUnavailable', description: '`SERVICE_UNAVAILABLE`: the rate limiter could not reach Valkey.' }
+        '503': { $ref: '#/components/responses/ServiceUnavailable', description: '`SERVICE_UNAVAILABLE`: the rate limiter could not reach Valkey, or the database did not answer the lookup of the email or the key (never `401`).' }
 
   /v1/webhooks/stripe:
     post:
@@ -223,7 +223,7 @@ paths:
           description: The account.
           content: { application/json: { schema: { $ref: '#/components/schemas/User' } } }
         '401': { $ref: '#/components/responses/Unauthorized' }
-        '404': { $ref: '#/components/responses/NotFound', description: '`NOT_FOUND`: the account could not be read.' }
+        '404': { $ref: '#/components/responses/NotFound', description: '`NOT_FOUND`: the account was deleted after the credential was checked.' }
         '429': { $ref: '#/components/responses/RateLimited' }
         '503': { $ref: '#/components/responses/ServiceUnavailable' }
 
@@ -1047,7 +1047,8 @@ components:
         granted through the API. A missing scope answers `403 FORBIDDEN`. Credential errors:
         `401 UNAUTHORIZED` (no bearer credential), `401 INVALID_API_KEY`, `401 INVALID_TOKEN`
         (an invalid, expired or revoked token, or a deleted account), and `503` when the token
-        revocation list or the token's account lookup is unavailable.
+        revocation list is unavailable or the database does not answer the lookup of the API key
+        or the token's account. A `401` always means that the credential itself is wrong.
 
   parameters:
     IdempotencyKey:
@@ -1189,8 +1190,9 @@ components:
     ServiceUnavailable:
       description: >-
         `SERVICE_UNAVAILABLE`: Valkey (token revocation list, rate limiter or idempotency
-        record) or the token's account lookup failed. `Request outcome could not be recorded;
-        retain the same Idempotency-Key` means that the mutation may have run.
+        record) failed, or the database did not answer the lookup of the credential or the
+        account. `Request outcome could not be recorded; retain the same Idempotency-Key` means
+        that the mutation may have run.
       content: { application/json: { schema: { $ref: '#/components/schemas/ErrorResponse' } } }
 
   schemas:

@@ -104,7 +104,8 @@ wss://sync.example.com/sync?document_id=<document id>&peer_id=<replica id>&gener
 Before the upgrade, failures are HTTP responses: `400` when `document_id` is missing or not a
 UUID, `peer_id` breaks the rule above or `gotipe.v2` comes without a `generation` of 1–128
 URL-safe characters, `401` for the credential, `403` for the scope, `404`
-for the document or role, `429` for too many connection attempts.
+for the document or role, `429` for too many connection attempts, `503` when Valkey or the
+database cannot check the credential or the limit.
 
 ```ts title="raw-socket.ts"
 export function openSocket(
