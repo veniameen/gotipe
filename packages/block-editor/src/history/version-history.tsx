@@ -2,6 +2,7 @@ import { type Document, type GoTipeEditor, GoTipeError } from "@gotipe/core";
 import type React from "react";
 import { type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { keyLabel } from "../components/formatting/keys";
+import { intlLocale } from "../i18n/intl-locale";
 import { useBlockEditorI18n as useGoTipeI18n } from "../i18n/strings";
 import { PageIcon } from "../page/icons";
 import { CompareView } from "./compare-view";
@@ -249,7 +250,7 @@ export function VersionHistory({
   const facts = version ? (
     <span className="gotipe-history-facts">
       <span className="gotipe-review-fact">
-        {new Intl.DateTimeFormat(i18n.locale, { day: "numeric", month: "long" }).format(
+        {new Intl.DateTimeFormat(intlLocale(i18n.locale), { day: "numeric", month: "long" }).format(
           new Date(version.createdAt),
         )}
         , {timeLabel(new Date(version.createdAt), i18n.locale)}

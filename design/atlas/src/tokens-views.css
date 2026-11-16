@@ -85,6 +85,7 @@
   --gt-caption-gap: 8px;
   --gt-inline-pad: 0.1em 0.35em;
   --gt-inline-code-size: 0.87em;
+  --gt-inline-code-leading: 1;
   --gt-mark-pad: 0.05em 0.15em;
   --gt-toggle-gap: 4px;
   --gt-handle-w: 22px;

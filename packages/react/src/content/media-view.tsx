@@ -105,8 +105,11 @@ function FileView({ block, editor, rootProps }: MediaBlockProps) {
               target="_blank"
               rel="noreferrer noopener"
               onMouseDown={(e) => e.stopPropagation()}
-              onClick={(event) => {
+              onClickCapture={(event) => {
+                // The card opens its file itself: the click stops before the editor's link
+                // handler on the surface would open the same address a second time (D-210).
                 event.preventDefault();
+                event.stopPropagation();
                 if (!displayUrl) return;
                 if (displayUrl.startsWith("data:"))
                   downloadAsset(editor, displayUrl, name, i18n.t("media.unsupportedUrl"));

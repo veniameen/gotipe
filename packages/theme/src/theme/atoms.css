@@ -45,8 +45,13 @@
   outline-offset: var(--gt-focus-gap);
 }
 
-/* ---- mentions: a person is their avatar and name; a page is its glyph and title ---- */
+/* ---- mentions: a person is their avatar and name; a page is its glyph and title. The mention is
+   one box of the line, as in the Atlas (frame 22): a click past a line that ends with a mention
+   puts the caret after it. As an inline element it let Chrome look for the caret inside its
+   drawing, find none there and leave the caret where it was (D-240) ---- */
 .gotipe-mention {
+  display: inline-flex;
+  align-items: baseline;
   white-space: nowrap;
 }
 .gotipe-mention-view {
@@ -162,7 +167,8 @@
   font-size: var(--gt-math-script);
 }
 
-/* a formula that cannot be drawn shows its TeX, tinted; the reason is in the tooltip */
+/* a formula that cannot be drawn shows its TeX, tinted, at the leading of inline code (D-225);
+   the reason is in the tooltip */
 .gotipe-math-inline.is-invalid {
   padding: var(--gt-inline-pad);
   border-radius: var(--gt-radius-inline);
@@ -170,6 +176,7 @@
   box-shadow: inset 0 calc(-1 * var(--gt-hairline)) 0 var(--gt-danger);
   font-family: var(--gt-font-mono);
   font-size: var(--gt-inline-code-size);
+  line-height: var(--gt-inline-code-leading);
   letter-spacing: normal;
 }
 

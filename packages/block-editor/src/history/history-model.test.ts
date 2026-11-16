@@ -7,6 +7,7 @@ import {
   groupByDay,
   initials,
   savedRows,
+  timeLabel,
   withLiveRow,
 } from "./history-model";
 
@@ -134,5 +135,19 @@ describe("the list of versions", () => {
     expect(dayLabel(new Date("2026-11-07T16:20:00"), now, "ru", words)).toBe("7 ноября");
     expect(initials("Мария Лебедева")).toBe("МЛ");
     expect(initials("anna")).toBe("A");
+  });
+  it("names days and times in the browser's language when the locale is no language tag (D-220)", () => {
+    const now = new Date("2026-11-14T15:00:00");
+    const old = new Date("2025-11-07T16:20:00");
+    const words = { today: "Today", yesterday: "Yesterday" };
+    const browser = (options: Intl.DateTimeFormatOptions) =>
+      new Intl.DateTimeFormat(undefined, options).format(old);
+    for (const locale of ["de_DE", ""]) {
+      expect(dayLabel(old, now, locale, words)).toBe(
+        browser({ day: "numeric", month: "long", year: "numeric" }),
+      );
+      expect(timeLabel(old, locale)).toBe(browser({ hour: "2-digit", minute: "2-digit" }));
+    }
+    expect(dayLabel(now, now, "de_DE", words)).toBe("Today");
   });
 });

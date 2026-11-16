@@ -7,6 +7,7 @@ import {
   countWordChanges,
   diffText,
 } from "@gotipe/versions";
+import { intlLocale } from "../i18n/intl-locale";
 
 /** A saved version as the panel shows it; `Version` of `@gotipe/versions` fits as it is. */
 export interface HistoryVersion {
@@ -146,7 +147,7 @@ export function dayLabel(
   const yesterday = new Date(now);
   yesterday.setDate(now.getDate() - 1);
   if (dayKey(date) === dayKey(yesterday)) return words.yesterday;
-  return new Intl.DateTimeFormat(locale, {
+  return new Intl.DateTimeFormat(intlLocale(locale), {
     day: "numeric",
     month: "long",
     ...(date.getFullYear() === now.getFullYear() ? {} : { year: "numeric" }),
@@ -154,7 +155,7 @@ export function dayLabel(
 }
 
 export const timeLabel = (date: Date, locale: string) =>
-  new Intl.DateTimeFormat(locale, { hour: "2-digit", minute: "2-digit" }).format(date);
+  new Intl.DateTimeFormat(intlLocale(locale), { hour: "2-digit", minute: "2-digit" }).format(date);
 
 /** One block of the comparison: as it is now, or as it was when it was removed. */
 export interface DiffNode {
