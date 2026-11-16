@@ -168,7 +168,8 @@ Each type is described in [extensions](/docs/extensions/overview).
 
 `createEditor`, `setContent` and every transaction check the whole result against the
 schema and throw `VALIDATION_ERROR` when it doesn't fit; nothing is changed. To test a
-document first, call `editor.validate()`. For a message that names the problem in the
+document first, call `editor.validate()` with the document object: a string is not read
+and returns `false`, so parse JSON yourself. For a message that names the problem in the
 document's shape, use `decodeDocument()`; it checks shape and IDs, not the schema.
 
 ```ts title="load.ts"

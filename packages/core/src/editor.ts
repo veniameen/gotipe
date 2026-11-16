@@ -388,10 +388,10 @@ export async function createEditorWithLoader(
       }
     },
 
-    validate(content: string | object): boolean {
+    validate(content: object): boolean {
       try {
-        const document = typeof content === "string" ? JSON.parse(content) : content;
-        return bridge.validate(JSON.stringify(toWasmDoc(document)));
+        if (typeof content === "string") return false; // only a document object (D-185)
+        return bridge.validate(JSON.stringify(toWasmDoc(content)));
       } catch {
         return false;
       }

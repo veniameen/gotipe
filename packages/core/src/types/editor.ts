@@ -144,8 +144,12 @@ export interface GoTipeEditor {
   /** Validated local dispatch only; remote synchronization and history are not filtered. */
   addTransactionFilter(filter: TransactionFilter): () => void;
   setContent(content: string | object, options?: SetContentOptions): void;
-  /** Validate a public document or its JSON string. Invalid input returns false. */
-  validate(content: string | object): boolean;
+  /**
+   * Validate a public document object; invalid input returns false. A string is not read and
+   * returns false: parse JSON yourself, `validate(JSON.parse(json))`. A string is HTML only in
+   * `content` and `setContent`.
+   */
+  validate(content: object): boolean;
   isActive(name: string, attrs?: Record<string, unknown>): boolean;
   getCurrentBlock(): {
     type: string;

@@ -1419,11 +1419,12 @@ export default function EditorPage() {
 // packages/core/src/server.ts
 
 /**
- * Рендерит GoTipe document JSON в HTML-строку.
+ * Рендерит объект документа GoTipe в HTML-строку. Строку не читает: JSON разбирает
+ * хост (`JSON.parse`), строка отклоняется с `TypeError` (D-185).
  * Работает в Node.js через WASM — не требует браузер.
  */
 export async function renderToHtml(
-  content: object | string,
+  content: object,
   options?: SSROptions,
 ): Promise<string>;
 
@@ -1431,14 +1432,14 @@ export async function renderToHtml(
  * Рендерит в Markdown.
  */
 export async function renderToMarkdown(
-  content: object | string,
+  content: object,
 ): Promise<string>;
 
 /**
  * Рендерит в plain text.
  */
 export async function renderToText(
-  content: object | string,
+  content: object,
 ): Promise<string>;
 
 export interface SSROptions {
