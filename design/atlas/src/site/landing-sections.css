@@ -1,164 +1,406 @@
-/* The rest of the landing: the bento of features, the looks, the dark panel with the code, the ways
-   to run, the licences, the closing band and the foot. */
+/* The middle of the landing (frame 20): the stack with its beams, the three parts it stands on, the
+   bento of three tiles with their pictures, the nine parts of the stack and the four looks. */
 
-.site-section.is-features {
-  padding-top: 0;
-}
-
-/* ---- the bento: three tinted tiles, each with a small drawing of what it says ---- */
-.site-bento {
+/* ---- the stack: your interface, the engine, your infrastructure ---- */
+.site-stack-diagram {
+  position: relative;
   display: grid;
-  grid-template-columns: repeat(var(--site-cols-2), minmax(0, 1fr));
-  gap: var(--site-gap-l);
-}
-.site-tile {
-  display: flex;
-  flex-direction: column;
   box-sizing: border-box;
-  min-width: 0;
-  min-height: var(--site-bento-h);
-  padding: var(--site-card-pad);
+  grid-template-columns: var(--site-stack-cols);
+  align-items: center;
+  gap: var(--site-space-12);
+  min-height: var(--site-stack-h);
+  padding: var(--site-stack-pad);
   border-radius: var(--site-card-radius);
-  background: var(--site-tint);
+  background-color: var(--site-bg-alt);
+  background-image: radial-gradient(var(--site-grid) var(--site-grid-line), transparent 0);
+  background-size: var(--site-space-6) var(--site-space-6);
+  box-shadow: inset 0 0 0 var(--gt-hairline) var(--site-line);
 }
-.site-tile.is-sage {
-  background: var(--site-sage);
+.site-beams {
+  position: absolute;
+  inset: 0;
+  overflow: visible;
+  pointer-events: none;
 }
-.site-tile.is-sand {
-  background: var(--site-sand);
+.site-beam-path,
+.site-beam-pulse {
+  fill: none;
+  stroke-linecap: round;
 }
-.site-tile.is-wide {
+.site-beam-path {
+  stroke: var(--site-beam-path);
+  stroke-width: var(--site-beam-width);
+}
+.site-beam-pulse {
+  stroke: var(--site-beam);
+  stroke-width: var(--site-beam-pulse-w);
+  stroke-dasharray: var(--site-beam-dash) 100;
+  stroke-dashoffset: var(--site-beam-dash);
+  opacity: 0;
+}
+.site-beam.is-out .site-beam-pulse {
+  stroke: var(--site-beam-out);
+}
+.site-stack-col {
+  position: relative;
   display: grid;
-  grid-column: 1 / -1;
-  grid-template-columns: var(--site-bento-wide-cols);
-  gap: var(--site-gap-xl) var(--site-gap-3xl);
+  justify-items: var(--site-stack-in-align);
+  gap: var(--site-space-4);
+  min-width: 0;
+}
+.site-stack-col.is-out {
+  justify-items: var(--site-stack-out-align);
+}
+.site-stack-col > ul {
+  display: grid;
+  grid-template-columns: var(--site-stack-node-cols);
+  gap: var(--site-space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.site-stack-node {
+  display: inline-flex;
   align-items: center;
-  min-height: 0;
-}
-.site-tile-top {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  color: var(--gt-accent);
-}
-.site-tile-top > .gt-icon,
-.site-run .site-tile-top > .gt-icon {
-  width: var(--site-tile-icon);
-  height: var(--site-tile-icon);
-}
-.site-tile.is-sage .site-tile-top {
-  color: var(--site-sage-ink);
-}
-.site-tile.is-sand .site-tile-top {
-  color: var(--gt-text-2);
-}
-.site-tile h3 {
-  margin: var(--site-gap-2xl) 0 0;
-  font-family: var(--site-font-display);
-  font-size: var(--site-h3-l-size);
-  font-weight: var(--site-weight-display);
-  line-height: var(--site-h3-l-leading);
-  letter-spacing: var(--site-h3-tracking);
-}
-.site-tile p {
-  max-width: var(--site-aside-max);
-  margin: var(--site-gap-m) 0 0;
-  color: var(--gt-text-2);
-  font-size: var(--site-body-size);
-  line-height: var(--site-body-leading);
-}
-
-/* the engine under your interface */
-.site-diagram {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: var(--site-gap-s);
-  align-self: center;
+  gap: var(--site-space-2);
   box-sizing: border-box;
-  width: min(var(--site-diagram-w), 100%);
-  margin-top: auto;
-  padding-top: var(--site-gap-xl);
-  color: var(--gt-text-3);
-}
-.site-diagram-box,
-.site-diagram-engine {
-  box-sizing: border-box;
-  width: 100%;
-  border-radius: var(--site-cta-radius);
-}
-.site-diagram-box {
-  padding: var(--site-diagram-pad);
+  height: var(--site-stack-node);
+  padding: var(--site-stack-node-pad);
+  border-radius: var(--site-radius-2);
   background: var(--site-card);
-  box-shadow: var(--site-item-shadow);
+  box-shadow: var(--site-card-shadow);
   color: var(--gt-text);
-  font-size: var(--site-small-size);
-  font-weight: var(--gt-weight-medium);
-  line-height: var(--site-small-leading);
-  text-align: center;
-}
-.site-diagram-engine {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--site-gap-xs) var(--site-gap);
-  padding: var(--site-diagram-engine-pad);
-  background: var(--site-cta-bg);
-  color: var(--site-cta-text);
+  font-family: var(--site-font-mono);
   font-size: var(--site-small-size);
   line-height: var(--site-small-leading);
-}
-/* the name and the engines wrap as whole phrases when the tile is narrow */
-.site-diagram-engine > * {
   white-space: nowrap;
 }
-.site-diagram-engine > strong {
-  font-weight: var(--gt-weight-strong);
+.site-stack-node > .gt-icon {
+  color: var(--site-beam-out);
 }
-.site-diagram-engine > span {
-  font-family: var(--site-font-mono);
-  font-size: var(--site-label-size);
+.site-stack-dot {
+  width: var(--site-dot);
+  height: var(--site-dot);
+  border-radius: var(--site-radius-round);
+  background: var(--site-beam);
 }
-.site-diagram-note {
-  margin-top: var(--site-gap-xs);
+.site-stack-hub {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  gap: var(--site-space-1);
+  padding: var(--site-space-6) var(--site-space-8);
+  border-radius: var(--site-card-radius);
+  background: var(--site-card);
+  box-shadow: 0 0 0 var(--gt-hairline) var(--site-tint-line), var(--site-hub-glow);
+  text-align: center;
+}
+.site-stack-hub > strong {
+  margin-top: var(--site-space-3);
+  font-family: var(--site-font-display);
+  font-size: var(--site-h3-size);
+  font-weight: var(--site-weight-display);
+  line-height: var(--site-h3-leading);
+  letter-spacing: var(--site-h3-tracking);
+}
+.site-stack-hub > span:last-child {
   color: var(--gt-text-2);
   font-family: var(--site-font-mono);
   font-size: var(--site-label-size);
   line-height: var(--site-label-leading);
 }
-
-/* the file written back */
-.site-md-card {
-  margin-top: auto;
-  padding: var(--site-md-card-pad);
-  border-radius: var(--site-cta-radius);
-  background: var(--site-card);
-  box-shadow: var(--site-item-shadow);
-  font-family: var(--site-font-mono);
+.site-stack-mark {
+  display: grid;
+  place-items: center;
+  width: var(--site-stack-hub-mark);
+  height: var(--site-stack-hub-mark);
+  border-radius: var(--site-radius-3);
+  background: var(--site-accent-tint);
 }
-.site-tile .site-md-card p {
+.site-stack-mark > .site-logo {
+  width: var(--site-logo-l);
+  height: var(--site-logo-l);
+}
+
+/* the three parts the stack stands on */
+.site-pillars {
+  display: grid;
+  grid-template-columns: repeat(var(--site-pillar-cols), minmax(0, 1fr));
+  gap: var(--site-space-8);
+  margin: var(--site-space-12) 0 0;
+  padding: 0;
+  list-style: none;
+}
+.site-pillar {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding-top: var(--site-space-6);
+  border-top: var(--gt-hairline) solid var(--site-line-strong);
+}
+.site-pillar-top {
+  display: flex;
+  align-self: stretch;
+  align-items: center;
+  justify-content: space-between;
+  margin: 0;
+  color: var(--gt-accent);
+}
+.site-pillar-top > span {
+  color: var(--gt-text-3);
+  font-family: var(--site-font-mono);
+  font-size: var(--site-label-size);
+  line-height: var(--site-label-leading);
+}
+.site-pillar h3 {
+  margin: var(--site-space-4) 0 0;
+  font-size: var(--site-h3-size);
+  font-weight: var(--site-weight-title);
+  line-height: var(--site-h3-leading);
+  letter-spacing: var(--site-h3-tracking);
+}
+.site-pillar p {
+  margin: var(--site-space-2) 0 var(--site-space-4);
+  color: var(--gt-text-2);
+  font-size: var(--site-body-size);
+  line-height: var(--site-body-leading);
+}
+.site-pillar > .site-badge {
+  margin-top: auto;
+}
+
+/* ---- cards that catch the light under the pointer ---- */
+[data-glow-card] {
+  position: relative;
+  isolation: isolate;
+}
+[data-glow-card]::before,
+[data-glow-card]::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--site-dur-2) var(--site-ease);
+}
+[data-glow-card]::before {
+  z-index: -1;
+  background: radial-gradient(
+    var(--site-glow-size) circle at var(--site-mx, 50%) var(--site-my, 50%),
+    var(--site-glow-card),
+    transparent 40%
+  );
+}
+[data-glow-card]::after {
+  z-index: 1;
+  padding: var(--gt-hairline);
+  background: radial-gradient(
+    var(--site-glow-ring-size) circle at var(--site-mx, 50%) var(--site-my, 50%),
+    var(--site-glow-ring),
+    transparent 40%
+  );
+  -webkit-mask: linear-gradient(var(--site-mask-on) 0 0) content-box,
+    linear-gradient(var(--site-mask-on) 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(var(--site-mask-on) 0 0) content-box exclude,
+    linear-gradient(var(--site-mask-on) 0 0);
+}
+[data-glow]:hover [data-glow-card]::before,
+[data-glow]:hover [data-glow-card]::after {
+  opacity: 1;
+}
+
+/* ---- the bento: three tiles with their pictures ---- */
+.site-bento {
+  display: grid;
+  grid-template-columns: var(--site-bento-cols);
+  gap: var(--site-space-4);
+}
+.site-bento > *,
+.site-features > * {
+  min-width: 0;
+}
+.site-tile {
+  display: flex;
+  flex-direction: column;
+  padding: var(--site-card-pad);
+  border-radius: var(--site-card-radius);
+  background: var(--site-card);
+  box-shadow: var(--site-card-shadow);
+  transition: box-shadow var(--site-dur-2) var(--site-ease);
+}
+.site-tile:hover {
+  box-shadow: var(--site-card-shadow-hover);
+}
+.site-tile.is-wide {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: var(--site-tile-wide-cols);
+  gap: var(--site-space-8) var(--site-space-12);
+  align-items: center;
+}
+.site-tile-top,
+.site-feature-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--site-space-4);
+}
+.gt-icon-box {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: var(--site-icon-box);
+  height: var(--site-icon-box);
+  border-radius: var(--site-icon-box-radius);
+  background: var(--site-accent-tint);
+  box-shadow: inset 0 0 0 var(--gt-hairline) var(--site-tint-line);
+  color: var(--gt-accent);
+  transition: background-color var(--site-dur-2) var(--site-ease), color var(--site-dur-2)
+    var(--site-ease);
+}
+.site-tile h3 {
+  margin: var(--site-space-8) 0 0;
+  font-family: var(--site-font-display);
+  font-size: var(--site-h3-l-size);
+  font-weight: var(--site-weight-title);
+  line-height: var(--site-h3-l-leading);
+  letter-spacing: var(--site-h3-tracking);
+}
+.site-tile p {
+  max-width: var(--site-sub-max);
+  margin: var(--site-space-3) 0 0;
+  color: var(--gt-text-2);
+  font-size: var(--site-text-size);
+  line-height: var(--site-text-leading);
+}
+.site-tile > .site-mock {
+  margin-top: auto;
+}
+.site-tile > p {
+  margin-bottom: var(--site-space-8);
+}
+
+/* ---- the pictures: a sunken well in the tile, mono like a terminal ---- */
+.site-mock {
+  position: relative;
+  min-width: 0;
+  padding: var(--site-mock-pad);
+  border-radius: var(--site-card-radius-s);
+  background: var(--site-card-2);
+  box-shadow: inset 0 0 0 var(--gt-hairline) var(--site-line);
+  color: var(--gt-text-2);
+  font-family: var(--site-font-mono);
+  font-size: var(--site-label-size);
+  line-height: var(--site-label-leading);
+}
+.site-tile .site-mock p {
   max-width: none;
   margin: 0;
+  font-size: inherit;
+  line-height: inherit;
+}
+.site-tile .site-mock .site-mock-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--site-space-3);
+  letter-spacing: var(--site-label-tracking);
+  text-transform: uppercase;
+}
+.site-mock-head > .site-kbd {
+  letter-spacing: normal;
+}
+
+/* a transaction of three steps */
+.site-tx-steps {
+  display: grid;
+  gap: var(--site-mock-gap);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.site-tx-steps > li {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--site-space-3);
+  height: var(--site-mock-row);
+  padding: 0 var(--site-space-3);
+  border-radius: var(--site-radius-1);
+  background: var(--site-card);
+  box-shadow: var(--site-item-shadow);
+  font-size: var(--site-small-size);
+}
+.site-tx-steps code {
+  color: var(--gt-accent);
+  font: inherit;
+}
+.site-tx-steps span {
+  overflow: hidden;
+  color: var(--gt-text-2);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.site-tx-steps .gt-icon {
+  width: var(--gt-icon-small);
+  height: var(--gt-icon-small);
+  color: var(--site-sage-ink);
+}
+.site-tile .site-mock .site-tx-engines {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--site-space-3);
+  margin-top: var(--site-space-4);
+  color: var(--gt-text);
+}
+.site-tx-link {
+  position: relative;
+  height: var(--site-grid-line);
+  overflow: hidden;
+  border-radius: var(--site-radius-round);
+  background: var(--site-line-strong);
+}
+.site-tx-link::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, var(--site-beam), transparent);
+  transform: translateX(-100%);
+}
+.site-tile .site-mock .site-mock-note {
+  margin-top: var(--site-space-3);
+  color: var(--gt-text-3);
+}
+
+/* a Markdown file written back */
+.site-tile .site-md p {
+  padding: 0 var(--site-space-2);
+  border-radius: var(--site-radius-1);
   font-size: var(--site-mono-size);
   line-height: var(--site-code-leading);
 }
-.site-tile .site-md-card p.is-head {
+.site-tile .site-md p.is-head {
   color: var(--gt-text);
 }
-.site-tile .site-md-card .site-md-foot {
+.site-tile .site-md .site-md-foot {
   display: flex;
   justify-content: space-between;
-  margin-top: var(--site-gap-m);
-  padding-top: var(--site-gap-m);
-  border-top: var(--gt-hairline) solid var(--gt-line);
+  gap: var(--site-space-4);
+  margin-top: var(--site-space-3);
+  padding: var(--site-space-3) var(--site-space-2) 0;
+  border-top: var(--gt-hairline) solid var(--site-line);
+  border-radius: 0;
   font-size: var(--site-label-size);
   line-height: var(--site-label-leading);
 }
 .site-md-foot > .is-ok {
   display: inline-flex;
   align-items: center;
-  gap: var(--site-gap-xs);
+  gap: var(--site-space-1);
   color: var(--site-sage-ink);
 }
 .site-md-foot > .is-ok > .gt-icon {
@@ -166,107 +408,120 @@
   height: var(--gt-icon-small);
 }
 
-/* two people in one paragraph */
+/* two people in one paragraph: the library's remote carets and selection */
 .site-pair {
-  min-width: 0;
-  padding: var(--site-pair-pad);
-  border-radius: var(--site-cta-radius);
-  background: var(--site-card);
-  box-shadow: var(--site-item-shadow);
+  padding: var(--site-space-8);
 }
-.site-tile .site-pair-text {
-  max-width: none;
-  margin: 0;
+.site-tile .site-pair .site-pair-text {
   color: var(--gt-text);
   font-family: var(--site-font-display);
   font-size: var(--site-pair-size);
-  font-weight: var(--site-weight-display);
+  font-weight: var(--site-weight-title);
   line-height: var(--site-pair-leading);
   letter-spacing: var(--site-title-tracking);
 }
-.site-tile .site-pair-note {
-  margin: var(--site-gap) 0 0;
-  font-family: var(--site-font-mono);
-  font-size: var(--site-label-size);
-  line-height: var(--site-label-leading);
+.site-tile .site-pair .site-pair-note {
+  margin-top: var(--site-space-4);
 }
 
-/* ---- nine smaller features on hairlines ---- */
+/* ---- the nine parts of the stack ---- */
 .site-features {
   display: grid;
   grid-template-columns: repeat(var(--site-cols-3), minmax(0, 1fr));
-  column-gap: var(--site-feature-gap-x);
-  margin-top: var(--site-gap-3xl);
+  gap: var(--site-space-4);
+  margin-top: var(--site-space-4);
 }
 .site-feature {
-  min-width: 0;
-  padding: var(--site-feature-pad);
-  border-bottom: var(--gt-hairline) solid var(--gt-line);
+  padding: var(--site-space-6);
+  border-radius: var(--site-card-radius);
+  background: var(--site-card);
+  box-shadow: var(--site-card-shadow);
+  transition: box-shadow var(--site-dur-2) var(--site-ease);
 }
-.site-feature-top {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+.site-feature:hover {
+  box-shadow: var(--site-card-shadow-hover);
+}
+.site-feature:hover .gt-icon-box,
+.site-tile:hover .gt-icon-box {
+  background: var(--site-accent-soft);
 }
 .site-feature h3 {
-  margin: var(--site-gap) 0 0;
-  font-size: var(--site-text-size);
-  font-weight: var(--gt-weight-medium);
-  line-height: var(--site-body-leading);
-  letter-spacing: var(--site-title-tracking);
+  margin: var(--site-space-5) 0 0;
+  font-size: var(--site-h3-size);
+  font-weight: var(--site-weight-title);
+  line-height: var(--site-h3-leading);
+  letter-spacing: var(--site-h3-tracking);
 }
 .site-feature p {
-  margin: var(--site-gap-xs) 0 0;
+  margin: var(--site-space-2) 0 0;
+  color: var(--gt-text-2);
+  font-size: var(--site-body-size);
+  line-height: var(--site-body-leading);
+}
+
+/* ---- one markup, four looks ---- */
+.site-looks > .site-head-row {
+  margin-bottom: var(--site-space-10);
+}
+.site-looks-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--site-space-3) var(--site-space-6);
+  margin-bottom: var(--site-space-6);
+}
+.site-segment {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  min-width: 0;
+  margin: 0;
+  padding: var(--site-space-1);
+  border: 0;
+  border-radius: var(--site-radius-2);
+  background: var(--site-card);
+  box-shadow: var(--site-card-shadow);
+}
+.site-segment-thumb {
+  position: absolute;
+  top: var(--site-space-1);
+  bottom: var(--site-space-1);
+  left: var(--site-space-1);
+  width: calc((100% - 2 * var(--site-space-1)) / 4);
+  border-radius: var(--site-radius-1);
+  background: var(--site-accent-tint);
+  box-shadow: inset 0 0 0 var(--gt-hairline) var(--site-tint-line);
+  transform: translateX(calc(var(--site-segment-i) * 100%));
+  transition: transform var(--site-dur-2) var(--site-ease-out);
+}
+.site-segment-item {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: var(--site-look-tab-h);
+  margin: 0;
+  padding: var(--site-look-tab-pad);
+  border: 0;
+  border-radius: var(--site-radius-1);
+  background: transparent;
+  color: var(--gt-text-2);
+  font: inherit;
+  font-size: var(--site-small-size);
+  font-weight: var(--gt-weight-medium);
+  line-height: var(--site-small-leading);
+  cursor: pointer;
+  transition: color var(--site-transition);
+}
+.site-segment-item:hover {
+  color: var(--gt-text);
+}
+.site-segment-item[aria-pressed="true"] {
+  color: var(--site-accent-ink);
+}
+.site-looks-note {
+  margin: 0;
   color: var(--gt-text-2);
   font-size: var(--site-small-size);
   line-height: var(--site-small-leading);
-}
-
-/* ---- the looks: a list that switches, the document beside it ---- */
-.site-looks {
-  display: grid;
-  grid-template-columns: var(--site-looks-cols);
-  gap: var(--site-section-gap) var(--site-looks-gap);
-  align-items: start;
-}
-.site-looks > * {
-  min-width: 0;
-}
-.site-look-list {
-  display: grid;
-  gap: var(--site-gap-xs);
-  margin-top: var(--site-gap-2xl);
-}
-.site-look {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--site-gap);
-  padding: var(--site-look-pad);
-  border-radius: var(--site-cta-radius);
-  color: var(--gt-text-2);
-}
-.site-look strong {
-  display: block;
-  font-size: var(--site-body-size);
-  font-weight: var(--gt-weight-medium);
-  line-height: var(--site-small-leading);
-}
-.site-look small {
-  display: block;
-  font-size: var(--gt-ui-small);
-  line-height: var(--gt-ui-small-leading);
-}
-.site-look.is-on {
-  background: var(--site-card);
-  box-shadow: var(--site-item-shadow);
-}
-.site-look.is-on strong {
-  color: var(--gt-text);
-}
-.site-look > .gt-icon {
-  color: var(--gt-text-3);
-}
-.site-look.is-on > .gt-icon {
-  color: var(--gt-accent);
 }

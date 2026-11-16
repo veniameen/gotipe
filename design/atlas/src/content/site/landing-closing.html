@@ -1,0 +1,171 @@
+<section class="site-section">
+  <div class="site-wrap">
+    <div class="site-panel" data-theme="dark">
+      <div class="site-panel-copy">
+        <p class="site-eyebrow">Less setup. More building.</p>
+        <h2 class="site-title">From install<br />to your first edit.</h2>
+        <ol class="site-panel-steps">
+          <li><span>01</span><div><h3>Install</h3><p>The engine, the React adapter and the ready editor. Add the theme’s CSS once.</p></div></li>
+          <li><span>02</span><div><h3>Create</h3><p>Pick a preset or your own extensions; the engine is chosen for you.</p></div></li>
+          <li><span>03</span><div><h3>Save</h3><p>JSON, HTML or Markdown from every update — your storage, your format.</p></div></li>
+        </ol>
+        <p class="site-panel-note"><span>14 lines · one component</span><span>No editor to configure.</span></p>
+      </div>
+      <div class="site-panel-code">
+        <div class="site-code" data-gt-view="docs">
+          <div class="site-code-head">
+            <div class="site-code-tabs" role="tablist">
+              <span class="site-code-tab" role="tab" aria-selected="true">React</span>
+              <span class="site-code-tab" role="tab" aria-selected="false">Markdown</span>
+              <span class="site-code-tab" role="tab" aria-selected="false">Vue</span>
+              <span class="site-code-tab-line"></span>
+            </div>
+            <span class="site-code-file">Notes.tsx</span>
+            <span class="gotipe-button is-quiet site-code-copy"><svg class="gt-icon" aria-hidden="true"><use href="#i-copy" /></svg>copy</span>
+          </div>
+          <div class="site-code-panel">
+            <span class="site-code-numbers" aria-hidden="true">1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14</span>
+            <pre><code><span class="tk-key">import</span> <span class="tk-pun">{</span> BlockEditor <span class="tk-pun">}</span> <span class="tk-key">from</span> <span class="tk-str">"@gotipe/block-editor"</span><span class="tk-pun">;</span>
+<span class="tk-key">import</span> <span class="tk-pun">{</span> FullPreset <span class="tk-pun">}</span> <span class="tk-key">from</span> <span class="tk-str">"@gotipe/core/presets"</span><span class="tk-pun">;</span>
+<span class="tk-key">import</span> <span class="tk-pun">{</span> useEditor <span class="tk-pun">}</span> <span class="tk-key">from</span> <span class="tk-str">"@gotipe/react"</span><span class="tk-pun">;</span>
+<span class="tk-key">import</span> <span class="tk-str">"@gotipe/theme/theme.css"</span><span class="tk-pun">;</span>
+<span class="tk-key">import</span> <span class="tk-str">"@gotipe/theme/base.css"</span><span class="tk-pun">;</span>
+
+<span class="tk-key">export function</span> <span class="tk-type">Notes</span><span class="tk-pun">({</span> content<span class="tk-pun">,</span> save <span class="tk-pun">})</span> <span class="tk-pun">{</span>
+  <span class="tk-key">const</span> editor <span class="tk-pun">=</span> useEditor<span class="tk-pun">({</span>
+    extensions<span class="tk-pun">: [</span>FullPreset<span class="tk-pun">],</span>
+    content<span class="tk-pun">,</span>
+    onUpdate<span class="tk-pun">: ({</span> editor <span class="tk-pun">}) =&gt;</span> save<span class="tk-pun">(</span>editor<span class="tk-pun">.</span>getJSON<span class="tk-pun">()),</span>
+  <span class="tk-pun">});</span>
+  <span class="tk-key">return</span> <span class="tk-pun">&lt;</span><span class="tk-type">BlockEditor</span> editor<span class="tk-pun">={</span>editor<span class="tk-pun">} /&gt;;</span>
+<span class="tk-pun">}</span></code></pre>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="site-section is-run">
+  <div class="site-wrap">
+    <div class="site-center-head">
+      <p class="site-eyebrow">Run it your way</p>
+      <h2 class="site-title">Same document.<br />Different ways to run.</h2>
+      <p class="site-sub">In the browser, in WebAssembly, on your servers. One document model, wherever you need it.</p>
+    </div>
+    <div class="site-run-grid">
+      <article class="site-run">
+        <div class="site-tile-top"><span class="site-icon-box"><svg class="gt-icon" aria-hidden="true"><use href="#i-globe" /></svg></span><span class="site-badge">MIT</span></div>
+        <p class="site-label">JavaScript</p>
+        <p class="site-big">~127 KB</p>
+        <h3>JavaScript engine</h3>
+        <p>The default. The whole editing model in TypeScript, nothing extra to load.</p>
+        <p class="site-run-foot">TypeScript · gzip, with Markdown</p>
+      </article>
+      <article class="site-run is-tint">
+        <div class="site-tile-top"><span class="site-icon-box"><svg class="gt-icon" aria-hidden="true"><use href="#i-chip" /></svg></span><span class="site-badge">MIT</span></div>
+        <p class="site-label">Rust / WASM</p>
+        <p class="site-big">~300 KB</p>
+        <h3>Rust/WASM engine</h3>
+        <p>The same API and document contract, compiled from Rust. Required for real-time collaboration.</p>
+        <p class="site-run-foot">Rust · gzip · CRDT, cursors, reconnect</p>
+      </article>
+      <article class="site-run">
+        <div class="site-tile-top"><span class="site-icon-box"><svg class="gt-icon" aria-hidden="true"><use href="#i-server" /></svg></span><span class="site-badge">MIT</span></div>
+        <p class="site-label">Go · self-hosted</p>
+        <p class="site-big">1 service</p>
+        <h3>GoTipe Cloud</h3>
+        <p>Documents, permissions, sync, exports and an AI proxy, on your servers.</p>
+        <p class="site-run-foot">PostgreSQL · Valkey · Docker Compose</p>
+      </article>
+    </div>
+  </div>
+</section>
+
+<section class="site-stage is-alt">
+  <div class="site-wrap">
+    <div class="site-head-row">
+      <div>
+        <p class="site-eyebrow">A clear line. No fine print.</p>
+        <h2 class="site-title">Open where it matters.</h2>
+      </div>
+      <p class="site-sub">The engine and every service around it are MIT. Only the ready-made interface is commercial, and it is free for most teams.</p>
+    </div>
+    <div class="site-licences">
+      <article class="site-licence">
+        <div class="site-licence-top"><span class="site-label">Build it your way</span><span class="site-badge">MIT</span></div>
+        <h3>Engine and services</h3>
+        <p class="site-licence-meta">8 parts · use, fork, ship</p>
+        <ul>
+          <li><svg class="gt-icon" aria-hidden="true"><use href="#i-check-16" /></svg><span>Transaction engine<small>selection, history, IME</small></span></li>
+          <li><svg class="gt-icon" aria-hidden="true"><use href="#i-check-16" /></svg><span>Markdown parser<small>lossless, 652 / 652 CommonMark</small></span></li>
+          <li><svg class="gt-icon" aria-hidden="true"><use href="#i-check-16" /></svg><span>Framework adapters<small>React, Vue, Svelte and Solid</small></span></li>
+          <li><svg class="gt-icon" aria-hidden="true"><use href="#i-check-16" /></svg><span>Real-time collaboration<small>CRDT in Rust/WASM</small></span></li>
+          <li><svg class="gt-icon" aria-hidden="true"><use href="#i-check-16" /></svg><span>Comments, suggestions, versions<small>anchored threads, block compare</small></span></li>
+          <li><svg class="gt-icon" aria-hidden="true"><use href="#i-check-16" /></svg><span>AI layer, PDF and DOCX<small>your model; browser and server writers</small></span></li>
+          <li><svg class="gt-icon" aria-hidden="true"><use href="#i-check-16" /></svg><span>Migration<small>ProseMirror, Tiptap, Slate, Lexical</small></span></li>
+          <li><svg class="gt-icon" aria-hidden="true"><use href="#i-check-16" /></svg><span>GoTipe Cloud and the SDK<small>Go service, Docker Compose</small></span></li>
+        </ul>
+      </article>
+      <article class="site-licence is-tint">
+        <div class="site-licence-top"><span class="site-label">Ship a little sooner</span><span class="site-badge is-commercial">Commercial</span></div>
+        <h3>Ready-made interface</h3>
+        <p class="site-licence-meta">4 parts · one licence per product</p>
+        <ul>
+          <li><svg class="gt-icon" aria-hidden="true"><use href="#i-check-16" /></svg><span>BlockEditor and PageEditor<small>for React</small></span></li>
+          <li><svg class="gt-icon" aria-hidden="true"><use href="#i-check-16" /></svg><span>The block editor for Vue<small>slash menu, drag handle, toolbar</small></span></li>
+          <li><svg class="gt-icon" aria-hidden="true"><use href="#i-check-16" /></svg><span>AI interface components<small>command line, suggestions</small></span></li>
+          <li><svg class="gt-icon" aria-hidden="true"><use href="#i-check-16" /></svg><span>The theme and its four views<small>notion, docs, modern, minimal</small></span></li>
+        </ul>
+        <p class="site-licence-free">
+          <strong>Free</strong> for personal projects, open source, non-profits, education and
+          companies under $1M revenue, and while you evaluate. Otherwise, one licence per
+          product. <a>Read the terms</a>
+        </p>
+      </article>
+    </div>
+  </div>
+</section>
+
+<section class="site-section">
+  <div class="site-wrap">
+    <div class="site-stage site-band">
+      <p class="site-eyebrow">The next chapter is yours</p>
+      <h2 class="site-title">Build on an engine<br />you own.</h2>
+      <p class="site-sub">Start with the quick start, or open the playground and edit a real document.</p>
+      <div class="site-actions">
+        <span class="gotipe-button site-cta">Read the docs<svg class="gt-icon" aria-hidden="true"><use href="#i-arrow-right" /></svg></span>
+        <span class="gotipe-button site-cta is-second">Open the playground</span>
+      </div>
+      <p class="site-band-legend"><span>Engine <strong>MIT</strong></span><span>Services <strong>MIT</strong></span><span>Interface <strong>Commercial</strong></span></p>
+    </div>
+  </div>
+</section>
+
+<footer class="site-foot">
+  <div class="site-wrap">
+    <div class="site-foot-grid">
+      <div>
+        <a class="site-brand is-large"><svg class="site-logo" aria-hidden="true"><use href="#i-logo" /></svg>GoTipe</a>
+        <p>A document editor framework with its own engine. TypeScript and Rust/WASM.</p>
+      </div>
+      <nav><h2>Product</h2><a>Docs</a><a>Playground</a><a>Licensing</a><a>Changelog</a></nav>
+      <nav><h2>Resources</h2><a>Quick start</a><a>Security</a><a>Browser support</a></nav>
+      <nav><h2>Project</h2><a>GitHub</a><a>npm</a><a>Contributing</a><a>Report a vulnerability</a></nav>
+    </div>
+    <p class="site-foot-base"><span>© 2026 GoTipe contributors · MIT and commercial licences</span><span class="site-mono">0.1</span></p>
+  </div>
+</footer>

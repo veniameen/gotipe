@@ -1,71 +1,7 @@
-/* The documentation: the navigation of all pages, the page in the library's `docs` view, its
-   outline on the right; search over everything behind ⌘K. The page itself is a GoTipe document:
-   the site draws only what stands around it, in the landing's type, calmer — docs need density. */
-
-/* ---- the head: the mark, the version, the search field, a few links ---- */
-.site-docs-head {
-  position: sticky;
-  top: 0;
-  z-index: var(--gt-z-handle);
-  border-bottom: var(--gt-hairline) solid var(--gt-line);
-  background: var(--site-glass);
-}
-.site-docs-head-in {
-  display: flex;
-  align-items: center;
-  gap: var(--site-gap);
-  box-sizing: border-box;
-  max-width: var(--site-docs-max);
-  height: var(--site-docs-head-h);
-  margin: 0 auto;
-  padding: 0 var(--site-pad-x);
-}
-.site-docs-head-in > .site-head-end {
-  margin-left: auto;
-}
-.site-version {
-  padding: var(--site-chip-tag-pad);
-  border-radius: var(--gt-radius-control);
-  background: var(--gt-fill-1);
-  box-shadow: inset 0 0 0 var(--gt-hairline) var(--gt-line);
-  color: var(--gt-text-2);
-  font-family: var(--site-font-mono);
-  font-size: var(--site-label-size);
-  line-height: var(--site-label-leading);
-}
-.site-kbd {
-  padding: var(--site-chip-tag-pad);
-  border-radius: var(--gt-radius-control);
-  background: var(--site-card);
-  box-shadow: inset 0 0 0 var(--gt-hairline) var(--gt-line-strong);
-  color: var(--gt-text-2);
-  font-family: var(--site-font-mono);
-  font-size: var(--site-label-size);
-  line-height: var(--site-label-leading);
-}
-
-/* the search field: a button that opens the dialog */
-.site-search {
-  display: var(--site-wide-display);
-  align-items: center;
-  gap: var(--site-gap-s);
-  box-sizing: border-box;
-  width: var(--site-search-w);
-  height: var(--site-search-h);
-  margin-left: var(--site-gap-l);
-  padding: var(--site-search-pad);
-  border-radius: var(--site-search-radius);
-  background: var(--site-surface);
-  box-shadow: inset 0 0 0 var(--gt-hairline) var(--gt-line);
-  color: var(--gt-text-2);
-  font-size: var(--site-small-size);
-}
-.site-search > .site-kbd {
-  margin-left: auto;
-}
-.site-search-button {
-  display: var(--site-search-button-display);
-}
+/* The documentation (frame 21): the navigation of all pages, the page in the library's `docs`
+   view, its outline on the right; search over everything behind ⌘K. The page itself is a GoTipe
+   document: the site draws only what stands around it, in the landing's type, calmer — docs need
+   density. The head is the landing's part (site/landing.css): it stands on the page's columns. */
 
 /* ---- three columns: navigation · page · outline ---- */
 .site-docs-body {
@@ -76,7 +12,7 @@
   box-sizing: border-box;
   max-width: var(--site-docs-max);
   margin: 0 auto;
-  padding: 0 var(--site-pad-x);
+  padding: 0 var(--site-gutter);
 }
 .site-docs-body > * {
   min-width: 0;
@@ -90,6 +26,21 @@
   font-size: var(--site-body-size);
   line-height: var(--site-small-leading);
 }
+/* the column fades at its edges, so a page scrolled under them reads as scrolled, not cut */
+.site-side {
+  -webkit-mask-image: linear-gradient(
+    transparent,
+    var(--site-mask-on) var(--site-side-fade),
+    var(--site-mask-on) calc(100% - var(--site-side-fade)),
+    transparent
+  );
+  mask-image: linear-gradient(
+    transparent,
+    var(--site-mask-on) var(--site-side-fade),
+    var(--site-mask-on) calc(100% - var(--site-side-fade)),
+    transparent
+  );
+}
 .site-side-group + .site-side-group {
   margin-top: var(--site-side-group-gap);
 }
@@ -97,9 +48,9 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: var(--site-gap-s);
-  margin: 0 0 var(--site-gap-s);
-  padding: 0 var(--site-gap-m);
+  gap: var(--site-space-2);
+  margin: 0 0 var(--site-space-2);
+  padding: 0 var(--site-space-3);
   color: var(--gt-text-2);
   font-family: var(--site-font-mono);
   font-size: var(--site-label-size);
@@ -145,11 +96,38 @@
   max-width: none;
   padding: var(--site-doc-top) 0 var(--site-section-gap);
 }
+/* the crumbs and the page's tools share the first line: the tools never wrap onto a row alone */
+.site-doc-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--site-space-4);
+  margin-bottom: var(--site-space-3);
+  font-family: var(--site-font-text);
+}
+.site-doc-tools {
+  display: flex;
+  flex: none;
+  gap: var(--site-space-1);
+}
+.site .site-tool-button {
+  height: var(--site-tool-h);
+  padding: var(--site-tool-pad);
+  border-radius: var(--site-badge-radius);
+  color: var(--gt-text-2);
+  font-size: var(--gt-ui-small);
+  line-height: var(--gt-ui-small-leading);
+}
+/* a phone keeps the tools' icons; their names stay for assistive technology */
+.site-tool-label {
+  display: var(--site-tool-label-display);
+}
 .site-crumbs {
   display: flex;
   align-items: center;
-  gap: var(--site-gap-xs);
-  margin: 0 0 var(--site-gap-m);
+  gap: var(--site-space-1);
+  min-width: 0;
+  margin: 0;
   color: var(--gt-text-2);
   font-family: var(--site-font-mono);
   font-size: var(--site-label-size);
@@ -166,7 +144,7 @@
   color: var(--gt-text-3);
 }
 .site-doc-lede {
-  margin: var(--site-gap-s) 0 0;
+  margin: var(--site-space-2) 0 0;
   color: var(--gt-text-2);
   font-family: var(--site-font-text);
   font-size: var(--site-text-size);
@@ -176,21 +154,11 @@
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: var(--site-gap-s);
-  margin: var(--site-gap-l) 0 var(--site-gap-xl);
-  padding-bottom: var(--site-gap-l);
+  gap: var(--site-space-2);
+  margin: var(--site-space-6) 0 var(--site-space-8);
+  padding-bottom: var(--site-space-6);
   border-bottom: var(--gt-hairline) solid var(--gt-line);
   font-family: var(--site-font-text);
-}
-.site-doc-meta > .site-tool-button {
-  margin-left: auto;
-}
-.site-doc-meta > .site-tool-button + .site-tool-button {
-  margin-left: 0;
-}
-.site .site-tool-button {
-  border-radius: var(--site-badge-radius);
-  box-shadow: inset 0 0 0 var(--gt-hairline) var(--gt-line);
 }
 
 /* the live example: a small window around a slice of the document */
@@ -205,7 +173,7 @@
 .site-pager {
   display: grid;
   grid-template-columns: repeat(var(--site-cols-2), minmax(0, 1fr));
-  gap: var(--site-gap);
+  gap: var(--site-space-4);
   margin-top: var(--site-section-gap);
   font-family: var(--site-font-text);
 }
@@ -221,8 +189,8 @@
 .site-pager a > small {
   display: flex;
   align-items: center;
-  gap: var(--site-gap-xs);
-  margin-bottom: var(--site-gap-xs);
+  gap: var(--site-space-1);
+  margin-bottom: var(--site-space-1);
   color: var(--gt-text-2);
   font-family: var(--site-font-mono);
   font-size: var(--site-label-size);
@@ -253,6 +221,17 @@
   display: block;
   padding-top: var(--site-doc-top);
 }
+/* the outline's title is a mono label, as the navigation's section titles */
+.site-toc .gotipe-outline-title {
+  margin: 0 0 var(--site-space-3);
+  color: var(--gt-text-2);
+  font-family: var(--site-font-mono);
+  font-size: var(--site-label-size);
+  font-weight: var(--gt-weight-medium);
+  line-height: var(--site-label-leading);
+  letter-spacing: var(--site-label-tracking);
+  text-transform: uppercase;
+}
 
 /* ---- the search dialog ---- */
 .site-scrim {
@@ -266,7 +245,7 @@
 }
 .site-dialog {
   align-self: start;
-  width: min(var(--site-dialog-w), calc(100% - 2 * var(--site-pad-x)));
+  width: min(var(--site-dialog-w), calc(100% - 2 * var(--site-gutter)));
   overflow: hidden;
   border-radius: var(--site-dialog-radius);
   background: var(--gt-overlay);
@@ -277,9 +256,9 @@
 .site-dialog-input {
   display: flex;
   align-items: center;
-  gap: var(--site-gap-m);
+  gap: var(--site-space-3);
   height: var(--site-dialog-input-h);
-  padding: 0 var(--site-gap-l);
+  padding: 0 var(--site-space-6);
   border-bottom: var(--gt-hairline) solid var(--gt-line);
   font-size: var(--site-text-size);
 }
@@ -290,11 +269,11 @@
   margin-left: auto;
 }
 .site-results {
-  padding: var(--site-gap-s) var(--site-gap-m) var(--site-gap-m);
+  padding: var(--site-space-2) var(--site-space-3) var(--site-space-3);
 }
 .site-results-title {
-  margin: var(--site-gap-m) 0 var(--site-gap-xs);
-  padding: 0 var(--site-gap-m);
+  margin: var(--site-space-3) 0 var(--site-space-1);
+  padding: 0 var(--site-space-3);
   color: var(--gt-text-2);
   font-family: var(--site-font-mono);
   font-size: var(--site-label-size);
@@ -306,7 +285,7 @@
 .site-result {
   display: flex;
   align-items: center;
-  gap: var(--site-gap-m);
+  gap: var(--site-space-3);
   padding: var(--site-result-pad);
   border-radius: var(--site-result-radius);
 }
@@ -343,8 +322,8 @@
 }
 .site-dialog-foot {
   display: flex;
-  gap: var(--site-gap-l);
-  padding: var(--site-gap-m) var(--site-gap-l);
+  gap: var(--site-space-6);
+  padding: var(--site-space-3) var(--site-space-6);
   border-top: var(--gt-hairline) solid var(--gt-line);
   background: var(--site-surface);
   color: var(--gt-text-2);
@@ -355,5 +334,5 @@
 .site-dialog-foot > span {
   display: inline-flex;
   align-items: center;
-  gap: var(--site-gap-xs);
+  gap: var(--site-space-1);
 }

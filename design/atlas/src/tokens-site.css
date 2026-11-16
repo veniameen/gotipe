@@ -1,70 +1,57 @@
-/* Site tokens: the landing and the documentation of GoTipe. The site keeps the library's text,
-   lines and accent (--gt-*) and adds its own voice: Inter for headings and text, JetBrains Mono for
-   labels and code, tinted stages and cards. The faces are named first and fall back to the
-   library's system families; nothing is loaded here, the site will host the files itself.
-   A frame is a container, so the folds are container queries. */
+/* Site tokens: the landing and the documentation of GoTipe (frames 20–21). The site keeps the
+   library's text, lines and accent (--gt-*) and adds its own voice: Inter for headings and text,
+   JetBrains Mono for labels and code, framed stages with blue light over a blueprint grid, glass and
+   hairlines. The faces are named first and fall back to the library's system families; the site
+   hosts the files itself (apps/landing/public/fonts).
+
+   One scale: every distance is a step of --site-space-* (4 px rhythm, as the library's), every
+   corner a step of --site-radius-*. Component tokens name a step of the scale, never a number.
+   A frame is a container, so the folds are container queries; the site's copy of this file
+   (apps/landing/styles/tokens-site.css) folds by the viewport. */
 
 :root {
-  /* type families of the site */
+  /* ---- the scale ---- */
+  --site-space-1: 4px;
+  --site-space-2: 8px;
+  --site-space-3: 12px;
+  --site-space-4: 16px;
+  --site-space-5: 20px;
+  --site-space-6: 24px;
+  --site-space-8: 32px;
+  --site-space-10: 40px;
+  --site-space-12: 48px;
+  --site-space-16: 64px;
+  --site-space-20: 80px;
+  --site-space-24: 96px;
+  --site-space-32: 128px;
+
+  --site-radius-1: 6px;
+  --site-radius-2: 10px;
+  --site-radius-3: 14px;
+  --site-radius-4: 20px;
+  --site-radius-5: 28px;
+  --site-radius-round: 999px;
+
+  /* ---- type: Inter for headings and text, JetBrains Mono for labels and code ---- */
   --site-font-text: Inter, var(--gt-font-ui);
   --site-font-display: Inter, var(--gt-font-ui);
   --site-font-mono: "JetBrains Mono", var(--gt-font-mono);
-  --site-weight-display: 500;
+  --site-weight-display: 600;
+  --site-weight-title: 560;
 
-  /* the page */
-  --site-max: 1200px;
-  --site-docs-max: 1440px;
-  --site-pad-x: 48px;
-  --site-stage-inset: 12px;
-  --site-stage-radius: 28px;
-  --site-head-top: 16px;
-  --site-head-max: 1056px;
-  --site-dot: 6px;
-  --site-head-pad-x: 32px;
-  --site-head-h: 60px;
-  --site-head-in-pad: 0 12px 0 20px;
-  --site-head-radius: 16px;
-  --site-docs-head-h: 60px;
-  --site-logo: 26px;
-  --site-logo-l: 32px;
-  --site-hero-top: 172px;
-  --site-hero-bottom: 40px;
-  --site-hero-gap: 88px;
-  --site-hero-strip-top: 104px;
-  --site-section-y: 112px;
-  --site-section-gap: 56px;
-  --site-gap-xs: 4px;
-  --site-gap-s: 8px;
-  --site-gap-m: 12px;
-  --site-gap: 16px;
-  --site-gap-l: 24px;
-  --site-gap-xl: 32px;
-  --site-gap-2xl: 40px;
-  --site-gap-3xl: 64px;
-  --site-title-max: 680px;
-  --site-lede-max: 520px;
-  --site-aside-max: 380px;
-
-  /* type: Inter 500 with tight tracking for headings, quiet text, mono labels */
   --site-hero-size: 80px;
-  --site-hero-leading: 82px;
-  --site-hero-tracking: -0.065em;
-  --site-h2-size: 58px;
-  --site-h2-leading: 63px;
-  --site-h2-tracking: -0.05em;
-  --site-panel-h2-size: 50px;
-  --site-panel-h2-leading: 55px;
-  --site-h3-l-size: 30px;
-  --site-h3-l-leading: 37px;
-  --site-h3-m-size: 26px;
-  --site-h3-m-leading: 33px;
-  --site-h3-tracking: -0.032em;
-  --site-h3-size: 16px;
+  --site-hero-leading: 84px;
+  --site-hero-tracking: -0.045em;
+  --site-h2-size: 52px;
+  --site-h2-leading: 56px;
+  --site-h2-tracking: -0.035em;
+  --site-h3-l-size: 24px;
+  --site-h3-l-leading: 32px;
+  --site-h3-size: 17px;
   --site-h3-leading: 24px;
-  --site-h4-size: 14px;
-  --site-h4-leading: 21px;
-  --site-title-tracking: -0.02em;
-  --site-lede-size: 18px;
+  --site-h3-tracking: -0.02em;
+  --site-title-tracking: -0.01em;
+  --site-lede-size: 19px;
   --site-lede-leading: 30px;
   --site-text-size: 15px;
   --site-text-leading: 24px;
@@ -75,303 +62,491 @@
   --site-label-size: 11px;
   --site-label-leading: 16px;
   --site-label-tracking: 0.12em;
-  --site-mono-size: 12px;
-  --site-mono-leading: 18px;
+  --site-mono-size: 13px;
+  --site-mono-leading: 20px;
   --site-code-size: 13px;
   --site-code-leading: 22px;
-  /* the facts shrink with the frame so the widest figure («652 / 652», about 4em) keeps air in
-     its cell of four columns below 1280 px; 58px from there on. The site uses 100vw. */
-  --site-fact-size: min(58px, calc((100cqi - 168px) / 18.4));
-  --site-fact-leading: calc(var(--site-fact-size) * 1.07);
+  --site-fact-size: 56px;
+  --site-fact-leading: 60px;
   --site-big-size: 48px;
   --site-big-leading: 52px;
   --site-big-tracking: -0.04em;
-  --site-preview-title-size: 30px;
-  --site-preview-title-leading: 36px;
   --site-pair-size: 24px;
   --site-pair-leading: 36px;
 
-  /* controls of the site */
-  --site-cta-h: 48px;
-  --site-cta-pad: 0 24px;
-  --site-cta-radius: 12px;
-  --site-head-button-h: 36px;
-  --site-head-button-pad: 0 14px;
-  --site-head-button-radius: 10px;
-  --site-chip-pad: 4px 12px 4px 4px;
-  --site-chip-tag-pad: 1px 7px;
-  --site-badge-pad: 3px 8px;
-  --site-badge-radius: 8px;
-  --site-icon-box: 36px;
-  --site-icon-box-radius: 10px;
+  /* ---- the page ---- */
+  --site-max: 1200px;
+  --site-docs-max: 1440px;
+  --site-gutter: var(--site-space-12);
+  /* the frame: how far a stage and the floating head stand from the window, on every side */
+  --site-frame: var(--site-space-3);
+  --site-stage-radius: var(--site-radius-5);
+  --site-section-y: var(--site-space-24);
+  --site-section-gap: var(--site-space-16);
+  --site-title-max: 760px;
+  --site-lede-max: 640px;
+  --site-sub-max: 520px;
+  --site-dot: 6px;
 
-  /* cards and windows */
-  --site-card-radius: 22px;
-  --site-card-radius-s: 16px;
-  --site-window-radius: 14px;
-  --site-card-pad: 36px;
-  --site-card-pad-s: 20px;
-  --site-run-pad: 32px;
-  --site-bento-h: 424px;
-  --site-stack-pad: 28px;
-  --site-stack-w: 484px;
-  --site-plinth-pad: 40px;
-  --site-plinth-radius: 24px;
-  --site-window-bar-h: 48px;
-  --site-window-bar-pad: 0 16px;
-  --site-pane-pad: 28px 32px;
-  --site-pane-pad-src: 28px 0;
-  --site-src-line-pad: 0 28px;
-  --site-src-num-w: 24px;
+  /* ---- the heads ---- */
+  --site-head-h: var(--site-space-16);
+  --site-head-pad-x: var(--site-space-3);
+  --site-head-radius: var(--site-radius-4);
+  --site-logo: 28px;
+  --site-logo-l: 32px;
+  --site-head-button-h: 36px;
+  --site-head-button-pad: 0 var(--site-space-3);
+  --site-head-button-radius: var(--site-radius-2);
+  --site-nav-gap: var(--site-space-1);
+  --site-nav-pad: 0 var(--site-space-3);
+
+  /* ---- the first stage ---- */
+  --site-hero-top: var(--site-space-20);
+  --site-hero-bottom: var(--site-space-16);
+  --site-hero-copy-max: 880px;
+  --site-hero-window-top: var(--site-space-16);
+  --site-grid-step: 64px;
+  --site-grid-line: 1px;
+  --site-grid-fade: 90% 70%;
+  --site-glow-shape-a: 70% 60%;
+  --site-glow-shape-b: 36% 44%;
+  --site-mask-on: #000;
+  /* the selection over «rules.» is one line tall; the caret after it is the editor's, scaled */
+  --site-select-inset: 0.08em -0.05em;
+  --site-hero-caret-w: 0.055em;
+  --site-hero-caret-h: 0.9em;
+  --site-hero-caret-gap: 0.05em;
+  --site-hero-caret-shift: -0.12em;
+  --site-window-glow-inset: -6% 4% 45%;
+  --site-window-glow-blur: 56px;
+  --site-beam-angle: 200deg;
+  --site-marquee-min: 320px;
+
+  /* ---- controls of the site ---- */
+  --site-cta-h: 48px;
+  --site-control-h: 28px;
+  --site-cta-pad: 0 var(--site-space-6);
+  --site-cta-radius: var(--site-radius-2);
+  --site-chip-pad: var(--site-space-1) var(--site-space-3) var(--site-space-1) var(--site-space-1);
+  --site-chip-tag-pad: 1px 7px;
+  --site-badge-pad: 3px var(--site-space-2);
+  --site-badge-radius: var(--site-radius-1);
+  --site-install-h: 44px;
+  --site-install-pad: 0 var(--site-space-1) 0 var(--site-space-4);
+  --site-icon-box: 40px;
+  --site-icon-box-radius: var(--site-radius-2);
+
+  /* ---- cards, windows, panels ---- */
+  --site-card-radius: var(--site-radius-4);
+  --site-card-radius-s: var(--site-radius-3);
+  --site-card-pad: var(--site-space-8);
+  --site-card-pad-s: var(--site-space-5);
+  --site-window-radius: var(--site-radius-3);
+  --site-window-bar-h: 44px;
+  --site-window-dot: 10px;
+  --site-window-bar-pad: 0 var(--site-space-4);
+  --site-pane-pad: var(--site-space-6) var(--site-space-8);
+  --site-pane-pad-src: var(--site-space-6) 0;
+  --site-src-line-pad: 0 var(--site-space-6);
+  --site-src-num-w: var(--site-space-6);
   --site-src-cols: minmax(0, 0.9fr) minmax(0, 1fr);
-  --site-window-foot-pad: 12px 28px;
+  --site-window-foot-pad: var(--site-space-3) var(--site-space-6);
   --site-toolbar-room: 52px;
-  --site-feature-pad: 28px 0;
-  --site-feature-gap-x: 48px;
-  --site-look-pad: 14px 16px;
-  /* the page of the looks stays wider than 640px at 1280 and up, under the library's own fold */
-  --site-looks-cols: minmax(0, 0.62fr) minmax(0, 1fr);
-  --site-looks-gap: 56px;
-  --site-look-page-pad: 40px 48px 36px;
-  --site-panel-radius: 24px;
-  --site-panel-pad: 48px 44px;
-  --site-panel-cols: minmax(0, 0.85fr) minmax(0, 1.15fr);
-  --site-step-num-w: 28px;
-  --site-licence-pad: 32px;
-  --site-licence-row-pad: 14px 0;
-  --site-band-pad: 88px 40px;
-  --site-band-radius: 26px;
-  --site-diagram-w: 352px;
-  --site-diagram-pad: 12px 20px;
-  --site-diagram-engine-pad: 16px 20px;
-  --site-md-card-pad: 20px;
-  --site-pair-pad: 32px;
+  --site-beam-width: 1px;
+  --site-beam-pulse-w: 2px;
+  /* a pulse is this share of its beam (the beam's path length is 100) */
+  --site-beam-dash: 18;
+  --site-mock-pad: var(--site-space-4);
+  --site-mock-row: 28px;
+  --site-mock-gap: var(--site-space-2);
+  --site-stack-node: 40px;
+  --site-stack-hub-mark: 56px;
+  --site-stack-h: 400px;
+  --site-stack-cols: minmax(0, 1fr) auto minmax(0, 1fr);
+  --site-stack-in-align: start;
+  --site-stack-out-align: end;
+  --site-stack-node-cols: minmax(0, 1fr);
+  --site-stack-pad: var(--site-space-12) var(--site-space-10);
+  --site-stack-node-pad: 0 var(--site-space-4);
+  --site-code-file-display: inline;
+  --site-pillar-cols: 3;
+  --site-tile-wide-cols: minmax(0, 1fr) minmax(0, 1.1fr);
+  --site-feature-min: 280px;
+  --site-look-tab-h: 36px;
+  --site-look-tab-pad: 0 var(--site-space-4);
+  --site-look-page-pad: var(--site-space-10) var(--site-space-12) var(--site-space-8);
+  --site-look-h: 360px;
+  --site-panel-radius: var(--site-radius-5);
+  --site-panel-pad: var(--site-space-12);
+  --site-panel-cols: minmax(0, 0.8fr) minmax(0, 1.2fr);
+  --site-panel-h2-size: 44px;
+  --site-panel-h2-leading: 48px;
+  --site-band-size: 64px;
+  --site-band-leading: 68px;
+  --site-tab-line: 2px;
+  --site-icon-nudge: 2px;
+  --site-step-num-w: var(--site-space-8);
+  --site-tab-h: 44px;
+  --site-tab-pad: 0 var(--site-space-4);
+  --site-code-pad: var(--site-space-5) var(--site-space-6);
+  --site-licence-pad: var(--site-space-8);
+  --site-licence-row-pad: var(--site-space-3) 0;
+  --site-band-pad: var(--site-space-24) var(--site-space-10);
   --site-arrow: 28px;
   --site-tile-icon: 20px;
+  --site-marquee-gap: var(--site-space-10);
+  --site-marquee-fade: var(--site-space-24);
+  /* a phone has no room to run the strip: its words wrap, once, without the fade */
+  --site-marquee-name: site-marquee;
+  --site-marquee-wrap: nowrap;
+  --site-marquee-track-w: max-content;
+  --site-marquee-copy-display: flex;
 
-  /* columns that fold */
-  --site-hero-cols: minmax(0, 1fr) var(--site-stack-w);
-  --site-head-cols: minmax(0, 1fr) var(--site-aside-max);
-  --site-cols-3: 3;
+  /* where a switch's thumb and a tab's line stand, and where the pointer's light falls: the page's
+     controls set them on their element (the first of each is chosen at rest) */
+  --site-segment-i: 0;
+  --site-tab-i: 0;
+  --site-tab-n: 3;
+  --site-mx: 50%;
+  --site-my: 50%;
+
+  /* ---- columns that fold ---- */
   --site-cols-2: 2;
+  --site-cols-3: 3;
   --site-cols-4: 4;
-  --site-bento-wide-cols: minmax(0, 1fr) minmax(0, 0.9fr);
+  --site-head-cols: minmax(0, 1fr) minmax(0, var(--site-sub-max));
+  --site-bento-cols: minmax(0, 1.25fr) minmax(0, 1fr);
   --site-foot-cols: minmax(0, 1.5fr) repeat(3, minmax(0, 1fr));
   --site-nav-display: flex;
   --site-menu-display: none;
   --site-wide-display: inline-flex;
   --site-search-button-display: none;
   --site-src-display: block;
-  --site-strip-labels-display: flex;
+  --site-render-display: block;
+  --site-render-alt-display: block;
+  --site-pane-tabs-display: none;
   --site-window-tag-display: inline;
   --site-window-trail-display: inline-flex;
+  --site-stack-dir: row;
 
-  /* the documentation: navigation, page, outline */
+  /* ---- the documentation: navigation, page, outline ---- */
+  --site-docs-head-h: var(--site-space-16);
   --site-side-w: 248px;
-  --site-docs-gap: 56px;
+  --site-docs-gap: var(--site-space-12);
+  --site-docs-head-display: grid;
+  --site-docs-head-gap: var(--site-docs-gap);
+  --site-search-offset: 0;
   --site-side-display: block;
   --site-toc-display: block;
-  --site-side-pad: 32px 0 48px;
-  --site-side-item-pad: 5px 12px;
-  --site-side-group-gap: 24px;
+  --site-side-pad: var(--site-space-8) 0 var(--site-space-12);
+  --site-side-item-pad: 5px var(--site-space-3);
+  --site-side-group-gap: var(--site-space-6);
+  --site-side-fade: var(--site-space-6);
   --site-search-w: 280px;
   --site-search-h: 36px;
-  --site-search-pad: 0 6px 0 12px;
-  --site-search-radius: 10px;
-  --site-doc-top: 40px;
-  --site-pager-pad: 16px 20px;
+  --site-search-pad: 0 6px 0 var(--site-space-3);
+  --site-search-radius: var(--site-radius-2);
+  --site-doc-top: var(--site-space-10);
+  --site-pager-pad: var(--site-space-4) var(--site-space-5);
   --site-dialog-w: 620px;
-  --site-dialog-top: 80px;
-  --site-dialog-radius: 18px;
+  --site-dialog-top: var(--site-space-20);
+  --site-dialog-radius: var(--site-radius-4);
   --site-dialog-input-h: 56px;
-  --site-result-pad: 10px 12px;
-  --site-result-radius: 10px;
-  --site-try-pad: 24px 28px;
+  --site-result-pad: 10px var(--site-space-3);
+  --site-result-radius: var(--site-radius-2);
+  --site-try-pad: var(--site-space-6) var(--site-space-8);
+  --site-code-fade: var(--site-space-8);
+  --site-code-shade-w: var(--site-space-3);
+  --site-tool-h: var(--site-control-h);
+  --site-tool-pad: 0 var(--site-space-2);
+  --site-tool-label-display: inline;
 }
 
-/* the docs columns name the docs view's own widths, so they are set inside the view, not at the root */
+/* the docs columns name the docs view's own widths, so they are set on the body and inside a view */
 .gotipe-root > * {
   --site-docs-cols: var(--site-side-w) minmax(0, var(--gt-page-width)) var(--gt-outline-width);
 }
 
-/* ---- a laptop: the outline of the page steps away first ---- */
+/* ---- a laptop: the outline of the docs steps away, the headline steps down ---- */
 @container (max-width: 1279px) {
   .gotipe-root > * {
-    /* two columns of the hero still fit from 1024 px: the headline and the stack step down */
-    --site-hero-size: 64px;
-    --site-hero-leading: 66px;
-    --site-hero-gap: 56px;
-    --site-stack-w: 400px;
-    /* the dark panel splits evenly so «to your first edit.» keeps one line */
-    --site-panel-cols: minmax(0, 1fr) minmax(0, 1fr);
-    --site-panel-h2-size: 42px;
-    --site-panel-h2-leading: 46px;
-    --site-docs-cols: var(--site-side-w) minmax(0, 1fr);
+    --site-hero-size: 68px;
+    --site-hero-leading: 72px;
+    --site-h2-size: 48px;
+    --site-h2-leading: 52px;
+    --site-fact-size: 48px;
+    --site-fact-leading: 52px;
+    --site-band-size: 56px;
+    --site-band-leading: 60px;
+    /* a section's line under its title: below the title, the title keeps its two lines */
+    --site-head-cols: minmax(0, 1fr);
     --site-toc-display: none;
+  }
+  .gotipe-root > * {
+    --site-docs-cols: var(--site-side-w) minmax(0, 1fr);
   }
 }
 
 /* ---- a tablet: one column, the navigation goes behind the menu button ---- */
 @container (max-width: 1023px) {
   .gotipe-root > * {
-    --site-pad-x: 32px;
-    --site-hero-cols: minmax(0, 1fr);
+    --site-gutter: var(--site-space-8);
+    --site-section-y: var(--site-space-20);
+    --site-section-gap: var(--site-space-12);
+    --site-hero-size: 60px;
+    --site-hero-leading: 64px;
+    --site-h2-size: 44px;
+    --site-h2-leading: 48px;
     --site-head-cols: minmax(0, 1fr);
-    --site-hero-top: 136px;
-    --site-hero-size: 64px;
-    --site-hero-leading: 66px;
-    --site-hero-gap: 88px;
-    --site-panel-h2-size: 50px;
-    --site-panel-h2-leading: 55px;
-    --site-fact-size: 58px;
-    --site-h2-size: 46px;
-    --site-h2-leading: 50px;
-    --site-cols-3: 1;
+    --site-cols-3: 2;
     --site-cols-4: 2;
-    --site-bento-wide-cols: minmax(0, 1fr);
-    --site-looks-cols: minmax(0, 1fr);
+    --site-bento-cols: minmax(0, 1fr);
     --site-panel-cols: minmax(0, 1fr);
     --site-foot-cols: repeat(2, minmax(0, 1fr));
     --site-nav-display: none;
     --site-menu-display: inline-flex;
-    --site-docs-cols: minmax(0, 1fr);
     --site-side-display: none;
-    --site-bento-h: auto;
+    --site-docs-head-display: flex;
+    --site-docs-head-gap: var(--site-space-4);
+    --site-search-offset: var(--site-space-6);
+    --site-panel-pad: var(--site-space-10);
+    --site-tile-wide-cols: minmax(0, 1fr);
+    --site-band-size: 48px;
+    --site-band-leading: 52px;
+  }
+  .gotipe-root > * {
+    --site-docs-cols: minmax(0, 1fr);
   }
 }
 
 /* ---- a phone ---- */
 @container (max-width: 640px) {
   .gotipe-root > * {
-    --site-pad-x: 20px;
-    --site-stage-inset: 8px;
-    --site-stage-radius: 22px;
-    --site-head-top: 12px;
-    --site-head-pad-x: 16px;
+    --site-gutter: var(--site-space-5);
+    --site-frame: var(--site-space-2);
+    --site-stage-radius: var(--site-radius-4);
+    --site-section-y: var(--site-space-16);
+    --site-section-gap: var(--site-space-10);
     --site-head-h: 56px;
-    --site-head-in-pad: 0 8px 0 14px;
-    --site-hero-top: 112px;
-    --site-hero-gap: 48px;
-    --site-hero-strip-top: 48px;
-    --site-section-y: 72px;
-    --site-section-gap: 32px;
-    --site-hero-size: 46px;
+    --site-head-pad-x: var(--site-space-2);
+    --site-head-radius: var(--site-radius-3);
+    --site-hero-top: var(--site-space-12);
+    --site-hero-bottom: var(--site-space-10);
+    --site-hero-window-top: var(--site-space-10);
+    --site-hero-size: 44px;
     --site-hero-leading: 48px;
-    --site-h2-size: 36px;
+    --site-hero-tracking: -0.04em;
+    --site-h2-size: 34px;
     --site-h2-leading: 40px;
-    --site-panel-h2-size: 34px;
-    --site-panel-h2-leading: 38px;
-    --site-h3-l-size: 24px;
-    --site-h3-l-leading: 30px;
-    --site-lede-size: 16px;
-    --site-lede-leading: 26px;
-    --site-fact-size: min(40px, calc((100cqi - 64px) / 9));
+    --site-h2-tracking: -0.03em;
+    --site-h3-l-size: 22px;
+    --site-h3-l-leading: 28px;
+    --site-lede-size: 17px;
+    --site-lede-leading: 28px;
+    --site-fact-size: 36px;
+    --site-fact-leading: 40px;
     --site-big-size: 40px;
     --site-big-leading: 44px;
     --site-cols-2: 1;
-    --site-cols-4: 2;
-    --site-card-pad: 24px;
-    --site-plinth-pad: 12px;
+    --site-cols-3: 1;
+    --site-card-pad: var(--site-space-6);
+    --site-pane-pad: var(--site-space-5);
     --site-src-cols: minmax(0, 1fr);
     --site-src-display: none;
-    --site-panel-pad: 32px 24px;
-    --site-band-pad: 56px 20px;
+    --site-render-alt-display: none;
+    --site-pane-tabs-display: flex;
+    --site-panel-pad: var(--site-space-6);
+    --site-band-pad: var(--site-space-16) var(--site-space-5);
     --site-wide-display: none;
-    --site-strip-labels-display: none;
     --site-window-tag-display: none;
     --site-window-trail-display: none;
     --site-search-button-display: inline-flex;
-    --site-doc-top: 24px;
-    --site-cta-pad: 0 20px;
+    --site-doc-top: var(--site-space-6);
+    --site-tool-label-display: none;
+    --site-cta-pad: 0 var(--site-space-5);
+    --site-look-page-pad: var(--site-space-6) var(--site-space-5);
+    --site-look-tab-pad: 0 var(--site-space-3);
+    --site-stack-dir: column;
+    --site-stack-h: auto;
+    --site-stack-cols: minmax(0, 1fr);
+    --site-stack-in-align: center;
+    --site-stack-out-align: center;
+    --site-stack-node-cols: repeat(2, minmax(0, 1fr));
+    --site-stack-pad: var(--site-space-8) var(--site-space-4);
+    --site-stack-node-pad: 0 var(--site-space-3);
+    --site-code-file-display: none;
+    --site-tab-pad: 0 var(--site-space-3);
+    --site-look-h: 280px;
+    --site-pillar-cols: 1;
+    --site-tile-wide-cols: minmax(0, 1fr);
+    --site-panel-h2-size: 34px;
+    --site-panel-h2-leading: 40px;
+    --site-band-size: 40px;
+    --site-band-leading: 44px;
+    --site-marquee-fade: 0px;
+    --site-marquee-name: none;
+    --site-marquee-wrap: wrap;
+    --site-marquee-track-w: auto;
+    --site-marquee-copy-display: none;
+    --site-marquee-gap: var(--site-space-4);
+    --site-licence-pad: var(--site-space-6);
   }
 }
 
-/* ---- light: blue-tinted stages, a cool grey panel, sage and sand cards ---- */
+/* ---- light: a white page, blue light in the first stage, glass and hairlines ---- */
 [data-theme="light"] {
   --site-bg: #ffffff;
+  --site-bg-alt: #f6f8fc;
   --site-card: #ffffff;
-  --site-surface: #f6f7f9;
-  --site-surface-line: rgb(25 30 45 / 0.08);
-  --site-stage: #e4ebf8;
-  --site-tint: #edf2fd;
-  --site-tint-line: rgb(44 98 212 / 0.12);
-  --site-sage: #edf1e8;
-  --site-sage-ink: #2f7559;
-  --site-sand: #f5f1e9;
+  --site-card-2: #f7f9fc;
+  --site-surface: #f4f6fa;
+  --site-line: rgb(18 30 60 / 0.08);
+  --site-line-strong: rgb(18 30 60 / 0.14);
+  --site-stage-top: #e9effd;
+  --site-stage-bottom: #f7f9ff;
+  --site-grid: rgb(44 98 212 / 0.07);
+  --site-glow-a: rgb(44 98 212 / 0.26);
+  --site-glow-b: rgb(14 165 233 / 0.2);
+  --site-glow-card: rgb(44 98 212 / 0.08);
+  --site-glow-ring: rgb(44 98 212 / 0.4);
+  --site-beam: #2c62d4;
+  --site-beam-out: #1f8a5c;
+  --site-beam-path: rgb(18 30 60 / 0.12);
+  --site-tint: #eef3fe;
+  --site-tint-line: rgb(44 98 212 / 0.14);
+  --site-sage: #eef4ef;
+  --site-sage-ink: #2b7547;
   --site-accent-tint: rgb(44 98 212 / 0.09);
   /* the accent one step darker, same hue: small text on a tint (the Commercial badge) */
   --site-accent-ink: #2656ba;
-  --site-accent-soft: rgb(44 98 212 / 0.14);
+  --site-accent-soft: rgb(44 98 212 / 0.16);
+  --site-accent-2: #0b84c6;
+  --site-title-fade: #3d4354;
   --site-cta-bg: #2c62d4;
+  --site-cta-bg-hover: #2556c0;
   --site-cta-text: #ffffff;
-  --site-cta-2-bg: #ffffff;
-  --site-cta-2-line: rgb(25 30 45 / 0.1);
-  --site-glass: rgb(255 255 255 / 0.9);
-  --site-glass-line: rgb(25 30 45 / 0.08);
-  --site-glass-shadow: 0 1px 2px rgb(25 30 45 / 0.04), 0 12px 32px -16px rgb(25 30 45 / 0.18);
-  --site-stack: rgb(255 255 255 / 0.56);
-  --site-stack-line: rgb(255 255 255 / 0.8);
-  --site-stack-shadow: 0 24px 60px -32px rgb(30 60 130 / 0.3);
-  --site-item-shadow: 0 1px 2px rgb(25 30 45 / 0.04), 0 6px 16px -10px rgb(25 30 45 / 0.14);
-  --site-window-shadow: 0 1px 2px rgb(25 30 45 / 0.05), 0 28px 60px -30px rgb(30 60 130 / 0.32);
-  --site-streaks: linear-gradient(
-      122deg,
-      transparent 16%,
-      rgb(255 255 255 / 0.32) 16.2%,
-      transparent 31%
-    ),
-    linear-gradient(122deg, transparent 48%, rgb(255 255 255 / 0.4) 48.2%, transparent 65%),
-    linear-gradient(122deg, transparent 77%, rgb(44 98 212 / 0.06) 77.2%, transparent 94%);
-  --site-plinth: linear-gradient(135deg, #e7eefb, #f6f7f9 70%, #e4ebf8);
-  --site-scrim: rgb(25 30 45 / 0.22);
+  --site-cta-shadow: inset 0 1px 0 rgb(255 255 255 / 0.18), 0 1px 2px rgb(18 30 60 / 0.12), 0 8px
+    24px -10px rgb(44 98 212 / 0.6);
+  --site-cta-2-bg: rgb(255 255 255 / 0.7);
+  --site-cta-2-line: rgb(18 30 60 / 0.12);
+  --site-glass: rgb(255 255 255 / 0.74);
+  --site-glass-strong: rgb(255 255 255 / 0.9);
+  --site-glass-line: rgb(18 30 60 / 0.08);
+  --site-glass-shadow: 0 1px 2px rgb(18 30 60 / 0.04), 0 12px 32px -16px rgb(18 30 60 / 0.2);
+  --site-item-shadow: 0 1px 2px rgb(18 30 60 / 0.04), 0 8px 24px -14px rgb(18 30 60 / 0.16);
+  --site-card-shadow: 0 0 0 var(--gt-hairline) var(--site-line), 0 1px 2px rgb(18 30 60 / 0.03), 0
+    16px 40px -28px rgb(18 30 60 / 0.24);
+  --site-card-shadow-hover: 0 0 0 var(--gt-hairline) var(--site-line-strong), 0 2px 4px
+    rgb(18 30 60 / 0.04), 0 24px 48px -28px rgb(30 60 130 / 0.32);
+  --site-window-shadow: 0 1px 2px rgb(18 30 60 / 0.05), 0 40px 80px -40px rgb(30 60 130 / 0.42);
+  --site-scrim: rgb(18 30 60 / 0.24);
+  --site-highlight: rgb(44 98 212 / 0.14);
+  --site-code-shade: rgb(18 30 60 / 0.14);
+  --site-hub-glow: 0 0 48px -8px rgb(44 98 212 / 0.35), 0 16px 40px -24px rgb(18 30 60 / 0.3);
 }
 
-/* ---- dark: the same stages in deep blue-grey, cards a step above the page ---- */
+/* ---- dark: blue-black ground, the same light, cards a step above ---- */
 [data-theme="dark"] {
-  --site-bg: #191918;
-  --site-card: #222221;
-  --site-surface: #1f1f1e;
-  --site-surface-line: rgb(255 255 255 / 0.07);
-  --site-stage: #19202d;
-  --site-tint: #1c2333;
-  --site-tint-line: rgb(107 156 255 / 0.16);
-  --site-sage: #1c221e;
-  --site-sage-ink: #86c9a8;
-  --site-sand: #23211d;
+  --site-bg: #0c0e13;
+  --site-bg-alt: #10131a;
+  --site-card: #13161d;
+  --site-card-2: #181c24;
+  --site-surface: #12151b;
+  --site-line: rgb(255 255 255 / 0.07);
+  --site-line-strong: rgb(255 255 255 / 0.13);
+  --site-stage-top: #121b31;
+  --site-stage-bottom: #0d1017;
+  --site-grid: rgb(107 156 255 / 0.08);
+  --site-glow-a: rgb(80 130 255 / 0.34);
+  --site-glow-b: rgb(56 189 248 / 0.18);
+  --site-glow-card: rgb(107 156 255 / 0.09);
+  --site-glow-ring: rgb(107 156 255 / 0.45);
+  --site-beam: #6b9cff;
+  --site-beam-out: #5fcf96;
+  --site-beam-path: rgb(255 255 255 / 0.1);
+  --site-tint: #141c2e;
+  --site-tint-line: rgb(107 156 255 / 0.18);
+  --site-sage: #121a17;
+  --site-sage-ink: #7fd0a2;
   --site-accent-tint: rgb(107 156 255 / 0.14);
   --site-accent-ink: var(--gt-accent);
   --site-accent-soft: rgb(107 156 255 / 0.22);
-  --site-cta-bg: #6b9cff;
-  --site-cta-text: #0d1424;
-  --site-cta-2-bg: rgb(255 255 255 / 0.06);
+  --site-accent-2: #5cc8f5;
+  --site-title-fade: #a9afbf;
+  --site-cta-bg: #5b8ef8;
+  --site-cta-bg-hover: #73a0ff;
+  --site-cta-text: #0a0f1e;
+  --site-cta-shadow: inset 0 1px 0 rgb(255 255 255 / 0.25), 0 0 0 1px rgb(107 156 255 / 0.4), 0 10px
+    32px -10px rgb(91 142 248 / 0.7);
+  --site-cta-2-bg: rgb(255 255 255 / 0.05);
   --site-cta-2-line: rgb(255 255 255 / 0.12);
-  --site-glass: rgb(34 34 33 / 0.9);
-  --site-glass-line: rgb(255 255 255 / 0.09);
-  --site-glass-shadow: 0 1px 2px rgb(0 0 0 / 0.3), 0 12px 32px -16px rgb(0 0 0 / 0.6);
-  --site-stack: rgb(255 255 255 / 0.035);
-  --site-stack-line: rgb(255 255 255 / 0.08);
-  --site-stack-shadow: 0 24px 60px -32px rgb(0 0 0 / 0.7);
-  --site-item-shadow: 0 0 0 1px rgb(255 255 255 / 0.05), 0 6px 16px -10px rgb(0 0 0 / 0.6);
-  --site-window-shadow: 0 0 0 1px rgb(255 255 255 / 0.06), 0 28px 60px -30px rgb(0 0 0 / 0.8);
-  --site-streaks: linear-gradient(
-      122deg,
-      transparent 16%,
-      rgb(255 255 255 / 0.025) 16.2%,
-      transparent 31%
-    ),
-    linear-gradient(122deg, transparent 48%, rgb(255 255 255 / 0.035) 48.2%, transparent 65%),
-    linear-gradient(122deg, transparent 77%, rgb(107 156 255 / 0.07) 77.2%, transparent 94%);
-  --site-plinth: linear-gradient(135deg, #1c2333, #1f1f1e 70%, #19202d);
-  --site-scrim: rgb(0 0 0 / 0.55);
+  --site-glass: rgb(14 17 23 / 0.62);
+  --site-glass-strong: rgb(17 20 27 / 0.86);
+  --site-glass-line: rgb(255 255 255 / 0.08);
+  --site-glass-shadow: 0 1px 2px rgb(0 0 0 / 0.3), 0 12px 32px -16px rgb(0 0 0 / 0.7);
+  --site-item-shadow: 0 0 0 1px rgb(255 255 255 / 0.05), 0 8px 24px -14px rgb(0 0 0 / 0.7);
+  --site-card-shadow: 0 0 0 var(--gt-hairline) var(--site-line), inset 0 1px 0
+    rgb(255 255 255 / 0.04), 0 16px 40px -28px rgb(0 0 0 / 0.8);
+  --site-card-shadow-hover: 0 0 0 var(--gt-hairline) var(--site-line-strong), inset 0 1px 0
+    rgb(255 255 255 / 0.06), 0 24px 56px -28px rgb(40 80 200 / 0.4);
+  --site-window-shadow: 0 0 0 1px rgb(255 255 255 / 0.06), 0 48px 96px -40px rgb(0 0 0 / 0.9);
+  --site-scrim: rgb(0 0 0 / 0.6);
+  --site-highlight: rgb(107 156 255 / 0.2);
+  --site-code-shade: rgb(0 0 0 / 0.5);
+  --site-hub-glow: 0 0 56px -8px rgb(80 130 255 / 0.45), 0 16px 40px -24px rgb(0 0 0 / 0.8);
+}
+
+/* the site hosts the library on its own ground (a host's colours, --gt-*): in the dark theme the
+   editors on the site take its blue-black surfaces; the library's own pages are untouched */
+html[data-theme="dark"] .site {
+  --gt-page-bg: var(--site-bg);
+  --gt-overlay: #1a1e27;
 }
 
 /* the dark panel of the landing wears the library's dark theme (data-theme="dark" on the panel);
-   its own ground is set by the page's theme, one step darker than the dark page */
+   its own ground is one step below the page in either theme */
 html[data-theme="light"] .site-panel {
-  --site-panel-bg: #17181b;
+  --site-panel-bg: #0d1017;
   --site-panel-line: rgb(255 255 255 / 0.08);
+  --site-code-ground: rgb(255 255 255 / 0.02);
 }
 html[data-theme="dark"] .site-panel {
-  --site-panel-bg: #111112;
+  --site-panel-bg: #090b10;
   --site-panel-line: rgb(255 255 255 / 0.09);
+  --site-code-ground: rgb(255 255 255 / 0.02);
+}
+
+/* ---- layers, the theme menu and motion ---- */
+:root {
+  --site-z-head: 20;
+  --site-z-menu: 30;
+  --site-z-skip: 40;
+  --site-icon: var(--gt-icon);
+  --site-menu-w: 184px;
+  --site-nav-menu-w: 240px;
+  --site-skip-top: var(--site-space-2);
+  --site-transition: var(--site-dur-1) var(--site-ease-out);
+  --site-ease: cubic-bezier(0.22, 0.61, 0.36, 1);
+  --site-ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --site-rise: 16px;
+  --site-rise-far: 28px;
+  --site-blur: 6px;
+  --site-glass-blur: 16px;
+  --site-lift: -2px;
+  --site-dur-1: 160ms;
+  --site-dur-2: 320ms;
+  --site-dur-3: 640ms;
+  --site-dur-4: 900ms;
+  --site-stagger: 80ms;
+  --site-beam-turn: 7s;
+  --site-beam-run: 3.2s;
+  --site-beam-step: 0.4s;
+  --site-ping-run: 1.8s;
+  --site-ring-run: 2.8s;
+  --site-ring-reach: 14px;
+  --site-sweep-run: 2.6s;
+  --site-marquee-run: 48s;
+  --site-caret-blink: 1.1s;
+  --site-glow-size: 480px;
+  --site-glow-ring-size: 280px;
 }

@@ -1,6 +1,8 @@
-/* The site of GoTipe: the shell shared by the landing and the documentation, then the first screens
-   of the landing. The site keeps the library's text, lines and accent and speaks in its own type:
-   Inter 500 headings with tight tracking, quiet text, small mono labels; tinted rounded stages. */
+/* The site of GoTipe: the shell shared by the landing and the documentation (frames 20–21), the
+   heads and the foot. The site keeps the library's text, lines and accent and speaks in its own
+   type: Inter headings with tight tracking, quiet text, small mono labels; framed stages with blue
+   light. Every distance is a step of the scale (tokens-site.css). The site repeats these rules
+   (apps/landing/styles/site.css, head.css, foot.css); in a frame the head stands at rest. */
 
 .site {
   position: relative;
@@ -11,7 +13,8 @@
   line-height: var(--site-text-leading);
   letter-spacing: normal;
 }
-.site a {
+/* weightless, so the library's rules for a document's links (underlined) win inside documents */
+:where(.site) a {
   color: inherit;
   text-decoration: none;
 }
@@ -19,7 +22,7 @@
   box-sizing: border-box;
   max-width: var(--site-max);
   margin: 0 auto;
-  padding: 0 var(--site-pad-x);
+  padding: 0 var(--site-gutter);
 }
 .site-accent {
   color: var(--gt-accent);
@@ -30,7 +33,7 @@
 /* the site's code reads as typed: no ligature turns => into an arrow */
 .site-install,
 .site-src-lines,
-.site-panel .gotipe-code-block-scroll {
+.site-code {
   font-variant-ligatures: none;
 }
 
@@ -38,11 +41,11 @@
 .site-brand {
   display: inline-flex;
   align-items: center;
-  gap: var(--site-gap-s);
+  gap: var(--site-space-2);
   font-family: var(--site-font-display);
   font-size: var(--site-h3-size);
-  font-weight: var(--gt-weight-strong);
-  line-height: var(--site-h3-leading);
+  font-weight: var(--site-weight-display);
+  line-height: var(--site-logo);
   letter-spacing: var(--site-title-tracking);
 }
 .site-brand > small {
@@ -51,6 +54,7 @@
   font-weight: var(--gt-weight-regular);
 }
 .site-logo {
+  display: block;
   flex: none;
   width: var(--site-logo);
   height: var(--site-logo);
@@ -61,7 +65,7 @@
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  gap: var(--site-gap-xs);
+  gap: var(--site-space-1);
 }
 .site-head-end > .is-wide {
   display: var(--site-wide-display);
@@ -79,63 +83,33 @@
   padding: 0;
 }
 
-/* ---- the landing's head: a pill floating over the first stage ---- */
-.site-head {
-  position: absolute;
-  top: var(--site-head-top);
-  right: 0;
-  left: 0;
-  z-index: var(--gt-z-handle);
-  padding: 0 var(--site-head-pad-x);
+/* ---- the frame: a stage stands off the window by the same distance on every side ---- */
+.site-frame {
+  padding: var(--site-frame) var(--site-frame) 0;
 }
-.site-head-in {
-  display: flex;
-  align-items: center;
-  gap: var(--site-gap);
-  box-sizing: border-box;
-  max-width: var(--site-head-max);
-  height: var(--site-head-h);
-  margin: 0 auto;
-  padding: var(--site-head-in-pad);
-  border-radius: var(--site-head-radius);
-  background: var(--site-glass);
-  box-shadow:
-    inset 0 0 0 var(--gt-hairline) var(--site-glass-line),
-    var(--site-glass-shadow);
-}
-/* the mark sits in a flexible start column; the link itself is only as wide as the mark */
-.site-head-in > .site-head-start,
-.site-head-in > .site-head-end {
-  flex: 1 0 0;
-}
-.site-nav {
-  display: var(--site-nav-display);
-  gap: var(--site-gap-xs);
-}
-.site-nav a {
-  padding: 0 var(--site-gap-m);
-  color: var(--gt-text-2);
-  font-size: var(--site-small-size);
-  line-height: var(--site-head-button-h);
-}
-
-/* ---- a stage: a rounded tinted ground set in from the frame's edges ---- */
 .site-stage {
-  margin: 0 var(--site-stage-inset);
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
   border-radius: var(--site-stage-radius);
-  background: var(--site-streaks), var(--site-stage);
 }
 /* a stage is set in from the page's edges; its content keeps the plain sections' left edge */
-.site-stage > .site-wrap {
-  max-width: calc(var(--site-max) - 2 * var(--site-stage-inset));
-  padding: 0 calc(var(--site-pad-x) - var(--site-stage-inset));
+.site-stage > .site-wrap,
+.site-frame .site-wrap {
+  max-width: calc(var(--site-max) - 2 * var(--site-frame));
+  padding: 0 calc(var(--site-gutter) - var(--site-frame));
 }
-.site-stage.is-grey {
+.site-stage.is-alt {
+  margin: 0 var(--site-frame);
   padding: var(--site-section-y) 0;
-  background: var(--site-surface);
+  background: var(--site-bg-alt);
 }
 .site-section {
   padding: var(--site-section-y) 0;
+}
+/* two plain sections share one distance between their contents */
+.site-section + .site-section {
+  padding-top: 0;
 }
 
 /* ---- words every section uses: the mono eyebrow, the big title, the quiet line under it ---- */
@@ -152,35 +126,55 @@
   text-wrap: balance;
 }
 .site-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--site-space-2);
   color: var(--gt-accent);
+}
+/* the eyebrow's mark: the editor's caret, the site's sign */
+.site-eyebrow::before {
+  content: "";
+  width: var(--gt-caret-w);
+  height: var(--site-label-leading);
+  border-radius: var(--gt-radius-round);
+  background: currentColor;
 }
 .site-label {
   color: var(--gt-text-2);
 }
-.site-landing h2:not(.gotipe-doc h2) {
-  margin: var(--site-gap) 0 0;
+.site-title {
+  max-width: var(--site-title-max);
+  margin: var(--site-space-4) 0 0;
   font-family: var(--site-font-display);
   font-size: var(--site-h2-size);
   font-weight: var(--site-weight-display);
   line-height: var(--site-h2-leading);
   letter-spacing: var(--site-h2-tracking);
+  text-wrap: balance;
 }
 .site-sub {
-  max-width: var(--site-lede-max);
-  margin: var(--site-gap-l) 0 0;
+  max-width: var(--site-sub-max);
+  margin: var(--site-space-6) 0 0;
   color: var(--gt-text-2);
   font-size: var(--site-text-size);
-  line-height: var(--site-body-leading);
+  line-height: var(--site-text-leading);
+  text-wrap: pretty;
 }
 .site-head-row {
   display: grid;
   grid-template-columns: var(--site-head-cols);
-  gap: var(--site-gap-l) var(--site-gap-3xl);
+  gap: var(--site-space-6) var(--site-space-16);
   align-items: end;
   margin-bottom: var(--site-section-gap);
 }
 .site-head-row > .site-sub {
   margin: 0;
+}
+.site-center-head {
+  display: grid;
+  justify-items: center;
+  margin: 0 auto var(--site-section-gap);
+  text-align: center;
 }
 .site-badge {
   flex: none;
@@ -203,240 +197,298 @@
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: var(--site-gap-m);
-  margin-top: var(--site-gap-2xl);
+  gap: var(--site-space-3);
+  margin-top: var(--site-space-10);
 }
 .site .site-cta {
-  gap: var(--site-gap-s);
+  gap: var(--site-space-2);
   height: var(--site-cta-h);
   padding: var(--site-cta-pad);
   border-radius: var(--site-cta-radius);
   background: var(--site-cta-bg);
+  box-shadow: var(--site-cta-shadow);
   color: var(--site-cta-text);
   font-size: var(--site-body-size);
+}
+.site .site-cta:hover {
+  background: var(--site-cta-bg-hover);
+  transform: translateY(var(--site-lift));
+}
+.site .site-cta > .gt-icon {
+  transition: transform var(--site-transition);
+}
+.site .site-cta:hover > .gt-icon {
+  transform: translateX(var(--site-space-1));
 }
 .site .site-cta.is-second {
   background: var(--site-cta-2-bg);
   box-shadow: inset 0 0 0 var(--gt-hairline) var(--site-cta-2-line);
   color: var(--gt-text);
 }
-.site-install {
-  display: flex;
-  align-items: center;
-  gap: var(--site-gap-l);
-  max-width: 100%;
-  margin-top: var(--site-gap-l);
-  color: var(--gt-text-2);
-  font-family: var(--site-font-mono);
-  font-size: var(--site-mono-size);
-  line-height: var(--site-mono-leading);
-  white-space: nowrap;
-}
-.site-install > code {
-  min-width: 0;
-  overflow-x: auto;
-  font: inherit;
-  scrollbar-width: none;
-}
-.site-install > code::before {
-  content: "$ ";
-  color: var(--gt-accent);
+.site .site-cta.is-second:hover {
+  box-shadow: inset 0 0 0 var(--gt-hairline) var(--gt-line-active);
 }
 
-/* ---- the hero: three lines and the stack ---- */
-.site-hero {
-  padding: var(--site-hero-top) 0 var(--site-hero-bottom);
+/* ---- the landing's head: a bar in the frame, clear over the first stage, glass once scrolled ---- */
+.site-head {
+  position: absolute;
+  top: var(--site-frame);
+  right: var(--site-frame);
+  left: var(--site-frame);
+  z-index: var(--site-z-head);
+  height: var(--site-head-h);
+  border-radius: var(--site-head-radius);
+  transition: background-color var(--site-dur-2) var(--site-ease), box-shadow var(--site-dur-2)
+    var(--site-ease), backdrop-filter var(--site-dur-2) var(--site-ease);
 }
-.site-hero-grid {
+/* three columns: the mark, the links in the very middle, the actions; the content keeps the
+   page's left and right edges */
+.site-head-in {
+  position: relative;
   display: grid;
-  grid-template-columns: var(--site-hero-cols);
-  gap: var(--site-hero-gap);
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
   align-items: center;
+  gap: var(--site-space-4);
+  box-sizing: border-box;
+  max-width: calc(var(--site-max) - 2 * var(--site-frame));
+  height: 100%;
+  margin: 0 auto;
+  padding: 0 calc(var(--site-gutter) - var(--site-frame));
 }
-.site-hero-grid > * {
+.site-head-in > .site-brand {
+  justify-self: start;
+}
+.site-head-in > .site-head-end {
+  grid-column: 3;
+}
+.site-nav {
+  display: var(--site-nav-display);
+  align-items: center;
+  gap: var(--site-nav-gap);
+}
+.site-nav a {
+  display: inline-flex;
+  align-items: center;
+  height: var(--site-head-button-h);
+  padding: var(--site-nav-pad);
+  border-radius: var(--site-head-button-radius);
+  color: var(--gt-text-2);
+  font-size: var(--site-small-size);
+  font-weight: var(--gt-weight-medium);
+  line-height: var(--site-small-leading);
+  transition: color var(--site-transition), background-color var(--site-transition);
+}
+.site-nav a:hover {
+  background: var(--gt-fill-1);
+  color: var(--gt-text);
+}
+
+/* ---- the documentation's head: the mark, the version, the search field, a few links ---- */
+.site-docs-head {
+  position: sticky;
+  top: 0;
+  z-index: var(--site-z-head);
+  border-bottom: var(--gt-hairline) solid var(--site-line);
+  background: var(--site-glass-strong);
+  -webkit-backdrop-filter: blur(var(--site-glass-blur)) saturate(1.8);
+  backdrop-filter: blur(var(--site-glass-blur)) saturate(1.8);
+}
+/* the head stands on the columns of the page below it: the search field starts where the page
+   does; a tablet and a phone keep one row */
+.site-docs-head-in {
+  position: relative;
+  display: var(--site-docs-head-display);
+  grid-template-columns: var(--site-docs-cols);
+  column-gap: var(--site-docs-head-gap);
+  justify-content: center;
+  align-items: center;
+  box-sizing: border-box;
+  max-width: var(--site-docs-max);
+  height: var(--site-docs-head-h);
+  margin: 0 auto;
+  padding: 0 var(--site-gutter);
+}
+.site-docs-brand {
+  display: flex;
+  grid-row: 1;
+  align-items: center;
+  gap: var(--site-space-3);
   min-width: 0;
 }
-.site-chip {
-  display: flex;
+.site-docs-head-in > .site-search {
+  grid-row: 1;
+  grid-column: 2;
+  justify-self: start;
+  margin-left: var(--site-search-offset);
+}
+.site-docs-head-in > .site-head-end {
+  grid-row: 1;
+  grid-column: -2;
+  justify-self: end;
+  margin-left: auto;
+}
+.site-version {
+  padding: var(--site-chip-tag-pad);
+  border-radius: var(--gt-radius-control);
+  background: var(--gt-fill-1);
+  box-shadow: inset 0 0 0 var(--gt-hairline) var(--gt-line);
+  color: var(--gt-text-2);
+  font-family: var(--site-font-mono);
+  font-size: var(--site-label-size);
+  line-height: var(--site-label-leading);
+}
+.site-kbd {
+  padding: var(--site-chip-tag-pad);
+  border-radius: var(--gt-radius-control);
+  background: var(--site-card);
+  box-shadow: inset 0 0 0 var(--gt-hairline) var(--gt-line-strong);
+  color: var(--gt-text-2);
+  font-family: var(--site-font-mono);
+  font-size: var(--site-label-size);
+  line-height: var(--site-label-leading);
+}
+
+/* the search field: a button that opens the dialog */
+.site-search {
+  display: var(--site-wide-display);
   align-items: center;
-  gap: var(--site-gap-s);
-  margin: 0;
+  gap: var(--site-space-2);
+  box-sizing: border-box;
+  width: var(--site-search-w);
+  max-width: 100%;
+  height: var(--site-search-h);
+  padding: var(--site-search-pad);
+  border-radius: var(--site-search-radius);
+  background: var(--site-surface);
+  box-shadow: inset 0 0 0 var(--gt-hairline) var(--site-line);
+  color: var(--gt-text-2);
+  font-size: var(--site-small-size);
+}
+.site-search > .site-kbd {
+  margin-left: auto;
+}
+.site-search-button {
+  display: var(--site-search-button-display);
+}
+
+/* ---- the theme: one icon button, the moon on a light page and the sun on a dark one ---- */
+.site-theme {
+  position: relative;
+  display: inline-flex;
+}
+.site-head-end > .site-theme.is-wide {
+  display: var(--site-wide-display);
+}
+html[data-theme="dark"] .site-theme-to-dark,
+html:not([data-theme="dark"]) .site-theme-to-light {
+  display: none;
+}
+
+/* the head's call to action: the page's primary colour at the head's size */
+.site .site-head-button.site-cta {
+  height: var(--site-head-button-h);
+  padding: var(--site-head-button-pad);
+  border-radius: var(--site-head-button-radius);
+  font-size: var(--site-small-size);
+}
+
+/* ---- the landing's foot ---- */
+.site-foot {
+  padding: var(--site-space-16) 0 var(--site-space-8);
+  border-top: var(--gt-hairline) solid var(--site-line);
+  font-size: var(--site-body-size);
+  line-height: var(--site-small-leading);
+}
+.site-foot-grid {
+  display: grid;
+  grid-template-columns: var(--site-foot-cols);
+  gap: var(--site-space-8);
+}
+.site-foot .site-brand.is-large {
+  gap: var(--site-space-3);
+  font-size: var(--site-pair-size);
+  line-height: var(--site-logo-l);
+}
+.site-brand.is-large > .site-logo {
+  width: var(--site-logo-l);
+  height: var(--site-logo-l);
+}
+.site-foot-grid p {
+  max-width: var(--site-sub-max);
+  margin: var(--site-space-4) 0 0;
   color: var(--gt-text-2);
   font-size: var(--site-small-size);
   line-height: var(--site-small-leading);
 }
-.site-chip > span {
-  padding: var(--site-chip-tag-pad);
-  border-radius: var(--gt-radius-control);
-  background: var(--site-card);
-  box-shadow: var(--site-item-shadow);
-  color: var(--gt-text);
+.site-foot h2 {
+  margin: 0 0 var(--site-space-3);
+  color: var(--gt-text-2);
   font-family: var(--site-font-mono);
   font-size: var(--site-label-size);
   font-weight: var(--gt-weight-medium);
   line-height: var(--site-label-leading);
+  letter-spacing: var(--site-label-tracking);
+  text-transform: uppercase;
 }
-.site-chip > .gt-icon {
-  color: var(--gt-text-3);
-}
-.site-hero h1 {
-  margin: var(--site-gap-xl) 0 0;
-  font-family: var(--site-font-display);
-  font-size: var(--site-hero-size);
-  font-weight: var(--site-weight-display);
-  line-height: var(--site-hero-leading);
-  letter-spacing: var(--site-hero-tracking);
-}
-.site-lede {
-  max-width: var(--site-lede-max);
-  margin: var(--site-gap-xl) 0 0;
-  color: var(--gt-text-2);
-  font-size: var(--site-lede-size);
-  line-height: var(--site-lede-leading);
-}
-
-/* the stack: a frosted card with the three parts GoTipe stands on */
-.site-stack {
-  display: grid;
-  gap: var(--site-gap-m);
-  padding: var(--site-stack-pad);
-  border-radius: var(--site-card-radius);
-  background: var(--site-stack);
-  box-shadow:
-    inset 0 0 0 var(--gt-hairline) var(--site-stack-line),
-    var(--site-stack-shadow);
-}
-.site-stack-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin: 0 0 var(--site-gap-xs);
-  color: var(--gt-accent);
-}
-.site-stack-item {
-  padding: var(--site-card-pad-s);
-  border-radius: var(--site-card-radius-s);
-  background: var(--site-card);
-  box-shadow: var(--site-item-shadow);
-}
-.site-stack-title {
-  display: flex;
-  align-items: center;
-  gap: var(--site-gap-m);
-  margin: 0;
-  color: var(--gt-accent);
-}
-.site-stack-title > strong {
-  color: var(--gt-text);
-  font-size: var(--site-h4-size);
-  font-weight: var(--gt-weight-strong);
-  line-height: var(--site-h4-leading);
-  letter-spacing: var(--site-title-tracking);
-}
-.site-stack-title > span {
-  margin-left: auto;
-  color: var(--gt-text-3);
-  font-family: var(--site-font-mono);
-  font-size: var(--site-label-size);
-  line-height: var(--site-label-leading);
-}
-.site-stack-item > p:not(.site-stack-title) {
-  margin: var(--site-gap-s) 0 var(--site-gap-m);
-  color: var(--gt-text-2);
-  font-size: var(--site-small-size);
-  line-height: var(--site-small-leading);
-}
-.site-stack-item > .site-badge {
-  display: inline-block;
-  background: var(--gt-fill-1);
-  box-shadow: none;
-}
-.site-stack-foot {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--site-gap-s);
-  margin: var(--site-gap-s) 0 0;
-  color: var(--gt-text-2);
-  font-size: var(--site-small-size);
-  line-height: var(--site-small-leading);
-}
-.site-stack-foot > .gt-icon {
-  color: var(--gt-accent);
-}
-
-/* the foot of the first stage: the promise and what it is made of */
-.site-strip {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--site-gap-l);
-  margin-top: var(--site-hero-strip-top);
-  padding-top: var(--site-gap-l);
-  border-top: var(--gt-hairline) solid var(--gt-line);
-  color: var(--gt-text-2);
-  font-size: var(--site-small-size);
-  line-height: var(--site-small-leading);
-}
-.site-strip-labels {
-  display: var(--site-strip-labels-display);
-  align-items: center;
-  gap: var(--site-gap-xl);
-  font-family: var(--site-font-mono);
-  font-size: var(--site-mono-size);
-}
-.site-strip-labels > span {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--site-gap-s);
-}
-
-/* ---- facts that can be checked ---- */
-.site-facts-head {
-  display: flex;
-  justify-content: space-between;
-  gap: var(--site-gap-l);
-  margin-top: var(--site-section-y);
-  padding-bottom: var(--site-gap-l);
-  border-bottom: var(--gt-hairline) solid var(--gt-line);
-  color: var(--gt-text-2);
-  font-family: var(--site-font-mono);
-  font-size: var(--site-label-size);
-  line-height: var(--site-label-leading);
-}
-/* «Shipped in 0.1» stays one phrase; the note beside it wraps on the right */
-.site-facts-head > :first-child {
-  flex: none;
-  white-space: nowrap;
-}
-.site-facts-head > :last-child {
-  text-align: right;
-  text-wrap: balance;
-}
-.site-facts {
-  display: grid;
-  grid-template-columns: repeat(var(--site-cols-4), minmax(0, 1fr));
-  gap: var(--site-gap-xl) var(--site-gap-l);
-  padding: var(--site-gap-2xl) 0;
-  border-bottom: var(--gt-hairline) solid var(--gt-line);
-}
-.site-fact {
-  margin: 0;
-  color: var(--gt-text-2);
-  font-size: var(--site-small-size);
-  line-height: var(--site-small-leading);
-}
-.site-fact > strong {
+.site-foot-grid a:not(.site-brand) {
   display: block;
-  margin-bottom: var(--site-gap);
+  width: fit-content;
+  padding: var(--site-space-1) 0;
   color: var(--gt-text);
-  font-family: var(--site-font-display);
-  font-size: var(--site-fact-size);
-  font-weight: var(--site-weight-display);
-  line-height: var(--site-fact-leading);
-  letter-spacing: var(--site-big-tracking);
-  white-space: nowrap;
+  transition: color var(--site-transition);
 }
-.site-fact > strong.site-accent {
+.site-foot-grid a:not(.site-brand):hover {
   color: var(--gt-accent);
+}
+.site-foot-base {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: var(--site-space-2) var(--site-space-6);
+  margin: var(--site-section-gap) 0 0;
+  padding-top: var(--site-space-6);
+  border-top: var(--gt-hairline) solid var(--site-line);
+  color: var(--gt-text-2);
+  font-size: var(--gt-ui-small);
+  line-height: var(--gt-ui-small-leading);
+}
+
+/* ---- the documentation's foot: one line under the page ---- */
+.site-docs-foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--site-space-2) var(--site-space-6);
+  margin-top: var(--site-space-12);
+  padding: var(--site-space-6) 0 var(--site-space-10);
+  border-top: var(--gt-hairline) solid var(--site-line);
+  color: var(--gt-text-2);
+  font-size: var(--gt-ui-small);
+  line-height: var(--gt-ui-small-leading);
+}
+.site-docs-foot nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--site-space-1) var(--site-space-5);
+}
+.site-docs-foot a {
+  color: var(--gt-text-2);
+  transition: color var(--site-transition);
+}
+.site-docs-foot a:hover {
+  color: var(--gt-text);
+}
+
+/* text for screen readers only */
+.site-sr {
+  position: absolute;
+  width: var(--gt-hairline);
+  height: var(--gt-hairline);
+  margin: calc(-1 * var(--gt-hairline));
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  border: 0;
+  white-space: nowrap;
 }
