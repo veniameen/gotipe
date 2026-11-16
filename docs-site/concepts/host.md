@@ -27,8 +27,10 @@ export const host: EditorHost = {
     // Our own paths go through the asset route; absolute URLs stay as they are.
     return /^[a-z][a-z0-9+.-]*:/i.test(src) ? src : `/api/assets/${encodeURIComponent(src)}`;
   },
-  openLink(href, { newTab }) {
-    if (newTab) window.open(href, "_blank", "noopener,noreferrer");
+  openLink(href, { newTab, target }) {
+    // The author asked for this tab: honour it for links inside the app only.
+    if (target === "_self" && href.startsWith("/")) window.location.assign(href);
+    else if (newTab) window.open(href, "_blank", "noopener,noreferrer");
     else window.location.assign(href);
   },
   onError(error) {
@@ -53,7 +55,7 @@ const editor = await createEditor({ extensions: [DefaultPreset], host });
 |---|---|---|---|
 | `saveAsset` | `(file: Blob, info: { kind: "image" \| "file"; name: string; mediaType: string; size: number }) => Promise<{ src: string; name?: string }>` | Inline `data:` URL | Store a pasted, dropped or picked file. Return the path or URL to put into the document. Throw to report a failure. |
 | `resolveAsset` | `(src: string) => Promise<string \| null> \| string \| null` | `src` as stored | Turn a document path such as `assets/diagram.png` into a URL the page can show. Return `null` when the file is unavailable. |
-| `openLink` | `(href: string, info: { blockId: string \| null; newTab: boolean }) => void` | A new tab with `window.open`; `newTab: false` goes to the link in this tab | Open a link the user activated. |
+| `openLink` | `(href: string, info: { blockId: string \| null; newTab: boolean; target: string \| null }) => void` | A new tab with `window.open`; `newTab: false` goes to the link in this tab; `target` is not read | Open a link the user activated. `target` is the link's own, you decide where it opens. |
 | `onError` | `(error: GoTipeError) => void` | Console, when nothing else listens | Receive every reported error. |
 | `imageSources` | `ImageSource[]` | none | Image catalogs to search in the image dialog. |
 
@@ -127,8 +129,14 @@ server.
 
 Links never navigate while the user edits: a plain click places the caret. Cmd-click or
 Ctrl-click, a middle click, or any click in read-only mode opens the link, and so does a
-click on a file block's name. `editor.openLink(href, { blockId, newTab })` does the same
-from your code.
+click on a file block's name. `editor.openLink(href, { blockId, newTab, target })` does the
+same from your code.
+
+The editor asks for a new tab (`newTab: true`) and passes the link's own `target` in `info`:
+`"_self"`, `"_blank"` or another value the document stores, and `null` when it stores none, as
+for a file block's name. Your `openLink` decides where the link opens, so a link the author
+marked `_self` can stay in your app. Without `openLink` the editor does not read `target` and
+opens a new tab, so it never leaves the page by itself.
 
 Before your `openLink` runs, the editor checks the URL with `toSafeHref`:
 

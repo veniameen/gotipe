@@ -29,8 +29,15 @@ export interface EditorHost {
    * asset is unavailable.
    */
   resolveAsset?: (src: string) => Promise<string | null> | string | null;
-  /** Open a link. Without it the editor falls back to `window.open`. */
-  openLink?: (href: string, info: { blockId: string | null; newTab: boolean }) => void;
+  /**
+   * Open a link. `newTab` is what the editor does without this callback (`window.open`).
+   * `target` is the link's own (`"_self"`, `"_blank"`), `null` when the document gives none,
+   * as for a file block's name: the host decides where the link opens.
+   */
+  openLink?: (
+    href: string,
+    info: { blockId: string | null; newTab: boolean; target: string | null },
+  ) => void;
   /** Called for every editor error (also emitted as the `error` event). */
   onError?: (error: GoTipeError) => void;
 }
@@ -103,8 +110,14 @@ export interface GoTipeEditor {
   getDecorations(layer?: string): Decoration[];
   /** Report an error: emits `error` and calls `host.onError`. Never throws. */
   reportError(error: GoTipeError): void;
-  /** Open a link through `host.openLink` (or `window.open` without a host). */
-  openLink(href: string, options?: { blockId?: string | null; newTab?: boolean }): void;
+  /**
+   * Open a link through `host.openLink` (or `window.open` without a host). `target` goes to
+   * the host as is; without a host only `newTab` decides.
+   */
+  openLink(
+    href: string,
+    options?: { blockId?: string | null; newTab?: boolean; target?: string | null },
+  ): void;
   getViewState(): ViewState;
   getJSON(): Document;
   getHTML(): string;

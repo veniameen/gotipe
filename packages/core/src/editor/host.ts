@@ -29,14 +29,18 @@ export function createHostActions(
   };
   const openLink = (
     href: string,
-    linkOptions?: { blockId?: string | null; newTab?: boolean },
+    linkOptions?: { blockId?: string | null; newTab?: boolean; target?: string | null },
   ): void => {
     const safe = toSafeHref(href);
     if (!safe) {
       reportError(new GoTipeError("LINK_BLOCKED", `Blocked link: ${href}`, { href }));
       return;
     }
-    const info = { blockId: linkOptions?.blockId ?? null, newTab: linkOptions?.newTab ?? true };
+    const info = {
+      blockId: linkOptions?.blockId ?? null,
+      newTab: linkOptions?.newTab ?? true,
+      target: linkOptions?.target ?? null,
+    };
     if (host.openLink) {
       try {
         host.openLink(safe, info);
@@ -49,7 +53,8 @@ export function createHostActions(
       }
       return;
     }
-    // Without a host `newTab` decides too: `false` goes to the link in this tab (D-13).
+    // Without a host `newTab` decides too: `false` goes to the link in this tab (D-13);
+    // `target` is the host's to read (D-186).
     if (typeof window !== "undefined") {
       if (info.newTab) window.open(safe, "_blank", "noopener,noreferrer");
       else window.location.assign(safe);

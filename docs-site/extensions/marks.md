@@ -92,7 +92,7 @@ Like the block shortcuts (`# `, `- `), these rules run for typed text only: text
 
 Commands write the defaults: a link made with `setLink` or `setMark("link", { href })` stores `target` and `rel`.
 
-Links never navigate the page by themselves. While editing, a click places the caret and Cmd/Ctrl+click (or a middle click) opens the link; in read-only mode any click opens it. The editor opens links through `host.openLink`, or `window.open` without a host. Only `http:`, `https:`, `mailto:` and relative addresses are opened or rendered; any other scheme is blocked with `LINK_BLOCKED`.
+Links never navigate the page by themselves. While editing, a click places the caret and Cmd/Ctrl+click (or a middle click) opens the link; in read-only mode any click opens it. The editor opens links through `host.openLink`, which gets the link's `target` and decides where it opens, or with `window.open` in a new tab without a host. Only `http:`, `https:`, `mailto:` and relative addresses are opened or rendered; any other scheme is blocked with `LINK_BLOCKED`.
 
 `Mod+K` emits the `openLinkDialog` event for your own link UI:
 
