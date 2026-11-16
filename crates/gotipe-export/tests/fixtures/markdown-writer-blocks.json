@@ -5206,6 +5206,150 @@
           ]
         }
       ]
+    },
+    {
+      "id": "a-list-before-a-toggle-takes-a-marker-apart-from-its-list",
+      "document": {
+        "version": 1,
+        "blocks": [
+          {
+            "id": "n905",
+            "type": "bulletList",
+            "attrs": {},
+            "content": null,
+            "children": [
+              {
+                "id": "n904",
+                "type": "listItem",
+                "attrs": {},
+                "content": [
+                  {
+                    "text": "a",
+                    "marks": []
+                  }
+                ],
+                "children": []
+              }
+            ]
+          },
+          {
+            "id": "n907",
+            "type": "bulletList",
+            "attrs": {},
+            "content": null,
+            "children": [
+              {
+                "id": "n906",
+                "type": "listItem",
+                "attrs": {},
+                "content": [
+                  {
+                    "text": "b",
+                    "marks": []
+                  }
+                ],
+                "children": []
+              }
+            ]
+          },
+          {
+            "id": "n903",
+            "type": "toggle",
+            "attrs": {},
+            "content": [],
+            "children": [
+              {
+                "id": "n902",
+                "type": "bulletList",
+                "attrs": {
+                  "marker": "*"
+                },
+                "content": null,
+                "children": [
+                  {
+                    "id": "n901",
+                    "type": "listItem",
+                    "attrs": {},
+                    "content": [
+                      {
+                        "text": "x",
+                        "marks": []
+                      }
+                    ],
+                    "children": []
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "markdown": "- a\n\n+ b\n\n* x\n",
+      "reparsed": [
+        {
+          "type": "bulletList",
+          "attrs": {
+            "marker": "-",
+            "spread": false
+          },
+          "content": null,
+          "children": [
+            {
+              "type": "listItem",
+              "attrs": {},
+              "content": [
+                {
+                  "text": "a",
+                  "marks": []
+                }
+              ],
+              "children": []
+            }
+          ]
+        },
+        {
+          "type": "bulletList",
+          "attrs": {
+            "marker": "+",
+            "spread": false
+          },
+          "content": null,
+          "children": [
+            {
+              "type": "listItem",
+              "attrs": {},
+              "content": [
+                {
+                  "text": "b",
+                  "marks": []
+                }
+              ],
+              "children": []
+            }
+          ]
+        },
+        {
+          "type": "bulletList",
+          "attrs": {
+            "marker": "*",
+            "spread": false
+          },
+          "content": null,
+          "children": [
+            {
+              "type": "listItem",
+              "attrs": {},
+              "content": [
+                {
+                  "text": "x",
+                  "marks": []
+                }
+              ],
+              "children": []
+            }
+          ]
+        }
+      ]
     }
   ]
 }
