@@ -144,6 +144,7 @@
   box-shadow: inset 0 calc(-1 * var(--gt-hairline)) 0 var(--gt-danger);
   font-family: var(--gt-font-mono);
   font-size: var(--gt-inline-code-size);
+  line-height: var(--gt-inline-code-leading);
   letter-spacing: normal;
 }
 

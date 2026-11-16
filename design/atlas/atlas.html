@@ -357,6 +357,7 @@
   --gt-caption-gap: 8px;
   --gt-inline-pad: 0.1em 0.35em;
   --gt-inline-code-size: 0.87em;
+  --gt-inline-code-leading: 1;
   --gt-mark-pad: 0.05em 0.15em;
   --gt-toggle-gap: 4px;
   --gt-handle-w: 22px;
@@ -1460,12 +1461,15 @@ body {
   text-decoration-color: var(--gt-link-line);
   text-underline-offset: var(--gt-underline-offset);
 }
+/* smaller monospace type at its own size: with the paragraph's leading it would push the line
+   down; the plate is drawn over the glyphs whatever the leading (D-225) */
 .gotipe-inline-code {
   padding: var(--gt-inline-pad);
   border-radius: var(--gt-radius-inline);
   background: var(--gt-fill-2);
   font-family: var(--gt-font-mono);
   font-size: var(--gt-inline-code-size);
+  line-height: var(--gt-inline-code-leading);
   letter-spacing: normal;
 }
 .gotipe-highlight {
@@ -3570,6 +3574,7 @@ ol.gotipe-list > li::before {
   box-shadow: inset 0 calc(-1 * var(--gt-hairline)) 0 var(--gt-danger);
   font-family: var(--gt-font-mono);
   font-size: var(--gt-inline-code-size);
+  line-height: var(--gt-inline-code-leading);
   letter-spacing: normal;
 }
 

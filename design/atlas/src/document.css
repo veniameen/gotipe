@@ -166,12 +166,15 @@
   text-decoration-color: var(--gt-link-line);
   text-underline-offset: var(--gt-underline-offset);
 }
+/* smaller monospace type at its own size: with the paragraph's leading it would push the line
+   down; the plate is drawn over the glyphs whatever the leading (D-225) */
 .gotipe-inline-code {
   padding: var(--gt-inline-pad);
   border-radius: var(--gt-radius-inline);
   background: var(--gt-fill-2);
   font-family: var(--gt-font-mono);
   font-size: var(--gt-inline-code-size);
+  line-height: var(--gt-inline-code-leading);
   letter-spacing: normal;
 }
 .gotipe-highlight {
