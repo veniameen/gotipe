@@ -6,7 +6,7 @@ import { GoTipeI18nProvider } from "@gotipe/react";
 import { act } from "react";
 import { type Root, createRoot } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { EditorErrorToast } from "./editor-states";
+import { EditorErrorToast, EditorFailure } from "./editor-states";
 
 let container: HTMLDivElement;
 let root: Root;
@@ -68,5 +68,26 @@ describe("the error toast", () => {
       "Не удалось применить изменение",
       "Block not found: x",
     ]);
+  });
+});
+
+describe("the page that could not be opened", () => {
+  it("keeps its words apart from the glyph, so only the glyph is red", () => {
+    act(() =>
+      root.render(
+        <GoTipeI18nProvider locale="ru">
+          <EditorFailure />
+        </GoTipeI18nProvider>,
+      ),
+    );
+    const alert = container.querySelector("[data-gotipe-editor-error]");
+    expect(alert?.getAttribute("role")).toBe("alert");
+    expect([...(alert?.children ?? [])].map((child) => child.tagName.toLowerCase())).toEqual([
+      "svg",
+      "span",
+    ]);
+    expect(alert?.querySelector(".gotipe-editor-error-text")?.textContent).toBe(
+      "Документ не открылся",
+    );
   });
 });

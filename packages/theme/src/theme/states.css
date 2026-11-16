@@ -263,7 +263,8 @@
   white-space: nowrap;
 }
 
-/* the element that failed: an image that cannot be shown, an editor that could not be created */
+/* the element that failed: an image that cannot be shown, an editor that could not be created —
+   a box in its place, the glyph red, the words quiet */
 .gotipe-image-block > .gotipe-image-error,
 .gotipe-block-editor > .gotipe-editor-error {
   display: grid;
@@ -278,14 +279,22 @@
   font-size: var(--gt-ui-size);
   line-height: var(--gt-ui-leading);
 }
+/* the editor's box stands in the page's column, with its margins, as the head and the quick
+   blocks do (Atlas frame 17, D-165) */
 .gotipe-block-editor > .gotipe-editor-error {
   grid-auto-flow: column;
   place-content: center;
   gap: var(--gt-menu-gap);
+  margin-block: var(--gt-page-pad-top) var(--gt-page-pad-bottom);
+  margin-inline: max(var(--gt-page-pad-x), calc((100% - var(--gt-page-width)) / 2));
+  letter-spacing: normal;
 }
 .gotipe-editor-error > svg {
   width: var(--gt-icon-size);
   height: var(--gt-icon-size);
+}
+.gotipe-editor-error-text {
+  color: var(--gt-text-2);
 }
 
 /* a reported error is shown by the toast (uploads included); the control keeps its alert for
