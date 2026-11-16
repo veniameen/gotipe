@@ -242,7 +242,9 @@
    into the gutter, where the block handle stands (D-269); the renderer sets --gt-list-digits */
 .gotipe-content ol {
   padding-left: calc(
-    var(--gt-indent) + max(0, var(--gt-list-digits, 2) - 2) * var(--gt-number-digit)
+    var(--gt-indent) +
+    max(0, var(--gt-list-digits, 2) - 2) *
+    var(--gt-number-digit)
   );
 }
 .gotipe-content ol > li::marker {
