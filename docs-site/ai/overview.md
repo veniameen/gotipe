@@ -87,9 +87,31 @@ Generated text is collected completely before it is inserted, so an error or a
 cancellation never leaves a half-written block. Accept All of proofreading is one
 transaction and one undo step.
 
-`aiStatusChange` reports `{ active, label }` when a request starts and ends. A failure,
-other than a cancellation, emits `error` with a `GoTipeError` of code `EXTENSION_ERROR` and
-`details.extension === "ai"`, and a final `aiStatusChange` whose `label` is the message.
+`aiStatusChange` reports an `AiStatus` when a request starts and ends: `{ active: true, task,
+label }`, then `{ active: false }`. `task` says what the request does — `suggestions`,
+`completion`, `rewrite`, `continue`, `paragraph`, `proofread`, `review` or `command` — and
+the interface says it in its own words (`AiStatusIndicator` reads the keys `ai.status.*`).
+A finished proofread or review ends with one more `{ active: false, task, count }`, where
+`count` is how many suggestions or comments it found. `label` keeps English words for
+hosts that show it as it is ("Proofreading...", "Found 3 suggestions"); show `task` and
+`count` in your own words instead. A failure, other than a cancellation, emits `error` with
+a `GoTipeError` of code `EXTENSION_ERROR` and `details.extension === "ai"`, and a final
+`aiStatusChange` whose `label` is the message.
+
+```ts title="proofread-found.ts"
+import type { GoTipeEditor } from "@gotipe/core";
+
+/** Calls `found` with the number of suggestions when a proofread ends. */
+export function onProofreadFound(editor: GoTipeEditor, found: (count: number) => void) {
+  return editor.on("aiStatusChange", (status) => {
+    if (!status.active && status.task === "proofread" && status.count !== undefined)
+      found(status.count);
+  });
+}
+```
+
+The core declares the event's type with these fields; `@gotipe/ai` names it `AiStatus`, and
+the codes of `task` `AiTask`.
 
 ## Context
 

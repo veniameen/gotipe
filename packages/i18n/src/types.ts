@@ -17,6 +17,8 @@ export type BaseTranslationKey =
   | "ai.noCommands"
   | "ai.closeCommands"
   | "a11y.toolbarLabel"
+  | "a11y.editorLabel"
+  | "a11y.insertLabel"
   | "table.type.text"
   | "table.type.code"
   | "table.type.number"

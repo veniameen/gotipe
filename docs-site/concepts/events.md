@@ -89,7 +89,7 @@ code.
 | `scrollToBlock` | `{ blockId }` | `CommentSidebar` in `@gotipe/block-editor` when a comment is chosen. |
 | `commentAdded`, `commentUpdated`, `commentResolved`, `commentDeleted` | `commentId: string` | The comments manager in `@gotipe/comments`. |
 | `executeAiCommand` | `{ commandId, prompt? }` | AI menus and commands; handled by `@gotipe/ai`. |
-| `aiStatusChange` | `{ active, label? }` | `@gotipe/ai` when a request starts, ends or fails. |
+| `aiStatusChange` | `{ active, task?, count?, label? }` | `@gotipe/ai` when a request starts, ends or fails: `task` says what runs, `count` how many results a proofread or review found (`AiStatus` of `@gotipe/ai`). |
 | `aiGhostTextChange` | `{ text, blockId, offset } \| null` | `@gotipe/ai` autocomplete. |
 | `aiProofreadChange` | `{ suggestions, currentIndex }` | `@gotipe/ai` proofreading. |
 | `aiReviewChange` | `{ comments }` | AI review found comments, or an edit moved or removed some. Read them with `getAiReviewComments(editor)`. |

@@ -17,6 +17,8 @@ export const ru: Locale = {
   "ai.noCommands": "Нет подходящих команд",
   "ai.closeCommands": "Закрыть",
   "a11y.toolbarLabel": "Форматирование текста",
+  "a11y.editorLabel": "Содержимое документа",
+  "a11y.insertLabel": "Вставить блок",
   "table.type.text": "Текст",
   "table.type.code": "Код",
   "table.type.number": "Число",

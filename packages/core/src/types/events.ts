@@ -25,7 +25,24 @@ export interface EditorEvents {
   commentDeleted: (commentId: string) => void;
   commentUpdated: (commentId: string) => void;
   executeAiCommand: (payload: { commandId: string; prompt?: string }) => void;
-  aiStatusChange: (status: { active: boolean; label?: string }) => void;
+  /**
+   * An AI request starts or ends: `task` says what it does, `count` how many results a finished
+   * proofread or review found, `label` holds English words or the message of a failure.
+   */
+  aiStatusChange: (status: {
+    active: boolean;
+    task?:
+      | "suggestions"
+      | "completion"
+      | "rewrite"
+      | "continue"
+      | "paragraph"
+      | "proofread"
+      | "review"
+      | "command";
+    count?: number;
+    label?: string;
+  }) => void;
   aiGhostTextChange: (ghost: { text: string; blockId: string; offset: number } | null) => void;
   aiProofreadChange: (payload: { suggestions: unknown[]; currentIndex: number }) => void;
   /** AI review comments: their own list, apart from the comments of `commentAdded` and others. */
