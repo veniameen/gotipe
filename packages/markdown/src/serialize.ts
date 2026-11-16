@@ -2,7 +2,7 @@ import { atomsIn, carried } from "./atoms";
 import { writeInline } from "./inline-serialize";
 import { RICH_TYPES, asWritten, fingerprint, isBlockEmpty, richContent } from "./model";
 import { parseInternal } from "./parse";
-import { type RNode, type RenderOpts, renderTop, writesNoLine } from "./serialization/blocks";
+import { type RNode, type RenderOpts, renderTop } from "./serialization/blocks";
 import { closingLine, copiesOpener } from "./serialization/closing";
 import {
   LIST_TYPES,
@@ -11,6 +11,7 @@ import {
   listSig,
   resolveHazards,
   riskyStart,
+  writesNoLine,
 } from "./serialization/hazards";
 import { type KeptBreaks, blockText, keptBreaks, snapshotLines } from "./serialization/line-breaks";
 import type {

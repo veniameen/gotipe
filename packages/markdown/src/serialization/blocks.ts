@@ -3,16 +3,14 @@ import {
   bulletMarker,
   calloutKind,
   clampLevel,
-  isBlockEmpty,
   listStart,
   normalizeAlign,
   richContent,
-  spansText,
 } from "../model";
 import type { Block, RawSegment, Span } from "../types";
 import { normalizeEol } from "../util";
 import { closingLine, copiesOpener } from "./closing";
-import { LIST_TYPES, siblingBlocks } from "./hazards";
+import { LIST_TYPES, siblingBlocks, writesNoLine } from "./hazards";
 import type { KeptBreaks } from "./line-breaks";
 import { hasMergedCells, tableHtml } from "./table-html";
 
@@ -129,14 +127,6 @@ function rawLines(source: string, indent: string): string {
   return indent ? source.replace(/\r\n|\r|\n/g, (eol) => eol + indent) : source;
 }
 
-/** An empty formula or an embed without an address has no Markdown at any depth. */
-function omitted(block: Block): boolean {
-  return (
-    (block.type === "math" || block.type === "embed" || block.type === "table") &&
-    isBlockEmpty(block)
-  );
-}
-
 /** A `$$` block; TeX with a line of its own `$$` uses a ```` ```math ```` fence instead. */
 function writeMath(w: Writer, tex: string, indent: string, ro: RenderOpts): void {
   const lines = tex.split("\n");
@@ -157,42 +147,9 @@ function blankLine(indent: string): string {
   return quote < 0 ? "" : `${indent.slice(0, quote + 1)} `;
 }
 
-/** Blocks written in syntax of their own: without text they still write a line. */
-const OWN_LINE = new Set([
-  "heading",
-  "codeBlock",
-  "blockquote",
-  "callout",
-  "divider",
-  "image",
-  "file",
-  "embed",
-  "math",
-  "table",
-]);
-
-/**
- * A block that writes no line but blanks of its own, so it keeps no lists apart and is not
- * written: raw source of blanks, a list without items, and a block without syntax of its own (a
- * paragraph, a toggle, columns) without text whose children write none (D-157). Its blank line
- * after the marker of an item without text would end the item (D-117).
- */
-export function writesNoLine(block: Block): boolean {
-  if (omitted(block)) return true;
-  if (block.type === "markdownRaw")
-    return typeof block.content !== "string" || !/[^ \t\r\n]/.test(block.content);
-  if (LIST_TYPES.has(block.type)) return !block.children?.length;
-  if (OWN_LINE.has(block.type)) return false;
-  const text =
-    typeof block.content === "string"
-      ? /[^ \t\r\n]/.test(block.content)
-      : spansText(richContent(block)).length > 0;
-  return !text && (block.children ?? []).every(writesNoLine);
-}
-
 /**
  * `children` as they are written: neighbouring lists with one marker would read as one list, so
- * one takes another marker (D-105).
+ * one takes another marker (D-105), also where a block without lines of its own holds one (D-191).
  */
 function written(children: readonly Block[] = []): Block[] {
   const changed = siblingBlocks(children.filter((child) => !writesNoLine(child)));

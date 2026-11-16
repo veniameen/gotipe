@@ -1,6 +1,6 @@
 import { readBlockNodes } from "../grammar/blocks";
 import type { List } from "../grammar/types";
-import { bulletMarker, listStart, richContent } from "../model";
+import { bulletMarker, isBlockEmpty, listStart, richContent, spansText } from "../model";
 import type { Block, MarkdownSnapshot } from "../types";
 
 /**
@@ -22,6 +22,76 @@ export interface Neighbour {
 }
 
 export const LIST_TYPES = new Set(["bulletList", "orderedList", "todoList"]);
+
+/** Blocks written in syntax of their own: without text they still write a line. */
+const OWN_LINE = new Set([
+  "heading",
+  "codeBlock",
+  "blockquote",
+  "callout",
+  "divider",
+  "image",
+  "file",
+  "embed",
+  "math",
+  "table",
+]);
+
+/** Blocks that hold their children in their syntax: a list its items, a table its rows, a quote. */
+const INSIDE = new Set([...LIST_TYPES, "table", "blockquote", "callout"]);
+
+/** An empty formula or an embed without an address has no Markdown at any depth. */
+const omitted = (block: Block): boolean =>
+  (block.type === "math" || block.type === "embed" || block.type === "table") &&
+  isBlockEmpty(block);
+
+/**
+ * Whether `block` writes nothing before its children: a block without syntax of its own (a
+ * paragraph, a toggle, columns) without text (D-191).
+ */
+function transparent(block: Block): boolean {
+  if (LIST_TYPES.has(block.type) || OWN_LINE.has(block.type)) return false;
+  return typeof block.content === "string"
+    ? !/[^ \t\r\n]/.test(block.content)
+    : !spansText(richContent(block));
+}
+
+/**
+ * A block that writes no line but blanks of its own, so it keeps no lists apart and is not
+ * written: raw source of blanks, a list without items, and a block without syntax of its own
+ * without text whose children write none (D-157). Its blank line after the marker of an item
+ * without text would end the item (D-117).
+ */
+export function writesNoLine(block: Block): boolean {
+  if (omitted(block)) return true;
+  if (block.type === "markdownRaw")
+    return typeof block.content !== "string" || !/[^ \t\r\n]/.test(block.content);
+  if (LIST_TYPES.has(block.type)) return !block.children?.length;
+  return transparent(block) && (block.children ?? []).every(writesNoLine);
+}
+
+/**
+ * The neighbours `item` is written as, one after another (D-191): the children of a block that
+ * does not hold them in its syntax follow it at its level, and a block that writes nothing before
+ * them is only its children. Source written as it is stays one neighbour.
+ */
+function flat(item: Neighbour): Neighbour[] {
+  const { block } = item;
+  if (item.preserved || INSIDE.has(block.type)) return [item];
+  const children = (block.children ?? [])
+    .filter((child) => !writesNoLine(child))
+    .flatMap((child) => flat({ block: child, oi: -1, preserved: false }));
+  return transparent(block) ? children : [item, ...children];
+}
+
+/** `block` with the blocks below it at its level that the protection of lists changed. */
+function rebuilt(block: Block, changed: Map<Block, Block>): Block {
+  const old = block.children;
+  const children = INSIDE.has(block.type)
+    ? old
+    : old?.map((child) => rebuilt(changed.get(child) ?? child, changed));
+  return children?.some((child, i) => child !== old![i]) ? { ...block, children } : block;
+}
 
 /** The list that `s` starts with: its bullet, or its numbering delimiter. */
 function fromSource(s: string): string | null {
@@ -140,39 +210,34 @@ export function resolveHazards(
 ): void {
   const first = items[0];
   if (first && !fm && first.block.type === "divider" && !first.preserved) first.dividerAlt = true;
-  separateLists(items, snap, blanks);
+  const changed = separateLists(items, snap, blanks);
+  for (const item of items) item.block = rebuilt(item.block, changed);
 }
 
 /**
  * The children `blocks` of one block as they are written one after another, where the protection
  * of lists of the top level changes them, at any depth (D-105): a list with another marker, raw
- * source of a list with another marker at each item.
+ * source of a list with another marker at each item, a toggle with such blocks (D-191).
  */
 export function siblingBlocks(blocks: readonly Block[]): Map<Block, Block> {
   const items: Neighbour[] = blocks.map((block) => ({ block, oi: -1, preserved: false }));
-  separateLists(items, undefined, () => "");
-  const written = new Map<Block, Block>();
-  for (const { block, markerOverride, raw } of items) {
-    if (raw !== undefined) written.set(block, { ...block, content: raw });
-    else if (markerOverride) {
-      const name = block.type === "orderedList" ? "delimiter" : "marker";
-      written.set(block, { ...block, attrs: { ...block.attrs, [name]: markerOverride } });
-    }
-  }
-  return written;
+  const changed = separateLists(items, undefined, () => "");
+  return new Map(blocks.map((block) => [block, rebuilt(changed.get(block) ?? block, changed)]));
 }
 
 /**
  * Of two lists with one marker the later takes another, the earlier one beside a raw list (unless
  * that joins it to the list before it), and of two raw lists the source of the later (or else of
- * the earlier) gets another marker. Neighbours in the source written as their source stay as they
- * are.
+ * the earlier) gets another marker; the blocks they are written as, one after another (`flat`).
+ * Neighbours in the source written as their source stay as they are. The blocks changed, as they
+ * are written.
  */
 function separateLists(
-  items: Neighbour[],
+  top: Neighbour[],
   snap: MarkdownSnapshot | undefined,
   blanks: (item: Neighbour) => string,
-): void {
+): Map<Block, Block> {
+  const items = top.flatMap(flat);
   for (let i = 1; i < items.length; i++) {
     const a = items[i - 1]!;
     const b = items[i]!;
@@ -201,6 +266,15 @@ function separateLists(
       }
     }
   }
+  const changed = new Map<Block, Block>();
+  for (const { block, markerOverride, raw } of items) {
+    if (raw !== undefined) changed.set(block, { ...block, content: raw });
+    else if (markerOverride) {
+      const name = block.type === "orderedList" ? "delimiter" : "marker";
+      changed.set(block, { ...block, attrs: { ...block.attrs, [name]: markerOverride } });
+    }
+  }
+  return changed;
 }
 
 export function riskyStart(item: Neighbour): boolean {
