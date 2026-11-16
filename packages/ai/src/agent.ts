@@ -1,4 +1,5 @@
 import { type GoTipeEditor, defineExtension } from "@gotipe/core";
+import { emitAiStatus } from "./requests";
 import { collectText, getRuntime, runAiTask } from "./runtime";
 import type { AiAgentOptions, AiComment, AiProofreadSuggestion } from "./types";
 
@@ -27,15 +28,19 @@ export const defineAiAgent = defineExtension<AiAgentOptions>({
           if (command === "proofread") {
             runtime.suggestions = await runtime.manager.proofread();
             editor.emit("aiProofreadChange", { suggestions: runtime.suggestions, currentIndex: 0 });
-            editor.emit("aiStatusChange", {
+            const count = runtime.suggestions.length;
+            emitAiStatus(editor, {
               active: false,
-              label: `Found ${runtime.suggestions.length} suggestions`,
+              task: "proofread",
+              count,
+              label: `Found ${count} suggestions`,
             });
           } else if (command === "review") {
             runtime.review.set(await runtime.manager.reviewComments());
             // Their own event: these comments are not in the comment store (D-46).
-            editor.emit("aiReviewChange", { comments: getAiReviewComments(editor) });
-            editor.emit("aiStatusChange", { active: false });
+            const comments = getAiReviewComments(editor);
+            editor.emit("aiReviewChange", { comments });
+            emitAiStatus(editor, { active: false, task: "review", count: comments.length });
           } else {
             if (!prompt) throw new Error("Enter an AI prompt");
             const target = runtime.manager.captureTarget();

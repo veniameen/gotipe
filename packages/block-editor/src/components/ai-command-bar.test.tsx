@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import { type GoTipeEditor, createEditor, defineExtension } from "@gotipe/core/js";
 import { FullPreset } from "@gotipe/core/presets";
+import { GoTipeI18nProvider } from "@gotipe/react";
 import { act } from "react";
 import { type Root, createRoot } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -211,5 +212,45 @@ describe("AI controls exist only with an extension that answers them", () => {
     act(() => root.render(<BlockEditor editor={full} showBlockToolbar={false} />));
     act(() => keyJ(container.querySelector("[data-gotipe-content]")!));
     expect(container.querySelector("[data-gotipe-ai-command-bar]")).not.toBeNull();
+  });
+});
+
+describe("the AI status speaks the interface's language (D-196)", () => {
+  const line = () => container.querySelector("[data-gotipe-ai-status]");
+  /** What `@gotipe/ai` sends, and a status of the host's own. */
+  function show(locale: string, status: { active: boolean; task?: string; label?: string }) {
+    act(() =>
+      root.render(
+        <GoTipeI18nProvider locale={locale}>
+          <AiStatusIndicator editor={editor} />
+        </GoTipeI18nProvider>,
+      ),
+    );
+    act(() => editor.emit("aiStatusChange", status));
+    return [line()?.textContent, line()?.getAttribute("aria-label")];
+  }
+
+  it.each([
+    ["ru", "proofread", "Proofreading...", "Модель проверяет правописание…"],
+    ["ru", "review", "Reviewing...", "Модель пишет замечания…"],
+    ["ru", "rewrite", "Improving...", "Модель улучшает текст…"],
+    ["ru", "command", "Processing...", "Модель пишет…"],
+    ["en", "suggestions", "Generating suggestions...", "Generating suggestions..."],
+    ["en", "paragraph", "Generating paragraph...", "Generating paragraph..."],
+  ])("in %s says the task %s by its key, not by label", (locale, task, label, words) => {
+    expect(show(locale, { active: true, task, label })).toEqual([words, words]);
+  });
+
+  it("shows a host's own status as it is, and a status without words generically", () => {
+    expect(show("ru", { active: true, label: "Свой статус" })).toEqual([
+      "Свой статус",
+      "Свой статус",
+    ]);
+    expect(show("ru", { active: true, task: "translate", label: "Translating..." })[0]).toBe(
+      "Translating...",
+    );
+    expect(show("ru", { active: true })[0]).toBe("Модель пишет…");
+    expect(show("en", { active: true })[0]).toBe("Processing...");
+    expect(show("ru", { active: false, task: "proofread" })[0]).toBeUndefined();
   });
 });

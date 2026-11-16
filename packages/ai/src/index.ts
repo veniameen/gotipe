@@ -19,6 +19,8 @@ export type {
   AiContext,
   AiContextOptions,
   AiAgentOptions,
+  AiStatus,
+  AiTask,
 } from "./types";
 export { AiManager } from "./manager";
 export { buildAiContext, captureTarget as captureAiTarget } from "./document";

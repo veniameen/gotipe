@@ -1,10 +1,26 @@
 import type { GoTipeEditor } from "@gotipe/core";
 import { assertWritable } from "./document";
+import type { AiStatus, AiTask } from "./types";
 
 export interface AiRequest {
   signal: AbortSignal;
   check(): void;
   finish(): void;
+}
+/** English words of each task in `AiStatus.label`, for hosts that show it as it is. */
+const LABELS: Record<AiTask, string> = {
+  suggestions: "Generating suggestions...",
+  completion: "Generating...",
+  rewrite: "Improving...",
+  continue: "Writing...",
+  paragraph: "Generating paragraph...",
+  proofread: "Proofreading...",
+  review: "Reviewing...",
+  command: "Processing...",
+};
+/** Emits `aiStatusChange` with the request's code, which the core's event type leaves out. */
+export function emitAiStatus(editor: GoTipeEditor, status: AiStatus): void {
+  editor.emit("aiStatusChange", status);
 }
 export function cancelled(): Error {
   const error = new Error("AI request was cancelled");
@@ -35,7 +51,7 @@ export class AiRequests {
   get processing(): boolean {
     return this.current !== null;
   }
-  start(label: string, signal?: AbortSignal): AiRequest {
+  start(task: AiTask, signal?: AbortSignal): AiRequest {
     assertWritable(this.editor);
     if (this.destroyed) throw new Error("AI manager has been destroyed");
     this.cancel();
@@ -47,7 +63,7 @@ export class AiRequests {
     };
     signal?.addEventListener("abort", abort, { once: true });
     if (signal?.aborted) abort();
-    else this.editor.emit("aiStatusChange", { active: true, label });
+    else emitAiStatus(this.editor, { active: true, task, label: LABELS[task] });
     return {
       signal: controller.signal,
       check: () => {
