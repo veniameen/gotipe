@@ -28,6 +28,7 @@ export const STAGE_COLOURS = {
   u_main: "--site-shade-main",
   u_second: "--site-shade-second",
   u_light: "--site-shade-light",
+  u_ink: "--site-shade-ink",
 } as const;
 type ColourUniform = keyof typeof STAGE_COLOURS;
 const COLOUR_UNIFORMS = Object.keys(STAGE_COLOURS) as ColourUniform[];

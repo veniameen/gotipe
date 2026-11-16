@@ -2,8 +2,8 @@ import { describe, expect, it } from "vitest";
 import tokens from "../../../styles/tokens-site.css?raw";
 import header from "../../site/site-header.tsx?raw";
 import hero from "../hero.tsx?raw";
-import { GLASS } from "./glass";
 import { HERO_CALM } from "./hero-background";
+import { NEBULA } from "./nebula";
 import { STAGE_COLOURS, STAGE_HEADER, approach, hexColour } from "./shader-stage";
 
 /** The declarations of a theme's block in the site's tokens: `[data-theme="…"] { … }`. */
@@ -28,11 +28,11 @@ describe("the stage shader", () => {
     expect(next).toBeLessThan(1);
   });
 
-  it("gives the glass every uniform it reads", () => {
+  it("gives the nebula every uniform it reads", () => {
     const declared = new Set(
       [...STAGE_HEADER.matchAll(/uniform \w+ (u_\w+)/g)].map((match) => match[1]),
     );
-    const used = new Set([...GLASS.matchAll(/\bu_\w+/g)].map((match) => match[0]));
+    const used = new Set([...NEBULA.matchAll(/\bu_\w+/g)].map((match) => match[0]));
     expect(used.size).toBeGreaterThan(0);
     for (const name of used) expect(declared, name).toContain(name);
   });

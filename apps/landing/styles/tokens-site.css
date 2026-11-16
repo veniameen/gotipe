@@ -452,12 +452,14 @@ body,
   --site-window-shadow: 0 1px 2px rgb(18 30 60 / 0.05), 0 40px 80px -40px rgb(30 60 130 / 0.42);
   --site-scrim: rgb(18 30 60 / 0.24);
   --site-highlight: rgb(44 98 212 / 0.14);
-  /* the stage's liquid glass (motion/glass.ts), hex only: the bands the drops bend, from the deep
-     tone through the main tone and a second hue to the highlight of their rims */
+  /* the stage's nebula (motion/nebula.ts), hex only: its gas from the deep tone through the main
+     tone and a second hue to the light one */
   --site-shade-deep: #b9c8ff;
   --site-shade-main: #7fa6ff;
   --site-shade-second: #8fd6ff;
   --site-shade-light: #ffffff;
+  /* the stars over it */
+  --site-shade-ink: #2c62d4;
   --site-code-shade: rgb(18 30 60 / 0.14);
   --site-hub-glow: 0 0 48px -8px rgb(44 98 212 / 0.35), 0 16px 40px -24px rgb(18 30 60 / 0.3);
 }
@@ -514,6 +516,7 @@ body,
   --site-shade-main: #2f6bff;
   --site-shade-second: #12a4e8;
   --site-shade-light: #a9c4ff;
+  --site-shade-ink: #cfdcff;
   --site-code-shade: rgb(0 0 0 / 0.5);
   --site-hub-glow: 0 0 56px -8px rgb(80 130 255 / 0.45), 0 16px 40px -24px rgb(0 0 0 / 0.8);
 }
