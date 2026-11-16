@@ -1,8 +1,8 @@
 /* The first stage of the landing (frame 20): blue light, the three lines with «rules.» selected
    as in the editor, the calls to action, the install line, the live window with a beam on its edge
    and the strip of what GoTipe is made of; then the facts. The site animates them
-   (apps/landing/styles/landing/motion.css) and draws drops of liquid glass over the light
-   (motion/glass.ts); the frame draws the state they settle in, the light without the drops. */
+   (apps/landing/styles/landing/motion.css) and draws a nebula over the light (motion/nebula.ts);
+   the frame draws the state they settle in, the light without the nebula. */
 
 /* ---- the stage: light from above; the shader over it is drawn by the page ---- */
 .site-hero {

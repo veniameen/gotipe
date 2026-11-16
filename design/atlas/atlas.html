@@ -1133,12 +1133,14 @@
   --site-window-shadow: 0 1px 2px rgb(18 30 60 / 0.05), 0 40px 80px -40px rgb(30 60 130 / 0.42);
   --site-scrim: rgb(18 30 60 / 0.24);
   --site-highlight: rgb(44 98 212 / 0.14);
-  /* the stage's liquid glass (motion/glass.ts), hex only: the bands the drops bend, from the deep
-     tone through the main tone and a second hue to the highlight of their rims */
+  /* the stage's nebula (motion/nebula.ts), hex only: its gas from the deep tone through the main
+     tone and a second hue to the light one */
   --site-shade-deep: #b9c8ff;
   --site-shade-main: #7fa6ff;
   --site-shade-second: #8fd6ff;
   --site-shade-light: #ffffff;
+  /* the stars over it */
+  --site-shade-ink: #2c62d4;
   --site-code-shade: rgb(18 30 60 / 0.14);
   --site-hub-glow: 0 0 48px -8px rgb(44 98 212 / 0.35), 0 16px 40px -24px rgb(18 30 60 / 0.3);
 }
@@ -1195,6 +1197,7 @@
   --site-shade-main: #2f6bff;
   --site-shade-second: #12a4e8;
   --site-shade-light: #a9c4ff;
+  --site-shade-ink: #cfdcff;
   --site-code-shade: rgb(0 0 0 / 0.5);
   --site-hub-glow: 0 0 56px -8px rgb(80 130 255 / 0.45), 0 16px 40px -24px rgb(0 0 0 / 0.8);
 }
@@ -4620,8 +4623,8 @@ html:not([data-theme="dark"]) .site-theme-to-light {
 /* The first stage of the landing (frame 20): blue light, the three lines with «rules.» selected
    as in the editor, the calls to action, the install line, the live window with a beam on its edge
    and the strip of what GoTipe is made of; then the facts. The site animates them
-   (apps/landing/styles/landing/motion.css) and draws drops of liquid glass over the light
-   (motion/glass.ts); the frame draws the state they settle in, the light without the drops. */
+   (apps/landing/styles/landing/motion.css) and draws a nebula over the light (motion/nebula.ts);
+   the frame draws the state they settle in, the light without the nebula. */
 
 /* ---- the stage: light from above; the shader over it is drawn by the page ---- */
 .site-hero {
@@ -10520,11 +10523,11 @@ editor<span class="tk-pun">.</span>on<span class="tk-pun">(</span><span class="t
     <span class="at-num">20</span>
     <h2 class="at-figure-title">Главная страница</h2>
     <p class="at-caption">
-      Главная по образцу владельца (zydeo-web) голосом GoTipe. Подложка первого экрана отстоит от края окна одинаково со всех сторон. На сайте по свету первого экрана плывут капли жидкого
-      стекла: сходятся и расходятся, скруглённые края преломляют полосы синего, ловят блик сверху
-      слева и светлый ободок. Курсор — своя капля: она вытягивается по движению, и стекло
-      перетекает к ней. Капли держатся по сторонам и ниже шапки, под текстом становятся прозрачнее,
-      ниже первого экрана гаснут. Кадр рисует свет первого экрана без капель. Шапка — полоса во всю
+      Главная по образцу владельца (zydeo-web) голосом GoTipe. Подложка первого экрана отстоит от края окна одинаково со всех сторон. На сайте по сторонам первого экрана — туманность: мягкий
+      синий газ обрамляет текст и едва заметно дрейфует, поверх мерцают редкие звёзды. Курсор
+      подсвечивает газ рядом с собой и слегка его закручивает, звёзды чуть сдвигаются за ним, как
+      в глубине. Под текстом и шапкой туманность затихает, ниже первого экрана гаснет. Кадр рисует
+      свет первого экрана без неё. Шапка — полоса во всю
       рамку, прозрачная над первым экраном, её тихие ссылки на ступень темнее тихого текста
       страницы; когда страница начинает прокручиваться, её стекло плавно сжимается до колонки
       страницы, а знак, ссылки и кнопки не сдвигаются: они на одной средней линии и на краях
