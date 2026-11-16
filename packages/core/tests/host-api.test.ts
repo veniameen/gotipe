@@ -109,9 +109,9 @@ describe('host API', () => {
     const errors: GoTipeError[] = [];
     editor.on('error', (e) => errors.push(e));
     editor.openLink('https://example.com/a', { blockId: 'a' });
-    expect(openLink).toHaveBeenCalledWith('https://example.com/a', { blockId: 'a', newTab: true });
+    expect(openLink).toHaveBeenCalledWith('https://example.com/a', { blockId: 'a', newTab: true, target: null });
     editor.openLink('docs/pages/other.md');
-    expect(openLink).toHaveBeenLastCalledWith('docs/pages/other.md', { blockId: null, newTab: true });
+    expect(openLink).toHaveBeenLastCalledWith('docs/pages/other.md', { blockId: null, newTab: true, target: null });
     editor.openLink('javascript:alert(1)');
     editor.openLink(' JaVa\tScRiPt:alert(1)');
     expect(openLink).toHaveBeenCalledTimes(2);

@@ -520,6 +520,7 @@ export function installDOMSelection(
   );
 
   return {
+    resolve: resolvePosition,
     read: readSelectionFromDOM,
     restore: restoreDomSelection,
     schedule: scheduleSelectionRestore,
