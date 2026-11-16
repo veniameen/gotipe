@@ -92,12 +92,14 @@ function escapeDollars(
   }
 }
 
-/** Where a word holds the start of an address: a scheme and `://`, or `www.` (`URL_WORD`). */
+/**
+ * Where a word holds the start of an address: a scheme and `://`, or `www.` (`URL_WORD`).
+ * `letter`: the run of scheme characters before here holds a letter; `colon`: how much of `://`
+ * follows that run.
+ */
 class UrlWord {
   found = false;
-  /** The run of scheme characters before here holds a letter. */
   private letter = false;
-  /** How much of `://` follows that run. */
   private colon = 0;
   private tail = "";
 
