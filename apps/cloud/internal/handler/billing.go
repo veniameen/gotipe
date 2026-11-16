@@ -13,6 +13,7 @@ import (
 	"github.com/gotipe/cloud/internal/audit"
 	"github.com/gotipe/cloud/internal/auth"
 	internalBilling "github.com/gotipe/cloud/internal/billing"
+	"github.com/gotipe/cloud/internal/middleware"
 	"github.com/gotipe/cloud/internal/storage"
 	"github.com/stripe/stripe-go/v81"
 )
@@ -73,6 +74,7 @@ func (h *BillingHandler) CreateSubscription() http.HandlerFunc {
 			return
 		}
 		if priceID == "" {
+			middleware.MarkNotRun(r) // nothing ran: a retry with the same key runs
 			apierror.ErrServiceDown.WithMessage("This billing plan is not configured").Write(w)
 			return
 		}

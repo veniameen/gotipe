@@ -11,6 +11,7 @@ import (
 	"github.com/gotipe/cloud/internal/apierror"
 	"github.com/gotipe/cloud/internal/auth"
 	"github.com/gotipe/cloud/internal/billing"
+	"github.com/gotipe/cloud/internal/middleware"
 	"github.com/gotipe/cloud/internal/storage"
 )
 
@@ -75,7 +76,10 @@ func (h *AIHandler) Complete() http.HandlerFunc {
 			apierror.ErrValidation.WithMessage("Invalid model, max_tokens or temperature").Write(w)
 			return
 		}
+		// Refusals before the provider answers change nothing: they are marked
+		// MarkNotRun, so an Idempotency-Key does not keep them and a retry runs.
 		if h.provider == nil {
+			middleware.MarkNotRun(r)
 			apierror.ErrServiceDown.WithMessage("AI provider is not configured").Write(w)
 			return
 		}
@@ -85,6 +89,8 @@ func (h *AIHandler) Complete() http.HandlerFunc {
 			return
 		}
 		if err != nil {
+			// A reservation left behind by a failed commit stops counting in 15 minutes.
+			middleware.MarkNotRun(r)
 			apierror.ErrInternal.Write(w)
 			return
 		}
@@ -112,6 +118,8 @@ func (h *AIHandler) Complete() http.HandlerFunc {
 			if started {
 				_ = writeAIEvent(w, "error", map[string]string{"code": "AI_PROVIDER_ERROR", "message": "AI generation failed"})
 			} else {
+				// The deferred release drops the reservation before the reply leaves.
+				middleware.MarkNotRun(r)
 				apierror.ErrServiceDown.WithMessage("AI provider is unavailable or returned an error").Write(w)
 			}
 			return

@@ -1,12 +1,14 @@
 package handler
 
 import (
+	"errors"
 	"net/http"
 	"time"
 
 	"github.com/gotipe/cloud/internal/apierror"
 	"github.com/gotipe/cloud/internal/auth"
 	"github.com/gotipe/cloud/internal/storage"
+	"github.com/jackc/pgx/v5"
 )
 
 type UsersHandler struct {
@@ -40,8 +42,13 @@ func (h *UsersHandler) GetMe() http.HandlerFunc {
 			`SELECT id, email, name, plan, COALESCE(avatar_url,''), created_at FROM users WHERE id = $1`,
 			user.UserID,
 		).Scan(&resp.ID, &resp.Email, &resp.Name, &resp.Plan, &resp.AvatarURL, &resp.CreatedAt)
-		if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			// The account was deleted after the credential was checked.
 			apierror.ErrNotFound.Write(w)
+			return
+		}
+		if err != nil {
+			apierror.ErrServiceDown.Write(w)
 			return
 		}
 

@@ -93,16 +93,20 @@ curl -X POST https://api.example.com/v1/documents \
 - A key is at most 255 bytes and is kept per user for 24 hours. It applies to the
   authenticated routes; `POST /v1/auth/token` and the Stripe webhook ignore it.
 - Repeating the same request with the same key returns the first response — status, headers
-  and body, errors included — after checking that you can still read the document or
-  organization it concerns.
+  and body, errors below `500` included — after checking that you can still read the document
+  or organization it concerns.
 - The same key with a different method, URL, content type, body, or credential (its scopes,
   document restriction or organization) answers `409 CONFLICT`.
 - While the first request is running, or when its result is unknown, the key answers
   `409 CONFLICT`. Check the resource's state instead of retrying with a new key.
-- A rate limit refusal is not a result: after a `429 RATE_LIMITED` (or a `503` because the
-  limit could not be checked) the key is free again, so repeat with the same key after
-  `Retry-After`. If even the key cannot be freed, the answer is `503` and the message asks
-  for a new key; the request did not run.
+- A refusal before the request ran is not a result: after a `429 RATE_LIMITED` (or a `503`
+  because the limit could not be checked), an AI request refused before the provider answered
+  (`503`, or `500` when the quota could not be checked) or a `503` for a billing plan without a
+  price, the key is free again, so repeat with the same key (after `Retry-After` for a rate
+  limit). If even the key cannot be freed, the answer is `503` and the message asks for a new
+  key; the request did not run.
+- Any other `5xx` is not kept either. The request may have stopped part way, so its result is
+  unknown, and the key answers `409 CONFLICT` until its 24 hours run out.
 - A body sent with a key has the same limit as any request. A streaming AI request
   (`"stream": true`) rejects keys with `400`.
 - A stored response body is at most 256 KiB. When the first response was larger, the first
@@ -442,7 +446,8 @@ data: {"usage":{"prompt_tokens":412,"completion_tokens":37}}
 
 A failure after the stream started arrives as `event: error` with `{"code": "AI_PROVIDER_ERROR", "message": "…"}`
 (or `USAGE_RECORD_FAILED` when the usage could not be saved). Before it starts, a missing
-provider key or a provider failure answers `503`. Provider calls time out after 2 minutes.
+provider key or a provider failure answers `503`, and its `Idempotency-Key` is free again.
+Provider calls time out after 2 minutes.
 
 ## Billing
 

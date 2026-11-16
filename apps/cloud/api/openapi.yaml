@@ -139,7 +139,7 @@ paths:
         '413': { $ref: '#/components/responses/PayloadTooLarge' }
         '429': { $ref: '#/components/responses/RateLimited' }
         '500': { $ref: '#/components/responses/InternalError' }
-        '503': { $ref: '#/components/responses/ServiceUnavailable', description: '`SERVICE_UNAVAILABLE`: the rate limiter could not reach Valkey.' }
+        '503': { $ref: '#/components/responses/ServiceUnavailable', description: '`SERVICE_UNAVAILABLE`: the rate limiter could not reach Valkey, or the database did not answer the lookup of the email or the key (never `401`).' }
 
   /v1/webhooks/stripe:
     post:
@@ -223,7 +223,7 @@ paths:
           description: The account.
           content: { application/json: { schema: { $ref: '#/components/schemas/User' } } }
         '401': { $ref: '#/components/responses/Unauthorized' }
-        '404': { $ref: '#/components/responses/NotFound', description: '`NOT_FOUND`: the account could not be read.' }
+        '404': { $ref: '#/components/responses/NotFound', description: '`NOT_FOUND`: the account was deleted after the credential was checked.' }
         '429': { $ref: '#/components/responses/RateLimited' }
         '503': { $ref: '#/components/responses/ServiceUnavailable' }
 
@@ -950,8 +950,8 @@ paths:
         '409': { $ref: '#/components/responses/Conflict' }
         '413': { $ref: '#/components/responses/PayloadTooLarge' }
         '429': { $ref: '#/components/responses/RateLimited', description: '`RATE_LIMITED` by `RATE_LIMIT_API` or `RATE_LIMIT_AI`. The `RATE_LIMIT_AI` check runs after the idempotency claim, but its refusal is not recorded: the key is released, and a repeat with the same key after `Retry-After` runs.' }
-        '500': { $ref: '#/components/responses/InternalError', description: '`INTERNAL_ERROR`: the quota reservation or the usage record failed.' }
-        '503': { $ref: '#/components/responses/ServiceUnavailable', description: '`SERVICE_UNAVAILABLE`: the provider has no API key on the server or failed before the stream started, or Valkey failed.' }
+        '500': { $ref: '#/components/responses/InternalError', description: '`INTERNAL_ERROR`: the quota reservation failed (the request did not run, and its `Idempotency-Key` is released), or the usage record failed after the provider answered (the key stays claimed, and a repeat answers `409`).' }
+        '503': { $ref: '#/components/responses/ServiceUnavailable', description: '`SERVICE_UNAVAILABLE`: the provider has no API key on the server or failed before the stream started (the quota reservation is dropped, and the `Idempotency-Key` is released, so a repeat with it runs), or Valkey failed.' }
 
   /v1/billing/subscribe:
     post:
@@ -981,7 +981,7 @@ paths:
         '413': { $ref: '#/components/responses/PayloadTooLarge' }
         '429': { $ref: '#/components/responses/RateLimited' }
         '500': { $ref: '#/components/responses/InternalError', description: '`INTERNAL_ERROR`: a database or Stripe failure.' }
-        '503': { $ref: '#/components/responses/ServiceUnavailable', description: '`SERVICE_UNAVAILABLE`: no Stripe price is configured for the plan (`This billing plan is not configured`), or Valkey failed.' }
+        '503': { $ref: '#/components/responses/ServiceUnavailable', description: '`SERVICE_UNAVAILABLE`: no Stripe price is configured for the plan (`This billing plan is not configured`; the `Idempotency-Key` is released), or Valkey failed.' }
 
   /v1/billing/cancel:
     post:
@@ -1047,7 +1047,8 @@ components:
         granted through the API. A missing scope answers `403 FORBIDDEN`. Credential errors:
         `401 UNAUTHORIZED` (no bearer credential), `401 INVALID_API_KEY`, `401 INVALID_TOKEN`
         (an invalid, expired or revoked token, or a deleted account), and `503` when the token
-        revocation list or the token's account lookup is unavailable.
+        revocation list is unavailable or the database does not answer the lookup of the API key
+        or the token's account. A `401` always means that the credential itself is wrong.
 
   parameters:
     IdempotencyKey:
@@ -1061,18 +1062,24 @@ components:
         - The server claims the key in Valkey before running the request, then records the
           outcome. A later request with the same key and an identical request (method, URI
           with query, `Content-Type`, body, and the credential's scopes, document restriction
-          and organization) gets the recorded status, headers and body again, errors included,
-          without running again. Before replaying a successful reply with a body that concerns
-          a document or an organization, the server checks that the caller can still read it
-          (viewer role or membership) and answers `404` otherwise.
+          and organization) gets the recorded status, headers and body again, errors below
+          `500` included, without running again. Before replaying a successful reply with a
+          body that concerns a document or an organization, the server checks that the caller
+          can still read it (viewer role or membership) and answers `404` otherwise.
         - `409 CONFLICT` when the key was used for a different request; while the first
-          request is still running or its outcome is uncertain (read the resource instead of
-          repeating the mutation with a new key); or when the first reply was larger than
+          request is still running or its outcome is uncertain (it ended with a `5xx` that did
+          not release the key, or its outcome could not be recorded: read the resource instead
+          of repeating the mutation with a new key); or when the first reply was larger than
           256 KiB or held a secret (a new API key) and was not kept (the message gives its
           status).
-        - A rate limit refusal (`429`, or `503` when the limit could not be checked) is not
-          recorded: the key is released and a repeat with it runs. When the key cannot be
-          released, the answer is `503` asking for a new key; the request did not run.
+        - A refusal before the request ran is not recorded: a rate limit refusal (`429`, or
+          `503` when the limit could not be checked), an AI request refused before the
+          provider answered (`503`, or `500` when the quota could not be checked) and a billing
+          plan without a price (`503`). The key is released and a repeat with it runs. When the
+          key cannot be released, the answer is `503` asking for a new key; the request did not
+          run.
+        - Any other `5xx` is not recorded either: the request may have stopped part way, so
+          the key stays claimed, and a repeat answers `409` until the record expires.
         - `400 VALIDATION_ERROR` when the key is longer than 255 bytes, the body cannot be read,
           or the request is a streaming AI request (`"stream": true`); `413` when the body is
           above the limit of every request.
@@ -1172,8 +1179,9 @@ components:
     Conflict:
       description: >-
         `CONFLICT` from the `Idempotency-Key`: the key was used for a different request, the
-        first request is still running or its outcome is uncertain, or its reply was larger
-        than 256 KiB and was not kept.
+        first request is still running or its outcome is uncertain (it ended with a `5xx` that
+        did not release the key, or its outcome could not be recorded), or its reply was
+        larger than 256 KiB and was not kept.
       content: { application/json: { schema: { $ref: '#/components/schemas/ErrorResponse' } } }
     PayloadTooLarge:
       description: '`PAYLOAD_TOO_LARGE`: `Content-Length` is above `EXPORT_MAX_DOCUMENT_SIZE` + 1 MiB (11 MiB by default). A longer body sent without its length fails with `400` instead.'
@@ -1189,8 +1197,9 @@ components:
     ServiceUnavailable:
       description: >-
         `SERVICE_UNAVAILABLE`: Valkey (token revocation list, rate limiter or idempotency
-        record) or the token's account lookup failed. `Request outcome could not be recorded;
-        retain the same Idempotency-Key` means that the mutation may have run.
+        record) failed, or the database did not answer the lookup of the credential or the
+        account. `Request outcome could not be recorded; retain the same Idempotency-Key` means
+        that the mutation may have run.
       content: { application/json: { schema: { $ref: '#/components/schemas/ErrorResponse' } } }
 
   schemas:

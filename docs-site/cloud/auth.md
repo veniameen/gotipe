@@ -51,7 +51,8 @@ curl -X POST https://api.example.com/v1/auth/token \
   `ai:use` and `account:manage`.
 - The account's plan is read from the database on every request, so plan changes apply at
   once.
-- Wrong credentials answer `401 UNAUTHORIZED` with the message `Invalid credentials`.
+- Wrong credentials answer `401 UNAUTHORIZED` with the message `Invalid credentials`. If the
+  database cannot be reached, the answer is `503`, not `401`.
 - The endpoint accepts 10 requests per minute per client address.
 
 To end a session, revoke the token you are using:
@@ -169,6 +170,9 @@ can read the organization and its member list. See [REST API](/docs/cloud/rest-a
 - Revoked token IDs are kept in Valkey until the token expires. If Valkey cannot be reached,
   requests with access tokens fail with `503` instead of skipping the check.
 - A deleted API key stops working on the next request.
+- An API key, and the account of an access token, are looked up in the database on every
+  request. If the database cannot be reached, the request fails with `503`: a `401` always
+  means that the credential itself is wrong.
 - Open `/sync` connections re-check the credential and the editor role every 15 seconds and on
   every message, and close at the token's expiry. See [Real-time sync](/docs/cloud/realtime).
 - The login limit (10 attempts a minute) counts each client address. Behind a reverse proxy,
