@@ -93,3 +93,35 @@ func (tx *eventTransaction) Rollback(context.Context) error                   { 
 type eventRow struct{}
 
 func (eventRow) Scan(dest ...any) error { *dest[0].(*string) = "account"; return nil }
+
+// The event only names the subscription. Its place differs between API versions:
+// an invoice of 2025-03-31.basil or later names it under parent.subscription_details.
+func TestEventProcessorFindsTheSubscriptionInEveryAPIVersion(t *testing.T) {
+	stop := errors.New("stop after the subscription ID")
+	for _, test := range []struct {
+		event, object, want string
+	}{
+		{"invoice.paid", `{"id":"in","subscription":"sub_old"}`, "sub_old"},
+		{"invoice.paid", `{"id":"in","subscription":null,"parent":{"type":"subscription_details","subscription_details":{"subscription":"sub_basil"}}}`, "sub_basil"},
+		{"invoice.payment_failed", `{"id":"in","parent":{"subscription_details":{"subscription":{"id":"sub_expanded","object":"subscription"}}}}`, "sub_expanded"},
+		{"checkout.session.completed", `{"id":"cs","subscription":{"id":"sub_session"}}`, "sub_session"},
+		{"customer.subscription.updated", `{"id":"sub_event","items":{"data":[{"current_period_end":1}]}}`, "sub_event"},
+	} {
+		var got string
+		p := &EventProcessor{Subscriptions: subscriptionReader(func(id string) (*stripe.Subscription, error) {
+			got = id
+			return nil, stop
+		}), DB: eventDB{}}
+		err := p.Process(context.Background(), &stripe.Event{Type: stripe.EventType(test.event), Data: &stripe.EventData{Raw: []byte(test.object)}})
+		if !errors.Is(err, stop) || got != test.want {
+			t.Fatalf("%s %s: got %q, %v", test.event, test.object, got, err)
+		}
+	}
+	p := &EventProcessor{Subscriptions: subscriptionReader(func(id string) (*stripe.Subscription, error) {
+		t.Fatalf("a one-time invoice read subscription %q", id)
+		return nil, nil
+	})}
+	if err := p.Process(context.Background(), &stripe.Event{Type: "invoice.paid", Data: &stripe.EventData{Raw: []byte(`{"id":"in","parent":{"type":"quote_details"}}`)}}); err != nil {
+		t.Fatal(err)
+	}
+}

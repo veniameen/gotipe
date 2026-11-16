@@ -23,38 +23,63 @@ type EventProcessor struct {
 	Prices        map[string]string // plan -> configured Stripe price
 }
 
+// eventObject is the part of an event's object the processor reads: the ID of the
+// subscription concerned, nothing else. The subscription itself is fetched again
+// with the API version stripe-go is built for, so an event of another API version
+// cannot be misread. Since 2025-03-31.basil an invoice names its subscription under
+// parent.subscription_details instead of subscription.
+type eventObject struct {
+	ID           string          `json:"id"`
+	Subscription json.RawMessage `json:"subscription"`
+	Parent       *struct {
+		SubscriptionDetails *struct {
+			Subscription json.RawMessage `json:"subscription"`
+		} `json:"subscription_details"`
+	} `json:"parent"`
+}
+
+// referenceID reads a reference that is an ID or an expanded object with an id.
+func referenceID(raw json.RawMessage) string {
+	var id string
+	if json.Unmarshal(raw, &id) == nil {
+		return id
+	}
+	var object struct {
+		ID string `json:"id"`
+	}
+	if json.Unmarshal(raw, &object) == nil {
+		return object.ID
+	}
+	return ""
+}
+
 func (p *EventProcessor) Process(ctx context.Context, event *stripe.Event) error {
 	if event == nil || event.Data == nil {
 		return errors.New("missing webhook event data")
 	}
+	var object eventObject
+	switch event.Type {
+	case "customer.subscription.created", "customer.subscription.updated", "customer.subscription.deleted",
+		"checkout.session.completed", "checkout.session.async_payment_succeeded",
+		"invoice.payment_failed", "invoice.paid":
+		if err := json.Unmarshal(event.Data.Raw, &object); err != nil {
+			return err
+		}
+	default:
+		return nil
+	}
 	var subscriptionID string
 	switch event.Type {
 	case "customer.subscription.created", "customer.subscription.updated", "customer.subscription.deleted":
-		var subscription stripe.Subscription
-		if err := json.Unmarshal(event.Data.Raw, &subscription); err != nil {
-			return err
-		}
-		subscriptionID = subscription.ID
-	case "checkout.session.completed", "checkout.session.async_payment_succeeded":
-		var session stripe.CheckoutSession
-		if err := json.Unmarshal(event.Data.Raw, &session); err != nil {
-			return err
-		}
-		if session.Subscription == nil {
-			return nil
-		}
-		subscriptionID = session.Subscription.ID
-	case "invoice.payment_failed", "invoice.paid":
-		var invoice stripe.Invoice
-		if err := json.Unmarshal(event.Data.Raw, &invoice); err != nil {
-			return err
-		}
-		if invoice.Subscription == nil {
-			return nil
-		}
-		subscriptionID = invoice.Subscription.ID
+		subscriptionID = object.ID
 	default:
-		return nil
+		subscriptionID = referenceID(object.Subscription)
+		if subscriptionID == "" && object.Parent != nil && object.Parent.SubscriptionDetails != nil {
+			subscriptionID = referenceID(object.Parent.SubscriptionDetails.Subscription)
+		}
+		if subscriptionID == "" {
+			return nil // a one-time payment, not a subscription
+		}
 	}
 	if subscriptionID == "" {
 		return errors.New("missing subscription id")

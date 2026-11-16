@@ -190,7 +190,7 @@ are `<count>/<s|sec|min|h|hour>`. An invalid value stops the API at startup.
 | `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, `GOOGLE_AI_API_KEY` | — | Provider keys for `/v1/ai/complete`. |
 | `AI_DEFAULT_PROVIDER`, `AI_DEFAULT_MODEL` | `openai`, `gpt-4o-mini` | Used when a request names none. |
 | `AI_MAX_TOKENS` | `4096` | Default and largest `max_tokens`. |
-| `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET` | — | Stripe billing; without the webhook secret the webhook answers `503`. |
+| `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET` | — | Stripe billing; without the webhook secret the webhook answers `503`. Send the endpoint `customer.subscription.*`, `checkout.session.completed`, `checkout.session.async_payment_succeeded`, `invoice.paid` and `invoice.payment_failed`; any API version works. |
 | `STRIPE_PRICE_STARTER_ID`, `STRIPE_PRICE_PRO_ID`, `STRIPE_PRICE_BUSINESS_ID` | — | Stripe prices of the paid plans. |
 | `LOG_LEVEL`, `LOG_FORMAT` | `info`, `json` | `debug`, `info`, `warn` or `error`; `json` or `text`. |
 

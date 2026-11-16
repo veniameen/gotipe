@@ -466,7 +466,9 @@ A limit of `-1` means unlimited.
 
 `POST /v1/webhooks/stripe` receives Stripe events. It checks the `Stripe-Signature` header
 against `STRIPE_WEBHOOK_SECRET`, stores the event and answers `200`; a worker applies it with
-retries. Subscription, checkout and invoice events update the account's plan.
+retries. Subscription, checkout and invoice events update the account's plan. The webhook
+endpoint in Stripe may use any API version: the worker takes only the subscription ID from the
+event and reads the subscription again from Stripe.
 
 > [!NOTE]
 > Not in this release: sign-up, OAuth or SSO, outgoing webhooks, an endpoint for a version's

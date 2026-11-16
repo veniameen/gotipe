@@ -48,3 +48,32 @@ func TestWebhookAcknowledgesOnlyVerifiedDurableEvents(t *testing.T) {
 		})
 	}
 }
+
+// Stripe signs events with the endpoint's API version, which need not be the one
+// stripe-go v81 is built for. A signed event of any version is stored.
+func TestWebhookAcceptsSignedEventsOfAnyAPIVersion(t *testing.T) {
+	for _, version := range []string{"2025-03-31.basil", "2023-10-16", stripe.APIVersion} {
+		body := []byte(fmt.Sprintf(`{"id":"evt_test","type":"invoice.paid","api_version":%q,"data":{"object":{"id":"in_test"}}}`, version))
+		signed := webhook.GenerateTestSignedPayload(&webhook.UnsignedPayload{Payload: body, Secret: "test-secret"})
+		writes := 0
+		pool := &testPool{exec: func(string, ...any) (pgconn.CommandTag, error) {
+			writes++
+			return pgconn.NewCommandTag("INSERT 0 1"), nil
+		}}
+		h := NewWebhooksHandler(&storage.PostgresStore{Pool: pool}, "test-secret", slog.New(slog.NewTextHandler(io.Discard, nil)))
+		r := httptest.NewRequest("POST", "/v1/webhooks/stripe", strings.NewReader(string(body)))
+		r.Header.Set("Stripe-Signature", signed.Header)
+		w := httptest.NewRecorder()
+		h.StripeWebhook()(w, r)
+		if w.Code != 200 || writes != 1 {
+			t.Fatalf("API version %s: status %d writes %d %s", version, w.Code, writes, w.Body)
+		}
+		tampered := httptest.NewRequest("POST", "/v1/webhooks/stripe", strings.NewReader(strings.Replace(string(body), "in_test", "in_other", 1)))
+		tampered.Header.Set("Stripe-Signature", signed.Header)
+		w = httptest.NewRecorder()
+		h.StripeWebhook()(w, tampered)
+		if w.Code != 400 || writes != 1 {
+			t.Fatalf("API version %s: tampered body accepted: %d", version, w.Code)
+		}
+	}
+}
