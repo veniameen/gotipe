@@ -134,7 +134,7 @@ import { PageEditor, type PageEditorHandle } from "@gotipe/block-editor";
 |---|---|---|
 | `saveAsset(blob, {kind, name, mediaType, size})` → `{src, name?}` | вставка из буфера, перетаскивание, «Изображение», «Файл» | `wiki.writeAsset`; отказ — `throw` (станет событием `error`) |
 | `resolveAsset(src)` → data URL \| null | показ изображения | `wiki.readAsset` → `dataUrl` |
-| `openLink(href, {blockId, newTab})` | Cmd/Ctrl+клик; любой клик в режиме чтения; клик по файлу | ссылки наружу — системный браузер; `docs/pages/*.md` — вкладка страницы |
+| `openLink(href, {blockId, newTab, target})` | Cmd/Ctrl+клик; любой клик в режиме чтения; клик по файлу | ссылки наружу — системный браузер; `docs/pages/*.md` — вкладка страницы; `target` — свой у ссылки (`_self`, `_blank`), у имени файла `null`, решает хост |
 | `onError(error: GoTipeError)` | любая ошибка | тост или подсветка; своих строк ошибок у редактора нет |
 
 Коды ошибок: `ASSET_SAVE_FAILED`, `ASSET_RESOLVE_FAILED`, `LINK_BLOCKED` (не http/https/mailto и не

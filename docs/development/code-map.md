@@ -60,6 +60,7 @@ React/content/table-layout владеет временной шириной пр
 | Правила Markdown-ярлыков блоков: смена блока и удаление триггера — одна транзакция; где блок нельзя, правило уступает без ошибки | `input/block-rule.ts` (`convertTyped`, `givesWay`), правила — в своих расширениях |
 | Выделенный блок (`selectBlock`) Backspace и Delete удаляют целиком, набор и Enter заменяют — и после кадра восстановления, пока каретка DOM стоит на его якоре | `editor/mount.ts` (keydown), `input/session.ts` (`resolveSelectionForInput`) → `input/selection-edit.ts` (`replaceStructuredSelection`) |
 | Каретка `focus(position)` и `autofocus`: начало первого блока с текстом, конец последнего | `editor/focus.ts` |
+| Щелчок по ссылке: когда открывать, `target` ссылки из модели в `info` хоста; проверка URL и запасной `window.open` | `editor/link-activation.ts`; `editor/host.ts` (`openLink`) |
 | Откуда правка в событии `update`: `origin` `"local"` или `"remote"` (обновление другой реплики и починка после него) | `editor/transactions.ts` (`publishUpdate`), `editor.ts` (`setContent`, `changed` совместной работы) |
 | Lifecycle extensions/plugins и decoration layers; порядок и проверка `dependencies` | `editor/extension-lifecycle.ts`; `editor/extensions.ts` (`resolveExtensions`) |
 | Настроенные paste rules и изолированный draft | `editor/clipboard-options.ts`, `clipboard/paste-rules.ts` |
