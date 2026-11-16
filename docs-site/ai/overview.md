@@ -99,20 +99,19 @@ a `GoTipeError` of code `EXTENSION_ERROR` and `details.extension === "ai"`, and 
 `aiStatusChange` whose `label` is the message.
 
 ```ts title="proofread-found.ts"
-import type { AiStatus } from "@gotipe/ai";
 import type { GoTipeEditor } from "@gotipe/core";
 
 /** Calls `found` with the number of suggestions when a proofread ends. */
 export function onProofreadFound(editor: GoTipeEditor, found: (count: number) => void) {
-  return editor.on("aiStatusChange", (status: AiStatus) => {
+  return editor.on("aiStatusChange", (status) => {
     if (!status.active && status.task === "proofread" && status.count !== undefined)
       found(status.count);
   });
 }
 ```
 
-The core's type of the event names only `active` and `label`, so type the listener with
-`AiStatus` to read `task` and `count`.
+The core declares the event's type with these fields; `@gotipe/ai` names it `AiStatus`, and
+the codes of `task` `AiTask`.
 
 ## Context
 

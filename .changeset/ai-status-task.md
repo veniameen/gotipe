@@ -13,8 +13,7 @@ The AI status says what runs, and the block editor says it in the interface's la
   many suggestions or comments it found; a review used to end with `{ active: false }`
   alone. `label` keeps its English words ("Proofreading...", "Found 3 suggestions") and the
   message of a failure, so hosts that show it as it is work as before. New types `AiStatus`
-  and `AiTask`; the core's type of the event still names only `active` and `label`, so type a
-  listener with `AiStatus` to read `task` and `count`.
+  and `AiTask` name the core's type of the event and the codes of `task`.
 - `@gotipe/block-editor`: `AiStatusIndicator` says the task by the new keys `ai.status.*`
   (in Russian «Модель проверяет правописание…» instead of "Proofreading..."), `command` by
   `ai.processing`. A status of the host's own without a known `task` still shows its

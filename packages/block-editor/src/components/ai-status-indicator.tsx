@@ -1,4 +1,4 @@
-import type { GoTipeEditor } from "@gotipe/core";
+import type { EditorEvents, GoTipeEditor } from "@gotipe/core";
 import type { TranslationKey } from "@gotipe/i18n";
 import { useEffect, useState } from "react";
 import { useBlockEditorI18n } from "../i18n/strings";
@@ -8,24 +8,20 @@ export interface AiStatusIndicatorProps {
   editor: GoTipeEditor;
 }
 
-/** `aiStatusChange` as `@gotipe/ai` emits it: `task` says what runs (D-196). */
-interface AiStatus {
-  active: boolean;
-  task?: string;
-  label?: string;
-}
+/** `aiStatusChange` as the core declares it: `task` says what runs (D-196). */
+type AiStatus = Parameters<EditorEvents["aiStatusChange"]>[0];
 
 /** The words of each task of `@gotipe/ai`. */
-const TASKS = new Map<string, TranslationKey>([
-  ["suggestions", "ai.status.suggestions"],
-  ["completion", "ai.status.completion"],
-  ["rewrite", "ai.status.rewrite"],
-  ["continue", "ai.status.continue"],
-  ["paragraph", "ai.status.paragraph"],
-  ["proofread", "ai.status.proofread"],
-  ["review", "ai.status.review"],
-  ["command", "ai.processing"],
-]);
+const TASKS: Record<NonNullable<AiStatus["task"]>, TranslationKey> = {
+  suggestions: "ai.status.suggestions",
+  completion: "ai.status.completion",
+  rewrite: "ai.status.rewrite",
+  continue: "ai.status.continue",
+  paragraph: "ai.status.paragraph",
+  proofread: "ai.status.proofread",
+  review: "ai.status.review",
+  command: "ai.processing",
+};
 
 /**
  * The footer line of a running AI request; it needs `defineAi`, which reports the status. It
@@ -41,14 +37,15 @@ function Status({ editor }: AiStatusIndicatorProps) {
   const [status, setStatus] = useState<AiStatus>({ active: false });
 
   useEffect(() => {
-    const unsub = editor.on("aiStatusChange", (s: AiStatus) => {
+    const unsub = editor.on("aiStatusChange", (s) => {
       setStatus(s);
     });
     return unsub;
   }, [editor]);
 
   if (!status.active) return null;
-  const key = status.task === undefined ? undefined : TASKS.get(status.task);
+  // A JavaScript host or a newer `@gotipe/ai` may send a code this line does not know.
+  const key = status.task && Object.hasOwn(TASKS, status.task) ? TASKS[status.task] : undefined;
   const text = key ? i18n.t(key) : (status.label ?? i18n.t("ai.processing"));
 
   return (

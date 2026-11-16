@@ -1,4 +1,5 @@
 // @vitest-environment jsdom
+import type { EditorEvents } from "@gotipe/core";
 import { type GoTipeEditor, createEditor, defineExtension } from "@gotipe/core/js";
 import { FullPreset } from "@gotipe/core/presets";
 import { GoTipeI18nProvider } from "@gotipe/react";
@@ -215,10 +216,12 @@ describe("AI controls exist only with an extension that answers them", () => {
   });
 });
 
+type AiStatus = Parameters<EditorEvents["aiStatusChange"]>[0];
+
 describe("the AI status speaks the interface's language (D-196)", () => {
   const line = () => container.querySelector("[data-gotipe-ai-status]");
   /** What `@gotipe/ai` sends, and a status of the host's own. */
-  function show(locale: string, status: { active: boolean; task?: string; label?: string }) {
+  function show(locale: string, status: AiStatus) {
     act(() =>
       root.render(
         <GoTipeI18nProvider locale={locale}>
@@ -230,7 +233,7 @@ describe("the AI status speaks the interface's language (D-196)", () => {
     return [line()?.textContent, line()?.getAttribute("aria-label")];
   }
 
-  it.each([
+  it.each<[string, AiStatus["task"], string, string]>([
     ["ru", "proofread", "Proofreading...", "Модель проверяет правописание…"],
     ["ru", "review", "Reviewing...", "Модель пишет замечания…"],
     ["ru", "rewrite", "Improving...", "Модель улучшает текст…"],
@@ -246,9 +249,11 @@ describe("the AI status speaks the interface's language (D-196)", () => {
       "Свой статус",
       "Свой статус",
     ]);
-    expect(show("ru", { active: true, task: "translate", label: "Translating..." })[0]).toBe(
-      "Translating...",
+    // A JavaScript host, or a newer `@gotipe/ai`, may send a code the line does not know.
+    const unknown = JSON.parse(
+      '{ "active": true, "task": "translate", "label": "Translating..." }',
     );
+    expect(show("ru", unknown)[0]).toBe("Translating...");
     expect(show("ru", { active: true })[0]).toBe("Модель пишет…");
     expect(show("en", { active: true })[0]).toBe("Processing...");
     expect(show("ru", { active: false, task: "proofread" })[0]).toBeUndefined();
