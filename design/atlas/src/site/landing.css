@@ -229,7 +229,9 @@
   box-shadow: inset 0 0 0 var(--gt-hairline) var(--gt-line-active);
 }
 
-/* ---- the landing's head: a bar in the frame, clear over the first stage, glass once scrolled ---- */
+/* ---- the landing's head: a bar in the frame, clear over the first stage; once the page scrolls,
+   glass that closes in on the page's column. The content never moves: the bar's width and its
+   padding change together, so the mark, the links and the actions keep the column's edges. ---- */
 .site-head {
   position: absolute;
   top: var(--site-frame);
@@ -237,12 +239,8 @@
   left: var(--site-frame);
   z-index: var(--site-z-head);
   height: var(--site-head-h);
-  border-radius: var(--site-head-radius);
-  transition: background-color var(--site-dur-2) var(--site-ease), box-shadow var(--site-dur-2)
-    var(--site-ease), backdrop-filter var(--site-dur-2) var(--site-ease);
 }
-/* three columns: the mark, the links in the very middle, the actions; the content keeps the
-   page's left and right edges */
+/* three columns: the mark, the links in the very middle, the actions */
 .site-head-in {
   position: relative;
   display: grid;
@@ -250,10 +248,30 @@
   align-items: center;
   gap: var(--site-space-4);
   box-sizing: border-box;
-  max-width: calc(var(--site-max) - 2 * var(--site-frame));
+  max-width: 100%;
   height: 100%;
   margin: 0 auto;
-  padding: 0 calc(var(--site-gutter) - var(--site-frame));
+  padding: 0
+    calc((100% - min(100% + 2 * var(--site-frame), var(--site-max)) + 2 * var(--site-gutter)) / 2);
+  border-radius: var(--site-head-radius);
+  transition:
+    max-width var(--site-head-shrink) var(--site-ease-out), padding var(--site-head-shrink)
+    var(--site-ease-out), background-color var(--site-dur-2) var(--site-ease), box-shadow
+    var(--site-dur-2) var(--site-ease), backdrop-filter var(--site-dur-2) var(--site-ease);
+}
+.site-head[data-scrolled] .site-head-in {
+  max-width: calc(
+    min(100% + 2 * var(--site-frame), var(--site-max)) -
+    2 *
+    var(--site-gutter) +
+    2 *
+    var(--site-head-pad-x)
+  );
+  padding: 0 var(--site-head-pad-x);
+  background: var(--site-glass-strong);
+  box-shadow: inset 0 0 0 var(--gt-hairline) var(--site-glass-line), var(--site-glass-shadow);
+  -webkit-backdrop-filter: blur(var(--site-glass-blur)) saturate(1.8);
+  backdrop-filter: blur(var(--site-glass-blur)) saturate(1.8);
 }
 .site-head-in > .site-brand {
   justify-self: start;

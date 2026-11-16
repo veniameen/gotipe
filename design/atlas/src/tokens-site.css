@@ -90,7 +90,8 @@
 
   /* ---- the heads ---- */
   --site-head-h: var(--site-space-16);
-  --site-head-pad-x: var(--site-space-3);
+  /* the glass bar's padding once it closes in on the column */
+  --site-head-pad-x: var(--site-space-4);
   --site-head-radius: var(--site-radius-4);
   --site-logo: 28px;
   --site-logo-l: 32px;
@@ -105,9 +106,7 @@
   --site-hero-bottom: var(--site-space-16);
   --site-hero-copy-max: 880px;
   --site-hero-window-top: var(--site-space-16);
-  --site-grid-step: 64px;
   --site-grid-line: 1px;
-  --site-grid-fade: 90% 70%;
   --site-glow-shape-a: 70% 60%;
   --site-glow-shape-b: 36% 44%;
   --site-mask-on: #000;
@@ -331,7 +330,7 @@
     --site-section-y: var(--site-space-16);
     --site-section-gap: var(--site-space-10);
     --site-head-h: 56px;
-    --site-head-pad-x: var(--site-space-2);
+    --site-head-pad-x: var(--site-space-3);
     --site-head-radius: var(--site-radius-3);
     --site-hero-top: var(--site-space-12);
     --site-hero-bottom: var(--site-space-10);
@@ -447,6 +446,12 @@
   --site-window-shadow: 0 1px 2px rgb(18 30 60 / 0.05), 0 40px 80px -40px rgb(30 60 130 / 0.42);
   --site-scrim: rgb(18 30 60 / 0.24);
   --site-highlight: rgb(44 98 212 / 0.14);
+  /* the stage's flowing light (motion/hero-light.tsx): three colours, how much of them, the lines */
+  --site-light-1: #2c62d4;
+  --site-light-2: #0ea5e9;
+  --site-light-3: #8fb4ff;
+  --site-light-strength: 0.3;
+  --site-light-lines: 0.75;
   --site-code-shade: rgb(18 30 60 / 0.14);
   --site-hub-glow: 0 0 48px -8px rgb(44 98 212 / 0.35), 0 16px 40px -24px rgb(18 30 60 / 0.3);
 }
@@ -498,6 +503,11 @@
   --site-window-shadow: 0 0 0 1px rgb(255 255 255 / 0.06), 0 48px 96px -40px rgb(0 0 0 / 0.9);
   --site-scrim: rgb(0 0 0 / 0.6);
   --site-highlight: rgb(107 156 255 / 0.2);
+  --site-light-1: #3d6fea;
+  --site-light-2: #22b3f0;
+  --site-light-3: #c2d6ff;
+  --site-light-strength: 0.55;
+  --site-light-lines: 0.55;
   --site-code-shade: rgb(0 0 0 / 0.5);
   --site-hub-glow: 0 0 56px -8px rgb(80 130 255 / 0.45), 0 16px 40px -24px rgb(0 0 0 / 0.8);
 }
@@ -544,6 +554,7 @@ html[data-theme="dark"] .site-panel {
   --site-dur-3: 640ms;
   --site-dur-4: 900ms;
   --site-stagger: 80ms;
+  --site-head-shrink: 560ms;
   --site-beam-turn: 7s;
   --site-beam-run: 3.2s;
   --site-beam-step: 0.4s;

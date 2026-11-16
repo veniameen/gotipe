@@ -772,7 +772,8 @@
 
   /* ---- the heads ---- */
   --site-head-h: var(--site-space-16);
-  --site-head-pad-x: var(--site-space-3);
+  /* the glass bar's padding once it closes in on the column */
+  --site-head-pad-x: var(--site-space-4);
   --site-head-radius: var(--site-radius-4);
   --site-logo: 28px;
   --site-logo-l: 32px;
@@ -787,9 +788,7 @@
   --site-hero-bottom: var(--site-space-16);
   --site-hero-copy-max: 880px;
   --site-hero-window-top: var(--site-space-16);
-  --site-grid-step: 64px;
   --site-grid-line: 1px;
-  --site-grid-fade: 90% 70%;
   --site-glow-shape-a: 70% 60%;
   --site-glow-shape-b: 36% 44%;
   --site-mask-on: #000;
@@ -1013,7 +1012,7 @@
     --site-section-y: var(--site-space-16);
     --site-section-gap: var(--site-space-10);
     --site-head-h: 56px;
-    --site-head-pad-x: var(--site-space-2);
+    --site-head-pad-x: var(--site-space-3);
     --site-head-radius: var(--site-radius-3);
     --site-hero-top: var(--site-space-12);
     --site-hero-bottom: var(--site-space-10);
@@ -1129,6 +1128,12 @@
   --site-window-shadow: 0 1px 2px rgb(18 30 60 / 0.05), 0 40px 80px -40px rgb(30 60 130 / 0.42);
   --site-scrim: rgb(18 30 60 / 0.24);
   --site-highlight: rgb(44 98 212 / 0.14);
+  /* the stage's flowing light (motion/hero-light.tsx): three colours, how much of them, the lines */
+  --site-light-1: #2c62d4;
+  --site-light-2: #0ea5e9;
+  --site-light-3: #8fb4ff;
+  --site-light-strength: 0.3;
+  --site-light-lines: 0.75;
   --site-code-shade: rgb(18 30 60 / 0.14);
   --site-hub-glow: 0 0 48px -8px rgb(44 98 212 / 0.35), 0 16px 40px -24px rgb(18 30 60 / 0.3);
 }
@@ -1180,6 +1185,11 @@
   --site-window-shadow: 0 0 0 1px rgb(255 255 255 / 0.06), 0 48px 96px -40px rgb(0 0 0 / 0.9);
   --site-scrim: rgb(0 0 0 / 0.6);
   --site-highlight: rgb(107 156 255 / 0.2);
+  --site-light-1: #3d6fea;
+  --site-light-2: #22b3f0;
+  --site-light-3: #c2d6ff;
+  --site-light-strength: 0.55;
+  --site-light-lines: 0.55;
   --site-code-shade: rgb(0 0 0 / 0.5);
   --site-hub-glow: 0 0 56px -8px rgb(80 130 255 / 0.45), 0 16px 40px -24px rgb(0 0 0 / 0.8);
 }
@@ -1226,6 +1236,7 @@ html[data-theme="dark"] .site-panel {
   --site-dur-3: 640ms;
   --site-dur-4: 900ms;
   --site-stagger: 80ms;
+  --site-head-shrink: 560ms;
   --site-beam-turn: 7s;
   --site-beam-run: 3.2s;
   --site-beam-step: 0.4s;
@@ -4317,7 +4328,9 @@ ol.gotipe-list > li::before {
   box-shadow: inset 0 0 0 var(--gt-hairline) var(--gt-line-active);
 }
 
-/* ---- the landing's head: a bar in the frame, clear over the first stage, glass once scrolled ---- */
+/* ---- the landing's head: a bar in the frame, clear over the first stage; once the page scrolls,
+   glass that closes in on the page's column. The content never moves: the bar's width and its
+   padding change together, so the mark, the links and the actions keep the column's edges. ---- */
 .site-head {
   position: absolute;
   top: var(--site-frame);
@@ -4325,12 +4338,8 @@ ol.gotipe-list > li::before {
   left: var(--site-frame);
   z-index: var(--site-z-head);
   height: var(--site-head-h);
-  border-radius: var(--site-head-radius);
-  transition: background-color var(--site-dur-2) var(--site-ease), box-shadow var(--site-dur-2)
-    var(--site-ease), backdrop-filter var(--site-dur-2) var(--site-ease);
 }
-/* three columns: the mark, the links in the very middle, the actions; the content keeps the
-   page's left and right edges */
+/* three columns: the mark, the links in the very middle, the actions */
 .site-head-in {
   position: relative;
   display: grid;
@@ -4338,10 +4347,30 @@ ol.gotipe-list > li::before {
   align-items: center;
   gap: var(--site-space-4);
   box-sizing: border-box;
-  max-width: calc(var(--site-max) - 2 * var(--site-frame));
+  max-width: 100%;
   height: 100%;
   margin: 0 auto;
-  padding: 0 calc(var(--site-gutter) - var(--site-frame));
+  padding: 0
+    calc((100% - min(100% + 2 * var(--site-frame), var(--site-max)) + 2 * var(--site-gutter)) / 2);
+  border-radius: var(--site-head-radius);
+  transition:
+    max-width var(--site-head-shrink) var(--site-ease-out), padding var(--site-head-shrink)
+    var(--site-ease-out), background-color var(--site-dur-2) var(--site-ease), box-shadow
+    var(--site-dur-2) var(--site-ease), backdrop-filter var(--site-dur-2) var(--site-ease);
+}
+.site-head[data-scrolled] .site-head-in {
+  max-width: calc(
+    min(100% + 2 * var(--site-frame), var(--site-max)) -
+    2 *
+    var(--site-gutter) +
+    2 *
+    var(--site-head-pad-x)
+  );
+  padding: 0 var(--site-head-pad-x);
+  background: var(--site-glass-strong);
+  box-shadow: inset 0 0 0 var(--gt-hairline) var(--site-glass-line), var(--site-glass-shadow);
+  -webkit-backdrop-filter: blur(var(--site-glass-blur)) saturate(1.8);
+  backdrop-filter: blur(var(--site-glass-blur)) saturate(1.8);
 }
 .site-head-in > .site-brand {
   justify-self: start;
@@ -4587,7 +4616,7 @@ html:not([data-theme="dark"]) .site-theme-to-light {
    beam on its edge and the strip of what GoTipe is made of; then the facts. The site animates them
    (apps/landing/styles/landing/motion.css); the frame draws the state they settle in. */
 
-/* ---- the stage: light from above, a grid that fades out below ---- */
+/* ---- the stage: light from above; the flowing light over it is drawn by the page ---- */
 .site-hero {
   padding: calc(var(--site-head-h) + var(--site-hero-top)) 0 var(--site-hero-bottom);
   background: radial-gradient(
@@ -4597,25 +4626,21 @@ html:not([data-theme="dark"]) .site-theme-to-light {
     ), radial-gradient(var(--site-glow-shape-b) at 88% 8%, var(--site-glow-b), transparent 70%),
     linear-gradient(180deg, var(--site-stage-top), var(--site-stage-bottom));
 }
-.site-hero::before {
-  content: "";
+.site-hero-light {
   position: absolute;
   inset: 0;
   z-index: -1;
-  background-image: linear-gradient(var(--site-grid) var(--site-grid-line), transparent 0),
-    linear-gradient(90deg, var(--site-grid) var(--site-grid-line), transparent 0);
-  background-position: center top;
-  background-size: var(--site-grid-step) var(--site-grid-step);
-  -webkit-mask-image: radial-gradient(
-    var(--site-grid-fade) at 50% 0%,
-    var(--site-mask-on) 20%,
-    transparent 75%
-  );
-  mask-image: radial-gradient(
-    var(--site-grid-fade) at 50% 0%,
-    var(--site-mask-on) 20%,
-    transparent 75%
-  );
+  pointer-events: none;
+}
+.site-hero-light > canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  transition: opacity var(--site-dur-4) var(--site-ease);
+}
+.site-hero-light > canvas[data-ready] {
+  opacity: 1;
 }
 
 .site-hero-copy {
@@ -6136,26 +6161,6 @@ html:not([data-theme="dark"]) .site-theme-to-light {
       transparent 70%
     ), linear-gradient(180deg, var(--site-stage-bottom), var(--site-stage-top));
   text-align: center;
-}
-.site-band::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  z-index: -1;
-  background-image: linear-gradient(var(--site-grid) var(--site-grid-line), transparent 0),
-    linear-gradient(90deg, var(--site-grid) var(--site-grid-line), transparent 0);
-  background-position: center bottom;
-  background-size: var(--site-grid-step) var(--site-grid-step);
-  -webkit-mask-image: radial-gradient(
-    var(--site-grid-fade) at 50% 100%,
-    var(--site-mask-on) 20%,
-    transparent 75%
-  );
-  mask-image: radial-gradient(
-    var(--site-grid-fade) at 50% 100%,
-    var(--site-mask-on) 20%,
-    transparent 75%
-  );
 }
 .site-band > .site-title {
   margin-right: auto;
@@ -10508,9 +10513,10 @@ editor<span class="tk-pun">.</span>on<span class="tk-pun">(</span><span class="t
     <span class="at-num">20</span>
     <h2 class="at-figure-title">Главная страница</h2>
     <p class="at-caption">
-      Главная по образцу владельца (zydeo-web) голосом GoTipe. Подложка первого экрана отстоит от края окна одинаково со всех сторон; шапка — полоса в той же рамке: прозрачная над первым
-      экраном, стеклянная после прокрутки, знак, ссылки и кнопки стоят на одной средней линии и на
-      краях колонки страницы. «rules.» выделено, как в редакторе, за ним мигает каретка; живое окно —
+      Главная по образцу владельца (zydeo-web) голосом GoTipe. Подложка первого экрана отстоит от края окна одинаково со всех сторон, по ней течёт свет — тонкие линии потока в синих акцента
+      (шейдер на сайте), он собирается под курсором и стихает за заголовком; кадр рисует свет в покое. Шапка — полоса во всю рамку, прозрачная над первым экраном; когда страница начинает
+      прокручиваться, её стекло плавно сжимается до колонки страницы, а знак, ссылки и кнопки не сдвигаются: они на одной средней линии и на краях колонки (третий кадр). «rules.» выделено,
+      как в редакторе, за ним мигает каретка; живое окно —
       Markdown слева, документ справа, по краю бежит луч; на телефоне окно переключает «Document» и «Markdown». Дальше: факты, которые досчитываются при появлении; стек — ваш интерфейс и ваша
       инфраструктура, по лучам между ними и движком бегут импульсы; бенто с живыми картинками и девять частей стека, под указателем — свет; переключатель видов с ползунком над окном одной
       высоты; тёмная панель с примерами во вкладках React, Markdown и Vue; три способа запуска;
@@ -10654,19 +10660,19 @@ editor<span class="tk-pun">.</span>on<span class="tk-pun">(</span><span class="t
   </div>
 
   <section class="site-section site-facts-section">
-    <div class="site-wrap">
-      <div class="site-facts-head">
-        <span>Shipped in 0.1</span>
-        <span>Numbers from the test suite and the build.</span>
-      </div>
-      <div class="site-facts">
-        <p class="site-fact"><strong>949</strong>browser scenarios in Chromium, Firefox and WebKit</p>
-        <p class="site-fact"><strong>652 / 652</strong>CommonMark examples parsed like the reference</p>
-        <p class="site-fact"><strong>~127 KB</strong>gzip for the JavaScript engine with Markdown</p>
-        <p class="site-fact"><strong class="site-accent">0</strong>third-party runtime dependencies in the engine</p>
-      </div>
+  <div class="site-wrap">
+    <div class="site-facts-head">
+      <span>Shipped in 0.1</span>
+      <span>Numbers from the test suite and the build.</span>
     </div>
-  </section>
+    <div class="site-facts">
+      <p class="site-fact"><strong>949</strong>browser scenarios in Chromium, Firefox and WebKit</p>
+      <p class="site-fact"><strong>652 / 652</strong>CommonMark examples parsed like the reference</p>
+      <p class="site-fact"><strong>~127 KB</strong>gzip for the JavaScript engine with Markdown</p>
+      <p class="site-fact"><strong class="site-accent">0</strong>third-party runtime dependencies in the engine</p>
+    </div>
+  </div>
+</section>
 
   <section class="site-section site-stack-section">
     <div class="site-wrap">
@@ -11190,19 +11196,19 @@ editor<span class="tk-pun">.</span>on<span class="tk-pun">(</span><span class="t
   </div>
 
   <section class="site-section site-facts-section">
-    <div class="site-wrap">
-      <div class="site-facts-head">
-        <span>Shipped in 0.1</span>
-        <span>Numbers from the test suite and the build.</span>
-      </div>
-      <div class="site-facts">
-        <p class="site-fact"><strong>949</strong>browser scenarios in Chromium, Firefox and WebKit</p>
-        <p class="site-fact"><strong>652 / 652</strong>CommonMark examples parsed like the reference</p>
-        <p class="site-fact"><strong>~127 KB</strong>gzip for the JavaScript engine with Markdown</p>
-        <p class="site-fact"><strong class="site-accent">0</strong>third-party runtime dependencies in the engine</p>
-      </div>
+  <div class="site-wrap">
+    <div class="site-facts-head">
+      <span>Shipped in 0.1</span>
+      <span>Numbers from the test suite and the build.</span>
     </div>
-  </section>
+    <div class="site-facts">
+      <p class="site-fact"><strong>949</strong>browser scenarios in Chromium, Firefox and WebKit</p>
+      <p class="site-fact"><strong>652 / 652</strong>CommonMark examples parsed like the reference</p>
+      <p class="site-fact"><strong>~127 KB</strong>gzip for the JavaScript engine with Markdown</p>
+      <p class="site-fact"><strong class="site-accent">0</strong>third-party runtime dependencies in the engine</p>
+    </div>
+  </div>
+</section>
 
   <section class="site-section site-stack-section">
     <div class="site-wrap">
@@ -11588,6 +11594,44 @@ editor<span class="tk-pun">.</span>on<span class="tk-pun">(</span><span class="t
     <p class="site-foot-base"><span>© 2026 GoTipe contributors · MIT and commercial licences</span><span class="site-mono">0.1</span></p>
   </div>
 </footer>
+</div>
+</div>
+</section>
+  <section class="at-stage" data-w="1440">
+<p class="at-stage-label">шапка после прокрутки · 1440</p>
+<div class="at-frame gotipe-root" data-gt-view="notion" data-frame="landing-scrolled" data-w="1440">
+<div class="site site-landing" lang="en">
+  <header class="site-head" data-scrolled>
+  <div class="site-head-in">
+    <a class="site-brand"><svg class="site-logo" aria-hidden="true"><use href="#i-logo" /></svg>GoTipe</a>
+    <nav class="site-nav" aria-label="Site">
+      <a>Docs</a>
+      <a>Playground</a>
+      <a>Licensing</a>
+      <a>Changelog</a>
+    </nav>
+    <div class="site-head-end">
+      <span class="gotipe-button is-quiet site-head-button is-wide">GitHub<svg class="gt-icon" aria-hidden="true"><use href="#i-external" /></svg></span>
+      <span class="gotipe-button is-quiet site-head-button is-icon is-wide" aria-label="Dark theme"><svg class="gt-icon" aria-hidden="true"><use href="#i-moon" /></svg></span>
+      <span class="gotipe-button site-cta site-head-button">Get started<svg class="gt-icon" aria-hidden="true"><use href="#i-arrow-right" /></svg></span>
+      <span class="gotipe-button is-quiet site-head-button is-icon site-menu-button" aria-label="Menu"><svg class="gt-icon" aria-hidden="true"><use href="#i-menu" /></svg></span>
+    </div>
+  </div>
+</header>
+  <section class="site-section site-facts-section">
+  <div class="site-wrap">
+    <div class="site-facts-head">
+      <span>Shipped in 0.1</span>
+      <span>Numbers from the test suite and the build.</span>
+    </div>
+    <div class="site-facts">
+      <p class="site-fact"><strong>949</strong>browser scenarios in Chromium, Firefox and WebKit</p>
+      <p class="site-fact"><strong>652 / 652</strong>CommonMark examples parsed like the reference</p>
+      <p class="site-fact"><strong>~127 KB</strong>gzip for the JavaScript engine with Markdown</p>
+      <p class="site-fact"><strong class="site-accent">0</strong>third-party runtime dependencies in the engine</p>
+    </div>
+  </div>
+</section>
 </div>
 </div>
 </section>
