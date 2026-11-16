@@ -63,7 +63,10 @@ export interface BlockEditorProps {
   mentions?: MentionOptions;
   /** The team's own emoji and the recent list of the «:» list and the emoji picker (frame 23). */
   emoji?: EmojiOptions;
-  /** The accessible name of the document. */
+  /**
+   * The accessible name of the document. By default `a11y.editorLabel` of the interface
+   * language: "Document content" in English, «Содержимое документа» in Russian.
+   */
   ariaLabel?: string;
   /**
    * Show the editor's errors as a toast at the top (GoTipe Atlas, frame 17). Default: on. Turn it

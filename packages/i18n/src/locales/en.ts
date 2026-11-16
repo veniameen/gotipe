@@ -17,6 +17,8 @@ export const en: Locale = {
   "ai.noCommands": "No matching commands",
   "ai.closeCommands": "Close",
   "a11y.toolbarLabel": "Text formatting",
+  "a11y.editorLabel": "Document content",
+  "a11y.insertLabel": "Insert block",
   "table.type.text": "Text",
   "table.type.code": "Code",
   "table.type.number": "Number",

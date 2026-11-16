@@ -3,6 +3,7 @@ import type { ViewState } from "@gotipe/core";
 import type React from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { FloatingPortal } from "./floating-portal";
+import { useGoTipeI18n } from "./i18n-context";
 import { useFloatingPosition } from "./use-floating-position";
 
 export interface BubbleMenuProps {
@@ -11,6 +12,10 @@ export interface BubbleMenuProps {
   offset?: { x: number; y: number };
   children: React.ReactNode | ((props: { editor: GoTipeEditor }) => React.ReactNode);
   className?: string;
+  /**
+   * Accessible name of the toolbar. By default `a11y.toolbarLabel` of `GoTipeI18nProvider`:
+   * "Text formatting" in English and without a provider.
+   */
   ariaLabel?: string;
 }
 
@@ -20,8 +25,9 @@ export function BubbleMenu({
   offset,
   children,
   className,
-  ariaLabel = "Text formatting",
+  ariaLabel,
 }: BubbleMenuProps) {
+  const i18n = useGoTipeI18n();
   const [visible, setVisible] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const rangeRef = useRef<Range | null>(null);
@@ -115,7 +121,7 @@ export function BubbleMenu({
         ref={menuRef}
         className={className ? `gotipe-bubble-menu ${className}` : "gotipe-bubble-menu"}
         role="toolbar"
-        aria-label={ariaLabel}
+        aria-label={ariaLabel ?? i18n.t("a11y.toolbarLabel")}
         data-gotipe-bubble-menu=""
         onMouseDown={handleMouseDown}
         style={{

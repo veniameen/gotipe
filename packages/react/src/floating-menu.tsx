@@ -1,12 +1,18 @@
 import type { BlockView, GoTipeEditor, ViewState } from "@gotipe/core";
 import type React from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useGoTipeI18n } from "./i18n-context";
 import { useFloatingPosition } from "./use-floating-position";
 
 export interface FloatingMenuProps {
   editor: GoTipeEditor;
   shouldShow?: (props: { editor: GoTipeEditor; state: ViewState }) => boolean;
   children: React.ReactNode | ((props: { editor: GoTipeEditor }) => React.ReactNode);
+  /**
+   * Accessible name of the toolbar. By default `a11y.insertLabel` of `GoTipeI18nProvider`:
+   * "Insert block" in English and without a provider.
+   */
+  ariaLabel?: string;
 }
 
 function findBlock(blocks: BlockView[], id: string): BlockView | undefined {
@@ -18,7 +24,8 @@ function findBlock(blocks: BlockView[], id: string): BlockView | undefined {
 }
 
 /** An insert toolbar anchored to the active empty paragraph, including nested blocks. */
-export function FloatingMenu({ editor, shouldShow, children }: FloatingMenuProps) {
+export function FloatingMenu({ editor, shouldShow, children, ariaLabel }: FloatingMenuProps) {
+  const i18n = useGoTipeI18n();
   const [visible, setVisible] = useState(false);
   const [revision, setRevision] = useState(0);
   const panel = useRef<HTMLDivElement>(null);
@@ -81,7 +88,7 @@ export function FloatingMenu({ editor, shouldShow, children }: FloatingMenuProps
       ref={panel}
       className="gotipe-floating-menu"
       role="toolbar"
-      aria-label="Insert block"
+      aria-label={ariaLabel ?? i18n.t("a11y.insertLabel")}
       onMouseDown={(event) => event.preventDefault()}
       style={{
         position: "fixed",
