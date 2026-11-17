@@ -68,30 +68,30 @@ _Date: February 13, 2026_
 - Todo caret/checkbox alignment behavior.
 - Todo left-zone click normalization (caret stays in content host, not left of checkbox).
 - Mixed create/change/delete stress operations.
-- Checklist batch `NL-001..NL-050` полностью автоматизирован в отдельном spec.
-- Checklist batch `NL-051..NL-100` полностью автоматизирован в отдельном spec.
-- Fast-hover reliability для gutter-toolbar (`+` и drag-handle) закрыта отдельным stress suite:
-  - быстрые перемещения мыши по всем основным top-level блокам
-  - проверка кликабельности `+` и drag-handle после fast-hover
-  - отдельный кейс custom `orderedList` (вне дефолтного RICH_CONTENT)
+- Checklist batch `NL-001..NL-050` is fully automated in a separate spec.
+- Checklist batch `NL-051..NL-100` is fully automated in a separate spec.
+- Fast-hover reliability of the gutter toolbar (`+` and drag handle) is covered by a separate stress suite:
+  - fast mouse movement across all main top-level blocks
+  - check that `+` and the drag handle stay clickable after fast hover
+  - a separate case for custom `orderedList` (outside the default RICH_CONTENT)
 - Fast post-slash immediate typing (`SLASH-021`) stabilized and verified repeat-run.
-- Nested slash-transform и nested backspace policy стабилизированы (repeat-run `25/25`).
+- Nested slash transform and nested Backspace policy are stabilized (repeat-run `25/25`).
 
 ## Known Gaps
 
-- `SLASH-010` (slash в начале непустой строки) остаётся `fixme`.
-- `SLASH-022` / `REL-007`: transform-matrix suite остаётся quarantined (`fixme`).
+- `SLASH-010` (slash at the start of a non-empty line) remains `fixme`.
+- `SLASH-022` / `REL-007`: the transform-matrix suite remains quarantined (`fixme`).
 - Firefox/WebKit not executed in this environment (binaries missing).
 
 ## Newly fixed regressions (validated)
 
-- `SLASH-021`: immediate typing после slash-item больше не теряет первый символ.
-- `codeBlock -> bullet/ordered/todo`: текст строки сохраняется.
-- `Enter` в code block больше не дублирует блок.
-- `setContent` больше не оставляет selection на устаревшем blockId.
-- `beforeinput` path учитывает актуальную DOM-selection (без регрессии immediate typing).
-- `todoItem` click-left selection больше не фиксируется на `li` offset 0:
-  - `selectionchange` path нормализует caret в `data-gotipe-todo-content`.
+- `SLASH-021`: immediate typing after a slash item no longer loses the first character.
+- `codeBlock -> bullet/ordered/todo`: the line text is preserved.
+- `Enter` in a code block no longer duplicates the block.
+- `setContent` no longer leaves the selection on a stale blockId.
+- `beforeinput` path honors the current DOM selection (no immediate-typing regression).
+- `todoItem` click-left selection is no longer pinned to `li` offset 0:
+  - `selectionchange` path normalizes the caret into `data-gotipe-todo-content`.
 - Hover gutter regression:
-  - блок под курсором определяется через point-based hit-test (`elementsFromPoint`) + nearest-by-Y fallback
-  - тулбар стабильно удерживается при быстром движении мыши в левом gutter
+  - the block under the cursor is found via a point-based hit test (`elementsFromPoint`) plus a nearest-by-Y fallback
+  - the toolbar stays stable during fast mouse movement in the left gutter

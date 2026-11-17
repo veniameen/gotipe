@@ -41,7 +41,7 @@
 ## Notes
 
 - No failing tests in the target Chromium suites above.
-- Transform-matrix quarantine (`SLASH-022` / `REL-007`) закрыт отдельным follow-up прогоном (`docs/notion-like-qa/report-2026-02-14-transform-matrix-unquarantine.md`).
+- Transform-matrix quarantine (`SLASH-022` / `REL-007`) closed by a separate follow-up run (`docs/notion-like-qa/report-2026-02-14-transform-matrix-unquarantine.md`).
 - Notion step 2 reference artifacts:
   - `output/playwright/notion-step2/list-row-audit-2026-02-14T00-01-03-991Z.json`
   - `docs/notion-like-qa/notion-reference-step2/00-index.md`

@@ -1,61 +1,61 @@
 # GoTipe — Block Editor (Notion-like UX)
 
-> **Историческая спецификация, не руководство по текущему API.** Примеры, сроки,
-> сравнения производительности, коммерческие условия и обещания ниже не подтверждают
-> реализацию или доступность сервиса. Актуально: [контракты](development/editor-contracts.md),
-> [карта кода](development/code-map.md), [проверки](development/testing.md),
-> [план выпуска](22-release-readiness.md). Лицензии определяются `LICENSE` и manifest
-> каждого пакета, а не этим документом.
+> **Historical specification, not a guide to the current API.** The examples, schedules,
+> performance comparisons, commercial terms and promises below do not confirm
+> an implementation or service availability. Current: [contracts](development/editor-contracts.md),
+> [code map](development/code-map.md), [checks](development/testing.md),
+> [release plan](22-release-readiness.md). Licenses are defined by `LICENSE` and each package's
+> manifest, not by this document.
 
-> **Лицензия:** `@gotipe/block-editor` — коммерческий пакет. Headless core (`@gotipe/core`, `@gotipe/react`, etc.) — MIT.
-> Подписчики GoTipe Cloud получают Block Editor лицензию бесплатно.
+> **License:** `@gotipe/block-editor` is a commercial package. The headless core (`@gotipe/core`, `@gotipe/react`, etc.) is MIT.
+> GoTipe Cloud subscribers get the Block Editor license for free.
 
-## Обзор
+## Overview
 
-`@gotipe/block-editor` — коммерческий пакет с готовым Notion-like UI: slash commands, drag-and-drop, floating toolbar, nested blocks, темы. Одна строчка `<BlockEditor />` = полноценный редактор.
+`@gotipe/block-editor` is a commercial package with a ready-made Notion-like UI: slash commands, drag-and-drop, floating toolbar, nested blocks, themes. One line, `<BlockEditor />`, gives a full editor.
 
-Headless API (`@gotipe/core` + framework adapters) позволяет построить **любой** UI бесплатно (MIT). Block Editor — для тех, кто хочет готовый Notion-like UX без написания UI.
+The headless API (`@gotipe/core` + framework adapters) lets you build **any** UI for free (MIT). Block Editor is for those who want a ready-made Notion-like UX without writing a UI.
 
-### Что MIT vs что коммерческое
+### What is MIT and what is commercial
 
-| Бесплатно (MIT) | Коммерческое (`@gotipe/block-editor`) |
+| Free (MIT) | Commercial (`@gotipe/block-editor`) |
 |-----------------|--------------------------------------|
-| Document model, transforms, commands | `<BlockEditor />` — готовый компонент |
+| Document model, transforms, commands | `<BlockEditor />` — ready-made component |
 | `useEditor()`, `<EditorContent />` | `<SlashMenu />` — slash commands UI |
-| Все block types (data + commands) | `<BubbleMenu />` — floating toolbar UI |
-| Все marks (bold, italic, etc.) | `<BlockToolbar />` — drag handle + block menu |
+| All block types (data + commands) | `<BubbleMenu />` — floating toolbar UI |
+| All marks (bold, italic, etc.) | `<BlockToolbar />` — drag handle + block menu |
 | CRDT collaboration engine | `<DragHandle />` — drag-and-drop UI |
 | AI provider interface + commands | `<AIPanel />` — AI ghost text + command palette UI |
-| Export (HTML, MD, PDF, DOCX) | Темы (minimal, modern, notion, docs) |
+| Export (HTML, MD, PDF, DOCX) | Themes (minimal, modern, notion, docs) |
 | Framework adapters (React, Vue, Svelte, Solid) | Input rules UI feedback |
 | Extension API | Image block UI (resize handles, caption) |
 | CSS variables API | Table block UI (column resize, toolbar) |
 
-### Лицензирование
+### Licensing
 
 ```tsx
 import { BlockEditor } from '@gotipe/block-editor'
 
 <BlockEditor
-  licenseKey="ge_xxx"              // JWT ключ, офлайн-верификация
+  licenseKey="ge_xxx"              // JWT key, offline verification
   content={content}
   onChange={setContent}
   theme="notion"
 />
 ```
 
-- **Ключ = подписанный JWT** (ES256). Проверяется офлайн, без API-вызовов
-- Содержит: plan, expiry, allowed domains
-- Без ключа: редактор работает, но с watermark "GoTipe Block Editor — Unlicensed"
-- Dev/localhost: всегда работает без watermark
+- **Key = signed JWT** (ES256). Verified offline, no API calls
+- Contains: plan, expiry, allowed domains
+- Without a key: the editor works, but with the watermark "GoTipe Block Editor — Unlicensed"
+- Dev/localhost: always works without the watermark
 
-### Цены
+### Pricing
 
-| Лицензия | Цена | Включает |
+| License | Price | Includes |
 |----------|------|----------|
-| **Block Editor Indie** | $149/app/год | 1 production domain |
-| **Block Editor Business** | $499/app/год | до 10 domains, приоритетная поддержка |
-| **GoTipe Cloud** (любой план) | от $29/мес | Block Editor лицензия **включена** |
+| **Block Editor Indie** | $149/app/year | 1 production domain |
+| **Block Editor Business** | $499/app/year | up to 10 domains, priority support |
+| **GoTipe Cloud** (any plan) | from $29/month | Block Editor license **included** |
 | **Enterprise** | Custom | Unlimited domains, source access |
 
 ```
@@ -97,32 +97,32 @@ import { BlockEditor } from '@gotipe/block-editor'
 
 ## Block Types
 
-### Полный каталог
+### Full catalog
 
-| Block Type | Описание | Content | Children | Attrs |
+| Block Type | Description | Content | Children | Attrs |
 |-----------|----------|---------|----------|-------|
-| `paragraph` | Обычный текст | RichText | Нет | — |
-| `heading` | Заголовок H1-H6 | RichText | Нет | `level: 1-6` |
-| `bulletList` | Маркированный список | Empty | `listItem[]` | — |
-| `orderedList` | Нумерованный список | Empty | `listItem[]` | `start: number` |
-| `listItem` | Элемент списка | RichText | Вложенные списки | `checked: bool\|null` |
-| `codeBlock` | Блок кода | RawText | Нет | `language: string` |
-| `image` | Изображение | Empty (leaf) | Нет | `src, alt, width` |
-| `blockquote` | Цитата | RichText | `paragraph[]` | — |
-| `callout` | Выделение (info/warning) | RichText | `paragraph[]` | `emoji: string` |
-| `divider` | Горизонтальная линия | Empty (leaf) | Нет | — |
-| `table` | Таблица | Empty | `tableRow[]` | — |
-| `tableRow` | Строка таблицы | Empty | `tableCell[]\|tableHeader[]` | — |
-| `tableCell` | Ячейка таблицы | RichText | Нет | `colspan, rowspan` |
-| `tableHeader` | Заголовок таблицы | RichText | Нет | `colspan, rowspan` |
-| `toggle` | Раскрывающийся блок | RichText (summary) | Любые блоки | `open: bool` |
-| `columns` | Колонки | Empty | `column[]` | — |
-| `column` | Одна колонка | Empty | Любые блоки | `width: number` |
-| `embed` | Вставка (YouTube, Figma...) | Empty (leaf) | Нет | `url, type` |
-| `math` | Формула (KaTeX/MathJax) | RawText | Нет | — |
-| `file` | Прикреплённый файл | Empty (leaf) | Нет | `url, name, size, mime_type` |
+| `paragraph` | Plain text | RichText | None | — |
+| `heading` | Heading H1-H6 | RichText | None | `level: 1-6` |
+| `bulletList` | Bulleted list | Empty | `listItem[]` | — |
+| `orderedList` | Numbered list | Empty | `listItem[]` | `start: number` |
+| `listItem` | List item | RichText | Nested lists | `checked: bool\|null` |
+| `codeBlock` | Code block | RawText | None | `language: string` |
+| `image` | Image | Empty (leaf) | None | `src, alt, width` |
+| `blockquote` | Quote | RichText | `paragraph[]` | — |
+| `callout` | Callout (info/warning) | RichText | `paragraph[]` | `emoji: string` |
+| `divider` | Horizontal rule | Empty (leaf) | None | — |
+| `table` | Table | Empty | `tableRow[]` | — |
+| `tableRow` | Table row | Empty | `tableCell[]\|tableHeader[]` | — |
+| `tableCell` | Table cell | RichText | None | `colspan, rowspan` |
+| `tableHeader` | Table header | RichText | None | `colspan, rowspan` |
+| `toggle` | Collapsible block | RichText (summary) | Any blocks | `open: bool` |
+| `columns` | Columns | Empty | `column[]` | — |
+| `column` | A single column | Empty | Any blocks | `width: number` |
+| `embed` | Embed (YouTube, Figma...) | Empty (leaf) | None | `url, type` |
+| `math` | Formula (KaTeX/MathJax) | RawText | None | — |
+| `file` | Attached file | Empty (leaf) | None | `url, name, size, mime_type` |
 
-### JSON Schema для каждого block type
+### JSON Schema for each block type
 
 #### Paragraph
 
@@ -153,7 +153,7 @@ import { BlockEditor } from '@gotipe/block-editor'
 }
 ```
 
-#### Bullet List с nested items
+#### Bullet List with nested items
 
 ```json
 {
@@ -391,17 +391,17 @@ import { BlockEditor } from '@gotipe/block-editor'
 
 ## Slash Commands
 
-### Как работает
+### How it works
 
-1. Пользователь нажимает `/` в пустом блоке или после текста
-2. Открывается dropdown (320px ширина, border-radius 20px, 4-layer soft shadow) с fuzzy search
-3. Клавиатурная навигация (↑↓, Enter, Escape)
-4. Выбор команды создаёт новый блок или трансформирует текущий
-5. Позиционирование: рядом с курсором, viewport edge detection (если не помещается снизу — показывается сверху)
+1. The user presses `/` in an empty block or after text
+2. A dropdown opens (320px wide, border-radius 20px, 4-layer soft shadow) with fuzzy search
+3. Keyboard navigation (↑↓, Enter, Escape)
+4. Choosing a command creates a new block or transforms the current one
+5. Positioning: next to the cursor, with viewport edge detection (if it does not fit below, it is shown above)
 
-### Категории и команды
+### Categories and commands
 
-Slash menu разбит на 4 категории с визуальными разделителями:
+The slash menu is split into 4 categories with visual separators:
 
 ```
 ┌──────────────────────────────────────┐
@@ -440,63 +440,63 @@ Slash menu разбит на 4 категории с визуальными ра
 └──────────────────────────────────────┘
 ```
 
-**Категория AI** — отображается только если AI extension подключён (`AIInline.configure()`).
+**AI category** is shown only if the AI extension is connected (`AIInline.configure()`).
 
-| Категория | Команда | Aliases | Действие |
+| Category | Command | Aliases | Action |
 |-----------|---------|---------|----------|
-| **AI** | Continue Writing | `/continue`, `/ai-continue` | AI генерирует следующий параграф в контексте документа |
-| **AI** | Ask AI | `/ask`, `/ai`, `/prompt` | Открывает AI prompt input → AI генерирует контент |
-| **Style** | Text | `/text`, `/paragraph` | Новый параграф |
+| **AI** | Continue Writing | `/continue`, `/ai-continue` | AI generates the next paragraph in the document context |
+| **AI** | Ask AI | `/ask`, `/ai`, `/prompt` | Opens the AI prompt input → AI generates content |
+| **Style** | Text | `/text`, `/paragraph` | New paragraph |
 | **Style** | Heading 1 | `/h1`, `/heading1` | Heading level 1 |
 | **Style** | Heading 2 | `/h2`, `/heading2` | Heading level 2 |
 | **Style** | Heading 3 | `/h3`, `/heading3` | Heading level 3 |
-| **Style** | Bullet List | `/bullet`, `/ul` | Маркированный список |
-| **Style** | Numbered List | `/number`, `/ol` | Нумерованный список |
-| **Style** | Todo List | `/todo`, `/checkbox` | Список с чекбоксами |
-| **Style** | Blockquote | `/quote`, `/blockquote` | Цитата |
-| **Style** | Code Block | `/code` | Блок кода с подсветкой синтаксиса |
-| **Style** | Callout | `/callout`, `/info` | Callout блок |
-| **Style** | Toggle | `/toggle` | Раскрывающийся блок |
-| **Insert** | Mention | `/mention`, `/@` | Упоминание пользователя |
+| **Style** | Bullet List | `/bullet`, `/ul` | Bulleted list |
+| **Style** | Numbered List | `/number`, `/ol` | Numbered list |
+| **Style** | Todo List | `/todo`, `/checkbox` | List with checkboxes |
+| **Style** | Blockquote | `/quote`, `/blockquote` | Quote |
+| **Style** | Code Block | `/code` | Code block with syntax highlighting |
+| **Style** | Callout | `/callout`, `/info` | Callout block |
+| **Style** | Toggle | `/toggle` | Collapsible block |
+| **Insert** | Mention | `/mention`, `/@` | User mention |
 | **Insert** | Emoji | `/emoji` | Emoji picker |
-| **Insert** | Table | `/table` | Таблица 3×3 |
-| **Insert** | Separator | `/divider`, `/hr` | Горизонтальная линия |
-| **Insert** | Table of Contents | `/toc`, `/contents` | Auto-генерируемое оглавление |
-| **Insert** | Math | `/math`, `/equation` | Математическая формула (KaTeX) |
-| **Insert** | Embed | `/embed` | Вставка URL (YouTube, Figma, etc.) |
-| **Insert** | Columns | `/columns`, `/cols` | Двухколоночный layout |
-| **Upload** | Image | `/image`, `/img` | Загрузка изображения |
-| **Upload** | File | `/file` | Прикрепление файла |
+| **Insert** | Table | `/table` | 3×3 table |
+| **Insert** | Separator | `/divider`, `/hr` | Horizontal rule |
+| **Insert** | Table of Contents | `/toc`, `/contents` | Auto-generated table of contents |
+| **Insert** | Math | `/math`, `/equation` | Math formula (KaTeX) |
+| **Insert** | Embed | `/embed` | URL embed (YouTube, Figma, etc.) |
+| **Insert** | Columns | `/columns`, `/cols` | Two-column layout |
+| **Upload** | Image | `/image`, `/img` | Image upload |
+| **Upload** | File | `/file` | File attachment |
 
 ### Fuzzy Search
 
-Поиск по slash menu работает через fuzzy scoring с приоритетами:
+Slash menu search works through fuzzy scoring with priorities:
 
-1. **Exact prefix match** — наивысший приоритет (ввёл `hea` → `Heading 1` первый)
-2. **Alias match** — совпадение с alias (`h1` → `Heading 1`)
-3. **Fuzzy substring** — нечёткий поиск в name + description
-4. Подсветка совпадений через `<mark>` в dropdown
-5. При пустом результате — "No results" с `--gt-text-tertiary` по центру
+1. **Exact prefix match** — highest priority (typing `hea` puts `Heading 1` first)
+2. **Alias match** — match against an alias (`h1` → `Heading 1`)
+3. **Fuzzy substring** — fuzzy search in name + description
+4. Matches are highlighted with `<mark>` in the dropdown
+5. On an empty result — "No results" with `--gt-text-tertiary`, centered
 
-### Визуальные спецификации
+### Visual specifications
 
-| Свойство | Значение |
+| Property | Value |
 |----------|---------|
-| Ширина | `320px` |
+| Width | `320px` |
 | Max-height | `400px` (scrollable) |
 | Border-radius | `20px` |
-| Shadow | 4-layer soft elevation (см. 18-design-system.md) |
+| Shadow | 4-layer soft elevation (see 18-design-system.md) |
 | Border | `1px solid rgba(0,0,0,0.05)` |
-| Фон | `--gt-bg` |
+| Background | `--gt-bg` |
 | Category label | `--gt-text-tertiary`, 11px, uppercase, letter-spacing 0.05em |
-| Item высота | `40px` |
+| Item height | `40px` |
 | Item hover | `--gt-bg-hover`, border-radius 6px |
 | Item selected (keyboard) | `--gt-bg-selected` |
 | Item icon | 20px, margin-right 10px |
 | Item title | `--gt-text`, 14px, font-weight 500 |
 | Item description | `--gt-text-tertiary`, 12px |
-| Анимация появления | `opacity + scale(0.98→1) + translateY(4px→0)`, 150ms ease-out |
-| Позиционирование | Рядом с курсором; viewport edge detection — если меню выходит за низ экрана, показывается сверху |
+| Appear animation | `opacity + scale(0.98→1) + translateY(4px→0)`, 150ms ease-out |
+| Positioning | Next to the cursor; viewport edge detection — if the menu goes off the bottom of the screen, it is shown above |
 
 ### TypeScript API
 
@@ -506,23 +506,23 @@ Slash menu разбит на 4 категории с визуальными ра
 export type SlashCommandGroup = 'ai' | 'style' | 'insert' | 'upload';
 
 export interface SlashCommand {
-  /** Имя команды */
+  /** Command name */
   name: string;
-  /** Алиасы для поиска */
+  /** Aliases for search */
   aliases: string[];
-  /** Описание */
+  /** Description */
   description: string;
-  /** Иконка (SVG icon name из @gotipe/theme) */
+  /** Icon (SVG icon name from @gotipe/theme) */
   icon: string;
-  /** Категория — определяет расположение в меню и визуальный разделитель */
+  /** Category — determines the position in the menu and the visual separator */
   group: SlashCommandGroup;
-  /** Функция выполнения */
+  /** Execute function */
   execute: (editor: GoTipeEditor) => void;
-  /** Кастомное условие показа */
+  /** Custom visibility condition */
   shouldShow?: (editor: GoTipeEditor) => boolean;
 }
 
-// Регистрация кастомной slash command:
+// Registering a custom slash command:
 editor.registerSlashCommand({
   name: 'Alert',
   aliases: ['alert', 'warning', 'danger'],
@@ -540,16 +540,16 @@ editor.registerSlashCommand({
 
 ### Input Rules (Markdown shortcuts)
 
-Помимо slash commands, GoTipe поддерживает Markdown-like input rules:
+Besides slash commands, GoTipe supports Markdown-like input rules:
 
-| Input | Результат |
+| Input | Result |
 |-------|----------|
 | `# ` + space | Heading 1 |
 | `## ` + space | Heading 2 |
 | `### ` + space | Heading 3 |
-| `- ` или `* ` | Bullet list |
+| `- ` or `* ` | Bullet list |
 | `1. ` | Ordered list |
-| `[] ` или `[ ] ` | Todo list |
+| `[] ` or `[ ] ` | Todo list |
 | `> ` | Blockquote |
 | `` ``` `` + enter | Code block |
 | `---` + enter | Divider |
@@ -590,7 +590,7 @@ Drag Flow (HTML5 Drag API):
 
 ### Implementation (React)
 
-HTML5 Drag API (НЕ @dnd-kit) — нативный API с минимальным bundle size и лучшей совместимостью с touch devices.
+HTML5 Drag API (NOT @dnd-kit) — the native API with minimal bundle size and better compatibility with touch devices.
 
 ```typescript
 // packages/block-editor/src/components/DragHandle.tsx
@@ -605,7 +605,7 @@ export function DragHandle({ blockId, editor }: DragHandleProps) {
     e.dataTransfer.setData('text/gotipe-block-id', blockId);
     e.dataTransfer.effectAllowed = 'move';
 
-    // Визуальное состояние: elevated shadow + scale
+    // Visual state: elevated shadow + scale
     const blockEl = document.querySelector(`[data-block-id="${blockId}"]`);
     if (blockEl) {
       blockEl.classList.add('gotipe-block--dragging');
@@ -613,10 +613,10 @@ export function DragHandle({ blockId, editor }: DragHandleProps) {
   };
 
   const handleDragEnd = () => {
-    // Убрать визуальное состояние
+    // Remove the visual state
     document.querySelector('.gotipe-block--dragging')
       ?.classList.remove('gotipe-block--dragging');
-    // Убрать drop indicators
+    // Remove drop indicators
     document.querySelectorAll('.gotipe-drop-indicator--active')
       .forEach(el => el.classList.remove('gotipe-drop-indicator--active'));
   };
@@ -636,10 +636,10 @@ export function DragHandle({ blockId, editor }: DragHandleProps) {
 }
 ```
 
-### Drop Indicator и зоны
+### Drop Indicator and zones
 
 ```css
-/* Визуальная линия drop indicator */
+/* Visual drop indicator line */
 .gotipe-drop-indicator--active {
   height: 2px;
   background: var(--gt-accent);
@@ -658,17 +658,17 @@ export function DragHandle({ blockId, editor }: DragHandleProps) {
 
 ### Nested Block Drag
 
-Блоки можно перетаскивать не только между блоками, но и внутрь блоков (nesting):
+Blocks can be dragged not only between blocks but also into blocks (nesting):
 
-| Drop Zone | Определение | Действие |
+| Drop Zone | Definition | Action |
 |-----------|-------------|----------|
-| Между блоками (top/bottom 25%) | Горизонтальная линия-индикатор | Вставить на этом уровне |
-| Середина блока (центральные 50%) | Весь блок подсвечивается | Сделать child (nest inside) |
-| Indent zone (правый край, >75% ширины) | Смещённый индикатор вправо | Сделать следующим sibling в parent |
+| Between blocks (top/bottom 25%) | Horizontal indicator line | Insert at this level |
+| Middle of a block (central 50%) | The whole block is highlighted | Make a child (nest inside) |
+| Indent zone (right edge, >75% of width) | Indicator shifted to the right | Make the next sibling in the parent |
 
 ### Touch Support
 
-На мобильных устройствах drag активируется через **long-press** (300ms) на drag handle. Feedback: вибрация (Haptic API), увеличенная тень.
+On mobile devices, drag is activated through a **long-press** (300ms) on the drag handle. Feedback: vibration (Haptic API), larger shadow.
 
 ---
 
@@ -676,7 +676,7 @@ export function DragHandle({ blockId, editor }: DragHandleProps) {
 
 ### Floating Toolbar (Bubble Menu)
 
-Появляется при выделении текста. Layout слева направо:
+Appears on text selection. Layout from left to right:
 
 ```
 ┌────────────────────────────────────────────────────────────────────┐
@@ -686,30 +686,30 @@ export function DragHandle({ blockId, editor }: DragHandleProps) {
               dropdown                             Color    menu
 ```
 
-**Секции Bubble Menu (разделены вертикальными разделителями):**
+**Bubble Menu sections (separated by vertical dividers):**
 
-1. **AI Improve** — кнопка с иконкой ✨. При клике AI перезаписывает выделенный текст как suggestion (отображается diff). Показывается только при подключённом AI extension.
-2. **Block Type dropdown** — текущий тип блока (Paragraph, Heading 1-3, Bullet List, etc.). Клик открывает dropdown для смены типа.
-3. **Formatting marks** — Bold, Italic, Underline, Strikethrough, Inline Code, Link. Кнопки 32×32px, подсвечиваются при активном mark.
-4. **Text Color picker** — кнопка `A` с цветной подчёркиванием. Клик открывает палитру: 5 highlight цветов (Blue, Green, Yellow, Red, Purple) + text color + reset.
-5. **More (⋮)** — дополнительные опции: Superscript, Subscript, Clear Formatting, Copy as Markdown.
+1. **AI Improve** — a button with the ✨ icon. On click, AI rewrites the selected text as a suggestion (a diff is shown). Shown only when the AI extension is connected.
+2. **Block Type dropdown** — the current block type (Paragraph, Heading 1-3, Bullet List, etc.). Click opens a dropdown to change the type.
+3. **Formatting marks** — Bold, Italic, Underline, Strikethrough, Inline Code, Link. Buttons are 32×32px, highlighted when the mark is active.
+4. **Text Color picker** — an `A` button with a colored underline. Click opens a palette: 5 highlight colors (Blue, Green, Yellow, Red, Purple) + text color + reset.
+5. **More (⋮)** — extra options: Superscript, Subscript, Clear Formatting, Copy as Markdown.
 
-**Визуальные спецификации:**
+**Visual specifications:**
 
-| Свойство | Значение |
+| Property | Value |
 |----------|---------|
-| Фон | `--gt-bg` |
+| Background | `--gt-bg` |
 | Border | `1px solid rgba(0,0,0,0.05)` |
-| Shadow | 4-layer soft elevation (см. 18-design-system.md) |
+| Shadow | 4-layer soft elevation (see 18-design-system.md) |
 | Border-radius | `12px` |
 | Padding | `4px` |
-| Кнопка размер | 32×32px, border-radius 12px |
-| Кнопка hover | `rgba(0,0,0,0.08)` background |
-| Кнопка active (mark включён) | `--gt-accent` цвет иконки |
-| Разделитель | 1px вертикальная линия, `rgba(0,0,0,0.05)`, height 20px, margin 0 4px |
-| Позиционирование | Над выделением, по центру. Если не влезает сверху — снизу. Viewport edge detection. |
-| Отступ от выделения | 8px |
-| Анимация | `opacity + translateY(4px→0)`, 150ms ease-out |
+| Button size | 32×32px, border-radius 12px |
+| Button hover | `rgba(0,0,0,0.08)` background |
+| Button active (mark on) | `--gt-accent` icon color |
+| Divider | 1px vertical line, `rgba(0,0,0,0.05)`, height 20px, margin 0 4px |
+| Positioning | Above the selection, centered. If it does not fit above, below. Viewport edge detection. |
+| Offset from selection | 8px |
+| Animation | `opacity + translateY(4px→0)`, 150ms ease-out |
 | Z-index | `--gt-z-bubble: 40` |
 
 ```typescript
@@ -718,7 +718,7 @@ export function DragHandle({ blockId, editor }: DragHandleProps) {
 export function BubbleMenu({ editor }: { editor: GoTipeEditor }) {
   return (
     <div className="gotipe-bubble-menu" data-gotipe-bubble-menu>
-      {/* AI Improve — показывается только если AI extension подключён */}
+      {/* AI Improve — shown only if the AI extension is connected */}
       {editor.hasExtension('ai') && (
         <>
           <button
@@ -757,7 +757,7 @@ export function BubbleMenu({ editor }: { editor: GoTipeEditor }) {
 
 ### Block Toolbar (Gutter)
 
-Появляется при hover на блоке. Позиционируется слева от блока (-24px). Содержит две кнопки:
+Appears on hover over a block. Positioned to the left of the block (-24px). Contains two buttons:
 
 ```
   +  ⠿  │ Block content here...
@@ -767,12 +767,12 @@ export function BubbleMenu({ editor }: { editor: GoTipeEditor }) {
 ```
 
 **Add Button (`+`):**
-- Клик → открывает Slash Menu в позиции блока
-- Показывает slash menu с курсором в начале нового блока ниже
+- Click → opens the Slash Menu at the block position
+- Shows the slash menu with the cursor at the start of a new block below
 
 **Drag Handle (`⠿`):**
-- Drag → HTML5 Drag API drag & drop (см. раздел Drag and Drop)
-- Click → открывает Block Context Menu
+- Drag → HTML5 Drag API drag & drop (see the Drag and Drop section)
+- Click → opens the Block Context Menu
 
 **Block Context Menu:**
 
@@ -785,24 +785,24 @@ export function BubbleMenu({ editor }: { editor: GoTipeEditor }) {
 └──────────────────────────┘
 ```
 
-| Пункт | Shortcut | Действие |
+| Item | Shortcut | Action |
 |-------|----------|----------|
-| Delete | `Cmd+Shift+Backspace` | Удалить текущий блок |
-| Duplicate | `Cmd+D` | Дублировать блок ниже |
-| Reset Formatting | — | Снять все marks, вернуть paragraph type |
-| Copy to Clipboard | — | Скопировать содержимое блока как plain text + rich text |
+| Delete | `Cmd+Shift+Backspace` | Delete the current block |
+| Duplicate | `Cmd+D` | Duplicate the block below |
+| Reset Formatting | — | Remove all marks, return to the paragraph type |
+| Copy to Clipboard | — | Copy the block content as plain text + rich text |
 
-**Визуальные спецификации:**
+**Visual specifications:**
 
-| Свойство | Значение |
+| Property | Value |
 |----------|---------|
-| Позиция | Слева от блока, `-24px` от content edge |
-| Появление | `opacity 0→1`, 100ms, при hover на блоке |
-| Скрытие | `opacity 1→0`, 100ms, при уходе мыши |
-| Кнопки | 20×20px, `--gt-text-tertiary`, hover: `--gt-text-secondary` |
+| Position | To the left of the block, `-24px` from the content edge |
+| Appear | `opacity 0→1`, 100ms, on block hover |
+| Hide | `opacity 1→0`, 100ms, when the mouse leaves |
+| Buttons | 20×20px, `--gt-text-tertiary`, hover: `--gt-text-secondary` |
 | Context menu | border-radius 12px, shadow 4-layer, padding 4px |
-| Context menu item | 32px высота, border-radius 8px, hover `--gt-bg-hover` |
-| Touch | Long-press (300ms) на блоке → показать handles |
+| Context menu item | 32px height, border-radius 8px, hover `--gt-bg-hover` |
+| Touch | Long-press (300ms) on a block → show handles |
 
 ```typescript
 // packages/block-editor/src/components/BlockToolbar.tsx
@@ -889,7 +889,7 @@ Document
 
 ### Indentation (Tab/Shift+Tab)
 
-| Контекст | Tab | Shift+Tab |
+| Context | Tab | Shift+Tab |
 |----------|-----|-----------|
 | List item | Nest as child of previous sibling | Un-nest to parent level |
 | Paragraph (in toggle/callout) | Become nested paragraph | Un-nest |
@@ -953,7 +953,7 @@ Document
 
 ---
 
-## Сравнение с Tiptap/BlockNote
+## Comparison with Tiptap/BlockNote
 
 | Feature | GoTipe | Tiptap v3 | BlockNote |
 |---------|--------|-----------|-----------|
@@ -980,10 +980,10 @@ Document
 
 ### CSS Variables (theming)
 
-> **Все CSS variables используют префикс `--gt-*`** (НЕ `--gotipe-*`). Полная спецификация токенов — в [18-design-system.md](18-design-system.md).
+> **All CSS variables use the `--gt-*` prefix** (NOT `--gotipe-*`). The full token specification is in [18-design-system.md](18-design-system.md).
 
 ```css
-/* Основные переменные — см. docs/18-design-system.md для полного списка */
+/* Core variables — see docs/18-design-system.md for the full list */
 :root {
   --gt-font-body: "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
   --gt-font-mono: "SF Mono", "Fira Code", "JetBrains Mono", monospace;
@@ -999,7 +999,7 @@ Document
   --gt-bg-code: #f7f6f3;
   --gt-editor-max-width: 708px;
 
-  /* Highlight palette (5 цветов для текста/фона) */
+  /* Highlight palette (5 colors for text/background) */
   --gt-highlight-blue-bg: #dbeafe;
   --gt-highlight-blue-text: #1e40af;
   --gt-highlight-green-bg: #dcfce7;
@@ -1106,18 +1106,18 @@ Upload zone + resize handles + editable caption.
 └─────────────────────────────────────────────┘
 ```
 
-| Свойство | Значение |
+| Property | Value |
 |----------|---------|
-| Upload zone | Click + drag & drop. `--gt-bg-hover` фон, dashed border `--gt-border`, border-radius 8px |
-| Progress bar | Горизонтальный, `--gt-accent` цвет, высота 4px, скругление 2px |
-| Resize handles | 8 точек (4 угла + 4 середины сторон). 8×8px, `--gt-accent` фон, border-radius 50% |
-| Aspect ratio lock | При drag resize сохраняется пропорция (Shift для свободного resize) |
+| Upload zone | Click + drag & drop. `--gt-bg-hover` background, dashed border `--gt-border`, border-radius 8px |
+| Progress bar | Horizontal, `--gt-accent` color, height 4px, border-radius 2px |
+| Resize handles | 8 points (4 corners + 4 side midpoints). 8×8px, `--gt-accent` background, border-radius 50% |
+| Aspect ratio lock | Drag resize keeps the proportions (Shift for free resize) |
 | Caption | `--gt-text-secondary`, 14px, text-align center, placeholder "Add a caption..." |
-| Selected state | `2px solid --gt-accent` border вокруг изображения |
-| Max files | Configurable, default: 3 файла |
+| Selected state | `2px solid --gt-accent` border around the image |
+| Max files | Configurable, default: 3 files |
 | Max file size | Configurable, default: 5MB |
-| Loading | Skeleton placeholder `--gt-bg-hover` с shimmer анимацией |
-| Error | Иконка broken image + `--gt-text-tertiary` "Failed to load image" |
+| Loading | Skeleton placeholder `--gt-bg-hover` with a shimmer animation |
+| Error | Broken image icon + `--gt-text-tertiary` "Failed to load image" |
 
 ### Table Block
 
@@ -1135,15 +1135,15 @@ Cell navigation + row/column controls + column resize.
 └──────────┴──────────┴──────────┘
 ```
 
-| Свойство | Значение |
+| Property | Value |
 |----------|---------|
-| Cell navigation | `Tab` → следующая ячейка, `Shift+Tab` → предыдущая. В последней ячейке Tab создаёт новую строку |
-| Row add button | `+` кнопка справа от таблицы, появляется при hover на строке |
-| Column add button | `+` кнопка сверху от таблицы, появляется при hover на колонке |
-| Column resize | Drag handle на вертикальных borders. Cursor: `col-resize`. Минимум 100px ширины |
-| Header row | Первая строка: font-weight 600, `--gt-bg-hover` фон |
-| Selected cell | `--gt-bg-selected` фон, `2px solid --gt-accent` border |
-| Multi-cell selection | Shift+Click для выбора диапазона ячеек |
+| Cell navigation | `Tab` → next cell, `Shift+Tab` → previous. In the last cell, Tab creates a new row |
+| Row add button | `+` button to the right of the table, appears on row hover |
+| Column add button | `+` button above the table, appears on column hover |
+| Column resize | Drag handle on vertical borders. Cursor: `col-resize`. Minimum width 100px |
+| Header row | First row: font-weight 600, `--gt-bg-hover` background |
+| Selected cell | `--gt-bg-selected` background, `2px solid --gt-accent` border |
+| Multi-cell selection | Shift+Click to select a range of cells |
 | Border | `1px solid var(--gt-border)` |
 | Cell padding | `8px 12px` |
 | Context menu | Right-click → Insert/delete row/column, Merge cells, Split cell |
@@ -1163,16 +1163,16 @@ Syntax highlighting + language selector + copy button.
 └──────────────────────────────────────────┘
 ```
 
-| Свойство | Значение |
+| Property | Value |
 |----------|---------|
-| Syntax highlighting | Shiki (WASM) для browser, tree-sitter для Node.js. Тема синхронизирована с editor theme (light/dark) |
-| Language selector | Dropdown вверху слева, `--gt-text-tertiary`, 12px. Popular languages first (JS, TS, Python, Rust, Go, HTML, CSS) |
-| Copy button | Вверху справа, `--gt-text-tertiary`, hover: `--gt-text`. Click → иконка меняется на ✓ checkmark на 2s |
-| Line numbers | Опционально (настраивается). `--gt-text-tertiary`, fixed width 32px, right-aligned |
+| Syntax highlighting | Shiki (WASM) for browser, tree-sitter for Node.js. Theme synced with the editor theme (light/dark) |
+| Language selector | Dropdown at top left, `--gt-text-tertiary`, 12px. Popular languages first (JS, TS, Python, Rust, Go, HTML, CSS) |
+| Copy button | Top right, `--gt-text-tertiary`, hover: `--gt-text`. Click → icon changes to a ✓ checkmark for 2s |
+| Line numbers | Optional (configurable). `--gt-text-tertiary`, fixed width 32px, right-aligned |
 | Font | `--gt-font-mono`, 14px, line-height 1.6 |
 | Background | `--gt-bg-code`, border-radius 8px, padding 16px |
-| Horizontal overflow | Scroll, тонкий scrollbar (4px) |
-| Tab behavior | Вставляет 2 пробела (или tab, настраивается). `Shift+Tab` — dedent |
+| Horizontal overflow | Scroll, thin scrollbar (4px) |
+| Tab behavior | Inserts 2 spaces (or a tab, configurable). `Shift+Tab` — dedent |
 
 ---
 
@@ -1182,7 +1182,7 @@ Syntax highlighting + language selector + copy button.
 import { createEditor } from '@gotipe/core';
 import { Editor } from '@gotipe/react';
 
-// Headless: только data, рендери сам
+// Headless: data only, render it yourself
 const editor = createEditor({ extensions: [...] });
 
 function CustomEditor() {
@@ -1200,7 +1200,7 @@ function CustomEditor() {
 
 ---
 
-## Связанные документы
+## Related documents
 
 - [03-editor-core.md](03-editor-core.md) — document model, transforms, commands
 - [05-extensions.md](05-extensions.md) — extension system, built-in extensions

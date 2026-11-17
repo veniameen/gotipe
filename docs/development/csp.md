@@ -1,21 +1,21 @@
-# CSP и сетевые границы библиотеки
+# CSP and the library's network boundaries
 
-PageEditor использует `@gotipe/core/js`: создание и редактирование документа не
-требуют WebAssembly, eval, Worker, CDN или сетевого сервиса. Код, CSS и шрифты
-поставляет приложение. Подсветка необязательна: отдельный Shiki adapter загружает
-только заданные хостом локальные grammars/themes и использует JavaScript engine.
+PageEditor uses `@gotipe/core/js`: creating and editing a document does not
+require WebAssembly, eval, a Worker, a CDN, or a network service. The application
+supplies the code, CSS, and fonts. Highlighting is optional: a separate Shiki adapter loads
+only the local grammars/themes the host specifies and uses the JavaScript engine.
 
-`apps/playground/tests/csp/` — технический consumer публичной библиотеки, а не
-экран продукта. Его production-конфигурация `vite.csp.config.ts` задаёт строгую
-политику и точный alias `@gotipe/core` → `@gotipe/core/js`; public subpaths,
-включая presets, сохраняются. Результат находится только в ignored `output/`.
+`apps/playground/tests/csp/` is a technical consumer of the public library, not a
+product screen. Its production configuration `vite.csp.config.ts` sets a strict
+policy and an exact alias `@gotipe/core` → `@gotipe/core/js`; public subpaths,
+including presets, are preserved. The output lives only in the ignored `output/`.
 
 ```sh
 pnpm --filter @gotipe/playground build:csp-test
 pnpm --filter @gotipe/playground preview:csp-test --host 127.0.0.1
 ```
 
-Открыть `http://127.0.0.1:5310/tests/csp/index.html`. Политика в HTML:
+Open `http://127.0.0.1:5310/tests/csp/index.html`. The policy in the HTML:
 
 ```text
 default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline';
@@ -23,15 +23,15 @@ img-src 'self' data:; font-src 'self'; connect-src 'self';
 object-src 'none'; base-uri 'none'
 ```
 
-Проверка в браузере включает ввод Unicode, Undo, checkbox с клавиатуры, смену темы
-и read-only. Записывать `securitypolicyviolation`, ошибки страницы и реальные
-requests от перезагрузки до завершения действий. У базового примера допустимы
-только собственные HTML/JS/CSS resources; `.wasm` и внешних запросов быть не должно.
-Development HMR не является доказательством работы production CSP.
+The browser check includes Unicode input, Undo, a checkbox from the keyboard, a theme change,
+and read-only. Record `securitypolicyviolation`, page errors, and the real
+requests from reload until the actions finish. For the base example only
+the app's own HTML/JS/CSS resources are allowed; there must be no `.wasm` and no external requests.
+Development HMR is not proof that the production CSP works.
 
-У GoTipe нет отдельного приложения SpecOrbit Wiki. Совместимость этой consumer
-сборки не заменяет проверку реального приложения, использующего библиотеку.
+GoTipe has no separate SpecOrbit Wiki application. Compatibility of this consumer
+build does not replace testing a real application that uses the library.
 
-Хост отдельно разрешает нужные ему домены медиа, AI и collaboration. GoTipe не
-расширяет CSP автоматически. Выбор WASM engine/export требует отдельной политики
-хоста и не входит в обещание JS-only PageEditor под `script-src 'self'`.
+The host separately allows the media, AI, and collaboration domains it needs. GoTipe does not
+widen the CSP automatically. Choosing the WASM engine/export requires a separate host
+policy and is not part of the promise of a JS-only PageEditor under `script-src 'self'`.

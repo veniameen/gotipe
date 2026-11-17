@@ -53,4 +53,4 @@ Note:
 
 - Headed exploratory jitter pass is green across Chromium/Firefox/WebKit.
 - No regressions found in gutter clickability (`+`/drag) under aggressive pointer movement.
-- Дополнительно усилен retry в hover-activation helper (`e2e/helpers/notion-chaos.ts`) и в headed jitter suite, чтобы убрать transient miss drag-handle в длинных combined runs.
+- Additionally strengthened the retry in the hover-activation helper (`e2e/helpers/notion-chaos.ts`) and in the headed jitter suite, to remove transient drag-handle misses in long combined runs.

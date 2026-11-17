@@ -1,85 +1,85 @@
-# 21 — Использование библиотеки GoTipe внутри SpecOrbit
+# 21 — Using the GoTipe library inside SpecOrbit
 
-GoTipe — библиотека редактора. Wiki является функцией приложения SpecOrbit и
-реализуется в его репозитории поверх публичных пакетов GoTipe. В GoTipe нет
-отдельной Wiki-страницы, файлового рабочего пространства или runtime SpecOrbit.
+GoTipe is an editor library. The Wiki is a feature of the SpecOrbit application and is
+implemented in its repository on top of the public GoTipe packages. GoTipe has no
+separate Wiki page, file workspace, or SpecOrbit runtime.
 
-| GoTipe | Приложение SpecOrbit |
+| GoTipe | SpecOrbit application |
 |---|---|
-| Документ, команды, выделение, история, Markdown | Страницы проекта, пути и дерево файлов |
-| Универсальный `PageEditor`, блоки, меню и оформление | Вкладки, панели, навигация и компоновка Wiki |
-| Host contracts для assets, links и ошибок | Чтение/запись файлов, права, durable storage и автосохранение |
-| Отображение предложений/комментариев и действия над ними | Запросы к модели, ревизии, бизнес-процесс принятия правок |
+| Document, commands, selection, history, Markdown | Project pages, paths, and the file tree |
+| Generic `PageEditor`, blocks, menus, and styling | Tabs, panels, navigation, and Wiki layout |
+| Host contracts for assets, links, and errors | File read/write, permissions, durable storage, and autosave |
+| Display of suggestions/comments and actions on them | Model requests, revisions, and the business process for accepting edits |
 
-Основной playground показывает универсальные варианты Page и Block одного
-редактора: `/?view=page#basic` и `/?view=block#basic`. Примеры ниже описывают код
-адаптера **на стороне SpecOrbit**: `wiki.*`, `file`, `projectPath` и функции
-сохранения принадлежат хосту, не являются API пакетов GoTipe. Этот документ не
-подтверждает выполнение интеграции или её проверок в репозитории SpecOrbit.
+The main playground shows the generic Page and Block variants of the same
+editor: `/?view=page#basic` and `/?view=block#basic`. The examples below describe the
+adapter code **on the SpecOrbit side**: `wiki.*`, `file`, `projectPath`, and the save
+functions belong to the host and are not GoTipe package APIs. This document does not
+confirm that the integration or its checks have been carried out in the SpecOrbit repository.
 
-## Пакеты
+## Packages
 
-| Пакет | Зачем |
+| Package | Purpose |
 |---|---|
 | `@gotipe/block-editor` | `PageEditor`, `ReviewBar`, `LaneAvatars`, `PageIcon`, `insertPageBlock` |
-| `@gotipe/theme` | `@gotipe/theme/base.css` и `theme.css` — общие виды; `page.css` грузит их же одним файлом |
-| `@gotipe/core`, `@gotipe/react` | ядро и React-слой (peer) |
-| `@gotipe/markdown` | собственный кодек Markdown; ещё и для runtime: `applyAnchoredEdits` — в `@gotipe/suggestions` |
-| `@gotipe/suggestions` | типы и якоря предложений: `findAnchor`, `applyAnchoredEdits`, `locateEdits` |
-| `@gotipe/i18n` | строки интерфейса: `en` по умолчанию, `ru` встроен — вике нужен `locale="ru"` |
+| `@gotipe/theme` | `@gotipe/theme/base.css` and `theme.css` — the shared views; `page.css` loads the same two as one file |
+| `@gotipe/core`, `@gotipe/react` | the core and the React layer (peer) |
+| `@gotipe/markdown` | our own Markdown codec; also needed at runtime: `applyAnchoredEdits` — in `@gotipe/suggestions` |
+| `@gotipe/suggestions` | suggestion types and anchors: `findAnchor`, `applyAnchoredEdits`, `locateEdits` |
+| `@gotipe/i18n` | UI strings: `en` by default, `ru` built in — the wiki needs `locale="ru"` |
 
-Для JS-режима и редактирования без подсветки не нужны `@gotipe/wasm` и `shiki`.
-Кодек использует собственный parser GoTipe, без runtime-зависимостей mdast/micromark.
-Нетронутые Markdown-фрагменты сохраняют исходные байты; произвольные JSON-атрибуты
-не становятся частью Markdown автоматически.
+JS mode and editing without highlighting need neither `@gotipe/wasm` nor `shiki`.
+The codec uses GoTipe's own parser, with no mdast/micromark runtime dependencies.
+Untouched Markdown fragments keep their original bytes; arbitrary JSON attributes
+do not automatically become part of Markdown.
 
-## Сборка (Vite)
+## Build (Vite)
 
 ```ts
 // vite.config.ts renderer
 resolve: {
   alias: [
-    // JS-движок: в бандл не попадает ни строчки WASM.
+    // JS engine: not a single line of WASM ends up in the bundle.
     { find: /^@gotipe\/core$/, replacement: "@gotipe/core/js" },
   ],
 },
 ```
 
-- `@gotipe/core/js` — JS entry без загрузки `@gotipe/wasm`; native collaboration
-  в этом режиме недоступна. Основной entry поддерживает optional WASM peer и
-  выбирает движок через `engine`. Для строгой JS-only сборки сохраняйте точный alias.
-- На стороне SpecOrbit экран Wiki можно загружать лениво вместе с
-  `import "@gotipe/theme/base.css"` и `import "@gotipe/theme/theme.css"` (или `page.css` — то же
-  одним файлом). Состав стартового bundle проверяется в сборке
-  хоста; сам пакет GoTipe не создаёт экран или маршрут приложения.
-- Импорт модулей GoTipe не вешает слушателей, не ходит в сеть и не грузит шрифты.
-  Именованные HTML references декодирует собственная таблица Unicode без создания
-  DOM-элементов; отдельный alias для декодера не нужен.
-- Размер проверяется на конкретной production-сборке. Поддерживаемые бюджеты
-  полного JS-графа описаны в [javascript-budgets.md](development/javascript-budgets.md),
-  native-модуля — в [wasm-budget.md](development/wasm-budget.md). Они не являются
-  обещанием неизменного размера произвольного приложения SpecOrbit.
+- `@gotipe/core/js` — a JS entry that does not load `@gotipe/wasm`; native collaboration
+  is unavailable in this mode. The main entry supports an optional WASM peer and
+  selects the engine through `engine`. For a strictly JS-only build keep the exact alias.
+- On the SpecOrbit side the Wiki screen can be loaded lazily together with
+  `import "@gotipe/theme/base.css"` and `import "@gotipe/theme/theme.css"` (or `page.css` — the same
+  in one file). The contents of the startup bundle are checked in the host's
+  build; the GoTipe package itself does not create an application screen or route.
+- Importing GoTipe modules does not attach listeners, make network requests, or load fonts.
+  Named HTML references are decoded by our own Unicode table without creating
+  DOM elements; no separate alias for the decoder is needed.
+- Size is checked on a specific production build. The supported budgets
+  for the full JS graph are described in [javascript-budgets.md](development/javascript-budgets.md),
+  for the native module in [wasm-budget.md](development/wasm-budget.md). They are not
+  a promise that an arbitrary SpecOrbit application will keep the same size.
 
 ## CSP
 
-Изолированный consumer-тест `build:csp-test` проверяет библиотеку под политикой:
+The isolated consumer test `build:csp-test` checks the library under this policy:
 `default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:;
 font-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'none'`.
-Сборка сама по себе не доказывает отсутствие нарушений CSP. Проверка запросов,
-ошибок и реального ввода описана в [контракте CSP](development/csp.md);
-интеграция в приложение хоста требует отдельного прогона в его renderer.
+A build by itself does not prove the absence of CSP violations. Checking requests,
+errors, and real input is described in the [CSP contract](development/csp.md);
+integration into the host application requires a separate run in its renderer.
 
-- `script-src 'self'` — хватает: JS-движок, без `wasm-unsafe-eval` и `unsafe-eval`.
-- `style-src 'unsafe-inline'` — нужен для атрибутов `style` (позиции меню и курсоров, цвет
-  дорожки `--gt-track`, выравнивание ячеек). Нужную политику задаёт хост.
-- `img-src data:` — картинки страницы показываются data URL из `host.resolveAsset`.
-- `font-src` — тема не объявляет `@font-face`: шрифты берутся из `--gt-font-ui` и
-  `--gt-font-mono`; шрифты и их загрузку выбирает SpecOrbit.
-- `connect-src` — редактор в сеть не ходит.
-- Подсветка кода по умолчанию выключена. Если нужна: `@gotipe/block-editor/shiki`
-  (`shiki/core` + JavaScript regex engine, без WASM; грамматики — ленивыми `import()`).
+- `script-src 'self'` — is enough: JS engine, no `wasm-unsafe-eval` or `unsafe-eval`.
+- `style-src 'unsafe-inline'` — needed for `style` attributes (menu and cursor positions, the
+  track color `--gt-track`, cell alignment). The host sets the policy it needs.
+- `img-src data:` — page images are shown as data URLs from `host.resolveAsset`.
+- `font-src` — the theme declares no `@font-face`: fonts come from `--gt-font-ui` and
+  `--gt-font-mono`; SpecOrbit chooses the fonts and how they are loaded.
+- `connect-src` — the editor makes no network requests.
+- Code highlighting is off by default. If needed: `@gotipe/block-editor/shiki`
+  (`shiki/core` + the JavaScript regex engine, no WASM; grammars via lazy `import()`).
 
-## Использование
+## Usage
 
 ```tsx
 import "@gotipe/theme/base.css";
@@ -88,83 +88,83 @@ import { PageEditor, type PageEditorHandle } from "@gotipe/block-editor";
 
 <PageEditor
   ref={pageRef}
-  view="notion"                        // общий вид: notion (по умолчанию), docs, modern, minimal
-  markdown={file.content}              // текст файла; новое значение ≠ последнему черновику → внешняя замена
-  onChange={(md) => scheduleSave(md)}  // черновик после каждой правки; автосохранение ~1 с — у хоста
-  readOnly={viewingVersion}            // В8: просмотр старой версии
-  locale="ru"                          // по умолчанию en
-  titlePlaceholder={slugToTitle(path)} // название без «# …» в файле
+  view="notion"                        // shared view: notion (default), docs, modern, minimal
+  markdown={file.content}              // file text; a new value ≠ the last draft → external replacement
+  onChange={(md) => scheduleSave(md)}  // draft after every edit; autosave (~1 s) is the host's job
+  readOnly={viewingVersion}            // H8: viewing an old version
+  locale="ru"                          // en by default
+  titlePlaceholder={slugToTitle(path)} // title when the file has no "# …"
   host={{
     saveAsset: async (blob, { name, mediaType }) => {
       const { path } = await wiki.writeAsset({ projectPath, page, name, mediaType, data: await toBase64(blob) });
-      return { src: relativeToPage(path) };        // например "assets/schema.png"
+      return { src: relativeToPage(path) };        // for example "assets/schema.png"
     },
     resolveAsset: async (src) => (await wiki.readAsset({ projectPath, path: resolve(page, src) })).dataUrl,
-    openLink: (href) => openExternalOrPage(href),  // http(s)/mailto или путь в проекте
-    onError: (error) => toast.error(errorText(error.code)), // с onError свой тост редактор не показывает
+    openLink: (href) => openExternalOrPage(href),  // http(s)/mailto or a path in the project
+    onError: (error) => toast.error(errorText(error.code)), // with onError the editor shows no toast of its own
   }}
-  review={review}                      // см. ниже; без него слоя предложений нет
-  reviewBar={false}                    // полосу правки SpecOrbit рисует сам (WikiLiveBar) или { title, extra }
+  review={review}                      // see below; without it there is no suggestion layer
+  reviewBar={false}                    // SpecOrbit draws the edit bar itself (WikiLiveBar), or { title, extra }
 />
 ```
 
-Ручка (`ref`): `editor`, `getMarkdown()`, `focus()`, `insertBlock(kind)` (кнопки «Изображение»
-и «Блоки» панели), `getTitle()`, `selectTitle()` («Переименовать»), `review` (`ReviewApi`).
+Handle (`ref`): `editor`, `getMarkdown()`, `focus()`, `insertBlock(kind)` (the "Image"
+and "Blocks" buttons of the toolbar), `getTitle()`, `selectTitle()` ("Rename"), `review` (`ReviewApi`).
 
-- Название — первый `# …` файла. Без него показывается `titlePlaceholder`, в файл ничего не
-  пишется, пока человек не наберёт название.
-- Front matter, HTML, сноски, определения ссылок не показываются как текст для правки: они
-  остаются как есть (блоки «Markdown» только для чтения).
-- Внешняя замена (файл изменил агент, Git, принятое предложение): передайте новый `markdown` —
-  id блоков переиспользуются, фокус, каретка и прокрутка сохраняются, правка попадает в undo.
-- Неизменённый файл возвращается байт-в-байт; после правки абзаца меняется только его блок.
-- PageEditor — это BlockEditor с Markdown-сессией и предложениями модели: та же панель над
-  выделением, «/», ручка и меню блока, меню столбца таблицы (атлас, кадры 6–9 и 19). Своей темы
-  у страницы нет.
-- На широкой странице (карточка + зазор + `--gt-margin-page-min`) карточки предложений стоят
-  колонкой на полях напротив своих правок: открытая — с ответами, остальные свёрнуты. На узкой
-  карточка открывается у текста.
-- Свои виды блоков — проп `blockViews`: они важнее видов страницы и общих. Так SpecOrbit рисует,
-  например, цитату, которая начинается с жирной метки «Инструкции для агента:» — для библиотеки
-  это обычная цитата.
+- The title is the first `# …` of the file. Without it `titlePlaceholder` is shown, and nothing is
+  written to the file until the person types a title.
+- Front matter, HTML, footnotes, and link definitions are not shown as editable text: they
+  stay as they are (read-only "Markdown" blocks).
+- External replacement (the file was changed by an agent, Git, or an accepted suggestion): pass the new `markdown` —
+  block ids are reused, focus, caret, and scroll position are kept, and the change goes into undo.
+- An unchanged file comes back byte for byte; after a paragraph edit only its block changes.
+- PageEditor is a BlockEditor with a Markdown session and model suggestions: the same toolbar over
+  the selection, "/", block handle and block menu, table column menu (Atlas, frames 6–9 and 19). The page
+  has no theme of its own.
+- On a wide page (card + gap + `--gt-margin-page-min`) suggestion cards stand in a
+  column in the margin next to their edits: the open one with its replies, the others collapsed. On a narrow page
+  the card opens next to the text.
+- Custom block views are the `blockViews` prop: they take precedence over page views and shared ones. This is how SpecOrbit draws,
+  for example, a quote that starts with a bold label "Agent instructions:" — for the library
+  it is an ordinary quote.
 
-### Колбэки хоста (`EditorHost`)
+### Host callbacks (`EditorHost`)
 
-| Колбэк | Когда | SpecOrbit |
+| Callback | When | SpecOrbit |
 |---|---|---|
-| `saveAsset(blob, {kind, name, mediaType, size})` → `{src, name?}` | вставка из буфера, перетаскивание, «Изображение», «Файл» | `wiki.writeAsset`; отказ — `throw` (станет событием `error`) |
-| `resolveAsset(src)` → data URL \| null | показ изображения | `wiki.readAsset` → `dataUrl` |
-| `openLink(href, {blockId, newTab, target})` | Cmd/Ctrl+клик; любой клик в режиме чтения; клик по файлу | ссылки наружу — системный браузер; `docs/pages/*.md` — вкладка страницы; `target` — свой у ссылки (`_self`, `_blank`), у имени файла `null`, решает хост |
-| `onError(error: GoTipeError)` | любая ошибка | тост или подсветка; своих строк ошибок у редактора нет |
+| `saveAsset(blob, {kind, name, mediaType, size})` → `{src, name?}` | paste from the clipboard, drag and drop, "Image", "File" | `wiki.writeAsset`; failure — `throw` (becomes an `error` event) |
+| `resolveAsset(src)` → data URL \| null | showing an image | `wiki.readAsset` → `dataUrl` |
+| `openLink(href, {blockId, newTab, target})` | Cmd/Ctrl+click; any click in read mode; click on a file | external links — the system browser; `docs/pages/*.md` — a page tab; `target` — the link's own (`_self`, `_blank`), for a file name `null`, the host decides |
+| `onError(error: GoTipeError)` | any error | toast or highlight; the editor has no error strings of its own |
 
-Коды ошибок: `ASSET_SAVE_FAILED`, `ASSET_RESOLVE_FAILED`, `LINK_BLOCKED` (не http/https/mailto и не
-относительная ссылка), `LINK_OPEN_FAILED`, `PROPOSAL_STALE`, `PROPOSAL_ACTION_FAILED`,
-`COMMENT_ACTION_FAILED`, `TRANSFORM_ERROR`. Неверная ссылка в плавающей панели — подсветка поля.
+Error codes: `ASSET_SAVE_FAILED`, `ASSET_RESOLVE_FAILED`, `LINK_BLOCKED` (not http/https/mailto and not a
+relative link), `LINK_OPEN_FAILED`, `PROPOSAL_STALE`, `PROPOSAL_ACTION_FAILED`,
+`COMMENT_ACTION_FAILED`, `TRANSFORM_ERROR`. An invalid link in the floating toolbar highlights the field.
 
-### Предложения модели (ADR-0047)
+### Model suggestions (ADR-0047)
 
 ```ts
 const review: PageReviewProps = {
-  lanes: [                       // дорожки траектории; цвет — CSS-цвет или переменная
-    { id: "user", name: "Вы", kind: "user", color: "var(--gt-track-4)" },
-    { id: "agent", name: "Агент", kind: "agent", color: "var(--gt-track-1)" },
+  lanes: [                       // trajectory lanes; color is a CSS color or a variable
+    { id: "user", name: "You", kind: "user", color: "var(--gt-track-4)" },
+    { id: "agent", name: "Agent", kind: "agent", color: "var(--gt-track-1)" },
     { id: "skill:company-lint", name: "company-lint", kind: "skill", color: "var(--gt-track-2)" },
     { id: "tool:psql", name: "psql", kind: "tool", color: "var(--gt-track-3)" },
   ],
   proposals: records.proposals.map((p) => ({
     id: p.id, laneId: laneOf(p.source), edits: p.edits, reason: p.reason,
-    status: p.status,            // "stale" из записей тоже учитывается
+    status: p.status,            // "stale" from the records is also taken into account
   })),
   comments: records.comments.map((c) => ({
     id: c.id, laneId: laneOf(c.source), anchor: c.anchor, text: c.text, question: c.question,
-    replies: c.replies.map((r) => ({ id: r.id, author: "Вы", text: r.text })),
+    replies: c.replies.map((r) => ({ id: r.id, author: "You", text: r.text })),
   })),
-  cursors,                       // из wiki.changed kind=cursor: {laneId, label, proposalId | anchor}
-  onAccept: async (id) => {      // сохранить черновик → wiki.acceptProposal → новый текст в markdown
+  cursors,                       // from wiki.changed kind=cursor: {laneId, label, proposalId | anchor}
+  onAccept: async (id) => {      // save the draft → wiki.acceptProposal → new text in markdown
     await saveNow(pageRef.current!.getMarkdown());
     const { document } = await wiki.acceptProposal({ projectPath, path, proposalId: id, expectedRevision });
-    setFile(document);           // PageEditor применит как внешнюю правку
-    return true;                 // false — остановить «Принять все»
+    setFile(document);           // PageEditor will apply it as an external edit
+    return true;                 // false — stop "Accept all"
   },
   onReject: (id) => wiki.rejectProposal({ projectPath, path, proposalId: id }).then(() => true),
   onRejectAll: () => wiki.rejectAll({ projectPath, path }),
@@ -173,32 +173,32 @@ const review: PageReviewProps = {
 };
 ```
 
-- Якоря — те же `before + quote + after` в тексте файла. Редактор привязывает их к черновику на
-  каждую правку; не найдено ровно одно совпадение — «устарело» (только «Отклонить»), подсказка
-  текстом на месте `before`.
-- Подсветка точная для правок внутри блоков (вставка подчёркнута цветом дорожки, замена —
-  зачёркнутое и новое); новые строки списков и ячейки таблиц появляются на месте; блоки другого
-  типа — старый зачёркнут, новый под ним, карточка показывает «Было» и «Стало».
-- «Принять все» по умолчанию — по одному в порядке документа, остановка на первом устаревшем
-  или `false`. Свой порядок — `onAcceptAll`. `ref.review.acceptAll()` — для своей полосы.
-- Курсор: у `proposalId` — в конце его текста, иначе — у `anchor`. Подпись — `label`.
-  Раскрытие готового текста — до 1,5 с, при `prefers-reduced-motion` сразу.
-- Без `onAccept` предложение применяется локально (`applyAnchoredEdits`) — так работает пример.
-- Для runtime (М1) пригодятся `findAnchor`, `locateEdits`, `applyAnchoredEdits`,
-  `anchorWindowsOverlap` из `@gotipe/suggestions`: те же правила, что в редакторе.
+- Anchors are the same `before + quote + after` in the file text. The editor binds them to the draft on
+  every edit; if exactly one match is not found — "stale" (only "Reject"), with a hint
+  as text in place of `before`.
+- Highlighting is exact for edits inside blocks (an insertion is underlined in the lane color, a replacement is
+  struck-through text plus the new one); new list lines and table cells appear in place; blocks of a different
+  type — the old one struck through, the new one under it, the card shows "Was" and "Now".
+- "Accept all" by default goes one by one in document order, stopping at the first stale one
+  or `false`. A custom order — `onAcceptAll`. `ref.review.acceptAll()` — for your own bar.
+- Cursor: with `proposalId` — at the end of its text, otherwise — at `anchor`. The caption is `label`.
+  Revealing finished text takes up to 1.5 s, instantly under `prefers-reduced-motion`.
+- Without `onAccept` the suggestion is applied locally (`applyAnchoredEdits`) — this is how the example works.
+- For the runtime (L1), `findAnchor`, `locateEdits`, `applyAnchoredEdits`, and
+  `anchorWindowsOverlap` from `@gotipe/suggestions` are useful: the same rules as in the editor.
 
-## CSS-переменные
+## CSS variables
 
-Страница рисуется общим видом (`view`); все цвета, шрифты и размеры — токены `--gt-*`
-(`@gotipe/theme`). Тёмная тема — `data-theme="dark"` на любом предке (или `prefers-color-scheme`,
-если `data-theme` нет).
+The page is drawn by the shared view (`view`); all colors, fonts, and sizes are `--gt-*` tokens
+(`@gotipe/theme`). The dark theme is `data-theme="dark"` on any ancestor (or `prefers-color-scheme`
+if there is no `data-theme`).
 
-- Цвета, шрифты, радиусы и тени наследуются: задайте их на контейнере страницы или выше, и они
-  дойдут до текста, меню и карточек предложений.
-- Размеры вида (кегль, интерлиньяж, поля страницы) задаёт сам вид на `[data-gt-view]`. Свои
-  значения ставьте на `.gotipe-page .gotipe-block-editor`.
+- Colors, fonts, radii, and shadows are inherited: set them on the page container or higher, and they
+  reach the text, menus, and suggestion cards.
+- View sizes (font size, line height, page margins) are set by the view itself on `[data-gt-view]`. Put your own
+  values on `.gotipe-page .gotipe-block-editor`.
 
-Пример адаптера на стороне SpecOrbit (имена справа — токены приложения):
+An example adapter on the SpecOrbit side (the names on the right are application tokens):
 
 ```css
 .wk-page {
@@ -219,34 +219,34 @@ const review: PageReviewProps = {
 }
 ```
 
-Цвета дорожек предложений — `--gt-track-1…6`: три цвета участников (синий, зелёный, бирюзовый),
-warning (янтарный), серый и красный; фиолетового и терракоты нет. Дорожка без `lanes[].color`
-берёт `--gt-track-1`, комментарий без дорожки — `--gt-track-3`; свой цвет дорожка передаёт в
+Suggestion lane colors are `--gt-track-1…6`: three participant colors (blue, green, teal),
+warning (amber), gray, and red; there is no purple or terracotta. A lane without `lanes[].color`
+takes `--gt-track-1`, a comment without a lane takes `--gt-track-3`; a lane passes its own color in
 `lanes[].color`.
 
-Классы для своих правок: `.gotipe-page` (корень), `.gotipe-page-title`, `.gotipe-raw`,
+Classes for your own edits: `.gotipe-page` (root), `.gotipe-page-title`, `.gotipe-raw`,
 `.gotipe-table`, `.gotipe-column-handle`, `.gotipe-row-handle`, `.gotipe-column-menu`, `.gotipe-bubble-menu`, `.gotipe-slash-menu`,
 `.gotipe-block-context-menu`, `.gotipe-review-bar`, `.gotipe-review-card`, `.gotipe-lane-cursor`,
-`.gotipe-sug-ins|-del|-stale|-block-ins|-block-del`, `.gotipe-cmt`. Атрибуты:
-`data-gt-view`, `data-review-layout` (колонка на полях), `data-gotipe-proposal`, `data-gotipe-comment`, `data-gotipe-lane`.
+`.gotipe-sug-ins|-del|-stale|-block-ins|-block-del`, `.gotipe-cmt`. Attributes:
+`data-gt-view`, `data-review-layout` (column in the margin), `data-gotipe-proposal`, `data-gotipe-comment`, `data-gotipe-lane`.
 
-## Что в Markdown
+## What goes into Markdown
 
-| Блок | Markdown |
+| Block | Markdown |
 |---|---|
-| Задачи | `- [ ]` / `- [x]`; подзадача — вложенный список с отступом (Tab / Shift+Tab) |
-| Выноска | `> [!NOTE]` (TIP, IMPORTANT, WARNING, CAUTION) |
-| Изображение | `![alt](assets/имя.png "подпись")` — путь возвращает `saveAsset` |
-| Файл | `[имя.pdf](assets/имя.pdf)` — абзац из одной ссылки без заголовка и без схемы (`assets/…` или `/…`), текст = имя файла из пути. Ссылка со схемой (`https://…/имя.pdf`) остаётся абзацем со ссылкой |
-| Тип столбца | не хранится: «Число» — `---:`, «Код» — ячейки в `` ` ``, «Да / нет» — ячейки `✓` и `—` на любом языке интерфейса; слова прежних версий (`да`/`нет`, `yes`/`no`) читаются как `✓` и `—` |
-| HTML, сноски, определения | как есть, блок только для чтения |
+| Tasks | `- [ ]` / `- [x]`; a subtask is a nested list with indentation (Tab / Shift+Tab) |
+| Callout | `> [!NOTE]` (TIP, IMPORTANT, WARNING, CAUTION) |
+| Image | `![alt](assets/name.png "caption")` — the path is returned by `saveAsset` |
+| File | `[name.pdf](assets/name.pdf)` — a paragraph with a single link, no title and no scheme (`assets/…` or `/…`), text = the file name from the path. A link with a scheme (`https://…/name.pdf`) stays a paragraph with a link |
+| Column type | not stored: "Number" is `---:`, "Code" is cells in `` ` ``, "Yes / no" is cells `✓` and `—` in any UI language; words from earlier versions (`да`/`нет`, `yes`/`no`) are read as `✓` and `—` |
+| HTML, footnotes, definitions | as is, a read-only block |
 
-## Ограничения
+## Limitations
 
-- Мягкие переносы строк внутри абзаца сохраняются переводом строки; в редакторе видны как
-  перенос.
-- Правленый блок пишется канонически: `**`, `*`, `~~`, ATX-заголовки, fenced-код; маркеры и
-  нумерация списков сохраняются.
-- Голые URL GFM превращает в ссылки при повторном разборе правленого блока.
-- Многоабзацные пункты списков и цитаты, смешанные списки задач — блоком «как есть».
-- Скорость: страница 80 КБ (2 000 блоков) — разбор ~190 мс, сериализация после правки ~16 мс.
+- Soft line breaks inside a paragraph are kept as a newline; in the editor they show as a
+  break.
+- An edited block is written canonically: `**`, `*`, `~~`, ATX headings, fenced code; list markers and
+  numbering are kept.
+- GFM turns bare URLs into links when an edited block is parsed again.
+- Multi-paragraph list items and quotes, mixed task lists — as an "as is" block.
+- Speed: an 80 KB page (2,000 blocks) — parsing ~190 ms, serialization after an edit ~16 ms.

@@ -5,7 +5,7 @@ _Date: February 14, 2026_
 ## Scope
 
 - Closed matrix case:
-  - `SEL-005` (mark toggle на list item без артефактов)
+  - `SEL-005` (mark toggle on a list item without artifacts)
 
 ## Implementation
 
@@ -16,7 +16,7 @@ _Date: February 14, 2026_
   - `orderedList -> listItem`
   - `todoList -> todoItem`
   - toggle `bold` and `italic` on/off with bubble menu
-  - assertions: структура (`parentType/itemType`) и текст не ломаются, mark-spans включаются/выключаются корректно
+  - assertions: the structure (`parentType/itemType`) and text stay intact, mark spans toggle on/off correctly
 
 ## Test Runs
 

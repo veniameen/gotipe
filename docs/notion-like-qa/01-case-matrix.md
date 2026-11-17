@@ -4,89 +4,89 @@ _Last updated: February 14, 2026_
 
 ## Legend
 
-- `Automated`: покрыто e2e
-- `Planned`: кейс в roadmap, тест ещё не написан
-- `Manual`: пока только ручная проверка
-- `Fixme`: кейс автоматизирован/описан, но временно quarantined из-за известной нестабильности
+- `Automated`: covered by e2e
+- `Planned`: case is in the roadmap, test not written yet
+- `Manual`: manual check only for now
+- `Fixme`: case is automated/described but temporarily quarantined because of known flakiness
 
 ## Slash & Block Transform
 
-| ID | Сценарий | Ожидание | Статус |
+| ID | Scenario | Expected | Status |
 |---|---|---|---|
-| SLASH-001 | paragraph -> bullet | создаётся listItem, строка не пропадает | Automated |
-| SLASH-002 | paragraph -> ordered | создаётся ordered list item | Automated |
-| SLASH-003 | paragraph -> todo | создаётся todoItem | Automated |
-| SLASH-004 | todo -> bullet | сохраняется текст текущей строки | Automated |
-| SLASH-005 | todo -> ordered | сохраняется текст текущей строки | Automated |
-| SLASH-006 | bullet -> todo | сохраняется текст текущей строки | Automated |
-| SLASH-007 | ordered -> bullet | сохраняется текст текущей строки | Automated |
-| SLASH-008 | bullet -> text | list item корректно выносится в paragraph | Automated |
-| SLASH-009 | todo -> heading 1 | item выносится в h1 без потери текста | Automated |
-| SLASH-010 | slash в начале непустой строки | существующий текст не удаляется | Automated |
-| SLASH-011 | slash + Enter в пустом paragraph | создаётся целевой блок, caret остаётся в нём | Automated |
-| SLASH-012 | slash menu Esc | меню закрывается, редактор остаётся рабочим | Automated |
-| SLASH-013 | slash menu click outside | меню закрывается | Automated |
-| SLASH-014 | slash query без совпадений | виден empty-state | Automated |
-| SLASH-015 | slash в list item с marks | marks не ломаются | Automated |
-| SLASH-016 | slash при выделении диапазона | поведение предсказуемое, без краша | Automated |
-| SLASH-017 | slash в heading -> paragraph | корректная смена типа | Automated |
-| SLASH-018 | slash в nested list | нет потери вложенности | Automated |
-| SLASH-019 | slash near viewport bottom | меню флипается вверх | Automated |
-| SLASH-020 | slash near right edge | нет горизонтального overflow | Automated |
-| SLASH-021 | мгновенный ввод после клика slash-item | первый символ не теряется | Automated |
-| SLASH-022 | data-driven source->target matrix (72 перехода) | текст сохраняется, целевой тип корректен | Automated |
-| SLASH-023 | slash keyboard nav (`↑`, `↓`, `Enter`) | выбранная команда применяется без mouse interaction | Automated |
+| SLASH-001 | paragraph -> bullet | a listItem is created, the line does not disappear | Automated |
+| SLASH-002 | paragraph -> ordered | an ordered list item is created | Automated |
+| SLASH-003 | paragraph -> todo | a todoItem is created | Automated |
+| SLASH-004 | todo -> bullet | the text of the current line is preserved | Automated |
+| SLASH-005 | todo -> ordered | the text of the current line is preserved | Automated |
+| SLASH-006 | bullet -> todo | the text of the current line is preserved | Automated |
+| SLASH-007 | ordered -> bullet | the text of the current line is preserved | Automated |
+| SLASH-008 | bullet -> text | the list item is correctly lifted into a paragraph | Automated |
+| SLASH-009 | todo -> heading 1 | the item is lifted into h1 without losing text | Automated |
+| SLASH-010 | slash at the start of a non-empty line | existing text is not deleted | Automated |
+| SLASH-011 | slash + Enter in an empty paragraph | the target block is created, the caret stays in it | Automated |
+| SLASH-012 | slash menu Esc | the menu closes, the editor stays usable | Automated |
+| SLASH-013 | slash menu click outside | the menu closes | Automated |
+| SLASH-014 | slash query with no matches | an empty state is visible | Automated |
+| SLASH-015 | slash in a list item with marks | marks are not broken | Automated |
+| SLASH-016 | slash with a range selection | predictable behavior, no crash | Automated |
+| SLASH-017 | slash in heading -> paragraph | the type changes correctly | Automated |
+| SLASH-018 | slash in a nested list | nesting is not lost | Automated |
+| SLASH-019 | slash near viewport bottom | the menu flips upward | Automated |
+| SLASH-020 | slash near right edge | no horizontal overflow | Automated |
+| SLASH-021 | immediate typing after clicking a slash item | the first character is not lost | Automated |
+| SLASH-022 | data-driven source->target matrix (72 transitions) | text is preserved, the target type is correct | Automated |
+| SLASH-023 | slash keyboard nav (`↑`, `↓`, `Enter`) | the selected command is applied without mouse interaction | Automated |
 
 ## Enter / Backspace / Caret
 
-| ID | Сценарий | Ожидание | Статус |
+| ID | Scenario | Expected | Status |
 |---|---|---|---|
-| ENTER-001 | Enter в paragraph | split на новый paragraph | Automated |
-| ENTER-002 | Enter в пустом paragraph | новая строка сразу видима | Automated |
-| ENTER-003 | Shift+Enter | soft break в том же блоке | Automated |
-| ENTER-004 | Enter в non-empty todo | создаётся новый todoItem | Automated |
-| ENTER-005 | Enter в empty todo | выход в paragraph | Automated |
-| ENTER-006 | Enter в bullet item | новый listItem | Automated |
-| ENTER-007 | Enter в ordered item | новый listItem | Automated |
-| ENTER-008 | Backspace в начале блока | merge с предыдущим блоком | Automated |
-| ENTER-009 | Backspace в начале второго list item | корректный list behavior | Automated |
-| ENTER-010 | Undo/Redo после slash-transform | дерево документа восстанавливается корректно | Automated |
-| ENTER-011 | Caret в пустом todo сразу после slash | каретка после checkbox в text-host, не на левом краю list | Automated |
-| ENTER-012 | Enter в code block | вставляется `\\n` в этом же блоке, без дублирования code block | Automated |
-| ENTER-013 | Escape в code block | создаётся paragraph после блока и каретка переходит в него | Automated |
+| ENTER-001 | Enter in a paragraph | split into a new paragraph | Automated |
+| ENTER-002 | Enter in an empty paragraph | the new line is immediately visible | Automated |
+| ENTER-003 | Shift+Enter | soft break in the same block | Automated |
+| ENTER-004 | Enter in a non-empty todo | a new todoItem is created | Automated |
+| ENTER-005 | Enter in an empty todo | exits to a paragraph | Automated |
+| ENTER-006 | Enter in a bullet item | a new listItem | Automated |
+| ENTER-007 | Enter in an ordered item | a new listItem | Automated |
+| ENTER-008 | Backspace at the start of a block | merge with the previous block | Automated |
+| ENTER-009 | Backspace at the start of the second list item | correct list behavior | Automated |
+| ENTER-010 | Undo/Redo after a slash transform | the document tree is restored correctly | Automated |
+| ENTER-011 | Caret in an empty todo right after slash | the caret is after the checkbox in the text host, not at the left edge of the list | Automated |
+| ENTER-012 | Enter in a code block | `\\n` is inserted in the same block, the code block is not duplicated | Automated |
+| ENTER-013 | Escape in a code block | a paragraph is created after the block and the caret moves into it | Automated |
 
 ## Selection / Formatting
 
-| ID | Сценарий | Ожидание | Статус |
+| ID | Scenario | Expected | Status |
 |---|---|---|---|
-| SEL-001 | bubble menu bold/italic | выделение не теряется визуально | Automated |
-| SEL-002 | toolbar bold/italic (simple/agent) | selection остаётся активным | Automated |
-| SEL-003 | headless bold | focus возвращается в редактор | Automated |
-| SEL-004 | slash transform после выделения | selection/caret не ломаются | Automated |
-| SEL-005 | mark toggle на list item | marks применяются без артефактов | Automated |
+| SEL-001 | bubble menu bold/italic | the selection is not visually lost | Automated |
+| SEL-002 | toolbar bold/italic (simple/agent) | the selection stays active | Automated |
+| SEL-003 | headless bold | focus returns to the editor | Automated |
+| SEL-004 | slash transform after a selection | selection/caret are not broken | Automated |
+| SEL-005 | mark toggle on a list item | marks are applied without artifacts | Automated |
 
 ## UI / Layout / Theme
 
-| ID | Сценарий | Ожидание | Статус |
+| ID | Scenario | Expected | Status |
 |---|---|---|---|
-| UI-001 | slash menu width/height | компактный размер в пределах лимитов | Automated |
-| UI-002 | slash menu не прыгает в левый верхний угол | меню у каретки | Automated |
-| UI-003 | slash menu no horizontal overflow | контент не вылезает | Automated |
-| UI-004 | light theme slash menu | светлая тема корректная | Automated |
-| UI-005 | dark theme slash menu | тёмная тема корректная | Automated |
-| UI-006 | block toolbar gutter anchor | `+` и drag рядом с блоком | Automated |
-| UI-007 | mobile width behavior | меню не ломает layout на узком экране | Automated |
-| UI-008 | long command titles | ellipsis без разрыва layout | Automated |
-| UI-009 | todo checkbox/text alignment | checkbox и текст выровнены по вертикали, есть стабильный gap | Automated |
+| UI-001 | slash menu width/height | compact size within limits | Automated |
+| UI-002 | slash menu does not jump to the top-left corner | the menu is at the caret | Automated |
+| UI-003 | slash menu no horizontal overflow | content does not overflow | Automated |
+| UI-004 | light theme slash menu | the light theme is correct | Automated |
+| UI-005 | dark theme slash menu | the dark theme is correct | Automated |
+| UI-006 | block toolbar gutter anchor | `+` and drag are next to the block | Automated |
+| UI-007 | mobile width behavior | the menu does not break the layout on a narrow screen | Automated |
+| UI-008 | long command titles | ellipsis without breaking the layout | Automated |
+| UI-009 | todo checkbox/text alignment | the checkbox and text are vertically aligned, with a stable gap | Automated |
 
-## Надёжность и стресс
+## Reliability and stress
 
-| ID | Сценарий | Ожидание | Статус |
+| ID | Scenario | Expected | Status |
 |---|---|---|---|
-| REL-001 | 50 последовательных slash-трансформаций | нет краша и рассинхрона DOM/state | Automated |
-| REL-002 | paste + slash + undo chain | стабильный state | Automated |
-| REL-003 | быстрый ввод + Enter mash | нет потери блоков | Automated |
-| REL-004 | Firefox run | критические кейсы стабильны | Automated |
-| REL-005 | WebKit run | критические кейсы стабильны | Automated |
-| REL-006 | mixed stress create/change/delete (18 итераций) | нет краша, маркеры не теряются в каждой итерации | Automated |
-| REL-007 | transform-matrix repeat runs | нет флаков на `repeat-each=2` | Automated |
+| REL-001 | 50 consecutive slash transforms | no crash or DOM/state desync | Automated |
+| REL-002 | paste + slash + undo chain | stable state | Automated |
+| REL-003 | fast typing + Enter mash | no lost blocks | Automated |
+| REL-004 | Firefox run | critical cases are stable | Automated |
+| REL-005 | WebKit run | critical cases are stable | Automated |
+| REL-006 | mixed stress create/change/delete (18 iterations) | no crash, markers are not lost in any iteration | Automated |
+| REL-007 | transform-matrix repeat runs | no flakes with `repeat-each=2` | Automated |

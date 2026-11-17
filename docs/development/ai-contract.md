@@ -1,47 +1,47 @@
-# AI provider и жизненный цикл
+# AI provider and lifecycle
 
-`@gotipe/ai` принимает явный `AiProvider`; без него команда возвращает ошибку.
-Демо использует подписанный mock, который не отправляет платных запросов.
-`AiContext.signal` отменяет сетевой запрос/stream у провайдера, если он поддерживает
-AbortSignal. Менеджер в любом случае отбрасывает поздний результат после cancel,
-смены provider, следующей команды, изменения документа, read-only или destroy.
-Старый запрос не сбрасывает статус нового. Перемещение caret не меняет адресата
-уже запрошенной правки.
+`@gotipe/ai` accepts an explicit `AiProvider`; without one, a command returns an error.
+The demo uses a signed mock that sends no paid requests.
+`AiContext.signal` cancels the network request/stream at the provider if it supports
+AbortSignal. In any case, the manager discards a late result after cancel,
+a provider change, the next command, a document change, read-only, or destroy.
+An old request does not reset the status of a new one. Moving the caret does not change the target
+of an edit that has already been requested.
 
-Контекст строится из публичного JSON документа, включая вложенные/raw блоки и
-направленное выделение между блоками. Provider получает detached данные.
-`captureTarget()` сохраняет исходные документ и selection. `applySuggestion`
-применяет ответ к этому выделению одной транзакцией; stale документ вызывает
-ошибку. Generation/continue сначала собирают поток, затем вставляют один блок
-рядом с исходным. Ошибка или отмена не создаёт пустой/частично записанный блок.
-Низкоуровневые stream-методы остаются доступны host для собственного preview.
+The context is built from the document's public JSON, including nested/raw blocks and
+a directional selection across blocks. The provider receives detached data.
+`captureTarget()` saves the original document and selection. `applySuggestion`
+applies the response to that selection in a single transaction; a stale document raises
+an error. Generation/continue first collect the stream, then insert one block
+next to the source. An error or cancellation never creates an empty or partially written block.
+Low-level stream methods remain available to the host for its own preview.
 
-Proofread проверяет block IDs, исходный текст, UTF-16 границы и пересечение правок.
-Accept All — одна атомарная транзакция и один undo. После одиночного accept
-оставшиеся offsets сдвигаются относительно принятой правки; постороннее изменение
-блока делает предложение stale. Review comments проверяют quotedText; это
-координаты снимка, поэтому при изменении документа они сбрасываются. Долговечные
-совместные обсуждения принадлежат отдельному `@gotipe/comments`.
+Proofread checks block IDs, the source text, UTF-16 boundaries, and overlapping edits.
+Accept All is one atomic transaction and one undo. After a single accept,
+the remaining offsets shift relative to the accepted edit; an outside change to the
+block makes the suggestion stale. Review comments check quotedText; these are
+snapshot coordinates, so they are reset when the document changes. Durable shared
+discussions belong to the separate `@gotipe/comments`.
 
-`enablePiiDetection` по умолчанию выключен. При включении собственный детектор
-проверяет context и prompt до вызова provider и блокирует найденные email,
-поддержанные форматы телефонов и 16-значные Luhn-карты. Это ограниченный набор
-паттернов, не полный классификатор персональных данных. Ничего не редактируется
-молча: замена текста в review-контексте нарушила бы offsets. `detectPii` возвращает
-UTF-16 start/end; общие тесты сравнивают результат с собранным WASM детектором.
+`enablePiiDetection` is off by default. When enabled, the built-in detector
+checks the context and prompt before calling the provider and blocks any email,
+supported phone formats, and 16-digit Luhn cards it finds. This is a limited set of
+patterns, not a full personal-data classifier. Nothing is edited
+silently: replacing text in a review context would break offsets. `detectPii` returns
+UTF-16 start/end; shared tests compare the result with the built WASM detector.
 
-AI UI показывает loading/error/retry/cancel, предотвращает повторный submit,
-учитывает read-only/destroy. Tab для ghost и ⌘J (Ctrl+J; физическая клавиша J на
-любой раскладке) для command bar принадлежат конкретному editor surface; ⌘K — это
-ссылка (`openLinkDialog`). Элементы ИИ блочного редактора — Improve, строка ⌘J,
-ghost text и строка состояния — показываются, только когда им отвечает расширение
-`@gotipe/ai` (`block-editor/src/components/ai-controls.ts`); без него их нет, и ⌘J
-остаётся браузеру. Autocomplete возникает только в конце текстового
-блока с фокусом редактора; overlay обрезается внутри доступной строки и следует
-за scroll/resize. Команды и listeners освобождаются владельцем extension.
+The AI UI shows loading/error/retry/cancel, prevents repeat submits,
+and respects read-only/destroy. Tab for ghost text and ⌘J (Ctrl+J; the physical J key on
+any layout) for the command bar belong to a specific editor surface; ⌘K is the
+link shortcut (`openLinkDialog`). The block editor's AI elements are Improve, the ⌘J row,
+ghost text, and the status line. They are shown only when the `@gotipe/ai` extension
+backs them (`block-editor/src/components/ai-controls.ts`); without it they do not exist, and ⌘J
+stays with the browser. Autocomplete appears only at the end of a text
+block while the editor has focus; the overlay is clipped within the available row and follows
+scroll/resize. Commands and listeners are released by the extension's owner.
 
-Проверки: `packages/ai/src/manager.test.ts`, `packages/ai/tests/pii.test.ts`,
+Checks: `packages/ai/src/manager.test.ts`, `packages/ai/tests/pii.test.ts`,
 `packages/ai-ui/src/command-palette.test.tsx`,
-`packages/block-editor/src/components/ai-command-bar.test.tsx`, существующий
-`e2e/ai-features.spec.ts` с настоящим редактором и mock provider, включая 320px, и
-`e2e/ai-availability.spec.ts` — элементы ИИ есть только с расширением.
+`packages/block-editor/src/components/ai-command-bar.test.tsx`, the existing
+`e2e/ai-features.spec.ts` with a real editor and a mock provider, including 320px, and
+`e2e/ai-availability.spec.ts`, which verifies that AI elements are present only with the extension.

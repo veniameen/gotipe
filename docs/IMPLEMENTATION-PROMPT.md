@@ -516,66 +516,66 @@ Phase 6: Polish & Test
 
 ---
 
-## 11. Tiptap Examples Catalog (26+ примеров)
+## 11. Tiptap Examples Catalog (26+ examples)
 
-Полный каталог примеров на [tiptap.dev/docs/examples](https://tiptap.dev/docs/examples). Используется как референс для функциональности GoTipe.
+A full catalog of examples at [tiptap.dev/docs/examples](https://tiptap.dev/docs/examples). Used as a reference for GoTipe functionality.
 
-### 4 шаблона редактора
+### 4 Editor Templates
 
-| Шаблон | Лицензия | Ключевые фичи |
+| Template | License | Key features |
 |--------|----------|----------------|
-| **Agent Editor** | Commercial (AI Toolkit) | AI меню (Proofread, Add AI comment, Adjust text, Justify edit), toolbar с zoom/headings/alignment, AI подсветка правок, Custom components |
-| **Notion-like Editor** | Commercial | Slash-меню с категориями (AI/Style), Bubble menu (Improve + Block Type + Color + форматирование), drag handles, dark mode, коллаборация |
-| **Simple Editor** | MIT | Toolbar (undo/redo, headings, lists, indent, B/I/S/Code/U, links, alignment, + Add), highlight, dark mode toggle. Без AI, без slash/bubble menu |
-| **Headless Editor** | MIT | Минимальный UI — чистые HTML-кнопки (Bold, Italic, Strike, Code, H1-H6, Lists, Blockquote, HR, Undo/Redo). Полностью BYO styles |
+| **Agent Editor** | Commercial (AI Toolkit) | AI menu (Proofread, Add AI comment, Adjust text, Justify edit), toolbar with zoom/headings/alignment, AI edit highlighting, Custom components |
+| **Notion-like Editor** | Commercial | Slash menu with categories (AI/Style), Bubble menu (Improve + Block Type + Color + formatting), drag handles, dark mode, collaboration |
+| **Simple Editor** | MIT | Toolbar (undo/redo, headings, lists, indent, B/I/S/Code/U, links, alignment, + Add), highlight, dark mode toggle. No AI, no slash/bubble menu |
+| **Headless Editor** | MIT | Minimal UI: plain HTML buttons (Bold, Italic, Strike, Code, H1-H6, Lists, Blockquote, HR, Undo/Redo). Fully BYO styles |
 
 ### Bubble Menu (Notion-like)
 
-При выделении текста всплывает inline-toolbar:
-- **Improve** (AI) — улучшение через AI
+When text is selected, an inline toolbar pops up:
+- **Improve** (AI): improvement via AI
 - **Block Type** (dropdown: Paragraph, Blockquote, Heading...)
-- **B** *I* U ~~S~~ `</>` — форматирование
-- **Link** — вставка ссылки
-- **A** (цвет) — цвет текста/фона
-- **...** — дополнительные опции (Superscript, Subscript и др.)
+- **B** *I* U ~~S~~ `</>` — formatting
+- **Link** — insert a link
+- **A** (color) — text/background color
+- **...** — additional options (Superscript, Subscript, etc.)
 
-### Basics (9 примеров)
+### Basics (9 examples)
 
-| Пример | Описание |
+| Example | Description |
 |--------|----------|
-| Default Text Editor | Базовый текстовый редактор |
-| Formatting | Стилизация контента (bold, italic, lists и т.д.) |
-| Images | Вставка и работа с изображениями |
-| Long Texts | Оптимизация производительности на больших документах |
-| Markdown Shortcuts | Конвертация markdown-синтаксиса (**, ##, - и т.д.) |
-| Minimal Setup | Легковесная минимальная реализация |
-| Tables | Создание и редактирование таблиц |
-| Tasks | Task list / чек-листы |
-| Text Direction & RTL | Поддержка right-to-left языков |
+| Default Text Editor | Basic text editor |
+| Formatting | Content styling (bold, italic, lists, etc.) |
+| Images | Inserting and working with images |
+| Long Texts | Performance optimization on large documents |
+| Markdown Shortcuts | Conversion of Markdown syntax (**, ##, - etc.) |
+| Minimal Setup | Lightweight minimal implementation |
+| Tables | Creating and editing tables |
+| Tasks | Task list / checklists |
+| Text Direction & RTL | Support for right-to-left languages |
 
-### Advanced (10 примеров)
+### Advanced (10 examples)
 
-| Пример | Описание |
+| Example | Description |
 |--------|----------|
-| Collaborative Editing | Многопользовательское редактирование в реальном времени |
-| Custom Drawing | Рисование кастомных элементов |
-| Bubble & Floating Menus | Контекстные меню при выделении и курсоре |
-| Mentions | @-упоминания пользователей |
-| Syntax Highlighting | Подсветка синтаксиса в code blocks (Shiki/lowlight) |
-| React Components | Встраивание интерактивных React-компонентов в контент |
-| Vue Components | Встраивание Vue-компонентов |
-| Content Structure | Enforced структура документа (schema rules) |
-| RAG | Retrieval-Augmented Generation — AI + поиск по базе знаний |
-| React Performance | Оптимизация рендера в React |
+| Collaborative Editing | Real-time multi-user editing |
+| Custom Drawing | Drawing custom elements |
+| Bubble & Floating Menus | Context menus on selection and at the cursor |
+| Mentions | @-mentions of users |
+| Syntax Highlighting | Syntax highlighting in code blocks (Shiki/lowlight) |
+| React Components | Embedding interactive React components in content |
+| Vue Components | Embedding Vue components |
+| Content Structure | Enforced document structure (schema rules) |
+| RAG | Retrieval-Augmented Generation — AI + knowledge base search |
+| React Performance | Render optimization in React |
 
-### Experiments (7 примеров, unsupported)
+### Experiments (7 examples, unsupported)
 
-| Пример | Описание |
+| Example | Description |
 |--------|----------|
-| Collaborative Fields | Отдельные Yjs-документы для полей формы |
-| Figure Node | Кастомный figure/figcaption блок |
-| Generic Figure | Обобщённый figure для разных типов медиа |
-| iFrame Embedding | Встраивание iframe (YouTube, карты и т.д.) |
-| Document Linting | Автоматическая проверка документа на ошибки |
-| Slash Commands | Slash-меню (`/`) для быстрой вставки блоков |
-| Smart Editor | Кастомные замены и автокоррекция |
+| Collaborative Fields | Separate Yjs documents for form fields |
+| Figure Node | Custom figure/figcaption block |
+| Generic Figure | Generic figure for different media types |
+| iFrame Embedding | Embedding an iframe (YouTube, maps, etc.) |
+| Document Linting | Automatic document checking for errors |
+| Slash Commands | Slash menu (`/`) for quick block insertion |
+| Smart Editor | Custom replacements and autocorrection |

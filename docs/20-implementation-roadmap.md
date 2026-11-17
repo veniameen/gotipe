@@ -1,153 +1,153 @@
-# GoTipe Block Editor — Пошаговый план реализации
+# GoTipe Block Editor — Step-by-Step Implementation Plan
 
-> **Историческая спецификация, не руководство по текущему API.** Примеры, сроки,
-> сравнения производительности, коммерческие условия и обещания ниже не подтверждают
-> реализацию или доступность сервиса. Актуально: [контракты](development/editor-contracts.md),
-> [карта кода](development/code-map.md), [проверки](development/testing.md),
-> [план выпуска](22-release-readiness.md). Лицензии определяются `LICENSE` и manifest
-> каждого пакета, а не этим документом.
+> **Historical specification, not a guide to the current API.** The examples, timelines,
+> performance comparisons, commercial terms, and promises below do not confirm an
+> implementation or service availability. Current: [contracts](development/editor-contracts.md),
+> [code map](development/code-map.md), [checks](development/testing.md),
+> [release plan](22-release-readiness.md). Licenses are defined by `LICENSE` and the manifest
+> of each package, not by this document.
 
-> Детальная документация: каждая фича разбита на атомарные шаги. Работаем последовательно — каждый шаг проверяем перед переходом к следующему.
-
----
-
-## Состояние кодовой базы (аудит)
-
-**Что реально работает (не заглушки):**
-- WASM скомпилирован (1.8MB бинарник), `WasmEditor` реально применяет транзакции
-- `editor.ts` — полный contentEditable с обработкой `beforeinput` (insertText, splitBlock, deleteText, mergeBlocks)
-- `chain.ts` — 30+ команд (toggleBold, setBlockType, insertBlockAfter, moveBlock и т.д.)
-- 26 extensions с реальными keybindings, inputRules, slash commands
-- `editor-content.tsx` — рендерит блоки с `data-block-id`, монтирует editor через `editor.mount()`
-- Все UI компоненты block-editor (SlashMenu, BubbleMenu, DragHandle и т.д.) реально подключены к editor
-- `WasmBridge` с fallback-режимом (если WASM не загрузится — показывает начальный контент, но транзакции не применяет)
-
-**Что означает для нас:**
-- Ядро работает. Проблемы в playground — это проблемы подключения, а не отсутствия логики.
-- Все `editor.chain().toggleBold().run()` — реальные вызовы, которые создают Transaction → отправляют в WASM → получают новый state → вызывают `viewStateChange` → React перерендеривает.
+> Detailed documentation: every feature is broken into atomic steps. We work sequentially — each step is verified before moving on to the next.
 
 ---
 
-## Фаза 0: Базовый рабочий редактор ✅
+## Codebase state (audit)
 
-Цель: открываем playground, видим текст, можем его редактировать.
+**What really works (not stubs):**
+- WASM is compiled (1.8MB binary), `WasmEditor` really applies transactions
+- `editor.ts` — a full contentEditable with `beforeinput` handling (insertText, splitBlock, deleteText, mergeBlocks)
+- `chain.ts` — 30+ commands (toggleBold, setBlockType, insertBlockAfter, moveBlock, etc.)
+- 26 extensions with real keybindings, inputRules, slash commands
+- `editor-content.tsx` — renders blocks with `data-block-id`, mounts the editor via `editor.mount()`
+- All block-editor UI components (SlashMenu, BubbleMenu, DragHandle, etc.) are really connected to the editor
+- `WasmBridge` with a fallback mode (if WASM fails to load — it shows the initial content but does not apply transactions)
 
-> **Статус:** Завершена. Найден и исправлен баг двойной вставки символов — `unmount()` не удалял event listeners, React strict mode вешал обработчики дважды. Исправлено через `AbortController` + rAF DOM correction как safety net.
+**What this means for us:**
+- The core works. Problems in the playground are wiring problems, not missing logic.
+- Every `editor.chain().toggleBold().run()` is a real call that creates a Transaction → sends it to WASM → gets a new state → fires `viewStateChange` → React re-renders.
 
-### Шаг 0.1: Проверить загрузку WASM ✅
+---
 
-**Файл:** `packages/core/src/wasm-bridge.ts`
+## Phase 0: A basic working editor ✅
 
-**Что проверить:**
-1. Открыть `http://localhost:5173/#simple` в Chrome DevTools → Console
-2. Если видим `"GoTipe WASM init failed, using JS fallback:"` — WASM не загрузился
-3. В Network tab проверить: загружается ли `gotipe_wasm_bg.wasm`?
+Goal: we open the playground, see text, and can edit it.
 
-**Возможные проблемы и решения:**
-- WASM файл не находится → проверить что `packages/wasm/pkg/gotipe_wasm_bg.wasm` существует
-- Vite не раздаёт `.wasm` → в `vite.config.ts` playground добавить:
+> **Status:** Done. A double character insertion bug was found and fixed — `unmount()` did not remove event listeners, and React strict mode attached the handlers twice. Fixed with `AbortController` + an rAF DOM correction as a safety net.
+
+### Step 0.1: Check that WASM loads ✅
+
+**File:** `packages/core/src/wasm-bridge.ts`
+
+**What to check:**
+1. Open `http://localhost:5173/#simple` in Chrome DevTools → Console
+2. If we see `"GoTipe WASM init failed, using JS fallback:"` — WASM did not load
+3. In the Network tab check: is `gotipe_wasm_bg.wasm` loaded?
+
+**Possible problems and solutions:**
+- The WASM file is not found → check that `packages/wasm/pkg/gotipe_wasm_bg.wasm` exists
+- Vite does not serve `.wasm` → add to the playground's `vite.config.ts`:
   ```ts
   optimizeDeps: { exclude: ['@gotipe/wasm'] }
   ```
-- MIME type неправильный → Vite должен отдавать `application/wasm`
+- Wrong MIME type → Vite must serve `application/wasm`
 
-**Критерий:** В консоли нет ошибок WASM. `editor.wasm.isFallback === false`.
+**Criterion:** No WASM errors in the console. `editor.wasm.isFallback === false`.
 
-### Шаг 0.2: Проверить mount() и contentEditable ✅
+### Step 0.2: Check mount() and contentEditable ✅
 
-**Файл:** `packages/react/src/editor-content.tsx` (строка 224-228)
+**File:** `packages/react/src/editor-content.tsx` (lines 224-228)
 
-**Что происходит:**
-1. `EditorContent` получает `editor` через prop
-2. В `useEffect` вызывает `editor.mount(containerRef.current)`
-3. `mount()` ставит `contenteditable="true"` на элемент
-4. `mount()` вешает обработчики: `beforeinput`, `keydown`, `input`, `selectionchange`, `paste`, `copy`, `cut`
+**What happens:**
+1. `EditorContent` receives `editor` through a prop
+2. In `useEffect` it calls `editor.mount(containerRef.current)`
+3. `mount()` sets `contenteditable="true"` on the element
+4. `mount()` attaches handlers: `beforeinput`, `keydown`, `input`, `selectionchange`, `paste`, `copy`, `cut`
 
-**Что проверить в DevTools:**
-1. Elements → найти `<div data-gotipe-content contenteditable="true">` — должен быть `contenteditable`
-2. Если нет — editor не смонтирован
-3. Кликнуть в область → должен появиться текстовый курсор
+**What to check in DevTools:**
+1. Elements → find `<div data-gotipe-content contenteditable="true">` — `contenteditable` must be there
+2. If not — the editor is not mounted
+3. Click in the area → a text cursor must appear
 
-**Возможная проблема:** `<Editor>` из `@gotipe/react` рендерит `<EditorContent>`, который вызывает `mount()`. Если playground использует `<BlockEditor>` из block-editor, тот внутри рендерит `<Editor>` → `<EditorContent>` → `mount()`. Цепочка длинная — проверить что editor не null на каждом уровне.
+**Possible problem:** `<Editor>` from `@gotipe/react` renders `<EditorContent>`, which calls `mount()`. If the playground uses `<BlockEditor>` from block-editor, it renders `<Editor>` → `<EditorContent>` → `mount()` inside. The chain is long — check that editor is not null at every level.
 
-**Критерий:** `contenteditable="true"` на DOM элементе. Текстовый курсор при клике.
+**Criterion:** `contenteditable="true"` on the DOM element. A text cursor on click.
 
-### Шаг 0.3: Проверить ввод текста ✅
+### Step 0.3: Check text input ✅
 
-**Файл:** `packages/core/src/editor.ts` (строки 645-699)
+**File:** `packages/core/src/editor.ts` (lines 645-699)
 
-**Что происходит при нажатии клавиши:**
-1. Браузер генерирует `beforeinput` с `inputType: "insertText"`, `data: "a"`
-2. `editor.mount()` перехватывает: `e.preventDefault()`
-3. Определяет текущую позицию курсора из `currentSelection`
-4. Создаёт step: `{ type: "insertText", blockId, offset, text: "a", marks: [] }`
-5. Вызывает `this.dispatch({ steps })` → `WasmBridge.apply(transactionJson)`
-6. WASM возвращает новый document JSON
-7. Editor парсит JSON → обновляет `currentState` → вызывает `emit("viewStateChange")`
-8. React перерендеривает блоки через `useSyncExternalStore`
-9. `scheduleSelectionRestore()` ставит курсор на `offset + 1` через `requestAnimationFrame`
+**What happens when a key is pressed:**
+1. The browser generates `beforeinput` with `inputType: "insertText"`, `data: "a"`
+2. `editor.mount()` intercepts it: `e.preventDefault()`
+3. Determines the current cursor position from `currentSelection`
+4. Creates a step: `{ type: "insertText", blockId, offset, text: "a", marks: [] }`
+5. Calls `this.dispatch({ steps })` → `WasmBridge.apply(transactionJson)`
+6. WASM returns the new document JSON
+7. The editor parses the JSON → updates `currentState` → calls `emit("viewStateChange")`
+8. React re-renders the blocks through `useSyncExternalStore`
+9. `scheduleSelectionRestore()` puts the cursor at `offset + 1` through `requestAnimationFrame`
 
-**Что может ломаться:**
-- `currentSelection` пустой (нет `blockId`) — курсор не установлен, позиция неизвестна
-- WASM в fallback → `apply()` возвращает неизменённый state → символ не добавляется
-- `resolvePosition()` не находит `data-block-id` элемент → selection tracking не работает
-- React перерендеривает и сбивает DOM → `restoreDomSelection()` не находит текстовый узел
+**What can break:**
+- `currentSelection` is empty (no `blockId`) — the cursor is not set, the position is unknown
+- WASM in fallback → `apply()` returns an unchanged state → the character is not added
+- `resolvePosition()` does not find the `data-block-id` element → selection tracking does not work
+- React re-renders and disturbs the DOM → `restoreDomSelection()` does not find the text node
 
-**Отладка:**
+**Debugging:**
 ```js
-// В console, после создания editor:
+// In the console, after creating the editor:
 editor.on('viewStateChange', () => console.log('State changed:', editor.getViewState().blocks.length));
 ```
 
-**Критерий:** Печатаем "hello" → видим "hello" в редакторе. Курсор двигается правильно.
+**Criterion:** Type "hello" → see "hello" in the editor. The cursor moves correctly.
 
-### Шаг 0.4: Проверить Enter (splitBlock) ✅
+### Step 0.4: Check Enter (splitBlock) ✅
 
-**Файл:** `packages/core/src/editor.ts` (строки 701-728)
+**File:** `packages/core/src/editor.ts` (lines 701-728)
 
-**Что происходит:**
-1. `beforeinput` с `inputType: "insertParagraph"`
+**What happens:**
+1. `beforeinput` with `inputType: "insertParagraph"`
 2. `e.preventDefault()`
 3. Step: `{ type: "splitBlock", blockId, offset }`
-4. WASM разделяет блок на два
-5. Курсор переносится на начало нового блока
+4. WASM splits the block into two
+5. The cursor moves to the start of the new block
 
-**Критерий:** Enter в середине текста → текст разделяется на два параграфа.
+**Criterion:** Enter in the middle of text → the text is split into two paragraphs.
 
-### Шаг 0.5: Проверить Backspace (deleteText / mergeBlocks) ✅
+### Step 0.5: Check Backspace (deleteText / mergeBlocks) ✅
 
-**Файл:** `packages/core/src/editor.ts` (строки 731-788)
+**File:** `packages/core/src/editor.ts` (lines 731-788)
 
-**Три кейса:**
-1. **Выделен текст** → `deleteText` с `from`/`to`
-2. **Курсор внутри блока** → `deleteText` с `from: offset-1, to: offset`
-3. **Курсор в начале блока** → `mergeBlocks` с предыдущим блоком
+**Three cases:**
+1. **Text is selected** → `deleteText` with `from`/`to`
+2. **Cursor inside a block** → `deleteText` with `from: offset-1, to: offset`
+3. **Cursor at the start of a block** → `mergeBlocks` with the previous block
 
-**Критерий:** Backspace удаляет символ. Backspace в начале блока сливает с предыдущим.
+**Criterion:** Backspace deletes a character. Backspace at the start of a block merges with the previous one.
 
-### Шаг 0.6: Проверить Delete (deleteContentForward) ✅
+### Step 0.6: Check Delete (deleteContentForward) ✅
 
-**Файл:** `packages/core/src/editor.ts` (строки 791-832)
+**File:** `packages/core/src/editor.ts` (lines 791-832)
 
-**Критерий:** Delete удаляет символ вперёд.
+**Criterion:** Delete deletes a character forward.
 
 ---
 
-## Фаза 1: Design System — Токены ✅
+## Phase 1: Design System — Tokens ✅
 
-Цель: единообразный визуальный стиль всех компонентов.
+Goal: a uniform visual style for all components.
 
-> **Статус:** Завершена. Все CSS-токены добавлены в `:root` и `[data-theme="dark"]` блоки в `theme.css`. Inter подключён через Google Fonts. Playground импортирует `theme.css` → все переменные доступны CSS-first (без ожидания JS). Theme toggle работает корректно.
+> **Status:** Done. All CSS tokens were added to the `:root` and `[data-theme="dark"]` blocks in `theme.css`. Inter is connected through Google Fonts. The playground imports `theme.css` → all variables are available CSS-first (without waiting for JS). The theme toggle works correctly.
 
-### Шаг 1.1: Обновить CSS переменные в theme.css ✅
+### Step 1.1: Update the CSS variables in theme.css ✅
 
-**Файл:** `packages/theme/src/theme.css`
+**File:** `packages/theme/src/theme.css`
 
-**Добавить/обновить:**
+**Add/update:**
 
 ```css
 :root {
-  /* Цвета */
+  /* Colors */
   --gt-accent: #2563eb;
   --gt-accent-text: #ffffff;
   --gt-bg: #ffffff;
@@ -161,31 +161,31 @@ editor.on('viewStateChange', () => console.log('State changed:', editor.getViewS
   --gt-border-light: rgba(0, 0, 0, 0.05);
   --gt-border-focus: #2563eb;
 
-  /* Тени — 4-слойная мягкая */
+  /* Shadows — a soft 4-layer one */
   --gt-shadow-elevated:
     0px 16px 48px 0px rgba(17, 24, 39, 0.04),
     0px 12px 24px 0px rgba(17, 24, 39, 0.04),
     0px 6px 8px 0px rgba(17, 24, 39, 0.02),
     0px 2px 3px 0px rgba(17, 24, 39, 0.02);
 
-  /* Скругления */
+  /* Radii */
   --gt-radius-sm: 6px;
   --gt-radius-md: 8px;
   --gt-radius-lg: 12px;
   --gt-radius-card: 20px;
 
-  /* Шрифты */
+  /* Fonts */
   --gt-font-body: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   --gt-font-mono: "SF Mono", "Fira Code", "Fira Mono", Menlo, Consolas, monospace;
 
-  /* Размеры текста */
+  /* Text sizes */
   --gt-text-xs: 12px;
   --gt-text-sm: 14px;
   --gt-text-base-size: 16px;
   --gt-text-lg: 18px;
   --gt-text-xl: 20px;
 
-  /* Подсветка — 5 цветов */
+  /* Highlighting — 5 colors */
   --gt-highlight-blue-bg: #dbeafe;
   --gt-highlight-blue-text: #1e40af;
   --gt-highlight-green-bg: #dcfce7;
@@ -206,13 +206,13 @@ editor.on('viewStateChange', () => console.log('State changed:', editor.getViewS
 }
 ```
 
-**Проверка:** Импортировать `@gotipe/theme/base.css` в playground → все компоненты используют токены.
+**Check:** Import `@gotipe/theme/base.css` in the playground → all components use the tokens.
 
-### Шаг 1.2: Тёмная тема ✅
+### Step 1.2: Dark theme ✅
 
-**Файл:** `packages/theme/src/theme.css`
+**File:** `packages/theme/src/theme.css`
 
-**Добавить:**
+**Add:**
 ```css
 [data-theme="dark"] {
   --gt-bg: #1a1a1a;
@@ -225,433 +225,433 @@ editor.on('viewStateChange', () => console.log('State changed:', editor.getViewS
   --gt-border: rgba(255, 255, 255, 0.1);
   --gt-border-light: rgba(255, 255, 255, 0.06);
   --gt-accent: #60a5fa;
-  /* ... все остальные токены тёмной темы */
+  /* ... all the other dark theme tokens */
 }
 ```
 
-**Проверка:** ThemeToggle переключает → все цвета меняются.
+**Check:** ThemeToggle switches → all colors change.
 
-### Шаг 1.3: Подключить Inter шрифт ✅
+### Step 1.3: Connect the Inter font ✅
 
-**Файл:** `apps/playground/index.html`
+**File:** `apps/playground/index.html`
 
-**Добавить:**
+**Add:**
 ```html
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 ```
 
-**Проверка:** Текст в редакторе отображается шрифтом Inter.
+**Check:** The text in the editor is shown in the Inter font.
 
 ---
 
-## Фаза 2: Marks (форматирование текста) ✅
+## Phase 2: Marks (text formatting) ✅
 
-> **Статус:** Завершена. Все 9 marks работают через JS fallback transform engine. Найдены и исправлены 3 критических бага: (1) `resolveExtensions` не flatten'ил вложенные массивы от presets, (2) `WasmBridge.apply()` в fallback режиме не применял транзакции — реализован полный JS transform engine (~250 строк), (3) `forceFallback()` получал JS-формат документа вместо WASM-формата. Написаны 26 unit тестов и 10 E2E тестов через Playwright.
+> **Status:** Done. All 9 marks work through the JS fallback transform engine. 3 critical bugs were found and fixed: (1) `resolveExtensions` did not flatten nested arrays from presets, (2) `WasmBridge.apply()` in fallback mode did not apply transactions — a full JS transform engine (~250 lines) was implemented, (3) `forceFallback()` received the JS document format instead of the WASM format. 26 unit tests and 10 E2E tests through Playwright were written.
 
-Каждый mark — это отдельный шаг. Порядок: от простого к сложному.
+Each mark is a separate step. The order is from simple to complex.
 
-### Шаг 2.1: Bold ✅
+### Step 2.1: Bold ✅
 
-**Как работает:**
-1. Пользователь выделяет текст
-2. Нажимает Cmd+B (или кнопку B в toolbar)
-3. Расширение Bold (в `packages/core/src/extensions/marks.ts`) регистрирует keybinding: `Mod-b`
-4. Handler вызывает `editor.chain().toggleBold().run()`
-5. `chain.ts` → `toggleMark("bold")` → создаёт step `{ type: "addMark", blockId, from, to, mark: { type: "bold", attrs: {} } }`
-6. WASM добавляет mark к spans в указанном диапазоне
-7. ViewState обновляется → TextRenderer рендерит `<strong>` тег
+**How it works:**
+1. The user selects text
+2. Presses Cmd+B (or the B button in the toolbar)
+3. The Bold extension (in `packages/core/src/extensions/marks.ts`) registers a keybinding: `Mod-b`
+4. The handler calls `editor.chain().toggleBold().run()`
+5. `chain.ts` → `toggleMark("bold")` → creates a step `{ type: "addMark", blockId, from, to, mark: { type: "bold", attrs: {} } }`
+6. WASM adds the mark to the spans in the given range
+7. ViewState is updated → TextRenderer renders a `<strong>` tag
 
-**Файлы задействованы:**
-- `packages/core/src/extensions/marks.ts` → `defineBold` extension
-- `packages/core/src/chain.ts` → `toggleMark()` (строки 70-94)
-- `packages/react/src/text-renderer.tsx` → рендерит mark как `<strong>`
+**Files involved:**
+- `packages/core/src/extensions/marks.ts` → the `defineBold` extension
+- `packages/core/src/chain.ts` → `toggleMark()` (lines 70-94)
+- `packages/react/src/text-renderer.tsx` → renders the mark as `<strong>`
 - `packages/core/src/editor.ts` → `beforeinput` + `dispatch()`
 
-**Что проверить:**
-1. Выделить текст → Cmd+B → текст стал bold (в DOM `<strong>`)
-2. Повторно Cmd+B → bold снят
-3. Кнопка B в toolbar подсвечивается когда курсор в bold тексте
-4. Input rule: `**text**` → bold (если включён)
+**What to check:**
+1. Select text → Cmd+B → the text became bold (`<strong>` in the DOM)
+2. Cmd+B again → bold removed
+3. The B button in the toolbar is highlighted when the cursor is in bold text
+4. Input rule: `**text**` → bold (if enabled)
 
-**Проблемы и как их решать:**
-- Текст не становится bold → проверить что `currentSelection` правильно отслеживает from/to
-- WASM не применяет mark → проверить формат транзакции: `toWasmTransaction()` правильно конвертирует `addMark` step
-- `<strong>` не рендерится → проверить `TextRenderer` — обрабатывает ли mark type "bold"
+**Problems and how to solve them:**
+- The text does not become bold → check that `currentSelection` tracks from/to correctly
+- WASM does not apply the mark → check the transaction format: `toWasmTransaction()` converts the `addMark` step correctly
+- `<strong>` is not rendered → check `TextRenderer` — does it handle the mark type "bold"
 
-### Шаг 2.2: Italic ✅
+### Step 2.2: Italic ✅
 
-Аналогично Bold. Keybinding: `Mod-i`. Mark type: `"italic"`. Tag: `<em>`.
+Same as Bold. Keybinding: `Mod-i`. Mark type: `"italic"`. Tag: `<em>`.
 Input rule: `*text*` → italic.
 
-### Шаг 2.3: Underline ✅
+### Step 2.3: Underline ✅
 
 Keybinding: `Mod-u`. Mark type: `"underline"`. Tag: `<u>`.
-Нет input rule.
+No input rule.
 
-### Шаг 2.4: Strikethrough ✅
+### Step 2.4: Strikethrough ✅
 
 Keybinding: `Mod-Shift-x`. Mark type: `"strikethrough"`. Tag: `<s>`.
 Input rule: `~~text~~` → strikethrough.
 
-### Шаг 2.5: Inline Code ✅
+### Step 2.5: Inline Code ✅
 
 Keybinding: `Mod-e`. Mark type: `"code"`. Tag: `<code>`.
 Input rule: `` `text` `` → code.
 
-### Шаг 2.6: Link ✅
+### Step 2.6: Link ✅
 
-**Дополнительная сложность:** Link имеет атрибут `href`.
+**Extra complexity:** Link has an `href` attribute.
 
-**Как работает:**
-1. Выделить текст → нажать кнопку Link (или Cmd+K)
-2. `prompt("Enter URL:")` — запросить URL у пользователя
+**How it works:**
+1. Select text → press the Link button (or Cmd+K)
+2. `prompt("Enter URL:")` — ask the user for a URL
 3. `editor.chain().setLink(href).run()` → `addMark("link", { href })`
-4. TextRenderer рендерит `<a href="...">`
+4. TextRenderer renders `<a href="...">`
 
-**Что проверить:**
-1. Выделить текст → вставить ссылку → текст становится кликабельной ссылкой
-2. Повторный клик на ссылку → возможность удалить link mark
-3. `toolbar.activeMarks` содержит "link" когда курсор внутри ссылки
+**What to check:**
+1. Select text → insert a link → the text becomes a clickable link
+2. Click the link again → the option to remove the link mark
+3. `toolbar.activeMarks` contains "link" when the cursor is inside a link
 
-### Шаг 2.7: Highlight ✅
+### Step 2.7: Highlight ✅
 
 Mark type: `"highlight"`. Attrs: `{ color: "#dbeafe" }`.
 Tag: `<mark style="background: ...">`.
 
-5 цветов из design system. Keybinding: `Mod-Shift-h`.
+5 colors from the design system. Keybinding: `Mod-Shift-h`.
 
-### Шаг 2.8: Superscript / Subscript ✅
+### Step 2.8: Superscript / Subscript ✅
 
 Mark types: `"superscript"`, `"subscript"`. Tags: `<sup>`, `<sub>`.
-Эти два marks взаимоисключающие — при активации одного, другой снимается.
+These two marks are mutually exclusive — activating one removes the other.
 
 ---
 
-## Фаза 3: Block Types (типы блоков)
+## Phase 3: Block Types
 
-### Шаг 3.1: Paragraph (базовый)
+### Step 3.1: Paragraph (basic)
 
-**Уже работает.** Это блок по умолчанию. Рендерится как `<p>`.
+**Already works.** This is the default block. Rendered as `<p>`.
 
-**Проверить:** Новый блок создаётся при Enter. Пустой параграф показывает placeholder "Type '/' for commands...".
+**Check:** A new block is created on Enter. An empty paragraph shows the placeholder "Type '/' for commands...".
 
-### Шаг 3.2: Heading (H1-H6)
+### Step 3.2: Heading (H1-H6)
 
-**Как работает:**
+**How it works:**
 1. Extension: `packages/core/src/extensions/heading.ts`
 2. Keybindings: `Mod-Alt-1` → H1, `Mod-Alt-2` → H2, `Mod-Alt-3` → H3
 3. Input rules: `# ` → H1, `## ` → H2, `### ` → H3
-4. Slash commands: "Heading 1", "Heading 2", "Heading 3" в slash menu
-5. Toolbar dropdown: выбор типа блока
+4. Slash commands: "Heading 1", "Heading 2", "Heading 3" in the slash menu
+5. Toolbar dropdown: choosing the block type
 
-**Что проверить:**
-1. Набрать `## ` в начале строки → блок становится H2
-2. Cmd+Alt+2 → текущий блок становится H2
-3. В dropdown toolbar выбрать H2 → блок меняется
-4. Slash menu: `/heading 2` → вставляется H2 блок
+**What to check:**
+1. Type `## ` at the start of a line → the block becomes H2
+2. Cmd+Alt+2 → the current block becomes H2
+3. Choose H2 in the toolbar dropdown → the block changes
+4. Slash menu: `/heading 2` → an H2 block is inserted
 
-**Файлы:**
+**Files:**
 - `packages/core/src/extensions/heading.ts` — extension definition
-- `packages/react/src/editor-content.tsx` — рендерит `<h1>`...`<h6>` (строки 48-55)
+- `packages/react/src/editor-content.tsx` — renders `<h1>`...`<h6>` (lines 48-55)
 - `packages/core/src/chain.ts` → `setBlockType("heading", { level: 2 })`
 
-### Шаг 3.3: Bullet List
+### Step 3.3: Bullet List
 
-**Как работает:**
+**How it works:**
 1. Extension: `packages/core/src/extensions/bullet-list.ts`
-2. Input rule: `- ` или `* ` в начале строки → создаёт bulletList + listItem
+2. Input rule: `- ` or `* ` at the start of a line → creates a bulletList + listItem
 3. Keybinding: `Mod-Shift-8`
 4. Toggle: `editor.chain().toggleBulletList().run()`
 
-**Структура блоков:**
+**Block structure:**
 ```
 bulletList (children: [listItem, listItem, ...])
   listItem (content: TextSpan[])
   listItem (content: TextSpan[])
 ```
 
-**Что проверить:**
-1. `- ` в начале → появляется маркер списка
-2. Enter в конце элемента → новый listItem
-3. Enter в пустом listItem → выход из списка (обратно в paragraph)
-4. Tab → indent (вложенный список)
+**What to check:**
+1. `- ` at the start → a list marker appears
+2. Enter at the end of an item → a new listItem
+3. Enter in an empty listItem → exit the list (back to a paragraph)
+4. Tab → indent (nested list)
 5. Shift+Tab → outdent
 
-### Шаг 3.4: Ordered List
+### Step 3.4: Ordered List
 
-Аналогично Bullet List. Input rule: `1. ` или `1) `. Keybinding: `Mod-Shift-7`.
+Same as Bullet List. Input rule: `1. ` or `1) `. Keybinding: `Mod-Shift-7`.
 
-### Шаг 3.5: Todo List
+### Step 3.5: Todo List
 
-**Дополнительная сложность:** checkbox с состоянием `checked`.
+**Extra complexity:** a checkbox with a `checked` state.
 
-**Структура:**
+**Structure:**
 ```
 todoList (children: [todoItem, todoItem, ...])
   todoItem (attrs: { checked: false }, content: TextSpan[])
   todoItem (attrs: { checked: true }, content: TextSpan[])
 ```
 
-**Что проверить:**
-1. `[] ` или `[ ] ` → создаёт todo list
-2. Checkbox кликабелен → меняет `checked` attr через `setBlockAttrs()`
-3. Зачёркнутый текст у completed items (опционально)
+**What to check:**
+1. `[] ` or `[ ] ` → creates a todo list
+2. The checkbox is clickable → changes the `checked` attr through `setBlockAttrs()`
+3. Struck-through text on completed items (optional)
 
-### Шаг 3.6: Code Block
+### Step 3.6: Code Block
 
-**Как работает:**
+**How it works:**
 1. Extension: `packages/core/src/extensions/code-block.ts`
 2. Input rule: ` ``` ` → codeBlock
-3. Content: `string` (не TextSpan[])
+3. Content: `string` (not TextSpan[])
 4. Attrs: `{ language: "javascript" }`
 
-**View компонент:** `packages/block-editor/src/views/code-block-view.tsx`
+**View component:** `packages/block-editor/src/views/code-block-view.tsx`
 - Shiki syntax highlighting (lazy loaded)
 - Language selector dropdown
-- Copy button (копирует код в clipboard)
+- Copy button (copies the code to the clipboard)
 - Line numbers
 
-**Что проверить:**
-1. ` ```js ` → code block с подсветкой JavaScript
-2. Tab внутри code block → вставляет 2 пробела (а не переключает фокус)
-3. Shift+Tab → убирает 2 пробела (dedent)
-4. Language dropdown → меняет подсветку
-5. Copy button → код в clipboard
+**What to check:**
+1. ` ```js ` → a code block with JavaScript highlighting
+2. Tab inside a code block → inserts 2 spaces (instead of moving focus)
+3. Shift+Tab → removes 2 spaces (dedent)
+4. Language dropdown → changes the highlighting
+5. Copy button → the code is in the clipboard
 
-### Шаг 3.7: Blockquote
+### Step 3.7: Blockquote
 
-Input rule: `> ` → blockquote. Рендерится как `<blockquote>` с левой border accent.
+Input rule: `> ` → blockquote. Rendered as a `<blockquote>` with an accent left border.
 
-### Шаг 3.8: Divider (Horizontal Rule)
+### Step 3.8: Divider (Horizontal Rule)
 
-Input rule: `---` → divider. Рендерится как `<hr>`.
+Input rule: `---` → divider. Rendered as `<hr>`.
 
-### Шаг 3.9: Callout
+### Step 3.9: Callout
 
-Slash command: `/callout`. Attrs: `{ emoji: "💡" }`. Рендерится как box с emoji и текстом.
+Slash command: `/callout`. Attrs: `{ emoji: "💡" }`. Rendered as a box with an emoji and text.
 
-### Шаг 3.10: Image
+### Step 3.10: Image
 
 **View:** `packages/block-editor/src/views/image-view.tsx`
 
-**Полный цикл:**
-1. Slash command `/image` → вставляет image block без src
-2. Показывается upload zone (click или drag-and-drop)
-3. Пользователь выбирает файл → `URL.createObjectURL()` для preview
-4. Simulated upload progress (в prod — реальный upload handler)
-5. Block attrs обновляются: `{ src, width, height }`
-6. Resize handles: 8 точек, aspect ratio lock, min 50px
-7. Caption: editable figcaption
+**Full cycle:**
+1. Slash command `/image` → inserts an image block without src
+2. An upload zone is shown (click or drag-and-drop)
+3. The user picks a file → `URL.createObjectURL()` for the preview
+4. Simulated upload progress (in prod — a real upload handler)
+5. Block attrs are updated: `{ src, width, height }`
+6. Resize handles: 8 points, aspect ratio lock, min 50px
+7. Caption: an editable figcaption
 
-**Что проверить по шагам:**
-1. `/image` → upload zone видна
-2. Клик → file picker → изображение отображается
-3. Drag файл на upload zone → изображение отображается
-4. Hover на изображение → 8 resize handles видны
-5. Drag corner handle → размер меняется с сохранением пропорций
-6. Shift+drag → свободное изменение размера
-7. Клик на caption → можно редактировать текст
+**What to check, step by step:**
+1. `/image` → the upload zone is visible
+2. Click → file picker → the image is displayed
+3. Drag a file onto the upload zone → the image is displayed
+4. Hover over the image → 8 resize handles are visible
+5. Drag a corner handle → the size changes while keeping proportions
+6. Shift+drag → free resizing
+7. Click the caption → the text can be edited
 
-### Шаг 3.11: Table
+### Step 3.11: Table
 
 **View:** `packages/block-editor/src/views/table-view.tsx`
 
-**Структура:**
+**Structure:**
 ```
 table (children: [tableRow, tableRow, ...])
   tableRow (children: [tableCell, tableCell, ...])
     tableCell (content: TextSpan[], attrs: { header: true/false })
 ```
 
-**Что проверить:**
-1. Slash command `/table` → таблица 3×3 с header
-2. Tab → следующая ячейка
-3. Shift+Tab → предыдущая ячейка
-4. Tab в последней ячейке → новая строка
-5. Hover на правый край → кнопка "+" (добавить столбец)
-6. Hover на нижний край → кнопка "+" (добавить строку)
-7. Drag border между столбцами → resize (min 100px)
-8. Header row: bold текст, серый фон
+**What to check:**
+1. Slash command `/table` → a 3×3 table with a header
+2. Tab → next cell
+3. Shift+Tab → previous cell
+4. Tab in the last cell → a new row
+5. Hover over the right edge → a "+" button (add a column)
+6. Hover over the bottom edge → a "+" button (add a row)
+7. Drag the border between columns → resize (min 100px)
+8. Header row: bold text, gray background
 
-### Шаг 3.12: Toggle (Details/Summary)
+### Step 3.12: Toggle (Details/Summary)
 
-Рендерится как `<details><summary>`. Клик на summary → toggle open/closed.
+Rendered as `<details><summary>`. Click the summary → toggle open/closed.
 
-### Шаг 3.13: Columns
+### Step 3.13: Columns
 
-Layout блок с несколькими колонками. Slash command `/columns`.
+A layout block with several columns. Slash command `/columns`.
 
 ---
 
-## Фаза 4: UI Компоненты
+## Phase 4: UI Components
 
-### Шаг 4.1: Slash Menu
+### Step 4.1: Slash Menu
 
-**Файл:** `packages/block-editor/src/components/slash-menu.tsx`
+**File:** `packages/block-editor/src/components/slash-menu.tsx`
 
-**Как активируется:**
-1. Пользователь печатает `/` в начале пустого блока
-2. Extension `SlashCommands` в `behaviors.ts` ловит input rule `^/$`
-3. Вызывает `editor.emit("openSlashMenu", { position })`
-4. `SlashMenu` компонент слушает это событие → показывает меню
+**How it is activated:**
+1. The user types `/` at the start of an empty block
+2. The `SlashCommands` extension in `behaviors.ts` catches the input rule `^/$`
+3. Calls `editor.emit("openSlashMenu", { position })`
+4. The `SlashMenu` component listens for this event → shows the menu
 
-**Функциональность:**
-- 4 категории: AI, Style, Insert, Upload
-- Fuzzy search с scoring (prefix > substring > fuzzy)
-- Highlight совпадений через `<mark>`
+**Functionality:**
+- 4 categories: AI, Style, Insert, Upload
+- Fuzzy search with scoring (prefix > substring > fuzzy)
+- Match highlighting through `<mark>`
 - Keyboard nav: Arrow Up/Down, Enter, Escape
-- Viewport edge detection для позиционирования
-- Выбор item → `item.execute(editor)` → вставляет блок
+- Viewport edge detection for positioning
+- Choosing an item → `item.execute(editor)` → inserts the block
 
-**Что проверить:**
-1. Печатаем `/` → меню появляется
-2. Печатаем `/head` → фильтруется до "Heading 1/2/3"
-3. Arrow Down → выбор перемещается
-4. Enter → блок вставляется, меню закрывается
-5. Escape → меню закрывается
-6. Клик вне меню → закрывается
-7. Меню позиционируется рядом с курсором, не выходит за viewport
+**What to check:**
+1. Type `/` → the menu appears
+2. Type `/head` → filtered to "Heading 1/2/3"
+3. Arrow Down → the selection moves
+4. Enter → the block is inserted, the menu closes
+5. Escape → the menu closes
+6. Click outside the menu → it closes
+7. The menu is positioned next to the cursor and does not go outside the viewport
 
-### Шаг 4.2: Bubble Menu ✅
+### Step 4.2: Bubble Menu ✅
 
-> **Статус:** Завершена. Все секции работают: Block Type dropdown (Paragraph/H1-H3/Lists/Quote/Code), Formatting кнопки (B/I/U/S/Code/Link), Text Color picker (5 highlight + 5 text colors + reset), More menu (Superscript/Subscript/Clear Formatting/Copy as Markdown). Меню появляется над выделением, скрывается при снятии selection. Позиционирование с edge detection (flip below if too close to top, clamp horizontal). Mobile: fixed bottom bar.
+> **Status:** Done. All sections work: Block Type dropdown (Paragraph/H1-H3/Lists/Quote/Code), Formatting buttons (B/I/U/S/Code/Link), Text Color picker (5 highlight + 5 text colors + reset), More menu (Superscript/Subscript/Clear Formatting/Copy as Markdown). The menu appears above the selection and hides when the selection is cleared. Positioning with edge detection (flip below if too close to the top, clamp horizontally). Mobile: a fixed bottom bar.
 
-**Файл:** `packages/block-editor/src/components/bubble-menu.tsx`
+**File:** `packages/block-editor/src/components/bubble-menu.tsx`
 
-**Как активируется:**
-1. Пользователь выделяет текст (selection range, не collapsed)
-2. `BubbleMenu` компонент из `@gotipe/react` отслеживает selection
-3. Если selection не пустая — показывает toolbar
+**How it is activated:**
+1. The user selects text (a selection range, not collapsed)
+2. The `BubbleMenu` component from `@gotipe/react` tracks the selection
+3. If the selection is not empty — it shows the toolbar
 
-**Секции (слева направо):**
-1. **AI Improve** (✨) — если AI extension активен
+**Sections (left to right):**
+1. **AI Improve** (✨) — if the AI extension is active
 2. **Block Type dropdown** — Paragraph, H1-H3, Lists, Quote, Code
-3. **Formatting** — B, I, U, S, Code, Link (32×32px кнопки)
-4. **Text Color** (A▾) — 5 цветов highlight + text color
+3. **Formatting** — B, I, U, S, Code, Link (32×32px buttons)
+4. **Text Color** (A▾) — 5 highlight colors + text color
 5. **More** (⋮) — Superscript, Subscript, Clear Formatting, Copy as Markdown
 
-**Что проверить:**
-1. Выделить текст → bubble menu появляется над selection
-2. B → текст bold (подсвечивается если уже bold)
-3. Block Type dropdown → выбрать H2 → блок меняет тип
-4. Color picker → выбрать цвет → текст подсвечен
-5. More → Clear Formatting → все marks сняты
-6. Menu исчезает при снятии selection
+**What to check:**
+1. Select text → the bubble menu appears above the selection
+2. B → the text is bold (highlighted if it is already bold)
+3. Block Type dropdown → choose H2 → the block changes type
+4. Color picker → choose a color → the text is highlighted
+5. More → Clear Formatting → all marks are removed
+6. The menu disappears when the selection is cleared
 
-### Шаг 4.3: Block Toolbar (Drag Handle + Add + Context Menu)
+### Step 4.3: Block Toolbar (Drag Handle + Add + Context Menu)
 
-**Файл:** `packages/block-editor/src/components/block-toolbar.tsx`
+**File:** `packages/block-editor/src/components/block-toolbar.tsx`
 
-**Как работает:**
-1. При hover на блок — слева появляется toolbar с двумя кнопками:
-   - `+` (Add) → вставляет новый paragraph после этого блока
-   - `⠿` (Drag Handle) → drag-and-drop ИЛИ click → context menu
+**How it works:**
+1. On hover over a block — a toolbar with two buttons appears on the left:
+   - `+` (Add) → inserts a new paragraph after this block
+   - `⠿` (Drag Handle) → drag-and-drop OR click → context menu
 
 **Drag and Drop:**
-1. Зажатие `⠿` → `draggable=true`, `dataTransfer.setData("text/gotipe-block-id", blockId)`
-2. При drag-over других блоков → drop indicator (2px accent линия)
+1. Pressing `⠿` → `draggable=true`, `dataTransfer.setData("text/gotipe-block-id", blockId)`
+2. On drag-over other blocks → a drop indicator (a 2px accent line)
 3. Drop → `editor.chain().moveBlock(blockId, targetIndex).run()`
 
-**Context Menu (click на ⠿):**
+**Context Menu (click on ⠿):**
 - Delete → `editor.chain().deleteBlock(blockId).run()`
 - Duplicate → `editor.chain().duplicateBlock(blockId).run()`
 - Reset Formatting → `editor.chain().setBlockType("paragraph").run()`
 - Copy to Clipboard → `navigator.clipboard.writeText(...)`
 
-**Что проверить:**
-1. Hover на блок → toolbar видна слева
-2. `+` клик → новый параграф ниже
-3. Drag `⠿` → блок перетаскивается, indicator показывает куда
-4. Drop → блок перемещён
+**What to check:**
+1. Hover over a block → the toolbar is visible on the left
+2. `+` click → a new paragraph below
+3. Drag `⠿` → the block is dragged, the indicator shows where to
+4. Drop → the block is moved
 5. Click `⠿` → context menu
-6. Delete → блок удалён
-7. Duplicate → копия блока ниже
+6. Delete → the block is deleted
+7. Duplicate → a copy of the block below
 
-### Шаг 4.4: AI Command Bar
+### Step 4.4: AI Command Bar
 
-**Файл:** `packages/block-editor/src/components/ai-command-bar.tsx`
+**File:** `packages/block-editor/src/components/ai-command-bar.tsx`
 
-**Как активируется:** `Cmd+K` (или всегда видим в Agent Editor)
+**How it is activated:** `Cmd+K` (or always visible in the Agent Editor)
 
-**Функциональность:**
-1. Input с placeholder "Tell AI what to change..."
+**Functionality:**
+1. An input with the placeholder "Tell AI what to change..."
 2. Enter → `editor.emit("executeAiCommand", { commandId: "freeText", prompt })`
-3. AI extension обрабатывает команду → генерирует текст
-4. Escape → закрывает
+3. The AI extension handles the command → generates text
+4. Escape → closes
 
-**Что проверить:**
-1. Cmd+K → bar появляется, input в фокусе
-2. Печатаем промпт → Enter → AI обрабатывает
-3. Escape → закрывается
-4. Клик вне → закрывается
+**What to check:**
+1. Cmd+K → the bar appears, the input is focused
+2. Type a prompt → Enter → the AI processes it
+3. Escape → closes
+4. Click outside → closes
 
-### Шаг 4.5: Suggestion Toolbar (AI Proofread)
+### Step 4.5: Suggestion Toolbar (AI Proofread)
 
-**Файл:** `packages/block-editor/src/components/suggestion-toolbar.tsx`
+**File:** `packages/block-editor/src/components/suggestion-toolbar.tsx`
 
-**Когда видна:** После AI Proofread → найдены suggestions
+**When visible:** After AI Proofread → suggestions were found
 
-**Функциональность:**
+**Functionality:**
 - Counter: `1/5`
 - Navigation: `◄` `►`
-- Accept / Reject текущую suggestion
+- Accept / Reject the current suggestion
 - Accept All / Reject All
 
-### Шаг 4.6: Comment Sidebar
+### Step 4.6: Comment Sidebar
 
-**Файл:** `packages/block-editor/src/components/comment-sidebar.tsx`
+**File:** `packages/block-editor/src/components/comment-sidebar.tsx`
 
-**Функциональность:**
+**Functionality:**
 - Filter tabs: Open (N) / Resolved (N)
 - Comment threads: author, timestamp, body, quoted text
-- Reply input в каждом thread
+- A reply input in every thread
 - Resolve/Unresolve
 - Navigation: ◄ 2/7 ►
-- Scroll-to-anchor: клик на comment → скролл к тексту в редакторе
+- Scroll-to-anchor: click a comment → scroll to the text in the editor
 
-### Шаг 4.7: Theme Toggle
+### Step 4.7: Theme Toggle
 
-**Файл:** `packages/block-editor/src/components/theme-toggle.tsx`
+**File:** `packages/block-editor/src/components/theme-toggle.tsx`
 
-**Функциональность:**
-- 3 режима: Light, Dark, System
-- Интеграция с `@gotipe/theme`: `getTheme()`, `setTheme()`, `onThemeChange()`
-- Ставит `data-theme="dark"` на `<html>`
+**Functionality:**
+- 3 modes: Light, Dark, System
+- Integration with `@gotipe/theme`: `getTheme()`, `setTheme()`, `onThemeChange()`
+- Sets `data-theme="dark"` on `<html>`
 
 ---
 
-## Фаза 5: Toolbar в playground (StaticToolbar)
+## Phase 5: Toolbar in the playground (StaticToolbar)
 
-### Шаг 5.1: Реактивное состояние toolbar
+### Step 5.1: Reactive toolbar state
 
-**Файл:** `apps/playground/src/shared/toolbar.tsx`
+**File:** `apps/playground/src/shared/toolbar.tsx`
 
-**Как работает:**
+**How it works:**
 ```tsx
 const toolbar = useEditorState<ToolbarState>(editor, (state) => state.toolbar);
 ```
 
-`useEditorState` подписывается на `viewStateChange` → при каждом изменении state вызывает selector → возвращает:
+`useEditorState` subscribes to `viewStateChange` → on every state change it calls the selector → which returns:
 ```ts
 {
-  activeMarks: ["bold", "italic"],   // какие marks активны на курсоре
-  activeBlockType: "heading",        // тип текущего блока
-  activeBlockAttrs: { level: 2 },    // attrs текущего блока
-  canUndo: true,                     // можно ли undo
-  canRedo: false,                    // можно ли redo
+  activeMarks: ["bold", "italic"],   // which marks are active at the cursor
+  activeBlockType: "heading",        // the type of the current block
+  activeBlockAttrs: { level: 2 },    // attrs of the current block
+  canUndo: true,                     // whether undo is possible
+  canRedo: false,                    // whether redo is possible
 }
 ```
 
-**Что проверить:**
-1. Поставить курсор в bold текст → кнопка B подсвечена
-2. Поставить курсор в heading → dropdown показывает "Heading 2"
-3. Undo что-то → кнопка Undo активна
-4. Undo всё → кнопка Undo disabled
+**What to check:**
+1. Put the cursor in bold text → the B button is highlighted
+2. Put the cursor in a heading → the dropdown shows "Heading 2"
+3. Undo something → the Undo button is active
+4. Undo everything → the Undo button is disabled
 
-### Шаг 5.2: Кнопки форматирования
+### Step 5.2: Formatting buttons
 
-Каждая кнопка:
+Each button:
 ```tsx
 <button
   className={`gotipe-toolbar-btn ${isMarkActive('bold') ? 'active' : ''}`}
@@ -659,7 +659,7 @@ const toolbar = useEditorState<ToolbarState>(editor, (state) => state.toolbar);
 >
 ```
 
-### Шаг 5.3: Dropdown типа блока
+### Step 5.3: Block type dropdown
 
 ```tsx
 <select
@@ -672,17 +672,17 @@ const toolbar = useEditorState<ToolbarState>(editor, (state) => state.toolbar);
 >
 ```
 
-### Шаг 5.4: Insert dropdown
+### Step 5.4: Insert dropdown
 
-Table, Code Block, Blockquote, Divider, Callout — каждый через `insertBlockAfter()` или `setBlockType()`.
+Table, Code Block, Blockquote, Divider, Callout — each through `insertBlockAfter()` or `setBlockType()`.
 
 ---
 
-## Фаза 6: AI Features
+## Phase 6: AI Features
 
-### Шаг 6.1: AI Provider Interface
+### Step 6.1: AI Provider Interface
 
-**Файл:** `packages/ai/src/extension.ts`
+**File:** `packages/ai/src/extension.ts`
 
 **Interface:**
 ```ts
@@ -696,136 +696,136 @@ interface AiProvider {
 }
 ```
 
-Все методы — async/streaming. Mock provider в playground использует `delay()` + `yield` для симуляции.
+All methods are async/streaming. The mock provider in the playground uses `delay()` + `yield` to simulate this.
 
-### Шаг 6.2: Level 1 — Ghost Text (Autocomplete)
+### Step 6.2: Level 1 — Ghost Text (Autocomplete)
 
 **Extension:** `defineAi`
 
-**Как работает:**
-1. Пользователь останавливается печатать (debounce ~500ms)
-2. AI extension собирает context (окружающие блоки)
-3. Вызывает `provider.generateCompletion(context)`
-4. Provider стримит текст token за token
-5. Полученный текст показывается как ghost decoration (серый текст после курсора)
-6. Tab → принимает ghost text (вставляет в документ)
-7. Escape / продолжение печати → ghost text исчезает
+**How it works:**
+1. The user stops typing (debounce ~500ms)
+2. The AI extension collects the context (surrounding blocks)
+3. Calls `provider.generateCompletion(context)`
+4. The provider streams text token by token
+5. The received text is shown as a ghost decoration (gray text after the cursor)
+6. Tab → accepts the ghost text (inserts it into the document)
+7. Escape / continued typing → the ghost text disappears
 
-**Что проверить:**
-1. Остановиться печатать → через 500ms появляется серый suggestion text
-2. Tab → текст вставлен
-3. Escape → suggestion исчез
-4. Продолжаем печатать → suggestion исчез
+**What to check:**
+1. Stop typing → after 500ms gray suggestion text appears
+2. Tab → the text is inserted
+3. Escape → the suggestion disappears
+4. Keep typing → the suggestion disappears
 
-### Шаг 6.3: Level 2 — AI Context (Improve + Continue Writing)
+### Step 6.3: Level 2 — AI Context (Improve + Continue Writing)
 
 **Extension:** `defineAiContext`
 
-**"Improve" (в Bubble Menu):**
-1. Выделить текст → Bubble Menu → ✨ Improve
+**"Improve" (in the Bubble Menu):**
+1. Select text → Bubble Menu → ✨ Improve
 2. `editor.emit("executeAiCommand", { commandId: "rewrite" })`
-3. AI extension берёт выделенный текст
-4. Вызывает `provider.streamRewrite(text, context)`
-5. Показывает результат как suggestion (зелёный highlight = добавление, серый strikethrough = удаление)
+3. The AI extension takes the selected text
+4. Calls `provider.streamRewrite(text, context)`
+5. Shows the result as a suggestion (green highlight = addition, gray strikethrough = deletion)
 6. Accept / Reject
 
-**"Continue Writing" (в Slash Menu):**
-1. `/continue` или "/Continue Writing"
-2. AI генерирует следующий параграф
-3. Текст стримится word по word в новый блок
+**"Continue Writing" (in the Slash Menu):**
+1. `/continue` or "/Continue Writing"
+2. The AI generates the next paragraph
+3. The text is streamed word by word into a new block
 
-### Шаг 6.4: Level 3 — AI Agent
+### Step 6.4: Level 3 — AI Agent
 
 **Extension:** `defineAiAgent`
 
 **Proofread:**
-1. Кнопка "Proofread" в AI sidebar
+1. The "Proofread" button in the AI sidebar
 2. `editor.emit("executeAiCommand", { commandId: "proofread" })`
-3. AI сканирует весь документ
-4. Возвращает массив suggestions: `[{ blockId, from, to, originalText, suggestedText, reason }]`
-5. Suggestions отображаются как inline decorations (зелёный = предложение, серый = оригинал)
-6. Suggestion Toolbar появляется: `1/5 ◄ ► [Accept All] [Reject All]`
+3. The AI scans the whole document
+4. Returns an array of suggestions: `[{ blockId, from, to, originalText, suggestedText, reason }]`
+5. Suggestions are displayed as inline decorations (green = suggestion, gray = original)
+6. The Suggestion Toolbar appears: `1/5 ◄ ► [Accept All] [Reject All]`
 
 **AI Comments (Review):**
-1. Кнопка "Add AI Comment" в AI sidebar
-2. AI анализирует документ
-3. Возвращает комментарии: `[{ blockId, content, type: "suggestion" | "note" }]`
-4. Комментарии появляются в Comment Sidebar
+1. The "Add AI Comment" button in the AI sidebar
+2. The AI analyzes the document
+3. Returns comments: `[{ blockId, content, type: "suggestion" | "note" }]`
+4. The comments appear in the Comment Sidebar
 
 **Add Paragraph:**
-1. Кнопка "Add new paragraph" → промпт "about the topic"
-2. AI генерирует текст → стримит в новый блок после текущего
+1. The "Add new paragraph" button → the prompt "about the topic"
+2. The AI generates text → streams it into a new block after the current one
 
 **Rewrite Selection:**
-1. Кнопка "Adjust text selection"
-2. AI берёт выделенный текст → перепишет → показывает как suggestion
+1. The "Adjust text selection" button
+2. The AI takes the selected text → rewrites it → shows it as a suggestion
 
-### Шаг 6.5: AI Status Indicator
+### Step 6.5: AI Status Indicator
 
-**Файл:** `packages/block-editor/src/components/ai-status-indicator.tsx`
+**File:** `packages/block-editor/src/components/ai-status-indicator.tsx`
 
-Во время работы AI показывает footer bar: "Proofreading...", "Generating...", "Reviewing..."
+While the AI is working it shows a footer bar: "Proofreading...", "Generating...", "Reviewing..."
 
 ---
 
-## Фаза 7: Collaboration
+## Phase 7: Collaboration
 
-### Шаг 7.1: CRDT Sync
+### Step 7.1: CRDT Sync
 
-**Файл:** `packages/collaboration/src/extension.ts`
+**File:** `packages/collaboration/src/extension.ts`
 
-**Как работает:**
+**How it works:**
 1. `defineCollaboration.configure({ wsUrl, documentId, token, user })`
-2. При подключении: `WasmBridge.enableCollaboration(peerId)`
-3. WebSocket binary protocol (НЕ JSON):
+2. On connect: `WasmBridge.enableCollaboration(peerId)`
+3. WebSocket binary protocol (NOT JSON):
    - Message types: 0x01 (sync step), 0x02 (awareness), 0x03 (update), etc.
    - zstd compression
-4. Каждый `dispatch()` генерирует CRDT update → отправляет по WebSocket
-5. Входящие updates: `WasmBridge.receiveUpdate(binary)` → новый state
+4. Every `dispatch()` generates a CRDT update → sends it over the WebSocket
+5. Incoming updates: `WasmBridge.receiveUpdate(binary)` → new state
 
-### Шаг 7.2: Remote Cursors
+### Step 7.2: Remote Cursors
 
-**Файл:** `packages/block-editor/src/components/collaboration-cursors.tsx`
+**File:** `packages/block-editor/src/components/collaboration-cursors.tsx`
 
-Decorations с `type: "remote-cursor"` → рендерятся как цветные метки с именем пользователя.
+Decorations with `type: "remote-cursor"` → rendered as colored marks with the user's name.
 
-### Шаг 7.3: Awareness
+### Step 7.3: Awareness
 
-Позиция курсора каждого пользователя передаётся через awareness protocol.
+Each user's cursor position is transmitted through the awareness protocol.
 
 ---
 
-## Фаза 8: Export
+## Phase 8: Export
 
-### Шаг 8.1: HTML Export
+### Step 8.1: HTML Export
 
 ```ts
 editor.getHTML() → WasmBridge.exportHtml()
 ```
 
-WASM конвертирует Block[] → HTML string. Sanitization через ammonia (Rust).
+WASM converts Block[] → an HTML string. Sanitization through ammonia (Rust).
 
-### Шаг 8.2: Markdown Export
+### Step 8.2: Markdown Export
 
 ```ts
 editor.getMarkdown() → WasmBridge.exportMarkdown()
 ```
 
-### Шаг 8.3: JSON Export
+### Step 8.3: JSON Export
 
 ```ts
 editor.getJSON() → WasmBridge.getState()
 ```
 
-Возвращает `{ version: 1, blocks: [...] }` — можно сохранить и загрузить обратно.
+Returns `{ version: 1, blocks: [...] }` — it can be saved and loaded back.
 
 ---
 
-## Фаза 9: Polish и Edge Cases
+## Phase 9: Polish and Edge Cases
 
-### Шаг 9.1: Keyboard Shortcuts
+### Step 9.1: Keyboard Shortcuts
 
-Полный список из extensions:
+The full list from the extensions:
 | Shortcut | Action |
 |----------|--------|
 | `Mod-b` | Toggle Bold |
@@ -846,7 +846,7 @@ editor.getJSON() → WasmBridge.getState()
 | `Enter` | Split block / New list item |
 | `Backspace` | Delete char / Merge blocks |
 
-### Шаг 9.2: Input Rules
+### Step 9.2: Input Rules
 
 | Pattern | Result |
 |---------|--------|
@@ -865,40 +865,40 @@ editor.getJSON() → WasmBridge.getState()
 | ` ``` ` | Code Block |
 | `/` | Open Slash Menu |
 
-### Шаг 9.3: Clipboard (Copy/Paste)
+### Step 9.3: Clipboard (Copy/Paste)
 
-**Файл:** `packages/core/src/editor.ts` → `ClipboardHandler`
+**File:** `packages/core/src/editor.ts` → `ClipboardHandler`
 
-- Copy: выделенный текст → `text/plain` + `text/html` + `application/x-gotipe` (internal format)
-- Paste: если `application/x-gotipe` → вставить blocks. Если HTML → sanitize через WASM → parse → вставить. Если plain text → вставить как текст.
+- Copy: selected text → `text/plain` + `text/html` + `application/x-gotipe` (internal format)
+- Paste: if `application/x-gotipe` → insert blocks. If HTML → sanitize through WASM → parse → insert. If plain text → insert as text.
 - Cut: Copy + Delete
 
-### Шаг 9.4: Accessibility
+### Step 9.4: Accessibility
 
-- `role="textbox"`, `aria-multiline="true"` на editor
-- `aria-label` на всех кнопках
-- Keyboard navigation во всех меню (Arrow Up/Down, Enter, Escape)
-- Focus management при открытии/закрытии меню
-- `aria-live="polite"` на AI status indicator
+- `role="textbox"`, `aria-multiline="true"` on the editor
+- `aria-label` on all buttons
+- Keyboard navigation in all menus (Arrow Up/Down, Enter, Escape)
+- Focus management when menus open/close
+- `aria-live="polite"` on the AI status indicator
 - Semantic HTML: `<h1>`-`<h6>`, `<ul>`, `<ol>`, `<blockquote>`, `<table>`, `<details>`
 
 ---
 
-## Порядок реализации (рекомендуемый)
+## Implementation order (recommended)
 
-- [x] 1. Фаза 0: Шаги 0.1-0.6 — Базовое редактирование работает
-- [x] 2. Фаза 1: Шаги 1.1-1.3 — Design tokens + тёмная тема + Inter
-- [x] 3. Фаза 2: Шаги 2.1-2.8 — Все marks работают
-- [x] 4. Фаза 3: Шаги 3.1-3.4 — Paragraph + Heading + Lists
-- [x] 5. Фаза 3: Шаги 3.5-3.8 — Todo + CodeBlock + Blockquote + Divider
-- [x] 6. Фаза 3: Шаги 3.9-3.13 — Callout + Image + Table + Toggle + Columns
-- [x] 7. Фаза 4: Шаг 4.1 — Slash Menu
-- [x] 8. Фаза 4: Шаг 4.2 — Bubble Menu
-- [x] 9. Фаза 4: Шаг 4.3 — Block Toolbar + Drag & Drop
-- [x] 10. Фаза 5: Шаги 5.1-5.4 — Static Toolbar в playground
-- [x] 11. Фаза 6: Шаги 6.1-6.5 — AI Features
-- [x] 12. Фаза 7: Шаги 7.1-7.3 — Collaboration
-- [x] 13. Фаза 8: Шаги 8.1-8.3 — Export
-- [x] 14. Фаза 9: Шаги 9.1-9.4 — Polish
+- [x] 1. Phase 0: Steps 0.1-0.6 — Basic editing works
+- [x] 2. Phase 1: Steps 1.1-1.3 — Design tokens + dark theme + Inter
+- [x] 3. Phase 2: Steps 2.1-2.8 — All marks work
+- [x] 4. Phase 3: Steps 3.1-3.4 — Paragraph + Heading + Lists
+- [x] 5. Phase 3: Steps 3.5-3.8 — Todo + CodeBlock + Blockquote + Divider
+- [x] 6. Phase 3: Steps 3.9-3.13 — Callout + Image + Table + Toggle + Columns
+- [x] 7. Phase 4: Step 4.1 — Slash Menu
+- [x] 8. Phase 4: Step 4.2 — Bubble Menu
+- [x] 9. Phase 4: Step 4.3 — Block Toolbar + Drag & Drop
+- [x] 10. Phase 5: Steps 5.1-5.4 — Static Toolbar in the playground
+- [x] 11. Phase 6: Steps 6.1-6.5 — AI Features
+- [x] 12. Phase 7: Steps 7.1-7.3 — Collaboration
+- [x] 13. Phase 8: Steps 8.1-8.3 — Export
+- [x] 14. Phase 9: Steps 9.1-9.4 — Polish
 
-Каждый шаг можно делать как отдельный PR. Проверяем перед переходом к следующему.
+Each step can be done as a separate PR. We verify before moving on to the next.

@@ -33,5 +33,5 @@
 
 ## Outcome
 
-- Закрыт дополнительный risk-gap по nested cross-block range chains.
-- Техдолг по увеличению mixed document size + nested range chains переведён в covered automation.
+- Closed an additional risk gap for nested cross-block range chains.
+- The tech debt item on larger mixed document size + nested range chains is now covered by automation.

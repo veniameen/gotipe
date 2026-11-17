@@ -1,27 +1,27 @@
 # GoTipe Cloud
 
-> **PDF: историческое предложение.** Упоминания Typst/docx-rs, оценки размеров и
-> возможностей ниже не описывают текущий backend. GoTipe владеет PDF layout и
-> OOXML rendering; актуальны [контракт экспорта](development/export-contract.md)
-> и [политика зависимостей](development/dependencies.md).
+> **PDF: historical proposal.** The mentions of Typst/docx-rs and the size and capability
+> estimates below do not describe the current backend. GoTipe owns PDF layout and
+> OOXML rendering; the current references are the [export contract](development/export-contract.md)
+> and the [dependency policy](development/dependencies.md).
 
-> Исторический проектный документ. Сигнатуры, размеры, цены, сравнения и планы ниже
-> не подтверждают текущую реализацию или доступный сервис. Актуальные контракты:
-> [разработка](development/cloud-contract.md), [экспорт](development/export-contract.md),
-> [Cloud](development/cloud-contract.md), [готовность выпуска](22-release-readiness.md).
+> Historical design document. The signatures, sizes, prices, comparisons and plans below
+> do not confirm the current implementation or an available service. Current contracts:
+> [development](development/cloud-contract.md), [export](development/export-contract.md),
+> [Cloud](development/cloud-contract.md), [release readiness](22-release-readiness.md).
 
-## Обзор
+## Overview
 
-GoTipe Cloud — managed backend для GoTipe editor: collaboration sync, AI proxy, document export, analytics. Open-source ядро работает без облака. Cloud — опциональная инфраструктура для тех, кто не хочет деплоить свой backend.
+GoTipe Cloud is a managed backend for the GoTipe editor: collaboration sync, AI proxy, document export, analytics. The open-source core works without the cloud. Cloud is optional infrastructure for those who do not want to deploy their own backend.
 
-Ключевые отличия от Tiptap Cloud:
-- Цена за документ в 2-3x ниже
-- AI proxy и export включены в тариф (у Tiptap — отдельно или отсутствуют)
-- Self-hosted вариант: Hetzner VDS + Docker Compose + Cloudflare R2 (~EUR 8/mo)
+Key differences from Tiptap Cloud:
+- Price per document is 2-3x lower
+- AI proxy and export are included in the plan (Tiptap charges separately or does not offer them)
+- Self-hosted option: Hetzner VDS + Docker Compose + Cloudflare R2 (~EUR 8/mo)
 
 ---
 
-## Архитектура
+## Architecture
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────┐
@@ -78,25 +78,25 @@ GoTipe Cloud — managed backend для GoTipe editor: collaboration sync, AI pr
 
 ---
 
-## Сервисы
+## Services
 
 ### 1. Collaboration — WebSocket Sync
 
-Sync server принимает WebSocket-соединения, мёрджит CRDT updates, рассылает изменения всем участникам документа, персистит state в PostgreSQL + Cloudflare R2.
+The sync server accepts WebSocket connections, merges CRDT updates, broadcasts changes to all document participants, and persists state in PostgreSQL + Cloudflare R2.
 
-Подробности sync protocol, CRDT engine и awareness — в [02-collaboration.md](02-collaboration.md).
+Details of the sync protocol, CRDT engine and awareness are in [02-collaboration.md](02-collaboration.md).
 
-Ответственность Cloud-слоя:
-- Authentication на WebSocket handshake (API key или JWT)
-- Room management (создание/удаление rooms, лимиты concurrent users)
-- Scheduled compaction (merge incremental updates в snapshot каждые N updates)
-- Document history (хранение snapshots с версионированием)
+Responsibilities of the Cloud layer:
+- Authentication at the WebSocket handshake (API key or JWT)
+- Room management (creating/deleting rooms, concurrent user limits)
+- Scheduled compaction (merge incremental updates into a snapshot every N updates)
+- Document history (storing snapshots with versioning)
 
 ### 2. AI Proxy
 
-LLM proxy — единая точка доступа к AI providers. Клиент отправляет запрос в GoTipe Cloud, Cloud маршрутизирует в нужный provider.
+The LLM proxy is a single access point to AI providers. The client sends a request to GoTipe Cloud, and Cloud routes it to the right provider.
 
-Подробности AI integration, ghost text и commands — в [07-ai.md](07-ai.md).
+Details of AI integration, ghost text and commands are in [07-ai.md](07-ai.md).
 
 ```
 Client ──► GoTipe AI Proxy ──┬──► OpenAI (gpt-4o, gpt-4o-mini)
@@ -104,18 +104,18 @@ Client ──► GoTipe AI Proxy ──┬──► OpenAI (gpt-4o, gpt-4o-mini)
                               └──► Google (gemini-2.0-flash)
 ```
 
-Функции proxy:
+Proxy features:
 - **Rate limiting** — per API key, per user, per provider
-- **Response caching** — Valkey, TTL по типу запроса (suggestions = 5min, rewrite = 1h)
-- **Streaming** — SSE relay от provider к клиенту
-- **Fallback** — при недоступности primary provider, автоматический switch на secondary
-- **Cost tracking** — подсчёт token usage per customer
+- **Response caching** — Valkey, TTL by request type (suggestions = 5min, rewrite = 1h)
+- **Streaming** — SSE relay from the provider to the client
+- **Fallback** — automatic switch to a secondary provider when the primary is unavailable
+- **Cost tracking** — token usage accounting per customer
 
 ### 3. Export Service
 
-Queue-based сервис для генерации PDF и DOCX. Использует Rust WASM core (typst для PDF, docx-rs для DOCX).
+A queue-based service for generating PDF and DOCX. Uses the Rust WASM core (typst for PDF, docx-rs for DOCX).
 
-Подробности export форматов — в [08-export-import.md](08-export-import.md).
+Details of export formats are in [08-export-import.md](08-export-import.md).
 
 ```
 Client ── POST /api/v1/exports ──► API Gateway ──► PostgreSQL (queue)
@@ -130,28 +130,28 @@ Client ── POST /api/v1/exports ──► API Gateway ──► PostgreSQL (q
 Client ◄── GET /api/v1/exports/:id ◄── 302 redirect ───┘
 ```
 
-| Формат | Engine | Время (100 блоков) | Client-side fallback |
+| Format | Engine | Time (100 blocks) | Client-side fallback |
 |--------|--------|--------------------|----------------------|
-| PDF | typst (Rust) | ~500ms | Нет |
-| DOCX | docx-rs (Rust) | ~300ms | Нет |
-| HTML | gotipe-export (WASM) | ~5ms | Да |
-| Markdown | gotipe-export (WASM) | ~3ms | Да |
+| PDF | typst (Rust) | ~500ms | No |
+| DOCX | docx-rs (Rust) | ~300ms | No |
+| HTML | gotipe-export (WASM) | ~5ms | Yes |
+| Markdown | gotipe-export (WASM) | ~3ms | Yes |
 
 ### 4. Analytics
 
-Сбор метрик использования: активные документы, collaboration sessions, AI requests, export jobs.
+Collects usage metrics: active documents, collaboration sessions, AI requests, export jobs.
 
-| Метрика | Тип | Описание |
+| Metric | Type | Description |
 |---------|-----|----------|
-| `gotipe_documents_total` | Counter | Общее количество документов |
-| `gotipe_documents_active` | Gauge | Документы с активными WebSocket-соединениями |
-| `gotipe_ws_connections` | Gauge | Текущие WebSocket-соединения |
-| `gotipe_ws_messages_total` | Counter | Всего WebSocket-сообщений (sync + awareness) |
-| `gotipe_ai_requests_total` | Counter | AI proxy запросы по provider / model |
+| `gotipe_documents_total` | Counter | Total number of documents |
+| `gotipe_documents_active` | Gauge | Documents with active WebSocket connections |
+| `gotipe_ws_connections` | Gauge | Current WebSocket connections |
+| `gotipe_ws_messages_total` | Counter | Total WebSocket messages (sync + awareness) |
+| `gotipe_ai_requests_total` | Counter | AI proxy requests by provider / model |
 | `gotipe_ai_tokens_total` | Counter | Token usage (input + output) |
-| `gotipe_exports_total` | Counter | Export jobs по формату |
-| `gotipe_exports_duration_seconds` | Histogram | Время генерации export |
-| `gotipe_api_requests_total` | Counter | REST API запросы по endpoint / status |
+| `gotipe_exports_total` | Counter | Export jobs by format |
+| `gotipe_exports_duration_seconds` | Histogram | Export generation time |
+| `gotipe_api_requests_total` | Counter | REST API requests by endpoint / status |
 | `gotipe_api_latency_seconds` | Histogram | REST API latency |
 
 ---
@@ -163,12 +163,12 @@ Client ◄── GET /api/v1/exports/:id ◄── 302 redirect ───┘
 -- GoTipe Cloud — Database Schema
 -- ============================================================
 
--- Пользователи (владельцы аккаунтов)
+-- Users (account owners)
 CREATE TABLE users (
     id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     email           TEXT NOT NULL UNIQUE,
     name            TEXT NOT NULL DEFAULT '',
-    password_hash   TEXT,                             -- NULL для OAuth-only
+    password_hash   TEXT,                             -- NULL for OAuth-only
     oauth_provider  TEXT,                             -- 'github', 'google', NULL
     oauth_id        TEXT,
     plan            TEXT NOT NULL DEFAULT 'starter',  -- starter, pro, business, enterprise
@@ -180,13 +180,13 @@ CREATE TABLE users (
 CREATE INDEX idx_users_email ON users(email);
 CREATE INDEX idx_users_oauth ON users(oauth_provider, oauth_id) WHERE oauth_provider IS NOT NULL;
 
--- API ключи для server-to-server аутентификации
+-- API keys for server-to-server authentication
 CREATE TABLE api_keys (
     id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id         UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     name            TEXT NOT NULL DEFAULT '',
-    key_hash        TEXT NOT NULL,                    -- SHA-256 hash ключа
-    key_prefix      TEXT NOT NULL,                    -- первые 8 символов (для display)
+    key_hash        TEXT NOT NULL,                    -- SHA-256 hash of the key
+    key_prefix      TEXT NOT NULL,                    -- first 8 characters (for display)
     scopes          TEXT[] NOT NULL DEFAULT '{}',     -- 'documents', 'ai', 'export', 'admin'
     last_used_at    TIMESTAMPTZ,
     expires_at      TIMESTAMPTZ,
@@ -196,13 +196,13 @@ CREATE TABLE api_keys (
 CREATE INDEX idx_api_keys_user ON api_keys(user_id);
 CREATE INDEX idx_api_keys_hash ON api_keys(key_hash);
 
--- Документы
+-- Documents
 CREATE TABLE documents (
     id              TEXT PRIMARY KEY,                 -- client-generated ID (nanoid)
     user_id         UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     title           TEXT NOT NULL DEFAULT '',
     version         BIGINT NOT NULL DEFAULT 0,
-    r2_snapshot_key TEXT,                             -- ключ последнего CRDT snapshot в R2
+    r2_snapshot_key TEXT,                             -- key of the latest CRDT snapshot in R2
     size_bytes      BIGINT NOT NULL DEFAULT 0,
     collaborators   JSONB NOT NULL DEFAULT '[]',     -- [{user_id, role, added_at}]
     created_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
@@ -212,7 +212,7 @@ CREATE TABLE documents (
 CREATE INDEX idx_documents_user ON documents(user_id);
 CREATE INDEX idx_documents_updated ON documents(updated_at DESC);
 
--- Incremental CRDT updates (compacted в snapshot периодически)
+-- Incremental CRDT updates (periodically compacted into a snapshot)
 CREATE TABLE document_updates (
     id              BIGSERIAL PRIMARY KEY,
     document_id     TEXT NOT NULL REFERENCES documents(id) ON DELETE CASCADE,
@@ -223,7 +223,7 @@ CREATE TABLE document_updates (
 
 CREATE INDEX idx_doc_updates_doc ON document_updates(document_id, id);
 
--- Версионные snapshots документов
+-- Document version snapshots
 CREATE TABLE document_snapshots (
     document_id     TEXT NOT NULL REFERENCES documents(id) ON DELETE CASCADE,
     version         BIGINT NOT NULL,
@@ -234,14 +234,14 @@ CREATE TABLE document_snapshots (
     PRIMARY KEY (document_id, version)
 );
 
--- Очередь задач на export
+-- Export job queue
 CREATE TABLE export_jobs (
     id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     document_id     TEXT NOT NULL REFERENCES documents(id) ON DELETE CASCADE,
     user_id         UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     format          TEXT NOT NULL,                    -- 'pdf', 'docx', 'html', 'md'
     status          TEXT NOT NULL DEFAULT 'pending',  -- pending, processing, completed, failed
-    r2_result_key   TEXT,                             -- ключ результата в R2
+    r2_result_key   TEXT,                             -- key of the result in R2
     error_message   TEXT,
     created_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
     completed_at    TIMESTAMPTZ
@@ -250,7 +250,7 @@ CREATE TABLE export_jobs (
 CREATE INDEX idx_export_jobs_status ON export_jobs(status) WHERE status IN ('pending', 'processing');
 CREATE INDEX idx_export_jobs_user ON export_jobs(user_id, created_at DESC);
 
--- Логи использования (для billing и analytics)
+-- Usage logs (for billing and analytics)
 CREATE TABLE usage_logs (
     id              BIGSERIAL PRIMARY KEY,
     user_id         UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
@@ -261,7 +261,7 @@ CREATE TABLE usage_logs (
 
 CREATE INDEX idx_usage_logs_user_type ON usage_logs(user_id, event_type, created_at DESC);
 
--- Partitioning usage_logs по месяцам (для production)
+-- Partition usage_logs by month (for production)
 -- CREATE TABLE usage_logs (...) PARTITION BY RANGE (created_at);
 ```
 
@@ -271,11 +271,11 @@ CREATE INDEX idx_usage_logs_user_type ON usage_logs(user_id, event_type, created
 
 Base URL: `https://api.gotipe.com/v1`
 
-Все запросы требуют header `Authorization: Bearer <api_key>` или `Authorization: Bearer <jwt_token>`.
+All requests require the header `Authorization: Bearer <api_key>` or `Authorization: Bearer <jwt_token>`.
 
 ### Documents CRUD
 
-#### `POST /api/v1/documents` — создание документа
+#### `POST /api/v1/documents` — create a document
 
 ```bash
 curl -X POST https://api.gotipe.com/v1/documents \
@@ -312,7 +312,7 @@ Response `201 Created`:
 }
 ```
 
-#### `GET /api/v1/documents/:id` — получение документа
+#### `GET /api/v1/documents/:id` — get a document
 
 ```bash
 curl https://api.gotipe.com/v1/documents/doc_k7x9m2 \
@@ -338,7 +338,7 @@ Response `200 OK`:
 }
 ```
 
-#### `GET /api/v1/documents` — список документов
+#### `GET /api/v1/documents` — list documents
 
 ```bash
 curl "https://api.gotipe.com/v1/documents?limit=20&offset=0&sort=updated_at:desc" \
@@ -358,7 +358,7 @@ Response `200 OK`:
 }
 ```
 
-#### `DELETE /api/v1/documents/:id` — удаление документа
+#### `DELETE /api/v1/documents/:id` — delete a document
 
 ```bash
 curl -X DELETE https://api.gotipe.com/v1/documents/doc_k7x9m2 \
@@ -369,7 +369,7 @@ Response `204 No Content`.
 
 ### Users
 
-#### `GET /api/v1/users/me` — текущий пользователь
+#### `GET /api/v1/users/me` — current user
 
 ```bash
 curl https://api.gotipe.com/v1/users/me \
@@ -396,7 +396,7 @@ Response `200 OK`:
 
 ### API Keys
 
-#### `POST /api/v1/api-keys` — создание API key
+#### `POST /api/v1/api-keys` — create an API key
 
 ```bash
 curl -X POST https://api.gotipe.com/v1/api-keys \
@@ -420,11 +420,11 @@ Response `201 Created`:
 }
 ```
 
-> `key` возвращается **только один раз** при создании. Хранить на стороне клиента.
+> `key` is returned **only once**, at creation. Store it on the client side.
 
 ### Export
 
-#### `POST /api/v1/exports` — создание export job
+#### `POST /api/v1/exports` — create an export job
 
 ```bash
 curl -X POST https://api.gotipe.com/v1/exports \
@@ -447,10 +447,10 @@ Response `202 Accepted`:
 }
 ```
 
-#### `GET /api/v1/exports/:id` — статус / download
+#### `GET /api/v1/exports/:id` — status / download
 
-Пока `status == "pending"` или `"processing"` — возвращает JSON со статусом.
-При `status == "completed"` — 302 redirect на R2 presigned URL.
+While `status == "pending"` or `"processing"`, it returns JSON with the status.
+When `status == "completed"`, it returns a 302 redirect to an R2 presigned URL.
 
 ```bash
 curl -L https://api.gotipe.com/v1/exports/exp_q8w2e \
@@ -557,21 +557,21 @@ Flags:
 
 ### Error Codes
 
-| Code | Message | Описание |
+| Code | Message | Description |
 |------|---------|----------|
-| `4001` | `auth_failed` | Невалидный token или API key |
-| `4002` | `document_not_found` | Документ не существует |
-| `4003` | `plan_limit_reached` | Превышен лимит документов плана |
-| `4004` | `room_full` | Превышен лимит concurrent users для документа |
-| `4005` | `rate_limited` | Слишком много сообщений |
+| `4001` | `auth_failed` | Invalid token or API key |
+| `4002` | `document_not_found` | Document does not exist |
+| `4003` | `plan_limit_reached` | Plan document limit exceeded |
+| `4004` | `room_full` | Concurrent user limit for the document exceeded |
+| `4005` | `rate_limited` | Too many messages |
 
 ---
 
-## Аутентификация
+## Authentication
 
-### Три механизма
+### Three mechanisms
 
-| Механизм | Где используется | Формат |
+| Mechanism | Where it is used | Format |
 |----------|-----------------|--------|
 | **API Key** | Server-to-server, REST API, WebSocket | `Authorization: Bearer gt_live_...` |
 | **JWT** | Client-side, short-lived | `Authorization: Bearer eyJhbG...` |
@@ -579,7 +579,7 @@ Flags:
 
 ### API Key
 
-Формат: `gt_live_sk_<32 hex chars>` (production) или `gt_test_sk_<32 hex chars>` (test).
+Format: `gt_live_sk_<32 hex chars>` (production) or `gt_test_sk_<32 hex chars>` (test).
 
 ```go
 // apps/cloud/api/middleware/auth.go
@@ -639,10 +639,10 @@ func AuthMiddleware(db *sql.DB) func(http.Handler) http.Handler {
 }
 ```
 
-### JWT Generation (для client-side)
+### JWT Generation (for client-side)
 
 ```bash
-# Клиент запрашивает JWT через server-side endpoint
+# The client requests a JWT through a server-side endpoint
 curl -X POST https://api.gotipe.com/v1/auth/token \
   -H "Authorization: Bearer gt_live_abc123..." \
   -H "Content-Type: application/json" \
@@ -678,7 +678,7 @@ JWT payload:
 
 ---
 
-## Go API Server — примеры endpoints
+## Go API Server — example endpoints
 
 ```go
 // apps/cloud/api/main.go
@@ -742,7 +742,7 @@ func main() {
 }
 ```
 
-### Document Handler (пример)
+### Document Handler (example)
 
 ```go
 // apps/cloud/api/handler/documents.go
@@ -919,7 +919,7 @@ LOG_FORMAT=json                       # json, text
 
 ### Docker Compose (Production)
 
-Production-стек использует Cloudflare R2 для object storage (zero egress, встроенный CDN), Caddy как reverse proxy с auto TLS, Hetzner VDS как хостинг.
+The production stack uses Cloudflare R2 for object storage (zero egress, built-in CDN), Caddy as a reverse proxy with auto TLS, and Hetzner VDS as hosting.
 
 ```yaml
 # infra/docker-compose.yml (Production)
@@ -1080,7 +1080,7 @@ volumes:
   caddy_config:
 ```
 
-> **Production использует Cloudflare R2** — object storage не требует отдельного контейнера. R2 credentials передаются через `.env` (R2_ACCOUNT_ID, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY). MinIO используется только для локальной разработки.
+> **Production uses Cloudflare R2** — object storage does not need a separate container. R2 credentials are passed through `.env` (R2_ACCOUNT_ID, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY). MinIO is used only for local development.
 
 ### Caddyfile (Reverse Proxy + Auto TLS)
 
@@ -1095,11 +1095,11 @@ sync.gotipe.com {
 }
 ```
 
-Caddy автоматически получает и обновляет TLS-сертификаты через Let's Encrypt. Минимальный конфиг — 6 строк.
+Caddy automatically obtains and renews TLS certificates through Let's Encrypt. The minimal config is 6 lines.
 
 ### Docker Compose (Local Development)
 
-Для локальной разработки MinIO заменяет R2, порты открыты напрямую:
+For local development, MinIO replaces R2 and ports are exposed directly:
 
 ```yaml
 # docker-compose.dev.yml (Local Development)
@@ -1188,26 +1188,26 @@ volumes:
   minio_data:
 ```
 
-### Запуск
+### Running
 
 ```bash
 # Production (Hetzner VDS)
 cd /opt/gotipe && docker compose up -d
 
-# С Prometheus + Grafana
+# With Prometheus + Grafana
 docker compose --profile monitoring up -d
 
 # Local Development
 docker compose -f docker-compose.dev.yml up -d
 
-# Проверка
+# Check
 curl http://localhost:8080/healthz
 curl http://localhost:8081/healthz
 ```
 
 ### Single Binary
 
-Для случаев, когда Docker не подходит. Все сервисы (API + Sync + Export worker) в одном binary.
+For cases where Docker is not suitable. All services (API + Sync + Export worker) in one binary.
 
 ```bash
 # Download
@@ -1245,7 +1245,7 @@ helm install gotipe-cloud gotipe/gotipe-cloud \
   --set ai.openaiKey="sk-..."
 ```
 
-`values.yaml` (основные параметры):
+`values.yaml` (main parameters):
 ```yaml
 api:
   replicas: 2
@@ -1266,14 +1266,14 @@ export:
     limits:   { cpu: 2000m, memory: 2Gi }
 
 postgresql:
-  enabled: true                # false если внешний PostgreSQL
+  enabled: true                # false if using an external PostgreSQL
   auth:
     postgresPassword: gotipe
     database: gotipe
 
 valkey:
   enabled: true
-  architecture: standalone     # или replication для HA
+  architecture: standalone     # or replication for HA
 
 r2:
   accountId: ""               # Cloudflare Account ID
@@ -1298,18 +1298,18 @@ ingress:
 
 ## Infrastructure — Hetzner VDS
 
-### Почему VDS, а не serverless
+### Why VDS and not serverless
 
 | | Hetzner VDS | Serverless stack (Workers + Neon + R2) |
 |---|---|---|
-| **Цена** | **~EUR 7/мес** | ~$80/мес |
+| **Price** | **~EUR 7/mo** | ~$80/mo |
 | **DB latency** | **<1ms** (localhost) | 10-50ms (network hop) |
-| **Контроль** | Полный | Зависимость от вендоров |
-| **Масштабирование** | VDS upgrade (CX32→CX42) | Дорожает линейно с usage |
+| **Control** | Full | Vendor dependency |
+| **Scaling** | VDS upgrade (CX32→CX42) | Gets more expensive linearly with usage |
 
-### VDS спека
+### VDS spec
 
-| Компонент | Spec |
+| Component | Spec |
 |-----------|------|
 | **Server** | Hetzner CX32: 4 vCPU, 8 GB RAM, 80 GB NVMe |
 | **OS** | Ubuntu 24.04 LTS |
@@ -1317,44 +1317,44 @@ ingress:
 | **Reverse proxy** | Caddy (auto TLS via Let's Encrypt) |
 | **CDN + DDoS** | Cloudflare (DNS proxy, caching) |
 | **Object storage** | Cloudflare R2 (zero egress, S3-compatible) |
-| **Price** | ~EUR 7/мес |
+| **Price** | ~EUR 7/mo |
 
 ### Cloudflare R2 — Object Storage
 
-**Почему R2:**
+**Why R2:**
 
-| Фактор | Cloudflare R2 | AWS S3 | MinIO (self-hosted) |
+| Factor | Cloudflare R2 | AWS S3 | MinIO (self-hosted) |
 |--------|--------------|--------|---------------------|
-| Egress | **$0** | $0.09/GB | $0 (но VDS трафик) |
-| Storage | $0.015/GB/мес | $0.023/GB/мес | Disk space на VDS |
-| S3 compatible | Да | Native | Да |
-| CDN | Встроенный (R2 public URL) | CloudFront (доп.) | Нет |
-| Free tier | 10GB storage, 10M reads | 5GB, 12 мес | Unlimited |
-| Бэкапы | Отдельный bucket | S3 lifecycle | Ручное |
+| Egress | **$0** | $0.09/GB | $0 (but VDS traffic) |
+| Storage | $0.015/GB/mo | $0.023/GB/mo | Disk space on the VDS |
+| S3 compatible | Yes | Native | Yes |
+| CDN | Built-in (R2 public URL) | CloudFront (extra) | No |
+| Free tier | 10GB storage, 10M reads | 5GB, 12 mo | Unlimited |
+| Backups | Separate bucket | S3 lifecycle | Manual |
 
-**Конфигурация:**
+**Configuration:**
 - Bucket: `gotipe-data` (CRDT snapshots, exports, attachments)
 - Bucket: `gotipe-backups` (pgBackRest WAL + incremental)
-- Public access: через custom domain `cdn.gotipe.com`
-- R2 credentials: через `.env` файл на сервере
+- Public access: via custom domain `cdn.gotipe.com`
+- R2 credentials: via the `.env` file on the server
 
-> **Production = Cloudflare R2.** MinIO используется только для локальной разработки (`docker-compose.dev.yml`).
+> **Production = Cloudflare R2.** MinIO is used only for local development (`docker-compose.dev.yml`).
 
 ### Server Provisioning (setup-server.sh)
 
-Любой новый сервер поднимается за 2 шага:
+Any new server comes up in 2 steps:
 
 ```bash
-# Шаг 1: Скопировать infra/ на сервер
+# Step 1: Copy infra/ to the server
 scp -r infra/ deploy@NEW_SERVER_IP:/opt/gotipe/
 
-# Шаг 2: Запустить setup
+# Step 2: Run setup
 ssh deploy@NEW_SERVER_IP "cd /opt/gotipe && bash scripts/setup-server.sh"
 ```
 
 ```bash
 #!/bin/bash
-# infra/scripts/setup-server.sh — полное провижионирование сервера
+# infra/scripts/setup-server.sh — full server provisioning
 set -euo pipefail
 
 REPO="gotipe/gotipe"
@@ -1371,16 +1371,16 @@ ufw --force enable
 useradd -m -s /bin/bash deploy || true
 usermod -aG docker deploy
 
-# ─── 4. SSH ключ + GitHub авторизация ───
+# ─── 4. SSH key + GitHub authorization ───
 sudo -u deploy ssh-keygen -t ed25519 -f /home/deploy/.ssh/id_ed25519 -N ""
 gh auth login --with-token <<< "$GITHUB_TOKEN"
 gh repo deploy-key add /home/deploy/.ssh/id_ed25519.pub \
    --repo $REPO --title "server-$(hostname)"
 
-# ─── 5. Клонируем репу (для git pull при деплое конфигов) ───
+# ─── 5. Clone the repo (for git pull when deploying configs) ───
 sudo -u deploy git clone git@github.com:$REPO.git /opt/gotipe/repo
 
-# ─── 6. GitHub Secrets (автодеплой будет знать IP и SSH ключ) ───
+# ─── 6. GitHub Secrets (auto-deploy will know the IP and SSH key) ───
 SERVER_IP=$(curl -s ifconfig.me)
 gh secret set DEPLOY_HOST --repo $REPO --body "$SERVER_IP"
 gh secret set DEPLOY_KEY --repo $REPO --body "$(cat /home/deploy/.ssh/id_ed25519)"
@@ -1388,88 +1388,88 @@ gh secret set DEPLOY_KEY --repo $REPO --body "$(cat /home/deploy/.ssh/id_ed25519
 # ─── 7. .env ───
 if [ ! -f /opt/gotipe/.env ]; then
   cp /opt/gotipe/.env.example /opt/gotipe/.env
-  echo "⚠️  Отредактируй /opt/gotipe/.env перед запуском"
+  echo "⚠️  Edit /opt/gotipe/.env before starting"
 fi
 
-# ─── 8. Запуск всех сервисов ───
+# ─── 8. Start all services ───
 cd /opt/gotipe && docker compose up -d
 
-# ─── 9. Бэкапы ───
+# ─── 9. Backups ───
 cp /opt/gotipe/scripts/backup-cron /etc/cron.d/gotipe-backup
 
-echo "✅ Сервер готов. Автодеплой настроен."
+echo "✅ Server is ready. Auto-deploy is configured."
 echo "   IP: $SERVER_IP"
-echo "   Следующий push to main → автоматический деплой API"
+echo "   The next push to main → automatic API deploy"
 ```
 
-**После setup** — всё автоматически. `git push` → GitHub Actions → SSH → `deploy.sh` → zero-downtime update.
+**After setup**, everything is automatic. `git push` → GitHub Actions → SSH → `deploy.sh` → zero-downtime update.
 
 ### Disaster Recovery (restore.sh)
 
-Восстановление на новый сервер из Cloudflare R2:
+Restoring onto a new server from Cloudflare R2:
 
 ```bash
 #!/bin/bash
-# infra/scripts/restore.sh — восстановление из R2 бэкапа
+# infra/scripts/restore.sh — restore from an R2 backup
 set -euo pipefail
 
 echo "=== GoTipe Disaster Recovery ==="
 
-# 1. Остановить сервисы (если запущены)
+# 1. Stop services (if running)
 docker compose down 2>/dev/null || true
 
-# 2. Поднять только PostgreSQL
+# 2. Bring up PostgreSQL only
 docker compose up -d postgres
 sleep 10
 
-# 3. Восстановить из pgBackRest (R2)
+# 3. Restore from pgBackRest (R2)
 docker compose exec postgres pgbackrest --stanza=gotipe restore
 
-# 4. Если нужен PITR — указать время
+# 4. If PITR is needed, specify the time
 # docker compose exec postgres pgbackrest --stanza=gotipe \
 #   --type=time --target="2026-02-10 14:30:00+00" restore
 
-# 5. Перезапустить PostgreSQL для применения recovery
+# 5. Restart PostgreSQL to apply recovery
 docker compose restart postgres
 sleep 10
 
-# 6. Проверить целостность
+# 6. Verify integrity
 docker compose exec postgres psql -U gotipe -c "SELECT COUNT(*) FROM documents;"
 
-# 7. Поднять остальные сервисы
+# 7. Bring up the remaining services
 docker compose up -d
 
 echo "=== Recovery complete ==="
-echo "   Проверьте: curl https://api.gotipe.com/healthz"
+echo "   Check: curl https://api.gotipe.com/healthz"
 ```
 
-**Смена сервера (полная):**
-1. Купить новый Hetzner VDS
-2. `scp -r infra/ deploy@NEW_IP:/opt/gotipe/` + `bash setup-server.sh` (скрипт обновит GitHub Secrets с новым IP)
-3. `bash restore.sh` (восстановит БД из R2)
-4. Обновить DNS в Cloudflare → новый IP
-5. Готово, автодеплой работает на новый сервер
+**Server replacement (full):**
+1. Buy a new Hetzner VDS
+2. `scp -r infra/ deploy@NEW_IP:/opt/gotipe/` + `bash setup-server.sh` (the script updates GitHub Secrets with the new IP)
+3. `bash restore.sh` (restores the DB from R2)
+4. Update DNS in Cloudflare → new IP
+5. Done, auto-deploy works on the new server
 
-### Стоимость инфраструктуры (Self-Hosted)
+### Infrastructure cost (Self-Hosted)
 
-| Компонент | Сервис | EUR/мес |
+| Component | Service | EUR/mo |
 |-----------|--------|---------|
 | VDS (API + Postgres + Valkey) | Hetzner CX32 | 6.80 |
 | Object storage (data + backups) | Cloudflare R2 free tier | 0 |
 | CDN + DDoS | Cloudflare free | 0 |
 | Monitoring | Prometheus + Grafana (self-hosted) | 0 |
 | Domain | gotipe.com | ~1.00 |
-| **Total** | | **~EUR 8/мес** |
+| **Total** | | **~EUR 8/mo** |
 
-> Для сравнения: Tiptap Cloud начинается от $49/мес за 500 документов. GoTipe self-hosted = **~EUR 8/мес** за unlimited документов.
+> For comparison: Tiptap Cloud starts at $49/mo for 500 documents. GoTipe self-hosted = **~EUR 8/mo** for unlimited documents.
 
 ---
 
 ## Deployment Strategy
 
-### Zero-Downtime Deploy с автоматическими миграциями
+### Zero-Downtime Deploy with automatic migrations
 
-Каждый деплой включает автоматический запуск миграций **до** старта новой версии API. Rolling update гарантирует отсутствие downtime.
+Every deploy automatically runs migrations **before** the new API version starts. A rolling update guarantees no downtime.
 
 ```bash
 #!/bin/bash
@@ -1511,17 +1511,17 @@ OLD_CONTAINER=$(docker ps --filter "name=gotipe-api" --format '{{.ID}}' | tail -
 docker stop "$OLD_CONTAINER" 2>/dev/null || true
 $COMPOSE up -d --no-deps --scale api=1 api
 
-# Update sync + export worker (stateless, можно restart)
+# Update sync + export worker (stateless, safe to restart)
 $COMPOSE up -d --no-deps sync export-worker
 
 echo "=== Deploy complete ==="
 ```
 
-**Принцип:** Миграции SQL backward-compatible (additive-only). Новый код работает со старой и новой схемой. Деструктивные изменения (drop column) — отдельный миграционный шаг через 1+ версий.
+**Principle:** SQL migrations are backward-compatible (additive-only). The new code works with both the old and new schema. Destructive changes (drop column) are a separate migration step after 1+ versions.
 
-### Graceful Shutdown (6 фаз)
+### Graceful Shutdown (6 phases)
 
-Go-сервер корректно завершает работу, не теряя in-flight requests:
+The Go server shuts down cleanly without losing in-flight requests:
 
 ```go
 // apps/cloud/cmd/api/main.go
@@ -1531,21 +1531,21 @@ func main() {
 
     srv := &http.Server{Addr: addr, Handler: mux}
 
-    // Goroutine для HTTP server
+    // Goroutine for the HTTP server
     go func() {
         if err := srv.ListenAndServe(); err != http.ErrServerClosed {
             logger.Error("server error", "err", err)
         }
     }()
 
-    // Ожидание сигнала завершения
+    // Wait for the shutdown signal
     quit := make(chan os.Signal, 1)
     signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
     <-quit
 
     logger.Info("shutdown: starting graceful shutdown")
 
-    // Phase 1: Прекращаем приём новых соединений
+    // Phase 1: Stop accepting new connections
     ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
     defer cancel()
 
@@ -1574,9 +1574,9 @@ func main() {
 }
 ```
 
-| Фаза | Действие | Timeout |
+| Phase | Action | Timeout |
 |------|----------|---------|
-| 1 | Stop accepting new connections | Мгновенно |
+| 1 | Stop accepting new connections | Immediate |
 | 2 | Drain HTTP in-flight requests | 30s |
 | 3 | Close WebSocket rooms, notify clients | 10s |
 | 4 | Stop background workers (finish current tasks) | 15s |
@@ -1587,14 +1587,14 @@ func main() {
 
 ## Backup & Disaster Recovery
 
-### Стратегия бэкапов
+### Backup strategy
 
-| Тип | Частота | Хранение | Цель |
+| Type | Frequency | Retention | Purpose |
 |-----|---------|----------|------|
-| **WAL archiving** | Непрерывный (каждый сегмент) | R2 (30 дней) | Point-in-time recovery |
-| **Incremental backup** | Ежедневно 03:00 UTC | R2 (30 дней) | Fast restore |
-| **Full backup** | Еженедельно (воскресенье) | R2 (90 дней) | Baseline |
-| **CRDT snapshots** | При compaction (~100 updates) | R2 | Отдельный pipeline |
+| **WAL archiving** | Continuous (every segment) | R2 (30 days) | Point-in-time recovery |
+| **Incremental backup** | Daily 03:00 UTC | R2 (30 days) | Fast restore |
+| **Full backup** | Weekly (Sunday) | R2 (90 days) | Baseline |
+| **CRDT snapshots** | On compaction (~100 updates) | R2 | Separate pipeline |
 
 ### pgBackRest (PostgreSQL Backup)
 
@@ -1622,47 +1622,47 @@ compress-type=zst
 compress-level=3
 ```
 
-> **Cloudflare R2** полностью совместим с S3 API — pgBackRest работает через S3 protocol. Zero egress = бэкапы не стоят на трафике.
+> **Cloudflare R2** is fully S3 API compatible, so pgBackRest works over the S3 protocol. Zero egress means backups cost nothing in traffic.
 
 ```bash
-# Crontab для бэкапов
-# WAL archiving — автоматически через archive_command
-# Incremental backup — ежедневно
+# Crontab for backups
+# WAL archiving — automatic via archive_command
+# Incremental backup — daily
 0 3 * * * pgbackrest --stanza=gotipe --type=incr backup
-# Full backup — еженедельно
+# Full backup — weekly
 0 4 * * 0 pgbackrest --stanza=gotipe --type=full backup
 ```
 
 ### Point-in-Time Recovery (PITR)
 
 ```bash
-# Восстановление до конкретного момента
+# Restore to a specific point in time
 pgbackrest --stanza=gotipe \
   --type=time \
   --target="2026-02-10 14:30:00+00" \
   restore
 ```
 
-### Disaster Recovery — время восстановления
+### Disaster Recovery — recovery time
 
-| Сценарий | RTO (Recovery Time) | RPO (Data Loss) |
+| Scenario | RTO (Recovery Time) | RPO (Data Loss) |
 |----------|:-------------------:|:---------------:|
 | Container crash | 30s (Docker restart: always) | 0 |
 | Server reboot | <1 min (docker-compose auto-start) | 0 |
-| Data corruption | 15-30 min (PITR до нужной секунды) | Секунды |
-| Disk failure | 30-60 min (новый VDS + R2 restore) | Минуты (WAL lag) |
-| Full disaster (весь сервер) | 1-2 часа (новый VDS + полный restore из R2) | Минуты |
-| Region failure | 2-4 часа (другой region + R2 global access) | Минуты |
+| Data corruption | 15-30 min (PITR to the exact second) | Seconds |
+| Disk failure | 30-60 min (new VDS + R2 restore) | Minutes (WAL lag) |
+| Full disaster (entire server) | 1-2 hours (new VDS + full restore from R2) | Minutes |
+| Region failure | 2-4 hours (another region + R2 global access) | Minutes |
 
 ---
 
 ## Background Workers
 
-Помимо основных сервисов (API, Sync, Export Worker), GoTipe Cloud использует фоновые задачи для обслуживания данных.
+Besides the main services (API, Sync, Export Worker), GoTipe Cloud uses background tasks for data maintenance.
 
 ### Cleanup Worker
 
-Периодическая очистка устаревших данных:
+Periodic cleanup of stale data:
 
 ```go
 // apps/cloud/internal/worker/cleanup.go
@@ -1691,7 +1691,7 @@ func (w *CleanupWorker) Run(ctx context.Context) {
 }
 
 func (w *CleanupWorker) cleanOrphanExports(ctx context.Context) {
-    // Удаление export jobs старше 7 дней с R2 файлами
+    // Delete export jobs older than 7 days along with their R2 files
     rows, _ := w.db.QueryContext(ctx,
         `DELETE FROM export_jobs
          WHERE completed_at < now() - interval '7 days'
@@ -1708,7 +1708,7 @@ func (w *CleanupWorker) cleanOrphanExports(ctx context.Context) {
 }
 
 func (w *CleanupWorker) compactDocumentUpdates(ctx context.Context) {
-    // Документы с >200 incremental updates → compact в snapshot
+    // Documents with >200 incremental updates → compact into a snapshot
     rows, _ := w.db.QueryContext(ctx,
         `SELECT document_id, COUNT(*) as cnt
          FROM document_updates
@@ -1727,7 +1727,7 @@ func (w *CleanupWorker) compactDocumentUpdates(ctx context.Context) {
 
 ### Retry Worker (Compensation Pattern)
 
-Для операций, которые зависят от внешних сервисов (Stripe, email, webhooks), применяется compensation pattern с экспоненциальным backoff:
+For operations that depend on external services (Stripe, email, webhooks), a compensation pattern with exponential backoff is used:
 
 ```go
 // apps/cloud/internal/worker/retry.go
@@ -1781,7 +1781,7 @@ func (w *RetryWorker) retryPendingWebhooks(ctx context.Context) {
 }
 ```
 
-**Принцип:** Основная транзакция (создание документа, публикация) фиксируется в БД немедленно. Побочные эффекты (webhook, уведомление) ставятся в очередь **вне транзакции**. Если побочный эффект не удался — пользователь не блокирован, retry worker обработает позже.
+**Principle:** The main transaction (document creation, publishing) is committed to the DB immediately. Side effects (webhook, notification) are queued **outside the transaction**. If a side effect fails, the user is not blocked and the retry worker handles it later.
 
 ---
 
@@ -1789,7 +1789,7 @@ func (w *RetryWorker) retryPendingWebhooks(ctx context.Context) {
 
 ### Idempotency Keys
 
-Все мутирующие API-вызовы (POST, PATCH, DELETE) поддерживают идемпотентность через header `Idempotency-Key`:
+All mutating API calls (POST, PATCH, DELETE) support idempotency through the `Idempotency-Key` header:
 
 ```go
 // apps/cloud/internal/middleware/idempotency.go
@@ -1848,15 +1848,15 @@ func IdempotencyMiddleware(valkey *redis.Client) func(http.Handler) http.Handler
 }
 ```
 
-**Гарантия:** Один и тот же `Idempotency-Key` → одинаковый ответ (предотвращает дублирование документов, двойные exports). Кеш в Valkey — быстрый, TTL 24h, не нагружает PostgreSQL.
+**Guarantee:** The same `Idempotency-Key` → the same response (prevents duplicate documents and double exports). The cache lives in Valkey: fast, TTL 24h, no load on PostgreSQL.
 
 ### Rate Limiting — Sliding Window (Lua Script)
 
-Атомарный rate limiter через Lua-скрипт в Valkey (ни одного race condition):
+An atomic rate limiter via a Lua script in Valkey (no race conditions):
 
 ```lua
 -- infra/scripts/rate-limit.lua
--- Sliding window rate limiter (атомарная операция)
+-- Sliding window rate limiter (atomic operation)
 
 local key = KEYS[1]
 local limit = tonumber(ARGV[1])
@@ -1864,14 +1864,14 @@ local window = tonumber(ARGV[2])  -- ms
 local now = tonumber(ARGV[3])     -- ms
 local window_start = now - window
 
--- 1. Удалить устаревшие записи
+-- 1. Remove stale entries
 redis.call('ZREMRANGEBYSCORE', key, '-inf', window_start)
 
--- 2. Подсчитать текущее количество в окне
+-- 2. Count the current number in the window
 local count = redis.call('ZCARD', key)
 
 if count < limit then
-    -- 3. Добавить текущий запрос
+    -- 3. Add the current request
     redis.call('ZADD', key, now, now .. ':' .. math.random(1000000))
     redis.call('PEXPIRE', key, window)
     return 1  -- allowed
@@ -1890,14 +1890,14 @@ func (rl *RateLimiter) AllowLua(ctx context.Context, key string, limit int, wind
         limit, window.Milliseconds(), now).Int()
 
     if err != nil {
-        // Graceful degradation: если Valkey недоступен — пропускаем запрос
+        // Graceful degradation: if Valkey is unavailable, let the request through
         return true
     }
     return result == 1
 }
 ```
 
-**Преимущество над naive подходом:** Sliding window не допускает burst на границах фиксированных окон. Lua-скрипт атомарен — нет race condition при concurrent requests.
+**Advantage over the naive approach:** A sliding window does not allow bursts at fixed-window boundaries. The Lua script is atomic, so there is no race condition with concurrent requests.
 
 ### Structured Logging (slog)
 
@@ -1908,12 +1908,12 @@ func SetupLogger(env string) *slog.Logger {
     var handler slog.Handler
 
     if env == "production" {
-        // JSON — parseable для Loki/Elasticsearch/Datadog
+        // JSON — parseable for Loki/Elasticsearch/Datadog
         handler = slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
             Level: slog.LevelInfo,
         })
     } else {
-        // Text — human-readable для разработки
+        // Text — human-readable for development
         handler = slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
             Level: slog.LevelDebug,
         })
@@ -1923,16 +1923,16 @@ func SetupLogger(env string) *slog.Logger {
 }
 ```
 
-**Правила логирования:**
-- JSON в production (parse-friendly для observability)
+**Logging rules:**
+- JSON in production (parse-friendly for observability)
 - Structured fields: `request_id`, `user_id`, `latency`, `status`
-- **Нет PII в логах** — email, имя, document content не логируются
+- **No PII in logs** — email, name and document content are not logged
 - Log levels: `DEBUG` (development), `INFO` (production default), `WARN`, `ERROR`
-- Request ID propagation через весь pipeline (HTTP → DB → R2 → response)
+- Request ID propagation through the whole pipeline (HTTP → DB → R2 → response)
 
 ### Unified Error Codes
 
-Все API ошибки следуют единому формату с машиночитаемыми кодами:
+All API errors follow a single format with machine-readable codes:
 
 ```go
 // apps/cloud/internal/apierror/codes.go
@@ -1958,7 +1958,7 @@ var (
 ```
 
 ```json
-// Пример ответа при превышении лимита
+// Example response when the limit is exceeded
 {
   "code": "QUOTA_EXCEEDED",
   "message": "Document limit reached for your plan. Current: 1000, Limit: 1000. Upgrade at https://gotipe.com/pricing"
@@ -1967,13 +1967,13 @@ var (
 
 ### Graceful Degradation
 
-| Сценарий | Поведение |
+| Scenario | Behavior |
 |----------|----------|
-| Valkey недоступен | REST API и Sync работают, rate limiting пропускает все запросы, AI cache отключён |
-| R2 недоступен | Uploads заблокированы, существующие CRDT snapshots из PostgreSQL (медленнее) |
-| AI provider недоступен | Fallback на secondary provider → если все недоступны, AI endpoints возвращают 503 |
-| Export worker упал | Export jobs копятся в очереди, обрабатываются при restart |
-| PostgreSQL недоступен | Полный downtime (critical dependency) — health check возвращает 503 |
+| Valkey unavailable | REST API and Sync work, rate limiting lets all requests through, AI cache disabled |
+| R2 unavailable | Uploads blocked, existing CRDT snapshots are served from PostgreSQL (slower) |
+| AI provider unavailable | Fallback to the secondary provider → if all are unavailable, AI endpoints return 503 |
+| Export worker down | Export jobs pile up in the queue and are processed on restart |
+| PostgreSQL unavailable | Full downtime (critical dependency) — health check returns 503 |
 
 ---
 
@@ -1991,7 +1991,7 @@ import (
     "time"
 )
 
-// Healthz — liveness probe (сервис жив?)
+// Healthz — liveness probe (is the service alive?)
 func Healthz(db *sql.DB, valkey *redis.Client) http.HandlerFunc {
     return func(w http.ResponseWriter, r *http.Request) {
         w.WriteHeader(http.StatusOK)
@@ -1999,7 +1999,7 @@ func Healthz(db *sql.DB, valkey *redis.Client) http.HandlerFunc {
     }
 }
 
-// Readyz — readiness probe (сервис готов принимать трафик?)
+// Readyz — readiness probe (is the service ready to accept traffic?)
 func Readyz(db *sql.DB, valkey *redis.Client, r2 R2Client) http.HandlerFunc {
     return func(w http.ResponseWriter, r *http.Request) {
         ctx, cancel := context.WithTimeout(r.Context(), 3*time.Second)
@@ -2072,7 +2072,7 @@ scrape_configs:
       - targets: ["valkey-exporter:9121"]
 ```
 
-### Ключевые алерты
+### Key alerts
 
 ```yaml
 # alerts.yml (Prometheus alerting rules)
@@ -2112,32 +2112,32 @@ groups:
 
 ## Pricing
 
-### 3 продукта GoTipe
+### The 3 GoTipe products
 
-| Продукт | Описание | Цена |
+| Product | Description | Price |
 |---------|----------|------|
 | **GoTipe Core** | Headless: Rust/WASM engine, extensions, CRDT, AI layer, export, adapters, self-hosted server | **$0 (MIT)** |
-| **GoTipe Block Editor** | Notion-like UI: `<BlockEditor />`, SlashMenu, BubbleMenu, DnD, темы. Лицензия по ключу (офлайн JWT) | **от $149/app/год** |
-| **GoTipe Cloud** | Managed sync + AI proxy + export + analytics. **Block Editor лицензия включена** | **от $29/мес** |
+| **GoTipe Block Editor** | Notion-like UI: `<BlockEditor />`, SlashMenu, BubbleMenu, DnD, themes. Key-based license (offline JWT) | **from $149/app/year** |
+| **GoTipe Cloud** | Managed sync + AI proxy + export + analytics. **Block Editor license included** | **from $29/mo** |
 
-### Block Editor лицензии (без Cloud)
+### Block Editor licenses (without Cloud)
 
-| Лицензия | Цена | Domains | Включает |
+| License | Price | Domains | Includes |
 |----------|------|---------|----------|
-| **Indie** | $149/app/год | 1 production | @gotipe/block-editor + @gotipe/theme + @gotipe/ai-ui |
-| **Business** | $499/app/год | до 10 | + приоритетная поддержка |
+| **Indie** | $149/app/year | 1 production | @gotipe/block-editor + @gotipe/theme + @gotipe/ai-ui |
+| **Business** | $499/app/year | up to 10 | + priority support |
 | **Enterprise** | Custom | Unlimited | + source access, SLA |
 
-### Cloud тарифы (Block Editor включён)
+### Cloud plans (Block Editor included)
 
 ```
 ┌─────────────┬──────────┬──────────┬───────────┬────────────┐
 │             │ Starter  │   Pro    │ Business  │ Enterprise │
 ├─────────────┼──────────┼──────────┼───────────┼────────────┤
-│ Цена        │ $29/mo   │ $99/mo   │ $299/mo   │ Custom     │
+│ Price       │ $29/mo   │ $99/mo   │ $299/mo   │ Custom     │
 ├─────────────┼──────────┼──────────┼───────────┼────────────┤
 │ Block Editor│ ✓ (incl.)│ ✓ (incl.)│ ✓ (incl.) │ ✓ (incl.)  │
-│ Документы   │ 1K       │ 10K      │ 100K      │ Unlimited  │
+│ Documents   │ 1K       │ 10K      │ 100K      │ Unlimited  │
 │ AI requests │ 10K/mo   │ 100K/mo  │ 1M/mo     │ Unlimited  │
 │ Exports     │ 1K/mo    │ Unlimited│ Unlimited │ Unlimited  │
 │ MAU         │ 1K       │ 10K      │ 100K      │ Unlimited  │
@@ -2152,16 +2152,16 @@ groups:
 └─────────────┴──────────┴──────────┴───────────┴────────────┘
 ```
 
-### Модель ценообразования
+### Pricing model
 
-Гибридная: **document-based + MAU**.
+Hybrid: **document-based + MAU**.
 
-- **Document-based** — количество документов с хотя бы одним sync event за billing period. Документ, который создан, но никто не подключался по WebSocket — не считается.
-- **MAU (Monthly Active Users)** — уникальные пользователи, подключавшиеся к WebSocket хотя бы раз за месяц.
+- **Document-based** — the number of documents with at least one sync event per billing period. A document that was created but never connected to over WebSocket does not count.
+- **MAU (Monthly Active Users)** — unique users who connected over WebSocket at least once in a month.
 
-Биллинг: тарифицируется по максимальному из двух лимитов. Если превышен лимит документов, но MAU в норме — считается как превышение. Overage: $0.01/doc, $0.005/MAU сверх лимита.
+Billing: charged by the higher of the two limits. If the document limit is exceeded but MAU is within limits, it still counts as an overage. Overage: $0.01/doc, $0.005/MAU over the limit.
 
-### Сравнение с Tiptap Cloud
+### Comparison with Tiptap Cloud
 
 ```
 ┌──────────────────────┬────────────────────────┬────────────────────────┐
@@ -2179,29 +2179,29 @@ groups:
 │ Docs at high         │ 50,000                 │ 100,000                │
 │ $/doc (high)         │ $0.020                 │ $0.003                 │
 ├──────────────────────┼────────────────────────┼────────────────────────┤
-│ AI integration       │ Отдельный addon        │ Включено в тариф       │
-│ PDF/DOCX export      │ Нет                    │ Включено в тариф       │
-│ Analytics            │ Отдельный addon        │ Включено (Pro+)        │
-│ Self-hosted option   │ Нет (только Hocuspocus)│ Hetzner VDS + R2 / Helm│
+│ AI integration       │ Separate addon         │ Included in plan       │
+│ PDF/DOCX export      │ No                     │ Included in plan       │
+│ Analytics            │ Separate addon         │ Included (Pro+)        │
+│ Self-hosted option   │ No (Hocuspocus only)   │ Hetzner VDS + R2 / Helm│
 │ SSO/SAML             │ Enterprise only        │ Business ($299)        │
-│ Open-source core     │ Partial (некоторые ext  │ Headless 100% MIT,     │
-│                      │  стали MIT в 2025)     │ Block Editor commercial│
+│ Open-source core     │ Partial (some ext       │ Headless 100% MIT,     │
+│                      │  became MIT in 2025)   │ Block Editor commercial│
 └──────────────────────┴────────────────────────┴────────────────────────┘
 ```
 
-Ключевые преимущества GoTipe Cloud:
-1. **3x ниже цена за документ** на entry tier ($0.029 vs $0.098)
-2. **AI и Export включены** — не нужно платить за отдельные addons
-3. **Block Editor лицензия включена** — не нужно покупать отдельно ($149/yr value)
-4. **Self-hosted без ограничений** — Docker Compose, single binary, Helm chart
-5. **Headless core MIT** — все extensions, CRDT, AI layer open-source
+Key advantages of GoTipe Cloud:
+1. **3x lower price per document** at the entry tier ($0.029 vs $0.098)
+2. **AI and Export included** — no need to pay for separate addons
+3. **Block Editor license included** — no need to buy it separately ($149/yr value)
+4. **Self-hosted without limits** — Docker Compose, single binary, Helm chart
+5. **Headless core MIT** — all extensions, CRDT, AI layer are open-source
 
 ---
 
 ## Client SDK Integration
 
 ```typescript
-// Подключение к GoTipe Cloud из клиента
+// Connecting to GoTipe Cloud from the client
 import { createEditor } from '@gotipe/core';
 import { Collaboration } from '@gotipe/collaboration';
 import { AIInline } from '@gotipe/ai';
@@ -2214,7 +2214,7 @@ const editor = createEditor({
       // GoTipe Cloud sync endpoint
       serverUrl: 'wss://sync.gotipe.com',
       documentId: 'doc_k7x9m2',
-      // JWT token (short-lived, получен через backend)
+      // JWT token (short-lived, obtained through the backend)
       token: jwtToken,
     }),
 
@@ -2228,7 +2228,7 @@ const editor = createEditor({
   ],
 });
 
-// Export через Cloud API
+// Export via Cloud API
 async function exportPDF(documentId: string) {
   const res = await fetch('https://api.gotipe.com/v1/exports', {
     method: 'POST',
@@ -2241,7 +2241,7 @@ async function exportPDF(documentId: string) {
 
   const { id } = await res.json();
 
-  // Poll until ready (или WebSocket notification)
+  // Poll until ready (or WebSocket notification)
   let status = 'pending';
   while (status === 'pending' || status === 'processing') {
     await new Promise(r => setTimeout(r, 1000));
@@ -2263,22 +2263,22 @@ async function exportPDF(documentId: string) {
 
 ## Self-Hosted vs Cloud
 
-| Аспект | Self-Hosted | GoTipe Cloud |
+| Aspect | Self-Hosted | GoTipe Cloud |
 |--------|-------------|--------------|
-| Sync server | Вы деплоите и управляете | Managed, auto-scaling |
-| AI proxy | Ваши API keys, ваш сервер | Managed, общий rate limit |
-| Export | Ваш worker, Cloudflare R2 | Managed |
-| Стоимость | Инфраструктура (~EUR 7/mo на Hetzner VDS) | $29-$299/mo |
-| SLA | Ваша ответственность | 99.9-99.99% |
-| Data residency | Полный контроль | US / EU regions |
-| Updates | Ручные (docker pull) | Автоматические |
+| Sync server | You deploy and manage it | Managed, auto-scaling |
+| AI proxy | Your API keys, your server | Managed, shared rate limit |
+| Export | Your worker, Cloudflare R2 | Managed |
+| Cost | Infrastructure (~EUR 7/mo on a Hetzner VDS) | $29-$299/mo |
+| SLA | Your responsibility | 99.9-99.99% |
+| Data residency | Full control | US / EU regions |
+| Updates | Manual (docker pull) | Automatic |
 | Support | Community / GitHub Issues | Email / Priority / Dedicated |
 
 ---
 
-## Связанные документы
+## Related documents
 
 - [02-collaboration.md](02-collaboration.md) — sync protocol, CRDT engine, awareness
 - [07-ai.md](07-ai.md) — AI proxy, ghost text, provider interface
 - [08-export-import.md](08-export-import.md) — export service, PDF/DOCX generation
-- [12-release-plan.md](12-release-plan.md) — план реализации и релиза
+- [12-release-plan.md](12-release-plan.md) — release and implementation plan

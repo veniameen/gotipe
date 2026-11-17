@@ -1,15 +1,15 @@
 # GoTipe — Real-time Collaboration
 
-> **Историческая спецификация, не руководство по текущему API.** Примеры, сроки,
-> сравнения производительности, коммерческие условия и обещания ниже не подтверждают
-> реализацию или доступность сервиса. Актуально: [контракты](development/editor-contracts.md),
-> [карта кода](development/code-map.md), [проверки](development/testing.md),
-> [план выпуска](22-release-readiness.md). Лицензии определяются `LICENSE` и manifest
-> каждого пакета, а не этим документом.
+> **Historical specification, not a guide to the current API.** The examples, timelines,
+> performance comparisons, commercial terms and promises below do not confirm an
+> implementation or the availability of the service. Current references: [contracts](development/editor-contracts.md),
+> [code map](development/code-map.md), [checks](development/testing.md),
+> [release plan](22-release-readiness.md). Licenses are defined by `LICENSE` and the manifest
+> of each package, not by this document.
 
-## Обзор
+## Overview
 
-GoTipe использует CRDT (Conflict-free Replicated Data Type) для real-time collaboration. CRDT встроен в ядро — collaboration работает без облака, через self-hosted сервер или peer-to-peer.
+GoTipe uses CRDTs (Conflict-free Replicated Data Types) for real-time collaboration. The CRDT is built into the core, so collaboration works without the cloud: through a self-hosted server or peer-to-peer.
 
 ```
 ┌──────────┐      WebSocket       ┌──────────────┐      WebSocket       ┌──────────┐
@@ -25,43 +25,43 @@ GoTipe использует CRDT (Conflict-free Replicated Data Type) для rea
 
 ---
 
-## Почему CRDT, а не OT
+## Why CRDT and Not OT
 
-| Аспект | CRDT | OT (Operational Transform) |
+| Aspect | CRDT | OT (Operational Transform) |
 |--------|------|---------------------------|
-| **Сервер** | Опциональный (peer-to-peer возможен) | Обязателен (центральный transform server) |
-| **Offline** | Полная поддержка — merge при reconnect | Ограниченная — нужен server для transform |
-| **Conflict resolution** | Автоматическая, математически доказанная | Ручные правила, сложные edge cases |
-| **Latency** | Immediate local apply, async sync | Optimistic local, server round-trip для confirm |
-| **Complexity** | Сложнее document model, проще protocol | Проще model, сложнее transform functions |
-| **Scalability** | Каждый peer — independent | Server — bottleneck |
-| **Undo/Redo** | Через CRDT history (built-in) | Отдельная система |
-| **Кто использует** | Figma, Linear, Notion (partial) | Google Docs, Tiptap (via Yjs — CRDT!) |
+| **Server** | Optional (peer-to-peer possible) | Required (central transform server) |
+| **Offline** | Full support, merge on reconnect | Limited, needs a server for transform |
+| **Conflict resolution** | Automatic, mathematically proven | Manual rules, complex edge cases |
+| **Latency** | Immediate local apply, async sync | Optimistic local, server round-trip to confirm |
+| **Complexity** | More complex document model, simpler protocol | Simpler model, more complex transform functions |
+| **Scalability** | Each peer is independent | The server is a bottleneck |
+| **Undo/Redo** | Via CRDT history (built-in) | A separate system |
+| **Who uses it** | Figma, Linear, Notion (partial) | Google Docs, Tiptap (via Yjs, which is a CRDT!) |
 
-**Решение:** CRDT даёт offline-first, peer-to-peer support и mathematical correctness. OT требует центральный сервер и имеет известные edge cases при >2 concurrent users. Примечание: Yjs (который использует Tiptap) — это тоже CRDT, не OT.
+**Decision:** CRDT gives offline-first, peer-to-peer support and mathematical correctness. OT requires a central server and has known edge cases with more than 2 concurrent users. Note: Yjs (which Tiptap uses) is also a CRDT, not OT.
 
-### Выбор CRDT engine
+### CRDT Engine Choice
 
 | Library | Approach | Performance (B4) | Doc size | Rust? | Rich Text? | Tree? |
 |---------|----------|-------------------|----------|-------|------------|-------|
-| **Loro** | Rust/WASM CRDT | 3,089ms | 258KB | Да | Да (v1.0+) | MovableTree |
-| **Yjs** | JS CRDT | 5,714ms | 159KB | Нет | Да | Нет (Map) |
-| **Automerge** | Rust/WASM CRDT | 14,326ms | 129KB | Да | Да (basic) | Нет |
-| **Diamond Types** | Rust CRDT | Fastest raw | Smallest | Да | Text only | Нет |
-| **Custom (GoTipe)** | Loro-inspired, Rust | Target: <2,000ms | Target: <200KB | Да | Да | MovableTree |
+| **Loro** | Rust/WASM CRDT | 3,089ms | 258KB | Yes | Yes (v1.0+) | MovableTree |
+| **Yjs** | JS CRDT | 5,714ms | 159KB | No | Yes | No (Map) |
+| **Automerge** | Rust/WASM CRDT | 14,326ms | 129KB | Yes | Yes (basic) | No |
+| **Diamond Types** | Rust CRDT | Fastest raw | Smallest | Yes | Text only | No |
+| **Custom (GoTipe)** | Loro-inspired, Rust | Target: <2,000ms | Target: <200KB | Yes | Yes | MovableTree |
 
-**Решение:** Loro-inspired custom engine в Rust. Причины:
-1. Loro доказал, что Rust CRDT быстрее Yjs на B4 benchmark (3,089ms vs 5,714ms)
-2. MovableTree — критичен для block editor (drag-and-drop blocks)
-3. Свой engine позволяет tight integration с GoTipe document model
-4. Rich Text CRDT с marks — проверено Loro v1.0+
-5. Если Loro стабилизирует API до релиза — возможен прямой Loro dependency вместо custom
+**Decision:** A Loro-inspired custom engine in Rust. Reasons:
+1. Loro proved that a Rust CRDT is faster than Yjs on the B4 benchmark (3,089ms vs 5,714ms)
+2. MovableTree is critical for the block editor (drag-and-drop of blocks)
+3. Our own engine allows tight integration with the GoTipe document model
+4. Rich Text CRDT with marks: verified by Loro v1.0+
+5. If Loro stabilizes its API before the release, a direct Loro dependency is possible instead of a custom engine
 
 ---
 
 ## CRDT Engine (gotipe-crdt)
 
-### Архитектура
+### Architecture
 
 ```rust
 // crates/gotipe-crdt/src/doc.rs
@@ -70,22 +70,22 @@ use crate::text::RichTextCrdt;
 use crate::tree::MovableTreeCrdt;
 use crate::sync::SyncProtocol;
 
-/// Peer ID — уникальный идентификатор участника
+/// Peer ID: unique identifier of a participant
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct PeerId(pub String);
 
-/// CRDT Document — содержит всё состояние для collaboration
+/// CRDT Document: holds the entire state for collaboration
 pub struct CrdtDocument {
     peer_id: PeerId,
-    /// Block tree — CRDT для структуры блоков
+    /// Block tree: CRDT for the block structure
     tree: MovableTreeCrdt,
-    /// Rich text per block — CRDT для текстового содержимого
+    /// Rich text per block: CRDT for the text content
     texts: HashMap<BlockId, RichTextCrdt>,
     /// Block attributes — last-writer-wins register
     attrs: HashMap<BlockId, LwwMap<String, AttrValue>>,
-    /// Version vector — для sync
+    /// Version vector: for sync
     version: VersionVector,
-    /// History — для undo/redo
+    /// History: for undo/redo
     history: CrdtHistory,
 }
 
@@ -166,7 +166,7 @@ impl CrdtDocument {
                     }
                     ops.push(CrdtOp::Attrs(block_id.clone(), new_attrs.clone()));
                 }
-                // ... другие steps
+                // ... other steps
                 _ => {}
             }
         }
@@ -398,7 +398,7 @@ pub struct AwarenessState {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct UserInfo {
     pub name: String,
-    pub color: String,    // hex color для cursor/selection
+    pub color: String,    // hex color for cursor/selection
     pub avatar_url: Option<String>,
 }
 
@@ -419,7 +419,7 @@ pub struct SelectionRange {
 pub struct AwarenessProtocol {
     local: AwarenessState,
     remotes: HashMap<PeerId, AwarenessState>,
-    /// Timeout для удаления stale peers (30 секунд)
+    /// Timeout for removing stale peers (30 seconds)
     timeout_ms: u64,
 }
 
@@ -515,7 +515,7 @@ pub enum AwarenessEvent {
 }
 ```
 
-### TypeScript API для awareness
+### TypeScript API for Awareness
 
 ```typescript
 // packages/collaboration/src/awareness.ts
@@ -527,7 +527,7 @@ export interface AwarenessOptions {
   heartbeatInterval?: number;
 }
 
-// Используется в React adapter:
+// Used in the React adapter:
 // const { users, localUser } = useCollaborationAwareness(editor);
 ```
 
@@ -535,7 +535,7 @@ export interface AwarenessOptions {
 
 ## Self-Hosted Sync Server
 
-### Архитектура (Go)
+### Architecture (Go)
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
@@ -807,21 +807,21 @@ CREATE INDEX idx_document_updates_doc_id ON document_updates(document_id, id);
 
 ### Text Conflicts (Rich Text CRDT)
 
-| Сценарий | Результат |
+| Scenario | Result |
 |----------|----------|
-| A и B вставляют текст в одну позицию | Оба текста сохраняются, порядок по peer_id (deterministic) |
-| A удаляет текст, B форматирует тот же текст | Текст удалён (delete wins by default) |
-| A делает bold, B делает italic на том же range | Оба marks применены (marks не конфликтуют) |
-| A делает heading 2, B делает heading 3 (attrs) | Last-writer-wins по timestamp |
+| A and B insert text at the same position | Both texts are kept, ordered by peer_id (deterministic) |
+| A deletes text, B formats the same text | The text is deleted (delete wins by default) |
+| A applies bold, B applies italic on the same range | Both marks are applied (marks do not conflict) |
+| A makes heading 2, B makes heading 3 (attrs) | Last-writer-wins by timestamp |
 
 ### Block Tree Conflicts
 
-| Сценарий | Результат |
+| Scenario | Result |
 |----------|----------|
-| A и B перемещают блок в разные места | MovableTree CRDT: один wins (deterministic), второй move ignored |
-| A удаляет блок, B редактирует этот блок | Блок удалён, правки B потеряны (delete wins) |
-| A и B создают блок в одном месте | Оба блока сохранены, порядок по peer_id |
-| A делает блок дочерним B, B делает B дочерним A (cycle) | MovableTree обнаруживает cycle, второй move ignored |
+| A and B move a block to different places | MovableTree CRDT: one wins (deterministic), the other move is ignored |
+| A deletes a block, B edits that block | The block is deleted, B's edits are lost (delete wins) |
+| A and B create a block in the same place | Both blocks are kept, ordered by peer_id |
+| A makes a block a child of B, B makes B a child of A (cycle) | MovableTree detects the cycle, the second move is ignored |
 
 ---
 
@@ -921,7 +921,7 @@ export class GoTipeProvider {
 
 ### Latency (target)
 
-| Операция | Local (WASM) | Network (server) | Total |
+| Operation | Local (WASM) | Network (server) | Total |
 |----------|-------------|-------------------|-------|
 | Keystroke apply | <1ms | — | <1ms |
 | CRDT op generation | <0.5ms | — | <0.5ms |
@@ -953,7 +953,7 @@ export class GoTipeProvider {
 
 ## Provider Pattern
 
-GoTipe collaboration поддерживает pluggable providers — любой transport для sync.
+GoTipe collaboration supports pluggable providers: any transport for sync.
 
 ```typescript
 // packages/collaboration/src/types.ts
@@ -997,11 +997,11 @@ export interface CollaborationProvider {
 
 ```typescript
 // packages/collaboration/src/adapters/yjs.ts
-// Для миграции с Tiptap/Yjs:
+// For migrating from Tiptap/Yjs:
 import { YjsAdapter } from '@gotipe/collaboration/adapters/yjs';
 import { HocuspocusProvider } from '@hocuspocus/provider';
 
-// Существующий Hocuspocus сервер работает с GoTipe
+// The existing Hocuspocus server works with GoTipe
 const hocuspocus = new HocuspocusProvider({
   url: 'wss://your-hocuspocus-server.com',
   name: 'doc-123',
@@ -1036,9 +1036,9 @@ const editor = createEditor({
 
 ---
 
-## Связанные документы
+## Related Documents
 
-- [01-architecture.md](01-architecture.md) — общая архитектура и CRDT crate
+- [01-architecture.md](01-architecture.md) — overall architecture and the CRDT crate
 - [03-editor-core.md](03-editor-core.md) — EditorState, Transactions, Steps
 - [10-cloud.md](10-cloud.md) — GoTipe Cloud sync service
-- [12-release-plan.md](12-release-plan.md) — план реализации collaboration
+- [12-release-plan.md](12-release-plan.md) — collaboration implementation plan

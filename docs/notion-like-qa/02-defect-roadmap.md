@@ -2,235 +2,235 @@
 
 _Last updated: February 14, 2026_
 
-## Critical (закрыто в этой итерации)
+## Critical (closed in this iteration)
 
-### DEF-001: Пропадание строки при slash-переходах между list/todo
+### DEF-001: Line disappearing on slash transitions between list/todo
 
-Симптом:
+Symptom:
 
-- при `todo -> bullet` или похожих переходах строка исчезала или дерево становилось невалидным
+- on `todo -> bullet` or similar transitions the line disappeared or the tree became invalid
 
-Причина:
+Cause:
 
-- в `toggleList` использовался fallback `setBlockType(listType)` на item-уровне
-- это могло создать невалидные сочетания типов в дереве
+- `toggleList` used a `setBlockType(listType)` fallback at the item level
+- this could create invalid type combinations in the tree
 
-Фикс:
+Fix:
 
 - `packages/core/src/chain.ts`
-- in-place конвертация типа списка + item типов
-- корректный lift list item в top-level блок при `setBlockType("paragraph" | "heading" | ...)`
-- для slash-команд добавлен idempotent set-path списка:
-  - выбор `Bullet/Numbered/To-do` на уже таком же list-type больше не выполняет unwrap в paragraph
+- in-place conversion of the list type + item types
+- correct lift of a list item into a top-level block on `setBlockType("paragraph" | "heading" | ...)`
+- an idempotent set path for lists was added for slash commands:
+  - choosing `Bullet/Numbered/To-do` on a list that already has that list type no longer unwraps it into a paragraph
 
-Покрытие:
+Coverage:
 
 - `e2e/notion-like-matrix.spec.ts` (`SLASH-004..SLASH-010`)
 
-### DEF-002: Левый toolbar (`+` и drag) “прилипал” к левому краю контейнера
+### DEF-002: Left toolbar (`+` and drag) "stuck" to the left edge of the container
 
-Симптом:
+Symptom:
 
-- controls визуально уезжали в левую пустую область, не рядом с блоком
+- the controls visually drifted into the empty left area, not next to the block
 
-Причина:
+Cause:
 
-- позиционирование было от контейнера (`left: 0`) без привязки к контентной колонке
+- positioning was relative to the container (`left: 0`) with no binding to the content column
 
-Фикс:
+Fix:
 
 - `packages/block-editor/src/components/block-editor.tsx`
-- вычисление `left` по фиксированной rail-позиции относительно `data-gotipe-content`
-- в list/todo сценариях hover-anchor вычисляется по строке (`listItem`/`todoItem`), а не по контейнеру списка
-- fallback для левого gutter remap-ит list container в ближайший item по `Y`, чтобы toolbar не “залипал” на первой строке
-- разделены:
-  - `anchorBlockId` (визуальное позиционирование по строке)
-  - `actionBlockId` (действия toolbar на top-level блоке)
+- `left` is computed from a fixed rail position relative to `data-gotipe-content`
+- in list/todo scenarios the hover anchor is computed per row (`listItem`/`todoItem`), not per list container
+- the fallback for the left gutter remaps the list container to the nearest item by `Y`, so the toolbar does not "stick" to the first row
+- the following were separated:
+  - `anchorBlockId` (visual positioning by row)
+  - `actionBlockId` (toolbar actions on the top-level block)
 
-Покрытие:
+Coverage:
 
 - `e2e/notion-like-matrix.spec.ts` (`UI-006`)
 - `e2e/notion-like-checklist-321-350.spec.ts` (`NL-321`, `NL-349`)
 - `e2e/notion-like-step2-parity.spec.ts`
   - `toolbar uses fixed X rail across block types and item rows`
   - `toolbar tracks each list item row, not only list container top`
-- `e2e/block-toolbar-fast-hover.spec.ts` (обновлён на fixed-rail контракт)
+- `e2e/block-toolbar-fast-hover.spec.ts` (updated for the fixed-rail contract)
 
-### DEF-003: Slash-menu был только в dark-стиле
+### DEF-003: Slash menu was dark-styled only
 
-Симптом:
+Symptom:
 
-- в light теме меню оставалось тёмным (хардкод цвета)
+- in the light theme the menu stayed dark (hardcoded color)
 
-Причина:
+Cause:
 
-- цвета меню были заданы статически
+- the menu colors were set statically
 
-Фикс:
+Fix:
 
 - `packages/theme/src/theme.css`
-- введены token-переменные `--gt-slash-*` для light/dark режимов
+- `--gt-slash-*` token variables were introduced for light/dark modes
 
-Покрытие:
+Coverage:
 
 - `e2e/notion-like-matrix.spec.ts` (`UI-004`, `UI-005`)
 
-### DEF-004: Slash не открывался в начале непустой строки
+### DEF-004: Slash did not open at the start of a non-empty line
 
-Симптом:
+Symptom:
 
-- при вводе `/` в начале уже заполненной строки меню не открывалось
+- typing `/` at the start of an already filled line did not open the menu
 
-Причина:
+Cause:
 
-- slash open зависел от input-rule `^/$`, который срабатывает только для полностью пустого блока
+- slash open depended on the `^/$` input rule, which fires only for a completely empty block
 
-Фикс:
+Fix:
 
 - `packages/core/src/editor.ts`
-- добавлен runtime-триггер `openSlashMenu` при вводе `/` в валидной позиции каретки
+- a runtime `openSlashMenu` trigger was added for typing `/` at a valid caret position
 
-Покрытие:
+Coverage:
 
 - `e2e/notion-like-matrix.spec.ts` (`SLASH-010`)
-- текущий статус: **Closed** (`Automated`, `PASS`)
+- current status: **Closed** (`Automated`, `PASS`)
 
-### DEF-008: Каретка в пустом todo оказывалась слева от checkbox
+### DEF-008: Caret in an empty todo ended up to the left of the checkbox
 
-Симптом:
+Symptom:
 
-- после `/todo` каретка могла остаться в list-контейнере (или в левом краю item)
-- фактический ввод начинался “вдруг” уже справа от checkbox только после первого символа
+- after `/todo` the caret could remain in the list container (or at the left edge of the item)
+- actual typing started "suddenly" to the right of the checkbox only after the first character
 
-Причина:
+Cause:
 
-- selection после slash-команды могла дрейфовать в `todoList` контейнер
-- restore и sync selection не всегда принудительно нормализовали точку в text-host `todoItem`
-- при клике в левую зону `todoItem` браузер мог оставить caret на `li` offset `0`
-  (визуально слева от checkbox) до первого введённого символа
+- the selection after a slash command could drift into the `todoList` container
+- restore and selection sync did not always force the point back into the `todoItem` text host
+- on a click in the left zone of a `todoItem` the browser could leave the caret at `li` offset `0`
+  (visually left of the checkbox) until the first character was typed
 
-Фикс:
+Fix:
 
 - `packages/core/src/editor.ts`
-  - нормализация list container -> list item в `resolvePosition`
-  - нормализация `resolveDomPoint` для list container в первый item
-  - в `selectionchange` path добавлена нормализация collapsed-caret для `todoItem`
-    (если caret оказался вне `data-gotipe-todo-content`, он принудительно переносится в text-host)
+  - list container -> list item normalization in `resolvePosition`
+  - `resolveDomPoint` normalization of a list container to its first item
+  - the `selectionchange` path now normalizes a collapsed caret for `todoItem`
+    (if the caret ended up outside `data-gotipe-todo-content`, it is forcibly moved into the text host)
 - `packages/block-editor/src/components/slash-menu.tsx`
-  - пост-командная нормализация selection + принудительная DOM-постановка каретки
+  - post-command selection normalization + forced DOM caret placement
 - `packages/react/src/editor-content.tsx`
-  - явный `data-gotipe-todo-content` host + `contentEditable={false}` на checkbox
+  - an explicit `data-gotipe-todo-content` host + `contentEditable={false}` on the checkbox
 
-Покрытие:
+Coverage:
 
 - `e2e/notion-like-matrix.spec.ts` (`ENTER-011`, `UI-009`)
 - `e2e/notion-like-matrix.spec.ts`
   - `todo click in left zone normalizes caret after checkbox (empty item)`
   - `todo click in left zone normalizes caret after checkbox (item with text)`
-  - repeat-run `--repeat-each=10`: `20/20` PASS
+  - repeat run `--repeat-each=10`: `20/20` PASS
 
-### DEF-009: Enter в code block дублировал блок вместо новой строки
+### DEF-009: Enter in a code block duplicated the block instead of adding a new line
 
-Симптом:
+Symptom:
 
-- в `codeBlock` по Enter создавался дополнительный code block (визуально выглядело как дублирование)
+- in a `codeBlock`, Enter created an extra code block (it looked like duplication)
 
-Причина:
+Cause:
 
-- `insertParagraph` всегда выполнял `splitBlock`, без отдельного поведения для `codeBlock`
+- `insertParagraph` always ran `splitBlock`, with no separate behavior for `codeBlock`
 
-Фикс:
+Fix:
 
 - `packages/core/src/editor.ts`
-  - в `beforeinput(insertParagraph)` добавлен branch для `codeBlock`:
-    Enter вставляет `\\n` в том же блоке
+  - a branch for `codeBlock` was added to `beforeinput(insertParagraph)`:
+    Enter inserts `\\n` in the same block
 - `packages/core/src/extensions/code-block.ts`
-  - Escape теперь вставляет paragraph после текущего code block и переносит туда каретку
+  - Escape now inserts a paragraph after the current code block and moves the caret into it
 
-Покрытие:
+Coverage:
 
 - `e2e/notion-like-matrix.spec.ts` (`ENTER-012`, `ENTER-013`)
 
-### DEF-011: Slash transform `codeBlock -> list/todo` терял текст
+### DEF-011: Slash transform `codeBlock -> list/todo` lost text
 
-Симптом:
+Symptom:
 
-- при трансформации code block в `Bullet List`/`Numbered List`/`To-do List`
-  строка могла становиться пустой (контент терялся)
+- when transforming a code block into `Bullet List`/`Numbered List`/`To-do List`
+  the line could become empty (content was lost)
 
-Причина:
+Cause:
 
-- в `toggleList` top-level wrap поддерживал только `paragraph/heading`
-- для `codeBlock` использовался fallback `setBlockType(listType)` без корректного
-  переноса текста в list item content
+- the top-level wrap in `toggleList` supported only `paragraph/heading`
+- for `codeBlock` it used a `setBlockType(listType)` fallback without correctly
+  moving the text into the list item content
 
-Фикс:
+Fix:
 
 - `packages/core/src/chain.ts`
-  - добавлен `cloneInlineContent` (string/inline span -> listItem content)
-  - расширен wrap branch в `toggleList` для `codeBlock` и `blockquote`
-  - при lift `listItem -> codeBlock` добавлена `contentForTargetType` (span -> string)
+  - `cloneInlineContent` was added (string/inline span -> listItem content)
+  - the wrap branch in `toggleList` was extended to `codeBlock` and `blockquote`
+  - `contentForTargetType` (span -> string) was added for the `listItem -> codeBlock` lift
 
-Покрытие:
+Coverage:
 
-- `e2e/notion-like-transform-matrix.spec.ts` (переходы `code->bullet/ordered/todo` и обратные)
+- `e2e/notion-like-transform-matrix.spec.ts` (`code->bullet/ordered/todo` transitions and the reverse ones)
 
-### DEF-012: Флаки в slash e2e из-за дрейфа каретки в helper
+### DEF-012: Flakes in slash e2e caused by caret drift in a helper
 
-Симптом:
+Symptom:
 
-- в полном прогоне периодически падали кейсы:
+- in the full run these cases failed intermittently:
   - `slash at line start preserves existing text`
   - `bullet->code keeps content and lands in expected block`
-- при падении `/query` печатался в конец строки вместо начала, slash-menu не открывался
+- on failure `/query` was typed at the end of the line instead of the start, and the slash menu did not open
 
-Причина:
+Cause:
 
-- в e2e-helper `placeCaretAtStartOfBlockByMarker` сначала ставился range, затем `focus()`
-- в части запусков браузер после `focus()` коллапсировал каретку в конец блока
+- in the e2e helper `placeCaretAtStartOfBlockByMarker` a range was set first, then `focus()` was called
+- in some runs the browser collapsed the caret to the end of the block after `focus()`
 
-Фикс:
+Fix:
 
 - `e2e/notion-like-matrix.spec.ts`
 - `e2e/notion-like-transform-matrix.spec.ts`
-- порядок изменён на `focus -> setRange`, добавлен `expect.poll` на anchorOffset `0`
+- the order was changed to `focus -> setRange`, and an `expect.poll` on anchorOffset `0` was added
 
-Покрытие:
+Coverage:
 
 - targeted reruns:
   - `slash at line start`: `10/10` PASS
   - `bullet->code`: `10/10` PASS
 - full combined run: `109/109` PASS
 
-### DEF-010: Fast post-slash typing race (закрыто)
+### DEF-010: Fast post-slash typing race (closed)
 
-Симптом:
+Symptom:
 
-- при быстром вводе сразу после выбора slash-команды (особенно `list item -> heading`)
-  первый символ мог теряться или ввод улетал не в целевой блок
+- when typing fast right after choosing a slash command (especially `list item -> heading`)
+  the first character could be lost, or the input went to a block other than the target
 
-Причина:
+Cause:
 
-- кратковременный рассинхрон между tracked selection и DOM selection после структурной трансформации
-- после `setContent(...)` selection могла оставаться на невалидном/старом `blockId`
-- в `beforeinput` не всегда использовалась актуальная DOM-selection перед вводом
+- a brief desync between the tracked selection and the DOM selection after a structural transform
+- after `setContent(...)` the selection could stay on an invalid/stale `blockId`
+- `beforeinput` did not always use the current DOM selection before typing
 
-Фикс:
+Fix:
 
 - `packages/core/src/chain.ts`
-  - для list lift добавлен `selectionOverride` на вставленный blockId
-  - в `run()` явно применяется `editor.setSelection(...)` по override после dispatch
+  - a `selectionOverride` onto the inserted blockId was added for list lift
+  - `run()` now explicitly applies `editor.setSelection(...)` from the override after dispatch
 - `packages/core/src/editor.ts`
-  - `setContent(...)` теперь всегда ребазит selection на первый валидный редактируемый блок
-  - в `beforeinput` добавлено чтение DOM-selection (когда нет pending restore), чтобы не печатать в устаревший блок
-  - сохранён guard от transient `selectionchange` во время `pendingSelectionRestore`
+  - `setContent(...)` now always rebases the selection onto the first valid editable block
+  - `beforeinput` now reads the DOM selection (when there is no pending restore) so it does not type into a stale block
+  - the guard against a transient `selectionchange` during `pendingSelectionRestore` is kept
 - `packages/block-editor/src/components/slash-menu.tsx`
-  - усилен post-command caret lock и fallback target resolution для list lift сценариев
-  - добавлен guard для `requestAnimationFrame` restore: если пользователь уже сдвинул каретку/начал ввод, restore не перетирает live selection
+  - the post-command caret lock and the fallback target resolution for list lift scenarios were strengthened
+  - a guard for the `requestAnimationFrame` restore was added: if the user has already moved the caret or started typing, the restore does not overwrite the live selection
 - `e2e/notion-like-nested-transform.spec.ts`
-  - после программной постановки range добавлен `editor.syncSelectionFromDOM()` в helper, чтобы исключить тестовый race
+  - `editor.syncSelectionFromDOM()` was added to the helper after the programmatic range placement, to rule out a test race
 
-Покрытие:
+Coverage:
 
 - `e2e/notion-like-matrix.spec.ts`
   - `slash: third bullet item -> heading keeps caret on transformed row`
@@ -238,32 +238,32 @@ _Last updated: February 14, 2026_
   - `slash click + immediate typing does not lose first character (heading)`
   - `slash: third bullet item -> heading + immediate typing stays on transformed row`
   - `slash: third todo item -> heading + immediate typing stays on transformed row`
-- стресс:
-  - `workers=1`, `repeat-each=10` на `immediate typing` группе: `30/30` PASS
+- stress:
+  - `workers=1`, `repeat-each=10` on the `immediate typing` group: `30/30` PASS
   - `e2e/notion-like-nested-transform.spec.ts --repeat-each=5`: `25/25` PASS
-  - targeted re-check (Chromium): `todo checkbox toggle right after slash transform keeps text in place` + `slash click + immediate typing does not lose first character` — `2/2` PASS
+  - targeted re-check (Chromium): `todo checkbox toggle right after slash transform keeps text in place` + `slash click + immediate typing does not lose first character`: `2/2` PASS
 
-### DEF-013: Nested list transform терял deep children (закрыто)
+### DEF-013: Nested list transform lost deep children (closed)
 
-Симптом:
+Symptom:
 
-- при `nested listItem -> heading/paragraph` дочерние вложенные блоки могли теряться
-- при unwrap list (`toggle same list type`) nested children item-ов также отбрасывались
+- on `nested listItem -> heading/paragraph` the nested child blocks could be lost
+- on list unwrap (`toggle same list type`) the nested children of the items were also dropped
 
-Причина:
+Cause:
 
-- lift branch в `setBlockType` создавал новый block c `children: []`
-- unwrap list branch (`toggleList`) поднимал только inline content item-а, без children
+- the lift branch in `setBlockType` created a new block with `children: []`
+- the list unwrap branch (`toggleList`) lifted only the item's inline content, without children
 
-Фикс:
+Fix:
 
 - `packages/core/src/chain.ts`
-  - добавлен deep clone tree helper для block children
-  - при lift `listItem/todoItem -> non-list` trailing children реинсертятся после lifted block
-  - при unwrap `list -> paragraph` children каждого item сохраняются и поднимаются вместе с ним
-  - `indent/outdent` переписаны под nested list контейнеры, без порчи структуры
+  - a deep clone tree helper for block children was added
+  - on `listItem/todoItem -> non-list` lift, the trailing children are reinserted after the lifted block
+  - on `list -> paragraph` unwrap, the children of each item are preserved and lifted along with it
+  - `indent/outdent` were rewritten for nested list containers, without corrupting the structure
 
-Покрытие:
+Coverage:
 
 - `e2e/notion-like-nested-transform.spec.ts`
   - `nested slash: listItem -> heading keeps deep child text`
@@ -272,110 +272,110 @@ _Last updated: February 14, 2026_
   - `backspace at start of second bullet item lifts it to paragraph and keeps first item in list`
   - `Tab and Shift+Tab keep nested bullet structure valid`
 
-### DEF-015: Hover toolbar мог терять интерактивность при заходе курсора на сам toolbar (закрыто)
+### DEF-015: Hover toolbar could lose interactivity when the cursor entered the toolbar itself (closed)
 
-Симптом:
+Symptom:
 
-- `+` / drag-handle иногда исчезали в момент наведения на них
-- визуально тулбар появлялся, но клик в быстрых сценариях срывался
+- `+` / drag-handle sometimes disappeared as the cursor moved onto them
+- the toolbar appeared visually, but the click failed in fast scenarios
 
-Причина:
+Cause:
 
-- в `onMouseMove` path блок вычислялся и сбрасывался даже когда target уже внутри toolbar wrapper
+- in the `onMouseMove` path the block was computed and reset even when the target was already inside the toolbar wrapper
 
-Фикс:
+Fix:
 
 - `packages/block-editor/src/components/block-editor.tsx`
-  - добавлен guard: не сбрасывать hover при target внутри
+  - a guard was added: do not reset hover when the target is inside
     `.gotipe-block-toolbar` / `.gotipe-block-toolbar-wrapper` / `.gotipe-block-context-menu`
 
-Покрытие:
+Coverage:
 
 - `e2e/block-toolbar-fast-hover.spec.ts`
 - `e2e/block-toolbar.spec.ts`
 - combined regression (`matrix + block-toolbar + fast-hover + checklist-101-150`): `116/116` PASS
 
-### DEF-016: Slash-menu outside click мог приводить к фокус-дрифту (закрыто)
+### DEF-016: Slash menu outside click could cause focus drift (closed)
 
-Симптом:
+Symptom:
 
-- после клика вне slash-menu возникал нестабильный фокусный переход в разные элементы страницы
+- after a click outside the slash menu, focus moved unstably to various elements on the page
 
-Причина:
+Cause:
 
-- outside-close path не предотвращал дефолтный `mousedown` и не имел явного capture-phase контроля
+- the outside-close path did not prevent the default `mousedown` and had no explicit capture-phase control
 
-Фикс:
+Fix:
 
 - `packages/block-editor/src/components/slash-menu.tsx`
-  - outside-close обработчик переведён на capture-phase `mousedown`
-  - добавлен `preventDefault()` + `editor.focus()` restore path
+  - the outside-close handler was switched to a capture-phase `mousedown`
+  - `preventDefault()` + an `editor.focus()` restore path were added
 
-Покрытие:
+Coverage:
 
 - `e2e/notion-like-checklist-101-150.spec.ts` (`NL-126`, `NL-134`, `NL-142`, `NL-150`)
 
-### DEF-017: Todo left-zone click мог кратковременно ставить caret на левый край item (закрыто)
+### DEF-017: Todo left-zone click could briefly put the caret at the left edge of the item (closed)
 
-Симптом:
+Symptom:
 
-- при клике слева от текста `todoItem` появлялся transient caret перед checkbox
+- on a click to the left of the `todoItem` text, a transient caret appeared before the checkbox
 
-Причина:
+Cause:
 
-- нативный mouse path иногда устанавливал range на `<li>` до post-normalization этапа
+- the native mouse path sometimes set the range on the `<li>` before the post-normalization step
 
-Фикс:
+Fix:
 
 - `packages/react/src/editor-content.tsx`
-  - в `todoItem` добавлен `onMouseDown` guard для левой зоны:
-    принудительная постановка range в `[data-gotipe-todo-content]` + синхронный `syncSelectionFromDOM()`
+  - an `onMouseDown` guard for the left zone was added to `todoItem`:
+    it forces the range into `[data-gotipe-todo-content]` + a synchronous `syncSelectionFromDOM()`
 
-Покрытие:
+Coverage:
 
 - `e2e/notion-like-matrix.spec.ts`
   - `todo click in left zone normalizes caret after checkbox (empty item)`
   - `todo click in left zone normalizes caret after checkbox (item with text)`
   - `todo checkbox is vertically aligned with text and has spacing`
 
-### DEF-018: Slash transform `callout -> list/todo` терял текст строки (закрыто)
+### DEF-018: Slash transform `callout -> list/todo` lost the line text (closed)
 
-Симптом:
+Symptom:
 
-- при `callout -> bullet/ordered/todo` исходный текст строки мог исчезать
+- on `callout -> bullet/ordered/todo` the original line text could disappear
 
-Причина:
+Cause:
 
-- в `toggleList` top-level wrap поддерживал `paragraph/heading/blockquote/codeBlock`,
-  но не `callout`
-- для `callout` срабатывал fallback `setBlockType(listType)`, который создавал
-  некорректный path без явного `listItem`-wrap
+- the top-level wrap in `toggleList` supported `paragraph/heading/blockquote/codeBlock`,
+  but not `callout`
+- for `callout` the `setBlockType(listType)` fallback ran, which created an
+  incorrect path without an explicit `listItem` wrap
 
-Фикс:
+Fix:
 
 - `packages/core/src/chain.ts`
-  - `callout` добавлен в безопасный wrap-path для list-transform
-  - контент переносится в `listItem/todoItem` без потери текста
+  - `callout` was added to the safe wrap path for list transforms
+  - the content is moved into `listItem/todoItem` without losing text
 
-Покрытие:
+Coverage:
 
 - `e2e/notion-like-checklist-301-320.spec.ts` (`NL-313..NL-315`)
 - `e2e/notion-like-checklist-301-320.spec.ts` (`20/20` PASS)
 
 ## Active backlog
 
-### DEF-005: Nested list conversion policy (закрыто)
+### DEF-005: Nested list conversion policy (closed)
 
-Статус:
+Status:
 
 - Closed (February 14, 2026)
 
-Что зафиксировано:
+What was pinned down:
 
-- multi-step nested конверсии `listItem <-> todoItem <-> ordered/bullet` без потери deep subtree
-- сохранение sibling-элементов и nested children на каждом шаге
+- multi-step nested conversions `listItem <-> todoItem <-> ordered/bullet` without losing the deep subtree
+- sibling items and nested children are preserved at every step
 
-Покрытие:
+Coverage:
 
 - `e2e/notion-like-backlog-policy.spec.ts` (`DEF-005` baseline)
 - `e2e/notion-like-backlog-hardening.spec.ts` (`DEF-005` hardening policy)
@@ -385,30 +385,30 @@ _Last updated: February 14, 2026_
 - WebKit: PASS
 - Chromium repeat (`--repeat-each=2`): PASS
 
-### DEF-006: Cross-browser stability (закрыто)
+### DEF-006: Cross-browser stability (closed)
 
-Статус:
-
-- Closed (February 14, 2026)
-
-Что подтверждено:
-
-- критический pack в Firefox/WebKit: `134/134` PASS
-- полный checklist: Firefox `500/500` PASS, WebKit `500/500` PASS
-- transform-matrix (включая repeat в Chromium) стабилен и возвращён из quarantine
-
-### DEF-007: High-frequency input stress (закрыто)
-
-Статус:
+Status:
 
 - Closed (February 14, 2026)
 
-Что зафиксировано:
+What was confirmed:
 
-- long-run цепочки `/`, Enter, Backspace, Undo/Redo не приводят к рассинхрону DOM/state
-- проверены mixed-стресс сценарии c переключением block types и history-операциями
+- critical pack in Firefox/WebKit: `134/134` PASS
+- full checklist: Firefox `500/500` PASS, WebKit `500/500` PASS
+- transform-matrix (including the Chromium repeat) is stable and was returned from quarantine
 
-Покрытие:
+### DEF-007: High-frequency input stress (closed)
+
+Status:
+
+- Closed (February 14, 2026)
+
+What was pinned down:
+
+- long-run chains of `/`, Enter, Backspace, Undo/Redo do not cause DOM/state desync
+- mixed stress scenarios with block type switching and history operations were checked
+
+Coverage:
 
 - `e2e/notion-like-exhaustive.spec.ts` (`REL-006`)
 - `e2e/notion-like-matrix-planned-reliability.spec.ts` (`REL-001..REL-003`)
@@ -419,19 +419,19 @@ _Last updated: February 14, 2026_
 - WebKit: PASS
 - Chromium repeat (`--repeat-each=2`): PASS
 
-### DEF-014: Backspace boundary policy в list item (закрыто)
+### DEF-014: Backspace boundary policy in a list item (closed)
 
-Статус:
+Status:
 
 - Closed (February 14, 2026)
 
 Policy:
 
-- Backspace в позиции `offset=0` у non-empty `listItem/todoItem` стабильно переводит строку в `paragraph`
-- поведение покрыто для top-level, nested list item и todo item
-- Undo/Redo после boundary action сохраняют валидное дерево
+- Backspace at `offset=0` of a non-empty `listItem/todoItem` consistently turns the line into a `paragraph`
+- the behavior is covered for a top-level item, a nested list item and a todo item
+- Undo/Redo after the boundary action keep the tree valid
 
-Покрытие:
+Coverage:
 
 - `e2e/notion-like-matrix.spec.ts` (`ENTER-009`)
 - `e2e/notion-like-backlog-policy.spec.ts` (`DEF-014` baseline)
@@ -440,20 +440,20 @@ Policy:
 - Firefox: PASS
 - WebKit: PASS
 
-### DEF-021: Deep DnD reordering policy (закрыто)
+### DEF-021: Deep DnD reordering policy (closed)
 
-Статус:
+Status:
 
 - Closed (February 14, 2026)
 
-Что зафиксировано:
+What was pinned down:
 
-- перенос complex top-level blocks (включая list/todo/code) не ломает дерево
-- сохраняются nested children/text markers после drag
-- history после drag (`undo/redo`) предсказуемо восстанавливает порядок
-- drag после slash-transform не ломает immediate typing
+- moving complex top-level blocks (including list/todo/code) does not break the tree
+- nested children/text markers are preserved after a drag
+- history after a drag (`undo/redo`) restores the order predictably
+- a drag after a slash transform does not break immediate typing
 
-Покрытие:
+Coverage:
 
 - `e2e/notion-like-dnd-policy.spec.ts`
 - Chromium: `3/3` PASS
@@ -461,20 +461,20 @@ Policy:
 - WebKit: `3/3` PASS
 - Chromium repeat (`--repeat-each=3`): `9/9` PASS
 
-### DEF-022: IME composition policy baseline (закрыто)
+### DEF-022: IME composition policy baseline (closed)
 
-Статус:
+Status:
 
 - Closed (February 14, 2026)
 
-Что зафиксировано:
+What was pinned down:
 
-- composition insert в paragraph не ломает selection/state
-- composition в `todoItem` сохраняет Enter-flow и корректную структуру
-- composition после slash-transform (`paragraph -> bullet`) сохраняет тип/текст
-- undo/redo после composition остаётся стабильным
+- a composition insert into a paragraph does not break selection/state
+- composition in a `todoItem` preserves the Enter flow and a correct structure
+- composition after a slash transform (`paragraph -> bullet`) preserves type/text
+- undo/redo after composition stays stable
 
-Покрытие:
+Coverage:
 
 - `e2e/notion-like-ime-policy.spec.ts`
 - Chromium: `3/3` PASS
@@ -482,19 +482,19 @@ Policy:
 - WebKit: `3/3` PASS
 - Chromium repeat (`--repeat-each=3`): `9/9` PASS
 
-### DEF-023: Selection/format/history stress on large docs (закрыто)
+### DEF-023: Selection/format/history stress on large docs (closed)
 
-Статус:
+Status:
 
 - Closed (February 14, 2026)
 
-Что зафиксировано:
+What was pinned down:
 
-- массовые mark-toggle операции на paragraph/list/todo не ломают состояние
-- mixed loop (`selection + marks + typing + Enter + undo/redo`) стабилен на больших документах
-- после stress-циклов сохраняется валидное дерево и предсказуемый history
+- bulk mark-toggle operations on paragraph/list/todo do not break the state
+- the mixed loop (`selection + marks + typing + Enter + undo/redo`) is stable on large documents
+- after stress cycles the tree stays valid and history stays predictable
 
-Покрытие:
+Coverage:
 
 - `e2e/notion-like-selection-history-stress.spec.ts`
 - Chromium: `3/3` PASS
@@ -502,20 +502,20 @@ Policy:
 - WebKit: `3/3` PASS
 - Chromium repeat (`--repeat-each=3`): `9/9` PASS
 
-### DEF-024: Cross-block clipboard + marks chain stability (закрыто)
+### DEF-024: Cross-block clipboard + marks chain stability (closed)
 
-Статус:
+Status:
 
 - Closed (February 14, 2026)
 
-Что зафиксировано:
+What was pinned down:
 
-- cross-block copy/paste и cut flow не ломают структуру документа
-- mark toggles после clipboard-цепочек остаются валидными
-- undo/redo после cross-block операций детерминированно восстанавливают state
-- rapid mixed loop (`selection + clipboard + marks + history`) стабилен
+- cross-block copy/paste and cut flow do not break the document structure
+- mark toggles after clipboard chains stay valid
+- undo/redo after cross-block operations restore the state deterministically
+- the rapid mixed loop (`selection + clipboard + marks + history`) is stable
 
-Покрытие:
+Coverage:
 
 - `e2e/notion-like-crossblock-clipboard-stress.spec.ts`
 - Chromium: `3/3` PASS
@@ -523,19 +523,19 @@ Policy:
 - WebKit: `3/3` PASS
 - Chromium repeat (`--repeat-each=3`): `9/9` PASS
 
-### DEF-020: Slash start-line / immediate typing instability (закрыто)
+### DEF-020: Slash start-line / immediate typing instability (closed)
 
-Статус:
+Status:
 
 - Closed (February 14, 2026)
 
-Что зафиксировано:
+What was pinned down:
 
-- slash в начале строки больше не теряет первый символ immediate typing.
-- transform-matrix кейсы immediate typing сняты с `fixme` и возвращены в обязательный прогон.
-- стабильность подтверждена в repeat-run и в cross-browser.
+- slash at the start of a line no longer loses the first character of immediate typing.
+- the transform-matrix immediate typing cases were removed from `fixme` and returned to the mandatory run.
+- stability was confirmed in a repeat run and cross-browser.
 
-Покрытие:
+Coverage:
 
 - `e2e/notion-like-transform-matrix.spec.ts`
 - Chromium: `72/72` PASS
@@ -543,20 +543,20 @@ Policy:
 - Firefox: `72/72` PASS
 - WebKit: `72/72` PASS
 
-### DEF-025: Nested cross-block range chains stability (закрыто)
+### DEF-025: Nested cross-block range chains stability (closed)
 
-Статус:
+Status:
 
 - Closed (February 14, 2026)
 
-Что зафиксировано:
+What was pinned down:
 
-- range selection через nested `listItem/todoItem` leafs не ломает дерево.
-- nested copy/paste + mark toggles сохраняют валидный state и структуру.
-- nested cut + undo/redo даёт детерминированное восстановление.
-- rapid mixed loop (`nested selection + clipboard + marks + history`) стабилен.
+- a range selection across nested `listItem/todoItem` leaves does not break the tree.
+- nested copy/paste + mark toggles keep a valid state and structure.
+- nested cut + undo/redo restores deterministically.
+- the rapid mixed loop (`nested selection + clipboard + marks + history`) is stable.
 
-Покрытие:
+Coverage:
 
 - helper: `e2e/helpers/notion-crossblock.ts`
 - `e2e/notion-like-crossblock-nested-chains.spec.ts`
@@ -565,19 +565,19 @@ Policy:
 - WebKit: `3/3` PASS
 - Chromium repeat (`--repeat-each=3`): `9/9` PASS
 
-### DEF-026: Integrated mixed-loop stability (`DnD + clipboard + marks + slash`) (закрыто)
+### DEF-026: Integrated mixed-loop stability (`DnD + clipboard + marks + slash`) (closed)
 
-Статус:
+Status:
 
 - Closed (February 14, 2026)
 
-Что зафиксировано:
+What was pinned down:
 
-- mixed nested сценарии с DnD/clipboard/marks/slash в одном цикле не ломают дерево.
-- после long-loop операций сохраняются валидные block ids/structure и предсказуемая history.
-- slash transform + immediate typing не теряет контекст при последующем DnD/clipboard.
+- mixed nested scenarios with DnD/clipboard/marks/slash in one loop do not break the tree.
+- after long-loop operations, block ids/structure stay valid and history stays predictable.
+- slash transform + immediate typing does not lose context on a subsequent DnD/clipboard.
 
-Покрытие:
+Coverage:
 
 - helper: `e2e/helpers/notion-chaos.ts`
 - `e2e/notion-like-integrated-chaos.spec.ts`
@@ -586,19 +586,19 @@ Policy:
 - WebKit: `3/3` PASS
 - Chromium repeat (`--repeat-each=3`): `9/9` PASS
 
-### DEF-027: Headed gutter jitter clickability (`+` / drag-handle) (закрыто)
+### DEF-027: Headed gutter jitter clickability (`+` / drag-handle) (closed)
 
-Статус:
+Status:
 
 - Closed (February 14, 2026)
 
-Что зафиксировано:
+What was pinned down:
 
-- при агрессивных mouse-path jitter toolbar остаётся привязан к строке.
-- `+` остаётся кликабельным сразу после jitter burst.
-- drag-handle стабильно открывает/закрывает context menu после jitter.
+- under aggressive mouse-path jitter the toolbar stays attached to the row.
+- `+` stays clickable right after a jitter burst.
+- the drag handle reliably opens/closes the context menu after jitter.
 
-Покрытие:
+Coverage:
 
 - `e2e/notion-like-gutter-jitter-headed.spec.ts`
 - Chromium headed: `3/3` PASS

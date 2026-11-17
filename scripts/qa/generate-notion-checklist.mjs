@@ -16,58 +16,58 @@ function addSection(title, items) {
 
 function formatItem(item) {
   const caseId = idLabel();
-  return `- [ ] ${caseId} | ${item.action} | Ожидание: ${item.expected} | Приоритет: ${item.priority} | Авто: ${item.automation}`;
+  return `- [ ] ${caseId} | ${item.action} | Expected: ${item.expected} | Priority: ${item.priority} | Auto: ${item.automation}`;
 }
 
 /* A. Caret and selection fundamentals (60) */
 {
   const contexts = [
-    "пустой paragraph",
-    "paragraph с простым текстом",
-    "paragraph с mixed marks (bold/italic)",
+    "empty paragraph",
+    "paragraph with plain text",
+    "paragraph with mixed marks (bold/italic)",
     "heading 1",
     "heading 2",
-    "bullet item с текстом",
-    "bullet item без текста",
-    "ordered item с текстом",
-    "todo item без текста",
-    "todo item с текстом",
+    "bullet item with text",
+    "bullet item without text",
+    "ordered item with text",
+    "todo item without text",
+    "todo item with text",
   ];
 
   const actions = [
     {
-      action: "Клик в начало блока",
-      expected: "каретка ставится в начало содержимого, без скачка в левый край",
+      action: "Click at the start of the block",
+      expected: "the caret is placed at the start of the content, without jumping to the left edge",
       priority: "P0",
       automation: "E2E",
     },
     {
-      action: "Клик в середину текста",
-      expected: "каретка ставится на ожидаемую позицию символа",
+      action: "Click in the middle of the text",
+      expected: "the caret is placed at the expected character position",
       priority: "P1",
       automation: "E2E",
     },
     {
-      action: "Клик в конец текста",
-      expected: "каретка на конце блока, ввод продолжает этот блок",
+      action: "Click at the end of the text",
+      expected: "the caret is at the end of the block, typing continues this block",
       priority: "P1",
       automation: "E2E",
     },
     {
-      action: "ArrowLeft из позиции 0",
-      expected: "переход в конец предыдущего блока без пропуска и краша",
+      action: "ArrowLeft from position 0",
+      expected: "moves to the end of the previous block without skipping or crashing",
       priority: "P1",
       automation: "Planned",
     },
     {
-      action: "ArrowRight из конца блока",
-      expected: "переход в начало следующего блока без рассинхрона",
+      action: "ArrowRight from the end of the block",
+      expected: "moves to the start of the next block without desync",
       priority: "P1",
       automation: "Planned",
     },
     {
-      action: "Mouse drag выделение в соседний блок",
-      expected: "диапазон визуально сохраняется, toolbar/bubble реагирует корректно",
+      action: "Mouse drag selection into the adjacent block",
+      expected: "the range stays visible, toolbar/bubble menu reacts correctly",
       priority: "P1",
       automation: "Planned",
     },
@@ -90,8 +90,8 @@ function formatItem(item) {
 /* B. Typing and line breaks (60) */
 {
   const contexts = [
-    "пустой paragraph",
-    "paragraph с текстом",
+    "empty paragraph",
+    "paragraph with text",
     "heading 1",
     "heading 3",
     "bullet item",
@@ -104,38 +104,38 @@ function formatItem(item) {
 
   const actions = [
     {
-      action: "Ввод обычного текста",
-      expected: "символы появляются один раз, без дублей и пропусков",
+      action: "Type plain text",
+      expected: "characters appear once, with no duplicates or gaps",
       priority: "P0",
       automation: "E2E",
     },
     {
-      action: "Нажатие Enter",
-      expected: "создаётся корректный следующий блок/элемент списка",
+      action: "Press Enter",
+      expected: "a valid next block/list item is created",
       priority: "P0",
       automation: "E2E",
     },
     {
-      action: "Нажатие Shift+Enter",
-      expected: "добавляется soft line break внутри текущего блока",
+      action: "Press Shift+Enter",
+      expected: "a soft line break is added inside the current block",
       priority: "P1",
       automation: "Planned",
     },
     {
-      action: "Backspace в середине строки",
-      expected: "удаляется 1 символ слева, каретка не прыгает",
+      action: "Backspace in the middle of a line",
+      expected: "one character to the left is deleted, the caret does not jump",
       priority: "P0",
       automation: "E2E",
     },
     {
-      action: "Backspace в начале строки",
-      expected: "merge/unwrap происходит предсказуемо по типу блока",
+      action: "Backspace at the start of a line",
+      expected: "merge/unwrap happens predictably for the block type",
       priority: "P0",
       automation: "Planned",
     },
     {
       action: "Delete (forward)",
-      expected: "удаляется символ справа без потери выделения",
+      expected: "the character to the right is deleted without losing the selection",
       priority: "P1",
       automation: "Planned",
     },
@@ -158,64 +158,64 @@ function formatItem(item) {
 /* C. Slash menu behavior (80) */
 {
   const contexts = [
-    "пустой paragraph",
-    "начало непустого paragraph",
-    "середина paragraph",
-    "конец heading",
-    "пустой bullet item",
-    "todo item с текстом",
-    "сразу после paste",
-    "у нижней границы viewport",
-    "у правой границы viewport",
-    "в dark theme",
+    "empty paragraph",
+    "start of a non-empty paragraph",
+    "middle of a paragraph",
+    "end of a heading",
+    "empty bullet item",
+    "todo item with text",
+    "right after paste",
+    "near the bottom edge of the viewport",
+    "near the right edge of the viewport",
+    "in dark theme",
   ];
 
   const actions = [
     {
-      action: "Ввод '/'",
-      expected: "menu открывается у каретки, не в левом верхнем углу",
+      action: "Type '/'",
+      expected: "the menu opens at the caret, not in the top-left corner",
       priority: "P0",
       automation: "E2E",
     },
     {
-      action: "Ввод '/to'",
-      expected: "фильтрация корректная, релевантные команды сверху",
+      action: "Type '/to'",
+      expected: "filtering is correct, relevant commands come first",
       priority: "P1",
       automation: "E2E",
     },
     {
       action: "ArrowDown + Enter",
-      expected: "выбранная команда исполняется без потери фокуса",
+      expected: "the selected command runs without losing focus",
       priority: "P0",
       automation: "E2E",
     },
     {
       action: "ArrowUp + Enter",
-      expected: "навигация вверх работает циклично/предсказуемо",
+      expected: "upward navigation wraps around/is predictable",
       priority: "P1",
       automation: "Planned",
     },
     {
       action: "Esc",
-      expected: "menu закрывается, документ не мутируется",
+      expected: "the menu closes, the document is not mutated",
       priority: "P0",
       automation: "E2E",
     },
     {
-      action: "Клик вне menu",
-      expected: "menu закрывается, editor остаётся интерактивным",
+      action: "Click outside the menu",
+      expected: "the menu closes, the editor stays interactive",
       priority: "P1",
       automation: "E2E",
     },
     {
-      action: "Запрос без совпадений",
-      expected: "показывается empty-state, layout не ломается",
+      action: "Query with no matches",
+      expected: "an empty state is shown, the layout does not break",
       priority: "P1",
       automation: "Planned",
     },
     {
-      action: "Удаление query backspace до пустого",
-      expected: "список команд возвращается в дефолтный порядок",
+      action: "Delete the query with Backspace until empty",
+      expected: "the command list returns to its default order",
       priority: "P2",
       automation: "Planned",
     },
@@ -270,7 +270,7 @@ function formatItem(item) {
     for (const dst of targets) {
       items.push({
         action: `Slash transform: ${src} -> ${dst}`,
-        expected: "целевой блок создаётся валидно, текст текущей строки не теряется, caret остаётся в новом блоке",
+        expected: "the target block is created validly, the text of the current line is not lost, the caret stays in the new block",
         priority: "P0",
         automation: "Planned",
       });
@@ -282,58 +282,58 @@ function formatItem(item) {
 /* E. Todo/list edge cases (70) */
 {
   const contexts = [
-    "первый item списка",
-    "средний item списка",
-    "последний item списка",
-    "item с длинным текстом",
-    "item с inline marks",
-    "пустой item",
-    "item после paste",
-    "item после undo/redo",
-    "item сразу после slash transform",
-    "item в dark theme",
+    "first list item",
+    "middle list item",
+    "last list item",
+    "item with long text",
+    "item with inline marks",
+    "empty item",
+    "item after paste",
+    "item after undo/redo",
+    "item right after slash transform",
+    "item in dark theme",
   ];
 
   const actions = [
     {
       action: "Click checkbox",
-      expected: "state checked меняется, текст остаётся на месте и не скачет",
+      expected: "the checked state changes, the text stays in place and does not jump",
       priority: "P0",
       automation: "E2E",
     },
     {
-      action: "Caret placement в пустом todo",
-      expected: "каретка ставится после checkbox в текстовой зоне",
+      action: "Caret placement in an empty todo",
+      expected: "the caret is placed after the checkbox in the text area",
       priority: "P0",
       automation: "E2E",
     },
     {
-      action: "Ввод текста в todo",
-      expected: "текст вертикально выровнен с checkbox, gap стабильный",
+      action: "Type text in a todo",
+      expected: "the text is vertically aligned with the checkbox, the gap is stable",
       priority: "P0",
       automation: "E2E",
     },
     {
-      action: "Enter в непустом todo",
-      expected: "создаётся следующий todo item",
+      action: "Enter in a non-empty todo",
+      expected: "the next todo item is created",
       priority: "P0",
       automation: "E2E",
     },
     {
-      action: "Enter в пустом todo",
-      expected: "выход в paragraph вне списка",
+      action: "Enter in an empty todo",
+      expected: "exits to a paragraph outside the list",
       priority: "P0",
       automation: "E2E",
     },
     {
       action: "Slash convert todo -> bullet",
-      expected: "текст строки сохраняется, тип меняется без пропадания строки",
+      expected: "the line text is preserved, the type changes without the line disappearing",
       priority: "P0",
       automation: "E2E",
     },
     {
       action: "Slash convert bullet -> todo",
-      expected: "текст строки сохраняется, checkbox корректно рендерится",
+      expected: "the line text is preserved, the checkbox renders correctly",
       priority: "P0",
       automation: "E2E",
     },
@@ -356,44 +356,44 @@ function formatItem(item) {
 /* F. Formatting and selection retention (40) */
 {
   const contexts = [
-    "selection внутри paragraph",
-    "selection внутри heading",
-    "selection внутри bullet item",
-    "selection внутри ordered item",
-    "selection внутри todo item",
-    "selection через 2 блока",
-    "collapsed caret в середине слова",
-    "collapsed caret в конце слова",
+    "selection inside a paragraph",
+    "selection inside a heading",
+    "selection inside a bullet item",
+    "selection inside an ordered item",
+    "selection inside a todo item",
+    "selection across 2 blocks",
+    "collapsed caret in the middle of a word",
+    "collapsed caret at the end of a word",
   ];
 
   const actions = [
     {
       action: "Toggle Bold",
-      expected: "mark применяется корректно, визуальное выделение не пропадает преждевременно",
+      expected: "the mark is applied correctly, the visual highlight does not disappear prematurely",
       priority: "P0",
       automation: "E2E",
     },
     {
       action: "Toggle Italic",
-      expected: "mark применяется на текущий range без потери focus",
+      expected: "the mark is applied to the current range without losing focus",
       priority: "P1",
       automation: "E2E",
     },
     {
       action: "Toggle Underline",
-      expected: "mark включается/выключается симметрично",
+      expected: "the mark toggles on/off symmetrically",
       priority: "P1",
       automation: "Planned",
     },
     {
       action: "Command via bubble menu",
-      expected: "bubble menu остаётся консистентной и не ломает selection",
+      expected: "the bubble menu stays consistent and does not break the selection",
       priority: "P1",
       automation: "Planned",
     },
     {
       action: "Command via keyboard shortcut",
-      expected: "горячая клавиша совпадает с поведением toolbar",
+      expected: "the shortcut matches the toolbar behavior",
       priority: "P1",
       automation: "Planned",
     },
@@ -427,31 +427,31 @@ function formatItem(item) {
   const actions = [
     {
       action: "Copy + Paste",
-      expected: "текст вставляется без дубликатов, структура не ломается",
+      expected: "the text is pasted without duplicates, the structure does not break",
       priority: "P1",
       automation: "Planned",
     },
     {
       action: "Cut + Undo",
-      expected: "после undo состояние восстанавливается полностью",
+      expected: "after undo the state is fully restored",
       priority: "P1",
       automation: "Planned",
     },
     {
       action: "IME composition",
-      expected: "композиция не теряется, символы не удваиваются",
+      expected: "the composition is not lost, characters are not doubled",
       priority: "P0",
       automation: "Manual",
     },
     {
-      action: "Undo/Redo цепочка (10 шагов)",
-      expected: "история детерминирована, нет расхождения DOM/state",
+      action: "Undo/Redo chain (10 steps)",
+      expected: "history is deterministic, no DOM/state divergence",
       priority: "P0",
       automation: "Planned",
     },
     {
       action: "Slash + Undo + Redo",
-      expected: "transform и обратные операции стабильны",
+      expected: "the transform and its inverse operations are stable",
       priority: "P0",
       automation: "E2E",
     },
@@ -484,25 +484,25 @@ function formatItem(item) {
   const actions = [
     {
       action: "Hover left gutter",
-      expected: "кнопки + и drag-handle появляются рядом с блоком, не на внешнем левом краю",
+      expected: "the + button and drag handle appear next to the block, not at the outer left edge",
       priority: "P0",
       automation: "E2E",
     },
     {
       action: "Click plus button",
-      expected: "вставка блока работает без смещения активной строки",
+      expected: "block insertion works without shifting the active line",
       priority: "P1",
       automation: "Planned",
     },
     {
-      action: "Drag block вниз",
-      expected: "блок переносится, содержимое и selection сохраняются",
+      action: "Drag block down",
+      expected: "the block moves, content and selection are preserved",
       priority: "P1",
       automation: "Manual",
     },
     {
-      action: "Drag block вверх",
-      expected: "порядок меняется корректно, без визуальных артефактов",
+      action: "Drag block up",
+      expected: "the order changes correctly, with no visual artifacts",
       priority: "P1",
       automation: "Manual",
     },
@@ -529,31 +529,31 @@ function formatItem(item) {
     "desktop dark theme",
     "mobile viewport 390px",
     "tablet viewport 768px",
-    "системная тема auto",
+    "system theme auto",
   ];
 
   const actions = [
     {
-      action: "Открыть slash-menu",
-      expected: "цвета, тени, border и padding консистентны с темой",
+      action: "Open the slash menu",
+      expected: "colors, shadows, border and padding are consistent with the theme",
       priority: "P1",
       automation: "E2E",
     },
     {
-      action: "Проверить overflow search/menu body",
-      expected: "инпут и пункты не вылезают за контейнер",
+      action: "Check overflow of the search/menu body",
+      expected: "the input and items do not overflow the container",
       priority: "P0",
       automation: "E2E",
     },
     {
       action: "Keyboard navigation (Up/Down/Enter/Esc)",
-      expected: "все клавиши работают одинаково в обеих темах",
+      expected: "all keys work the same in both themes",
       priority: "P0",
       automation: "E2E",
     },
     {
       action: "Screen reader semantics",
-      expected: "role/aria-атрибуты валидны, фокус читается корректно",
+      expected: "role/aria attributes are valid, focus is announced correctly",
       priority: "P2",
       automation: "Manual",
     },
@@ -579,18 +579,18 @@ if (totalCases !== 500) {
 }
 
 const lines = [];
-lines.push("# Notion-like QA Checklist (500 действий)");
+lines.push("# Notion-like QA Checklist (500 actions)");
 lines.push("");
 lines.push("_Last updated: February 13, 2026_");
 lines.push("");
-lines.push("## Как использовать");
+lines.push("## How to use");
 lines.push("");
-lines.push("- Каждый пункт — отдельный тест-кейс поведения редактора.");
-lines.push("- `Авто: E2E` — можно/нужно покрыть Playwright тестом.");
-lines.push("- `Авто: Planned` — добавить в автоматизацию в следующих итерациях.");
-lines.push("- `Авто: Manual` — пока только ручная проверка (обычно IME/DnD/a11y кейсы).");
+lines.push("- Each item is a separate test case for editor behavior.");
+lines.push("- `Auto: E2E`: can/should be covered by a Playwright test.");
+lines.push("- `Auto: Planned`: add to automation in upcoming iterations.");
+lines.push("- `Auto: Manual`: manual check only for now (usually IME/DnD/a11y cases).");
 lines.push("");
-lines.push(`Всего кейсов: **${totalCases}**.`);
+lines.push(`Total cases: **${totalCases}**.`);
 lines.push("");
 
 for (const section of sections) {

@@ -1,18 +1,18 @@
 # GoTipe -- Document Conversion (Export/Import)
 
-> **PDF: историческое предложение.** Упоминания Typst/docx-rs, оценки размеров и
-> возможностей ниже не описывают текущий backend. GoTipe владеет PDF layout и
-> OOXML rendering; актуальны [контракт экспорта](development/export-contract.md)
-> и [политика зависимостей](development/dependencies.md).
+> **PDF: historical proposal.** The mentions of Typst/docx-rs and the size and capability
+> estimates below do not describe the current backend. GoTipe owns PDF layout and
+> OOXML rendering; see the [export contract](development/export-contract.md)
+> and the [dependency policy](development/dependencies.md) for what is current.
 
-> Исторический проектный документ. Сигнатуры, размеры, цены, сравнения и планы ниже
-> не подтверждают текущую реализацию или доступный сервис. Актуальные контракты:
-> [разработка](development/export-contract.md), [экспорт](development/export-contract.md),
-> [Cloud](development/cloud-contract.md), [готовность выпуска](22-release-readiness.md).
+> Historical design document. The signatures, sizes, prices, comparisons and plans below
+> do not confirm the current implementation or an available service. Current contracts:
+> [development](development/export-contract.md), [export](development/export-contract.md),
+> [Cloud](development/cloud-contract.md), [release readiness](22-release-readiness.md).
 
-## Обзор
+## Overview
 
-`gotipe-export` -- Rust crate, реализующий конвертацию документов между форматами. Компилируется в WebAssembly (работает в браузере) и нативный binary (работает на сервере). Один и тот же код, одинаковый результат.
+`gotipe-export` is a Rust crate that converts documents between formats. It compiles to WebAssembly (runs in the browser) and to a native binary (runs on the server). The same code, the same result.
 
 ```
                         ┌──────────────────────────────┐
@@ -36,39 +36,39 @@
 
 ---
 
-## Форматы
+## Formats
 
 ### Export
 
-| Формат | Crate/Module | Lazy-loadable | Размер (gzip) | Зависимости |
+| Format | Crate/Module | Lazy-loadable | Size (gzip) | Dependencies |
 |--------|-------------|---------------|---------------|-------------|
-| HTML | `gotipe-export::html` | Нет (в core bundle) | ~8KB | -- |
-| Markdown | `gotipe-export::markdown` | Нет (в core bundle) | ~12KB | -- |
-| Plain Text | `gotipe-export::plaintext` | Нет (в core bundle) | ~3KB | -- |
-| JSON | `gotipe-core` (serde) | Нет (в core bundle) | ~2KB | serde_json |
-| PDF | `gotipe-export::pdf` | Да | ~400KB | typst |
-| DOCX | `gotipe-export::docx` | Да | ~60KB | docx-rs |
+| HTML | `gotipe-export::html` | No (in core bundle) | ~8KB | -- |
+| Markdown | `gotipe-export::markdown` | No (in core bundle) | ~12KB | -- |
+| Plain Text | `gotipe-export::plaintext` | No (in core bundle) | ~3KB | -- |
+| JSON | `gotipe-core` (serde) | No (in core bundle) | ~2KB | serde_json |
+| PDF | `gotipe-export::pdf` | Yes | ~400KB | typst |
+| DOCX | `gotipe-export::docx` | Yes | ~60KB | docx-rs |
 | **Total core bundle** | | | **~25KB** | |
-| **Total с PDF + DOCX** | | | **~485KB** | |
+| **Total with PDF + DOCX** | | | **~485KB** | |
 
 ### Import
 
-| Формат | Crate/Module | Особенности |
+| Format | Crate/Module | Notes |
 |--------|-------------|-------------|
-| HTML | `gotipe-export::html` | Sanitization, XSS prevention, round-trip с export |
+| HTML | `gotipe-export::html` | Sanitization, XSS prevention, round-trip with export |
 | Markdown | `gotipe-export::markdown` | CommonMark + GFM + custom extensions |
 | DOCX | `gotipe-export::docx` | Styles mapping, images extraction |
 | Notion export | `gotipe-export::notion` | Markdown + CSV + metadata merge |
-| Google Docs paste | `gotipe-export::gdocs` | HTML paste с Google-specific markup cleanup |
-| JSON | `gotipe-core` (serde) | Нативная десериализация Document |
+| Google Docs paste | `gotipe-export::gdocs` | HTML paste with Google-specific markup cleanup |
+| JSON | `gotipe-core` (serde) | Native Document deserialization |
 
 ---
 
-## Архитектура: Provider Pattern
+## Architecture: Provider Pattern
 
 ### Export/Import Trait
 
-Все конвертеры реализуют единый trait. Это позволяет подключать custom форматы без изменения core.
+All converters implement a single trait. This allows plugging in custom formats without changing core.
 
 ```rust
 // crates/gotipe-export/src/lib.rs
@@ -77,7 +77,7 @@ use gotipe_core::Document;
 use std::collections::HashMap;
 use thiserror::Error;
 
-/// Ошибки конвертации
+/// Conversion errors
 #[derive(Debug, Error)]
 pub enum ConvertError {
     #[error("Unsupported block type: {0}")]
@@ -102,20 +102,20 @@ pub enum ConvertError {
     Io(#[from] std::io::Error),
 }
 
-/// Настройки экспорта
+/// Export options
 #[derive(Debug, Clone)]
 pub struct ExportOptions {
-    /// Включать inline styles vs CSS classes
+    /// Use inline styles vs CSS classes
     pub inline_styles: bool,
-    /// CSP nonce для <style> и <script> тегов
+    /// CSP nonce for <style> and <script> tags
     pub csp_nonce: Option<String>,
-    /// Base URL для relative paths (images, links)
+    /// Base URL for relative paths (images, links)
     pub base_url: Option<String>,
-    /// Кастомные CSS классы для block types
+    /// Custom CSS classes for block types
     pub css_classes: HashMap<String, String>,
-    /// Highlight.js language auto-detect для code blocks
+    /// Highlight.js language auto-detect for code blocks
     pub highlight_code: bool,
-    /// Включать metadata (block IDs, version)
+    /// Include metadata (block IDs, version)
     pub include_metadata: bool,
 }
 
@@ -132,14 +132,14 @@ impl Default for ExportOptions {
     }
 }
 
-/// Настройки импорта
+/// Import options
 #[derive(Debug, Clone)]
 pub struct ImportOptions {
     /// Strict mode: reject unknown elements vs ignore
     pub strict: bool,
     /// Sanitize HTML input (XSS prevention)
     pub sanitize: bool,
-    /// Allowed HTML tags (если sanitize = true)
+    /// Allowed HTML tags (if sanitize = true)
     pub allowed_tags: Option<Vec<String>>,
     /// Max document size (blocks)
     pub max_blocks: Option<usize>,
@@ -161,35 +161,35 @@ impl Default for ImportOptions {
 
 // ─── Export Trait ───────────────────────────────────────────
 
-/// Trait для экспортеров: Document → target format
+/// Trait for exporters: Document → target format
 pub trait Exporter: Send + Sync {
-    /// Уникальное имя формата
+    /// Unique format name
     fn format_name(&self) -> &str;
 
-    /// MIME type результата
+    /// MIME type of the result
     fn mime_type(&self) -> &str;
 
-    /// Расширение файла
+    /// File extension
     fn file_extension(&self) -> &str;
 
-    /// Экспорт в строку (для текстовых форматов: HTML, Markdown, Plain Text)
+    /// Export to a string (for text formats: HTML, Markdown, Plain Text)
     fn export_string(
         &self,
         doc: &Document,
         opts: &ExportOptions,
     ) -> Result<String, ConvertError>;
 
-    /// Экспорт в байты (для бинарных форматов: PDF, DOCX)
+    /// Export to bytes (for binary formats: PDF, DOCX)
     fn export_bytes(
         &self,
         doc: &Document,
         opts: &ExportOptions,
     ) -> Result<Vec<u8>, ConvertError> {
-        // Default: конвертируем string в bytes
+        // Default: convert the string to bytes
         Ok(self.export_string(doc, opts)?.into_bytes())
     }
 
-    /// Поддерживает ли формат export в bytes (PDF, DOCX — true)
+    /// Whether the format supports export to bytes (PDF, DOCX: true)
     fn is_binary(&self) -> bool {
         false
     }
@@ -197,22 +197,22 @@ pub trait Exporter: Send + Sync {
 
 // ─── Import Trait ───────────────────────────────────────────
 
-/// Trait для импортеров: source format → Document
+/// Trait for importers: source format → Document
 pub trait Importer: Send + Sync {
-    /// Уникальное имя формата
+    /// Unique format name
     fn format_name(&self) -> &str;
 
-    /// Поддерживаемые MIME types для auto-detect
+    /// Supported MIME types for auto-detect
     fn supported_mime_types(&self) -> Vec<&str>;
 
-    /// Импорт из строки
+    /// Import from a string
     fn import_string(
         &self,
         input: &str,
         opts: &ImportOptions,
     ) -> Result<Document, ConvertError>;
 
-    /// Импорт из байтов (для бинарных форматов: DOCX)
+    /// Import from bytes (for binary formats: DOCX)
     fn import_bytes(
         &self,
         input: &[u8],
@@ -226,7 +226,7 @@ pub trait Importer: Send + Sync {
 
 // ─── Registry ───────────────────────────────────────────────
 
-/// Реестр конвертеров — pluggable, extensible
+/// Converter registry: pluggable, extensible
 pub struct ConverterRegistry {
     exporters: HashMap<String, Box<dyn Exporter>>,
     importers: HashMap<String, Box<dyn Importer>>,
@@ -238,7 +238,7 @@ impl ConverterRegistry {
             exporters: HashMap::new(),
             importers: HashMap::new(),
         };
-        // Регистрация built-in конвертеров
+        // Register built-in converters
         registry.register_exporter(Box::new(html::HtmlExporter));
         registry.register_exporter(Box::new(markdown::MarkdownExporter));
         registry.register_exporter(Box::new(plaintext::PlainTextExporter));
@@ -317,7 +317,7 @@ pub enum ExportResult {
 }
 ```
 
-### Регистрация custom exporter
+### Registering a custom exporter
 
 ```rust
 use gotipe_export::{Exporter, ExportOptions, ConvertError};
@@ -347,14 +347,14 @@ impl Exporter for AsciiDocExporter {
                 "paragraph" => {
                     out.push_str(&format!("{}\n\n", block.text_content()));
                 }
-                _ => {} // другие типы...
+                _ => {} // other types...
             }
         }
         Ok(out)
     }
 }
 
-// Регистрация:
+// Registration:
 // registry.register_exporter(Box::new(AsciiDocExporter));
 ```
 
@@ -513,7 +513,7 @@ fn render_block(
         }
 
         other => {
-            // Extensible: data-block-type для unknown types
+            // Extensible: data-block-type for unknown types
             buf.push_str(&format!(r#"<div data-block-type="{other}">"#));
             render_inline_content(buf, &block.content, opts)?;
             buf.push_str("</div>\n");
@@ -566,7 +566,7 @@ fn render_inline_content(
 }
 
 fn render_span(buf: &mut String, span: &TextSpan, opts: &ExportOptions) {
-    // Открывающие теги (по rank order)
+    // Opening tags (by rank order)
     let mut sorted_marks = span.marks.clone();
     sorted_marks.sort_by_key(|m| mark_rank(&m.mark_type));
 
@@ -590,23 +590,23 @@ fn render_span(buf: &mut String, span: &TextSpan, opts: &ExportOptions) {
             "link" => {
                 let href = mark.attr_as_str("href").unwrap_or("");
                 let href = resolve_url(href, opts);
-                // Sanitize: только http(s) и mailto
+                // Sanitize: only http(s) and mailto
                 if is_safe_url(&href) {
                     buf.push_str(&format!(
                         r#"<a href="{}" rel="noopener noreferrer">"#,
                         html_escape(&href)
                     ));
                 } else {
-                    buf.push_str("<span>"); // unsafe URL — рендерим как plain text
+                    buf.push_str("<span>"); // unsafe URL: render as plain text
                 }
             }
-            _ => {} // unknown marks — skip (extensible через opts)
+            _ => {} // unknown marks: skip (extensible via opts)
         }
     }
 
     buf.push_str(&html_escape(&span.text));
 
-    // Закрывающие теги (reverse order)
+    // Closing tags (reverse order)
     for mark in sorted_marks.iter().rev() {
         match mark.mark_type.as_str() {
             "bold"          => buf.push_str("</strong>"),
@@ -675,7 +675,7 @@ fn mark_rank(mark_type: &str) -> u32 {
 
 ### HTML Sanitization (Import)
 
-При импорте HTML происходит многоуровневая санитизация для предотвращения XSS:
+HTML import runs multi-level sanitization to prevent XSS:
 
 ```rust
 // crates/gotipe-export/src/html.rs (import section)
@@ -737,26 +737,26 @@ Input HTML
 1. Strip <script>, <style>, <iframe>, event handlers (on*)
    │
    ▼
-2. Whitelist tags: только DEFAULT_ALLOWED_TAGS
+2. Whitelist tags: only DEFAULT_ALLOWED_TAGS
    │
    ▼
 3. Whitelist attributes:
-   - <a>: href (только http/https/mailto), rel, target
-   - <img>: src (только http/https/data:image), alt, width
+   - <a>: href (only http/https/mailto), rel, target
+   - <img>: src (only http/https/data:image), alt, width
    - <td>/<th>: colspan, rowspan
-   - data-*: удаляются (кроме data-block-type)
+   - data-*: removed (except data-block-type)
    │
    ▼
 4. URL sanitization:
-   - javascript: → удаляется
-   - data: → только data:image/*
-   - Relative URLs → resolve через base_url
+   - javascript: → removed
+   - data: → only data:image/*
+   - Relative URLs → resolved via base_url
    │
    ▼
 5. CSP-compatible output:
-   - Нет inline styles (если csp_nonce не задан)
-   - Нет inline event handlers
-   - img src → проверка Content-Security-Policy
+   - No inline styles (if csp_nonce is not set)
+   - No inline event handlers
+   - img src → checked against Content-Security-Policy
    │
    ▼
 Clean HTML → parse_html_to_document()
@@ -764,37 +764,37 @@ Clean HTML → parse_html_to_document()
 
 ### Round-trip Fidelity
 
-HTML export + HTML import должны сохранять структуру документа. Гарантии:
+HTML export + HTML import must preserve the document structure. Guarantees:
 
-| Элемент | Round-trip | Примечание |
+| Element | Round-trip | Note |
 |---------|-----------|------------|
 | Paragraph | Lossless | |
-| Heading (h1-h6) | Lossless | ID из slug генерируется заново |
+| Heading (h1-h6) | Lossless | The slug ID is regenerated |
 | Bold, Italic, etc. | Lossless | |
-| Links | Lossless | rel="noopener" добавляется автоматически |
-| Ordered/Bullet lists | Lossless | Вложенность сохраняется |
+| Links | Lossless | rel="noopener" is added automatically |
+| Ordered/Bullet lists | Lossless | Nesting is preserved |
 | Task lists | Lossless | `<input type="checkbox" disabled>` |
-| Code blocks | Lossless | Language class сохраняется |
+| Code blocks | Lossless | The language class is preserved |
 | Images | Lossless | src, alt, width |
 | Tables | Lossless | colspan, rowspan |
-| Callout | Lossless | Через `data-emoji` attribute |
-| Math | Lossless | Через `data-tex` attribute |
-| Block IDs | Опционально | Только если `include_metadata: true` |
+| Callout | Lossless | Via the `data-emoji` attribute |
+| Math | Lossless | Via the `data-tex` attribute |
+| Block IDs | Optional | Only if `include_metadata: true` |
 | Custom blocks | Best-effort | `data-block-type` attribute |
 
 ---
 
 ## Markdown Export/Import
 
-### Поддержка спецификаций
+### Supported specifications
 
-| Спецификация | Поддержка | Примеры |
+| Specification | Support | Examples |
 |-------------|-----------|---------|
-| **CommonMark** | Полная | Paragraphs, headings, lists, code, links, images, blockquotes, thematic breaks |
-| **GFM Tables** | Полная | Pipe tables с alignment |
-| **GFM Task Lists** | Полная | `- [x] done`, `- [ ] todo` |
-| **GFM Strikethrough** | Полная | `~~deleted~~` |
-| **GFM Autolinks** | Полная | `https://example.com` без `<>` |
+| **CommonMark** | Full | Paragraphs, headings, lists, code, links, images, blockquotes, thematic breaks |
+| **GFM Tables** | Full | Pipe tables with alignment |
+| **GFM Task Lists** | Full | `- [x] done`, `- [ ] todo` |
+| **GFM Strikethrough** | Full | `~~deleted~~` |
+| **GFM Autolinks** | Full | `https://example.com` without `<>` |
 | **GoTipe: Callout** | Custom extension | `> [!note] Title` (Obsidian-compatible) |
 | **GoTipe: Math** | Custom extension | `$$\LaTeX$$` (block), `$inline$` |
 | **GoTipe: Highlight** | Custom extension | `==highlighted==` |
@@ -1029,7 +1029,7 @@ fn render_md_span(buf: &mut String, span: &TextSpan) {
                 prefix.push('[');
                 suffix.insert_str(0, &format!("]({})", href));
             }
-            _ => {} // underline, superscript и др. — нет Markdown-эквивалента
+            _ => {} // underline, superscript, etc.: no Markdown equivalent
         }
     }
 
@@ -1080,7 +1080,7 @@ fn render_md_table(
 }
 
 fn md_escape(text: &str, marks: &[Mark]) -> String {
-    // Внутри code span — не экранируем
+    // Inside a code span: do not escape
     if marks.iter().any(|m| m.mark_type == "code") {
         return text.to_string();
     }
@@ -1109,7 +1109,7 @@ fn emoji_to_callout_type(emoji: &str) -> &str {
 
 ### Markdown Importer
 
-Парсинг через `pulldown-cmark` (CommonMark) с пост-обработкой GFM и custom extensions:
+Parsing goes through `pulldown-cmark` (CommonMark) with GFM post-processing and custom extensions:
 
 ```rust
 // crates/gotipe-export/src/markdown.rs (import)
@@ -1183,7 +1183,7 @@ impl Importer for MarkdownImporter {
                     builder.open_mark_with_attrs("link", [("href", href.to_string())]);
                 }
                 Event::End(Tag::Link(..)) => builder.close_mark("link"),
-                // ... остальные events
+                // ... remaining events
                 _ => {}
             }
         }
@@ -1205,11 +1205,11 @@ fn preprocess_custom_extensions(input: &str) -> String {
     let mut output = input.to_string();
 
     // 1. Callout blocks: > [!type] → <gotipe-callout type="...">
-    //    Обрабатывается отдельно в DocumentBuilder
+    // Handled separately in DocumentBuilder
 
-    // 2. Math blocks: $$ ... $$ → сохраняем как есть, парсим в builder
+    // 2. Math blocks: $$ ... $$ → keep as is, parse in the builder
 
-    // 3. Highlight: ==text== → сохраняем как есть, парсим в builder
+    // 3. Highlight: ==text== → keep as is, parse in the builder
 
     output
 }
@@ -1219,22 +1219,22 @@ fn preprocess_custom_extensions(input: &str) -> String {
 
 ## PDF Export (typst)
 
-### Почему typst
+### Why typst
 
-| Критерий | typst | wkhtmltopdf | Puppeteer/Chromium | printpdf |
+| Criterion | typst | wkhtmltopdf | Puppeteer/Chromium | printpdf |
 |----------|-------|-------------|--------------------|---------:|
-| **Запуск в WASM** | Да (native Rust) | Нет (требует Qt/WebKit binary) | Нет (требует Chromium) | Да (native Rust) |
-| **Размер binary (gzip)** | ~400KB (WASM) | ~30MB (system dep) | ~200MB (Chromium) | ~50KB |
-| **Скорость (10 страниц)** | ~80ms | ~2s | ~3-5s | ~200ms |
-| **Fonts** | OTF/TTF, font fallback, subsetting | System fonts | System fonts | Ручная загрузка, нет subsetting |
-| **Layout engine** | Полноценный (колонки, page breaks, headers/footers) | WebKit layout | Blink layout | Нет layout engine |
-| **Таблицы** | Да (native) | Да (CSS) | Да (CSS) | Ручное позиционирование |
-| **Math rendering** | Да (native LaTeX-like) | Да (MathJax) | Да (MathJax/KaTeX) | Нет |
-| **Images** | PNG, JPEG, SVG | Все web-форматы | Все web-форматы | PNG, JPEG |
-| **Server-side без X11** | Да | Нет (требует Xvfb) | Headless mode | Да |
-| **Лицензия** | Apache 2.0 | LGPL | Apache 2.0 | MIT |
+| **Runs in WASM** | Yes (native Rust) | No (needs a Qt/WebKit binary) | No (needs Chromium) | Yes (native Rust) |
+| **Binary size (gzip)** | ~400KB (WASM) | ~30MB (system dep) | ~200MB (Chromium) | ~50KB |
+| **Speed (10 pages)** | ~80ms | ~2s | ~3-5s | ~200ms |
+| **Fonts** | OTF/TTF, font fallback, subsetting | System fonts | System fonts | Manual loading, no subsetting |
+| **Layout engine** | Full (columns, page breaks, headers/footers) | WebKit layout | Blink layout | No layout engine |
+| **Tables** | Yes (native) | Yes (CSS) | Yes (CSS) | Manual positioning |
+| **Math rendering** | Yes (native LaTeX-like) | Yes (MathJax) | Yes (MathJax/KaTeX) | No |
+| **Images** | PNG, JPEG, SVG | All web formats | All web formats | PNG, JPEG |
+| **Server-side without X11** | Yes | No (needs Xvfb) | Headless mode | Yes |
+| **License** | Apache 2.0 | LGPL | Apache 2.0 | MIT |
 
-**Решение:** typst -- единственная библиотека, которая дает полноценный PDF layout engine, работает в WASM и весит <1MB. `printpdf` быстрее и легче, но не имеет layout engine (нет auto page breaks, нет tables, нет math). `wkhtmltopdf` и Puppeteer невозможно запустить в WASM/браузере.
+**Decision:** typst is the only library that provides a full PDF layout engine, runs in WASM and weighs <1MB. `printpdf` is faster and lighter but has no layout engine (no auto page breaks, no tables, no math). `wkhtmltopdf` and Puppeteer cannot run in WASM/the browser.
 
 ### PDF Exporter
 
@@ -1251,14 +1251,14 @@ pub struct PdfExporter {
     fonts: FontStore,
 }
 
-/// Настройки PDF
+/// PDF options
 #[derive(Debug, Clone)]
 pub struct PdfOptions {
-    /// Размер страницы
+    /// Page size
     pub page_size: PageSize,
-    /// Margins (top, right, bottom, left) в pt
+    /// Margins (top, right, bottom, left) in pt
     pub margins: (f64, f64, f64, f64),
-    /// Header text (шаблон: {title}, {page}, {pages})
+    /// Header text (template: {title}, {page}, {pages})
     pub header: Option<String>,
     /// Footer text
     pub footer: Option<String>,
@@ -1302,7 +1302,7 @@ impl PdfExporter {
         Ok(PdfExporter { fonts })
     }
 
-    /// Загрузить custom font из bytes
+    /// Load a custom font from bytes
     pub fn add_font(&mut self, name: &str, data: &[u8]) -> Result<(), ConvertError> {
         self.fonts.add(name, data)
             .map_err(|e| ConvertError::FontNotFound(e.to_string()))
@@ -1328,7 +1328,7 @@ impl Exporter for PdfExporter {
         doc: &Document,
         opts: &ExportOptions,
     ) -> Result<Vec<u8>, ConvertError> {
-        let pdf_opts = PdfOptions::default(); // или из opts.metadata
+        let pdf_opts = PdfOptions::default(); // or from opts.metadata
         self.render_pdf(doc, &pdf_opts, opts)
     }
 }
@@ -1495,57 +1495,57 @@ impl PdfExporter {
 
 ### Fonts
 
-Стратегия загрузки шрифтов:
+Font loading strategy:
 
 ```
 Browser (WASM):
   1. Bundled fonts: Noto Sans (Latin + Cyrillic subset) — ~200KB
-  2. Lazy load: дополнительные языки по document content detection
-  3. Custom fonts: через PdfExporter.add_font(name, bytes)
+  2. Lazy load: additional languages via document content detection
+  3. Custom fonts: via PdfExporter.add_font(name, bytes)
 
 Server (native):
   1. System fonts: /usr/share/fonts, ~/.fonts
-  2. Bundled fonts: embedded в binary
-  3. Custom fonts: через add_font() или config
-  4. Font subsetting: только используемые glyphs включаются в PDF
+  2. Bundled fonts: embedded in the binary
+  3. Custom fonts: via add_font() or config
+  4. Font subsetting: only the glyphs in use are included in the PDF
 ```
 
-| Шрифт | Назначение | Размер (subset, gzip) |
+| Font | Purpose | Size (subset, gzip) |
 |-------|-----------|----------------------|
 | Noto Sans | Body text (Latin, Cyrillic) | ~80KB |
 | Noto Sans CJK | CJK support | ~2MB (lazy) |
 | Noto Sans Arabic | Arabic script | ~120KB (lazy) |
 | JetBrains Mono | Code blocks | ~40KB |
 
-### Images в PDF
+### Images in PDF
 
 ```
-Image в Document
+Image in Document
      │
      ▼
 1. Resolve URL → bytes
    - data:image/* → decode base64
-   - https:// → fetch (server) / предзагрузка (browser)
-   - relative → resolve через base_url
+   - https:// → fetch (server) / preloaded (browser)
+   - relative → resolved via base_url
      │
      ▼
 2. Detect format (PNG, JPEG, SVG, WebP)
      │
      ▼
-3. WebP → конвертация в PNG (typst не поддерживает WebP)
-   SVG → растеризация или передача как есть
+3. WebP → converted to PNG (typst does not support WebP)
+   SVG → rasterized or passed through as is
      │
      ▼
-4. Embed в typst Document → PDF
+4. Embed into the typst Document → PDF
 ```
 
 ---
 
 ## DOCX Export/Import
 
-### Структура DOCX
+### DOCX structure
 
-DOCX -- ZIP-архив с XML-файлами:
+DOCX is a ZIP archive of XML files:
 
 ```
 document.docx (ZIP)
@@ -1553,14 +1553,14 @@ document.docx (ZIP)
 ├── _rels/
 │   └── .rels
 ├── word/
-│   ├── document.xml          ← основной контент
-│   ├── styles.xml            ← стили (heading, paragraph, etc.)
-│   ├── numbering.xml         ← нумерация списков
+│   ├── document.xml          ← main content
+│   ├── styles.xml            ← styles (heading, paragraph, etc.)
+│   ├── numbering.xml         ← list numbering
 │   ├── media/
 │   │   ├── image1.png        ← embedded images
 │   │   └── image2.jpeg
 │   └── _rels/
-│       └── document.xml.rels ← связи (images, hyperlinks)
+│       └── document.xml.rels ← relationships (images, hyperlinks)
 └── docProps/
     ├── app.xml
     └── core.xml              ← metadata (author, title, date)
@@ -1730,7 +1730,7 @@ impl DocxExporter {
                     };
                 }
 
-                // Links — добавляем как hyperlink
+                // Links: add as a hyperlink
                 if let Some(link_mark) = span.marks.iter().find(|m| m.mark_type == "link") {
                     let href = link_mark.attr_as_str("href").unwrap_or("");
                     let hyperlink = Hyperlink::new(href, HyperlinkType::External)
@@ -1802,11 +1802,11 @@ impl Exporter for PlainTextExporter {
 
 ## Notion Export Import
 
-Notion export = ZIP-архив с Markdown-файлами + CSV + metadata:
+Notion export is a ZIP archive of Markdown files + CSV + metadata:
 
 ```
 notion-export/
-├── Page Title abc123.md       ← Markdown с Notion-specific syntax
+├── Page Title abc123.md       ← Markdown with Notion-specific syntax
 ├── Subpage xyz789.md
 ├── Database abc.csv           ← Database views
 └── images/
@@ -1814,14 +1814,14 @@ notion-export/
     └── image2.jpeg
 ```
 
-Importer обрабатывает:
+Importer handles:
 
 | Notion-specific | GoTipe mapping |
 |-----------------|---------------|
 | `/toggle` blocks | `toggle` block type |
 | `/callout` | `callout` block type |
-| `/code` с language | `codeBlock` с `language` attr |
-| Inline database mentions | Link с placeholder text |
+| `/code` with language | `codeBlock` with a `language` attr |
+| Inline database mentions | Link with placeholder text |
 | `@mention` | Plain text (resolved) |
 | Nested pages (subpage links) | Link blocks |
 | CSV databases | Table blocks |
@@ -1831,7 +1831,7 @@ Importer обрабатывает:
 
 ## Google Docs Paste Import
 
-При paste из Google Docs браузер получает HTML с Google-specific markup. Importer очищает его:
+When pasting from Google Docs, the browser receives HTML with Google-specific markup. The importer cleans it up:
 
 ```
 Google Docs clipboard HTML
@@ -1844,8 +1844,8 @@ Google Docs clipboard HTML
      │
      ▼
 2. Cleanup Google-specific styles:
-   - Remove font-weight:normal на <b> (Google default)
-   - Remove font-style:normal на <i>
+   - Remove font-weight:normal on <b> (Google default)
+   - Remove font-style:normal on <i>
    - Normalize font-size → heading levels
    - Convert Google's color spans → highlight marks
      │
@@ -1870,17 +1870,17 @@ export type ExportFormat = 'html' | 'markdown' | 'json' | 'plaintext' | 'pdf' | 
 export type ImportFormat = 'html' | 'markdown' | 'json' | 'docx' | 'notion';
 
 export interface ExportOptions {
-  /** Inline styles вместо CSS classes */
+  /** Inline styles instead of CSS classes */
   inlineStyles?: boolean;
-  /** CSP nonce для style/script тегов */
+  /** CSP nonce for style/script tags */
   cspNonce?: string;
-  /** Base URL для relative paths */
+  /** Base URL for relative paths */
   baseUrl?: string;
-  /** Кастомные CSS classes */
+  /** Custom CSS classes */
   cssClasses?: Record<string, string>;
-  /** Syntax highlighting для code blocks */
+  /** Syntax highlighting for code blocks */
   highlightCode?: boolean;
-  /** Включить metadata (block IDs) */
+  /** Include metadata (block IDs) */
   includeMetadata?: boolean;
 }
 
@@ -1907,8 +1907,8 @@ export interface PdfOptions {
 // ─── Export Functions ────────────────────────────────────────
 
 /**
- * Экспорт документа в указанный формат.
- * HTML, Markdown, PlainText, JSON — синхронно через WASM.
+ * Exports a document to the given format.
+ * HTML, Markdown, PlainText, JSON: synchronous through WASM.
  * PDF, DOCX — async (lazy-load WASM module).
  */
 export async function exportDocument(
@@ -1940,7 +1940,7 @@ export async function exportDocument(
       const { PdfExporter } = await import('@gotipe/export-pdf');
       const exporter = new PdfExporter();
 
-      // Загрузка fonts если нужно
+      // Load fonts if needed
       if (options?.fontFamily) {
         const fontBytes = await loadFont(options.fontFamily);
         exporter.add_font(options.fontFamily, fontBytes);
@@ -1969,7 +1969,7 @@ export async function exportDocument(
 }
 
 /**
- * Импорт документа из строки/файла.
+ * Imports a document from a string/file.
  */
 export async function importDocument(
   editor: Editor,
@@ -2004,7 +2004,7 @@ export async function importDocument(
 // ─── Convenience Methods ─────────────────────────────────────
 
 /**
- * Скачать документ как файл.
+ * Downloads a document as a file.
  */
 export async function downloadDocument(
   editor: Editor,
@@ -2034,7 +2034,7 @@ export async function downloadDocument(
 }
 
 /**
- * Копировать документ в clipboard.
+ * Copies a document to the clipboard.
  */
 export async function copyToClipboard(
   editor: Editor,
@@ -2055,7 +2055,7 @@ export async function copyToClipboard(
 
 // ─── Editor Integration ──────────────────────────────────────
 
-// Эти методы добавляются к Editor через extension
+// These methods are added to Editor through an extension
 declare module './editor' {
   interface Editor {
     /** Export document */
@@ -2088,7 +2088,7 @@ function formatMimeType(format: ExportFormat): string {
 }
 ```
 
-### Использование в React
+### Usage in React
 
 ```tsx
 import { useEditor } from '@gotipe/react';
@@ -2152,7 +2152,7 @@ function ImportButton() {
 import init, { WasmEditor, PdfExporter, DocxExporter } from '@gotipe/wasm/node';
 import { readFile } from 'fs/promises';
 
-// Инициализация WASM — один раз при старте сервера
+// Initialize WASM: once, at server start
 let wasmReady = false;
 async function ensureWasm(): Promise<void> {
   if (wasmReady) return;
@@ -2210,7 +2210,7 @@ export async function exportDocument(req: ExportRequest): Promise<ExportResponse
     case 'pdf': {
       const exporter = new PdfExporter();
 
-      // Загрузка шрифтов на сервере
+      // Load fonts on the server
       const notoSans = await readFile('/usr/share/fonts/truetype/noto/NotoSans-Regular.ttf');
       const jetBrainsMono = await readFile('/usr/share/fonts/truetype/jetbrains/JetBrainsMono-Regular.ttf');
       exporter.add_font('Noto Sans', new Uint8Array(notoSans));
@@ -2310,7 +2310,7 @@ async fn handle_export(
 async fn main() -> std::io::Result<()> {
     let mut registry = ConverterRegistry::new();
 
-    // PDF exporter с fonts
+    // PDF exporter with fonts
     let mut pdf = PdfExporter::new().expect("Failed to init PDF exporter");
     pdf.add_font("Noto Sans", include_bytes!("../fonts/NotoSans-Regular.ttf"))
         .expect("Failed to load font");
@@ -2349,7 +2349,7 @@ import (
 	"unsafe"
 )
 
-// ExportPDF вызывает Rust gotipe-export через FFI
+// ExportPDF calls Rust gotipe-export through FFI
 func ExportPDF(documentJSON string, options string) ([]byte, error) {
 	cDoc := C.CString(documentJSON)
 	defer C.free(unsafe.Pointer(cDoc))
@@ -2367,7 +2367,7 @@ func ExportPDF(documentJSON string, options string) ([]byte, error) {
 	return C.GoBytes(unsafe.Pointer(result), C.int(outLen)), nil
 }
 
-// ExportHTML вызывает Rust gotipe-export через FFI
+// ExportHTML calls Rust gotipe-export through FFI
 func ExportHTML(documentJSON string) (string, error) {
 	cDoc := C.CString(documentJSON)
 	defer C.free(unsafe.Pointer(cDoc))
@@ -2382,7 +2382,7 @@ func ExportHTML(documentJSON string) (string, error) {
 }
 ```
 
-Rust C-API для FFI:
+Rust C-API for FFI:
 
 ```rust
 // crates/gotipe-export/src/ffi.rs
@@ -2446,21 +2446,21 @@ pub extern "C" fn gotipe_free(ptr: *mut std::ffi::c_void) {
 
 ## Bundle Sizes
 
-| Converter | WASM size (gzip) | Загрузка | Включён в core bundle |
+| Converter | WASM size (gzip) | Loading | Included in core bundle |
 |-----------|-----------------|----------|----------------------|
-| HTML exporter + importer | ~8KB | Eager | Да |
-| Markdown exporter + importer | ~12KB | Eager | Да |
-| Plain Text exporter | ~3KB | Eager | Да |
-| JSON (serde) | ~2KB | Eager | Да |
+| HTML exporter + importer | ~8KB | Eager | Yes |
+| Markdown exporter + importer | ~12KB | Eager | Yes |
+| Plain Text exporter | ~3KB | Eager | Yes |
+| JSON (serde) | ~2KB | Eager | Yes |
 | **Core export bundle** | **~25KB** | | |
-| PDF exporter (typst) | ~400KB | Lazy (`import()`) | Нет |
-| DOCX exporter + importer | ~60KB | Lazy (`import()`) | Нет |
-| Notion importer | ~15KB | Lazy (`import()`) | Нет |
-| Google Docs paste handler | ~5KB | Lazy (on paste event) | Нет |
+| PDF exporter (typst) | ~400KB | Lazy (`import()`) | No |
+| DOCX exporter + importer | ~60KB | Lazy (`import()`) | No |
+| Notion importer | ~15KB | Lazy (`import()`) | No |
+| Google Docs paste handler | ~5KB | Lazy (on paste event) | No |
 
-**Стратегия:** core bundle содержит только текстовые конвертеры (~25KB). PDF и DOCX загружаются по требованию через dynamic `import()`. Пользователь не платит за PDF, если не экспортирует в PDF.
+**Strategy:** the core bundle contains only the text converters (~25KB). PDF and DOCX are loaded on demand through dynamic `import()`. Users don't pay for PDF unless they export to PDF.
 
-Подробнее о WASM binary sizes в [01-architecture.md](01-architecture.md).
+For more on WASM binary sizes see [01-architecture.md](01-architecture.md).
 
 ---
 
@@ -2507,7 +2507,7 @@ docx-rs = { version = "0.4", optional = true }
 csv = { version = "1.3", optional = true }
 ```
 
-Feature flags позволяют собрать WASM binary без PDF/DOCX для минимального bundle:
+Feature flags let you build a WASM binary without PDF/DOCX for a minimal bundle:
 
 ```bash
 # Core bundle (HTML + Markdown + PlainText): ~25KB gzip
@@ -2516,16 +2516,16 @@ wasm-pack build crates/gotipe-wasm --release --features "export-core"
 # Full bundle (+ PDF + DOCX): ~485KB gzip
 wasm-pack build crates/gotipe-wasm --release --features "export-full"
 
-# PDF-only add-on (отдельный WASM module для lazy load)
+# PDF-only add-on (separate WASM module for lazy load)
 wasm-pack build crates/gotipe-export-pdf --release --features "pdf"
 ```
 
 ---
 
-## Связанные документы
+## Related documents
 
 - [03-editor-core.md](03-editor-core.md) -- Document model, serialization, server-side usage
-- [10-cloud.md](10-cloud.md) -- Export service в GoTipe Cloud
+- [10-cloud.md](10-cloud.md) -- Export service in GoTipe Cloud
 - [01-architecture.md](01-architecture.md) -- WASM binary sizes, crate structure
-- [05-extensions.md](05-extensions.md) -- Extension system (custom export formats как extensions)
-- [04-block-editor.md](04-block-editor.md) -- Block types, которые экспортируются
+- [05-extensions.md](05-extensions.md) -- Extension system (custom export formats as extensions)
+- [04-block-editor.md](04-block-editor.md) -- Block types that get exported

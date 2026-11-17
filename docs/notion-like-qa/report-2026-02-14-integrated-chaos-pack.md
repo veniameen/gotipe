@@ -35,5 +35,5 @@
 
 ## Outcome
 
-- Закрыт риск mixed nested chains (`DnD + clipboard + marks + slash`) в одном сценарии.
-- Новый chaos-pack не внёс регрессий в существующие stress/policy suite.
+- Closed the risk of mixed nested chains (`DnD + clipboard + marks + slash`) in a single scenario.
+- The new chaos pack introduced no regressions in the existing stress/policy suites.

@@ -1,17 +1,17 @@
-# GoTipe — Стратегия тестирования
+# GoTipe — Testing Strategy
 
-> **Историческая спецификация, не руководство по текущему API.** Примеры, сроки,
-> сравнения производительности, коммерческие условия и обещания ниже не подтверждают
-> реализацию или доступность сервиса. Актуально: [контракты](development/editor-contracts.md),
-> [карта кода](development/code-map.md), [проверки](development/testing.md),
-> [план выпуска](22-release-readiness.md). Лицензии определяются `LICENSE` и manifest
-> каждого пакета, а не этим документом.
+> **Historical specification, not a guide to the current API.** The examples, timelines,
+> performance comparisons, commercial terms, and promises below do not confirm an
+> implementation or service availability. Current: [contracts](development/editor-contracts.md),
+> [code map](development/code-map.md), [checks](development/testing.md),
+> [release plan](22-release-readiness.md). Licenses are defined by `LICENSE` and the manifest
+> of each package, not by this document.
 
-> Многоуровневое тестирование: Rust (unit + property + benchmarks) → WASM (integration) → TypeScript (unit + E2E) → Go (unit + integration + testcontainers). Каждый уровень ловит свои классы багов.
+> Multi-level testing: Rust (unit + property + benchmarks) → WASM (integration) → TypeScript (unit + E2E) → Go (unit + integration + testcontainers). Each level catches its own classes of bugs.
 
 ---
 
-## Обзор
+## Overview
 
 ```
 ┌──────────────────────────────────────────────────────────────────┐
@@ -47,7 +47,7 @@
 
 ### Unit Tests (`cargo test`)
 
-Каждый crate содержит `#[cfg(test)]` модули рядом с реализацией.
+Each crate contains `#[cfg(test)]` modules next to the implementation.
 
 ```rust
 // crates/gotipe-core/src/transform.rs
@@ -94,21 +94,21 @@ mod tests {
 }
 ```
 
-**Паттерны:**
-- Test helpers (`test_doc_paragraph`, `test_doc_three_paragraphs`) — в `crates/gotipe-core/src/test_utils.rs`
+**Patterns:**
+- Test helpers (`test_doc_paragraph`, `test_doc_three_paragraphs`) — in `crates/gotipe-core/src/test_utils.rs`
 - Naming convention: `fn <action>_<expected_result>`
-- Каждый `Step` variant имеет минимум 3 теста: happy path, edge case, error case
+- Each `Step` variant has at least 3 tests: happy path, edge case, error case
 
 ### Property-Based Tests (proptest)
 
-Для CRDT и transforms — fuzzing через генерацию случайных документов и операций:
+For CRDT and transforms — fuzzing by generating random documents and operations:
 
 ```rust
 // crates/gotipe-crdt/tests/convergence.rs
 
 use proptest::prelude::*;
 
-/// Генератор случайных CRDT-операций
+/// Generator of random CRDT operations
 fn arb_crdt_operation() -> impl Strategy<Value = CrdtOperation> {
     prop_oneof![
         arb_insert_text(),
@@ -121,8 +121,8 @@ fn arb_crdt_operation() -> impl Strategy<Value = CrdtOperation> {
 }
 
 proptest! {
-    /// Два peer'а, применяющие операции в разном порядке,
-    /// ДОЛЖНЫ прийти к одному и тому же документу (convergence)
+    /// Two peers applying operations in a different order
+    /// MUST arrive at the same document (convergence)
     #[test]
     fn crdt_convergence(
         ops_a in prop::collection::vec(arb_crdt_operation(), 1..50),
@@ -170,7 +170,7 @@ proptest! {
     ) {
         let schema = DefaultSchema::new();
         let result = mutation.apply(doc);
-        // Если мутация применилась, результат должен быть valid
+        // If the mutation was applied, the result must be valid
         if let Ok(new_doc) = result {
             prop_assert!(schema.validate(&new_doc).is_ok());
         }
@@ -178,11 +178,11 @@ proptest! {
 }
 ```
 
-**Запуск:**
+**Running:**
 ```bash
-# Property tests отмечены #[ignore] для скорости CI
-cargo test --all -- --ignored           # Все property tests
-PROPTEST_CASES=10000 cargo test crdt    # Больше итераций для CRDT
+# Property tests are marked #[ignore] to keep CI fast
+cargo test --all -- --ignored           # All property tests
+PROPTEST_CASES=10000 cargo test crdt    # More iterations for CRDT
 ```
 
 ### Benchmarks (criterion)
@@ -248,16 +248,16 @@ criterion_group!(benches, bench_parse_document, bench_insert_text, bench_crdt_me
 criterion_main!(benches);
 ```
 
-**Запуск и CI:**
+**Running and CI:**
 ```bash
-cargo bench                             # Полный benchmark suite
-cargo bench -p gotipe-core              # Только core crate
-cargo bench --no-run                    # Компиляция (CI — проверяет что собирается)
+cargo bench                             # Full benchmark suite
+cargo bench -p gotipe-core              # Core crate only
+cargo bench --no-run                    # Compile only (CI checks that it builds)
 ```
 
-**Performance Budget (CI fail если превышен):**
+**Performance Budget (CI fails if exceeded):**
 
-| Операция | Budget | Критерий провала |
+| Operation | Budget | Failure criterion |
 |----------|--------|-----------------|
 | Parse 10K blocks | <30ms | >50ms |
 | 1000 sequential inserts | <25ms | >40ms |
@@ -438,7 +438,7 @@ func TestValidateAPIKeyFormat(t *testing.T) {
 
 ### Integration Tests (testcontainers)
 
-Настоящие PostgreSQL и Valkey в Docker контейнерах, поднимаемых для тестов:
+Real PostgreSQL and Valkey in Docker containers, started for the tests:
 
 ```go
 // apps/cloud/internal/storage/postgres_test.go
@@ -587,7 +587,7 @@ func TestCreateDocumentUnauthorized(t *testing.T) {
 
 ## E2E Tests (Playwright)
 
-### Настройка
+### Setup
 
 ```typescript
 // apps/playground/playwright.config.ts
@@ -620,7 +620,7 @@ export default defineConfig({
 });
 ```
 
-### Тесты
+### Tests
 
 ```typescript
 // apps/playground/tests/e2e/editor.spec.ts
@@ -931,13 +931,13 @@ test.describe('Dark mode', () => {
 
 ## CI Pipeline
 
-### Полный CI workflow
+### Full CI workflow
 
 ```yaml
-# .github/workflows/ci.yml (дополнение)
+# .github/workflows/ci.yml (addition)
 
 jobs:
-  # ... rust, wasm, typescript, go jobs (см. 11-monorepo.md) ...
+  # ... rust, wasm, typescript, go jobs (see 11-monorepo.md) ...
 
   coverage:
     needs: [rust, typescript, go]
@@ -983,15 +983,15 @@ jobs:
 | TypeScript (framework adapters) | 75% | 60% |
 | Go (cloud API) | 80% | 70% |
 | Go (sync server) | 75% | 65% |
-| E2E (Playwright) | N/A | Все тесты проходят |
+| E2E (Playwright) | N/A | All tests pass |
 
 ---
 
-## Тестирование специфичных компонентов
+## Testing specific components
 
 ### CRDT Convergence
 
-Свойство: N peers, применяющих операции в произвольном порядке, ДОЛЖНЫ сходиться к одному документу.
+Property: N peers applying operations in an arbitrary order MUST converge to the same document.
 
 ```
 Peer A: [op1, op2, op3]
@@ -1002,14 +1002,14 @@ After full sync:
   doc_A == doc_B == doc_C  ← MUST be true
 ```
 
-Тестируется через:
-1. **Unit tests** — фиксированные сценарии (concurrent insert, concurrent delete, move+edit)
-2. **Property tests** — proptest с random операциями (10K+ итераций)
+Tested through:
+1. **Unit tests** — fixed scenarios (concurrent insert, concurrent delete, move+edit)
+2. **Property tests** — proptest with random operations (10K+ iterations)
 3. **Simulation tests** — N peers, random network delays, random operation batches
 
 ### Schema Validation Soundness
 
-Свойство: невалидный документ НИКОГДА не может быть создан через API.
+Property: an invalid document can NEVER be created through the API.
 
 ```
 For any sequence of valid transactions T1, T2, ..., Tn:
@@ -1018,37 +1018,37 @@ For any sequence of valid transactions T1, T2, ..., Tn:
 
 ### Export Roundtrip
 
-Свойство: Document → Export → Import → Document = identity (для lossless форматов).
+Property: Document → Export → Import → Document = identity (for lossless formats).
 
-| Формат | Roundtrip fidelity | Потери |
+| Format | Roundtrip fidelity | Losses |
 |--------|:------------------:|--------|
-| JSON | 100% | Нет |
-| HTML | 95%+ | Некоторые block-level attrs |
+| JSON | 100% | None |
+| HTML | 95%+ | Some block-level attrs |
 | Markdown | 90%+ | Inline styles, complex tables |
 | PDF | N/A | One-way export |
 | DOCX | N/A | One-way export |
 
 ---
 
-## Локальная разработка
+## Local development
 
 ```bash
-# Запуск всех тестов
+# Run all tests
 pnpm test                                  # TS tests (vitest)
 cargo test --all                           # Rust tests
 cd apps/cloud && go test ./...             # Go tests
 
-# Watch mode (разработка)
+# Watch mode (development)
 pnpm --filter @gotipe/core test -- --watch
 cargo watch -x "test -p gotipe-core"       # cargo-watch
 
-# Конкретный тест
-cargo test -p gotipe-crdt convergence      # По имени
+# A specific test
+cargo test -p gotipe-crdt convergence      # By name
 pnpm --filter @gotipe/core test -- -t "toggles bold"
 
 # E2E
 pnpm --filter @gotipe/playground test:e2e
-pnpm --filter @gotipe/playground test:e2e -- --headed  # С визуализацией
+pnpm --filter @gotipe/playground test:e2e -- --headed  # With visualization
 
 # Coverage
 cargo tarpaulin --all --out html           # Rust coverage → tarpaulin-report.html
@@ -1058,7 +1058,7 @@ cd apps/cloud && go test ./... -coverprofile=cover.out && go tool cover -html=co
 
 ---
 
-## Связанные документы
+## Related documents
 
 - [01-architecture.md](01-architecture.md) — Rust crate structure, performance targets
 - [02-collaboration.md](02-collaboration.md) — CRDT engine, sync protocol (convergence requirements)

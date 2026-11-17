@@ -1,27 +1,27 @@
-# GoTipe — Структура репозитория
+# GoTipe — Repository Structure
 
-> **PDF: историческое предложение.** Упоминания Typst/docx-rs, оценки размеров и
-> возможностей ниже не описывают текущий backend. GoTipe владеет PDF layout и
-> OOXML rendering; актуальны [контракт экспорта](development/export-contract.md)
-> и [политика зависимостей](development/dependencies.md).
+> **PDF: historical proposal.** The mentions of Typst/docx-rs, and the size and capability
+> estimates below, do not describe the current backend. GoTipe owns PDF layout and
+> OOXML rendering; the current references are the [export contract](development/export-contract.md)
+> and the [dependency policy](development/dependencies.md).
 
-> **Историческая спецификация, не руководство по текущему API.** Примеры, сроки,
-> сравнения производительности, коммерческие условия и обещания ниже не подтверждают
-> реализацию или доступность сервиса. Актуально: [контракты](development/editor-contracts.md),
-> [карта кода](development/code-map.md), [проверки](development/testing.md),
-> [план выпуска](22-release-readiness.md). Лицензии определяются `LICENSE` и manifest
-> каждого пакета, а не этим документом.
+> **Historical specification, not a guide to the current API.** The examples, timelines,
+> performance comparisons, commercial terms and promises below do not confirm an
+> implementation or the availability of the service. Current references: [contracts](development/editor-contracts.md),
+> [code map](development/code-map.md), [checks](development/testing.md),
+> [release plan](22-release-readiness.md). Licenses are defined by `LICENSE` and the manifest
+> of each package, not by this document.
 
-## Обзор
+## Overview
 
-GoTipe — monorepo с Rust workspace (crates/) и TypeScript packages (packages/). Build tooling: Cargo для Rust, Turborepo для TypeScript, wasm-pack для WASM bridge.
+GoTipe is a monorepo with a Rust workspace (crates/) and TypeScript packages (packages/). Build tooling: Cargo for Rust, Turborepo for TypeScript, wasm-pack for the WASM bridge.
 
 ```
 gotipe/
 ├── .github/
 │   └── workflows/
 │       ├── ci.yml                # PR checks: lint, test, build
-│       ├── release.yml           # npm publish (crates не публикуются)
+│       ├── release.yml           # npm publish (crates are not published)
 │       └── wasm-build.yml        # WASM build + size check
 │
 ├── crates/                       # Rust workspace
@@ -45,7 +45,7 @@ gotipe/
 │   ├── ai/                       # @gotipe/ai — AI integration layer
 │   ├── export/                   # @gotipe/export — JS export API
 │   │
-│   │ # ── Commercial (лицензия) ──────────────────────
+│   │ # ── Commercial (license) ──────────────────────
 │   ├── block-editor/             # @gotipe/block-editor — Notion-like React UI
 │   │   ├── src/
 │   │   │   ├── editor.tsx        # <BlockEditor> main component
@@ -254,7 +254,7 @@ packages:
 }
 ```
 
-### Package Structure (каждый TS package)
+### Package Structure (each TS package)
 
 ```
 packages/core/
@@ -279,7 +279,7 @@ packages/core/
 └── vitest.config.ts
 ```
 
-### tsup.config.ts (build config, каждый пакет)
+### tsup.config.ts (build config, each package)
 
 ```typescript
 // packages/core/tsup.config.ts
@@ -331,7 +331,7 @@ export default defineConfig({
 | @gotipe/solid | ~5KB | @gotipe/core, solid-js >=1.8 | MIT |
 | @gotipe/collaboration | ~10KB | @gotipe/core | MIT |
 | @gotipe/ai | ~5KB | @gotipe/core | MIT |
-| @gotipe/export | ~3KB (без WASM lazy) | @gotipe/core, @gotipe/wasm | MIT |
+| @gotipe/export | ~3KB (without WASM lazy) | @gotipe/core, @gotipe/wasm | MIT |
 | @gotipe/block-editor | ~25KB | @gotipe/react, @gotipe/theme | Commercial |
 | @gotipe/block-editor-vue | ~22KB | @gotipe/vue, @gotipe/theme | Commercial |
 | @gotipe/ai-ui | ~8KB | @gotipe/ai, @gotipe/react | Commercial |
@@ -385,7 +385,7 @@ apps/playground/
 
 ### Documentation Site (Mintlify)
 
-Hosted на Mintlify (docs.gotipe.com). Автодеплой через GitHub integration. API Reference автогенерируется из OpenAPI spec.
+Hosted on Mintlify (docs.gotipe.com). Auto-deploy via the GitHub integration. The API Reference is auto-generated from the OpenAPI spec.
 
 ```
 docs-site/
@@ -836,10 +836,10 @@ CMD ["serve"]
 ### Vercel: Landing Page (gotipe.com)
 
 ```
-apps/landing/ подключен как Vercel project.
+apps/landing/ is connected as a Vercel project.
 
-Push to main (paths: apps/landing/**, packages/**) → Vercel автодеплой
-  Vercel turbo-ignore скипает билд если app не изменился
+Push to main (paths: apps/landing/**, packages/**) → Vercel auto-deploy
+  Vercel turbo-ignore skips the build if the app has not changed
 
 PR → Vercel preview deployments (automatic)
 ```
@@ -847,8 +847,8 @@ PR → Vercel preview deployments (automatic)
 ### Mintlify: Documentation (docs.gotipe.com)
 
 ```
-Push to main (paths: docs-site/**) → Mintlify автодеплой
-  OpenAPI spec из apps/cloud/api/openapi.yaml → API Reference автогенерация
+Push to main (paths: docs-site/**) → Mintlify auto-deploy
+  OpenAPI spec from apps/cloud/api/openapi.yaml → API Reference auto-generation
 ```
 
 ### GitHub Actions: Infrastructure Deploy
@@ -866,7 +866,7 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    environment: production  # requires approve в GitHub UI
+    environment: production  # requires approval in the GitHub UI
     steps:
       - uses: actions/checkout@v4
       - name: Deploy infrastructure
@@ -885,8 +885,8 @@ jobs:
 
 ### Deployment Flow
 
-> Исторический план. 2026-11-17 владелец оставил Cloud только локальным: `deploy-cloud.yml` и
-> `deploy-infra.yml` удалены; сайт собирается в GitHub Actions и выкладывается на Cloudflare Pages
+> Historical plan. On 2026-11-17 the owner kept Cloud local-only: `deploy-cloud.yml` and
+> `deploy-infra.yml` were removed; the site is built in GitHub Actions and published to Cloudflare Pages
 > (`deploy-site.yml`).
 
 ```
@@ -895,37 +895,37 @@ git push to main
   ├── apps/cloud/** → GitHub Actions (deploy-cloud.yml)
   │     1. go test → docker build → ghcr.io/gotipe/cloud-api:sha
   │     2. ssh server "bash infra/scripts/deploy.sh $SHA"
-  │        → migrate up (напрямую к Postgres) → zero-downtime deploy → health check
+  │        → migrate up (directly against Postgres) → zero-downtime deploy → health check
   │
-  ├── apps/landing/** или packages/** → Vercel автодеплой
-  │     turbo-ignore скипает билд если app не затронут
+  ├── apps/landing/** or packages/** → Vercel auto-deploy
+  │     turbo-ignore skips the build if the app is not affected
   │     PR → preview deployment
   │
-  ├── docs-site/** → Mintlify автодеплой
+  ├── docs-site/** → Mintlify auto-deploy
   │
   ├── infra/** → GitHub Actions (deploy-infra.yml)
-  │     environment: production (requires approve в GitHub UI)
+  │     environment: production (requires approval in the GitHub UI)
   │     ssh server "git pull && docker compose up -d"
   │
   ├── crates/** → GitHub Actions CI (rust + wasm jobs)
   │
-  └── docs/** → Ничего (design docs, не деплоятся)
+  └── docs/** → Nothing (design docs, not deployed)
 ```
 
-### Новый сервер (полная автоматизация)
+### New Server (full automation)
 
 ```
 scp -r infra/ deploy@NEW_IP:/opt/gotipe/
 ssh deploy@NEW_IP "bash /opt/gotipe/scripts/setup-server.sh"
   → Docker, firewall, deploy user
-  → SSH ключ + GitHub авторизация
-  → GitHub Secrets обновлены (IP + SSH key)
-  → Репа склонирована
-  → Все сервисы запущены (только Go Cloud — landing на Vercel, docs на Mintlify)
-  → Бэкапы настроены (pgBackRest → R2)
-  → Автодеплой работает
+  → SSH key + GitHub authorization
+  → GitHub Secrets updated (IP + SSH key)
+  → Repo cloned
+  → All services started (Go Cloud only; landing is on Vercel, docs on Mintlify)
+  → Backups configured (pgBackRest → R2)
+  → Auto-deploy works
 
-Обновить DNS в Cloudflare → новый IP
+Update DNS in Cloudflare → new IP
 ```
 
 ---
@@ -1020,9 +1020,9 @@ cd apps/cloud && go test -race ./...
 
 ---
 
-## Связанные документы
+## Related Documents
 
 - [01-architecture.md](01-architecture.md) — crate structure, package dependencies
 - [03-editor-core.md](03-editor-core.md) — Rust crate details, WASM build config
 - [10-cloud.md](10-cloud.md) — Go cloud app structure
-- [12-release-plan.md](12-release-plan.md) — план реализации и релиза
+- [12-release-plan.md](12-release-plan.md) — implementation and release plan

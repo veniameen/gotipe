@@ -1,20 +1,20 @@
 # GoTipe — Editor Core (Rust/WASM)
 
-> **PDF: историческое предложение.** Упоминания Typst/docx-rs, оценки размеров и
-> возможностей ниже не описывают текущий backend. GoTipe владеет PDF layout и
-> OOXML rendering; актуальны [контракт экспорта](development/export-contract.md)
-> и [политика зависимостей](development/dependencies.md).
+> **PDF: historical proposal.** The mentions of Typst/docx-rs and the size and capability
+> estimates below do not describe the current backend. GoTipe owns PDF layout and
+> OOXML rendering; see the [export contract](development/export-contract.md)
+> and the [dependency policy](development/dependencies.md) for what is current.
 
-> **Историческая спецификация, не руководство по текущему API.** Примеры, сроки,
-> сравнения производительности, коммерческие условия и обещания ниже не подтверждают
-> реализацию или доступность сервиса. Актуально: [контракты](development/editor-contracts.md),
-> [карта кода](development/code-map.md), [проверки](development/testing.md),
-> [план выпуска](22-release-readiness.md). Лицензии определяются `LICENSE` и manifest
-> каждого пакета, а не этим документом.
+> **Historical specification, not a guide to the current API.** The examples, timelines,
+> performance comparisons, commercial terms and promises below do not confirm an
+> implementation or service availability. Current: [contracts](development/editor-contracts.md),
+> [code map](development/code-map.md), [checks](development/testing.md),
+> [release plan](22-release-readiness.md). Licenses are defined by `LICENSE` and each
+> package's manifest, not by this document.
 
-## Обзор
+## Overview
 
-Editor Core — Rust crate'ы, содержащие всю бизнес-логику редактора: document model, schema engine, transforms, commands, history, serialization. Компилируется в WebAssembly для браузера и работает нативно на сервере.
+Editor Core is the set of Rust crates holding all of the editor's business logic: document model, schema engine, transforms, commands, history, serialization. It compiles to WebAssembly for the browser and runs natively on the server.
 
 ```
 ┌─────────────────────────────────────────────────────────┐
@@ -69,7 +69,7 @@ thiserror = "2.0"
 wasm-bindgen = "0.2"
 ```
 
-### Зависимости между crate'ами
+### Dependencies between crates
 
 ```
 gotipe-schema ◄──── gotipe-core ◄──── gotipe-wasm
@@ -97,7 +97,7 @@ gotipe-schema ◄──── gotipe-core ◄──── gotipe-wasm
 
 ### Schema DSL
 
-Schema определяет допустимые node types, mark types и правила валидации.
+Schema defines the allowed node types, mark types and validation rules.
 
 ```rust
 // crates/gotipe-schema/src/lib.rs
@@ -105,67 +105,67 @@ Schema определяет допустимые node types, mark types и пр�
 use serde::{Serialize, Deserialize};
 use std::collections::HashMap;
 
-/// Schema — набор правил для валидации документа
+/// Schema: a set of rules for validating a document
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Schema {
     pub nodes: HashMap<String, NodeSpec>,
     pub marks: HashMap<String, MarkSpec>,
 }
 
-/// NodeSpec — определение типа блока
+/// NodeSpec: definition of a block type
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct NodeSpec {
-    /// Имя типа (например "paragraph", "heading")
+    /// Type name (e.g. "paragraph", "heading")
     pub name: String,
 
-    /// Группы, к которым принадлежит node (например "block", "inline")
+    /// Groups this node belongs to (e.g. "block", "inline")
     pub group: Vec<String>,
 
-    /// Какой контент допускается
+    /// Which content is allowed
     pub content: ContentRule,
 
-    /// Атрибуты с default values и validation
+    /// Attributes with default values and validation
     pub attrs: HashMap<String, AttrSpec>,
 
-    /// Может ли быть top-level блоком
+    /// Whether it can be a top-level block
     pub top_level: bool,
 
-    /// Допускает ли inline marks
+    /// Whether it allows inline marks
     pub marks_allowed: MarksRule,
 
-    /// Является ли leaf node (без children)
+    /// Whether it is a leaf node (no children)
     pub leaf: bool,
 
-    /// Может ли содержать nested blocks (children)
+    /// Whether it can contain nested blocks (children)
     pub allows_children: bool,
 
-    /// Допустимые типы children
+    /// Allowed child types
     pub child_types: Option<Vec<String>>,
 }
 
-/// Правило для content
+/// Rule for content
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum ContentRule {
     /// Rich text (TextSpan[])
     RichText,
-    /// Raw text (код, формулы)
+    /// Raw text (code, formulas)
     RawText,
     /// No content (divider, image)
     Empty,
 }
 
-/// Правило для marks
+/// Rule for marks
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum MarksRule {
-    /// Все marks допускаются
+    /// All marks are allowed
     All,
-    /// Конкретный набор marks
+    /// A specific set of marks
     Only(Vec<String>),
-    /// Marks запрещены
+    /// Marks are forbidden
     None,
 }
 
-/// Атрибут с типом и дефолтом
+/// Attribute with a type and a default
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AttrSpec {
     pub attr_type: AttrType,
@@ -181,15 +181,15 @@ pub enum AttrType {
     Enum(Vec<String>),
 }
 
-/// MarkSpec — определение inline formatting
+/// MarkSpec: definition of inline formatting
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct MarkSpec {
     pub name: String,
-    /// Может ли mark пересекаться с другими marks этого типа
+    /// Whether the mark can overlap with other marks of this type
     pub exclusive_group: Option<String>,
-    /// Атрибуты (например href для link)
+    /// Attributes (e.g. href for link)
     pub attrs: HashMap<String, AttrSpec>,
-    /// Приоритет рендеринга (порядок вложенности в HTML)
+    /// Rendering priority (nesting order in HTML)
     pub rank: u32,
 }
 ```
@@ -200,7 +200,7 @@ pub struct MarkSpec {
 // crates/gotipe-schema/src/defaults.rs
 
 impl Schema {
-    /// Стандартная schema с Notion-like block types
+    /// Default schema with Notion-like block types
     pub fn default_block_editor() -> Self {
         let mut nodes = HashMap::new();
         let mut marks = HashMap::new();
@@ -835,7 +835,7 @@ pub enum ValidationError {
 
 ## Transforms
 
-Каждый `Step` — атомарная трансформация документа. Steps composable: Transaction = Vec<Step>.
+Each `Step` is an atomic document transformation. Steps are composable: Transaction = Vec<Step>.
 
 ### Step Implementations
 
@@ -1036,7 +1036,7 @@ fn insert_text_at(
 
 ## Commands
 
-Полный список built-in commands — high-level operations, которые создают Transactions.
+The full list of built-in commands: high-level operations that create Transactions.
 
 ```rust
 // crates/gotipe-core/src/command.rs
@@ -1088,7 +1088,7 @@ pub mod commands {
 
 ## History (Undo/Redo)
 
-Undo/Redo реализован через CRDT history, а не отдельный command stack. Это даёт корректный undo в collaborative editing.
+Undo/Redo is implemented through CRDT history rather than a separate command stack. This gives correct undo in collaborative editing.
 
 ```rust
 // crates/gotipe-crdt/src/history.rs
@@ -1194,7 +1194,7 @@ impl CrdtHistory {
 | Plain Text | → | `gotipe-export` | Clipboard, search indexing |
 | CRDT Binary | ↔ | `gotipe-crdt` | Sync protocol |
 
-Детальная документация по export/import в [08-export-import.md](08-export-import.md).
+Detailed export/import documentation is in [08-export-import.md](08-export-import.md).
 
 ---
 
@@ -1380,11 +1380,11 @@ criterion_main!(benches);
 
 ---
 
-## Связанные документы
+## Related documents
 
-- [01-architecture.md](01-architecture.md) — общая архитектура, crate structure overview
-- [02-collaboration.md](02-collaboration.md) — CRDT engine подробно
+- [01-architecture.md](01-architecture.md) — overall architecture, crate structure overview
+- [02-collaboration.md](02-collaboration.md) — CRDT engine in detail
 - [04-block-editor.md](04-block-editor.md) — block types, UX
 - [05-extensions.md](05-extensions.md) — extension API, built-in extensions
-- [08-export-import.md](08-export-import.md) — serialization подробно
+- [08-export-import.md](08-export-import.md) — serialization in detail
 - [11-monorepo.md](11-monorepo.md) — build tooling, wasm-pack

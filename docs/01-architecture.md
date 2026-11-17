@@ -1,18 +1,18 @@
-# GoTipe — Архитектура
+# GoTipe — Architecture
 
-> **PDF: историческое предложение.** Упоминания Typst/docx-rs, оценки размеров и
-> возможностей ниже не описывают текущий backend. GoTipe владеет PDF layout и
-> OOXML rendering; актуальны [контракт экспорта](development/export-contract.md)
-> и [политика зависимостей](development/dependencies.md).
+> **PDF: historical proposal.** The mentions of Typst/docx-rs and the size and capability
+> estimates below do not describe the current backend. GoTipe owns PDF layout and
+> OOXML rendering; the current references are the [export contract](development/export-contract.md)
+> and the [dependency policy](development/dependencies.md).
 
-> **Историческая спецификация, не руководство по текущему API.** Примеры, сроки,
-> сравнения производительности, коммерческие условия и обещания ниже не подтверждают
-> реализацию или доступность сервиса. Актуально: [контракты](development/editor-contracts.md),
-> [карта кода](development/code-map.md), [проверки](development/testing.md),
-> [план выпуска](22-release-readiness.md). Лицензии определяются `LICENSE` и manifest
-> каждого пакета, а не этим документом.
+> **Historical specification, not a guide to the current API.** The examples, schedules,
+> performance comparisons, commercial terms and promises below do not confirm an
+> implementation or service availability. Current: [contracts](development/editor-contracts.md),
+> [code map](development/code-map.md), [checks](development/testing.md),
+> [release plan](22-release-readiness.md). Licenses are defined by `LICENSE` and the manifest
+> of each package, not by this document.
 
-## Обзор системы
+## System overview
 
 ```
 ┌─────────────────────────────────────────────────────────────────────┐
@@ -78,21 +78,21 @@
 
 ## Rust/WASM Core
 
-### Почему Rust
+### Why Rust
 
-| Аспект | Rust/WASM | JavaScript | Go/WASM |
+| Aspect | Rust/WASM | JavaScript | Go/WASM |
 |--------|-----------|------------|---------|
-| **Скорость парсинга** | ~10-50x быстрее JS на tree operations | Baseline | ~2-5x быстрее JS, но WASM binary в 3-5x больше |
-| **Memory safety** | Compile-time гарантии, нет GC pauses | GC pauses на больших документах | GC, runtime overhead |
-| **WASM binary size** | 200-500KB (wasm-opt) | N/A | 2-10MB (Go runtime в WASM) |
-| **Server-side** | Нативный binary ИЛИ WASM в Node.js | Нативно в Node.js | Нативный binary |
-| **Ecosystem** | serde, wasm-bindgen, loro, typst | ProseMirror, Yjs, unified | Нет RTE ecosystem |
+| **Parsing speed** | ~10-50x faster than JS on tree operations | Baseline | ~2-5x faster than JS, but the WASM binary is 3-5x larger |
+| **Memory safety** | Compile-time guarantees, no GC pauses | GC pauses on large documents | GC, runtime overhead |
+| **WASM binary size** | 200-500KB (wasm-opt) | N/A | 2-10MB (Go runtime in WASM) |
+| **Server-side** | Native binary OR WASM in Node.js | Native in Node.js | Native binary |
+| **Ecosystem** | serde, wasm-bindgen, loro, typst | ProseMirror, Yjs, unified | No RTE ecosystem |
 | **Type safety** | Algebraic types, pattern matching | TypeScript (compile-time only) | Interfaces (runtime) |
-| **Concurrency** | async/await, rayon (server-side) | Single-threaded | Goroutines (не в WASM) |
+| **Concurrency** | async/await, rayon (server-side) | Single-threaded | Goroutines (not in WASM) |
 
-**Решение:** Rust — единственный язык, который даёт нативную производительность, memory safety и компактный WASM binary одновременно. Go WASM binary слишком большой для клиента. JS недостаточно быстр для CRDT operations на больших документах.
+**Decision:** Rust is the only language that delivers native performance, memory safety and a compact WASM binary at the same time. The Go WASM binary is too large for the client. JS is not fast enough for CRDT operations on large documents.
 
-### Структура Rust crate'ов
+### Rust crate structure
 
 ```
 crates/
@@ -106,10 +106,10 @@ crates/
 │   │   └── selection.rs  # TextSelection, BlockSelection
 │   └── Cargo.toml
 │
-├── gotipe-schema/        # Schema DSL и type system
+├── gotipe-schema/        # Schema DSL and type system
 │   ├── src/
 │   │   ├── lib.rs
-│   │   ├── node_spec.rs  # NodeSpec trait и реализации
+│   │   ├── node_spec.rs  # NodeSpec trait and implementations
 │   │   ├── mark_spec.rs  # MarkSpec trait
 │   │   └── validate.rs   # Schema validation engine
 │   └── Cargo.toml
@@ -154,7 +154,7 @@ crates/
     └── Cargo.toml
 ```
 
-### wasm-bindgen API (ключевые exports)
+### wasm-bindgen API (key exports)
 
 ```rust
 // crates/gotipe-wasm/src/lib.rs
@@ -243,16 +243,16 @@ impl WasmEditor {
 
 ## Document Model
 
-### Сравнение с ProseMirror
+### Comparison with ProseMirror
 
-| Аспект | GoTipe | ProseMirror |
+| Aspect | GoTipe | ProseMirror |
 |--------|--------|-------------|
-| **Парадигма** | Block-first (как Notion) | Node tree (generic) |
-| **Top-level** | `Document → Block[]` | `Document → Node[]` (произвольная вложенность) |
-| **Nesting** | Explicit: `children` поле в Block | Implicit: через content expressions |
-| **Schema** | Rust structs + JSON DSL | JS objects с content expressions |
-| **Marks** | Flat set на text span | Flat set на text node |
-| **CRDT** | Встроен в model | Внешний (Yjs adapter) |
+| **Paradigm** | Block-first (like Notion) | Node tree (generic) |
+| **Top-level** | `Document → Block[]` | `Document → Node[]` (arbitrary nesting) |
+| **Nesting** | Explicit: `children` field in Block | Implicit: via content expressions |
+| **Schema** | Rust structs + JSON DSL | JS objects with content expressions |
+| **Marks** | Flat set on a text span | Flat set on a text node |
+| **CRDT** | Built into the model | External (Yjs adapter) |
 | **Validation** | Compile-time (Rust) + Runtime | Runtime only |
 
 ### Block-based Document
@@ -284,18 +284,18 @@ Document
 use serde::{Serialize, Deserialize};
 use std::collections::HashMap;
 
-/// Уникальный идентификатор блока
+/// Unique block identifier
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct BlockId(pub String);
 
-/// Документ — корневой контейнер
+/// Document — the root container
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Document {
     pub blocks: Vec<Block>,
     pub version: u64,
 }
 
-/// Блок — основная единица контента
+/// Block — the main unit of content
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Block {
     pub id: BlockId,
@@ -305,7 +305,7 @@ pub struct Block {
     pub children: Vec<Block>,
 }
 
-/// Содержимое блока
+/// Block content
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum BlockContent {
@@ -317,7 +317,7 @@ pub enum BlockContent {
     Raw(String),
 }
 
-/// Text span с marks
+/// Text span with marks
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TextSpan {
     pub text: String,
@@ -342,7 +342,7 @@ pub enum AttrValue {
 }
 ```
 
-### JSON-представление документа
+### JSON representation of a document
 
 ```json
 {
@@ -454,7 +454,7 @@ impl EditorState {
 }
 ```
 
-### Transaction — описание изменений
+### Transaction — a description of changes
 
 ```rust
 // crates/gotipe-core/src/transaction.rs
@@ -466,7 +466,7 @@ pub struct Transaction {
     pub metadata: HashMap<String, AttrValue>,
 }
 
-/// Атомарный шаг трансформации
+/// Atomic transformation step
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum Step {
     InsertText {
@@ -519,8 +519,8 @@ pub enum Step {
         offset: usize,
     },
     MergeBlocks {
-        block_id: BlockId,       // блок, который мёрджится вверх
-        target_id: BlockId,      // блок, в который мёрджится
+        block_id: BlockId,       // block that is merged upward
+        target_id: BlockId,      // block it is merged into
     },
 }
 ```
@@ -530,10 +530,10 @@ pub enum Step {
 ```rust
 // crates/gotipe-core/src/command.rs
 
-/// Команда — функция, которая создаёт Transaction из текущего состояния
+/// Command — a function that creates a Transaction from the current state
 pub type Command = fn(&EditorState) -> Option<Transaction>;
 
-/// Стандартные команды
+/// Standard commands
 pub mod commands {
     use super::*;
 
@@ -600,20 +600,20 @@ pub mod commands {
 
 ## Extension System
 
-Архитектура расширений описана детально в [05-extensions.md](05-extensions.md). Здесь — ключевые принципы.
+The extension architecture is described in detail in [05-extensions.md](05-extensions.md). Here are the key principles.
 
-### Принцип: всё — extension
+### Principle: everything is an extension
 
-Даже базовые block types (paragraph, heading, list) реализованы как extensions. Core engine не знает о конкретных типах блоков — только о Document, Block, TextSpan, Mark.
+Even the basic block types (paragraph, heading, list) are implemented as extensions. The core engine knows nothing about concrete block types, only about Document, Block, TextSpan and Mark.
 
 ```rust
 // crates/gotipe-core/src/extension.rs
 
 pub trait Extension: Send + Sync {
-    /// Уникальное имя extension
+    /// Unique extension name
     fn name(&self) -> &str;
 
-    /// Schema nodes, которые добавляет extension
+    /// Schema nodes added by the extension
     fn nodes(&self) -> Vec<NodeSpec> { vec![] }
 
     /// Schema marks
@@ -622,7 +622,7 @@ pub trait Extension: Send + Sync {
     /// Keyboard shortcuts
     fn keybindings(&self) -> Vec<(KeyBinding, Command)> { vec![] }
 
-    /// Input rules (напр. "# " → heading)
+    /// Input rules (e.g. "# " → heading)
     fn input_rules(&self) -> Vec<InputRule> { vec![] }
 
     /// Paste rules
@@ -637,12 +637,12 @@ pub trait Extension: Send + Sync {
     /// Lifecycle: extension destroyed
     fn on_destroy(&self) {}
 
-    /// Plugin state (для stateful extensions)
+    /// Plugin state (for stateful extensions)
     fn plugin(&self) -> Option<Box<dyn Plugin>> { None }
 }
 ```
 
-### Регистрация extensions (TypeScript API)
+### Extension registration (TypeScript API)
 
 ```typescript
 // packages/core/src/editor.ts
@@ -710,20 +710,20 @@ const editor = createEditor({
 └─────────────────────────────────────────────────────┘
 ```
 
-**Ключевой принцип:** core выдаёт ViewState (plain JS objects), adapter конвертирует в framework-specific компоненты. Core не импортирует React, Vue и т.д.
+**Key principle:** the core emits ViewState (plain JS objects) and the adapter converts it into framework-specific components. The core does not import React, Vue, etc.
 
-### Virtual Rendering для больших документов
+### Virtual rendering for large documents
 
-Документы с >1000 блоков используют virtual rendering — рендерятся только видимые блоки + buffer.
+Documents with >1000 blocks use virtual rendering: only the visible blocks plus a buffer are rendered.
 
 ```typescript
 // packages/core/src/virtual-renderer.ts
 export interface VirtualRendererConfig {
-  /** Высота viewport в пикселях */
+  /** Viewport height in pixels */
   viewportHeight: number;
-  /** Примерная высота одного блока */
+  /** Approximate height of a single block */
   estimatedBlockHeight: number;
-  /** Количество блоков-буфера сверху и снизу */
+  /** Number of buffer blocks above and below */
   overscan: number;
 }
 
@@ -756,7 +756,7 @@ export function computeVisibleRange(
 
 ### Benchmarks: GoTipe vs ProseMirror/Tiptap (target)
 
-| Операция | ProseMirror (JS) | GoTipe (WASM) | Speedup |
+| Operation | ProseMirror (JS) | GoTipe (WASM) | Speedup |
 |----------|------------------|---------------|---------|
 | Parse 10K blocks from JSON | ~120ms | ~25ms | **4.8x** |
 | Apply 1000 sequential inserts | ~85ms | ~18ms | **4.7x** |
@@ -766,9 +766,9 @@ export function computeVisibleRange(
 | Document serialize to JSON | ~30ms | ~7ms | **4.3x** |
 | Initial load (WASM + parse) | N/A (JS) | ~50ms (WASM init) + ~25ms | ~75ms total |
 
-**Методология:** Chrome 120, M2 MacBook Pro, документ 10K параграфов по ~50 символов. Benchmark code в [03-editor-core.md#benchmarks](03-editor-core.md#benchmarks).
+**Methodology:** Chrome 120, M2 MacBook Pro, a document of 10K paragraphs of ~50 characters each. Benchmark code is in [03-editor-core.md#benchmarks](03-editor-core.md#benchmarks).
 
-**Примечание:** WASM init (~50ms) — одноразовый overhead при загрузке. Для subsequent operations GoTipe стабильно в 2-5x быстрее.
+**Note:** WASM init (~50ms) is a one-time overhead at load. For subsequent operations GoTipe is consistently 2-5x faster.
 
 ### WASM Binary Size
 
@@ -778,28 +778,28 @@ export function computeVisibleRange(
 | gotipe-crdt | ~80KB |
 | gotipe-export (HTML + Markdown) | ~40KB |
 | gotipe-ai (context builder) | ~15KB |
-| **Total (без PDF/DOCX)** | **~255KB** |
+| **Total (without PDF/DOCX)** | **~255KB** |
 | gotipe-export-pdf (typst) | ~400KB (lazy load) |
 | gotipe-export-docx | ~60KB (lazy load) |
 
-Для сравнения: ProseMirror core ~40KB gzip, Tiptap + ProseMirror ~90KB gzip, Yjs ~20KB gzip. GoTipe WASM binary больше, но включает CRDT, validation и export — то, что в Tiptap ecosystem = 3-4 отдельных пакета.
+For comparison: ProseMirror core is ~40KB gzip, Tiptap + ProseMirror ~90KB gzip, Yjs ~20KB gzip. The GoTipe WASM binary is larger, but it includes CRDT, validation and export, which in the Tiptap ecosystem take 3-4 separate packages.
 
 ---
 
 ## Graceful Degradation
 
-| Сценарий | Поведение |
+| Scenario | Behavior |
 |----------|----------|
-| WASM не поддерживается | Fallback на JS polyfill (медленнее, но работает). `@gotipe/core-js` — чистый JS fallback. |
-| WebSocket недоступен | Offline mode: все изменения сохраняются в CRDT. Sync при reconnect. |
-| AI provider недоступен | Editor работает без AI features. Ghost text не показывается. |
-| Export service недоступен | HTML и Markdown export работают в WASM (client-side). PDF/DOCX — graceful error. |
+| WASM not supported | Fallback to a JS polyfill (slower, but works). `@gotipe/core-js` is the pure-JS fallback. |
+| WebSocket unavailable | Offline mode: all changes are saved in the CRDT. Sync on reconnect. |
+| AI provider unavailable | The editor works without AI features. Ghost text is not shown. |
+| Export service unavailable | HTML and Markdown export work in WASM (client-side). PDF/DOCX — graceful error. |
 
 ```typescript
 // packages/core/src/init.ts
 export async function initGoTipe(): Promise<GoTipeEngine> {
   try {
-    // Попытка загрузить WASM
+    // Try to load WASM
     const wasm = await import('@gotipe/wasm');
     await wasm.default(); // init WASM
     return new WasmEngine(wasm);
@@ -815,20 +815,20 @@ export async function initGoTipe(): Promise<GoTipeEngine> {
 
 ## Cost Analysis
 
-### Инфраструктурные затраты (self-hosted, 1000 concurrent users)
+### Infrastructure costs (self-hosted, 1000 concurrent users)
 
-| Компонент | Hetzner VDS (рекомендация) | Стоимость |
+| Component | Hetzner VDS (recommended) | Cost |
 |-----------|---------------------------|-----------|
 | Hetzner CX32 (4 vCPU, 8 GB RAM, 80 GB NVMe) | Go API + PostgreSQL + Valkey + Caddy | ~EUR 7/mo |
 | Cloudflare R2 (CRDT snapshots, exports, assets) | 10 GB storage, zero egress | ~$0.15/mo |
 | Cloudflare R2 (backups) | pgBackRest WAL + full backups | ~$0.50/mo |
 | **Total** | | **~EUR 8/mo** |
 
-Для сравнения: Tiptap Cloud для 1000 документов = **$49/mo** (только sync, без AI/export). GoTipe self-hosted на Hetzner = **~EUR 8/mo** за всё.
+For comparison: Tiptap Cloud for 1000 documents = **$49/mo** (sync only, no AI/export). GoTipe self-hosted on Hetzner = **~EUR 8/mo** for everything.
 
 ### Development Effort
 
-| Компонент | Person-months | Зависимости | Лицензия |
+| Component | Person-months | Dependencies | License |
 |-----------|--------------|-------------|----------|
 | Rust core (schema, transforms, commands) | 3 | — | MIT |
 | WASM bindings | 1 | Rust core | MIT |
@@ -843,6 +843,6 @@ export async function initGoTipe(): Promise<GoTipeEngine> {
 | Documentation site (Mintlify) | 0.5 | All | — |
 | **Total** | **~16.5 person-months** | | |
 
-> **Модель монетизации:** Headless core (MIT) бесплатный. Block Editor UI (`@gotipe/block-editor`) — коммерческая лицензия ($149/app/год). Cloud — подписка ($29+/mo, Block Editor включён). Детали в [00-overview.md#monetization](00-overview.md) и [12-release-plan.md#pricing](12-release-plan.md).
+> **Monetization model:** The headless core (MIT) is free. The Block Editor UI (`@gotipe/block-editor`) has a commercial license ($149/app/year). Cloud is a subscription ($29+/mo, Block Editor included). Details in [00-overview.md#monetization](00-overview.md) and [12-release-plan.md#pricing](12-release-plan.md).
 
-Детальный план в [12-release-plan.md](12-release-plan.md).
+Detailed plan in [12-release-plan.md](12-release-plan.md).

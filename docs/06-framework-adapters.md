@@ -1,15 +1,15 @@
 # GoTipe — Framework Integration
 
-> **Историческая спецификация, не руководство по текущему API.** Примеры, сроки,
-> сравнения производительности, коммерческие условия и обещания ниже не подтверждают
-> реализацию или доступность сервиса. Актуально: [контракты](development/editor-contracts.md),
-> [карта кода](development/code-map.md), [проверки](development/testing.md),
-> [план выпуска](22-release-readiness.md). Лицензии определяются `LICENSE` и manifest
-> каждого пакета, а не этим документом.
+> **Historical specification, not a guide to the current API.** The examples, timelines,
+> performance comparisons, commercial terms and promises below do not confirm an
+> implementation or service availability. Current: [contracts](development/editor-contracts.md),
+> [code map](development/code-map.md), [checks](development/testing.md),
+> [release plan](22-release-readiness.md). Licenses are defined by `LICENSE` and each
+> package's manifest, not by this document.
 
-## Обзор
+## Overview
 
-GoTipe — framework-agnostic editor. Core (`@gotipe/core` + `gotipe-wasm`) ничего не знает о React, Vue, Svelte или Solid. Ядро выдаёт `ViewState` — plain JS objects. Тонкий adapter layer конвертирует `ViewState` в framework-specific компоненты и обратно транслирует DOM events в commands/transactions.
+GoTipe is a framework-agnostic editor. Core (`@gotipe/core` + `gotipe-wasm`) knows nothing about React, Vue, Svelte or Solid. The core emits `ViewState`, plain JS objects. A thin adapter layer converts `ViewState` into framework-specific components and translates DOM events back into commands/transactions.
 
 ```
 ┌───────────────────────────────────────────────────────────────┐
@@ -18,13 +18,13 @@ GoTipe — framework-agnostic editor. Core (`@gotipe/core` + `gotipe-wasm`) ни
 │  EditorState ──► ViewState (plain JS objects)                 │
 │                                                               │
 │  ViewState = {                                                │
-│    blocks: BlockView[],     // block tree для рендеринга       │
+│    blocks: BlockView[],     // block tree for rendering        │
 │    selection: SelectionView,// cursor + selection ranges       │
 │    decorations: Decoration[], // placeholder, AI ghost text   │
 │    toolbar: ToolbarState,   // active marks, active block type │
 │  }                                                            │
 │                                                               │
-│  Core экспортирует:                                            │
+│  Core exports:                                                │
 │    createEditor(config) → GoTipeEditor                        │
 │    GoTipeEditor.on('update', cb) → unsubscribe                │
 │    GoTipeEditor.getViewState() → ViewState                    │
@@ -41,19 +41,19 @@ GoTipe — framework-agnostic editor. Core (`@gotipe/core` + `gotipe-wasm`) ни
 └──────────┘ └──────────┘ └──────────┘ └──────────┘ └─────────┘
 ```
 
-**Ключевой принцип:** core НЕ импортирует `react`, `vue`, `svelte`, `solid-js`. Adapter — единственное место, где появляется зависимость от фреймворка. Переключение фреймворка = замена одного пакета.
+**Key principle:** core does NOT import `react`, `vue`, `svelte`, `solid-js`. The adapter is the only place where a framework dependency appears. Switching frameworks = replacing one package.
 
-Связанные документы:
+Related documents:
 - [01-architecture.md](01-architecture.md) — rendering architecture, ViewState pipeline
 - [04-block-editor.md](04-block-editor.md) — block types, slash commands, drag-and-drop
 - [05-extensions.md](05-extensions.md) — extension presets, custom extensions
-- [09-sdk-and-api.md](09-sdk-and-api.md) — пакеты, types, bundle sizes
+- [09-sdk-and-api.md](09-sdk-and-api.md) — packages, types, bundle sizes
 
 ---
 
-## Пакеты
+## Packages
 
-| Пакет | Назначение | Peer Dependencies | Size (gzip) |
+| Package | Purpose | Peer Dependencies | Size (gzip) |
 |-------|-----------|-------------------|-------------|
 | `@gotipe/core` | Editor engine, extensions, ViewState | — | ~30KB |
 | `@gotipe/wasm` | Rust/WASM core (schema, transforms, CRDT) | — | ~255KB |
@@ -62,27 +62,27 @@ GoTipe — framework-agnostic editor. Core (`@gotipe/core` + `gotipe-wasm`) ни
 | `@gotipe/svelte` | Svelte 5 adapter | `svelte >=5` | ~4KB |
 | `@gotipe/solid` | Solid 1.8+ adapter | `solid-js >=1.8` | ~5KB |
 
-Все adapters зависят от `@gotipe/core` как peer dependency.
+All adapters depend on `@gotipe/core` as a peer dependency.
 
 ---
 
 ## ViewState Contract
 
-Все adapters потребляют один и тот же `ViewState`. Core ничего не знает о DOM — ViewState содержит только данные.
+All adapters consume the same `ViewState`. Core knows nothing about the DOM: ViewState contains only data.
 
 ```typescript
 // packages/core/src/view-state.ts
 
 export interface ViewState {
-  /** Block tree для рендеринга */
+  /** Block tree for rendering */
   blocks: BlockView[];
-  /** Текущее выделение */
+  /** Current selection */
   selection: SelectionView;
   /** Decorations (placeholder, ghost text, remote cursors) */
   decorations: Decoration[];
-  /** Состояние toolbar (какие marks активны) */
+  /** Toolbar state (which marks are active) */
   toolbar: ToolbarState;
-  /** Версия документа */
+  /** Document version */
   version: number;
 }
 
@@ -92,7 +92,7 @@ export interface BlockView {
   attrs: Record<string, unknown>;
   content: TextSpanView[] | string | null;
   children: BlockView[];
-  /** Decorations, применённые к этому блоку */
+  /** Decorations applied to this block */
   decorations: Decoration[];
 }
 
@@ -113,15 +113,15 @@ export interface SelectionView {
 }
 
 export interface ToolbarState {
-  /** Активные marks в текущем selection */
+  /** Active marks in the current selection */
   activeMarks: string[];
-  /** Тип текущего блока */
+  /** Type of the current block */
   activeBlockType: string;
-  /** Атрибуты текущего блока */
+  /** Attributes of the current block */
   activeBlockAttrs: Record<string, unknown>;
-  /** Можно ли выполнить undo */
+  /** Whether undo is possible */
   canUndo: boolean;
-  /** Можно ли выполнить redo */
+  /** Whether redo is possible */
   canRedo: boolean;
 }
 ```
@@ -130,13 +130,13 @@ export interface ToolbarState {
 
 ## 1. React
 
-### Установка
+### Installation
 
 ```bash
 npm install @gotipe/core @gotipe/react
 ```
 
-### Quick Start (5 строк)
+### Quick Start (5 lines)
 
 ```tsx
 import { useEditor, Editor } from '@gotipe/react';
@@ -152,7 +152,7 @@ export default function App() {
 
 #### `useEditor`
 
-Создаёт и управляет lifecycle экземпляра `GoTipeEditor`. Инициализирует WASM, собирает schema из extensions, создаёт editor.
+Creates and manages the lifecycle of a `GoTipeEditor` instance. Initializes WASM, builds the schema from extensions, creates the editor.
 
 ```typescript
 // packages/react/src/hooks/useEditor.ts
@@ -160,7 +160,7 @@ export default function App() {
 export interface UseEditorOptions {
   /** Extensions (nodes, marks, behaviors) */
   extensions: Extension[];
-  /** Начальный контент (JSON, HTML, Markdown) */
+  /** Initial content (JSON, HTML, Markdown) */
   content?: string | object;
   /** Editable */
   editable?: boolean;
@@ -178,14 +178,14 @@ export interface UseEditorOptions {
 export function useEditor(options: UseEditorOptions): GoTipeEditor | null;
 ```
 
-| Параметр | Тип | Default | Описание |
+| Parameter | Type | Default | Description |
 |----------|-----|---------|----------|
-| `extensions` | `Extension[]` | **required** | Набор extensions. Используйте presets из [05-extensions.md](05-extensions.md) |
-| `content` | `string \| object` | `undefined` | JSON-объект, HTML-строка или Markdown |
-| `editable` | `boolean` | `true` | Режим read-only при `false` |
-| `autofocus` | `boolean \| 'start' \| 'end'` | `false` | Автофокус при mount |
-| `onUpdate` | `(props) => void` | — | Вызывается при каждом изменении документа |
-| `onSelectionChange` | `(props) => void` | — | Вызывается при изменении selection |
+| `extensions` | `Extension[]` | **required** | Set of extensions. Use the presets from [05-extensions.md](05-extensions.md) |
+| `content` | `string \| object` | `undefined` | JSON object, HTML string or Markdown |
+| `editable` | `boolean` | `true` | Read-only mode when `false` |
+| `autofocus` | `boolean \| 'start' \| 'end'` | `false` | Autofocus on mount |
+| `onUpdate` | `(props) => void` | — | Called on every document change |
+| `onSelectionChange` | `(props) => void` | — | Called when the selection changes |
 
 ```tsx
 function MyEditor() {
@@ -213,7 +213,7 @@ function MyEditor() {
 
 #### `useEditorState`
 
-Подписывается на конкретные части ViewState. Использует `useSyncExternalStore` для интеграции с React concurrent mode. Re-render происходит только при изменении выбранного slice.
+Subscribes to specific parts of ViewState. Uses `useSyncExternalStore` to integrate with React concurrent mode. Re-renders only when the selected slice changes.
 
 ```typescript
 export function useEditorState<T>(
@@ -256,15 +256,15 @@ function ActiveMarks({ editor }: { editor: GoTipeEditor }) {
 }
 ```
 
-### Компоненты
+### Components
 
 #### `<Editor />`
 
-Основной компонент. Рендерит block tree, управляет DOM events, contentEditable.
+The main component. Renders the block tree, manages DOM events, contentEditable.
 
 ```typescript
 export interface EditorProps {
-  /** GoTipeEditor instance из useEditor */
+  /** GoTipeEditor instance from useEditor */
   editor: GoTipeEditor | null;
   /** CSS class */
   className?: string;
@@ -276,7 +276,7 @@ export interface EditorProps {
   slotBefore?: React.ReactNode;
   /** Slot: after editor content */
   slotAfter?: React.ReactNode;
-  /** Children — BubbleMenu, FloatingMenu и т.д. */
+  /** Children: BubbleMenu, FloatingMenu, etc. */
   children?: React.ReactNode;
 }
 ```
@@ -299,14 +299,14 @@ export interface EditorProps {
 
 #### `<BubbleMenu />`
 
-Floating toolbar, появляющийся при выделении текста. Автоматически позиционируется относительно selection.
+A floating toolbar that appears when text is selected. Positioned automatically relative to the selection.
 
 ```typescript
 export interface BubbleMenuProps {
   editor: GoTipeEditor;
-  /** Условие показа (по умолчанию: есть текстовый selection) */
+  /** Show condition (default: there is a text selection) */
   shouldShow?: (props: { editor: GoTipeEditor; state: ViewState }) => boolean;
-  /** Offset от selection в пикселях */
+  /** Offset from the selection in pixels */
   offset?: { x: number; y: number };
   /** Render function */
   children: (props: { editor: GoTipeEditor }) => React.ReactNode;
@@ -345,12 +345,12 @@ export interface BubbleMenuProps {
 
 #### `<FloatingMenu />`
 
-Меню, появляющееся рядом с пустым блоком. Используется для вставки новых block types.
+A menu that appears next to an empty block. Used for inserting new block types.
 
 ```typescript
 export interface FloatingMenuProps {
   editor: GoTipeEditor;
-  /** Условие показа (по умолчанию: курсор в пустом параграфе) */
+  /** Show condition (default: cursor is in an empty paragraph) */
   shouldShow?: (props: { editor: GoTipeEditor; state: ViewState }) => boolean;
   children: (props: { editor: GoTipeEditor }) => React.ReactNode;
 }
@@ -382,7 +382,7 @@ export interface FloatingMenuProps {
 
 #### Custom Block Renderer
 
-Для кастомного рендеринга конкретных block types.
+For custom rendering of specific block types.
 
 ```tsx
 import { Editor, BlockRendererProps } from '@gotipe/react';
@@ -404,7 +404,7 @@ function CustomBlockRenderer({ block, children, editor }: BlockRendererProps) {
         </pre>
       );
     default:
-      return null; // fallback на default renderer
+      return null; // fallback to the default renderer
   }
 }
 
@@ -413,7 +413,7 @@ function CustomBlockRenderer({ block, children, editor }: BlockRendererProps) {
 
 ### React Server Components
 
-`@gotipe/react` поддерживает React Server Components (RSC). Серверные компоненты используют `@gotipe/core` напрямую для рендеринга HTML — без клиентского JS.
+`@gotipe/react` supports React Server Components (RSC). Server components use `@gotipe/core` directly to render HTML, with no client JS.
 
 ```tsx
 // app/article/[id]/page.tsx (Next.js App Router — Server Component)
@@ -422,7 +422,7 @@ import { renderToHtml } from '@gotipe/core/server';
 export default async function ArticlePage({ params }: { params: { id: string } }) {
   const doc = await db.getDocument(params.id);
 
-  // Рендеринг на сервере — WASM core в Node.js, zero client JS
+  // Rendering on the server: WASM core in Node.js, zero client JS
   const html = await renderToHtml(doc.content);
 
   return (
@@ -434,7 +434,7 @@ export default async function ArticlePage({ params }: { params: { id: string } }
 }
 ```
 
-Для интерактивного редактирования — client component:
+For interactive editing, use a client component:
 
 ```tsx
 // app/article/[id]/edit/page.tsx
@@ -455,38 +455,38 @@ export default function EditPage({ initialContent }: { initialContent: object })
 
 ### Props, Events, Slots
 
-| Prop | Тип | Описание |
+| Prop | Type | Description |
 |------|-----|----------|
-| `editor` | `GoTipeEditor \| null` | Экземпляр editor |
-| `className` | `string` | CSS class на контейнер |
+| `editor` | `GoTipeEditor \| null` | Editor instance |
+| `className` | `string` | CSS class on the container |
 | `style` | `CSSProperties` | Inline styles |
-| `blockRenderer` | `(props) => ReactNode` | Кастомный рендер для блоков |
-| `slotBefore` | `ReactNode` | Контент перед editor (toolbar) |
-| `slotAfter` | `ReactNode` | Контент после editor (word count) |
-| `children` | `ReactNode` | BubbleMenu, FloatingMenu и т.д. |
+| `blockRenderer` | `(props) => ReactNode` | Custom renderer for blocks |
+| `slotBefore` | `ReactNode` | Content before the editor (toolbar) |
+| `slotAfter` | `ReactNode` | Content after the editor (word count) |
+| `children` | `ReactNode` | BubbleMenu, FloatingMenu, etc. |
 
-| Event (через useEditor) | Когда срабатывает |
+| Event (via useEditor) | When it fires |
 |--------------------------|-------------------|
-| `onUpdate` | Документ изменился (user input, API) |
-| `onSelectionChange` | Selection/cursor изменился |
-| `onFocus` | Editor получил фокус |
-| `onBlur` | Editor потерял фокус |
-| `onCreate` | Editor инициализирован |
-| `onDestroy` | Editor уничтожен |
+| `onUpdate` | The document changed (user input, API) |
+| `onSelectionChange` | The selection/cursor changed |
+| `onFocus` | The editor received focus |
+| `onBlur` | The editor lost focus |
+| `onCreate` | The editor was initialized |
+| `onDestroy` | The editor was destroyed |
 
-### Стилизация
+### Styling
 
 ```tsx
-// Вариант 1: импорт default стилей
+// Option 1: import the default styles
 import '@gotipe/react/styles.css';
 
-// Вариант 2: только base (без theme)
+// Option 2: base only (no theme)
 import '@gotipe/react/styles/base.css';
 
-// Вариант 3: headless — без стилей, всё кастомное
-// Не импортируйте ничего, используйте CSS variables из 04-block-editor.md
+// Option 3: headless, no styles, everything custom
+// Import nothing, use the CSS variables from 04-block-editor.md
 
-// Вариант 4: Tailwind
+// Option 4: Tailwind
 <Editor editor={editor} className="prose max-w-none" />
 ```
 
@@ -494,13 +494,13 @@ import '@gotipe/react/styles/base.css';
 
 ## 2. Vue 3
 
-### Установка
+### Installation
 
 ```bash
 npm install @gotipe/core @gotipe/vue
 ```
 
-### Quick Start (5 строк)
+### Quick Start (5 lines)
 
 ```vue
 <script setup lang="ts">
@@ -519,7 +519,7 @@ const editor = useEditor({ extensions: DefaultPreset });
 
 #### `useEditor`
 
-Возвращает `ShallowRef<GoTipeEditor | null>`. Использует `shallowRef` — сам объект editor не реактивен, но ref обновляется при инициализации. Lifecycle (onMounted, onBeforeUnmount) управляется автоматически.
+Returns `ShallowRef<GoTipeEditor | null>`. Uses `shallowRef`: the editor object itself is not reactive, but the ref is updated on initialization. Lifecycle (onMounted, onBeforeUnmount) is managed automatically.
 
 ```typescript
 // packages/vue/src/composables/useEditor.ts
@@ -578,7 +578,7 @@ const editor = useEditor({
 
 #### `useEditorState`
 
-Подписывается на slice ViewState. Возвращает `ComputedRef<T>`. Обновляется только при изменении выбранного slice.
+Subscribes to a ViewState slice. Returns `ComputedRef<T>`. Updates only when the selected slice changes.
 
 ```typescript
 export function useEditorState<T>(
@@ -617,18 +617,18 @@ const canRedo = useEditorState(editor, (state) => state.toolbar.canRedo);
 </template>
 ```
 
-### Компоненты
+### Components
 
-| Компонент | Описание |
+| Component | Description |
 |-----------|----------|
-| `<Editor>` | Основной editor. Props: `editor`, `class`. Slots: `#before`, `#after`, default (menus) |
-| `<BubbleMenu>` | Floating toolbar при selection. Props: `editor`, `shouldShow` |
-| `<FloatingMenu>` | Menu у пустого блока. Props: `editor`, `shouldShow` |
-| `<BlockRenderer>` | Кастомный рендер блока. Props: `block`, `editor` |
+| `<Editor>` | The main editor. Props: `editor`, `class`. Slots: `#before`, `#after`, default (menus) |
+| `<BubbleMenu>` | Floating toolbar on selection. Props: `editor`, `shouldShow` |
+| `<FloatingMenu>` | Menu at an empty block. Props: `editor`, `shouldShow` |
+| `<BlockRenderer>` | Custom block renderer. Props: `block`, `editor` |
 
 ### Reactivity Integration
 
-Vue adapter использует `triggerRef` для оптимального обновления. Core editor вызывает callback при изменении ViewState, adapter вызывает `triggerRef` на внутреннем `shallowRef<ViewState>`:
+The Vue adapter uses `triggerRef` for optimal updates. The core editor calls a callback when ViewState changes, and the adapter calls `triggerRef` on an internal `shallowRef<ViewState>`:
 
 ```typescript
 // packages/vue/src/internal/reactivity.ts
@@ -652,7 +652,7 @@ export function createReactiveViewState(editor: GoTipeEditor) {
 
 ```vue
 <Editor :editor="editor">
-  <!-- #before: перед contentEditable -->
+  <!-- #before: before contentEditable -->
   <template #before>
     <div class="toolbar">...</div>
   </template>
@@ -661,27 +661,27 @@ export function createReactiveViewState(editor: GoTipeEditor) {
   <BubbleMenu :editor="editor">...</BubbleMenu>
   <FloatingMenu :editor="editor">...</FloatingMenu>
 
-  <!-- #after: после contentEditable -->
+  <!-- #after: after contentEditable -->
   <template #after>
     <div class="status-bar">...</div>
   </template>
 </Editor>
 ```
 
-### Стилизация
+### Styling
 
 ```vue
-<!-- Default стили -->
+<!-- Default styles -->
 <style>
 @import '@gotipe/vue/styles.css';
 </style>
 
-<!-- Headless: только переменные -->
+<!-- Headless: variables only -->
 <style>
 @import '@gotipe/vue/styles/base.css';
 </style>
 
-<!-- Scoped custom стили -->
+<!-- Scoped custom styles -->
 <style scoped>
 .gotipe-editor {
   border: 1px solid var(--gotipe-color-border);
@@ -695,13 +695,13 @@ export function createReactiveViewState(editor: GoTipeEditor) {
 
 ## 3. Svelte 5
 
-### Установка
+### Installation
 
 ```bash
 npm install @gotipe/core @gotipe/svelte
 ```
 
-### Quick Start (5 строк)
+### Quick Start (5 lines)
 
 ```svelte
 <script lang="ts">
@@ -716,7 +716,7 @@ npm install @gotipe/core @gotipe/svelte
 
 ### Runes Integration
 
-Svelte 5 adapter использует runes (`$state`, `$derived`, `$effect`) для реактивности. `createEditor` возвращает reactive state object.
+The Svelte 5 adapter uses runes (`$state`, `$derived`, `$effect`) for reactivity. `createEditor` returns a reactive state object.
 
 ```typescript
 // packages/svelte/src/editor.svelte.ts
@@ -726,7 +726,7 @@ export function createEditor(options: EditorOptions): GoTipeEditorState {
   let viewState: ViewState | null = $state(null);
 
   $effect(() => {
-    // Инициализация WASM + editor
+    // Initialize WASM + editor
     const ed = initEditor(options);
     ed.then((editor) => {
       instance = editor;
@@ -750,7 +750,7 @@ export function createEditor(options: EditorOptions): GoTipeEditorState {
 }
 ```
 
-### Полный пример
+### Full example
 
 ```svelte
 <script lang="ts">
@@ -762,7 +762,7 @@ export function createEditor(options: EditorOptions): GoTipeEditorState {
     content: '<p>Hello <strong>Svelte 5</strong></p>',
   });
 
-  // $derived — автоматически пересчитывается при изменении viewState
+  // $derived: recomputed automatically when viewState changes
   const wordCount = $derived(
     editor.viewState?.blocks.reduce((acc, block) => {
       if (Array.isArray(block.content)) {
@@ -823,13 +823,13 @@ export function createEditor(options: EditorOptions): GoTipeEditorState {
 </style>
 ```
 
-### Компоненты
+### Components
 
-| Компонент | Props | Описание |
+| Component | Props | Description |
 |-----------|-------|----------|
-| `<Editor>` | `editor`, `class`, `onupdate`, `onfocus`, `onblur` | Основной editor |
-| `<BubbleMenu>` | `editor`, `shouldShow` | Floating toolbar при selection |
-| `<FloatingMenu>` | `editor`, `shouldShow` | Menu у пустого блока |
+| `<Editor>` | `editor`, `class`, `onupdate`, `onfocus`, `onblur` | The main editor |
+| `<BubbleMenu>` | `editor`, `shouldShow` | Floating toolbar on selection |
+| `<FloatingMenu>` | `editor`, `shouldShow` | Menu at an empty block |
 
 ### Custom Block Renderer
 
@@ -850,7 +850,7 @@ export function createEditor(options: EditorOptions): GoTipeEditorState {
 {/if}
 ```
 
-### Стилизация
+### Styling
 
 ```svelte
 <!-- Default -->
@@ -871,13 +871,13 @@ export function createEditor(options: EditorOptions): GoTipeEditorState {
 
 ## 4. Solid
 
-### Установка
+### Installation
 
 ```bash
 npm install @gotipe/core @gotipe/solid
 ```
 
-### Quick Start (5 строк)
+### Quick Start (5 lines)
 
 ```tsx
 import { createEditor, Editor } from '@gotipe/solid';
@@ -891,7 +891,7 @@ export default function App() {
 
 ### Signals Integration
 
-Solid adapter использует `createSignal` и `createResource` для реактивности. Editor ViewState — signal, обновляется через `batch`.
+The Solid adapter uses `createSignal` and `createResource` for reactivity. The editor's ViewState is a signal, updated through `batch`.
 
 ```typescript
 // packages/solid/src/createEditor.ts
@@ -926,7 +926,7 @@ export function createEditor(options: EditorOptions) {
 }
 ```
 
-### Полный пример
+### Full example
 
 ```tsx
 import { createEditor, Editor, BubbleMenu } from '@gotipe/solid';
@@ -991,15 +991,15 @@ export default function App() {
 }
 ```
 
-### Компоненты
+### Components
 
-| Компонент | Props | Описание |
+| Component | Props | Description |
 |-----------|-------|----------|
-| `<Editor>` | `editor`, `class`, `onUpdate`, `onFocus`, `onBlur` | Основной editor |
+| `<Editor>` | `editor`, `class`, `onUpdate`, `onFocus`, `onBlur` | The main editor |
 | `<BubbleMenu>` | `editor`, `shouldShow`, `children: (editor) => JSX` | Floating toolbar |
-| `<FloatingMenu>` | `editor`, `shouldShow`, `children: (editor) => JSX` | Menu у пустого блока |
+| `<FloatingMenu>` | `editor`, `shouldShow`, `children: (editor) => JSX` | Menu at an empty block |
 
-### Стилизация
+### Styling
 
 ```tsx
 // Default styles
@@ -1013,13 +1013,13 @@ import '@gotipe/solid/styles/base.css';
 
 ## 5. Vanilla JS
 
-### Установка
+### Installation
 
 ```bash
 npm install @gotipe/core
 ```
 
-### Quick Start (5 строк)
+### Quick Start (5 lines)
 
 ```typescript
 import { createEditor } from '@gotipe/core';
@@ -1032,7 +1032,7 @@ editor.setContent('<p>Hello <strong>GoTipe</strong></p>');
 
 ### Imperative API
 
-Vanilla JS API полностью императивный. Core рендерит блоки в DOM напрямую, без virtual DOM.
+The Vanilla JS API is fully imperative. Core renders blocks to the DOM directly, with no virtual DOM.
 
 ```typescript
 import { createEditor, type GoTipeEditor } from '@gotipe/core';
@@ -1044,10 +1044,10 @@ async function init() {
     content: { version: 1, blocks: [] },
   });
 
-  // Mount в DOM element
+  // Mount into a DOM element
   editor.mount(document.getElementById('editor')!);
 
-  // Подписка на события
+  // Subscribe to events
   editor.on('update', ({ editor }) => {
     console.log('JSON:', editor.getJSON());
     console.log('HTML:', editor.getHTML());
@@ -1114,23 +1114,23 @@ floating.destroy();
 
 ### Events
 
-| Event | Payload | Описание |
+| Event | Payload | Description |
 |-------|---------|----------|
-| `update` | `{ editor: GoTipeEditor }` | Документ изменился |
-| `selectionChange` | `{ editor: GoTipeEditor }` | Selection изменился |
-| `focus` | `{ editor: GoTipeEditor }` | Фокус получен |
-| `blur` | `{ editor: GoTipeEditor }` | Фокус потерян |
-| `create` | `{ editor: GoTipeEditor }` | Editor инициализирован |
-| `destroy` | `{ editor: GoTipeEditor }` | Editor уничтожен |
-| `viewStateChange` | `ViewState` | ViewState обновлён (low-level) |
+| `update` | `{ editor: GoTipeEditor }` | The document changed |
+| `selectionChange` | `{ editor: GoTipeEditor }` | The selection changed |
+| `focus` | `{ editor: GoTipeEditor }` | Focus received |
+| `blur` | `{ editor: GoTipeEditor }` | Focus lost |
+| `create` | `{ editor: GoTipeEditor }` | The editor was initialized |
+| `destroy` | `{ editor: GoTipeEditor }` | The editor was destroyed |
+| `viewStateChange` | `ViewState` | ViewState updated (low-level) |
 
-### Стилизация
+### Styling
 
 ```html
 <!-- Default styles -->
 <link rel="stylesheet" href="node_modules/@gotipe/core/styles.css" />
 
-<!-- Или через bundler -->
+<!-- Or through a bundler -->
 <script>
 import '@gotipe/core/styles.css';
 </script>
@@ -1140,67 +1140,67 @@ import '@gotipe/core/styles.css';
 
 ## 6. Headless API
 
-Headless mode = только данные, без рендеринга UI. Подходит для:
+Headless mode = data only, no UI rendering. Suitable for:
 - server-side document processing
 - custom renderers (Canvas, WebGL, PDF)
-- тестирования
-- CLI-инструментов
+- testing
+- CLI tools
 
-### Headless в браузере
+### Headless in the browser
 
 ```typescript
 import { createEditor } from '@gotipe/core';
 import { DefaultPreset } from '@gotipe/core/presets';
 
-// Без .mount() — headless, нет DOM
+// Without .mount() it is headless, no DOM
 const editor = await createEditor({
   extensions: DefaultPreset,
   content: existingDocument,
 });
 
-// Читаем ViewState как plain objects
+// Read ViewState as plain objects
 const viewState = editor.getViewState();
 
-// Рендерим сами
+// Render it ourselves
 viewState.blocks.forEach((block) => {
   renderToCanvas(block);       // custom Canvas renderer
   renderToWebGL(block);        // custom WebGL renderer
   renderToCustomDOM(block);    // custom DOM renderer
 });
 
-// Подписываемся на изменения
+// Subscribe to changes
 editor.on('viewStateChange', (state) => {
   rerenderCanvas(state.blocks);
 });
 
-// API работает полностью
+// The API works in full
 editor.chain().toggleBold().run();
 const json = editor.getJSON();
 const html = editor.getHTML();
 ```
 
-### Headless на сервере (Node.js)
+### Headless on the server (Node.js)
 
 ```typescript
 // server/process-document.ts
 import { createHeadlessEditor } from '@gotipe/core/server';
 import { DefaultPreset } from '@gotipe/core/presets';
 
-// Нет DOM, нет WASM init — чистый server-side
+// No DOM, no WASM init: pure server-side
 const editor = await createHeadlessEditor({
   extensions: DefaultPreset,
 });
 
-// Валидация
+// Validation
 const isValid = editor.validate(userInput);
 
-// Конвертация
+// Conversion
 editor.setContent(userInput);
 const html = editor.getHTML();
 const markdown = editor.getMarkdown();
 const plainText = editor.getText();
 
-// Трансформация
+// Transformation
 editor.setContent(document);
 editor.chain().setBlockType('heading', { level: 1 }).run();
 const transformed = editor.getJSON();
@@ -1212,10 +1212,10 @@ const transformed = editor.getJSON();
 // packages/core/src/headless.ts
 
 export interface HeadlessEditor {
-  /** Установить контент */
+  /** Set the content */
   setContent(content: string | object): void;
 
-  /** Получить ViewState (plain objects) */
+  /** Get ViewState (plain objects) */
   getViewState(): ViewState;
 
   /** Export */
@@ -1224,7 +1224,7 @@ export interface HeadlessEditor {
   getMarkdown(): string;
   getText(): string;
 
-  /** Validate документ */
+  /** Validate the document */
   validate(content: string | object): ValidationResult;
 
   /** Commands */
@@ -1242,12 +1242,12 @@ export interface HeadlessEditor {
 
 ## 7. SSR (Server-Side Rendering)
 
-### Общая стратегия
+### General strategy
 
-SSR в GoTipe работает в два этапа:
+SSR in GoTipe works in two stages:
 
-1. **Server:** `@gotipe/core/server` рендерит документ в HTML через WASM core в Node.js
-2. **Client:** framework adapter hydrate'ит HTML и подключает интерактивность
+1. **Server:** `@gotipe/core/server` renders the document to HTML through the WASM core in Node.js
+2. **Client:** the framework adapter hydrates the HTML and wires up interactivity
 
 ```
 Server (Node.js)                          Client (Browser)
@@ -1298,7 +1298,7 @@ export function ClientEditor({ initialContent, ssrHtml }: Props) {
     content: initialContent,
   });
 
-  // SSR fallback: показываем server-rendered HTML до hydration
+  // SSR fallback: show server-rendered HTML until hydration
   if (!editor) {
     return (
       <div
@@ -1419,9 +1419,9 @@ export default function EditorPage() {
 // packages/core/src/server.ts
 
 /**
- * Рендерит объект документа GoTipe в HTML-строку. Строку не читает: JSON разбирает
- * хост (`JSON.parse`), строка отклоняется с `TypeError` (D-185).
- * Работает в Node.js через WASM — не требует браузер.
+ * Renders a GoTipe document object to an HTML string. Does not read a string: the host
+ * parses JSON (`JSON.parse`); a string is rejected with `TypeError` (D-185).
+ * Works in Node.js through WASM, no browser required.
  */
 export async function renderToHtml(
   content: object,
@@ -1429,14 +1429,14 @@ export async function renderToHtml(
 ): Promise<string>;
 
 /**
- * Рендерит в Markdown.
+ * Renders to Markdown.
  */
 export async function renderToMarkdown(
   content: object,
 ): Promise<string>;
 
 /**
- * Рендерит в plain text.
+ * Renders to plain text.
  */
 export async function renderToText(
   content: object,
@@ -1445,7 +1445,7 @@ export async function renderToText(
 export interface SSROptions {
   /** CSS class prefix */
   classPrefix?: string;
-  /** Включить inline стили */
+  /** Enable inline styles */
   inlineStyles?: boolean;
   /** Custom block renderers (HTML string) */
   blockRenderers?: Record<string, (block: BlockView) => string>;
@@ -1454,9 +1454,9 @@ export interface SSROptions {
 
 ---
 
-## Сравнение adapters
+## Adapter comparison
 
-| Возможность | React | Vue 3 | Svelte 5 | Solid | Vanilla JS |
+| Feature | React | Vue 3 | Svelte 5 | Solid | Vanilla JS |
 |-------------|-------|-------|----------|-------|------------|
 | Hook/Composable | `useEditor` | `useEditor` | `createEditor` | `createEditor` | `createEditor` |
 | State selector | `useEditorState` | `useEditorState` | `$derived` | `createMemo` | `editor.on()` |
@@ -1471,9 +1471,9 @@ export interface SSROptions {
 
 ---
 
-## Custom Block Rendering: все фреймворки
+## Custom Block Rendering: all frameworks
 
-Каждый adapter позволяет переопределить рендеринг конкретных block types. Это основной механизм кастомизации UI. См. [04-block-editor.md](04-block-editor.md) для полного каталога block types.
+Every adapter lets you override rendering of specific block types. This is the main UI customization mechanism. See [04-block-editor.md](04-block-editor.md) for the full catalog of block types.
 
 ### React
 
@@ -1560,7 +1560,7 @@ export interface SSROptions {
 
 ## Extension UI Rendering
 
-Extensions из [05-extensions.md](05-extensions.md) могут определять framework-specific UI через `view` поле. Core extension определяет логику, adapter-пакет определяет рендеринг.
+Extensions from [05-extensions.md](05-extensions.md) can define framework-specific UI through the `view` field. The core extension defines the logic, the adapter package defines the rendering.
 
 ```typescript
 // packages/core/src/extensions/callout.ts (framework-agnostic)
@@ -1592,7 +1592,7 @@ export const CalloutView = defineBlockView({
 
 ## TypeScript Support
 
-Все adapters полностью типизированы. Типы ViewState, BlockView, GoTipeEditor экспортируются из `@gotipe/core` и re-exported из каждого adapter-пакета.
+All adapters are fully typed. The ViewState, BlockView and GoTipeEditor types are exported from `@gotipe/core` and re-exported from each adapter package.
 
 ```typescript
 import type {
@@ -1606,14 +1606,14 @@ import type {
   Extension,
 } from '@gotipe/core';
 
-// Или из adapter:
+// Or from the adapter:
 import type { UseEditorOptions } from '@gotipe/react';
 import type { EditorProps, BubbleMenuProps, FloatingMenuProps } from '@gotipe/react';
 ```
 
 ---
 
-## Связанные документы
+## Related documents
 
 - [01-architecture.md](01-architecture.md) — rendering pipeline, ViewState generation, virtual rendering
 - [04-block-editor.md](04-block-editor.md) — block types, slash commands, drag-and-drop, CSS variables

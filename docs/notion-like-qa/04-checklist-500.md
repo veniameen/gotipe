@@ -1,596 +1,597 @@
-# Notion-like QA Checklist (500 действий)
+# Notion-like QA Checklist (500 actions)
 
-_Last updated: February 14, 2026_
+_Last updated: February 13, 2026_
 
-## Как использовать
+## How to use
 
-- Каждый пункт — отдельный тест-кейс поведения редактора.
-- `Авто: E2E` — можно/нужно покрыть Playwright тестом.
-- `Авто: Planned` — добавить в автоматизацию в следующих итерациях.
-- `Авто: Manual` — пока только ручная проверка (обычно IME/DnD/a11y кейсы).
+- Each item is a separate test case for editor behavior.
+- `Auto: E2E`: can/should be covered by a Playwright test.
+- `Auto: Planned`: add to automation in upcoming iterations.
+- `Auto: Manual`: manual check only for now (usually IME/DnD/a11y cases).
 
-Всего кейсов: **500**.
+Total cases: **500**.
 
-## Обновления автоматизации (February 14, 2026)
+## Automation updates (February 14, 2026)
 
-- Добавлен suite `e2e/notion-like-matrix-planned-ui.spec.ts`:
-  - закрыты matrix-кейсы `SLASH-019`, `UI-007`, `UI-008`
-- Добавлен suite `e2e/notion-like-matrix-planned-selection.spec.ts`:
-  - закрыт matrix-кейс `SEL-005`
-- Добавлен suite `e2e/notion-like-matrix-planned-reliability.spec.ts`:
-  - закрыты matrix-кейсы `REL-001`, `REL-002`, `REL-003`
-- Закрыт cross-browser critical-pack (Firefox + WebKit):
-  - `134/134` PASS по критическим suite
-  - закрыты matrix-кейсы `REL-004`, `REL-005`
-- Добавлены suite:
+- Added the suite `e2e/notion-like-matrix-planned-ui.spec.ts`:
+  - closes matrix cases `SLASH-019`, `UI-007`, `UI-008`
+- Added the suite `e2e/notion-like-matrix-planned-selection.spec.ts`:
+  - closes matrix case `SEL-005`
+- Added the suite `e2e/notion-like-matrix-planned-reliability.spec.ts`:
+  - closes matrix cases `REL-001`, `REL-002`, `REL-003`
+- Closed the cross-browser critical pack (Firefox + WebKit):
+  - `134/134` PASS across the critical suites
+  - closes matrix cases `REL-004`, `REL-005`
+- Added suites:
   - `e2e/notion-like-backlog-hardening.spec.ts`
   - `e2e/notion-like-backlog-hardening-stress.spec.ts`
-  - policy hardening для `DEF-005`, `DEF-007`, `DEF-014`
-  - быстрый hover-повтор для интерактивности `+`/drag
+  - policy hardening for `DEF-005`, `DEF-007`, `DEF-014`
+  - a fast hover repeat for `+`/drag interactivity
   - Chromium/Firefox/WebKit: PASS
   - Chromium `--repeat-each=2`: PASS
-- Добавлен suite `e2e/notion-like-dnd-policy.spec.ts`:
-  - deep DnD policy для complex blocks (list/todo/code)
+- Added the suite `e2e/notion-like-dnd-policy.spec.ts`:
+  - deep DnD policy for complex blocks (list/todo/code)
   - drag + undo/redo policy
-  - drag после slash-transform + immediate typing
+  - drag after a slash transform + immediate typing
   - Chromium/Firefox/WebKit: PASS
   - Chromium `--repeat-each=3`: PASS
-- Добавлен suite `e2e/notion-like-ime-policy.spec.ts`:
-  - composition baseline для paragraph/todo/slash-transform
-  - history stability (undo/redo) после composition-операций
+- Added the suite `e2e/notion-like-ime-policy.spec.ts`:
+  - composition baseline for paragraph/todo/slash transform
+  - history stability (undo/redo) after composition operations
   - Chromium/Firefox/WebKit: PASS
   - Chromium `--repeat-each=3`: PASS
-- Добавлен suite `e2e/notion-like-selection-history-stress.spec.ts`:
+- Added the suite `e2e/notion-like-selection-history-stress.spec.ts`:
   - large-doc selection/format/history stress (paragraph/list/todo)
-  - массовые mark toggles + mixed typing/Enter/undo/redo loops
+  - bulk mark toggles + mixed typing/Enter/undo/redo loops
   - Chromium/Firefox/WebKit: PASS
   - Chromium `--repeat-each=3`: PASS
-- Добавлен suite `e2e/notion-like-crossblock-clipboard-stress.spec.ts`:
+- Added the suite `e2e/notion-like-crossblock-clipboard-stress.spec.ts`:
   - cross-block clipboard chains (copy/paste/cut) + mark toggles
-  - deterministic undo/redo validation после cross-block операций
+  - deterministic undo/redo validation after cross-block operations
   - rapid mixed cross-block loop
   - Chromium/Firefox/WebKit: PASS
   - Chromium `--repeat-each=3`: PASS
-- Добавлен suite `e2e/notion-like-crossblock-nested-chains.spec.ts`:
+- Added the suite `e2e/notion-like-crossblock-nested-chains.spec.ts`:
   - nested cross-block ranges (`listItem/todoItem`) + clipboard/marks/history
-  - deterministic undo/redo после nested cut операций
+  - deterministic undo/redo after nested cut operations
   - rapid mixed nested loop
   - Chromium/Firefox/WebKit: PASS
   - Chromium `--repeat-each=3`: PASS
-- Добавлен suite `e2e/notion-like-integrated-chaos.spec.ts`:
-  - интеграционный mixed pack (`nested DnD + clipboard + marks + slash`)
-  - long mixed loop на nested документе с history checks
+- Added the suite `e2e/notion-like-integrated-chaos.spec.ts`:
+  - integrated mixed pack (`nested DnD + clipboard + marks + slash`)
+  - long mixed loop on a nested document with history checks
   - Chromium/Firefox/WebKit: PASS
   - Chromium `--repeat-each=3`: PASS
-- Добавлен headed exploratory suite `e2e/notion-like-gutter-jitter-headed.spec.ts`:
-  - rapid jitter-path проверки для gutter controls (`+` / drag-handle)
+- Added the headed exploratory suite `e2e/notion-like-gutter-jitter-headed.spec.ts`:
+  - rapid jitter-path checks for the gutter controls (`+` / drag-handle)
   - headed Chromium/Firefox/WebKit: PASS
   - headed Chromium `--repeat-each=2`: PASS
-  - артефакты: screenshots + trace zips в `output/playwright/notion-like-headed-gutter-jitter*`
+  - artifacts: screenshots + trace zips in `output/playwright/notion-like-headed-gutter-jitter*`
 
 ## A. Caret & Selection Fundamentals (60)
 
-- [x] NL-001 | Клик в начало блока (пустой paragraph) | Ожидание: каретка ставится в начало содержимого, без скачка в левый край | Приоритет: P0 | Авто: E2E
-- [x] NL-002 | Клик в середину текста (пустой paragraph) | Ожидание: каретка ставится на ожидаемую позицию символа | Приоритет: P1 | Авто: E2E
-- [x] NL-003 | Клик в конец текста (пустой paragraph) | Ожидание: каретка на конце блока, ввод продолжает этот блок | Приоритет: P1 | Авто: E2E
-- [x] NL-004 | ArrowLeft из позиции 0 (пустой paragraph) | Ожидание: переход в конец предыдущего блока без пропуска и краша | Приоритет: P1 | Авто: Planned
-- [x] NL-005 | ArrowRight из конца блока (пустой paragraph) | Ожидание: переход в начало следующего блока без рассинхрона | Приоритет: P1 | Авто: Planned
-- [x] NL-006 | Mouse drag выделение в соседний блок (пустой paragraph) | Ожидание: диапазон визуально сохраняется, toolbar/bubble реагирует корректно | Приоритет: P1 | Авто: Planned
-- [x] NL-007 | Клик в начало блока (paragraph с простым текстом) | Ожидание: каретка ставится в начало содержимого, без скачка в левый край | Приоритет: P0 | Авто: E2E
-- [x] NL-008 | Клик в середину текста (paragraph с простым текстом) | Ожидание: каретка ставится на ожидаемую позицию символа | Приоритет: P1 | Авто: E2E
-- [x] NL-009 | Клик в конец текста (paragraph с простым текстом) | Ожидание: каретка на конце блока, ввод продолжает этот блок | Приоритет: P1 | Авто: E2E
-- [x] NL-010 | ArrowLeft из позиции 0 (paragraph с простым текстом) | Ожидание: переход в конец предыдущего блока без пропуска и краша | Приоритет: P1 | Авто: Planned
-- [x] NL-011 | ArrowRight из конца блока (paragraph с простым текстом) | Ожидание: переход в начало следующего блока без рассинхрона | Приоритет: P1 | Авто: Planned
-- [x] NL-012 | Mouse drag выделение в соседний блок (paragraph с простым текстом) | Ожидание: диапазон визуально сохраняется, toolbar/bubble реагирует корректно | Приоритет: P1 | Авто: Planned
-- [x] NL-013 | Клик в начало блока (paragraph с mixed marks (bold/italic)) | Ожидание: каретка ставится в начало содержимого, без скачка в левый край | Приоритет: P0 | Авто: E2E
-- [x] NL-014 | Клик в середину текста (paragraph с mixed marks (bold/italic)) | Ожидание: каретка ставится на ожидаемую позицию символа | Приоритет: P1 | Авто: E2E
-- [x] NL-015 | Клик в конец текста (paragraph с mixed marks (bold/italic)) | Ожидание: каретка на конце блока, ввод продолжает этот блок | Приоритет: P1 | Авто: E2E
-- [x] NL-016 | ArrowLeft из позиции 0 (paragraph с mixed marks (bold/italic)) | Ожидание: переход в конец предыдущего блока без пропуска и краша | Приоритет: P1 | Авто: Planned
-- [x] NL-017 | ArrowRight из конца блока (paragraph с mixed marks (bold/italic)) | Ожидание: переход в начало следующего блока без рассинхрона | Приоритет: P1 | Авто: Planned
-- [x] NL-018 | Mouse drag выделение в соседний блок (paragraph с mixed marks (bold/italic)) | Ожидание: диапазон визуально сохраняется, toolbar/bubble реагирует корректно | Приоритет: P1 | Авто: Planned
-- [x] NL-019 | Клик в начало блока (heading 1) | Ожидание: каретка ставится в начало содержимого, без скачка в левый край | Приоритет: P0 | Авто: E2E
-- [x] NL-020 | Клик в середину текста (heading 1) | Ожидание: каретка ставится на ожидаемую позицию символа | Приоритет: P1 | Авто: E2E
-- [x] NL-021 | Клик в конец текста (heading 1) | Ожидание: каретка на конце блока, ввод продолжает этот блок | Приоритет: P1 | Авто: E2E
-- [x] NL-022 | ArrowLeft из позиции 0 (heading 1) | Ожидание: переход в конец предыдущего блока без пропуска и краша | Приоритет: P1 | Авто: Planned
-- [x] NL-023 | ArrowRight из конца блока (heading 1) | Ожидание: переход в начало следующего блока без рассинхрона | Приоритет: P1 | Авто: Planned
-- [x] NL-024 | Mouse drag выделение в соседний блок (heading 1) | Ожидание: диапазон визуально сохраняется, toolbar/bubble реагирует корректно | Приоритет: P1 | Авто: Planned
-- [x] NL-025 | Клик в начало блока (heading 2) | Ожидание: каретка ставится в начало содержимого, без скачка в левый край | Приоритет: P0 | Авто: E2E
-- [x] NL-026 | Клик в середину текста (heading 2) | Ожидание: каретка ставится на ожидаемую позицию символа | Приоритет: P1 | Авто: E2E
-- [x] NL-027 | Клик в конец текста (heading 2) | Ожидание: каретка на конце блока, ввод продолжает этот блок | Приоритет: P1 | Авто: E2E
-- [x] NL-028 | ArrowLeft из позиции 0 (heading 2) | Ожидание: переход в конец предыдущего блока без пропуска и краша | Приоритет: P1 | Авто: Planned
-- [x] NL-029 | ArrowRight из конца блока (heading 2) | Ожидание: переход в начало следующего блока без рассинхрона | Приоритет: P1 | Авто: Planned
-- [x] NL-030 | Mouse drag выделение в соседний блок (heading 2) | Ожидание: диапазон визуально сохраняется, toolbar/bubble реагирует корректно | Приоритет: P1 | Авто: Planned
-- [x] NL-031 | Клик в начало блока (bullet item с текстом) | Ожидание: каретка ставится в начало содержимого, без скачка в левый край | Приоритет: P0 | Авто: E2E
-- [x] NL-032 | Клик в середину текста (bullet item с текстом) | Ожидание: каретка ставится на ожидаемую позицию символа | Приоритет: P1 | Авто: E2E
-- [x] NL-033 | Клик в конец текста (bullet item с текстом) | Ожидание: каретка на конце блока, ввод продолжает этот блок | Приоритет: P1 | Авто: E2E
-- [x] NL-034 | ArrowLeft из позиции 0 (bullet item с текстом) | Ожидание: переход в конец предыдущего блока без пропуска и краша | Приоритет: P1 | Авто: Planned
-- [x] NL-035 | ArrowRight из конца блока (bullet item с текстом) | Ожидание: переход в начало следующего блока без рассинхрона | Приоритет: P1 | Авто: Planned
-- [x] NL-036 | Mouse drag выделение в соседний блок (bullet item с текстом) | Ожидание: диапазон визуально сохраняется, toolbar/bubble реагирует корректно | Приоритет: P1 | Авто: Planned
-- [x] NL-037 | Клик в начало блока (bullet item без текста) | Ожидание: каретка ставится в начало содержимого, без скачка в левый край | Приоритет: P0 | Авто: E2E
-- [x] NL-038 | Клик в середину текста (bullet item без текста) | Ожидание: каретка ставится на ожидаемую позицию символа | Приоритет: P1 | Авто: E2E
-- [x] NL-039 | Клик в конец текста (bullet item без текста) | Ожидание: каретка на конце блока, ввод продолжает этот блок | Приоритет: P1 | Авто: E2E
-- [x] NL-040 | ArrowLeft из позиции 0 (bullet item без текста) | Ожидание: переход в конец предыдущего блока без пропуска и краша | Приоритет: P1 | Авто: Planned
-- [x] NL-041 | ArrowRight из конца блока (bullet item без текста) | Ожидание: переход в начало следующего блока без рассинхрона | Приоритет: P1 | Авто: Planned
-- [x] NL-042 | Mouse drag выделение в соседний блок (bullet item без текста) | Ожидание: диапазон визуально сохраняется, toolbar/bubble реагирует корректно | Приоритет: P1 | Авто: Planned
-- [x] NL-043 | Клик в начало блока (ordered item с текстом) | Ожидание: каретка ставится в начало содержимого, без скачка в левый край | Приоритет: P0 | Авто: E2E
-- [x] NL-044 | Клик в середину текста (ordered item с текстом) | Ожидание: каретка ставится на ожидаемую позицию символа | Приоритет: P1 | Авто: E2E
-- [x] NL-045 | Клик в конец текста (ordered item с текстом) | Ожидание: каретка на конце блока, ввод продолжает этот блок | Приоритет: P1 | Авто: E2E
-- [x] NL-046 | ArrowLeft из позиции 0 (ordered item с текстом) | Ожидание: переход в конец предыдущего блока без пропуска и краша | Приоритет: P1 | Авто: Planned
-- [x] NL-047 | ArrowRight из конца блока (ordered item с текстом) | Ожидание: переход в начало следующего блока без рассинхрона | Приоритет: P1 | Авто: Planned
-- [x] NL-048 | Mouse drag выделение в соседний блок (ordered item с текстом) | Ожидание: диапазон визуально сохраняется, toolbar/bubble реагирует корректно | Приоритет: P1 | Авто: Planned
-- [x] NL-049 | Клик в начало блока (todo item без текста) | Ожидание: каретка ставится в начало содержимого, без скачка в левый край | Приоритет: P0 | Авто: E2E
-- [x] NL-050 | Клик в середину текста (todo item без текста) | Ожидание: каретка ставится на ожидаемую позицию символа | Приоритет: P1 | Авто: E2E
-- [x] NL-051 | Клик в конец текста (todo item без текста) | Ожидание: каретка на конце блока, ввод продолжает этот блок | Приоритет: P1 | Авто: E2E
-- [x] NL-052 | ArrowLeft из позиции 0 (todo item без текста) | Ожидание: переход в конец предыдущего блока без пропуска и краша | Приоритет: P1 | Авто: Planned
-- [x] NL-053 | ArrowRight из конца блока (todo item без текста) | Ожидание: переход в начало следующего блока без рассинхрона | Приоритет: P1 | Авто: Planned
-- [x] NL-054 | Mouse drag выделение в соседний блок (todo item без текста) | Ожидание: диапазон визуально сохраняется, toolbar/bubble реагирует корректно | Приоритет: P1 | Авто: Planned
-- [x] NL-055 | Клик в начало блока (todo item с текстом) | Ожидание: каретка ставится в начало содержимого, без скачка в левый край | Приоритет: P0 | Авто: E2E
-- [x] NL-056 | Клик в середину текста (todo item с текстом) | Ожидание: каретка ставится на ожидаемую позицию символа | Приоритет: P1 | Авто: E2E
-- [x] NL-057 | Клик в конец текста (todo item с текстом) | Ожидание: каретка на конце блока, ввод продолжает этот блок | Приоритет: P1 | Авто: E2E
-- [x] NL-058 | ArrowLeft из позиции 0 (todo item с текстом) | Ожидание: переход в конец предыдущего блока без пропуска и краша | Приоритет: P1 | Авто: Planned
-- [x] NL-059 | ArrowRight из конца блока (todo item с текстом) | Ожидание: переход в начало следующего блока без рассинхрона | Приоритет: P1 | Авто: Planned
-- [x] NL-060 | Mouse drag выделение в соседний блок (todo item с текстом) | Ожидание: диапазон визуально сохраняется, toolbar/bubble реагирует корректно | Приоритет: P1 | Авто: Planned
+- [ ] NL-001 | Click at the start of the block (empty paragraph) | Expected: the caret is placed at the start of the content, without jumping to the left edge | Priority: P0 | Auto: E2E
+- [ ] NL-002 | Click in the middle of the text (empty paragraph) | Expected: the caret is placed at the expected character position | Priority: P1 | Auto: E2E
+- [ ] NL-003 | Click at the end of the text (empty paragraph) | Expected: the caret is at the end of the block, typing continues this block | Priority: P1 | Auto: E2E
+- [ ] NL-004 | ArrowLeft from position 0 (empty paragraph) | Expected: moves to the end of the previous block without skipping or crashing | Priority: P1 | Auto: Planned
+- [ ] NL-005 | ArrowRight from the end of the block (empty paragraph) | Expected: moves to the start of the next block without desync | Priority: P1 | Auto: Planned
+- [ ] NL-006 | Mouse drag selection into the adjacent block (empty paragraph) | Expected: the range stays visible, toolbar/bubble menu reacts correctly | Priority: P1 | Auto: Planned
+- [ ] NL-007 | Click at the start of the block (paragraph with plain text) | Expected: the caret is placed at the start of the content, without jumping to the left edge | Priority: P0 | Auto: E2E
+- [ ] NL-008 | Click in the middle of the text (paragraph with plain text) | Expected: the caret is placed at the expected character position | Priority: P1 | Auto: E2E
+- [ ] NL-009 | Click at the end of the text (paragraph with plain text) | Expected: the caret is at the end of the block, typing continues this block | Priority: P1 | Auto: E2E
+- [ ] NL-010 | ArrowLeft from position 0 (paragraph with plain text) | Expected: moves to the end of the previous block without skipping or crashing | Priority: P1 | Auto: Planned
+- [ ] NL-011 | ArrowRight from the end of the block (paragraph with plain text) | Expected: moves to the start of the next block without desync | Priority: P1 | Auto: Planned
+- [ ] NL-012 | Mouse drag selection into the adjacent block (paragraph with plain text) | Expected: the range stays visible, toolbar/bubble menu reacts correctly | Priority: P1 | Auto: Planned
+- [ ] NL-013 | Click at the start of the block (paragraph with mixed marks (bold/italic)) | Expected: the caret is placed at the start of the content, without jumping to the left edge | Priority: P0 | Auto: E2E
+- [ ] NL-014 | Click in the middle of the text (paragraph with mixed marks (bold/italic)) | Expected: the caret is placed at the expected character position | Priority: P1 | Auto: E2E
+- [ ] NL-015 | Click at the end of the text (paragraph with mixed marks (bold/italic)) | Expected: the caret is at the end of the block, typing continues this block | Priority: P1 | Auto: E2E
+- [ ] NL-016 | ArrowLeft from position 0 (paragraph with mixed marks (bold/italic)) | Expected: moves to the end of the previous block without skipping or crashing | Priority: P1 | Auto: Planned
+- [ ] NL-017 | ArrowRight from the end of the block (paragraph with mixed marks (bold/italic)) | Expected: moves to the start of the next block without desync | Priority: P1 | Auto: Planned
+- [ ] NL-018 | Mouse drag selection into the adjacent block (paragraph with mixed marks (bold/italic)) | Expected: the range stays visible, toolbar/bubble menu reacts correctly | Priority: P1 | Auto: Planned
+- [ ] NL-019 | Click at the start of the block (heading 1) | Expected: the caret is placed at the start of the content, without jumping to the left edge | Priority: P0 | Auto: E2E
+- [ ] NL-020 | Click in the middle of the text (heading 1) | Expected: the caret is placed at the expected character position | Priority: P1 | Auto: E2E
+- [ ] NL-021 | Click at the end of the text (heading 1) | Expected: the caret is at the end of the block, typing continues this block | Priority: P1 | Auto: E2E
+- [ ] NL-022 | ArrowLeft from position 0 (heading 1) | Expected: moves to the end of the previous block without skipping or crashing | Priority: P1 | Auto: Planned
+- [ ] NL-023 | ArrowRight from the end of the block (heading 1) | Expected: moves to the start of the next block without desync | Priority: P1 | Auto: Planned
+- [ ] NL-024 | Mouse drag selection into the adjacent block (heading 1) | Expected: the range stays visible, toolbar/bubble menu reacts correctly | Priority: P1 | Auto: Planned
+- [ ] NL-025 | Click at the start of the block (heading 2) | Expected: the caret is placed at the start of the content, without jumping to the left edge | Priority: P0 | Auto: E2E
+- [ ] NL-026 | Click in the middle of the text (heading 2) | Expected: the caret is placed at the expected character position | Priority: P1 | Auto: E2E
+- [ ] NL-027 | Click at the end of the text (heading 2) | Expected: the caret is at the end of the block, typing continues this block | Priority: P1 | Auto: E2E
+- [ ] NL-028 | ArrowLeft from position 0 (heading 2) | Expected: moves to the end of the previous block without skipping or crashing | Priority: P1 | Auto: Planned
+- [ ] NL-029 | ArrowRight from the end of the block (heading 2) | Expected: moves to the start of the next block without desync | Priority: P1 | Auto: Planned
+- [ ] NL-030 | Mouse drag selection into the adjacent block (heading 2) | Expected: the range stays visible, toolbar/bubble menu reacts correctly | Priority: P1 | Auto: Planned
+- [ ] NL-031 | Click at the start of the block (bullet item with text) | Expected: the caret is placed at the start of the content, without jumping to the left edge | Priority: P0 | Auto: E2E
+- [ ] NL-032 | Click in the middle of the text (bullet item with text) | Expected: the caret is placed at the expected character position | Priority: P1 | Auto: E2E
+- [ ] NL-033 | Click at the end of the text (bullet item with text) | Expected: the caret is at the end of the block, typing continues this block | Priority: P1 | Auto: E2E
+- [ ] NL-034 | ArrowLeft from position 0 (bullet item with text) | Expected: moves to the end of the previous block without skipping or crashing | Priority: P1 | Auto: Planned
+- [ ] NL-035 | ArrowRight from the end of the block (bullet item with text) | Expected: moves to the start of the next block without desync | Priority: P1 | Auto: Planned
+- [ ] NL-036 | Mouse drag selection into the adjacent block (bullet item with text) | Expected: the range stays visible, toolbar/bubble menu reacts correctly | Priority: P1 | Auto: Planned
+- [ ] NL-037 | Click at the start of the block (bullet item without text) | Expected: the caret is placed at the start of the content, without jumping to the left edge | Priority: P0 | Auto: E2E
+- [ ] NL-038 | Click in the middle of the text (bullet item without text) | Expected: the caret is placed at the expected character position | Priority: P1 | Auto: E2E
+- [ ] NL-039 | Click at the end of the text (bullet item without text) | Expected: the caret is at the end of the block, typing continues this block | Priority: P1 | Auto: E2E
+- [ ] NL-040 | ArrowLeft from position 0 (bullet item without text) | Expected: moves to the end of the previous block without skipping or crashing | Priority: P1 | Auto: Planned
+- [ ] NL-041 | ArrowRight from the end of the block (bullet item without text) | Expected: moves to the start of the next block without desync | Priority: P1 | Auto: Planned
+- [ ] NL-042 | Mouse drag selection into the adjacent block (bullet item without text) | Expected: the range stays visible, toolbar/bubble menu reacts correctly | Priority: P1 | Auto: Planned
+- [ ] NL-043 | Click at the start of the block (ordered item with text) | Expected: the caret is placed at the start of the content, without jumping to the left edge | Priority: P0 | Auto: E2E
+- [ ] NL-044 | Click in the middle of the text (ordered item with text) | Expected: the caret is placed at the expected character position | Priority: P1 | Auto: E2E
+- [ ] NL-045 | Click at the end of the text (ordered item with text) | Expected: the caret is at the end of the block, typing continues this block | Priority: P1 | Auto: E2E
+- [ ] NL-046 | ArrowLeft from position 0 (ordered item with text) | Expected: moves to the end of the previous block without skipping or crashing | Priority: P1 | Auto: Planned
+- [ ] NL-047 | ArrowRight from the end of the block (ordered item with text) | Expected: moves to the start of the next block without desync | Priority: P1 | Auto: Planned
+- [ ] NL-048 | Mouse drag selection into the adjacent block (ordered item with text) | Expected: the range stays visible, toolbar/bubble menu reacts correctly | Priority: P1 | Auto: Planned
+- [ ] NL-049 | Click at the start of the block (todo item without text) | Expected: the caret is placed at the start of the content, without jumping to the left edge | Priority: P0 | Auto: E2E
+- [ ] NL-050 | Click in the middle of the text (todo item without text) | Expected: the caret is placed at the expected character position | Priority: P1 | Auto: E2E
+- [ ] NL-051 | Click at the end of the text (todo item without text) | Expected: the caret is at the end of the block, typing continues this block | Priority: P1 | Auto: E2E
+- [ ] NL-052 | ArrowLeft from position 0 (todo item without text) | Expected: moves to the end of the previous block without skipping or crashing | Priority: P1 | Auto: Planned
+- [ ] NL-053 | ArrowRight from the end of the block (todo item without text) | Expected: moves to the start of the next block without desync | Priority: P1 | Auto: Planned
+- [ ] NL-054 | Mouse drag selection into the adjacent block (todo item without text) | Expected: the range stays visible, toolbar/bubble menu reacts correctly | Priority: P1 | Auto: Planned
+- [ ] NL-055 | Click at the start of the block (todo item with text) | Expected: the caret is placed at the start of the content, without jumping to the left edge | Priority: P0 | Auto: E2E
+- [ ] NL-056 | Click in the middle of the text (todo item with text) | Expected: the caret is placed at the expected character position | Priority: P1 | Auto: E2E
+- [ ] NL-057 | Click at the end of the text (todo item with text) | Expected: the caret is at the end of the block, typing continues this block | Priority: P1 | Auto: E2E
+- [ ] NL-058 | ArrowLeft from position 0 (todo item with text) | Expected: moves to the end of the previous block without skipping or crashing | Priority: P1 | Auto: Planned
+- [ ] NL-059 | ArrowRight from the end of the block (todo item with text) | Expected: moves to the start of the next block without desync | Priority: P1 | Auto: Planned
+- [ ] NL-060 | Mouse drag selection into the adjacent block (todo item with text) | Expected: the range stays visible, toolbar/bubble menu reacts correctly | Priority: P1 | Auto: Planned
 
 ## B. Typing, Enter, Backspace (60)
 
-- [x] NL-061 | Ввод обычного текста (пустой paragraph) | Ожидание: символы появляются один раз, без дублей и пропусков | Приоритет: P0 | Авто: E2E
-- [x] NL-062 | Нажатие Enter (пустой paragraph) | Ожидание: создаётся корректный следующий блок/элемент списка | Приоритет: P0 | Авто: E2E
-- [x] NL-063 | Нажатие Shift+Enter (пустой paragraph) | Ожидание: добавляется soft line break внутри текущего блока | Приоритет: P1 | Авто: Planned
-- [x] NL-064 | Backspace в середине строки (пустой paragraph) | Ожидание: удаляется 1 символ слева, каретка не прыгает | Приоритет: P0 | Авто: E2E
-- [x] NL-065 | Backspace в начале строки (пустой paragraph) | Ожидание: merge/unwrap происходит предсказуемо по типу блока | Приоритет: P0 | Авто: Planned
-- [x] NL-066 | Delete (forward) (пустой paragraph) | Ожидание: удаляется символ справа без потери выделения | Приоритет: P1 | Авто: Planned
-- [x] NL-067 | Ввод обычного текста (paragraph с текстом) | Ожидание: символы появляются один раз, без дублей и пропусков | Приоритет: P0 | Авто: E2E
-- [x] NL-068 | Нажатие Enter (paragraph с текстом) | Ожидание: создаётся корректный следующий блок/элемент списка | Приоритет: P0 | Авто: E2E
-- [x] NL-069 | Нажатие Shift+Enter (paragraph с текстом) | Ожидание: добавляется soft line break внутри текущего блока | Приоритет: P1 | Авто: Planned
-- [x] NL-070 | Backspace в середине строки (paragraph с текстом) | Ожидание: удаляется 1 символ слева, каретка не прыгает | Приоритет: P0 | Авто: E2E
-- [x] NL-071 | Backspace в начале строки (paragraph с текстом) | Ожидание: merge/unwrap происходит предсказуемо по типу блока | Приоритет: P0 | Авто: Planned
-- [x] NL-072 | Delete (forward) (paragraph с текстом) | Ожидание: удаляется символ справа без потери выделения | Приоритет: P1 | Авто: Planned
-- [x] NL-073 | Ввод обычного текста (heading 1) | Ожидание: символы появляются один раз, без дублей и пропусков | Приоритет: P0 | Авто: E2E
-- [x] NL-074 | Нажатие Enter (heading 1) | Ожидание: создаётся корректный следующий блок/элемент списка | Приоритет: P0 | Авто: E2E
-- [x] NL-075 | Нажатие Shift+Enter (heading 1) | Ожидание: добавляется soft line break внутри текущего блока | Приоритет: P1 | Авто: Planned
-- [x] NL-076 | Backspace в середине строки (heading 1) | Ожидание: удаляется 1 символ слева, каретка не прыгает | Приоритет: P0 | Авто: E2E
-- [x] NL-077 | Backspace в начале строки (heading 1) | Ожидание: merge/unwrap происходит предсказуемо по типу блока | Приоритет: P0 | Авто: Planned
-- [x] NL-078 | Delete (forward) (heading 1) | Ожидание: удаляется символ справа без потери выделения | Приоритет: P1 | Авто: Planned
-- [x] NL-079 | Ввод обычного текста (heading 3) | Ожидание: символы появляются один раз, без дублей и пропусков | Приоритет: P0 | Авто: E2E
-- [x] NL-080 | Нажатие Enter (heading 3) | Ожидание: создаётся корректный следующий блок/элемент списка | Приоритет: P0 | Авто: E2E
-- [x] NL-081 | Нажатие Shift+Enter (heading 3) | Ожидание: добавляется soft line break внутри текущего блока | Приоритет: P1 | Авто: Planned
-- [x] NL-082 | Backspace в середине строки (heading 3) | Ожидание: удаляется 1 символ слева, каретка не прыгает | Приоритет: P0 | Авто: E2E
-- [x] NL-083 | Backspace в начале строки (heading 3) | Ожидание: merge/unwrap происходит предсказуемо по типу блока | Приоритет: P0 | Авто: Planned
-- [x] NL-084 | Delete (forward) (heading 3) | Ожидание: удаляется символ справа без потери выделения | Приоритет: P1 | Авто: Planned
-- [x] NL-085 | Ввод обычного текста (bullet item) | Ожидание: символы появляются один раз, без дублей и пропусков | Приоритет: P0 | Авто: E2E
-- [x] NL-086 | Нажатие Enter (bullet item) | Ожидание: создаётся корректный следующий блок/элемент списка | Приоритет: P0 | Авто: E2E
-- [x] NL-087 | Нажатие Shift+Enter (bullet item) | Ожидание: добавляется soft line break внутри текущего блока | Приоритет: P1 | Авто: Planned
-- [x] NL-088 | Backspace в середине строки (bullet item) | Ожидание: удаляется 1 символ слева, каретка не прыгает | Приоритет: P0 | Авто: E2E
-- [x] NL-089 | Backspace в начале строки (bullet item) | Ожидание: merge/unwrap происходит предсказуемо по типу блока | Приоритет: P0 | Авто: Planned
-- [x] NL-090 | Delete (forward) (bullet item) | Ожидание: удаляется символ справа без потери выделения | Приоритет: P1 | Авто: Planned
-- [x] NL-091 | Ввод обычного текста (ordered item) | Ожидание: символы появляются один раз, без дублей и пропусков | Приоритет: P0 | Авто: E2E
-- [x] NL-092 | Нажатие Enter (ordered item) | Ожидание: создаётся корректный следующий блок/элемент списка | Приоритет: P0 | Авто: E2E
-- [x] NL-093 | Нажатие Shift+Enter (ordered item) | Ожидание: добавляется soft line break внутри текущего блока | Приоритет: P1 | Авто: Planned
-- [x] NL-094 | Backspace в середине строки (ordered item) | Ожидание: удаляется 1 символ слева, каретка не прыгает | Приоритет: P0 | Авто: E2E
-- [x] NL-095 | Backspace в начале строки (ordered item) | Ожидание: merge/unwrap происходит предсказуемо по типу блока | Приоритет: P0 | Авто: Planned
-- [x] NL-096 | Delete (forward) (ordered item) | Ожидание: удаляется символ справа без потери выделения | Приоритет: P1 | Авто: Planned
-- [x] NL-097 | Ввод обычного текста (todo item) | Ожидание: символы появляются один раз, без дублей и пропусков | Приоритет: P0 | Авто: E2E
-- [x] NL-098 | Нажатие Enter (todo item) | Ожидание: создаётся корректный следующий блок/элемент списка | Приоритет: P0 | Авто: E2E
-- [x] NL-099 | Нажатие Shift+Enter (todo item) | Ожидание: добавляется soft line break внутри текущего блока | Приоритет: P1 | Авто: Planned
-- [x] NL-100 | Backspace в середине строки (todo item) | Ожидание: удаляется 1 символ слева, каретка не прыгает | Приоритет: P0 | Авто: E2E
-- [x] NL-101 | Backspace в начале строки (todo item) | Ожидание: merge/unwrap происходит предсказуемо по типу блока | Приоритет: P0 | Авто: Planned
-- [x] NL-102 | Delete (forward) (todo item) | Ожидание: удаляется символ справа без потери выделения | Приоритет: P1 | Авто: Planned
-- [x] NL-103 | Ввод обычного текста (blockquote) | Ожидание: символы появляются один раз, без дублей и пропусков | Приоритет: P0 | Авто: E2E
-- [x] NL-104 | Нажатие Enter (blockquote) | Ожидание: создаётся корректный следующий блок/элемент списка | Приоритет: P0 | Авто: E2E
-- [x] NL-105 | Нажатие Shift+Enter (blockquote) | Ожидание: добавляется soft line break внутри текущего блока | Приоритет: P1 | Авто: Planned
-- [x] NL-106 | Backspace в середине строки (blockquote) | Ожидание: удаляется 1 символ слева, каретка не прыгает | Приоритет: P0 | Авто: E2E
-- [x] NL-107 | Backspace в начале строки (blockquote) | Ожидание: merge/unwrap происходит предсказуемо по типу блока | Приоритет: P0 | Авто: Planned
-- [x] NL-108 | Delete (forward) (blockquote) | Ожидание: удаляется символ справа без потери выделения | Приоритет: P1 | Авто: Planned
-- [x] NL-109 | Ввод обычного текста (code block) | Ожидание: символы появляются один раз, без дублей и пропусков | Приоритет: P0 | Авто: E2E
-- [x] NL-110 | Нажатие Enter (code block) | Ожидание: создаётся корректный следующий блок/элемент списка | Приоритет: P0 | Авто: E2E
-- [x] NL-111 | Нажатие Shift+Enter (code block) | Ожидание: добавляется soft line break внутри текущего блока | Приоритет: P1 | Авто: Planned
-- [x] NL-112 | Backspace в середине строки (code block) | Ожидание: удаляется 1 символ слева, каретка не прыгает | Приоритет: P0 | Авто: E2E
-- [x] NL-113 | Backspace в начале строки (code block) | Ожидание: merge/unwrap происходит предсказуемо по типу блока | Приоритет: P0 | Авто: Planned
-- [x] NL-114 | Delete (forward) (code block) | Ожидание: удаляется символ справа без потери выделения | Приоритет: P1 | Авто: Planned
-- [x] NL-115 | Ввод обычного текста (callout) | Ожидание: символы появляются один раз, без дублей и пропусков | Приоритет: P0 | Авто: E2E
-- [x] NL-116 | Нажатие Enter (callout) | Ожидание: создаётся корректный следующий блок/элемент списка | Приоритет: P0 | Авто: E2E
-- [x] NL-117 | Нажатие Shift+Enter (callout) | Ожидание: добавляется soft line break внутри текущего блока | Приоритет: P1 | Авто: Planned
-- [x] NL-118 | Backspace в середине строки (callout) | Ожидание: удаляется 1 символ слева, каретка не прыгает | Приоритет: P0 | Авто: E2E
-- [x] NL-119 | Backspace в начале строки (callout) | Ожидание: merge/unwrap происходит предсказуемо по типу блока | Приоритет: P0 | Авто: Planned
-- [x] NL-120 | Delete (forward) (callout) | Ожидание: удаляется символ справа без потери выделения | Приоритет: P1 | Авто: Planned
+- [ ] NL-061 | Type plain text (empty paragraph) | Expected: characters appear once, with no duplicates or gaps | Priority: P0 | Auto: E2E
+- [ ] NL-062 | Press Enter (empty paragraph) | Expected: a valid next block/list item is created | Priority: P0 | Auto: E2E
+- [ ] NL-063 | Press Shift+Enter (empty paragraph) | Expected: a soft line break is added inside the current block | Priority: P1 | Auto: Planned
+- [ ] NL-064 | Backspace in the middle of a line (empty paragraph) | Expected: one character to the left is deleted, the caret does not jump | Priority: P0 | Auto: E2E
+- [ ] NL-065 | Backspace at the start of a line (empty paragraph) | Expected: merge/unwrap happens predictably for the block type | Priority: P0 | Auto: Planned
+- [ ] NL-066 | Delete (forward) (empty paragraph) | Expected: the character to the right is deleted without losing the selection | Priority: P1 | Auto: Planned
+- [ ] NL-067 | Type plain text (paragraph with text) | Expected: characters appear once, with no duplicates or gaps | Priority: P0 | Auto: E2E
+- [ ] NL-068 | Press Enter (paragraph with text) | Expected: a valid next block/list item is created | Priority: P0 | Auto: E2E
+- [ ] NL-069 | Press Shift+Enter (paragraph with text) | Expected: a soft line break is added inside the current block | Priority: P1 | Auto: Planned
+- [ ] NL-070 | Backspace in the middle of a line (paragraph with text) | Expected: one character to the left is deleted, the caret does not jump | Priority: P0 | Auto: E2E
+- [ ] NL-071 | Backspace at the start of a line (paragraph with text) | Expected: merge/unwrap happens predictably for the block type | Priority: P0 | Auto: Planned
+- [ ] NL-072 | Delete (forward) (paragraph with text) | Expected: the character to the right is deleted without losing the selection | Priority: P1 | Auto: Planned
+- [ ] NL-073 | Type plain text (heading 1) | Expected: characters appear once, with no duplicates or gaps | Priority: P0 | Auto: E2E
+- [ ] NL-074 | Press Enter (heading 1) | Expected: a valid next block/list item is created | Priority: P0 | Auto: E2E
+- [ ] NL-075 | Press Shift+Enter (heading 1) | Expected: a soft line break is added inside the current block | Priority: P1 | Auto: Planned
+- [ ] NL-076 | Backspace in the middle of a line (heading 1) | Expected: one character to the left is deleted, the caret does not jump | Priority: P0 | Auto: E2E
+- [ ] NL-077 | Backspace at the start of a line (heading 1) | Expected: merge/unwrap happens predictably for the block type | Priority: P0 | Auto: Planned
+- [ ] NL-078 | Delete (forward) (heading 1) | Expected: the character to the right is deleted without losing the selection | Priority: P1 | Auto: Planned
+- [ ] NL-079 | Type plain text (heading 3) | Expected: characters appear once, with no duplicates or gaps | Priority: P0 | Auto: E2E
+- [ ] NL-080 | Press Enter (heading 3) | Expected: a valid next block/list item is created | Priority: P0 | Auto: E2E
+- [ ] NL-081 | Press Shift+Enter (heading 3) | Expected: a soft line break is added inside the current block | Priority: P1 | Auto: Planned
+- [ ] NL-082 | Backspace in the middle of a line (heading 3) | Expected: one character to the left is deleted, the caret does not jump | Priority: P0 | Auto: E2E
+- [ ] NL-083 | Backspace at the start of a line (heading 3) | Expected: merge/unwrap happens predictably for the block type | Priority: P0 | Auto: Planned
+- [ ] NL-084 | Delete (forward) (heading 3) | Expected: the character to the right is deleted without losing the selection | Priority: P1 | Auto: Planned
+- [ ] NL-085 | Type plain text (bullet item) | Expected: characters appear once, with no duplicates or gaps | Priority: P0 | Auto: E2E
+- [ ] NL-086 | Press Enter (bullet item) | Expected: a valid next block/list item is created | Priority: P0 | Auto: E2E
+- [ ] NL-087 | Press Shift+Enter (bullet item) | Expected: a soft line break is added inside the current block | Priority: P1 | Auto: Planned
+- [ ] NL-088 | Backspace in the middle of a line (bullet item) | Expected: one character to the left is deleted, the caret does not jump | Priority: P0 | Auto: E2E
+- [ ] NL-089 | Backspace at the start of a line (bullet item) | Expected: merge/unwrap happens predictably for the block type | Priority: P0 | Auto: Planned
+- [ ] NL-090 | Delete (forward) (bullet item) | Expected: the character to the right is deleted without losing the selection | Priority: P1 | Auto: Planned
+- [ ] NL-091 | Type plain text (ordered item) | Expected: characters appear once, with no duplicates or gaps | Priority: P0 | Auto: E2E
+- [ ] NL-092 | Press Enter (ordered item) | Expected: a valid next block/list item is created | Priority: P0 | Auto: E2E
+- [ ] NL-093 | Press Shift+Enter (ordered item) | Expected: a soft line break is added inside the current block | Priority: P1 | Auto: Planned
+- [ ] NL-094 | Backspace in the middle of a line (ordered item) | Expected: one character to the left is deleted, the caret does not jump | Priority: P0 | Auto: E2E
+- [ ] NL-095 | Backspace at the start of a line (ordered item) | Expected: merge/unwrap happens predictably for the block type | Priority: P0 | Auto: Planned
+- [ ] NL-096 | Delete (forward) (ordered item) | Expected: the character to the right is deleted without losing the selection | Priority: P1 | Auto: Planned
+- [ ] NL-097 | Type plain text (todo item) | Expected: characters appear once, with no duplicates or gaps | Priority: P0 | Auto: E2E
+- [ ] NL-098 | Press Enter (todo item) | Expected: a valid next block/list item is created | Priority: P0 | Auto: E2E
+- [ ] NL-099 | Press Shift+Enter (todo item) | Expected: a soft line break is added inside the current block | Priority: P1 | Auto: Planned
+- [ ] NL-100 | Backspace in the middle of a line (todo item) | Expected: one character to the left is deleted, the caret does not jump | Priority: P0 | Auto: E2E
+- [ ] NL-101 | Backspace at the start of a line (todo item) | Expected: merge/unwrap happens predictably for the block type | Priority: P0 | Auto: Planned
+- [ ] NL-102 | Delete (forward) (todo item) | Expected: the character to the right is deleted without losing the selection | Priority: P1 | Auto: Planned
+- [ ] NL-103 | Type plain text (blockquote) | Expected: characters appear once, with no duplicates or gaps | Priority: P0 | Auto: E2E
+- [ ] NL-104 | Press Enter (blockquote) | Expected: a valid next block/list item is created | Priority: P0 | Auto: E2E
+- [ ] NL-105 | Press Shift+Enter (blockquote) | Expected: a soft line break is added inside the current block | Priority: P1 | Auto: Planned
+- [ ] NL-106 | Backspace in the middle of a line (blockquote) | Expected: one character to the left is deleted, the caret does not jump | Priority: P0 | Auto: E2E
+- [ ] NL-107 | Backspace at the start of a line (blockquote) | Expected: merge/unwrap happens predictably for the block type | Priority: P0 | Auto: Planned
+- [ ] NL-108 | Delete (forward) (blockquote) | Expected: the character to the right is deleted without losing the selection | Priority: P1 | Auto: Planned
+- [ ] NL-109 | Type plain text (code block) | Expected: characters appear once, with no duplicates or gaps | Priority: P0 | Auto: E2E
+- [ ] NL-110 | Press Enter (code block) | Expected: a valid next block/list item is created | Priority: P0 | Auto: E2E
+- [ ] NL-111 | Press Shift+Enter (code block) | Expected: a soft line break is added inside the current block | Priority: P1 | Auto: Planned
+- [ ] NL-112 | Backspace in the middle of a line (code block) | Expected: one character to the left is deleted, the caret does not jump | Priority: P0 | Auto: E2E
+- [ ] NL-113 | Backspace at the start of a line (code block) | Expected: merge/unwrap happens predictably for the block type | Priority: P0 | Auto: Planned
+- [ ] NL-114 | Delete (forward) (code block) | Expected: the character to the right is deleted without losing the selection | Priority: P1 | Auto: Planned
+- [ ] NL-115 | Type plain text (callout) | Expected: characters appear once, with no duplicates or gaps | Priority: P0 | Auto: E2E
+- [ ] NL-116 | Press Enter (callout) | Expected: a valid next block/list item is created | Priority: P0 | Auto: E2E
+- [ ] NL-117 | Press Shift+Enter (callout) | Expected: a soft line break is added inside the current block | Priority: P1 | Auto: Planned
+- [ ] NL-118 | Backspace in the middle of a line (callout) | Expected: one character to the left is deleted, the caret does not jump | Priority: P0 | Auto: E2E
+- [ ] NL-119 | Backspace at the start of a line (callout) | Expected: merge/unwrap happens predictably for the block type | Priority: P0 | Auto: Planned
+- [ ] NL-120 | Delete (forward) (callout) | Expected: the character to the right is deleted without losing the selection | Priority: P1 | Auto: Planned
 
 ## C. Slash Menu UX & Positioning (80)
 
-- [x] NL-121 | Ввод '/' (пустой paragraph) | Ожидание: menu открывается у каретки, не в левом верхнем углу | Приоритет: P0 | Авто: E2E
-- [x] NL-122 | Ввод '/to' (пустой paragraph) | Ожидание: фильтрация корректная, релевантные команды сверху | Приоритет: P1 | Авто: E2E
-- [x] NL-123 | ArrowDown + Enter (пустой paragraph) | Ожидание: выбранная команда исполняется без потери фокуса | Приоритет: P0 | Авто: E2E
-- [x] NL-124 | ArrowUp + Enter (пустой paragraph) | Ожидание: навигация вверх работает циклично/предсказуемо | Приоритет: P1 | Авто: Planned
-- [x] NL-125 | Esc (пустой paragraph) | Ожидание: menu закрывается, документ не мутируется | Приоритет: P0 | Авто: E2E
-- [x] NL-126 | Клик вне menu (пустой paragraph) | Ожидание: menu закрывается, editor остаётся интерактивным | Приоритет: P1 | Авто: E2E
-- [x] NL-127 | Запрос без совпадений (пустой paragraph) | Ожидание: показывается empty-state, layout не ломается | Приоритет: P1 | Авто: Planned
-- [x] NL-128 | Удаление query backspace до пустого (пустой paragraph) | Ожидание: список команд возвращается в дефолтный порядок | Приоритет: P2 | Авто: Planned
-- [x] NL-129 | Ввод '/' (начало непустого paragraph) | Ожидание: menu открывается у каретки, не в левом верхнем углу | Приоритет: P0 | Авто: E2E
-- [x] NL-130 | Ввод '/to' (начало непустого paragraph) | Ожидание: фильтрация корректная, релевантные команды сверху | Приоритет: P1 | Авто: E2E
-- [x] NL-131 | ArrowDown + Enter (начало непустого paragraph) | Ожидание: выбранная команда исполняется без потери фокуса | Приоритет: P0 | Авто: E2E
-- [x] NL-132 | ArrowUp + Enter (начало непустого paragraph) | Ожидание: навигация вверх работает циклично/предсказуемо | Приоритет: P1 | Авто: Planned
-- [x] NL-133 | Esc (начало непустого paragraph) | Ожидание: menu закрывается, документ не мутируется | Приоритет: P0 | Авто: E2E
-- [x] NL-134 | Клик вне menu (начало непустого paragraph) | Ожидание: menu закрывается, editor остаётся интерактивным | Приоритет: P1 | Авто: E2E
-- [x] NL-135 | Запрос без совпадений (начало непустого paragraph) | Ожидание: показывается empty-state, layout не ломается | Приоритет: P1 | Авто: Planned
-- [x] NL-136 | Удаление query backspace до пустого (начало непустого paragraph) | Ожидание: список команд возвращается в дефолтный порядок | Приоритет: P2 | Авто: Planned
-- [x] NL-137 | Ввод '/' (середина paragraph) | Ожидание: menu открывается у каретки, не в левом верхнем углу | Приоритет: P0 | Авто: E2E
-- [x] NL-138 | Ввод '/to' (середина paragraph) | Ожидание: фильтрация корректная, релевантные команды сверху | Приоритет: P1 | Авто: E2E
-- [x] NL-139 | ArrowDown + Enter (середина paragraph) | Ожидание: выбранная команда исполняется без потери фокуса | Приоритет: P0 | Авто: E2E
-- [x] NL-140 | ArrowUp + Enter (середина paragraph) | Ожидание: навигация вверх работает циклично/предсказуемо | Приоритет: P1 | Авто: Planned
-- [x] NL-141 | Esc (середина paragraph) | Ожидание: menu закрывается, документ не мутируется | Приоритет: P0 | Авто: E2E
-- [x] NL-142 | Клик вне menu (середина paragraph) | Ожидание: menu закрывается, editor остаётся интерактивным | Приоритет: P1 | Авто: E2E
-- [x] NL-143 | Запрос без совпадений (середина paragraph) | Ожидание: показывается empty-state, layout не ломается | Приоритет: P1 | Авто: Planned
-- [x] NL-144 | Удаление query backspace до пустого (середина paragraph) | Ожидание: список команд возвращается в дефолтный порядок | Приоритет: P2 | Авто: Planned
-- [x] NL-145 | Ввод '/' (конец heading) | Ожидание: menu открывается у каретки, не в левом верхнем углу | Приоритет: P0 | Авто: E2E
-- [x] NL-146 | Ввод '/to' (конец heading) | Ожидание: фильтрация корректная, релевантные команды сверху | Приоритет: P1 | Авто: E2E
-- [x] NL-147 | ArrowDown + Enter (конец heading) | Ожидание: выбранная команда исполняется без потери фокуса | Приоритет: P0 | Авто: E2E
-- [x] NL-148 | ArrowUp + Enter (конец heading) | Ожидание: навигация вверх работает циклично/предсказуемо | Приоритет: P1 | Авто: Planned
-- [x] NL-149 | Esc (конец heading) | Ожидание: menu закрывается, документ не мутируется | Приоритет: P0 | Авто: E2E
-- [x] NL-150 | Клик вне menu (конец heading) | Ожидание: menu закрывается, editor остаётся интерактивным | Приоритет: P1 | Авто: E2E
-- [x] NL-151 | Запрос без совпадений (конец heading) | Ожидание: показывается empty-state, layout не ломается | Приоритет: P1 | Авто: Planned
-- [x] NL-152 | Удаление query backspace до пустого (конец heading) | Ожидание: список команд возвращается в дефолтный порядок | Приоритет: P2 | Авто: Planned
-- [x] NL-153 | Ввод '/' (пустой bullet item) | Ожидание: menu открывается у каретки, не в левом верхнем углу | Приоритет: P0 | Авто: E2E
-- [x] NL-154 | Ввод '/to' (пустой bullet item) | Ожидание: фильтрация корректная, релевантные команды сверху | Приоритет: P1 | Авто: E2E
-- [x] NL-155 | ArrowDown + Enter (пустой bullet item) | Ожидание: выбранная команда исполняется без потери фокуса | Приоритет: P0 | Авто: E2E
-- [x] NL-156 | ArrowUp + Enter (пустой bullet item) | Ожидание: навигация вверх работает циклично/предсказуемо | Приоритет: P1 | Авто: Planned
-- [x] NL-157 | Esc (пустой bullet item) | Ожидание: menu закрывается, документ не мутируется | Приоритет: P0 | Авто: E2E
-- [x] NL-158 | Клик вне menu (пустой bullet item) | Ожидание: menu закрывается, editor остаётся интерактивным | Приоритет: P1 | Авто: E2E
-- [x] NL-159 | Запрос без совпадений (пустой bullet item) | Ожидание: показывается empty-state, layout не ломается | Приоритет: P1 | Авто: Planned
-- [x] NL-160 | Удаление query backspace до пустого (пустой bullet item) | Ожидание: список команд возвращается в дефолтный порядок | Приоритет: P2 | Авто: Planned
-- [x] NL-161 | Ввод '/' (todo item с текстом) | Ожидание: menu открывается у каретки, не в левом верхнем углу | Приоритет: P0 | Авто: E2E
-- [x] NL-162 | Ввод '/to' (todo item с текстом) | Ожидание: фильтрация корректная, релевантные команды сверху | Приоритет: P1 | Авто: E2E
-- [x] NL-163 | ArrowDown + Enter (todo item с текстом) | Ожидание: выбранная команда исполняется без потери фокуса | Приоритет: P0 | Авто: E2E
-- [x] NL-164 | ArrowUp + Enter (todo item с текстом) | Ожидание: навигация вверх работает циклично/предсказуемо | Приоритет: P1 | Авто: Planned
-- [x] NL-165 | Esc (todo item с текстом) | Ожидание: menu закрывается, документ не мутируется | Приоритет: P0 | Авто: E2E
-- [x] NL-166 | Клик вне menu (todo item с текстом) | Ожидание: menu закрывается, editor остаётся интерактивным | Приоритет: P1 | Авто: E2E
-- [x] NL-167 | Запрос без совпадений (todo item с текстом) | Ожидание: показывается empty-state, layout не ломается | Приоритет: P1 | Авто: Planned
-- [x] NL-168 | Удаление query backspace до пустого (todo item с текстом) | Ожидание: список команд возвращается в дефолтный порядок | Приоритет: P2 | Авто: Planned
-- [x] NL-169 | Ввод '/' (сразу после paste) | Ожидание: menu открывается у каретки, не в левом верхнем углу | Приоритет: P0 | Авто: E2E
-- [x] NL-170 | Ввод '/to' (сразу после paste) | Ожидание: фильтрация корректная, релевантные команды сверху | Приоритет: P1 | Авто: E2E
-- [x] NL-171 | ArrowDown + Enter (сразу после paste) | Ожидание: выбранная команда исполняется без потери фокуса | Приоритет: P0 | Авто: E2E
-- [x] NL-172 | ArrowUp + Enter (сразу после paste) | Ожидание: навигация вверх работает циклично/предсказуемо | Приоритет: P1 | Авто: Planned
-- [x] NL-173 | Esc (сразу после paste) | Ожидание: menu закрывается, документ не мутируется | Приоритет: P0 | Авто: E2E
-- [x] NL-174 | Клик вне menu (сразу после paste) | Ожидание: menu закрывается, editor остаётся интерактивным | Приоритет: P1 | Авто: E2E
-- [x] NL-175 | Запрос без совпадений (сразу после paste) | Ожидание: показывается empty-state, layout не ломается | Приоритет: P1 | Авто: Planned
-- [x] NL-176 | Удаление query backspace до пустого (сразу после paste) | Ожидание: список команд возвращается в дефолтный порядок | Приоритет: P2 | Авто: Planned
-- [x] NL-177 | Ввод '/' (у нижней границы viewport) | Ожидание: menu открывается у каретки, не в левом верхнем углу | Приоритет: P0 | Авто: E2E
-- [x] NL-178 | Ввод '/to' (у нижней границы viewport) | Ожидание: фильтрация корректная, релевантные команды сверху | Приоритет: P1 | Авто: E2E
-- [x] NL-179 | ArrowDown + Enter (у нижней границы viewport) | Ожидание: выбранная команда исполняется без потери фокуса | Приоритет: P0 | Авто: E2E
-- [x] NL-180 | ArrowUp + Enter (у нижней границы viewport) | Ожидание: навигация вверх работает циклично/предсказуемо | Приоритет: P1 | Авто: Planned
-- [x] NL-181 | Esc (у нижней границы viewport) | Ожидание: menu закрывается, документ не мутируется | Приоритет: P0 | Авто: E2E
-- [x] NL-182 | Клик вне menu (у нижней границы viewport) | Ожидание: menu закрывается, editor остаётся интерактивным | Приоритет: P1 | Авто: E2E
-- [x] NL-183 | Запрос без совпадений (у нижней границы viewport) | Ожидание: показывается empty-state, layout не ломается | Приоритет: P1 | Авто: Planned
-- [x] NL-184 | Удаление query backspace до пустого (у нижней границы viewport) | Ожидание: список команд возвращается в дефолтный порядок | Приоритет: P2 | Авто: Planned
-- [x] NL-185 | Ввод '/' (у правой границы viewport) | Ожидание: menu открывается у каретки, не в левом верхнем углу | Приоритет: P0 | Авто: E2E
-- [x] NL-186 | Ввод '/to' (у правой границы viewport) | Ожидание: фильтрация корректная, релевантные команды сверху | Приоритет: P1 | Авто: E2E
-- [x] NL-187 | ArrowDown + Enter (у правой границы viewport) | Ожидание: выбранная команда исполняется без потери фокуса | Приоритет: P0 | Авто: E2E
-- [x] NL-188 | ArrowUp + Enter (у правой границы viewport) | Ожидание: навигация вверх работает циклично/предсказуемо | Приоритет: P1 | Авто: Planned
-- [x] NL-189 | Esc (у правой границы viewport) | Ожидание: menu закрывается, документ не мутируется | Приоритет: P0 | Авто: E2E
-- [x] NL-190 | Клик вне menu (у правой границы viewport) | Ожидание: menu закрывается, editor остаётся интерактивным | Приоритет: P1 | Авто: E2E
-- [x] NL-191 | Запрос без совпадений (у правой границы viewport) | Ожидание: показывается empty-state, layout не ломается | Приоритет: P1 | Авто: Planned
-- [x] NL-192 | Удаление query backspace до пустого (у правой границы viewport) | Ожидание: список команд возвращается в дефолтный порядок | Приоритет: P2 | Авто: Planned
-- [x] NL-193 | Ввод '/' (в dark theme) | Ожидание: menu открывается у каретки, не в левом верхнем углу | Приоритет: P0 | Авто: E2E
-- [x] NL-194 | Ввод '/to' (в dark theme) | Ожидание: фильтрация корректная, релевантные команды сверху | Приоритет: P1 | Авто: E2E
-- [x] NL-195 | ArrowDown + Enter (в dark theme) | Ожидание: выбранная команда исполняется без потери фокуса | Приоритет: P0 | Авто: E2E
-- [x] NL-196 | ArrowUp + Enter (в dark theme) | Ожидание: навигация вверх работает циклично/предсказуемо | Приоритет: P1 | Авто: Planned
-- [x] NL-197 | Esc (в dark theme) | Ожидание: menu закрывается, документ не мутируется | Приоритет: P0 | Авто: E2E
-- [x] NL-198 | Клик вне menu (в dark theme) | Ожидание: menu закрывается, editor остаётся интерактивным | Приоритет: P1 | Авто: E2E
-- [x] NL-199 | Запрос без совпадений (в dark theme) | Ожидание: показывается empty-state, layout не ломается | Приоритет: P1 | Авто: Planned
-- [x] NL-200 | Удаление query backspace до пустого (в dark theme) | Ожидание: список команд возвращается в дефолтный порядок | Приоритет: P2 | Авто: Planned
+- [ ] NL-121 | Type '/' (empty paragraph) | Expected: the menu opens at the caret, not in the top-left corner | Priority: P0 | Auto: E2E
+- [ ] NL-122 | Type '/to' (empty paragraph) | Expected: filtering is correct, relevant commands come first | Priority: P1 | Auto: E2E
+- [ ] NL-123 | ArrowDown + Enter (empty paragraph) | Expected: the selected command runs without losing focus | Priority: P0 | Auto: E2E
+- [ ] NL-124 | ArrowUp + Enter (empty paragraph) | Expected: upward navigation wraps around/is predictable | Priority: P1 | Auto: Planned
+- [ ] NL-125 | Esc (empty paragraph) | Expected: the menu closes, the document is not mutated | Priority: P0 | Auto: E2E
+- [ ] NL-126 | Click outside the menu (empty paragraph) | Expected: the menu closes, the editor stays interactive | Priority: P1 | Auto: E2E
+- [ ] NL-127 | Query with no matches (empty paragraph) | Expected: an empty state is shown, the layout does not break | Priority: P1 | Auto: Planned
+- [ ] NL-128 | Delete the query with Backspace until empty (empty paragraph) | Expected: the command list returns to its default order | Priority: P2 | Auto: Planned
+- [ ] NL-129 | Type '/' (start of a non-empty paragraph) | Expected: the menu opens at the caret, not in the top-left corner | Priority: P0 | Auto: E2E
+- [ ] NL-130 | Type '/to' (start of a non-empty paragraph) | Expected: filtering is correct, relevant commands come first | Priority: P1 | Auto: E2E
+- [ ] NL-131 | ArrowDown + Enter (start of a non-empty paragraph) | Expected: the selected command runs without losing focus | Priority: P0 | Auto: E2E
+- [ ] NL-132 | ArrowUp + Enter (start of a non-empty paragraph) | Expected: upward navigation wraps around/is predictable | Priority: P1 | Auto: Planned
+- [ ] NL-133 | Esc (start of a non-empty paragraph) | Expected: the menu closes, the document is not mutated | Priority: P0 | Auto: E2E
+- [ ] NL-134 | Click outside the menu (start of a non-empty paragraph) | Expected: the menu closes, the editor stays interactive | Priority: P1 | Auto: E2E
+- [ ] NL-135 | Query with no matches (start of a non-empty paragraph) | Expected: an empty state is shown, the layout does not break | Priority: P1 | Auto: Planned
+- [ ] NL-136 | Delete the query with Backspace until empty (start of a non-empty paragraph) | Expected: the command list returns to its default order | Priority: P2 | Auto: Planned
+- [ ] NL-137 | Type '/' (middle of a paragraph) | Expected: the menu opens at the caret, not in the top-left corner | Priority: P0 | Auto: E2E
+- [ ] NL-138 | Type '/to' (middle of a paragraph) | Expected: filtering is correct, relevant commands come first | Priority: P1 | Auto: E2E
+- [ ] NL-139 | ArrowDown + Enter (middle of a paragraph) | Expected: the selected command runs without losing focus | Priority: P0 | Auto: E2E
+- [ ] NL-140 | ArrowUp + Enter (middle of a paragraph) | Expected: upward navigation wraps around/is predictable | Priority: P1 | Auto: Planned
+- [ ] NL-141 | Esc (middle of a paragraph) | Expected: the menu closes, the document is not mutated | Priority: P0 | Auto: E2E
+- [ ] NL-142 | Click outside the menu (middle of a paragraph) | Expected: the menu closes, the editor stays interactive | Priority: P1 | Auto: E2E
+- [ ] NL-143 | Query with no matches (middle of a paragraph) | Expected: an empty state is shown, the layout does not break | Priority: P1 | Auto: Planned
+- [ ] NL-144 | Delete the query with Backspace until empty (middle of a paragraph) | Expected: the command list returns to its default order | Priority: P2 | Auto: Planned
+- [ ] NL-145 | Type '/' (end of a heading) | Expected: the menu opens at the caret, not in the top-left corner | Priority: P0 | Auto: E2E
+- [ ] NL-146 | Type '/to' (end of a heading) | Expected: filtering is correct, relevant commands come first | Priority: P1 | Auto: E2E
+- [ ] NL-147 | ArrowDown + Enter (end of a heading) | Expected: the selected command runs without losing focus | Priority: P0 | Auto: E2E
+- [ ] NL-148 | ArrowUp + Enter (end of a heading) | Expected: upward navigation wraps around/is predictable | Priority: P1 | Auto: Planned
+- [ ] NL-149 | Esc (end of a heading) | Expected: the menu closes, the document is not mutated | Priority: P0 | Auto: E2E
+- [ ] NL-150 | Click outside the menu (end of a heading) | Expected: the menu closes, the editor stays interactive | Priority: P1 | Auto: E2E
+- [ ] NL-151 | Query with no matches (end of a heading) | Expected: an empty state is shown, the layout does not break | Priority: P1 | Auto: Planned
+- [ ] NL-152 | Delete the query with Backspace until empty (end of a heading) | Expected: the command list returns to its default order | Priority: P2 | Auto: Planned
+- [ ] NL-153 | Type '/' (empty bullet item) | Expected: the menu opens at the caret, not in the top-left corner | Priority: P0 | Auto: E2E
+- [ ] NL-154 | Type '/to' (empty bullet item) | Expected: filtering is correct, relevant commands come first | Priority: P1 | Auto: E2E
+- [ ] NL-155 | ArrowDown + Enter (empty bullet item) | Expected: the selected command runs without losing focus | Priority: P0 | Auto: E2E
+- [ ] NL-156 | ArrowUp + Enter (empty bullet item) | Expected: upward navigation wraps around/is predictable | Priority: P1 | Auto: Planned
+- [ ] NL-157 | Esc (empty bullet item) | Expected: the menu closes, the document is not mutated | Priority: P0 | Auto: E2E
+- [ ] NL-158 | Click outside the menu (empty bullet item) | Expected: the menu closes, the editor stays interactive | Priority: P1 | Auto: E2E
+- [ ] NL-159 | Query with no matches (empty bullet item) | Expected: an empty state is shown, the layout does not break | Priority: P1 | Auto: Planned
+- [ ] NL-160 | Delete the query with Backspace until empty (empty bullet item) | Expected: the command list returns to its default order | Priority: P2 | Auto: Planned
+- [ ] NL-161 | Type '/' (todo item with text) | Expected: the menu opens at the caret, not in the top-left corner | Priority: P0 | Auto: E2E
+- [ ] NL-162 | Type '/to' (todo item with text) | Expected: filtering is correct, relevant commands come first | Priority: P1 | Auto: E2E
+- [ ] NL-163 | ArrowDown + Enter (todo item with text) | Expected: the selected command runs without losing focus | Priority: P0 | Auto: E2E
+- [ ] NL-164 | ArrowUp + Enter (todo item with text) | Expected: upward navigation wraps around/is predictable | Priority: P1 | Auto: Planned
+- [ ] NL-165 | Esc (todo item with text) | Expected: the menu closes, the document is not mutated | Priority: P0 | Auto: E2E
+- [ ] NL-166 | Click outside the menu (todo item with text) | Expected: the menu closes, the editor stays interactive | Priority: P1 | Auto: E2E
+- [ ] NL-167 | Query with no matches (todo item with text) | Expected: an empty state is shown, the layout does not break | Priority: P1 | Auto: Planned
+- [ ] NL-168 | Delete the query with Backspace until empty (todo item with text) | Expected: the command list returns to its default order | Priority: P2 | Auto: Planned
+- [ ] NL-169 | Type '/' (right after paste) | Expected: the menu opens at the caret, not in the top-left corner | Priority: P0 | Auto: E2E
+- [ ] NL-170 | Type '/to' (right after paste) | Expected: filtering is correct, relevant commands come first | Priority: P1 | Auto: E2E
+- [ ] NL-171 | ArrowDown + Enter (right after paste) | Expected: the selected command runs without losing focus | Priority: P0 | Auto: E2E
+- [ ] NL-172 | ArrowUp + Enter (right after paste) | Expected: upward navigation wraps around/is predictable | Priority: P1 | Auto: Planned
+- [ ] NL-173 | Esc (right after paste) | Expected: the menu closes, the document is not mutated | Priority: P0 | Auto: E2E
+- [ ] NL-174 | Click outside the menu (right after paste) | Expected: the menu closes, the editor stays interactive | Priority: P1 | Auto: E2E
+- [ ] NL-175 | Query with no matches (right after paste) | Expected: an empty state is shown, the layout does not break | Priority: P1 | Auto: Planned
+- [ ] NL-176 | Delete the query with Backspace until empty (right after paste) | Expected: the command list returns to its default order | Priority: P2 | Auto: Planned
+- [ ] NL-177 | Type '/' (near the bottom edge of the viewport) | Expected: the menu opens at the caret, not in the top-left corner | Priority: P0 | Auto: E2E
+- [ ] NL-178 | Type '/to' (near the bottom edge of the viewport) | Expected: filtering is correct, relevant commands come first | Priority: P1 | Auto: E2E
+- [ ] NL-179 | ArrowDown + Enter (near the bottom edge of the viewport) | Expected: the selected command runs without losing focus | Priority: P0 | Auto: E2E
+- [ ] NL-180 | ArrowUp + Enter (near the bottom edge of the viewport) | Expected: upward navigation wraps around/is predictable | Priority: P1 | Auto: Planned
+- [ ] NL-181 | Esc (near the bottom edge of the viewport) | Expected: the menu closes, the document is not mutated | Priority: P0 | Auto: E2E
+- [ ] NL-182 | Click outside the menu (near the bottom edge of the viewport) | Expected: the menu closes, the editor stays interactive | Priority: P1 | Auto: E2E
+- [ ] NL-183 | Query with no matches (near the bottom edge of the viewport) | Expected: an empty state is shown, the layout does not break | Priority: P1 | Auto: Planned
+- [ ] NL-184 | Delete the query with Backspace until empty (near the bottom edge of the viewport) | Expected: the command list returns to its default order | Priority: P2 | Auto: Planned
+- [ ] NL-185 | Type '/' (near the right edge of the viewport) | Expected: the menu opens at the caret, not in the top-left corner | Priority: P0 | Auto: E2E
+- [ ] NL-186 | Type '/to' (near the right edge of the viewport) | Expected: filtering is correct, relevant commands come first | Priority: P1 | Auto: E2E
+- [ ] NL-187 | ArrowDown + Enter (near the right edge of the viewport) | Expected: the selected command runs without losing focus | Priority: P0 | Auto: E2E
+- [ ] NL-188 | ArrowUp + Enter (near the right edge of the viewport) | Expected: upward navigation wraps around/is predictable | Priority: P1 | Auto: Planned
+- [ ] NL-189 | Esc (near the right edge of the viewport) | Expected: the menu closes, the document is not mutated | Priority: P0 | Auto: E2E
+- [ ] NL-190 | Click outside the menu (near the right edge of the viewport) | Expected: the menu closes, the editor stays interactive | Priority: P1 | Auto: E2E
+- [ ] NL-191 | Query with no matches (near the right edge of the viewport) | Expected: an empty state is shown, the layout does not break | Priority: P1 | Auto: Planned
+- [ ] NL-192 | Delete the query with Backspace until empty (near the right edge of the viewport) | Expected: the command list returns to its default order | Priority: P2 | Auto: Planned
+- [ ] NL-193 | Type '/' (in dark theme) | Expected: the menu opens at the caret, not in the top-left corner | Priority: P0 | Auto: E2E
+- [ ] NL-194 | Type '/to' (in dark theme) | Expected: filtering is correct, relevant commands come first | Priority: P1 | Auto: E2E
+- [ ] NL-195 | ArrowDown + Enter (in dark theme) | Expected: the selected command runs without losing focus | Priority: P0 | Auto: E2E
+- [ ] NL-196 | ArrowUp + Enter (in dark theme) | Expected: upward navigation wraps around/is predictable | Priority: P1 | Auto: Planned
+- [ ] NL-197 | Esc (in dark theme) | Expected: the menu closes, the document is not mutated | Priority: P0 | Auto: E2E
+- [ ] NL-198 | Click outside the menu (in dark theme) | Expected: the menu closes, the editor stays interactive | Priority: P1 | Auto: E2E
+- [ ] NL-199 | Query with no matches (in dark theme) | Expected: an empty state is shown, the layout does not break | Priority: P1 | Auto: Planned
+- [ ] NL-200 | Delete the query with Backspace until empty (in dark theme) | Expected: the command list returns to its default order | Priority: P2 | Auto: Planned
 
 ## D. Slash Transform Cross-Matrix (120)
 
-- [x] NL-201 | Slash transform: paragraph -> text | Ожидание: целевой блок создаётся валидно, текст текущей строки не теряется, caret остаётся в новом блоке | Приоритет: P0 | Авто: Planned
-- [x] NL-202 | Slash transform: paragraph -> heading 1 | Ожидание: целевой блок создаётся валидно, текст текущей строки не теряется, caret остаётся в новом блоке | Приоритет: P0 | Авто: Planned
-- [x] NL-203 | Slash transform: paragraph -> heading 2 | Ожидание: целевой блок создаётся валидно, текст текущей строки не теряется, caret остаётся в новом блоке | Приоритет: P0 | Авто: Planned
-- [x] NL-204 | Slash transform: paragraph -> heading 3 | Ожидание: целевой блок создаётся валидно, текст текущей строки не теряется, caret остаётся в новом блоке | Приоритет: P0 | Авто: Planned
-- [x] NL-205 | Slash transform: paragraph -> bullet list | Ожидание: целевой блок создаётся валидно, текст текущей строки не теряется, caret остаётся в новом блоке | Приоритет: P0 | Авто: Planned
-- [x] NL-206 | Slash transform: paragraph -> numbered list | Ожидание: целевой блок создаётся валидно, текст текущей строки не теряется, caret остаётся в новом блоке | Приоритет: P0 | Авто: Planned
-- [x] NL-207 | Slash transform: paragraph -> todo list | Ожидание: целевой блок создаётся валидно, текст текущей строки не теряется, caret остаётся в новом блоке | Приоритет: P0 | Авто: Planned
-- [x] NL-208 | Slash transform: paragraph -> blockquote | Ожидание: целевой блок создаётся валидно, текст текущей строки не теряется, caret остаётся в новом блоке | Приоритет: P0 | Авто: Planned
-- [x] NL-209 | Slash transform: paragraph -> code block | Ожидание: целевой блок создаётся валидно, текст текущей строки не теряется, caret остаётся в новом блоке | Приоритет: P0 | Авто: Planned
-- [x] NL-210 | Slash transform: paragraph -> divider | Ожидание: целевой блок создаётся валидно, текст текущей строки не теряется, caret остаётся в новом блоке | Приоритет: P0 | Авто: Planned
-- [x] NL-211 | Slash transform: paragraph -> table | Ожидание: целевой блок создаётся валидно, текст текущей строки не теряется, caret остаётся в новом блоке | Приоритет: P0 | Авто: Planned
-- [x] NL-212 | Slash transform: paragraph -> image | Ожидание: целевой блок создаётся валидно, текст текущей строки не теряется, caret остаётся в новом блоке | Приоритет: P0 | Авто: Planned
-- [x] NL-213 | Slash transform: heading 1 -> text | Ожидание: целевой блок создаётся валидно, текст текущей строки не теряется, caret остаётся в новом блоке | Приоритет: P0 | Авто: Planned
-- [x] NL-214 | Slash transform: heading 1 -> heading 1 | Ожидание: целевой блок создаётся валидно, текст текущей строки не теряется, caret остаётся в новом блоке | Приоритет: P0 | Авто: Planned
-- [x] NL-215 | Slash transform: heading 1 -> heading 2 | Ожидание: целевой блок создаётся валидно, текст текущей строки не теряется, caret остаётся в новом блоке | Приоритет: P0 | Авто: Planned
-- [x] NL-216 | Slash transform: heading 1 -> heading 3 | Ожидание: целевой блок создаётся валидно, текст текущей строки не теряется, caret остаётся в новом блоке | Приоритет: P0 | Авто: Planned
-- [x] NL-217 | Slash transform: heading 1 -> bullet list | Ожидание: целевой блок создаётся валидно, текст текущей строки не теряется, caret остаётся в новом блоке | Приоритет: P0 | Авто: Planned
-- [x] NL-218 | Slash transform: heading 1 -> numbered list | Ожидание: целевой блок создаётся валидно, текст текущей строки не теряется, caret остаётся в новом блоке | Приоритет: P0 | Авто: Planned
-- [x] NL-219 | Slash transform: heading 1 -> todo list | Ожидание: целевой блок создаётся валидно, текст текущей строки не теряется, caret остаётся в новом блоке | Приоритет: P0 | Авто: Planned
-- [x] NL-220 | Slash transform: heading 1 -> blockquote | Ожидание: целевой блок создаётся валидно, текст текущей строки не теряется, caret остаётся в новом блоке | Приоритет: P0 | Авто: Planned
-- [x] NL-221 | Slash transform: heading 1 -> code block | Ожидание: целевой блок создаётся валидно, текст текущей строки не теряется, caret остаётся в новом блоке | Приоритет: P0 | Авто: Planned
-- [x] NL-222 | Slash transform: heading 1 -> divider | Ожидание: целевой блок создаётся валидно, текст текущей строки не теряется, caret остаётся в новом блоке | Приоритет: P0 | Авто: Planned
-- [x] NL-223 | Slash transform: heading 1 -> table | Ожидание: целевой блок создаётся валидно, текст текущей строки не теряется, caret остаётся в новом блоке | Приоритет: P0 | Авто: Planned
-- [x] NL-224 | Slash transform: heading 1 -> image | Ожидание: целевой блок создаётся валидно, текст текущей строки не теряется, caret остаётся в новом блоке | Приоритет: P0 | Авто: Planned
-- [x] NL-225 | Slash transform: heading 2 -> text | Ожидание: целевой блок создаётся валидно, текст текущей строки не теряется, caret остаётся в новом блоке | Приоритет: P0 | Авто: Planned
-- [x] NL-226 | Slash transform: heading 2 -> heading 1 | Ожидание: целевой блок создаётся валидно, текст текущей строки не теряется, caret остаётся в новом блоке | Приоритет: P0 | Авто: Planned
-- [x] NL-227 | Slash transform: heading 2 -> heading 2 | Ожидание: целевой блок создаётся валидно, текст текущей строки не теряется, caret остаётся в новом блоке | Приоритет: P0 | Авто: Planned
-- [x] NL-228 | Slash transform: heading 2 -> heading 3 | Ожидание: целевой блок создаётся валидно, текст текущей строки не теряется, caret остаётся в новом блоке | Приоритет: P0 | Авто: Planned
-- [x] NL-229 | Slash transform: heading 2 -> bullet list | Ожидание: целевой блок создаётся валидно, текст текущей строки не теряется, caret остаётся в новом блоке | Приоритет: P0 | Авто: Planned
-- [x] NL-230 | Slash transform: heading 2 -> numbered list | Ожидание: целевой блок создаётся валидно, текст текущей строки не теряется, caret остаётся в новом блоке | Приоритет: P0 | Авто: Planned
-- [x] NL-231 | Slash transform: heading 2 -> todo list | Ожидание: целевой блок создаётся валидно, текст текущей строки не теряется, caret остаётся в новом блоке | Приоритет: P0 | Авто: Planned
-- [x] NL-232 | Slash transform: heading 2 -> blockquote | Ожидание: целевой блок создаётся валидно, текст текущей строки не теряется, caret остаётся в новом блоке | Приоритет: P0 | Авто: Planned
-- [x] NL-233 | Slash transform: heading 2 -> code block | Ожидание: целевой блок создаётся валидно, текст текущей строки не теряется, caret остаётся в новом блоке | Приоритет: P0 | Авто: Planned
-- [x] NL-234 | Slash transform: heading 2 -> divider | Ожидание: целевой блок создаётся валидно, текст текущей строки не теряется, caret остаётся в новом блоке | Приоритет: P0 | Авто: Planned
-- [x] NL-235 | Slash transform: heading 2 -> table | Ожидание: целевой блок создаётся валидно, текст текущей строки не теряется, caret остаётся в новом блоке | Приоритет: P0 | Авто: Planned
-- [x] NL-236 | Slash transform: heading 2 -> image | Ожидание: целевой блок создаётся валидно, текст текущей строки не теряется, caret остаётся в новом блоке | Приоритет: P0 | Авто: Planned
-- [x] NL-237 | Slash transform: heading 3 -> text | Ожидание: целевой блок создаётся валидно, текст текущей строки не теряется, caret остаётся в новом блоке | Приоритет: P0 | Авто: Planned
-- [x] NL-238 | Slash transform: heading 3 -> heading 1 | Ожидание: целевой блок создаётся валидно, текст текущей строки не теряется, caret остаётся в новом блоке | Приоритет: P0 | Авто: Planned
-- [x] NL-239 | Slash transform: heading 3 -> heading 2 | Ожидание: целевой блок создаётся валидно, текст текущей строки не теряется, caret остаётся в новом блоке | Приоритет: P0 | Авто: Planned
-- [x] NL-240 | Slash transform: heading 3 -> heading 3 | Ожидание: целевой блок создаётся валидно, текст текущей строки не теряется, caret остаётся в новом блоке | Приоритет: P0 | Авто: Planned
-- [x] NL-241 | Slash transform: heading 3 -> bullet list | Ожидание: целевой блок создаётся валидно, текст текущей строки не теряется, caret остаётся в новом блоке | Приоритет: P0 | Авто: Planned
-- [x] NL-242 | Slash transform: heading 3 -> numbered list | Ожидание: целевой блок создаётся валидно, текст текущей строки не теряется, caret остаётся в новом блоке | Приоритет: P0 | Авто: Planned
-- [x] NL-243 | Slash transform: heading 3 -> todo list | Ожидание: целевой блок создаётся валидно, текст текущей строки не теряется, caret остаётся в новом блоке | Приоритет: P0 | Авто: Planned
-- [x] NL-244 | Slash transform: heading 3 -> blockquote | Ожидание: целевой блок создаётся валидно, текст текущей строки не теряется, caret остаётся в новом блоке | Приоритет: P0 | Авто: Planned
-- [x] NL-245 | Slash transform: heading 3 -> code block | Ожидание: целевой блок создаётся валидно, текст текущей строки не теряется, caret остаётся в новом блоке | Приоритет: P0 | Авто: Planned
-- [x] NL-246 | Slash transform: heading 3 -> divider | Ожидание: целевой блок создаётся валидно, текст текущей строки не теряется, caret остаётся в новом блоке | Приоритет: P0 | Авто: Planned
-- [x] NL-247 | Slash transform: heading 3 -> table | Ожидание: целевой блок создаётся валидно, текст текущей строки не теряется, caret остаётся в новом блоке | Приоритет: P0 | Авто: Planned
-- [x] NL-248 | Slash transform: heading 3 -> image | Ожидание: целевой блок создаётся валидно, текст текущей строки не теряется, caret остаётся в новом блоке | Приоритет: P0 | Авто: Planned
-- [x] NL-249 | Slash transform: bullet item -> text | Ожидание: целевой блок создаётся валидно, текст текущей строки не теряется, caret остаётся в новом блоке | Приоритет: P0 | Авто: Planned
-- [x] NL-250 | Slash transform: bullet item -> heading 1 | Ожидание: целевой блок создаётся валидно, текст текущей строки не теряется, caret остаётся в новом блоке | Приоритет: P0 | Авто: Planned
-- [x] NL-251 | Slash transform: bullet item -> heading 2 | Ожидание: целевой блок создаётся валидно, текст текущей строки не теряется, caret остаётся в новом блоке | Приоритет: P0 | Авто: Planned
-- [x] NL-252 | Slash transform: bullet item -> heading 3 | Ожидание: целевой блок создаётся валидно, текст текущей строки не теряется, caret остаётся в новом блоке | Приоритет: P0 | Авто: Planned
-- [x] NL-253 | Slash transform: bullet item -> bullet list | Ожидание: целевой блок создаётся валидно, текст текущей строки не теряется, caret остаётся в новом блоке | Приоритет: P0 | Авто: Planned
-- [x] NL-254 | Slash transform: bullet item -> numbered list | Ожидание: целевой блок создаётся валидно, текст текущей строки не теряется, caret остаётся в новом блоке | Приоритет: P0 | Авто: Planned
-- [x] NL-255 | Slash transform: bullet item -> todo list | Ожидание: целевой блок создаётся валидно, текст текущей строки не теряется, caret остаётся в новом блоке | Приоритет: P0 | Авто: Planned
-- [x] NL-256 | Slash transform: bullet item -> blockquote | Ожидание: целевой блок создаётся валидно, текст текущей строки не теряется, caret остаётся в новом блоке | Приоритет: P0 | Авто: Planned
-- [x] NL-257 | Slash transform: bullet item -> code block | Ожидание: целевой блок создаётся валидно, текст текущей строки не теряется, caret остаётся в новом блоке | Приоритет: P0 | Авто: Planned
-- [x] NL-258 | Slash transform: bullet item -> divider | Ожидание: целевой блок создаётся валидно, текст текущей строки не теряется, caret остаётся в новом блоке | Приоритет: P0 | Авто: Planned
-- [x] NL-259 | Slash transform: bullet item -> table | Ожидание: целевой блок создаётся валидно, текст текущей строки не теряется, caret остаётся в новом блоке | Приоритет: P0 | Авто: Planned
-- [x] NL-260 | Slash transform: bullet item -> image | Ожидание: целевой блок создаётся валидно, текст текущей строки не теряется, caret остаётся в новом блоке | Приоритет: P0 | Авто: Planned
-- [x] NL-261 | Slash transform: ordered item -> text | Ожидание: целевой блок создаётся валидно, текст текущей строки не теряется, caret остаётся в новом блоке | Приоритет: P0 | Авто: Planned
-- [x] NL-262 | Slash transform: ordered item -> heading 1 | Ожидание: целевой блок создаётся валидно, текст текущей строки не теряется, caret остаётся в новом блоке | Приоритет: P0 | Авто: Planned
-- [x] NL-263 | Slash transform: ordered item -> heading 2 | Ожидание: целевой блок создаётся валидно, текст текущей строки не теряется, caret остаётся в новом блоке | Приоритет: P0 | Авто: Planned
-- [x] NL-264 | Slash transform: ordered item -> heading 3 | Ожидание: целевой блок создаётся валидно, текст текущей строки не теряется, caret остаётся в новом блоке | Приоритет: P0 | Авто: Planned
-- [x] NL-265 | Slash transform: ordered item -> bullet list | Ожидание: целевой блок создаётся валидно, текст текущей строки не теряется, caret остаётся в новом блоке | Приоритет: P0 | Авто: Planned
-- [x] NL-266 | Slash transform: ordered item -> numbered list | Ожидание: целевой блок создаётся валидно, текст текущей строки не теряется, caret остаётся в новом блоке | Приоритет: P0 | Авто: Planned
-- [x] NL-267 | Slash transform: ordered item -> todo list | Ожидание: целевой блок создаётся валидно, текст текущей строки не теряется, caret остаётся в новом блоке | Приоритет: P0 | Авто: Planned
-- [x] NL-268 | Slash transform: ordered item -> blockquote | Ожидание: целевой блок создаётся валидно, текст текущей строки не теряется, caret остаётся в новом блоке | Приоритет: P0 | Авто: Planned
-- [x] NL-269 | Slash transform: ordered item -> code block | Ожидание: целевой блок создаётся валидно, текст текущей строки не теряется, caret остаётся в новом блоке | Приоритет: P0 | Авто: Planned
-- [x] NL-270 | Slash transform: ordered item -> divider | Ожидание: целевой блок создаётся валидно, текст текущей строки не теряется, caret остаётся в новом блоке | Приоритет: P0 | Авто: Planned
-- [x] NL-271 | Slash transform: ordered item -> table | Ожидание: целевой блок создаётся валидно, текст текущей строки не теряется, caret остаётся в новом блоке | Приоритет: P0 | Авто: Planned
-- [x] NL-272 | Slash transform: ordered item -> image | Ожидание: целевой блок создаётся валидно, текст текущей строки не теряется, caret остаётся в новом блоке | Приоритет: P0 | Авто: Planned
-- [x] NL-273 | Slash transform: todo item -> text | Ожидание: целевой блок создаётся валидно, текст текущей строки не теряется, caret остаётся в новом блоке | Приоритет: P0 | Авто: Planned
-- [x] NL-274 | Slash transform: todo item -> heading 1 | Ожидание: целевой блок создаётся валидно, текст текущей строки не теряется, caret остаётся в новом блоке | Приоритет: P0 | Авто: Planned
-- [x] NL-275 | Slash transform: todo item -> heading 2 | Ожидание: целевой блок создаётся валидно, текст текущей строки не теряется, caret остаётся в новом блоке | Приоритет: P0 | Авто: Planned
-- [x] NL-276 | Slash transform: todo item -> heading 3 | Ожидание: целевой блок создаётся валидно, текст текущей строки не теряется, caret остаётся в новом блоке | Приоритет: P0 | Авто: Planned
-- [x] NL-277 | Slash transform: todo item -> bullet list | Ожидание: целевой блок создаётся валидно, текст текущей строки не теряется, caret остаётся в новом блоке | Приоритет: P0 | Авто: Planned
-- [x] NL-278 | Slash transform: todo item -> numbered list | Ожидание: целевой блок создаётся валидно, текст текущей строки не теряется, caret остаётся в новом блоке | Приоритет: P0 | Авто: Planned
-- [x] NL-279 | Slash transform: todo item -> todo list | Ожидание: целевой блок создаётся валидно, текст текущей строки не теряется, caret остаётся в новом блоке | Приоритет: P0 | Авто: Planned
-- [x] NL-280 | Slash transform: todo item -> blockquote | Ожидание: целевой блок создаётся валидно, текст текущей строки не теряется, caret остаётся в новом блоке | Приоритет: P0 | Авто: Planned
-- [x] NL-281 | Slash transform: todo item -> code block | Ожидание: целевой блок создаётся валидно, текст текущей строки не теряется, caret остаётся в новом блоке | Приоритет: P0 | Авто: Planned
-- [x] NL-282 | Slash transform: todo item -> divider | Ожидание: целевой блок создаётся валидно, текст текущей строки не теряется, caret остаётся в новом блоке | Приоритет: P0 | Авто: Planned
-- [x] NL-283 | Slash transform: todo item -> table | Ожидание: целевой блок создаётся валидно, текст текущей строки не теряется, caret остаётся в новом блоке | Приоритет: P0 | Авто: Planned
-- [x] NL-284 | Slash transform: todo item -> image | Ожидание: целевой блок создаётся валидно, текст текущей строки не теряется, caret остаётся в новом блоке | Приоритет: P0 | Авто: Planned
-- [x] NL-285 | Slash transform: blockquote -> text | Ожидание: целевой блок создаётся валидно, текст текущей строки не теряется, caret остаётся в новом блоке | Приоритет: P0 | Авто: Planned
-- [x] NL-286 | Slash transform: blockquote -> heading 1 | Ожидание: целевой блок создаётся валидно, текст текущей строки не теряется, caret остаётся в новом блоке | Приоритет: P0 | Авто: Planned
-- [x] NL-287 | Slash transform: blockquote -> heading 2 | Ожидание: целевой блок создаётся валидно, текст текущей строки не теряется, caret остаётся в новом блоке | Приоритет: P0 | Авто: Planned
-- [x] NL-288 | Slash transform: blockquote -> heading 3 | Ожидание: целевой блок создаётся валидно, текст текущей строки не теряется, caret остаётся в новом блоке | Приоритет: P0 | Авто: Planned
-- [x] NL-289 | Slash transform: blockquote -> bullet list | Ожидание: целевой блок создаётся валидно, текст текущей строки не теряется, caret остаётся в новом блоке | Приоритет: P0 | Авто: Planned
-- [x] NL-290 | Slash transform: blockquote -> numbered list | Ожидание: целевой блок создаётся валидно, текст текущей строки не теряется, caret остаётся в новом блоке | Приоритет: P0 | Авто: Planned
-- [x] NL-291 | Slash transform: blockquote -> todo list | Ожидание: целевой блок создаётся валидно, текст текущей строки не теряется, caret остаётся в новом блоке | Приоритет: P0 | Авто: Planned
-- [x] NL-292 | Slash transform: blockquote -> blockquote | Ожидание: целевой блок создаётся валидно, текст текущей строки не теряется, caret остаётся в новом блоке | Приоритет: P0 | Авто: Planned
-- [x] NL-293 | Slash transform: blockquote -> code block | Ожидание: целевой блок создаётся валидно, текст текущей строки не теряется, caret остаётся в новом блоке | Приоритет: P0 | Авто: Planned
-- [x] NL-294 | Slash transform: blockquote -> divider | Ожидание: целевой блок создаётся валидно, текст текущей строки не теряется, caret остаётся в новом блоке | Приоритет: P0 | Авто: Planned
-- [x] NL-295 | Slash transform: blockquote -> table | Ожидание: целевой блок создаётся валидно, текст текущей строки не теряется, caret остаётся в новом блоке | Приоритет: P0 | Авто: Planned
-- [x] NL-296 | Slash transform: blockquote -> image | Ожидание: целевой блок создаётся валидно, текст текущей строки не теряется, caret остаётся в новом блоке | Приоритет: P0 | Авто: Planned
-- [x] NL-297 | Slash transform: code block -> text | Ожидание: целевой блок создаётся валидно, текст текущей строки не теряется, caret остаётся в новом блоке | Приоритет: P0 | Авто: Planned
-- [x] NL-298 | Slash transform: code block -> heading 1 | Ожидание: целевой блок создаётся валидно, текст текущей строки не теряется, caret остаётся в новом блоке | Приоритет: P0 | Авто: Planned
-- [x] NL-299 | Slash transform: code block -> heading 2 | Ожидание: целевой блок создаётся валидно, текст текущей строки не теряется, caret остаётся в новом блоке | Приоритет: P0 | Авто: Planned
-- [x] NL-300 | Slash transform: code block -> heading 3 | Ожидание: целевой блок создаётся валидно, текст текущей строки не теряется, caret остаётся в новом блоке | Приоритет: P0 | Авто: Planned
-- [x] NL-301 | Slash transform: code block -> bullet list | Ожидание: целевой блок создаётся валидно, текст текущей строки не теряется, caret остаётся в новом блоке | Приоритет: P0 | Авто: Planned
-- [x] NL-302 | Slash transform: code block -> numbered list | Ожидание: целевой блок создаётся валидно, текст текущей строки не теряется, caret остаётся в новом блоке | Приоритет: P0 | Авто: Planned
-- [x] NL-303 | Slash transform: code block -> todo list | Ожидание: целевой блок создаётся валидно, текст текущей строки не теряется, caret остаётся в новом блоке | Приоритет: P0 | Авто: Planned
-- [x] NL-304 | Slash transform: code block -> blockquote | Ожидание: целевой блок создаётся валидно, текст текущей строки не теряется, caret остаётся в новом блоке | Приоритет: P0 | Авто: Planned
-- [x] NL-305 | Slash transform: code block -> code block | Ожидание: целевой блок создаётся валидно, текст текущей строки не теряется, caret остаётся в новом блоке | Приоритет: P0 | Авто: Planned
-- [x] NL-306 | Slash transform: code block -> divider | Ожидание: целевой блок создаётся валидно, текст текущей строки не теряется, caret остаётся в новом блоке | Приоритет: P0 | Авто: Planned
-- [x] NL-307 | Slash transform: code block -> table | Ожидание: целевой блок создаётся валидно, текст текущей строки не теряется, caret остаётся в новом блоке | Приоритет: P0 | Авто: Planned
-- [x] NL-308 | Slash transform: code block -> image | Ожидание: целевой блок создаётся валидно, текст текущей строки не теряется, caret остаётся в новом блоке | Приоритет: P0 | Авто: Planned
-- [x] NL-309 | Slash transform: callout -> text | Ожидание: целевой блок создаётся валидно, текст текущей строки не теряется, caret остаётся в новом блоке | Приоритет: P0 | Авто: Planned
-- [x] NL-310 | Slash transform: callout -> heading 1 | Ожидание: целевой блок создаётся валидно, текст текущей строки не теряется, caret остаётся в новом блоке | Приоритет: P0 | Авто: Planned
-- [x] NL-311 | Slash transform: callout -> heading 2 | Ожидание: целевой блок создаётся валидно, текст текущей строки не теряется, caret остаётся в новом блоке | Приоритет: P0 | Авто: Planned
-- [x] NL-312 | Slash transform: callout -> heading 3 | Ожидание: целевой блок создаётся валидно, текст текущей строки не теряется, caret остаётся в новом блоке | Приоритет: P0 | Авто: Planned
-- [x] NL-313 | Slash transform: callout -> bullet list | Ожидание: целевой блок создаётся валидно, текст текущей строки не теряется, caret остаётся в новом блоке | Приоритет: P0 | Авто: Planned
-- [x] NL-314 | Slash transform: callout -> numbered list | Ожидание: целевой блок создаётся валидно, текст текущей строки не теряется, caret остаётся в новом блоке | Приоритет: P0 | Авто: Planned
-- [x] NL-315 | Slash transform: callout -> todo list | Ожидание: целевой блок создаётся валидно, текст текущей строки не теряется, caret остаётся в новом блоке | Приоритет: P0 | Авто: Planned
-- [x] NL-316 | Slash transform: callout -> blockquote | Ожидание: целевой блок создаётся валидно, текст текущей строки не теряется, caret остаётся в новом блоке | Приоритет: P0 | Авто: Planned
-- [x] NL-317 | Slash transform: callout -> code block | Ожидание: целевой блок создаётся валидно, текст текущей строки не теряется, caret остаётся в новом блоке | Приоритет: P0 | Авто: Planned
-- [x] NL-318 | Slash transform: callout -> divider | Ожидание: целевой блок создаётся валидно, текст текущей строки не теряется, caret остаётся в новом блоке | Приоритет: P0 | Авто: Planned
-- [x] NL-319 | Slash transform: callout -> table | Ожидание: целевой блок создаётся валидно, текст текущей строки не теряется, caret остаётся в новом блоке | Приоритет: P0 | Авто: Planned
-- [x] NL-320 | Slash transform: callout -> image | Ожидание: целевой блок создаётся валидно, текст текущей строки не теряется, caret остаётся в новом блоке | Приоритет: P0 | Авто: Planned
+- [ ] NL-201 | Slash transform: paragraph -> text | Expected: the target block is created validly, the text of the current line is not lost, the caret stays in the new block | Priority: P0 | Auto: Planned
+- [ ] NL-202 | Slash transform: paragraph -> heading 1 | Expected: the target block is created validly, the text of the current line is not lost, the caret stays in the new block | Priority: P0 | Auto: Planned
+- [ ] NL-203 | Slash transform: paragraph -> heading 2 | Expected: the target block is created validly, the text of the current line is not lost, the caret stays in the new block | Priority: P0 | Auto: Planned
+- [ ] NL-204 | Slash transform: paragraph -> heading 3 | Expected: the target block is created validly, the text of the current line is not lost, the caret stays in the new block | Priority: P0 | Auto: Planned
+- [ ] NL-205 | Slash transform: paragraph -> bullet list | Expected: the target block is created validly, the text of the current line is not lost, the caret stays in the new block | Priority: P0 | Auto: Planned
+- [ ] NL-206 | Slash transform: paragraph -> numbered list | Expected: the target block is created validly, the text of the current line is not lost, the caret stays in the new block | Priority: P0 | Auto: Planned
+- [ ] NL-207 | Slash transform: paragraph -> todo list | Expected: the target block is created validly, the text of the current line is not lost, the caret stays in the new block | Priority: P0 | Auto: Planned
+- [ ] NL-208 | Slash transform: paragraph -> blockquote | Expected: the target block is created validly, the text of the current line is not lost, the caret stays in the new block | Priority: P0 | Auto: Planned
+- [ ] NL-209 | Slash transform: paragraph -> code block | Expected: the target block is created validly, the text of the current line is not lost, the caret stays in the new block | Priority: P0 | Auto: Planned
+- [ ] NL-210 | Slash transform: paragraph -> divider | Expected: the target block is created validly, the text of the current line is not lost, the caret stays in the new block | Priority: P0 | Auto: Planned
+- [ ] NL-211 | Slash transform: paragraph -> table | Expected: the target block is created validly, the text of the current line is not lost, the caret stays in the new block | Priority: P0 | Auto: Planned
+- [ ] NL-212 | Slash transform: paragraph -> image | Expected: the target block is created validly, the text of the current line is not lost, the caret stays in the new block | Priority: P0 | Auto: Planned
+- [ ] NL-213 | Slash transform: heading 1 -> text | Expected: the target block is created validly, the text of the current line is not lost, the caret stays in the new block | Priority: P0 | Auto: Planned
+- [ ] NL-214 | Slash transform: heading 1 -> heading 1 | Expected: the target block is created validly, the text of the current line is not lost, the caret stays in the new block | Priority: P0 | Auto: Planned
+- [ ] NL-215 | Slash transform: heading 1 -> heading 2 | Expected: the target block is created validly, the text of the current line is not lost, the caret stays in the new block | Priority: P0 | Auto: Planned
+- [ ] NL-216 | Slash transform: heading 1 -> heading 3 | Expected: the target block is created validly, the text of the current line is not lost, the caret stays in the new block | Priority: P0 | Auto: Planned
+- [ ] NL-217 | Slash transform: heading 1 -> bullet list | Expected: the target block is created validly, the text of the current line is not lost, the caret stays in the new block | Priority: P0 | Auto: Planned
+- [ ] NL-218 | Slash transform: heading 1 -> numbered list | Expected: the target block is created validly, the text of the current line is not lost, the caret stays in the new block | Priority: P0 | Auto: Planned
+- [ ] NL-219 | Slash transform: heading 1 -> todo list | Expected: the target block is created validly, the text of the current line is not lost, the caret stays in the new block | Priority: P0 | Auto: Planned
+- [ ] NL-220 | Slash transform: heading 1 -> blockquote | Expected: the target block is created validly, the text of the current line is not lost, the caret stays in the new block | Priority: P0 | Auto: Planned
+- [ ] NL-221 | Slash transform: heading 1 -> code block | Expected: the target block is created validly, the text of the current line is not lost, the caret stays in the new block | Priority: P0 | Auto: Planned
+- [ ] NL-222 | Slash transform: heading 1 -> divider | Expected: the target block is created validly, the text of the current line is not lost, the caret stays in the new block | Priority: P0 | Auto: Planned
+- [ ] NL-223 | Slash transform: heading 1 -> table | Expected: the target block is created validly, the text of the current line is not lost, the caret stays in the new block | Priority: P0 | Auto: Planned
+- [ ] NL-224 | Slash transform: heading 1 -> image | Expected: the target block is created validly, the text of the current line is not lost, the caret stays in the new block | Priority: P0 | Auto: Planned
+- [ ] NL-225 | Slash transform: heading 2 -> text | Expected: the target block is created validly, the text of the current line is not lost, the caret stays in the new block | Priority: P0 | Auto: Planned
+- [ ] NL-226 | Slash transform: heading 2 -> heading 1 | Expected: the target block is created validly, the text of the current line is not lost, the caret stays in the new block | Priority: P0 | Auto: Planned
+- [ ] NL-227 | Slash transform: heading 2 -> heading 2 | Expected: the target block is created validly, the text of the current line is not lost, the caret stays in the new block | Priority: P0 | Auto: Planned
+- [ ] NL-228 | Slash transform: heading 2 -> heading 3 | Expected: the target block is created validly, the text of the current line is not lost, the caret stays in the new block | Priority: P0 | Auto: Planned
+- [ ] NL-229 | Slash transform: heading 2 -> bullet list | Expected: the target block is created validly, the text of the current line is not lost, the caret stays in the new block | Priority: P0 | Auto: Planned
+- [ ] NL-230 | Slash transform: heading 2 -> numbered list | Expected: the target block is created validly, the text of the current line is not lost, the caret stays in the new block | Priority: P0 | Auto: Planned
+- [ ] NL-231 | Slash transform: heading 2 -> todo list | Expected: the target block is created validly, the text of the current line is not lost, the caret stays in the new block | Priority: P0 | Auto: Planned
+- [ ] NL-232 | Slash transform: heading 2 -> blockquote | Expected: the target block is created validly, the text of the current line is not lost, the caret stays in the new block | Priority: P0 | Auto: Planned
+- [ ] NL-233 | Slash transform: heading 2 -> code block | Expected: the target block is created validly, the text of the current line is not lost, the caret stays in the new block | Priority: P0 | Auto: Planned
+- [ ] NL-234 | Slash transform: heading 2 -> divider | Expected: the target block is created validly, the text of the current line is not lost, the caret stays in the new block | Priority: P0 | Auto: Planned
+- [ ] NL-235 | Slash transform: heading 2 -> table | Expected: the target block is created validly, the text of the current line is not lost, the caret stays in the new block | Priority: P0 | Auto: Planned
+- [ ] NL-236 | Slash transform: heading 2 -> image | Expected: the target block is created validly, the text of the current line is not lost, the caret stays in the new block | Priority: P0 | Auto: Planned
+- [ ] NL-237 | Slash transform: heading 3 -> text | Expected: the target block is created validly, the text of the current line is not lost, the caret stays in the new block | Priority: P0 | Auto: Planned
+- [ ] NL-238 | Slash transform: heading 3 -> heading 1 | Expected: the target block is created validly, the text of the current line is not lost, the caret stays in the new block | Priority: P0 | Auto: Planned
+- [ ] NL-239 | Slash transform: heading 3 -> heading 2 | Expected: the target block is created validly, the text of the current line is not lost, the caret stays in the new block | Priority: P0 | Auto: Planned
+- [ ] NL-240 | Slash transform: heading 3 -> heading 3 | Expected: the target block is created validly, the text of the current line is not lost, the caret stays in the new block | Priority: P0 | Auto: Planned
+- [ ] NL-241 | Slash transform: heading 3 -> bullet list | Expected: the target block is created validly, the text of the current line is not lost, the caret stays in the new block | Priority: P0 | Auto: Planned
+- [ ] NL-242 | Slash transform: heading 3 -> numbered list | Expected: the target block is created validly, the text of the current line is not lost, the caret stays in the new block | Priority: P0 | Auto: Planned
+- [ ] NL-243 | Slash transform: heading 3 -> todo list | Expected: the target block is created validly, the text of the current line is not lost, the caret stays in the new block | Priority: P0 | Auto: Planned
+- [ ] NL-244 | Slash transform: heading 3 -> blockquote | Expected: the target block is created validly, the text of the current line is not lost, the caret stays in the new block | Priority: P0 | Auto: Planned
+- [ ] NL-245 | Slash transform: heading 3 -> code block | Expected: the target block is created validly, the text of the current line is not lost, the caret stays in the new block | Priority: P0 | Auto: Planned
+- [ ] NL-246 | Slash transform: heading 3 -> divider | Expected: the target block is created validly, the text of the current line is not lost, the caret stays in the new block | Priority: P0 | Auto: Planned
+- [ ] NL-247 | Slash transform: heading 3 -> table | Expected: the target block is created validly, the text of the current line is not lost, the caret stays in the new block | Priority: P0 | Auto: Planned
+- [ ] NL-248 | Slash transform: heading 3 -> image | Expected: the target block is created validly, the text of the current line is not lost, the caret stays in the new block | Priority: P0 | Auto: Planned
+- [ ] NL-249 | Slash transform: bullet item -> text | Expected: the target block is created validly, the text of the current line is not lost, the caret stays in the new block | Priority: P0 | Auto: Planned
+- [ ] NL-250 | Slash transform: bullet item -> heading 1 | Expected: the target block is created validly, the text of the current line is not lost, the caret stays in the new block | Priority: P0 | Auto: Planned
+- [ ] NL-251 | Slash transform: bullet item -> heading 2 | Expected: the target block is created validly, the text of the current line is not lost, the caret stays in the new block | Priority: P0 | Auto: Planned
+- [ ] NL-252 | Slash transform: bullet item -> heading 3 | Expected: the target block is created validly, the text of the current line is not lost, the caret stays in the new block | Priority: P0 | Auto: Planned
+- [ ] NL-253 | Slash transform: bullet item -> bullet list | Expected: the target block is created validly, the text of the current line is not lost, the caret stays in the new block | Priority: P0 | Auto: Planned
+- [ ] NL-254 | Slash transform: bullet item -> numbered list | Expected: the target block is created validly, the text of the current line is not lost, the caret stays in the new block | Priority: P0 | Auto: Planned
+- [ ] NL-255 | Slash transform: bullet item -> todo list | Expected: the target block is created validly, the text of the current line is not lost, the caret stays in the new block | Priority: P0 | Auto: Planned
+- [ ] NL-256 | Slash transform: bullet item -> blockquote | Expected: the target block is created validly, the text of the current line is not lost, the caret stays in the new block | Priority: P0 | Auto: Planned
+- [ ] NL-257 | Slash transform: bullet item -> code block | Expected: the target block is created validly, the text of the current line is not lost, the caret stays in the new block | Priority: P0 | Auto: Planned
+- [ ] NL-258 | Slash transform: bullet item -> divider | Expected: the target block is created validly, the text of the current line is not lost, the caret stays in the new block | Priority: P0 | Auto: Planned
+- [ ] NL-259 | Slash transform: bullet item -> table | Expected: the target block is created validly, the text of the current line is not lost, the caret stays in the new block | Priority: P0 | Auto: Planned
+- [ ] NL-260 | Slash transform: bullet item -> image | Expected: the target block is created validly, the text of the current line is not lost, the caret stays in the new block | Priority: P0 | Auto: Planned
+- [ ] NL-261 | Slash transform: ordered item -> text | Expected: the target block is created validly, the text of the current line is not lost, the caret stays in the new block | Priority: P0 | Auto: Planned
+- [ ] NL-262 | Slash transform: ordered item -> heading 1 | Expected: the target block is created validly, the text of the current line is not lost, the caret stays in the new block | Priority: P0 | Auto: Planned
+- [ ] NL-263 | Slash transform: ordered item -> heading 2 | Expected: the target block is created validly, the text of the current line is not lost, the caret stays in the new block | Priority: P0 | Auto: Planned
+- [ ] NL-264 | Slash transform: ordered item -> heading 3 | Expected: the target block is created validly, the text of the current line is not lost, the caret stays in the new block | Priority: P0 | Auto: Planned
+- [ ] NL-265 | Slash transform: ordered item -> bullet list | Expected: the target block is created validly, the text of the current line is not lost, the caret stays in the new block | Priority: P0 | Auto: Planned
+- [ ] NL-266 | Slash transform: ordered item -> numbered list | Expected: the target block is created validly, the text of the current line is not lost, the caret stays in the new block | Priority: P0 | Auto: Planned
+- [ ] NL-267 | Slash transform: ordered item -> todo list | Expected: the target block is created validly, the text of the current line is not lost, the caret stays in the new block | Priority: P0 | Auto: Planned
+- [ ] NL-268 | Slash transform: ordered item -> blockquote | Expected: the target block is created validly, the text of the current line is not lost, the caret stays in the new block | Priority: P0 | Auto: Planned
+- [ ] NL-269 | Slash transform: ordered item -> code block | Expected: the target block is created validly, the text of the current line is not lost, the caret stays in the new block | Priority: P0 | Auto: Planned
+- [ ] NL-270 | Slash transform: ordered item -> divider | Expected: the target block is created validly, the text of the current line is not lost, the caret stays in the new block | Priority: P0 | Auto: Planned
+- [ ] NL-271 | Slash transform: ordered item -> table | Expected: the target block is created validly, the text of the current line is not lost, the caret stays in the new block | Priority: P0 | Auto: Planned
+- [ ] NL-272 | Slash transform: ordered item -> image | Expected: the target block is created validly, the text of the current line is not lost, the caret stays in the new block | Priority: P0 | Auto: Planned
+- [ ] NL-273 | Slash transform: todo item -> text | Expected: the target block is created validly, the text of the current line is not lost, the caret stays in the new block | Priority: P0 | Auto: Planned
+- [ ] NL-274 | Slash transform: todo item -> heading 1 | Expected: the target block is created validly, the text of the current line is not lost, the caret stays in the new block | Priority: P0 | Auto: Planned
+- [ ] NL-275 | Slash transform: todo item -> heading 2 | Expected: the target block is created validly, the text of the current line is not lost, the caret stays in the new block | Priority: P0 | Auto: Planned
+- [ ] NL-276 | Slash transform: todo item -> heading 3 | Expected: the target block is created validly, the text of the current line is not lost, the caret stays in the new block | Priority: P0 | Auto: Planned
+- [ ] NL-277 | Slash transform: todo item -> bullet list | Expected: the target block is created validly, the text of the current line is not lost, the caret stays in the new block | Priority: P0 | Auto: Planned
+- [ ] NL-278 | Slash transform: todo item -> numbered list | Expected: the target block is created validly, the text of the current line is not lost, the caret stays in the new block | Priority: P0 | Auto: Planned
+- [ ] NL-279 | Slash transform: todo item -> todo list | Expected: the target block is created validly, the text of the current line is not lost, the caret stays in the new block | Priority: P0 | Auto: Planned
+- [ ] NL-280 | Slash transform: todo item -> blockquote | Expected: the target block is created validly, the text of the current line is not lost, the caret stays in the new block | Priority: P0 | Auto: Planned
+- [ ] NL-281 | Slash transform: todo item -> code block | Expected: the target block is created validly, the text of the current line is not lost, the caret stays in the new block | Priority: P0 | Auto: Planned
+- [ ] NL-282 | Slash transform: todo item -> divider | Expected: the target block is created validly, the text of the current line is not lost, the caret stays in the new block | Priority: P0 | Auto: Planned
+- [ ] NL-283 | Slash transform: todo item -> table | Expected: the target block is created validly, the text of the current line is not lost, the caret stays in the new block | Priority: P0 | Auto: Planned
+- [ ] NL-284 | Slash transform: todo item -> image | Expected: the target block is created validly, the text of the current line is not lost, the caret stays in the new block | Priority: P0 | Auto: Planned
+- [ ] NL-285 | Slash transform: blockquote -> text | Expected: the target block is created validly, the text of the current line is not lost, the caret stays in the new block | Priority: P0 | Auto: Planned
+- [ ] NL-286 | Slash transform: blockquote -> heading 1 | Expected: the target block is created validly, the text of the current line is not lost, the caret stays in the new block | Priority: P0 | Auto: Planned
+- [ ] NL-287 | Slash transform: blockquote -> heading 2 | Expected: the target block is created validly, the text of the current line is not lost, the caret stays in the new block | Priority: P0 | Auto: Planned
+- [ ] NL-288 | Slash transform: blockquote -> heading 3 | Expected: the target block is created validly, the text of the current line is not lost, the caret stays in the new block | Priority: P0 | Auto: Planned
+- [ ] NL-289 | Slash transform: blockquote -> bullet list | Expected: the target block is created validly, the text of the current line is not lost, the caret stays in the new block | Priority: P0 | Auto: Planned
+- [ ] NL-290 | Slash transform: blockquote -> numbered list | Expected: the target block is created validly, the text of the current line is not lost, the caret stays in the new block | Priority: P0 | Auto: Planned
+- [ ] NL-291 | Slash transform: blockquote -> todo list | Expected: the target block is created validly, the text of the current line is not lost, the caret stays in the new block | Priority: P0 | Auto: Planned
+- [ ] NL-292 | Slash transform: blockquote -> blockquote | Expected: the target block is created validly, the text of the current line is not lost, the caret stays in the new block | Priority: P0 | Auto: Planned
+- [ ] NL-293 | Slash transform: blockquote -> code block | Expected: the target block is created validly, the text of the current line is not lost, the caret stays in the new block | Priority: P0 | Auto: Planned
+- [ ] NL-294 | Slash transform: blockquote -> divider | Expected: the target block is created validly, the text of the current line is not lost, the caret stays in the new block | Priority: P0 | Auto: Planned
+- [ ] NL-295 | Slash transform: blockquote -> table | Expected: the target block is created validly, the text of the current line is not lost, the caret stays in the new block | Priority: P0 | Auto: Planned
+- [ ] NL-296 | Slash transform: blockquote -> image | Expected: the target block is created validly, the text of the current line is not lost, the caret stays in the new block | Priority: P0 | Auto: Planned
+- [ ] NL-297 | Slash transform: code block -> text | Expected: the target block is created validly, the text of the current line is not lost, the caret stays in the new block | Priority: P0 | Auto: Planned
+- [ ] NL-298 | Slash transform: code block -> heading 1 | Expected: the target block is created validly, the text of the current line is not lost, the caret stays in the new block | Priority: P0 | Auto: Planned
+- [ ] NL-299 | Slash transform: code block -> heading 2 | Expected: the target block is created validly, the text of the current line is not lost, the caret stays in the new block | Priority: P0 | Auto: Planned
+- [ ] NL-300 | Slash transform: code block -> heading 3 | Expected: the target block is created validly, the text of the current line is not lost, the caret stays in the new block | Priority: P0 | Auto: Planned
+- [ ] NL-301 | Slash transform: code block -> bullet list | Expected: the target block is created validly, the text of the current line is not lost, the caret stays in the new block | Priority: P0 | Auto: Planned
+- [ ] NL-302 | Slash transform: code block -> numbered list | Expected: the target block is created validly, the text of the current line is not lost, the caret stays in the new block | Priority: P0 | Auto: Planned
+- [ ] NL-303 | Slash transform: code block -> todo list | Expected: the target block is created validly, the text of the current line is not lost, the caret stays in the new block | Priority: P0 | Auto: Planned
+- [ ] NL-304 | Slash transform: code block -> blockquote | Expected: the target block is created validly, the text of the current line is not lost, the caret stays in the new block | Priority: P0 | Auto: Planned
+- [ ] NL-305 | Slash transform: code block -> code block | Expected: the target block is created validly, the text of the current line is not lost, the caret stays in the new block | Priority: P0 | Auto: Planned
+- [ ] NL-306 | Slash transform: code block -> divider | Expected: the target block is created validly, the text of the current line is not lost, the caret stays in the new block | Priority: P0 | Auto: Planned
+- [ ] NL-307 | Slash transform: code block -> table | Expected: the target block is created validly, the text of the current line is not lost, the caret stays in the new block | Priority: P0 | Auto: Planned
+- [ ] NL-308 | Slash transform: code block -> image | Expected: the target block is created validly, the text of the current line is not lost, the caret stays in the new block | Priority: P0 | Auto: Planned
+- [ ] NL-309 | Slash transform: callout -> text | Expected: the target block is created validly, the text of the current line is not lost, the caret stays in the new block | Priority: P0 | Auto: Planned
+- [ ] NL-310 | Slash transform: callout -> heading 1 | Expected: the target block is created validly, the text of the current line is not lost, the caret stays in the new block | Priority: P0 | Auto: Planned
+- [ ] NL-311 | Slash transform: callout -> heading 2 | Expected: the target block is created validly, the text of the current line is not lost, the caret stays in the new block | Priority: P0 | Auto: Planned
+- [ ] NL-312 | Slash transform: callout -> heading 3 | Expected: the target block is created validly, the text of the current line is not lost, the caret stays in the new block | Priority: P0 | Auto: Planned
+- [ ] NL-313 | Slash transform: callout -> bullet list | Expected: the target block is created validly, the text of the current line is not lost, the caret stays in the new block | Priority: P0 | Auto: Planned
+- [ ] NL-314 | Slash transform: callout -> numbered list | Expected: the target block is created validly, the text of the current line is not lost, the caret stays in the new block | Priority: P0 | Auto: Planned
+- [ ] NL-315 | Slash transform: callout -> todo list | Expected: the target block is created validly, the text of the current line is not lost, the caret stays in the new block | Priority: P0 | Auto: Planned
+- [ ] NL-316 | Slash transform: callout -> blockquote | Expected: the target block is created validly, the text of the current line is not lost, the caret stays in the new block | Priority: P0 | Auto: Planned
+- [ ] NL-317 | Slash transform: callout -> code block | Expected: the target block is created validly, the text of the current line is not lost, the caret stays in the new block | Priority: P0 | Auto: Planned
+- [ ] NL-318 | Slash transform: callout -> divider | Expected: the target block is created validly, the text of the current line is not lost, the caret stays in the new block | Priority: P0 | Auto: Planned
+- [ ] NL-319 | Slash transform: callout -> table | Expected: the target block is created validly, the text of the current line is not lost, the caret stays in the new block | Priority: P0 | Auto: Planned
+- [ ] NL-320 | Slash transform: callout -> image | Expected: the target block is created validly, the text of the current line is not lost, the caret stays in the new block | Priority: P0 | Auto: Planned
 
 ## E. Todo/List Stress Cases (70)
 
-- [x] NL-321 | Click checkbox (первый item списка) | Ожидание: state checked меняется, текст остаётся на месте и не скачет | Приоритет: P0 | Авто: E2E
-- [x] NL-322 | Caret placement в пустом todo (первый item списка) | Ожидание: каретка ставится после checkbox в текстовой зоне | Приоритет: P0 | Авто: E2E
-- [x] NL-323 | Ввод текста в todo (первый item списка) | Ожидание: текст вертикально выровнен с checkbox, gap стабильный | Приоритет: P0 | Авто: E2E
-- [x] NL-324 | Enter в непустом todo (первый item списка) | Ожидание: создаётся следующий todo item | Приоритет: P0 | Авто: E2E
-- [x] NL-325 | Enter в пустом todo (первый item списка) | Ожидание: выход в paragraph вне списка | Приоритет: P0 | Авто: E2E
-- [x] NL-326 | Slash convert todo -> bullet (первый item списка) | Ожидание: текст строки сохраняется, тип меняется без пропадания строки | Приоритет: P0 | Авто: E2E
-- [x] NL-327 | Slash convert bullet -> todo (первый item списка) | Ожидание: текст строки сохраняется, checkbox корректно рендерится | Приоритет: P0 | Авто: E2E
-- [x] NL-328 | Click checkbox (средний item списка) | Ожидание: state checked меняется, текст остаётся на месте и не скачет | Приоритет: P0 | Авто: E2E
-- [x] NL-329 | Caret placement в пустом todo (средний item списка) | Ожидание: каретка ставится после checkbox в текстовой зоне | Приоритет: P0 | Авто: E2E
-- [x] NL-330 | Ввод текста в todo (средний item списка) | Ожидание: текст вертикально выровнен с checkbox, gap стабильный | Приоритет: P0 | Авто: E2E
-- [x] NL-331 | Enter в непустом todo (средний item списка) | Ожидание: создаётся следующий todo item | Приоритет: P0 | Авто: E2E
-- [x] NL-332 | Enter в пустом todo (средний item списка) | Ожидание: выход в paragraph вне списка | Приоритет: P0 | Авто: E2E
-- [x] NL-333 | Slash convert todo -> bullet (средний item списка) | Ожидание: текст строки сохраняется, тип меняется без пропадания строки | Приоритет: P0 | Авто: E2E
-- [x] NL-334 | Slash convert bullet -> todo (средний item списка) | Ожидание: текст строки сохраняется, checkbox корректно рендерится | Приоритет: P0 | Авто: E2E
-- [x] NL-335 | Click checkbox (последний item списка) | Ожидание: state checked меняется, текст остаётся на месте и не скачет | Приоритет: P0 | Авто: E2E
-- [x] NL-336 | Caret placement в пустом todo (последний item списка) | Ожидание: каретка ставится после checkbox в текстовой зоне | Приоритет: P0 | Авто: E2E
-- [x] NL-337 | Ввод текста в todo (последний item списка) | Ожидание: текст вертикально выровнен с checkbox, gap стабильный | Приоритет: P0 | Авто: E2E
-- [x] NL-338 | Enter в непустом todo (последний item списка) | Ожидание: создаётся следующий todo item | Приоритет: P0 | Авто: E2E
-- [x] NL-339 | Enter в пустом todo (последний item списка) | Ожидание: выход в paragraph вне списка | Приоритет: P0 | Авто: E2E
-- [x] NL-340 | Slash convert todo -> bullet (последний item списка) | Ожидание: текст строки сохраняется, тип меняется без пропадания строки | Приоритет: P0 | Авто: E2E
-- [x] NL-341 | Slash convert bullet -> todo (последний item списка) | Ожидание: текст строки сохраняется, checkbox корректно рендерится | Приоритет: P0 | Авто: E2E
-- [x] NL-342 | Click checkbox (item с длинным текстом) | Ожидание: state checked меняется, текст остаётся на месте и не скачет | Приоритет: P0 | Авто: E2E
-- [x] NL-343 | Caret placement в пустом todo (item с длинным текстом) | Ожидание: каретка ставится после checkbox в текстовой зоне | Приоритет: P0 | Авто: E2E
-- [x] NL-344 | Ввод текста в todo (item с длинным текстом) | Ожидание: текст вертикально выровнен с checkbox, gap стабильный | Приоритет: P0 | Авто: E2E
-- [x] NL-345 | Enter в непустом todo (item с длинным текстом) | Ожидание: создаётся следующий todo item | Приоритет: P0 | Авто: E2E
-- [x] NL-346 | Enter в пустом todo (item с длинным текстом) | Ожидание: выход в paragraph вне списка | Приоритет: P0 | Авто: E2E
-- [x] NL-347 | Slash convert todo -> bullet (item с длинным текстом) | Ожидание: текст строки сохраняется, тип меняется без пропадания строки | Приоритет: P0 | Авто: E2E
-- [x] NL-348 | Slash convert bullet -> todo (item с длинным текстом) | Ожидание: текст строки сохраняется, checkbox корректно рендерится | Приоритет: P0 | Авто: E2E
-- [x] NL-349 | Click checkbox (item с inline marks) | Ожидание: state checked меняется, текст остаётся на месте и не скачет | Приоритет: P0 | Авто: E2E
-- [x] NL-350 | Caret placement в пустом todo (item с inline marks) | Ожидание: каретка ставится после checkbox в текстовой зоне | Приоритет: P0 | Авто: E2E
-- [x] NL-351 | Ввод текста в todo (item с inline marks) | Ожидание: текст вертикально выровнен с checkbox, gap стабильный | Приоритет: P0 | Авто: E2E
-- [x] NL-352 | Enter в непустом todo (item с inline marks) | Ожидание: создаётся следующий todo item | Приоритет: P0 | Авто: E2E
-- [x] NL-353 | Enter в пустом todo (item с inline marks) | Ожидание: выход в paragraph вне списка | Приоритет: P0 | Авто: E2E
-- [x] NL-354 | Slash convert todo -> bullet (item с inline marks) | Ожидание: текст строки сохраняется, тип меняется без пропадания строки | Приоритет: P0 | Авто: E2E
-- [x] NL-355 | Slash convert bullet -> todo (item с inline marks) | Ожидание: текст строки сохраняется, checkbox корректно рендерится | Приоритет: P0 | Авто: E2E
-- [x] NL-356 | Click checkbox (пустой item) | Ожидание: state checked меняется, текст остаётся на месте и не скачет | Приоритет: P0 | Авто: E2E
-- [x] NL-357 | Caret placement в пустом todo (пустой item) | Ожидание: каретка ставится после checkbox в текстовой зоне | Приоритет: P0 | Авто: E2E
-- [x] NL-358 | Ввод текста в todo (пустой item) | Ожидание: текст вертикально выровнен с checkbox, gap стабильный | Приоритет: P0 | Авто: E2E
-- [x] NL-359 | Enter в непустом todo (пустой item) | Ожидание: создаётся следующий todo item | Приоритет: P0 | Авто: E2E
-- [x] NL-360 | Enter в пустом todo (пустой item) | Ожидание: выход в paragraph вне списка | Приоритет: P0 | Авто: E2E
-- [x] NL-361 | Slash convert todo -> bullet (пустой item) | Ожидание: текст строки сохраняется, тип меняется без пропадания строки | Приоритет: P0 | Авто: E2E
-- [x] NL-362 | Slash convert bullet -> todo (пустой item) | Ожидание: текст строки сохраняется, checkbox корректно рендерится | Приоритет: P0 | Авто: E2E
-- [x] NL-363 | Click checkbox (item после paste) | Ожидание: state checked меняется, текст остаётся на месте и не скачет | Приоритет: P0 | Авто: E2E
-- [x] NL-364 | Caret placement в пустом todo (item после paste) | Ожидание: каретка ставится после checkbox в текстовой зоне | Приоритет: P0 | Авто: E2E
-- [x] NL-365 | Ввод текста в todo (item после paste) | Ожидание: текст вертикально выровнен с checkbox, gap стабильный | Приоритет: P0 | Авто: E2E
-- [x] NL-366 | Enter в непустом todo (item после paste) | Ожидание: создаётся следующий todo item | Приоритет: P0 | Авто: E2E
-- [x] NL-367 | Enter в пустом todo (item после paste) | Ожидание: выход в paragraph вне списка | Приоритет: P0 | Авто: E2E
-- [x] NL-368 | Slash convert todo -> bullet (item после paste) | Ожидание: текст строки сохраняется, тип меняется без пропадания строки | Приоритет: P0 | Авто: E2E
-- [x] NL-369 | Slash convert bullet -> todo (item после paste) | Ожидание: текст строки сохраняется, checkbox корректно рендерится | Приоритет: P0 | Авто: E2E
-- [x] NL-370 | Click checkbox (item после undo/redo) | Ожидание: state checked меняется, текст остаётся на месте и не скачет | Приоритет: P0 | Авто: E2E
-- [x] NL-371 | Caret placement в пустом todo (item после undo/redo) | Ожидание: каретка ставится после checkbox в текстовой зоне | Приоритет: P0 | Авто: E2E
-- [x] NL-372 | Ввод текста в todo (item после undo/redo) | Ожидание: текст вертикально выровнен с checkbox, gap стабильный | Приоритет: P0 | Авто: E2E
-- [x] NL-373 | Enter в непустом todo (item после undo/redo) | Ожидание: создаётся следующий todo item | Приоритет: P0 | Авто: E2E
-- [x] NL-374 | Enter в пустом todo (item после undo/redo) | Ожидание: выход в paragraph вне списка | Приоритет: P0 | Авто: E2E
-- [x] NL-375 | Slash convert todo -> bullet (item после undo/redo) | Ожидание: текст строки сохраняется, тип меняется без пропадания строки | Приоритет: P0 | Авто: E2E
-- [x] NL-376 | Slash convert bullet -> todo (item после undo/redo) | Ожидание: текст строки сохраняется, checkbox корректно рендерится | Приоритет: P0 | Авто: E2E
-- [x] NL-377 | Click checkbox (item сразу после slash transform) | Ожидание: state checked меняется, текст остаётся на месте и не скачет | Приоритет: P0 | Авто: E2E
-- [x] NL-378 | Caret placement в пустом todo (item сразу после slash transform) | Ожидание: каретка ставится после checkbox в текстовой зоне | Приоритет: P0 | Авто: E2E
-- [x] NL-379 | Ввод текста в todo (item сразу после slash transform) | Ожидание: текст вертикально выровнен с checkbox, gap стабильный | Приоритет: P0 | Авто: E2E
-- [x] NL-380 | Enter в непустом todo (item сразу после slash transform) | Ожидание: создаётся следующий todo item | Приоритет: P0 | Авто: E2E
-- [x] NL-381 | Enter в пустом todo (item сразу после slash transform) | Ожидание: выход в paragraph вне списка | Приоритет: P0 | Авто: E2E
-- [x] NL-382 | Slash convert todo -> bullet (item сразу после slash transform) | Ожидание: текст строки сохраняется, тип меняется без пропадания строки | Приоритет: P0 | Авто: E2E
-- [x] NL-383 | Slash convert bullet -> todo (item сразу после slash transform) | Ожидание: текст строки сохраняется, checkbox корректно рендерится | Приоритет: P0 | Авто: E2E
-- [x] NL-384 | Click checkbox (item в dark theme) | Ожидание: state checked меняется, текст остаётся на месте и не скачет | Приоритет: P0 | Авто: E2E
-- [x] NL-385 | Caret placement в пустом todo (item в dark theme) | Ожидание: каретка ставится после checkbox в текстовой зоне | Приоритет: P0 | Авто: E2E
-- [x] NL-386 | Ввод текста в todo (item в dark theme) | Ожидание: текст вертикально выровнен с checkbox, gap стабильный | Приоритет: P0 | Авто: E2E
-- [x] NL-387 | Enter в непустом todo (item в dark theme) | Ожидание: создаётся следующий todo item | Приоритет: P0 | Авто: E2E
-- [x] NL-388 | Enter в пустом todo (item в dark theme) | Ожидание: выход в paragraph вне списка | Приоритет: P0 | Авто: E2E
-- [x] NL-389 | Slash convert todo -> bullet (item в dark theme) | Ожидание: текст строки сохраняется, тип меняется без пропадания строки | Приоритет: P0 | Авто: E2E
-- [x] NL-390 | Slash convert bullet -> todo (item в dark theme) | Ожидание: текст строки сохраняется, checkbox корректно рендерится | Приоритет: P0 | Авто: E2E
+- [ ] NL-321 | Click checkbox (first list item) | Expected: the checked state changes, the text stays in place and does not jump | Priority: P0 | Auto: E2E
+- [ ] NL-322 | Caret placement in an empty todo (first list item) | Expected: the caret is placed after the checkbox in the text area | Priority: P0 | Auto: E2E
+- [ ] NL-323 | Type text in a todo (first list item) | Expected: the text is vertically aligned with the checkbox, the gap is stable | Priority: P0 | Auto: E2E
+- [ ] NL-324 | Enter in a non-empty todo (first list item) | Expected: the next todo item is created | Priority: P0 | Auto: E2E
+- [ ] NL-325 | Enter in an empty todo (first list item) | Expected: exits to a paragraph outside the list | Priority: P0 | Auto: E2E
+- [ ] NL-326 | Slash convert todo -> bullet (first list item) | Expected: the line text is preserved, the type changes without the line disappearing | Priority: P0 | Auto: E2E
+- [ ] NL-327 | Slash convert bullet -> todo (first list item) | Expected: the line text is preserved, the checkbox renders correctly | Priority: P0 | Auto: E2E
+- [ ] NL-328 | Click checkbox (middle list item) | Expected: the checked state changes, the text stays in place and does not jump | Priority: P0 | Auto: E2E
+- [ ] NL-329 | Caret placement in an empty todo (middle list item) | Expected: the caret is placed after the checkbox in the text area | Priority: P0 | Auto: E2E
+- [ ] NL-330 | Type text in a todo (middle list item) | Expected: the text is vertically aligned with the checkbox, the gap is stable | Priority: P0 | Auto: E2E
+- [ ] NL-331 | Enter in a non-empty todo (middle list item) | Expected: the next todo item is created | Priority: P0 | Auto: E2E
+- [ ] NL-332 | Enter in an empty todo (middle list item) | Expected: exits to a paragraph outside the list | Priority: P0 | Auto: E2E
+- [ ] NL-333 | Slash convert todo -> bullet (middle list item) | Expected: the line text is preserved, the type changes without the line disappearing | Priority: P0 | Auto: E2E
+- [ ] NL-334 | Slash convert bullet -> todo (middle list item) | Expected: the line text is preserved, the checkbox renders correctly | Priority: P0 | Auto: E2E
+- [ ] NL-335 | Click checkbox (last list item) | Expected: the checked state changes, the text stays in place and does not jump | Priority: P0 | Auto: E2E
+- [ ] NL-336 | Caret placement in an empty todo (last list item) | Expected: the caret is placed after the checkbox in the text area | Priority: P0 | Auto: E2E
+- [ ] NL-337 | Type text in a todo (last list item) | Expected: the text is vertically aligned with the checkbox, the gap is stable | Priority: P0 | Auto: E2E
+- [ ] NL-338 | Enter in a non-empty todo (last list item) | Expected: the next todo item is created | Priority: P0 | Auto: E2E
+- [ ] NL-339 | Enter in an empty todo (last list item) | Expected: exits to a paragraph outside the list | Priority: P0 | Auto: E2E
+- [ ] NL-340 | Slash convert todo -> bullet (last list item) | Expected: the line text is preserved, the type changes without the line disappearing | Priority: P0 | Auto: E2E
+- [ ] NL-341 | Slash convert bullet -> todo (last list item) | Expected: the line text is preserved, the checkbox renders correctly | Priority: P0 | Auto: E2E
+- [ ] NL-342 | Click checkbox (item with long text) | Expected: the checked state changes, the text stays in place and does not jump | Priority: P0 | Auto: E2E
+- [ ] NL-343 | Caret placement in an empty todo (item with long text) | Expected: the caret is placed after the checkbox in the text area | Priority: P0 | Auto: E2E
+- [ ] NL-344 | Type text in a todo (item with long text) | Expected: the text is vertically aligned with the checkbox, the gap is stable | Priority: P0 | Auto: E2E
+- [ ] NL-345 | Enter in a non-empty todo (item with long text) | Expected: the next todo item is created | Priority: P0 | Auto: E2E
+- [ ] NL-346 | Enter in an empty todo (item with long text) | Expected: exits to a paragraph outside the list | Priority: P0 | Auto: E2E
+- [ ] NL-347 | Slash convert todo -> bullet (item with long text) | Expected: the line text is preserved, the type changes without the line disappearing | Priority: P0 | Auto: E2E
+- [ ] NL-348 | Slash convert bullet -> todo (item with long text) | Expected: the line text is preserved, the checkbox renders correctly | Priority: P0 | Auto: E2E
+- [ ] NL-349 | Click checkbox (item with inline marks) | Expected: the checked state changes, the text stays in place and does not jump | Priority: P0 | Auto: E2E
+- [ ] NL-350 | Caret placement in an empty todo (item with inline marks) | Expected: the caret is placed after the checkbox in the text area | Priority: P0 | Auto: E2E
+- [ ] NL-351 | Type text in a todo (item with inline marks) | Expected: the text is vertically aligned with the checkbox, the gap is stable | Priority: P0 | Auto: E2E
+- [ ] NL-352 | Enter in a non-empty todo (item with inline marks) | Expected: the next todo item is created | Priority: P0 | Auto: E2E
+- [ ] NL-353 | Enter in an empty todo (item with inline marks) | Expected: exits to a paragraph outside the list | Priority: P0 | Auto: E2E
+- [ ] NL-354 | Slash convert todo -> bullet (item with inline marks) | Expected: the line text is preserved, the type changes without the line disappearing | Priority: P0 | Auto: E2E
+- [ ] NL-355 | Slash convert bullet -> todo (item with inline marks) | Expected: the line text is preserved, the checkbox renders correctly | Priority: P0 | Auto: E2E
+- [ ] NL-356 | Click checkbox (empty item) | Expected: the checked state changes, the text stays in place and does not jump | Priority: P0 | Auto: E2E
+- [ ] NL-357 | Caret placement in an empty todo (empty item) | Expected: the caret is placed after the checkbox in the text area | Priority: P0 | Auto: E2E
+- [ ] NL-358 | Type text in a todo (empty item) | Expected: the text is vertically aligned with the checkbox, the gap is stable | Priority: P0 | Auto: E2E
+- [ ] NL-359 | Enter in a non-empty todo (empty item) | Expected: the next todo item is created | Priority: P0 | Auto: E2E
+- [ ] NL-360 | Enter in an empty todo (empty item) | Expected: exits to a paragraph outside the list | Priority: P0 | Auto: E2E
+- [ ] NL-361 | Slash convert todo -> bullet (empty item) | Expected: the line text is preserved, the type changes without the line disappearing | Priority: P0 | Auto: E2E
+- [ ] NL-362 | Slash convert bullet -> todo (empty item) | Expected: the line text is preserved, the checkbox renders correctly | Priority: P0 | Auto: E2E
+- [ ] NL-363 | Click checkbox (item after paste) | Expected: the checked state changes, the text stays in place and does not jump | Priority: P0 | Auto: E2E
+- [ ] NL-364 | Caret placement in an empty todo (item after paste) | Expected: the caret is placed after the checkbox in the text area | Priority: P0 | Auto: E2E
+- [ ] NL-365 | Type text in a todo (item after paste) | Expected: the text is vertically aligned with the checkbox, the gap is stable | Priority: P0 | Auto: E2E
+- [ ] NL-366 | Enter in a non-empty todo (item after paste) | Expected: the next todo item is created | Priority: P0 | Auto: E2E
+- [ ] NL-367 | Enter in an empty todo (item after paste) | Expected: exits to a paragraph outside the list | Priority: P0 | Auto: E2E
+- [ ] NL-368 | Slash convert todo -> bullet (item after paste) | Expected: the line text is preserved, the type changes without the line disappearing | Priority: P0 | Auto: E2E
+- [ ] NL-369 | Slash convert bullet -> todo (item after paste) | Expected: the line text is preserved, the checkbox renders correctly | Priority: P0 | Auto: E2E
+- [ ] NL-370 | Click checkbox (item after undo/redo) | Expected: the checked state changes, the text stays in place and does not jump | Priority: P0 | Auto: E2E
+- [ ] NL-371 | Caret placement in an empty todo (item after undo/redo) | Expected: the caret is placed after the checkbox in the text area | Priority: P0 | Auto: E2E
+- [ ] NL-372 | Type text in a todo (item after undo/redo) | Expected: the text is vertically aligned with the checkbox, the gap is stable | Priority: P0 | Auto: E2E
+- [ ] NL-373 | Enter in a non-empty todo (item after undo/redo) | Expected: the next todo item is created | Priority: P0 | Auto: E2E
+- [ ] NL-374 | Enter in an empty todo (item after undo/redo) | Expected: exits to a paragraph outside the list | Priority: P0 | Auto: E2E
+- [ ] NL-375 | Slash convert todo -> bullet (item after undo/redo) | Expected: the line text is preserved, the type changes without the line disappearing | Priority: P0 | Auto: E2E
+- [ ] NL-376 | Slash convert bullet -> todo (item after undo/redo) | Expected: the line text is preserved, the checkbox renders correctly | Priority: P0 | Auto: E2E
+- [ ] NL-377 | Click checkbox (item right after slash transform) | Expected: the checked state changes, the text stays in place and does not jump | Priority: P0 | Auto: E2E
+- [ ] NL-378 | Caret placement in an empty todo (item right after slash transform) | Expected: the caret is placed after the checkbox in the text area | Priority: P0 | Auto: E2E
+- [ ] NL-379 | Type text in a todo (item right after slash transform) | Expected: the text is vertically aligned with the checkbox, the gap is stable | Priority: P0 | Auto: E2E
+- [ ] NL-380 | Enter in a non-empty todo (item right after slash transform) | Expected: the next todo item is created | Priority: P0 | Auto: E2E
+- [ ] NL-381 | Enter in an empty todo (item right after slash transform) | Expected: exits to a paragraph outside the list | Priority: P0 | Auto: E2E
+- [ ] NL-382 | Slash convert todo -> bullet (item right after slash transform) | Expected: the line text is preserved, the type changes without the line disappearing | Priority: P0 | Auto: E2E
+- [ ] NL-383 | Slash convert bullet -> todo (item right after slash transform) | Expected: the line text is preserved, the checkbox renders correctly | Priority: P0 | Auto: E2E
+- [ ] NL-384 | Click checkbox (item in dark theme) | Expected: the checked state changes, the text stays in place and does not jump | Priority: P0 | Auto: E2E
+- [ ] NL-385 | Caret placement in an empty todo (item in dark theme) | Expected: the caret is placed after the checkbox in the text area | Priority: P0 | Auto: E2E
+- [ ] NL-386 | Type text in a todo (item in dark theme) | Expected: the text is vertically aligned with the checkbox, the gap is stable | Priority: P0 | Auto: E2E
+- [ ] NL-387 | Enter in a non-empty todo (item in dark theme) | Expected: the next todo item is created | Priority: P0 | Auto: E2E
+- [ ] NL-388 | Enter in an empty todo (item in dark theme) | Expected: exits to a paragraph outside the list | Priority: P0 | Auto: E2E
+- [ ] NL-389 | Slash convert todo -> bullet (item in dark theme) | Expected: the line text is preserved, the type changes without the line disappearing | Priority: P0 | Auto: E2E
+- [ ] NL-390 | Slash convert bullet -> todo (item in dark theme) | Expected: the line text is preserved, the checkbox renders correctly | Priority: P0 | Auto: E2E
 
 ## F. Formatting & Highlight Retention (40)
 
-- [x] NL-391 | Toggle Bold (selection внутри paragraph) | Ожидание: mark применяется корректно, визуальное выделение не пропадает преждевременно | Приоритет: P0 | Авто: E2E
-- [x] NL-392 | Toggle Italic (selection внутри paragraph) | Ожидание: mark применяется на текущий range без потери focus | Приоритет: P1 | Авто: E2E
-- [x] NL-393 | Toggle Underline (selection внутри paragraph) | Ожидание: mark включается/выключается симметрично | Приоритет: P1 | Авто: E2E
-- [x] NL-394 | Command via bubble menu (selection внутри paragraph) | Ожидание: bubble menu остаётся консистентной и не ломает selection | Приоритет: P1 | Авто: E2E
-- [x] NL-395 | Command via keyboard shortcut (selection внутри paragraph) | Ожидание: горячая клавиша совпадает с поведением toolbar | Приоритет: P1 | Авто: E2E
-- [x] NL-396 | Toggle Bold (selection внутри heading) | Ожидание: mark применяется корректно, визуальное выделение не пропадает преждевременно | Приоритет: P0 | Авто: E2E
-- [x] NL-397 | Toggle Italic (selection внутри heading) | Ожидание: mark применяется на текущий range без потери focus | Приоритет: P1 | Авто: E2E
-- [x] NL-398 | Toggle Underline (selection внутри heading) | Ожидание: mark включается/выключается симметрично | Приоритет: P1 | Авто: E2E
-- [x] NL-399 | Command via bubble menu (selection внутри heading) | Ожидание: bubble menu остаётся консистентной и не ломает selection | Приоритет: P1 | Авто: E2E
-- [x] NL-400 | Command via keyboard shortcut (selection внутри heading) | Ожидание: горячая клавиша совпадает с поведением toolbar | Приоритет: P1 | Авто: E2E
-- [x] NL-401 | Toggle Bold (selection внутри bullet item) | Ожидание: mark применяется корректно, визуальное выделение не пропадает преждевременно | Приоритет: P0 | Авто: E2E
-- [x] NL-402 | Toggle Italic (selection внутри bullet item) | Ожидание: mark применяется на текущий range без потери focus | Приоритет: P1 | Авто: E2E
-- [x] NL-403 | Toggle Underline (selection внутри bullet item) | Ожидание: mark включается/выключается симметрично | Приоритет: P1 | Авто: E2E
-- [x] NL-404 | Command via bubble menu (selection внутри bullet item) | Ожидание: bubble menu остаётся консистентной и не ломает selection | Приоритет: P1 | Авто: E2E
-- [x] NL-405 | Command via keyboard shortcut (selection внутри bullet item) | Ожидание: горячая клавиша совпадает с поведением toolbar | Приоритет: P1 | Авто: E2E
-- [x] NL-406 | Toggle Bold (selection внутри ordered item) | Ожидание: mark применяется корректно, визуальное выделение не пропадает преждевременно | Приоритет: P0 | Авто: E2E
-- [x] NL-407 | Toggle Italic (selection внутри ordered item) | Ожидание: mark применяется на текущий range без потери focus | Приоритет: P1 | Авто: E2E
-- [x] NL-408 | Toggle Underline (selection внутри ordered item) | Ожидание: mark включается/выключается симметрично | Приоритет: P1 | Авто: E2E
-- [x] NL-409 | Command via bubble menu (selection внутри ordered item) | Ожидание: bubble menu остаётся консистентной и не ломает selection | Приоритет: P1 | Авто: E2E
-- [x] NL-410 | Command via keyboard shortcut (selection внутри ordered item) | Ожидание: горячая клавиша совпадает с поведением toolbar | Приоритет: P1 | Авто: E2E
-- [x] NL-411 | Toggle Bold (selection внутри todo item) | Ожидание: mark применяется корректно, визуальное выделение не пропадает преждевременно | Приоритет: P0 | Авто: E2E
-- [x] NL-412 | Toggle Italic (selection внутри todo item) | Ожидание: mark применяется на текущий range без потери focus | Приоритет: P1 | Авто: E2E
-- [x] NL-413 | Toggle Underline (selection внутри todo item) | Ожидание: mark включается/выключается симметрично | Приоритет: P1 | Авто: E2E
-- [x] NL-414 | Command via bubble menu (selection внутри todo item) | Ожидание: bubble menu остаётся консистентной и не ломает selection | Приоритет: P1 | Авто: E2E
-- [x] NL-415 | Command via keyboard shortcut (selection внутри todo item) | Ожидание: горячая клавиша совпадает с поведением toolbar | Приоритет: P1 | Авто: E2E
-- [x] NL-416 | Toggle Bold (selection через 2 блока) | Ожидание: mark применяется корректно, визуальное выделение не пропадает преждевременно | Приоритет: P0 | Авто: E2E
-- [x] NL-417 | Toggle Italic (selection через 2 блока) | Ожидание: mark применяется на текущий range без потери focus | Приоритет: P1 | Авто: E2E
-- [x] NL-418 | Toggle Underline (selection через 2 блока) | Ожидание: mark включается/выключается симметрично | Приоритет: P1 | Авто: E2E
-- [x] NL-419 | Command via bubble menu (selection через 2 блока) | Ожидание: bubble menu остаётся консистентной и не ломает selection | Приоритет: P1 | Авто: E2E
-- [x] NL-420 | Command via keyboard shortcut (selection через 2 блока) | Ожидание: горячая клавиша совпадает с поведением toolbar | Приоритет: P1 | Авто: E2E
-- [x] NL-421 | Toggle Bold (collapsed caret в середине слова) | Ожидание: mark применяется корректно, визуальное выделение не пропадает преждевременно | Приоритет: P0 | Авто: E2E
-- [x] NL-422 | Toggle Italic (collapsed caret в середине слова) | Ожидание: mark применяется на текущий range без потери focus | Приоритет: P1 | Авто: E2E
-- [x] NL-423 | Toggle Underline (collapsed caret в середине слова) | Ожидание: mark включается/выключается симметрично | Приоритет: P1 | Авто: E2E
-- [x] NL-424 | Command via bubble menu (collapsed caret в середине слова) | Ожидание: bubble menu остаётся консистентной и не ломает selection | Приоритет: P1 | Авто: E2E
-- [x] NL-425 | Command via keyboard shortcut (collapsed caret в середине слова) | Ожидание: горячая клавиша совпадает с поведением toolbar | Приоритет: P1 | Авто: E2E
-- [x] NL-426 | Toggle Bold (collapsed caret в конце слова) | Ожидание: mark применяется корректно, визуальное выделение не пропадает преждевременно | Приоритет: P0 | Авто: E2E
-- [x] NL-427 | Toggle Italic (collapsed caret в конце слова) | Ожидание: mark применяется на текущий range без потери focus | Приоритет: P1 | Авто: E2E
-- [x] NL-428 | Toggle Underline (collapsed caret в конце слова) | Ожидание: mark включается/выключается симметрично | Приоритет: P1 | Авто: E2E
-- [x] NL-429 | Command via bubble menu (collapsed caret в конце слова) | Ожидание: bubble menu остаётся консистентной и не ломает selection | Приоритет: P1 | Авто: E2E
-- [x] NL-430 | Command via keyboard shortcut (collapsed caret в конце слова) | Ожидание: горячая клавиша совпадает с поведением toolbar | Приоритет: P1 | Авто: E2E
+- [ ] NL-391 | Toggle Bold (selection inside a paragraph) | Expected: the mark is applied correctly, the visual highlight does not disappear prematurely | Priority: P0 | Auto: E2E
+- [ ] NL-392 | Toggle Italic (selection inside a paragraph) | Expected: the mark is applied to the current range without losing focus | Priority: P1 | Auto: E2E
+- [ ] NL-393 | Toggle Underline (selection inside a paragraph) | Expected: the mark toggles on/off symmetrically | Priority: P1 | Auto: Planned
+- [ ] NL-394 | Command via bubble menu (selection inside a paragraph) | Expected: the bubble menu stays consistent and does not break the selection | Priority: P1 | Auto: Planned
+- [ ] NL-395 | Command via keyboard shortcut (selection inside a paragraph) | Expected: the shortcut matches the toolbar behavior | Priority: P1 | Auto: Planned
+- [ ] NL-396 | Toggle Bold (selection inside a heading) | Expected: the mark is applied correctly, the visual highlight does not disappear prematurely | Priority: P0 | Auto: E2E
+- [ ] NL-397 | Toggle Italic (selection inside a heading) | Expected: the mark is applied to the current range without losing focus | Priority: P1 | Auto: E2E
+- [ ] NL-398 | Toggle Underline (selection inside a heading) | Expected: the mark toggles on/off symmetrically | Priority: P1 | Auto: Planned
+- [ ] NL-399 | Command via bubble menu (selection inside a heading) | Expected: the bubble menu stays consistent and does not break the selection | Priority: P1 | Auto: Planned
+- [ ] NL-400 | Command via keyboard shortcut (selection inside a heading) | Expected: the shortcut matches the toolbar behavior | Priority: P1 | Auto: Planned
+- [ ] NL-401 | Toggle Bold (selection inside a bullet item) | Expected: the mark is applied correctly, the visual highlight does not disappear prematurely | Priority: P0 | Auto: E2E
+- [ ] NL-402 | Toggle Italic (selection inside a bullet item) | Expected: the mark is applied to the current range without losing focus | Priority: P1 | Auto: E2E
+- [ ] NL-403 | Toggle Underline (selection inside a bullet item) | Expected: the mark toggles on/off symmetrically | Priority: P1 | Auto: Planned
+- [ ] NL-404 | Command via bubble menu (selection inside a bullet item) | Expected: the bubble menu stays consistent and does not break the selection | Priority: P1 | Auto: Planned
+- [ ] NL-405 | Command via keyboard shortcut (selection inside a bullet item) | Expected: the shortcut matches the toolbar behavior | Priority: P1 | Auto: Planned
+- [ ] NL-406 | Toggle Bold (selection inside an ordered item) | Expected: the mark is applied correctly, the visual highlight does not disappear prematurely | Priority: P0 | Auto: E2E
+- [ ] NL-407 | Toggle Italic (selection inside an ordered item) | Expected: the mark is applied to the current range without losing focus | Priority: P1 | Auto: E2E
+- [ ] NL-408 | Toggle Underline (selection inside an ordered item) | Expected: the mark toggles on/off symmetrically | Priority: P1 | Auto: Planned
+- [ ] NL-409 | Command via bubble menu (selection inside an ordered item) | Expected: the bubble menu stays consistent and does not break the selection | Priority: P1 | Auto: Planned
+- [ ] NL-410 | Command via keyboard shortcut (selection inside an ordered item) | Expected: the shortcut matches the toolbar behavior | Priority: P1 | Auto: Planned
+- [ ] NL-411 | Toggle Bold (selection inside a todo item) | Expected: the mark is applied correctly, the visual highlight does not disappear prematurely | Priority: P0 | Auto: E2E
+- [ ] NL-412 | Toggle Italic (selection inside a todo item) | Expected: the mark is applied to the current range without losing focus | Priority: P1 | Auto: E2E
+- [ ] NL-413 | Toggle Underline (selection inside a todo item) | Expected: the mark toggles on/off symmetrically | Priority: P1 | Auto: Planned
+- [ ] NL-414 | Command via bubble menu (selection inside a todo item) | Expected: the bubble menu stays consistent and does not break the selection | Priority: P1 | Auto: Planned
+- [ ] NL-415 | Command via keyboard shortcut (selection inside a todo item) | Expected: the shortcut matches the toolbar behavior | Priority: P1 | Auto: Planned
+- [ ] NL-416 | Toggle Bold (selection across 2 blocks) | Expected: the mark is applied correctly, the visual highlight does not disappear prematurely | Priority: P0 | Auto: E2E
+- [ ] NL-417 | Toggle Italic (selection across 2 blocks) | Expected: the mark is applied to the current range without losing focus | Priority: P1 | Auto: E2E
+- [ ] NL-418 | Toggle Underline (selection across 2 blocks) | Expected: the mark toggles on/off symmetrically | Priority: P1 | Auto: Planned
+- [ ] NL-419 | Command via bubble menu (selection across 2 blocks) | Expected: the bubble menu stays consistent and does not break the selection | Priority: P1 | Auto: Planned
+- [ ] NL-420 | Command via keyboard shortcut (selection across 2 blocks) | Expected: the shortcut matches the toolbar behavior | Priority: P1 | Auto: Planned
+- [ ] NL-421 | Toggle Bold (collapsed caret in the middle of a word) | Expected: the mark is applied correctly, the visual highlight does not disappear prematurely | Priority: P0 | Auto: E2E
+- [ ] NL-422 | Toggle Italic (collapsed caret in the middle of a word) | Expected: the mark is applied to the current range without losing focus | Priority: P1 | Auto: E2E
+- [ ] NL-423 | Toggle Underline (collapsed caret in the middle of a word) | Expected: the mark toggles on/off symmetrically | Priority: P1 | Auto: Planned
+- [ ] NL-424 | Command via bubble menu (collapsed caret in the middle of a word) | Expected: the bubble menu stays consistent and does not break the selection | Priority: P1 | Auto: Planned
+- [ ] NL-425 | Command via keyboard shortcut (collapsed caret in the middle of a word) | Expected: the shortcut matches the toolbar behavior | Priority: P1 | Auto: Planned
+- [ ] NL-426 | Toggle Bold (collapsed caret at the end of a word) | Expected: the mark is applied correctly, the visual highlight does not disappear prematurely | Priority: P0 | Auto: E2E
+- [ ] NL-427 | Toggle Italic (collapsed caret at the end of a word) | Expected: the mark is applied to the current range without losing focus | Priority: P1 | Auto: E2E
+- [ ] NL-428 | Toggle Underline (collapsed caret at the end of a word) | Expected: the mark toggles on/off symmetrically | Priority: P1 | Auto: Planned
+- [ ] NL-429 | Command via bubble menu (collapsed caret at the end of a word) | Expected: the bubble menu stays consistent and does not break the selection | Priority: P1 | Auto: Planned
+- [ ] NL-430 | Command via keyboard shortcut (collapsed caret at the end of a word) | Expected: the shortcut matches the toolbar behavior | Priority: P1 | Auto: Planned
 
 ## G. Clipboard, IME, Undo/Redo (30)
 
-- [x] NL-431 | Copy + Paste (paragraph) | Ожидание: текст вставляется без дубликатов, структура не ломается | Приоритет: P1 | Авто: E2E
-- [x] NL-432 | Cut + Undo (paragraph) | Ожидание: после undo состояние восстанавливается полностью | Приоритет: P1 | Авто: E2E
-- [x] NL-433 | IME composition (paragraph) | Ожидание: композиция не теряется, символы не удваиваются | Приоритет: P0 | Авто: E2E
-- [x] NL-434 | Undo/Redo цепочка (10 шагов) (paragraph) | Ожидание: история детерминирована, нет расхождения DOM/state | Приоритет: P0 | Авто: E2E
-- [x] NL-435 | Slash + Undo + Redo (paragraph) | Ожидание: transform и обратные операции стабильны | Приоритет: P0 | Авто: E2E
-- [x] NL-436 | Copy + Paste (heading) | Ожидание: текст вставляется без дубликатов, структура не ломается | Приоритет: P1 | Авто: E2E
-- [x] NL-437 | Cut + Undo (heading) | Ожидание: после undo состояние восстанавливается полностью | Приоритет: P1 | Авто: E2E
-- [x] NL-438 | IME composition (heading) | Ожидание: композиция не теряется, символы не удваиваются | Приоритет: P0 | Авто: E2E
-- [x] NL-439 | Undo/Redo цепочка (10 шагов) (heading) | Ожидание: история детерминирована, нет расхождения DOM/state | Приоритет: P0 | Авто: E2E
-- [x] NL-440 | Slash + Undo + Redo (heading) | Ожидание: transform и обратные операции стабильны | Приоритет: P0 | Авто: E2E
-- [x] NL-441 | Copy + Paste (bullet item) | Ожидание: текст вставляется без дубликатов, структура не ломается | Приоритет: P1 | Авто: E2E
-- [x] NL-442 | Cut + Undo (bullet item) | Ожидание: после undo состояние восстанавливается полностью | Приоритет: P1 | Авто: E2E
-- [x] NL-443 | IME composition (bullet item) | Ожидание: композиция не теряется, символы не удваиваются | Приоритет: P0 | Авто: E2E
-- [x] NL-444 | Undo/Redo цепочка (10 шагов) (bullet item) | Ожидание: история детерминирована, нет расхождения DOM/state | Приоритет: P0 | Авто: E2E
-- [x] NL-445 | Slash + Undo + Redo (bullet item) | Ожидание: transform и обратные операции стабильны | Приоритет: P0 | Авто: E2E
-- [x] NL-446 | Copy + Paste (todo item) | Ожидание: текст вставляется без дубликатов, структура не ломается | Приоритет: P1 | Авто: E2E
-- [x] NL-447 | Cut + Undo (todo item) | Ожидание: после undo состояние восстанавливается полностью | Приоритет: P1 | Авто: E2E
-- [x] NL-448 | IME composition (todo item) | Ожидание: композиция не теряется, символы не удваиваются | Приоритет: P0 | Авто: E2E
-- [x] NL-449 | Undo/Redo цепочка (10 шагов) (todo item) | Ожидание: история детерминирована, нет расхождения DOM/state | Приоритет: P0 | Авто: E2E
-- [x] NL-450 | Slash + Undo + Redo (todo item) | Ожидание: transform и обратные операции стабильны | Приоритет: P0 | Авто: E2E
-- [x] NL-451 | Copy + Paste (code block) | Ожидание: текст вставляется без дубликатов, структура не ломается | Приоритет: P1 | Авто: E2E
-- [x] NL-452 | Cut + Undo (code block) | Ожидание: после undo состояние восстанавливается полностью | Приоритет: P1 | Авто: E2E
-- [x] NL-453 | IME composition (code block) | Ожидание: композиция не теряется, символы не удваиваются | Приоритет: P0 | Авто: E2E
-- [x] NL-454 | Undo/Redo цепочка (10 шагов) (code block) | Ожидание: история детерминирована, нет расхождения DOM/state | Приоритет: P0 | Авто: E2E
-- [x] NL-455 | Slash + Undo + Redo (code block) | Ожидание: transform и обратные операции стабильны | Приоритет: P0 | Авто: E2E
-- [x] NL-456 | Copy + Paste (multi-block selection) | Ожидание: текст вставляется без дубликатов, структура не ломается | Приоритет: P1 | Авто: E2E
-- [x] NL-457 | Cut + Undo (multi-block selection) | Ожидание: после undo состояние восстанавливается полностью | Приоритет: P1 | Авто: E2E
-- [x] NL-458 | IME composition (multi-block selection) | Ожидание: композиция не теряется, символы не удваиваются | Приоритет: P0 | Авто: E2E
-- [x] NL-459 | Undo/Redo цепочка (10 шагов) (multi-block selection) | Ожидание: история детерминирована, нет расхождения DOM/state | Приоритет: P0 | Авто: E2E
-- [x] NL-460 | Slash + Undo + Redo (multi-block selection) | Ожидание: transform и обратные операции стабильны | Приоритет: P0 | Авто: E2E
+- [ ] NL-431 | Copy + Paste (paragraph) | Expected: the text is pasted without duplicates, the structure does not break | Priority: P1 | Auto: Planned
+- [ ] NL-432 | Cut + Undo (paragraph) | Expected: after undo the state is fully restored | Priority: P1 | Auto: Planned
+- [ ] NL-433 | IME composition (paragraph) | Expected: the composition is not lost, characters are not doubled | Priority: P0 | Auto: Manual
+- [ ] NL-434 | Undo/Redo chain (10 steps) (paragraph) | Expected: history is deterministic, no DOM/state divergence | Priority: P0 | Auto: Planned
+- [ ] NL-435 | Slash + Undo + Redo (paragraph) | Expected: the transform and its inverse operations are stable | Priority: P0 | Auto: E2E
+- [ ] NL-436 | Copy + Paste (heading) | Expected: the text is pasted without duplicates, the structure does not break | Priority: P1 | Auto: Planned
+- [ ] NL-437 | Cut + Undo (heading) | Expected: after undo the state is fully restored | Priority: P1 | Auto: Planned
+- [ ] NL-438 | IME composition (heading) | Expected: the composition is not lost, characters are not doubled | Priority: P0 | Auto: Manual
+- [ ] NL-439 | Undo/Redo chain (10 steps) (heading) | Expected: history is deterministic, no DOM/state divergence | Priority: P0 | Auto: Planned
+- [ ] NL-440 | Slash + Undo + Redo (heading) | Expected: the transform and its inverse operations are stable | Priority: P0 | Auto: E2E
+- [ ] NL-441 | Copy + Paste (bullet item) | Expected: the text is pasted without duplicates, the structure does not break | Priority: P1 | Auto: Planned
+- [ ] NL-442 | Cut + Undo (bullet item) | Expected: after undo the state is fully restored | Priority: P1 | Auto: Planned
+- [ ] NL-443 | IME composition (bullet item) | Expected: the composition is not lost, characters are not doubled | Priority: P0 | Auto: Manual
+- [ ] NL-444 | Undo/Redo chain (10 steps) (bullet item) | Expected: history is deterministic, no DOM/state divergence | Priority: P0 | Auto: Planned
+- [ ] NL-445 | Slash + Undo + Redo (bullet item) | Expected: the transform and its inverse operations are stable | Priority: P0 | Auto: E2E
+- [ ] NL-446 | Copy + Paste (todo item) | Expected: the text is pasted without duplicates, the structure does not break | Priority: P1 | Auto: Planned
+- [ ] NL-447 | Cut + Undo (todo item) | Expected: after undo the state is fully restored | Priority: P1 | Auto: Planned
+- [ ] NL-448 | IME composition (todo item) | Expected: the composition is not lost, characters are not doubled | Priority: P0 | Auto: Manual
+- [ ] NL-449 | Undo/Redo chain (10 steps) (todo item) | Expected: history is deterministic, no DOM/state divergence | Priority: P0 | Auto: Planned
+- [ ] NL-450 | Slash + Undo + Redo (todo item) | Expected: the transform and its inverse operations are stable | Priority: P0 | Auto: E2E
+- [ ] NL-451 | Copy + Paste (code block) | Expected: the text is pasted without duplicates, the structure does not break | Priority: P1 | Auto: Planned
+- [ ] NL-452 | Cut + Undo (code block) | Expected: after undo the state is fully restored | Priority: P1 | Auto: Planned
+- [ ] NL-453 | IME composition (code block) | Expected: the composition is not lost, characters are not doubled | Priority: P0 | Auto: Manual
+- [ ] NL-454 | Undo/Redo chain (10 steps) (code block) | Expected: history is deterministic, no DOM/state divergence | Priority: P0 | Auto: Planned
+- [ ] NL-455 | Slash + Undo + Redo (code block) | Expected: the transform and its inverse operations are stable | Priority: P0 | Auto: E2E
+- [ ] NL-456 | Copy + Paste (multi-block selection) | Expected: the text is pasted without duplicates, the structure does not break | Priority: P1 | Auto: Planned
+- [ ] NL-457 | Cut + Undo (multi-block selection) | Expected: after undo the state is fully restored | Priority: P1 | Auto: Planned
+- [ ] NL-458 | IME composition (multi-block selection) | Expected: the composition is not lost, characters are not doubled | Priority: P0 | Auto: Manual
+- [ ] NL-459 | Undo/Redo chain (10 steps) (multi-block selection) | Expected: history is deterministic, no DOM/state divergence | Priority: P0 | Auto: Planned
+- [ ] NL-460 | Slash + Undo + Redo (multi-block selection) | Expected: the transform and its inverse operations are stable | Priority: P0 | Auto: E2E
 
 ## H. Gutter Toolbar & Drag Controls (20)
 
-- [x] NL-461 | Hover left gutter (paragraph) | Ожидание: кнопки + и drag-handle появляются рядом с блоком, не на внешнем левом краю | Приоритет: P0 | Авто: E2E
-- [x] NL-462 | Click plus button (paragraph) | Ожидание: вставка блока работает без смещения активной строки | Приоритет: P1 | Авто: E2E
-- [x] NL-463 | Drag block вниз (paragraph) | Ожидание: блок переносится, содержимое и selection сохраняются | Приоритет: P1 | Авто: E2E
-- [x] NL-464 | Drag block вверх (paragraph) | Ожидание: порядок меняется корректно, без визуальных артефактов | Приоритет: P1 | Авто: E2E
-- [x] NL-465 | Hover left gutter (heading) | Ожидание: кнопки + и drag-handle появляются рядом с блоком, не на внешнем левом краю | Приоритет: P0 | Авто: E2E
-- [x] NL-466 | Click plus button (heading) | Ожидание: вставка блока работает без смещения активной строки | Приоритет: P1 | Авто: E2E
-- [x] NL-467 | Drag block вниз (heading) | Ожидание: блок переносится, содержимое и selection сохраняются | Приоритет: P1 | Авто: E2E
-- [x] NL-468 | Drag block вверх (heading) | Ожидание: порядок меняется корректно, без визуальных артефактов | Приоритет: P1 | Авто: E2E
-- [x] NL-469 | Hover left gutter (bullet list) | Ожидание: кнопки + и drag-handle появляются рядом с блоком, не на внешнем левом краю | Приоритет: P0 | Авто: E2E
-- [x] NL-470 | Click plus button (bullet list) | Ожидание: вставка блока работает без смещения активной строки | Приоритет: P1 | Авто: E2E
-- [x] NL-471 | Drag block вниз (bullet list) | Ожидание: блок переносится, содержимое и selection сохраняются | Приоритет: P1 | Авто: E2E
-- [x] NL-472 | Drag block вверх (bullet list) | Ожидание: порядок меняется корректно, без визуальных артефактов | Приоритет: P1 | Авто: E2E
-- [x] NL-473 | Hover left gutter (todo list) | Ожидание: кнопки + и drag-handle появляются рядом с блоком, не на внешнем левом краю | Приоритет: P0 | Авто: E2E
-- [x] NL-474 | Click plus button (todo list) | Ожидание: вставка блока работает без смещения активной строки | Приоритет: P1 | Авто: E2E
-- [x] NL-475 | Drag block вниз (todo list) | Ожидание: блок переносится, содержимое и selection сохраняются | Приоритет: P1 | Авто: E2E
-- [x] NL-476 | Drag block вверх (todo list) | Ожидание: порядок меняется корректно, без визуальных артефактов | Приоритет: P1 | Авто: E2E
-- [x] NL-477 | Hover left gutter (code block) | Ожидание: кнопки + и drag-handle появляются рядом с блоком, не на внешнем левом краю | Приоритет: P0 | Авто: E2E
-- [x] NL-478 | Click plus button (code block) | Ожидание: вставка блока работает без смещения активной строки | Приоритет: P1 | Авто: E2E
-- [x] NL-479 | Drag block вниз (code block) | Ожидание: блок переносится, содержимое и selection сохраняются | Приоритет: P1 | Авто: E2E
-- [x] NL-480 | Drag block вверх (code block) | Ожидание: порядок меняется корректно, без визуальных артефактов | Приоритет: P1 | Авто: E2E
+- [ ] NL-461 | Hover left gutter (paragraph) | Expected: the + button and drag handle appear next to the block, not at the outer left edge | Priority: P0 | Auto: E2E
+- [ ] NL-462 | Click plus button (paragraph) | Expected: block insertion works without shifting the active line | Priority: P1 | Auto: Planned
+- [ ] NL-463 | Drag block down (paragraph) | Expected: the block moves, content and selection are preserved | Priority: P1 | Auto: Manual
+- [ ] NL-464 | Drag block up (paragraph) | Expected: the order changes correctly, with no visual artifacts | Priority: P1 | Auto: Manual
+- [ ] NL-465 | Hover left gutter (heading) | Expected: the + button and drag handle appear next to the block, not at the outer left edge | Priority: P0 | Auto: E2E
+- [ ] NL-466 | Click plus button (heading) | Expected: block insertion works without shifting the active line | Priority: P1 | Auto: Planned
+- [ ] NL-467 | Drag block down (heading) | Expected: the block moves, content and selection are preserved | Priority: P1 | Auto: Manual
+- [ ] NL-468 | Drag block up (heading) | Expected: the order changes correctly, with no visual artifacts | Priority: P1 | Auto: Manual
+- [ ] NL-469 | Hover left gutter (bullet list) | Expected: the + button and drag handle appear next to the block, not at the outer left edge | Priority: P0 | Auto: E2E
+- [ ] NL-470 | Click plus button (bullet list) | Expected: block insertion works without shifting the active line | Priority: P1 | Auto: Planned
+- [ ] NL-471 | Drag block down (bullet list) | Expected: the block moves, content and selection are preserved | Priority: P1 | Auto: Manual
+- [ ] NL-472 | Drag block up (bullet list) | Expected: the order changes correctly, with no visual artifacts | Priority: P1 | Auto: Manual
+- [ ] NL-473 | Hover left gutter (todo list) | Expected: the + button and drag handle appear next to the block, not at the outer left edge | Priority: P0 | Auto: E2E
+- [ ] NL-474 | Click plus button (todo list) | Expected: block insertion works without shifting the active line | Priority: P1 | Auto: Planned
+- [ ] NL-475 | Drag block down (todo list) | Expected: the block moves, content and selection are preserved | Priority: P1 | Auto: Manual
+- [ ] NL-476 | Drag block up (todo list) | Expected: the order changes correctly, with no visual artifacts | Priority: P1 | Auto: Manual
+- [ ] NL-477 | Hover left gutter (code block) | Expected: the + button and drag handle appear next to the block, not at the outer left edge | Priority: P0 | Auto: E2E
+- [ ] NL-478 | Click plus button (code block) | Expected: block insertion works without shifting the active line | Priority: P1 | Auto: Planned
+- [ ] NL-479 | Drag block down (code block) | Expected: the block moves, content and selection are preserved | Priority: P1 | Auto: Manual
+- [ ] NL-480 | Drag block up (code block) | Expected: the order changes correctly, with no visual artifacts | Priority: P1 | Auto: Manual
 
 ## I. Theme, Responsive, A11y (20)
 
-- [x] NL-481 | Открыть slash-menu (desktop light theme) | Ожидание: цвета, тени, border и padding консистентны с темой | Приоритет: P1 | Авто: E2E
-- [x] NL-482 | Проверить overflow search/menu body (desktop light theme) | Ожидание: инпут и пункты не вылезают за контейнер | Приоритет: P0 | Авто: E2E
-- [x] NL-483 | Keyboard navigation (Up/Down/Enter/Esc) (desktop light theme) | Ожидание: все клавиши работают одинаково в обеих темах | Приоритет: P0 | Авто: E2E
-- [x] NL-484 | Screen reader semantics (desktop light theme) | Ожидание: role/aria-атрибуты валидны, фокус читается корректно | Приоритет: P2 | Авто: E2E
-- [x] NL-485 | Открыть slash-menu (desktop dark theme) | Ожидание: цвета, тени, border и padding консистентны с темой | Приоритет: P1 | Авто: E2E
-- [x] NL-486 | Проверить overflow search/menu body (desktop dark theme) | Ожидание: инпут и пункты не вылезают за контейнер | Приоритет: P0 | Авто: E2E
-- [x] NL-487 | Keyboard navigation (Up/Down/Enter/Esc) (desktop dark theme) | Ожидание: все клавиши работают одинаково в обеих темах | Приоритет: P0 | Авто: E2E
-- [x] NL-488 | Screen reader semantics (desktop dark theme) | Ожидание: role/aria-атрибуты валидны, фокус читается корректно | Приоритет: P2 | Авто: E2E
-- [x] NL-489 | Открыть slash-menu (mobile viewport 390px) | Ожидание: цвета, тени, border и padding консистентны с темой | Приоритет: P1 | Авто: E2E
-- [x] NL-490 | Проверить overflow search/menu body (mobile viewport 390px) | Ожидание: инпут и пункты не вылезают за контейнер | Приоритет: P0 | Авто: E2E
-- [x] NL-491 | Keyboard navigation (Up/Down/Enter/Esc) (mobile viewport 390px) | Ожидание: все клавиши работают одинаково в обеих темах | Приоритет: P0 | Авто: E2E
-- [x] NL-492 | Screen reader semantics (mobile viewport 390px) | Ожидание: role/aria-атрибуты валидны, фокус читается корректно | Приоритет: P2 | Авто: E2E
-- [x] NL-493 | Открыть slash-menu (tablet viewport 768px) | Ожидание: цвета, тени, border и padding консистентны с темой | Приоритет: P1 | Авто: E2E
-- [x] NL-494 | Проверить overflow search/menu body (tablet viewport 768px) | Ожидание: инпут и пункты не вылезают за контейнер | Приоритет: P0 | Авто: E2E
-- [x] NL-495 | Keyboard navigation (Up/Down/Enter/Esc) (tablet viewport 768px) | Ожидание: все клавиши работают одинаково в обеих темах | Приоритет: P0 | Авто: E2E
-- [x] NL-496 | Screen reader semantics (tablet viewport 768px) | Ожидание: role/aria-атрибуты валидны, фокус читается корректно | Приоритет: P2 | Авто: E2E
-- [x] NL-497 | Открыть slash-menu (системная тема auto) | Ожидание: цвета, тени, border и padding консистентны с темой | Приоритет: P1 | Авто: E2E
-- [x] NL-498 | Проверить overflow search/menu body (системная тема auto) | Ожидание: инпут и пункты не вылезают за контейнер | Приоритет: P0 | Авто: E2E
-- [x] NL-499 | Keyboard navigation (Up/Down/Enter/Esc) (системная тема auto) | Ожидание: все клавиши работают одинаково в обеих темах | Приоритет: P0 | Авто: E2E
-- [x] NL-500 | Screen reader semantics (системная тема auto) | Ожидание: role/aria-атрибуты валидны, фокус читается корректно | Приоритет: P2 | Авто: E2E
+- [ ] NL-481 | Open the slash menu (desktop light theme) | Expected: colors, shadows, border and padding are consistent with the theme | Priority: P1 | Auto: E2E
+- [ ] NL-482 | Check overflow of the search/menu body (desktop light theme) | Expected: the input and items do not overflow the container | Priority: P0 | Auto: E2E
+- [ ] NL-483 | Keyboard navigation (Up/Down/Enter/Esc) (desktop light theme) | Expected: all keys work the same in both themes | Priority: P0 | Auto: E2E
+- [ ] NL-484 | Screen reader semantics (desktop light theme) | Expected: role/aria attributes are valid, focus is announced correctly | Priority: P2 | Auto: Manual
+- [ ] NL-485 | Open the slash menu (desktop dark theme) | Expected: colors, shadows, border and padding are consistent with the theme | Priority: P1 | Auto: E2E
+- [ ] NL-486 | Check overflow of the search/menu body (desktop dark theme) | Expected: the input and items do not overflow the container | Priority: P0 | Auto: E2E
+- [ ] NL-487 | Keyboard navigation (Up/Down/Enter/Esc) (desktop dark theme) | Expected: all keys work the same in both themes | Priority: P0 | Auto: E2E
+- [ ] NL-488 | Screen reader semantics (desktop dark theme) | Expected: role/aria attributes are valid, focus is announced correctly | Priority: P2 | Auto: Manual
+- [ ] NL-489 | Open the slash menu (mobile viewport 390px) | Expected: colors, shadows, border and padding are consistent with the theme | Priority: P1 | Auto: E2E
+- [ ] NL-490 | Check overflow of the search/menu body (mobile viewport 390px) | Expected: the input and items do not overflow the container | Priority: P0 | Auto: E2E
+- [ ] NL-491 | Keyboard navigation (Up/Down/Enter/Esc) (mobile viewport 390px) | Expected: all keys work the same in both themes | Priority: P0 | Auto: E2E
+- [ ] NL-492 | Screen reader semantics (mobile viewport 390px) | Expected: role/aria attributes are valid, focus is announced correctly | Priority: P2 | Auto: Manual
+- [ ] NL-493 | Open the slash menu (tablet viewport 768px) | Expected: colors, shadows, border and padding are consistent with the theme | Priority: P1 | Auto: E2E
+- [ ] NL-494 | Check overflow of the search/menu body (tablet viewport 768px) | Expected: the input and items do not overflow the container | Priority: P0 | Auto: E2E
+- [ ] NL-495 | Keyboard navigation (Up/Down/Enter/Esc) (tablet viewport 768px) | Expected: all keys work the same in both themes | Priority: P0 | Auto: E2E
+- [ ] NL-496 | Screen reader semantics (tablet viewport 768px) | Expected: role/aria attributes are valid, focus is announced correctly | Priority: P2 | Auto: Manual
+- [ ] NL-497 | Open the slash menu (system theme auto) | Expected: colors, shadows, border and padding are consistent with the theme | Priority: P1 | Auto: E2E
+- [ ] NL-498 | Check overflow of the search/menu body (system theme auto) | Expected: the input and items do not overflow the container | Priority: P0 | Auto: E2E
+- [ ] NL-499 | Keyboard navigation (Up/Down/Enter/Esc) (system theme auto) | Expected: all keys work the same in both themes | Priority: P0 | Auto: E2E
+- [ ] NL-500 | Screen reader semantics (system theme auto) | Expected: role/aria attributes are valid, focus is announced correctly | Priority: P2 | Auto: Manual
+

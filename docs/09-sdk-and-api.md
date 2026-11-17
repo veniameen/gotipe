@@ -1,24 +1,24 @@
-# GoTipe — SDK и API
+# GoTipe — SDK and API
 
-> **PDF: историческое предложение.** Упоминания Typst/docx-rs, оценки размеров и
-> возможностей ниже не описывают текущий backend. GoTipe владеет PDF layout и
-> OOXML rendering; актуальны [контракт экспорта](development/export-contract.md)
-> и [политика зависимостей](development/dependencies.md).
+> **PDF: historical proposal.** The mentions of Typst/docx-rs and the size estimates and
+> capabilities below do not describe the current backend. GoTipe owns PDF layout and
+> OOXML rendering; see the current [export contract](development/export-contract.md)
+> and [dependency policy](development/dependencies.md).
 
-> Исторический проектный документ. Сигнатуры, размеры, цены, сравнения и планы ниже
-> не подтверждают текущую реализацию или доступный сервис. Актуальные контракты:
-> [разработка](development/editor-contracts.md), [экспорт](development/export-contract.md),
-> [Cloud](development/cloud-contract.md), [готовность выпуска](22-release-readiness.md).
+> Historical design document. The signatures, sizes, prices, comparisons and plans below
+> do not confirm the current implementation or an available service. Current contracts:
+> [development](development/editor-contracts.md), [export](development/export-contract.md),
+> [Cloud](development/cloud-contract.md), [release readiness](22-release-readiness.md).
 
-Справочник по всем npm-пакетам GoTipe: TypeScript-интерфейсы, сигнатуры, примеры, конфигурация exports.
+Reference for all GoTipe npm packages: TypeScript interfaces, signatures, examples, exports configuration.
 
-Source of truth для Rust-типов: [03-editor-core.md](03-editor-core.md). Здесь описаны TypeScript-биндинги поверх WASM.
+Source of truth for the Rust types: [03-editor-core.md](03-editor-core.md). This document describes the TypeScript bindings on top of WASM.
 
 ---
 
-## Содержание
+## Contents
 
-- [Типы данных (core interfaces)](#типы-данных-core-interfaces)
+- [Data types (core interfaces)](#data-types-core-interfaces)
 - [@gotipe/core](#gotipecore)
 - [@gotipe/react](#gotipereact)
 - [@gotipe/vue](#gotipevue)
@@ -32,9 +32,9 @@ Source of truth для Rust-типов: [03-editor-core.md](03-editor-core.md). 
 
 ---
 
-## Типы данных (core interfaces)
+## Data types (core interfaces)
 
-Все типы определены в `@gotipe/core` и реэкспортируются из каждого адаптера. Зеркало Rust-типов из [03-editor-core.md](03-editor-core.md).
+All types are defined in `@gotipe/core` and re-exported from every adapter. They mirror the Rust types from [03-editor-core.md](03-editor-core.md).
 
 ### AttrValue
 
@@ -50,9 +50,9 @@ export type AttrValue = string | number | boolean | null;
 // packages/core/src/types/mark.ts
 
 export interface Mark {
-  /** Тип mark: "bold", "italic", "link" и т.д. */
+  /** Mark type: "bold", "italic", "link", etc. */
   readonly type: string;
-  /** Атрибуты mark (href для link, color для highlight) */
+  /** Mark attributes (href for link, color for highlight) */
   readonly attrs: Record<string, AttrValue>;
 }
 ```
@@ -63,9 +63,9 @@ export interface Mark {
 // packages/core/src/types/text-span.ts
 
 export interface TextSpan {
-  /** Текстовое содержимое span */
+  /** Text content of the span */
   readonly text: string;
-  /** Inline marks, применённые к span */
+  /** Inline marks applied to the span */
   readonly marks: readonly Mark[];
 }
 ```
@@ -81,15 +81,15 @@ export type BlockContent =
   | { type: 'empty' };
 
 export interface Block {
-  /** Уникальный идентификатор (UUID v7) */
+  /** Unique identifier (UUID v7) */
   readonly id: string;
-  /** Тип блока: "paragraph", "heading", "codeBlock" и т.д. */
+  /** Block type: "paragraph", "heading", "codeBlock", etc. */
   readonly type: string;
-  /** Атрибуты блока (level для heading, language для codeBlock) */
+  /** Block attributes (level for heading, language for codeBlock) */
   readonly attrs: Record<string, AttrValue>;
-  /** Содержимое блока */
+  /** Block content */
   readonly content: BlockContent;
-  /** Вложенные блоки (list items, table rows, columns) */
+  /** Nested blocks (list items, table rows, columns) */
   readonly children: readonly Block[];
 }
 ```
@@ -115,7 +115,7 @@ export type Selection =
     };
 ```
 
-### Step и Transaction
+### Step and Transaction
 
 ```typescript
 // packages/core/src/types/transaction.ts
@@ -134,11 +134,11 @@ export type Step =
   | { type: 'mergeBlocks'; blockId: string; targetId: string };
 
 export interface Transaction {
-  /** Атомарные шаги трансформации */
+  /** Atomic transform steps */
   readonly steps: readonly Step[];
-  /** Новая позиция курсора (null = автомаппинг) */
+  /** New cursor position (null = auto-map) */
   readonly selection: Selection | null;
-  /** Метаданные (источник, timestamp, ...) */
+  /** Metadata (source, timestamp, ...) */
   readonly metadata: Record<string, AttrValue>;
 }
 ```
@@ -149,14 +149,14 @@ export interface Transaction {
 // packages/core/src/types/state.ts
 
 export interface EditorState {
-  /** Документ — дерево блоков */
+  /** Document — a tree of blocks */
   readonly doc: {
     readonly blocks: readonly Block[];
     readonly version: number;
   };
-  /** Текущая позиция курсора / выделение */
+  /** Current cursor position / selection */
   readonly selection: Selection;
-  /** Schema, с которой создан editor */
+  /** Schema the editor was created with */
   readonly schema: Schema;
 }
 ```
@@ -208,41 +208,41 @@ export interface Schema {
 import type { Extension } from './extension';
 
 export interface EditorOptions {
-  /** Список extensions (определяют schema, команды, keybindings) */
+  /** List of extensions (define the schema, commands, keybindings) */
   extensions: Extension[];
 
-  /** Начальный контент (JSON-документ или HTML-строка) */
+  /** Initial content (JSON document or HTML string) */
   content?: Block[] | string;
 
-  /** Режим только для чтения */
+  /** Read-only mode */
   editable?: boolean;
 
-  /** CSS-класс для корневого элемента */
+  /** CSS class for the root element */
   editorClass?: string;
 
-  /** Callback при каждом обновлении документа */
+  /** Callback on every document update */
   onUpdate?: (props: { editor: GoTipeEditor; transaction: Transaction }) => void;
 
-  /** Callback при изменении selection */
+  /** Callback on selection change */
   onSelectionUpdate?: (props: { editor: GoTipeEditor; selection: Selection }) => void;
 
-  /** Callback при создании editor */
+  /** Callback when the editor is created */
   onCreate?: (props: { editor: GoTipeEditor }) => void;
 
-  /** Callback при уничтожении editor */
+  /** Callback when the editor is destroyed */
   onDestroy?: () => void;
 
-  /** Callback при focus/blur */
+  /** Callback on focus/blur */
   onFocus?: (props: { editor: GoTipeEditor; event: FocusEvent }) => void;
   onBlur?: (props: { editor: GoTipeEditor; event: FocusEvent }) => void;
 
-  /** Callback перед каждой транзакцией (return false для отмены) */
+  /** Callback before every transaction (return false to cancel) */
   onBeforeTransaction?: (props: { editor: GoTipeEditor; transaction: Transaction }) => boolean;
 
-  /** Автофокус при создании */
+  /** Autofocus on creation */
   autofocus?: boolean | 'start' | 'end';
 
-  /** Inline-стили для editor container */
+  /** Inline styles for the editor container */
   editorStyle?: Record<string, string>;
 }
 ```
@@ -255,78 +255,78 @@ export interface EditorOptions {
 export interface GoTipeEditor {
   // --- State ---
 
-  /** Текущее состояние редактора (immutable snapshot) */
+  /** Current editor state (immutable snapshot) */
   readonly state: EditorState;
 
-  /** Schema текущего editor */
+  /** Schema of the current editor */
   readonly schema: Schema;
 
-  /** true, если editor не уничтожен */
+  /** true if the editor is not destroyed */
   readonly isActive: boolean;
 
-  /** true, если editor в режиме "только для чтения" */
+  /** true if the editor is in "read-only" mode */
   readonly isEditable: boolean;
 
   // --- Document access ---
 
-  /** Получить документ как JSON */
+  /** Get the document as JSON */
   getJSON(): { blocks: Block[]; version: number };
 
-  /** Получить документ как HTML */
+  /** Get the document as HTML */
   getHTML(): string;
 
-  /** Получить plain text */
+  /** Get plain text */
   getText(): string;
 
-  /** Найти блок по ID */
+  /** Find a block by ID */
   getBlock(blockId: string): Block | null;
 
-  /** Проверить, пуст ли документ */
+  /** Check whether the document is empty */
   isEmpty(): boolean;
 
   // --- Chainable command API ---
 
   /**
-   * Начать цепочку команд.
-   * Каждый метод chain возвращает this.
-   * `.run()` применяет накопленную Transaction.
+   * Start a command chain.
+   * Every chain method returns this.
+   * `.run()` applies the accumulated Transaction.
    */
   chain(): ChainableCommands;
 
   // --- Direct commands ---
 
-  /** Применить произвольную Transaction */
+  /** Apply an arbitrary Transaction */
   dispatch(transaction: Transaction): void;
 
-  /** Undo последнее действие */
+  /** Undo the last action */
   undo(): boolean;
 
-  /** Redo отменённое действие */
+  /** Redo an undone action */
   redo(): boolean;
 
-  /** Установить editable/readonly */
+  /** Set editable/readonly */
   setEditable(editable: boolean): void;
 
-  /** Установить фокус */
+  /** Set focus */
   focus(position?: 'start' | 'end' | number): void;
 
-  /** Убрать фокус */
+  /** Remove focus */
   blur(): void;
 
   // --- Events ---
 
-  /** Подписаться на событие */
+  /** Subscribe to an event */
   on<K extends keyof EditorEvents>(event: K, handler: EditorEvents[K]): () => void;
 
-  /** Отписаться от события */
+  /** Unsubscribe from an event */
   off<K extends keyof EditorEvents>(event: K, handler: EditorEvents[K]): void;
 
-  /** Emit событие */
+  /** Emit an event */
   emit<K extends keyof EditorEvents>(event: K, ...args: Parameters<EditorEvents[K]>): void;
 
   // --- Lifecycle ---
 
-  /** Уничтожить editor, освободить WASM-память */
+  /** Destroy the editor, free WASM memory */
   destroy(): void;
 }
 
@@ -407,7 +407,7 @@ export interface ChainableCommands {
   redo(): this;
 
   // --- Execute ---
-  /** Применить все накопленные команды как одну Transaction */
+  /** Apply all accumulated commands as a single Transaction */
   run(): boolean;
 }
 ```
@@ -416,27 +416,27 @@ export interface ChainableCommands {
 
 ## @gotipe/core
 
-Headless editor core. TypeScript-обёртка над Rust/WASM engine. Не зависит от фреймворка.
+Headless editor core. A TypeScript wrapper over the Rust/WASM engine. Framework-independent.
 
 | | |
 |---|---|
 | **npm** | `@gotipe/core` |
 | **Bundle size (gzip)** | ~18 KB (JS bindings) + ~255 KB (WASM binary) |
-| **Зависимости** | `@gotipe/wasm` |
-| **Документация** | [01-architecture.md](01-architecture.md), [03-editor-core.md](03-editor-core.md), [05-extensions.md](05-extensions.md) |
+| **Dependencies** | `@gotipe/wasm` |
+| **Documentation** | [01-architecture.md](01-architecture.md), [03-editor-core.md](03-editor-core.md), [05-extensions.md](05-extensions.md) |
 
 ### Key exports
 
 ```typescript
 // packages/core/src/index.ts
 
-/** Создать editor instance */
+/** Create an editor instance */
 export function createEditor(options: EditorOptions): GoTipeEditor;
 
-/** Инициализировать WASM engine (вызывается автоматически при createEditor) */
+/** Initialize the WASM engine (called automatically by createEditor) */
 export function initGoTipe(): Promise<void>;
 
-/** Определить extension */
+/** Define an extension */
 export function defineExtension<O = any>(config: ExtensionConfig<O>): Extension<O>;
 
 // --- Types ---
@@ -503,7 +503,7 @@ export {
 export { MinimalPreset, DefaultPreset, FullPreset } from './presets';
 ```
 
-### Пример
+### Example
 
 ```typescript
 import { createEditor, DefaultPreset } from '@gotipe/core';
@@ -562,14 +562,14 @@ editor.chain().toggleBold().insertText(' world').run();
 
 ## @gotipe/react
 
-React 18+ adapter. Компоненты и hooks для подключения GoTipe к React-приложению.
+React 18+ adapter. Components and hooks for connecting GoTipe to a React application.
 
 | | |
 |---|---|
 | **npm** | `@gotipe/react` |
 | **Bundle size (gzip)** | ~6 KB |
 | **Peer dependencies** | `react >=18`, `react-dom >=18`, `@gotipe/core` |
-| **Документация** | [06-framework-adapters.md](06-framework-adapters.md) |
+| **Documentation** | [06-framework-adapters.md](06-framework-adapters.md) |
 
 ### Key exports
 
@@ -579,14 +579,14 @@ React 18+ adapter. Компоненты и hooks для подключения G
 // --- Hooks ---
 
 /**
- * Создать GoTipeEditor и привязать к React lifecycle.
- * Возвращает editor instance. WASM инициализируется автоматически.
+ * Create a GoTipeEditor and bind it to the React lifecycle.
+ * Returns the editor instance. WASM is initialized automatically.
  */
 export function useEditor(options: EditorOptions, deps?: any[]): GoTipeEditor | null;
 
 /**
- * Подписка на EditorState с selector.
- * Re-render только при изменении возвращаемого значения (shallow equal).
+ * Subscribe to EditorState with a selector.
+ * Re-renders only when the returned value changes (shallow equal).
  */
 export function useEditorState<T>(
   editor: GoTipeEditor | null,
@@ -594,8 +594,8 @@ export function useEditorState<T>(
 ): T | undefined;
 
 /**
- * Подписка на collaboration awareness (курсоры, presence).
- * Работает только при подключённом @gotipe/collaboration.
+ * Subscribe to collaboration awareness (cursors, presence).
+ * Works only when @gotipe/collaboration is connected.
  */
 export function useCollaboration(editor: GoTipeEditor | null): {
   users: CollaborationUser[];
@@ -611,29 +611,29 @@ export interface EditorProps {
   style?: React.CSSProperties;
 }
 
-/** Корневой компонент editor — рендерит блоки, обрабатывает ввод */
+/** Root editor component: renders blocks, handles input */
 export const Editor: React.FC<EditorProps>;
 
 export interface BubbleMenuProps {
   editor: GoTipeEditor | null;
-  /** Показывать при текстовом выделении */
+  /** Show on text selection */
   shouldShow?: (props: { editor: GoTipeEditor; state: EditorState }) => boolean;
-  /** Смещение от выделения (px) */
+  /** Offset from the selection (px) */
   offset?: { x?: number; y?: number };
   children: React.ReactNode;
 }
 
-/** Floating toolbar, появляющийся при выделении текста */
+/** Floating toolbar that appears on text selection */
 export const BubbleMenu: React.FC<BubbleMenuProps>;
 
 export interface FloatingMenuProps {
   editor: GoTipeEditor | null;
-  /** Показывать при пустом блоке */
+  /** Show on an empty block */
   shouldShow?: (props: { editor: GoTipeEditor; state: EditorState }) => boolean;
   children: React.ReactNode;
 }
 
-/** Floating menu, появляющийся слева от пустого блока */
+/** Floating menu that appears to the left of an empty block */
 export const FloatingMenu: React.FC<FloatingMenuProps>;
 
 export interface BlockToolbarProps {
@@ -642,11 +642,11 @@ export interface BlockToolbarProps {
   children?: React.ReactNode;
 }
 
-/** Toolbar для каждого блока (drag handle, type menu) */
+/** Toolbar for each block (drag handle, type menu) */
 export const BlockToolbar: React.FC<BlockToolbarProps>;
 ```
 
-### Пример
+### Example
 
 ```tsx
 import { useEditor } from '@gotipe/react';
@@ -697,14 +697,14 @@ function MyEditor() {
 
 ## @gotipe/vue
 
-Vue 3 adapter. Composables и компоненты.
+Vue 3 adapter. Composables and components.
 
 | | |
 |---|---|
 | **npm** | `@gotipe/vue` |
 | **Bundle size (gzip)** | ~5 KB |
 | **Peer dependencies** | `vue >=3.4`, `@gotipe/core` |
-| **Документация** | [06-framework-adapters.md](06-framework-adapters.md) |
+| **Documentation** | [06-framework-adapters.md](06-framework-adapters.md) |
 
 ### Key exports
 
@@ -712,14 +712,14 @@ Vue 3 adapter. Composables и компоненты.
 // packages/vue/src/index.ts
 
 /**
- * Composable: создать editor, привязать к component lifecycle.
- * Возвращает ShallowRef<GoTipeEditor | null>.
+ * Composable: create an editor, bind it to the component lifecycle.
+ * Returns ShallowRef<GoTipeEditor | null>.
  */
 export function useEditor(options: MaybeRefOrGetter<EditorOptions>): ShallowRef<GoTipeEditor | null>;
 
 /**
- * Composable: подписка на state с selector.
- * Возвращает computed ref.
+ * Composable: subscribe to state with a selector.
+ * Returns a computed ref.
  */
 export function useEditorState<T>(
   editor: ShallowRef<GoTipeEditor | null>,
@@ -750,7 +750,7 @@ export const BlockToolbar: DefineComponent<{
 }>;
 ```
 
-### Пример
+### Example
 
 ```vue
 <script setup lang="ts">
@@ -758,7 +758,7 @@ import { useEditor } from '@gotipe/vue';
 import { GoTipeEditorComponent as Editor, BubbleMenu } from '@gotipe/vue';
 import { DefaultPreset } from '@gotipe/core';
 
-const editor = useEditor({ extensions: DefaultPreset, content: '<p>Привет</p>' });
+const editor = useEditor({ extensions: DefaultPreset, content: '<p>Hello</p>' });
 </script>
 
 <template>
@@ -806,7 +806,7 @@ Svelte 5 adapter. Runes-based API ($state, $derived, $effect).
 | **npm** | `@gotipe/svelte` |
 | **Bundle size (gzip)** | ~4 KB |
 | **Peer dependencies** | `svelte >=5`, `@gotipe/core` |
-| **Документация** | [06-framework-adapters.md](06-framework-adapters.md) |
+| **Documentation** | [06-framework-adapters.md](06-framework-adapters.md) |
 
 ### Key exports
 
@@ -814,21 +814,21 @@ Svelte 5 adapter. Runes-based API ($state, $derived, $effect).
 // packages/svelte/src/index.ts
 
 /**
- * Создать editor instance как $state rune.
- * Автоматический cleanup при destroy компонента.
+ * Create an editor instance as a $state rune.
+ * Automatic cleanup when the component is destroyed.
  */
 export function createEditorState(options: EditorOptions): {
-  /** $state: editor instance (null пока WASM грузится) */
+  /** $state: editor instance (null while WASM is loading) */
   readonly editor: GoTipeEditor | null;
-  /** $derived: текущее состояние */
+  /** $derived: current state */
   readonly state: EditorState | undefined;
   /** $derived: is editor ready */
   readonly isReady: boolean;
 };
 
 /**
- * Подписка на EditorState с selector.
- * Возвращает $derived rune.
+ * Subscribe to EditorState with a selector.
+ * Returns a $derived rune.
  */
 export function useEditorState<T>(
   editor: GoTipeEditor | null,
@@ -836,16 +836,16 @@ export function useEditorState<T>(
 ): { readonly value: T | undefined };
 ```
 
-### Компоненты
+### Components
 
 ```
-Editor.svelte        — корневой editor
-BubbleMenu.svelte    — floating toolbar при выделении
-FloatingMenu.svelte  — menu для пустого блока
+Editor.svelte        — root editor
+BubbleMenu.svelte    — floating toolbar on selection
+FloatingMenu.svelte  — menu for an empty block
 BlockToolbar.svelte  — drag handle + block menu
 ```
 
-### Пример
+### Example
 
 ```svelte
 <script>
@@ -918,7 +918,7 @@ Solid adapter. Signals-based API.
 | **npm** | `@gotipe/solid` |
 | **Bundle size (gzip)** | ~4 KB |
 | **Peer dependencies** | `solid-js >=1.8`, `@gotipe/core` |
-| **Документация** | [06-framework-adapters.md](06-framework-adapters.md) |
+| **Documentation** | [06-framework-adapters.md](06-framework-adapters.md) |
 
 ### Key exports
 
@@ -928,14 +928,14 @@ Solid adapter. Signals-based API.
 import type { Accessor } from 'solid-js';
 
 /**
- * Создать editor instance как signal.
- * Автоматический cleanup через onCleanup.
+ * Create an editor instance as a signal.
+ * Automatic cleanup via onCleanup.
  */
 export function createEditor(options: EditorOptions | Accessor<EditorOptions>): Accessor<GoTipeEditor | null>;
 
 /**
- * Подписка на EditorState с selector.
- * Возвращает memo signal — re-compute только при изменении slice.
+ * Subscribe to EditorState with a selector.
+ * Returns a memo signal that recomputes only when the slice changes.
  */
 export function useEditorState<T>(
   editor: Accessor<GoTipeEditor | null>,
@@ -949,7 +949,7 @@ export const FloatingMenu: Component<{ editor: GoTipeEditor | null; children: JS
 export const BlockToolbar: Component<{ editor: GoTipeEditor | null }>;
 ```
 
-### Пример
+### Example
 
 ```tsx
 import { createEditor } from '@gotipe/solid';
@@ -998,14 +998,14 @@ function MyEditor() {
 
 ## @gotipe/collaboration
 
-CRDT sync client. Подключает editor к sync-серверу или WebRTC для real-time collaboration.
+CRDT sync client. Connects the editor to a sync server or WebRTC for real-time collaboration.
 
 | | |
 |---|---|
 | **npm** | `@gotipe/collaboration` |
-| **Bundle size (gzip)** | ~8 KB (JS client; CRDT engine в WASM — уже в @gotipe/core) |
+| **Bundle size (gzip)** | ~8 KB (JS client; the CRDT engine is in WASM, already in @gotipe/core) |
 | **Peer dependencies** | `@gotipe/core` |
-| **Документация** | [02-collaboration.md](02-collaboration.md) |
+| **Documentation** | [02-collaboration.md](02-collaboration.md) |
 
 ### Key exports
 
@@ -1019,17 +1019,17 @@ import type { Extension, GoTipeEditor } from '@gotipe/core';
 export interface CollaborationOptions {
   /** URL WebSocket sync server */
   serverUrl: string;
-  /** Идентификатор документа */
+  /** Document identifier */
   documentId: string;
-  /** Имя/цвет текущего пользователя (awareness) */
+  /** Name/color of the current user (awareness) */
   user?: { name: string; color: string; avatar?: string };
-  /** Auth token (передаётся в WebSocket handshake) */
+  /** Auth token (sent in the WebSocket handshake) */
   token?: string;
-  /** Reconnect стратегия */
+  /** Reconnect strategy */
   reconnect?: { maxRetries?: number; baseDelay?: number; maxDelay?: number };
 }
 
-/** Extension для CRDT collaboration через WebSocket */
+/** Extension for CRDT collaboration over WebSocket */
 export const Collaboration: Extension<CollaborationOptions>;
 
 // --- Providers ---
@@ -1053,7 +1053,7 @@ export interface CollaborationUser {
   lastActive: number;
 }
 
-/** WebSocket provider — подключение к GoTipe Sync Server */
+/** WebSocket provider: connection to the GoTipe Sync Server */
 export class GoTipeProvider implements SyncProvider {
   constructor(opts: {
     serverUrl: string;
@@ -1073,7 +1073,7 @@ export class GoTipeProvider implements SyncProvider {
   on(event: 'connect' | 'disconnect' | 'sync' | 'error' | 'users-change', handler: (...args: any[]) => void): void;
 }
 
-/** WebRTC provider — peer-to-peer без сервера */
+/** WebRTC provider: peer-to-peer without a server */
 export class WebRTCProvider implements SyncProvider {
   constructor(opts: {
     signalingUrl: string;
@@ -1094,7 +1094,7 @@ export class WebRTCProvider implements SyncProvider {
 }
 ```
 
-### Пример
+### Example
 
 ```typescript
 import { createEditor, DefaultPreset } from '@gotipe/core';
@@ -1154,9 +1154,9 @@ AI integration layer. Ghost text, AI commands, provider-agnostic architecture.
 | | |
 |---|---|
 | **npm** | `@gotipe/ai` |
-| **Bundle size (gzip)** | ~6 KB (JS client; context builder в WASM) |
+| **Bundle size (gzip)** | ~6 KB (JS client; the context builder is in WASM) |
 | **Peer dependencies** | `@gotipe/core` |
-| **Документация** | [07-ai.md](07-ai.md) |
+| **Documentation** | [07-ai.md](07-ai.md) |
 
 ### Key exports
 
@@ -1168,61 +1168,61 @@ import type { Extension, GoTipeEditor, Block } from '@gotipe/core';
 // --- Extension ---
 
 export interface AIOptions {
-  /** AI provider конфигурация */
+  /** AI provider configuration */
   provider: AIProvider;
-  /** Горячая клавиша для accept ghost text (default: Tab) */
+  /** Hotkey to accept ghost text (default: Tab) */
   acceptKey?: string;
-  /** Горячая клавиша для dismiss ghost text (default: Escape) */
+  /** Hotkey to dismiss ghost text (default: Escape) */
   dismissKey?: string;
-  /** Debounce для inline suggestions (ms, default: 500) */
+  /** Debounce for inline suggestions (ms, default: 500) */
   debounceMs?: number;
-  /** Максимум tokens для контекста (default: 4096) */
+  /** Maximum tokens for context (default: 4096) */
   maxContextTokens?: number;
 }
 
-/** Extension для inline AI suggestions (ghost text) */
+/** Extension for inline AI suggestions (ghost text) */
 export const AIInline: Extension<AIOptions>;
 
-/** Extension для AI slash commands (/ai rewrite, /ai expand, ...) */
+/** Extension for AI slash commands (/ai rewrite, /ai expand, ...) */
 export const AICommands: Extension<AIOptions>;
 
 // --- Provider interface ---
 
 export interface AIProvider {
-  /** Идентификатор провайдера */
+  /** Provider identifier */
   readonly name: string;
 
   /**
    * Inline completion (ghost text).
-   * Возвращает stream текста.
+   * Returns a text stream.
    */
   complete(params: {
-    /** Текст до курсора */
+    /** Text before the cursor */
     prefix: string;
-    /** Текст после курсора */
+    /** Text after the cursor */
     suffix: string;
-    /** Окружающие блоки (контекст) */
+    /** Surrounding blocks (context) */
     context: Block[];
-    /** AbortSignal для отмены */
+    /** AbortSignal for cancellation */
     signal: AbortSignal;
   }): AsyncIterable<string>;
 
   /**
    * AI command (rewrite, expand, translate, ...).
-   * Возвращает stream текста.
+   * Returns a text stream.
    */
   command(params: {
-    /** Тип команды */
+    /** Command type */
     command: 'rewrite' | 'expand' | 'summarize' | 'translate' | 'fixGrammar' | 'changeTone' | string;
-    /** Входной текст */
+    /** Input text */
     input: string;
-    /** Дополнительные инструкции */
+    /** Additional instructions */
     instructions?: string;
-    /** Контекст документа */
+    /** Document context */
     context: Block[];
-    /** Язык для translate */
+    /** Language for translate */
     language?: string;
-    /** Тон для changeTone */
+    /** Tone for changeTone */
     tone?: 'formal' | 'casual' | 'professional' | 'friendly';
     signal: AbortSignal;
   }): AsyncIterable<string>;
@@ -1249,13 +1249,13 @@ export function createOllamaProvider(opts: {
   model: string;
 }): AIProvider;
 
-/** GoTipe Cloud AI proxy (маршрутизация через GoTipe Cloud) */
+/** GoTipe Cloud AI proxy (routing through GoTipe Cloud) */
 export function createGoTipeCloudProvider(opts: {
   apiKey: string;
 }): AIProvider;
 ```
 
-### Пример
+### Example
 
 ```typescript
 import { createEditor, DefaultPreset } from '@gotipe/core';
@@ -1271,7 +1271,7 @@ const editor = createEditor({
   ],
 });
 
-// Программный вызов AI command
+// Programmatic AI command call
 const stream = ai.command({
   command: 'rewrite',
   input: editor.getText(),
@@ -1318,14 +1318,14 @@ for await (const chunk of stream) { console.log(chunk); }
 
 ## @gotipe/export
 
-Document conversion. Client-side (WASM) для HTML/Markdown, server-side или lazy-load для PDF/DOCX.
+Document conversion. Client-side (WASM) for HTML/Markdown, server-side or lazy-load for PDF/DOCX.
 
 | | |
 |---|---|
 | **npm** | `@gotipe/export` |
-| **Bundle size (gzip)** | ~4 KB (JS bindings); HTML+MD конвертеры в WASM (~40 KB, уже в @gotipe/core); PDF (+~400 KB lazy), DOCX (+~60 KB lazy) |
+| **Bundle size (gzip)** | ~4 KB (JS bindings); HTML+MD converters in WASM (~40 KB, already in @gotipe/core); PDF (+~400 KB lazy), DOCX (+~60 KB lazy) |
 | **Peer dependencies** | `@gotipe/core` |
-| **Документация** | [08-export-import.md](08-export-import.md) |
+| **Documentation** | [08-export-import.md](08-export-import.md) |
 
 ### Key exports
 
@@ -1335,11 +1335,11 @@ Document conversion. Client-side (WASM) для HTML/Markdown, server-side или
 import type { Block } from '@gotipe/core';
 
 export interface ExportOptions {
-  /** Включать inline-стили в HTML (default: true) */
+  /** Include inline styles in HTML (default: true) */
   inlineStyles?: boolean;
-  /** Custom CSS для PDF export */
+  /** Custom CSS for PDF export */
   css?: string;
-  /** Metadata для PDF/DOCX (автор, заголовок) */
+  /** Metadata for PDF/DOCX (author, title) */
   metadata?: {
     title?: string;
     author?: string;
@@ -1349,53 +1349,53 @@ export interface ExportOptions {
 }
 
 /**
- * Экспорт документа в HTML-строку.
- * Синхронный — работает через WASM.
+ * Export the document to an HTML string.
+ * Synchronous: works through WASM.
  */
 export function exportHTML(blocks: readonly Block[], options?: ExportOptions): string;
 
 /**
- * Экспорт документа в Markdown-строку.
- * Синхронный — работает через WASM.
+ * Export the document to a Markdown string.
+ * Synchronous: works through WASM.
  */
 export function exportMarkdown(blocks: readonly Block[], options?: ExportOptions): string;
 
 /**
- * Экспорт документа в PDF (Uint8Array).
- * Lazy-load: WASM-модуль typst загружается при первом вызове.
+ * Export the document to PDF (Uint8Array).
+ * Lazy-load: the typst WASM module is loaded on first call.
  */
 export function exportPDF(blocks: readonly Block[], options?: ExportOptions): Promise<Uint8Array>;
 
 /**
- * Экспорт документа в DOCX (Uint8Array).
- * Lazy-load: WASM-модуль docx-rs загружается при первом вызове.
+ * Export the document to DOCX (Uint8Array).
+ * Lazy-load: the docx-rs WASM module is loaded on first call.
  */
 export function exportDOCX(blocks: readonly Block[], options?: ExportOptions): Promise<Uint8Array>;
 
 /**
- * Импорт HTML-строки в массив Block.
- * Синхронный — парсинг через WASM.
+ * Import an HTML string into a Block array.
+ * Synchronous: parsing goes through WASM.
  */
 export function importHTML(html: string): Block[];
 
 /**
- * Импорт Markdown-строки в массив Block.
- * Синхронный — парсинг через WASM.
+ * Import a Markdown string into a Block array.
+ * Synchronous: parsing goes through WASM.
  */
 export function importMarkdown(markdown: string): Block[];
 
-/** Хелпер: скачать файл в браузере */
+/** Helper: download a file in the browser */
 export function downloadBlob(data: Uint8Array | string, filename: string, mimeType: string): void;
 ```
 
-### Пример
+### Example
 
 ```typescript
 import { exportPDF, exportMarkdown, downloadBlob } from '@gotipe/export';
 
 const blocks = editor.getJSON().blocks;
 
-// Markdown — синхронный
+// Markdown — synchronous
 const md = exportMarkdown(blocks);
 console.log(md);
 
@@ -1445,7 +1445,7 @@ downloadBlob(pdf, 'document.pdf', 'application/pdf');
 
 ### GoTipeError
 
-Все ошибки GoTipe наследуют от `GoTipeError`. Код ошибки — строковый enum для pattern matching.
+All GoTipe errors extend `GoTipeError`. The error code is a string enum for pattern matching.
 
 ```typescript
 // packages/core/src/errors.ts
@@ -1479,12 +1479,12 @@ export type GoTipeErrorCode =
   | 'IMPORT_PARSE_ERROR';
 ```
 
-### Паттерны обработки
+### Handling patterns
 
 ```typescript
 import { GoTipeError } from '@gotipe/core';
 
-// 1. try/catch с проверкой кода
+// 1. try/catch with a code check
 try {
   editor.dispatch(transaction);
 } catch (e) {
@@ -1502,11 +1502,11 @@ try {
   }
 }
 
-// 2. onBeforeTransaction — предотвращение невалидных транзакций
+// 2. onBeforeTransaction — preventing invalid transactions
 const editor = createEditor({
   extensions: DefaultPreset,
   onBeforeTransaction: ({ transaction }) => {
-    // return false для отмены транзакции
+    // return false to cancel the transaction
     if (transaction.metadata.source === 'untrusted') return false;
     return true;
   },
@@ -1522,7 +1522,7 @@ provider.on('error', (err) => {
   }
 });
 
-// 4. AI error handling с AbortController
+// 4. AI error handling with AbortController
 const controller = new AbortController();
 setTimeout(() => controller.abort(), 10_000); // timeout 10s
 
@@ -1532,7 +1532,7 @@ try {
   }
 } catch (e) {
   if (e instanceof DOMException && e.name === 'AbortError') {
-    // Таймаут или отмена пользователем — ожидаемо
+    // Timeout or user cancellation — expected
   } else {
     console.error('AI provider error:', e);
   }
@@ -1544,12 +1544,12 @@ try {
 ```typescript
 import { initGoTipe } from '@gotipe/core';
 
-// WASM загрузка может упасть (CSP, unsupported browser, network error)
+// WASM loading can fail (CSP, unsupported browser, network error)
 try {
   await initGoTipe();
 } catch (e) {
   if (e instanceof GoTipeError && e.code === 'WASM_INIT_FAILED') {
-    // Fallback на JS engine
+    // Fallback to the JS engine
     const { initGoTipeJS } from '@gotipe/core-js';
     await initGoTipeJS();
   }
@@ -1560,9 +1560,9 @@ try {
 
 ## package.json exports
 
-Сводная таблица exports по всем пакетам. Все пакеты используют [conditional exports](https://nodejs.org/api/packages.html#conditional-exports) и dual CJS/ESM.
+Summary table of exports across all packages. All packages use [conditional exports](https://nodejs.org/api/packages.html#conditional-exports) and dual CJS/ESM.
 
-| Пакет | Entry point | Types | ESM | CJS |
+| Package | Entry point | Types | ESM | CJS |
 |-------|------------|-------|-----|-----|
 | `@gotipe/core` | `.` | `dist/index.d.ts` | `dist/index.mjs` | `dist/index.cjs` |
 | `@gotipe/core` | `./extensions` | `dist/extensions/index.d.ts` | `dist/extensions/index.mjs` | `dist/extensions/index.cjs` |
@@ -1581,15 +1581,15 @@ try {
 | `@gotipe/export` | `./pdf` | `dist/pdf.d.ts` | `dist/pdf.mjs` | -- |
 | `@gotipe/export` | `./docx` | `dist/docx.d.ts` | `dist/docx.mjs` | -- |
 
-### Шаблон exports поля
+### exports field template
 
 ```jsonc
 {
   "exports": {
     ".": {
-      "types": "./dist/index.d.ts",     // TypeScript — всегда первым
+      "types": "./dist/index.d.ts",     // TypeScript — always first
       "import": "./dist/index.mjs",      // ESM
-      "require": "./dist/index.cjs"      // CJS (опционально)
+      "require": "./dist/index.cjs"      // CJS (optional)
     },
     "./subpath": {
       "types": "./dist/subpath.d.ts",
@@ -1600,18 +1600,18 @@ try {
 }
 ```
 
-Правила:
-1. `"types"` condition всегда первым — TypeScript резолвит сверху вниз
-2. `"import"` для ESM bundlers (Vite, Rollup, esbuild, Node ESM)
-3. `"require"` для CJS (Node, Jest без ESM transform)
-4. `"svelte"` / `"solid"` conditions для framework-specific resolvers
-5. `"sideEffects": false` — tree-shaking для всех пакетов
+Rules:
+1. `"types"` condition always first — TypeScript resolves top to bottom
+2. `"import"` for ESM bundlers (Vite, Rollup, esbuild, Node ESM)
+3. `"require"` for CJS (Node, Jest without ESM transform)
+4. `"svelte"` / `"solid"` conditions for framework-specific resolvers
+5. `"sideEffects": false` — tree-shaking for all packages
 
 ---
 
-## Связанные документы
+## Related documents
 
-- [01-architecture.md](01-architecture.md) -- архитектура системы, WASM layer, document model
-- [03-editor-core.md](03-editor-core.md) -- Rust-типы (source of truth), wasm-bindgen API, benchmarks
+- [01-architecture.md](01-architecture.md) -- system architecture, WASM layer, document model
+- [03-editor-core.md](03-editor-core.md) -- Rust types (source of truth), wasm-bindgen API, benchmarks
 - [05-extensions.md](05-extensions.md) -- extension API, defineExtension, built-in extensions
-- [06-framework-adapters.md](06-framework-adapters.md) -- детали rendering, virtual DOM, custom block renderers
+- [06-framework-adapters.md](06-framework-adapters.md) -- rendering details, virtual DOM, custom block renderers

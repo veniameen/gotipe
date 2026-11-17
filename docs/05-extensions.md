@@ -1,15 +1,15 @@
 # GoTipe — Extension System
 
-> **Историческая спецификация, не руководство по текущему API.** Примеры, сроки,
-> сравнения производительности, коммерческие условия и обещания ниже не подтверждают
-> реализацию или доступность сервиса. Актуально: [контракты](development/editor-contracts.md),
-> [карта кода](development/code-map.md), [проверки](development/testing.md),
-> [план выпуска](22-release-readiness.md). Лицензии определяются `LICENSE` и manifest
-> каждого пакета, а не этим документом.
+> **Historical specification, not a guide to the current API.** The examples, schedules,
+> performance comparisons, commercial terms and promises below do not confirm an
+> implementation or service availability. Current: [contracts](development/editor-contracts.md),
+> [code map](development/code-map.md), [checks](development/testing.md),
+> [release plan](22-release-readiness.md). Licenses are defined by `LICENSE` and the manifest
+> of each package, not by this document.
 
-## Обзор
+## Overview
 
-Всё в GoTipe — extension. Даже базовые блоки (paragraph, heading, list) реализованы как extensions. Core engine оперирует абстрактными Block, TextSpan, Mark — конкретные типы определяются extensions.
+Everything in GoTipe is an extension. Even the basic blocks (paragraph, heading, list) are implemented as extensions. The core engine works with abstract Block, TextSpan and Mark types; the concrete types are defined by extensions.
 
 ```
 ┌──────────────────────────────────────────────────────────────┐
@@ -40,12 +40,12 @@
 ```rust
 // crates/gotipe-core/src/extension.rs
 
-/// Extension — единица расширяемости GoTipe
+/// Extension — the unit of extensibility in GoTipe
 pub trait Extension: Send + Sync {
-    /// Уникальное имя
+    /// Unique name
     fn name(&self) -> &str;
 
-    /// Зависимости (имена других extensions)
+    /// Dependencies (names of other extensions)
     fn dependencies(&self) -> Vec<&str> { vec![] }
 
     /// Schema nodes
@@ -57,28 +57,28 @@ pub trait Extension: Send + Sync {
     /// Keyboard shortcuts: (key combo, command)
     fn keybindings(&self) -> Vec<Keybinding> { vec![] }
 
-    /// Input rules: auto-formatting при вводе
+    /// Input rules: auto-formatting while typing
     fn input_rules(&self) -> Vec<InputRule> { vec![] }
 
-    /// Paste rules: трансформации при вставке
+    /// Paste rules: transformations on paste
     fn paste_rules(&self) -> Vec<PasteRule> { vec![] }
 
-    /// Lifecycle: после инициализации editor
+    /// Lifecycle: after the editor is initialized
     fn on_create(&self, _state: &EditorState) {}
 
-    /// Lifecycle: после каждого обновления state
+    /// Lifecycle: after every state update
     fn on_update(&self, _old: &EditorState, _new: &EditorState) {}
 
-    /// Lifecycle: при уничтожении editor
+    /// Lifecycle: when the editor is destroyed
     fn on_destroy(&self) {}
 
-    /// Plugin state (для stateful extensions)
+    /// Plugin state (for stateful extensions)
     fn plugin(&self) -> Option<Box<dyn Plugin>> { None }
 
     /// Slash commands
     fn slash_commands(&self) -> Vec<SlashCommandDef> { vec![] }
 
-    /// Конфигурация (по умолчанию)
+    /// Configuration (defaults)
     fn default_config(&self) -> Option<serde_json::Value> { None }
 }
 ```
@@ -169,7 +169,7 @@ Editor created
 
 ---
 
-## Built-in Extensions (все MIT)
+## Built-in Extensions (all MIT)
 
 ### Node Extensions
 
@@ -669,7 +669,7 @@ export const SlashCommands = defineExtension({
 
 ## Custom Extensions
 
-### Пример: Callout Extension
+### Example: Callout Extension
 
 ```typescript
 // my-app/extensions/callout.ts
@@ -719,7 +719,7 @@ export const Callout = defineExtension({
 });
 ```
 
-### Пример: Custom Mark (spoiler)
+### Example: Custom Mark (spoiler)
 
 ```typescript
 // my-app/extensions/spoiler.ts
@@ -752,7 +752,7 @@ export const Spoiler = defineExtension({
   ],
 });
 
-// CSS для spoiler mark:
+// CSS for the spoiler mark:
 // .gotipe-mark-spoiler {
 //   background-color: currentColor;
 //   border-radius: 2px;
@@ -764,7 +764,7 @@ export const Spoiler = defineExtension({
 // }
 ```
 
-### Пример: Custom Node (video embed)
+### Example: Custom Node (video embed)
 
 ```typescript
 // my-app/extensions/video.ts
@@ -813,7 +813,7 @@ export const Video = defineExtension({
 
 ### npm Package Convention
 
-Extensions публикуются как npm-пакеты с конвенцией `@gotipe/ext-*` или `gotipe-ext-*`.
+Extensions are published as npm packages following the `@gotipe/ext-*` or `gotipe-ext-*` convention.
 
 ```
 @gotipe/ext-math          — math equations (KaTeX)
@@ -856,12 +856,12 @@ gotipe-ext-example/
 
 ## Preset Bundles
 
-Для удобства — presets, объединяющие часто используемые extensions.
+For convenience, presets bundle frequently used extensions.
 
 ```typescript
 // packages/core/src/presets.ts
 
-/** Минимальный набор: только текст */
+/** Minimal set: text only */
 export const MinimalPreset = [
   Paragraph,
   Bold,
@@ -869,7 +869,7 @@ export const MinimalPreset = [
   History,
 ];
 
-/** Стандартный набор: Notion-like editor */
+/** Standard set: Notion-like editor */
 export const DefaultPreset = [
   // Nodes
   Paragraph,
@@ -899,7 +899,7 @@ export const DefaultPreset = [
   SlashCommands,
 ];
 
-/** Полный набор: всё из коробки */
+/** Full set: everything out of the box */
 export const FullPreset = [
   ...DefaultPreset,
   Heading.configure({ levels: [1, 2, 3, 4, 5, 6] }),
@@ -912,7 +912,7 @@ export const FullPreset = [
 ];
 ```
 
-### Использование
+### Usage
 
 ```typescript
 import { createEditor } from '@gotipe/core';
@@ -931,11 +931,11 @@ const editor = createEditor({
 
 ---
 
-## Сравнение с Tiptap Extensions
+## Comparison with Tiptap Extensions
 
-| Аспект | GoTipe | Tiptap |
+| Aspect | GoTipe | Tiptap |
 |--------|--------|--------|
-| **Extension API** | `defineExtension()` — единый формат | Class-based (Node.create(), Mark.create()) |
+| **Extension API** | `defineExtension()` — a single format | Class-based (Node.create(), Mark.create()) |
 | **Dependencies** | Explicit declaration | Implicit (manual ordering) |
 | **Configuration** | `.configure()` typed | `.configure()` typed |
 | **Schema** | Declarative (JSON-like) | ProseMirror schema objects |
@@ -948,7 +948,7 @@ const editor = createEditor({
 
 ---
 
-## Связанные документы
+## Related documents
 
 - [03-editor-core.md](03-editor-core.md) — Extension trait, NodeSpec, MarkSpec definitions
 - [04-block-editor.md](04-block-editor.md) — block types, slash commands

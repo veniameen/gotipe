@@ -1,102 +1,108 @@
-# Разработка GoTipe
+# GoTipe development
 
-Правила действуют во всём репозитории, включая Claude и Codex. Запрос владельца
-разрешает обычные шаги внутри задачи: исследование, правки, сборки и проверки.
-Не требуй повторного разрешения на обратимые действия. Публикация и внешние
-сообщения требуют соответствующего запроса. Не меняй лицензии ради удобства.
+These rules apply across the whole repository, including to Claude and Codex. The owner's request
+authorizes the usual steps within a task: research, edits, builds and checks.
+Don't ask for repeated permission for reversible actions. Publishing and external
+messages require a request that says so. Don't change licenses for convenience.
 
-## Начальное чтение
+## Required reading
 
-1. Найди область в [карте кода](docs/development/code-map.md).
-2. Выбери сценарий и проверки из [матрицы](docs/development/testing.md).
-3. Для текущей работы сверяйся с [планом выпуска](docs/22-release-readiness.md).
-4. Ищи только нужные исходники; исключай node_modules, dist, target, pkg, output.
+1. Find the area in the [code map](docs/development/code-map.md).
+2. Pick the scenario and checks from the [matrix](docs/development/testing.md).
+3. For current work, check the [release plan](docs/22-release-readiness.md).
+4. Search only the sources you need; exclude node_modules, dist, target, pkg, output.
 
-## Архитектура и SOLID
+## Architecture and SOLID
 
-- GoTipe — библиотека редактора. Wiki, дерево страниц, вкладки, сохранение, права и
-  workflow модели принадлежат приложению-потребителю (например, SpecOrbit).
-  Playground демонстрирует публичные компоненты и контракты; не переноси в него
-  копию приложения хоста и не делай её отдельным продуктовым экраном.
-- Один модуль отвечает за одну предметную задачу. Entry points связывают владельцев,
-  а не содержат реализацию очередной функции. Не создавай общий склад utils/services.
-- Расширяй редактор через extensions, commands, views и provider/host contracts.
-  Не добавляй ветку для конкретного приложения в движок.
-- JS и Rust/WASM соблюдают один контракт документа, транзакций, UTF-16 offsets,
-  ошибок и истории. Подмена движка не меняет семантику публичного API.
-- Интерфейс содержит нужные потребителю операции, а не весь Editor/App context.
-  Доменная логика зависит от узких портов; UI и транспорт реализуют их адаптеры.
-- Ядро, Markdown и SDK не импортируют UI, frameworks или приложения. Между
-  пакетами используются публичные входы. Runtime-циклы запрещены.
-- У документа, истории, подписок, таймеров, запросов и ресурсов один владелец.
-  Импорт модуля не запускает работу. Создание и cleanup явные; поздний async-ответ
-  после destroy не воскрешает объект, старый ответ не перезаписывает новый state.
-- Production TS/JS/Rust/Go/CSS файлы — до 600 строк; каталоги — до 24 прямых code
-  files. Это повод выделить ответственность, а не разрезать функцию по номеру
-  строки. Не обходи лимит минификацией, include-фрагментами и безымянными chunks.
-- Старые превышения записаны в `config/architecture-baseline.json`. Их нельзя
-  увеличивать; после сокращения уменьши baseline. До выпуска устрани долг:
-  `pnpm check:architecture:release` не принимает исключения по размеру.
+- GoTipe is an editor library. Wiki, page tree, tabs, saving, permissions and model
+  workflows belong to the consuming application (for example, SpecOrbit).
+  The playground demonstrates the public components and contracts; don't move a
+  copy of a host application into it, and don't turn it into a separate product screen.
+- One module is responsible for one domain task. Entry points wire the owners together
+  rather than hold the implementation of yet another feature. Don't create a general
+  dumping ground of utils/services.
+- Extend the editor through extensions, commands, views and provider/host contracts.
+  Don't add a branch for a specific application to the engine.
+- JS and Rust/WASM follow one contract for the document, transactions, UTF-16 offsets,
+  errors and history. Swapping the engine doesn't change the public API semantics.
+- An interface contains the operations the consumer needs, not the whole Editor/App context.
+  Domain logic depends on narrow ports; UI and transport implement their adapters.
+- The core, Markdown and SDK don't import UI, frameworks or applications. Packages use
+  each other's public entry points. Runtime cycles are forbidden.
+- Documents, history, subscriptions, timers, requests and resources each have one owner.
+  Importing a module doesn't start work. Creation and cleanup are explicit; a late async
+  response after destroy doesn't resurrect the object, and an old response doesn't
+  overwrite new state.
+- Production TS/JS/Rust/Go/CSS files stay under 600 lines; directories hold at most 24 direct
+  code files. This is a reason to extract a responsibility, not to cut a function at a
+  line number. Don't dodge the limit with minification, include fragments or anonymous chunks.
+- Existing overruns are recorded in `config/architecture-baseline.json`. They must not
+  grow; when you shrink one, lower the baseline. Clear the debt before release:
+  `pnpm check:architecture:release` accepts no size exceptions.
 
-## Собственное решение и зависимости
+## Own implementation and dependencies
 
-- Движок, Markdown-парсер, преобразования документа, история, CRDT и небольшие
-  вспомогательные алгоритмы принадлежат GoTipe. Не подключай ProseMirror, Tiptap,
-  Lexical, mdast/micromark или utility-пакет вместо своей реализации области.
-- Сначала используй платформу и существующий модуль. Runtime-зависимость требует
-  конкретного обоснования в [политике](docs/development/dependencies.md), а не
-  возраста, популярности или удобства импорта. Удаляй неиспользуемые зависимости.
-- Framework peers относятся только к адаптерам/UI. Headless-потребитель не должен
-  загружать UI, highlighter, PDF/DOCX. Не переписывай криптографию, TLS, драйверы
-  хранения и компиляторы ради формального отсутствия зависимостей.
-- Build/test tools не являются runtime движка. Собственная реализация принимается
-  по совместимости, устойчивости и измерениям, а не по меньшему lockfile.
+- The engine, the Markdown parser, document transforms, history, CRDT and small helper
+  algorithms belong to GoTipe. Don't pull in ProseMirror, Tiptap, Lexical, mdast/micromark
+  or a utility package in place of our own implementation of an area.
+- Use the platform and existing modules first. A runtime dependency needs a specific
+  justification in the [policy](docs/development/dependencies.md), not age, popularity or
+  import convenience. Remove unused dependencies.
+- Framework peers belong only to adapters/UI. A headless consumer must not load UI,
+  a highlighter, or PDF/DOCX. Don't rewrite cryptography, TLS, storage drivers or
+  compilers just to have no dependencies on paper.
+- Build/test tools are not part of the engine's runtime. An own implementation is accepted
+  on compatibility, robustness and measurements, not on a smaller lockfile.
 
-## Целостность и безопасность
+## Integrity and security
 
-- Документ меняется транзакцией. Проверяй весь пакет до записи; ошибка не оставляет
-  половину правок, истории или сетевых операций.
-- Сохраняй вложенность, attrs, marks, raw text, IDs и исходные байты нетронутого
-  Markdown. Неизвестные данные нельзя молча выбрасывать.
-- Сохраняй selection/focus/scroll/IME, порядок async-операций и границы undo.
-  Отдельно проверяй кириллицу, emoji, составные символы и вложенные блоки.
-- HTML строится из разрешённой структуры и проверенных URL, а не вставляется
-  непроверенной строкой. Validation нужна на каждой границе доверия.
-- Cloud проверяет scope, роль и принадлежность документа до доступа. Не возвращай
-  успешный результат-заглушку. Ошибка провайдера остаётся ошибкой.
-- Не скрывай сбои через any/cast, отключение strict/lint, пустой catch, skip теста
-  или `|| true`. Повтор неопределённой записи требует идемпотентности.
+- A document changes through a transaction. Validate the whole batch before writing; an
+  error leaves no half-applied edits, history or network operations.
+- Preserve nesting, attrs, marks, raw text, IDs and the original bytes of untouched
+  Markdown. Never silently drop unknown data.
+- Preserve selection/focus/scroll/IME, the order of async operations and undo boundaries.
+  Test Cyrillic, emoji, composed characters and nested blocks separately.
+- HTML is built from an allowed structure and validated URLs, not inserted as an
+  unchecked string. Validation is needed at every trust boundary.
+- Cloud checks scope, role and document ownership before granting access. Don't return a
+  stub success result. A provider error stays an error.
+- Don't hide failures with any/casts, disabling strict/lint, an empty catch, a skipped test
+  or `|| true`. Retrying an indeterminate write requires idempotency.
 
-## Интерфейс
+## Interface
 
-- Основа вида — [Атлас GoTipe](design/atlas/README.md). Любая правка вида начинается
-  там: кадр → `node design/atlas/check.mjs` → решение владельца → код. Код повторяет
-  принятый кадр; замечание к виду исправляется в рисунке, а не в коде.
-- Литеральные цвета и размеры — только в токенах. Виды `minimal`, `modern`, `notion`,
-  `docs` — наборы `--gt-*` над одной разметкой. Отдельного вида, темы или имён под
-  приложение-хост нет: SpecOrbit и другие хосты передают свои цвета через `--gt-*`.
-- Переиспользуй `--gt-*` semantic tokens, controls и поведение; не копируй тему в
-  каждый экран. Значки — общий набор; эмодзи и буквы вместо значков не используются.
-- Проверяй light/dark, длинный текст, empty/loading/error/disabled/read-only,
-  клавиатуру и видимый focus. Скрытая кнопка не должна ловить Tab.
-- Адаптивность зависит и от контейнера. Ширины: 320, 375, 768, 1024, 1440 px.
-  Текст/кнопки не перекрываются; широкие таблицы и код скроллятся локально.
-- Меню измеряется до показа и следует за якорем при scroll/resize/layout changes.
-  Появление ручки/toolbar не сдвигает документ и не ломает путь указателя.
-- Screenshot не доказывает drag, ввод, undo или сохранение selection.
+- The basis of a view is the [GoTipe Atlas](design/atlas/README.md). Any view change starts
+  there: frame → `node design/atlas/check.mjs` → owner decision → code. Code follows the
+  accepted frame; a remark about a view is fixed in the drawing, not in code.
+- Literal colors and sizes live only in tokens. The `minimal`, `modern`, `notion` and
+  `docs` views are sets of `--gt-*` over one markup. There is no separate view, theme or
+  naming for a host application: SpecOrbit and other hosts pass their colors through `--gt-*`.
+- Reuse `--gt-*` semantic tokens, controls and behavior; don't copy a theme into each
+  screen. Icons come from the shared set; emoji and letters are not used instead of icons.
+- Check light/dark, long text, empty/loading/error/disabled/read-only states, the keyboard
+  and visible focus. A hidden button must not catch Tab.
+- Responsiveness depends on the container too. Widths: 320, 375, 768, 1024, 1440 px.
+  Text and buttons don't overlap; wide tables and code scroll locally.
+- A menu is measured before it is shown and follows its anchor on scroll/resize/layout
+  changes. A handle or toolbar appearing doesn't shift the document or break the pointer path.
+- A screenshot doesn't prove drag, input, undo or selection preservation.
 
-## Рабочий цикл и приёмка
+## Workflow and acceptance
 
-- Законченная правка включает всех потребителей. Отделяй перенос кода от изменения
-  поведения. До переноса фиксируй exports, зависимости и lifecycle.
-- Параллельные агенты владеют разными файлами; общие manifests/lock/bootstrap
-  интегрирует один владелец. Не отменяй чужие и пользовательские изменения.
-- После правки — целевые проверки по риску. Полный suite — приёмка окончательного
-  дерева. Сбой воспроизведи, исправь и повтори; наличие теста не равно прогону.
-- Обновляй контракты, карту кода, примеры и changeset вместе с публичным API.
-  Не объявляй функцию готовой по сборке и не публикуй фиктивные метрики.
-- Диагностика, логи, screenshots — в ignored `output/`. В docs остаются
-  поддерживаемые правила, контракты, планы и решения. Не коммить секреты/.DS_Store.
-- `pnpm check:architecture`, typecheck, lint, применимые unit/integration/browser
-  tests и проверка архивов обязательны. Отчёт называет дерево, команды, результаты
-  и реальные ограничения.
+- Language: everything in the repository is in English: code, comments, docs, changesets and
+  commit messages. Russian appears only in the editor's Russian locale (`ru` dictionaries,
+  Russian emoji names) and in test data that exercises it.
+- Commit messages are in English and carry no `Co-Authored-By` or "Generated with" trailers.
+- A finished change covers all consumers. Keep moving code separate from changing
+  behavior. Before a move, pin down exports, dependencies and lifecycle.
+- Parallel agents own different files; shared manifests/lock/bootstrap are integrated by
+  one owner. Don't undo other people's or the user's changes.
+- After an edit, run targeted checks by risk. The full suite is acceptance of the final
+  tree. Reproduce a failure, fix it and rerun; having a test is not the same as running it.
+- Update contracts, the code map, examples and the changeset together with the public API.
+  Don't declare a feature done because it builds, and don't publish fictitious metrics.
+- Diagnostics, logs and screenshots go in the ignored `output/`. Docs keep only maintained
+  rules, contracts, plans and decisions. Don't commit secrets or .DS_Store.
+- `pnpm check:architecture`, typecheck, lint, the applicable unit/integration/browser
+  tests and archive verification are mandatory. The report names the tree, the commands, the
+  results and the real limitations.

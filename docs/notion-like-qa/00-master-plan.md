@@ -2,16 +2,16 @@
 
 _Last updated: February 14, 2026_
 
-## Цель
+## Goal
 
-Сделать вкладку `Notion-like Editor` стабильной на уровне production:
+Make the `Notion-like Editor` tab production-stable:
 
-- предсказуемые преобразования блоков через slash-команды
-- корректная работа Enter/Backspace/selection
-- аккуратный UI (slash-menu, gutter toolbar, светлая/тёмная тема)
-- защита от регрессий через e2e-матрицу
+- predictable block transforms via slash commands
+- correct Enter/Backspace/selection behavior
+- polished UI (slash menu, gutter toolbar, light/dark theme)
+- regression protection through the e2e matrix
 
-## Связанные документы
+## Related documents
 
 - `docs/notion-like-qa/DONE.md`
 - `docs/notion-like-qa/TODO.md`
@@ -36,190 +36,190 @@ _Last updated: February 14, 2026_
 - `docs/notion-like-qa/report-2026-02-14-integrated-chaos-pack.md`
 - `docs/notion-like-qa/report-2026-02-14-headed-gutter-jitter.md`
 
-## Что уже сделано
+## What is already done
 
-- Добавлены regression-тесты: `e2e/notion-like-matrix.spec.ts`
-- Добавлены keyboard regression-кейсы slash-menu (`ArrowUp/ArrowDown/Enter`, `Escape`)
-- Добавлен расширенный стресс/поведенческий suite: `e2e/notion-like-exhaustive.spec.ts`
-- Добавлен data-driven suite трансформаций: `e2e/notion-like-transform-matrix.spec.ts`
-- Добавлен nested/multi-step suite: `e2e/notion-like-nested-transform.spec.ts`
-- Добавлен checklist-batch suite: `e2e/notion-like-checklist-001-050.spec.ts`
-- Добавлен checklist-batch suite: `e2e/notion-like-checklist-051-100.spec.ts`
-- Добавлен checklist-batch suite: `e2e/notion-like-checklist-101-150.spec.ts`
-- Добавлен checklist-batch suite: `e2e/notion-like-checklist-151-200.spec.ts`
-- Добавлен checklist-batch suite: `e2e/notion-like-checklist-201-250.spec.ts`
-- Добавлен checklist-batch suite: `e2e/notion-like-checklist-251-300.spec.ts`
-- Добавлен checklist-batch suite: `e2e/notion-like-checklist-301-320.spec.ts`
-- Добавлен checklist-batch suite: `e2e/notion-like-checklist-321-350.spec.ts`
-- Добавлен checklist-batch suite: `e2e/notion-like-checklist-351-370.spec.ts`
-- Добавлен checklist-batch suite: `e2e/notion-like-checklist-371-390.spec.ts`
-- Добавлен checklist-batch suite: `e2e/notion-like-checklist-391-400.spec.ts`
-- Добавлен checklist-batch suite: `e2e/notion-like-checklist-401-425.spec.ts`
-- Добавлен checklist-batch suite: `e2e/notion-like-checklist-426-450.spec.ts`
-- Добавлен checklist-batch suite: `e2e/notion-like-checklist-451-475.spec.ts`
-- Добавлен checklist-batch suite: `e2e/notion-like-checklist-476-500.spec.ts`
-- Переписан устаревший suite: `e2e/slash-menu.spec.ts`
-- Исправлены core-преобразования в list-контексте:
+- Added regression tests: `e2e/notion-like-matrix.spec.ts`
+- Added keyboard regression cases for the slash menu (`ArrowUp/ArrowDown/Enter`, `Escape`)
+- Added an extended stress/behavior suite: `e2e/notion-like-exhaustive.spec.ts`
+- Added a data-driven transform suite: `e2e/notion-like-transform-matrix.spec.ts`
+- Added a nested/multi-step suite: `e2e/notion-like-nested-transform.spec.ts`
+- Added a checklist-batch suite: `e2e/notion-like-checklist-001-050.spec.ts`
+- Added a checklist-batch suite: `e2e/notion-like-checklist-051-100.spec.ts`
+- Added a checklist-batch suite: `e2e/notion-like-checklist-101-150.spec.ts`
+- Added a checklist-batch suite: `e2e/notion-like-checklist-151-200.spec.ts`
+- Added a checklist-batch suite: `e2e/notion-like-checklist-201-250.spec.ts`
+- Added a checklist-batch suite: `e2e/notion-like-checklist-251-300.spec.ts`
+- Added a checklist-batch suite: `e2e/notion-like-checklist-301-320.spec.ts`
+- Added a checklist-batch suite: `e2e/notion-like-checklist-321-350.spec.ts`
+- Added a checklist-batch suite: `e2e/notion-like-checklist-351-370.spec.ts`
+- Added a checklist-batch suite: `e2e/notion-like-checklist-371-390.spec.ts`
+- Added a checklist-batch suite: `e2e/notion-like-checklist-391-400.spec.ts`
+- Added a checklist-batch suite: `e2e/notion-like-checklist-401-425.spec.ts`
+- Added a checklist-batch suite: `e2e/notion-like-checklist-426-450.spec.ts`
+- Added a checklist-batch suite: `e2e/notion-like-checklist-451-475.spec.ts`
+- Added a checklist-batch suite: `e2e/notion-like-checklist-476-500.spec.ts`
+- Rewrote an outdated suite: `e2e/slash-menu.spec.ts`
+- Fixed core transforms in list context:
   - `packages/core/src/chain.ts`
-- Slash list-команды переведены в idempotent set-path (без unwrap при выборе того же типа):
+- Slash list commands moved to an idempotent set path (no unwrap when the same type is chosen):
   - `packages/core/src/chain.ts`
   - `packages/core/src/extensions/bullet-list.ts`
   - `packages/core/src/extensions/ordered-list.ts`
-- Исправлен блоковый gutter toolbar (позиционирование около контента):
+- Fixed the block gutter toolbar (positioning next to the content):
   - `packages/block-editor/src/components/block-editor.tsx`
-- Добавлена полноценная light/dark стилизация slash-menu:
+- Added full light/dark styling for the slash menu:
   - `packages/theme/src/theme.css`
-- Исправлена нормализация каретки для пустых todo:
+- Fixed caret normalization for empty todos:
   - `packages/core/src/editor.ts`
   - `packages/block-editor/src/components/slash-menu.tsx`
   - `packages/react/src/editor-content.tsx`
   - `packages/theme/src/theme.css`
-- Исправлена нормализация каретки для клика в левую зону `todoItem`:
+- Fixed caret normalization for clicks in the left zone of `todoItem`:
   - `packages/core/src/editor.ts` (selectionchange path)
-  - `e2e/notion-like-matrix.spec.ts` (новые regression кейсы)
-- Исправлены конверсии `codeBlock -> list/todo` (с сохранением текста):
+  - `e2e/notion-like-matrix.spec.ts` (new regression cases)
+- Fixed `codeBlock -> list/todo` conversions (preserving text):
   - `packages/core/src/chain.ts`
-- Исправлены конверсии `callout -> bullet/ordered/todo` (с сохранением текста):
+- Fixed `callout -> bullet/ordered/todo` conversions (preserving text):
   - `packages/core/src/chain.ts`
-- Исправлен selection drift после `setContent`/programmatic range:
+- Fixed selection drift after `setContent`/programmatic range:
   - `packages/core/src/editor.ts`
   - `e2e/notion-like-nested-transform.spec.ts` (helper sync)
-- Исправлен сброс stored marks на ложных `selectionchange`:
-  - `packages/core/src/editor.ts` (marks при collapsed-caret теперь не теряются между toggle и вводом)
-- Исправлено сохранение nested children при lift/unwrap list transform:
+- Fixed stored marks being reset on spurious `selectionchange` events:
+  - `packages/core/src/editor.ts` (marks at a collapsed caret are no longer lost between toggle and typing)
+- Fixed preservation of nested children during lift/unwrap list transforms:
   - `packages/core/src/chain.ts`
-- Улучшены nested list операции:
+- Improved nested list operations:
   - `packages/core/src/chain.ts` (`indent` / `outdent`)
-- Добавлен детерминированный тестовый reset для Notion-like:
+- Added a deterministic test reset for Notion-like:
   - `apps/playground/src/templates/notion-editor.tsx` (`__GOTIPE_NOTION_EDITOR__`)
-  - reset контента перед каждым e2e кейсом
-- Закрыт Step 2 reference-pass (Notion list-row micro behavior):
+  - content reset before each e2e case
+- Closed the Step 2 reference pass (Notion list-row micro behavior):
   - `docs/notion-like-qa/notion-reference-step2/00-index.md`
   - `docs/notion-like-qa/notion-reference-step2/01-list-row-micro-behavior.md`
   - `docs/notion-like-qa/notion-reference-step2/02-parity-actions.md`
-- Закрыт race post-slash caret restore (first-char shift):
-  - `packages/block-editor/src/components/slash-menu.tsx` (rAF guard, чтобы не перетирать уже изменённый selection)
-  - подтверждено regression-кейсами immediate typing
-- Закрыт race immediate-typing после клика в левую зону `todoItem`:
-  - `packages/react/src/editor-content.tsx` (syncSelection выполняется синхронно после принудительной постановки range)
-- Увеличен безопасный list-gutter отступ для block-toolbar (не перекрывает checkbox):
+- Closed the post-slash caret restore race (first-char shift):
+  - `packages/block-editor/src/components/slash-menu.tsx` (rAF guard so an already changed selection is not overwritten)
+  - confirmed by immediate-typing regression cases
+- Closed the immediate-typing race after a click in the left zone of `todoItem`:
+  - `packages/react/src/editor-content.tsx` (syncSelection runs synchronously after the range is forcibly set)
+- Increased the safe list-gutter offset for the block toolbar (it no longer overlaps the checkbox):
   - `packages/block-editor/src/components/block-editor.tsx`
-- Усилен anti-flicker для hover-toolbar (`+`/drag) в реальном fast-hover:
+- Strengthened anti-flicker for the hover toolbar (`+`/drag) under real fast hover:
   - `packages/block-editor/src/components/block-editor.tsx` (`TOOLBAR_HIDE_DELAY_MS`, delayed hide policy)
-- Усилена постановка DOM-каретки для пустого `todoItem` после slash transforms:
-  - `packages/block-editor/src/components/slash-menu.tsx` (`setDomCaretInBlock` -> fallback на `[data-gotipe-todo-content]`)
-- Добавлен targeted parity suite Step 2:
+- Strengthened DOM caret placement for an empty `todoItem` after slash transforms:
+  - `packages/block-editor/src/components/slash-menu.tsx` (`setDomCaretInBlock` -> fallback to `[data-gotipe-todo-content]`)
+- Added a targeted Step 2 parity suite:
   - `e2e/notion-like-step2-parity.spec.ts` (slash boundary + jagged hover clickability)
   - cross-browser: Chromium/Firefox/WebKit PASS
-- Добавлен strict Step1 parity suite (Enter/Shift+Enter/Backspace) в split-формате:
+- Added a strict Step 1 parity suite (Enter/Shift+Enter/Backspace) in split format:
   - `e2e/helpers/notion-step1-parity.ts`
   - `e2e/notion-like-step1-enter-shift-parity.spec.ts`
   - `e2e/notion-like-step1-split-backspace-parity.spec.ts`
   - Chromium: `15/15` PASS
-- Закрыт planned core-batch по матрице:
+- Closed the planned core batch of the matrix:
   - `e2e/notion-like-matrix-planned-core.spec.ts`
-  - кейсы: `SLASH-011`, `SLASH-015`, `SLASH-016`, `ENTER-010` (+ `SEL-004`)
-  - кросс-браузер: Chromium/Firefox/WebKit PASS
-- Закрыт planned UI-batch по матрице:
+  - cases: `SLASH-011`, `SLASH-015`, `SLASH-016`, `ENTER-010` (+ `SEL-004`)
+  - cross-browser: Chromium/Firefox/WebKit PASS
+- Closed the planned UI batch of the matrix:
   - `e2e/notion-like-matrix-planned-ui.spec.ts`
-  - кейсы: `SLASH-019`, `UI-007`, `UI-008`
-  - кросс-браузер: Chromium/Firefox/WebKit PASS
-- Закрыт planned selection-batch по матрице:
+  - cases: `SLASH-019`, `UI-007`, `UI-008`
+  - cross-browser: Chromium/Firefox/WebKit PASS
+- Closed the planned selection batch of the matrix:
   - `e2e/notion-like-matrix-planned-selection.spec.ts`
-  - кейс: `SEL-005` (mark toggle на list item без артефактов)
-  - кросс-браузер: Chromium/Firefox/WebKit PASS
-- Закрыт planned reliability-batch по матрице:
+  - case: `SEL-005` (mark toggle on a list item without artifacts)
+  - cross-browser: Chromium/Firefox/WebKit PASS
+- Closed the planned reliability batch of the matrix:
   - `e2e/notion-like-matrix-planned-reliability.spec.ts`
-  - кейсы: `REL-001`, `REL-002`, `REL-003`
-  - кросс-браузер: Chromium/Firefox/WebKit PASS
-- Закрыт cross-browser critical pack:
+  - cases: `REL-001`, `REL-002`, `REL-003`
+  - cross-browser: Chromium/Firefox/WebKit PASS
+- Closed the cross-browser critical pack:
   - Firefox + WebKit: `134/134` PASS (critical suites)
-  - кейсы `REL-004` / `REL-005` переведены в `Automated`
-- Стабилизированы flaky helper-пути для WebKit:
-  - `e2e/notion-like-matrix.spec.ts` (`placeCaretInTopLevelListItem`, `placeCaretAtStartOfBlockByMarker` через editor API + selection poll)
-  - `e2e/slash-menu.spec.ts` (более реалистичный caret-distance tolerance)
-- Сужен mobile override для slash-menu:
+  - cases `REL-004` / `REL-005` moved to `Automated`
+- Stabilized flaky helper paths for WebKit:
+  - `e2e/notion-like-matrix.spec.ts` (`placeCaretInTopLevelListItem`, `placeCaretAtStartOfBlockByMarker` via the editor API + selection poll)
+  - `e2e/slash-menu.spec.ts` (a more realistic caret-distance tolerance)
+- Narrowed the mobile override for the slash menu:
   - `packages/theme/src/theme.css`
-  - mobile width теперь ограничен `min(300px, 90vw)` без layout-overflow
-- Закрыт transform-matrix quarantine:
-  - `e2e/notion-like-transform-matrix.spec.ts` переведён из `fixme` в active run
-  - стабилизация WebKit через API-постановку каретки (`setSelection`) в matrix helper
-- Закрыт active backlog policy-пакет:
-  - новые suite:
+  - mobile width is now limited to `min(300px, 90vw)` with no layout overflow
+- Closed the transform-matrix quarantine:
+  - `e2e/notion-like-transform-matrix.spec.ts` moved from `fixme` to the active run
+  - stabilized WebKit by placing the caret through the API (`setSelection`) in the matrix helper
+- Closed the active backlog policy pack:
+  - new suites:
     - `e2e/notion-like-backlog-hardening.spec.ts`
     - `e2e/notion-like-backlog-hardening-stress.spec.ts`
-  - закрыты `DEF-005`, `DEF-007`, `DEF-014` (+ cross-browser `DEF-006`)
+  - closed `DEF-005`, `DEF-007`, `DEF-014` (+ cross-browser `DEF-006`)
   - cross-browser PASS + Chromium repeat PASS
-- Закрыт deep DnD policy-пакет:
-  - новый suite: `e2e/notion-like-dnd-policy.spec.ts`
-  - закрыт `DEF-021` (complex reordering policy)
+- Closed the deep DnD policy pack:
+  - new suite: `e2e/notion-like-dnd-policy.spec.ts`
+  - closed `DEF-021` (complex reordering policy)
   - cross-browser PASS + Chromium repeat PASS
-- Закрыт IME composition baseline:
-  - новый suite: `e2e/notion-like-ime-policy.spec.ts`
-  - закрыт `DEF-022` (IME composition policy baseline)
+- Closed the IME composition baseline:
+  - new suite: `e2e/notion-like-ime-policy.spec.ts`
+  - closed `DEF-022` (IME composition policy baseline)
   - cross-browser PASS + Chromium repeat PASS
-- Закрыт selection/history large-doc baseline:
-  - новый suite: `e2e/notion-like-selection-history-stress.spec.ts`
-  - закрыт `DEF-023` (selection/format/history stress)
+- Closed the selection/history large-doc baseline:
+  - new suite: `e2e/notion-like-selection-history-stress.spec.ts`
+  - closed `DEF-023` (selection/format/history stress)
   - cross-browser PASS + Chromium repeat PASS
-- Закрыт cross-block clipboard/marks baseline:
-  - новый suite: `e2e/notion-like-crossblock-clipboard-stress.spec.ts`
-  - закрыт `DEF-024` (cross-block clipboard + marks chains)
+- Closed the cross-block clipboard/marks baseline:
+  - new suite: `e2e/notion-like-crossblock-clipboard-stress.spec.ts`
+  - closed `DEF-024` (cross-block clipboard + marks chains)
   - cross-browser PASS + Chromium repeat PASS
-- Закрыт nested cross-block range chains gap:
+- Closed the nested cross-block range chains gap:
   - helper: `e2e/helpers/notion-crossblock.ts`
-  - новый suite: `e2e/notion-like-crossblock-nested-chains.spec.ts`
-  - закрыт `DEF-025` (nested cross-block range chains stability)
+  - new suite: `e2e/notion-like-crossblock-nested-chains.spec.ts`
+  - closed `DEF-025` (nested cross-block range chains stability)
   - cross-browser PASS + Chromium repeat PASS
-- Закрыт integrated chaos gap (mixed nested flows):
+- Closed the integrated chaos gap (mixed nested flows):
   - helper: `e2e/helpers/notion-chaos.ts`
-  - новый suite: `e2e/notion-like-integrated-chaos.spec.ts`
-  - закрыт `DEF-026` (integrated mixed loop stability)
+  - new suite: `e2e/notion-like-integrated-chaos.spec.ts`
+  - closed `DEF-026` (integrated mixed loop stability)
   - cross-browser PASS + Chromium repeat PASS
-- Закрыт headed gutter jitter exploratory gap:
-  - новый suite: `e2e/notion-like-gutter-jitter-headed.spec.ts`
-  - закрыт `DEF-027` (headed jitter clickability for `+`/drag)
+- Closed the headed gutter jitter exploratory gap:
+  - new suite: `e2e/notion-like-gutter-jitter-headed.spec.ts`
+  - closed `DEF-027` (headed jitter clickability for `+`/drag)
   - headed cross-browser PASS + headed Chromium repeat PASS
 
-## Рабочие фазы
+## Work phases
 
-### Фаза 1. Core Stability
+### Phase 1. Core Stability
 
-Фокус:
+Focus:
 
-- корректные переходы `paragraph <-> list/todo/heading` через slash
-- отсутствие “исчезновения строки” при смене типа блока
-- корректный выход из пустого todo по Enter
-
-Exit criteria:
-
-- matrix-ключи `SLASH-*`, `ENTER-*` зелёные в Chromium
-
-### Фаза 2. UI & Positioning Fidelity
-
-Фокус:
-
-- slash-menu позиционируется у каретки и корректно флипается
-- gutter `+` и drag-handle привязаны к блоку, а не к левому краю контейнера
-- тема светлая/тёмная выглядит консистентно
+- correct `paragraph <-> list/todo/heading` transitions via slash
+- no “disappearing line” when the block type changes
+- correct exit from an empty todo on Enter
 
 Exit criteria:
 
-- matrix-ключи `UI-*` зелёные
-- визуальные расхождения устранены
+- matrix keys `SLASH-*`, `ENTER-*` are green in Chromium
 
-### Фаза 3. Cross-browser Reliability
+### Phase 2. UI & Positioning Fidelity
 
-Фокус:
+Focus:
 
-- прогоны Chromium/Firefox/WebKit
-- стабилизация флаки-кейсов
+- the slash menu is positioned at the caret and flips correctly
+- the gutter `+` and drag handle are anchored to the block, not to the left edge of the container
+- the light/dark theme looks consistent
 
 Exit criteria:
 
-- стабильный pass-rate > 95% для `notion-like` suites в 3 браузерах
+- matrix keys `UI-*` are green
+- visual discrepancies are eliminated
 
-## Текущий статус прогонов
+### Phase 3. Cross-browser Reliability
+
+Focus:
+
+- Chromium/Firefox/WebKit runs
+- stabilization of flaky cases
+
+Exit criteria:
+
+- stable pass rate > 95% for the `notion-like` suites in 3 browsers
+
+## Current run status
 
 - Chromium matrix: `32/32` PASS  
   - `pnpm playwright test e2e/notion-like-matrix.spec.ts --project=chromium`
@@ -246,7 +246,7 @@ Exit criteria:
 - Chromium checklist batch `NL-426..NL-450`: `25/25` PASS
 - Chromium checklist batch `NL-451..NL-475`: `25/25` PASS
 - Chromium checklist batch `NL-476..NL-500`: `25/25` PASS
-- Chromium checklist полный прогон `NL-001..NL-500`: `500/500` PASS
+- Chromium checklist full run `NL-001..NL-500`: `500/500` PASS
 - Chromium checklist stress-repeat (`NL-151..NL-250`, `--repeat-each=2`): `200/200` PASS
 - Chromium checklist stress-repeat (`NL-251..NL-300`, `--repeat-each=2`): `100/100` PASS
 - Chromium checklist stress-repeat (`NL-301..NL-350`, `--repeat-each=2`): `100/100` PASS
@@ -307,15 +307,15 @@ Exit criteria:
 - Block-toolbar fast-hover cross-browser revalidation (`e2e/block-toolbar-fast-hover.spec.ts`):
   - Chromium: `18/18` PASS
   - Firefox + WebKit: `36/36` PASS
-- SLASH-022 / REL-007 сняты с quarantine и возвращены в активный прогон
+- SLASH-022 / REL-007 removed from quarantine and returned to the active run
 - Firefox smoke (`notion-like-matrix + block-toolbar`): `48/48` PASS
 - WebKit smoke (`notion-like-matrix + block-toolbar`): `48/48` PASS
-- Firefox checklist полный прогон (`NL-001..NL-500`): `500/500` PASS
-- WebKit checklist полный прогон (`NL-001..NL-500`): `500/500` PASS
+- Firefox checklist full run (`NL-001..NL-500`): `500/500` PASS
+- WebKit checklist full run (`NL-001..NL-500`): `500/500` PASS
 
 ## Definition of Done
 
-- Нет критических багов P0/P1 в `Notion-like`
-- Все `Automated` кейсы из matrix проходят
-- На каждый новый баг добавляется e2e-тест или unit-тест
-- Все изменения отражены в `02-defect-roadmap.md`
+- No critical P0/P1 bugs in `Notion-like`
+- All `Automated` cases from the matrix pass
+- Every new bug gets an e2e or unit test
+- All changes are reflected in `02-defect-roadmap.md`
