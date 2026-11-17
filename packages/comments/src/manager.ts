@@ -26,7 +26,6 @@ export class CommentsManager {
   private destroyed = false;
   private cleanup: (() => void)[];
   private layer = `comments-${createId()}`;
-  /** The text the comments were last resolved in; the next update follows them from it. */
   private resolvedIn: DocumentText | null = null;
 
   constructor(
@@ -84,6 +83,7 @@ export class CommentsManager {
       return;
     }
     const view = documentText(this.editor.getJSON());
+    // resolvedIn is the text the comments were last resolved in: this update follows them from it.
     const change = this.resolvedIn && {
       previous: this.resolvedIn,
       follow: followChange(this.resolvedIn.text, view.text),
