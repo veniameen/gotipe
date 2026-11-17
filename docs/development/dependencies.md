@@ -138,7 +138,8 @@ finding count as a permanent guarantee.
 
 ## Native and Cloud security boundary
 
-Cloud pins Go 1.26.10 through `apps/cloud/go.mod`; CI reads that file and the
+Cloud pins Go 1.26.11 through `apps/cloud/go.mod` (1.26.11 fixes GO-2026-6859 in
+`net/http`, found by govulncheck on 2026-11-17); CI reads that file and the
 Docker builder uses the same patch. The AWS S3, pgx, JWT, compression and x/*
 modules include current advisory fixes. `x/crypto` pins the upstream OpenPGP
 removal commit `2f1f834330b2`; GoTipe uses maintained crypto packages, not OpenPGP.
