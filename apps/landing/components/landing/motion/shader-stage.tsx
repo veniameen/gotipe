@@ -14,6 +14,29 @@ const PRESENCE = 2.5;
 const FLOW = 3;
 /** The moment a reader who asked for less motion sees: one frame, still. */
 const STILL_TIME = 21;
+/**
+ * With the pointer away the gas only drifts: a frame this often (ms), half the GPU's work. The wait
+ * is a timer, so the page's main thread wakes half as often too; it ends half a frame early, the
+ * animation frame that follows lands on time.
+ */
+const IDLE_FRAME = 33;
+const IDLE_EARLY = 8;
+/** Below this presence and stir the pointer counts as away. */
+const IDLE_PRESENCE = 0.02;
+const IDLE_FLOW = 0.02;
+/**
+ * A machine that cannot keep up: if the median gap between drawn frames over a window runs past
+ * the frame it aims at by this much, the buffer steps down (each step a share of the last), never
+ * below the floor; the gas is soft, a smaller buffer reads the same.
+ */
+const SLOW_WINDOW = 30;
+const SLOW_MARGIN = 1.5;
+/** The page's own start (hydration, the editor) is not the machine's pace: watched only after. */
+const PACE_GRACE = 2000;
+/** Windows in a row that must run late before the buffer steps down. */
+const SLOW_WINDOWS = 2;
+const QUALITY_STEP = 0.8;
+const QUALITY_FLOOR = 0.5;
 
 const VERTEX = `
 attribute vec2 a_position;
@@ -103,15 +126,13 @@ function readPalette(element: HTMLElement): Palette | null {
   return { colours, dark };
 }
 
-function compile(gl: WebGLRenderingContext, type: number, source: string): WebGLShader | null {
+/** A shader handed to the GPU to compile; its status is asked for only once the program links. */
+function source(gl: WebGLRenderingContext, type: number, text: string): WebGLShader | null {
   const shader = gl.createShader(type);
   if (!shader) return null;
-  gl.shaderSource(shader, source);
+  gl.shaderSource(shader, text);
   gl.compileShader(shader);
-  if (gl.getShaderParameter(shader, gl.COMPILE_STATUS)) return shader;
-  console.warn("GoTipe site: a stage shader did not compile", gl.getShaderInfoLog(shader));
-  gl.deleteShader(shader);
-  return null;
+  return shader;
 }
 
 /** No box to keep calm; one array for every render, so the effect does not restart. */
@@ -122,6 +143,264 @@ function inFixed(element: Element): boolean {
   for (let at: Element | null = element; at; at = at.parentElement)
     if (getComputedStyle(at).position === "fixed") return true;
   return false;
+}
+
+interface Scene {
+  element: HTMLCanvasElement;
+  stage: HTMLElement;
+  gl: WebGLRenderingContext;
+  program: WebGLProgram;
+  vertex: WebGLShader;
+  shader: WebGLShader;
+  calm: readonly string[];
+}
+
+/**
+ * The stage once its program has linked: the frame loop, the pointer, the measures, the theme.
+ * Returns the way to stop it and free the GPU's objects.
+ */
+function run({ element, stage, gl, program, vertex, shader, calm }: Scene): () => void {
+  if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
+    console.warn(
+      "GoTipe site: a stage shader did not compile",
+      gl.getShaderInfoLog(vertex) || gl.getShaderInfoLog(shader) || gl.getProgramInfoLog(program),
+    );
+    gl.deleteProgram(program);
+    gl.deleteShader(vertex);
+    gl.deleteShader(shader);
+    return () => {};
+  }
+  gl.useProgram(program);
+
+  const buffer = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
+  const position = gl.getAttribLocation(program, "a_position");
+  gl.enableVertexAttribArray(position);
+  gl.vertexAttribPointer(position, 2, gl.FLOAT, false, 0, 0);
+  const at = (name: string) => gl.getUniformLocation(program, name);
+  const uniform = {
+    res: at("u_res"),
+    time: at("u_time"),
+    pointer: at("u_pointer"),
+    presence: at("u_presence"),
+    flow: at("u_flow"),
+    dark: at("u_dark"),
+    fold: at("u_fold"),
+    calm: at("u_calm"),
+  };
+  const colourAt = new Map(COLOUR_UNIFORMS.map((name) => [name, at(name)]));
+
+  const still = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false;
+  let palette = readPalette(element);
+  let frame = 0;
+  let timer = 0;
+  let last = 0;
+  let drawn = 0;
+  let shown = false;
+  let quality = 1;
+  let slowWindows = 0;
+  const born = performance.now();
+  const gaps: number[] = [];
+  let time = still ? STILL_TIME : 0;
+  let onScreen = false;
+  const pointer = { x: 0.5, y: 0.72, tx: 0.5, ty: 0.72, presence: 0, target: 0 };
+  const flow = { x: 0, y: 0, lx: 0.5, ly: 0.72 };
+  const calmBoxes = new Float32Array(CALM_BOXES * 4);
+  let fold = 1;
+
+  const size = () => {
+    const width = element.clientWidth;
+    const height = element.clientHeight;
+    const scale =
+      Math.min(1, window.devicePixelRatio || 1, BUFFER_SIDE / Math.max(width, height, 1)) * quality;
+    element.width = Math.max(1, Math.round(width * scale));
+    element.height = Math.max(1, Math.round(height * scale));
+    gl.viewport(0, 0, element.width, element.height);
+  };
+
+  /** The first screen's height and the calm boxes, in buffer pixels, y up, as at the page's top. */
+  const measure = () => {
+    const box = element.getBoundingClientRect();
+    if (!box.width || !box.height) return;
+    const scale = element.width / box.width;
+    const top = box.top + window.scrollY;
+    fold = Math.max(1, Math.min(box.height, window.innerHeight - top) * scale);
+    calmBoxes.fill(NOWHERE);
+    calm.slice(0, CALM_BOXES).forEach((selector, index) => {
+      const target = document.querySelector(selector);
+      if (!target) return;
+      const rect = target.getBoundingClientRect();
+      const from = inFixed(target) ? top : box.top;
+      calmBoxes.set(
+        [
+          (rect.left - box.left) * scale,
+          element.height - (rect.bottom - from) * scale,
+          (rect.right - box.left) * scale,
+          element.height - (rect.top - from) * scale,
+        ],
+        index * 4,
+      );
+    });
+  };
+
+  const draw = () => {
+    if (!palette) return;
+    gl.uniform2f(uniform.res, element.width, element.height);
+    gl.uniform1f(uniform.time, time);
+    gl.uniform2f(uniform.pointer, pointer.x, pointer.y);
+    gl.uniform1f(uniform.presence, pointer.presence);
+    gl.uniform2f(uniform.flow, flow.x, flow.y);
+    for (const [name, colour] of palette.colours) gl.uniform3fv(colourAt.get(name) ?? null, colour);
+    gl.uniform1f(uniform.dark, palette.dark);
+    gl.uniform1f(uniform.fold, fold);
+    gl.uniform4fv(uniform.calm, calmBoxes);
+    gl.drawArrays(gl.TRIANGLES, 0, 3);
+    if (!shown) {
+      element.setAttribute("data-ready", "");
+      shown = true;
+    }
+  };
+
+  const tick = (now: number) => {
+    frame = 0;
+    const dt = last ? Math.min((now - last) / 1000, 0.05) : 0;
+    last = now;
+    time += dt;
+    pointer.x = approach(pointer.x, pointer.tx, dt, FOLLOW);
+    pointer.y = approach(pointer.y, pointer.ty, dt, FOLLOW);
+    pointer.presence = approach(pointer.presence, pointer.target, dt, PRESENCE);
+    if (dt > 0) {
+      // the pointer's velocity, in stage heights per second, eased so a stir lingers
+      const vx = (pointer.x - flow.lx) / dt;
+      const vy = (pointer.y - flow.ly) / dt;
+      flow.x = approach(flow.x, vx, dt, FLOW);
+      flow.y = approach(flow.y, vy, dt, FLOW);
+    }
+    flow.lx = pointer.x;
+    flow.ly = pointer.y;
+    // the pointer away, the gas drifts: every other frame is enough
+    const idle = pointer.presence < IDLE_PRESENCE && Math.hypot(flow.x, flow.y) < IDLE_FLOW;
+    if (drawn) watchPace(now - drawn, idle ? IDLE_FRAME : 1000 / 60);
+    drawn = now;
+    draw();
+    schedule(idle ? IDLE_FRAME - IDLE_EARLY : 0);
+  };
+  /** Steps the buffer down when frames keep coming late (SLOW_*), never up again. */
+  function watchPace(gap: number, aim: number) {
+    if (performance.now() - born < PACE_GRACE || quality <= QUALITY_FLOOR) return;
+    gaps.push(gap / aim);
+    if (gaps.length < SLOW_WINDOW) return;
+    const median = [...gaps].sort((a, b) => a - b)[gaps.length >> 1];
+    gaps.length = 0;
+    slowWindows = median > SLOW_MARGIN ? slowWindows + 1 : 0;
+    if (slowWindows < SLOW_WINDOWS) return;
+    slowWindows = 0;
+    quality = Math.max(QUALITY_FLOOR, quality * QUALITY_STEP);
+    size();
+    measure();
+  }
+  /** The next frame: at the next animation frame, or after `wait` ms of a timer (an idle gap). */
+  function schedule(wait = 0) {
+    if (still || frame || timer || !onScreen || document.hidden) return;
+    if (wait > 0) {
+      timer = window.setTimeout(() => {
+        timer = 0;
+        schedule();
+      }, wait);
+      return;
+    }
+    frame = requestAnimationFrame(tick);
+  }
+  const pause = () => {
+    if (frame) cancelAnimationFrame(frame);
+    window.clearTimeout(timer);
+    frame = 0;
+    timer = 0;
+    last = 0;
+    drawn = 0;
+    gaps.length = 0;
+  };
+
+  const onMove = (event: PointerEvent) => {
+    if (event.pointerType === "touch") return;
+    const box = element.getBoundingClientRect();
+    pointer.tx = (event.clientX - box.left) / box.width;
+    pointer.ty = 1 - (event.clientY - box.top) / box.height;
+    pointer.target = 1;
+    // waiting out an idle gap: the pointer is back, so is every frame
+    if (timer) {
+      window.clearTimeout(timer);
+      timer = 0;
+      schedule();
+    }
+  };
+  const onLeave = () => {
+    pointer.target = 0;
+  };
+  if (!still) {
+    stage.addEventListener("pointermove", onMove);
+    stage.addEventListener("pointerleave", onLeave);
+  }
+  const resize = new ResizeObserver(() => {
+    size();
+    measure();
+    draw();
+  });
+  resize.observe(element);
+  const remeasure = () => {
+    measure();
+    draw();
+  };
+  const calmed = new ResizeObserver(remeasure);
+  for (const selector of calm) {
+    const target = document.querySelector(selector);
+    if (target) calmed.observe(target);
+  }
+  window.addEventListener("resize", remeasure);
+  const view = new IntersectionObserver((entries) => {
+    onScreen = entries.some((entry) => entry.isIntersecting);
+    if (onScreen) schedule();
+    else pause();
+  });
+  view.observe(element);
+  const onVisibility = () => (document.hidden ? pause() : schedule());
+  document.addEventListener("visibilitychange", onVisibility);
+  const theme = new MutationObserver(() => {
+    palette = readPalette(element);
+    draw();
+  });
+  theme.observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+  const onLost = (event: Event) => {
+    event.preventDefault();
+    pause();
+    shown = false;
+    element.removeAttribute("data-ready");
+  };
+  element.addEventListener("webglcontextlost", onLost);
+
+  size();
+  measure();
+  draw();
+  schedule();
+
+  return () => {
+    pause();
+    calmed.disconnect();
+    window.removeEventListener("resize", remeasure);
+    stage.removeEventListener("pointermove", onMove);
+    stage.removeEventListener("pointerleave", onLeave);
+    resize.disconnect();
+    view.disconnect();
+    theme.disconnect();
+    document.removeEventListener("visibilitychange", onVisibility);
+    element.removeEventListener("webglcontextlost", onLost);
+    element.removeAttribute("data-ready");
+    gl.deleteBuffer(buffer);
+    gl.deleteProgram(program);
+    gl.deleteShader(vertex);
+    gl.deleteShader(shader);
+  };
 }
 
 export interface ShaderStageProps {
@@ -154,201 +433,38 @@ export function ShaderStage({ fragment, calm = NO_CALM }: ShaderStageProps) {
       powerPreference: "low-power",
     });
     if (!gl) return;
-    const vertex = compile(gl, gl.VERTEX_SHADER, VERTEX);
-    const shader = compile(gl, gl.FRAGMENT_SHADER, STAGE_HEADER + fragment);
+    const vertex = source(gl, gl.VERTEX_SHADER, VERTEX);
+    const shader = source(gl, gl.FRAGMENT_SHADER, STAGE_HEADER + fragment);
     const program = gl.createProgram();
     if (!vertex || !shader || !program) return;
     gl.attachShader(program, vertex);
     gl.attachShader(program, shader);
     gl.linkProgram(program);
-    if (!gl.getProgramParameter(program, gl.LINK_STATUS)) return;
-    gl.useProgram(program);
-
-    const buffer = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
-    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
-    const position = gl.getAttribLocation(program, "a_position");
-    gl.enableVertexAttribArray(position);
-    gl.vertexAttribPointer(position, 2, gl.FLOAT, false, 0, 0);
-    const at = (name: string) => gl.getUniformLocation(program, name);
-    const uniform = {
-      res: at("u_res"),
-      time: at("u_time"),
-      pointer: at("u_pointer"),
-      presence: at("u_presence"),
-      flow: at("u_flow"),
-      dark: at("u_dark"),
-      fold: at("u_fold"),
-      calm: at("u_calm"),
+    // the GPU compiles in the background where it can: the page's first motion does not wait on it
+    let stop: (() => void) | undefined;
+    let waiting = 0;
+    const begin = () => {
+      stop = run({ element, stage, gl, program, vertex, shader, calm });
     };
-    const colourAt = new Map(COLOUR_UNIFORMS.map((name) => [name, at(name)]));
-
-    const still = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false;
-    let palette = readPalette(element);
-    let frame = 0;
-    let last = 0;
-    let time = still ? STILL_TIME : 0;
-    let onScreen = false;
-    const pointer = { x: 0.5, y: 0.72, tx: 0.5, ty: 0.72, presence: 0, target: 0 };
-    const flow = { x: 0, y: 0, lx: 0.5, ly: 0.72 };
-    const calmBoxes = new Float32Array(CALM_BOXES * 4);
-    let fold = 1;
-
-    const size = () => {
-      const width = element.clientWidth;
-      const height = element.clientHeight;
-      const scale = Math.min(
-        1,
-        window.devicePixelRatio || 1,
-        BUFFER_SIDE / Math.max(width, height, 1),
-      );
-      element.width = Math.max(1, Math.round(width * scale));
-      element.height = Math.max(1, Math.round(height * scale));
-      gl.viewport(0, 0, element.width, element.height);
-    };
-
-    /** The first screen's height and the calm boxes, in buffer pixels, y up, as at the page's top. */
-    const measure = () => {
-      const box = element.getBoundingClientRect();
-      if (!box.width || !box.height) return;
-      const scale = element.width / box.width;
-      const top = box.top + window.scrollY;
-      fold = Math.max(1, Math.min(box.height, window.innerHeight - top) * scale);
-      calmBoxes.fill(NOWHERE);
-      calm.slice(0, CALM_BOXES).forEach((selector, index) => {
-        const target = document.querySelector(selector);
-        if (!target) return;
-        const rect = target.getBoundingClientRect();
-        const from = inFixed(target) ? top : box.top;
-        calmBoxes.set(
-          [
-            (rect.left - box.left) * scale,
-            element.height - (rect.bottom - from) * scale,
-            (rect.right - box.left) * scale,
-            element.height - (rect.top - from) * scale,
-          ],
-          index * 4,
-        );
-      });
-    };
-
-    const draw = () => {
-      if (!palette) return;
-      gl.uniform2f(uniform.res, element.width, element.height);
-      gl.uniform1f(uniform.time, time);
-      gl.uniform2f(uniform.pointer, pointer.x, pointer.y);
-      gl.uniform1f(uniform.presence, pointer.presence);
-      gl.uniform2f(uniform.flow, flow.x, flow.y);
-      for (const [name, colour] of palette.colours)
-        gl.uniform3fv(colourAt.get(name) ?? null, colour);
-      gl.uniform1f(uniform.dark, palette.dark);
-      gl.uniform1f(uniform.fold, fold);
-      gl.uniform4fv(uniform.calm, calmBoxes);
-      gl.drawArrays(gl.TRIANGLES, 0, 3);
-      element.setAttribute("data-ready", "");
-    };
-
-    const tick = (now: number) => {
-      frame = 0;
-      const dt = last ? Math.min((now - last) / 1000, 0.05) : 0;
-      last = now;
-      time += dt;
-      pointer.x = approach(pointer.x, pointer.tx, dt, FOLLOW);
-      pointer.y = approach(pointer.y, pointer.ty, dt, FOLLOW);
-      pointer.presence = approach(pointer.presence, pointer.target, dt, PRESENCE);
-      if (dt > 0) {
-        // the pointer's velocity, in stage heights per second, eased so a stir lingers
-        const vx = (pointer.x - flow.lx) / dt;
-        const vy = (pointer.y - flow.ly) / dt;
-        flow.x = approach(flow.x, vx, dt, FLOW);
-        flow.y = approach(flow.y, vy, dt, FLOW);
-      }
-      flow.lx = pointer.x;
-      flow.ly = pointer.y;
-      draw();
-      schedule();
-    };
-    function schedule() {
-      if (still || frame || !onScreen || document.hidden) return;
-      frame = requestAnimationFrame(tick);
+    const parallel = gl.getExtension("KHR_parallel_shader_compile");
+    if (parallel) {
+      const poll = () => {
+        waiting = 0;
+        if (gl.getProgramParameter(program, parallel.COMPLETION_STATUS_KHR)) begin();
+        else waiting = requestAnimationFrame(poll);
+      };
+      poll();
+    } else {
+      begin();
     }
-    const pause = () => {
-      if (frame) cancelAnimationFrame(frame);
-      frame = 0;
-      last = 0;
-    };
-
-    const onMove = (event: PointerEvent) => {
-      if (event.pointerType === "touch") return;
-      const box = element.getBoundingClientRect();
-      pointer.tx = (event.clientX - box.left) / box.width;
-      pointer.ty = 1 - (event.clientY - box.top) / box.height;
-      pointer.target = 1;
-    };
-    const onLeave = () => {
-      pointer.target = 0;
-    };
-    if (!still) {
-      stage.addEventListener("pointermove", onMove);
-      stage.addEventListener("pointerleave", onLeave);
-    }
-    const resize = new ResizeObserver(() => {
-      size();
-      measure();
-      draw();
-    });
-    resize.observe(element);
-    const remeasure = () => {
-      measure();
-      draw();
-    };
-    const calmed = new ResizeObserver(remeasure);
-    for (const selector of calm) {
-      const target = document.querySelector(selector);
-      if (target) calmed.observe(target);
-    }
-    window.addEventListener("resize", remeasure);
-    const view = new IntersectionObserver((entries) => {
-      onScreen = entries.some((entry) => entry.isIntersecting);
-      if (onScreen) schedule();
-      else pause();
-    });
-    view.observe(element);
-    const onVisibility = () => (document.hidden ? pause() : schedule());
-    document.addEventListener("visibilitychange", onVisibility);
-    const theme = new MutationObserver(() => {
-      palette = readPalette(element);
-      draw();
-    });
-    theme.observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
-    const onLost = (event: Event) => {
-      event.preventDefault();
-      pause();
-      element.removeAttribute("data-ready");
-    };
-    element.addEventListener("webglcontextlost", onLost);
-
-    size();
-    measure();
-    draw();
-    schedule();
-
     return () => {
-      pause();
-      calmed.disconnect();
-      window.removeEventListener("resize", remeasure);
-      stage.removeEventListener("pointermove", onMove);
-      stage.removeEventListener("pointerleave", onLeave);
-      resize.disconnect();
-      view.disconnect();
-      theme.disconnect();
-      document.removeEventListener("visibilitychange", onVisibility);
-      element.removeEventListener("webglcontextlost", onLost);
-      element.removeAttribute("data-ready");
-      gl.deleteBuffer(buffer);
-      gl.deleteProgram(program);
-      gl.deleteShader(vertex);
-      gl.deleteShader(shader);
+      if (waiting) cancelAnimationFrame(waiting);
+      if (stop) stop();
+      else {
+        gl.deleteProgram(program);
+        gl.deleteShader(vertex);
+        gl.deleteShader(shader);
+      }
     };
   }, [fragment, calm]);
 

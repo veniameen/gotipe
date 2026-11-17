@@ -3,12 +3,6 @@
    to reduce it; blocks rising into view wait for motion/controller.tsx (`data-motion`), and the
    endless animations stop while their block is off screen (`data-play`, `data-playing`). */
 
-@property --site-beam-angle {
-  syntax: "<angle>";
-  inherits: false;
-  initial-value: 200deg;
-}
-
 @keyframes site-rise {
   from {
     opacity: 0;
@@ -47,79 +41,14 @@
     transform: scale(2.6);
   }
 }
-@keyframes site-turn {
+@keyframes site-spin {
   to {
-    --site-beam-angle: 560deg;
+    rotate: 360deg;
   }
 }
 @keyframes site-marquee {
   to {
     transform: translateX(-50%);
-  }
-}
-@keyframes site-comet-in {
-  0% {
-    offset-distance: 0%;
-    opacity: 0;
-  }
-  4%,
-  38% {
-    opacity: 1;
-  }
-  42%,
-  100% {
-    offset-distance: 100%;
-    opacity: 0;
-  }
-}
-@keyframes site-comet-out {
-  0%,
-  50% {
-    offset-distance: 0%;
-    opacity: 0;
-  }
-  54%,
-  88% {
-    opacity: 1;
-  }
-  92%,
-  100% {
-    offset-distance: 100%;
-    opacity: 0;
-  }
-}
-@keyframes site-node-send {
-  0% {
-    opacity: 1;
-  }
-  16%,
-  100% {
-    opacity: 0;
-  }
-}
-@keyframes site-node-take {
-  0%,
-  86% {
-    opacity: 0;
-  }
-  92% {
-    opacity: 1;
-  }
-  100% {
-    opacity: 0;
-  }
-}
-@keyframes site-hub-beat {
-  0%,
-  34% {
-    opacity: 0;
-  }
-  46% {
-    opacity: 1;
-  }
-  62%,
-  100% {
-    opacity: 0;
   }
 }
 @keyframes site-step {
@@ -166,11 +95,6 @@
   }
 }
 
-@keyframes site-co-blink {
-  50% {
-    background-color: transparent;
-  }
-}
 @keyframes site-co-bob {
   50% {
     transform: translateY(var(--site-co-bob));
@@ -191,27 +115,20 @@
   }
 }
 
-/* the round of light over the editor beneath the stage glides after the pointer */
-@property --site-ghost-x {
-  syntax: "<length-percentage>";
-  inherits: false;
-  initial-value: 50%;
-}
-@property --site-ghost-y {
-  syntax: "<length-percentage>";
-  inherits: false;
-  initial-value: 30%;
-}
-
 @media (prefers-reduced-motion: no-preference) {
+  /* the round of light over the editor beneath the stage glides after the pointer: the lens and,
+     back as far, its scene, on one timing so the interface stays put */
   .site-ghost {
-    transition: opacity var(--site-dur-4) var(--site-ease), --site-ghost-x var(--site-ghost-follow)
-      var(--site-ease-out), --site-ghost-y var(--site-ghost-follow) var(--site-ease-out);
+    transition: opacity var(--site-dur-4) var(--site-ease);
+  }
+  .site-ghost-lens,
+  .site-ghost-scene {
+    transition: transform var(--site-ghost-follow) var(--site-ease-out);
   }
   /* the collaborator in the title: her caret blinks, her name floats; when the head comes into
      view a phrase is selected and the toolbar comes up over it */
-  .site-co-caret {
-    animation: site-co-blink var(--site-caret-blink) step-end infinite;
+  .site-co-caret::before {
+    animation: site-blink var(--site-caret-blink) step-end infinite;
   }
   .site-co-flag {
     animation: site-co-bob var(--site-co-float) ease-in-out infinite;
@@ -233,8 +150,8 @@
     animation: site-build-breathe var(--site-build-run) ease-in-out infinite;
     animation-delay: calc(var(--site-build-level) * var(--site-build-stagger));
   }
-  .site-build-caret {
-    animation: site-co-blink var(--site-caret-blink) step-end infinite;
+  .site-build-caret::before {
+    animation: site-blink var(--site-caret-blink) step-end infinite;
   }
   /* light runs down two of the margin's lines */
   .site-lines::before {
@@ -280,8 +197,10 @@
       both;
   }
   .site-hero-caret {
-    animation: site-appear var(--site-dur-1) linear calc(14 * var(--site-stagger)) both, site-blink
-      var(--site-caret-blink) step-end calc(16 * var(--site-stagger)) infinite;
+    animation: site-appear var(--site-dur-1) linear calc(14 * var(--site-stagger)) both;
+  }
+  .site-hero-caret::before {
+    animation: site-blink var(--site-caret-blink) step-end calc(16 * var(--site-stagger)) infinite;
   }
   .site-pulse::after {
     content: "";
@@ -291,8 +210,8 @@
     background: inherit;
     animation: site-ping var(--site-ping-run) var(--site-ease-out) infinite;
   }
-  .site-showcase::before {
-    animation: site-turn var(--site-beam-turn) linear infinite;
+  .site-beam-ring > span {
+    animation: site-spin var(--site-beam-turn) linear infinite;
   }
   .site-marquee-track {
     animation: var(--site-marquee-name) var(--site-marquee-run) linear infinite;
@@ -301,29 +220,8 @@
     animation-play-state: paused;
   }
 
-  /* ---- the stack: comets run in to the engine and out of it, the boxes flash as they leave and
-     arrive, the engine beats as they come in and a comet runs round its rim ---- */
-  .site-comet.is-in {
-    animation: site-comet-in var(--site-comet-cycle) var(--site-ease) infinite;
-    animation-delay: calc(var(--site-beam-i, 0) * var(--site-comet-step));
-  }
-  .site-comet.is-out {
-    animation: site-comet-out var(--site-comet-cycle) var(--site-ease) infinite;
-    animation-delay: calc(var(--site-beam-i, 0) * var(--site-comet-step));
-  }
-  .site-stack-col .site-stack-node::after {
-    animation: site-node-send var(--site-comet-cycle) linear infinite;
-    animation-delay: calc(var(--site-beam-i, 0) * var(--site-comet-step));
-  }
-  .site-stack-col.is-out .site-stack-node::after {
-    animation-name: site-node-take;
-  }
-  .site-stack-hub::before {
-    animation: site-turn var(--site-beam-turn) linear infinite;
-  }
-  .site-stack-hub::after {
-    animation: site-hub-beat var(--site-comet-cycle) var(--site-ease-out) infinite;
-  }
+  /* the stack's comets, the boxes' flashes and the engine's beat run on the compositor from
+     motion/beams.tsx, on --site-comet-cycle and --site-comet-step; the rim's beam turns as above */
 
   /* ---- the bento's pictures play once their tile is in view ---- */
   [data-revealed] .site-tx-steps > li {

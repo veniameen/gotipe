@@ -3,9 +3,6 @@
 import { useEffect } from "react";
 import { figureAt, figureParts } from "./figures";
 
-/** How far the page scrolls before the head turns to glass; it turns back a little higher. */
-const SCROLLED_ON = 12;
-const SCROLLED_OFF = 4;
 /** A figure counts for this long once it comes into view. */
 const COUNT_MS = 1400;
 /** Blocks start to rise a little before they reach the viewport's bottom edge. */
@@ -15,28 +12,26 @@ const reducedMotion = () =>
   window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false;
 
 /**
- * The head's glass: `data-scrolled` on the landing's head past the first few pixels, with
- * hysteresis, so a page resting near the threshold does not flicker between the two.
+ * The head's glass: `data-scrolled` on the landing's head once the page has scrolled past its first
+ * few pixels. A mark as tall as those pixels lies at the page's top (`site-scroll-mark`, site.css);
+ * once it is out of view the page has scrolled. An observer, not a scroll listener: scrolling never
+ * wakes the page's main thread for it.
  */
 function followScroll(): () => void {
   const heads = [...document.querySelectorAll<HTMLElement>(".site-head")];
-  let frame = 0;
-  let scrolled = false;
-  const update = () => {
-    frame = 0;
-    const next = scrolled ? window.scrollY > SCROLLED_OFF : window.scrollY > SCROLLED_ON;
-    if (next === scrolled) return;
-    scrolled = next;
+  if (heads.length === 0 || typeof IntersectionObserver === "undefined") return () => {};
+  const mark = document.createElement("div");
+  mark.className = "site-scroll-mark";
+  mark.setAttribute("aria-hidden", "true");
+  document.body.prepend(mark);
+  const observer = new IntersectionObserver((entries) => {
+    const scrolled = !entries.some((entry) => entry.isIntersecting);
     for (const head of heads) head.toggleAttribute("data-scrolled", scrolled);
-  };
-  const onScroll = () => {
-    if (!frame) frame = requestAnimationFrame(update);
-  };
-  update();
-  window.addEventListener("scroll", onScroll, { passive: true });
+  });
+  observer.observe(mark);
   return () => {
-    window.removeEventListener("scroll", onScroll);
-    if (frame) cancelAnimationFrame(frame);
+    observer.disconnect();
+    mark.remove();
     for (const head of heads) head.removeAttribute("data-scrolled");
   };
 }
@@ -118,17 +113,35 @@ function playOnView(): () => void {
   };
 }
 
-/** The light under the pointer on cards of a `data-glow` grid: one listener per grid. */
+/** A card's light fades out at this share of --site-glow-size (styles/landing/sections.css). */
+const GLOW_REACH = 0.4;
+
+/**
+ * The light under the pointer on cards of a `data-glow` grid: one listener per grid. Only cards the
+ * light reaches are restyled; a card it leaves takes one last place, so its light goes with it.
+ */
 function glowUnderPointer(): () => void {
   const offs: (() => void)[] = [];
   for (const grid of document.querySelectorAll<HTMLElement>("[data-glow]")) {
     let frame = 0;
     let last: PointerEvent | null = null;
+    const cards = [...grid.querySelectorAll<HTMLElement>("[data-glow-card]")];
+    const lit = new Set<HTMLElement>();
+    const reach = () =>
+      (Number.parseFloat(getComputedStyle(grid).getPropertyValue("--site-glow-size")) || 0) *
+      GLOW_REACH;
     const paint = () => {
       frame = 0;
       if (!last) return;
-      for (const card of grid.querySelectorAll<HTMLElement>("[data-glow-card]")) {
+      const far = reach();
+      for (const card of cards) {
         const box = card.getBoundingClientRect();
+        const dx = Math.max(box.left - last.clientX, 0, last.clientX - box.right);
+        const dy = Math.max(box.top - last.clientY, 0, last.clientY - box.bottom);
+        const near = dx * dx + dy * dy <= far * far;
+        if (!near && !lit.has(card)) continue;
+        if (near) lit.add(card);
+        else lit.delete(card);
         card.style.setProperty("--site-mx", `${last.clientX - box.left}px`);
         card.style.setProperty("--site-my", `${last.clientY - box.top}px`);
       }

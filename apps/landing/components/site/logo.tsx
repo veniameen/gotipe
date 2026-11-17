@@ -38,6 +38,8 @@ export function Logo({ place, className = "site-logo" }: LogoProps) {
       height={width}
       alt=""
       decoding="async"
+      // only the head's mark is in the first screen: the others wait, unfetched and not preloaded
+      loading={place === "head" ? undefined : "lazy"}
       draggable={false}
     />
   );

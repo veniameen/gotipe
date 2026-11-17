@@ -68,6 +68,9 @@ export function Stack() {
             </ul>
           </div>
           <div className="site-stack-hub" data-hub>
+            <span className="site-beam-ring" aria-hidden="true">
+              <span />
+            </span>
             <span className="site-stack-mark">
               <Logo place="hub" />
             </span>
