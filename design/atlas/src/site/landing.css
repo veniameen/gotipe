@@ -18,6 +18,17 @@
   color: inherit;
   text-decoration: none;
 }
+/* the page's first pixels: once this mark is out of view the head turns to glass
+   (motion/controller.tsx) */
+.site-scroll-mark {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: var(--site-hairline-w);
+  height: var(--site-scrolled-at);
+  pointer-events: none;
+  visibility: hidden;
+}
 .site-wrap {
   box-sizing: border-box;
   max-width: var(--site-max);

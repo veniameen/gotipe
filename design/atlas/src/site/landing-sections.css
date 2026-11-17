@@ -82,7 +82,8 @@
 [data-focus] .site-beam:not(.is-lit) .site-beam-path {
   opacity: var(--site-beam-dim);
 }
-/* a comet of light: a bright head and its tail, carried along its beam (motion.css runs it) */
+/* a comet of light: a bright head and its tail, carried along its beam by transform from its
+   top left corner (motion/beams.tsx runs it on the compositor) */
 .site-comet {
   position: absolute;
   top: 0;
@@ -94,9 +95,7 @@
   background: linear-gradient(90deg, transparent, var(--site-comet-in) 70%, var(--site-comet-head));
   filter: drop-shadow(0 0 var(--site-comet-glow) var(--site-comet-in));
   opacity: 0;
-  offset-path: var(--site-comet-path);
-  offset-rotate: auto;
-  offset-anchor: 100% 50%;
+  transform-origin: 0 0;
   pointer-events: none;
 }
 .site-comet.is-out {
@@ -177,7 +176,8 @@
   background: var(--site-comet-in);
   box-shadow: 0 0 var(--site-comet-glow) var(--site-comet-in);
 }
-/* the engine: glass with a comet running round its rim, its mark lit, light behind it */
+/* the engine: glass with a comet running round its rim (a beam ring, hero.css), its mark lit,
+   light behind it */
 .site-stack-hub {
   position: relative;
   display: grid;
@@ -189,13 +189,8 @@
   box-shadow: inset 0 0 0 var(--gt-hairline) var(--site-stack-hub-line), var(--site-hub-glow);
   text-align: center;
 }
-.site-stack-hub::before {
-  content: "";
-  position: absolute;
-  inset: calc(-1 * var(--site-beam-width));
-  padding: var(--site-beam-pulse-w);
-  border-radius: inherit;
-  background: conic-gradient(
+.site-stack-hub > .site-beam-ring {
+  --site-beam-light: conic-gradient(
     from var(--site-beam-angle),
     transparent 0%,
     transparent 62%,
@@ -203,12 +198,8 @@
     var(--site-comet-head) 86%,
     transparent 96%
   );
-  -webkit-mask: linear-gradient(var(--site-mask-on) 0 0) content-box,
-    linear-gradient(var(--site-mask-on) 0 0);
-  -webkit-mask-composite: xor;
-  mask: linear-gradient(var(--site-mask-on) 0 0) content-box exclude,
-    linear-gradient(var(--site-mask-on) 0 0);
-  pointer-events: none;
+  z-index: auto;
+  padding: var(--site-beam-pulse-w);
 }
 /* the engine's beat as the comets come in */
 .site-stack-hub::after {
@@ -302,13 +293,27 @@
   margin-top: auto;
 }
 
-/* ---- cards that catch the light under the pointer ---- */
+/* ---- cards that catch the light under the pointer ----
+   The pointer's place (motion/controller.tsx) is the card's own, not inherited: a move restyles the
+   card and its two lights, never the card's content. */
+@property --site-mx {
+  syntax: "<length-percentage>";
+  inherits: false;
+  initial-value: 50%;
+}
+@property --site-my {
+  syntax: "<length-percentage>";
+  inherits: false;
+  initial-value: 50%;
+}
 [data-glow-card] {
   position: relative;
   isolation: isolate;
 }
 [data-glow-card]::before,
 [data-glow-card]::after {
+  --site-mx: inherit;
+  --site-my: inherit;
   content: "";
   position: absolute;
   inset: 0;
@@ -346,6 +351,8 @@
 
 /* ---- a collaborator at work in the title: her caret with her name, a phrase selected and the
    bubble toolbar over it ---- */
+/* her caret: the bar is its ::before, so it blinks by opacity (motion.css) and her name, a child,
+   stays */
 .site-co-caret {
   position: relative;
   display: inline-block;
@@ -354,6 +361,12 @@
   margin-left: var(--site-co-caret-gap);
   border-radius: var(--site-radius-round);
   vertical-align: var(--site-co-caret-shift);
+}
+.site-co-caret::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
   background: var(--site-co-ink);
 }
 /* her name hangs off the caret's top, toward the free space after the line */

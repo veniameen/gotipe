@@ -479,12 +479,19 @@
   height: calc(2 * var(--site-build-block-h));
   background: var(--site-build-code);
 }
+/* the caret: the bar is its ::before, so it blinks by opacity (motion.css) and the flag stays */
 .site-build-caret {
   position: relative;
   flex: none;
   width: var(--site-co-caret-w);
   height: calc(2.4 * var(--site-build-line-h));
   border-radius: var(--site-radius-round);
+}
+.site-build-caret::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
   background: var(--site-build-caret);
 }
 .site-build-flag {

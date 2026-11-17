@@ -92,6 +92,9 @@
 
   /* ---- the heads ---- */
   --site-head-h: var(--site-space-16);
+  /* how far the page scrolls before the head turns to glass */
+  --site-scrolled-at: var(--site-space-3);
+  --site-hairline-w: 1px;
   /* the glass bar's padding once it closes in on the column: the content steps in by it */
   --site-head-pad-x: var(--site-space-4);
   --site-head-radius: var(--site-radius-4);
@@ -293,7 +296,6 @@
   --site-stack-mark-glow: 28px;
   --site-stack-beat: 64px;
   /* a comet's road, set per comet by its beam (motion/beams.tsx) */
-  --site-comet-path: none;
   --site-comet-w: 72px;
   --site-comet-h: 2px;
   --site-comet-glow: 4px;

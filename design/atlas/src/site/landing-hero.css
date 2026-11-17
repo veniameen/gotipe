@@ -32,30 +32,49 @@
 }
 
 /* ---- the editor beneath the stage: pieces of GoTipe's interface under the nebula, out of sight
-   until the pointer brings them up in a round of light (motion/hero-ghost.tsx; the round's place
-   and its fading in motion.css) ---- */
+   until the pointer brings them up in a round of light (motion/hero-ghost.tsx; the gliding and the
+   fading in motion.css). The round is a lens as wide as the light with a fixed mask; the lens
+   glides to the pointer and the scene inside it glides back as far, so the interface stays put
+   while the light passes over it: two transforms for the compositor, nothing painted again. ---- */
 .site-ghost {
   position: absolute;
   inset: 0;
   z-index: -2;
   display: var(--site-ghost-display);
+  container-type: size;
   opacity: 0;
   pointer-events: none;
+}
+.site-ghost[data-lit] {
+  opacity: 1;
+}
+.site-ghost-lens,
+.site-ghost-scene {
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+.site-ghost-lens {
+  width: calc(2 * var(--site-ghost-r));
+  height: calc(2 * var(--site-ghost-r));
+  transform: translate(calc(50cqw - var(--site-ghost-r)), calc(30cqh - var(--site-ghost-r)));
   -webkit-mask: radial-gradient(
-    var(--site-ghost-r) circle at var(--site-ghost-x) var(--site-ghost-y),
+    var(--site-ghost-r) circle at center,
     var(--site-mask-on) 0%,
     var(--site-mask-on) 30%,
     transparent 100%
   );
   mask: radial-gradient(
-    var(--site-ghost-r) circle at var(--site-ghost-x) var(--site-ghost-y),
+    var(--site-ghost-r) circle at center,
     var(--site-mask-on) 0%,
     var(--site-mask-on) 30%,
     transparent 100%
   );
 }
-.site-ghost[data-lit] {
-  opacity: 1;
+.site-ghost-scene {
+  width: 100cqw;
+  height: 100cqh;
+  transform: translate(calc(var(--site-ghost-r) - 50cqw), calc(var(--site-ghost-r) - 30cqh));
 }
 .site-ghost p {
   margin: 0;
@@ -296,13 +315,22 @@
   background: var(--site-highlight);
   transform-origin: left center;
 }
+/* the caret: the bar is its ::before, so its coming in and its blinking are two elements' opacity
+   (motion.css), both left to the compositor */
 .site-hero-caret {
+  position: relative;
   display: inline-block;
   width: var(--site-hero-caret-w);
   height: var(--site-hero-caret-h);
   margin-left: var(--site-hero-caret-gap);
   border-radius: var(--site-radius-round);
   vertical-align: var(--site-hero-caret-shift);
+}
+.site-hero-caret::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
   background: var(--gt-accent);
 }
 
@@ -372,14 +400,12 @@
   position: relative;
   border-radius: var(--site-window-radius);
 }
-.site-showcase::before {
-  content: "";
-  position: absolute;
-  inset: calc(-1 * var(--site-beam-width));
-  z-index: 1;
-  padding: var(--site-beam-width);
-  border-radius: inherit;
-  background: conic-gradient(
+/* a light running round a box's edge (the window, the stack's engine): a ring cut by a mask stays
+   put, and inside it a conic light, a square as wide as the box's diagonal, turns. The turn is the
+   compositor's (motion.css), so the edge is painted once, never again frame by frame. An empty ring
+   (the Atlas's picture of the light at rest) wears the light itself. */
+.site-beam-ring {
+  --site-beam-light: conic-gradient(
     from var(--site-beam-angle),
     transparent 0%,
     transparent 58%,
@@ -387,12 +413,33 @@
     var(--site-accent-2) 80%,
     transparent 94%
   );
+  position: absolute;
+  inset: calc(-1 * var(--site-beam-width));
+  z-index: 1;
+  container-type: size;
+  padding: var(--site-beam-width);
+  border-radius: inherit;
   -webkit-mask: linear-gradient(var(--site-mask-on) 0 0) content-box,
     linear-gradient(var(--site-mask-on) 0 0);
   -webkit-mask-composite: xor;
   mask: linear-gradient(var(--site-mask-on) 0 0) content-box exclude,
     linear-gradient(var(--site-mask-on) 0 0);
   pointer-events: none;
+}
+.site-beam-ring:empty,
+.site-beam-ring > span {
+  background: var(--site-beam-light);
+}
+.site-beam-ring:not(:empty) {
+  overflow: hidden;
+}
+.site-beam-ring > span {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: calc(hypot(100cqw, 100cqh) + var(--site-space-2));
+  aspect-ratio: 1;
+  translate: -50% -50%;
 }
 .site-hero-note {
   max-width: var(--site-lede-max);

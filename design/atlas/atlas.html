@@ -774,6 +774,9 @@
 
   /* ---- the heads ---- */
   --site-head-h: var(--site-space-16);
+  /* how far the page scrolls before the head turns to glass */
+  --site-scrolled-at: var(--site-space-3);
+  --site-hairline-w: 1px;
   /* the glass bar's padding once it closes in on the column: the content steps in by it */
   --site-head-pad-x: var(--site-space-4);
   --site-head-radius: var(--site-radius-4);
@@ -975,7 +978,6 @@
   --site-stack-mark-glow: 28px;
   --site-stack-beat: 64px;
   /* a comet's road, set per comet by its beam (motion/beams.tsx) */
-  --site-comet-path: none;
   --site-comet-w: 72px;
   --site-comet-h: 2px;
   --site-comet-glow: 4px;
@@ -4496,6 +4498,17 @@ ol.gotipe-list > li::before {
   color: inherit;
   text-decoration: none;
 }
+/* the page's first pixels: once this mark is out of view the head turns to glass
+   (motion/controller.tsx) */
+.site-scroll-mark {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: var(--site-hairline-w);
+  height: var(--site-scrolled-at);
+  pointer-events: none;
+  visibility: hidden;
+}
 .site-wrap {
   box-sizing: border-box;
   max-width: var(--site-max);
@@ -5190,30 +5203,49 @@ html:not([data-theme="dark"]) .site-theme-to-light {
 }
 
 /* ---- the editor beneath the stage: pieces of GoTipe's interface under the nebula, out of sight
-   until the pointer brings them up in a round of light (motion/hero-ghost.tsx; the round's place
-   and its fading in motion.css) ---- */
+   until the pointer brings them up in a round of light (motion/hero-ghost.tsx; the gliding and the
+   fading in motion.css). The round is a lens as wide as the light with a fixed mask; the lens
+   glides to the pointer and the scene inside it glides back as far, so the interface stays put
+   while the light passes over it: two transforms for the compositor, nothing painted again. ---- */
 .site-ghost {
   position: absolute;
   inset: 0;
   z-index: -2;
   display: var(--site-ghost-display);
+  container-type: size;
   opacity: 0;
   pointer-events: none;
+}
+.site-ghost[data-lit] {
+  opacity: 1;
+}
+.site-ghost-lens,
+.site-ghost-scene {
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+.site-ghost-lens {
+  width: calc(2 * var(--site-ghost-r));
+  height: calc(2 * var(--site-ghost-r));
+  transform: translate(calc(50cqw - var(--site-ghost-r)), calc(30cqh - var(--site-ghost-r)));
   -webkit-mask: radial-gradient(
-    var(--site-ghost-r) circle at var(--site-ghost-x) var(--site-ghost-y),
+    var(--site-ghost-r) circle at center,
     var(--site-mask-on) 0%,
     var(--site-mask-on) 30%,
     transparent 100%
   );
   mask: radial-gradient(
-    var(--site-ghost-r) circle at var(--site-ghost-x) var(--site-ghost-y),
+    var(--site-ghost-r) circle at center,
     var(--site-mask-on) 0%,
     var(--site-mask-on) 30%,
     transparent 100%
   );
 }
-.site-ghost[data-lit] {
-  opacity: 1;
+.site-ghost-scene {
+  width: 100cqw;
+  height: 100cqh;
+  transform: translate(calc(var(--site-ghost-r) - 50cqw), calc(var(--site-ghost-r) - 30cqh));
 }
 .site-ghost p {
   margin: 0;
@@ -5454,13 +5486,22 @@ html:not([data-theme="dark"]) .site-theme-to-light {
   background: var(--site-highlight);
   transform-origin: left center;
 }
+/* the caret: the bar is its ::before, so its coming in and its blinking are two elements' opacity
+   (motion.css), both left to the compositor */
 .site-hero-caret {
+  position: relative;
   display: inline-block;
   width: var(--site-hero-caret-w);
   height: var(--site-hero-caret-h);
   margin-left: var(--site-hero-caret-gap);
   border-radius: var(--site-radius-round);
   vertical-align: var(--site-hero-caret-shift);
+}
+.site-hero-caret::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
   background: var(--gt-accent);
 }
 
@@ -5530,14 +5571,12 @@ html:not([data-theme="dark"]) .site-theme-to-light {
   position: relative;
   border-radius: var(--site-window-radius);
 }
-.site-showcase::before {
-  content: "";
-  position: absolute;
-  inset: calc(-1 * var(--site-beam-width));
-  z-index: 1;
-  padding: var(--site-beam-width);
-  border-radius: inherit;
-  background: conic-gradient(
+/* a light running round a box's edge (the window, the stack's engine): a ring cut by a mask stays
+   put, and inside it a conic light, a square as wide as the box's diagonal, turns. The turn is the
+   compositor's (motion.css), so the edge is painted once, never again frame by frame. An empty ring
+   (the Atlas's picture of the light at rest) wears the light itself. */
+.site-beam-ring {
+  --site-beam-light: conic-gradient(
     from var(--site-beam-angle),
     transparent 0%,
     transparent 58%,
@@ -5545,12 +5584,33 @@ html:not([data-theme="dark"]) .site-theme-to-light {
     var(--site-accent-2) 80%,
     transparent 94%
   );
+  position: absolute;
+  inset: calc(-1 * var(--site-beam-width));
+  z-index: 1;
+  container-type: size;
+  padding: var(--site-beam-width);
+  border-radius: inherit;
   -webkit-mask: linear-gradient(var(--site-mask-on) 0 0) content-box,
     linear-gradient(var(--site-mask-on) 0 0);
   -webkit-mask-composite: xor;
   mask: linear-gradient(var(--site-mask-on) 0 0) content-box exclude,
     linear-gradient(var(--site-mask-on) 0 0);
   pointer-events: none;
+}
+.site-beam-ring:empty,
+.site-beam-ring > span {
+  background: var(--site-beam-light);
+}
+.site-beam-ring:not(:empty) {
+  overflow: hidden;
+}
+.site-beam-ring > span {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: calc(hypot(100cqw, 100cqh) + var(--site-space-2));
+  aspect-ratio: 1;
+  translate: -50% -50%;
 }
 .site-hero-note {
   max-width: var(--site-lede-max);
@@ -6140,7 +6200,8 @@ html:not([data-theme="dark"]) .site-theme-to-light {
 [data-focus] .site-beam:not(.is-lit) .site-beam-path {
   opacity: var(--site-beam-dim);
 }
-/* a comet of light: a bright head and its tail, carried along its beam (motion.css runs it) */
+/* a comet of light: a bright head and its tail, carried along its beam by transform from its
+   top left corner (motion/beams.tsx runs it on the compositor) */
 .site-comet {
   position: absolute;
   top: 0;
@@ -6152,9 +6213,7 @@ html:not([data-theme="dark"]) .site-theme-to-light {
   background: linear-gradient(90deg, transparent, var(--site-comet-in) 70%, var(--site-comet-head));
   filter: drop-shadow(0 0 var(--site-comet-glow) var(--site-comet-in));
   opacity: 0;
-  offset-path: var(--site-comet-path);
-  offset-rotate: auto;
-  offset-anchor: 100% 50%;
+  transform-origin: 0 0;
   pointer-events: none;
 }
 .site-comet.is-out {
@@ -6235,7 +6294,8 @@ html:not([data-theme="dark"]) .site-theme-to-light {
   background: var(--site-comet-in);
   box-shadow: 0 0 var(--site-comet-glow) var(--site-comet-in);
 }
-/* the engine: glass with a comet running round its rim, its mark lit, light behind it */
+/* the engine: glass with a comet running round its rim (a beam ring, hero.css), its mark lit,
+   light behind it */
 .site-stack-hub {
   position: relative;
   display: grid;
@@ -6247,13 +6307,8 @@ html:not([data-theme="dark"]) .site-theme-to-light {
   box-shadow: inset 0 0 0 var(--gt-hairline) var(--site-stack-hub-line), var(--site-hub-glow);
   text-align: center;
 }
-.site-stack-hub::before {
-  content: "";
-  position: absolute;
-  inset: calc(-1 * var(--site-beam-width));
-  padding: var(--site-beam-pulse-w);
-  border-radius: inherit;
-  background: conic-gradient(
+.site-stack-hub > .site-beam-ring {
+  --site-beam-light: conic-gradient(
     from var(--site-beam-angle),
     transparent 0%,
     transparent 62%,
@@ -6261,12 +6316,8 @@ html:not([data-theme="dark"]) .site-theme-to-light {
     var(--site-comet-head) 86%,
     transparent 96%
   );
-  -webkit-mask: linear-gradient(var(--site-mask-on) 0 0) content-box,
-    linear-gradient(var(--site-mask-on) 0 0);
-  -webkit-mask-composite: xor;
-  mask: linear-gradient(var(--site-mask-on) 0 0) content-box exclude,
-    linear-gradient(var(--site-mask-on) 0 0);
-  pointer-events: none;
+  z-index: auto;
+  padding: var(--site-beam-pulse-w);
 }
 /* the engine's beat as the comets come in */
 .site-stack-hub::after {
@@ -6360,13 +6411,27 @@ html:not([data-theme="dark"]) .site-theme-to-light {
   margin-top: auto;
 }
 
-/* ---- cards that catch the light under the pointer ---- */
+/* ---- cards that catch the light under the pointer ----
+   The pointer's place (motion/controller.tsx) is the card's own, not inherited: a move restyles the
+   card and its two lights, never the card's content. */
+@property --site-mx {
+  syntax: "<length-percentage>";
+  inherits: false;
+  initial-value: 50%;
+}
+@property --site-my {
+  syntax: "<length-percentage>";
+  inherits: false;
+  initial-value: 50%;
+}
 [data-glow-card] {
   position: relative;
   isolation: isolate;
 }
 [data-glow-card]::before,
 [data-glow-card]::after {
+  --site-mx: inherit;
+  --site-my: inherit;
   content: "";
   position: absolute;
   inset: 0;
@@ -6404,6 +6469,8 @@ html:not([data-theme="dark"]) .site-theme-to-light {
 
 /* ---- a collaborator at work in the title: her caret with her name, a phrase selected and the
    bubble toolbar over it ---- */
+/* her caret: the bar is its ::before, so it blinks by opacity (motion.css) and her name, a child,
+   stays */
 .site-co-caret {
   position: relative;
   display: inline-block;
@@ -6412,6 +6479,12 @@ html:not([data-theme="dark"]) .site-theme-to-light {
   margin-left: var(--site-co-caret-gap);
   border-radius: var(--site-radius-round);
   vertical-align: var(--site-co-caret-shift);
+}
+.site-co-caret::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
   background: var(--site-co-ink);
 }
 /* her name hangs off the caret's top, toward the free space after the line */
@@ -7617,12 +7690,19 @@ html:not([data-theme="dark"]) .site-theme-to-light {
   height: calc(2 * var(--site-build-block-h));
   background: var(--site-build-code);
 }
+/* the caret: the bar is its ::before, so it blinks by opacity (motion.css) and the flag stays */
 .site-build-caret {
   position: relative;
   flex: none;
   width: var(--site-co-caret-w);
   height: calc(2.4 * var(--site-build-line-h));
   border-radius: var(--site-radius-round);
+}
+.site-build-caret::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
   background: var(--site-build-caret);
 }
 .site-build-flag {
@@ -12065,6 +12145,7 @@ editor<span class="tk-pun">.</span>on<span class="tk-pun">(</span><span class="t
 
         <div class="site-hero-window">
           <div class="site-showcase">
+            <span class="site-beam-ring" aria-hidden="true"></span>
             <figure class="site-window">
               <div class="site-window-bar">
                 <span class="site-window-dots" aria-hidden="true"><span></span><span></span><span></span></span>
@@ -12201,6 +12282,7 @@ editor<span class="tk-pun">.</span>on<span class="tk-pun">(</span><span class="t
           </ul>
         </div>
         <div class="site-stack-hub">
+          <span class="site-beam-ring" aria-hidden="true"></span>
           <span class="site-stack-mark"><svg class="site-logo" aria-hidden="true"><use href="#i-logo" /></svg></span>
           <strong>GoTipe engine</strong>
           <span>TypeScript · Rust/WASM</span>
@@ -12638,6 +12720,7 @@ editor<span class="tk-pun">.</span>on<span class="tk-pun">(</span><span class="t
 
         <div class="site-hero-window">
           <div class="site-showcase">
+            <span class="site-beam-ring" aria-hidden="true"></span>
             <figure class="site-window">
               <div class="site-window-bar">
                 <span class="site-window-dots" aria-hidden="true"><span></span><span></span><span></span></span>
@@ -12774,6 +12857,7 @@ editor<span class="tk-pun">.</span>on<span class="tk-pun">(</span><span class="t
           </ul>
         </div>
         <div class="site-stack-hub">
+          <span class="site-beam-ring" aria-hidden="true"></span>
           <span class="site-stack-mark"><svg class="site-logo" aria-hidden="true"><use href="#i-logo" /></svg></span>
           <strong>GoTipe engine</strong>
           <span>TypeScript · Rust/WASM</span>
