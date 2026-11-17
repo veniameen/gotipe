@@ -1,0 +1,34 @@
+# The nine Rust crates on crates.io. Run by hand (Actions, Publish crates, Run workflow) once
+# the release checks of a version have passed and the crates carry a version that is not on
+# crates.io yet: cargo publish uploads them in dependency order and refuses a version that is
+# already there. Needs the repository secret CARGO_REGISTRY_TOKEN, a crates.io token limited to
+# publish-new and publish-update of gotipe-*.
+name: Publish crates
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: publish-crates
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    name: Publish to crates.io
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+
+      - name: Verify registry source dependency graph
+        run: node scripts/check-cargo-release.mjs
+
+      - name: Publish the workspace crates
+        run: cargo publish --workspace --locked
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
