@@ -12,7 +12,7 @@ you use the ready UI, and configure the bundler only if you want the WASM engine
 Ready editor for React (`BlockEditor` and `PageEditor`):
 
 ```sh
-npm install @gotipe/block-editor @gotipe/core @gotipe/react @gotipe/theme @gotipe/i18n @gotipe/markdown @gotipe/suggestions react react-dom
+npm install @gotipe/block-editor @gotipe/core @gotipe/react @gotipe/theme @gotipe/i18n @gotipe/markdown @gotipe/suggestions @gotipe/versions react react-dom
 ```
 
 Headless editor for React, with your own interface:
