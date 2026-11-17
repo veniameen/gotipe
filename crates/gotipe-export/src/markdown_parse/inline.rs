@@ -369,7 +369,7 @@ pub(super) fn read(source: &Source, context: &Context, depth: usize) -> Vec<Node
         if c == '$' && context.atoms.inline_math {
             // A run of dollars is text; a single one may open a formula (see `math_end`).
             let run = text[p..].bytes().take_while(|b| *b == b'$').count();
-            let close = Some(p).filter(|_| run == 1);
+            let close = (run == 1).then_some(p);
             if let Some(close) = close.and_then(|open| atoms::math_end(text, open)) {
                 // A cell writes `|` as `\|`, as in inline code.
                 let value = &text[p + 1..close];

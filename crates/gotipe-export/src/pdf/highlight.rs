@@ -47,7 +47,7 @@ pub(crate) fn spans(text: &str, language: &str, size: f32) -> Vec<Span> {
                 .find(close)
                 .map_or(rest.len(), |end| open + end + close.len());
             [0.35, 0.40, 0.45]
-        } else if [b'\'', b'"', b'`'].contains(&bytes[index]) {
+        } else if b"'\"`".contains(&bytes[index]) {
             let quote = bytes[index];
             index += 1;
             while index < bytes.len() {
@@ -64,7 +64,7 @@ pub(crate) fn spans(text: &str, language: &str, size: f32) -> Vec<Span> {
         } else if bytes[index].is_ascii_digit() {
             index += 1;
             while index < bytes.len()
-                && (bytes[index].is_ascii_alphanumeric() || [b'.', b'_'].contains(&bytes[index]))
+                && (bytes[index].is_ascii_alphanumeric() || b"._".contains(&bytes[index]))
             {
                 index += 1;
             }
