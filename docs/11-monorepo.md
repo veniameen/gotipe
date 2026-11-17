@@ -885,6 +885,10 @@ jobs:
 
 ### Deployment Flow
 
+> Исторический план. 2026-11-17 владелец оставил Cloud только локальным: `deploy-cloud.yml` и
+> `deploy-infra.yml` удалены; сайт собирается в GitHub Actions и выкладывается на Cloudflare Pages
+> (`deploy-site.yml`).
+
 ```
 git push to main
   │
