@@ -17,7 +17,7 @@ MIT packages.
 | Table bars, resize handles, media controls | `@gotipe/react` | Editable tables, image and file blocks |
 | `BubbleMenu`, `FloatingMenu` | `@gotipe/react` | Your own React menus; see [React](/docs/frameworks/react) |
 | `createBubbleMenu`, `createFloatingMenu` | `@gotipe/core/menus` | Your own menus without a framework |
-| «@» and «:» lists, emoji picker, formula popover | `@gotipe/block-editor` | Typing `@` or `:`, «/» → Emoji, a click on a formula; needs `atomExtensions()` |
+| `@` and `:` lists, emoji picker, formula popover | `@gotipe/block-editor` | Typing `@` or `:`, `/` → Emoji, a click on a formula; needs `atomExtensions()` |
 
 ## Slash menu
 
@@ -76,21 +76,21 @@ GoTipe Atlas, frames 22–24. All four need the editor to include `atomExtension
 `@gotipe/block-editor`; the data comes from the `mentions` and `emoji` props of `BlockEditor`
 and `PageEditor` ([Inline atoms](/docs/extensions/inline-atoms#the-block-editors-interface)).
 
-**The «@» list.** Typing `@` at the start of a word opens it at the caret with the host's
+**The `@` list.** Typing `@` at the start of a word opens it at the caret with the host's
 people and pages for the text after `@`: initials for a person, the page glyph for a page,
-the match in bold, a group label wherever the kind changes («People», «Pages»). The first row
+the match in bold, a group label wherever the kind changes (“People”, “Pages”). The first row
 is chosen and shows ↵. ArrowDown and ArrowUp move the choice, Enter or a click inserts the
 mention in place of `@query`, Escape closes the list until the caret leaves the trigger, and
-so does moving the focus away. An empty answer is one line: «No one found». Return people
+so does moving the focus away. An empty answer is one line: “No one found”. Return people
 before pages from `mentions.items`, as the list groups consecutive rows.
 
-**The «:» list.** Typing `:` at the start of a word lists Unicode emoji by shortcode and, with
+**The `:` list.** Typing `:` at the start of a word lists Unicode emoji by shortcode and, with
 the Russian interface, by Russian name (`:пра` → 🎉 праздник, ✅ правильно, ✍️ правка, 👉 направо),
 then the team's emoji from `emoji.custom`. Right after `:` it shows the recent emoji. The keys
-are those of the «@» list; Enter inserts the character (a custom emoji as an atom) and moves it
+are those of the `@` list; Enter inserts the character (a custom emoji as an atom) and moves it
 to the front of the recent list.
 
-**The emoji picker.** «/» → Emoji opens it at the caret: a search field with the focus, the
+**The emoji picker.** `/` → Emoji opens it at the caret: a search field with the focus, the
 categories as glyphs (recent, faces, nature, food, activities, travel, objects, symbols, flags,
 the team's own), the recent row first, then a grid of nine columns. A tab scrolls to its
 category and the tab of the category in view is marked. ArrowDown from the field enters the
@@ -99,13 +99,13 @@ back to the field; Enter or Space inserts, Enter in the field inserts the first 
 name of the emoji under the pointer or the focus shows in a tooltip. Escape or a click outside
 closes it and returns the caret.
 
-**The formula popover.** A click on a formula, Enter with a formula selected, «/» → Inline
+**The formula popover.** A click on a formula, Enter with a formula selected, `/` → Inline
 formula and typing `$x^2$` open it under the formula. The closing `$` makes the formula only when
 the opening one starts a word and is followed by neither a space nor a digit, so `costs $5-$`
 stays text, and Escape right after it brings the typed dollars back. The popover holds the
 TeX in a monospace field with the caret at its end, a confirm button and the drawing under it as
 you type. TeX that cannot be read marks the field red and names the reason in a tooltip
-(«Missing closing “}”»); it can still be confirmed and then shows in the line as TeX on a red
+(`Missing closing “}”`); it can still be confirmed and then shows in the line as TeX on a red
 tint. Enter or the button confirms in one undo step (`updateInlineMath` or `insertInlineMath`),
 Escape or a click outside cancels. The formula stays selected while the popover is open.
 

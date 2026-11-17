@@ -230,7 +230,7 @@ scrolls to its quote and selects it in the editor. The sidebar fills the width o
 container. Its words come from `GoTipeI18nProvider` of `@gotipe/react` (the `comments.*` keys,
 English and Russian built in), English without one; see
 [Internationalization](/docs/ui/i18n). The time of a thread and of each reply is written in
-that language too (`toLocaleString` of the provider's locale): «15.11.2026, 22:00:00» in
+that language too (`toLocaleString` of the provider's locale): “15.11.2026, 22:00:00” in
 Russian, "11/15/2026, 10:00:00 PM" in English. A locale name that is no language tag, such
 as `de_DE`, keeps the browser's way of writing time.
 

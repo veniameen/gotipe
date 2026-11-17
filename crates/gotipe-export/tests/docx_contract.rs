@@ -278,7 +278,8 @@ fn merged_cells_over_rows_become_vertical_merges() {
             .sum();
         assert_eq!(width, 4, "{row}");
     }
-    // the second header row: «Платформа» continues before «Ключ», «Шифрование» after the rest
+    // the second header row: “Платформа” (Platform) continues before “Ключ” (Key), and
+    // “Шифрование” (Encryption) after the rest
     let second = rows[1];
     let key = second.find("Ключ").unwrap();
     assert!(second[..key].contains("<w:vMerge/>"));
@@ -327,9 +328,9 @@ fn short_rows_keep_continuations_in_their_column_and_no_row_is_empty() {
                     cell("c", "C", json!({"rowspan": 2})),
                     cell("d", "D", json!({"rowspan": 9, "colspan": 1500})),
                 ]),
-                // short: «C» continues in column 3, after an empty cell in columns 1–2
+                // short: “C” continues in column 3, after an empty cell in columns 1–2
                 row("r1", vec![cell("e", "E", json!({}))]),
-                // nothing of its own and nothing from above but «D»
+                // nothing of its own and nothing from above but “D”
                 row("r2", vec![]),
             ]
         }, {
@@ -347,7 +348,7 @@ fn short_rows_keep_continuations_in_their_column_and_no_row_is_empty() {
     );
     let tables: Vec<&str> = xml.split("<w:tbl>").skip(1).collect();
     let rows: Vec<Vec<(char, usize)>> = tables[0].split("<w:tr>").skip(1).map(row_layout).collect();
-    // 2.7 and 1500 are no spans: one column each; «D» reaches only to the last row
+    // 2.7 and 1500 are no spans: one column each; “D” reaches only to the last row
     assert_eq!(rows[0], [('t', 1), ('t', 1), ('t', 1), ('t', 1)]);
     assert_eq!(rows[1], [('t', 1), ('f', 1), ('v', 1), ('v', 1)]);
     assert_eq!(rows[2], [('f', 1), ('f', 1), ('f', 1), ('v', 1)]);

@@ -48,7 +48,7 @@ fn block_and_mark_attributes_are_written_in_key_order() {
         attrs: attrs(),
     };
     let span = TextSpan {
-        text: "ячейка 😀".into(),
+        text: "cell 😀".into(),
         marks: vec![mark.clone()],
     };
     let block = Block {

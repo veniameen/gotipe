@@ -40,7 +40,7 @@ const result = convertProseMirrorToGoTipe({
     { type: "heading", attrs: { level: 2 }, content: [{ type: "text", text: "Notes" }] },
     {
       type: "paragraph",
-      content: [{ type: "text", text: "Привет 😀", marks: [{ type: "bold" }] }],
+      content: [{ type: "text", text: "Hello 😀", marks: [{ type: "bold" }] }],
     },
   ],
 });

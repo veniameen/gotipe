@@ -96,7 +96,7 @@ whole document as public JSON.
 | `moved` | In both, with a different parent, or out of order among the siblings both documents share. Inserting or removing a sibling moves nothing. |
 
 The result holds block IDs. For the text, `diffText(before, after)` compares two texts word by
-word and returns runs of `equal`, `delete` and `insert`; a no-break space keeps «10 %» one
+word and returns runs of `equal`, `delete` and `insert`; a no-break space keeps “10 %” one
 unit. `countWordChanges(a, b)` counts the words added and removed between two documents, and
 `blockText(block)` is a block's own text.
 
@@ -128,7 +128,7 @@ function Page() {
     <VersionHistory
       editor={editor}
       source={manager ?? undefined}
-      user={{ name: "Мария Лебедева" }}
+      user={{ name: "Maria Lebedeva" }}
       open={open}
       onClose={() => setOpen(false)}
     >

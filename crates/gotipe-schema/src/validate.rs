@@ -5,7 +5,7 @@ use crate::document::{Block, BlockContent, BlockId, Document, Mark};
 use crate::mark_spec::MarkSpec;
 use crate::node_spec::{ContentRule, MarksRule, NodeSpec};
 
-/// Schema — набор правил для валидации документа
+/// Schema: the set of rules for validating a document
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct Schema {
     pub nodes: HashMap<String, NodeSpec>,

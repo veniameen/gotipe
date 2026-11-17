@@ -3,55 +3,55 @@ use std::collections::HashMap;
 
 use crate::attr::AttrSpec;
 
-/// NodeSpec — определение типа блока
+/// NodeSpec: the definition of a block type
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct NodeSpec {
-    /// Имя типа (например "paragraph", "heading")
+    /// Type name (for example "paragraph", "heading")
     pub name: String,
 
-    /// Группы, к которым принадлежит node (например "block", "inline")
+    /// Groups the node belongs to (for example "block", "inline")
     pub group: Vec<String>,
 
-    /// Какой контент допускается
+    /// What content is allowed
     pub content: ContentRule,
 
-    /// Атрибуты с default values и validation
+    /// Attributes with default values and validation
     pub attrs: HashMap<String, AttrSpec>,
 
-    /// Может ли быть top-level блоком
+    /// Whether it can be a top-level block
     pub top_level: bool,
 
-    /// Допускает ли inline marks
+    /// Whether it allows inline marks
     pub marks_allowed: MarksRule,
 
-    /// Является ли leaf node (без children)
+    /// Whether it is a leaf node (no children)
     pub leaf: bool,
 
-    /// Может ли содержать nested blocks (children)
+    /// Whether it can contain nested blocks (children)
     pub allows_children: bool,
 
-    /// Допустимые типы children
+    /// Allowed child types
     pub child_types: Option<Vec<String>>,
 }
 
-/// Правило для content
+/// Content rule
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum ContentRule {
     /// Rich text (TextSpan[])
     RichText,
-    /// Raw text (код, формулы)
+    /// Raw text (code, formulas)
     RawText,
     /// No content (divider, image)
     Empty,
 }
 
-/// Правило для marks
+/// Marks rule
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum MarksRule {
-    /// Все marks допускаются
+    /// All marks are allowed
     All,
-    /// Конкретный набор marks
+    /// A specific set of marks
     Only(Vec<String>),
-    /// Marks запрещены
+    /// Marks are not allowed
     None,
 }
