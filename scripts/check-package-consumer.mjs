@@ -93,9 +93,13 @@ writeFileSync(
     2,
   ),
 );
+// A local run installs from pnpm's cache alone. A CI runner installs the workspace from the
+// lockfile, which leaves the metadata cache empty, so there pnpm may ask the registry for
+// metadata; the package files still come from the store.
+const network = process.env.CI ? "--prefer-offline" : "--offline";
 run(
   "pnpm",
-  ["install", "--ignore-workspace", "--offline", "--ignore-scripts", "--strict-peer-dependencies"],
+  ["install", "--ignore-workspace", network, "--ignore-scripts", "--strict-peer-dependencies"],
   consumer,
 );
 writeFileSync(
