@@ -1,0 +1,67 @@
+# The site (apps/landing: the landing and the documentation, a static export) on Cloudflare Pages.
+# Every push to main builds the engine's WASM, the packages the site uses and the site itself, and
+# uploads the export. Needs the repository secrets CLOUDFLARE_API_TOKEN (Cloudflare Pages: Edit)
+# and CLOUDFLARE_ACCOUNT_ID. GoTipe Cloud is not deployed: it runs locally (infra/).
+name: Deploy site
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-site
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    name: Build and deploy gotipe.com
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-unknown-unknown
+      - uses: Swatinem/rust-cache@v2
+
+      - name: Install wasm-pack
+        run: curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh
+
+      - name: Install wasm-opt
+        run: npm install -g binaryen
+
+      - name: Build WASM
+        run: bash scripts/build-wasm.sh
+
+      - name: Build optional PDF and DOCX exporter
+        run: bash scripts/build-export-wasm.sh
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.28.2
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build the packages the site uses
+        run: pnpm turbo run build --filter="@gotipe/landing^..."
+
+      - name: Build the site
+        run: pnpm --filter @gotipe/landing build
+        env:
+          NEXT_PUBLIC_SITE_URL: https://gotipe.com
+
+      - name: Deploy to Cloudflare Pages
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: pages deploy apps/landing/out --project-name=gotipe --branch=main
