@@ -236,7 +236,7 @@ jobs:
         run: python3 ../../scripts/collect-cloud-licenses.py --check
 
       - name: Build
-        run: go build -p 2 ./cmd/...
+        run: go build -p 2 -o "$RUNNER_TEMP/" ./cmd/...
 
       - name: Upload coverage
         uses: actions/upload-artifact@v4

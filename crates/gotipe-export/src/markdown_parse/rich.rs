@@ -204,8 +204,8 @@ fn walk(children: &[Node], marks: &[Mark], read: Read, br: bool, out: &mut Inlin
             }
             "link" if !plain_inline(n).is_empty() => {
                 let mut nested = marks.to_vec();
-                let mention = Some(n.url.as_str())
-                    .filter(|_| read.atoms.mention && plain_children(&n.children))
+                let mention = (read.atoms.mention && plain_children(&n.children))
+                    .then_some(n.url.as_str())
                     .and_then(atoms::mention_of);
                 if let Some((kind, id)) = mention {
                     let label = match n.title.as_deref() {
