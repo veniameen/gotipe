@@ -4,6 +4,15 @@
   "description": "Optional GoTipe PDF and DOCX exporter with bundled Unicode fonts",
   "type": "module",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/veniameen/gotipe.git",
+    "directory": "packages/export-wasm"
+  },
+  "homepage": "https://gotipe.com",
+  "bugs": {
+    "url": "https://github.com/veniameen/gotipe/issues"
+  },
   "main": "./node.js",
   "types": "./pkg/gotipe_export_wasm.d.ts",
   "exports": {
@@ -13,7 +22,18 @@
       "default": "./pkg/gotipe_export_wasm.js"
     }
   },
-  "files": ["node.js", "pkg/gotipe_export_wasm.js", "pkg/gotipe_export_wasm_bg.wasm", "pkg/gotipe_export_wasm.d.ts", "pkg/gotipe_export_wasm_bg.wasm.d.ts", "LICENSE", "THIRD_PARTY_NOTICES.md", "licenses"],
+  "files": [
+    "node.js",
+    "pkg/gotipe_export_wasm.js",
+    "pkg/gotipe_export_wasm_bg.wasm",
+    "pkg/gotipe_export_wasm.d.ts",
+    "pkg/gotipe_export_wasm_bg.wasm.d.ts",
+    "LICENSE",
+    "THIRD_PARTY_NOTICES.md",
+    "licenses"
+  ],
   "sideEffects": false,
-  "publishConfig": { "access": "public" }
+  "publishConfig": {
+    "access": "public"
+  }
 }

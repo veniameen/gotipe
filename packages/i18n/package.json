@@ -24,6 +24,15 @@
     "lint": "biome check src/"
   },
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/veniameen/gotipe.git",
+    "directory": "packages/i18n"
+  },
+  "homepage": "https://gotipe.com",
+  "bugs": {
+    "url": "https://github.com/veniameen/gotipe/issues"
+  },
   "files": [
     "dist",
     "LICENSE"

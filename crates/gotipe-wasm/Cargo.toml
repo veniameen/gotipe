@@ -3,6 +3,11 @@ name = "gotipe-wasm"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
+description = "WebAssembly bindings of the GoTipe editor engine (the @gotipe/wasm npm package)."
+repository.workspace = true
+homepage.workspace = true
+keywords = ["editor", "wasm", "crdt", "rich-text"]
+categories = ["wasm", "text-editors"]
 
 [lib]
 crate-type = ["cdylib", "rlib"]

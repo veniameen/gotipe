@@ -3,6 +3,11 @@ name = "gotipe-export"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
+description = "Import and export for GoTipe documents: Markdown, HTML, JSON, and its own PDF layout and DOCX writer."
+repository.workspace = true
+homepage.workspace = true
+keywords = ["pdf", "docx", "markdown", "export", "editor"]
+categories = ["text-processing", "encoding"]
 
 [features]
 default = ["html", "markdown", "plaintext"]

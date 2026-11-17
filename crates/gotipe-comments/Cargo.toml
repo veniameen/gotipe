@@ -3,6 +3,11 @@ name = "gotipe-comments"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
+description = "Anchored comment threads and suggestions for GoTipe documents."
+repository.workspace = true
+homepage.workspace = true
+keywords = ["editor", "comments", "review", "rich-text"]
+categories = ["text-editors"]
 
 [dependencies]
 gotipe-core = { version = "0.1.0", path = "../gotipe-core" }
