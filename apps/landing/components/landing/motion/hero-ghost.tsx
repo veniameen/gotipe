@@ -7,10 +7,11 @@ import { Icon } from "../../site/icon";
  * The editor beneath the first stage: pieces of GoTipe's own interface (the block menu, a comment
  * thread, the versions, Markdown, a table, the bubble toolbar) lie under the nebula, out of sight.
  * Under the pointer they come up, softly, in a round of light that follows it; when the pointer
- * leaves they sink back. Decoration, hidden from assistive technology; wide screens only (the copy
- * fills a phone's stage); none for a reader who asked for less motion or for touch. The light is a
- * lens moved to the pointer and the scene moved back inside it (styles/landing/hero.css), both by
- * transform: the compositor glides them, nothing is painted again as the pointer moves.
+ * leaves they sink back. Decoration, hidden from assistive technology; from a laptop's width up
+ * (below 1024px the copy fills the stage); none for a reader who asked for less motion or for
+ * touch. The light is a lens moved to the pointer and the scene moved back inside it
+ * (styles/landing/hero.css), both by transform: the compositor glides them, nothing is painted
+ * again as the pointer moves.
  */
 export function HeroGhost() {
   const layer = useRef<HTMLDivElement>(null);

@@ -419,7 +419,15 @@ body,
 /* ---- a laptop: the outline of the docs steps away, the headline steps down ---- */
 @media (max-width: 1279px) {
   :root {
-    --site-ghost-display: none;
+    /* the copy takes more of the stage: the Markdown and the versions beneath it step out to
+       the stage's edges, clear of the lines */
+    --site-ghost-source-top: 400px;
+    --site-ghost-source-left: 16px;
+    --site-ghost-source-w: 160px;
+    --site-ghost-versions-top: 272px;
+    --site-ghost-versions-right: 16px;
+    --site-ghost-versions-w: 200px;
+    --site-ghost-cursor-right: 300px;
     --site-lines-display: none;
     --site-hero-size: 68px;
     --site-hero-leading: 68px;
@@ -442,6 +450,7 @@ body,
 /* ---- a tablet: one column, the navigation goes behind the menu button ---- */
 @media (max-width: 1023px) {
   :root {
+    --site-ghost-display: none;
     --site-build-size: 320px;
     --site-band-cols: minmax(0, 1fr);
     --site-band-align: center;
