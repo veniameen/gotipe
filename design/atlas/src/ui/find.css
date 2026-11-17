@@ -1,5 +1,5 @@
 /* Find and replace, and the counter. The find bar is docked at the top right of the editor: the
-   query with «3 из 12» in its end, the three switches, previous and next, close; replace opens a
+   query with “3 of 12” at its end, the three switches, previous and next, close; replace opens a
    second row under it. Every match is tinted, the current one stronger and ringed. The counter is a
    quiet line under the document that takes a tone only near a limit. */
 

@@ -1,13 +1,13 @@
 <p>
-  Правка, сделанная без сети, сейчас пропадает, если закрыть вкладку до того, как связь
-  вернётся. В выпуске 2.8 редактор пишет каждую транзакцию в локальный журнал и отправляет его,
-  как только сеть появится. Решение опирается на
+  An edit made offline is currently lost if the tab is closed before the connection returns. In
+  release 2.8 the editor writes every transaction to a local log and sends it as soon as the
+  network is back. The decision rests on
   <a class="gotipe-mention" data-kind="page"
     ><svg class="gt-icon" aria-hidden="true"><use href="#i-page" /></svg><span>ADR-0031</span></a
   >
-  и на обращения в поддержку за октябрь — их разобрал
+  and on the October support requests, which were reviewed by
   <span class="gotipe-mention" data-kind="person"
-    ><span class="gotipe-avatar" data-person="1">ИО</span>Илья Орлов</span
+    ><span class="gotipe-avatar" data-person="1">IO</span>Ilya Orlov</span
   >.
 </p>
 
@@ -17,17 +17,17 @@
   ></span>
   <div class="gotipe-callout-content">
     <p>
-      Черновик хранится только на устройстве и зашифрован ключом сессии. При выходе из аккаунта
-      он удаляется вместе с ключом.
+      A draft is stored only on the device and is encrypted with the session key. On sign-out it
+      is deleted along with the key.
     </p>
   </div>
 </div>
 
-<h1>Как это работает<span class="gotipe-heading-anchor" aria-hidden="true"><span class="gotipe-anchor-button"><svg class="gt-icon"><use href="#i-hash" /></svg></span></span></h1>
+<h1>How it works<span class="gotipe-heading-anchor" aria-hidden="true"><span class="gotipe-anchor-button"><svg class="gt-icon"><use href="#i-hash" /></svg></span></span></h1>
 <p class="is-hovered">
-  Журнал лежит в <code class="gotipe-inline-code">IndexedDB</code> и переживает перезапуск
-  приложения. Сервер принимает пачку транзакций целиком или отклоняет её:
-  <mark class="gotipe-highlight">половина пачки записаться не может</mark>.
+  The log lives in <code class="gotipe-inline-code">IndexedDB</code> and survives an app restart.
+  The server accepts a batch of transactions whole or rejects it:
+  <mark class="gotipe-highlight">half a batch can’t be written</mark>.
   <span class="gotipe-block-handle" aria-hidden="true"
     ><span class="gotipe-handle-button"><svg class="gt-icon"><use href="#i-plus" /></svg></span
     ><span class="gotipe-handle-button"><svg class="gt-icon"><use href="#i-grip" /></svg></span
@@ -39,6 +39,6 @@
     <!-- @include content/drafts/diagram.svg -->
   </div>
   <figcaption>
-    Транзакции копятся в журнале, пока нет сети, и уходят на сервер одной пачкой.
+    Transactions pile up in the log while there is no network and go to the server in one batch.
   </figcaption>
 </figure>

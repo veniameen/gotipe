@@ -1,6 +1,7 @@
-// Russian typesetting for the atlas's prose: a short word keeps the next one on its line,
-// a dash stays with the word before it, a percent sign with its number. Code, SVG and markup
-// are left as they are.
+// Typesetting for the atlas's prose: a short word keeps the next one on its line, a dash stays with
+// the word before it, a percent sign with its number. The word list is Russian on purpose: it
+// serves a Russian-locale frame, and English text passes through it unchanged. Code, SVG and
+// markup are left as they are.
 
 const SKIP = new Set(["pre", "code", "svg", "style", "script", "title"]);
 const SHORT =
