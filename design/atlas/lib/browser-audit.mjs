@@ -50,7 +50,7 @@ function auditPage({ roles, theme }) {
   const describe = (el) => {
     const text = (el.textContent || "").trim().replace(/\s+/g, " ").slice(0, 28);
     const cls = typeof el.className === "string" && el.classList[0] ? `.${el.classList[0]}` : "";
-    return `<${el.tagName.toLowerCase()}${cls}> «${text}»`;
+    return `<${el.tagName.toLowerCase()}${cls}> “${text}”`;
   };
   const parse = (value) => {
     const m = /rgba?\(([^)]+)\)/.exec(value);
@@ -176,7 +176,7 @@ function auditPage({ roles, theme }) {
       for (const { node, rect } of lines) {
         if (!handle.contains(node) && intersects(h, rect)) {
           problems.push(
-            `${name}: the block handle covers «${node.textContent.trim().slice(0, 24)}»`,
+            `${name}: the block handle covers “${node.textContent.trim().slice(0, 24)}”`,
           );
         }
       }

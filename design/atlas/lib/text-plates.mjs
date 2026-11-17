@@ -108,7 +108,7 @@ export function textOffPlates({ theme }) {
       range.setStart(node, start);
       range.setEnd(node, text.trimEnd().length);
       const lines = [...range.getClientRects()].filter((r) => r.width && r.height);
-      const said = `«${text.trim().replace(/\s+/g, " ").slice(0, 32)}»`;
+      const said = `“${text.trim().replace(/\s+/g, " ").slice(0, 32)}”`;
 
       // The plates under the text, and what the clips between the text and the frame leave of it.
       // A box placed out of the flow escapes the clips up to the box that holds it.

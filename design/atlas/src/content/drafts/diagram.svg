@@ -1,13 +1,13 @@
-<svg class="dg" viewBox="0 0 632 180" role="img" aria-label="Редактор, журнал и сервер">
+<svg class="dg" viewBox="0 0 632 180" role="img" aria-label="Editor, log and server">
   <rect class="dg-node" x="0.5" y="28.5" width="147" height="123" rx="10" />
-  <text class="dg-title" x="74" y="84">Редактор</text>
-  <text class="dg-sub" x="74" y="102">вкладка или приложение</text>
+  <text class="dg-title" x="74" y="84">Editor</text>
+  <text class="dg-sub" x="74" y="102">tab or app</text>
 
   <path class="dg-edge" d="M156 90h76M226 85l6 5-6 5" />
-  <text class="dg-note" x="194" y="80">транзакции</text>
+  <text class="dg-note" x="194" y="80">transactions</text>
 
   <rect class="dg-node" x="242.5" y="28.5" width="147" height="123" rx="10" />
-  <text class="dg-title" x="316" y="62">Журнал</text>
+  <text class="dg-title" x="316" y="62">Log</text>
   <text class="dg-sub dg-mono" x="316" y="80">IndexedDB</text>
   <rect class="dg-queue" x="270" y="94" width="92" height="6" rx="3" />
   <rect class="dg-queue" x="270" y="105" width="76" height="6" rx="3" />
@@ -15,11 +15,11 @@
   <rect class="dg-queue" x="270" y="127" width="58" height="6" rx="3" />
 
   <path class="dg-edge dg-off" d="M398 70h76" />
-  <text class="dg-note" x="436" y="60">нет сети</text>
+  <text class="dg-note" x="436" y="60">offline</text>
   <path class="dg-edge dg-go" d="M398 112h76M468 107l6 5-6 5" />
-  <text class="dg-note" x="436" y="134">одной пачкой</text>
+  <text class="dg-note" x="436" y="134">one batch</text>
 
   <rect class="dg-node" x="484.5" y="28.5" width="147" height="123" rx="10" />
-  <text class="dg-title" x="558" y="84">Сервер</text>
-  <text class="dg-sub" x="558" y="102">новая версия документа</text>
+  <text class="dg-title" x="558" y="84">Server</text>
+  <text class="dg-sub" x="558" y="102">new document version</text>
 </svg>

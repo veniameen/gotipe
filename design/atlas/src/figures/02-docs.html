@@ -1,101 +1,101 @@
-<figure class="at-figure" id="f2" data-section="Документ">
+<figure class="at-figure" id="f2" data-section="Document">
   <figcaption class="at-figure-head">
     <span class="at-num">2</span>
-    <h2 class="at-figure-title">Вид docs</h2>
+    <h2 class="at-figure-title">The docs view</h2>
     <p class="at-caption">
-      Справочная страница: текст плотнее, 14/22; оглавление рядом и уходит на узком экране; номера
-      строк в коде. Ручка блока — как в notion: у блока под указателем, в поле 64 между оглавлением
-      и текстом. Якорь # — после последнего слова заголовка под указателем; место под него заголовок
-      держит всегда, поэтому не переносится заново; щелчок копирует ссылку, адрес строит хост. На
-      узком экране ручка остаётся в поле 56, якорь — у заголовка, которого коснулись. Принят 15
-      ноября (D-30).
+      A reference page: denser text, 14/22; the outline sits beside it and goes away on a narrow
+      screen; line numbers in code. The block handle works as in notion: by the block under the
+      pointer, in a 64 margin between the outline and the text. The # anchor comes after the last
+      word of the heading under the pointer; the heading always keeps room for it, so it does not
+      rewrap; a click copies the link, and the host builds the address. On a narrow screen the
+      handle stays in a 56 margin and the anchor sits by the heading that was touched. Accepted
+      November 15 (D-30).
     </p>
   </figcaption>
-  <!-- @frame frame=docs-document view=docs w=1024 label="абзац под указателем, заголовки в покое" -->
+  <!-- @frame frame=docs-document view=docs w=1024 label="paragraph under the pointer, headings at rest" -->
   <div class="gotipe-docs">
-    <nav class="gotipe-outline" aria-label="Оглавление">
-      <p class="gotipe-outline-title">На этой странице</p>
-      <a class="is-current">Как это работает</a>
-      <a data-level="2">Что меняется</a>
-      <a data-level="3">Порядок выката</a>
-      <a data-level="2">Конфликты</a>
-      <a data-level="2">Задачи</a>
+    <nav class="gotipe-outline" aria-label="Page outline">
+      <p class="gotipe-outline-title">On this page</p>
+      <a class="is-current">How it works</a>
+      <a data-level="2">What changes</a>
+      <a data-level="3">Rollout order</a>
+      <a data-level="2">Conflicts</a>
+      <a data-level="2">Tasks</a>
     </nav>
-    <article class="gotipe-page" lang="ru">
+    <article class="gotipe-page" lang="en">
       <!-- @include content/drafts/head-docs.html -->
       <!-- @include content/drafts/doc.html -->
     </article>
   </div>
   <!-- @end -->
-  <!-- @frame frame=docs-heading view=docs w=1024 label="заголовок под указателем: ручка в поле, якорь после текста" -->
+  <!-- @frame frame=docs-heading view=docs w=1024 label="heading under the pointer: handle in the margin, anchor after the text" -->
   <div class="gotipe-docs">
-    <nav class="gotipe-outline" aria-label="Оглавление">
-      <p class="gotipe-outline-title">На этой странице</p>
-      <a>Как это работает</a>
-      <a data-level="2">Что меняется</a>
-      <a data-level="3">Порядок выката</a>
-      <a data-level="2" class="is-current">Конфликты</a>
-      <a data-level="3">Что видит автор</a>
-      <a data-level="2">Задачи</a>
+    <nav class="gotipe-outline" aria-label="Page outline">
+      <p class="gotipe-outline-title">On this page</p>
+      <a>How it works</a>
+      <a data-level="2">What changes</a>
+      <a data-level="3">Rollout order</a>
+      <a data-level="2" class="is-current">Conflicts</a>
+      <a data-level="3">What the author sees</a>
+      <a data-level="2">Tasks</a>
     </nav>
-    <article class="gotipe-page is-slice" lang="ru">
+    <article class="gotipe-page is-slice" lang="en">
       <div class="gotipe-doc">
-        <h2 class="is-hovered">Конфликты<span class="gotipe-heading-anchor" aria-hidden="true"><span class="gotipe-anchor-button"><svg class="gt-icon"><use href="#i-hash" /></svg></span></span><span class="gotipe-block-handle" aria-hidden="true"><span class="gotipe-handle-button"><svg class="gt-icon"><use href="#i-plus" /></svg></span><span class="gotipe-handle-button"><svg class="gt-icon"><use href="#i-grip" /></svg></span></span><svg class="at-pointer is-start"><use href="#i-pointer" /></svg></h2>
+        <h2 class="is-hovered">Conflicts<span class="gotipe-heading-anchor" aria-hidden="true"><span class="gotipe-anchor-button"><svg class="gt-icon"><use href="#i-hash" /></svg></span></span><span class="gotipe-block-handle" aria-hidden="true"><span class="gotipe-handle-button"><svg class="gt-icon"><use href="#i-plus" /></svg></span><span class="gotipe-handle-button"><svg class="gt-icon"><use href="#i-grip" /></svg></span></span><svg class="at-pointer is-start"><use href="#i-pointer" /></svg></h2>
         <p>
-          Конфликт решается по блокам: чужая правка блока не перезаписывает вашу, обе версии
-          остаются, ваша — предложением правки.
+          A conflict is resolved per block: someone else’s edit to a block doesn’t overwrite yours;
+          both versions stay, yours as a suggestion.
         </p>
-        <h3>Что видит автор<span class="gotipe-heading-anchor" aria-hidden="true"><span class="gotipe-anchor-button"><svg class="gt-icon"><use href="#i-hash" /></svg></span></span></h3>
+        <h3>What the author sees<span class="gotipe-heading-anchor" aria-hidden="true"><span class="gotipe-anchor-button"><svg class="gt-icon"><use href="#i-hash" /></svg></span></span></h3>
         <p>
-          Блок, изменённый только у вас, сохраняется без вопросов. Изменённый у обоих приходит
-          предложением правки, удалённый на сервере — тостом «Блок удалён».
+          A block changed only by you is saved without questions. One changed by both arrives as a
+          suggestion; one deleted on the server, as a “Block deleted” toast.
         </p>
       </div>
     </article>
   </div>
   <!-- @end -->
-  <!-- @frame frame=docs-anchor view=docs w=1024 label="указатель на якоре" -->
+  <!-- @frame frame=docs-anchor view=docs w=1024 label="pointer on the anchor" -->
   <div class="gotipe-docs">
-    <nav class="gotipe-outline" aria-label="Оглавление">
-      <p class="gotipe-outline-title">На этой странице</p>
-      <a>Как это работает</a>
-      <a data-level="2">Что меняется</a>
-      <a data-level="3">Порядок выката</a>
-      <a data-level="2" class="is-current">Конфликты</a>
-      <a data-level="3">Что видит автор</a>
-      <a data-level="2">Задачи</a>
+    <nav class="gotipe-outline" aria-label="Page outline">
+      <p class="gotipe-outline-title">On this page</p>
+      <a>How it works</a>
+      <a data-level="2">What changes</a>
+      <a data-level="3">Rollout order</a>
+      <a data-level="2" class="is-current">Conflicts</a>
+      <a data-level="3">What the author sees</a>
+      <a data-level="2">Tasks</a>
     </nav>
-    <article class="gotipe-page is-slice" lang="ru">
+    <article class="gotipe-page is-slice" lang="en">
       <div class="gotipe-doc">
-        <h2 class="is-hovered">Конфликты<span class="gotipe-heading-anchor" aria-hidden="true"><span class="gotipe-anchor-button is-hover"><svg class="gt-icon"><use href="#i-hash" /></svg><span class="gotipe-tooltip" data-place="above">Скопировать ссылку</span><svg class="at-pointer"><use href="#i-pointer" /></svg></span></span><span class="gotipe-block-handle" aria-hidden="true"><span class="gotipe-handle-button"><svg class="gt-icon"><use href="#i-plus" /></svg></span><span class="gotipe-handle-button"><svg class="gt-icon"><use href="#i-grip" /></svg></span></span></h2>
+        <h2 class="is-hovered">Conflicts<span class="gotipe-heading-anchor" aria-hidden="true"><span class="gotipe-anchor-button is-hover"><svg class="gt-icon"><use href="#i-hash" /></svg><span class="gotipe-tooltip" data-place="above">Copy link</span><svg class="at-pointer"><use href="#i-pointer" /></svg></span></span><span class="gotipe-block-handle" aria-hidden="true"><span class="gotipe-handle-button"><svg class="gt-icon"><use href="#i-plus" /></svg></span><span class="gotipe-handle-button"><svg class="gt-icon"><use href="#i-grip" /></svg></span></span></h2>
         <p>
-          Конфликт решается по блокам: чужая правка блока не перезаписывает вашу, обе версии
-          остаются, ваша — предложением правки.
+          A conflict is resolved per block: someone else’s edit to a block doesn’t overwrite yours;
+          both versions stay, yours as a suggestion.
         </p>
-        <h3>Что видит автор<span class="gotipe-heading-anchor" aria-hidden="true"><span class="gotipe-anchor-button"><svg class="gt-icon"><use href="#i-hash" /></svg></span></span></h3>
+        <h3>What the author sees<span class="gotipe-heading-anchor" aria-hidden="true"><span class="gotipe-anchor-button"><svg class="gt-icon"><use href="#i-hash" /></svg></span></span></h3>
         <p>
-          Блок, изменённый только у вас, сохраняется без вопросов. Изменённый у обоих приходит
-          предложением правки, удалённый на сервере — тостом «Блок удалён».
+          A block changed only by you is saved without questions. One changed by both arrives as a
+          suggestion; one deleted on the server, as a “Block deleted” toast.
         </p>
       </div>
     </article>
   </div>
   <!-- @end -->
-  <!-- @frame frame=docs-375 view=docs w=375 label="касание заголовка: ручка в поле 56" -->
+  <!-- @frame frame=docs-375 view=docs w=375 label="heading touched: handle in the 56 margin" -->
   <div class="gotipe-docs">
-    <article class="gotipe-page is-scrolled" lang="ru">
+    <article class="gotipe-page is-scrolled" lang="en">
       <div class="gotipe-doc">
-        <h2>Конфликты<span class="gotipe-heading-anchor" aria-hidden="true"><span class="gotipe-anchor-button"><svg class="gt-icon"><use href="#i-hash" /></svg></span></span></h2>
-        <p>Конфликт решается по блокам: чужая правка блока не перезаписывает вашу.</p>
-        <h3 class="is-hovered">Что видит автор, когда блок изменён<span class="gotipe-caret"></span> у обоих<span class="gotipe-heading-anchor" aria-hidden="true"><span class="gotipe-anchor-button"><svg class="gt-icon"><use href="#i-hash" /></svg></span></span><span class="gotipe-block-handle" aria-hidden="true"><span class="gotipe-handle-button"><svg class="gt-icon"><use href="#i-plus" /></svg></span><span class="gotipe-handle-button"><svg class="gt-icon"><use href="#i-grip" /></svg></span></span></h3>
+        <h2>Conflicts<span class="gotipe-heading-anchor" aria-hidden="true"><span class="gotipe-anchor-button"><svg class="gt-icon"><use href="#i-hash" /></svg></span></span></h2>
+        <p>A conflict is resolved per block: someone else’s edit to a block doesn’t overwrite yours.</p>
+        <h3 class="is-hovered">What the author sees when a block is changed<span class="gotipe-caret"></span> by both<span class="gotipe-heading-anchor" aria-hidden="true"><span class="gotipe-anchor-button"><svg class="gt-icon"><use href="#i-hash" /></svg></span></span><span class="gotipe-block-handle" aria-hidden="true"><span class="gotipe-handle-button"><svg class="gt-icon"><use href="#i-plus" /></svg></span><span class="gotipe-handle-button"><svg class="gt-icon"><use href="#i-grip" /></svg></span></span></h3>
         <p>
-          Обе версии остаются: ваша приходит предложением правки, его можно принять или
-          отклонить.
+          Both versions stay: yours arrives as a suggestion that can be accepted or rejected.
         </p>
-        <h3>Порядок выката<span class="gotipe-heading-anchor" aria-hidden="true"><span class="gotipe-anchor-button"><svg class="gt-icon"><use href="#i-hash" /></svg></span></span></h3>
+        <h3>Rollout order<span class="gotipe-heading-anchor" aria-hidden="true"><span class="gotipe-anchor-button"><svg class="gt-icon"><use href="#i-hash" /></svg></span></span></h3>
         <ol class="gotipe-list">
-          <li>Включить журнал для 5 % пользователей веб-версии.</li>
-          <li>Открыть всем, начиная с приложения для macOS.</li>
+          <li>Turn the log on for 5% of web users.</li>
+          <li>Open to everyone, starting with the macOS app.</li>
         </ol>
       </div>
     </article>

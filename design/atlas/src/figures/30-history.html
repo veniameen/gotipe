@@ -1,168 +1,166 @@
-<figure class="at-figure" id="f30" data-section="Новые возможности">
+<figure class="at-figure" id="f30" data-section="New features">
   <figcaption class="at-figure-head">
     <span class="at-num">30</span>
-    <h2 class="at-figure-title">История версий</h2>
+    <h2 class="at-figure-title">Version history</h2>
     <p class="at-caption">
-      Панель библиотеки: версии по дням — автор, время, сколько слов добавлено и убрано; страница
-      сравнивает выбранную версию с текущей по блокам — черта в поле: добавлен, удалён, изменён.
-      «Восстановить» отвечает тостом с отменой; на телефоне список и сравнение — два экрана.
+      Library panel: versions by day, with author, time, and how many words were added and removed; the page compares the chosen version with the current one block by block, with a rule in the margin: added, removed, changed. “Restore” answers with a toast with undo; on a phone the list and the comparison are two screens.
     </p>
   </figcaption>
-  <!-- @frame frame=history view=notion w=1024 label="сравнение с текущей" -->
+  <!-- @frame frame=history view=notion w=1024 label="comparison with the current version" -->
   <div class="gotipe-history">
     <div class="gotipe-history-main">
       <div class="gotipe-version-head gotipe-history-head">
         <span class="gotipe-tool gotipe-history-back"><svg class="gt-icon"><use href="#i-chevron-left" /></svg></span
-        ><span class="gotipe-review-title">Выпуск 2.8</span
+        ><span class="gotipe-review-title">Release 2.8</span
         ><span class="gotipe-history-facts"
-          ><span class="gotipe-review-fact">10 ноября, 18:40</span
-          ><span class="gotipe-diff-stat"><span class="is-add">+2</span> · <span class="is-del">−1</span> · <span class="is-change">1 изменён</span></span></span
+          ><span class="gotipe-review-fact">November 10, 18:40</span
+          ><span class="gotipe-diff-stat"><span class="is-add">+2</span> · <span class="is-del">−1</span> · <span class="is-change">1 changed</span></span></span
         ><span class="gotipe-tool-spacer"></span
-        ><span class="gotipe-button is-primary"><svg class="gt-icon"><use href="#i-restore" /></svg>Восстановить</span>
+        ><span class="gotipe-button is-primary"><svg class="gt-icon"><use href="#i-restore" /></svg>Restore</span>
       </div>
-      <article class="gotipe-page is-scrolled" lang="ru">
+      <article class="gotipe-page is-scrolled" lang="en">
         <div class="gotipe-doc">
-          <h3>Порядок выката</h3>
-          <p>Журнал включают по шагам, каждый — после недели наблюдения.</p>
+          <h3>Rollout order</h3>
+          <p>The log is enabled in steps, each after a week of observation.</p>
           <ol class="gotipe-list">
             <li data-diff="changed">
-              Включить журнал для <span class="gotipe-delete">10 %</span
-              ><span class="gotipe-insert">5 %</span> пользователей веб-версии.
+              Enable the log for <span class="gotipe-delete">10%</span
+              ><span class="gotipe-insert">5%</span> of web users.
             </li>
-            <li>Неделю сравнивать долю потерянных правок с контрольной группой.</li>
-            <li data-diff="added">Открыть всем, начиная с приложения для macOS.</li>
+            <li>Compare the share of lost edits with the control group for a week.</li>
+            <li data-diff="added">Open to everyone, starting with the macOS app.</li>
           </ol>
-          <p data-diff="removed">Шифрование черновика — после выпуска.</p>
-          <p data-diff="added">Черновик шифруется ключом сессии с первого дня.</p>
-          <p>Возражения принимаем до 18 ноября — в обсуждении ADR-0031.</p>
+          <p data-diff="removed">Draft encryption comes after the release.</p>
+          <p data-diff="added">The draft is encrypted with the session key from day one.</p>
+          <p>We take objections until November 18, in the ADR-0031 discussion.</p>
         </div>
       </article>
     </div>
-    <aside class="gotipe-panel" aria-label="История версий">
+    <aside class="gotipe-panel" aria-label="History">
       <div class="gotipe-panel-head">
-        <p class="gotipe-panel-title">История</p>
+        <p class="gotipe-panel-title">History</p>
         <span class="gotipe-tool-spacer"></span>
         <span class="gotipe-tool"><svg class="gt-icon"><use href="#i-x" /></svg></span>
       </div>
-      <p class="gotipe-history-day">Сегодня</p>
+      <p class="gotipe-history-day">Today</p>
       <div class="gotipe-history-item">
-        <span class="gotipe-version-name">Текущая</span
+        <span class="gotipe-version-name">Current</span
         ><span class="gotipe-diff-stat"><span class="is-add">+38</span> <span class="is-del">−4</span></span
-        ><span class="gotipe-version-meta"><span class="gotipe-avatar" data-person="2">МЛ</span>14:32 · Мария Лебедева</span>
+        ><span class="gotipe-version-meta"><span class="gotipe-avatar" data-person="2">ML</span>14:32 · Maria Lebedeva</span>
       </div>
       <div class="gotipe-history-item">
-        <span class="gotipe-version-name">Автосохранение</span
+        <span class="gotipe-version-name">Auto-save</span
         ><span class="gotipe-diff-stat"><span class="is-add">+6</span> <span class="is-del">−15</span></span
-        ><span class="gotipe-version-meta"><span class="gotipe-avatar" data-person="1">ИО</span>11:05 · Илья Орлов</span>
+        ><span class="gotipe-version-meta"><span class="gotipe-avatar" data-person="1">IO</span>11:05 · Ilya Orlov</span>
       </div>
-      <p class="gotipe-history-day">Вчера</p>
+      <p class="gotipe-history-day">Yesterday</p>
       <div class="gotipe-history-item is-current">
-        <span class="gotipe-version-name">Выпуск 2.8</span
+        <span class="gotipe-version-name">Release 2.8</span
         ><span class="gotipe-diff-stat"><span class="is-add">+124</span> <span class="is-del">−30</span></span
-        ><span class="gotipe-version-meta"><span class="gotipe-avatar" data-person="1">ИО</span>18:40 · Илья Орлов</span>
+        ><span class="gotipe-version-meta"><span class="gotipe-avatar" data-person="1">IO</span>18:40 · Ilya Orlov</span>
       </div>
       <div class="gotipe-history-item">
-        <span class="gotipe-version-name">Автосохранение</span
+        <span class="gotipe-version-name">Auto-save</span
         ><span class="gotipe-diff-stat"><span class="is-add">+12</span></span
-        ><span class="gotipe-version-meta"><span class="gotipe-avatar" data-person="3">АК</span>12:05 · Анна Ковалёва</span>
+        ><span class="gotipe-version-meta"><span class="gotipe-avatar" data-person="3">AK</span>12:05 · Anna Kovaleva</span>
       </div>
-      <p class="gotipe-history-day">7 ноября</p>
+      <p class="gotipe-history-day">November 7</p>
       <div class="gotipe-history-item">
-        <span class="gotipe-version-name">Черновик для ревью</span
+        <span class="gotipe-version-name">Draft for review</span
         ><span class="gotipe-diff-stat"><span class="is-add">+540</span></span
-        ><span class="gotipe-version-meta"><span class="gotipe-avatar" data-person="2">МЛ</span>16:20 · Мария Лебедева</span>
+        ><span class="gotipe-version-meta"><span class="gotipe-avatar" data-person="2">ML</span>16:20 · Maria Lebedeva</span>
       </div>
     </aside>
   </div>
   <!-- @end -->
-  <!-- @frame frame=history-restored view=notion w=1024 label="восстановлено, можно отменить" -->
+  <!-- @frame frame=history-restored view=notion w=1024 label="restored, can be undone" -->
   <div class="gotipe-history">
     <div class="gotipe-history-main">
       <div class="gotipe-toast is-done" role="status">
-        <svg class="gt-icon"><use href="#i-restore" /></svg>Восстановлена версия «Выпуск 2.8»<span class="gotipe-button"
-          >Отменить<span class="gotipe-key">⌘Z</span></span
+        <svg class="gt-icon"><use href="#i-restore" /></svg>Restored version “Release 2.8”<span class="gotipe-button"
+          >Undo<span class="gotipe-key">⌘Z</span></span
         >
       </div>
       <div class="gotipe-version-head gotipe-history-head">
         <span class="gotipe-tool gotipe-history-back"><svg class="gt-icon"><use href="#i-chevron-left" /></svg></span
-        ><span class="gotipe-review-title">Текущая</span
-        ><span class="gotipe-history-facts"><span class="gotipe-review-fact">сейчас</span></span>
+        ><span class="gotipe-review-title">Current</span
+        ><span class="gotipe-history-facts"><span class="gotipe-review-fact">now</span></span>
       </div>
-      <article class="gotipe-page is-scrolled" lang="ru">
+      <article class="gotipe-page is-scrolled" lang="en">
         <div class="gotipe-doc">
-          <h3>Порядок выката</h3>
-          <p>Журнал включают по шагам, каждый — после недели наблюдения.</p>
+          <h3>Rollout order</h3>
+          <p>The log is enabled in steps, each after a week of observation.</p>
           <ol class="gotipe-list">
-            <li>Включить журнал для 10 % пользователей веб-версии.</li>
-            <li>Неделю сравнивать долю потерянных правок с контрольной группой.</li>
+            <li>Enable the log for 10% of web users.</li>
+            <li>Compare the share of lost edits with the control group for a week.</li>
           </ol>
-          <p>Шифрование черновика — после выпуска.</p>
-          <p>Возражения принимаем до 18 ноября — в обсуждении ADR-0031.</p>
+          <p>Draft encryption comes after the release.</p>
+          <p>We take objections until November 18, in the ADR-0031 discussion.</p>
         </div>
       </article>
     </div>
-    <aside class="gotipe-panel" aria-label="История версий">
+    <aside class="gotipe-panel" aria-label="History">
       <div class="gotipe-panel-head">
-        <p class="gotipe-panel-title">История</p>
+        <p class="gotipe-panel-title">History</p>
         <span class="gotipe-tool-spacer"></span>
         <span class="gotipe-tool"><svg class="gt-icon"><use href="#i-x" /></svg></span>
       </div>
-      <p class="gotipe-history-day">Сегодня</p>
+      <p class="gotipe-history-day">Today</p>
       <div class="gotipe-history-item is-current">
-        <span class="gotipe-version-name">Возврат к «Выпуск 2.8»</span
+        <span class="gotipe-version-name">Back to “Release 2.8”</span
         ><span class="gotipe-diff-stat"><span class="is-add">+30</span> <span class="is-del">−162</span></span
-        ><span class="gotipe-version-meta"><span class="gotipe-avatar" data-person="2">МЛ</span>14:35 · Мария Лебедева</span>
+        ><span class="gotipe-version-meta"><span class="gotipe-avatar" data-person="2">ML</span>14:35 · Maria Lebedeva</span>
       </div>
       <div class="gotipe-history-item">
-        <span class="gotipe-version-name">До восстановления</span
+        <span class="gotipe-version-name">Before restore</span
         ><span class="gotipe-diff-stat"><span class="is-add">+38</span> <span class="is-del">−4</span></span
-        ><span class="gotipe-version-meta"><span class="gotipe-avatar" data-person="2">МЛ</span>14:32 · Мария Лебедева</span>
+        ><span class="gotipe-version-meta"><span class="gotipe-avatar" data-person="2">ML</span>14:32 · Maria Lebedeva</span>
       </div>
       <div class="gotipe-history-item">
-        <span class="gotipe-version-name">Автосохранение</span
+        <span class="gotipe-version-name">Auto-save</span
         ><span class="gotipe-diff-stat"><span class="is-add">+6</span> <span class="is-del">−15</span></span
-        ><span class="gotipe-version-meta"><span class="gotipe-avatar" data-person="1">ИО</span>11:05 · Илья Орлов</span>
+        ><span class="gotipe-version-meta"><span class="gotipe-avatar" data-person="1">IO</span>11:05 · Ilya Orlov</span>
       </div>
-      <p class="gotipe-history-day">Вчера</p>
+      <p class="gotipe-history-day">Yesterday</p>
       <div class="gotipe-history-item">
-        <span class="gotipe-version-name">Выпуск 2.8</span
+        <span class="gotipe-version-name">Release 2.8</span
         ><span class="gotipe-diff-stat"><span class="is-add">+124</span> <span class="is-del">−30</span></span
-        ><span class="gotipe-version-meta"><span class="gotipe-avatar" data-person="1">ИО</span>18:40 · Илья Орлов</span>
+        ><span class="gotipe-version-meta"><span class="gotipe-avatar" data-person="1">IO</span>18:40 · Ilya Orlov</span>
       </div>
     </aside>
   </div>
   <!-- @end -->
-  <!-- @frame frame=history-phone view=notion w=375 label="сравнение на телефоне" -->
+  <!-- @frame frame=history-phone view=notion w=375 label="comparison on a phone" -->
   <div class="gotipe-history">
     <div class="gotipe-history-main">
       <div class="gotipe-version-head gotipe-history-head">
         <span class="gotipe-tool gotipe-history-back"><svg class="gt-icon"><use href="#i-chevron-left" /></svg></span
-        ><span class="gotipe-review-title">Выпуск 2.8</span
+        ><span class="gotipe-review-title">Release 2.8</span
         ><span class="gotipe-history-facts"
-          ><span class="gotipe-review-fact">10 ноября, 18:40</span
-          ><span class="gotipe-diff-stat"><span class="is-add">+2</span> · <span class="is-del">−1</span> · <span class="is-change">1 изменён</span></span></span
+          ><span class="gotipe-review-fact">November 10, 18:40</span
+          ><span class="gotipe-diff-stat"><span class="is-add">+2</span> · <span class="is-del">−1</span> · <span class="is-change">1 changed</span></span></span
         ><span class="gotipe-tool-spacer"></span
-        ><span class="gotipe-button is-primary"><svg class="gt-icon"><use href="#i-restore" /></svg>Восстановить</span>
+        ><span class="gotipe-button is-primary"><svg class="gt-icon"><use href="#i-restore" /></svg>Restore</span>
       </div>
-      <article class="gotipe-page is-scrolled" lang="ru">
+      <article class="gotipe-page is-scrolled" lang="en">
         <div class="gotipe-doc">
-          <h3>Порядок выката</h3>
-          <p>Журнал включают по шагам, каждый — после недели наблюдения.</p>
+          <h3>Rollout order</h3>
+          <p>The log is enabled in steps, each after a week of observation.</p>
           <ol class="gotipe-list">
             <li data-diff="changed">
-              Включить журнал для <span class="gotipe-delete">10 %</span
-              ><span class="gotipe-insert">5 %</span> пользователей веб-версии.
+              Enable the log for <span class="gotipe-delete">10%</span
+              ><span class="gotipe-insert">5%</span> of web users.
             </li>
-            <li>Неделю сравнивать долю потерянных правок с контрольной группой.</li>
-            <li data-diff="added">Открыть всем, начиная с приложения для macOS.</li>
+            <li>Compare the share of lost edits with the control group for a week.</li>
+            <li data-diff="added">Open to everyone, starting with the macOS app.</li>
           </ol>
-          <p data-diff="removed">Шифрование черновика — после выпуска.</p>
-          <p data-diff="added">Черновик шифруется ключом сессии с первого дня.</p>
+          <p data-diff="removed">Draft encryption comes after the release.</p>
+          <p data-diff="added">The draft is encrypted with the session key from day one.</p>
         </div>
       </article>
     </div>
-    <aside class="gotipe-panel" aria-label="История версий">
-      <div class="gotipe-panel-head"><p class="gotipe-panel-title">История</p></div>
+    <aside class="gotipe-panel" aria-label="History">
+      <div class="gotipe-panel-head"><p class="gotipe-panel-title">History</p></div>
     </aside>
   </div>
   <!-- @end -->
