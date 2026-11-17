@@ -128,8 +128,8 @@ fn unicode_property_ranges_match_the_legacy_classifier() {
         include_bytes!("data/space.bin").as_slice(),
         include_bytes!("data/word.bin").as_slice(),
     ] {
-        for bytes in data.chunks_exact(4) {
-            let value = u32::from_le_bytes(bytes.try_into().unwrap());
+        for bytes in data.as_chunks::<4>().0 {
+            let value = u32::from_le_bytes(*bytes);
             scalars.extend([value.saturating_sub(1), value, value + 1]);
         }
     }
