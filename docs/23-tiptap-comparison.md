@@ -1,7 +1,7 @@
 # 23 — GoTipe против Tiptap: что есть, чего нет, что делать
 
 Состояние на 2026-11-12. Tiptap смотрели на живых tiptap.dev и tiptap.dev/docs,
-GoTipe — по коду `main` (e6f869c). Полная выписка по Tiptap со ссылками лежит
+GoTipe — по коду `main` (c45dd4c). Полная выписка по Tiptap со ссылками лежит
 локально: `output/research/tiptap-inventory-20261112.md` (вне Git).
 
 ## Tiptap сейчас
