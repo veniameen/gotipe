@@ -2,12 +2,13 @@ import type { CSSProperties } from "react";
 import { Badge } from "../site/badge";
 import { Icon, type IconName } from "../site/icon";
 import { MarkdownMock, PairMock, TransactionMock } from "./bento/mocks";
+import { PartIcon, type PartIconName } from "./part-icons";
 
 type Licence = "MIT" | "Commercial";
 
-const FEATURES: { icon: IconName; licence: Licence; title: string; text: string }[] = [
+const FEATURES: { icon: PartIconName; licence: Licence; title: string; text: string }[] = [
   {
-    icon: "edit",
+    icon: "block",
     licence: "Commercial",
     title: "Block editor",
     text: "Slash menu, drag handle, bubble toolbar, tables and media.",
@@ -19,37 +20,37 @@ const FEATURES: { icon: IconName; licence: Licence; title: string; text: string 
     text: "A Markdown page with comments in the margin.",
   },
   {
-    icon: "comment",
+    icon: "comments",
     licence: "MIT",
     title: "Comments and suggestions",
     text: "Anchored threads and tracked changes.",
   },
   {
-    icon: "restore",
+    icon: "versions",
     licence: "MIT",
     title: "Versions",
     text: "Snapshots, block-level compare, a restore you can undo.",
   },
   {
-    icon: "sparkle",
+    icon: "ai",
     licence: "MIT",
     title: "AI layer",
     text: "Your model: streaming, cancel, proofreading.",
   },
   {
-    icon: "download",
+    icon: "export",
     licence: "MIT",
     title: "PDF and DOCX",
     text: "Our own writers, in the browser or on the server.",
   },
   {
-    icon: "swap",
+    icon: "migration",
     licence: "MIT",
     title: "Migration",
     text: "ProseMirror, Tiptap, Slate and Lexical JSON.",
   },
   {
-    icon: "palette",
+    icon: "views",
     licence: "Commercial",
     title: "Views and themes",
     text: "Four looks, light and dark, your CSS variables.",
@@ -79,12 +80,15 @@ function TileTop({ icon, licence }: { icon: IconName; licence: Licence }) {
 }
 
 /**
- * «Everything you need. Nothing in your way.»: three tiles with their live pictures, then the nine
- * parts of the stack. Light follows the pointer over the cards (motion/controller.tsx).
+ * «Everything you need. Nothing in your way.»: a collaborator at work in the title (her caret and
+ * name, a phrase selected, the bubble toolbar over it); light lines down the page's left margin; three night
+ * tiles with their live pictures, a light behind them coming through the gaps; then the nine parts
+ * of the stack. Light follows the pointer over the cards (motion/controller.tsx).
  */
 export function Features() {
   return (
     <section className="site-section is-features" aria-labelledby="site-features-title">
+      <span className="site-lines" aria-hidden="true" />
       <div className="site-wrap">
         <div className="site-head-row" data-reveal>
           <div>
@@ -93,16 +97,29 @@ export function Features() {
               Everything you need.
               <br />
               Nothing in your way.
+              <span className="site-co-caret" aria-hidden="true">
+                <span className="site-co-flag">Ana</span>
+              </span>
             </h2>
           </div>
           <p className="site-sub">
-            The engine and every service around it are open source. Only the ready-made interface
-            has a commercial license.
+            The engine and every service around it are{" "}
+            <span className="site-co-pick">
+              open source
+              <span className="site-co-bar" aria-hidden="true">
+                <Icon name="bold" />
+                <Icon name="italic" />
+                <Icon name="link" />
+                <Icon name="comment" />
+              </span>
+            </span>
+            . Only the ready-made interface has a commercial license.
           </p>
         </div>
 
-        <div className="site-bento" data-glow>
+        <div className="site-bento" data-glow data-theme="dark">
           <article className="site-tile is-engine" data-glow-card data-reveal style={order(0)}>
+            <span className="site-tile-light" aria-hidden="true" />
             <TileTop icon="braces" licence="MIT" />
             <h3>An engine. Not a wrapper.</h3>
             <p>
@@ -112,6 +129,7 @@ export function Features() {
             <TransactionMock />
           </article>
           <article className="site-tile is-markdown" data-glow-card data-reveal style={order(1)}>
+            <span className="site-tile-light" aria-hidden="true" />
             <TileTop icon="page" licence="MIT" />
             <h3>Your Markdown stays yours.</h3>
             <p>
@@ -127,6 +145,7 @@ export function Features() {
             data-play
             style={order(2)}
           >
+            <span className="site-tile-light" aria-hidden="true" />
             <div>
               <TileTop icon="nodes" licence="MIT" />
               <h3>Better, together.</h3>
@@ -149,9 +168,7 @@ export function Features() {
               style={order(index % 3)}
             >
               <div className="site-feature-top">
-                <span className="site-icon-box">
-                  <Icon name={feature.icon} />
-                </span>
+                <PartIcon name={feature.icon} />
                 <Badge licence={feature.licence} />
               </div>
               <h3>{feature.title}</h3>

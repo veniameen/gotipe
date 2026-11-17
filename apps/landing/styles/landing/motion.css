@@ -114,7 +114,90 @@
   }
 }
 
+@keyframes site-pulse-down {
+  from {
+    transform: translateY(-100%);
+  }
+  to {
+    transform: translateY(var(--site-lines-run-to));
+  }
+}
+
+@keyframes site-co-blink {
+  50% {
+    background-color: transparent;
+  }
+}
+@keyframes site-co-bob {
+  50% {
+    transform: translateY(var(--site-co-bob));
+  }
+}
+@keyframes site-pop {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(var(--site-space-1)) scale(0.96);
+  }
+}
+
+@keyframes site-hand-turn {
+  to {
+    transform: rotate(calc(var(--site-engine-hand-at) + 1turn));
+  }
+}
+
+/* the round of light over the editor beneath the stage glides after the pointer */
+@property --site-ghost-x {
+  syntax: "<length-percentage>";
+  inherits: false;
+  initial-value: 50%;
+}
+@property --site-ghost-y {
+  syntax: "<length-percentage>";
+  inherits: false;
+  initial-value: 30%;
+}
+
 @media (prefers-reduced-motion: no-preference) {
+  .site-ghost {
+    transition: opacity var(--site-dur-4) var(--site-ease), --site-ghost-x var(--site-ghost-follow)
+      var(--site-ease-out), --site-ghost-y var(--site-ghost-follow) var(--site-ease-out);
+  }
+  /* the collaborator in the title: her caret blinks, her name floats; when the head comes into
+     view a phrase is selected and the toolbar comes up over it */
+  .site-co-caret {
+    animation: site-co-blink var(--site-caret-blink) step-end infinite;
+  }
+  .site-co-flag {
+    animation: site-co-bob var(--site-co-float) ease-in-out infinite;
+  }
+  html[data-motion] [data-reveal]:not([data-revealed]) .site-co-pick {
+    background-size: 0% 100%;
+  }
+  html[data-motion] [data-reveal]:not([data-revealed]) .site-co-bar {
+    opacity: 0;
+  }
+  [data-revealed] .site-co-pick {
+    animation: site-grow var(--site-dur-3) var(--site-ease-out) var(--site-co-select-at) both;
+  }
+  [data-revealed] .site-co-bar {
+    animation: site-pop var(--site-dur-2) var(--site-ease-out) var(--site-co-bar-at) both;
+  }
+  /* the engine's hands turn slowly while the band is on screen */
+  .site-engine-hand {
+    animation: site-hand-turn var(--site-engine-turn) linear infinite;
+  }
+  .site-engine-hand.is-short {
+    animation-duration: var(--site-engine-turn-short);
+  }
+  /* light runs down two of the margin's lines */
+  .site-lines::before {
+    animation: site-pulse-down var(--site-lines-run) var(--site-ease) infinite;
+  }
+  .site-lines::after {
+    animation: site-pulse-down var(--site-lines-run-2) var(--site-ease) var(--site-lines-delay)
+      infinite;
+  }
   /* ---- the first stage comes in on load: CSS alone, before any script ---- */
   .site-hero-copy > .site-chip,
   .site-hero-line,

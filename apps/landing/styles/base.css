@@ -123,6 +123,24 @@ body {
   white-space: nowrap;
 }
 
+/* ---- a new theme opens as a circle from the control that turned it (use-theme-toggle.ts) ---- */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+::view-transition-new(root) {
+  animation: site-theme-reveal var(--site-theme-reveal) var(--site-ease-out);
+}
+@keyframes site-theme-reveal {
+  from {
+    clip-path: circle(0 at var(--site-theme-x) var(--site-theme-y));
+  }
+  to {
+    clip-path: circle(var(--site-theme-reach) at var(--site-theme-x) var(--site-theme-y));
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

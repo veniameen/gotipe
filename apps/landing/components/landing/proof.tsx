@@ -14,19 +14,26 @@ export function Proof() {
         </div>
         <div className="site-facts">
           <p className="site-fact">
-            <strong data-count>{FACTS.BROWSER_SCENARIOS}</strong>browser scenarios in Chromium,
-            Firefox and WebKit
+            <strong className="site-ink" data-count>
+              {FACTS.BROWSER_SCENARIOS}
+            </strong>
+            browser scenarios in Chromium, Firefox and WebKit
           </p>
           <p className="site-fact">
-            <strong data-count>{FACTS.COMMONMARK}</strong>CommonMark examples parsed like the
-            reference
+            <strong className="site-ink" data-count>
+              {FACTS.COMMONMARK}
+            </strong>
+            CommonMark examples parsed like the reference
           </p>
           <p className="site-fact">
-            <strong data-count>{FACTS.JS_ENGINE_GZIP}</strong>gzip for the JavaScript engine with
-            Markdown
+            <strong className="site-ink" data-count>
+              {FACTS.JS_ENGINE_GZIP}
+            </strong>
+            gzip for the JavaScript engine with Markdown
           </p>
           <p className="site-fact">
-            <strong className="site-accent">0</strong>third-party runtime dependencies in the engine
+            <strong className="site-ink is-accent">0</strong>third-party runtime dependencies in the
+            engine
           </p>
         </div>
       </div>

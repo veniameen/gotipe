@@ -4,17 +4,17 @@ import Link from "next/link";
 import { useCallback, useId, useMemo, useRef, useState } from "react";
 import { Icon } from "./icon";
 import { LINKS, type NavLink } from "./links";
-import { MODE_LABEL, THEME_MODES } from "./theme-state";
 import { useDismiss } from "./use-dismiss";
-import { useThemeMode } from "./use-theme-mode";
+import { useThemeToggle } from "./use-theme-toggle";
 
 /**
  * The menu button of narrow screens (the Atlas folds the navigation behind it below 1024 px):
- * a disclosure with the head's links, GitHub and the theme, which the phone head has no room for.
+ * a disclosure with the head's links, GitHub and the theme as one switch, which the phone head has
+ * no room for.
  */
 export function NavMenu({ links }: { links: NavLink[] }) {
   const [open, setOpen] = useState(false);
-  const [mode, setMode] = useThemeMode();
+  const { dark, toggle } = useThemeToggle();
   const button = useRef<HTMLButtonElement>(null);
   const panel = useRef<HTMLDivElement>(null);
   const parts = useMemo(() => [button, panel], []);
@@ -63,20 +63,17 @@ export function NavMenu({ links }: { links: NavLink[] }) {
             <Icon name="external" />
           </a>
         </nav>
-        <fieldset className="site-menu-themes">
-          <legend className="site-label">Theme</legend>
-          {THEME_MODES.map((item) => (
-            <button
-              key={item}
-              type="button"
-              className="site-menu-theme"
-              aria-pressed={mode === item}
-              onClick={() => setMode(item)}
-            >
-              {MODE_LABEL[item]}
-            </button>
-          ))}
-        </fieldset>
+        <div className="site-menu-switch">
+          <button
+            type="button"
+            className="site-menu-item"
+            aria-pressed={dark ?? undefined}
+            onClick={(event) => toggle(event.currentTarget)}
+          >
+            Dark theme
+            <span className="site-switch" aria-hidden="true" />
+          </button>
+        </div>
       </div>
     </>
   );

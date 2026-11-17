@@ -1,8 +1,10 @@
 import Link from "next/link";
 import { CopyButton } from "../site/copy-button";
 import { Icon } from "../site/icon";
+import { Catch, Lamp } from "../site/lamp";
 import { LINKS } from "../site/links";
 import { HeroBackground } from "./motion/hero-background";
+import { HeroGhost } from "./motion/hero-ghost";
 import { SignatureLive } from "./signature-live";
 
 const INSTALL = "npm i @gotipe/core @gotipe/react";
@@ -44,6 +46,7 @@ export function Hero() {
   return (
     <div className="site-frame">
       <section className="site-stage site-hero" aria-labelledby="site-hero-title">
+        <HeroGhost />
         <HeroBackground />
         <div className="site-wrap">
           <div className="site-hero-copy">
@@ -56,10 +59,16 @@ export function Hero() {
               <Icon name="arrow-right" />
             </Link>
             <h1 id="site-hero-title" className="site-hero-title">
-              <span className="site-hero-line">Your editor.</span>{" "}
-              <span className="site-hero-line">Your engine.</span>{" "}
+              <span className="site-hero-line">
+                <span className="site-ink">Your editor.</span>
+              </span>{" "}
+              <span className="site-hero-line">
+                <span className="site-ink">Your engine.</span>
+              </span>{" "}
               <span className="site-hero-line is-accent">
-                Your <span className="site-hero-select">rules.</span>
+                <span className="site-ink is-accent">
+                  Your <span className="site-hero-select">rules.</span>
+                </span>
                 <span className="site-hero-caret" aria-hidden="true" />
               </span>
             </h1>
@@ -68,17 +77,20 @@ export function Hero() {
               collaboration, and an interface that’s entirely yours.
             </p>
             <div className="site-actions">
-              <Link className="site-button site-cta" href={LINKS.docs}>
-                Start building
+              <Link className="site-button site-cta" href={LINKS.docs} data-lamp>
+                <Lamp />
+                <span>Start building</span>
                 <Icon name="arrow-right" />
               </Link>
               {LINKS.playground ? (
                 <a className="site-button site-cta is-second" href={LINKS.playground}>
+                  <Catch />
                   Try the playground
                   <Icon name="arrow-up-right" />
                 </a>
               ) : (
                 <a className="site-button site-cta is-second" href={LINKS.repo}>
+                  <Catch />
                   View on GitHub
                   <Icon name="arrow-up-right" />
                 </a>

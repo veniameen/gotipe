@@ -8,7 +8,6 @@ export type ThemeMode = "light" | "dark" | "system";
 export type ResolvedTheme = "light" | "dark";
 
 export const THEME_STORAGE_KEY = "gotipe-site-theme";
-export const THEME_MODES: readonly ThemeMode[] = ["light", "dark", "system"];
 const DARK_QUERY = "(prefers-color-scheme: dark)";
 
 /**
@@ -63,9 +62,3 @@ export function followSystem(onChange: (theme: ResolvedTheme) => void): () => vo
   query.addEventListener("change", change);
   return () => query.removeEventListener("change", change);
 }
-
-export const MODE_LABEL: Record<ThemeMode, string> = {
-  light: "Light",
-  dark: "Dark",
-  system: "System",
-};

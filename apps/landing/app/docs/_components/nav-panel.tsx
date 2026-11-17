@@ -2,7 +2,7 @@
 
 import { Icon } from "@/components/site/icon";
 import { LINKS } from "@/components/site/links";
-import { ThemeMenu } from "@/components/site/theme-menu";
+import { ThemeToggle } from "@/components/site/theme-toggle";
 import { usePathname } from "next/navigation";
 import {
   type ReactNode,
@@ -142,7 +142,7 @@ export function NavPanel({ children }: { children: ReactNode }) {
             >
               <Icon name="external" />
             </a>
-            <ThemeMenu />
+            <ThemeToggle />
             <button
               type="button"
               className="site-button is-quiet site-head-button is-icon site-drawer-close"

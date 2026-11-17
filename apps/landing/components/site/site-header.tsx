@@ -1,9 +1,10 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { Icon } from "./icon";
+import { Lamp } from "./lamp";
 import { LINKS, primaryNav } from "./links";
 import { NavMenu } from "./nav-menu";
-import { ThemeMenu } from "./theme-menu";
+import { ThemeToggle } from "./theme-toggle";
 
 /**
  * The mark, linking home. The docs head does not prefetch the landing: a docs reader rarely goes
@@ -53,9 +54,10 @@ export function SiteHeader() {
         </nav>
         <div className="site-head-end">
           <GitHubLink />
-          <ThemeMenu className="is-wide" />
-          <Link className="site-button site-cta site-head-button" href={LINKS.docs}>
-            Get started
+          <ThemeToggle className="is-wide" />
+          <Link className="site-button site-cta site-head-button" href={LINKS.docs} data-lamp>
+            <Lamp />
+            <span>Get started</span>
             <Icon name="arrow-right" />
           </Link>
           <NavMenu links={links} />
@@ -98,7 +100,7 @@ export function DocsHeader({ search, searchButton, menu }: DocsHeaderProps) {
             </a>
           )}
           <GitHubLink />
-          <ThemeMenu className="is-wide" />
+          <ThemeToggle className="is-wide" />
           {searchButton}
           {menu ?? <NavMenu links={links} />}
         </div>
