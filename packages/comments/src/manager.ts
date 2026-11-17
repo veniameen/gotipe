@@ -1,5 +1,12 @@
 import { type GoTipeEditor, GoTipeError, createId } from "@gotipe/core";
-import { captureRange, commentDecorations, resolveComment } from "./anchors";
+import {
+  type DocumentText,
+  captureRange,
+  commentDecorations,
+  documentText,
+  resolveComment,
+} from "./anchors";
+import { followChange } from "./follow";
 import { decodeCommentsSnapshot, nonempty } from "./persistence";
 import type {
   Comment,
@@ -19,6 +26,8 @@ export class CommentsManager {
   private destroyed = false;
   private cleanup: (() => void)[];
   private layer = `comments-${createId()}`;
+  /** The text the comments were last resolved in; the next update follows them from it. */
+  private resolvedIn: DocumentText | null = null;
 
   constructor(
     private editor: EditorPort,
@@ -53,34 +62,43 @@ export class CommentsManager {
       );
     }
   }
-  private refresh(): void {
+  private refresh(view?: DocumentText): void {
     if (this.destroyed || this.editor.isDestroyed) return;
-    const document = this.editor.getJSON();
+    const comments = Array.from(this.comments.values());
+    const text = comments.length ? (view ?? documentText(this.editor.getJSON())) : null;
     this.editor.setDecorations(
       this.layer,
-      Array.from(this.comments.values()).flatMap((comment) =>
-        commentDecorations(comment, document),
-      ),
+      text ? comments.flatMap((comment) => commentDecorations(comment, text)) : [],
     );
   }
-  private changed(): void {
-    this.refresh();
+  private changed(view?: DocumentText): void {
+    this.refresh(view);
     for (const listener of this.listeners) this.call(listener);
     this.call(() => this.options.onChange?.(this.exportState()));
   }
   private reanchor(): void {
     if (this.destroyed || this.editor.isDestroyed) return;
-    const document = this.editor.getJSON();
+    if (!this.comments.size) {
+      this.resolvedIn = null;
+      this.refresh();
+      return;
+    }
+    const view = documentText(this.editor.getJSON());
+    const change = this.resolvedIn && {
+      previous: this.resolvedIn,
+      follow: followChange(this.resolvedIn.text, view.text),
+    };
+    this.resolvedIn = view;
     let changed = false;
     for (const [id, comment] of this.comments) {
-      const next = resolveComment(comment, document);
+      const next = resolveComment(comment, view, change ?? undefined);
       if (JSON.stringify(next) !== JSON.stringify(comment)) {
         this.comments.set(id, next);
         changed = true;
       }
     }
-    if (changed) this.changed();
-    else this.refresh();
+    if (changed) this.changed(view);
+    else this.refresh(view);
   }
   subscribe(listener: () => void): () => void {
     this.assertLive();
@@ -91,9 +109,10 @@ export class CommentsManager {
     options: CommentRange & { authorId: string; authorName: string; content: string },
   ): Comment {
     this.assertLive();
+    const view = documentText(this.editor.getJSON());
     const comment: Comment = {
       id: createId(),
-      ...captureRange(this.editor.getJSON(), options),
+      ...captureRange(view, options),
       authorId: nonempty(options.authorId, "Author ID"),
       authorName: nonempty(options.authorName, "Author name"),
       content: nonempty(options.content, "Comment"),
@@ -102,7 +121,8 @@ export class CommentsManager {
       replies: [],
     };
     this.comments.set(comment.id, comment);
-    this.changed();
+    this.resolvedIn = view;
+    this.changed(view);
     this.editor.emit("commentAdded", comment.id);
     this.call(() => this.options.onAdd?.(structuredClone(comment)));
     return structuredClone(comment);
@@ -121,11 +141,13 @@ export class CommentsManager {
     this.assertLive();
     const comment = this.comments.get(id);
     if (!comment) return false;
-    Object.assign(comment, captureRange(this.editor.getJSON(), range), {
+    const view = documentText(this.editor.getJSON());
+    Object.assign(comment, captureRange(view, range), {
       endBlockId: range.endBlockId,
       updatedAt: new Date().toISOString(),
     });
-    this.changed();
+    this.resolvedIn = view;
+    this.changed(view);
     this.editor.emit("commentUpdated", id);
     return true;
   }
@@ -219,10 +241,11 @@ export class CommentsManager {
   loadState(value: unknown): void {
     this.assertLive();
     const snapshot = decodeCommentsSnapshot(value);
-    const document = this.editor.getJSON();
-    const comments = snapshot.comments.map((comment) => resolveComment(comment, document));
+    const view = documentText(this.editor.getJSON());
+    const comments = snapshot.comments.map((comment) => resolveComment(comment, view));
     this.comments = new Map(comments.map((comment) => [comment.id, comment]));
-    this.changed();
+    this.resolvedIn = view;
+    this.changed(view);
   }
   destroy(): void {
     if (this.destroyed) return;
@@ -231,6 +254,7 @@ export class CommentsManager {
     this.cleanup = [];
     if (!this.editor.isDestroyed) this.editor.setDecorations(this.layer, []);
     this.comments.clear();
+    this.resolvedIn = null;
     this.listeners.clear();
   }
 }

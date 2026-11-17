@@ -168,6 +168,108 @@ describe("owned comment lifecycle", () => {
   });
 });
 
+describe("a quote whose context is edited (D-290)", () => {
+  // The quote opens the second block, so its anchor context reaches into the first one.
+  async function draft() {
+    const editor = await createEditor({
+      extensions: [],
+      content: {
+        version: 1,
+        blocks: ["Discuss a draft", "Select a phrase to start a discussion."].map(
+          (text, index) => ({
+            id: index ? "b" : "a",
+            type: "paragraph",
+            attrs: {},
+            content: [{ text, marks: [] }],
+            children: [],
+          }),
+        ),
+      },
+    });
+    const manager = new CommentsManager(editor);
+    cleanup.push(() => {
+      manager.destroy();
+      editor.destroy();
+    });
+    const comment = manager.addComment({
+      blockId: "b",
+      from: 0,
+      to: 15,
+      authorId: "alice",
+      authorName: "Alice",
+      content: "Needs details 😀",
+    });
+    const type = (offset: number, text: string) =>
+      editor.dispatch({ steps: [{ type: "insertText", blockId: "b", offset, text, marks: [] }] });
+    return { editor, manager, id: comment.id, type };
+  }
+
+  it("follows text typed at the start of its block, reloads, orphans on removal and returns with Undo", async () => {
+    const { editor, manager, id, type } = await draft();
+    type(0, "Префикс 😀 ");
+    const moved = {
+      blockId: "b",
+      from: 11,
+      to: 26,
+      quotedText: "Select a phrase",
+      orphaned: false,
+    };
+    expect(manager.getComment(id)).toMatchObject(moved);
+    expect(editor.getDecorations()).toMatchObject([{ blockId: "b", from: 11, to: 26 }]);
+    // The saved anchor names the quote in the edited text, so a reload finds it there.
+    const reloaded = new CommentsManager(editor, {
+      initialState: JSON.parse(JSON.stringify(manager.exportState())),
+    });
+    expect(reloaded.getComment(id)).toMatchObject(moved);
+    reloaded.destroy();
+    editor.dispatch({ steps: [{ type: "deleteText", blockId: "b", from: 11, to: 26 }] });
+    expect(manager.getComment(id)!.orphaned).toBe(true);
+    expect(editor.getDecorations()).toEqual([]);
+    editor.undo();
+    expect(manager.getComment(id)).toMatchObject(moved);
+    editor.undo();
+    expect(manager.getComment(id)).toMatchObject({ from: 0, to: 15, orphaned: false });
+    expect(editor.getDecorations()).toMatchObject([{ blockId: "b", from: 0, to: 15 }]);
+  });
+
+  it("stays on its text when typing touches its edges, and orphans when the quote itself changes", async () => {
+    const { manager, id, type } = await draft();
+    type(15, " 🦀");
+    expect(manager.getComment(id)).toMatchObject({ from: 0, to: 15, orphaned: false });
+    type(0, "S");
+    expect(manager.getComment(id)).toMatchObject({ from: 1, to: 16, orphaned: false });
+    type(7, "ed");
+    expect(manager.getComment(id)).toMatchObject({ orphaned: true, quotedText: "Select a phrase" });
+  });
+
+  it("keeps its place when a copy of the quoted text appears and stays unique for a reload", async () => {
+    const { editor, manager, id } = await draft();
+    const copy = {
+      id: "c",
+      type: "paragraph",
+      attrs: {},
+      content: [{ text: "Select a phrase to start a discussion.", marks: [] }],
+      children: [],
+    };
+    // Now "a draft\n" before the copy too: the old context occurs twice.
+    editor.dispatch({
+      steps: [
+        { type: "insertBlock", parentId: null, index: 2, block: copy },
+        {
+          type: "insertBlock",
+          parentId: null,
+          index: 2,
+          block: { ...copy, id: "d", content: [{ text: "Discuss a draft", marks: [] }] },
+        },
+      ],
+    });
+    expect(manager.getComment(id)).toMatchObject({ blockId: "b", from: 0, orphaned: false });
+    const reloaded = new CommentsManager(editor, { initialState: manager.exportState() });
+    expect(reloaded.getComment(id)).toMatchObject({ blockId: "b", from: 0, orphaned: false });
+    reloaded.destroy();
+  });
+});
+
 describe("a page served over plain HTTP (D-85)", () => {
   it("creates a manager, comments and replies without crypto.randomUUID", async () => {
     const { editor } = await setup();

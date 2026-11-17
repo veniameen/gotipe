@@ -426,6 +426,18 @@ not part of the check artifacts.
   unchanged) and the commit links in the docs were remapped. Open: in Firefox
   `e2e/comments.spec.ts:68` loses the comment's anchor after text is typed before the quote (red on
   867fa6f too), so E2E and the release stay red in Firefox until it is fixed.
+- 2026-11-17: the Firefox failure of `e2e/comments.spec.ts:68` is a comments defect, fixed as D-290
+  ([docs/24](24-documentation-findings.md)). A comment was found again only by its quote with
+  eight characters of context on each side, and a quote that opens a block takes that context
+  from the previous block, so text typed next to the quote orphaned it. Only Firefox typed there:
+  the spec clicked the line boundary of the wrapped paragraph, and Chrome put the caret on the
+  second line, after the quote. A comment now follows every edit that leaves its quote whole and
+  takes its context again; the spec clicks into the quote first, so the prefix goes before it in
+  every browser. Checked on this branch: comments unit tests 13 (three fail on the old code),
+  suggestions 47, the block editor's comment tests, typecheck, lint, `check:architecture`; in
+  Chrome `comments.spec.ts` 4/4 five times (on the old build the new spec fails exactly as
+  in Firefox), accessibility and page editor 43/43. Firefox and WebKit were not run locally
+  (Playwright's browsers are not installed); the next CI run confirms them.
 
 ## Acceptance before release (2026-11-15)
 
