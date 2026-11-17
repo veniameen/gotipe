@@ -774,7 +774,7 @@
 
   /* ---- the heads ---- */
   --site-head-h: var(--site-space-16);
-  /* the glass bar's padding once it closes in on the column */
+  /* the glass bar's padding once it closes in on the column: the content steps in by it */
   --site-head-pad-x: var(--site-space-4);
   --site-head-radius: var(--site-radius-4);
   --site-logo: 28px;
@@ -832,7 +832,8 @@
   --site-rim-blur-2: 7px;
   --site-rim-blur-3: 15px;
   --site-catch-line: 1.5px;
-  --site-lamp-heart: radial-gradient(
+  --site-lamp-heart: var(--site-lamp-heart-hot);
+  --site-lamp-heart-hot: radial-gradient(
     closest-side,
     #ffffff 0%,
     #ffffff 22%,
@@ -860,17 +861,10 @@
   --site-dot-step: 4px;
   --site-dot-r: 0.6px;
   --site-dot-soft: 0.6px;
-  --site-bento-light: radial-gradient(
-    closest-side,
-    rgb(80 130 255 / 0.85),
-    rgb(47 107 255 / 0.4) 50%,
-    rgb(18 164 232 / 0) 100%
-  );
-  --site-tile-glow-1: rgb(80 130 255 / 0.42);
-  --site-tile-glow-2: rgb(47 107 255 / 0.12);
-  --site-tile-dot: rgb(169 196 255 / 0.4);
+  /* the colours of the bento, the stack and the closing scene are the theme's (light and dark below) */
   /* the nine parts: a drawn glyph, a large name */
   --site-part-icon: 48px;
+  --site-pillar-icon: 32px;
   --site-part-size: 24px;
   --site-part-leading: 28px;
   --site-part-tracking: -0.03em;
@@ -911,37 +905,28 @@
   --site-co-bob: -2px;
   --site-co-flag-at: 62%;
   --site-co-aside-display: inline-flex;
-  /* the closing band: its columns, the engine and its light (the band is a night stage) */
+  /* the closing band: its columns, the document built on the engine (the band is a night stage) */
   --site-band-cols: minmax(0, 0.9fr) minmax(0, 1.1fr);
   --site-band-align: left;
   --site-band-auto: 0;
   --site-band-justify: flex-start;
-  --site-engine-size: 440px;
-  --site-engine-blur: 18px;
-  --site-engine-beam-reach: 1.25;
-  --site-engine-bezel: 10px;
-  --site-engine-arc-w: 2px;
-  --site-engine-glow: 6px;
-  --site-engine-hand-w: 2px;
-  --site-engine-hub: 8px;
-  --site-engine-hand-at: 300deg;
-  --site-engine-short-at: 40deg;
-  --site-engine-face: #0b0f1c;
-  --site-engine-face-hi: #19223d;
-  --site-engine-left: rgb(70 110 240 / 0.6);
-  --site-engine-right: rgb(60 190 240 / 0.42);
-  --site-engine-bezel-ink: #070910;
-  --site-engine-rim: rgb(255 255 255 / 0.14);
-  --site-engine-shadow: 0 30px 80px -30px rgb(0 0 0 / 0.8);
-  --site-engine-line: rgb(255 255 255 / 0.1);
-  --site-engine-dot: rgb(169 196 255 / 0.45);
-  --site-engine-arc-a: #6b9cff;
-  --site-engine-arc-b: #5cc8f5;
-  --site-engine-beam-a: rgb(91 142 248 / 0.7);
-  --site-engine-beam-b: rgb(92 200 245 / 0.55);
-  --site-engine-mark: #070a14;
-  --site-engine-mark-glow: rgb(91 142 248 / 0.45);
-  --site-engine-hand: rgb(225 235 255 / 0.9);
+  --site-build-size: 440px;
+  --site-build-depth: 1400px;
+  --site-build-tilt: 50deg;
+  --site-build-turn: -38deg;
+  --site-build-step: 62px;
+  --site-build-shift: 9%;
+  --site-build-inset: 20% 19%;
+  --site-build-lift: 10px;
+  --site-build-pad: 9%;
+  --site-build-gap: 10px;
+  --site-build-line-h: 8px;
+  --site-build-block-h: 20px;
+  --site-build-halo: 28px;
+  --site-build-halo-wide: 60px;
+  --site-build-mark: 68%;
+  --site-build-manta-glow: 8px;
+  --site-build-blur: 34px;
   /* where a new theme opens from, until a control sets it (use-theme-toggle.ts) */
   --site-theme-x: 100vw;
   --site-theme-y: 0px;
@@ -951,8 +936,6 @@
   --site-badge-radius: var(--site-radius-1);
   --site-install-h: 44px;
   --site-install-pad: 0 var(--site-space-1) 0 var(--site-space-4);
-  --site-icon-box: 40px;
-  --site-icon-box-radius: var(--site-radius-2);
 
   /* ---- cards, windows, panels ---- */
   --site-card-radius: var(--site-radius-4);
@@ -965,20 +948,39 @@
   --site-window-bar-pad: 0 var(--site-space-4);
   --site-pane-pad: var(--site-space-6) var(--site-space-8);
   --site-pane-pad-src: var(--site-space-6) 0;
-  --site-src-line-pad: 0 var(--site-space-6);
+  /* the document's text stands after a gutter for the block's «+» and handle, which the library
+     sets --gt-handle-offset left of the text; the code of the source pane starts as far in */
+  --site-render-gutter: var(--site-space-16);
+  --site-src-pad-x: var(--site-space-6);
+  --site-src-line-pad: 0 var(--site-src-pad-x);
   --site-src-num-w: var(--site-space-6);
+  --site-src-num-gap: var(--site-space-4);
+  /* where a line's code starts: after its padding, its number and the gap */
+  --site-src-code-x: calc(var(--site-src-pad-x) + var(--site-src-num-w) + var(--site-src-num-gap));
   --site-src-cols: minmax(0, 0.9fr) minmax(0, 1fr);
   --site-window-foot-pad: var(--site-space-3) var(--site-space-6);
   --site-toolbar-room: 52px;
   --site-beam-width: 1px;
   --site-beam-pulse-w: 2px;
   /* a pulse is this share of its beam (the beam's path length is 100) */
-  --site-beam-dash: 18;
   --site-mock-pad: var(--site-space-4);
   --site-mock-row: 28px;
   --site-mock-gap: var(--site-space-2);
   --site-stack-node: 40px;
-  --site-stack-hub-mark: 56px;
+  --site-stack-hub-mark: 72px;
+  --site-stack-hub-size: 20px;
+  --site-stack-hub-leading: 28px;
+  /* the stack's light: the engine's glow and its reach, the comets, the beat, a dimmed beam */
+  --site-stack-light-size: 46% 70%;
+  --site-stack-mark-glow: 28px;
+  --site-stack-beat: 64px;
+  /* a comet's road, set per comet by its beam (motion/beams.tsx) */
+  --site-comet-path: none;
+  --site-comet-w: 72px;
+  --site-comet-h: 2px;
+  --site-comet-glow: 4px;
+  --site-comet-glow-wide: 18px;
+  --site-beam-dim: 0.35;
   --site-stack-h: 400px;
   --site-stack-cols: minmax(0, 1fr) auto minmax(0, 1fr);
   --site-stack-in-align: start;
@@ -1113,11 +1115,11 @@
 /* ---- a tablet: one column, the navigation goes behind the menu button ---- */
 @container (max-width: 1023px) {
   .gotipe-root > * {
+    --site-build-size: 320px;
     --site-band-cols: minmax(0, 1fr);
     --site-band-align: center;
     --site-band-auto: auto;
     --site-band-justify: center;
-    --site-engine-size: 320px;
     --site-gutter: var(--site-space-8);
     --site-section-y: var(--site-space-20);
     --site-section-gap: var(--site-space-12);
@@ -1150,7 +1152,6 @@
 /* ---- a phone ---- */
 @container (max-width: 640px) {
   .gotipe-root > * {
-    --site-engine-beam-reach: 1;
     --site-co-aside-display: none;
     --site-gutter: var(--site-space-5);
     --site-frame: var(--site-space-2);
@@ -1261,49 +1262,53 @@
   /* large headings: ink running into deep blue; the accent line from the accent into its cyan */
   --site-title-ink: linear-gradient(160deg, #0b1020 35%, #2c3b6e 100%);
   --site-title-accent: linear-gradient(90deg, #2c62d4 0%, #2f74e0 55%, #0b84c6 100%);
-  /* the primary call: a pill of frosted light with a blue lamp in it, its label dark on the lamp
-     too (4.5:1 and more); its rim lit at the lamp's end */
-  --site-lamp-body: linear-gradient(180deg, #dbe2f0, #c6cfe1);
-  --site-lamp-edge: rgb(255 255 255 / 0.85);
-  --site-lamp-text: #0c1733;
-  --site-lamp-shadow: 0 1px 2px rgb(18 30 60 / 0.14), 0 10px 26px -14px rgb(18 30 60 / 0.4);
+  /* the primary call: a pill of ink with a cool light in it, its label white over the light too
+     (4.5:1 and more); its rim lit at the lamp's end by a fine blue line, barely blurred: on a light
+     page wide halos read as smudge */
+  --site-lamp-body: linear-gradient(180deg, #1d2541 0%, #0c1229 100%);
+  --site-lamp-edge: rgb(255 255 255 / 0.12);
+  --site-lamp-text: #ffffff;
+  --site-lamp-shadow: 0 1px 2px rgb(12 18 41 / 0.24), 0 10px 22px -12px rgb(12 18 41 / 0.5);
   --site-lamp-bloom: radial-gradient(
     closest-side,
-    #f4f9ff 0%,
-    rgb(228 241 255 / 0.96) 30%,
-    rgb(208 228 255 / 0.86) 48%,
-    rgb(196 219 255 / 0.56) 64%,
-    rgb(186 212 255 / 0.26) 80%,
-    rgb(180 208 255 / 0.08) 92%,
-    rgb(180 208 255 / 0) 100%
+    rgb(126 165 255 / 0.62) 0%,
+    rgb(104 146 250 / 0.46) 30%,
+    rgb(86 130 245 / 0.3) 52%,
+    rgb(72 118 240 / 0.14) 74%,
+    rgb(64 110 236 / 0.04) 90%,
+    rgb(64 110 236 / 0) 100%
+  );
+  --site-lamp-heart: radial-gradient(
+    closest-side,
+    rgb(214 228 255 / 0.62) 0%,
+    rgb(190 212 255 / 0.48) 30%,
+    rgb(160 192 255 / 0.28) 56%,
+    rgb(140 178 255 / 0.1) 80%,
+    rgb(140 178 255 / 0) 100%
   );
   --site-rim-crisp: linear-gradient(
     103.7deg,
-    rgb(150 175 225 / 0.1) 38.66%,
-    rgb(99 150 233 / 0.1) 68.55%,
-    #7ba6ff 85.01%,
-    #ffffff 92.12%
+    rgb(44 98 212 / 0) 52%,
+    rgb(44 98 212 / 0.28) 74%,
+    #3d78f0 88%,
+    #7aa5ff 95%
   );
   --site-rim-near: linear-gradient(
     97.68deg,
-    rgb(90 145 250 / 0) 38.1%,
-    rgb(90 145 250 / 0.2) 82.47%,
-    #4a84f6 93.3%
+    rgb(44 98 212 / 0) 56%,
+    rgb(44 98 212 / 0.1) 82%,
+    rgb(52 108 232 / 0.32) 95%
   );
   --site-rim-halo: linear-gradient(
     91.96deg,
-    rgb(90 145 250 / 0) 6.11%,
-    rgb(90 145 250 / 0.18) 53.57%,
-    #6a9cf8 93.6%
+    rgb(44 98 212 / 0) 60%,
+    rgb(44 98 212 / 0.06) 82%,
+    rgb(52 108 232 / 0.14) 95%
   );
-  --site-rim-glow: linear-gradient(
-    91.88deg,
-    rgb(70 125 245 / 0.08) 46.45%,
-    rgb(60 120 240 / 0.5) 98.59%
-  );
-  /* the light the second call catches from the lamp beside it */
-  --site-catch-ring: linear-gradient(90deg, #3a74ec, rgb(58 116 236 / 0) 45%);
-  --site-catch-glow: -12px 0 30px -6px rgb(58 116 236 / 0.75);
+  --site-rim-glow: linear-gradient(91.88deg, rgb(44 98 212 / 0) 60%, rgb(44 98 212 / 0.08) 98%);
+  /* the light the second call catches from the lamp beside it: a fine blue edge, a breath of glow */
+  --site-catch-ring: linear-gradient(90deg, rgb(44 98 212 / 0.7), rgb(44 98 212 / 0) 38%);
+  --site-catch-glow: -6px 0 16px -8px rgb(44 98 212 / 0.4);
   --site-lines-ink: rgb(44 160 220 / 0.24);
   --site-glyph-hi: #b9d3ff;
   --site-glyph-mid: #4f84f5;
@@ -1328,12 +1333,13 @@
   --site-co-bar-on: rgb(107 156 255 / 0.28);
   --site-lines-light: rgb(60 180 240 / 0.9);
   --site-switch-knob-bg: #ffffff;
-  /* the second call: clear glass in a hairline that fades toward the bottom */
-  --site-pill-fill: rgb(255 255 255 / 0.55);
-  --site-pill-fill-hover: rgb(255 255 255 / 0.9);
-  --site-pill-text: var(--gt-text);
-  --site-pill-ring: linear-gradient(180deg, rgb(18 30 60 / 0.22), rgb(18 30 60 / 0.08));
-  --site-pill-ring-hover: linear-gradient(180deg, rgb(44 98 212 / 0.6), rgb(44 98 212 / 0.2));
+  /* the second call: a white pill in a neutral hairline, a soft shadow under it */
+  --site-pill-fill: rgb(255 255 255 / 0.92);
+  --site-pill-fill-hover: #ffffff;
+  --site-pill-text: #0c1229;
+  --site-pill-ring: linear-gradient(180deg, rgb(18 30 60 / 0.16), rgb(18 30 60 / 0.1));
+  --site-pill-ring-hover: linear-gradient(180deg, rgb(18 30 60 / 0.32), rgb(18 30 60 / 0.2));
+  --site-pill-shadow: 0 1px 2px rgb(18 30 60 / 0.06), 0 8px 18px -12px rgb(18 30 60 / 0.3);
   --site-glass: rgb(255 255 255 / 0.74);
   --site-glass-strong: rgb(255 255 255 / 0.9);
   --site-glass-line: rgb(18 30 60 / 0.08);
@@ -1356,6 +1362,47 @@
   --site-shade-ink: #2c62d4;
   --site-code-shade: rgb(18 30 60 / 0.14);
   --site-hub-glow: 0 0 48px -8px rgb(44 98 212 / 0.35), 0 16px 40px -24px rgb(18 30 60 / 0.3);
+  /* the stack, the bento and the closing scene by day: light glass and white boxes, the same blue
+     light, comets and dots in the accent */
+  --site-bento-light: radial-gradient(
+    closest-side,
+    rgb(44 98 212 / 0.42),
+    rgb(56 120 232 / 0.18) 50%,
+    rgb(14 165 233 / 0) 100%
+  );
+  --site-tile-glow-1: rgb(44 98 212 / 0.12);
+  --site-tile-glow-2: rgb(44 98 212 / 0.04);
+  --site-tile-dot: rgb(44 98 212 / 0.28);
+  --site-stack-bg: linear-gradient(180deg, #fbfcff, #f1f5fd);
+  --site-stack-rim: rgb(18 30 60 / 0.08);
+  --site-stack-shadow: 0 1px 2px rgb(18 30 60 / 0.04), 0 30px 70px -44px rgb(18 30 60 / 0.3);
+  --site-stack-light: rgb(44 98 212 / 0.12);
+  --site-stack-dot: rgb(18 30 60 / 0.09);
+  --site-stack-dot-lit: rgb(44 98 212 / 0.35);
+  --site-stack-node-fill: #ffffff;
+  --site-stack-node-hover: #f5f8ff;
+  --site-stack-node-line: rgb(18 30 60 / 0.12);
+  --site-stack-hub-fill: #ffffff;
+  --site-stack-hub-line: rgb(44 98 212 / 0.22);
+  --site-stack-mark-fill: radial-gradient(circle at 35% 30%, #f3f7ff, #e2eafb 70%);
+  --site-stack-mark-light: rgb(44 98 212 / 0.25);
+  --site-comet-in: #2c62d4;
+  --site-comet-out: #0b84c6;
+  --site-comet-head: #8db4ff;
+  --site-build-light: rgb(44 98 212 / 0.26);
+  --site-build-glass: rgb(255 255 255 / 0.5);
+  --site-build-glass-top: rgb(255 255 255 / 0.8);
+  --site-build-core: rgb(92 140 255 / 0.78);
+  --site-build-edge: rgb(44 98 212 / 0.2);
+  --site-build-edge-lit: rgb(44 98 212 / 0.42);
+  --site-build-sign: #0b84c6;
+  --site-build-ink: rgb(18 30 60 / 0.14);
+  --site-build-ink-strong: rgb(18 30 60 / 0.42);
+  --site-build-pick: rgb(44 98 212 / 0.32);
+  --site-build-block: rgb(44 98 212 / 0.05);
+  --site-build-code: rgb(11 132 198 / 0.12);
+  --site-build-caret: #0b84c6;
+  --site-build-manta: #ffffff;
 }
 
 /* ---- dark: blue-black ground, the same light, cards a step above ---- */
@@ -1390,6 +1437,7 @@
   --site-title-ink: linear-gradient(160deg, #ffffff 35%, #c3d0f5 85%, #e8eeff 100%);
   --site-title-accent: linear-gradient(90deg, #6b9cff 0%, #7fb0ff 50%, #5cc8f5 100%);
   --site-lamp-body: linear-gradient(180deg, #d6dce8, #c3cad9);
+  --site-lamp-heart: var(--site-lamp-heart-hot);
   --site-lamp-edge: rgb(255 255 255 / 0.6);
   --site-lamp-text: #0c1733;
   --site-lamp-shadow: 0 12px 30px -14px rgb(0 0 0 / 0.6);
@@ -1454,6 +1502,7 @@
   --site-pill-text: #f2f5fc;
   --site-pill-ring: linear-gradient(180deg, rgb(255 255 255 / 0.3), rgb(255 255 255 / 0.1));
   --site-pill-ring-hover: linear-gradient(180deg, rgb(169 196 255 / 0.8), rgb(169 196 255 / 0.3));
+  --site-pill-shadow: none;
   --site-glass: rgb(14 17 23 / 0.62);
   --site-glass-strong: rgb(17 20 27 / 0.86);
   --site-glass-line: rgb(255 255 255 / 0.08);
@@ -1473,6 +1522,46 @@
   --site-shade-ink: #cfdcff;
   --site-code-shade: rgb(0 0 0 / 0.5);
   --site-hub-glow: 0 0 56px -8px rgb(80 130 255 / 0.45), 0 16px 40px -24px rgb(0 0 0 / 0.8);
+  /* the stack, the bento and the closing scene by night: night glass, the light and its comets */
+  --site-bento-light: radial-gradient(
+    closest-side,
+    rgb(80 130 255 / 0.85),
+    rgb(47 107 255 / 0.4) 50%,
+    rgb(18 164 232 / 0) 100%
+  );
+  --site-tile-glow-1: rgb(80 130 255 / 0.42);
+  --site-tile-glow-2: rgb(47 107 255 / 0.12);
+  --site-tile-dot: rgb(169 196 255 / 0.4);
+  --site-stack-bg: #0b0f1a;
+  --site-stack-rim: rgb(255 255 255 / 0.08);
+  --site-stack-shadow: 0 30px 80px -40px rgb(10 20 60 / 0.6);
+  --site-stack-light: rgb(70 120 245 / 0.22);
+  --site-stack-dot: rgb(255 255 255 / 0.06);
+  --site-stack-dot-lit: rgb(169 196 255 / 0.35);
+  --site-stack-node-fill: #111726;
+  --site-stack-node-hover: #161e31;
+  --site-stack-node-line: rgb(255 255 255 / 0.12);
+  --site-stack-hub-fill: #10162a;
+  --site-stack-hub-line: rgb(150 185 255 / 0.22);
+  --site-stack-mark-fill: radial-gradient(circle at 35% 30%, #1d2a52, #0d1324 70%);
+  --site-stack-mark-light: rgb(80 130 255 / 0.55);
+  --site-comet-in: #6b9cff;
+  --site-comet-out: #5cc8f5;
+  --site-comet-head: #ffffff;
+  --site-build-light: rgb(80 130 255 / 0.5);
+  --site-build-glass: rgb(16 22 42 / 0.55);
+  --site-build-glass-top: rgb(22 30 56 / 0.72);
+  --site-build-core: rgb(150 190 255 / 1);
+  --site-build-edge: rgb(150 185 255 / 0.22);
+  --site-build-edge-lit: rgb(169 196 255 / 0.6);
+  --site-build-sign: #5cc8f5;
+  --site-build-ink: rgb(200 215 255 / 0.28);
+  --site-build-ink-strong: rgb(225 235 255 / 0.7);
+  --site-build-pick: rgb(107 156 255 / 0.6);
+  --site-build-block: rgb(255 255 255 / 0.05);
+  --site-build-code: rgb(92 200 245 / 0.14);
+  --site-build-caret: #5cc8f5;
+  --site-build-manta: #070b18;
 }
 
 /* the site hosts the library on its own ground (a host's colours, --gt-*): in the dark theme the
@@ -1519,11 +1608,9 @@ html[data-theme="dark"] .site-panel {
   --site-stagger: 80ms;
   --site-head-shrink: 560ms;
   --site-beam-turn: 7s;
-  --site-beam-run: 3.2s;
-  --site-beam-step: 0.4s;
+  --site-comet-cycle: 5.6s;
+  --site-comet-step: 0.3s;
   --site-ping-run: 1.8s;
-  --site-ring-run: 2.8s;
-  --site-ring-reach: 14px;
   --site-sweep-run: 2.6s;
   --site-marquee-run: 48s;
   --site-caret-blink: 1.1s;
@@ -1533,11 +1620,11 @@ html[data-theme="dark"] .site-panel {
   --site-lines-run-2: 9s;
   --site-lines-delay: 2.4s;
   --site-co-float: 3.2s;
+  --site-build-run: 7s;
+  --site-build-stagger: -0.7s;
   --site-ghost-follow: 900ms;
   --site-co-select-at: 600ms;
   --site-co-bar-at: 1100ms;
-  --site-engine-turn: 120s;
-  --site-engine-turn-short: 720s;
   --site-glow-size: 480px;
   --site-glow-ring-size: 280px;
 }
@@ -4449,8 +4536,6 @@ ol.gotipe-list > li::before {
   flex: none;
   width: var(--site-logo);
   height: var(--site-logo);
-  color: var(--gt-accent);
-  fill: var(--site-bg);
 }
 .site-head-end {
   display: flex;
@@ -4733,7 +4818,7 @@ ol.gotipe-list > li::before {
 }
 .site .site-cta.is-second {
   background: var(--site-pill-fill);
-  box-shadow: none;
+  box-shadow: var(--site-pill-shadow);
   color: var(--site-pill-text);
   transition: background-color var(--site-transition);
 }
@@ -4790,8 +4875,8 @@ ol.gotipe-list > li::before {
 }
 
 /* ---- the landing's head: a bar in the frame, clear over the first stage; once the page scrolls,
-   glass that closes in on the page's column. The content never moves: the bar's width and its
-   padding change together, so the mark, the links and the actions keep the column's edges. ---- */
+   glass that closes in on the page's column: its edges come to the column's edges, never past
+   them, and the mark, the links and the actions step in with it, inside the glass's padding ---- */
 .site-head {
   --site-quiet-ink: var(--site-head-ink);
   position: absolute;
@@ -4821,13 +4906,7 @@ ol.gotipe-list > li::before {
     var(--site-dur-2) var(--site-ease), backdrop-filter var(--site-dur-2) var(--site-ease);
 }
 .site-head[data-scrolled] .site-head-in {
-  max-width: calc(
-    min(100% + 2 * var(--site-frame), var(--site-max)) -
-    2 *
-    var(--site-gutter) +
-    2 *
-    var(--site-head-pad-x)
-  );
+  max-width: calc(min(100% + 2 * var(--site-frame), var(--site-max)) - 2 * var(--site-gutter));
   padding: 0 var(--site-head-pad-x);
   background: var(--site-glass-strong);
   box-shadow: inset 0 0 0 var(--gt-hairline) var(--site-glass-line), var(--site-glass-shadow);
@@ -5774,6 +5853,7 @@ html:not([data-theme="dark"]) .site-theme-to-light {
 .site-render {
   display: var(--site-render-display);
   padding: var(--site-pane-pad);
+  padding-left: var(--site-render-gutter);
 }
 .site-src,
 .site-render {
@@ -5813,30 +5893,62 @@ html:not([data-theme="dark"]) .site-theme-to-light {
 .site-pane-foot > .is-dot::before {
   color: var(--site-sage-ink);
 }
-.site-src-lines {
-  margin: 0;
-  padding: 0;
-  overflow-x: auto;
-  list-style: none;
-  counter-reset: line;
+/* the numbered lines and, in the live window, the field over them: one cell, one type, one
+   wrapping, so a line of the field lies on its coloured line (a long line wraps in both) */
+.site-src-code {
+  display: grid;
   color: var(--gt-text-2);
   font-family: var(--site-font-mono);
   font-size: var(--site-code-size);
   line-height: var(--site-code-leading);
-  white-space: nowrap;
+  overflow-wrap: anywhere;
+}
+.site-src-code > * {
+  grid-area: 1 / 1;
+}
+.site-src-lines {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: line;
 }
 .site-src-lines > li {
   display: grid;
   grid-template-columns: var(--site-src-num-w) minmax(0, 1fr);
-  gap: var(--site-space-4);
-  min-width: fit-content;
+  gap: var(--site-src-num-gap);
   min-height: var(--site-code-leading);
   padding: var(--site-src-line-pad);
   counter-increment: line;
   transition: background-color var(--site-transition);
 }
+/* the field: its text clear over the coloured lines, its caret and selection seen; its text starts
+   where a line's code does and ends where the line's padding begins */
+.site-src-input {
+  justify-self: stretch;
+  align-self: stretch;
+  min-width: 0;
+  margin: 0;
+  padding: 0 var(--site-src-pad-x) 0 var(--site-src-code-x);
+  border: 0;
+  border-radius: 0;
+  background: none;
+  color: transparent;
+  caret-color: var(--gt-text);
+  font: inherit;
+  letter-spacing: inherit;
+  white-space: pre-wrap;
+  overflow-wrap: inherit;
+  overflow: hidden;
+  resize: none;
+}
+/* as the document beside it, the source draws no ring: the caret and its block's tint show the place */
+.site-src-input:focus-visible {
+  outline: none;
+}
+/* a line keeps its spaces and wraps as the field does; between the lines nothing is kept */
 .site-src-lines code {
   font: inherit;
+  white-space: pre-wrap;
 }
 .site-src-lines > li::before {
   content: counter(line);
@@ -5879,11 +5991,17 @@ html:not([data-theme="dark"]) .site-theme-to-light {
 
 /* ---- the documents in the windows: the window pads them, the page sets only its type ----
    The same rule holds the server's static document (the library's own markup) and the live editor
-   that replaces it, so the window keeps its height when the editor arrives. */
+   that replaces it, so the window keeps its height when the editor arrives. The library stands a
+   block's «+» and handle --gt-handle-offset left of the text, inside the editor: the editor reaches
+   back over the pane's gutter and holds its text after it, so the handles stand in the gutter. */
+.site-render > .site-page-editor,
+.site-render > .site-static-doc {
+  margin-left: calc(-1 * var(--site-render-gutter));
+}
 .site-render .gotipe-content {
   max-width: none;
   min-height: 0;
-  padding: 0;
+  padding: 0 0 0 var(--site-render-gutter);
 }
 /* the static document's title: an h2 (the landing has one h1) drawn as the page's title */
 .site-static-doc .gotipe-content > .site-static-title {
@@ -5941,9 +6059,13 @@ html:not([data-theme="dark"]) .site-theme-to-light {
 /* The middle of the landing (frame 20): the stack with its beams, the three parts it stands on, the
    bento of three tiles with their pictures, the nine parts of the stack and the four looks. */
 
-/* ---- the stack: your interface, the engine, your infrastructure ---- */
+/* ---- the stack: a panel of the theme (light glass by day, night glass by night), your interface,
+   the engine, your infrastructure. The engine is the light of the panel: dots come up around it, a
+   comet runs round its rim, and comets of light run along the beams, in from the interfaces and out
+   to the infrastructure ---- */
 .site-stack-diagram {
   position: relative;
+  isolation: isolate;
   display: grid;
   box-sizing: border-box;
   grid-template-columns: var(--site-stack-cols);
@@ -5952,10 +6074,38 @@ html:not([data-theme="dark"]) .site-theme-to-light {
   min-height: var(--site-stack-h);
   padding: var(--site-stack-pad);
   border-radius: var(--site-card-radius);
-  background-color: var(--site-bg-alt);
-  background-image: radial-gradient(var(--site-grid) var(--site-grid-line), transparent 0);
-  background-size: var(--site-space-6) var(--site-space-6);
-  box-shadow: inset 0 0 0 var(--gt-hairline) var(--site-line);
+  background: radial-gradient(
+      var(--site-stack-light-size) at 50% 50%,
+      var(--site-stack-light),
+      transparent 70%
+    ), var(--site-stack-bg);
+  box-shadow: inset 0 0 0 var(--gt-hairline) var(--site-stack-rim), var(--site-stack-shadow);
+  color: var(--gt-text);
+}
+/* the grain of dots, brighter about the engine */
+.site-stack-diagram::before,
+.site-stack-diagram::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  background: radial-gradient(var(--site-stack-dot) var(--site-grid-line), transparent 0) 0 0 /
+    var(--site-space-6) var(--site-space-6);
+  pointer-events: none;
+}
+.site-stack-diagram::after {
+  background-image: radial-gradient(var(--site-stack-dot-lit) var(--site-grid-line), transparent 0);
+  -webkit-mask: radial-gradient(
+    var(--site-stack-light-size) at 50% 50%,
+    var(--site-mask-on),
+    transparent 75%
+  );
+  mask: radial-gradient(
+    var(--site-stack-light-size) at 50% 50%,
+    var(--site-mask-on),
+    transparent 75%
+  );
 }
 .site-beams {
   position: absolute;
@@ -5964,23 +6114,52 @@ html:not([data-theme="dark"]) .site-theme-to-light {
   pointer-events: none;
 }
 .site-beam-path,
-.site-beam-pulse {
+.site-beam-glow {
   fill: none;
   stroke-linecap: round;
+  transition: opacity var(--site-dur-2) var(--site-ease), stroke var(--site-dur-2) var(--site-ease);
 }
 .site-beam-path {
   stroke: var(--site-beam-path);
   stroke-width: var(--site-beam-width);
 }
-.site-beam-pulse {
-  stroke: var(--site-beam);
+/* a lit beam: the box or the engine under the pointer */
+.site-beam-glow {
+  stroke: var(--site-comet-in);
   stroke-width: var(--site-beam-pulse-w);
-  stroke-dasharray: var(--site-beam-dash) 100;
-  stroke-dashoffset: var(--site-beam-dash);
   opacity: 0;
+  filter: drop-shadow(0 0 var(--site-comet-glow) var(--site-comet-in));
 }
-.site-beam.is-out .site-beam-pulse {
-  stroke: var(--site-beam-out);
+.site-beam.is-out .site-beam-glow {
+  stroke: var(--site-comet-out);
+  filter: drop-shadow(0 0 var(--site-comet-glow) var(--site-comet-out));
+}
+.site-beam.is-lit .site-beam-glow {
+  opacity: 1;
+}
+[data-focus] .site-beam:not(.is-lit) .site-beam-path {
+  opacity: var(--site-beam-dim);
+}
+/* a comet of light: a bright head and its tail, carried along its beam (motion.css runs it) */
+.site-comet {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 0;
+  width: var(--site-comet-w);
+  height: var(--site-comet-h);
+  border-radius: var(--site-radius-round);
+  background: linear-gradient(90deg, transparent, var(--site-comet-in) 70%, var(--site-comet-head));
+  filter: drop-shadow(0 0 var(--site-comet-glow) var(--site-comet-in));
+  opacity: 0;
+  offset-path: var(--site-comet-path);
+  offset-rotate: auto;
+  offset-anchor: 100% 50%;
+  pointer-events: none;
+}
+.site-comet.is-out {
+  background: linear-gradient(90deg, transparent, var(--site-comet-out) 70%, var(--site-comet-head));
+  filter: drop-shadow(0 0 var(--site-comet-glow) var(--site-comet-out));
 }
 .site-stack-col {
   position: relative;
@@ -6000,48 +6179,111 @@ html:not([data-theme="dark"]) .site-theme-to-light {
   padding: 0;
   list-style: none;
 }
+/* a box: dark glass in a hairline that lights when its comet leaves or arrives, or under the
+   pointer */
 .site-stack-node {
+  position: relative;
   display: inline-flex;
   align-items: center;
   gap: var(--site-space-2);
   box-sizing: border-box;
   height: var(--site-stack-node);
   padding: var(--site-stack-node-pad);
-  border-radius: var(--site-radius-2);
-  background: var(--site-card);
-  box-shadow: var(--site-card-shadow);
+  border-radius: var(--site-radius-round);
+  background: var(--site-stack-node-fill);
+  box-shadow: inset 0 0 0 var(--gt-hairline) var(--site-stack-node-line);
   color: var(--gt-text);
   font-family: var(--site-font-mono);
   font-size: var(--site-small-size);
   line-height: var(--site-small-leading);
   white-space: nowrap;
+  cursor: default;
+  transition: box-shadow var(--site-dur-2) var(--site-ease), background-color var(--site-dur-2)
+    var(--site-ease);
+}
+.site-stack-node:hover {
+  background: var(--site-stack-node-hover);
+  box-shadow: inset 0 0 0 var(--gt-hairline) var(--site-comet-in), 0 0 var(--site-comet-glow-wide)
+    calc(-1 * var(--site-space-1)) var(--site-comet-in);
+}
+.site-stack-col.is-out .site-stack-node:hover {
+  box-shadow: inset 0 0 0 var(--gt-hairline) var(--site-comet-out), 0 0 var(--site-comet-glow-wide)
+    calc(-1 * var(--site-space-1)) var(--site-comet-out);
+}
+/* the flash of a box when its comet leaves (an interface) or arrives (the infrastructure) */
+.site-stack-node::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  box-shadow: inset 0 0 0 var(--gt-hairline) var(--site-comet-in), 0 0 var(--site-comet-glow-wide)
+    calc(-1 * var(--site-space-1)) var(--site-comet-in);
+  opacity: 0;
+  pointer-events: none;
+}
+.site-stack-col.is-out .site-stack-node::after {
+  box-shadow: inset 0 0 0 var(--gt-hairline) var(--site-comet-out), 0 0 var(--site-comet-glow-wide)
+    calc(-1 * var(--site-space-1)) var(--site-comet-out);
 }
 .site-stack-node > .gt-icon {
-  color: var(--site-beam-out);
+  color: var(--site-comet-out);
 }
 .site-stack-dot {
   width: var(--site-dot);
   height: var(--site-dot);
   border-radius: var(--site-radius-round);
-  background: var(--site-beam);
+  background: var(--site-comet-in);
+  box-shadow: 0 0 var(--site-comet-glow) var(--site-comet-in);
 }
+/* the engine: glass with a comet running round its rim, its mark lit, light behind it */
 .site-stack-hub {
   position: relative;
   display: grid;
   justify-items: center;
   gap: var(--site-space-1);
-  padding: var(--site-space-6) var(--site-space-8);
+  padding: var(--site-space-8) var(--site-space-10);
   border-radius: var(--site-card-radius);
-  background: var(--site-card);
-  box-shadow: 0 0 0 var(--gt-hairline) var(--site-tint-line), var(--site-hub-glow);
+  background: var(--site-stack-hub-fill);
+  box-shadow: inset 0 0 0 var(--gt-hairline) var(--site-stack-hub-line), var(--site-hub-glow);
   text-align: center;
 }
+.site-stack-hub::before {
+  content: "";
+  position: absolute;
+  inset: calc(-1 * var(--site-beam-width));
+  padding: var(--site-beam-pulse-w);
+  border-radius: inherit;
+  background: conic-gradient(
+    from var(--site-beam-angle),
+    transparent 0%,
+    transparent 62%,
+    var(--site-comet-in) 80%,
+    var(--site-comet-head) 86%,
+    transparent 96%
+  );
+  -webkit-mask: linear-gradient(var(--site-mask-on) 0 0) content-box,
+    linear-gradient(var(--site-mask-on) 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(var(--site-mask-on) 0 0) content-box exclude,
+    linear-gradient(var(--site-mask-on) 0 0);
+  pointer-events: none;
+}
+/* the engine's beat as the comets come in */
+.site-stack-hub::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  box-shadow: 0 0 var(--site-stack-beat) calc(-1 * var(--site-space-1)) var(--site-comet-in);
+  opacity: 0;
+  pointer-events: none;
+}
 .site-stack-hub > strong {
-  margin-top: var(--site-space-3);
+  margin-top: var(--site-space-4);
   font-family: var(--site-font-display);
-  font-size: var(--site-h3-size);
+  font-size: var(--site-stack-hub-size);
   font-weight: var(--site-weight-display);
-  line-height: var(--site-h3-leading);
+  line-height: var(--site-stack-hub-leading);
   letter-spacing: var(--site-h3-tracking);
 }
 .site-stack-hub > span:last-child {
@@ -6055,12 +6297,15 @@ html:not([data-theme="dark"]) .site-theme-to-light {
   place-items: center;
   width: var(--site-stack-hub-mark);
   height: var(--site-stack-hub-mark);
-  border-radius: var(--site-radius-3);
-  background: var(--site-accent-tint);
+  border-radius: var(--site-radius-4);
+  background: var(--site-stack-mark-fill);
+  box-shadow: inset 0 0 0 var(--gt-hairline) var(--site-stack-hub-line), 0 0
+    var(--site-stack-mark-glow) var(--site-stack-mark-light);
 }
 .site-stack-mark > .site-logo {
-  width: var(--site-logo-l);
-  height: var(--site-logo-l);
+  width: var(--site-stack-hub-mark);
+  height: var(--site-stack-hub-mark);
+  filter: drop-shadow(0 0 var(--site-comet-glow) var(--site-comet-in));
 }
 
 /* the three parts the stack stands on */
@@ -6086,6 +6331,11 @@ html:not([data-theme="dark"]) .site-theme-to-light {
   justify-content: space-between;
   margin: 0;
   color: var(--gt-accent);
+}
+/* the pillar's drawn glyph, a step smaller than a tile's */
+.site-pillar-top > .site-part-icon {
+  width: var(--site-pillar-icon);
+  height: var(--site-pillar-icon);
 }
 .site-pillar-top > span {
   color: var(--gt-text-3);
@@ -6265,7 +6515,7 @@ html:not([data-theme="dark"]) .site-theme-to-light {
   left: calc(4 * var(--site-lines-step) - var(--gt-hairline));
 }
 
-/* ---- the bento: three night tiles; a light lies behind them and comes through the gaps ---- */
+/* ---- the bento: three tiles; a light lies behind them and comes through the gaps ---- */
 .site-bento {
   position: relative;
   isolation: isolate;
@@ -6362,19 +6612,6 @@ html:not([data-theme="dark"]) .site-theme-to-light {
 /* a part of the stack: its name where the icon was, the licence on the name's first line */
 .site-feature-top {
   align-items: baseline;
-}
-.gt-icon-box {
-  display: grid;
-  flex: none;
-  place-items: center;
-  width: var(--site-icon-box);
-  height: var(--site-icon-box);
-  border-radius: var(--site-icon-box-radius);
-  background: var(--site-accent-tint);
-  box-shadow: inset 0 0 0 var(--gt-hairline) var(--site-tint-line);
-  color: var(--gt-accent);
-  transition: background-color var(--site-dur-2) var(--site-ease), color var(--site-dur-2)
-    var(--site-ease);
 }
 .site-tile h3 {
   margin: var(--site-space-8) 0 0;
@@ -6556,9 +6793,6 @@ html:not([data-theme="dark"]) .site-theme-to-light {
 .site-feature:hover {
   background: var(--site-part-hover);
 }
-.site-tile:hover .gt-icon-box {
-  background: var(--site-accent-soft);
-}
 .site-feature-top {
   align-items: flex-start;
 }
@@ -6665,10 +6899,12 @@ html:not([data-theme="dark"]) .site-theme-to-light {
 }
 
 /* site/landing-glyphs.css */
-/* The drawn glyphs of the nine parts (frame 20): each shape's gradient, by class. The site draws
-   the same glyphs from apps/landing/components/landing/part-icons.tsx, whose shapes take these
-   gradients as fill; here the markup carries classes and this part fills them, the stops take the
-   theme's four tones (--site-glyph-*). */
+/* The drawn glyphs of the landing (frame 20): the nine parts, the engine, Markdown and working
+   together (the bento's tiles and the pillars), the browser, the engine and the cloud (the ways to
+   run); each shape's gradient, by class. The site draws the same glyphs from
+   apps/landing/components/landing/part-icons.tsx, whose shapes take these gradients as fill; here
+   the markup carries classes and this part fills them, the stops take the theme's four tones
+   (--site-glyph-*). A glyph drawn in two places takes its place in its ids (gt-part-pillar-…). */
 
 .gp-block-back {
   fill: url(#gt-part-block-back);
@@ -6786,6 +7022,117 @@ html:not([data-theme="dark"]) .site-theme-to-light {
 }
 .gp-cloud-led {
   fill: url(#gt-part-cloud-led);
+}
+.gp-engine-back {
+  fill: url(#gt-part-engine-back);
+}
+.gp-engine-front {
+  fill: url(#gt-part-engine-front);
+}
+.gp-engine-shine {
+  fill: url(#gt-part-engine-shine);
+}
+.gp-engine-core {
+  fill: url(#gt-part-engine-core);
+}
+.gp-engine-die {
+  fill: url(#gt-part-engine-die);
+}
+.gp-markdown-back {
+  fill: url(#gt-part-markdown-back);
+}
+.gp-markdown-front {
+  fill: url(#gt-part-markdown-front);
+}
+.gp-markdown-shine {
+  fill: url(#gt-part-markdown-shine);
+}
+.gp-markdown-ink {
+  fill: url(#gt-part-markdown-ink);
+}
+.gp-together-back {
+  fill: url(#gt-part-together-back);
+}
+.gp-together-front {
+  fill: url(#gt-part-together-front);
+}
+.gp-together-shine {
+  fill: url(#gt-part-together-shine);
+}
+.gp-pillar-engine-back {
+  fill: url(#gt-part-pillar-engine-back);
+}
+.gp-pillar-engine-front {
+  fill: url(#gt-part-pillar-engine-front);
+}
+.gp-pillar-engine-shine {
+  fill: url(#gt-part-pillar-engine-shine);
+}
+.gp-pillar-engine-core {
+  fill: url(#gt-part-pillar-engine-core);
+}
+.gp-pillar-engine-die {
+  fill: url(#gt-part-pillar-engine-die);
+}
+.gp-pillar-markdown-back {
+  fill: url(#gt-part-pillar-markdown-back);
+}
+.gp-pillar-markdown-front {
+  fill: url(#gt-part-pillar-markdown-front);
+}
+.gp-pillar-markdown-shine {
+  fill: url(#gt-part-pillar-markdown-shine);
+}
+.gp-pillar-markdown-ink {
+  fill: url(#gt-part-pillar-markdown-ink);
+}
+.gp-pillar-together-back {
+  fill: url(#gt-part-pillar-together-back);
+}
+.gp-pillar-together-front {
+  fill: url(#gt-part-pillar-together-front);
+}
+.gp-pillar-together-shine {
+  fill: url(#gt-part-pillar-together-shine);
+}
+.gp-run-browser-back {
+  fill: url(#gt-part-run-browser-back);
+}
+.gp-run-browser-front {
+  fill: url(#gt-part-run-browser-front);
+}
+.gp-run-browser-shine {
+  fill: url(#gt-part-run-browser-shine);
+}
+.gp-run-browser-ink {
+  fill: url(#gt-part-run-browser-ink);
+}
+.gp-run-engine-back {
+  fill: url(#gt-part-run-engine-back);
+}
+.gp-run-engine-front {
+  fill: url(#gt-part-run-engine-front);
+}
+.gp-run-engine-shine {
+  fill: url(#gt-part-run-engine-shine);
+}
+.gp-run-engine-core {
+  fill: url(#gt-part-run-engine-core);
+}
+.gp-run-engine-die {
+  fill: url(#gt-part-run-engine-die);
+}
+.gp-run-cloud-front {
+  fill: url(#gt-part-run-cloud-front);
+}
+.gp-run-cloud-shine {
+  fill: url(#gt-part-run-cloud-shine);
+}
+.gp-run-cloud-back {
+  fill: url(#gt-part-run-cloud-back);
+}
+.gp-run-cloud-led {
+  fill: url(#gt-part-run-cloud-led);
 }
 
 /* site/landing-closing.css */
@@ -7150,129 +7497,145 @@ html:not([data-theme="dark"]) .site-theme-to-light {
   justify-content: var(--site-band-justify);
 }
 
-/* ---- the engine: a dark dial lit from the sides, rings with arcs of light, slow hands ---- */
-.site-engine {
+/* ---- a document built on the engine: glass plates stacked in depth, light rising through them
+   from the engine at the foot; the Markdown source, the blocks, then the page with a caret ---- */
+.site-build {
   position: relative;
-  width: min(100%, var(--site-engine-size));
+  width: min(100%, var(--site-build-size));
   aspect-ratio: 1;
   margin: 0 auto;
+  perspective: var(--site-build-depth);
 }
-.site-engine-beam {
+.site-build-glow {
   position: absolute;
-  top: 34%;
-  left: 0;
-  width: 100%;
-  height: 26%;
-  background: linear-gradient(90deg, transparent 8%, var(--site-engine-beam-a) 42%, transparent 78%);
-  filter: blur(var(--site-engine-blur));
-  transform: rotate(-22deg) scaleX(var(--site-engine-beam-reach));
-  pointer-events: none;
-}
-.site-engine-beam.is-second {
-  top: 52%;
-  background: linear-gradient(
-    90deg,
-    transparent 22%,
-    var(--site-engine-beam-b) 58%,
-    transparent 92%
-  );
-  transform: rotate(16deg) scaleX(var(--site-engine-beam-reach));
-}
-.site-engine-face {
-  position: absolute;
-  inset: 0;
+  inset: 24% 14% 6%;
   border-radius: var(--site-radius-round);
-  background: radial-gradient(60% 60% at 26% 42%, var(--site-engine-left), transparent 70%),
-    radial-gradient(56% 56% at 76% 34%, var(--site-engine-right), transparent 70%),
-    radial-gradient(circle at 50% 40%, var(--site-engine-face-hi), var(--site-engine-face) 70%);
-  box-shadow: inset 0 0 0 var(--site-engine-bezel) var(--site-engine-bezel-ink), inset 0 0 0
-    calc(var(--site-engine-bezel) + var(--gt-hairline)) var(--site-engine-rim),
-    var(--site-engine-shadow);
-  contain: paint;
+  background: radial-gradient(closest-side, var(--site-build-light), transparent);
+  filter: blur(var(--site-build-blur));
 }
-.site-engine-face::before {
-  content: "";
+.site-build-scene {
+  position: absolute;
+  inset: var(--site-build-inset);
+  transform: translateY(var(--site-build-shift)) rotateX(var(--site-build-tilt))
+    rotateZ(var(--site-build-turn));
+  transform-style: preserve-3d;
+}
+.site-build-plate {
+  --site-build-level: 0;
   position: absolute;
   inset: 0;
+  display: grid;
+  align-content: start;
+  gap: var(--site-build-gap);
+  box-sizing: border-box;
+  padding: var(--site-build-pad);
+  border-radius: var(--site-radius-4);
+  background: var(--site-build-glass);
+  box-shadow: inset 0 0 0 var(--gt-hairline) var(--site-build-edge), 0 0 var(--site-build-halo)
+    calc(-1 * var(--site-space-2)) var(--site-build-light);
+  transform: translateZ(calc(var(--site-build-level) * var(--site-build-step)));
+}
+.site-build-plate.is-engine {
+  place-items: center;
+  align-content: center;
   background: radial-gradient(
-      circle,
-      var(--site-engine-dot) var(--site-dot-r),
-      transparent calc(var(--site-dot-r) + var(--site-dot-soft))
-    )
-    0 0 / var(--site-dot-step) var(--site-dot-step);
-  -webkit-mask: radial-gradient(70% 70% at 50% 45%, var(--site-mask-on), transparent 75%);
-  mask: radial-gradient(70% 70% at 50% 45%, var(--site-mask-on), transparent 75%);
-}
-.site-engine-ring {
-  position: absolute;
-  inset: 12%;
-  border-radius: var(--site-radius-round);
-  box-shadow: inset 0 0 0 var(--gt-hairline) var(--site-engine-line);
-}
-.site-engine-ring.is-inner {
-  inset: 22%;
-}
-.site-engine-arc {
-  position: absolute;
-  inset: 12%;
-  border-radius: var(--site-radius-round);
-  background: conic-gradient(
-    from 210deg,
-    transparent 0 4%,
-    var(--site-engine-arc-a) 20%,
-    transparent 21%
+    circle at 50% 50%,
+    var(--site-build-core),
+    var(--site-build-glass) 72%
   );
-  -webkit-mask: radial-gradient(
-    closest-side,
-    transparent calc(100% - var(--site-engine-arc-w)),
-    var(--site-mask-on) calc(100% - var(--site-engine-arc-w) + var(--gt-hairline))
-  );
-  mask: radial-gradient(
-    closest-side,
-    transparent calc(100% - var(--site-engine-arc-w)),
-    var(--site-mask-on) calc(100% - var(--site-engine-arc-w) + var(--gt-hairline))
-  );
-  filter: drop-shadow(0 0 var(--site-engine-glow) var(--site-engine-arc-a));
+  box-shadow: inset 0 0 0 var(--gt-hairline) var(--site-build-edge-lit), 0 0
+    var(--site-build-halo-wide) 0 var(--site-build-light);
 }
-.site-engine-arc.is-second {
-  inset: 22%;
-  background: conic-gradient(
-    from 20deg,
-    transparent 0 4%,
-    var(--site-engine-arc-b) 24%,
-    transparent 25%
-  );
-  filter: drop-shadow(0 0 var(--site-engine-glow) var(--site-engine-arc-b));
+.site-build-plate.is-source {
+  --site-build-level: 1;
 }
-.site-engine-mark {
-  position: absolute;
-  inset: 31%;
-  fill: var(--site-engine-mark);
-  filter: drop-shadow(0 0 var(--site-engine-glow) var(--site-engine-mark-glow));
+.site-build-plate.is-blocks {
+  --site-build-level: 2;
 }
-.site-engine-hand {
-  position: absolute;
-  bottom: 50%;
-  left: calc(50% - var(--site-engine-hand-w) / 2);
-  width: var(--site-engine-hand-w);
-  height: 38%;
+.site-build-plate.is-page {
+  --site-build-level: 3;
+  background: var(--site-build-glass-top);
+  box-shadow: inset 0 0 0 var(--gt-hairline) var(--site-build-edge-lit), 0 0 var(--site-build-halo)
+    calc(-1 * var(--site-space-2)) var(--site-build-light);
+}
+/* the engine's mark: the manta alone, so it reads through the glass above it: white light by day,
+   by night a silhouette against the engine's light */
+.site-build-mark {
+  width: var(--site-build-mark);
+  height: var(--site-build-mark);
+  color: var(--site-build-manta);
+  filter: drop-shadow(0 0 var(--site-build-manta-glow) var(--site-build-light));
+}
+.site-build-row {
+  display: flex;
+  align-items: center;
+  gap: var(--site-build-gap);
+}
+.site-build-sign {
+  flex: none;
+  color: var(--site-build-sign);
+  font-family: var(--site-font-mono);
+  font-size: var(--site-label-size);
+  line-height: var(--site-build-line-h);
+}
+.site-build-line {
+  display: block;
+  width: 70%;
+  height: var(--site-build-line-h);
   border-radius: var(--site-radius-round);
-  background: linear-gradient(0deg, transparent, var(--site-engine-hand));
-  transform: rotate(var(--site-engine-hand-at));
-  transform-origin: 50% 100%;
+  background: var(--site-build-ink);
 }
-.site-engine-hand.is-short {
-  height: 26%;
-  --site-engine-hand-at: var(--site-engine-short-at);
+.site-build-line.is-long {
+  width: 88%;
 }
-.site-engine-hub {
-  position: absolute;
-  top: calc(50% - var(--site-engine-hub) / 2);
-  left: calc(50% - var(--site-engine-hub) / 2);
-  width: var(--site-engine-hub);
-  height: var(--site-engine-hub);
+.site-build-line.is-short {
+  width: 46%;
+}
+.site-build-line.is-head {
+  width: 60%;
+  height: calc(2 * var(--site-build-line-h));
+  background: var(--site-build-ink-strong);
+}
+.site-build-line.is-picked {
+  width: 62%;
+  background: var(--site-build-pick);
+}
+.site-build-block {
+  display: block;
+  height: var(--site-build-block-h);
+  border-radius: var(--site-radius-1);
+  background: var(--site-build-block);
+  box-shadow: inset 0 0 0 var(--gt-hairline) var(--site-build-edge);
+}
+.site-build-block.is-head {
+  width: 72%;
+}
+.site-build-block.is-list {
+  width: 84%;
+}
+.site-build-block.is-code {
+  height: calc(2 * var(--site-build-block-h));
+  background: var(--site-build-code);
+}
+.site-build-caret {
+  position: relative;
+  flex: none;
+  width: var(--site-co-caret-w);
+  height: calc(2.4 * var(--site-build-line-h));
   border-radius: var(--site-radius-round);
-  background: var(--site-engine-hand);
+  background: var(--site-build-caret);
+}
+.site-build-flag {
+  position: absolute;
+  bottom: 100%;
+  left: 0;
+  padding: var(--site-co-flag-pad);
+  border-radius: var(--site-radius-1) var(--site-radius-1) var(--site-radius-1) 0;
+  background: var(--site-build-caret);
+  color: var(--site-co-text);
+  font-size: var(--site-label-size);
+  font-weight: var(--gt-weight-strong);
+  line-height: var(--site-label-leading);
 }
 
 .site-band-legend {
@@ -8134,10 +8497,16 @@ html:not([data-theme="dark"]) .site-theme-to-light {
   <symbol id="i-arrow-down-right" viewBox="0 0 16 16">
     <path vector-effect="non-scaling-stroke" d="M4.75 4.75 11.25 11.25M11.25 5.75v5.5h-5.5" />
   </symbol>
-  <!-- the mark: a square of the accent with the letter cut in the page's colour (`fill` of the use) -->
+  <!-- the mark: the manta on its night tile, a raster (the site's public/brand/gotipe-logo-256.webp) -->
   <symbol id="i-logo" viewBox="0 0 32 32">
-    <rect width="32" height="32" rx="8" fill="currentColor" />
-    <path d="M23 11a8 8 0 1 0 1 9v-5h-8v3h5v1a5 5 0 1 1-1-6z" />
+    <image width="32" height="32" href="data:image/webp;base64,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" />
+  </symbol>
+  <!-- the manta alone, in the colour of its place: a mask cut from the logo over a square of currentColor -->
+  <symbol id="i-manta" viewBox="0 0 256 256">
+    <mask id="i-manta-mask" maskUnits="userSpaceOnUse" x="0" y="0" width="256" height="256">
+      <image width="256" height="256" href="data:image/png;base64,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" />
+    </mask>
+    <rect width="256" height="256" fill="currentColor" mask="url(#i-manta-mask)" />
   </symbol>
 </svg>
     <main class="at-page">
@@ -11614,34 +11983,42 @@ editor<span class="tk-pun">.</span>on<span class="tk-pun">(</span><span class="t
     <p class="at-caption">
       Главная по образцу владельца (zydeo-web) голосом GoTipe. Подложка первого экрана отстоит от края окна одинаково со всех сторон. На сайте по сторонам первого экрана — туманность: мягкий
       синий газ обрамляет текст и едва заметно дрейфует, поверх мерцают редкие звёзды. Курсор
-      подсвечивает газ рядом с собой и слегка его закручивает, звёзды чуть сдвигаются за ним, как
-      в глубине. Под текстом и шапкой туманность затихает, ниже первого экрана гаснет. Кадр рисует
+      подсвечивает газ рядом с собой и слегка его закручивает, звёзды чуть сдвигаются за ним, как в глубине. Под текстом и шапкой туманность затихает, ниже первого экрана гаснет. Кадр рисует
       свет первого экрана без неё. Под туманностью по сторонам лежит сам редактор — меню блоков,
       исходник Markdown, таблица, обсуждение, версии, панель форматирования, курсор соавтора; он
       невидим, пока курсор не поднимет его в мягком круге света, который плавно идёт за мышью.
-      Большие заголовки освещены: чернила переходят в глубокий
-      синий (на тёмном — белый в лёд), строка акцента — из акцента в голубой. Главная кнопка —
-      серая пилюля, внутри мягкий белый свет; он стоит у конца пилюли, на сайте плавно идёт за курсором и остаётся там, где курсор ушёл, а край пилюли у света горит: тонкая линия и свет, размытый на 2, 7 и 15 px. Вторая
-      кнопка — тёмное стекло (на светлой странице — прозрачное) в обводке; когда лампа подходит к её стороне, ближний край второй кнопки ловит свет. Подписи кнопок — малые прописные. Шапка — полоса
-      во всю рамку, прозрачная над первым экраном, её тихие ссылки на ступень темнее тихого
-      текста страницы; тема меняется одним нажатием, новая раскрывается кругом от кнопки, на телефоне — переключатель в меню. Когда страница начинает прокручиваться, стекло шапки
-      плавно сжимается до колонки страницы, а знак, ссылки и кнопки не сдвигаются: они на одной
-      средней линии и на краях колонки (третий кадр). «rules.» выделено, как в редакторе, за ним
-      мигает каретка; живое окно —
-      Markdown слева, документ справа, по краю бежит луч; на телефоне окно переключает «Document» и «Markdown». Дальше: факты, которые досчитываются при появлении; стек — ваш интерфейс и ваша
-      инфраструктура, по лучам между ними и движком бегут импульсы; в заголовке «Everything you
-      need» работает соавтор — её каретка с именем, выделенная фраза и панель редактора над ней;
-      по левому полю страницы идут тонкие световые линии, по двум бежит свет; бенто — три ночные
-      плитки в любой теме, сзади лежит свет и проходит в зазоры между ними, в каждой плитке он
-      светится у ближнего угла сквозь зерно точек; девять частей стека — открытые ячейки:
-      нарисованный градиентный знак, крупное имя, лицензия рядом, под указателем — свет;
-      переключатель видов с ползунком над окном одной
-      высоты; тёмная панель с примерами во вкладках React, Markdown и Vue; три способа запуска;
-      лицензии одной высоты; финальная полоса — ночная сцена: слева «двигатель», тёмный
-      циферблат со знаком G, освещённый синим и голубым, с дугами света и медленными стрелками,
-      за ним два луча; справа слова и две кнопки. Отступы — шаги шкалы 4 px (--site-space-*), углы —
-      шаги --site-radius-*. Кадр рисует покой, в который приходит движение; при prefers-reduced-motion движения нет. Числа — дерево 72271ce: 949 сценариев проходят во всех
-      трёх браузерах (965 в Chromium), ядро с Markdown — 127 296 байт gzip, WASM — 300 183. Без адреса Playground вторая кнопка ведёт на GitHub («View on GitHub»).
+      Большие заголовки освещены: чернила переходят в глубокий синий (на тёмном — белый в лёд),
+      строка акцента — из акцента в голубой. Главная кнопка — на тёмной странице серая пилюля с мягким белым светом внутри, на светлой — чернильная пилюля с холодным голубым светом; он стоит
+      у конца пилюли, на сайте плавно идёт за курсором и остаётся там, где курсор ушёл, а край
+      пилюли у света горит: тонкая линия и свет, размытый на 2, 7 и 15 px (на светлой странице —
+      тонкая синяя линия почти без размытия). Вторая кнопка — тёмное стекло в обводке (на светлой
+      странице — белая пилюля в нейтральной обводке с мягкой тенью); когда лампа подходит к её
+      стороне, ближний край второй кнопки ловит свет. Подписи кнопок — малые прописные. Шапка —
+      полоса во всю рамку, прозрачная над первым экраном, её тихие ссылки на ступень темнее тихого
+      текста страницы; тема меняется одним нажатием, новая раскрывается кругом от кнопки, на телефоне — переключатель в меню. Когда страница начинает прокручиваться, стекло шапки плавно
+      сжимается ровно до колонки страницы — его края встают на края колонки и не выходят за них, а знак, ссылки и кнопки отходят внутрь стекла, все на одной средней линии (третий кадр).
+      «rules.» выделено, как в редакторе, за ним мигает каретка; живое окно — Markdown слева,
+      документ справа, по краю бежит луч; править можно обе стороны: правка документа сразу пишется
+      в Markdown, набранный Markdown документ принимает на паузе; у блока под курсором в левом поле
+      документа стоят «+» и ручка; на телефоне окно переключает «Document» и «Markdown». Дальше:
+      факты, которые досчитываются при появлении; стек — панель в теме страницы (днём светлое стекло
+      и белые узлы, ночью — ночная): ваш интерфейс и ваша инфраструктура, свет движка поднимает
+      зерно точек вокруг него, по его краю бежит свет; по лучам бегут кометы — синие в движок,
+      голубые из него, — узел вспыхивает, когда его комета уходит или приходит, движок отзывается;
+      узел или движок под курсором зажигает свои лучи; в заголовке «Everything you need» работает
+      соавтор — её каретка с именем, выделенная фраза и панель редактора над ней; по левому полю
+      страницы идут тонкие световые линии, по двум бежит свет; бенто — три плитки в теме страницы с нарисованными знаками (чип движка, M↓, двое), сзади лежит свет и проходит в зазоры между ними,
+      в каждой плитке он светится у ближнего угла сквозь зерно точек; девять частей стека — открытые
+      ячейки: нарисованный градиентный знак, крупное имя, лицензия рядом, под указателем — свет;
+      переключатель видов с ползунком над окном одной высоты; тёмная панель с примерами во вкладках
+      React, Markdown и Vue; три способа запуска с нарисованными знаками (браузер, чип, облако);
+      лицензии одной высоты; финальная полоса — свет первого экрана в теме страницы: слева документ,
+      собранный на движке, — стеклянные пластины в глубину, снизу движок со скатом из логотипа (днём
+      белым, ночью — силуэтом на свету движка), над ним исходник Markdown, блоки и страница с выделением, кареткой и флажком соавтора; свет поднимается сквозь них, пластины медленно дышат;
+      справа слова и две кнопки. Отступы — шаги шкалы 4 px (--site-space-*), углы — шаги
+      --site-radius-*. Кадр рисует покой, в который приходит движение; при prefers-reduced-motion
+      движения нет. Числа — дерево 72271ce: 949 сценариев проходят во всех трёх браузерах (965 в Chromium), ядро с Markdown — 127 296 байт gzip, WASM — 300 183. Без адреса Playground вторая
+      кнопка ведёт на GitHub («View on GitHub»).
     </p>
   </figcaption>
   <section class="at-stage" data-w="1440">
@@ -11705,20 +12082,22 @@ editor<span class="tk-pun">.</span>on<span class="tk-pun">(</span><span class="t
               <div class="site-split">
                 <div class="site-src">
                   <p class="site-pane-head"><span>Markdown source</span><span>.md</span></p>
-                  <ol class="site-src-lines">
-                    <li><code><span class="is-mark"># Everything here syncs live</span></code></li>
-                    <li></li>
-                    <li class="is-current"><code><span class="is-mark">**Every block is a transaction**</span> the engine</code></li>
-                    <li class="is-current"><code>replays. Two cursors, one document.</code></li>
-                    <li></li>
-                    <li><code><span class="is-mark">### Launch checklist</span></code></li>
-                    <li></li>
-                    <li><code>- [x] Engine compiles to WASM</code></li>
-                    <li><code>- [x] Docs run on 0.1</code></li>
-                    <li><code>- [ ] Cut the release note</code></li>
-                    <li></li>
-                    <li><code>&gt; Paste a link — Markdown stays intact.</code></li>
-                  </ol>
+                  <div class="site-src-code">
+                    <ol class="site-src-lines">
+                      <li><code><span class="is-mark"># Everything here syncs live</span></code></li>
+                      <li></li>
+                      <li class="is-current"><code><span class="is-mark">**Every block is a transaction**</span> the engine</code></li>
+                      <li class="is-current"><code>replays. Two cursors, one document.</code></li>
+                      <li></li>
+                      <li><code><span class="is-mark">### Launch checklist</span></code></li>
+                      <li></li>
+                      <li><code>- [x] Engine compiles to WASM</code></li>
+                      <li><code>- [x] Docs run on 0.1</code></li>
+                      <li><code>- [ ] Cut the release note</code></li>
+                      <li></li>
+                      <li><code>&gt; Paste a link — Markdown stays intact.</code></li>
+                    </ol>
+                  </div>
                   <p class="site-pane-foot"><span class="is-dot">UTF-8</span><span>CommonMark</span></p>
                 </div>
                 <div class="site-render">
@@ -11726,7 +12105,7 @@ editor<span class="tk-pun">.</span>on<span class="tk-pun">(</span><span class="t
                   <article class="gotipe-page is-slice">
                     <div class="gotipe-doc">
                       <h1>Everything here syncs live</h1>
-                      <p class="site-has-toolbar">
+                      <p class="site-has-toolbar is-hovered">
                         <span class="gotipe-anchor is-inline"
                           ><strong class="gotipe-selection">Every block is a transaction</strong
                           ><span class="gotipe-overlay gotipe-toolbar" data-place="above-start" role="toolbar"
@@ -11736,6 +12115,10 @@ editor<span class="tk-pun">.</span>on<span class="tk-pun">(</span><span class="t
                             ><span class="gotipe-tool"><svg class="gt-icon"><use href="#i-comment" /></svg></span></span
                         ></span>
                         the engine replays. Two cursors, one document.
+                        <span class="gotipe-block-handle" aria-hidden="true"
+                          ><span class="gotipe-handle-button"><svg class="gt-icon"><use href="#i-plus" /></svg></span
+                          ><span class="gotipe-handle-button"><svg class="gt-icon"><use href="#i-grip" /></svg></span
+                        ></span>
                       </p>
                       <h3>Launch checklist</h3>
                       <ul class="gotipe-todo-list">
@@ -11763,7 +12146,7 @@ editor<span class="tk-pun">.</span>on<span class="tk-pun">(</span><span class="t
               </figcaption>
             </figure>
           </div>
-          <p class="site-hero-note">Markdown source and the document it becomes. One model, nothing lost. Edit the document: the source follows.</p>
+          <p class="site-hero-note">Markdown source and the document it becomes. One model, nothing lost. Edit either side: the other follows.</p>
         </div>
 
         <div class="site-strip">
@@ -11834,19 +12217,19 @@ editor<span class="tk-pun">.</span>on<span class="tk-pun">(</span><span class="t
       </div>
       <ol class="site-pillars">
         <li class="site-pillar">
-          <p class="site-pillar-top"><svg class="gt-icon" aria-hidden="true"><use href="#i-braces" /></svg><span>01</span></p>
+          <p class="site-pillar-top"><svg viewBox="0 0 48 48" class="site-part-icon" aria-hidden="true" focusable="false"><defs><linearGradient id="gt-part-pillar-engine-front" x1="9" y1="9" x2="39" y2="39" gradientUnits="userSpaceOnUse"><stop offset="0" class="site-glyph-cyan"></stop><stop offset="0.6" class="site-glyph-mid"></stop><stop offset="1" class="site-glyph-lo"></stop></linearGradient><radialGradient id="gt-part-pillar-engine-shine" cx="13" cy="12" r="22" gradientUnits="userSpaceOnUse"><stop offset="0" class="site-glyph-hi" stop-opacity="0.85"></stop><stop offset="1" class="site-glyph-hi" stop-opacity="0"></stop></radialGradient><linearGradient id="gt-part-pillar-engine-back" x1="3" y1="3" x2="45" y2="45" gradientUnits="userSpaceOnUse"><stop offset="0" class="site-glyph-mid"></stop><stop offset="0.5" class="site-glyph-mid"></stop><stop offset="1" class="site-glyph-lo"></stop></linearGradient><linearGradient id="gt-part-pillar-engine-core" x1="17" y1="17" x2="31" y2="31" gradientUnits="userSpaceOnUse"><stop offset="0" class="site-glyph-hi"></stop><stop offset="1" class="site-glyph-cyan"></stop></linearGradient><linearGradient id="gt-part-pillar-engine-die" x1="21" y1="21" x2="27" y2="27" gradientUnits="userSpaceOnUse"><stop offset="0" class="site-glyph-mid"></stop><stop offset="1" class="site-glyph-lo"></stop></linearGradient></defs><rect x="3" y="15.5" width="7" height="3.5" rx="1.75" class="gp-pillar-engine-back" opacity="0.55"></rect><rect x="38" y="15.5" width="7" height="3.5" rx="1.75" class="gp-pillar-engine-back" opacity="0.55"></rect><rect x="15.5" y="3" width="3.5" height="7" rx="1.75" class="gp-pillar-engine-back" opacity="0.55"></rect><rect x="15.5" y="38" width="3.5" height="7" rx="1.75" class="gp-pillar-engine-back" opacity="0.55"></rect><rect x="3" y="22.25" width="7" height="3.5" rx="1.75" class="gp-pillar-engine-back" opacity="0.55"></rect><rect x="38" y="22.25" width="7" height="3.5" rx="1.75" class="gp-pillar-engine-back" opacity="0.55"></rect><rect x="22.25" y="3" width="3.5" height="7" rx="1.75" class="gp-pillar-engine-back" opacity="0.55"></rect><rect x="22.25" y="38" width="3.5" height="7" rx="1.75" class="gp-pillar-engine-back" opacity="0.55"></rect><rect x="3" y="29" width="7" height="3.5" rx="1.75" class="gp-pillar-engine-back" opacity="0.55"></rect><rect x="38" y="29" width="7" height="3.5" rx="1.75" class="gp-pillar-engine-back" opacity="0.55"></rect><rect x="29" y="3" width="3.5" height="7" rx="1.75" class="gp-pillar-engine-back" opacity="0.55"></rect><rect x="29" y="38" width="3.5" height="7" rx="1.75" class="gp-pillar-engine-back" opacity="0.55"></rect><rect x="9" y="9" width="30" height="30" rx="7" class="gp-pillar-engine-front"></rect><rect x="9" y="9" width="30" height="30" rx="7" class="gp-pillar-engine-shine"></rect><rect x="16.5" y="16.5" width="15" height="15" rx="3.5" class="gp-pillar-engine-core"></rect><rect x="21" y="21" width="6" height="6" rx="1.5" class="gp-pillar-engine-die"></rect></svg><span>01</span></p>
           <h3>Your own engine</h3>
           <p>TypeScript and Rust/WASM. No editor underneath.</p>
           <span class="site-badge">MIT</span>
         </li>
         <li class="site-pillar">
-          <p class="site-pillar-top"><svg class="gt-icon" aria-hidden="true"><use href="#i-page" /></svg><span>02</span></p>
+          <p class="site-pillar-top"><svg viewBox="0 0 48 48" class="site-part-icon" aria-hidden="true" focusable="false"><defs><linearGradient id="gt-part-pillar-markdown-front" x1="4" y1="13" x2="40" y2="38" gradientUnits="userSpaceOnUse"><stop offset="0" class="site-glyph-cyan"></stop><stop offset="0.6" class="site-glyph-mid"></stop><stop offset="1" class="site-glyph-lo"></stop></linearGradient><radialGradient id="gt-part-pillar-markdown-shine" cx="9" cy="14" r="24" gradientUnits="userSpaceOnUse"><stop offset="0" class="site-glyph-hi" stop-opacity="0.85"></stop><stop offset="1" class="site-glyph-hi" stop-opacity="0"></stop></radialGradient><linearGradient id="gt-part-pillar-markdown-back" x1="11" y1="6" x2="44" y2="28" gradientUnits="userSpaceOnUse"><stop offset="0" class="site-glyph-mid"></stop><stop offset="0.5" class="site-glyph-mid"></stop><stop offset="1" class="site-glyph-lo"></stop></linearGradient><linearGradient id="gt-part-pillar-markdown-ink" x1="10" y1="19" x2="35" y2="32" gradientUnits="userSpaceOnUse"><stop offset="0" class="site-glyph-hi"></stop><stop offset="1" class="site-glyph-hi" stop-opacity="0.8"></stop></linearGradient><clipPath id="gt-part-pillar-markdown-cut"><path clip-rule="evenodd" d="M-4 -4H52V52H-4ZM10.5 11H33.5A8.5 8.5 0 0 1 42 19.5V31.5A8.5 8.5 0 0 1 33.5 40H10.5A8.5 8.5 0 0 1 2 31.5V19.5A8.5 8.5 0 0 1 10.5 11Z"></path></clipPath></defs><rect clip-path="url(#gt-part-pillar-markdown-cut)" x="11" y="6" width="33" height="22" rx="6" class="gp-pillar-markdown-back" opacity="0.5"></rect><rect x="4" y="13" width="36" height="25" rx="6.5" class="gp-pillar-markdown-front"></rect><rect x="4" y="13" width="36" height="25" rx="6.5" class="gp-pillar-markdown-shine"></rect><path d="M10 32V19H13.2L17 23.8L20.8 19H24V32H20.8V24.2L17 28.8L13.2 24.2V32Z" class="gp-pillar-markdown-ink"></path><path d="M28.6 19H31.8V25.5H35L30.2 31.5L25.4 25.5H28.6Z" class="gp-pillar-markdown-ink"></path></svg><span>02</span></p>
           <h3>Markdown, untouched</h3>
           <p>The same file in. Untouched blocks come back byte for byte.</p>
           <span class="site-badge">Lossless</span>
         </li>
         <li class="site-pillar">
-          <p class="site-pillar-top"><svg class="gt-icon" aria-hidden="true"><use href="#i-nodes" /></svg><span>03</span></p>
+          <p class="site-pillar-top"><svg viewBox="0 0 48 48" class="site-part-icon" aria-hidden="true" focusable="false"><defs><linearGradient id="gt-part-pillar-together-front" x1="5" y1="10" x2="31" y2="43" gradientUnits="userSpaceOnUse"><stop offset="0" class="site-glyph-cyan"></stop><stop offset="0.6" class="site-glyph-mid"></stop><stop offset="1" class="site-glyph-lo"></stop></linearGradient><radialGradient id="gt-part-pillar-together-shine" cx="12" cy="12" r="20" gradientUnits="userSpaceOnUse"><stop offset="0" class="site-glyph-hi" stop-opacity="0.85"></stop><stop offset="1" class="site-glyph-hi" stop-opacity="0"></stop></radialGradient><linearGradient id="gt-part-pillar-together-back" x1="22" y1="8" x2="44" y2="38" gradientUnits="userSpaceOnUse"><stop offset="0" class="site-glyph-mid"></stop><stop offset="0.5" class="site-glyph-mid"></stop><stop offset="1" class="site-glyph-lo"></stop></linearGradient><clipPath id="gt-part-pillar-together-cut"><path clip-rule="evenodd" d="M-4 -4H52V52H-4ZM9 17A9 9 0 1 0 27 17A9 9 0 1 0 9 17ZM3 40A15 15 0 0 1 33 40V43A4 4 0 0 1 29 47H7A4 4 0 0 1 3 43Z"></path></clipPath></defs><g clip-path="url(#gt-part-pillar-together-cut)" opacity="0.55"><circle cx="33" cy="14" r="6" class="gp-pillar-together-back"></circle><path d="M22 36A11 11 0 0 1 44 36V36.5A1.5 1.5 0 0 1 42.5 38H23.5A1.5 1.5 0 0 1 22 36.5Z" class="gp-pillar-together-back"></path></g><circle cx="18" cy="17" r="7" class="gp-pillar-together-front"></circle><circle cx="18" cy="17" r="7" class="gp-pillar-together-shine"></circle><path d="M5 40A13 13 0 0 1 31 40V41A2 2 0 0 1 29 43H7A2 2 0 0 1 5 41Z" class="gp-pillar-together-front"></path><path d="M5 40A13 13 0 0 1 31 40V41A2 2 0 0 1 29 43H7A2 2 0 0 1 5 41Z" class="gp-pillar-together-shine"></path></svg><span>03</span></p>
           <h3>Built to work together</h3>
           <p>Real-time sync, review and offline editing.</p>
           <span class="site-badge">MIT</span>
@@ -11866,10 +12249,10 @@ editor<span class="tk-pun">.</span>on<span class="tk-pun">(</span><span class="t
       <p class="site-sub">The engine and every service around it are <span class="site-co-pick">open source<span class="site-co-bar" aria-hidden="true"><svg class="gt-icon" aria-hidden="true"><use href="#i-bold" /></svg><svg class="gt-icon" aria-hidden="true"><use href="#i-italic" /></svg><svg class="gt-icon" aria-hidden="true"><use href="#i-link" /></svg><svg class="gt-icon" aria-hidden="true"><use href="#i-comment" /></svg></span></span>. Only the ready-made interface has a commercial license.</p>
     </div>
 
-    <div class="site-bento" data-theme="dark">
+    <div class="site-bento">
       <article class="site-tile is-engine">
         <span class="site-tile-light" aria-hidden="true"></span>
-        <div class="site-tile-top"><span class="site-icon-box"><svg class="gt-icon" aria-hidden="true"><use href="#i-braces" /></svg></span><span class="site-badge">MIT</span></div>
+        <div class="site-tile-top"><svg viewBox="0 0 48 48" class="site-part-icon" aria-hidden="true" focusable="false"><defs><linearGradient id="gt-part-engine-front" x1="9" y1="9" x2="39" y2="39" gradientUnits="userSpaceOnUse"><stop offset="0" class="site-glyph-cyan"></stop><stop offset="0.6" class="site-glyph-mid"></stop><stop offset="1" class="site-glyph-lo"></stop></linearGradient><radialGradient id="gt-part-engine-shine" cx="13" cy="12" r="22" gradientUnits="userSpaceOnUse"><stop offset="0" class="site-glyph-hi" stop-opacity="0.85"></stop><stop offset="1" class="site-glyph-hi" stop-opacity="0"></stop></radialGradient><linearGradient id="gt-part-engine-back" x1="3" y1="3" x2="45" y2="45" gradientUnits="userSpaceOnUse"><stop offset="0" class="site-glyph-mid"></stop><stop offset="0.5" class="site-glyph-mid"></stop><stop offset="1" class="site-glyph-lo"></stop></linearGradient><linearGradient id="gt-part-engine-core" x1="17" y1="17" x2="31" y2="31" gradientUnits="userSpaceOnUse"><stop offset="0" class="site-glyph-hi"></stop><stop offset="1" class="site-glyph-cyan"></stop></linearGradient><linearGradient id="gt-part-engine-die" x1="21" y1="21" x2="27" y2="27" gradientUnits="userSpaceOnUse"><stop offset="0" class="site-glyph-mid"></stop><stop offset="1" class="site-glyph-lo"></stop></linearGradient></defs><rect x="3" y="15.5" width="7" height="3.5" rx="1.75" class="gp-engine-back" opacity="0.55"></rect><rect x="38" y="15.5" width="7" height="3.5" rx="1.75" class="gp-engine-back" opacity="0.55"></rect><rect x="15.5" y="3" width="3.5" height="7" rx="1.75" class="gp-engine-back" opacity="0.55"></rect><rect x="15.5" y="38" width="3.5" height="7" rx="1.75" class="gp-engine-back" opacity="0.55"></rect><rect x="3" y="22.25" width="7" height="3.5" rx="1.75" class="gp-engine-back" opacity="0.55"></rect><rect x="38" y="22.25" width="7" height="3.5" rx="1.75" class="gp-engine-back" opacity="0.55"></rect><rect x="22.25" y="3" width="3.5" height="7" rx="1.75" class="gp-engine-back" opacity="0.55"></rect><rect x="22.25" y="38" width="3.5" height="7" rx="1.75" class="gp-engine-back" opacity="0.55"></rect><rect x="3" y="29" width="7" height="3.5" rx="1.75" class="gp-engine-back" opacity="0.55"></rect><rect x="38" y="29" width="7" height="3.5" rx="1.75" class="gp-engine-back" opacity="0.55"></rect><rect x="29" y="3" width="3.5" height="7" rx="1.75" class="gp-engine-back" opacity="0.55"></rect><rect x="29" y="38" width="3.5" height="7" rx="1.75" class="gp-engine-back" opacity="0.55"></rect><rect x="9" y="9" width="30" height="30" rx="7" class="gp-engine-front"></rect><rect x="9" y="9" width="30" height="30" rx="7" class="gp-engine-shine"></rect><rect x="16.5" y="16.5" width="15" height="15" rx="3.5" class="gp-engine-core"></rect><rect x="21" y="21" width="6" height="6" rx="1.5" class="gp-engine-die"></rect></svg><span class="site-badge">MIT</span></div>
         <h3>An engine. Not a wrapper.</h3>
         <p>Transactions, history, selection and IME in TypeScript, with the same contract in Rust/WASM. No ProseMirror, Tiptap or Slate underneath.</p>
         <div class="site-mock site-tx" aria-hidden="true">
@@ -11885,7 +12268,7 @@ editor<span class="tk-pun">.</span>on<span class="tk-pun">(</span><span class="t
       </article>
       <article class="site-tile is-markdown">
         <span class="site-tile-light" aria-hidden="true"></span>
-        <div class="site-tile-top"><span class="site-icon-box"><svg class="gt-icon" aria-hidden="true"><use href="#i-page" /></svg></span><span class="site-badge">MIT</span></div>
+        <div class="site-tile-top"><svg viewBox="0 0 48 48" class="site-part-icon" aria-hidden="true" focusable="false"><defs><linearGradient id="gt-part-markdown-front" x1="4" y1="13" x2="40" y2="38" gradientUnits="userSpaceOnUse"><stop offset="0" class="site-glyph-cyan"></stop><stop offset="0.6" class="site-glyph-mid"></stop><stop offset="1" class="site-glyph-lo"></stop></linearGradient><radialGradient id="gt-part-markdown-shine" cx="9" cy="14" r="24" gradientUnits="userSpaceOnUse"><stop offset="0" class="site-glyph-hi" stop-opacity="0.85"></stop><stop offset="1" class="site-glyph-hi" stop-opacity="0"></stop></radialGradient><linearGradient id="gt-part-markdown-back" x1="11" y1="6" x2="44" y2="28" gradientUnits="userSpaceOnUse"><stop offset="0" class="site-glyph-mid"></stop><stop offset="0.5" class="site-glyph-mid"></stop><stop offset="1" class="site-glyph-lo"></stop></linearGradient><linearGradient id="gt-part-markdown-ink" x1="10" y1="19" x2="35" y2="32" gradientUnits="userSpaceOnUse"><stop offset="0" class="site-glyph-hi"></stop><stop offset="1" class="site-glyph-hi" stop-opacity="0.8"></stop></linearGradient><clipPath id="gt-part-markdown-cut"><path clip-rule="evenodd" d="M-4 -4H52V52H-4ZM10.5 11H33.5A8.5 8.5 0 0 1 42 19.5V31.5A8.5 8.5 0 0 1 33.5 40H10.5A8.5 8.5 0 0 1 2 31.5V19.5A8.5 8.5 0 0 1 10.5 11Z"></path></clipPath></defs><rect clip-path="url(#gt-part-markdown-cut)" x="11" y="6" width="33" height="22" rx="6" class="gp-markdown-back" opacity="0.5"></rect><rect x="4" y="13" width="36" height="25" rx="6.5" class="gp-markdown-front"></rect><rect x="4" y="13" width="36" height="25" rx="6.5" class="gp-markdown-shine"></rect><path d="M10 32V19H13.2L17 23.8L20.8 19H24V32H20.8V24.2L17 28.8L13.2 24.2V32Z" class="gp-markdown-ink"></path><path d="M28.6 19H31.8V25.5H35L30.2 31.5L25.4 25.5H28.6Z" class="gp-markdown-ink"></path></svg><span class="site-badge">MIT</span></div>
         <h3>Your Markdown stays yours.</h3>
         <p>Our own parser keeps the file intact: an edit rewrites only the block it touched, your spacing and formatting are written back as they were.</p>
         <div class="site-mock site-md" aria-hidden="true">
@@ -11898,7 +12281,7 @@ editor<span class="tk-pun">.</span>on<span class="tk-pun">(</span><span class="t
       <article class="site-tile is-together is-wide">
         <span class="site-tile-light" aria-hidden="true"></span>
         <div>
-          <div class="site-tile-top"><span class="site-icon-box"><svg class="gt-icon" aria-hidden="true"><use href="#i-nodes" /></svg></span><span class="site-badge">MIT</span></div>
+          <div class="site-tile-top"><svg viewBox="0 0 48 48" class="site-part-icon" aria-hidden="true" focusable="false"><defs><linearGradient id="gt-part-together-front" x1="5" y1="10" x2="31" y2="43" gradientUnits="userSpaceOnUse"><stop offset="0" class="site-glyph-cyan"></stop><stop offset="0.6" class="site-glyph-mid"></stop><stop offset="1" class="site-glyph-lo"></stop></linearGradient><radialGradient id="gt-part-together-shine" cx="12" cy="12" r="20" gradientUnits="userSpaceOnUse"><stop offset="0" class="site-glyph-hi" stop-opacity="0.85"></stop><stop offset="1" class="site-glyph-hi" stop-opacity="0"></stop></radialGradient><linearGradient id="gt-part-together-back" x1="22" y1="8" x2="44" y2="38" gradientUnits="userSpaceOnUse"><stop offset="0" class="site-glyph-mid"></stop><stop offset="0.5" class="site-glyph-mid"></stop><stop offset="1" class="site-glyph-lo"></stop></linearGradient><clipPath id="gt-part-together-cut"><path clip-rule="evenodd" d="M-4 -4H52V52H-4ZM9 17A9 9 0 1 0 27 17A9 9 0 1 0 9 17ZM3 40A15 15 0 0 1 33 40V43A4 4 0 0 1 29 47H7A4 4 0 0 1 3 43Z"></path></clipPath></defs><g clip-path="url(#gt-part-together-cut)" opacity="0.55"><circle cx="33" cy="14" r="6" class="gp-together-back"></circle><path d="M22 36A11 11 0 0 1 44 36V36.5A1.5 1.5 0 0 1 42.5 38H23.5A1.5 1.5 0 0 1 22 36.5Z" class="gp-together-back"></path></g><circle cx="18" cy="17" r="7" class="gp-together-front"></circle><circle cx="18" cy="17" r="7" class="gp-together-shine"></circle><path d="M5 40A13 13 0 0 1 31 40V41A2 2 0 0 1 29 43H7A2 2 0 0 1 5 41Z" class="gp-together-front"></path><path d="M5 40A13 13 0 0 1 31 40V41A2 2 0 0 1 29 43H7A2 2 0 0 1 5 41Z" class="gp-together-shine"></path></svg><span class="site-badge">MIT</span></div>
           <h3>Better, together.</h3>
           <p>Our own CRDT in Rust. Concurrent and offline edits merge on reconnect; cursors and selections included.</p>
         </div>
@@ -12080,7 +12463,7 @@ editor<span class="tk-pun">.</span>on<span class="tk-pun">(</span><span class="t
     </div>
     <div class="site-run-grid">
       <article class="site-run">
-        <div class="site-tile-top"><span class="site-icon-box"><svg class="gt-icon" aria-hidden="true"><use href="#i-globe" /></svg></span><span class="site-badge">MIT</span></div>
+        <div class="site-tile-top"><svg viewBox="0 0 48 48" class="site-part-icon" aria-hidden="true" focusable="false"><defs><linearGradient id="gt-part-run-browser-front" x1="4" y1="11" x2="40" y2="40" gradientUnits="userSpaceOnUse"><stop offset="0" class="site-glyph-cyan"></stop><stop offset="0.6" class="site-glyph-mid"></stop><stop offset="1" class="site-glyph-lo"></stop></linearGradient><radialGradient id="gt-part-run-browser-shine" cx="9" cy="12" r="24" gradientUnits="userSpaceOnUse"><stop offset="0" class="site-glyph-hi" stop-opacity="0.85"></stop><stop offset="1" class="site-glyph-hi" stop-opacity="0"></stop></radialGradient><linearGradient id="gt-part-run-browser-back" x1="10" y1="4" x2="44" y2="30" gradientUnits="userSpaceOnUse"><stop offset="0" class="site-glyph-mid"></stop><stop offset="0.5" class="site-glyph-mid"></stop><stop offset="1" class="site-glyph-lo"></stop></linearGradient><linearGradient id="gt-part-run-browser-ink" x1="8" y1="15" x2="30" y2="32" gradientUnits="userSpaceOnUse"><stop offset="0" class="site-glyph-hi"></stop><stop offset="1" class="site-glyph-hi" stop-opacity="0.8"></stop></linearGradient><clipPath id="gt-part-run-browser-cut"><path clip-rule="evenodd" d="M-4 -4H52V52H-4ZM10 9H34A8 8 0 0 1 42 17V34A8 8 0 0 1 34 42H10A8 8 0 0 1 2 34V17A8 8 0 0 1 10 9Z"></path></clipPath></defs><rect clip-path="url(#gt-part-run-browser-cut)" x="10" y="4" width="34" height="26" rx="6" class="gp-run-browser-back" opacity="0.5"></rect><rect x="4" y="11" width="36" height="29" rx="6" class="gp-run-browser-front"></rect><rect x="4" y="11" width="36" height="29" rx="6" class="gp-run-browser-shine"></rect><circle cx="9.5" cy="16.5" r="1.6" class="gp-run-browser-ink"></circle><circle cx="14" cy="16.5" r="1.6" class="gp-run-browser-ink"></circle><circle cx="18.5" cy="16.5" r="1.6" class="gp-run-browser-ink"></circle><rect x="10" y="23" width="14" height="3" rx="1.5" class="gp-run-browser-ink"></rect><rect x="10" y="29" width="20" height="3" rx="1.5" class="gp-run-browser-ink" opacity="0.8"></rect></svg><span class="site-badge">MIT</span></div>
         <p class="site-label">JavaScript</p>
         <p class="site-big">~127 KB</p>
         <h3>JavaScript engine</h3>
@@ -12088,7 +12471,7 @@ editor<span class="tk-pun">.</span>on<span class="tk-pun">(</span><span class="t
         <p class="site-run-foot">TypeScript · gzip, with Markdown</p>
       </article>
       <article class="site-run is-tint">
-        <div class="site-tile-top"><span class="site-icon-box"><svg class="gt-icon" aria-hidden="true"><use href="#i-chip" /></svg></span><span class="site-badge">MIT</span></div>
+        <div class="site-tile-top"><svg viewBox="0 0 48 48" class="site-part-icon" aria-hidden="true" focusable="false"><defs><linearGradient id="gt-part-run-engine-front" x1="9" y1="9" x2="39" y2="39" gradientUnits="userSpaceOnUse"><stop offset="0" class="site-glyph-cyan"></stop><stop offset="0.6" class="site-glyph-mid"></stop><stop offset="1" class="site-glyph-lo"></stop></linearGradient><radialGradient id="gt-part-run-engine-shine" cx="13" cy="12" r="22" gradientUnits="userSpaceOnUse"><stop offset="0" class="site-glyph-hi" stop-opacity="0.85"></stop><stop offset="1" class="site-glyph-hi" stop-opacity="0"></stop></radialGradient><linearGradient id="gt-part-run-engine-back" x1="3" y1="3" x2="45" y2="45" gradientUnits="userSpaceOnUse"><stop offset="0" class="site-glyph-mid"></stop><stop offset="0.5" class="site-glyph-mid"></stop><stop offset="1" class="site-glyph-lo"></stop></linearGradient><linearGradient id="gt-part-run-engine-core" x1="17" y1="17" x2="31" y2="31" gradientUnits="userSpaceOnUse"><stop offset="0" class="site-glyph-hi"></stop><stop offset="1" class="site-glyph-cyan"></stop></linearGradient><linearGradient id="gt-part-run-engine-die" x1="21" y1="21" x2="27" y2="27" gradientUnits="userSpaceOnUse"><stop offset="0" class="site-glyph-mid"></stop><stop offset="1" class="site-glyph-lo"></stop></linearGradient></defs><rect x="3" y="15.5" width="7" height="3.5" rx="1.75" class="gp-run-engine-back" opacity="0.55"></rect><rect x="38" y="15.5" width="7" height="3.5" rx="1.75" class="gp-run-engine-back" opacity="0.55"></rect><rect x="15.5" y="3" width="3.5" height="7" rx="1.75" class="gp-run-engine-back" opacity="0.55"></rect><rect x="15.5" y="38" width="3.5" height="7" rx="1.75" class="gp-run-engine-back" opacity="0.55"></rect><rect x="3" y="22.25" width="7" height="3.5" rx="1.75" class="gp-run-engine-back" opacity="0.55"></rect><rect x="38" y="22.25" width="7" height="3.5" rx="1.75" class="gp-run-engine-back" opacity="0.55"></rect><rect x="22.25" y="3" width="3.5" height="7" rx="1.75" class="gp-run-engine-back" opacity="0.55"></rect><rect x="22.25" y="38" width="3.5" height="7" rx="1.75" class="gp-run-engine-back" opacity="0.55"></rect><rect x="3" y="29" width="7" height="3.5" rx="1.75" class="gp-run-engine-back" opacity="0.55"></rect><rect x="38" y="29" width="7" height="3.5" rx="1.75" class="gp-run-engine-back" opacity="0.55"></rect><rect x="29" y="3" width="3.5" height="7" rx="1.75" class="gp-run-engine-back" opacity="0.55"></rect><rect x="29" y="38" width="3.5" height="7" rx="1.75" class="gp-run-engine-back" opacity="0.55"></rect><rect x="9" y="9" width="30" height="30" rx="7" class="gp-run-engine-front"></rect><rect x="9" y="9" width="30" height="30" rx="7" class="gp-run-engine-shine"></rect><rect x="16.5" y="16.5" width="15" height="15" rx="3.5" class="gp-run-engine-core"></rect><rect x="21" y="21" width="6" height="6" rx="1.5" class="gp-run-engine-die"></rect></svg><span class="site-badge">MIT</span></div>
         <p class="site-label">Rust / WASM</p>
         <p class="site-big">~300 KB</p>
         <h3>Rust/WASM engine</h3>
@@ -12096,7 +12479,7 @@ editor<span class="tk-pun">.</span>on<span class="tk-pun">(</span><span class="t
         <p class="site-run-foot">Rust · gzip · CRDT, cursors, reconnect</p>
       </article>
       <article class="site-run">
-        <div class="site-tile-top"><span class="site-icon-box"><svg class="gt-icon" aria-hidden="true"><use href="#i-server" /></svg></span><span class="site-badge">MIT</span></div>
+        <div class="site-tile-top"><svg viewBox="0 0 48 48" class="site-part-icon" aria-hidden="true" focusable="false"><defs><linearGradient id="gt-part-run-cloud-front" x1="7" y1="7" x2="43" y2="32" gradientUnits="userSpaceOnUse"><stop offset="0" class="site-glyph-cyan"></stop><stop offset="0.6" class="site-glyph-mid"></stop><stop offset="1" class="site-glyph-lo"></stop></linearGradient><radialGradient id="gt-part-run-cloud-shine" cx="17" cy="11" r="20" gradientUnits="userSpaceOnUse"><stop offset="0" class="site-glyph-hi" stop-opacity="0.85"></stop><stop offset="1" class="site-glyph-hi" stop-opacity="0"></stop></radialGradient><linearGradient id="gt-part-run-cloud-back" x1="12" y1="35" x2="36" y2="42" gradientUnits="userSpaceOnUse"><stop offset="0" class="site-glyph-mid"></stop><stop offset="0.5" class="site-glyph-mid"></stop><stop offset="1" class="site-glyph-lo"></stop></linearGradient><linearGradient id="gt-part-run-cloud-led" x1="14" y1="37" x2="22" y2="40" gradientUnits="userSpaceOnUse"><stop offset="0" class="site-glyph-hi"></stop><stop offset="1" class="site-glyph-cyan"></stop></linearGradient><clipPath id="gt-part-run-cloud-shape"><circle cx="15" cy="24.5" r="7.5"></circle><circle cx="26.5" cy="18" r="11"></circle><circle cx="36" cy="25" r="7"></circle><rect x="7.5" y="21" width="35.5" height="11" rx="5.5"></rect></clipPath></defs><g clip-path="url(#gt-part-run-cloud-shape)"><rect x="6" y="6" width="38" height="28" class="gp-run-cloud-front"></rect><rect x="6" y="6" width="38" height="28" class="gp-run-cloud-shine"></rect></g><rect x="12" y="35" width="24" height="7" rx="3" class="gp-run-cloud-back" opacity="0.7"></rect><circle cx="16" cy="38.5" r="1.4" class="gp-run-cloud-led"></circle><circle cx="20.5" cy="38.5" r="1.4" class="gp-run-cloud-led"></circle></svg><span class="site-badge">MIT</span></div>
         <p class="site-label">Go · self-hosted</p>
         <p class="site-big">1 service</p>
         <h3>GoTipe Cloud</h3>
@@ -12154,20 +12537,31 @@ editor<span class="tk-pun">.</span>on<span class="tk-pun">(</span><span class="t
 
 <section class="site-section">
   <div class="site-wrap">
-    <div class="site-stage site-band" data-theme="dark">
-      <div class="site-engine" aria-hidden="true">
-        <span class="site-engine-beam"></span>
-        <span class="site-engine-beam is-second"></span>
-        <span class="site-engine-face">
-          <span class="site-engine-ring"></span>
-          <span class="site-engine-ring is-inner"></span>
-          <span class="site-engine-arc"></span>
-          <span class="site-engine-arc is-second"></span>
-          <svg class="site-engine-mark" viewBox="7 7 18 18" aria-hidden="true"><path d="M23 11a8 8 0 1 0 1 9v-5h-8v3h5v1a5 5 0 1 1-1-6z" /></svg>
-          <span class="site-engine-hand"></span>
-          <span class="site-engine-hand is-short"></span>
-          <span class="site-engine-hub"></span>
-        </span>
+    <div class="site-stage site-band">
+      <div class="site-build" aria-hidden="true">
+        <span class="site-build-glow"></span>
+        <div class="site-build-scene">
+          <span class="site-build-plate is-engine"><svg class="site-build-mark" aria-hidden="true"><use href="#i-manta" /></svg></span>
+          <span class="site-build-plate is-source">
+            <span class="site-build-row"><span class="site-build-sign">#</span><span class="site-build-line is-long"></span></span>
+            <span class="site-build-row"><span class="site-build-sign">-</span><span class="site-build-line"></span></span>
+            <span class="site-build-row"><span class="site-build-sign">-</span><span class="site-build-line is-short"></span></span>
+            <span class="site-build-row"><span class="site-build-sign">&gt;</span><span class="site-build-line"></span></span>
+          </span>
+          <span class="site-build-plate is-blocks">
+            <span class="site-build-block is-head"></span>
+            <span class="site-build-block"></span>
+            <span class="site-build-block is-list"></span>
+            <span class="site-build-block is-code"></span>
+          </span>
+          <span class="site-build-plate is-page">
+            <span class="site-build-line is-head"></span>
+            <span class="site-build-line is-long"></span>
+            <span class="site-build-row"><span class="site-build-line is-picked"></span><span class="site-build-caret"><span class="site-build-flag">Ana</span></span></span>
+            <span class="site-build-line"></span>
+            <span class="site-build-line is-short"></span>
+          </span>
+        </div>
       </div>
       <div class="site-band-copy">
         <p class="site-eyebrow">The next chapter is yours</p>
@@ -12261,20 +12655,22 @@ editor<span class="tk-pun">.</span>on<span class="tk-pun">(</span><span class="t
               <div class="site-split">
                 <div class="site-src">
                   <p class="site-pane-head"><span>Markdown source</span><span>.md</span></p>
-                  <ol class="site-src-lines">
-                    <li><code><span class="is-mark"># Everything here syncs live</span></code></li>
-                    <li></li>
-                    <li class="is-current"><code><span class="is-mark">**Every block is a transaction**</span> the engine</code></li>
-                    <li class="is-current"><code>replays. Two cursors, one document.</code></li>
-                    <li></li>
-                    <li><code><span class="is-mark">### Launch checklist</span></code></li>
-                    <li></li>
-                    <li><code>- [x] Engine compiles to WASM</code></li>
-                    <li><code>- [x] Docs run on 0.1</code></li>
-                    <li><code>- [ ] Cut the release note</code></li>
-                    <li></li>
-                    <li><code>&gt; Paste a link — Markdown stays intact.</code></li>
-                  </ol>
+                  <div class="site-src-code">
+                    <ol class="site-src-lines">
+                      <li><code><span class="is-mark"># Everything here syncs live</span></code></li>
+                      <li></li>
+                      <li class="is-current"><code><span class="is-mark">**Every block is a transaction**</span> the engine</code></li>
+                      <li class="is-current"><code>replays. Two cursors, one document.</code></li>
+                      <li></li>
+                      <li><code><span class="is-mark">### Launch checklist</span></code></li>
+                      <li></li>
+                      <li><code>- [x] Engine compiles to WASM</code></li>
+                      <li><code>- [x] Docs run on 0.1</code></li>
+                      <li><code>- [ ] Cut the release note</code></li>
+                      <li></li>
+                      <li><code>&gt; Paste a link — Markdown stays intact.</code></li>
+                    </ol>
+                  </div>
                   <p class="site-pane-foot"><span class="is-dot">UTF-8</span><span>CommonMark</span></p>
                 </div>
                 <div class="site-render">
@@ -12282,7 +12678,7 @@ editor<span class="tk-pun">.</span>on<span class="tk-pun">(</span><span class="t
                   <article class="gotipe-page is-slice">
                     <div class="gotipe-doc">
                       <h1>Everything here syncs live</h1>
-                      <p class="site-has-toolbar">
+                      <p class="site-has-toolbar is-hovered">
                         <span class="gotipe-anchor is-inline"
                           ><strong class="gotipe-selection">Every block is a transaction</strong
                           ><span class="gotipe-overlay gotipe-toolbar" data-place="above-start" role="toolbar"
@@ -12292,6 +12688,10 @@ editor<span class="tk-pun">.</span>on<span class="tk-pun">(</span><span class="t
                             ><span class="gotipe-tool"><svg class="gt-icon"><use href="#i-comment" /></svg></span></span
                         ></span>
                         the engine replays. Two cursors, one document.
+                        <span class="gotipe-block-handle" aria-hidden="true"
+                          ><span class="gotipe-handle-button"><svg class="gt-icon"><use href="#i-plus" /></svg></span
+                          ><span class="gotipe-handle-button"><svg class="gt-icon"><use href="#i-grip" /></svg></span
+                        ></span>
                       </p>
                       <h3>Launch checklist</h3>
                       <ul class="gotipe-todo-list">
@@ -12319,7 +12719,7 @@ editor<span class="tk-pun">.</span>on<span class="tk-pun">(</span><span class="t
               </figcaption>
             </figure>
           </div>
-          <p class="site-hero-note">Markdown source and the document it becomes. One model, nothing lost. Edit the document: the source follows.</p>
+          <p class="site-hero-note">Markdown source and the document it becomes. One model, nothing lost. Edit either side: the other follows.</p>
         </div>
 
         <div class="site-strip">
@@ -12390,19 +12790,19 @@ editor<span class="tk-pun">.</span>on<span class="tk-pun">(</span><span class="t
       </div>
       <ol class="site-pillars">
         <li class="site-pillar">
-          <p class="site-pillar-top"><svg class="gt-icon" aria-hidden="true"><use href="#i-braces" /></svg><span>01</span></p>
+          <p class="site-pillar-top"><svg viewBox="0 0 48 48" class="site-part-icon" aria-hidden="true" focusable="false"><defs><linearGradient id="gt-part-pillar-engine-front" x1="9" y1="9" x2="39" y2="39" gradientUnits="userSpaceOnUse"><stop offset="0" class="site-glyph-cyan"></stop><stop offset="0.6" class="site-glyph-mid"></stop><stop offset="1" class="site-glyph-lo"></stop></linearGradient><radialGradient id="gt-part-pillar-engine-shine" cx="13" cy="12" r="22" gradientUnits="userSpaceOnUse"><stop offset="0" class="site-glyph-hi" stop-opacity="0.85"></stop><stop offset="1" class="site-glyph-hi" stop-opacity="0"></stop></radialGradient><linearGradient id="gt-part-pillar-engine-back" x1="3" y1="3" x2="45" y2="45" gradientUnits="userSpaceOnUse"><stop offset="0" class="site-glyph-mid"></stop><stop offset="0.5" class="site-glyph-mid"></stop><stop offset="1" class="site-glyph-lo"></stop></linearGradient><linearGradient id="gt-part-pillar-engine-core" x1="17" y1="17" x2="31" y2="31" gradientUnits="userSpaceOnUse"><stop offset="0" class="site-glyph-hi"></stop><stop offset="1" class="site-glyph-cyan"></stop></linearGradient><linearGradient id="gt-part-pillar-engine-die" x1="21" y1="21" x2="27" y2="27" gradientUnits="userSpaceOnUse"><stop offset="0" class="site-glyph-mid"></stop><stop offset="1" class="site-glyph-lo"></stop></linearGradient></defs><rect x="3" y="15.5" width="7" height="3.5" rx="1.75" class="gp-pillar-engine-back" opacity="0.55"></rect><rect x="38" y="15.5" width="7" height="3.5" rx="1.75" class="gp-pillar-engine-back" opacity="0.55"></rect><rect x="15.5" y="3" width="3.5" height="7" rx="1.75" class="gp-pillar-engine-back" opacity="0.55"></rect><rect x="15.5" y="38" width="3.5" height="7" rx="1.75" class="gp-pillar-engine-back" opacity="0.55"></rect><rect x="3" y="22.25" width="7" height="3.5" rx="1.75" class="gp-pillar-engine-back" opacity="0.55"></rect><rect x="38" y="22.25" width="7" height="3.5" rx="1.75" class="gp-pillar-engine-back" opacity="0.55"></rect><rect x="22.25" y="3" width="3.5" height="7" rx="1.75" class="gp-pillar-engine-back" opacity="0.55"></rect><rect x="22.25" y="38" width="3.5" height="7" rx="1.75" class="gp-pillar-engine-back" opacity="0.55"></rect><rect x="3" y="29" width="7" height="3.5" rx="1.75" class="gp-pillar-engine-back" opacity="0.55"></rect><rect x="38" y="29" width="7" height="3.5" rx="1.75" class="gp-pillar-engine-back" opacity="0.55"></rect><rect x="29" y="3" width="3.5" height="7" rx="1.75" class="gp-pillar-engine-back" opacity="0.55"></rect><rect x="29" y="38" width="3.5" height="7" rx="1.75" class="gp-pillar-engine-back" opacity="0.55"></rect><rect x="9" y="9" width="30" height="30" rx="7" class="gp-pillar-engine-front"></rect><rect x="9" y="9" width="30" height="30" rx="7" class="gp-pillar-engine-shine"></rect><rect x="16.5" y="16.5" width="15" height="15" rx="3.5" class="gp-pillar-engine-core"></rect><rect x="21" y="21" width="6" height="6" rx="1.5" class="gp-pillar-engine-die"></rect></svg><span>01</span></p>
           <h3>Your own engine</h3>
           <p>TypeScript and Rust/WASM. No editor underneath.</p>
           <span class="site-badge">MIT</span>
         </li>
         <li class="site-pillar">
-          <p class="site-pillar-top"><svg class="gt-icon" aria-hidden="true"><use href="#i-page" /></svg><span>02</span></p>
+          <p class="site-pillar-top"><svg viewBox="0 0 48 48" class="site-part-icon" aria-hidden="true" focusable="false"><defs><linearGradient id="gt-part-pillar-markdown-front" x1="4" y1="13" x2="40" y2="38" gradientUnits="userSpaceOnUse"><stop offset="0" class="site-glyph-cyan"></stop><stop offset="0.6" class="site-glyph-mid"></stop><stop offset="1" class="site-glyph-lo"></stop></linearGradient><radialGradient id="gt-part-pillar-markdown-shine" cx="9" cy="14" r="24" gradientUnits="userSpaceOnUse"><stop offset="0" class="site-glyph-hi" stop-opacity="0.85"></stop><stop offset="1" class="site-glyph-hi" stop-opacity="0"></stop></radialGradient><linearGradient id="gt-part-pillar-markdown-back" x1="11" y1="6" x2="44" y2="28" gradientUnits="userSpaceOnUse"><stop offset="0" class="site-glyph-mid"></stop><stop offset="0.5" class="site-glyph-mid"></stop><stop offset="1" class="site-glyph-lo"></stop></linearGradient><linearGradient id="gt-part-pillar-markdown-ink" x1="10" y1="19" x2="35" y2="32" gradientUnits="userSpaceOnUse"><stop offset="0" class="site-glyph-hi"></stop><stop offset="1" class="site-glyph-hi" stop-opacity="0.8"></stop></linearGradient><clipPath id="gt-part-pillar-markdown-cut"><path clip-rule="evenodd" d="M-4 -4H52V52H-4ZM10.5 11H33.5A8.5 8.5 0 0 1 42 19.5V31.5A8.5 8.5 0 0 1 33.5 40H10.5A8.5 8.5 0 0 1 2 31.5V19.5A8.5 8.5 0 0 1 10.5 11Z"></path></clipPath></defs><rect clip-path="url(#gt-part-pillar-markdown-cut)" x="11" y="6" width="33" height="22" rx="6" class="gp-pillar-markdown-back" opacity="0.5"></rect><rect x="4" y="13" width="36" height="25" rx="6.5" class="gp-pillar-markdown-front"></rect><rect x="4" y="13" width="36" height="25" rx="6.5" class="gp-pillar-markdown-shine"></rect><path d="M10 32V19H13.2L17 23.8L20.8 19H24V32H20.8V24.2L17 28.8L13.2 24.2V32Z" class="gp-pillar-markdown-ink"></path><path d="M28.6 19H31.8V25.5H35L30.2 31.5L25.4 25.5H28.6Z" class="gp-pillar-markdown-ink"></path></svg><span>02</span></p>
           <h3>Markdown, untouched</h3>
           <p>The same file in. Untouched blocks come back byte for byte.</p>
           <span class="site-badge">Lossless</span>
         </li>
         <li class="site-pillar">
-          <p class="site-pillar-top"><svg class="gt-icon" aria-hidden="true"><use href="#i-nodes" /></svg><span>03</span></p>
+          <p class="site-pillar-top"><svg viewBox="0 0 48 48" class="site-part-icon" aria-hidden="true" focusable="false"><defs><linearGradient id="gt-part-pillar-together-front" x1="5" y1="10" x2="31" y2="43" gradientUnits="userSpaceOnUse"><stop offset="0" class="site-glyph-cyan"></stop><stop offset="0.6" class="site-glyph-mid"></stop><stop offset="1" class="site-glyph-lo"></stop></linearGradient><radialGradient id="gt-part-pillar-together-shine" cx="12" cy="12" r="20" gradientUnits="userSpaceOnUse"><stop offset="0" class="site-glyph-hi" stop-opacity="0.85"></stop><stop offset="1" class="site-glyph-hi" stop-opacity="0"></stop></radialGradient><linearGradient id="gt-part-pillar-together-back" x1="22" y1="8" x2="44" y2="38" gradientUnits="userSpaceOnUse"><stop offset="0" class="site-glyph-mid"></stop><stop offset="0.5" class="site-glyph-mid"></stop><stop offset="1" class="site-glyph-lo"></stop></linearGradient><clipPath id="gt-part-pillar-together-cut"><path clip-rule="evenodd" d="M-4 -4H52V52H-4ZM9 17A9 9 0 1 0 27 17A9 9 0 1 0 9 17ZM3 40A15 15 0 0 1 33 40V43A4 4 0 0 1 29 47H7A4 4 0 0 1 3 43Z"></path></clipPath></defs><g clip-path="url(#gt-part-pillar-together-cut)" opacity="0.55"><circle cx="33" cy="14" r="6" class="gp-pillar-together-back"></circle><path d="M22 36A11 11 0 0 1 44 36V36.5A1.5 1.5 0 0 1 42.5 38H23.5A1.5 1.5 0 0 1 22 36.5Z" class="gp-pillar-together-back"></path></g><circle cx="18" cy="17" r="7" class="gp-pillar-together-front"></circle><circle cx="18" cy="17" r="7" class="gp-pillar-together-shine"></circle><path d="M5 40A13 13 0 0 1 31 40V41A2 2 0 0 1 29 43H7A2 2 0 0 1 5 41Z" class="gp-pillar-together-front"></path><path d="M5 40A13 13 0 0 1 31 40V41A2 2 0 0 1 29 43H7A2 2 0 0 1 5 41Z" class="gp-pillar-together-shine"></path></svg><span>03</span></p>
           <h3>Built to work together</h3>
           <p>Real-time sync, review and offline editing.</p>
           <span class="site-badge">MIT</span>
@@ -12422,10 +12822,10 @@ editor<span class="tk-pun">.</span>on<span class="tk-pun">(</span><span class="t
       <p class="site-sub">The engine and every service around it are <span class="site-co-pick">open source<span class="site-co-bar" aria-hidden="true"><svg class="gt-icon" aria-hidden="true"><use href="#i-bold" /></svg><svg class="gt-icon" aria-hidden="true"><use href="#i-italic" /></svg><svg class="gt-icon" aria-hidden="true"><use href="#i-link" /></svg><svg class="gt-icon" aria-hidden="true"><use href="#i-comment" /></svg></span></span>. Only the ready-made interface has a commercial license.</p>
     </div>
 
-    <div class="site-bento" data-theme="dark">
+    <div class="site-bento">
       <article class="site-tile is-engine">
         <span class="site-tile-light" aria-hidden="true"></span>
-        <div class="site-tile-top"><span class="site-icon-box"><svg class="gt-icon" aria-hidden="true"><use href="#i-braces" /></svg></span><span class="site-badge">MIT</span></div>
+        <div class="site-tile-top"><svg viewBox="0 0 48 48" class="site-part-icon" aria-hidden="true" focusable="false"><defs><linearGradient id="gt-part-engine-front" x1="9" y1="9" x2="39" y2="39" gradientUnits="userSpaceOnUse"><stop offset="0" class="site-glyph-cyan"></stop><stop offset="0.6" class="site-glyph-mid"></stop><stop offset="1" class="site-glyph-lo"></stop></linearGradient><radialGradient id="gt-part-engine-shine" cx="13" cy="12" r="22" gradientUnits="userSpaceOnUse"><stop offset="0" class="site-glyph-hi" stop-opacity="0.85"></stop><stop offset="1" class="site-glyph-hi" stop-opacity="0"></stop></radialGradient><linearGradient id="gt-part-engine-back" x1="3" y1="3" x2="45" y2="45" gradientUnits="userSpaceOnUse"><stop offset="0" class="site-glyph-mid"></stop><stop offset="0.5" class="site-glyph-mid"></stop><stop offset="1" class="site-glyph-lo"></stop></linearGradient><linearGradient id="gt-part-engine-core" x1="17" y1="17" x2="31" y2="31" gradientUnits="userSpaceOnUse"><stop offset="0" class="site-glyph-hi"></stop><stop offset="1" class="site-glyph-cyan"></stop></linearGradient><linearGradient id="gt-part-engine-die" x1="21" y1="21" x2="27" y2="27" gradientUnits="userSpaceOnUse"><stop offset="0" class="site-glyph-mid"></stop><stop offset="1" class="site-glyph-lo"></stop></linearGradient></defs><rect x="3" y="15.5" width="7" height="3.5" rx="1.75" class="gp-engine-back" opacity="0.55"></rect><rect x="38" y="15.5" width="7" height="3.5" rx="1.75" class="gp-engine-back" opacity="0.55"></rect><rect x="15.5" y="3" width="3.5" height="7" rx="1.75" class="gp-engine-back" opacity="0.55"></rect><rect x="15.5" y="38" width="3.5" height="7" rx="1.75" class="gp-engine-back" opacity="0.55"></rect><rect x="3" y="22.25" width="7" height="3.5" rx="1.75" class="gp-engine-back" opacity="0.55"></rect><rect x="38" y="22.25" width="7" height="3.5" rx="1.75" class="gp-engine-back" opacity="0.55"></rect><rect x="22.25" y="3" width="3.5" height="7" rx="1.75" class="gp-engine-back" opacity="0.55"></rect><rect x="22.25" y="38" width="3.5" height="7" rx="1.75" class="gp-engine-back" opacity="0.55"></rect><rect x="3" y="29" width="7" height="3.5" rx="1.75" class="gp-engine-back" opacity="0.55"></rect><rect x="38" y="29" width="7" height="3.5" rx="1.75" class="gp-engine-back" opacity="0.55"></rect><rect x="29" y="3" width="3.5" height="7" rx="1.75" class="gp-engine-back" opacity="0.55"></rect><rect x="29" y="38" width="3.5" height="7" rx="1.75" class="gp-engine-back" opacity="0.55"></rect><rect x="9" y="9" width="30" height="30" rx="7" class="gp-engine-front"></rect><rect x="9" y="9" width="30" height="30" rx="7" class="gp-engine-shine"></rect><rect x="16.5" y="16.5" width="15" height="15" rx="3.5" class="gp-engine-core"></rect><rect x="21" y="21" width="6" height="6" rx="1.5" class="gp-engine-die"></rect></svg><span class="site-badge">MIT</span></div>
         <h3>An engine. Not a wrapper.</h3>
         <p>Transactions, history, selection and IME in TypeScript, with the same contract in Rust/WASM. No ProseMirror, Tiptap or Slate underneath.</p>
         <div class="site-mock site-tx" aria-hidden="true">
@@ -12441,7 +12841,7 @@ editor<span class="tk-pun">.</span>on<span class="tk-pun">(</span><span class="t
       </article>
       <article class="site-tile is-markdown">
         <span class="site-tile-light" aria-hidden="true"></span>
-        <div class="site-tile-top"><span class="site-icon-box"><svg class="gt-icon" aria-hidden="true"><use href="#i-page" /></svg></span><span class="site-badge">MIT</span></div>
+        <div class="site-tile-top"><svg viewBox="0 0 48 48" class="site-part-icon" aria-hidden="true" focusable="false"><defs><linearGradient id="gt-part-markdown-front" x1="4" y1="13" x2="40" y2="38" gradientUnits="userSpaceOnUse"><stop offset="0" class="site-glyph-cyan"></stop><stop offset="0.6" class="site-glyph-mid"></stop><stop offset="1" class="site-glyph-lo"></stop></linearGradient><radialGradient id="gt-part-markdown-shine" cx="9" cy="14" r="24" gradientUnits="userSpaceOnUse"><stop offset="0" class="site-glyph-hi" stop-opacity="0.85"></stop><stop offset="1" class="site-glyph-hi" stop-opacity="0"></stop></radialGradient><linearGradient id="gt-part-markdown-back" x1="11" y1="6" x2="44" y2="28" gradientUnits="userSpaceOnUse"><stop offset="0" class="site-glyph-mid"></stop><stop offset="0.5" class="site-glyph-mid"></stop><stop offset="1" class="site-glyph-lo"></stop></linearGradient><linearGradient id="gt-part-markdown-ink" x1="10" y1="19" x2="35" y2="32" gradientUnits="userSpaceOnUse"><stop offset="0" class="site-glyph-hi"></stop><stop offset="1" class="site-glyph-hi" stop-opacity="0.8"></stop></linearGradient><clipPath id="gt-part-markdown-cut"><path clip-rule="evenodd" d="M-4 -4H52V52H-4ZM10.5 11H33.5A8.5 8.5 0 0 1 42 19.5V31.5A8.5 8.5 0 0 1 33.5 40H10.5A8.5 8.5 0 0 1 2 31.5V19.5A8.5 8.5 0 0 1 10.5 11Z"></path></clipPath></defs><rect clip-path="url(#gt-part-markdown-cut)" x="11" y="6" width="33" height="22" rx="6" class="gp-markdown-back" opacity="0.5"></rect><rect x="4" y="13" width="36" height="25" rx="6.5" class="gp-markdown-front"></rect><rect x="4" y="13" width="36" height="25" rx="6.5" class="gp-markdown-shine"></rect><path d="M10 32V19H13.2L17 23.8L20.8 19H24V32H20.8V24.2L17 28.8L13.2 24.2V32Z" class="gp-markdown-ink"></path><path d="M28.6 19H31.8V25.5H35L30.2 31.5L25.4 25.5H28.6Z" class="gp-markdown-ink"></path></svg><span class="site-badge">MIT</span></div>
         <h3>Your Markdown stays yours.</h3>
         <p>Our own parser keeps the file intact: an edit rewrites only the block it touched, your spacing and formatting are written back as they were.</p>
         <div class="site-mock site-md" aria-hidden="true">
@@ -12454,7 +12854,7 @@ editor<span class="tk-pun">.</span>on<span class="tk-pun">(</span><span class="t
       <article class="site-tile is-together is-wide">
         <span class="site-tile-light" aria-hidden="true"></span>
         <div>
-          <div class="site-tile-top"><span class="site-icon-box"><svg class="gt-icon" aria-hidden="true"><use href="#i-nodes" /></svg></span><span class="site-badge">MIT</span></div>
+          <div class="site-tile-top"><svg viewBox="0 0 48 48" class="site-part-icon" aria-hidden="true" focusable="false"><defs><linearGradient id="gt-part-together-front" x1="5" y1="10" x2="31" y2="43" gradientUnits="userSpaceOnUse"><stop offset="0" class="site-glyph-cyan"></stop><stop offset="0.6" class="site-glyph-mid"></stop><stop offset="1" class="site-glyph-lo"></stop></linearGradient><radialGradient id="gt-part-together-shine" cx="12" cy="12" r="20" gradientUnits="userSpaceOnUse"><stop offset="0" class="site-glyph-hi" stop-opacity="0.85"></stop><stop offset="1" class="site-glyph-hi" stop-opacity="0"></stop></radialGradient><linearGradient id="gt-part-together-back" x1="22" y1="8" x2="44" y2="38" gradientUnits="userSpaceOnUse"><stop offset="0" class="site-glyph-mid"></stop><stop offset="0.5" class="site-glyph-mid"></stop><stop offset="1" class="site-glyph-lo"></stop></linearGradient><clipPath id="gt-part-together-cut"><path clip-rule="evenodd" d="M-4 -4H52V52H-4ZM9 17A9 9 0 1 0 27 17A9 9 0 1 0 9 17ZM3 40A15 15 0 0 1 33 40V43A4 4 0 0 1 29 47H7A4 4 0 0 1 3 43Z"></path></clipPath></defs><g clip-path="url(#gt-part-together-cut)" opacity="0.55"><circle cx="33" cy="14" r="6" class="gp-together-back"></circle><path d="M22 36A11 11 0 0 1 44 36V36.5A1.5 1.5 0 0 1 42.5 38H23.5A1.5 1.5 0 0 1 22 36.5Z" class="gp-together-back"></path></g><circle cx="18" cy="17" r="7" class="gp-together-front"></circle><circle cx="18" cy="17" r="7" class="gp-together-shine"></circle><path d="M5 40A13 13 0 0 1 31 40V41A2 2 0 0 1 29 43H7A2 2 0 0 1 5 41Z" class="gp-together-front"></path><path d="M5 40A13 13 0 0 1 31 40V41A2 2 0 0 1 29 43H7A2 2 0 0 1 5 41Z" class="gp-together-shine"></path></svg><span class="site-badge">MIT</span></div>
           <h3>Better, together.</h3>
           <p>Our own CRDT in Rust. Concurrent and offline edits merge on reconnect; cursors and selections included.</p>
         </div>
@@ -12636,7 +13036,7 @@ editor<span class="tk-pun">.</span>on<span class="tk-pun">(</span><span class="t
     </div>
     <div class="site-run-grid">
       <article class="site-run">
-        <div class="site-tile-top"><span class="site-icon-box"><svg class="gt-icon" aria-hidden="true"><use href="#i-globe" /></svg></span><span class="site-badge">MIT</span></div>
+        <div class="site-tile-top"><svg viewBox="0 0 48 48" class="site-part-icon" aria-hidden="true" focusable="false"><defs><linearGradient id="gt-part-run-browser-front" x1="4" y1="11" x2="40" y2="40" gradientUnits="userSpaceOnUse"><stop offset="0" class="site-glyph-cyan"></stop><stop offset="0.6" class="site-glyph-mid"></stop><stop offset="1" class="site-glyph-lo"></stop></linearGradient><radialGradient id="gt-part-run-browser-shine" cx="9" cy="12" r="24" gradientUnits="userSpaceOnUse"><stop offset="0" class="site-glyph-hi" stop-opacity="0.85"></stop><stop offset="1" class="site-glyph-hi" stop-opacity="0"></stop></radialGradient><linearGradient id="gt-part-run-browser-back" x1="10" y1="4" x2="44" y2="30" gradientUnits="userSpaceOnUse"><stop offset="0" class="site-glyph-mid"></stop><stop offset="0.5" class="site-glyph-mid"></stop><stop offset="1" class="site-glyph-lo"></stop></linearGradient><linearGradient id="gt-part-run-browser-ink" x1="8" y1="15" x2="30" y2="32" gradientUnits="userSpaceOnUse"><stop offset="0" class="site-glyph-hi"></stop><stop offset="1" class="site-glyph-hi" stop-opacity="0.8"></stop></linearGradient><clipPath id="gt-part-run-browser-cut"><path clip-rule="evenodd" d="M-4 -4H52V52H-4ZM10 9H34A8 8 0 0 1 42 17V34A8 8 0 0 1 34 42H10A8 8 0 0 1 2 34V17A8 8 0 0 1 10 9Z"></path></clipPath></defs><rect clip-path="url(#gt-part-run-browser-cut)" x="10" y="4" width="34" height="26" rx="6" class="gp-run-browser-back" opacity="0.5"></rect><rect x="4" y="11" width="36" height="29" rx="6" class="gp-run-browser-front"></rect><rect x="4" y="11" width="36" height="29" rx="6" class="gp-run-browser-shine"></rect><circle cx="9.5" cy="16.5" r="1.6" class="gp-run-browser-ink"></circle><circle cx="14" cy="16.5" r="1.6" class="gp-run-browser-ink"></circle><circle cx="18.5" cy="16.5" r="1.6" class="gp-run-browser-ink"></circle><rect x="10" y="23" width="14" height="3" rx="1.5" class="gp-run-browser-ink"></rect><rect x="10" y="29" width="20" height="3" rx="1.5" class="gp-run-browser-ink" opacity="0.8"></rect></svg><span class="site-badge">MIT</span></div>
         <p class="site-label">JavaScript</p>
         <p class="site-big">~127 KB</p>
         <h3>JavaScript engine</h3>
@@ -12644,7 +13044,7 @@ editor<span class="tk-pun">.</span>on<span class="tk-pun">(</span><span class="t
         <p class="site-run-foot">TypeScript · gzip, with Markdown</p>
       </article>
       <article class="site-run is-tint">
-        <div class="site-tile-top"><span class="site-icon-box"><svg class="gt-icon" aria-hidden="true"><use href="#i-chip" /></svg></span><span class="site-badge">MIT</span></div>
+        <div class="site-tile-top"><svg viewBox="0 0 48 48" class="site-part-icon" aria-hidden="true" focusable="false"><defs><linearGradient id="gt-part-run-engine-front" x1="9" y1="9" x2="39" y2="39" gradientUnits="userSpaceOnUse"><stop offset="0" class="site-glyph-cyan"></stop><stop offset="0.6" class="site-glyph-mid"></stop><stop offset="1" class="site-glyph-lo"></stop></linearGradient><radialGradient id="gt-part-run-engine-shine" cx="13" cy="12" r="22" gradientUnits="userSpaceOnUse"><stop offset="0" class="site-glyph-hi" stop-opacity="0.85"></stop><stop offset="1" class="site-glyph-hi" stop-opacity="0"></stop></radialGradient><linearGradient id="gt-part-run-engine-back" x1="3" y1="3" x2="45" y2="45" gradientUnits="userSpaceOnUse"><stop offset="0" class="site-glyph-mid"></stop><stop offset="0.5" class="site-glyph-mid"></stop><stop offset="1" class="site-glyph-lo"></stop></linearGradient><linearGradient id="gt-part-run-engine-core" x1="17" y1="17" x2="31" y2="31" gradientUnits="userSpaceOnUse"><stop offset="0" class="site-glyph-hi"></stop><stop offset="1" class="site-glyph-cyan"></stop></linearGradient><linearGradient id="gt-part-run-engine-die" x1="21" y1="21" x2="27" y2="27" gradientUnits="userSpaceOnUse"><stop offset="0" class="site-glyph-mid"></stop><stop offset="1" class="site-glyph-lo"></stop></linearGradient></defs><rect x="3" y="15.5" width="7" height="3.5" rx="1.75" class="gp-run-engine-back" opacity="0.55"></rect><rect x="38" y="15.5" width="7" height="3.5" rx="1.75" class="gp-run-engine-back" opacity="0.55"></rect><rect x="15.5" y="3" width="3.5" height="7" rx="1.75" class="gp-run-engine-back" opacity="0.55"></rect><rect x="15.5" y="38" width="3.5" height="7" rx="1.75" class="gp-run-engine-back" opacity="0.55"></rect><rect x="3" y="22.25" width="7" height="3.5" rx="1.75" class="gp-run-engine-back" opacity="0.55"></rect><rect x="38" y="22.25" width="7" height="3.5" rx="1.75" class="gp-run-engine-back" opacity="0.55"></rect><rect x="22.25" y="3" width="3.5" height="7" rx="1.75" class="gp-run-engine-back" opacity="0.55"></rect><rect x="22.25" y="38" width="3.5" height="7" rx="1.75" class="gp-run-engine-back" opacity="0.55"></rect><rect x="3" y="29" width="7" height="3.5" rx="1.75" class="gp-run-engine-back" opacity="0.55"></rect><rect x="38" y="29" width="7" height="3.5" rx="1.75" class="gp-run-engine-back" opacity="0.55"></rect><rect x="29" y="3" width="3.5" height="7" rx="1.75" class="gp-run-engine-back" opacity="0.55"></rect><rect x="29" y="38" width="3.5" height="7" rx="1.75" class="gp-run-engine-back" opacity="0.55"></rect><rect x="9" y="9" width="30" height="30" rx="7" class="gp-run-engine-front"></rect><rect x="9" y="9" width="30" height="30" rx="7" class="gp-run-engine-shine"></rect><rect x="16.5" y="16.5" width="15" height="15" rx="3.5" class="gp-run-engine-core"></rect><rect x="21" y="21" width="6" height="6" rx="1.5" class="gp-run-engine-die"></rect></svg><span class="site-badge">MIT</span></div>
         <p class="site-label">Rust / WASM</p>
         <p class="site-big">~300 KB</p>
         <h3>Rust/WASM engine</h3>
@@ -12652,7 +13052,7 @@ editor<span class="tk-pun">.</span>on<span class="tk-pun">(</span><span class="t
         <p class="site-run-foot">Rust · gzip · CRDT, cursors, reconnect</p>
       </article>
       <article class="site-run">
-        <div class="site-tile-top"><span class="site-icon-box"><svg class="gt-icon" aria-hidden="true"><use href="#i-server" /></svg></span><span class="site-badge">MIT</span></div>
+        <div class="site-tile-top"><svg viewBox="0 0 48 48" class="site-part-icon" aria-hidden="true" focusable="false"><defs><linearGradient id="gt-part-run-cloud-front" x1="7" y1="7" x2="43" y2="32" gradientUnits="userSpaceOnUse"><stop offset="0" class="site-glyph-cyan"></stop><stop offset="0.6" class="site-glyph-mid"></stop><stop offset="1" class="site-glyph-lo"></stop></linearGradient><radialGradient id="gt-part-run-cloud-shine" cx="17" cy="11" r="20" gradientUnits="userSpaceOnUse"><stop offset="0" class="site-glyph-hi" stop-opacity="0.85"></stop><stop offset="1" class="site-glyph-hi" stop-opacity="0"></stop></radialGradient><linearGradient id="gt-part-run-cloud-back" x1="12" y1="35" x2="36" y2="42" gradientUnits="userSpaceOnUse"><stop offset="0" class="site-glyph-mid"></stop><stop offset="0.5" class="site-glyph-mid"></stop><stop offset="1" class="site-glyph-lo"></stop></linearGradient><linearGradient id="gt-part-run-cloud-led" x1="14" y1="37" x2="22" y2="40" gradientUnits="userSpaceOnUse"><stop offset="0" class="site-glyph-hi"></stop><stop offset="1" class="site-glyph-cyan"></stop></linearGradient><clipPath id="gt-part-run-cloud-shape"><circle cx="15" cy="24.5" r="7.5"></circle><circle cx="26.5" cy="18" r="11"></circle><circle cx="36" cy="25" r="7"></circle><rect x="7.5" y="21" width="35.5" height="11" rx="5.5"></rect></clipPath></defs><g clip-path="url(#gt-part-run-cloud-shape)"><rect x="6" y="6" width="38" height="28" class="gp-run-cloud-front"></rect><rect x="6" y="6" width="38" height="28" class="gp-run-cloud-shine"></rect></g><rect x="12" y="35" width="24" height="7" rx="3" class="gp-run-cloud-back" opacity="0.7"></rect><circle cx="16" cy="38.5" r="1.4" class="gp-run-cloud-led"></circle><circle cx="20.5" cy="38.5" r="1.4" class="gp-run-cloud-led"></circle></svg><span class="site-badge">MIT</span></div>
         <p class="site-label">Go · self-hosted</p>
         <p class="site-big">1 service</p>
         <h3>GoTipe Cloud</h3>
@@ -12710,20 +13110,31 @@ editor<span class="tk-pun">.</span>on<span class="tk-pun">(</span><span class="t
 
 <section class="site-section">
   <div class="site-wrap">
-    <div class="site-stage site-band" data-theme="dark">
-      <div class="site-engine" aria-hidden="true">
-        <span class="site-engine-beam"></span>
-        <span class="site-engine-beam is-second"></span>
-        <span class="site-engine-face">
-          <span class="site-engine-ring"></span>
-          <span class="site-engine-ring is-inner"></span>
-          <span class="site-engine-arc"></span>
-          <span class="site-engine-arc is-second"></span>
-          <svg class="site-engine-mark" viewBox="7 7 18 18" aria-hidden="true"><path d="M23 11a8 8 0 1 0 1 9v-5h-8v3h5v1a5 5 0 1 1-1-6z" /></svg>
-          <span class="site-engine-hand"></span>
-          <span class="site-engine-hand is-short"></span>
-          <span class="site-engine-hub"></span>
-        </span>
+    <div class="site-stage site-band">
+      <div class="site-build" aria-hidden="true">
+        <span class="site-build-glow"></span>
+        <div class="site-build-scene">
+          <span class="site-build-plate is-engine"><svg class="site-build-mark" aria-hidden="true"><use href="#i-manta" /></svg></span>
+          <span class="site-build-plate is-source">
+            <span class="site-build-row"><span class="site-build-sign">#</span><span class="site-build-line is-long"></span></span>
+            <span class="site-build-row"><span class="site-build-sign">-</span><span class="site-build-line"></span></span>
+            <span class="site-build-row"><span class="site-build-sign">-</span><span class="site-build-line is-short"></span></span>
+            <span class="site-build-row"><span class="site-build-sign">&gt;</span><span class="site-build-line"></span></span>
+          </span>
+          <span class="site-build-plate is-blocks">
+            <span class="site-build-block is-head"></span>
+            <span class="site-build-block"></span>
+            <span class="site-build-block is-list"></span>
+            <span class="site-build-block is-code"></span>
+          </span>
+          <span class="site-build-plate is-page">
+            <span class="site-build-line is-head"></span>
+            <span class="site-build-line is-long"></span>
+            <span class="site-build-row"><span class="site-build-line is-picked"></span><span class="site-build-caret"><span class="site-build-flag">Ana</span></span></span>
+            <span class="site-build-line"></span>
+            <span class="site-build-line is-short"></span>
+          </span>
+        </div>
       </div>
       <div class="site-band-copy">
         <p class="site-eyebrow">The next chapter is yours</p>

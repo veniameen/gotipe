@@ -1,9 +1,13 @@
 /* The middle of the landing (frame 20): the stack with its beams, the three parts it stands on, the
    bento of three tiles with their pictures, the nine parts of the stack and the four looks. */
 
-/* ---- the stack: your interface, the engine, your infrastructure ---- */
+/* ---- the stack: a panel of the theme (light glass by day, night glass by night), your interface,
+   the engine, your infrastructure. The engine is the light of the panel: dots come up around it, a
+   comet runs round its rim, and comets of light run along the beams, in from the interfaces and out
+   to the infrastructure ---- */
 .site-stack-diagram {
   position: relative;
+  isolation: isolate;
   display: grid;
   box-sizing: border-box;
   grid-template-columns: var(--site-stack-cols);
@@ -12,10 +16,38 @@
   min-height: var(--site-stack-h);
   padding: var(--site-stack-pad);
   border-radius: var(--site-card-radius);
-  background-color: var(--site-bg-alt);
-  background-image: radial-gradient(var(--site-grid) var(--site-grid-line), transparent 0);
-  background-size: var(--site-space-6) var(--site-space-6);
-  box-shadow: inset 0 0 0 var(--gt-hairline) var(--site-line);
+  background: radial-gradient(
+      var(--site-stack-light-size) at 50% 50%,
+      var(--site-stack-light),
+      transparent 70%
+    ), var(--site-stack-bg);
+  box-shadow: inset 0 0 0 var(--gt-hairline) var(--site-stack-rim), var(--site-stack-shadow);
+  color: var(--gt-text);
+}
+/* the grain of dots, brighter about the engine */
+.site-stack-diagram::before,
+.site-stack-diagram::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  background: radial-gradient(var(--site-stack-dot) var(--site-grid-line), transparent 0) 0 0 /
+    var(--site-space-6) var(--site-space-6);
+  pointer-events: none;
+}
+.site-stack-diagram::after {
+  background-image: radial-gradient(var(--site-stack-dot-lit) var(--site-grid-line), transparent 0);
+  -webkit-mask: radial-gradient(
+    var(--site-stack-light-size) at 50% 50%,
+    var(--site-mask-on),
+    transparent 75%
+  );
+  mask: radial-gradient(
+    var(--site-stack-light-size) at 50% 50%,
+    var(--site-mask-on),
+    transparent 75%
+  );
 }
 .site-beams {
   position: absolute;
@@ -24,23 +56,52 @@
   pointer-events: none;
 }
 .site-beam-path,
-.site-beam-pulse {
+.site-beam-glow {
   fill: none;
   stroke-linecap: round;
+  transition: opacity var(--site-dur-2) var(--site-ease), stroke var(--site-dur-2) var(--site-ease);
 }
 .site-beam-path {
   stroke: var(--site-beam-path);
   stroke-width: var(--site-beam-width);
 }
-.site-beam-pulse {
-  stroke: var(--site-beam);
+/* a lit beam: the box or the engine under the pointer */
+.site-beam-glow {
+  stroke: var(--site-comet-in);
   stroke-width: var(--site-beam-pulse-w);
-  stroke-dasharray: var(--site-beam-dash) 100;
-  stroke-dashoffset: var(--site-beam-dash);
   opacity: 0;
+  filter: drop-shadow(0 0 var(--site-comet-glow) var(--site-comet-in));
 }
-.site-beam.is-out .site-beam-pulse {
-  stroke: var(--site-beam-out);
+.site-beam.is-out .site-beam-glow {
+  stroke: var(--site-comet-out);
+  filter: drop-shadow(0 0 var(--site-comet-glow) var(--site-comet-out));
+}
+.site-beam.is-lit .site-beam-glow {
+  opacity: 1;
+}
+[data-focus] .site-beam:not(.is-lit) .site-beam-path {
+  opacity: var(--site-beam-dim);
+}
+/* a comet of light: a bright head and its tail, carried along its beam (motion.css runs it) */
+.site-comet {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 0;
+  width: var(--site-comet-w);
+  height: var(--site-comet-h);
+  border-radius: var(--site-radius-round);
+  background: linear-gradient(90deg, transparent, var(--site-comet-in) 70%, var(--site-comet-head));
+  filter: drop-shadow(0 0 var(--site-comet-glow) var(--site-comet-in));
+  opacity: 0;
+  offset-path: var(--site-comet-path);
+  offset-rotate: auto;
+  offset-anchor: 100% 50%;
+  pointer-events: none;
+}
+.site-comet.is-out {
+  background: linear-gradient(90deg, transparent, var(--site-comet-out) 70%, var(--site-comet-head));
+  filter: drop-shadow(0 0 var(--site-comet-glow) var(--site-comet-out));
 }
 .site-stack-col {
   position: relative;
@@ -60,48 +121,111 @@
   padding: 0;
   list-style: none;
 }
+/* a box: dark glass in a hairline that lights when its comet leaves or arrives, or under the
+   pointer */
 .site-stack-node {
+  position: relative;
   display: inline-flex;
   align-items: center;
   gap: var(--site-space-2);
   box-sizing: border-box;
   height: var(--site-stack-node);
   padding: var(--site-stack-node-pad);
-  border-radius: var(--site-radius-2);
-  background: var(--site-card);
-  box-shadow: var(--site-card-shadow);
+  border-radius: var(--site-radius-round);
+  background: var(--site-stack-node-fill);
+  box-shadow: inset 0 0 0 var(--gt-hairline) var(--site-stack-node-line);
   color: var(--gt-text);
   font-family: var(--site-font-mono);
   font-size: var(--site-small-size);
   line-height: var(--site-small-leading);
   white-space: nowrap;
+  cursor: default;
+  transition: box-shadow var(--site-dur-2) var(--site-ease), background-color var(--site-dur-2)
+    var(--site-ease);
+}
+.site-stack-node:hover {
+  background: var(--site-stack-node-hover);
+  box-shadow: inset 0 0 0 var(--gt-hairline) var(--site-comet-in), 0 0 var(--site-comet-glow-wide)
+    calc(-1 * var(--site-space-1)) var(--site-comet-in);
+}
+.site-stack-col.is-out .site-stack-node:hover {
+  box-shadow: inset 0 0 0 var(--gt-hairline) var(--site-comet-out), 0 0 var(--site-comet-glow-wide)
+    calc(-1 * var(--site-space-1)) var(--site-comet-out);
+}
+/* the flash of a box when its comet leaves (an interface) or arrives (the infrastructure) */
+.site-stack-node::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  box-shadow: inset 0 0 0 var(--gt-hairline) var(--site-comet-in), 0 0 var(--site-comet-glow-wide)
+    calc(-1 * var(--site-space-1)) var(--site-comet-in);
+  opacity: 0;
+  pointer-events: none;
+}
+.site-stack-col.is-out .site-stack-node::after {
+  box-shadow: inset 0 0 0 var(--gt-hairline) var(--site-comet-out), 0 0 var(--site-comet-glow-wide)
+    calc(-1 * var(--site-space-1)) var(--site-comet-out);
 }
 .site-stack-node > .gt-icon {
-  color: var(--site-beam-out);
+  color: var(--site-comet-out);
 }
 .site-stack-dot {
   width: var(--site-dot);
   height: var(--site-dot);
   border-radius: var(--site-radius-round);
-  background: var(--site-beam);
+  background: var(--site-comet-in);
+  box-shadow: 0 0 var(--site-comet-glow) var(--site-comet-in);
 }
+/* the engine: glass with a comet running round its rim, its mark lit, light behind it */
 .site-stack-hub {
   position: relative;
   display: grid;
   justify-items: center;
   gap: var(--site-space-1);
-  padding: var(--site-space-6) var(--site-space-8);
+  padding: var(--site-space-8) var(--site-space-10);
   border-radius: var(--site-card-radius);
-  background: var(--site-card);
-  box-shadow: 0 0 0 var(--gt-hairline) var(--site-tint-line), var(--site-hub-glow);
+  background: var(--site-stack-hub-fill);
+  box-shadow: inset 0 0 0 var(--gt-hairline) var(--site-stack-hub-line), var(--site-hub-glow);
   text-align: center;
 }
+.site-stack-hub::before {
+  content: "";
+  position: absolute;
+  inset: calc(-1 * var(--site-beam-width));
+  padding: var(--site-beam-pulse-w);
+  border-radius: inherit;
+  background: conic-gradient(
+    from var(--site-beam-angle),
+    transparent 0%,
+    transparent 62%,
+    var(--site-comet-in) 80%,
+    var(--site-comet-head) 86%,
+    transparent 96%
+  );
+  -webkit-mask: linear-gradient(var(--site-mask-on) 0 0) content-box,
+    linear-gradient(var(--site-mask-on) 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(var(--site-mask-on) 0 0) content-box exclude,
+    linear-gradient(var(--site-mask-on) 0 0);
+  pointer-events: none;
+}
+/* the engine's beat as the comets come in */
+.site-stack-hub::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  box-shadow: 0 0 var(--site-stack-beat) calc(-1 * var(--site-space-1)) var(--site-comet-in);
+  opacity: 0;
+  pointer-events: none;
+}
 .site-stack-hub > strong {
-  margin-top: var(--site-space-3);
+  margin-top: var(--site-space-4);
   font-family: var(--site-font-display);
-  font-size: var(--site-h3-size);
+  font-size: var(--site-stack-hub-size);
   font-weight: var(--site-weight-display);
-  line-height: var(--site-h3-leading);
+  line-height: var(--site-stack-hub-leading);
   letter-spacing: var(--site-h3-tracking);
 }
 .site-stack-hub > span:last-child {
@@ -115,12 +239,15 @@
   place-items: center;
   width: var(--site-stack-hub-mark);
   height: var(--site-stack-hub-mark);
-  border-radius: var(--site-radius-3);
-  background: var(--site-accent-tint);
+  border-radius: var(--site-radius-4);
+  background: var(--site-stack-mark-fill);
+  box-shadow: inset 0 0 0 var(--gt-hairline) var(--site-stack-hub-line), 0 0
+    var(--site-stack-mark-glow) var(--site-stack-mark-light);
 }
 .site-stack-mark > .site-logo {
-  width: var(--site-logo-l);
-  height: var(--site-logo-l);
+  width: var(--site-stack-hub-mark);
+  height: var(--site-stack-hub-mark);
+  filter: drop-shadow(0 0 var(--site-comet-glow) var(--site-comet-in));
 }
 
 /* the three parts the stack stands on */
@@ -146,6 +273,11 @@
   justify-content: space-between;
   margin: 0;
   color: var(--gt-accent);
+}
+/* the pillar's drawn glyph, a step smaller than a tile's */
+.site-pillar-top > .site-part-icon {
+  width: var(--site-pillar-icon);
+  height: var(--site-pillar-icon);
 }
 .site-pillar-top > span {
   color: var(--gt-text-3);
@@ -325,7 +457,7 @@
   left: calc(4 * var(--site-lines-step) - var(--gt-hairline));
 }
 
-/* ---- the bento: three night tiles; a light lies behind them and comes through the gaps ---- */
+/* ---- the bento: three tiles; a light lies behind them and comes through the gaps ---- */
 .site-bento {
   position: relative;
   isolation: isolate;
@@ -422,19 +554,6 @@
 /* a part of the stack: its name where the icon was, the licence on the name's first line */
 .site-feature-top {
   align-items: baseline;
-}
-.gt-icon-box {
-  display: grid;
-  flex: none;
-  place-items: center;
-  width: var(--site-icon-box);
-  height: var(--site-icon-box);
-  border-radius: var(--site-icon-box-radius);
-  background: var(--site-accent-tint);
-  box-shadow: inset 0 0 0 var(--gt-hairline) var(--site-tint-line);
-  color: var(--gt-accent);
-  transition: background-color var(--site-dur-2) var(--site-ease), color var(--site-dur-2)
-    var(--site-ease);
 }
 .site-tile h3 {
   margin: var(--site-space-8) 0 0;
@@ -615,9 +734,6 @@
 }
 .site-feature:hover {
   background: var(--site-part-hover);
-}
-.site-tile:hover .gt-icon-box {
-  background: var(--site-accent-soft);
 }
 .site-feature-top {
   align-items: flex-start;

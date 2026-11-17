@@ -359,129 +359,145 @@
   justify-content: var(--site-band-justify);
 }
 
-/* ---- the engine: a dark dial lit from the sides, rings with arcs of light, slow hands ---- */
-.site-engine {
+/* ---- a document built on the engine: glass plates stacked in depth, light rising through them
+   from the engine at the foot; the Markdown source, the blocks, then the page with a caret ---- */
+.site-build {
   position: relative;
-  width: min(100%, var(--site-engine-size));
+  width: min(100%, var(--site-build-size));
   aspect-ratio: 1;
   margin: 0 auto;
+  perspective: var(--site-build-depth);
 }
-.site-engine-beam {
+.site-build-glow {
   position: absolute;
-  top: 34%;
-  left: 0;
-  width: 100%;
-  height: 26%;
-  background: linear-gradient(90deg, transparent 8%, var(--site-engine-beam-a) 42%, transparent 78%);
-  filter: blur(var(--site-engine-blur));
-  transform: rotate(-22deg) scaleX(var(--site-engine-beam-reach));
-  pointer-events: none;
-}
-.site-engine-beam.is-second {
-  top: 52%;
-  background: linear-gradient(
-    90deg,
-    transparent 22%,
-    var(--site-engine-beam-b) 58%,
-    transparent 92%
-  );
-  transform: rotate(16deg) scaleX(var(--site-engine-beam-reach));
-}
-.site-engine-face {
-  position: absolute;
-  inset: 0;
+  inset: 24% 14% 6%;
   border-radius: var(--site-radius-round);
-  background: radial-gradient(60% 60% at 26% 42%, var(--site-engine-left), transparent 70%),
-    radial-gradient(56% 56% at 76% 34%, var(--site-engine-right), transparent 70%),
-    radial-gradient(circle at 50% 40%, var(--site-engine-face-hi), var(--site-engine-face) 70%);
-  box-shadow: inset 0 0 0 var(--site-engine-bezel) var(--site-engine-bezel-ink), inset 0 0 0
-    calc(var(--site-engine-bezel) + var(--gt-hairline)) var(--site-engine-rim),
-    var(--site-engine-shadow);
-  contain: paint;
+  background: radial-gradient(closest-side, var(--site-build-light), transparent);
+  filter: blur(var(--site-build-blur));
 }
-.site-engine-face::before {
-  content: "";
+.site-build-scene {
+  position: absolute;
+  inset: var(--site-build-inset);
+  transform: translateY(var(--site-build-shift)) rotateX(var(--site-build-tilt))
+    rotateZ(var(--site-build-turn));
+  transform-style: preserve-3d;
+}
+.site-build-plate {
+  --site-build-level: 0;
   position: absolute;
   inset: 0;
+  display: grid;
+  align-content: start;
+  gap: var(--site-build-gap);
+  box-sizing: border-box;
+  padding: var(--site-build-pad);
+  border-radius: var(--site-radius-4);
+  background: var(--site-build-glass);
+  box-shadow: inset 0 0 0 var(--gt-hairline) var(--site-build-edge), 0 0 var(--site-build-halo)
+    calc(-1 * var(--site-space-2)) var(--site-build-light);
+  transform: translateZ(calc(var(--site-build-level) * var(--site-build-step)));
+}
+.site-build-plate.is-engine {
+  place-items: center;
+  align-content: center;
   background: radial-gradient(
-      circle,
-      var(--site-engine-dot) var(--site-dot-r),
-      transparent calc(var(--site-dot-r) + var(--site-dot-soft))
-    )
-    0 0 / var(--site-dot-step) var(--site-dot-step);
-  -webkit-mask: radial-gradient(70% 70% at 50% 45%, var(--site-mask-on), transparent 75%);
-  mask: radial-gradient(70% 70% at 50% 45%, var(--site-mask-on), transparent 75%);
-}
-.site-engine-ring {
-  position: absolute;
-  inset: 12%;
-  border-radius: var(--site-radius-round);
-  box-shadow: inset 0 0 0 var(--gt-hairline) var(--site-engine-line);
-}
-.site-engine-ring.is-inner {
-  inset: 22%;
-}
-.site-engine-arc {
-  position: absolute;
-  inset: 12%;
-  border-radius: var(--site-radius-round);
-  background: conic-gradient(
-    from 210deg,
-    transparent 0 4%,
-    var(--site-engine-arc-a) 20%,
-    transparent 21%
+    circle at 50% 50%,
+    var(--site-build-core),
+    var(--site-build-glass) 72%
   );
-  -webkit-mask: radial-gradient(
-    closest-side,
-    transparent calc(100% - var(--site-engine-arc-w)),
-    var(--site-mask-on) calc(100% - var(--site-engine-arc-w) + var(--gt-hairline))
-  );
-  mask: radial-gradient(
-    closest-side,
-    transparent calc(100% - var(--site-engine-arc-w)),
-    var(--site-mask-on) calc(100% - var(--site-engine-arc-w) + var(--gt-hairline))
-  );
-  filter: drop-shadow(0 0 var(--site-engine-glow) var(--site-engine-arc-a));
+  box-shadow: inset 0 0 0 var(--gt-hairline) var(--site-build-edge-lit), 0 0
+    var(--site-build-halo-wide) 0 var(--site-build-light);
 }
-.site-engine-arc.is-second {
-  inset: 22%;
-  background: conic-gradient(
-    from 20deg,
-    transparent 0 4%,
-    var(--site-engine-arc-b) 24%,
-    transparent 25%
-  );
-  filter: drop-shadow(0 0 var(--site-engine-glow) var(--site-engine-arc-b));
+.site-build-plate.is-source {
+  --site-build-level: 1;
 }
-.site-engine-mark {
-  position: absolute;
-  inset: 31%;
-  fill: var(--site-engine-mark);
-  filter: drop-shadow(0 0 var(--site-engine-glow) var(--site-engine-mark-glow));
+.site-build-plate.is-blocks {
+  --site-build-level: 2;
 }
-.site-engine-hand {
-  position: absolute;
-  bottom: 50%;
-  left: calc(50% - var(--site-engine-hand-w) / 2);
-  width: var(--site-engine-hand-w);
-  height: 38%;
+.site-build-plate.is-page {
+  --site-build-level: 3;
+  background: var(--site-build-glass-top);
+  box-shadow: inset 0 0 0 var(--gt-hairline) var(--site-build-edge-lit), 0 0 var(--site-build-halo)
+    calc(-1 * var(--site-space-2)) var(--site-build-light);
+}
+/* the engine's mark: the manta alone, so it reads through the glass above it: white light by day,
+   by night a silhouette against the engine's light */
+.site-build-mark {
+  width: var(--site-build-mark);
+  height: var(--site-build-mark);
+  color: var(--site-build-manta);
+  filter: drop-shadow(0 0 var(--site-build-manta-glow) var(--site-build-light));
+}
+.site-build-row {
+  display: flex;
+  align-items: center;
+  gap: var(--site-build-gap);
+}
+.site-build-sign {
+  flex: none;
+  color: var(--site-build-sign);
+  font-family: var(--site-font-mono);
+  font-size: var(--site-label-size);
+  line-height: var(--site-build-line-h);
+}
+.site-build-line {
+  display: block;
+  width: 70%;
+  height: var(--site-build-line-h);
   border-radius: var(--site-radius-round);
-  background: linear-gradient(0deg, transparent, var(--site-engine-hand));
-  transform: rotate(var(--site-engine-hand-at));
-  transform-origin: 50% 100%;
+  background: var(--site-build-ink);
 }
-.site-engine-hand.is-short {
-  height: 26%;
-  --site-engine-hand-at: var(--site-engine-short-at);
+.site-build-line.is-long {
+  width: 88%;
 }
-.site-engine-hub {
-  position: absolute;
-  top: calc(50% - var(--site-engine-hub) / 2);
-  left: calc(50% - var(--site-engine-hub) / 2);
-  width: var(--site-engine-hub);
-  height: var(--site-engine-hub);
+.site-build-line.is-short {
+  width: 46%;
+}
+.site-build-line.is-head {
+  width: 60%;
+  height: calc(2 * var(--site-build-line-h));
+  background: var(--site-build-ink-strong);
+}
+.site-build-line.is-picked {
+  width: 62%;
+  background: var(--site-build-pick);
+}
+.site-build-block {
+  display: block;
+  height: var(--site-build-block-h);
+  border-radius: var(--site-radius-1);
+  background: var(--site-build-block);
+  box-shadow: inset 0 0 0 var(--gt-hairline) var(--site-build-edge);
+}
+.site-build-block.is-head {
+  width: 72%;
+}
+.site-build-block.is-list {
+  width: 84%;
+}
+.site-build-block.is-code {
+  height: calc(2 * var(--site-build-block-h));
+  background: var(--site-build-code);
+}
+.site-build-caret {
+  position: relative;
+  flex: none;
+  width: var(--site-co-caret-w);
+  height: calc(2.4 * var(--site-build-line-h));
   border-radius: var(--site-radius-round);
-  background: var(--site-engine-hand);
+  background: var(--site-build-caret);
+}
+.site-build-flag {
+  position: absolute;
+  bottom: 100%;
+  left: 0;
+  padding: var(--site-co-flag-pad);
+  border-radius: var(--site-radius-1) var(--site-radius-1) var(--site-radius-1) 0;
+  background: var(--site-build-caret);
+  color: var(--site-co-text);
+  font-size: var(--site-label-size);
+  font-weight: var(--gt-weight-strong);
+  line-height: var(--site-label-leading);
 }
 
 .site-band-legend {

@@ -1,7 +1,9 @@
-/* The drawn glyphs of the nine parts (frame 20): each shape's gradient, by class. The site draws
-   the same glyphs from apps/landing/components/landing/part-icons.tsx, whose shapes take these
-   gradients as fill; here the markup carries classes and this part fills them, the stops take the
-   theme's four tones (--site-glyph-*). */
+/* The drawn glyphs of the landing (frame 20): the nine parts, the engine, Markdown and working
+   together (the bento's tiles and the pillars), the browser, the engine and the cloud (the ways to
+   run); each shape's gradient, by class. The site draws the same glyphs from
+   apps/landing/components/landing/part-icons.tsx, whose shapes take these gradients as fill; here
+   the markup carries classes and this part fills them, the stops take the theme's four tones
+   (--site-glyph-*). A glyph drawn in two places takes its place in its ids (gt-part-pillar-…). */
 
 .gp-block-back {
   fill: url(#gt-part-block-back);
@@ -119,4 +121,115 @@
 }
 .gp-cloud-led {
   fill: url(#gt-part-cloud-led);
+}
+.gp-engine-back {
+  fill: url(#gt-part-engine-back);
+}
+.gp-engine-front {
+  fill: url(#gt-part-engine-front);
+}
+.gp-engine-shine {
+  fill: url(#gt-part-engine-shine);
+}
+.gp-engine-core {
+  fill: url(#gt-part-engine-core);
+}
+.gp-engine-die {
+  fill: url(#gt-part-engine-die);
+}
+.gp-markdown-back {
+  fill: url(#gt-part-markdown-back);
+}
+.gp-markdown-front {
+  fill: url(#gt-part-markdown-front);
+}
+.gp-markdown-shine {
+  fill: url(#gt-part-markdown-shine);
+}
+.gp-markdown-ink {
+  fill: url(#gt-part-markdown-ink);
+}
+.gp-together-back {
+  fill: url(#gt-part-together-back);
+}
+.gp-together-front {
+  fill: url(#gt-part-together-front);
+}
+.gp-together-shine {
+  fill: url(#gt-part-together-shine);
+}
+.gp-pillar-engine-back {
+  fill: url(#gt-part-pillar-engine-back);
+}
+.gp-pillar-engine-front {
+  fill: url(#gt-part-pillar-engine-front);
+}
+.gp-pillar-engine-shine {
+  fill: url(#gt-part-pillar-engine-shine);
+}
+.gp-pillar-engine-core {
+  fill: url(#gt-part-pillar-engine-core);
+}
+.gp-pillar-engine-die {
+  fill: url(#gt-part-pillar-engine-die);
+}
+.gp-pillar-markdown-back {
+  fill: url(#gt-part-pillar-markdown-back);
+}
+.gp-pillar-markdown-front {
+  fill: url(#gt-part-pillar-markdown-front);
+}
+.gp-pillar-markdown-shine {
+  fill: url(#gt-part-pillar-markdown-shine);
+}
+.gp-pillar-markdown-ink {
+  fill: url(#gt-part-pillar-markdown-ink);
+}
+.gp-pillar-together-back {
+  fill: url(#gt-part-pillar-together-back);
+}
+.gp-pillar-together-front {
+  fill: url(#gt-part-pillar-together-front);
+}
+.gp-pillar-together-shine {
+  fill: url(#gt-part-pillar-together-shine);
+}
+.gp-run-browser-back {
+  fill: url(#gt-part-run-browser-back);
+}
+.gp-run-browser-front {
+  fill: url(#gt-part-run-browser-front);
+}
+.gp-run-browser-shine {
+  fill: url(#gt-part-run-browser-shine);
+}
+.gp-run-browser-ink {
+  fill: url(#gt-part-run-browser-ink);
+}
+.gp-run-engine-back {
+  fill: url(#gt-part-run-engine-back);
+}
+.gp-run-engine-front {
+  fill: url(#gt-part-run-engine-front);
+}
+.gp-run-engine-shine {
+  fill: url(#gt-part-run-engine-shine);
+}
+.gp-run-engine-core {
+  fill: url(#gt-part-run-engine-core);
+}
+.gp-run-engine-die {
+  fill: url(#gt-part-run-engine-die);
+}
+.gp-run-cloud-front {
+  fill: url(#gt-part-run-cloud-front);
+}
+.gp-run-cloud-shine {
+  fill: url(#gt-part-run-cloud-shine);
+}
+.gp-run-cloud-back {
+  fill: url(#gt-part-run-cloud-back);
+}
+.gp-run-cloud-led {
+  fill: url(#gt-part-run-cloud-led);
 }
