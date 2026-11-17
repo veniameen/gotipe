@@ -24,7 +24,7 @@ const PAGE = `# Выкат
 `;
 
 const LANES: ReviewLane[] = [
-  { id: "agent", name: "Агент", kind: "agent", color: "var(--gt-track-1)" },
+  { id: "agent", name: "Agent", kind: "agent", color: "var(--gt-track-1)" },
   { id: "psql", name: "psql", kind: "tool", color: "var(--gt-track-3)" },
 ];
 

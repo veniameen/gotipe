@@ -10,7 +10,7 @@ const TABLE_DELIMITER = /^ {0,3}\|?[ \t]*:?-+:?[ \t]*(?:\|[ \t]*:?-+:?[ \t]*)+\|
 /**
  * A link or image to a web, mail, absolute, relative (`./`, `../`) or fragment address, not
  * glued to a name before it: `handlers[name](event)` and `note [1](2)` are not links. A
- * mention written as `[@Анна](mention:user-1)` counts when the editor has mentions.
+ * mention written as `[@Anna](mention:user-1)` counts when the editor has mentions.
  */
 const link = (mentions: boolean) =>
   new RegExp(

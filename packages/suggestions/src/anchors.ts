@@ -128,7 +128,7 @@ export type ApplyResult =
   | { ok: false; reason: AnchorFailure | "overlap"; index: number };
 
 /**
- * Applies anchored edits to `text` (all or nothing). The basis of «Принять»:
+ * Applies anchored edits to `text` (all or nothing). The basis of “Accept”:
  * a stale anchor leaves the text untouched.
  */
 export function applyAnchoredEdits(text: string, edits: AnchoredEdit[]): ApplyResult {
@@ -144,7 +144,7 @@ export function applyAnchoredEdits(text: string, edits: AnchoredEdit[]): ApplyRe
 
 /**
  * Whether `edit` changes text inside the anchor window of `other`
- * (accepting one would make the other stale). ADR-0047 «задевает».
+ * (accepting one would make the other stale). ADR-0047 “overlaps”.
  */
 export function anchorWindowsOverlap(text: string, edit: AnchoredEdit, other: TextAnchor): boolean {
   const a = findAnchor(text, edit);

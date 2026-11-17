@@ -106,7 +106,7 @@ export interface MarkdownSnapshot {
  * Each one is off unless asked for, so a document only gets the marks its editor declares.
  */
 export interface InlineAtoms {
-  /** `[@Анна](mention:user-42)` is text with a `mention` mark (`id`, `kind`, `label`). */
+  /** `[@Anna](mention:user-42)` is text with a `mention` mark (`id`, `kind`, `label`). */
   mention?: boolean;
   /** `$x^2$` is the TeX source with an `inlineMath` mark. */
   inlineMath?: boolean;

@@ -1,6 +1,6 @@
 /* Merged table cells — Atlas frame 29. A header over two columns keeps its rule under those
    columns only; a cell over two rows breaks the rule between them. Cells selected together take
-   the selection's tint; «Объединить ячейки» and «Разделить ячейку» stand in the table menus and an
+   the selection's tint; “Merge cells” and “Split cell” stand in the table menus and an
    unavailable one is paler, its reason in the tip. Shared by BlockEditor and PageEditor. */
 
 .gotipe-table-wrapper th[rowspan] {

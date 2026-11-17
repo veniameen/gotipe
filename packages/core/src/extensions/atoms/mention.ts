@@ -14,9 +14,9 @@ export interface MentionAttrs {
 }
 
 /**
- * A mention: the text `@Анна` (or a page title) carrying the atomic `mention` mark with
- * `id`, `label` and `kind`. Markdown writes it as `[@Анна](mention:user-42)`, HTML as
- * `<span data-type="mention" data-id="42">@Анна</span>`. Rendering it as a chip is the
+ * A mention: the text `@Anna` (or a page title) carrying the atomic `mention` mark with
+ * `id`, `label` and `kind`. Markdown writes it as `[@Anna](mention:user-42)`, HTML as
+ * `<span data-type="mention" data-id="42">@Anna</span>`. Rendering it as a chip is the
  * host's view; without one the text shows.
  */
 export const Mention = defineExtension({
