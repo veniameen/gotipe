@@ -138,7 +138,8 @@ finding count as a permanent guarantee.
 
 ## Release audit (2026-11-17)
 
-The checks of the v0.1.0 release found two Rust advisories; neither is suppressed.
+The checks of the v0.1.0 release found two Rust advisories, both fixed, and one npm advisory in the
+build tools that has no fix and is the only one ignored.
 
 - `ammonia` 4.2.5 fixes RUSTSEC-2026-0533 (mutation XSS through embedded SVG and
   MathML). It is the HTML sanitizer behind the `html` feature of `gotipe-export`;
@@ -151,6 +152,14 @@ The checks of the v0.1.0 release found two Rust advisories; neither is suppresse
   `gotipe-core` (the system clock, or `Date.now()` through `js-sys` in a browser);
   only `gotipe-comments` and `gotipe-versioning` turn it on, so the exporter graph
   and its notices are unchanged.
+- `picomatch` up to 4.0.7 (GHSA-fc5q-39xc-vjpf, ReDoS through single-branch repeated
+  extglobs, high) has no patched release; on 2026-11-17 the advisory was widened to
+  the latest version, 4.0.7. Only build and test tools reach it (`@changesets/cli`,
+  `tsup` through `tinyglobby`, `vite`, `vitest`, `micromatch`), and they match glob
+  patterns fixed in this repository. No published package depends on it at run time
+  (`pnpm audit --prod` is clean) and none bundles it. The advisory is listed in
+  `pnpm.auditConfig.ignoreGhsas` of the root `package.json`; remove the entry as soon
+  as picomatch ships a fix.
 
 ## Native and Cloud security boundary
 

@@ -439,6 +439,11 @@ not part of the check artifacts.
   Chrome `comments.spec.ts` 4/4 five times (on the old build the new spec fails exactly as
   in Firefox), accessibility and page editor 43/43. Firefox and WebKit were not run locally
   (Playwright's browsers are not installed); the next CI run confirms them.
+- 2026-11-17: the first v0.1.0 release run passed CI, E2E in Chromium, Firefox and WebKit and
+  the Rust and Go audits, but stopped before publishing at the npm audit: GHSA-fc5q-39xc-vjpf in
+  `picomatch` was widened that day to the latest version, which has no fix. Only build and test
+  tools reach it, so it is ignored by name with the reasons in the dependency policy, and the
+  tag moved to that commit.
 
 ## Acceptance before release (2026-11-15)
 
