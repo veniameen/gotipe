@@ -9,7 +9,18 @@ export type PartIconName =
   | "export"
   | "migration"
   | "views"
-  | "cloud";
+  | "cloud"
+  | "engine"
+  | "markdown"
+  | "together"
+  | "browser";
+
+/** Where on the page a glyph stands, when it stands in more than one place (its ids are unique). */
+export type PartIconPlace = "pillar" | "run";
+
+interface DrawingProps {
+  place?: PartIconPlace;
+}
 
 type Tone = "hi" | "mid" | "lo" | "cyan";
 /** A gradient stop: where it sits, its tone and, where the tone fades, its opacity. */
@@ -84,15 +95,15 @@ function Cut({ id, outline }: { id: string; outline: string }) {
   );
 }
 
-/** An icon's gradient and clip ids (gt-part-<name>-<role>) and references to them. */
-function scope(name: PartIconName) {
-  const id = (role: string) => `gt-part-${name}-${role}`;
+/** An icon's gradient and clip ids (gt-part-[<place>-]<name>-<role>) and references to them. */
+function scope(name: PartIconName, place?: PartIconPlace) {
+  const id = (role: string) => `gt-part-${place ? `${place}-` : ""}${name}-${role}`;
   return { id, url: (role: string) => `url(#${id(role)})` };
 }
 
 /** Block editor: three blocks, the middle one lifted to the front, with its drag handle. */
-function Block() {
-  const { id, url } = scope("block");
+function Block({ place }: DrawingProps) {
+  const { id, url } = scope("block", place);
   return (
     <>
       <defs>
@@ -117,8 +128,8 @@ function Block() {
 }
 
 /** Page editor: a page of text with a folded corner and a comment over its lower corner. */
-function Page() {
-  const { id, url } = scope("page");
+function Page({ place }: DrawingProps) {
+  const { id, url } = scope("page", place);
   const page =
     "M11.5 5H21.5Q22.5 5 23.21 5.71L30.29 12.79Q31 13.5 31 14.5V36.5A4.5 4.5 0 0 1 26.5 41H11.5A4.5 4.5 0 0 1 7 36.5V9.5A4.5 4.5 0 0 1 11.5 5Z";
   return (
@@ -150,8 +161,8 @@ function Page() {
 }
 
 /** Comments and suggestions: a bright speech bubble with three dots over a deeper one. */
-function Comments() {
-  const { id, url } = scope("comments");
+function Comments({ place }: DrawingProps) {
+  const { id, url } = scope("comments", place);
   const bubble =
     "M22.5 16H35.5A7.5 7.5 0 0 1 43 23.5V29.5Q43 39.03 44.5 41.5Q40 37.6 32 37H22.5A7.5 7.5 0 0 1 15 29.5V23.5A7.5 7.5 0 0 1 22.5 16Z";
   return (
@@ -182,8 +193,8 @@ function Comments() {
 }
 
 /** Versions: a thick arc turning back with its arrowhead, around a dot, over a faint ring. */
-function Versions() {
-  const { id, url } = scope("versions");
+function Versions({ place }: DrawingProps) {
+  const { id, url } = scope("versions", place);
   const arc =
     "M7.56 18.01A17.5 17.5 0 1 0 24 6.5L24 3L16.21 10.84L24 16.5L24 13A11 11 0 1 1 13.66 20.24A3.25 3.25 0 0 0 7.56 18.01Z";
   return (
@@ -208,8 +219,8 @@ function Versions() {
 }
 
 /** AI layer: a large four-point sparkle in a soft glow, a small light one and a spark. */
-function Ai() {
-  const { id, url } = scope("ai");
+function Ai({ place }: DrawingProps) {
+  const { id, url } = scope("ai", place);
   const sparkle =
     "M20.5 10Q25.3 21.9 36.5 27Q25.3 32.1 20.5 44Q15.7 32.1 4.5 27Q15.7 21.9 20.5 10Z";
   return (
@@ -234,8 +245,8 @@ function Ai() {
 }
 
 /** PDF and DOCX: two pages fanned out, the one behind deeper and turned away. */
-function Export() {
-  const { id, url } = scope("export");
+function Export({ place }: DrawingProps) {
+  const { id, url } = scope("export", place);
   const page =
     "M24 7H32.5Q33.5 7 34.21 7.71L40.29 13.79Q41 14.5 41 15.5V35A4 4 0 0 1 37 39H24A4 4 0 0 1 20 35V11A4 4 0 0 1 24 7Z";
   return (
@@ -269,8 +280,8 @@ function Export() {
 }
 
 /** Migration: a bright diamond moving right, two fading echoes trailing behind it. */
-function Migration() {
-  const { id, url } = scope("migration");
+function Migration({ place }: DrawingProps) {
+  const { id, url } = scope("migration", place);
   const diamond =
     "M32.71 10.81L41.69 21.78A3.5 3.5 0 0 1 41.69 26.22L32.71 37.19A3.5 3.5 0 0 1 27.29 37.19L18.31 26.22A3.5 3.5 0 0 1 18.31 21.78L27.29 10.81A3.5 3.5 0 0 1 32.71 10.81Z";
   return (
@@ -307,8 +318,8 @@ function Migration() {
 }
 
 /** Views and themes: four looks as tiles in four shades, one split light and dark. */
-function Views() {
-  const { id, url } = scope("views");
+function Views({ place }: DrawingProps) {
+  const { id, url } = scope("views", place);
   return (
     <>
       <defs>
@@ -335,8 +346,8 @@ function Views() {
 }
 
 /** Your own cloud: a cloud lit from inside at the top left, over a server slab with two lights. */
-function Cloud() {
-  const { id, url } = scope("cloud");
+function Cloud({ place }: DrawingProps) {
+  const { id, url } = scope("cloud", place);
   return (
     <>
       <defs>
@@ -362,7 +373,173 @@ function Cloud() {
   );
 }
 
-const DRAWINGS: Record<PartIconName, ComponentType> = {
+/** The engine: a chip, its body lit from the top left, a bright core with a die in it, pins on
+ * every side. */
+function Engine({ place }: DrawingProps) {
+  const { id, url } = scope("engine", place);
+  const pins = [15.5, 22.25, 29];
+  return (
+    <>
+      <defs>
+        <Linear id={id("front")} at={[9, 9, 39, 39]} of={FRONT} />
+        <Radial id={id("shine")} at={[13, 12, 22]} of={SHINE} />
+        <Linear id={id("back")} at={[3, 3, 45, 45]} of={BACK} />
+        <Linear id={id("core")} at={[17, 17, 31, 31]} of={LIGHT} />
+        <Linear id={id("die")} at={[21, 21, 27, 27]} of={DEEP} />
+      </defs>
+      {pins.flatMap((at) => [
+        <rect
+          key={`l${at}`}
+          x="3"
+          y={at}
+          width="7"
+          height="3.5"
+          rx="1.75"
+          fill={url("back")}
+          opacity="0.55"
+        />,
+        <rect
+          key={`r${at}`}
+          x="38"
+          y={at}
+          width="7"
+          height="3.5"
+          rx="1.75"
+          fill={url("back")}
+          opacity="0.55"
+        />,
+        <rect
+          key={`t${at}`}
+          x={at}
+          y="3"
+          width="3.5"
+          height="7"
+          rx="1.75"
+          fill={url("back")}
+          opacity="0.55"
+        />,
+        <rect
+          key={`b${at}`}
+          x={at}
+          y="38"
+          width="3.5"
+          height="7"
+          rx="1.75"
+          fill={url("back")}
+          opacity="0.55"
+        />,
+      ])}
+      <rect x="9" y="9" width="30" height="30" rx="7" fill={url("front")} />
+      <rect x="9" y="9" width="30" height="30" rx="7" fill={url("shine")} />
+      <rect x="16.5" y="16.5" width="15" height="15" rx="3.5" fill={url("core")} />
+      <rect x="21" y="21" width="6" height="6" rx="1.5" fill={url("die")} />
+    </>
+  );
+}
+
+/** Markdown: the M and the arrow down in a bright badge, a deeper badge behind it. */
+function Markdown({ place }: DrawingProps) {
+  const { id, url } = scope("markdown", place);
+  return (
+    <>
+      <defs>
+        <Linear id={id("front")} at={[4, 13, 40, 38]} of={FRONT} />
+        <Radial id={id("shine")} at={[9, 14, 24]} of={SHINE} />
+        <Linear id={id("back")} at={[11, 6, 44, 28]} of={BACK} />
+        <Linear id={id("ink")} at={[10, 19, 35, 32]} of={INK} />
+        <Cut
+          id={id("cut")}
+          outline="M10.5 11H33.5A8.5 8.5 0 0 1 42 19.5V31.5A8.5 8.5 0 0 1 33.5 40H10.5A8.5 8.5 0 0 1 2 31.5V19.5A8.5 8.5 0 0 1 10.5 11Z"
+        />
+      </defs>
+      <rect
+        clipPath={url("cut")}
+        x="11"
+        y="6"
+        width="33"
+        height="22"
+        rx="6"
+        fill={url("back")}
+        opacity="0.5"
+      />
+      <rect x="4" y="13" width="36" height="25" rx="6.5" fill={url("front")} />
+      <rect x="4" y="13" width="36" height="25" rx="6.5" fill={url("shine")} />
+      <path
+        d="M10 32V19H13.2L17 23.8L20.8 19H24V32H20.8V24.2L17 28.8L13.2 24.2V32Z"
+        fill={url("ink")}
+      />
+      <path d="M28.6 19H31.8V25.5H35L30.2 31.5L25.4 25.5H28.6Z" fill={url("ink")} />
+    </>
+  );
+}
+
+/** Together: two people, the one in front bright and lit, the other deeper beside and behind. */
+function Together({ place }: DrawingProps) {
+  const { id, url } = scope("together", place);
+  const body = "M5 40A13 13 0 0 1 31 40V41A2 2 0 0 1 29 43H7A2 2 0 0 1 5 41Z";
+  return (
+    <>
+      <defs>
+        <Linear id={id("front")} at={[5, 10, 31, 43]} of={FRONT} />
+        <Radial id={id("shine")} at={[12, 12, 20]} of={SHINE} />
+        <Linear id={id("back")} at={[22, 8, 44, 38]} of={BACK} />
+        <Cut
+          id={id("cut")}
+          outline="M9 17A9 9 0 1 0 27 17A9 9 0 1 0 9 17ZM3 40A15 15 0 0 1 33 40V43A4 4 0 0 1 29 47H7A4 4 0 0 1 3 43Z"
+        />
+      </defs>
+      <g clipPath={url("cut")} opacity="0.55">
+        <circle cx="33" cy="14" r="6" fill={url("back")} />
+        <path
+          d="M22 36A11 11 0 0 1 44 36V36.5A1.5 1.5 0 0 1 42.5 38H23.5A1.5 1.5 0 0 1 22 36.5Z"
+          fill={url("back")}
+        />
+      </g>
+      <circle cx="18" cy="17" r="7" fill={url("front")} />
+      <circle cx="18" cy="17" r="7" fill={url("shine")} />
+      <path d={body} fill={url("front")} />
+      <path d={body} fill={url("shine")} />
+    </>
+  );
+}
+
+/** The browser: a bright window with its three dots and two lines of code, another behind it. */
+function Browser({ place }: DrawingProps) {
+  const { id, url } = scope("browser", place);
+  return (
+    <>
+      <defs>
+        <Linear id={id("front")} at={[4, 11, 40, 40]} of={FRONT} />
+        <Radial id={id("shine")} at={[9, 12, 24]} of={SHINE} />
+        <Linear id={id("back")} at={[10, 4, 44, 30]} of={BACK} />
+        <Linear id={id("ink")} at={[8, 15, 30, 32]} of={INK} />
+        <Cut
+          id={id("cut")}
+          outline="M10 9H34A8 8 0 0 1 42 17V34A8 8 0 0 1 34 42H10A8 8 0 0 1 2 34V17A8 8 0 0 1 10 9Z"
+        />
+      </defs>
+      <rect
+        clipPath={url("cut")}
+        x="10"
+        y="4"
+        width="34"
+        height="26"
+        rx="6"
+        fill={url("back")}
+        opacity="0.5"
+      />
+      <rect x="4" y="11" width="36" height="29" rx="6" fill={url("front")} />
+      <rect x="4" y="11" width="36" height="29" rx="6" fill={url("shine")} />
+      {[9.5, 14, 18.5].map((cx) => (
+        <circle key={cx} cx={cx} cy="16.5" r="1.6" fill={url("ink")} />
+      ))}
+      <rect x="10" y="23" width="14" height="3" rx="1.5" fill={url("ink")} />
+      <rect x="10" y="29" width="20" height="3" rx="1.5" fill={url("ink")} opacity="0.8" />
+    </>
+  );
+}
+
+const DRAWINGS: Record<PartIconName, ComponentType<DrawingProps>> = {
   block: Block,
   page: Page,
   comments: Comments,
@@ -372,19 +549,25 @@ const DRAWINGS: Record<PartIconName, ComponentType> = {
   migration: Migration,
   views: Views,
   cloud: Cloud,
+  engine: Engine,
+  markdown: Markdown,
+  together: Together,
+  browser: Browser,
 };
 
 /**
- * One of the nine parts of the stack (the feature grid): filled shapes, a bright front shape over
- * deeper or see-through ones, lit from the top left, readable from 48 px. Colours come only from
- * the site-glyph-* tone classes; ids are gt-part-<name>-…, as each part appears once on a page.
- * Decoration: the card's heading names the part.
+ * A drawn glyph of the landing: the nine parts of the stack (the feature grid); the engine, Markdown
+ * and working together (the bento's tiles and the stack's three pillars); the browser, the engine
+ * and the cloud (the ways to run). Filled shapes, a
+ * bright front shape over deeper or see-through ones, lit from the top left, readable from 32 px.
+ * Colours come only from the site-glyph-* tone classes; ids are gt-part-[<place>-]<name>-…, unique
+ * on a page: a glyph drawn twice takes a place. Decoration: the heading beside it names the thing.
  */
-export function PartIcon({ name }: { name: PartIconName }) {
+export function PartIcon({ name, place }: { name: PartIconName; place?: PartIconPlace }) {
   const Drawing = DRAWINGS[name];
   return (
     <svg viewBox="0 0 48 48" className="site-part-icon" aria-hidden="true" focusable="false">
-      <Drawing />
+      <Drawing place={place} />
     </svg>
   );
 }

@@ -14,11 +14,17 @@
 
 /* ---- the documents in the windows: the window pads them, the page sets only its type ----
    The same rule holds the server's static document (the library's own markup) and the live editor
-   that replaces it, so the window keeps its height when the editor arrives. */
+   that replaces it, so the window keeps its height when the editor arrives. The library stands a
+   block's «+» and handle --gt-handle-offset left of the text, inside the editor: the editor reaches
+   back over the pane's gutter and holds its text after it, so the handles stand in the gutter. */
+.site-render > .site-page-editor,
+.site-render > .site-static-doc {
+  margin-left: calc(-1 * var(--site-render-gutter));
+}
 .site-render .gotipe-content {
   max-width: none;
   min-height: 0;
-  padding: 0;
+  padding: 0 0 0 var(--site-render-gutter);
 }
 /* the static document's title: an h2 (the landing has one h1) drawn as the page's title */
 .site-static-doc .gotipe-content > .site-static-title {

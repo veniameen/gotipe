@@ -166,6 +166,7 @@
 .site-render {
   display: var(--site-render-display);
   padding: var(--site-pane-pad);
+  padding-left: var(--site-render-gutter);
 }
 .site-src,
 .site-render {
@@ -205,30 +206,62 @@
 .site-pane-foot > .is-dot::before {
   color: var(--site-sage-ink);
 }
-.site-src-lines {
-  margin: 0;
-  padding: 0;
-  overflow-x: auto;
-  list-style: none;
-  counter-reset: line;
+/* the numbered lines and, in the live window, the field over them: one cell, one type, one
+   wrapping, so a line of the field lies on its coloured line (a long line wraps in both) */
+.site-src-code {
+  display: grid;
   color: var(--gt-text-2);
   font-family: var(--site-font-mono);
   font-size: var(--site-code-size);
   line-height: var(--site-code-leading);
-  white-space: nowrap;
+  overflow-wrap: anywhere;
+}
+.site-src-code > * {
+  grid-area: 1 / 1;
+}
+.site-src-lines {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: line;
 }
 .site-src-lines > li {
   display: grid;
   grid-template-columns: var(--site-src-num-w) minmax(0, 1fr);
-  gap: var(--site-space-4);
-  min-width: fit-content;
+  gap: var(--site-src-num-gap);
   min-height: var(--site-code-leading);
   padding: var(--site-src-line-pad);
   counter-increment: line;
   transition: background-color var(--site-transition);
 }
+/* the field: its text clear over the coloured lines, its caret and selection seen; its text starts
+   where a line's code does and ends where the line's padding begins */
+.site-src-input {
+  justify-self: stretch;
+  align-self: stretch;
+  min-width: 0;
+  margin: 0;
+  padding: 0 var(--site-src-pad-x) 0 var(--site-src-code-x);
+  border: 0;
+  border-radius: 0;
+  background: none;
+  color: transparent;
+  caret-color: var(--gt-text);
+  font: inherit;
+  letter-spacing: inherit;
+  white-space: pre-wrap;
+  overflow-wrap: inherit;
+  overflow: hidden;
+  resize: none;
+}
+/* as the document beside it, the source draws no ring: the caret and its block's tint show the place */
+.site-src-input:focus-visible {
+  outline: none;
+}
+/* a line keeps its spaces and wraps as the field does; between the lines nothing is kept */
 .site-src-lines code {
   font: inherit;
+  white-space: pre-wrap;
 }
 .site-src-lines > li::before {
   content: counter(line);

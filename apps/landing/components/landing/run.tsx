@@ -1,10 +1,10 @@
 import type { CSSProperties } from "react";
-import { Icon, type IconName } from "../site/icon";
 import { FACTS } from "./facts";
 import { Badge } from "./features";
+import { PartIcon, type PartIconName } from "./part-icons";
 
 const WAYS: {
-  icon: IconName;
+  icon: PartIconName;
   label: string;
   big: string;
   title: string;
@@ -13,7 +13,7 @@ const WAYS: {
   tint?: boolean;
 }[] = [
   {
-    icon: "globe",
+    icon: "browser",
     label: "JavaScript",
     big: FACTS.JS_ENGINE_GZIP,
     title: "JavaScript engine",
@@ -21,7 +21,7 @@ const WAYS: {
     foot: "TypeScript · gzip, with Markdown",
   },
   {
-    icon: "chip",
+    icon: "engine",
     label: "Rust / WASM",
     big: FACTS.WASM_ENGINE_GZIP,
     title: "Rust/WASM engine",
@@ -30,7 +30,7 @@ const WAYS: {
     tint: true,
   },
   {
-    icon: "server",
+    icon: "cloud",
     label: "Go · self-hosted",
     big: "1 service",
     title: "GoTipe Cloud",
@@ -66,9 +66,7 @@ export function Run() {
               style={{ "--site-i": index } as CSSProperties}
             >
               <div className="site-tile-top">
-                <span className="site-icon-box">
-                  <Icon name={way.icon} />
-                </span>
+                <PartIcon name={way.icon} place="run" />
                 <Badge licence="MIT" />
               </div>
               <p className="site-label">{way.label}</p>

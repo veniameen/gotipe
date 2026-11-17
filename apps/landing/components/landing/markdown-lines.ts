@@ -10,6 +10,21 @@ export function linesOf(text: string): string[] {
   return lines;
 }
 
+/** The file as a text field shows it: its final line break ends the last line, so it is left out. */
+export function fieldOf(file: string): string {
+  return file.replace(/\r?\n$/, "");
+}
+
+/** The file of a text field's text: a Markdown file ends with a line break. */
+export function fileOf(field: string): string {
+  return `${field}\n`;
+}
+
+/** The line (0-based) that holds `offset` in `text`. */
+export function lineAt(text: string, offset: number): number {
+  return text.slice(0, offset).split(/\r\n|\n/).length - 1;
+}
+
 /**
  * Which output lines are not byte-for-byte lines of the original, in order: the complement of a
  * longest common subsequence. An untouched block is copied by the writer, so its lines match.

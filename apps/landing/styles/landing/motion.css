@@ -57,26 +57,69 @@
     transform: translateX(-50%);
   }
 }
-@keyframes site-beam-run {
+@keyframes site-comet-in {
   0% {
+    offset-distance: 0%;
     opacity: 0;
-    stroke-dashoffset: var(--site-beam-dash);
   }
-  15%,
-  85% {
+  4%,
+  38% {
+    opacity: 1;
+  }
+  42%,
+  100% {
+    offset-distance: 100%;
+    opacity: 0;
+  }
+}
+@keyframes site-comet-out {
+  0%,
+  50% {
+    offset-distance: 0%;
+    opacity: 0;
+  }
+  54%,
+  88% {
+    opacity: 1;
+  }
+  92%,
+  100% {
+    offset-distance: 100%;
+    opacity: 0;
+  }
+}
+@keyframes site-node-send {
+  0% {
+    opacity: 1;
+  }
+  16%,
+  100% {
+    opacity: 0;
+  }
+}
+@keyframes site-node-take {
+  0%,
+  86% {
+    opacity: 0;
+  }
+  92% {
     opacity: 1;
   }
   100% {
     opacity: 0;
-    stroke-dashoffset: -100;
   }
 }
-@keyframes site-ring {
-  from {
-    box-shadow: 0 0 0 0 var(--site-glow-ring);
+@keyframes site-hub-beat {
+  0%,
+  34% {
+    opacity: 0;
   }
-  to {
-    box-shadow: 0 0 0 var(--site-ring-reach) transparent;
+  46% {
+    opacity: 1;
+  }
+  62%,
+  100% {
+    opacity: 0;
   }
 }
 @keyframes site-step {
@@ -140,9 +183,11 @@
   }
 }
 
-@keyframes site-hand-turn {
-  to {
-    transform: rotate(calc(var(--site-engine-hand-at) + 1turn));
+@keyframes site-build-breathe {
+  50% {
+    transform: translateZ(
+      calc(var(--site-build-level) * var(--site-build-step) + var(--site-build-lift))
+    );
   }
 }
 
@@ -183,12 +228,13 @@
   [data-revealed] .site-co-bar {
     animation: site-pop var(--site-dur-2) var(--site-ease-out) var(--site-co-bar-at) both;
   }
-  /* the engine's hands turn slowly while the band is on screen */
-  .site-engine-hand {
-    animation: site-hand-turn var(--site-engine-turn) linear infinite;
+  /* the document on the engine breathes: its plates rise and settle in turn, the caret blinks */
+  .site-build-plate {
+    animation: site-build-breathe var(--site-build-run) ease-in-out infinite;
+    animation-delay: calc(var(--site-build-level) * var(--site-build-stagger));
   }
-  .site-engine-hand.is-short {
-    animation-duration: var(--site-engine-turn-short);
+  .site-build-caret {
+    animation: site-co-blink var(--site-caret-blink) step-end infinite;
   }
   /* light runs down two of the margin's lines */
   .site-lines::before {
@@ -255,18 +301,28 @@
     animation-play-state: paused;
   }
 
-  /* ---- the stack: pulses run along the beams, the engine breathes ---- */
-  .site-beam-pulse {
-    animation: site-beam-run var(--site-beam-run) var(--site-ease) infinite;
-    animation-delay: calc(var(--site-beam-i, 0) * var(--site-beam-step));
+  /* ---- the stack: comets run in to the engine and out of it, the boxes flash as they leave and
+     arrive, the engine beats as they come in and a comet runs round its rim ---- */
+  .site-comet.is-in {
+    animation: site-comet-in var(--site-comet-cycle) var(--site-ease) infinite;
+    animation-delay: calc(var(--site-beam-i, 0) * var(--site-comet-step));
+  }
+  .site-comet.is-out {
+    animation: site-comet-out var(--site-comet-cycle) var(--site-ease) infinite;
+    animation-delay: calc(var(--site-beam-i, 0) * var(--site-comet-step));
+  }
+  .site-stack-col .site-stack-node::after {
+    animation: site-node-send var(--site-comet-cycle) linear infinite;
+    animation-delay: calc(var(--site-beam-i, 0) * var(--site-comet-step));
+  }
+  .site-stack-col.is-out .site-stack-node::after {
+    animation-name: site-node-take;
+  }
+  .site-stack-hub::before {
+    animation: site-turn var(--site-beam-turn) linear infinite;
   }
   .site-stack-hub::after {
-    content: "";
-    position: absolute;
-    inset: 0;
-    border-radius: inherit;
-    pointer-events: none;
-    animation: site-ring var(--site-ring-run) var(--site-ease-out) infinite;
+    animation: site-hub-beat var(--site-comet-cycle) var(--site-ease-out) infinite;
   }
 
   /* ---- the bento's pictures play once their tile is in view ---- */

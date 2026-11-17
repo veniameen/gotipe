@@ -109,8 +109,8 @@ export function Hero() {
           <div className="site-hero-window">
             <SignatureLive />
             <p className="site-hero-note">
-              Markdown source and the document it becomes. One model, nothing lost. Edit the
-              document: the source follows.
+              Markdown source and the document it becomes. One model, nothing lost. Edit either
+              side: the other follows.
             </p>
           </div>
 

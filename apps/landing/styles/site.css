@@ -57,8 +57,6 @@
   flex: none;
   width: var(--site-logo);
   height: var(--site-logo);
-  color: var(--gt-accent);
-  fill: var(--site-bg);
 }
 .site-head-end {
   display: flex;
@@ -341,7 +339,7 @@
 }
 .site .site-cta.is-second {
   background: var(--site-pill-fill);
-  box-shadow: none;
+  box-shadow: var(--site-pill-shadow);
   color: var(--site-pill-text);
   transition: background-color var(--site-transition);
 }

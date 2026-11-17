@@ -1,6 +1,6 @@
 import type { CSSProperties } from "react";
 import { Badge } from "../site/badge";
-import { Icon, type IconName } from "../site/icon";
+import { Icon } from "../site/icon";
 import { MarkdownMock, PairMock, TransactionMock } from "./bento/mocks";
 import { PartIcon, type PartIconName } from "./part-icons";
 
@@ -68,12 +68,10 @@ export { Badge };
 
 const order = (index: number) => ({ "--site-i": index }) as CSSProperties;
 
-function TileTop({ icon, licence }: { icon: IconName; licence: Licence }) {
+function TileTop({ icon, licence }: { icon: PartIconName; licence: Licence }) {
   return (
     <div className="site-tile-top">
-      <span className="site-icon-box">
-        <Icon name={icon} />
-      </span>
+      <PartIcon name={icon} />
       <Badge licence={licence} />
     </div>
   );
@@ -81,8 +79,8 @@ function TileTop({ icon, licence }: { icon: IconName; licence: Licence }) {
 
 /**
  * «Everything you need. Nothing in your way.»: a collaborator at work in the title (her caret and
- * name, a phrase selected, the bubble toolbar over it); light lines down the page's left margin; three night
- * tiles with their live pictures, a light behind them coming through the gaps; then the nine parts
+ * name, a phrase selected, the bubble toolbar over it); light lines down the page's left margin; three
+ * tiles of the page's theme with their live pictures, a light behind them coming through the gaps; then the nine parts
  * of the stack. Light follows the pointer over the cards (motion/controller.tsx).
  */
 export function Features() {
@@ -117,10 +115,10 @@ export function Features() {
           </p>
         </div>
 
-        <div className="site-bento" data-glow data-theme="dark">
+        <div className="site-bento" data-glow>
           <article className="site-tile is-engine" data-glow-card data-reveal style={order(0)}>
             <span className="site-tile-light" aria-hidden="true" />
-            <TileTop icon="braces" licence="MIT" />
+            <TileTop icon="engine" licence="MIT" />
             <h3>An engine. Not a wrapper.</h3>
             <p>
               Transactions, history, selection and IME in TypeScript, with the same contract in
@@ -130,7 +128,7 @@ export function Features() {
           </article>
           <article className="site-tile is-markdown" data-glow-card data-reveal style={order(1)}>
             <span className="site-tile-light" aria-hidden="true" />
-            <TileTop icon="page" licence="MIT" />
+            <TileTop icon="markdown" licence="MIT" />
             <h3>Your Markdown stays yours.</h3>
             <p>
               Our own parser keeps the file intact: an edit rewrites only the block it touched, your
@@ -147,7 +145,7 @@ export function Features() {
           >
             <span className="site-tile-light" aria-hidden="true" />
             <div>
-              <TileTop icon="nodes" licence="MIT" />
+              <TileTop icon="together" licence="MIT" />
               <h3>Better, together.</h3>
               <p>
                 Our own CRDT in Rust. Concurrent and offline edits merge on reconnect; cursors and

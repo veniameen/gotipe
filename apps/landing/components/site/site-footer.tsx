@@ -1,7 +1,7 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
-import { Icon } from "./icon";
 import { LINKS } from "./links";
+import { Logo } from "./logo";
 
 function FootLink({ href, children }: { href: string; children: ReactNode }) {
   return href.startsWith("/") ? <Link href={href}>{children}</Link> : <a href={href}>{children}</a>;
@@ -15,7 +15,7 @@ export function SiteFooter() {
         <div className="site-foot-grid">
           <div>
             <Link className="site-brand is-large" href={LINKS.home}>
-              <Icon name="logo" className="site-logo" />
+              <Logo place="foot" />
               GoTipe
             </Link>
             <p>A document editor framework with its own engine. TypeScript and Rust/WASM.</p>

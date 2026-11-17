@@ -2,46 +2,75 @@ import Link from "next/link";
 import { Icon } from "../site/icon";
 import { Catch, Lamp } from "../site/lamp";
 import { LINKS } from "../site/links";
-
-/** The mark's G without its tile: the engine's face carries it, dark against the light. */
-const G_PATH = "M23 11a8 8 0 1 0 1 9v-5h-8v3h5v1a5 5 0 1 1-1-6z";
+import { MantaMark } from "../site/logo";
 
 /**
- * The engine: a dark dial lit from the left in blue and from the right in cyan, a grain of dots in
- * that light, two arcs of light on its rings and two hands turning slowly; two beams cross behind
- * it. Decoration, hidden from assistive technology.
+ * A document built on the engine: glass plates stacked in depth, light rising through them from
+ * the engine at the foot (the manta, lit); above it the Markdown source, then the blocks, then the page with
+ * a phrase selected, a caret and a collaborator's flag. The plates breathe slowly. Decoration,
+ * hidden from assistive technology.
  */
-function Engine() {
+function Build() {
   return (
-    <div className="site-engine" aria-hidden="true">
-      <span className="site-engine-beam" />
-      <span className="site-engine-beam is-second" />
-      <span className="site-engine-face">
-        <span className="site-engine-ring" />
-        <span className="site-engine-ring is-inner" />
-        <span className="site-engine-arc" />
-        <span className="site-engine-arc is-second" />
-        <svg className="site-engine-mark" viewBox="7 7 18 18" aria-hidden="true" focusable="false">
-          <path d={G_PATH} />
-        </svg>
-        <span className="site-engine-hand" />
-        <span className="site-engine-hand is-short" />
-        <span className="site-engine-hub" />
-      </span>
+    <div className="site-build" aria-hidden="true">
+      <span className="site-build-glow" />
+      <div className="site-build-scene">
+        <span className="site-build-plate is-engine">
+          <MantaMark className="site-build-mark" />
+        </span>
+        <span className="site-build-plate is-source">
+          <span className="site-build-row">
+            <span className="site-build-sign">#</span>
+            <span className="site-build-line is-long" />
+          </span>
+          <span className="site-build-row">
+            <span className="site-build-sign">-</span>
+            <span className="site-build-line" />
+          </span>
+          <span className="site-build-row">
+            <span className="site-build-sign">-</span>
+            <span className="site-build-line is-short" />
+          </span>
+          <span className="site-build-row">
+            <span className="site-build-sign">&gt;</span>
+            <span className="site-build-line" />
+          </span>
+        </span>
+        <span className="site-build-plate is-blocks">
+          <span className="site-build-block is-head" />
+          <span className="site-build-block" />
+          <span className="site-build-block is-list" />
+          <span className="site-build-block is-code" />
+        </span>
+        <span className="site-build-plate is-page">
+          <span className="site-build-line is-head" />
+          <span className="site-build-line is-long" />
+          <span className="site-build-row">
+            <span className="site-build-line is-picked" />
+            <span className="site-build-caret">
+              <span className="site-build-flag">Ana</span>
+            </span>
+          </span>
+          <span className="site-build-line" />
+          <span className="site-build-line is-short" />
+        </span>
+      </div>
     </div>
   );
 }
 
 /**
- * The closing band (Atlas frame 20): a night stage in either theme, the engine beside the last
- * words and the two calls; the lamp of the first lights the edge of the second when it comes near.
+ * The closing band (Atlas frame 20): the first stage's light in the page's theme, a document built
+ * on the engine
+ * beside the last words and the two calls; the lamp of the first lights the edge of the second
+ * when it comes near.
  */
 export function Closing() {
   return (
     <section className="site-section" aria-labelledby="site-closing-title">
       <div className="site-wrap">
-        <div className="site-stage site-band" data-theme="dark" data-reveal data-play>
-          <Engine />
+        <div className="site-stage site-band" data-reveal data-play>
+          <Build />
           <div className="site-band-copy">
             <p className="site-eyebrow">The next chapter is yours</p>
             <h2 id="site-closing-title" className="site-title">

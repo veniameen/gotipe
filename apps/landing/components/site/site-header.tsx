@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import { Icon } from "./icon";
 import { Lamp } from "./lamp";
 import { LINKS, primaryNav } from "./links";
+import { Logo } from "./logo";
 import { NavMenu } from "./nav-menu";
 import { ThemeToggle } from "./theme-toggle";
 
@@ -13,7 +14,7 @@ import { ThemeToggle } from "./theme-toggle";
 function Brand({ docs = false }: { docs?: boolean }) {
   return (
     <Link className="site-brand" href={LINKS.home} prefetch={docs ? false : undefined}>
-      <Icon name="logo" className="site-logo" />
+      <Logo place="head" />
       GoTipe{docs && <small>Docs</small>}
     </Link>
   );

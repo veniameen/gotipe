@@ -30,7 +30,6 @@ export type IconName =
   | "layers"
   | "link"
   | "lock"
-  | "logo"
   | "menu"
   | "moon"
   | "more"
@@ -47,7 +46,7 @@ export type IconName =
   | "x";
 
 /** Bump the version when public/icons.svg changes: browsers keep an external sprite in cache. */
-export const ICON_SPRITE = "/icons.svg?v=2";
+export const ICON_SPRITE = "/icons.svg?v=3";
 
 /** An icon as markup, for HTML built as text (the docs pipeline): the same sprite and names. */
 export function iconMarkup(name: IconName, className = "site-icon"): string {

@@ -1,6 +1,14 @@
 import { describe, expect, it } from "vitest";
 import { SIGNATURE_MARKDOWN } from "./demo-content";
-import { lineSummary, linesOf, piecesOf, rewrittenLines } from "./markdown-lines";
+import {
+  fieldOf,
+  fileOf,
+  lineAt,
+  lineSummary,
+  linesOf,
+  piecesOf,
+  rewrittenLines,
+} from "./markdown-lines";
 
 describe("linesOf", () => {
   it("ends the last line at a final line break instead of starting another", () => {
@@ -13,6 +21,34 @@ describe("linesOf", () => {
 
   it("counts the signature file as the frame does", () => {
     expect(linesOf(SIGNATURE_MARKDOWN)).toHaveLength(12);
+  });
+});
+
+describe("fieldOf and fileOf", () => {
+  it("shows a field as many lines as the pane numbers", () => {
+    for (const file of [SIGNATURE_MARKDOWN, "a\nb\n", "a\nb\n\n", "\n", "a"]) {
+      expect(fieldOf(file).split("\n")).toHaveLength(linesOf(file).length);
+    }
+  });
+
+  it("gives the file back from its field", () => {
+    expect(fileOf(fieldOf(SIGNATURE_MARKDOWN))).toBe(SIGNATURE_MARKDOWN);
+    expect(fileOf(fieldOf("a\r\n"))).toBe("a\n");
+    expect(fileOf("")).toBe("\n");
+  });
+
+  it("keeps a line the person added at the end", () => {
+    expect(linesOf(fileOf("a\n"))).toEqual(["a", ""]);
+  });
+});
+
+describe("lineAt", () => {
+  it("finds the line of an offset", () => {
+    expect(lineAt("a\nbc\nd", 0)).toBe(0);
+    expect(lineAt("a\nbc\nd", 1)).toBe(0);
+    expect(lineAt("a\nbc\nd", 2)).toBe(1);
+    expect(lineAt("a\nbc\nd", 5)).toBe(2);
+    expect(lineAt("a\r\nb", 3)).toBe(1);
   });
 });
 

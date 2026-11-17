@@ -13,8 +13,22 @@ export interface SignatureWindowProps {
   summary: string;
   /** Whether the document pane is the live editor (the status reads «Synced») or its picture. */
   live: boolean;
+  /** The source pane takes typing (the live window); without it the pane only shows the lines. */
+  source?: SourceInput;
   /** The document pane. */
   children: ReactNode;
+}
+
+/** The source pane as a field: the file's text and what the person does in it. */
+export interface SourceInput {
+  /** The file as the field shows it: its final line break is the end of the last line. */
+  value: string;
+  /** The person typed: the field's new text. */
+  onInput(value: string): void;
+  /** The caret moved (or the field took the focus): the field's text and the caret's offset. */
+  onCaret(value: string, offset: number): void;
+  onFocus(): void;
+  onBlur(): void;
 }
 
 type Pane = "document" | "source";
@@ -27,8 +41,19 @@ function Piece({ piece }: { piece: SourcePiece }) {
  * The window of the first stage (Atlas frame 20): the Markdown source with line numbers on the
  * left, the document on the right, the count of lines under both. A phone has room for one pane:
  * a switch over them shows the document or its source (`data-pane`), both stay in the page.
+ *
+ * The live source is a field over its own picture: the numbered, coloured lines lie beneath a
+ * text field with the same type and wrapping, whose text is clear, so the person sees the colours
+ * and types into the field (its caret and selection).
  */
-export function SignatureWindow({ lines, current, summary, live, children }: SignatureWindowProps) {
+export function SignatureWindow({
+  lines,
+  current,
+  summary,
+  live,
+  source,
+  children,
+}: SignatureWindowProps) {
   const [pane, setPane] = useState<Pane>("document");
   const ids = useId();
   const tab = (value: Pane, label: string) => (
@@ -80,24 +105,51 @@ export function SignatureWindow({ lines, current, summary, live, children }: Sig
             <span>Markdown source</span>
             <span>.md</span>
           </p>
-          {/* biome-ignore lint/a11y/noNoninteractiveTabindex: the source scrolls sideways on narrow windows; the keyboard reaches it */}
-          <ol className="site-src-lines" tabIndex={0} aria-label="Markdown source lines">
-            {lines.map((line, index) => (
-              <li
-                // a line's place is its identity: the pane shows the file line by line
-                key={index}
-                className={current?.has(index) ? "is-current" : undefined}
-              >
-                {line && (
-                  <code>
-                    {piecesOf(line).map((piece, at) => (
-                      <Piece key={at} piece={piece} />
-                    ))}
-                  </code>
-                )}
-              </li>
-            ))}
-          </ol>
+          <div className="site-src-code">
+            <ol
+              className="site-src-lines"
+              aria-label={source ? undefined : "Markdown source lines"}
+              aria-hidden={source ? true : undefined}
+            >
+              {lines.map((line, index) => (
+                <li
+                  // a line's place is its identity: the pane shows the file line by line
+                  key={index}
+                  className={current?.has(index) ? "is-current" : undefined}
+                >
+                  {line && (
+                    <code>
+                      {piecesOf(line).map((piece, at) => (
+                        <Piece key={at} piece={piece} />
+                      ))}
+                    </code>
+                  )}
+                </li>
+              ))}
+            </ol>
+            {source && (
+              <textarea
+                className="site-src-input"
+                aria-label="Markdown"
+                value={source.value}
+                rows={1}
+                wrap="soft"
+                spellCheck={false}
+                autoCapitalize="off"
+                autoComplete="off"
+                autoCorrect="off"
+                onChange={(event) => source.onInput(event.currentTarget.value)}
+                onSelect={(event) =>
+                  source.onCaret(event.currentTarget.value, event.currentTarget.selectionStart)
+                }
+                onFocus={(event) => {
+                  source.onFocus();
+                  source.onCaret(event.currentTarget.value, event.currentTarget.selectionStart);
+                }}
+                onBlur={source.onBlur}
+              />
+            )}
+          </div>
           <p className="site-pane-foot">
             <span className="is-dot">UTF-8</span>
             <span>CommonMark</span>
