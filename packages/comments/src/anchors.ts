@@ -1,5 +1,6 @@
 import { type Block, type Decoration, type Document, GoTipeError } from "@gotipe/core";
 import { anchorAt, findAnchor } from "@gotipe/suggestions";
+import type { FollowRange } from "./follow";
 import type { Comment, CommentRange } from "./types";
 
 interface TextBlock {
@@ -8,7 +9,17 @@ interface TextBlock {
   start: number;
   end: number;
 }
-function projection(document: Document): { text: string; blocks: TextBlock[] } {
+/** The document as comment anchors read it: the text of its blocks in order, joined by "\n". */
+export interface DocumentText {
+  text: string;
+  blocks: TextBlock[];
+}
+/** The text a comment was last resolved in and how the text changed since then. */
+export interface TextChange {
+  previous: DocumentText;
+  follow: FollowRange;
+}
+export function documentText(document: Document): DocumentText {
   const blocks: TextBlock[] = [];
   let text = "";
   const visit = (entries: Block[]) => {
@@ -42,8 +53,7 @@ function validOffset(text: string, offset: number): boolean {
     )
   );
 }
-export function captureRange(document: Document, range: CommentRange) {
-  const view = projection(document);
+export function captureRange(view: DocumentText, range: CommentRange) {
   const start = view.blocks.find((block) => block.blockId === range.blockId);
   const end = view.blocks.find((block) => block.blockId === (range.endBlockId ?? range.blockId));
   if (
@@ -68,17 +78,44 @@ export function captureRange(document: Document, range: CommentRange) {
     orphaned: false,
   };
 }
-export function resolveComment(comment: Comment, document: Document): Comment {
-  const view = projection(document);
+/** Where the quote of `comment` is in `view` after `change`, if the change left the quote alone. */
+function followQuote(comment: Comment, quote: string, view: DocumentText, change: TextChange) {
+  const { previous, follow } = change;
+  const first = previous.blocks.find((block) => block.blockId === comment.blockId);
+  const last = previous.blocks.find(
+    (block) => block.blockId === (comment.endBlockId ?? comment.blockId),
+  );
+  if (!first || !last) return null;
+  const start = first.start + comment.from;
+  const end = last.start + comment.to;
+  if (previous.text.slice(start, end) !== quote) return null;
+  const moved = follow(start, end);
+  return moved && view.text.slice(moved.from, moved.to) === quote
+    ? { start: moved.from, end: moved.to }
+    : null;
+}
+/**
+ * Finds the comment's quote in `view`. An anchored quote follows `change` when the change left the
+ * quote itself alone, even if it rewrote the context around it: text typed right before or after
+ * the quote, or at the start of its block. Otherwise the whole anchor, context and quote, must
+ * occur exactly once (after Undo, a move, a reload, for an orphan). Missing or ambiguous text marks
+ * the comment orphaned and keeps its last anchor, so Undo can bring it back. A context that no
+ * longer names the quote's place is read again around it, so a reload finds the quote too.
+ */
+export function resolveComment(comment: Comment, view: DocumentText, change?: TextChange): Comment {
   if (!comment.anchor) {
     try {
-      return { ...comment, ...captureRange(document, comment) };
+      return { ...comment, ...captureRange(view, comment) };
     } catch {
       return { ...comment, orphaned: true };
     }
   }
-  const match = findAnchor(view.text, comment.anchor);
-  if (!match.ok) return { ...comment, orphaned: true };
+  const { anchor } = comment;
+  const followed =
+    change && !comment.orphaned ? followQuote(comment, anchor.quote, view, change) : null;
+  const found = findAnchor(view.text, anchor);
+  const match = followed ?? (found.ok ? found : null);
+  if (!match) return { ...comment, orphaned: true };
   const start = view.blocks.find((block) => block.start <= match.start && block.end >= match.start);
   const end = [...view.blocks]
     .reverse()
@@ -90,13 +127,17 @@ export function resolveComment(comment: Comment, document: Document): Comment {
     endBlockId: end.blockId === start.blockId ? undefined : end.blockId,
     from: match.start - start.start,
     to: match.end - end.start,
-    quotedText: comment.anchor.quote,
+    anchor:
+      found.ok && found.start === match.start
+        ? anchor
+        : anchorAt(view.text, match.start, match.end),
+    quotedText: anchor.quote,
     orphaned: false,
   };
 }
-export function commentDecorations(comment: Comment, document: Document): Decoration[] {
+export function commentDecorations(comment: Comment, view: DocumentText): Decoration[] {
   if (comment.orphaned) return [];
-  const blocks = projection(document).blocks;
+  const { blocks } = view;
   const first = blocks.findIndex((block) => block.blockId === comment.blockId);
   const last = blocks.findIndex(
     (block) => block.blockId === (comment.endBlockId ?? comment.blockId),

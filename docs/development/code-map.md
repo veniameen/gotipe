@@ -208,6 +208,13 @@ The reason a tool is unavailable is `components/formatting/reasons.ts`, which is
 ⌘K (`openLinkDialog`) is handled by one owner per editor, `formatting/link-shortcut.ts`: the field
 opens the bubble menu's `LinkEditor`, and without a bubble menu the toolbar's. The view is `theme/src/theme/toolbar.css`.
 
+Comment anchors (D-290): `comments/src/anchors.ts` finds each comment's quote after an `update`.
+A quote the edit left whole follows it (`follow.ts`: the edit is read from the document text
+before and after as one replaced part, placed as late or as early as the texts allow, as
+`ai/src/review.ts` does per block for AI review comments); otherwise the whole anchor is searched
+for (`findAnchor` of `@gotipe/suggestions`), and a context that no longer names the quote is
+taken again around it (`anchorAt`).
+
 The block editor's AI elements (Improve in the bubble menu, the ⌘J row, ghost text, the status line) exist
 only when the `@gotipe/ai` extension backs them: `block-editor/src/components/ai-controls.ts` decides
 by the core's `editor.hasExtension(name)`; without it the components draw and listen to nothing.

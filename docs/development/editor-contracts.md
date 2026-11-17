@@ -136,6 +136,12 @@ and persist records. `exportState()` / `loadState(unknown)` use a validated vers
 snapshot and preserve author/date/reply metadata. Loading invalid records does not
 partially replace existing state. Anchors follow unchanged quoted text across edits
 and block IDs; missing or ambiguous text is marked `orphaned` and is not guessed.
+A comment follows every edit that leaves its quote whole, also text typed right before
+or after the quote or at the start of its block, and its stored context is then read
+again around the quote, so an exported anchor still finds it after a reload. Otherwise
+the whole anchor (context and quote) must occur exactly once: after Undo, a move, a load,
+or for an orphan, which keeps its last anchor so Undo can restore it. Two edits on
+opposite sides of a quote in one transaction are read as one edit over the quote.
 `reanchorComment(id, range)` attaches an orphan to a new explicit quote. Comment metadata
 is independent of document editability; a host controls which UI action callbacks exist.
 The playground persists document Markdown and discussion in its browser tab's session
