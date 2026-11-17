@@ -1,7 +1,6 @@
 # The nine Rust crates on crates.io. Run by hand (Actions, Publish crates, Run workflow) once
-# the release checks of a version have passed and the crates carry a version that is not on
-# crates.io yet: cargo publish uploads them in dependency order and refuses a version that is
-# already there. Needs the repository secret CARGO_REGISTRY_TOKEN, a crates.io token limited to
+# the release checks of a version have passed. Crates whose version is on crates.io already are
+# skipped. Needs the repository secret CARGO_REGISTRY_TOKEN, a crates.io token limited to
 # publish-new and publish-update of gotipe-*.
 name: Publish crates
 
@@ -28,7 +27,28 @@ jobs:
       - name: Verify registry source dependency graph
         run: node scripts/check-cargo-release.mjs
 
+      # One crate at a time in dependency order. A version already on crates.io is skipped, so a
+      # run picks up where an earlier one stopped. crates.io takes a burst of five new crates and
+      # then one every ten minutes: an upload it refuses for that waits and tries again.
       - name: Publish the workspace crates
-        run: cargo publish --workspace --locked
         env:
           CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
+        run: |
+          set -euo pipefail
+          for crate in gotipe-schema gotipe-core gotipe-crdt gotipe-ai gotipe-comments \
+                       gotipe-versioning gotipe-export gotipe-export-wasm gotipe-wasm; do
+            version=$(cargo metadata --locked --no-deps --format-version 1 \
+              | jq -r --arg crate "$crate" '.packages[] | select(.name == $crate) | .version')
+            if curl -sf -o /dev/null -A "gotipe-publish-crates" \
+                 "https://crates.io/api/v1/crates/$crate/$version"; then
+              echo "$crate $version is on crates.io already"
+              continue
+            fi
+            until cargo publish --locked -p "$crate" 2> publish.log; do
+              cat publish.log
+              grep -q "429 Too Many Requests" publish.log || exit 1
+              echo "crates.io asks to wait: trying $crate again in ten minutes"
+              sleep 600
+            done
+            cat publish.log
+          done
