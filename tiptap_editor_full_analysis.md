@@ -1,430 +1,439 @@
-# Tiptap Editor — Полный анализ функционала
+# Tiptap Editor — Full Feature Analysis
 
-> **Дата исследования:** 12 февраля 2026  
-> **Источник:** https://tiptap.dev/  
-> **Метод:** прокликивание всех элементов, ввод текста, скриншоты каждого состояния
-
----
-
-## 0) Важная поправка: у Tiptap нет "единственного внешнего вида"
-
-Tiptap — **headless редактор**: ядро даёт схему документа + команды + плагины/расширения, а "как выглядит" (тулбары, меню, поповеры, блок-меню) — это UI, который вы делаете сами или берёте из **Tiptap UI Components / Templates**.
-
-Поэтому корректно анализировать нужно в **2 слоя**:
-
-1. **Editor capabilities** (что умеет движок и расширения)
-2. **Reference UI/UX** (как это упаковано в официальных шаблонах)
-
-На главной странице tiptap.dev представлены **4 варианта редактора**, каждый демонстрирует разный уровень кастомизации:
-
-| Вариант | Назначение | Уровень UI |
-|:--------|:-----------|:-----------|
-| **Agent editor** | AI-native редактирование, Cursor-like | Максимальный (AI + comments + diffs) |
-| **Notion-like editor** | Блочный редактор с drag & drop | Высокий (slash-меню, drag handle, bubble menu) |
-| **Simple editor** | Готовый к продакшену шаблон | Средний (полированный тулбар) |
-| **Headless editor** | Демо "голого" API | Минимальный (текстовые кнопки) |
+> **Research date:** February 12, 2026  
+> **Source:** https://tiptap.dev/  
+> **Method:** clicking through every element, typing text, screenshots of every state
 
 ---
 
-## 1) Agent Editor — AI-native редактор
+## 0) An important correction: Tiptap has no single "look"
 
-### Скриншот
+Tiptap is a **headless editor**: the core provides the document schema, commands and plugins/extensions,
+while "how it looks" (toolbars, menus, popovers, block menus) is UI that you build yourself or take from
+**Tiptap UI Components / Templates**.
+
+So the analysis has to cover **2 layers**:
+
+1. **Editor capabilities** (what the engine and extensions can do)
+2. **Reference UI/UX** (how it is packaged in the official templates)
+
+The tiptap.dev home page presents **4 editor variants**, each demonstrating a different level of
+customization:
+
+| Variant | Purpose | UI level |
+|:--------|:--------|:---------|
+| **Agent editor** | AI-native editing, Cursor-like | Maximum (AI + comments + diffs) |
+| **Notion-like editor** | Block editor with drag & drop | High (slash menu, drag handle, bubble menu) |
+| **Simple editor** | Production-ready template | Medium (polished toolbar) |
+| **Headless editor** | Demo of the "bare" API | Minimal (text buttons) |
+
+---
+
+## 1) Agent Editor — the AI-native editor
+
+### Screenshot
 ![Agent editor — AI Toolkit](./agent_editor_recording.webp)
 
-### 1.1 Компоновка интерфейса
+### 1.1 Interface layout
 
-Agent Editor состоит из **4 основных зон**:
+The Agent Editor consists of **4 main zones**:
 
-| Зона | Описание |
-|:-----|:---------|
-| **Верхний тулбар** | Комплексный набор инструментов форматирования |
-| **AI Toolkit (дропдаун)** | Меню с предзаполненными AI-экшенами |
-| **Область редактирования** | Rich-text канва с контентом |
-| **AI Command Bar (снизу)** | Плавающий инпут для кастомных AI-инструкций |
+| Zone | Description |
+|:-----|:------------|
+| **Top toolbar** | A comprehensive set of formatting tools |
+| **AI Toolkit (dropdown)** | A menu with prefilled AI actions |
+| **Editing area** | Rich-text canvas with the content |
+| **AI Command Bar (bottom)** | A floating input for custom AI instructions |
 
-### 1.2 AI Toolkit — подробное описание каждой функции
+### 1.2 AI Toolkit — each function in detail
 
-#### "AI Toolkit examples" — дропдаун в левом верхнем углу
+#### "AI Toolkit examples" — the dropdown in the top left corner
 
-При клике открывается список AI-действий:
+Clicking it opens a list of AI actions:
 
 ---
 
 ##### ① Add AI Comment
-- **Что делает:** AI анализирует документ и оставляет **контекстные комментарии** — прямо как ревьюер.
-- **Визуал:** В тексте появляется подчёркивание/выделение (например, "[Your University or Research Center]"), а на правом поле — **пузырёк комментария** (comment bubble).
-- **При клике на пузырёк:** Открывается **поповер** с текстом комментария:
-  - Пример: *"Please specify the official name of your institution here"*
-  - Кнопки: **Reply** (ответить), **Resolve** (закрыть тред)
-  - Навигация: стрелки для переключения между несколькими комментариями (prev/next)
-- **UX-паттерн:** Полноценные треды, как в Google Docs / Word Online.
-- **Применение:** Code review, peer review, совместное редактирование.
+- **What it does:** the AI analyzes the document and leaves **contextual comments**, just like a reviewer.
+- **Visual:** an underline/highlight appears in the text (for example, "[Your University or Research Center]"),
+  and a **comment bubble** appears in the right margin.
+- **On clicking the bubble:** a **popover** opens with the comment text:
+  - Example: *"Please specify the official name of your institution here"*
+  - Buttons: **Reply**, **Resolve** (close the thread)
+  - Navigation: arrows to switch between several comments (prev/next)
+- **UX pattern:** full threads, like Google Docs / Word Online.
+- **Use cases:** code review, peer review, collaborative editing.
 
 ---
 
 ##### ② Add New Paragraph
-- **Что делает:** AI генерирует **новый параграф**, контекстно релевантный существующему тексту.
-- **Визуал:** Новый текст появляется как **"зелёное предложение" (diff-view)**:
-  - Зелёным подсвечен добавляемый текст
-  - Серым со зачёркиванием — удаляемый текст
-- **Кнопки:** **Accept** (принять) / **Reject** (отклонить)
-- **UX-паттерн:** "Track Changes" / "Suggestions" — как в Google Docs / Word. Пользователь **сам решает**, принять или отклонить.
+- **What it does:** the AI generates a **new paragraph** that is contextually relevant to the existing text.
+- **Visual:** the new text appears as a **"green suggestion" (diff view)**:
+  - Added text is highlighted in green
+  - Removed text is gray with a strikethrough
+- **Buttons:** **Accept** / **Reject**
+- **UX pattern:** "Track Changes" / "Suggestions", as in Google Docs / Word. The user **decides** whether to
+  accept or reject.
 
 ---
 
 ##### ③ Proofread
-- **Что делает:** AI сканирует **весь документ** на ошибки (опечатки, грамматика, стиль).
-- **Визуал:**
-  - **Зелёные хайлайты** — предлагаемые исправления (additions)
-  - **Серые зачёркивания** — то, что предлагается удалить (deletions)
-  - Пример: "giaging" → "aging", "nueral" → "neural", "Metabolm" → "Metabolism"
-- **Suggestion Toolbar (снизу):**
-  - Счётчик: **"1/12"** — показывает текущую и общее количество найденных правок
-  - Стрелки ◀ ▶ — навигация между предложениями
-  - **Accept all** — принять все исправления
-  - **Reject all** — отклонить все
+- **What it does:** the AI scans the **whole document** for errors (typos, grammar, style).
+- **Visual:**
+  - **Green highlights** are the proposed fixes (additions)
+  - **Gray strikethroughs** are what is proposed for removal (deletions)
+  - Example: "giaging" → "aging", "nueral" → "neural", "Metabolm" → "Metabolism"
+- **Suggestion Toolbar (bottom):**
+  - Counter: **"1/12"** shows the current position and the total number of edits found
+  - Arrows ◀ ▶ navigate between suggestions
+  - **Accept all** accepts all fixes
+  - **Reject all** rejects them all
 
 ---
 
-#### AI Command Bar (нижняя панель)
+#### AI Command Bar (bottom panel)
 
-- **Плавающий инпут:** "Tell AI what else needs to be changed..."
-- **При клике:** Расширяется область ввода для свободного текста.
-- **Пример команды:** "Summarize this page in one sentence."
-- **Результат:** AI интеллектуально модифицирует документ:
-  - Может заменить заголовок ("ABSTRACT" → "EXECUTIVE SUMMARY")
-  - Вставить суммаризированный параграф
-  - Результат опять же показывается как **suggestion для одобрения**
-- **Индикатор статуса:** При работе AI в футере появляется анимация *"Using AI toolkit"*
+- **Floating input:** "Tell AI what else needs to be changed..."
+- **On click:** the input area expands for free-form text.
+- **Example command:** "Summarize this page in one sentence."
+- **Result:** the AI modifies the document intelligently:
+  - It can replace a heading ("ABSTRACT" → "EXECUTIVE SUMMARY")
+  - It can insert a summarized paragraph
+  - The result is again shown as a **suggestion to approve**
+- **Status indicator:** while the AI works, a *"Using AI toolkit"* animation appears in the footer
 
-### 1.3 Стандартный тулбар Agent Editor
+### 1.3 The standard Agent Editor toolbar
 
-| Кнопка | Функция | Детали |
-|:-------|:--------|:-------|
-| **B** | Bold (жирный) | Cmd+B / Ctrl+B |
-| **I** | Italic (курсив) | Cmd+I / Ctrl+I |
-| **S** | Strikethrough (зачёркивание) | — |
-| **U** | Underline (подчёркивание) | — |
-| **Highlight** | Выделение маркером | Жёлтый фон |
-| **Headings** | Дропдаун: H1, H2, H3, H4 | Уровни заголовков |
-| **Lists** | Bullet / Ordered / Checkbox | 3 типа списков |
-| **Alignment** | Left / Center / Right / Justify | 4 варианта выравнивания |
-| **Zoom** | Масштаб документа | Например 100% |
-| **Custom Components** | Вставка сложных UI-элементов | Компоненты прямо в текст |
+| Button | Function | Details |
+|:-------|:---------|:--------|
+| **B** | Bold | Cmd+B / Ctrl+B |
+| **I** | Italic | Cmd+I / Ctrl+I |
+| **S** | Strikethrough | — |
+| **U** | Underline | — |
+| **Highlight** | Marker highlight | Yellow background |
+| **Headings** | Dropdown: H1, H2, H3, H4 | Heading levels |
+| **Lists** | Bullet / Ordered / Checkbox | 3 list types |
+| **Alignment** | Left / Center / Right / Justify | 4 alignment options |
+| **Zoom** | Document zoom | For example 100% |
+| **Custom Components** | Insert complex UI elements | Components directly in the text |
 
-### 1.4 Ключевая философия Agent Editor
+### 1.4 The core philosophy of the Agent Editor
 
-> **"Human-in-the-loop"** — AI выступает как **умный помощник**, который предлагает правки, оставляет заметки и следует инструкциям. Финальное решение **всегда за человеком** через Accept/Reject workflow.
+> **"Human-in-the-loop"** — the AI acts as a **smart assistant** that proposes edits, leaves notes and
+> follows instructions. The final decision **always rests with the human** through the Accept/Reject
+> workflow.
 
-### 1.5 Дизайн и UI-структура (Agent Specific)
+### 1.5 Design and UI structure (Agent specific)
 
-- **Layout:** Трехколоночная сетка (Sidebar левый / Canvas центр / Sidebar правый для комментов)
-- **Canvas (область редактора):**
-  - Не имеет явных границ (border: none)
-  - Фон: прозрачный
-  - Типографика: `DM Sans`
-  - Отступы: асимметричные, с местом под комментарии справа
+- **Layout:** three-column grid (left sidebar / center canvas / right sidebar for comments)
+- **Canvas (editor area):**
+  - No visible borders (border: none)
+  - Background: transparent
+  - Typography: `DM Sans`
+  - Padding: asymmetric, with room for comments on the right
 - **Floating Command Bar:**
-  - Позиционирование: `fixed` внизу по центру
-  - Скругление: `50px` (полный pill-shape)
-  - Тень: глубокая `box-shadow` (elevated)
-  - Ширина: адаптивная, ~600px
-  - Анимация: плавает с `backdrop-filter: blur`
+  - Positioning: `fixed` at the bottom center
+  - Rounding: `50px` (a full pill shape)
+  - Shadow: a deep `box-shadow` (elevated)
+  - Width: adaptive, ~600px
+  - Animation: floats with `backdrop-filter: blur`
 - **AI Sidebar:**
-  - Фиксированная ширина слева
-  - Фон: светлый серый / прозрачный
-  - Разделитель: тонкий border-right
+  - Fixed width on the left
+  - Background: light gray / transparent
+  - Divider: a thin border-right
 
 ---
 
-## 2) Notion-like Editor — Блочный редактор
+## 2) Notion-like Editor — the block editor
 
-### Скриншот
+### Screenshot
 ![Notion-like editor](./notion_editor.png)
 
-### 2.1 Компоновка интерфейса
+### 2.1 Interface layout
 
-- **Документ-канва:** Одна колонка контента, чистый белый/тёмный фон.
-- **Верхняя панель:**
-  - **Undo/Redo** (стрелки отмены/повтора)
-  - **Переключатель темы** (☀️ / 🌓 — Light / Dark mode)
-  - **Аватары коллабораторов** (real-time presence)
-- **Gutter (левая область):** При наведении на блок появляются **две кнопки**:
-  - **`+` (плюсик)** — открывает дропдаун вставки нового блока (slash-меню)
-  - **`⠿` (drag handle)** — открывает контекст-меню блока / позволяет перетаскивать
-- **Плавающие плейсхолдеры:** При пустом блоке — "Write, type '/' for commands..."
+- **Document canvas:** a single content column, clean white/dark background.
+- **Top bar:**
+  - **Undo/Redo** (arrows)
+  - **Theme toggle** (☀️ / 🌓 — Light / Dark mode)
+  - **Collaborator avatars** (real-time presence)
+- **Gutter (left area):** hovering over a block shows **two buttons**:
+  - **`+` (plus)** opens the dropdown for inserting a new block (slash menu)
+  - **`⠿` (drag handle)** opens the block context menu / lets you drag the block
+- **Floating placeholders:** an empty block shows "Write, type '/' for commands..."
 
-### 2.2 Дропдаун вставки блока (`+` плюсик и `/` slash-команды)
+### 2.2 The block insert dropdown (`+` button and `/` slash commands)
 
-Одно и то же меню можно вызвать **двумя способами**:
+The same menu can be opened **in two ways**:
 
-| Триггер | Где | Описание |
-|:--------|:----|:---------|
-| **Кнопка `+`** | Левый gutter (появляется при наведении на блок) | Клик → открывается дропдаун |
-| **Символ `/`** | В пустой строке набрать `/` | Появляется то же самое меню |
+| Trigger | Where | Description |
+|:--------|:------|:------------|
+| **`+` button** | Left gutter (appears when hovering a block) | Click → the dropdown opens |
+| **`/` character** | Type `/` on an empty line | The same menu appears |
 
-Меню содержит **4 категории** с разделителями:
+The menu has **4 categories** with dividers:
 
 #### 🤖 AI
-| Команда | Описание |
-|:--------|:---------|
-| `Continue Writing` | AI продолжает написание на основе существующего текста |
-| `Ask AI` | Промпт-интерфейс для кастомной генерации |
+| Command | Description |
+|:--------|:------------|
+| `Continue Writing` | The AI continues writing based on the existing text |
+| `Ask AI` | A prompt interface for custom generation |
 
-#### 🎨 Style (Типы блоков)
-| Команда | Описание |
-|:--------|:---------|
-| `Text` | Обычный параграф |
-| `Heading 1` | Заголовок первого уровня |
-| `Heading 2` | Заголовок второго уровня |
-| `Heading 3` | Заголовок третьего уровня |
-| `Bullet List` | Маркированный список |
-| `Numbered List` | Нумерованный список |
-| `To-do list` | Чеклист с чекбоксами (task list) |
-| `Blockquote` | Блоковая цитата |
-| `Code Block` | Блок кода с подсветкой синтаксиса |
+#### 🎨 Style (Block types)
+| Command | Description |
+|:--------|:------------|
+| `Text` | Plain paragraph |
+| `Heading 1` | First-level heading |
+| `Heading 2` | Second-level heading |
+| `Heading 3` | Third-level heading |
+| `Bullet List` | Bulleted list |
+| `Numbered List` | Numbered list |
+| `To-do list` | Checklist with checkboxes (task list) |
+| `Blockquote` | Block quote |
+| `Code Block` | Code block with syntax highlighting |
 
-#### 📎 Insert (Вставка)
-| Команда | Описание |
-|:--------|:---------|
-| `Mention` | Вставка упоминания пользователя (`@name`) |
-| `Emoji` | Вставка эмодзи через пикер |
-| `Table` | Вставка настраиваемой таблицы |
-| `Separator` | Горизонтальная линия-разделитель (`<hr>`) |
-| `Table of contents` | Автосгенерированное оглавление по заголовкам |
+#### 📎 Insert
+| Command | Description |
+|:--------|:------------|
+| `Mention` | Insert a user mention (`@name`) |
+| `Emoji` | Insert an emoji through a picker |
+| `Table` | Insert a configurable table |
+| `Separator` | Horizontal divider line (`<hr>`) |
+| `Table of contents` | Auto-generated table of contents from headings |
 
-#### 📤 Upload (Загрузка)
-| Команда | Описание |
-|:--------|:---------|
-| `Image` | Загрузка изображения (upload / drag & drop) |
+#### 📤 Upload
+| Command | Description |
+|:--------|:------------|
+| `Image` | Image upload (upload / drag & drop) |
 
 ### 2.3 Floating Selection Toolbar (Bubble Menu)
 
-Появляется **при выделении текста**. Содержит:
+Appears **when text is selected**. It contains:
 
-| Кнопка | Функция |
-|:-------|:--------|
-| **AI 'Improve'** | AI улучшает выделенный текст |
-| **Block Type** | Дропдаун текущего типа блока (Heading 1, Text и т.д.) — позволяет переключать |
-| **Bold** | Жирный |
-| **Italic** | Курсив |
-| **Underline** | Подчёркивание |
-| **Strikethrough** | Зачёркивание |
-| **Code** | Инлайн-код |
-| **Link** | Добавление/редактирование гиперссылки |
-| **Text Color** | Пикер цвета текста (иконка "A" с цветной полосой) |
-| **More Options** | Вертикальное многоточие (⋮) — дополнительные действия |
+| Button | Function |
+|:-------|:---------|
+| **AI 'Improve'** | The AI improves the selected text |
+| **Block Type** | Dropdown of the current block type (Heading 1, Text, etc.), lets you switch it |
+| **Bold** | Bold |
+| **Italic** | Italic |
+| **Underline** | Underline |
+| **Strikethrough** | Strikethrough |
+| **Code** | Inline code |
+| **Link** | Add/edit a hyperlink |
+| **Text Color** | Text color picker (an "A" icon with a colored bar) |
+| **More Options** | Vertical ellipsis (⋮) for additional actions |
 
 ### 2.4 Drag Handle & Block Context Menu
 
-**При наведении на блок** слева появляется **шеститочечная ручка** (`⠿`).
+**Hovering a block** shows a **six-dot handle** (`⠿`) on its left.
 
-**При клике на ручку** открывается **контекст-меню блока:**
+**Clicking the handle** opens the **block context menu:**
 
-| Пункт | Описание |
-|:------|:---------|
-| **Duplicate** | Клонирование всего блока |
-| **Delete** | Удаление блока |
-| **Reset Formatting** | Сброс всех стилей текста внутри блока |
-| **Copy to Clipboard** | Копирование содержимого блока |
-| **Drag & Drop** | Ручка также позволяет **перетаскивать** блоки вверх/вниз |
+| Item | Description |
+|:-----|:------------|
+| **Duplicate** | Clone the whole block |
+| **Delete** | Delete the block |
+| **Reset Formatting** | Reset all text styles inside the block |
+| **Copy to Clipboard** | Copy the block content |
+| **Drag & Drop** | The handle also lets you **drag** blocks up and down |
 
-### 2.5 Инлайн-триггеры (шорткаты прямо в тексте)
+### 2.5 Inline triggers (shortcuts right in the text)
 
-Помимо меню `+`/`/`, есть **инлайн-шорткаты**, которые работают прямо при вводе текста:
+Besides the `+`/`/` menu, there are **inline shortcuts** that work while typing:
 
-| Триггер | Функция | UX |
-|:--------|:--------|:---|
-| **`@`** | Mentions (упоминания) | Появляется дропдаун с именами тиммейтов (Cyndi Lauper, Joan Jett…) |
-| **`:`** | Emoji picker | Поиск по эмодзи (`:smile` → 😀) |
+| Trigger | Function | UX |
+|:--------|:---------|:---|
+| **`@`** | Mentions | A dropdown with teammate names appears (Cyndi Lauper, Joan Jett…) |
+| **`:`** | Emoji picker | Emoji search (`:smile` → 😀) |
 
-> **Примечание:** Mention и Emoji также доступны через дропдаун `+`/`/` (категория **Insert**), но инлайн-триггеры `@` и `:` — это быстрый шорткат.
+> **Note:** Mention and Emoji are also available through the `+`/`/` dropdown (the **Insert** category),
+> but the inline `@` and `:` triggers are the quick shortcut.
 
-### 2.6 Темы и коллаборация
+### 2.6 Themes and collaboration
 
-- **Dark Mode:** Полная поддержка, все меню и ручки адаптируются
-- **Collaboration:** Вертикальные маркеры в правой части + аватары в верхней панели = real-time editing
-- **Interactive Placeholders:** Изображения и видео показывают промпт "upload" / "embed" до загрузки контента
+- **Dark Mode:** full support, all menus and handles adapt
+- **Collaboration:** vertical markers on the right plus avatars in the top bar = real-time editing
+- **Interactive Placeholders:** images and videos show an "upload" / "embed" prompt until the content is
+  loaded
 
-### 2.7 Дизайн и UI-структура (Notion-like Specific)
+### 2.7 Design and UI structure (Notion-like specific)
 
-- **Контейнер:**
-  - Максимальная ширина текста: ~708px (стандарт для читаемости)
-  - Выравнивание: по центру экрана (`margin: 0 auto`)
-- **Визуальный стиль:**
-  - **Полный минимализм:** нет видимых границ редактора (no border)
-  - **Отступы:** большие (`padding-top: 48px `), создают "воздух"
+- **Container:**
+  - Maximum text width: ~708px (the standard for readability)
+  - Alignment: centered on the screen (`margin: 0 auto`)
+- **Visual style:**
+  - **Full minimalism:** no visible editor borders (no border)
+  - **Padding:** large (`padding-top: 48px `), creating "air"
 - **Drag Handle (`⠿`):**
-  - Появляется в `fixed` или `absolute` позиции слева от блока (-24px offset)
-  - Размер кликабельной зоны: `24px` × высока строки
-  - Цвет иконок: `rgba(0,0,0, 0.4)` → при ховере темнее
-- **Slash-меню:**
+  - Appears in a `fixed` or `absolute` position to the left of the block (-24px offset)
+  - Click target size: `24px` × the line height
+  - Icon color: `rgba(0,0,0, 0.4)`, darker on hover
+- **Slash menu:**
   - `border-radius: 20px`
   - `width: 320px`
-  - `box-shadow`: Soft elevation (`0 10px 40px rgba(...)`)
-  - Айтемы меню: `padding: 4px 8px`, `border-radius: 6px` при ховере
+  - `box-shadow`: soft elevation (`0 10px 40px rgba(...)`)
+  - Menu items: `padding: 4px 8px`, `border-radius: 6px` on hover
 
 ---
 
-## 3) Simple Editor — Готовый к продакшену шаблон
+## 3) Simple Editor — the production-ready template
 
-### Скриншот
+### Screenshot
 ![Simple editor](./simple_editor.png)
 
-### 3.1 Компоновка интерфейса
+### 3.1 Interface layout
 
-- **Канва:** Просторная белая область с предзагруженным контентом ("Getting started")
-- **Тулбар:** Чистый, центрированный, со стилизованными иконками и hover-состояниями
-- **Переключатель темы:** ☀️/🌓 (Light/Dark) справа на тулбаре
+- **Canvas:** a spacious white area with preloaded content ("Getting started")
+- **Toolbar:** clean, centered, with styled icons and hover states
+- **Theme toggle:** ☀️/🌓 (Light/Dark) on the right of the toolbar
 
-### 3.2 Тулбар — каждая кнопка
+### 3.2 Toolbar — every button
 
-Слева направо:
+Left to right:
 
-| # | Иконка | Функция | Подробности |
-|:--|:-------|:--------|:------------|
-| 1 | ↶ | **Undo** | Отмена действия |
-| 2 | ↷ | **Redo** | Повтор действия |
-| 3 | H▾ | **Heading dropdown** | 4 уровня: H1, H2, H3, H4 |
+| # | Icon | Function | Details |
+|:--|:-----|:---------|:--------|
+| 1 | ↶ | **Undo** | Undo an action |
+| 2 | ↷ | **Redo** | Redo an action |
+| 3 | H▾ | **Heading dropdown** | 4 levels: H1, H2, H3, H4 |
 | 4 | ☰▾ | **List dropdown** | Bullet list, Ordered list |
-| 5 | ❝ | **Blockquote** | Обёртка текста в цитату |
-| 6 | **B** | **Bold** | Жирный шрифт |
-| 7 | *I* | **Italic** | Курсив |
-| 8 | ~~S~~ | **Strike** | Зачёркивание |
-| 9 | `</>` | **Code** | Инлайн-код |
-| 10 | U | **Underline** | Подчёркивание |
-| 11 | 🖍 | **Highlight** | Выделение маркером |
-| 12 | 🔗 | **Link** | Вставка/редактирование ссылки (появляется промпт для URL) |
-| 13 | x² | **Superscript** | Верхний индекс |
-| 14 | x₂ | **Subscript** | Нижний индекс |
-| 15 | ≡← | **Align left** | Выравнивание по левому краю |
-| 16 | ≡ | **Align center** | По центру |
-| 17 | ≡→ | **Align right** | По правому краю |
-| 18 | ≡↔ | **Align justify** | По ширине |
-| 19 | 🖼 **+ Add** | **Image upload** | Открывает зону загрузки (drag & drop / click), лимит 3 файла × 5МБ |
-| 20 | ☀️ | **Theme toggle** | Переключение Light / Dark mode |
+| 5 | ❝ | **Blockquote** | Wrap text in a quote |
+| 6 | **B** | **Bold** | Bold type |
+| 7 | *I* | **Italic** | Italic |
+| 8 | ~~S~~ | **Strike** | Strikethrough |
+| 9 | `</>` | **Code** | Inline code |
+| 10 | U | **Underline** | Underline |
+| 11 | 🖍 | **Highlight** | Marker highlight |
+| 12 | 🔗 | **Link** | Insert/edit a link (a URL prompt appears) |
+| 13 | x² | **Superscript** | Superscript |
+| 14 | x₂ | **Subscript** | Subscript |
+| 15 | ≡← | **Align left** | Align to the left edge |
+| 16 | ≡ | **Align center** | Center |
+| 17 | ≡→ | **Align right** | Align to the right edge |
+| 18 | ≡↔ | **Align justify** | Justify |
+| 19 | 🖼 **+ Add** | **Image upload** | Opens an upload zone (drag & drop / click), limit 3 files × 5MB |
+| 20 | ☀️ | **Theme toggle** | Switch Light / Dark mode |
 
 ### 3.3 Heading Dropdown
 ![Heading dropdown](./simple_heading_dropdown.png)
 
-При клике на H▾ открываются уровни:
-- **Heading 1** — самый крупный
+Clicking H▾ opens the levels:
+- **Heading 1** — the largest
 - **Heading 2**
 - **Heading 3**
-- **Heading 4** — самый мелкий
+- **Heading 4** — the smallest
 
 ### 3.4 List Dropdown
 ![List dropdown](./simple_list_dropdown.png)
 
-- **Bullet list** — маркированный
-- **Ordered list** — нумерованный
+- **Bullet list** — bulleted
+- **Ordered list** — numbered
 
 ### 3.5 Image Upload
 ![Image upload zone](./simple_image_upload.png)
 
-При клике на "+ Add" в тулбаре:
-- Появляется **зона загрузки** внутри редактора
+Clicking "+ Add" in the toolbar:
+- An **upload zone** appears inside the editor
 - "Click to upload or drag and drop"
-- **Лимит:** 3 файла, каждый до 5 МБ
+- **Limit:** 3 files, each up to 5 MB
 
-### 3.6 Контент по умолчанию
+### 3.6 Default content
 
-Предзагруженный контент демонстрирует:
-- **Заголовок H1:** "Getting started"
-- **Параграфы** с **bold** и *italic* текстом
-- **Ссылку:** "Tiptap UI Components docs"
-- **Код-блок:** `npx @tiptap/cli init`
-- **Заголовок H2:** "Features"
-- **Blockquote** с маркдаун-шорткатами и клавиатурными сочетаниями (`**`, `⌘+B`)
+The preloaded content demonstrates:
+- **H1 heading:** "Getting started"
+- **Paragraphs** with **bold** and *italic* text
+- **A link:** "Tiptap UI Components docs"
+- **Code block:** `npx @tiptap/cli init`
+- **H2 heading:** "Features"
+- **Blockquote** with Markdown shortcuts and keyboard combinations (`**`, `⌘+B`)
 
-### 3.7 Ключевые особенности
+### 3.7 Key features
 
-- ✅ Поддержка **Markdown-шорткатов** (ввод `**` для bold, `*` для italic и т.д.)
-- ✅ **Типографские автозамены** (`->` → `→`)
-- ✅ **MIT-лицензия** с open source UI-компонентами
-- ✅ Готово к встраиванию через `npx @tiptap/cli init`
+- ✅ **Markdown shortcut** support (type `**` for bold, `*` for italic, and so on)
+- ✅ **Typographic replacements** (`->` → `→`)
+- ✅ **MIT license** with open source UI components
+- ✅ Ready to embed via `npx @tiptap/cli init`
 
-### 3.8 Дизайн и UI-структура (Simple Specific)
+### 3.8 Design and UI structure (Simple specific)
 
-В отличие от Notion-like, этот редактор оформлен как **единая карточка**:
+Unlike the Notion-like editor, this one is styled as a **single card**:
 
-- **Контейнер (Wrapper):**
-  - **Border:** `1px solid rgba(0,0,0, 0.1)` (тонкая рамка)
-  - **Border-radius:** `16px` (скругление всего редактора)
-  - **Box-shadow:** лёгкая тень или отсутствует (плоский стиль)
-- **Тулбар:**
-  - Прижат к верху (`border-bottom: 1px solid ...`)
-  - Sticky-позиционирование (в некоторых реализациях)
-- **Кнопки:**
-  - Скругление: `8px` или `12px` (мягкий квадрат)
-  - Состояние Active: фон `rgba(0,0,0, 0.05)` или цвет бренда
-- **Зона контента:**
-  - Внутренние отступы: `padding: 24px`
-  - Ограничение ширины: часто на всю ширину контейнера
+- **Container (Wrapper):**
+  - **Border:** `1px solid rgba(0,0,0, 0.1)` (a thin frame)
+  - **Border-radius:** `16px` (rounding of the whole editor)
+  - **Box-shadow:** a light shadow or none (flat style)
+- **Toolbar:**
+  - Pinned to the top (`border-bottom: 1px solid ...`)
+  - Sticky positioning (in some implementations)
+- **Buttons:**
+  - Rounding: `8px` or `12px` (a soft square)
+  - Active state: background `rgba(0,0,0, 0.05)` or the brand color
+- **Content area:**
+  - Inner padding: `padding: 24px`
+  - Width limit: often the full container width
 
 ---
 
-## 4) Headless Editor — «Голое» API без стилей
+## 4) Headless Editor — the "bare" API without styles
 
-### Скриншот
+### Screenshot
 ![Headless editor](./headless_editor.png)
 
-### 4.1 Компоновка интерфейса
+### 4.1 Interface layout
 
-- **Тулбар:** Плотный ряд **текстовых кнопок** без иконок (только слова)
-- **Канва:** Базовый белый фон с текстом, списками и кодовым блоком (тёмный фон)
-- **Активное состояние:** Подсвечено **фиолетовым** (например, H2 при наведении на заголовок уровня 2)
+- **Toolbar:** a dense row of **text buttons** without icons (words only)
+- **Canvas:** a basic white background with text, lists and a code block (dark background)
+- **Active state:** highlighted in **purple** (for example, H2 when hovering a level 2 heading)
 
-### 4.2 Все кнопки — полный список
+### 4.2 All buttons — the full list
 
-**Первый ряд:**
+**First row:**
 
-| Кнопка | Функция | Описание |
-|:-------|:--------|:---------|
-| **Bold** | toggleBold | Жирный |
-| **Italic** | toggleItalic | Курсив |
-| **Strike** | toggleStrike | Зачёркивание |
-| **Code** | toggleCode | Инлайн-код |
-| **Clear marks** | unsetAllMarks | Удаление **всех** инлайн-стилей (bold, italic, code…) с выделения |
-| **Clear nodes** | clearNodes | Сброс блока в стандартный параграф (heading → paragraph, list → paragraph) |
-| **Paragraph** | setParagraph | Установка блока как обычный текст |
-| **H1** | toggleHeading level:1 | Заголовок 1 |
-| **H2** | toggleHeading level:2 | Заголовок 2 |
-| **H3** | toggleHeading level:3 | Заголовок 3 |
-| **H4** | toggleHeading level:4 | Заголовок 4 |
-| **H5** | toggleHeading level:5 | Заголовок 5 |
-| **H6** | toggleHeading level:6 | Заголовок 6 |
-| **Bullet list** | toggleBulletList | Маркированный список |
-| **Ordered list** | toggleOrderedList | Нумерованный список |
-| **Code block** | toggleCodeBlock | Блок кода (многострочный, с тёмным фоном) |
+| Button | Function | Description |
+|:-------|:---------|:------------|
+| **Bold** | toggleBold | Bold |
+| **Italic** | toggleItalic | Italic |
+| **Strike** | toggleStrike | Strikethrough |
+| **Code** | toggleCode | Inline code |
+| **Clear marks** | unsetAllMarks | Removes **all** inline styles (bold, italic, code…) from the selection |
+| **Clear nodes** | clearNodes | Resets the block to a standard paragraph (heading → paragraph, list → paragraph) |
+| **Paragraph** | setParagraph | Sets the block as plain text |
+| **H1** | toggleHeading level:1 | Heading 1 |
+| **H2** | toggleHeading level:2 | Heading 2 |
+| **H3** | toggleHeading level:3 | Heading 3 |
+| **H4** | toggleHeading level:4 | Heading 4 |
+| **H5** | toggleHeading level:5 | Heading 5 |
+| **H6** | toggleHeading level:6 | Heading 6 |
+| **Bullet list** | toggleBulletList | Bulleted list |
+| **Ordered list** | toggleOrderedList | Numbered list |
+| **Code block** | toggleCodeBlock | Code block (multi-line, dark background) |
 
-**Второй ряд:**
+**Second row:**
 
-| Кнопка | Функция | Описание |
-|:-------|:--------|:---------|
-| **Blockquote** | toggleBlockquote | Блок-цитата |
-| **Horizontal rule** | setHorizontalRule | Горизонтальная линия `<hr>` |
-| **Hard break** | setHardBreak | Принудительный перенос строки `<br>` |
-| **Undo** | undo | Отмена (может быть disabled) |
-| **Redo** | redo | Повтор (может быть disabled) |
+| Button | Function | Description |
+|:-------|:---------|:------------|
+| **Blockquote** | toggleBlockquote | Block quote |
+| **Horizontal rule** | setHorizontalRule | Horizontal line `<hr>` |
+| **Hard break** | setHardBreak | Forced line break `<br>` |
+| **Undo** | undo | Undo (may be disabled) |
+| **Redo** | redo | Redo (may be disabled) |
 
-### 4.3 Тестирование функций
+### 4.3 Testing the functions
 
-#### Clear marks — удаление инлайн-стилей
+#### Clear marks — removing inline styles
 ![Clear marks test](./headless_cleared_marks.png)
-- Выделяем текст с bold/italic → нажимаем "Clear marks" → все стили сбрасываются, остаётся plain text.
-- Также при тесте был добавлен Horizontal rule — появляется линия-разделитель.
+- Select text with bold/italic → press "Clear marks" → all styles are reset, leaving plain text.
+- A Horizontal rule was also added during the test — a divider line appears.
 
-#### Clear nodes — сброс типа блока
+#### Clear nodes — resetting the block type
 ![Clear nodes + Code block](./headless_codeblock.png)
-- H1 заголовок → "Clear nodes" → становится обычным параграфом
-- Затем "Code block" → параграф трансформируется в блок кода
+- H1 heading → "Clear nodes" → becomes a regular paragraph
+- Then "Code block" → the paragraph is transformed into a code block
 
-#### H1 — смена уровня заголовка
+#### H1 — changing the heading level
 ![H1 applied](./headless_h1_applied.png)
-- H2 ("Hi there,") → клик на "H1" → текст увеличивается, меняется семантика
+- H2 ("Hi there,") → click "H1" → the text gets larger, the semantics change
 
-### 4.4 Контент по умолчанию
+### 4.4 Default content
 
 ```
 Hi there,  (H2)
@@ -448,35 +457,36 @@ I know, I know, this is impressive. It's only the tip of the iceberg though.
 > — Mom
 ```
 
-### 4.5 Ключевые отличия Headless от остальных
+### 4.5 Key differences of Headless from the others
 
-| Характеристика | Headless | Simple | Notion-like | Agent |
+| Characteristic | Headless | Simple | Notion-like | Agent |
 |:---------------|:---------|:-------|:------------|:------|
-| UI-стиль | Текстовые кнопки | Иконки | Контекстные меню | AI-панели |
-| Заголовки | **H1–H6** (индивидуально) | H1–H4 (дропдаун) | H1–H3 (slash + bubble) | H1–H4 (дропдаун) |
-| Медиа | ❌ Нет | ✅ Upload зона | ✅ Slash-команда | ❌ Нет (фокус на AI) |
-| Темы | ❌ Только light | ✅ Light/Dark | ✅ Light/Dark | ✅ Light/Dark |
-| AI | ❌ Нет | ✅ Continue/Ask AI | ✅ Improve в bubble | ✅ Полный AI Toolkit |
-| Утилиты | Clear marks, Clear nodes, Hard break | — | — | — |
-| **Назначение** | Демо для разработчиков | Готовый продукт | Клон Notion | AI-агент |
+| UI style | Text buttons | Icons | Context menus | AI panels |
+| Headings | **H1–H6** (individually) | H1–H4 (dropdown) | H1–H3 (slash + bubble) | H1–H4 (dropdown) |
+| Media | ❌ No | ✅ Upload zone | ✅ Slash command | ❌ No (AI focus) |
+| Themes | ❌ Light only | ✅ Light/Dark | ✅ Light/Dark | ✅ Light/Dark |
+| AI | ❌ No | ✅ Continue/Ask AI | ✅ Improve in bubble | ✅ Full AI Toolkit |
+| Utilities | Clear marks, Clear nodes, Hard break | — | — | — |
+| **Purpose** | Demo for developers | Ready-made product | Notion clone | AI agent |
 
 ---
 
-## 5) Дизайн-система и CSS-токены (Design Tokens)
+## 5) Design system and CSS tokens (Design Tokens)
 
-> Все значения получены программно через `getComputedStyle()` и парсинг CSS-переменных на `tiptap.dev` и `template.tiptap.dev`.
+> All values were obtained programmatically via `getComputedStyle()` and by parsing CSS variables on
+> `tiptap.dev` and `template.tiptap.dev`.
 
-### 5.1 CSS Custom Properties (`--tiptap-*` и `--tt-*`)
+### 5.1 CSS Custom Properties (`--tiptap-*` and `--tt-*`)
 
-#### Брендовый цвет
+#### Brand color
 
 ```css
---tt-brand-color-500: rgba(98, 41, 255, 1)   /* #6229FF — фиолетовый, основной акцент */
+--tt-brand-color-500: rgba(98, 41, 255, 1)   /* #6229FF — violet, the main accent */
 ```
 
-Используется для: активное состояние кнопок, фокус-бордеры инпутов, image handles, upload-зона.
+Used for: the active state of buttons, focus borders of inputs, image handles, the upload zone.
 
-#### Border-radius (система скруглений)
+#### Border-radius (the rounding system)
 
 ```css
 --tt-radius-sm:  0.375rem   /*  6px */
@@ -485,14 +495,14 @@ I know, I know, this is impressive. It's only the tip of the iceberg though.
 --tt-radius-xl:  1rem       /* 16px */
 ```
 
-| Элемент | border-radius | Токен |
+| Element | border-radius | Token |
 |:--------|:-------------|:------|
-| **Кнопки тулбара** | `12px` | `--tt-radius-lg` |
-| **Карточки/дропдауны** (slash-меню, поповеры) | `20px` | Кастомный (больше `--tt-radius-xl`) |
-| **Headless-кнопки** | `8px` | `--tt-radius-md` |
-| **Чекбоксы, мелкие элементы** | `6px` | `--tt-radius-sm` |
+| **Toolbar buttons** | `12px` | `--tt-radius-lg` |
+| **Cards/dropdowns** (slash menu, popovers) | `20px` | Custom (larger than `--tt-radius-xl`) |
+| **Headless buttons** | `8px` | `--tt-radius-md` |
+| **Checkboxes, small elements** | `6px` | `--tt-radius-sm` |
 
-#### Тени (box-shadow)
+#### Shadows (box-shadow)
 
 ```css
 --tt-shadow-elevated-md:
@@ -502,18 +512,18 @@ I know, I know, this is impressive. It's only the tip of the iceberg though.
   0px  2px  3px 0px rgba(17, 24, 39, 0.02);
 ```
 
-- **4-слойная мягкая тень** — создаёт эффект "парящего" элемента без резких контуров
-- Используется для: slash-меню, bubble menu, все поповеры и дропдауны
-- Серый оттенок `rgba(17,24,39)` — почти чёрный, но очень прозрачный (2–4%)
+- **4-layer soft shadow** creates a "floating" effect without sharp outlines
+- Used for: the slash menu, the bubble menu, all popovers and dropdowns
+- The gray tint `rgba(17,24,39)` is almost black but very transparent (2–4%)
 
-#### Тулбар
+#### Toolbar
 
 ```css
---tt-toolbar-bg-color: rgba(255, 255, 255, 1)   /* Белый фон */
+--tt-toolbar-bg-color: rgba(255, 255, 255, 1)   /* White background */
 --tt-toolbar-height: 2.75rem                      /* 44px */
 ```
 
-#### AI-компоненты
+#### AI components
 
 ```css
 --tiptap-ai-loading-background-color:    rgba(37, 39, 45, 0.1)
@@ -525,7 +535,7 @@ I know, I know, this is impressive. It's only the tip of the iceberg though.
 --tiptap-ai-prompt-input-content-placeholder:  rgba(40, 44, 51, 0.42)
 ```
 
-#### Аватары и коллаборация
+#### Avatars and collaboration
 
 ```css
 --tiptap-avatar-border-color:      rgba(255, 255, 255, 1)
@@ -533,65 +543,65 @@ I know, I know, this is impressive. It's only the tip of the iceberg though.
 --tiptap-avatar-fallback-text-color: rgba(36, 39, 46, 0.78)
 ```
 
-#### Карточки (slash-меню, поповеры)
+#### Cards (slash menu, popovers)
 
 ```css
 --tiptap-card-bg-color:     rgba(255, 255, 255, 1)
---tiptap-card-border-color: rgba(15, 22, 36, 0.05)   /* Почти невидимый бордер */
+--tiptap-card-border-color: rgba(15, 22, 36, 0.05)   /* An almost invisible border */
 ```
 
 #### Image upload
 
 ```css
---tiptap-image-handle-bg:    rgba(84, 0, 229, 1)   /* Тёмно-фиолетовый */
+--tiptap-image-handle-bg:    rgba(84, 0, 229, 1)   /* Dark violet */
 --tiptap-image-upload-active: rgba(98, 41, 255, 1)
 --tiptap-image-upload-border: rgba(47, 50, 55, 0.2)
 ```
 
-### 5.2 Типографика
+### 5.2 Typography
 
-| Контекст | Шрифт | Размер | Line-height | Вес |
-|:---------|:------|:-------|:------------|:----|
-| **Контент редактора** (Simple, Notion-like) | `"DM Sans", sans-serif` | `16px` | `24px` (1.5) | `400` (normal) |
-| **Headless редактор** | `Inter, ui-sans-serif, system-ui, …` | `16px` | `24px` | `400` |
-| **Кнопки UI** | `Inter, ui-sans-serif, system-ui, …` | `14px` | `20px` | `500` (medium) |
-| **Заголовок H1** | `"DM Sans"` | `30px` | `36px` | `700` (bold) |
-| **Текст лейблов в меню** | `Inter` | `14px` | `20px` | `400` |
-| **Лейблы категорий** (AI, Style, Insert) | `Inter` | `12px` | `16px` | `600` (semibold) |
+| Context | Font | Size | Line-height | Weight |
+|:--------|:-----|:-----|:------------|:-------|
+| **Editor content** (Simple, Notion-like) | `"DM Sans", sans-serif` | `16px` | `24px` (1.5) | `400` (normal) |
+| **Headless editor** | `Inter, ui-sans-serif, system-ui, …` | `16px` | `24px` | `400` |
+| **UI buttons** | `Inter, ui-sans-serif, system-ui, …` | `14px` | `20px` | `500` (medium) |
+| **H1 heading** | `"DM Sans"` | `30px` | `36px` | `700` (bold) |
+| **Menu label text** | `Inter` | `14px` | `20px` | `400` |
+| **Category labels** (AI, Style, Insert) | `Inter` | `12px` | `16px` | `600` (semibold) |
 
-> **DM Sans** — Google Font, геометрический sans-serif. Используется для **контента** (то, что пишет пользователь).  
-> **Inter** — Google Font, нео-гротескный sans-serif. Используется для **UI** (кнопки, меню, лейблы).
+> **DM Sans** is a Google Font, a geometric sans-serif. Used for **content** (what the user writes).  
+> **Inter** is a Google Font, a neo-grotesque sans-serif. Used for the **UI** (buttons, menus, labels).
 
-### 5.3 Цветовая палитра
+### 5.3 Color palette
 
-#### Основные цвета интерфейса
+#### Main interface colors
 
-| Назначение | Light Mode | Dark Mode (приблиз.) |
-|:-----------|:-----------|:---------------------|
-| **Фон страницы** | `#FFFFFF` (`rgb(255,255,255)`) | `#1A1A1E` |
-| **Текст основной** | `#222325` (`rgb(34,35,37)`) | `#E8E8E8` |
-| **Текст приглушённый** | `rgba(40,44,51, 0.42)` | `rgba(200,200,210, 0.5)` |
-| **Акцент (brand)** | `#6229FF` (`rgba(98,41,255,1)`) | `#6229FF` |
-| **Фон карточек** | `#FFFFFF` | `#2A2A2E` |
-| **Бордер карточек** | `rgba(15,22,36, 0.05)` | `rgba(255,255,255, 0.08)` |
-| **Hover кнопок** | `rgba(61,37,20, 0.08)` | `rgba(255,255,255, 0.1)` |
-| **Иконки** | `rgba(40,44,51, 0.42)` | `rgba(200,200,210, 0.6)` |
+| Purpose | Light Mode | Dark Mode (approx.) |
+|:--------|:-----------|:--------------------|
+| **Page background** | `#FFFFFF` (`rgb(255,255,255)`) | `#1A1A1E` |
+| **Primary text** | `#222325` (`rgb(34,35,37)`) | `#E8E8E8` |
+| **Muted text** | `rgba(40,44,51, 0.42)` | `rgba(200,200,210, 0.5)` |
+| **Accent (brand)** | `#6229FF` (`rgba(98,41,255,1)`) | `#6229FF` |
+| **Card background** | `#FFFFFF` | `#2A2A2E` |
+| **Card border** | `rgba(15,22,36, 0.05)` | `rgba(255,255,255, 0.08)` |
+| **Button hover** | `rgba(61,37,20, 0.08)` | `rgba(255,255,255, 0.1)` |
+| **Icons** | `rgba(40,44,51, 0.42)` | `rgba(200,200,210, 0.6)` |
 
-#### Палитра выделений (Highlight Colors)
+#### Highlight Colors palette
 
-| Цвет | Background | Text Color |
-|:-----|:-----------|:-----------|
+| Color | Background | Text Color |
+|:------|:-----------|:-----------|
 | 🔵 **Blue** | `#E0F2FE` | `hsl(202, 54%, 43%)` |
 | 🟢 **Green** | `#DCFCE7` | `hsl(148, 32%, 39%)` |
 | 🟡 **Yellow** | `#FEF9C3` | `hsl(38, 62%, 49%)` |
 | 🔴 **Red** | `#FFE4E6` | `hsl(2, 62%, 55%)` |
 | 🟣 **Purple** | `#F3E8FF` | `hsl(274, 32%, 54%)` |
 
-### 5.4 Computed Styles — по компонентам
+### 5.4 Computed Styles — by component
 
-#### Редактор (`.tiptap` / `.ProseMirror`)
+#### Editor (`.tiptap` / `.ProseMirror`)
 
-| Свойство | Notion-like | Simple | Headless |
+| Property | Notion-like | Simple | Headless |
 |:---------|:------------|:-------|:---------|
 | `font-family` | `"DM Sans", sans-serif` | `"DM Sans", sans-serif` | `Inter, ui-sans-serif, system-ui` |
 | `font-size` | `16px` | `16px` | `16px` |
@@ -601,107 +611,108 @@ I know, I know, this is impressive. It's only the tip of the iceberg though.
 | `padding` | `48px` | `16px 0px 0px` | `0px 0px 32px` |
 | `border-radius` | `0px` | `0px` | `0px` |
 
-#### Кнопки тулбара (`.tiptap-button`)
+#### Toolbar buttons (`.tiptap-button`)
 
-| Свойство | Notion-like / Simple | Headless |
+| Property | Notion-like / Simple | Headless |
 |:---------|:---------------------|:---------|
 | `border-radius` | **`12px`** | **`8px`** |
 | `padding` | `4px 8px` | `4px 8px` |
 | `height` | `32px` | `auto` |
-| `width` | `32px` (квадрат) | `auto` |
+| `width` | `32px` (square) | `auto` |
 | `font-size` | `14px` | `12px` |
 | `color` | `rgba(40,44,51, 0.42)` | `rgb(46, 43, 41)` |
 | `background` | `transparent` → hover: `rgba(61,37,20, 0.08)` | `rgba(61,37,20, 0.08)` |
 | `border` | `none` | `1px solid transparent` |
 
-#### Карточка / Дропдаун (`.tiptap-card`)
+#### Card / Dropdown (`.tiptap-card`)
 
-| Свойство | Значение |
-|:---------|:---------|
+| Property | Value |
+|:---------|:------|
 | `border-radius` | **`20px`** |
 | `background-color` | `rgb(255, 255, 255)` |
 | `border` | `1px solid rgba(15, 22, 36, 0.05)` |
-| `box-shadow` | `--tt-shadow-elevated-md` (4-слойная мягкая тень) |
-| `padding` | `0px` (padding внутри `.tiptap-card-body`) |
+| `box-shadow` | `--tt-shadow-elevated-md` (4-layer soft shadow) |
+| `padding` | `0px` (padding is inside `.tiptap-card-body`) |
 
-#### Лейбл категории (`.tiptap-card-group-label`)
+#### Category label (`.tiptap-card-group-label`)
 
-| Свойство | Значение |
-|:---------|:---------|
+| Property | Value |
+|:---------|:------|
 | `font-size` | `12px` |
 | `line-height` | `16px` |
 | `font-weight` | `600` (semibold) |
 | `color` | `rgba(30, 32, 36, 0.95)` |
 | `padding` | `8px 12px` |
 
-#### Разделитель (`.tiptap-separator`)
+#### Separator (`.tiptap-separator`)
 
-| Свойство | Значение |
-|:---------|:---------|
+| Property | Value |
+|:---------|:------|
 | `height` | `1px` |
 | `background-color` | `rgba(15, 22, 36, 0.05)` |
 | `margin` | `4px 0px` |
 
-#### Иконки кнопок (`.tiptap-button-icon`)
+#### Button icons (`.tiptap-button-icon`)
 
-| Свойство | Значение |
-|:---------|:---------|
+| Property | Value |
+|:---------|:------|
 | `width × height` | `16px × 16px` |
-| `color` | `currentColor` (наследуется от `.tiptap-button`) |
+| `color` | `currentColor` (inherited from `.tiptap-button`) |
 
-### 5.5 Ключевые дизайн-принципы
+### 5.5 Key design principles
 
-| Принцип | Реализация |
-|:--------|:-----------|
-| **Минимальные бордеры** | Бордеры почти невидимы (`0.05` opacity), визуальное разделение через тени |
-| **Глубина через тени** | 4-слойная `box-shadow` вместо жёстких рамок → эффект "парения" |
-| **Скруглённость** | Агрессивные радиусы: кнопки `12px`, карточки `20px` |
-| **Нейтральная палитра** | Чёрно-белая база, единственный акцент — фиолетовый `#6229FF` |
-| **Прозрачные hover** | Кнопки без фона, при ховере — лёгкая заливка `8%` opacity |
-| **Два шрифта** | `DM Sans` для контента, `Inter` для UI — чёткое разделение |
-| **Micro-animations** | CSS transitions на `background-color`, `color`, `box-shadow` (150–200ms) |
-
----
-
-## 6) Collaboration (реал-тайм совместное редактирование)
-
-Tiptap Collaboration продаётся как:
-
-- **Live carets/cursors** — видно, кто где печатает
-- **Offline editing** и синхронизация изменений
-- **"Real-time collaboration anywhere"** — доступно как Platform и On-premises
-
-### UX-реализация
-
-| Элемент | Описание |
-|:--------|:---------|
-| **Курсоры** | Цветные каретки других пользователей в документе |
-| **Presence** | Аватары в верхней панели (кто сейчас в документе) |
-| **Merge** | Автоматическое слияние на уровне транзакций/операций (нет конфликтов) |
-| **Offline sync** | Работа при оффлайне с последующей синхронизацией |
-
-В Notion-like template коллаборация уже **встроена и видна**: аватары в хедере + вертикальные маркеры справа.
+| Principle | Implementation |
+|:----------|:---------------|
+| **Minimal borders** | Borders are almost invisible (`0.05` opacity), visual separation comes from shadows |
+| **Depth through shadows** | A 4-layer `box-shadow` instead of hard frames → a "floating" effect |
+| **Roundness** | Aggressive radii: buttons `12px`, cards `20px` |
+| **Neutral palette** | A black-and-white base, the only accent is violet `#6229FF` |
+| **Transparent hovers** | Buttons have no background, a light `8%` opacity fill on hover |
+| **Two fonts** | `DM Sans` for content, `Inter` for UI — a clear separation |
+| **Micro-animations** | CSS transitions on `background-color`, `color`, `box-shadow` (150–200ms) |
 
 ---
 
-## 7) Comments (треды, инлайн-обсуждения, suggestions)
+## 6) Collaboration (real-time collaborative editing)
+
+Tiptap Collaboration is marketed as:
+
+- **Live carets/cursors** — you can see who is typing where
+- **Offline editing** and syncing of changes
+- **"Real-time collaboration anywhere"** — available as Platform and On-premises
+
+### UX implementation
+
+| Element | Description |
+|:--------|:------------|
+| **Cursors** | Colored carets of other users in the document |
+| **Presence** | Avatars in the top bar (who is in the document right now) |
+| **Merge** | Automatic merging at the level of transactions/operations (no conflicts) |
+| **Offline sync** | Working offline with syncing afterwards |
+
+In the Notion-like template, collaboration is already **built in and visible**: avatars in the header plus
+vertical markers on the right.
+
+---
+
+## 7) Comments (threads, inline discussions, suggestions)
 
 Tiptap Comments (Beta):
 
-- **Threaded conversations** — полноценные треды с ответами
-- **Inline suggestions** — предложения прямо в тексте
-- **Comments REST API** — модерация/управление тредами на бэкенде
+- **Threaded conversations** — full threads with replies
+- **Inline suggestions** — suggestions right in the text
+- **Comments REST API** — moderating/managing threads on the backend
 
-### UX-паттерн (проверено в Agent editor)
+### UX pattern (checked in the Agent editor)
 
-| Шаг | Описание |
-|:----|:---------|
-| 1 | Выделяешь фрагмент → **"Add comment"** |
-| 2 | Появляется маркер/подсветка в тексте |
-| 3 | Справа — **comment bubble** |
-| 4 | При клике — **тред** (reply / resolve) |
-| 5 | Навигация между комментариями (prev/next) |
-| 6 | Привязка к диапазонам текста |
+| Step | Description |
+|:-----|:------------|
+| 1 | Select a fragment → **"Add comment"** |
+| 2 | A marker/highlight appears in the text |
+| 3 | A **comment bubble** appears on the right |
+| 4 | On click, a **thread** opens (reply / resolve) |
+| 5 | Navigation between comments (prev/next) |
+| 6 | Anchoring to text ranges |
 
 ---
 
@@ -709,96 +720,97 @@ Tiptap Comments (Beta):
 
 ### 8.1 Track Changes / Redlining
 
-В официальном roadmap заявлено **"Redlining (Tracked Changes)"** — классический режим вставки/удаления "как предложения" (как в Word/Docs).
+The official roadmap announces **"Redlining (Tracked Changes)"**, the classic mode of inserting/deleting
+"as suggestions" (as in Word/Docs).
 
 ### 8.2 AI Toolkit → Suggestions as Diffs
 
-**Уже работает** в Agent editor (проверено):
+**Already works** in the Agent editor (checked):
 
-- AI-powered suggestions как **actionable diffs**
-- **Accept / Reject** changes мгновенно
-- Streaming результатов в редактор
-- Зелёные хайлайты (additions) + серые зачёркивания (deletions)
-- Suggestion toolbar: счётчик, навигация, Accept all / Reject all
+- AI-powered suggestions as **actionable diffs**
+- **Accept / Reject** changes instantly
+- Streaming of results into the editor
+- Green highlights (additions) + gray strikethroughs (deletions)
+- Suggestion toolbar: counter, navigation, Accept all / Reject all
 
 ### 8.3 Version History / Snapshots
 
-В платных фичах:
+In the paid features:
 
-- **Снимки** документа (snapshots/versions)
-- Список версий с метаданными (кто/когда)
-- **Compare/diff** между версиями
+- Document **snapshots** (snapshots/versions)
+- A version list with metadata (who/when)
+- **Compare/diff** between versions
 
 ---
 
-## 9) AI Features — 2 уровня
+## 9) AI Features — 2 levels
 
-### 9.1 Content AI (one-shot команды)
+### 9.1 Content AI (one-shot commands)
 
-| Функция | Описание | Где доступно |
-|:--------|:---------|:-------------|
-| **Fix grammar** | Исправление грамматики | Agent, Notion-like |
-| **Change tone** | Изменение тона текста | Agent |
-| **Translate** | Перевод | Agent |
-| **Summarize** | Суммаризация | Agent |
-| **Continue Writing** | AI продолжает текст | Notion-like |
-| **Ask AI** | Свободный промпт | Notion-like |
-| **Improve** | Улучшение выделения | Notion-like (bubble menu) |
-| **Copilot-style autocomplete** | Автодополнение со streaming | Agent |
+| Function | Description | Where available |
+|:---------|:------------|:----------------|
+| **Fix grammar** | Grammar correction | Agent, Notion-like |
+| **Change tone** | Change the tone of the text | Agent |
+| **Translate** | Translation | Agent |
+| **Summarize** | Summarization | Agent |
+| **Continue Writing** | The AI continues the text | Notion-like |
+| **Ask AI** | Free-form prompt | Notion-like |
+| **Improve** | Improve the selection | Notion-like (bubble menu) |
+| **Copilot-style autocomplete** | Autocomplete with streaming | Agent |
 
-### 9.2 AI Toolkit (агентное редактирование, Cursor-like)
+### 9.2 AI Toolkit (agentic editing, Cursor-like)
 
-Инфраструктура для AI, которая:
-- **Понимает схему** документа
-- Делает **точечные правки** (не заменяет всё)
-- Выдаёт **diff-предложения** (зелёный/серый)
-- Позволяет **accept/reject** каждую правку
-- Поддерживает **streaming** генерации
+Infrastructure for AI that:
+- **Understands the schema** of the document
+- Makes **targeted edits** (does not replace everything)
+- Produces **diff suggestions** (green/gray)
+- Lets you **accept/reject** each edit
+- Supports **streaming** generation
 
-### 9.3 UI-упаковка AI
+### 9.3 AI UI packaging
 
-| Компонент | Описание |
-|:----------|:---------|
-| **AI Menu** | Контекстное плавающее AI-меню |
-| **AI Ask Button** | Кнопка для вызова AI по выделению |
-| **AI Command Bar** | Свободный текстовый ввод для команд AI |
-| **AI Status** | Индикатор "Using AI toolkit" в футере |
+| Component | Description |
+|:----------|:------------|
+| **AI Menu** | A contextual floating AI menu |
+| **AI Ask Button** | A button to invoke the AI on a selection |
+| **AI Command Bar** | Free-form text input for AI commands |
+| **AI Status** | The "Using AI toolkit" indicator in the footer |
 
 ---
 
 ## 10) Custom Extensions
 
-Ключевая сила Tiptap — возможность "дописать Notion" под свой продукт:
+Tiptap's key strength is the ability to "finish Notion" for your own product:
 
-- **Свои node types:** Callout, Steps, Card, Embed, Smart-Block, Jira-Issue, Confluence-Excerpt…
-- **Свои marks:** "semantic highlight" с типами
-- **Свои команды/хоткеи/input rules**
-- **Свои NodeViews:** Сложные React-рендеры узлов
-- **Command-chain подход:** Цепочки команд как нормальный паттерн
+- **Custom node types:** Callout, Steps, Card, Embed, Smart-Block, Jira-Issue, Confluence-Excerpt…
+- **Custom marks:** a "semantic highlight" with types
+- **Custom commands/hotkeys/input rules**
+- **Custom NodeViews:** complex React renders of nodes
+- **Command-chain approach:** command chains as a normal pattern
 
 ---
 
 ## 11) i18n & RTL
 
 ### RTL / BiDi
-- Встроенная поддержка: `textDirection: 'ltr' | 'rtl' | 'auto'`
-- Команды: `setTextDirection(...)` / `unsetTextDirection()`
-- Отдельный пример "Text direction & RTL support"
+- Built-in support: `textDirection: 'ltr' | 'rtl' | 'auto'`
+- Commands: `setTextDirection(...)` / `unsetTextDirection()`
+- A separate example, "Text direction & RTL support"
 
 ### i18n
-- Tiptap headless → перевод интерфейса = перевод ваших UI-лейблов
-- UI-компоненты принимают text-пропсы (например, `text="Insert Block"`)
-- i18n делается на уровне **вашего UI-слоя**, не "внутри движка"
+- Tiptap headless → translating the interface = translating your own UI labels
+- UI components accept text props (for example, `text="Insert Block"`)
+- i18n is done at the level of **your UI layer**, not "inside the engine"
 
 ---
 
-## 12) Сравнительная таблица всех 4 редакторов
+## 12) Comparison table of all 4 editors
 
-| Функция | Agent | Notion-like | Simple | Headless |
+| Feature | Agent | Notion-like | Simple | Headless |
 |:--------|:-----:|:-----------:|:------:|:--------:|
 | **Bold/Italic/Strike** | ✅ | ✅ | ✅ | ✅ |
 | **Underline** | ✅ | ✅ | ✅ | ❌ |
-| **Highlight** | ✅ | ✅ (цвет) | ✅ | ❌ |
+| **Highlight** | ✅ | ✅ (color) | ✅ | ❌ |
 | **Inline Code** | ❓ | ✅ | ✅ | ✅ |
 | **Link** | ❓ | ✅ | ✅ | ❌ |
 | **Superscript/Subscript** | ❌ | ❌ | ✅ | ❌ |
@@ -808,7 +820,7 @@ Tiptap Comments (Beta):
 | **Ordered List** | ✅ | ✅ | ✅ | ✅ |
 | **Task List (To-do)** | ✅ | ✅ (slash/+) | ❌ | ❌ |
 | **Blockquote** | ❓ | ✅ | ✅ | ✅ |
-| **Code Block** | ❓ | ✅ | ✅ (в демо) | ✅ |
+| **Code Block** | ❓ | ✅ | ✅ (in the demo) | ✅ |
 | **Table** | ❓ | ✅ | ❌ | ❌ |
 | **Image** | ❌ | ✅ | ✅ (upload) | ❌ |
 | **Video** | ❌ | ✅ | ❌ | ❌ |
@@ -833,114 +845,125 @@ Tiptap Comments (Beta):
 | **Hard break** | ❌ | ❌ | ❌ | ✅ |
 | **Image Upload Zone** | ❌ | ❌ | ✅ | ❌ |
 
-> ❓ = Функция теоретически доступна через extensions, но не была явно замечена в демо.
+> ❓ = The feature is theoretically available through extensions but was not explicitly seen in the demo.
 
 ---
 
-## 13) Advanced Capabilities (на основе Tiptap Examples)
+## 13) Advanced Capabilities (based on the Tiptap Examples)
 
-Анализ страницы `tiptap.dev/examples` раскрывает дополнительные возможности, выходящие за рамки стандартных редакторов:
+Analysis of the `tiptap.dev/examples` page reveals additional capabilities beyond standard editors:
 
 ### 13.1 Performance & Long Texts
-- Tiptap оптимизирован для работы с **огромными документами** (тысячи узлов).
-- Использует виртуализацию и умный рендеринг ProseMirror, чтобы не лагать при скролле и вводе в длинных лонгридах.
+- Tiptap is optimized for working with **huge documents** (thousands of nodes).
+- It uses virtualization and ProseMirror's smart rendering so that scrolling and typing in long reads do
+  not lag.
 
-### 13.2 Interactive NodeViews (React/Vue внутри текста)
-- Вы можете встраивать **полноценные React/Vue компоненты** прямо в тело редактора.
-- Примеры:
-  - **Drawing:** Рисовалка (canvas) как часть документа.
-  - **Interactive Kanban/Tasks:** Доски с перетаскиванием внутри текста.
-  - **Charts/Graphs:** Живые графики, которые можно редактировать.
-- Это не просто "статичные картинки", а **интерактивные приложения** внутри текста, которые сохраняют своё состояние в JSON документа.
+### 13.2 Interactive NodeViews (React/Vue inside the text)
+- You can embed **full React/Vue components** right into the editor body.
+- Examples:
+  - **Drawing:** a drawing tool (canvas) as part of the document.
+  - **Interactive Kanban/Tasks:** boards with drag & drop inside the text.
+  - **Charts/Graphs:** live charts that can be edited.
+- These are not just "static pictures" but **interactive applications** inside the text that keep their
+  state in the document JSON.
 
 ### 13.3 Content Structure & Validations
-- **Forced Layout:** Можно задать жесткую структуру документа на уровне схемы.
-  - *Пример:* "Документ обязан начинаться с Заголовка 1, за которым следует Параграф. Удалить Заголовок 1 нельзя".
-- **Linting (Experiment):** Расширение для проверки ошибок (опечатки, стиль, правила) в реальном времени с визуальной подсветкой.
+- **Forced Layout:** you can set a rigid document structure at the schema level.
+  - *Example:* "The document must start with a Heading 1 followed by a Paragraph. Heading 1 cannot be
+    deleted".
+- **Linting (Experiment):** an extension for checking errors (typos, style, rules) in real time with visual
+  highlighting.
 
-### 13.4 Экспериментальные возможности
-- **Collaborative Fields:** Одно Y.js соединение может синхронизировать не только текст редактора, но и **соседние поля** (например, "Title", "Status", "Tags" документа) — всё в реал-тайме.
-- **iFrames:** Безопасное встраивание внешнего контента с UI для настройки размеров и URL.
-- **Generic Figure:** Обертки для медиа-контента с подписями (captions).
+### 13.4 Experimental capabilities
+- **Collaborative Fields:** one Y.js connection can sync not only the editor text but also the **neighboring
+  fields** (for example, the document's "Title", "Status", "Tags"), all in real time.
+- **iFrames:** safe embedding of external content with a UI for setting sizes and URLs.
+- **Generic Figure:** wrappers for media content with captions.
 
 ---
 
-## 14) Общая концепция и философия (General Concept)
+## 14) General Concept and philosophy
 
-На основе анализа всех редакторов и примеров, **Tiptap — это не просто "editor"**, это **конструктор**:
+Based on the analysis of all the editors and examples, **Tiptap is not just an "editor"**, it is a
+**construction kit**:
 
 1.  **Everything is an Extension:**
-    - Нет "ядра с кнопками". Даже `Paragraph`, `Text` и `Bold` — это расширения.
-    - Вы подключаете только то, что нужно. Хотите только Plain Text? Отключите всё, кроме `Text`. Хотите сверхмощный Notion? Подключите 50 расширений.
+    - There is no "core with buttons". Even `Paragraph`, `Text` and `Bold` are extensions.
+    - You plug in only what you need. Want only Plain Text? Disable everything except `Text`. Want a
+      super-powerful Notion? Plug in 50 extensions.
 
 2.  **Headless & Framework Agnostic:**
-    - Tiptap **не даёт UI**. Кнопки, меню, сайдбары — вы верстаете сами на React/Vue/Svelte.
-    - Это даёт **полный контроль над дизайном** (см. разницу между Agent и Simple редакторами — один движок, абсолютно разный вид).
+    - Tiptap **provides no UI**. Buttons, menus, sidebars: you build them yourself in React/Vue/Svelte.
+    - This gives **full control over the design** (see the difference between the Agent and Simple editors:
+      one engine, a completely different look).
 
-3.  **ProseMirror под капотом:**
-    - Tiptap — это удобная обёртка над **ProseMirror** (мощнейший, но сложный фреймворк).
-    - Он упрощает API, но сохраняет мощь: транзакции, steps, схему документа.
+3.  **ProseMirror under the hood:**
+    - Tiptap is a convenient wrapper over **ProseMirror** (a very powerful but complex framework).
+    - It simplifies the API but keeps the power: transactions, steps, the document schema.
 
 4.  **JSON Output:**
-    - Документ хранится не как HTML, а как **JSON-дерево** (ProseMirror Node Tree). Это позволяет легко парсить, анализировать и трансформировать контент на бэкенде.
+    - The document is stored not as HTML but as a **JSON tree** (a ProseMirror Node Tree). This makes it
+      easy to parse, analyze and transform content on the backend.
 
 ---
 
-## 15) Чек-лист "как всё прощёлкать самому"
+## 15) Checklist: "how to click through everything yourself"
 
 ### Agent Editor
-1. Открой Agent editor на tiptap.dev
-2. Кликни "AI Toolkit examples" → "Add AI comment" → подожди → кликни на comment bubble → скриншоть поповер с reply/resolve
-3. "Add new paragraph" → подожди → скриншоть зелёные diff-предложения → Accept/Reject
-4. "Proofread" → подожди → скриншоть все правки с подсчётом "1/12" → Accept all / Reject all
-5. AI Command Bar → введи текст → скриншоть результат → Accept/Reject
-6. Тулбар: Bold, Italic, Strike, Underline, Highlight → применяй к тексту
+1. Open the Agent editor on tiptap.dev
+2. Click "AI Toolkit examples" → "Add AI comment" → wait → click the comment bubble → screenshot the popover
+   with reply/resolve
+3. "Add new paragraph" → wait → screenshot the green diff suggestions → Accept/Reject
+4. "Proofread" → wait → screenshot all the edits with the "1/12" count → Accept all / Reject all
+5. AI Command Bar → type text → screenshot the result → Accept/Reject
+6. Toolbar: Bold, Italic, Strike, Underline, Highlight → apply to text
 7. Heading dropdown → H1-H4
 8. Lists → Bullet/Ordered/Task
 9. Alignment → left/center/right/justify
 
 ### Notion-like Editor
-1. Открой Notion-like tab
-2. `/` → скриншоть slash-меню (AI / Style / Insert категории)
-3. Наведи слева от блока → кликни drag handle → скриншоть контекст-меню (Duplicate/Delete/Reset/Copy)
-4. Выдели текст → скриншоть floating toolbar (Improve/Bold/Italic/Link/Color)
-5. `@` → скриншоть mentions dropdown
-6. `:` → скриншоть emoji picker
-7. ☀️/🌓 → скриншоть dark mode
-8. Вставь table/image/video через slash-меню
+1. Open the Notion-like tab
+2. `/` → screenshot the slash menu (AI / Style / Insert categories)
+3. Hover to the left of a block → click the drag handle → screenshot the context menu
+   (Duplicate/Delete/Reset/Copy)
+4. Select text → screenshot the floating toolbar (Improve/Bold/Italic/Link/Color)
+5. `@` → screenshot the mentions dropdown
+6. `:` → screenshot the emoji picker
+7. ☀️/🌓 → screenshot dark mode
+8. Insert a table/image/video through the slash menu
 
 ### Simple Editor
-1. Открой Simple tab
-2. H▾ → скриншоть heading dropdown (H1-H4)
-3. ☰▾ → скриншоть list dropdown (Bullet/Ordered)
-4. Каждую кнопку тулбара → Bold/Italic/Strike/Code/Underline/Highlight/Link/Super/Sub
+1. Open the Simple tab
+2. H▾ → screenshot the heading dropdown (H1-H4)
+3. ☰▾ → screenshot the list dropdown (Bullet/Ordered)
+4. Each toolbar button → Bold/Italic/Strike/Code/Underline/Highlight/Link/Super/Sub
 5. Alignment → left/center/right/justify
-6. "+ Add" → скриншоть зону загрузки изображений
-7. ☀️ → скриншоть dark mode
+6. "+ Add" → screenshot the image upload zone
+7. ☀️ → screenshot dark mode
 
 ### Headless Editor
-1. Открой Headless tab
-2. Нажми каждую кнопку: Bold, Italic, Strike, Code
-3. "Clear marks" → убедись что стили сброшены
+1. Open the Headless tab
+2. Press each button: Bold, Italic, Strike, Code
+3. "Clear marks" → make sure the styles are reset
 4. "Clear nodes" → heading → paragraph
-5. H1-H6 → проверь все уровни
+5. H1-H6 → check all levels
 6. Bullet list / Ordered list
-7. Code block → тёмный фон
-8. Blockquote → боковая полоса
-9. Horizontal rule → линия-разделитель
-10. Hard break → `<br>` внутри параграфа
+7. Code block → dark background
+8. Blockquote → side bar
+9. Horizontal rule → divider line
+10. Hard break → `<br>` inside a paragraph
 11. Undo / Redo
 
 ---
 
-## 16) Записи взаимодействий (Recordings)
+## 16) Interaction recordings (Recordings)
 
-Все взаимодействия были записаны:
+All interactions were recorded:
 
-| Запись | Содержание |
-|:-------|:-----------|
-| `main_page_recording.webp` | Навигация по главной странице tiptap.dev |
-| `agent_editor_recording.webp` | Прокликивание Agent editor: AI toolkit, toolbar, форматирование |
-| `notion_editor_recording.webp` | Прокликивание Notion-like editor: slash, drag, bubble, mentions, emoji |
-| `simple_headless_recording.webp` | Прокликивание Simple + Headless editors: тулбар, кнопки, dropdowns |
-| examples_analysis.webp | Анализ страницы Examples: скролл по экспериментам и продвинутым демо |
+| Recording | Contents |
+|:----------|:---------|
+| `main_page_recording.webp` | Navigating the tiptap.dev home page |
+| `agent_editor_recording.webp` | Clicking through the Agent editor: AI toolkit, toolbar, formatting |
+| `notion_editor_recording.webp` | Clicking through the Notion-like editor: slash, drag, bubble, mentions, emoji |
+| `simple_headless_recording.webp` | Clicking through the Simple + Headless editors: toolbar, buttons, dropdowns |
+| examples_analysis.webp | Analysis of the Examples page: scrolling through experiments and advanced demos |
