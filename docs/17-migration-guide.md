@@ -1,67 +1,67 @@
 # GoTipe -- Migration Guide
 
-> **Историческая спецификация, не руководство по текущему API.** Примеры, сроки,
-> сравнения производительности, коммерческие условия и обещания ниже не подтверждают
-> реализацию или доступность сервиса. Актуально: [контракты](development/migration-contract.md),
-> [карта кода](development/code-map.md), [проверки](development/testing.md),
-> [план выпуска](22-release-readiness.md). Лицензии определяются `LICENSE` и manifest
-> каждого пакета, а не этим документом.
+> **Historical specification, not a guide to the current API.** The examples, timelines,
+> performance comparisons, commercial terms and promises below do not confirm an
+> implementation or the availability of the service. Current references: [contracts](development/migration-contract.md),
+> [code map](development/code-map.md), [checks](development/testing.md),
+> [release plan](22-release-readiness.md). Licenses are defined by `LICENSE` and the manifest
+> of each package, not by this document.
 
-> Руководство по миграции с других rich text editor фреймворков на GoTipe. Охватывает Tiptap, ProseMirror, Lexical, Slate, CKEditor и TinyMCE.
+> A guide to migrating to GoTipe from other rich text editor frameworks. Covers Tiptap, ProseMirror, Lexical, Slate, CKEditor and TinyMCE.
 
 ---
 
-## 1. Обзор миграции
+## 1. Migration Overview
 
-### Зачем мигрировать на GoTipe
+### Why Migrate to GoTipe
 
-| Причина | Детали |
-|---------|--------|
-| **Производительность** | Rust/WASM core: парсинг, валидация, CRDT, трансформации в 2-5x быстрее ProseMirror-based решений. См. [01-architecture.md#performance](01-architecture.md#performance) |
-| **Нативный CRDT** | Collaboration встроена в core, работает без облака. Нет vendor lock-in на Hocuspocus/Liveblocks/Tiptap Cloud |
-| **AI-first** | Ghost text, AI commands, streaming -- в ядре, не addon. Provider-agnostic. См. [07-ai.md](07-ai.md) |
-| **Честный open-source** | Все extensions MIT. Нет Pro tier, нет paywall на collaboration |
-| **Framework-agnostic** | React, Vue, Svelte, Solid -- тонкий adapter layer. Core не зависит от фреймворка |
-| **Server-side** | WASM core работает в Node.js, Go, Rust -- валидация и рендеринг без браузера |
-| **Block-first model** | Notion-like UX из коробки: slash commands, drag-and-drop, nested blocks |
+| Reason | Details |
+|--------|---------|
+| **Performance** | Rust/WASM core: parsing, validation, CRDT and transforms are 2-5x faster than ProseMirror-based solutions. See [01-architecture.md#performance](01-architecture.md#performance) |
+| **Native CRDT** | Collaboration is built into the core and works without the cloud. No vendor lock-in on Hocuspocus/Liveblocks/Tiptap Cloud |
+| **AI-first** | Ghost text, AI commands and streaming are in the core, not an addon. Provider-agnostic. See [07-ai.md](07-ai.md) |
+| **Honest open source** | All extensions are MIT. No Pro tier, no paywall on collaboration |
+| **Framework-agnostic** | React, Vue, Svelte, Solid: a thin adapter layer. The core does not depend on a framework |
+| **Server-side** | The WASM core runs in Node.js, Go and Rust: validation and rendering without a browser |
+| **Block-first model** | Notion-like UX out of the box: slash commands, drag-and-drop, nested blocks |
 
-### Что отличает GoTipe от других решений
+### What Sets GoTipe Apart from Other Solutions
 
 ```
 Tiptap / ProseMirror:
   JS core → OT/Yjs collaboration → framework wrappers
 
 GoTipe:
-  Rust/WASM core → нативный CRDT → framework adapters (thin layer)
+  Rust/WASM core → native CRDT → framework adapters (thin layer)
 ```
 
-**Ключевые архитектурные различия:**
+**Key architectural differences:**
 
-1. **Document model.** GoTipe использует block-first model (как Notion), а не generic node tree (ProseMirror). Каждый блок имеет `id`, `type`, `attrs`, `content` и `children`.
-2. **State management.** Immutable `EditorState` с transaction-based updates. Похоже на ProseMirror, но типы определены в Rust.
-3. **Extension system.** Единый `defineExtension()` API вместо class-based Node.create() / Mark.create(). Dependencies -- explicit.
-4. **Collaboration.** CRDT встроен в core (не внешний Yjs adapter). Binary sync protocol.
-5. **Rendering.** Core выдаёт `ViewState` (plain JS objects). Adapter конвертирует в framework-specific компоненты.
+1. **Document model.** GoTipe uses a block-first model (like Notion), not a generic node tree (ProseMirror). Every block has `id`, `type`, `attrs`, `content` and `children`.
+2. **State management.** Immutable `EditorState` with transaction-based updates. Similar to ProseMirror, but the types are defined in Rust.
+3. **Extension system.** A single `defineExtension()` API instead of class-based Node.create() / Mark.create(). Dependencies are explicit.
+4. **Collaboration.** The CRDT is built into the core (not an external Yjs adapter). Binary sync protocol.
+5. **Rendering.** The core emits a `ViewState` (plain JS objects). The adapter converts it into framework-specific components.
 
-### Матрица сложности миграции
+### Migration Complexity Matrix
 
-| Источник | Сложность | Время (оценка) | Основная работа |
-|----------|-----------|----------------|-----------------|
-| **Tiptap** | Средняя | 2-5 дней | Extension mapping, React/Vue adapter замена, контент конвертация |
-| **ProseMirror** | Средняя-Высокая | 3-7 дней | Schema mapping, plugin переработка, view layer замена |
-| **Lexical** | Средняя | 2-5 дней | Node model перестройка, plugin mapping, React hook замена |
-| **Slate** | Средняя | 2-5 дней | Document model mapping, plugin замена, React adapter |
-| **CKEditor 5** | Низкая-Средняя | 1-3 дня | Контент конвертация (HTML), toolbar mapping |
-| **TinyMCE** | Низкая | 1-2 дня | HTML контент конвертация, конфигурация |
-| **Quill** | Средняя | 2-4 дня | Delta format конвертация, module mapping |
+| Source | Complexity | Time (estimate) | Main work |
+|--------|------------|-----------------|-----------|
+| **Tiptap** | Medium | 2-5 days | Extension mapping, replacing the React/Vue adapter, content conversion |
+| **ProseMirror** | Medium-High | 3-7 days | Schema mapping, reworking plugins, replacing the view layer |
+| **Lexical** | Medium | 2-5 days | Rebuilding the node model, plugin mapping, replacing React hooks |
+| **Slate** | Medium | 2-5 days | Document model mapping, replacing plugins, React adapter |
+| **CKEditor 5** | Low-Medium | 1-3 days | Content conversion (HTML), toolbar mapping |
+| **TinyMCE** | Low | 1-2 days | HTML content conversion, configuration |
+| **Quill** | Medium | 2-4 days | Delta format conversion, module mapping |
 
-> **Совет:** Независимо от исходного редактора, начните с контент конвертации (JSON/HTML), затем настройте extensions, и только потом мигрируйте кастомные плагины.
+> **Tip:** Whatever the source editor, start with content conversion (JSON/HTML), then set up extensions, and only then migrate custom plugins.
 
 ---
 
-## 2. Миграция с Tiptap
+## 2. Migrating from Tiptap
 
-Tiptap -- самый распространённый путь миграции, так как GoTipe спроектирован как его эволюция. Многие API намеренно похожи.
+Tiptap is the most common migration path, since GoTipe is designed as its evolution. Many APIs are intentionally similar.
 
 ### 2.1. Document Model: ProseMirror Node vs GoTipe Block
 
@@ -120,64 +120,64 @@ Tiptap -- самый распространённый путь миграции,
 }
 ```
 
-**Ключевые различия:**
+**Key differences:**
 
-| Аспект | Tiptap (ProseMirror) | GoTipe |
+| Aspect | Tiptap (ProseMirror) | GoTipe |
 |--------|---------------------|--------|
-| Корневой элемент | `{ type: "doc", content: [...] }` | `{ version: 1, blocks: [...] }` |
-| Идентификатор узла | Нет (позиционный) | `id` на каждом блоке (string) |
-| Текстовый узел | `{ type: "text", text: "...", marks: [...] }` | `{ text: "...", marks: [...] }` (без type) |
-| Marks на тексте | Отдельный объект `marks` с `type` и `attrs` | Аналогично, но `marks` присутствует всегда (даже пустой массив) |
-| Вложенность | Через `content` expression | Через `children` массив |
-| Списки | `bulletList > listItem > paragraph` | `bulletList > children: [listItem]`, listItem содержит content напрямую |
+| Root element | `{ type: "doc", content: [...] }` | `{ version: 1, blocks: [...] }` |
+| Node identifier | None (positional) | `id` on every block (string) |
+| Text node | `{ type: "text", text: "...", marks: [...] }` | `{ text: "...", marks: [...] }` (no type) |
+| Marks on text | A separate `marks` object with `type` and `attrs` | Same, but `marks` is always present (even as an empty array) |
+| Nesting | Via the `content` expression | Via the `children` array |
+| Lists | `bulletList > listItem > paragraph` | `bulletList > children: [listItem]`, listItem holds its content directly |
 
 ### 2.2. Extension Mapping
 
-| Tiptap Extension | GoTipe Extension | Пакет | Различия |
-|-----------------|-----------------|-------|----------|
-| `StarterKit` | `DefaultPreset` | `@gotipe/core/presets` | Preset вместо single extension |
-| `Document` | Встроен в core | `@gotipe/core` | Не нужен отдельный extension |
+| Tiptap Extension | GoTipe Extension | Package | Differences |
+|-----------------|-----------------|---------|-------------|
+| `StarterKit` | `DefaultPreset` | `@gotipe/core/presets` | A preset instead of a single extension |
+| `Document` | Built into the core | `@gotipe/core` | No separate extension needed |
 | `Paragraph` | `Paragraph` | `@gotipe/core/extensions` | 1:1 |
-| `Text` | Встроен в core | `@gotipe/core` | Не нужен отдельный extension |
+| `Text` | Built into the core | `@gotipe/core` | No separate extension needed |
 | `Heading` | `Heading` | `@gotipe/core/extensions` | 1:1, `.configure({ levels: [1,2,3] })` |
 | `Bold` | `Bold` | `@gotipe/core/extensions` | 1:1 |
 | `Italic` | `Italic` | `@gotipe/core/extensions` | 1:1 |
 | `Underline` | `Underline` | `@gotipe/core/extensions` | 1:1 |
-| `Strike` | `Strikethrough` | `@gotipe/core/extensions` | Переименован |
-| `Code` | `InlineCode` | `@gotipe/core/extensions` | Переименован |
-| `CodeBlock` / `CodeBlockLowlight` | `CodeBlock` | `@gotipe/core/extensions` | Syntax highlighting в `.configure()` |
+| `Strike` | `Strikethrough` | `@gotipe/core/extensions` | Renamed |
+| `Code` | `InlineCode` | `@gotipe/core/extensions` | Renamed |
+| `CodeBlock` / `CodeBlockLowlight` | `CodeBlock` | `@gotipe/core/extensions` | Syntax highlighting in `.configure()` |
 | `BulletList` | `BulletList` | `@gotipe/core/extensions` | 1:1 |
 | `OrderedList` | `OrderedList` | `@gotipe/core/extensions` | 1:1 |
 | `ListItem` | `ListItem` | `@gotipe/core/extensions` | 1:1 |
-| `TaskList` / `TaskItem` | `TodoList` | `@gotipe/core/extensions` | Объединены в один extension |
+| `TaskList` / `TaskItem` | `TodoList` | `@gotipe/core/extensions` | Merged into one extension |
 | `Blockquote` | `Blockquote` | `@gotipe/core/extensions` | 1:1 |
-| `HorizontalRule` | `Divider` | `@gotipe/core/extensions` | Переименован |
+| `HorizontalRule` | `Divider` | `@gotipe/core/extensions` | Renamed |
 | `Link` | `Link` | `@gotipe/core/extensions` | 1:1 |
-| `Image` | `Image` | `@gotipe/core/extensions` | 1:1, upload handler в `.configure()` |
-| `Table` / `TableRow` / `TableCell` / `TableHeader` | `Table` | `@gotipe/core/extensions` | Все в одном extension |
+| `Image` | `Image` | `@gotipe/core/extensions` | 1:1, upload handler in `.configure()` |
+| `Table` / `TableRow` / `TableCell` / `TableHeader` | `Table` | `@gotipe/core/extensions` | All in one extension |
 | `Highlight` | `Highlight` | `@gotipe/core/extensions` | 1:1 |
 | `Superscript` | `Superscript` | `@gotipe/core/extensions` | 1:1 |
 | `Subscript` | `Subscript` | `@gotipe/core/extensions` | 1:1 |
 | `TextAlign` | `TextAlign` | `@gotipe/core/extensions` | 1:1 |
 | `Placeholder` | `Placeholder` | `@gotipe/core/extensions` | 1:1, `.configure({ text: '...' })` |
 | `History` | `History` | `@gotipe/core/extensions` | 1:1 |
-| `Dropcursor` | Встроен в `DragAndDrop` | `@gotipe/core/extensions` | Автоматически включён |
-| `Gapcursor` | Встроен в core | `@gotipe/core` | Автоматически |
+| `Dropcursor` | Built into `DragAndDrop` | `@gotipe/core/extensions` | Enabled automatically |
+| `Gapcursor` | Built into the core | `@gotipe/core` | Automatic |
 | `Typography` | `Typography` | `@gotipe/core/extensions` | 1:1 |
 | `CharacterCount` | `CharacterCount` | `@gotipe/core/extensions` | 1:1 |
-| `Color` / `TextStyle` | `TextColor` | `@gotipe/core/extensions` | Объединены |
+| `Color` / `TextStyle` | `TextColor` | `@gotipe/core/extensions` | Merged |
 | `FontFamily` | `FontFamily` | `@gotipe/core/extensions` | 1:1 |
-| `Collaboration` | `Collaboration` | `@gotipe/collaboration` | CRDT вместо Yjs (+ Yjs adapter) |
-| `CollaborationCursor` | Встроен в `Collaboration` | `@gotipe/collaboration` | Awareness включён по умолчанию |
-| `Mention` | `Mention` | `@gotipe/ext-mention` | Отдельный пакет |
-| `Youtube` / `Embed` | `Embed` | `@gotipe/core/extensions` | Универсальный embed |
-| `Mathematics` | `Math` | `@gotipe/ext-math` | Отдельный пакет |
+| `Collaboration` | `Collaboration` | `@gotipe/collaboration` | CRDT instead of Yjs (+ Yjs adapter) |
+| `CollaborationCursor` | Built into `Collaboration` | `@gotipe/collaboration` | Awareness is on by default |
+| `Mention` | `Mention` | `@gotipe/ext-mention` | Separate package |
+| `Youtube` / `Embed` | `Embed` | `@gotipe/core/extensions` | Universal embed |
+| `Mathematics` | `Math` | `@gotipe/ext-math` | Separate package |
 
 ### 2.3. API Mapping
 
-#### Создание editor
+#### Creating an Editor
 
-**Tiptap (до):**
+**Tiptap (before):**
 
 ```typescript
 import { useEditor, EditorContent } from '@tiptap/react';
@@ -196,7 +196,7 @@ const editor = useEditor({
 });
 ```
 
-**GoTipe (после):**
+**GoTipe (after):**
 
 ```typescript
 import { useEditor, Editor } from '@gotipe/react';
@@ -217,37 +217,37 @@ const editor = useEditor({
 
 #### Commands
 
-| Tiptap Command | GoTipe Command | Различия |
-|---------------|---------------|----------|
+| Tiptap Command | GoTipe Command | Differences |
+|---------------|---------------|-------------|
 | `editor.commands.toggleBold()` | `editor.chain().toggleBold().run()` | Chainable API |
-| `editor.chain().toggleBold().focus().run()` | `editor.chain().toggleBold().run()` | Focus неявный |
-| `editor.commands.setContent(html)` | `editor.setContent(html)` | Прямой метод |
-| `editor.getJSON()` | `editor.getJSON()` | 1:1 (разный формат JSON) |
+| `editor.chain().toggleBold().focus().run()` | `editor.chain().toggleBold().run()` | Focus is implicit |
+| `editor.commands.setContent(html)` | `editor.setContent(html)` | Direct method |
+| `editor.getJSON()` | `editor.getJSON()` | 1:1 (different JSON format) |
 | `editor.getHTML()` | `editor.getHTML()` | 1:1 |
 | `editor.getText()` | `editor.getText()` | 1:1 |
 | `editor.isActive('bold')` | `editor.isActive('bold')` | 1:1 |
 | `editor.isActive('heading', { level: 1 })` | `editor.isActive('heading', { level: 1 })` | 1:1 |
-| `editor.can().toggleBold().run()` | `editor.can().toggleBold()` | Без `.run()` |
+| `editor.can().toggleBold().run()` | `editor.can().toggleBold()` | Without `.run()` |
 | `editor.commands.insertContent(...)` | `editor.chain().insertContent(...).run()` | Chain-based |
 | `editor.commands.setTextSelection(pos)` | `editor.chain().setSelection({ blockId, offset }).run()` | Block-based selection |
-| `editor.state.doc.textContent` | `editor.getText()` | Метод вместо property |
+| `editor.state.doc.textContent` | `editor.getText()` | Method instead of property |
 
 #### Events
 
-| Tiptap Event | GoTipe Event | Различия |
-|-------------|-------------|----------|
+| Tiptap Event | GoTipe Event | Differences |
+|-------------|-------------|-------------|
 | `onUpdate` | `onUpdate` | 1:1 |
-| `onSelectionUpdate` | `onSelectionChange` | Переименован |
+| `onSelectionUpdate` | `onSelectionChange` | Renamed |
 | `onFocus` | `onFocus` | 1:1 |
 | `onBlur` | `onBlur` | 1:1 |
 | `onCreate` | `onCreate` | 1:1 |
 | `onDestroy` | `onDestroy` | 1:1 |
-| `onTransaction` | `editor.on('transaction', cb)` | Через EventEmitter |
-| `onBeforeCreate` | Нет аналога | -- |
+| `onTransaction` | `editor.on('transaction', cb)` | Via EventEmitter |
+| `onBeforeCreate` | No equivalent | -- |
 
 ### 2.4. React Adapter
 
-**Tiptap React (до):**
+**Tiptap React (before):**
 
 ```tsx
 import { useEditor, EditorContent, BubbleMenu, FloatingMenu } from '@tiptap/react';
@@ -274,7 +274,7 @@ function MyEditor() {
 }
 ```
 
-**GoTipe React (после):**
+**GoTipe React (after):**
 
 ```tsx
 import { useEditor, Editor, BubbleMenu } from '@gotipe/react';
@@ -302,23 +302,23 @@ function MyEditor() {
 }
 ```
 
-**Различия React adapter:**
+**React adapter differences:**
 
-| Аспект | Tiptap React | GoTipe React |
+| Aspect | Tiptap React | GoTipe React |
 |--------|-------------|-------------|
-| Основной компонент | `<EditorContent editor={editor} />` | `<Editor editor={editor} />` |
+| Main component | `<EditorContent editor={editor} />` | `<Editor editor={editor} />` |
 | BubbleMenu | `<BubbleMenu editor={editor}>children</BubbleMenu>` | `<BubbleMenu editor={editor}>{(props) => children}</BubbleMenu>` (render function) |
 | FloatingMenu | `<FloatingMenu editor={editor}>children</FloatingMenu>` | `<FloatingMenu editor={editor}>{(props) => children}</FloatingMenu>` |
 | State selector | `editor.storage.characterCount.characters()` | `useEditorState(editor, state => ...)` |
-| Focus в chain | `editor.chain().focus().toggleBold().run()` | `editor.chain().toggleBold().run()` (focus автоматический) |
-| Стили | `import '@tiptap/core/style.css'` или `import '@tiptap/react/style.css'` | `import '@gotipe/react/styles.css'` |
-| Slots | Нет | `slotBefore`, `slotAfter` props |
+| Focus in a chain | `editor.chain().focus().toggleBold().run()` | `editor.chain().toggleBold().run()` (focus is automatic) |
+| Styles | `import '@tiptap/core/style.css'` or `import '@tiptap/react/style.css'` | `import '@gotipe/react/styles.css'` |
+| Slots | None | `slotBefore`, `slotAfter` props |
 | Custom renderer | `NodeViewRenderer` | `blockRenderer` prop |
-| WASM loading | Нет (JS only) | Editor = null до загрузки WASM |
+| WASM loading | None (JS only) | Editor = null until WASM loads |
 
 ### 2.5. Vue Adapter
 
-**Tiptap Vue (до):**
+**Tiptap Vue (before):**
 
 ```vue
 <script setup>
@@ -339,7 +339,7 @@ const editor = useEditor({
 </template>
 ```
 
-**GoTipe Vue (после):**
+**GoTipe Vue (after):**
 
 ```vue
 <script setup>
@@ -364,28 +364,28 @@ const editor = useEditor({
 </template>
 ```
 
-**Различия Vue adapter:**
+**Vue adapter differences:**
 
-| Аспект | Tiptap Vue 3 | GoTipe Vue |
+| Aspect | Tiptap Vue 3 | GoTipe Vue |
 |--------|-------------|-----------|
-| Основной компонент | `<EditorContent :editor="editor" />` | `<Editor :editor="editor" />` |
-| Slots | Нет | `#before`, `#after`, `#block` |
+| Main component | `<EditorContent :editor="editor" />` | `<Editor :editor="editor" />` |
+| Slots | None | `#before`, `#after`, `#block` |
 | Reactivity | `shallowRef` | `shallowRef` + `triggerRef` |
 | State selector | `editor.value?.isActive('bold')` | `useEditorState(editor, s => s.toolbar.activeMarks)` |
 | Focus | `editor.chain().focus().toggleBold().run()` | `editor.chain().toggleBold().run()` |
 
-Подробнее о Vue adapter в [06-framework-adapters.md#vue](06-framework-adapters.md#vue).
+More on the Vue adapter in [06-framework-adapters.md#vue](06-framework-adapters.md#vue).
 
 ### 2.6. Collaboration: Yjs/Hocuspocus -> GoTipe CRDT
 
-GoTipe поддерживает два пути миграции collaboration:
+GoTipe supports two collaboration migration paths:
 
-#### Путь 1: Постепенный (Yjs Compatibility Adapter)
+#### Path 1: Gradual (Yjs Compatibility Adapter)
 
-Используйте `@gotipe/collaboration/adapters/yjs` для работы с существующим Hocuspocus сервером:
+Use `@gotipe/collaboration/adapters/yjs` to work with an existing Hocuspocus server:
 
 ```typescript
-// Шаг 1: Используем Yjs adapter (работает с существующим Hocuspocus)
+// Step 1: Use the Yjs adapter (works with the existing Hocuspocus)
 import { Collaboration } from '@gotipe/collaboration';
 import { YjsAdapter } from '@gotipe/collaboration/adapters/yjs';
 import { HocuspocusProvider } from '@hocuspocus/provider';
@@ -406,7 +406,7 @@ const editor = createEditor({
 ```
 
 ```typescript
-// Шаг 2: Переключаемся на нативный GoTipe CRDT (позже)
+// Step 2: Switch to the native GoTipe CRDT (later)
 import { Collaboration } from '@gotipe/collaboration';
 import { GoTipeProvider } from '@gotipe/collaboration';
 
@@ -423,67 +423,67 @@ const editor = createEditor({
 });
 ```
 
-#### Путь 2: Прямой (GoTipe CRDT)
+#### Path 2: Direct (GoTipe CRDT)
 
-1. Разверните GoTipe Sync Server (self-hosted или GoTipe Cloud)
-2. Мигрируйте документы из Yjs формата в GoTipe CRDT
-3. Переключите клиентов на GoTipe Provider
+1. Deploy the GoTipe Sync Server (self-hosted or GoTipe Cloud)
+2. Migrate documents from the Yjs format to the GoTipe CRDT
+3. Switch the clients to the GoTipe Provider
 
 ```typescript
-// Скрипт миграции Yjs -> GoTipe CRDT
+// Yjs -> GoTipe CRDT migration script
 import * as Y from 'yjs';
 import { GoTipeCRDT } from '@gotipe/collaboration/migration';
 
 async function migrateDocument(yjsState: Uint8Array): Promise<Uint8Array> {
-  // 1. Загружаем Yjs документ
+  // 1. Load the Yjs document
   const ydoc = new Y.Doc();
   Y.applyUpdate(ydoc, yjsState);
 
-  // 2. Извлекаем ProseMirror JSON из Yjs
+  // 2. Extract the ProseMirror JSON from Yjs
   const prosemirrorJson = yXmlFragmentToJson(ydoc.getXmlFragment('default'));
 
-  // 3. Конвертируем ProseMirror JSON -> GoTipe JSON
+  // 3. Convert ProseMirror JSON -> GoTipe JSON
   const gotipeJson = convertProseMirrorToGoTipe(prosemirrorJson);
 
-  // 4. Создаём GoTipe CRDT документ
+  // 4. Create the GoTipe CRDT document
   const crdtDoc = GoTipeCRDT.fromJson(gotipeJson);
   return crdtDoc.encodeSnapshot();
 }
 ```
 
-Подробнее о collaboration в [02-collaboration.md](02-collaboration.md).
+More on collaboration in [02-collaboration.md](02-collaboration.md).
 
-### 2.7. Пошаговая миграция с Tiptap
+### 2.7. Step-by-Step Migration from Tiptap
 
-**Шаг 1: Установка GoTipe**
+**Step 1: Install GoTipe**
 
 ```bash
-# Удаляем Tiptap пакеты
+# Remove the Tiptap packages
 npm uninstall @tiptap/core @tiptap/react @tiptap/starter-kit \
-  @tiptap/extension-heading @tiptap/extension-bold # ... и т.д.
+  @tiptap/extension-heading @tiptap/extension-bold # ... and so on
 
-# Устанавливаем GoTipe
+# Install GoTipe
 npm install @gotipe/core @gotipe/react
-# Опционально:
+# Optional:
 npm install @gotipe/collaboration @gotipe/ai
 ```
 
-**Шаг 2: Замена imports**
+**Step 2: Replace imports**
 
 ```typescript
-// До (Tiptap):
+// Before (Tiptap):
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 
-// После (GoTipe):
+// After (GoTipe):
 import { useEditor, Editor } from '@gotipe/react';
 import { DefaultPreset } from '@gotipe/core/presets';
 ```
 
-**Шаг 3: Обновление конфигурации editor**
+**Step 3: Update the editor configuration**
 
 ```typescript
-// До:
+// Before:
 const editor = useEditor({
   extensions: [
     StarterKit.configure({
@@ -495,7 +495,7 @@ const editor = useEditor({
   content: initialContent,
 });
 
-// После:
+// After:
 import { Heading, Highlight, Underline } from '@gotipe/core/extensions';
 
 const editor = useEditor({
@@ -505,14 +505,14 @@ const editor = useEditor({
     Highlight,
     Underline,
   ],
-  content: initialContent, // Нужна конвертация JSON формата!
+  content: initialContent, // The JSON format needs conversion!
 });
 ```
 
-**Шаг 4: Конвертация контента**
+**Step 4: Convert the content**
 
 ```typescript
-// Используем утилиту конвертации (см. раздел 7)
+// Use the conversion utility (see section 7)
 import { convertProseMirrorToGoTipe } from '@gotipe/migration';
 
 const tiptapJson = await fetchDocumentFromDB();
@@ -524,31 +524,31 @@ const editor = useEditor({
 });
 ```
 
-**Шаг 5: Обновление компонентов**
+**Step 5: Update the components**
 
 ```tsx
-// До:
+// Before:
 return <EditorContent editor={editor} className="my-editor" />;
 
-// После:
+// After:
 return <Editor editor={editor} className="my-editor" />;
 ```
 
-**Шаг 6: Обновление chain commands**
+**Step 6: Update chain commands**
 
 ```typescript
-// До:
+// Before:
 editor.chain().focus().toggleBold().run();
 
-// После:
+// After:
 editor.chain().toggleBold().run();
-// focus() не нужен -- GoTipe автоматически фокусирует editor
+// focus() is not needed: GoTipe focuses the editor automatically
 ```
 
-**Шаг 7: Обновление NodeViews -> blockRenderer**
+**Step 7: Update NodeViews -> blockRenderer**
 
 ```tsx
-// До (Tiptap NodeView):
+// Before (Tiptap NodeView):
 import { NodeViewWrapper, NodeViewContent } from '@tiptap/react';
 
 function CalloutView({ node, updateAttributes }) {
@@ -567,7 +567,7 @@ Callout.extend({
   },
 });
 
-// После (GoTipe blockRenderer):
+// After (GoTipe blockRenderer):
 <Editor
   editor={editor}
   blockRenderer={({ block, children }) => {
@@ -613,7 +613,7 @@ interface GoTipeDocument {
 }
 
 /**
- * Конвертирует ProseMirror/Tiptap JSON в GoTipe JSON.
+ * Converts ProseMirror/Tiptap JSON to GoTipe JSON.
  */
 export function convertProseMirrorToGoTipe(pmDoc: ProseMirrorNode): GoTipeDocument {
   if (pmDoc.type !== 'doc' || !pmDoc.content) {
@@ -636,7 +636,7 @@ function convertNode(node: ProseMirrorNode): GoTipeBlock {
   };
 
   if (node.content) {
-    // Разделяем на inline content и block children
+    // Split into inline content and block children
     const inlineNodes = node.content.filter(n => n.type === 'text' || isInlineNode(n));
     const blockNodes = node.content.filter(n => n.type !== 'text' && !isInlineNode(n));
 
@@ -711,11 +711,11 @@ function mapMarkType(pmMark: string): string {
 }
 
 function mapAttrs(type: string, attrs: Record<string, unknown>): Record<string, unknown> {
-  // Удаляем ProseMirror-specific attrs
+  // Remove ProseMirror-specific attrs
   const cleaned = { ...attrs };
   delete cleaned['class'];
 
-  // Специфичные маппинги
+  // Specific mappings
   if (type === 'codeBlock' || type === 'code_block') {
     return { language: attrs.language ?? 'plain' };
   }
@@ -730,13 +730,13 @@ function isInlineNode(node: ProseMirrorNode): boolean {
 
 ---
 
-## 3. Миграция с ProseMirror
+## 3. Migrating from ProseMirror
 
-ProseMirror -- low-level фреймворк, лежащий в основе Tiptap. Миграция сложнее, так как ProseMirror требует больше кастомного кода.
+ProseMirror is the low-level framework that Tiptap is built on. Migration is harder because ProseMirror requires more custom code.
 
 ### 3.1. Schema Mapping
 
-**ProseMirror Schema (до):**
+**ProseMirror Schema (before):**
 
 ```typescript
 import { Schema, NodeSpec, MarkSpec } from 'prosemirror-model';
@@ -777,14 +777,14 @@ const schema = new Schema({
 });
 ```
 
-**GoTipe Extensions (после):**
+**GoTipe Extensions (after):**
 
 ```typescript
 import { defineExtension } from '@gotipe/core';
 
-// GoTipe не использует Schema объект напрямую.
-// Schema собирается автоматически из extensions.
-// parseDOM/toDOM заменены на HTML import/export в gotipe-export crate.
+// GoTipe does not use a Schema object directly.
+// The schema is assembled automatically from the extensions.
+// parseDOM/toDOM are replaced by HTML import/export in the gotipe-export crate.
 
 const Paragraph = defineExtension({
   name: 'paragraph',
@@ -816,7 +816,7 @@ const Heading = defineExtension({
   }],
 });
 
-// Marks определяются аналогично
+// Marks are defined similarly
 const Bold = defineExtension({
   name: 'bold',
   marks: [{ name: 'bold', attrs: {}, rank: 10 }],
@@ -840,18 +840,18 @@ const Link = defineExtension({
 
 ### 3.2. Plugin -> Extension
 
-| ProseMirror Plugin | GoTipe Extension | Подход |
-|-------------------|-----------------|--------|
-| `Plugin` с `state` | `defineExtension` с `plugin()` | Plugin factory в extension |
-| `keymap()` | `keybindings: [...]` | Декларативные keybindings |
-| `inputRules()` | `inputRules: [...]` | Декларативные input rules |
-| `history()` | `History` extension | Встроен |
-| `dropCursor()` | `DragAndDrop` extension | Встроен |
-| `gapCursor()` | Встроен в core | Автоматически |
-| `collab()` | `Collaboration` extension | CRDT вместо OT |
-| Custom decorations | `plugin()` с `decorations` | Через extension plugin |
+| ProseMirror Plugin | GoTipe Extension | Approach |
+|-------------------|-----------------|----------|
+| `Plugin` with `state` | `defineExtension` with `plugin()` | Plugin factory in the extension |
+| `keymap()` | `keybindings: [...]` | Declarative keybindings |
+| `inputRules()` | `inputRules: [...]` | Declarative input rules |
+| `history()` | `History` extension | Built in |
+| `dropCursor()` | `DragAndDrop` extension | Built in |
+| `gapCursor()` | Built into the core | Automatic |
+| `collab()` | `Collaboration` extension | CRDT instead of OT |
+| Custom decorations | `plugin()` with `decorations` | Via the extension plugin |
 
-**ProseMirror Plugin (до):**
+**ProseMirror Plugin (before):**
 
 ```typescript
 import { Plugin, PluginKey } from 'prosemirror-state';
@@ -874,7 +874,7 @@ const wordCountPlugin = new Plugin({
 });
 ```
 
-**GoTipe Extension (после):**
+**GoTipe Extension (after):**
 
 ```typescript
 import { defineExtension } from '@gotipe/core';
@@ -894,7 +894,7 @@ const WordCount = defineExtension({
   }),
 });
 
-// Или проще -- через useEditorState hook:
+// Or more simply, via the useEditorState hook:
 const wordCount = useEditorState(editor, (state) =>
   state.blocks.reduce((acc, block) => {
     if (Array.isArray(block.content)) {
@@ -909,22 +909,22 @@ const wordCount = useEditorState(editor, (state) =>
 
 ### 3.3. Transaction/Transform
 
-| ProseMirror | GoTipe | Различия |
-|------------|--------|----------|
-| `tr.insertText('hello', pos)` | `Step::InsertText { block_id, offset, text, marks }` | Block-based вместо position-based |
-| `tr.delete(from, to)` | `Step::DeleteText { block_id, from, to }` | Offset внутри блока |
-| `tr.setNodeMarkup(pos, type, attrs)` | `Step::SetBlockType { block_id, new_type, attrs }` | По block ID |
-| `tr.addMark(from, to, mark)` | `Step::AddMark { block_id, from, to, mark }` | Внутри одного блока |
-| `tr.split(pos)` | `Step::SplitBlock { block_id, offset }` | По block ID |
-| `tr.join(pos)` | `Step::MergeBlocks { block_id, target_id }` | Два block ID |
-| Position-based addressing | Block ID + offset addressing | Главное различие |
+| ProseMirror | GoTipe | Differences |
+|------------|--------|-------------|
+| `tr.insertText('hello', pos)` | `Step::InsertText { block_id, offset, text, marks }` | Block-based instead of position-based |
+| `tr.delete(from, to)` | `Step::DeleteText { block_id, from, to }` | Offset within the block |
+| `tr.setNodeMarkup(pos, type, attrs)` | `Step::SetBlockType { block_id, new_type, attrs }` | By block ID |
+| `tr.addMark(from, to, mark)` | `Step::AddMark { block_id, from, to, mark }` | Within a single block |
+| `tr.split(pos)` | `Step::SplitBlock { block_id, offset }` | By block ID |
+| `tr.join(pos)` | `Step::MergeBlocks { block_id, target_id }` | Two block IDs |
+| Position-based addressing | Block ID + offset addressing | The main difference |
 
 ### 3.4. View Layer
 
-ProseMirror EditorView заменяется framework adapter:
+The ProseMirror EditorView is replaced by a framework adapter:
 
 ```typescript
-// До (ProseMirror):
+// Before (ProseMirror):
 import { EditorView } from 'prosemirror-view';
 
 const view = new EditorView(document.getElementById('editor'), {
@@ -940,7 +940,7 @@ const view = new EditorView(document.getElementById('editor'), {
   },
 });
 
-// После (GoTipe + React):
+// After (GoTipe + React):
 import { useEditor, Editor } from '@gotipe/react';
 
 const editor = useEditor({
@@ -964,22 +964,22 @@ return (
 
 ---
 
-## 4. Миграция с Lexical
+## 4. Migrating from Lexical
 
-Lexical (Meta) -- React-first editor с собственной node model. Миграция требует переосмысления node structure.
+Lexical (Meta) is a React-first editor with its own node model. Migration requires rethinking the node structure.
 
 ### 4.1. Node Model
 
-| Аспект | Lexical | GoTipe |
+| Aspect | Lexical | GoTipe |
 |--------|---------|--------|
 | Node type | Class-based (`ElementNode`, `TextNode`, `DecoratorNode`) | Data-driven (JSON block) |
 | Node identity | Unique key (auto-generated) | Block `id` (string) |
 | Text formatting | Bitmask flags (`IS_BOLD = 1`, `IS_ITALIC = 2`) | Marks array |
-| Tree structure | Generic `ElementNode` с children | `Block` с `content` (text) и `children` (nested blocks) |
-| Immutability | Mutable nodes в reconciler | Immutable EditorState с transactions |
+| Tree structure | Generic `ElementNode` with children | `Block` with `content` (text) and `children` (nested blocks) |
+| Immutability | Mutable nodes in the reconciler | Immutable EditorState with transactions |
 | State updates | `editor.update(() => { ... })` | `editor.chain().toggleBold().run()` |
 
-**Lexical Node (до):**
+**Lexical Node (before):**
 
 ```typescript
 import {
@@ -1003,7 +1003,7 @@ editor.update(() => {
 });
 ```
 
-**GoTipe (после):**
+**GoTipe (after):**
 
 ```typescript
 import { createEditor } from '@gotipe/core';
@@ -1024,25 +1024,25 @@ editor.chain()
 
 ### 4.2. Plugin -> Extension
 
-| Lexical Plugin/Module | GoTipe Extension | Различия |
-|----------------------|-----------------|----------|
-| `RichTextPlugin` | `DefaultPreset` | Встроен |
-| `HistoryPlugin` | `History` | Встроен в preset |
-| `ListPlugin` | `BulletList`, `OrderedList` | Раздельные extensions |
+| Lexical Plugin/Module | GoTipe Extension | Differences |
+|----------------------|-----------------|-------------|
+| `RichTextPlugin` | `DefaultPreset` | Built in |
+| `HistoryPlugin` | `History` | Built into the preset |
+| `ListPlugin` | `BulletList`, `OrderedList` | Separate extensions |
 | `LinkPlugin` | `Link` | 1:1 |
 | `TablePlugin` | `Table` | 1:1 |
-| `CodeHighlightPlugin` | `CodeBlock` | Syntax highlighting в `.configure()` |
-| `AutoFocusPlugin` | `autofocus` option | Параметр useEditor |
-| `OnChangePlugin` | `onUpdate` callback | Параметр useEditor |
+| `CodeHighlightPlugin` | `CodeBlock` | Syntax highlighting in `.configure()` |
+| `AutoFocusPlugin` | `autofocus` option | A useEditor parameter |
+| `OnChangePlugin` | `onUpdate` callback | A useEditor parameter |
 | `CollaborationPlugin` (Yjs) | `Collaboration` | GoTipe CRDT (+ Yjs adapter) |
 | `CheckListPlugin` | `TodoList` | 1:1 |
-| `MarkdownShortcutPlugin` | Input rules в extensions | Автоматически из extensions |
-| `TabIndentationPlugin` | Встроен в `ListItem` | Автоматически |
-| Custom `DecoratorNode` | Custom extension с `blockRenderer` | Data-driven подход |
+| `MarkdownShortcutPlugin` | Input rules in extensions | Automatically from extensions |
+| `TabIndentationPlugin` | Built into `ListItem` | Automatic |
+| Custom `DecoratorNode` | Custom extension with `blockRenderer` | Data-driven approach |
 
 ### 4.3. React Hook
 
-**Lexical React (до):**
+**Lexical React (before):**
 
 ```tsx
 import { LexicalComposer } from '@lexical/react/LexicalComposer';
@@ -1078,7 +1078,7 @@ function MyEditor() {
 }
 ```
 
-**GoTipe React (после):**
+**GoTipe React (after):**
 
 ```tsx
 import { useEditor, Editor } from '@gotipe/react';
@@ -1108,7 +1108,7 @@ function MyEditor() {
 
 ### 4.4. Collaboration
 
-**Lexical + Yjs (до):**
+**Lexical + Yjs (before):**
 
 ```typescript
 import { CollaborationPlugin } from '@lexical/react/LexicalCollaborationPlugin';
@@ -1126,7 +1126,7 @@ import * as Y from 'yjs';
 />
 ```
 
-**GoTipe (после):**
+**GoTipe (after):**
 
 ```typescript
 import { Collaboration } from '@gotipe/collaboration';
@@ -1147,13 +1147,13 @@ const editor = useEditor({
 
 ---
 
-## 5. Миграция со Slate
+## 5. Migrating from Slate
 
-Slate -- гибкий React-фреймворк с tree-based document model. GoTipe предлагает более structured подход.
+Slate is a flexible React framework with a tree-based document model. GoTipe offers a more structured approach.
 
 ### 5.1. Document Model
 
-**Slate Document (до):**
+**Slate Document (before):**
 
 ```json
 [
@@ -1184,7 +1184,7 @@ Slate -- гибкий React-фреймворк с tree-based document model. GoT
 ]
 ```
 
-**GoTipe Document (после):**
+**GoTipe Document (after):**
 
 ```json
 {
@@ -1227,17 +1227,17 @@ Slate -- гибкий React-фреймворк с tree-based document model. GoT
 }
 ```
 
-**Ключевые различия:**
+**Key differences:**
 
-| Аспект | Slate | GoTipe |
+| Aspect | Slate | GoTipe |
 |--------|-------|--------|
-| Root | Массив nodes | `{ version, blocks }` |
-| Text formatting | Properties на text node (`{ bold: true }`) | Marks array (`[{ type: "bold" }]`) |
-| Attributes | Flat на node (`{ level: 1 }`) | В `attrs` объекте |
+| Root | An array of nodes | `{ version, blocks }` |
+| Text formatting | Properties on the text node (`{ bold: true }`) | Marks array (`[{ type: "bold" }]`) |
+| Attributes | Flat on the node (`{ level: 1 }`) | In the `attrs` object |
 | Identity | Path-based (`[0, 1, 2]`) | Block ID (`"b123"`) |
-| Custom props | Любые properties на node | Typed `attrs` через schema |
+| Custom props | Any properties on the node | Typed `attrs` via the schema |
 
-### 5.2. Конвертация Slate -> GoTipe
+### 5.2. Converting Slate -> GoTipe
 
 ```typescript
 // packages/migration/src/slate-to-gotipe.ts
@@ -1259,7 +1259,7 @@ export function convertSlateToGoTipe(slateNodes: SlateNode[]): GoTipeDocument {
 }
 
 function convertSlateNode(node: SlateNode): GoTipeBlock {
-  // Text leaf -- не конвертируем отдельно
+  // Text leaf: not converted separately
   if (node.text !== undefined) {
     throw new Error('Text nodes should be handled by parent');
   }
@@ -1341,7 +1341,7 @@ function mapSlateType(type: string): string {
 
 ### 5.3. React Integration
 
-**Slate React (до):**
+**Slate React (before):**
 
 ```tsx
 import { Slate, Editable, withReact } from 'slate-react';
@@ -1381,7 +1381,7 @@ function MyEditor() {
 }
 ```
 
-**GoTipe React (после):**
+**GoTipe React (after):**
 
 ```tsx
 import { useEditor, Editor } from '@gotipe/react';
@@ -1392,7 +1392,7 @@ function MyEditor() {
     extensions: DefaultPreset,
     content: convertSlateToGoTipe(initialValue),
     onUpdate: ({ editor }) => {
-      // GoTipe JSON вместо Slate value
+      // GoTipe JSON instead of a Slate value
       console.log(editor.getJSON());
     },
   });
@@ -1403,7 +1403,7 @@ function MyEditor() {
     <Editor
       editor={editor}
       blockRenderer={({ block, children }) => {
-        // Кастомный рендеринг если нужен
+        // Custom rendering if needed
         if (block.type === 'heading') {
           const Tag = `h${block.attrs.level}` as keyof JSX.IntrinsicElements;
           return <Tag className="custom-heading">{children}</Tag>;
@@ -1417,9 +1417,9 @@ function MyEditor() {
 
 ---
 
-## 6. Миграция с CKEditor / TinyMCE
+## 6. Migrating from CKEditor / TinyMCE
 
-CKEditor и TinyMCE -- legacy WYSIWYG editors, работающие с HTML напрямую. Миграция проще, так как GoTipe поддерживает HTML import.
+CKEditor and TinyMCE are legacy WYSIWYG editors that work with HTML directly. Migration is simpler because GoTipe supports HTML import.
 
 ### 6.1. Content Format Conversion
 
@@ -1429,7 +1429,7 @@ CKEditor и TinyMCE -- legacy WYSIWYG editors, работающие с HTML на
 import { createEditor } from '@gotipe/core';
 import { DefaultPreset } from '@gotipe/core/presets';
 
-// CKEditor хранит HTML
+// CKEditor stores HTML
 const ckeditorContent = `
   <h1>My Article</h1>
   <p>This is <strong>bold</strong> and <em>italic</em> text.</p>
@@ -1443,18 +1443,18 @@ const ckeditorContent = `
   </table>
 `;
 
-// GoTipe импортирует HTML напрямую
+// GoTipe imports HTML directly
 const editor = await createEditor({
   extensions: DefaultPreset,
-  content: ckeditorContent, // HTML строка -- автоматический импорт
+  content: ckeditorContent, // an HTML string: imported automatically
 });
 
-// Или явный импорт:
+// Or an explicit import:
 editor.setContent(ckeditorContent);
-const gotipeJson = editor.getJSON(); // GoTipe JSON для сохранения
+const gotipeJson = editor.getJSON(); // GoTipe JSON to save
 ```
 
-### 6.2. Batch конвертация из базы данных
+### 6.2. Batch Conversion from a Database
 
 ```typescript
 // scripts/migrate-ckeditor-to-gotipe.ts
@@ -1472,16 +1472,16 @@ async function migrateAll() {
 
   for (const row of rows) {
     try {
-      // 1. Импортируем HTML
+      // 1. Import the HTML
       editor.setContent(row.html_content);
 
-      // 2. Валидируем
+      // 2. Validate
       const validation = editor.validate(editor.getJSON());
       if (!validation.valid) {
         console.warn(`Document ${row.id}: validation warnings`, validation.errors);
       }
 
-      // 3. Сохраняем GoTipe JSON
+      // 3. Save the GoTipe JSON
       const gotipeJson = JSON.stringify(editor.getJSON());
       await pool.query(
         'UPDATE articles SET gotipe_content = $1 WHERE id = $2',
@@ -1505,12 +1505,12 @@ migrateAll();
 | CKEditor 5 Plugin | GoTipe Extension |
 |-------------------|-----------------|
 | `@ckeditor/ckeditor5-essentials` | `DefaultPreset` |
-| `@ckeditor/ckeditor5-paragraph` | `Paragraph` (в preset) |
-| `@ckeditor/ckeditor5-heading` | `Heading` (в preset) |
-| `@ckeditor/ckeditor5-bold` | `Bold` (в preset) |
-| `@ckeditor/ckeditor5-italic` | `Italic` (в preset) |
-| `@ckeditor/ckeditor5-link` | `Link` (в preset) |
-| `@ckeditor/ckeditor5-list` | `BulletList`, `OrderedList` (в preset) |
+| `@ckeditor/ckeditor5-paragraph` | `Paragraph` (in the preset) |
+| `@ckeditor/ckeditor5-heading` | `Heading` (in the preset) |
+| `@ckeditor/ckeditor5-bold` | `Bold` (in the preset) |
+| `@ckeditor/ckeditor5-italic` | `Italic` (in the preset) |
+| `@ckeditor/ckeditor5-link` | `Link` (in the preset) |
+| `@ckeditor/ckeditor5-list` | `BulletList`, `OrderedList` (in the preset) |
 | `@ckeditor/ckeditor5-image` | `Image` |
 | `@ckeditor/ckeditor5-table` | `Table` |
 | `@ckeditor/ckeditor5-code-block` | `CodeBlock` |
@@ -1541,7 +1541,7 @@ migrateAll();
 
 ### 6.4. Configuration Mapping
 
-**CKEditor 5 (до):**
+**CKEditor 5 (before):**
 
 ```typescript
 import ClassicEditor from '@ckeditor/ckeditor5-editor-classic/src/classiceditor';
@@ -1561,7 +1561,7 @@ ClassicEditor.create(document.querySelector('#editor'), {
 });
 ```
 
-**GoTipe (после):**
+**GoTipe (after):**
 
 ```typescript
 import { useEditor, Editor } from '@gotipe/react';
@@ -1580,7 +1580,7 @@ const editor = useEditor({
     Image.configure({
       allowedTypes: ['image/jpeg', 'image/png', 'image/gif'],
       upload: async (file) => {
-        // Ваш upload handler
+        // Your upload handler
         const formData = new FormData();
         formData.append('file', file);
         const res = await fetch('/api/upload', { method: 'POST', body: formData });
@@ -1593,7 +1593,7 @@ const editor = useEditor({
   content: existingHtmlContent,
 });
 
-// Toolbar -- React component, полная свобода кастомизации
+// Toolbar: a React component, full freedom to customize
 return (
   <Editor
     editor={editor}
@@ -1604,11 +1604,11 @@ return (
 
 ---
 
-## 7. Content Conversion (детальный гайд)
+## 7. Content Conversion (detailed guide)
 
 ### 7.1. ProseMirror JSON -> GoTipe JSON (TypeScript utility)
 
-Полная реализация конвертера описана в разделе 2.8. Установка:
+The full converter implementation is described in section 2.8. Installation:
 
 ```bash
 npm install @gotipe/migration
@@ -1630,7 +1630,7 @@ const gotipeDoc = convertProseMirrorToGoTipe(tiptapDoc);
 
 ### 7.2. HTML -> GoTipe JSON
 
-Используйте `gotipe-export` importer (Rust/WASM):
+Use the `gotipe-export` importer (Rust/WASM):
 
 ```typescript
 import { createHeadlessEditor } from '@gotipe/core/server';
@@ -1638,16 +1638,16 @@ import { DefaultPreset } from '@gotipe/core/presets';
 
 const editor = await createHeadlessEditor({ extensions: DefaultPreset });
 
-// Вариант 1: setContent с HTML строкой
+// Option 1: setContent with an HTML string
 editor.setContent('<p>Hello <strong>World</strong></p>');
 const doc = editor.getJSON();
 
-// Вариант 2: import функция
+// Option 2: the import function
 import { importDocument } from '@gotipe/core/export';
 await importDocument(editor, htmlString, 'html', {
   sanitize: true,   // XSS prevention
-  strict: false,     // Игнорировать неизвестные элементы
-  maxBlocks: 10000,  // Лимит блоков
+  strict: false,     // Ignore unknown elements
+  maxBlocks: 10000,  // Block limit
 });
 ```
 
@@ -1656,7 +1656,7 @@ await importDocument(editor, htmlString, 'html', {
 ```typescript
 const editor = await createHeadlessEditor({ extensions: DefaultPreset });
 
-// Markdown -> GoTipe JSON (через WASM, CommonMark + GFM)
+// Markdown -> GoTipe JSON (via WASM, CommonMark + GFM)
 editor.setContent(`
 # Hello World
 
@@ -1674,9 +1674,9 @@ const x = 42;
 const doc = editor.getJSON();
 ```
 
-Поддерживаемые расширения Markdown:
+Supported Markdown extensions:
 
-- CommonMark (полная поддержка)
+- CommonMark (full support)
 - GFM Tables
 - GFM Task Lists (`- [x] done`)
 - GFM Strikethrough (`~~text~~`)
@@ -1685,11 +1685,11 @@ const doc = editor.getJSON();
 - GoTipe Math (`$$LaTeX$$`)
 - GoTipe Highlight (`==text==`)
 
-Подробнее в [08-export-import.md](08-export-import.md).
+More in [08-export-import.md](08-export-import.md).
 
 ### 7.4. Notion Export -> GoTipe JSON
 
-Notion экспортирует данные как ZIP-архив с Markdown файлами:
+Notion exports data as a ZIP archive of Markdown files:
 
 ```typescript
 // scripts/import-notion.ts
@@ -1710,7 +1710,7 @@ async function importNotionExport(zipPath: string): Promise<Map<string, object>>
 
     const markdown = entry.getData().toString('utf8');
     const title = path.basename(entry.entryName, '.md')
-      .replace(/ [a-f0-9]{32}$/, ''); // Убираем Notion UUID из имени
+      .replace(/ [a-f0-9]{32}$/, ''); // Strip the Notion UUID from the name
 
     // Notion Markdown -> GoTipe JSON
     await importDocument(editor, markdown, 'markdown', {
@@ -1729,7 +1729,7 @@ async function importNotionExport(zipPath: string): Promise<Map<string, object>>
 
 ### 7.5. Batch Conversion Scripts
 
-**Скрипт массовой конвертации (PostgreSQL):**
+**Bulk conversion script (PostgreSQL):**
 
 ```typescript
 // scripts/batch-convert.ts
@@ -1815,7 +1815,7 @@ async function batchConvert(options: {
   return result;
 }
 
-// Использование:
+// Usage:
 batchConvert({
   sourceFormat: 'prosemirror',
   sourceColumn: 'tiptap_json',
@@ -1836,12 +1836,12 @@ batchConvert({
 
 ### 8.1. Yjs -> GoTipe CRDT (Adapter Pattern)
 
-Рекомендуемый подход -- постепенная миграция с использованием Yjs Compatibility Adapter:
+The recommended approach is a gradual migration using the Yjs Compatibility Adapter:
 
-**Фаза 1: GoTipe editor + Yjs backend (существующий)**
+**Phase 1: GoTipe editor + Yjs backend (existing)**
 
 ```typescript
-// Шаг 1: Замените Tiptap на GoTipe, сохранив Yjs
+// Step 1: Replace Tiptap with GoTipe, keeping Yjs
 import { Collaboration } from '@gotipe/collaboration';
 import { YjsAdapter } from '@gotipe/collaboration/adapters/yjs';
 import { HocuspocusProvider } from '@hocuspocus/provider';
@@ -1861,10 +1861,10 @@ const editor = useEditor({
 });
 ```
 
-**Фаза 2: Dual-write (параллельный запуск)**
+**Phase 2: Dual-write (parallel run)**
 
 ```typescript
-// Шаг 2: Пишем в оба backend одновременно
+// Step 2: Write to both backends at the same time
 import { DualProvider } from '@gotipe/collaboration/migration';
 
 const dualProvider = new DualProvider({
@@ -1873,14 +1873,14 @@ const dualProvider = new DualProvider({
     url: 'wss://new-gotipe-sync.com',
     documentId,
   }),
-  mode: 'shadow', // secondary получает writes, но не читается
+  mode: 'shadow', // secondary receives writes but is not read
 });
 ```
 
-**Фаза 3: Переключение на GoTipe CRDT**
+**Phase 3: Switch to the GoTipe CRDT**
 
 ```typescript
-// Шаг 3: GoTipe CRDT как primary
+// Step 3: GoTipe CRDT as primary
 const editor = useEditor({
   extensions: [
     ...DefaultPreset,
@@ -1897,7 +1897,7 @@ const editor = useEditor({
 ### 8.2. Liveblocks -> GoTipe Cloud
 
 ```typescript
-// До (Liveblocks):
+// Before (Liveblocks):
 import { createClient } from '@liveblocks/client';
 import { useRoom, RoomProvider } from '@liveblocks/react';
 
@@ -1908,7 +1908,7 @@ const client = createClient({ publicApiKey: 'pk_...' });
   <TiptapEditor />
 </RoomProvider>
 
-// После (GoTipe Cloud):
+// After (GoTipe Cloud):
 import { Collaboration } from '@gotipe/collaboration';
 import { GoTipeCloudProvider } from '@gotipe/cloud';
 
@@ -1929,11 +1929,11 @@ const editor = useEditor({
 });
 ```
 
-Подробнее о GoTipe Cloud в [10-cloud.md](10-cloud.md).
+More on GoTipe Cloud in [10-cloud.md](10-cloud.md).
 
 ### 8.3. Custom WebSocket -> GoTipe Provider
 
-Если у вас собственный WebSocket сервер для collaboration, реализуйте `CollaborationProvider` interface:
+If you have your own WebSocket server for collaboration, implement the `CollaborationProvider` interface:
 
 ```typescript
 import type { CollaborationProvider } from '@gotipe/collaboration';
@@ -1982,7 +1982,7 @@ class CustomProvider implements CollaborationProvider {
   destroy(): void { this.disconnect(); }
 }
 
-// Использование:
+// Usage:
 const editor = useEditor({
   extensions: [
     ...DefaultPreset,
@@ -1993,7 +1993,7 @@ const editor = useEditor({
 });
 ```
 
-Описание GoTipe sync protocol (binary) в [02-collaboration.md#sync-protocol](02-collaboration.md#sync-protocol).
+The GoTipe sync protocol (binary) is described in [02-collaboration.md#sync-protocol](02-collaboration.md#sync-protocol).
 
 ---
 
@@ -2001,7 +2001,7 @@ const editor = useEditor({
 
 ### 9.1. Content Parity Tests
 
-Убедитесь, что конвертация контента не теряет данные:
+Make sure the content conversion does not lose data:
 
 ```typescript
 // tests/migration/content-parity.test.ts
@@ -2095,7 +2095,7 @@ describe('Content Parity: Tiptap -> GoTipe', () => {
     editor.setContent(html);
     const exportedHtml = editor.getHTML();
 
-    // Re-import и сравнить
+    // Re-import and compare
     editor.setContent(exportedHtml);
     const json = editor.getJSON();
 
@@ -2108,7 +2108,7 @@ describe('Content Parity: Tiptap -> GoTipe', () => {
 
 ### 9.2. Feature Parity Checklist
 
-Используйте этот чеклист для верификации миграции:
+Use this checklist to verify the migration:
 
 ```markdown
 ## Feature Parity Checklist
@@ -2126,10 +2126,10 @@ describe('Content Parity: Tiptap -> GoTipe', () => {
 ### Block Types
 - [ ] Paragraph
 - [ ] Heading (H1-H6)
-- [ ] Bullet list (с вложенностью)
-- [ ] Ordered list (с вложенностью)
+- [ ] Bullet list (with nesting)
+- [ ] Ordered list (with nesting)
 - [ ] Task list (checkboxes)
-- [ ] Code block (с syntax highlighting)
+- [ ] Code block (with syntax highlighting)
 - [ ] Blockquote
 - [ ] Image (upload + paste)
 - [ ] Table (insert, resize, merge cells)
@@ -2138,7 +2138,7 @@ describe('Content Parity: Tiptap -> GoTipe', () => {
 
 ### UX Features
 - [ ] Slash commands (/)
-- [ ] Markdown shortcuts (# , ** , - , и т.д.)
+- [ ] Markdown shortcuts (# , ** , - , etc.)
 - [ ] Drag and drop blocks
 - [ ] Placeholder text
 - [ ] Auto-linking URLs
@@ -2165,11 +2165,11 @@ describe('Content Parity: Tiptap -> GoTipe', () => {
 - [ ] Import DOCX
 
 ### Custom Features
-- [ ] Кастомные extensions (если были)
-- [ ] Кастомные NodeViews / block renderers
-- [ ] Кастомные toolbar кнопки
-- [ ] Кастомные slash commands
-- [ ] API интеграции
+- [ ] Custom extensions (if you had any)
+- [ ] Custom NodeViews / block renderers
+- [ ] Custom toolbar buttons
+- [ ] Custom slash commands
+- [ ] API integrations
 ```
 
 ### 9.3. Performance Comparison
@@ -2181,8 +2181,8 @@ import { bench, describe } from 'vitest';
 import { createHeadlessEditor } from '@gotipe/core/server';
 
 describe('Performance Comparison', () => {
-  // Генерируем тестовый документ
-  const largeDoc = generateLargeDocument(10000); // 10K блоков
+  // Generate a test document
+  const largeDoc = generateLargeDocument(10000); // 10K blocks
 
   bench('GoTipe: parse 10K blocks from JSON', async () => {
     const editor = await createHeadlessEditor({ extensions: DefaultPreset });
@@ -2207,10 +2207,10 @@ describe('Performance Comparison', () => {
 });
 ```
 
-Target performance (из [01-architecture.md#performance](01-architecture.md#performance)):
+Target performance (from [01-architecture.md#performance](01-architecture.md#performance)):
 
-| Операция | ProseMirror (JS) | GoTipe (WASM) | Speedup |
-|----------|------------------|---------------|---------|
+| Operation | ProseMirror (JS) | GoTipe (WASM) | Speedup |
+|-----------|------------------|---------------|---------|
 | Parse 10K blocks from JSON | ~120ms | ~25ms | 4.8x |
 | Apply 1000 sequential inserts | ~85ms | ~18ms | 4.7x |
 | Schema validation (10K blocks) | ~45ms | ~8ms | 5.6x |
@@ -2280,44 +2280,44 @@ test.describe('Accessibility', () => {
 
 ## 10. Browser Compatibility Matrix
 
-### Поддерживаемые браузеры
+### Supported Browsers
 
-| Browser | Минимальная версия | WASM | WebSocket | contentEditable | Notes |
+| Browser | Minimum version | WASM | WebSocket | contentEditable | Notes |
 |---------|-------------------|------|-----------|-----------------|-------|
-| **Chrome** | 90+ | Полная | Полная | Полная | Основной target |
-| **Firefox** | 90+ | Полная | Полная | Полная | |
-| **Safari** | 15+ | Полная | Полная | Полная | Safari 14 -- partial WASM support |
-| **Edge** | 90+ | Полная | Полная | Полная | Chromium-based |
-| **Chrome Android** | 90+ | Полная | Полная | Полная | Mobile keyboard handling |
-| **Safari iOS** | 15+ | Полная | Полная | Ограниченная | Selection API ограничен |
-| **Samsung Internet** | 15+ | Полная | Полная | Полная | Chromium-based |
-| **Opera** | 76+ | Полная | Полная | Полная | Chromium-based |
+| **Chrome** | 90+ | Full | Full | Full | Primary target |
+| **Firefox** | 90+ | Full | Full | Full | |
+| **Safari** | 15+ | Full | Full | Full | Safari 14 -- partial WASM support |
+| **Edge** | 90+ | Full | Full | Full | Chromium-based |
+| **Chrome Android** | 90+ | Full | Full | Full | Mobile keyboard handling |
+| **Safari iOS** | 15+ | Full | Full | Limited | The Selection API is limited |
+| **Samsung Internet** | 15+ | Full | Full | Full | Chromium-based |
+| **Opera** | 76+ | Full | Full | Full | Chromium-based |
 
 ### Feature Detection
 
-GoTipe автоматически определяет возможности браузера и активирует fallback при необходимости:
+GoTipe automatically detects browser capabilities and activates a fallback when needed:
 
 ```typescript
 // packages/core/src/feature-detection.ts
 
 export interface BrowserCapabilities {
-  /** WebAssembly поддерживается */
+  /** WebAssembly is supported */
   wasm: boolean;
-  /** WebAssembly SIMD поддерживается (ускоренные операции) */
+  /** WebAssembly SIMD is supported (accelerated operations) */
   wasmSimd: boolean;
-  /** SharedArrayBuffer доступен (multi-threaded WASM) */
+  /** SharedArrayBuffer is available (multi-threaded WASM) */
   sharedArrayBuffer: boolean;
-  /** WebSocket поддерживается */
+  /** WebSocket is supported */
   webSocket: boolean;
-  /** IndexedDB для offline persistence */
+  /** IndexedDB for offline persistence */
   indexedDB: boolean;
   /** Clipboard API (async) */
   clipboardApi: boolean;
-  /** Selection API (полная) */
+  /** Selection API (full) */
   selectionApi: boolean;
   /** Drag and Drop API */
   dragAndDrop: boolean;
-  /** ResizeObserver (для virtual rendering) */
+  /** ResizeObserver (for virtual rendering) */
   resizeObserver: boolean;
   /** InputEvent.getTargetRanges() */
   inputEventLevel2: boolean;
@@ -2342,11 +2342,11 @@ export function detectCapabilities(): BrowserCapabilities {
 
 ### Polyfills
 
-| Feature | Polyfill | Когда нужен |
+| Feature | Polyfill | When needed |
 |---------|----------|-------------|
-| WebAssembly | JS fallback (`@gotipe/core-js`) | IE11 (не поддерживается), очень старые браузеры |
+| WebAssembly | JS fallback (`@gotipe/core-js`) | IE11 (not supported), very old browsers |
 | ResizeObserver | `resize-observer-polyfill` | Safari < 13.1 |
-| Clipboard API | Fallback на `document.execCommand` | Firefox < 87 (partial) |
+| Clipboard API | Fallback to `document.execCommand` | Firefox < 87 (partial) |
 | `structuredClone` | `core-js/actual/structured-clone` | Node.js < 17, Safari < 15.4 |
 
 ```typescript
@@ -2369,45 +2369,45 @@ export async function ensurePolyfills(): Promise<void> {
 
 ### Graceful Degradation
 
-| Сценарий | Поведение |
+| Scenario | Behavior |
 |----------|----------|
-| WASM не поддерживается | Fallback на JS polyfill (`@gotipe/core-js`). Медленнее в 2-5x, но работает |
-| WebSocket недоступен | Offline mode. Все изменения в CRDT, sync при reconnect |
-| Clipboard API недоступен | Fallback на `document.execCommand('copy')` |
-| Drag and Drop недоступен | Блоки перемещаются через slash commands / cut-paste |
-| SharedArrayBuffer недоступен | Single-threaded WASM (без COOP/COEP). Работает, немного медленнее |
+| WASM is not supported | Fall back to the JS polyfill (`@gotipe/core-js`). 2-5x slower, but works |
+| WebSocket is unavailable | Offline mode. All changes go into the CRDT, sync on reconnect |
+| Clipboard API is unavailable | Fall back to `document.execCommand('copy')` |
+| Drag and Drop is unavailable | Blocks are moved via slash commands / cut-paste |
+| SharedArrayBuffer is unavailable | Single-threaded WASM (without COOP/COEP). Works, slightly slower |
 
 ### Known Limitations per Browser
 
 | Browser | Limitation | Workaround |
 |---------|-----------|-----------|
-| **Safari iOS** | Selection API не поддерживает `setBaseAndExtent` полностью | Используем fallback через `Range` API |
-| **Safari iOS** | Виртуальная клавиатура может скрывать toolbar | `visualViewport` API для позиционирования |
-| **Safari** | `contenteditable` edge cases с IME input | Обработка через `CompositionEvent` |
-| **Firefox** | `document.execCommand('insertText')` deprecated | Используем `InputEvent` level 2 |
-| **Firefox** | `getTargetRanges()` возвращает пустой массив для некоторых input types | Fallback на `beforeinput` data |
-| **Chrome Android** | Swipe-to-type (Gboard) генерирует нестандартные events | Специальная обработка composition events |
-| **Samsung Internet** | Custom fonts в PDF export могут не загружаться | Используем bundled fonts |
+| **Safari iOS** | The Selection API does not fully support `setBaseAndExtent` | Use a fallback via the `Range` API |
+| **Safari iOS** | The virtual keyboard can cover the toolbar | Use the `visualViewport` API for positioning |
+| **Safari** | `contenteditable` edge cases with IME input | Handled via `CompositionEvent` |
+| **Firefox** | `document.execCommand('insertText')` is deprecated | Use `InputEvent` level 2 |
+| **Firefox** | `getTargetRanges()` returns an empty array for some input types | Fall back to `beforeinput` data |
+| **Chrome Android** | Swipe-to-type (Gboard) generates non-standard events | Special handling of composition events |
+| **Samsung Internet** | Custom fonts in PDF export may fail to load | Use bundled fonts |
 
 ### WASM Binary Size Impact
 
-| Browser | Кеш WASM | Streaming Compile | Результат |
-|---------|---------|-------------------|----------|
-| Chrome 90+ | Да (V8 code cache) | Да (`WebAssembly.compileStreaming`) | Первый load ~100ms, повторный ~20ms |
-| Firefox 90+ | Да | Да | Первый load ~120ms, повторный ~25ms |
-| Safari 15+ | Да | Частично | Первый load ~150ms, повторный ~30ms |
-| Edge 90+ | Да (V8) | Да | Как Chrome |
+| Browser | WASM cache | Streaming Compile | Result |
+|---------|---------|-------------------|--------|
+| Chrome 90+ | Yes (V8 code cache) | Yes (`WebAssembly.compileStreaming`) | First load ~100ms, repeat load ~20ms |
+| Firefox 90+ | Yes | Yes | First load ~120ms, repeat load ~25ms |
+| Safari 15+ | Yes | Partial | First load ~150ms, repeat load ~30ms |
+| Edge 90+ | Yes (V8) | Yes | Same as Chrome |
 
 ```typescript
-// Оптимальная загрузка WASM с кешированием
+// Optimal WASM loading with caching
 async function loadWasm(): Promise<WebAssembly.Module> {
   const wasmUrl = new URL('@gotipe/wasm/gotipe_wasm_bg.wasm', import.meta.url);
 
   if (typeof WebAssembly.compileStreaming === 'function') {
-    // Streaming compile -- самый быстрый путь
+    // Streaming compile -- the fastest path
     return WebAssembly.compileStreaming(fetch(wasmUrl));
   } else {
-    // Fallback для Safari < 15.2
+    // Fallback for Safari < 15.2
     const response = await fetch(wasmUrl);
     const bytes = await response.arrayBuffer();
     return WebAssembly.compile(bytes);
@@ -2417,10 +2417,10 @@ async function loadWasm(): Promise<WebAssembly.Module> {
 
 ---
 
-## Связанные документы
+## Related Documents
 
-- [00-overview.md](00-overview.md) -- Обзор продукта, целевая аудитория
-- [01-architecture.md](01-architecture.md) -- Архитектура системы, Rust/WASM core, document model, performance benchmarks
+- [00-overview.md](00-overview.md) -- Product overview, target audience
+- [01-architecture.md](01-architecture.md) -- System architecture, Rust/WASM core, document model, performance benchmarks
 - [02-collaboration.md](02-collaboration.md) -- Real-time collaboration, CRDT engine, sync protocol, Yjs compatibility adapter
 - [03-editor-core.md](03-editor-core.md) -- Editor core: schema, transforms, commands, EditorState
 - [04-block-editor.md](04-block-editor.md) -- Block editor UX: slash commands, drag-and-drop, Notion-like
@@ -2430,4 +2430,4 @@ async function loadWasm(): Promise<WebAssembly.Module> {
 - [08-export-import.md](08-export-import.md) -- Document conversion: HTML, Markdown, PDF, DOCX
 - [09-sdk-and-api.md](09-sdk-and-api.md) -- SDK packages, types, API reference
 - [10-cloud.md](10-cloud.md) -- GoTipe Cloud: managed sync, AI, export
-- [13-competitive.md](13-competitive.md) -- Конкурентный анализ: Tiptap, ProseMirror, Lexical, Slate, CKEditor
+- [13-competitive.md](13-competitive.md) -- Competitive analysis: Tiptap, ProseMirror, Lexical, Slate, CKEditor

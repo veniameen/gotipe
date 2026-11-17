@@ -1,15 +1,15 @@
 # GoTipe — Comments, Version History & Permissions
 
-> **Историческая спецификация, не руководство по текущему API.** Примеры, сроки,
-> сравнения производительности, коммерческие условия и обещания ниже не подтверждают
-> реализацию или доступность сервиса. Актуально: [контракты](development/editor-contracts.md),
-> [карта кода](development/code-map.md), [проверки](development/testing.md),
-> [план выпуска](22-release-readiness.md). Лицензии определяются `LICENSE` и manifest
-> каждого пакета, а не этим документом.
+> **Historical specification, not a guide to the current API.** The examples, timelines,
+> performance comparisons, commercial terms and promises below do not confirm an
+> implementation or the availability of the service. Current references: [contracts](development/editor-contracts.md),
+> [code map](development/code-map.md), [checks](development/testing.md),
+> [release plan](22-release-readiness.md). Licenses are defined by `LICENSE` and the manifest
+> of each package, not by this document.
 
-## Обзор
+## Overview
 
-GoTipe предоставляет встроенную систему комментариев, историю версий и гранулярную модель прав доступа. Все три подсистемы интегрированы с CRDT-ядром — комментарии и suggestions синхронизируются в real-time, версии строятся на CRDT state vectors, а permissions проверяются и на клиенте (WASM), и на сервере (Go/Rust).
+GoTipe provides a built-in comment system, version history and a granular access permission model. All three subsystems are integrated with the CRDT core: comments and suggestions sync in real time, versions are built on CRDT state vectors, and permissions are checked both on the client (WASM) and on the server (Go/Rust).
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
@@ -38,23 +38,23 @@ GoTipe предоставляет встроенную систему комме
 └─────────────────────────────────────────────────────────────────┘
 ```
 
-Зависимости: система комментариев и versioning используют CRDT engine из [02-collaboration.md](02-collaboration.md), extension API из [05-extensions.md](05-extensions.md), Cloud инфраструктуру из [10-cloud.md](10-cloud.md).
+Dependencies: the comment and versioning systems use the CRDT engine from [02-collaboration.md](02-collaboration.md), the extension API from [05-extensions.md](05-extensions.md), and the Cloud infrastructure from [10-cloud.md](10-cloud.md).
 
 ---
 
-## 1. Система комментариев — обзор
+## 1. Comment System — Overview
 
-GoTipe поддерживает три типа комментариев:
+GoTipe supports three types of comments:
 
-| Тип | Описание | Хранение |
-|-----|----------|----------|
-| **Inline comment** | Привязан к диапазону текста через `CommentMark` | CRDT mark на text spans |
-| **Block comment** | Привязан к конкретному блоку (image, table, code block) | CRDT block attribute |
-| **Document comment** | Не привязан к контенту, относится к документу в целом | Отдельный CRDT map |
+| Type | Description | Storage |
+|------|-------------|---------|
+| **Inline comment** | Attached to a text range via `CommentMark` | CRDT mark on text spans |
+| **Block comment** | Attached to a specific block (image, table, code block) | CRDT block attribute |
+| **Document comment** | Not attached to content, belongs to the document as a whole | Separate CRDT map |
 
-Все комментарии поддерживают threads (ответы), reactions, и resolution (пометка "resolved").
+All comments support threads (replies), reactions, and resolution (marking as "resolved").
 
-### Жизненный цикл комментария
+### Comment Lifecycle
 
 ```
    Created ──► Active ──► Resolved ──► Deleted
@@ -70,7 +70,7 @@ GoTipe поддерживает три типа комментариев:
 
 ## 2. Comment Architecture
 
-### Модель данных (Rust)
+### Data Model (Rust)
 
 ```rust
 // crates/gotipe-comments/src/comment.rs
@@ -79,29 +79,29 @@ use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use gotipe_crdt::PeerId;
 
-/// Уникальный идентификатор комментария
+/// Unique comment identifier
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct CommentId(pub String);
 
-/// Тип привязки комментария к контенту
+/// How a comment is anchored to content
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum CommentAnchor {
-    /// Inline: привязан к диапазону текста в блоке
+    /// Inline: attached to a text range in a block
     Inline {
         block_id: BlockId,
-        /// CRDT-позиции (стабильны при concurrent edits)
+        /// CRDT positions (stable under concurrent edits)
         from: CrdtPosition,
         to: CrdtPosition,
     },
-    /// Block: привязан к целому блоку
+    /// Block: attached to a whole block
     Block {
         block_id: BlockId,
     },
-    /// Document: не привязан к контенту
+    /// Document: not attached to content
     Document,
 }
 
-/// Комментарий
+/// Comment
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Comment {
     pub id: CommentId,
@@ -117,7 +117,7 @@ pub struct Comment {
     pub metadata: HashMap<String, serde_json::Value>,
 }
 
-/// Реакция на комментарий (emoji)
+/// Reaction to a comment (emoji)
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Reaction {
     pub emoji: String,
@@ -125,7 +125,7 @@ pub struct Reaction {
     pub created_at: DateTime<Utc>,
 }
 
-/// Thread — корневой комментарий + все replies
+/// Thread: the root comment plus all replies
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CommentThread {
     pub root: Comment,
@@ -134,9 +134,9 @@ pub struct CommentThread {
 }
 ```
 
-### CommentMark — inline mark для комментариев
+### CommentMark — Inline Mark for Comments
 
-Inline комментарии реализованы как mark (см. [05-extensions.md](05-extensions.md)). `CommentMark` — это mark, который сохраняет `comment_id` в attributes и рендерится как highlight поверх текста.
+Inline comments are implemented as a mark (see [05-extensions.md](05-extensions.md)). `CommentMark` is a mark that stores `comment_id` in its attributes and renders as a highlight over the text.
 
 ```rust
 // crates/gotipe-comments/src/mark.rs
@@ -164,9 +164,9 @@ impl Extension for CommentMarkExtension {
                     required: false,
                 },
             ],
-            // CommentMark может сосуществовать с bold, italic и другими marks
+            // CommentMark can coexist with bold, italic and other marks
             excludes: "".to_string(),
-            // Несколько комментариев могут перекрываться на одном тексте
+            // Several comments can overlap on the same text
             spanning: true,
             inclusive: false,
         }]
@@ -174,31 +174,31 @@ impl Extension for CommentMarkExtension {
 }
 ```
 
-### Интеграция с CRDT
+### CRDT Integration
 
-Комментарии хранятся в отдельном CRDT map внутри `CrdtDocument`. Это позволяет:
+Comments are stored in a separate CRDT map inside `CrdtDocument`. This allows:
 
-1. **Concurrent comments** — два пользователя могут одновременно создать комментарии на один и тот же текст без конфликтов.
-2. **Стабильные anchor** — позиции `from`/`to` используют CRDT-позиции (не числовые offsets), что позволяет комментарию сохранять привязку к тексту даже при concurrent edits.
-3. **Независимый sync** — комментарии синхронизируются вместе с документом, но могут быть resolved/deleted без изменения текста.
+1. **Concurrent comments**: two users can create comments on the same text at the same time without conflicts.
+2. **Stable anchors**: the `from`/`to` positions use CRDT positions (not numeric offsets), so a comment keeps its binding to the text even under concurrent edits.
+3. **Independent sync**: comments sync together with the document, but can be resolved or deleted without changing the text.
 
 ```rust
-// Внутри CrdtDocument
+// Inside CrdtDocument
 pub struct CrdtDocument {
     // ... (tree, texts, attrs, version, history)
 
-    /// Comments — CRDT map для хранения комментариев
+    /// Comments: CRDT map that stores comments
     comments: CrdtMap<CommentId, Comment>,
 
-    /// Suggestion marks — отдельный CRDT map
+    /// Suggestion marks: a separate CRDT map
     suggestions: CrdtMap<SuggestionId, Suggestion>,
 }
 ```
 
-### Real-time sync комментариев
+### Real-time Comment Sync
 
 ```
-Client A: addComment()                    Client B: видит новый комментарий
+Client A: addComment()                    Client B: sees the new comment
     │                                          ▲
     ▼                                          │
   CRDT: insert into comments map            CRDT: merge remote ops
@@ -222,66 +222,66 @@ Client A: addComment()                    Client B: видит новый ком
 import { Editor } from '@gotipe/core';
 
 export interface CommentOptions {
-  /** Контент комментария (plain text или rich text) */
+  /** Comment content (plain text or rich text) */
   content: string;
-  /** Метаданные (произвольные key-value) */
+  /** Metadata (arbitrary key-value) */
   metadata?: Record<string, unknown>;
 }
 
 export interface CommentPlugin {
   /**
-   * Добавить inline комментарий к текущему selection.
-   * Создаёт CommentMark на выделенном тексте.
+   * Add an inline comment to the current selection.
+   * Creates a CommentMark on the selected text.
    */
   addComment(options: CommentOptions): Comment;
 
   /**
-   * Добавить block-level комментарий к указанному блоку.
+   * Add a block-level comment to the given block.
    */
   addBlockComment(blockId: string, options: CommentOptions): Comment;
 
   /**
-   * Добавить document-level комментарий (не привязан к контенту).
+   * Add a document-level comment (not attached to content).
    */
   addDocumentComment(options: CommentOptions): Comment;
 
   /**
-   * Ответить на существующий комментарий (thread reply).
+   * Reply to an existing comment (thread reply).
    */
   replyToComment(commentId: string, options: CommentOptions): Comment;
 
   /**
-   * Пометить комментарий как resolved.
+   * Mark a comment as resolved.
    */
   resolveComment(commentId: string): void;
 
   /**
-   * Повторно открыть resolved комментарий.
+   * Reopen a resolved comment.
    */
   reopenComment(commentId: string): void;
 
   /**
-   * Удалить комментарий. Если это root — удаляет весь thread.
+   * Delete a comment. If it is a root comment, the whole thread is deleted.
    */
   deleteComment(commentId: string): void;
 
   /**
-   * Получить все комментарии (фильтр опционален).
+   * Get all comments (the filter is optional).
    */
   getComments(filter?: CommentFilter): CommentThread[];
 
   /**
-   * Получить комментарии для конкретного блока.
+   * Get the comments for a specific block.
    */
   getBlockComments(blockId: string): CommentThread[];
 
   /**
-   * Добавить reaction (emoji) к комментарию.
+   * Add a reaction (emoji) to a comment.
    */
   addReaction(commentId: string, emoji: string): void;
 
   /**
-   * Убрать свою reaction.
+   * Remove your own reaction.
    */
   removeReaction(commentId: string, emoji: string): void;
 }
@@ -294,7 +294,7 @@ export interface CommentFilter {
 }
 ```
 
-### Использование
+### Usage
 
 ```typescript
 import { GoTipeEditor } from '@gotipe/react';
@@ -303,25 +303,25 @@ import { CommentsExtension } from '@gotipe/comments';
 const editor = new GoTipeEditor({
   extensions: [
     CommentsExtension.configure({
-      // Callback для получения данных пользователя
+      // Callback that returns user data
       getUser: (peerId) => ({
         name: 'Alice',
         avatar: '/avatars/alice.png',
       }),
-      // Разрешить resolved комментариям оставаться видимыми
+      // Let resolved comments stay visible
       showResolved: true,
     }),
   ],
 });
 
-// Создать inline комментарий на текущем selection
+// Create an inline comment on the current selection
 const comment = editor.comments.addComment({
-  content: 'Нужно переформулировать этот абзац',
+  content: 'This paragraph needs rewording',
 });
 
-// Ответить на комментарий
+// Reply to the comment
 editor.comments.replyToComment(comment.id, {
-  content: 'Согласен, исправлю',
+  content: 'Agreed, I will fix it',
 });
 
 // Resolve
@@ -331,10 +331,10 @@ editor.comments.resolveComment(comment.id);
 ### Events
 
 ```typescript
-// Подписка на события комментариев
+// Subscribe to comment events
 editor.on('commentAdded', (comment: Comment) => {
   console.log(`New comment by ${comment.author}: ${comment.content}`);
-  // Показать notification, обновить sidebar
+  // Show a notification, update the sidebar
 });
 
 editor.on('commentResolved', (comment: Comment) => {
@@ -346,7 +346,7 @@ editor.on('commentDeleted', (commentId: string) => {
 });
 
 editor.on('commentUpdated', (comment: Comment) => {
-  // Thread reply, reaction, или edit
+  // Thread reply, reaction, or edit
 });
 ```
 
@@ -356,7 +356,7 @@ editor.on('commentUpdated', (comment: Comment) => {
 
 ### React Components
 
-GoTipe предоставляет headless UI-компоненты для комментариев. Стилизация через CSS — компоненты не навязывают визуальный стиль.
+GoTipe provides headless UI components for comments. Styling is done through CSS; the components do not impose a visual style.
 
 ```typescript
 // packages/react/src/comments/CommentBubble.tsx
@@ -364,8 +364,8 @@ GoTipe предоставляет headless UI-компоненты для ком
 import { useComments, useCurrentComment } from '@gotipe/react';
 
 /**
- * CommentBubble — всплывающий bubble рядом с выделенным комментарием.
- * Появляется при клике на highlighted текст с CommentMark.
+ * CommentBubble: a popup bubble next to the highlighted comment.
+ * Appears on click on highlighted text with a CommentMark.
  */
 export function CommentBubble() {
   const { activeComment, position } = useCurrentComment();
@@ -383,8 +383,8 @@ export function CommentBubble() {
 }
 
 /**
- * CommentSidebar — боковая панель со списком всех комментариев.
- * Поддерживает фильтрацию, скролл к комментарию в документе.
+ * CommentSidebar: a side panel listing all comments.
+ * Supports filtering and scrolling to the comment in the document.
  */
 export function CommentSidebar() {
   const { threads, filter, setFilter } = useComments();
@@ -411,7 +411,7 @@ export function CommentSidebar() {
 }
 
 /**
- * CommentThread — отображение одного thread (root + replies).
+ * CommentThread: renders a single thread (root + replies).
  */
 export function CommentThread({ thread }: { thread: CommentThread }) {
   const { replyToComment, resolveComment, deleteComment } = useComments();
@@ -442,12 +442,12 @@ export function CommentThread({ thread }: { thread: CommentThread }) {
 }
 ```
 
-### Highlighting commented text
+### Highlighting Commented Text
 
-Текст с `CommentMark` визуально выделяется:
+Text with a `CommentMark` is visually highlighted:
 
 ```css
-/* Активный (unresolved) комментарий */
+/* Active (unresolved) comment */
 .gotipe-comment-highlight {
   background-color: rgba(255, 212, 0, 0.3);
   border-bottom: 2px solid #ffd400;
@@ -455,18 +455,18 @@ export function CommentThread({ thread }: { thread: CommentThread }) {
   transition: background-color 0.15s ease;
 }
 
-/* Hover — усиленный highlight */
+/* Hover: stronger highlight */
 .gotipe-comment-highlight:hover {
   background-color: rgba(255, 212, 0, 0.5);
 }
 
-/* Resolved комментарий — subtle highlight */
+/* Resolved comment: subtle highlight */
 .gotipe-comment-highlight--resolved {
   background-color: rgba(0, 0, 0, 0.04);
   border-bottom: 1px dashed #ccc;
 }
 
-/* Перекрывающиеся комментарии — более глубокий цвет */
+/* Overlapping comments: a deeper color */
 .gotipe-comment-highlight[data-comment-depth="2"] {
   background-color: rgba(255, 180, 0, 0.35);
 }
@@ -474,19 +474,19 @@ export function CommentThread({ thread }: { thread: CommentThread }) {
 
 ### Comments UX Flow (Google Docs-like)
 
-Полный пользовательский flow создания и управления комментариями:
+The full user flow for creating and managing comments:
 
-#### Создание комментария
+#### Creating a Comment
 
 ```
-1. Выделить текст → в Bubble Menu появляется кнопка "Add comment" (💬)
+1. Select text → an "Add comment" button (💬) appears in the Bubble Menu
    ┌────────────────────────────────────────────────────────┐
    │ ✨ Improve │ Paragraph ▾ │ B I U S </> 🔗 │ A▾ │ 💬 │
    └────────────────────────────────────────────────────────┘
                                                        ↑
                                               "Add comment" button
 
-2. Клик → текст подсвечивается highlight, справа появляется comment input:
+2. Click → the text is highlighted and a comment input appears on the right:
    ┌───────────────────────────────────────────────────────────┐
    │ Document text with [highlighted comment range] here.      │
    │                                              ┌──────────┐│
@@ -501,9 +501,9 @@ export function CommentThread({ thread }: { thread: CommentThread }) {
    └───────────────────────────────────────────────────────────┘
 ```
 
-#### Comment Sidebar (правая панель)
+#### Comment Sidebar (right panel)
 
-Все комментарии отображаются в sidebar справа от документа. Каждый комментарий — bubble, выровненный по высоте с текстом, к которому он привязан.
+All comments are shown in a sidebar to the right of the document. Each comment is a bubble aligned in height with the text it is attached to.
 
 ```
 ┌─── Document ────────────────────────┬── Comment Sidebar ──────────┐
@@ -534,7 +534,7 @@ export function CommentThread({ thread }: { thread: CommentThread }) {
 
 #### Comment Thread Popover
 
-Клик на highlighted текст → открывается thread popover:
+Clicking highlighted text opens a thread popover:
 
 ```
 ┌────────────────────────────────────┐
@@ -559,7 +559,7 @@ export function CommentThread({ thread }: { thread: CommentThread }) {
 
 #### Comment Navigation
 
-Навигация между комментариями (prev/next):
+Navigation between comments (prev/next):
 
 ```
 ┌────────────────────────────────────┐
@@ -567,16 +567,16 @@ export function CommentThread({ thread }: { thread: CommentThread }) {
 └────────────────────────────────────┘
 ```
 
-| Элемент | Описание |
-|---------|----------|
-| Counter | `N / Total` — текущий / всего активных комментариев |
-| Arrows `◄` `►` | Переход к предыдущему/следующему. Документ скроллится к позиции комментария |
+| Element | Description |
+|---------|-------------|
+| Counter | `N / Total`: current / total active comments |
+| Arrows `◄` `►` | Jump to the previous/next comment. The document scrolls to the comment position |
 | Filter | Tabs: "Open" (N) / "Resolved" (N) |
 
-#### Визуальные спецификации комментариев
+#### Comment Visual Specifications
 
-| Свойство | Значение |
-|----------|---------|
+| Property | Value |
+|----------|-------|
 | Comment highlight | `rgba(255, 212, 0, 0.25)` background + `2px solid rgba(255, 212, 0, 0.5)` border-bottom |
 | Comment highlight hover | `rgba(255, 212, 0, 0.4)` background |
 | Resolved highlight | `rgba(0, 0, 0, 0.04)` background, `1px dashed --gt-border` border-bottom |
@@ -586,26 +586,26 @@ export function CommentThread({ thread }: { thread: CommentThread }) {
 | Timestamp | 12px, `--gt-text-tertiary` |
 | Quoted text | 13px, italic, `--gt-text-secondary`, 2px `--gt-border` border-left, padding-left 8px |
 | Reply input | border-radius 8px, `--gt-bg-hover` background, placeholder "Reply..." |
-| Resolve button | Ghost button, `--gt-success` цвет при hover |
+| Resolve button | Ghost button, `--gt-success` color on hover |
 | Thread connector | Vertical line 1px `--gt-border` connecting root to replies |
 
 ---
 
 ## 5. Suggestions / Track Changes
 
-Suggestions (предложенные изменения) — режим редактирования, при котором правки не применяются сразу, а отображаются как diff, который можно принять или отклонить. Аналог Track Changes в Google Docs / Word.
+Suggestions (proposed changes) are an editing mode in which edits are not applied immediately but shown as a diff that can be accepted or rejected. It is the equivalent of Track Changes in Google Docs / Word.
 
-### Типы suggestions
+### Suggestion Types
 
-| Тип | Описание | Mark |
+| Type | Description | Mark |
 |-----|----------|------|
-| **Insert** | Добавленный текст | `SuggestionMark { type: "insert" }` |
-| **Delete** | Удалённый текст (strikethrough) | `SuggestionMark { type: "delete" }` |
-| **Replace** | Замена текста (delete + insert) | Два mark: delete на старый, insert на новый |
-| **Format** | Изменение форматирования (bold, italic) | `SuggestionMark { type: "format", oldMarks, newMarks }` |
-| **Block change** | Изменение типа блока (paragraph -> heading) | Block attribute suggestion |
+| **Insert** | Added text | `SuggestionMark { type: "insert" }` |
+| **Delete** | Deleted text (strikethrough) | `SuggestionMark { type: "delete" }` |
+| **Replace** | Text replacement (delete + insert) | Two marks: delete on the old text, insert on the new |
+| **Format** | Formatting change (bold, italic) | `SuggestionMark { type: "format", oldMarks, newMarks }` |
+| **Block change** | Block type change (paragraph -> heading) | Block attribute suggestion |
 
-### Модель данных
+### Data Model
 
 ```rust
 // crates/gotipe-suggestions/src/suggestion.rs
@@ -637,7 +637,7 @@ pub struct Suggestion {
     pub author: PeerId,
     pub created_at: DateTime<Utc>,
     pub anchor: SuggestionAnchor,
-    /// Связанный comment thread (опционально)
+    /// Linked comment thread (optional)
     pub comment_thread: Option<CommentId>,
     pub status: SuggestionStatus,
 }
@@ -681,49 +681,49 @@ impl Extension for SuggestionMarkExtension {
 
 export interface SuggestionsPlugin {
   /**
-   * Включить/выключить режим suggestions.
-   * В этом режиме все правки создают suggestions вместо прямых изменений.
+   * Turn suggestion mode on or off.
+   * In this mode all edits create suggestions instead of direct changes.
    */
   setSuggestionMode(enabled: boolean): void;
 
   /**
-   * Принять suggestion — применить изменение к документу.
+   * Accept a suggestion: apply the change to the document.
    */
   acceptSuggestion(suggestionId: string): void;
 
   /**
-   * Отклонить suggestion — убрать предложенное изменение.
+   * Reject a suggestion: remove the proposed change.
    */
   rejectSuggestion(suggestionId: string): void;
 
   /**
-   * Принять все pending suggestions.
+   * Accept all pending suggestions.
    */
   acceptAllSuggestions(): void;
 
   /**
-   * Отклонить все pending suggestions.
+   * Reject all pending suggestions.
    */
   rejectAllSuggestions(): void;
 
   /**
-   * Получить все suggestions с фильтрами.
+   * Get all suggestions, with filters.
    */
   getSuggestions(filter?: SuggestionFilter): Suggestion[];
 }
 
-// Пример использования
+// Usage example
 editor.suggestions.setSuggestionMode(true);
 
-// Теперь любое редактирование создаёт suggestion
+// Now any edit creates a suggestion
 editor.commands.insertText('Hello world');
-// → создан Suggestion { type: "insert", text: "Hello world" }
+// → creates Suggestion { type: "insert", text: "Hello world" }
 
-// Editor / Admin может принять или отклонить
+// An Editor / Admin can accept or reject it
 editor.suggestions.acceptSuggestion('sug_abc123');
 ```
 
-### Diff rendering
+### Diff Rendering
 
 ```css
 /* Inserted text (suggestion) */
@@ -734,7 +734,7 @@ editor.suggestions.acceptSuggestion('sug_abc123');
   text-decoration-color: #1a7f37;
 }
 
-/* Deleted text (suggestion) — strikethrough */
+/* Deleted text (suggestion): strikethrough */
 .gotipe-suggestion-delete {
   color: #cf222e;
   background-color: rgba(207, 34, 46, 0.1);
@@ -750,24 +750,24 @@ editor.suggestions.acceptSuggestion('sug_abc123');
 
 ---
 
-## 6. Version History — обзор
+## 6. Version History — Overview
 
-GoTipe автоматически сохраняет историю всех изменений документа. Пользователи могут:
+GoTipe automatically saves the history of all document changes. Users can:
 
-- Просматривать timeline всех изменений
-- Создавать именованные версии (named snapshots)
-- Сравнивать любые две версии (diff view)
-- Восстанавливать документ к предыдущей версии
-- Видеть, кто и когда внёс конкретные изменения
+- Browse a timeline of all changes
+- Create named versions (named snapshots)
+- Compare any two versions (diff view)
+- Restore the document to a previous version
+- See who made specific changes and when
 
-### Типы versions
+### Version Types
 
-| Тип | Описание | Создание |
-|-----|----------|----------|
-| **Auto-save** | Автоматический snapshot каждые N минут | Timer / idle detection |
-| **Named version** | Именованная версия, созданная пользователем | Вручную через API |
-| **Milestone** | Специальная версия (publish, review complete) | Workflow events |
-| **Restore point** | Создаётся перед restore из старой версии | Автоматически |
+| Type | Description | Creation |
+|------|-------------|----------|
+| **Auto-save** | Automatic snapshot every N minutes | Timer / idle detection |
+| **Named version** | A named version created by a user | Manually via the API |
+| **Milestone** | A special version (publish, review complete) | Workflow events |
+| **Restore point** | Created before a restore from an old version | Automatically |
 
 ```
 Timeline:
@@ -783,13 +783,13 @@ Timeline:
 
 ## 7. Version History Architecture
 
-### CRDT State Vectors как основа версий
+### CRDT State Vectors as the Basis of Versions
 
-Каждая версия документа — это CRDT state vector (точка в пространстве операций). Это позволяет:
+Every document version is a CRDT state vector (a point in the operation space). This allows:
 
-1. **Инкрементальное хранение** — сохраняются только diff между версиями, не полные копии документа.
-2. **Мгновенное сравнение** — diff между двумя версиями вычисляется через разницу state vectors.
-3. **Точное attribution** — каждый символ привязан к автору и timestamp через CRDT metadata.
+1. **Incremental storage**: only the diff between versions is saved, not full copies of the document.
+2. **Instant comparison**: the diff between two versions is computed from the difference of state vectors.
+3. **Exact attribution**: every character is tied to an author and a timestamp through CRDT metadata.
 
 ```rust
 // crates/gotipe-versioning/src/version.rs
@@ -799,19 +799,19 @@ use gotipe_crdt::{StateVector, CrdtDocument};
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct VersionId(pub String);
 
-/// Snapshot версии документа
+/// Snapshot of a document version
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Version {
     pub id: VersionId,
     pub document_id: String,
-    pub name: Option<String>,          // None для auto-save
+    pub name: Option<String>,          // None for auto-save
     pub version_type: VersionType,
-    pub state_vector: StateVector,     // CRDT позиция
+    pub state_vector: StateVector,     // CRDT position
     pub created_by: PeerId,
     pub created_at: DateTime<Utc>,
     pub description: Option<String>,
     pub metadata: HashMap<String, serde_json::Value>,
-    /// Размер инкрементального snapshot в байтах
+    /// Size of the incremental snapshot in bytes
     pub snapshot_size: u64,
 }
 
@@ -823,19 +823,19 @@ pub enum VersionType {
     RestorePoint { restored_from: VersionId },
 }
 
-/// Инкрементальный snapshot — разница между двумя state vectors
+/// Incremental snapshot: the difference between two state vectors
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct IncrementalSnapshot {
-    /// Base state vector (от какой версии diff)
+    /// Base state vector (the version the diff is taken from)
     pub base_state_vector: StateVector,
-    /// CRDT operations между base и этой версией
+    /// CRDT operations between the base and this version
     pub ops: Vec<CrdtOp>,
-    /// Сжатый бинарный формат
+    /// Compressed binary format
     pub compressed_data: Vec<u8>,
 }
 ```
 
-### Хранение snapshots
+### Snapshot Storage
 
 ```
 ┌────────────────────────────────────────────────────────────────┐
@@ -856,9 +856,9 @@ pub struct IncrementalSnapshot {
 │  │  │  r2_key        │  │    │  │ (zstd compressed)      │  │ │
 │  │  │  snapshot_size │  │    │  └────────────────────────┘  │ │
 │  │  └────────────────┘  │    │                              │ │
-│  │                      │    │  Полный snapshot: каждые     │ │
-│  │  ┌────────────────┐  │    │  50 версий (для быстрого     │ │
-│  │  │ version_diffs  │  │    │  восстановления)             │ │
+│  │                      │    │  Full snapshot: every        │ │
+│  │  ┌────────────────┐  │    │  50 versions (for fast       │ │
+│  │  │ version_diffs  │  │    │  restore)                    │ │
 │  │  │  from_version  │  │    │                              │ │
 │  │  │  to_version    │  │    └──────────────────────────────┘ │
 │  │  │  diff_summary  │  │                                     │
@@ -867,12 +867,12 @@ pub struct IncrementalSnapshot {
 └────────────────────────────────────────────────────────────────┘
 ```
 
-**Стратегия хранения:**
+**Storage strategy:**
 
-- **Full snapshot** сохраняется каждые 50 инкрементальных версий (anchor point).
-- **Incremental delta** — CRDT ops между двумя соседними версиями, сжатые zstd.
-- **Восстановление**: найти ближайший full snapshot + применить цепочку deltas.
-- **Retention policy**: auto-save версии старше 30 дней удаляются, named версии хранятся бессрочно.
+- A **full snapshot** is saved every 50 incremental versions (anchor point).
+- An **incremental delta** is the CRDT ops between two adjacent versions, compressed with zstd.
+- **Restore**: find the nearest full snapshot and apply the chain of deltas.
+- **Retention policy**: auto-save versions older than 30 days are deleted, named versions are kept indefinitely.
 
 ### SQL Schema
 
@@ -897,7 +897,7 @@ CREATE TABLE versions (
 CREATE INDEX idx_versions_document ON versions(document_id, created_at DESC);
 CREATE INDEX idx_versions_type ON versions(document_id, version_type);
 
--- Precomputed diffs для быстрого сравнения
+-- Precomputed diffs for fast comparison
 CREATE TABLE version_diffs (
     id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     from_version_id UUID NOT NULL REFERENCES versions(id),
@@ -917,28 +917,28 @@ CREATE TABLE version_diffs (
 
 export interface VersioningPlugin {
   /**
-   * Создать named version (snapshot текущего состояния).
+   * Create a named version (a snapshot of the current state).
    */
   createVersion(options: CreateVersionOptions): Promise<Version>;
 
   /**
-   * Получить список версий документа.
+   * Get the list of document versions.
    */
   listVersions(options?: ListVersionsOptions): Promise<Version[]>;
 
   /**
-   * Получить конкретную версию.
+   * Get a specific version.
    */
   getVersion(versionId: string): Promise<VersionDetail>;
 
   /**
-   * Восстановить документ к состоянию конкретной версии.
-   * Создаёт restore point перед восстановлением.
+   * Restore the document to the state of a specific version.
+   * Creates a restore point before restoring.
    */
   restoreVersion(versionId: string): Promise<void>;
 
   /**
-   * Сравнить две версии — получить diff.
+   * Compare two versions: get the diff.
    */
   compareVersions(
     fromVersionId: string,
@@ -946,7 +946,7 @@ export interface VersioningPlugin {
   ): Promise<VersionDiff>;
 
   /**
-   * Настроить auto-save интервал.
+   * Configure the auto-save interval.
    */
   setAutoSaveInterval(intervalMs: number): void;
 }
@@ -975,22 +975,22 @@ export interface VersionDiff {
     modifiedBlocks: string[];
     authors: string[];
   };
-  /** Structured diff для rendering */
+  /** Structured diff for rendering */
   changes: DiffChange[];
 }
 
 export interface DiffChange {
   type: 'insert' | 'delete' | 'modify';
   blockId: string;
-  /** Для текстовых блоков — char-level diff */
+  /** For text blocks: char-level diff */
   textDiff?: TextDiffSegment[];
-  /** Для block-level изменений */
+  /** For block-level changes */
   oldBlock?: Block;
   newBlock?: Block;
 }
 ```
 
-### Пример использования
+### Usage Example
 
 ```typescript
 import { VersioningExtension } from '@gotipe/versioning';
@@ -998,33 +998,33 @@ import { VersioningExtension } from '@gotipe/versioning';
 const editor = new GoTipeEditor({
   extensions: [
     VersioningExtension.configure({
-      autoSaveIntervalMs: 5 * 60 * 1000, // auto-save каждые 5 минут
-      maxAutoSaveVersions: 100,           // максимум 100 auto-save версий
-      fullSnapshotEvery: 50,              // full snapshot каждые 50 версий
+      autoSaveIntervalMs: 5 * 60 * 1000, // auto-save every 5 minutes
+      maxAutoSaveVersions: 100,           // at most 100 auto-save versions
+      fullSnapshotEvery: 50,              // full snapshot every 50 versions
     }),
   ],
 });
 
-// Создать named version
+// Create a named version
 await editor.versioning.createVersion({
   name: 'v1.0 — Draft',
-  description: 'Первый черновик',
+  description: 'First draft',
 });
 
-// Список версий
+// List versions
 const versions = await editor.versioning.listVersions({
   type: ['named', 'milestone'],
   limit: 20,
 });
 
-// Сравнить две версии
+// Compare two versions
 const diff = await editor.versioning.compareVersions(
   versions[0].id,
   versions[1].id,
 );
 console.log(`Changes: +${diff.summary.addedChars} -${diff.summary.deletedChars}`);
 
-// Восстановить
+// Restore
 await editor.versioning.restoreVersion(versions[0].id);
 ```
 
@@ -1040,7 +1040,7 @@ editor.on('versionRestored', (version: Version) => {
 });
 
 editor.on('autoSaveCompleted', (version: Version) => {
-  // UI: показать timestamp последнего auto-save
+  // UI: show the timestamp of the last auto-save
 });
 ```
 
@@ -1054,8 +1054,8 @@ editor.on('autoSaveCompleted', (version: Version) => {
 // packages/react/src/versioning/VersionTimeline.tsx
 
 /**
- * VersionTimeline — вертикальный timeline всех версий документа.
- * Группирует auto-save версии, выделяет named versions.
+ * VersionTimeline: a vertical timeline of all document versions.
+ * Groups auto-save versions and highlights named versions.
  */
 export function VersionTimeline() {
   const { versions, selectedVersion, selectVersion } = useVersioning();
@@ -1088,8 +1088,8 @@ export function VersionTimeline() {
 }
 
 /**
- * DiffView — визуализация различий между двумя версиями.
- * Поддерживает inline diff и side-by-side режимы.
+ * DiffView: visualizes the differences between two versions.
+ * Supports inline diff and side-by-side modes.
  */
 export function DiffView({ diff }: { diff: VersionDiff }) {
   const [mode, setMode] = useState<'inline' | 'side-by-side'>('inline');
@@ -1114,7 +1114,7 @@ export function DiffView({ diff }: { diff: VersionDiff }) {
 }
 
 /**
- * VersionRestoreDialog — confirmation dialog перед restore.
+ * VersionRestoreDialog: confirmation dialog before a restore.
  */
 export function VersionRestoreDialog({
   version,
@@ -1149,65 +1149,65 @@ export function VersionRestoreDialog({
 }
 ```
 
-### Branch visualization (для advanced use cases)
+### Branch Visualization (for advanced use cases)
 
-Когда несколько пользователей создают named versions одновременно, timeline может разветвляться:
+When several users create named versions at the same time, the timeline can branch:
 
 ```
     v1 ─── auto ─── v2 ─── auto ─── v3 (main)
                      │
                      └── auto ─── v2.1 (Alice's branch)
 
-    Визуализация как git-graph: линейный timeline
-    с merge points для concurrent versions.
+    Visualization like a git graph: a linear timeline
+    with merge points for concurrent versions.
 ```
 
 ---
 
-## 10. Модель прав доступа (Permissions)
+## 10. Permissions Model
 
-GoTipe использует RBAC (Role-Based Access Control) с четырьмя базовыми ролями:
+GoTipe uses RBAC (Role-Based Access Control) with five base roles:
 
-| Роль | Чтение | Комментарии | Suggestions | Редактирование | Управление |
-|------|--------|-------------|-------------|----------------|------------|
-| **Viewer** | Да | Нет | Нет | Нет | Нет |
-| **Commenter** | Да | Да | Нет | Нет | Нет |
-| **Suggester** | Да | Да | Да | Нет | Нет |
-| **Editor** | Да | Да | Да | Да | Нет |
-| **Admin** | Да | Да | Да | Да | Да |
+| Role | Read | Comments | Suggestions | Editing | Management |
+|------|------|----------|-------------|---------|------------|
+| **Viewer** | Yes | No | No | No | No |
+| **Commenter** | Yes | Yes | No | No | No |
+| **Suggester** | Yes | Yes | Yes | No | No |
+| **Editor** | Yes | Yes | Yes | Yes | No |
+| **Admin** | Yes | Yes | Yes | Yes | Yes |
 
-### Действия по ролям
+### Actions by Role
 
 ```
 Viewer:
-  ✓ Просмотр документа
-  ✓ Просмотр комментариев
-  ✓ Просмотр истории версий
-  ✗ Всё остальное
+  ✓ View the document
+  ✓ View comments
+  ✓ View version history
+  ✗ Everything else
 
 Commenter:
-  + Создание комментариев
-  + Ответы на комментарии
-  + Reactions на комментарии
-  + Resolve своих комментариев
+  + Create comments
+  + Reply to comments
+  + Reactions on comments
+  + Resolve their own comments
 
 Suggester:
-  + Создание suggestions (track changes)
-  + Комментарии к suggestions
-  ✗ Accept/reject suggestions (только Editor/Admin)
+  + Create suggestions (track changes)
+  + Comment on suggestions
+  ✗ Accept/reject suggestions (Editor/Admin only)
 
 Editor:
-  + Редактирование документа
+  + Edit the document
   + Accept/reject suggestions
-  + Resolve любых комментариев
-  + Создание named versions
-  + Restore версий
+  + Resolve any comments
+  + Create named versions
+  + Restore versions
 
 Admin:
-  + Управление permissions (invite, change role, remove)
-  + Удаление комментариев других пользователей
-  + Удаление версий
-  + Настройка документа (public/private, retention policy)
+  + Manage permissions (invite, change role, remove)
+  + Delete other users' comments
+  + Delete versions
+  + Configure the document (public/private, retention policy)
   + Transfer ownership
 ```
 
@@ -1215,12 +1215,12 @@ Admin:
 
 ## 11. Permission Architecture
 
-### Модель данных
+### Data Model
 
 ```rust
 // crates/gotipe-permissions/src/lib.rs
 
-/// Роли доступа
+/// Access roles
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
 pub enum Role {
     Viewer = 0,
@@ -1230,7 +1230,7 @@ pub enum Role {
     Admin = 4,
 }
 
-/// Действия, требующие проверки прав
+/// Actions that require a permission check
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum Action {
     // Document
@@ -1256,7 +1256,7 @@ pub enum Action {
     TransferOwnership,
 }
 
-/// Проверка: может ли роль выполнить действие
+/// Check whether a role can perform an action
 pub fn can_perform(role: Role, action: Action) -> bool {
     match action {
         Action::ViewDocument | Action::ViewVersionHistory => {
@@ -1278,13 +1278,13 @@ pub fn can_perform(role: Role, action: Action) -> bool {
             role >= Role::Admin
         }
         Action::TransferOwnership => {
-            role == Role::Admin // Только owner/admin
+            role == Role::Admin // Owner/admin only
         }
     }
 }
 ```
 
-### Иерархия permissions
+### Permission Hierarchy
 
 ```
 ┌──────────────────────────────────────────────────────┐
@@ -1292,13 +1292,13 @@ pub fn can_perform(role: Role, action: Action) -> bool {
 │                                                      │
 │  ┌─────────────────────────────────────────┐        │
 │  │        Organization Defaults            │        │
-│  │  "Все сотрудники = Editor по умолчанию" │        │
+│  │  "All employees = Editor by default"    │        │
 │  └────────────────┬────────────────────────┘        │
 │                   │ inherits                         │
 │                   ▼                                  │
 │  ┌─────────────────────────────────────────┐        │
 │  │       Workspace / Folder Level          │        │
-│  │  "Team A folder = Commenter для Team B" │        │
+│  │  "Team A folder = Commenter for Team B" │        │
 │  └────────────────┬────────────────────────┘        │
 │                   │ inherits (can override)           │
 │                   ▼                                  │
@@ -1315,21 +1315,21 @@ pub fn can_perform(role: Role, action: Action) -> bool {
 └──────────────────────────────────────────────────────┘
 ```
 
-**Правила наследования:**
-1. Document-level permission всегда приоритетнее.
-2. Если document-level не задан — берётся workspace/folder level.
-3. Если workspace не задан — берётся organization default.
-4. Если ничего не задано — доступ отклонён (deny by default).
+**Inheritance rules:**
+1. A document-level permission always takes priority.
+2. If no document-level permission is set, the workspace/folder level is used.
+3. If no workspace level is set, the organization default is used.
+4. If nothing is set, access is denied (deny by default).
 
-### Проверки прав: dual enforcement
+### Permission Checks: Dual Enforcement
 
-Permissions проверяются в двух местах:
+Permissions are checked in two places:
 
-1. **Клиент (WASM core)** — мгновенная проверка, UI адаптируется (скрываются кнопки, блокируется ввод).
-2. **Сервер (Go API / Rust middleware)** — авторитетная проверка, отклоняет unauthorized operations.
+1. **Client (WASM core)**: an instant check, and the UI adapts (buttons are hidden, input is blocked).
+2. **Server (Go API / Rust middleware)**: the authoritative check, which rejects unauthorized operations.
 
 ```rust
-// Клиентская проверка (WASM)
+// Client-side check (WASM)
 impl EditorState {
     pub fn can_edit(&self) -> bool {
         can_perform(self.current_role, Action::EditDocument)
@@ -1339,7 +1339,7 @@ impl EditorState {
         can_perform(self.current_role, Action::AddComment)
     }
 
-    /// Применяется перед каждым Step
+    /// Applied before every Step
     pub fn apply_step(&mut self, step: Step) -> Result<(), EditorError> {
         // Permission check
         let required_action = step.required_action();
@@ -1356,7 +1356,7 @@ impl EditorState {
 ```
 
 ```go
-// Серверная проверка (Go Cloud API)
+// Server-side check (Go Cloud API)
 // cloud/internal/middleware/permissions.go
 
 func RequirePermission(action string) gin.HandlerFunc {
@@ -1385,7 +1385,7 @@ func RequirePermission(action string) gin.HandlerFunc {
 }
 ```
 
-### SQL Schema для permissions
+### SQL Schema for Permissions
 
 ```sql
 -- Document permissions
@@ -1410,7 +1410,7 @@ CREATE TABLE organization_defaults (
     UNIQUE(organization_id)
 );
 
--- Permission audit log (см. 14-security-privacy.md)
+-- Permission audit log (see 14-security-privacy.md)
 CREATE TABLE permission_audit_log (
     id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     document_id UUID NOT NULL,
@@ -1432,37 +1432,37 @@ CREATE TABLE permission_audit_log (
 
 export interface PermissionsPlugin {
   /**
-   * Установить permission для пользователя на документ.
+   * Set a user's permission on a document.
    */
   setPermission(options: SetPermissionOptions): Promise<void>;
 
   /**
-   * Получить все permissions для документа.
+   * Get all permissions for a document.
    */
   getPermissions(documentId: string): Promise<DocumentPermissions>;
 
   /**
-   * Проверить permission (client-side, мгновенно).
+   * Check a permission (client-side, instant).
    */
   checkPermission(action: Action): boolean;
 
   /**
-   * Получить effective role текущего пользователя.
+   * Get the current user's effective role.
    */
   getCurrentRole(): Role;
 
   /**
-   * Удалить permission (revoke access).
+   * Remove a permission (revoke access).
    */
   revokePermission(documentId: string, userId: string): Promise<void>;
 
   /**
-   * Получить public link settings.
+   * Get the public link settings.
    */
   getPublicAccess(documentId: string): Promise<PublicAccessSettings>;
 
   /**
-   * Установить public access (anyone with link).
+   * Set public access (anyone with the link).
    */
   setPublicAccess(
     documentId: string,
@@ -1474,7 +1474,7 @@ export interface SetPermissionOptions {
   documentId: string;
   userId?: string;
   teamId?: string;
-  email?: string; // Invite по email (создаёт pending invite)
+  email?: string; // Invite by email (creates a pending invite)
   role: Role;
 }
 
@@ -1496,15 +1496,15 @@ export interface UserPermission {
 
 export interface PublicAccessSettings {
   enabled: boolean;
-  role: 'viewer' | 'commenter'; // Public access ограничен viewer/commenter
+  role: 'viewer' | 'commenter'; // Public access is limited to viewer/commenter
   expiresAt?: Date;
 }
 ```
 
-### Пример использования
+### Usage Example
 
 ```typescript
-// Проверить права перед показом UI
+// Check permissions before showing the UI
 if (editor.permissions.checkPermission('editDocument')) {
   showToolbar();
 }
@@ -1513,7 +1513,7 @@ if (editor.permissions.checkPermission('addComment')) {
   showCommentButton();
 }
 
-// Установить permission
+// Set a permission
 await editor.permissions.setPermission({
   documentId: 'doc_123',
   email: 'bob@example.com',
@@ -1533,14 +1533,14 @@ await editor.permissions.setPublicAccess('doc_123', {
 editor.on('permissionChanged', (event: PermissionChangedEvent) => {
   console.log(`${event.userId} role changed to ${event.newRole}`);
 
-  // Обновить UI: скрыть/показать элементы управления
+  // Update the UI: hide/show controls
   if (event.userId === currentUserId) {
     updateEditorUI(event.newRole);
   }
 });
 
 editor.on('accessRevoked', (event: AccessRevokedEvent) => {
-  // Если текущий пользователь потерял доступ
+  // If the current user lost access
   if (event.userId === currentUserId) {
     showAccessDeniedScreen();
   }
@@ -1549,54 +1549,54 @@ editor.on('accessRevoked', (event: AccessRevokedEvent) => {
 
 ---
 
-## 13. Интеграция с Collaboration
+## 13. Collaboration Integration
 
-### Комментарии в multi-user среде
+### Comments in a Multi-user Environment
 
-Комментарии — CRDT-aware. При concurrent операциях:
+Comments are CRDT-aware. With concurrent operations:
 
-| Сценарий | Поведение |
-|----------|-----------|
-| Два пользователя комментируют один текст | Оба CommentMark сосуществуют (overlapping highlights) |
-| Пользователь A resolve, пользователь B reply | Reply сохраняется, resolved status обновляется через LWW |
-| Текст под комментарием удалён | CommentMark удаляется, комментарий переходит в "orphaned" состояние |
-| Пользователь A редактирует текст в диапазоне комментария | CommentMark автоматически расширяется/сужается через CRDT positions |
+| Scenario | Behavior |
+|----------|----------|
+| Two users comment on the same text | Both CommentMarks coexist (overlapping highlights) |
+| User A resolves, user B replies | The reply is kept, the resolved status is updated via LWW |
+| The text under a comment is deleted | The CommentMark is removed, the comment becomes "orphaned" |
+| User A edits text inside the comment range | The CommentMark expands/shrinks automatically via CRDT positions |
 
-### Suggestions в multi-user среде
+### Suggestions in a Multi-user Environment
 
 ```
-Сценарий: Alice и Bob оба в suggestion mode
+Scenario: Alice and Bob are both in suggestion mode
 
 Alice (Suggester):
-  Вводит "Hello" → Suggestion { type: insert, text: "Hello", author: Alice }
+  Types "Hello" → Suggestion { type: insert, text: "Hello", author: Alice }
 
 Bob (Suggester):
-  Удаляет "World" → Suggestion { type: delete, text: "World", author: Bob }
+  Deletes "World" → Suggestion { type: delete, text: "World", author: Bob }
 
 Charlie (Editor):
-  Видит оба suggestions, может accept/reject каждый независимо.
+  Sees both suggestions and can accept/reject each one independently.
 
-CRDT гарантирует: suggestions от разных авторов не конфликтуют,
-даже если затрагивают перекрывающиеся диапазоны текста.
+The CRDT guarantees that suggestions from different authors do not conflict,
+even when they touch overlapping text ranges.
 ```
 
-### Конфликты и resolution
+### Conflicts and Resolution
 
 ```rust
-// Стратегии разрешения конфликтов для comments/suggestions
+// Conflict resolution strategies for comments/suggestions
 
-/// Comment conflicts: LWW (Last Writer Wins) для mutable полей
-/// - resolved_at, resolved_by: LWW по timestamp
-/// - content (edit): LWW по timestamp
-/// - reactions: add-wins set (добавления никогда не теряются)
+/// Comment conflicts: LWW (Last Writer Wins) for mutable fields
+/// - resolved_at, resolved_by: LWW by timestamp
+/// - content (edit): LWW by timestamp
+/// - reactions: add-wins set (additions are never lost)
 
 /// Suggestion conflicts:
-/// - Два overlapping insert suggestions: оба сохраняются,
-///   editor решает порядок accept
-/// - Accept + concurrent edit в том же диапазоне:
-///   CRDT merge корректно обрабатывает (insert по CRDT-позиции)
-/// - Reject + concurrent edit: rejected text остаётся удалённым,
-///   concurrent edit применяется к оставшемуся тексту
+/// - Two overlapping insert suggestions: both are kept,
+///   the editor decides the order of acceptance
+/// - Accept + concurrent edit in the same range:
+///   CRDT merge handles it correctly (insert at the CRDT position)
+/// - Reject + concurrent edit: the rejected text stays deleted,
+///   the concurrent edit is applied to the remaining text
 
 impl CrdtDocument {
     /// Merge remote comment operations
@@ -1625,12 +1625,12 @@ impl CrdtDocument {
 
 ### Presence + Comments
 
-Когда пользователь просматривает комментарий, его присутствие отображается:
+When a user views a comment, their presence is shown:
 
 ```typescript
 // Presence integration
 editor.on('commentViewed', (event) => {
-  // Broadcast через presence channel
+  // Broadcast through the presence channel
   editor.collaboration.broadcastPresence({
     type: 'viewing_comment',
     commentId: event.commentId,
@@ -1638,93 +1638,93 @@ editor.on('commentViewed', (event) => {
   });
 });
 
-// Другие пользователи видят, кто просматривает комментарий
+// Other users see who is viewing the comment
 editor.on('presenceUpdated', (peers) => {
   const viewingComment = peers.filter(
     p => p.state?.type === 'viewing_comment'
   );
-  // Показать аватары рядом с комментарием
+  // Show avatars next to the comment
 });
 ```
 
 ---
 
-## 14. Сравнение с конкурентами
+## 14. Comparison with Competitors
 
 ### Comments
 
 | Feature | GoTipe | Tiptap | Google Docs | Notion |
 |---------|--------|--------|-------------|--------|
-| Inline comments | Да (CRDT mark) | Да (Yjs + extension) | Да | Да |
-| Block comments | Да | Нет (custom) | Нет | Да (block discussion) |
-| Document comments | Да | Нет | Нет | Нет |
-| Comment threads | Да | Да (Pro) | Да | Да |
-| Comment reactions | Да | Нет | Да | Да |
-| Offline comments | Да (CRDT) | Частично | Нет | Нет |
-| Real-time sync | Да | Да (Cloud required) | Да | Да |
-| Overlapping comments | Да | Ограничено | Да | Нет |
-| Comment API | Open-source | Pro tier ($) | Нет | Нет |
-| Self-hosted | Да | Enterprise ($$$) | Нет | Нет |
+| Inline comments | Yes (CRDT mark) | Yes (Yjs + extension) | Yes | Yes |
+| Block comments | Yes | No (custom) | No | Yes (block discussion) |
+| Document comments | Yes | No | No | No |
+| Comment threads | Yes | Yes (Pro) | Yes | Yes |
+| Comment reactions | Yes | No | Yes | Yes |
+| Offline comments | Yes (CRDT) | Partial | No | No |
+| Real-time sync | Yes | Yes (Cloud required) | Yes | Yes |
+| Overlapping comments | Yes | Limited | Yes | No |
+| Comment API | Open-source | Pro tier ($) | No | No |
+| Self-hosted | Yes | Enterprise ($$$) | No | No |
 
 ### Suggestions / Track Changes
 
 | Feature | GoTipe | Tiptap | Google Docs | Notion |
 |---------|--------|--------|-------------|--------|
-| Suggestion mode | Да | Pro tier ($) | Да | Нет |
-| Insert suggestions | Да | Да (Pro) | Да | Нет |
-| Delete suggestions | Да | Да (Pro) | Да | Нет |
-| Format suggestions | Да | Нет | Да | Нет |
-| Block change suggestions | Да | Нет | Частично | Нет |
-| Accept/reject individual | Да | Да (Pro) | Да | N/A |
-| Accept/reject all | Да | Нет | Да | N/A |
-| Suggestion threads | Да | Нет | Да | N/A |
-| CRDT-based diff | Да | Yjs-based | OT-based | N/A |
+| Suggestion mode | Yes | Pro tier ($) | Yes | No |
+| Insert suggestions | Yes | Yes (Pro) | Yes | No |
+| Delete suggestions | Yes | Yes (Pro) | Yes | No |
+| Format suggestions | Yes | No | Yes | No |
+| Block change suggestions | Yes | No | Partial | No |
+| Accept/reject individual | Yes | Yes (Pro) | Yes | N/A |
+| Accept/reject all | Yes | No | Yes | N/A |
+| Suggestion threads | Yes | No | Yes | N/A |
+| CRDT-based diff | Yes | Yjs-based | OT-based | N/A |
 
 ### Version History
 
 | Feature | GoTipe | Tiptap | Google Docs | Notion |
 |---------|--------|--------|-------------|--------|
-| Auto-save versions | Да | Нет (manual) | Да | Да |
-| Named versions | Да | Нет | Нет | Нет |
-| Diff view | Да (char-level) | Нет | Да (limited) | Нет |
-| Side-by-side diff | Да | Нет | Нет | Нет |
-| Restore version | Да | Нет (manual) | Да | Да (paid) |
-| Version branches | Да (basic) | Нет | Нет | Нет |
-| Incremental storage | Да (CRDT deltas) | N/A | Да | Да |
+| Auto-save versions | Yes | No (manual) | Yes | Yes |
+| Named versions | Yes | No | No | No |
+| Diff view | Yes (char-level) | No | Yes (limited) | No |
+| Side-by-side diff | Yes | No | No | No |
+| Restore version | Yes | No (manual) | Yes | Yes (paid) |
+| Version branches | Yes (basic) | No | No | No |
+| Incremental storage | Yes (CRDT deltas) | N/A | Yes | Yes |
 | Retention policy | Configurable | N/A | 30 days (free) | 30 days (free) |
-| Self-hosted storage | Да (Cloudflare R2) | N/A | Нет | Нет |
-| API access | Да | Нет | Limited (Docs API) | Нет |
+| Self-hosted storage | Yes (Cloudflare R2) | N/A | No | No |
+| API access | Yes | No | Limited (Docs API) | No |
 
 ### Permissions
 
 | Feature | GoTipe | Tiptap | Google Docs | Notion |
 |---------|--------|--------|-------------|--------|
-| Viewer role | Да | Нет (DIY) | Да | Да |
-| Commenter role | Да | Нет (DIY) | Да | Да |
-| Suggester role | Да | Нет | Нет | Нет |
-| Editor role | Да | Нет (DIY) | Да | Да |
-| Admin role | Да | Нет (DIY) | Да (Owner) | Да |
-| Permission API | Да | Нет | Да (Drive API) | Да |
-| Organization defaults | Да | Нет | Да (Workspace) | Да |
-| Public links | Да | Нет | Да | Да |
-| Expiring links | Да | Нет | Нет | Нет |
-| Client-side enforcement | Да (WASM) | Нет | Нет (server only) | Нет |
-| Permission audit log | Да | Нет | Да (Admin) | Да (Enterprise) |
-| Self-hosted RBAC | Да | Нет | Нет | Нет |
+| Viewer role | Yes | No (DIY) | Yes | Yes |
+| Commenter role | Yes | No (DIY) | Yes | Yes |
+| Suggester role | Yes | No | No | No |
+| Editor role | Yes | No (DIY) | Yes | Yes |
+| Admin role | Yes | No (DIY) | Yes (Owner) | Yes |
+| Permission API | Yes | No | Yes (Drive API) | Yes |
+| Organization defaults | Yes | No | Yes (Workspace) | Yes |
+| Public links | Yes | No | Yes | Yes |
+| Expiring links | Yes | No | No | No |
+| Client-side enforcement | Yes (WASM) | No | No (server only) | No |
+| Permission audit log | Yes | No | Yes (Admin) | Yes (Enterprise) |
+| Self-hosted RBAC | Yes | No | No | No |
 
-### Итоги сравнения
+### Comparison Summary
 
-**GoTipe vs Tiptap:** Tiptap предлагает comments и suggestions только в Pro/Enterprise тарифах. GoTipe предоставляет всё open-source с MIT лицензией. CRDT-based versioning и встроенный RBAC — уникальные преимущества GoTipe.
+**GoTipe vs Tiptap:** Tiptap offers comments and suggestions only in its Pro/Enterprise tiers. GoTipe provides everything as open source under the MIT license. CRDT-based versioning and built-in RBAC are unique advantages of GoTipe.
 
-**GoTipe vs Google Docs:** Google Docs имеет зрелую систему comments и suggestions, но полностью cloud-зависима, не self-hosted, и не имеет открытого API для customization. GoTipe предлагает comparable functionality с offline support и self-hosted deployment.
+**GoTipe vs Google Docs:** Google Docs has a mature comments and suggestions system, but it is fully cloud-dependent, not self-hosted, and has no open API for customization. GoTipe offers comparable functionality with offline support and self-hosted deployment.
 
-**GoTipe vs Notion:** Notion не поддерживает suggestion mode и имеет базовую историю версий (только paid plan). GoTipe значительно превосходит Notion по функциональности comments/versioning/permissions.
+**GoTipe vs Notion:** Notion does not support suggestion mode and has a basic version history (paid plan only). GoTipe is significantly ahead of Notion in comments/versioning/permissions functionality.
 
 ---
 
-## Конфигурация и настройка
+## Configuration and Setup
 
-### Полная конфигурация для production
+### Full Production Configuration
 
 ```typescript
 import { GoTipeEditor } from '@gotipe/react';
@@ -1750,7 +1750,7 @@ const editor = new GoTipeEditor({
     }),
 
     SuggestionsExtension.configure({
-      // Автоматически включить suggestion mode для Suggesters
+      // Automatically turn on suggestion mode for Suggesters
       autoEnableForRole: 'suggester',
       showAuthorColors: true,
     }),
@@ -1772,12 +1772,12 @@ const editor = new GoTipeEditor({
     }),
 
     PermissionsExtension.configure({
-      // Получить permissions с сервера при инициализации
+      // Fetch permissions from the server on initialization
       fetchPermissions: async (docId) => {
         const res = await fetch(`/api/documents/${docId}/permissions`);
         return res.json();
       },
-      // Callback при изменении роли — обновить UI
+      // Callback on role change: update the UI
       onRoleChanged: (newRole) => {
         updateUIForRole(newRole);
       },
@@ -1787,7 +1787,7 @@ const editor = new GoTipeEditor({
 });
 ```
 
-### Self-hosted конфигурация
+### Self-hosted Configuration
 
 ```yaml
 # docker-compose.yml — comments, versioning, permissions
@@ -1820,13 +1820,13 @@ volumes:
 
 ---
 
-## Связанные документы
+## Related Documents
 
-| Документ | Связь |
-|----------|-------|
-| [02-collaboration.md](02-collaboration.md) | CRDT engine, real-time sync, presence — фундамент для comments и versioning |
-| [03-editor-core.md](03-editor-core.md) | Document model, marks, steps — используются CommentMark и SuggestionMark |
-| [05-extensions.md](05-extensions.md) | Extension API — comments, suggestions, versioning реализованы как extensions |
-| [09-sdk-and-api.md](09-sdk-and-api.md) | TypeScript API — типы Comment, Version, Permission |
-| [10-cloud.md](10-cloud.md) | Cloud infrastructure — Cloudflare R2 storage, PostgreSQL, WebSocket sync |
-| [14-security-privacy.md](14-security-privacy.md) | Security model — audit logs, encryption, permission enforcement |
+| Document | Relationship |
+|----------|--------------|
+| [02-collaboration.md](02-collaboration.md) | CRDT engine, real-time sync, presence: the foundation for comments and versioning |
+| [03-editor-core.md](03-editor-core.md) | Document model, marks, steps: used by CommentMark and SuggestionMark |
+| [05-extensions.md](05-extensions.md) | Extension API: comments, suggestions and versioning are implemented as extensions |
+| [09-sdk-and-api.md](09-sdk-and-api.md) | TypeScript API: the Comment, Version and Permission types |
+| [10-cloud.md](10-cloud.md) | Cloud infrastructure: Cloudflare R2 storage, PostgreSQL, WebSocket sync |
+| [14-security-privacy.md](14-security-privacy.md) | Security model: audit logs, encryption, permission enforcement |
