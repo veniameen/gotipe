@@ -235,10 +235,12 @@
   --site-build-depth: 1400px;
   --site-build-tilt: 50deg;
   --site-build-turn: -38deg;
-  --site-build-step: 62px;
+  /* the plates' spacing in depth and their breath, shares of the scene's width (cqw: 62 and 10 px
+     of the 440 px scene): a smaller scene is as deep for its size and stays inside its band */
+  --site-build-step: 14.09cqw;
   --site-build-shift: 9%;
   --site-build-inset: 20% 19%;
-  --site-build-lift: 10px;
+  --site-build-lift: 2.27cqw;
   --site-build-pad: 9%;
   --site-build-gap: 10px;
   --site-build-line-h: 8px;
@@ -252,6 +254,8 @@
   --site-theme-x: 100vw;
   --site-theme-y: 0px;
   --site-chip-pad: var(--site-space-1) var(--site-space-3) var(--site-space-1) var(--site-space-1);
+  --site-chip-size: var(--site-small-size);
+  --site-chip-arrow: inline-block;
   --site-chip-tag-pad: 1px 7px;
   --site-badge-pad: 3px var(--site-space-2);
   --site-badge-radius: var(--site-radius-1);
@@ -371,6 +375,9 @@
   --site-window-tag-display: inline;
   --site-window-trail-display: inline-flex;
   --site-stack-dir: row;
+  /* where a column's label stands: above its boxes, or after them (a phone: the beams reach the
+     boxes without crossing it) */
+  --site-stack-out-label-order: 0;
 
   /* ---- the documentation: navigation, page, outline ---- */
   --site-docs-head-h: var(--site-space-16);
@@ -518,6 +525,7 @@
     --site-look-page-pad: var(--site-space-6) var(--site-space-5);
     --site-look-tab-pad: 0 var(--site-space-3);
     --site-stack-dir: column;
+    --site-stack-out-label-order: 1;
     --site-stack-h: auto;
     --site-stack-cols: minmax(0, 1fr);
     --site-stack-in-align: center;
@@ -544,6 +552,14 @@
     --site-marquee-chip-pad: var(--site-space-1) var(--site-space-2);
     --site-marquee-chip-line: var(--site-line-strong);
     --site-licence-pad: var(--site-space-6);
+  }
+}
+
+/* ---- a small phone: the chip's promise a size smaller and without its arrow, on one line ---- */
+@container (max-width: 359px) {
+  .gotipe-root > * {
+    --site-chip-size: 12px;
+    --site-chip-arrow: none;
   }
 }
 
