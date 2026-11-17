@@ -10,7 +10,7 @@ dictionaries hold only keys that a component uses (D-34).
   without one: new keys `comments.*` (heading, filters, navigation, thread actions, reply
   form, empty states, the orphaned quote) in English and Russian; a failed action without
   its own message says `error.comment`. The formatting bubble is named by
-  `a11y.toolbarLabel` («Форматирование текста» in Russian, "Text formatting" as before), and
+  `a11y.toolbarLabel` (“Форматирование текста” in Russian, "Text formatting" as before), and
   the block and table menus fall back to `block.actionFailed` and `table.actionFailed`
   instead of English text. `blockEditorEn` and `blockEditorRu` have the new keys.
 - `@gotipe/i18n`: removed keys that no component drew, so overriding them changed nothing:

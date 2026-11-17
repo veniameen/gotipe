@@ -1,21 +1,21 @@
-# Проверки разработки
+# Development checks
 
-До правки выбери поведение, риск и проверку. Перенос сохраняет exports, ошибки,
-CSS order, keys/mount, subscriptions и форматы. Тест не повторяет реализацию.
+Before an edit, choose the behavior, the risk, and the check. A move preserves exports, errors,
+CSS order, keys/mount, subscriptions, and formats. A test does not repeat the implementation.
 
-| Изменение | Целевая проверка |
+| Change | Targeted check |
 |---|---|
-| Транзакции/схема/история | атомарность, неверные входы, raw/nested, undo/redo, Unicode |
-| JS/WASM | одинаковые семантические сценарии обоих движков |
-| Markdown/clipboard | структура/marks/байты, nested selection, safe cut, roundtrip |
-| Adapters | StrictMode/late resolve/destroy, отказ создания без unhandled rejection, subscriptions, stable snapshot, SSR |
-| UI/меню/DnD | реальные жесты, keyboard/focus/read-only, resize/scroll, light/dark |
-| CRDT | 2–3 peers, разные порядки доставки, дубликаты/reconnect, convergence |
-| Cloud/SDK | чужая роль/user/scope, malformed payload, storage failure, 204/errors |
-| Экспорт | потребитель/валидатор формата, Unicode, отсутствие подмены формата |
-| Пакеты | tarball/files/license/exports, ESM/CJS/types, чистый consumer |
+| Transactions/schema/history | atomicity, invalid inputs, raw/nested, undo/redo, Unicode |
+| JS/WASM | the same semantic scenarios on both engines |
+| Markdown/clipboard | structure/marks/bytes, nested selection, safe cut, roundtrip |
+| Adapters | StrictMode/late resolve/destroy, creation failure without an unhandled rejection, subscriptions, stable snapshot, SSR |
+| UI/menus/DnD | real gestures, keyboard/focus/read-only, resize/scroll, light/dark |
+| CRDT | 2–3 peers, different delivery orders, duplicates/reconnect, convergence |
+| Cloud/SDK | another role/user/scope, malformed payload, storage failure, 204/errors |
+| Export | a consumer/format validator, Unicode, no format substitution |
+| Packages | tarball/files/license/exports, ESM/CJS/types, a clean consumer |
 
-## Команды
+## Commands
 
 ```sh
 pnpm check:architecture
@@ -44,63 +44,63 @@ pnpm exec playwright test
 (cd apps/cloud && go test ./... -race)
 ```
 
-Для промежуточного прогона выбирай workspace filter/файл. Полные проверки — на
-окончательном дереве. Не обходи ошибки skip/timeout. Browser matrix: Chromium,
-Firefox, WebKit; 320/375/768/1024/1440 и изменяемый контейнер. Проверяй не только
-overflow страницы, но доступную ширину редактора и взаимодействия.
+For an intermediate run, choose a workspace filter or a file. Run the full checks on the
+final tree. Do not work around skip/timeout errors. Browser matrix: Chromium,
+Firefox, WebKit; 320/375/768/1024/1440 and a resizable container. Check not only the
+page overflow but also the available editor width and interactions.
 
-Отчёты/trace/screenshots — ignored `output/`. Записывай команду, инструменты,
-дерево/commit, результат/ограничения. Старый CI не подтверждает текущий код.
-Публикация не входит в локальную приёмку и не выполняется автоматически.
+Reports/traces/screenshots go to the ignored `output/`. Record the command, the tools,
+the tree/commit, and the result/limitations. An old CI run does not confirm the current code.
+Publishing is not part of local acceptance and is not run automatically.
 
-`check:consumer` упаковывает все публичные пакеты и устанавливает реальные tarball
-в отдельный каталог с отключёнными workspace links и строгими peer dependencies.
-Локальные overrides разрешают только внутренние ещё не опубликованные версии;
-исходники не подменяют содержимое архивов. Проверяются все JS exports ESM/CJS,
-декларации без `skipLibCheck`, headless SSR/Markdown, вызов PDF/DOCX и один
-`GoTipeError` на все входы `@gotipe/core` в ESM и CJS (D-166).
-Команда требует предварительной сборки JS, core WASM и optional export WASM.
+`check:consumer` packs all public packages and installs the real tarballs
+into a separate directory with workspace links disabled and strict peer dependencies.
+Local overrides allow only internal versions that are not yet published;
+the sources do not replace the contents of the archives. It checks all JS exports in ESM/CJS,
+declarations without `skipLibCheck`, headless SSR/Markdown, a PDF/DOCX call, and a single
+`GoTipeError` across all `@gotipe/core` entry points in ESM and CJS (D-166).
+The command requires a prior build of JS, core WASM, and the optional export WASM.
 
 
-Размер JavaScript проверяется по [полному графу импортов](javascript-budgets.md),
-а не только по entry-файлу. Для локальной полной приёмки ограничивай Turbo
-`--concurrency=2`, Vitest `--maxWorkers=2`; WASM-скрипты используют
-не более двух Cargo/Binaryen workers по умолчанию.
+JavaScript size is checked against the [full import graph](javascript-budgets.md),
+not only the entry file. For a full local acceptance run, limit Turbo to
+`--concurrency=2` and Vitest to `--maxWorkers=2`; the WASM scripts use
+at most two Cargo/Binaryen workers by default.
 
-Собранные WASM-модули (`packages/wasm/pkg`, `packages/export-wasm/pkg`) — входы задач
-`@gotipe/wasm#build` и `@gotipe/export-wasm#build` в `turbo.json`. После `pnpm build:wasm`
-или `build:export-wasm` Turbo один раз заново собирает и проверяет всё, что от них зависит,
-и тесты движка не приходят из кэша, прогнанного на прежнем бинарнике.
+The built WASM modules (`packages/wasm/pkg`, `packages/export-wasm/pkg`) are inputs to the
+`@gotipe/wasm#build` and `@gotipe/export-wasm#build` tasks in `turbo.json`. After `pnpm build:wasm`
+or `build:export-wasm`, Turbo rebuilds and rechecks everything that depends on them once,
+and engine tests do not come from a cache produced against the previous binary.
 
-`check:pdf-regression` сохраняет native PDF из фиксированного corpus и сравнивает
-их с реальным public WASM export. Независимый validator использует Poppler
-(`pdfinfo`, `pdftotext`, `pdftohtml`) и Python `pypdf`: Unicode, page geometry,
-пагинация, marks, links, images, merged tables и явные ошибки. Эти инструменты
-нужны локально; CI устанавливает `poppler-utils` и `python3-pypdf`.
-Browser corpus находится в `e2e/pdf-export.spec.ts` и входит в общий suite.
+`check:pdf-regression` saves native PDFs from a fixed corpus and compares
+them with the real public WASM export. The independent validator uses Poppler
+(`pdfinfo`, `pdftotext`, `pdftohtml`) and Python `pypdf`: Unicode, page geometry,
+pagination, marks, links, images, merged tables, and explicit errors. These tools
+are needed locally; CI installs `poppler-utils` and `python3-pypdf`.
+The browser corpus is in `e2e/pdf-export.spec.ts` and is part of the overall suite.
 
-## Геометрия интерфейса редактора
+## Editor UI geometry
 
-`e2e/editor-visual-audit.spec.ts` проходит редакторы playground — PageEditor (Page), BlockEditor
-(Block) и BlockEditor с шапкой страницы и счётчиком (Views) — в видах notion, docs, modern и
-minimal, светлой и тёмной теме, на ширинах 320, 375, 768, 1024 и 1440. Документ проверки
-(`e2e/helpers/visual-audit/document.ts`) содержит каждый блок: заголовки, вложенные списки и
-задачи, цитату, выноску, код, формулу, таблицу, картинку с подписью и пустую, файл, вставку,
-переключатель, колонки, разделитель, абзац справа налево. Указатель встаёт на каждый блок, и
-проверка требует:
-- ручка не накрывает текст, флажок, маркер или номер, значок выноски, поле или картинку и
-  стоит внутри редактора, экрана и всех обрезающих контейнеров;
-- центр ручки — на первой строке блока (допуск 2,5 px): первой строке его редактируемого текста,
-  верхнем ряду картинки, строке имени файла или адреса вставки, строке заголовка таблицы;
-- в modern и minimal ручки нет; у ячейки — ручка строки или столбца в своём поле, не на тексте;
-- колонки не выходят друг за друга и за свой блок, шапка и счётчик стоят в колонке текста;
-- пузырь над словом в начале и в конце строки, «/» внизу экрана и из «+», меню ручки,
-  «Превратить в» и подсказки ручки — на экране; страница не прокручивается вбок.
+`e2e/editor-visual-audit.spec.ts` walks the playground editors: PageEditor (Page), BlockEditor
+(Block), and BlockEditor with a page header and a counter (Views). It covers the notion, docs, modern, and
+minimal views, light and dark themes, and widths 320, 375, 768, 1024, and 1440. The audit document
+(`e2e/helpers/visual-audit/document.ts`) contains every block: headings, nested lists and
+tasks, a quote, a callout, code, a formula, a table, an image with a caption and an empty one, a file, an embed,
+a toggle, columns, a divider, a right-to-left paragraph. The pointer is placed on each block, and
+the check requires that:
+- the handle does not cover text, a checkbox, a marker or number, a callout icon, a field, or an image, and
+  sits inside the editor, the screen, and all clipping containers;
+- the handle's center is on the block's first line (tolerance 2.5 px): the first line of its editable text,
+  the top row of an image, the file name or embed address line, the table header row;
+- in modern and minimal there is no handle; a cell has a row or column handle in its own gutter, not on the text;
+- columns do not extend past each other or past their block, and the page header and counter sit in the text column;
+- the bubble menu over a word at the start and at the end of a line, the slash menu at the bottom of the screen and from "+", the handle menu,
+  "Turn into", and the handle tooltips are on screen; the page does not scroll sideways.
 
-Полный перебор (120 конфигураций) идёт в Chrome, выборка из шести — в Firefox и WebKit; сеть
-вне localhost отрезана. Нарушение оставляет снимок с рамками ручки (красная) и того, что она
-задела (синяя), в `output/editor-visual-audit/<браузер>/<конфигурация>/`, а итог конфигурации —
-в соседнем JSON:
+The full sweep (120 configurations) runs in Chrome, a sample of six in Firefox and WebKit; the network
+outside localhost is cut off. A violation leaves a snapshot with the frames of the handle (red) and of what it
+touched (blue) in `output/editor-visual-audit/<browser>/<configuration>/`, and the configuration's result is
+in the adjacent JSON:
 
 ```sh
 GOTIPE_E2E_CHANNEL=chrome GOTIPE_E2E_PORT=5420 pnpm exec playwright test e2e/editor-visual-audit.spec.ts

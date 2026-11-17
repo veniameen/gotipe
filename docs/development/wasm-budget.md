@@ -1,38 +1,38 @@
-# Размер основного WASM
+# Size of the main WASM
 
-Решение 2026-11-15 (D-171): единый предел основного `gotipe_wasm_bg.wasm` —
-325 KiB (332 800 bytes) gzip level 9. Единственный владелец значения —
-`config/wasm-budget.json`; локальная сборка, CI и benchmark используют
-`scripts/check-wasm-size.mjs`. Превышение завершает проверку ошибкой.
+Decision of 2026-11-15 (D-171): a single limit for the main `gotipe_wasm_bg.wasm`:
+325 KiB (332,800 bytes) gzip level 9. The only owner of the value is
+`config/wasm-budget.json`; the local build, CI, and the benchmark use
+`scripts/check-wasm-size.mjs`. Exceeding it fails the check.
 
-Измерение: сборка `scripts/build-wasm.sh` в основной папке 2026-11-15 22:31, после
-последней правки крейтов модуля (D-82, 01d63d2, 22:12), — 825 703 bytes без сжатия и
-302 506 bytes gzip. Предел — это число плюс 10% (332 757), округлённое до 325 KiB: запас
-около 30 KB на рост совместной работы, истории и комментариев в ядре. Прежние 600 KiB
-остались от модуля с выводом HTML, Markdown и очисткой (ниже); после D-73 запас был больше
-300 KB, и предел ничего не ограничивал: модуль мог снова вырасти вдвое, не задев проверку.
-Загрузка и публичный контракт не меняются — меняется только порог, на котором сборка
-падает. Рост сверх 325 KiB требует нового решения с измерением, как и раньше.
+Measurement: the `scripts/build-wasm.sh` build in the main folder on 2026-11-15 22:31, after the
+last edit of the module's crates (D-82, 01d63d2, 22:12), came to 825,703 bytes uncompressed and
+302,506 bytes gzip. The limit is that number plus 10% (332,757), rounded to 325 KiB: headroom of
+about 30 KB for growth of collaboration, history, and comments in the core. The previous 600 KiB
+was left over from the module with HTML and Markdown output and sanitizing (below); after D-73 the headroom was more than
+300 KB and the limit constrained nothing: the module could have doubled again without touching the check.
+Loading and the public contract do not change; only the threshold at which the build
+fails changes. Growth beyond 325 KiB requires a new decision with a measurement, as before.
 
-Решение 2026-11-10 (заменено): предел 600 KiB (614400 bytes) gzip.
+Decision of 2026-11-10 (superseded): a limit of 600 KiB (614400 bytes) gzip.
 
-Раньше локальный build разрешал 800 KiB, а CI — 500 KiB. Эти несовместимые
-значения не были подтверждены одной рабочей сборкой. После удаления внешнего
-Markdown parser и замены PII regex собственным scanner основной binary занимает
-588399 bytes gzip (Node zlib, level 9). Это измерение, а не прохождение прежнего предела 512000 bytes.
-600 KiB оставляет около 26 KB для исправлений без отключения существующих API.
+Previously the local build allowed 800 KiB and CI allowed 500 KiB. These incompatible
+values were not confirmed by a single working build. After removing the external
+Markdown parser and replacing the PII regex with a built-in scanner, the main binary takes
+588399 bytes gzip (Node zlib, level 9). That is a measurement, not a pass against the former 512000-byte limit.
+600 KiB leaves about 26 KB for fixes without disabling existing APIs.
 
-Решение 2026-11-10 сохраняло в модуле синхронный HTML sanitizer: вынос в отдельную
-асинхронную загрузку ради прежнего числа изменил бы контракт и загрузку потребителей.
-D-73 (27a49fd) его отменила: `export_html`, `export_markdown` и `sanitize_html` убраны
-из модуля, HTML, Markdown и очистку делает `@gotipe/core` одним кодом на обоих движках,
-а `gotipe-wasm` больше не зависит от `gotipe-export` и ammonia. Основной binary упал с
-604 875 до 298 588 bytes gzip (замер при выносе); сборка из основной папки на 2026-11-15
-даёт 300 804 (`scripts/check-wasm-size.mjs`). Предел 614400 bytes тогда не менялся: его
-меняет только решение с новым измерением — оно принято 2026-11-15 (D-171, выше). PDF/DOCX относятся к отдельному lazy export WASM; их размер не входит
-в initial editor budget. Удаление validation ради размера недопустимо. Дополнительный
-`wasm-opt --converge` существенного выигрыша не дал.
+The decision of 2026-11-10 kept the synchronous HTML sanitizer in the module: moving it to a separate
+asynchronous load to hit the former number would have changed the contract and loading for consumers.
+D-73 (27a49fd) reversed that: `export_html`, `export_markdown`, and `sanitize_html` were removed
+from the module, HTML, Markdown, and sanitizing are done by `@gotipe/core` with the same code on both engines,
+and `gotipe-wasm` no longer depends on `gotipe-export` and ammonia. The main binary dropped from
+604,875 to 298,588 bytes gzip (measured at the time of the move); a build from the main folder on 2026-11-15
+gives 300,804 (`scripts/check-wasm-size.mjs`). The limit of 614400 bytes was not changed then: only
+a decision with a new measurement changes it, and that was made on 2026-11-15 (D-171, above). PDF/DOCX belong to a separate lazy export WASM; their size is not part
+of the initial editor budget. Removing validation to save size is not acceptable. An additional
+`wasm-opt --converge` gave no significant gain.
 
-Размер проверяется по конечному файлу, а не Cargo tree. Для изменения предела
-нужно новое измерение и объяснение влияния на загрузку и публичный контракт.
-Обычный рост бинарного файла не служит автоматическим основанием поднять бюджет.
+Size is checked on the final file, not on the Cargo tree. Changing the limit
+requires a new measurement and an explanation of the impact on loading and the public contract.
+Ordinary growth of the binary is not an automatic reason to raise the budget.

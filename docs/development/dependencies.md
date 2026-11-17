@@ -1,72 +1,72 @@
-# Политика зависимостей
+# Dependency policy
 
-Решение владельца от 2026-11-09: своё редакторное ядро, Markdown и небольшие
-вспомогательные алгоритмы. Замена пакета завершается после regression/parity
-проверок; возраст пакета сам по себе не определяет качество или безопасность.
+Owner decision of 2026-11-09: our own editor core, Markdown, and small
+helper algorithms. A package replacement is completed after regression/parity
+checks; a package's age alone does not determine quality or security.
 
-| Категория | Решение |
+| Category | Decision |
 |---|---|
-| Runtime редактора/Markdown/utility | свои модули, никаких новых внешних dependencies |
-| React/React DOM/Vue/Svelte/Solid | peers соответствующих adapters/UI |
-| Shiki | существующий необязательный host adapter, отдельный lazy entry; не часть ядра |
-| mdast/micromark | удалены; Markdown разбирает собственный parser GoTipe |
-| Web APIs | DOMParser, URL, Intl.Segmenter, Web Crypto с validation границ |
-| Rust/Go platform libraries | serde/WASM, TLS/crypto, DB/storage/network drivers; не писать свою криптографию |
-| Build/test tooling | devDependencies, не runtime потребителя |
+| Editor/Markdown/utility runtime | our own modules, no new external dependencies |
+| React/React DOM/Vue/Svelte/Solid | peers of the corresponding adapters/UI |
+| Shiki | the existing optional host adapter, a separate lazy entry; not part of the core |
+| mdast/micromark | removed; Markdown is parsed by GoTipe's own parser |
+| Web APIs | DOMParser, URL, Intl.Segmenter, Web Crypto with boundary validation |
+| Rust/Go platform libraries | serde/WASM, TLS/crypto, DB/storage/network drivers; do not write our own cryptography |
+| Build/test tooling | devDependencies, not the consumer's runtime |
 
-Новая зависимость объясняет задачу, почему платформа/свой код не подходят,
-лицензию, влияние на bundle и владельца обновлений. Раздувание allowlist ради CI
-запрещено. При удалении обновляй lockfile, проверяй чистую установку и entrypoints.
+A new dependency explains the task, why the platform or our own code does not fit,
+the license, the bundle impact, and the owner of updates. Bloating the allowlist for CI
+is forbidden. On removal, update the lockfile and check a clean install and the entrypoints.
 
-Runtime imports проверяет `pnpm check:architecture`. Release режим запрещает
-временный Markdown-долг. Внешние системы остаются адаптерами: правила редактора
-не зависят от конкретного приложения.
+`pnpm check:architecture` checks runtime imports. Release mode forbids the
+temporary Markdown debt. External systems remain adapters: the editor's rules
+do not depend on a specific application.
 
-## Необязательные PDF и DOCX
+## Optional PDF and DOCX
 
-Решение владельца от 2026-11-10: GoTipe владеет обходом документа, разметкой
-страниц, переносами, таблицами, marks, колонтитулами и PDF/OOXML rendering.
-Typst, typst-pdf, typst-assets как runtime dependencies и citationberg удалены.
-Ни один полный document/layout compiler не входит в новый PDF backend.
+Owner decision of 2026-11-10: GoTipe owns document traversal, page
+layout, line breaking, tables, marks, headers and footers, and PDF/OOXML rendering.
+Typst, typst-pdf, typst-assets as runtime dependencies, and citationberg are removed.
+No full document/layout compiler is part of the new PDF backend.
 
-Узкие библиотеки отвечают за специализированные форматы и международный текст:
+Narrow libraries handle specialized formats and international text:
 
-| Библиотека | Задача и причина | Лицензия |
+| Library | Task and reason | License |
 |---|---|---|
-| pdf-writer 0.15 | корректная сериализация PDF objects/xref/streams; не layout | MIT/Apache-2.0 |
-| harfrust 0.15 | OpenType shaping, ligatures, complex scripts; поддерживаемая реализация HarfBuzz | MIT |
-| read-fonts 0.46 | проверенное чтение OpenType tables/metrics; общий parser с harfrust | MIT/Apache-2.0 |
-| subsetter 0.2.6 | CFF/TrueType glyph subsetting и instancing variable Noto Emoji; font compiler не пишем заново | MIT/Apache-2.0 |
-| unicode-bidi / unicode-segmentation | стандартные UAX #9/#29: порядок текста и границы grapheme clusters, не layout документа | MIT/Apache-2.0 |
-| flate2 / zlib-rs и ZIP 9 | Deflate streams и контейнер OOXML; компрессию не переписываем | MIT/Apache-2.0, Zlib, MIT |
-| image 0.25 | ограниченное декодирование PNG/JPEG/GIF/WebP; собственный raster codec не нужен | MIT/Apache-2.0 |
-| image-webp 0.2 (feature `webp` у image) | WebP (VP8 и VP8L) — один из четырёх форматов, которые редактор принимает при загрузке (`IMAGE_MEDIA_TYPES`); без него PDF/DOCX отклоняли документ, который редактор показывает. Pure Rust без unsafe/C, ≈8,7 тыс. строк, тот же владелец image-rs и те же `Limits`; тянет только quick-error 2 (MIT/Apache-2.0), byteorder-lite уже в графе. Только export WASM и `gotipe-convert`, не ядро | MIT/Apache-2.0 |
+| pdf-writer 0.15 | correct serialization of PDF objects/xref/streams; not layout | MIT/Apache-2.0 |
+| harfrust 0.15 | OpenType shaping, ligatures, complex scripts; a maintained HarfBuzz implementation | MIT |
+| read-fonts 0.46 | verified reading of OpenType tables/metrics; a parser shared with harfrust | MIT/Apache-2.0 |
+| subsetter 0.2.6 | CFF/TrueType glyph subsetting and instancing of variable Noto Emoji; we do not rewrite a font compiler | MIT/Apache-2.0 |
+| unicode-bidi / unicode-segmentation | the standard UAX #9/#29: text order and grapheme cluster boundaries, not document layout | MIT/Apache-2.0 |
+| flate2 / zlib-rs and ZIP 9 | Deflate streams and the OOXML container; we do not rewrite compression | MIT/Apache-2.0, Zlib, MIT |
+| image 0.25 | bounded decoding of PNG/JPEG/GIF/WebP; no raster codec of our own is needed | MIT/Apache-2.0 |
+| image-webp 0.2 (the `webp` feature of image) | WebP (VP8 and VP8L) is one of the four formats the editor accepts on upload (`IMAGE_MEDIA_TYPES`); without it PDF/DOCX rejected a document that the editor displays. Pure Rust without unsafe/C, about 8.7 thousand lines, the same owner as image (image-rs) and the same `Limits`; it pulls in only quick-error 2 (MIT/Apache-2.0), byteorder-lite is already in the graph. Export WASM and `gotipe-convert` only, not the core | MIT/Apache-2.0 |
 
-Subsetting включает upstream variable-fonts feature, поэтому использует собственные
-skrifa/write-fonts/kurbo. Прямой второй scaler skrifa не подключается: экспортёру
-достаточно read-fonts, который уже нужен HarfRust. Optional ICU feature HarfRust
-выключен. Точные transitive versions и оригинальные notices генерируются из lockfile.
-Эти библиотеки разрешены только для отдельного PDF/DOCX exporter, не для ядра,
-Markdown или небольших helpers. Владелец обновлений — модуль export.
+Subsetting enables the upstream variable-fonts feature, so it uses its own
+skrifa/write-fonts/kurbo. A direct second skrifa scaler is not connected: the exporter
+needs only read-fonts, which HarfRust already requires. HarfRust's optional ICU feature
+is off. Exact transitive versions and original notices are generated from the lockfile.
+These libraries are allowed only for the separate PDF/DOCX exporter, not for the core,
+Markdown, or small helpers. The owner of updates is the export module.
 
-В браузере PDF/DOCX входят в отдельный `@gotipe/export-wasm`; `@gotipe/export`
-загружает его при первом запросе. Основной editor WASM не включает эти features.
-Импорт wrapper не запускает загрузку/инициализацию. Cloud вызывает тот же native
-`gotipe-convert`. Размер нового WASM измеряется после сборки, не выводится из
-размера Cargo graph. Core bundle проверяется отдельно.
+In the browser PDF/DOCX are part of the separate `@gotipe/export-wasm`; `@gotipe/export`
+loads it on the first request. The main editor WASM does not include these features.
+Importing the wrapper does not start loading/initialization. Cloud calls the same native
+`gotipe-convert`. The size of the new WASM is measured after the build, not derived from the
+size of the Cargo graph. The core bundle is checked separately.
 
-URL изображений загружает явный host `resolveImage`; native renderer не получает
-доступ к сети или произвольным файлам. Raster codecs проверяют размер и бюджет
-памяти и нормализуют изображения в PNG для OOXML.
+Image URLs are loaded by the explicit host `resolveImage`; the native renderer gets no
+access to the network or to arbitrary files. Raster codecs check the size and memory
+budget and normalize images to PNG for OOXML.
 
-Неизменённые fonts перенесены из опубликованного typst-assets 0.15.1 в
-`crates/gotipe-export/assets`, вместе с исходными LICENSE/NOTICE. Это Libertinus
-Serif, New Computer Modern и DejaVu Sans Mono; Noto Emoji сохранён под SIL OFL.
-Имена, байты и лицензионные условия не изменены. `assets/inventory.json` фиксирует
-исходный archive/revision и SHA-256. Collector проверяет fonts и помещает notices
-в optional npm package и Cloud image. Шрифты не требуют установленного Typst.
+The unmodified fonts were moved from the published typst-assets 0.15.1 into
+`crates/gotipe-export/assets`, together with the original LICENSE/NOTICE. They are Libertinus
+Serif, New Computer Modern, and DejaVu Sans Mono; Noto Emoji is kept under the SIL OFL.
+Names, bytes, and license terms are unchanged. `assets/inventory.json` records
+the source archive/revision and SHA-256. The collector verifies the fonts and places the notices
+in the optional npm package and the Cloud image. The fonts do not require an installed Typst.
 
-Источники: [PDF writer](https://github.com/typst/pdf-writer),
+Sources: [PDF writer](https://github.com/typst/pdf-writer),
 [HarfRust](https://github.com/harfbuzz/harfrust),
 [Fontations](https://github.com/googlefonts/fontations),
 [Subsetter](https://github.com/typst/subsetter),
@@ -75,26 +75,26 @@ Serif, New Computer Modern и DejaVu Sans Mono; Noto Emoji сохранён по
 [ZIP codec](https://github.com/zip-rs/zip2),
 [Noto Emoji / SIL OFL](https://github.com/google/fonts/tree/main/ofl/notoemoji).
 
-Приёмка требует сохранённых baseline fixtures прежнего backend, PDF/OOXML
+Acceptance requires saved baseline fixtures of the previous backend, PDF/OOXML
 validators, Unicode extraction, glyph/font checks, geometry/pagination, tables,
-marks, images, header/footer и одинакового поведения native/WASM/Cloud. Сборка
-или чистый audit сами по себе не подтверждают визуальную совместимость.
+marks, images, header/footer, and identical behavior of native/WASM/Cloud. A build
+or a clean audit alone does not confirm visual compatibility.
 
 ## Native Markdown grammar
 
-Rust import использует собственные lexer, block/inline AST, delimiter resolver,
-reference handling и converter GoTipe. Существующий `regex` (MIT/Apache-2.0)
-исполняет ограниченные грамматические шаблоны из того же контракта, что JS
-RegExp в TS parser; сторонний Markdown parser не подключается. Это полноценный
-компилятор регулярных выражений, а не замена небольшого helper. Включены только
-std/perf, Unicode Perl classes и general categories для flanking punctuation.
-Case-insensitive syntax patterns ограничены ASCII; Unicode case tables отключены.
-Импорт ограничен глубиной 64 и бюджетом inline scanning; неподдержанный синтаксис
-сохраняется raw. Владелец — Rust export. Проверка — differential public-model
-fixtures против собственного TS parser и размер main WASM после linker.
-Основной WASM вызывает Markdown serializer, native parser не экспортируется;
-его regex matcher/data должны исключаться при link. Наличие build dependency
-в Cargo tree само по себе не доказывает присутствия кода в конечном WASM.
+The Rust import uses GoTipe's own lexer, block/inline AST, delimiter resolver,
+reference handling, and converter. The existing `regex` (MIT/Apache-2.0)
+executes bounded grammar patterns from the same contract as the JS
+RegExp in the TS parser; no third-party Markdown parser is connected. This is a full
+regular expression compiler, not a replacement for a small helper. Only
+std/perf, Unicode Perl classes, and general categories for flanking punctuation are enabled.
+Case-insensitive syntax patterns are limited to ASCII; Unicode case tables are disabled.
+Import is limited to a depth of 64 and an inline scanning budget; unsupported syntax
+is preserved raw. The owner is Rust export. The check is differential public-model
+fixtures against the own TS parser, and the size of the main WASM after the linker.
+The main WASM calls the Markdown serializer, the native parser is not exported;
+its regex matcher/data must be excluded at link time. The presence of a build dependency
+in the Cargo tree does not by itself prove that the code is in the final WASM.
 
 ### Named character reference data
 

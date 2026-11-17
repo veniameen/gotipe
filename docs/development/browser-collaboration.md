@@ -1,20 +1,20 @@
-# Подключение браузерного редактора к Cloud
+# Connecting a browser editor to Cloud
 
-`@gotipe/collaboration` передаёт операции собственного Rust/WASM CRDT.
-Для этого сценария создавай редактор с `engine: "wasm"`: JS-only entry явно
-возвращает `COLLABORATION_UNAVAILABLE`, а не имитирует синхронизацию копиями JSON.
-Точный формат сервера: [replication contract](collaboration-protocol.md).
+`@gotipe/collaboration` transmits operations of its own Rust/WASM CRDT.
+For this scenario, create the editor with `engine: "wasm"`: the JS-only entry explicitly
+returns `COLLABORATION_UNAVAILABLE` rather than imitating sync with JSON copies.
+The exact server format: [replication contract](collaboration-protocol.md).
 
-## Загрузка и запуск
+## Loading and starting
 
-GET `/v1/documents/{id}` возвращает `content` для отображения и
-`collaboration_state: { baseline, updates, generation }` для восстановления реплики.
-В SDK поле называется `collaborationState`; вложенные CRDT данные не переименовываются.
-Создай редактор из baseline и примени **все** updates перед началом ввода.
-Один materialized content не содержит идентичностей и истории репликации.
-`generation` — непрозрачное имя этой baseline в Cloud. Передавай состояние в
-`initialState` целиком: с `generation` провайдер подключается по `gotipe.v2` и шлёт
-только операции, без неё — по `gotipe.v1`, где каждый кадр повторяет baseline.
+GET `/v1/documents/{id}` returns `content` for display and
+`collaboration_state: { baseline, updates, generation }` for restoring a replica.
+In the SDK the field is called `collaborationState`; the nested CRDT data is not renamed.
+Create the editor from the baseline and apply **all** updates before input begins.
+Materialized content alone contains no identities and no replication history.
+`generation` is the opaque name of this baseline in Cloud. Pass the state to
+`initialState` whole: with `generation` the provider connects over `gotipe.v2` and sends
+only operations, without it over `gotipe.v1`, where each frame repeats the baseline.
 
 ```ts
 import { createEditor } from "@gotipe/core";
@@ -50,79 +50,79 @@ async function openDocument(
 }
 ```
 
-`peerId` принадлежит одной живой реплике и сохраняется при reconnect. Разные
-вкладки получают разные IDs. Повторный connect с другим редактором запрещён.
-`initialState` применяется один раз; переподключение не заменяет локальный документ.
+`peerId` belongs to one live replica and is kept across reconnects. Different
+tabs get different IDs. Connecting again with a different editor is forbidden.
+`initialState` is applied once; reconnecting does not replace the local document.
 
-Конструктор сразу отклоняет (`TypeError`) настройку, которая не может заработать:
-`wsUrl` не `ws:`/`wss:`, учётные данные или `token` в URL, `peerId` длиннее 256 байт
-или с префиксом `@base`, неверный `user` (имя до 256 символов, цвет `#rgb`/`#rrggbb`,
-аватар `http(s)`/`data:image` до 16384 символов). Такие ошибки не повторяются как
-временные; `SecurityError`/`SyntaxError` из конструктора WebSocket тоже окончательны.
+The constructor immediately rejects (`TypeError`) a configuration that cannot work:
+a `wsUrl` that is not `ws:`/`wss:`, credentials or a `token` in the URL, a `peerId` longer than 256 bytes
+or with the `@base` prefix, an invalid `user` (a name up to 256 characters, a `#rgb`/`#rrggbb` color,
+an `http(s)`/`data:image` avatar up to 16384 characters). Such errors are not retried as
+transient ones; a `SecurityError`/`SyntaxError` from the WebSocket constructor is also final.
 
-## Состояние сохранения
+## Save state
 
-`getState()` / `onStateChange` описывают соединение. `connected` означает завершённый
-обмен начальным состоянием. `getSyncState()` / `onSyncChange` возвращают
-`pendingOperations` и `saving`: интерфейс может показывать несохранённые правки.
+`getState()` / `onStateChange` describe the connection. `connected` means the initial
+state exchange has completed. `getSyncState()` / `onSyncChange` return
+`pendingOperations` and `saving`: the interface can show unsaved edits.
 
-Сервер подтверждает пакет только после устойчивой записи. Провайдер держит один
-пакет в полёте и отправляет только неподтверждённые операции. Подтверждения приходят
-по порядку, поэтому подтверждённые операции реплики — префикс её Lamport-часов:
-провайдер хранит одну отметку и просит у движка
-`getCollaborationUpdate({ after, maxBytes })`, не разбирая весь журнал на каждое
-нажатие. После разрыва отметка берётся заново из полного состояния сервера
-(`getCollaborationUpdate({ missingFrom })`), так что потерянное подтверждение не
-приводит к повтору записанного. Тем же вызовом находятся операции, которых у сервера
-нет и которые создала не эта реплика (локальная копия закрытой вкладки под другим
-`peerId`): они уходят один раз сразу после handshake.
-Ошибки сохранения и протокола приходят в `onError`; они не превращаются в успех.
+The server acknowledges a batch only after a durable write. The provider keeps one
+batch in flight and sends only unacknowledged operations. Acknowledgments arrive
+in order, so the acknowledged operations of a replica are a prefix of its Lamport clocks:
+the provider keeps a single mark and asks the engine for
+`getCollaborationUpdate({ after, maxBytes })` without parsing the whole log on every
+keystroke. After a disconnect the mark is taken anew from the server's full state
+(`getCollaborationUpdate({ missingFrom })`), so a lost acknowledgment does not
+lead to a repeat of something already written. The same call finds operations that the server
+does not have and that this replica did not create (the local copy of a closed tab under a different
+`peerId`): they go out once, right after the handshake.
+Save and protocol errors arrive in `onError`; they are not turned into success.
 
-Размер кадра не зависит от размера документа и длины офлайн-сессии: кадр заполняется
-до 512 KiB целых транзакций, половины лимита сообщения Cloud (1 MiB), остальное
-уходит следующими кадрами по порядку. Кадр никогда не кончается посреди транзакции:
-участник проверяет схемой весь документ, а половина транзакции (заголовок без
-`level`, картинка без `src`) — не документ. Транзакция больше кадра уходит целиком,
-если помещается в одно сообщение; больше сообщения — частями с `continues`, которые
-Cloud копит, сохраняет одной записью, подтверждает одним ACK и пересылает целиком
-(`SYNC_TRANSACTION_LIMIT`, 16 MiB). При разрыве, паузе больше 30 s или ошибке в
-любой части сервер ничего не сохраняет и закрывает соединение, и транзакция уходит
-заново целиком. Если сервер отвечает `UPDATE_TOO_LARGE`, провайдер переподключается и
-отправляет эту правку самостоятельными кадрами; участник, чья схема отклоняет такой
-кусок, держит его и применяет вместе со следующими, пока объединение не станет
-документом. `DOCUMENT_TOO_LARGE` (журнал документа стал бы больше, чем читается)
-останавливает провайдер. Срок ожидания ACK отсчитывается, когда сокет отдал данные
-в сеть (`bufferedAmount` ушёл в ноль), а счётчик переподключений сбрасывает только
-ACK. Восстановленные чужие операции уходят одной транзакцией. Одна операция больше лимита (например, атрибут с файлом в `data:`) не
-может быть передана: провайдер сообщает об этом в `onError` и останавливается, а не
-переподключается по кругу. То же он делает на `gotipe.v1`, если baseline сама не
-помещается в кадр или транзакция не помещается в одно сообщение.
+The frame size does not depend on the document size or the length of an offline session: a frame is filled
+with up to 512 KiB of whole transactions, half of Cloud's message limit (1 MiB), and the rest
+goes out in the following frames in order. A frame never ends in the middle of a transaction:
+a participant validates the whole document against the schema, and half a transaction (a heading without
+`level`, an image without `src`) is not a document. A transaction larger than a frame goes out whole
+if it fits in one message; larger than a message, it goes in parts with `continues`, which
+Cloud accumulates, saves as a single record, confirms with a single ACK, and forwards whole
+(`SYNC_TRANSACTION_LIMIT`, 16 MiB). On a disconnect, a pause longer than 30 s, or an error in
+any part, the server saves nothing and closes the connection, and the transaction is sent
+again in full. If the server replies `UPDATE_TOO_LARGE`, the provider reconnects and
+sends that edit as self-contained frames; a participant whose schema rejects such a
+piece holds it and applies it together with the next ones until the union becomes a
+document. `DOCUMENT_TOO_LARGE` (the document's log would become larger than can be read)
+stops the provider. The ACK wait timeout is counted from when the socket handed the data
+to the network (`bufferedAmount` dropped to zero), and the reconnect counter is reset only by an
+ACK. Recovered foreign operations go out as one transaction. A single operation larger than the limit (for example, an attribute with a file in `data:`) cannot
+be transmitted: the provider reports this in `onError` and stops instead of
+reconnecting in a loop. It does the same on `gotipe.v1` if the baseline itself does not
+fit in a frame or a transaction does not fit in one message.
 
-Сохранённые записи `collaboration_state.updates` — объединение, а не
-последовательность: `applyCollaborationState` сливает их в одно обновление, и
-редактор проверяет схемой один раз. После сжатия журнала строка, записанная во
-время слияния, стоит раньше слитой строки, от которой может зависеть; по одной они
-не применяются.
+The stored `collaboration_state.updates` records are a union, not a
+sequence: `applyCollaborationState` merges them into one update, and the
+editor validates against the schema once. After the log is compacted, a row written during
+the merge comes before the merged row it may depend on; applied one by one
+they do not work.
 
-Если удалённый участник вписал текст внутрь inline-атома (упоминание, формула),
-`receiveCollaborationUpdate` снимает с этого текста атомарные marks локальной
-транзакцией вне истории (`normalizeRemoteAtoms`), так что исправление получают все
-реплики, а одновременные исправления сходятся. Провайдер отправляет его сразу после
-приёма.
+If a remote participant typed text inside an inline atom (a mention, a formula),
+`receiveCollaborationUpdate` strips the atomic marks from that text with a local
+transaction outside history (`normalizeRemoteAtoms`), so all replicas receive the fix,
+and simultaneous fixes converge. The provider sends it right after
+receiving.
 
-Набор текста объединяется: после паузы кадр уходит сразу, в серии нажатий — не чаще
-раза в 50 ms, а дальше действует запас в 60 кадров с пополнением 4 в секунду, то
-есть не больше 300 кадров правок в любую минуту. Вместе с присутствием (до 10 в
-секунду) соединение остаётся ниже `RATE_LIMIT_WS` по умолчанию (1000 в минуту).
-Очередь после офлайна уходит без паузы в 50 ms, но в том же запасе.
+Typing is coalesced: after a pause a frame goes out immediately, in a series of keystrokes no more often than once
+every 50 ms, and beyond that a reserve of 60 frames applies, refilled at 4 per second, that
+is, no more than 300 edit frames in any minute. Together with presence (up to 10 per
+second) the connection stays below the default `RATE_LIMIT_WS` (1000 per minute).
+The queue after offline goes out without the 50 ms pause, but within the same reserve.
 
-Если содержимое документа заменили через REST (`PATCH` с `content` или
-восстановление версии), Cloud отправляет `BASELINE_REPLACED` и закрывает соединение.
-База реплики устарела: провайдер останавливается без повторов, оставляет
-неподтверждённые операции в редакторе и вызывает `onBaselineReplaced` (без него —
-`onError`). Хост заново загружает документ и создаёт новый редактор и провайдер.
-То же происходит, если замена случилась, пока реплика была offline: handshake с
-другой base распознаётся как замена, а не как сбой.
+If the document content was replaced through REST (`PATCH` with `content` or
+a version restore), Cloud sends `BASELINE_REPLACED` and closes the connection.
+The replica's base is stale: the provider stops without retries, leaves
+unacknowledged operations in the editor, and calls `onBaselineReplaced` (without it,
+`onError`). The host reloads the document and creates a new editor and provider.
+The same happens if the replacement occurred while the replica was offline: a handshake with a
+different base is recognized as a replacement, not a failure.
 
 ```ts
 const provider = new CollaborationProvider({
@@ -139,50 +139,50 @@ const provider = new CollaborationProvider({
 });
 ```
 
-`disconnect()` закрывает соединение и подписки без автоматического reconnect;
-`connect(editor)` возобновляет работу той же реплики. Несохранённые операции
-сохраняются **в памяти редактора**. Переживание закрытия вкладки требует host storage
-для baseline, `generation` и `editor.getCollaborationUpdate()` (полное состояние);
-провайдер сам не пишет в IndexedDB.
-`destroy()` окончателен, игнорирует поздние token promises и освобождает ресурсы.
+`disconnect()` closes the connection and subscriptions without an automatic reconnect;
+`connect(editor)` resumes work of the same replica. Unsaved operations
+are kept **in the editor's memory**. Surviving a tab close requires host storage
+for the baseline, `generation`, and `editor.getCollaborationUpdate()` (the full state);
+the provider itself does not write to IndexedDB.
+`destroy()` is final, ignores late token promises, and releases resources.
 
-## Авторизация и присутствие
+## Authorization and presence
 
-Браузер передаёт краткоживущий JWT в credential subprotocol; секрет не попадает в URL.
-Cloud проверяет token, scope, роль и доступ к документу до upgrade и не возвращает
-credential subprotocol клиенту. `token`-функция позволяет обновлять JWT при reconnect.
-`SYNC_ALLOWED_ORIGINS` содержит точные разрешённые frontend origins; wildcard не принят.
+The browser passes a short-lived JWT in a credential subprotocol; the secret does not end up in the URL.
+Cloud checks the token, scope, role, and document access before the upgrade and does not return the
+credential subprotocol to the client. A `token` function lets you refresh the JWT on reconnect.
+`SYNC_ALLOWED_ORIGINS` holds the exact allowed frontend origins; wildcards are not accepted.
 
-Peer awareness содержит имя, цвет, курсор и выделение. Провайдер обновляет слой
-`collaboration` и `onPeersChange`, очищает его при disconnect и при сообщении удаления.
-Он не изменяет документ ради курсора. Своё присутствие провайдер отправляет только
-при изменении курсора или выделения (чужие правки сами по себе не считаются), не чаще
-раза в 100 ms после изменения, и заново после каждого handshake. Cloud проверяет
-кадр присутствия и отказывает (`INVALID_AWARENESS`) только отправителю; неверное
-чужое присутствие убирает одного этого участника и приходит в `onError`, соединение
-продолжает работать. Закрывая компонент, вызывай `provider.destroy()`
-и `editor.destroy()`; уничтожение редактора также отключает провайдер.
+Peer awareness contains a name, color, cursor, and selection. The provider updates the
+`collaboration` layer and `onPeersChange`, clears it on disconnect and on a removal message.
+It does not modify the document for the sake of a cursor. The provider sends its own presence only
+when the cursor or selection changes (foreign edits alone do not count), no more often than once
+every 100 ms after a change, and again after every handshake. Cloud validates the
+presence frame and rejects it (`INVALID_AWARENESS`) to the sender only; invalid
+foreign presence removes that one participant and arrives in `onError`, and the connection
+keeps working. When closing the component, call `provider.destroy()`
+and `editor.destroy()`; destroying the editor also disconnects the provider.
 
-## Локальное использование
+## Local use
 
-`LocalCollaborationBridge` связывает несколько редакторов одной baseline без сервера.
-Он передаёт те же CRDT updates и сохраняет идентичности блоков/символов. Это удобный
-локальный пример; он не предоставляет дисковое хранение или удалённую авторизацию.
+`LocalCollaborationBridge` connects several editors with one baseline without a server.
+It passes the same CRDT updates and preserves block/character identities. It is a convenient
+local example; it provides no disk storage or remote authorization.
 
-## Проверенное состояние
+## Verified state
 
-Контрактные тесты провайдера покрывают ACK, reconnect, потерю ACK, отказ сохранения,
-намеренное отключение, позднюю авторизацию, malformed data, presence cleanup, неверное
-присутствие одного участника, частоту присутствия, замену базы и ошибки настройки,
-а также кадры без baseline, размер кадра в большом документе и после долгого офлайна,
-порядок и разбиение кадров, восстановленные чужие операции, отказ generation при
-handshake, работу по `gotipe.v1`, частоту кадров при непрерывном наборе, границы
-транзакций, части `continues` с одним ACK, повтор целой транзакции после разрыва и
-`UPDATE_TOO_LARGE`. Движок в этих тестах заменён моделью его контракта; сам контракт
-(`after`, `missingFrom`, порядок marks) проверяется на настоящем WASM в
-`packages/core/tests`, а загрузка записей в любом порядке и части транзакции с
-заголовком и картинкой — в `packages/collaboration/tests/engine.test.ts`.
-Реальный Chrome + локальный Cloud/PostgreSQL: две WASM реплики сделали конкурентные
-правки с кириллицей/emoji без соединения, сошлись после reconnect, дождались ACK,
-а новый редактор восстановил тот же текст из GET baseline и durable updates.
-Локальное доказательство: `output/cloud-validation/browser-sync-result.json`.
+The provider's contract tests cover ACK, reconnect, a lost ACK, a save failure,
+intentional disconnect, late authorization, malformed data, presence cleanup, invalid
+presence from one participant, presence rate, baseline replacement, and configuration errors,
+as well as frames without a baseline, frame size in a large document and after a long offline period,
+frame order and splitting, recovered foreign operations, a generation rejection at
+handshake, operation over `gotipe.v1`, frame rate under continuous typing, transaction
+boundaries, `continues` parts with a single ACK, repeating a whole transaction after a disconnect, and
+`UPDATE_TOO_LARGE`. In these tests the engine is replaced with a model of its contract; the contract itself
+(`after`, `missingFrom`, mark order) is checked against the real WASM in
+`packages/core/tests`, and loading records in any order and parts of a transaction with a
+heading and an image are checked in `packages/collaboration/tests/engine.test.ts`.
+Real Chrome + local Cloud/PostgreSQL: two WASM replicas made concurrent
+edits with Cyrillic/emoji without a connection, converged after reconnect, waited for the ACK,
+and a new editor restored the same text from the GET baseline and durable updates.
+Local evidence: `output/cloud-validation/browser-sync-result.json`.

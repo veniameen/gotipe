@@ -64,7 +64,7 @@ host draws itself and the renderer leaves out. Vue's `EditorContent` also takes 
 **Placeholder.** `Placeholder` has no text of its own any more (`text: ""`), and the presets
 no longer configure English words. Its decoration asks the renderer for words: React shows
 its placeholder in the interface language (`placeholder.*` strings), so `BlockEditor` with
-`DefaultPreset` shows «Введите «/» для блоков» in `ru` and "Text" in `en`, now also on the
+`DefaultPreset` shows “Type / for blocks” in `ru` (“Введите “/” для блоков”) and "Text" in `en`, now also on the
 empty document away from the caret. A configured `text` or a host `placeholder` function wins.
 
 **@gotipe/block-editor.** Each collaborator is drawn once. `BlockEditor` takes over the
@@ -87,6 +87,6 @@ spaces, except the last line); DOCX writes `w:jc`. `@gotipe/migration` maps Tipt
 Slate's `align` already fits. The migration's schema lookup ignores exports of
 `@gotipe/core/extensions` that are not extensions.
 
-**MarkdownPaste and inline atoms.** Pasted `[@Анна](mention:user-1)`, `$x^2$`, inline images
+**MarkdownPaste and inline atoms.** Pasted `[@Anna](mention:user-1)`, `$x^2$`, inline images
 and registered `:emoji:` become atoms when the schema has `Mention`, `InlineMath`,
 `InlineImage` or `CustomEmoji` (with the new `customEmoji` option); otherwise the text stays.

@@ -1,51 +1,51 @@
-# Одна тема и несколько редакторов
+# One theme and several editors
 
-Вид рисуется в [Атласе GoTipe](../../design/atlas/README.md); здесь — как тема устроена
-в коде. Значения токенов приходят из принятых кадров: литералы только в
-`design-tokens.json`, компоненты пользуются `--gt-*`. Решения атласа словами —
-в [дизайн-системе](../18-design-system.md).
+The view is drawn in the [GoTipe Atlas](../../design/atlas/README.md); this page describes how the theme is built
+in code. Token values come from accepted frames: literals live only in
+`design-tokens.json`, and components use `--gt-*`. The Atlas decisions in words are
+in the [design system](../18-design-system.md).
 
-`design-tokens.json` — владелец общих semantic tokens и light/dark значений.
-`pnpm generate:theme` обновляет CSS; `pnpm check:theme` проверяет его соответствие.
-JS presets используют тот же JSON. Не копируйте значения цветов в примеры.
+`design-tokens.json` owns the shared semantic tokens and the light/dark values.
+`pnpm generate:theme` updates the CSS; `pnpm check:theme` verifies that it matches.
+JS presets use the same JSON. Do not copy color values into examples.
 
-Разделы JSON:
-- `shared` — значения, не зависящие от темы, и псевдонимы. Псевдоним, который ведёт к
-  палитре, генератор объявляет заново в каждой теме, иначе `var()` останется в старой;
-- `light`, `dark` — палитры → `tokens/palette.css`;
-- `view` — вид notion, база для всех видов (`:root` и `[data-gt-view]`); `views` — то, чем
-  отличаются docs, modern и minimal; `narrow` — токены узкого контейнера (`@container`
-  640 и 359 px) для детей корня редактора → `tokens/views.css`.
+JSON sections:
+- `shared`: values that do not depend on the theme, and aliases. An alias that leads to
+  the palette is redeclared by the generator in each theme, otherwise `var()` stays on the old one;
+- `light`, `dark`: palettes → `tokens/palette.css`;
+- `view`: the notion view, the base for all views (`:root` and `[data-gt-view]`); `views`: what
+  distinguishes docs, modern, and minimal; `narrow`: tokens for a narrow container (`@container`
+  640 and 359 px) for children of the editor root → `tokens/views.css`.
 
-`tokens.css` только импортирует оба файла. Старые имена (`--gt-text-prose`,
-`--gt-editor-padding-x` и другие) остаются псевдонимами новых; новый CSS пишется на новых.
+`tokens.css` only imports both files. The old names (`--gt-text-prose`,
+`--gt-editor-padding-x`, and others) remain aliases of the new ones; new CSS is written with the new ones.
 
-`setTheme(mode, root?)` применяет тему к конкретному DOM root. Без root работает
-с documentElement. `getTheme(root?)` и `onThemeChange(listener, root?)` относятся
-к тому же root; разные экземпляры не меняют состояние и подписки друг друга.
-`setTheme` возвращает cleanup системного media listener для unmount. Cleanup
-старого вызова не отменяет listener нового вызова. Явные light/dark отключают
-слежение за системой. Импорт и getTheme безопасны при SSR.
+`setTheme(mode, root?)` applies the theme to a specific DOM root. Without a root it works
+with documentElement. `getTheme(root?)` and `onThemeChange(listener, root?)` refer
+to the same root; separate instances do not change each other's state or subscriptions.
+`setTheme` returns a cleanup for the system media listener, to be called on unmount. The cleanup
+of an old call does not cancel the listener of a new call. Explicit light/dark turn off
+following the system. Import and getTheme are safe during SSR.
 
-## Вид и хост
+## View and host
 
-Вид (`minimal`, `modern`, `notion`, `docs`) — набор `--gt-*` над одной разметкой. Он
-задаётся атрибутом `data-gt-view` на корне редактора: `<BlockEditor view="docs">` ставит его
-сам, по умолчанию `notion`. Корни `.gotipe-block-editor` и `.gotipe-editor` — контейнеры
-размера: узкий контейнер меняет токены, а не разметку. Редактор берёт ширину у родителя;
-в контексте, где ширина считается по содержимому, задайте её явно.
+A view (`minimal`, `modern`, `notion`, `docs`) is a set of `--gt-*` over a single markup. It is
+set by the `data-gt-view` attribute on the editor root: `<BlockEditor view="docs">` sets it
+itself, `notion` by default. The `.gotipe-block-editor` and `.gotipe-editor` roots are size
+containers: a narrow container changes tokens, not markup. The editor takes its width from its parent;
+in a context where width is computed from content, set it explicitly.
 
-`base.css` рисует документ всех видов, `theme.css` — меню, панели и состояния. PageEditor —
-тот же BlockEditor с Markdown-сессией и предложениями модели, своей темы у него нет: он берёт
-`view` (по умолчанию `notion`). `page.css` оставлен для совместимости и грузит те же
-`base.css` и `theme.css`.
+`base.css` draws the document for all views, `theme.css` draws menus, panels, and states. PageEditor is
+the same BlockEditor with a Markdown session and model suggestions; it has no theme of its own and takes
+`view` (`notion` by default). `page.css` is kept for compatibility and loads the same
+`base.css` and `theme.css`.
 
-Отдельной темы под приложение-хост нет. Хост передаёт свои цвета переопределением
-`--gt-*` на контейнере редактора или через `applyTheme(config, root)`; данные хоста —
-через контракты, а не через вид. Палитра объявлена только на `:root` и на элементах с
-`data-theme`, поэтому цвета, шрифты и радиусы хоста наследуются до текста и меню. Размеры
-вида (`[data-gt-view]`) переопределяются на самом корне редактора.
+There is no separate theme for a host application. The host passes its colors by overriding
+`--gt-*` on the editor container or through `applyTheme(config, root)`; host data goes
+through contracts, not through the view. The palette is declared only on `:root` and on elements with
+`data-theme`, so the host's colors, fonts, and radii are inherited down to text and menus. View
+sizes (`[data-gt-view]`) are overridden on the editor root itself.
 
-Редактор допускает собственный контейнер с `data-theme`: его меню и карточки, вынесенные за
-пределы страницы, получают токены контейнера. Оба редактора импортируют `base.css` и
+The editor allows its own container with `data-theme`: its menus and cards, which are rendered outside
+the page, receive the container's tokens. Both editors import `base.css` and
 `theme.css`.

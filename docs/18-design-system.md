@@ -1,246 +1,246 @@
-# GoTipe — дизайн-система
+# GoTipe — design system
 
-Источник вида — [Атлас GoTipe](../design/atlas/README.md) (`design/atlas/atlas.html`),
-принят владельцем 11 ноября 2026. Этот документ записывает решения атласа словами.
-Значения живут в токенах атласа (`design/atlas/src/tokens*.css`), после переноса — в
-`packages/theme/src/design-tokens.json`. Если документ и атлас расходятся, прав атлас.
+The source of the look is the [GoTipe Atlas](../design/atlas/README.md) (`design/atlas/atlas.html`),
+accepted by the owner on 11 November 2026. This document records the Atlas decisions in words.
+The values live in the Atlas tokens (`design/atlas/src/tokens*.css`) and, after the port, in
+`packages/theme/src/design-tokens.json`. If this document and the Atlas disagree, the Atlas is right.
 
-## Как меняется вид
+## How the look changes
 
-1. Кадр в атласе: новый или правка существующего. `node design/atlas/build.mjs`,
-   затем `node design/atlas/check.mjs`.
-2. Решение владельца по кадру. Замечания исправляются в рисунке, а не в коде.
-3. Код по принятому кадру: токены → тема → компоненты. Коммит называет кадр
-   («Атлас к. 7»). Снимок не доказывает ввод, перетаскивание, undo и выделение —
-   это проверяет сценарий.
+1. A frame in the Atlas: a new one or an edit to an existing one. `node design/atlas/build.mjs`,
+   then `node design/atlas/check.mjs`.
+2. The owner's decision on the frame. Remarks are fixed in the drawing, not in code.
+3. Code for the accepted frame: tokens → theme → components. The commit names the frame
+   ("Atlas frame 7"). A snapshot does not prove input, drag and drop, undo, and selection —
+   a scenario checks those.
 
-Правка вида без кадра не принимается.
+A change to the look without a frame is not accepted.
 
-## Принципы
+## Principles
 
-Мера — Specimen v6: шкала, ритм, радиусы, плотность. Вид — собственный.
+The measure is Specimen v6: scale, rhythm, radii, density. The look itself is our own.
 
-- **Тихо и плотно, как нативное приложение macOS** (ChatGPT.app, Codex):
-  системный шрифт, без украшений.
-- **Иерархия — размером и весом, а не серым.** Основной текст — чернила. Вторичный
-  и тихий текст остаются тихими, их не затемняют.
-- **Глубину даёт тон поверхности.** У всплывающего — кольцо 0,5 px и тень, а не
-  рамка. Нет одинаковой рамки 1 px у всего подряд и нет карточки в карточке.
-- **Цвет только со смыслом:** люди, вид выноски, подсветка кода, ошибки.
-  Фиолетового и терракоты нет. Ссылка и отметка задачи — чернилами; акцент — это
-  выделение, фокус и модель.
-- **Пояснений минимум.** Причина «нельзя» — в подсказке. Ошибка — тостом или
-  подсветкой элемента, а не строкой под полем. Настройка появляется только там,
-  где без неё нельзя.
-- **Значки — собственный набор:** сетка 16 (у значка страницы — 24), штрих 1,5,
-  скруглённые концы, `currentColor`. Эмодзи и буквы вместо значков не используются.
-- **В примерах — настоящее содержание.** Пустой документ подсказывает, с чего начать.
-- **Нет вида под конкретное приложение.** Хост передаёт данные через контракты, а
-  цвета — через `--gt-*`.
+- **Quiet and dense, like a native macOS app** (ChatGPT.app, Codex):
+  system font, no decoration.
+- **Hierarchy comes from size and weight, not from gray.** Main text is ink. Secondary
+  and quiet text stay quiet; they are not darkened.
+- **Depth comes from the surface tone.** A popover gets a 0.5 px ring and a shadow, not
+  a border. There is no identical 1 px border on everything and no card inside a card.
+- **Color only with meaning:** people, callout kind, code highlighting, errors.
+  There is no purple or terracotta. The link and the task checkmark are ink; the accent is
+  selection, focus, and the model.
+- **As few explanations as possible.** The reason for "not allowed" goes in a tooltip. An error is a toast or
+  a highlight on the element, not a line under the field. A setting appears only where
+  it cannot be avoided.
+- **Icons are our own set:** a 16 grid (24 for the page icon), 1.5 stroke,
+  rounded ends, `currentColor`. Emoji and letters are not used in place of icons.
+- **Examples use real content.** An empty document hints at where to start.
+- **There is no view for a specific application.** The host passes data through contracts and
+  colors through `--gt-*`.
 
-## Шрифт и шкала
+## Font and scale
 
-Семейства задаются токенами с системным запасом, в пакеты шрифты не вшиваются:
+Families are set by tokens with a system fallback; fonts are not bundled into the packages:
 - UI — `-apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", system-ui…`;
-- моноширинный — `ui-monospace, "SF Mono", Menlo, Consolas…`.
+- monospace — `ui-monospace, "SF Mono", Menlo, Consolas…`.
 
-| Роль | notion | docs | minimal |
+| Role | notion | docs | minimal |
 |---|---|---|---|
-| Заголовок страницы | 32/40, 700 | 28/36 | 22/28 |
+| Page title | 32/40, 700 | 28/36 | 22/28 |
 | H1 · H2 · H3 | 24/32 · 20/28 · 16/24, 600 | 22/28 · 18/24 · 15/22 | 18/26 · 16/22 · 14/22 |
-| Текст | 15/24 | 14/22 | 14/22 |
-| Цитата · таблица · код | 16/26 · 14/20 · 13/20 | 15/24 · 13/20 · 12/20 | 14/22 · 13/20 · 12/20 |
-| Подпись, мета | 13/20 | 13/20 | 13/20 |
+| Text | 15/24 | 14/22 | 14/22 |
+| Quote · table · code | 16/26 · 14/20 · 13/20 | 15/24 · 13/20 · 12/20 | 14/22 · 13/20 · 12/20 |
+| Caption, meta | 13/20 | 13/20 | 13/20 |
 
-Интерфейс (меню, панели, карточки) — 13/18, подписи групп — 12/16. Отрицательный
-трекинг только у заголовков и текста документа. Числа в таблицах — табличные цифры.
+The interface (menus, panels, cards) is 13/18, group labels 12/16. Negative tracking
+only on headings and document text. Numbers in tables use tabular figures.
 
-## Цвет
+## Color
 
-Основные роли. Полный набор — в токенах.
+The main roles. The full set is in the tokens.
 
-| Роль | Светлая | Тёмная |
+| Role | Light | Dark |
 |---|---|---|
-| Страница · углублённая поверхность | `#ffffff` · `#f7f7f5` | `#191918` · `#20201f` |
-| Текст · вторичный · тихий | `#232322` · `#66665f` · `#8e8e87` | `#ececea` · `#a6a6a0` · `#7a7a74` |
-| Линия · сильная линия | чернила 9 % · 15 % | белый 8 % · 13 % |
-| Чернила (главная кнопка, отметка задачи) | `#1d1d1c` | `#ececea` |
-| Акцент · выделение | `#2c62d4` · 16 % | `#6b9cff` · 26 % |
-| Опасность · предупреждение · успех | `#c4382f` · `#9a6500` · `#2b7547` | `#f06b60` · `#e2ad45` · `#6cc48a` |
-| Всплывающее · инверсия (подсказка, тост) | `#ffffff` · `#1d1d1c` | `#262625` · `#3a3a38` |
+| Page · sunken surface | `#ffffff` · `#f7f7f5` | `#191918` · `#20201f` |
+| Text · secondary · quiet | `#232322` · `#66665f` · `#8e8e87` | `#ececea` · `#a6a6a0` · `#7a7a74` |
+| Line · strong line | ink 9% · 15% | white 8% · 13% |
+| Ink (primary button, task checkmark) | `#1d1d1c` | `#ececea` |
+| Accent · selection | `#2c62d4` · 16% | `#6b9cff` · 26% |
+| Danger · warning · success | `#c4382f` · `#9a6500` · `#2b7547` | `#f06b60` · `#e2ad45` · `#6cc48a` |
+| Popover · inverse (tooltip, toast) | `#ffffff` · `#1d1d1c` | `#262625` · `#3a3a38` |
 
-- **Выноски.** Заметка — заливка 4 %. Информация, предупреждение и ошибка — оттенок
-  своего цвета 6–10 % и значок в этом цвете.
-- **Подсветка кода:** ключевые слова синие, строки зелёные, числа бирюзовые, типы
-  янтарные, комментарии тихие, без курсива.
-- **Люди и авторы правок** — синий, зелёный, бирюзовый. Выделение и вставка — их
-  цвет на 13–24 %.
-- **Цвета текста документа:** серый, красный, янтарный, зелёный, синий. Фон —
-  жёлтый, зелёный, синий, красный, серый.
+- **Callouts.** Note is a 4% fill. Info, warning, and error are a 6–10% tint
+  of their own color with an icon in that color.
+- **Code highlighting:** keywords blue, strings green, numbers teal, types
+  amber, comments quiet, no italics.
+- **People and edit authors** are blue, green, teal. Selection and insertion are their
+  color at 13–24%.
+- **Document text colors:** gray, red, amber, green, blue. Backgrounds are
+  yellow, green, blue, red, gray.
 
-## Геометрия и ритм
+## Geometry and rhythm
 
-- **Радиусы по ролям, один и тот же не вкладывается в себя:**
-  - 4 — строчные элементы: код, упоминание, пометка, чекбокс;
-  - 6 — управление: кнопки, строки меню, ручки, поля;
-  - 8 — блоки: код, выноска, изображение;
-  - 10 — всплывающее: меню, панель над выделением, тост;
-  - 12 — карточки: комментарий, предложение.
-- **Линия 1 px** только там, где она делит: строки таблицы, низ закреплённой
-  панели, край боковой панели.
-- **Шаг ритма — 4 px.** Между абзацами 8, между пунктами списка 4. Блоки (код,
-  таблица, изображение, выноска, цитата, раскрывающийся блок) — 16 со всех сторон.
-- **Заголовок держит дистанцию сверху и текст снизу:** над H1/H2/H3 — 40/32/20,
-  под ними — 10/8/4; в docs сверху 36/28/18. Разделитель — 28 с обеих сторон,
-  вложенность — 24.
-- **Страница notion:** колонка 680, поле 64 (в нём ручка блока), сверху 72, снизу 112.
+- **Radii by role; the same one is never nested inside itself:**
+  - 4 — inline elements: code, mention, mark, checkbox;
+  - 6 — controls: buttons, menu rows, handles, fields;
+  - 8 — blocks: code, callout, image;
+  - 10 — popovers: menu, toolbar over the selection, toast;
+  - 12 — cards: comment, suggestion.
+- **A 1 px line** only where it divides: table rows, the bottom of a pinned
+  toolbar, the edge of a side panel.
+- **The rhythm step is 4 px.** 8 between paragraphs, 4 between list items. Blocks (code,
+  table, image, callout, quote, toggle) get 16 on all sides.
+- **A heading keeps distance above and from the text below:** above H1/H2/H3 — 40/32/20,
+  below them — 10/8/4; in docs, 36/28/18 above. A divider is 28 on both sides,
+  nesting is 24.
+- **The notion page:** a 680 column, a 64 margin (the block handle lives in it), 72 on top, 112 at the bottom.
 
-## Виды
+## Views
 
-Вид — это набор токенов над одной разметкой (`data-gt-view` на корне редактора).
-Узкий контейнер меняет токены, а не разметку: при ширине до 640 поле 20, заголовок
-26; до 359 — поле 16. Ручка блока в узком notion остаётся — через неё работает
-перетаскивание пальцем, — и слева под неё остаётся поле 56. Код и таблица
-прокручиваются внутри себя, страница — нет.
+A view is a set of tokens over one markup (`data-gt-view` on the editor root).
+A narrow container changes tokens, not markup: at widths up to 640 the margin is 20, the title
+26; up to 359 — the margin is 16. The block handle stays in narrow notion — drag and drop by
+finger works through it — and a 56 margin is kept on the left for it. Code and tables
+scroll inside themselves, the page does not.
 
-- **notion** — страница, которую читают и собирают блоками: значок, заголовок,
-  подпись хоста, колонка 680, ручка у блока под указателем.
-- **docs** — справочная страница: текст плотнее, оглавление рядом (уходит на узком
-  экране), номера строк в коде. Ручка блока — как в notion, в поле 64 между оглавлением и
-  текстом; якорь # — после последнего слова заголовка под указателем, место под него заголовок
-  держит всегда (решение владельца по D-30).
-- **modern** — редактор формы или CMS: закреплённая панель над документом,
-  заголовок — первая строка, без шапки страницы и ручек. На узком экране панель
-  листается вбок, край со скрытыми инструментами затухает, как у широкой таблицы.
-- **minimal** — редактор как поле в чужом интерфейсе: интерфейсный кегль, без шапки
-  и ручек, форматирование — панелью над выделением.
+- **notion** — a page that is read and assembled from blocks: icon, title,
+  host caption, a 680 column, a handle on the block under the pointer.
+- **docs** — a reference page: denser text, a table of contents alongside (goes away on a narrow
+  screen), line numbers in code. The block handle is as in notion, in the 64 margin between the table of contents and the
+  text; the # anchor goes after the last word of the heading under the pointer, and the heading
+  always keeps room for it (owner decision on D-30).
+- **modern** — a form or CMS editor: a pinned toolbar above the document,
+  the title is the first line, no page header or handles. On a narrow screen the toolbar
+  scrolls sideways, and the edge with hidden tools fades out, like a wide table.
+- **minimal** — an editor as a field inside someone else's interface: interface font size, no page header
+  or handles, formatting through the toolbar over the selection.
 
-## Компоненты
+## Components
 
-- **Панель над выделением:**
-  - состав: модель, тип блока, начертания, ссылка, цвет, остальное;
-  - включённое начертание стоит на заливке, клавиша — в подсказке;
-  - ссылка и цвет занимают место панели: поле или палитра в одну строку,
-    поэтому текст под ними виден;
-  - неверный адрес только подсвечивает поле.
-- **Меню «/»:**
-  - группы с тихой подписью, справа — Markdown-сокращение, описаний нет;
-  - поиск выделяет совпадение, пустой результат — одной строкой.
-- **Ручка и меню блока:**
-  - ручка не сдвигает текст;
-  - меню разбито на группы, «Превратить в» раскрывается справа с клавишами.
-- **Перетаскивание:** на месте блока остаётся след (32 %), место вставки показывает
-  линия акцента, призрак идёт за указателем.
-- **Таблица:**
-  - линии между строками, без рамки и без вертикалей;
-  - шеврон в заголовке столбца, тип столбца: текст, код, число, да / нет;
-  - строка и столбец добавляются под таблицей.
-- **Изображение:** панель в углу, ручки ширины по краям, подпись — текстом. Пустой
-  блок предлагает загрузку и ссылку.
-- **Курсоры:** линия и флажок с именем в цвете человека. Курсор модели подписан
-  тем, что она делает.
-- **Комментарии:**
-  - слова подчёркнуты янтарным, открытый комментарий — с заливкой;
-  - в панели фильтр «Открытые / Решённые», ветка с цитатой, ответ прямо в карточке.
-- **Предложения правок:**
-  - вставка подчёркнута цветом автора, удаление зачёркнуто;
-  - над страницей строка: кто правит, сколько ждёт, «Принять все»;
-  - карточка стоит у текста; у устаревшей правки — только «Отклонить».
-- **Версии:** список рядом со страницей; страница показывает изменения с выбранной
-  версии.
-- **Модель:**
-  - текст-подсказка тихий, стоит после курсора, принимается клавишей Tab;
-  - строка команды — внизу редактора и знает, что выделено;
-  - пока модель пишет, строка показывает это и даёт остановить.
+- **Toolbar over the selection:**
+  - contents: model, block type, styles, link, color, the rest;
+  - an active style sits on a fill, the key is in the tooltip;
+  - link and color take the toolbar's place: a field or palette in one row,
+    so the text under them stays visible;
+  - an invalid address only highlights the field.
+- **The "/" menu:**
+  - groups with a quiet label, the Markdown shortcut on the right, no descriptions;
+  - search highlights the match, an empty result is a single line.
+- **Block handle and menu:**
+  - the handle does not shift the text;
+  - the menu is split into groups, "Turn into" opens to the right with keys.
+- **Drag and drop:** a trace (32%) stays in the block's place, the insertion point is shown by
+  an accent line, a ghost follows the pointer.
+- **Table:**
+  - lines between rows, no border and no vertical lines;
+  - a chevron in the column header, column type: text, code, number, yes / no;
+  - a row and a column are added below the table.
+- **Image:** a toolbar in the corner, width handles on the edges, the caption is text. An empty
+  block offers upload and a link.
+- **Cursors:** a line and a flag with the name in the person's color. The model's cursor is labeled
+  with what it is doing.
+- **Comments:**
+  - words are underlined in amber, an open comment gets a fill;
+  - the panel has an "Open / Resolved" filter, a thread with a quote, a reply right in the card.
+- **Edit suggestions:**
+  - an insertion is underlined in the author's color, a deletion is struck through;
+  - above the page is a line: who is editing, how many are waiting, "Accept all";
+  - the card stands next to the text; a stale suggestion has only "Reject".
+- **Versions:** a list beside the page; the page shows changes since the selected
+  version.
+- **Model:**
+  - the hint text is quiet, stands after the cursor, and is accepted with Tab;
+  - the command line is at the bottom of the editor and knows what is selected;
+  - while the model writes, the line shows it and lets you stop.
 
-## Состояния
+## States
 
-- **Загрузка** — силуэт страницы без мерцания.
-- **Ошибка** — тост сверху по центру с действием или подсветка самого элемента.
-- **Только чтение** — знак у заголовка, причина в подсказке.
-- **Markdown, который редактор сохраняет как есть** — тихий блок, причина в
-  подсказке.
-- **Недоступно** — приглушённый пункт, причина в подсказке.
-- **Фокус с клавиатуры** — кольцо темы 2 px с зазором 1 px, никогда не браузерное.
-  Выделение текста — цветом акцента.
-- **Пустые блоки** подсказывают, чем станут. Новая страница: значок по наведению,
-  курсор в заголовке, ниже — быстрые блоки.
+- **Loading** — a page silhouette with no shimmer.
+- **Error** — a toast at the top center with an action, or a highlight on the element itself.
+- **Read only** — a sign by the title, the reason in a tooltip.
+- **Markdown that the editor saves as is** — a quiet block, the reason in a
+  tooltip.
+- **Unavailable** — a muted item, the reason in a tooltip.
+- **Keyboard focus** — the theme ring, 2 px with a 1 px gap, never the browser's.
+  Text selection uses the accent color.
+- **Empty blocks** hint at what they will become. A new page: an icon on hover,
+  the cursor in the title, quick blocks below.
 
-## Клавиши
+## Keys
 
-Меню показывают только назначенные клавиши:
-- начертания — ⌘B, ⌘I, ⌘U, ⇧⌘X, ⌘E, ⌘K (ссылка), ⇧⌘H, ⌘. и ⌘,;
-- блоки — ⌥⌘1–6, ⇧⌘7/8/9 (списки) и ⇧⌘B (цитата);
-- история — ⌘Z и ⇧⌘Z;
-- строка команды модели — ⌘J.
+Menus show only assigned keys:
+- styles — ⌘B, ⌘I, ⌘U, ⇧⌘X, ⌘E, ⌘K (link), ⇧⌘H, ⌘. and ⌘,;
+- blocks — ⌥⌘1–6, ⇧⌘7/8/9 (lists) and ⇧⌘B (quote);
+- history — ⌘Z and ⇧⌘Z;
+- the model command line — ⌘J.
 
-Показанные клавиши берутся из привязок ядра; тест `formatting/keys.test.ts` следит, чтобы
-меню не обещало клавишу, которой нет.
+The keys shown are taken from the core bindings; the `formatting/keys.test.ts` test makes sure the
+menu does not promise a key that does not exist.
 
-Markdown-сокращения в меню «/»: `#`, `##`, `###`, `-`, `1.`, `[]`, `>`, ` ``` `, `---`.
+Markdown shortcuts in the "/" menu: `#`, `##`, `###`, `-`, `1.`, `[]`, `>`, ` ``` `, `---`.
 
-## Что в коде ещё расходится с атласом
+## What in the code still differs from the Atlas
 
-Этапы 3 и 4 перенесли в редакторы все кадры атласа:
-- токены и четыре вида (`view`), документ и блоки (кадры 1–5);
-- шапка страницы `PageHead` через `header`, пустая страница с быстрыми блоками (11);
-- панель над выделением с подсказками и клавишами, ссылка, палитра, меню «/», меню
-  блока, перетаскивание (6–8), изображение (10);
-- таблица: столбец добавляет полоса справа, строку — полоса под таблицей; обе вне
-  прокрутки и видны под указателем или с курсором в таблице; край широкой таблицы со
-  скрытыми столбцами затухает (9);
-- курсоры, комментарии, предложения, строка модели по ⌘J (12–16);
-- силуэт загрузки, тост ошибки, «только чтение», ошибка изображения (17);
-- задачи, раскрывающиеся блоки, файл, вставка и формула (18);
-- PageEditor — тот же BlockEditor с Markdown-сессией и предложениями модели (19): вид по
-  умолчанию notion (решение владельца 12 ноября), любой другой — через `view`; темы page нет,
-  `page.css` грузит общую тему; заголовок — первый «#» файла;
-- меню столбца и меню строки таблицы (9) — в обоих редакторах: ручка строки слева у строки
-  под указателем добавляет строку выше или ниже и удаляет её;
-- карточки предложений колонкой на полях широкой страницы (14); на узкой карточка открывается
-  у текста;
-- оглавление, ручка блока и якоря заголовков вида docs (2);
-- подсветка кода цветами `--gt-syn-*` (`highlight` и `gotipeCodeTheme`);
-- строки интерфейса из `@gotipe/i18n`: английский по умолчанию, русский — как в атласе.
+Stages 3 and 4 moved all Atlas frames into the editors:
+- tokens and four views (`view`), document and blocks (frames 1–5);
+- the `PageHead` page header via `header`, an empty page with quick blocks (11);
+- the toolbar over the selection with tooltips and keys, link, palette, the "/" menu, block
+  menu, drag and drop (6–8), image (10);
+- table: a column is added by the strip on the right, a row by the strip under the table; both outside
+  the scroll and visible under the pointer or with the cursor in the table; the edge of a wide table with
+  hidden columns fades out (9);
+- cursors, comments, suggestions, the model line on ⌘J (12–16);
+- the loading silhouette, error toast, "read only", image error (17);
+- tasks, toggles, file, embed and formula (18);
+- PageEditor — the same BlockEditor with a Markdown session and model suggestions (19): the default view is
+  notion (owner decision of 12 November), any other through `view`; there is no page theme,
+  `page.css` loads the shared theme; the title is the file's first "#";
+- the table column menu and row menu (9) — in both editors: the row handle on the left of the row
+  under the pointer adds a row above or below and deletes it;
+- suggestion cards in a column in the margin of a wide page (14); on a narrow page the card opens
+  next to the text;
+- the table of contents, block handle, and heading anchors of the docs view (2);
+- code highlighting with the `--gt-syn-*` colors (`highlight` and `gotipeCodeTheme`);
+- UI strings from `@gotipe/i18n`: English by default, Russian — as in the Atlas.
 
-Сверка — маршрут «Views» в playground (вид, состояние, язык). Панели modern и версий там
-нарисованы по атласу, но остаются примерами playground, а не компонентами библиотеки.
+The check is the "Views" route in the playground (view, state, language). The modern and versions panels there
+are drawn after the Atlas, but remain playground examples, not library components.
 
-### Осмотр компонентов
+### Component review
 
-Осмотр прошёл все блоки и всплывающие элементы: четыре вида, обе темы, ширины 1280 и 375,
-плотность 1x и 2x. Искал кольца, которые распадаются на две линии, лишнюю прокрутку,
-системные кольца фокуса и подсказки, английские строки, выход за край. Исправлено:
-- кольцо флажка и полого маркера рисуется рамкой: на экране 1x тень в 1,5 px
-  распадалась на тёмную и светлую линии;
-- системные кольца фокуса. Ячейка таблицы, заголовок раскрывающегося блока и подпись
-  изображения — поля текста, кольца у них нет. Кнопки, ручки, ссылка файла и замок «только
-  чтение» получили кольцо темы;
-- системные подсказки `title` заменены подсказками темы: копирование кода, цвета, кнопки
-  ссылки, причина «только чтение»;
-- таблица прокручивалась на 3 px из-за ручки ширины последнего столбца;
-- панель изображения растягивалась на всю ширину над картинкой, а не стояла в углу;
-- изображение, которое не загрузилось, показывало значок браузера. Теперь у него своё
-  состояние, а у файла — подсвеченная карточка;
-- ошибка загрузки — тост, а не строка под блоком;
-- изображение и файл говорили по-английски. Размер файла пишется по правилам языка.
-  Пустые изображение и файл предлагают «Загрузить» и «По ссылке»;
-- у вставки и формулы не было вида: из меню «/» вставлялся пустой абзац;
-- подсказки пустых задачи, пункта списка, цитаты и раскрывающегося блока видны всегда,
-  как в кадре 11; у абзаца — только под курсором.
+The review went through all blocks and popovers: four views, both themes, widths 1280 and 375,
+density 1x and 2x. It looked for rings that split into two lines, extra scroll,
+system focus rings and tooltips, English strings, and overflow past the edge. Fixed:
+- the ring of the checkbox and the hollow bullet is drawn as a border: on a 1x screen a 1.5 px shadow
+  split into a dark and a light line;
+- system focus rings. A table cell, the title of a toggle, and an image caption are
+  text fields and have no ring. Buttons, handles, the file link, and the "read
+  only" lock got the theme ring;
+- system `title` tooltips were replaced with theme tooltips: code copy, colors, link
+  buttons, the "read only" reason;
+- the table scrolled by 3 px because of the last column's width handle;
+- the image toolbar stretched across the full width above the picture instead of sitting in the corner;
+- an image that failed to load showed the browser icon. Now it has its own
+  state, and the file has a highlighted card;
+- a load error is a toast, not a line under the block;
+- the image and file spoke English. The file size is written by the language's rules.
+  An empty image and file offer "Upload" and "By link";
+- the embed and the formula had no view: an empty paragraph was inserted from the "/" menu;
+- the hints of an empty task, list item, quote, and toggle are always visible,
+  as in frame 11; for a paragraph — only under the cursor.
 
-Ещё расходится:
+Still differs:
 
-- **Ручка на узком экране остаётся** — решение владельца: через неё работает
-  перетаскивание пальцем, поэтому слева у notion остаётся поле под неё.
+- **The handle stays on a narrow screen** — an owner decision: drag and drop by finger works
+  through it, so notion keeps a margin for it on the left.
 
-Выноска хоста «Инструкции для агента» убрана из библиотеки: кодек читает такую цитату как
-цитату, свой вид хост рисует через `blockViews`.
+The host callout "Agent instructions" was removed from the library: the codec reads such a quote as
+a quote, and the host draws its own view through `blockViews`.
 
-## Связанные документы
+## Related documents
 
-- [Атлас GoTipe](../design/atlas/README.md): сборка, проверка, кадры.
-- [Тема и несколько редакторов](development/theme.md): API темы.
-- [Доступность и i18n](15-accessibility-i18n.md).
-- [Интеграция с хостом](21-host-integration.md): хост берёт общий вид и
-  передаёт свои цвета через `--gt-*`.
+- [GoTipe Atlas](../design/atlas/README.md): build, check, frames.
+- [Theme and multiple editors](development/theme.md): the theme API.
+- [Accessibility and i18n](15-accessibility-i18n.md).
+- [Host integration](21-host-integration.md): the host takes the shared view and
+  passes its colors through `--gt-*`.

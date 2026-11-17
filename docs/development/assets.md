@@ -1,29 +1,30 @@
-# Изображения и файлы
+# Images and files
 
-У загрузки один контракт: `saveAsset(host, blob, kind)` из `@gotipe/core`.
-`host.saveAsset` сохраняет файл и возвращает долговечный путь; `host.resolveAsset`
-превращает путь в доступный для показа URL. Хост владеет своими blob URLs и их
-освобождением. Ошибки видны в интерфейсе и `host.onError`.
+Uploading has a single contract: `saveAsset(host, blob, kind)` from `@gotipe/core`.
+`host.saveAsset` saves the file and returns a durable path; `host.resolveAsset`
+turns the path into a URL that can be displayed. The host owns its blob URLs and their
+release. Errors are visible in the interface and in `host.onError`.
 
-Без хоста файлы до 10 MiB включаются в документ как base64 data URLs. Это позволяет
-сохранить JSON/Markdown и открыть его после перезагрузки. Большие файлы требуют
-host storage. Основные image types — PNG/JPEG/GIF/WebP; executable SVG не принимается
-как inline upload. Data attachments скачиваются, а не открываются как HTML-страницы.
+Without a host, files up to 10 MiB are included in the document as base64 data URLs. This lets you
+save JSON/Markdown and open it after a reload. Larger files require
+host storage. The main image types are PNG/JPEG/GIF/WebP; executable SVG is not accepted
+as an inline upload. Data attachments are downloaded rather than opened as HTML pages.
 
-Редактирование картинок и файлов — общие ImageBlock/FileBlock из `@gotipe/react/media`;
-BlockEditor и PageEditor подключают их через `MediaBlocksContext`, а `EditorContent` без
-этого входа показывает их только для чтения. Upload не заменяет
-изменённый источник и не воскрешает удалённый блок. File paste/drop сохраняет
-пакет одним undoable изменением; если за время загрузки изменились документ или
-selection, поздняя вставка отменяется с явной ошибкой. Повтор должен быть явным.
+Editing of images and files is handled by the shared ImageBlock/FileBlock from `@gotipe/react/media`;
+BlockEditor and PageEditor connect them through `MediaBlocksContext`, while `EditorContent` without
+that entry point shows them read-only. An upload does not replace a
+changed source and does not resurrect a deleted block. A file paste/drop saves
+the batch as a single undoable change; if the document or
+selection changed during the upload, the late insertion is cancelled with an explicit error.
+A retry must be explicit.
 
-Изображения поддерживают размер в пределах контейнера, caption, alternative text,
-preview, crop, duplicate, move, delete и download. Crop использует browser canvas,
-сохраняет PNG через тот же storage contract и восстанавливается Undo. Для remote
-image нужен CORS от сервера; анимированный файл при crop становится одним кадром.
-Ограничение canvas — 16 megapixels. Нет скрытого fetch к стороннему proxy.
+Images support sizing within the container, caption, alternative text,
+preview, crop, duplicate, move, delete, and download. Crop uses the browser canvas,
+saves a PNG through the same storage contract, and is restored by Undo. A remote
+image needs CORS from the server; an animated file becomes a single frame when cropped.
+The canvas limit is 16 megapixels. There is no hidden fetch to a third-party proxy.
 
-Поиск в каталогах включается только через `host.imageSources`:
+Catalog search is enabled only through `host.imageSources`:
 
 ```ts
 const host = {
@@ -38,7 +39,7 @@ const host = {
 };
 ```
 
-Поиск отменяет устаревший запрос, показывает loading/error/empty, принимает только
-HTTP(S) results и ограничивает одну страницу 40 items. Без adapter интерфейс
-показывает Upload/Link; фиктивных вкладок Unsplash/GIPHY нет. Владелец adapter
-соблюдает условия своего каталога, attribution и tracking downloads.
+Search cancels a stale request, shows loading/error/empty, accepts only
+HTTP(S) results, and limits one page to 40 items. Without an adapter the interface
+shows Upload/Link; there are no fake Unsplash/GIPHY tabs. The adapter's owner
+complies with the terms of their catalog, attribution, and download tracking.
