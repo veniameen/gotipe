@@ -61,7 +61,7 @@ describe("rewrittenLines", () => {
 
   it("marks only the line of the edited block", () => {
     const after = [...source];
-    after[3] = "replays. Two cursors, one document. Привет 👋";
+    after[3] = "replays. Two cursors, one document. Naïve café 👋";
     expect([...rewrittenLines(source, after)]).toEqual([3]);
   });
 

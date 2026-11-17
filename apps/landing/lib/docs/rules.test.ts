@@ -52,8 +52,8 @@ describe("heading ids", () => {
   it("follow GitHub: lower case, punctuation dropped, spaces as hyphens", () => {
     expect(headingSlug("The find bar of BlockEditor")).toBe("the-find-bar-of-blockeditor");
     expect(headingSlug("insertTable({ rows })")).toBe("inserttable-rows-");
-    expect(headingSlug("Правка таблицы")).toBe("правка-таблицы");
-    expect(headingSlug("Ёлка и emoji 🎉")).toBe("ёлка-и-emoji-");
+    expect(headingSlug("Éditer la table")).toBe("éditer-la-table");
+    expect(headingSlug("Über emoji 🎉")).toBe("über-emoji-");
   });
 
   it("number repeated headings within a page", () => {
@@ -77,7 +77,7 @@ describe("internal links", () => {
       slug: "concepts/commands",
       anchor: "",
     });
-    expect(internalTarget("#%D1%91", "a/b")).toEqual({ slug: "a/b", anchor: "ё" });
+    expect(internalTarget("#%C3%A9", "a/b")).toEqual({ slug: "a/b", anchor: "é" });
   });
 
   it("keep a malformed anchor as written and leave other links alone", () => {
