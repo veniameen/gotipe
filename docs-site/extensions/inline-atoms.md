@@ -143,7 +143,7 @@ const emoji = defineSuggestion({
 
 For your own emoji, return `{ name, src }` items and select them with `insertCustomEmoji(editor, item, range)`.
 
-The table is grouped by the picker's categories: `EMOJI_CATEGORIES` (`people`, `nature`, `food`, `activities`, `travel`, `objects`, `symbols`, `flags`) and `EMOJI_TABLE[category]`. `emojiItems(category)` lists one category, `findEmoji("🎉")` finds an entry by its character (a missing or extra U+FE0F still matches) and every item carries its `category`. `searchEmoji(query, limit, names)` also matches localized names: `@gotipe/core/emoji/ru` exports `EMOJI_NAMES_RU` (shortcode → Russian name), so `searchEmoji("пра", 8, EMOJI_NAMES_RU)` finds 🎉 «праздник» and ✅ «правильно». A name's start or the start of one of its words ranks first; `ё` and `е` are the same letter.
+The table is grouped by the picker's categories: `EMOJI_CATEGORIES` (`people`, `nature`, `food`, `activities`, `travel`, `objects`, `symbols`, `flags`) and `EMOJI_TABLE[category]`. `emojiItems(category)` lists one category, `findEmoji("🎉")` finds an entry by its character (a missing or extra U+FE0F still matches) and every item carries its `category`. `searchEmoji(query, limit, names)` also matches localized names: `@gotipe/core/emoji/ru` exports `EMOJI_NAMES_RU` (shortcode → Russian name), so `searchEmoji("пра", 8, EMOJI_NAMES_RU)` finds 🎉 “праздник” (“celebration”) and ✅ “правильно” (“correct”). A name's start or the start of one of its words ranks first; `ё` and `е` are the same letter.
 
 ## How atoms look
 
@@ -209,12 +209,12 @@ export function DocumentEditor() {
 }
 ```
 
-`atomExtensions()` is the four atom marks plus `MentionSuggestion` («@»), `EmojiSuggestion` («:»), `EmojiCommand` («/» → Emoji) and `InlineMathCommands` («/» → Inline formula and `$…$`). Russian emoji names (`@gotipe/core/emoji/ru`) load on first use, only with a Russian interface. `PageEditor` takes the same `mentions` and `emoji` props: the «:» list and the picker are always on there, mentions only with `mentions` (written as `[@name](mention:user-id)` or `[title](mention:page-id)` and read back); inline formulas are not part of a Markdown page.
+`atomExtensions()` is the four atom marks plus `MentionSuggestion` (`@`), `EmojiSuggestion` (`:`), `EmojiCommand` (`/` → Emoji) and `InlineMathCommands` (`/` → Inline formula and `$…$`). Russian emoji names (`@gotipe/core/emoji/ru`) load on first use, only with a Russian interface. `PageEditor` takes the same `mentions` and `emoji` props: the `:` list and the picker are always on there, mentions only with `mentions` (written as `[@name](mention:user-id)` or `[title](mention:page-id)` and read back); inline formulas are not part of a Markdown page.
 
 | Prop | Type | Description |
 | --- | --- | --- |
-| `mentions` | `{ items(query, { signal }): MentionItem[] \| Promise<MentionItem[]> }` | People and pages. `MentionItem` is `{ id, label, kind?: "user" \| "page" }`. Without it the list answers «No one found». |
-| `emoji.custom` | `{ name, src }[]` | The team's emoji: in the «:» list after the Unicode ones and in the picker's last tab. |
+| `mentions` | `{ items(query, { signal }): MentionItem[] \| Promise<MentionItem[]> }` | People and pages. `MentionItem` is `{ id, label, kind?: "user" \| "page" }`. Without it the list answers “No one found”. |
+| `emoji.custom` | `{ name, src }[]` | The team's emoji: in the `:` list after the Unicode ones and in the picker's last tab. |
 | `emoji.recent` | `string[]` | Recent emoji to start with: characters, or `:name:` for custom ones. |
 | `emoji.onRecentChange` | `(recent: string[]) => void` | Called after each insert with the new list, newest first (at most 18). The list itself lives in memory. |
 

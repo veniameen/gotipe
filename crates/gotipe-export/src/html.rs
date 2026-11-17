@@ -362,12 +362,12 @@ mod tests {
     fn hard_breaks_captions_and_editor_image_sources_are_kept() {
         let output = html(serde_json::json!({"blocks": [
             {"id": "p", "type": "paragraph", "content": [{"text": "a\nb"}]},
-            {"id": "i", "type": "image", "attrs": {"src": "data:image/webp;base64,UklGRg==", "caption": "Подпись"}},
+            {"id": "i", "type": "image", "attrs": {"src": "data:image/webp;base64,UklGRg==", "caption": "Caption"}},
             {"id": "r", "type": "image", "attrs": {"src": "images/a.png", "alt": "A"}}
         ]}));
         assert_eq!(
             output,
-            "<p>a<br>b</p>\n<figure><img src=\"data:image/webp;base64,UklGRg==\" alt=\"\"><figcaption>Подпись</figcaption></figure>\n<figure><img src=\"images/a.png\" alt=\"A\"></figure>"
+            "<p>a<br>b</p>\n<figure><img src=\"data:image/webp;base64,UklGRg==\" alt=\"\"><figcaption>Caption</figcaption></figure>\n<figure><img src=\"images/a.png\" alt=\"A\"></figure>"
         );
     }
 

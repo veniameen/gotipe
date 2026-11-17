@@ -118,9 +118,9 @@ text; a container 640 px wide or less keeps a 56 px rail for it on the left, as 
 Every top-level heading h1–h3 with text has an anchor in `docs` — the headings the outline lists;
 a leading h1 that is the page's title has none. The anchor is a quiet `#` after the heading's last
 word, shown under the pointer and on the heading a touch chose. The heading keeps room for it at the end of its
-lines, so showing it moves nothing. Its tip says «Copy link»; a click copies the same link as
+lines, so showing it moves nothing. Its tip says “Copy link”; a click copies the same link as
 **Copy link to block** in the [block menu](/docs/ui/menus#block-handle) — the page's address with
-`?gotipe-block=<id>` — and the tip says «Link copied». The host owns the address: the editor only
+`?gotipe-block=<id>` — and the tip says “Link copied”. The host owns the address: the editor only
 adds the block's id, and a page opened with the link scrolls to the heading. The anchor stays out
 of the Tab order and of the heading's name; with the keyboard, copy the link from the block menu.
 The `modern` view expects a fixed toolbar above it: [FixedToolbar](/docs/ui/fixed-toolbar).

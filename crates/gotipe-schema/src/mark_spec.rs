@@ -3,18 +3,18 @@ use std::collections::HashMap;
 
 use crate::attr::AttrSpec;
 
-/// MarkSpec — определение inline formatting
+/// MarkSpec: the definition of an inline format
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct MarkSpec {
     pub name: String,
-    /// Может ли mark пересекаться с другими marks этого типа
+    /// Whether the mark may overlap other marks of this type
     pub exclusive_group: Option<String>,
-    /// Атрибуты (например href для link)
+    /// Attributes (for example href for link)
     pub attrs: HashMap<String, AttrSpec>,
-    /// Приоритет рендеринга (порядок вложенности в HTML)
+    /// Render priority (nesting order in HTML)
     pub rank: u32,
-    /// Отрезок с этой разметкой — один неделимый элемент строки (упоминание, формула).
-    /// Его текст — запасное представление; см. docs/development/inline-atoms.md.
+    /// A span with this mark is one indivisible element of the line (a mention, a formula).
+    /// Its text is a fallback representation; see docs/development/inline-atoms.md.
     #[serde(default)]
     pub atomic: bool,
 }

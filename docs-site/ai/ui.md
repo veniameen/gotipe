@@ -191,7 +191,7 @@ the other suggestions of that block move with the text.
 
 The status line shows a spinner and what the request does, in the interface's language,
 while a request runs: it turns the event's `task` into the keys `ai.status.*` (in Russian
-«Модель проверяет правописание…», in English "Proofreading..."). It reads `aiStatusChange`;
+“Модель проверяет правописание…”, in English "Proofreading..."). It reads `aiStatusChange`;
 use the same event for a status of your own. A status without a `task` the line knows shows
 its `label` as it is, and a status without either says `ai.processing`.
 

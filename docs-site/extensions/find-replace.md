@@ -19,9 +19,9 @@ const counter = document.querySelector<HTMLElement>("#search-count")!;
 search.subscribe((state) => {
   counter.textContent = `${state.position} of ${state.total}`;
 });
-search.setSearch({ query: "журнал" });
+search.setSearch({ query: "colour" });
 search.next();
-await search.replace("лог");
+await search.replace("color");
 ```
 
 `FindReplace` is in no preset. `getFindReplace(editor)` returns the editor's search, or `null` when the extension is not installed or the editor is destroyed.
@@ -129,7 +129,7 @@ export function Page() {
 }
 ```
 
-The bar is docked at the top right of the editor and stays there while the page scrolls. It holds the query with «3 of 12» at its end, switches for match case, whole word and regular expression, previous and next, close, and a second row with the replacement, **Replace** and **Replace all**. A query that finds nothing tints the field and disables the arrows; an invalid or unsafe pattern says why in the field's title and to screen readers. In a container narrower than 640 px the bar spans it and its tools step under the field.
+The bar is docked at the top right of the editor and stays there while the page scrolls. It holds the query with “3 of 12” at its end, switches for match case, whole word and regular expression, previous and next, close, and a second row with the replacement, **Replace** and **Replace all**. A query that finds nothing tints the field and disables the arrows; an invalid or unsafe pattern says why in the field's title and to screen readers. In a container narrower than 640 px the bar spans it and its tools step under the field.
 
 | Key | Where | Action |
 | --- | --- | --- |

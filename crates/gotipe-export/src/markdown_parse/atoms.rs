@@ -9,7 +9,7 @@ use std::collections::{BTreeMap, HashMap};
 /// gets the marks its schema declares.
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub struct MarkdownAtoms {
-    /// `[@Анна](mention:user-42)` is text with a `mention` mark (`id`, `kind`, `label`).
+    /// `[@Anna](mention:user-42)` is text with a `mention` mark (`id`, `kind`, `label`).
     pub mention: bool,
     /// `$x^2$` is the TeX source with an `inlineMath` mark.
     pub inline_math: bool,

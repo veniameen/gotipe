@@ -77,7 +77,7 @@ fn a_document_with_line_breaks_comes_back_from_its_markdown() {
         "a\n",
         "\nb",
         "a\n\n\nb",
-        "Привет\n- нет\n1. списка\n> и цитаты",
+        "Hello\n- no\n1. list\n> or quote",
         "x \n y",
     ] {
         let json = serde_json::json!({

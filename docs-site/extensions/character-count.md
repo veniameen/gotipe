@@ -69,7 +69,7 @@ With a `limit` the extension registers a transaction filter (see [filters](/docs
 
 ## The counter line of BlockEditor
 
-`BlockEditor` (and `PageEditor`, which installs `CharacterCount`) draws the quiet line of the GoTipe Atlas (frame 26) under the document with the `status` prop: «1 204 words · 7 830 characters», plural forms of the interface language and its digit grouping.
+`BlockEditor` (and `PageEditor`, which installs `CharacterCount`) draws the quiet line of the GoTipe Atlas (frame 26) under the document with the `status` prop: “1 204 words · 7 830 characters”, plural forms of the interface language and its digit grouping.
 
 ```tsx title="counter.tsx"
 <BlockEditor
@@ -81,8 +81,8 @@ With a `limit` the extension registers a transaction filter (see [filters](/docs
 | Field | Type | Default | Description |
 | --- | --- | --- | --- |
 | `limit` | `number \| null` | the extension's `limit` | The limit the line shows. A limit given only here is shown, not enforced: the text may grow past it. |
-| `warning` | `number` | `0.9` | Share of the limit from which the count takes the warning tone: «7 830 of 8 000 characters». |
-| `reason` | `string` | «At most N characters» | Shown in a tooltip over the count past the limit (hover or keyboard focus). |
+| `warning` | `number` | `0.9` | Share of the limit from which the count takes the warning tone: “7 830 of 8 000 characters”. |
+| `reason` | `string` | “At most N characters” | Shown in a tooltip over the count past the limit (hover or keyboard focus). |
 
 Past the limit the count takes the danger tone, and the text that does not fit is tinted where it stands: the decoration layer `characterLimit` (`OVER_LIMIT_LAYER`) wraps it in `.gotipe-over-limit`, counted in grapheme clusters as the extension counts them. `status={true}` shows the counts without a limit. `StatusLine` is exported for a host's own layout. The line needs `CharacterCount`; without it nothing is drawn.
 

@@ -45,7 +45,7 @@ fn paragraphs_and_headings_take_one_of_four_alignments() {
     let schema = defaults::default_block_editor();
     let text = || {
         BlockContent::RichText(vec![TextSpan {
-            text: "Текст".into(),
+            text: "Text".into(),
             marks: vec![],
         }])
     };

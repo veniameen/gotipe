@@ -171,7 +171,7 @@ fn leading_header_rows(plan: &PlannedTable) -> usize {
 }
 
 pub fn insert_row(plan: &mut PlannedTable, at: usize) {
-    // a new row never goes above the header: «Add row above» on the first row keeps it on top
+    // a new row never goes above the header: “Add row above” on the first row keeps it on top
     let index = at.max(leading_header_rows(plan));
     for cell in &mut plan.cells {
         if cell.row >= index {
