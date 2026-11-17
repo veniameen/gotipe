@@ -16,7 +16,8 @@ members = [
 version = "0.1.0"
 edition = "2021"
 license = "MIT"
-repository = "https://github.com/gotipe/gotipe"
+repository = "https://github.com/veniameen/gotipe"
+homepage = "https://gotipe.com"
 
 [workspace.dependencies]
 serde = { version = "1.0", features = ["derive"] }

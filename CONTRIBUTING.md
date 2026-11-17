@@ -6,7 +6,7 @@ Thank you for contributing to GoTipe! This guide covers our development workflow
 
 ```bash
 # Clone
-git clone https://github.com/gotipe/gotipe.git
+git clone https://github.com/veniameen/gotipe.git
 cd gotipe
 
 # Install Rust

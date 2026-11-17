@@ -11,7 +11,7 @@
 
 **Домен:** [gotipe.com](https://gotipe.com)
 **Лицензия:** MIT
-**Репозиторий:** github.com/gotipe/gotipe
+**Репозиторий:** github.com/veniameen/gotipe
 
 ---
 

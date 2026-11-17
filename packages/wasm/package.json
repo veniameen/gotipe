@@ -27,6 +27,15 @@
     "test": "node tests/integrity.mjs && node tests/node-entry.mjs"
   },
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/veniameen/gotipe.git",
+    "directory": "packages/wasm"
+  },
+  "homepage": "https://gotipe.com",
+  "bugs": {
+    "url": "https://github.com/veniameen/gotipe/issues"
+  },
   "publishConfig": {
     "access": "public"
   }

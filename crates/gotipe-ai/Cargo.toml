@@ -3,6 +3,11 @@ name = "gotipe-ai"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
+description = "AI document operations for the GoTipe editor: context, commands, suggestions and PII masking."
+repository.workspace = true
+homepage.workspace = true
+keywords = ["editor", "ai", "llm", "rich-text"]
+categories = ["text-editors", "text-processing"]
 
 [dependencies]
 gotipe-core = { version = "0.1.0", path = "../gotipe-core" }

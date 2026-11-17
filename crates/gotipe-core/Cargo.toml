@@ -3,6 +3,11 @@ name = "gotipe-core"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
+description = "The GoTipe editor engine: document model, transactions, selection, history and tables."
+repository.workspace = true
+homepage.workspace = true
+keywords = ["editor", "rich-text", "wysiwyg", "document"]
+categories = ["text-editors", "data-structures"]
 
 [dependencies]
 gotipe-schema = { version = "0.1.0", path = "../gotipe-schema" }

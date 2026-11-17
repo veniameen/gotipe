@@ -3,6 +3,11 @@ name = "gotipe-crdt"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
+description = "CRDT for GoTipe documents: concurrent and offline edits merge into one document, with cursors."
+repository.workspace = true
+homepage.workspace = true
+keywords = ["crdt", "collaboration", "editor", "sync", "offline"]
+categories = ["data-structures", "text-editors"]
 
 [features]
 default = ["compression"]
