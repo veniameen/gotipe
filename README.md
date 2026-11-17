@@ -1,4 +1,20 @@
-# GoTipe
+<p align="center">
+  <a href="https://gotipe.com"><img src="apps/landing/public/brand/gotipe-logo-256.webp" width="112" height="112" alt="GoTipe logo"></a>
+</p>
+
+<h1 align="center">GoTipe</h1>
+
+<p align="center">
+  Your editor. Your engine. Your rules.<br>
+  A document editor framework built from the engine up: lossless Markdown, real-time collaboration, TypeScript and Rust/WASM.
+</p>
+
+<p align="center">
+  <a href="https://gotipe.com">Website</a> ·
+  <a href="https://gotipe.com/docs/">Docs</a> ·
+  <a href="https://crates.io/search?q=gotipe">Crates</a> ·
+  <a href="docs/22-release-readiness.md">Release plan</a>
+</p>
 
 GoTipe is a block editor written from scratch in TypeScript and Rust/WASM. The core, Markdown,
 transactions, history and CRDT are all owned by the project; Tiptap and ProseMirror are not used.
