@@ -14,7 +14,7 @@ The document engine, the collaboration CRDT, versions, review state and the PDF 
 | Crate | What it does | Depends on |
 | --- | --- | --- |
 | `gotipe-schema` | The document model (`Document`, `Block`, `BlockContent`, `TextSpan`, `Mark`), node, mark and attribute specs, schema validation and the default schemas. | — |
-| `gotipe-core` | Editor state, transactions and their steps, atomic transforms, selections in UTF-16 offsets and their mapping, commands and clipboard. Re-exports the schema types. | schema |
+| `gotipe-core` | Editor state, transactions and their steps, atomic transforms, selections in UTF-16 offsets and their mapping, commands and clipboard, and `Timestamp`, the RFC 3339 instant of comments and versions (its clock is the `clock` feature). Re-exports the schema types. | schema |
 | `gotipe-crdt` | The collaboration replica `CrdtDocument`: an idempotent log of causally stamped operations over a rich-text CRDT and a movable block tree, plus version vectors, awareness, sync framing and selective undo. | core |
 | `gotipe-comments` | Comments, threads, anchors and suggestions, their review state (`ReviewStore`) and their CRDT operations. | core, crdt |
 | `gotipe-versioning` | Named versions, diffs of block and text changes, and incremental snapshots, compressed with zstd when the default `compression` feature is on. | core, crdt |

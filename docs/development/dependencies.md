@@ -136,6 +136,22 @@ The before/after audit and tool versions are local evidence in ignored `output/`
 The security workflow runs a fresh audit instead of treating a historic zero
 finding count as a permanent guarantee.
 
+## Release audit (2026-11-17)
+
+The checks of the v0.1.0 release found two Rust advisories; neither is suppressed.
+
+- `ammonia` 4.2.5 fixes RUSTSEC-2026-0533 (mutation XSS through embedded SVG and
+  MathML). It is the HTML sanitizer behind the `html` feature of `gotipe-export`;
+  the WASM exporter does not link it.
+- `chrono` is unmaintained (RUSTSEC-2026-0543). Comments and versions only stored
+  creation and resolution instants, so they now use GoTipe's own
+  `gotipe_core::Timestamp`: RFC 3339 in UTC with the same text as before, read back
+  from any offset. Before removal it matched chrono on 2,000,000 random instants of
+  the years 0000 to 9999 in both directions. Its clock is the `clock` feature of
+  `gotipe-core` (the system clock, or `Date.now()` through `js-sys` in a browser);
+  only `gotipe-comments` and `gotipe-versioning` turn it on, so the exporter graph
+  and its notices are unchanged.
+
 ## Native and Cloud security boundary
 
 Cloud pins Go 1.26.11 through `apps/cloud/go.mod` (1.26.11 fixes GO-2026-6859 in

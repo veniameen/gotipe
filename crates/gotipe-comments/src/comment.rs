@@ -1,7 +1,6 @@
 use std::collections::HashMap;
 
-use chrono::{DateTime, Utc};
-use gotipe_core::{AttrValue, BlockId};
+use gotipe_core::{AttrValue, BlockId, Timestamp};
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
@@ -48,9 +47,9 @@ pub struct Comment {
     pub anchor: CommentAnchor,
     pub author: String,
     pub content: String,
-    pub created_at: DateTime<Utc>,
-    pub updated_at: DateTime<Utc>,
-    pub resolved_at: Option<DateTime<Utc>>,
+    pub created_at: Timestamp,
+    pub updated_at: Timestamp,
+    pub resolved_at: Option<Timestamp>,
     pub resolved_by: Option<String>,
     pub parent_id: Option<CommentId>,
     pub reactions: Vec<Reaction>,
@@ -59,7 +58,7 @@ pub struct Comment {
 
 impl Comment {
     pub fn new(author: &str, content: &str, anchor: CommentAnchor) -> Self {
-        let now = Utc::now();
+        let now = Timestamp::now();
         Comment {
             id: CommentId::new(),
             anchor,
@@ -82,7 +81,7 @@ impl Comment {
     }
 
     pub fn resolve(&mut self, resolved_by: &str) {
-        self.resolved_at = Some(Utc::now());
+        self.resolved_at = Some(Timestamp::now());
         self.resolved_by = Some(resolved_by.into());
     }
 
@@ -104,7 +103,7 @@ impl Comment {
             self.reactions.push(Reaction {
                 emoji: emoji.into(),
                 user_id: user_id.into(),
-                created_at: Utc::now(),
+                created_at: Timestamp::now(),
             });
         }
     }
@@ -119,7 +118,7 @@ impl Comment {
 pub struct Reaction {
     pub emoji: String,
     pub user_id: String,
-    pub created_at: DateTime<Utc>,
+    pub created_at: Timestamp,
 }
 
 /// A comment thread with root and replies

@@ -1,7 +1,6 @@
 use std::collections::HashMap;
 
-use chrono::{DateTime, Utc};
-use gotipe_core::AttrValue;
+use gotipe_core::{AttrValue, Timestamp};
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
@@ -35,7 +34,7 @@ pub struct Version {
     pub version_type: VersionType,
     pub state_vector: Vec<u8>,
     pub created_by: String,
-    pub created_at: DateTime<Utc>,
+    pub created_at: Timestamp,
     pub description: Option<String>,
     pub metadata: HashMap<String, AttrValue>,
     pub snapshot_size: u64,
@@ -51,7 +50,7 @@ impl Version {
             snapshot_size: state_vector.len() as u64,
             state_vector,
             created_by: created_by.into(),
-            created_at: Utc::now(),
+            created_at: Timestamp::now(),
             description: None,
             metadata: HashMap::new(),
         }
@@ -71,7 +70,7 @@ impl Version {
             snapshot_size: state_vector.len() as u64,
             state_vector,
             created_by: created_by.into(),
-            created_at: Utc::now(),
+            created_at: Timestamp::now(),
             description: None,
             metadata: HashMap::new(),
         }

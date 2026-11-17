@@ -69,7 +69,7 @@ impl VersionManager {
             },
             state_vector: state.clone(),
             created_by: restored_by.into(),
-            created_at: chrono::Utc::now(),
+            created_at: gotipe_core::Timestamp::now(),
             description: None,
             metadata: std::collections::HashMap::new(),
             snapshot_size: state.len() as u64,
