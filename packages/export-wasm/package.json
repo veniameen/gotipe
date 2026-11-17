@@ -1,7 +1,15 @@
 {
   "name": "@gotipe/export-wasm",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Optional GoTipe PDF and DOCX exporter with bundled Unicode fonts",
+  "keywords": [
+    "gotipe",
+    "pdf",
+    "docx",
+    "wasm",
+    "export",
+    "fonts"
+  ],
   "type": "module",
   "license": "MIT",
   "repository": {

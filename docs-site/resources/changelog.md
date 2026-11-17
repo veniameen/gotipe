@@ -1,7 +1,12 @@
 ---
 title: Changelog
-description: Release notes of GoTipe 0.1.0, grouped by package.
+description: Release notes of GoTipe, newest first, grouped by package.
 ---
+
+## 0.1.1
+
+Every npm package now has a README on npm, with installation, a short example and links to these
+docs, and a one-line description in npm search. The code is the same as in 0.1.0.
 
 ## 0.1.0
 

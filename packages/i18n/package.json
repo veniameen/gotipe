@@ -1,6 +1,14 @@
 {
   "name": "@gotipe/i18n",
-  "version": "0.1.0",
+  "version": "0.1.1",
+  "description": "UI strings of the GoTipe editor: English and Russian dictionaries, createI18n and plural forms.",
+  "keywords": [
+    "gotipe",
+    "editor",
+    "i18n",
+    "localization",
+    "translations"
+  ],
   "type": "module",
   "exports": {
     ".": {

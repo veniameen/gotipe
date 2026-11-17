@@ -1,6 +1,14 @@
 {
   "name": "@gotipe/versions",
-  "version": "0.1.0",
+  "version": "0.1.1",
+  "description": "Version history for the GoTipe editor: named and automatic snapshots, block diffs and undoable restore.",
+  "keywords": [
+    "gotipe",
+    "editor",
+    "versions",
+    "history",
+    "diff"
+  ],
   "type": "module",
   "exports": {
     ".": {
