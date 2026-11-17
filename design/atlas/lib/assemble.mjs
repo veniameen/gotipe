@@ -38,6 +38,7 @@ export const STYLES = [
   "site/landing-hero.css",
   "site/landing-window.css",
   "site/landing-sections.css",
+  "site/landing-glyphs.css",
   "site/landing-closing.css",
   "site/docs.css",
   "content/diagram.css",

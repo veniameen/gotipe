@@ -212,11 +212,182 @@
   opacity: 1;
 }
 
-/* ---- the bento: three tiles with their pictures ---- */
+/* ---- a collaborator at work in the title: her caret with her name, a phrase selected and the
+   bubble toolbar over it ---- */
+.site-co-caret {
+  position: relative;
+  display: inline-block;
+  width: var(--site-co-caret-w);
+  height: var(--site-co-caret-h);
+  margin-left: var(--site-co-caret-gap);
+  border-radius: var(--site-radius-round);
+  vertical-align: var(--site-co-caret-shift);
+  background: var(--site-co-ink);
+}
+/* her name hangs off the caret's top, toward the free space after the line */
+.site-co-flag {
+  position: absolute;
+  display: var(--site-co-aside-display);
+  bottom: var(--site-co-flag-at);
+  left: 100%;
+  padding: var(--site-co-flag-pad);
+  border-radius: var(--site-radius-1) var(--site-radius-1) var(--site-radius-1) 0;
+  background: var(--site-co-ink);
+  color: var(--site-co-text);
+  -webkit-text-fill-color: var(--site-co-text);
+  font-family: var(--site-font-text);
+  font-size: var(--site-label-size);
+  font-weight: var(--gt-weight-strong);
+  line-height: var(--site-label-leading);
+  letter-spacing: normal;
+  white-space: nowrap;
+}
+.site-co-pick {
+  position: relative;
+  border-radius: var(--site-radius-1);
+  background: linear-gradient(var(--site-co-select), var(--site-co-select)) no-repeat 0 0 / 100%
+    100%;
+  color: var(--gt-text);
+}
+/* on a phone the phrase wraps under other words: there the name and the toolbar stay away */
+.site-co-bar {
+  position: absolute;
+  bottom: calc(100% + var(--site-space-2));
+  left: 50%;
+  display: var(--site-co-aside-display);
+  gap: var(--site-space-1);
+  padding: var(--site-space-1);
+  border-radius: var(--site-radius-2);
+  background: var(--site-co-bar-bg);
+  box-shadow: var(--site-glass-shadow);
+  color: var(--site-co-bar-ink);
+  transform: translateX(-50%);
+}
+.site-co-bar > .gt-icon {
+  box-sizing: content-box;
+  padding: var(--site-space-1);
+  border-radius: var(--site-radius-1);
+}
+.site-co-bar > .gt-icon:first-child {
+  background: var(--site-co-bar-on);
+}
+
+/* ---- light lines down the page's left margin, a pulse running down two of them ---- */
+.site-section.is-features {
+  position: relative;
+  isolation: isolate;
+}
+.site-lines {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  z-index: -1;
+  display: var(--site-lines-display);
+  width: var(--site-lines-w);
+  background: repeating-linear-gradient(
+    90deg,
+    transparent 0 calc(var(--site-lines-step) - var(--gt-hairline)),
+    var(--site-lines-ink) calc(var(--site-lines-step) - var(--gt-hairline)) var(--site-lines-step)
+  );
+  -webkit-mask: linear-gradient(90deg, var(--site-mask-on), transparent),
+    linear-gradient(
+      180deg,
+      transparent,
+      var(--site-mask-on) 20%,
+      var(--site-mask-on) 70%,
+      transparent
+    );
+  -webkit-mask-composite: source-in;
+  mask: linear-gradient(90deg, var(--site-mask-on), transparent) intersect,
+    linear-gradient(
+      180deg,
+      transparent,
+      var(--site-mask-on) 20%,
+      var(--site-mask-on) 70%,
+      transparent
+    );
+  pointer-events: none;
+}
+.site-lines::before,
+.site-lines::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  width: var(--gt-hairline);
+  height: var(--site-lines-pulse);
+  background: linear-gradient(180deg, transparent, var(--site-lines-light), transparent);
+}
+.site-lines::before {
+  left: calc(2 * var(--site-lines-step) - var(--gt-hairline));
+}
+.site-lines::after {
+  left: calc(4 * var(--site-lines-step) - var(--gt-hairline));
+}
+
+/* ---- the bento: three night tiles; a light lies behind them and comes through the gaps ---- */
 .site-bento {
+  position: relative;
+  isolation: isolate;
+  color: var(--gt-text);
   display: grid;
   grid-template-columns: var(--site-bento-cols);
   gap: var(--site-space-4);
+}
+.site-bento::before {
+  content: "";
+  position: absolute;
+  inset: var(--site-bento-light-inset);
+  z-index: -1;
+  border-radius: var(--site-radius-round);
+  background: var(--site-bento-light);
+  filter: blur(var(--site-bento-light-blur));
+  pointer-events: none;
+}
+/* in a tile, that light from the side it comes through: a glow in a grain of dots */
+.site-tile-light {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  background: radial-gradient(
+    var(--site-tile-light-size) at var(--site-light-at),
+    var(--site-tile-glow-1),
+    var(--site-tile-glow-2) 45%,
+    transparent 100%
+  );
+  pointer-events: none;
+}
+.site-tile-light::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: radial-gradient(
+      circle,
+      var(--site-tile-dot) var(--site-dot-r),
+      transparent calc(var(--site-dot-r) + var(--site-dot-soft))
+    )
+    0 0 / var(--site-dot-step) var(--site-dot-step);
+  -webkit-mask: radial-gradient(
+    var(--site-tile-light-size) at var(--site-light-at),
+    var(--site-mask-on),
+    transparent 70%
+  );
+  mask: radial-gradient(
+    var(--site-tile-light-size) at var(--site-light-at),
+    var(--site-mask-on),
+    transparent 70%
+  );
+}
+.site-tile.is-engine {
+  --site-light-at: 100% 100%;
+}
+.site-tile.is-markdown {
+  --site-light-at: 0% 100%;
+}
+.site-tile.is-together {
+  --site-light-at: 50% 0%;
 }
 .site-bento > *,
 .site-features > * {
@@ -247,6 +418,10 @@
   align-items: center;
   justify-content: space-between;
   gap: var(--site-space-4);
+}
+/* a part of the stack: its name where the icon was, the licence on the name's first line */
+.site-feature-top {
+  align-items: baseline;
 }
 .gt-icon-box {
   display: grid;
@@ -425,38 +600,61 @@
 }
 
 /* ---- the nine parts of the stack ---- */
+/* ---- the nine parts: open cells, a drawn glyph over a large name, the licence beside it ---- */
 .site-features {
   display: grid;
   grid-template-columns: repeat(var(--site-cols-3), minmax(0, 1fr));
   gap: var(--site-space-4);
-  margin-top: var(--site-space-4);
+  margin-top: var(--site-space-12);
 }
 .site-feature {
   padding: var(--site-space-6);
   border-radius: var(--site-card-radius);
-  background: var(--site-card);
-  box-shadow: var(--site-card-shadow);
-  transition: box-shadow var(--site-dur-2) var(--site-ease);
+  background: transparent;
+  transition: background-color var(--site-dur-2) var(--site-ease);
 }
 .site-feature:hover {
-  box-shadow: var(--site-card-shadow-hover);
+  background: var(--site-part-hover);
 }
-.site-feature:hover .gt-icon-box,
 .site-tile:hover .gt-icon-box {
   background: var(--site-accent-soft);
 }
+.site-feature-top {
+  align-items: flex-start;
+}
+.site-part-icon {
+  display: block;
+  flex: none;
+  width: var(--site-part-icon);
+  height: var(--site-part-icon);
+}
 .site-feature h3 {
-  margin: var(--site-space-5) 0 0;
-  font-size: var(--site-h3-size);
-  font-weight: var(--site-weight-title);
-  line-height: var(--site-h3-leading);
-  letter-spacing: var(--site-h3-tracking);
+  margin: var(--site-space-6) 0 0;
+  font-family: var(--site-font-display);
+  font-size: var(--site-part-size);
+  font-weight: var(--site-weight-display);
+  line-height: var(--site-part-leading);
+  letter-spacing: var(--site-part-tracking);
+  text-wrap: balance;
 }
 .site-feature p {
-  margin: var(--site-space-2) 0 0;
+  margin: var(--site-space-3) 0 0;
   color: var(--gt-text-2);
   font-size: var(--site-body-size);
   line-height: var(--site-body-leading);
+}
+/* the glyphs' gradients take the theme's four tones */
+.site-glyph-hi {
+  stop-color: var(--site-glyph-hi);
+}
+.site-glyph-mid {
+  stop-color: var(--site-glyph-mid);
+}
+.site-glyph-lo {
+  stop-color: var(--site-glyph-lo);
+}
+.site-glyph-cyan {
+  stop-color: var(--site-glyph-cyan);
 }
 
 /* ---- one markup, four looks ---- */

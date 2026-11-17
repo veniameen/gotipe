@@ -1,0 +1,122 @@
+/* The drawn glyphs of the nine parts (frame 20): each shape's gradient, by class. The site draws
+   the same glyphs from apps/landing/components/landing/part-icons.tsx, whose shapes take these
+   gradients as fill; here the markup carries classes and this part fills them, the stops take the
+   theme's four tones (--site-glyph-*). */
+
+.gp-block-back {
+  fill: url(#gt-part-block-back);
+}
+.gp-block-front {
+  fill: url(#gt-part-block-front);
+}
+.gp-block-shine {
+  fill: url(#gt-part-block-shine);
+}
+.gp-block-ink {
+  fill: url(#gt-part-block-ink);
+}
+.gp-block-dot {
+  fill: url(#gt-part-block-dot);
+}
+.gp-page-front {
+  fill: url(#gt-part-page-front);
+}
+.gp-page-shine {
+  fill: url(#gt-part-page-shine);
+}
+.gp-page-ink {
+  fill: url(#gt-part-page-ink);
+}
+.gp-page-note {
+  fill: url(#gt-part-page-note);
+}
+.gp-comments-back {
+  fill: url(#gt-part-comments-back);
+}
+.gp-comments-front {
+  fill: url(#gt-part-comments-front);
+}
+.gp-comments-shine {
+  fill: url(#gt-part-comments-shine);
+}
+.gp-comments-ink {
+  fill: url(#gt-part-comments-ink);
+}
+.gp-versions-back {
+  fill: url(#gt-part-versions-back);
+}
+.gp-versions-front {
+  fill: url(#gt-part-versions-front);
+}
+.gp-versions-shine {
+  fill: url(#gt-part-versions-shine);
+}
+.gp-versions-dot {
+  fill: url(#gt-part-versions-dot);
+}
+.gp-ai-glow {
+  fill: url(#gt-part-ai-glow);
+}
+.gp-ai-front {
+  fill: url(#gt-part-ai-front);
+}
+.gp-ai-shine {
+  fill: url(#gt-part-ai-shine);
+}
+.gp-ai-small {
+  fill: url(#gt-part-ai-small);
+}
+.gp-ai-dot {
+  fill: url(#gt-part-ai-dot);
+}
+.gp-export-back {
+  fill: url(#gt-part-export-back);
+}
+.gp-export-front {
+  fill: url(#gt-part-export-front);
+}
+.gp-export-shine {
+  fill: url(#gt-part-export-shine);
+}
+.gp-export-ink {
+  fill: url(#gt-part-export-ink);
+}
+.gp-migration-back {
+  fill: url(#gt-part-migration-back);
+}
+.gp-migration-front {
+  fill: url(#gt-part-migration-front);
+}
+.gp-migration-shine {
+  fill: url(#gt-part-migration-shine);
+}
+.gp-views-front {
+  fill: url(#gt-part-views-front);
+}
+.gp-views-shine {
+  fill: url(#gt-part-views-shine);
+}
+.gp-views-light {
+  fill: url(#gt-part-views-light);
+}
+.gp-views-back {
+  fill: url(#gt-part-views-back);
+}
+.gp-views-half-dark {
+  fill: url(#gt-part-views-half-dark);
+}
+.gp-views-half-light {
+  fill: url(#gt-part-views-half-light);
+}
+.gp-cloud-front {
+  fill: url(#gt-part-cloud-front);
+}
+.gp-cloud-shine {
+  fill: url(#gt-part-cloud-shine);
+}
+.gp-cloud-back {
+  fill: url(#gt-part-cloud-back);
+}
+.gp-cloud-led {
+  fill: url(#gt-part-cloud-led);
+}

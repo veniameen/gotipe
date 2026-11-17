@@ -331,32 +331,163 @@
 
 /* ---- the closing band: the first stage's light again, centred ---- */
 .site-stage.site-band {
+  display: grid;
+  grid-template-columns: var(--site-band-cols);
+  gap: var(--site-space-12);
+  align-items: center;
   padding: var(--site-band-pad);
   background: radial-gradient(
-      var(--site-glow-shape-a) at 50% 110%,
+      var(--site-glow-shape-a) at 25% 50%,
       var(--site-glow-a),
       transparent 70%
     ), linear-gradient(180deg, var(--site-stage-bottom), var(--site-stage-top));
-  text-align: center;
+  color: var(--gt-text);
+  text-align: var(--site-band-align);
 }
-.site-band > .site-title {
-  margin-right: auto;
-  margin-left: auto;
+.site-band-copy > .site-title {
+  margin-right: var(--site-band-auto);
+  margin-left: var(--site-band-auto);
   font-size: var(--site-band-size);
   line-height: var(--site-band-leading);
   letter-spacing: var(--site-hero-tracking);
 }
-.site-band > .site-sub {
-  margin-right: auto;
-  margin-left: auto;
+.site-band-copy > .site-sub {
+  margin-right: var(--site-band-auto);
+  margin-left: var(--site-band-auto);
 }
-.site-band > .site-actions {
-  justify-content: center;
+.site-band-copy > .site-actions {
+  justify-content: var(--site-band-justify);
 }
+
+/* ---- the engine: a dark dial lit from the sides, rings with arcs of light, slow hands ---- */
+.site-engine {
+  position: relative;
+  width: min(100%, var(--site-engine-size));
+  aspect-ratio: 1;
+  margin: 0 auto;
+}
+.site-engine-beam {
+  position: absolute;
+  top: 34%;
+  left: 0;
+  width: 100%;
+  height: 26%;
+  background: linear-gradient(90deg, transparent 8%, var(--site-engine-beam-a) 42%, transparent 78%);
+  filter: blur(var(--site-engine-blur));
+  transform: rotate(-22deg) scaleX(var(--site-engine-beam-reach));
+  pointer-events: none;
+}
+.site-engine-beam.is-second {
+  top: 52%;
+  background: linear-gradient(
+    90deg,
+    transparent 22%,
+    var(--site-engine-beam-b) 58%,
+    transparent 92%
+  );
+  transform: rotate(16deg) scaleX(var(--site-engine-beam-reach));
+}
+.site-engine-face {
+  position: absolute;
+  inset: 0;
+  border-radius: var(--site-radius-round);
+  background: radial-gradient(60% 60% at 26% 42%, var(--site-engine-left), transparent 70%),
+    radial-gradient(56% 56% at 76% 34%, var(--site-engine-right), transparent 70%),
+    radial-gradient(circle at 50% 40%, var(--site-engine-face-hi), var(--site-engine-face) 70%);
+  box-shadow: inset 0 0 0 var(--site-engine-bezel) var(--site-engine-bezel-ink), inset 0 0 0
+    calc(var(--site-engine-bezel) + var(--gt-hairline)) var(--site-engine-rim),
+    var(--site-engine-shadow);
+  contain: paint;
+}
+.site-engine-face::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+      circle,
+      var(--site-engine-dot) var(--site-dot-r),
+      transparent calc(var(--site-dot-r) + var(--site-dot-soft))
+    )
+    0 0 / var(--site-dot-step) var(--site-dot-step);
+  -webkit-mask: radial-gradient(70% 70% at 50% 45%, var(--site-mask-on), transparent 75%);
+  mask: radial-gradient(70% 70% at 50% 45%, var(--site-mask-on), transparent 75%);
+}
+.site-engine-ring {
+  position: absolute;
+  inset: 12%;
+  border-radius: var(--site-radius-round);
+  box-shadow: inset 0 0 0 var(--gt-hairline) var(--site-engine-line);
+}
+.site-engine-ring.is-inner {
+  inset: 22%;
+}
+.site-engine-arc {
+  position: absolute;
+  inset: 12%;
+  border-radius: var(--site-radius-round);
+  background: conic-gradient(
+    from 210deg,
+    transparent 0 4%,
+    var(--site-engine-arc-a) 20%,
+    transparent 21%
+  );
+  -webkit-mask: radial-gradient(
+    closest-side,
+    transparent calc(100% - var(--site-engine-arc-w)),
+    var(--site-mask-on) calc(100% - var(--site-engine-arc-w) + var(--gt-hairline))
+  );
+  mask: radial-gradient(
+    closest-side,
+    transparent calc(100% - var(--site-engine-arc-w)),
+    var(--site-mask-on) calc(100% - var(--site-engine-arc-w) + var(--gt-hairline))
+  );
+  filter: drop-shadow(0 0 var(--site-engine-glow) var(--site-engine-arc-a));
+}
+.site-engine-arc.is-second {
+  inset: 22%;
+  background: conic-gradient(
+    from 20deg,
+    transparent 0 4%,
+    var(--site-engine-arc-b) 24%,
+    transparent 25%
+  );
+  filter: drop-shadow(0 0 var(--site-engine-glow) var(--site-engine-arc-b));
+}
+.site-engine-mark {
+  position: absolute;
+  inset: 31%;
+  fill: var(--site-engine-mark);
+  filter: drop-shadow(0 0 var(--site-engine-glow) var(--site-engine-mark-glow));
+}
+.site-engine-hand {
+  position: absolute;
+  bottom: 50%;
+  left: calc(50% - var(--site-engine-hand-w) / 2);
+  width: var(--site-engine-hand-w);
+  height: 38%;
+  border-radius: var(--site-radius-round);
+  background: linear-gradient(0deg, transparent, var(--site-engine-hand));
+  transform: rotate(var(--site-engine-hand-at));
+  transform-origin: 50% 100%;
+}
+.site-engine-hand.is-short {
+  height: 26%;
+  --site-engine-hand-at: var(--site-engine-short-at);
+}
+.site-engine-hub {
+  position: absolute;
+  top: calc(50% - var(--site-engine-hub) / 2);
+  left: calc(50% - var(--site-engine-hub) / 2);
+  width: var(--site-engine-hub);
+  height: var(--site-engine-hub);
+  border-radius: var(--site-radius-round);
+  background: var(--site-engine-hand);
+}
+
 .site-band-legend {
   display: flex;
   flex-wrap: wrap;
-  justify-content: center;
+  justify-content: var(--site-band-justify);
   gap: var(--site-space-2) var(--site-space-6);
   margin: var(--site-space-8) 0 0;
   color: var(--gt-text-2);

@@ -152,6 +152,34 @@
   letter-spacing: var(--site-h2-tracking);
   text-wrap: balance;
 }
+
+/* ---- large headings are lit: their ink runs into deep blue (white into ice on a dark ground),
+   an accent line runs from the accent into its cyan. Without the page's colours (forced colours)
+   they are plain text; selected, their text stays solid. ---- */
+.site-title,
+.site-ink {
+  background: var(--site-title-ink);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+}
+.site-ink.is-accent {
+  background-image: var(--site-title-accent);
+}
+.site-title::selection,
+.site-ink::selection {
+  -webkit-text-fill-color: var(--gt-text);
+}
+@media (forced-colors: active) {
+  .site-title,
+  .site-ink {
+    background: none;
+    -webkit-text-fill-color: currentColor;
+  }
+}
 .site-sub {
   max-width: var(--site-sub-max);
   margin: var(--site-space-6) 0 0;
@@ -200,19 +228,33 @@
   gap: var(--site-space-3);
   margin-top: var(--site-space-10);
 }
+/* the primary call: a cool grey pill with a light inside it. The light rests near the pill's end
+   and follows the pointer along it on a spring, staying where the pointer left it
+   (motion/controller.tsx writes --site-lamp-x on the row of calls, a share of the pill's width).
+   Behind the pill its rim is lit at the light's end: a crisp line, then light softened three
+   times over; the other end takes the light as the light goes there. The pill makes no stacking
+   context of its own, so its rim lies behind it. */
 .site .site-cta {
+  --site-lamp-unit: var(--site-cta-h);
+  position: relative;
   gap: var(--site-space-2);
   height: var(--site-cta-h);
   padding: var(--site-cta-pad);
   border-radius: var(--site-cta-radius);
-  background: var(--site-cta-bg);
-  box-shadow: var(--site-cta-shadow);
-  color: var(--site-cta-text);
-  font-size: var(--site-body-size);
+  background: var(--site-lamp-body);
+  box-shadow: inset 0 0 0 var(--gt-hairline) var(--site-lamp-edge), var(--site-lamp-shadow);
+  color: var(--site-lamp-text);
+  font-size: var(--site-cta-size);
+  font-weight: var(--gt-weight-title);
+  letter-spacing: var(--site-cta-tracking);
+  text-transform: uppercase;
 }
-.site .site-cta:hover {
-  background: var(--site-cta-bg-hover);
-  transform: translateY(var(--site-lift));
+.site .site-cta.site-head-button {
+  --site-lamp-unit: var(--site-head-lamp-unit);
+}
+.site .site-cta > span:not([aria-hidden]),
+.site .site-cta > .gt-icon {
+  position: relative;
 }
 .site .site-cta > .gt-icon {
   transition: transform var(--site-transition);
@@ -220,13 +262,140 @@
 .site .site-cta:hover > .gt-icon {
   transform: translateX(var(--site-space-1));
 }
+/* the light: a wide soft bloom and a white-hot heart in it, their stops close in lightness, so it
+   reads as glow and never as a disc. Each is a layer as wide as the pill, slid along it, so the
+   light's centre stands at --site-lamp-x; it stays inside the pill (painting contained). */
+.site-lamp {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  contain: paint;
+  pointer-events: none;
+}
+.site-lamp::before,
+.site-lamp::after {
+  content: "";
+  position: absolute;
+  inset: calc(-1 * var(--site-lamp-unit)) 0;
+  background-repeat: no-repeat;
+  background-position: center;
+  transform: translateX(calc((var(--site-lamp-x) - 0.5) * 100%));
+}
+.site-lamp::before {
+  background-image: var(--site-lamp-bloom);
+  background-size: calc(var(--site-lamp-unit) * var(--site-lamp-bloom-w))
+    calc(var(--site-lamp-unit) * var(--site-lamp-bloom-h));
+  filter: blur(var(--site-lamp-soft));
+}
+.site-lamp::after {
+  background-image: var(--site-lamp-heart);
+  background-size: calc(var(--site-lamp-unit) * var(--site-lamp-heart-w))
+    calc(var(--site-lamp-unit) * var(--site-lamp-heart-h));
+}
+/* the rim's light, behind the pill: lit at its right end; mirrored for the left. The two fade
+   across each other as the light crosses the pill's middle. */
+.site-rim {
+  position: absolute;
+  inset: calc(-1 * var(--site-rim-out));
+  z-index: -1;
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: clamp(0, (var(--site-lamp-x) - 0.3) * 2.5, 1);
+}
+.site-rim.is-left {
+  transform: scaleX(-1);
+  opacity: clamp(0, (0.7 - var(--site-lamp-x)) * 2.5, 1);
+}
+.site-rim::before,
+.site-rim::after,
+.site-rim > span,
+.site-rim > span::before {
+  content: "";
+  position: absolute;
+  border-radius: inherit;
+}
+.site-rim > span {
+  inset: calc(var(--site-rim-out) - var(--site-rim-line));
+  background: var(--site-rim-crisp);
+}
+.site-rim::before {
+  inset: calc(var(--site-rim-out) - var(--site-rim-blur-1));
+  background: var(--site-rim-near);
+  filter: blur(var(--site-rim-blur-1));
+}
+.site-rim > span::before {
+  inset: calc(-1 * var(--site-rim-blur-1));
+  background: var(--site-rim-halo);
+  filter: blur(var(--site-rim-blur-2));
+}
+.site-rim::after {
+  inset: 0;
+  background: var(--site-rim-glow);
+  filter: blur(var(--site-rim-blur-3));
+}
+
+/* the second call: dark glass (clear glass on a light page) in a hairline that fades toward the
+   bottom, brighter under the pointer. When the lamp beside it goes to the end next to it, its
+   near edge catches that light. */
+.site-actions {
+  --site-catch: clamp(0, (var(--site-lamp-x) - 0.6) * 3.2, 1);
+}
 .site .site-cta.is-second {
-  background: var(--site-cta-2-bg);
-  box-shadow: inset 0 0 0 var(--gt-hairline) var(--site-cta-2-line);
-  color: var(--gt-text);
+  background: var(--site-pill-fill);
+  box-shadow: none;
+  color: var(--site-pill-text);
+  transition: background-color var(--site-transition);
 }
 .site .site-cta.is-second:hover {
-  box-shadow: inset 0 0 0 var(--gt-hairline) var(--gt-line-active);
+  background: var(--site-pill-fill-hover);
+}
+.site .site-cta.is-second::before,
+.site .site-cta.is-second::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  padding: var(--gt-hairline);
+  border-radius: inherit;
+  pointer-events: none;
+  -webkit-mask: linear-gradient(var(--site-mask-on) 0 0) content-box,
+    linear-gradient(var(--site-mask-on) 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(var(--site-mask-on) 0 0) content-box exclude,
+    linear-gradient(var(--site-mask-on) 0 0);
+}
+.site .site-cta.is-second::before {
+  background: var(--site-pill-ring);
+}
+.site .site-cta.is-second::after {
+  background: var(--site-pill-ring-hover);
+  opacity: 0;
+  transition: opacity var(--site-transition);
+}
+.site .site-cta.is-second:hover::after {
+  opacity: 1;
+}
+/* the light the second call catches from the lamp beside it: a lit edge and a glow on its near
+   side, as strong as the lamp is near */
+.site-catch {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  box-shadow: var(--site-catch-glow);
+  opacity: var(--site-catch);
+  pointer-events: none;
+}
+.site-catch::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  padding: var(--site-catch-line);
+  border-radius: inherit;
+  background: var(--site-catch-ring);
+  -webkit-mask: linear-gradient(var(--site-mask-on) 0 0) content-box,
+    linear-gradient(var(--site-mask-on) 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(var(--site-mask-on) 0 0) content-box exclude,
+    linear-gradient(var(--site-mask-on) 0 0);
 }
 
 /* ---- the landing's head: a bar in the frame, clear over the first stage; once the page scrolls,
@@ -390,25 +559,29 @@
   display: var(--site-search-button-display);
 }
 
-/* ---- the theme: one icon button, the moon on a light page and the sun on a dark one ---- */
-.site-theme {
-  position: relative;
-  display: inline-flex;
+/* ---- the theme: one icon button, one click; the moon on a light page and the sun on a dark one,
+   the one turning away as the other turns in ---- */
+.site-theme-icons {
+  display: grid;
+  place-items: center;
 }
-.site-head-end > .site-theme.is-wide {
-  display: var(--site-wide-display);
+.site-theme-icons > .gt-icon {
+  grid-area: 1 / 1;
+  transition: opacity var(--site-dur-2) var(--site-ease-out), transform var(--site-dur-3)
+    var(--site-ease-out);
 }
 html[data-theme="dark"] .site-theme-to-dark,
 html:not([data-theme="dark"]) .site-theme-to-light {
-  display: none;
+  opacity: 0;
+  transform: rotate(-90deg) scale(0.5);
 }
 
-/* the head's call to action: the page's primary colour at the head's size */
+/* the head's call to action: the lit pill at the head's size */
 .site .site-head-button.site-cta {
   height: var(--site-head-button-h);
   padding: var(--site-head-button-pad);
-  border-radius: var(--site-head-button-radius);
-  font-size: var(--site-small-size);
+  border-radius: var(--site-cta-radius);
+  font-size: var(--site-head-cta-size);
 }
 
 /* ---- the landing's foot ---- */
