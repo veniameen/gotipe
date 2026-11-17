@@ -1,13 +1,13 @@
 ---
 title: Rust crates
-description: The MIT Rust crates behind the WebAssembly engine, the PDF and DOCX exporter and the server converter, and how to build them from source.
+description: The MIT Rust crates behind the WebAssembly engine, the PDF and DOCX exporter and the server converter, published on crates.io, and how to build them from source.
 license: MIT
 ---
 
 The document engine, the collaboration CRDT, versions, review state and the PDF and DOCX exporters are written in Rust. Nine crates in `crates/` of the GoTipe repository build three things: the `@gotipe/wasm` engine, the `@gotipe/export-wasm` exporter and the `gotipe-convert` command-line converter.
 
 > [!NOTE]
-> The crates are not published to crates.io in this release. Build them from the GoTipe repository and use them as path dependencies. All of them are version 0.1.0, Rust edition 2021, MIT licensed.
+> The crates are published on [crates.io](https://crates.io/search?q=gotipe). All of them are version 0.1.0, Rust edition 2021, MIT licensed; their sources are in `crates/` of the GoTipe repository.
 
 ## Crates
 
@@ -69,7 +69,7 @@ Release builds use `opt-level = "z"`, link-time optimization, one codegen unit a
 
 ```toml title="Cargo.toml"
 [dependencies]
-gotipe-export = { path = "../gotipe/crates/gotipe-export", features = ["pdf"] }
+gotipe-export = { version = "0.1", features = ["pdf"] }
 ```
 
 ```rust title="src/main.rs"

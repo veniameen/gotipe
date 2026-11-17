@@ -27,9 +27,10 @@ Readiness means passing the checks listed below and having no known blocking def
 supported scenarios. Old "done" marks and successful builds without tests do not confirm the
 result on their own.
 
-Publishing to npm, pushing and deploying an external service are not done automatically; crates
-are not published to crates.io at all (D-71). The result of this work is a verifiable local release
-candidate.
+Publishing follows the owner's decision of 2026-11-17: the crates 0.1.0 are on crates.io, published
+by hand with `publish-crates.yml` (revising D-71); the npm packages are published by `release.yml`
+when the tag `v0.1.0` is pushed and all its checks pass. Every push to main deploys the site
+(`deploy-site.yml`); Cloud runs only locally (D-233).
 
 ## Working order
 

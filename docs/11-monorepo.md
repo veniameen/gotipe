@@ -21,7 +21,9 @@ gotipe/
 ├── .github/
 │   └── workflows/
 │       ├── ci.yml                # PR checks: lint, test, build
-│       ├── release.yml           # npm publish (crates are not published)
+│       ├── release.yml           # npm publish on a v* tag
+│       ├── publish-crates.yml    # crates.io, run by hand
+│       ├── deploy-site.yml       # the site on Cloudflare Pages
 │       └── wasm-build.yml        # WASM build + size check
 │
 ├── crates/                       # Rust workspace
@@ -701,8 +703,8 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
-      # Rust crates are not published to crates.io: they ship compiled
-      # inside @gotipe/wasm and @gotipe/export-wasm (D-71)
+      # Rust crates go to crates.io through publish-crates.yml, run by
+      # hand after these checks (owner decision of 2026-11-17, revising D-71)
 
       # Create GitHub Release
       - uses: softprops/action-gh-release@v2

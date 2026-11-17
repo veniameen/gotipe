@@ -70,7 +70,7 @@ GoTipe is a Rust/WASM rich text editor framework with Notion-like UX. The projec
 
 ### Phase 5: CI/CD ✅
 - [x] 5.1 `.github/workflows/ci.yml` — rust (fmt, clippy, test, property tests, bench compile) + wasm (build + artifact + size check ≤500KB gzip) + typescript (download wasm → install → lint → typecheck → build → test → bundle size check) + go (vet, test -race, build)
-- [x] 5.2 `.github/workflows/release.yml` — npm publish (--provenance, dependency order) + GitHub Release + CHANGELOG.md generation. The cargo publish step was removed (D-71): crates are not published to crates.io, only npm is released
+- [x] 5.2 `.github/workflows/release.yml` — npm publish (--provenance, dependency order) + GitHub Release + CHANGELOG.md generation. The cargo publish step was removed from it (D-71); since 2026-11-17 the crates go to crates.io through the separate, manual `publish-crates.yml`
 - [x] 5.3 `.github/workflows/deploy-cloud.yml` — test with services → Docker build+push GHCR → SSH deploy (Hetzner VDS)
 - [x] 5.4 `.github/workflows/deploy-infra.yml` — push to main (paths: infra/**) → environment: production (requires approve) → ssh server "git pull && docker compose up -d"
 - [x] 5.5 `.github/workflows/security.yml` — `cargo audit`, `cargo deny check`, `npm audit`, SBOM generation (CycloneDX), license compliance check
@@ -632,7 +632,7 @@ The Vue 3 counterpart of block-editor. The same components: BlockEditor, SlashMe
 | File | Contents |
 |------|-----------|
 | `.github/workflows/ci.yml` | Jobs: rust (fmt, clippy, test, property tests `--ignored`, bench compile), wasm (build + artifact + gzip size check ≤500KB), typescript (download wasm → install → lint → typecheck → build → test → per-package bundle size check), go (vet, test -race, build). Full specification from docs/11 |
-| `.github/workflows/release.yml` | On tag v*: build wasm → build TS → npm publish --provenance (dependency order) → GitHub Release. CHANGELOG.md via changesets. Crates are not published to crates.io (D-71) |
+| `.github/workflows/release.yml` | On tag v*: build wasm → build TS → npm publish --provenance (dependency order) → GitHub Release. CHANGELOG.md via changesets. Crates go to crates.io through the manual `publish-crates.yml` (2026-11-17, revising D-71) |
 | `.github/workflows/deploy-cloud.yml` | On push main (apps/cloud/**): test with services (postgres, valkey) → docker build+push GHCR → SSH deploy Hetzner VDS |
 | `.github/workflows/deploy-infra.yml` | On push main (infra/**): environment: production (requires approve) → ssh server "git pull && docker compose up -d" |
 | `.github/workflows/security.yml` | Weekly + on PR: `cargo audit`, `cargo deny check licenses`, `npm audit --audit-level=high`, SBOM generation (CycloneDX: `cargo cyclonedx` + `npx @cyclonedx/cyclonedx-npm`), license compliance check |

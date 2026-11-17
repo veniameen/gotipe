@@ -471,7 +471,7 @@ Full-St ░░░░░░░░░░░░░░░░░░░░░░██
 
 ### Launch
 - [ ] npm: all @gotipe/* packages published
-- [x] crates.io: gotipe-* crates are not published: owner decision, only npm is released (D-71)
+- [x] crates.io: gotipe-* 0.1.0 published on 2026-11-17 (`publish-crates.yml`); the owner's decision revises D-71
 - [ ] GitHub: README, templates, labels, milestones
 - [ ] GoTipe Cloud: registration, API keys, working sync
 - [ ] Monitoring: Prometheus, alerts, health checks
