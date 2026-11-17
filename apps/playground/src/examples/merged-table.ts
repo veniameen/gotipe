@@ -1,7 +1,7 @@
 /**
  * A table with merged cells (GoTipe Atlas, frame 29): a header over two columns, two header rows
  * under tall headers, and a body cell over two rows. Select cells by dragging across them or with
- * Shift, then use «Merge cells» or «Split cell» in a row or column menu.
+ * Shift, then use “Merge cells” or “Split cell” in a row or column menu.
  */
 const text = (value: string, code = false) => [
   { text: value, marks: code ? [{ type: "code", attrs: {} }] : [] },

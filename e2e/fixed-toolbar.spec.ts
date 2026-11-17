@@ -5,11 +5,11 @@ async function openModern(page: Page, width: number) {
   await page.setViewportSize({ width, height: 800 });
   await page.goto('/#views');
   await page.getByRole('button', { name: 'modern', exact: true }).click();
-  await expect(page.getByRole('toolbar', { name: 'Форматирование' })).toBeVisible();
+  await expect(page.getByRole('toolbar', { name: 'Formatting' })).toBeVisible();
 }
 
 test.describe('Fixed toolbar (Atlas frame 31)', () => {
-  test('a wide editor shows the whole bar and no «More»', async ({ page }) => {
+  test('a wide editor shows the whole bar and no “More”', async ({ page }) => {
     await openModern(page, 1440);
     const track = page.locator('.gotipe-fixed-toolbar-track');
     for (const unit of ['history', 'blockType', 'font', 'marks', 'align', 'insert', 'invisibles'])
@@ -17,7 +17,7 @@ test.describe('Fixed toolbar (Atlas frame 31)', () => {
     await expect(page.locator('.gotipe-fixed-toolbar-more')).toHaveCount(0);
   });
 
-  test('a phone sends what does not fit to «More»; the keys open and close it', async ({ page }) => {
+  test('a phone sends what does not fit to “More”; the keys open and close it', async ({ page }) => {
     await openModern(page, 375);
     const track = page.locator('.gotipe-fixed-toolbar-track');
     // history, the block type, bold, italic and underline never leave; the font leaves first
@@ -51,7 +51,7 @@ test.describe('Fixed toolbar (Atlas frame 31)', () => {
     await redo.hover();
     const tip = redo.locator('.gotipe-tip');
     await expect(tip).toBeVisible();
-    await expect(tip).toHaveText('Нечего повторять');
+    await expect(tip).toHaveText('Nothing to redo');
     await expect(redo).toHaveAttribute('aria-disabled', 'true');
 
     await undo.focus();

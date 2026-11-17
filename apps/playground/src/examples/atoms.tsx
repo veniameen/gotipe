@@ -9,11 +9,11 @@ const GOTIPE_EMOJI =
   "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAiUlEQVR42u2Xyw3AIAxDPVCn6szdhw5QVeRnDIJI3IL8DvkZ6MR1Py3zEImsaBiGJWwCGSX+CyEFGC3+gVgKoBdugCrhKAgY4h4IRMUteRQAS76rDirFQ52wDABtFmQBsh2xBwC1COUA2X+UQeTJp47iEgD5MqKvY/lBcm7C4wumsWZTmFOFPX8B/FjBBuhzrGoAAAAASUVORK5CYII=";
 
 const PEOPLE: MentionItem[] = [
-  { id: "u3", label: "Анна Ковалёва" },
-  { id: "u1", label: "Андрей Соколов" },
-  { id: "u2", label: "Ольга Антонова" },
-  { id: "u4", label: "Илья Орлов" },
-  { id: "p1", label: "Анализ обращений за октябрь", kind: "page" },
+  { id: "u3", label: "Anna Kovaleva" },
+  { id: "u1", label: "Andrew Sokolov" },
+  { id: "u2", label: "Olga Antonova" },
+  { id: "u4", label: "Ilya Orlov" },
+  { id: "p1", label: "Analysis of October support tickets", kind: "page" },
   { id: "p2", label: "ADR-0031", kind: "page" },
 ];
 
@@ -49,17 +49,17 @@ const CONTENT = {
   version: 1,
   blocks: [
     paragraph("mentions", [
-      text("Схему журнала проверили "),
+      text("The journal schema was checked by "),
       {
-        text: "@Илья Орлов",
-        marks: [atom("mention", { id: "u4", label: "Илья Орлов", kind: "user" }, "m1")],
+        text: "@Ilya Orlov",
+        marks: [atom("mention", { id: "u4", label: "Ilya Orlov", kind: "user" }, "m1")],
       },
-      text(" и "),
+      text(" and "),
       {
-        text: "@Анна Ковалёва",
-        marks: [atom("mention", { id: "u3", label: "Анна Ковалёва", kind: "user" }, "m2")],
+        text: "@Anna Kovaleva",
+        marks: [atom("mention", { id: "u3", label: "Anna Kovaleva", kind: "user" }, "m2")],
       },
-      text(", решение записано в "),
+      text("; the decision is recorded in "),
       {
         text: "ADR-0031",
         marks: [atom("mention", { id: "p2", label: "ADR-0031", kind: "page" }, "m3")],
@@ -67,24 +67,24 @@ const CONTENT = {
       text("."),
     ]),
     paragraph("emoji", [
-      text("Все проверки прошли, сборка подписана "),
+      text("All checks passed, the build is signed "),
       {
         text: ":gotipe:",
         marks: [atom("customEmoji", { name: "gotipe", src: GOTIPE_EMOJI }, "e1")],
       },
-      text(" — спасибо всем, кто гонял журнал на своих устройствах 🙏"),
+      text(". Thanks to everyone who ran the journal on their devices 🙏"),
     ]),
     paragraph("math", [
-      text("Доля потерянных правок "),
+      text("The share of lost edits "),
       { text: "p = \\frac{L}{N}", marks: [atom("inlineMath", {}, "f1")] },
-      text(" за неделю должна остаться ниже "),
+      text(" over a week must stay below "),
       { text: "10^{-3}", marks: [atom("inlineMath", {}, "f2")] },
-      text(", где "),
+      text(", where "),
       { text: "L", marks: [atom("inlineMath", {}, "f3")] },
-      text(" — правки, не дошедшие до сервера."),
+      text(" is the edits that never reached the server."),
     ]),
     paragraph("invalid", [
-      text("Формула с ошибкой: "),
+      text("A formula with an error: "),
       { text: "p = \\frac{L}{N", marks: [atom("inlineMath", {}, "f4")] },
       text("."),
     ]),
@@ -95,7 +95,7 @@ const CONTENT = {
       content: "p = \\frac{lost}{lost + sent}",
       children: [],
     },
-    paragraph("end", [text("Наберите «@ан», «:пра», «/эмодзи» или $x^2$.")]),
+    paragraph("end", [text("Type “@an”, “:par”, “/emoji” or $x^2$.")]),
   ],
 };
 
@@ -105,10 +105,10 @@ export function AtomsExample() {
   return (
     <ExampleWrapper
       title="Mentions, emoji, formulas"
-      description="Atlas frames 22–24: atoms of a line, the «@» and «:» lists, the emoji picker of «/» and the formula popover. Commercial license."
+      description="Atlas frames 22–24: atoms of a line, the “@” and “:” lists, the emoji picker of the slash menu and the formula popover. Commercial license."
       tags={["Commercial"]}
     >
-      <GoTipeI18nProvider locale="ru">
+      <GoTipeI18nProvider locale="en">
         <BlockEditor editor={editor} mentions={mentions} emoji={emoji} showAiCommandBar={false} />
       </GoTipeI18nProvider>
     </ExampleWrapper>

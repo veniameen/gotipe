@@ -224,7 +224,7 @@ function TableHandleMenu({
   );
 }
 
-/** The «Cells» group: merge the selected cells, split a merged one (Atlas frame 29). */
+/** The “Cells” group: merge the selected cells, split a merged one (Atlas frame 29). */
 function useCellsGroup(cellId: string): () => MenuGroup {
   const i18n = useGoTipeI18n();
   const layout = useTableLayout();

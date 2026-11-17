@@ -1,7 +1,7 @@
 import { type CellPosition, type TableGrid, editTable, rangeCells } from "@gotipe/core";
 import type { TableLayout, TableMergeGuard } from "@gotipe/react";
 
-/** What the «Cells» group of a table menu can do from one cell (Atlas frame 29). */
+/** What the “Cells” group of a table menu can do from one cell (Atlas frame 29). */
 export interface CellActions {
   /** Two or more cells are selected together, and the page can keep the merged table. */
   canMerge: boolean;

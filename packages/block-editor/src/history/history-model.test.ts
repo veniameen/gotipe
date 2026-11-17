@@ -26,7 +26,7 @@ const list = (id: string, ...items: Block[]): Block => ({
   children: items,
 });
 const doc = (...blocks: Block[]): Document => ({ version: 1, blocks });
-const version = (id: string, at: string, snapshot: Document, createdBy = "Илья Орлов") => ({
+const version = (id: string, at: string, snapshot: Document, createdBy = "Ilya Orlov") => ({
   id,
   name: id,
   createdAt: at,
@@ -37,25 +37,25 @@ const version = (id: string, at: string, snapshot: Document, createdBy = "Иль
 describe("the comparison of a version with the page", () => {
   it("marks added, removed and changed blocks and puts removed ones back where they stood", () => {
     const before = doc(
-      p("h", "Порядок выката", "heading"),
+      p("h", "Rollout order", "heading"),
       list(
         "l",
-        p("i1", "Включить журнал для 10 % пользователей", "listItem"),
-        p("i2", "Неделю", "listItem"),
+        p("i1", "Enable the log for 10 % of users", "listItem"),
+        p("i2", "For a week", "listItem"),
       ),
-      p("old", "Шифрование черновика — после выпуска."),
-      p("end", "Возражения"),
+      p("old", "Draft encryption comes after the release."),
+      p("end", "Objections"),
     );
     const after = doc(
-      p("h", "Порядок выката", "heading"),
+      p("h", "Rollout order", "heading"),
       list(
         "l",
-        p("i1", "Включить журнал для 5 % пользователей", "listItem"),
-        p("i2", "Неделю", "listItem"),
-        p("i3", "Открыть всем", "listItem"),
+        p("i1", "Enable the log for 5 % of users", "listItem"),
+        p("i2", "For a week", "listItem"),
+        p("i3", "Open to everyone", "listItem"),
       ),
-      p("new", "Черновик шифруется ключом сессии."),
-      p("end", "Возражения"),
+      p("new", "The draft is encrypted with the session key."),
+      p("end", "Objections"),
     );
     const result = compareTree(before, after);
     expect([result.added, result.removed, result.changed]).toEqual([2, 1, 1]);
@@ -69,14 +69,14 @@ describe("the comparison of a version with the page", () => {
     const items = result.nodes[1]!.children;
     expect(items.map((node) => node.status)).toEqual(["changed", "same", "added"]);
     expect(items[0]!.text).toEqual([
-      { type: "equal", text: "Включить журнал для " },
+      { type: "equal", text: "Enable the log for " },
       { type: "delete", text: "10" },
       { type: "insert", text: "5" },
-      { type: "equal", text: " % пользователей" },
+      { type: "equal", text: " % of users" },
     ]);
   });
   it("keeps a removed first block first and a removed subtree whole", () => {
-    const before = doc(p("a", "первый"), list("l", p("x", "пункт", "listItem")), p("b", "b"));
+    const before = doc(p("a", "first"), list("l", p("x", "item", "listItem")), p("b", "b"));
     const result = compareTree(before, doc(p("b", "b")));
     expect(result.nodes.map((node) => [node.block.id, node.status])).toEqual([
       ["a", "removed"],
@@ -112,12 +112,12 @@ describe("the list of versions", () => {
     const rows = savedRows(versions);
     const now = new Date("2026-11-14T14:32:00");
     const changed = withLiveRow(rows, doc(p("a", "one two three")), now, {
-      name: "Мария Лебедева",
+      name: "Maria Lebedeva",
     });
     expect(changed[0]).toMatchObject({
       id: LIVE_ROW,
       live: true,
-      author: "Мария Лебедева",
+      author: "Maria Lebedeva",
       words: { added: 0, removed: 1 },
     });
     const same = withLiveRow(rows, second, now, undefined);

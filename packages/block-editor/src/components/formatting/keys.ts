@@ -18,7 +18,7 @@ export const HISTORY_KEYS = {
   redo: "mod-shift-z",
 } as const;
 
-/** `TextAlign` (Atlas frame 27: the alignment group of «More»). */
+/** `TextAlign` (Atlas frame 27: the alignment group of “More”). */
 export const ALIGN_KEYS = {
   left: "mod-shift-l",
   center: "mod-shift-e",
@@ -39,7 +39,7 @@ export const BLOCK_KEYS: Record<string, string> = {
 const isMac = () =>
   typeof navigator !== "undefined" && /Mac|iPhone|iPad|iPod/i.test(navigator.platform);
 
-/** «⌥⇧⌘X» on Apple systems, «Ctrl+Shift+X» elsewhere. */
+/** “⌥⇧⌘X” on Apple systems, “Ctrl+Shift+X” elsewhere. */
 export function keyLabel(binding: string, mac = isMac()): string {
   const parts = binding.toLowerCase().split("-");
   const main = (parts.pop() ?? "").toUpperCase();

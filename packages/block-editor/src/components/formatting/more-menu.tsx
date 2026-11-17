@@ -9,7 +9,7 @@ import { hasMark } from "./schema";
 import { Tip } from "./tip";
 import { useFormattingMenu } from "./use-formatting-menu";
 
-/** Marks «More» offers when the editor has them (`Superscript`, `Subscript`: not in DefaultPreset). */
+/** Marks “More” offers when the editor has them (`Superscript`, `Subscript`: not in DefaultPreset). */
 const SCRIPTS = ["superscript", "subscript"] as const;
 
 export function MoreMenu({ editor }: { editor: GoTipeEditor }) {

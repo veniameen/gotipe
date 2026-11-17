@@ -20,7 +20,7 @@ export interface Hit {
 export interface HandleProbe {
   /** The hovered block exists. */
   found: boolean;
-  /** The handle is drawn: «+» and the grip. */
+  /** The handle is drawn: “+” and the grip. */
   visible: boolean;
   /** The block the grip moves (`data-block-drag`) and the block it should move. */
   drag: string | null;

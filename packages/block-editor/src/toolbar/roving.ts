@@ -6,7 +6,7 @@ import {
   useRef,
 } from "react";
 
-/** Lists the tools open (a font list, «Insert»): their rows keep their own keys. */
+/** Lists the tools open (a font list, “Insert”): their rows keep their own keys. */
 const POPUP = "[data-gotipe-formatting-popup]";
 
 /** The controls of a toolbar line in order: buttons and fields, without those of open lists. */
@@ -33,7 +33,7 @@ export function useRovingFocus(line: RefObject<HTMLElement | null>) {
   const settle = (controls: HTMLElement[], index: number) => {
     for (const [at, control] of controls.entries()) control.tabIndex = at === index ? 0 : -1;
   };
-  // Tools mount anew when they move between the bar and «More»: the stop is set after each render.
+  // Tools mount anew when they move between the bar and “More”: the stop is set after each render.
   useLayoutEffect(() => {
     const element = line.current;
     if (!element) return;

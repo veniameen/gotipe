@@ -32,7 +32,7 @@ export interface VersionHistorySource {
 export interface RestoreContext {
   /** The page before the restore when no saved version held it, to keep as `names.unsaved`. */
   unsaved: Document | null;
-  /** «До восстановления» and «Возврат к «…»» in the panel's language. */
+  /** “Before restore” and “Back to “…”” in the panel's language. */
   names: { unsaved: string; restored: string };
 }
 
@@ -71,7 +71,7 @@ const LIVE_DELAY = 400;
 
 /**
  * Version history (GoTipe Atlas, frame 30): versions by day beside the page; a chosen version is
- * compared with the current page block by block, «Восстановить» puts it back as one undo step and
+ * compared with the current page block by block, “Restore” puts it back as one undo step and
  * a toast takes it back. On a narrow container the list and the comparison are two screens.
  */
 export function VersionHistory({

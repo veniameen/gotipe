@@ -45,7 +45,7 @@ async function editorWith(extensions: unknown[]) {
   return editor;
 }
 
-/** Opens «More» on a selection and lists its rows. */
+/** Opens “More” on a selection and lists its rows. */
 async function rows(editor: GoTipeEditor) {
   act(() => root.render(<MoreMenu key={editors.indexOf(editor)} editor={editor} />));
   act(() =>
@@ -61,7 +61,7 @@ async function rows(editor: GoTipeEditor) {
   );
 }
 
-describe("«More» offers only the marks the editor has", () => {
+describe("“More” offers only the marks the editor has", () => {
   it("leaves out superscript and subscript in DefaultPreset", async () => {
     const editor = await editorWith([DefaultPreset]);
     expect(hasMark(editor, "superscript")).toBe(false);

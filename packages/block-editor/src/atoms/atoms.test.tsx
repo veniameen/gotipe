@@ -114,7 +114,7 @@ const spans = (editor: GoTipeEditor) =>
   }[];
 const rows = () => Array.from(document.querySelectorAll<HTMLElement>(".gotipe-suggest-item"));
 
-describe("the «@» list", () => {
+describe("the “@” list", () => {
   it("lists people and pages with the match in bold and inserts the chosen one", async () => {
     const editor = await open("Смотрит @ан");
     caretAt(editor, 11);
@@ -163,7 +163,7 @@ describe("the «@» list", () => {
 });
 
 describe("emoji", () => {
-  it("lists emoji by their Russian names after «:» and inserts the character", async () => {
+  it("lists emoji by their Russian names after “:” and inserts the character", async () => {
     const editor = await open("Готово :пра");
     caretAt(editor, 11);
     await settle();
@@ -234,14 +234,14 @@ describe("the picker and input methods", () => {
   });
 });
 
-describe("«/» commands", () => {
+describe("“/” commands", () => {
   it("open the picker after the menu has returned the focus to the editor", async () => {
     const editor = await open("Спасибо ");
     caretAt(editor, 8);
     const command = editor.getSlashCommands().find((item) => item.icon === "smile")!;
     act(() => {
       command.execute(editor);
-      // The «/» menu focuses the editor right after running a command.
+      // The slash menu focuses the editor right after running a command.
       editor.focus();
     });
     await settle();

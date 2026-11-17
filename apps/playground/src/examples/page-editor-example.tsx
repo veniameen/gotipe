@@ -67,11 +67,11 @@ export function PageEditorExample() {
       <div className="gotipe-page-example-controls">
         <h2>Editor</h2>
         <label className="gotipe-editor-view">
-          Вид
+          View
           <select
             value={view}
             onChange={(event) => setView(event.target.value as ThemePreset)}
-            aria-label="Вид страницы"
+            aria-label="Page view"
           >
             {(["notion", "docs", "modern", "minimal"] as const).map((name) => (
               <option key={name} value={name}>
@@ -90,7 +90,7 @@ export function PageEditorExample() {
           data-gotipe-page-readonly=""
           onClick={() => setReadOnly((value) => !value)}
         >
-          Только чтение
+          Read only
         </button>
         <button
           type="button"
@@ -120,7 +120,7 @@ export function PageEditorExample() {
           onReady={ready}
           readOnly={readOnly}
           view={view}
-          locale="ru"
+          locale="en"
           onError={reportError}
           review={{
             lanes: PAGE_LANES,
@@ -139,7 +139,7 @@ export function PageEditorExample() {
                         ...comment,
                         replies: [
                           ...(comment.replies ?? []),
-                          { id: crypto.randomUUID(), author: "Вы", text },
+                          { id: crypto.randomUUID(), author: "You", text },
                         ],
                       }
                     : comment,

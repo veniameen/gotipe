@@ -477,11 +477,11 @@ export function BlockEditorExample() {
       style={{ display: "flex", flexDirection: "column", height: "100%" }}
     >
       <label className="gotipe-editor-view">
-        Вид
+        View
         <select
           value={view}
           onChange={(event) => setView(event.target.value as ThemePreset)}
-          aria-label="Вид редактора"
+          aria-label="Block view"
         >
           {(["notion", "docs", "modern", "minimal"] as const).map((name) => (
             <option key={name} value={name}>

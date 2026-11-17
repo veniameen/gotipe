@@ -31,7 +31,7 @@ it("renders inline atoms as one non-editable element each", async () => {
           type: "paragraph",
           attrs: {},
           content: [
-            { text: "Привет ", marks: [] },
+            { text: "Hello, ", marks: [] },
             { text: "x^2", marks: [{ type: "inlineMath", attrs: {} }] },
           ],
           children: [],
@@ -48,18 +48,18 @@ it("renders inline atoms as one non-editable element each", async () => {
   app.mount(root);
   await nextTick();
   const block = () => root.querySelector('[data-block-id="p"]')!;
-  expect(documentText(block())).toBe("Привет x^2");
+  expect(documentText(block())).toBe("Hello, x^2");
   const formula = block().querySelector<HTMLElement>('[data-gotipe-atom][data-type="inlineMath"]')!;
   expect(formula.getAttribute("contenteditable")).toBe("false");
   expect(formula.getAttribute("role")).toBe("math");
   expect(formula.querySelector("msup")).not.toBeNull();
   editor.setSelection({ anchor: { blockId: "p", offset: 7 }, head: { blockId: "p", offset: 7 } });
-  insertMention(editor, { id: "42", label: "Анна😀" });
+  insertMention(editor, { id: "42", label: "Anna😀" });
   await nextTick();
-  expect(documentText(block())).toBe("Привет @Анна😀x^2");
+  expect(documentText(block())).toBe("Hello, @Anna😀x^2");
   const mention = block().querySelector<HTMLElement>(".gotipe-mention")!;
   expect(mention.dataset.kind).toBe("person");
-  expect(mention.querySelector(".gotipe-avatar")!.textContent).toBe("А");
+  expect(mention.querySelector(".gotipe-avatar")!.textContent).toBe("A");
   editor.destroy();
 });
 
@@ -106,7 +106,7 @@ it("draws a page mention with its glyph, and a formula as TeX without `math`", a
 describe("an IME composition right after an atom (D-226)", () => {
   const anna = {
     type: "mention",
-    attrs: { id: "u3", label: "Анна Ковалёва", kind: "user", key: "a" },
+    attrs: { id: "u3", label: "Anna Kovaleva", kind: "user", key: "a" },
   };
   const page = { type: "mention", attrs: { id: "p1", label: "ADR-0031", kind: "page", key: "b" } };
   const formula = { type: "inlineMath", attrs: { key: "1" } };
@@ -122,12 +122,12 @@ describe("an IME composition right after an atom (D-226)", () => {
     target.dispatchEvent(new CompositionEvent("compositionend", { bubbles: true, data: text }));
   };
   it.each([
-    ["mention", { text: "@Анна Ковалёва", marks: [anna] }, " и всё"],
-    ["mention", { text: "@Анна Ковалёва", marks: [anna] }, ""],
+    ["mention", { text: "@Anna Kovaleva", marks: [anna] }, " and all"],
+    ["mention", { text: "@Anna Kovaleva", marks: [anna] }, ""],
     ["page", { text: "ADR-0031", marks: [page] }, ""],
-    ["formula", { text: "x^2", marks: [formula] }, " и всё"],
+    ["formula", { text: "x^2", marks: [formula] }, " and all"],
     ["formula", { text: "x^2", marks: [formula] }, ""],
-  ])("puts the text after the %s, then the caret (tail «%#»)", async (_name, atom, tail) => {
+  ])("puts the text after the %s, then the caret (tail “%#”)", async (_name, atom, tail) => {
     const editor = await createEditor({
       extensions: [Paragraph, Mention, InlineMath],
       engine: "js",

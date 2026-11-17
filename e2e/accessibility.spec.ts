@@ -367,7 +367,7 @@ test.describe("Interactive blocks — keyboard and read-only", () => {
                 id: "task",
                 type: "todoItem",
                 attrs: { checked: false },
-                content: [{ text: "Клавиатура 😀", marks: [] }],
+                content: [{ text: "Keyboard 😀", marks: [] }],
                 children: [],
               },
             ],
@@ -438,12 +438,12 @@ test.describe("Interactive blocks — keyboard and read-only", () => {
     await page.keyboard.press("Space");
     await expect(checkbox).toBeChecked();
     await expect(page.locator("[data-gotipe-page-source]")).toContainText(
-      "- [x] Проверить таблицу",
+      "- [x] Check the table",
     );
     await page.locator("[data-gotipe-todo-content]").last().click();
     await page.keyboard.press("ControlOrMeta+z");
     await expect(checkbox).not.toBeChecked();
-    await page.getByRole("button", { name: "Только чтение" }).click();
+    await page.getByRole("button", { name: "Read only" }).click();
     await expect(checkbox).toBeDisabled();
   });
 });

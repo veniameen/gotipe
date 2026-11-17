@@ -59,9 +59,9 @@ test.describe('PageEditor showcase', () => {
   });
 
   test('renders the Markdown file and keeps it byte-for-byte', async ({ page }) => {
-    await expect(page.locator('.gotipe-page-title')).toHaveText('Документ редактора');
+    await expect(page.locator('.gotipe-page-title')).toHaveText('Editor document');
     // a host's own quote stays a quote: the library knows no host-specific callout
-    await expect(page.locator('[data-gotipe-page] blockquote').first()).toContainText('Инструкции для агента');
+    await expect(page.locator('[data-gotipe-page] blockquote').first()).toContainText('Agent instructions');
     await expect(page.locator('[data-block-type="todoItem"]')).toHaveCount(3);
     await expect(page.locator('.gotipe-table th')).toHaveCount(3);
     await expect(page.locator('.gotipe-raw')).toHaveCount(3);
@@ -70,10 +70,10 @@ test.describe('PageEditor showcase', () => {
 
   test('editing a paragraph changes only its line', async ({ page }) => {
     await caretToEnd(page, '.gotipe-callout-content', 0);
-    await page.keyboard.type(' Новый текст.');
+    await page.keyboard.type(' New text.');
     await expect.poll(() => source(page).textContent()).toBe(PAGE_MARKDOWN.replace(
-      '> Текст с `кодом` сохраняет форматирование.',
-      '> Текст с `кодом` сохраняет форматирование. Новый текст.',
+      '> Text with `code` keeps its formatting.',
+      '> Text with `code` keeps its formatting. New text.',
     ));
   });
 
@@ -91,22 +91,22 @@ test.describe('PageEditor showcase', () => {
       // This exercises native Unicode insertion, not an OS IME automation claim.
       await page.keyboard.insertText('漢');
     }
-    await expect(page.locator('[data-block-type="todoItem"]').nth(2)).toHaveText('Проверить таблицу — отдельно漢');
-    await expect(source(page)).toContainText('- [ ] Проверить таблицу — отдельно漢\n');
+    await expect(page.locator('[data-block-type="todoItem"]').nth(2)).toHaveText('Check the table — отдельно漢');
+    await expect(source(page)).toContainText('- [ ] Check the table — отдельно漢\n');
   });
 
-  test('«/» opens the blocks menu and inserts a heading', async ({ page }) => {
+  test('“/” opens the blocks menu and inserts a heading', async ({ page }) => {
     await caretToEnd(page, '.gotipe-page-title');
     await page.keyboard.press('Enter');
     await page.keyboard.type('/');
     const menu = page.locator('[data-gotipe-slash-menu]');
     await expect(menu).toBeVisible();
-    await expect(menu).toContainText('Медиа');
-    await expect(menu).toContainText('Основные');
+    await expect(menu).toContainText('Upload');
+    await expect(menu).toContainText('Style');
     await page.keyboard.type('h2');
     await page.keyboard.press('Enter');
-    await page.keyboard.type('Цель');
-    await expect(source(page)).toContainText('# Документ редактора\n\n## Цель\n\n> **Инструкции для агента:**');
+    await page.keyboard.type('Goal');
+    await expect(source(page)).toContainText('# Editor document\n\n## Goal\n\n> **Agent instructions:**');
   });
 
   test('demo review shows cursors and accepts all suggestions', async ({ page }) => {
@@ -115,13 +115,13 @@ test.describe('PageEditor showcase', () => {
     await expect(page.locator('.gotipe-sug-block-ins')).toHaveCount(2, { timeout: 5000 });
     await expect(page.locator('.gotipe-sug-ins')).toHaveCount(5);
     await expect(page.locator('.gotipe-cmt')).toHaveCount(1);
-    await expect(page.locator('.gotipe-review-bar')).toContainText('3 предложения');
-    await page.locator('.gotipe-review-bar').getByRole('button', { name: 'Принять все' }).click();
+    await expect(page.locator('.gotipe-review-bar')).toContainText('3 suggestions');
+    await page.locator('.gotipe-review-bar').getByRole('button', { name: 'Accept all' }).click();
     await expect(page.locator('.gotipe-sug-ins, .gotipe-sug-block-ins')).toHaveCount(0);
     const md = await source(page).innerText();
-    expect(md).toContain('- [ ] Проверить форматирование и ссылки\n');
-    expect(md).toContain('- [ ] Проверить таблицу\n- [ ] Проверить ссылки\n- [ ] Проверить экспорт\n');
-    expect(md).toContain('| `alpha` | 3 | нет |');
+    expect(md).toContain('- [ ] Check the formatting and links\n');
+    expect(md).toContain('- [ ] Check the table\n- [ ] Check the links\n- [ ] Check the export\n');
+    expect(md).toContain('| `alpha` | 3 | no |');
     expect(md).toContain('title: editor-example');
   });
 
@@ -131,11 +131,11 @@ test.describe('PageEditor showcase', () => {
     await page.locator('.gotipe-sug-ins').first().click();
     const card = page.locator('[data-gotipe-review-card="proposal"]');
     await expect(card).toBeVisible();
-    await card.getByRole('button', { name: 'Отклонить' }).click();
+    await card.getByRole('button', { name: 'Reject' }).click();
     await expect(page.locator('.gotipe-sug-ins')).toHaveCount(4);
     await caretToEnd(page, '[data-block-type="todoItem"] [data-gotipe-todo-content]', 2);
     await page.keyboard.type('!');
-    await expect(page.locator('.gotipe-review-bar')).toContainText('1 устарело');
+    await expect(page.locator('.gotipe-review-bar')).toContainText('1 stale');
   });
 
   test('replies to a demo review comment', async ({ page }) => {
@@ -143,10 +143,10 @@ test.describe('PageEditor showcase', () => {
     await expect(page.locator('.gotipe-cmt')).toHaveCount(1, { timeout: 5000 });
     await page.locator('.gotipe-cmt').click();
     const card = page.locator('[data-gotipe-review-card="comment"]');
-    await expect(card).toContainText('Убедитесь, что все ячейки заполнены.');
-    await card.getByRole('textbox').fill('Да, поправь');
-    await card.getByRole('button', { name: 'Отправить' }).click();
-    await expect(card).toContainText('Да, поправь');
+    await expect(card).toContainText('Make sure every cell is filled in.');
+    await card.getByRole('textbox').fill('Yes, fix it');
+    await card.getByRole('button', { name: 'Send' }).click();
+    await expect(card).toContainText('Yes, fix it');
   });
 
   test('read-only mode ignores input', async ({ page }) => {
@@ -154,19 +154,19 @@ test.describe('PageEditor showcase', () => {
     await expect(page.locator('[data-gotipe-content]')).toHaveAttribute('contenteditable', 'false');
     await page.locator('.gotipe-page-title').click();
     await page.keyboard.type('xyz');
-    await expect(page.locator('.gotipe-page-title')).toHaveText('Документ редактора');
+    await expect(page.locator('.gotipe-page-title')).toHaveText('Editor document');
     await expect(page.locator('[data-block-type="todoItem"] input').first()).toBeDisabled();
     expect(await source(page).textContent()).toBe(PAGE_MARKDOWN);
   });
 
-  test('column type «Код» writes backticks into the file', async ({ page }) => {
+  test('column type “Code” writes backticks into the file', async ({ page }) => {
     const header = page.locator('.gotipe-table th').nth(2);
     await header.hover();
     await header.locator('.gotipe-column-handle').click();
     const menu = page.locator('[data-gotipe-column-menu]');
-    await expect(menu).toContainText('Тип столбца');
-    await menu.getByRole('menuitemradio', { name: 'Код' }).click();
-    await expect(source(page)).toContainText('| `alpha` |  | `нет` |');
+    await expect(menu).toContainText('Column type');
+    await menu.getByRole('menuitemradio', { name: 'Code' }).click();
+    await expect(source(page)).toContainText('| `alpha` |  | `no` |');
   });
 
   test('external replacement keeps focus, caret and scroll', async ({ page }) => {
@@ -174,15 +174,15 @@ test.describe('PageEditor showcase', () => {
     const scroll = await page.locator('.gotipe-page-example-surface').evaluate((el) => el.scrollTop);
     await page.evaluate(() =>
       window.__GOTIPE_PAGE_EXAMPLE__!.replaceMarkdown(
-        'Проверить текст',
-        'Проверить текст (обновлено)',
+        'Check the text',
+        'Check the text (updated)',
       ),
     );
-    await expect(page.locator('[data-block-type="todoItem"]').first()).toContainText('(обновлено)');
+    await expect(page.locator('[data-block-type="todoItem"]').first()).toContainText('(updated)');
     expect(await page.evaluate(() => document.activeElement?.hasAttribute('data-gotipe-content'))).toBe(true);
     expect(await page.locator('.gotipe-page-example-surface').evaluate((el) => el.scrollTop)).toBe(scroll);
     await page.keyboard.type('!');
-    await expect(page.locator('[data-block-type="todoItem"]').nth(1)).toHaveText('Проверить форматирование!');
+    await expect(page.locator('[data-block-type="todoItem"]').nth(1)).toHaveText('Check the formatting!');
   });
 
   test('dark theme re-colours the page through tokens', async ({ page }) => {
@@ -200,8 +200,8 @@ test.describe('PageEditor showcase', () => {
     const original = await heading.innerText();
     await caretToEnd(page, '.gotipe-page-title');
     for (let index = 0; index < 5; index++) await page.keyboard.press('Shift+ArrowLeft');
-    await page.getByRole('button', { name: 'Ссылка', exact: true }).click();
-    const address = page.getByRole('textbox', { name: 'Адрес ссылки', exact: true });
+    await page.getByRole('button', { name: 'Link', exact: true }).click();
+    const address = page.getByRole('textbox', { name: 'Link address', exact: true });
     await address.fill('javascript:alert(1)');
     await address.press('Enter');
     await expect(address).toHaveAttribute('aria-invalid', 'true');
@@ -209,8 +209,8 @@ test.describe('PageEditor showcase', () => {
     await address.fill('https://example.com/путь');
     await address.press('Enter');
     await expect(heading.locator('a')).toHaveText(original.slice(-5));
-    await expect(page.getByRole('textbox', { name: 'Страница', exact: true })).toBeFocused();
-    await page.getByRole('button', { name: 'Ссылка', exact: true }).click();
+    await expect(page.getByRole('textbox', { name: 'Page', exact: true })).toBeFocused();
+    await page.getByRole('button', { name: 'Link', exact: true }).click();
     await expect(address).toHaveValue('https://example.com/путь');
     await page.keyboard.press('Escape');
     await page.keyboard.type('X');
@@ -233,7 +233,7 @@ test.describe('PageEditor showcase', () => {
       expect(bounds!.height).toBeLessThanOrEqual(control!.height);
     }
     await page.locator('.gotipe-page').evaluate((node) => node.style.setProperty('--gt-icon-size', '20px'));
-    await expect(menu.getByRole('button', { name: 'Жирный', exact: true }).locator('svg')).toHaveCSS('width', '20px');
+    await expect(menu.getByRole('button', { name: 'Bold', exact: true }).locator('svg')).toHaveCSS('width', '20px');
     await page.locator('.gotipe-page').evaluate((node) => node.style.removeProperty('--gt-icon-size'));
     for (const width of [320, 375, 768, 1024, 1440]) {
       await page.setViewportSize({ width, height: 780 });
@@ -254,8 +254,8 @@ test.describe('PageEditor showcase', () => {
     }).toBe(true);
     await page.locator('.gotipe-page-example-surface').evaluate((node) => { node.scrollTop = 160; });
     await expect.poll(async () => (await menu.boundingBox())?.y).toBeGreaterThanOrEqual(7);
-    await page.getByRole('button', { name: 'Ссылка', exact: true }).click();
-    await expect(page.getByRole('textbox', { name: 'Адрес ссылки', exact: true })).toBeFocused();
+    await page.getByRole('button', { name: 'Link', exact: true }).click();
+    await expect(page.getByRole('textbox', { name: 'Link address', exact: true })).toBeFocused();
     await page.locator('[data-gotipe-page-readonly]').click();
     await expect(menu).toHaveCount(0);
   });

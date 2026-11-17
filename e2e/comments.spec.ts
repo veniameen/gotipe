@@ -17,7 +17,7 @@ async function selectQuote(page: Page, crossBlock = false) {
     return selection.toString();
   }, crossBlock);
 }
-async function comment(page: Page, body = 'Нужны детали 😀', cross = false) {
+async function comment(page: Page, body = 'Needs details 😀', cross = false) {
   const quote = await selectQuote(page, cross);
   await page.getByRole('button', { name: 'Add comment', exact: true }).click();
   await expect(page.getByRole('textbox', { name: 'New comment' })).toBeFocused();
@@ -34,7 +34,7 @@ test.describe('Owned comment discussion', () => {
     await expect(page.getByRole('button', { name: 'Add comment', exact: true })).toBeEnabled();
   });
   test('creates a cross-block quote, replies, resolves, reopens, persists and deletes', async ({ page }) => {
-    const { thread } = await comment(page, 'Проверить оба абзаца 😀', true);
+    const { thread } = await comment(page, 'Check both paragraphs 😀', true);
     await expect(thread.locator('.gotipe-comment-quote')).toContainText('a phrase to start');
     await expect(thread.locator('.gotipe-comment-quote')).toContainText('Reply with details');
     // One discussion for the quote; its highlight marks the text in both paragraphs.
@@ -45,9 +45,9 @@ test.describe('Owned comment discussion', () => {
     await expect(paragraphs.nth(1).locator(highlight)).not.toHaveCount(0);
     await thread.getByRole('button', { name: 'Reply', exact: true }).click();
     await expect(thread.getByRole('textbox', { name: 'Reply', exact: true })).toBeFocused();
-    await thread.getByRole('textbox', { name: 'Reply', exact: true }).fill('Добавлено — 🦀');
+    await thread.getByRole('textbox', { name: 'Reply', exact: true }).fill('Added 🦀');
     await thread.getByRole('button', { name: 'Send reply', exact: true }).click();
-    await expect(thread.locator('.gotipe-comment-replies')).toHaveText(/Добавлено — 🦀/);
+    await expect(thread.locator('.gotipe-comment-replies')).toHaveText(/Added 🦀/);
     await thread.getByRole('button', { name: 'Resolve', exact: true }).click();
     await expect(page.getByText('No open comments', { exact: true })).toBeVisible();
     await page.getByRole('button', { name: 'Resolved (1)', exact: true }).click();
@@ -56,8 +56,8 @@ test.describe('Owned comment discussion', () => {
     await expect(thread).toBeVisible();
     await page.reload();
     const restored = page.locator('.gotipe-comment-thread');
-    await expect(restored).toContainText('Проверить оба абзаца 😀');
-    await expect(restored).toContainText('Добавлено — 🦀');
+    await expect(restored).toContainText('Check both paragraphs 😀');
+    await expect(restored).toContainText('Added 🦀');
     await restored.getByRole('button', { name: 'Scroll to comment', exact: true }).click();
     await expect.poll(() => page.evaluate(() => window.getSelection()?.toString())).toContain('Reply with details');
     await restored.getByRole('button', { name: 'Delete comment', exact: true }).click();
@@ -70,7 +70,7 @@ test.describe('Owned comment discussion', () => {
     const paragraph = page.locator('[data-gotipe-example="comments"] [data-block-type="paragraph"]').first();
     await paragraph.click();
     await page.keyboard.press('Home');
-    await page.keyboard.insertText('Префикс 😀 ');
+    await page.keyboard.insertText('Prefix 😀 ');
     await thread.getByRole('button', { name: 'Scroll to comment', exact: true }).click();
     await expect.poll(() => page.evaluate(() => window.getSelection()?.toString())).toBe('Select a phrase');
     await page.keyboard.press('Backspace');
@@ -86,14 +86,14 @@ test.describe('Owned comment discussion', () => {
     const root = page.locator('[data-gotipe-example="comments"] [data-gotipe-content]');
     await expect(root).toHaveAttribute('contenteditable', 'false');
     const before = await root.textContent();
-    const { thread } = await comment(page, 'Комментарий к защищённому тексту');
+    const { thread } = await comment(page, 'A comment on protected text');
     await thread.getByRole('button', { name: 'Reply', exact: true }).click();
-    await thread.getByRole('textbox', { name: 'Reply', exact: true }).fill('Ответ без изменения документа');
+    await thread.getByRole('textbox', { name: 'Reply', exact: true }).fill('A reply that leaves the document alone');
     await thread.getByRole('button', { name: 'Send reply', exact: true }).click();
     await expect(root).toHaveText(before!);
   });
   test('keeps long discussions inside light and dark responsive containers', async ({ page }) => {
-    await comment(page, 'Длинный комментарий 😀 '.repeat(14));
+    await comment(page, 'A long comment 😀 '.repeat(14));
     for (const theme of ['light', 'dark']) {
       await page.getByRole('banner').getByRole('radio', { name: theme === 'dark' ? 'Dark theme' : 'Light theme', exact: true }).click();
       await expect(page.locator('html')).toHaveAttribute('data-theme', theme);

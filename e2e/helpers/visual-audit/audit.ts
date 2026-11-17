@@ -1,7 +1,7 @@
 /**
  * One configuration of the visual audit: an editor of the playground in a view, a theme and a
  * width. The pointer rests on every block of the audit document; the handle, the table's own
- * handles, the bubble, «/» and the block menu are measured where they stand.
+ * handles, the bubble menu, the slash menu and the block menu are measured where they stand.
  */
 
 import { mkdir, writeFile } from "node:fs/promises";
@@ -49,11 +49,11 @@ const HANDLED: View[] = ["notion", "docs"];
 const SETUP: Record<Mode, { url: string; pick: (page: Page, view: View) => Promise<unknown> }> = {
   page: {
     url: "/?view=page#basic",
-    pick: (page, view) => page.selectOption('select[aria-label="Вид страницы"]', view),
+    pick: (page, view) => page.selectOption('select[aria-label="Page view"]', view),
   },
   block: {
     url: "/?view=block#basic",
-    pick: (page, view) => page.selectOption('select[aria-label="Вид редактора"]', view),
+    pick: (page, view) => page.selectOption('select[aria-label="Block view"]', view),
   },
   views: {
     url: "/#views",
@@ -195,7 +195,7 @@ async function checkHandle(rec: Recorder, view: View, target: AuditTarget, probe
       "handle-covers",
       target.name,
       probe.hits
-        .map((hit) => `${hit.kind}${hit.text ? ` «${hit.text}»` : ""} ${round(hit.box)}`)
+        .map((hit) => `${hit.kind}${hit.text ? ` “${hit.text}”` : ""} ${round(hit.box)}`)
         .join("; "),
       [...marks, ...probe.hits.map((hit) => ({ box: hit.box, color: "#0b6bcb" }))],
     );
@@ -352,8 +352,8 @@ async function checkMenu(
     ]);
 }
 
-const PARAGRAPH: AuditTarget = { name: "paragraph", type: "paragraph", text: "Абзац:" };
-const LAST: AuditTarget = { name: "last", type: "paragraph", text: "Последний абзац" };
+const PARAGRAPH: AuditTarget = { name: "paragraph", type: "paragraph", text: "Paragraph:" };
+const LAST: AuditTarget = { name: "last", type: "paragraph", text: "Last paragraph" };
 const TOOLBAR = ".gotipe-block-toolbar .gotipe-block-toolbar-control > button";
 
 async function checkMenus(rec: Recorder, page: Page, view: View) {
@@ -376,7 +376,7 @@ async function checkMenus(rec: Recorder, page: Page, view: View) {
     await page.mouse.click(1, 1);
   }
   if (HANDLED.includes(view)) {
-    // the handle's tooltips, the block menu and «Turn into» beside it
+    // the handle's tooltips, the block menu and “Turn into” beside it
     if ((await hoverTarget(page, PARAGRAPH, true))?.visible) {
       await page.locator(TOOLBAR).first().hover();
       await checkMenu(rec, page, '[data-gotipe-toolbar-tooltip="add"]', "tooltip", "add");
@@ -396,7 +396,7 @@ async function checkMenus(rec: Recorder, page: Page, view: View) {
       await page.keyboard.press("Escape");
       await page.mouse.move(1, 1);
     }
-    // «+» at the bottom of the screen: a new block below with «/» open
+    // “+” at the bottom of the screen: a new block below with the slash menu open
     if ((await hoverTarget(page, LAST, true, "end"))?.visible) {
       await page.locator(TOOLBAR).first().click();
       await checkMenu(rec, page, "[data-gotipe-slash-menu]", "slash", "add-bottom");
@@ -404,7 +404,7 @@ async function checkMenus(rec: Recorder, page: Page, view: View) {
       await page.mouse.move(1, 1);
     }
   }
-  // «/» typed in a new paragraph at the bottom of the screen
+  // “/” typed in a new paragraph at the bottom of the screen
   const end = await page.evaluate((t) => window.__visualAudit!.textPoint(t, true), LAST);
   if (end) {
     await page.mouse.click(end.x + 3, end.y);

@@ -84,7 +84,7 @@ export function AlignOptions({
 
 /**
  * The alignment list of a fixed toolbar (Atlas frame 27, modern view): the current alignment's
- * glyph and a chevron; the list holds the same rows as «More». Where a block takes no alignment,
+ * glyph and a chevron; the list holds the same rows as “More”. Where a block takes no alignment,
  * or the editor is read-only, the tool stays focusable and its tooltip says why (frame 31).
  */
 export function AlignPicker({ editor }: { editor: GoTipeEditor }) {

@@ -124,7 +124,7 @@ describe("merged table cells in BlockEditor", () => {
     expect(editor.getJSON().blocks[0]).toEqual(FRAME);
     act(() => document.body.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" })));
 
-    // drag from «drafts.mac» to «iOS · 0»: the rectangle covers two rows and two columns
+    // drag from “drafts.mac” to “iOS · 0”: the rectangle covers two rows and two columns
     document.elementFromPoint = () => cellOf("iq");
     act(() => {
       pointer("pointerdown", cellOf("mk"));
@@ -183,7 +183,7 @@ describe("merged table cells in BlockEditor", () => {
       ),
     ).toEqual(["wq", "ws", "mq"]);
     key("ArrowDown");
-    // the rectangle keeps «Ключ сессии» whole and grows past it
+    // the rectangle keeps “Ключ сессии” whole and grows past it
     expect(container.querySelectorAll(".gotipe-table-cell-selected")).toHaveLength(5);
     key("Escape", false);
     expect(container.querySelectorAll(".gotipe-table-cell-selected")).toHaveLength(0);

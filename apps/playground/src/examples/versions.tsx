@@ -4,20 +4,20 @@ import { GoTipeI18nProvider } from "@gotipe/react";
 import { useCallback, useState } from "react";
 import "./versions/versions.css";
 
-const PAGE = `### Порядок выката
+const PAGE = `### Rollout order
 
-Журнал включают по шагам, каждый — после недели наблюдения.
+The journal is enabled in steps, each one after a week of observation.
 
-1. Включить журнал для 5\u00a0% пользователей веб-версии.
-2. Неделю сравнивать долю потерянных правок с контрольной группой.
-3. Открыть всем, начиная с приложения для macOS.
+1. Enable the journal for 5\u00a0% of web users.
+2. For a week, compare the share of lost edits with a control group.
+3. Open it to everyone, starting with the macOS app.
 
-Черновик шифруется ключом сессии с первого дня.
+The draft is encrypted with the session key from day one.
 
-Возражения принимаем до 18 ноября — в обсуждении ADR-0031.
+Objections are welcome until November 18 in the ADR-0031 discussion.
 `;
 
-const ME = { name: "Мария Лебедева", person: 2 as const };
+const ME = { name: "Maria Lebedeva", person: 2 as const };
 
 /** A copy of the page with one block's text replaced, a block removed or a block put after another. */
 function edit(page: Document, change: (blocks: Block[]) => Block[]): Document {
@@ -38,7 +38,7 @@ const at = (daysAgo: number, hours: number, minutes: number) => {
   const date = new Date();
   date.setDate(date.getDate() - daysAgo);
   date.setHours(hours, minutes, 0, 0);
-  // a version saved «today» is never later than now: two hours back at the latest
+  // a version saved “today” is never later than now: two hours back at the latest
   const latest = Date.now() - 2 * 60 * 60 * 1000;
   return new Date(Math.min(date.getTime(), latest)).toISOString();
 };
@@ -56,12 +56,12 @@ function seed(page: Document): HistoryVersion[] {
         return {
           ...block,
           children: [
-            setText(block.children[0]!, "Включить журнал для 10\u00a0% пользователей веб-версии."),
+            setText(block.children[0]!, "Enable the journal for 10\u00a0% of web users."),
             ...block.children.slice(1, -1),
           ],
         };
-      if (text(block).startsWith("Черновик шифруется"))
-        return paragraph("history-encryption", "Шифрование черновика — после выпуска.");
+      if (text(block).startsWith("The draft is encrypted"))
+        return paragraph("history-encryption", "Draft encryption comes after the release.");
       return block;
     }),
   );
@@ -71,7 +71,7 @@ function seed(page: Document): HistoryVersion[] {
   return [
     {
       id: "review",
-      name: "Черновик для ревью",
+      name: "Draft for review",
       createdAt: at(7, 16, 20),
       createdBy: ME.name,
       person: 2,
@@ -82,15 +82,15 @@ function seed(page: Document): HistoryVersion[] {
       name: "",
       auto: true,
       createdAt: at(1, 12, 5),
-      createdBy: "Анна Ковалёва",
+      createdBy: "Anna Kovaleva",
       person: 3,
       snapshot: yesterday,
     },
     {
       id: "release",
-      name: "Выпуск 2.8",
+      name: "Release 2.8",
       createdAt: at(1, 18, 40),
-      createdBy: "Илья Орлов",
+      createdBy: "Ilya Orlov",
       person: 1,
       snapshot: release,
     },
@@ -99,7 +99,7 @@ function seed(page: Document): HistoryVersion[] {
       name: "",
       auto: true,
       createdAt: at(0, 11, 5),
-      createdBy: "Илья Орлов",
+      createdBy: "Ilya Orlov",
       person: 1,
       snapshot: morning,
     },
@@ -108,7 +108,7 @@ function seed(page: Document): HistoryVersion[] {
 
 /**
  * Version history (GoTipe Atlas, frame 30): the library's panel beside a page. The host owns the
- * versions — here a list in memory; it saves a version and keeps the entries of a restore.
+ * versions, here a list in memory; it saves a version and keeps the entries of a restore.
  */
 export function VersionsExample() {
   const [markdown, setMarkdown] = useState(PAGE);
@@ -133,7 +133,7 @@ export function VersionsExample() {
     ]);
 
   return (
-    <GoTipeI18nProvider locale="ru">
+    <GoTipeI18nProvider locale="en">
       <div data-gotipe-example="versions" className="gotipe-versions-example">
         <div className="gotipe-versions-actions">
           <button
@@ -141,9 +141,9 @@ export function VersionsExample() {
             className="gotipe-btn"
             data-gotipe-action="create-version"
             disabled={!editor}
-            onClick={() => editor && save(`Версия ${versions.length + 1}`, editor.getJSON())}
+            onClick={() => editor && save(`Version ${versions.length + 1}`, editor.getJSON())}
           >
-            Сохранить версию
+            Save version
           </button>
           <button
             type="button"
@@ -152,7 +152,7 @@ export function VersionsExample() {
             aria-pressed={open}
             onClick={() => setOpen((value) => !value)}
           >
-            История
+            History
           </button>
         </div>
         <VersionHistory
@@ -166,7 +166,7 @@ export function VersionsExample() {
             if (editor) save(names.restored, editor.getJSON());
           }}
         >
-          <PageEditor markdown={markdown} onChange={setMarkdown} onReady={ready} locale="ru" />
+          <PageEditor markdown={markdown} onChange={setMarkdown} onReady={ready} locale="en" />
         </VersionHistory>
       </div>
     </GoTipeI18nProvider>

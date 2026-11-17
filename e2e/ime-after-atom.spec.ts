@@ -2,7 +2,7 @@ import { type CDPSession, type Page, expect, test } from "@playwright/test";
 
 // D-226: an IME composition right after an inline atom. React keeps the atom's document text in the
 // line at zero size (`HIDDEN` in atoms.tsx): Chrome loses a composition after an atom whose text is
-// out of the flow (with it taken out, the commit doubles: «漢漢字»). A team's emoji is a box in the
+// out of the flow (with it taken out, the commit doubles: “漢漢字”). A team's emoji is a box in the
 // line whose hidden text is a block of no height (theme/atoms.css, D-200). The composition runs
 // through the Chrome DevTools protocol, as an IME does: marked text first, then its commit.
 // D-240: a click past a line that ends with a mention left the caret where it was.
@@ -22,8 +22,8 @@ const EMOJI =
   "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==";
 const ATOMS = {
   mention: {
-    text: "@Анна Ковалёва",
-    mark: { type: "mention", attrs: { id: "u3", label: "Анна Ковалёва", kind: "user", key: "m" } },
+    text: "@Anna Kovaleva",
+    mark: { type: "mention", attrs: { id: "u3", label: "Anna Kovaleva", kind: "user", key: "m" } },
   },
   page: {
     text: "ADR-0031",
@@ -36,7 +36,7 @@ const ATOMS = {
   },
 } as const;
 const BEFORE = "Ёж 😀 ";
-const AFTER = " и всё";
+const AFTER = " and all";
 const COMPOSED = "漢字";
 
 async function open(page: Page, atom: keyof typeof ATOMS, tail: string): Promise<void> {

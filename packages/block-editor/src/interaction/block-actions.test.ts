@@ -10,7 +10,7 @@ const bold: Mark = { type: "bold", attrs: {} };
 const link: Mark = { type: "link", attrs: { href: "https://example.com", target: "_blank" } };
 const mention: Mark = {
   type: "mention",
-  attrs: { id: "u1", label: "Аня", kind: "user", key: "m" },
+  attrs: { id: "u1", label: "Ann", kind: "user", key: "m" },
 };
 const block = (
   id: string,
@@ -203,7 +203,7 @@ describe("Reset formatting in the block menu", () => {
     { text: " and ", marks: [] },
     { text: "link", marks: [link] },
     { text: " for ", marks: [] },
-    { text: "@Аня", marks: [mention] },
+    { text: "@Ann", marks: [mention] },
   ];
 
   it("turns a heading into a paragraph without marks; a mention stays", async () => {
@@ -213,7 +213,7 @@ describe("Reset formatting in the block menu", () => {
     expect(paragraph).toMatchObject({ id: "H", type: "paragraph" });
     expect(paragraph.content).toEqual([
       { text: "Bold and link for ", marks: [] },
-      { text: "@Аня", marks: [mention] },
+      { text: "@Ann", marks: [mention] },
     ]);
     expect(editor.getViewState().selection.anchor).toEqual({ blockId: "H", offset: 22 });
   });
@@ -226,7 +226,7 @@ describe("Reset formatting in the block menu", () => {
     expect(shape(editor).map((line) => line.replace(/#[^ ]+/, ""))).toEqual([
       "bulletList",
       "  listItem one",
-      "paragraph Bold and link for @Аня",
+      "paragraph Bold and link for @Ann",
       "bulletList",
       "  listItem four",
     ]);

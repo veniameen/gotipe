@@ -23,7 +23,7 @@ import { type FixedToolbarTool, UnitTools, toolUnits } from "./units";
 
 export interface FixedToolbarProps {
   editor: GoTipeEditor;
-  /** The toolbar's accessible name. Default: «Formatting» in the editor's language. */
+  /** The toolbar's accessible name. Default: “Formatting” in the editor's language. */
   label?: string;
   /**
    * Tools to leave out. The font and size need `FontFamily` and `FontSize`, ¶ needs
@@ -51,8 +51,8 @@ function Separator() {
 
 /**
  * The fixed toolbar over the document (Atlas frame 31, the view modern): history, the block
- * type, the font and size, marks, alignment and lists, «Insert», ¶. What is on stands on a fill;
- * an unavailable tool says why in its tooltip. What does not fit goes to «More» — a second bar
+ * type, the font and size, marks, alignment and lists, “Insert”, ¶. What is on stands on a fill;
+ * an unavailable tool says why in its tooltip. What does not fit goes to “More” — a second bar
  * under its button, in the bar's order. One Tab stop; the arrows move between the tools.
  */
 export function FixedToolbar({
@@ -81,7 +81,7 @@ export function FixedToolbar({
   const anchor = useCallback(() => {
     const button = more.current?.getBoundingClientRect();
     if (!button) return null;
-    // «More» opens under its button, its right edge on the button's right edge
+    // “More” opens under its button, its right edge on the button's right edge
     const width = panel.current?.offsetWidth ?? 0;
     return {
       top: button.top,

@@ -23,38 +23,38 @@ describe("outlineHeadings", () => {
 
   it("skips the page title: an h1 that is the very first block", () => {
     const blocks = view(
-      heading("title", 1, "Офлайн-черновики"),
-      block("intro", "paragraph", "Правка без сети"),
-      heading("how", 1, "Как это работает"),
-      heading("what", 2, "Что меняется"),
-      heading("order", 3, "Порядок выката"),
-      heading("deep", 4, "Подробности"),
+      heading("title", 1, "Offline drafts"),
+      block("intro", "paragraph", "Editing without a network"),
+      heading("how", 1, "How it works"),
+      heading("what", 2, "What changes"),
+      heading("order", 3, "Rollout order"),
+      heading("deep", 4, "Details"),
       heading("empty", 2, "  "),
     );
     expect(outlineHeadings(blocks)).toEqual([
-      { id: "how", level: 1, text: "Как это работает" },
-      { id: "what", level: 2, text: "Что меняется" },
-      { id: "order", level: 3, text: "Порядок выката" },
+      { id: "how", level: 1, text: "How it works" },
+      { id: "what", level: 2, text: "What changes" },
+      { id: "order", level: 3, text: "Rollout order" },
     ]);
   });
 
   it("keeps a first heading that is not an h1 and an h1 after other blocks", () => {
-    expect(outlineHeadings(view(heading("a", 2, "Начало"), heading("b", 1, "Дальше")))).toEqual([
-      { id: "a", level: 2, text: "Начало" },
-      { id: "b", level: 1, text: "Дальше" },
+    expect(outlineHeadings(view(heading("a", 2, "Start"), heading("b", 1, "Next")))).toEqual([
+      { id: "a", level: 2, text: "Start" },
+      { id: "b", level: 1, text: "Next" },
     ]);
     const spans = {
       ...heading("c", 3, ""),
       content: [
-        { text: "Код ", marks: [] },
-        { text: "и 🙂", marks: [] },
+        { text: "Code ", marks: [] },
+        { text: "and 🙂", marks: [] },
       ],
     };
     expect(
       outlineHeadings(view(block("p", "paragraph", "x"), heading("t", 1, "Title"), spans)),
     ).toEqual([
       { id: "t", level: 1, text: "Title" },
-      { id: "c", level: 3, text: "Код и 🙂" },
+      { id: "c", level: 3, text: "Code and 🙂" },
     ]);
   });
 });

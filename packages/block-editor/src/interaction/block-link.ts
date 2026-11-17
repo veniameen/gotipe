@@ -14,7 +14,7 @@ export function blockLink(blockId: string, page: string = window.location.href):
 }
 
 /**
- * Copies the link to a block («Copy link to block», a heading's anchor). A clipboard the browser
+ * Copies the link to a block (“Copy link to block”, a heading's anchor). A clipboard the browser
  * refuses is the editor's `CLIPBOARD_FAILED` error with the browser's reason, or `unavailable`
  * when it gives none. Says whether the link was copied.
  */

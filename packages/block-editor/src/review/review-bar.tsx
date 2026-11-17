@@ -42,7 +42,7 @@ export function LaneAvatars({
 
 /**
  * The edit's bar (v6 `.wkl-live`): what is happening, how many suggestions
- * wait, extra facts from the host (tokens), «Отклонить все» / «Принять все».
+ * wait, extra facts from the host (tokens), “Reject all” / “Accept all”.
  */
 export function ReviewBar({
   title,
@@ -52,10 +52,10 @@ export function ReviewBar({
   onRejectAll,
   onClose,
 }: {
-  /** «Правит GigaChat 2». */
+  /** “GigaChat 2 is editing”. */
   title?: React.ReactNode;
   states: ProposalState[];
-  /** More facts, e.g. «3,6 тыс. токенов» (shown emphasised, last). */
+  /** More facts, e.g. “3.6K tokens” (shown emphasised, last). */
   extra?: React.ReactNode[];
   onAcceptAll?: () => Promise<unknown> | unknown;
   onRejectAll?: () => Promise<unknown> | unknown;

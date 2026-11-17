@@ -18,7 +18,7 @@ interface Block {
   children: Block[];
 }
 
-const LONG = "длинная строка, которая переносится на узком экране и проверяет первую строку блока";
+const LONG = "a long line that wraps on a narrow screen and checks the first line of the block";
 /** An inline picture, so the audit loads nothing from the network. */
 const IMAGE = `data:image/svg+xml;utf8,${encodeURIComponent(
   '<svg xmlns="http://www.w3.org/2000/svg" width="640" height="360"><rect width="640" height="360" fill="#8aa"/></svg>',
@@ -26,7 +26,7 @@ const IMAGE = `data:image/svg+xml;utf8,${encodeURIComponent(
 /** A paragraph that runs from the right: its handle stands in the right gutter (Atlas frame 28). */
 const RTL = "פסקה מימין לשמאל: הידית עומדת בשוליים הימניים של הטקסט";
 const CODE =
-  'const message = "Привет, мир"; // длинная строка кода не помещается и листается внутри блока';
+  'const message = "Hello, world"; // a long line of code does not fit and scrolls inside the block';
 
 let next = 0;
 const text = (value: string): Span[] => [{ text: value, marks: [] }];
@@ -51,41 +51,41 @@ const cells = (type: "tableHeader" | "tableCell", values: string[]) =>
 export const AUDIT_DOCUMENT = {
   version: 1,
   blocks: [
-    block("heading", text("Заголовок первого уровня"), { level: 1 }),
-    block("paragraph", text(`Абзац: ${LONG}.`)),
-    block("heading", text("Заголовок второго уровня"), { level: 2 }),
-    block("heading", text("Заголовок третьего уровня"), { level: 3 }),
+    block("heading", text("First-level heading"), { level: 1 }),
+    block("paragraph", text(`Paragraph: ${LONG}.`)),
+    block("heading", text("Second-level heading"), { level: 2 }),
+    block("heading", text("Third-level heading"), { level: 3 }),
     block("bulletList", null, {}, [
-      item("Пункт маркированного списка"),
-      item("Пункт со вложенным списком", [
+      item("Bulleted list item"),
+      item("Item with a nested list", [
         block("bulletList", null, {}, [
-          item("Вложенный пункт", [block("bulletList", null, {}, [item("Третий уровень")])]),
+          item("Nested item", [block("bulletList", null, {}, [item("Third level")])]),
         ]),
       ]),
     ]),
     block("orderedList", null, {}, [
-      item("Первый пункт нумерованного списка"),
-      item("Второй пункт со вложенным", [
-        block("orderedList", null, {}, [item("Вложенный нумерованный")]),
+      item("First item of the numbered list"),
+      item("Second item with a nested one", [
+        block("orderedList", null, {}, [item("Nested numbered item")]),
       ]),
     ]),
-    block("orderedList", null, { start: 99 }, [item("Девяносто девятый"), item("Сотый пункт")]),
+    block("orderedList", null, { start: 99 }, [item("Ninety-ninth item"), item("Hundredth item")]),
     block("todoList", null, {}, [
       task("Cut the release note", true),
-      task("Задача со вложенной", false, [
-        block("todoList", null, {}, [task("Вложенная задача", false)]),
+      task("Task with a nested one", false, [
+        block("todoList", null, {}, [task("Nested task", false)]),
       ]),
       task("", false),
     ]),
-    block("blockquote", text(`Цитата: ${LONG}`)),
-    block("callout", text(`Выноска: ${LONG}`), { type: "info", emoji: "" }),
+    block("blockquote", text(`Quote: ${LONG}`)),
+    block("callout", text(`Callout: ${LONG}`), { type: "info", emoji: "" }),
     block("codeBlock", CODE, { language: "typescript" }),
     block("math", "E = mc^2", { display: "block" }),
     block("table", null, {}, [
-      cells("tableHeader", ["Ситуация", "Что видит автор", "Что сохраняется", "Примечание"]),
-      cells("tableCell", ["Блок изменён у вас", "Ничего", "Ваша версия", "Примечание в ячейке"]),
+      cells("tableHeader", ["Situation", "What the author sees", "What is kept", "Note"]),
+      cells("tableCell", ["Block changed on your side", "Nothing", "Your version", "A note in a cell"]),
     ]),
-    block("image", null, { src: IMAGE, alt: "Картинка", caption: "Подпись к картинке" }),
+    block("image", null, { src: IMAGE, alt: "Picture", caption: "A caption for the picture" }),
     block("image", null, { src: "", alt: "" }),
     block("file", null, {
       url: "https://example.com/report.pdf",
@@ -95,77 +95,77 @@ export const AUDIT_DOCUMENT = {
     }),
     block("embed", null, { url: "https://example.com/page", type: "generic" }),
     block("embed", null, { url: "", type: "generic" }),
-    block("toggle", text("Переключатель"), { open: true }, [
-      block("paragraph", text("Текст внутри переключателя")),
-      block("bulletList", null, {}, [item("Пункт внутри переключателя")]),
+    block("toggle", text("Toggle"), { open: true }, [
+      block("paragraph", text("Text inside the toggle")),
+      block("bulletList", null, {}, [item("Item inside the toggle")]),
     ]),
     block("columns", null, { count: 2 }, [
-      block("column", null, {}, [block("paragraph", text(`Левая колонка: ${LONG}`))]),
-      block("column", null, {}, [block("paragraph", text(`Правая колонка: ${LONG}`))]),
+      block("column", null, {}, [block("paragraph", text(`Left column: ${LONG}`))]),
+      block("column", null, {}, [block("paragraph", text(`Right column: ${LONG}`))]),
     ]),
     block("divider", null),
     block("paragraph", text(RTL)),
-    block("paragraph", text("Последний абзац.")),
+    block("paragraph", text("Last paragraph.")),
   ],
 };
 
-/** The same blocks as Markdown for PageEditor; its first «#» is the page title. */
-export const AUDIT_MARKDOWN = `# Документ проверки
+/** The same blocks as Markdown for PageEditor; its first “#” is the page title. */
+export const AUDIT_MARKDOWN = `# Audit document
 
-Абзац: ${LONG}.
+Paragraph: ${LONG}.
 
-# Заголовок первого уровня
+# First-level heading
 
-## Заголовок второго уровня
+## Second-level heading
 
-### Заголовок третьего уровня
+### Third-level heading
 
-- Пункт маркированного списка
-- Пункт со вложенным списком
-  - Вложенный пункт
-    - Третий уровень
+- Bulleted list item
+- Item with a nested list
+  - Nested item
+    - Third level
 
-1. Первый пункт нумерованного списка
-2. Второй пункт со вложенным
-   1. Вложенный нумерованный
+1. First item of the numbered list
+2. Second item with a nested one
+   1. Nested numbered item
 
-Номера в три знака:
+Three-digit numbers:
 
-99. Девяносто девятый
-100. Сотый пункт
+99. Ninety-ninth item
+100. Hundredth item
 
 - [x] Cut the release note
-- [ ] Задача со вложенной
-  - [ ] Вложенная задача
+- [ ] Task with a nested one
+  - [ ] Nested task
 
-> Цитата: ${LONG}
+> Quote: ${LONG}
 
 > [!NOTE]
-> Выноска: ${LONG}
+> Callout: ${LONG}
 
 \`\`\`typescript
 ${CODE}
 \`\`\`
 
-| Ситуация | Что видит автор | Что сохраняется | Примечание |
+| Situation | What the author sees | What is kept | Note |
 | --- | --- | --- | --- |
-| Блок изменён у вас | Ничего | Ваша версия | Примечание в ячейке |
+| Block changed on your side | Nothing | Your version | A note in a cell |
 
-![Картинка](${IMAGE} "Подпись к картинке")
+![Picture](${IMAGE} "A caption for the picture")
 
 [report.pdf](attachments/report.pdf)
 
 <details>
-<summary>Сырой Markdown</summary>
+<summary>Raw Markdown</summary>
 
-Остаётся как есть.
+Stays as it is.
 </details>
 
 ---
 
 ${RTL}
 
-Последний абзац.
+Last paragraph.
 `;
 
 /** A block the pointer rests on, and what its handle must act on and line up with. */
@@ -192,66 +192,66 @@ export interface AuditTarget {
 const BLOCK_MODES: Mode[] = ["block", "views"];
 
 export const AUDIT_TARGETS: AuditTarget[] = [
-  { name: "title", type: "heading", text: "Документ проверки", modes: ["page"] },
-  { name: "heading-1", type: "heading", text: "Заголовок первого уровня" },
-  { name: "paragraph", type: "paragraph", text: "Абзац:" },
-  { name: "heading-2", type: "heading", text: "Заголовок второго уровня" },
-  { name: "heading-3", type: "heading", text: "Заголовок третьего уровня" },
-  { name: "bullet", type: "listItem", text: "Пункт маркированного списка" },
-  { name: "bullet-nested", type: "listItem", text: "Вложенный пункт" },
-  { name: "bullet-deep", type: "listItem", text: "Третий уровень" },
-  { name: "ordered", type: "listItem", text: "Первый пункт нумерованного" },
-  { name: "ordered-nested", type: "listItem", text: "Вложенный нумерованный" },
-  { name: "ordered-wide", type: "listItem", text: "Сотый пункт" },
+  { name: "title", type: "heading", text: "Audit document", modes: ["page"] },
+  { name: "heading-1", type: "heading", text: "First-level heading" },
+  { name: "paragraph", type: "paragraph", text: "Paragraph:" },
+  { name: "heading-2", type: "heading", text: "Second-level heading" },
+  { name: "heading-3", type: "heading", text: "Third-level heading" },
+  { name: "bullet", type: "listItem", text: "Bulleted list item" },
+  { name: "bullet-nested", type: "listItem", text: "Nested item" },
+  { name: "bullet-deep", type: "listItem", text: "Third level" },
+  { name: "ordered", type: "listItem", text: "First item of the numbered" },
+  { name: "ordered-nested", type: "listItem", text: "Nested numbered item" },
+  { name: "ordered-wide", type: "listItem", text: "Hundredth item" },
   { name: "todo", type: "todoItem", text: "Cut the release note" },
-  { name: "todo-parent", type: "todoItem", text: "Задача со вложенной" },
-  { name: "todo-nested", type: "todoItem", text: "Вложенная задача" },
+  { name: "todo-parent", type: "todoItem", text: "Task with a nested one" },
+  { name: "todo-nested", type: "todoItem", text: "Nested task" },
   { name: "todo-empty", type: "todoItem", empty: true, modes: BLOCK_MODES },
-  { name: "quote", type: "blockquote", text: "Цитата:" },
-  { name: "callout", type: "callout", text: "Выноска:" },
+  { name: "quote", type: "blockquote", text: "Quote:" },
+  { name: "callout", type: "callout", text: "Callout:" },
   { name: "code", type: "codeBlock" },
   { name: "math", type: "math", modes: BLOCK_MODES },
   // the pointer at the formula's left: its TeX is centred, its handle is reached from its edge
   { name: "math-edge", type: "math", at: "edge", modes: BLOCK_MODES },
-  { name: "table-header", type: "tableHeader", text: "Ситуация", unit: "table", line: "table" },
-  { name: "table-cell", type: "tableCell", text: "Блок изменён", unit: "table", line: "table" },
+  { name: "table-header", type: "tableHeader", text: "Situation", unit: "table", line: "table" },
+  { name: "table-cell", type: "tableCell", text: "Block changed", unit: "table", line: "table" },
   { name: "image", type: "image" },
   { name: "image-empty", type: "image", index: 1, modes: BLOCK_MODES },
   { name: "file", type: "file" },
   { name: "embed", type: "embed", modes: BLOCK_MODES },
   { name: "embed-empty", type: "embed", index: 1, modes: BLOCK_MODES },
-  { name: "toggle", type: "toggle", text: "Переключатель", modes: BLOCK_MODES },
+  { name: "toggle", type: "toggle", text: "Toggle", modes: BLOCK_MODES },
   {
     name: "toggle-child",
     type: "paragraph",
-    text: "Текст внутри переключателя",
+    text: "Text inside the toggle",
     unit: "toggle",
     modes: BLOCK_MODES,
   },
   {
     name: "toggle-list",
     type: "listItem",
-    text: "Пункт внутри переключателя",
+    text: "Item inside the toggle",
     modes: BLOCK_MODES,
   },
   {
     name: "column-left",
     type: "paragraph",
-    text: "Левая колонка",
+    text: "Left column",
     unit: "columns",
     modes: BLOCK_MODES,
   },
   {
     name: "column-right",
     type: "paragraph",
-    text: "Правая колонка",
+    text: "Right column",
     unit: "columns",
     modes: BLOCK_MODES,
   },
   { name: "raw", type: "markdownRaw", modes: ["page"] },
   { name: "divider", type: "divider" },
   { name: "rtl", type: "paragraph", text: "פסקה" },
-  { name: "last", type: "paragraph", text: "Последний абзац" },
+  { name: "last", type: "paragraph", text: "Last paragraph" },
 ];
 
 export const targetsFor = (mode: Mode) =>

@@ -17,7 +17,7 @@ export interface StatusLineOptions {
   limit?: number | null;
   /** Share of the limit from which the count takes the warning tone. Default 0.9. */
   warning?: number;
-  /** Why the limit exists, shown over the count past it, e.g. «Release notes — up to 8 000». */
+  /** Why the limit exists, shown over the count past it, e.g. “Release notes — up to 8 000”. */
   reason?: string;
 }
 

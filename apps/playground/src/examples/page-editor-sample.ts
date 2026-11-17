@@ -5,45 +5,45 @@ export const PAGE_MARKDOWN = `---
 title: editor-example
 ---
 
-# Документ редактора
+# Editor document
 
-> **Инструкции для агента:** Сохраняйте структуру и форматирование документа.
+> **Agent instructions:** Keep the document's structure and formatting.
 
-## Список
+## List
 
-- [x] Проверить текст
-- [ ] Проверить форматирование
-- [ ] Проверить таблицу
+- [x] Check the text
+- [ ] Check the formatting
+- [ ] Check the table
 
-## Таблица
+## Table
 
-| Элемент | Количество | Готово |
+| Item | Count | Done |
 | :--- | ---: | :---: |
-| \`alpha\` |  | нет |
-| \`beta\` |  | нет |
-| \`gamma\` |  | нет |
-| \`delta\` |  | да |
+| \`alpha\` |  | no |
+| \`beta\` |  | no |
+| \`gamma\` |  | no |
+| \`delta\` |  | yes |
 
 > [!NOTE]
-> Текст с \`кодом\` сохраняет форматирование.
+> Text with \`code\` keeps its formatting.
 
 \`\`\`typescript
-const message = "Привет, мир";
+const message = "Hello, world";
 \`\`\`
 
 <details>
-<summary>Дополнительная информация</summary>
+<summary>More information</summary>
 
-Исходный Markdown остаётся доступным.
+The source Markdown stays available.
 </details>
 
-Пример сноски[^note].
+A footnote example[^note].
 
-[^note]: Текст сноски сохраняется без изменений.
+[^note]: The footnote text is kept unchanged.
 `;
 
 export const PAGE_LANES: ReviewLane[] = [
-  { id: "user", name: "Вы", kind: "user", color: "var(--gt-track-4)" },
+  { id: "user", name: "You", kind: "user", color: "var(--gt-track-4)" },
   { id: "reviewer", name: "Reviewer", kind: "agent", color: "var(--gt-track-1)" },
   { id: "validator", name: "Validator", kind: "tool", color: "var(--gt-track-3)" },
 ];
@@ -59,37 +59,37 @@ export function demoReview(generation: number): {
       {
         id: addId,
         laneId: "reviewer",
-        reason: "Пример добавления строк.",
+        reason: "An example of added lines.",
         edits: [
           {
-            before: "- [ ] Проверить таблицу",
+            before: "- [ ] Check the table",
             quote: "",
-            after: "\n\n## Таблица",
-            text: "\n- [ ] Проверить ссылки\n- [ ] Проверить экспорт",
+            after: "\n\n## Table",
+            text: "\n- [ ] Check the links\n- [ ] Check the export",
           },
         ],
       },
       {
         id: `counts-${generation}`,
         laneId: "validator",
-        reason: "Пример правок в таблице.",
+        reason: "An example of table edits.",
         edits: [
-          { before: "| `alpha` | ", quote: "", after: " | нет |\n| `beta`", text: "3" },
-          { before: "| `beta` | ", quote: "", after: " | нет |\n| `gamma`", text: "7" },
-          { before: "| `gamma` | ", quote: "", after: " | нет |\n| `delta`", text: "12" },
-          { before: "| `delta` | ", quote: "", after: " | да |", text: "1" },
+          { before: "| `alpha` | ", quote: "", after: " | no |\n| `beta`", text: "3" },
+          { before: "| `beta` | ", quote: "", after: " | no |\n| `gamma`", text: "7" },
+          { before: "| `gamma` | ", quote: "", after: " | no |\n| `delta`", text: "12" },
+          { before: "| `delta` | ", quote: "", after: " | yes |", text: "1" },
         ],
       },
       {
         id: `format-${generation}`,
         laneId: "reviewer",
-        reason: "Пример замены текста.",
+        reason: "An example of replaced text.",
         edits: [
           {
             before: "- [ ] ",
-            quote: "Проверить форматирование",
+            quote: "Check the formatting",
             after: "\n",
-            text: "Проверить форматирование и ссылки",
+            text: "Check the formatting and links",
           },
         ],
       },
@@ -99,8 +99,8 @@ export function demoReview(generation: number): {
         id: `comment-${generation}`,
         laneId: "reviewer",
         question: true,
-        anchor: { before: "- [ ] ", quote: "Проверить таблицу", after: "\n" },
-        text: "Убедитесь, что все ячейки заполнены.",
+        anchor: { before: "- [ ] ", quote: "Check the table", after: "\n" },
+        text: "Make sure every cell is filled in.",
       },
     ],
     cursors: [{ laneId: "reviewer", label: "Demo suggestion", proposalId: addId }],
