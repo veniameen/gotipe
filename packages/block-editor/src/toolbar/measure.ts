@@ -6,14 +6,14 @@ const px = (value: string, fallback: number) => {
   return Number.isFinite(number) ? number : fallback;
 };
 
-/** Units are measured where they stand, in the bar or in «More»: the tools look the same. */
+/** Units are measured where they stand, in the bar or in “More”: the tools look the same. */
 export const UNIT_ATTRIBUTE = "data-gotipe-unit";
 
 /**
- * Plans what leaves the bar for «More» from the bar's own width and its units' widths, before
+ * Plans what leaves the bar for “More” from the bar's own width and its units' widths, before
  * paint, and again whenever the bar or a unit changes size (a longer font name, a narrower
  * container). Geometry comes from the theme: the gap, `--gt-hairline`, `--gt-tool-sep-gap` and
- * `--gt-tool` («More» is a square tool).
+ * `--gt-tool` (“More” is a square tool).
  */
 export function useOverflowPlan(
   units: readonly ToolUnit[],
@@ -49,7 +49,7 @@ export function useOverflowPlan(
         : NO_OVERFLOW;
     setPlan((previous) => (samePlan(previous, next) ? previous : next));
   }, [root, track, panel]);
-  // Each render may move units between the bar and «More»: measure and observe them again.
+  // Each render may move units between the bar and “More”: measure and observe them again.
   useLayoutEffect(() => {
     measure();
     const owner = root.current;

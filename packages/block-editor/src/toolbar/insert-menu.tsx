@@ -9,10 +9,10 @@ import { localizeCommand } from "../components/slash/names";
 import { useBlockEditorI18n } from "../i18n/strings";
 import { PageIcon } from "../page/icons";
 
-/** Blocks «Insert» lists first, in this order (Atlas frame 31); other insert commands follow. */
+/** Blocks “Insert” lists first, in this order (Atlas frame 31); other insert commands follow. */
 const BLOCKS = ["quote", "alert-circle", "chevron-right", "code", "table", "minus"];
 const MEDIA = ["image", "paperclip"];
-/** Commands of «/» that turn the empty line into their block; «Insert» adds the block instead. */
+/** Commands of “/” that turn the empty line into their block; “Insert” adds the block instead. */
 const TURNS_INTO: Record<string, string> = { quote: "blockquote", code: "codeBlock" };
 const GROUP_NAMES: Record<InsertGroup["id"], TranslationKey> = {
   insert: "slashMenu.group.insert",
@@ -31,7 +31,7 @@ const rank = (order: string[], cmd: SlashCommandDef) => {
 };
 
 /**
- * What «Insert» offers: the blocks and media of the editor's «/» commands. Text, headings and
+ * What “Insert” offers: the blocks and media of the editor's “/” commands. Text, headings and
  * lists have their own tools; a host's insert and upload commands follow the built-in ones.
  */
 export function insertGroups(editor: GoTipeEditor, commands: SlashCommandDef[]): InsertGroup[] {
@@ -57,7 +57,7 @@ function flatten(blocks: BlockView[]): BlockView[] {
 
 /**
  * Adds the command's block after the caret's block, as one undo step; on an empty line the
- * command takes the line, as from «/». The caret goes into the new block's text.
+ * command takes the line, as from “/”. The caret goes into the new block's text.
  */
 export function runInsert(editor: GoTipeEditor, cmd: SlashCommandDef): void {
   const before = new Set(flatten(editor.getViewState().blocks).map((block) => block.id));
@@ -77,7 +77,7 @@ export function runInsert(editor: GoTipeEditor, cmd: SlashCommandDef): void {
   editor.focus();
 }
 
-/** «Insert» of the fixed toolbar: a list of the blocks and media «/» offers (Atlas frame 31). */
+/** “Insert” of the fixed toolbar: a list of the blocks and media “/” offers (Atlas frame 31). */
 export function InsertMenu({ editor }: { editor: GoTipeEditor }) {
   const i18n = useBlockEditorI18n();
   const menu = useFormattingMenu(editor);

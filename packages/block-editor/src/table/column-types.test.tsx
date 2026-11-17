@@ -33,7 +33,7 @@ const cell = (id: string, text: string, header = false): Block => ({
   content: text ? [{ text, marks: [] }] : [],
   children: [],
 });
-/** A task column and a done column with these values under the header «Готово». */
+/** A task column and a done column with these values under the header “Done”. */
 const table = (...done: string[]): Block => ({
   id: "t",
   type: "table",
@@ -45,7 +45,7 @@ const table = (...done: string[]): Block => ({
       type: "tableRow",
       attrs: {},
       content: null,
-      children: [cell("h0", "Задача", true), cell("h1", "Готово", true)],
+      children: [cell("h0", "Task", true), cell("h1", "Done", true)],
     },
     ...done.map((value, index) => ({
       id: `r${index + 1}`,
@@ -75,7 +75,7 @@ const values = (editor: GoTipeEditor) =>
 const typeOf = (editor: GoTipeEditor, yes?: string, no?: string) =>
   columnTypeOf(findTable(editor, "t")!, 1, yes, no);
 
-describe("the «Да / нет» column stores ✓ and —", () => {
+describe("the “Yes / no” column stores ✓ and —", () => {
   it("writes the same marks for a Russian and an English interface, in one undo step", async () => {
     for (const words of [
       { yes: "да", no: "нет" },
@@ -90,19 +90,19 @@ describe("the «Да / нет» column stores ✓ and —", () => {
     }
   });
 
-  it("reads the words earlier versions wrote — «да», «yes» and the host's — as ✓ and —", async () => {
+  it("reads the words earlier versions wrote (“да”, “yes” and the host's) as ✓ and —", async () => {
     const editor = await editorWith("да", "Нет", "Yes", "NO", "ja", "nein");
     expect(typeOf(editor)).toBe("text");
     expect(typeOf(editor, "ja", "nein")).toBe("boolean");
     setColumnType(editor, "t", 1, "boolean");
-    // Without the host's words, its «ja» and «nein» are other values and stay.
+    // Without the host's words, its “ja” and “nein” are other values and stay.
     expect(values(editor)).toEqual(["✓", "—", "✓", "—", "ja", "nein"]);
     setColumnType(editor, "t", 1, "boolean", { yes: "ja", no: "nein" });
     expect(values(editor)).toEqual(["✓", "—", "✓", "—", "✓", "—"]);
     expect(typeOf(editor)).toBe("boolean");
   });
 
-  it("takes the host's words before the built-in ones: its «no» may be «x»", async () => {
+  it("takes the host's words before the built-in ones: its “no” may be “x”", async () => {
     const editor = await editorWith("x", "ja");
     expect(typeOf(editor, "ja", "x")).toBe("boolean");
     setColumnType(editor, "t", 1, "boolean", { yes: "ja", no: "x" });

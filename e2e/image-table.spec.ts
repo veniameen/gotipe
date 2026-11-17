@@ -65,9 +65,9 @@ test.describe('Image interactions', () => {
 
   test('description, crop, preview and undo are real operations', async ({ page }) => {
     await imageAction(page, 'Edit alternative text');
-    await page.getByRole('dialog').getByLabel('Alternative text').fill('Описание 😀');
+    await page.getByRole('dialog').getByLabel('Alternative text').fill('A description 😀');
     await page.getByRole('dialog').getByRole('button', { name: 'Save', exact: true }).click();
-    await expect(page.locator('[data-block-id="picture"] img')).toHaveAttribute('alt', 'Описание 😀');
+    await expect(page.locator('[data-block-id="picture"] img')).toHaveAttribute('alt', 'A description 😀');
     await imageAction(page, 'Crop image');
     await page.getByRole('dialog').getByLabel('Width (%)', { exact: true }).fill('50');
     await page.getByRole('dialog').getByRole('button', { name: 'Save', exact: true }).click();

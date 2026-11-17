@@ -49,7 +49,7 @@ test.describe('View docs: handle and heading anchors (Atlas frame 2)', () => {
     page,
   }) => {
     await openDocs(page, 1024);
-    const heading = headingOf(page, 'Что меняется');
+    const heading = headingOf(page, 'What changes');
     const anchor = anchorOf(heading);
     await heading.scrollIntoViewIfNeeded();
     await expect(anchor).toBeHidden();
@@ -80,7 +80,7 @@ test.describe('View docs: handle and heading anchors (Atlas frame 2)', () => {
     page,
   }) => {
     await openDocs(page, 1024);
-    const heading = headingOf(page, 'Конфликты');
+    const heading = headingOf(page, 'Conflicts');
     const id = await heading.getAttribute('data-block-id');
     // the caret stays where it was
     await page.locator('.gotipe-content > p').first().click();
@@ -97,9 +97,9 @@ test.describe('View docs: handle and heading anchors (Atlas frame 2)', () => {
     await anchor.hover();
     const tip = anchor.locator('.gotipe-tip');
     await expect(tip).toBeVisible();
-    await expect(tip).toHaveText('Скопировать ссылку');
+    await expect(tip).toHaveText('Copy link');
     await anchor.click();
-    await expect(tip).toHaveText('Ссылка скопирована');
+    await expect(tip).toHaveText('Link copied');
     const [link] = await copied(page);
     expect(new URL(link!).searchParams.get('gotipe-block')).toBe(id);
     expect(new URL(link!).hash).toBe('#views');
@@ -108,12 +108,12 @@ test.describe('View docs: handle and heading anchors (Atlas frame 2)', () => {
 
   test('the copied link opens the page at its heading', async ({ page }) => {
     await openDocs(page, 1024);
-    const heading = headingOf(page, 'Задачи');
+    const heading = headingOf(page, 'Tasks');
     await heading.hover();
     await anchorOf(heading).click();
     const [link] = await copied(page);
     await page.goto(link!);
-    await expect(headingOf(page, 'Задачи')).toBeInViewport();
+    await expect(headingOf(page, 'Tasks')).toBeInViewport();
   });
 
   test('typing and composing after the last word land once, before the anchor', async ({
@@ -121,13 +121,13 @@ test.describe('View docs: handle and heading anchors (Atlas frame 2)', () => {
     browserName,
   }) => {
     await openDocs(page, 1024);
-    const heading = headingOf(page, 'Порядок выката');
+    const heading = headingOf(page, 'Rollout order');
     await heading.scrollIntoViewIfNeeded();
     // a click in the room the heading keeps for the anchor puts the caret after the last word
     const boxes = await textBoxes(heading);
     const last = boxes[boxes.length - 1]!;
     await page.mouse.click(last[2]! + 30, (last[1]! + last[3]!) / 2);
-    await page.keyboard.type(' первым');
+    await page.keyboard.type(' first');
     if (browserName === 'chromium') {
       const cdp = await page.context().newCDPSession(page);
       try {
@@ -152,7 +152,7 @@ test.describe('View docs: handle and heading anchors (Atlas frame 2)', () => {
         const block = editor.getViewState().blocks.find((item) => item.id === blockId);
         return block?.content.map((span) => span.text).join('');
       }, id);
-    await expect.poll(model).toBe('Порядок выката первым漢');
+    await expect.poll(model).toBe('Rollout order first漢');
     // the page shows the same text once, and the anchor still follows it
     const own = await heading.evaluate((element) => {
       const anchor = element.querySelector('.gotipe-heading-anchor')!.parentElement!;
@@ -160,13 +160,13 @@ test.describe('View docs: handle and heading anchors (Atlas frame 2)', () => {
       for (const node of element.childNodes) if (node !== anchor) text += node.textContent;
       return { text, anchorLast: element.lastChild === anchor };
     });
-    expect(own).toEqual({ text: 'Порядок выката первым漢', anchorLast: true });
+    expect(own).toEqual({ text: 'Rollout order first漢', anchorLast: true });
   });
 
   test('the anchor never takes Tab and stays out of the heading\'s name', async ({ page }) => {
     await openDocs(page, 1024);
-    await expect(page.getByRole('heading', { name: 'Порядок выката', exact: true })).toHaveCount(1);
-    const anchor = anchorOf(headingOf(page, 'Порядок выката'));
+    await expect(page.getByRole('heading', { name: 'Rollout order', exact: true })).toHaveCount(1);
+    const anchor = anchorOf(headingOf(page, 'Rollout order'));
     await expect(anchor).toHaveAttribute('tabindex', '-1');
     await expect(anchor.locator('..')).toHaveAttribute('aria-hidden', 'true');
   });
@@ -179,7 +179,7 @@ test.describe('View docs: handle and heading anchors (Atlas frame 2)', () => {
     const content = page.locator('.gotipe-block-editor[data-gt-view="docs"] .gotipe-content');
     expect(await content.evaluate((element) => getComputedStyle(element).paddingLeft)).toBe('56px');
 
-    const heading = headingOf(page, 'Что меняется');
+    const heading = headingOf(page, 'What changes');
     const anchor = anchorOf(heading);
     await heading.scrollIntoViewIfNeeded();
     await expect(anchor).toBeHidden();
@@ -201,7 +201,7 @@ test.describe('View docs: handle and heading anchors (Atlas frame 2)', () => {
     page,
   }) => {
     await openDocs(page, 1024, 'read only');
-    const heading = headingOf(page, 'Как это работает');
+    const heading = headingOf(page, 'How it works');
     await heading.hover();
     await expect(page.locator('.gotipe-block-toolbar-wrapper')).toHaveCount(0);
     const anchor = anchorOf(heading);

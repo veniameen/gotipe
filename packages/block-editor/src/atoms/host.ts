@@ -1,7 +1,7 @@
 import type { GoTipeEditor } from "@gotipe/core";
 import type { AtomInfo, AtomTarget } from "@gotipe/core/extensions";
 
-/** A person or a page the «@» list offers (GoTipe Atlas, frame 22). */
+/** A person or a page the “@” list offers (GoTipe Atlas, frame 22). */
 export interface MentionItem {
   /** The host's id of the person or page. */
   id: string;
@@ -11,9 +11,9 @@ export interface MentionItem {
   kind?: "user" | "page";
 }
 
-/** People and pages for the «@» list: the host searches its own directory. */
+/** People and pages for the “@” list: the host searches its own directory. */
 export interface MentionOptions {
-  /** Items for a query (empty right after «@»). A newer query aborts `signal`. */
+  /** Items for a query (empty right after “@”). A newer query aborts `signal`. */
   items(query: string, context: { signal: AbortSignal }): MentionItem[] | Promise<MentionItem[]>;
 }
 
@@ -24,7 +24,7 @@ export interface CustomEmojiItem {
   src: string;
 }
 
-/** Emoji of the «:» list and the picker (frame 23). */
+/** Emoji of the “:” list and the picker (frame 23). */
 export interface EmojiOptions {
   /** The team's emoji: listed after the Unicode ones and in their own tab. */
   custom?: CustomEmojiItem[];

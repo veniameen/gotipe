@@ -81,7 +81,7 @@ const type = (input: HTMLInputElement, value: string) =>
 
 describe("Mod+K opens the link field (openLinkDialog)", () => {
   it("over selected text: the field takes the keys and links the selection", async () => {
-    const editor = await editorWith("Правка без сети");
+    const editor = await editorWith("Drafts are kept");
     show(
       <>
         <EditorContent editor={editor} />
@@ -100,14 +100,14 @@ describe("Mod+K opens the link field (openLinkDialog)", () => {
       text: string;
       marks: { type: string; attrs?: { href?: string } }[];
     }[];
-    expect(linked?.text).toBe("Правка");
+    expect(linked?.text).toBe("Drafts");
     expect(linked?.marks[0]?.attrs?.href).toBe("https://example.com/путь");
     expect(rest?.marks).toEqual([]);
     expect(fields()).toHaveLength(0);
   });
 
   it("starts from the address of the link under the selection", async () => {
-    const editor = await editorWith("Правка без сети");
+    const editor = await editorWith("Drafts are kept");
     show(
       <>
         <EditorContent editor={editor} />
@@ -123,7 +123,7 @@ describe("Mod+K opens the link field (openLinkDialog)", () => {
   });
 
   it("shows the link under the caret in the fixed toolbar as it moves (D-129)", async () => {
-    const editor = await editorWith("Правка без сети");
+    const editor = await editorWith("Drafts are kept");
     show(<FixedToolbar editor={editor} />);
     const tool = () => container.querySelector('[data-gotipe-fixed-toolbar] [data-mark="link"]')!;
     select(editor, 7, 10);
@@ -139,7 +139,7 @@ describe("Mod+K opens the link field (openLinkDialog)", () => {
   });
 
   it("opens nothing at a caret alone: Atlas draws the field only over selected text", async () => {
-    const editor = await editorWith("Правка без сети");
+    const editor = await editorWith("Drafts are kept");
     show(
       <>
         <EditorContent editor={editor} />
@@ -152,7 +152,7 @@ describe("Mod+K opens the link field (openLinkDialog)", () => {
   });
 
   it("opens one field: the bubble's before the fixed toolbar's, the toolbar's without one", async () => {
-    const editor = await editorWith("Правка без сети");
+    const editor = await editorWith("Drafts are kept");
     const page = (toolbar: string, bubble: boolean) => (
       <>
         <EditorContent editor={editor} />
@@ -188,7 +188,7 @@ describe("Mod+K opens the link field (openLinkDialog)", () => {
   });
 
   it("passes over a tool out of reach or unable to act", async () => {
-    const editor = await editorWith("Правка без сети");
+    const editor = await editorWith("Drafts are kept");
     show(
       <>
         <EditorContent editor={editor} />
@@ -198,7 +198,7 @@ describe("Mod+K opens the link field (openLinkDialog)", () => {
         <LinkEditor editor={editor} />
       </>,
     );
-    // the toolbar's closed «More» is inert: its tool passes, the next one opens
+    // the toolbar's closed “More” is inert: its tool passes, the next one opens
     const more = container.querySelector<HTMLElement>(".closed-more")!;
     more.inert = true;
     select(editor, 0, 6);
@@ -221,7 +221,7 @@ describe("Mod+K opens the link field (openLinkDialog)", () => {
   });
 
   it("listens once per editor and stops when the last tool goes", async () => {
-    const editor = await editorWith("Правка");
+    const editor = await editorWith("Drafts");
     const on = editor.on.bind(editor);
     const stops: ReturnType<typeof vi.fn>[] = [];
     vi.spyOn(editor, "on").mockImplementation(((event, handler) => {

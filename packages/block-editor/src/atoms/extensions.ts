@@ -23,14 +23,14 @@ import {
   requestAtomUI,
 } from "./host";
 
-/** A row of the «:» list: a Unicode emoji with its shown name, or a team's own emoji. */
+/** A row of the “:” list: a Unicode emoji with its shown name, or a team's own emoji. */
 export type EmojiChoice =
   | { kind: "unicode"; item: EmojiItem; label: string }
   | { kind: "custom"; item: CustomEmojiItem; label: string };
 
 const LIMIT = 8;
 
-/** Unicode and custom emoji for a query of the «:» list. */
+/** Unicode and custom emoji for a query of the “:” list. */
 export function searchEmojiChoices(editor: GoTipeEditor, query: string): EmojiChoice[] {
   const { locale, emoji } = atomHost(editor);
   const names = emojiNames(locale);
@@ -39,7 +39,7 @@ export function searchEmojiChoices(editor: GoTipeEditor, query: string): EmojiCh
     item,
     label: names?.[item.name] ?? item.name.replace(/_/g, " "),
   });
-  // Right after «:» the list offers the recent emoji, then the first faces.
+  // Right after “:” the list offers the recent emoji, then the first faces.
   if (!query) {
     const custom = new Map((emoji?.custom ?? []).map((item) => [`:${item.name}:`, item]));
     const recent = recentEmoji(editor).flatMap((value): EmojiChoice[] => {
@@ -86,7 +86,7 @@ export function insertEmoji(
   return done;
 }
 
-/** The «@» list: people and pages from the host's `mentions.items`. */
+/** The “@” list: people and pages from the host's `mentions.items`. */
 export const MentionSuggestion = defineSuggestion<MentionItem>({
   name: "mentionSuggestion",
   char: "@",
@@ -97,7 +97,7 @@ export const MentionSuggestion = defineSuggestion<MentionItem>({
   },
 });
 
-/** The «:» list: Unicode emoji by name (localized names for `ru`) and the team's own. */
+/** The “:” list: Unicode emoji by name (localized names for `ru`) and the team's own. */
 export const EmojiSuggestion = defineSuggestion<EmojiChoice>({
   name: "emojiSuggestion",
   char: ":",
@@ -122,7 +122,7 @@ export const EmojiSuggestion = defineSuggestion<EmojiChoice>({
  */
 const DOLLAR = /(^|[^\p{L}\p{N}_$\\])\$([^$\s\d](?:[^$]*[^$\s\\])?)\$$/u;
 
-/** «/» → Emoji opens the emoji picker at the caret (frame 23). */
+/** “/” → Emoji opens the emoji picker at the caret (frame 23). */
 export const EmojiCommand = defineExtension({
   name: "emojiCommand",
   slashCommands: [
@@ -132,7 +132,7 @@ export const EmojiCommand = defineExtension({
       icon: "smile",
       group: "insert",
       execute(editor) {
-        // After the «/» menu has removed its query and returned the caret and the focus.
+        // After the slash menu has removed its query and returned the caret and the focus.
         afterMenu(editor, () => {
           const at = caretTarget(editor);
           if (at) requestAtomUI(editor, { type: "emojiPicker", at });
@@ -143,7 +143,7 @@ export const EmojiCommand = defineExtension({
 });
 
 /**
- * Formulas in a line (frame 24): «/» → Inline formula opens the formula popover; typing `$…$`
+ * Formulas in a line (frame 24): “/” → Inline formula opens the formula popover; typing `$…$`
  * makes a formula and opens it for a check.
  */
 export const InlineMathCommands = defineExtension({
@@ -214,7 +214,7 @@ function blockText(editor: GoTipeEditor, blockId: string): string {
 
 /**
  * The extensions behind the block editor's mentions, emoji and formulas: the four atom marks,
- * the «@» and «:» lists and the commands. Add them when creating the editor; the data comes
+ * the “@” and “:” lists and the commands. Add them when creating the editor; the data comes
  * from `BlockEditor`'s `mentions` and `emoji` props.
  */
 export function atomExtensions() {

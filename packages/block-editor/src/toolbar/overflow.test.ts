@@ -33,7 +33,7 @@ const METRICS = { gap: 2, separator: 9, more: 28 };
 const all = new Set(UNITS.map((unit) => unit.id));
 const ids = (rows: ToolUnit[][][]) => rows.map((row) => row.map((group) => group.map((u) => u.id)));
 
-describe("the fixed toolbar's «More»", () => {
+describe("the fixed toolbar's “More”", () => {
   it("measures the bar: tools, a separator between groups, the gaps", () => {
     // 795 of tools, five separators, sixteen items (the free space before ¶ included)
     expect(barWidth(UNITS, WIDTHS, all, METRICS)).toBe(795 + 5 * 9 + 15 * 2);
@@ -47,7 +47,7 @@ describe("the fixed toolbar's «More»", () => {
     expect(hiddenUnits(UNITS, WIDTHS, 1000, METRICS).size).toBe(0);
   });
 
-  it("sends ¶, then the font and size to «More» first (768)", () => {
+  it("sends ¶, then the font and size to “More” first (768)", () => {
     // in the order they leave
     expect([...hiddenUnits(UNITS, WIDTHS, 744, METRICS)]).toEqual(["invisibles", "font"]);
   });

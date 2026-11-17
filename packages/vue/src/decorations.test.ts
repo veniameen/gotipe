@@ -66,7 +66,7 @@ describe("Vue EditorContent draws every decoration layer (D-20)", () => {
         peerId: "ann",
         blockId: "p",
         offset: 9,
-        user: { name: "Аня", color: "#2c62d4" },
+        user: { name: "Ann", color: "#2c62d4" },
       },
       { type: "remote-selection", peerId: "bob", blockId: "p", from: 7, to: 9, color: "#2c62d4" },
     ]);
@@ -89,7 +89,7 @@ describe("Vue EditorContent draws every decoration layer (D-20)", () => {
     expect(block("p").querySelector('[data-comment-id="c"]')?.textContent).toBe("Привет");
     const caret = block("p").querySelector('.gotipe-remote-cursor[data-peer-id="ann"]')!;
     expect(caret.getAttribute("contenteditable")).toBe("false");
-    expect(caret.querySelector(".gotipe-remote-cursor-label")?.textContent).toBe("Аня");
+    expect(caret.querySelector(".gotipe-remote-cursor-label")?.textContent).toBe("Ann");
     expect(block("p").querySelector('.gotipe-remote-range[data-peer-id="bob"]')?.textContent).toBe(
       "😀",
     );
@@ -101,9 +101,9 @@ describe("Vue EditorContent draws every decoration layer (D-20)", () => {
   it("draws node classes, suggested blocks and the Placeholder text", async () => {
     const { editor, root, block } = await mount(
       [paragraph("p", "")],
-      [Paragraph, Placeholder.configure({ text: "Пишите…" })],
+      [Paragraph, Placeholder.configure({ text: "Write…" })],
     );
-    expect(block("p").getAttribute("data-placeholder")).toBe("Пишите…");
+    expect(block("p").getAttribute("data-placeholder")).toBe("Write…");
     editor.setDecorations("review", [
       { type: "node", key: "n", blockId: "p", className: "is-reviewed", attrs: { "data-r": "1" } },
       {
@@ -117,7 +117,7 @@ describe("Vue EditorContent draws every decoration layer (D-20)", () => {
             id: "new",
             type: "paragraph",
             attrs: {},
-            content: [{ text: "Новый", marks: [] }],
+            content: [{ text: "New", marks: [] }],
             children: [],
             decorations: [],
           },
@@ -130,7 +130,7 @@ describe("Vue EditorContent draws every decoration layer (D-20)", () => {
     const phantom = root.querySelector<HTMLElement>('[data-gotipe-phantom-id="new"]')!;
     expect(phantom.classList.contains("is-proposed")).toBe(true);
     expect(phantom.getAttribute("contenteditable")).toBe("false");
-    expect(phantom.textContent).toBe("Новый");
+    expect(phantom.textContent).toBe("New");
     expect(block("p").nextElementSibling).toBe(phantom);
     editor.setEditable(false);
     await nextTick();
@@ -139,7 +139,7 @@ describe("Vue EditorContent draws every decoration layer (D-20)", () => {
 
   it("draws the search, invisible-character and focus layers and alignment", async () => {
     const { editor, block } = await mount(
-      [paragraph("a", "кот и кот")],
+      [paragraph("a", "cat and cat")],
       [
         Paragraph,
         FindReplace,
@@ -148,7 +148,7 @@ describe("Vue EditorContent draws every decoration layer (D-20)", () => {
         TextAlign,
       ],
     );
-    getFindReplace(editor)!.setSearch({ query: "кот" });
+    getFindReplace(editor)!.setSearch({ query: "cat" });
     setInvisibleCharacters(editor, true);
     setTextAlign(editor, "right");
     await nextTick();
@@ -160,24 +160,25 @@ describe("Vue EditorContent draws every decoration layer (D-20)", () => {
     expect(block("a").classList.contains("has-focus")).toBe(true);
     expect(block("a").getAttribute("data-align")).toBe("right");
     expect(block("a").style.textAlign).toBe("right");
-    expect(ownText(block("a"))).toBe("кот и кот");
+    expect(ownText(block("a"))).toBe("cat and cat");
   });
 
   it("leaves host layers out and takes placeholder words from the host", async () => {
     const { editor, block } = await mount([paragraph("p", "")], [Paragraph, Placeholder], {
       hostLayers: ["collaboration"],
-      placeholder: (item: { type: string }) => (item.type === "paragraph" ? "Напишите…" : null),
+      placeholder: (item: { type: string }) =>
+        item.type === "paragraph" ? "Type something…" : null,
     });
     // Without configured text the decoration has no words; the host's function supplies them.
     expect(editor.getDecorations()).toEqual([{ type: "placeholder", text: "", blockId: "p" }]);
-    expect(block("p").getAttribute("data-placeholder")).toBe("Напишите…");
+    expect(block("p").getAttribute("data-placeholder")).toBe("Type something…");
     editor.setDecorations("collaboration", [
       {
         type: "remote-cursor",
         peerId: "ann",
         blockId: "p",
         offset: 0,
-        user: { name: "Аня", color: "#2c62d4" },
+        user: { name: "Ann", color: "#2c62d4" },
       },
     ]);
     editor.setDecorations("review", [{ type: "node", key: "n", blockId: "p", className: "kept" }]);

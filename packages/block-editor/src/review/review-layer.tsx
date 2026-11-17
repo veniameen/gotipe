@@ -32,7 +32,7 @@ export interface PageReviewProps {
   proposals: ReviewProposal[];
   comments?: ReviewComment[];
   cursors?: LaneCursor[];
-  /** Accept one proposal. Return `false` when it failed (stops «Принять все»). */
+  /** Accept one proposal. Return `false` when it failed (stops “Accept all”). */
   onAccept?: ReviewAction;
   onReject?: ReviewAction;
   /** Default: `onAccept` one by one in document order, stopping at the first stale or failed one. */
@@ -240,7 +240,7 @@ export function ReviewLayer({
           decorationRect(root, "data-gotipe-proposal", activeId) ??
           decorationRect(root, "data-gotipe-comment", activeId);
         if (rect) {
-          // Beside the text when there is room (v6 к. 6), otherwise below it.
+          // Beside the text when there is room (v6 frame 6), otherwise below it.
           const width = 288;
           const doc = root.querySelector("[data-gotipe-content]")?.getBoundingClientRect();
           const besideLeft = (doc ? doc.right : rect.right) + 16;

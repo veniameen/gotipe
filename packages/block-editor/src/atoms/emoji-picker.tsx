@@ -133,7 +133,7 @@ function step(sections: Section[], at: [number, number], key: string): [number, 
 }
 
 /**
- * The emoji picker (GoTipe Atlas, frame 23), opened from «/» → Emoji: a search field, the
+ * The emoji picker (GoTipe Atlas, frame 23), opened from “/” → Emoji: a search field, the
  * categories as glyphs, recent emoji first, a grid with arrow keys, the name in a tooltip.
  */
 export function EmojiPicker({

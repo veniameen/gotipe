@@ -120,7 +120,7 @@ test.describe('Bubble menu', () => {
   });
 
   test('edits a safe link without losing the captured selection and undoes once', async ({ page }) => {
-    await page.keyboard.insertText('До ссылка после');
+    await page.keyboard.insertText('An anchor here');
     await page.keyboard.press(process.platform === 'darwin' ? 'Meta+ArrowLeft' : 'Home');
     for (let index = 0; index < 3; index++) await page.keyboard.press('ArrowRight');
     for (let index = 0; index < 6; index++) await page.keyboard.press('Shift+ArrowRight');
@@ -133,16 +133,16 @@ test.describe('Bubble menu', () => {
     await address.fill('https://example.com/путь');
     await page.getByRole('button', { name: 'Apply link', exact: true }).click();
     const link = page.locator('[data-block-id="test-body"] a');
-    await expect(link).toHaveText('ссылка');
+    await expect(link).toHaveText('anchor');
     await expect(link).toHaveAttribute('href', 'https://example.com/путь');
-    await expect(page.locator('[data-block-id="test-body"]')).toHaveText('До ссылка после');
+    await expect(page.locator('[data-block-id="test-body"]')).toHaveText('An anchor here');
     await page.keyboard.press('ControlOrMeta+z');
     await expect(link).toHaveCount(0);
-    await expect(page.locator('[data-block-id="test-body"]')).toHaveText('До ссылка после');
+    await expect(page.locator('[data-block-id="test-body"]')).toHaveText('An anchor here');
   });
 
   test('applies independent text and highlight colors and resets them', async ({ page }) => {
-    await page.keyboard.insertText('Цвет 😀');
+    await page.keyboard.insertText('Color 😀');
     await page.keyboard.press('ControlOrMeta+a');
     await page.getByRole('button', { name: 'Text color', exact: true }).click();
     await page.getByRole('button', { name: 'Text color Blue', exact: true }).click();
@@ -156,7 +156,7 @@ test.describe('Bubble menu', () => {
     await page.getByRole('button', { name: 'Text color', exact: true }).click();
     await page.getByRole('button', { name: 'Reset color', exact: true }).click();
     await expect(paragraph.locator('mark, span[style]')).toHaveCount(0);
-    await expect(paragraph).toHaveText('Цвет 😀');
+    await expect(paragraph).toHaveText('Color 😀');
     await page.keyboard.press('ControlOrMeta+z');
     await expect(paragraph.locator('mark')).toHaveCSS('background-color', 'rgba(234, 179, 8, 0.2)');
   });
@@ -217,7 +217,7 @@ test.describe('Bubble menu', () => {
 
   test('keeps floating controls inside narrow viewports and dismisses them in read-only mode', async ({ page }) => {
     await page.setViewportSize({ width: 320, height: 720 });
-    await page.keyboard.insertText('Узкое меню 😀');
+    await page.keyboard.insertText('Narrow menu 😀');
     await page.keyboard.press('ControlOrMeta+a');
     const menu = page.locator('[data-gotipe-bubble-menu]');
     await expect(menu).toBeVisible();

@@ -3,11 +3,11 @@ import type { I18n, TranslationKey } from "@gotipe/i18n";
 import { withBlockEditorStrings } from "../i18n/strings";
 import type { PageIconName } from "./icons";
 
-/** A block the page editor can insert (the «/» menu and the blocks button). */
+/** A block the page editor can insert (the slash menu and the blocks button). */
 export interface PageBlockCommand extends SlashCommandDef {
   /** Icon of the row. */
   pageIcon: PageIconName;
-  /** Markdown shortcut shown on the right of the row («#», «-», «```»). */
+  /** Markdown shortcut shown on the right of the row (“#”, “-”, “```”). */
   shortcut?: string;
 }
 
@@ -177,7 +177,7 @@ const SPECS: Spec[] = [
   },
 ];
 
-/** The core's icon name of each page icon, so the shared «/» menu draws the row (Atlas, frame 7). */
+/** The core's icon name of each page icon, so the shared slash menu draws it (Atlas frame 7). */
 const SLASH_ICONS: Partial<Record<PageIconName, string>> = {
   image: "image",
   file: "paperclip",
@@ -195,7 +195,7 @@ const SLASH_ICONS: Partial<Record<PageIconName, string>> = {
   callout: "alert-circle",
 };
 
-/** Groups of the «/» menu in display order — the shared menu's own: «Основные», «Блоки», «Медиа». */
+/** Groups of the slash menu in display order (the shared menu's own): Style, Insert, Upload. */
 export function pageSlashGroups(host: I18n): { id: string; label: string }[] {
   const i18n = withBlockEditorStrings(host);
   return [
@@ -220,7 +220,7 @@ export function pageBlockCommands(host: I18n, kinds?: PageBlockKind[]): PageBloc
   }));
 }
 
-/** Runs a page block command by kind (for a toolbar «blocks» button). */
+/** Runs a page block command by kind (for a toolbar “blocks” button). */
 export function insertPageBlock(editor: GoTipeEditor, kind: PageBlockKind): boolean {
   const spec = SPECS.find((s) => s.kind === kind);
   if (!spec) return false;

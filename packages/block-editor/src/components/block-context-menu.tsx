@@ -102,7 +102,7 @@ export function BlockContextMenu({ editor, blockId, open, onClose }: BlockContex
     [],
   );
   const position = useFloatingPosition({ open, element: menuRef, anchor });
-  // «Turn into» follows its menu: the menu moves without resizing, the trigger moves with it (D-267)
+  // “Turn into” follows its menu: the menu moves without resizing, the trigger moves with it (D-267)
   const submenuPosition = useFloatingPosition({
     open: open && turnIntoOpen,
     element: submenuRef,

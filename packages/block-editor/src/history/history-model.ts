@@ -18,7 +18,7 @@ export interface HistoryVersion {
   /** The author's display name; `"system"` with no `auto` marks an automatic save without one. */
   createdBy: string;
   snapshot: Document;
-  /** Saved automatically: listed as «Автосохранение» with its author, if any. */
+  /** Saved automatically: listed as “Auto-save” with its author, if any. */
   auto?: boolean;
   /** The author's colour, 1–3; by default it follows the name. */
   person?: 1 | 2 | 3;
@@ -58,7 +58,7 @@ export function personOf(name: string, own?: 1 | 2 | 3): 1 | 2 | 3 {
   return ((hash % 3) + 1) as 1 | 2 | 3;
 }
 
-/** «Мария Лебедева» → «МЛ»: the first letters of the first two words. */
+/** “Maria Lebedeva” → “ML”: the first letters of the first two words. */
 export function initials(name: string): string {
   return name
     .trim()
@@ -136,7 +136,7 @@ export function groupByDay(rows: HistoryRow[]): HistoryDay[] {
   return days;
 }
 
-/** «Сегодня», «Вчера» or the date, as the list heads a day. */
+/** “Today”, “Yesterday” or the date, as the list heads a day. */
 export function dayLabel(
   date: Date,
   now: Date,

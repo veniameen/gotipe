@@ -105,7 +105,7 @@ describe("FixedToolbar", () => {
       "insert",
       "invisibles",
     ]);
-    // a hairline between the six groups before the free space; nothing went to «More»
+    // a hairline between the six groups before the free space; nothing went to “More”
     expect(container.querySelectorAll("hr.gotipe-fixed-toolbar-sep")).toHaveLength(5);
     expect(container.querySelector(".gotipe-fixed-toolbar-more")).toBeNull();
   });
@@ -251,7 +251,7 @@ describe("FixedToolbar", () => {
     expect(controls.filter((control) => control.tabIndex === 0)).toEqual([first]);
   });
 
-  it("sends what does not fit to «More», a second bar under its button", async () => {
+  it("sends what does not fit to “More”, a second bar under its button", async () => {
     // jsdom has no layout: the units measure as the frame draws them on a 375 px phone
     const widths: Record<string, number> = {
       history: 58,
@@ -305,7 +305,7 @@ describe("FixedToolbar", () => {
       expect(panel.inert).toBe(false);
       expect(panel.contains(document.activeElement)).toBe(true);
 
-      // a tool in «More» acts like one in the bar
+      // a tool in “More” acts like one in the bar
       select(editor, "p0", 0, 6);
       await click(panel.querySelector('[data-mark="strikethrough"]'));
       expect(spans(editor.getJSON().blocks[0])[0]?.marks?.[0]?.type).toBe("strikethrough");

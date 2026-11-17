@@ -42,7 +42,7 @@ const sameIds = (a: string[], b: string[]) =>
  * The anchors of the docs view (GoTipe Atlas, frame 2): a quiet # after the last word of every
  * heading its outline lists. It shows under the pointer — the heading's own hover, or the block
  * the handle stands at (`hovered`), which is also the heading a finger touched. A click copies the
- * link to the heading, as «Copy link to block» does. Other views draw none.
+ * link to the heading, as “Copy link to block” does. Other views draw none.
  */
 export function useHeadingAnchors(
   editor: GoTipeEditor | null,

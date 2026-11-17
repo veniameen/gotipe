@@ -7,11 +7,12 @@ import {
 } from "./helpers/visual-audit/audit";
 import type { Mode } from "./helpers/visual-audit/document";
 
-// The geometry of the editor's interface in the playground (AGENTS.md, «Интерфейс»): the block
+// The geometry of the editor's interface in the playground (AGENTS.md, “Interface”): the block
 // handle never covers text, a box, a marker or an icon, stands at the block's first line inside
-// the editor and the screen; the table's handles keep their own margins, columns keep theirs; the
-// bubble, «/» and the block menu stay on the screen; the page never scrolls sideways.
-// Page is PageEditor, Block — BlockEditor alone, Views — BlockEditor with the page head.
+// the editor and the screen; the table's handles keep their own margins, columns keep theirs;
+// the bubble menu, the slash menu and the block menu stay on the screen; the page never scrolls
+// sideways.
+// Page is PageEditor, Block is BlockEditor alone, Views is BlockEditor with the page head.
 // The full matrix runs in Chrome; Firefox and WebKit take a sample of it. Every violation leaves
 // a snapshot in output/editor-visual-audit/<browser>/<configuration>/.
 

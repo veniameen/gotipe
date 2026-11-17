@@ -80,8 +80,8 @@ export const MarkdownRawMark = defineExtension({
 });
 
 /**
- * Extensions for a Markdown document (GFM blocks and marks), the «:» emoji list and «/» →
- * Emoji; with `mentions` also mentions and the «@» list (written as `[@name](mention:user-id)`).
+ * Extensions for a Markdown document (GFM blocks and marks), the “:” emoji list and “/” →
+ * Emoji; with `mentions` also mentions and the “@” list (written as `[@name](mention:user-id)`).
  */
 export function pageExtensions(options: { mentions?: boolean } = {}) {
   const atoms = options.mentions ? [Mention, MentionSuggestion] : [];
@@ -127,11 +127,11 @@ export interface PageEditorHandle {
   /** The current document as Markdown (untouched blocks byte-for-byte). */
   getMarkdown(): string;
   focus(position?: "start" | "end"): void;
-  /** Inserts a block at the caret (the toolbar's «blocks» and «image» buttons). */
+  /** Inserts a block at the caret (the toolbar's “blocks” and “image” buttons). */
   insertBlock(kind: PageBlockKind): void;
   /** The page title: text of the leading `# heading`, or null when the file has none. */
   getTitle(): string | null;
-  /** Focuses the title and selects its text («Переименовать»). */
+  /** Focuses the title and selects its text (“Rename”). */
   selectTitle(): void;
   /** Review actions (null without `review`). */
   readonly review: ReviewApi | null;
@@ -171,7 +171,7 @@ export interface PageEditorProps {
    * starts with a bold label the host gives a look of its own.
    */
   blockViews?: BlockViews;
-  /** Blocks offered by «/» (default: all). */
+  /** Blocks offered by “/” (default: all). */
   blocks?: PageBlockKind[];
   autoFocus?: boolean;
   className?: string;
@@ -181,7 +181,7 @@ export interface PageEditorProps {
   /** Called when the editor reports an error and when it cannot be created (as `host.onError`). */
   onError?: EditorHost["onError"];
   /**
-   * People and pages of the «@» list (Atlas frame 22), as `BlockEditor`'s `mentions`. Read when
+   * People and pages of the “@” list (Atlas frame 22), as `BlockEditor`'s `mentions`. Read when
    * the page opens: with it the page reads and writes `[@name](mention:user-id)` as mentions.
    */
   mentions?: BlockEditorProps["mentions"];
@@ -447,7 +447,7 @@ const PageEditorInner = forwardRef<PageEditorHandle, PageEditorProps>(
               onRejectAll={() => reviewApi.current?.rejectAll()}
             />
           ) : null}
-          {/* the shared editor: its panel, «/», handle, block and column menus (Atlas, frame 19) */}
+          {/* the shared editor: its panel, “/”, handle, block and column menus (Atlas, frame 19) */}
           {failed ? (
             <div className="gotipe-block-editor" data-gotipe-block-failed="" data-gt-view={view}>
               <EditorFailure />

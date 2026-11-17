@@ -169,7 +169,7 @@ function person(id: string): number {
   return (hash % 3) + 1;
 }
 
-/** The «@» list (frame 22): people with initials, then pages; the match in bold. */
+/** The “@” list (frame 22): people with initials, then pages; the match in bold. */
 export function MentionMenu({ editor }: { editor: GoTipeEditor }) {
   const i18n = useBlockEditorI18n();
   return (
@@ -201,7 +201,7 @@ export function MentionMenu({ editor }: { editor: GoTipeEditor }) {
   );
 }
 
-/** The «:» list (frame 23): the emoji, then its name with the match in bold. */
+/** The “:” list (frame 23): the emoji, then its name with the match in bold. */
 export function EmojiMenu({ editor }: { editor: GoTipeEditor }) {
   const i18n = useBlockEditorI18n();
   return (

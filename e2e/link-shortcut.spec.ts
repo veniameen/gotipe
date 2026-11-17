@@ -29,7 +29,7 @@ test.describe('Mod+K opens the link field', () => {
       }),
     );
     await page.click('[data-gotipe-block-editor]');
-    await page.keyboard.insertText('Ссылка 😀 в тексте');
+    await page.keyboard.insertText('Linked 😀 in text');
     await selectFromLineStart(page, 6);
     await expect(page.locator('[data-gotipe-bubble-menu]')).toBeVisible();
 
@@ -40,7 +40,7 @@ test.describe('Mod+K opens the link field', () => {
     await input.fill('https://example.com/путь');
     await page.keyboard.press('Enter');
     const link = page.locator('[data-block-id="test-body"] a');
-    await expect(link).toHaveText('Ссылка');
+    await expect(link).toHaveText('Linked');
     await expect(link).toHaveAttribute('href', 'https://example.com/путь');
 
     // Escape gives the keys back to the text with the selection
@@ -56,14 +56,14 @@ test.describe('Mod+K opens the link field', () => {
     await page.keyboard.press('ControlOrMeta+k');
     await page.keyboard.insertText('!');
     await expect(page.locator('.gotipe-link-editor')).toHaveCount(0);
-    await expect(page.locator('[data-block-id="test-body"]')).toHaveText('Ссылка! 😀 в тексте');
+    await expect(page.locator('[data-block-id="test-body"]')).toHaveText('Linked! 😀 in text');
   });
 
   test('with the fixed toolbar too, the bubble field opens and the toolbar field stays shut', async ({ page }) => {
     await page.setViewportSize({ width: 1440, height: 900 });
     await page.goto('/#views');
     await page.getByRole('button', { name: 'modern', exact: true }).click();
-    await expect(page.getByRole('toolbar', { name: 'Форматирование' })).toBeVisible();
+    await expect(page.getByRole('toolbar', { name: 'Formatting' })).toBeVisible();
     await page.waitForFunction(() => Boolean(window.__GOTIPE_VIEWS_EDITOR__));
     await page.locator('[data-gotipe-content] p').first().click();
     await selectFromLineStart(page, 5);

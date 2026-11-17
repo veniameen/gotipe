@@ -4,14 +4,14 @@ import { blockEditorRu } from "../i18n/ru";
 
 /**
  * Column types are read from and written to Markdown cell content and
- * alignment. «Число» — right alignment `---:`; «Код» — every body cell in
- * backticks; «Да / нет» — cells `✓` and `—`, the same in every interface
- * language; «Текст» — as is.
+ * alignment. “Number”: right alignment `---:`; “Code”: every body cell in
+ * backticks; “Yes / no”: cells `✓` and `—`, the same in every interface
+ * language; “Text”: as is.
  */
 export type ColumnType = "text" | "code" | "number" | "boolean";
 
 /**
- * Words for yes and no that a «Да / нет» column of an earlier version may hold: it wrote the
+ * Words for yes and no that a “Yes / no” column of an earlier version may hold: it wrote the
  * interface language's word. The block editor's own dictionaries (`table.yes`, `table.no`) are
  * always read; pass a host dictionary's words to read them too.
  */
@@ -23,13 +23,13 @@ export interface BooleanWords {
 const YES = "✓";
 const NO = "—";
 const DICTIONARIES = [blockEditorEn, blockEditorRu];
-/** Values switching a column to «Да / нет» turns into `✓` or `—`; other values stay. */
+/** Values switching a column to “Yes / no” turns into `✓` or `—`; other values stay. */
 const TRUTHY = /^(?:✓|✔|да|yes|true|1|\+|x|y)$/i;
 const FALSY = /^(?:—|-|нет|no|false|0|n|)$/i;
 
 const normal = (value: string) => value.trim().toLowerCase();
 
-/** The exact values a «Да / нет» cell means: the marks and the dictionaries' words. */
+/** The exact values a “Yes / no” cell means: the marks and the dictionaries' words. */
 function booleanValues(extra?: BooleanWords): { yes: Set<string>; no: Set<string> } {
   const words = (key: "table.yes" | "table.no", mark: string, own?: string) =>
     new Set(
@@ -40,7 +40,7 @@ function booleanValues(extra?: BooleanWords): { yes: Set<string>; no: Set<string
 
 /**
  * `✓`, `—`, or `null` for a value that stays. The exact words — the marks, the dictionaries' and
- * the host's — come first, so a host's «no» that looks like a built-in yes (`x`) still means no.
+ * the host's — come first, so a host's “no” that looks like a built-in yes (`x`) still means no.
  */
 function booleanOf(value: string, values: { yes: Set<string>; no: Set<string> }): string | null {
   if (values.yes.has(value)) return YES;
@@ -88,7 +88,7 @@ function bodyCells(table: BlockView, column: number): BlockView[] {
 }
 
 /**
- * A column of `✓` and `—` is «Да / нет»; so is one of an earlier version's words (`yes`, `да`,
+ * A column of `✓` and `—` is “Yes / no”; so is one of an earlier version's words (`yes`, `да`,
  * a host's `yes` and `no`). `yes` and `no` are a host dictionary's words to read besides.
  */
 export function columnTypeOf(
@@ -108,7 +108,7 @@ export function columnTypeOf(
 }
 
 /**
- * Rewrites one column in one transaction. «Да / нет» stores `✓` and `—`, not a word of the
+ * Rewrites one column in one transaction. “Yes / no” stores `✓` and `—`, not a word of the
  * interface language: yes-like values (`yes`, `да`, `true`, `1`, `x`, `✔`, the dictionaries'
  * and `words`' yes) become `✓`, no-like and empty ones `—`; other values stay.
  */

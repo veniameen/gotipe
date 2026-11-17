@@ -30,7 +30,7 @@ export type FixedToolbarTool =
 
 /**
  * The bar of Atlas frame 31 in its order. When it is too narrow, ¶ leaves first, then the font,
- * «Insert», the alignment with the task list, the rest of the marks and the lists; history, the
+ * “Insert”, the alignment with the task list, the rest of the marks and the lists; history, the
  * block type, bold, italic and underline stay.
  */
 const UNITS: (ToolUnit & { tool: FixedToolbarTool })[] = [
@@ -46,7 +46,7 @@ const UNITS: (ToolUnit & { tool: FixedToolbarTool })[] = [
   { id: "invisibles", tool: "invisibles", group: "end", priority: 1, end: true },
 ];
 
-/** Host tools stand at the bar's edge, after ¶ and «More», and never leave the bar. */
+/** Host tools stand at the bar's edge, after ¶ and “More”, and never leave the bar. */
 const HOST: ToolUnit = {
   id: "host",
   group: "end",

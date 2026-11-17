@@ -27,7 +27,7 @@ function useEditing(editor: GoTipeEditor, blockId: string): boolean {
 }
 
 /**
- * A formula (GoTipe Atlas, frames 18 and 24): the label «Formula · TeX» and the typeset formula
+ * A formula (GoTipe Atlas, frames 18 and 24): the label “Formula · TeX” and the typeset formula
  * in the document's font. With the caret in the block its TeX shows, edited as text, with the
  * drawing under it; TeX that cannot be read shows with the reason. At rest the source stays in
  * place, transparent over the drawing, so a click or the arrow keys still reach it.

@@ -14,7 +14,7 @@ export interface HistoryListProps {
   onRetry?: () => void;
   onSelect(id: string): void;
   onClose?: () => void;
-  /** The list of a row's label: the name, «Текущая» or «Автосохранение». */
+  /** The list of a row's label: the name, “Current” or “Auto-save”. */
   nameOf(row: HistoryRow): string;
   listRef: React.RefObject<HTMLDivElement | null>;
 }

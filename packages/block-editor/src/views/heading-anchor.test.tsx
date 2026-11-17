@@ -23,12 +23,12 @@ const heading = (id: string, level: number, text: string) => block(id, "heading"
 const PAGE = {
   version: 1,
   blocks: [
-    heading("title", 1, "Офлайн-черновики"),
-    block("intro", "paragraph", "Правка без сети"),
-    heading("how", 1, "Как это работает"),
-    heading("what", 2, "Что меняется"),
-    heading("order", 3, "Порядок выката"),
-    heading("deep", 4, "Подробности"),
+    heading("title", 1, "Offline drafts"),
+    block("intro", "paragraph", "Editing without a network"),
+    heading("how", 1, "How it works"),
+    heading("what", 2, "What changes"),
+    heading("order", 3, "Rollout order"),
+    heading("deep", 4, "Details"),
     heading("empty", 2, ""),
   ],
 };
@@ -69,7 +69,7 @@ describe("heading anchors of the docs view (Atlas frame 2)", () => {
     const anchor = anchorOf("what")!;
     // a widget after the last word: outside the text, out of Tab and out of the heading's name
     expect(anchor.parentElement?.matches("[data-gotipe-widget][contenteditable=false]")).toBe(true);
-    expect(anchor.parentElement?.previousSibling?.textContent).toBe("Что меняется");
+    expect(anchor.parentElement?.previousSibling?.textContent).toBe("What changes");
     expect(anchor.getAttribute("aria-hidden")).toBe("true");
     expect(anchor.querySelector("button")?.tabIndex).toBe(-1);
     expect(anchor.querySelector(".gotipe-tip")?.textContent).toBe("Copy link");
@@ -84,12 +84,12 @@ describe("heading anchors of the docs view (Atlas frame 2)", () => {
     act(() => {
       const end = { blockId: "empty", offset: 0 };
       editor.setSelection({ anchor: end, head: end });
-      editor.chain().insertText("Задачи").run();
+      editor.chain().insertText("Tasks").run();
     });
     expect(anchored()).toEqual(["how", "what", "order", "empty"]);
   });
 
-  it("copy the link «Copy link to block» copies and say so", async () => {
+  it("copy the link “Copy link to block” copies and say so", async () => {
     act(() => root.render(<BlockEditor editor={editor} view="docs" showAiCommandBar={false} />));
     const button = anchorOf("order")!.querySelector("button")!;
     await act(async () => {
@@ -139,7 +139,9 @@ describe("heading anchors of the docs view (Atlas frame 2)", () => {
     await act(async () => {
       root.render(
         <PageEditor
-          markdown={"# Офлайн-черновики\n\nПравка без сети.\n\n## Как это работает\n\nЖурнал.\n"}
+          markdown={
+            "# Offline drafts\n\nEditing without a network.\n\n## How it works\n\nThe log.\n"
+          }
           view="docs"
           autoFocus={false}
         />,
@@ -148,8 +150,8 @@ describe("heading anchors of the docs view (Atlas frame 2)", () => {
     });
     const headings = [...container.querySelectorAll("h1, h2")];
     expect(headings.map((element) => element.textContent)).toEqual([
-      "Офлайн-черновики",
-      "Как это работаетCopy link",
+      "Offline drafts",
+      "How it worksCopy link",
     ]);
     expect(headings[0]?.querySelector(".gotipe-heading-anchor")).toBeNull();
   });

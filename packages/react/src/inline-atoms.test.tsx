@@ -37,7 +37,7 @@ afterEach(() => {
 
 const anna = {
   type: "mention",
-  attrs: { id: "u3", label: "Анна Ковалёва", kind: "user", key: "a" },
+  attrs: { id: "u3", label: "Anna Kovaleva", kind: "user", key: "a" },
 };
 const page = { type: "mention", attrs: { id: "p1", label: "ADR-0031", kind: "page", key: "b" } };
 const math = (key: string) => ({ type: "inlineMath", attrs: { key } });
@@ -69,10 +69,10 @@ function documentText(node: Node): string {
 describe("inline atom views", () => {
   it("draws a mention as one non-editable chip and keeps its text for offsets", async () => {
     await open([
-      { text: "Проверила ", marks: [] },
-      { text: "@Анна ", marks: [anna, { type: "bold" }] },
-      { text: "Ковалёва", marks: [anna] },
-      { text: ", см. ", marks: [] },
+      { text: "Checked by ", marks: [] },
+      { text: "@Anna ", marks: [anna, { type: "bold" }] },
+      { text: "Kovaleva", marks: [anna] },
+      { text: ", see ", marks: [] },
       { text: "ADR-0031", marks: [page] },
     ]);
     const chips = block().querySelectorAll<HTMLElement>("[data-gotipe-atom]");
@@ -82,16 +82,16 @@ describe("inline atom views", () => {
     expect(person!.getAttribute("contenteditable")).toBe("false");
     expect(person!.dataset.type).toBe("mention");
     expect(person!.dataset.kind).toBe("person");
-    expect(person!.querySelector(".gotipe-avatar")!.textContent).toBe("АК");
+    expect(person!.querySelector(".gotipe-avatar")!.textContent).toBe("AK");
     expect(doc!.dataset.kind).toBe("page");
     expect(doc!.querySelector("svg")).not.toBeNull();
-    expect(documentText(block())).toBe("Проверила @Анна Ковалёва, см. ADR-0031");
+    expect(documentText(block())).toBe("Checked by @Anna Kovaleva, see ADR-0031");
   });
 
   it("typesets a formula as MathML and shows broken TeX with its reason", async () => {
     await open([
       { text: "p = \\frac{L}{N}", marks: [math("1")] },
-      { text: " и ", marks: [] },
+      { text: " and ", marks: [] },
       { text: "\\frac{L}{N", marks: [math("2")] },
     ]);
     const [good, bad] = block().querySelectorAll<HTMLElement>(".gotipe-math-inline");
@@ -103,7 +103,7 @@ describe("inline atom views", () => {
     expect(bad!.classList.contains("is-invalid")).toBe(true);
     expect(bad!.getAttribute("aria-invalid")).toBe("true");
     expect(bad!.querySelector(".gotipe-tooltip")!.textContent).toBe("Missing closing “}”");
-    expect(documentText(block())).toBe("p = \\frac{L}{N} и \\frac{L}{N");
+    expect(documentText(block())).toBe("p = \\frac{L}{N} and \\frac{L}{N");
   });
 
   it("shows a formula's TeX without a TeX reader", async () => {
@@ -133,8 +133,8 @@ describe("inline atom views", () => {
 
   it("maps the caret beside an atom, never into its text", async () => {
     await open([
-      { text: "@Анна Ковалёва", marks: [anna] },
-      { text: " и ", marks: [] },
+      { text: "@Anna Kovaleva", marks: [anna] },
+      { text: " and ", marks: [] },
       { text: "x^2", marks: [math("1")] },
     ]);
     const chip = block().querySelector("[data-gotipe-atom]")!;
@@ -152,8 +152,8 @@ describe("inline atom views", () => {
     act(() => {
       editor.focus();
       editor.setSelection({
-        anchor: { blockId: "p", offset: 20 },
-        head: { blockId: "p", offset: 20 },
+        anchor: { blockId: "p", offset: 22 },
+        head: { blockId: "p", offset: 22 },
       });
     });
     const selection = document.getSelection()!;
@@ -166,7 +166,7 @@ describe("inline atom views", () => {
 
   it("removes an atom whole with Backspace after it", async () => {
     await open([
-      { text: "Привет ", marks: [] },
+      { text: "Hello, ", marks: [] },
       { text: "x^2", marks: [math("1")] },
     ]);
     act(() => {
@@ -185,23 +185,23 @@ describe("inline atom views", () => {
         }),
       );
     });
-    expect(documentText(block())).toBe("Привет ");
+    expect(documentText(block())).toBe("Hello, ");
     expect(block().querySelector("[data-gotipe-atom]")).toBeNull();
   });
 
   it("inserts a mention through the command", async () => {
-    await open([{ text: "Привет ", marks: [] }]);
+    await open([{ text: "Hello, ", marks: [] }]);
     editor.setSelection({ anchor: { blockId: "p", offset: 7 }, head: { blockId: "p", offset: 7 } });
     act(() => {
-      insertMention(editor, { id: "42", label: "Анна😀" });
+      insertMention(editor, { id: "42", label: "Anna😀" });
     });
-    expect(documentText(block())).toBe("Привет @Анна😀");
-    expect(block().querySelector(".gotipe-mention")!.textContent).toContain("Анна😀");
+    expect(documentText(block())).toBe("Hello, @Anna😀");
+    expect(block().querySelector(".gotipe-mention")!.textContent).toContain("Anna😀");
   });
 });
 
 describe("an atom at the end of a block with nested blocks", () => {
-  const mention = { text: "@Анна", marks: [{ ...anna, attrs: { ...anna.attrs, label: "Анна" } }] };
+  const mention = { text: "@Anna", marks: [{ ...anna, attrs: { ...anna.attrs, label: "Anna" } }] };
   const own = [{ text: "a ", marks: [] }, mention];
   const leaf = (id: string, type: string, text: string) => ({
     id,
@@ -283,12 +283,12 @@ describe("an IME composition right after an atom (D-226)", () => {
   };
   const before = { text: "Ёж 😀 ", marks: [] };
   it.each([
-    ["mention", { text: "@Анна Ковалёва", marks: [anna] }, " и всё"],
-    ["mention", { text: "@Анна Ковалёва", marks: [anna] }, ""],
+    ["mention", { text: "@Anna Kovaleva", marks: [anna] }, " and all"],
+    ["mention", { text: "@Anna Kovaleva", marks: [anna] }, ""],
     ["page", { text: "ADR-0031", marks: [page] }, ""],
-    ["formula", { text: "x^2", marks: [math("1")] }, " и всё"],
+    ["formula", { text: "x^2", marks: [math("1")] }, " and all"],
     ["formula", { text: "x^2", marks: [math("1")] }, ""],
-  ])("puts the text after the %s, then the caret (tail «%#»)", async (_name, atom, tail) => {
+  ])("puts the text after the %s, then the caret (tail “%#”)", async (_name, atom, tail) => {
     await open([before, atom, ...(tail ? [{ text: tail, marks: [] }] : [])]);
     const end = before.text.length + atom.text.length;
     act(() => {

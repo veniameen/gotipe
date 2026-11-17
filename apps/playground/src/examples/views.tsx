@@ -31,7 +31,7 @@ const highlight = createShikiHighlighter({
   themes: { light: gotipeCodeThemeLoader, dark: gotipeCodeThemeLoader },
 });
 const STATES = ["document", "empty page", "loading", "read only"] as const;
-const LANGUAGES = ["ru", "en"] as const;
+const LANGUAGES = ["en", "ru"] as const;
 /** The counter under the document (Atlas frame 26): off, plain, or near and over a host limit. */
 const COUNTERS = ["off", "words", "near limit", "over limit"] as const;
 type Counter = (typeof COUNTERS)[number];
@@ -69,13 +69,13 @@ function Byline() {
     <>
       <span className="gotipe-avatars">
         <span className="gotipe-avatar" data-person="2">
-          МЛ
+          ML
         </span>
         <span className="gotipe-avatar" data-person="1">
-          ИО
+          IO
         </span>
       </span>
-      Мария Лебедева и Илья Орлов · изменено 11 ноября в 14:32
+      Maria Lebedeva and Ilya Orlov · edited November 11 at 14:32
     </>
   );
 }
@@ -91,7 +91,7 @@ export function ViewsExample() {
   const [view, setView] = useState<ThemePreset>("notion");
   const [state, setState] = useState<State>("document");
   const [title, setTitle] = useState(ATLAS_TITLE);
-  const [language, setLanguage] = useState<(typeof LANGUAGES)[number]>("ru");
+  const [language, setLanguage] = useState<(typeof LANGUAGES)[number]>("en");
   useDebugEditor("__GOTIPE_VIEWS_EDITOR__", editor);
 
   useEffect(() => {
@@ -118,7 +118,7 @@ export function ViewsExample() {
         onTitleChange={setTitle}
         onTitleEnter={() => editor?.focus("start")}
         byline={state === "empty page" ? undefined : <Byline />}
-        readOnly={state === "read only" ? "Только чтение: страница в архиве" : undefined}
+        readOnly={state === "read only" ? "Read only: the page is archived" : undefined}
       />
     ) : undefined;
 

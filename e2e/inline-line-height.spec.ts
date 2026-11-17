@@ -23,22 +23,22 @@ test.describe("a line with inline code or broken TeX keeps its height (D-225)", 
       editor?.setContent({
         version: 1,
         blocks: [
-          paragraph("plain", [text("Строка без вставок")]),
+          paragraph("plain", [text("A line without inserts")]),
           paragraph("code", [
-            text("Строка с "),
+            text("A line with "),
             text("inline code", [{ type: "code", attrs: {} }]),
           ]),
           paragraph("invalid", [
-            text("Строка с "),
+            text("A line with "),
             text("p = \\frac{L}{N", [{ type: "inlineMath", attrs: { key: "f" } }]),
           ]),
           // A mention is one box of the line (D-240) and keeps it as high as the others (D-200).
           paragraph("mention", [
-            text("Строка с "),
-            text("@Анна Ковалёва", [
+            text("A line with "),
+            text("@Anna Kovaleva", [
               {
                 type: "mention",
-                attrs: { id: "u3", label: "Анна Ковалёва", kind: "user", key: "m" },
+                attrs: { id: "u3", label: "Anna Kovaleva", kind: "user", key: "m" },
               },
             ]),
           ]),

@@ -20,9 +20,9 @@ import { EmojiMenu, MentionMenu } from "./suggestion-menus";
 
 export interface AtomUIProps {
   editor: GoTipeEditor;
-  /** People and pages of the «@» list; without it the list answers «No one found». */
+  /** People and pages of the “@” list; without it the list answers “No one found”. */
   mentions?: MentionOptions;
-  /** The team's emoji and the recent list of the «:» list and the picker. */
+  /** The team's emoji and the recent list of the “:” list and the picker. */
   emoji?: EmojiOptions;
 }
 
@@ -47,9 +47,9 @@ export function AtomProvider({
 }
 
 /**
- * The interface of inline atoms (GoTipe Atlas, frames 22–24): the «@» and «:» lists at the
- * caret, the emoji picker of «/» → Emoji and the formula popover, which opens on a click on a
- * formula, on Enter with a formula selected, after `$…$` and from «/» → Inline formula. Needs
+ * The interface of inline atoms (GoTipe Atlas, frames 22–24): the “@” and “:” lists at the
+ * caret, the emoji picker of “/” → Emoji and the formula popover, which opens on a click on a
+ * formula, on Enter with a formula selected, after `$…$` and from “/” → Inline formula. Needs
  * the editor to include `atomExtensions()`.
  */
 export function AtomUI(props: AtomUIProps) {

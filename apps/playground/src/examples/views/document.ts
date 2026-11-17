@@ -34,77 +34,81 @@ const row = (cell: "tableHeader" | "tableCell", values: string[]) =>
     values.map((value) => block(cell, [text(value)])),
   );
 
-export const ATLAS_TITLE = "Офлайн-черновики";
+export const ATLAS_TITLE = "Offline drafts";
 
 export const ATLAS_DOCUMENT = {
   version: 1,
   blocks: [
     paragraph(
       text(
-        "Правка, сделанная без сети, сейчас пропадает, если закрыть вкладку до того, как связь вернётся. В выпуске 2.8 редактор пишет каждую транзакцию в локальный журнал и отправляет его, как только сеть появится. Решение опирается на ",
+        "An edit made offline is lost today if the tab is closed before the connection comes back. In release 2.8 the editor writes every transaction to a local journal and sends it as soon as the network returns. The decision builds on ",
       ),
       text("ADR-0031", link("https://example.com/adr-0031")),
-      text(" и на обращения в поддержку за октябрь."),
+      text(" and on the October support tickets."),
     ),
     block(
       "callout",
       [
         text(
-          "Черновик хранится только на устройстве и зашифрован ключом сессии. При выходе из аккаунта он удаляется вместе с ключом.",
+          "The draft is stored only on the device and encrypted with the session key. Signing out deletes it together with the key.",
         ),
       ],
       { type: "info", emoji: "" },
     ),
-    heading(1, "Как это работает"),
+    heading(1, "How it works"),
     paragraph(
-      text("Журнал лежит в "),
+      text("The journal lives in "),
       text("IndexedDB", { type: "code" }),
       text(
-        " и переживает перезапуск приложения. Сервер принимает пачку транзакций целиком или отклоняет её: ",
+        " and survives an app restart. The server accepts a batch of transactions whole or rejects it: ",
       ),
-      text("половина пачки записаться не может", { type: "highlight" }),
+      text("half a batch can never be written", { type: "highlight" }),
       text("."),
     ),
-    heading(2, "Что меняется"),
+    heading(2, "What changes"),
     list("bulletList", [
-      item("Каждая транзакция сначала попадает в журнал и только потом — на сервер."),
+      item("Every transaction goes to the journal first and only then to the server."),
       item(
-        "Когда связь вернулась, журнал уходит пачкой, а сервер отвечает новой версией документа.",
+        "When the connection is back, the journal goes out as a batch and the server replies with a new version of the document.",
       ),
-      item("Конфликт решается по блокам:", [
+      item("Conflicts are resolved block by block:", [
         list("bulletList", [
-          item("чужая правка блока не перезаписывает вашу;"),
-          item("обе версии остаются, ваша — предложением правки."),
+          item("someone else's edit of a block never overwrites yours;"),
+          item("both versions stay, yours as a suggested edit."),
         ]),
       ]),
     ]),
     block(
       "codeBlock",
-      '// Журнал пишется до отправки: закрытая вкладка ничего не теряет.\neditor.on("transaction", async ({ steps, version }: Transaction) => {\n  await drafts.append(documentId, { steps, version });\n  if (navigator.onLine) await drafts.flush(documentId, { retries: 3 });\n});',
+      '// The journal is written before sending: a closed tab loses nothing.\neditor.on("transaction", async ({ steps, version }: Transaction) => {\n  await drafts.append(documentId, { steps, version });\n  if (navigator.onLine) await drafts.flush(documentId, { retries: 3 });\n});',
       { language: "typescript" },
     ),
-    heading(3, "Порядок выката"),
+    heading(3, "Rollout order"),
     list("orderedList", [
-      item("Включить журнал для 5 % пользователей веб-версии."),
-      item("Неделю сравнивать долю потерянных правок с контрольной группой."),
-      item("Открыть всем, начиная с приложения для macOS."),
+      item("Enable the journal for 5 % of web users."),
+      item("For a week, compare the share of lost edits with a control group."),
+      item("Open it to everyone, starting with the macOS app."),
     ]),
     block(
       "callout",
       [
         text(
-          "До выпуска 2.9 черновик не переносится между устройствами: правка с ноутбука не появится на телефоне, пока не отправлена.",
+          "Until release 2.9 the draft does not move between devices: an edit from a laptop will not appear on a phone until it is sent.",
         ),
       ],
       { type: "warning", emoji: "" },
     ),
-    heading(1, "Конфликты"),
+    heading(1, "Conflicts"),
     block("table", null, {}, [
-      row("tableHeader", ["Ситуация", "Что видит автор", "Что сохраняется"]),
-      row("tableCell", ["Блок изменён только у вас", "Ничего", "Ваша версия"]),
-      row("tableCell", ["Блок изменён у обоих", "Предложение правки", "Обе версии"]),
-      row("tableCell", ["Блок удалён на сервере", "Тост «Блок удалён»", "Ваша версия — в истории"]),
-      row("tableCell", ["Документ удалён", "Окно восстановления", "Копия в «Черновиках»"]),
+      row("tableHeader", ["Situation", "What the author sees", "What is kept"]),
+      row("tableCell", ["Block changed only on your side", "Nothing", "Your version"]),
+      row("tableCell", ["Block changed on both sides", "A suggested edit", "Both versions"]),
+      row("tableCell", [
+        "Block deleted on the server",
+        "A “Block deleted” toast",
+        "Your version, in history",
+      ]),
+      row("tableCell", ["Document deleted", "A restore dialog", "A copy in “Drafts”"]),
     ]),
     block("blockquote", [
       text("I wrote two pages on the train, and when I got off they were just gone."),
@@ -116,17 +120,17 @@ export const ATLAS_DOCUMENT = {
         ),
       ),
     ]),
-    heading(2, "Задачи"),
+    heading(2, "Tasks"),
     block("todoList", null, {}, [
-      task("Схема журнала и миграция IndexedDB", true),
-      task("Шифрование черновика ключом сессии", true),
-      task("Индикатор «Не отправлено» в шапке документа", false),
-      task("Метрика потерянных правок на дашборде выпуска", false),
+      task("Journal schema and IndexedDB migration", true),
+      task("Draft encryption with the session key", true),
+      task("A “Not sent” indicator in the page header", false),
+      task("A lost-edits metric on the release dashboard", false),
     ]),
     block("divider", null),
     paragraph(
-      text("Возражения принимаем до 18 ноября — в обсуждении ADR-0031 или в "),
-      text("треде выпуска 2.8", link("https://example.com/release-2-8")),
+      text("Objections are welcome until November 18 in the ADR-0031 discussion or in the "),
+      text("release 2.8 thread", link("https://example.com/release-2-8")),
       text("."),
     ),
   ],

@@ -1,8 +1,8 @@
 import { defineConfig, devices } from '@playwright/test';
 
-// GOTIPE_E2E_PORT — порт dev-сервера playground (по умолчанию 5173).
-// GOTIPE_E2E_CHANNEL — канал браузера для проекта chromium (например, "chrome",
-// когда браузеры Playwright не установлены).
+// GOTIPE_E2E_PORT: the playground dev server port (5173 by default).
+// GOTIPE_E2E_CHANNEL: the browser channel for the chromium project (for example, "chrome"
+// when the Playwright browsers are not installed).
 const port = Number(process.env.GOTIPE_E2E_PORT ?? 5173);
 const baseURL = `http://localhost:${port}`;
 const channel = process.env.GOTIPE_E2E_CHANNEL;

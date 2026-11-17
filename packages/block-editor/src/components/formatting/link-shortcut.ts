@@ -4,7 +4,7 @@ import type { GoTipeEditor, SelectionView } from "@gotipe/core";
  * Mod+K: the core `Link` extension emits `openLinkDialog`, and one link field opens. Every mounted
  * `LinkEditor` offers its field; the one at the selection (the bubble, Atlas frame 6) is asked
  * before the fixed toolbar's, and a tool that can't act or is out of reach (in the toolbar's
- * closed «More») passes. Atlas draws the field only over selected text: with a caret alone the
+ * closed “More”) passes. Atlas draws the field only over selected text: with a caret alone the
  * key opens nothing.
  */
 export interface LinkField {
@@ -31,7 +31,7 @@ function hasSelectedText(selection: SelectionView): boolean {
   );
 }
 
-/** In the page and not inside an inert part (the fixed toolbar's closed «More»). */
+/** In the page and not inside an inert part (the fixed toolbar's closed “More”). */
 export function reachable(element: HTMLElement | null): boolean {
   if (!element?.isConnected) return false;
   for (let node: HTMLElement | null = element; node; node = node.parentElement)

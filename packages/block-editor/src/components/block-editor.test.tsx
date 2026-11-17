@@ -69,7 +69,7 @@ const ann: Decoration = {
   peerId: "ann",
   blockId: "p",
   offset: 2,
-  user: { name: "Аня", color: "#2c62d4" },
+  user: { name: "Ann", color: "#2c62d4" },
 };
 const annSelection: Decoration = {
   type: "remote-selection",
@@ -93,7 +93,7 @@ describe("other people in BlockEditor: one owner draws them", () => {
     // The overlay of Atlas frame 12, not an inline widget inside the text.
     expect(caret.closest(".gotipe-collaboration-cursors")).not.toBeNull();
     expect(caret.closest("[data-gotipe-content]")).toBeNull();
-    expect(caret.querySelector(".gotipe-remote-cursor-label")?.textContent).toBe("Аня");
+    expect(caret.querySelector(".gotipe-remote-cursor-label")?.textContent).toBe("Ann");
     expect(container.querySelectorAll(".gotipe-remote-selection")).toHaveLength(1);
     expect(container.querySelector(".gotipe-remote-range")).toBeNull();
     expect(container.querySelector('[data-block-id="p"]')?.textContent).toBe("hello");
@@ -107,7 +107,7 @@ describe("other people in BlockEditor: one owner draws them", () => {
     const peers: RemotePeer[] = [
       {
         peerId: "ann",
-        user: { name: "Аня", color: "#2c62d4" },
+        user: { name: "Ann", color: "#2c62d4" },
         cursor: { blockId: "p", offset: 2 },
       },
       {
@@ -172,7 +172,7 @@ describe("other people in BlockEditor: one owner draws them", () => {
     expect(peersFromDecorations(editor.getDecorations("collaboration"))).toEqual([
       {
         peerId: "ann",
-        user: { name: "Аня", color: "#2c62d4" },
+        user: { name: "Ann", color: "#2c62d4" },
         cursor: { blockId: "p", offset: 2 },
       },
     ]);
@@ -198,11 +198,11 @@ describe("the document's name follows the interface language (D-195)", () => {
     act(() =>
       root.render(
         <GoTipeI18nProvider locale={locale}>
-          <BlockEditor editor={editor} showBlockToolbar={false} ariaLabel="Заметки" />
+          <BlockEditor editor={editor} showBlockToolbar={false} ariaLabel="Notes" />
         </GoTipeI18nProvider>,
       ),
     );
-    expect(name()).toBe("Заметки");
+    expect(name()).toBe("Notes");
   });
 });
 
@@ -234,10 +234,7 @@ describe("placeholder words follow the interface language", () => {
   });
 
   it("a configured text and a host function win over the interface words", async () => {
-    const editor = await editorWith("", [
-      DefaultPreset,
-      Placeholder.configure({ text: "Пишите…" }),
-    ]);
+    const editor = await editorWith("", [DefaultPreset, Placeholder.configure({ text: "Write…" })]);
     act(() =>
       root.render(
         <GoTipeI18nProvider locale="en">
@@ -245,7 +242,7 @@ describe("placeholder words follow the interface language", () => {
         </GoTipeI18nProvider>,
       ),
     );
-    expect(placeholder()).toBe("Пишите…");
+    expect(placeholder()).toBe("Write…");
     act(() => root.render(<EditorContent editor={editor} placeholder={() => "Host"} />));
     expect(placeholder()).toBe("Host");
   });

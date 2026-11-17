@@ -99,7 +99,7 @@ describe("decoration layers drawn by EditorContent (D-20)", () => {
           peerId: "ann",
           blockId: "p",
           offset: 3,
-          user: { name: "Аня", color: "#2c62d4" },
+          user: { name: "Ann", color: "#2c62d4" },
         },
         { type: "remote-selection", peerId: "bob", blockId: "p", from: 0, to: 2, color: "red;x" },
       ]),
@@ -109,7 +109,7 @@ describe("decoration layers drawn by EditorContent (D-20)", () => {
     )!;
     expect(caret.getAttribute("contenteditable")).toBe("false");
     expect(caret.hasAttribute("data-gotipe-widget")).toBe(true);
-    expect(caret.querySelector(".gotipe-remote-cursor-label")?.textContent).toBe("Аня");
+    expect(caret.querySelector(".gotipe-remote-cursor-label")?.textContent).toBe("Ann");
     expect(
       caret.querySelector<HTMLElement>(".gotipe-remote-cursor-caret")?.style.backgroundColor,
     ).toBe("rgb(44, 98, 212)");
@@ -128,8 +128,8 @@ describe("decoration layers drawn by EditorContent (D-20)", () => {
   });
 
   it("draws the Placeholder extension's text on an empty document, not when read-only", async () => {
-    await render([paragraph("p", "")], [Paragraph, Placeholder.configure({ text: "Пишите…" })]);
-    expect(block("p").getAttribute("data-placeholder")).toBe("Пишите…");
+    await render([paragraph("p", "")], [Paragraph, Placeholder.configure({ text: "Write…" })]);
+    expect(block("p").getAttribute("data-placeholder")).toBe("Write…");
     act(() => editor.setEditable(false));
     expect(block("p").hasAttribute("data-placeholder")).toBe(false);
   });
@@ -146,7 +146,7 @@ describe("decoration layers drawn by EditorContent (D-20)", () => {
 
   it("draws the search, invisible-character and focus layers and block alignment", async () => {
     await render(
-      [paragraph("a", "кот и кот"), paragraph("b", "")],
+      [paragraph("a", "cat and cat"), paragraph("b", "")],
       [
         Paragraph,
         FindReplace,
@@ -156,7 +156,7 @@ describe("decoration layers drawn by EditorContent (D-20)", () => {
       ],
     );
     act(() => {
-      getFindReplace(editor)!.setSearch({ query: "кот" });
+      getFindReplace(editor)!.setSearch({ query: "cat" });
       setInvisibleCharacters(editor, true);
       setTextAlign(editor, "center");
     });
@@ -170,7 +170,7 @@ describe("decoration layers drawn by EditorContent (D-20)", () => {
       true,
     );
     expect(block("b").querySelector(".gotipe-pilcrow")).not.toBeNull();
-    expect(ownText(block("a"))).toBe("кот и кот");
+    expect(ownText(block("a"))).toBe("cat and cat");
     expect(block("a").classList.contains("has-focus")).toBe(true);
     expect(block("a").getAttribute("data-align")).toBe("center");
     expect(block("a").style.textAlign).toBe("center");

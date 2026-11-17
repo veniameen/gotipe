@@ -261,8 +261,8 @@ describe("counter (Atlas frame 26)", () => {
 });
 
 describe("alignment, font, size, invisibles (Atlas frames 27–28)", () => {
-  it("aligns from «More» and from the toolbar list", async () => {
-    const editor = await editorWith("Офлайн-черновики");
+  it("aligns from “More” and from the toolbar list", async () => {
+    const editor = await editorWith("Offline drafts");
     act(() => root.render(<MoreMenu editor={editor} />));
     await click(container.querySelector('[aria-haspopup="menu"]'));
     await frame();
@@ -284,7 +284,7 @@ describe("alignment, font, size, invisibles (Atlas frames 27–28)", () => {
   });
 
   it("sets the face and the size of a selection", async () => {
-    const editor = await editorWith("Правка без сети");
+    const editor = await editorWith("Drafts are kept");
     editor.setSelection({
       anchor: { blockId: "p0", offset: 0 },
       head: { blockId: "p0", offset: 6 },
@@ -333,7 +333,7 @@ describe("alignment, font, size, invisibles (Atlas frames 27–28)", () => {
   });
 
   it("gives text blocks their direction", async () => {
-    const editor = await editorWith("Правка", "لم تعد التعديلات");
+    const editor = await editorWith("Drafts", "لم تعد التعديلات");
     editor.setSelection({
       anchor: { blockId: "p1", offset: 0 },
       head: { blockId: "p1", offset: 0 },

@@ -1,6 +1,6 @@
 /**
- * What leaves a narrow fixed toolbar for «More» (Atlas frame 31). The bar keeps its order; when
- * it is too narrow, whole units leave it, the least needed first, and «More» holds them in the
+ * What leaves a narrow fixed toolbar for “More” (Atlas frame 31). The bar keeps its order; when
+ * it is too narrow, whole units leave it, the least needed first, and “More” holds them in the
  * bar's order, a row of groups per line. Pure: widths come in, a plan comes out.
  */
 
@@ -15,7 +15,7 @@ export interface ToolUnit {
   end?: boolean;
 }
 
-/** The bar's geometry in px: the gap between items, a separator with its margins, «More». */
+/** The bar's geometry in px: the gap between items, a separator with its margins, “More”. */
 export interface BarMetrics {
   gap: number;
   separator: number;
@@ -23,9 +23,9 @@ export interface BarMetrics {
 }
 
 export interface OverflowPlan {
-  /** Units in «More». */
+  /** Units in “More”. */
   hidden: ReadonlySet<string>;
-  /** «More» line by line: rows of groups of units, in the bar's order. */
+  /** “More” line by line: rows of groups of units, in the bar's order. */
   rows: ToolUnit[][][];
   /** Even the tools that never leave do not fit: the bar scrolls sideways. */
   cramped: boolean;
@@ -35,7 +35,7 @@ export const NO_OVERFLOW: OverflowPlan = { hidden: new Set(), rows: [], cramped:
 
 const widthOf = (widths: ReadonlyMap<string, number>, unit: ToolUnit) => widths.get(unit.id) ?? 0;
 
-/** The width the bar needs with `shown` units, «More» included when any unit is left out. */
+/** The width the bar needs with `shown` units, “More” included when any unit is left out. */
 export function barWidth(
   units: readonly ToolUnit[],
   widths: ReadonlyMap<string, number>,
