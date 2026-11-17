@@ -16,6 +16,14 @@ serde_json = { workspace = true }
 thiserror = { workspace = true }
 uuid = { workspace = true }
 
+[features]
+# Timestamp::now: the system clock, or in a browser, which gives WebAssembly no system clock,
+# the JavaScript one. Comments and versions turn it on; the exporters need no clock.
+clock = ["dep:js-sys"]
+
+[target.'cfg(all(target_arch = "wasm32", target_os = "unknown"))'.dependencies]
+js-sys = { version = "0.3", optional = true }
+
 [dev-dependencies]
 criterion = { workspace = true }
 

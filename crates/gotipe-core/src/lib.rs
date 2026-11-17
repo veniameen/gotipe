@@ -7,6 +7,7 @@ pub mod selection;
 mod selection_mapping;
 pub mod state;
 pub mod table;
+pub mod timestamp;
 pub mod transaction;
 pub mod transform;
 
@@ -19,4 +20,5 @@ pub use gotipe_schema::{
 pub use error::GoTipeError;
 pub use selection::{Selection, TextPosition};
 pub use state::EditorState;
+pub use timestamp::{Timestamp, TimestampError};
 pub use transaction::{Step, Transaction, TransformError};

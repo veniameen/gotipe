@@ -1,22 +1,5 @@
 [
   {
-    "name": "autocfg",
-    "version": "1.5.1",
-    "license": "Apache-2.0 OR MIT",
-    "source": "https://github.com/cuviper/autocfg",
-    "resolved_source": "registry+https://github.com/rust-lang/crates.io-index",
-    "notices": [
-      {
-        "file": "autocfg-1.5.1-LICENSE-APACHE",
-        "sha256": "a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2"
-      },
-      {
-        "file": "autocfg-1.5.1-LICENSE-MIT",
-        "sha256": "27995d58ad5c1145c1a8cd86244ce844886958a35eb2b78c6b772748669999ac"
-      }
-    ]
-  },
-  {
     "name": "bumpalo",
     "version": "3.20.3",
     "license": "MIT OR Apache-2.0",
@@ -47,19 +30,6 @@
       {
         "file": "cfg-if-1.0.5-LICENSE-MIT",
         "sha256": "378f5840b258e2779c39418f3f2d7b2ba96f1c7917dd6be0713f88305dbda397"
-      }
-    ]
-  },
-  {
-    "name": "chrono",
-    "version": "0.4.45",
-    "license": "MIT OR Apache-2.0",
-    "source": "https://github.com/chronotope/chrono",
-    "resolved_source": "registry+https://github.com/rust-lang/crates.io-index",
-    "notices": [
-      {
-        "file": "chrono-0.4.45-LICENSE.txt",
-        "sha256": "946c9835d8034d24404f8cfec5f4654cee5dad17e944afc3d06d742cf2882831"
       }
     ]
   },
@@ -162,23 +132,6 @@
       {
         "file": "memchr-2.8.3-LICENSE-MIT",
         "sha256": "0f96a83840e146e43c0ec96a22ec1f392e0680e6c1226e6f3ba87e0740af850f"
-      }
-    ]
-  },
-  {
-    "name": "num-traits",
-    "version": "0.2.19",
-    "license": "MIT OR Apache-2.0",
-    "source": "https://github.com/rust-num/num-traits",
-    "resolved_source": "registry+https://github.com/rust-lang/crates.io-index",
-    "notices": [
-      {
-        "file": "num-traits-0.2.19-LICENSE-APACHE",
-        "sha256": "a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2"
-      },
-      {
-        "file": "num-traits-0.2.19-LICENSE-MIT",
-        "sha256": "6485b8ed310d3f0340bf1ad1f47645069ce4069dcc6bb46c7d5c6faf41de1fdb"
       }
     ]
   },

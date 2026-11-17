@@ -25,7 +25,6 @@ serde_json = "1.0"
 thiserror = "2.0"
 wasm-bindgen = "0.2"
 uuid = { version = "1.0", features = ["v4", "v7", "js"] }
-chrono = { version = "0.4", features = ["serde"] }
 zstd = { version = "0.13.4", features = ["wasm", "no_asm"] }
 regex = { version = "1.11", default-features = false, features = ["std", "perf", "unicode-perl"] }
 
@@ -38,7 +37,7 @@ unicode-bidi = "0.3.18"
 unicode-segmentation = "1.13.3"
 flate2 = { version = "1.1", default-features = false, features = ["zlib-rs"] }
 zip = { version = "9.0", default-features = false, features = ["deflate-flate2-zlib-rs"] }
-ammonia = "4.2.4"
+ammonia = "4.2.5"
 
 # Testing
 criterion = "0.5"

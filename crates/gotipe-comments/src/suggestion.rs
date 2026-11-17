@@ -1,7 +1,6 @@
 use std::collections::HashMap;
 
-use chrono::{DateTime, Utc};
-use gotipe_core::{AttrValue, Mark};
+use gotipe_core::{AttrValue, Mark, Timestamp};
 use serde::{Deserialize, Serialize};
 
 use crate::comment::{CommentAnchor, CommentThread};
@@ -50,7 +49,7 @@ pub struct Suggestion {
     pub id: SuggestionId,
     pub suggestion_type: SuggestionType,
     pub author: String,
-    pub created_at: DateTime<Utc>,
+    pub created_at: Timestamp,
     pub anchor: CommentAnchor,
     pub comment_thread: Option<CommentThread>,
     pub status: SuggestionStatus,
@@ -62,7 +61,7 @@ impl Suggestion {
             id: SuggestionId::new(),
             suggestion_type,
             author: author.into(),
-            created_at: Utc::now(),
+            created_at: Timestamp::now(),
             anchor,
             comment_thread: None,
             status: SuggestionStatus::Pending,
