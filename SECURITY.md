@@ -4,9 +4,11 @@
 
 If you discover a security vulnerability in GoTipe, please report it responsibly.
 
-**Email:** security@gotipe.com
+Report it privately through GitHub: open
+[Security → Report a vulnerability](https://github.com/veniameen/gotipe/security/advisories/new).
+Only the maintainers see the report, and the fix is coordinated in a private advisory.
 
-**Do NOT open a public GitHub issue for security vulnerabilities.**
+**Do not open a public GitHub issue for security vulnerabilities.**
 
 ### Response Timeline
 
