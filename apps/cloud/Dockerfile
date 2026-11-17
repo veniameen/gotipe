@@ -5,7 +5,7 @@ COPY Cargo.toml Cargo.lock ./
 COPY crates ./crates
 RUN CARGO_BUILD_JOBS=2 cargo build --locked --release -p gotipe-export --features pdf,docx,cli --bin gotipe-convert
 
-FROM golang:1.26.10-bookworm AS api
+FROM golang:1.26.11-bookworm AS api
 WORKDIR /source
 COPY apps/cloud/go.mod apps/cloud/go.sum ./
 RUN go mod download
