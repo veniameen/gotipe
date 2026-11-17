@@ -229,8 +229,11 @@
   line-height: var(--site-label-leading);
 }
 
+/* one column as wide as the copy, never wider: a long line (the install command) scrolls inside
+   its own box instead of pushing the column past the stage */
 .site-hero-copy {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   justify-items: center;
   max-width: var(--site-hero-copy-max);
   margin: 0 auto;
@@ -242,12 +245,13 @@
   display: inline-flex;
   align-items: center;
   gap: var(--site-space-2);
+  max-width: 100%;
   padding: var(--site-chip-pad);
   border-radius: var(--site-radius-round);
   background: var(--site-glass);
   box-shadow: inset 0 0 0 var(--gt-hairline) var(--site-tint-line), var(--site-item-shadow);
   color: var(--gt-text-2);
-  font-size: var(--site-small-size);
+  font-size: var(--site-chip-size);
   line-height: var(--site-small-leading);
   transition: box-shadow var(--site-transition), color var(--site-transition);
 }
@@ -269,6 +273,7 @@
   line-height: var(--site-label-leading);
 }
 .site-chip > .site-icon {
+  display: var(--site-chip-arrow);
   color: var(--gt-text-3);
   transition: transform var(--site-transition), color var(--site-transition);
 }

@@ -363,6 +363,7 @@
    from the engine at the foot; the Markdown source, the blocks, then the page with a caret ---- */
 .site-build {
   position: relative;
+  container-type: inline-size;
   width: min(100%, var(--site-build-size));
   aspect-ratio: 1;
   margin: 0 auto;

@@ -112,6 +112,9 @@
 .site-stack-col.is-out {
   justify-items: var(--site-stack-out-align);
 }
+.site-stack-col.is-out > .site-label {
+  order: var(--site-stack-out-label-order);
+}
 .site-stack-col > ul {
   display: grid;
   grid-template-columns: var(--site-stack-node-cols);
