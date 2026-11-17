@@ -7,13 +7,13 @@ import type { AnchoredEdit, TextAnchor } from "./anchors";
  */
 export interface ReviewLane {
   id: string;
-  /** Display name: «Агент», «company-lint», «psql». */
+  /** Display name: “Agent”, “company-lint”, “psql”. */
   name: string;
   kind: "agent" | "skill" | "tool" | "user";
   color?: string;
 }
 
-/** A model edit waiting for the person (ADR-0047 «предложение»). */
+/** A model edit waiting for the person (ADR-0047 “suggestion”). */
 export interface ReviewProposal {
   id: string;
   laneId: string;
@@ -53,7 +53,7 @@ export interface LaneCursor {
   laneId: string;
   proposalId?: string;
   anchor?: TextAnchor;
-  /** What the output does: «Дописывает порядок». */
+  /** What the output does: “Writing the steps”. */
   label?: string;
 }
 
