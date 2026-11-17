@@ -1,19 +1,19 @@
-# GoTipe — Безопасность и конфиденциальность
+# GoTipe — Security and Privacy
 
-> **Историческая спецификация, не руководство по текущему API.** Примеры, сроки,
-> сравнения производительности, коммерческие условия и обещания ниже не подтверждают
-> реализацию или доступность сервиса. Актуально: [контракты](development/editor-contracts.md),
-> [карта кода](development/code-map.md), [проверки](development/testing.md),
-> [план выпуска](22-release-readiness.md). Лицензии определяются `LICENSE` и manifest
-> каждого пакета, а не этим документом.
+> **Historical specification, not a guide to the current API.** The examples, timelines,
+> performance comparisons, commercial terms and promises below do not confirm an
+> implementation or the availability of the service. Current references:
+> [contracts](development/editor-contracts.md), [code map](development/code-map.md),
+> [checks](development/testing.md), [release plan](22-release-readiness.md). Licenses are
+> defined by `LICENSE` and the manifest of each package, not by this document.
 
-> Security by design: безопасность встроена в каждый слой GoTipe — от WASM sandbox на клиенте до encrypted storage на сервере. Данные пользователей не покидают контролируемый периметр без явного согласия.
+> Security by design: security is built into every layer of GoTipe, from the WASM sandbox on the client to encrypted storage on the server. User data does not leave the controlled perimeter without explicit consent.
 
 ---
 
-## Содержание
+## Contents
 
-- [Модель угроз (Threat Model)](#модель-угроз-threat-model)
+- [Threat Model](#threat-model)
 - [Content Security](#content-security)
 - [Input Validation](#input-validation)
 - [CRDT Security](#crdt-security)
@@ -26,34 +26,34 @@
 - [Compliance](#compliance)
 - [Incident Response](#incident-response)
 - [Security Checklist](#security-checklist)
-- [Связанные документы](#связанные-документы)
+- [Related documents](#related-documents)
 
 ---
 
-## Модель угроз (Threat Model)
+## Threat Model
 
-GoTipe оперирует в нескольких средах: браузер (WASM), server (Go/Rust), AI providers (внешние API). Каждая среда имеет свой набор угроз.
+GoTipe operates in several environments: the browser (WASM), the server (Go/Rust), and AI providers (external APIs). Each environment has its own set of threats.
 
-### Таблица угроз
+### Threat table
 
-| # | Угроза | Severity | Вектор атаки | Компонент | Mitigation |
+| # | Threat | Severity | Attack vector | Component | Mitigation |
 |---|--------|----------|-------------|-----------|------------|
-| T1 | XSS через editor output | **Critical** | Вставка `<script>` или `onerror` через контент | Client (render) | HTML sanitization в Rust core + JS fallback, CSP headers |
-| T2 | HTML injection через paste | **High** | Clipboard содержит malicious HTML | Client (paste) | Paste sanitizer, allowlist элементов |
-| T3 | CRDT operation tampering | **High** | Malicious peer отправляет invalid operations | CRDT Engine | Operation validation, schema enforcement, author verification |
-| T4 | WASM memory exploits | **Medium** | Crafted input вызывает buffer overflow в WASM | WASM Core | Rust memory safety, WASM sandbox, bounds checking |
+| T1 | XSS through editor output | **Critical** | Inserting `<script>` or `onerror` through content | Client (render) | HTML sanitization in the Rust core + JS fallback, CSP headers |
+| T2 | HTML injection through paste | **High** | Clipboard contains malicious HTML | Client (paste) | Paste sanitizer, element allowlist |
+| T3 | CRDT operation tampering | **High** | A malicious peer sends invalid operations | CRDT Engine | Operation validation, schema enforcement, author verification |
+| T4 | WASM memory exploits | **Medium** | Crafted input causes a buffer overflow in WASM | WASM Core | Rust memory safety, WASM sandbox, bounds checking |
 | T5 | SQL injection | **Critical** | Malformed API parameters | Server (Go) | Parameterized queries, ORM (sqlx), input validation |
-| T6 | WebSocket hijacking | **High** | Перехват WS-соединения, replay attacks | Sync Server | WSS (TLS), JWT validation на handshake, origin check |
-| T7 | API key leakage | **High** | Ключ попадает в client-side code или логи | API Gateway | Server-side only keys, key rotation, hash-based storage |
-| T8 | AI data leakage | **High** | Конфиденциальные данные отправляются в LLM | AI Proxy | PII detection, self-hosted Ollama option, data flow audit |
+| T6 | WebSocket hijacking | **High** | Interception of the WS connection, replay attacks | Sync Server | WSS (TLS), JWT validation on handshake, origin check |
+| T7 | API key leakage | **High** | A key ends up in client-side code or logs | API Gateway | Server-side only keys, key rotation, hash-based storage |
+| T8 | AI data leakage | **High** | Confidential data is sent to an LLM | AI Proxy | PII detection, self-hosted Ollama option, data flow audit |
 | T9 | Supply chain attack | **Medium** | Compromised dependency (npm/crates.io) | Build pipeline | cargo audit, npm audit, lockfile pinning, SBOM |
-| T10 | DDoS на sync server | **Medium** | Flood WebSocket connections или operations | Sync Server | Rate limiting, connection limits, IP throttling |
-| T11 | Privilege escalation | **High** | User получает admin-права через API manipulation | API Gateway | RBAC enforcement, server-side authorization checks |
-| T12 | Data exfiltration | **Critical** | Несанкционированный доступ к документам | Storage Layer | Encryption at rest (AES-256), access control, audit logging |
-| T13 | CSRF атаки | **Medium** | Cross-site request к GoTipe API | API Gateway | SameSite cookies, CSRF tokens, Origin header validation |
-| T14 | Malicious extensions | **Medium** | Third-party extension исполняет вредоносный код | Extension Host | Extension sandbox, permission model, review process |
+| T10 | DDoS on the sync server | **Medium** | Flood of WebSocket connections or operations | Sync Server | Rate limiting, connection limits, IP throttling |
+| T11 | Privilege escalation | **High** | A user gains admin rights through API manipulation | API Gateway | RBAC enforcement, server-side authorization checks |
+| T12 | Data exfiltration | **Critical** | Unauthorized access to documents | Storage Layer | Encryption at rest (AES-256), access control, audit logging |
+| T13 | CSRF attacks | **Medium** | Cross-site request to the GoTipe API | API Gateway | SameSite cookies, CSRF tokens, Origin header validation |
+| T14 | Malicious extensions | **Medium** | A third-party extension runs malicious code | Extension Host | Extension sandbox, permission model, review process |
 
-### Диаграмма поверхности атаки
+### Attack surface diagram
 
 ```
                          ┌─────────────────┐
@@ -80,16 +80,16 @@ GoTipe оперирует в нескольких средах: браузер (
 
 ### XSS Prevention
 
-GoTipe использует многоуровневую защиту от XSS. Sanitization выполняется в Rust core (gotipe-export), что исключает bypass через JS-специфичные уязвимости.
+GoTipe uses layered XSS protection. Sanitization runs in the Rust core (gotipe-export), which rules out bypasses through JS-specific vulnerabilities.
 
-#### Уровень 1: Rust-side sanitization
+#### Level 1: Rust-side sanitization
 
 ```rust
 // crates/gotipe-export/src/html/sanitizer.rs
 
 use std::collections::{HashMap, HashSet};
 
-/// Allowlist элементов и атрибутов для HTML output
+/// Allowlist of elements and attributes for HTML output
 pub struct HtmlSanitizer {
     allowed_elements: HashSet<&'static str>,
     allowed_attrs: HashMap<&'static str, HashSet<&'static str>>,
@@ -129,7 +129,7 @@ impl HtmlSanitizer {
         }
     }
 
-    /// Санитизация HTML-строки — удаляет всё, что не в allowlist
+    /// Sanitizes an HTML string: removes everything that is not in the allowlist
     pub fn sanitize(&self, html: &str) -> Result<String, SanitizeError> {
         let fragment = parse_html_fragment(html)?;
         let mut output = String::with_capacity(html.len());
@@ -138,7 +138,7 @@ impl HtmlSanitizer {
             match node {
                 Node::Element(el) => {
                     if !self.allowed_elements.contains(el.tag.as_str()) {
-                        // Элемент удаляется, но дочерние узлы сохраняются
+                        // The element is removed, but its child nodes are kept
                         continue;
                     }
                     self.sanitize_attrs(&el, &mut output)?;
@@ -146,25 +146,25 @@ impl HtmlSanitizer {
                 Node::Text(text) => {
                     output.push_str(&escape_html(&text));
                 }
-                _ => {} // Comment, Doctype — удаляются
+                _ => {} // Comment, Doctype are removed
             }
         }
         Ok(output)
     }
 
-    /// Проверка URI scheme — блокирует javascript:, data: и т.д.
+    /// URI scheme check: blocks javascript:, data:, etc.
     fn validate_uri(&self, uri: &str) -> bool {
         if let Some(scheme) = uri.split(':').next() {
             self.allowed_uri_schemes.contains(scheme.to_lowercase().as_str())
         } else {
-            // Relative URI — допускается
+            // Relative URI is allowed
             true
         }
     }
 }
 ```
 
-#### Уровень 2: JS-side sanitization (fallback)
+#### Level 2: JS-side sanitization (fallback)
 
 ```typescript
 // packages/core/src/security/sanitizer.ts
@@ -187,13 +187,13 @@ const SANITIZER_CONFIG: DOMPurify.Config = {
   ALLOWED_URI_REGEXP: /^(?:(?:https?|mailto):|[^a-z]|[a-z+.\-]+(?:[^a-z+.\-:]|$))/i,
   ALLOW_DATA_ATTR: false,
   ADD_ATTR: ['target'],
-  // Принудительно добавляем rel="noopener noreferrer" на все ссылки
+  // Force rel="noopener noreferrer" on all links
   FORBID_CONTENTS: ['script', 'style', 'textarea'],
 };
 
 /**
- * Двойная sanitization: Rust (primary) + DOMPurify (fallback).
- * DOMPurify используется только если Rust sanitizer вернул ошибку.
+ * Double sanitization: Rust (primary) + DOMPurify (fallback).
+ * DOMPurify is used only if the Rust sanitizer returned an error.
  */
 export function sanitizeHtml(html: string): string {
   try {
@@ -208,7 +208,7 @@ export function sanitizeHtml(html: string): string {
 
 ### Content Security Policy (CSP)
 
-Рекомендуемые CSP headers для приложений с GoTipe:
+Recommended CSP headers for applications that use GoTipe:
 
 ```
 Content-Security-Policy:
@@ -223,45 +223,45 @@ Content-Security-Policy:
   base-uri 'self';
 ```
 
-| Директива | Значение | Обоснование |
+| Directive | Value | Rationale |
 |-----------|----------|-------------|
-| `script-src 'wasm-unsafe-eval'` | Разрешает WASM execution | Необходим для gotipe-wasm core |
-| `style-src 'unsafe-inline'` | Разрешает inline styles | Editor использует inline styles для marks (color, highlight) |
-| `connect-src wss://...` | WebSocket для collaboration | Sync server connection |
-| `frame-src 'none'` | Запрещает iframe embedding | Предотвращает clickjacking |
-| `object-src 'none'` | Запрещает plugins | Блокирует Flash, Java applets |
+| `script-src 'wasm-unsafe-eval'` | Allows WASM execution | Required for the gotipe-wasm core |
+| `style-src 'unsafe-inline'` | Allows inline styles | The editor uses inline styles for marks (color, highlight) |
+| `connect-src wss://...` | WebSocket for collaboration | Sync server connection |
+| `frame-src 'none'` | Forbids iframe embedding | Prevents clickjacking |
+| `object-src 'none'` | Forbids plugins | Blocks Flash, Java applets |
 
 ### Allowlists
 
-#### Элементы (HTML tags)
+#### Elements (HTML tags)
 
-| Категория | Разрешённые элементы |
+| Category | Allowed elements |
 |-----------|---------------------|
 | Block | `p`, `h1`-`h6`, `blockquote`, `pre`, `hr`, `div` |
 | List | `ul`, `ol`, `li` |
 | Inline | `em`, `strong`, `del`, `u`, `code`, `a`, `br`, `span`, `sub`, `sup` |
 | Table | `table`, `thead`, `tbody`, `tr`, `th`, `td` |
-| Media | `img` (с валидацией src) |
-| Запрещены | `script`, `style`, `iframe`, `object`, `embed`, `form`, `input`, `textarea`, `svg`, `math` |
+| Media | `img` (with `src` validation) |
+| Forbidden | `script`, `style`, `iframe`, `object`, `embed`, `form`, `input`, `textarea`, `svg`, `math` |
 
-#### Атрибуты (HTML attributes)
+#### Attributes (HTML attributes)
 
-| Атрибут | Элементы | Валидация |
+| Attribute | Elements | Validation |
 |---------|----------|-----------|
-| `href` | `a` | Только `http:`, `https:`, `mailto:` — блокируется `javascript:` |
-| `src` | `img` | Только `http:`, `https:` — блокируется `data:` в strict mode |
-| `target` | `a` | Только `_blank` — принудительно добавляется `rel="noopener noreferrer"` |
-| `style` | `span` | Только CSS properties из allowlist |
-| `class` | `code` | Только `language-*` pattern |
-| `data-*` | Все | Запрещены по умолчанию, явный allowlist для `data-language`, `data-color` |
+| `href` | `a` | Only `http:`, `https:`, `mailto:`; `javascript:` is blocked |
+| `src` | `img` | Only `http:`, `https:`; `data:` is blocked in strict mode |
+| `target` | `a` | Only `_blank`; `rel="noopener noreferrer"` is added forcibly |
+| `style` | `span` | Only CSS properties from the allowlist |
+| `class` | `code` | Only the `language-*` pattern |
+| `data-*` | All | Forbidden by default, explicit allowlist for `data-language`, `data-color` |
 
 ---
 
 ## Input Validation
 
-### Schema-based validation в Rust
+### Schema-based validation in Rust
 
-Каждый документ GoTipe валидируется через schema, определённую в Rust core. Валидация выполняется на каждую операцию — нельзя вставить block, не описанный в schema. Подробности document model см. в [03-editor-core.md](03-editor-core.md).
+Every GoTipe document is validated against a schema defined in the Rust core. Validation runs on every operation: you cannot insert a block that the schema does not describe. For the document model, see [03-editor-core.md](03-editor-core.md).
 
 ```rust
 // crates/gotipe-core/src/schema/validator.rs
@@ -269,19 +269,19 @@ Content-Security-Policy:
 use crate::schema::{Schema, BlockSpec, MarkSpec};
 use crate::document::{Block, Mark, TextSpan};
 
-/// Лимиты для предотвращения DoS через гигантские документы
+/// Limits to prevent DoS through giant documents
 pub struct ValidationLimits {
-    /// Максимальная глубина вложенности блоков
+    /// Maximum block nesting depth
     pub max_depth: usize,              // default: 12
-    /// Максимальное количество блоков в документе
+    /// Maximum number of blocks in a document
     pub max_blocks: usize,             // default: 10_000
-    /// Максимальная длина текста в одном span
+    /// Maximum text length in one span
     pub max_text_length: usize,        // default: 100_000
-    /// Максимальное количество marks на одном span
+    /// Maximum number of marks on one span
     pub max_marks_per_span: usize,     // default: 20
-    /// Максимальный размер атрибута (bytes)
+    /// Maximum attribute size (bytes)
     pub max_attr_size: usize,          // default: 4_096
-    /// Максимальный общий размер документа (bytes)
+    /// Maximum total document size (bytes)
     pub max_document_size: usize,      // default: 10_485_760 (10MB)
 }
 
@@ -298,7 +298,7 @@ impl Default for ValidationLimits {
     }
 }
 
-/// Валидатор документа — проверяет соответствие schema
+/// Document validator: checks conformance with the schema
 pub struct DocumentValidator<'a> {
     schema: &'a Schema,
     limits: ValidationLimits,
@@ -306,7 +306,7 @@ pub struct DocumentValidator<'a> {
 
 impl<'a> DocumentValidator<'a> {
     pub fn validate_block(&self, block: &Block, depth: usize) -> Result<(), ValidationError> {
-        // 1. Проверка глубины вложенности
+        // 1. Check nesting depth
         if depth > self.limits.max_depth {
             return Err(ValidationError::MaxDepthExceeded {
                 max: self.limits.max_depth,
@@ -314,17 +314,17 @@ impl<'a> DocumentValidator<'a> {
             });
         }
 
-        // 2. Проверка типа блока — должен быть в schema
+        // 2. Check the block type: it must be in the schema
         let spec = self.schema.block_spec(&block.block_type)
             .ok_or(ValidationError::UnknownBlockType(block.block_type.clone()))?;
 
-        // 3. Валидация атрибутов блока
+        // 3. Validate block attributes
         self.validate_block_attrs(block, spec)?;
 
-        // 4. Валидация content (text spans, marks)
+        // 4. Validate content (text spans, marks)
         self.validate_content(&block.content, spec)?;
 
-        // 5. Рекурсивная валидация children
+        // 5. Recursively validate children
         for child in &block.children {
             if !spec.allowed_children.contains(&child.block_type) {
                 return Err(ValidationError::InvalidChild {
@@ -344,14 +344,14 @@ impl<'a> DocumentValidator<'a> {
         spec: &BlockSpec,
     ) -> Result<(), ValidationError> {
         for (key, value) in &block.attrs {
-            // Атрибут должен быть объявлен в schema
+            // The attribute must be declared in the schema
             let attr_spec = spec.attrs.get(key.as_str())
                 .ok_or(ValidationError::UnknownAttribute {
                     block_type: block.block_type.clone(),
                     attr: key.clone(),
                 })?;
 
-            // Проверка размера
+            // Size check
             let attr_bytes = serde_json::to_vec(value)
                 .map_err(|_| ValidationError::InvalidAttrValue)?;
             if attr_bytes.len() > self.limits.max_attr_size {
@@ -361,7 +361,7 @@ impl<'a> DocumentValidator<'a> {
                 });
             }
 
-            // Проверка типа значения
+            // Value type check
             attr_spec.validate_value(value)?;
         }
         Ok(())
@@ -371,7 +371,7 @@ impl<'a> DocumentValidator<'a> {
         let spec = self.schema.mark_spec(&mark.mark_type)
             .ok_or(ValidationError::UnknownMarkType(mark.mark_type.clone()))?;
 
-        // Валидация атрибутов mark (например, href для link)
+        // Validate mark attributes (e.g. href for link)
         for (key, value) in &mark.attrs {
             let attr_spec = spec.attrs.get(key.as_str())
                 .ok_or(ValidationError::UnknownMarkAttribute {
@@ -381,7 +381,7 @@ impl<'a> DocumentValidator<'a> {
             attr_spec.validate_value(value)?;
         }
 
-        // Специальная проверка для link marks — валидация URL
+        // Special check for link marks: URL validation
         if mark.mark_type == "link" {
             if let Some(href) = mark.attrs.get("href") {
                 self.validate_url(href.as_str()
@@ -394,7 +394,7 @@ impl<'a> DocumentValidator<'a> {
 }
 ```
 
-### Валидация на каждом уровне
+### Validation at every level
 
 ```
 ┌─────────────┐     ┌──────────────┐     ┌────────────────┐     ┌───────────────┐
@@ -418,7 +418,7 @@ impl<'a> DocumentValidator<'a> {
 
 ## CRDT Security
 
-CRDT engine (подробности в [02-collaboration.md](02-collaboration.md)) требует специальных мер безопасности, т.к. каждый peer может генерировать операции.
+The CRDT engine (details in [02-collaboration.md](02-collaboration.md)) requires dedicated security measures, because every peer can generate operations.
 
 ### Operation Validation
 
@@ -428,25 +428,25 @@ CRDT engine (подробности в [02-collaboration.md](02-collaboration.md
 use crate::ops::CrdtOperation;
 use crate::doc::CrdtDocument;
 
-/// Валидация CRDT-операции перед применением
+/// Validation of a CRDT operation before it is applied
 pub struct OperationValidator {
-    /// Максимальный размер одной операции (bytes)
+    /// Maximum size of a single operation (bytes)
     max_op_size: usize,
-    /// Максимальное количество операций в одном batch
+    /// Maximum number of operations in one batch
     max_batch_size: usize,
-    /// Rate limit: операций в секунду на peer
+    /// Rate limit: operations per second per peer
     max_ops_per_second: u32,
 }
 
 impl OperationValidator {
-    /// Проверка операции перед merge в документ
+    /// Checks an operation before it is merged into the document
     pub fn validate(
         &self,
         op: &CrdtOperation,
         doc: &CrdtDocument,
         peer_state: &PeerState,
     ) -> Result<(), CrdtSecurityError> {
-        // 1. Размер операции
+        // 1. Operation size
         let op_size = op.serialized_size();
         if op_size > self.max_op_size {
             return Err(CrdtSecurityError::OperationTooLarge {
@@ -455,17 +455,17 @@ impl OperationValidator {
             });
         }
 
-        // 2. Author verification — PeerId соответствует authenticated user
+        // 2. Author verification: PeerId matches the authenticated user
         if !peer_state.is_authenticated(&op.peer_id) {
             return Err(CrdtSecurityError::UnauthorizedPeer(op.peer_id.clone()));
         }
 
-        // 3. Causal ordering — операция ссылается на известные dependencies
+        // 3. Causal ordering: the operation refers to known dependencies
         if !doc.version.contains(&op.dependencies) {
             return Err(CrdtSecurityError::InvalidCausalOrder);
         }
 
-        // 4. Schema compliance — результат операции соответствует schema
+        // 4. Schema compliance: the result of the operation matches the schema
         let simulated_doc = doc.simulate_apply(op)?;
         self.schema_validator.validate_document(&simulated_doc)?;
 
@@ -484,29 +484,29 @@ impl OperationValidator {
 
 ### Malicious Peer Detection
 
-| Индикатор | Порог | Действие |
+| Indicator | Threshold | Action |
 |-----------|-------|----------|
 | Operations per second | > 100 ops/s | Throttle + warning |
 | Operations per second | > 500 ops/s | Temporary ban (60s) |
-| Invalid operations | > 5 за 10 минут | Disconnect + log |
-| Document size growth | > 1MB за 1 операцию | Reject operation |
-| Causal order violations | > 3 подряд | Disconnect + alert |
-| Replay attacks (duplicate ops) | Любой duplicate | Silent reject |
+| Invalid operations | > 5 in 10 minutes | Disconnect + log |
+| Document size growth | > 1MB in 1 operation | Reject operation |
+| Causal order violations | > 3 in a row | Disconnect + alert |
+| Replay attacks (duplicate ops) | Any duplicate | Silent reject |
 
 ### Conflict Resolution Safety
 
-CRDT-конфликты разрешаются детерминистически — результат одинаков на всех peers:
+CRDT conflicts are resolved deterministically: the result is the same on all peers:
 
 ```
 Peer A: insert("Hello") at position 0    ─┐
                                            ├──► Merge: "HelloWorld" (deterministic)
-Peer B: insert("World") at position 0    ─┘    PeerId ordering определяет порядок
+Peer B: insert("World") at position 0    ─┘    PeerId ordering determines the order
 
-Правило: при concurrent inserts peer с лексикографически меньшим PeerId идёт первым.
-Это математически гарантирует eventual consistency.
+Rule: for concurrent inserts, the peer with the lexicographically smaller PeerId goes first.
+This mathematically guarantees eventual consistency.
 ```
 
-**Важно:** GoTipe CRDT не использует last-writer-wins для text content (только для block attributes). Это предотвращает потерю данных при concurrent editing.
+**Important:** the GoTipe CRDT does not use last-writer-wins for text content (only for block attributes). This prevents data loss during concurrent editing.
 
 ---
 
@@ -514,7 +514,7 @@ Peer B: insert("World") at position 0    ─┘    PeerId ordering опреде�
 
 ### API Key Management
 
-API ключи хранятся как SHA-256 хэши в PostgreSQL. Плейнтекст ключа показывается пользователю один раз при создании.
+API keys are stored as SHA-256 hashes in PostgreSQL. The plaintext key is shown to the user once, at creation.
 
 ```
 ┌────────────┐     ┌──────────────┐     ┌───────────────────┐
@@ -528,40 +528,40 @@ API ключи хранятся как SHA-256 хэши в PostgreSQL. Плей�
                                         └───────────────────┘
 ```
 
-#### Структура API ключа
+#### API key structure
 
 ```
 gt_live_a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6
 │  │    │
-│  │    └── 32 символа random (crypto/rand)
-│  └── Среда: live / test
-└── Prefix: идентификатор GoTipe
+│  │    └── 32 random characters (crypto/rand)
+│  └── Environment: live / test
+└── Prefix: GoTipe identifier
 ```
 
-| Поле | Описание |
+| Field | Description |
 |------|----------|
-| `key_prefix` | Первые 8 символов (для display в UI: `gt_live_a1b2c3d4...`) |
-| `key_hash` | SHA-256 хэш полного ключа |
-| `scopes` | Массив разрешений: `["documents:read", "documents:write", "ai:use"]` |
-| `expires_at` | Опциональная дата истечения |
-| `rate_limit` | Custom rate limit (по умолчанию: plan limit) |
+| `key_prefix` | First 8 characters (for display in the UI: `gt_live_a1b2c3d4...`) |
+| `key_hash` | SHA-256 hash of the full key |
+| `scopes` | Array of permissions: `["documents:read", "documents:write", "ai:use"]` |
+| `expires_at` | Optional expiration date |
+| `rate_limit` | Custom rate limit (default: plan limit) |
 
 ### JWT Tokens
 
-JWT используются для browser-side аутентификации (WebSocket handshake, REST API из SPA).
+JWTs are used for browser-side authentication (WebSocket handshake, REST API from the SPA).
 
 ```typescript
-// Пример JWT payload для GoTipe Cloud
+// Example JWT payload for GoTipe Cloud
 interface GoTipeJwtPayload {
   /** Subject — user ID */
   sub: string;
   /** Organization ID */
   org: string;
-  /** Роль в организации */
+  /** Role in the organization */
   role: 'viewer' | 'commenter' | 'editor' | 'admin' | 'owner';
-  /** Scopes — разрешённые действия */
+  /** Scopes: permitted actions */
   scopes: string[];
-  /** Document-level permissions (опционально) */
+  /** Document-level permissions (optional) */
   doc_permissions?: Record<string, 'read' | 'comment' | 'edit'>;
   /** Issued at */
   iat: number;
@@ -570,21 +570,21 @@ interface GoTipeJwtPayload {
 }
 ```
 
-**Политика JWT:**
-- Access token TTL: 15 минут
-- Refresh token TTL: 7 дней
+**JWT policy:**
+- Access token TTL: 15 minutes
+- Refresh token TTL: 7 days
 - Signing algorithm: ES256 (ECDSA P-256)
-- JWT хранится в `httpOnly` cookie (не в localStorage)
-- Refresh rotation: каждый refresh token одноразовый
+- The JWT is stored in an `httpOnly` cookie (not in localStorage)
+- Refresh rotation: every refresh token is single-use
 
 ### JWT Blocklist (Revocation)
 
-Отозванные JWT (logout, password change, session revoke) хранятся в Valkey до истечения TTL:
+Revoked JWTs (logout, password change, session revoke) are stored in Valkey until their TTL expires:
 
 ```go
 // apps/cloud/internal/auth/blocklist.go
 
-const valkeyBlocklistDB = 1  // Отдельная DB для blocklist
+const valkeyBlocklistDB = 1  // Separate DB for the blocklist
 
 type JWTBlocklist struct {
     client *redis.Client  // Valkey client, db=1
@@ -598,27 +598,27 @@ func NewJWTBlocklist(valkeyURL string) *JWTBlocklist {
     return &JWTBlocklist{client: client}
 }
 
-// Revoke — добавить JWT в blocklist
+// Revoke: add a JWT to the blocklist
 func (bl *JWTBlocklist) Revoke(ctx context.Context, tokenHash string, expiresAt time.Time) error {
     ttl := time.Until(expiresAt)
     if ttl <= 0 {
-        return nil  // Уже истёк, нет смысла блокировать
+        return nil  // Already expired, no point in blocking
     }
     return bl.client.Set(ctx, "blocked:"+tokenHash, "1", ttl).Err()
 }
 
-// IsRevoked — проверить, отозван ли JWT
+// IsRevoked: check whether a JWT has been revoked
 func (bl *JWTBlocklist) IsRevoked(ctx context.Context, tokenHash string) bool {
     exists, err := bl.client.Exists(ctx, "blocked:"+tokenHash).Result()
     if err != nil {
-        // Graceful degradation: если Valkey недоступен — считаем токен валидным
-        // (он всё равно истечёт через 15 минут)
+        // Graceful degradation: if Valkey is unavailable, treat the token as valid
+        // (it expires within 15 minutes anyway)
         return false
     }
     return exists > 0
 }
 
-// RevokeAllForUser — отозвать все сессии пользователя (при смене пароля)
+// RevokeAllForUser: revoke all of a user's sessions (on password change)
 func (bl *JWTBlocklist) RevokeAllForUser(ctx context.Context, userID string) error {
     return bl.client.Set(ctx,
         "user_revoked:"+userID,
@@ -628,25 +628,25 @@ func (bl *JWTBlocklist) RevokeAllForUser(ctx context.Context, userID string) err
 }
 ```
 
-**Конфигурация Valkey для blocklist:**
-- DB 1 (отдельная от основного кеша в DB 0)
-- `maxmemory-policy noeviction` — нельзя случайно удалить заблокированный токен
-- AOF persistence — blocklist сохраняется при restart
-- TTL на каждом ключе = оставшееся время жизни JWT (автоматическая очистка)
+**Valkey configuration for the blocklist:**
+- DB 1 (separate from the main cache in DB 0)
+- `maxmemory-policy noeviction`: a blocked token must not be evicted by accident
+- AOF persistence: the blocklist survives a restart
+- TTL on every key = the remaining lifetime of the JWT (automatic cleanup)
 
-**Сценарии отзыва:**
+**Revocation scenarios:**
 
-| Событие | Действие |
+| Event | Action |
 |---------|----------|
 | Logout | `Revoke(tokenHash, token.exp)` |
-| Смена пароля | `RevokeAllForUser(userID)` |
-| Удаление API key | `Revoke(keyHash, key.exp)` |
-| Подозрительная активность | `RevokeAllForUser(userID)` + email уведомление |
+| Password change | `RevokeAllForUser(userID)` |
+| API key deletion | `Revoke(keyHash, key.exp)` |
+| Suspicious activity | `RevokeAllForUser(userID)` + email notification |
 | GDPR deletion | `RevokeAllForUser(userID)` + delete all data |
 
 ### RBAC (Role-Based Access Control)
 
-| Роль | Документы | Комментарии | Редактирование | AI | Export | Настройки | Billing |
+| Role | Documents | Comments | Editing | AI | Export | Settings | Billing |
 |------|-----------|-------------|----------------|-----|--------|-----------|---------|
 | `viewer` | Read | Read | -- | -- | Read | -- | -- |
 | `commenter` | Read | Read/Write | -- | -- | Read | -- | -- |
@@ -656,7 +656,7 @@ func (bl *JWTBlocklist) RevokeAllForUser(ctx context.Context, userID string) err
 
 ### Per-Document Permissions
 
-Помимо organization-level roles, GoTipe поддерживает per-document permissions:
+In addition to organization-level roles, GoTipe supports per-document permissions:
 
 ```typescript
 // Per-document access control
@@ -668,7 +668,7 @@ const docPermission = await gotipeCloud.documents.setPermission({
 });
 ```
 
-Enforcement выполняется на server-side — WebSocket handshake проверяет permission перед подключением к room.
+Enforcement happens on the server side: the WebSocket handshake checks the permission before connecting to a room.
 
 ```go
 // server/middleware/auth.go
@@ -703,31 +703,31 @@ func AuthorizeDocument(next http.Handler) http.Handler {
 
 ### GDPR Compliance
 
-GoTipe реализует GDPR by design:
+GoTipe implements GDPR by design:
 
-| Принцип GDPR | Реализация в GoTipe |
+| GDPR principle | Implementation in GoTipe |
 |---------------|---------------------|
-| **Lawfulness** | Обработка данных только с согласия или на основе контракта |
-| **Purpose limitation** | Документы хранятся только для предоставления сервиса collaboration |
-| **Data minimization** | Собираются только необходимые данные: email, name, document content |
-| **Accuracy** | Пользователи могут обновить свои данные через API |
-| **Storage limitation** | Configurable retention policy, auto-delete неактивных документов |
+| **Lawfulness** | Data is processed only with consent or on the basis of a contract |
+| **Purpose limitation** | Documents are stored only to provide the collaboration service |
+| **Data minimization** | Only the necessary data is collected: email, name, document content |
+| **Accuracy** | Users can update their data through the API |
+| **Storage limitation** | Configurable retention policy, auto-delete of inactive documents |
 | **Integrity & confidentiality** | Encryption at rest + in transit |
-| **Accountability** | Audit logging всех операций с данными |
+| **Accountability** | Audit logging of all operations on data |
 
 ### Data Minimization
 
-GoTipe Cloud собирает минимум данных:
+GoTipe Cloud collects a minimum of data:
 
-| Данные | Собирается | Цель | Retention |
+| Data | Collected | Purpose | Retention |
 |--------|-----------|------|-----------|
-| Email | Да | Аутентификация, уведомления | До удаления аккаунта |
-| Имя | Да | Отображение в collaboration | До удаления аккаунта |
-| IP-адрес | Rate limiting only | Безопасность | 24 часа |
-| Document content | Да | Сервис | Policy клиента |
-| Cursor positions | Transient | Awareness (collaboration) | В памяти, не персистится |
-| AI prompts | Нет (по умолчанию) | -- | Не хранятся |
-| Usage metrics | Агрегированные | Billing, analytics | 90 дней |
+| Email | Yes | Authentication, notifications | Until the account is deleted |
+| Name | Yes | Display in collaboration | Until the account is deleted |
+| IP address | Rate limiting only | Security | 24 hours |
+| Document content | Yes | Service | Customer policy |
+| Cursor positions | Transient | Awareness (collaboration) | In memory, not persisted |
+| AI prompts | No (by default) | -- | Not stored |
+| Usage metrics | Aggregated | Billing, analytics | 90 days |
 
 ### Encryption
 
@@ -745,8 +745,8 @@ GoTipe Cloud собирает минимум данных:
 │  │      aad = document_id                                  │  │
 │  │  )                                                      │  │
 │  │                                                         │  │
-│  │  DEK зашифрован через KEK (Key Encryption Key)          │  │
-│  │  KEK хранится в: AWS KMS / HashiCorp Vault / env var    │  │
+│  │  DEK is encrypted with a KEK (Key Encryption Key)       │  │
+│  │  KEK is stored in: AWS KMS / HashiCorp Vault / env var  │  │
 │  └─────────────────────────────────────────────────────────┘  │
 │                                                                │
 │  Cloudflare R2 (CRDT snapshots, exported files)                │
@@ -759,7 +759,7 @@ GoTipe Cloud собирает минимум данных:
 
 #### In Transit (TLS 1.3)
 
-| Соединение | Протокол | Минимальная версия |
+| Connection | Protocol | Minimum version |
 |------------|----------|-------------------|
 | Browser → API Gateway | HTTPS | TLS 1.2 (prefer 1.3) |
 | Browser → Sync Server | WSS | TLS 1.2 (prefer 1.3) |
@@ -771,37 +771,37 @@ GoTipe Cloud собирает минимум данных:
 ### Data Retention & Right to Deletion
 
 ```typescript
-// Пример: запрос на удаление данных пользователя (GDPR Article 17)
+// Example: a request to delete a user's data (GDPR Article 17)
 const deletion = await gotipeCloud.admin.requestDataDeletion({
   userId: 'user_xyz789',
-  // Опции:
-  deleteDocuments: true,         // Удалить все документы, где user — единственный owner
-  anonymizeCollabHistory: true,  // Заменить userId на "deleted_user" в CRDT history
-  deleteApiKeys: true,           // Отозвать все API ключи
-  deleteExports: true,           // Удалить сгенерированные файлы из R2
+  // Options:
+  deleteDocuments: true,         // Delete all documents where the user is the only owner
+  anonymizeCollabHistory: true,  // Replace userId with "deleted_user" in the CRDT history
+  deleteApiKeys: true,           // Revoke all API keys
+  deleteExports: true,           // Delete generated files from R2
 });
 
-// Результат: deletion выполняется в течение 72 часов
-// Возвращается confirmation token для отслеживания статуса
+// Result: deletion completes within 72 hours
+// A confirmation token is returned for tracking the status
 ```
 
-**Политика retention:**
+**Retention policy:**
 
-| Тип данных | Self-hosted | Cloud Starter | Cloud Pro | Cloud Enterprise |
+| Data type | Self-hosted | Cloud Starter | Cloud Pro | Cloud Enterprise |
 |------------|-------------|---------------|-----------|------------------|
-| Документы | Без ограничений | 1 год после last edit | Без ограничений | Configurable |
-| CRDT History | Без ограничений | 90 дней | 1 год | Configurable |
-| Audit Logs | Без ограничений | 30 дней | 1 год | 7 лет |
-| Exported Files | Без ограничений | 7 дней | 30 дней | Configurable |
-| Backups | Ответственность клиента | 30 дней | 90 дней | Configurable |
+| Documents | Unlimited | 1 year after last edit | Unlimited | Configurable |
+| CRDT History | Unlimited | 90 days | 1 year | Configurable |
+| Audit Logs | Unlimited | 30 days | 1 year | 7 years |
+| Exported Files | Unlimited | 7 days | 30 days | Configurable |
+| Backups | Customer's responsibility | 30 days | 90 days | Configurable |
 
 ---
 
 ## AI Privacy
 
-AI-интеграция (подробности в [07-ai.md](07-ai.md)) создаёт особые риски для конфиденциальности. GoTipe реализует privacy by design для AI data flow.
+The AI integration (details in [07-ai.md](07-ai.md)) creates particular privacy risks. GoTipe implements privacy by design for the AI data flow.
 
-### Data Flow для AI запросов
+### Data flow for AI requests
 
 ```
 ┌────────────────────────────────────────────────────────────────────────┐
@@ -813,7 +813,7 @@ AI-интеграция (подробности в [07-ai.md](07-ai.md)) соз�
 │  │              │    │                  │    │                    │   │
 │  │ • Full doc   │    │ • Selection only │    │ • Email regex      │   │
 │  │ • All blocks │    │ • Surrounding    │    │ • Phone regex      │   │
-│  │              │    │   context (±3    │    │ • SSN/ИНН patterns │   │
+│  │              │    │   context (±3    │    │ • SSN/INN patterns │   │
 │  │              │    │   blocks)        │    │ • Credit card      │   │
 │  │              │    │ • Block types    │    │ • Custom patterns  │   │
 │  │              │    │ • No metadata    │    │                    │   │
@@ -835,8 +835,8 @@ AI-интеграция (подробности в [07-ai.md](07-ai.md)) соз�
 │  ┌──────────────────┐    ┌──────────────────┐                         │
 │  │ Request Logger   │    │ Provider Router  │                         │
 │  │ (NO content      │    │                  │                         │
-│  │  logging — only  │    │ • Ollama (local) │──► Данные не покидают   │
-│  │  metadata: model,│    │ • OpenAI         │    вашу инфраструктуру  │
+│  │  logging — only  │    │ • Ollama (local) │──► Data does not leave  │
+│  │  metadata: model,│    │ • OpenAI         │    your infrastructure  │
 │  │  token count,    │    │ • Anthropic      │                         │
 │  │  latency)        │    │ • Custom         │                         │
 │  └──────────────────┘    └──────────────────┘                         │
@@ -845,32 +845,32 @@ AI-интеграция (подробности в [07-ai.md](07-ai.md)) соз�
 
 ### Self-hosted AI (Ollama)
 
-Для максимальной конфиденциальности GoTipe поддерживает self-hosted Ollama — данные не покидают локальную сеть:
+For maximum privacy, GoTipe supports self-hosted Ollama: data does not leave the local network:
 
 ```typescript
-// Конфигурация Ollama — данные остаются на вашем сервере
+// Ollama configuration: data stays on your server
 const editor = new GoTipeEditor({
   ai: {
     provider: 'ollama',
     config: {
-      baseUrl: 'http://localhost:11434',  // Ваш Ollama instance
+      baseUrl: 'http://localhost:11434',  // Your Ollama instance
       model: 'llama3.1:8b',
-      // Никакие данные не отправляются в интернет
+      // No data is sent to the internet
     },
   },
 });
 ```
 
-### Гарантии по провайдерам
+### Guarantees by provider
 
-| Аспект | Self-hosted (Ollama) | OpenAI API | Anthropic API |
+| Aspect | Self-hosted (Ollama) | OpenAI API | Anthropic API |
 |--------|---------------------|------------|---------------|
-| Данные покидают инфраструктуру | Нет | Да (API call) | Да (API call) |
-| Обучение на данных пользователей | Нет | Нет (API ToS) | Нет (API ToS) |
-| Хранение запросов провайдером | Нет | 30 дней (abuse) | 30 дней (safety) |
-| Compliance-ready | Да | SOC 2 Type II | SOC 2 Type II |
-| Рекомендация для HIPAA | Да | С BAA | С BAA |
-| Контроль модели | Полный | Нет | Нет |
+| Data leaves the infrastructure | No | Yes (API call) | Yes (API call) |
+| Training on user data | No | No (API ToS) | No (API ToS) |
+| Request retention by the provider | No | 30 days (abuse) | 30 days (safety) |
+| Compliance-ready | Yes | SOC 2 Type II | SOC 2 Type II |
+| Recommended for HIPAA | Yes | With BAA | With BAA |
+| Model control | Full | None | None |
 
 ### PII Detection & Redaction
 
@@ -893,34 +893,34 @@ lazy_static! {
         r"\b\d{4}[\s\-]?\d{4}[\s\-]?\d{4}[\s\-]?\d{4}\b"
     ).unwrap();
 
-    // ИНН (Россия)
+    // INN (Russian taxpayer ID)
     static ref INN_RE: Regex = Regex::new(
         r"\b\d{10}(\d{2})?\b"
     ).unwrap();
 }
 
-/// Конфигурация PII detection
+/// PII detection configuration
 pub struct PiiConfig {
     pub detect_emails: bool,
     pub detect_phones: bool,
     pub detect_credit_cards: bool,
     pub detect_inn: bool,
     pub custom_patterns: Vec<Regex>,
-    /// Режим: Redact (заменить на [REDACTED]) или Warn (пометить, не заменять)
+    /// Mode: Redact (replace with [REDACTED]) or Warn (flag, do not replace)
     pub mode: PiiMode,
 }
 
 pub enum PiiMode {
-    /// Автоматическая замена PII на placeholder
+    /// Automatically replace PII with a placeholder
     Redact,
-    /// Предупреждение пользователю, данные отправляются с согласия
+    /// Warn the user; data is sent with their consent
     Warn,
-    /// Без проверки (для self-hosted)
+    /// No scanning (for self-hosted)
     Disabled,
 }
 
 impl PiiDetector {
-    /// Сканирование текста на наличие PII
+    /// Scans text for PII
     pub fn scan(&self, text: &str) -> Vec<PiiMatch> {
         let mut matches = Vec::new();
 
@@ -946,17 +946,17 @@ impl PiiDetector {
             }
         }
 
-        // ... аналогично для phone, INN, custom patterns
+        // ... likewise for phone, INN, custom patterns
 
         matches
     }
 
-    /// Редактирование PII — замена на placeholder
+    /// PII redaction: replacement with a placeholder
     pub fn redact(&self, text: &str) -> String {
         let matches = self.scan(text);
         let mut result = text.to_string();
 
-        // Замена с конца, чтобы индексы не сдвигались
+        // Replace from the end so indices do not shift
         for m in matches.iter().rev() {
             let placeholder = match m.kind {
                 PiiKind::Email => "[EMAIL_REDACTED]",
@@ -973,7 +973,7 @@ impl PiiDetector {
 }
 ```
 
-**Конфигурация PII на клиенте:**
+**PII configuration on the client:**
 
 ```typescript
 const editor = new GoTipeEditor({
@@ -984,8 +984,8 @@ const editor = new GoTipeEditor({
       detectPhones: true,
       detectCreditCards: true,
       customPatterns: [
-        /ИНН\s*\d{10,12}/g,     // ИНН (Россия)
-        /СНИЛС\s*\d{3}-\d{3}-\d{3}\s*\d{2}/g,
+        /ИНН\s*\d{10,12}/g,     // INN (Russian taxpayer ID)
+        /СНИЛС\s*\d{3}-\d{3}-\d{3}\s*\d{2}/g,  // SNILS (Russian pension insurance number)
       ],
     },
   },
@@ -996,7 +996,7 @@ const editor = new GoTipeEditor({
 
 ## Server Security
 
-Серверная часть GoTipe Cloud написана на Go (API Gateway, Sync Server, AI Proxy). Подробности архитектуры см. в [01-architecture.md](01-architecture.md) и [10-cloud.md](10-cloud.md).
+The GoTipe Cloud server side is written in Go (API Gateway, Sync Server, AI Proxy). For the architecture details, see [01-architecture.md](01-architecture.md) and [10-cloud.md](10-cloud.md).
 
 ### Go API Hardening
 
@@ -1006,10 +1006,10 @@ const editor = new GoTipeEditor({
 func setupServer() *chi.Mux {
     r := chi.NewRouter()
 
-    // 1. Request ID для tracing
+    // 1. Request ID for tracing
     r.Use(middleware.RequestID)
 
-    // 2. Panic recovery — не раскрываем stack trace клиенту
+    // 2. Panic recovery: do not expose the stack trace to the client
     r.Use(middleware.Recoverer)
 
     // 3. Security headers
@@ -1017,7 +1017,7 @@ func setupServer() *chi.Mux {
 
     // 4. CORS — strict origin checking
     r.Use(cors.Handler(cors.Options{
-        AllowedOrigins:   allowedOrigins, // Из конфига, НЕ "*"
+        AllowedOrigins:   allowedOrigins, // From config, NOT "*"
         AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
         AllowedHeaders:   []string{"Authorization", "Content-Type", "X-Request-ID"},
         ExposedHeaders:   []string{"X-Request-ID"},
@@ -1025,7 +1025,7 @@ func setupServer() *chi.Mux {
         MaxAge:           300,
     }))
 
-    // 5. Rate limiting (по IP + API key)
+    // 5. Rate limiting (by IP + API key)
     r.Use(rateLimiter.Handler)
 
     // 6. Request size limit (10MB max)
@@ -1041,7 +1041,7 @@ func securityHeaders(next http.Handler) http.Handler {
     return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
         w.Header().Set("X-Content-Type-Options", "nosniff")
         w.Header().Set("X-Frame-Options", "DENY")
-        w.Header().Set("X-XSS-Protection", "0") // Отключён (CSP вместо этого)
+        w.Header().Set("X-XSS-Protection", "0") // Disabled (CSP is used instead)
         w.Header().Set("Referrer-Policy", "strict-origin-when-cross-origin")
         w.Header().Set("Permissions-Policy", "camera=(), microphone=(), geolocation=()")
         w.Header().Set("Strict-Transport-Security", "max-age=63072000; includeSubDomains; preload")
@@ -1054,14 +1054,14 @@ func securityHeaders(next http.Handler) http.Handler {
 
 | Endpoint | Limit (Starter) | Limit (Pro) | Limit (Enterprise) |
 |----------|-----------------|-------------|---------------------|
-| REST API (общий) | 100 req/min | 1000 req/min | Custom |
+| REST API (general) | 100 req/min | 1000 req/min | Custom |
 | WebSocket connections | 10 concurrent | 100 concurrent | Custom |
 | WebSocket messages | 60 msg/s per conn | 120 msg/s per conn | Custom |
 | AI Proxy | 20 req/min | 200 req/min | Custom |
 | Export | 10 req/min | 60 req/min | Custom |
 | Auth (login) | 5 req/min per IP | 5 req/min per IP | 5 req/min per IP |
 
-Rate limiter использует Valkey (Redis) с sliding window algorithm:
+The rate limiter uses Valkey (Redis) with a sliding window algorithm:
 
 ```go
 // server/ratelimit/limiter.go
@@ -1077,7 +1077,7 @@ func (rl *RateLimiter) Allow(key string, limit int, window time.Duration) (bool,
 
     pipe := rl.client.Pipeline()
 
-    // Sliding window: удаляем устаревшие, добавляем текущий, считаем
+    // Sliding window: remove stale entries, add the current one, count
     pipe.ZRemRangeByScore(ctx, key, "0", strconv.FormatInt(windowStart, 10))
     pipe.ZAdd(ctx, key, valkey.Z{Score: float64(now), Member: now})
     countCmd := pipe.ZCard(ctx, key)
@@ -1094,10 +1094,10 @@ func (rl *RateLimiter) Allow(key string, limit int, window time.Duration) (bool,
 
 ### SQL Injection Prevention
 
-GoTipe использует parameterized queries через `sqlx` (Go). Raw SQL queries запрещены code review policy.
+GoTipe uses parameterized queries through `sqlx` (Go). Raw SQL queries are forbidden by the code review policy.
 
 ```go
-// Правильно — parameterized query
+// Correct: parameterized query
 func GetDocument(ctx context.Context, db *sqlx.DB, id string) (*Document, error) {
     var doc Document
     err := db.GetContext(ctx, &doc,
@@ -1105,7 +1105,7 @@ func GetDocument(ctx context.Context, db *sqlx.DB, id string) (*Document, error)
     return &doc, err
 }
 
-// ЗАПРЕЩЕНО — конкатенация строк (ловится linter)
+// FORBIDDEN: string concatenation (caught by the linter)
 // query := "SELECT * FROM documents WHERE id = '" + id + "'"
 ```
 
@@ -1115,18 +1115,18 @@ func GetDocument(ctx context.Context, db *sqlx.DB, id string) (*Document, error)
 // server/ws/upgrade.go
 
 var upgrader = websocket.Upgrader{
-    // 1. Проверка Origin
+    // 1. Check Origin
     CheckOrigin: func(r *http.Request) bool {
         origin := r.Header.Get("Origin")
         return isAllowedOrigin(origin)
     },
-    // 2. Размер сообщения
+    // 2. Message size
     ReadBufferSize:  4096,
     WriteBufferSize: 4096,
 }
 
 func HandleWebSocket(w http.ResponseWriter, r *http.Request) {
-    // 3. JWT validation перед upgrade
+    // 3. JWT validation before the upgrade
     claims, err := validateJWT(r)
     if err != nil {
         http.Error(w, "Unauthorized", http.StatusUnauthorized)
@@ -1149,7 +1149,7 @@ func HandleWebSocket(w http.ResponseWriter, r *http.Request) {
     // 5. Message size limit
     conn.SetReadLimit(maxMessageSize) // 1MB
 
-    // 6. Ping/pong для обнаружения dead connections
+    // 6. Ping/pong to detect dead connections
     conn.SetReadDeadline(time.Now().Add(pongWait))
     conn.SetPongHandler(func(string) error {
         conn.SetReadDeadline(time.Now().Add(pongWait))
@@ -1166,7 +1166,7 @@ func HandleWebSocket(w http.ResponseWriter, r *http.Request) {
         }
 
         if !limiter.Allow() {
-            // Rate limit exceeded — отправляем warning
+            // Rate limit exceeded: send a warning
             conn.WriteJSON(ErrorMsg{Code: "RATE_LIMITED"})
             continue
         }
@@ -1178,13 +1178,13 @@ func HandleWebSocket(w http.ResponseWriter, r *http.Request) {
 
 ### DDoS Mitigation
 
-| Уровень | Механизм | Реализация |
+| Level | Mechanism | Implementation |
 |---------|----------|------------|
 | L3/L4 | IP-based rate limiting | Cloudflare / iptables |
 | L7 | Request rate limiting | Go middleware (Valkey) |
 | WebSocket | Connection + message limits | Per-IP connection limit, per-conn msg limit |
 | Application | Payload size limits | 10MB request body, 1MB WebSocket message |
-| Infrastructure | Auto-scaling | Kubernetes HPA на CPU/memory |
+| Infrastructure | Auto-scaling | Kubernetes HPA on CPU/memory |
 
 ---
 
@@ -1192,7 +1192,7 @@ func HandleWebSocket(w http.ResponseWriter, r *http.Request) {
 
 ### WASM Sandbox
 
-WebAssembly выполняется в sandbox браузера — WASM module не имеет прямого доступа к DOM, network, файловой системе. Все взаимодействия проходят через явный JS interop.
+WebAssembly runs in the browser sandbox: a WASM module has no direct access to the DOM, the network, or the file system. All interaction goes through an explicit JS interop.
 
 ```
 ┌─────────────────────────────────────────────────────┐
@@ -1206,7 +1206,7 @@ WebAssembly выполняется в sandbox браузера — WASM module �
 │  │  • Clipboard API     │  │  • gotipe-ai        │  │
 │  │  • localStorage      │  │  • gotipe-export    │  │
 │  │                      │──►│                     │  │
-│  │  wasm-bindgen bridge │  │  Нет доступа к:     │  │
+│  │  wasm-bindgen bridge │  │  No access to:      │  │
 │  │  (typed interface)   │  │  • DOM              │  │
 │  │                      │  │  • Network          │  │
 │  │                      │  │  • File system      │  │
@@ -1215,15 +1215,15 @@ WebAssembly выполняется в sandbox браузера — WASM module �
 └─────────────────────────────────────────────────────┘
 ```
 
-**Гарантии WASM sandbox:**
-- Линейная память — WASM module работает с собственным linear memory, изолированным от JS heap
-- Нет прямого system call доступа — все I/O через imports из JS
-- Bounds checking — доступ за пределами linear memory вызывает trap (не undefined behavior)
-- Rust memory safety — compile-time гарантии отсутствия buffer overflow, use-after-free, data races
+**WASM sandbox guarantees:**
+- Linear memory: a WASM module works with its own linear memory, isolated from the JS heap
+- No direct system call access: all I/O goes through imports from JS
+- Bounds checking: access outside linear memory causes a trap (not undefined behavior)
+- Rust memory safety: compile-time guarantees against buffer overflow, use-after-free, data races
 
 ### Clipboard Security
 
-Paste handling — один из главных векторов XSS в rich text editors:
+Paste handling is one of the main XSS vectors in rich text editors:
 
 ```typescript
 // packages/core/src/clipboard/paste-handler.ts
@@ -1237,18 +1237,18 @@ export class PasteHandler {
     const items = event.clipboardData?.items;
     if (!items) return [];
 
-    // Приоритет: plain text > sanitized HTML > files
+    // Priority: plain text > sanitized HTML > files
     const plainText = event.clipboardData?.getData('text/plain');
     const html = event.clipboardData?.getData('text/html');
 
     if (html) {
-      // 1. Sanitize HTML через Rust WASM
+      // 1. Sanitize HTML through Rust WASM
       const sanitized = this.sanitizer.sanitize(html);
 
-      // 2. Parse sanitized HTML в Block[]
+      // 2. Parse the sanitized HTML into Block[]
       const blocks = wasmModule.html_to_blocks(sanitized);
 
-      // 3. Validate blocks через schema
+      // 3. Validate blocks against the schema
       const validated = blocks.filter(block =>
         wasmModule.validate_block(block)
       );
@@ -1257,7 +1257,7 @@ export class PasteHandler {
     }
 
     if (plainText) {
-      // Plain text — безопасно, без HTML parsing
+      // Plain text is safe, no HTML parsing
       return this.textToBlocks(plainText);
     }
 
@@ -1282,7 +1282,7 @@ export class PasteHandler {
       return Promise.resolve([]);
     }
 
-    // Upload через secure endpoint, получаем URL
+    // Upload through a secure endpoint, get a URL
     return this.uploadAndCreateImageBlock(file);
   }
 }
@@ -1290,7 +1290,7 @@ export class PasteHandler {
 
 ### iframe Sandboxing
 
-Если GoTipe встраивается в iframe (например, для предпросмотра), рекомендуется:
+If GoTipe is embedded in an iframe (for example, for preview), the recommended setup is:
 
 ```html
 <iframe
@@ -1302,13 +1302,13 @@ export class PasteHandler {
 ></iframe>
 ```
 
-| sandbox flag | Разрешено | Обоснование |
+| sandbox flag | Allowed | Rationale |
 |-------------|-----------|-------------|
-| `allow-scripts` | Да | WASM и JS execution |
-| `allow-same-origin` | Да | API requests к GoTipe Cloud |
-| `allow-forms` | Нет | Editor не использует HTML forms |
-| `allow-popups` | Нет | Предотвращает popup-based attacks |
-| `allow-top-navigation` | Нет | iframe не может перенаправить parent |
+| `allow-scripts` | Yes | WASM and JS execution |
+| `allow-same-origin` | Yes | API requests to GoTipe Cloud |
+| `allow-forms` | No | The editor does not use HTML forms |
+| `allow-popups` | No | Prevents popup-based attacks |
+| `allow-top-navigation` | No | The iframe cannot redirect the parent |
 
 ---
 
@@ -1316,16 +1316,16 @@ export class PasteHandler {
 
 ### Supply Chain Security
 
-GoTipe использует два package ecosystems: crates.io (Rust) и npm (TypeScript). Оба требуют мониторинга.
+GoTipe uses two package ecosystems: crates.io (Rust) and npm (TypeScript). Both require monitoring.
 
 #### cargo audit (Rust)
 
 ```bash
-# CI pipeline — запускается на каждый PR
+# CI pipeline: runs on every PR
 cargo install cargo-audit
 cargo audit
 
-# Автоматические advisory updates
+# Automatic advisory updates
 cargo audit fix
 ```
 
@@ -1335,7 +1335,7 @@ cargo audit fix
 # CI pipeline
 npm audit --omit=dev
 
-# Автоматическое исправление
+# Automatic fixing
 npm audit fix
 ```
 
@@ -1350,7 +1350,7 @@ on:
     branches: [main]
   pull_request:
   schedule:
-    - cron: '0 8 * * 1'  # Каждый понедельник
+    - cron: '0 8 * * 1'  # Every Monday
 
 jobs:
   rust-audit:
@@ -1400,13 +1400,13 @@ jobs:
 
 ### SBOM (Software Bill of Materials)
 
-GoTipe генерирует SBOM в формате CycloneDX для каждого release:
+GoTipe generates an SBOM in CycloneDX format for every release:
 
-| Компонент | Формат | Содержимое |
+| Component | Format | Contents |
 |-----------|--------|-----------|
-| Rust crates | CycloneDX XML | Все прямые и transitive зависимости |
-| npm packages | CycloneDX JSON | Все production-зависимости |
-| Go modules | CycloneDX JSON | Server-side зависимости |
+| Rust crates | CycloneDX XML | All direct and transitive dependencies |
+| npm packages | CycloneDX JSON | All production dependencies |
+| Go modules | CycloneDX JSON | Server-side dependencies |
 | WASM binary | SHA-256 hash | Integrity verification |
 
 ### Lockfile Policy
@@ -1417,7 +1417,7 @@ GoTipe генерирует SBOM в формате CycloneDX для каждог
 | npm | `package-lock.json` | Committed, exact versions |
 | Go | `go.sum` | Committed, hash verification |
 
-**Правило:** dependabot / renovate автоматически создают PR для обновлений. Обновления с security advisories merge автоматически после CI pass.
+**Rule:** dependabot / renovate automatically create PRs for updates. Updates with security advisories are merged automatically after CI passes.
 
 ---
 
@@ -1425,9 +1425,9 @@ GoTipe генерирует SBOM в формате CycloneDX для каждог
 
 ### SOC 2 Type II
 
-GoTipe Cloud проходит SOC 2 Type II аудит (planned для v1.0):
+GoTipe Cloud undergoes a SOC 2 Type II audit (planned for v1.0):
 
-| Принцип | Контроли GoTipe |
+| Principle | GoTipe controls |
 |---------|-----------------|
 | **Security** | Encryption at rest/transit, RBAC, API key management, audit logging |
 | **Availability** | Multi-region deployment, health checks, incident response SLA |
@@ -1437,48 +1437,48 @@ GoTipe Cloud проходит SOC 2 Type II аудит (planned для v1.0):
 
 ### GDPR
 
-| Требование | Реализация | Статус |
+| Requirement | Implementation | Status |
 |------------|------------|--------|
-| Consent management | Cookie banner API, data processing agreement | Готово |
-| Right to access (Art. 15) | Data export API (`GET /api/v1/users/me/data`) | Готово |
-| Right to deletion (Art. 17) | Data deletion API + 72h SLA | Готово |
-| Right to portability (Art. 20) | JSON export всех документов | Готово |
-| Data breach notification (Art. 33) | Incident response plan, 72h notification | Документировано |
-| DPO contact | privacy@gotipe.com | Настроено |
-| Data Processing Agreement | Шаблон DPA для Enterprise | Готово |
+| Consent management | Cookie banner API, data processing agreement | Done |
+| Right to access (Art. 15) | Data export API (`GET /api/v1/users/me/data`) | Done |
+| Right to deletion (Art. 17) | Data deletion API + 72h SLA | Done |
+| Right to portability (Art. 20) | JSON export of all documents | Done |
+| Data breach notification (Art. 33) | Incident response plan, 72h notification | Documented |
+| DPO contact | privacy@gotipe.com | Configured |
+| Data Processing Agreement | DPA template for Enterprise | Done |
 
 ### HIPAA (Enterprise)
 
-Для обработки Protected Health Information (PHI) GoTipe Enterprise предоставляет:
+To process Protected Health Information (PHI), GoTipe Enterprise provides:
 
-| Требование HIPAA | Реализация |
+| HIPAA requirement | Implementation |
 |------------------|------------|
-| BAA (Business Associate Agreement) | Подписывается с Enterprise клиентами |
+| BAA (Business Associate Agreement) | Signed with Enterprise customers |
 | Encryption (§164.312(a)(2)(iv)) | AES-256-GCM at rest, TLS 1.3 in transit |
 | Access controls (§164.312(a)(1)) | RBAC, per-document permissions, MFA |
-| Audit controls (§164.312(b)) | Полный audit log всех операций |
+| Audit controls (§164.312(b)) | Full audit log of all operations |
 | Integrity controls (§164.312(c)(1)) | CRDT integrity verification, checksums |
-| Transmission security (§164.312(e)(1)) | TLS 1.3 для всех соединений |
-| Self-hosted option | PHI не покидает инфраструктуру клиента |
-| AI opt-out | Отключение AI или self-hosted Ollama only |
+| Transmission security (§164.312(e)(1)) | TLS 1.3 for all connections |
+| Self-hosted option | PHI does not leave the customer's infrastructure |
+| AI opt-out | AI disabled, or self-hosted Ollama only |
 
 ### Data Residency
 
-GoTipe Cloud поддерживает выбор региона хранения данных:
+GoTipe Cloud supports choosing the region where data is stored:
 
-| Регион | Расположение | Доступность |
+| Region | Location | Availability |
 |--------|-------------|-------------|
 | `eu-central` | Falkenstein/Nuremberg, Germany (Hetzner FSN/NBG) | GA |
 | `us-east` | Ashburn, Virginia, USA (Hetzner ASH) | GA |
 | `us-west` | Hillsboro, Oregon, USA (Hetzner HIL) | Planned |
 | `ap-southeast` | Singapore (Hetzner SIN) | Planned |
-| Self-hosted | Любой | GA |
+| Self-hosted | Any | GA |
 
-**Гарантия:** данные, созданные в регионе `eu-central`, никогда не покидают EU. Sync server, database, R2 — всё внутри одного региона.
+**Guarantee:** data created in the `eu-central` region never leaves the EU. Sync server, database, R2: everything stays within one region.
 
 ### Audit Logging
 
-Все security-relevant события записываются в audit log:
+All security-relevant events are written to the audit log:
 
 ```go
 // server/audit/logger.go
@@ -1486,7 +1486,7 @@ GoTipe Cloud поддерживает выбор региона хранения
 type AuditEvent struct {
     ID          string    `json:"id"`
     Timestamp   time.Time `json:"timestamp"`
-    ActorID     string    `json:"actor_id"`     // User ID или "system"
+    ActorID     string    `json:"actor_id"`     // User ID or "system"
     ActorIP     string    `json:"actor_ip"`     // Hashed IP (privacy)
     Action      string    `json:"action"`       // "document.read", "user.login", etc.
     ResourceType string   `json:"resource_type"` // "document", "api_key", "user"
@@ -1496,18 +1496,18 @@ type AuditEvent struct {
 }
 ```
 
-| Событие | Action | Описание |
+| Event | Action | Description |
 |---------|--------|----------|
-| Вход в систему | `auth.login` | Email, OAuth provider, IP |
-| Неудачный вход | `auth.login_failed` | Причина отказа, IP |
-| Создание API key | `api_key.create` | Key prefix, scopes |
-| Отзыв API key | `api_key.revoke` | Key prefix |
-| Доступ к документу | `document.read` | Document ID |
-| Редактирование документа | `document.edit` | Document ID, operation count |
-| Удаление документа | `document.delete` | Document ID |
-| Изменение прав доступа | `permission.change` | Document ID, target user, old/new permission |
-| AI запрос | `ai.request` | Provider, model, token count (без content) |
-| Export документа | `export.create` | Document ID, format |
+| Login | `auth.login` | Email, OAuth provider, IP |
+| Failed login | `auth.login_failed` | Reason for refusal, IP |
+| API key creation | `api_key.create` | Key prefix, scopes |
+| API key revocation | `api_key.revoke` | Key prefix |
+| Document access | `document.read` | Document ID |
+| Document editing | `document.edit` | Document ID, operation count |
+| Document deletion | `document.delete` | Document ID |
+| Permission change | `permission.change` | Document ID, target user, old/new permission |
+| AI request | `ai.request` | Provider, model, token count (no content) |
+| Document export | `export.create` | Document ID, format |
 | Data deletion request | `gdpr.deletion_request` | User ID |
 
 ---
@@ -1516,12 +1516,12 @@ type AuditEvent struct {
 
 ### Security Disclosure Policy
 
-GoTipe следует принципу responsible disclosure:
+GoTipe follows the principle of responsible disclosure:
 
-**Контакт:** security@gotipe.com
+**Contact:** security@gotipe.com
 **PGP Key:** [https://gotipe.com/.well-known/security.txt](https://gotipe.com/.well-known/security.txt)
 
-### Процесс
+### Process
 
 ```
 ┌──────────────────────────────────────────────────────────────┐
@@ -1544,25 +1544,25 @@ GoTipe следует принципу responsible disclosure:
 └──────────────────────────────────────────────────────────────┘
 ```
 
-### SLA по Severity
+### SLA by severity
 
-| Severity | Описание | Response SLA | Fix SLA | Пример |
+| Severity | Description | Response SLA | Fix SLA | Example |
 |----------|----------|-------------|---------|--------|
-| **Critical** | RCE, data breach, auth bypass | 4 часа | 24 часа | SQL injection, CRDT data corruption |
-| **High** | XSS, privilege escalation, data leak | 24 часа | 72 часа | Stored XSS, API key exposure |
-| **Medium** | CSRF, information disclosure, DoS | 72 часа | 7 дней | CSRF на settings, error stack trace leak |
-| **Low** | Minor info leak, best practice violation | 7 дней | 30 дней | Version disclosure, missing security header |
+| **Critical** | RCE, data breach, auth bypass | 4 hours | 24 hours | SQL injection, CRDT data corruption |
+| **High** | XSS, privilege escalation, data leak | 24 hours | 72 hours | Stored XSS, API key exposure |
+| **Medium** | CSRF, information disclosure, DoS | 72 hours | 7 days | CSRF on settings, error stack trace leak |
+| **Low** | Minor info leak, best practice violation | 7 days | 30 days | Version disclosure, missing security header |
 
 ### CVE Process
 
-1. Получение отчёта через security@gotipe.com
-2. Подтверждение получения в течение 24 часов
-3. Оценка severity и impact
-4. Разработка и тестирование patch
-5. Координация с reporter по timeline disclosure
-6. Выпуск patch + security advisory
-7. Запрос CVE ID (если applicable) через MITRE CNA
-8. Публичное раскрытие через 30 дней после patch (или раньше, по согласованию)
+1. Receive the report at security@gotipe.com
+2. Acknowledge receipt within 24 hours
+3. Assess severity and impact
+4. Develop and test the patch
+5. Coordinate the disclosure timeline with the reporter
+6. Release the patch + security advisory
+7. Request a CVE ID (if applicable) through the MITRE CNA
+8. Public disclosure 30 days after the patch (or earlier, by agreement)
 
 ### Bug Bounty
 
@@ -1574,7 +1574,7 @@ GoTipe следует принципу responsible disclosure:
 | Low | Hall of Fame |
 
 **Scope:** gotipe.com, api.gotipe.com, sync.gotipe.com, npm packages, Rust crates
-**Out of scope:** Social engineering, физический доступ, third-party services
+**Out of scope:** Social engineering, physical access, third-party services
 
 ---
 
@@ -1588,40 +1588,40 @@ GoTipe следует принципу responsible disclosure:
 ├──────────────────────────────────────────────────────────────────────────┤
 │                                                                          │
 │  Infrastructure:                                                         │
-│  [ ] TLS certificates настроены (Let's Encrypt / custom CA)             │
-│  [ ] Firewall: только порты 443 (HTTPS) и 8443 (WSS) открыты           │
-│  [ ] PostgreSQL не доступен извне (bind 127.0.0.1 или internal network) │
-│  [ ] Valkey (Redis) не доступен извне + requirepass                     │
+│  [ ] TLS certificates configured (Let's Encrypt / custom CA)            │
+│  [ ] Firewall: only ports 443 (HTTPS) and 8443 (WSS) are open          │
+│  [ ] PostgreSQL is not public (bind localhost or private network)       │
+│  [ ] Valkey (Redis) is not reachable from outside + requirepass         │
 │  [ ] R2 bucket — private, no public access                               │
-│  [ ] Docker images pinned по SHA256 digest                               │
-│  [ ] Host OS обновлён (security patches)                                 │
+│  [ ] Docker images pinned by SHA256 digest                               │
+│  [ ] Host OS is up to date (security patches)                            │
 │                                                                          │
 │  Application:                                                            │
-│  [ ] GOTIPE_SECRET_KEY установлен (min 32 bytes, crypto/rand)           │
-│  [ ] GOTIPE_ALLOWED_ORIGINS настроен (не "*")                           │
-│  [ ] API keys используют scoped permissions                              │
-│  [ ] Rate limiting включён                                               │
-│  [ ] Audit logging включён                                               │
-│  [ ] Default admin password изменён                                      │
-│  [ ] Health check endpoint (/healthz) не раскрывает sensitive info       │
+│  [ ] GOTIPE_SECRET_KEY is set (min 32 bytes, crypto/rand)               │
+│  [ ] GOTIPE_ALLOWED_ORIGINS is configured (not "*")                     │
+│  [ ] API keys use scoped permissions                                     │
+│  [ ] Rate limiting is enabled                                            │
+│  [ ] Audit logging is enabled                                            │
+│  [ ] Default admin password is changed                                   │
+│  [ ] Health check endpoint (/healthz) does not expose sensitive info     │
 │                                                                          │
-│  AI (если используется):                                                 │
-│  [ ] AI provider API keys хранятся в env vars / secrets manager          │
-│  [ ] PII detection включён (mode: redact или warn)                      │
-│  [ ] Для конфиденциальных данных: Ollama self-hosted                     │
-│  [ ] AI request logging не содержит content                              │
+│  AI (if used):                                                           │
+│  [ ] AI provider API keys are stored in env vars / a secrets manager     │
+│  [ ] PII detection is enabled (mode: redact or warn)                    │
+│  [ ] For confidential data: self-hosted Ollama                           │
+│  [ ] AI request logging does not contain content                         │
 │                                                                          │
 │  Database:                                                                │
 │  [ ] PostgreSQL: SSL mode = require                                       │
-│  [ ] PostgreSQL: отдельный user с минимальными правами                   │
-│  [ ] Backups зашифрованы                                                  │
-│  [ ] Backup restore протестирован                                         │
+│  [ ] PostgreSQL: separate user with minimal privileges                   │
+│  [ ] Backups are encrypted                                                │
+│  [ ] Backup restore is tested                                             │
 │                                                                          │
 │  Monitoring:                                                              │
-│  [ ] Alerting на failed auth attempts (>10/min)                          │
-│  [ ] Alerting на rate limit hits                                          │
-│  [ ] Log rotation настроен                                                │
-│  [ ] Audit logs отправляются в SIEM (опционально)                        │
+│  [ ] Alerting on failed auth attempts (>10/min)                          │
+│  [ ] Alerting on rate limit hits                                          │
+│  [ ] Log rotation is configured                                           │
+│  [ ] Audit logs are shipped to a SIEM (optional)                         │
 │                                                                          │
 └──────────────────────────────────────────────────────────────────────────┘
 ```
@@ -1633,72 +1633,72 @@ GoTipe следует принципу responsible disclosure:
 │                    SECURITY CHECKLIST — Cloud                             │
 ├──────────────────────────────────────────────────────────────────────────┤
 │                                                                          │
-│  Аккаунт:                                                                │
-│  [ ] MFA включён для owner аккаунта                                     │
-│  [ ] API keys имеют expiration date                                      │
-│  [ ] Неиспользуемые API keys отозваны                                   │
-│  [ ] API keys не включены в client-side code                             │
-│  [ ] RBAC настроен: минимальные необходимые роли                        │
+│  Account:                                                                │
+│  [ ] MFA is enabled for the owner account                               │
+│  [ ] API keys have an expiration date                                    │
+│  [ ] Unused API keys are revoked                                        │
+│  [ ] API keys are not included in client-side code                       │
+│  [ ] RBAC is configured: minimum necessary roles                        │
 │                                                                          │
-│  Интеграция:                                                             │
-│  [ ] CSP headers настроены на стороне приложения                         │
-│  [ ] CORS: GOTIPE_ALLOWED_ORIGINS указывает конкретные домены            │
-│  [ ] WebSocket endpoint подключается через WSS (не WS)                  │
-│  [ ] JWT token rotation настроен (refresh token)                         │
-│  [ ] Error handling не раскрывает internal details клиенту               │
+│  Integration:                                                            │
+│  [ ] CSP headers are configured on the application side                  │
+│  [ ] CORS: GOTIPE_ALLOWED_ORIGINS lists specific domains                 │
+│  [ ] The WebSocket endpoint is connected over WSS (not WS)              │
+│  [ ] JWT token rotation is configured (refresh token)                    │
+│  [ ] Error handling does not expose internal details to the client       │
 │                                                                          │
 │  AI:                                                                     │
-│  [ ] AI provider выбран в соответствии с compliance требованиями         │
-│  [ ] PII detection настроен                                              │
-│  [ ] Data retention policy AI провайдера проверена                       │
-│  [ ] Пользователи уведомлены об использовании AI                        │
+│  [ ] AI provider is chosen according to compliance requirements          │
+│  [ ] PII detection is configured                                         │
+│  [ ] The AI provider's data retention policy has been reviewed           │
+│  [ ] Users are notified about the use of AI                             │
 │                                                                          │
 │  Data:                                                                   │
-│  [ ] Data residency region выбран                                         │
-│  [ ] Data retention policy настроена                                      │
-│  [ ] DPA (Data Processing Agreement) подписан (если GDPR applicable)     │
-│  [ ] Data export протестирован (backup / migration)                      │
+│  [ ] Data residency region is chosen                                      │
+│  [ ] Data retention policy is configured                                  │
+│  [ ] DPA (Data Processing Agreement) is signed (if GDPR applies)         │
+│  [ ] Data export is tested (backup / migration)                          │
 │                                                                          │
-│  Compliance (если требуется):                                            │
-│  [ ] SOC 2 report запрошен у GoTipe                                      │
-│  [ ] HIPAA BAA подписан (для PHI данных)                                │
-│  [ ] Audit logs включены и ретроспективно доступны                       │
-│  [ ] Incident response contacts настроены                                │
+│  Compliance (if required):                                               │
+│  [ ] SOC 2 report is requested from GoTipe                               │
+│  [ ] HIPAA BAA is signed (for PHI data)                                 │
+│  [ ] Audit logs are enabled and retrospectively available                │
+│  [ ] Incident response contacts are configured                           │
 │                                                                          │
 └──────────────────────────────────────────────────────────────────────────┘
 ```
 
-### Checklist для разработчиков (Extension Security)
+### Developer checklist (Extension Security)
 
-| # | Проверка | Обязательность |
+| # | Check | Required? |
 |---|---------|---------------|
-| 1 | Extension не использует `eval()` или `Function()` constructor | Required |
-| 2 | Extension не обращается к `document.cookie` | Required |
-| 3 | Extension не делает network requests к неизвестным доменам | Required |
-| 4 | HTML output проходит через sanitizer | Required |
-| 5 | User input валидируется через schema | Required |
-| 6 | Зависимости проверены через `npm audit` | Required |
-| 7 | Extension декларирует необходимые permissions | Recommended |
-| 8 | Extension имеет unit tests для edge cases (empty input, max size) | Recommended |
-| 9 | Extension документирует security considerations | Recommended |
+| 1 | The extension does not use `eval()` or the `Function()` constructor | Required |
+| 2 | The extension does not access `document.cookie` | Required |
+| 3 | The extension does not make network requests to unknown domains | Required |
+| 4 | HTML output goes through the sanitizer | Required |
+| 5 | User input is validated against the schema | Required |
+| 6 | Dependencies are checked with `npm audit` | Required |
+| 7 | The extension declares the permissions it needs | Recommended |
+| 8 | The extension has unit tests for edge cases (empty input, max size) | Recommended |
+| 9 | The extension documents its security considerations | Recommended |
 
 ---
 
-## Связанные документы
+## Related documents
 
-| Документ | Relevance |
+| Document | Relevance |
 |----------|-----------|
-| [01-architecture.md](01-architecture.md) | Общая архитектура системы, Rust/WASM core, server components |
+| [01-architecture.md](01-architecture.md) | Overall system architecture, Rust/WASM core, server components |
 | [02-collaboration.md](02-collaboration.md) | CRDT engine, sync protocol, WebSocket communication |
 | [03-editor-core.md](03-editor-core.md) | Document model, schema engine, transforms, validation |
 | [05-extensions.md](05-extensions.md) | Extension architecture, plugin host, permission model |
 | [07-ai.md](07-ai.md) | AI integration, provider interface, context builder |
-| [08-export-import.md](08-export-import.md) | Export engine, HTML sanitization при import |
+| [08-export-import.md](08-export-import.md) | Export engine, HTML sanitization on import |
 | [09-sdk-and-api.md](09-sdk-and-api.md) | TypeScript API, type safety, error handling |
 | [10-cloud.md](10-cloud.md) | Cloud architecture, API Gateway, storage layer, pricing |
 
 ---
 
-> **Вопросы по безопасности:** security@gotipe.com
+> **Security questions:** security@gotipe.com
 > **PGP Key:** [gotipe.com/.well-known/security.txt](https://gotipe.com/.well-known/security.txt)
 > **Bug Bounty:** [gotipe.com/security/bounty](https://gotipe.com/security/bounty)

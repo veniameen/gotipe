@@ -1,15 +1,15 @@
 # GoTipe — Accessibility & Internationalization
 
-> **Историческая спецификация, не руководство по текущему API.** Примеры, сроки,
-> сравнения производительности, коммерческие условия и обещания ниже не подтверждают
-> реализацию или доступность сервиса. Актуально: [контракты](development/editor-contracts.md),
-> [карта кода](development/code-map.md), [проверки](development/testing.md),
-> [план выпуска](22-release-readiness.md). Лицензии определяются `LICENSE` и manifest
-> каждого пакета, а не этим документом.
+> **Historical specification, not a guide to the current API.** The examples, timelines,
+> performance comparisons, commercial terms and promises below do not confirm an
+> implementation or the availability of the service. Current references:
+> [contracts](development/editor-contracts.md), [code map](development/code-map.md),
+> [checks](development/testing.md), [release plan](22-release-readiness.md). Licenses are
+> defined by `LICENSE` and the manifest of each package, not by this document.
 
-## Обзор
+## Overview
 
-GoTipe обеспечивает первоклассную поддержку accessibility (a11y) и internationalization (i18n) на уровне core. Rich text editor — один из самых сложных UI-компонентов с точки зрения доступности: он должен корректно работать с клавиатурой, screen readers, различными языками, IME, RTL-текстом и assistive technologies. GoTipe решает все эти задачи системно — a11y и i18n встроены в архитектуру, а не добавлены как afterthought.
+GoTipe provides first-class support for accessibility (a11y) and internationalization (i18n) at the core level. A rich text editor is one of the most complex UI components from an accessibility point of view: it must work correctly with the keyboard, screen readers, different languages, IME, RTL text and assistive technologies. GoTipe solves all of these problems systematically: a11y and i18n are built into the architecture, not added as an afterthought.
 
 ```
 ┌──────────────────────────────────────────────────────────────────┐
@@ -38,7 +38,7 @@ GoTipe обеспечивает первоклассную поддержку ac
 └──────────────────────────────────────────────────────────────────┘
 ```
 
-Связанные документы:
+Related documents:
 - [04-block-editor.md](04-block-editor.md) — block types, slash commands, drag-and-drop
 - [06-framework-adapters.md](06-framework-adapters.md) — ViewState, framework integration
 - [05-extensions.md](05-extensions.md) — extension API, keyboard shortcuts
@@ -48,58 +48,58 @@ GoTipe обеспечивает первоклассную поддержку ac
 
 ## 1. WCAG 2.1 Compliance
 
-### Целевой уровень: AA
+### Target level: AA
 
-GoTipe нацелен на полное соответствие WCAG 2.1 Level AA. Для rich text editors это включает специфические требования, выходящие за рамки стандартных web-компонентов.
+GoTipe targets full conformance with WCAG 2.1 Level AA. For rich text editors this includes specific requirements that go beyond standard web components.
 
-### Чеклист для Rich Text Editor
+### Checklist for a Rich Text Editor
 
-| WCAG Критерий | Уровень | Статус | Реализация в GoTipe |
+| WCAG criterion | Level | Status | Implementation in GoTipe |
 |---------------|---------|--------|---------------------|
-| **1.1.1** Non-text Content | A | Обязательно | `alt` атрибуты для image blocks, `aria-label` для embed blocks |
-| **1.3.1** Info and Relationships | A | Обязательно | Семантический HTML: `<h1>`-`<h6>`, `<ul>`, `<ol>`, `<blockquote>`, `<table>` |
-| **1.3.2** Meaningful Sequence | A | Обязательно | DOM order = reading order, logical block sequence |
-| **1.3.3** Sensory Characteristics | A | Обязательно | Инструкции не зависят только от цвета/формы |
-| **1.4.1** Use of Color | A | Обязательно | Highlight marks имеют дополнительные индикаторы помимо цвета |
-| **1.4.3** Contrast (Minimum) | AA | Обязательно | Минимум 4.5:1 для текста, 3:1 для крупного текста |
-| **1.4.4** Resize Text | AA | Обязательно | Работает при 200% zoom без потери функциональности |
-| **1.4.11** Non-text Contrast | AA | Обязательно | UI-элементы (кнопки toolbar, focus ring) с контрастом >= 3:1 |
-| **1.4.12** Text Spacing | AA | Обязательно | Работает с пользовательскими настройками spacing |
-| **1.4.13** Content on Hover/Focus | AA | Обязательно | Tooltip/popover dismissible, hoverable, persistent |
-| **2.1.1** Keyboard | A | Обязательно | Все операции доступны с клавиатуры |
-| **2.1.2** No Keyboard Trap | A | Обязательно | Focus можно покинуть из любого элемента |
-| **2.4.1** Bypass Blocks | A | Обязательно | Skip navigation link для editor region |
-| **2.4.3** Focus Order | A | Обязательно | Логичный tab order: toolbar → editor → footer |
-| **2.4.6** Headings and Labels | AA | Обязательно | Все UI-элементы имеют accessible labels |
-| **2.4.7** Focus Visible | AA | Обязательно | Видимый focus indicator на всех интерактивных элементах |
-| **2.5.1** Pointer Gestures | A | Обязательно | Multipoint gestures имеют single-pointer alternatives |
-| **3.1.1** Language of Page | A | Обязательно | `lang` атрибут на editor container |
-| **3.1.2** Language of Parts | AA | Обязательно | Поддержка `lang` на уровне отдельных блоков |
-| **3.2.1** On Focus | A | Обязательно | Focus не вызывает неожиданных изменений контекста |
-| **3.2.2** On Input | A | Обязательно | Ввод текста не вызывает неожиданных изменений |
-| **4.1.1** Parsing | A | Обязательно | Валидный HTML без duplicate IDs |
-| **4.1.2** Name, Role, Value | A | Обязательно | ARIA roles/states для всех custom widgets |
-| **4.1.3** Status Messages | AA | Обязательно | Live regions для collaboration уведомлений |
+| **1.1.1** Non-text Content | A | Required | `alt` attributes for image blocks, `aria-label` for embed blocks |
+| **1.3.1** Info and Relationships | A | Required | Semantic HTML: `<h1>`-`<h6>`, `<ul>`, `<ol>`, `<blockquote>`, `<table>` |
+| **1.3.2** Meaningful Sequence | A | Required | DOM order = reading order, logical block sequence |
+| **1.3.3** Sensory Characteristics | A | Required | Instructions do not rely on color or shape alone |
+| **1.4.1** Use of Color | A | Required | Highlight marks have indicators in addition to color |
+| **1.4.3** Contrast (Minimum) | AA | Required | At least 4.5:1 for text, 3:1 for large text |
+| **1.4.4** Resize Text | AA | Required | Works at 200% zoom without loss of functionality |
+| **1.4.11** Non-text Contrast | AA | Required | UI elements (toolbar buttons, focus ring) with contrast >= 3:1 |
+| **1.4.12** Text Spacing | AA | Required | Works with user-defined spacing settings |
+| **1.4.13** Content on Hover/Focus | AA | Required | Tooltip/popover is dismissible, hoverable, persistent |
+| **2.1.1** Keyboard | A | Required | All operations are available from the keyboard |
+| **2.1.2** No Keyboard Trap | A | Required | Focus can be moved away from any element |
+| **2.4.1** Bypass Blocks | A | Required | Skip navigation link for the editor region |
+| **2.4.3** Focus Order | A | Required | Logical tab order: toolbar → editor → footer |
+| **2.4.6** Headings and Labels | AA | Required | All UI elements have accessible labels |
+| **2.4.7** Focus Visible | AA | Required | Visible focus indicator on all interactive elements |
+| **2.5.1** Pointer Gestures | A | Required | Multipoint gestures have single-pointer alternatives |
+| **3.1.1** Language of Page | A | Required | `lang` attribute on the editor container |
+| **3.1.2** Language of Parts | AA | Required | `lang` support at the level of individual blocks |
+| **3.2.1** On Focus | A | Required | Focus does not cause unexpected context changes |
+| **3.2.2** On Input | A | Required | Typing does not cause unexpected changes |
+| **4.1.1** Parsing | A | Required | Valid HTML without duplicate IDs |
+| **4.1.2** Name, Role, Value | A | Required | ARIA roles/states for all custom widgets |
+| **4.1.3** Status Messages | AA | Required | Live regions for collaboration notifications |
 
-### Принципы WCAG в контексте GoTipe
+### WCAG principles in the context of GoTipe
 
-#### Perceivable (Воспринимаемость)
+#### Perceivable
 
 ```typescript
 // packages/core/src/a11y/perceivable.ts
 
 export interface BlockA11yConfig {
-  /** Роль для screen reader */
+  /** Role for the screen reader */
   role: AriaRole;
-  /** Текстовая метка блока */
+  /** Text label of the block */
   label: string | ((block: BlockView) => string);
-  /** Описание для сложных блоков */
+  /** Description for complex blocks */
   description?: string | ((block: BlockView) => string);
-  /** Является ли блок landmark */
+  /** Whether the block is a landmark */
   landmark?: boolean;
 }
 
-// Каждый block type определяет свою a11y-конфигурацию
+// Each block type defines its own a11y configuration
 export const defaultA11yConfigs: Record<string, BlockA11yConfig> = {
   paragraph: {
     role: 'paragraph',
@@ -130,29 +130,29 @@ export const defaultA11yConfigs: Record<string, BlockA11yConfig> = {
 };
 ```
 
-#### Operable (Управляемость)
+#### Operable
 
-Все операции доступны через клавиатуру. Drag-and-drop имеет keyboard alternative (Alt+Arrow для перемещения блоков). Timer-based операции (автосохранение) не требуют пользовательского ввода.
+All operations are available through the keyboard. Drag-and-drop has a keyboard alternative (Alt+Arrow to move blocks). Timer-based operations (autosave) do not require user input.
 
-#### Understandable (Понятность)
+#### Understandable
 
-Предсказуемое поведение: focus не меняет контекст, ввод текста не открывает popover (кроме slash commands, которые пользователь явно инициирует вводом `/`). Все error messages доступны screen readers через `aria-live`.
+Predictable behavior: focus does not change context, typing does not open a popover (except slash commands, which the user explicitly initiates by typing `/`). All error messages are available to screen readers through `aria-live`.
 
-#### Robust (Надёжность)
+#### Robust
 
-Семантический HTML + ARIA: editor использует `<div role="textbox" aria-multiline="true">` с правильной иерархией `<h1>`-`<h6>`, `<ul>/<ol>`, `<table>`, `<blockquote>`. Custom blocks обёрнуты в ARIA widgets.
+Semantic HTML + ARIA: the editor uses `<div role="textbox" aria-multiline="true">` with a proper hierarchy of `<h1>`-`<h6>`, `<ul>/<ol>`, `<table>`, `<blockquote>`. Custom blocks are wrapped in ARIA widgets.
 
 ---
 
 ## 2. Keyboard Navigation
 
-### Таблица горячих клавиш
+### Keyboard shortcut table
 
-GoTipe поддерживает полный набор keyboard shortcuts для всех операций. `Mod` = `Cmd` на macOS, `Ctrl` на Windows/Linux.
+GoTipe supports a complete set of keyboard shortcuts for all operations. `Mod` = `Cmd` on macOS, `Ctrl` on Windows/Linux.
 
-#### Форматирование текста
+#### Text formatting
 
-| Shortcut | Действие | Команда |
+| Shortcut | Action | Command |
 |----------|---------|---------|
 | `Mod+B` | Bold | `toggleBold()` |
 | `Mod+I` | Italic | `toggleItalic()` |
@@ -163,16 +163,16 @@ GoTipe поддерживает полный набор keyboard shortcuts дл�
 | `Mod+K` | Link | `openLinkDialog()` |
 | `Mod+Shift+M` | Comment | `addComment()` |
 
-#### Блочные операции
+#### Block operations
 
-| Shortcut | Действие | Команда |
+| Shortcut | Action | Command |
 |----------|---------|---------|
-| `/` | Открыть slash menu | `openSlashMenu()` |
-| `Enter` | Новый блок | `splitBlock()` |
-| `Shift+Enter` | Soft break (новая строка в блоке) | `insertHardBreak()` |
-| `Backspace` | В начале блока — merge с предыдущим | `joinBackward()` |
-| `Delete` | В конце блока — merge со следующим | `joinForward()` |
-| `Tab` | Indent (в списках, code block) | `indent()` |
+| `/` | Open the slash menu | `openSlashMenu()` |
+| `Enter` | New block | `splitBlock()` |
+| `Shift+Enter` | Soft break (new line in a block) | `insertHardBreak()` |
+| `Backspace` | At the start of a block: merge with the previous one | `joinBackward()` |
+| `Delete` | At the end of a block: merge with the next one | `joinForward()` |
+| `Tab` | Indent (in lists, code block) | `indent()` |
 | `Shift+Tab` | Outdent | `outdent()` |
 | `Mod+Shift+0` | Paragraph | `setBlock('paragraph')` |
 | `Mod+Shift+1` | Heading 1 | `setBlock('heading', { level: 1 })` |
@@ -183,33 +183,33 @@ GoTipe поддерживает полный набор keyboard shortcuts дл�
 | `Mod+Shift+9` | Blockquote | `toggleBlockquote()` |
 | `Mod+Alt+C` | Code Block | `toggleCodeBlock()` |
 
-#### Навигация
+#### Navigation
 
-| Shortcut | Действие | Команда |
+| Shortcut | Action | Command |
 |----------|---------|---------|
-| `Arrow Up/Down` | Перемещение между блоками | `moveCursor()` |
-| `Mod+Home` | В начало документа | `moveTo('start')` |
-| `Mod+End` | В конец документа | `moveTo('end')` |
-| `Escape` | Выход из code block / закрыть меню | `exitNode()` / `closeMenu()` |
-| `Alt+Arrow Up` | Переместить блок вверх | `moveBlockUp()` |
-| `Alt+Arrow Down` | Переместить блок вниз | `moveBlockDown()` |
-| `Mod+Shift+Arrow Up` | Выделить до начала блока | `selectToBlockStart()` |
-| `Mod+Shift+Arrow Down` | Выделить до конца блока | `selectToBlockEnd()` |
+| `Arrow Up/Down` | Move between blocks | `moveCursor()` |
+| `Mod+Home` | To the start of the document | `moveTo('start')` |
+| `Mod+End` | To the end of the document | `moveTo('end')` |
+| `Escape` | Exit a code block / close a menu | `exitNode()` / `closeMenu()` |
+| `Alt+Arrow Up` | Move the block up | `moveBlockUp()` |
+| `Alt+Arrow Down` | Move the block down | `moveBlockDown()` |
+| `Mod+Shift+Arrow Up` | Select to the start of the block | `selectToBlockStart()` |
+| `Mod+Shift+Arrow Down` | Select to the end of the block | `selectToBlockEnd()` |
 
 #### History
 
-| Shortcut | Действие | Команда |
+| Shortcut | Action | Command |
 |----------|---------|---------|
 | `Mod+Z` | Undo | `undo()` |
 | `Mod+Shift+Z` / `Mod+Y` | Redo | `redo()` |
 
 #### Selection
 
-| Shortcut | Действие | Команда |
+| Shortcut | Action | Command |
 |----------|---------|---------|
-| `Mod+A` | Выделить весь контент блока / весь документ (двойное нажатие) | `selectAll()` |
-| `Shift+Click` | Выделение диапазона | Selection extension |
-| `Mod+D` | Выделить следующее вхождение слова | `selectNextOccurrence()` |
+| `Mod+A` | Select the whole block content / the whole document (double press) | `selectAll()` |
+| `Shift+Click` | Range selection | Selection extension |
+| `Mod+D` | Select the next occurrence of the word | `selectNextOccurrence()` |
 
 ### Focus Management
 
@@ -219,9 +219,9 @@ GoTipe поддерживает полный набор keyboard shortcuts дл�
 export interface FocusManagerConfig {
   /** Tab order: toolbar → editor → footer */
   tabOrder: FocusRegion[];
-  /** Trap focus в модальных окнах */
+  /** Trap focus in modal windows */
   trapFocus: boolean;
-  /** Восстановить focus после закрытия меню */
+  /** Restore focus after a menu closes */
   restoreFocus: boolean;
 }
 
@@ -238,13 +238,13 @@ export class FocusManager {
   private regions: Map<FocusRegion, HTMLElement> = new Map();
   private focusStack: HTMLElement[] = [];
 
-  /** Регистрация региона */
+  /** Register a region */
   register(region: FocusRegion, element: HTMLElement): void {
     this.regions.set(region, element);
     element.setAttribute('data-gotipe-region', region);
   }
 
-  /** Переключение focus на регион */
+  /** Move focus to a region */
   focusRegion(region: FocusRegion): void {
     const el = this.regions.get(region);
     if (el) {
@@ -253,7 +253,7 @@ export class FocusManager {
     }
   }
 
-  /** Восстановление предыдущего focus */
+  /** Restore the previous focus */
   restoreFocus(): void {
     const prev = this.focusStack.pop();
     if (prev && prev.isConnected) {
@@ -261,7 +261,7 @@ export class FocusManager {
     }
   }
 
-  /** Focus trap для модальных окон */
+  /** Focus trap for modal windows */
   trapFocusIn(container: HTMLElement): () => void {
     const focusable = container.querySelectorAll<HTMLElement>(
       'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
@@ -291,14 +291,14 @@ export class FocusManager {
 ### Tab Order
 
 ```html
-<!-- Логичный tab order для editor -->
+<!-- Logical tab order for the editor -->
 <a href="#gotipe-editor" class="gotipe-skip-nav">
   Skip to editor content
 </a>
 
 <div class="gotipe-toolbar" role="toolbar" aria-label="Formatting options">
-  <!-- tabindex="0" на первом элементе, "-1" на остальных -->
-  <!-- Arrow keys для навигации внутри toolbar -->
+  <!-- tabindex="0" on the first element, "-1" on the rest -->
+  <!-- Arrow keys for navigation inside the toolbar -->
   <button tabindex="0" aria-label="Bold" aria-pressed="false">B</button>
   <button tabindex="-1" aria-label="Italic" aria-pressed="false">I</button>
   <button tabindex="-1" aria-label="Underline" aria-pressed="false">U</button>
@@ -318,29 +318,29 @@ export class FocusManager {
 
 ### Keyboard-only Editing Flow
 
-Полный сценарий без мыши:
+Full scenario without a mouse:
 
-1. `Tab` — focus на toolbar
-2. `Arrow Right/Left` — навигация по кнопкам toolbar
-3. `Tab` — focus на editor
-4. Ввод текста — paragraph автоматически
-5. `/` — открытие slash menu (focus trap)
-6. `Arrow Down` — навигация по элементам меню
-7. `Enter` — выбор блока
-8. `Escape` — закрыть меню, вернуть focus в editor
-9. Выделить текст — `Shift+Arrow`
-10. `Mod+B` — применить bold
-11. `Alt+Arrow Down` — переместить блок вниз (keyboard DnD alternative)
-12. `Tab` — focus на footer / следующий элемент
+1. `Tab`: focus on the toolbar
+2. `Arrow Right/Left`: navigate the toolbar buttons
+3. `Tab`: focus on the editor
+4. Typing text: a paragraph is created automatically
+5. `/`: opens the slash menu (focus trap)
+6. `Arrow Down`: navigate the menu items
+7. `Enter`: choose a block
+8. `Escape`: close the menu, return focus to the editor
+9. Select text: `Shift+Arrow`
+10. `Mod+B`: apply bold
+11. `Alt+Arrow Down`: move the block down (keyboard DnD alternative)
+12. `Tab`: focus on the footer / next element
 
 ---
 
 ## 3. Screen Reader Support
 
-### ARIA Roles и Attributes для Editor
+### ARIA Roles and Attributes for the Editor
 
 ```html
-<!-- Основной editor container -->
+<!-- Main editor container -->
 <div
   role="application"
   aria-roledescription="rich text editor"
@@ -387,15 +387,15 @@ export class FocusManager {
 </div>
 ```
 
-### ARIA Attributes для каждого Block Type
+### ARIA Attributes for each Block Type
 
-| Block Type | ARIA Role | ARIA Attributes | Пример |
+| Block Type | ARIA Role | ARIA Attributes | Example |
 |-----------|-----------|-----------------|--------|
-| `paragraph` | `paragraph` (неявный) | — | `<p>Text</p>` |
+| `paragraph` | `paragraph` (implicit) | — | `<p>Text</p>` |
 | `heading` | `heading` | `aria-level="1..6"` | `<h2 aria-level="2">Title</h2>` |
 | `bulletList` | `list` | — | `<ul role="list">` |
 | `orderedList` | `list` | — | `<ol role="list">` |
-| `listItem` | `listitem` | `aria-checked` (для task list) | `<li role="listitem" aria-checked="false">` |
+| `listItem` | `listitem` | `aria-checked` (for task list) | `<li role="listitem" aria-checked="false">` |
 | `codeBlock` | `code` | `aria-label="Code block, language: javascript"` | `<pre><code aria-label="...">` |
 | `blockquote` | `blockquote` | — | `<blockquote>` |
 | `callout` | `note` | `aria-label="Info callout"` | `<aside role="note">` |
@@ -405,10 +405,10 @@ export class FocusManager {
 | `divider` | `separator` | — | `<hr role="separator" />` |
 | `toggle` | `region` | `aria-expanded`, `aria-label` | `<details aria-expanded="true">` |
 | `embed` | `figure` | `aria-label="Embedded content: YouTube"` | `<figure role="figure">` |
-| `math` | `math` | `aria-label` (текстовое представление) | `<span role="math" aria-label="x squared">` |
+| `math` | `math` | `aria-label` (text representation) | `<span role="math" aria-label="x squared">` |
 | `file` | `link` | `aria-label="Attached file: report.pdf, 2.3 MB"` | `<a role="link">` |
 
-### Live Regions для Collaboration
+### Live Regions for Collaboration
 
 ```typescript
 // packages/core/src/a11y/announcer.ts
@@ -418,7 +418,7 @@ export class A11yAnnouncer {
   private logRegion: HTMLElement;
 
   constructor(container: HTMLElement) {
-    // Polite announcements — не прерывают текущее чтение
+    // Polite announcements do not interrupt the current reading
     this.liveRegion = document.createElement('div');
     this.liveRegion.setAttribute('role', 'status');
     this.liveRegion.setAttribute('aria-live', 'polite');
@@ -426,7 +426,7 @@ export class A11yAnnouncer {
     this.liveRegion.className = 'gotipe-sr-only';
     container.appendChild(this.liveRegion);
 
-    // Log region — для collaboration events
+    // Log region for collaboration events
     this.logRegion = document.createElement('div');
     this.logRegion.setAttribute('role', 'log');
     this.logRegion.setAttribute('aria-live', 'polite');
@@ -435,22 +435,22 @@ export class A11yAnnouncer {
     container.appendChild(this.logRegion);
   }
 
-  /** Объявить действие (block type change, formatting) */
+  /** Announce an action (block type change, formatting) */
   announce(message: string, priority: 'polite' | 'assertive' = 'polite'): void {
     this.liveRegion.setAttribute('aria-live', priority);
-    // Clearing and re-setting заставляет screen reader перечитать
+    // Clearing and re-setting makes the screen reader read it again
     this.liveRegion.textContent = '';
     requestAnimationFrame(() => {
       this.liveRegion.textContent = message;
     });
   }
 
-  /** Добавить collaboration event в log */
+  /** Add a collaboration event to the log */
   logCollabEvent(event: string): void {
     const entry = document.createElement('div');
     entry.textContent = event;
     this.logRegion.appendChild(entry);
-    // Очистка старых записей
+    // Clear old entries
     while (this.logRegion.children.length > 20) {
       this.logRegion.removeChild(this.logRegion.firstChild!);
     }
@@ -458,7 +458,7 @@ export class A11yAnnouncer {
 }
 ```
 
-### Примеры announcement
+### Announcement examples
 
 ```typescript
 // Block type changes
@@ -483,10 +483,10 @@ announcer.announce('Connection lost. Changes saved locally.', 'assertive');
 
 ### Custom Block A11y
 
-Extension API позволяет определять accessibility для custom blocks:
+The Extension API lets you define accessibility for custom blocks:
 
 ```typescript
-// Пример: extension для custom block "poll"
+// Example: an extension for a custom "poll" block
 import { defineExtension } from '@gotipe/core';
 
 export const PollExtension = defineExtension({
@@ -500,7 +500,7 @@ export const PollExtension = defineExtension({
       options: { default: [] },
     },
 
-    // A11y конфигурация для custom block
+    // A11y configuration for the custom block
     accessibility: {
       role: 'group',
       label: (node) => `Poll: ${node.attrs.question}`,
@@ -524,13 +524,13 @@ export const PollExtension = defineExtension({
 // packages/core/src/a11y/editor-focus.ts
 
 export interface EditorFocusState {
-  /** Editor имеет focus */
+  /** The editor has focus */
   isFocused: boolean;
-  /** Какой регион активен */
+  /** Which region is active */
   activeRegion: FocusRegion | null;
-  /** Позиция cursor (для screen reader) */
+  /** Cursor position (for the screen reader) */
   cursorPosition: { line: number; column: number };
-  /** Активный block type */
+  /** Active block type */
   activeBlockType: string | null;
 }
 
@@ -554,10 +554,10 @@ export class EditorFocusController {
     this.emit('blur', this.state);
   }
 
-  /** Обновить screen reader при смене блока */
+  /** Update the screen reader when the block changes */
   onBlockChange(blockType: string, attrs: Record<string, unknown>): void {
     this.state.activeBlockType = blockType;
-    // Объявить новый block type
+    // Announce the new block type
     const label = this.getBlockLabel(blockType, attrs);
     this.announcer.announce(label);
   }
@@ -613,7 +613,7 @@ export function SlashMenuA11y(props: {
 }
 ```
 
-React-реализация slash menu с focus management:
+A React implementation of the slash menu with focus management:
 
 ```tsx
 // packages/react/src/components/SlashMenu.tsx
@@ -626,7 +626,7 @@ export function SlashMenu({ items, isOpen, onSelect, onClose }: SlashMenuProps) 
   const [activeIndex, setActiveIndex] = useState(0);
   const editor = useEditor();
 
-  // Focus trap — Tab cycles внутри меню
+  // Focus trap: Tab cycles inside the menu
   const releaseTrap = useFocusTrap(listRef, isOpen);
 
   // Keyboard navigation
@@ -647,13 +647,13 @@ export function SlashMenu({ items, isOpen, onSelect, onClose }: SlashMenuProps) 
       case 'Escape':
         e.preventDefault();
         onClose();
-        // Focus возвращается в editor
+        // Focus returns to the editor
         editor.focus();
         break;
     }
   }, [items, activeIndex, onSelect, onClose, editor]);
 
-  // Announce при навигации
+  // Announce on navigation
   useEffect(() => {
     if (isOpen && items[activeIndex]) {
       editor.a11y.announce(
@@ -704,13 +704,13 @@ export function BubbleMenu({ isOpen, onClose }: BubbleMenuProps) {
 
   useEffect(() => {
     if (isOpen && toolbarRef.current) {
-      // Focus на первый элемент
+      // Focus on the first element
       const first = toolbarRef.current.querySelector<HTMLElement>('button');
       first?.focus();
     }
   }, [isOpen]);
 
-  // roving tabindex — Arrow keys внутри toolbar
+  // roving tabindex: Arrow keys inside the toolbar
   const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
     const buttons = toolbarRef.current?.querySelectorAll<HTMLElement>('button');
     if (!buttons) return;
@@ -812,13 +812,13 @@ export function createDialogA11y(dialogElement: HTMLElement, options: {
 ### Skip Navigation
 
 ```html
-<!-- Skip nav link — визуально скрыт, виден при focus -->
+<!-- Skip nav link: visually hidden, visible on focus -->
 <a
   href="#gotipe-editor-content"
   class="gotipe-skip-nav"
   tabindex="0"
 >
-  Перейти к содержимому редактора
+  Skip to editor content
 </a>
 
 <style>
@@ -847,13 +847,13 @@ export function createDialogA11y(dialogElement: HTMLElement, options: {
 
 ### CSS Custom Properties
 
-GoTipe использует CSS custom properties для полной кастомизации visual appearance:
+GoTipe uses CSS custom properties for full customization of the visual appearance:
 
 ```css
 /* packages/core/src/styles/a11y-variables.css */
 
 :root {
-  /* === Цвета === */
+  /* === Colors === */
   --gotipe-color-text: #1a1a1a;
   --gotipe-color-text-secondary: #666666;
   --gotipe-color-background: #ffffff;
@@ -896,14 +896,14 @@ GoTipe использует CSS custom properties для полной касто
 ```css
 /* packages/core/src/styles/focus.css */
 
-/* Видимый focus ring для всех интерактивных элементов */
+/* Visible focus ring for all interactive elements */
 .gotipe-editor *:focus-visible {
   outline: var(--gotipe-focus-ring-width) var(--gotipe-focus-ring-style) var(--gotipe-focus-ring-color);
   outline-offset: var(--gotipe-focus-ring-offset);
   border-radius: 2px;
 }
 
-/* Более заметный focus для toolbar buttons */
+/* More prominent focus for toolbar buttons */
 .gotipe-toolbar button:focus-visible {
   outline: var(--gotipe-focus-ring-width) var(--gotipe-focus-ring-style) var(--gotipe-focus-ring-color);
   outline-offset: var(--gotipe-focus-ring-offset);
@@ -911,13 +911,13 @@ GoTipe использует CSS custom properties для полной касто
     color-mix(in srgb, var(--gotipe-focus-ring-color) 25%, transparent);
 }
 
-/* Focus на editor area */
+/* Focus on the editor area */
 .gotipe-editor [role="textbox"]:focus-visible {
-  outline: none; /* contenteditable имеет свой cursor */
+  outline: none; /* contenteditable has its own cursor */
   box-shadow: inset 0 0 0 2px var(--gotipe-focus-ring-color);
 }
 
-/* Block-level focus indicator (при keyboard навигации между блоками) */
+/* Block-level focus indicator (for keyboard navigation between blocks) */
 .gotipe-block--focused {
   position: relative;
 }
@@ -941,7 +941,7 @@ GoTipe использует CSS custom properties для полной касто
 
 @media (forced-colors: active) {
   .gotipe-editor {
-    /* В forced-colors mode цвета управляются системой */
+    /* In forced-colors mode the colors are controlled by the system */
     forced-color-adjust: none;
   }
 
@@ -965,7 +965,7 @@ GoTipe использует CSS custom properties для полной касто
     outline-offset: 2px;
   }
 
-  /* Selection в high contrast mode */
+  /* Selection in high contrast mode */
   .gotipe-editor ::selection {
     background: Highlight;
     color: HighlightText;
@@ -1001,7 +1001,7 @@ GoTipe использует CSS custom properties для полной касто
     border-color: ButtonText;
   }
 
-  /* Image без alt */
+  /* Image without alt */
   .gotipe-image:not([alt]) {
     border: 2px dashed LinkText;
   }
@@ -1016,7 +1016,7 @@ GoTipe использует CSS custom properties для полной касто
 
 ### Contrast Ratios
 
-| Элемент | Foreground | Background | Ratio | WCAG |
+| Element | Foreground | Background | Ratio | WCAG |
 |---------|-----------|-----------|-------|------|
 | Body text | `#1a1a1a` | `#ffffff` | 17.1:1 | AAA |
 | Secondary text | `#666666` | `#ffffff` | 5.74:1 | AA |
@@ -1031,13 +1031,13 @@ GoTipe использует CSS custom properties для полной касто
 ### Selection Styling
 
 ```css
-/* Стилизация selection с учётом accessibility */
+/* Selection styling with accessibility in mind */
 .gotipe-editor ::selection {
   background-color: var(--gotipe-selection-bg);
   color: var(--gotipe-selection-text);
 }
 
-/* Collaboration cursor colors — достаточный контраст с текстом */
+/* Collaboration cursor colors: sufficient contrast with the text */
 .gotipe-collab-cursor {
   border-inline-start: var(--gotipe-collab-cursor-width) solid var(--cursor-color);
   position: relative;
@@ -1048,7 +1048,7 @@ GoTipe использует CSS custom properties для полной касто
   top: -1.5em;
   inset-inline-start: 0;
   background: var(--cursor-color);
-  color: #ffffff; /* Гарантирован контраст >= 4.5:1 с любым cursor-color */
+  color: #ffffff; /* Guaranteed contrast >= 4.5:1 with any cursor color */
   font-size: 0.75rem;
   padding: 1px 4px;
   border-radius: 3px;
@@ -1066,18 +1066,18 @@ GoTipe использует CSS custom properties для полной касто
 ```css
 /* packages/core/src/styles/reduced-motion.css */
 
-/* По умолчанию: анимации включены */
+/* By default: animations are on */
 .gotipe-editor {
   --gotipe-transition-duration: 150ms;
 }
 
-/* Reduced motion: отключение всех необязательных анимаций */
+/* Reduced motion: disable all non-essential animations */
 @media (prefers-reduced-motion: reduce) {
   .gotipe-editor {
     --gotipe-transition-duration: 0ms;
   }
 
-  /* Отключить transition на всех элементах */
+  /* Disable transitions on all elements */
   .gotipe-editor *,
   .gotipe-editor *::before,
   .gotipe-editor *::after {
@@ -1087,12 +1087,12 @@ GoTipe использует CSS custom properties для полной касто
     scroll-behavior: auto !important;
   }
 
-  /* Cursor blink — отключить */
+  /* Cursor blink: disable */
   .gotipe-editor .gotipe-cursor {
     animation: none;
   }
 
-  /* Collaboration cursor animations — отключить */
+  /* Collaboration cursor animations: disable */
   .gotipe-collab-cursor {
     transition: none;
   }
@@ -1102,31 +1102,31 @@ GoTipe использует CSS custom properties для полной касто
     transition: none;
   }
 
-  /* Slash menu appear — мгновенно */
+  /* Slash menu appearing: instant */
   .gotipe-slash-menu {
     animation: none;
     opacity: 1;
     transform: none;
   }
 
-  /* Bubble menu — мгновенно */
+  /* Bubble menu: instant */
   .gotipe-bubble-menu {
     animation: none;
     opacity: 1;
     transform: none;
   }
 
-  /* Drag-and-drop placeholder — без анимации */
+  /* Drag-and-drop placeholder: no animation */
   .gotipe-drop-indicator {
     animation: none;
   }
 
-  /* Block transition при перемещении — мгновенно */
+  /* Block transition when moving: instant */
   .gotipe-block {
     transition: none;
   }
 
-  /* Image loading skeleton — статичный placeholder */
+  /* Image loading skeleton: static placeholder */
   .gotipe-image-placeholder {
     animation: none;
     background: var(--gotipe-color-surface);
@@ -1152,7 +1152,7 @@ export function onMotionPreferenceChange(callback: (reduced: boolean) => void): 
   return () => mql.removeEventListener('change', handler);
 }
 
-// Использование в editor:
+// Usage in the editor:
 const editor = createEditor({
   // ...
   a11y: {
@@ -1167,7 +1167,7 @@ const editor = createEditor({
 // packages/core/src/view/cursor.ts
 
 export interface CursorConfig {
-  /** Включить blink animation */
+  /** Enable the blink animation */
   blink: boolean;
   /** Smooth caret movement */
   smoothCaret: boolean;
@@ -1203,9 +1203,9 @@ export function getCursorConfig(reducedMotion: boolean): CursorConfig {
 export interface GoTipeLocale {
   /** BCP 47 language tag */
   code: string;
-  /** Направление текста */
+  /** Text direction */
   dir: 'ltr' | 'rtl';
-  /** Название на своём языке */
+  /** Name in its own language */
   nativeName: string;
   /** Translations */
   messages: GoTipeMessages;
@@ -1219,7 +1219,7 @@ export interface GoTipeLocale {
 
 export type PluralCategory = 'zero' | 'one' | 'two' | 'few' | 'many' | 'other';
 
-// Полный набор translation keys
+// Full set of translation keys
 export interface GoTipeMessages {
   // === Editor ===
   'editor.label': string;
@@ -1305,7 +1305,7 @@ export interface GoTipeMessages {
 
 ### Translation Keys — ICU MessageFormat
 
-GoTipe использует [ICU MessageFormat](https://unicode-org.github.io/icu/userguide/format_parse/messages/) для сложных переводов с pluralization, gender, числовым форматированием:
+GoTipe uses [ICU MessageFormat](https://unicode-org.github.io/icu/userguide/format_parse/messages/) for complex translations with pluralization, gender and number formatting:
 
 ```typescript
 // packages/i18n/src/format.ts
@@ -1326,7 +1326,7 @@ export class MessageFormatter {
   }
 }
 
-// Пример использования:
+// Usage example (Russian plural forms):
 const fmt = new MessageFormatter('ru');
 
 // Pluralization
@@ -1334,17 +1334,17 @@ fmt.format(
   '{count, plural, =0 {Нет пользователей} one {# пользователь} few {# пользователя} many {# пользователей} other {# пользователей}}',
   { count: 3 }
 );
-// → "3 пользователя"
+// → "3 пользователя" ("3 users")
 
 // Number formatting
 fmt.format(
   'Размер файла: {size, number, ::compact-short}',
   { size: 2048576 }
 );
-// → "Размер файла: 2 М"
+// → "Размер файла: 2 М" ("File size: 2 M")
 ```
 
-### Примеры локализаций
+### Localization examples
 
 ```typescript
 // packages/i18n/src/locales/ru.ts
@@ -1440,7 +1440,7 @@ export const ru: GoTipeLocale = {
 ```
 
 ```typescript
-// packages/i18n/src/locales/en.ts (фрагмент)
+// packages/i18n/src/locales/en.ts (excerpt)
 
 export const en: GoTipeLocale = {
   code: 'en',
@@ -1460,25 +1460,25 @@ export const en: GoTipeLocale = {
 };
 ```
 
-### Подключение i18n
+### Hooking up i18n
 
 ```typescript
-// Использование в editor
+// Usage in the editor
 import { createEditor } from '@gotipe/core';
 import { ru } from '@gotipe/i18n/locales/ru';
 
 const editor = createEditor({
   locale: ru,
-  // Или динамическая загрузка:
+  // Or dynamic loading:
   // locale: () => import(`@gotipe/i18n/locales/${navigator.language.split('-')[0]}`),
 });
 
-// Смена локали в runtime
+// Changing the locale at runtime
 editor.setLocale(en);
 ```
 
 ```tsx
-// React: через Provider
+// React: through a Provider
 import { GoTipeProvider, useGoTipe } from '@gotipe/react';
 import { ru } from '@gotipe/i18n/locales/ru';
 
@@ -1490,7 +1490,7 @@ function App() {
   );
 }
 
-// Использование внутри компонентов
+// Usage inside components
 function StatusBar() {
   const { t, formatNumber } = useGoTipe();
 
@@ -1510,20 +1510,20 @@ function StatusBar() {
 
 ### CSS Logical Properties
 
-GoTipe использует CSS logical properties вместо physical (left/right/top/bottom) для автоматической поддержки RTL:
+GoTipe uses CSS logical properties instead of physical ones (left/right/top/bottom) for automatic RTL support:
 
 ```css
 /* packages/core/src/styles/logical.css */
 
-/* Использовать logical properties вместо physical */
+/* Use logical properties instead of physical ones */
 .gotipe-block {
-  /* Вместо: margin-left: 1.5em; */
+  /* Instead of: margin-left: 1.5em; */
   margin-inline-start: var(--gotipe-indent-size);
-  /* Вместо: padding-left: 8px; padding-right: 8px; */
+  /* Instead of: padding-left: 8px; padding-right: 8px; */
   padding-inline: 8px;
-  /* Вместо: text-align: left; */
+  /* Instead of: text-align: left; */
   text-align: start;
-  /* Вместо: border-left: 3px solid; */
+  /* Instead of: border-left: 3px solid; */
   border-inline-start: 3px solid;
 }
 
@@ -1570,7 +1570,7 @@ GoTipe использует CSS logical properties вместо physical (left/r
 .gotipe-toolbar {
   display: flex;
   flex-direction: row;
-  /* В RTL — автоматически reverse */
+  /* In RTL: reversed automatically */
 }
 
 /* Block drag handle */
@@ -1592,11 +1592,11 @@ GoTipe использует CSS logical properties вместо physical (left/r
 // packages/core/src/i18n/bidi.ts
 
 /**
- * Определение направления текста на уровне блока.
- * Использует Unicode BiDi algorithm (UAX #9).
+ * Detecting text direction at the block level.
+ * Uses the Unicode BiDi algorithm (UAX #9).
  */
 export function detectTextDirection(text: string): 'ltr' | 'rtl' {
-  // Первый "strong" Unicode character определяет направление
+  // The first "strong" Unicode character determines the direction
   const rtlRegex = /[\u0591-\u07FF\u200F\u202B\u202E\uFB1D-\uFDFD\uFE70-\uFEFC]/;
   const ltrRegex = /[A-Za-z\u00C0-\u00D6\u00D8-\u00F6\u00F8-\u02B8\u0300-\u0590\u0800-\u1FFF\u200E\u2C00-\uFB1C\uFE00-\uFE6F\uFEFF\uFF00-\uFFEF]/;
 
@@ -1604,12 +1604,12 @@ export function detectTextDirection(text: string): 'ltr' | 'rtl' {
     if (rtlRegex.test(char)) return 'rtl';
     if (ltrRegex.test(char)) return 'ltr';
   }
-  // Default: inherit от document
+  // Default: inherit from the document
   return document.documentElement.dir === 'rtl' ? 'rtl' : 'ltr';
 }
 
 /**
- * Установка dir на уровне блока для mixed content.
+ * Setting dir at the block level for mixed content.
  */
 export function applyBlockDirection(
   blockElement: HTMLElement,
@@ -1629,15 +1629,15 @@ export function applyBlockDirection(
 ### Mixed LTR/RTL Content
 
 ```html
-<!-- Документ на арабском с вставками английского кода -->
+<!-- An Arabic document with inserted English code -->
 <div dir="rtl" lang="ar" class="gotipe-editor">
   <!-- RTL paragraph -->
   <p dir="rtl">هذا هو محرر النصوص GoTipe مع دعم كامل للغة العربية.</p>
 
-  <!-- Code block — всегда LTR -->
+  <!-- Code block: always LTR -->
   <pre dir="ltr" lang="en"><code>const editor = createEditor({ dir: 'rtl' });</code></pre>
 
-  <!-- Mixed paragraph: арабский + английские термины -->
+  <!-- Mixed paragraph: Arabic + English terms -->
   <p dir="rtl">
     استخدم
     <bdi dir="ltr"><code>editor.chain().toggleBold().run()</code></bdi>
@@ -1646,29 +1646,29 @@ export function applyBlockDirection(
 </div>
 ```
 
-### Cursor Movement в RTL
+### Cursor Movement in RTL
 
 ```typescript
 // packages/core/src/input/cursor-rtl.ts
 
 export interface BiDiCursorBehavior {
   /**
-   * Visual movement: Arrow Right всегда двигает cursor вправо визуально,
-   * независимо от направления текста.
+   * Visual movement: Arrow Right always moves the cursor right visually,
+   * regardless of the text direction.
    */
   visual: boolean;
 
   /**
-   * Logical movement: Arrow Right двигает cursor "вперёд" по тексту.
-   * В RTL-тексте это визуально влево.
+   * Logical movement: Arrow Right moves the cursor "forward" through the text.
+   * In RTL text this is visually to the left.
    */
   logical: boolean;
 }
 
 /**
- * GoTipe по умолчанию использует visual cursor movement,
- * что соответствует поведению Notion и Google Docs.
- * Пользователь может переключить на logical через настройки.
+ * By default GoTipe uses visual cursor movement,
+ * which matches the behavior of Notion and Google Docs.
+ * The user can switch to logical through the settings.
  */
 export const defaultBiDiCursorBehavior: BiDiCursorBehavior = {
   visual: true,
@@ -1676,17 +1676,17 @@ export const defaultBiDiCursorBehavior: BiDiCursorBehavior = {
 };
 ```
 
-### Полная RTL-конфигурация
+### Full RTL configuration
 
 ```typescript
 const editor = createEditor({
   dir: 'rtl',
-  locale: ar, // Арабская локаль
+  locale: ar, // Arabic locale
 
   bidi: {
-    /** Автоматическое определение направления для каждого блока */
+    /** Automatic direction detection for each block */
     autoDetect: true,
-    /** Code blocks всегда LTR */
+    /** Code blocks are always LTR */
     codeBlockDir: 'ltr',
     /** Cursor movement mode */
     cursorMovement: 'visual',
@@ -1698,9 +1698,9 @@ const editor = createEditor({
 
 ## 9. IME Support
 
-### Обзор
+### Overview
 
-IME (Input Method Editor) — критически важная функция для ввода CJK (Chinese, Japanese, Korean) символов. GoTipe полностью поддерживает composition events и корректно синхронизирует WASM state во время composition.
+IME (Input Method Editor) is a critical feature for entering CJK (Chinese, Japanese, Korean) characters. GoTipe fully supports composition events and correctly synchronizes the WASM state during composition.
 
 ```
 ┌──────────────────────────────────────────────────────────────┐
@@ -1756,10 +1756,10 @@ export class IMEHandler {
     this.isComposing = true;
     this.compositionAnchor = this.wasmCore.getCursorPosition();
 
-    // Заблокировать WASM state updates во время composition
+    // Block WASM state updates during composition
     this.wasmCore.lockState();
 
-    // Отключить history snapshots
+    // Disable history snapshots
     this.wasmCore.pauseHistory();
 
     this.announcer.announce('IME composition started', 'polite');
@@ -1769,8 +1769,8 @@ export class IMEHandler {
     if (!this.isComposing) return;
     this.compositionText = e.data;
 
-    // Визуальный preview — render composition text в DOM,
-    // НЕ отправлять в WASM core
+    // Visual preview: render the composition text in the DOM,
+    // do NOT send it to the WASM core
     this.renderCompositionPreview(this.compositionText);
   };
 
@@ -1780,18 +1780,18 @@ export class IMEHandler {
 
     const finalText = e.data;
 
-    // Убрать preview
+    // Remove the preview
     this.clearCompositionPreview();
 
-    // Разблокировать WASM state
+    // Unblock the WASM state
     this.wasmCore.unlockState();
 
-    // Применить финальный текст к WASM state
+    // Apply the final text to the WASM state
     if (this.compositionAnchor && finalText) {
       this.wasmCore.insertText(this.compositionAnchor, finalText);
     }
 
-    // Возобновить history
+    // Resume history
     this.wasmCore.resumeHistory();
 
     // Reset
@@ -1799,14 +1799,14 @@ export class IMEHandler {
     this.compositionAnchor = null;
   };
 
-  /** Проверка: идёт ли composition сейчас */
+  /** Check: is a composition in progress */
   get composing(): boolean {
     return this.isComposing;
   }
 
   private renderCompositionPreview(text: string): void {
-    // Специальный DOM-only rendering для composition text
-    // с подчёркиванием (стандартный IME visual feedback)
+    // Special DOM-only rendering for the composition text
+    // with an underline (standard IME visual feedback)
     const preview = this.editorElement.querySelector('.gotipe-composition-preview');
     if (preview) {
       preview.textContent = text;
@@ -1828,15 +1828,15 @@ export class IMEHandler {
 // packages/core/src/wasm/state-lock.ts
 
 /**
- * Во время IME composition, WASM state заморожен.
- * Все изменения буферизируются и применяются после compositionend.
+ * During an IME composition the WASM state is frozen.
+ * All changes are buffered and applied after compositionend.
  *
- * Это критически важно:
- * 1. Если обновлять WASM state на каждый compositionupdate,
- *    browser потеряет IME candidate window positioning.
- * 2. Intermediate composition text не должен попадать в CRDT history.
- * 3. Collaboration updates от других пользователей буферизируются
- *    и применяются после compositionend.
+ * This is critical:
+ * 1. If the WASM state is updated on every compositionupdate,
+ *    the browser loses IME candidate window positioning.
+ * 2. Intermediate composition text must not end up in the CRDT history.
+ * 3. Collaboration updates from other users are buffered
+ *    and applied after compositionend.
  */
 export class WasmStateLock {
   private locked = false;
@@ -1853,13 +1853,13 @@ export class WasmStateLock {
     return updates;
   }
 
-  /** Буферизировать update, если state заблокирован */
+  /** Buffer the update if the state is locked */
   tryApply(transaction: Transaction): boolean {
     if (this.locked) {
       this.pendingUpdates.push(transaction);
-      return false; // Не применено сейчас
+      return false; // Not applied now
     }
-    return true; // Можно применять
+    return true; // Can be applied
   }
 
   get isLocked(): boolean {
@@ -1873,8 +1873,8 @@ export class WasmStateLock {
 ```css
 /* IME candidate window positioning */
 .gotipe-editor [contenteditable="true"] {
-  /* Не устанавливать transform на contenteditable —
-     это ломает positioning IME candidate window в Chrome */
+  /* Do not set transform on contenteditable:
+     it breaks IME candidate window positioning in Chrome */
   transform: none;
 }
 
@@ -1886,11 +1886,11 @@ export class WasmStateLock {
 }
 ```
 
-### Тестирование IME
+### IME testing
 
-| Язык | Input Method | Browser | Ожидаемое поведение |
+| Language | Input Method | Browser | Expected behavior |
 |------|-------------|---------|---------------------|
-| Japanese | Hiragana → Kanji | Chrome | Candidate window под cursor, correct insertion |
+| Japanese | Hiragana → Kanji | Chrome | Candidate window under the cursor, correct insertion |
 | Chinese (Simplified) | Pinyin → Hanzi | Chrome/Firefox | Composition preview, candidate selection |
 | Chinese (Traditional) | Zhuyin (Bopomofo) | Safari | Correct positioning, no duplicate input |
 | Korean | Hangul 2-beolsik | Chrome | Syllable composition, backspace during composition |
@@ -1907,11 +1907,11 @@ export class WasmStateLock {
 // packages/core/src/input/touch-dnd.ts
 
 export interface TouchDnDConfig {
-  /** Задержка перед началом drag (ms) */
+  /** Delay before the drag starts (ms) */
   longPressDelay: number;
-  /** Минимальное расстояние для начала drag (px) */
+  /** Minimum distance to start a drag (px) */
   dragThreshold: number;
-  /** Haptic feedback (если поддерживается) */
+  /** Haptic feedback (if supported) */
   hapticFeedback: boolean;
 }
 
@@ -1923,11 +1923,11 @@ export const defaultTouchDnDConfig: TouchDnDConfig = {
 
 /**
  * Touch DnD flow:
- * 1. Long press (500ms) на block → активация drag mode
+ * 1. Long press (500ms) on a block → drag mode activates
  * 2. Haptic feedback (navigator.vibrate)
- * 3. Block визуально "поднимается" (scale + shadow)
- * 4. Перемещение пальцем → drop indicator показывает позицию
- * 5. Отпускание → block перемещается
+ * 3. The block visually "lifts" (scale + shadow)
+ * 4. Moving the finger → the drop indicator shows the position
+ * 5. Release → the block moves
  */
 export class TouchDragAndDrop {
   private longPressTimer: ReturnType<typeof setTimeout> | null = null;
@@ -1971,7 +1971,7 @@ export class TouchDragAndDrop {
 ```css
 /* packages/core/src/styles/mobile.css */
 
-/* Mobile toolbar: sticky bottom на маленьких экранах */
+/* Mobile toolbar: sticky bottom on small screens */
 @media (max-width: 768px) {
   .gotipe-toolbar {
     position: fixed;
@@ -2003,7 +2003,7 @@ export class TouchDragAndDrop {
     padding-bottom: env(safe-area-inset-bottom);
   }
 
-  /* Bubble menu — positioned above selection, не обрезается */
+  /* Bubble menu: positioned above the selection, not clipped */
   .gotipe-bubble-menu {
     max-width: calc(100vw - 16px);
     overflow-x: auto;
@@ -2032,11 +2032,11 @@ export class VirtualKeyboardManager {
   }
 
   private bind(): void {
-    // Visual Viewport API — более надёжный способ detect virtual keyboard
+    // Visual Viewport API: a more reliable way to detect the virtual keyboard
     if (window.visualViewport) {
       window.visualViewport.addEventListener('resize', this.onViewportResize);
     } else {
-      // Fallback для старых браузеров
+      // Fallback for older browsers
       window.addEventListener('resize', this.onWindowResize);
     }
   }
@@ -2071,10 +2071,10 @@ export class VirtualKeyboardManager {
 }
 ```
 
-### Viewport Meta и Safe Area
+### Viewport Meta and Safe Area
 
 ```html
-<!-- Рекомендуемый viewport meta для приложений с GoTipe -->
+<!-- Recommended viewport meta for applications with GoTipe -->
 <meta
   name="viewport"
   content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content"
@@ -2082,7 +2082,7 @@ export class VirtualKeyboardManager {
 ```
 
 ```css
-/* Safe area insets для iPhone/iPad с notch */
+/* Safe area insets for iPhone/iPad with a notch */
 .gotipe-editor-container {
   padding-top: env(safe-area-inset-top);
   padding-bottom: env(safe-area-inset-bottom);
@@ -2093,7 +2093,7 @@ export class VirtualKeyboardManager {
 
 ### Gesture Support
 
-| Gesture | Действие | A11y Alternative |
+| Gesture | Action | A11y Alternative |
 |---------|---------|------------------|
 | Tap | Place cursor | Focus event |
 | Double tap | Select word | `Mod+D` |
@@ -2130,7 +2130,7 @@ export class VirtualKeyboardManager {
 | `navigator.vibrate` | Full | Full | No | Full |
 | `ResizeObserver` | Full | Full | Full | Full |
 
-\* `Intl.Segmenter` — Firefox не поддерживает нативно. GoTipe использует polyfill.
+\* `Intl.Segmenter`: Firefox does not support it natively. GoTipe uses a polyfill.
 
 ### Graceful Degradation
 
@@ -2180,13 +2180,13 @@ export function detectCapabilities(): BrowserCapabilities {
 // packages/core/src/compat/fallbacks.ts
 
 /**
- * Fallback-стратегии для неподдерживаемых features.
+ * Fallback strategies for unsupported features.
  */
 export function applyFallbacks(capabilities: BrowserCapabilities): void {
-  // Intl.Segmenter fallback для Firefox
+  // Intl.Segmenter fallback for Firefox
   if (!capabilities.intlSegmenter) {
-    // Используем simple word boundary detection
-    // вместо Unicode-aware segmentation
+    // Use simple word boundary detection
+    // instead of Unicode-aware segmentation
     console.info(
       'GoTipe: Intl.Segmenter not available. ' +
       'Using fallback word boundary detection.'
@@ -2195,19 +2195,19 @@ export function applyFallbacks(capabilities: BrowserCapabilities): void {
 
   // :focus-visible fallback
   if (!capabilities.focusVisible) {
-    // Добавить polyfill class
+    // Add the polyfill class
     document.documentElement.classList.add('gotipe-no-focus-visible');
   }
 
   // ClipboardItem fallback
   if (!capabilities.clipboardAPI) {
-    // Использовать deprecated document.execCommand('copy')
-    // для copy/paste operations
+    // Use the deprecated document.execCommand('copy')
+    // for copy/paste operations
   }
 
   // WASM SIMD fallback
   if (!capabilities.wasmSimd) {
-    // Загрузить non-SIMD WASM bundle (немного медленнее)
+    // Load the non-SIMD WASM bundle (slightly slower)
     console.info(
       'GoTipe: WASM SIMD not available. ' +
       'Using scalar fallback (~20% slower on large documents).'
@@ -2216,14 +2216,14 @@ export function applyFallbacks(capabilities: BrowserCapabilities): void {
 
   // forced-colors fallback (Safari)
   if (!capabilities.forcedColors) {
-    // High contrast detection через альтернативный метод
-    // Проверяем background color computed style
+    // High contrast detection through an alternative method
+    // Check the computed background color style
     const test = document.createElement('div');
     test.style.backgroundColor = 'Canvas';
     document.body.appendChild(test);
     const bg = getComputedStyle(test).backgroundColor;
     document.body.removeChild(test);
-    // Если Canvas !== white/transparent → вероятно high contrast
+    // If Canvas !== white/transparent → probably high contrast
   }
 }
 ```
@@ -2237,7 +2237,7 @@ export function applyFallbacks(capabilities: BrowserCapabilities): void {
   outline-offset: 2px;
 }
 
-/* CSS logical properties fallback (маловероятно для target browsers, но safe) */
+/* CSS logical properties fallback (unlikely for target browsers, but safe) */
 @supports not (margin-inline-start: 0) {
   [dir="ltr"] .gotipe-blockquote {
     border-left: 4px solid var(--gotipe-color-border);
@@ -2264,27 +2264,27 @@ export function applyFallbacks(capabilities: BrowserCapabilities): void {
 import { configureAxe, toHaveNoViolations } from 'jest-axe';
 import { render } from '@testing-library/react';
 
-// Расширить Jest expect
+// Extend Jest expect
 expect.extend(toHaveNoViolations);
 
-// Конфигурация axe для rich text editor
+// axe configuration for a rich text editor
 const axe = configureAxe({
   rules: {
-    // Disable правила, которые конфликтуют с contenteditable
+    // Disable rules that conflict with contenteditable
     'aria-allowed-attr': { enabled: true },
     'color-contrast': { enabled: true },
     'focus-order': { enabled: true },
     'keyboard-access': { enabled: true },
     'label': { enabled: true },
     'landmark-unique': { enabled: true },
-    // contenteditable divs не должны быть flagged как missing form labels
+    // contenteditable divs must not be flagged as missing form labels
     'region': { enabled: false },
   },
-  // Проверять только editor region
+  // Check only the editor region
   include: ['.gotipe-editor'],
 });
 
-// Пример теста
+// Example test
 describe('GoTipe Editor A11y', () => {
   it('should have no accessibility violations on empty editor', async () => {
     const { container } = render(<GoTipeEditor />);
@@ -2315,9 +2315,9 @@ describe('GoTipe Editor A11y', () => {
         ]}
       />
     );
-    // axe поймает skipped heading level
+    // axe will catch a skipped heading level
     const results = await axe(container);
-    // Предупреждение о пропущенном heading level
+    // Warning about a skipped heading level
     expect(results.violations.find(v => v.id === 'heading-order')).toBeDefined();
   });
 });
@@ -2330,7 +2330,7 @@ describe('GoTipe Editor A11y', () => {
 
 export const pa11yConfig = {
   standard: 'WCAG2AA',
-  // URL для тестирования (Storybook или dev server)
+  // URL to test (Storybook or dev server)
   defaults: {
     timeout: 30000,
     wait: 1000,
@@ -2338,7 +2338,7 @@ export const pa11yConfig = {
       args: ['--no-sandbox'],
     },
   },
-  // Страницы для тестирования
+  // Pages to test
   urls: [
     {
       url: 'http://localhost:6006/iframe.html?id=editor--empty',
@@ -2361,7 +2361,7 @@ export const pa11yConfig = {
       label: 'High contrast mode',
     },
   ],
-  // Ignore правила, специфичные для contenteditable
+  // Ignore rules specific to contenteditable
   ignore: [
     'WCAG2AA.Principle1.Guideline1_3.1_3_1.H49.AlignAttr', // contenteditable alignment
   ],
@@ -2442,41 +2442,41 @@ jobs:
 
 ### Manual Testing Checklist
 
-| # | Тест | Ожидаемый результат | Пройден |
+| # | Test | Expected result | Passed |
 |---|------|---------------------|---------|
-| 1 | Tab через все интерактивные элементы | Focus переходит в логичном порядке | [ ] |
-| 2 | Shift+Tab — обратный порядок | Focus идёт в обратном направлении | [ ] |
-| 3 | Focus visible на каждом элементе | Видимый focus indicator | [ ] |
-| 4 | Escape из slash menu | Focus возвращается в editor | [ ] |
-| 5 | Escape из link dialog | Focus возвращается в editor | [ ] |
-| 6 | Tab в slash menu | Focus остаётся в меню (trap) | [ ] |
-| 7 | Keyboard-only создание и форматирование текста | Весь workflow без мыши | [ ] |
-| 8 | Alt+Arrow для перемещения блоков | Block moves up/down | [ ] |
-| 9 | Screen reader прочитывает block types | "Heading level 2", "Code block" | [ ] |
-| 10 | Screen reader объявляет formatting changes | "Bold applied", "Link inserted" | [ ] |
-| 11 | Collaboration events объявляются | "Alice joined", "Bob editing line 5" | [ ] |
-| 12 | High contrast mode — все элементы видны | Borders, focus rings, text | [ ] |
-| 13 | Zoom 200% — editor функционален | No overflow, no clipping | [ ] |
-| 14 | Reduced motion — нет анимаций | Мгновенные transitions | [ ] |
-| 15 | RTL editor — корректный layout | Mirrored UI, correct cursor | [ ] |
-| 16 | IME ввод (Japanese) — корректная вставка | Composition → final text | [ ] |
+| 1 | Tab through all interactive elements | Focus moves in a logical order | [ ] |
+| 2 | Shift+Tab: reverse order | Focus goes in the reverse direction | [ ] |
+| 3 | Focus visible on every element | Visible focus indicator | [ ] |
+| 4 | Escape from the slash menu | Focus returns to the editor | [ ] |
+| 5 | Escape from the link dialog | Focus returns to the editor | [ ] |
+| 6 | Tab in the slash menu | Focus stays in the menu (trap) | [ ] |
+| 7 | Keyboard-only text creation and formatting | The whole workflow without a mouse | [ ] |
+| 8 | Alt+Arrow to move blocks | Block moves up/down | [ ] |
+| 9 | The screen reader reads block types | "Heading level 2", "Code block" | [ ] |
+| 10 | The screen reader announces formatting changes | "Bold applied", "Link inserted" | [ ] |
+| 11 | Collaboration events are announced | "Alice joined", "Bob editing line 5" | [ ] |
+| 12 | High contrast mode: all elements are visible | Borders, focus rings, text | [ ] |
+| 13 | Zoom 200%: the editor is functional | No overflow, no clipping | [ ] |
+| 14 | Reduced motion: no animations | Instant transitions | [ ] |
+| 15 | RTL editor: correct layout | Mirrored UI, correct cursor | [ ] |
+| 16 | IME input (Japanese): correct insertion | Composition → final text | [ ] |
 | 17 | Touch: long press + drag block | Block moves on mobile | [ ] |
 | 18 | Virtual keyboard — cursor visible | Editor scrolls to cursor | [ ] |
-| 19 | Image без alt — предупреждение | "Image without description" announced | [ ] |
-| 20 | Table navigation с клавиатуры | Tab moves between cells | [ ] |
+| 19 | Image without alt: warning | "Image without description" announced | [ ] |
+| 20 | Table navigation from the keyboard | Tab moves between cells | [ ] |
 
 ### Screen Reader Testing Matrix
 
-| Screen Reader | Browser | OS | Приоритет | Статус |
+| Screen Reader | Browser | OS | Priority | Status |
 |--------------|---------|-----|-----------|--------|
-| **NVDA 2024+** | Chrome | Windows 10/11 | P0 — Primary | Обязательно |
-| **NVDA 2024+** | Firefox | Windows 10/11 | P0 — Primary | Обязательно |
-| **VoiceOver** | Safari | macOS 14+ | P0 — Primary | Обязательно |
-| **VoiceOver** | Safari | iOS 17+ | P1 — Secondary | Обязательно |
-| **JAWS 2024+** | Chrome | Windows 10/11 | P1 — Secondary | Обязательно |
-| **TalkBack** | Chrome | Android 13+ | P1 — Secondary | Обязательно |
-| **Narrator** | Edge | Windows 11 | P2 — Tertiary | Желательно |
-| **Orca** | Firefox | Linux (GNOME) | P2 — Tertiary | Желательно |
+| **NVDA 2024+** | Chrome | Windows 10/11 | P0 — Primary | Required |
+| **NVDA 2024+** | Firefox | Windows 10/11 | P0 — Primary | Required |
+| **VoiceOver** | Safari | macOS 14+ | P0 — Primary | Required |
+| **VoiceOver** | Safari | iOS 17+ | P1 — Secondary | Required |
+| **JAWS 2024+** | Chrome | Windows 10/11 | P1 — Secondary | Required |
+| **TalkBack** | Chrome | Android 13+ | P1 — Secondary | Required |
+| **Narrator** | Edge | Windows 11 | P2 — Tertiary | Desirable |
+| **Orca** | Firefox | Linux (GNOME) | P2 — Tertiary | Desirable |
 
 ### Screen Reader Test Scenarios
 
@@ -2485,7 +2485,7 @@ jobs:
 
 /**
  * Manual screen reader test scripts.
- * Эти тесты выполняются вручную, но структурированы для повторяемости.
+ * These tests are run manually, but structured for repeatability.
  */
 export const screenReaderTestScripts = [
   {
@@ -2599,8 +2599,8 @@ export interface A11yViolation {
 }
 
 /**
- * Генерация a11y report для PR review.
- * Отправляется как comment в GitHub PR.
+ * Generates an a11y report for PR review.
+ * Posted as a comment on the GitHub PR.
  */
 export function formatA11yReportForPR(report: A11yReport): string {
   const status = report.violations.length === 0 ? 'PASS' : 'FAIL';
@@ -2629,12 +2629,12 @@ ${report.violations.length > 0 ? '### Violations\n' + report.violations.map(v =>
 
 ---
 
-## Связанные документы
+## Related documents
 
-- [01-architecture.md](01-architecture.md) — общая архитектура, rendering pipeline, ViewState
+- [01-architecture.md](01-architecture.md) — overall architecture, rendering pipeline, ViewState
 - [03-editor-core.md](03-editor-core.md) — editor state, commands, transforms, schema
 - [04-block-editor.md](04-block-editor.md) — block types, slash commands, drag-and-drop, JSON schema
 - [05-extensions.md](05-extensions.md) — extension API, keyboard shortcuts, input rules
 - [06-framework-adapters.md](06-framework-adapters.md) — React/Vue/Svelte/Solid adapters, ViewState contract
 - [02-collaboration.md](02-collaboration.md) — CRDT, awareness, collaboration cursors
-- [09-sdk-and-api.md](09-sdk-and-api.md) — пакеты, types, bundle sizes
+- [09-sdk-and-api.md](09-sdk-and-api.md) — packages, types, bundle sizes
