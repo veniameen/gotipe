@@ -1,7 +1,7 @@
 # 23 — GoTipe vs Tiptap: what we have, what we lack, what to do
 
 State as of 2026-11-12. Tiptap was reviewed on the live tiptap.dev and tiptap.dev/docs;
-GoTipe from the `main` code (c45dd4c). The full Tiptap inventory with links is stored
+GoTipe from the `main` code (940483f). The full Tiptap inventory with links is stored
 locally: `output/research/tiptap-inventory-20261112.md` (outside Git).
 
 ## Tiptap today

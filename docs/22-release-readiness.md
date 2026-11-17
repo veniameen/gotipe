@@ -1,6 +1,6 @@
 # GoTipe — getting to release
 
-Status: **all 12 documentation blockers are closed ([docs/24](24-documentation-findings.md)); the final tree was accepted on 2026-11-15** (section "Acceptance before release"); the fixes for the H findings after it were checked on trees b6b78aa, f5ea11a, e6c2aa9, a8f40aa, d5a3ce7, 0fa4a4e, 9c6497c, ae72a6b and 463fe04 (log). Findings of levels H (4) and L (4) remain open, counting the partly fixed ones; per [docs/24](24-documentation-findings.md) they do not block the release. All four H findings are leftovers of large features (D-07, D-32, D-44, D-65), deferred by the owner until after the first release. Of the L findings, D-233 was closed on 2026-11-17: Cloud is local-only for now, and the `deploy-cloud.yml` and `deploy-infra.yml` workflows were deleted. The other L findings are minor: D-250, D-251 (Cloud), D-255 (Markdown) and D-265 (block columns stay side by side on a phone; waiting for an owner decision); `@gotipe/block-editor-vue` is not published until it is ready. The release, publishing and deployment are owner decisions.
+Status: **all 12 documentation blockers are closed ([docs/24](24-documentation-findings.md)); the final tree was accepted on 2026-11-15** (section "Acceptance before release"); the fixes for the H findings after it were checked on trees 23ba1f6, bbaa7ad, 5c4cf1f, d2ea636, 56d8195, 8f99760, 4f844ee, 03f5996 and ad30c45 (log). Findings of levels H (4) and L (4) remain open, counting the partly fixed ones; per [docs/24](24-documentation-findings.md) they do not block the release. All four H findings are leftovers of large features (D-07, D-32, D-44, D-65), deferred by the owner until after the first release. Of the L findings, D-233 was closed on 2026-11-17: Cloud is local-only for now, and the `deploy-cloud.yml` and `deploy-infra.yml` workflows were deleted. The other L findings are minor: D-250, D-251 (Cloud), D-255 (Markdown) and D-265 (block columns stay side by side on a phone; waiting for an owner decision); `@gotipe/block-editor-vue` is not published until it is ready. The release, publishing and deployment are owner decisions.
 Started 2026-11-09 at the owner's direct request.
 
 On November 10 the owner allowed replacing Typst with our own PDF layout on top of small libraries
@@ -229,30 +229,30 @@ not part of the check artifacts.
   keyboard path. The Modern caption on the site and in frame 20 is restored: “A fixed toolbar and
   more room.”.
 
-- 2026-11-14: site findings D-84…D-88 closed (0fa39e9): `createId()` instead of a direct
+- 2026-11-14: site findings D-84…D-88 closed (3508ef5): `createId()` instead of a direct
   `crypto.randomUUID()`, `titleLevel`, SVG without a size, tables without widths, soft wrap of
   Markdown in both engines. The site dropped its own workarounds for D-87 and D-88: 69 pages and 254
   tables matched the previous build. Minor findings of the independent check are D-89…D-98 in docs/24.
-  Commit 0fa39e9 on its own fails the `block-editor` type check (it picked up unfinished
-  panel files without `@gotipe/i18n` keys); the next one, ad14776, fixes it.
+  Commit 3508ef5 on its own fails the `block-editor` type check (it picked up unfinished
+  panel files without `@gotipe/i18n` keys); the next one, 9c86492, fixes it.
 - 2026-11-15: the core and Markdown ceiling was raised from 122 880 to 128 000 bytes (125 KiB) at
   the owner's direction. The D-84…D-100 fixes grew the graph from 116 181 to 121 208 bytes, leaving
   1.4% of headroom. The measurements and the growth analysis are in
   [javascript-budgets.md](development/javascript-budgets.md).
-- 2026-11-15: the full acceptance of the final tree b592969 passed: Rust, WASM, JS without a cache,
+- 2026-11-15: the full acceptance of the final tree 98a79e4 passed: Rust, WASM, JS without a cache,
   21 archives and a clean consumer, PDF corpus, Atlas, Cloud with PostgreSQL 17 and the whole browser
   suite in three engines (912/912). Along the way D-125 (Cloud log compression), D-126 (`@gotipe/wasm`
   licenses) and two outdated e2e tests were found and fixed; see the section "Acceptance before
   release".
-- 2026-11-15: three sessions of H-level fixes merged (157fdad, b6b78aa). Closed D-10, D-12,
+- 2026-11-15: three sessions of H-level fixes merged (7f4ffd2, 23ba1f6). Closed D-10, D-12,
   D-22, D-23, D-27, D-31, D-71 and D-129, found along the way; partly fixed D-11, D-32, D-44, D-46,
-  D-65; new D-127 (H) and D-128 (L). Tree b6b78aa: types 34/34, linter 21/21, tests 42/42,
+  D-65; new D-127 (H) and D-128 (L). Tree 23ba1f6: types 34/34, linter 21/21, tests 42/42,
   architecture (775 files), theme, docs-site, budgets (core and Markdown 124 231 of 128 000),
   Rust export and fmt, Atlas, site, 21 archives and a clean consumer (now including the WASM engine
   in Node), e2e 918/918 in Chromium, Firefox and WebKit. Go was not rerun: the Cloud code matches the
   branch where 292 tests passed on PostgreSQL 17. The partly fixed findings now also count as open:
   the previous count of L (25) skipped D-47 and D-73.
-- 2026-11-15: D-03 closed, the selection of D-07 fixed (f5ea11a). The JS engine rejects steps
+- 2026-11-15: D-03 closed, the selection of D-07 fixed (bbaa7ad). The JS engine rejects steps
   for a block that does not exist, like Rust, and does not write an empty history step. The final
   selection of a chain follows its steps as a caret. An independent review found one more
   divergence, `deleteText` on a block with `content: null`; it was fixed in the same commit. Core and
@@ -260,9 +260,9 @@ not part of the check artifacts.
   826), architecture, budgets, theme, docs-site, Atlas, site; e2e 918/918 in three engines. Two
   failures in the run at load 29 turned out to be load-induced: each test passed 5 times out of 5
   under normal load.
-- 2026-11-15: D-08 merged by fast-forward (e6c2aa9): text typed in a row, like text deleted in a
+- 2026-11-15: D-08 merged by fast-forward (5c4cf1f): text typed in a row, like text deleted in a
   row, is undone in one step; an IME composition is a separate step; the public API is unchanged.
-  Core and Markdown are 125 537 of 128 000 bytes (+337). Tree e6c2aa9: types, linter, tests,
+  Core and Markdown are 125 537 of 128 000 bytes (+337). Tree 5c4cf1f: types, linter, tests,
   architecture, theme, docs-site, budgets, Rust export and fmt, Atlas, e2e 922/922 in three engines.
   The site build came from the turbo cache while `out/` was left over from the previous build
   (D-133). The site was rebuilt without a cache: 69 pages, the transactions page is new. New
@@ -276,18 +276,18 @@ not part of the check artifacts.
   `@gotipe/export-wasm#build`, and a new binary invalidates the cache of every task that
   depends on it, including the site build. `pnpm test` passed again after the edit: 38 tasks, 42
   successful.
-- 2026-11-15: owner decisions on seven findings were recorded in docs/24 (5ea7829). Three sessions
-  merged: D-132 and D-127 (input in lists, rewind up to 26c0d56), D-33 (5af82fb) and D-21, D-24, D-25,
-  D-29 (a8f40aa). D-139 and D-140, found along the way, were closed too. Two sessions took the same
+- 2026-11-15: owner decisions on seven findings were recorded in docs/24 (c7c596e). Three sessions
+  merged: D-132 and D-127 (input in lists, rewind up to 64ae9e1), D-33 (1265d00) and D-21, D-24, D-25,
+  D-29 (d2ea636). D-139 and D-140, found along the way, were closed too. Two sessions took the same
   numbers D-135 and D-136, so the D-33 findings were renumbered to D-141 and D-142. Tree
-  a8f40aa: types, linter, tests, architecture, theme, docs-site, budgets (core and Markdown 125 582
+  d2ea636: types, linter, tests, architecture, theme, docs-site, budgets (core and Markdown 125 582
   of 128 000, React 32 340, Svelte 676), Rust export and fmt, Atlas, site, 21 archives and a clean
   consumer, e2e 936/936 in three engines. The Atlas frame for D-30 (branch
   `claude/admiring-wing-4c7c3f`) waits for the owner's choice; D-11 together with D-05 is the next
   work in the core.
 - 2026-11-15: fast mode at the owner's request. Eight sessions fixed things in parallel, each with
   its own files and only quick checks of its own packages, and the full check ran once after the
-  common merge. Branches from 5498998 to 64366d3 were merged:
+  common merge. Branches from 5498998 to 14e0998 were merged:
   - core: D-05, D-11, D-128, D-137, D-15, D-131, D-135, D-136, D-13 (autofocus), D-46;
   - collaboration: D-130, D-82;
   - UI and adapters: D-138, D-141, D-142, D-34 (AI), D-35, D-72, D-47;
@@ -299,15 +299,15 @@ not part of the check artifacts.
   edits of both sides, the rest were document lines. The first common check found two breakages:
   - links for the new `@gotipe/ai-ui` dependencies had not been created; `pnpm install
     --offline` helped;
-  - `block-editor.tsx` grew to 601 lines; the block panel was extracted into its own hook (d5a3ce7).
+  - `block-editor.tsx` grew to 601 lines; the block panel was extracted into its own hook (56d8195).
 
-  Tree d5a3ce7: types 34/34, linter, tests 42/42, architecture (778 files), theme, docs-site,
-  budgets, 21 archives and a clean consumer, e2e 945/945 in three engines. On tree 64366d3 the Rust
+  Tree 56d8195: types 34/34, linter, tests 42/42, architecture (778 files), theme, docs-site,
+  budgets, 21 archives and a clean consumer, e2e 945/945 in three engines. On tree 14e0998 the Rust
   export and fmt, Atlas, site, `go vet` and `go test` passed. Both WASM builds were rebuilt, the WASM
   core is 302 506 bytes gzip. Core and Markdown are 126 950 of 128 000 bytes: headroom 0.8%.
 - 2026-11-15: owner decision: the remainders of D-07, D-32, D-44 and D-65 go after the first
-  release; `@gotipe/block-editor-vue` is closed to publishing (647ff6e). The second fast round, five
-  sessions, merged from 9ad419e to 284bc0d:
+  release; `@gotipe/block-editor-vue` is closed to publishing (e4e9bc3). The second fast round, five
+  sessions, merged from 5e3bc33 to 8963766:
   - core: D-143, D-175, D-180, D-13, D-173;
   - Markdown: D-155, D-156, D-157, D-161 and D-190, found along the way;
   - AI and i18n: D-34, D-181;
@@ -316,10 +316,10 @@ not part of the check artifacts.
     expressions), D-170, D-171 (the WASM limit is 325 KiB), D-173.
 
   After the merge the D-167 check caught five new comments inside expressions; they were moved
-  (0fa4a4e). Tree 0fa4a4e: all checks, 20 archives and a clean consumer, Rust, Atlas, site,
+  (8f99760). Tree 8f99760: all checks, 20 archives and a clean consumer, Rust, Atlas, site,
   `go vet` and `go test`, e2e 945/945 in three engines. Core and Markdown are 127 296 of 128 000.
-- 2026-11-16: owner decisions on D-165, D-185, D-186, D-67 (2a5d647) and the third fast round,
-  five sessions, merged from a89893a to 9c6497c:
+- 2026-11-16: owner decisions on D-165, D-185, D-186, D-67 (62c0acb) and the third fast round,
+  five sessions, merged from 782b67e to 4f844ee:
   - core: D-185 (`validate` and `renderTo*` take only a document object), D-186 (the host decides
     the link `target`);
   - Markdown: D-191, D-192;
@@ -328,27 +328,27 @@ not part of the check artifacts.
   - Cloud: D-67 (the domain from `infra/.env`, no link to PGP; the SDK and OpenAPI caught up with the
     server).
 
-  Tree c6da378: all checks, 20 archives and a clean consumer, Rust, Atlas, site, `go vet` and
-  `go test`, e2e 945/945 in three engines. The Cloud branch was merged after that (9c6497c) and
+  Tree 2328440: all checks, 20 archives and a clean consumer, Rust, Atlas, site, `go vet` and
+  `go test`, e2e 945/945 in three engines. The Cloud branch was merged after that (4f844ee) and
   checked for what it touches: types, linter, tests, docs-site, budgets, archives, consumer and Go.
   Core and Markdown are 127 018 of 128 000. The Cloud session found two H-level bugs: an
   administrator can delete the organization owner (D-230), and the idempotency key remembers
   too much (D-231).
-- 2026-11-16: the fourth fast round, three sessions, merged from 965ce3b to ae72a6b:
+- 2026-11-16: the fourth fast round, three sessions, merged from 7b4519f to 03f5996:
   - Cloud: D-230 (the organization owner cannot be deleted), D-231 (the idempotency key stores only
     a completed result), D-234 (Stripe webhook); D-232 and D-233 partly;
   - UI: D-210, D-220, D-225; the IME check after an atom (D-226) found the caret bug D-240,
     which is fixed;
   - Markdown: D-215, D-216.
 
-  Tree ae72a6b: all checks, 20 archives and a clean consumer, Rust, Atlas, site, `go vet` and
+  Tree 03f5996: all checks, 20 archives and a clean consumer, Rust, Atlas, site, `go vet` and
   `go test`. E2E: Chromium 965/965, Firefox and WebKit 949 without errors; 16 new IME checks
   through CDP run only in Chrome. Core and Markdown are 127 309 of 128 000. Minor findings left
   open: D-232 (on a database failure, `401`/`404` instead of `503`), D-235 (the idempotency key
   stores an AI provider failure), D-245 (a lazy table header row with an indent).
-- 2026-11-16: the last minor findings merged (2f8a358, 463fe04): on a database failure Cloud answers
+- 2026-11-16: the last minor findings merged (34d90ca, ad30c45): on a database failure Cloud answers
   `503` (D-232); the idempotency key does not remember `5xx` responses (D-235); a lazy table header
-  row with an indent works as in GFM (D-245). Tree 463fe04: types, linter, tests, architecture,
+  row with an indent works as in GFM (D-245). Tree ad30c45: types, linter, tests, architecture,
   docs-site, budgets, Rust export and fmt, 20 archives and a consumer, `go vet` and `go test`, e2e
   Chromium 965/965, Firefox and WebKit 949 without errors (16 IME checks are Chrome only). The site
   was not rebuilt: the owner had its dev server open. New minor findings are D-250, D-251, D-255.
@@ -357,7 +357,7 @@ not part of the check artifacts.
   page and the documentation at 375–1920 in both themes found defects D-280…D-289
   ([docs/24](24-documentation-findings.md)), among them both of the owner's examples: the backdrop of
   the first screen is pressed to the top and the header mark sits higher than the links. Atlas frames
-  20–21 were redrawn (93d21dd) and the site was built from them (126caa3): one spacing scale
+  20–21 were redrawn (a5c449f) and the site was built from them (3549d61): one spacing scale
   `--site-space-*`, a live Markdown ↔ document window on the first screen, facts with a count-up,
   a stack with rays, a bento with live pictures, a view switcher, examples in tabs; the motion is
   CSS and one IntersectionObserver, no new packages, and it is off under reduced motion. The numbers
@@ -367,24 +367,24 @@ not part of the check artifacts.
   Following the owner's remarks, the header smoothly shrinks to a column on scroll, and the grid of
   the first screen is removed. The owner rejected the waves and the Markdown lens; of three live
   backgrounds (clouds, liquid glass, halftone) the owner chose liquid glass: a WebGL shader, the
-  cursor is its own drop (4f76f68, f31ea3b). The quiet header links over the scene glow were
+  cursor is its own drop (0fbf888, ed15dbd). The quiet header links over the scene glow were
   strengthened from 3.5:1 to 5.2:1 and above (D-281). Then the owner asked for a cosmic, blurred
   and unobtrusive background: of three live ones (nebula, orbits, horizon) the owner chose the
   nebula: soft blue gas at the sides of the first screen and rare stars, the cursor lights up and
   swirls the gas. Under the subtitle the contrast is at least 4.7:1 in both themes.
-  Then the huly.io level (2d3d638, 139a961): buttons with a light that follows the cursor and
+  Then the huly.io level (dbc879e, e796438): buttons with a light that follows the cursor and
   stays in place, and a second button catches it; lit headings; the theme on one button;
   the editor UI under the nebula, which the cursor lifts; a coauthor in a section heading;
   a night bento with light in the gaps; drawn marks for the nine parts; a final strip with the
   “engine”.
-  Then (72a0d59, 8ae80ed): the stack is a panel with comets along the rays; in the finale, instead of
+  Then (4ccb656, 784b761): the stack is a panel with comets along the rays; in the finale, instead of
   a clock, a document assembled on the engine from glass plates; in the live window, the “+” and
   the block handle moved into the margin left of the text, and Markdown is editable from both
   sides. Following the owner's remarks, the stack, bento and finale follow the theme (light glass
   by day), the buttons by day are an ink pill and a white pill without halos, the header glass
   shrinks exactly to the column, and the tiles, pillars and ways to start have drawn marks. The
   logo is the owner's stingray: header, footer, the stack engine, favicon.
-  Then a performance audit (9055e18, 91188c1): with the CPU throttled 4× the main thread was
+  Then a performance audit (ae8f829, 5a29e11): with the CPU throttled 4× the main thread was
   overloaded by the light along the edge of the window and the engine (a repaint every frame), the
   light under the cursor (inherited variables and a mask), comets on offset-path, caret blinking
   through background-color and a shader at 60 frames. All of this was moved to the compositor
@@ -392,7 +392,7 @@ not part of the check artifacts.
   machine, and the editor loads after the first screen. The look did not change (verified pixel by
   pixel); main-thread load: first screen 26→17%, stack 45→26%, bento under the cursor 79→51%,
   scroll 49→40%, frame p95 during scroll 33→17 ms.
-  Following the owner's remarks from a phone (7bf4a16, be33b9c): on 320–359 px screens the install
+  Following the owner's remarks from a phone (fb9aced, 5a45303): on 320–359 px screens the install
   row pushed the first-screen column apart and the text ran out of the frame; the column is now no
   wider than the text, the chip is one size smaller and has no arrow; the finale plates were cut off
   by the edge of the strip, so their depth became a fraction of the scene width; the stack comets
@@ -406,31 +406,42 @@ not part of the check artifacts.
   are fixed ([docs/24](24-documentation-findings.md)); D-265 (columns on a phone) and Atlas frame 32
   wait for an owner decision. The audit branch was cut before the history rewrite, so its five
   commits were not merged but carried over onto main; the link 8b5134e in docs/24 was replaced with
-  a729a5b. Tree 231e20b with the audit was checked in full: typecheck, lint, tests, architecture,
+  675c482. Tree 220047d with the audit was checked in full: typecheck, lint, tests, architecture,
   theme, docs-site, budgets (core with Markdown 127 296 of 128 000), Rust export and fmt, Atlas, site
   build, 20 archives and a consumer, WASM 302 506 of 332 800, `go vet` and `go test`; e2e: Chromium
   1085/1085 (965 previous and 120 geometry configurations), Firefox 955 and WebKit 954 (130 skipped
   in each: IME is Chrome only, and configurations outside the sample). In WebKit NL-174 failed once
   in setup because the global page editor had not been set yet; a repeat 10/10 and the whole file
   50/50 passed. By the owner's decision the audit went into 0.1.0: the release in progress was
-  stopped before publishing, the audit was put on top of 080d90a (between the trees there are only
+  stopped before publishing, the audit was put on top of 867fa6f (between the trees there are only
   crates, Go and release scripts); the tag v0.1.0 moves after the history is migrated.
+- 2026-11-17: the editor pieces beneath the hero nebula show from 1024px wide. Below 1280px they had
+  been switched off since they came in, which hid them in laptop windows and in the app's browser
+  pane; the site and the Atlas tokens changed together, checked in a browser at 1024, 1126 and 1279px.
+- 2026-11-17: English pass before the first public release. Docs, the Atlas, comments, test titles,
+  the playground samples and the e2e specs that read them are in English; the playground opens in
+  English with Russian one click away. Russian stays in the editor's `ru` locale, Russian emoji
+  names and test data that covers Cyrillic, IME, case folding and non-ASCII URLs. The history of
+  `main` was rewritten with English messages and without `Co-Authored-By` trailers (every tree is
+  unchanged) and the commit links in the docs were remapped. Open: in Firefox
+  `e2e/comments.spec.ts:68` loses the comment's anchor after text is typed before the quote (red on
+  867fa6f too), so E2E and the release stay red in Firefox until it is fixed.
 
 ## Acceptance before release (2026-11-15)
 
-The final `main` tree b592969: everything done after the acceptance of 2026-11-12: the blockers and
+The final `main` tree 98a79e4: everything done after the acceptance of 2026-11-12: the blockers and
 the docs/24 findings up to D-107, Atlas frames 22–31. The heavy checks ran one at a time, the logs are in
-`output/acceptance-20261115/`. Rust, WASM, JS, packages and the Atlas were checked on 42b3498; the next
+`output/acceptance-20261115/`. Rust, WASM, JS, packages and the Atlas were checked on aff69b2; the next
 commits change only license notices, Cloud and e2e, and their checks were repeated on the final
 tree. The acceptance found three failures, each fixed in it:
 
-- D-126 (532bf31): `collect-rust-licenses.py --check` failed: after D-73 the `@gotipe/wasm` archive
+- D-126 (ddbdf94): `collect-rust-licenses.py --check` failed: after D-73 the `@gotipe/wasm` archive
   carried notices for 57 crates that are not in the module. Rebuilt from `Cargo.lock`: 32 crates,
   the archive went from 159 to 71 files; the archives and the clean consumer were rechecked.
-- D-125 (bec8d76): the log compression integration test on PostgreSQL, run for the first time, caught
+- D-125 (383137b): the log compression integration test on PostgreSQL, run for the first time, caught
   a `CompactLog` success for a replaced generation below the thresholds. The generation is now
   checked first.
-- b592969: two e2e tests failed the same way in all engines: they expected the behavior from before
+- 98a79e4: two e2e tests failed the same way in all engines: they expected the behavior from before
   D-14 (plain text is an empty language) and D-20 (a comment highlight carries `data-comment-id`).
   The expectations were updated to the intended behavior.
 

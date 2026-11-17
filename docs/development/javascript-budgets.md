@@ -48,9 +48,9 @@ On the merge build of 2026-11-12 the same graphs measure 95,659 (core and Markdo
 Decision of 2026-11-15: the core and Markdown ceiling is 128,000 (125 KiB), on the owner's
 instruction to raise it when needed. The fixes D-84…D-100 took the graph from 116,181 to
 121,208 bytes, 1.4% under 122,880. Both ends are measured with this checker; the tree of the
-decision below (211165d), rebuilt as it was, gives its 116,181 again.
+decision below (ed6fb90), rebuilt as it was, gives its 116,181 again.
 
-- Core +350 (64,522 → 64,872): the findings D-84…D-88 (0fa39e9), chiefly `createId()` with a
+- Core +350 (64,522 → 64,872): the findings D-84…D-88 (3508ef5), chiefly `createId()` with a
   fallback where `crypto.randomUUID` is missing (D-84).
 - Markdown +4,677 (51,659 → 56,336): the soft line break read as a space, with the writer
   keeping the source's line endings (D-88, +1,139); write → read keeping the document — edge
