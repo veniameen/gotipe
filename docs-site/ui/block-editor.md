@@ -18,7 +18,7 @@ document, extensions and host stay yours. For Markdown files use
 ## Install
 
 ```sh
-npm install @gotipe/block-editor @gotipe/core @gotipe/react @gotipe/theme @gotipe/i18n @gotipe/markdown @gotipe/suggestions react react-dom
+npm install @gotipe/block-editor @gotipe/core @gotipe/react @gotipe/theme @gotipe/i18n @gotipe/markdown @gotipe/suggestions @gotipe/versions react react-dom
 ```
 
 Import the styles once. `base.css` draws the document, `theme.css` the menus, panels and
