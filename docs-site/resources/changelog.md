@@ -5,8 +5,8 @@ description: Release notes of GoTipe 0.1.0, grouped by package.
 
 ## 0.1.0
 
-The first public release. Every npm package starts at `0.1.0`; the Rust crates are not
-published to crates.io. Licenses per package are in [Licensing](/docs/resources/licensing).
+The first public release. Every npm package and every Rust crate on crates.io starts at
+`0.1.0`. Licenses per package are in [Licensing](/docs/resources/licensing).
 
 ### All packages
 
