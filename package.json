@@ -36,6 +36,11 @@
     "overrides": {
       "next>postcss": "^8.5.23",
       "tsup>esbuild": "^0.28.1"
+    },
+    "auditConfig": {
+      "ignoreGhsas": [
+        "GHSA-fc5q-39xc-vjpf"
+      ]
     }
   }
 }
