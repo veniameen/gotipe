@@ -1,6 +1,16 @@
 {
   "name": "@gotipe/core",
-  "version": "0.1.0",
+  "version": "0.1.1",
+  "description": "Headless core of the GoTipe editor: document model, transactions, commands, events and extensions.",
+  "keywords": [
+    "gotipe",
+    "editor",
+    "rich-text",
+    "block-editor",
+    "headless",
+    "wysiwyg",
+    "markdown"
+  ],
   "type": "module",
   "exports": {
     ".": {

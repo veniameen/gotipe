@@ -1,6 +1,15 @@
 {
   "name": "@gotipe/solid",
-  "version": "0.1.0",
+  "version": "0.1.1",
+  "description": "Solid adapter for the GoTipe editor: hooks that create an editor and follow its state.",
+  "keywords": [
+    "gotipe",
+    "editor",
+    "solid",
+    "solid-js",
+    "rich-text",
+    "headless"
+  ],
   "type": "module",
   "exports": {
     ".": {

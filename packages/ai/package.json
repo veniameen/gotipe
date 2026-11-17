@@ -1,6 +1,15 @@
 {
   "name": "@gotipe/ai",
-  "version": "0.1.0",
+  "version": "0.1.1",
+  "description": "Connect the GoTipe editor to a language model through your own provider: context, commands and proofreading.",
+  "keywords": [
+    "gotipe",
+    "editor",
+    "ai",
+    "llm",
+    "proofreading",
+    "autocomplete"
+  ],
   "type": "module",
   "exports": {
     ".": {

@@ -444,6 +444,12 @@ not part of the check artifacts.
   `picomatch` was widened that day to the latest version, which has no fix. Only build and test
   tools reach it, so it is ignored by name with the reasons in the dependency policy, and the
   tag moved to that commit.
+- 2026-11-17: v0.1.0 is on npm (20 packages), crates.io (9 crates) and GitHub Releases. 0.1.1 adds
+  a README to the 17 packages whose npm pages had none, with an install line, an example checked
+  against the built types and links to the docs, plus a description and keywords for every
+  package; the code is the same. The 119 changesets released in 0.1.0 are removed. The docs
+  install lines of the ready UI gain the required `@gotipe/versions`, and the i18n example merges
+  the block-editor dictionaries whose keys it shows.
 
 ## Acceptance before release (2026-11-15)
 

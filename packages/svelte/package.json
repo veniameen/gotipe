@@ -1,6 +1,15 @@
 {
   "name": "@gotipe/svelte",
-  "version": "0.1.0",
+  "version": "0.1.1",
+  "description": "Svelte 5 adapter for the GoTipe editor: a store that creates an editor and follows its state.",
+  "keywords": [
+    "gotipe",
+    "editor",
+    "svelte",
+    "rich-text",
+    "headless",
+    "block-editor"
+  ],
   "type": "module",
   "exports": {
     ".": {

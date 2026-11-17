@@ -1,6 +1,15 @@
 {
   "name": "@gotipe/migration",
-  "version": "0.1.0",
+  "version": "0.1.1",
+  "description": "Convert ProseMirror/Tiptap, Lexical and Slate JSON into GoTipe documents without loading those editors.",
+  "keywords": [
+    "gotipe",
+    "migration",
+    "prosemirror",
+    "tiptap",
+    "lexical",
+    "slate"
+  ],
   "type": "module",
   "exports": {
     ".": {

@@ -1,6 +1,15 @@
 {
   "name": "@gotipe/export",
-  "version": "0.1.0",
+  "version": "0.1.1",
+  "description": "Export GoTipe documents to HTML, Markdown, plain text, PDF and DOCX in the browser or in Node.",
+  "keywords": [
+    "gotipe",
+    "editor",
+    "export",
+    "pdf",
+    "docx",
+    "markdown"
+  ],
   "type": "module",
   "exports": {
     ".": {

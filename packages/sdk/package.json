@@ -1,6 +1,14 @@
 {
   "name": "@gotipe/sdk",
-  "version": "0.1.0",
+  "version": "0.1.1",
+  "description": "A typed client for the GoTipe Cloud REST API: documents, versions, comments, exports and AI.",
+  "keywords": [
+    "gotipe",
+    "sdk",
+    "api-client",
+    "rest",
+    "cloud"
+  ],
   "type": "module",
   "exports": {
     ".": {

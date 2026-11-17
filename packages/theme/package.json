@@ -1,6 +1,15 @@
 {
   "name": "@gotipe/theme",
-  "version": "0.1.0",
+  "version": "0.1.1",
+  "description": "Styles, design tokens and light and dark themes of the ready GoTipe editors.",
+  "keywords": [
+    "gotipe",
+    "editor",
+    "theme",
+    "css",
+    "design-tokens",
+    "dark-mode"
+  ],
   "type": "module",
   "exports": {
     ".": {

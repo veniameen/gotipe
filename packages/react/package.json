@@ -1,6 +1,15 @@
 {
   "name": "@gotipe/react",
-  "version": "0.1.0",
+  "version": "0.1.1",
+  "description": "React adapter for the GoTipe editor: hooks, document renderer, bubble and floating menus.",
+  "keywords": [
+    "gotipe",
+    "editor",
+    "react",
+    "rich-text",
+    "headless",
+    "block-editor"
+  ],
   "type": "module",
   "exports": {
     ".": {

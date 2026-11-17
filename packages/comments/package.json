@@ -1,6 +1,14 @@
 {
   "name": "@gotipe/comments",
-  "version": "0.1.0",
+  "version": "0.1.1",
+  "description": "Discussion threads for the GoTipe editor, anchored to quoted text that follows edits.",
+  "keywords": [
+    "gotipe",
+    "editor",
+    "comments",
+    "review",
+    "annotations"
+  ],
   "type": "module",
   "exports": {
     ".": {
