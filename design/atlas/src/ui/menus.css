@@ -87,6 +87,29 @@
 .gotipe-menu-item.is-model > .gt-icon {
   color: var(--gt-accent);
 }
+/* a host may give the "/" menu's rows a description: a quiet second line, one line with an
+   ellipsis; a row that has one grows to hold it */
+.gotipe-menu-item.has-description {
+  height: auto;
+  min-height: var(--gt-menu-item-h);
+  padding-block: var(--gt-menu-pad);
+}
+.gotipe-menu-item > .gotipe-menu-body {
+  display: grid;
+  flex: 1;
+  min-width: 0;
+}
+.gotipe-menu-body > .gotipe-menu-text,
+.gotipe-menu-description {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.gotipe-menu-description {
+  color: var(--gt-text-2);
+  font-size: var(--gt-ui-small);
+  line-height: var(--gt-ui-small-leading);
+}
 .gotipe-menu-empty {
   margin: 0;
   padding: var(--gt-menu-label-pad);
