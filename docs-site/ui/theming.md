@@ -170,6 +170,12 @@ set on the editor root; a colour on any container.
 | `--gt-sug-ins-underline-offset` | `var(--gt-underline-offset)` (0.2em) | Its offset from the font's underline position |
 | `--gt-sug-changed-bar-width` | `var(--gt-rule)` (2 px) | Bar at the left edge of a block a proposal changes; `0px` removes it |
 | `--gt-sug-changed-bar` | unset: the lane's colour | Colour of that bar |
+| `--gt-image-radius` | `var(--gt-radius-block)` (8 px) | Corners of an image |
+| `--gt-image-ring` | `0px` | Width of a ring around an image, which keeps a light image apart from the page |
+| `--gt-image-ring-color` | `var(--gt-line)` | Its colour |
+| `--gt-caption-color` | `var(--gt-text-2)` | Colour of an image's caption |
+| `--gt-caption-size`, `--gt-caption-leading` | `var(--gt-small-size)`, `var(--gt-small-leading)` | Its size and line height; `--gt-caption-gap` is the space above it |
+| `--gt-image-empty-bg` | `var(--gt-sunken)` | Background of an empty image or file block (upload or link) |
 | `--gt-handle-rail` | 56 px (`0px` in `modern`, `minimal`) | Rail a narrow `notion` or `docs` page keeps on the left for the block handle |
 | `--gt-handle-offset` | 54 px | Room left of the text the block handle needs; with less, no handle shows |
 

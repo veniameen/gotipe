@@ -13,6 +13,8 @@ More of the look is reachable through tokens set on a container:
 - New tokens, defaults equal to today's look: `--gt-check-fill`, `--gt-check-line`;
   `--gt-card-name-size`, `--gt-card-name-weight`, `--gt-card-button-size`; `--gt-sug-ins-bar`
   and `--gt-sug-ins-underline`, `-style`, `-thickness`, `-offset` (a text underline for a proposed
-  insertion); `--gt-sug-changed-bar`, `--gt-sug-changed-bar-width`.
+  insertion); `--gt-sug-changed-bar`, `--gt-sug-changed-bar-width`; `--gt-image-radius`,
+  `--gt-image-ring`, `--gt-image-ring-color`, `--gt-caption-color`, `--gt-caption-size`,
+  `--gt-caption-leading`, `--gt-image-empty-bg`.
 - Styles for `.gotipe-review-card-delete`, a `.gotipe-page-head` inside a page and
   `.gotipe-slash-menu-item-description`.

@@ -37,6 +37,9 @@
   --gt-ai-highlight: var(--gt-selection);
   --gt-ai-border: var(--gt-line-control);
   --gt-check-fill: var(--gt-ink);
+  --gt-image-ring-color: var(--gt-line);
+  --gt-caption-color: var(--gt-text-2);
+  --gt-image-empty-bg: var(--gt-sunken);
   --gt-check-line: var(--gt-line-control);
   --gt-track-1: var(--gt-person-1);
   --gt-track-2: var(--gt-person-2);
@@ -191,6 +194,9 @@
   --gt-ai-highlight: var(--gt-selection);
   --gt-ai-border: var(--gt-line-control);
   --gt-check-fill: var(--gt-ink);
+  --gt-image-ring-color: var(--gt-line);
+  --gt-caption-color: var(--gt-text-2);
+  --gt-image-empty-bg: var(--gt-sunken);
   --gt-check-line: var(--gt-line-control);
   --gt-track-1: var(--gt-person-1);
   --gt-track-2: var(--gt-person-2);
@@ -346,6 +352,9 @@
     --gt-ai-highlight: var(--gt-selection);
     --gt-ai-border: var(--gt-line-control);
     --gt-check-fill: var(--gt-ink);
+    --gt-image-ring-color: var(--gt-line);
+    --gt-caption-color: var(--gt-text-2);
+    --gt-image-empty-bg: var(--gt-sunken);
     --gt-check-line: var(--gt-line-control);
     --gt-track-1: var(--gt-person-1);
     --gt-track-2: var(--gt-person-2);
@@ -501,6 +510,9 @@
   --gt-ai-highlight: var(--gt-selection);
   --gt-ai-border: var(--gt-line-control);
   --gt-check-fill: var(--gt-ink);
+  --gt-image-ring-color: var(--gt-line);
+  --gt-caption-color: var(--gt-text-2);
+  --gt-image-empty-bg: var(--gt-sunken);
   --gt-check-line: var(--gt-line-control);
   --gt-track-1: var(--gt-person-1);
   --gt-track-2: var(--gt-person-2);
