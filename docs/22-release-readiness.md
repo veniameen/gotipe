@@ -476,7 +476,15 @@ not part of the check artifacts.
   hint (not written to the file) and the glyph in the title row as host options with Atlas frames
   (10 and 1). Released: `core`, `react`, `i18n`, `theme`, `block-editor` at 0.1.3 and `wasm` at
   0.1.2; the others keep their versions and published peer ranges. The Atlas audit holds a caption
-  hint to the 3:1 contrast of other quiet labels.
+  hint to the 3:1 contrast of other quiet labels. Accepted on tree 1435a02 (macOS, M4 Max): WASM
+  builds, `pnpm build`, `check:architecture` and `:release`, `check:theme`, typecheck, lint,
+  `pnpm test` (core 1,125, markdown 548, block-editor 209, react 106, the rest green),
+  `check:bundles` (core graph 130,173 of 131,072), `check:packages`, `check:consumer`,
+  `check:exports`, `check:docs-site`, `cargo fmt`, clippy, `cargo test`; Playwright Chromium
+  1,084 of 1,085, Firefox and WebKit 952 of 955 before the review fixes and the fixed tests 3 of 3
+  after. Left: `comments.spec.ts:68` (macOS Home, as on 0.1.1) and REL-001, 50 slash transforms
+  in 18–21 s alone on 0.1.2 and 0.1.3 alike, which under the full parallel run comes near its
+  30 s limit.
 
 ## Acceptance before release (2026-11-15)
 
