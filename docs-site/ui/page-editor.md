@@ -79,18 +79,23 @@ Details of the codec are in [Markdown](/docs/conversion/markdown).
 | Prop | Type | Default | Description |
 |---|---|---|---|
 | `markdown` | `string` | — | The file's text. A new value that differs from the last draft replaces the document. |
-| `onChange` | `(markdown: string) => void` | — | The draft after edits. |
+| `onChange` | `(markdown: string) => void` | — | The draft after edits, at most once a frame. `ref.flush()` sends a pending draft at once. |
 | `readOnly` | `boolean` | `false` | No input; links open on a plain click; task boxes are disabled. |
 | `host` | `EditorHost` | — | Assets, links and errors; see below. |
 | `locale` | `string` | `"en"` | UI language; `"ru"` is built in. |
 | `i18n` | `I18n` | — | A ready dictionary from `createI18n`; wins over `locale`. |
 | `titlePlaceholder` | `string` | `"Untitled"` | Shown in an empty title, for example the file name. |
 | `titleLevel` | `1 \| 2 \| 3 \| 4 \| 5 \| 6` | `1` | The HTML level of the title: `h1` by default. It looks the same at any level; pass `2` when your page has its own `h1`. Other headings of the file keep their levels. |
+| `icon` | `ReactNode` | — | The page's glyph above the title in the text column, as in [`PageHead`](/docs/ui/block-editor) (`.gotipe-page-head-icon`). It is not written to the file. |
+| `header` | `ReactNode` | — | Your own content above the title in the text column, after `icon`, inside `.gotipe-page-head`. |
 | `view` | `"notion" \| "docs" \| "modern" \| "minimal"` | `"notion"` | One of the shared [views](/docs/ui/theming). |
+| `narrow` | `boolean` | `true` | The view's sizes for a container up to 640 px wide. `false` keeps the wide sizes, or your own on `.gotipe-page .gotipe-block-editor`, at any width (`data-gt-narrow="off"`). |
 | `highlight` | `CodeHighlighter` | — | Code highlighter (`@gotipe/block-editor/shiki`). |
 | `blockViews` | `BlockViews` | — | Your views; they win over the page's and the shared ones. |
 | `blocks` | `PageBlockKind[]` | all | Blocks offered by `/`. |
+| `slashMenu` | `PageSlashMenu` | — | Your commands, groups and order of the `/` menu; see [below](#the--menu). |
 | `review` | `PageReviewProps` | — | Suggestions, comments and cursors. Without it there is no review layer. |
+| `reviewLayout` | `"auto" \| "inline" \| "margin"` | `"auto"` | Where review cards stand: `auto` — in the margin when the page is wide enough, otherwise by the text; `inline` — always by the text; `margin` — always in the margin column. |
 | `reviewBar` | `{ title?: ReactNode; extra?: ReactNode[] } \| false` | not shown | Pass an object to show the review bar above the page. |
 | `autoFocus` | `boolean` | — | Put the caret at the end once the editor exists. |
 | `onReady` | `(editor: GoTipeEditor) => void` | — | Called once per editor, when it exists. A new function on a later render is not called. |
@@ -108,6 +113,8 @@ among them.
 |---|---|
 | `editor` | The `GoTipeEditor`, or `null` before it exists. |
 | `getMarkdown()` | The current document as Markdown. |
+| `flush()` | Send a draft not yet emitted to `onChange` now and return the current Markdown. Call it before saving: `onChange` otherwise comes on the next frame. |
+| `setMarkdown(text)` | Replace the document with `text` as an external edit (caret, focus and scroll kept; undo takes it back), even when `text` equals the last `markdown` you passed. `onChange` is not called for it; a draft not yet emitted is dropped, so call `flush()` first to keep it. |
 | `focus(position?)` | Focus the page, optionally at `"start"` or `"end"`. |
 | `insertBlock(kind)` | Insert a block of a `PageBlockKind` at the caret, for your own toolbar. |
 | `getTitle()` | Text of the leading `# heading`, or `null` when there is none or it is empty. |
@@ -118,12 +125,49 @@ among them.
 `orderedList`, `todoList`, `quote`, `code`, `table`, `divider`, `callout`, `image`, `file`.
 The `/` menu groups them as Style, Insert and Upload.
 
+## The / menu
+
+`slashMenu` changes the menu without changing the page's blocks:
+
+```tsx title="SlashMenu.tsx"
+<PageEditor
+  markdown={file}
+  slashMenu={{
+    // the page's commands (its blocks and Emoji) come in; return what to show, in order
+    commands: (defaults) => [...defaults, {
+      name: "Release note", aliases: ["note"], description: "A callout for the changelog",
+      icon: "alert-circle", group: "notes",
+      execute: (editor) => editor.chain().setBlockType("callout", { type: "note", emoji: "" }).run(),
+    }],
+    groups: [
+      { id: "upload", label: "Media" },
+      { id: "style", label: "Style" },
+      { id: "notes", label: "Notes" },
+      { id: "insert", label: "Insert" },
+    ],
+    descriptions: true,
+  }}
+/>
+```
+
+- `commands` — a list replaces the page's own; a function gets them and returns the list to show.
+  A command is a `SlashCommandDef` of `@gotipe/core`; its `group` places it.
+- `groups` — order and labels; a group not listed is hidden. Without it the shared menu's AI, Style,
+  Insert and Upload are shown; `pageSlashGroups(i18n)` returns the page's three in its language.
+- `descriptions` — show a command's `description` under its name
+  (`.gotipe-slash-menu-item-description`). Off by default.
+
 ## Host
 
 `host` takes the [EditorHost](/docs/concepts/host) callbacks. Without `saveAsset`, pasted
 and uploaded images and files up to 10 MiB are stored in the file as `data:` URLs. Without
 `openLink`, a link opens in a new tab with `noopener`. Without `onError` and
 `host.onError`, errors show as a toast; with either of them the toast is off.
+
+`resolveAsset` returning `null` (or a promise of it) means the asset is unavailable: the image
+or file shows its failed state and nothing is requested. A throw is reported as
+`ASSET_RESOLVE_FAILED`; anything but a `GoTipeError` thrown by `saveAsset` becomes
+`ASSET_SAVE_FAILED`.
 
 When the editor cannot be created — the Markdown cannot be read or the document fails its
 check — the page shows "The document could not be opened" in place of the loading shape, and
@@ -161,11 +205,14 @@ export function ReviewedPage({ file, save }: { file: string; save: (text: string
 - Without `onAccept` a proposal is applied locally and `onChange` gets the new text; without
   `onReject` it is hidden locally. Accept all goes one by one in document order and stops at
   the first stale proposal or `false` result; `onAcceptAll` replaces that.
-- **Comments** quote a range, can be questions, and take replies through `onReply`.
+- **Comments** quote a range, can be questions, and take replies through `onReply`. With
+  `onDeleteComment(id)` the open card has a delete button (a trash icon, "Delete comment"); ask
+  for confirmation inside it if you need to. `false` keeps the card, a throw is reported as
+  `COMMENT_ACTION_FAILED`; after success drop the comment from `comments`.
 - **Cursors** stand at the end of a proposal's text or at an anchor, with a label.
 - On a page at least 880 px wide (card, gap and minimum page width tokens) cards stand in
   the margin beside their text; on a narrower page a card opens next to the text you click.
-  Escape closes it.
+  Escape closes it. `reviewLayout` fixes either layout whatever the width.
 
 `ref.current.review` has `accept(id)`, `reject(id)`, `acceptAll()`, `rejectAll()`,
 `states()` and `focus(id)`. `ReviewBar` and `LaneAvatars` are exported for a bar of your
