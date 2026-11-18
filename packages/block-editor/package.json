@@ -1,6 +1,6 @@
 {
   "name": "@gotipe/block-editor",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Ready React UI for GoTipe: BlockEditor with slash menu and block handle, and the Markdown PageEditor.",
   "keywords": [
     "gotipe",
@@ -32,13 +32,13 @@
     "*.css"
   ],
   "peerDependencies": {
-    "@gotipe/core": "^0.1.0",
-    "@gotipe/i18n": "^0.1.0",
-    "@gotipe/markdown": "^0.1.0",
-    "@gotipe/react": "^0.1.0",
-    "@gotipe/suggestions": "^0.1.0",
-    "@gotipe/theme": "^0.1.0",
-    "@gotipe/versions": "^0.1.0",
+    "@gotipe/core": "^0.1.2",
+    "@gotipe/i18n": "^0.1.2",
+    "@gotipe/markdown": "^0.1.2",
+    "@gotipe/react": "^0.1.2",
+    "@gotipe/suggestions": "^0.1.2",
+    "@gotipe/theme": "^0.1.2",
+    "@gotipe/versions": "^0.1.1",
     "react": ">=18",
     "react-dom": ">=18",
     "shiki": "^1.22.0"

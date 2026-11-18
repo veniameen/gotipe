@@ -3,7 +3,7 @@ title: Changelog
 description: Release notes of GoTipe, newest first, grouped by package.
 ---
 
-## Unreleased
+## 0.1.2
 
 Typing in a long document is fast, and hosts that embed `PageEditor` get the props and tokens
 they needed. Defaults keep today's look and behavior except where a fix says otherwise.

@@ -1,6 +1,6 @@
 {
   "name": "@gotipe/react",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "React adapter for the GoTipe editor: hooks, document renderer, bubble and floating menus.",
   "keywords": [
     "gotipe",
@@ -31,7 +31,7 @@
     "@gotipe/i18n": "workspace:^"
   },
   "peerDependencies": {
-    "@gotipe/core": "^0.1.0",
+    "@gotipe/core": "^0.1.2",
     "react": ">=18",
     "react-dom": ">=18"
   },

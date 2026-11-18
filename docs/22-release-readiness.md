@@ -450,6 +450,18 @@ not part of the check artifacts.
   package; the code is the same. The 119 changesets released in 0.1.0 are removed. The docs
   install lines of the ready UI gain the required `@gotipe/versions`, and the i18n example merges
   the block-editor dictionaries whose keys it shows.
+- 2026-11-18: 0.1.2 prepared from a host's list of needs (the owner asked to fix in GoTipe what
+  hosts had to work around, and to publish). Nine packages go to 0.1.2: `core`, `markdown`,
+  `react`, `vue`, `i18n`, `suggestions`, `comments`, `theme` and `block-editor`; the others stay
+  at 0.1.1. Every change is a patch: the packages reference each other through `^0.1.x` peer
+  ranges, which a minor bump in 0.x would leave, making changesets bump their dependents to
+  1.0.0. Typing on a 7,400-block page went from about 415 ms to about 30 ms a key; the comment
+  card can delete; `PageEditor` gains `flush`, `setMarkdown`, `icon`/`header`, `slashMenu`,
+  `reviewLayout`, `narrow`, `media` and `undoableReplace`; `EditorHost.discardAsset`; part
+  tokens; shared table columns; fixes listed in the site's changelog. Two new Atlas drawings (the
+  comment card's delete, slash rows with descriptions) wait for the owner's acceptance. The JS
+  budgets of the core graph and the Vue increment were raised with the measured reasons
+  ([javascript-budgets.md](development/javascript-budgets.md)).
 
 ## Acceptance before release (2026-11-15)
 

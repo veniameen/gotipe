@@ -1,6 +1,6 @@
 {
   "name": "@gotipe/core",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Headless core of the GoTipe editor: document model, transactions, commands, events and extensions.",
   "keywords": [
     "gotipe",
