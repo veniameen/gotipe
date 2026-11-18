@@ -8,5 +8,5 @@
       "@/*": ["src/*"]
     }
   },
-  "include": ["src", "tests/csp"]
+  "include": ["src", "tests/csp", "tests/perf"]
 }

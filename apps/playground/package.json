@@ -10,7 +10,7 @@
     "build:csp-test": "vite build --config vite.csp.config.ts",
     "preview:csp-test": "vite preview --config vite.csp.config.ts",
     "typecheck": "tsc --noEmit",
-    "lint": "biome check src tests/csp"
+    "lint": "biome check src tests/csp tests/perf"
   },
   "dependencies": {
     "@gotipe/ai": "workspace:*",
