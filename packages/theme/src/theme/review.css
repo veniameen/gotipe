@@ -4,11 +4,17 @@
    Lane cursors are carets with a flag. Every lane colour comes in as --gt-track. */
 
 /* ---- proposals in the text ---- */
+/* an insertion: a bar flush with the bottom of its tint (--gt-sug-ins-bar), or, when a host asks
+   for one, a text underline (--gt-sug-ins-underline: underline) */
 .gotipe-sug-ins {
   border-radius: var(--gt-radius-inline);
   background: color-mix(in srgb, var(--gt-track, var(--gt-add)) var(--gt-track-tint), transparent);
-  box-shadow: inset 0 calc(-1 * var(--gt-rule)) 0 var(--gt-track, var(--gt-add));
-  text-decoration: none;
+  box-shadow: inset 0 calc(-1 * var(--gt-sug-ins-bar)) 0 var(--gt-track, var(--gt-add));
+  text-decoration-line: var(--gt-sug-ins-underline);
+  text-decoration-style: var(--gt-sug-ins-underline-style);
+  text-decoration-color: var(--gt-track, var(--gt-add));
+  text-decoration-thickness: var(--gt-sug-ins-underline-thickness);
+  text-underline-offset: var(--gt-sug-ins-underline-offset);
   user-select: none;
   cursor: pointer;
 }
@@ -47,8 +53,10 @@
     transparent
   );
 }
+/* a changed block: a bar at its left edge; --gt-sug-changed-bar is unset, so the lane's colour */
 .gotipe-sug-block-changed {
-  box-shadow: inset var(--gt-rule) 0 0 var(--gt-track, var(--gt-add));
+  box-shadow: inset var(--gt-sug-changed-bar-width) 0 0
+    var(--gt-sug-changed-bar, var(--gt-track, var(--gt-add)));
 }
 li.gotipe-sug-block-ins > input[type="checkbox"] {
   border-color: var(--gt-track, var(--gt-add));
@@ -144,8 +152,8 @@ li.gotipe-sug-block-ins > input[type="checkbox"] {
 }
 .gotipe-review-card-head b {
   color: var(--gt-text);
-  font-size: var(--gt-ui-size);
-  font-weight: var(--gt-weight-medium);
+  font-size: var(--gt-card-name-size);
+  font-weight: var(--gt-card-name-weight);
 }
 .gotipe-review-avatar {
   display: inline-grid;
@@ -223,6 +231,9 @@ li.gotipe-sug-block-ins > input[type="checkbox"] {
   justify-content: flex-end;
   gap: var(--gt-button-gap);
   margin-top: var(--gt-card-pad);
+}
+.gotipe-review-card-actions > .gotipe-btn {
+  font-size: var(--gt-card-button-size);
 }
 
 /* ---- a wide page: every card in a column beside the text, level with it (Atlas, frame 14);
@@ -377,6 +388,15 @@ li.gotipe-sug-block-ins > input[type="checkbox"] {
 .gotipe-review-icon-btn > svg {
   width: var(--gt-icon-size);
   height: var(--gt-icon-size);
+}
+/* a card's delete stands at the end of its head and keeps the head as tall as the avatar */
+.gotipe-review-card-delete {
+  margin-block: calc((var(--gt-avatar) - var(--gt-handle-h)) / 2);
+  margin-inline-start: auto;
+}
+.gotipe-review-card-delete:hover:not(:disabled) {
+  background: var(--gt-danger-tint);
+  color: var(--gt-danger);
 }
 :is(.gotipe-btn, .gotipe-review-icon-btn):focus-visible {
   outline: var(--gt-focus-width) solid var(--gt-focus);

@@ -42,30 +42,52 @@ const sharedFixed = pick(tokens.shared, ([key]) => !themed.has(key));
 
 // The palette lives on the root and on any element that names its theme; everything else, the
 // editors included, inherits it, so a host's own --gt-* on a page's container reach the content.
+// The editor root resolves the aliases again: a host's palette on a container reaches them too.
 const darkSelectors = '[data-theme="dark"]';
 const palette = `${rules(':root,\n[data-theme="light"]', { ...sharedThemed, ...tokens.light }, "light")}\n${rules(darkSelectors, { ...sharedThemed, ...tokens.dark }, "dark")}\n@media (prefers-color-scheme: dark) {\n${indent(
   rules(":root:not([data-theme])", { ...sharedThemed, ...tokens.dark }, "dark"),
-)}}\n`;
+)}}\n\n${rules("[data-gt-view]", sharedThemed)}`;
 
 // Views: notion's values are the base of every view; a view changes only what makes it itself.
-// A narrow container changes the tokens of the editor's children, never the markup.
-// A narrow container re-declares the aliases, so they resolve with its values; an alias that a
-// narrow container sets itself (a layout of its own) keeps that value.
-const narrowOwn = new Set(tokens.narrow.flatMap(({ tokens: values }) => Object.keys(values)));
+// A narrow container changes the tokens of the editor's children, never the markup: its sizes
+// (`tokens`, `views`) unless the container or an ancestor has data-gt-narrow="off", its layout
+// (`layout`: what is shown and how it wraps) always.
+// A narrow container re-declares the aliases that lead to what it changes, so they resolve with its
+// values; an alias that a narrow container sets itself (a layout of its own) keeps that value.
+const narrowOwn = new Set(
+  tokens.narrow.flatMap(({ tokens: values, layout = {} }) => Object.keys({ ...values, ...layout })),
+);
 const aliases = pick(tokens.view, ([key, value]) => value.includes("var(") && !narrowOwn.has(key));
+const leadingTo = (changed) => {
+  const reached = new Set(changed);
+  for (let grown = true; grown; ) {
+    grown = false;
+    for (const [key, value] of Object.entries(aliases)) {
+      if (!reached.has(key) && references(value).some((name) => reached.has(name))) {
+        reached.add(key);
+        grown = true;
+      }
+    }
+  }
+  return pick(aliases, ([key]) => reached.has(key));
+};
 // the version history is a container of its own: on a phone its list and comparison are two screens
 const containers = ":is(.gotipe-block-editor, .gotipe-editor, .gotipe-history-shell)";
+const sized = `${containers}:where(:not([data-gt-narrow="off"], [data-gt-narrow="off"] *))`;
 const viewSelector = (name) => `[data-gt-view="${name}"]`;
-const narrow = tokens.narrow.map(({ max, tokens: values, views: own = {} }) => {
+const narrow = tokens.narrow.map(({ max, tokens: values, layout = {}, views: own = {} }) => {
+  const sizes = [values, ...Object.values(own)].flatMap(Object.keys);
   const inner = [
-    rules(`${containers} > *`, { ...values, ...aliases }),
-    ...Object.entries(own).map(([name, overrides]) =>
-      rules(`${viewSelector(name)}${containers} > *,\n${viewSelector(name)} ${containers} > *`, {
-        ...overrides,
-        ...aliases,
-      }),
-    ),
-  ].join("\n");
+    [`${containers} > *`, { ...layout, ...leadingTo(Object.keys(layout)) }],
+    [`${sized} > *`, { ...values, ...leadingTo(sizes) }],
+    ...Object.entries(own).map(([name, overrides]) => [
+      `${viewSelector(name)}${sized} > *,\n${viewSelector(name)} ${sized} > *`,
+      overrides,
+    ]),
+  ]
+    .filter(([, body]) => Object.keys(body).length > 0)
+    .map(([selector, body]) => rules(selector, body))
+    .join("\n");
   return `@container (max-width: ${max}) {\n${indent(inner)}}\n`;
 });
 const views = [

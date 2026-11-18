@@ -11,11 +11,15 @@ JS presets use the same JSON. Do not copy color values into examples.
 
 JSON sections:
 - `shared`: values that do not depend on the theme, and aliases. An alias that leads to
-  the palette is redeclared by the generator in each theme, otherwise `var()` stays on the old one;
+  the palette is redeclared by the generator in each theme, otherwise `var()` stays on the old one,
+  and once more on the editor root (`[data-gt-view]`), so a host's palette on a container reaches it;
 - `light`, `dark`: palettes → `tokens/palette.css`;
 - `view`: the notion view, the base for all views (`:root` and `[data-gt-view]`); `views`: what
   distinguishes docs, modern, and minimal; `narrow`: tokens for a narrow container (`@container`
-  640 and 359 px) for children of the editor root → `tokens/views.css`.
+  640 and 359 px) for children of the editor root → `tokens/views.css`. A step's `tokens` and
+  `views` are sizes, switched off by `data-gt-narrow="off"` on the editor root or an ancestor; its
+  `layout` (what shows and how it wraps) always applies. A step redeclares only the `view` aliases
+  that lead to what it changes.
 
 `tokens.css` only imports both files. The old names (`--gt-text-prose`,
 `--gt-editor-padding-x`, and others) remain aliases of the new ones; new CSS is written with the new ones.
