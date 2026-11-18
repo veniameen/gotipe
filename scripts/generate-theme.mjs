@@ -42,11 +42,10 @@ const sharedFixed = pick(tokens.shared, ([key]) => !themed.has(key));
 
 // The palette lives on the root and on any element that names its theme; everything else, the
 // editors included, inherits it, so a host's own --gt-* on a page's container reach the content.
-// The editor root resolves the aliases again: a host's palette on a container reaches them too.
 const darkSelectors = '[data-theme="dark"]';
 const palette = `${rules(':root,\n[data-theme="light"]', { ...sharedThemed, ...tokens.light }, "light")}\n${rules(darkSelectors, { ...sharedThemed, ...tokens.dark }, "dark")}\n@media (prefers-color-scheme: dark) {\n${indent(
   rules(":root:not([data-theme])", { ...sharedThemed, ...tokens.dark }, "dark"),
-)}}\n\n${rules("[data-gt-view]", sharedThemed)}`;
+)}}\n`;
 
 // Views: notion's values are the base of every view; a view changes only what makes it itself.
 // A narrow container changes the tokens of the editor's children, never the markup: its sizes

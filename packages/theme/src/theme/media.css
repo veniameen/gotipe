@@ -11,12 +11,12 @@
   max-width: 100%;
   height: auto;
   border-radius: var(--gt-image-radius);
-  box-shadow: 0 0 0 var(--gt-image-ring) var(--gt-image-ring-color);
+  box-shadow: 0 0 0 var(--gt-image-ring) var(--gt-image-ring-color, var(--gt-line));
 }
 .gotipe-image-block figcaption {
   padding-top: var(--gt-caption-gap);
   outline: none;
-  color: var(--gt-caption-color);
+  color: var(--gt-caption-color, var(--gt-text-2));
   font-size: var(--gt-caption-size);
   line-height: var(--gt-caption-leading);
   letter-spacing: normal;
@@ -51,7 +51,7 @@
   padding: var(--gt-space-4);
   border: 0;
   border-radius: var(--gt-radius-block);
-  background: var(--gt-image-empty-bg);
+  background: var(--gt-image-empty-bg, var(--gt-sunken));
   color: var(--gt-text-2);
   font-family: var(--gt-font-ui);
   font-size: var(--gt-ui-size);

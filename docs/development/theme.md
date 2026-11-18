@@ -11,8 +11,10 @@ JS presets use the same JSON. Do not copy color values into examples.
 
 JSON sections:
 - `shared`: values that do not depend on the theme, and aliases. An alias that leads to
-  the palette is redeclared by the generator in each theme, otherwise `var()` stays on the old one,
-  and once more on the editor root (`[data-gt-view]`), so a host's palette on a container reaches it;
+  the palette is redeclared by the generator in each theme, otherwise `var()` stays on the old one.
+  A part colour that must follow a host's palette on a container (`--gt-comment-soft`,
+  `--gt-check-fill`, ...) is not a token here: its rule reads it with the base as the fallback,
+  `var(--gt-check-fill, var(--gt-ink))`, which resolves where the part is drawn;
 - `light`, `dark`: palettes → `tokens/palette.css`;
 - `view`: the notion view, the base for all views (`:root` and `[data-gt-view]`); `views`: what
   distinguishes docs, modern, and minimal; `narrow`: tokens for a narrow container (`@container`

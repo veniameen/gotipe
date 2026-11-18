@@ -37,7 +37,7 @@
 /* ---- the model's suggestion after the caret: quiet text ---- */
 .gotipe-ghost-text {
   z-index: var(--gt-z-content);
-  color: var(--gt-ai-ghost);
+  color: var(--gt-ai-ghost, var(--gt-text-3));
   font-family: inherit;
   font-size: inherit;
   white-space: pre;

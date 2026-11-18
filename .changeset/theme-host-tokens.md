@@ -4,9 +4,10 @@
 
 More of the look is reachable through tokens set on a container:
 
-- Palette aliases such as `--gt-comment-soft` and `--gt-ai-ghost` are resolved again on
-  `[data-gt-view]`, so base colours a host sets on a page container reach them. To set an alias
-  itself, set it on the editor root.
+- `--gt-comment-soft` and `--gt-ai-ghost` are no longer declared on `:root`: unset, their rules
+  fall back to `--gt-comment-tint` and `--gt-text-3` where they are drawn, so base colours a host
+  sets on a page container reach them; the host can still set either on any container. The new
+  part colours below work the same way.
 - `data-gt-narrow="off"` on the editor root or any ancestor switches off the sizes of a narrow
   container (up to 640 px); the layout of a narrow container (docs outline, history screens,
   find bar) still applies.

@@ -129,10 +129,10 @@ them on the editor root itself:
 }
 ```
 
-A token defined from other tokens, such as `--gt-comment-soft` (from `--gt-comment-tint`),
-`--gt-ai-ghost` (from `--gt-text-3`) or `--gt-check-fill` (from `--gt-ink`), is resolved again on
-the editor root (`[data-gt-view]`), so it follows the base colours you set on a container. To set
-such a token itself, set it on the editor root, like a size.
+A part colour such as `--gt-comment-soft`, `--gt-ai-ghost` or `--gt-check-fill` is unset by
+default: the rule that uses it falls back to a base colour (`--gt-comment-tint`, `--gt-text-3`,
+`--gt-ink`) where it is drawn, so it follows the base colours you set on a container. Set the part
+token itself on any container to override it.
 
 Menus that open outside the editor, such as the formatting bubble and the table menus,
 render in a layer on `<body>`. That layer copies the editor's computed `--gt-*` values,
@@ -151,15 +151,16 @@ font, colour scheme and direction, so tokens you set on a container apply there 
 ### Parts
 
 These tokens style one part each. A size (`-size`, `-width`, `-bar`, `-offset`, `-thickness`) is
-set on the editor root; a colour on any container.
+set on the editor root; a colour on any container. "Unset" means the rule falls back to the base
+token shown, resolved where the part is drawn.
 
 | Token | Default | Controls |
 |---|---|---|
-| `--gt-check-fill` | `var(--gt-ink)` | Fill of a checked task box |
-| `--gt-check-line` | `var(--gt-line-control)` | Border of an empty task box |
+| `--gt-check-fill` | unset: `--gt-ink` | Fill of a checked task box |
+| `--gt-check-line` | unset: `--gt-line-control` | Border of an empty task box |
 | `--gt-check-mark` | an SVG in `--gt-ink-text` | The tick of a checked task box, a `url()` image; with a light `--gt-check-fill`, give it a tick of a dark colour |
-| `--gt-comment-soft` | `var(--gt-comment-tint)` | Background of commented text |
-| `--gt-ai-ghost` | `var(--gt-text-3)` | Colour of the model's text offered at the caret |
+| `--gt-comment-soft` | unset: `--gt-comment-tint` | Background of commented text |
+| `--gt-ai-ghost` | unset: `--gt-text-3` | Colour of the model's text offered at the caret |
 | `--gt-card-name-size` | `var(--gt-ui-size)` (13 px) | Name of the author or lane in a review card's head |
 | `--gt-card-name-weight` | `var(--gt-weight-medium)` | Its weight |
 | `--gt-card-button-size` | `var(--gt-ui-size)` (13 px) | Text of a review card's buttons |
@@ -172,10 +173,10 @@ set on the editor root; a colour on any container.
 | `--gt-sug-changed-bar` | unset: the lane's colour | Colour of that bar |
 | `--gt-image-radius` | `var(--gt-radius-block)` (8 px) | Corners of an image |
 | `--gt-image-ring` | `0px` | Width of a ring around an image, which keeps a light image apart from the page |
-| `--gt-image-ring-color` | `var(--gt-line)` | Its colour |
-| `--gt-caption-color` | `var(--gt-text-2)` | Colour of an image's caption |
+| `--gt-image-ring-color` | unset: `--gt-line` | Its colour |
+| `--gt-caption-color` | unset: `--gt-text-2` | Colour of an image's caption |
 | `--gt-caption-size`, `--gt-caption-leading` | `var(--gt-small-size)`, `var(--gt-small-leading)` | Its size and line height; `--gt-caption-gap` is the space above it |
-| `--gt-image-empty-bg` | `var(--gt-sunken)` | Background of an empty image or file block (upload or link) |
+| `--gt-image-empty-bg` | unset: `--gt-sunken` | Background of an empty image or file block (upload or link) |
 | `--gt-handle-rail` | 56 px (`0px` in `modern`, `minimal`) | Rail a narrow `notion` or `docs` page keeps on the left for the block handle |
 | `--gt-handle-offset` | 54 px | Room left of the text the block handle needs; with less, no handle shows |
 
