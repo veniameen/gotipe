@@ -56,6 +56,8 @@ export interface PageReviewProps {
 }
 
 const LAYER = "review";
+/** One empty list for a review without comments: a new one each render would recompute forever. */
+const NO_COMMENTS: ReviewComment[] = [];
 const MAX_REVEAL_MS = 1500;
 
 function prefersReducedMotion(): boolean {
@@ -126,7 +128,7 @@ export function ReviewLayer({
 
   const lanes = useMemo(() => new Map(review.lanes.map((l) => [l.id, l] as const)), [review.lanes]);
   const proposals = review.proposals;
-  const comments = review.comments ?? [];
+  const comments = review.comments ?? NO_COMMENTS;
   // Wide pages keep every card in a margin column (Atlas, frame 14); narrow ones open one by the text.
   const margin = useMarginLayout(root, proposals.length + comments.length > 0, layout);
 
