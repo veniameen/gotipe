@@ -75,3 +75,6 @@ export function TableCellView({
     </Tag>
   );
 }
+
+// The cell draws from its block, the table's layout context and its own menus' state.
+TableCellView.pure = true;

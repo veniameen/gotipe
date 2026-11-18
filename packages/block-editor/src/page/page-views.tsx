@@ -1,5 +1,10 @@
-import type { BlockView } from "@gotipe/core";
-import type { BlockViewProps, BlockViews } from "@gotipe/react";
+import type { BlockView, ViewState } from "@gotipe/core";
+import {
+  type BlockViewComponent,
+  type BlockViewProps,
+  type BlockViews,
+  useEditorState,
+} from "@gotipe/react";
 import type React from "react";
 import { Tip } from "../components/formatting/tip";
 import type { CodeHighlighter } from "../highlight/types";
@@ -21,6 +26,9 @@ function textOf(block: BlockView): string {
 /** The HTML level of a page title: `h1`…`h6`. */
 export type PageTitleLevel = 1 | 2 | 3 | 4 | 5 | 6;
 
+/** The id of the document's first block: a page title is a level-1 heading standing first. */
+const firstBlockId = (state: ViewState): string | undefined => state.blocks[0]?.id;
+
 /**
  * Headings of a Markdown page: the file's leading `# heading` is the page's title (GoTipe Atlas,
  * frame 19); an empty title shows the host's name for the file. Other headings are as anywhere.
@@ -28,10 +36,18 @@ export type PageTitleLevel = 1 | 2 | 3 | 4 | 5 | 6;
  * `h1` passes 2 (D-84).
  */
 function headingView(titlePlaceholder: string | undefined, titleLevel: PageTitleLevel) {
-  return function PageHeadingView({ block, editor, rootProps, content, readOnly }: BlockViewProps) {
+  const view: BlockViewComponent = function PageHeadingView({
+    block,
+    editor,
+    rootProps,
+    content,
+    readOnly,
+  }: BlockViewProps) {
     const i18n = useBlockEditorI18n();
     const level = Math.min(Math.max(Number(block.attrs.level) || 1, 1), 6);
-    const isTitle = level === 1 && editor.getViewState().blocks[0]?.id === block.id;
+    // subscribed: the heading is drawn again when another block becomes the first
+    const first = useEditorState(editor, firstBlockId);
+    const isTitle = level === 1 && first === block.id;
     const Tag = `h${isTitle ? titleLevel : level}` as "h1";
     const empty = textOf(block).length === 0;
     const placeholder =
@@ -51,6 +67,8 @@ function headingView(titlePlaceholder: string | undefined, titleLevel: PageTitle
       </Tag>
     );
   };
+  view.pure = true;
+  return view;
 }
 
 /** Markdown the editor keeps as it is (HTML, footnotes, definitions): read-only, Atlas frame 17. */
@@ -75,6 +93,8 @@ function MarkdownRawView({ block, rootProps }: BlockViewProps) {
     </div>
   );
 }
+
+MarkdownRawView.pure = true;
 
 /**
  * Block views of a Markdown page on top of the shared ones: the title and the raw Markdown
