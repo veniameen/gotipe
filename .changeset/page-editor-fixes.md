@@ -11,3 +11,5 @@
 - `ref.insertBlock(kind)` with the caret in the page title inserts the block under the title
   instead of turning the title into it.
 - A `review` without `comments` no longer re-renders in a loop ("Maximum update depth exceeded").
+- An image or file placeholder whose source is not chosen yet is no longer written to the file as
+  `![](<>)`; it becomes content once it has a source.

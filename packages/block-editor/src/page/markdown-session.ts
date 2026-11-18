@@ -29,6 +29,29 @@ function isEmptyTitle(block: DocBlock | undefined): boolean {
   return !Array.isArray(content) || content.every((s: { text: string }) => s.text.trim() === "");
 }
 
+/** An image or a file whose source is not chosen yet: the page's placeholder, not file content. */
+function isPlaceholder(block: DocBlock): boolean {
+  if (block.type === "image") return !String(block.attrs.src ?? "").trim();
+  if (block.type === "file") return !String(block.attrs.url ?? "").trim();
+  return false;
+}
+
+/** `blocks` without placeholders at any depth; the same array when there are none. */
+function withoutPlaceholders(blocks: DocBlock[]): DocBlock[] {
+  let changed = false;
+  const kept: DocBlock[] = [];
+  for (const block of blocks) {
+    if (isPlaceholder(block)) {
+      changed = true;
+      continue;
+    }
+    const children = withoutPlaceholders(block.children);
+    if (children !== block.children) changed = true;
+    kept.push(children === block.children ? block : { ...block, children });
+  }
+  return changed ? kept : blocks;
+}
+
 /**
  * Keeps an editor and a Markdown file in sync:
  * - `load(text)` parses the file (reusing block ids of the previous version,
@@ -37,6 +60,7 @@ function isEmptyTitle(block: DocBlock | undefined): boolean {
  *   blocks byte-for-byte from the source.
  * A page always starts with a title (H1). When the file has none, an empty
  * synthetic title block is shown and left out of the file until typed in.
+ * An image or a file placeholder (no source yet) is left out of the file too.
  */
 export class MarkdownSession {
   private snapshot: MarkdownSnapshot | undefined;
@@ -103,7 +127,7 @@ export class MarkdownSession {
       blocks.shift();
     }
     const { text, map, snapshot } = serializeMarkdown(
-      { version: doc.version, blocks } as never,
+      { version: doc.version, blocks: withoutPlaceholders(blocks) } as never,
       this.snapshot,
     );
     this.snapshot = snapshot;
