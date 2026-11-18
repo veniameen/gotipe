@@ -173,8 +173,9 @@ const PageEditorInner = forwardRef<PageEditorHandle, PageEditorProps>(
     onErrorRef.current = onError;
     const onReadyRef = useRef(onReady);
     onReadyRef.current = onReady;
-    /** The editor `onReady` and the first `autoFocus` were run for: once per editor. */
+    /** The editor `onReady` and the first `autoFocus` were run for: once per editor each. */
     const readied = useRef<GoTipeEditor | null>(null);
+    const focused = useRef<GoTipeEditor | null>(null);
     const initial = useRef({ markdown, readOnly, autoFocus, mentions: !!props.mentions });
 
     // Create the editor once (JS engine: no WASM, no eval).
@@ -219,12 +220,16 @@ const PageEditorInner = forwardRef<PageEditorHandle, PageEditorProps>(
     const draft = usePageDraft(editor, session, markdown, onChangeRef);
     // `autoFocus` waits a frame: what the host subscribes to in `onReady`, or in the render that
     // `onReady` causes, sees the first focus and selection.
+    // Under StrictMode the effect runs twice: the second run schedules the focus again.
     useEffect(() => {
-      if (!editor || readied.current === editor) return;
-      readied.current = editor;
-      onReadyRef.current?.(editor);
-      if (!initial.current.autoFocus) return;
+      if (!editor) return;
+      if (readied.current !== editor) {
+        readied.current = editor;
+        onReadyRef.current?.(editor);
+      }
+      if (!initial.current.autoFocus || focused.current === editor) return;
       const frame = requestAnimationFrame(() => {
+        focused.current = editor;
         if (!editor.isDestroyed) editor.focus("end");
       });
       return () => cancelAnimationFrame(frame);
