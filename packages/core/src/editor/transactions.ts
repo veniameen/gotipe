@@ -5,8 +5,10 @@ import {
 } from "../document/selection";
 import { getMarksAt, mapSelectionToDocument } from "../document/tree";
 import { fromWasmDoc, toWasmTransaction } from "../engine/conversion";
+import type { FallbackDoc } from "../engine/types";
 import { GoTipeError } from "../error";
 import type { TypingKind } from "../input/session";
+import type { Document } from "../types/block";
 import type { Selection, Transaction, TransactionContext } from "../types/state";
 import type { MarkView, SelectionView, ViewState } from "../types/view";
 import type { WasmBridge } from "../wasm-bridge";
@@ -28,6 +30,10 @@ interface TransactionPort {
   selection: SelectionView;
   storedMarks: MarkView[] | null;
   getDocumentJSON(): string;
+  /** The parsed state of `json`, shared: it must not be changed. */
+  parseState(json: string): FallbackDoc;
+  /** The public document of the state `json`; its blocks are shared and must not be changed. */
+  decodeState(json: string): Document;
   apply(transaction: string): string;
   preview(transaction: string): string;
   restoreDocument(state: string): void;
@@ -54,6 +60,32 @@ const withNativeTyping = (transaction: Record<string, unknown>, typing?: TypingK
   JSON.stringify({ ...transaction, metadata: { ...(transaction.metadata as object), typing } });
 
 /**
+ * The context of a transaction for filters and listeners. `before` and `after` are detached
+ * documents, decoded when first read: most listeners read only the transaction.
+ */
+export function transactionContext<Extra extends object>(
+  transaction: Transaction,
+  before: () => Document,
+  after: () => Document,
+  extra?: Extra,
+): TransactionContext & Extra {
+  const lazy = (read: () => Document): PropertyDescriptor => {
+    let value: Document | undefined;
+    return {
+      enumerable: true,
+      get: () => {
+        value ??= read();
+        return value;
+      },
+    };
+  };
+  return Object.defineProperties({ ...extra, transaction } as TransactionContext & Extra, {
+    before: lazy(before),
+    after: lazy(after),
+  });
+}
+
+/**
  * Owns transaction acceptance and document/selection undo boundaries. `dispatch(tr, kind,
  * since)`: `kind` is typing from the input layer, which may go on with the open undo step;
  * `since` is when it began (a composition: at `compositionstart`).
@@ -75,7 +107,7 @@ export function createTransactions(port: TransactionPort) {
   });
   const restoreHistory = (entry: HistoryEntry) => {
     port.restoreDocument(entry.state);
-    const blocks = fromWasmDoc(JSON.parse(entry.state)).blocks as ViewState["blocks"];
+    const blocks = port.decodeState(entry.state).blocks as ViewState["blocks"];
     port.selection = mapSelectionToDocument(entry.selection, blocks, blocks) ?? {
       type: "text",
       anchor: { blockId: "", offset: 0 },
@@ -92,7 +124,7 @@ export function createTransactions(port: TransactionPort) {
       ? port.collaboration.redoCollaboration()
       : port.collaboration.undoCollaboration();
     if (state === null) return false;
-    const blocks = fromWasmDoc(JSON.parse(state)).blocks as ViewState["blocks"];
+    const blocks = port.decodeState(state).blocks as ViewState["blocks"];
     port.selection = blocks.length
       ? engineToViewSelection(port.collaboration.getSelection(), state)
       : { type: "text", anchor: { blockId: "", offset: 0 }, head: { blockId: "", offset: 0 } };
@@ -127,14 +159,16 @@ export function createTransactions(port: TransactionPort) {
       const serializedTransaction = JSON.stringify(wasmTr);
       const beforeJson = port.getDocumentJSON();
       const candidate = port.preview(serializedTransaction);
-      const explicitSelection = tr.selection ? validateSelection(tr.selection, candidate!) : null;
+      const explicitSelection = tr.selection
+        ? validateSelection(tr.selection, port.parseState(candidate!))
+        : null;
       const context: TransactionContext | null =
         candidate && port.shouldInspectTransaction()
-          ? {
-              transaction: structuredClone(transaction as Transaction),
-              before: fromWasmDoc(JSON.parse(beforeJson)),
-              after: fromWasmDoc(JSON.parse(candidate)),
-            }
+          ? transactionContext(
+              structuredClone(transaction as Transaction),
+              () => fromWasmDoc(port.parseState(beforeJson)),
+              () => fromWasmDoc(port.parseState(candidate)),
+            )
           : null;
       if (context && !port.filterTransaction(context)) {
         port.scheduleSelectionRestore();
@@ -216,7 +250,7 @@ export function createTransactions(port: TransactionPort) {
           port.selection = explicitSelection;
           port.storedMarks = null;
         } else {
-          const after = fromWasmDoc(JSON.parse(afterJson)).blocks as ViewState["blocks"];
+          const after = port.decodeState(afterJson).blocks as ViewState["blocks"];
           port.selection = mapSelectionToDocument(port.selection, before, after) ?? {
             type: "text",
             anchor: { blockId: "", offset: 0 },
@@ -231,7 +265,13 @@ export function createTransactions(port: TransactionPort) {
 
         port.invalidate();
         if (context)
-          port.publishTransaction({ ...context, after: fromWasmDoc(JSON.parse(afterJson)) });
+          port.publishTransaction(
+            transactionContext(
+              context.transaction,
+              () => context.before,
+              () => fromWasmDoc(port.parseState(afterJson)),
+            ),
+          );
         if (
           explicitSelection ||
           JSON.stringify(previousSelection) !== JSON.stringify(port.selection)

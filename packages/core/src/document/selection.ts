@@ -74,19 +74,25 @@ export function engineToViewSelection(json: string, document: string): Selection
   throw new GoTipeError("COLLABORATION_ERROR", "Unknown native selection");
 }
 
-/** Validate an explicit transaction selection against the complete staged document. */
-export function validateSelection(selection: Selection, docJson: string): SelectionView {
-  const doc = JSON.parse(docJson) as FallbackDoc;
-  const blocks = new Map<string, FallbackBlock>();
-  const collect = (children: FallbackBlock[]): void => {
-    for (const block of children) {
-      blocks.set(block.id, block);
-      collect(block.children);
+/**
+ * Validate an explicit transaction selection against the complete staged document: its state
+ * text, or the parsed state, which is only read.
+ */
+export function validateSelection(
+  selection: Selection,
+  state: string | FallbackDoc,
+): SelectionView {
+  const doc = typeof state === "string" ? (JSON.parse(state) as FallbackDoc) : state;
+  // the last block with the id, as a map filled in document order would hold
+  const find = (children: FallbackBlock[], id: string): FallbackBlock | undefined => {
+    for (let index = children.length - 1; index >= 0; index -= 1) {
+      const block = children[index]!;
+      const found = find(block.children, id) ?? (block.id === id ? block : undefined);
+      if (found) return found;
     }
   };
-  collect(doc.blocks);
   const textOf = (id: string): string => {
-    const block = blocks.get(id);
+    const block = find(doc.blocks, id);
     if (!block) throw new GoTipeError("TRANSFORM_ERROR", `Selection block not found: ${id}`);
     return block.content.type === "RichText"
       ? block.content.value.map((span) => span.text).join("")

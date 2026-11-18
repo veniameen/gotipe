@@ -1,11 +1,14 @@
 import { serializeMarkdown } from "@gotipe/markdown";
 import { fromWasmDoc } from "./engine/conversion";
-import { fallbackApply } from "./engine/js-transactions";
+import { applyTransaction } from "./engine/js-transactions";
 import { markGroups } from "./engine/mark-rules";
 import { replacementTransaction } from "./engine/replacement";
+import { EngineStates } from "./engine/states";
+import type { FallbackDoc } from "./engine/types";
 import { validateEngineDocument, validateEngineStep } from "./engine/validate";
 import { GoTipeError } from "./error";
 import { blocksToHtml } from "./serialization/html";
+import type { Document } from "./types/block";
 
 /**
  * Minimal surface of the `@gotipe/wasm` module the bridge needs. Declared here
@@ -83,6 +86,7 @@ export class WasmBridge {
   private fallbackState: string | null = null;
   private collaborationEnabled = false;
   private prepared: { before: string; transaction: string; after: string } | null = null;
+  private states = new EngineStates();
 
   constructor(
     private readonly loader: WasmModuleLoader | null = null,
@@ -158,6 +162,7 @@ export class WasmBridge {
     if (!validateEngineDocument(schema, JSON.parse(docJson)))
       throw new GoTipeError("VALIDATION_ERROR", "Document does not match the editor schema");
     this.schema = schema;
+    this.states.resetSchema();
     this.prepared = null;
     if (this.collaborationEnabled && this.editor) {
       this.restoreState(schemaJson, docJson);
@@ -177,8 +182,8 @@ export class WasmBridge {
     const before = this.getState();
     if (this.prepared?.before === before && this.prepared.transaction === transactionJson)
       return this.prepared.after;
-    const after = fallbackApply(
-      before,
+    const result = applyTransaction(
+      this.states.parse(before),
       transactionJson,
       (step, document) => {
         if (!this.schema || !validateEngineStep(this.schema, step, document))
@@ -190,11 +195,12 @@ export class WasmBridge {
       markGroups(this.schema),
       (type) => this.schema?.nodes[type]?.content,
     );
-    if (!this.schema || !validateEngineDocument(this.schema, JSON.parse(after)))
+    if (!this.schema || !this.states.validate(this.schema, result))
       throw new GoTipeError(
         "VALIDATION_ERROR",
         "Transaction result does not match the editor schema",
       );
+    const after = this.states.stringify(result);
     this.prepared = { before, transaction: transactionJson, after };
     return after;
   }
@@ -227,6 +233,17 @@ export class WasmBridge {
     }
     if (!this.editor) throw new GoTipeError("EDITOR_NOT_INITIALIZED", "Editor not initialized");
     return this.editor.export_json();
+  }
+
+  parseState(json: string): FallbackDoc {
+    // The parsed state of `json`, shared with other reads: it must not be changed.
+    return this.states.parse(json);
+  }
+
+  decodeState(json: string): Document {
+    // The public document of the state `json`. Its blocks are shared with other reads and must
+    // not be changed; a document handed out for changing is decoded anew (`fromWasmDoc`).
+    return this.states.decode(this.states.parse(json));
   }
 
   /** One serializer for both engines: the same document gives the same HTML. */

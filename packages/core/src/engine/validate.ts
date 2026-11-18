@@ -4,7 +4,8 @@ import type { AttrValue, Block, Document } from "../types/block";
 import type { toWasmSchema } from "./schema";
 import type { FallbackBlock, FallbackDoc } from "./types";
 
-type Schema = ReturnType<typeof toWasmSchema>;
+export type EngineSchema = ReturnType<typeof toWasmSchema>;
+type Schema = EngineSchema;
 type Attributes = Schema["nodes"][string]["attrs"];
 function validAttributes(values: Record<string, AttrValue>, specs: Attributes): boolean {
   for (const [name, spec] of Object.entries(specs))
@@ -31,10 +32,13 @@ function validAttributes(values: Record<string, AttrValue>, specs: Attributes): 
     }
   });
 }
-/** Structural/JSON decoding always applies; an empty schema is an explicit schema-free editor. */
-export function validateEngineDocument(schema: Schema, value: unknown): boolean {
-  const document: Document = decodeDocument(value);
-  if (!Object.keys(schema.nodes).length && !Object.keys(schema.marks).length) return true;
+/** A schema without nodes and marks: an explicit schema-free editor. */
+export function isSchemaFree(schema: Schema): boolean {
+  return !Object.keys(schema.nodes).length && !Object.keys(schema.marks).length;
+}
+
+/** Whether a decoded block, and every block under it, is what `schema` allows. */
+export function blockValidator(schema: Schema): (block: Block, top: boolean) => boolean {
   const valid = (block: Block, top: boolean): boolean => {
     const spec = schema.nodes[block.type];
     if (!spec || (top && !spec.top_level)) return false;
@@ -65,6 +69,14 @@ export function validateEngineDocument(schema: Schema, value: unknown): boolean 
         (!spec.child_types || spec.child_types.includes(child.type)) && valid(child, false),
     );
   };
+  return valid;
+}
+
+/** Structural/JSON decoding always applies; an empty schema is an explicit schema-free editor. */
+export function validateEngineDocument(schema: Schema, value: unknown): boolean {
+  const document: Document = decodeDocument(value);
+  if (isSchemaFree(schema)) return true;
+  const valid = blockValidator(schema);
   return document.blocks.every((block) => valid(block, true));
 }
 
@@ -86,7 +98,7 @@ export function validateEngineStep(
   step: Record<string, unknown>,
   document: FallbackDoc,
 ): boolean {
-  if (!Object.keys(schema.nodes).length && !Object.keys(schema.marks).length) return true;
+  if (isSchemaFree(schema)) return true;
   if (!step || typeof step !== "object") return false;
   if ("InsertBlock" in step) {
     const data = step.InsertBlock;
