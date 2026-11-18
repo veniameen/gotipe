@@ -34,7 +34,16 @@ export async function saveAsset(
     throw new GoTipeError("ASSET_UNSUPPORTED", "Choose a PNG, JPEG, GIF or WebP image");
   }
   if (!host.saveAsset) return { src: await encodeInlineAsset(file), name };
-  const saved = await host.saveAsset(file, { kind, name, mediaType: file.type, size: file.size });
+  const info = { kind, name, mediaType: file.type, size: file.size };
+  let saved: Awaited<ReturnType<NonNullable<EditorHost["saveAsset"]>>>;
+  try {
+    saved = await host.saveAsset(file, info);
+  } catch (error) {
+    // a host failure is a failed save, whatever it threw: never a clipboard or paste error
+    if (error instanceof GoTipeError) throw error;
+    const message = error instanceof Error ? error.message : String(error);
+    throw new GoTipeError("ASSET_SAVE_FAILED", message, { ...info, cause: error });
+  }
   if (!saved?.src?.trim())
     throw new GoTipeError("ASSET_SAVE_FAILED", "The host returned no asset path");
   if (/^(?:javascript|vbscript):/i.test(saved.src.replace(/\s/g, ""))) {

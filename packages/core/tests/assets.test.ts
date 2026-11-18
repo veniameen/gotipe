@@ -1,6 +1,7 @@
 // @vitest-environment node
 import { describe, expect, it, vi } from "vitest";
 import { INLINE_ASSET_LIMIT, encodeInlineAsset, saveAsset } from "../src/assets";
+import { GoTipeError } from "../src/error";
 
 describe("durable assets", () => {
   it("serializes standalone bytes into a reloadable data URL", async () => {
@@ -38,6 +39,26 @@ describe("durable assets", () => {
     await expect(
       saveAsset({ saveAsset: async () => ({ src: "" }) }, blob, "file"),
     ).rejects.toMatchObject({ code: "ASSET_SAVE_FAILED" });
+    // a plain throw from the host is a failed save with the asset's details; a GoTipeError stays
+    const thrown = new Error("quota exceeded");
+    await expect(
+      saveAsset({ saveAsset: async () => Promise.reject(thrown) }, blob, "file"),
+    ).rejects.toMatchObject({
+      code: "ASSET_SAVE_FAILED",
+      message: "quota exceeded",
+      details: { kind: "file", name: "file", mediaType: "application/pdf", size: 3, cause: thrown },
+    });
+    await expect(
+      saveAsset(
+        {
+          saveAsset: async () => {
+            throw new GoTipeError("ASSET_UNSUPPORTED", "no PDFs here");
+          },
+        },
+        blob,
+        "file",
+      ),
+    ).rejects.toMatchObject({ code: "ASSET_UNSUPPORTED" });
     await expect(
       saveAsset(
         {
