@@ -1,5 +1,5 @@
 ---
-"@gotipe/theme": minor
+"@gotipe/theme": patch
 ---
 
 More of the look is reachable through tokens set on a container:

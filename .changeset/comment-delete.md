@@ -1,6 +1,6 @@
 ---
-"@gotipe/block-editor": minor
-"@gotipe/i18n": minor
+"@gotipe/block-editor": patch
+"@gotipe/i18n": patch
 ---
 
 A comment can be deleted from its card. `PageReviewProps.onDeleteComment(id)` adds a trash

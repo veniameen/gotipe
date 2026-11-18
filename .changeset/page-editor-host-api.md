@@ -1,5 +1,5 @@
 ---
-"@gotipe/block-editor": minor
+"@gotipe/block-editor": patch
 ---
 
 `PageEditor` gives the host more control without workarounds:
