@@ -55,6 +55,7 @@ const editor = await createEditor({ extensions: [DefaultPreset], host });
 |---|---|---|---|
 | `saveAsset` | `(file: Blob, info: { kind: "image" \| "file"; name: string; mediaType: string; size: number }) => Promise<{ src: string; name?: string }>` | Inline `data:` URL | Store a pasted, dropped or picked file. Return the path or URL to put into the document. Throw to report a failure. |
 | `resolveAsset` | `(src: string) => Promise<string \| null> \| string \| null` | `src` as stored | Turn a document path such as `assets/diagram.png` into a URL the page can show. Return `null` when the file is unavailable. |
+| `discardAsset` | `(asset: { src: string; name: string; kind: "image" \| "file" }) => void` | none | A file `saveAsset` stored that was then not inserted: a newer paste replaced it, the document or selection changed during the upload, the editor became read-only or was destroyed, or another file of the same paste failed. Delete it if you keep files. |
 | `openLink` | `(href: string, info: { blockId: string \| null; newTab: boolean; target: string \| null }) => void` | A new tab with `window.open`; `newTab: false` goes to the link in this tab; `target` is not read | Open a link the user activated. `target` is the link's own, you decide where it opens. |
 | `onError` | `(error: GoTipeError) => void` | Console, when nothing else listens | Receive every reported error. |
 | `imageSources` | `ImageSource[]` | none | Image catalogs to search in the image dialog. |
@@ -162,7 +163,7 @@ Each error is a `GoTipeError` with `code`, `message` and optional `details`:
 
 | Code | Reported when |
 |---|---|
-| `ASSET_SAVE_FAILED`, `ASSET_RESOLVE_FAILED` | `saveAsset` or `resolveAsset` failed, or an upload lost its position |
+| `ASSET_SAVE_FAILED`, `ASSET_RESOLVE_FAILED` | `saveAsset` (anything it throws but a `GoTipeError`) or `resolveAsset` failed, or an upload lost its position |
 | `ASSET_UNSUPPORTED`, `ASSET_TOO_LARGE` | A file breaks the type or size rules |
 | `LINK_BLOCKED`, `LINK_OPEN_FAILED` | A link had an unsafe URL, or `openLink` threw |
 | `CLIPBOARD_FAILED` | Clipboard access failed, or a paste no longer fits the document |

@@ -259,6 +259,46 @@ it("reports a host that fails to save a pasted file as ASSET_SAVE_FAILED, not a 
   editor.destroy();
 });
 
+it("tells the host about stored files a paste did not insert (discardAsset)", async () => {
+  const { editor, handler, errors } = await setup(doc(paragraph("a", "before")));
+  const discarded: unknown[] = [];
+  const pending: Array<(asset: { src: string }) => void> = [];
+  editor.host.saveAsset = (file) =>
+    file.size === 4
+      ? Promise.reject(new Error("too big"))
+      : new Promise((resolve) => {
+          pending.push(resolve);
+        });
+  editor.host.discardAsset = (asset) => discarded.push(asset);
+  const paste = (...files: File[]) => {
+    const event = transfer().event;
+    Object.defineProperty(event.clipboardData, "files", { value: files });
+    handler.onPaste(event);
+  };
+  const png = (name: string, body = "image") => new File([body], name, { type: "image/png" });
+  // a newer paste replaces the first one while it is stored: no error, the first file is dropped
+  paste(png("first.png"));
+  paste(png("second.png"));
+  pending[0]!({ src: "assets/first.png" });
+  pending[1]!({ src: "assets/second.png" });
+  await vi.waitFor(() => expect(discarded).toHaveLength(1));
+  expect(discarded[0]).toEqual({ src: "assets/first.png", name: "first.png", kind: "image" });
+  await vi.waitFor(() =>
+    expect(editor.getJSON().blocks.some((block) => block.attrs.src === "assets/second.png")).toBe(
+      true,
+    ),
+  );
+  expect(errors).toEqual([]);
+  // one file of a drop fails: the other, already stored, is dropped too and the failure reported
+  paste(png("ok.png"), png("bad.png", "abcd"));
+  pending[2]!({ src: "assets/ok.png" });
+  await vi.waitFor(() => expect(errors).toHaveLength(1));
+  expect(errors[0]).toMatchObject({ code: "ASSET_SAVE_FAILED", message: "too big" });
+  expect(discarded[1]).toEqual({ src: "assets/ok.png", name: "ok.png", kind: "image" });
+  expect(editor.getJSON().blocks.some((block) => block.attrs.src === "assets/ok.png")).toBe(false);
+  editor.destroy();
+});
+
 it("does not insert a late file at a changed selection or after destruction", async () => {
   const { editor, handler, errors } = await setup(doc(paragraph("a", "before")));
   let complete!: (asset: { src: string }) => void;
