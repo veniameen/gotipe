@@ -127,4 +127,24 @@ describe("comment card delete (onDeleteComment)", () => {
     expect(errors.map((e) => e.code)).toEqual(["COMMENT_ACTION_FAILED"]);
     expect(errors[0]?.message).toBe("disk full");
   });
+
+  it("a review without comments renders once, not in a loop", async () => {
+    const ref = createRef<PageEditorHandle>();
+    const errors: unknown[] = [];
+    const spy = vi.spyOn(console, "error").mockImplementation((...args) => errors.push(args));
+    await act(async () => {
+      root.render(
+        <PageEditor
+          ref={ref}
+          markdown={markdown}
+          locale="en"
+          review={{ lanes: [{ id: "agent", name: "Agent", kind: "agent" }], proposals: [] }}
+        />,
+      );
+      await wait(60);
+    });
+    spy.mockRestore();
+    expect(ref.current?.review?.states().comments).toEqual([]);
+    expect(String(errors)).not.toContain("Maximum update depth");
+  });
 });
