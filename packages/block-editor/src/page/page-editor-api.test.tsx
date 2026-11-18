@@ -304,6 +304,17 @@ describe("PageEditor head, narrow sizes and review layout", () => {
 });
 
 describe("PageEditor assets", () => {
+  it("gives the editor the host's discardAsset", async () => {
+    const discardAsset = vi.fn();
+    const { editor } = await mount({
+      markdown: "# Notes\n",
+      host: { saveAsset: async () => ({ src: "assets/a.png" }), discardAsset },
+    });
+    const asset = { src: "assets/a.png", name: "a.png", kind: "image" as const };
+    editor.host.discardAsset?.(asset);
+    expect(discardAsset).toHaveBeenCalledWith(asset);
+  });
+
   it("a host resolver's null shows the image as unavailable and never uses the raw path", async () => {
     const resolveAsset = vi.fn(() => null);
     await mount({ markdown: "# Notes\n\n![Plan](assets/plan.png)\n", host: { resolveAsset } });
