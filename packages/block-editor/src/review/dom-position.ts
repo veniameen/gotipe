@@ -58,7 +58,38 @@ export function proposalEndRect(root: HTMLElement, proposalId: string): DOMRect 
   return new DOMRect(r.right, r.top, 0, r.height || 20);
 }
 
+/**
+ * Where a suggestion or a comment stands. A whole block (a suggested list item, task, paragraph)
+ * stands where its text starts, past its marker or checkbox, so its card lines up with the text;
+ * an inline mark is its own box.
+ */
 export function decorationRect(root: HTMLElement, attr: string, id: string): DOMRect | null {
   const el = root.querySelector(`[${attr}="${CSS.escape(id)}"]`);
-  return el ? el.getBoundingClientRect() : null;
+  if (!el) return null;
+  const box = el.getBoundingClientRect();
+  if (!el.matches("[data-block-id], [data-gotipe-phantom-id]")) return box;
+  const left = blockTextLeft(el);
+  return left === null || left <= box.left
+    ? box
+    : new DOMRect(left, box.top, box.right - left, box.height);
+}
+
+/** The left edge of a block's own first text, or null when it shows none. */
+function blockTextLeft(block: Element): number | null {
+  const host =
+    block.querySelector("[data-gotipe-todo-content]") ??
+    block.querySelector(".gotipe-callout-content") ??
+    block;
+  const walker = createTextWalker(host);
+  for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+    const owner = node.parentElement?.closest("[data-block-id], [data-gotipe-phantom-id]");
+    if (owner && owner !== block) continue;
+    if (!(node as Text).length) continue;
+    const range = document.createRange();
+    range.setStart(node, 0);
+    range.setEnd(node, 1);
+    const rect = range.getClientRects()[0] ?? range.getBoundingClientRect();
+    return rect.width || rect.height ? rect.left : null;
+  }
+  return null;
 }
