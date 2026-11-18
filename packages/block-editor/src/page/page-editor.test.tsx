@@ -38,7 +38,7 @@ describe("PageEditor's onReady (D-27)", () => {
           onChange={(markdown) => drafts.push(markdown)}
           onReady={(editor) => {
             editors.push(editor);
-            // autoFocus comes right after onReady
+            // autoFocus comes a frame after onReady
             vi.spyOn(editor, "focus").mockImplementation(focus);
           }}
         />,
@@ -47,6 +47,8 @@ describe("PageEditor's onReady (D-27)", () => {
       draw();
       await wait(60);
     });
+    // the focus comes on the frame after onReady
+    await act(() => wait(40));
     expect(editors).toHaveLength(1);
     expect(focus.mock.calls).toEqual([["end"]]);
     const editor = editors[0]!;

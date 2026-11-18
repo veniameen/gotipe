@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import type { GoTipeEditor, SlashCommandDef } from "@gotipe/core";
-import { act, createRef } from "react";
+import { act, createRef, useEffect, useState } from "react";
 import { type Root, createRoot } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { PageEditor, type PageEditorHandle, type PageEditorProps } from "./page-editor";
@@ -113,6 +113,68 @@ describe("PageEditor handle: flush and setMarkdown", () => {
       editor.undo();
     });
     expect(ref.current!.getMarkdown()).toBe("# Notes\n\nBody. Edited\n");
+  });
+});
+
+describe("PageEditor focus and insertion from the title", () => {
+  it("autoFocus comes after the render onReady causes, so a host's effect sees it", async () => {
+    const seen: string[] = [];
+    function Host() {
+      const [editor, setEditor] = useState<GoTipeEditor | null>(null);
+      // a host subscribes once it has the editor, in an effect of the next render
+      useEffect(
+        () =>
+          editor?.on("selectionChange", () => {
+            seen.push("selection");
+          }),
+        [editor],
+      );
+      return (
+        <PageEditor markdown={"# Notes\n\nBody.\n"} locale="en" autoFocus onReady={setEditor} />
+      );
+    }
+    await act(async () => {
+      root.render(<Host />);
+      await wait(60);
+    });
+    await act(() => wait(40));
+    expect(seen).toContain("selection");
+  });
+
+  it("insertBlock from the title adds the block under it and keeps the title", async () => {
+    const { ref, editor } = await mount({ markdown: "# Notes\n\nBody.\n" });
+    const title = editor.getViewState().blocks[0]!;
+    act(() => {
+      editor.setSelection({
+        anchor: { blockId: title.id, offset: 2 },
+        head: { blockId: title.id, offset: 2 },
+      });
+      ref.current!.insertBlock("heading2");
+    });
+    const blocks = editor.getViewState().blocks;
+    expect(blocks[0]).toMatchObject({ id: title.id, type: "heading", attrs: { level: 1 } });
+    expect(blocks[1]).toMatchObject({ type: "heading", attrs: { level: 2 } });
+    expect(ref.current!.getTitle()).toBe("Notes");
+  });
+
+  it("insertBlock in the body still turns an empty paragraph into the block", async () => {
+    const { ref, editor } = await mount({ markdown: "# Notes\n\nBody.\n" });
+    act(() => {
+      editor.focus("end");
+      editor.chain().insertBlockAfter("paragraph", {}).run();
+      const empty = editor.getViewState().blocks[2]!;
+      editor.setSelection({
+        anchor: { blockId: empty.id, offset: 0 },
+        head: { blockId: empty.id, offset: 0 },
+      });
+      ref.current!.insertBlock("divider");
+    });
+    // the caret's empty paragraph becomes the divider
+    expect(editor.getViewState().blocks.map((block) => block.type)).toEqual([
+      "heading",
+      "paragraph",
+      "divider",
+    ]);
   });
 });
 

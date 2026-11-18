@@ -55,7 +55,7 @@ import { type PageReviewProps, type ReviewApi, ReviewLayer } from "../review/rev
 import { markdownTableGuard } from "../table/markdown-guard";
 import { MarkdownSession } from "./markdown-session";
 import { PageOverlayContext } from "./overlay";
-import { insertPageBlock, pageBlockCommands } from "./page-commands";
+import { type PageBlockKind, insertPageBlock, pageBlockCommands } from "./page-commands";
 import type { PageEditorHandle, PageEditorProps } from "./page-editor-props";
 import { createPageHost } from "./page-host";
 import { createPageBlockViews } from "./page-views";
@@ -217,11 +217,17 @@ const PageEditorInner = forwardRef<PageEditorHandle, PageEditorProps>(
     // The draft goes out once a frame after edits, or at once on `flush()`. A new `onReady` from
     // the host does not run this again: the pending draft stays, and so does the caret.
     const draft = usePageDraft(editor, session, markdown, onChangeRef);
+    // `autoFocus` waits a frame: what the host subscribes to in `onReady`, or in the render that
+    // `onReady` causes, sees the first focus and selection.
     useEffect(() => {
       if (!editor || readied.current === editor) return;
       readied.current = editor;
       onReadyRef.current?.(editor);
-      if (initial.current.autoFocus) editor.focus("end");
+      if (!initial.current.autoFocus) return;
+      const frame = requestAnimationFrame(() => {
+        if (!editor.isDestroyed) editor.focus("end");
+      });
+      return () => cancelAnimationFrame(frame);
     }, [editor]);
 
     useEffect(() => {
@@ -285,7 +291,7 @@ const PageEditorInner = forwardRef<PageEditorHandle, PageEditorProps>(
         setMarkdown: draft.setMarkdown,
         focus: (position) => editor?.focus(position),
         insertBlock: (kind) => {
-          if (editor) insertPageBlock(editor, kind);
+          if (editor) insertBelowTitle(editor, kind);
         },
         getTitle: () => pageTitle(editor),
         selectTitle: () => selectPageTitle(editor),
@@ -373,10 +379,29 @@ const PageEditorInner = forwardRef<PageEditorHandle, PageEditorProps>(
   },
 );
 
+/** Inserts a block at the caret; from the title, a new block under it: the title stays. */
+function insertBelowTitle(editor: GoTipeEditor, kind: PageBlockKind): void {
+  const title = editor.getViewState().blocks[0];
+  const current = editor.getCurrentBlock();
+  if (title && current?.id === title.id && isTitle(title)) {
+    editor.chain().insertBlockAfter("paragraph", {}).run();
+    const below = editor.getViewState().blocks[1];
+    if (below) {
+      const at = { blockId: below.id, offset: 0 };
+      editor.setSelection({ anchor: at, head: at });
+    }
+  }
+  insertPageBlock(editor, kind);
+}
+
+function isTitle(block: { type: string; attrs: Record<string, unknown> }): boolean {
+  return block.type === "heading" && Number(block.attrs.level) === 1;
+}
+
 /** The page title: text of the leading `# heading`, or null when there is none. */
 function pageTitle(editor: GoTipeEditor | null): string | null {
   const first = editor?.getViewState().blocks[0];
-  if (!first || first.type !== "heading" || Number(first.attrs.level) !== 1) return null;
+  if (!first || !isTitle(first)) return null;
   const text = Array.isArray(first.content) ? first.content.map((sp) => sp.text).join("") : "";
   return text.trim() ? text : null;
 }
