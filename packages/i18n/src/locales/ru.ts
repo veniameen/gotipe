@@ -98,6 +98,8 @@ export const ru: Locale = {
   "media.searchActions": "Найти действие…",
   "media.searchActionsLabel": "Поиск действий с изображением",
   "media.imageGroup": "Изображение",
+  "media.fileGroup": "Файл",
+  "media.chooseFile": "Выбрать файл…",
   "media.noActions": "Таких действий нет",
   "media.captionLabel": "Подпись к изображению",
   "media.captionPlaceholder": "Добавьте подпись",

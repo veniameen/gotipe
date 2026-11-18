@@ -22,6 +22,10 @@
   letter-spacing: normal;
   text-align: left;
 }
+/* a host's option (`media.captionName`): the file name in the caption's place, not a caption */
+.gotipe-image-block figcaption.gotipe-image-caption-hint {
+  color: var(--gt-caption-hint-color, var(--gt-text-3));
+}
 /* the caption is edited as text: the caret shows where, no ring; empty, it says what it is for */
 .gotipe-image-block figcaption > [data-gotipe-input] {
   min-height: var(--gt-small-leading);
@@ -91,6 +95,27 @@ button.gotipe-media-placeholder:hover:not(:disabled) {
   flex-wrap: wrap;
   justify-content: center;
   gap: var(--gt-button-gap);
+}
+/* a host's option (`media.placeholder: "row"`): one quiet row — the glyph, what the block holds
+   and a secondary "Choose a file…" (Atlas frame 10) */
+.gotipe-media-placeholder[data-layout="row"] {
+  flex-direction: row;
+  justify-content: flex-start;
+  gap: var(--gt-media-row-gap);
+  min-height: var(--gt-media-row-h);
+  padding: var(--gt-media-row-pad);
+  border-radius: var(--gt-media-row-radius);
+  text-align: left;
+}
+.gotipe-media-placeholder[data-layout="row"] .gotipe-media-placeholder-icon {
+  width: var(--gt-media-row-icon);
+  height: var(--gt-media-row-icon);
+}
+.gotipe-media-placeholder[data-layout="row"] .gotipe-media-placeholder-label {
+  flex: 1;
+}
+.gotipe-media-placeholder[data-layout="row"] .gotipe-media-button {
+  height: var(--gt-media-row-button-h);
 }
 
 /* ---- buttons on a block: ink for the main answer, a fill for the other, quiet for the rest ---- */

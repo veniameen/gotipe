@@ -17,7 +17,8 @@ export function FileBlock({
   rootProps,
 }: { block: BlockView; editor: GoTipeEditor; rootProps: Record<string, unknown> }) {
   const i18n = useGoTipeI18n();
-  const { links, inlineErrors } = useMediaOptions();
+  const { links, inlineErrors, placeholder } = useMediaOptions();
+  const row = placeholder === "row";
   const linkErrorId = useId();
   const url = (block.attrs.url as string) || "";
   const { url: displayUrl, failed: assetFailed } = useResolvedAsset(editor, url);
@@ -203,6 +204,7 @@ export function FileBlock({
           {/* like an empty image (Atlas frame 10): what the block holds and its two ways in */}
           <div
             className={`gotipe-file-placeholder gotipe-media-placeholder${dragOver ? " dragover" : ""}`}
+            data-layout={row ? "row" : undefined}
             onDragOver={(e) => {
               if (readOnly) return;
               e.preventDefault();
@@ -214,18 +216,20 @@ export function FileBlock({
             <span className="gotipe-media-placeholder-icon" aria-hidden="true">
               <PlaceholderFileIcon />
             </span>
-            <span className="gotipe-media-placeholder-label">{i18n.t("media.addFile")}</span>
+            <span className="gotipe-media-placeholder-label">
+              {i18n.t(row ? "media.fileGroup" : "media.addFile")}
+            </span>
             <span className="gotipe-media-placeholder-actions">
               <button
                 type="button"
-                className="gotipe-media-button is-primary"
+                className={row ? "gotipe-media-button" : "gotipe-media-button is-primary"}
                 aria-label={i18n.t(uploading ? "media.uploading" : "media.uploadFile")}
                 disabled={readOnly || uploading}
                 onMouseDown={(e) => e.preventDefault()}
                 onClick={triggerFilePicker}
               >
-                <MediaGlyph kind="upload" />
-                {i18n.t(uploading ? "media.uploading" : "media.upload")}
+                {row ? null : <MediaGlyph kind="upload" />}
+                {i18n.t(uploading ? "media.uploading" : row ? "media.chooseFile" : "media.upload")}
               </button>
               {links && (
                 <button

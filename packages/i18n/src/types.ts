@@ -98,6 +98,8 @@ export type BaseTranslationKey =
   | "media.searchActions"
   | "media.searchActionsLabel"
   | "media.imageGroup"
+  | "media.fileGroup"
+  | "media.chooseFile"
   | "media.noActions"
   | "media.captionLabel"
   | "media.captionPlaceholder"

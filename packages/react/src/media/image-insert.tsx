@@ -127,7 +127,8 @@ export function ImageInsert({
   onPick: () => void;
 }) {
   const i18n = useGoTipeI18n();
-  const { links, inlineErrors } = useMediaOptions();
+  const { links, inlineErrors, placeholder } = useMediaOptions();
+  const row = placeholder === "row";
   const errorId = useId();
   const [open, setOpen] = useState(false);
   const [tab, setTab] = useState("link");
@@ -164,6 +165,7 @@ export function ImageInsert({
     <div className="gotipe-media-placeholder-shell" ref={shell}>
       <div
         className={`gotipe-image-placeholder gotipe-media-placeholder${dragOver ? " dragover" : ""}`}
+        data-layout={row ? "row" : undefined}
         onMouseDown={(event) => {
           if (event.target === event.currentTarget) hold(event);
         }}
@@ -184,19 +186,21 @@ export function ImageInsert({
         <span className="gotipe-media-placeholder-icon" aria-hidden="true">
           <PlaceholderImageIcon />
         </span>
-        <span className="gotipe-media-placeholder-label">{i18n.t("media.addImage")}</span>
+        <span className="gotipe-media-placeholder-label">
+          {i18n.t(row ? "media.imageGroup" : "media.addImage")}
+        </span>
         <span className="gotipe-media-placeholder-actions">
           <button
             type="button"
-            className="gotipe-media-button is-primary"
+            className={row ? "gotipe-media-button" : "gotipe-media-button is-primary"}
             aria-label={i18n.t(uploading ? "media.uploading" : "media.uploadImage")}
             title={i18n.t("media.imageNote")}
             disabled={readOnly || uploading}
             onMouseDown={hold}
             onClick={onPick}
           >
-            <MediaGlyph kind="upload" />
-            {i18n.t(uploading ? "media.uploading" : "media.upload")}
+            {row ? null : <MediaGlyph kind="upload" />}
+            {i18n.t(uploading ? "media.uploading" : row ? "media.chooseFile" : "media.upload")}
           </button>
           {tabs.length > 0 && (
             <button

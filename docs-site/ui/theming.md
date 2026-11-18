@@ -188,6 +188,9 @@ can be set on any container.
 | `--gt-caption-color` | unset: `--gt-text-2` | Colour of an image's caption |
 | `--gt-caption-size`, `--gt-caption-leading` | `var(--gt-small-size)`, `var(--gt-small-leading)` | Its size and line height; `--gt-caption-gap` is the space above it |
 | `--gt-image-empty-bg` | unset: `--gt-sunken` | Background of an empty image or file block (upload or link) |
+| `--gt-media-row-h`, `--gt-media-row-pad`, `--gt-media-row-gap` | 48 px, `0 12px`, 8 px | The empty block as a row (`media.placeholder: "row"`): height, padding and gaps |
+| `--gt-media-row-icon`, `--gt-media-row-radius`, `--gt-media-row-button-h` | 20 px, `var(--gt-radius-block)`, 24 px | Its glyph, corners and button height |
+| `--gt-caption-hint-color` | unset: `--gt-text-3` | The file name an image without a caption shows with `media.captionName` |
 | `--gt-list-item-gap` | `var(--gt-flow-list)` (4 px) | Space between two items of a list, task lists included |
 | `--gt-flow-between-lists` | `var(--gt-flow)` (8 px) | Space before a list that follows another list, as a numbered list after a task list; `0px` joins them |
 | `--gt-flow-after-h1-table`, `--gt-flow-after-h2-table`, `--gt-flow-after-h3-table` | `var(--gt-flow-after-h1)`, `-h2`, `-h3` (10, 8, 4 px) | Space before a table right under a heading of that level (`-h3` for h3 to h6; `-h1` also under the page title) |

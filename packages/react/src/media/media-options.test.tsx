@@ -203,3 +203,37 @@ describe("media options: inline errors", () => {
     }
   });
 });
+
+describe("media.placeholder and media.captionName", () => {
+  it("draws the empty blocks as blocks with a primary Upload by default", async () => {
+    await mount();
+    const empty = block("empty").querySelector(".gotipe-media-placeholder")!;
+    expect(empty.hasAttribute("data-layout")).toBe(false);
+    expect(empty.querySelector(".gotipe-media-placeholder-label")?.textContent).toBe(
+      "Add an image",
+    );
+    expect(empty.querySelector(".gotipe-media-button.is-primary")?.textContent).toBe("Upload");
+    // no hint without the option
+    expect(block("image").querySelector(".gotipe-image-caption-hint")).toBeNull();
+  });
+
+  it('placeholder: "row" draws one row with a secondary “Choose a file…”', async () => {
+    await mount({ placeholder: "row" });
+    for (const [id, label] of [
+      ["empty", "Image"],
+      ["attach", "File"],
+    ] as const) {
+      const empty = block(id).querySelector(".gotipe-media-placeholder")!;
+      expect(empty.getAttribute("data-layout")).toBe("row");
+      expect(empty.querySelector(".gotipe-media-placeholder-label")?.textContent).toBe(label);
+      expect(empty.querySelector(".gotipe-media-button.is-primary")).toBeNull();
+      expect(empty.querySelector(".gotipe-media-button")?.textContent).toBe("Choose a file…");
+    }
+  });
+
+  it("captionName shows the file name where an image has no caption, outside the document", async () => {
+    await mount({ captionName: true });
+    expect(block("image").querySelector(".gotipe-image-caption-hint")?.textContent).toBe("a.png");
+    expect(editor.getJSON().blocks[2]?.attrs.caption ?? "").toBe("");
+  });
+});

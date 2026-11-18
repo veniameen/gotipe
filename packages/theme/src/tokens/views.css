@@ -307,6 +307,12 @@
   --gt-drop-line: 2px;
   --gt-drop-dot: 6px;
   --gt-image-empty-h: 152px;
+  --gt-media-row-h: 48px;
+  --gt-media-row-pad: 0 12px;
+  --gt-media-row-gap: 8px;
+  --gt-media-row-icon: 20px;
+  --gt-media-row-radius: var(--gt-radius-block);
+  --gt-media-row-button-h: 24px;
   --gt-resize-w: 4px;
   --gt-resize-h: 36px;
   --gt-resize-inset: 8px;
