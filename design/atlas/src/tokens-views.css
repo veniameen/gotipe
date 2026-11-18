@@ -57,6 +57,8 @@
   --gt-head-after: 32px;
   --gt-page-icon: 40px;
   --gt-page-icon-stroke: 1.25;
+  --gt-page-icon-inline: 1em;
+  --gt-page-icon-inline-gap: 0.3em;
   --gt-avatar: 20px;
   --gt-avatar-inline: 18px;
   --gt-avatar-gap: 2px;

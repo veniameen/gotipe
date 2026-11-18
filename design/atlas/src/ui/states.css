@@ -122,6 +122,27 @@
   display: flex;
   gap: var(--gt-button-gap);
 }
+/* a host's option: an empty image or file as one quiet row — the glyph, the block's kind and a
+   secondary "Choose a file…" */
+.gotipe-image-state.is-row {
+  display: flex;
+  align-items: center;
+  gap: var(--gt-media-row-gap);
+  min-height: var(--gt-media-row-h);
+  padding: var(--gt-media-row-pad);
+  border-radius: var(--gt-media-row-radius);
+}
+.gotipe-image-state.is-row > .gt-icon {
+  width: var(--gt-media-row-icon);
+  height: var(--gt-media-row-icon);
+  color: var(--gt-text-3);
+}
+.gotipe-image-state.is-row > .gotipe-image-state-label {
+  flex: 1;
+}
+.gotipe-image-state.is-row > .gotipe-button {
+  height: var(--gt-media-row-button-h);
+}
 
 /* ---- an editor that could not be created: the element that failed is the editor, a box in its
    place. It stands in the page's column, with its margins, as the head and the quick blocks do;

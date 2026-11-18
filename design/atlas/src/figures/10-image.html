@@ -4,7 +4,8 @@
     <h2 class="at-figure-title">Image</h2>
     <p class="at-caption">
       Under the pointer: a bar in the corner and width handles at the edges; the caption is edited
-      as text. An empty block offers to upload a file or paste a link.
+      as text. An empty block offers to upload a file or paste a link. Host options: an empty image or
+      file as one quiet row; an image without a caption shows its file name as a quiet hint.
     </p>
   </figcaption>
   <!-- @frame frame=image view=notion w=768 label="under the pointer" -->
@@ -36,6 +37,35 @@
           ><span class="gotipe-button"><svg class="gt-icon"><use href="#i-link" /></svg>By link</span></span
         >
       </div>
+    </div>
+  </article>
+  <!-- @end -->
+  <!-- @frame frame=image-empty-row view=notion w=768 label="as a row (host option)" -->
+  <article class="gotipe-page is-slice" lang="en">
+    <div class="gotipe-doc">
+      <p>The dual-write scheme: until step 4 the old field is read together with the new one.</p>
+      <div class="gotipe-image-state is-row">
+        <svg class="gt-icon"><use href="#i-image" /></svg>
+        <span class="gotipe-image-state-label">Image</span>
+        <span class="gotipe-button">Choose a file…</span>
+      </div>
+      <div class="gotipe-image-state is-row">
+        <svg class="gt-icon"><use href="#i-file" /></svg>
+        <span class="gotipe-image-state-label">File</span>
+        <span class="gotipe-button">Choose a file…</span>
+      </div>
+    </div>
+  </article>
+  <!-- @end -->
+  <!-- @frame frame=image-name-hint view=notion w=768 label="host option: the file name, not written to the file" -->
+  <article class="gotipe-page is-slice" lang="en">
+    <div class="gotipe-doc">
+      <figure class="gotipe-figure">
+        <div class="gotipe-image">
+          <!-- @include content/drafts/diagram.svg -->
+        </div>
+        <figcaption class="is-hint">offline-sync-diagram.png</figcaption>
+      </figure>
     </div>
   </article>
   <!-- @end -->

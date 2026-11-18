@@ -4,10 +4,31 @@
     <h2 class="at-figure-title">The notion view</h2>
     <p class="at-caption">
       A page that is read and assembled from blocks: icon, title, the host’s byline, a 680 column,
-      the block handle by the block under the pointer.
+      the block handle by the block under the pointer. A host can put the glyph in the title’s row
+      instead: before the text, at the middle of its first line, nothing above the title.
     </p>
   </figcaption>
   <!-- @frame frame=notion-document view=notion w=1024 -->
   <!-- @include content/drafts/page.html -->
+  <!-- @end -->
+  <!-- @frame frame=notion-title-glyph view=notion w=768 label="glyph in the title row (host option)" -->
+  <article class="gotipe-page is-slice" lang="en">
+    <header class="gotipe-page-head">
+      <h1 class="gotipe-page-title"
+        ><span class="gotipe-page-title-icon" aria-hidden="true"><svg class="gt-icon"><use href="#i-cloud-off" /></svg></span
+        >Offline drafts</h1
+      >
+      <div class="gotipe-page-byline">
+        <span class="gotipe-avatars" aria-hidden="true">
+          <span class="gotipe-avatar" data-person="2">ML</span>
+          <span class="gotipe-avatar" data-person="1">IO</span>
+        </span>
+        <span>Maria Lebedeva and Ilya Orlov · edited November 11 at 14:32</span>
+      </div>
+    </header>
+    <div class="gotipe-doc">
+      <p>Transactions pile up in the log while there is no network and go to the server in one batch.</p>
+    </div>
+  </article>
   <!-- @end -->
 </figure>
