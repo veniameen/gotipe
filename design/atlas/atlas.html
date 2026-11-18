@@ -329,6 +329,8 @@
   --gt-head-after: 32px;
   --gt-page-icon: 40px;
   --gt-page-icon-stroke: 1.25;
+  --gt-page-icon-inline: 1em;
+  --gt-page-icon-inline-gap: 0.3em;
   --gt-avatar: 20px;
   --gt-avatar-inline: 18px;
   --gt-avatar-gap: 2px;
@@ -619,6 +621,12 @@
   --gt-drop-line: 2px;
   --gt-drop-dot: 6px;
   --gt-image-empty-h: 152px;
+  --gt-media-row-h: 48px;
+  --gt-media-row-pad: 0 12px;
+  --gt-media-row-gap: 8px;
+  --gt-media-row-icon: 20px;
+  --gt-media-row-radius: var(--gt-radius-block);
+  --gt-media-row-button-h: 24px;
   --gt-resize-w: 4px;
   --gt-resize-h: 36px;
   --gt-resize-inset: 8px;
@@ -1994,6 +2002,27 @@ body {
   letter-spacing: var(--gt-title-tracking);
   text-wrap: balance;
 }
+/* a host's option: the glyph in the title's row, before the text, out of its flow, at the middle
+   of the first line; nothing stands above the title */
+.gotipe-page-title:has(> .gotipe-page-title-icon) {
+  position: relative;
+  padding-inline-start: calc(var(--gt-page-icon-inline) + var(--gt-page-icon-inline-gap));
+}
+.gotipe-page-title-icon {
+  position: absolute;
+  inset-block-start: 0;
+  inset-inline-start: 0;
+  display: flex;
+  align-items: center;
+  width: var(--gt-page-icon-inline);
+  height: var(--gt-title-leading);
+  color: var(--gt-text);
+}
+.gotipe-page-title-icon > .gt-icon {
+  width: var(--gt-page-icon-inline);
+  height: var(--gt-page-icon-inline);
+  stroke-width: var(--gt-page-icon-stroke);
+}
 
 /* the host's slot under the title: who wrote the page and when it changed */
 .gotipe-page-byline {
@@ -2515,6 +2544,10 @@ ol.gotipe-list.is-three-digits > li::before {
   color: var(--gt-text-2);
   font-size: var(--gt-small-size);
   line-height: var(--gt-small-leading);
+}
+/* a host's option: no caption, the file name as a quiet hint in its place, not written to the file */
+.gotipe-figure > figcaption.is-hint {
+  color: var(--gt-text-3);
 }
 
 /* ---- divider ---- */
@@ -3998,6 +4031,27 @@ ol.gotipe-list.is-three-digits > li::before {
 .gotipe-image-state-actions {
   display: flex;
   gap: var(--gt-button-gap);
+}
+/* a host's option: an empty image or file as one quiet row — the glyph, the block's kind and a
+   secondary "Choose a file…" */
+.gotipe-image-state.is-row {
+  display: flex;
+  align-items: center;
+  gap: var(--gt-media-row-gap);
+  min-height: var(--gt-media-row-h);
+  padding: var(--gt-media-row-pad);
+  border-radius: var(--gt-media-row-radius);
+}
+.gotipe-image-state.is-row > .gt-icon {
+  width: var(--gt-media-row-icon);
+  height: var(--gt-media-row-icon);
+  color: var(--gt-text-3);
+}
+.gotipe-image-state.is-row > .gotipe-image-state-label {
+  flex: 1;
+}
+.gotipe-image-state.is-row > .gotipe-button {
+  height: var(--gt-media-row-button-h);
 }
 
 /* ---- an editor that could not be created: the element that failed is the editor, a box in its
@@ -8726,7 +8780,8 @@ html:not([data-theme="dark"]) .site-theme-to-light {
     <h2 class="at-figure-title">The notion view</h2>
     <p class="at-caption">
       A page that is read and assembled from blocks: icon, title, the host’s byline, a 680 column,
-      the block handle by the block under the pointer.
+      the block handle by the block under the pointer. A host can put the glyph in the title’s row
+      instead: before the text, at the middle of its first line, nothing above the title.
     </p>
   </figcaption>
   <section class="at-stage" data-w="1024">
@@ -8966,6 +9021,29 @@ editor<span class="tk-pun">.</span>on<span class="tk-pun">(</span><span class="t
 </p>
 </div>
 </article>
+</div>
+</section>
+  <section class="at-stage" data-w="768">
+<p class="at-stage-label">glyph in the title row (host option) · 768</p>
+<div class="at-frame gotipe-root" data-gt-view="notion" data-frame="notion-title-glyph" data-w="768">
+<article class="gotipe-page is-slice" lang="en">
+    <header class="gotipe-page-head">
+      <h1 class="gotipe-page-title"
+        ><span class="gotipe-page-title-icon" aria-hidden="true"><svg class="gt-icon"><use href="#i-cloud-off" /></svg></span
+        >Offline drafts</h1
+      >
+      <div class="gotipe-page-byline">
+        <span class="gotipe-avatars" aria-hidden="true">
+          <span class="gotipe-avatar" data-person="2">ML</span>
+          <span class="gotipe-avatar" data-person="1">IO</span>
+        </span>
+        <span>Maria Lebedeva and Ilya Orlov · edited November 11 at 14:32</span>
+      </div>
+    </header>
+    <div class="gotipe-doc">
+      <p>Transactions pile up in the log while there is no network and go to the server in one batch.</p>
+    </div>
+  </article>
 </div>
 </section>
 </figure>
@@ -11343,7 +11421,8 @@ editor<span class="tk-pun">.</span>on<span class="tk-pun">(</span><span class="t
     <h2 class="at-figure-title">Image</h2>
     <p class="at-caption">
       Under the pointer: a bar in the corner and width handles at the edges; the caption is edited
-      as text. An empty block offers to upload a file or paste a link.
+      as text. An empty block offers to upload a file or paste a link. Host options: an empty image or
+      file as one quiet row; an image without a caption shows its file name as a quiet hint.
     </p>
   </figcaption>
   <section class="at-stage" data-w="768">
@@ -11404,6 +11483,65 @@ editor<span class="tk-pun">.</span>on<span class="tk-pun">(</span><span class="t
           ><span class="gotipe-button"><svg class="gt-icon"><use href="#i-link" /></svg>By link</span></span
         >
       </div>
+    </div>
+  </article>
+</div>
+</section>
+  <section class="at-stage" data-w="768">
+<p class="at-stage-label">as a row (host option) · 768</p>
+<div class="at-frame gotipe-root" data-gt-view="notion" data-frame="image-empty-row" data-w="768">
+<article class="gotipe-page is-slice" lang="en">
+    <div class="gotipe-doc">
+      <p>The dual-write scheme: until step 4 the old field is read together with the new one.</p>
+      <div class="gotipe-image-state is-row">
+        <svg class="gt-icon"><use href="#i-image" /></svg>
+        <span class="gotipe-image-state-label">Image</span>
+        <span class="gotipe-button">Choose a file…</span>
+      </div>
+      <div class="gotipe-image-state is-row">
+        <svg class="gt-icon"><use href="#i-file" /></svg>
+        <span class="gotipe-image-state-label">File</span>
+        <span class="gotipe-button">Choose a file…</span>
+      </div>
+    </div>
+  </article>
+</div>
+</section>
+  <section class="at-stage" data-w="768">
+<p class="at-stage-label">host option: the file name, not written to the file · 768</p>
+<div class="at-frame gotipe-root" data-gt-view="notion" data-frame="image-name-hint" data-w="768">
+<article class="gotipe-page is-slice" lang="en">
+    <div class="gotipe-doc">
+      <figure class="gotipe-figure">
+        <div class="gotipe-image">
+          <svg class="dg" viewBox="0 0 632 180" role="img" aria-label="Editor, log and server">
+  <rect class="dg-node" x="0.5" y="28.5" width="147" height="123" rx="10" />
+  <text class="dg-title" x="74" y="84">Editor</text>
+  <text class="dg-sub" x="74" y="102">tab or app</text>
+
+  <path class="dg-edge" d="M156 90h76M226 85l6 5-6 5" />
+  <text class="dg-note" x="194" y="80">transactions</text>
+
+  <rect class="dg-node" x="242.5" y="28.5" width="147" height="123" rx="10" />
+  <text class="dg-title" x="316" y="62">Log</text>
+  <text class="dg-sub dg-mono" x="316" y="80">IndexedDB</text>
+  <rect class="dg-queue" x="270" y="94" width="92" height="6" rx="3" />
+  <rect class="dg-queue" x="270" y="105" width="76" height="6" rx="3" />
+  <rect class="dg-queue" x="270" y="116" width="86" height="6" rx="3" />
+  <rect class="dg-queue" x="270" y="127" width="58" height="6" rx="3" />
+
+  <path class="dg-edge dg-off" d="M398 70h76" />
+  <text class="dg-note" x="436" y="60">offline</text>
+  <path class="dg-edge dg-go" d="M398 112h76M468 107l6 5-6 5" />
+  <text class="dg-note" x="436" y="134">one batch</text>
+
+  <rect class="dg-node" x="484.5" y="28.5" width="147" height="123" rx="10" />
+  <text class="dg-title" x="558" y="84">Server</text>
+  <text class="dg-sub" x="558" y="102">new document version</text>
+</svg>
+        </div>
+        <figcaption class="is-hint">offline-sync-diagram.png</figcaption>
+      </figure>
     </div>
   </article>
 </div>

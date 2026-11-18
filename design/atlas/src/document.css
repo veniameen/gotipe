@@ -99,6 +99,27 @@
   letter-spacing: var(--gt-title-tracking);
   text-wrap: balance;
 }
+/* a host's option: the glyph in the title's row, before the text, out of its flow, at the middle
+   of the first line; nothing stands above the title */
+.gotipe-page-title:has(> .gotipe-page-title-icon) {
+  position: relative;
+  padding-inline-start: calc(var(--gt-page-icon-inline) + var(--gt-page-icon-inline-gap));
+}
+.gotipe-page-title-icon {
+  position: absolute;
+  inset-block-start: 0;
+  inset-inline-start: 0;
+  display: flex;
+  align-items: center;
+  width: var(--gt-page-icon-inline);
+  height: var(--gt-title-leading);
+  color: var(--gt-text);
+}
+.gotipe-page-title-icon > .gt-icon {
+  width: var(--gt-page-icon-inline);
+  height: var(--gt-page-icon-inline);
+  stroke-width: var(--gt-page-icon-stroke);
+}
 
 /* the host's slot under the title: who wrote the page and when it changed */
 .gotipe-page-byline {

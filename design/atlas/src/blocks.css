@@ -376,6 +376,10 @@ ol.gotipe-list.is-three-digits > li::before {
   font-size: var(--gt-small-size);
   line-height: var(--gt-small-leading);
 }
+/* a host's option: no caption, the file name as a quiet hint in its place, not written to the file */
+.gotipe-figure > figcaption.is-hint {
+  color: var(--gt-text-3);
+}
 
 /* ---- divider ---- */
 .gotipe-doc > hr {
