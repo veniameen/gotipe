@@ -197,8 +197,8 @@ can be set on any container.
 | `--gt-flow-after-h1-table`, `--gt-flow-after-h2-table`, `--gt-flow-after-h3-table` | `var(--gt-flow-after-h1)`, `-h2`, `-h3` (10, 8, 4 px) | Space before a table right under a heading of that level (`-h3` for h3 to h6; `-h1` also under the page title) |
 | `--gt-table-line` | unset: `--gt-line` | Colour of a table's row lines, column lines and frame |
 | `--gt-table-row-rule` | `var(--gt-hairline)` (1 px) | Width of the line under each row but the last, the head's included; `0px` removes the row lines |
-| `--gt-table-col-rule` | `0px` | Width of the lines between columns |
-| `--gt-table-frame` | `0px` | Width of the frame around a table |
+| `--gt-table-col-rule`, `--gt-table-col-rule-style` | `0px`, unset: `none` | Width and style of the lines between columns; set both, e.g. `1px` and `solid` |
+| `--gt-table-frame`, `--gt-table-frame-style` | `0px`, unset: `none` | Width and style of the frame around a table |
 | `--gt-table-head-line` | unset: `--gt-line-strong` | Colour of the line under header cells |
 | `--gt-table-head-size`, `--gt-table-head-leading` | `var(--gt-small-size)`, `var(--gt-small-leading)` | Size and line height of header cells' text |
 | `--gt-table-head-weight` | `var(--gt-weight-medium)` | Its weight |
@@ -222,7 +222,9 @@ A table with a grid and a filled head:
 ```css title="editor-theme.css"
 .app-editor .gotipe-block-editor {
   --gt-table-col-rule: 1px;
+  --gt-table-col-rule-style: solid;
   --gt-table-frame: 1px;
+  --gt-table-frame-style: solid;
   --gt-table-head-fill: var(--gt-fill-1);
   --gt-cell-first-pad: 12px;
 }

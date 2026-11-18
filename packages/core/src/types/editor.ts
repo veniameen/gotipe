@@ -182,7 +182,8 @@ export interface GoTipeEditor {
   emit<K extends keyof EditorEvents>(event: K, ...args: Parameters<EditorEvents[K]>): void;
   /**
    * Makes every change committed while `fn` runs one undo step; Redo restores all of it and
-   * Undo restores the selection from before it. Events are still emitted per transaction. A
+   * Undo restores the selection from before its first change (a selection `fn` sets before that
+   * change is what Undo returns to). Events are still emitted per transaction. A
    * nested call joins the outer one; only what `fn` does before it returns is grouped.
    */
   batch(fn: () => void): void;

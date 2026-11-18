@@ -39,7 +39,8 @@
   table-layout: fixed;
   width: max-content;
   min-width: 100%;
-  border: var(--gt-table-frame) solid var(--gt-table-line, var(--gt-line));
+  border: var(--gt-table-frame) var(--gt-table-frame-style, none)
+    var(--gt-table-line, var(--gt-line));
   border-collapse: collapse;
   font-size: var(--gt-table-size);
   line-height: var(--gt-table-leading);
@@ -49,7 +50,8 @@
   padding: var(--gt-cell-pad);
   border: 0;
   border-bottom: var(--gt-table-row-rule) solid var(--gt-table-line, var(--gt-line));
-  border-left: var(--gt-table-col-rule) solid var(--gt-table-line, var(--gt-line));
+  border-left: var(--gt-table-col-rule) var(--gt-table-col-rule-style, none)
+    var(--gt-table-line, var(--gt-line));
   background: transparent;
   color: var(--gt-text);
   text-align: left;

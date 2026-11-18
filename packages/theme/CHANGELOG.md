@@ -16,8 +16,7 @@
 
 - f67955e: `PageEditor`'s `iconPlacement: "above" | "inline"` (default `"above"`): `"inline"` draws the page's
   glyph in the title's row before its text (`.gotipe-page-title-icon`, `--gt-page-icon-inline`,
-  `--gt-page-icon-inline-gap`), outside the title's text and the file. `createPageBlockViews` takes
-  `titleIcon`.
+  `--gt-page-icon-inline-gap`), outside the title's text and the file.
 - f633ccf: More part tokens for a host, each with today's look as its default:
 
   - Tables: `--gt-table-line`, `--gt-table-row-rule`, `--gt-table-col-rule` and `--gt-table-frame`

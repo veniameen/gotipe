@@ -18,8 +18,7 @@
   `EditorHost` gains a member the page does not pass on.
 - f67955e: `PageEditor`'s `iconPlacement: "above" | "inline"` (default `"above"`): `"inline"` draws the page's
   glyph in the title's row before its text (`.gotipe-page-title-icon`, `--gt-page-icon-inline`,
-  `--gt-page-icon-inline-gap`), outside the title's text and the file. `createPageBlockViews` takes
-  `titleIcon`.
+  `--gt-page-icon-inline-gap`), outside the title's text and the file.
 - 358b9c1: The card of a suggested block (a new list item or task, pending or stale) stands at the block's
   text, past its marker or checkbox, as a card of an inline suggestion does, not at the block's
   left edge.

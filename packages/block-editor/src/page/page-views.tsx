@@ -6,6 +6,7 @@ import {
   useEditorState,
 } from "@gotipe/react";
 import type React from "react";
+import { createContext, useContext } from "react";
 import { Tip } from "../components/formatting/tip";
 import type { CodeHighlighter } from "../highlight/types";
 import { useBlockEditorI18n } from "../i18n/strings";
@@ -35,11 +36,15 @@ const firstBlockId = (state: ViewState): string | undefined => state.blocks[0]?.
  * The title is an `h${titleLevel}` that looks the same at any level: a host page with its own
  * `h1` passes 2 (D-84).
  */
-function headingView(
-  titlePlaceholder: string | undefined,
-  titleLevel: PageTitleLevel,
-  titleIcon: React.ReactNode,
-) {
+/**
+ * The page's glyph in the title's row (`iconPlacement="inline"`), drawn as a widget outside the
+ * title's text: no offset, no Markdown, no caret. A context, not an argument of
+ * the view: a new icon element on every render of the host must not make a new heading view,
+ * which would draw every heading anew and lose the caret.
+ */
+export const PageTitleIconContext = createContext<React.ReactNode>(null);
+
+function headingView(titlePlaceholder: string | undefined, titleLevel: PageTitleLevel) {
   const view: BlockViewComponent = function PageHeadingView({
     block,
     editor,
@@ -48,6 +53,7 @@ function headingView(
     readOnly,
   }: BlockViewProps) {
     const i18n = useBlockEditorI18n();
+    const titleIcon = useContext(PageTitleIconContext);
     const level = Math.min(Math.max(Number(block.attrs.level) || 1, 1), 6);
     // subscribed: the heading is drawn again when another block becomes the first
     const first = useEditorState(editor, firstBlockId);
@@ -68,7 +74,6 @@ function headingView(
         data-placeholder={placeholder}
       >
         {isTitle && titleIcon ? (
-          // in the title's row, outside its text: no offset, no Markdown, no caret
           <span
             className="gotipe-page-title-icon"
             data-gotipe-widget=""
@@ -120,12 +125,10 @@ export function createPageBlockViews(
     highlight?: CodeHighlighter;
     titlePlaceholder?: string;
     titleLevel?: PageTitleLevel;
-    /** The page's glyph drawn in the title's row, before its text. */
-    titleIcon?: React.ReactNode;
   } = {},
 ): BlockViews {
   return {
-    heading: headingView(options.titlePlaceholder, options.titleLevel ?? 1, options.titleIcon),
+    heading: headingView(options.titlePlaceholder, options.titleLevel ?? 1),
     markdownRaw: MarkdownRawView,
     ...(options.highlight ? { codeBlock: codeBlockViewFor(options.highlight) } : {}),
   };

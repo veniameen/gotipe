@@ -220,10 +220,11 @@ describe("tables have tokens for their grid, head, first column and code, today'
   it("draws row lines, column lines and a frame by tokens; no columns and no frame by default", () => {
     expect(declarations(tables, ".gotipe-table-wrapper :where(th, td)")).toMatchObject({
       "border-bottom": "var(--gt-table-row-rule) solid var(--gt-table-line, var(--gt-line))",
-      "border-left": "var(--gt-table-col-rule) solid var(--gt-table-line, var(--gt-line))",
+      "border-left":
+        "var(--gt-table-col-rule) var(--gt-table-col-rule-style, none)\n    var(--gt-table-line, var(--gt-line))",
     });
     expect(declarations(tables, ".gotipe-table-wrapper table").border).toBe(
-      "var(--gt-table-frame) solid var(--gt-table-line, var(--gt-line))",
+      "var(--gt-table-frame) var(--gt-table-frame-style, none)\n    var(--gt-table-line, var(--gt-line))",
     );
     expect(
       declarations(tables, ".gotipe-table-wrapper :where(tr:not(.is-continued) > :first-child)"),

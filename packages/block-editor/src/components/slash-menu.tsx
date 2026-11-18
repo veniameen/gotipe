@@ -8,7 +8,7 @@ export interface SlashMenuProps {
   commands?: SlashCommandDef[];
   /** Group order and labels; groups not listed are hidden. Default: AI, Style, Insert, Upload. */
   groups?: { id: string; label: string }[];
-  /** Custom row icon; `undefined` keeps the built-in one. */
+  /** Custom row icon; `undefined` keeps the built-in one, `null` shows none. */
   renderIcon?: (cmd: SlashCommandDef) => React.ReactNode;
   /**
    * Right-hand meta of a row (e.g. a Markdown shortcut); `undefined` keeps the built-in
@@ -381,7 +381,11 @@ export function SlashMenu({
   if (!visible) return null;
 
   let flatIdx = 0;
-  // the host's meta, or the Markdown shortcut when it gives none (`null`: nothing)
+  // the host's icon and meta, the built-in ones when it gives `undefined` (`null`: nothing)
+  const iconOf = (cmd: SlashCommandDef): React.ReactNode => {
+    const own = renderIconProp?.(cmd);
+    return own === undefined ? renderIcon(cmd.icon, cmd.name) : own;
+  };
   const metaOf = (cmd: SlashCommandDef): React.ReactNode => {
     const own = renderMeta?.(cmd);
     return own === undefined ? markdownShortcut(cmd.icon) : own;
@@ -424,6 +428,7 @@ export function SlashMenu({
             </div>
             {group.items.map((cmd) => {
               const idx = flatIdx++;
+              const meta = metaOf(cmd);
               const isSelected = idx === selectedIndex;
               return (
                 <div
@@ -446,7 +451,7 @@ export function SlashMenu({
                     className={`gotipe-slash-menu-item-icon ${isAccentIcon(cmd.icon, cmd.name) ? "gotipe-slash-menu-item-icon--accent" : ""}`}
                     aria-hidden="true"
                   >
-                    {renderIconProp?.(cmd) ?? renderIcon(cmd.icon, cmd.name)}
+                    {iconOf(cmd)}
                   </span>
                   <div className="gotipe-slash-menu-item-body">
                     <div className="gotipe-slash-menu-item-title">
@@ -456,11 +461,11 @@ export function SlashMenu({
                       <div className="gotipe-slash-menu-item-description">{cmd.description}</div>
                     ) : null}
                   </div>
-                  {metaOf(cmd) ? (
+                  {meta === null || meta === undefined ? null : (
                     <span className="gotipe-slash-menu-item-meta" aria-hidden="true">
-                      {metaOf(cmd)}
+                      {meta}
                     </span>
-                  ) : null}
+                  )}
                 </div>
               );
             })}
