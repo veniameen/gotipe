@@ -8,9 +8,12 @@ export interface SlashMenuProps {
   commands?: SlashCommandDef[];
   /** Group order and labels; groups not listed are hidden. Default: AI, Style, Insert, Upload. */
   groups?: { id: string; label: string }[];
-  /** Custom row icon. */
+  /** Custom row icon; `undefined` keeps the built-in one. */
   renderIcon?: (cmd: SlashCommandDef) => React.ReactNode;
-  /** Right-hand meta of a row (e.g. a Markdown shortcut). */
+  /**
+   * Right-hand meta of a row (e.g. a Markdown shortcut); `undefined` keeps the built-in
+   * shortcut, `null` shows nothing.
+   */
   renderMeta?: (cmd: SlashCommandDef) => React.ReactNode;
   /** Show a command's `description` under its name (`.gotipe-slash-menu-item-description`). */
   descriptions?: boolean;
@@ -378,6 +381,11 @@ export function SlashMenu({
   if (!visible) return null;
 
   let flatIdx = 0;
+  // the host's meta, or the Markdown shortcut when it gives none (`null`: nothing)
+  const metaOf = (cmd: SlashCommandDef): React.ReactNode => {
+    const own = renderMeta?.(cmd);
+    return own === undefined ? markdownShortcut(cmd.icon) : own;
+  };
 
   return (
     <div
@@ -438,7 +446,7 @@ export function SlashMenu({
                     className={`gotipe-slash-menu-item-icon ${isAccentIcon(cmd.icon, cmd.name) ? "gotipe-slash-menu-item-icon--accent" : ""}`}
                     aria-hidden="true"
                   >
-                    {renderIconProp ? renderIconProp(cmd) : renderIcon(cmd.icon, cmd.name)}
+                    {renderIconProp?.(cmd) ?? renderIcon(cmd.icon, cmd.name)}
                   </span>
                   <div className="gotipe-slash-menu-item-body">
                     <div className="gotipe-slash-menu-item-title">
@@ -448,13 +456,9 @@ export function SlashMenu({
                       <div className="gotipe-slash-menu-item-description">{cmd.description}</div>
                     ) : null}
                   </div>
-                  {renderMeta ? (
+                  {metaOf(cmd) ? (
                     <span className="gotipe-slash-menu-item-meta" aria-hidden="true">
-                      {renderMeta(cmd)}
-                    </span>
-                  ) : markdownShortcut(cmd.icon) ? (
-                    <span className="gotipe-slash-menu-item-meta" aria-hidden="true">
-                      {markdownShortcut(cmd.icon)}
+                      {metaOf(cmd)}
                     </span>
                   ) : null}
                 </div>

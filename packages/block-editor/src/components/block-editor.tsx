@@ -77,6 +77,8 @@ function BlockEditorView({
   slashCommands,
   slashGroups,
   slashDescriptions,
+  slashRenderIcon,
+  slashRenderMeta,
   narrow = true,
   ariaLabel,
   errorToast = true,
@@ -477,6 +479,8 @@ function BlockEditorView({
             commands={slashCommands ?? editor.getSlashCommands()}
             groups={slashGroups}
             descriptions={slashDescriptions}
+            renderIcon={slashRenderIcon}
+            renderMeta={slashRenderMeta}
           />
         )}
         <AtomUI editor={editor} />

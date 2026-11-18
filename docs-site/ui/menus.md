@@ -60,7 +60,17 @@ export function DocumentEditor() {
 `slashGroups` sets the order and labels of the groups (a group not listed is hidden, so a
 command of your own group needs it listed), and `slashDescriptions` shows each command's
 `description` as a quiet second line under its name (`.gotipe-slash-menu-item-description`); it
-is off by default. `PageEditor` takes the same through its `slashMenu` prop.
+is off by default. `slashRenderIcon` and `slashRenderMeta` are `SlashMenu`'s `renderIcon` and
+`renderMeta`. `PageEditor` takes all of them through its `slashMenu` prop.
+
+A row is `.gotipe-slash-menu-item` (`.selected` under the keyboard): the icon
+`.gotipe-slash-menu-item-icon`, the body `.gotipe-slash-menu-item-body` with the title
+`.gotipe-slash-menu-item-title` and the description `.gotipe-slash-menu-item-description`, and
+the right-hand side `.gotipe-slash-menu-item-meta`. A group has a label
+`.gotipe-slash-menu-group-label`, and from the second group on a line
+`.gotipe-slash-menu-group-separator` before it. To put the description beside the title, lay
+the body out as a row in your CSS (for example `flex-direction: row` with a gap); to keep only
+the labels between groups, hide the separator.
 
 To change row icons or the right-hand side, render `SlashMenu` yourself as a child of
 `BlockEditor` with `showSlashMenu={false}`:
@@ -70,8 +80,8 @@ To change row icons or the right-hand side, render `SlashMenu` yourself as a chi
 | `editor` | `GoTipeEditor` | — | The editor. |
 | `commands` | `SlashCommandDef[]` | `[]` | Commands to offer. |
 | `groups` | `{ id: string; label: string }[]` | AI, Style, Insert, Upload | Group order and labels; groups not listed are hidden. |
-| `renderIcon` | `(command) => ReactNode` | built-in icons | Row icon. By default an icon name outside the built-in set draws the command's first letter. |
-| `renderMeta` | `(command) => ReactNode` | Markdown shortcut | Right-hand side of a row. |
+| `renderIcon` | `(command) => ReactNode` | built-in icons | Row icon; `undefined` keeps the built-in one. By default an icon name outside the built-in set draws the command's first letter. |
+| `renderMeta` | `(command) => ReactNode` | Markdown shortcut | Right-hand side of a row; `undefined` keeps the shortcut, `null` shows nothing. |
 | `descriptions` | `boolean` | `false` | Show a command's `description` under its name. |
 | `labels` | `{ menu?, list?, empty?, results?(count) }` | i18n strings | Accessible names, the empty state and the result count. |
 | `className` | `string` | — | Added to `.gotipe-slash-menu`. |

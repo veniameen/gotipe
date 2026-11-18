@@ -157,6 +157,9 @@ The `/` menu groups them as Style, Insert and Upload.
   Insert and Upload are shown; `pageSlashGroups(i18n)` returns the page's three in its language.
 - `descriptions` — show a command's `description` under its name
   (`.gotipe-slash-menu-item-description`). Off by default.
+- `renderIcon`, `renderMeta` — a row's icon and right-hand side, for example your own icon for
+  your command; return `undefined` to keep the built-in one, `null` from `renderMeta` for none.
+  The row classes are listed under [Menus](/docs/ui/menus).
 
 ## Host
 

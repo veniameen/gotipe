@@ -60,6 +60,10 @@ export interface BlockEditorProps {
   slashGroups?: { id: string; label: string }[];
   /** Show a slash command's `description` under its name. Default: false. */
   slashDescriptions?: boolean;
+  /** A slash menu row's icon (see `SlashMenu`'s `renderIcon`). */
+  slashRenderIcon?: (command: SlashCommandDef) => React.ReactNode;
+  /** The right-hand side of a slash menu row (see `SlashMenu`'s `renderMeta`). */
+  slashRenderMeta?: (command: SlashCommandDef) => React.ReactNode;
   /**
    * The view's sizes for a narrow container (≤ 640 px). Default true; `false` keeps the wide
    * sizes, or the host's own, at any width (`data-gt-narrow="off"` on the editor).

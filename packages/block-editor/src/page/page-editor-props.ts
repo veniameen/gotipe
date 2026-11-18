@@ -51,6 +51,10 @@ export interface PageSlashMenu {
   groups?: { id: string; label: string }[];
   /** Show a command's `description` under its name. Default: false. */
   descriptions?: boolean;
+  /** A row's icon, e.g. the host's own for its commands. Default: the built-in icons. */
+  renderIcon?: (command: SlashCommandDef) => React.ReactNode;
+  /** The right-hand side of a row. Default: the block's Markdown shortcut. */
+  renderMeta?: (command: SlashCommandDef) => React.ReactNode;
 }
 
 export interface PageEditorProps {

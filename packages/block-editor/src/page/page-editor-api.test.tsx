@@ -483,6 +483,34 @@ describe("PageEditor slash menu", () => {
     });
   });
 
+  it("draws the host's icon and meta for its command, the built-in ones for the rest", async () => {
+    const agent: SlashCommandDef = {
+      name: "Agent instructions",
+      aliases: ["agent"],
+      icon: "quote",
+      group: "insert",
+      execute: vi.fn(),
+    };
+    const { editor } = await mount({
+      markdown: "# Notes\n",
+      slashMenu: {
+        commands: (defaults) => [...defaults, agent],
+        renderIcon: (command) => (command === agent ? <svg data-testid="agent-icon" /> : undefined),
+        renderMeta: (command) => (command === agent ? null : undefined),
+      },
+    });
+    await openSlash(editor);
+    const row = (name: string) =>
+      [...document.querySelectorAll(".gotipe-slash-menu-item")].find(
+        (item) => item.querySelector(".gotipe-slash-menu-item-title")?.textContent === name,
+      );
+    expect(row("Agent instructions")?.querySelector("[data-testid='agent-icon']")).not.toBeNull();
+    // the quote icon would bring the “>” shortcut: the host said none
+    expect(row("Agent instructions")?.querySelector(".gotipe-slash-menu-item-meta")).toBeNull();
+    expect(row("Heading 1")?.querySelector(".gotipe-slash-menu-item-meta")?.textContent).toBe("#");
+    expect(row("Heading 1")?.querySelector(".gotipe-slash-menu-item-icon svg")).not.toBeNull();
+  });
+
   it("keeps the page's own menu by default, without descriptions", async () => {
     const { editor } = await mount({ markdown: "# Notes\n" });
     await openSlash(editor);
