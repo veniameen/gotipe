@@ -219,6 +219,15 @@ describe("PageEditor focus and insertion from the title", () => {
     expect(blocks[0]).toMatchObject({ id: title.id, type: "heading", attrs: { level: 1 } });
     expect(blocks[1]).toMatchObject({ type: "heading", attrs: { level: 2 } });
     expect(ref.current!.getTitle()).toBe("Notes");
+      // one action, one Cmd+Z: the paragraph it went into goes too, the caret is back in the title
+    act(() => {
+      expect(editor.undo()).toBe(true);
+    });
+    expect(editor.getViewState().blocks.map((block) => block.type)).toEqual([
+      "heading",
+      "paragraph",
+    ]);
+    expect(editor.getViewState().selection.anchor).toEqual({ blockId: title.id, offset: 2 });
   });
 
   it("insertBlock in the body still turns an empty paragraph into the block", async () => {
@@ -238,6 +247,14 @@ describe("PageEditor focus and insertion from the title", () => {
       "heading",
       "paragraph",
       "divider",
+    ]);
+      act(() => {
+      expect(editor.undo()).toBe(true);
+    });
+    expect(editor.getViewState().blocks.map((block) => block.type)).toEqual([
+      "heading",
+      "paragraph",
+      "paragraph",
     ]);
   });
 });
@@ -299,6 +316,28 @@ describe("PageEditor head, narrow sizes and review layout", () => {
       Node.DOCUMENT_POSITION_FOLLOWING,
     );
     expect(ref.current!.getMarkdown()).toBe("# Notes\n\nBody.\n");
+  });
+
+  it('iconPlacement="inline" draws the icon in the title row, outside its text', async () => {
+    const { ref, editor } = await mount({
+      markdown: "# Notes\n\nBody.\n",
+      icon: <svg data-testid="glyph" />,
+      iconPlacement: "inline",
+    });
+    expect(container.querySelector(".gotipe-page-head")).toBeNull();
+    const icon = container.querySelector(".gotipe-page-title > .gotipe-page-title-icon");
+    expect(icon?.getAttribute("data-gotipe-widget")).toBe("");
+    expect(icon?.querySelector("[data-testid='glyph']")).not.toBeNull();
+    const title = editor.getViewState().blocks[0]!;
+    act(() => {
+      editor.setSelection({
+        anchor: { blockId: title.id, offset: 0 },
+        head: { blockId: title.id, offset: 0 },
+      });
+      editor.chain().insertText("My ").run();
+    });
+    expect(ref.current!.getTitle()).toBe("My Notes");
+    expect(ref.current!.getMarkdown()).toBe("# My Notes\n\nBody.\n");
   });
 
   it("has no head and keeps the narrow sizes by default", async () => {

@@ -34,6 +34,26 @@
   height: var(--gt-page-icon);
   stroke-width: var(--gt-page-icon-stroke);
 }
+/* the glyph in the title's row (`iconPlacement="inline"`): before the text, out of its flow */
+.gotipe-page-title:has(> .gotipe-page-title-icon) {
+  position: relative;
+  padding-inline-start: calc(var(--gt-page-icon-inline) + var(--gt-page-icon-inline-gap));
+}
+.gotipe-page-title-icon {
+  position: absolute;
+  inset-block-start: 0;
+  inset-inline-start: 0;
+  display: flex;
+  align-items: center;
+  width: var(--gt-page-icon-inline);
+  height: var(--gt-title-leading);
+  color: var(--gt-text);
+  user-select: none;
+}
+.gotipe-page-title-icon > :is(svg, img) {
+  width: 100%;
+  height: auto;
+}
 .gotipe-page-head-add {
   justify-self: start;
   display: inline-flex;

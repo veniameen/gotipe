@@ -366,6 +366,8 @@
     "--gt-head-gap": "12px",
     "--gt-head-after": "32px",
     "--gt-page-icon": "40px",
+    "--gt-page-icon-inline": "1em",
+    "--gt-page-icon-inline-gap": "0.3em",
     "--gt-page-icon-stroke": "1.25",
     "--gt-avatar": "20px",
     "--gt-avatar-inline": "18px",
