@@ -471,6 +471,12 @@ not part of the check artifacts.
   tree and on 0.1.1 (5cea501e) alike: there Home does not move the caret to the line start; CI
   runs on Linux. One Firefox checkbox test failed once under load and passed 3 of 3 alone. Not
   run here: the PDF regression and Go Cloud tests (no change in those areas).
+- 2026-11-18: 0.1.3 prepared from the host's next list, with the owner's decisions of the day:
+  one undo step for a group of changes (`editor.batch`) now, the compact media row, the caption
+  hint (not written to the file) and the glyph in the title row as host options with Atlas frames
+  (10 and 1). Released: `core`, `react`, `i18n`, `theme`, `block-editor` at 0.1.3 and `wasm` at
+  0.1.2; the others keep their versions and published peer ranges. The Atlas audit holds a caption
+  hint to the 3:1 contrast of other quiet labels.
 
 ## Acceptance before release (2026-11-15)
 

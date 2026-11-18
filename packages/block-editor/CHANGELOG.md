@@ -1,5 +1,55 @@
 # @gotipe/block-editor
 
+## 0.1.3
+
+### Patch Changes
+
+- 2c3dccb: A reliable first focus:
+
+  - `editor.focus(position)` puts the caret at `position` before the `focus` event and emits the
+    `selectionChange` of that move after it (it used to emit `selectionChange` first).
+  - `PageEditor`'s `autoFocus` comes after `onReady` and after every effect of the render `onReady`
+    causes, so a host that keeps the editor in state and subscribes in an effect hears `focus` and
+    then `selectionChange`, under StrictMode too. It no longer depends on a frame, which under load
+    could come before the host's subscription.
+
+- 2ca6ed6: `PageEditor` passes the host's `discardAsset` on to the editor; it used to drop it, so a file
+  stored for a paste that was then not inserted stayed with the host. A test now fails when
+  `EditorHost` gains a member the page does not pass on.
+- f67955e: `PageEditor`'s `iconPlacement: "above" | "inline"` (default `"above"`): `"inline"` draws the page's
+  glyph in the title's row before its text (`.gotipe-page-title-icon`, `--gt-page-icon-inline`,
+  `--gt-page-icon-inline-gap`), outside the title's text and the file. `createPageBlockViews` takes
+  `titleIcon`.
+- 358b9c1: The card of a suggested block (a new list item or task, pending or stale) stands at the block's
+  text, past its marker or checkbox, as a card of an inline suggestion does, not at the block's
+  left edge.
+- ccc02e6: The "/" menu takes the host's row drawing: `PageEditor`'s `slashMenu.renderIcon` and
+  `slashMenu.renderMeta`, `BlockEditor`'s `slashRenderIcon` and `slashRenderMeta`. In `SlashMenu`,
+  `undefined` from either keeps the built-in icon or Markdown shortcut (it used to draw nothing),
+  and `null` from `renderMeta` shows none. The menu's row and group classes are documented, so a
+  host can put the description beside the title or hide the group lines in its CSS.
+- ec77da1: `editor.batch(fn)` makes every change committed while `fn` runs one undo step, on both
+  engines and with collaboration: Undo restores the document and the selection from before
+  the first change, Redo restores all of them. Events and filters still run per transaction;
+  a nested batch joins the outer one; typing before and after a batch stays a step of its own.
+  `@gotipe/wasm` joins a change marked `metadata.typing: "group"` to the open step of its
+  collaboration history.
+
+  `PageEditor`'s `insertBlock` from the title and the image and file blocks that replace an
+  empty paragraph are one undo step; they used to take two.
+
+- Updated dependencies [2c3dccb]
+- Updated dependencies [9ca2225]
+- Updated dependencies [f67955e]
+- Updated dependencies [f633ccf]
+- Updated dependencies [ec77da1]
+  - @gotipe/core@0.1.3
+  - @gotipe/react@0.1.3
+  - @gotipe/i18n@0.1.3
+  - @gotipe/theme@0.1.3
+  - @gotipe/suggestions@0.1.2
+  - @gotipe/versions@0.1.1
+
 ## 0.1.2
 
 ### Patch Changes
