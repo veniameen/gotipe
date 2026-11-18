@@ -3,6 +3,61 @@ title: Changelog
 description: Release notes of GoTipe, newest first, grouped by package.
 ---
 
+## Unreleased
+
+Typing in a long document is fast, and hosts that embed `PageEditor` get the props and tokens
+they needed. Defaults keep today's look and behavior except where a fix says otherwise.
+
+### Typing in long documents
+
+A key press on a Markdown page of about 7,400 blocks went from about 415 ms to about 30 ms to the
+next frame (Chromium, JS engine). The work of a key press no longer grows with the document: the
+JS engine keeps what it knows of unchanged blocks, the render check reads only changed blocks,
+React redraws only the blocks that changed, and the page writes its draft from kept block
+fingerprints. The Markdown written is the same byte for byte. New for custom views:
+`BlockViewComponent.pure`; for the writer: `serializeMarkdown(doc, snapshot, { fingerprints })`.
+
+### @gotipe/block-editor
+
+- `PageReviewProps.onDeleteComment(id)`: a delete button (trash icon, "Delete comment") at the end
+  of the open comment card's head. `false` keeps the card; a throw is `COMMENT_ACTION_FAILED`.
+- `PageEditor` handle: `flush()` sends a pending draft at once and returns the Markdown;
+  `setMarkdown(text)` replaces the document even with the same text as the last `markdown`.
+- `PageEditor` props: `icon` and `header` (a page head above the title), `slashMenu` (commands,
+  groups and opt-in descriptions of the `/` menu), `reviewLayout` (`auto`, `inline`, `margin`)
+  `narrow` (keep the wide or the host's sizes in a narrow container) and `media`
+  (`{ links, inlineErrors }` for the image and file placeholders). `BlockEditor` gets
+  `slashGroups`, `slashDescriptions`, `narrow` and `media`; `SlashMenu` gets `descriptions`.
+- Fixes: a host `resolveAsset` returning `null` shows the asset as unavailable instead of
+  requesting its raw path; `autoFocus` comes a frame after `onReady`; `insertBlock` from the page
+  title inserts under the title; an image or file placeholder is not written to the file as
+  `![](<>)`; a `review` without `comments` no longer re-renders in a loop.
+
+### @gotipe/theme
+
+- Palette aliases (`--gt-comment-soft`, `--gt-ai-ghost`, ...) follow base colours set on a
+  container; `data-gt-narrow="off"` switches off the narrow container sizes.
+- New tokens: `--gt-check-fill`, `--gt-check-line`, `--gt-card-name-size`,
+  `--gt-card-name-weight`, `--gt-card-button-size`, `--gt-sug-ins-bar`,
+  `--gt-sug-ins-underline` (and `-style`, `-thickness`, `-offset`), `--gt-sug-changed-bar`,
+  `--gt-sug-changed-bar-width`.
+- Fixes: a list after a heading or a paragraph gets the flow gap of the Atlas;
+  `.gotipe-btn-secondary` has its own rule (filled when it is the only button).
+
+### @gotipe/react, @gotipe/vue
+
+- Table columns without a stored width share the text column instead of being 160 px wide.
+- `MediaOptionsContext` and `useMediaOptions` (`@gotipe/react`): hide "By link" or the failure
+  text in the image and file placeholders; failures shown only there are then reported.
+
+### @gotipe/suggestions
+
+- A suggested new list item stands as its own item, pending or stale.
+
+### @gotipe/core
+
+- A host `saveAsset` that throws is reported as `ASSET_SAVE_FAILED`, not as a clipboard error.
+
 ## 0.1.1
 
 Every npm package now has a README on npm, with installation, a short example and links to these
