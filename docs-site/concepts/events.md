@@ -63,7 +63,7 @@ For values derived from the view state, `useEditorState` from `@gotipe/react` or
 | `transaction` | `{ editor, transaction, before, after }` | After a local `dispatch` commits, before `update`. Not for Undo, Redo, `setContent` or remote updates. |
 | `selectionChange` | `{ editor }` | The selection changed: by the user, `setSelection`, a transaction, Undo or `setContent`. |
 | `viewStateChange` | `ViewState` | Anything `getViewState()` returns changed: document, selection, decorations, editability. |
-| `focus`, `blur` | `{ editor }` | The mounted surface gained or lost focus. |
+| `focus`, `blur` | `{ editor }` | The mounted surface gained or lost focus. On `editor.focus(position)` the caret already stands at `position` when `focus` fires, and the `selectionChange` of that move comes after it. |
 | `editableChange` | `boolean` | `setEditable` switched the mode. |
 | `decorationsChange` | `{ layer }` | A decoration layer changed. |
 | `error` | `GoTipeError` | Any reported error; see [host](/docs/concepts/host#errors). |

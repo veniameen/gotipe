@@ -98,7 +98,7 @@ Details of the codec are in [Markdown](/docs/conversion/markdown).
 | `review` | `PageReviewProps` | — | Suggestions, comments and cursors. Without it there is no review layer. |
 | `reviewLayout` | `"auto" \| "inline" \| "margin"` | `"auto"` | Where review cards stand: `auto` — in the margin when the page is wide enough, otherwise by the text; `inline` — always by the text; `margin` — always in the margin column. |
 | `reviewBar` | `{ title?: ReactNode; extra?: ReactNode[] } \| false` | not shown | Pass an object to show the review bar above the page. |
-| `autoFocus` | `boolean` | — | Put the caret at the end once the editor exists. |
+| `autoFocus` | `boolean` | — | Put the caret at the end once the editor exists: after `onReady` and after the effects of the render `onReady` causes, so listeners you add there get `focus` and then `selectionChange`. No frame or timer decides the order. |
 | `onReady` | `(editor: GoTipeEditor) => void` | — | Called once per editor, when it exists. A new function on a later render is not called. |
 | `onError` | `(error: GoTipeError) => void` | — | Every editor error, like `host.onError`, and the failed creation of the editor ([Host](#host)). |
 | `status` | `boolean \| StatusLineOptions` | `false` | Words and characters under the page ([counter line](/docs/extensions/character-count#the-counter-line-of-blockeditor)). The page has `FindReplace` and `CharacterCount`, so `Mod+F` opens the find bar. |

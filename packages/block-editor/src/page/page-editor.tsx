@@ -224,22 +224,30 @@ const PageEditorInner = forwardRef<PageEditorHandle, PageEditorProps>(
       onChangeRef,
       props.undoableReplace ?? true,
     );
-    // `autoFocus` waits a frame: what the host subscribes to in `onReady`, or in the render that
-    // `onReady` causes, sees the first focus and selection.
-    // Under StrictMode the effect runs twice: the second run schedules the focus again.
+    // `autoFocus` comes once the host has had the render `onReady` causes: its state update is
+    // batched with `focusFor`, and the focus waits for every effect of that commit (the host's
+    // subscriptions included). No frame or timer decides it.
+    const [focusFor, setFocusFor] = useState<GoTipeEditor | null>(null);
     useEffect(() => {
-      if (!editor) return;
-      if (readied.current !== editor) {
-        readied.current = editor;
-        onReadyRef.current?.(editor);
-      }
-      if (!initial.current.autoFocus || focused.current === editor) return;
-      const frame = requestAnimationFrame(() => {
-        focused.current = editor;
-        if (!editor.isDestroyed) editor.focus("end");
-      });
-      return () => cancelAnimationFrame(frame);
+      if (!editor || readied.current === editor) return;
+      readied.current = editor;
+      onReadyRef.current?.(editor);
+      if (initial.current.autoFocus) setFocusFor(editor);
     }, [editor]);
+    // Under StrictMode the effect runs twice: the cleanup drops the first run's focus.
+    useEffect(() => {
+      const target = focusFor;
+      if (!target || focused.current === target) return;
+      let live = true;
+      queueMicrotask(() => {
+        if (!live || target.isDestroyed || focused.current === target) return;
+        focused.current = target;
+        target.focus("end");
+      });
+      return () => {
+        live = false;
+      };
+    }, [focusFor]);
 
     useEffect(() => {
       editor?.setEditable(!readOnly);

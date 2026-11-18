@@ -94,3 +94,21 @@ describe.each(ENGINES)("%s autofocus and focus(position) (D-13)", (engine) => {
     expect(caret(editor)).toEqual({ blockId: "p", offset: 0 });
   });
 });
+
+describe.each(ENGINES)("focus(position) on the %s engine: focus first, then the selection", (engine) => {
+  it("the caret stands when `focus` fires and `selectionChange` follows it", async () => {
+    const { editor } = await mounted(engine, [paragraph("a", "one"), paragraph("b", "two")], {});
+    const seen: string[] = [];
+    editor.on("focus", () => {
+      const { anchor } = editor.getViewState().selection;
+      seen.push(`focus ${anchor.blockId}:${anchor.offset}`);
+    });
+    editor.on("selectionChange", () => seen.push("selectionChange"));
+    editor.focus("end");
+    expect(seen).toEqual(["focus b:3", "selectionChange"]);
+    // focused already, the caret moves: only the selection changes
+    seen.length = 0;
+    editor.focus("start");
+    expect(seen).toEqual(["selectionChange"]);
+  });
+});

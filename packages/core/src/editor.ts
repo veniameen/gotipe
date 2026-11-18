@@ -270,8 +270,19 @@ export async function createEditorWithLoader(
       if (!mountedElement) return;
       const caret = focusCaret(this.getViewState().blocks, position, currentSelection.anchor);
       if (!caret) return;
-      if (caret !== currentSelection.anchor) this.setSelection({ anchor: caret, head: caret });
+      // The caret stands before the `focus` event and `selectionChange` comes after it: a
+      // listener of `focus` reads the new selection, one that waits for the next
+      // `selectionChange` gets it.
+      const moved = caret !== currentSelection.anchor;
+      if (moved) {
+        select({ type: "text", anchor: { ...caret }, head: { ...caret } });
+        view.invalidate();
+      }
       mountedElement.focus({ preventScroll: true });
+      if (moved) {
+        this.emit("selectionChange", { editor: this });
+        this.emit("viewStateChange", this.getViewState());
+      }
       restoreDomSelectionImmediately?.();
       scheduleDomSelectionRestore?.();
     },
