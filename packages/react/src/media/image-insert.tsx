@@ -1,16 +1,28 @@
-import type { GoTipeEditor, ImageSource, ImageSourceItem } from "@gotipe/core";
+import {
+  type GoTipeEditor,
+  GoTipeError,
+  type ImageSource,
+  type ImageSourceItem,
+} from "@gotipe/core";
 import type React from "react";
 import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { useGoTipeI18n } from "../i18n-context";
+import { useMediaOptions } from "../media-options";
 import { useFloatingPosition } from "../use-floating-position";
 import { MediaGlyph, PlaceholderImageIcon } from "./icons";
 import { normalizeHttpUrl } from "./links";
 
 function Catalog({
+  editor,
   source,
   onSource,
-}: { source: ImageSource; onSource: (src: string, alt: string) => void }) {
+}: {
+  editor: GoTipeEditor;
+  source: ImageSource;
+  onSource: (src: string, alt: string) => void;
+}) {
   const i18n = useGoTipeI18n();
+  const { inlineErrors } = useMediaOptions();
   const [query, setQuery] = useState("");
   const [items, setItems] = useState<ImageSourceItem[]>([]);
   const [status, setStatus] = useState<"idle" | "loading" | "ready" | "error">("idle");
@@ -29,8 +41,14 @@ function Catalog({
       setStatus("ready");
     } catch (cause) {
       if (controller.signal.aborted) return;
-      setError(cause instanceof Error ? cause.message : i18n.t("media.searchFailed"));
+      const message = cause instanceof Error ? cause.message : i18n.t("media.searchFailed");
+      setError(message);
       setStatus("error");
+      // the panel says it itself; without that text the host is told instead
+      if (!inlineErrors)
+        editor.reportError(
+          new GoTipeError("ASSET_RESOLVE_FAILED", message, { source: source.id, query, cause }),
+        );
     }
   }
   return (
@@ -54,7 +72,7 @@ function Catalog({
         </button>
       </form>
       {status === "loading" && <p role="status">{i18n.t("media.searching")}</p>}
-      {status === "error" && (
+      {status === "error" && inlineErrors && (
         <p role="alert" className="gotipe-media-insert-error">
           {error}
         </p>
@@ -91,6 +109,7 @@ const hold = (event: React.MouseEvent) => {
  * Atlas frame 10, the empty block: the image glyph, what the block offers, and its two answers on
  * the block itself — upload (the main one) and a link, which opens the address field (and the
  * host's image catalogs, when there are any). A file can also be dropped on the block.
+ * With `links: false` (`MediaOptions`) the second button opens only the catalogs, if any.
  */
 export function ImageInsert({
   editor,
@@ -108,6 +127,7 @@ export function ImageInsert({
   onPick: () => void;
 }) {
   const i18n = useGoTipeI18n();
+  const { links, inlineErrors } = useMediaOptions();
   const errorId = useId();
   const [open, setOpen] = useState(false);
   const [tab, setTab] = useState("link");
@@ -125,6 +145,9 @@ export function ImageInsert({
     (source) => source.id !== "upload" && source.id !== "link",
   );
   const source = sources.find((item) => item.id === tab);
+  const tabs = links ? [{ id: "link", label: i18n.t("media.link") }, ...sources] : sources;
+  // without links the button names the catalogs: the only one by its label
+  const browseLabel = sources.length === 1 ? sources[0]?.label : i18n.t("media.imageSource");
   useEffect(() => {
     if (!open) return;
     const close = (event: PointerEvent) => {
@@ -175,23 +198,25 @@ export function ImageInsert({
             <MediaGlyph kind="upload" />
             {i18n.t(uploading ? "media.uploading" : "media.upload")}
           </button>
-          <button
-            type="button"
-            ref={linkButton}
-            className="gotipe-media-button"
-            aria-label={i18n.t("media.addImageByLink")}
-            aria-expanded={open}
-            disabled={readOnly}
-            onMouseDown={hold}
-            onClick={() => {
-              setOpen((value) => !value);
-              setTab("link");
-              setError("");
-            }}
-          >
-            <MediaGlyph kind="link" />
-            {i18n.t("media.byLink")}
-          </button>
+          {tabs.length > 0 && (
+            <button
+              type="button"
+              ref={linkButton}
+              className="gotipe-media-button"
+              aria-label={links ? i18n.t("media.addImageByLink") : browseLabel}
+              aria-expanded={open}
+              disabled={readOnly}
+              onMouseDown={hold}
+              onClick={() => {
+                setOpen((value) => !value);
+                setTab(tabs[0]?.id ?? "link");
+                setError("");
+              }}
+            >
+              {links && <MediaGlyph kind="link" />}
+              {links ? i18n.t("media.byLink") : browseLabel}
+            </button>
+          )}
         </span>
       </div>
       {open && !readOnly && (
@@ -213,13 +238,13 @@ export function ImageInsert({
             overflow: "auto",
           }}
         >
-          {sources.length > 0 && (
+          {tabs.length > 1 && (
             <div
               className="gotipe-media-insert-tabs"
               role="tablist"
               aria-label={i18n.t("media.imageSourceTabs")}
             >
-              {[{ id: "link", label: i18n.t("media.link") }, ...sources].map((item) => (
+              {tabs.map((item) => (
                 <button
                   type="button"
                   key={item.id}
@@ -237,7 +262,7 @@ export function ImageInsert({
             </div>
           )}
           <div className="gotipe-media-insert-content">
-            {tab === "link" && (
+            {links && tab === "link" && (
               <form
                 noValidate
                 className="gotipe-media-link-form"
@@ -245,7 +270,12 @@ export function ImageInsert({
                   event.preventDefault();
                   const normalized = normalizeHttpUrl(link);
                   if (!normalized) {
-                    setError(i18n.t("media.invalidImageUrl"));
+                    const message = i18n.t("media.invalidImageUrl");
+                    setError(message);
+                    if (!inlineErrors)
+                      editor.reportError(
+                        new GoTipeError("LINK_BLOCKED", message, { url: link, kind: "image" }),
+                      );
                     address.current?.focus();
                     return;
                   }
@@ -257,8 +287,8 @@ export function ImageInsert({
                   type="url"
                   aria-label={i18n.t("media.imageUrl")}
                   aria-invalid={error ? true : undefined}
-                  aria-errormessage={error ? errorId : undefined}
-                  title={error || undefined}
+                  aria-errormessage={error && inlineErrors ? errorId : undefined}
+                  title={(inlineErrors && error) || undefined}
                   placeholder="https://example.com/image.png"
                   value={link}
                   onChange={(event) => {
@@ -269,9 +299,11 @@ export function ImageInsert({
                 <button type="submit">{i18n.t("media.insert")}</button>
               </form>
             )}
-            {source && <Catalog key={source.id} source={source} onSource={onSource} />}
+            {source && (
+              <Catalog key={source.id} editor={editor} source={source} onSource={onSource} />
+            )}
             {/* A wrong address marks the field; the reason is its tooltip and is read aloud. */}
-            {error && tab === "link" && (
+            {error && inlineErrors && tab === "link" && (
               <p id={errorId} role="alert" className="gotipe-sr-only">
                 {error}
               </p>

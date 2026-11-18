@@ -566,7 +566,7 @@ function BlockEditorView({
 }
 
 export const BlockEditor = (props: BlockEditorProps) => (
-  <EditorProviders mentions={props.mentions} emoji={props.emoji}>
+  <EditorProviders mentions={props.mentions} emoji={props.emoji} media={props.media}>
     <BlockEditorView {...props} />
   </EditorProviders>
 );

@@ -306,6 +306,24 @@ describe("PageEditor placeholders", () => {
   });
 });
 
+describe("PageEditor media options", () => {
+  it("passes media to the placeholders: no “By link” with links: false", async () => {
+    const byLink = () =>
+      [...container.querySelectorAll("button")].filter((button) =>
+        /link/i.test(button.textContent ?? ""),
+      );
+    const { ref } = await mount({ markdown: "# Notes\n" });
+    act(() => ref.current!.insertBlock("image"));
+    expect(byLink().length).toBeGreaterThan(0);
+    act(() => root.unmount());
+    root = createRoot(container);
+    const next = await mount({ markdown: "# Notes\n", media: { links: false } });
+    act(() => next.ref.current!.insertBlock("image"));
+    expect(container.querySelector(".gotipe-media-placeholder")).not.toBeNull();
+    expect(byLink()).toEqual([]);
+  });
+});
+
 describe("PageEditor slash menu", () => {
   const openSlash = async (editor: GoTipeEditor) => {
     await act(async () => {

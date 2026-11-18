@@ -2,6 +2,7 @@ import { type BlockView, type GoTipeEditor, GoTipeError } from "@gotipe/core";
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useGoTipeI18n } from "../i18n-context";
+import { useMediaOptions } from "../media-options";
 import { useAssetUpload } from "./use-asset-upload";
 
 interface Crop {
@@ -71,6 +72,7 @@ export function ImageDialog({
   onClose: () => void;
 }) {
   const i18n = useGoTipeI18n();
+  const { inlineErrors } = useMediaOptions();
   const dialog = useRef<HTMLDialogElement>(null);
   const active = useRef(true);
   const originalSource = useRef(String(block.attrs.src ?? ""));
@@ -119,7 +121,7 @@ export function ImageDialog({
     } catch (cause) {
       if (!active.current || editor.isDestroyed) return;
       const message = cause instanceof Error ? cause.message : i18n.t("media.cropFailed");
-      setError(i18n.t("media.cropCors", { message }));
+      if (inlineErrors) setError(i18n.t("media.cropCors", { message }));
       editor.reportError(new GoTipeError("ASSET_SAVE_FAILED", message));
     } finally {
       if (active.current) setProcessing(false);

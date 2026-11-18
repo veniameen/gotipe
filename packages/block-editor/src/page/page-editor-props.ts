@@ -1,6 +1,6 @@
 import type { EditorHost, GoTipeEditor, SlashCommandDef } from "@gotipe/core";
 import type { I18n } from "@gotipe/i18n";
-import type { BlockViews } from "@gotipe/react";
+import type { BlockViews, MediaOptions } from "@gotipe/react";
 import type { ThemePreset } from "@gotipe/theme";
 import type React from "react";
 import type { BlockEditorProps } from "../components/block-editor-props";
@@ -112,6 +112,11 @@ export interface PageEditorProps {
   blocks?: PageBlockKind[];
   /** The host's commands, groups and order of the “/” menu. */
   slashMenu?: PageSlashMenu;
+  /**
+   * The image and file placeholders: `links: false` hides “By link”, `inlineErrors: false` shows
+   * no failure text in the block (the error still reaches `onError`). Both default to true.
+   */
+  media?: MediaOptions;
   autoFocus?: boolean;
   className?: string;
   style?: React.CSSProperties;

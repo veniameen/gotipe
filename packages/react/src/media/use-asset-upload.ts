@@ -2,6 +2,7 @@ import { type BlockView, type GoTipeEditor, GoTipeError } from "@gotipe/core";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { saveAssetWithHost } from "../host-assets";
 import { useGoTipeI18n } from "../i18n-context";
+import { useMediaOptions } from "../media-options";
 
 function find(blocks: BlockView[], id: string): BlockView | undefined {
   for (const block of blocks) {
@@ -11,7 +12,10 @@ function find(blocks: BlockView[], id: string): BlockView | undefined {
   }
 }
 
-/** A late upload cannot recreate a deleted block or replace a newer chosen source. */
+/**
+ * A late upload cannot recreate a deleted block or replace a newer chosen source. Every failure
+ * reaches `host.onError`; `error` is its text for the block, `null` with `inlineErrors: false`.
+ */
 export function useAssetUpload(
   editor: GoTipeEditor,
   blockId: string,
@@ -19,6 +23,7 @@ export function useAssetUpload(
   apply: (saved: { src: string; name: string }, file: File) => void,
 ) {
   const i18n = useGoTipeI18n();
+  const { inlineErrors } = useMediaOptions();
   const request = useRef(0);
   const mounted = useRef(false);
   const [pending, setPending] = useState(false);
@@ -38,7 +43,10 @@ export function useAssetUpload(
       const sourceKey = kind === "image" ? "src" : "url";
       const previousSource = before.attrs[sourceKey];
       if (expectedSource !== undefined && previousSource !== expectedSource) {
-        setError(i18n.t("media.sourceChanged"));
+        const message = i18n.t("media.sourceChanged");
+        // the block says it itself; without that text the host is told instead
+        if (inlineErrors) setError(message);
+        else editor.reportError(new GoTipeError("ASSET_SAVE_FAILED", message, { kind, blockId }));
         return;
       }
       const generation = ++request.current;
@@ -56,7 +64,8 @@ export function useAssetUpload(
         const current = find(editor.getViewState().blocks, blockId);
         if (!current || current.attrs[sourceKey] !== previousSource) return;
         if (saved) apply(saved, file);
-        else setError(i18n.t("media.uploadFailed"));
+        // `saveAssetWithHost` has reported the failure already
+        else if (inlineErrors) setError(i18n.t("media.uploadFailed"));
       } catch (error) {
         if (mounted.current && generation === request.current && !editor.isDestroyed) {
           const failure =
@@ -66,14 +75,14 @@ export function useAssetUpload(
                   "ASSET_SAVE_FAILED",
                   error instanceof Error ? error.message : i18n.t("media.insertFailed"),
                 );
-          setError(failure.message);
+          if (inlineErrors) setError(failure.message);
           editor.reportError(failure);
         }
       } finally {
         if (mounted.current && generation === request.current) setPending(false);
       }
     },
-    [editor, blockId, kind, apply, i18n],
+    [editor, blockId, kind, apply, i18n, inlineErrors],
   );
   return { upload, pending, error };
 }
