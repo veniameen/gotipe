@@ -210,7 +210,9 @@
 }
 
 /* ---- lists: a dot, then a ring one level down; numbers are quiet ---- */
-.gotipe-content :where(ul, ol) {
+/* the browser's list margins go; weightless, so the flow above sets a list's top margin, after a
+   heading too (Atlas frame 1: an h2 and an h3 lead into lists) */
+:where(.gotipe-content ul, .gotipe-content ol) {
   margin: 0;
 }
 .gotipe-content ul:not(.gotipe-todo-list) {
