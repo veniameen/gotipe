@@ -150,6 +150,7 @@ export function CommentCard({
   place,
   compact = false,
   onReply,
+  onDelete,
   labels,
 }: {
   comment: ReviewComment;
@@ -158,13 +159,33 @@ export function CommentCard({
   /** In the margin, a card that is not open shows only who and what. */
   compact?: boolean;
   onReply: (text: string) => Promise<boolean>;
-  labels: { reply: string; send: string; waiting: string; region: string; you: string };
+  /** Deletes the comment; without it the card has no delete button. */
+  onDelete?: () => Promise<boolean>;
+  labels: {
+    reply: string;
+    send: string;
+    waiting: string;
+    region: string;
+    you: string;
+    delete: string;
+  };
 }) {
   const position = useCardPosition(place);
   const [draft, setDraft] = useState("");
   const [pending, setPending] = useState(false);
   const [failed, setFailed] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const replies = comment.replies ?? [];
+  const remove = async () => {
+    if (!onDelete || deleting) return;
+    setDeleting(true);
+    try {
+      await onDelete();
+    } finally {
+      // the host drops a deleted comment from `comments`; a refused one keeps its card
+      setDeleting(false);
+    }
+  };
   const submit = async () => {
     const text = draft.trim();
     if (!text || pending) return;
@@ -189,6 +210,18 @@ export function CommentCard({
         <LaneAvatar lane={lane} />
         <b>{lane?.name ?? comment.laneId}</b>
         {comment.question && replies.length === 0 ? <span>{labels.waiting}</span> : null}
+        {onDelete && !compact ? (
+          <button
+            type="button"
+            className="gotipe-review-icon-btn gotipe-review-card-delete"
+            aria-label={labels.delete}
+            title={labels.delete}
+            disabled={deleting}
+            onClick={() => void remove()}
+          >
+            <PageIcon name="trash" />
+          </button>
+        ) : null}
       </div>
       <div className="gotipe-review-card-text">{comment.text}</div>
       {(compact ? [] : replies).map((r) => (

@@ -85,6 +85,7 @@ export const blockEditorEn: BlockEditorLocale = {
   "review.staleCount.many": "{count} stale",
   "review.suggestion": "Suggestion",
   "review.comment": "Comment",
+  "review.deleteComment": "Delete comment",
   "editor.color": "Color",
   "editor.textColor": "Text color",
   "editor.more": "More",

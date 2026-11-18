@@ -40,6 +40,12 @@ export interface PageReviewProps {
   /** Default: `onReject` for every proposal. */
   onRejectAll?: () => Promise<void> | void;
   onReply?: (commentId: string, text: string) => Promise<ReviewResult> | ReviewResult;
+  /**
+   * Delete a comment: with it the open comment card has a delete button. Ask for confirmation
+   * here if needed; return `false` to keep the card. A throw is reported as
+   * `COMMENT_ACTION_FAILED`. After success remove the comment from `comments`.
+   */
+  onDeleteComment?: ReviewAction;
   /** Binding results: which proposals are stale, where they are. */
   onStatesChange?: (states: { proposals: ProposalState[]; comments: CommentState[] }) => void;
 }
@@ -351,6 +357,18 @@ export function ReviewLayer({
     [review, report],
   );
 
+  const removeComment = useCallback(
+    async (id: string): Promise<boolean> => {
+      try {
+        return (await review.onDeleteComment?.(id)) !== false;
+      } catch (e) {
+        report(e, "COMMENT_ACTION_FAILED");
+        return false;
+      }
+    },
+    [review, report],
+  );
+
   const statesRef = useRef(states);
   statesRef.current = states;
   useEffect(() => {
@@ -409,6 +427,7 @@ export function ReviewLayer({
     waiting: i18n.t("review.waitingReply"),
     region: i18n.t("review.comment"),
     you: i18n.t("review.you"),
+    delete: i18n.t("review.deleteComment"),
   };
   const proposalCard = (proposal: ReviewProposal, place: CardPlace, compact = false) => (
     <ProposalCard
@@ -447,6 +466,15 @@ export function ReviewLayer({
           return false;
         }
       }}
+      onDelete={
+        review.onDeleteComment
+          ? async () => {
+              const ok = await removeComment(comment.id);
+              if (ok) setActiveId((id) => (id === comment.id ? null : id));
+              return ok;
+            }
+          : undefined
+      }
       labels={commentLabels}
     />
   );
