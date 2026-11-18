@@ -5,28 +5,43 @@
 
 /* ---- proposals in the text ---- */
 /* an insertion: a bar flush with the bottom of its tint (--gt-sug-ins-bar), or, when a host asks
-   for one, a text underline (--gt-sug-ins-underline: underline) */
+   for one, a text underline (--gt-sug-ins-underline: underline); the line takes
+   --gt-sug-ins-line-mix of the lane's colour */
 .gotipe-sug-ins {
   border-radius: var(--gt-radius-inline);
   background: color-mix(in srgb, var(--gt-track, var(--gt-add)) var(--gt-track-tint), transparent);
-  box-shadow: inset 0 calc(-1 * var(--gt-sug-ins-bar)) 0 var(--gt-track, var(--gt-add));
+  box-shadow: inset 0 calc(-1 * var(--gt-sug-ins-bar)) 0
+    color-mix(in srgb, var(--gt-track, var(--gt-add)) var(--gt-sug-ins-line-mix), transparent);
   text-decoration-line: var(--gt-sug-ins-underline);
   text-decoration-style: var(--gt-sug-ins-underline-style);
-  text-decoration-color: var(--gt-track, var(--gt-add));
+  text-decoration-color: color-mix(
+    in srgb,
+    var(--gt-track, var(--gt-add)) var(--gt-sug-ins-line-mix),
+    transparent
+  );
   text-decoration-thickness: var(--gt-sug-ins-underline-thickness);
   text-underline-offset: var(--gt-sug-ins-underline-offset);
   user-select: none;
   cursor: pointer;
 }
-/* a whole new block: a quiet tint, its text underlined in the lane's colour */
+/* a whole new block: a quiet tint (--gt-sug-block-ins-tint of the lane's colour), its text
+   underlined in the lane's colour */
 .gotipe-sug-block-ins:is(p, li, h1, h2, h3, h4, h5, h6, blockquote),
 .gotipe-sug-block-ins
   :is(p, li, h1, h2, h3, td, th, blockquote, .gotipe-callout-content, .gotipe-todo-item-content) {
   border-radius: var(--gt-radius-inline);
-  background: color-mix(in srgb, var(--gt-track, var(--gt-add)) var(--gt-track-tint), transparent);
-  text-decoration: underline;
-  text-decoration-color: var(--gt-track, var(--gt-add));
-  text-decoration-thickness: var(--gt-underline);
+  background: color-mix(
+    in srgb,
+    var(--gt-track, var(--gt-add)) var(--gt-sug-block-ins-tint, var(--gt-track-tint)),
+    transparent
+  );
+  text-decoration: var(--gt-sug-block-ins-underline);
+  text-decoration-color: color-mix(
+    in srgb,
+    var(--gt-track, var(--gt-add)) var(--gt-sug-ins-line-mix),
+    transparent
+  );
+  text-decoration-thickness: var(--gt-sug-block-ins-underline-thickness);
   text-underline-offset: var(--gt-underline-offset);
   cursor: pointer;
 }
@@ -35,9 +50,10 @@
 .gotipe-sug-block-ins.gotipe-sug-stale
   :is(p, li, h1, h2, h3, td, th, blockquote, .gotipe-callout-content, .gotipe-todo-item-content) {
   background: transparent;
-  color: var(--gt-text-2);
-  text-decoration: underline dashed var(--gt-line-control);
-  text-decoration-thickness: var(--gt-underline);
+  color: var(--gt-sug-stale-color, var(--gt-text-2));
+  text-decoration: underline var(--gt-sug-stale-underline-style)
+    var(--gt-sug-stale-line, var(--gt-line-control));
+  text-decoration-thickness: var(--gt-sug-stale-underline-thickness);
 }
 .gotipe-sug-del,
 .gotipe-sug-block-del {
@@ -48,9 +64,10 @@
   cursor: pointer;
 }
 .gotipe-sug-stale {
-  color: var(--gt-text-2);
-  text-decoration: underline dashed var(--gt-line-control);
-  text-decoration-thickness: var(--gt-underline);
+  color: var(--gt-sug-stale-color, var(--gt-text-2));
+  text-decoration: underline var(--gt-sug-stale-underline-style)
+    var(--gt-sug-stale-line, var(--gt-line-control));
+  text-decoration-thickness: var(--gt-sug-stale-underline-thickness);
   text-underline-offset: var(--gt-underline-offset);
   user-select: none;
   cursor: pointer;
@@ -62,6 +79,13 @@
     transparent
   );
 }
+/* a stale proposal whose card is open: the same tint unless a host sets its own fill */
+.gotipe-sug.is-active.gotipe-sug-stale {
+  background: var(
+    --gt-sug-stale-active-fill,
+    color-mix(in srgb, var(--gt-track, var(--gt-add)) var(--gt-track-tint-active), transparent)
+  );
+}
 /* a changed block: a bar at its left edge; --gt-sug-changed-bar is unset, so the lane's colour */
 .gotipe-sug-block-changed {
   box-shadow: inset var(--gt-sug-changed-bar-width) 0 0
@@ -71,7 +95,7 @@ li.gotipe-sug-block-ins > input[type="checkbox"] {
   border-color: var(--gt-track, var(--gt-add));
 }
 li.gotipe-sug-block-ins.gotipe-sug-stale > input[type="checkbox"] {
-  border-color: var(--gt-line-control);
+  border-color: var(--gt-sug-stale-check-line, var(--gt-line-control));
 }
 
 /* ---- comments on the text ---- */

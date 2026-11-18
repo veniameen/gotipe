@@ -1,5 +1,5 @@
-/* Table — Atlas frames 1, 5 and 9: rules between rows, no frame and no columns drawn; the head is
-   quiet. A wide table scrolls inside .gotipe-table-scroll and the edge with hidden columns fades.
+/* Table — Atlas frames 1, 5 and 9: rules between rows, no frame and no columns drawn (a host
+   draws them with --gt-table-col-rule and --gt-table-frame); the head is quiet. A wide table scrolls inside .gotipe-table-scroll and the edge with hidden columns fades.
    The bars that add a column (right of the table) and a row (under it) live outside the scrolling
    area, so a scrollbar never covers them. Shared by BlockEditor and PageEditor. */
 
@@ -39,6 +39,7 @@
   table-layout: fixed;
   width: max-content;
   min-width: 100%;
+  border: var(--gt-table-frame) solid var(--gt-table-line, var(--gt-line));
   border-collapse: collapse;
   font-size: var(--gt-table-size);
   line-height: var(--gt-table-leading);
@@ -47,19 +48,32 @@
   position: relative;
   padding: var(--gt-cell-pad);
   border: 0;
-  border-bottom: var(--gt-hairline) solid var(--gt-line);
+  border-bottom: var(--gt-table-row-rule) solid var(--gt-table-line, var(--gt-line));
+  border-left: var(--gt-table-col-rule) solid var(--gt-table-line, var(--gt-line));
   background: transparent;
   color: var(--gt-text);
   text-align: left;
   vertical-align: top;
   overflow-wrap: anywhere;
 }
+.gotipe-table-wrapper :where(td) {
+  height: var(--gt-table-row-height);
+}
+.gotipe-table-wrapper :where(th) {
+  background: var(--gt-table-head-fill, transparent);
+}
+/* a cell at the table's left edge draws no column line: the frame stands there */
+.gotipe-table-wrapper :where(tr:not(.is-continued) > :first-child) {
+  border-left-width: 0;
+}
 /* The editor gives every column a <col>: a stored width is kept as stored, so a table of stored
    widths is as wide as their sum (at least the text column) and scrolls in its own box past it.
    A column without a stored width has a bare <col> and the table is .gotipe-table-shared: such
    columns share what the stored ones leave of the text column, none narrower than a cell's
-   minimum (--gt-table-fixed is the stored widths' sum, --gt-table-shared the shared count). */
+   minimum (--gt-table-fixed is the stored widths' sum, --gt-table-shared the shared count).
+   --gt-table-shared-layout: auto sizes the shared columns by their content instead. */
 .gotipe-table-wrapper table.gotipe-table-shared {
+  table-layout: var(--gt-table-shared-layout);
   width: 100%;
   min-width: calc(var(--gt-table-fixed) + var(--gt-table-shared) * var(--gt-cell-min));
 }
@@ -79,24 +93,32 @@
 }
 .gotipe-table-wrapper th {
   padding: var(--gt-head-cell-pad);
-  border-bottom-color: var(--gt-line-strong);
-  color: var(--gt-text-2);
-  font-size: var(--gt-small-size);
-  font-weight: var(--gt-weight-medium);
-  line-height: var(--gt-small-leading);
+  border-bottom-color: var(--gt-table-head-line, var(--gt-line-strong));
+  color: var(--gt-table-head-color, var(--gt-text-2));
+  font-size: var(--gt-table-head-size);
+  font-weight: var(--gt-table-head-weight);
+  line-height: var(--gt-table-head-leading);
   letter-spacing: normal;
 }
 /* the first column starts with the text column; when the page margin is narrower than the row
    handle (a phone without the handle's rail), the first cell of a table with row handles gives
    it the rest (D-263) */
 .gotipe-table-wrapper tr > :where(th, td):first-child {
-  padding-left: 0;
+  padding-left: var(--gt-cell-first-pad);
 }
 .gotipe-table-wrapper:has(.gotipe-row-handle) tr > :where(th, td):first-child {
-  padding-left: calc(var(--gt-row-handle-full) - var(--gt-row-handle-room));
+  padding-left: max(var(--gt-cell-first-pad), var(--gt-row-handle-full) - var(--gt-row-handle-room));
 }
-.gotipe-table-wrapper tbody > tr:last-child > td {
+/* the last row draws no rule under the table; as heavy as the cell rule, so a host's own rule on
+   the cells wins over it */
+.gotipe-table-wrapper :where(tbody > tr:last-child > td) {
   border-bottom: 0;
+}
+/* inline code in a cell: its size and plate (by default as in the text) */
+.gotipe-table-wrapper :is(th, td) code:not(pre > code) {
+  padding: var(--gt-table-code-pad);
+  background: var(--gt-table-code-fill, var(--gt-fill-2));
+  font-size: var(--gt-table-code-size);
 }
 .gotipe-table-cell-selected {
   background: var(--gt-selection);

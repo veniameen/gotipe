@@ -29,7 +29,13 @@ function declarations(css: string, selector: string): Record<string, string> {
 
 describe("host colours on a container reach the derived tokens", () => {
   const palette = read("tokens/palette.css");
-  const sheets = ["base.css", "theme/review.css", "theme/panels.css", "theme/media.css"].map(read);
+  const sheets = [
+    "base.css",
+    "theme/review.css",
+    "theme/panels.css",
+    "theme/media.css",
+    "theme/tables.css",
+  ].map(read);
   const derived: Record<string, string> = {
     "--gt-comment-soft": "var(--gt-comment-tint)",
     "--gt-ai-ghost": "var(--gt-text-3)",
@@ -38,6 +44,15 @@ describe("host colours on a container reach the derived tokens", () => {
     "--gt-caption-color": "var(--gt-text-2)",
     "--gt-image-ring-color": "var(--gt-line)",
     "--gt-image-empty-bg": "var(--gt-sunken)",
+    "--gt-table-line": "var(--gt-line)",
+    "--gt-table-head-line": "var(--gt-line-strong)",
+    "--gt-table-head-color": "var(--gt-text-2)",
+    "--gt-table-head-fill": "transparent",
+    "--gt-table-code-fill": "var(--gt-fill-2)",
+    "--gt-sug-block-ins-tint": "var(--gt-track-tint)",
+    "--gt-sug-stale-color": "var(--gt-text-2)",
+    "--gt-sug-stale-line": "var(--gt-line-control)",
+    "--gt-sug-stale-check-line": "var(--gt-line-control)",
   };
   it("leaves a derived token unset: its rule falls back to the base at the element", () => {
     for (const [name, base] of Object.entries(derived)) {
@@ -114,12 +129,43 @@ describe("review parts have tokens with today's values", () => {
   });
   it("keeps the insertion's flush 2 px bar by default and offers an underline", () => {
     const insert = declarations(review, ".gotipe-sug-ins");
-    expect(insert["box-shadow"]).toBe(
-      "inset 0 calc(-1 * var(--gt-sug-ins-bar)) 0 var(--gt-track, var(--gt-add))",
-    );
+    const line =
+      "color-mix(in srgb, var(--gt-track, var(--gt-add)) var(--gt-sug-ins-line-mix), transparent)";
+    expect(insert["box-shadow"]).toBe(`inset 0 calc(-1 * var(--gt-sug-ins-bar)) 0\n    ${line}`);
     expect(insert["text-decoration-line"]).toBe("var(--gt-sug-ins-underline)");
     expect(tokens.view["--gt-sug-ins-bar"]).toBe("var(--gt-rule)");
     expect(tokens.view["--gt-sug-ins-underline"]).toBe("none");
+    // all of the lane's colour by default: the line is the lane's colour, as before
+    expect(tokens.view["--gt-sug-ins-line-mix"]).toBe("100%");
+  });
+  it("draws a new block's fill and underline by tokens, today's by default", () => {
+    const block = review.slice(review.indexOf("/* a whole new block"));
+    const rule = block.slice(0, block.indexOf("}"));
+    expect(rule).toContain("var(--gt-sug-block-ins-tint, var(--gt-track-tint))");
+    expect(rule).toContain("text-decoration: var(--gt-sug-block-ins-underline);");
+    expect(rule).toContain("var(--gt-sug-ins-line-mix)");
+    expect(rule).toContain(
+      "text-decoration-thickness: var(--gt-sug-block-ins-underline-thickness);",
+    );
+    expect(tokens.view["--gt-sug-block-ins-underline"]).toBe("underline");
+    expect(tokens.view["--gt-sug-block-ins-underline-thickness"]).toBe("var(--gt-underline)");
+  });
+  it("draws a stale proposal by tokens: today's quiet text and dashed line by default", () => {
+    const stale = declarations(review, ".gotipe-sug-stale");
+    expect(stale.color).toBe("var(--gt-sug-stale-color, var(--gt-text-2))");
+    expect(stale["text-decoration"]).toBe(
+      "underline var(--gt-sug-stale-underline-style)\n    var(--gt-sug-stale-line, var(--gt-line-control))",
+    );
+    expect(stale["text-decoration-thickness"]).toBe("var(--gt-sug-stale-underline-thickness)");
+    expect(tokens.view["--gt-sug-stale-underline-style"]).toBe("dashed");
+    expect(tokens.view["--gt-sug-stale-underline-thickness"]).toBe("var(--gt-underline)");
+    // its card open: the active tint unless a host sets its own fill
+    expect(declarations(review, ".gotipe-sug.is-active.gotipe-sug-stale").background).toBe(
+      "var(\n    --gt-sug-stale-active-fill,\n    color-mix(in srgb, var(--gt-track, var(--gt-add)) var(--gt-track-tint-active), transparent)\n  )",
+    );
+    expect(
+      declarations(review, 'li.gotipe-sug-block-ins.gotipe-sug-stale > input[type="checkbox"]'),
+    ).toEqual({ "border-color": "var(--gt-sug-stale-check-line, var(--gt-line-control))" });
   });
   it("draws a changed block's bar by tokens, the lane's colour unless a host sets one", () => {
     expect(declarations(review, ".gotipe-sug-block-changed")["box-shadow"]).toBe(
@@ -165,5 +211,115 @@ describe("page head and slash descriptions", () => {
       "text-overflow": "ellipsis",
       "white-space": "nowrap",
     });
+  });
+});
+
+describe("tables have tokens for their grid, head, first column and code, today's by default", () => {
+  const tables = read("theme/tables.css");
+  const cells = read("theme/table-cells.css");
+  it("draws row lines, column lines and a frame by tokens; no columns and no frame by default", () => {
+    expect(declarations(tables, ".gotipe-table-wrapper :where(th, td)")).toMatchObject({
+      "border-bottom": "var(--gt-table-row-rule) solid var(--gt-table-line, var(--gt-line))",
+      "border-left": "var(--gt-table-col-rule) solid var(--gt-table-line, var(--gt-line))",
+    });
+    expect(declarations(tables, ".gotipe-table-wrapper table").border).toBe(
+      "var(--gt-table-frame) solid var(--gt-table-line, var(--gt-line))",
+    );
+    expect(
+      declarations(tables, ".gotipe-table-wrapper :where(tr:not(.is-continued) > :first-child)"),
+    ).toEqual({ "border-left-width": "0" });
+    expect(tokens.view["--gt-table-row-rule"]).toBe("var(--gt-hairline)");
+    expect(tokens.view["--gt-table-col-rule"]).toBe("0px");
+    expect(tokens.view["--gt-table-frame"]).toBe("0px");
+  });
+  it("weighs the last row's reset as the cell rule, so a host's rule on the cells wins", () => {
+    expect(tables).not.toContain("tbody > tr:last-child > td {");
+    expect(
+      declarations(tables, ".gotipe-table-wrapper :where(tbody > tr:last-child > td)"),
+    ).toEqual({ "border-bottom": "0" });
+    expect(
+      declarations(cells, ".gotipe-table-wrapper :where(tbody > tr > td[data-last-row])"),
+    ).toEqual({ "border-bottom": "0" });
+  });
+  it("styles header cells by tokens", () => {
+    expect(declarations(tables, ".gotipe-table-wrapper th")).toMatchObject({
+      "border-bottom-color": "var(--gt-table-head-line, var(--gt-line-strong))",
+      color: "var(--gt-table-head-color, var(--gt-text-2))",
+      "font-size": "var(--gt-table-head-size)",
+      "font-weight": "var(--gt-table-head-weight)",
+      "line-height": "var(--gt-table-head-leading)",
+    });
+    expect(declarations(tables, ".gotipe-table-wrapper :where(th)")).toEqual({
+      background: "var(--gt-table-head-fill, transparent)",
+    });
+    expect(tokens.view["--gt-table-head-size"]).toBe("var(--gt-small-size)");
+    expect(tokens.view["--gt-table-head-leading"]).toBe("var(--gt-small-leading)");
+    expect(tokens.view["--gt-table-head-weight"]).toBe("var(--gt-weight-medium)");
+  });
+  it("pads the first column and sizes rows by tokens", () => {
+    expect(
+      declarations(tables, ".gotipe-table-wrapper tr > :where(th, td):first-child")["padding-left"],
+    ).toBe("var(--gt-cell-first-pad)");
+    expect(
+      declarations(
+        tables,
+        ".gotipe-table-wrapper:has(.gotipe-row-handle) tr > :where(th, td):first-child",
+      )["padding-left"],
+    ).toBe("max(var(--gt-cell-first-pad), var(--gt-row-handle-full) - var(--gt-row-handle-room))");
+    expect(declarations(tables, ".gotipe-table-wrapper :where(td)")).toEqual({
+      height: "var(--gt-table-row-height)",
+    });
+    expect(tokens.view["--gt-cell-first-pad"]).toBe("0px");
+    expect(tokens.view["--gt-table-row-height"]).toBe("auto");
+  });
+  it("lays shared columns out as the token says, fixed by default", () => {
+    expect(
+      declarations(tables, ".gotipe-table-wrapper table.gotipe-table-shared")["table-layout"],
+    ).toBe("var(--gt-table-shared-layout)");
+    expect(tokens.view["--gt-table-shared-layout"]).toBe("fixed");
+  });
+  it("sizes inline code in a cell and its plate by tokens, as in the text by default", () => {
+    expect(declarations(tables, ".gotipe-table-wrapper :is(th, td) code:not(pre > code)")).toEqual({
+      padding: "var(--gt-table-code-pad)",
+      background: "var(--gt-table-code-fill, var(--gt-fill-2))",
+      "font-size": "var(--gt-table-code-size)",
+    });
+    expect(tokens.view["--gt-table-code-size"]).toBe("var(--gt-inline-code-size)");
+    expect(tokens.view["--gt-table-code-pad"]).toBe("var(--gt-inline-pad)");
+  });
+});
+
+describe("flow tokens for tables under headings, lists and list items", () => {
+  const base = read("base.css");
+  it("spaces a table under a heading by its own token, the heading's gap by default", () => {
+    for (const [selector, level] of [
+      [".gotipe-content > :where(h2) + :where(.gotipe-table-wrapper)", "h2"],
+      [".gotipe-content > :where(h3, h4, h5, h6) + :where(.gotipe-table-wrapper)", "h3"],
+      [".gotipe-content > :where(h1, .gotipe-page-title) + :where(.gotipe-table-wrapper)", "h1"],
+    ] as const) {
+      expect(declarations(base, selector)).toEqual({
+        "margin-top": `var(--gt-flow-after-${level}-table)`,
+      });
+      expect(tokens.view[`--gt-flow-after-${level}-table`]).toBe(`var(--gt-flow-after-${level})`);
+    }
+    // after the heading rules, so the table's own gap wins under a heading
+    expect(base.indexOf("+ :where(.gotipe-table-wrapper)")).toBeGreaterThan(
+      base.indexOf(".gotipe-content > :where(.gotipe-page-title) + * {"),
+    );
+  });
+  it("spaces a list after a list and the items of a list by their own tokens", () => {
+    const lists = [
+      ".gotipe-content > :where(ul, ol) + :where(ul, ol),",
+      ".gotipe-content",
+      "  :where(.gotipe-callout-content, .gotipe-toggle-content, .gotipe-column, blockquote)",
+      "  > :where(ul, ol)",
+      "  + :where(ul, ol)",
+    ].join("\n");
+    expect(declarations(base, lists)).toEqual({ "margin-top": "var(--gt-flow-between-lists)" });
+    expect(declarations(base, ".gotipe-content :where(ul, ol) > li + li")).toEqual({
+      "margin-top": "var(--gt-list-item-gap)",
+    });
+    expect(tokens.view["--gt-flow-between-lists"]).toBe("var(--gt-flow)");
+    expect(tokens.view["--gt-list-item-gap"]).toBe("var(--gt-flow-list)");
   });
 });
