@@ -1,6 +1,6 @@
 {
   "name": "@gotipe/suggestions",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Track changes for the GoTipe editor, plus anchored edits for changes proposed by a model.",
   "keywords": [
     "gotipe",
@@ -22,7 +22,7 @@
   "types": "./dist/index.d.ts",
   "sideEffects": false,
   "peerDependencies": {
-    "@gotipe/core": "^0.1.0"
+    "@gotipe/core": "^0.1.2"
   },
   "devDependencies": {
     "@gotipe/core": "workspace:*",

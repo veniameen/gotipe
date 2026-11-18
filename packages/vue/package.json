@@ -1,6 +1,6 @@
 {
   "name": "@gotipe/vue",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Vue 3 adapter for the GoTipe editor: useEditor, useEditorState and the EditorContent renderer.",
   "keywords": [
     "gotipe",
@@ -23,7 +23,7 @@
   "types": "./dist/index.d.ts",
   "sideEffects": false,
   "peerDependencies": {
-    "@gotipe/core": "^0.1.0",
+    "@gotipe/core": "^0.1.2",
     "vue": ">=3.4"
   },
   "devDependencies": {
