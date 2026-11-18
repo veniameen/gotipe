@@ -186,24 +186,6 @@ export function TableElement({ children }: { children: ReactNode }) {
   );
 }
 
-/**
- * The widths a resize writes. A table whose columns all have widths goes through `editTable`;
- * one with shared columns keeps them shared (null), so the other columns do not jump to a
- * default width and the written table looks as the drag showed it.
- */
-function resizeColumn(layout: TableLayout, column: number, width: number) {
-  if (!layout.widths.some((value, index) => value === null && index !== column)) {
-    editTable(layout.editor, layout.table.id, { type: "resizeColumn", index: column, width });
-    return;
-  }
-  const colWidths = layout.widths.map((value, index) =>
-    index === column ? clampWidth(width) : value,
-  );
-  layout.editor.dispatch({
-    steps: [{ type: "setBlockAttrs", blockId: layout.table.id, attrs: { colWidths } }],
-  });
-}
-const clampWidth = (width: number) => Math.max(64, Math.min(1600, Math.round(width)));
 
 type HiddenSide = "left" | "right" | "both";
 
@@ -316,7 +298,8 @@ export function TableColumnResizeHandle({ cellId }: { cellId: string }) {
       const current = latest.current;
       if (!current || current.readOnly) return;
       try {
-        resizeColumn(current, column, width);
+        // the planner keeps the other shared columns shared (null)
+        editTable(current.editor, current.table.id, { type: "resizeColumn", index: column, width });
       } catch (error) {
         current.report(error);
       }

@@ -126,7 +126,7 @@ pub fn edit_table(
             if !width.is_finite() {
                 return fail("Column width must be finite");
             }
-            result.widths[index] = width.round().clamp(64.0, 1600.0);
+            result.widths[index] = Some(width.round().clamp(64.0, 1600.0));
         }
         TableEdit::MergeCells { from, to } => {
             focus = Some(plan::merge_cells(

@@ -40,11 +40,11 @@ describe("table transactions", () => {
     expect(editor.getJSON().blocks[0]!.children.map((row) => row.children.length)).toEqual([3, 3]);
     expect(editor.getJSON().blocks[0]!.children[0]!.children[1]!.type).toBe("tableHeader");
     editTable(editor, "table", { type: "resizeColumn", index: 1, width: 245 });
-    expect(editor.getJSON().blocks[0]!.attrs.colWidths).toEqual([160, 245, 160]);
+    expect(editor.getJSON().blocks[0]!.attrs.colWidths).toEqual([null, 245, null]);
     editTable(editor, "table", { type: "deleteColumn", index: 1 });
     expect(editor.getJSON().blocks[0]!.children).toEqual(original.blocks[0]!.children);
     editor.undo();
-    expect(editor.getJSON().blocks[0]!.attrs.colWidths).toEqual([160, 245, 160]);
+    expect(editor.getJSON().blocks[0]!.attrs.colWidths).toEqual([null, 245, null]);
     editor.undo();
     editor.undo();
     expect(editor.getJSON().blocks).toEqual(original.blocks);

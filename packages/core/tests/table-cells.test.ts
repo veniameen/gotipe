@@ -271,7 +271,7 @@ describe.each(ENGINES)("merged table cells on the %s engine", (engine) => {
     const resized = await open(engine, [["a:1", "b:2"], ["d:4"]]);
     editTable(resized, "t", { type: "resizeColumn", index: 1, width: 200 });
     expect(stored(resized).children[1]!.children).toHaveLength(1);
-    expect(stored(resized).attrs.colWidths).toEqual([160, 200]);
+    expect(stored(resized).attrs.colWidths).toEqual([null, 200]);
   });
 
   it("refuses grid positions that are not whole numbers, writing nothing", async () => {

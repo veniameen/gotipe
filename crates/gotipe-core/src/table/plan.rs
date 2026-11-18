@@ -32,7 +32,8 @@ pub struct PlannedTable {
     pub rows: Vec<PlannedRow>,
     pub cells: Vec<PlannedCell>,
     pub columns: usize,
-    pub widths: Vec<f64>,
+    /// Each column's width; `None` for a column without one, which shares the text column.
+    pub widths: Vec<Option<f64>>,
     pub align: Vec<AttrValue>,
     pub removed: bool,
 }
@@ -88,8 +89,8 @@ pub fn plan_table(table: &Block, fill: bool) -> Result<PlannedTable, GoTipeError
         widths: (0..grid.columns)
             .map(
                 |index| match widths.as_ref().and_then(|values| values.get(index)) {
-                    Some(AttrValue::Number(width)) if width.is_finite() => *width,
-                    _ => DEFAULT_WIDTH,
+                    Some(AttrValue::Number(width)) if width.is_finite() => Some(*width),
+                    _ => None,
                 },
             )
             .collect(),
@@ -225,7 +226,10 @@ pub fn insert_column(plan: &mut PlannedTable, index: usize) {
             add(plan, row, index, header);
         }
     }
-    plan.widths.insert(index, DEFAULT_WIDTH);
+    // a table of stored widths gives a new column the default; one with shared columns, another
+    let stored = !plan.widths.is_empty() && plan.widths.iter().all(Option::is_some);
+    plan.widths
+        .insert(index, if stored { Some(DEFAULT_WIDTH) } else { None });
     plan.align.insert(index, AttrValue::Null);
 }
 
