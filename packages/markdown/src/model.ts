@@ -143,6 +143,17 @@ export function spansText(spans: readonly Span[]): string {
   return t;
 }
 
+/**
+ * Whether the rich text of `block` has a character: `spansText(richContent(block)) !== ""`
+ * without normalizing the spans (the marks do not matter to it).
+ */
+export function hasRichText(block: Block): boolean {
+  if (!Array.isArray(block.content)) return false;
+  for (const span of block.content)
+    if (span && typeof span.text === "string" && span.text.length > 0) return true;
+  return false;
+}
+
 export function richContent(block: Block): Span[] {
   return Array.isArray(block.content) ? normalizeSpans(block.content) : [];
 }
@@ -281,13 +292,11 @@ export function isBlockEmpty(block: Block): boolean {
   switch (block.type) {
     case "paragraph":
     case "heading":
-      return spansText(richContent(block)).length === 0;
+      return !hasRichText(block);
     case "markdownRaw":
       return typeof block.content !== "string" || block.content.length === 0;
     case "math":
-      return typeof block.content === "string"
-        ? block.content.length === 0
-        : spansText(richContent(block)).length === 0;
+      return typeof block.content === "string" ? block.content.length === 0 : !hasRichText(block);
     case "embed":
       return str(block.attrs?.url) === "";
     case "table":

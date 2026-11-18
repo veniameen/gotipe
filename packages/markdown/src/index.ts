@@ -12,6 +12,7 @@ export type {
   Mark,
   ParseOptions,
   ParseResult,
+  SerializeOptions,
   SerializeResult,
   SnapshotBlock,
   SnapshotNode,

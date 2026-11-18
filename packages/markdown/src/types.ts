@@ -132,6 +132,16 @@ export interface ParseResult {
   snapshot: MarkdownSnapshot;
 }
 
+export interface SerializeOptions {
+  /**
+   * Fingerprints of top-level blocks kept between calls, by block object. Pass the same map to
+   * every call only for documents whose blocks are never changed in place (a changed block is a
+   * new object, as in an editor's view): a block seen before is not fingerprinted again. The
+   * written text is the same with and without it.
+   */
+  fingerprints?: WeakMap<object, string>;
+}
+
 export interface SerializeResult {
   text: string;
   snapshot: MarkdownSnapshot;
