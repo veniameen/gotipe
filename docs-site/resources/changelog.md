@@ -41,7 +41,8 @@ fingerprints. The Markdown written is the same byte for byte. New for custom vie
 - New tokens: `--gt-check-fill`, `--gt-check-line`, `--gt-card-name-size`,
   `--gt-card-name-weight`, `--gt-card-button-size`, `--gt-sug-ins-bar`,
   `--gt-sug-ins-underline` (and `-style`, `-thickness`, `-offset`), `--gt-sug-changed-bar`,
-  `--gt-sug-changed-bar-width`.
+  `--gt-sug-changed-bar-width`, `--gt-image-radius`, `--gt-image-ring`, `--gt-image-ring-color`,
+  `--gt-caption-color`, `--gt-caption-size`, `--gt-caption-leading`, `--gt-image-empty-bg`.
 - Fixes: a list after a heading or a paragraph gets the flow gap of the Atlas;
   `.gotipe-btn-secondary` has its own rule (filled when it is the only button).
 

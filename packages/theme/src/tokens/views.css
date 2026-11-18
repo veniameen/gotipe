@@ -171,6 +171,10 @@
   --gt-row-handle-room: min(var(--gt-row-handle-full), var(--gt-page-pad-x));
   --gt-quote-pad: 16px;
   --gt-caption-gap: 8px;
+  --gt-image-radius: var(--gt-radius-block);
+  --gt-image-ring: 0px;
+  --gt-caption-size: var(--gt-small-size);
+  --gt-caption-leading: var(--gt-small-leading);
   --gt-inline-pad: 0.1em 0.35em;
   --gt-inline-code-size: 0.87em;
   --gt-inline-code-leading: 1;

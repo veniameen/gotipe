@@ -115,7 +115,8 @@ import { PageEditor, type PageEditorHandle } from "@gotipe/block-editor";
 
 Handle (`ref`): `editor`, `getMarkdown()`, `flush()` (emits a pending draft at once and returns the
 Markdown — call it before a save), `setMarkdown(text)` (replaces the document even with the same text
-as the last `markdown`, e.g. a revert to the file on disk), `focus()`, `insertBlock(kind)` (the "Image"
+as the last `markdown`, e.g. a revert to the file on disk; `{ addToHistory: false }` or the prop
+`undoableReplace={false}` clears the undo history instead, e.g. around showing a past version), `focus()`, `insertBlock(kind)` (the "Image"
 and "Blocks" buttons of the toolbar), `getTitle()`, `selectTitle()` ("Rename"), `review` (`ReviewApi`).
 
 - The title is the first `# …` of the file. Without it `titlePlaceholder` is shown, and nothing is
@@ -146,6 +147,7 @@ and "Blocks" buttons of the toolbar), `getTitle()`, `selectTitle()` ("Rename"), 
 | `saveAsset(blob, {kind, name, mediaType, size})` → `{src, name?}` | paste from the clipboard, drag and drop, "Image", "File" | `wiki.writeAsset`; failure — `throw` (becomes an `error` event) |
 | `resolveAsset(src)` → data URL \| null | showing an image | `wiki.readAsset` → `dataUrl`; `null` — the image shows "unavailable" and nothing is requested |
 | `openLink(href, {blockId, newTab, target})` | Cmd/Ctrl+click; any click in read mode; click on a file | external links — the system browser; `docs/pages/*.md` — a page tab; `target` — the link's own (`_self`, `_blank`), for a file name `null`, the host decides |
+| `discardAsset({src, name, kind})` | a file `saveAsset` stored that a paste or drop then did not insert | delete it from `assets/` |
 | `onError(error: GoTipeError)` | any error | toast or highlight; the editor has no error strings of its own |
 
 Error codes (`GoTipeError.code`, all of `GoTipeErrorCode` in `@gotipe/core`). An invalid link in the
@@ -240,7 +242,9 @@ if there is no `data-theme`).
   (`--gt-check-fill`, `--gt-check-line`, `--gt-check-mark`), the review card (`--gt-card-name-size`,
   `--gt-card-name-weight`, `--gt-card-button-size`), an insertion (`--gt-sug-ins-bar`, or a text underline with
   `--gt-sug-ins-underline: underline` and `--gt-sug-ins-underline-thickness|-offset|-style`), a changed block's bar
-  (`--gt-sug-changed-bar`, `--gt-sug-changed-bar-width`), the block handle's rail (`--gt-handle-rail`).
+  (`--gt-sug-changed-bar`, `--gt-sug-changed-bar-width`), the block handle's rail (`--gt-handle-rail`), the image
+  (`--gt-image-radius`, `--gt-image-ring`, `--gt-image-ring-color`, `--gt-caption-color|-size|-leading`) and an empty
+  image or file block (`--gt-image-empty-bg`).
 
 An example adapter on the SpecOrbit side (the names on the right are application tokens):
 

@@ -5,18 +5,20 @@
    Shared by BlockEditor and PageEditor. */
 @import "./media-insert.css";
 
+/* --gt-image-ring (0 by default) draws a ring that keeps a light image apart from the page */
 .gotipe-image-block img {
   display: block;
   max-width: 100%;
   height: auto;
-  border-radius: var(--gt-radius-block);
+  border-radius: var(--gt-image-radius);
+  box-shadow: 0 0 0 var(--gt-image-ring) var(--gt-image-ring-color);
 }
 .gotipe-image-block figcaption {
   padding-top: var(--gt-caption-gap);
   outline: none;
-  color: var(--gt-text-2);
-  font-size: var(--gt-small-size);
-  line-height: var(--gt-small-leading);
+  color: var(--gt-caption-color);
+  font-size: var(--gt-caption-size);
+  line-height: var(--gt-caption-leading);
   letter-spacing: normal;
   text-align: left;
 }
@@ -49,7 +51,7 @@
   padding: var(--gt-space-4);
   border: 0;
   border-radius: var(--gt-radius-block);
-  background: var(--gt-sunken);
+  background: var(--gt-image-empty-bg);
   color: var(--gt-text-2);
   font-family: var(--gt-font-ui);
   font-size: var(--gt-ui-size);
