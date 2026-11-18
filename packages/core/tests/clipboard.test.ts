@@ -243,6 +243,22 @@ it("pastes a durable uploaded asset atomically and undoes it with the selected t
   editor.destroy();
 });
 
+it("reports a host that fails to save a pasted file as ASSET_SAVE_FAILED, not a clipboard error", async () => {
+  const { editor, handler, errors } = await setup(doc(paragraph("a", "before")));
+  editor.host.saveAsset = async () => {
+    throw new Error("disk full");
+  };
+  const event = transfer().event;
+  Object.defineProperty(event.clipboardData, "files", {
+    value: [new File(["image"], "picture.png", { type: "image/png" })],
+  });
+  handler.onPaste(event);
+  await vi.waitFor(() => expect(errors).toHaveLength(1));
+  expect(errors[0]).toMatchObject({ code: "ASSET_SAVE_FAILED", message: "disk full" });
+  expect(editor.getText()).toBe("before");
+  editor.destroy();
+});
+
 it("does not insert a late file at a changed selection or after destruction", async () => {
   const { editor, handler, errors } = await setup(doc(paragraph("a", "before")));
   let complete!: (asset: { src: string }) => void;
