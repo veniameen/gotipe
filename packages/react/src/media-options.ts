@@ -14,12 +14,29 @@ export interface MediaOptions {
    * so a host that shows errors its own way, e.g. as toasts, gets them all.
    */
   inlineErrors?: boolean;
+  /**
+   * An image without a caption shows its file name (`alt`, else the last part of `src`) as a
+   * quiet hint in the caption's place (`.gotipe-image-caption-hint`). Default: `false`. The hint
+   * is not a caption: it is not written to the document.
+   */
+  captionName?: boolean;
+  /**
+   * The empty image or file block: `"block"` (default) — a sunken area with what it holds and a
+   * primary Upload; `"row"` — one quiet row with a glyph, the block's kind and a secondary
+   * “Choose a file…” (`data-layout="row"` on `.gotipe-media-placeholder`).
+   */
+  placeholder?: "block" | "row";
 }
 
 /** `MediaOptions` with each default filled in. */
 export type ResolvedMediaOptions = Required<MediaOptions>;
 
-const DEFAULTS: ResolvedMediaOptions = { links: true, inlineErrors: true };
+const DEFAULTS: ResolvedMediaOptions = {
+  links: true,
+  inlineErrors: true,
+  captionName: false,
+  placeholder: "block",
+};
 
 /**
  * The options of the editing image and file blocks for the editor below it:
@@ -34,5 +51,20 @@ export function useMediaOptions(): ResolvedMediaOptions {
   return {
     links: options?.links ?? DEFAULTS.links,
     inlineErrors: options?.inlineErrors ?? DEFAULTS.inlineErrors,
+    captionName: options?.captionName ?? DEFAULTS.captionName,
+    placeholder: options?.placeholder ?? DEFAULTS.placeholder,
   };
+}
+
+/** The name an image without a caption shows with `captionName`: its `alt`, else its file's. */
+export function imageName(alt: string, src: string): string {
+  if (alt.trim()) return alt.trim();
+  if (/^(?:data|blob):/i.test(src)) return "";
+  const path = src.split(/[?#]/)[0] ?? "";
+  const last = path.slice(path.lastIndexOf("/") + 1);
+  try {
+    return decodeURIComponent(last);
+  } catch {
+    return last;
+  }
 }

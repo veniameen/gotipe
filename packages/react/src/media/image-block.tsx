@@ -4,7 +4,7 @@ import { usePhantom } from "../content/context";
 import { useMissingNaturalWidth } from "../content/natural-width";
 import { useResolvedAsset } from "../host-assets";
 import { useGoTipeI18n } from "../i18n-context";
-import { useMediaOptions } from "../media-options";
+import { imageName, useMediaOptions } from "../media-options";
 import { useFloatingPosition } from "../use-floating-position";
 import { downloadAsset } from "./download";
 import { ImageToolbarIcon, MediaGlyph } from "./icons";
@@ -26,7 +26,7 @@ export function ImageBlock({
   const width = block.attrs.width as number | undefined;
   const caption = (block.attrs.caption as string) || "";
   const i18n = useGoTipeI18n();
-  const { inlineErrors } = useMediaOptions();
+  const { inlineErrors, captionName } = useMediaOptions();
   const { url: displaySrc, failed: assetFailed } = useResolvedAsset(editor, src);
   // The browser could not show this source: the block shows its failed state (Atlas frame 17)
   // until the source changes or the reader retries.
@@ -484,6 +484,8 @@ export function ImageBlock({
           element={captionRef}
           onEmpty={() => setIsCaptionVisible(false)}
         />
+      ) : src && captionName && imageName(alt, src) ? (
+        <figcaption className="gotipe-image-caption-hint">{imageName(alt, src)}</figcaption>
       ) : null}
       {uploadError ? (
         <p className="gotipe-media-insert-error" role="alert">

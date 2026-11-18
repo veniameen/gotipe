@@ -98,6 +98,8 @@ export const en: Locale = {
   "media.searchActions": "Search actions…",
   "media.searchActionsLabel": "Search image actions",
   "media.imageGroup": "Image",
+  "media.fileGroup": "File",
+  "media.chooseFile": "Choose a file…",
   "media.noActions": "No matching actions",
   "media.captionLabel": "Image caption",
   "media.captionPlaceholder": "Add a caption",

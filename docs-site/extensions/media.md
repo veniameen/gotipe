@@ -121,6 +121,8 @@ In the editor UI an empty file block offers **Add a file**, **By link** (an addr
 | --- | --- | --- | --- |
 | `links` | `boolean` | `true` | **By link** on empty image and file blocks and the **Link** tab of the image panel. `false` leaves **Upload** and dropping a file; the catalogs of `host.imageSources`, if any, stay behind the same button, named after the catalog (or "Image source" for several). |
 | `inlineErrors` | `boolean` | `true` | The reason of a failure in the block: a failed upload or crop, a failed copy, a wrong address (its tooltip and the text read aloud) and a failed catalog search. `false` shows none of them; a wrong address still marks its field as invalid. |
+| `placeholder` | `"block" \| "row"` | `"block"` | The empty image or file block: a sunken area with a primary Upload, or one quiet row with a glyph, the block's kind and a secondary "Choose a file…" (`data-layout="row"`; sizes `--gt-media-row-*`). |
+| `captionName` | `boolean` | `false` | An image without a caption shows its file name (`alt`, else the last part of `src`) as a quiet hint in the caption's place (`.gotipe-image-caption-hint`). The hint is not written to the document. |
 
 Every failure that the blocks show also reaches `host.onError` (and the `error` event), whatever the options. A few were shown only in the block; with `inlineErrors: false` they are reported instead:
 

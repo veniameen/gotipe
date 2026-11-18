@@ -248,7 +248,8 @@ if there is no `data-theme`).
   `--gt-sug-ins-underline: underline` and `--gt-sug-ins-underline-thickness|-offset|-style`), a changed block's bar
   (`--gt-sug-changed-bar`, `--gt-sug-changed-bar-width`), the block handle's rail (`--gt-handle-rail`), the image
   (`--gt-image-radius`, `--gt-image-ring`, `--gt-image-ring-color`, `--gt-caption-color|-size|-leading`) and an empty
-  image or file block (`--gt-image-empty-bg`).
+  image or file block (`--gt-image-empty-bg`, and as a row with `media={{ placeholder: "row" }}`: `--gt-media-row-*`); with
+  `media={{ captionName: true }}` an image without a caption shows its file name as a quiet hint, not written to the file.
 
 An example adapter on the SpecOrbit side (the names on the right are application tokens):
 

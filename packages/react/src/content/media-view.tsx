@@ -2,6 +2,7 @@ import { toSafeHref } from "@gotipe/core";
 import { useRef, useState } from "react";
 import { useResolvedAsset } from "../host-assets";
 import { useGoTipeI18n } from "../i18n-context";
+import { imageName, useMediaOptions } from "../media-options";
 import { downloadAsset } from "../media/download";
 import { MediaGlyph, PlaceholderFileIcon, PlaceholderImageIcon } from "../media/icons";
 import { formatFileSize } from "../media/links";
@@ -32,6 +33,7 @@ function ImageView({ block, editor, rootProps }: MediaBlockProps) {
   const width = block.attrs.width as number | undefined;
   const caption = (block.attrs.caption as string) || "";
   const i18n = useGoTipeI18n();
+  const { captionName } = useMediaOptions();
   const { url, failed: assetFailed } = useResolvedAsset(editor, src);
   const [failedSource, setFailedSource] = useState<string | null>(null);
   const failed = assetFailed || (url !== null && failedSource === url);
@@ -72,6 +74,8 @@ function ImageView({ block, editor, rootProps }: MediaBlockProps) {
         <figcaption>
           <div aria-label={i18n.t("media.captionLabel")}>{caption}</div>
         </figcaption>
+      ) : src && captionName && imageName(alt, src) ? (
+        <figcaption className="gotipe-image-caption-hint">{imageName(alt, src)}</figcaption>
       ) : null}
     </figure>
   );
