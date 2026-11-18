@@ -79,7 +79,7 @@ export {
   MarkdownRawExtension,
   MarkdownRawMark,
 } from "./page/page-editor";
-export type { PageEditorProps, PageEditorHandle } from "./page/page-editor";
+export type { PageEditorProps, PageEditorHandle, PageSlashMenu } from "./page/page-editor";
 export { pageBlockCommands, pageSlashGroups, insertPageBlock } from "./page/page-commands";
 export type { PageBlockCommand, PageBlockKind } from "./page/page-commands";
 export { createPageBlockViews } from "./page/page-views";
@@ -100,7 +100,13 @@ export {
 export type { BooleanWords, ColumnType } from "./table/column-types";
 export { TableColumnButton, TableRowButton } from "./components/table-column-menu";
 export { ReviewLayer, acceptAllInOrder } from "./review/review-layer";
-export type { PageReviewProps, ReviewApi, ReviewAction, ReviewResult } from "./review/review-layer";
+export type {
+  PageReviewProps,
+  ReviewApi,
+  ReviewAction,
+  ReviewLayout,
+  ReviewResult,
+} from "./review/review-layer";
 export { ReviewBar, LaneAvatars } from "./review/review-bar";
 // Version history panel (Atlas frame 30)
 export { VersionHistory } from "./history/version-history";

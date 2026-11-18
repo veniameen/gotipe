@@ -12,6 +12,8 @@ export interface SlashMenuProps {
   renderIcon?: (cmd: SlashCommandDef) => React.ReactNode;
   /** Right-hand meta of a row (e.g. a Markdown shortcut). */
   renderMeta?: (cmd: SlashCommandDef) => React.ReactNode;
+  /** Show a command's `description` under its name (`.gotipe-slash-menu-item-description`). */
+  descriptions?: boolean;
   /** UI strings. */
   labels?: { menu?: string; list?: string; empty?: string; results?: (count: number) => string };
   className?: string;
@@ -51,6 +53,7 @@ export function SlashMenu({
   groups,
   renderIcon: renderIconProp,
   renderMeta,
+  descriptions = false,
   labels,
   className,
 }: SlashMenuProps) {
@@ -441,6 +444,9 @@ export function SlashMenu({
                     <div className="gotipe-slash-menu-item-title">
                       {highlightMatch(cmd.name, query)}
                     </div>
+                    {descriptions && cmd.description ? (
+                      <div className="gotipe-slash-menu-item-description">{cmd.description}</div>
+                    ) : null}
                   </div>
                   {renderMeta ? (
                     <span className="gotipe-slash-menu-item-meta" aria-hidden="true">

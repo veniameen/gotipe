@@ -1,4 +1,4 @@
-import type { EditorHost, GoTipeEditor } from "@gotipe/core";
+import type { GoTipeEditor } from "@gotipe/core";
 import {
   Blockquote,
   Bold,
@@ -28,8 +28,7 @@ import {
   TodoList,
   Underline,
 } from "@gotipe/core/extensions";
-import { GoTipeError, createEditor, defineExtension, saveAsset } from "@gotipe/core/js";
-import type { I18n } from "@gotipe/i18n";
+import { GoTipeError, createEditor, defineExtension } from "@gotipe/core/js";
 import { markdownRawNodeSpec } from "@gotipe/markdown";
 import { type BlockViews, GoTipeI18nProvider, TableMergeGuardProvider } from "@gotipe/react";
 import {
@@ -38,8 +37,6 @@ import {
   type ReviewProposal,
   applyAnchoredEdits,
 } from "@gotipe/suggestions";
-import type { ThemePreset } from "@gotipe/theme";
-import type React from "react";
 import {
   forwardRef,
   useCallback,
@@ -50,22 +47,21 @@ import {
   useState,
 } from "react";
 import { EmojiCommand, EmojiSuggestion, MentionSuggestion } from "../atoms/extensions";
-import { BlockEditor, type BlockEditorProps } from "../components/block-editor";
+import { BlockEditor } from "../components/block-editor";
 import { EditorFailure } from "../components/editor-states";
-import type { CodeHighlighter } from "../highlight/types";
 import { useBlockEditorI18n } from "../i18n/strings";
 import { ReviewBar } from "../review/review-bar";
 import { type PageReviewProps, type ReviewApi, ReviewLayer } from "../review/review-layer";
 import { markdownTableGuard } from "../table/markdown-guard";
 import { MarkdownSession } from "./markdown-session";
 import { PageOverlayContext } from "./overlay";
-import {
-  type PageBlockCommand,
-  type PageBlockKind,
-  insertPageBlock,
-  pageBlockCommands,
-} from "./page-commands";
-import { type PageTitleLevel, createPageBlockViews } from "./page-views";
+import { insertPageBlock, pageBlockCommands } from "./page-commands";
+import type { PageEditorHandle, PageEditorProps } from "./page-editor-props";
+import { createPageHost } from "./page-host";
+import { createPageBlockViews } from "./page-views";
+import { usePageDraft } from "./use-page-draft";
+
+export type { PageEditorHandle, PageEditorProps, PageSlashMenu } from "./page-editor-props";
 
 /** Raw Markdown the editor keeps as is (HTML, footnotes, definitions…). */
 export const MarkdownRawExtension = defineExtension({
@@ -122,75 +118,6 @@ export function pageExtensions(options: { mentions?: boolean } = {}) {
   ];
 }
 
-export interface PageEditorHandle {
-  readonly editor: GoTipeEditor | null;
-  /** The current document as Markdown (untouched blocks byte-for-byte). */
-  getMarkdown(): string;
-  focus(position?: "start" | "end"): void;
-  /** Inserts a block at the caret (the toolbar's “blocks” and “image” buttons). */
-  insertBlock(kind: PageBlockKind): void;
-  /** The page title: text of the leading `# heading`, or null when the file has none. */
-  getTitle(): string | null;
-  /** Focuses the title and selects its text (“Rename”). */
-  selectTitle(): void;
-  /** Review actions (null without `review`). */
-  readonly review: ReviewApi | null;
-}
-
-export interface PageEditorProps {
-  /** The file's text. A new value that differs from the last emitted draft replaces the document, keeping focus, caret and scroll. */
-  markdown: string;
-  /** The draft changed (called after every edit; debounce the save in the host). */
-  onChange?: (markdown: string) => void;
-  readOnly?: boolean;
-  /** Assets, links, errors. */
-  host?: EditorHost;
-  /** Locale of the UI strings (`en` by default, `ru` built in) or a ready `I18n`. */
-  locale?: string;
-  i18n?: I18n;
-  /** Shown in the title when the file has no `# heading` (the file name). */
-  titlePlaceholder?: string;
-  /**
-   * The HTML level of the page title, the file's leading `# heading` (default 1: an `h1`). It looks
-   * the same at any level; pass 2 when the host page has its own `h1`. Other headings keep theirs.
-   */
-  titleLevel?: PageTitleLevel;
-  /** Suggestions, comments and collaborator cursors supplied by the host. */
-  review?: PageReviewProps;
-  /** Show the edit bar above the page. */
-  reviewBar?: { title?: React.ReactNode; extra?: React.ReactNode[] } | false;
-  /**
-   * One of the shared views (GoTipe Atlas, frames 1–4 and 19): `notion` (default), `docs`,
-   * `modern` or `minimal`. The page has no theme of its own.
-   */
-  view?: ThemePreset;
-  /** Optional code highlighter (`@gotipe/block-editor/shiki`). */
-  highlight?: CodeHighlighter;
-  /**
-   * The host's own block views; they win over the page's and the shared ones. E.g. a quote that
-   * starts with a bold label the host gives a look of its own.
-   */
-  blockViews?: BlockViews;
-  /** Blocks offered by “/” (default: all). */
-  blocks?: PageBlockKind[];
-  autoFocus?: boolean;
-  className?: string;
-  style?: React.CSSProperties;
-  /** Called once the editor exists. */
-  onReady?: (editor: GoTipeEditor) => void;
-  /** Called when the editor reports an error and when it cannot be created (as `host.onError`). */
-  onError?: EditorHost["onError"];
-  /**
-   * People and pages of the “@” list (Atlas frame 22), as `BlockEditor`'s `mentions`. Read when
-   * the page opens: with it the page reads and writes `[@name](mention:user-id)` as mentions.
-   */
-  mentions?: BlockEditorProps["mentions"];
-  /** The team's emoji and the recent list (Atlas frame 23), as `BlockEditor`'s `emoji`. */
-  emoji?: BlockEditorProps["emoji"];
-  /** Words and characters under the page (Atlas frame 26), as `BlockEditor`'s `status`. */
-  status?: BlockEditorProps["status"];
-}
-
 const PageEditorInner = forwardRef<PageEditorHandle, PageEditorProps>(
   function PageEditorInner(props, ref) {
     const {
@@ -201,11 +128,14 @@ const PageEditorInner = forwardRef<PageEditorHandle, PageEditorProps>(
       titlePlaceholder,
       titleLevel = 1,
       review,
+      reviewLayout = "auto",
       reviewBar,
       view = "notion",
+      narrow = true,
       highlight,
       blockViews: hostViews,
       blocks: allowedBlocks,
+      slashMenu,
       autoFocus,
       className,
       style,
@@ -251,26 +181,7 @@ const PageEditorInner = forwardRef<PageEditorHandle, PageEditorProps>(
     useEffect(() => {
       let cancelled = false;
       let created: GoTipeEditor | null = null;
-      const stableHost: EditorHost = {
-        get imageSources() {
-          return hostRef.current?.imageSources;
-        },
-        saveAsset: (file, info) => {
-          const save = hostRef.current?.saveAsset;
-          if (!save) return saveAsset({}, file, info.kind);
-          return save(file, info);
-        },
-        resolveAsset: (src) => hostRef.current?.resolveAsset?.(src) ?? src,
-        openLink: (href, info) => {
-          if (hostRef.current?.openLink) hostRef.current.openLink(href, info);
-          else if (info.newTab) window.open(href, "_blank", "noopener,noreferrer");
-          else window.location.assign(href);
-        },
-        onError: (error) => {
-          hostRef.current?.onError?.(error);
-          onErrorRef.current?.(error);
-        },
-      };
+      const stableHost = createPageHost(hostRef, onErrorRef);
       // Reading the Markdown and checking the document can fail: that rejects the creation.
       const create = async () =>
         createEditor({
@@ -303,52 +214,28 @@ const PageEditorInner = forwardRef<PageEditorHandle, PageEditorProps>(
       };
     }, [session]);
 
-    // Emit the draft after edits. A new `onReady` from the host does not run this again: the
-    // pending draft stays, and the caret stays where the person put it.
+    // The draft goes out once a frame after edits, or at once on `flush()`. A new `onReady` from
+    // the host does not run this again: the pending draft stays, and so does the caret.
+    const draft = usePageDraft(editor, session, markdown, onChangeRef);
     useEffect(() => {
-      if (!editor) return;
-      const first = readied.current !== editor;
+      if (!editor || readied.current === editor) return;
       readied.current = editor;
-      if (first) onReadyRef.current?.(editor);
-      let frame: number | null = null;
-      const flush = () => {
-        frame = null;
-        const { text } = session.serialize(editor);
-        if (text !== session.lastText) {
-          session.lastText = text;
-          onChangeRef.current?.(text);
-        }
-      };
-      const off = editor.on("update", () => {
-        session.touch();
-        if (frame === null) frame = requestAnimationFrame(flush);
-      });
-      if (first && initial.current.autoFocus) editor.focus("end");
-      return () => {
-        off();
-        if (frame !== null) cancelAnimationFrame(frame);
-      };
-    }, [editor, session]);
-
-    // External replacement (file changed on disk, accepted suggestion…).
-    useEffect(() => {
-      if (!editor) return;
-      if (markdown === session.lastText) return;
-      session.load(editor, markdown, true);
-    }, [editor, session, markdown]);
+      onReadyRef.current?.(editor);
+      if (initial.current.autoFocus) editor.focus("end");
+    }, [editor]);
 
     useEffect(() => {
       editor?.setEditable(!readOnly);
     }, [editor, readOnly]);
 
-    const commands = useMemo<PageBlockCommand[]>(
-      () => pageBlockCommands(i18n, allowedBlocks),
-      [i18n, allowedBlocks],
-    );
-    const slashCommands = useMemo(
-      () => [...commands, ...(EmojiCommand.slashCommands ?? [])],
-      [commands],
-    );
+    const slashCommands = useMemo(() => {
+      const defaults = [
+        ...pageBlockCommands(i18n, allowedBlocks),
+        ...(EmojiCommand.slashCommands ?? []),
+      ];
+      const custom = slashMenu?.commands;
+      return typeof custom === "function" ? custom(defaults) : (custom ?? defaults);
+    }, [i18n, allowedBlocks, slashMenu?.commands]);
     const blockViews = useMemo<BlockViews>(
       () => ({
         ...createPageBlockViews({ highlight, titlePlaceholder, titleLevel }),
@@ -394,39 +281,30 @@ const PageEditorInner = forwardRef<PageEditorHandle, PageEditorProps>(
         },
         getMarkdown: () =>
           editor ? session.serialize(editor).text : (session.lastText ?? markdown),
+        flush: draft.flush,
+        setMarkdown: draft.setMarkdown,
         focus: (position) => editor?.focus(position),
         insertBlock: (kind) => {
           if (editor) insertPageBlock(editor, kind);
         },
-        getTitle: () => {
-          const first = editor?.getViewState().blocks[0];
-          if (!first || first.type !== "heading" || Number(first.attrs.level) !== 1) return null;
-          const text = Array.isArray(first.content)
-            ? first.content.map((sp) => sp.text).join("")
-            : "";
-          return text.trim() ? text : null;
-        },
-        selectTitle: () => {
-          const first = editor?.getViewState().blocks[0];
-          if (!editor || !first) return;
-          const length = Array.isArray(first.content)
-            ? first.content.reduce((n, sp) => n + sp.text.length, 0)
-            : 0;
-          editor.focus();
-          editor.setSelection({
-            anchor: { blockId: first.id, offset: 0 },
-            head: { blockId: first.id, offset: length },
-          });
-        },
+        getTitle: () => pageTitle(editor),
+        selectTitle: () => selectPageTitle(editor),
         get review() {
           return reviewApi.current;
         },
       }),
-      [editor, session, markdown],
+      [editor, session, markdown, draft],
     );
 
     // merged cells only where the Markdown page can keep the table (an HTML table read back)
     const mergeGuard = useMemo(() => markdownTableGuard(i18n.t("table.mergeMarkdownHint")), [i18n]);
+    const head =
+      props.icon || props.header ? (
+        <header className="gotipe-page-head" data-gotipe-page-head="">
+          {props.icon ? <div className="gotipe-page-head-icon">{props.icon}</div> : null}
+          {props.header}
+        </header>
+      ) : undefined;
 
     return (
       <div
@@ -435,6 +313,7 @@ const PageEditorInner = forwardRef<PageEditorHandle, PageEditorProps>(
         style={style}
         data-gotipe-page=""
         data-gt-view={view}
+        data-gt-narrow={narrow ? undefined : "off"}
         data-readonly={readOnly ? "" : undefined}
       >
         <PageOverlayContext.Provider value={overlay}>
@@ -457,10 +336,15 @@ const PageEditorInner = forwardRef<PageEditorHandle, PageEditorProps>(
               <BlockEditor
                 editor={editor}
                 view={view}
+                narrow={narrow}
                 className="gotipe-page-editor"
+                header={head}
+                starters={false}
                 highlight={highlight}
                 blockViews={blockViews}
                 slashCommands={slashCommands}
+                slashGroups={slashMenu?.groups}
+                slashDescriptions={slashMenu?.descriptions}
                 mentions={props.mentions}
                 emoji={props.emoji}
                 ariaLabel={i18n.t("page.ariaLabel")}
@@ -476,6 +360,7 @@ const PageEditorInner = forwardRef<PageEditorHandle, PageEditorProps>(
               session={session}
               root={root}
               review={effectiveReview}
+              layout={reviewLayout}
               onLocalAccept={localAccept}
               apiRef={reviewApi}
               onStates={setReviewStates}
@@ -487,6 +372,28 @@ const PageEditorInner = forwardRef<PageEditorHandle, PageEditorProps>(
     );
   },
 );
+
+/** The page title: text of the leading `# heading`, or null when there is none. */
+function pageTitle(editor: GoTipeEditor | null): string | null {
+  const first = editor?.getViewState().blocks[0];
+  if (!first || first.type !== "heading" || Number(first.attrs.level) !== 1) return null;
+  const text = Array.isArray(first.content) ? first.content.map((sp) => sp.text).join("") : "";
+  return text.trim() ? text : null;
+}
+
+/** Focuses the title and selects its text (“Rename”). */
+function selectPageTitle(editor: GoTipeEditor | null): void {
+  const first = editor?.getViewState().blocks[0];
+  if (!editor || !first) return;
+  const length = Array.isArray(first.content)
+    ? first.content.reduce((n, sp) => n + sp.text.length, 0)
+    : 0;
+  editor.focus();
+  editor.setSelection({
+    anchor: { blockId: first.id, offset: 0 },
+    head: { blockId: first.id, offset: length },
+  });
+}
 
 /** A failed creation as an editor error: a reason that is not a `GoTipeError` becomes one. */
 function creationError(reason: unknown): GoTipeError {

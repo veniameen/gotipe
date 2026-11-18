@@ -74,6 +74,9 @@ function BlockEditorView({
   onSuggestionRejectAll,
   blockViews: hostViews,
   slashCommands,
+  slashGroups,
+  slashDescriptions,
+  narrow = true,
   ariaLabel,
   errorToast = true,
   find = true,
@@ -422,9 +425,15 @@ function BlockEditorView({
     }
   }, []);
 
+  const narrowOff = narrow ? undefined : "off";
   if (!editor)
     return (
-      <div className="gotipe-block-editor" data-gotipe-block-loading="" data-gt-view={view}>
+      <div
+        className="gotipe-block-editor"
+        data-gotipe-block-loading=""
+        data-gt-view={view}
+        data-gt-narrow={narrowOff}
+      >
         <EditorSkeleton />
       </div>
     );
@@ -453,6 +462,7 @@ function BlockEditorView({
       style={{ ...style, position: "relative" }}
       data-gotipe-block-editor=""
       data-gt-view={view}
+      data-gt-narrow={narrowOff}
       onDragOver={handleDragOver}
       onDrop={handleDrop}
       onDragLeave={handleDragLeave}
@@ -489,7 +499,12 @@ function BlockEditorView({
         {errorToast && <EditorErrorToast editor={editor} />}
         {status && <StatusLine editor={editor} {...(status === true ? {} : status)} />}
         {showSlashMenu && (
-          <SlashMenu editor={editor} commands={slashCommands ?? editor.getSlashCommands()} />
+          <SlashMenu
+            editor={editor}
+            commands={slashCommands ?? editor.getSlashCommands()}
+            groups={slashGroups}
+            descriptions={slashDescriptions}
+          />
         )}
         <AtomUI editor={editor} />
         {showBubbleMenu && <BlockEditorBubbleMenu editor={editor} enableAI={showAiCommandBar} />}

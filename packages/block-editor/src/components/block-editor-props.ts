@@ -56,6 +56,15 @@ export interface BlockEditorProps {
   blockViews?: BlockViews;
   /** Commands of the slash menu. Default: the editor's own (`editor.getSlashCommands()`). */
   slashCommands?: SlashCommandDef[];
+  /** Group order and labels of the slash menu (see `SlashMenu`'s `groups`). */
+  slashGroups?: { id: string; label: string }[];
+  /** Show a slash command's `description` under its name. Default: false. */
+  slashDescriptions?: boolean;
+  /**
+   * The view's sizes for a narrow container (≤ 640 px). Default true; `false` keeps the wide
+   * sizes, or the host's own, at any width (`data-gt-narrow="off"` on the editor).
+   */
+  narrow?: boolean;
   /**
    * People and pages of the “@” list (GoTipe Atlas, frame 22), e.g.
    * `{ items: (query) => directory.search(query) }`. The editor needs `atomExtensions()`.
