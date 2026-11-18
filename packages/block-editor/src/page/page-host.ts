@@ -19,7 +19,11 @@ export function createPageHost(
       if (!save) return saveAsset({}, file, info.kind);
       return save(file, info);
     },
-    resolveAsset: (src) => host.current?.resolveAsset?.(src) ?? src,
+    // the host's null means “unavailable”: the image shows its failed state, nothing is fetched
+    resolveAsset: (src) => {
+      const resolve = host.current?.resolveAsset;
+      return resolve ? resolve(src) : src;
+    },
     openLink: (href, info) => {
       if (host.current?.openLink) host.current.openLink(href, info);
       else if (info.newTab) window.open(href, "_blank", "noopener,noreferrer");

@@ -175,6 +175,23 @@ describe("PageEditor head, narrow sizes and review layout", () => {
   });
 });
 
+describe("PageEditor assets", () => {
+  it("a host resolver's null shows the image as unavailable and never uses the raw path", async () => {
+    const resolveAsset = vi.fn(() => null);
+    await mount({ markdown: "# Notes\n\n![Plan](assets/plan.png)\n", host: { resolveAsset } });
+    await act(() => wait(30));
+    expect(resolveAsset).toHaveBeenCalledWith("assets/plan.png");
+    expect(container.querySelector('img[src="assets/plan.png"]')).toBeNull();
+    expect(container.querySelector(".gotipe-image-error")).not.toBeNull();
+  });
+
+  it("without a resolver the path is shown as it is", async () => {
+    await mount({ markdown: "# Notes\n\n![Plan](https://example.test/plan.png)\n" });
+    await act(() => wait(30));
+    expect(container.querySelector('img[src="https://example.test/plan.png"]')).not.toBeNull();
+  });
+});
+
 describe("PageEditor slash menu", () => {
   const openSlash = async (editor: GoTipeEditor) => {
     await act(async () => {
