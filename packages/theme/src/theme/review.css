@@ -30,6 +30,15 @@
   text-underline-offset: var(--gt-underline-offset);
   cursor: pointer;
 }
+/* a stale proposal's new block (its edit adds lines): quiet and dashed, as its hint in the text */
+.gotipe-sug-block-ins.gotipe-sug-stale:is(p, li, h1, h2, h3, h4, h5, h6, blockquote),
+.gotipe-sug-block-ins.gotipe-sug-stale
+  :is(p, li, h1, h2, h3, td, th, blockquote, .gotipe-callout-content, .gotipe-todo-item-content) {
+  background: transparent;
+  color: var(--gt-text-2);
+  text-decoration: underline dashed var(--gt-line-control);
+  text-decoration-thickness: var(--gt-underline);
+}
 .gotipe-sug-del,
 .gotipe-sug-block-del {
   color: var(--gt-text-3);
@@ -60,6 +69,9 @@
 }
 li.gotipe-sug-block-ins > input[type="checkbox"] {
   border-color: var(--gt-track, var(--gt-add));
+}
+li.gotipe-sug-block-ins.gotipe-sug-stale > input[type="checkbox"] {
+  border-color: var(--gt-line-control);
 }
 
 /* ---- comments on the text ---- */

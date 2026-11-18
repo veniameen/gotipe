@@ -57,6 +57,8 @@ function run(
   return { ...s, ...computeReviewDecorations({ ...s, parse, proposals, lanes: LANES, ...extra }) };
 }
 
+const plain = (b: BlockView) =>
+  Array.isArray(b.content) ? b.content.map((span) => span.text).join("") : "";
 const byType = (ds: Decoration[], type: Decoration["type"]) => ds.filter((d) => d.type === type);
 
 describe("computeReviewDecorations", () => {
@@ -142,10 +144,68 @@ describe("computeReviewDecorations", () => {
       ["stale", "missing"],
       ["stale", "ambiguous"],
     ]);
-    const hint = r.decorations.find(
-      (d) => d.type === "widget" && d.className?.includes("gotipe-sug-stale"),
-    );
-    expect(hint).toBeTruthy();
+    // p4 adds a line: its item stands as an item of the task list, after the one it followed
+    const item = r.blocks[1]!.children[1]!;
+    const hint = byType(r.decorations, "blocks")[0];
+    expect(hint).toMatchObject({
+      blockId: item.id,
+      position: "after",
+      className: "gotipe-sug gotipe-sug-stale gotipe-sug-block-ins",
+    });
+    expect(hint?.type === "blocks" && hint.blocks.map((b) => [b.type, plain(b)])).toEqual([
+      ["todoItem", "Ещё"],
+    ]);
+  });
+
+  it("shows a new list item as an item of its list, pending or stale", () => {
+    const page = "# T\n\n- one\n- two\n- three\n";
+    const edit = { before: "- one\n", quote: "", after: "- two", text: "- new\n" };
+    const items = (r: ReturnType<typeof run>) => r.blocks[1]!.children;
+    const pending = run(page, [{ id: "p", laneId: "agent", edits: [edit] }]);
+    expect(pending.proposals[0]!.status).toBe("pending");
+    const stale = run(page.replace("- two", "- zwei"), [
+      { id: "p", laneId: "agent", edits: [edit] },
+    ]);
+    expect(stale.proposals[0]!.status).toBe("stale");
+    for (const r of [pending, stale]) {
+      const [phantom, ...rest] = r.decorations.filter((d) => d.type === "blocks");
+      expect(rest).toEqual([]);
+      expect(phantom).toMatchObject({ blockId: items(r)[0]!.id, position: "after" });
+      expect(phantom?.type === "blocks" && phantom.blocks.map((b) => [b.type, plain(b)])).toEqual([
+        ["listItem", "new"],
+      ]);
+      // nothing is drawn in the line of the item before it
+      expect(r.decorations.filter((d) => d.type === "widget")).toEqual([]);
+    }
+  });
+
+  it("puts a stale block before the first block when nothing comes before its place", () => {
+    const r = run("# T\n\nBody.\n", [
+      {
+        id: "p",
+        laneId: "agent",
+        edits: [{ before: "Gone\n\n", quote: "", after: "# T", text: "Intro.\n\n" }],
+      },
+    ]);
+    expect(r.proposals[0]!.status).toBe("stale");
+    expect(r.decorations).toMatchObject([
+      { type: "blocks", blockId: r.blocks[0]!.id, position: "before" },
+    ]);
+  });
+
+  it("keeps a stale change inside a line as a hint in the text", () => {
+    const page = "Alpha beta gamma.\n";
+    const r = run(page.replace("gamma", "delta"), [
+      {
+        id: "p",
+        laneId: "agent",
+        edits: [{ before: "Alpha ", quote: "beta", after: " gamma", text: "BETA" }],
+      },
+    ]);
+    expect(r.proposals[0]!.status).toBe("stale");
+    expect(r.decorations).toMatchObject([
+      { type: "widget", text: "BETA", className: "gotipe-sug gotipe-sug-stale" },
+    ]);
   });
 
   it("replaces a block of another type: old block struck, new one after it", () => {
