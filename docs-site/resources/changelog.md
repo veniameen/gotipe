@@ -58,6 +58,7 @@ fingerprints. The Markdown written is the same byte for byte. New for custom vie
 ### @gotipe/core
 
 - A host `saveAsset` that throws is reported as `ASSET_SAVE_FAILED`, not as a clipboard error.
+- `EditorHost.discardAsset`: a file `saveAsset` stored that a paste or drop then did not insert.
 
 ## 0.1.1
 

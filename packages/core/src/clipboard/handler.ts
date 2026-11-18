@@ -196,15 +196,21 @@ export class ClipboardHandler {
       document: this.editor.getJSON(),
       selection: this.editor.getViewState().selection,
     });
+    let saved: Block[] = [];
     try {
-      const blocks = await Promise.all(files.map((file) => this.savedFile(file)));
+      const settled = await Promise.allSettled(files.map((file) => this.savedFile(file)));
+      saved = settled.flatMap((result) => (result.status === "fulfilled" ? [result.value] : []));
+      const failed = settled.find((result) => result.status === "rejected");
+      if (failed) throw failed.reason;
       if (
         this.disposed ||
         this.editor.isDestroyed ||
         !this.editor.isEditable ||
         request !== this.request
-      )
+      ) {
+        this.discardSaved(saved);
         return;
+      }
       const current = JSON.stringify({
         document: this.editor.getJSON(),
         selection: this.editor.getViewState().selection,
@@ -214,10 +220,34 @@ export class ClipboardHandler {
           "ASSET_SAVE_FAILED",
           "The document changed during upload. Insert the file again at the desired position.",
         );
-      this.apply({ blocks });
+      this.apply({ blocks: saved });
     } catch (error) {
+      // nothing of this paste is in the document: the files already stored are the host's to drop
+      this.discardSaved(saved);
       if (!this.disposed && !this.editor.isDestroyed && request === this.request)
         this.report(error);
+    }
+  }
+
+  private discardSaved(blocks: Block[]): void {
+    // Tells the host about files its `saveAsset` stored that the editor did not insert.
+    const { saveAsset, discardAsset } = this.editor.host;
+    if (!saveAsset || !discardAsset) return;
+    for (const block of blocks) {
+      const kind = block.type === "image" ? "image" : "file";
+      const src = String((kind === "image" ? block.attrs.src : block.attrs.url) ?? "");
+      const name = String((kind === "image" ? block.attrs.alt : block.attrs.name) ?? "");
+      try {
+        discardAsset({ src, name, kind });
+      } catch (error) {
+        this.report(
+          new GoTipeError(
+            "ASSET_SAVE_FAILED",
+            error instanceof Error ? error.message : String(error),
+            { src, cause: error },
+          ),
+        );
+      }
     }
   }
 
