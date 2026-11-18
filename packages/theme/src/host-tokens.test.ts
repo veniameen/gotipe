@@ -29,16 +29,25 @@ function declarations(css: string, selector: string): Record<string, string> {
 
 describe("host colours on a container reach the derived tokens", () => {
   const palette = read("tokens/palette.css");
-  it("resolves every palette alias again on the editor root", () => {
-    const root = declarations(palette, ':root,\n[data-theme="light"]');
-    const view = declarations(palette, "[data-gt-view]");
-    const aliases = Object.entries(root).filter(([, value]) => value.includes("var("));
-    expect(aliases.length).toBeGreaterThan(0);
-    for (const [name, value] of aliases) expect(view[name]).toBe(value);
-    expect(view["--gt-comment-soft"]).toBe("var(--gt-comment-tint)");
-    expect(view["--gt-ai-ghost"]).toBe("var(--gt-text-3)");
-    expect(view["--gt-check-fill"]).toBe("var(--gt-ink)");
-    expect(view["--gt-check-line"]).toBe("var(--gt-line-control)");
+  const sheets = ["base.css", "theme/review.css", "theme/panels.css", "theme/media.css"].map(read);
+  const derived: Record<string, string> = {
+    "--gt-comment-soft": "var(--gt-comment-tint)",
+    "--gt-ai-ghost": "var(--gt-text-3)",
+    "--gt-check-fill": "var(--gt-ink)",
+    "--gt-check-line": "var(--gt-line-control)",
+    "--gt-caption-color": "var(--gt-text-2)",
+    "--gt-image-ring-color": "var(--gt-line)",
+    "--gt-image-empty-bg": "var(--gt-sunken)",
+  };
+  it("leaves a derived token unset: its rule falls back to the base at the element", () => {
+    for (const [name, base] of Object.entries(derived)) {
+      expect(palette).not.toContain(`${name}:`);
+      expect(sheets.join("\n")).toContain(`var(${name}, ${base})`);
+      expect(sheets.join("\n")).not.toContain(`var(${name})`);
+    }
+  });
+  it("does not declare the palette's aliases again below the root: a host's own alias wins", () => {
+    expect(palette).not.toContain("[data-gt-view]");
   });
 });
 
@@ -82,10 +91,10 @@ describe("the document follows the Atlas and names its parts", () => {
     );
   });
   it("draws the task box with its own tokens, today's colours by default", () => {
-    expect(base).toContain("border: var(--gt-check-ring) solid var(--gt-check-line);");
-    expect(base).toContain("background: var(--gt-check-fill) var(--gt-check-mark)");
-    expect(tokens.shared["--gt-check-fill"]).toBe("var(--gt-ink)");
-    expect(tokens.shared["--gt-check-line"]).toBe("var(--gt-line-control)");
+    expect(base).toContain(
+      "border: var(--gt-check-ring) solid var(--gt-check-line, var(--gt-line-control));",
+    );
+    expect(base).toContain("background: var(--gt-check-fill, var(--gt-ink)) var(--gt-check-mark)");
   });
 });
 

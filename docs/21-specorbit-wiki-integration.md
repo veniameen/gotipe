@@ -234,10 +234,10 @@ if there is no `data-theme`).
 - View sizes (font size, line height, page margins) are set by the view itself on `[data-gt-view]`. Put your own
   values on `.gotipe-page .gotipe-block-editor`. A container up to 640 px wide sets smaller sizes on the editor's
   children, which win over yours: `narrow={false}` (`data-gt-narrow="off"` on the page) keeps yours at any width.
-- Tokens derived from others (`--gt-comment-soft` from `--gt-comment-tint`, `--gt-ai-ghost` from `--gt-text-3`,
-  `--gt-check-fill` from `--gt-ink`, `--gt-check-line` from `--gt-line-control`) are resolved again on
-  `[data-gt-view]`, so the base colours of the map below reach them. Set a derived token itself on
-  `.gotipe-page .gotipe-block-editor`.
+- Part colours (`--gt-comment-soft`, `--gt-ai-ghost`, `--gt-check-fill`, `--gt-check-line`, `--gt-caption-color`,
+  `--gt-image-ring-color`, `--gt-image-empty-bg`) are unset by default: their rules fall back to `--gt-comment-tint`,
+  `--gt-text-3`, `--gt-ink`, `--gt-line-control`, `--gt-text-2`, `--gt-line` and `--gt-sunken` where they are drawn,
+  so the base colours of the map below reach them. Set a part colour itself on any container.
 - Parts with their own tokens (defaults keep the shared look; the full table is in `theming.md`): the task box
   (`--gt-check-fill`, `--gt-check-line`, `--gt-check-mark`), the review card (`--gt-card-name-size`,
   `--gt-card-name-weight`, `--gt-card-button-size`), an insertion (`--gt-sug-ins-bar`, or a text underline with

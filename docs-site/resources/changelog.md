@@ -36,8 +36,8 @@ fingerprints. The Markdown written is the same byte for byte. New for custom vie
 
 ### @gotipe/theme
 
-- Palette aliases (`--gt-comment-soft`, `--gt-ai-ghost`, ...) follow base colours set on a
-  container; `data-gt-narrow="off"` switches off the narrow container sizes.
+- `--gt-comment-soft` and `--gt-ai-ghost` (and the new part colours) are unset by default and fall
+  back to their base colours where they are drawn, so base colours set on a container reach them; `data-gt-narrow="off"` switches off the narrow container sizes.
 - New tokens: `--gt-check-fill`, `--gt-check-line`, `--gt-card-name-size`,
   `--gt-card-name-weight`, `--gt-card-button-size`, `--gt-sug-ins-bar`,
   `--gt-sug-ins-underline` (and `-style`, `-thickness`, `-offset`), `--gt-sug-changed-bar`,
