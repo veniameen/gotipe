@@ -371,6 +371,14 @@ fn collaboration_history_joins_only_typing_marked_as_going_on() {
         .unwrap();
     editor.undo_collaboration().unwrap().unwrap();
     assert_eq!(text(&editor), "Hello the");
+    // The changes of an `editor.batch` after its first one go on with its step.
+    editor.apply(&typed(vec![insert(9, "1")], None)).unwrap();
+    editor
+        .apply(&typed(vec![delete(0, 6)], Some("group")))
+        .unwrap();
+    assert_eq!(text(&editor), "the1");
+    editor.undo_collaboration().unwrap().unwrap();
+    assert_eq!(text(&editor), "Hello the");
 }
 
 #[test]

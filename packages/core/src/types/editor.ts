@@ -180,6 +180,12 @@ export interface GoTipeEditor {
   on<K extends keyof EditorEvents>(event: K, handler: EditorEvents[K]): () => void;
   off<K extends keyof EditorEvents>(event: K, handler: EditorEvents[K]): void;
   emit<K extends keyof EditorEvents>(event: K, ...args: Parameters<EditorEvents[K]>): void;
+  /**
+   * Makes every change committed while `fn` runs one undo step; Redo restores all of it and
+   * Undo restores the selection from before it. Events are still emitted per transaction. A
+   * nested call joins the outer one; only what `fn` does before it returns is grouped.
+   */
+  batch(fn: () => void): void;
   undo(): boolean;
   redo(): boolean;
   mount(element: HTMLElement): void;

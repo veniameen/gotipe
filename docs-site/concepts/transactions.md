@@ -205,6 +205,31 @@ of its own, even one that inserts a character at the caret.
   changing text before it in the same block.
 
 To make several changes one undo step, put them in one transaction or one command chain.
+When an action needs several dispatches, because each one reads the document the previous
+one left, run them in `editor.batch(fn)`:
+
+```ts
+editor.batch(() => {
+  editor.chain().insertBlockAfter("paragraph").run();
+  const at = { blockId: editor.getViewState().blocks[1].id, offset: 0 };
+  editor.setSelection({ anchor: at, head: at });
+  editor.chain().setBlockType("blockquote").insertText("Quoted").run();
+});
+```
+
+- Every change committed while `fn` runs is one undo step. Undo restores the document and
+  the selection from before the first of them; Redo restores all of them.
+- Each dispatch is still a transaction of its own: filters run and `transaction` and
+  `update` are emitted for each, and a failed or cancelled one changes nothing, as outside a
+  batch. The changes before and after it stay and remain one step. If `fn` throws, the
+  batch ends, the error reaches the caller and what was committed stays one step.
+- A `batch` inside `fn` is part of the outer one.
+- The typing step ends when the batch starts and when it ends, so typing before and after
+  it is a step of its own. Undo, Redo and `setContent` inside `fn` end the group: the
+  changes after them start a new one.
+- Only what `fn` does before it returns is grouped: a change after an `await` or in a
+  callback is a step of its own.
+- With collaboration, the batch is one step of the CRDT history, the same as without it.
 
 ## Read-only
 

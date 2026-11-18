@@ -20,12 +20,13 @@ pub(crate) fn now_ms() -> u64 {
 /// `"insert"` for text typed at the caret, `"delete"` for text deleted with Backspace or Delete.
 /// It decides that by one rule with and without collaboration (`typing-group.ts` in
 /// `@gotipe/core`): a pause of 500 ms, a selection change, another block, a switch between
-/// typing and deleting and any other change end the step. Only a marked transaction joins the
+/// typing and deleting and any other change end the step. `"group"` marks a change after the
+/// first one of an `editor.batch`, which is one undo step. Only a marked transaction joins the
 /// undo step before it, within the history's 500 ms window; any other one starts a new step.
 pub(crate) fn continues_typing(metadata: &HashMap<String, AttrValue>) -> bool {
     matches!(
         metadata.get("typing"),
-        Some(AttrValue::String(kind)) if kind == "insert" || kind == "delete"
+        Some(AttrValue::String(kind)) if kind == "insert" || kind == "delete" || kind == "group"
     )
 }
 impl WasmEditor {

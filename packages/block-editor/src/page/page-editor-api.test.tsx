@@ -219,7 +219,7 @@ describe("PageEditor focus and insertion from the title", () => {
     expect(blocks[0]).toMatchObject({ id: title.id, type: "heading", attrs: { level: 1 } });
     expect(blocks[1]).toMatchObject({ type: "heading", attrs: { level: 2 } });
     expect(ref.current!.getTitle()).toBe("Notes");
-      // one action, one Cmd+Z: the paragraph it went into goes too, the caret is back in the title
+    // one action, one Cmd+Z: the paragraph it went into goes too, the caret is back in the title
     act(() => {
       expect(editor.undo()).toBe(true);
     });
@@ -248,7 +248,7 @@ describe("PageEditor focus and insertion from the title", () => {
       "paragraph",
       "divider",
     ]);
-      act(() => {
+    act(() => {
       expect(editor.undo()).toBe(true);
     });
     expect(editor.getViewState().blocks.map((block) => block.type)).toEqual([
