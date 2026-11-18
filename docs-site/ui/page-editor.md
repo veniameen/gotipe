@@ -79,6 +79,7 @@ Details of the codec are in [Markdown](/docs/conversion/markdown).
 | Prop | Type | Default | Description |
 |---|---|---|---|
 | `markdown` | `string` | — | The file's text. A new value that differs from the last draft replaces the document. |
+| `undoableReplace` | `boolean` | `true` | Whether replacing the document (a new `markdown`, `setMarkdown`) can be undone. `false` clears the undo history instead, for example while you show an earlier version of the file. |
 | `onChange` | `(markdown: string) => void` | — | The draft after edits, at most once a frame. `ref.flush()` sends a pending draft at once. |
 | `readOnly` | `boolean` | `false` | No input; links open on a plain click; task boxes are disabled. |
 | `host` | `EditorHost` | — | Assets, links and errors; see below. |
@@ -114,7 +115,7 @@ among them.
 | `editor` | The `GoTipeEditor`, or `null` before it exists. |
 | `getMarkdown()` | The current document as Markdown. |
 | `flush()` | Send a draft not yet emitted to `onChange` now and return the current Markdown. Call it before saving: `onChange` otherwise comes on the next frame. |
-| `setMarkdown(text)` | Replace the document with `text` as an external edit (caret, focus and scroll kept; undo takes it back), even when `text` equals the last `markdown` you passed. `onChange` is not called for it; a draft not yet emitted is dropped, so call `flush()` first to keep it. |
+| `setMarkdown(text, options?)` | Replace the document with `text` as an external edit (caret, focus and scroll kept; undo takes it back), even when `text` equals the last `markdown` you passed. `onChange` is not called for it; a draft not yet emitted is dropped, so call `flush()` first to keep it. `{ addToHistory: false }` clears the undo history instead (default: `undoableReplace`). |
 | `focus(position?)` | Focus the page, optionally at `"start"` or `"end"`. |
 | `insertBlock(kind)` | Insert a block of a `PageBlockKind` at the caret, for your own toolbar. |
 | `getTitle()` | Text of the leading `# heading`, or `null` when there is none or it is empty. |

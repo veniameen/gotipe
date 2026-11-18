@@ -202,6 +202,48 @@ describe("PageEditor focus and insertion from the title", () => {
   });
 });
 
+describe("PageEditor replacement history", () => {
+  it("undoableReplace={false}: a shown version and the way back are not undo steps", async () => {
+    const current = "# Notes\n\nToday.\n";
+    const old = "# Notes\n\nLast week.\n";
+    const { ref, editor, draw } = await mount({ markdown: current, undoableReplace: false });
+    await act(async () => {
+      draw({ markdown: old, undoableReplace: false });
+      await wait(20);
+    });
+    expect(ref.current!.getMarkdown()).toBe(old);
+    await act(async () => {
+      draw({ markdown: current, undoableReplace: false });
+      await wait(20);
+    });
+    act(() => {
+      editor.undo();
+    });
+    expect(ref.current!.getMarkdown()).toBe(current);
+  });
+
+  it("by default a replacement is undoable; setMarkdown can opt out per call", async () => {
+    const current = "# Notes\n\nToday.\n";
+    const { ref, editor } = await mount({ markdown: current });
+    await act(async () => {
+      ref.current!.setMarkdown("# Notes\n\nNew.\n");
+      await wait(20);
+    });
+    act(() => {
+      editor.undo();
+    });
+    expect(ref.current!.getMarkdown()).toBe(current);
+    await act(async () => {
+      ref.current!.setMarkdown("# Notes\n\nOther.\n", { addToHistory: false });
+      await wait(20);
+    });
+    act(() => {
+      editor.undo();
+    });
+    expect(ref.current!.getMarkdown()).toBe("# Notes\n\nOther.\n");
+  });
+});
+
 describe("PageEditor head, narrow sizes and review layout", () => {
   it("renders the icon and the header above the title, outside the Markdown", async () => {
     const { ref } = await mount({

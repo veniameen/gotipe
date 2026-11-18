@@ -21,8 +21,9 @@ export interface PageEditorHandle {
    * Replaces the document with `text` as an external edit (focus, caret and scroll kept, the
    * change goes into undo), even when `text` equals the last value of `markdown`. A draft not yet
    * emitted is dropped: call `flush()` first to keep it. `onChange` is not called for `text`.
+   * `addToHistory: false` clears the undo history instead (default: `undoableReplace`).
    */
-  setMarkdown(text: string): void;
+  setMarkdown(text: string, options?: { addToHistory?: boolean }): void;
   focus(position?: "start" | "end"): void;
   /** Inserts a block at the caret (the toolbar's “blocks” and “image” buttons). */
   insertBlock(kind: PageBlockKind): void;
@@ -55,6 +56,11 @@ export interface PageSlashMenu {
 export interface PageEditorProps {
   /** The file's text. A new value that differs from the last emitted draft replaces the document, keeping focus, caret and scroll. */
   markdown: string;
+  /**
+   * Whether replacing the document (a new `markdown`, `setMarkdown`) can be undone. Default true;
+   * false clears the undo history instead, e.g. while the host shows an earlier version of the file.
+   */
+  undoableReplace?: boolean;
   /**
    * The draft changed: called once a frame after edits (debounce the save in the host); call
    * `flush()` on the handle to get a pending draft at once.

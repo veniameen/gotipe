@@ -6,7 +6,7 @@ export interface PageDraft {
   /** Emits a draft not yet sent to `onChange` now, and returns the current Markdown. */
   flush(): string;
   /** Replaces the document with `text`, even when it equals the last value of `markdown`. */
-  setMarkdown(text: string): void;
+  setMarkdown(text: string, options?: { addToHistory?: boolean }): void;
 }
 
 /**
@@ -19,6 +19,8 @@ export function usePageDraft(
   session: MarkdownSession,
   markdown: string,
   onChange: MutableRefObject<((markdown: string) => void) | undefined>,
+  /** Whether a replacement goes into undo (true) or clears the history (false). */
+  undoable = true,
 ): PageDraft {
   const frame = useRef<number | null>(null);
   /** Text given to `setMarkdown` before the editor existed. */
@@ -27,6 +29,8 @@ export function usePageDraft(
   editorRef.current = editor;
   const markdownRef = useRef(markdown);
   markdownRef.current = markdown;
+  const undoableRef = useRef(undoable);
+  undoableRef.current = undoable;
 
   const cancel = useCallback(() => {
     if (frame.current === null) return;
@@ -64,11 +68,12 @@ export function usePageDraft(
     const text = pending.current ?? markdown;
     pending.current = null;
     if (text === session.lastText) return;
-    session.load(editor, text, true);
+    session.load(editor, text, true, undoableRef.current);
   }, [editor, session, markdown]);
 
   const setMarkdown = useCallback(
-    (text: string) => {
+    (text: string, options?: { addToHistory?: boolean }) => {
+      const history = options?.addToHistory ?? undoableRef.current;
       const current = editorRef.current;
       if (!current) {
         pending.current = text;
@@ -76,7 +81,7 @@ export function usePageDraft(
       }
       // the host replaces the document: a draft it has not been sent is dropped (flush() first)
       cancel();
-      session.load(current, text, true);
+      session.load(current, text, true, history);
     },
     [session, cancel],
   );

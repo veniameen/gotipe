@@ -26,7 +26,8 @@ fingerprints. The Markdown written is the same byte for byte. New for custom vie
 - `PageEditor` props: `icon` and `header` (a page head above the title), `slashMenu` (commands,
   groups and opt-in descriptions of the `/` menu), `reviewLayout` (`auto`, `inline`, `margin`)
   `narrow` (keep the wide or the host's sizes in a narrow container) and `media`
-  (`{ links, inlineErrors }` for the image and file placeholders). `BlockEditor` gets
+  (`{ links, inlineErrors }` for the image and file placeholders), `undoableReplace` (load an
+  external text without an undo step). `BlockEditor` gets
   `slashGroups`, `slashDescriptions`, `narrow` and `media`; `SlashMenu` gets `descriptions`.
 - Fixes: a host `resolveAsset` returning `null` shows the asset as unavailable instead of
   requesting its raw path; `autoFocus` comes a frame after `onReady`; `insertBlock` from the page

@@ -104,10 +104,10 @@ export class MarkdownSession {
   }
 
   /** Loads `text` into `editor`. `external`: keep selection, focus and scroll. */
-  load(editor: GoTipeEditor, text: string, external: boolean): void {
+  load(editor: GoTipeEditor, text: string, external: boolean, history = external): void {
     const previous = external ? (editor.getJSON() as Doc) : undefined;
     const doc = this.parse(text, previous);
-    editor.setContent(doc, { preserveSelection: external, addToHistory: external });
+    editor.setContent(doc, { preserveSelection: external, addToHistory: history });
     this.revision += 1;
   }
 
