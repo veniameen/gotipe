@@ -13,6 +13,7 @@ import { EmbedBlock } from "./embed-block";
 import { CalloutBlock, ToggleBlock } from "./interactive-blocks";
 import { MathBlock } from "./math-block";
 import { MediaBlock } from "./media-view";
+import { holdsBlock, isPlainTree } from "./plain-blocks";
 import {
   BlockContent,
   blockKey,
@@ -173,7 +174,37 @@ interface BlockComponentProps {
   parentType?: string;
 }
 
+/**
+ * A block and everything under it. A block that only built-in views draw (`isPlainTree`) is
+ * drawn again only when it is a new object, the caret enters or leaves it, or the editor
+ * becomes read-only or editable: typing in one block of a long document does not redraw the
+ * others. A block with a custom view or a legacy renderer anywhere under it is drawn every time.
+ */
 export function BlockComponent(props: BlockComponentProps) {
+  const views = useContext(BlockViewsContext);
+  const legacy = useContext(LegacyRendererContext);
+  const { block, editor, selectedBlockId, parentType } = props;
+  if (legacy || !isPlainTree(block, views)) return <BlockRender {...props} />;
+  return (
+    <PlainBlock
+      block={block}
+      editor={editor}
+      parentType={parentType}
+      selectedBlockId={holdsBlock(block, selectedBlockId) ? selectedBlockId : ""}
+      editable={editor.isEditable}
+    />
+  );
+}
+
+/** `editable` is not read: a change of it draws the block again, which reads the editor. */
+const PlainBlock = React.memo(function PlainBlock({
+  editable: _editable,
+  ...props
+}: BlockComponentProps & { editable: boolean }) {
+  return <BlockRender {...props} />;
+});
+
+function BlockRender(props: BlockComponentProps) {
   const { block, editor, selectedBlockId, parentType } = props;
   const views = useContext(BlockViewsContext);
   const legacy = useContext(LegacyRendererContext);

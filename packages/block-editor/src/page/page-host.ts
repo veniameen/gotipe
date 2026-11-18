@@ -19,8 +19,8 @@ export function createPageHost(
       if (!save) return saveAsset({}, file, info.kind);
       return save(file, info);
     },
-    // the host's null means “unavailable”: the image shows its failed state, nothing is fetched
     resolveAsset: (src) => {
+      // the host's null means “unavailable”: the image shows its failed state, nothing is fetched
       const resolve = host.current?.resolveAsset;
       return resolve ? resolve(src) : src;
     },

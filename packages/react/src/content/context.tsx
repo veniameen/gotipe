@@ -25,7 +25,17 @@ export interface BlockViewProps {
   children: React.ReactNode;
 }
 
-export type BlockViewComponent = (props: BlockViewProps) => React.ReactNode;
+/**
+ * A custom block view. A view is drawn again on every change of the editor, since it may read
+ * the editor as it draws. A view that draws only from its props, hooks and contexts can say so
+ * with `pure`: then its block is drawn again only when the block is a new object, the caret
+ * enters or leaves it, or the editor becomes read-only or editable. Whatever else such a view
+ * shows it must subscribe to (`useEditorState`). Its `selectedBlockId` names the caret's block
+ * only while that is its block or a block under it, and is `""` otherwise.
+ */
+export type BlockViewComponent = ((props: BlockViewProps) => React.ReactNode) & {
+  pure?: boolean;
+};
 export type BlockViews = Partial<Record<string, BlockViewComponent>>;
 
 export const BlockViewsContext = createContext<BlockViews | null>(null);

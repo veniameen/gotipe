@@ -61,12 +61,15 @@ function withoutPlaceholders(blocks: DocBlock[]): DocBlock[] {
  * A page always starts with a title (H1). When the file has none, an empty
  * synthetic title block is shown and left out of the file until typed in.
  * An image or a file placeholder (no source yet) is left out of the file too.
+ * `fingerprints` keeps those of the view's top-level blocks: an edit fingerprints only what it
+ * changed.
  */
 export class MarkdownSession {
   private snapshot: MarkdownSnapshot | undefined;
   private syntheticTitleId: string | null = null;
   private revision = 0;
   private cache: SerializedPage | null = null;
+  private readonly fingerprints = new WeakMap<object, string>();
   /** Last text loaded from the host or emitted to it. */
   lastText: string | null = null;
 
@@ -117,7 +120,10 @@ export class MarkdownSession {
   /** The current document as Markdown, plus the text ⇄ block map. */
   serialize(editor: GoTipeEditor): SerializedPage {
     if (this.cache && this.cache.revision === this.revision) return this.cache;
-    const doc = editor.getJSON() as Doc;
+    // The view's blocks are never changed in place and an unchanged block keeps its object, so
+    // what the writer knows of a block (`fingerprints`) holds between edits. The writer reads
+    // the document's fields only: decorations and the view's own flags do not reach the text.
+    const doc = editor.getViewState() as unknown as Doc;
     const blocks = [...doc.blocks];
     if (
       this.syntheticTitleId &&
@@ -129,6 +135,7 @@ export class MarkdownSession {
     const { text, map, snapshot } = serializeMarkdown(
       { version: doc.version, blocks: withoutPlaceholders(blocks) } as never,
       this.snapshot,
+      { fingerprints: this.fingerprints },
     );
     this.snapshot = snapshot;
     this.cache = { text, map, revision: this.revision };
