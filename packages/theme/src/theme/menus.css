@@ -117,7 +117,7 @@
 .gotipe-slash-menu-item:has(.gotipe-slash-menu-item-description) {
   height: auto;
   min-height: var(--gt-menu-item-h);
-  padding-block: var(--gt-space-1);
+  padding-block: var(--gt-menu-pad);
 }
 .gotipe-slash-menu-item-meta {
   flex: none;

@@ -84,6 +84,23 @@
   color: var(--gt-text-3);
   font-size: var(--gt-ui-small);
 }
+/* a card's delete: a quiet icon at the end of its head, red under the pointer; it keeps the head as
+   tall as the avatar */
+.gotipe-card-delete {
+  display: inline-grid;
+  flex: none;
+  place-items: center;
+  width: var(--gt-handle-w);
+  height: var(--gt-handle-h);
+  margin-block: calc((var(--gt-avatar) - var(--gt-handle-h)) / 2);
+  margin-inline-start: auto;
+  border-radius: var(--gt-radius-control);
+  color: var(--gt-text-2);
+}
+.gotipe-card-delete.is-hover {
+  background: var(--gt-danger-tint);
+  color: var(--gt-danger);
+}
 .gotipe-card-actions {
   display: flex;
   justify-content: flex-end;

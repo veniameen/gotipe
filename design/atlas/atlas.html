@@ -3102,6 +3102,29 @@ ol.gotipe-list.is-three-digits > li::before {
 .gotipe-menu-item.is-model > .gt-icon {
   color: var(--gt-accent);
 }
+/* a host may give the "/" menu's rows a description: a quiet second line, one line with an
+   ellipsis; a row that has one grows to hold it */
+.gotipe-menu-item.has-description {
+  height: auto;
+  min-height: var(--gt-menu-item-h);
+  padding-block: var(--gt-menu-pad);
+}
+.gotipe-menu-item > .gotipe-menu-body {
+  display: grid;
+  flex: 1;
+  min-width: 0;
+}
+.gotipe-menu-body > .gotipe-menu-text,
+.gotipe-menu-description {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.gotipe-menu-description {
+  color: var(--gt-text-2);
+  font-size: var(--gt-ui-small);
+  line-height: var(--gt-ui-small-leading);
+}
 .gotipe-menu-empty {
   margin: 0;
   padding: var(--gt-menu-label-pad);
@@ -3701,6 +3724,23 @@ ol.gotipe-list.is-three-digits > li::before {
 .gotipe-change-label {
   color: var(--gt-text-3);
   font-size: var(--gt-ui-small);
+}
+/* a card's delete: a quiet icon at the end of its head, red under the pointer; it keeps the head as
+   tall as the avatar */
+.gotipe-card-delete {
+  display: inline-grid;
+  flex: none;
+  place-items: center;
+  width: var(--gt-handle-w);
+  height: var(--gt-handle-h);
+  margin-block: calc((var(--gt-avatar) - var(--gt-handle-h)) / 2);
+  margin-inline-start: auto;
+  border-radius: var(--gt-radius-control);
+  color: var(--gt-text-2);
+}
+.gotipe-card-delete.is-hover {
+  background: var(--gt-danger-tint);
+  color: var(--gt-danger);
 }
 .gotipe-card-actions {
   display: flex;
@@ -11019,7 +11059,8 @@ editor<span class="tk-pun">.</span>on<span class="tk-pun">(</span><span class="t
     <h2 class="at-figure-title">The “/” menu</h2>
     <p class="at-caption">
       Groups with a quiet label, on the right the block’s Markdown shortcut, the chosen row on a
-      fill. Search highlights the match; an empty result is one line. Items have no descriptions.
+      fill. Search highlights the match; an empty result is one line. Items have no descriptions by
+      default; a host can turn them on: a quiet second line under the title.
     </p>
   </figcaption>
   <section class="at-stage" data-w="480">
@@ -11032,6 +11073,22 @@ editor<span class="tk-pun">.</span>on<span class="tk-pun">(</span><span class="t
         <span class="gotipe-anchor"
           ><span class="gotipe-query">/</span><span class="gotipe-caret"></span
           ><span class="gotipe-overlay gotipe-menu is-wide" data-place="below"><span class="gotipe-menu-scroll"><span class="gotipe-menu-group"><span class="gotipe-menu-label">Basic</span><span class="gotipe-menu-item is-selected"><svg class="gt-icon"><use href="#i-text" /></svg><span class="gotipe-menu-text">Text</span></span><span class="gotipe-menu-item"><svg class="gt-icon"><use href="#i-h1" /></svg><span class="gotipe-menu-text">Heading 1</span><span class="gotipe-key">#</span></span><span class="gotipe-menu-item"><svg class="gt-icon"><use href="#i-h2" /></svg><span class="gotipe-menu-text">Heading 2</span><span class="gotipe-key">##</span></span><span class="gotipe-menu-item"><svg class="gt-icon"><use href="#i-h3" /></svg><span class="gotipe-menu-text">Heading 3</span><span class="gotipe-key">###</span></span></span><span class="gotipe-menu-group"><span class="gotipe-menu-label">Lists</span><span class="gotipe-menu-item"><svg class="gt-icon"><use href="#i-list" /></svg><span class="gotipe-menu-text">Bulleted list</span><span class="gotipe-key">-</span></span><span class="gotipe-menu-item"><svg class="gt-icon"><use href="#i-list-num" /></svg><span class="gotipe-menu-text">Numbered list</span><span class="gotipe-key">1.</span></span><span class="gotipe-menu-item"><svg class="gt-icon"><use href="#i-todo" /></svg><span class="gotipe-menu-text">To-do list</span><span class="gotipe-key">[]</span></span></span><span class="gotipe-menu-group"><span class="gotipe-menu-label">Blocks</span><span class="gotipe-menu-item"><svg class="gt-icon"><use href="#i-quote" /></svg><span class="gotipe-menu-text">Quote</span><span class="gotipe-key">&gt;</span></span><span class="gotipe-menu-item"><svg class="gt-icon"><use href="#i-callout" /></svg><span class="gotipe-menu-text">Callout</span></span><span class="gotipe-menu-item"><svg class="gt-icon"><use href="#i-toggle" /></svg><span class="gotipe-menu-text">Toggle</span></span><span class="gotipe-menu-item"><svg class="gt-icon"><use href="#i-code" /></svg><span class="gotipe-menu-text">Code</span><span class="gotipe-key">```</span></span><span class="gotipe-menu-item"><svg class="gt-icon"><use href="#i-table" /></svg><span class="gotipe-menu-text">Table</span></span><span class="gotipe-menu-item"><svg class="gt-icon"><use href="#i-divider" /></svg><span class="gotipe-menu-text">Divider</span><span class="gotipe-key">---</span></span></span><span class="gotipe-menu-group"><span class="gotipe-menu-label">Media</span><span class="gotipe-menu-item"><svg class="gt-icon"><use href="#i-image" /></svg><span class="gotipe-menu-text">Image</span></span><span class="gotipe-menu-item"><svg class="gt-icon"><use href="#i-file" /></svg><span class="gotipe-menu-text">File</span></span></span><span class="gotipe-menu-group"><span class="gotipe-menu-label">AI</span><span class="gotipe-menu-item is-model"><svg class="gt-icon"><use href="#i-sparkle" /></svg><span class="gotipe-menu-text">Continue writing</span></span><span class="gotipe-menu-item is-model"><svg class="gt-icon"><use href="#i-sparkle" /></svg><span class="gotipe-menu-text">Ask AI</span></span></span></span></span></span
+        >
+      </p>
+    </div>
+  </article>
+</div>
+</section>
+  <section class="at-stage" data-w="480">
+<p class="at-stage-label">with descriptions (host option)</p>
+<div class="at-frame gotipe-root" data-gt-view="notion" data-frame="slash-descriptions" data-w="480" data-min="480">
+<article class="gotipe-page is-slice" lang="en">
+    <div class="gotipe-doc">
+      <h3>Rollout order</h3>
+      <p>
+        <span class="gotipe-anchor"
+          ><span class="gotipe-query">/</span><span class="gotipe-caret"></span
+          ><span class="gotipe-overlay gotipe-menu is-wide" data-place="below"><span class="gotipe-menu-group"><span class="gotipe-menu-label">Basic</span><span class="gotipe-menu-item has-description is-selected"><svg class="gt-icon"><use href="#i-text" /></svg><span class="gotipe-menu-body"><span class="gotipe-menu-text">Text</span><span class="gotipe-menu-description">Plain text of a paragraph</span></span></span><span class="gotipe-menu-item has-description"><svg class="gt-icon"><use href="#i-h1" /></svg><span class="gotipe-menu-body"><span class="gotipe-menu-text">Heading 1</span><span class="gotipe-menu-description">A section heading</span></span><span class="gotipe-key">#</span></span><span class="gotipe-menu-item has-description"><svg class="gt-icon"><use href="#i-h2" /></svg><span class="gotipe-menu-body"><span class="gotipe-menu-text">Heading 2</span><span class="gotipe-menu-description">A subsection heading</span></span><span class="gotipe-key">##</span></span></span><span class="gotipe-menu-group"><span class="gotipe-menu-label">Lists</span><span class="gotipe-menu-item has-description"><svg class="gt-icon"><use href="#i-list" /></svg><span class="gotipe-menu-body"><span class="gotipe-menu-text">Bulleted list</span><span class="gotipe-menu-description">Items marked with a dot</span></span><span class="gotipe-key">-</span></span><span class="gotipe-menu-item has-description"><svg class="gt-icon"><use href="#i-list-num" /></svg><span class="gotipe-menu-body"><span class="gotipe-menu-text">Numbered list</span><span class="gotipe-menu-description">Steps in order, each with its number</span></span><span class="gotipe-key">1.</span></span><span class="gotipe-menu-item has-description"><svg class="gt-icon"><use href="#i-todo" /></svg><span class="gotipe-menu-body"><span class="gotipe-menu-text">To-do list</span><span class="gotipe-menu-description">Tasks with a box to tick when they are done</span></span><span class="gotipe-key">[]</span></span></span></span></span
         >
       </p>
     </div>
@@ -11514,7 +11571,8 @@ editor<span class="tk-pun">.</span>on<span class="tk-pun">(</span><span class="t
     <p class="at-caption">
       An insertion is underlined in the author's color, a deletion is struck through. Above the page:
       who is editing, how many are waiting, "Accept all". The card sits by the text: the reason and
-      two answers; a stale one has only "Reject".
+      two answers; a stale one has only "Reject". A comment's card can be deleted from the end of its
+      head.
     </p>
   </figcaption>
   <section class="at-stage" data-w="1024">
@@ -11601,7 +11659,7 @@ editor<span class="tk-pun">.</span>on<span class="tk-pun">(</span><span class="t
         <div class="gotipe-card-actions"><span class="gotipe-button">Reject</span></div>
       </div>
       <div class="gotipe-card">
-        <div class="gotipe-comment-head"><span class="gotipe-lane" data-person="3"><svg class="gt-icon"><use href="#i-sparkle" /></svg></span><span class="gotipe-comment-author">AI</span><span class="gotipe-comment-time">Waiting for your reply</span></div>
+        <div class="gotipe-comment-head"><span class="gotipe-lane" data-person="3"><svg class="gt-icon"><use href="#i-sparkle" /></svg></span><span class="gotipe-comment-author">AI</span><span class="gotipe-comment-time">Waiting for your reply</span><span class="gotipe-card-delete"><svg class="gt-icon"><use href="#i-trash" /></svg></span></div>
         <p class="gotipe-comment-body">Is the 0.1% threshold of all edits or only of offline edits?</p>
         <div class="gotipe-reply">
           <span class="gotipe-field"><span class="gotipe-field-placeholder">Reply…</span></span>
