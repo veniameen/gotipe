@@ -217,7 +217,13 @@ const PageEditorInner = forwardRef<PageEditorHandle, PageEditorProps>(
 
     // The draft goes out once a frame after edits, or at once on `flush()`. A new `onReady` from
     // the host does not run this again: the pending draft stays, and so does the caret.
-    const draft = usePageDraft(editor, session, markdown, onChangeRef);
+    const draft = usePageDraft(
+      editor,
+      session,
+      markdown,
+      onChangeRef,
+      props.undoableReplace ?? true,
+    );
     // `autoFocus` waits a frame: what the host subscribes to in `onReady`, or in the render that
     // `onReady` causes, sees the first focus and selection.
     // Under StrictMode the effect runs twice: the second run schedules the focus again.

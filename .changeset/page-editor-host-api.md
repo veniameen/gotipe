@@ -16,3 +16,5 @@
 - `reviewLayout: "auto" | "inline" | "margin"` (default `"auto"`, today's width rule).
 - `narrow={false}` (also on `BlockEditor`) keeps the wide view sizes, or the host's own, in a
   container up to 640 px wide.
+- `undoableReplace={false}` (and `setMarkdown(text, { addToHistory: false })`) loads an external
+  text without an undo step: the history is cleared, e.g. while the host shows an earlier version.
