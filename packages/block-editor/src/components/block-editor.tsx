@@ -1,7 +1,8 @@
 import { type BlockViews, Editor } from "@gotipe/react";
 import type React from "react";
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { AtomUI } from "../atoms/atom-ui";
+import { useToolbarFollow } from "../interaction/use-toolbar-follow";
 import { useToolbarHover } from "../interaction/use-toolbar-hover";
 import { type DragPoint, useTouchDrag } from "../interaction/use-touch-drag";
 import { handleRail, inHandleReach } from "../text/direction";
@@ -124,35 +125,7 @@ function BlockEditorView({
     });
   }, [editor, hideToolbarNow]);
 
-  useLayoutEffect(() => {
-    const root = containerRef.current;
-    if (!root || !hoveredToolbarTarget || !editor) return;
-    const update = () => {
-      const block = getBlockElById(root, hoveredToolbarTarget.anchorBlockId);
-      const rail = block && handleRail(root, block, getToolbarRailLeft);
-      if (!block || !rail) return hideToolbarNow();
-      const container = root.getBoundingClientRect();
-      const line = getBlockFirstLineMetrics(block);
-      const next = { top: line.top - container.top + line.height / 2, ...rail };
-      setToolbarPos((previous) =>
-        previous?.top === next.top && previous.left === next.left && previous.right === next.right
-          ? previous
-          : next,
-      );
-    };
-    const observer = new ResizeObserver(update);
-    observer.observe(root);
-    const unsubscribe = editor.on("viewStateChange", update);
-    window.addEventListener("resize", update);
-    window.addEventListener("scroll", update, true);
-    update();
-    return () => {
-      observer.disconnect();
-      unsubscribe();
-      window.removeEventListener("resize", update);
-      window.removeEventListener("scroll", update, true);
-    };
-  }, [editor, hoveredToolbarTarget, hideToolbarNow, setToolbarPos]);
+  useToolbarFollow(editor, containerRef, hoveredToolbarTarget, hideToolbarNow, setToolbarPos);
 
   // Track hovered block for floating toolbar
   const handleMouseMove = useCallback(
