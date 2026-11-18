@@ -332,6 +332,19 @@ li.gotipe-sug-block-ins > input[type="checkbox"] {
   background: var(--gt-fill-2);
   color: var(--gt-text);
 }
+/* the other answer: quiet beside the main one, a fill when it is the only one (Atlas frame 14:
+   a stale proposal has only "Reject") */
+.gotipe-btn-secondary {
+  background: transparent;
+  color: var(--gt-text-2);
+}
+.gotipe-btn-secondary:only-child {
+  background: var(--gt-fill-2);
+  color: var(--gt-text);
+}
+.gotipe-btn-secondary:only-child:hover:not(:disabled) {
+  background: var(--gt-fill-3);
+}
 .gotipe-btn-primary {
   background: var(--gt-ink);
   color: var(--gt-ink-text);
