@@ -30,6 +30,8 @@ export { useResolvedAsset, saveAssetWithHost, isAbsoluteUrl } from "./host-asset
 // The editing image and file blocks live in `@gotipe/react/media`.
 export { MediaBlocksContext } from "./content/media-blocks";
 export type { MediaBlockProps, MediaBlocks } from "./content/media-blocks";
+export { MediaOptionsContext, useMediaOptions } from "./media-options";
+export type { MediaOptions, ResolvedMediaOptions } from "./media-options";
 
 export { TableBlock } from "./content/blocks";
 export {

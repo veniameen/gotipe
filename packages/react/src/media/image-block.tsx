@@ -4,6 +4,7 @@ import { usePhantom } from "../content/context";
 import { useMissingNaturalWidth } from "../content/natural-width";
 import { useResolvedAsset } from "../host-assets";
 import { useGoTipeI18n } from "../i18n-context";
+import { useMediaOptions } from "../media-options";
 import { useFloatingPosition } from "../use-floating-position";
 import { downloadAsset } from "./download";
 import { ImageToolbarIcon, MediaGlyph } from "./icons";
@@ -25,6 +26,7 @@ export function ImageBlock({
   const width = block.attrs.width as number | undefined;
   const caption = (block.attrs.caption as string) || "";
   const i18n = useGoTipeI18n();
+  const { inlineErrors } = useMediaOptions();
   const { url: displaySrc, failed: assetFailed } = useResolvedAsset(editor, src);
   // The browser could not show this source: the block shows its failed state (Atlas frame 17)
   // until the source changes or the reader retries.
@@ -130,10 +132,10 @@ export function ImageBlock({
   const clipboardFailure = useCallback(
     (error: unknown) => {
       const message = error instanceof Error ? error.message : i18n.t("media.clipboardUnavailable");
-      setActionError(message);
+      if (inlineErrors) setActionError(message);
       editor.reportError(new GoTipeError("CLIPBOARD_FAILED", message));
     },
-    [editor, i18n],
+    [editor, i18n, inlineErrors],
   );
 
   const copyImage = useCallback(async () => {

@@ -1,9 +1,10 @@
-import { type BlockView, type GoTipeEditor, toSafeHref } from "@gotipe/core";
+import { type BlockView, type GoTipeEditor, GoTipeError, toSafeHref } from "@gotipe/core";
 import type React from "react";
 import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { usePhantom } from "../content/context";
 import { useResolvedAsset } from "../host-assets";
 import { useGoTipeI18n } from "../i18n-context";
+import { useMediaOptions } from "../media-options";
 import { useFloatingPosition } from "../use-floating-position";
 import { downloadAsset } from "./download";
 import { MediaGlyph, PlaceholderFileIcon } from "./icons";
@@ -16,6 +17,7 @@ export function FileBlock({
   rootProps,
 }: { block: BlockView; editor: GoTipeEditor; rootProps: Record<string, unknown> }) {
   const i18n = useGoTipeI18n();
+  const { links, inlineErrors } = useMediaOptions();
   const linkErrorId = useId();
   const url = (block.attrs.url as string) || "";
   const { url: displayUrl, failed: assetFailed } = useResolvedAsset(editor, url);
@@ -79,7 +81,13 @@ export function FileBlock({
       e.preventDefault();
       const normalized = normalizeHttpUrl(linkUrlValue);
       if (!normalized) {
-        setLinkError(i18n.t("media.invalidFileUrl"));
+        const message = i18n.t("media.invalidFileUrl");
+        setLinkError(message);
+        // the field says it itself; without that text the host is told instead
+        if (!inlineErrors)
+          editor.reportError(
+            new GoTipeError("LINK_BLOCKED", message, { url: linkUrlValue, kind: "file" }),
+          );
         return;
       }
       const resolvedName =
@@ -91,7 +99,7 @@ export function FileBlock({
         mime_type: "",
       });
     },
-    [applyFile, linkNameValue, linkUrlValue, i18n],
+    [applyFile, linkNameValue, linkUrlValue, i18n, editor, inlineErrors],
   );
 
   const handleDrop = useCallback(
@@ -219,23 +227,25 @@ export function FileBlock({
                 <MediaGlyph kind="upload" />
                 {i18n.t(uploading ? "media.uploading" : "media.upload")}
               </button>
-              <button
-                type="button"
-                className="gotipe-media-button"
-                aria-label={i18n.t("media.addFileByLink")}
-                aria-expanded={isInsertPanelOpen}
-                disabled={readOnly}
-                onMouseDown={(e) => e.preventDefault()}
-                onClick={() => {
-                  setIsInsertPanelOpen((open) => !open);
-                }}
-              >
-                <MediaGlyph kind="link" />
-                {i18n.t("media.byLink")}
-              </button>
+              {links && (
+                <button
+                  type="button"
+                  className="gotipe-media-button"
+                  aria-label={i18n.t("media.addFileByLink")}
+                  aria-expanded={isInsertPanelOpen}
+                  disabled={readOnly}
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={() => {
+                    setIsInsertPanelOpen((open) => !open);
+                  }}
+                >
+                  <MediaGlyph kind="link" />
+                  {i18n.t("media.byLink")}
+                </button>
+              )}
             </span>
           </div>
-          {isInsertPanelOpen && !readOnly ? (
+          {isInsertPanelOpen && links && !readOnly ? (
             <div
               ref={insertPanelRef}
               className="gotipe-media-insert-panel"
@@ -258,8 +268,8 @@ export function FileBlock({
                     type="url"
                     aria-label={i18n.t("media.fileUrl")}
                     aria-invalid={linkError ? true : undefined}
-                    aria-errormessage={linkError ? linkErrorId : undefined}
-                    title={linkError ?? undefined}
+                    aria-errormessage={linkError && inlineErrors ? linkErrorId : undefined}
+                    title={(inlineErrors && linkError) || undefined}
                     placeholder="https://example.com/file.pdf"
                     value={linkUrlValue}
                     onChange={(e) => {
@@ -281,7 +291,7 @@ export function FileBlock({
                   </button>
                 </form>
                 {/* A wrong address marks the field; the reason is its tooltip and is read aloud. */}
-                {linkError ? (
+                {linkError && inlineErrors ? (
                   <p id={linkErrorId} role="alert" className="gotipe-sr-only">
                     {linkError}
                   </p>

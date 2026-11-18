@@ -90,6 +90,7 @@ root shows a loading skeleton with `role="status"`.
 | `slashCommands` | `SlashCommandDef[]` | `editor.getSlashCommands()` | Commands of the `/` menu. |
 | `ariaLabel` | `string` | `a11y.editorLabel` | Accessible name of the document; by default in the interface language: "Document content" in English. |
 | `errorToast` | `boolean` | `true` | A toast for errors a person can act on. |
+| `media` | `MediaOptions` | `{ links: true, inlineErrors: true }` | What empty image and file blocks offer and where their failures are shown: `links: false` hides **By link**, `inlineErrors: false` keeps the reasons out of the blocks; see [editor UI options](/docs/extensions/media#editor-ui-options). |
 | `find` | `boolean` | `true` | The [find bar](/docs/extensions/find-replace#the-find-bar-of-blockeditor) (`Mod+F`, `Mod+Alt+F`) when the editor has `FindReplace`. |
 | `status` | `boolean \| StatusLineOptions` | `false` | Words and characters under the document, with an optional limit; see [the counter line](/docs/extensions/character-count#the-counter-line-of-blockeditor). Needs `CharacterCount`. |
 | `className` | `string` | — | Added to the root `.gotipe-block-editor`. |
@@ -158,7 +159,9 @@ The toast shows errors with these codes for four seconds: `TRANSFORM_ERROR`,
 title it shows the error's own message, except for `PROPOSAL_STALE`: its message names the
 engine's reason, so the toast says in the interface's language that the suggestion is out of
 date because the text around it changed. Other errors go to `console.error`. If you report
-errors yourself through `host.onError`, set `errorToast={false}`.
+errors yourself through `host.onError`, set `errorToast={false}`. Image and file blocks also
+say why an upload, an address or a copy failed in the block itself; `media={{ inlineErrors:
+false }}` turns that text off, and every such failure still reaches `host.onError`.
 
 `EXTENSION_ERROR` and `COMPOSITION_CONFLICT` never show in the toast; this is by design. An
 extension's or a listener's failure belongs to the extension's own interface, which reports

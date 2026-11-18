@@ -1,5 +1,5 @@
 import type { GoTipeEditor, SlashCommandDef } from "@gotipe/core";
-import type { BlockViews } from "@gotipe/react";
+import type { BlockViews, MediaOptions } from "@gotipe/react";
 import type { ThemePreset } from "@gotipe/theme";
 import type React from "react";
 import type { EmojiOptions, MentionOptions } from "../atoms/host";
@@ -77,6 +77,12 @@ export interface BlockEditorProps {
    * language: "Document content" in English, “Содержимое документа” in Russian.
    */
   ariaLabel?: string;
+  /**
+   * What empty image and file blocks offer and how they fail, e.g. `{ links: false }` under a CSP
+   * that blocks images from the web, or `{ inlineErrors: false }` when the host shows failures
+   * itself (`host.onError`). Default: links and the reasons in the block, both on.
+   */
+  media?: MediaOptions;
   /**
    * Show the editor's errors as a toast at the top (GoTipe Atlas, frame 17). Default: on. Turn it
    * off when the host shows them itself (`host.onError`).

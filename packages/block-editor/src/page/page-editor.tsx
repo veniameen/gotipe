@@ -356,6 +356,7 @@ const PageEditorInner = forwardRef<PageEditorHandle, PageEditorProps>(
                 slashCommands={slashCommands}
                 slashGroups={slashMenu?.groups}
                 slashDescriptions={slashMenu?.descriptions}
+                media={props.media}
                 mentions={props.mentions}
                 emoji={props.emoji}
                 ariaLabel={i18n.t("page.ariaLabel")}

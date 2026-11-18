@@ -55,7 +55,7 @@ The "/" menu lists **Image**.
 
 Pasting or dropping image files on the editor inserts image blocks. Each file must fit `maxSize` (`ASSET_TOO_LARGE` otherwise) and `allowedTypes` (`ASSET_UNSUPPORTED`), and is stored through `upload` when you set it, otherwise through `host.saveAsset`, otherwise embedded as a `data:` URL. Several files go in as one undoable change. If the document or the selection changes while files upload, the insertion is cancelled with an error; insert the files again.
 
-In the editor UI an empty image offers **Upload**, **By link** (an http or https address) and one tab per image catalog your host supplies, and accepts a dropped file. A placed image has resize handles on both sides (drag, or Left and Right for 16 px steps), a caption field and a toolbar: alternative text, original size, fit to width, caption, zoom, download, and a menu with crop, replace, copy URL, copy link to block, duplicate, move up or down and delete. Crop draws on a canvas, saves a PNG through the same storage path and is undone with Undo; it needs CORS for remote images, keeps only the first frame of an animation and is limited to 16 megapixels.
+In the editor UI an empty image offers **Upload**, **By link** (an http or https address; hidden with [`links: false`](#editor-ui-options)) and one tab per image catalog your host supplies, and accepts a dropped file. A placed image has resize handles on both sides (drag, or Left and Right for 16 px steps), a caption field and a toolbar: alternative text, original size, fit to width, caption, zoom, download, and a menu with crop, replace, copy URL, copy link to block, duplicate, move up or down and delete. Crop draws on a canvas, saves a PNG through the same storage path and is undone with Undo; it needs CORS for remote images, keeps only the first frame of an animation and is limited to 16 megapixels.
 
 Without `width` an image is shown at its own size, at most the width of the column. An image without a size of its own, such as an SVG with a `viewBox` and no `width` or `height`, fills the column, and "original size" sets the column's width; resizing gives it a width like any other image.
 
@@ -112,6 +112,31 @@ Without `saveAsset`, files up to 10 MiB are embedded in the document as base64 `
 `File` has no options. Insert it with `insertBlockAfter("file", { url: "", name: "", size: null, mime_type: "" })` or the "/" menu's **File**. Dropping or pasting a file that is not an image inserts a file block, stored the same way as images.
 
 In the editor UI an empty file block offers **Add a file**, **By link** (an address and an optional name) and a drop zone. The card shows the name, the MIME type and size, and **Replace** and **Remove**. Clicking the name opens the file through `host.openLink` in a new tab; a file embedded as a `data:` URL is downloaded instead of opened.
+
+## Editor UI options
+
+`BlockEditor` and `PageEditor` take a `media` prop of type `MediaOptions` from `@gotipe/react`; with your own editor, provide it through `MediaOptionsContext` (see [React](/docs/frameworks/react#image-and-file-editing)). Both options are on by default.
+
+| Option | Type | Default | Description |
+| --- | --- | --- | --- |
+| `links` | `boolean` | `true` | **By link** on empty image and file blocks and the **Link** tab of the image panel. `false` leaves **Upload** and dropping a file; the catalogs of `host.imageSources`, if any, stay behind the same button, named after the catalog (or "Image source" for several). |
+| `inlineErrors` | `boolean` | `true` | The reason of a failure in the block: a failed upload or crop, a failed copy, a wrong address (its tooltip and the text read aloud) and a failed catalog search. `false` shows none of them; a wrong address still marks its field as invalid. |
+
+Every failure that the blocks show also reaches `host.onError` (and the `error` event), whatever the options. A few were shown only in the block; with `inlineErrors: false` they are reported instead:
+
+| Failure | Code |
+| --- | --- |
+| An address that is not http or https, typed under **By link** | `LINK_BLOCKED` |
+| The image changed while it was cropped | `ASSET_SAVE_FAILED` |
+| A search of a host image catalog failed | `ASSET_RESOLVE_FAILED`, with the catalog's `source` id and the `query` in `details` |
+
+Under a strict CSP such as `img-src 'self' data:`, images from the web cannot be shown, so a link would only insert a broken image. Hide the links and show the failures your own way:
+
+```tsx title="Editor.tsx"
+<PageEditor host={host} media={{ links: false, inlineErrors: false }} errorToast={false} />
+```
+
+An image or file the host cannot resolve keeps its unavailable state: that is the block's content, not an error message, and no option hides it.
 
 ## Embed
 

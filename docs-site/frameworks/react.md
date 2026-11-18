@@ -222,6 +222,18 @@ export function MediaEditor({ editor }: { editor: GoTipeEditor | null }) {
 `ImageBlock` and `FileBlock` for your own block views; `MediaBlocks` and `MediaBlockProps`
 type a replacement pair.
 
+`MediaOptionsContext` sets what these blocks offer: `links: false` hides **By link**, and
+`inlineErrors: false` keeps the reasons of failures out of the blocks while every failure
+still reaches `host.onError` (see [editor UI options](/docs/extensions/media#editor-ui-options)).
+`BlockEditor` and `PageEditor` take the same object as their `media` prop. `useMediaOptions()`
+returns the options in force, defaults filled in, for your own block views.
+
+```tsx
+<MediaOptionsContext.Provider value={{ links: false, inlineErrors: false }}>
+  <Editor editor={editor} />
+</MediaOptionsContext.Provider>
+```
+
 ## Server rendering
 
 The editor is created in an effect, so a server render outputs no document and creates
