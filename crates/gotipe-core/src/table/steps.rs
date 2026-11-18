@@ -6,7 +6,7 @@ use std::collections::{HashMap, HashSet};
 
 use gotipe_schema::{AttrValue, Block, BlockContent, BlockId};
 
-use super::plan::{planned, PlannedTable, DEFAULT_WIDTH};
+use super::plan::{planned, PlannedTable};
 use crate::transaction::Step;
 
 fn utf16(text: &str) -> usize {
@@ -167,10 +167,14 @@ pub fn table_steps(table: &Block, plan: &PlannedTable) -> Vec<Step> {
         }
     }
     let mut attrs = HashMap::new();
-    let widths: Vec<AttrValue> = plan.widths.iter().map(|w| AttrValue::Number(*w)).collect();
+    let widths: Vec<AttrValue> = plan
+        .widths
+        .iter()
+        .map(|w| w.map_or(AttrValue::Null, AttrValue::Number))
+        .collect();
     let changed_widths = match table.attrs.get("colWidths") {
         Some(AttrValue::Array(stored)) => stored != &widths,
-        _ => plan.widths.iter().any(|width| *width != DEFAULT_WIDTH),
+        _ => plan.widths.iter().any(Option::is_some),
     };
     if changed_widths {
         attrs.insert("colWidths".to_string(), AttrValue::Array(widths));

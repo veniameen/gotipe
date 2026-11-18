@@ -66,7 +66,7 @@ fn table(rows: &Value, widths: Option<&Value>) -> Block {
             .as_array()
             .unwrap()
             .iter()
-            .map(|width| AttrValue::Number(width.as_f64().unwrap()))
+            .map(|width| width.as_f64().map_or(AttrValue::Null, AttrValue::Number))
             .collect();
         table
             .attrs

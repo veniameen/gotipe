@@ -104,7 +104,7 @@ export function tableSteps(table: Block, plan: PlannedTable): Step[] {
   const widths = Array.isArray(table.attrs.colWidths) ? table.attrs.colWidths : undefined;
   const align = Array.isArray(table.attrs.align) ? table.attrs.align : undefined;
   const attrs: Record<string, AttrValue> = {};
-  if (widths ? !same(widths, plan.widths) : !plan.widths.every((width) => width === 160))
+  if (widths ? !same(widths, plan.widths) : plan.widths.some((width) => width !== null))
     attrs.colWidths = plan.widths;
   if (align ? !same(align, plan.align) : plan.align.some((value) => value !== null))
     attrs.align = plan.align;

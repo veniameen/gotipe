@@ -29,7 +29,8 @@ export interface PlannedTable {
   rows: PlannedRow[];
   cells: PlannedCell[];
   columns: number;
-  widths: number[];
+  /** Each column's width; null for a column without one, which shares the text column. */
+  widths: (number | null)[];
   align: AttrValue[];
   removed: boolean;
   /** Makes the ID of a new cell or row. */
@@ -74,7 +75,7 @@ export function planTable(
     columns: grid.columns,
     widths: Array.from({ length: grid.columns }, (_, index) => {
       const value = Array.isArray(table.attrs.colWidths) ? table.attrs.colWidths[index] : null;
-      return typeof value === "number" && Number.isFinite(value) ? value : DEFAULT_WIDTH;
+      return typeof value === "number" && Number.isFinite(value) ? value : null;
     }),
     align: Array.from({ length: grid.columns }, (_, index) =>
       Array.isArray(table.attrs.align) ? (table.attrs.align[index] ?? null) : null,
@@ -165,7 +166,9 @@ export function insertColumn(plan: PlannedTable, index: number): void {
   plan.rows.forEach((_, row) => {
     if (!covering(plan, row, index)) add(plan, row, index, headers[row]!);
   });
-  plan.widths.splice(index, 0, DEFAULT_WIDTH);
+  // a table of stored widths gives a new column the default; one with shared columns, another
+  const stored = plan.widths.length > 0 && plan.widths.every((width) => width !== null);
+  plan.widths.splice(index, 0, stored ? DEFAULT_WIDTH : null);
   plan.align.splice(index, 0, null);
 }
 

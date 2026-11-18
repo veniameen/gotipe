@@ -147,7 +147,21 @@
       "id": "resize-writes-widths-only",
       "table": "short",
       "edit": { "type": "resizeColumn", "index": 1, "width": 200.4 },
-      "expect": { "grid": [["a", "b", "c"], ["d", "-", "-"]], "colWidths": [160, 200, 160] }
+      "expect": { "grid": [["a", "b", "c"], ["d", "-", "-"]], "colWidths": [null, 200, null] }
+    },
+    {
+      "id": "shared-columns-stay-shared-through-an-edit",
+      "table": "short",
+      "colWidths": [200, null, null],
+      "edit": { "type": "insertRow", "index": 1 },
+      "expect": { "grid": [["a", "b", "c"], ["new", "new", "new"], ["d", "new", "new"]], "colWidths": [200, null, null] }
+    },
+    {
+      "id": "a-new-column-of-a-table-with-shared-columns-is-shared",
+      "table": "short",
+      "colWidths": [200, null, null],
+      "edit": { "type": "insertColumn", "index": 3 },
+      "expect": { "grid": [["a", "b", "c", "new"], ["d", "new", "new", "new"]], "colWidths": [200, null, null, null] }
     },
     {
       "id": "overlapping-cells-are-read-as-drawn-and-repaired",
@@ -171,7 +185,7 @@
       "id": "a-resize-writes-repaired-spans",
       "table": "tall-past-the-end",
       "edit": { "type": "resizeColumn", "index": 0, "width": 100 },
-      "expect": { "grid": [["a", "b"], ["a", "c"]], "stored": { "a": { "rowspan": 2 } }, "colWidths": [100, 160] }
+      "expect": { "grid": [["a", "b"], ["a", "c"]], "stored": { "a": { "rowspan": 2 } }, "colWidths": [100, null] }
     },
     {
       "id": "a-huge-index-is-out-of-range",
