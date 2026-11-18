@@ -104,9 +104,27 @@
 .gotipe-content > :where(.gotipe-page-title) + * {
   margin-top: var(--gt-flow-after-h1);
 }
+/* a table right under a heading has its own gap at each level; by default the heading's */
+.gotipe-content > :where(h2) + :where(.gotipe-table-wrapper) {
+  margin-top: var(--gt-flow-after-h2-table);
+}
+.gotipe-content > :where(h3, h4, h5, h6) + :where(.gotipe-table-wrapper) {
+  margin-top: var(--gt-flow-after-h3-table);
+}
+.gotipe-content > :where(h1, .gotipe-page-title) + :where(.gotipe-table-wrapper) {
+  margin-top: var(--gt-flow-after-h1-table);
+}
 .gotipe-content > :where(hr),
 .gotipe-content > :where(hr) + * {
   margin-top: var(--gt-flow-rule);
+}
+/* a list right after another list, as a numbered list after a task list */
+.gotipe-content > :where(ul, ol) + :where(ul, ol),
+.gotipe-content
+  :where(.gotipe-callout-content, .gotipe-toggle-content, .gotipe-column, blockquote)
+  > :where(ul, ol)
+  + :where(ul, ol) {
+  margin-top: var(--gt-flow-between-lists);
 }
 .gotipe-content > :first-child {
   margin-top: 0;
@@ -254,7 +272,9 @@
   color: var(--gt-text-2);
   font-variant-numeric: tabular-nums;
 }
-.gotipe-content :where(ul, ol) > li + li,
+.gotipe-content :where(ul, ol) > li + li {
+  margin-top: var(--gt-list-item-gap);
+}
 .gotipe-content li > :where(ul, ol, [data-block-id]) {
   margin-top: var(--gt-flow-list);
 }

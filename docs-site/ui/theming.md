@@ -150,15 +150,16 @@ font, colour scheme and direction, so tokens you set on a container apply there 
 
 ### Parts
 
-These tokens style one part each. A size (`-size`, `-width`, `-bar`, `-offset`, `-thickness`) is
-set on the editor root; a colour on any container. "Unset" means the rule falls back to the base
-token shown, resolved where the part is drawn.
+These tokens style one part each. A size (`-size`, `-width`, `-bar`, `-offset`, `-thickness`,
+`-gap`, `-pad`, `-rule`, `-mix`) is set on the editor root; a colour on any container. "Unset"
+means the rule falls back to the base token shown, resolved where the part is drawn; such a token
+can be set on any container.
 
 | Token | Default | Controls |
 |---|---|---|
 | `--gt-check-fill` | unset: `--gt-ink` | Fill of a checked task box |
 | `--gt-check-line` | unset: `--gt-line-control` | Border of an empty task box |
-| `--gt-check-mark` | an SVG in `--gt-ink-text` | The tick of a checked task box, a `url()` image; with a light `--gt-check-fill`, give it a tick of a dark colour |
+| `--gt-check-mark` | an SVG in `--gt-ink-text` (white in light, dark in dark) | The tick of a checked task box, a `url()` image; with a light `--gt-check-fill`, give it a tick of a dark colour, and with a fill that stays dark in both themes, a white tick |
 | `--gt-comment-soft` | unset: `--gt-comment-tint` | Background of commented text |
 | `--gt-ai-ghost` | unset: `--gt-text-3` | Colour of the model's text offered at the caret |
 | `--gt-card-name-size` | `var(--gt-ui-size)` (13 px) | Name of the author or lane in a review card's head |
@@ -169,6 +170,16 @@ token shown, resolved where the part is drawn.
 | `--gt-sug-ins-underline-style` | `solid` | Its style: `solid`, `dotted`, `dashed`, `wavy` |
 | `--gt-sug-ins-underline-thickness` | `var(--gt-rule)` (2 px) | Its thickness |
 | `--gt-sug-ins-underline-offset` | `var(--gt-underline-offset)` (0.2em) | Its offset from the font's underline position |
+| `--gt-sug-ins-line-mix` | `100%` | Share of the lane's colour in an insertion's bar or underline and in a new block's underline; `75%` makes the line paler |
+| `--gt-sug-block-ins-tint` | unset: `--gt-track-tint` (12%) | Share of the lane's colour in a proposed new block's fill; `0%` removes the fill |
+| `--gt-sug-block-ins-underline` | `underline` | `none` drops the underline of a proposed new block's text |
+| `--gt-sug-block-ins-underline-thickness` | `var(--gt-underline)` (1 px) | Its thickness |
+| `--gt-sug-stale-color` | unset: `--gt-text-2` | Text colour of a stale proposal, in the text and as a new block |
+| `--gt-sug-stale-line` | unset: `--gt-line-control` | Colour of its underline |
+| `--gt-sug-stale-underline-style` | `dashed` | Its style |
+| `--gt-sug-stale-underline-thickness` | `var(--gt-underline)` (1 px) | Its thickness |
+| `--gt-sug-stale-active-fill` | unset: the lane's active tint | Fill of a stale proposal while its card is open; `transparent` keeps it unfilled |
+| `--gt-sug-stale-check-line` | unset: `--gt-line-control` | Border of the task box of a stale proposed task item |
 | `--gt-sug-changed-bar-width` | `var(--gt-rule)` (2 px) | Bar at the left edge of a block a proposal changes; `0px` removes it |
 | `--gt-sug-changed-bar` | unset: the lane's colour | Colour of that bar |
 | `--gt-image-radius` | `var(--gt-radius-block)` (8 px) | Corners of an image |
@@ -177,8 +188,41 @@ token shown, resolved where the part is drawn.
 | `--gt-caption-color` | unset: `--gt-text-2` | Colour of an image's caption |
 | `--gt-caption-size`, `--gt-caption-leading` | `var(--gt-small-size)`, `var(--gt-small-leading)` | Its size and line height; `--gt-caption-gap` is the space above it |
 | `--gt-image-empty-bg` | unset: `--gt-sunken` | Background of an empty image or file block (upload or link) |
+| `--gt-list-item-gap` | `var(--gt-flow-list)` (4 px) | Space between two items of a list, task lists included |
+| `--gt-flow-between-lists` | `var(--gt-flow)` (8 px) | Space before a list that follows another list, as a numbered list after a task list; `0px` joins them |
+| `--gt-flow-after-h1-table`, `--gt-flow-after-h2-table`, `--gt-flow-after-h3-table` | `var(--gt-flow-after-h1)`, `-h2`, `-h3` (10, 8, 4 px) | Space before a table right under a heading of that level (`-h3` for h3 to h6; `-h1` also under the page title) |
+| `--gt-table-line` | unset: `--gt-line` | Colour of a table's row lines, column lines and frame |
+| `--gt-table-row-rule` | `var(--gt-hairline)` (1 px) | Width of the line under each row but the last, the head's included; `0px` removes the row lines |
+| `--gt-table-col-rule` | `0px` | Width of the lines between columns |
+| `--gt-table-frame` | `0px` | Width of the frame around a table |
+| `--gt-table-head-line` | unset: `--gt-line-strong` | Colour of the line under header cells |
+| `--gt-table-head-size`, `--gt-table-head-leading` | `var(--gt-small-size)`, `var(--gt-small-leading)` | Size and line height of header cells' text |
+| `--gt-table-head-weight` | `var(--gt-weight-medium)` | Its weight |
+| `--gt-table-head-color` | unset: `--gt-text-2` | Its colour |
+| `--gt-table-head-fill` | unset: `transparent` | Background of header cells |
+| `--gt-cell-pad`, `--gt-head-cell-pad` | `9px 12px`, `8px 12px` | Padding of body cells and header cells |
+| `--gt-cell-first-pad` | `0px` | Left padding of the first column, which starts with the text column; with row handles the cell keeps at least the room the handle needs |
+| `--gt-table-row-height` | `auto` | Least height of a body row |
+| `--gt-table-shared-layout` | `fixed` | Columns without a stored width share the text column evenly; `auto` gives them their share by content, as a table without stored widths in HTML. Stored widths stay a column's least width |
+| `--gt-table-code-size` | `var(--gt-inline-code-size)` (0.87em) | Size of inline code in a cell |
+| `--gt-table-code-pad` | `var(--gt-inline-pad)` | Its padding |
+| `--gt-table-code-fill` | unset: `--gt-fill-2` | Its plate; `transparent` with `--gt-table-code-pad: 0` drops the plate |
 | `--gt-handle-rail` | 56 px (`0px` in `modern`, `minimal`) | Rail a narrow `notion` or `docs` page keeps on the left for the block handle |
 | `--gt-handle-offset` | 54 px | Room left of the text the block handle needs; with less, no handle shows |
+
+A rule that removes a default line, such as the one under a table's last row, is as heavy as the
+cell rule it overrides, so your own rule on the cells wins over it.
+
+A table with a grid and a filled head:
+
+```css title="editor-theme.css"
+.app-editor .gotipe-block-editor {
+  --gt-table-col-rule: 1px;
+  --gt-table-frame: 1px;
+  --gt-table-head-fill: var(--gt-fill-1);
+  --gt-cell-first-pad: 12px;
+}
+```
 
 To underline insertions instead of the bar:
 

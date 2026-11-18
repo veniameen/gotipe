@@ -51,7 +51,8 @@
 .gotipe-table-scroll[data-cell-drag] :is(th, td) {
   user-select: none;
 }
-/* a cell over rows that reaches the bottom of the table ends it, as the last row does */
-.gotipe-table-wrapper tbody > tr > td[data-last-row] {
+/* a cell over rows that reaches the bottom of the table ends it, as the last row does; as heavy as
+   the cell rule, so a host's own rule on the cells wins over it */
+.gotipe-table-wrapper :where(tbody > tr > td[data-last-row]) {
   border-bottom: 0;
 }
