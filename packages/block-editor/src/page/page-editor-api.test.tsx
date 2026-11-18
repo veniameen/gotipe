@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import type { GoTipeEditor, SlashCommandDef } from "@gotipe/core";
-import { act, createRef, useEffect, useState } from "react";
+import { StrictMode, act, createRef, useEffect, useState } from "react";
 import { type Root, createRoot } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { PageEditor, type PageEditorHandle, type PageEditorProps } from "./page-editor";
@@ -139,6 +139,30 @@ describe("PageEditor focus and insertion from the title", () => {
     });
     await act(() => wait(40));
     expect(seen).toContain("selection");
+  });
+
+  it("autoFocus still comes once under StrictMode", async () => {
+    const focus = vi.fn();
+    const ready = vi.fn();
+    await act(async () => {
+      root.render(
+        <StrictMode>
+          <PageEditor
+            markdown={"# Notes\n"}
+            locale="en"
+            autoFocus
+            onReady={(editor) => {
+              ready();
+              vi.spyOn(editor, "focus").mockImplementation(focus);
+            }}
+          />
+        </StrictMode>,
+      );
+      await wait(60);
+    });
+    await act(() => wait(40));
+    expect(focus.mock.calls).toEqual([["end"]]);
+    expect(ready).toHaveBeenCalledOnce();
   });
 
   it("insertBlock from the title adds the block under it and keeps the title", async () => {
