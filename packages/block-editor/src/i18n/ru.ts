@@ -85,6 +85,7 @@ export const blockEditorRu: BlockEditorLocale = {
   "review.staleCount.many": "{count} устарело",
   "review.suggestion": "Предложение",
   "review.comment": "Комментарий",
+  "review.deleteComment": "Удалить комментарий",
   "editor.color": "Цвет",
   "editor.textColor": "Цвет текста",
   "editor.more": "Ещё",

@@ -88,6 +88,7 @@ export type BlockEditorTranslationKey =
   | "review.staleCount.many"
   | "review.suggestion"
   | "review.comment"
+  | "review.deleteComment"
   | "editor.color"
   | "editor.textColor"
   | "editor.more"
