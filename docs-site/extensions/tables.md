@@ -16,7 +16,7 @@ The `Table` extension is in `DefaultPreset`, `FullPreset` and `PageEditor`. It c
 
 | Node | Content | Attribute | Type | Default | Description |
 | --- | --- | --- | --- | --- | --- |
-| `table` | `tableRow` children | `colWidths` | `number[]` | — | Column widths in pixels. A missing entry means 160. |
+| `table` | `tableRow` children | `colWidths` | `(number \| null)[]` | — | Column widths in pixels. A missing or `null` entry is a shared column (see [Widths and alignment](#widths-and-alignment)). |
 | | | `align` | `("left" \| "center" \| "right" \| null)[]` | — | Alignment of each column. |
 | `tableRow` | `tableCell` or `tableHeader` children | — | — | — | — |
 | `tableHeader`, `tableCell` | Rich text | `colspan` | `number` | `1` | Columns the cell spans. |
@@ -66,7 +66,7 @@ editTable(editor, tableId, { type: "deleteRow", index: 2 });
 | --- | --- |
 | `{ type: "insertRow", index }` | Inserts an empty row of plain cells at `index` (0 to the row count). A row never goes above the header rows: index 0 in a table with a header lands under them. A cell over rows that the new row passes through grows by one row. |
 | `{ type: "deleteRow", index, count? }` | Deletes `count` rows (default 1) from `index` in one step. A cell over several rows shrinks; if its top row goes, the cell moves down to the next row with its text and ID. Deleting every row deletes the table. |
-| `{ type: "insertColumn", index }` | Inserts a column at `index` (0 to the column count) in every row; a header row gets a header cell. A cell over several columns that the new column passes through grows by one column. The new column is 160 px wide and unaligned. |
+| `{ type: "insertColumn", index }` | Inserts a column at `index` (0 to the column count) in every row; a header row gets a header cell. A cell over several columns that the new column passes through grows by one column. The new column is 160 px wide (shared in a table that stores no widths) and unaligned. |
 | `{ type: "deleteColumn", index, count? }` | Deletes `count` columns (default 1) from `index` in one step, with their widths and alignment. A cell over several columns shrinks. Deleting every column deletes the table. |
 | `{ type: "resizeColumn", index, width }` | Sets a column width. The width is rounded and kept between 64 and 1600 px. |
 | `{ type: "mergeCells", from, to }` | Merges the rectangle between two grid positions (`{ row, column }`, counted from 0) into its top-left cell. The other cells' text follows the top-left cell's, each on a new line (a line break, `\n`), with its marks. The caret goes to the end of the merged cell. |
@@ -90,8 +90,14 @@ Column widths live in the table's `colWidths` array and alignment in its `align`
 editor.chain().setBlockAttrs(tableId, { align: ["left", null, "right"] }).run();
 ```
 
-In the editor a column without a width is 160 px wide, and the table fills at least the width of
-the text; a wider table scrolls in its own box. A table drawn without `<col>` widths — the HTML of
+In the editor a column with a stored width is drawn that wide, and a table of stored widths fills
+at least the width of the text; a wider table scrolls in its own box. Columns without a stored
+width share what the stored ones leave of the text column, none narrower than `--gt-cell-min`;
+past that the table scrolls too. Such a table is `.gotipe-table-shared`, and its inline
+`--gt-table-fixed` (the stored widths' sum) and `--gt-table-shared` (the shared count) size it.
+Dragging a shared column stores its drawn width and keeps the other columns shared (`null`).
+`editTable` reads a shared column as 160 px: an edit of a table that already stores some widths
+writes 160 for the shared ones. A table drawn without `<col>` widths — the HTML of
 `serializeHtml` or a server render inside `.gotipe-table-wrapper`, or the version comparison —
 fits the text column with `@gotipe/theme`: its columns share the width by their content and the
 cells wrap, and only words that cannot fit make it scroll.

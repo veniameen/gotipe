@@ -65,10 +65,15 @@ describe("Vue table renderer", () => {
     expect(at("f").rowSpan).toBe(1);
     expect(root.querySelectorAll("thead > tr")).toHaveLength(2);
     expect(root.querySelectorAll("tbody > tr")).toHaveLength(1);
+    // columns without a stored width share the rest of the text column
     expect([...root.querySelectorAll("col")].map((col) => col.style.width)).toEqual([
       "90px",
-      "160px",
-      "160px",
+      "",
+      "",
     ]);
+    const table = root.querySelector<HTMLTableElement>("table")!;
+    expect(table.classList.contains("gotipe-table-shared")).toBe(true);
+    expect(table.style.getPropertyValue("--gt-table-fixed")).toBe("90px");
+    expect(table.style.getPropertyValue("--gt-table-shared")).toBe("2");
   });
 });

@@ -231,19 +231,31 @@ function renderBlock(
       return node("hr", { contenteditable: false }, []);
     case "table": {
       // as the React renderer: header rows (and the rows a header reaches into) in the head,
-      // one column element per grid column with its stored width
+      // one column element per grid column with its stored width; columns without one share
+      // the rest of the text column (.gotipe-table-shared)
       const grid = tableGrid(block);
       const first = block.children[0]?.children.some((cell) => cell.type === "tableHeader");
       const top = grid.cells.filter((cell) => cell.row === 0).map((cell) => cell.rows);
       const head = Math.max(headerRows(grid), first ? Math.max(1, ...top) : 0);
-      const widths = Array.isArray(block.attrs.colWidths) ? block.attrs.colWidths : [];
-      const columns = Array.from({ length: grid.columns }, (_, column) => {
-        const width = widths[column];
-        return h("col", { style: { width: `${typeof width === "number" ? width : 160}px` } });
+      const stored = Array.isArray(block.attrs.colWidths) ? block.attrs.colWidths : [];
+      const widths = Array.from({ length: grid.columns }, (_, column) => {
+        const width = stored[column];
+        return typeof width === "number" && Number.isFinite(width) ? width : null;
       });
+      const columns = widths.map((width) =>
+        h("col", width === null ? {} : { style: { width: `${width}px` } }),
+      );
+      const shared = widths.filter((width) => width === null).length;
+      const fixed = widths.reduce<number>((sum, width) => sum + (width ?? 0), 0);
+      const frame = shared
+        ? {
+            class: "gotipe-table gotipe-table-shared",
+            style: { "--gt-table-fixed": `${fixed}px`, "--gt-table-shared": shared },
+          }
+        : { class: "gotipe-table" };
       const rows = (from: number, to?: number) =>
         renderBlocks(block.children.slice(from, to), context, block.type);
-      return node("table", { class: "gotipe-table" }, [
+      return node("table", frame, [
         h("colgroup", {}, columns),
         ...(head > 0 ? [h("thead", {}, rows(0, head))] : []),
         ...(head < block.children.length ? [h("tbody", {}, rows(head))] : []),
