@@ -24,6 +24,11 @@ import { type CardPlace, CommentCard, LANE_ICON, ProposalCard } from "./review-c
 import { ReviewMargin, useMarginLayout } from "./review-margin";
 
 export type ReviewResult = boolean | undefined;
+/**
+ * Where review cards stand: `auto` — in a margin column when the page is wide enough, otherwise
+ * one by the text; `inline` — always by the text; `margin` — always in the margin column.
+ */
+export type ReviewLayout = "auto" | "inline" | "margin";
 export type ReviewAction = (id: string) => Promise<ReviewResult> | ReviewResult;
 
 /** Review data and callbacks (ADR-0047). Everything is controlled by the host. */
@@ -88,6 +93,7 @@ export function ReviewLayer({
   session,
   root,
   review,
+  layout = "auto",
   onLocalAccept,
   apiRef,
   onStates,
@@ -96,6 +102,7 @@ export function ReviewLayer({
   session: MarkdownSession;
   root: HTMLElement | null;
   review: PageReviewProps;
+  layout?: ReviewLayout;
   /** Applies a proposal to the document when the host has no `onAccept`. */
   onLocalAccept: (proposal: ReviewProposal) => boolean;
   apiRef?: React.MutableRefObject<ReviewApi | null>;
@@ -121,7 +128,7 @@ export function ReviewLayer({
   const proposals = review.proposals;
   const comments = review.comments ?? [];
   // Wide pages keep every card in a margin column (Atlas, frame 14); narrow ones open one by the text.
-  const margin = useMarginLayout(root, proposals.length + comments.length > 0);
+  const margin = useMarginLayout(root, proposals.length + comments.length > 0, layout);
 
   const applyDecorations = useCallback(() => {
     let decorations = fullRef.current;

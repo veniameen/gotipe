@@ -17,12 +17,17 @@ function px(style: CSSStyleDeclaration, name: string): number {
 /**
  * Whether the page is wide enough for a column of cards beside the text (GoTipe Atlas, frame 14):
  * the card, the gap and the least page width, all tokens. While it is, and there is something to
- * review, the page's root lays out as text and margin (`data-review-layout="margin"`).
+ * review, the page's root lays out as text and margin (`data-review-layout="margin"`). `inline`
+ * never takes the column, `margin` always does.
  */
-export function useMarginLayout(root: HTMLElement | null, active: boolean): boolean {
+export function useMarginLayout(
+  root: HTMLElement | null,
+  active: boolean,
+  layout: "auto" | "inline" | "margin" = "auto",
+): boolean {
   const [wide, setWide] = useState(false);
   useEffect(() => {
-    if (!root) return;
+    if (!root || layout !== "auto") return;
     const measure = () => {
       const style = getComputedStyle(root);
       const need =
@@ -33,8 +38,8 @@ export function useMarginLayout(root: HTMLElement | null, active: boolean): bool
     const observer = new ResizeObserver(measure);
     observer.observe(root);
     return () => observer.disconnect();
-  }, [root]);
-  const margin = wide && active;
+  }, [root, layout]);
+  const margin = active && (layout === "margin" || (layout === "auto" && wide));
   useEffect(() => {
     if (!root) return;
     if (margin) root.setAttribute("data-review-layout", "margin");
