@@ -462,6 +462,15 @@ not part of the check artifacts.
   comment card's delete, slash rows with descriptions) wait for the owner's acceptance. The JS
   budgets of the core graph and the Vue increment were raised with the measured reasons
   ([javascript-budgets.md](development/javascript-budgets.md)).
+  Accepted on tree 8afd44f (macOS, M4 Max): WASM and export WASM builds, `pnpm build`,
+  `check:architecture` and `:release`, `check:theme`, typecheck, lint, `pnpm test` (core 1,108,
+  markdown 548, block-editor 198, react 103, the rest green), `check:bundles`, `check:packages`,
+  `check:consumer`, `check:exports`, `check:docs-site`, `cargo fmt`, clippy and `cargo test`
+  (365); Playwright: Chromium 1,085 passed; Firefox 953 and WebKit 954 passed, 130 skipped each.
+  The comment-anchor test (`comments.spec.ts:68`) fails in Firefox and WebKit on macOS on this
+  tree and on 0.1.1 (5cea501e) alike: there Home does not move the caret to the line start; CI
+  runs on Linux. One Firefox checkbox test failed once under load and passed 3 of 3 alone. Not
+  run here: the PDF regression and Go Cloud tests (no change in those areas).
 
 ## Acceptance before release (2026-11-15)
 
