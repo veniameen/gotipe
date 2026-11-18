@@ -186,7 +186,6 @@ export function TableElement({ children }: { children: ReactNode }) {
   );
 }
 
-
 type HiddenSide = "left" | "right" | "both";
 
 /**

@@ -296,8 +296,10 @@ const PageEditorInner = forwardRef<PageEditorHandle, PageEditorProps>(
         get editor() {
           return editor;
         },
-        // before the editor exists: a text given to setMarkdown, else the last one
-        getMarkdown: () => (editor ? session.serialize(editor).text : draft.flush()),
+        getMarkdown: () => {
+          // before the editor exists: a text given to setMarkdown, else the last one
+          return editor ? session.serialize(editor).text : draft.flush();
+        },
         flush: draft.flush,
         setMarkdown: draft.setMarkdown,
         focus: (position) => editor?.focus(position),
