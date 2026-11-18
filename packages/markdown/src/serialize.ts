@@ -21,6 +21,7 @@ import type {
   MapBlock,
   MarkdownMap,
   MarkdownSnapshot,
+  SerializeOptions,
   SerializeResult,
   SnapshotBlock,
   SnapshotNode,
@@ -376,7 +377,20 @@ function rnodeToSnapshot(n: RNode, segs: TextSegment[]): SnapshotNode {
  * Serialize a document. Blocks whose id and fingerprint match the snapshot are
  * emitted verbatim (with their original gaps); others are re-serialized.
  */
-export function serializeMarkdown(doc: Doc, snapshot?: MarkdownSnapshot): SerializeResult {
+export function serializeMarkdown(
+  doc: Doc,
+  snapshot?: MarkdownSnapshot,
+  options: SerializeOptions = {},
+): SerializeResult {
+  const known = options.fingerprints;
+  const print = (block: Block): string => {
+    let fp = known?.get(block);
+    if (fp === undefined) {
+      fp = fingerprint(block);
+      known?.set(block, fp);
+    }
+    return fp;
+  };
   const snap = snapshot && snapshot.version === 1 ? snapshot : undefined;
   const eol = snap?.eol ?? "\n";
   const bom = snap?.bom ?? "";
@@ -392,7 +406,7 @@ export function serializeMarkdown(doc: Doc, snapshot?: MarkdownSnapshot): Serial
     let oi = origIndex.get(block.id) ?? -1;
     if (oi >= 0 && usedOrig.has(oi)) oi = -1;
     if (oi >= 0) usedOrig.add(oi);
-    const fp = fingerprint(block);
+    const fp = print(block);
     const preserved = oi >= 0 && snap!.blocks[oi]!.fingerprint === fp;
     // a block that writes no line, such as a list without items (D-124) or raw source of blanks,
     // keeps no lists apart (D-123): it is not written; a paragraph or heading without text is

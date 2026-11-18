@@ -1,6 +1,6 @@
 import { readBlockNodes } from "../grammar/blocks";
 import type { List } from "../grammar/types";
-import { bulletMarker, isBlockEmpty, listStart, richContent, spansText } from "../model";
+import { bulletMarker, hasRichText, isBlockEmpty, listStart, richContent } from "../model";
 import type { Block, MarkdownSnapshot } from "../types";
 
 /**
@@ -53,7 +53,7 @@ function transparent(block: Block): boolean {
   if (LIST_TYPES.has(block.type) || OWN_LINE.has(block.type)) return false;
   return typeof block.content === "string"
     ? !/[^ \t\r\n]/.test(block.content)
-    : !spansText(richContent(block));
+    : !hasRichText(block);
 }
 
 /**
