@@ -20,6 +20,11 @@
 .gotipe-page-head ~ .gotipe-content:where(:not(.gotipe-page *)) {
   padding-top: var(--gt-head-after);
 }
+/* in a page the head takes the page's top padding; the content follows it at the head's own gap,
+   so the page title (the content's first block) stands under the glyph as in a head of its own */
+.gotipe-page .gotipe-page-head ~ .gotipe-content {
+  padding-top: var(--gt-head-gap);
+}
 .gotipe-page-head-icon {
   display: flex;
   color: var(--gt-text);

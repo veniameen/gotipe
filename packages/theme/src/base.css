@@ -32,7 +32,8 @@
 .gotipe-content ::selection {
   background: var(--gt-selection);
 }
-.gotipe-content [data-block-id] {
+/* a suggested (phantom) block is laid out as a block too: a new list item draws its own dot */
+.gotipe-content :is([data-block-id], [data-gotipe-phantom-id]) {
   position: relative;
 }
 
@@ -280,7 +281,7 @@
   width: var(--gt-check);
   height: var(--gt-check);
   margin: var(--gt-check-top) 0 0;
-  border: var(--gt-check-ring) solid var(--gt-line-control);
+  border: var(--gt-check-ring) solid var(--gt-check-line);
   border-radius: var(--gt-radius-check);
   background: transparent;
   cursor: pointer;
@@ -291,7 +292,7 @@
 }
 .gotipe-todo-item > input[type="checkbox"]:checked {
   border-color: transparent;
-  background: var(--gt-ink) var(--gt-check-mark) center / var(--gt-icon-check) no-repeat;
+  background: var(--gt-check-fill) var(--gt-check-mark) center / var(--gt-icon-check) no-repeat;
 }
 .gotipe-todo-item > input[type="checkbox"]:disabled {
   cursor: default;

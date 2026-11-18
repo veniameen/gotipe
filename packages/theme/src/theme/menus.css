@@ -1,6 +1,7 @@
 /* ============================================================
    Slash menu — Atlas frame 7: groups with a quiet label, a 16 px icon, the title and the
-   Markdown shortcut on the right; no descriptions. The match is marked; nothing found is one line.
+   Markdown shortcut on the right; a description under the title only when the host asks for it.
+   The match is marked; nothing found is one line.
    ============================================================ */
 
 .gotipe-slash-menu {
@@ -105,7 +106,18 @@
   white-space: nowrap;
 }
 .gotipe-slash-menu-item-description {
-  display: none;
+  overflow: hidden;
+  color: var(--gt-text-2);
+  font-size: var(--gt-ui-small);
+  line-height: var(--gt-ui-small-leading);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+/* a row with a description (the host turns them on) grows to two lines */
+.gotipe-slash-menu-item:has(.gotipe-slash-menu-item-description) {
+  height: auto;
+  min-height: var(--gt-menu-item-h);
+  padding-block: var(--gt-space-1);
 }
 .gotipe-slash-menu-item-meta {
   flex: none;
