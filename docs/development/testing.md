@@ -49,6 +49,17 @@ final tree. Do not work around skip/timeout errors. Browser matrix: Chromium,
 Firefox, WebKit; 320/375/768/1024/1440 and a resizable container. Check not only the
 page overflow but also the available editor width and interactions.
 
+Typing latency on a long page is measured, not asserted:
+`GOTIPE_E2E_CHANNEL=chrome node scripts/perf/typing-latency.mjs --label <name>` builds the
+technical consumer `apps/playground/tests/perf` (production React, JS engine, a generated page of
+about 258 KiB and 7,384 blocks, and a small one), types 50 keys in the middle of the page and
+writes the median and p95 from `keydown` to the next frame to `output/perf/`; it fails when the
+emitted Markdown differs from the page by more than the typed text. `--profile` also saves a CPU
+profile. Run it alone (a heavy run) and compare runs of one machine only. What keeps the cost of a
+key press from growing with the document is pinned by unit tests: `core/tests/engine-states.test.ts`,
+`core/tests/render-correction.test.ts`, `react/src/content/plain-blocks.test.tsx`,
+`markdown/src/fingerprints.test.ts`.
+
 Reports/traces/screenshots go to the ignored `output/`. Record the command, the tools,
 the tree/commit, and the result/limitations. An old CI run does not confirm the current code.
 Publishing is not part of local acceptance and is not run automatically.

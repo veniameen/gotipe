@@ -10,7 +10,7 @@
       "exclude": [
         "@gotipe/wasm"
       ],
-      "gzipBytes": 128000
+      "gzipBytes": 131072
     },
     {
       "name": "react-incremental",
@@ -34,7 +34,7 @@
         "@gotipe/core",
         "vue"
       ],
-      "gzipBytes": 8192
+      "gzipBytes": 8704
     },
     {
       "name": "svelte-incremental",

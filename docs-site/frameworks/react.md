@@ -191,6 +191,24 @@ suggested block show nothing. A custom view gets it inside `content`.
 A block type with no view, such as your own node without `blockViews`, is drawn as a `<p>`
 with its text; with child blocks, as a `<div>` with its text and then the children.
 
+### Long documents
+
+A block the built-in views draw is drawn again only when it changes, when the caret enters or
+leaves it, or when the editor becomes read-only or editable: typing in one paragraph of a long
+document does not redraw the others. A block with a custom view, and the blocks above it, are
+drawn on every change of the editor, because a view may read the editor as it draws.
+
+A view that draws only from its props, hooks and contexts can say so with `pure`; whatever else
+it shows it subscribes to with `useEditorState`:
+
+```tsx title="Quote.tsx"
+Quote.pure = true;
+```
+
+In a pure view `selectedBlockId` names the caret's block only while that is the view's block or a
+block under it; otherwise it is `""`. A code block and a block drawn by `blockRenderer` are always
+drawn again.
+
 The building blocks of the default views are exported for your own views: `TableBlock`,
 `TableColumnResizeHandle`, `CodeBlock`, `ToggleBlock`, `CalloutBlock`, `TextRenderer`
 and `FloatingPortal`; `ImageBlock` and `FileBlock` come from `@gotipe/react/media`. `useResolvedAsset` and

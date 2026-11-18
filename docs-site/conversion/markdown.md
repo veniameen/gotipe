@@ -36,6 +36,8 @@ const { text, snapshot: next } = serializeMarkdown(doc, snapshot);
 
 `parseMarkdown` returns the document and a snapshot. The snapshot is plain JSON that describes the source: the original text, the BOM, the front matter, the line-ending style and, for every top-level block, its id, source range, fingerprint, nested ranges and text segments. Keep it next to the open file, pass it to `serializeMarkdown`, and keep the snapshot that `serializeMarkdown` returns for the next save.
 
+For a long document saved after every edit, `serializeMarkdown(doc, snapshot, { fingerprints })` takes a `WeakMap` you keep between calls: a top-level block object it has seen is not fingerprinted again. Use it only when blocks are never changed in place, so that a changed block is a new object, as the blocks of `editor.getViewState()` are. The text is the same with and without it.
+
 ## With an editor
 
 The parser emits the node types of `FullPreset` plus a raw block and a raw mark for Markdown the editor cannot edit. Register those two, then serialize the editor's document with the snapshot:

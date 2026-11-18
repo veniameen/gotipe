@@ -127,3 +127,16 @@ exporter payload is recorded separately during release acceptance. Importing the
 Syntax highlighting and additional heavy integrations must likewise keep their
 loading boundary explicit. CSS and native/font/binary assets are not counted as
 JavaScript; their separate reporting must not be described as a total page size.
+
+Decision of 2026-11-18, under the owner's instruction of 2026-11-15 to raise a ceiling when
+needed: the core and Markdown ceiling is 131,072 (128 KiB) and the Vue increment's 8,704
+(8.5 KiB). Measured with this checker, the graph went from 127,296 bytes on the 0.1.1 tree
+(5cea501e) to 129,600, 1.1% under the new ceiling, and the Vue increment to 8,285.
+
+- Core and Markdown +2,304: typing in a long document (a key press on a 7,400-block page went from
+  about 415 ms to about 30 ms): the engine states that parse a state once and keep what is known
+  of each block (`engine/states.ts`), the render check that reads only changed blocks
+  (`dom/render-correction.ts`), and the Markdown writer's kept block fingerprints; plus a host's
+  failed `saveAsset` reported as `ASSET_SAVE_FAILED`.
+- Vue +93 over the old ceiling: table columns without a stored width share the text column
+  (`.gotipe-table-shared`), as in React.

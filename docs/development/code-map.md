@@ -28,7 +28,9 @@ GoTipe does not own a host application's Wiki: pages, the file tree, tabs,
 saving, and model scenarios belong to the consumer. In the playground the main example
 shows the library's Page/Block variants with a choice of view; the UI geometry check
 runs against them (`e2e/editor-visual-audit.spec.ts`). `apps/playground/tests/csp` is a separate
-technical consumer for the CSP check of the public JS entry, with no product route.
+technical consumer for the CSP check of the public JS entry, with no product route;
+`apps/playground/tests/perf` is one for typing latency on a long generated page
+(`scripts/perf/typing-latency.mjs`).
 
 The limits of 600 lines / 24 direct files do not replace a review of responsibility.
 A pure function, a state controller, transport, and UI are separated by reasons
@@ -42,6 +44,8 @@ Tables: core/tables plans one atomic structural operation;
 IDs, `table/navigation.ts` is the adjacent cell for Tab/Shift+Tab within its own table;
 the Rust copy is `crates/gotipe-core/src/table` (`edit_table`), shared cases are in
 `crates/gotipe-core/tests/fixtures/table-edits.json`.
+React/content/plain-blocks decides which blocks are drawn again only when they change
+(built-in views and custom views that set `pure`); a custom view without it is drawn on every change.
 React/content/table-layout owns the temporary width during drag and the controls,
 `table-cells.tsx` owns cell spans and cell selection; the "Cells" menu is
 `block-editor/src/table/cell-actions.ts`.
@@ -55,9 +59,11 @@ Inside `core/src` ownership is divided as follows:
 | Public document JSON / attributes / selection; `attrs` keys in code point order, as in Rust | `document/decode.ts`, `attributes.ts` (`cloneAttributes`), `selection.ts` |
 | IDs of blocks and records of all packages (UUID v4, also without a secure context, i.e. HTTP) | `document/id.ts`, the public `createId()`; a direct `crypto.randomUUID()` in `packages/` is rejected by `check:architecture` |
 | Schema and the preliminary atomic check for JS/WASM | `engine/schema.ts`, `validate.ts`, `js-transactions.ts`, `wasm-bridge.ts` |
-| History, filters, and transaction events | `editor/transactions.ts`, `editor/transaction-filters.ts` |
+| Engine states of one editor: a state is parsed once, a transaction copies only the top-level blocks it names (`applyTransaction`), and what is known of the others (their text, decoded form, validity) is kept with their objects; parsed states and decoded blocks are shared and never changed, a document handed out is decoded anew | `engine/states.ts` (`EngineStates`, owned by `wasm-bridge.ts`), `engine/js-transactions.ts`, `document/decode.ts` (`createBlockDecoder`) |
+| History, filters, and transaction events; `before`/`after` of a transaction are decoded when read (`transactionContext`) | `editor/transactions.ts`, `editor/transaction-filters.ts` |
 | Typing step: text typed or deleted in a row is one undo step (500 ms pause, selection change, a different kind of edit); IME composition counts as typing, and the pause before it is measured from `compositionstart` | `editor/typing-group.ts`; the input kind (`TypingKind`) is passed by the `input/` handlers through the mount port, composition by `editor/mount.ts` (`commit`), a selection with the same value keeps the object (`select` in `editor.ts`) |
 | Caret after an edit: the native one is placed at the model caret as soon as the renderer has replaced the nodes or rewritten their text, otherwise in the next frame; until then input and Backspace use the model caret | `dom/selection.ts` (`renderObserver`, `scheduleSelectionRestore`); `input/session.ts` (`resolveSelectionForInput`), Backspace and paste (Mod+V, `paste`) in `editor/mount.ts`, `clipboard/handler.ts` (`onPaste`) |
+| Text the browser inserted after handled input: only blocks that are new view objects or whose top-level node reported a DOM mutation are read again | `dom/render-correction.ts` (from `dom/selection.ts`) |
 | Rules for Markdown block shortcuts: a block change and removal of the trigger are one transaction; where the block is not allowed, the rule yields without an error | `input/block-rule.ts` (`convertTyped`, `givesWay`), the rules live in their own extensions |
 | A selected block (`selectBlock`): Backspace and Delete remove it whole, typing and Enter replace it, including after the restore frame while the DOM caret sits on its anchor | `editor/mount.ts` (keydown), `input/session.ts` (`resolveSelectionForInput`) → `input/selection-edit.ts` (`replaceStructuredSelection`) |
 | The `focus(position)` caret and `autofocus`: the start of the first block with text, the end of the last | `editor/focus.ts` |
