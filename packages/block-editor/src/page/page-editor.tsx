@@ -261,12 +261,13 @@ const PageEditorInner = forwardRef<PageEditorHandle, PageEditorProps>(
       const custom = slashMenu?.commands;
       return typeof custom === "function" ? custom(defaults) : (custom ?? defaults);
     }, [i18n, allowedBlocks, slashMenu?.commands]);
+    const inlineIcon = props.iconPlacement === "inline" ? props.icon : undefined;
     const blockViews = useMemo<BlockViews>(
       () => ({
-        ...createPageBlockViews({ highlight, titlePlaceholder, titleLevel }),
+        ...createPageBlockViews({ highlight, titlePlaceholder, titleLevel, titleIcon: inlineIcon }),
         ...hostViews,
       }),
-      [highlight, titlePlaceholder, titleLevel, hostViews],
+      [highlight, titlePlaceholder, titleLevel, inlineIcon, hostViews],
     );
 
     const localAccept = useCallback(
@@ -325,10 +326,11 @@ const PageEditorInner = forwardRef<PageEditorHandle, PageEditorProps>(
 
     // merged cells only where the Markdown page can keep the table (an HTML table read back)
     const mergeGuard = useMemo(() => markdownTableGuard(i18n.t("table.mergeMarkdownHint")), [i18n]);
+    const iconAbove = inlineIcon ? undefined : props.icon;
     const head =
-      props.icon || props.header ? (
+      iconAbove || props.header ? (
         <header className="gotipe-page-head" data-gotipe-page-head="">
-          {props.icon ? <div className="gotipe-page-head-icon">{props.icon}</div> : null}
+          {iconAbove ? <div className="gotipe-page-head-icon">{iconAbove}</div> : null}
           {props.header}
         </header>
       ) : undefined;
@@ -405,17 +407,20 @@ const PageEditorInner = forwardRef<PageEditorHandle, PageEditorProps>(
 
 /** Inserts a block at the caret; from the title, a new block under it: the title stays. */
 function insertBelowTitle(editor: GoTipeEditor, kind: PageBlockKind): void {
-  const title = editor.getViewState().blocks[0];
-  const current = editor.getCurrentBlock();
-  if (title && current?.id === title.id && isTitle(title)) {
-    editor.chain().insertBlockAfter("paragraph", {}).run();
-    const below = editor.getViewState().blocks[1];
-    if (below) {
-      const at = { blockId: below.id, offset: 0 };
-      editor.setSelection({ anchor: at, head: at });
+  // One action, one undo step (`editor.batch`).
+  editor.batch(() => {
+    const title = editor.getViewState().blocks[0];
+    const current = editor.getCurrentBlock();
+    if (title && current?.id === title.id && isTitle(title)) {
+      editor.chain().insertBlockAfter("paragraph", {}).run();
+      const below = editor.getViewState().blocks[1];
+      if (below) {
+        const at = { blockId: below.id, offset: 0 };
+        editor.setSelection({ anchor: at, head: at });
+      }
     }
-  }
-  insertPageBlock(editor, kind);
+    insertPageBlock(editor, kind);
+  });
 }
 
 function isTitle(block: { type: string; attrs: Record<string, unknown> }): boolean {

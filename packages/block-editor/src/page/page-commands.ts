@@ -46,8 +46,10 @@ function currentBlockIsEmptyParagraph(editor: GoTipeEditor): boolean {
 function insertLeaf(editor: GoTipeEditor, type: string, attrs: Record<string, unknown>) {
   const current = editor.getCurrentBlock();
   if (current && currentBlockIsEmptyParagraph(editor)) {
-    editor.chain().insertBlockAfter(type, attrs).run();
-    editor.chain().deleteBlock(current.id).run();
+    editor.batch(() => {
+      editor.chain().insertBlockAfter(type, attrs).run();
+      editor.chain().deleteBlock(current.id).run();
+    });
     return;
   }
   editor.chain().insertBlockAfter(type, attrs).run();

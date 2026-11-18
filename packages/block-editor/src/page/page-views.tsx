@@ -35,7 +35,11 @@ const firstBlockId = (state: ViewState): string | undefined => state.blocks[0]?.
  * The title is an `h${titleLevel}` that looks the same at any level: a host page with its own
  * `h1` passes 2 (D-84).
  */
-function headingView(titlePlaceholder: string | undefined, titleLevel: PageTitleLevel) {
+function headingView(
+  titlePlaceholder: string | undefined,
+  titleLevel: PageTitleLevel,
+  titleIcon: React.ReactNode,
+) {
   const view: BlockViewComponent = function PageHeadingView({
     block,
     editor,
@@ -63,6 +67,17 @@ function headingView(titlePlaceholder: string | undefined, titleLevel: PageTitle
         className={cx(rootProps.className, isTitle && "gotipe-page-title")}
         data-placeholder={placeholder}
       >
+        {isTitle && titleIcon ? (
+          // in the title's row, outside its text: no offset, no Markdown, no caret
+          <span
+            className="gotipe-page-title-icon"
+            data-gotipe-widget=""
+            contentEditable={false}
+            aria-hidden="true"
+          >
+            {titleIcon}
+          </span>
+        ) : null}
         {content}
       </Tag>
     );
@@ -105,10 +120,12 @@ export function createPageBlockViews(
     highlight?: CodeHighlighter;
     titlePlaceholder?: string;
     titleLevel?: PageTitleLevel;
+    /** The page's glyph drawn in the title's row, before its text. */
+    titleIcon?: React.ReactNode;
   } = {},
 ): BlockViews {
   return {
-    heading: headingView(options.titlePlaceholder, options.titleLevel ?? 1),
+    heading: headingView(options.titlePlaceholder, options.titleLevel ?? 1, options.titleIcon),
     markdownRaw: MarkdownRawView,
     ...(options.highlight ? { codeBlock: codeBlockViewFor(options.highlight) } : {}),
   };

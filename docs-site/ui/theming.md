@@ -190,6 +190,7 @@ can be set on any container.
 | `--gt-image-empty-bg` | unset: `--gt-sunken` | Background of an empty image or file block (upload or link) |
 | `--gt-media-row-h`, `--gt-media-row-pad`, `--gt-media-row-gap` | 48 px, `0 12px`, 8 px | The empty block as a row (`media.placeholder: "row"`): height, padding and gaps |
 | `--gt-media-row-icon`, `--gt-media-row-radius`, `--gt-media-row-button-h` | 20 px, `var(--gt-radius-block)`, 24 px | Its glyph, corners and button height |
+| `--gt-page-icon-inline`, `--gt-page-icon-inline-gap` | `1em`, `0.3em` | The page's glyph in the title's row (`iconPlacement="inline"`, `.gotipe-page-title-icon`) and its gap to the text |
 | `--gt-caption-hint-color` | unset: `--gt-text-3` | The file name an image without a caption shows with `media.captionName` |
 | `--gt-list-item-gap` | `var(--gt-flow-list)` (4 px) | Space between two items of a list, task lists included |
 | `--gt-flow-between-lists` | `var(--gt-flow)` (8 px) | Space before a list that follows another list, as a numbered list after a task list; `0px` joins them |

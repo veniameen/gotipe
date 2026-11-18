@@ -96,6 +96,7 @@ import { PageEditor, type PageEditorHandle } from "@gotipe/block-editor";
   locale="ru"                          // en by default
   titlePlaceholder={slugToTitle(path)} // title when the file has no "# …"
   icon={<PageGlyph page={page} />}     // optional glyph above the title, in the text column
+  iconPlacement="inline"               // or in the title's row, before its text
   narrow={false}                       // keep the host's sizes in a narrow panel too
   reviewLayout="inline"                // cards by the text, never in a margin column
   slashMenu={{ commands: (defaults) => [...defaults, agentNote], groups, descriptions: true }}
