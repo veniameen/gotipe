@@ -57,7 +57,12 @@ export function DocumentEditor() {
 }
 ```
 
-To change groups, labels or row icons, render `SlashMenu` yourself as a child of
+`slashGroups` sets the order and labels of the groups (a group not listed is hidden, so a
+command of your own group needs it listed), and `slashDescriptions` shows each command's
+`description` as a quiet second line under its name (`.gotipe-slash-menu-item-description`); it
+is off by default. `PageEditor` takes the same through its `slashMenu` prop.
+
+To change row icons or the right-hand side, render `SlashMenu` yourself as a child of
 `BlockEditor` with `showSlashMenu={false}`:
 
 | Prop | Type | Default | Description |
@@ -67,6 +72,7 @@ To change groups, labels or row icons, render `SlashMenu` yourself as a child of
 | `groups` | `{ id: string; label: string }[]` | AI, Style, Insert, Upload | Group order and labels; groups not listed are hidden. |
 | `renderIcon` | `(command) => ReactNode` | built-in icons | Row icon. By default an icon name outside the built-in set draws the command's first letter. |
 | `renderMeta` | `(command) => ReactNode` | Markdown shortcut | Right-hand side of a row. |
+| `descriptions` | `boolean` | `false` | Show a command's `description` under its name. |
 | `labels` | `{ menu?, list?, empty?, results?(count) }` | i18n strings | Accessible names, the empty state and the result count. |
 | `className` | `string` | — | Added to `.gotipe-slash-menu`. |
 
