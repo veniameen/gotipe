@@ -340,6 +340,30 @@ describe("PageEditor head, narrow sizes and review layout", () => {
     expect(ref.current!.getMarkdown()).toBe("# My Notes\n\nBody.\n");
   });
 
+  it("a host that re-renders with a new inline icon keeps the headings and the caret", async () => {
+    const { editor, draw } = await mount({
+      markdown: "# Notes\n\n## Part\n",
+      icon: <svg data-testid="glyph" />,
+      iconPlacement: "inline",
+    });
+    const before = [...container.querySelectorAll("h1, h2")];
+    const title = editor.getViewState().blocks[0]!;
+    act(() => {
+      editor.setSelection({
+        anchor: { blockId: title.id, offset: 2 },
+        head: { blockId: title.id, offset: 2 },
+      });
+    });
+    await act(async () => {
+      draw({ icon: <svg data-testid="glyph" />, iconPlacement: "inline" });
+      await wait(20);
+    });
+    const after = [...container.querySelectorAll("h1, h2")];
+    expect(after).toHaveLength(2);
+    expect(after.every((node, index) => node === before[index])).toBe(true);
+    expect(editor.getViewState().selection.anchor).toEqual({ blockId: title.id, offset: 2 });
+  });
+
   it("has no head and keeps the narrow sizes by default", async () => {
     await mount({ markdown: "# Notes\n" });
     expect(container.querySelector(".gotipe-page-head")).toBeNull();
@@ -534,7 +558,10 @@ describe("PageEditor slash menu", () => {
       markdown: "# Notes\n",
       slashMenu: {
         commands: (defaults) => [...defaults, agent],
-        renderIcon: (command) => (command === agent ? <svg data-testid="agent-icon" /> : undefined),
+        renderIcon: (command) =>
+          command === agent ? (
+            <svg data-testid="agent-icon" />
+          ) : command.name === "Divider" ? null : undefined,
         renderMeta: (command) => (command === agent ? null : undefined),
       },
     });
@@ -548,6 +575,10 @@ describe("PageEditor slash menu", () => {
     expect(row("Agent instructions")?.querySelector(".gotipe-slash-menu-item-meta")).toBeNull();
     expect(row("Heading 1")?.querySelector(".gotipe-slash-menu-item-meta")?.textContent).toBe("#");
     expect(row("Heading 1")?.querySelector(".gotipe-slash-menu-item-icon svg")).not.toBeNull();
+    // null: no icon at all
+    expect(row("Divider")?.querySelector(".gotipe-slash-menu-item-icon")?.childElementCount).toBe(
+      0,
+    );
   });
 
   it("keeps the page's own menu by default, without descriptions", async () => {

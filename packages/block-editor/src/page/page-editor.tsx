@@ -58,7 +58,7 @@ import { PageOverlayContext } from "./overlay";
 import { type PageBlockKind, insertPageBlock, pageBlockCommands } from "./page-commands";
 import type { PageEditorHandle, PageEditorProps } from "./page-editor-props";
 import { createPageHost } from "./page-host";
-import { createPageBlockViews } from "./page-views";
+import { PageTitleIconContext, createPageBlockViews } from "./page-views";
 import { usePageDraft } from "./use-page-draft";
 
 export type { PageEditorHandle, PageEditorProps, PageSlashMenu } from "./page-editor-props";
@@ -264,10 +264,10 @@ const PageEditorInner = forwardRef<PageEditorHandle, PageEditorProps>(
     const inlineIcon = props.iconPlacement === "inline" ? props.icon : undefined;
     const blockViews = useMemo<BlockViews>(
       () => ({
-        ...createPageBlockViews({ highlight, titlePlaceholder, titleLevel, titleIcon: inlineIcon }),
+        ...createPageBlockViews({ highlight, titlePlaceholder, titleLevel }),
         ...hostViews,
       }),
-      [highlight, titlePlaceholder, titleLevel, inlineIcon, hostViews],
+      [highlight, titlePlaceholder, titleLevel, hostViews],
     );
 
     const localAccept = useCallback(
@@ -362,28 +362,30 @@ const PageEditorInner = forwardRef<PageEditorHandle, PageEditorProps>(
             </div>
           ) : (
             <TableMergeGuardProvider value={mergeGuard}>
-              <BlockEditor
-                editor={editor}
-                view={view}
-                narrow={narrow}
-                className="gotipe-page-editor"
-                header={head}
-                starters={false}
-                highlight={highlight}
-                blockViews={blockViews}
-                slashCommands={slashCommands}
-                slashGroups={slashMenu?.groups}
-                slashDescriptions={slashMenu?.descriptions}
-                slashRenderIcon={slashMenu?.renderIcon}
-                slashRenderMeta={slashMenu?.renderMeta}
-                media={props.media}
-                mentions={props.mentions}
-                emoji={props.emoji}
-                ariaLabel={i18n.t("page.ariaLabel")}
-                errorToast={!host?.onError && !onError}
-                showAiCommandBar={false}
-                status={props.status}
-              />
+              <PageTitleIconContext.Provider value={inlineIcon ?? null}>
+                <BlockEditor
+                  editor={editor}
+                  view={view}
+                  narrow={narrow}
+                  className="gotipe-page-editor"
+                  header={head}
+                  starters={false}
+                  highlight={highlight}
+                  blockViews={blockViews}
+                  slashCommands={slashCommands}
+                  slashGroups={slashMenu?.groups}
+                  slashDescriptions={slashMenu?.descriptions}
+                  slashRenderIcon={slashMenu?.renderIcon}
+                  slashRenderMeta={slashMenu?.renderMeta}
+                  media={props.media}
+                  mentions={props.mentions}
+                  emoji={props.emoji}
+                  ariaLabel={i18n.t("page.ariaLabel")}
+                  errorToast={!host?.onError && !onError}
+                  showAiCommandBar={false}
+                  status={props.status}
+                />
+              </PageTitleIconContext.Provider>
             </TableMergeGuardProvider>
           )}
           {editor && effectiveReview ? (

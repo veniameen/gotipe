@@ -76,10 +76,13 @@ export function decorationRect(root: HTMLElement, attr: string, id: string): DOM
 
 /** The left edge of a block's own first text, or null when it shows none. */
 function blockTextLeft(block: Element): number | null {
-  const host =
-    block.querySelector("[data-gotipe-todo-content]") ??
-    block.querySelector(".gotipe-callout-content") ??
-    block;
+  // right to left, the text starts at the right: the box's own edge stands
+  if (getComputedStyle(block).direction === "rtl") return null;
+  const own = (selector: string) =>
+    [...block.querySelectorAll(selector)].find(
+      (element) => element.closest("[data-block-id], [data-gotipe-phantom-id]") === block,
+    );
+  const host = own("[data-gotipe-todo-content]") ?? own(".gotipe-callout-content") ?? block;
   const walker = createTextWalker(host);
   for (let node = walker.nextNode(); node; node = walker.nextNode()) {
     const owner = node.parentElement?.closest("[data-block-id], [data-gotipe-phantom-id]");
