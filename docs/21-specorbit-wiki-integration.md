@@ -27,6 +27,7 @@ confirm that the integration or its checks have been carried out in the SpecOrbi
 | `@gotipe/markdown` | our own Markdown codec; also needed at runtime: `applyAnchoredEdits` — in `@gotipe/suggestions` |
 | `@gotipe/suggestions` | suggestion types and anchors: `findAnchor`, `applyAnchoredEdits`, `locateEdits` |
 | `@gotipe/i18n` | UI strings: `en` by default, `ru` built in — the wiki needs `locale="ru"` |
+| `@gotipe/versions` | a required peer: `@gotipe/block-editor` imports it statically (version history and comparison); install it even when the page shows no history |
 
 JS mode and editing without highlighting need neither `@gotipe/wasm` nor `shiki`.
 The codec uses GoTipe's own parser, with no mdast/micromark runtime dependencies.
@@ -90,10 +91,14 @@ import { PageEditor, type PageEditorHandle } from "@gotipe/block-editor";
   ref={pageRef}
   view="notion"                        // shared view: notion (default), docs, modern, minimal
   markdown={file.content}              // file text; a new value ≠ the last draft → external replacement
-  onChange={(md) => scheduleSave(md)}  // draft after every edit; autosave (~1 s) is the host's job
+  onChange={(md) => scheduleSave(md)}  // draft once a frame after edits; autosave (~1 s) is the host's job
   readOnly={viewingVersion}            // H8: viewing an old version
   locale="ru"                          // en by default
   titlePlaceholder={slugToTitle(path)} // title when the file has no "# …"
+  icon={<PageGlyph page={page} />}     // optional glyph above the title, in the text column
+  narrow={false}                       // keep the host's sizes in a narrow panel too
+  reviewLayout="inline"                // cards by the text, never in a margin column
+  slashMenu={{ commands: (defaults) => [...defaults, agentNote], groups, descriptions: true }}
   host={{
     saveAsset: async (blob, { name, mediaType }) => {
       const { path } = await wiki.writeAsset({ projectPath, page, name, mediaType, data: await toBase64(blob) });
@@ -108,7 +113,9 @@ import { PageEditor, type PageEditorHandle } from "@gotipe/block-editor";
 />
 ```
 
-Handle (`ref`): `editor`, `getMarkdown()`, `focus()`, `insertBlock(kind)` (the "Image"
+Handle (`ref`): `editor`, `getMarkdown()`, `flush()` (emits a pending draft at once and returns the
+Markdown — call it before a save), `setMarkdown(text)` (replaces the document even with the same text
+as the last `markdown`, e.g. a revert to the file on disk), `focus()`, `insertBlock(kind)` (the "Image"
 and "Blocks" buttons of the toolbar), `getTitle()`, `selectTitle()` ("Rename"), `review` (`ReviewApi`).
 
 - The title is the first `# …` of the file. Without it `titlePlaceholder` is shown, and nothing is
@@ -116,14 +123,18 @@ and "Blocks" buttons of the toolbar), `getTitle()`, `selectTitle()` ("Rename"), 
 - Front matter, HTML, footnotes, and link definitions are not shown as editable text: they
   stay as they are (read-only "Markdown" blocks).
 - External replacement (the file was changed by an agent, Git, or an accepted suggestion): pass the new `markdown` —
-  block ids are reused, focus, caret, and scroll position are kept, and the change goes into undo.
+  block ids are reused, focus, caret, and scroll position are kept, and the change goes into undo. A text equal to
+  the last `markdown` passed is not a change of the prop: use `ref.setMarkdown(text)` for it.
 - An unchanged file comes back byte for byte; after a paragraph edit only its block changes.
 - PageEditor is a BlockEditor with a Markdown session and model suggestions: the same toolbar over
   the selection, "/", block handle and block menu, table column menu (Atlas, frames 6–9 and 19). The page
   has no theme of its own.
 - On a wide page (card + gap + `--gt-margin-page-min`) suggestion cards stand in a
   column in the margin next to their edits: the open one with its replies, the others collapsed. On a narrow page
-  the card opens next to the text.
+  the card opens next to the text. `reviewLayout="inline"` or `"margin"` fixes either layout at any width.
+- The "/" menu: `slashMenu.commands` (a list, or a function over the page's own commands), `slashMenu.groups`
+  (order and labels — e.g. Upload first, labelled "Media") and `slashMenu.descriptions` (a hint under each name).
+  A host command such as "Agent instructions" is an ordinary `SlashCommandDef` that inserts a quote with the label.
 - Custom block views are the `blockViews` prop: they take precedence over page views and shared ones. This is how SpecOrbit draws,
   for example, a quote that starts with a bold label "Agent instructions:" — for the library
   it is an ordinary quote.
@@ -133,13 +144,31 @@ and "Blocks" buttons of the toolbar), `getTitle()`, `selectTitle()` ("Rename"), 
 | Callback | When | SpecOrbit |
 |---|---|---|
 | `saveAsset(blob, {kind, name, mediaType, size})` → `{src, name?}` | paste from the clipboard, drag and drop, "Image", "File" | `wiki.writeAsset`; failure — `throw` (becomes an `error` event) |
-| `resolveAsset(src)` → data URL \| null | showing an image | `wiki.readAsset` → `dataUrl` |
+| `resolveAsset(src)` → data URL \| null | showing an image | `wiki.readAsset` → `dataUrl`; `null` — the image shows "unavailable" and nothing is requested |
 | `openLink(href, {blockId, newTab, target})` | Cmd/Ctrl+click; any click in read mode; click on a file | external links — the system browser; `docs/pages/*.md` — a page tab; `target` — the link's own (`_self`, `_blank`), for a file name `null`, the host decides |
 | `onError(error: GoTipeError)` | any error | toast or highlight; the editor has no error strings of its own |
 
-Error codes: `ASSET_SAVE_FAILED`, `ASSET_RESOLVE_FAILED`, `LINK_BLOCKED` (not http/https/mailto and not a
-relative link), `LINK_OPEN_FAILED`, `PROPOSAL_STALE`, `PROPOSAL_ACTION_FAILED`,
-`COMMENT_ACTION_FAILED`, `TRANSFORM_ERROR`. An invalid link in the floating toolbar highlights the field.
+Error codes (`GoTipeError.code`, all of `GoTipeErrorCode` in `@gotipe/core`). An invalid link in the
+floating toolbar highlights the field.
+
+| Code | On a page |
+|---|---|
+| `EDITOR_NOT_INITIALIZED` | the editor could not be created (the page shows "could not be opened"); the reason is `details.cause` |
+| `PARSE_ERROR`, `VALIDATION_ERROR` | the Markdown or the document failed its check while creating or replacing |
+| `TRANSFORM_ERROR` | a command or a table operation could not be applied; nothing changed |
+| `ASSET_SAVE_FAILED` | `saveAsset` threw (any error but a `GoTipeError`), returned no path or an unsafe one, or the document changed during the upload |
+| `ASSET_RESOLVE_FAILED` | `resolveAsset` threw |
+| `ASSET_UNSUPPORTED` | an image that is not PNG, JPEG, GIF or WebP; also what a host throws itself to refuse a file |
+| `ASSET_TOO_LARGE` | without `saveAsset`, a file above 10 MiB cannot be embedded |
+| `LINK_BLOCKED` | not http/https/mailto and not a relative link |
+| `LINK_OPEN_FAILED` | `openLink` threw |
+| `CLIPBOARD_FAILED` | copy, cut or paste failed (no clipboard access, the paste no longer fits) |
+| `PROPOSAL_STALE` | "Accept" on a stale suggestion |
+| `PROPOSAL_ACTION_FAILED` | `onAccept` or `onReject` threw |
+| `COMMENT_ACTION_FAILED` | `onReply` or `onDeleteComment` threw |
+| `COMPOSITION_CONFLICT` | IME input met a concurrent change; the composed text is in `details` |
+| `EXTENSION_ERROR`, `EXTENSION_DEPENDENCY_CYCLE` | an extension failed or the extensions depend on each other in a cycle |
+| `WASM_INIT_FAILED`, `COLLABORATION_UNAVAILABLE`, `COLLABORATION_ERROR` | WASM engine and collaboration only: a page (JS engine) never reports them |
 
 ### Model suggestions (ADR-0047)
 
@@ -161,7 +190,7 @@ const review: PageReviewProps = {
   })),
   cursors,                       // from wiki.changed kind=cursor: {laneId, label, proposalId | anchor}
   onAccept: async (id) => {      // save the draft → wiki.acceptProposal → new text in markdown
-    await saveNow(pageRef.current!.getMarkdown());
+    await saveNow(pageRef.current!.flush());
     const { document } = await wiki.acceptProposal({ projectPath, path, proposalId: id, expectedRevision });
     setFile(document);           // PageEditor will apply it as an external edit
     return true;                 // false — stop "Accept all"
@@ -169,6 +198,11 @@ const review: PageReviewProps = {
   onReject: (id) => wiki.rejectProposal({ projectPath, path, proposalId: id }).then(() => true),
   onRejectAll: () => wiki.rejectAll({ projectPath, path }),
   onReply: (commentId, text) => wiki.reply({ projectPath, path, commentId, text }).then(() => true),
+  onDeleteComment: async (commentId) => {   // the trash button of the open comment card
+    if (!(await confirm("Delete the comment?"))) return false;  // false — the card stays
+    await wiki.deleteComment({ projectPath, path, commentId });  // a throw → COMMENT_ACTION_FAILED
+    return true;                 // then drop it from `comments`
+  },
   onStatesChange: ({ proposals }) => setStale(proposals.filter((p) => p.status === "stale")),
 };
 ```
@@ -196,7 +230,17 @@ if there is no `data-theme`).
 - Colors, fonts, radii, and shadows are inherited: set them on the page container or higher, and they
   reach the text, menus, and suggestion cards.
 - View sizes (font size, line height, page margins) are set by the view itself on `[data-gt-view]`. Put your own
-  values on `.gotipe-page .gotipe-block-editor`.
+  values on `.gotipe-page .gotipe-block-editor`. A container up to 640 px wide sets smaller sizes on the editor's
+  children, which win over yours: `narrow={false}` (`data-gt-narrow="off"` on the page) keeps yours at any width.
+- Tokens derived from others (`--gt-comment-soft` from `--gt-comment-tint`, `--gt-ai-ghost` from `--gt-text-3`,
+  `--gt-check-fill` from `--gt-ink`, `--gt-check-line` from `--gt-line-control`) are resolved again on
+  `[data-gt-view]`, so the base colours of the map below reach them. Set a derived token itself on
+  `.gotipe-page .gotipe-block-editor`.
+- Parts with their own tokens (defaults keep the shared look; the full table is in `theming.md`): the task box
+  (`--gt-check-fill`, `--gt-check-line`, `--gt-check-mark`), the review card (`--gt-card-name-size`,
+  `--gt-card-name-weight`, `--gt-card-button-size`), an insertion (`--gt-sug-ins-bar`, or a text underline with
+  `--gt-sug-ins-underline: underline` and `--gt-sug-ins-underline-thickness|-offset|-style`), a changed block's bar
+  (`--gt-sug-changed-bar`, `--gt-sug-changed-bar-width`), the block handle's rail (`--gt-handle-rail`).
 
 An example adapter on the SpecOrbit side (the names on the right are application tokens):
 
@@ -226,9 +270,10 @@ takes `--gt-track-1`, a comment without a lane takes `--gt-track-3`; a lane pass
 
 Classes for your own edits: `.gotipe-page` (root), `.gotipe-page-title`, `.gotipe-raw`,
 `.gotipe-table`, `.gotipe-column-handle`, `.gotipe-row-handle`, `.gotipe-column-menu`, `.gotipe-bubble-menu`, `.gotipe-slash-menu`,
-`.gotipe-block-context-menu`, `.gotipe-review-bar`, `.gotipe-review-card`, `.gotipe-lane-cursor`,
-`.gotipe-sug-ins|-del|-stale|-block-ins|-block-del`, `.gotipe-cmt`. Attributes:
-`data-gt-view`, `data-review-layout` (column in the margin), `data-gotipe-proposal`, `data-gotipe-comment`, `data-gotipe-lane`.
+`.gotipe-block-context-menu`, `.gotipe-review-bar`, `.gotipe-review-card`, `.gotipe-review-card-delete`, `.gotipe-lane-cursor`,
+`.gotipe-btn-secondary`, `.gotipe-sug-ins|-del|-stale|-block-ins|-block-del|-block-changed`, `.gotipe-cmt`,
+`.gotipe-page-head` (`icon`/`header`), `.gotipe-slash-menu-item-description`. Attributes:
+`data-gt-view`, `data-gt-narrow`, `data-review-layout` (column in the margin), `data-gotipe-proposal`, `data-gotipe-comment`, `data-gotipe-lane`.
 
 ## What goes into Markdown
 
