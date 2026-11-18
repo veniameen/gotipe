@@ -254,6 +254,34 @@ describe("PageEditor assets", () => {
   });
 });
 
+describe("PageEditor placeholders", () => {
+  it("an image or file without a source is not written to the file", async () => {
+    const markdown = "# Notes\n\nBody.\n";
+    const { ref, editor, drafts } = await mount({ markdown });
+    act(() => {
+      editor.focus("end");
+      ref.current!.insertBlock("image");
+      ref.current!.insertBlock("file");
+    });
+    expect(editor.getViewState().blocks.map((block) => block.type)).toContain("image");
+    let text = "";
+    act(() => {
+      text = ref.current!.flush();
+    });
+    expect(text).toBe(markdown);
+    expect(ref.current!.getMarkdown()).toBe(markdown);
+    expect(drafts).toEqual([]);
+    // once it has a source it is content
+    const image = editor.getViewState().blocks.find((block) => block.type === "image")!;
+    act(() => {
+      editor.dispatch({
+        steps: [{ type: "setBlockAttrs", blockId: image.id, attrs: { src: "assets/a.png" } }],
+      });
+    });
+    expect(ref.current!.flush()).toContain("![](assets/a.png)");
+  });
+});
+
 describe("PageEditor slash menu", () => {
   const openSlash = async (editor: GoTipeEditor) => {
     await act(async () => {
