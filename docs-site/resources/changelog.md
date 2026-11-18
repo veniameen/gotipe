@@ -3,6 +3,46 @@ title: Changelog
 description: Release notes of GoTipe, newest first, grouped by package.
 ---
 
+## 0.1.3
+
+Hosts that embed `PageEditor` get a reliable first focus, one undo step for a group of changes,
+more of the look as tokens, and three new host options. Defaults keep today's look and behavior
+except where a fix says otherwise. Released packages: `core`, `react`, `i18n`, `theme` and
+`block-editor` (0.1.3), `wasm` (0.1.2).
+
+### @gotipe/core, @gotipe/wasm
+
+- `editor.batch(fn)`: every change committed while `fn` runs is one undo step, on both engines
+  and under collaboration.
+- `editor.focus(position)` puts the caret in place before the `focus` event; the
+  `selectionChange` of the move comes after it.
+
+### @gotipe/block-editor
+
+- `autoFocus` comes after the effects of the render `onReady` causes, not on a frame.
+- `PageEditor` passes `EditorHost.discardAsset` on (it dropped it in 0.1.2).
+- `iconPlacement: "inline"` puts the page's glyph in the title's row.
+- The "/" menu: `slashMenu.renderIcon` and `renderMeta` (`slashRenderIcon`, `slashRenderMeta` on
+  `BlockEditor`); `undefined` keeps the built-in icon or shortcut. The row classes are documented.
+- A suggested block's card stands at its text, past its marker or checkbox.
+- Inserting a block from the title and replacing an empty paragraph are one undo step.
+
+### @gotipe/react, @gotipe/i18n
+
+- `media.placeholder: "row"` draws an empty image or file block as one row with "Choose a file…";
+  `media.captionName` shows an image's file name as a quiet hint where it has no caption, not
+  written to the document.
+
+### @gotipe/theme
+
+- Tables: the last row's line yields to a host's cell border; tokens for the gap after a heading,
+  the grid and frame, the head, the first column, the row height, inline code in a cell and
+  content-sized shared columns (`--gt-table-shared-layout: auto`).
+- Lists: `--gt-list-item-gap`, `--gt-flow-between-lists`.
+- Suggestions: tokens for the insertion line, a new block's tint and underline and the stale look.
+- The compact media row, the caption hint and the glyph in the title row: `--gt-media-row-*`,
+  `--gt-caption-hint-color`, `--gt-page-icon-inline`, `--gt-page-icon-inline-gap`.
+
 ## 0.1.2
 
 Typing in a long document is fast, and hosts that embed `PageEditor` get the props and tokens

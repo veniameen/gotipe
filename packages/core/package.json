@@ -1,6 +1,6 @@
 {
   "name": "@gotipe/core",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "Headless core of the GoTipe editor: document model, transactions, commands, events and extensions.",
   "keywords": [
     "gotipe",
@@ -64,7 +64,7 @@
   "types": "./dist/index.d.ts",
   "sideEffects": false,
   "peerDependencies": {
-    "@gotipe/wasm": "^0.1.0"
+    "@gotipe/wasm": "^0.1.2"
   },
   "peerDependenciesMeta": {
     "@gotipe/wasm": {

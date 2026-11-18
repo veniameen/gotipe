@@ -1,6 +1,6 @@
 {
   "name": "@gotipe/theme",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "Styles, design tokens and light and dark themes of the ready GoTipe editors.",
   "keywords": [
     "gotipe",
@@ -29,7 +29,7 @@
     "*.css"
   ],
   "peerDependencies": {
-    "@gotipe/core": "^0.1.2"
+    "@gotipe/core": "^0.1.3"
   },
   "devDependencies": {
     "@gotipe/core": "workspace:*",

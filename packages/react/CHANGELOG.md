@@ -1,5 +1,25 @@
 # @gotipe/react
 
+## 0.1.3
+
+### Patch Changes
+
+- 9ca2225: Two host options of the image and file blocks (`media` on `PageEditor` and `BlockEditor`, or
+  `MediaOptionsContext`), off by default:
+
+  - `placeholder: "row"` draws an empty image or file block as one quiet row: a glyph, the block's
+    kind ("Image", "File") and a secondary "Choose a file…" (`media.fileGroup`, `media.chooseFile`;
+    sizes `--gt-media-row-h`, `-pad`, `-gap`, `-icon`, `-radius`, `-button-h`).
+  - `captionName: true` shows an image's file name in the caption's place when it has no caption,
+    quietly (`.gotipe-image-caption-hint`, `--gt-caption-hint-color`); nothing is written to the
+    document.
+
+- Updated dependencies [2c3dccb]
+- Updated dependencies [9ca2225]
+- Updated dependencies [ec77da1]
+  - @gotipe/core@0.1.3
+  - @gotipe/i18n@0.1.3
+
 ## 0.1.2
 
 ### Patch Changes
