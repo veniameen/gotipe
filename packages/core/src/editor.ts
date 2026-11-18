@@ -13,7 +13,7 @@ import { createHostActions } from "./editor/host";
 import { initializeEditor } from "./editor/initialize";
 import { mountSurface } from "./editor/mount";
 import { createTransactionFilters } from "./editor/transaction-filters";
-import { createTransactions } from "./editor/transactions";
+import { createTransactions, transactionContext } from "./editor/transactions";
 import { createViewState } from "./editor/view-state";
 import { fromWasmDoc, toWasmDoc } from "./engine/conversion";
 import { GoTipeError } from "./error";
@@ -109,6 +109,8 @@ export async function createEditorWithLoader(
       storedMarks = atoms.marks(value);
     },
     getDocumentJSON: () => bridge.getState(),
+    parseState: (json) => bridge.parseState(json),
+    decodeState: (json) => bridge.decodeState(json),
     apply: (transaction) => {
       if (bridge.isCollaborating && atoms.enabled)
         htmlSchema.atoms?.rememberLocal(view.get().blocks, transaction, atoms.isAtomic);
@@ -128,11 +130,21 @@ export async function createEditorWithLoader(
     shouldInspectTransaction: () =>
       transactionFilters.size > 0 || !!listeners.get("transaction")?.size,
     filterTransaction: (context) => transactionFilters.check(context),
-    publishTransaction: (context) => editor.emit("transaction", { editor, ...context }),
+    publishTransaction: (context) =>
+      editor.emit(
+        "transaction",
+        transactionContext(
+          context.transaction,
+          () => context.before,
+          () => context.after,
+          { editor },
+        ),
+      ),
   });
 
   const view = createViewState({
     getDocumentJSON: () => bridge.getState(),
+    decodeState: (json) => bridge.decodeState(json),
     getSelection: () => currentSelection,
     isAtomic: atoms.isAtomic,
     getStoredMarks: () => storedMarks,
@@ -238,9 +250,8 @@ export async function createEditorWithLoader(
     },
 
     getJSON(): Document {
-      const state = bridge.getState();
-      const raw = JSON.parse(state);
-      return fromWasmDoc(raw);
+      // a document of the caller's own: decoded anew from the parsed state
+      return fromWasmDoc(bridge.parseState(bridge.getState()));
     },
 
     getHTML(): string {

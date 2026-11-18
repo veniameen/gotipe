@@ -381,6 +381,15 @@ function applyMergeBlocks(
   removeBlockById(doc.blocks, step.block_id);
 }
 
+/** The fields of a step that name the blocks it reads and changes. */
+const STEP_BLOCKS = ["block_id", "target_id", "parent_id", "new_parent_id"];
+
+function holds(block: FallbackBlock, id: string): boolean {
+  if (block.id === id) return true;
+  for (const child of block.children) if (holds(child, id)) return true;
+  return false;
+}
+
 /**
  * `groups` are the schema's exclusive mark groups and `contentOf` its content kinds; the Rust
  * engine reads both from its schema. Without them no mark has a group and no type a kind.
@@ -393,11 +402,46 @@ export function fallbackApply(
   contentOf: ContentOf = () => undefined,
 ): string {
   const doc = JSON.parse(docJson) as FallbackDoc;
+  return JSON.stringify(applyTransaction(doc, transactionJson, validateStep, groups, contentOf));
+}
+
+/**
+ * The document after the transaction. `base` and its blocks stay as they are: a top-level block
+ * is copied before a step changes it or a block under it, and the result shares the other
+ * top-level blocks with `base`. A failed step leaves nothing behind.
+ */
+export function applyTransaction(
+  base: FallbackDoc,
+  transactionJson: string,
+  validateStep?: (step: Record<string, unknown>, document: FallbackDoc) => void,
+  groups: MarkGroups = NO_MARK_GROUPS,
+  contentOf: ContentOf = () => undefined,
+): FallbackDoc {
+  const doc: FallbackDoc = { ...base, blocks: base.blocks.slice() };
   const tr = JSON.parse(transactionJson) as { steps: Record<string, unknown>[] };
+  const copied = new Set<FallbackBlock>();
+  /** A step changes blocks only under the top-level blocks of the blocks it names. */
+  const copyBlocksOf = (step: Record<string, unknown>): void => {
+    if (!step || typeof step !== "object") return;
+    for (const data of Object.values(step)) {
+      if (!data || typeof data !== "object") continue;
+      for (const field of STEP_BLOCKS) {
+        const id = (data as Record<string, unknown>)[field];
+        if (typeof id !== "string") continue;
+        const at = doc.blocks.findIndex((block) => holds(block, id));
+        const top = doc.blocks[at];
+        if (!top || copied.has(top)) continue;
+        const copy = JSON.parse(JSON.stringify(top)) as FallbackBlock;
+        copied.add(copy);
+        doc.blocks[at] = copy;
+      }
+    }
+  };
 
   const atomic = groups.atomic;
   for (const raw of tr.steps) {
     validateStep?.(raw, doc);
+    copyBlocksOf(raw);
     // Offsets inside an atom move to its edges (atoms.ts); the Rust engine does the same.
     const step = atomic
       ? normalizeAtomStep(
@@ -454,5 +498,5 @@ export function fallbackApply(
     doc.version += 1;
   }
 
-  return JSON.stringify(doc);
+  return doc;
 }

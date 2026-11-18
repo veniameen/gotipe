@@ -42,26 +42,30 @@ function content(value: unknown): BlockContent {
   throw new GoTipeError("VALIDATION_ERROR", "Unsupported block content");
 }
 
-/** Validates the canonical document shape; accepts the equivalent Rust wire representation. */
-export function decodeDocument(value: unknown): Document {
-  const document = object(value, "Document");
-  if (!Array.isArray(document.blocks))
-    throw new GoTipeError("VALIDATION_ERROR", "Document blocks must be an array");
-  const version = document.version ?? 1;
-  if (typeof version !== "number" || !Number.isSafeInteger(version) || version < 0)
-    throw new GoTipeError(
-      "VALIDATION_ERROR",
-      "Document version must be a non-negative safe integer",
-    );
+/** Decodes the blocks of one document, with its checks across blocks: unique ids and limits. */
+export interface BlockDecoder {
+  /** A top-level block and the blocks under it. */
+  block(value: unknown): Block;
+  /** Counts the ids, in document order, of a block decoded before: it is not decoded again. */
+  seen(ids: readonly string[]): void;
+}
+
+export function createBlockDecoder(): BlockDecoder {
   const ids = new Set<string>();
   let count = 0;
-  const block = (value: unknown, depth: number): Block => {
+  const limit = (depth: number): void => {
     if (depth > 64 || ++count > 100000)
       throw new GoTipeError("VALIDATION_ERROR", "Document structure exceeds supported limits");
-    const entry = object(value, "Block");
-    const id = name(entry.id, "Block ID");
+  };
+  const unique = (id: string): void => {
     if (ids.has(id)) throw new GoTipeError("VALIDATION_ERROR", `Duplicate block ID: ${id}`);
     ids.add(id);
+  };
+  const block = (value: unknown, depth: number): Block => {
+    limit(depth);
+    const entry = object(value, "Block");
+    const id = name(entry.id, "Block ID");
+    unique(id);
     if (entry.children !== undefined && !Array.isArray(entry.children))
       throw new GoTipeError("VALIDATION_ERROR", "Block children must be an array");
     return {
@@ -72,5 +76,34 @@ export function decodeDocument(value: unknown): Document {
       children: (entry.children ?? []).map((child) => block(child, depth + 1)),
     };
   };
-  return { version, blocks: document.blocks.map((entry) => block(entry, 0)) };
+  return {
+    block: (value) => block(value, 0),
+    seen(known) {
+      for (const id of known) {
+        limit(0);
+        unique(id);
+      }
+    },
+  };
+}
+
+/** The version and the undecoded blocks of a document, checked as `decodeDocument` checks them. */
+export function decodeHeader(value: unknown): { version: number; blocks: unknown[] } {
+  const document = object(value, "Document");
+  if (!Array.isArray(document.blocks))
+    throw new GoTipeError("VALIDATION_ERROR", "Document blocks must be an array");
+  const version = document.version ?? 1;
+  if (typeof version !== "number" || !Number.isSafeInteger(version) || version < 0)
+    throw new GoTipeError(
+      "VALIDATION_ERROR",
+      "Document version must be a non-negative safe integer",
+    );
+  return { version, blocks: document.blocks };
+}
+
+/** Validates the canonical document shape; accepts the equivalent Rust wire representation. */
+export function decodeDocument(value: unknown): Document {
+  const { version, blocks } = decodeHeader(value);
+  const decoder = createBlockDecoder();
+  return { version, blocks: blocks.map((entry) => decoder.block(entry)) };
 }

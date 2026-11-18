@@ -1,10 +1,11 @@
 import { findBlockInTree, getMarksAt } from "../document/tree";
-import { fromWasmDoc } from "../engine/conversion";
-import type { Block } from "../types/block";
+import type { Block, Document } from "../types/block";
 import type { Decoration, MarkView, SelectionView, ViewState } from "../types/view";
 
 interface ViewStatePort {
   getDocumentJSON(): string;
+  /** The public document of the state `json`; its blocks are shared and are not changed here. */
+  decodeState(json: string): Document;
   getSelection(): SelectionView;
   /** Marks declared `atomic` carry `atomic: true` in the view (MarkView). */
   isAtomic?(markType: string): boolean;
@@ -23,6 +24,8 @@ export function createViewState(port: ViewStatePort) {
   let lastStateJson: string | null = null;
   let lastParsed: { blocks: ViewState["blocks"]; version: number } | null = null;
   const blockKeys = new WeakMap<object, string>();
+  // The decoded block a view block was made from: the same one again needs no comparing.
+  const sources = new WeakMap<object, Block>();
 
   const withEmptyDecorations = (
     block: ViewState["blocks"][number],
@@ -34,16 +37,23 @@ export function createViewState(port: ViewStatePort) {
 
   const shareBlocks = (
     prev: ViewState["blocks"],
-    next: ViewState["blocks"],
+    next: Block[],
+    toView: (block: Block) => ViewState["blocks"][number],
   ): ViewState["blocks"] => {
     const prevById = new Map<string, ViewState["blocks"][number]>();
     for (const block of prev) prevById.set(block.id, block);
-    return next.map((block) => {
+    return next.map((source) => {
+      const old = prevById.get(source.id);
+      if (old && sources.get(old) === source) return old;
+      const block = toView(source);
       const key = JSON.stringify(block);
-      const old = prevById.get(block.id);
-      if (old && blockKeys.get(old) === key) return old;
+      if (old && blockKeys.get(old) === key) {
+        sources.set(old, source);
+        return old;
+      }
       withEmptyDecorations(block);
       blockKeys.set(block, key);
+      sources.set(block, source);
       return block;
     });
   };
@@ -103,7 +113,7 @@ export function createViewState(port: ViewStatePort) {
     };
     const json = port.getDocumentJSON();
     if (json !== lastStateJson || !lastParsed) {
-      const document = fromWasmDoc(JSON.parse(json));
+      const document = port.decodeState(json);
       const atomic = port.isAtomic;
       const content = (block: Block): Block["content"] =>
         atomic && Array.isArray(block.content)
@@ -126,7 +136,7 @@ export function createViewState(port: ViewStatePort) {
       });
       lastParsed = {
         version: document.version,
-        blocks: shareBlocks(lastParsed?.blocks ?? [], document.blocks.map(toView)),
+        blocks: shareBlocks(lastParsed?.blocks ?? [], document.blocks, toView),
       };
       lastStateJson = json;
     }

@@ -1,6 +1,6 @@
-import { flattenBlocks } from "../document/tree";
 import type { BlockView } from "../types/view";
 import { ownsInputTarget } from "./input-owner";
+import { installRenderCorrection } from "./render-correction";
 import { ATOM, createTextWalker, isInsideWidget } from "./text-walker";
 
 export interface TextSelection {
@@ -199,12 +199,25 @@ export function installDOMSelection(
     node: atom.parentNode!,
     offset: Array.prototype.indexOf.call(atom.parentNode!.childNodes, atom) + after,
   });
+  // The element found last is tried first: the caret stays in one block while typing, and a
+  // search of a long document for it on every restore is the slowest part of a key press.
+  let lastBlock: Element | null = null;
+  const blockElement = (blockId: string): Element | null => {
+    if (
+      lastBlock?.getAttribute("data-block-id") === blockId &&
+      lastBlock !== element &&
+      element.contains(lastBlock)
+    )
+      return lastBlock;
+    lastBlock = element.querySelector(`[data-block-id="${blockId}"]`);
+    return lastBlock;
+  };
   const resolveDomPoint = (
     blockId: string,
     targetOffset: number,
   ): { node: Node; offset: number } | null => {
     if (signal.aborted) return null;
-    const blockEl = element.querySelector(`[data-block-id="${blockId}"]`);
+    const blockEl = blockElement(blockId);
     if (!blockEl) return null;
 
     const blockType = blockEl.getAttribute("data-block-type");
@@ -296,6 +309,16 @@ export function installDOMSelection(
         document.activeElement !== editingHost
       )
         editingHost.focus({ preventScroll: true });
+      // Already there: setting the same selection again changes nothing, and in a long
+      // document it is not free.
+      if (
+        sel.rangeCount > 0 &&
+        sel.anchorNode === anchorPoint.node &&
+        sel.anchorOffset === anchorPoint.offset &&
+        sel.focusNode === headPoint.node &&
+        sel.focusOffset === headPoint.offset
+      )
+        return true;
       sel.removeAllRanges();
 
       if (typeof sel.setBaseAndExtent === "function") {
@@ -318,56 +341,8 @@ export function installDOMSelection(
     }
   };
 
-  // Correct DOM text nodes if native input leaked through preventDefault()
-  const correctDomFromWasmState = (): boolean => {
-    if (signal.aborted) return false;
-    const blocks = port.getBlocks();
-    const stale: string[] = [];
-    const collectOwnTextNodes = (host: HTMLElement, ownerBlockId: string): Text[] => {
-      const walker = createTextWalker(host);
-      const textNodes: Text[] = [];
-      let node: Node | null;
-      for (node = walker.nextNode(); node; node = walker.nextNode()) {
-        const parent = node.parentElement;
-        const owner =
-          parent?.closest("[data-block-id]")?.getAttribute("data-block-id") ?? ownerBlockId;
-        if (owner === ownerBlockId) {
-          textNodes.push(node as Text);
-        }
-      }
-      return textNodes;
-    };
-
-    for (const block of flattenBlocks(blocks)) {
-      if (!Array.isArray(block.content)) continue;
-      const blockEl = element.querySelector(`[data-block-id="${block.id}"]`);
-      if (!blockEl) continue;
-
-      const blockType = blockEl.getAttribute("data-block-type");
-      const textHost =
-        blockType === "todoItem"
-          ? ((blockEl.querySelector("[data-gotipe-todo-content]") as HTMLElement | null) ?? blockEl)
-          : blockType === "callout"
-            ? ((blockEl.querySelector(".gotipe-callout-content") as HTMLElement | null) ?? blockEl)
-            : blockEl;
-
-      const expected = block.content.map((s) => s.text).join("");
-      const textNodes = collectOwnTextNodes(textHost as HTMLElement, block.id);
-      const actual = textNodes.map((node) => node.nodeValue ?? "").join("");
-      if (actual !== expected) {
-        // The browser inserted nodes the renderer does not own. Patching
-        // text nodes in place cannot be trusted (decorations split spans,
-        // native nodes sit next to rendered ones), so ask the renderer to
-        // remount this block from the model.
-        stale.push(block.id);
-      }
-    }
-    if (stale.length > 0) {
-      port.redrawBlocks(stale);
-      return true;
-    }
-    return false;
-  };
+  // Corrects blocks whose text the browser changed although the input was prevented.
+  const correction = installRenderCorrection(element, signal, port);
 
   // Schedule selection restore after React re-render
   const scheduleSelectionRestore = () => {
@@ -391,7 +366,7 @@ export function installDOMSelection(
 
       // Fix DOM if native input leaked through preventDefault()
       if (port.consumeHandledInput()) {
-        if (correctDomFromWasmState() && attempts < 4) {
+        if (correction.correct() && attempts < 4) {
           // The renderer remounts the stale blocks; restore on next frame.
           requestAnimationFrame(tryRestore);
           return;
