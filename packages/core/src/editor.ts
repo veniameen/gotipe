@@ -338,6 +338,7 @@ export async function createEditorWithLoader(
       if (destroyed) throw new GoTipeError("EDITOR_NOT_INITIALIZED", "The editor was destroyed");
       return transactionFilters.add(filter);
     },
+    batch: (fn) => transactions.batch(fn),
     undo(): boolean {
       return transactions.undo();
     },

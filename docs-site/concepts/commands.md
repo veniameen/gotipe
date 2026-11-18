@@ -179,6 +179,9 @@ merged cells.
 | `undo()`, `redo()` | Undo or redo instead of the other staged commands. |
 | `run()` | Dispatch the staged commands as one transaction. |
 
+Chains that run one after another are one undo step each; run them inside
+[`editor.batch`](/docs/concepts/transactions#history) to make them one.
+
 ## Keyboard shortcuts
 
 The built-in extensions bind these keys. `Mod` is Cmd on macOS and Ctrl elsewhere.
