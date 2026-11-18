@@ -23,7 +23,13 @@ import {
   rootPropsOf,
 } from "./presentation";
 import { TableCell, TableCellSelection, TableRow } from "./table-cells";
-import { TableColumns, TableLayoutProvider, TableScroll, TableToolbar } from "./table-layout";
+import {
+  TableColumns,
+  TableElement,
+  TableLayoutProvider,
+  TableScroll,
+  TableToolbar,
+} from "./table-layout";
 
 /** Digits of the widest number of an ordered list from `start` with `count` items. */
 function listDigits(start: number, count: number): number {
@@ -147,11 +153,11 @@ export function TableBlock({
         contentEditable={false}
       >
         <TableScroll>
-          <table className="gotipe-table">
+          <TableElement>
             <TableColumns />
             {head > 0 ? <thead>{rows(0, head)}</thead> : null}
             {head < block.children.length ? <tbody>{rows(head)}</tbody> : null}
-          </table>
+          </TableElement>
         </TableScroll>
         <TableCellSelection />
         <TableToolbar />

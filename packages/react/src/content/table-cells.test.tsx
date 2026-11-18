@@ -83,3 +83,109 @@ describe("merged cells in the MIT renderer", () => {
     expect(editor.getViewState().selection.anchor.blockId).toBe("g");
   });
 });
+
+describe("column widths in the MIT renderer", () => {
+  const plain = (id: string, attrs: Block["attrs"] = {}): Promise<GoTipeEditor> =>
+    createEditor({
+      extensions: [FullPreset],
+      content: {
+        version: 1,
+        blocks: [
+          {
+            id,
+            type: "table",
+            attrs,
+            content: null,
+            children: [
+              row("p0", [cell("h1", {}, true), cell("h2", {}, true), cell("h3", {}, true)]),
+              row("p1", [cell("x1"), cell("x2"), cell("x3")]),
+            ],
+          },
+        ],
+      },
+    });
+  const table = () => container.querySelector<HTMLTableElement>("table")!;
+  const cols = () => [...container.querySelectorAll("col")].map((col) => col.style.width);
+  const widthsOf = (target: GoTipeEditor) => target.getJSON().blocks[0]!.attrs.colWidths;
+  /** Draws every column `width` px wide, as a browser lays out the shared columns. */
+  const drawColumns = (width: number) => {
+    for (const col of container.querySelectorAll("col"))
+      col.getBoundingClientRect = () => ({ width }) as DOMRect;
+  };
+  const pointer = (type: string, clientX: number, target: EventTarget = window) => {
+    const event = new MouseEvent(type, { bubbles: true, cancelable: true, button: 0, clientX });
+    Object.defineProperty(event, "pointerId", { value: 1 });
+    act(() => {
+      target.dispatchEvent(event);
+    });
+  };
+  const handleOf = (id: string) =>
+    container
+      .querySelector(`[data-block-id="${id}"]`)!
+      .querySelector<HTMLButtonElement>(".gotipe-table-col-resize")!;
+  let own: GoTipeEditor;
+  afterEach(() => own.destroy());
+
+  it("shares the text column among columns without a stored width, no fixed 160 px", async () => {
+    own = await plain("w");
+    act(() => root.render(<EditorContent editor={own} />));
+    expect(cols()).toEqual(["", "", ""]);
+    expect(table().classList.contains("gotipe-table-shared")).toBe(true);
+    expect(table().style.getPropertyValue("--gt-table-fixed")).toBe("0px");
+    expect(table().style.getPropertyValue("--gt-table-shared")).toBe("3");
+    expect(container.innerHTML).not.toContain("160px");
+  });
+
+  it("keeps stored widths as stored and shares the rest with the columns that have none", async () => {
+    own = await plain("w", { colWidths: [100, 120, 140] });
+    act(() => root.render(<EditorContent editor={own} />));
+    expect(cols()).toEqual(["100px", "120px", "140px"]);
+    expect(table().className).toBe("gotipe-table");
+    expect(table().getAttribute("style")).toBeNull();
+    act(() => root.render(<div />));
+    own.destroy();
+    own = await plain("w", { colWidths: [100] });
+    act(() => root.render(<EditorContent editor={own} />));
+    expect(cols()).toEqual(["100px", "", ""]);
+    expect(table().style.getPropertyValue("--gt-table-fixed")).toBe("100px");
+    expect(table().style.getPropertyValue("--gt-table-shared")).toBe("2");
+  });
+
+  it("resizes a shared column from its drawn width and keeps the others shared", async () => {
+    own = await plain("w");
+    act(() => root.render(<EditorContent editor={own} />));
+    drawColumns(149);
+    pointer("pointerdown", 300, handleOf("h3"));
+    pointer("pointermove", 351);
+    // the drag shows the new width; the other columns still share the rest
+    expect(cols()).toEqual(["", "", "200px"]);
+    pointer("pointerup", 351);
+    expect(widthsOf(own)).toEqual([null, null, 200]);
+    expect(cols()).toEqual(["", "", "200px"]);
+    expect(table().style.getPropertyValue("--gt-table-fixed")).toBe("200px");
+    expect(table().style.getPropertyValue("--gt-table-shared")).toBe("2");
+    // one undo step brings the shared table back
+    act(() => {
+      own.undo();
+    });
+    expect(widthsOf(own)).toBeUndefined();
+    // the keyboard steps from the drawn width as well
+    drawColumns(149);
+    act(() => {
+      handleOf("h1").dispatchEvent(
+        new KeyboardEvent("keydown", { key: "ArrowRight", bubbles: true }),
+      );
+    });
+    expect(widthsOf(own)).toEqual([165, null, null]);
+  });
+
+  it("resizes a table of stored widths as before", async () => {
+    own = await plain("w", { colWidths: [100, 120, 140] });
+    act(() => root.render(<EditorContent editor={own} />));
+    pointer("pointerdown", 300, handleOf("h2"));
+    pointer("pointermove", 330);
+    pointer("pointerup", 330);
+    // jsdom draws nothing: the drag starts from the stored width
+    expect(widthsOf(own)).toEqual([100, 150, 140]);
+  });
+});

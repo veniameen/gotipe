@@ -11,6 +11,7 @@ import {
   rangeCells,
 } from "@gotipe/core";
 import {
+  type CSSProperties,
   type ReactNode,
   type RefObject,
   createContext,
@@ -38,7 +39,11 @@ export interface TableLayout {
   grid: TableGrid<BlockView>;
   /** The column each cell carries the width handle of: the topmost cell ending there. */
   edges: Map<string, number>;
-  widths: number[];
+  /**
+   * Each column's width in px; null for a column without a stored width, which shares what the
+   * stored columns leave of the text column (never narrower than `--gt-cell-min`).
+   */
+  widths: (number | null)[];
   /** The scrolling area, so a new column can be brought into view. */
   scroll: RefObject<HTMLDivElement | null>;
   /** Selected cells: the rectangle reaches over every merged cell it cuts. */
@@ -81,7 +86,8 @@ export function TableLayoutProvider({
     () =>
       Array.from({ length: grid.columns }, (_, column) => {
         const value = Array.isArray(stored) ? stored[column] : null;
-        return draft?.column === column ? draft.width : typeof value === "number" ? value : 160;
+        if (draft?.column === column) return draft.width;
+        return typeof value === "number" && Number.isFinite(value) ? value : null;
       }),
     [grid.columns, stored, draft],
   );
@@ -155,11 +161,49 @@ export function TableColumns() {
   return layout ? (
     <colgroup>
       {layout.widths.map((width, column) => (
-        <col key={column} style={{ width }} />
+        <col key={column} style={width === null ? undefined : { width }} />
       ))}
     </colgroup>
   ) : null;
 }
+
+/**
+ * The table element. With a column that has no stored width it fills the text column: those
+ * columns share what the stored ones leave, each at least `--gt-cell-min`, and past that the
+ * table scrolls in its own box (`.gotipe-table-shared`, Atlas frame 9).
+ */
+export function TableElement({ children }: { children: ReactNode }) {
+  const layout = useContext(Context);
+  const widths = layout?.widths ?? [];
+  const shared = widths.filter((width) => width === null).length;
+  if (!shared) return <table className="gotipe-table">{children}</table>;
+  const fixed = widths.reduce<number>((sum, width) => sum + (width ?? 0), 0);
+  const style = { "--gt-table-fixed": `${fixed}px`, "--gt-table-shared": shared } as CSSProperties;
+  return (
+    <table className="gotipe-table gotipe-table-shared" style={style}>
+      {children}
+    </table>
+  );
+}
+
+/**
+ * The widths a resize writes. A table whose columns all have widths goes through `editTable`;
+ * one with shared columns keeps them shared (null), so the other columns do not jump to a
+ * default width and the written table looks as the drag showed it.
+ */
+function resizeColumn(layout: TableLayout, column: number, width: number) {
+  if (!layout.widths.some((value, index) => value === null && index !== column)) {
+    editTable(layout.editor, layout.table.id, { type: "resizeColumn", index: column, width });
+    return;
+  }
+  const colWidths = layout.widths.map((value, index) =>
+    index === column ? clampWidth(width) : value,
+  );
+  layout.editor.dispatch({
+    steps: [{ type: "setBlockAttrs", blockId: layout.table.id, attrs: { colWidths } }],
+  });
+}
+const clampWidth = (width: number) => Math.max(64, Math.min(1600, Math.round(width)));
 
 type HiddenSide = "left" | "right" | "both";
 
@@ -272,7 +316,7 @@ export function TableColumnResizeHandle({ cellId }: { cellId: string }) {
       const current = latest.current;
       if (!current || current.readOnly) return;
       try {
-        editTable(current.editor, current.table.id, { type: "resizeColumn", index: column, width });
+        resizeColumn(current, column, width);
       } catch (error) {
         current.report(error);
       }
@@ -329,9 +373,8 @@ export function TableColumnResizeHandle({ cellId }: { cellId: string }) {
         if (event.button !== 0) return;
         event.preventDefault();
         event.stopPropagation();
-        // the column's own width: a merged cell is wider than the column it resizes
-        const col = event.currentTarget.closest("table")?.querySelectorAll("col")[column];
-        const width = col?.getBoundingClientRect().width || layout.widths[column] || 160;
+        // the column as drawn: a merged cell is wider than the column it resizes
+        const width = renderedWidth(event.currentTarget, column, layout.widths[column]);
         drag.current = { x: event.clientX, width, next: width, pointerId: event.pointerId };
         setActive(true);
       }}
@@ -339,7 +382,8 @@ export function TableColumnResizeHandle({ cellId }: { cellId: string }) {
         if (event.key === "ArrowLeft" || event.key === "ArrowRight") {
           event.preventDefault();
           event.stopPropagation();
-          commit((layout.widths[column] ?? 160) + (event.key === "ArrowRight" ? 16 : -16));
+          const width = layout.widths[column] ?? renderedWidth(event.currentTarget, column);
+          commit(width + (event.key === "ArrowRight" ? 16 : -16));
         }
       }}
     >
@@ -347,5 +391,19 @@ export function TableColumnResizeHandle({ cellId }: { cellId: string }) {
         {i18n.t("table.resizeHint")}
       </span>
     </button>
+  );
+}
+
+/**
+ * The width a resize starts from: the column as drawn, else its stored width, else its cell's (a
+ * shared column has no stored width).
+ */
+function renderedWidth(handle: HTMLElement, column: number, stored?: number | null): number {
+  const col = handle.closest("table")?.querySelectorAll("col")[column];
+  return (
+    col?.getBoundingClientRect().width ||
+    stored ||
+    handle.parentElement?.getBoundingClientRect().width ||
+    160
   );
 }

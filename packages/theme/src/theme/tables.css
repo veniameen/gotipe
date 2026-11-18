@@ -54,10 +54,19 @@
   vertical-align: top;
   overflow-wrap: anywhere;
 }
-/* A table without column widths: the editor gives every column a <col> (its stored width, 160 px
-   without one), the table of serializeHtml, a server render or the version comparison has none.
-   Its columns share the text column by their content and the cells wrap, instead of the table
-   growing as wide as its longest line; words that cannot fit scroll the table in its own box. */
+/* The editor gives every column a <col>: a stored width is kept as stored, so a table of stored
+   widths is as wide as their sum (at least the text column) and scrolls in its own box past it.
+   A column without a stored width has a bare <col> and the table is .gotipe-table-shared: such
+   columns share what the stored ones leave of the text column, none narrower than a cell's
+   minimum (--gt-table-fixed is the stored widths' sum, --gt-table-shared the shared count). */
+.gotipe-table-wrapper table.gotipe-table-shared {
+  width: 100%;
+  min-width: calc(var(--gt-table-fixed) + var(--gt-table-shared) * var(--gt-cell-min));
+}
+/* A table with no <col> at all: the table of serializeHtml, a server render or the version
+   comparison. Its columns share the text column by their content and the cells wrap, instead of
+   the table growing as wide as its longest line; words that cannot fit scroll the table in its
+   own box. */
 .gotipe-table-wrapper:not(:has(col)) {
   overflow-x: auto;
 }
