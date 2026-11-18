@@ -242,7 +242,49 @@ function computeProposal(
   };
 }
 
-/** Best-effort place for a stale proposal: after its `before`, or before its `after`. */
+/** The blocks from the top level down to the block `id`, or an empty list. */
+function pathTo(blocks: BlockView[], id: string): BlockView[] {
+  for (const block of blocks) {
+    if (block.id === id) return [block];
+    const inner = pathTo(block.children, id);
+    if (inner.length > 0) return [block, ...inner];
+  }
+  return [];
+}
+
+/**
+ * A stale edit that adds lines shows its new blocks as blocks at the hint's place, not as text
+ * in the neighbouring line: beside the deepest item of a list of the same kind (a new list item
+ * stands as an item of that list), else beside the top-level block. False when there is none.
+ */
+function staleBlocks(
+  input: ReviewInput,
+  pos: ReviewPosition,
+  position: "before" | "after",
+  parsed: BlockView[],
+  ctx: Ctx,
+): boolean {
+  const path = pathTo(input.blocks, pos.blockId);
+  if (path.length === 0 || parsed.length === 0) return false;
+  let anchor = path[0]!;
+  let blocks = parsed;
+  const only = parsed.length === 1 ? parsed[0]! : null;
+  if (only && only.children.length > 0) {
+    for (let i = path.length - 1; i >= 1; i--) {
+      if (path[i - 1]!.type !== only.type) continue;
+      anchor = path[i]!;
+      blocks = only.children;
+      break;
+    }
+  }
+  insertBlocks(ctx, anchor, position, blocks, "gotipe-sug gotipe-sug-stale gotipe-sug-block-ins");
+  return true;
+}
+
+/**
+ * Best-effort place for a stale proposal: after its `before`, or before its `after`. An edit
+ * that adds lines shows its blocks there; one inside a line, a hint in the text.
+ */
 function staleWidget(
   input: ReviewInput,
   proposal: ReviewProposal,
@@ -263,6 +305,13 @@ function staleWidget(
   const pos = mapOffsetToText(input.map, at, "before");
   if (!pos) return null;
   const parsed = edit.text ? input.parse(edit.text) : [];
+  if (edit.text.includes("\n")) {
+    // no text before the place: the blocks go before the first block there
+    const offset = at;
+    const first = !input.map.segments.some((g) => g.mdFrom < offset);
+    const place = first ? mapOffsetToText(input.map, offset, "after") : pos;
+    if (place && staleBlocks(input, place, first ? "before" : "after", parsed, ctx)) return pos;
+  }
   const deepText = (b: BlockView): string =>
     [plainText(b), ...b.children.map(deepText)].filter((t) => t.length > 0).join(" ");
   const text = (parsed.map(deepText).join(" ") || edit.quote).slice(0, 240);

@@ -116,11 +116,13 @@ function countText(block: BlockView): number {
   return plainText(block).length + block.children.reduce((n, c) => n + countText(c), 0);
 }
 
+/** New blocks as phantoms beside `anchor`; a stale proposal's blocks take `gotipe-sug-stale` too. */
 export function insertBlocks(
   ctx: Ctx,
   anchor: BlockView,
   position: "before" | "after",
   blocks: BlockView[],
+  className = "gotipe-sug gotipe-sug-block-ins",
 ) {
   if (blocks.length === 0) return;
   ctx.exact = false;
@@ -131,7 +133,7 @@ export function insertBlocks(
     blockId: anchor.id,
     position,
     blocks: phantoms,
-    className: cls(ctx, "gotipe-sug gotipe-sug-block-ins"),
+    className: cls(ctx, className),
     attrs: ctx.attrs,
     style: ctx.style,
   });
