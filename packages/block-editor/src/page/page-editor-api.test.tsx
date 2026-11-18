@@ -141,6 +141,46 @@ describe("PageEditor focus and insertion from the title", () => {
     expect(seen).toContain("selection");
   });
 
+  it.each([false, true])(
+    "a host that subscribes after onReady sees focus, then the title's selection (StrictMode %s), with no frame",
+    async (strict) => {
+      // frames never come: the order must not depend on one
+      vi.stubGlobal("requestAnimationFrame", () => 0);
+      const seen: string[] = [];
+      function Host() {
+        const [editor, setEditor] = useState<GoTipeEditor | null>(null);
+        useEffect(() => {
+          if (!editor) return;
+          const offFocus = editor.on("focus", () => seen.push("focus"));
+          const offSelection = editor.on("selectionChange", () => {
+            const { anchor } = editor.getViewState().selection;
+            const title = editor.getViewState().blocks[0]?.id;
+            seen.push(anchor.blockId === title ? "selection:title" : "selection:body");
+          });
+          return () => {
+            offFocus();
+            offSelection();
+          };
+        }, [editor]);
+        return <PageEditor markdown={"# \n"} locale="en" autoFocus onReady={setEditor} />;
+      }
+      await act(async () => {
+        root.render(
+          strict ? (
+            <StrictMode>
+              <Host />
+            </StrictMode>
+          ) : (
+            <Host />
+          ),
+        );
+        await wait(60);
+      });
+      expect(seen.slice(0, 2)).toEqual(["focus", "selection:title"]);
+      expect(seen.filter((event) => event === "focus")).toHaveLength(1);
+    },
+  );
+
   it("autoFocus still comes once under StrictMode", async () => {
     const focus = vi.fn();
     const ready = vi.fn();
