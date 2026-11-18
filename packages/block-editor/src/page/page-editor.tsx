@@ -296,8 +296,8 @@ const PageEditorInner = forwardRef<PageEditorHandle, PageEditorProps>(
         get editor() {
           return editor;
         },
-        getMarkdown: () =>
-          editor ? session.serialize(editor).text : (session.lastText ?? markdown),
+        // before the editor exists: a text given to setMarkdown, else the last one
+        getMarkdown: () => (editor ? session.serialize(editor).text : draft.flush()),
         flush: draft.flush,
         setMarkdown: draft.setMarkdown,
         focus: (position) => editor?.focus(position),
@@ -310,7 +310,7 @@ const PageEditorInner = forwardRef<PageEditorHandle, PageEditorProps>(
           return reviewApi.current;
         },
       }),
-      [editor, session, markdown, draft],
+      [editor, session, draft],
     );
 
     // merged cells only where the Markdown page can keep the table (an HTML table read back)

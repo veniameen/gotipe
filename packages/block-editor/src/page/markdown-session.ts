@@ -36,16 +36,28 @@ function isPlaceholder(block: DocBlock): boolean {
   return false;
 }
 
-/** `blocks` without placeholders at any depth; the same array when there are none. */
-function withoutPlaceholders(blocks: DocBlock[]): DocBlock[] {
+/** Ids of the placeholders a file itself holds (`![alt]()`): they are its text, kept as is. */
+function placeholderIds(blocks: DocBlock[], into = new Set<string>()): Set<string> {
+  for (const block of blocks) {
+    if (isPlaceholder(block)) into.add(block.id);
+    placeholderIds(block.children, into);
+  }
+  return into;
+}
+
+/**
+ * `blocks` without the placeholders inserted since the file was read, at any depth; the same
+ * array when there are none.
+ */
+function withoutPlaceholders(blocks: DocBlock[], fromFile: Set<string>): DocBlock[] {
   let changed = false;
   const kept: DocBlock[] = [];
   for (const block of blocks) {
-    if (isPlaceholder(block)) {
+    if (isPlaceholder(block) && !fromFile.has(block.id)) {
       changed = true;
       continue;
     }
-    const children = withoutPlaceholders(block.children);
+    const children = withoutPlaceholders(block.children, fromFile);
     if (children !== block.children) changed = true;
     kept.push(children === block.children ? block : { ...block, children });
   }
@@ -60,7 +72,8 @@ function withoutPlaceholders(blocks: DocBlock[]): DocBlock[] {
  *   blocks byte-for-byte from the source.
  * A page always starts with a title (H1). When the file has none, an empty
  * synthetic title block is shown and left out of the file until typed in.
- * An image or a file placeholder (no source yet) is left out of the file too.
+ * An image or a file placeholder (no source yet) inserted since the file was read is left out
+ * of the file too; an empty `![alt]()` the file holds stays as it is (`filePlaceholders`).
  * `fingerprints` keeps those of the view's top-level blocks: an edit fingerprints only what it
  * changed.
  */
@@ -70,6 +83,7 @@ export class MarkdownSession {
   private revision = 0;
   private cache: SerializedPage | null = null;
   private readonly fingerprints = new WeakMap<object, string>();
+  private filePlaceholders = new Set<string>();
   /** Last text loaded from the host or emitted to it. */
   lastText: string | null = null;
 
@@ -87,6 +101,7 @@ export class MarkdownSession {
     this.lastText = text;
     this.cache = null;
     const blocks = doc.blocks as unknown as DocBlock[];
+    this.filePlaceholders = placeholderIds(blocks);
     this.syntheticTitleId = null;
     if (this.options.ensureTitle) {
       const first = blocks[0];
@@ -133,7 +148,7 @@ export class MarkdownSession {
       blocks.shift();
     }
     const { text, map, snapshot } = serializeMarkdown(
-      { version: doc.version, blocks: withoutPlaceholders(blocks) } as never,
+      { version: doc.version, blocks: withoutPlaceholders(blocks, this.filePlaceholders) } as never,
       this.snapshot,
       { fingerprints: this.fingerprints },
     );

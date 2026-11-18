@@ -321,6 +321,17 @@ describe("PageEditor assets", () => {
 });
 
 describe("PageEditor placeholders", () => {
+  it("an empty image the file itself holds is kept byte for byte", async () => {
+    const markdown = "# T\n\npara\n\n![alt]()\n\nend\n";
+    const { ref, drafts } = await mount({ markdown });
+    let text = "";
+    act(() => {
+      text = ref.current!.flush();
+    });
+    expect(text).toBe(markdown);
+    expect(drafts).toEqual([]);
+  });
+
   it("an image or file without a source is not written to the file", async () => {
     const markdown = "# Notes\n\nBody.\n";
     const { ref, editor, drafts } = await mount({ markdown });
