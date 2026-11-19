@@ -119,6 +119,7 @@ among them.
 | `editor` | The `GoTipeEditor`, or `null` before it exists. |
 | `getMarkdown()` | The current document as Markdown. |
 | `flush()` | Send a draft not yet emitted to `onChange` now and return the current Markdown. Call it before saving: `onChange` otherwise comes on the next frame. |
+| `selectionMarkdownRange()` | Where the selection is in `getMarkdown()`'s text, `{ start, end }`: a text selection without mark delimiters at its edges (selected `**bold**` is `bold`), selected blocks whole; `null` before the editor exists or when the selection is not in the file. |
 | `setMarkdown(text, options?)` | Replace the document with `text` as an external edit (caret, focus and scroll kept; undo takes it back), even when `text` equals the last `markdown` you passed. `onChange` is not called for it; a draft not yet emitted is dropped, so call `flush()` first to keep it. `{ addToHistory: false }` clears the undo history instead (default: `undoableReplace`). |
 | `focus(position?)` | Focus the page, optionally at `"start"` or `"end"`. |
 | `insertBlock(kind)` | Insert a block of a `PageBlockKind` at the caret, for your own toolbar. |

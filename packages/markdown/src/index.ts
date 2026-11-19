@@ -1,4 +1,4 @@
-export { mdOffsetToText, textOffsetToMd } from "./map";
+export { mdOffsetToText, textOffsetToMd, textRangeToMd } from "./map";
 export { fingerprint, isBlockEmpty } from "./model";
 export { parseMarkdown } from "./parse";
 export { blockToMarkdown, serializeMarkdown } from "./serialize";

@@ -88,9 +88,19 @@ export function mdOffsetToText(
   return null;
 }
 
-/** Position in a block's text -> Markdown offset. */
-export function textOffsetToMd(map: MarkdownMap, blockId: string, offset: number): number | null {
+/**
+ * Position in a block's text -> Markdown offset. Where the position is the edge of a mark
+ * (`**bold**|`), `bias` says which side of its delimiters the offset stands: `"after"` (default)
+ * past them, at the text that follows, `"before"` before them, at the end of the text before.
+ */
+export function textOffsetToMd(
+  map: MarkdownMap,
+  blockId: string,
+  offset: number,
+  bias: "before" | "after" = "after",
+): number | null {
   let best: TextSegment | null = null;
+  let ending: TextSegment | null = null;
   let last: TextSegment | null = null;
   let first: TextSegment | null = null;
   for (const s of map.segments) {
@@ -101,8 +111,11 @@ export function textOffsetToMd(map: MarkdownMap, blockId: string, offset: number
       // Prefer the segment that strictly contains the offset, then the earliest.
       if (!best) best = s;
       else if (offset < s.textTo && offset >= s.textFrom && !(offset < best.textTo)) best = s;
+      // before: the first segment whose text runs up to the offset
+      if (!ending && s.textFrom < offset) ending = s;
     }
   }
+  if (bias === "before" && ending) best = ending;
   if (best) {
     if (best.exact) return best.mdFrom + (offset - best.textFrom);
     if (offset <= best.textFrom) return best.mdFrom;
@@ -113,4 +126,20 @@ export function textOffsetToMd(map: MarkdownMap, blockId: string, offset: number
   if (first && offset < first.textFrom) return first.mdFrom;
   const block = map.blocks.find((b) => b.blockId === blockId);
   return block ? block.start : null;
+}
+
+/**
+ * A range of the text (`from` to `to`, in document order) -> `[start, end)` in the Markdown, with
+ * no mark delimiters at its edges: the start past them, the end before them. A collapsed range
+ * stays collapsed.
+ */
+export function textRangeToMd(
+  map: MarkdownMap,
+  from: { blockId: string; offset: number },
+  to: { blockId: string; offset: number },
+): { start: number; end: number } | null {
+  const start = textOffsetToMd(map, from.blockId, from.offset, "after");
+  const end = textOffsetToMd(map, to.blockId, to.offset, "before");
+  if (start === null || end === null) return null;
+  return { start, end: Math.max(start, end) };
 }

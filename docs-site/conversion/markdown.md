@@ -201,7 +201,13 @@ A `<details>` element is split by CommonMark into HTML blocks with editable para
 - `map.segments` maps ranges of a block's flat text (its span texts joined, or the raw string of a code or raw block) to ranges of the Markdown. In an `exact` segment every character maps to one character. Escapes, character references, soft breaks (a space of the text over a line ending and the stripped prefix of the next line) and `<br>` in cells get their own non-exact segments.
 
 ```ts title="map.ts"
-import { mdOffsetToText, parseMarkdown, serializeMarkdown, textOffsetToMd } from "@gotipe/markdown";
+import {
+  mdOffsetToText,
+  parseMarkdown,
+  serializeMarkdown,
+  textOffsetToMd,
+  textRangeToMd,
+} from "@gotipe/markdown";
 
 const source = "# Notes\n\nHello **world**\n";
 const { doc, snapshot } = parseMarkdown(source);
@@ -224,7 +230,8 @@ textOffsetToMd(map, paragraph, 6); // 17, the offset of "world" in the source
 | `isBlockEmpty(block)` | Whether the block has nothing of its own to write, so the writer skips it: a paragraph, heading or formula without text, a raw block without content, an embed without an address, a table without cells. A paragraph or heading without text is skipped only when no block under it is written. |
 | `fingerprint(block)` | The id-free canonical JSON used to detect changes. |
 | `mdOffsetToText(map, mdOffset, bias?)` | Markdown offset to `{ blockId, offset }`, or `null`. |
-| `textOffsetToMd(map, blockId, offset)` | Block text offset to a Markdown offset, or `null`. |
+| `textOffsetToMd(map, blockId, offset, bias?)` | Block text offset to a Markdown offset, or `null`. At the edge of a mark, `"after"` (default) stands past its delimiters, `"before"` before them: the end of `**bold**` is before the closing `**`. |
+| `textRangeToMd(map, from, to)` | A text range (`{ blockId, offset }` each, in document order) to `{ start, end }` in the Markdown, with no mark delimiters at its edges; `null` when a side is not in the map. |
 | `markdownRawNodeSpec` | The `NodeSpec` of the `markdownRaw` block. Pass it to `defineExtension` as in [With an editor](/docs/conversion/markdown#with-an-editor); the package does not depend on `@gotipe/core`, so its type repeats core's `NodeSpec`. |
 
 | Option of `parseMarkdown` | Type | Default | Description |
