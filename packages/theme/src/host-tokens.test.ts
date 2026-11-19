@@ -152,7 +152,7 @@ describe("review parts have tokens with today's values", () => {
   });
   it("can tint a new block's text alone, none by default", () => {
     const text = declarations(review, ".gotipe-sug-block-ins-text");
-    expect(text.background.replace(/\s+/g, " ")).toBe(
+    expect(text.background?.replace(/\s+/g, " ")).toBe(
       "color-mix( in srgb, var(--gt-track, var(--gt-add)) var(--gt-sug-block-ins-text-tint), transparent )",
     );
     expect(text["box-decoration-break"]).toBe("clone");
@@ -244,7 +244,7 @@ describe("review parts have tokens with today's values", () => {
     expect(tokens.view["--gt-lane-pointer-outline"]).toBe("currentColor");
     // derived from the size where they are used, so a host's size on any container holds
     for (const unset of ["tip-x", "tip-y", "outline-width"]) {
-      expect(tokens.view[`--gt-lane-pointer-${unset}`]).toBeUndefined();
+      expect(Object.hasOwn(tokens.view, `--gt-lane-pointer-${unset}`)).toBe(false);
     }
     expect(tokens.view["--gt-lane-pointer-size"]).toBe("16px");
     expect(tokens.view["--gt-lane-pointer-chip-x"]).toBe("10px");

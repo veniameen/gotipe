@@ -25,6 +25,7 @@ function useCardPosition(place: CardPlace) {
   const bottom = floating ? place.bottom : 0;
   const left = floating ? place.left : 0;
   const side = floating ? place.side : "beside";
+  // beside the page the card starts at the given point; by a row it keeps 8 px from the text
   const anchor = useCallback(
     () => ({ top, bottom, left, right: left, width: 0, height: bottom - top }),
     [top, bottom, left],
@@ -34,7 +35,6 @@ function useCardPosition(place: CardPlace) {
     anchor,
     element: ref,
     placement: PLACEMENT[side],
-    // beside the page the card starts at the given point; by a row it keeps 8 px from the text
     gap: side === "beside" ? 0 : 8,
   });
   const style: React.CSSProperties = floating
