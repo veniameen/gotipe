@@ -19,6 +19,22 @@ describe("floating panel positioning", () => {
     expect(p.top).toBe(30);
     expect(p.left + 160).toBeLessThanOrEqual(312);
   });
+  it("top-start stands above the anchor by the panel's own height, left-aligned", () => {
+    const at = { left: 20, top: 300, right: 120, bottom: 320, width: 100, height: 20 };
+    const box = { left: 0, top: 0, width: 600, height: 800 };
+    for (const height of [116, 158]) {
+      const p = computeFloatingPosition(at, { width: 288, height }, box, "top-start", 8);
+      expect(p).toMatchObject({ left: 20, top: 300 - height - 8 });
+    }
+    const low = computeFloatingPosition(
+      { ...at, top: 60, bottom: 80 },
+      { width: 288, height: 116 },
+      box,
+      "top-start",
+      8,
+    );
+    expect(low.top).toBe(88);
+  });
   it("flips above a table header near the bottom", () => {
     const p = computeFloatingPosition(
       { ...anchor, top: 450, bottom: 470 },

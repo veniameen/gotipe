@@ -8,19 +8,35 @@ function trackStyle(color: string, style: React.CSSProperties = {}): TrackStyle 
   return { ...style, "--gt-track": color };
 }
 
-/** Where a card stands: floating at a point by the text, or in the margin column (frame 14). */
-export type CardPlace = { top: number; left: number } | "margin";
+/**
+ * Where a card stands: floating by a row of text (`below` it, `above` it or `beside` the page,
+ * each measured with the card's own size), or in the margin column (frame 14).
+ */
+export type CardPlace =
+  | { top: number; bottom: number; left: number; side: "below" | "above" | "beside" }
+  | "margin";
+
+const PLACEMENT = { below: "bottom-start", above: "top-start", beside: "bottom-start" } as const;
 
 function useCardPosition(place: CardPlace) {
   const ref = useRef<HTMLDivElement>(null);
-  const top = place === "margin" ? 0 : place.top;
-  const left = place === "margin" ? 0 : place.left;
-  const anchor = useCallback(
-    () => ({ top, bottom: top, left, right: left, width: 0, height: 0 }),
-    [top, left],
-  );
   const floating = place !== "margin";
-  const position = useFloatingPosition({ open: floating, anchor, element: ref, gap: 0 });
+  const top = floating ? place.top : 0;
+  const bottom = floating ? place.bottom : 0;
+  const left = floating ? place.left : 0;
+  const side = floating ? place.side : "beside";
+  const anchor = useCallback(
+    () => ({ top, bottom, left, right: left, width: 0, height: bottom - top }),
+    [top, bottom, left],
+  );
+  const position = useFloatingPosition({
+    open: floating,
+    anchor,
+    element: ref,
+    placement: PLACEMENT[side],
+    // beside the page the card starts at the given point; by a row it keeps 8 px from the text
+    gap: side === "beside" ? 0 : 8,
+  });
   const style: React.CSSProperties = floating
     ? { position: "fixed", ...(position ?? { visibility: "hidden" }) }
     : {};
