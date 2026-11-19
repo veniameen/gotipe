@@ -485,6 +485,10 @@ not part of the check artifacts.
   after. Left: `comments.spec.ts:68` (macOS Home, as on 0.1.1) and REL-001, 50 slash transforms
   in 18–21 s alone on 0.1.2 and 0.1.3 alike, which under the full parallel run comes near its
   30 s limit.
+- 2026-11-19: 0.1.4 prepared from the host's list after 0.1.3: `discardAsset` on every path a
+  stored file is not inserted, an accessible inline page icon, the owner's host options
+  `reviewCardPlacement` and `reviewLaneCursor` (Atlas frame 14), and tokens. Released: `core`,
+  `react`, `theme`, `block-editor` at 0.1.4.
 
 ## Acceptance before release (2026-11-15)
 
