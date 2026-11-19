@@ -323,6 +323,7 @@ describe("tables have tokens for their grid, head, first column and code, today'
       "font-weight": "var(--gt-table-head-weight)",
       "line-height": "var(--gt-table-head-leading)",
       "letter-spacing": "var(--gt-table-head-tracking)",
+      "min-width": "var(--gt-table-head-min-width)",
     });
     expect(declarations(tables, ".gotipe-table-wrapper :where(th)")).toEqual({
       background: "var(--gt-table-head-fill, transparent)",
@@ -331,6 +332,7 @@ describe("tables have tokens for their grid, head, first column and code, today'
     expect(tokens.view["--gt-table-head-leading"]).toBe("var(--gt-small-leading)");
     expect(tokens.view["--gt-table-head-weight"]).toBe("var(--gt-weight-medium)");
     expect(tokens.view["--gt-table-head-tracking"]).toBe("normal");
+    expect(tokens.view["--gt-table-head-min-width"]).toBe("auto");
   });
   it("pads the first column and sizes rows by tokens", () => {
     expect(

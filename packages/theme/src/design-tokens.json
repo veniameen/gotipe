@@ -400,6 +400,7 @@
     "--gt-table-head-leading": "var(--gt-small-leading)",
     "--gt-table-head-weight": "var(--gt-weight-medium)",
     "--gt-table-head-tracking": "normal",
+    "--gt-table-head-min-width": "auto",
     "--gt-table-shared-layout": "fixed",
     "--gt-table-code-size": "var(--gt-inline-code-size)",
     "--gt-table-code-pad": "var(--gt-inline-pad)",

@@ -10,6 +10,8 @@
   fills the text instead of the whole row. A stale one stays unfilled. Defaults look as before.
 - `--gt-sug-block-ins-text-radius` (`var(--gt-radius-inline)`): the corners of the fill behind a
   proposed new block's text.
+- `--gt-table-head-min-width` (`auto`): the least width of a header cell, a floor for columns sized
+  by their content.
 - 484513c: The page title with an inline icon (`iconPlacement="inline"`): its accessible name is the title's
   text alone (the prompt when it is empty), no longer prefixed by the icon's own name, and the empty
   title's prompt starts after the icon instead of under it (`--gt-page-icon-inline` +
