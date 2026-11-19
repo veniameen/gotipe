@@ -2,6 +2,7 @@ import { type GoTipeEditor, GoTipeError, type Selection } from "@gotipe/core";
 import { useFloatingPosition } from "@gotipe/react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { KeyboardEvent } from "react";
+import { isHostKey } from "../../page/host-slot";
 import { capturedSelection } from "./selection";
 
 /**
@@ -72,7 +73,7 @@ export function useFormattingMenu(
         close();
     };
     const escape = (event: globalThis.KeyboardEvent) => {
-      if (event.key === "Escape") {
+      if (event.key === "Escape" && !isHostKey(event)) {
         event.preventDefault();
         event.stopPropagation();
         close(true);

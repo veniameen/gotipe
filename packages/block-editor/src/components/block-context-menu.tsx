@@ -6,6 +6,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useBlockEditorI18n } from "../i18n/strings";
 import { deleteMenuBlock, duplicateMenuBlock, resetMenuBlock } from "../interaction/block-actions";
 import { copyBlockLink } from "../interaction/block-link";
+import { isHostKey } from "../page/host-slot";
 import { PageIcon, type PageIconName } from "../page/icons";
 import { BLOCK_KEYS } from "./formatting/keys";
 import { MenuKey } from "./formatting/tip";
@@ -255,7 +256,7 @@ export function BlockContextMenu({ editor, blockId, open, onClose }: BlockContex
   useEffect(() => {
     if (!open) return;
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
+      if (e.key === "Escape" && !isHostKey(e)) {
         e.preventDefault();
         if (turnIntoOpen) setTurnIntoOpen(false);
         else {

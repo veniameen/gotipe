@@ -459,6 +459,8 @@ describe("PageEditor head, narrow sizes and review layout", () => {
       await wait(20);
     });
     const slot = container.querySelector<HTMLElement>("[data-gotipe-block-slot]")!;
+    // marked as the host's: the editor's own listeners on the document leave its keys alone
+    expect(slot.querySelector("input")!.closest("[data-gotipe-host]")).not.toBeNull();
     expect(slot.previousElementSibling?.getAttribute("data-block-id")).toBe(list!.id);
     expect(slot.closest("ul, ol")).toBeNull();
     const input = slot.querySelector("input")!;
@@ -567,6 +569,51 @@ describe("PageEditor head, narrow sizes and review layout", () => {
     document.body.removeEventListener("keydown", seen);
     window.removeEventListener("keydown", onWindow);
     document.body.removeEventListener("mousedown", clicked);
+  });
+
+  it("a key on the inline icon is not the open slash menu's", async () => {
+    const { ref, editor } = await mount({
+      markdown: "# Notes\n\nBody.\n",
+      icon: <button type="button" aria-label="Page icon" />,
+      iconPlacement: "inline",
+    });
+    await act(async () => {
+      editor.focus("end");
+      editor.chain().insertBlockAfter("paragraph", {}).run();
+      editor.chain().insertText("/").run();
+      editor.emit("openSlashMenu");
+      await wait(40);
+    });
+    const selected = () =>
+      document.querySelector(".gotipe-slash-menu-item.selected .gotipe-slash-menu-item-title")
+        ?.textContent;
+    expect(document.querySelector(".gotipe-slash-menu")).not.toBeNull();
+    const first = selected();
+    const markdown = ref.current!.getMarkdown();
+    const button = container.querySelector<HTMLButtonElement>(".gotipe-page-title-icon button")!;
+    expect(button.closest("[data-gotipe-host]")).not.toBeNull();
+    await act(async () => {
+      button.focus();
+      for (const key of ["ArrowDown", "End", "Enter", "Escape"]) {
+        const event = new KeyboardEvent("keydown", { key, bubbles: true, cancelable: true });
+        button.dispatchEvent(event);
+        expect(event.defaultPrevented).toBe(false);
+      }
+      await wait(40);
+    });
+    // no command ran, the menu and its row are as they were, the focus is the icon's
+    expect(document.querySelector(".gotipe-slash-menu")).not.toBeNull();
+    expect(selected()).toBe(first);
+    expect(ref.current!.getMarkdown()).toBe(markdown);
+    expect(document.activeElement).toBe(button);
+    // the menu still takes the keys of the text
+    await act(async () => {
+      editor.element!.dispatchEvent(
+        new KeyboardEvent("keydown", { key: "Escape", bubbles: true, cancelable: true }),
+      );
+      await wait(40);
+    });
+    expect(document.querySelector(".gotipe-slash-menu")).toBeNull();
   });
 
   it("an inline icon stands only in a title and comes back when the first block is one again", async () => {

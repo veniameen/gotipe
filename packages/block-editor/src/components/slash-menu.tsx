@@ -2,6 +2,7 @@ import type { GoTipeEditor, SlashCommandDef } from "@gotipe/core";
 import { useFloatingPosition } from "@gotipe/react";
 import type React from "react";
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
+import { isHostKey } from "../page/host-slot";
 
 export interface SlashMenuProps {
   editor: GoTipeEditor;
@@ -353,7 +354,9 @@ export function SlashMenu({
   // Global keydown for keyboard nav when menu is open
   useEffect(() => {
     if (!visible) return;
-    const handler = (e: KeyboardEvent) => handleKeyDown(e);
+    const handler = (e: KeyboardEvent) => {
+      if (!isHostKey(e)) handleKeyDown(e);
+    };
     document.addEventListener("keydown", handler);
     return () => document.removeEventListener("keydown", handler);
   }, [visible, handleKeyDown]);

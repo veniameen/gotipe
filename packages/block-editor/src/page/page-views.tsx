@@ -11,6 +11,7 @@ import { Tip } from "../components/formatting/tip";
 import type { CodeHighlighter } from "../highlight/types";
 import { useBlockEditorI18n } from "../i18n/strings";
 import { codeBlockViewFor } from "../views/code-block-view";
+import { HOST_SLOT_ATTR } from "./host-slot";
 import { PageIcon } from "./icons";
 
 function cx(...names: unknown[]): string | undefined {
@@ -55,9 +56,11 @@ function stopAtHost(event: React.SyntheticEvent): void {
 /**
  * Keeps input in a host's element inside the page from the editor's handlers. Its keys are not
  * stopped: the core takes no key of a widget's target, and the host's own listeners on `document`
- * or `window` (shortcuts, a hint of the keys held) must see them.
+ * or `window` (shortcuts, a hint of the keys held) must see them. The mark tells the editor's own
+ * listeners there (the menus, the shortcuts) that the key is not theirs: `isHostKey`.
  */
 export const hostEventGuard = {
+  [HOST_SLOT_ATTR]: "",
   onBeforeInput: stopAtHost,
   onInput: stopAtHost,
 };
