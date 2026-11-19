@@ -35,6 +35,13 @@ describe("block editor strings", () => {
     expect(i18n.t("align.label")).toBe(blockEditorEn["align.label"]);
   });
 
+  it("keeps a Russian review particle with the word after it", () => {
+    for (const [key, value] of Object.entries(blockEditorRu)) {
+      if (key.startsWith("review.")) expect(value, key).not.toMatch(/(?:^|\s)(?:не|в|к|с|о|и) /i);
+    }
+    expect(blockEditorRu["review.staleText"]).toContain("не\u00a0применить");
+  });
+
   it("layers an I18n once", () => {
     const host = createI18n({ locale: "en", locales: { en } });
     const layered = withBlockEditorStrings(host);
