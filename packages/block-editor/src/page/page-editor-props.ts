@@ -119,8 +119,8 @@ export interface PageEditorProps {
   /**
    * Where `icon` stands: `"above"` the title (default, as `PageHead`), or `"inline"` in the
    * title's row before its text (`.gotipe-page-title-icon`, sizes `--gt-page-icon-inline`,
-   * `--gt-page-icon-inline-gap`); inline, it stays accessible, the editor takes none of its clicks
-   * or keys, and both go on to the host's listeners on `document`.
+   * `--gt-page-icon-inline-gap`); inline, it stays accessible, the editor and its menus take none of
+   * its clicks or keys, and both go on to the host's listeners on `document` and `window`.
    */
   iconPlacement?: "above" | "inline";
   /** The host's own content above the title in the text column (after `icon`). */

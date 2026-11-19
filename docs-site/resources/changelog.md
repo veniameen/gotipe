@@ -31,7 +31,8 @@ its own), `react`, `theme` and `block-editor` (0.1.5), `markdown`, `suggestions`
   `--gt-review-card-gap` between card and row.
 - `afterBlock` on `BlockEditor` and `PageEditor`; its keys and input stay the host's.
 - Keys pressed in a host's element inside the page (an inline page icon, `afterBlock`) go on to the
-  host's listeners on `document` and `window`; the editor still takes none of them.
+  host's listeners on `document` and `window`; the editor, its shortcuts and its open menus take
+  none of them.
 - `PageEditorHandle`: `selectionMarkdownRange()`, `bookmark(point?, bias?)` (a place that follows
   edits, splits and joins, and comes back with its text) and `markdownOffset(point, bias?)`.
 - `reviewLanePointer`: the host's own arrow for the pointer lane cursor.
