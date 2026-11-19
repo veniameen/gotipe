@@ -1,10 +1,21 @@
 import { PageEditor, type PageEditorHandle } from "@gotipe/block-editor";
 import type { GoTipeEditor, GoTipeError } from "@gotipe/core";
-import type { LaneCursor, ReviewComment, ReviewProposal } from "@gotipe/suggestions";
+import {
+  type LaneCursor,
+  type ReviewComment,
+  type ReviewProposal,
+  applyAnchoredEdits,
+} from "@gotipe/suggestions";
 import type { ThemePreset } from "@gotipe/theme";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useDebugEditor } from "../shared/use-debug-editor";
-import { PAGE_LANES, PAGE_MARKDOWN, demoReview } from "./page-editor-sample";
+import {
+  PAGE_LANES,
+  PAGE_MARKDOWN,
+  WRITING_LENGTH,
+  demoReview,
+  demoWriting,
+} from "./page-editor-sample";
 import "./page-editor-example.css";
 
 declare global {
@@ -12,6 +23,14 @@ declare global {
     __GOTIPE_PAGE_EXAMPLE__?: {
       replaceMarkdown(from: string, to: string): void;
       setMarkdown(markdown: string): void;
+      /** Shows a review as a host would give it: what is not named is left as it is. */
+      setReview(review: {
+        proposals?: ReviewProposal[];
+        comments?: ReviewComment[];
+        cursors?: LaneCursor[];
+        /** How the lanes' cursors look (`reviewLaneCursor`). */
+        laneCursor?: "caret" | "pointer";
+      }): void;
     };
   }
 }
@@ -28,6 +47,10 @@ export function PageEditorExample() {
   const [proposals, setProposals] = useState<ReviewProposal[]>([]);
   const [comments, setComments] = useState<ReviewComment[]>([]);
   const [cursors, setCursors] = useState<LaneCursor[]>([]);
+  const [laneCursor, setLaneCursor] = useState<"caret" | "pointer">("caret");
+  const [writing, setWriting] = useState(false);
+  /** The proposals shown were written at one point of the page ("Demo writing"). */
+  const [written, setWritten] = useState(false);
   const page = useRef<PageEditorHandle>(null);
   const generation = useRef(0);
   const ready = useCallback((next: GoTipeEditor) => setEditor(next), []);
@@ -43,11 +66,17 @@ export function PageEditorExample() {
   useDebugEditor("__GOTIPE_EDITOR__", editor);
   useEffect(() => {
     if (!import.meta.env.DEV) return;
-    const inspection = {
+    const inspection: NonNullable<Window["__GOTIPE_PAGE_EXAMPLE__"]> = {
       replaceMarkdown(from: string, to: string) {
         setMarkdown((current) => (page.current?.getMarkdown() ?? current).replace(from, to));
       },
       setMarkdown,
+      setReview(review) {
+        if (review.proposals) setProposals(review.proposals);
+        if (review.comments) setComments(review.comments);
+        if (review.cursors) setCursors(review.cursors);
+        if (review.laneCursor) setLaneCursor(review.laneCursor);
+      },
     };
     window.__GOTIPE_PAGE_EXAMPLE__ = inspection;
     return () => {
@@ -58,9 +87,43 @@ export function PageEditorExample() {
   }, []);
   const loadReview = () => {
     const review = demoReview(++generation.current);
+    setWritten(false);
     setProposals(review.proposals);
     setComments(review.comments);
     setCursors(review.cursors);
+  };
+  // text written into the page a few letters at a time, as a model's answer arrives
+  useEffect(() => {
+    if (!writing) return;
+    const run = ++generation.current;
+    let shown = 0;
+    setWritten(true);
+    setComments([]);
+    const timer = setInterval(() => {
+      shown = Math.min(WRITING_LENGTH, shown + 7);
+      const review = demoWriting(run, shown);
+      setProposals(review.proposals);
+      setCursors(review.cursors);
+      if (shown >= WRITING_LENGTH) setWriting(false);
+    }, 80);
+    return () => clearInterval(timer);
+  }, [writing]);
+  // Proposals written at one point go into the page together, in their order: accepted one by
+  // one, the first would move the others' place.
+  const acceptWritten = () => {
+    const first = proposals[0]?.edits[0];
+    if (!first) return;
+    const text = [...proposals]
+      .sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
+      .map((proposal) => proposal.edits[0]?.text ?? "")
+      .join("");
+    const result = applyAnchoredEdits(page.current?.getMarkdown() ?? markdown, [
+      { ...first, text },
+    ]);
+    if (!result.ok) return;
+    setMarkdown(result.text);
+    setDraft(result.text);
+    setProposals([]);
   };
   return (
     <section className="gotipe-page-example" data-gotipe-example="page" aria-label="Editor example">
@@ -82,6 +145,15 @@ export function PageEditorExample() {
         </label>
         <button type="button" className="gotipe-button" onClick={loadReview} disabled={readOnly}>
           Demo suggestions
+        </button>
+        <button
+          type="button"
+          className="gotipe-button"
+          aria-pressed={writing}
+          onClick={() => setWriting(true)}
+          disabled={readOnly || writing}
+        >
+          Demo writing
         </button>
         <button
           type="button"
@@ -112,7 +184,7 @@ export function PageEditorExample() {
           </button>
         </div>
       )}
-      <div className="gotipe-page-example-surface">
+      <div className="gotipe-page-example-surface" data-writing={writing ? "" : undefined}>
         <PageEditor
           ref={page}
           markdown={markdown}
@@ -122,11 +194,13 @@ export function PageEditorExample() {
           view={view}
           locale="en"
           onError={reportError}
+          reviewLaneCursor={laneCursor}
           review={{
             lanes: PAGE_LANES,
             proposals,
             comments,
             cursors,
+            onAcceptAll: written ? acceptWritten : undefined,
             onReject: (id) => {
               setProposals((current) => current.filter((proposal) => proposal.id !== id));
               return true;
