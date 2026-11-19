@@ -129,6 +129,7 @@ const PageEditorInner = forwardRef<PageEditorHandle, PageEditorProps>(
       titleLevel = 1,
       review,
       reviewLayout = "auto",
+      reviewCardPlacement = "below",
       reviewBar,
       view = "notion",
       narrow = true,
@@ -395,6 +396,7 @@ const PageEditorInner = forwardRef<PageEditorHandle, PageEditorProps>(
               root={root}
               review={effectiveReview}
               layout={reviewLayout}
+              cardPlacement={reviewCardPlacement}
               onLocalAccept={localAccept}
               apiRef={reviewApi}
               onStates={setReviewStates}

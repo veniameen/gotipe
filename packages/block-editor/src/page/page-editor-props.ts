@@ -4,7 +4,12 @@ import type { BlockViews, MediaOptions } from "@gotipe/react";
 import type { ThemePreset } from "@gotipe/theme";
 import type React from "react";
 import type { BlockEditorProps } from "../components/block-editor-props";
-import type { PageReviewProps, ReviewApi, ReviewLayout } from "../review/review-layer";
+import type {
+  PageReviewProps,
+  ReviewApi,
+  ReviewCardPlacement,
+  ReviewLayout,
+} from "../review/review-layer";
 import type { PageBlockKind } from "./page-commands";
 import type { PageTitleLevel } from "./page-views";
 
@@ -105,6 +110,12 @@ export interface PageEditorProps {
    * text; `inline` — always by the text; `margin` — always in the margin column.
    */
   reviewLayout?: ReviewLayout;
+  /**
+   * Where a card by the text opens when there is no room beside it (a narrow page): `below` the
+   * row (default; above it when the window has no room below), or `above` the row (below it when
+   * there is no room above).
+   */
+  reviewCardPlacement?: ReviewCardPlacement;
   /** Show the edit bar above the page. */
   reviewBar?: { title?: React.ReactNode; extra?: React.ReactNode[] } | false;
   /**

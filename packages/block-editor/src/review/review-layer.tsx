@@ -29,6 +29,8 @@ export type ReviewResult = boolean | undefined;
  * one by the text; `inline` — always by the text; `margin` — always in the margin column.
  */
 export type ReviewLayout = "auto" | "inline" | "margin";
+/** Where the card by the text opens when it has no room beside it. */
+export type ReviewCardPlacement = "below" | "above";
 export type ReviewAction = (id: string) => Promise<ReviewResult> | ReviewResult;
 
 /** Review data and callbacks (ADR-0047). Everything is controlled by the host. */
@@ -96,6 +98,7 @@ export function ReviewLayer({
   root,
   review,
   layout = "auto",
+  cardPlacement = "below",
   onLocalAccept,
   apiRef,
   onStates,
@@ -105,6 +108,7 @@ export function ReviewLayer({
   root: HTMLElement | null;
   review: PageReviewProps;
   layout?: ReviewLayout;
+  cardPlacement?: ReviewCardPlacement;
   /** Applies a proposal to the document when the host has no `onAccept`. */
   onLocalAccept: (proposal: ReviewProposal) => boolean;
   apiRef?: React.MutableRefObject<ReviewApi | null>;
@@ -265,12 +269,19 @@ export function ReviewLayer({
               left: besideLeft,
             });
           } else {
+            // below the row, above it when there is no room; `cardPlacement: "above"` the reverse
             const left = Math.min(Math.max(8, rect.left), window.innerWidth - width - 8);
             const below = rect.bottom + 8;
-            setCardPos({
-              top: below + 180 > window.innerHeight ? Math.max(8, rect.top - 188) : below,
-              left,
-            });
+            const above = rect.top - 188;
+            const top =
+              cardPlacement === "above"
+                ? above >= 8
+                  ? above
+                  : below
+                : below + 180 > window.innerHeight
+                  ? Math.max(8, above)
+                  : below;
+            setCardPos({ top, left });
           }
         } else {
           setCardPos(null);
@@ -292,7 +303,7 @@ export function ReviewLayer({
       window.removeEventListener("scroll", onScroll, true);
       window.removeEventListener("resize", onScroll);
     };
-  }, [root, editor, session, review.cursors, lanes, activeId, layoutTick, margin]);
+  }, [root, editor, session, review.cursors, lanes, activeId, layoutTick, margin, cardPlacement]);
 
   // Clicking a suggestion or a comment opens its card.
   useEffect(() => {
