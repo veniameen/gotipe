@@ -99,6 +99,7 @@ import { PageEditor, type PageEditorHandle } from "@gotipe/block-editor";
   iconPlacement="inline"               // or in the title's row, before its text
   narrow={false}                       // keep the host's sizes in a narrow panel too
   reviewLayout="inline"                // cards by the text, never in a margin column
+  reviewCardPlacement="above"          // on a narrow page the card opens above the row
   slashMenu={{ commands: (defaults) => [...defaults, agentNote], groups, descriptions: true }}
   host={{
     saveAsset: async (blob, { name, mediaType }) => {
@@ -137,7 +138,8 @@ and "Blocks" buttons of the toolbar), `getTitle()`, `selectTitle()` ("Rename"), 
   has no theme of its own.
 - On a wide page (card + gap + `--gt-margin-page-min`) suggestion cards stand in a
   column in the margin next to their edits: the open one with its replies, the others collapsed. On a narrow page
-  the card opens next to the text. `reviewLayout="inline"` or `"margin"` fixes either layout at any width.
+  the card opens next to the text. `reviewLayout="inline"` or `"margin"` fixes either layout at any width;
+  `reviewCardPlacement="above"` opens that card above the row (below when there is no room).
 - The "/" menu: `slashMenu.commands` (a list, or a function over the page's own commands), `slashMenu.groups`
   (order and labels — e.g. Upload first, labelled "Media") and `slashMenu.descriptions` (a hint under each name).
   A host command such as "Agent instructions" is an ordinary `SlashCommandDef` that inserts a quote with the label.

@@ -98,6 +98,7 @@ Details of the codec are in [Markdown](/docs/conversion/markdown).
 | `slashMenu` | `PageSlashMenu` | — | Your commands, groups and order of the `/` menu; see [below](#the--menu). |
 | `review` | `PageReviewProps` | — | Suggestions, comments and cursors. Without it there is no review layer. |
 | `reviewLayout` | `"auto" \| "inline" \| "margin"` | `"auto"` | Where review cards stand: `auto` — in the margin when the page is wide enough, otherwise by the text; `inline` — always by the text; `margin` — always in the margin column. |
+| `reviewCardPlacement` | `"below" \| "above"` | `"below"` | Where a card by the text opens when there is no room beside it (a narrow page): `below` the row, or above it when the window has no room below; `above` the row, or below it when there is no room above. |
 | `reviewBar` | `{ title?: ReactNode; extra?: ReactNode[] } \| false` | not shown | Pass an object to show the review bar above the page. |
 | `autoFocus` | `boolean` | — | Put the caret at the end once the editor exists: after `onReady` and after the effects of the render `onReady` causes, so listeners you add there get `focus` and then `selectionChange`. No frame or timer decides the order. |
 | `onReady` | `(editor: GoTipeEditor) => void` | — | Called once per editor, when it exists. A new function on a later render is not called. |
