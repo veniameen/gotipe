@@ -219,6 +219,7 @@ can be set on any container.
 | `--gt-table-head-size`, `--gt-table-head-leading` | `var(--gt-small-size)`, `var(--gt-small-leading)` | Size and line height of header cells' text |
 | `--gt-table-head-weight` | `var(--gt-weight-medium)` | Its weight |
 | `--gt-table-head-tracking` | `normal` | Letter spacing of header cells' text |
+| `--gt-table-head-min-width` | `auto` | Least width of a header cell: a floor for columns sized by their content (`--gt-table-shared-layout: auto`) |
 | `--gt-table-head-color` | unset: `--gt-text-2` | Its colour |
 | `--gt-table-head-fill` | unset: `transparent` | Background of header cells |
 | `--gt-cell-pad`, `--gt-head-cell-pad` | `9px 12px`, `8px 12px` | Padding of body cells and header cells |
