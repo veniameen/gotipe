@@ -157,12 +157,15 @@ describe("review parts have tokens with today's values", () => {
     );
     expect(text["box-decoration-break"]).toBe("clone");
     expect(tokens.view["--gt-sug-block-ins-text-tint"]).toBe("0%");
-    expect(text["border-radius"]).toBe("var(--gt-sug-block-ins-text-radius)");
-    expect(tokens.view["--gt-sug-block-ins-text-radius"]).toBe("var(--gt-sug-ins-radius)");
-    expect(declarations(review, ".gotipe-sug-ins")["border-radius"]).toBe(
-      "var(--gt-sug-ins-radius)",
+    // read with fallbacks, not declared on the view: a value set on any element above wins
+    expect((text["border-radius"] ?? "").replace(/\s+/g, " ")).toBe(
+      "var( --gt-sug-block-ins-text-radius, var(--gt-sug-ins-radius, var(--gt-radius-inline)) )",
     );
-    expect(tokens.view["--gt-sug-ins-radius"]).toBe("var(--gt-radius-inline)");
+    expect(tokens.view).not.toHaveProperty("--gt-sug-block-ins-text-radius");
+    expect(declarations(review, ".gotipe-sug-ins")["border-radius"]).toBe(
+      "var(--gt-sug-ins-radius, var(--gt-radius-inline))",
+    );
+    expect(tokens.view).not.toHaveProperty("--gt-sug-ins-radius");
     expect(declarations(review, ".gotipe-sug-stale .gotipe-sug-block-ins-text").background).toBe(
       "transparent",
     );
@@ -327,10 +330,12 @@ describe("tables have tokens for their grid, head, first column and code, today'
       "font-weight": "var(--gt-table-head-weight)",
       "line-height": "var(--gt-table-head-leading)",
       "letter-spacing": "var(--gt-table-head-tracking)",
-      "min-width": "var(--gt-table-head-min-width)",
     });
+    expect(declarations(tables, ".gotipe-table-wrapper th")["min-width"]).toBeUndefined();
+    // without specificity: a host's own `th { min-width }` wins over the token
     expect(declarations(tables, ".gotipe-table-wrapper :where(th)")).toEqual({
       background: "var(--gt-table-head-fill, transparent)",
+      "min-width": "var(--gt-table-head-min-width)",
     });
     expect(tokens.view["--gt-table-head-size"]).toBe("var(--gt-small-size)");
     expect(tokens.view["--gt-table-head-leading"]).toBe("var(--gt-small-leading)");

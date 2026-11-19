@@ -8,11 +8,11 @@
   decoration over the phantom block's text), and `--gt-sug-block-ins-text-tint` (`0%`) tints it in
   the lane's colour behind the text alone, line by line; with `--gt-sug-block-ins-tint: 0%` a host
   fills the text instead of the whole row. A stale one stays unfilled. Defaults look as before.
-- `--gt-sug-ins-radius` (`var(--gt-radius-inline)`): the corners of an inserted text's fill, and
-  `--gt-sug-block-ins-text-radius` (`var(--gt-sug-ins-radius)`): those of the fill behind a proposed
-  new block's text.
+- `--gt-sug-ins-radius` (unset: `--gt-radius-inline`): the corners of an inserted text's fill, and
+  `--gt-sug-block-ins-text-radius` (unset: `--gt-sug-ins-radius`): those of the fill behind a
+  proposed new block's text. Read with fallbacks, so each can be set on any element above the text.
 - `--gt-table-head-min-width` (`auto`): the least width of a header cell, a floor for columns sized
-  by their content.
+  by their content; a host's own `th { min-width }` still wins.
 - 484513c: The page title with an inline icon (`iconPlacement="inline"`): its accessible name is the title's
   text alone (the prompt when it is empty), no longer prefixed by the icon's own name, and the empty
   title's prompt starts after the icon instead of under it (`--gt-page-icon-inline` +
