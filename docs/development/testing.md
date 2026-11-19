@@ -66,7 +66,10 @@ long page and a small one), grows the texts of four proposals 12 times a second 
 all in one update and then each on its own beat, and writes to `output/perf/` the time from an
 update to the next frame, the length of every frame (a frame longer than one and a half of the
 display's own counts as late) and what the browser spent per update (Chromium's own counters).
-`--profile` saves a CPU profile. Run it alone and compare runs of one machine only.
+Each text is a section of many blocks; `--text paragraph` writes one long paragraph instead, which
+tells the cost of a growing text from the cost of a new block coming to a long page (the browser
+restyles the page's blocks when a block is inserted between them). `--profile` saves a CPU
+profile. Run it alone and compare runs of one machine only.
 What keeps an update from binding and drawing everything again is pinned by unit tests:
 `suggestions/src/review-live.test.ts`, `react/src/content/plain-blocks.test.tsx`,
 `block-editor/src/review/review-live.test.tsx`.

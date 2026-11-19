@@ -2,7 +2,7 @@
 // Frames of the public PageEditor while a review's growing proposals are written, in Chromium.
 //
 //   node scripts/perf/live-review.mjs [--label after] [--writers 4] [--rate 12] [--seconds 10]
-//     [--profile] [--no-build]
+//     [--text paragraph] [--profile] [--no-build]
 //
 // Builds the technical consumer `apps/playground/tests/perf` (production React, JS engine), serves
 // it with `vite preview` and opens `live.html`: a long generated page whose review holds `writers`
@@ -10,6 +10,8 @@
 // first all in one update (`batched`), then each on its own beat (`staggered`). Per run it reads
 // the time from an update to the first frame after it, the length of every frame, and what the
 // browser spent per update. The report goes to `output/perf/live-review-<label>.json`.
+// A text is a section of many blocks; `--text paragraph` writes one long paragraph instead, so
+// that no new block comes to the page while it grows.
 // `--profile` rebuilds without minification and saves a CPU profile of the batched run on the
 // large page. GOTIPE_E2E_CHANNEL picks the browser channel (for example "chrome").
 import { spawn, spawnSync } from "node:child_process";
@@ -29,6 +31,7 @@ const label = option("label", "run");
 const writers = Number(option("writers", "4"));
 const rate = Number(option("rate", "12"));
 const seconds = Number(option("seconds", "10"));
+const text = option("text", "section");
 const profile = flag("profile");
 const port = Number(process.env.GOTIPE_PERF_PORT ?? 5320);
 const pages = [
@@ -85,7 +88,7 @@ async function waitForServer(url) {
 
 async function measure(browser, base, target, mode) {
   const page = await browser.newPage({ viewport: { width: 1280, height: 800 } });
-  const query = `sections=${target.sections}&writers=${writers}`;
+  const query = `sections=${target.sections}&writers=${writers}&text=${text}`;
   await page.goto(`${base}/tests/perf/live.html?${query}`);
   await page.waitForFunction(
     () => window.__GOTIPE_LIVE__?.editor && document.querySelector("[data-block-id]"),
@@ -166,6 +169,7 @@ async function measure(browser, base, target, mode) {
   return {
     page: target.name,
     mode,
+    text,
     blocks,
     writers,
     updatesPerSecond: mode === "batched" ? rate : rate * writers,
@@ -203,6 +207,7 @@ try {
     minified: !profile,
     rate,
     seconds,
+    text,
     results,
   };
   writeFileSync(resolve(out, `live-review-${label}.json`), `${JSON.stringify(report, null, 2)}\n`);
