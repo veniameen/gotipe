@@ -88,6 +88,7 @@ root shows a loading skeleton with `role="status"`.
 | `onSuggestionRejectAll` | `() => void` | no-op | Reject all button. |
 | `blockViews` | `BlockViews` | — | Your views by block type; they win over the editor's own. |
 | `slashCommands` | `SlashCommandDef[]` | `editor.getSlashCommands()` | Commands of the `/` menu. |
+| `afterBlock` | `{ blockId, node } \| null` | — | The host's element in the flow after the top-level block that is or holds `blockId`; see `afterBlock` in [React](../frameworks/react.md). |
 | `ariaLabel` | `string` | `a11y.editorLabel` | Accessible name of the document; by default in the interface language: "Document content" in English. |
 | `errorToast` | `boolean` | `true` | A toast for errors a person can act on. |
 | `media` | `MediaOptions` | `{ links: true, inlineErrors: true }` | What empty image and file blocks offer and where their failures are shown: `links: false` hides **By link**, `inlineErrors: false` keeps the reasons out of the blocks; see [editor UI options](/docs/extensions/media#editor-ui-options). |

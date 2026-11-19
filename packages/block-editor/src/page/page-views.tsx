@@ -46,12 +46,17 @@ const firstBlockId = (state: ViewState): string | undefined => state.blocks[0]?.
  */
 export const PageTitleIconContext = createContext<React.ReactNode>(null);
 
-function stopAtIcon(event: React.SyntheticEvent): void {
-  // the host's icon (a button with a menu, say) keeps its keys: the editor's handlers above it
-  // do not take Enter, Backspace or typing
+function stopAtHost(event: React.SyntheticEvent): void {
+  // the host's element (an icon with a menu, a field) keeps its keys: the editor's handlers above
+  // it do not take Enter, Backspace or typing
   event.stopPropagation();
 }
-const iconGuard = { onKeyDown: stopAtIcon, onBeforeInput: stopAtIcon, onInput: stopAtIcon };
+/** Keeps keys and input in a host's element inside the page from the editor's handlers. */
+export const hostEventGuard = {
+  onKeyDown: stopAtHost,
+  onBeforeInput: stopAtHost,
+  onInput: stopAtHost,
+};
 
 function headingView(titlePlaceholder: string | undefined, titleLevel: PageTitleLevel) {
   const view: BlockViewComponent = function PageHeadingView({
@@ -93,7 +98,7 @@ function headingView(titlePlaceholder: string | undefined, titleLevel: PageTitle
             className="gotipe-page-title-icon"
             data-gotipe-widget=""
             contentEditable={false}
-            {...iconGuard}
+            {...hostEventGuard}
           >
             {titleIcon}
           </span>

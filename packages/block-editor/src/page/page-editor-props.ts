@@ -1,6 +1,6 @@
 import type { EditorHost, GoTipeEditor, SlashCommandDef } from "@gotipe/core";
 import type { I18n } from "@gotipe/i18n";
-import type { BlockViews, MediaOptions } from "@gotipe/react";
+import type { BlockSlot, BlockViews, MediaOptions } from "@gotipe/react";
 import type { ThemePreset } from "@gotipe/theme";
 import type React from "react";
 import type { BlockEditorProps } from "../components/block-editor-props";
@@ -140,6 +140,14 @@ export interface PageEditorProps {
    * assistive technology) and takes no pointer events.
    */
   reviewLanePointer?: React.ReactNode;
+  /**
+   * The host's element in the flow of the page after the top-level block that is or holds
+   * `blockId` (a field for writing with a model between paragraphs, say): the text below moves
+   * down for it, and it follows its block as the text above changes. A widget
+   * (`.gotipe-block-slot`, `data-gotipe-widget`): not part of the text or the file; its keys and
+   * input stay the host's. None when null.
+   */
+  afterBlock?: BlockSlot | null;
   /** Show the edit bar above the page. */
   reviewBar?: { title?: React.ReactNode; extra?: React.ReactNode[] } | false;
   /**

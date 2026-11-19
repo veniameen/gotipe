@@ -4,6 +4,7 @@ import type { BlockRendererProps } from "./block-renderer";
 import { EditorContext } from "./context";
 import {
   type AfterTextFn,
+  type BlockSlot,
   type BlockViews,
   EditorContent,
   type PlaceholderFn,
@@ -20,6 +21,8 @@ export interface EditorProps {
   placeholder?: PlaceholderFn;
   /** What a block with text shows after it; see `EditorContent`. */
   afterText?: AfterTextFn;
+  /** A host's element in the flow after a block; see `EditorContent`. */
+  afterBlock?: BlockSlot | null;
   /** Decoration layers the host draws itself; see `EditorContent`. */
   hostLayers?: readonly string[];
   /** Accessible name of the document; `a11y.editorLabel` of `GoTipeI18nProvider` by default. */
@@ -37,6 +40,7 @@ export function Editor({
   blockViews,
   placeholder,
   afterText,
+  afterBlock,
   hostLayers,
   ariaLabel,
   slotBefore,
@@ -55,6 +59,7 @@ export function Editor({
           blockViews={blockViews}
           placeholder={placeholder}
           afterText={afterText}
+          afterBlock={afterBlock}
           hostLayers={hostLayers}
           ariaLabel={ariaLabel}
         />

@@ -371,6 +371,45 @@ describe("PageEditor head, narrow sizes and review layout", () => {
     expect(caret.end).toBe(caret.start);
   });
 
+  it("afterBlock: the host's field in the flow after a block, its keys its own", async () => {
+    const markdown = "# Notes\n\n- one\n- two\n\nAfter.\n";
+    const field = <input aria-label="Write with the model" />;
+    const { ref, editor, draw } = await mount({ markdown });
+    const [, list] = editor.getViewState().blocks;
+    const item = list!.children[1]!;
+    // an item's id: the field stands after the whole list, not inside it
+    await act(async () => {
+      draw({ afterBlock: { blockId: item.id, node: field } });
+      await wait(20);
+    });
+    const slot = container.querySelector<HTMLElement>("[data-gotipe-block-slot]")!;
+    expect(slot.previousElementSibling?.getAttribute("data-block-id")).toBe(list!.id);
+    expect(slot.closest("ul, ol")).toBeNull();
+    const input = slot.querySelector("input")!;
+    const seen = vi.fn();
+    document.body.addEventListener("keydown", seen);
+    const before = JSON.stringify(editor.getJSON());
+    act(() => {
+      input.focus();
+      for (const key of ["Enter", "Backspace", "a", "/"]) {
+        const event = new KeyboardEvent("keydown", { key, bubbles: true, cancelable: true });
+        input.dispatchEvent(event);
+        expect(event.defaultPrevented).toBe(false);
+      }
+    });
+    document.body.removeEventListener("keydown", seen);
+    expect(seen).not.toHaveBeenCalled();
+    expect(document.activeElement).toBe(input);
+    expect(JSON.stringify(editor.getJSON())).toBe(before);
+    // not in the file
+    expect(ref.current!.getMarkdown()).toBe(markdown);
+    await act(async () => {
+      draw({ afterBlock: null });
+      await wait(20);
+    });
+    expect(container.querySelector("[data-gotipe-block-slot]")).toBeNull();
+  });
+
   it("an inline icon is not part of the title's accessible name", async () => {
     const { ref } = await mount({
       markdown: "# Notes\n\n## Part\n",

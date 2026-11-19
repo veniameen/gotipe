@@ -58,7 +58,7 @@ import { PageOverlayContext } from "./overlay";
 import { type PageBlockKind, insertPageBlock, pageBlockCommands } from "./page-commands";
 import type { PageEditorHandle, PageEditorProps } from "./page-editor-props";
 import { createPageHost } from "./page-host";
-import { PageTitleIconContext, createPageBlockViews } from "./page-views";
+import { PageTitleIconContext, createPageBlockViews, hostEventGuard } from "./page-views";
 import { selectionMarkdownRange } from "./selection-markdown";
 import { usePageDraft } from "./use-page-draft";
 
@@ -134,6 +134,7 @@ const PageEditorInner = forwardRef<PageEditorHandle, PageEditorProps>(
       reviewLaneCursor = "caret",
       reviewLanePointer,
       reviewBar,
+      afterBlock,
       view = "notion",
       narrow = true,
       highlight,
@@ -389,6 +390,12 @@ const PageEditorInner = forwardRef<PageEditorHandle, PageEditorProps>(
                   mentions={props.mentions}
                   emoji={props.emoji}
                   ariaLabel={i18n.t("page.ariaLabel")}
+                  afterBlock={
+                    afterBlock && {
+                      blockId: afterBlock.blockId,
+                      node: <div {...hostEventGuard}>{afterBlock.node}</div>,
+                    }
+                  }
                   errorToast={!host?.onError && !onError}
                   showAiCommandBar={false}
                   status={props.status}
