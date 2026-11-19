@@ -21,12 +21,13 @@ export type {
 } from "./anchors";
 export {
   computeReviewDecorations,
+  createReviewCache,
   mapOffsetToText,
   mapRangeToText,
   proposalsInDocumentOrder,
   revealDecorations,
 } from "./review-decorations";
-export type { ReviewInput, ReviewOutput } from "./review-decorations";
+export type { ReviewCache, ReviewInput, ReviewOutput } from "./review-decorations";
 export type {
   ReviewLane,
   ReviewProposal,

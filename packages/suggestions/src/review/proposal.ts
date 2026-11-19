@@ -7,9 +7,30 @@ import type {
   ReviewProposal,
   TextMap,
 } from "../review-types";
-import { type Ctx, cls, diffLists, insertBlocks, key, plainText } from "./block-diff";
+import { type Ctx, cls, diffLists, insertBlocks, plainText, widgetKey } from "./block-diff";
 import type { ReviewInput } from "./input";
+import { markLiveEnd } from "./live";
 import { mapOffsetToText } from "./positions";
+
+type TopBlock = TextMap["blocks"][number];
+
+/** One call's input and what is read from it once for all its proposals. */
+export interface Frame {
+  input: ReviewInput;
+  /** The map's top-level blocks in document order. */
+  top: () => TopBlock[];
+}
+
+export function frameOf(input: ReviewInput): Frame {
+  let top: TopBlock[] | null = null;
+  return {
+    input,
+    top: () => {
+      top ??= input.map.blocks.filter((b) => b.depth === 0).sort((a, b) => a.start - b.start);
+      return top;
+    },
+  };
+}
 
 interface Cluster {
   start: number;
@@ -18,8 +39,7 @@ interface Cluster {
   blockIds: string[];
 }
 
-function clusterEdits(map: TextMap, edits: LocatedEdit[]): Cluster[] {
-  const top = map.blocks.filter((b) => b.depth === 0).sort((a, b) => a.start - b.start);
+function clusterEdits(top: TopBlock[], edits: LocatedEdit[]): Cluster[] {
   const clusters: Cluster[] = [];
   for (const e of edits) {
     const affected = top.filter((b) =>
@@ -42,16 +62,27 @@ function clusterEdits(map: TextMap, edits: LocatedEdit[]): Cluster[] {
   return clusters;
 }
 
+/** A proposal's rank as the lead of its widgets' keys (see `widgetKey`). */
+const rankKey = (rank: number) => `${String(rank).padStart(4, "0")}:`;
+
+/**
+ * One proposal bound to the document. `rank` is its place among the proposals (by `order`, then
+ * by their order in the list).
+ */
 export function computeProposal(
-  input: ReviewInput,
+  frame: Frame,
   proposal: ReviewProposal,
   lane: ReviewLane | undefined,
+  rank: number,
 ): {
   state: ProposalState;
   decorations: Decoration[];
 } {
+  const { input } = frame;
+  const live = proposal.live === true;
   const ctx: Ctx = {
     pid: proposal.id,
+    rank: rankKey(rank),
     style: { "--gt-track": lane?.color ?? "var(--gt-track-1)" },
     attrs: { "data-gotipe-proposal": proposal.id, "data-gotipe-lane": proposal.laneId },
     active: input.activeId === proposal.id,
@@ -64,28 +95,33 @@ export function computeProposal(
   };
   const base: ProposalState = {
     id: proposal.id,
-    status: "pending",
+    status: live ? "live" : "pending",
     position: null,
     insertEnd: null,
     blockIds: [],
     exact: true,
     insertedChars: 0,
   };
-  const located = proposal.status === "stale" ? null : locateEdits(input.text, proposal.edits);
+  // a growing text is read as the codec says an unfinished one is
+  const read = live ? input.liveText : undefined;
+  const edits = read
+    ? proposal.edits.map((edit) => ({ ...edit, text: read(edit.text) }))
+    : proposal.edits;
+  const located = proposal.status === "stale" ? null : locateEdits(input.text, edits);
   if (!located || !located.ok) {
     return {
       state: {
         ...base,
-        status: "stale",
+        status: live ? "live" : "stale",
         reason: located && !located.ok ? located.reason : undefined,
-        position: staleWidget(input, proposal, ctx),
+        position: staleWidget(input, edits[0], ctx),
       },
       decorations: ctx.out,
     };
   }
-  const top = input.map.blocks.filter((b) => b.depth === 0).sort((a, b) => a.start - b.start);
+  const top = frame.top();
   const touched: string[] = [];
-  for (const cluster of clusterEdits(input.map, located.edits)) {
+  for (const cluster of clusterEdits(top, located.edits)) {
     let region = input.text.slice(cluster.start, cluster.end);
     for (let i = cluster.edits.length - 1; i >= 0; i--) {
       const e = cluster.edits[i]!;
@@ -100,7 +136,8 @@ export function computeProposal(
     if (oldBlocks.length === 0) {
       // Pure insertion between blocks.
       const at = cluster.start;
-      const prev = [...top].reverse().find((b) => b.end <= at);
+      let prev: TopBlock | undefined;
+      for (let i = top.length - 1; i >= 0 && !prev; i--) if (top[i]!.end <= at) prev = top[i];
       const next = top.find((b) => b.start >= at);
       const prevBlock = prev ? input.blocks.find((b) => b.id === prev.blockId) : undefined;
       const nextBlock = next ? input.blocks.find((b) => b.id === next.blockId) : undefined;
@@ -110,6 +147,16 @@ export function computeProposal(
     }
     diffLists(ctx, oldBlocks, newBlocks, null);
   }
+  if (live) {
+    markLiveEnd(ctx.out);
+    // no text yet: the proposal stands where its text will start, after its last quote
+    const last = located.edits[located.edits.length - 1];
+    const start = last && !ctx.insertEnd ? mapOffsetToText(input.map, last.end, "before") : null;
+    if (start) {
+      ctx.insertEnd = start;
+      ctx.position ??= start;
+    }
+  }
   return {
     state: {
       ...base,
@@ -117,7 +164,7 @@ export function computeProposal(
       insertEnd: ctx.insertEnd,
       blockIds: touched,
       exact: ctx.exact,
-      insertedChars: ctx.inserted,
+      insertedChars: live ? 0 : ctx.inserted,
     },
     decorations: ctx.out,
   };
@@ -168,10 +215,9 @@ function staleBlocks(
  */
 function staleWidget(
   input: ReviewInput,
-  proposal: ReviewProposal,
+  edit: ReviewProposal["edits"][number] | undefined,
   ctx: Ctx,
 ): ReviewPosition | null {
-  const edit = proposal.edits[0];
   if (!edit) return null;
   let at: number | null = null;
   if (edit.before) {
@@ -199,7 +245,7 @@ function staleWidget(
   if (text) {
     ctx.out.push({
       type: "widget",
-      key: key(ctx, "stale"),
+      key: widgetKey(ctx, "stale"),
       blockId: pos.blockId,
       offset: pos.offset,
       text,

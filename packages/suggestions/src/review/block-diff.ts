@@ -78,6 +78,8 @@ function lcs(a: string[], b: string[]): [number, number][] {
 
 export interface Ctx {
   pid: string;
+  /** Leads the keys of the proposal's widgets: at one offset they stand by it, then by their own. */
+  rank: string;
   style: Record<string, string>;
   attrs: Record<string, string>;
   active: boolean;
@@ -98,13 +100,23 @@ export function key(ctx: Ctx, kind: string): string {
   return `${ctx.pid}:${String(ctx.seq).padStart(4, "0")}:${kind}`;
 }
 
+/**
+ * The key of a widget. Renderers order the widgets at one offset by key, so those of several
+ * proposals stand in the proposals' order (`rank`), not in the order of their ids.
+ */
+export function widgetKey(ctx: Ctx, kind: string): string {
+  return `${ctx.rank}${key(ctx, kind)}`;
+}
+
 function note(ctx: Ctx, pos: ReviewPosition) {
   if (!ctx.position) ctx.position = pos;
 }
 
-function phantomId(ctx: Ctx, block: BlockView): BlockView {
-  ctx.seq += 1;
-  const id = `phantom:${ctx.pid}:${ctx.seq}:${block.id}`;
+/**
+ * A new block under an id of its place: the group's key and its index path. The id does not
+ * change while the proposal's text grows, so a renderer keeps the block's element.
+ */
+function phantom(block: BlockView, id: string): BlockView {
   const length = Array.isArray(block.content) ? plainText(block).length : 0;
   // the new block's text in its own span, so a host can tint the text rather than the row
   return {
@@ -123,7 +135,7 @@ function phantomId(ctx: Ctx, block: BlockView): BlockView {
             },
           ]
         : [],
-    children: block.children.map((c) => phantomId(ctx, c)),
+    children: block.children.map((child, index) => phantom(child, `${id}.${index}`)),
   };
 }
 
@@ -141,10 +153,12 @@ export function insertBlocks(
 ) {
   if (blocks.length === 0) return;
   ctx.exact = false;
-  const phantoms = blocks.map((b) => phantomId(ctx, b));
+  // the group's key first: it must not depend on how many blocks the group holds
+  const group = key(ctx, "blocks");
+  const phantoms = blocks.map((b, index) => phantom(b, `phantom:${group}:${index}`));
   ctx.out.push({
     type: "blocks",
-    key: key(ctx, "blocks"),
+    key: group,
     blockId: anchor.id,
     position,
     blocks: phantoms,
@@ -208,7 +222,7 @@ function diffLeafText(ctx: Ctx, oldB: BlockView, newB: BlockView) {
     for (const span of spans) {
       ctx.out.push({
         type: "widget",
-        key: key(ctx, "ins"),
+        key: widgetKey(ctx, "ins"),
         blockId: oldB.id,
         offset: delTo,
         text: span.text,
