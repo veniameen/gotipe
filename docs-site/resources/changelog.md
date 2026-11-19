@@ -6,7 +6,8 @@ description: Release notes of GoTipe, newest first, grouped by package.
 ## 0.1.5
 
 Placement fixes for review cards, a host's element in the page's flow, a selection's and a
-bookmark's place in the Markdown file, and more tokens. Released packages: `core` (no changes of
+bookmark's place in the Markdown file, proposals shown while they are still being written, and
+more tokens. Released packages: `core` (no changes of
 its own), `react`, `theme` and `block-editor` (0.1.5), `markdown`, `suggestions` and `comments`
 (0.1.3). `block-editor` 0.1.5 needs `react` 0.1.5, `theme` 0.1.5, `markdown` 0.1.3 and
 `suggestions` 0.1.3.
@@ -17,6 +18,8 @@ its own), `react`, `theme` and `block-editor` (0.1.5), `markdown`, `suggestions`
   host's element in the flow after the top-level block that is or holds `blockId`
   (`.gotipe-block-slot`, a widget outside the text and the file).
 - `FloatingPlacement` gains `"top-start"`.
+- A block with decorations is drawn again only when its own decorations or children changed, and
+  of a growing group of suggested blocks only the new and the changed ones.
 
 ### @gotipe/markdown
 
@@ -36,18 +39,31 @@ its own), `react`, `theme` and `block-editor` (0.1.5), `markdown`, `suggestions`
 - `PageEditorHandle`: `selectionMarkdownRange()`, `bookmark(point?, bias?)` (a place that follows
   edits, splits and joins, and comes back with its text) and `markdownOffset(point, bias?)`.
 - `reviewLanePointer`: the host's own arrow for the pointer lane cursor.
+- The review shows proposals that are still being written (`live`): the text grows in place
+  without the reveal and takes no decision until it is whole; its unfinished Markdown is shown
+  as text. Proposals at one point stand by `order`. A lane has several cursors (`id`, `name`,
+  `compact`); the cursor of a growing proposal waits where its text will start and follows it,
+  and a cursor's flag that has no room at the page's edge stands before it (`data-chip-side`).
+  Only what changed is bound and drawn again.
 - A page title with an inline icon is named by its text alone, and its empty prompt starts after
   the icon.
 
 ### @gotipe/suggestions
 
 - A proposed new block's text stands in its own `.gotipe-sug-block-ins-text` span.
+- `ReviewProposal.live` and `order`, the `"live"` state, the class `gotipe-sug-live` on the end
+  of a growing text, `LaneCursor.id`, `name` and `compact`, and `createReviewCache()` for
+  `computeReviewDecorations` to bind only what changed.
 
 ### @gotipe/theme
 
 - Tokens: `--gt-review-card-gap`, `--gt-lane-pointer-at`, `--gt-lane-pointer-outline`,
   `--gt-lane-pointer-outline-width`, `--gt-lane-pointer-tip-x`, `--gt-lane-pointer-tip-y`,
-  `--gt-sug-block-ins-text-tint`, `--gt-sug-ins-radius`, `--gt-sug-block-ins-text-radius`, `--gt-table-head-min-width`, `--gt-list-item-text-inset`. Defaults keep the 0.1.4 look.
+  `--gt-sug-block-ins-text-tint`, `--gt-sug-ins-radius`, `--gt-sug-block-ins-text-radius`, `--gt-table-head-min-width`, `--gt-list-item-text-inset`,
+  `--gt-sug-live-caret-width`, `--gt-sug-live-caret-color`, `--gt-lane-cursor-move`, `--gt-lane-chip-gap`,
+  `--gt-lane-chip-flip-x`, `--gt-lane-chip-flip-y`. Defaults keep the 0.1.4 look.
+- Outside the docs view, an element added to the text no longer makes the browser restyle the
+  whole page (the outline's `:has()` rules ask for the view first).
 
 ## 0.1.4
 

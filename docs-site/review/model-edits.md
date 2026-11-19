@@ -127,15 +127,15 @@ and scroll. Without `onAccept`, `PageEditor` applies an accepted proposal itself
 | Option | Type | Default | Description |
 | --- | --- | --- | --- |
 | `lanes` | `ReviewLane[]` | — | Who proposes: `{ id, name, kind, color? }`. `kind` is `agent`, `skill`, `tool` or `user`; `color` is any CSS color, such as `var(--gt-track-2)`. |
-| `proposals` | `ReviewProposal[]` | — | `{ id, laneId, edits, reason?, status?, createdAt? }`. Set `status: "stale"` when you already know it is. |
+| `proposals` | `ReviewProposal[]` | — | `{ id, laneId, edits, reason?, status?, createdAt?, live?, order? }`. Set `status: "stale"` when you already know it is. `live` marks a proposal that is [still being written](#proposals-still-being-written); `order` places proposals that insert at the same point. |
 | `comments` | `ReviewComment[]` | `[]` | Notes or questions on a quote: `{ id, laneId, anchor, text, question?, replies? }`. An empty quote marks a point. |
-| `cursors` | `LaneCursor[]` | `[]` | Where a lane works now: `{ laneId, proposalId?, anchor?, label? }`. Drawn at the end of the proposal's new text, else after the anchor's quote, with the lane's name and `label`. |
+| `cursors` | `LaneCursor[]` | `[]` | Where a lane works now: `{ laneId, id?, name?, compact?, proposalId?, anchor?, label? }`. Drawn at the end of the proposal's new text, else after the anchor's quote, with the lane's name (or `name`) and `label`. A lane can have several: give each its own `id`. `compact` puts the name and the label in one line, and lets the flag go before its cursor at the page's edge. |
 | `onAccept` | `ReviewAction` | local apply | Accept one proposal. Return `false` when it failed; that stops Accept all. |
 | `onReject` | `ReviewAction` | hide | Reject one proposal. |
-| `onAcceptAll` | `() => void \| Promise<void>` | in order | Default: `onAccept` one by one in document order, stopping at the first stale or failed proposal. |
-| `onRejectAll` | `() => void \| Promise<void>` | each | Default: `onReject` for every proposal. |
+| `onAcceptAll` | `() => void \| Promise<void>` | in order | Default: `onAccept` one by one in document order, stopping at the first stale or failed proposal; a `live` proposal is passed over. |
+| `onRejectAll` | `() => void \| Promise<void>` | each | Default: `onReject` for every proposal that is not `live`. |
 | `onReply` | `(commentId, text) => ReviewResult \| Promise<ReviewResult>` | — | A reply to a comment. |
-| `onStatesChange` | `(states) => void` | — | `{ proposals, comments }`: where each item is and which are stale. |
+| `onStatesChange` | `(states) => void` | — | `{ proposals, comments }`: where each item is and which are stale. A proposal's `status` is `"pending"`, `"stale"` or `"live"`. Called when a state changes, not for every growth of a live proposal's text. |
 
 `ReviewAction` is `(id: string) => ReviewResult | Promise<ReviewResult>`, and `ReviewResult` is
 `boolean | undefined`. Only `false` counts as a failure.
@@ -149,13 +149,70 @@ and scroll. Without `onAccept`, `PageEditor` applies an accepted proposal itself
 - On a wide page every card sits in a margin column next to its change. On a narrow page
   a card opens next to the text when you click a change. Escape closes it.
 - The text of a new proposal appears over up to 1.5 seconds; with
-  `prefers-reduced-motion` it appears at once.
+  `prefers-reduced-motion` it appears at once. A `live` proposal is never revealed.
 - A proposal whose anchor is no longer found exactly once is stale. A dashed hint stays near
   where its text was, and its card offers only Reject. Accepting it reports
   `PROPOSAL_STALE`; without your `onError` the toast says in the interface's language that the
   suggestion is out of date.
 - An error thrown by your callbacks reaches `host.onError` / `onError` as
   `PROPOSAL_ACTION_FAILED` or `COMMENT_ACTION_FAILED`.
+
+### Proposals still being written
+
+A model's answer arrives in pieces. To show it on the page as it arrives, give the proposal
+`live: true` and replace it with a new object under the same `id` whenever its text grows.
+When the text is whole, give the same `id` without `live`: it becomes an ordinary proposal,
+in the same place and without its text being revealed again.
+
+```tsx title="written-section.tsx"
+import { PageEditor } from "@gotipe/block-editor";
+import type { LaneCursor, ReviewLane, ReviewProposal } from "@gotipe/suggestions";
+
+const lanes: ReviewLane[] = [{ id: "assistant", name: "Assistant", kind: "agent" }];
+// The section goes after the paragraph the anchor ends with. Its text starts with an empty
+// line, so it is a block of its own from its first character.
+const place = { before: "The release is planned for May.", quote: "", after: "" };
+
+export function WrittenSection({ file, text, done }: { file: string; text: string; done: boolean }) {
+  const proposals: ReviewProposal[] = [
+    { id: "section-1", laneId: "assistant", live: !done, edits: [{ ...place, text: `\n\n${text}` }] },
+  ];
+  const cursors: LaneCursor[] = done
+    ? []
+    : [{ laneId: "assistant", id: "section-1", proposalId: "section-1", label: "Writing" }];
+  return <PageEditor markdown={file} review={{ lanes, proposals, cursors }} />;
+}
+```
+
+While a proposal is `live`:
+
+- Its whole text is on the page at once: nothing is revealed letter by letter. Blocks already
+  written keep their elements as the text grows; only what changed is bound to the document
+  and drawn again.
+- It takes no decision. Its card has no Accept or Reject, the handle's `accept(id)` and
+  `reject(id)` resolve to `false` without calling you, and Accept all and Reject all pass it
+  over. Its state is `"live"`, and the review bar does not count it.
+- Markdown its end leaves unfinished is shown as text and changes nothing around it: a mark
+  without its pair (`**`, `` ` ``, `~~`, a link). A table comes with all its columns once its
+  head row and its delimiter row are whole, and grows by whole rows: a row being written is a
+  line of text under it until its line ends. A code block still open holds the code written
+  so far and takes nothing that follows it.
+- The last piece of its text carries the class `gotipe-sug-live`. Set
+  `--gt-sug-live-caret-width` to draw a typing caret there
+  (see [theming](/docs/ui/theming#parts)).
+- A cursor with its `proposalId` stands where the text will start while there is none, then
+  follows its end. When the text moves it, it goes there over `--gt-lane-cursor-move`.
+- Every cursor says on which side its flag has room: `data-chip-side="end"`, or `"start"` when
+  the flag would cross the page's end edge. A `compact` flag then stands before its cursor,
+  above the row. The side is kept at the edge: the flag comes back only once it fits after the
+  cursor with room to spare.
+- When its anchor is no longer found, it stays `"live"`, a dashed hint keeps its place, and
+  the state's `reason` says why.
+
+Several proposals can insert at the same point, for instance the sections of a new page.
+They stand in ascending `order` (0 when not given), equal ones in the order of `proposals`,
+and keep their places while they grow. Accepting one changes the text the others are
+anchored to: anchor them again, or apply them together as one edit.
 
 ### Review bar and handle
 
@@ -167,13 +224,15 @@ actions:
 
 | Method | Description |
 | --- | --- |
-| `accept(id)` / `reject(id)` | Same as the card buttons. Resolve to `true` on success. |
-| `acceptAll()` / `rejectAll()` | Resolve to the number handled, or `0` when your `onAcceptAll` / `onRejectAll` ran. |
+| `accept(id)` / `reject(id)` | Same as the card buttons. Resolve to `true` on success, and to `false` for a `live` proposal. |
+| `acceptAll()` / `rejectAll()` | Resolve to the number handled, or `0` when your `onAcceptAll` / `onRejectAll` ran. `live` proposals are passed over. |
 | `states()` | The current `{ proposals, comments }` states. |
 | `focus(id)` | Opens the card of a proposal or comment; `null` closes it. |
 
 For a renderer of your own, `computeReviewDecorations()` returns the same decorations and
 states. It needs the serialized text, the Markdown codec's text map and a fragment parser.
+Pass it a `cache` from `createReviewCache()`, one per editor, and it binds again only the
+proposals and comments that changed; the rest keep their decoration objects.
 
 ## Limitations
 
