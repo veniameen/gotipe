@@ -80,6 +80,7 @@ export {
   MarkdownRawMark,
 } from "./page/page-editor";
 export type { PageEditorProps, PageEditorHandle, PageSlashMenu } from "./page/page-editor";
+export type { PageBookmark, TextPoint } from "./page/page-bookmark";
 export { pageBlockCommands, pageSlashGroups, insertPageBlock } from "./page/page-commands";
 export type { PageBlockCommand, PageBlockKind } from "./page/page-commands";
 export { createPageBlockViews } from "./page/page-views";

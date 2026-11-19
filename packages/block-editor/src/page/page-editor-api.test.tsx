@@ -371,6 +371,40 @@ describe("PageEditor head, narrow sizes and review layout", () => {
     expect(caret.end).toBe(caret.start);
   });
 
+  it("bookmark: a place that follows edits, and its offset in the file", async () => {
+    const markdown = "# Notes\n\nSee **bold** here.\n";
+    const { ref, editor } = await mount({ markdown });
+    const body = editor.getViewState().blocks[1]!;
+    const at = (offset: number) => ({ blockId: body.id, offset });
+    // the end of "bold"
+    const mark = ref.current!.bookmark(at(8))!;
+    expect(ref.current!.markdownOffset(mark.resolve()!, "before")).toBe(
+      markdown.indexOf("** here"),
+    );
+    expect(ref.current!.markdownOffset(mark.resolve()!)).toBe(markdown.indexOf(" here"));
+    // typing before it moves it
+    act(() => {
+      editor.setSelection({ anchor: at(0), head: at(0) });
+      editor.chain().insertText("Do ").run();
+    });
+    expect(mark.resolve()).toEqual(at(11));
+    // typing right at it goes before it (bias "after")
+    act(() => {
+      editor.setSelection({ anchor: at(11), head: at(11) });
+      editor.chain().insertText("er").run();
+    });
+    expect(mark.resolve()).toEqual(at(13));
+    const caret = ref.current!.bookmark(undefined, "before")!;
+    expect(caret.resolve()).toEqual(at(13));
+    mark.release();
+    expect(mark.resolve()).toBeNull();
+    // gone with its block
+    act(() => {
+      editor.chain().deleteBlock(body.id).run();
+    });
+    expect(caret.resolve()).toBeNull();
+  });
+
   it("afterBlock: the host's field in the flow after a block, its keys its own", async () => {
     const markdown = "# Notes\n\n- one\n- two\n\nAfter.\n";
     const field = <input aria-label="Write with the model" />;

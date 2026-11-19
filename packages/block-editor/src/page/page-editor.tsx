@@ -29,7 +29,7 @@ import {
   Underline,
 } from "@gotipe/core/extensions";
 import { GoTipeError, createEditor, defineExtension } from "@gotipe/core/js";
-import { markdownRawNodeSpec } from "@gotipe/markdown";
+import { markdownRawNodeSpec, textOffsetToMd } from "@gotipe/markdown";
 import { type BlockViews, GoTipeI18nProvider, TableMergeGuardProvider } from "@gotipe/react";
 import {
   type CommentState,
@@ -55,6 +55,7 @@ import { type PageReviewProps, type ReviewApi, ReviewLayer } from "../review/rev
 import { markdownTableGuard } from "../table/markdown-guard";
 import { MarkdownSession } from "./markdown-session";
 import { PageOverlayContext } from "./overlay";
+import { type PageBookmark, createBookmark } from "./page-bookmark";
 import { type PageBlockKind, insertPageBlock, pageBlockCommands } from "./page-commands";
 import type { PageEditorHandle, PageEditorProps } from "./page-editor-props";
 import { createPageHost } from "./page-host";
@@ -161,6 +162,15 @@ const PageEditorInner = forwardRef<PageEditorHandle, PageEditorProps>(
       });
     const session = sessionRef.current;
     const reviewApi = useRef<ReviewApi | null>(null);
+    // places the host follows through edits; released with the editor they belong to
+    const bookmarks = useRef(new Set<PageBookmark>());
+    useEffect(() => {
+      if (!editor) return;
+      const held = bookmarks.current;
+      return () => {
+        for (const bookmark of [...held]) bookmark.release();
+      };
+    }, [editor]);
     const [resolved, setResolved] = useState<Set<string>>(() => new Set());
     const [reviewStates, setReviewStates] = useState<{
       proposals: ProposalState[];
@@ -318,6 +328,19 @@ const PageEditorInner = forwardRef<PageEditorHandle, PageEditorProps>(
         selectionMarkdownRange: () =>
           editor
             ? selectionMarkdownRange(session.serialize(editor).map, editor.getViewState().selection)
+            : null,
+        bookmark: (point, bias = "after") => {
+          if (!editor) return null;
+          const at = point ?? editor.getViewState().selection.head;
+          const bookmark = createBookmark(editor, at, bias, (gone) =>
+            bookmarks.current.delete(gone),
+          );
+          bookmarks.current.add(bookmark);
+          return bookmark;
+        },
+        markdownOffset: (point, bias = "after") =>
+          editor
+            ? textOffsetToMd(session.serialize(editor).map, point.blockId, point.offset, bias)
             : null,
         setMarkdown: draft.setMarkdown,
         focus: (position) => editor?.focus(position),
