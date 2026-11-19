@@ -7,7 +7,11 @@ export interface AnchorRect {
   height: number;
 }
 
-export type FloatingPlacement = "top" | "bottom-start" | "left-start";
+/**
+ * `top` centres the panel over the anchor; `top-start` aligns it to the anchor's left edge.
+ * Both fall back below the anchor when there is no room above.
+ */
+export type FloatingPlacement = "top" | "top-start" | "bottom-start" | "left-start";
 
 /** Positions a panel inside the visual viewport, including narrow/mobile windows. */
 export function computeFloatingPosition(
@@ -30,8 +34,8 @@ export function computeFloatingPosition(
   let left = anchor.left;
   let top = anchor.bottom + gap;
 
-  if (placement === "top") {
-    left = anchor.left + (anchor.width - width) / 2;
+  if (placement === "top" || placement === "top-start") {
+    if (placement === "top") left = anchor.left + (anchor.width - width) / 2;
     top = anchor.top - height - gap;
     if (top < minTop) top = anchor.bottom + gap;
   } else if (placement === "left-start") {

@@ -126,7 +126,7 @@ export function ReviewLayer({
     comments: [],
   });
   const [placed, setPlaced] = useState<Placed[]>([]);
-  const [cardPos, setCardPos] = useState<{ top: number; left: number } | null>(null);
+  const [cardPos, setCardPos] = useState<Exclude<CardPlace, "margin"> | null>(null);
   const [busy, setBusy] = useState(false);
   const fullRef = useRef<Decoration[]>([]);
   const seenRef = useRef<Set<string> | null>(null);
@@ -268,24 +268,13 @@ export function ReviewLayer({
           const doc = root.querySelector("[data-gotipe-content]")?.getBoundingClientRect();
           const besideLeft = (doc ? doc.right : rect.right) + 16;
           if (besideLeft + width + 8 <= window.innerWidth) {
-            setCardPos({
-              top: Math.max(8, Math.min(rect.top - 10, window.innerHeight - 200)),
-              left: besideLeft,
-            });
+            const top = Math.max(8, Math.min(rect.top - 10, window.innerHeight - 200));
+            setCardPos({ top, bottom: top, left: besideLeft, side: "beside" });
           } else {
-            // below the row, above it when there is no room; `cardPlacement: "above"` the reverse
-            const left = Math.min(Math.max(8, rect.left), window.innerWidth - width - 8);
-            const below = rect.bottom + 8;
-            const above = rect.top - 188;
-            const top =
-              cardPlacement === "above"
-                ? above >= 8
-                  ? above
-                  : Math.min(below, Math.max(8, window.innerHeight - 188))
-                : below + 180 > window.innerHeight
-                  ? Math.max(8, above)
-                  : below;
-            setCardPos({ top, left });
+            // Below the row (above it when there is no room); `cardPlacement: "above"` the
+            // reverse. The card measures its own height, so the 8 px gap holds for any card.
+            const side = cardPlacement === "above" ? "above" : "below";
+            setCardPos({ top: rect.top, bottom: rect.bottom, left: rect.left, side });
           }
         } else {
           setCardPos(null);

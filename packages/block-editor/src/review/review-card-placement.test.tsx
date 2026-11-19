@@ -9,6 +9,7 @@ import type { ReviewCardPlacement } from "./review-layer";
 let container: HTMLDivElement;
 let root: Root;
 let row = { top: 300, bottom: 320 };
+let cardHeight = 116;
 const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 const original = Element.prototype.getBoundingClientRect;
 
@@ -31,7 +32,9 @@ beforeEach(() => {
   Element.prototype.getBoundingClientRect = function (this: Element) {
     const box = this.matches("[data-gotipe-comment]")
       ? { ...zero, left: 20, right: 120, width: 100, ...row, height: row.bottom - row.top }
-      : zero;
+      : this.matches(".gotipe-review-card")
+        ? { ...zero, width: 288, height: cardHeight }
+        : zero;
     return { ...box, toJSON() {} } as DOMRect;
   };
   container = document.createElement("div");
@@ -85,12 +88,19 @@ describe("reviewCardPlacement on a narrow page", () => {
     act(() => root.unmount());
     root = createRoot(container);
     row = { top: 700, bottom: 720 };
-    expect(await cardTop("below")).toBe(512);
+    // above by the card's measured height: 700 - 116 - 8
+    expect(await cardTop("below")).toBe(576);
   });
 
   it('"above" opens above the row, below it when there is no room above', async () => {
     row = { top: 300, bottom: 320 };
-    expect(await cardTop("above")).toBe(112);
+    // the card's bottom stays 8 px above the row whatever its height (P47)
+    expect(await cardTop("above")).toBe(300 - 116 - 8);
+    act(() => root.unmount());
+    root = createRoot(container);
+    cardHeight = 158;
+    expect(await cardTop("above")).toBe(300 - 158 - 8);
+    cardHeight = 116;
     act(() => root.unmount());
     root = createRoot(container);
     row = { top: 100, bottom: 120 };
