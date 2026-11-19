@@ -45,4 +45,19 @@ describe("decorationRect: where a suggestion's card is anchored", () => {
     const at = decorationRect(document.getElementById("root")!, "data-gotipe-proposal", "s3");
     expect([at?.left, at?.top]).toEqual([84, 386]);
   });
+
+  it("a new task stands at its text's line, not at the taller item", () => {
+    vi.stubGlobal("CSS", { escape: (value: string) => value });
+    document.body.innerHTML = `<div id="root"><ul><li data-gotipe-phantom-id="p1" data-gotipe-proposal="s4" class="gotipe-sug-block-ins"><input type="checkbox"><div data-gotipe-todo-content><span class="gotipe-sug-block-ins-text">New task</span></div></li></ul></div>`;
+    vi.spyOn(document.querySelector("li")!, "getBoundingClientRect").mockReturnValue(
+      rect(56, 100, 400, 21),
+    );
+    vi.spyOn(
+      document.querySelector(".gotipe-sug-block-ins-text")!,
+      "getBoundingClientRect",
+    ).mockReturnValue(rect(84, 102, 60, 17));
+    Range.prototype.getClientRects = () => [rect(84, 102, 8, 17)] as unknown as DOMRectList;
+    const at = decorationRect(document.getElementById("root")!, "data-gotipe-proposal", "s4");
+    expect([at?.left, at?.top, at?.bottom, at?.right]).toEqual([84, 102, 119, 456]);
+  });
 });

@@ -71,8 +71,17 @@ export function decorationRect(root: HTMLElement, attr: string, id: string): DOM
   const all = [...root.querySelectorAll(`[${attr}="${CSS.escape(id)}"]`)];
   const el = all.find((e) => !e.matches(BLOCK)) ?? all[0];
   if (!el) return null;
-  const box = el.getBoundingClientRect();
-  if (!el.matches(BLOCK)) return box;
+  const block = el.getBoundingClientRect();
+  if (!el.matches(BLOCK)) return block;
+  // a new block's rows are its text's lines (`.gotipe-sug-block-ins-text`), not its taller box
+  const text = [...el.querySelectorAll(".gotipe-sug-block-ins-text")].find(
+    (span) => span.closest(BLOCK) === el,
+  );
+  const lines = text?.getBoundingClientRect();
+  const box =
+    lines && lines.height > 0
+      ? new DOMRect(block.left, lines.top, block.width, lines.height)
+      : block;
   const left = blockTextLeft(el);
   return left === null || left <= box.left
     ? box
