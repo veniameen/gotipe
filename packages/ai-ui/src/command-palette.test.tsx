@@ -150,6 +150,20 @@ it("ghost text only consumes unmodified Tab inside its own editable editor", () 
   surface.dispatchEvent(inside);
   expect(inside.defaultPrevented).toBe(true);
   expect(accept).toHaveBeenCalledOnce();
+  // a key in a widget inside the text (a host's field) is not the text's: Tab moves the focus on
+  const slot = document.createElement("div");
+  slot.setAttribute("data-gotipe-widget", "");
+  const field = slot.appendChild(document.createElement("input"));
+  surface.append(slot);
+  const dismissed = dismiss.mock.calls.length;
+  for (const key of ["Tab", "a"]) {
+    const hosts = new KeyboardEvent("keydown", { key, bubbles: true, cancelable: true });
+    field.dispatchEvent(hosts);
+    expect(hosts.defaultPrevented).toBe(false);
+  }
+  expect(accept).toHaveBeenCalledOnce();
+  expect(dismiss).toHaveBeenCalledTimes(dismissed);
+  slot.remove();
   editor.setEditable(false);
   surface.dispatchEvent(
     new KeyboardEvent("keydown", { key: "Tab", bubbles: true, cancelable: true }),

@@ -1,4 +1,4 @@
-import { type GoTipeEditor, createId } from "@gotipe/core";
+import { type GoTipeEditor, createId, isInsideWidget } from "@gotipe/core";
 import { type AiTarget, flatten, textOf } from "./document";
 import type { AiManager } from "./manager";
 import { reportAiError } from "./runtime";
@@ -67,7 +67,9 @@ export function installAutocomplete(
       !editor.isEditable ||
       event.isComposing ||
       !(event.target instanceof Node) ||
-      !editor.element?.contains(event.target)
+      !editor.element?.contains(event.target) ||
+      // a key in a widget inside the text (a host's field, a button) is not the text's
+      isInsideWidget(event.target, editor.element)
     )
       return;
     if (
