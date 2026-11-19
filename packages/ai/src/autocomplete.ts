@@ -62,13 +62,13 @@ export function installAutocomplete(
     }, delay);
   });
   const keydown = (event: KeyboardEvent) => {
+    // a key in a widget inside the text (a host's field, a button) is not the text's
     if (
       !ghost ||
       !editor.isEditable ||
       event.isComposing ||
       !(event.target instanceof Node) ||
       !editor.element?.contains(event.target) ||
-      // a key in a widget inside the text (a host's field, a button) is not the text's
       isInsideWidget(event.target, editor.element)
     )
       return;

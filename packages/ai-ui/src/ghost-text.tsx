@@ -16,6 +16,7 @@ export function AiGhostText({ editor, text, onAccept, onDismiss }: AiGhostTextPr
     const owner = editor.element?.ownerDocument;
     if (!owner) return;
     const handleKeyDown = (event: KeyboardEvent) => {
+      // a key in a widget inside the text (a host's field, a button) is not the text's
       if (
         event.defaultPrevented ||
         event.isComposing ||
@@ -23,7 +24,6 @@ export function AiGhostText({ editor, text, onAccept, onDismiss }: AiGhostTextPr
         !editor.isEditable ||
         !(event.target instanceof Node) ||
         !editor.element?.contains(event.target) ||
-        // a key in a widget inside the text (a host's field, a button) is not the text's
         isInsideWidget(event.target, editor.element)
       )
         return;
