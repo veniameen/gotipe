@@ -79,6 +79,17 @@
     transparent
   );
 }
+/* a deletion whose card is open: the insertion's tint unless a host sets its own fill */
+.gotipe-sug.is-active.gotipe-sug-del {
+  background: var(
+    --gt-sug-del-active-fill,
+    color-mix(in srgb, var(--gt-track, var(--gt-add)) var(--gt-track-tint-active), transparent)
+  );
+}
+/* a replacement: the insertion after its struck deletion, --gt-sug-replace-gap apart */
+.gotipe-sug-del + .gotipe-sug-ins {
+  margin-inline-start: var(--gt-sug-replace-gap);
+}
 /* a stale proposal whose card is open: the same tint unless a host sets its own fill */
 .gotipe-sug.is-active.gotipe-sug-stale {
   background: var(

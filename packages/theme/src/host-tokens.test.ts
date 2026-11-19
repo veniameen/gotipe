@@ -186,6 +186,20 @@ describe("review parts have tokens with today's values", () => {
       color: "var(--gt-text)",
     });
   });
+  it("fills an open deletion and spaces a replacement by tokens, today's by default", () => {
+    expect(declarations(review, ".gotipe-sug.is-active.gotipe-sug-del").background).toBe(
+      "var(\n    --gt-sug-del-active-fill,\n    color-mix(in srgb, var(--gt-track, var(--gt-add)) var(--gt-track-tint-active), transparent)\n  )",
+    );
+    // before the stale rule: a stale deletion keeps the stale fill
+    expect(review.indexOf(".gotipe-sug.is-active.gotipe-sug-del {")).toBeLessThan(
+      review.indexOf(".gotipe-sug.is-active.gotipe-sug-stale {"),
+    );
+    expect(declarations(review, ".gotipe-sug-del + .gotipe-sug-ins")).toEqual({
+      "margin-inline-start": "var(--gt-sug-replace-gap)",
+    });
+    expect(tokens.view["--gt-sug-replace-gap"]).toBe("0px");
+    expect(read("tokens/palette.css")).not.toContain("--gt-sug-del-active-fill:");
+  });
   it("puts a card's delete at the end of its head", () => {
     expect(declarations(review, ".gotipe-review-card-delete")["margin-inline-start"]).toBe("auto");
   });
@@ -249,6 +263,7 @@ describe("tables have tokens for their grid, head, first column and code, today'
       "font-size": "var(--gt-table-head-size)",
       "font-weight": "var(--gt-table-head-weight)",
       "line-height": "var(--gt-table-head-leading)",
+      "letter-spacing": "var(--gt-table-head-tracking)",
     });
     expect(declarations(tables, ".gotipe-table-wrapper :where(th)")).toEqual({
       background: "var(--gt-table-head-fill, transparent)",
@@ -256,6 +271,7 @@ describe("tables have tokens for their grid, head, first column and code, today'
     expect(tokens.view["--gt-table-head-size"]).toBe("var(--gt-small-size)");
     expect(tokens.view["--gt-table-head-leading"]).toBe("var(--gt-small-leading)");
     expect(tokens.view["--gt-table-head-weight"]).toBe("var(--gt-weight-medium)");
+    expect(tokens.view["--gt-table-head-tracking"]).toBe("normal");
   });
   it("pads the first column and sizes rows by tokens", () => {
     expect(
@@ -322,5 +338,40 @@ describe("flow tokens for tables under headings, lists and list items", () => {
     });
     expect(tokens.view["--gt-flow-between-lists"]).toBe("var(--gt-flow)");
     expect(tokens.view["--gt-list-item-gap"]).toBe("var(--gt-flow-list)");
+  });
+  it("insets list items from the list's edge by a token, none by default", () => {
+    expect(declarations(base, ".gotipe-content :where(ul, ol) > li")).toEqual({
+      "margin-inline-start": "var(--gt-list-item-inset)",
+    });
+    expect(tokens.view["--gt-list-item-inset"]).toBe("0px");
+  });
+});
+
+describe("the empty media block as a row has tokens for its text and button", () => {
+  const media = read("theme/media.css");
+  it("sizes the label and the button by tokens, today's sizes by default", () => {
+    expect(
+      declarations(
+        media,
+        '.gotipe-media-placeholder[data-layout="row"] .gotipe-media-placeholder-label',
+      ),
+    ).toEqual({ flex: "1", "font-size": "var(--gt-media-row-label-size)" });
+    expect(
+      declarations(media, '.gotipe-media-placeholder[data-layout="row"] .gotipe-media-button'),
+    ).toEqual({
+      "min-width": "var(--gt-media-row-button-min-w)",
+      height: "var(--gt-media-row-button-h)",
+      padding: "var(--gt-media-row-button-pad)",
+      "font-size": "var(--gt-media-row-button-size)",
+    });
+    // the placeholder and every media button: 13 px text and the button's padding, as before
+    expect(declarations(media, ".gotipe-media-button")).toMatchObject({
+      padding: "var(--gt-button-pad)",
+      "font-size": "var(--gt-ui-size)",
+    });
+    expect(tokens.view["--gt-media-row-label-size"]).toBe("var(--gt-ui-size)");
+    expect(tokens.view["--gt-media-row-button-size"]).toBe("var(--gt-ui-size)");
+    expect(tokens.view["--gt-media-row-button-pad"]).toBe("var(--gt-button-pad)");
+    expect(tokens.view["--gt-media-row-button-min-w"]).toBe("auto");
   });
 });

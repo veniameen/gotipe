@@ -100,7 +100,7 @@
   font-size: var(--gt-table-head-size);
   font-weight: var(--gt-table-head-weight);
   line-height: var(--gt-table-head-leading);
-  letter-spacing: normal;
+  letter-spacing: var(--gt-table-head-tracking);
 }
 /* the first column starts with the text column; when the page margin is narrower than the row
    handle (a phone without the handle's rail), the first cell of a table with row handles gives
