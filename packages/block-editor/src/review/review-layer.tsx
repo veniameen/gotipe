@@ -36,15 +36,24 @@ export type ReviewAction = (id: string) => Promise<ReviewResult> | ReviewResult;
 /** Review data and callbacks (ADR-0047). Everything is controlled by the host. */
 export interface PageReviewProps {
   lanes: ReviewLane[];
+  /**
+   * The proposals. One with `live` is still being written: give a new object with a longer
+   * `edits[].text` under the same `id` as its text grows, and the same `id` without `live` when
+   * it is written. Until then it takes no decision.
+   */
   proposals: ReviewProposal[];
   comments?: ReviewComment[];
+  /** Where lanes work now; several of one lane each under their own `id`. */
   cursors?: LaneCursor[];
   /** Accept one proposal. Return `false` when it failed (stops “Accept all”). */
   onAccept?: ReviewAction;
   onReject?: ReviewAction;
-  /** Default: `onAccept` one by one in document order, stopping at the first stale or failed one. */
+  /**
+   * Default: `onAccept` one by one in document order, stopping at the first stale or failed one;
+   * a growing proposal (`live`) is passed over.
+   */
   onAcceptAll?: () => Promise<void> | void;
-  /** Default: `onReject` for every proposal. */
+  /** Default: `onReject` for every proposal but the growing ones (`live`). */
   onRejectAll?: () => Promise<void> | void;
   onReply?: (commentId: string, text: string) => Promise<ReviewResult> | ReviewResult;
   /**
@@ -62,9 +71,13 @@ const NO_COMMENTS: ReviewComment[] = [];
 
 /** Imperative review actions of a mounted page editor. */
 export interface ReviewApi {
+  /** Resolves to false, with nothing called, for a growing proposal (`live`): it takes no decision. */
   accept(id: string): Promise<boolean>;
   reject(id: string): Promise<boolean>;
-  /** One by one in document order; stops at the first stale or failed proposal. */
+  /**
+   * One by one in document order; stops at the first stale or failed proposal. Growing
+   * proposals (`live`) are passed over, in `rejectAll` too.
+   */
   acceptAll(): Promise<number>;
   rejectAll(): Promise<number>;
   states(): { proposals: ProposalState[]; comments: CommentState[] };
@@ -211,7 +224,7 @@ export function ReviewLayer({
     async (id: string): Promise<boolean> => {
       const proposal = proposals.find((p) => p.id === id);
       const state = states.proposals.find((p) => p.id === id);
-      if (!proposal) return false;
+      if (!proposal || proposal.live) return false;
       if (state?.status === "stale") {
         editor.reportError(
           new GoTipeError("PROPOSAL_STALE", "The text around the suggestion changed", {
@@ -233,6 +246,7 @@ export function ReviewLayer({
 
   const reject = useCallback(
     async (id: string): Promise<boolean> => {
+      if (proposals.find((p) => p.id === id)?.live) return false;
       try {
         return (await review.onReject?.(id)) !== false;
       } catch (e) {
@@ -240,7 +254,7 @@ export function ReviewLayer({
         return false;
       }
     },
-    [review, report],
+    [proposals, review, report],
   );
 
   const removeComment = useCallback(
@@ -275,7 +289,7 @@ export function ReviewLayer({
           return 0;
         }
         let n = 0;
-        for (const p of proposals) if (await reject(p.id)) n += 1;
+        for (const p of proposals) if (!p.live && (await reject(p.id))) n += 1;
         return n;
       },
       states: () => statesRef.current,
@@ -375,6 +389,7 @@ export function ReviewLayer({
         root={root}
         cursors={review.cursors}
         lanes={lanes}
+        proposals={states.proposals}
         tick={layoutTick}
         look={laneCursor}
         pointer={lanePointer}
@@ -414,7 +429,10 @@ function cardGap(root: HTMLElement): number {
   return px ? Number(px[1]) : 8;
 }
 
-/** Accepts proposals one by one in document order; stops at the first stale or failed one. */
+/**
+ * Accepts proposals one by one in document order; stops at the first stale or failed one. A
+ * growing proposal (`live`) is passed over: it takes no decision yet.
+ */
 export async function acceptAllInOrder(
   editor: GoTipeEditor,
   states: ProposalState[],
@@ -422,6 +440,7 @@ export async function acceptAllInOrder(
 ): Promise<number> {
   let accepted = 0;
   for (const state of proposalsInDocumentOrder(editor.getViewState().blocks, states)) {
+    if (state.status === "live") continue;
     if (state.status === "stale") break;
     if (!(await accept(state.id))) break;
     accepted += 1;

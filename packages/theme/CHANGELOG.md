@@ -13,6 +13,17 @@
   proposed new block's text. Read with fallbacks, so each can be set on any element above the text.
 - `--gt-table-head-min-width` (`auto`): the least width of a header cell, a floor for columns sized
   by their content; a host's own `th { min-width }` still wins.
+- A review whose proposals are still written (`theme/review/live.css`), nothing of it by default:
+  `--gt-sug-live-caret-width` (unset: none) draws a typing caret at the end of a growing
+  proposal's text (`.gotipe-sug-live`) in `--gt-sug-live-caret-color` (unset: the lane's colour),
+  as a shadow that takes no room; `--gt-lane-cursor-move` (unset: the fast duration) is the time
+  the cursor of a growing proposal takes to its text's new end (`.gotipe-lane-cursor[data-glide]`,
+  nothing under reduced motion); a compact cursor's flag (`[data-compact]`) is one line, its name
+  and label `--gt-lane-chip-gap` apart (unset: `--gt-space-1`), and when its cursor says it has
+  no room after it (`[data-chip-side="start"]`) it stands before the cursor, above the row
+  (`--gt-lane-chip-flip-x`, unset: at the cursor; `--gt-lane-chip-flip-y`, unset:
+  `--gt-toolbar-gap`). Each is read with a fallback, so it can be set on any element above the
+  page.
 - 484513c: The page title with an inline icon (`iconPlacement="inline"`): its accessible name is the title's
   text alone (the prompt when it is empty), no longer prefixed by the icon's own name, and the empty
   title's prompt starts after the icon instead of under it (`--gt-page-icon-inline` +

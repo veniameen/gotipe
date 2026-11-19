@@ -39,6 +39,7 @@ it("stops the motion of GoTipe's panels, spinners and drop line, not only of the
     "gotipe-ai-status-spinner",
     "gotipe-drop-indicator",
     "gotipe-ghost-text",
+    "gotipe-lane-cursor",
     "gotipe-toast",
     "gotipe-editor",
   ])

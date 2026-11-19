@@ -52,6 +52,14 @@
   left: var(--gt-lane-pointer-chip-x);
   border-radius: var(--gt-lane-pointer-chip-radius);
 }
+/* at the page's end edge the flag has no room after its cursor: it stands before it, above the
+   row, over the text the cursor writes */
+.gotipe-remote.is-flipped > .gotipe-remote-flag {
+  top: auto;
+  right: 0;
+  bottom: calc(100% + var(--gt-toolbar-gap));
+  left: auto;
+}
 .gotipe-remote-selection {
   background: var(--s);
 }

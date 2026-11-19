@@ -101,7 +101,10 @@ export function ProposalCard({
   };
 }) {
   const position = useCardPosition(place);
-  const stale = state?.status === "stale";
+  // a growing proposal takes no decision: its card says who and why, and has no answers
+  const live = proposal.live === true;
+  // one whose anchor is lost is drawn as a stale one, growing or not
+  const stale = state?.status === "stale" || (live && state?.reason !== undefined);
   const edit = proposal.edits[0];
   // Before/after only when whole blocks are rewritten (a pure insertion is visible in place).
   const showDiff = !stale && state && !state.exact && edit && edit.quote.trim().length > 0;
@@ -115,6 +118,7 @@ export function ProposalCard({
       {...(compact
         ? { "data-gotipe-review-summary": "proposal" }
         : { "data-gotipe-review-card": "proposal" })}
+      data-live={live ? "" : undefined}
     >
       <div className="gotipe-review-card-head">
         <LaneAvatar lane={lane} />
@@ -142,7 +146,7 @@ export function ProposalCard({
           ) : null}
         </div>
       ) : null}
-      {compact ? null : (
+      {compact || live ? null : (
         <div className="gotipe-review-card-actions">
           <button
             type="button"
