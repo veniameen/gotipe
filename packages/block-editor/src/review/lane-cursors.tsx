@@ -153,20 +153,25 @@ export function LaneCursors({
     };
   }, [root, editor, session, cursors, lanes, proposals, tick]);
 
-  // Once drawn, each flag is measured against the page's edges and takes its side.
+  // Once drawn, each flag is measured against the page's edges and takes its side. It is
+  // measured from its cursor's place, not from where a glide has it at the moment.
   useLayoutEffect(() => {
     if (!root) return;
     const box = root.getBoundingClientRect();
     const page = { left: Math.max(0, box.left), right: Math.min(window.innerWidth, box.right) };
     const next = new Map<string, ChipState>();
     for (const cursor of placed) {
-      const chip = nodes.current.get(cursor.key)?.querySelector(".gotipe-lane-chip");
+      const chip = nodes.current.get(cursor.key)?.querySelector<HTMLElement>(".gotipe-lane-chip");
       const known = sides.current.get(cursor.key);
+      if (!chip) {
+        next.set(cursor.key, known ?? { side: "end", offset: null });
+        continue;
+      }
+      const left = cursor.left + chip.offsetLeft;
+      const width = chip.offsetWidth;
       next.set(
         cursor.key,
-        chip
-          ? chipSide(known, cursor.left, chip.getBoundingClientRect(), page)
-          : (known ?? { side: "end", offset: null }),
+        chipSide(known, cursor.left, { left, right: left + width, width }, page),
       );
     }
     sides.current = next;
