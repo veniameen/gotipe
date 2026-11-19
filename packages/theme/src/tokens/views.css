@@ -139,6 +139,7 @@
   --gt-flow-between-lists: var(--gt-flow);
   --gt-list-item-gap: var(--gt-flow-list);
   --gt-list-item-inset: 0px;
+  --gt-list-item-text-inset: 0px;
   --gt-indent: 24px;
   --gt-bullet: 5px;
   --gt-bullet-x: 8px;

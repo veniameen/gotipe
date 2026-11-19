@@ -239,7 +239,7 @@
   list-style: none;
 }
 .gotipe-content ul:not(.gotipe-todo-list) > li {
-  padding-left: var(--gt-indent);
+  padding-left: calc(var(--gt-indent) + var(--gt-list-item-text-inset));
 }
 /* the dot is drawn, not clicked: Firefox would put the caret of a click beside an empty item into
    the next block (as the placeholder, it lets the pointer through) */
@@ -275,9 +275,11 @@
 .gotipe-content :where(ul, ol) > li + li {
   margin-top: var(--gt-list-item-gap);
 }
-/* an item's inset from the list's edge: its dot, number or task box and its text move together */
+/* an item's inset from the list's edge: its dot, number or task box and its text move together;
+   its text's inset (--gt-list-item-text-inset): its text and task box move, its dot and number stay */
 .gotipe-content :where(ul, ol) > li {
   margin-inline-start: var(--gt-list-item-inset);
+  padding-inline-start: var(--gt-list-item-text-inset);
 }
 .gotipe-content li > :where(ul, ol, [data-block-id]) {
   margin-top: var(--gt-flow-list);
@@ -507,7 +509,10 @@
   pointer-events: none;
 }
 .gotipe-content ul:not(.gotipe-todo-list) > li[data-placeholder]::after {
-  left: var(--gt-indent);
+  left: calc(var(--gt-indent) + var(--gt-list-item-text-inset));
+}
+.gotipe-content ol > li[data-placeholder]::after {
+  left: var(--gt-list-item-text-inset);
 }
 .gotipe-content blockquote[data-placeholder]::after {
   left: var(--gt-quote-pad);
