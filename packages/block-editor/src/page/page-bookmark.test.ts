@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { mapOffset } from "./page-bookmark";
+import { followPlace, mapOffset } from "./page-bookmark";
 
 describe("mapOffset: a place in a block's text through an edit", () => {
   it("moves with edits before it and stays with edits after it", () => {
@@ -19,5 +19,48 @@ describe("mapOffset: a place in a block's text through an edit", () => {
   });
   it("an unchanged text keeps it", () => {
     expect(mapOffset("same", "same", 2, "before")).toBe(2);
+  });
+});
+
+describe("followPlace: a place through a split, a join and a lost block", () => {
+  const doc = (...pairs: [string, string][]) => new Map(pairs);
+  it("follows its text into the new block of a split", () => {
+    const before = doc(["a", "Hello world"]);
+    const after = doc(["a", "Hello "], ["n", "world"]);
+    expect(followPlace(before, after, { blockId: "a", offset: 9 }, "after")).toEqual({
+      blockId: "n",
+      offset: 3,
+    });
+    // before the cut it stays; at the cut, as text typed at it: after goes on, before stays
+    expect(followPlace(before, after, { blockId: "a", offset: 2 }, "after")).toEqual({
+      blockId: "a",
+      offset: 2,
+    });
+    expect(followPlace(before, after, { blockId: "a", offset: 6 }, "after")).toEqual({
+      blockId: "n",
+      offset: 0,
+    });
+    expect(followPlace(before, after, { blockId: "a", offset: 6 }, "before")).toEqual({
+      blockId: "a",
+      offset: 6,
+    });
+  });
+  it("follows its text into the block before when the two are joined", () => {
+    const before = doc(["a", "Hello "], ["b", "world"]);
+    const after = doc(["a", "Hello world"]);
+    expect(followPlace(before, after, { blockId: "b", offset: 3 }, "after")).toEqual({
+      blockId: "a",
+      offset: 9,
+    });
+  });
+  it("is lost with its block", () => {
+    expect(
+      followPlace(
+        doc(["a", "x"], ["b", "y"]),
+        doc(["a", "x"]),
+        { blockId: "b", offset: 1 },
+        "after",
+      ),
+    ).toBeNull();
   });
 });
