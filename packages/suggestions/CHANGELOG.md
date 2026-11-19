@@ -8,6 +8,26 @@
   decoration over the phantom block's text), and `--gt-sug-block-ins-text-tint` (`0%`) tints it in
   the lane's colour behind the text alone, line by line; with `--gt-sug-block-ins-tint: 0%` a host
   fills the text instead of the whole row. A stale one stays unfilled. Defaults look as before.
+- A proposal still being written: `ReviewProposal.live`. As its text grows the host gives a new
+  object with a longer `edits[].text` under the same `id`. Its state is `"live"`
+  (`ProposalState.status`, also when its anchor is not found: `reason` then says why) with
+  `insertedChars` 0, since it is never revealed; with no text yet its `position` and `insertEnd`
+  are where the text will start. The last piece of its text carries the class `gotipe-sug-live`:
+  an inline insertion itself, or a span over the last run of the last new block's text (the block
+  itself when it has no text). `ReviewInput.liveText` reads its unfinished text, for a codec that
+  settles an unfinished end.
+- `ReviewProposal.order`: proposals that insert at the same point stand in ascending `order` (0
+  when not given), equal ones as listed. Inline insertions of several proposals at one offset now
+  stand in that order too; they used to stand in the order of their ids.
+- `computeReviewDecorations` takes a `cache` (`createReviewCache()`, one per editor): a proposal or
+  a comment is bound to the document again only when it, the document, its lane's colour, its
+  place among the others or its being open changed, and what did not change keeps its state and
+  decoration objects, an unchanged new block inside a grown group included. A new block's id and
+  its group's key name its place (`phantom:<proposal>:<n>:blocks:<path>`), not its text, so a
+  renderer keeps the block's element while the text grows. `revealDecorations` finds a proposal's
+  decorations by `data-gotipe-proposal`.
+- `LaneCursor.id` (the cursor's own key, for several cursors of one lane), `LaneCursor.name` (the
+  name on its flag instead of the lane's) and `LaneCursor.compact` (a flag in one line).
   - @gotipe/core@0.1.5
 
 ## 0.1.2

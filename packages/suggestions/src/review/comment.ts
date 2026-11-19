@@ -4,6 +4,7 @@ import type { CommentState, ReviewComment, ReviewLane } from "../review-types";
 import type { ReviewInput } from "./input";
 import { mapOffsetToText, mapRangeToText } from "./positions";
 
+/** One comment bound to the document; its decorations go to `out`. */
 export function computeComment(
   input: ReviewInput,
   comment: ReviewComment,

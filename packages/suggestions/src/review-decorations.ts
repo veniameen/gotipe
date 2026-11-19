@@ -1,10 +1,14 @@
 import type { BlockView, Decoration } from "@gotipe/core";
 import type { CommentState, ProposalState } from "./review-types";
 import { sliceSpans } from "./review/block-diff";
+import { cached, forget, remember } from "./review/cache";
 import { computeComment } from "./review/comment";
 import type { ReviewInput, ReviewOutput } from "./review/input";
-import { computeProposal } from "./review/proposal";
+import { keepDecorations, sameData } from "./review/keep";
+import { computeProposal, frameOf } from "./review/proposal";
 
+export { createReviewCache } from "./review/cache";
+export type { ReviewCache } from "./review/cache";
 export type { ReviewInput, ReviewOutput } from "./review/input";
 export { findBlockById, mapOffsetToText, mapRangeToText } from "./review/positions";
 
@@ -15,24 +19,65 @@ export { findBlockById, mapOffsetToText, mapRangeToText } from "./review/positio
  * `widget` (new text) decorations; new blocks become phantom `blocks`;
  * removed or rewritten blocks get `node` decorations. A proposal whose
  * anchor is not found exactly once is stale.
+ *
+ * Proposals that insert at one point stand by their `order`, then as listed. With
+ * `input.cache` only what changed since the last call is bound again (see `ReviewCache`).
  */
 export function computeReviewDecorations(input: ReviewInput): ReviewOutput {
   const lanes = new Map(input.lanes.map((l) => [l.id, l] as const));
+  const cache = input.cache;
+  if (cache) cache.call += 1;
+  const frame = frameOf(input);
   const decorations: Decoration[] = [];
-  const proposals: ProposalState[] = [];
-  for (const proposal of input.proposals) {
-    const { state, decorations: own } = computeProposal(
-      input,
-      proposal,
-      lanes.get(proposal.laneId),
-    );
-    proposals.push(state);
+  const proposals = new Array<ProposalState>(input.proposals.length);
+  const ranked = input.proposals
+    .map((proposal, index) => ({ proposal, index }))
+    .sort((a, b) => (a.proposal.order ?? 0) - (b.proposal.order ?? 0) || a.index - b.index);
+  ranked.forEach(({ proposal, index }, rank) => {
+    const lane = lanes.get(proposal.laneId);
+    const known = cache && cached(cache.proposals, proposal.id, proposal, input, lane?.color, rank);
+    if (cache && known) {
+      known.call = cache.call;
+      proposals[index] = known.state;
+      decorations.push(...known.decorations);
+      return;
+    }
+    let { state, decorations: own } = computeProposal(frame, proposal, lane, rank);
+    if (cache) {
+      const was = cache.proposals.get(proposal.id);
+      if (was) {
+        own = keepDecorations(was.decorations, own);
+        if (sameData(was.state, state)) state = was.state;
+      }
+      remember(cache, cache.proposals, proposal.id, proposal, input, lane?.color, rank, state, own);
+    }
+    proposals[index] = state;
     decorations.push(...own);
-  }
+  });
   const comments: CommentState[] = [];
   for (const comment of input.comments ?? []) {
-    comments.push(computeComment(input, comment, lanes.get(comment.laneId), decorations));
+    const lane = lanes.get(comment.laneId);
+    const known = cache && cached(cache.comments, comment.id, comment, input, lane?.color, 0);
+    if (cache && known) {
+      known.call = cache.call;
+      comments.push(known.state);
+      decorations.push(...known.decorations);
+      continue;
+    }
+    let own: Decoration[] = [];
+    let state = computeComment(input, comment, lane, own);
+    if (cache) {
+      const was = cache.comments.get(comment.id);
+      if (was) {
+        own = keepDecorations(was.decorations, own);
+        if (sameData(was.state, state)) state = was.state;
+      }
+      remember(cache, cache.comments, comment.id, comment, input, lane?.color, 0, state, own);
+    }
+    comments.push(state);
+    decorations.push(...own);
   }
+  if (cache) forget(cache);
   return { decorations, proposals, comments };
 }
 
@@ -51,7 +96,8 @@ export function proposalsInDocumentOrder(
   };
   walk(blocks);
   return [...states].sort((a, b) => {
-    if (a.status !== b.status) return a.status === "stale" ? 1 : -1;
+    const stale = Number(a.status === "stale") - Number(b.status === "stale");
+    if (stale !== 0) return stale;
     const pa = a.position
       ? (order.get(a.position.blockId) ?? 0) * 1e6 + a.position.offset
       : Number.MAX_SAFE_INTEGER;
@@ -72,7 +118,7 @@ export function revealDecorations(
   chars: number,
 ): Decoration[] {
   let left = chars;
-  const prefix = `${proposalId}:`;
+  const own = (d: Decoration) => "attrs" in d && d.attrs?.["data-gotipe-proposal"] === proposalId;
   const truncateBlock = (block: BlockView): BlockView | null => {
     if (left <= 0) return null;
     let content = block.content;
@@ -95,7 +141,7 @@ export function revealDecorations(
   };
   const out: Decoration[] = [];
   for (const d of decorations) {
-    if (!("key" in d) || typeof d.key !== "string" || !d.key.startsWith(prefix)) {
+    if (!own(d)) {
       out.push(d);
       continue;
     }
