@@ -57,6 +57,10 @@
   border: 1px solid var(--gt-line);
   border-radius: var(--gt-radius-card);
 }
+/* "Demo writing": a host's option, a typing caret at the end of the text being written */
+.gotipe-page-example-surface[data-writing] {
+  --gt-sug-live-caret-width: 2px;
+}
 .gotipe-page-example-source {
   min-width: 0;
   max-height: 280px;
