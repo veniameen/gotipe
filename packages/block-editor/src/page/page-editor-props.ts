@@ -34,8 +34,9 @@ export interface PageEditorHandle {
   /**
    * A place that follows edits (the caret's when `point` is not given), for a host that acts at
    * it later: edits before it in its block move it; text typed right at it goes before it with
-   * `bias: "after"` (default), after it with `"before"`. `resolve()` is null once its text or
-   * block is gone. Release it when done; the editor's bookmarks go with the editor. Null before
+   * `bias: "after"` (default), after it with `"before"`; it follows its text through a split
+   * (Enter) or a join of blocks. `resolve()` is null while its text or block is gone, and the
+   * place comes back once that block's text is as it was (a version shown and restored, undo). Release it when done; the editor's bookmarks go with the editor. Null before
    * the editor exists.
    */
   bookmark(point?: TextPoint, bias?: "before" | "after"): PageBookmark | null;

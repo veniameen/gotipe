@@ -405,6 +405,48 @@ describe("PageEditor head, narrow sizes and review layout", () => {
     expect(caret.resolve()).toBeNull();
   });
 
+  it("bookmark: follows a split and a join, and comes back after setMarkdown and back", async () => {
+    const markdown = "# Notes\n\nHello brave world.\n\nEnd.\n";
+    const { ref, editor } = await mount({ markdown });
+    const body = editor.getViewState().blocks[1]!;
+    // at "w" of "world"
+    const mark = ref.current!.bookmark({ blockId: body.id, offset: 12 })!;
+    act(() => {
+      editor.setSelection({
+        anchor: { blockId: body.id, offset: 6 },
+        head: { blockId: body.id, offset: 6 },
+      });
+      editor.chain().splitBlock().run();
+    });
+    const second = editor.getViewState().blocks[2]!;
+    expect(mark.resolve()).toEqual({ blockId: second.id, offset: 6 });
+    act(() => {
+      editor.setSelection({
+        anchor: { blockId: second.id, offset: 0 },
+        head: { blockId: second.id, offset: 0 },
+      });
+      editor.chain().mergeWithPrevious().run();
+    });
+    expect(mark.resolve()).toEqual({ blockId: body.id, offset: 12 });
+    const current = ref.current!.getMarkdown();
+    expect(current).toBe(markdown);
+    // another version shown, then the current one again
+    await act(async () => {
+      ref.current!.setMarkdown("# Notes\n\nAn older text.\n");
+      await wait(20);
+    });
+    expect(mark.resolve()).toBeNull();
+    await act(async () => {
+      ref.current!.setMarkdown(current);
+      await wait(20);
+    });
+    const back = mark.resolve()!;
+    expect(back.offset).toBe(12);
+    const offset = ref.current!.markdownOffset(back)!;
+    expect(current.slice(offset)).toBe("world.\n\nEnd.\n");
+    mark.release();
+  });
+
   it("afterBlock: the host's field in the flow after a block, its keys its own", async () => {
     const markdown = "# Notes\n\n- one\n- two\n\nAfter.\n";
     const field = <input aria-label="Write with the model" />;
