@@ -8,7 +8,7 @@
    for one, a text underline (--gt-sug-ins-underline: underline); the line takes
    --gt-sug-ins-line-mix of the lane's colour */
 .gotipe-sug-ins {
-  border-radius: var(--gt-radius-inline);
+  border-radius: var(--gt-sug-ins-radius);
   background: color-mix(in srgb, var(--gt-track, var(--gt-add)) var(--gt-track-tint), transparent);
   box-shadow: inset 0 calc(-1 * var(--gt-sug-ins-bar)) 0
     color-mix(in srgb, var(--gt-track, var(--gt-add)) var(--gt-sug-ins-line-mix), transparent);
