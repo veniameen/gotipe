@@ -4,6 +4,10 @@
 
 ### Patch Changes
 
+- `discardSavedAsset` never gives up a `src` the document shows (a host may return the same `src`
+  for the same file), and the paste rules call a host's `saveAsset` as its method, so a host object
+  or class keeps its `this`.
+
 - 4649fd9: `EditorHost.discardAsset` is now called on every path where `saveAsset` stored a file the editor
   did not insert: pastes and drops through the image paste rule (a newer paste, a changed document
   or selection, read-only, destroyed, a refused or failed file of the same paste) and the image and

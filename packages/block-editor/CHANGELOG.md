@@ -4,6 +4,11 @@
 
 ### Patch Changes
 
+- `PageEditor` calls the host's `saveAsset` and `resolveAsset` as its methods (a host object or class
+  keeps its `this`). Clicks on an inline page icon reach the page again, so the editor's open menus
+  close on them; keys and input still stop at the icon. With `reviewCardPlacement: "above"` and no
+  room above or below, the card stays in the window.
+
 - 280494d: `iconPlacement="inline"`: the icon's wrapper is no longer `aria-hidden`, so a host's icon button
   stays accessible, and its pointer and key events (mousedown, pointerdown, click, keydown,
   beforeinput, input) stop at the wrapper: clicking it or pressing Enter or Backspace in it does not

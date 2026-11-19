@@ -281,7 +281,7 @@ export function ReviewLayer({
               cardPlacement === "above"
                 ? above >= 8
                   ? above
-                  : below
+                  : Math.min(below, Math.max(8, window.innerHeight - 188))
                 : below + 180 > window.innerHeight
                   ? Math.max(8, above)
                   : below;

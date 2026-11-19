@@ -367,9 +367,10 @@ describe("PageEditor head, narrow sizes and review layout", () => {
     const selection = JSON.stringify(editor.getViewState().selection);
     const markdown = ref.current!.getMarkdown();
     const seen = vi.fn();
-    // past the page: the events stopped at the icon
+    // past the page: the keys stop at the icon; a click goes on, so the editor's menus close
+    const clicked = vi.fn();
     document.body.addEventListener("keydown", seen);
-    document.body.addEventListener("mousedown", seen);
+    document.body.addEventListener("mousedown", clicked);
     act(() => {
       button.focus();
       for (const type of ["pointerdown", "mousedown", "mouseup", "click"]) {
@@ -383,13 +384,14 @@ describe("PageEditor head, narrow sizes and review layout", () => {
     });
     expect(opened).toHaveBeenCalledOnce();
     expect(seen).not.toHaveBeenCalled();
+    expect(clicked).toHaveBeenCalledOnce();
     expect(document.activeElement).toBe(button);
     expect(JSON.stringify(editor.getJSON())).toBe(before);
     expect(JSON.stringify(editor.getViewState().selection)).toBe(selection);
     expect(ref.current!.getMarkdown()).toBe(markdown);
     expect(ref.current!.getTitle()).toBe("Notes");
     document.body.removeEventListener("keydown", seen);
-    document.body.removeEventListener("mousedown", seen);
+    document.body.removeEventListener("mousedown", clicked);
   });
 
   it("a host that re-renders with a new inline icon keeps the headings and the caret", async () => {

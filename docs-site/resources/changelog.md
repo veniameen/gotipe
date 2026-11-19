@@ -13,12 +13,15 @@ packages: `core`, `react`, `theme` and `block-editor` (0.1.4).
 - `EditorHost.discardAsset` is called on every path where `saveAsset` stored a file that was not
   inserted: paste and drop through paste rules (images included), and the image and file blocks'
   upload, replace, crop and placeholder drop. A document that changed during such a save is
-  `ASSET_SAVE_FAILED`, not `CLIPBOARD_FAILED`. New export `discardSavedAsset(editor, asset)`.
+  `ASSET_SAVE_FAILED`, not `CLIPBOARD_FAILED`. A `src` the document shows is never given up (a host
+  may return the same `src` for the same file). New export `discardSavedAsset(editor, asset)`.
+- A host's `saveAsset` and `resolveAsset` are called as its methods, so a host object or class keeps
+  its `this`.
 
 ### @gotipe/block-editor
 
-- `iconPlacement: "inline"`: the host's icon stays accessible (no `aria-hidden`), and its pointer
-  and key events no longer reach the editor.
+- `iconPlacement: "inline"`: the host's icon stays accessible (no `aria-hidden`), and its keys and
+  input no longer reach the editor; its clicks still close the editor's open menus.
 - `reviewCardPlacement: "below" | "above"` (default `"below"`) and `reviewLaneCursor: "caret" |
   "pointer"` (default `"caret"`): where a review card opens on a narrow page, and a lane's cursor as
   an arrow with a name chip.

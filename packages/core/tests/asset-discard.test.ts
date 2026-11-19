@@ -65,6 +65,24 @@ describe.each(ENGINES)("stored files a paste rule did not insert (%s)", (engine)
     expect(errors).toEqual([]);
   });
 
+  it("keeps a source the document shows: the host may return the same src for the same file", async () => {
+    const { send, pending, saved, images, discarded, caret, editor } = await setup();
+    send("paste", [png("image.png")]);
+    await saved(1);
+    pending[0]!({ src: "assets/image.png" });
+    await vi.waitFor(() => expect(images()).toHaveLength(1));
+    // the same screenshot again, and typing while it is stored: this paste is dropped
+    caret(0);
+    send("paste", [png("image.png")]);
+    await saved(2);
+    editor.chain().insertText("x").run();
+    pending[1]!({ src: "assets/image.png" });
+    await vi.waitFor(() => expect(pending).toHaveLength(2));
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    expect(discarded).toEqual([]);
+    expect(images()).toHaveLength(1);
+  });
+
   it("drops the image of a paste a newer one replaced, without an error", async () => {
     const { send, pending, saved, images, discarded, errors } = await setup();
     send("paste", [png("first.png")]);
@@ -150,5 +168,40 @@ describe.each(ENGINES)("stored files a paste rule did not insert (%s)", (engine)
     await vi.waitFor(() => expect(errors).toHaveLength(1));
     expect(images()).toEqual([]);
     expect(discarded).toEqual([]);
+  });
+});
+
+describe.each(ENGINES)("a host object's saveAsset keeps its this (%s)", (engine) => {
+  it("stores and inserts a pasted image through a class host", async () => {
+    class Store {
+      prefix = "assets/";
+      async saveAsset(_file: Blob, info: { name: string }) {
+        return { src: this.prefix + info.name };
+      }
+    }
+    const editor: GoTipeEditor = await createOn(engine, {
+      extensions: [Paragraph, Image],
+      content: doc(paragraph("p", "base")),
+      host: new Store() as unknown as EditorHost,
+    });
+    const root = document.createElement("div");
+    root.innerHTML = '<p data-block-id="p" data-block-type="paragraph">base</p>';
+    document.body.append(root);
+    editor.mount(root);
+    editor.setSelection({ anchor: { blockId: "p", offset: 4 }, head: { blockId: "p", offset: 4 } });
+    cleanups.push(() => {
+      editor.destroy();
+      root.remove();
+    });
+    const event = new Event("paste", { bubbles: true, cancelable: true });
+    Object.defineProperty(event, "clipboardData", {
+      value: { files: [png("shot.png")], types: ["Files"], getData: () => "" },
+    });
+    root.dispatchEvent(event);
+    await vi.waitFor(() =>
+      expect(editor.getJSON().blocks.some((block) => block.attrs.src === "assets/shot.png")).toBe(
+        true,
+      ),
+    );
   });
 });
