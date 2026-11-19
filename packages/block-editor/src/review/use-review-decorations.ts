@@ -6,10 +6,12 @@ import {
   type ReviewLane,
   type ReviewProposal,
   computeReviewDecorations,
+  createReviewCache,
   revealDecorations,
 } from "@gotipe/suggestions";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { MarkdownSession } from "../page/markdown-session";
+import { settleLiveMarkdown } from "./live-markdown";
 
 const LAYER = "review";
 const MAX_REVEAL_MS = 1500;
@@ -27,11 +29,16 @@ export interface ReviewStates {
   comments: CommentState[];
 }
 
+const sameItems = (a: readonly unknown[], b: readonly unknown[]) =>
+  a.length === b.length && a.every((item, index) => item === b[index]);
+
 /**
  * Binds a review's proposals and comments to the editor's document and draws them as the
  * editor's `review` decoration layer: again on every document change (once a frame) and on new
- * data. A new proposal reveals its text. `tick` changes whenever the layer was drawn, for what
- * is placed by it.
+ * data. Only what changed is bound and drawn again: a proposal that is as it was keeps its
+ * decorations and its state, and the layer is not set anew for the same decorations. A new
+ * proposal reveals its text; a growing one (`live`) never does, nor when it stops growing.
+ * `tick` changes whenever the layer was drawn, for what is placed by it.
  */
 export function useReviewDecorations({
   editor,
@@ -50,6 +57,8 @@ export function useReviewDecorations({
 }): { states: ReviewStates; tick: number } {
   const [states, setStates] = useState<ReviewStates>({ proposals: [], comments: [] });
   const fullRef = useRef<Decoration[]>([]);
+  /** The decorations the editor's layer holds now. */
+  const drawnRef = useRef<Decoration[]>([]);
   const seenRef = useRef<Set<string> | null>(null);
   const revealRef = useRef(new Map<string, { start: number; total: number; duration: number }>());
   const frameRef = useRef<number | null>(null);
@@ -66,8 +75,12 @@ export function useReviewDecorations({
       }
       decorations = revealDecorations(decorations, id, Math.ceil(r.total * t));
     }
-    editor.setDecorations(LAYER, decorations);
-    setTick((n) => n + 1);
+    // the same decorations again change nothing on the page
+    if (!sameItems(drawnRef.current, decorations)) {
+      drawnRef.current = decorations;
+      editor.setDecorations(LAYER, decorations);
+      setTick((n) => n + 1);
+    }
     if (revealRef.current.size > 0) {
       frameRef.current = requestAnimationFrame(applyDecorations);
     } else {
@@ -75,17 +88,24 @@ export function useReviewDecorations({
     }
   }, [editor]);
 
+  // what each proposal and comment gave last time, for this editor's document
+  // biome-ignore lint/correctness/useExhaustiveDependencies: a new editor is a new document
+  const cache = useMemo(() => createReviewCache(), [editor]);
+  const parse = useCallback((fragment: string) => session.parseFragment(fragment), [session]);
+
   const recompute = useCallback(() => {
     const page = session.serialize(editor);
     const out = computeReviewDecorations({
       blocks: editor.getViewState().blocks,
       text: page.text,
       map: page.map,
-      parse: (fragment) => session.parseFragment(fragment),
+      parse,
       proposals,
       comments,
       lanes,
       activeId,
+      liveText: settleLiveMarkdown,
+      cache,
     });
     fullRef.current = out.decorations;
     // New proposals reveal their text (unless motion is reduced).
@@ -105,9 +125,13 @@ export function useReviewDecorations({
         }
       }
     }
-    setStates({ proposals: out.proposals, comments: out.comments });
+    setStates((previous) =>
+      sameItems(previous.proposals, out.proposals) && sameItems(previous.comments, out.comments)
+        ? previous
+        : { proposals: out.proposals, comments: out.comments },
+    );
     if (frameRef.current === null) applyDecorations();
-  }, [editor, session, proposals, comments, lanes, activeId, applyDecorations]);
+  }, [editor, session, parse, cache, proposals, comments, lanes, activeId, applyDecorations]);
 
   // Recompute on every document change (throttled to a frame) and on new data.
   useEffect(() => {
@@ -130,6 +154,8 @@ export function useReviewDecorations({
   useEffect(
     () => () => {
       if (frameRef.current !== null) cancelAnimationFrame(frameRef.current);
+      frameRef.current = null;
+      drawnRef.current = [];
       editor.setDecorations(LAYER, []);
     },
     [editor],

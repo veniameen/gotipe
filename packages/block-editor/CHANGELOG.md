@@ -17,6 +17,26 @@
   stop at the element. The element is marked `data-gotipe-host`, and the editor's own listeners
   on the document skip its keys: an open slash, block, formatting or table menu, the AI bar's ⌘J,
   find's ⌘F, Enter on a formula and Escape of a review card.
+- The page's review shows proposals that are still being written (`ReviewProposal.live`): the
+  whole text at once, without the reveal, growing in place as the host gives longer texts under
+  the same `id`; the same `id` without `live` is then an ordinary proposal, not revealed again
+  and in the same elements. A growing proposal takes no decision: its card has no Accept or
+  Reject (`.gotipe-review-card[data-live]`), `ReviewApi.accept` and `reject` resolve to `false`
+  for it, and the default “Accept all” and “Reject all” pass it over. Markdown its end leaves
+  unfinished is shown as text and changes nothing around it (a mark without its pair, a link; a
+  table comes whole once its head and delimiter rows are, and grows by whole rows; an open code
+  block holds the code so far). Proposals that insert at one point stand by
+  `ReviewProposal.order`.
+- Lane cursors: a lane has as many as it is given (`LaneCursor.id`), each with its own `name` on
+  the flag and `compact` for a flag in one line (`data-compact`). The cursor of a growing
+  proposal stands where its text will start while it has none, and goes to the text's new end
+  over `--gt-lane-cursor-move` when the text moved it (`data-glide`; at once on a scroll). Every
+  cursor says on which side its flag has room (`data-chip-side="end"`, or `"start"` when the
+  flag would cross the page's end edge; kept at the edge until the flag fits after the cursor
+  with room to spare): the theme puts a compact flag before its cursor then.
+- The review binds and draws only what changed: a proposal or a comment that is as it was keeps
+  its decorations, the editor's `review` layer is not set again for the same decorations, and
+  `onStatesChange` is called only when a state changed.
 - 484513c: The page title with an inline icon (`iconPlacement="inline"`): its accessible name is the title's
   text alone (the prompt when it is empty), no longer prefixed by the icon's own name, and the empty
   title's prompt starts after the icon instead of under it (`--gt-page-icon-inline` +

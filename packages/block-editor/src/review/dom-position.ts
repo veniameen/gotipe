@@ -58,6 +58,27 @@ export function proposalEndRect(root: HTMLElement, proposalId: string): DOMRect 
   return new DOMRect(r.right, r.top, 0, r.height || 20);
 }
 
+/**
+ * The end of the text of every growing proposal on the page, by proposal id: where its last
+ * inserted piece ends (the piece marked `gotipe-sug-live`). One pass over the page for all of
+ * them, however many there are.
+ */
+export function liveEndRects(root: HTMLElement): Map<string, DOMRect> {
+  const ends = new Map<string, DOMRect>();
+  for (const mark of root.getElementsByClassName("gotipe-sug-live")) {
+    const id = mark.closest("[data-gotipe-proposal]")?.getAttribute("data-gotipe-proposal");
+    if (!id) continue;
+    // a block marked itself has no text of its own: a code block ends where its code does
+    const text = mark.querySelector("pre > code") ?? mark;
+    const range = document.createRange();
+    range.selectNodeContents(text);
+    const rects = range.getClientRects();
+    const r = rects.length > 0 ? rects[rects.length - 1]! : text.getBoundingClientRect();
+    ends.set(id, new DOMRect(rects.length > 0 ? r.right : r.left, r.top, 0, r.height || 20));
+  }
+  return ends;
+}
+
 const BLOCK = "[data-block-id], [data-gotipe-phantom-id]";
 
 /**

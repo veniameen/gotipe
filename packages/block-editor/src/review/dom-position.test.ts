@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { decorationRect } from "./dom-position";
+import { decorationRect, liveEndRects } from "./dom-position";
 
 afterEach(() => {
   vi.restoreAllMocks();
@@ -73,5 +73,35 @@ describe("decorationRect: where a suggestion's card is anchored", () => {
     Range.prototype.getClientRects = () => [rect(56, 100, 8, 20)] as unknown as DOMRectList;
     const at = decorationRect(document.getElementById("root")!, "data-gotipe-proposal", "s5");
     expect(at?.top).toBe(100);
+  });
+});
+
+describe("liveEndRects: where the texts being written end", () => {
+  it("finds the end of every growing proposal in one pass, by its marked last piece", () => {
+    document.body.innerHTML = `<div id="root">
+      <p data-block-id="a">Text <span class="gotipe-sug gotipe-sug-ins gotipe-sug-live" data-gotipe-proposal="inline">new words</span></p>
+      <ul data-gotipe-phantom-id="p1" data-gotipe-proposal="blocks" class="gotipe-sug-block-ins"><li data-gotipe-phantom-id="p1.0"><span class="gotipe-sug-block-ins-text">one <span class="gotipe-sug-live">last</span></span></li></ul>
+      <div data-gotipe-phantom-id="p2" data-gotipe-proposal="code" class="gotipe-code-block gotipe-sug-block-ins gotipe-sug-live"><div>header</div><pre><code>const a = 1;</code></pre></div>
+      <h2 data-gotipe-phantom-id="p3" data-gotipe-proposal="empty" class="gotipe-sug-block-ins gotipe-sug-live"></h2>
+      <p data-gotipe-phantom-id="p4" data-gotipe-proposal="written" class="gotipe-sug-block-ins">not growing</p>
+    </div>`;
+    // jsdom has no layout: a range's last box is told by what it holds
+    Range.prototype.getClientRects = function (this: Range) {
+      const text = this.toString();
+      return (text ? [rect(10, 20, text.length * 10, 18)] : []) as unknown as DOMRectList;
+    };
+    vi.spyOn(document.querySelector("h2")!, "getBoundingClientRect").mockReturnValue(
+      rect(56, 300, 400, 30),
+    );
+    const ends = liveEndRects(document.getElementById("root")!);
+    expect([...ends.keys()].sort()).toEqual(["blocks", "code", "empty", "inline"]);
+    const at = (id: string) => [ends.get(id)?.left, ends.get(id)?.top, ends.get(id)?.width];
+    // after the last character of the marked piece
+    expect(at("inline")).toEqual([10 + "new words".length * 10, 20, 0]);
+    expect(at("blocks")).toEqual([10 + "last".length * 10, 20, 0]);
+    // a code block ends where its code does, not where its header does
+    expect(at("code")).toEqual([10 + "const a = 1;".length * 10, 20, 0]);
+    // an empty block: at its start
+    expect(at("empty")).toEqual([56, 300, 0]);
   });
 });

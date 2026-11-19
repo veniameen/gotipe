@@ -18,6 +18,15 @@
   background: transparent;
   box-shadow: inset 0 calc(-1 * var(--gt-hairline)) 0 var(--gt-line-control);
 }
+/* the end of a text still being written: a typing caret when a host gives it a width, drawn as a
+   shadow at the end of the insertion, so it takes no room */
+.gotipe-insert.is-live {
+  box-shadow: inset 0 calc(-1 * var(--gt-rule)) 0 var(--c, var(--gt-add)),
+    var(--gt-sug-live-caret-width) 0 0 var(--c, var(--gt-add));
+}
+.gotipe-page.has-live-caret {
+  --gt-sug-live-caret-width: var(--gt-caret-w);
+}
 
 /* ---- the bar over the page: who proposes, how many wait, accept or reject them all ---- */
 .gotipe-review-bar {

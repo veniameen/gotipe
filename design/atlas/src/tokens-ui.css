@@ -70,6 +70,8 @@
   --gt-lane-pointer-chip-radius: var(--gt-radius-inline);
   --gt-lane-pointer-at: 0px;
   --gt-lane-pointer-outline: currentColor;
+  /* the typing caret at the end of a text still being written: none unless a host sets a width */
+  --gt-sug-live-caret-width: 0px;
 
   --gt-card-w: 288px;
   --gt-review-card-gap: 8px;

@@ -271,6 +271,73 @@ describe("review parts have tokens with today's values", () => {
   });
 });
 
+describe("a review whose proposals are still written: nothing by default, a host's tokens", () => {
+  const live = read("theme/review/live.css");
+  const flat = (value: string | undefined) => (value ?? "").replace(/\s+/g, " ");
+  const caret =
+    "var(--gt-sug-live-caret-width, 0) 0 0 var(--gt-sug-live-caret-color, var(--gt-track, var(--gt-add)))";
+  it("is part of the theme, after the review's own rules", () => {
+    const theme = read("theme.css");
+    expect(theme).toContain('@import "./theme/review/live.css";');
+    expect(theme.indexOf("review/live.css")).toBeGreaterThan(theme.indexOf("review.css"));
+  });
+  it("draws the typing caret as a shadow of no width unless a host sets one, in the lane's colour", () => {
+    const end = declarations(
+      live,
+      "span.gotipe-sug-live,\n.gotipe-code-block.gotipe-sug-live pre > code",
+    );
+    // a shadow takes no room: the text does not move when the caret comes or goes
+    expect(Object.keys(end)).toEqual(["box-shadow"]);
+    expect(flat(end["box-shadow"])).toBe(caret);
+    // an inline insertion keeps its own bar under the text
+    const insert = flat(declarations(live, ".gotipe-sug-ins.gotipe-sug-live")["box-shadow"]);
+    const bar = flat(declarations(read("theme/review.css"), ".gotipe-sug-ins")["box-shadow"]);
+    expect(insert).toBe(`${bar}, ${caret}`);
+    // read with fallbacks, not declared on the view: a value set on any element above wins
+    for (const name of ["--gt-sug-live-caret-width", "--gt-sug-live-caret-color"]) {
+      expect(tokens.view).not.toHaveProperty(name);
+      expect(tokens.shared).not.toHaveProperty(name);
+    }
+  });
+  it("moves a growing proposal's cursor over a token's time, the fast duration by default", () => {
+    expect(declarations(live, ".gotipe-lane-cursor[data-glide]")).toEqual({
+      "transition-property": "top, left",
+      "transition-duration": "var(--gt-lane-cursor-move, var(--gt-duration-fast))",
+      "transition-timing-function": "linear",
+    });
+    expect(tokens.view).not.toHaveProperty("--gt-lane-cursor-move");
+    // a cursor that does not follow a growing text has no transition of its own
+    expect(read("theme/review.css")).not.toMatch(/\.gotipe-lane-cursor[^{]*\{[^}]*transition/);
+  });
+  it("lays a compact cursor's flag out in one line; the others keep their two", () => {
+    expect(declarations(live, ".gotipe-lane-cursor[data-compact] > .gotipe-lane-chip")).toEqual({
+      "flex-direction": "row",
+      "align-items": "baseline",
+      gap: "var(--gt-lane-chip-gap, var(--gt-space-1))",
+    });
+    expect(declarations(read("theme/review.css"), ".gotipe-lane-chip")["flex-direction"]).toBe(
+      "column",
+    );
+  });
+  it("puts a compact flag with no room after its cursor before it, above the row", () => {
+    const flipped = '.gotipe-lane-cursor[data-compact][data-chip-side="start"] > .gotipe-lane-chip';
+    expect(declarations(live, flipped)).toEqual({
+      top: "auto",
+      right: "var(--gt-lane-chip-flip-x, 0)",
+      bottom: "calc(100% + var(--gt-lane-chip-flip-y, var(--gt-toolbar-gap)))",
+      left: "auto",
+    });
+    // only a compact flag changes sides by default: the others look as they did
+    expect(live.match(/data-chip-side/g)).toHaveLength(2);
+    expect(read("theme/review.css")).not.toContain("data-chip-side");
+    // it outweighs the pointer cursor's own place for the flag
+    const pointer = '.gotipe-lane-cursor[data-variant="pointer"] > .gotipe-lane-chip';
+    expect(declarations(read("theme/review.css"), pointer)).toMatchObject({
+      left: "var(--gt-lane-pointer-chip-x)",
+    });
+  });
+});
+
 describe("page head and slash descriptions", () => {
   it("lets a page's content follow its head at the head's gap", () => {
     const states = read("theme/states.css");
