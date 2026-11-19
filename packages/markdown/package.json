@@ -1,6 +1,6 @@
 {
   "name": "@gotipe/markdown",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "Lossless GFM Markdown <-> GoTipe document codec: untouched blocks keep their source bytes",
   "keywords": [
     "gotipe",

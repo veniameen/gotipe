@@ -494,6 +494,10 @@ not part of the check artifacts.
   graph 130,424 of 131,072), packages, consumer, exports, docs site, `cargo fmt`, clippy, `cargo
   test`; Playwright Chromium 1,085 of 1,085, Firefox and WebKit 954 of 955 (only
   `comments.spec.ts:68`, macOS Home, as on 0.1.1).
+- 2026-11-19: 0.1.5 prepared from the host's list after 0.1.4, checked by the host on local packs
+  before one release: review card placement and gap, `afterBlock`, selection ranges and bookmarks
+  in the Markdown, the host's lane pointer, and tokens. Released: `core`, `react`, `theme`,
+  `block-editor` at 0.1.5; `markdown`, `suggestions`, `comments` at 0.1.3.
 
 ## Acceptance before release (2026-11-15)
 

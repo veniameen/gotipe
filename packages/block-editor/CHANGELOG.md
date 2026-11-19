@@ -1,5 +1,69 @@
 # @gotipe/block-editor
 
+## 0.1.5
+
+### Patch Changes
+
+- 5110b7e: `afterBlock?: { blockId, node } | null` on `EditorContent`, `Editor`, `BlockEditor` and
+  `PageEditor` (type `BlockSlot`): the host's element in the flow of the document right after the
+  top-level block that is or holds `blockId`, spaced as one more block, so the text below moves down
+  for it (a field for writing with a model between paragraphs, say). A widget (`.gotipe-block-slot`,
+  `data-gotipe-widget`): not part of the text, offsets or file; it keeps its element as it moves to
+  another block. In `BlockEditor` and `PageEditor` its keys and input stay the host's, as with an
+  inline page icon.
+- 484513c: The page title with an inline icon (`iconPlacement="inline"`): its accessible name is the title's
+  text alone (the prompt when it is empty), no longer prefixed by the icon's own name, and the empty
+  title's prompt starts after the icon instead of under it (`--gt-page-icon-inline` +
+  `--gt-page-icon-inline-gap`, as the text).
+- 2c6a867: The pointer lane cursor (`reviewLaneCursor="pointer"`) is placed and drawn by the host:
+  `--gt-lane-pointer-at` (`0px`) sets where the tip stands in the row (`100%` is its bottom) and the
+  name chip moves with it; `--gt-lane-pointer-outline` (`currentColor`) and
+  `--gt-lane-pointer-outline-width` (unset: `--gt-icon-stroke`) outline the built-in arrow, for
+  instance in the page's colour. `PageEditor`'s `reviewLanePointer?: ReactNode` draws the host's own
+  arrow instead of the built-in one (`span.gotipe-lane-pointer`, in the lane's colour), and
+  `--gt-lane-pointer-tip-x`/`-tip-y` (unset: the built-in arrow's 3/16 and 1.75/16 of the size) say
+  where its tip lies in its box. Defaults draw the cursor as in 0.1.4.
+- 3008901: A page bookmark follows its text into the new block when its block is split (Enter) and into the
+  block before when two blocks are joined. A lost bookmark (its block gone or replaced) comes back
+  once its block's text is as it was, so it survives showing another version with `setMarkdown` and
+  restoring the current one, or an undo.
+- a88ffed: `PageEditorHandle.bookmark(point?, bias?)` keeps a place (the caret's by default) that follows edits
+  until `release()`: `resolve()` gives `{ blockId, offset }` now, or `null` once the text around it or
+  its block is gone; text typed right at it goes before it (`"after"`, default) or after it
+  (`"before"`). `markdownOffset(point, bias?)` gives a point's offset in `getMarkdown()`'s text, past
+  or before a mark's delimiters at its edge. Types `PageBookmark`, `TextPoint`.
+- 7730811: The review card on a narrow page (`reviewCardPlacement`) is placed from its measured height:
+  `"above"` keeps the card's bottom 8 px above the row for any card (it used to assume 188 px, so a
+  short card hung far above its row and a tall one covered it), and `"below"` turns above the row by
+  the same measured rule when the window has no room below. `@gotipe/react`'s `FloatingPlacement`
+  gains `"top-start"`: above the anchor, aligned to its left edge, below it when there is no room.
+- 824f832: A proposed new block (a task or list item, say) opens its card at its text's lines
+  (`.gotipe-sug-block-ins-text`) rather than at the block's taller box, so `--gt-review-card-gap` is
+  measured from the text as for an edit's marks.
+- a5b9de4: A suggestion that edits a list item opens its card at that row's marks (`.gotipe-sug-del`,
+  `.gotipe-sug-ins`) instead of at the whole changed list; a block stands for the card only when the
+  text has no mark. `--gt-review-card-gap` (8 px) sets the card's space to its row above or below it.
+- 27f2aba: `textOffsetToMd(map, blockId, offset, bias?)` takes a `bias` like `mdOffsetToText`: at the edge of
+  a mark, `"after"` (default, as before) stands past its delimiters, `"before"` before them, so the
+  end of a selected `**bold**` no longer takes the closing `**`. New `textRangeToMd(map, from, to)`
+  maps a text range to `{ start, end }` in the Markdown with no delimiters at its edges.
+  `PageEditorHandle.selectionMarkdownRange()` returns the editor's selection as such a range in
+  `getMarkdown()`'s text (selected blocks whole; `null` when the selection is not in the file).
+- Updated dependencies [5110b7e]
+- Updated dependencies [c4b13c7]
+- Updated dependencies [484513c]
+- Updated dependencies [2c6a867]
+- Updated dependencies [0ea7f50]
+- Updated dependencies [7730811]
+- Updated dependencies [a5b9de4]
+- Updated dependencies [27f2aba]
+  - @gotipe/react@0.1.5
+  - @gotipe/suggestions@0.1.3
+  - @gotipe/theme@0.1.5
+  - @gotipe/markdown@0.1.3
+  - @gotipe/core@0.1.5
+  - @gotipe/versions@0.1.1
+
 ## 0.1.4
 
 ### Patch Changes

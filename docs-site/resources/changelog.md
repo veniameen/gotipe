@@ -3,6 +3,49 @@ title: Changelog
 description: Release notes of GoTipe, newest first, grouped by package.
 ---
 
+## 0.1.5
+
+Placement fixes for review cards, a host's element in the page's flow, a selection's and a
+bookmark's place in the Markdown file, and more tokens. Released packages: `core` (no changes of
+its own), `react`, `theme` and `block-editor` (0.1.5), `markdown`, `suggestions` and `comments`
+(0.1.3). `block-editor` 0.1.5 needs `react` 0.1.5, `theme` 0.1.5, `markdown` 0.1.3 and
+`suggestions` 0.1.3.
+
+### @gotipe/react
+
+- `afterBlock?: { blockId, node } | null` on `EditorContent` and `Editor` (type `BlockSlot`): the
+  host's element in the flow after the top-level block that is or holds `blockId`
+  (`.gotipe-block-slot`, a widget outside the text and the file).
+- `FloatingPlacement` gains `"top-start"`.
+
+### @gotipe/markdown
+
+- `textOffsetToMd(map, blockId, offset, bias?)`: at a mark's edge, `"after"` (default, as before)
+  or `"before"` its delimiters. New `textRangeToMd(map, from, to)`: a text range without
+  delimiters at its edges.
+
+### @gotipe/block-editor
+
+- Review cards: placed by their measured height (`"above"` no longer assumes 188 px), by the
+  edited row's marks rather than a whole changed list, by a new block's text line, and with
+  `--gt-review-card-gap` between card and row.
+- `afterBlock` on `BlockEditor` and `PageEditor`; its keys and input stay the host's.
+- `PageEditorHandle`: `selectionMarkdownRange()`, `bookmark(point?, bias?)` (a place that follows
+  edits, splits and joins, and comes back with its text) and `markdownOffset(point, bias?)`.
+- `reviewLanePointer`: the host's own arrow for the pointer lane cursor.
+- A page title with an inline icon is named by its text alone, and its empty prompt starts after
+  the icon.
+
+### @gotipe/suggestions
+
+- A proposed new block's text stands in its own `.gotipe-sug-block-ins-text` span.
+
+### @gotipe/theme
+
+- Tokens: `--gt-review-card-gap`, `--gt-lane-pointer-at`, `--gt-lane-pointer-outline`,
+  `--gt-lane-pointer-outline-width`, `--gt-lane-pointer-tip-x`, `--gt-lane-pointer-tip-y`,
+  `--gt-sug-block-ins-text-tint`, `--gt-list-item-text-inset`. Defaults keep the 0.1.4 look.
+
 ## 0.1.4
 
 Fixes for stored files and the inline page icon, two host options and more tokens. Released

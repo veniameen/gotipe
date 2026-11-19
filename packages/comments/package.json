@@ -1,6 +1,6 @@
 {
   "name": "@gotipe/comments",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "Discussion threads for the GoTipe editor, anchored to quoted text that follows edits.",
   "keywords": [
     "gotipe",
