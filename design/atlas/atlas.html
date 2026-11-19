@@ -587,6 +587,10 @@
   --gt-flag-pad: 1px 6px;
   --gt-flag-radius: 4px 4px 4px 0;
   --gt-flag-note-opacity: 0.82;
+  --gt-lane-pointer-size: 16px;
+  --gt-lane-pointer-chip-x: 10px;
+  --gt-lane-pointer-chip-y: 14px;
+  --gt-lane-pointer-chip-radius: var(--gt-radius-inline);
 
   --gt-card-w: 288px;
   --gt-card-pad: 12px;
@@ -3505,6 +3509,30 @@ ol.gotipe-list.is-three-digits > li::before {
 .gotipe-remote-flag > span {
   font-weight: var(--gt-weight-regular);
   opacity: var(--gt-flag-note-opacity);
+}
+/* a host's option: a lane's cursor as an arrow pointer whose tip is the place, the name below right
+   of the tip; the glyph's tip is 3/16 and 1.75/16 into its box */
+.gotipe-remote.is-pointer {
+  width: 0;
+  margin: 0;
+  background: none;
+}
+.gotipe-remote-arrow {
+  position: absolute;
+  top: calc(var(--gt-lane-pointer-size) * -1.75 / 16);
+  left: calc(var(--gt-lane-pointer-size) * -3 / 16);
+  width: var(--gt-lane-pointer-size);
+  height: var(--gt-lane-pointer-size);
+  fill: var(--c);
+  stroke: var(--c);
+  stroke-width: var(--gt-icon-stroke);
+  stroke-linejoin: round;
+}
+.gotipe-remote.is-pointer > .gotipe-remote-flag {
+  top: var(--gt-lane-pointer-chip-y);
+  bottom: auto;
+  left: var(--gt-lane-pointer-chip-x);
+  border-radius: var(--gt-lane-pointer-chip-radius);
 }
 .gotipe-remote-selection {
   background: var(--s);
@@ -11710,7 +11738,8 @@ editor<span class="tk-pun">.</span>on<span class="tk-pun">(</span><span class="t
       An insertion is underlined in the author's color, a deletion is struck through. Above the page:
       who is editing, how many are waiting, "Accept all". The card sits by the text: the reason and
       two answers; a stale one has only "Reject". A comment's card can be deleted from the end of its
-      head. Host option: on a narrow page the card opens above the row instead of below it.
+      head. Host options: on a narrow page the card opens above the row instead of below it; a lane's cursor
+      is an arrow pointer with its name instead of a caret with a flag.
     </p>
   </figcaption>
   <section class="at-stage" data-w="1024">
@@ -11762,6 +11791,27 @@ editor<span class="tk-pun">.</span>on<span class="tk-pun">(</span><span class="t
       </div>
     </div>
   </div>
+</div>
+</section>
+  <section class="at-stage" data-w="768">
+<p class="at-stage-label">Lane cursor as a pointer (host option) · 768</p>
+<div class="at-frame gotipe-root" data-gt-view="notion" data-frame="suggestion-pointer" data-w="768">
+<article class="gotipe-page is-slice" lang="en">
+    <div class="gotipe-doc">
+      <ol class="gotipe-list">
+        <li>Turn the log on for 5% of web users.</li>
+        <li>
+          Compare lost edits with the control group<span class="gotipe-insert" data-person="3"
+            >: under 0.1%</span
+          ><span class="gotipe-remote is-pointer" data-person="3"
+            ><svg class="gotipe-remote-arrow"><use href="#i-pointer" /></svg
+            ><span class="gotipe-remote-flag">AI <span>· writing the threshold</span></span></span
+          >.
+        </li>
+      </ol>
+      <p>We take objections until November 18, in the ADR-0031 discussion.</p>
+    </div>
+  </article>
 </div>
 </section>
   <section class="at-stage" data-w="1024">

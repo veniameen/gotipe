@@ -28,6 +28,30 @@
   font-weight: var(--gt-weight-regular);
   opacity: var(--gt-flag-note-opacity);
 }
+/* a host's option: a lane's cursor as an arrow pointer whose tip is the place, the name below right
+   of the tip; the glyph's tip is 3/16 and 1.75/16 into its box */
+.gotipe-remote.is-pointer {
+  width: 0;
+  margin: 0;
+  background: none;
+}
+.gotipe-remote-arrow {
+  position: absolute;
+  top: calc(var(--gt-lane-pointer-size) * -1.75 / 16);
+  left: calc(var(--gt-lane-pointer-size) * -3 / 16);
+  width: var(--gt-lane-pointer-size);
+  height: var(--gt-lane-pointer-size);
+  fill: var(--c);
+  stroke: var(--c);
+  stroke-width: var(--gt-icon-stroke);
+  stroke-linejoin: round;
+}
+.gotipe-remote.is-pointer > .gotipe-remote-flag {
+  top: var(--gt-lane-pointer-chip-y);
+  bottom: auto;
+  left: var(--gt-lane-pointer-chip-x);
+  border-radius: var(--gt-lane-pointer-chip-radius);
+}
 .gotipe-remote-selection {
   background: var(--s);
 }

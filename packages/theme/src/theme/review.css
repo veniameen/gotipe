@@ -161,6 +161,21 @@ li.gotipe-sug-block-ins.gotipe-sug-stale > input[type="checkbox"] {
   letter-spacing: normal;
   white-space: nowrap;
 }
+/* a host's option (`reviewLaneCursor: "pointer"`): an arrow whose tip is the place, as in a design
+   tool, and the name below right of the tip; the glyph's tip is 3/16 and 1.75/16 into its box */
+.gotipe-lane-cursor > .gotipe-lane-pointer {
+  position: absolute;
+  top: calc(var(--gt-lane-pointer-size) * -1.75 / 16);
+  left: calc(var(--gt-lane-pointer-size) * -3 / 16);
+  width: var(--gt-lane-pointer-size);
+  height: var(--gt-lane-pointer-size);
+  color: var(--gt-track);
+}
+.gotipe-lane-cursor[data-variant="pointer"] > .gotipe-lane-chip {
+  top: var(--gt-lane-pointer-chip-y);
+  left: var(--gt-lane-pointer-chip-x);
+  border-radius: var(--gt-lane-pointer-chip-radius);
+}
 .gotipe-lane-chip-name {
   font-weight: var(--gt-weight-medium);
 }

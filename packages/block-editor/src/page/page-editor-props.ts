@@ -8,6 +8,7 @@ import type {
   PageReviewProps,
   ReviewApi,
   ReviewCardPlacement,
+  ReviewLaneCursor,
   ReviewLayout,
 } from "../review/review-layer";
 import type { PageBlockKind } from "./page-commands";
@@ -116,6 +117,13 @@ export interface PageEditorProps {
    * there is no room above).
    */
   reviewCardPlacement?: ReviewCardPlacement;
+  /**
+   * How a lane's cursor looks: `caret` (default), a line with a flag that names the lane, or
+   * `pointer`, an arrow pointer at the same place with the name below right of its tip
+   * (`.gotipe-lane-cursor[data-variant="pointer"]`, sizes `--gt-lane-pointer-size`,
+   * `--gt-lane-pointer-chip-x`, `--gt-lane-pointer-chip-y`), in the lane's colour.
+   */
+  reviewLaneCursor?: ReviewLaneCursor;
   /** Show the edit bar above the page. */
   reviewBar?: { title?: React.ReactNode; extra?: React.ReactNode[] } | false;
   /**

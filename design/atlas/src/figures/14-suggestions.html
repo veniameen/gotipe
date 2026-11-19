@@ -6,7 +6,8 @@
       An insertion is underlined in the author's color, a deletion is struck through. Above the page:
       who is editing, how many are waiting, "Accept all". The card sits by the text: the reason and
       two answers; a stale one has only "Reject". A comment's card can be deleted from the end of its
-      head. Host option: on a narrow page the card opens above the row instead of below it.
+      head. Host options: on a narrow page the card opens above the row instead of below it; a lane's cursor
+      is an arrow pointer with its name instead of a caret with a flag.
     </p>
   </figcaption>
   <!-- @frame frame=suggestions view=notion w=1024 label="model suggestions" -->
@@ -56,6 +57,24 @@
       </div>
     </div>
   </div>
+  <!-- @end -->
+  <!-- @frame frame=suggestion-pointer view=notion w=768 label="Lane cursor as a pointer (host option)" -->
+  <article class="gotipe-page is-slice" lang="en">
+    <div class="gotipe-doc">
+      <ol class="gotipe-list">
+        <li>Turn the log on for 5% of web users.</li>
+        <li>
+          Compare lost edits with the control group<span class="gotipe-insert" data-person="3"
+            >: under 0.1%</span
+          ><span class="gotipe-remote is-pointer" data-person="3"
+            ><svg class="gotipe-remote-arrow"><use href="#i-pointer" /></svg
+            ><span class="gotipe-remote-flag">AI <span>· writing the threshold</span></span></span
+          >.
+        </li>
+      </ol>
+      <p>We take objections until November 18, in the ADR-0031 discussion.</p>
+    </div>
+  </article>
   <!-- @end -->
   <!-- @frame frame=suggestion-stale view=notion w=1024 label="stale one and a model question" -->
   <div class="gotipe-with-margin">

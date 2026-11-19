@@ -64,6 +64,10 @@
   --gt-flag-pad: 1px 6px;
   --gt-flag-radius: 4px 4px 4px 0;
   --gt-flag-note-opacity: 0.82;
+  --gt-lane-pointer-size: 16px;
+  --gt-lane-pointer-chip-x: 10px;
+  --gt-lane-pointer-chip-y: 14px;
+  --gt-lane-pointer-chip-radius: var(--gt-radius-inline);
 
   --gt-card-w: 288px;
   --gt-card-pad: 12px;

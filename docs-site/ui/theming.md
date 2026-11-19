@@ -183,6 +183,9 @@ can be set on any container.
 | `--gt-sug-stale-check-line` | unset: `--gt-line-control` | Border of the task box of a stale proposed task item |
 | `--gt-sug-changed-bar-width` | `var(--gt-rule)` (2 px) | Bar at the left edge of a block a proposal changes; `0px` removes it |
 | `--gt-sug-changed-bar` | unset: the lane's colour | Colour of that bar |
+| `--gt-lane-pointer-size` | 16 px | A lane's cursor as a pointer (`reviewLaneCursor="pointer"`): size of the arrow, whose tip is the cursor's place; its colour is the lane's (`--gt-track`) |
+| `--gt-lane-pointer-chip-x`, `--gt-lane-pointer-chip-y` | 10 px, 14 px | Offset of the name chip from the arrow's tip, right and down |
+| `--gt-lane-pointer-chip-radius` | `var(--gt-radius-inline)` (4 px) | Corners of that chip |
 | `--gt-sug-replace-gap` | `0px` | Space between a struck deletion and the insertion that replaces it |
 | `--gt-image-radius` | `var(--gt-radius-block)` (8 px) | Corners of an image |
 | `--gt-image-ring` | `0px` | Width of a ring around an image, which keeps a light image apart from the page |

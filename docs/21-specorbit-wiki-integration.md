@@ -100,6 +100,7 @@ import { PageEditor, type PageEditorHandle } from "@gotipe/block-editor";
   narrow={false}                       // keep the host's sizes in a narrow panel too
   reviewLayout="inline"                // cards by the text, never in a margin column
   reviewCardPlacement="above"          // on a narrow page the card opens above the row
+  reviewLaneCursor="pointer"           // a lane's cursor as an arrow pointer with its name
   slashMenu={{ commands: (defaults) => [...defaults, agentNote], groups, descriptions: true }}
   host={{
     saveAsset: async (blob, { name, mediaType }) => {
