@@ -275,6 +275,10 @@
 .gotipe-content :where(ul, ol) > li + li {
   margin-top: var(--gt-list-item-gap);
 }
+/* an item's inset from the list's edge: its dot, number or task box and its text move together */
+.gotipe-content :where(ul, ol) > li {
+  margin-inline-start: var(--gt-list-item-inset);
+}
 .gotipe-content li > :where(ul, ol, [data-block-id]) {
   margin-top: var(--gt-flow-list);
 }

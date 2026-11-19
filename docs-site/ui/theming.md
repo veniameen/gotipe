@@ -179,9 +179,11 @@ can be set on any container.
 | `--gt-sug-stale-underline-style` | `dashed` | Its style |
 | `--gt-sug-stale-underline-thickness` | `var(--gt-underline)` (1 px) | Its thickness |
 | `--gt-sug-stale-active-fill` | unset: the lane's active tint | Fill of a stale proposal while its card is open; `transparent` keeps it unfilled |
+| `--gt-sug-del-active-fill` | unset: the lane's active tint | Fill of a proposed deletion's struck text while its card is open, apart from the insertion's; `transparent` keeps it unfilled |
 | `--gt-sug-stale-check-line` | unset: `--gt-line-control` | Border of the task box of a stale proposed task item |
 | `--gt-sug-changed-bar-width` | `var(--gt-rule)` (2 px) | Bar at the left edge of a block a proposal changes; `0px` removes it |
 | `--gt-sug-changed-bar` | unset: the lane's colour | Colour of that bar |
+| `--gt-sug-replace-gap` | `0px` | Space between a struck deletion and the insertion that replaces it |
 | `--gt-image-radius` | `var(--gt-radius-block)` (8 px) | Corners of an image |
 | `--gt-image-ring` | `0px` | Width of a ring around an image, which keeps a light image apart from the page |
 | `--gt-image-ring-color` | unset: `--gt-line` | Its colour |
@@ -190,9 +192,12 @@ can be set on any container.
 | `--gt-image-empty-bg` | unset: `--gt-sunken` | Background of an empty image or file block (upload or link) |
 | `--gt-media-row-h`, `--gt-media-row-pad`, `--gt-media-row-gap` | 48 px, `0 12px`, 8 px | The empty block as a row (`media.placeholder: "row"`): height, padding and gaps |
 | `--gt-media-row-icon`, `--gt-media-row-radius`, `--gt-media-row-button-h` | 20 px, `var(--gt-radius-block)`, 24 px | Its glyph, corners and button height |
+| `--gt-media-row-label-size` | `var(--gt-ui-size)` (13 px) | Size of the row's label |
+| `--gt-media-row-button-size`, `--gt-media-row-button-pad`, `--gt-media-row-button-min-w` | `var(--gt-ui-size)` (13 px), `var(--gt-button-pad)` (`0 10px`), `auto` | Its button's text size, padding and least width |
 | `--gt-page-icon-inline`, `--gt-page-icon-inline-gap` | `1em`, `0.3em` | The page's glyph in the title's row (`iconPlacement="inline"`, `.gotipe-page-title-icon`) and its gap to the text |
 | `--gt-caption-hint-color` | unset: `--gt-text-3` | The file name an image without a caption shows with `media.captionName` |
 | `--gt-list-item-gap` | `var(--gt-flow-list)` (4 px) | Space between two items of a list, task lists included |
+| `--gt-list-item-inset` | `0px` | Inset of a list item from the list's edge: its dot, number or task box moves with its text |
 | `--gt-flow-between-lists` | `var(--gt-flow)` (8 px) | Space before a list that follows another list, as a numbered list after a task list; `0px` joins them |
 | `--gt-flow-after-h1-table`, `--gt-flow-after-h2-table`, `--gt-flow-after-h3-table` | `var(--gt-flow-after-h1)`, `-h2`, `-h3` (10, 8, 4 px) | Space before a table right under a heading of that level (`-h3` for h3 to h6; `-h1` also under the page title) |
 | `--gt-table-line` | unset: `--gt-line` | Colour of a table's row lines, column lines and frame |
@@ -202,6 +207,7 @@ can be set on any container.
 | `--gt-table-head-line` | unset: `--gt-line-strong` | Colour of the line under header cells |
 | `--gt-table-head-size`, `--gt-table-head-leading` | `var(--gt-small-size)`, `var(--gt-small-leading)` | Size and line height of header cells' text |
 | `--gt-table-head-weight` | `var(--gt-weight-medium)` | Its weight |
+| `--gt-table-head-tracking` | `normal` | Letter spacing of header cells' text |
 | `--gt-table-head-color` | unset: `--gt-text-2` | Its colour |
 | `--gt-table-head-fill` | unset: `transparent` | Background of header cells |
 | `--gt-cell-pad`, `--gt-head-cell-pad` | `9px 12px`, `8px 12px` | Padding of body cells and header cells |

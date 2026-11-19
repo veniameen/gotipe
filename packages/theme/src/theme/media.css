@@ -113,9 +113,13 @@ button.gotipe-media-placeholder:hover:not(:disabled) {
 }
 .gotipe-media-placeholder[data-layout="row"] .gotipe-media-placeholder-label {
   flex: 1;
+  font-size: var(--gt-media-row-label-size);
 }
 .gotipe-media-placeholder[data-layout="row"] .gotipe-media-button {
+  min-width: var(--gt-media-row-button-min-w);
   height: var(--gt-media-row-button-h);
+  padding: var(--gt-media-row-button-pad);
+  font-size: var(--gt-media-row-button-size);
 }
 
 /* ---- buttons on a block: ink for the main answer, a fill for the other, quiet for the rest ---- */
