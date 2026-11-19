@@ -11,7 +11,9 @@ import { largePage } from "./large-page";
  * (`?sections=236` is about 258 KiB and 7,384 blocks) whose review holds `writers` growing
  * proposals, each with a cursor. `start()` grows every text `rate` times a second for `seconds`:
  * all in one update (`batched`), or each on its own beat (`staggered`). It records, per update,
- * the time to the first frame after it, and every frame's length while the texts grow.
+ * the time to the first frame after it, and every frame's length while the texts grow. A text
+ * is a section of many blocks, or with `?text=paragraph` one long paragraph: it grows without
+ * a new block coming to the page.
  */
 interface LiveRun {
   /** Time from an update to the first frame after it, per update. */
@@ -47,10 +49,15 @@ const LANES: ReviewLane[] = Array.from({ length: writers }, (_, index) => ({
   color: `var(--gt-track-${(index % 4) + 1})`,
 }));
 
-/** The text a writer will have written: a section of its own, after one of the page's. */
+/**
+ * The text a writer will have written, after one of the page's sections: a section of its own
+ * (headings, paragraphs, lists, a table, code), or one paragraph of the same length.
+ */
 const TEXTS = LANES.map((_, index) => {
   const page = largePage(2, 4242 + index);
-  return `\n\n${page.slice(page.indexOf("## Section 1")).trimEnd()}`;
+  const section = page.slice(page.indexOf("## Section 1")).trimEnd();
+  if (params.get("text") !== "paragraph") return `\n\n${section}`;
+  return `\n\n${section.replace(/[^\p{L}\p{N}]+/gu, " ").trim()}.`;
 });
 
 /** After the last paragraph of section `first + index`: the anchor names the next heading. */
