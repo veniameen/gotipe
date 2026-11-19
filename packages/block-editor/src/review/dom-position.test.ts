@@ -32,4 +32,17 @@ describe("decorationRect: where a suggestion's card is anchored", () => {
     const at = decorationRect(document.getElementById("root")!, "data-gotipe-proposal", "s2");
     expect(at?.left).toBe(200);
   });
+
+  it("an edit inside a list item stands at its row's marks, not at the changed list (P51)", () => {
+    vi.stubGlobal("CSS", { escape: (value: string) => value });
+    document.body.innerHTML = `<div id="root"><ul data-block-id="l" class="gotipe-sug-block-changed" data-gotipe-proposal="s3"><li data-block-id="a">one</li><li data-block-id="b"><span class="gotipe-sug-del" data-gotipe-proposal="s3">old</span><span class="gotipe-sug-ins" data-gotipe-proposal="s3">new</span></li></ul></div>`;
+    vi.spyOn(document.querySelector("ul")!, "getBoundingClientRect").mockReturnValue(
+      rect(56, 342, 400, 105),
+    );
+    vi.spyOn(document.querySelector(".gotipe-sug-del")!, "getBoundingClientRect").mockReturnValue(
+      rect(84, 386, 30, 17),
+    );
+    const at = decorationRect(document.getElementById("root")!, "data-gotipe-proposal", "s3");
+    expect([at?.left, at?.top]).toEqual([84, 386]);
+  });
 });

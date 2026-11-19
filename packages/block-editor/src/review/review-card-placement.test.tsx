@@ -106,4 +106,19 @@ describe("reviewCardPlacement on a narrow page", () => {
     row = { top: 100, bottom: 120 };
     expect(await cardTop("above")).toBe(128);
   });
+
+  it("keeps --gt-review-card-gap from the row on either side", async () => {
+    const sheet = document.createElement("style");
+    sheet.textContent = "[data-gt-view] { --gt-review-card-gap: 6px; }";
+    document.head.append(sheet);
+    try {
+      row = { top: 300, bottom: 320 };
+      expect(await cardTop("above")).toBe(300 - 116 - 6);
+      act(() => root.unmount());
+      root = createRoot(container);
+      expect(await cardTop("below")).toBe(320 + 6);
+    } finally {
+      sheet.remove();
+    }
+  });
 });

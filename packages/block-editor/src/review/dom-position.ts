@@ -58,16 +58,21 @@ export function proposalEndRect(root: HTMLElement, proposalId: string): DOMRect 
   return new DOMRect(r.right, r.top, 0, r.height || 20);
 }
 
+const BLOCK = "[data-block-id], [data-gotipe-phantom-id]";
+
 /**
  * Where a suggestion or a comment stands. A whole block (a suggested list item, task, paragraph)
  * stands where its text starts, past its marker or checkbox, so its card lines up with the text;
  * an inline mark is its own box.
  */
 export function decorationRect(root: HTMLElement, attr: string, id: string): DOMRect | null {
-  const el = root.querySelector(`[${attr}="${CSS.escape(id)}"]`);
+  // A proposal that edits a list item marks the whole list as changed and the item's text with
+  // its own marks: the card stands by the first mark in the text, the block only without one.
+  const all = [...root.querySelectorAll(`[${attr}="${CSS.escape(id)}"]`)];
+  const el = all.find((e) => !e.matches(BLOCK)) ?? all[0];
   if (!el) return null;
   const box = el.getBoundingClientRect();
-  if (!el.matches("[data-block-id], [data-gotipe-phantom-id]")) return box;
+  if (!el.matches(BLOCK)) return box;
   const left = blockTextLeft(el);
   return left === null || left <= box.left
     ? box

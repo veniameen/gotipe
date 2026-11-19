@@ -505,6 +505,7 @@
     "--gt-sug-changed-bar-width": "var(--gt-rule)",
     "--gt-sug-replace-gap": "0px",
     "--gt-card-w": "288px",
+    "--gt-review-card-gap": "8px",
     "--gt-card-pad": "12px",
     "--gt-card-gap": "8px",
     "--gt-card-name-size": "var(--gt-ui-size)",

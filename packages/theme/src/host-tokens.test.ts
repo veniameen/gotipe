@@ -240,6 +240,8 @@ describe("review parts have tokens with today's values", () => {
       "border-radius": "var(--gt-lane-pointer-chip-radius)",
     });
     expect(tokens.view["--gt-lane-pointer-at"]).toBe("0px");
+    // the review card's gap to its row (read by the review layer, a length in px)
+    expect(tokens.view["--gt-review-card-gap"]).toBe("8px");
     // the built-in arrow is outlined in its own colour, as the glyph's stroke was
     expect(tokens.view["--gt-lane-pointer-outline"]).toBe("currentColor");
     // derived from the size where they are used, so a host's size on any container holds

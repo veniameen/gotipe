@@ -13,7 +13,14 @@ function trackStyle(color: string, style: React.CSSProperties = {}): TrackStyle 
  * each measured with the card's own size), or in the margin column (frame 14).
  */
 export type CardPlace =
-  | { top: number; bottom: number; left: number; side: "below" | "above" | "beside" }
+  | {
+      top: number;
+      bottom: number;
+      left: number;
+      side: "below" | "above" | "beside";
+      /** Space to the row (`--gt-review-card-gap`), unused beside the page. */
+      gap: number;
+    }
   | "margin";
 
 const PLACEMENT = { below: "bottom-start", above: "top-start", beside: "bottom-start" } as const;
@@ -25,7 +32,8 @@ function useCardPosition(place: CardPlace) {
   const bottom = floating ? place.bottom : 0;
   const left = floating ? place.left : 0;
   const side = floating ? place.side : "beside";
-  // beside the page the card starts at the given point; by a row it keeps 8 px from the text
+  const rowGap = floating ? place.gap : 0;
+  // beside the page the card starts at the given point; by a row it keeps its gap to the text
   const anchor = useCallback(
     () => ({ top, bottom, left, right: left, width: 0, height: bottom - top }),
     [top, bottom, left],
@@ -35,7 +43,7 @@ function useCardPosition(place: CardPlace) {
     anchor,
     element: ref,
     placement: PLACEMENT[side],
-    gap: side === "beside" ? 0 : 8,
+    gap: side === "beside" ? 0 : rowGap,
   });
   const style: React.CSSProperties = floating
     ? { position: "fixed", ...(position ?? { visibility: "hidden" }) }

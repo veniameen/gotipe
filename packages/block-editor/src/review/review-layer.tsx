@@ -272,12 +272,13 @@ export function ReviewLayer({
           const besideLeft = (doc ? doc.right : rect.right) + 16;
           if (besideLeft + width + 8 <= window.innerWidth) {
             const top = Math.max(8, Math.min(rect.top - 10, window.innerHeight - 200));
-            setCardPos({ top, bottom: top, left: besideLeft, side: "beside" });
+            setCardPos({ top, bottom: top, left: besideLeft, side: "beside", gap: 0 });
           } else {
             // Below the row (above it when there is no room); `cardPlacement: "above"` the
-            // reverse. The card measures its own height, so the 8 px gap holds for any card.
+            // reverse. The card measures its own height, so its gap holds for any card.
             const side = cardPlacement === "above" ? "above" : "below";
-            setCardPos({ top: rect.top, bottom: rect.bottom, left: rect.left, side });
+            const gap = cardGap(root);
+            setCardPos({ top: rect.top, bottom: rect.bottom, left: rect.left, side, gap });
           }
         } else {
           setCardPos(null);
@@ -555,6 +556,13 @@ export function ReviewLayer({
     </>,
     overlay,
   );
+}
+
+/** `--gt-review-card-gap` on the page (a length in px; 8 when unset or not in px). */
+function cardGap(root: HTMLElement): number {
+  const value = getComputedStyle(root).getPropertyValue("--gt-review-card-gap").trim();
+  const px = /^(-?\d*\.?\d+)px$/.exec(value);
+  return px ? Number(px[1]) : 8;
 }
 
 /** Accepts proposals one by one in document order; stops at the first stale or failed one. */
