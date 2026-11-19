@@ -342,6 +342,35 @@ describe("PageEditor head, narrow sizes and review layout", () => {
     expect(ref.current!.getMarkdown()).toBe("# My Notes\n\nBody.\n");
   });
 
+  it("selectionMarkdownRange: the selection in the file, without a mark's delimiters", async () => {
+    const markdown = "# Notes\n\nSee **bold** and _this_ here.\n\nNext line.\n";
+    const { ref, editor } = await mount({ markdown });
+    const [, body, next] = editor.getViewState().blocks;
+    const select = (
+      anchor: { blockId: string; offset: number },
+      head: { blockId: string; offset: number },
+    ) => act(() => editor.setSelection({ anchor, head }));
+    const slice = () => {
+      const range = ref.current!.selectionMarkdownRange()!;
+      return markdown.slice(range.start, range.end);
+    };
+    expect(ref.current!.getMarkdown()).toBe(markdown);
+    // "bold", as a double click selects it, either way round
+    select({ blockId: body!.id, offset: 4 }, { blockId: body!.id, offset: 8 });
+    expect(slice()).toBe("bold");
+    select({ blockId: body!.id, offset: 8 }, { blockId: body!.id, offset: 4 });
+    expect(slice()).toBe("bold");
+    select({ blockId: body!.id, offset: 13 }, { blockId: body!.id, offset: 17 });
+    expect(slice()).toBe("this");
+    // across blocks, backwards
+    select({ blockId: next!.id, offset: 4 }, { blockId: body!.id, offset: 13 });
+    expect(slice()).toBe("this_ here.\n\nNext");
+    // a caret: an empty range
+    select({ blockId: body!.id, offset: 8 }, { blockId: body!.id, offset: 8 });
+    const caret = ref.current!.selectionMarkdownRange()!;
+    expect(caret.end).toBe(caret.start);
+  });
+
   it("an inline icon is not part of the title's accessible name", async () => {
     const { ref } = await mount({
       markdown: "# Notes\n\n## Part\n",

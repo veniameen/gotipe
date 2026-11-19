@@ -122,7 +122,8 @@ editor in state and subscribes in an effect hears it), first `focus`, then `sele
 in place.
 
 Handle (`ref`): `editor`, `getMarkdown()`, `flush()` (emits a pending draft at once and returns the
-Markdown — call it before a save), `setMarkdown(text)` (replaces the document even with the same text
+Markdown — call it before a save), `selectionMarkdownRange()` (the selection as `{ start, end }` in that
+Markdown, without mark delimiters at its edges — an anchor for an edit of the selected text), `setMarkdown(text)` (replaces the document even with the same text
 as the last `markdown`, e.g. a revert to the file on disk; `{ addToHistory: false }` or the prop
 `undoableReplace={false}` clears the undo history instead, e.g. around showing a past version), `focus()`, `insertBlock(kind)` (the "Image"
 and "Blocks" buttons of the toolbar), `getTitle()`, `selectTitle()` ("Rename"), `review` (`ReviewApi`).

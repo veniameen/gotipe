@@ -36,7 +36,8 @@ isBlockEmpty(block: Block): boolean;                    // blocks the serializer
 fingerprint(block: Block): string;                      // id-free canonical JSON of a block
 
 mdOffsetToText(map, mdOffset, bias?: "before" | "after"): { blockId; offset } | null;
-textOffsetToMd(map, blockId, offset): number | null;
+textOffsetToMd(map, blockId, offset, bias?: "before" | "after"): number | null; // at a mark's edge: past or before its delimiters
+textRangeToMd(map, from, to): { start; end } | null;   // a text range without delimiters at its edges
 
 markdownRawNodeSpec   // GoTipe NodeSpec of the `markdownRaw` block, for defineExtension
 ```

@@ -59,6 +59,7 @@ import { type PageBlockKind, insertPageBlock, pageBlockCommands } from "./page-c
 import type { PageEditorHandle, PageEditorProps } from "./page-editor-props";
 import { createPageHost } from "./page-host";
 import { PageTitleIconContext, createPageBlockViews } from "./page-views";
+import { selectionMarkdownRange } from "./selection-markdown";
 import { usePageDraft } from "./use-page-draft";
 
 export type { PageEditorHandle, PageEditorProps, PageSlashMenu } from "./page-editor-props";
@@ -313,6 +314,10 @@ const PageEditorInner = forwardRef<PageEditorHandle, PageEditorProps>(
           return editor ? session.serialize(editor).text : draft.flush();
         },
         flush: draft.flush,
+        selectionMarkdownRange: () =>
+          editor
+            ? selectionMarkdownRange(session.serialize(editor).map, editor.getViewState().selection)
+            : null,
         setMarkdown: draft.setMarkdown,
         focus: (position) => editor?.focus(position),
         insertBlock: (kind) => {

@@ -24,6 +24,13 @@ export interface PageEditorHandle {
    */
   flush(): string;
   /**
+   * Where the selection is in `getMarkdown()`'s text, `[start, end)`: a text selection without
+   * mark delimiters at its edges (selected `**bold**` is `bold`), selected blocks whole. Null
+   * before the editor exists or when the selection is not in the file (an empty title not
+   * written yet).
+   */
+  selectionMarkdownRange(): { start: number; end: number } | null;
+  /**
    * Replaces the document with `text` as an external edit (focus, caret and scroll kept, the
    * change goes into undo), even when `text` equals the last value of `markdown`. A draft not yet
    * emitted is dropped: call `flush()` first to keep it. `onChange` is not called for `text`.

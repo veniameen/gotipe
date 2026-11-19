@@ -1,7 +1,13 @@
 import { describe, expect, it } from "vitest";
 import { clone, flatText, plain } from "./__fixtures__/helpers";
 import { WIKI_PAGE } from "./__fixtures__/wiki-page";
-import { mdOffsetToText, parseMarkdown, serializeMarkdown, textOffsetToMd } from "./index";
+import {
+  mdOffsetToText,
+  parseMarkdown,
+  serializeMarkdown,
+  textOffsetToMd,
+  textRangeToMd,
+} from "./index";
 import type { Block, Doc, MarkdownMap } from "./types";
 
 function allBlocks(doc: Doc): Block[] {
@@ -31,6 +37,52 @@ function checkMap(doc: Doc, text: string, map: MarkdownMap): void {
 }
 
 describe("markdown <-> text mapping", () => {
+  it("puts a selection's edges inside a mark's delimiters (bias, textRangeToMd)", () => {
+    const md = "# Т\n\nЭто **жирный** и _наклонный_ текст\n";
+    const { doc, snapshot } = parseMarkdown(md);
+    const { text, map } = serializeMarkdown(doc, snapshot);
+    const p = doc.blocks[1]!;
+    expect(flatText(p)).toBe("Это жирный и наклонный текст");
+    const word = (w: string) => {
+      const from = flatText(p).indexOf(w);
+      return [from, from + w.length] as const;
+    };
+    const [b0, b1] = word("жирный");
+    // the end of "жирный": past the closing `**` by default (as before), before it with "before"
+    expect(textOffsetToMd(map, p.id, b1)).toBe(md.indexOf(" и _"));
+    expect(textOffsetToMd(map, p.id, b1, "after")).toBe(md.indexOf(" и _"));
+    expect(textOffsetToMd(map, p.id, b1, "before")).toBe(md.indexOf("** и"));
+    // its start: past the opening `**` either way
+    expect(textOffsetToMd(map, p.id, b0, "before")).toBe(md.indexOf("жирный") - 2);
+    expect(textOffsetToMd(map, p.id, b0)).toBe(md.indexOf("жирный"));
+    const range = textRangeToMd(map, { blockId: p.id, offset: b0 }, { blockId: p.id, offset: b1 })!;
+    expect(text.slice(range.start, range.end)).toBe("жирный");
+    const [i0, i1] = word("наклонный");
+    const italic = textRangeToMd(
+      map,
+      { blockId: p.id, offset: i0 },
+      { blockId: p.id, offset: i1 },
+    )!;
+    expect(text.slice(italic.start, italic.end)).toBe("наклонный");
+    // across the marks, the delimiters inside stay
+    const across = textRangeToMd(
+      map,
+      { blockId: p.id, offset: b0 },
+      { blockId: p.id, offset: i1 },
+    )!;
+    expect(text.slice(across.start, across.end)).toBe("жирный** и _наклонный");
+    // a collapsed range at a mark's edge stays collapsed, past the delimiters
+    const caret = textRangeToMd(map, { blockId: p.id, offset: b1 }, { blockId: p.id, offset: b1 })!;
+    expect(caret.end).toBe(caret.start);
+    // across blocks
+    const title = doc.blocks[0]!;
+    const both = textRangeToMd(
+      map,
+      { blockId: title.id, offset: 0 },
+      { blockId: p.id, offset: b1 },
+    )!;
+    expect(text.slice(both.start, both.end)).toBe("Т\n\nЭто **жирный");
+  });
   it("maps Cyrillic text, escapes and entities in a preserved paragraph", () => {
     const md = "# Т\n\nПривет, **мир** \\* и &amp; конец\n";
     const { doc, snapshot } = parseMarkdown(md);
