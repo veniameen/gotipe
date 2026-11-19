@@ -206,6 +206,7 @@ can be set on any container.
 | `--gt-caption-hint-color` | unset: `--gt-text-3` | The file name an image without a caption shows with `media.captionName` |
 | `--gt-list-item-gap` | `var(--gt-flow-list)` (4 px) | Space between two items of a list, task lists included |
 | `--gt-list-item-inset` | `0px` | Inset of a list item from the list's edge: its dot, number or task box moves with its text |
+| `--gt-list-item-text-inset` | `0px` | Inset of a list item's content alone: its text (and a task's box) moves, its dot and number stay where they are |
 | `--gt-flow-between-lists` | `var(--gt-flow)` (8 px) | Space before a list that follows another list, as a numbered list after a task list; `0px` joins them |
 | `--gt-flow-after-h1-table`, `--gt-flow-after-h2-table`, `--gt-flow-after-h3-table` | `var(--gt-flow-after-h1)`, `-h2`, `-h3` (10, 8, 4 px) | Space before a table right under a heading of that level (`-h3` for h3 to h6; `-h1` also under the page title) |
 | `--gt-table-line` | unset: `--gt-line` | Colour of a table's row lines, column lines and frame |

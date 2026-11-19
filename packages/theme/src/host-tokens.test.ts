@@ -397,8 +397,23 @@ describe("flow tokens for tables under headings, lists and list items", () => {
   it("insets list items from the list's edge by a token, none by default", () => {
     expect(declarations(base, ".gotipe-content :where(ul, ol) > li")).toEqual({
       "margin-inline-start": "var(--gt-list-item-inset)",
+      "padding-inline-start": "var(--gt-list-item-text-inset)",
     });
     expect(tokens.view["--gt-list-item-inset"]).toBe("0px");
+  });
+  it("insets a list item's text alone by a token, its dot and number staying, none by default", () => {
+    expect(tokens.view["--gt-list-item-text-inset"]).toBe("0px");
+    // a bullet item's text after the dot's room; the dot itself is placed from the item's edge
+    expect(declarations(base, ".gotipe-content ul:not(.gotipe-todo-list) > li")).toEqual({
+      "padding-left": "calc(var(--gt-indent) + var(--gt-list-item-text-inset))",
+    });
+    expect(
+      declarations(base, ".gotipe-content ul:not(.gotipe-todo-list) > li[data-placeholder]::after")
+        .left,
+    ).toBe("calc(var(--gt-indent) + var(--gt-list-item-text-inset))");
+    expect(declarations(base, ".gotipe-content ol > li[data-placeholder]::after").left).toBe(
+      "var(--gt-list-item-text-inset)",
+    );
   });
 });
 
