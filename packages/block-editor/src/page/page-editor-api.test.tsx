@@ -340,6 +340,58 @@ describe("PageEditor head, narrow sizes and review layout", () => {
     expect(ref.current!.getMarkdown()).toBe("# My Notes\n\nBody.\n");
   });
 
+  it("an inline icon that is the host's button stays reachable and keeps its events", async () => {
+    const opened = vi.fn();
+    const { ref, editor } = await mount({
+      markdown: "# Notes\n\nBody.\n",
+      icon: (
+        <button type="button" aria-label="Page icon" onClick={opened}>
+          <svg />
+        </button>
+      ),
+      iconPlacement: "inline",
+    });
+    const wrapper = container.querySelector(".gotipe-page-title-icon");
+    expect(wrapper?.hasAttribute("aria-hidden")).toBe(false);
+    expect(wrapper?.closest("[aria-hidden='true']")).toBeNull();
+    const button = container.querySelector<HTMLButtonElement>("button[aria-label='Page icon']")!;
+    expect(button.getAttribute("type")).toBe("button");
+    const title = editor.getViewState().blocks[0]!;
+    act(() => {
+      editor.setSelection({
+        anchor: { blockId: title.id, offset: 2 },
+        head: { blockId: title.id, offset: 2 },
+      });
+    });
+    const before = JSON.stringify(editor.getJSON());
+    const selection = JSON.stringify(editor.getViewState().selection);
+    const markdown = ref.current!.getMarkdown();
+    const seen = vi.fn();
+    // past the page: the events stopped at the icon
+    document.body.addEventListener("keydown", seen);
+    document.body.addEventListener("mousedown", seen);
+    act(() => {
+      button.focus();
+      for (const type of ["pointerdown", "mousedown", "mouseup", "click"]) {
+        button.dispatchEvent(new MouseEvent(type, { bubbles: true, cancelable: true }));
+      }
+      for (const key of ["Enter", "Backspace", "a"]) {
+        const event = new KeyboardEvent("keydown", { key, bubbles: true, cancelable: true });
+        button.dispatchEvent(event);
+        expect(event.defaultPrevented).toBe(false);
+      }
+    });
+    expect(opened).toHaveBeenCalledOnce();
+    expect(seen).not.toHaveBeenCalled();
+    expect(document.activeElement).toBe(button);
+    expect(JSON.stringify(editor.getJSON())).toBe(before);
+    expect(JSON.stringify(editor.getViewState().selection)).toBe(selection);
+    expect(ref.current!.getMarkdown()).toBe(markdown);
+    expect(ref.current!.getTitle()).toBe("Notes");
+    document.body.removeEventListener("keydown", seen);
+    document.body.removeEventListener("mousedown", seen);
+  });
+
   it("a host that re-renders with a new inline icon keeps the headings and the caret", async () => {
     const { editor, draw } = await mount({
       markdown: "# Notes\n\n## Part\n",
