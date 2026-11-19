@@ -150,6 +150,17 @@ describe("review parts have tokens with today's values", () => {
     expect(tokens.view["--gt-sug-block-ins-underline"]).toBe("underline");
     expect(tokens.view["--gt-sug-block-ins-underline-thickness"]).toBe("var(--gt-underline)");
   });
+  it("can tint a new block's text alone, none by default", () => {
+    const text = declarations(review, ".gotipe-sug-block-ins-text");
+    expect(text.background.replace(/\s+/g, " ")).toBe(
+      "color-mix( in srgb, var(--gt-track, var(--gt-add)) var(--gt-sug-block-ins-text-tint), transparent )",
+    );
+    expect(text["box-decoration-break"]).toBe("clone");
+    expect(tokens.view["--gt-sug-block-ins-text-tint"]).toBe("0%");
+    expect(declarations(review, ".gotipe-sug-stale .gotipe-sug-block-ins-text").background).toBe(
+      "transparent",
+    );
+  });
   it("draws a stale proposal by tokens: today's quiet text and dashed line by default", () => {
     const stale = declarations(review, ".gotipe-sug-stale");
     expect(stale.color).toBe("var(--gt-sug-stale-color, var(--gt-text-2))");

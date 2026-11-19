@@ -174,6 +174,18 @@ describe("computeReviewDecorations", () => {
       expect(phantom?.type === "blocks" && phantom.blocks.map((b) => [b.type, plain(b)])).toEqual([
         ["listItem", "new"],
       ]);
+      // its text in a span of its own: a host can tint the text rather than the whole row
+      const row = phantom?.type === "blocks" ? phantom.blocks[0]! : null;
+      expect(row?.decorations).toEqual([
+        {
+          type: "inline",
+          key: `${row?.id}:text`,
+          blockId: row?.id,
+          from: 0,
+          to: 3,
+          className: "gotipe-sug-block-ins-text",
+        },
+      ]);
       // nothing is drawn in the line of the item before it
       expect(r.decorations.filter((d) => d.type === "widget")).toEqual([]);
     }

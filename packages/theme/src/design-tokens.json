@@ -498,6 +498,7 @@
     "--gt-sug-ins-line-mix": "100%",
     "--gt-sug-block-ins-underline": "underline",
     "--gt-sug-block-ins-underline-thickness": "var(--gt-underline)",
+    "--gt-sug-block-ins-text-tint": "0%",
     "--gt-sug-stale-underline-style": "dashed",
     "--gt-sug-stale-underline-thickness": "var(--gt-underline)",
     "--gt-sug-changed-bar-width": "var(--gt-rule)",
