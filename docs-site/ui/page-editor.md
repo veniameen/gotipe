@@ -221,7 +221,15 @@ export function ReviewedPage({ file, save }: { file: string; save: (text: string
   `onDeleteComment(id)` the open card has a delete button (a trash icon, "Delete comment"); ask
   for confirmation inside it if you need to. `false` keeps the card, a throw is reported as
   `COMMENT_ACTION_FAILED`; after success drop the comment from `comments`.
-- **Cursors** stand at the end of a proposal's text or at an anchor, with a label.
+- **Cursors** stand at the end of a proposal's text or at an anchor, with a label. A lane
+  can have several, each under its own `id` and with its own `name`; `compact` keeps a
+  cursor's flag in one line, and at the page's edge the flag stands before its cursor
+  (`data-chip-side`).
+- A proposal with `live: true` is **still being written**: give a new object with a longer
+  text under the same `id` as it grows, and the same `id` without `live` when it is whole.
+  Until then it has no Accept or Reject and is not part of Accept all, its text is shown at
+  once and its unfinished Markdown as text. Proposals that insert at one point stand by
+  their `order`. See [model edits](/docs/review/model-edits#proposals-still-being-written).
 - On a page at least 880 px wide (card, gap and minimum page width tokens) cards stand in
   the margin beside their text; on a narrower page a card opens next to the text you click.
   Escape closes it. `reviewLayout` fixes either layout whatever the width.

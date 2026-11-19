@@ -60,6 +60,17 @@ key press from growing with the document is pinned by unit tests: `core/tests/en
 `core/tests/render-correction.test.ts`, `react/src/content/plain-blocks.test.tsx`,
 `markdown/src/fingerprints.test.ts`.
 
+A review whose proposals are still being written is measured the same way:
+`node scripts/perf/live-review.mjs --label <name>` opens `live.html` of the same consumer (the
+long page and a small one), grows the texts of four proposals 12 times a second for 10 seconds,
+all in one update and then each on its own beat, and writes to `output/perf/` the time from an
+update to the next frame, the length of every frame (a frame longer than one and a half of the
+display's own counts as late) and what the browser spent per update (Chromium's own counters).
+`--profile` saves a CPU profile. Run it alone and compare runs of one machine only.
+What keeps an update from binding and drawing everything again is pinned by unit tests:
+`suggestions/src/review-live.test.ts`, `react/src/content/plain-blocks.test.tsx`,
+`block-editor/src/review/review-live.test.tsx`.
+
 Reports/traces/screenshots go to the ignored `output/`. Record the command, the tools,
 the tree/commit, and the result/limitations. An old CI run does not confirm the current code.
 Publishing is not part of local acceptance and is not run automatically.

@@ -30,7 +30,8 @@ shows the library's Page/Block variants with a choice of view; the UI geometry c
 runs against them (`e2e/editor-visual-audit.spec.ts`). `apps/playground/tests/csp` is a separate
 technical consumer for the CSP check of the public JS entry, with no product route;
 `apps/playground/tests/perf` is one for typing latency on a long generated page
-(`scripts/perf/typing-latency.mjs`).
+(`scripts/perf/typing-latency.mjs`) and for the frames of a review whose proposals are still
+being written (`live.html`, `scripts/perf/live-review.mjs`).
 
 The limits of 600 lines / 24 direct files do not replace a review of responsibility.
 A pure function, a state controller, transport, and UI are separated by reasons
@@ -213,6 +214,18 @@ The reason a tool is unavailable is `components/formatting/reasons.ts`, which is
 `aria-describedby`; whether a mark is in the schema (the toolbar fonts, the "More" indices) is `formatting/schema.ts`.
 ⌘K (`openLinkDialog`) is handled by one owner per editor, `formatting/link-shortcut.ts`: the field
 opens the bubble menu's `LinkEditor`, and without a bubble menu the toolbar's. The view is `theme/src/theme/toolbar.css`.
+
+Review of a Markdown page (`PageEditor`'s `review`): `suggestions/src/review-decorations.ts` binds
+proposals and comments to the document, in the proposals' `order`; `review/proposal.ts` binds one
+proposal (`block-diff.ts` diffs the blocks, `live.ts` marks the end of a growing text),
+`review/comment.ts` one comment. `review/cache.ts` and `keep.ts` bind again only what changed and
+keep the objects of the rest, so the renderers redraw only that (`react/src/content/decorations.ts`
+`keepDrawn`, `blocks.tsx` `phantomOf`). In the block editor, `review/use-review-decorations.ts`
+owns the editor's `review` layer, the cache and the reveal of new proposals;
+`review/live-markdown.ts` says how a growing proposal's unfinished Markdown is read;
+`review/lane-cursors.tsx` places the lanes' cursors; `review/review-layer.tsx` ties them with the
+cards (`review-cards.tsx`, `review-margin.tsx`) and the actions. A proposal that is still being
+written (`live`) takes no decision anywhere in these.
 
 Comment anchors (D-290): `comments/src/anchors.ts` finds each comment's quote after an `update`.
 A quote the edit left whole follows it (`follow.ts`: the edit is read from the document text
