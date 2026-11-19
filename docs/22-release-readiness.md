@@ -488,7 +488,12 @@ not part of the check artifacts.
 - 2026-11-19: 0.1.4 prepared from the host's list after 0.1.3: `discardAsset` on every path a
   stored file is not inserted, an accessible inline page icon, the owner's host options
   `reviewCardPlacement` and `reviewLaneCursor` (Atlas frame 14), and tokens. Released: `core`,
-  `react`, `theme`, `block-editor` at 0.1.4.
+  `react`, `theme`, `block-editor` at 0.1.4. Accepted on tree 0c0f926 plus a jsdom stub in one
+  test (cfb0aa9): WASM builds, build, architecture and `:release`, theme, typecheck, lint, `pnpm
+  test` (core 1,143, block-editor 216, react 112, theme 31, the rest green), `check:bundles` (core
+  graph 130,424 of 131,072), packages, consumer, exports, docs site, `cargo fmt`, clippy, `cargo
+  test`; Playwright Chromium 1,085 of 1,085, Firefox and WebKit 954 of 955 (only
+  `comments.spec.ts:68`, macOS Home, as on 0.1.1).
 
 ## Acceptance before release (2026-11-15)
 
