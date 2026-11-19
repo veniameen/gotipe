@@ -1,6 +1,7 @@
 import type { GoTipeEditor } from "@gotipe/core";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useBlockEditorI18n } from "../i18n/strings";
+import { isHostKey } from "../page/host-slot";
 import { PageIcon } from "../page/icons";
 import { aiControls } from "./ai-controls";
 
@@ -101,7 +102,8 @@ function CommandBar({ editor, onSubmit }: AiCommandBarProps) {
       const owned =
         target instanceof Node &&
         (editor.element?.contains(target) || barRef.current?.contains(target));
-      if (!owned || event.isComposing || !editor.isEditable || editor.isDestroyed) return;
+      if (!owned || isHostKey(event)) return;
+      if (event.isComposing || !editor.isEditable || editor.isDestroyed) return;
       // ⌘J (Ctrl+J): ⌘K belongs to the link (GoTipe Atlas). The physical key works on any layout.
       const j = event.code === "KeyJ" || event.key.toLowerCase() === "j";
       if ((event.metaKey || event.ctrlKey) && !event.altKey && !event.shiftKey && j) {

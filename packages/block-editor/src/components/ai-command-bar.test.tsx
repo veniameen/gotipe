@@ -6,6 +6,7 @@ import { GoTipeI18nProvider } from "@gotipe/react";
 import { act } from "react";
 import { type Root, createRoot } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { HOST_SLOT_ATTR } from "../page/host-slot";
 import { AiCommandBar } from "./ai-command-bar";
 import { AiStatusIndicator } from "./ai-status-indicator";
 import { BlockEditor } from "./block-editor";
@@ -62,6 +63,29 @@ it("opens only for its editor and respects runtime read-only mode", () => {
   expect(container.querySelector("dialog")).toBeNull();
   act(open);
   expect(container.querySelector("dialog")).toBeNull();
+});
+it("leaves ⌘J pressed in a host's element inside the page to the host", () => {
+  act(() => root.render(<AiCommandBar editor={editor} />));
+  const slot = document.createElement("div");
+  slot.setAttribute(HOST_SLOT_ATTR, "");
+  slot.setAttribute("data-gotipe-widget", "");
+  const field = slot.appendChild(document.createElement("input"));
+  surface.append(slot);
+  const key = new KeyboardEvent("keydown", {
+    key: "j",
+    ctrlKey: true,
+    bubbles: true,
+    cancelable: true,
+  });
+  act(() => {
+    field.dispatchEvent(key);
+  });
+  expect(key.defaultPrevented).toBe(false);
+  expect(container.querySelector("dialog")).toBeNull();
+  // from the text it still opens
+  act(open);
+  expect(container.querySelector("dialog")).not.toBeNull();
+  slot.remove();
 });
 it("prevents repeated submission and retains errors and prompt for retry", async () => {
   let reject!: (error: Error) => void;

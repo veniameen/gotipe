@@ -11,6 +11,7 @@ import { useSyncExternalStore } from "react";
 import { blockPath } from "../components/formatting/selection";
 import { Tip } from "../components/formatting/tip";
 import { useBlockEditorI18n } from "../i18n/strings";
+import { isHostKey } from "../page/host-slot";
 import { PageIcon, type PageIconName } from "../page/icons";
 import { FIND_KEYS, findShortcut } from "./find-keys";
 
@@ -106,7 +107,7 @@ function FindDock({
     const element = root.current;
     if (!element) return;
     const keydown = (event: KeyboardEvent) => {
-      const wanted = findShortcut(event);
+      const wanted = isHostKey(event) ? null : findShortcut(event);
       if (!wanted) return;
       event.preventDefault();
       event.stopPropagation();

@@ -5,6 +5,7 @@ import { MathRendererContext } from "@gotipe/react";
 import type React from "react";
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { useBlockEditorI18n } from "../i18n/strings";
+import { isHostKey } from "../page/host-slot";
 import { loadEmojiNames } from "./emoji-names";
 import { EmojiPicker } from "./emoji-picker";
 import {
@@ -86,6 +87,7 @@ export function AtomUI(props: AtomUIProps) {
     const key = (event: KeyboardEvent) => {
       if (event.key !== "Enter" || event.shiftKey || event.altKey || event.metaKey || event.ctrlKey)
         return;
+      if (isHostKey(event)) return;
       const range = own(event.target) && editor.isEditable ? caretTarget(editor) : null;
       if (!range || range.from === range.to) return;
       const atom = getInlineMath(editor, { blockId: range.blockId, offset: range.from + 1 });

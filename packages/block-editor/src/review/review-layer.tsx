@@ -16,6 +16,7 @@ import type React from "react";
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useBlockEditorI18n } from "../i18n/strings";
+import { isHostKey } from "../page/host-slot";
 import { PageIcon, type PageIconName } from "../page/icons";
 import type { MarkdownSession } from "../page/markdown-session";
 import { usePageOverlay } from "../page/overlay";
@@ -317,7 +318,7 @@ export function ReviewLayer({
       setActiveId(id && root.contains(hit) ? id : null);
     };
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setActiveId(null);
+      if (e.key === "Escape" && !isHostKey(e)) setActiveId(null);
     };
     document.addEventListener("mousedown", onDown, true);
     document.addEventListener("keydown", onKey);
