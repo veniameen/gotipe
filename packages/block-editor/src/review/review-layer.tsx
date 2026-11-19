@@ -1,4 +1,4 @@
-import { type Decoration, type GoTipeEditor, GoTipeError } from "@gotipe/core";
+import { type GoTipeEditor, GoTipeError } from "@gotipe/core";
 import {
   type CommentState,
   type LaneCursor,
@@ -6,23 +6,22 @@ import {
   type ReviewComment,
   type ReviewLane,
   type ReviewProposal,
-  computeReviewDecorations,
-  findAnchor,
-  mapOffsetToText,
   proposalsInDocumentOrder,
-  revealDecorations,
 } from "@gotipe/suggestions";
 import type React from "react";
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useBlockEditorI18n } from "../i18n/strings";
 import { isHostKey } from "../page/host-slot";
-import { PageIcon, type PageIconName } from "../page/icons";
 import type { MarkdownSession } from "../page/markdown-session";
 import { usePageOverlay } from "../page/overlay";
-import { decorationRect, proposalEndRect, rectAt } from "./dom-position";
-import { type CardPlace, CommentCard, LANE_ICON, ProposalCard } from "./review-cards";
+import { decorationRect } from "./dom-position";
+import { LaneCursors, type ReviewLaneCursor } from "./lane-cursors";
+import { type CardPlace, CommentCard, ProposalCard } from "./review-cards";
 import { ReviewMargin, useMarginLayout } from "./review-margin";
+import { useReviewDecorations } from "./use-review-decorations";
+
+export type { ReviewLaneCursor } from "./lane-cursors";
 
 export type ReviewResult = boolean | undefined;
 /**
@@ -32,8 +31,6 @@ export type ReviewResult = boolean | undefined;
 export type ReviewLayout = "auto" | "inline" | "margin";
 /** Where the card by the text opens when it has no room beside it. */
 export type ReviewCardPlacement = "below" | "above";
-/** How a lane's cursor looks: a caret with a flag, or an arrow pointer with its name. */
-export type ReviewLaneCursor = "caret" | "pointer";
 export type ReviewAction = (id: string) => Promise<ReviewResult> | ReviewResult;
 
 /** Review data and callbacks (ADR-0047). Everything is controlled by the host. */
@@ -60,28 +57,8 @@ export interface PageReviewProps {
   onStatesChange?: (states: { proposals: ProposalState[]; comments: CommentState[] }) => void;
 }
 
-const LAYER = "review";
 /** One empty list for a review without comments: a new one each render would recompute forever. */
 const NO_COMMENTS: ReviewComment[] = [];
-const MAX_REVEAL_MS = 1500;
-
-function prefersReducedMotion(): boolean {
-  return (
-    typeof window !== "undefined" &&
-    !!window.matchMedia?.("(prefers-reduced-motion: reduce)").matches
-  );
-}
-
-interface Placed {
-  laneId: string;
-  name: string;
-  label?: string;
-  color: string;
-  icon: PageIconName;
-  top: number;
-  left: number;
-  height: number;
-}
 
 /** Imperative review actions of a mounted page editor. */
 export interface ReviewApi {
@@ -125,104 +102,22 @@ export function ReviewLayer({
   const i18n = useBlockEditorI18n();
   const overlay = usePageOverlay();
   const [activeId, setActiveId] = useState<string | null>(null);
-  const [states, setStates] = useState<{ proposals: ProposalState[]; comments: CommentState[] }>({
-    proposals: [],
-    comments: [],
-  });
-  const [placed, setPlaced] = useState<Placed[]>([]);
   const [cardPos, setCardPos] = useState<Exclude<CardPlace, "margin"> | null>(null);
   const [busy, setBusy] = useState(false);
-  const fullRef = useRef<Decoration[]>([]);
-  const seenRef = useRef<Set<string> | null>(null);
-  const revealRef = useRef(new Map<string, { start: number; total: number; duration: number }>());
-  const frameRef = useRef<number | null>(null);
-  const [layoutTick, setLayoutTick] = useState(0);
-
   const lanes = useMemo(() => new Map(review.lanes.map((l) => [l.id, l] as const)), [review.lanes]);
   const proposals = review.proposals;
   const comments = review.comments ?? NO_COMMENTS;
   // Wide pages keep every card in a margin column (Atlas, frame 14); narrow ones open one by the text.
   const margin = useMarginLayout(root, proposals.length + comments.length > 0, layout);
 
-  const applyDecorations = useCallback(() => {
-    let decorations = fullRef.current;
-    const now = performance.now();
-    for (const [id, r] of revealRef.current) {
-      const t = Math.min(1, (now - r.start) / r.duration);
-      if (t >= 1) {
-        revealRef.current.delete(id);
-        continue;
-      }
-      decorations = revealDecorations(decorations, id, Math.ceil(r.total * t));
-    }
-    editor.setDecorations(LAYER, decorations);
-    setLayoutTick((n) => n + 1);
-    if (revealRef.current.size > 0) {
-      frameRef.current = requestAnimationFrame(applyDecorations);
-    } else {
-      frameRef.current = null;
-    }
-  }, [editor]);
-
-  const recompute = useCallback(() => {
-    const page = session.serialize(editor);
-    const out = computeReviewDecorations({
-      blocks: editor.getViewState().blocks,
-      text: page.text,
-      map: page.map,
-      parse: (fragment) => session.parseFragment(fragment),
-      proposals,
-      comments,
-      lanes: review.lanes,
-      activeId,
-    });
-    fullRef.current = out.decorations;
-    // New proposals reveal their text (unless motion is reduced).
-    if (seenRef.current === null) {
-      seenRef.current = new Set(proposals.map((p) => p.id));
-    } else {
-      const reduced = prefersReducedMotion();
-      for (const state of out.proposals) {
-        if (seenRef.current.has(state.id)) continue;
-        seenRef.current.add(state.id);
-        if (!reduced && state.status === "pending" && state.insertedChars > 0) {
-          revealRef.current.set(state.id, {
-            start: performance.now(),
-            total: state.insertedChars,
-            duration: Math.min(MAX_REVEAL_MS, Math.max(250, state.insertedChars * 18)),
-          });
-        }
-      }
-    }
-    setStates({ proposals: out.proposals, comments: out.comments });
-    if (frameRef.current === null) applyDecorations();
-  }, [editor, session, proposals, comments, review.lanes, activeId, applyDecorations]);
-
-  // Recompute on every document change (throttled to a frame) and on new data.
-  useEffect(() => {
-    let scheduled: number | null = null;
-    const schedule = () => {
-      if (scheduled !== null) return;
-      scheduled = requestAnimationFrame(() => {
-        scheduled = null;
-        recompute();
-      });
-    };
-    recompute();
-    const off = editor.on("update", schedule);
-    return () => {
-      off();
-      if (scheduled !== null) cancelAnimationFrame(scheduled);
-    };
-  }, [editor, recompute]);
-
-  useEffect(
-    () => () => {
-      if (frameRef.current !== null) cancelAnimationFrame(frameRef.current);
-      editor.setDecorations(LAYER, []);
-    },
-    [editor],
-  );
+  const { states, tick: layoutTick } = useReviewDecorations({
+    editor,
+    session,
+    proposals,
+    comments,
+    lanes: review.lanes,
+    activeId,
+  });
 
   const onStatesChange = review.onStatesChange;
   useEffect(() => {
@@ -230,38 +125,11 @@ export function ReviewLayer({
     onStates?.(states);
   }, [states, onStatesChange, onStates]);
 
-  // Cursors and the open card follow layout: decorations, scroll, resize.
+  // The open card follows layout: decorations, scroll, resize.
   // biome-ignore lint/correctness/useExhaustiveDependencies: layoutTick re-places after decorations change
   useLayoutEffect(() => {
     if (!root) return;
     const place = () => {
-      const page = session.serialize(editor);
-      const out: Placed[] = [];
-      for (const cursor of review.cursors ?? []) {
-        const lane = lanes.get(cursor.laneId);
-        if (!lane) continue;
-        let rect: DOMRect | null = null;
-        if (cursor.proposalId) rect = proposalEndRect(root, cursor.proposalId);
-        if (!rect && cursor.anchor) {
-          const m = findAnchor(page.text, cursor.anchor);
-          if (m.ok) {
-            const pos = mapOffsetToText(page.map, m.end, "before");
-            if (pos) rect = rectAt(root, pos.blockId, pos.offset);
-          }
-        }
-        if (!rect) continue;
-        out.push({
-          laneId: lane.id,
-          name: lane.name,
-          label: cursor.label,
-          color: lane.color ?? "var(--gt-track-1)",
-          icon: LANE_ICON[lane.kind],
-          top: rect.top,
-          left: rect.left,
-          height: rect.height || 20,
-        });
-      }
-      setPlaced(out);
       if (activeId && !margin) {
         const rect =
           decorationRect(root, "data-gotipe-proposal", activeId) ??
@@ -301,7 +169,7 @@ export function ReviewLayer({
       window.removeEventListener("scroll", onScroll, true);
       window.removeEventListener("resize", onScroll);
     };
-  }, [root, editor, session, review.cursors, lanes, activeId, layoutTick, margin, cardPlacement]);
+  }, [root, activeId, layoutTick, margin, cardPlacement]);
 
   // Clicking a suggestion or a comment opens its card.
   useEffect(() => {
@@ -498,39 +366,19 @@ export function ReviewLayer({
   );
 
   if (!overlay) return null;
-  const pointer = laneCursor === "pointer";
 
   return createPortal(
     <>
-      {placed.map((c) => (
-        <div
-          key={c.laneId}
-          className="gotipe-lane-cursor"
-          style={
-            {
-              position: "fixed",
-              top: c.top,
-              left: c.left,
-              height: c.height,
-              "--gt-track": c.color,
-            } as React.CSSProperties
-          }
-          data-variant={pointer ? "pointer" : undefined}
-          aria-hidden="true"
-        >
-          {pointer && lanePointer ? (
-            <span className="gotipe-lane-pointer">{lanePointer}</span>
-          ) : pointer ? (
-            <PageIcon name="pointer" className="gotipe-lane-pointer" />
-          ) : (
-            <span className="gotipe-lane-caret" />
-          )}
-          <span className="gotipe-lane-chip">
-            <span className="gotipe-lane-chip-name">{c.name}</span>
-            {c.label ? <span className="gotipe-lane-chip-label">{c.label}</span> : null}
-          </span>
-        </div>
-      ))}
+      <LaneCursors
+        editor={editor}
+        session={session}
+        root={root}
+        cursors={review.cursors}
+        lanes={lanes}
+        tick={layoutTick}
+        look={laneCursor}
+        pointer={lanePointer}
+      />
       {margin && root ? (
         <ReviewMargin
           root={root}
