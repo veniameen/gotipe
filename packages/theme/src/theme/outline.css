@@ -2,21 +2,24 @@
    page; a narrow container hides it (--gt-outline-display) and the page takes the whole width.
    The page keeps its own side padding, because a narrow container changes it. So the outline's
    column is sized by the outline: the grid's left padding, the column and the gap, which reaches
-   into the page's padding. A hidden outline leaves that column empty, at zero width. */
+   into the page's padding. A hidden outline leaves that column empty, at zero width.
+   Only the docs view has an outline, and the rules ask for the view before they look for it
+   (`:where`, so they weigh as before): in the other views the browser does not watch the editor
+   for an outline, and a new element in the text does not make it restyle the whole page. */
 
-.gotipe-block-editor:has(> .gotipe-outline) {
+.gotipe-block-editor:where([data-gt-view="docs"]):has(> .gotipe-outline) {
   display: grid;
   grid-template-columns: var(--gt-docs-columns);
   justify-content: center;
 }
 /* everything in the flow stands in the page's column; the overlays keep the whole editor */
-.gotipe-block-editor:has(> .gotipe-outline)
+.gotipe-block-editor:where([data-gt-view="docs"]):has(> .gotipe-outline)
   > :not(.gotipe-outline, .gotipe-block-toolbar-wrapper, .gotipe-drop-indicator) {
   grid-column: -2;
   min-width: 0;
 }
 /* the page answers to the editor's container, as in the Atlas, not to its own narrower column */
-.gotipe-block-editor:has(> .gotipe-outline) > .gotipe-editor {
+.gotipe-block-editor:where([data-gt-view="docs"]):has(> .gotipe-outline) > .gotipe-editor {
   container-type: normal;
 }
 

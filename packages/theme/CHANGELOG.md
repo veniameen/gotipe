@@ -24,6 +24,11 @@
   (`--gt-lane-chip-flip-x`, unset: at the cursor; `--gt-lane-chip-flip-y`, unset:
   `--gt-toolbar-gap`). Each is read with a fallback, so it can be set on any element above the
   page.
+- The docs view's outline rules ask for the view before they look for the outline
+  (`.gotipe-block-editor:where([data-gt-view="docs"]):has(> .gotipe-outline)`, the same weight
+  and the same look). In the other views the browser no longer restyles the whole page when an
+  element is added to the text or removed from it (a suggested block, a mark, a decoration),
+  which took about 100 ms on a page of 7,400 blocks.
 - 484513c: The page title with an inline icon (`iconPlacement="inline"`): its accessible name is the title's
   text alone (the prompt when it is empty), no longer prefixed by the icon's own name, and the empty
   title's prompt starts after the icon instead of under it (`--gt-page-icon-inline` +
