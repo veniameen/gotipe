@@ -11,6 +11,10 @@
   `data-gotipe-widget`): not part of the text, offsets or file; it keeps its element as it moves to
   another block. In `BlockEditor` and `PageEditor` its keys and input stay the host's, as with an
   inline page icon.
+- Keys pressed in a host's element inside the page (an inline page icon, `afterBlock`) are no
+  longer stopped there: the editor still takes none of them, and the host's own listeners on
+  `document` and `window` (shortcuts, a hint of the keys held) now see them. Input events still
+  stop at the element.
 - 484513c: The page title with an inline icon (`iconPlacement="inline"`): its accessible name is the title's
   text alone (the prompt when it is empty), no longer prefixed by the icon's own name, and the empty
   title's prompt starts after the icon instead of under it (`--gt-page-icon-inline` +

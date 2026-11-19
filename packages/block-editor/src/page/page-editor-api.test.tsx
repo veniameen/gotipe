@@ -474,7 +474,8 @@ describe("PageEditor head, narrow sizes and review layout", () => {
       }
     });
     document.body.removeEventListener("keydown", seen);
-    expect(seen).not.toHaveBeenCalled();
+    // the editor takes none of them; the host's listeners past the page see each
+    expect(seen).toHaveBeenCalledTimes(4);
     expect(document.activeElement).toBe(input);
     expect(JSON.stringify(editor.getJSON())).toBe(before);
     // not in the file
@@ -536,8 +537,11 @@ describe("PageEditor head, narrow sizes and review layout", () => {
     const selection = JSON.stringify(editor.getViewState().selection);
     const markdown = ref.current!.getMarkdown();
     const seen = vi.fn();
-    // past the page: the keys stop at the icon; a click goes on, so the editor's menus close
+    // past the page: the keys and a click go on, so the host's shortcuts on `document` and
+    // `window` work from the icon and the editor's menus close
     const clicked = vi.fn();
+    const onWindow = vi.fn();
+    window.addEventListener("keydown", onWindow);
     document.body.addEventListener("keydown", seen);
     document.body.addEventListener("mousedown", clicked);
     act(() => {
@@ -552,7 +556,8 @@ describe("PageEditor head, narrow sizes and review layout", () => {
       }
     });
     expect(opened).toHaveBeenCalledOnce();
-    expect(seen).not.toHaveBeenCalled();
+    expect(seen).toHaveBeenCalledTimes(3);
+    expect(onWindow).toHaveBeenCalledTimes(3);
     expect(clicked).toHaveBeenCalledOnce();
     expect(document.activeElement).toBe(button);
     expect(JSON.stringify(editor.getJSON())).toBe(before);
@@ -560,7 +565,35 @@ describe("PageEditor head, narrow sizes and review layout", () => {
     expect(ref.current!.getMarkdown()).toBe(markdown);
     expect(ref.current!.getTitle()).toBe("Notes");
     document.body.removeEventListener("keydown", seen);
+    window.removeEventListener("keydown", onWindow);
     document.body.removeEventListener("mousedown", clicked);
+  });
+
+  it("an inline icon stands only in a title and comes back when the first block is one again", async () => {
+    const { editor } = await mount({
+      markdown: "# Notes\n\nBody.\n",
+      icon: <svg data-testid="glyph" />,
+      iconPlacement: "inline",
+    });
+    const glyph = () => container.querySelector(".gotipe-page-title-icon [data-testid='glyph']");
+    const first = editor.getViewState().blocks[0]!;
+    const caret = { blockId: first.id, offset: 0 };
+    expect(glyph()).not.toBeNull();
+    await act(async () => {
+      editor.setSelection({ anchor: caret, head: caret });
+      editor.chain().setBlockType("paragraph").run();
+      await wait(20);
+    });
+    expect(editor.getViewState().blocks[0]!.type).toBe("paragraph");
+    expect(container.querySelector(".gotipe-page-title")).toBeNull();
+    expect(glyph()).toBeNull();
+    await act(async () => {
+      editor.setSelection({ anchor: caret, head: caret });
+      editor.chain().setBlockType("heading", { level: 1 }).run();
+      await wait(20);
+    });
+    expect(container.querySelector(".gotipe-page-title")).not.toBeNull();
+    expect(glyph()).not.toBeNull();
   });
 
   it("a host that re-renders with a new inline icon keeps the headings and the caret", async () => {
