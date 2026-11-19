@@ -88,7 +88,7 @@ Details of the codec are in [Markdown](/docs/conversion/markdown).
 | `titlePlaceholder` | `string` | `"Untitled"` | Shown in an empty title, for example the file name. |
 | `titleLevel` | `1 \| 2 \| 3 \| 4 \| 5 \| 6` | `1` | The HTML level of the title: `h1` by default. It looks the same at any level; pass `2` when your page has its own `h1`. Other headings of the file keep their levels. |
 | `icon` | `ReactNode` | — | The page's glyph above the title in the text column, as in [`PageHead`](/docs/ui/block-editor) (`.gotipe-page-head-icon`). It is not written to the file. |
-| `iconPlacement` | `"above" \| "inline"` | `"above"` | Where `icon` stands: above the title, or in the title's row before its text (`.gotipe-page-title-icon`, sizes `--gt-page-icon-inline` and `--gt-page-icon-inline-gap`). Either way it is not part of the title's text or the file. |
+| `iconPlacement` | `"above" \| "inline"` | `"above"` | Where `icon` stands: above the title, or in the title's row before its text (`.gotipe-page-title-icon`, sizes `--gt-page-icon-inline` and `--gt-page-icon-inline-gap`). Either way it is not part of the title's text or the file. Inline, it stays accessible (a button with a menu keeps its role and focus) and its clicks and keys do not reach the editor. |
 | `header` | `ReactNode` | — | Your own content above the title in the text column, after `icon`, inside `.gotipe-page-head`. |
 | `view` | `"notion" \| "docs" \| "modern" \| "minimal"` | `"notion"` | One of the shared [views](/docs/ui/theming). |
 | `narrow` | `boolean` | `true` | The view's sizes for a container up to 640 px wide. `false` keeps the wide sizes, or your own on `.gotipe-page .gotipe-block-editor`, at any width (`data-gt-narrow="off"`). |

@@ -38,11 +38,26 @@ const firstBlockId = (state: ViewState): string | undefined => state.blocks[0]?.
  */
 /**
  * The page's glyph in the title's row (`iconPlacement="inline"`), drawn as a widget outside the
- * title's text: no offset, no Markdown, no caret. A context, not an argument of
+ * title's text: no offset, no Markdown, no caret. It stays accessible (its role and focus are the
+ * host's) and its pointer and key events do not reach the editor. A context, not an argument of
  * the view: a new icon element on every render of the host must not make a new heading view,
  * which would draw every heading anew and lose the caret.
  */
 export const PageTitleIconContext = createContext<React.ReactNode>(null);
+
+function stopAtIcon(event: React.SyntheticEvent): void {
+  // the host's icon (a button with a menu, say) keeps its own events: the editor's handlers
+  // above it do not move the caret, select the block or take Enter and Backspace
+  event.stopPropagation();
+}
+const iconGuard = {
+  onMouseDown: stopAtIcon,
+  onPointerDown: stopAtIcon,
+  onClick: stopAtIcon,
+  onKeyDown: stopAtIcon,
+  onBeforeInput: stopAtIcon,
+  onInput: stopAtIcon,
+};
 
 function headingView(titlePlaceholder: string | undefined, titleLevel: PageTitleLevel) {
   const view: BlockViewComponent = function PageHeadingView({
@@ -78,7 +93,7 @@ function headingView(titlePlaceholder: string | undefined, titleLevel: PageTitle
             className="gotipe-page-title-icon"
             data-gotipe-widget=""
             contentEditable={false}
-            aria-hidden="true"
+            {...iconGuard}
           >
             {titleIcon}
           </span>
