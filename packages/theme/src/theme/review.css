@@ -47,9 +47,10 @@
 }
 /* a new block's text (`.gotipe-sug-block-ins-text`): a tint behind the text alone, line by line,
    --gt-sug-block-ins-text-tint of the lane's colour (0%: none; set it with
-   --gt-sug-block-ins-tint: 0% for the text's fill instead of the row's) */
+   --gt-sug-block-ins-tint: 0% for the text's fill instead of the row's), its corners
+   --gt-sug-block-ins-text-radius */
 .gotipe-sug-block-ins-text {
-  border-radius: var(--gt-radius-inline);
+  border-radius: var(--gt-sug-block-ins-text-radius);
   background: color-mix(
     in srgb,
     var(--gt-track, var(--gt-add)) var(--gt-sug-block-ins-text-tint),

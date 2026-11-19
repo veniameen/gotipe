@@ -157,6 +157,8 @@ describe("review parts have tokens with today's values", () => {
     );
     expect(text["box-decoration-break"]).toBe("clone");
     expect(tokens.view["--gt-sug-block-ins-text-tint"]).toBe("0%");
+    expect(text["border-radius"]).toBe("var(--gt-sug-block-ins-text-radius)");
+    expect(tokens.view["--gt-sug-block-ins-text-radius"]).toBe("var(--gt-radius-inline)");
     expect(declarations(review, ".gotipe-sug-stale .gotipe-sug-block-ins-text").background).toBe(
       "transparent",
     );

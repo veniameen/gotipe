@@ -8,6 +8,8 @@
   decoration over the phantom block's text), and `--gt-sug-block-ins-text-tint` (`0%`) tints it in
   the lane's colour behind the text alone, line by line; with `--gt-sug-block-ins-tint: 0%` a host
   fills the text instead of the whole row. A stale one stays unfilled. Defaults look as before.
+- `--gt-sug-block-ins-text-radius` (`var(--gt-radius-inline)`): the corners of the fill behind a
+  proposed new block's text.
 - 484513c: The page title with an inline icon (`iconPlacement="inline"`): its accessible name is the title's
   text alone (the prompt when it is empty), no longer prefixed by the icon's own name, and the empty
   title's prompt starts after the icon instead of under it (`--gt-page-icon-inline` +
