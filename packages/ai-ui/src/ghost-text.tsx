@@ -1,4 +1,4 @@
-import type { GoTipeEditor } from "@gotipe/core";
+import { type GoTipeEditor, isInsideWidget } from "@gotipe/core";
 import { useEffect } from "react";
 
 export interface AiGhostTextProps {
@@ -22,7 +22,9 @@ export function AiGhostText({ editor, text, onAccept, onDismiss }: AiGhostTextPr
         editor.isDestroyed ||
         !editor.isEditable ||
         !(event.target instanceof Node) ||
-        !editor.element?.contains(event.target)
+        !editor.element?.contains(event.target) ||
+        // a key in a widget inside the text (a host's field, a button) is not the text's
+        isInsideWidget(event.target, editor.element)
       )
         return;
       if (
