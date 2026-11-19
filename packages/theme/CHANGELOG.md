@@ -1,5 +1,34 @@
 # @gotipe/theme
 
+## 0.1.5
+
+### Patch Changes
+
+- c4b13c7: A proposed new block's text stands in a span of its own (`.gotipe-sug-block-ins-text`, an inline
+  decoration over the phantom block's text), and `--gt-sug-block-ins-text-tint` (`0%`) tints it in
+  the lane's colour behind the text alone, line by line; with `--gt-sug-block-ins-tint: 0%` a host
+  fills the text instead of the whole row. A stale one stays unfilled. Defaults look as before.
+- 484513c: The page title with an inline icon (`iconPlacement="inline"`): its accessible name is the title's
+  text alone (the prompt when it is empty), no longer prefixed by the icon's own name, and the empty
+  title's prompt starts after the icon instead of under it (`--gt-page-icon-inline` +
+  `--gt-page-icon-inline-gap`, as the text).
+- 2c6a867: The pointer lane cursor (`reviewLaneCursor="pointer"`) is placed and drawn by the host:
+  `--gt-lane-pointer-at` (`0px`) sets where the tip stands in the row (`100%` is its bottom) and the
+  name chip moves with it; `--gt-lane-pointer-outline` (`currentColor`) and
+  `--gt-lane-pointer-outline-width` (unset: `--gt-icon-stroke`) outline the built-in arrow, for
+  instance in the page's colour. `PageEditor`'s `reviewLanePointer?: ReactNode` draws the host's own
+  arrow instead of the built-in one (`span.gotipe-lane-pointer`, in the lane's colour), and
+  `--gt-lane-pointer-tip-x`/`-tip-y` (unset: the built-in arrow's 3/16 and 1.75/16 of the size) say
+  where its tip lies in its box. Defaults draw the cursor as in 0.1.4.
+- 0ea7f50: `--gt-list-item-text-inset` (`0px`): a list item's content alone moves in from where it starts (its
+  text, and a task's box with it), while its dot and number stay, as `li { padding-left }` does;
+  `--gt-list-item-inset` still moves the whole item, its marker too. An empty item's prompt follows
+  the text.
+- a5b9de4: A suggestion that edits a list item opens its card at that row's marks (`.gotipe-sug-del`,
+  `.gotipe-sug-ins`) instead of at the whole changed list; a block stands for the card only when the
+  text has no mark. `--gt-review-card-gap` (8 px) sets the card's space to its row above or below it.
+  - @gotipe/core@0.1.5
+
 ## 0.1.4
 
 ### Patch Changes

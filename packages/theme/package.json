@@ -1,6 +1,6 @@
 {
   "name": "@gotipe/theme",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "description": "Styles, design tokens and light and dark themes of the ready GoTipe editors.",
   "keywords": [
     "gotipe",

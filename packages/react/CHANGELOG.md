@@ -1,5 +1,23 @@
 # @gotipe/react
 
+## 0.1.5
+
+### Patch Changes
+
+- 5110b7e: `afterBlock?: { blockId, node } | null` on `EditorContent`, `Editor`, `BlockEditor` and
+  `PageEditor` (type `BlockSlot`): the host's element in the flow of the document right after the
+  top-level block that is or holds `blockId`, spaced as one more block, so the text below moves down
+  for it (a field for writing with a model between paragraphs, say). A widget (`.gotipe-block-slot`,
+  `data-gotipe-widget`): not part of the text, offsets or file; it keeps its element as it moves to
+  another block. In `BlockEditor` and `PageEditor` its keys and input stay the host's, as with an
+  inline page icon.
+- 7730811: The review card on a narrow page (`reviewCardPlacement`) is placed from its measured height:
+  `"above"` keeps the card's bottom 8 px above the row for any card (it used to assume 188 px, so a
+  short card hung far above its row and a tall one covered it), and `"below"` turns above the row by
+  the same measured rule when the window has no room below. `@gotipe/react`'s `FloatingPlacement`
+  gains `"top-start"`: above the anchor, aligned to its left edge, below it when there is no room.
+  - @gotipe/core@0.1.5
+
 ## 0.1.4
 
 ### Patch Changes

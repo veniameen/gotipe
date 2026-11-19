@@ -1,6 +1,6 @@
 {
   "name": "@gotipe/suggestions",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "Track changes for the GoTipe editor, plus anchored edits for changes proposed by a model.",
   "keywords": [
     "gotipe",
