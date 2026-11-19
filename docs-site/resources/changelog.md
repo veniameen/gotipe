@@ -30,6 +30,8 @@ its own), `react`, `theme` and `block-editor` (0.1.5), `markdown`, `suggestions`
   edited row's marks rather than a whole changed list, by a new block's text line, and with
   `--gt-review-card-gap` between card and row.
 - `afterBlock` on `BlockEditor` and `PageEditor`; its keys and input stay the host's.
+- Keys pressed in a host's element inside the page (an inline page icon, `afterBlock`) go on to the
+  host's listeners on `document` and `window`; the editor still takes none of them.
 - `PageEditorHandle`: `selectionMarkdownRange()`, `bookmark(point?, bias?)` (a place that follows
   edits, splits and joins, and comes back with its text) and `markdownOffset(point, bias?)`.
 - `reviewLanePointer`: the host's own arrow for the pointer lane cursor.
@@ -44,7 +46,7 @@ its own), `react`, `theme` and `block-editor` (0.1.5), `markdown`, `suggestions`
 
 - Tokens: `--gt-review-card-gap`, `--gt-lane-pointer-at`, `--gt-lane-pointer-outline`,
   `--gt-lane-pointer-outline-width`, `--gt-lane-pointer-tip-x`, `--gt-lane-pointer-tip-y`,
-  `--gt-sug-block-ins-text-tint`, `--gt-list-item-text-inset`. Defaults keep the 0.1.4 look.
+  `--gt-sug-block-ins-text-tint`, `--gt-sug-block-ins-text-radius`, `--gt-list-item-text-inset`. Defaults keep the 0.1.4 look.
 
 ## 0.1.4
 
