@@ -61,6 +61,11 @@ describe("a suggested list item (PageEditor review)", () => {
       ["two", false, ""],
       ["three", false, ""],
     ]);
+    // the new item's text alone in a span, for a tint behind the text (--gt-sug-block-ins-text-tint)
+    const text = [
+      ...container.querySelectorAll("[data-gotipe-phantom-id] .gotipe-sug-block-ins-text"),
+    ];
+    expect(text.map((span) => span.textContent)).toEqual(["new"]);
   });
 
   it("stale: stands as its own item too, in the stale look", async () => {

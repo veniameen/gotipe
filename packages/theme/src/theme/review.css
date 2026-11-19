@@ -45,6 +45,22 @@
   text-underline-offset: var(--gt-underline-offset);
   cursor: pointer;
 }
+/* a new block's text (`.gotipe-sug-block-ins-text`): a tint behind the text alone, line by line,
+   --gt-sug-block-ins-text-tint of the lane's colour (0%: none; set it with
+   --gt-sug-block-ins-tint: 0% for the text's fill instead of the row's) */
+.gotipe-sug-block-ins-text {
+  border-radius: var(--gt-radius-inline);
+  background: color-mix(
+    in srgb,
+    var(--gt-track, var(--gt-add)) var(--gt-sug-block-ins-text-tint),
+    transparent
+  );
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+}
+.gotipe-sug-stale .gotipe-sug-block-ins-text {
+  background: transparent;
+}
 /* a stale proposal's new block (its edit adds lines): quiet and dashed, as its hint in the text */
 .gotipe-sug-block-ins.gotipe-sug-stale:is(p, li, h1, h2, h3, h4, h5, h6, blockquote),
 .gotipe-sug-block-ins.gotipe-sug-stale

@@ -104,10 +104,25 @@ function note(ctx: Ctx, pos: ReviewPosition) {
 
 function phantomId(ctx: Ctx, block: BlockView): BlockView {
   ctx.seq += 1;
+  const id = `phantom:${ctx.pid}:${ctx.seq}:${block.id}`;
+  const length = Array.isArray(block.content) ? plainText(block).length : 0;
   return {
     ...block,
-    id: `phantom:${ctx.pid}:${ctx.seq}:${block.id}`,
-    decorations: [],
+    id,
+    // the new block's text in its own span, so a host can tint the text rather than the row
+    decorations:
+      length > 0
+        ? [
+            {
+              type: "inline",
+              key: `${id}:text`,
+              blockId: id,
+              from: 0,
+              to: length,
+              className: "gotipe-sug-block-ins-text",
+            },
+          ]
+        : [],
     children: block.children.map((c) => phantomId(ctx, c)),
   };
 }

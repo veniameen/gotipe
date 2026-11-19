@@ -174,6 +174,7 @@ can be set on any container.
 | `--gt-sug-block-ins-tint` | unset: `--gt-track-tint` (12%) | Share of the lane's colour in a proposed new block's fill; `0%` removes the fill |
 | `--gt-sug-block-ins-underline` | `underline` | `none` drops the underline of a proposed new block's text |
 | `--gt-sug-block-ins-underline-thickness` | `var(--gt-underline)` (1 px) | Its thickness |
+| `--gt-sug-block-ins-text-tint` | `0%` | Share of the lane's colour behind a proposed new block's text alone, line by line (`.gotipe-sug-block-ins-text`); with `--gt-sug-block-ins-tint: 0%` the text is filled instead of the row |
 | `--gt-sug-stale-color` | unset: `--gt-text-2` | Text colour of a stale proposal, in the text and as a new block |
 | `--gt-sug-stale-line` | unset: `--gt-line-control` | Colour of its underline |
 | `--gt-sug-stale-underline-style` | `dashed` | Its style |
