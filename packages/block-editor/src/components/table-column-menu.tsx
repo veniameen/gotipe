@@ -10,6 +10,7 @@ import {
 import type React from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useBlockEditorI18n } from "../i18n/strings";
+import { isHostKey } from "../page/host-slot";
 import { PageIcon, type PageIconName } from "../page/icons";
 import { cellActions } from "../table/cell-actions";
 import {
@@ -92,7 +93,7 @@ function TableHandleMenu({
       setOpen(false);
     };
     const keys = (event: KeyboardEvent) => {
-      if (event.key !== "Escape") return;
+      if (event.key !== "Escape" || isHostKey(event)) return;
       event.stopPropagation();
       setOpen(false);
       buttonRef.current?.focus({ preventScroll: true });
