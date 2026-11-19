@@ -68,10 +68,11 @@ test.describe('Owned comment discussion', () => {
   test('tracks quote movement, signals removed text and restores the anchor with undo', async ({ page }) => {
     const { thread } = await comment(page);
     const paragraph = page.locator('[data-gotipe-example="comments"] [data-block-type="paragraph"]').first();
-    // Into the quote, then Home: the quote's line starts the paragraph. The centre of the wrapped
-    // paragraph lies on its line boundary, and browsers put a click there on different lines.
+    // Into the quote, then to the line start: the quote's line starts the paragraph. The centre of
+    // the wrapped paragraph lies on its line boundary, and browsers put a click there on different
+    // lines. On macOS Home leaves the caret where it is in Firefox and WebKit.
     await paragraph.locator('.gotipe-comment-highlight').first().click();
-    await page.keyboard.press('Home');
+    await page.keyboard.press(process.platform === 'darwin' ? 'Meta+ArrowLeft' : 'Home');
     await page.keyboard.insertText('Префикс 😀 ');
     await expect(paragraph).toHaveText(/^Префикс 😀 Select a phrase/);
     await thread.getByRole('button', { name: 'Scroll to comment', exact: true }).click();
