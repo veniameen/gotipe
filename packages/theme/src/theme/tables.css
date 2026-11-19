@@ -61,8 +61,12 @@
 .gotipe-table-wrapper :where(td) {
   height: var(--gt-table-row-height);
 }
+/* --gt-table-head-min-width: a floor for a column sized by its content
+   (--gt-table-shared-layout: auto); without specificity, so a host's own `th { min-width }`
+   still wins */
 .gotipe-table-wrapper :where(th) {
   background: var(--gt-table-head-fill, transparent);
+  min-width: var(--gt-table-head-min-width);
 }
 /* a cell at the table's left edge draws no column line: the frame stands there */
 .gotipe-table-wrapper :where(tr:not(.is-continued) > :first-child) {
@@ -93,8 +97,6 @@
 .gotipe-table-wrapper table:not(:has(> colgroup > col)) :where(th, td) {
   overflow-wrap: break-word;
 }
-/* --gt-table-head-min-width: a floor for a column sized by its content
-   (--gt-table-shared-layout: auto) */
 .gotipe-table-wrapper th {
   padding: var(--gt-head-cell-pad);
   border-bottom-color: var(--gt-table-head-line, var(--gt-line-strong));
@@ -103,7 +105,6 @@
   font-weight: var(--gt-table-head-weight);
   line-height: var(--gt-table-head-leading);
   letter-spacing: var(--gt-table-head-tracking);
-  min-width: var(--gt-table-head-min-width);
 }
 /* the first column starts with the text column; when the page margin is narrower than the row
    handle (a phone without the handle's rail), the first cell of a table with row handles gives
