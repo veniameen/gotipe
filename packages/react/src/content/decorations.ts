@@ -168,6 +168,43 @@ export function holdComposing(
   return blocks.map(visit);
 }
 
+const sameItems = (a: readonly unknown[], b: readonly unknown[]) =>
+  a === b || (a.length === b.length && a.every((item, index) => item === b[index]));
+
+/**
+ * The blocks with the objects drawn last wherever a block is the same as then: the core gives a
+ * block that has decorations a new object on every change of any layer, so one whose own
+ * decorations and children are the very same would be drawn again for nothing. `drawn` is the
+ * tree drawn last; blocks are compared place by place.
+ */
+export function keepDrawn(blocks: BlockView[], drawn: readonly BlockView[] | null): BlockView[] {
+  if (!drawn) return blocks;
+  const visit = (block: BlockView, before: BlockView | undefined): BlockView => {
+    if (!before || block === before || block.id !== before.id) return block;
+    const children =
+      block.children === before.children
+        ? block.children
+        : block.children.map((child, index) => visit(child, before.children[index]));
+    if (
+      block.content === before.content &&
+      block.attrs === before.attrs &&
+      block.type === before.type &&
+      block.renderKey === before.renderKey &&
+      sameItems(block.decorations ?? [], before.decorations ?? []) &&
+      sameItems(children, before.children)
+    )
+      return before;
+    return sameItems(children, block.children) ? block : { ...block, children };
+  };
+  let same = blocks.length === drawn.length;
+  const kept = blocks.map((block, index) => {
+    const next = visit(block, drawn[index]);
+    if (next !== drawn[index]) same = false;
+    return next;
+  });
+  return same ? (drawn as BlockView[]) : kept;
+}
+
 const ALIGNMENTS = new Set(["left", "center", "right", "justify"]);
 
 /** A block's own `align` attribute (`TextAlign`), when it is one of the four values. */

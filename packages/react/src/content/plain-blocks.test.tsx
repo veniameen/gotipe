@@ -121,6 +121,89 @@ describe("blocks drawn by the built-in views", () => {
     expect(container.querySelector("[data-block-id=b] .mark")).toBeNull();
   });
 
+  it("draws a decorated block again only when its own decorations change", () => {
+    act(() => root.render(<EditorContent editor={editor} afterText={afterText} />));
+    const mark = (blockId: string, to: number) =>
+      ({ type: "inline", key: blockId, blockId, from: 0, to, className: "mark" }) as const;
+    const kept = [mark("a", 2), mark("i3", 2)];
+    act(() => editor.setDecorations("kept", kept));
+    act(() => editor.setDecorations("moving", [mark("b", 1)]));
+    drawn();
+    // another layer changes: the blocks of the layer that stays are not drawn again
+    act(() => editor.setDecorations("moving", [mark("b", 3)]));
+    expect(drawn()).toEqual(["b"]);
+    expect(container.querySelector("[data-block-id=b] .mark")?.textContent).toBe("Las");
+    // the same decorations given again draw nothing, and neither does typing elsewhere
+    act(() => editor.setDecorations("kept", kept));
+    expect(drawn()).toEqual([]);
+    type("title", "x");
+    expect(drawn()).toEqual(["title"]);
+    expect(container.querySelector("[data-block-id=i3] .mark")?.textContent).toBe("Th");
+    // a decoration that is a new object is a new decoration
+    act(() => editor.setDecorations("kept", [mark("a", 2), kept[1]!]));
+    expect(drawn()).toEqual(["a"]);
+  });
+
+  it("draws of a growing group of suggested blocks only the blocks that are new objects", () => {
+    const seenPhantoms: string[] = [];
+    const paragraph = ({ rootProps, content, block: view, phantom }: BlockViewProps) => {
+      if (phantom) seenPhantoms.push(view.id);
+      return <p {...rootProps}>{content}</p>;
+    };
+    paragraph.pure = true;
+    act(() => root.render(<EditorContent editor={editor} blockViews={{ paragraph }} />));
+    const suggested = (id: string, value: string): BlockView => ({
+      id,
+      type: "paragraph",
+      attrs: {},
+      content: text(value),
+      children: [],
+      decorations: [],
+    });
+    const attrs = { "data-proposal": "p" };
+    const style = { "--track": "red" };
+    const group = (blocks: BlockView[], className = "suggested") =>
+      ({
+        type: "blocks",
+        key: "g",
+        blockId: "a",
+        position: "after",
+        blocks,
+        className,
+        attrs,
+        style,
+      }) as const;
+    const one = suggested("n1", "One");
+    act(() => editor.setDecorations("review", [group([one, suggested("n2", "Tw")])]));
+    expect(seenPhantoms.splice(0)).toEqual(["n1", "n2"]);
+    // the text grows: the first block is the same object, the last is new, one more comes
+    act(() =>
+      editor.setDecorations("review", [
+        group([one, suggested("n2", "Two"), suggested("n3", "Three")]),
+      ]),
+    );
+    expect(seenPhantoms.splice(0)).toEqual(["n2", "n3"]);
+    const texts = () =>
+      [...container.querySelectorAll("[data-gotipe-phantom-id]")].map((element) => [
+        element.textContent,
+        element.className,
+        element.getAttribute("data-proposal"),
+      ]);
+    expect(texts()).toEqual([
+      ["One", "suggested", "p"],
+      ["Two", "suggested", "p"],
+      ["Three", "suggested", "p"],
+    ]);
+    // typing elsewhere draws none of them again
+    type("b", "x");
+    expect(seenPhantoms.splice(0)).toEqual([]);
+    // the group's look changes: every block of it is drawn with the new class
+    const two = suggested("n2", "Two");
+    act(() => editor.setDecorations("review", [group([one, two], "suggested is-active")]));
+    expect(seenPhantoms.splice(0)).toEqual(["n1", "n2"]);
+    expect(texts().map((row) => row[1])).toEqual(["suggested is-active", "suggested is-active"]);
+  });
+
   it("draws a block with a custom view, and the blocks over it, on every change", () => {
     let titles = 0;
     let items = 0;

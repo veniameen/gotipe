@@ -8,7 +8,7 @@ import React, {
   useSyncExternalStore,
 } from "react";
 import type { BlockRendererProps } from "./block-renderer";
-import { BlockComponent, PhantomBlocks } from "./content/blocks";
+import { BlockComponent, PhantomBlocks, hasPhantomBlocks } from "./content/blocks";
 import {
   AfterTextContext,
   type AfterTextFn,
@@ -18,7 +18,7 @@ import {
   PlaceholderContext,
   type PlaceholderFn,
 } from "./content/context";
-import { holdComposing, withoutLayers } from "./content/decorations";
+import { holdComposing, keepDrawn, withoutLayers } from "./content/decorations";
 import { blockKey } from "./content/presentation";
 import { SelectionKeeper } from "./content/selection-keeper";
 import { useGoTipeI18n } from "./i18n-context";
@@ -134,11 +134,13 @@ export function EditorContent({
     [editor, viewState, layers],
   );
   const selectedBlockId = viewState?.selection.anchor.blockId ?? "";
-  // The composing block is where the selection was when the composition started.
+  // The composing block is where the selection was when the composition started. A block that
+  // is as it was drawn keeps that object: only what changed is drawn again.
   const drawn = useRef<BlockView[] | null>(null);
-  const shown = editor?.isComposing
-    ? holdComposing(blocks, drawn.current, selectedBlockId)
-    : blocks;
+  const shown = keepDrawn(
+    editor?.isComposing ? holdComposing(blocks, drawn.current, selectedBlockId) : blocks,
+    drawn.current,
+  );
   useEffect(() => {
     drawn.current = shown;
   });
@@ -166,15 +168,20 @@ export function EditorContent({
                 {editor && (
                   <SelectionKeeper editor={editor} state={viewState}>
                     {shown.flatMap((block, index) => {
+                      const phantoms = hasPhantomBlocks(block);
                       const drawnBlock = (
                         <React.Fragment key={blockKey(block)}>
-                          <PhantomBlocks block={block} editor={editor} position="before" />
+                          {phantoms ? (
+                            <PhantomBlocks block={block} editor={editor} position="before" />
+                          ) : null}
                           <BlockComponent
                             block={block}
                             editor={editor}
                             selectedBlockId={selectedBlockId}
                           />
-                          <PhantomBlocks block={block} editor={editor} position="after" />
+                          {phantoms ? (
+                            <PhantomBlocks block={block} editor={editor} position="after" />
+                          ) : null}
                         </React.Fragment>
                       );
                       if (index !== slotAt || !afterBlock) return [drawnBlock];
