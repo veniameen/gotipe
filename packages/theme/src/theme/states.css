@@ -39,6 +39,12 @@
   position: relative;
   padding-inline-start: calc(var(--gt-page-icon-inline) + var(--gt-page-icon-inline-gap));
 }
+/* the empty title's prompt starts after the glyph, as the text does */
+.gotipe-page-title:has(> .gotipe-page-title-icon)[data-placeholder]::after {
+  left: auto;
+  inset-inline-start: calc(var(--gt-page-icon-inline) + var(--gt-page-icon-inline-gap));
+  max-width: calc(100% - var(--gt-page-icon-inline) - var(--gt-page-icon-inline-gap));
+}
 .gotipe-page-title-icon {
   position: absolute;
   inset-block-start: 0;
