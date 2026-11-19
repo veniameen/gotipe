@@ -5,6 +5,7 @@ import { AtomUI } from "../atoms/atom-ui";
 import { useToolbarFollow } from "../interaction/use-toolbar-follow";
 import { useToolbarHover } from "../interaction/use-toolbar-hover";
 import { type DragPoint, useTouchDrag } from "../interaction/use-touch-drag";
+import { hostEventGuard } from "../page/page-views";
 import { handleRail, inHandleReach } from "../text/direction";
 import { FindBar } from "../text/find-bar";
 import { StatusLine } from "../text/status-line";
@@ -457,7 +458,12 @@ function BlockEditorView({
         editor={editor}
         blockViews={blockViews}
         afterText={afterText}
-        afterBlock={afterBlock}
+        afterBlock={
+          afterBlock && {
+            blockId: afterBlock.blockId,
+            node: <div {...hostEventGuard}>{afterBlock.node}</div>,
+          }
+        }
         hostLayers={HOST_LAYERS}
         ariaLabel={ariaLabel}
         slotBefore={

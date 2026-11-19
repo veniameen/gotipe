@@ -10,7 +10,8 @@ export interface TextPoint {
  * A place in the page that follows edits until it is released (`PageEditorHandle.bookmark`).
  * Edits in its block before it move it; text inserted right at it goes before it (`"after"`) or
  * after it (`"before"`). It follows its text into a new block when the block is split (Enter) and
- * into the block before when the two are joined. It is lost while its block is gone or text on
+ * into the block before when the two are joined. Edits are read by comparing the block's text
+ * before and after them, so an edit among repeated characters may be placed on either side. It is lost while its block is gone or text on
  * both sides of it is replaced, and comes back when its block's text is back as it was (the
  * document replaced and restored, an undo).
  */
@@ -93,15 +94,29 @@ export function followPlace(
     }
     return null;
   }
-  // split (Enter): the block keeps the text up to the cut, a new block after it the rest
+  // the block after it joined to it (Delete at its end): its own text is unchanged
+  const { next: following } = neighbours(before, place.blockId);
+  const tail = following === undefined ? undefined : before.get(following);
+  if (
+    following !== undefined &&
+    tail !== undefined &&
+    !after.has(following) &&
+    now === was + tail
+  ) {
+    return place;
+  }
+  // split (Enter): the block keeps the text up to the cut, a new block the rest; the new block
+  // comes after it, though not always right after (a list item with nested items)
   const cut = now.length;
   if (cut < was.length && was.startsWith(now)) {
-    const { next } = neighbours(after, place.blockId);
-    const moved = next === undefined || before.has(next) ? undefined : after.get(next);
+    const rest = was.slice(cut);
+    const ids = [...after.keys()];
+    const from = ids.indexOf(place.blockId);
+    const created = ids.find(
+      (id, index) => index > from && !before.has(id) && after.get(id)?.startsWith(rest),
+    );
     const past = place.offset > cut || (place.offset === cut && bias === "after");
-    if (next !== undefined && moved?.startsWith(was.slice(cut)) && past) {
-      return { blockId: next, offset: place.offset - cut };
-    }
+    if (created !== undefined && past) return { blockId: created, offset: place.offset - cut };
   }
   const offset = mapOffset(was, now, place.offset, bias);
   return offset === null ? null : { blockId: place.blockId, offset };

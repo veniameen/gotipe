@@ -53,6 +53,22 @@ describe("followPlace: a place through a split, a join and a lost block", () => 
       offset: 9,
     });
   });
+  it("stays at the end of its block when the next block is joined to it", () => {
+    const before = doc(["a", "Hello "], ["b", "world"]);
+    const after = doc(["a", "Hello world"]);
+    expect(followPlace(before, after, { blockId: "a", offset: 6 }, "after")).toEqual({
+      blockId: "a",
+      offset: 6,
+    });
+  });
+  it("finds the new block of a split past nested blocks", () => {
+    const before = doc(["item", "one two"], ["child", "nested"]);
+    const after = doc(["item", "one "], ["child", "nested"], ["new", "two"]);
+    expect(followPlace(before, after, { blockId: "item", offset: 5 }, "after")).toEqual({
+      blockId: "new",
+      offset: 1,
+    });
+  });
   it("is lost with its block", () => {
     expect(
       followPlace(
