@@ -15,8 +15,8 @@
   longer stopped there: the editor still takes none of them, and the host's own listeners on
   `document` and `window` (shortcuts, a hint of the keys held) now see them. Input events still
   stop at the element. The element is marked `data-gotipe-host`, and the editor's own listeners
-  on the document skip its keys: an open slash, block or formatting menu, the AI bar's ⌘J, find's
-  ⌘F, Enter on a formula and Escape of a review card.
+  on the document skip its keys: an open slash, block, formatting or table menu, the AI bar's ⌘J,
+  find's ⌘F, Enter on a formula and Escape of a review card.
 - 484513c: The page title with an inline icon (`iconPlacement="inline"`): its accessible name is the title's
   text alone (the prompt when it is empty), no longer prefixed by the icon's own name, and the empty
   title's prompt starts after the icon instead of under it (`--gt-page-icon-inline` +
