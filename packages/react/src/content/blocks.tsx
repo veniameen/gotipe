@@ -1,4 +1,10 @@
-import { type BlockView, type GoTipeEditor, headerRows, tableGrid } from "@gotipe/core";
+import {
+  type BlockView,
+  type BlocksDecoration,
+  type GoTipeEditor,
+  headerRows,
+  tableGrid,
+} from "@gotipe/core";
 import React, { useContext, useMemo } from "react";
 import { useGoTipeI18n } from "../i18n-context";
 import { CodeBlock } from "./code-block";
@@ -38,6 +44,49 @@ function listDigits(start: number, count: number): number {
   return Math.max(String(Math.abs(start)).length, String(Math.abs(last)).length);
 }
 
+/** A suggested block as drawn last: with the class, attributes and style of its group. */
+const drawnPhantoms = new WeakMap<BlockView, { group: BlocksDecoration; block: BlockView }>();
+
+/**
+ * A suggested block with its group's class, attributes and style on its root. The same block
+ * of a group that looks the same is the same object, so it is not drawn again while only its
+ * neighbours change (a proposal whose text grows).
+ */
+function phantomOf(phantom: BlockView, group: BlocksDecoration): BlockView {
+  const drawn = drawnPhantoms.get(phantom);
+  if (
+    drawn &&
+    drawn.group.key === group.key &&
+    drawn.group.className === group.className &&
+    drawn.group.attrs === group.attrs &&
+    drawn.group.style === group.style
+  )
+    return drawn.block;
+  const block: BlockView = {
+    ...phantom,
+    decorations: [
+      ...(phantom.decorations ?? []),
+      {
+        type: "node",
+        key: group.key,
+        blockId: phantom.id,
+        className: group.className,
+        attrs: group.attrs,
+        style: group.style,
+      },
+    ],
+  };
+  drawnPhantoms.set(phantom, { group, block });
+  return block;
+}
+
+/** Whether suggested blocks stand around `block`: without them `PhantomBlocks` draws nothing. */
+export function hasPhantomBlocks(block: BlockView): boolean {
+  const decorations = block.decorations;
+  if (!decorations || decorations.length === 0) return false;
+  return decorations.some((d) => d.type === "blocks");
+}
+
 /** Suggested blocks around `block` (a `blocks` decoration). */
 export function PhantomBlocks({
   block,
@@ -58,20 +107,7 @@ export function PhantomBlocks({
         group.blocks.map((phantom) => (
           <BlockComponent
             key={`${group.key}:${phantom.id}`}
-            block={{
-              ...phantom,
-              decorations: [
-                ...(phantom.decorations ?? []),
-                {
-                  type: "node",
-                  key: group.key,
-                  blockId: phantom.id,
-                  className: group.className,
-                  attrs: group.attrs,
-                  style: group.style,
-                },
-              ],
-            }}
+            block={phantomOf(phantom, group)}
             editor={editor}
             selectedBlockId=""
             parentType={parentType}
@@ -94,18 +130,35 @@ function BlockChildren({
   if (!block.children || block.children.length === 0) return null;
   return (
     <>
-      {block.children.map((child) => (
-        <React.Fragment key={blockKey(child)}>
-          <PhantomBlocks block={child} editor={editor} position="before" parentType={block.type} />
-          <BlockComponent
-            block={child}
-            editor={editor}
-            selectedBlockId={selectedBlockId}
-            parentType={block.type}
-          />
-          <PhantomBlocks block={child} editor={editor} position="after" parentType={block.type} />
-        </React.Fragment>
-      ))}
+      {block.children.map((child) => {
+        const phantoms = hasPhantomBlocks(child);
+        return (
+          <React.Fragment key={blockKey(child)}>
+            {phantoms ? (
+              <PhantomBlocks
+                block={child}
+                editor={editor}
+                position="before"
+                parentType={block.type}
+              />
+            ) : null}
+            <BlockComponent
+              block={child}
+              editor={editor}
+              selectedBlockId={selectedBlockId}
+              parentType={block.type}
+            />
+            {phantoms ? (
+              <PhantomBlocks
+                block={child}
+                editor={editor}
+                position="after"
+                parentType={block.type}
+              />
+            ) : null}
+          </React.Fragment>
+        );
+      })}
     </>
   );
 }

@@ -16,6 +16,11 @@
   short card hung far above its row and a tall one covered it), and `"below"` turns above the row by
   the same measured rule when the window has no room below. `@gotipe/react`'s `FloatingPlacement`
   gains `"top-start"`: above the anchor, aligned to its left edge, below it when there is no room.
+- `EditorContent` draws a block that has decorations again only when its own decorations or its
+  children are new objects: a change of another decoration layer, or of another block's
+  decorations in the same layer, no longer draws it. A suggested block (a `blocks` decoration)
+  that is the same object in a group that looks the same is not drawn again either, so of a
+  growing group only the new and the changed blocks are drawn.
   - @gotipe/core@0.1.5
 
 ## 0.1.4
