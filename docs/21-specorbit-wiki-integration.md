@@ -152,7 +152,7 @@ and "Blocks" buttons of the toolbar), `getTitle()`, `selectTitle()` ("Rename"), 
 | `saveAsset(blob, {kind, name, mediaType, size})` → `{src, name?}` | paste from the clipboard, drag and drop, "Image", "File" | `wiki.writeAsset`; failure — `throw` (becomes an `error` event) |
 | `resolveAsset(src)` → data URL \| null | showing an image | `wiki.readAsset` → `dataUrl`; `null` — the image shows "unavailable" and nothing is requested |
 | `openLink(href, {blockId, newTab, target})` | Cmd/Ctrl+click; any click in read mode; click on a file | external links — the system browser; `docs/pages/*.md` — a page tab; `target` — the link's own (`_self`, `_blank`), for a file name `null`, the host decides |
-| `discardAsset({src, name, kind})` | a file `saveAsset` stored that a paste or drop then did not insert | delete it from `assets/` |
+| `discardAsset({src, name, kind})` | a file `saveAsset` stored that a paste, a drop or a media block upload then did not insert | delete it from `assets/` |
 | `onError(error: GoTipeError)` | any error | toast or highlight; the editor has no error strings of its own |
 
 Error codes (`GoTipeError.code`, all of `GoTipeErrorCode` in `@gotipe/core`). An invalid link in the

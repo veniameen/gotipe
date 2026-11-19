@@ -45,7 +45,7 @@ const keys = (list: TextSpan[]) =>
 function paste(editor: GoTipeEditor, extensions: Extension[], data: Record<string, string>) {
   const handler = new ClipboardHandler(
     editor,
-    clipboardOptions(extensions, editor, () => Promise.reject(new Error("no drafts"))),
+    clipboardOptions(extensions, () => Promise.reject(new Error("no drafts"))),
   );
   handler.onPaste({
     preventDefault() {},

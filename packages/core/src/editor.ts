@@ -493,7 +493,7 @@ export async function createEditorWithLoader(
       mountAbort = new AbortController();
       clipboardHandler = new ClipboardHandler(
         this,
-        clipboardOptions(resolved, this, (draft) => createEditorWithLoader(draft, null)),
+        clipboardOptions(resolved, (draft) => createEditorWithLoader(draft, null)),
       );
       const extensions = createExtensionEvents(resolved, this);
       const selection = mountSurface(element, mountAbort.signal, {

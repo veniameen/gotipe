@@ -1,4 +1,4 @@
-import { saveAsset } from "../assets";
+import { type StoredAsset, discardSavedAsset, recordingHost, saveAsset } from "../assets";
 import { createId } from "../document/id";
 import { findBlockInTree } from "../document/tree";
 import { GoTipeError } from "../error";
@@ -6,12 +6,19 @@ import { toSafeHref, toSafeImageSrc } from "../security/urls";
 import { blocksToHtml, spansToHtml } from "../serialization/html";
 import { blocksToText } from "../text";
 import type { Block, Document } from "../types/block";
-import type { GoTipeEditor } from "../types/editor";
+import type { EditorHost, GoTipeEditor } from "../types/editor";
 import { documentTransaction } from "./document";
 import { insertPayload, plainTextPayload } from "./insertion";
 import { type ClipboardOptions, findPasteRule, runPasteRules } from "./paste-rules";
 import { readClipboardPayload } from "./payload";
 import { type ClipboardPayload, copySelection, removeSelection } from "./selection";
+
+function changedDuringUpload(): GoTipeError {
+  return new GoTipeError(
+    "ASSET_SAVE_FAILED",
+    "The document changed during upload. Insert the file again at the desired position.",
+  );
+}
 
 export class ClipboardHandler {
   private request = 0;
@@ -127,9 +134,9 @@ export class ClipboardHandler {
     return !!this.options.createDraft && !!findPasteRule(this.options, data);
   }
 
-  private async savedFile(file: File): Promise<Block> {
+  private async savedFile(file: File, host: EditorHost): Promise<Block> {
     const kind = file.type.startsWith("image/") ? "image" : "file";
-    const saved = await saveAsset(this.editor.host, file, kind);
+    const saved = await saveAsset(host, file, kind);
     return {
       id: createId(),
       type: kind,
@@ -152,6 +159,8 @@ export class ClipboardHandler {
       !this.editor.isDestroyed &&
       this.editor.isEditable &&
       request === this.request;
+    const stored: StoredAsset[] = [];
+    const host = recordingHost(this.editor.host, stored);
     try {
       const result = await runPasteRules(
         this.options,
@@ -160,7 +169,8 @@ export class ClipboardHandler {
         selection,
         current,
         this.drafts,
-        async (file) => ({ blocks: [await this.savedFile(file)] }),
+        async (file) => ({ blocks: [await this.savedFile(file, host)] }),
+        host,
       );
       if (!result || !current()) return;
       if (
@@ -170,10 +180,12 @@ export class ClipboardHandler {
           selection: this.editor.getViewState().selection,
         })
       )
-        throw new GoTipeError(
-          "CLIPBOARD_FAILED",
-          "The document or selection changed during paste. Paste again at the desired position.",
-        );
+        throw data.some((entry) => typeof entry !== "string")
+          ? changedDuringUpload()
+          : new GoTipeError(
+              "CLIPBOARD_FAILED",
+              "The document or selection changed during paste. Paste again at the desired position.",
+            );
       if (!this.editor.validate(result.document))
         throw new GoTipeError(
           "CLIPBOARD_FAILED",
@@ -181,8 +193,11 @@ export class ClipboardHandler {
         );
       const transaction = documentTransaction(before, result.document, result.selection.head);
       if (transaction.steps.length) this.editor.dispatch(transaction);
+      stored.length = 0;
     } catch (error) {
       if (current()) this.report(error);
+    } finally {
+      this.discardStored(stored);
     }
   }
 
@@ -196,10 +211,10 @@ export class ClipboardHandler {
       document: this.editor.getJSON(),
       selection: this.editor.getViewState().selection,
     });
-    let saved: Block[] = [];
+    const stored: StoredAsset[] = [];
+    const host = recordingHost(this.editor.host, stored);
     try {
-      const settled = await Promise.allSettled(files.map((file) => this.savedFile(file)));
-      saved = settled.flatMap((result) => (result.status === "fulfilled" ? [result.value] : []));
+      const settled = await Promise.allSettled(files.map((file) => this.savedFile(file, host)));
       const failed = settled.find((result) => result.status === "rejected");
       if (failed) throw failed.reason;
       if (
@@ -207,48 +222,28 @@ export class ClipboardHandler {
         this.editor.isDestroyed ||
         !this.editor.isEditable ||
         request !== this.request
-      ) {
-        this.discardSaved(saved);
+      )
         return;
-      }
       const current = JSON.stringify({
         document: this.editor.getJSON(),
         selection: this.editor.getViewState().selection,
       });
-      if (snapshot !== current)
-        throw new GoTipeError(
-          "ASSET_SAVE_FAILED",
-          "The document changed during upload. Insert the file again at the desired position.",
-        );
-      this.apply({ blocks: saved });
+      if (snapshot !== current) throw changedDuringUpload();
+      this.apply({
+        blocks: settled.flatMap((result) => (result.status === "fulfilled" ? [result.value] : [])),
+      });
+      stored.length = 0;
     } catch (error) {
-      // nothing of this paste is in the document: the files already stored are the host's to drop
-      this.discardSaved(saved);
       if (!this.disposed && !this.editor.isDestroyed && request === this.request)
         this.report(error);
+    } finally {
+      // nothing of this paste is in the document: the files already stored are the host's to drop
+      this.discardStored(stored);
     }
   }
 
-  private discardSaved(blocks: Block[]): void {
-    // Tells the host about files its `saveAsset` stored that the editor did not insert.
-    const { saveAsset, discardAsset } = this.editor.host;
-    if (!saveAsset || !discardAsset) return;
-    for (const block of blocks) {
-      const kind = block.type === "image" ? "image" : "file";
-      const src = String((kind === "image" ? block.attrs.src : block.attrs.url) ?? "");
-      const name = String((kind === "image" ? block.attrs.alt : block.attrs.name) ?? "");
-      try {
-        discardAsset({ src, name, kind });
-      } catch (error) {
-        this.report(
-          new GoTipeError(
-            "ASSET_SAVE_FAILED",
-            error instanceof Error ? error.message : String(error),
-            { src, cause: error },
-          ),
-        );
-      }
-    }
+  private discardStored(stored: StoredAsset[]): void {
+    for (const asset of stored) discardSavedAsset(this.editor, asset);
   }
 
   canReadClipboardText(): boolean {

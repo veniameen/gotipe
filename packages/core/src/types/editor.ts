@@ -30,9 +30,11 @@ export interface EditorHost {
    */
   resolveAsset?: (src: string) => Promise<string | null> | string | null;
   /**
-   * A file `saveAsset` stored that the editor then did not insert: the paste was replaced by a
-   * newer one, the document or selection changed during the upload, the editor became read-only
-   * or was destroyed, or another file of the same paste failed. The host may delete it.
+   * A file `saveAsset` stored that the editor then did not insert: a paste or drop (also through
+   * a paste rule) was replaced by a newer one, the document or selection changed during the
+   * upload, the editor became read-only or was destroyed, or another file of the same paste
+   * failed; a media block's upload found its block gone, superseded or with a new source.
+   * The host may delete it.
    */
   discardAsset?: (asset: { src: string; name: string; kind: "image" | "file" }) => void;
   /**

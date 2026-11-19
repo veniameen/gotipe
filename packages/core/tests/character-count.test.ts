@@ -23,7 +23,7 @@ afterEach(() => {
 function paste(editor: GoTipeEditor, plain: string, html = "") {
   const handler = new ClipboardHandler(
     editor,
-    clipboardOptions([CharacterCount, Paragraph], editor, async () => {
+    clipboardOptions([CharacterCount, Paragraph], async () => {
       throw new Error("no drafts");
     }),
   );

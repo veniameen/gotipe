@@ -17,7 +17,6 @@ function pastedTextHooks(extensions: Extension[]): PastedTextHooks | undefined {
 
 export function clipboardOptions(
   extensions: Extension[],
-  editor: GoTipeEditor,
   create: (options: CreateEditorOptions) => Promise<GoTipeEditor>,
 ): ClipboardOptions {
   const rules = extensions.flatMap((extension) =>
@@ -34,11 +33,11 @@ export function clipboardOptions(
     rules,
     text,
     schema: html,
-    createDraft: async (document, selection) => {
+    createDraft: async (document, selection, host) => {
       const draft = await create({
         extensions: schema,
         content: document,
-        host: editor.host,
+        host,
         engine: "js",
       });
       try {

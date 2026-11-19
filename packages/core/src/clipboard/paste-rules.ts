@@ -1,6 +1,6 @@
 import type { HtmlImportSchema } from "../html";
 import type { Document } from "../types/block";
-import type { GoTipeEditor } from "../types/editor";
+import type { EditorHost, GoTipeEditor } from "../types/editor";
 import type { ExtensionConfig, PasteRule, PasteTextContext } from "../types/extension";
 import type { SelectionView } from "../types/view";
 import { documentTransaction } from "./document";
@@ -19,8 +19,12 @@ export interface PastedTextHooks {
 }
 export interface ClipboardOptions {
   rules?: ConfiguredPasteRule[];
-  /** An isolated editor with the same schema, without extension lifecycle side effects. */
-  createDraft?: (document: Document, selection: SelectionView) => Promise<GoTipeEditor>;
+  /** An isolated editor with the same schema and `host`, without extension lifecycle side effects. */
+  createDraft?: (
+    document: Document,
+    selection: SelectionView,
+    host: EditorHost,
+  ) => Promise<GoTipeEditor>;
   text?: PastedTextHooks;
   /** The editor's schema, so pasted HTML reads back the inline atoms it declares. */
   schema?: HtmlImportSchema;
@@ -52,9 +56,10 @@ export async function runPasteRules(
   current: () => boolean,
   drafts: Set<GoTipeEditor>,
   fallback: (file: File) => Promise<ClipboardPayload>,
+  host: EditorHost,
 ): Promise<{ document: Document; selection: SelectionView } | null> {
   if (!options.createDraft) return null;
-  const draft = await options.createDraft(before, selection);
+  const draft = await options.createDraft(before, selection, host);
   drafts.add(draft);
   try {
     for (const entry of data) {
