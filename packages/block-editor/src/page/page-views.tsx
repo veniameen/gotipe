@@ -68,21 +68,27 @@ function headingView(titlePlaceholder: string | undefined, titleLevel: PageTitle
     const first = useEditorState(editor, firstBlockId);
     const isTitle = level === 1 && first === block.id;
     const Tag = `h${isTitle ? titleLevel : level}` as "h1";
-    const empty = textOf(block).length === 0;
+    const text = textOf(block);
+    const empty = text.length === 0;
+    const titlePrompt = titlePlaceholder ?? i18n.t("page.titlePlaceholder");
     const placeholder =
       empty && !readOnly
         ? isTitle
-          ? (titlePlaceholder ?? i18n.t("page.titlePlaceholder"))
+          ? titlePrompt
           : i18n.t("placeholder.heading", { level })
         : undefined;
+    // The icon's own name (a host button, say) is not part of the title's: the heading is named
+    // by its text alone (the prompt when it is empty), not by its content with the icon in it.
+    const withIcon = isTitle && Boolean(titleIcon);
     return (
       <Tag
         {...(rootProps as React.HTMLAttributes<HTMLHeadingElement>)}
         data-block-type="heading"
         className={cx(rootProps.className, isTitle && "gotipe-page-title")}
         data-placeholder={placeholder}
+        {...(withIcon ? { "aria-label": text || titlePrompt } : {})}
       >
-        {isTitle && titleIcon ? (
+        {withIcon ? (
           <span
             className="gotipe-page-title-icon"
             data-gotipe-widget=""

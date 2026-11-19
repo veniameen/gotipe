@@ -342,6 +342,29 @@ describe("PageEditor head, narrow sizes and review layout", () => {
     expect(ref.current!.getMarkdown()).toBe("# My Notes\n\nBody.\n");
   });
 
+  it("an inline icon is not part of the title's accessible name", async () => {
+    const { ref } = await mount({
+      markdown: "# Notes\n\n## Part\n",
+      icon: (
+        <button type="button" aria-label="Page icon">
+          <svg />
+        </button>
+      ),
+      iconPlacement: "inline",
+    });
+    const heading = () => container.querySelector<HTMLElement>(".gotipe-page-title")!;
+    expect(heading().getAttribute("aria-label")).toBe("Notes");
+    // other headings keep the name from their content
+    expect(container.querySelector("h2")?.hasAttribute("aria-label")).toBe(false);
+    await act(async () => {
+      ref.current!.setMarkdown("#\n\n## Part\n");
+      await wait(20);
+    });
+    // an empty title is named by its prompt, never by the icon's label
+    expect(heading().getAttribute("aria-label")).toBe(heading().getAttribute("data-placeholder"));
+    expect(heading().getAttribute("aria-label")).toBeTruthy();
+  });
+
   it("an inline icon that is the host's button stays reachable and keeps its events", async () => {
     const opened = vi.fn();
     const { ref, editor } = await mount({
