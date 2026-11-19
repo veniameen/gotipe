@@ -3,6 +3,35 @@ title: Changelog
 description: Release notes of GoTipe, newest first, grouped by package.
 ---
 
+## 0.1.4
+
+Fixes for stored files and the inline page icon, two host options and more tokens. Released
+packages: `core`, `react`, `theme` and `block-editor` (0.1.4).
+
+### @gotipe/core, @gotipe/react
+
+- `EditorHost.discardAsset` is called on every path where `saveAsset` stored a file that was not
+  inserted: paste and drop through paste rules (images included), and the image and file blocks'
+  upload, replace, crop and placeholder drop. A document that changed during such a save is
+  `ASSET_SAVE_FAILED`, not `CLIPBOARD_FAILED`. New export `discardSavedAsset(editor, asset)`.
+
+### @gotipe/block-editor
+
+- `iconPlacement: "inline"`: the host's icon stays accessible (no `aria-hidden`), and its pointer
+  and key events no longer reach the editor.
+- `reviewCardPlacement: "below" | "above"` (default `"below"`) and `reviewLaneCursor: "caret" |
+  "pointer"` (default `"caret"`): where a review card opens on a narrow page, and a lane's cursor as
+  an arrow with a name chip.
+- Russian: a no-break space after «не» in the stale suggestion's text.
+
+### @gotipe/theme
+
+- Tokens: `--gt-media-row-label-size`, `--gt-media-row-button-size`, `--gt-media-row-button-pad`,
+  `--gt-media-row-button-min-w`, `--gt-sug-del-active-fill`, `--gt-table-head-tracking`,
+  `--gt-sug-replace-gap`, `--gt-list-item-inset`, `--gt-lane-pointer-size`,
+  `--gt-lane-pointer-chip-x`, `--gt-lane-pointer-chip-y`, `--gt-lane-pointer-chip-radius`.
+  Defaults keep the 0.1.3 look.
+
 ## 0.1.3
 
 Hosts that embed `PageEditor` get a reliable first focus, one undo step for a group of changes,

@@ -1,5 +1,31 @@
 # @gotipe/theme
 
+## 0.1.4
+
+### Patch Changes
+
+- 2fde80e: `PageEditor`'s `reviewLaneCursor?: "caret" | "pointer"` (default `"caret"`, today's caret with a
+  flag): `"pointer"` draws a lane's cursor as an arrow pointer at the same place, its name chip below
+  right of the tip, in the lane's colour (`.gotipe-lane-cursor[data-variant="pointer"]`,
+  `.gotipe-lane-pointer`). Tokens `--gt-lane-pointer-size` (16 px), `--gt-lane-pointer-chip-x`
+  (10 px), `--gt-lane-pointer-chip-y` (14 px), `--gt-lane-pointer-chip-radius`
+  (`var(--gt-radius-inline)`). `ReviewLayer` takes `laneCursor`; type `ReviewLaneCursor`; `PageIcon`
+  has a `pointer` glyph.
+- 10078d3: `--gt-list-item-inset` (default `0px`): a list item's inset from the list's edge; its dot, number
+  or task box moves with its text.
+- 10078d3: Tokens for the empty media block as a row (`media.placeholder: "row"`):
+  `--gt-media-row-label-size` (default `var(--gt-ui-size)`, 13 px) for its label, and
+  `--gt-media-row-button-size` (`var(--gt-ui-size)`), `--gt-media-row-button-pad`
+  (`var(--gt-button-pad)`) and `--gt-media-row-button-min-w` (`auto`) for its button. Today's look
+  by default.
+- 10078d3: `--gt-sug-del-active-fill` (unset: the lane's active tint, as today): the fill of a proposed
+  deletion's struck text while its card is open, apart from the insertion's.
+- 10078d3: `--gt-sug-replace-gap` (default `0px`): space between a struck deletion and the insertion that
+  follows it in a replacement (`.gotipe-sug-del + .gotipe-sug-ins`).
+- 10078d3: `--gt-table-head-tracking` (default `normal`): letter spacing of table header cells.
+- Updated dependencies [4649fd9]
+  - @gotipe/core@0.1.4
+
 ## 0.1.3
 
 ### Patch Changes

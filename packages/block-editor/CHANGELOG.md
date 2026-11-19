@@ -1,5 +1,39 @@
 # @gotipe/block-editor
 
+## 0.1.4
+
+### Patch Changes
+
+- 280494d: `iconPlacement="inline"`: the icon's wrapper is no longer `aria-hidden`, so a host's icon button
+  stays accessible, and its pointer and key events (mousedown, pointerdown, click, keydown,
+  beforeinput, input) stop at the wrapper: clicking it or pressing Enter or Backspace in it does not
+  move the caret, select or edit the title. It stays outside the title's text and the Markdown.
+- 21cfed4: `PageEditor`'s `reviewCardPlacement?: "below" | "above"` (default `"below"`, today's behavior):
+  where a review card by the text opens when there is no room beside it. `"above"` opens it above
+  the row, below it when the window has no room above. `ReviewLayer` takes `cardPlacement`; type
+  `ReviewCardPlacement`.
+- 2fde80e: `PageEditor`'s `reviewLaneCursor?: "caret" | "pointer"` (default `"caret"`, today's caret with a
+  flag): `"pointer"` draws a lane's cursor as an arrow pointer at the same place, its name chip below
+  right of the tip, in the lane's colour (`.gotipe-lane-cursor[data-variant="pointer"]`,
+  `.gotipe-lane-pointer`). Tokens `--gt-lane-pointer-size` (16 px), `--gt-lane-pointer-chip-x`
+  (10 px), `--gt-lane-pointer-chip-y` (14 px), `--gt-lane-pointer-chip-radius`
+  (`var(--gt-radius-inline)`). `ReviewLayer` takes `laneCursor`; type `ReviewLaneCursor`; `PageIcon`
+  has a `pointer` glyph.
+- 19cfd7f: Russian `review.staleText` keeps «не» with the next word (a no-break space), so the line never
+  ends on the particle.
+- Updated dependencies [4649fd9]
+- Updated dependencies [2fde80e]
+- Updated dependencies [10078d3]
+- Updated dependencies [10078d3]
+- Updated dependencies [10078d3]
+- Updated dependencies [10078d3]
+- Updated dependencies [10078d3]
+  - @gotipe/core@0.1.4
+  - @gotipe/react@0.1.4
+  - @gotipe/theme@0.1.4
+  - @gotipe/suggestions@0.1.2
+  - @gotipe/versions@0.1.1
+
 ## 0.1.3
 
 ### Patch Changes
