@@ -68,7 +68,7 @@ export const blockEditorRu: BlockEditorLocale = {
   "review.acceptAll": "Принять все",
   "review.rejectAll": "Отклонить все",
   "review.stale": "устарело",
-  "review.staleText": "Текст рядом изменился — правку не применить.",
+  "review.staleText": "Текст рядом изменился — правку не\u00a0применить.",
   "review.reply": "Ответить…",
   "review.send": "Отправить",
   "review.close": "Закрыть",
