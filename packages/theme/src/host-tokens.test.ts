@@ -338,6 +338,19 @@ describe("a review whose proposals are still written: nothing by default, a host
   });
 });
 
+describe("the docs view's outline", () => {
+  const outline = read("theme/outline.css");
+  it("is looked for in the docs view only, so no other view is watched for it", () => {
+    // `:has()` on the editor's root makes every new element in the text restyle the whole page:
+    // the view is asked first, at no weight, and the other views never reach `:has()`
+    const guarded = '.gotipe-block-editor:where([data-gt-view="docs"]):has(> .gotipe-outline)';
+    const rules = outline.match(/^\.gotipe-block-editor[^\n{}]*:has\([^{]*\{/gm) ?? [];
+    expect(rules).toHaveLength(3);
+    for (const rule of rules) expect(rule.startsWith(guarded)).toBe(true);
+    expect(declarations(outline, guarded)).toMatchObject({ display: "grid" });
+  });
+});
+
 describe("page head and slash descriptions", () => {
   it("lets a page's content follow its head at the head's gap", () => {
     const states = read("theme/states.css");
