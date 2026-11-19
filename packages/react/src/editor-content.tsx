@@ -8,7 +8,7 @@ import React, {
   useSyncExternalStore,
 } from "react";
 import type { BlockRendererProps } from "./block-renderer";
-import { BlockComponent, PhantomBlocks, hasPhantomBlocks } from "./content/blocks";
+import { BlockComponent, PhantomBlocks } from "./content/blocks";
 import {
   AfterTextContext,
   type AfterTextFn,
@@ -19,7 +19,8 @@ import {
   type PlaceholderFn,
 } from "./content/context";
 import { holdComposing, keepDrawn, withoutLayers } from "./content/decorations";
-import { blockKey } from "./content/presentation";
+import { holdsBlock, isPlainTree } from "./content/plain-blocks";
+import { blockKey, phantomGroupsOf } from "./content/presentation";
 import { SelectionKeeper } from "./content/selection-keeper";
 import { useGoTipeI18n } from "./i18n-context";
 export { usePhantom } from "./content/context";
@@ -39,6 +40,13 @@ export type {
 export interface BlockSlot {
   blockId: string;
   node: React.ReactNode;
+}
+
+/** A top-level block as drawn last, and what it was drawn for. */
+interface DrawnRow {
+  selected: string;
+  editable: boolean;
+  element: React.ReactElement;
 }
 
 /** Index of the top-level block that is or holds `id`, or -1. */
@@ -146,6 +154,38 @@ export function EditorContent({
   });
   const slotAt = afterBlock ? topLevelIndex(shown, afterBlock.blockId) : -1;
 
+  // A top-level block that only built-in views draw gives the element it gave last time while
+  // it is the same object, the caret is where it was for it and the editor is as editable:
+  // React then passes it over, and a change of one block costs that block, not the page. A
+  // block with a custom view anywhere in it, among its suggested blocks too, is drawn every time.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: a new editor draws every block anew
+  const rows = useMemo(() => new WeakMap<BlockView, DrawnRow>(), [editor]);
+  const editable = !!editor && editor.isEditable;
+  const rowOf = (block: BlockView, current: GoTipeEditor): React.ReactElement => {
+    const views = blockViews ?? null;
+    const phantoms = phantomGroupsOf(block);
+    const plain =
+      !blockRenderer &&
+      isPlainTree(block, views) &&
+      phantoms.every((group) => group.blocks.every((phantom) => isPlainTree(phantom, views)));
+    const selected = !plain || holdsBlock(block, selectedBlockId) ? selectedBlockId : "";
+    const known = plain ? rows.get(block) : undefined;
+    if (known && known.selected === selected && known.editable === editable) return known.element;
+    const element = (
+      <React.Fragment key={blockKey(block)}>
+        {phantoms.length > 0 ? (
+          <PhantomBlocks block={block} editor={current} position="before" />
+        ) : null}
+        <BlockComponent block={block} editor={current} selectedBlockId={selected} />
+        {phantoms.length > 0 ? (
+          <PhantomBlocks block={block} editor={current} position="after" />
+        ) : null}
+      </React.Fragment>
+    );
+    if (plain) rows.set(block, { selected, editable, element });
+    return element;
+  };
+
   return (
     <>
       <div
@@ -168,22 +208,7 @@ export function EditorContent({
                 {editor && (
                   <SelectionKeeper editor={editor} state={viewState}>
                     {shown.flatMap((block, index) => {
-                      const phantoms = hasPhantomBlocks(block);
-                      const drawnBlock = (
-                        <React.Fragment key={blockKey(block)}>
-                          {phantoms ? (
-                            <PhantomBlocks block={block} editor={editor} position="before" />
-                          ) : null}
-                          <BlockComponent
-                            block={block}
-                            editor={editor}
-                            selectedBlockId={selectedBlockId}
-                          />
-                          {phantoms ? (
-                            <PhantomBlocks block={block} editor={editor} position="after" />
-                          ) : null}
-                        </React.Fragment>
-                      );
+                      const drawnBlock = rowOf(block, editor);
                       if (index !== slotAt || !afterBlock) return [drawnBlock];
                       // one key wherever it stands: the host's element keeps its state as it moves
                       return [

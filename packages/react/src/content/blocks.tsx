@@ -1,10 +1,4 @@
-import {
-  type BlockView,
-  type BlocksDecoration,
-  type GoTipeEditor,
-  headerRows,
-  tableGrid,
-} from "@gotipe/core";
+import { type BlockView, type GoTipeEditor, headerRows, tableGrid } from "@gotipe/core";
 import React, { useContext, useMemo } from "react";
 import { useGoTipeI18n } from "../i18n-context";
 import { CodeBlock } from "./code-block";
@@ -27,8 +21,11 @@ import {
   isBlockContentEmpty,
   nodeDecorationClass,
   phantomBlocksOf,
+  phantomGroupsOf,
+  phantomOf,
   rootPropsOf,
 } from "./presentation";
+
 import { TableCell, TableCellSelection, TableRow } from "./table-cells";
 import {
   TableColumns,
@@ -42,49 +39,6 @@ import {
 function listDigits(start: number, count: number): number {
   const last = start + Math.max(0, count - 1);
   return Math.max(String(Math.abs(start)).length, String(Math.abs(last)).length);
-}
-
-/** A suggested block as drawn last: with the class, attributes and style of its group. */
-const drawnPhantoms = new WeakMap<BlockView, { group: BlocksDecoration; block: BlockView }>();
-
-/**
- * A suggested block with its group's class, attributes and style on its root. The same block
- * of a group that looks the same is the same object, so it is not drawn again while only its
- * neighbours change (a proposal whose text grows).
- */
-function phantomOf(phantom: BlockView, group: BlocksDecoration): BlockView {
-  const drawn = drawnPhantoms.get(phantom);
-  if (
-    drawn &&
-    drawn.group.key === group.key &&
-    drawn.group.className === group.className &&
-    drawn.group.attrs === group.attrs &&
-    drawn.group.style === group.style
-  )
-    return drawn.block;
-  const block: BlockView = {
-    ...phantom,
-    decorations: [
-      ...(phantom.decorations ?? []),
-      {
-        type: "node",
-        key: group.key,
-        blockId: phantom.id,
-        className: group.className,
-        attrs: group.attrs,
-        style: group.style,
-      },
-    ],
-  };
-  drawnPhantoms.set(phantom, { group, block });
-  return block;
-}
-
-/** Whether suggested blocks stand around `block`: without them `PhantomBlocks` draws nothing. */
-export function hasPhantomBlocks(block: BlockView): boolean {
-  const decorations = block.decorations;
-  if (!decorations || decorations.length === 0) return false;
-  return decorations.some((d) => d.type === "blocks");
 }
 
 /** Suggested blocks around `block` (a `blocks` decoration). */
@@ -131,7 +85,7 @@ function BlockChildren({
   return (
     <>
       {block.children.map((child) => {
-        const phantoms = hasPhantomBlocks(child);
+        const phantoms = phantomGroupsOf(child).length > 0;
         return (
           <React.Fragment key={blockKey(child)}>
             {phantoms ? (
