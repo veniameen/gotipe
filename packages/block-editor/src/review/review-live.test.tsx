@@ -302,13 +302,31 @@ describe("lane cursors", () => {
         { left: cursorLeft, right: cursorLeft, top: 100, bottom: 120, width: 0, height: 20 },
       ] as unknown as DOMRectList;
     Element.prototype.getBoundingClientRect = function (this: Element) {
-      if (this.matches(".gotipe-page")) return box(0, 300);
-      if (this.matches(".gotipe-lane-chip")) {
-        const flipped = this.parentElement?.getAttribute("data-chip-side") === "start";
-        return flipped ? box(cursorLeft - 120, 120) : box(cursorLeft + 10, 120);
-      }
-      return box(0, 0);
+      return this.matches(".gotipe-page") ? box(0, 300) : box(0, 0);
     };
+    // the flag's own place in its cursor: 10 after it, or ending at it when it is before it
+    const flag = (element: HTMLElement) =>
+      element.matches(".gotipe-lane-chip")
+        ? element.parentElement?.getAttribute("data-chip-side") === "start"
+          ? { left: -120, width: 120 }
+          : { left: 10, width: 120 }
+        : { left: 0, width: 0 };
+    const offsets = {
+      offsetLeft: Object.getOwnPropertyDescriptor(HTMLElement.prototype, "offsetLeft")!,
+      offsetWidth: Object.getOwnPropertyDescriptor(HTMLElement.prototype, "offsetWidth")!,
+    };
+    Object.defineProperty(HTMLElement.prototype, "offsetLeft", {
+      configurable: true,
+      get(this: HTMLElement) {
+        return flag(this).left;
+      },
+    });
+    Object.defineProperty(HTMLElement.prototype, "offsetWidth", {
+      configurable: true,
+      get(this: HTMLElement) {
+        return flag(this).width;
+      },
+    });
     try {
       const anchor = { before: "The ", quote: "last", after: " one." };
       const cursor: LaneCursor = { laneId: "agent", id: "c", compact: true, anchor };
@@ -329,6 +347,8 @@ describe("lane cursors", () => {
       expect(side()).toBe("end");
     } finally {
       Element.prototype.getBoundingClientRect = original;
+      Object.defineProperty(HTMLElement.prototype, "offsetLeft", offsets.offsetLeft);
+      Object.defineProperty(HTMLElement.prototype, "offsetWidth", offsets.offsetWidth);
     }
   });
 
