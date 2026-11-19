@@ -131,6 +131,7 @@ const PageEditorInner = forwardRef<PageEditorHandle, PageEditorProps>(
       reviewLayout = "auto",
       reviewCardPlacement = "below",
       reviewLaneCursor = "caret",
+      reviewLanePointer,
       reviewBar,
       view = "notion",
       narrow = true,
@@ -399,6 +400,7 @@ const PageEditorInner = forwardRef<PageEditorHandle, PageEditorProps>(
               layout={reviewLayout}
               cardPlacement={reviewCardPlacement}
               laneCursor={reviewLaneCursor}
+              lanePointer={reviewLanePointer}
               onLocalAccept={localAccept}
               apiRef={reviewApi}
               onStates={setReviewStates}

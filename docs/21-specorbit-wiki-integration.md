@@ -101,6 +101,7 @@ import { PageEditor, type PageEditorHandle } from "@gotipe/block-editor";
   reviewLayout="inline"                // cards by the text, never in a margin column
   reviewCardPlacement="above"          // on a narrow page the card opens above the row
   reviewLaneCursor="pointer"           // a lane's cursor as an arrow pointer with its name
+  reviewLanePointer={<AgentArrow />}   // optional: the host's own arrow, tip set by --gt-lane-pointer-tip-*
   slashMenu={{ commands: (defaults) => [...defaults, agentNote], groups, descriptions: true }}
   host={{
     saveAsset: async (blob, { name, mediaType }) => {

@@ -121,9 +121,18 @@ export interface PageEditorProps {
    * How a lane's cursor looks: `caret` (default), a line with a flag that names the lane, or
    * `pointer`, an arrow pointer at the same place with the name below right of its tip
    * (`.gotipe-lane-cursor[data-variant="pointer"]`, sizes `--gt-lane-pointer-size`,
-   * `--gt-lane-pointer-chip-x`, `--gt-lane-pointer-chip-y`), in the lane's colour.
+   * `--gt-lane-pointer-chip-x`, `--gt-lane-pointer-chip-y`), in the lane's colour. The tip
+   * stands `--gt-lane-pointer-at` from the row's top (`0px`; `100%` is its bottom).
    */
   reviewLaneCursor?: ReviewLaneCursor;
+  /**
+   * The host's own arrow for `reviewLaneCursor="pointer"` (an `<svg>`, say), drawn instead of the
+   * built-in one in a `--gt-lane-pointer-size` box at its top left, in the lane's colour
+   * (`currentColor`; `var(--gt-track)`). Set where its tip lies in that box with
+   * `--gt-lane-pointer-tip-x` and `--gt-lane-pointer-tip-y`. It is decorative (hidden from
+   * assistive technology) and takes no pointer events.
+   */
+  reviewLanePointer?: React.ReactNode;
   /** Show the edit bar above the page. */
   reviewBar?: { title?: React.ReactNode; extra?: React.ReactNode[] } | false;
   /**

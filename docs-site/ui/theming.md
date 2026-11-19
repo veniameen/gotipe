@@ -186,6 +186,10 @@ can be set on any container.
 | `--gt-lane-pointer-size` | 16 px | A lane's cursor as a pointer (`reviewLaneCursor="pointer"`): size of the arrow, whose tip is the cursor's place; its colour is the lane's (`--gt-track`) |
 | `--gt-lane-pointer-chip-x`, `--gt-lane-pointer-chip-y` | 10 px, 14 px | Offset of the name chip from the arrow's tip, right and down |
 | `--gt-lane-pointer-chip-radius` | `var(--gt-radius-inline)` (4 px) | Corners of that chip |
+| `--gt-lane-pointer-at` | `0px` | Where the arrow's tip stands in the row, from its top: `100%` is the row's bottom, `calc(100% - 2px)` just above it; the chip moves with the tip |
+| `--gt-lane-pointer-tip-x`, `--gt-lane-pointer-tip-y` | unset: 3/16 and 1.75/16 of `--gt-lane-pointer-size` | Where the tip lies inside the arrow's box, from its top left; set them for a host's own arrow (`reviewLanePointer`) |
+| `--gt-lane-pointer-outline` | `currentColor` | Outline of the built-in arrow; the page's colour (`var(--gt-page-bg)`) sets it apart from the text under it |
+| `--gt-lane-pointer-outline-width` | unset: `var(--gt-icon-stroke)` (1.5) | Width of that outline, in the arrow's 16-unit box |
 | `--gt-sug-replace-gap` | `0px` | Space between a struck deletion and the insertion that replaces it |
 | `--gt-image-radius` | `var(--gt-radius-block)` (8 px) | Corners of an image |
 | `--gt-image-ring` | `0px` | Width of a ring around an image, which keeps a light image apart from the page |

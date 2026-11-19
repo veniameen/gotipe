@@ -1,4 +1,5 @@
 // @vitest-environment jsdom
+import type React from "react";
 import { act } from "react";
 import { type Root, createRoot } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -33,13 +34,14 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-async function cursor(look?: ReviewLaneCursor) {
+async function cursor(look?: ReviewLaneCursor, arrow?: React.ReactNode) {
   await act(async () => {
     root.render(
       <PageEditor
         markdown={"# Notes\n\nThe quick brown fox.\n"}
         locale="en"
         reviewLaneCursor={look}
+        reviewLanePointer={arrow}
         review={{
           lanes: [{ id: "agent", name: "Agent", kind: "agent", color: "rgb(1, 2, 3)" }],
           proposals: [],
@@ -88,5 +90,19 @@ describe("reviewLaneCursor", () => {
     expect(arrow?.getAttribute("aria-hidden")).toBe("true");
     expect(arrow?.querySelector("path")?.getAttribute("fill")).toBe("currentColor");
     expect(element.lastElementChild?.className).toBe("gotipe-lane-chip");
+  });
+
+  it("a host's arrow is drawn in place of the built-in one, only for the pointer", async () => {
+    const own = <svg data-testid="own" viewBox="0 0 14 17" width="14" height="17" />;
+    const element = await cursor("pointer", own);
+    const box = element.querySelector("span.gotipe-lane-pointer");
+    expect(box?.firstElementChild?.getAttribute("data-testid")).toBe("own");
+    expect(element.querySelector("svg.gotipe-lane-pointer")).toBeNull();
+    expect(element.getAttribute("aria-hidden")).toBe("true");
+    act(() => root.unmount());
+    root = createRoot(container);
+    const caret = await cursor("caret", own);
+    expect(caret.querySelector("[data-testid='own']")).toBeNull();
+    expect(caret.querySelector(".gotipe-lane-caret")).not.toBeNull();
   });
 });

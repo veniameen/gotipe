@@ -162,17 +162,32 @@ li.gotipe-sug-block-ins.gotipe-sug-stale > input[type="checkbox"] {
   white-space: nowrap;
 }
 /* a host's option (`reviewLaneCursor: "pointer"`): an arrow whose tip is the place, as in a design
-   tool, and the name below right of the tip; the glyph's tip is 3/16 and 1.75/16 into its box */
+   tool, and the name below right of the tip. The tip stands `--gt-lane-pointer-at` from the row's
+   top (`100%` is its bottom); it lies `--gt-lane-pointer-tip-x`/`-y` into the glyph's box (unset:
+   3/16 and 1.75/16 of the size, the built-in arrow's tip), so a host's own glyph sets its own. */
 .gotipe-lane-cursor > .gotipe-lane-pointer {
   position: absolute;
-  top: calc(var(--gt-lane-pointer-size) * -1.75 / 16);
-  left: calc(var(--gt-lane-pointer-size) * -3 / 16);
+  top: calc(
+    var(--gt-lane-pointer-at) -
+    var(--gt-lane-pointer-tip-y, calc(var(--gt-lane-pointer-size) * 1.75 / 16))
+  );
+  left: calc(var(--gt-lane-pointer-tip-x, calc(var(--gt-lane-pointer-size) * 3 / 16)) * -1);
   width: var(--gt-lane-pointer-size);
   height: var(--gt-lane-pointer-size);
   color: var(--gt-track);
 }
+/* the built-in arrow: filled in the lane's colour, outlined by `--gt-lane-pointer-outline` */
+.gotipe-lane-cursor > svg.gotipe-lane-pointer {
+  stroke: var(--gt-lane-pointer-outline);
+  stroke-width: var(--gt-lane-pointer-outline-width, var(--gt-icon-stroke));
+}
+/* a host's glyph (`reviewLanePointer`) at the top left of the box, in the lane's colour */
+.gotipe-lane-cursor > span.gotipe-lane-pointer {
+  display: flex;
+  align-items: flex-start;
+}
 .gotipe-lane-cursor[data-variant="pointer"] > .gotipe-lane-chip {
-  top: var(--gt-lane-pointer-chip-y);
+  top: calc(var(--gt-lane-pointer-at) + var(--gt-lane-pointer-chip-y));
   left: var(--gt-lane-pointer-chip-x);
   border-radius: var(--gt-lane-pointer-chip-radius);
 }

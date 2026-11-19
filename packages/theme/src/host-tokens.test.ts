@@ -201,21 +201,40 @@ describe("review parts have tokens with today's values", () => {
     expect(read("tokens/palette.css")).not.toContain("--gt-sug-del-active-fill:");
   });
   it("draws a lane's cursor as a pointer by tokens, in the lane's colour", () => {
-    expect(declarations(review, ".gotipe-lane-cursor > .gotipe-lane-pointer")).toEqual({
+    const flat = (rule: Record<string, string>) =>
+      Object.fromEntries(
+        Object.entries(rule).map(([k, v]) => [
+          k,
+          v.replace(/\s+/g, " ").replace(/\( /g, "(").replace(/ \)/g, ")"),
+        ]),
+      );
+    // the tip at the row's top, 3/16 and 1.75/16 into the built-in arrow's box, as in 0.1.4
+    expect(flat(declarations(review, ".gotipe-lane-cursor > .gotipe-lane-pointer"))).toEqual({
       position: "absolute",
-      top: "calc(var(--gt-lane-pointer-size) * -1.75 / 16)",
-      left: "calc(var(--gt-lane-pointer-size) * -3 / 16)",
+      top: "calc(var(--gt-lane-pointer-at) - var(--gt-lane-pointer-tip-y, calc(var(--gt-lane-pointer-size) * 1.75 / 16)))",
+      left: "calc(var(--gt-lane-pointer-tip-x, calc(var(--gt-lane-pointer-size) * 3 / 16)) * -1)",
       width: "var(--gt-lane-pointer-size)",
       height: "var(--gt-lane-pointer-size)",
       color: "var(--gt-track)",
     });
+    expect(declarations(review, ".gotipe-lane-cursor > svg.gotipe-lane-pointer")).toEqual({
+      stroke: "var(--gt-lane-pointer-outline)",
+      "stroke-width": "var(--gt-lane-pointer-outline-width, var(--gt-icon-stroke))",
+    });
     expect(
       declarations(review, '.gotipe-lane-cursor[data-variant="pointer"] > .gotipe-lane-chip'),
     ).toEqual({
-      top: "var(--gt-lane-pointer-chip-y)",
+      top: "calc(var(--gt-lane-pointer-at) + var(--gt-lane-pointer-chip-y))",
       left: "var(--gt-lane-pointer-chip-x)",
       "border-radius": "var(--gt-lane-pointer-chip-radius)",
     });
+    expect(tokens.view["--gt-lane-pointer-at"]).toBe("0px");
+    // the built-in arrow is outlined in its own colour, as the glyph's stroke was
+    expect(tokens.view["--gt-lane-pointer-outline"]).toBe("currentColor");
+    // derived from the size where they are used, so a host's size on any container holds
+    for (const unset of ["tip-x", "tip-y", "outline-width"]) {
+      expect(tokens.view[`--gt-lane-pointer-${unset}`]).toBeUndefined();
+    }
     expect(tokens.view["--gt-lane-pointer-size"]).toBe("16px");
     expect(tokens.view["--gt-lane-pointer-chip-x"]).toBe("10px");
     expect(tokens.view["--gt-lane-pointer-chip-y"]).toBe("14px");

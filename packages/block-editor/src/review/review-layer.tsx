@@ -102,6 +102,7 @@ export function ReviewLayer({
   layout = "auto",
   cardPlacement = "below",
   laneCursor = "caret",
+  lanePointer,
   onLocalAccept,
   apiRef,
   onStates,
@@ -113,6 +114,8 @@ export function ReviewLayer({
   layout?: ReviewLayout;
   cardPlacement?: ReviewCardPlacement;
   laneCursor?: ReviewLaneCursor;
+  /** The host's own arrow for `laneCursor: "pointer"` instead of the built-in one. */
+  lanePointer?: React.ReactNode;
   /** Applies a proposal to the document when the host has no `onAccept`. */
   onLocalAccept: (proposal: ReviewProposal) => boolean;
   apiRef?: React.MutableRefObject<ReviewApi | null>;
@@ -513,7 +516,9 @@ export function ReviewLayer({
           data-variant={pointer ? "pointer" : undefined}
           aria-hidden="true"
         >
-          {pointer ? (
+          {pointer && lanePointer ? (
+            <span className="gotipe-lane-pointer">{lanePointer}</span>
+          ) : pointer ? (
             <PageIcon name="pointer" className="gotipe-lane-pointer" />
           ) : (
             <span className="gotipe-lane-caret" />
