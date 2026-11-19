@@ -23,8 +23,6 @@
 - 10078d3: `--gt-sug-replace-gap` (default `0px`): space between a struck deletion and the insertion that
   follows it in a replacement (`.gotipe-sug-del + .gotipe-sug-ins`).
 - 10078d3: `--gt-table-head-tracking` (default `normal`): letter spacing of table header cells.
-- Updated dependencies [4649fd9]
-  - @gotipe/core@0.1.4
 
 ## 0.1.3
 

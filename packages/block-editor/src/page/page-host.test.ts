@@ -62,3 +62,22 @@ describe("PageEditor's host passes every EditorHost member on", () => {
     expect(typeof page.discardAsset).toBe("function");
   });
 });
+
+describe("PageEditor's host calls a host object's methods as methods", () => {
+  it("keeps `this` for saveAsset and resolveAsset", async () => {
+    class Store {
+      prefix = "assets/";
+      async saveAsset(_file: Blob, info: { name: string }) {
+        return { src: this.prefix + info.name };
+      }
+      resolveAsset(src: string) {
+        return `${this.prefix}resolved/${src}`;
+      }
+    }
+    const store = new Store() as unknown as EditorHost;
+    const page = createPageHost({ current: store }, { current: undefined });
+    const info = { kind: "image" as const, name: "a.png", mediaType: "image/png", size: 1 };
+    expect(await page.saveAsset?.(new Blob(["x"]), info)).toEqual({ src: "assets/a.png" });
+    expect(page.resolveAsset?.("x.png")).toBe("assets/resolved/x.png");
+  });
+});

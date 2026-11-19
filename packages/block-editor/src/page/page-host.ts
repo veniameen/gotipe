@@ -15,14 +15,15 @@ export function createPageHost(
       return host.current?.imageSources;
     },
     saveAsset: (file, info) => {
-      const save = host.current?.saveAsset;
-      if (!save) return saveAsset({}, file, info.kind);
-      return save(file, info);
+      // called as the host's method: a host object or class keeps its `this`
+      const current = host.current;
+      if (!current?.saveAsset) return saveAsset({}, file, info.kind);
+      return current.saveAsset(file, info);
     },
     resolveAsset: (src) => {
       // the host's null means “unavailable”: the image shows its failed state, nothing is fetched
-      const resolve = host.current?.resolveAsset;
-      return resolve ? resolve(src) : src;
+      const current = host.current;
+      return current?.resolveAsset ? current.resolveAsset(src) : src;
     },
     get discardAsset() {
       // a stored file a paste did not insert: only the host that stores files can drop it

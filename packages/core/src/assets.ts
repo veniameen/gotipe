@@ -10,30 +10,48 @@ export interface SavedAsset {
 }
 export type StoredAsset = Parameters<NonNullable<EditorHost["discardAsset"]>>[0];
 
-/** `host` whose `saveAsset` also lists in `stored` each file it stored. */
+/**
+ * `host` whose `saveAsset` also lists in `stored` each file it stored. The host stays the
+ * prototype, so its own methods and getters keep their `this`.
+ */
 export function recordingHost(host: EditorHost, stored: StoredAsset[]): EditorHost {
-  const save = host.saveAsset;
-  if (!save) return host;
-  return {
-    ...host,
-    saveAsset: async (file, info) => {
-      const saved = await save(file, info);
-      if (saved?.src)
-        stored.push({ src: saved.src, name: saved.name ?? info.name, kind: info.kind });
-      return saved;
-    },
+  if (!host.saveAsset) return host;
+  const recording: EditorHost = Object.create(host);
+  recording.saveAsset = async (file, info) => {
+    const saved = await host.saveAsset!(file, info);
+    if (saved?.src) stored.push({ src: saved.src, name: saved.name ?? info.name, kind: info.kind });
+    return saved;
   };
+  return recording;
 }
 
-/** Tells the host about a file its `saveAsset` stored that the editor then did not insert. */
+/** True when a block of `blocks`, at any depth, shows `src` (an image's or a file's). */
+function usesSource(
+  blocks: readonly { attrs: Record<string, unknown>; children: readonly unknown[] }[],
+  src: string,
+): boolean {
+  return blocks.some(
+    (block) =>
+      block.attrs.src === src ||
+      block.attrs.url === src ||
+      usesSource(block.children as typeof blocks, src),
+  );
+}
+
+/**
+ * Tells the host about a file its `saveAsset` stored that the editor then did not insert. A
+ * source the document shows is not given up: a host may return the same `src` for the same
+ * file (by name or by content), and another block may hold it.
+ */
 export function discardSavedAsset(
-  editor: Pick<GoTipeEditor, "host" | "reportError">,
+  editor: Pick<GoTipeEditor, "host" | "reportError" | "getViewState">,
   asset: StoredAsset,
 ): void {
   const { saveAsset, discardAsset } = editor.host;
   if (!saveAsset || !discardAsset) return;
+  if (usesSource(editor.getViewState().blocks, asset.src)) return;
   try {
-    discardAsset(asset);
+    discardAsset.call(editor.host, asset);
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     editor.reportError(

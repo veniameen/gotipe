@@ -29,7 +29,7 @@
     "*.css"
   ],
   "peerDependencies": {
-    "@gotipe/core": "^0.1.4"
+    "@gotipe/core": "^0.1.3"
   },
   "devDependencies": {
     "@gotipe/core": "workspace:*",
