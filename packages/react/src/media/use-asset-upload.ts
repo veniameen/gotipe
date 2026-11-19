@@ -1,4 +1,4 @@
-import { type BlockView, type GoTipeEditor, GoTipeError } from "@gotipe/core";
+import { type BlockView, type GoTipeEditor, GoTipeError, discardSavedAsset } from "@gotipe/core";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { saveAssetWithHost } from "../host-assets";
 import { useGoTipeI18n } from "../i18n-context";
@@ -13,8 +13,9 @@ function find(blocks: BlockView[], id: string): BlockView | undefined {
 }
 
 /**
- * A late upload cannot recreate a deleted block or replace a newer chosen source. Every failure
- * reaches `host.onError`; `error` is its text for the block, `null` with `inlineErrors: false`.
+ * A late upload cannot recreate a deleted block or replace a newer chosen source; the file it
+ * stored then goes to `host.discardAsset`. Every failure reaches `host.onError`; `error` is its
+ * text for the block, `null` with `inlineErrors: false`.
  */
 export function useAssetUpload(
   editor: GoTipeEditor,
@@ -54,15 +55,16 @@ export function useAssetUpload(
       setError(null);
       try {
         const saved = await saveAssetWithHost(editor, file, kind);
-        if (
-          !mounted.current ||
-          generation !== request.current ||
-          editor.isDestroyed ||
-          !editor.isEditable
-        )
+        const current =
+          mounted.current &&
+          generation === request.current &&
+          !editor.isDestroyed &&
+          editor.isEditable &&
+          find(editor.getViewState().blocks, blockId);
+        if (!current || current.attrs[sourceKey] !== previousSource) {
+          if (saved) discardSavedAsset(editor, { ...saved, kind });
           return;
-        const current = find(editor.getViewState().blocks, blockId);
-        if (!current || current.attrs[sourceKey] !== previousSource) return;
+        }
         if (saved) apply(saved, file);
         // `saveAssetWithHost` has reported the failure already
         else if (inlineErrors) setError(i18n.t("media.uploadFailed"));

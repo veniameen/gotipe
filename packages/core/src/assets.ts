@@ -1,5 +1,5 @@
 import { GoTipeError } from "./error";
-import type { EditorHost } from "./types/editor";
+import type { EditorHost, GoTipeEditor } from "./types/editor";
 
 export const INLINE_ASSET_LIMIT = 10 * 1024 * 1024;
 export const IMAGE_MEDIA_TYPES = ["image/png", "image/jpeg", "image/gif", "image/webp"];
@@ -7,6 +7,39 @@ export const IMAGE_MEDIA_TYPES = ["image/png", "image/jpeg", "image/gif", "image
 export interface SavedAsset {
   src: string;
   name: string;
+}
+export type StoredAsset = Parameters<NonNullable<EditorHost["discardAsset"]>>[0];
+
+/** `host` whose `saveAsset` also lists in `stored` each file it stored. */
+export function recordingHost(host: EditorHost, stored: StoredAsset[]): EditorHost {
+  const save = host.saveAsset;
+  if (!save) return host;
+  return {
+    ...host,
+    saveAsset: async (file, info) => {
+      const saved = await save(file, info);
+      if (saved?.src)
+        stored.push({ src: saved.src, name: saved.name ?? info.name, kind: info.kind });
+      return saved;
+    },
+  };
+}
+
+/** Tells the host about a file its `saveAsset` stored that the editor then did not insert. */
+export function discardSavedAsset(
+  editor: Pick<GoTipeEditor, "host" | "reportError">,
+  asset: StoredAsset,
+): void {
+  const { saveAsset, discardAsset } = editor.host;
+  if (!saveAsset || !discardAsset) return;
+  try {
+    discardAsset(asset);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    editor.reportError(
+      new GoTipeError("ASSET_SAVE_FAILED", message, { src: asset.src, cause: error }),
+    );
+  }
 }
 
 /** A durable standalone asset, serialized with the document instead of a session blob URL. */
