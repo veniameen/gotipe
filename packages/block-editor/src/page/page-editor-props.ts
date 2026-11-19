@@ -11,6 +11,7 @@ import type {
   ReviewLaneCursor,
   ReviewLayout,
 } from "../review/review-layer";
+import type { PageBookmark, TextPoint } from "./page-bookmark";
 import type { PageBlockKind } from "./page-commands";
 import type { PageTitleLevel } from "./page-views";
 
@@ -30,6 +31,19 @@ export interface PageEditorHandle {
    * written yet).
    */
   selectionMarkdownRange(): { start: number; end: number } | null;
+  /**
+   * A place that follows edits (the caret's when `point` is not given), for a host that acts at
+   * it later: edits before it in its block move it; text typed right at it goes before it with
+   * `bias: "after"` (default), after it with `"before"`. `resolve()` is null once its text or
+   * block is gone. Release it when done; the editor's bookmarks go with the editor. Null before
+   * the editor exists.
+   */
+  bookmark(point?: TextPoint, bias?: "before" | "after"): PageBookmark | null;
+  /**
+   * `point` as an offset in `getMarkdown()`'s text: at the edge of a mark, `"after"` (default)
+   * past its delimiters, `"before"` before them. Null when the point is not in the file.
+   */
+  markdownOffset(point: TextPoint, bias?: "before" | "after"): number | null;
   /**
    * Replaces the document with `text` as an external edit (focus, caret and scroll kept, the
    * change goes into undo), even when `text` equals the last value of `markdown`. A draft not yet
