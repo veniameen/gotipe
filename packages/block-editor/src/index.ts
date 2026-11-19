@@ -105,6 +105,7 @@ export type {
   ReviewApi,
   ReviewAction,
   ReviewCardPlacement,
+  ReviewLaneCursor,
   ReviewLayout,
   ReviewResult,
 } from "./review/review-layer";

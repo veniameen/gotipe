@@ -74,7 +74,8 @@ export type PageIconName =
   | "case"
   | "word"
   | "regex"
-  | "minus";
+  | "minus"
+  | "pointer";
 
 const PATHS: Record<PageIconName, React.ReactNode> = {
   image: (
@@ -283,6 +284,7 @@ const PATHS: Record<PageIconName, React.ReactNode> = {
     </>
   ),
   minus: <path d="M3.5 8h9" />,
+  pointer: <path d="M3 1.75v11.5l2.85-2.7 1.9 4.15 1.9-.85-1.9-4.1h3.95Z" fill="currentColor" />,
 };
 
 export function PageIcon({ name, className }: { name: PageIconName; className?: string }) {

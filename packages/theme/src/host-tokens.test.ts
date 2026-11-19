@@ -200,6 +200,31 @@ describe("review parts have tokens with today's values", () => {
     expect(tokens.view["--gt-sug-replace-gap"]).toBe("0px");
     expect(read("tokens/palette.css")).not.toContain("--gt-sug-del-active-fill:");
   });
+  it("draws a lane's cursor as a pointer by tokens, in the lane's colour", () => {
+    expect(declarations(review, ".gotipe-lane-cursor > .gotipe-lane-pointer")).toEqual({
+      position: "absolute",
+      top: "calc(var(--gt-lane-pointer-size) * -1.75 / 16)",
+      left: "calc(var(--gt-lane-pointer-size) * -3 / 16)",
+      width: "var(--gt-lane-pointer-size)",
+      height: "var(--gt-lane-pointer-size)",
+      color: "var(--gt-track)",
+    });
+    expect(
+      declarations(review, '.gotipe-lane-cursor[data-variant="pointer"] > .gotipe-lane-chip'),
+    ).toEqual({
+      top: "var(--gt-lane-pointer-chip-y)",
+      left: "var(--gt-lane-pointer-chip-x)",
+      "border-radius": "var(--gt-lane-pointer-chip-radius)",
+    });
+    expect(tokens.view["--gt-lane-pointer-size"]).toBe("16px");
+    expect(tokens.view["--gt-lane-pointer-chip-x"]).toBe("10px");
+    expect(tokens.view["--gt-lane-pointer-chip-y"]).toBe("14px");
+    expect(tokens.view["--gt-lane-pointer-chip-radius"]).toBe("var(--gt-radius-inline)");
+    // the caret with its flag stays as it is
+    expect(declarations(review, ".gotipe-lane-chip").top).toBe(
+      "calc(100% + var(--gt-toolbar-gap))",
+    );
+  });
   it("puts a card's delete at the end of its head", () => {
     expect(declarations(review, ".gotipe-review-card-delete")["margin-inline-start"]).toBe("auto");
   });

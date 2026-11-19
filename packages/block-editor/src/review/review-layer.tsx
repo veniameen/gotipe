@@ -16,7 +16,7 @@ import type React from "react";
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useBlockEditorI18n } from "../i18n/strings";
-import type { PageIconName } from "../page/icons";
+import { PageIcon, type PageIconName } from "../page/icons";
 import type { MarkdownSession } from "../page/markdown-session";
 import { usePageOverlay } from "../page/overlay";
 import { decorationRect, proposalEndRect, rectAt } from "./dom-position";
@@ -31,6 +31,8 @@ export type ReviewResult = boolean | undefined;
 export type ReviewLayout = "auto" | "inline" | "margin";
 /** Where the card by the text opens when it has no room beside it. */
 export type ReviewCardPlacement = "below" | "above";
+/** How a lane's cursor looks: a caret with a flag, or an arrow pointer with its name. */
+export type ReviewLaneCursor = "caret" | "pointer";
 export type ReviewAction = (id: string) => Promise<ReviewResult> | ReviewResult;
 
 /** Review data and callbacks (ADR-0047). Everything is controlled by the host. */
@@ -99,6 +101,7 @@ export function ReviewLayer({
   review,
   layout = "auto",
   cardPlacement = "below",
+  laneCursor = "caret",
   onLocalAccept,
   apiRef,
   onStates,
@@ -109,6 +112,7 @@ export function ReviewLayer({
   review: PageReviewProps;
   layout?: ReviewLayout;
   cardPlacement?: ReviewCardPlacement;
+  laneCursor?: ReviewLaneCursor;
   /** Applies a proposal to the document when the host has no `onAccept`. */
   onLocalAccept: (proposal: ReviewProposal) => boolean;
   apiRef?: React.MutableRefObject<ReviewApi | null>;
@@ -500,6 +504,7 @@ export function ReviewLayer({
   );
 
   if (!overlay) return null;
+  const pointer = laneCursor === "pointer";
 
   return createPortal(
     <>
@@ -516,9 +521,14 @@ export function ReviewLayer({
               "--gt-track": c.color,
             } as React.CSSProperties
           }
+          data-variant={pointer ? "pointer" : undefined}
           aria-hidden="true"
         >
-          <span className="gotipe-lane-caret" />
+          {pointer ? (
+            <PageIcon name="pointer" className="gotipe-lane-pointer" />
+          ) : (
+            <span className="gotipe-lane-caret" />
+          )}
           <span className="gotipe-lane-chip">
             <span className="gotipe-lane-chip-name">{c.name}</span>
             {c.label ? <span className="gotipe-lane-chip-label">{c.label}</span> : null}
