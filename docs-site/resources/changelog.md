@@ -46,7 +46,7 @@ its own), `react`, `theme` and `block-editor` (0.1.5), `markdown`, `suggestions`
 
 - Tokens: `--gt-review-card-gap`, `--gt-lane-pointer-at`, `--gt-lane-pointer-outline`,
   `--gt-lane-pointer-outline-width`, `--gt-lane-pointer-tip-x`, `--gt-lane-pointer-tip-y`,
-  `--gt-sug-block-ins-text-tint`, `--gt-sug-block-ins-text-radius`, `--gt-table-head-min-width`, `--gt-list-item-text-inset`. Defaults keep the 0.1.4 look.
+  `--gt-sug-block-ins-text-tint`, `--gt-sug-ins-radius`, `--gt-sug-block-ins-text-radius`, `--gt-table-head-min-width`, `--gt-list-item-text-inset`. Defaults keep the 0.1.4 look.
 
 ## 0.1.4
 
