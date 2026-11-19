@@ -160,7 +160,9 @@ export interface PageEditorProps {
    * `blockId` (a field for writing with a model between paragraphs, say): the text below moves
    * down for it, and it follows its block as the text above changes. A widget
    * (`.gotipe-block-slot`, `data-gotipe-widget`): not part of the text or the file; its keys and
-   * input stay the host's. None when null.
+   * input stay the host's. None when null or when no block has that id (ids can change when the
+   * document is replaced with `setMarkdown`: the element is drawn anew then, so keep its state
+   * with the host).
    */
   afterBlock?: BlockSlot | null;
   /** Show the edit bar above the page. */

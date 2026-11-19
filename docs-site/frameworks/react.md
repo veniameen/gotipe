@@ -193,7 +193,8 @@ document right after the top-level block that is or holds `blockId` (an item's i
 its whole list), spaced as one more block, so the text below moves down for it. It is a widget
 (`.gotipe-block-slot`, `data-gotipe-widget`, not editable): not part of the text, offsets, copy or
 file, and the editor does not handle its input. It keeps its element while it moves to another
-block, and an unknown id or `null` shows nothing.
+block, and an unknown id or `null` shows nothing. Block ids can change when the document is
+replaced (`setMarkdown`): the element is then drawn anew, so the host keeps its state.
 
 A block type with no view, such as your own node without `blockViews`, is drawn as a `<p>`
 with its text; with child blocks, as a `<div>` with its text and then the children.

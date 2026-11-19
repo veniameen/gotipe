@@ -60,4 +60,18 @@ describe("decorationRect: where a suggestion's card is anchored", () => {
     const at = decorationRect(document.getElementById("root")!, "data-gotipe-proposal", "s4");
     expect([at?.left, at?.top, at?.bottom, at?.right]).toEqual([84, 102, 119, 456]);
   });
+
+  it("the first place in document order wins over a mark further down", () => {
+    vi.stubGlobal("CSS", { escape: (value: string) => value });
+    document.body.innerHTML = `<div id="root"><p data-block-id="p2" class="gotipe-sug-block-del" data-gotipe-proposal="s5">gone</p><p data-block-id="p5"><span class="gotipe-sug-ins" data-gotipe-proposal="s5">new</span></p></div>`;
+    vi.spyOn(document.querySelector("p")!, "getBoundingClientRect").mockReturnValue(
+      rect(56, 100, 400, 20),
+    );
+    vi.spyOn(document.querySelector("span")!, "getBoundingClientRect").mockReturnValue(
+      rect(56, 300, 30, 20),
+    );
+    Range.prototype.getClientRects = () => [rect(56, 100, 8, 20)] as unknown as DOMRectList;
+    const at = decorationRect(document.getElementById("root")!, "data-gotipe-proposal", "s5");
+    expect(at?.top).toBe(100);
+  });
 });

@@ -66,11 +66,15 @@ const BLOCK = "[data-block-id], [data-gotipe-phantom-id]";
  * an inline mark is its own box.
  */
 export function decorationRect(root: HTMLElement, attr: string, id: string): DOMRect | null {
-  // A proposal that edits a list item marks the whole list as changed and the item's text with
-  // its own marks: the card stands by the first mark in the text, the block only without one.
+  // The card stands at the first place in document order. A proposal that edits a list item
+  // marks the whole list as changed and the item's text with its own marks: when that first
+  // place is a block holding a mark, the card stands by the mark, not the whole block.
   const all = [...root.querySelectorAll(`[${attr}="${CSS.escape(id)}"]`)];
-  const el = all.find((e) => !e.matches(BLOCK)) ?? all[0];
-  if (!el) return null;
+  const first = all[0];
+  if (!first) return null;
+  const el = first.matches(BLOCK)
+    ? (all.find((e) => e !== first && !e.matches(BLOCK) && first.contains(e)) ?? first)
+    : first;
   const block = el.getBoundingClientRect();
   if (!el.matches(BLOCK)) return block;
   // a new block's rows are its text's lines (`.gotipe-sug-block-ins-text`), not its taller box
