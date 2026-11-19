@@ -31,6 +31,22 @@ export type {
   PlaceholderFn,
 } from "./content/context";
 
+/**
+ * A host's element in the flow of the document, right after the top-level block that is or holds
+ * `blockId` (a field between paragraphs, say): the text below moves down for it. It is a widget,
+ * not part of the text: no offsets, no Markdown, the editor does not handle its input or keys.
+ */
+export interface BlockSlot {
+  blockId: string;
+  node: React.ReactNode;
+}
+
+/** Index of the top-level block that is or holds `id`, or -1. */
+function topLevelIndex(blocks: BlockView[], id: string): number {
+  const holds = (block: BlockView): boolean => block.id === id || block.children.some(holds);
+  return blocks.findIndex(holds);
+}
+
 function useViewState(editor: GoTipeEditor | null) {
   const subscribe = useCallback(
     (onStoreChange: () => void) => {
@@ -54,6 +70,7 @@ export function EditorContent({
   blockViews,
   placeholder,
   afterText,
+  afterBlock,
   hostLayers,
   ariaLabel,
 }: {
@@ -65,6 +82,8 @@ export function EditorContent({
   placeholder?: PlaceholderFn;
   /** What a block with text shows after it, as a widget: a heading's anchor link. */
   afterText?: AfterTextFn;
+  /** A host's element in the flow after a block (`BlockSlot`); none when null. */
+  afterBlock?: BlockSlot | null;
   /**
    * Decoration layers the host draws itself, e.g. `["collaboration"]` when it has its own
    * cursor overlay. Their decorations are left out; every other layer is drawn.
@@ -123,6 +142,7 @@ export function EditorContent({
   useEffect(() => {
     drawn.current = shown;
   });
+  const slotAt = afterBlock ? topLevelIndex(shown, afterBlock.blockId) : -1;
 
   return (
     <>
@@ -145,17 +165,34 @@ export function EditorContent({
               <AfterTextContext.Provider value={afterText ?? null}>
                 {editor && (
                   <SelectionKeeper editor={editor} state={viewState}>
-                    {shown.map((block) => (
-                      <React.Fragment key={blockKey(block)}>
-                        <PhantomBlocks block={block} editor={editor} position="before" />
-                        <BlockComponent
-                          block={block}
-                          editor={editor}
-                          selectedBlockId={selectedBlockId}
-                        />
-                        <PhantomBlocks block={block} editor={editor} position="after" />
-                      </React.Fragment>
-                    ))}
+                    {shown.flatMap((block, index) => {
+                      const drawnBlock = (
+                        <React.Fragment key={blockKey(block)}>
+                          <PhantomBlocks block={block} editor={editor} position="before" />
+                          <BlockComponent
+                            block={block}
+                            editor={editor}
+                            selectedBlockId={selectedBlockId}
+                          />
+                          <PhantomBlocks block={block} editor={editor} position="after" />
+                        </React.Fragment>
+                      );
+                      if (index !== slotAt || !afterBlock) return [drawnBlock];
+                      // one key wherever it stands: the host's element keeps its state as it moves
+                      return [
+                        drawnBlock,
+                        <div
+                          key="gotipe-block-slot"
+                          className="gotipe-block-slot"
+                          data-gotipe-widget=""
+                          data-gotipe-block-slot={afterBlock.blockId}
+                          contentEditable={false}
+                          suppressContentEditableWarning
+                        >
+                          {afterBlock.node}
+                        </div>,
+                      ];
+                    })}
                   </SelectionKeeper>
                 )}
               </AfterTextContext.Provider>

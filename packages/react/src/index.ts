@@ -20,6 +20,7 @@ export type { TextRendererProps } from "./text-renderer";
 export { usePhantom } from "./editor-content";
 export type {
   AfterTextFn,
+  BlockSlot,
   BlockViewProps,
   BlockViewComponent,
   BlockViews,

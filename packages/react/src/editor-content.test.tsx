@@ -53,6 +53,38 @@ afterEach(() => {
 });
 
 describe("EditorContent rendering contracts", () => {
+  it("afterBlock draws the host's element in the flow after its block, outside the text", () => {
+    const draw = (blockId: string | null) =>
+      act(() =>
+        root.render(
+          <EditorContent
+            editor={editor}
+            afterBlock={blockId ? { blockId, node: <input aria-label="Ask" /> } : null}
+          />,
+        ),
+      );
+    draw("heading");
+    const content = container.querySelector("[data-gotipe-content]")!;
+    const slot = () => content.querySelector<HTMLElement>("[data-gotipe-block-slot]");
+    expect(slot()?.previousElementSibling?.getAttribute("data-block-id")).toBe("heading");
+    expect(slot()?.nextElementSibling?.getAttribute("data-block-id")).toBe("body");
+    expect(slot()?.getAttribute("contenteditable")).toBe("false");
+    expect(slot()?.hasAttribute("data-gotipe-widget")).toBe(true);
+    const input = slot()!.querySelector("input")!;
+    input.value = "typed";
+    // it moves with its block id and keeps the host's element (its state)
+    draw("body");
+    expect(slot()?.previousElementSibling?.getAttribute("data-block-id")).toBe("body");
+    expect(slot()!.querySelector("input")).toBe(input);
+    expect(input.value).toBe("typed");
+    // the document's text and blocks know nothing of it
+    expect(editor.getViewState().blocks.map((b) => b.id)).toEqual(["heading", "body", "image"]);
+    draw("missing");
+    expect(slot()).toBeNull();
+    draw(null);
+    expect(slot()).toBeNull();
+  });
+
   it("uses the documented legacy renderer and falls back only for null results", () => {
     act(() =>
       root.render(

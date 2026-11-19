@@ -1,5 +1,5 @@
 import type { GoTipeEditor, SlashCommandDef } from "@gotipe/core";
-import type { BlockViews, MediaOptions } from "@gotipe/react";
+import type { BlockSlot, BlockViews, MediaOptions } from "@gotipe/react";
 import type { ThemePreset } from "@gotipe/theme";
 import type React from "react";
 import type { EmojiOptions, MentionOptions } from "../atoms/host";
@@ -81,6 +81,12 @@ export interface BlockEditorProps {
    * language: "Document content" in English, “Содержимое документа” in Russian.
    */
   ariaLabel?: string;
+  /**
+   * A host's element in the flow of the document after the top-level block that is or holds
+   * `blockId` (`.gotipe-block-slot`): the text below moves down for it. Not part of the text or
+   * the file; the editor does not handle its input. None when null.
+   */
+  afterBlock?: BlockSlot | null;
   /**
    * What empty image and file blocks offer and how they fail, e.g. `{ links: false }` under a CSP
    * that blocks images from the web, or `{ inlineErrors: false }` when the host shows failures

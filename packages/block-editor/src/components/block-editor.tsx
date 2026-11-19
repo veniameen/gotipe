@@ -81,6 +81,7 @@ function BlockEditorView({
   slashRenderMeta,
   narrow = true,
   ariaLabel,
+  afterBlock,
   errorToast = true,
   find = true,
   status = false,
@@ -456,6 +457,7 @@ function BlockEditorView({
         editor={editor}
         blockViews={blockViews}
         afterText={afterText}
+        afterBlock={afterBlock}
         hostLayers={HOST_LAYERS}
         ariaLabel={ariaLabel}
         slotBefore={
