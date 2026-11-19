@@ -72,6 +72,7 @@
   --gt-lane-pointer-outline: currentColor;
 
   --gt-card-w: 288px;
+  --gt-review-card-gap: 8px;
   --gt-card-pad: 12px;
   --gt-card-gap: 8px;
   --gt-panel-w: 300px;
