@@ -84,8 +84,10 @@ export interface BlockEditorProps {
   /**
    * A host's element in the flow of the document after the top-level block that is or holds
    * `blockId` (`.gotipe-block-slot`): the text below moves down for it. Not part of the text or
-   * the file; its keys and input stay the host's. None when null or when no block has that id
-   * (ids can change when the document is replaced: the element is drawn anew then).
+   * the file; its keys and input stay the host's (the editor and its menus take none of them, the
+   * keys go on to the host's listeners on `document` and `window`). None when null or when no
+   * block has that id (ids can change when the document is replaced: the element is drawn anew
+   * then).
    */
   afterBlock?: BlockSlot | null;
   /**
