@@ -20,7 +20,11 @@
   children are new objects: a change of another decoration layer, or of another block's
   decorations in the same layer, no longer draws it. A suggested block (a `blocks` decoration)
   that is the same object in a group that looks the same is not drawn again either, so of a
-  growing group only the new and the changed blocks are drawn.
+  growing group only the new and the changed blocks are drawn. A top-level block that only
+  built-in or `pure` views draw (its suggested blocks too) gives React the element it gave last
+  time while the block, the caret's place in it and the editor's being editable are the same,
+  so a change of one block, or a host's own re-render, is not paid for by every block of a long
+  page.
   - @gotipe/core@0.1.5
 
 ## 0.1.4

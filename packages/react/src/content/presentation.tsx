@@ -57,6 +57,52 @@ export function phantomBlocksOf(
   return out;
 }
 
+/** A suggested block as drawn last: with the class, attributes and style of its group. */
+const drawnPhantoms = new WeakMap<BlockView, { group: BlocksDecoration; block: BlockView }>();
+
+/**
+ * A suggested block with its group's class, attributes and style on its root. The same block
+ * of a group that looks the same is the same object, so it is not drawn again while only its
+ * neighbours change (a proposal whose text grows).
+ */
+export function phantomOf(phantom: BlockView, group: BlocksDecoration): BlockView {
+  const drawn = drawnPhantoms.get(phantom);
+  if (
+    drawn &&
+    drawn.group.key === group.key &&
+    drawn.group.className === group.className &&
+    drawn.group.attrs === group.attrs &&
+    drawn.group.style === group.style
+  )
+    return drawn.block;
+  const block: BlockView = {
+    ...phantom,
+    decorations: [
+      ...(phantom.decorations ?? []),
+      {
+        type: "node",
+        key: group.key,
+        blockId: phantom.id,
+        className: group.className,
+        attrs: group.attrs,
+        style: group.style,
+      },
+    ],
+  };
+  drawnPhantoms.set(phantom, { group, block });
+  return block;
+}
+
+const NO_PHANTOMS: BlocksDecoration[] = [];
+
+/** Every group of suggested blocks around `block`, before it or after it. */
+export function phantomGroupsOf(block: BlockView): BlocksDecoration[] {
+  const decorations = block.decorations;
+  if (!decorations || decorations.length === 0) return NO_PHANTOMS;
+  const groups = decorations.filter((d): d is BlocksDecoration => d.type === "blocks");
+  return groups.length > 0 ? groups : NO_PHANTOMS;
+}
+
 export function blockKey(block: BlockView): string {
   return block.renderKey ? `${block.id}:${block.renderKey}` : block.id;
 }

@@ -204,6 +204,51 @@ describe("blocks drawn by the built-in views", () => {
     expect(texts().map((row) => row[1])).toEqual(["suggested is-active", "suggested is-active"]);
   });
 
+  it("draws a suggested block with a custom view on every change, like any block with one", () => {
+    let quotes = 0;
+    // a view that is not `pure` may read the editor as it draws: it is never passed over
+    const blockquote = ({ rootProps, content }: BlockViewProps) => {
+      quotes += 1;
+      return <blockquote {...rootProps}>{content}</blockquote>;
+    };
+    const views = { blockquote };
+    act(() =>
+      root.render(<EditorContent editor={editor} afterText={afterText} blockViews={views} />),
+    );
+    act(() =>
+      editor.setDecorations("review", [
+        {
+          type: "blocks",
+          key: "g",
+          blockId: "a",
+          position: "after",
+          blocks: [
+            {
+              id: "q",
+              type: "blockquote",
+              attrs: {},
+              content: text("Quoted"),
+              children: [],
+              decorations: [],
+            },
+          ],
+        },
+      ]),
+    );
+    expect(quotes).toBe(1);
+    drawn();
+    type("b", "x");
+    expect(quotes).toBe(2);
+    // the block it stands after is a plain one: it is not drawn with it
+    expect(drawn()).toEqual(["b"]);
+    // a host that draws again draws it again too, and no plain block
+    act(() =>
+      root.render(<EditorContent editor={editor} afterText={afterText} blockViews={views} />),
+    );
+    expect(quotes).toBe(3);
+    expect(drawn()).toEqual([]);
+  });
+
   it("draws a block with a custom view, and the blocks over it, on every change", () => {
     let titles = 0;
     let items = 0;
