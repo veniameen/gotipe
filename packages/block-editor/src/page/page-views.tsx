@@ -39,21 +39,25 @@ const firstBlockId = (state: ViewState): string | undefined => state.blocks[0]?.
 /**
  * The page's glyph in the title's row (`iconPlacement="inline"`), drawn as a widget outside the
  * title's text: no offset, no Markdown, no caret. It stays accessible (its role and focus are the
- * host's) and its keys and input do not reach the editor; its clicks do, so the editor's menus
- * close on them as on any click outside (the core already ignores widget targets). A context, not an argument of
+ * host's) and the editor takes none of its keys or input; its clicks and keys go on to the page,
+ * so the editor's menus close on a click as on any click outside and the host's listeners on
+ * `document` or `window` see the keys (the core ignores widget targets). A context, not an argument of
  * the view: a new icon element on every render of the host must not make a new heading view,
  * which would draw every heading anew and lose the caret.
  */
 export const PageTitleIconContext = createContext<React.ReactNode>(null);
 
 function stopAtHost(event: React.SyntheticEvent): void {
-  // the host's element (an icon with a menu, a field) keeps its keys: the editor's handlers above
-  // it do not take Enter, Backspace or typing
+  // the host's element (an icon with a menu, a field) keeps its typing: the editor's handlers
+  // above it do not take its input
   event.stopPropagation();
 }
-/** Keeps keys and input in a host's element inside the page from the editor's handlers. */
+/**
+ * Keeps input in a host's element inside the page from the editor's handlers. Its keys are not
+ * stopped: the core takes no key of a widget's target, and the host's own listeners on `document`
+ * or `window` (shortcuts, a hint of the keys held) must see them.
+ */
 export const hostEventGuard = {
-  onKeyDown: stopAtHost,
   onBeforeInput: stopAtHost,
   onInput: stopAtHost,
 };
