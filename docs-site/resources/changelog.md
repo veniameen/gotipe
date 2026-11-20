@@ -73,7 +73,10 @@ its own), `react`, `theme` and `block-editor` (0.1.5), `markdown`, `suggestions`
   `--gt-sug-live-caret-width`, `--gt-sug-live-caret-color`, `--gt-lane-cursor-move`, `--gt-lane-chip-gap`,
   `--gt-lane-chip-flip-x`, `--gt-lane-chip-flip-y`, `--gt-inline-code-wrap`,
   `--gt-head-after-heading`, `--gt-flag-label-size`, `--gt-flag-label-leading`,
-  `--gt-table-code-radius`. Defaults keep the 0.1.4 look.
+  `--gt-table-code-radius`, `--gt-table-add-room`. Defaults keep the 0.1.4 look.
+- `--gt-table-add-room`: the room under an editable table for the bar that adds a row. With none
+  (`0`) the bar stands over the top of what follows only while the pointer is on the table or
+  the keyboard on the bar, and otherwise takes no clicks.
 - A fix of the default look: a suggested table stays a table. Its cells are square and keep their
   own fill (a head fill too) under the lane's tint; they used to be rounded and lose the fill.
 - Outside the docs view, an element added to the text no longer makes the browser restyle the

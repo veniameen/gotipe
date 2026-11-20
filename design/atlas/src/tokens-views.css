@@ -81,6 +81,10 @@
   --gt-cell-min: 132px;
   --gt-table-add: 16px;
   --gt-table-add-gap: 4px;
+  /* room under an editable table for the bar that adds a row: the bar and its gap. In the library
+     a host's option, unset: this; none (frame 9) is 0px */
+  --gt-table-add-room: calc(var(--gt-table-add) + var(--gt-table-add-gap));
+  --gt-table-add-room-none: 0px;
   --gt-table-fade: 24px;
   --gt-row-handle-full: calc(var(--gt-handle-w) + var(--gt-table-add-gap));
   --gt-row-handle-room: min(var(--gt-row-handle-full), var(--gt-page-pad-x));
@@ -203,6 +207,7 @@
     --gt-page-pad-x: 20px;
     --gt-page-pad-bottom: 64px;
     --gt-table-add: 12px;
+    --gt-table-add-room: calc(var(--gt-table-add) + var(--gt-table-add-gap));
     --gt-row-handle-room: min(var(--gt-row-handle-full), var(--gt-page-pad-x));
     --gt-title-size: 26px;
     --gt-title-leading: 32px;

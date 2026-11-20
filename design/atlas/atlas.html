@@ -353,6 +353,10 @@
   --gt-cell-min: 132px;
   --gt-table-add: 16px;
   --gt-table-add-gap: 4px;
+  /* room under an editable table for the bar that adds a row: the bar and its gap. In the library
+     a host's option, unset: this; none (frame 9) is 0px */
+  --gt-table-add-room: calc(var(--gt-table-add) + var(--gt-table-add-gap));
+  --gt-table-add-room-none: 0px;
   --gt-table-fade: 24px;
   --gt-row-handle-full: calc(var(--gt-handle-w) + var(--gt-table-add-gap));
   --gt-row-handle-room: min(var(--gt-row-handle-full), var(--gt-page-pad-x));
@@ -475,6 +479,7 @@
     --gt-page-pad-x: 20px;
     --gt-page-pad-bottom: 64px;
     --gt-table-add: 12px;
+    --gt-table-add-room: calc(var(--gt-table-add) + var(--gt-table-add-gap));
     --gt-row-handle-room: min(var(--gt-row-handle-full), var(--gt-page-pad-x));
     --gt-title-size: 26px;
     --gt-title-leading: 32px;
@@ -1455,7 +1460,13 @@ ol.gotipe-list.is-three-digits > li::before {
    them. A wide table scrolls; the edge with hidden columns fades. */
 .gotipe-table-block {
   position: relative;
-  padding-bottom: calc(var(--gt-table-add) + var(--gt-table-add-gap));
+  padding-bottom: var(--gt-table-add-room);
+}
+/* a host's option: no room under the table. What follows stands as after any table; the bar that
+   adds a row stands a gap under the table all the same, over the top of what follows, and only
+   while the pointer is on the table or the keyboard on the bar: otherwise it takes no clicks */
+.gotipe-table-block.is-roomless {
+  --gt-table-add-room: var(--gt-table-add-room-none);
 }
 /* the scrolling area reaches into the left margin by the row handle's room, so the handle of a
    row stays visible beside it; the table itself does not move */
@@ -1490,13 +1501,13 @@ ol.gotipe-list.is-three-digits > li::before {
 }
 .gotipe-table-add.is-column {
   top: 0;
-  bottom: calc(var(--gt-table-add) + var(--gt-table-add-gap));
+  bottom: var(--gt-table-add-room);
   left: calc(100% + var(--gt-table-add-gap));
   width: var(--gt-table-add);
 }
 .gotipe-table-add.is-row {
+  top: calc(100% - var(--gt-table-add-room) + var(--gt-table-add-gap));
   right: 0;
-  bottom: 0;
   left: 0;
   height: var(--gt-table-add);
 }
@@ -6803,7 +6814,9 @@ editor<span class="tk-pun">.</span>on<span class="tk-pun">(</span><span class="t
       row under the pointer has a handle with a menu on the left: row above, below, delete. A cell
       is a text field with no focus frame. A wide table scrolls sideways, the edge with hidden
       columns fades. The column type changes how cells look: code in mono, number to the right, yes
-      / no as a mark.
+      / no as a mark. A host can keep no room under the table: what follows stands as after any
+      table, and the row strip stands under the table over it only while the pointer is on the
+      table or the keyboard on the strip; otherwise it takes no clicks.
     </p>
   </figcaption>
   <section class="at-stage" data-w="768">
@@ -6899,6 +6912,61 @@ editor<span class="tk-pun">.</span>on<span class="tk-pun">(</span><span class="t
           ><svg class="at-pointer"><use href="#i-pointer" /></svg
         ></span>
         <span class="gotipe-table-add is-row"><svg class="gt-icon"><use href="#i-plus" /></svg></span>
+      </div>
+      <p>A table grows as the discussion goes: a new column appears on the right, a row at the bottom.</p>
+    </div>
+  </article>
+</div>
+</section>
+  <section class="at-stage" data-w="768">
+<p class="at-stage-label">No room under the table (host option): what follows stands as after any table · 768</p>
+<div class="at-frame gotipe-root" data-gt-view="notion" data-frame="table-roomless" data-w="768">
+<article class="gotipe-page is-slice" lang="en">
+    <div class="gotipe-doc">
+      <h2>Conflicts</h2>
+      <div class="gotipe-table-block is-roomless">
+        <div class="gotipe-table-wrap">
+          <table class="gotipe-table">
+            <thead>
+              <tr><th>Situation</th><th>What the author sees</th><th>What is kept</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>A block changed only by you</td><td>Nothing</td><td>Your version</td></tr>
+              <tr><td>A document deleted</td><td>A restore dialog</td><td>A copy in “Drafts”</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <span class="gotipe-table-add is-column"><svg class="gt-icon"><use href="#i-plus" /></svg></span>
+        <span class="gotipe-table-add is-row"><svg class="gt-icon"><use href="#i-plus" /></svg></span>
+      </div>
+      <p>A table grows as the discussion goes: a new column appears on the right, a row at the bottom.</p>
+    </div>
+  </article>
+</div>
+</section>
+  <section class="at-stage" data-w="768">
+<p class="at-stage-label">No room, the pointer on the table: the row strip a gap under it, over the top of what follows · 768</p>
+<div class="at-frame gotipe-root" data-gt-view="notion" data-frame="table-roomless-add" data-w="768">
+<article class="gotipe-page is-slice" lang="en">
+    <div class="gotipe-doc">
+      <h2>Conflicts</h2>
+      <div class="gotipe-table-block is-roomless is-hovered">
+        <div class="gotipe-table-wrap">
+          <table class="gotipe-table">
+            <thead>
+              <tr><th>Situation</th><th>What the author sees</th><th>What is kept</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>A block changed only by you</td><td>Nothing</td><td>Your version</td></tr>
+              <tr><td>A document deleted</td><td>A restore dialog</td><td>A copy in “Drafts”</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <span class="gotipe-table-add is-column"><svg class="gt-icon"><use href="#i-plus" /></svg></span>
+        <span class="gotipe-table-add is-row is-hover"
+          ><svg class="gt-icon"><use href="#i-plus" /></svg
+          ><svg class="at-pointer"><use href="#i-pointer" /></svg
+        ></span>
       </div>
       <p>A table grows as the discussion goes: a new column appears on the right, a row at the bottom.</p>
     </div>

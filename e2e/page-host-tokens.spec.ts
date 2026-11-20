@@ -2,7 +2,7 @@ import { expect, type Page, test } from '@playwright/test';
 
 // Tokens a host sets on the page, each unset by default (the look as it was): the gap above a
 // heading that comes first after the title, the label of a lane cursor's flag, the corners of
-// inline code in a table cell.
+// inline code in a table cell, the room under an editable table.
 
 async function open(page: Page) {
   await page.goto('/?view=page#basic');
@@ -81,5 +81,91 @@ test.describe('PageEditor: host tokens of 0.1.5', () => {
     expect(await corners()).toBe(inText);
     await setToken(page, '--gt-table-code-radius', '0px');
     expect(await corners()).toBe('0px');
+  });
+
+  test('--gt-table-add-room: with no room (0px or 0) the row bar stands over what follows for the pointer on the table and for the keyboard alone', async ({ page }) => {
+    await page.evaluate(
+      (text) => window.__GOTIPE_PAGE_EXAMPLE__!.setMarkdown(text),
+      '# Title\n\n| Name | Value |\n| --- | --- |\n| one | 1 |\n\nAfter the table.\n',
+    );
+    const table = page.locator('[data-gotipe-content] .gotipe-table-wrapper');
+    const rows = table.locator('tr');
+    await expect(rows).toHaveCount(2);
+    const bar = table.getByRole('button', { name: 'Add row', exact: true });
+    const next = page.locator('[data-gotipe-content] p[data-block-id]', { hasText: 'After the table.' });
+    const nextId = await next.getAttribute('data-block-id');
+    const caretIn = () => page.evaluate(() => window.__GOTIPE_EDITOR__!.getViewState().selection.anchor.blockId);
+    /** In the window: the table's bottom, its room, the row bar, the top of what follows. */
+    const measure = () =>
+      page.evaluate(() => {
+        const wrapper = document.querySelector<HTMLElement>('[data-gotipe-content] .gotipe-table-wrapper')!;
+        const bottom = wrapper.querySelector('.gotipe-table-scroll')!.getBoundingClientRect().bottom;
+        const element = wrapper.querySelector('.gotipe-table-add-row')!;
+        const bar = element.getBoundingClientRect();
+        const next = [...document.querySelectorAll('[data-gotipe-content] p[data-block-id]')]
+          .find((node) => node.textContent === 'After the table.')!
+          .getBoundingClientRect();
+        const style = getComputedStyle(wrapper);
+        return {
+          add: Number.parseFloat(style.getPropertyValue('--gt-table-add')),
+          gap: Number.parseFloat(style.getPropertyValue('--gt-table-add-gap')),
+          room: wrapper.getBoundingClientRect().bottom - bottom,
+          bar: { top: bar.top - bottom, bottom: bar.bottom - bottom, x: bar.left + bar.width / 2 },
+          next: next.top - bottom,
+          bottom,
+          clip: getComputedStyle(element).clipPath,
+        };
+      });
+    /** What takes the pointer at a point: the row bar, or something else. */
+    const onBar = (x: number, y: number) =>
+      page.evaluate(([px, py]) => Boolean(document.elementFromPoint(px!, py!)?.closest('.gotipe-table-add-row')), [x, y]);
+    const room = await measure();
+    // by default: room for the bar and its gap, the bar in it, what follows under it
+    expect(room.room).toBe(room.add + room.gap);
+    expect(room.bar.top).toBe(room.gap);
+    expect(room.bar.bottom).toBe(room.gap + room.add);
+    expect(room.next).toBeGreaterThanOrEqual(room.bar.bottom);
+
+    await setToken(page, '--gt-table-add-room', '0px');
+    const none = await measure();
+    expect(none.room).toBe(0);
+    // what follows moves up by the room; the bar stays a gap under the table, over its top
+    expect(Math.abs(none.next - (room.next - room.room))).toBeLessThan(0.5);
+    expect(none.bar.top).toBe(none.gap);
+    expect(none.bar.bottom).toBe(none.gap + none.add);
+    expect(none.next).toBeLessThan(none.bar.bottom - 2);
+    // a unitless 0 is the same: the bar's place and its cut
+    await setToken(page, '--gt-table-add-room', '0');
+    expect(await measure()).toEqual(none);
+    const at = { x: none.bar.x, y: none.bottom + (Math.max(none.next, none.bar.top) + none.bar.bottom) / 2 };
+
+    // the pointer elsewhere: nothing of the bar is there, a click goes to what follows
+    await page.mouse.move(1, 1);
+    expect(await onBar(at.x, at.y)).toBe(false);
+    await page.mouse.click(at.x, at.y);
+    await expect.poll(caretIn).toBe(nextId);
+    await expect(rows).toHaveCount(2);
+
+    // from the table down to the bar, a pixel at a time across the gap: it shows and adds a row
+    const last = (await rows.last().boundingBox())!;
+    await page.mouse.move(at.x, last.y + last.height / 2);
+    await page.mouse.move(at.x, at.y, { steps: Math.ceil(at.y - (last.y + last.height / 2)) });
+    expect(await onBar(at.x, at.y)).toBe(true);
+    await expect(bar).toHaveCSS('opacity', '1');
+    await page.mouse.click(at.x, at.y);
+    await expect(rows).toHaveCount(3);
+
+    // a caret in the table does not bring the bar over what follows; Tab from the last cell does
+    await rows.last().locator('td').last().click();
+    await page.mouse.move(1, 1);
+    const moved = await measure();
+    const below = { x: moved.bar.x, y: moved.bottom + (Math.max(moved.next, moved.bar.top) + moved.bar.bottom) / 2 };
+    expect(await onBar(below.x, below.y)).toBe(false);
+    await page.keyboard.press('Tab');
+    await expect(bar).toBeFocused();
+    await expect(bar).toHaveCSS('clip-path', 'none');
+    expect(await onBar(below.x, below.y)).toBe(true);
+    await page.keyboard.press('Enter');
+    await expect(rows).toHaveCount(4);
   });
 });

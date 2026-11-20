@@ -8,7 +8,9 @@
       row under the pointer has a handle with a menu on the left: row above, below, delete. A cell
       is a text field with no focus frame. A wide table scrolls sideways, the edge with hidden
       columns fades. The column type changes how cells look: code in mono, number to the right, yes
-      / no as a mark.
+      / no as a mark. A host can keep no room under the table: what follows stands as after any
+      table, and the row strip stands under the table over it only while the pointer is on the
+      table or the keyboard on the strip; otherwise it takes no clicks.
     </p>
   </figcaption>
   <!-- @frame frame=column-menu view=notion w=768 min=480 label="column menu" -->
@@ -96,6 +98,55 @@
           ><svg class="at-pointer"><use href="#i-pointer" /></svg
         ></span>
         <span class="gotipe-table-add is-row"><svg class="gt-icon"><use href="#i-plus" /></svg></span>
+      </div>
+      <p>A table grows as the discussion goes: a new column appears on the right, a row at the bottom.</p>
+    </div>
+  </article>
+  <!-- @end -->
+  <!-- @frame frame=table-roomless view=notion w=768 label="No room under the table (host option): what follows stands as after any table" -->
+  <article class="gotipe-page is-slice" lang="en">
+    <div class="gotipe-doc">
+      <h2>Conflicts</h2>
+      <div class="gotipe-table-block is-roomless">
+        <div class="gotipe-table-wrap">
+          <table class="gotipe-table">
+            <thead>
+              <tr><th>Situation</th><th>What the author sees</th><th>What is kept</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>A block changed only by you</td><td>Nothing</td><td>Your version</td></tr>
+              <tr><td>A document deleted</td><td>A restore dialog</td><td>A copy in “Drafts”</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <span class="gotipe-table-add is-column"><svg class="gt-icon"><use href="#i-plus" /></svg></span>
+        <span class="gotipe-table-add is-row"><svg class="gt-icon"><use href="#i-plus" /></svg></span>
+      </div>
+      <p>A table grows as the discussion goes: a new column appears on the right, a row at the bottom.</p>
+    </div>
+  </article>
+  <!-- @end -->
+  <!-- @frame frame=table-roomless-add view=notion w=768 label="No room, the pointer on the table: the row strip a gap under it, over the top of what follows" -->
+  <article class="gotipe-page is-slice" lang="en">
+    <div class="gotipe-doc">
+      <h2>Conflicts</h2>
+      <div class="gotipe-table-block is-roomless is-hovered">
+        <div class="gotipe-table-wrap">
+          <table class="gotipe-table">
+            <thead>
+              <tr><th>Situation</th><th>What the author sees</th><th>What is kept</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>A block changed only by you</td><td>Nothing</td><td>Your version</td></tr>
+              <tr><td>A document deleted</td><td>A restore dialog</td><td>A copy in “Drafts”</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <span class="gotipe-table-add is-column"><svg class="gt-icon"><use href="#i-plus" /></svg></span>
+        <span class="gotipe-table-add is-row is-hover"
+          ><svg class="gt-icon"><use href="#i-plus" /></svg
+          ><svg class="at-pointer"><use href="#i-pointer" /></svg
+        ></span>
       </div>
       <p>A table grows as the discussion goes: a new column appears on the right, a row at the bottom.</p>
     </div>
