@@ -220,6 +220,12 @@ li.gotipe-sug-block-ins.gotipe-sug-stale > input[type="checkbox"] {
   opacity: var(--gt-flag-label-opacity);
   text-overflow: ellipsis;
 }
+/* the label's own size and leading, a compact flag's too (unset: no value, so the flag's are
+   inherited, as the name's); a rule of no weight, so a host's own rule on the label still wins */
+:where(.gotipe-lane-chip-label) {
+  font-size: var(--gt-flag-label-size);
+  line-height: var(--gt-flag-label-leading);
+}
 
 /* ---- the card at the text ---- */
 .gotipe-review-card {
