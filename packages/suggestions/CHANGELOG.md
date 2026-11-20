@@ -22,10 +22,11 @@
 - `computeReviewDecorations` takes a `cache` (`createReviewCache()`, one per editor): a proposal or
   a comment is bound to the document again only when it, the document, its lane's colour, its
   place among the others or its being open changed, and what did not change keeps its state and
-  decoration objects, an unchanged new block inside a grown group included. A new block's id and
-  its group's key name its place (`phantom:<proposal>:<n>:blocks:<path>`), not its text, so a
-  renderer keeps the block's element while the text grows. `revealDecorations` finds a proposal's
-  decorations by `data-gotipe-proposal`.
+  decoration objects, an unchanged new block inside a grown group included. The cache is opaque
+  (`ReviewCache` has nothing to read or set; an object not made by `createReviewCache()` is no
+  cache). A new block's id and its group's key name its place, not its text, so a renderer keeps
+  the block's element while the text grows; their form is the binding's own, not a contract.
+  `revealDecorations` finds a proposal's decorations by `data-gotipe-proposal`.
 - `LaneCursor.id` (the cursor's own key, for several cursors of one lane), `LaneCursor.name` (the
   name on its flag instead of the lane's) and `LaneCursor.compact` (a flag in one line).
   - @gotipe/core@0.1.5

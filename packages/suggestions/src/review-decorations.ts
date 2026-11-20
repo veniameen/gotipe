@@ -1,7 +1,7 @@
 import type { BlockView, Decoration } from "@gotipe/core";
 import type { CommentState, ProposalState } from "./review-types";
 import { sliceSpans } from "./review/block-diff";
-import { cached, forget, remember } from "./review/cache";
+import { cached, entriesOf, forget, remember } from "./review/cache";
 import { computeComment } from "./review/comment";
 import type { ReviewInput, ReviewOutput } from "./review/input";
 import { keepDecorations, sameData } from "./review/keep";
@@ -21,11 +21,12 @@ export { findBlockById, mapOffsetToText, mapRangeToText } from "./review/positio
  * anchor is not found exactly once is stale.
  *
  * Proposals that insert at one point stand by their `order`, then as listed. With
- * `input.cache` only what changed since the last call is bound again (see `ReviewCache`).
+ * `input.cache` only what changed since the last call is bound again (see `ReviewCache`); an
+ * object not made by `createReviewCache()` is no cache, and everything is bound.
  */
 export function computeReviewDecorations(input: ReviewInput): ReviewOutput {
   const lanes = new Map(input.lanes.map((l) => [l.id, l] as const));
-  const cache = input.cache;
+  const cache = input.cache ? entriesOf(input.cache) : undefined;
   if (cache) cache.call += 1;
   const frame = frameOf(input);
   const decorations: Decoration[] = [];

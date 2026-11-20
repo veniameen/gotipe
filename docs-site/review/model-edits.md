@@ -233,8 +233,9 @@ actions:
 
 For a renderer of your own, `computeReviewDecorations()` returns the same decorations and
 states. It needs the serialized text, the Markdown codec's text map and a fragment parser.
-Pass it a `cache` from `createReviewCache()`, one per editor, and it binds again only the
-proposals and comments that changed; the rest keep their decoration objects.
+Pass it a `cache` from `createReviewCache()`, one per editor (an opaque object: nothing in it
+to read or set), and it binds again only the proposals and comments that changed; the rest
+keep their decoration objects.
 
 ## Limitations
 
