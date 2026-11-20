@@ -30,9 +30,10 @@
 - `--gt-table-add-room` (unset: the bar that adds a row and its gap, `--gt-table-add` +
   `--gt-table-add-gap`): the room under an editable table (Atlas frame 9). With less, `0` for
   none, the bar stands a gap under the table all the same, over the top of what follows, while
-  the pointer is on the table or on the bar (a bridge over the gap keeps it on the way down) or
-  the keyboard is on it; otherwise the part of it beyond the room is cut away (`clip-path`) and
-  takes no clicks, the caret in the table included. By default the bar is as before.
+  the pointer is on the table or on the bar (a bridge over the part of the gap beyond the room
+  keeps it on the way down) or the keyboard is on it; otherwise the part of it beyond the room is
+  cut away (`clip-path`) and takes no clicks, the caret in the table included. By default the bar
+  and the gap above it are as before: the gap is the table's room, and a click there adds no row.
 - `--gt-inline-code-wrap` (unset: inline code wraps as the text around it): `nowrap` keeps a code
   span on one line, its spaces kept (`text-wrap-mode`), so one that does not fit at the end of a
   line moves to the next whole. It is declared in a rule of no weight

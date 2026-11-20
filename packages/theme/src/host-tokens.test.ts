@@ -525,7 +525,7 @@ describe("tables have tokens for their grid, head, first column and code, today'
     );
     expect(declarations(tables, "@property --gt-table-add-room-length")).toEqual({
       syntax: '"<length>"',
-      inherits: "false",
+      inherits: "true",
       "initial-value": "0px",
     });
     // ...until the pointer is on the table or the keyboard on the bar; a caret in a cell is not
@@ -536,14 +536,15 @@ describe("tables have tokens for their grid, head, first column and code, today'
       ),
     ).toEqual({ "clip-path": "none" });
     expect(tables).not.toMatch(/:focus-within\)? > \.gotipe-table-add-row/);
-    // a bridge over the gap keeps the table hovered on the way down to the bar
+    // a bridge over what of the gap is beyond the room keeps the table hovered on the way down
+    // to the bar; by default none: the gap is the table's own room, and a click there adds nothing
     expect(declarations(tables, ".gotipe-table-add-row::before")).toEqual({
       content: '""',
       position: "absolute",
       right: "0",
       bottom: "100%",
       left: "0",
-      height: "var(--gt-table-add-gap)",
+      height: "max(0px, calc(var(--gt-table-add-gap) - var(--gt-table-add-room-length)))",
     });
     expect(tokens.view).not.toHaveProperty("--gt-table-add-room");
   });

@@ -14,6 +14,56 @@ const surface = (page: Page) => page.locator('.gotipe-page-example-surface');
 const setToken = (page: Page, name: string, value: string) =>
   surface(page).evaluate((node, [token, to]) => (node as HTMLElement).style.setProperty(token!, to!), [name, value]);
 
+/** A page with an editable table and a paragraph after it. */
+async function tablePage(page: Page) {
+  await page.evaluate(
+    (text) => window.__GOTIPE_PAGE_EXAMPLE__!.setMarkdown(text),
+    '# Title\n\n| Name | Value |\n| --- | --- |\n| one | 1 |\n\nAfter the table.\n',
+  );
+  const table = page.locator('[data-gotipe-content] .gotipe-table-wrapper');
+  const rows = table.locator('tr');
+  await expect(rows).toHaveCount(2);
+  const next = page.locator('[data-gotipe-content] p[data-block-id]', { hasText: 'After the table.' });
+  return {
+    table,
+    rows,
+    bar: table.getByRole('button', { name: 'Add row', exact: true }),
+    nextId: await next.getAttribute('data-block-id'),
+    caretIn: () => page.evaluate(() => window.__GOTIPE_EDITOR__!.getViewState().selection.anchor.blockId),
+    /** In the window: the table's bottom, its room, the row bar, the top of what follows. */
+    measure: () =>
+      page.evaluate(() => {
+        const wrapper = document.querySelector<HTMLElement>('[data-gotipe-content] .gotipe-table-wrapper')!;
+        const bottom = wrapper.querySelector('.gotipe-table-scroll')!.getBoundingClientRect().bottom;
+        const element = wrapper.querySelector('.gotipe-table-add-row')!;
+        const bar = element.getBoundingClientRect();
+        const next = [...document.querySelectorAll('[data-gotipe-content] p[data-block-id]')]
+          .find((node) => node.textContent === 'After the table.')!
+          .getBoundingClientRect();
+        const style = getComputedStyle(wrapper);
+        return {
+          add: Number.parseFloat(style.getPropertyValue('--gt-table-add')),
+          gap: Number.parseFloat(style.getPropertyValue('--gt-table-add-gap')),
+          room: wrapper.getBoundingClientRect().bottom - bottom,
+          bar: { top: bar.top - bottom, bottom: bar.bottom - bottom, x: bar.left + bar.width / 2 },
+          next: next.top - bottom,
+          bottom,
+          clip: getComputedStyle(element).clipPath,
+        };
+      }),
+    /** What takes the pointer at a point: the row bar, or something else. */
+    onBar: (x: number, y: number) =>
+      page.evaluate(
+        ([px, py]) => Boolean(document.elementFromPoint(px!, py!)?.closest('.gotipe-table-add-row')),
+        [x, y],
+      ),
+  };
+}
+
+type Measured = Awaited<ReturnType<Awaited<ReturnType<typeof tablePage>>['measure']>>;
+/** A point of the row bar over the top of what follows the table. */
+const overNext = (at: Measured) => ({ x: at.bar.x, y: at.bottom + (Math.max(at.next, at.bar.top) + at.bar.bottom) / 2 });
+
 test.describe('PageEditor: host tokens of 0.1.5', () => {
   test.beforeEach(async ({ page }) => {
     await open(page);
@@ -83,42 +133,27 @@ test.describe('PageEditor: host tokens of 0.1.5', () => {
     expect(await corners()).toBe('0px');
   });
 
+  test('by default the gap between a table and its row bar is the table\'s own room: a click there adds no row', async ({ page }) => {
+    const the = await tablePage(page);
+    const at = await the.measure();
+    expect(at.room).toBe(at.add + at.gap);
+    // the pointer on the table, then in the gap under it: the table's room, not the bar
+    const last = (await the.rows.last().boundingBox())!;
+    const gap = { x: at.bar.x, y: at.bottom + at.gap / 2 };
+    await page.mouse.move(gap.x, last.y + last.height / 2);
+    await page.mouse.move(gap.x, gap.y, { steps: 4 });
+    await expect(the.bar).toHaveCSS('opacity', '1');
+    expect(await the.onBar(gap.x, gap.y)).toBe(false);
+    await page.mouse.click(gap.x, gap.y);
+    await expect(the.rows).toHaveCount(2);
+    // the bar itself still adds one
+    await page.mouse.click(gap.x, at.bottom + at.gap + at.add / 2);
+    await expect(the.rows).toHaveCount(3);
+  });
+
   test('--gt-table-add-room: with no room (0px or 0) the row bar stands over what follows for the pointer on the table and for the keyboard alone', async ({ page }) => {
-    await page.evaluate(
-      (text) => window.__GOTIPE_PAGE_EXAMPLE__!.setMarkdown(text),
-      '# Title\n\n| Name | Value |\n| --- | --- |\n| one | 1 |\n\nAfter the table.\n',
-    );
-    const table = page.locator('[data-gotipe-content] .gotipe-table-wrapper');
-    const rows = table.locator('tr');
-    await expect(rows).toHaveCount(2);
-    const bar = table.getByRole('button', { name: 'Add row', exact: true });
-    const next = page.locator('[data-gotipe-content] p[data-block-id]', { hasText: 'After the table.' });
-    const nextId = await next.getAttribute('data-block-id');
-    const caretIn = () => page.evaluate(() => window.__GOTIPE_EDITOR__!.getViewState().selection.anchor.blockId);
-    /** In the window: the table's bottom, its room, the row bar, the top of what follows. */
-    const measure = () =>
-      page.evaluate(() => {
-        const wrapper = document.querySelector<HTMLElement>('[data-gotipe-content] .gotipe-table-wrapper')!;
-        const bottom = wrapper.querySelector('.gotipe-table-scroll')!.getBoundingClientRect().bottom;
-        const element = wrapper.querySelector('.gotipe-table-add-row')!;
-        const bar = element.getBoundingClientRect();
-        const next = [...document.querySelectorAll('[data-gotipe-content] p[data-block-id]')]
-          .find((node) => node.textContent === 'After the table.')!
-          .getBoundingClientRect();
-        const style = getComputedStyle(wrapper);
-        return {
-          add: Number.parseFloat(style.getPropertyValue('--gt-table-add')),
-          gap: Number.parseFloat(style.getPropertyValue('--gt-table-add-gap')),
-          room: wrapper.getBoundingClientRect().bottom - bottom,
-          bar: { top: bar.top - bottom, bottom: bar.bottom - bottom, x: bar.left + bar.width / 2 },
-          next: next.top - bottom,
-          bottom,
-          clip: getComputedStyle(element).clipPath,
-        };
-      });
-    /** What takes the pointer at a point: the row bar, or something else. */
-    const onBar = (x: number, y: number) =>
-      page.evaluate(([px, py]) => Boolean(document.elementFromPoint(px!, py!)?.closest('.gotipe-table-add-row')), [x, y]);
+    const the = await tablePage(page);
+    const { rows, bar, caretIn, measure, onBar } = the;
     const room = await measure();
     // by default: room for the bar and its gap, the bar in it, what follows under it
     expect(room.room).toBe(room.add + room.gap);
@@ -137,13 +172,13 @@ test.describe('PageEditor: host tokens of 0.1.5', () => {
     // a unitless 0 is the same: the bar's place and its cut
     await setToken(page, '--gt-table-add-room', '0');
     expect(await measure()).toEqual(none);
-    const at = { x: none.bar.x, y: none.bottom + (Math.max(none.next, none.bar.top) + none.bar.bottom) / 2 };
+    const at = overNext(none);
 
     // the pointer elsewhere: nothing of the bar is there, a click goes to what follows
     await page.mouse.move(1, 1);
     expect(await onBar(at.x, at.y)).toBe(false);
     await page.mouse.click(at.x, at.y);
-    await expect.poll(caretIn).toBe(nextId);
+    await expect.poll(caretIn).toBe(the.nextId);
     await expect(rows).toHaveCount(2);
 
     // from the table down to the bar, a pixel at a time across the gap: it shows and adds a row
@@ -158,8 +193,7 @@ test.describe('PageEditor: host tokens of 0.1.5', () => {
     // a caret in the table does not bring the bar over what follows; Tab from the last cell does
     await rows.last().locator('td').last().click();
     await page.mouse.move(1, 1);
-    const moved = await measure();
-    const below = { x: moved.bar.x, y: moved.bottom + (Math.max(moved.next, moved.bar.top) + moved.bar.bottom) / 2 };
+    const below = overNext(await measure());
     expect(await onBar(below.x, below.y)).toBe(false);
     await page.keyboard.press('Tab');
     await expect(bar).toBeFocused();

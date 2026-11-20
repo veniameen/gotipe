@@ -178,7 +178,7 @@
    host's unitless 0 counts as 0px in the arithmetic. */
 @property --gt-table-add-room-length {
   syntax: "<length>";
-  inherits: false;
+  inherits: true;
   initial-value: 0px;
 }
 .gotipe-table-add-row {
@@ -203,14 +203,16 @@
 .gotipe-table-add-row:focus-visible {
   clip-path: none;
 }
-/* bridges the gap, so the pointer keeps the table hovered on its way down to the bar */
+/* bridges what of the gap above it is beyond the table's room, so the pointer keeps the table
+   hovered on its way down to the bar; none by default, where the gap is the table's own room and
+   a click there adds nothing */
 .gotipe-table-add-row::before {
   content: "";
   position: absolute;
   right: 0;
   bottom: 100%;
   left: 0;
-  height: var(--gt-table-add-gap);
+  height: max(0px, calc(var(--gt-table-add-gap) - var(--gt-table-add-room-length)));
 }
 .gotipe-table-add > svg {
   width: var(--gt-icon-small);
