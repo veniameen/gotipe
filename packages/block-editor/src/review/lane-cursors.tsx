@@ -57,12 +57,13 @@ interface Edges {
  * The cursors of a review's lanes over the page: each at the end of its proposal's new text
  * (where the text of a growing proposal will start while it has none), or after its anchor's
  * quote. A lane has as many as it is given, each under its own `id`. They follow layout: the
- * review's decorations (`tick`), scroll, resize. The cursor of a growing proposal moves to its
- * new place over `--gt-lane-cursor-move` when the text moved it (`data-glide`), and at once when
- * a scroll of the page or a move of the page's edges took it there. Each says on which side its
- * flag stands (`data-chip-side`): `left` when the flag would cross the page's right edge, for a
- * theme to place it there (the sides are physical, not mirrored on a right-to-left page). The side
- * is found again when a cursor moves and when the page's edges do.
+ * review's decorations (`tick`), scroll, resize, web fonts that came. The cursor of a growing
+ * proposal moves to its new place over `--gt-lane-cursor-move` when the text moved it
+ * (`data-glide`), and at once when a scroll of the page, a move of the page's edges or a font
+ * took it there. Each says on which side its flag stands (`data-chip-side`): `left` when the flag
+ * would cross the page's right edge, for a theme to place it there (the sides are physical, not
+ * mirrored on a right-to-left page). The side is found again when a cursor moves and when the
+ * page's edges do.
  */
 export function LaneCursors({
   editor,
@@ -184,7 +185,19 @@ export function LaneCursors({
     observer.observe(root, { box: "border-box" });
     const content = root.querySelector("[data-gotipe-content]");
     if (content) observer.observe(content);
+    // A web font that comes after the cursors were placed lays the text out anew, often with no
+    // change of the page's size: they are placed again at once, as after a resize. A font still
+    // loading now is waited for; any font loaded later tells of itself.
+    const fonts = root.ownerDocument.fonts as FontFaceSet | undefined;
+    let current = true;
+    const onFonts = () => {
+      if (current) place(true);
+    };
+    fonts?.addEventListener("loadingdone", onFonts);
+    if (fonts?.status === "loading") void fonts.ready.then(onFonts);
     return () => {
+      current = false;
+      fonts?.removeEventListener("loadingdone", onFonts);
       observer.disconnect();
       window.removeEventListener("scroll", onScroll, true);
       window.removeEventListener("resize", onWindow);

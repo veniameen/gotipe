@@ -44,7 +44,8 @@ its own), `react`, `theme` and `block-editor` (0.1.5), `markdown`, `suggestions`
 - The review shows proposals that are still being written (`live`): the text grows in place
   without the reveal and takes no decision until it is whole; its unfinished Markdown is shown
   as text. Proposals at one point stand by `order`. A lane has several cursors (`id`, `name`,
-  `compact`); the cursor of a growing proposal waits where its text will start and follows it,
+  `compact`), placed again when web fonts have loaded; the cursor of a growing proposal waits
+  where its text will start and follows it,
   and a cursor's flag that has no room at the page's right edge stands left of it
   (`data-chip-side="right"` or `"left"`, physical sides).
   Only what changed is bound and drawn again, and `onStatesChange` is called only when a state

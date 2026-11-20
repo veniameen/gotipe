@@ -525,6 +525,50 @@ describe("lane cursors", () => {
     });
   });
 
+  it("is placed again, at once, when web fonts have come and laid the text out anew", async () => {
+    // the document's fonts, as a browser gives them: an event when loads end, and a promise
+    const fonts = Object.assign(new EventTarget(), {
+      status: "loaded" as FontFaceSetLoadStatus,
+      ready: Promise.resolve(),
+    });
+    Object.defineProperty(document, "fonts", { configurable: true, value: fonts });
+    try {
+      await measured(async (the) => {
+        const cursor: LaneCursor = { laneId: "agent", id: "c", proposalId: "p" };
+        const { show } = await mount({
+          proposals: [live("p", "\n\nSome text")],
+          cursors: [cursor],
+        });
+        const element = cursors()[0]!;
+        expect(element.style.left).toBe("50px");
+        // a font came: the text stands elsewhere, and nothing else of the page changed
+        the.cursor(140);
+        await act(async () => {
+          fonts.dispatchEvent(new Event("loadingdone"));
+          await wait(10);
+        });
+        expect(element.style.left).toBe("140px");
+        expect(element.hasAttribute("data-glide")).toBe(false);
+        // a font still loading when the cursors are placed: they are placed again once it is in
+        let loaded!: () => void;
+        fonts.status = "loading";
+        fonts.ready = new Promise<void>((done) => {
+          loaded = done;
+        });
+        await show({ proposals: [live("p", "\n\nSome text")], cursors: [{ ...cursor }] });
+        the.cursor(200);
+        expect(element.style.left).toBe("140px");
+        await act(async () => {
+          loaded();
+          await wait(10);
+        });
+        expect(element.style.left).toBe("200px");
+      });
+    } finally {
+      Reflect.deleteProperty(document, "fonts");
+    }
+  });
+
   it("the cursor of a growing proposal stands where its text will start, and glides as the text moves it", async () => {
     await measured(async (the) => {
       const cursor: LaneCursor = { laneId: "agent", id: "c", proposalId: "p", label: "Writing" };
