@@ -209,6 +209,72 @@ test.describe('PageEditor review: a growing proposal', () => {
     expect(loose.chip.top).toBeGreaterThanOrEqual(loose.top);
   });
 
+  test("a flag finds its side again when only the page's edge moves", async ({ page }) => {
+    await page.addStyleTag({
+      content: [
+        '.gotipe-lane-cursor[data-compact] { --gt-lane-pointer-at: 0px; --gt-lane-pointer-chip-x: 12px; --gt-lane-pointer-chip-y: 0px; }',
+        // the page's end edge moves and its text does not: its width and its end padding change together
+        '.gotipe-page-example-surface .gotipe-page { box-sizing: border-box; margin-right: auto; width: calc(460px + var(--edge, 400px)); padding-right: var(--edge, 400px); }',
+        // the text being written ends at the end of its row, so its cursor stands by the page's edge
+        '.gotipe-page-example-surface [data-gotipe-phantom-id] { text-align: right; }',
+        // and the cursor is at its place at once: its box is measured where it stands
+        '.gotipe-page-example-surface { --gt-lane-cursor-move: 0s; }',
+      ].join('\n'),
+    });
+    const cursor = { laneId: 'reviewer', id: 'c', name: 'Summary', label: 'writing', compact: true, proposalId: 'p' };
+    await show(page, { proposals: [part('p', '\n\n## Summary')], cursors: [cursor], laneCursor: 'pointer' });
+    await expect(suggested(page)).toHaveText(['Summary']);
+    const element = page.locator('.gotipe-lane-cursor');
+    // it stands at the end of the written text
+    const textEnd = () =>
+      page.locator('.gotipe-sug-live').evaluate((node) => {
+        const range = node.ownerDocument.createRange();
+        range.selectNodeContents(node);
+        const rects = range.getClientRects();
+        return rects[rects.length - 1]!.right;
+      });
+    await expect
+      .poll(async () => Math.abs((await element.evaluate((node) => node.getBoundingClientRect().left)) - (await textEnd())))
+      .toBeLessThan(1.5);
+    await expect(element).toHaveAttribute('data-chip-side', 'end');
+    const boxes = () =>
+      element.evaluate((node) => {
+        const own = node.getBoundingClientRect();
+        const chip = node.querySelector('.gotipe-lane-chip')!.getBoundingClientRect();
+        const page = node.ownerDocument.querySelector('.gotipe-page')!.getBoundingClientRect();
+        return { left: own.left, top: own.top, chip: { left: chip.left, right: chip.right, bottom: chip.bottom }, page: { left: page.left, right: page.right } };
+      });
+    const wide = await boxes();
+    // the flag has room after its cursor, and ends past the text's own column
+    expect(wide.chip.right).toBeLessThan(wide.page.right);
+    expect(wide.chip.right).toBeGreaterThan(wide.page.left + 460 + 8);
+    const surface = page.locator('.gotipe-page-example-surface');
+    /** Puts the page's end edge at `x` of the window and lets two frames pass. */
+    const edgeAt = async (x: number) => {
+      await surface.evaluate((node, value) => {
+        (node as HTMLElement).style.setProperty('--edge', `${value}px`);
+      }, x - wide.page.left - 460);
+      await page.evaluate(() => new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(() => done(null)))));
+    };
+    // the edge comes in and crosses the flag by a little; the text and its cursor stay where they were
+    await edgeAt(wide.chip.right - 4);
+    await expect(element).toHaveAttribute('data-chip-side', 'start');
+    const flipped = await boxes();
+    expect(Math.abs(flipped.page.right - (wide.chip.right - 4))).toBeLessThan(1);
+    expect([flipped.left, flipped.top]).toEqual([wide.left, wide.top]);
+    expect(Math.abs(flipped.chip.right - flipped.left)).toBeLessThan(1);
+    expect(flipped.chip.bottom).toBeLessThanOrEqual(flipped.top);
+    // the flag would fit after its cursor again by a little: it keeps its side
+    await edgeAt(wide.chip.right + 4);
+    await expect(element).toHaveAttribute('data-chip-side', 'start');
+    // with room to spare it is back, and the cursor has not moved all the while
+    await edgeAt(wide.chip.right + 40);
+    await expect(element).toHaveAttribute('data-chip-side', 'end');
+    const back = await boxes();
+    expect([back.left, back.top]).toEqual([wide.left, wide.top]);
+    expect(Math.abs(back.chip.right - wide.chip.right)).toBeLessThan(1);
+  });
+
   test('its cursor waits where the text will start and follows the text; no motion when reduced', async ({ page }) => {
     const cursor = { laneId: 'reviewer', id: 'c', label: 'writing', proposalId: 'p' };
     await show(page, { proposals: [part('p', '')], cursors: [cursor] });
@@ -239,6 +305,28 @@ test.describe('PageEditor review: a growing proposal', () => {
     // a scroll moves it at once
     await page.locator('.gotipe-page-example-surface').evaluate((node) => {
       node.scrollTop += 40;
+    });
+    await expect(element).not.toHaveAttribute('data-glide', '');
+    // the text grows on: a glide again, and a scroll elsewhere on the screen does not end it
+    await show(page, { proposals: [part('p', '\n\nSome text more')], cursors: [cursor] });
+    await expect(element).toHaveAttribute('data-glide', '');
+    await page.evaluate(async () => {
+      const other = document.createElement('div');
+      other.style.cssText = 'position: fixed; top: 0; left: 0; width: 40px; height: 40px; overflow: auto;';
+      const tall = document.createElement('div');
+      tall.style.height = '400px';
+      other.append(tall);
+      document.body.append(other);
+      const scrolled = new Promise((done) => other.addEventListener('scroll', done, { once: true }));
+      other.scrollTop = 60;
+      await scrolled;
+      await new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(() => done(null))));
+      other.remove();
+    });
+    await expect(element).toHaveAttribute('data-glide', '');
+    // the page narrows: it is at its new place at once
+    await page.locator('.gotipe-page-example-surface').evaluate((node) => {
+      (node as HTMLElement).style.width = `${node.getBoundingClientRect().width - 60}px`;
     });
     await expect(element).not.toHaveAttribute('data-glide', '');
   });

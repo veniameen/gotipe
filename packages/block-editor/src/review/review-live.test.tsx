@@ -281,8 +281,13 @@ describe("lane cursors", () => {
     ]);
   });
 
-  it("says on which side its flag stands: before it when the flag would cross the page's edge", async () => {
-    // the page is 300 wide; a flag is 120 wide and stands 10 after its cursor, or ends at it
+  /**
+   * A page 300 wide, or as wide as the test makes it, with every cursor where the test puts it.
+   * A flag is 120 wide and stands 10 after its cursor, or ends at it when it is before it.
+   */
+  async function measured(
+    run: (the: { cursor(left: number): void; page(width: number): void }) => Promise<void>,
+  ) {
     const original = Element.prototype.getBoundingClientRect;
     const box = (left: number, width: number) =>
       ({
@@ -297,12 +302,13 @@ describe("lane cursors", () => {
         toJSON() {},
       }) as DOMRect;
     let cursorLeft = 50;
+    let pageWidth = 300;
     Range.prototype.getClientRects = () =>
       [
         { left: cursorLeft, right: cursorLeft, top: 100, bottom: 120, width: 0, height: 20 },
       ] as unknown as DOMRectList;
     Element.prototype.getBoundingClientRect = function (this: Element) {
-      return this.matches(".gotipe-page") ? box(0, 300) : box(0, 0);
+      return this.matches(".gotipe-page") ? box(0, pageWidth) : box(0, 0);
     };
     // the flag's own place in its cursor: 10 after it, or ending at it when it is before it
     const flag = (element: HTMLElement) =>
@@ -328,60 +334,180 @@ describe("lane cursors", () => {
       },
     });
     try {
-      const anchor = { before: "The ", quote: "last", after: " one." };
-      const cursor: LaneCursor = { laneId: "agent", id: "c", compact: true, anchor };
-      const { show } = await mount({ cursors: [cursor] });
-      const side = () => cursors()[0]!.getAttribute("data-chip-side");
-      expect(side()).toBe("end");
-      // the cursor moves to the page's end edge: the flag has no room after it
-      cursorLeft = 200;
-      await show({ cursors: [{ ...cursor }] });
-      expect(cursors()[0]!.style.left).toBe("200px");
-      expect(side()).toBe("start");
-      // a little back: it would fit by a few pixels, and keeps its side
-      cursorLeft = 165;
-      await show({ cursors: [{ ...cursor }] });
-      expect(side()).toBe("start");
-      cursorLeft = 150;
-      await show({ cursors: [{ ...cursor }] });
-      expect(side()).toBe("end");
+      await run({
+        cursor(left) {
+          cursorLeft = left;
+        },
+        page(width) {
+          pageWidth = width;
+        },
+      });
     } finally {
       Element.prototype.getBoundingClientRect = original;
       Object.defineProperty(HTMLElement.prototype, "offsetLeft", offsets.offsetLeft);
       Object.defineProperty(HTMLElement.prototype, "offsetWidth", offsets.offsetWidth);
     }
+  }
+
+  /** Resize observers that tell of a resize when the test says so. */
+  function resizes() {
+    const watching = new Set<ResizeObserverCallback>();
+    class Watching {
+      constructor(private readonly callback: ResizeObserverCallback) {}
+      observe() {
+        watching.add(this.callback);
+      }
+      unobserve() {}
+      disconnect() {
+        watching.delete(this.callback);
+      }
+    }
+    vi.stubGlobal("ResizeObserver", Watching);
+    return async () => {
+      await act(async () => {
+        for (const callback of [...watching]) callback([], {} as ResizeObserver);
+        await wait(10);
+      });
+    };
+  }
+  const windowResized = async () => {
+    await act(async () => {
+      window.dispatchEvent(new Event("resize"));
+      await wait(10);
+    });
+  };
+  const side = () => cursors()[0]!.getAttribute("data-chip-side");
+  const anchor = { before: "The ", quote: "last", after: " one." };
+  const flagged: LaneCursor = { laneId: "agent", id: "c", compact: true, anchor };
+
+  it("says on which side its flag stands: before it when the flag would cross the page's edge", async () => {
+    await measured(async (the) => {
+      const { show } = await mount({ cursors: [flagged] });
+      expect(side()).toBe("end");
+      // the cursor moves to the page's end edge: the flag has no room after it
+      the.cursor(200);
+      await show({ cursors: [{ ...flagged }] });
+      expect(cursors()[0]!.style.left).toBe("200px");
+      expect(side()).toBe("start");
+      // a little back: it would fit by a few pixels, and keeps its side
+      the.cursor(165);
+      await show({ cursors: [{ ...flagged }] });
+      expect(side()).toBe("start");
+      the.cursor(150);
+      await show({ cursors: [{ ...flagged }] });
+      expect(side()).toBe("end");
+    });
+  });
+
+  it("finds the side again when the page's edge moved and the cursor did not", async () => {
+    const resized = resizes();
+    await measured(async (the) => {
+      // 150 + 10 + 120: the flag ends 20 before the page's edge
+      the.cursor(150);
+      await mount({ cursors: [flagged] });
+      const element = cursors()[0]!;
+      expect(side()).toBe("end");
+      // the page narrows; its text, and the cursor with it, stay where they were
+      the.page(270);
+      await resized();
+      expect(cursors()[0]).toBe(element);
+      expect(element.style.left).toBe("150px");
+      expect(side()).toBe("start");
+      // a little wider: the flag would fit by a few pixels, and keeps its side
+      the.page(285);
+      await resized();
+      expect(side()).toBe("start");
+      the.page(300);
+      await resized();
+      expect(side()).toBe("end");
+      // the window's edge is the page's when the window shows less of it
+      vi.stubGlobal("innerWidth", 270);
+      await windowResized();
+      expect(element.style.left).toBe("150px");
+      expect(side()).toBe("start");
+      vi.stubGlobal("innerWidth", 300);
+      await windowResized();
+      expect(side()).toBe("end");
+    });
+  });
+
+  it("the cursor of a growing proposal does not glide to where the page's new width took it", async () => {
+    const resized = resizes();
+    await measured(async (the) => {
+      const cursor: LaneCursor = { laneId: "agent", id: "c", proposalId: "p" };
+      const { show } = await mount({ proposals: [live("p", "\n\nSome text")], cursors: [cursor] });
+      const element = cursors()[0]!;
+      expect(element.hasAttribute("data-glide")).toBe(true);
+      // the page narrows and its text is laid out anew: the cursor is at its new place at once
+      the.page(280);
+      the.cursor(40);
+      await resized();
+      expect(element.style.left).toBe("40px");
+      expect(element.hasAttribute("data-glide")).toBe(false);
+      // told of the same resize once more, or drawn again where it is: still no glide
+      await resized();
+      await show({ proposals: [live("p", "\n\nSome text")], cursors: [{ ...cursor }] });
+      expect(element.hasAttribute("data-glide")).toBe(false);
+      // the text grows on: a glide again, and a resize that moved nothing leaves it alone
+      the.cursor(60);
+      await show({ proposals: [live("p", "\n\nSome text more")], cursors: [cursor] });
+      expect(element.style.left).toBe("60px");
+      expect(element.hasAttribute("data-glide")).toBe(true);
+      await resized();
+      expect(element.hasAttribute("data-glide")).toBe(true);
+    });
   });
 
   it("the cursor of a growing proposal stands where its text will start, and glides as the text moves it", async () => {
-    const cursor: LaneCursor = { laneId: "agent", id: "c", proposalId: "p", label: "Writing" };
-    const { show } = await mount({ proposals: [live("p", "")], cursors: [cursor] });
-    // no text yet, no anchor of its own: at the place of the insertion
-    expect(cursors()).toHaveLength(1);
-    expect([cursors()[0]!.style.top, cursors()[0]!.style.left]).toEqual(["100px", "50px"]);
-    expect(cursors()[0]!.hasAttribute("data-glide")).toBe(true);
-    const element = cursors()[0]!;
-    await show({ proposals: [live("p", "\n\nSome text")], cursors: [cursor] });
-    expect(cursors()[0]).toBe(element);
-    expect(element.hasAttribute("data-glide")).toBe(true);
-    // a scroll moves it at once; the next growth glides again
-    await act(async () => {
-      window.dispatchEvent(new Event("scroll"));
-      await wait(10);
+    await measured(async (the) => {
+      const cursor: LaneCursor = { laneId: "agent", id: "c", proposalId: "p", label: "Writing" };
+      const { show } = await mount({ proposals: [live("p", "")], cursors: [cursor] });
+      // no text yet, no anchor of its own: at the place of the insertion
+      expect(cursors()).toHaveLength(1);
+      expect([cursors()[0]!.style.top, cursors()[0]!.style.left]).toEqual(["100px", "50px"]);
+      expect(cursors()[0]!.hasAttribute("data-glide")).toBe(true);
+      const element = cursors()[0]!;
+      the.cursor(90);
+      await show({ proposals: [live("p", "\n\nSome text")], cursors: [cursor] });
+      expect(cursors()[0]).toBe(element);
+      expect(element.style.left).toBe("90px");
+      expect(element.hasAttribute("data-glide")).toBe(true);
+      // a scroll elsewhere on the screen moves no cursor of the page: the glide goes on
+      const other = document.createElement("div");
+      document.body.append(other);
+      await act(async () => {
+        other.dispatchEvent(new Event("scroll"));
+        await wait(10);
+      });
+      other.remove();
+      expect(element.hasAttribute("data-glide")).toBe(true);
+      // a scroll of the page takes it along at once
+      the.cursor(80);
+      await act(async () => {
+        window.dispatchEvent(new Event("scroll"));
+        await wait(10);
+      });
+      expect(element.style.left).toBe("80px");
+      expect(element.hasAttribute("data-glide")).toBe(false);
+      // drawn again where it is, it is as it was; moved by its text, it glides again
+      await show({ proposals: [live("p", "\n\nSome text")], cursors: [{ ...cursor }] });
+      expect(element.hasAttribute("data-glide")).toBe(false);
+      the.cursor(120);
+      await show({ proposals: [live("p", "\n\nSome text more")], cursors: [cursor] });
+      expect(element.style.left).toBe("120px");
+      expect(element.hasAttribute("data-glide")).toBe(true);
+      // written: an ordinary proposal's cursor does not glide
+      await show({
+        proposals: [{ ...live("p", "\n\nSome text more"), live: false }],
+        cursors: [cursor],
+      });
+      expect(cursors()[0]!.hasAttribute("data-glide")).toBe(false);
+      // an ordinary proposal with no text has no place for a cursor without an anchor
+      await show({
+        proposals: [{ ...live("q", ""), live: false }],
+        cursors: [{ ...cursor, proposalId: "q" }],
+      });
+      expect(cursors()).toHaveLength(0);
     });
-    expect(element.hasAttribute("data-glide")).toBe(false);
-    await show({ proposals: [live("p", "\n\nSome text more")], cursors: [cursor] });
-    expect(element.hasAttribute("data-glide")).toBe(true);
-    // written: an ordinary proposal's cursor does not glide
-    await show({
-      proposals: [{ ...live("p", "\n\nSome text more"), live: false }],
-      cursors: [cursor],
-    });
-    expect(cursors()[0]!.hasAttribute("data-glide")).toBe(false);
-    // an ordinary proposal with no text has no place for a cursor without an anchor
-    await show({
-      proposals: [{ ...live("q", ""), live: false }],
-      cursors: [{ ...cursor, proposalId: "q" }],
-    });
-    expect(cursors()).toHaveLength(0);
   });
 });
