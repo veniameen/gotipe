@@ -493,14 +493,17 @@ describe("tables have tokens for their grid, head, first column and code, today'
     ).toBe("var(--gt-table-shared-layout)");
     expect(tokens.view["--gt-table-shared-layout"]).toBe("fixed");
   });
-  it("sizes inline code in a cell and its plate by tokens, as in the text by default", () => {
+  it("sizes inline code in a cell, its plate and corners by tokens, as in the text by default", () => {
+    // its corners in the rule of its plate: it outweighs inline code's own in any stylesheet order
     expect(declarations(tables, ".gotipe-table-wrapper :is(th, td) code:not(pre > code)")).toEqual({
       padding: "var(--gt-table-code-pad)",
+      "border-radius": "var(--gt-table-code-radius, var(--gt-radius-inline))",
       background: "var(--gt-table-code-fill, var(--gt-fill-2))",
       "font-size": "var(--gt-table-code-size)",
     });
     expect(tokens.view["--gt-table-code-size"]).toBe("var(--gt-inline-code-size)");
     expect(tokens.view["--gt-table-code-pad"]).toBe("var(--gt-inline-pad)");
+    expect(tokens.view).not.toHaveProperty("--gt-table-code-radius");
   });
 });
 

@@ -238,6 +238,7 @@ can be set on any container.
 | `--gt-table-code-size` | `var(--gt-inline-code-size)` (0.87em) | Size of inline code in a cell |
 | `--gt-table-code-pad` | `var(--gt-inline-pad)` | Its padding |
 | `--gt-table-code-fill` | unset: `--gt-fill-2` | Its plate; `transparent` with `--gt-table-code-pad: 0` drops the plate |
+| `--gt-table-code-radius` | unset: `--gt-radius-inline` (4 px) | Its corners; `0` with no plate leaves no rounding behind |
 | `--gt-handle-rail` | 56 px (`0px` in `modern`, `minimal`) | Rail a narrow `notion` or `docs` page keeps on the left for the block handle |
 | `--gt-handle-offset` | 54 px | Room left of the text the block handle needs; with less, no handle shows |
 

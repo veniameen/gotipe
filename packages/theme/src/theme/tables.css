@@ -120,9 +120,10 @@
 .gotipe-table-wrapper :where(tbody > tr:last-child > td) {
   border-bottom: 0;
 }
-/* inline code in a cell: its size and plate (by default as in the text) */
+/* inline code in a cell: its size, plate and corners (by default as in the text) */
 .gotipe-table-wrapper :is(th, td) code:not(pre > code) {
   padding: var(--gt-table-code-pad);
+  border-radius: var(--gt-table-code-radius, var(--gt-radius-inline));
   background: var(--gt-table-code-fill, var(--gt-fill-2));
   font-size: var(--gt-table-code-size);
 }
