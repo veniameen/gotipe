@@ -28,12 +28,38 @@
    underlined in the lane's colour */
 .gotipe-sug-block-ins:is(p, li, h1, h2, h3, h4, h5, h6, blockquote),
 .gotipe-sug-block-ins
-  :is(p, li, h1, h2, h3, td, th, blockquote, .gotipe-callout-content, .gotipe-todo-item-content) {
+  :is(p, li, h1, h2, h3, blockquote, .gotipe-callout-content, .gotipe-todo-item-content) {
   border-radius: var(--gt-radius-inline);
   background: color-mix(
     in srgb,
     var(--gt-track, var(--gt-add)) var(--gt-sug-block-ins-tint, var(--gt-track-tint)),
     transparent
+  );
+  text-decoration: var(--gt-sug-block-ins-underline);
+  text-decoration-color: color-mix(
+    in srgb,
+    var(--gt-track, var(--gt-add)) var(--gt-sug-ins-line-mix),
+    transparent
+  );
+  text-decoration-thickness: var(--gt-sug-block-ins-underline-thickness);
+  text-underline-offset: var(--gt-underline-offset);
+  cursor: pointer;
+}
+/* a new table stays a table (Atlas frame 14): its cells square, each on its own fill (a head
+   cell's --gt-table-head-fill), the same tint laid over it; their text underlined as a new
+   block's */
+.gotipe-sug-block-ins :is(td, th) {
+  background-image: linear-gradient(
+    color-mix(
+      in srgb,
+      var(--gt-track, var(--gt-add)) var(--gt-sug-block-ins-tint, var(--gt-track-tint)),
+      transparent
+    ),
+    color-mix(
+      in srgb,
+      var(--gt-track, var(--gt-add)) var(--gt-sug-block-ins-tint, var(--gt-track-tint)),
+      transparent
+    )
   );
   text-decoration: var(--gt-sug-block-ins-underline);
   text-decoration-color: color-mix(
@@ -69,8 +95,16 @@
 /* a stale proposal's new block (its edit adds lines): quiet and dashed, as its hint in the text */
 .gotipe-sug-block-ins.gotipe-sug-stale:is(p, li, h1, h2, h3, h4, h5, h6, blockquote),
 .gotipe-sug-block-ins.gotipe-sug-stale
-  :is(p, li, h1, h2, h3, td, th, blockquote, .gotipe-callout-content, .gotipe-todo-item-content) {
+  :is(p, li, h1, h2, h3, blockquote, .gotipe-callout-content, .gotipe-todo-item-content) {
   background: transparent;
+  color: var(--gt-sug-stale-color, var(--gt-text-2));
+  text-decoration: underline var(--gt-sug-stale-underline-style)
+    var(--gt-sug-stale-line, var(--gt-line-control));
+  text-decoration-thickness: var(--gt-sug-stale-underline-thickness);
+}
+/* its table's cells keep their own fill, without the tint */
+.gotipe-sug-block-ins.gotipe-sug-stale :is(td, th) {
+  background-image: none;
   color: var(--gt-sug-stale-color, var(--gt-text-2));
   text-decoration: underline var(--gt-sug-stale-underline-style)
     var(--gt-sug-stale-line, var(--gt-line-control));

@@ -3742,6 +3742,41 @@ ol.gotipe-list.is-three-digits > li::before {
 .gotipe-page.has-live-caret {
   --gt-sug-live-caret-width: var(--gt-caret-w);
 }
+/* a suggested new block: a quiet tint of its author's colour, its text underlined in it */
+.gotipe-insert-block {
+  border-radius: var(--gt-radius-inline);
+  background: var(--s, var(--gt-add-tint));
+  text-decoration: underline;
+  text-decoration-color: var(--c, var(--gt-add));
+  text-decoration-thickness: var(--gt-underline);
+  text-underline-offset: var(--gt-underline-offset);
+}
+/* a suggested new table stays a table: square cells, each on its own fill (a head fill a host
+   gives too), the same tint laid over it, the text underlined; it takes no edits, so it keeps no
+   room for the bar that adds a row, and the block after it stands as after any table. Before
+   0.1.5 (`.is-was`) the tint took the place of each cell's fill and rounded the cell, and the
+   block after it stood only the text's flow below. */
+.gotipe-table-block.is-suggested {
+  padding-bottom: 0;
+}
+.gotipe-table-block.is-suggested :is(th, td) {
+  background-image: linear-gradient(var(--s, var(--gt-add-tint)), var(--s, var(--gt-add-tint)));
+  text-decoration: underline;
+  text-decoration-color: var(--c, var(--gt-add));
+  text-decoration-thickness: var(--gt-underline);
+  text-underline-offset: var(--gt-underline-offset);
+}
+.gotipe-table-block.is-suggested.is-was :is(th, td) {
+  border-radius: var(--gt-radius-inline);
+  background: var(--s, var(--gt-add-tint));
+}
+.gotipe-doc > .gotipe-table-block.is-was + * {
+  margin-top: var(--gt-flow);
+}
+/* a host's option: the head cells on a fill of their own */
+.gotipe-table-block.has-head-fill th {
+  background-color: var(--gt-fill-2);
+}
 
 /* ---- the bar over the page: who proposes, how many wait, accept or reject them all ---- */
 .gotipe-review-bar {
@@ -11764,7 +11799,10 @@ editor<span class="tk-pun">.</span>on<span class="tk-pun">(</span><span class="t
       is an arrow pointer with its name instead of a caret with a flag. A proposal still being written
       shows what is written so far and has no answers yet; a lane has a cursor for each text it
       writes, named by the host, and a host can end the growing text with a typing caret. At the
-      page's edge a flag that has no room after its cursor stands before it, above the row.
+      page's edge a flag that has no room after its cursor stands before it, above the row. A
+      suggested table stays a table: its cells square under the author's tint, a head fill kept
+      under it, and a row being written stands under it as any block after a table (before 0.1.5
+      the cells were rounded, lost their fill, and the row stood close under the table).
     </p>
   </figcaption>
   <section class="at-stage" data-w="1024">
@@ -11889,6 +11927,78 @@ editor<span class="tk-pun">.</span>on<span class="tk-pun">(</span><span class="t
           ><span class="gotipe-remote-flag">Summary <span>· writing</span></span></span
         >
       </p>
+    </div>
+  </article>
+</div>
+</section>
+  <section class="at-stage" data-w="480">
+<p class="at-stage-label">Before 0.1.5, with a head fill: the cells rounded, the fill lost under the tint, the row being written close under the table</p>
+<div class="at-frame gotipe-root" data-gt-view="notion" data-frame="suggestion-table-was" data-w="480">
+<article class="gotipe-page is-slice" lang="en">
+    <div class="gotipe-doc">
+      <p>The share of lost edits, by platform:</p>
+      <div class="gotipe-table-block is-suggested is-was has-head-fill" data-person="3">
+        <div class="gotipe-table-wrap">
+          <table class="gotipe-table">
+            <thead>
+              <tr><th>Platform</th><th>Lost edits</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>Web</td><td>under 0.1%</td></tr>
+              <tr><td>macOS</td><td>under 0.1%</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <p class="gotipe-insert-block" data-person="3">| iOS | under 0.</p>
+    </div>
+  </article>
+</div>
+</section>
+  <section class="at-stage" data-w="480">
+<p class="at-stage-label">With a head fill (host option): square cells, the head keeps its fill under the tint</p>
+<div class="at-frame gotipe-root" data-gt-view="notion" data-frame="suggestion-table-head" data-w="480">
+<article class="gotipe-page is-slice" lang="en">
+    <div class="gotipe-doc">
+      <p>The share of lost edits, by platform:</p>
+      <div class="gotipe-table-block is-suggested has-head-fill" data-person="3">
+        <div class="gotipe-table-wrap">
+          <table class="gotipe-table">
+            <thead>
+              <tr><th>Platform</th><th>Lost edits</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>Web</td><td>under 0.1%</td></tr>
+              <tr><td>macOS</td><td>under 0.1%</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <p class="gotipe-insert-block" data-person="3">| iOS | under 0.</p>
+    </div>
+  </article>
+</div>
+</section>
+  <section class="at-stage" data-w="480">
+<p class="at-stage-label">A suggested table stays a table: square cells under the tint; the row being written stands under it as after a table</p>
+<div class="at-frame gotipe-root" data-gt-view="notion" data-frame="suggestion-table" data-w="480">
+<article class="gotipe-page is-slice" lang="en">
+    <div class="gotipe-doc">
+      <p>The share of lost edits, by platform:</p>
+      <div class="gotipe-table-block is-suggested" data-person="3">
+        <div class="gotipe-table-wrap">
+          <table class="gotipe-table">
+            <thead>
+              <tr><th>Platform</th><th>Lost edits</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>Web</td><td>under 0.1%</td></tr>
+              <tr><td>macOS</td><td>under 0.1%</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <p class="gotipe-insert-block" data-person="3">| iOS | under 0.</p>
     </div>
   </article>
 </div>

@@ -13,6 +13,12 @@
   proposed new block's text. Read with fallbacks, so each can be set on any element above the text.
 - `--gt-table-head-min-width` (`auto`): the least width of a header cell, a floor for columns sized
   by their content; a host's own `th { min-width }` still wins.
+- A suggested table stays a table (a fix, Atlas frame 14): its cells are square and keep their own
+  fill, a head cell's `--gt-table-head-fill` included, with the lane's tint
+  (`--gt-sug-block-ins-tint`) laid over it as a `background-image`; a stale one's cells keep
+  their fill without the tint. The cells used to be rounded by `--gt-radius-inline`, and the tint
+  took the place of their fill, so the head lost it (with `--gt-sug-block-ins-tint: 0%` the head
+  had no fill at all). The text of the cells is underlined as before.
 - `--gt-inline-code-wrap` (unset: inline code wraps as the text around it): `nowrap` keeps a code
   span on one line, its spaces kept (`text-wrap-mode`), so one that does not fit at the end of a
   line moves to the next whole.

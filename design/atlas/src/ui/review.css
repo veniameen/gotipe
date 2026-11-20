@@ -27,6 +27,41 @@
 .gotipe-page.has-live-caret {
   --gt-sug-live-caret-width: var(--gt-caret-w);
 }
+/* a suggested new block: a quiet tint of its author's colour, its text underlined in it */
+.gotipe-insert-block {
+  border-radius: var(--gt-radius-inline);
+  background: var(--s, var(--gt-add-tint));
+  text-decoration: underline;
+  text-decoration-color: var(--c, var(--gt-add));
+  text-decoration-thickness: var(--gt-underline);
+  text-underline-offset: var(--gt-underline-offset);
+}
+/* a suggested new table stays a table: square cells, each on its own fill (a head fill a host
+   gives too), the same tint laid over it, the text underlined; it takes no edits, so it keeps no
+   room for the bar that adds a row, and the block after it stands as after any table. Before
+   0.1.5 (`.is-was`) the tint took the place of each cell's fill and rounded the cell, and the
+   block after it stood only the text's flow below. */
+.gotipe-table-block.is-suggested {
+  padding-bottom: 0;
+}
+.gotipe-table-block.is-suggested :is(th, td) {
+  background-image: linear-gradient(var(--s, var(--gt-add-tint)), var(--s, var(--gt-add-tint)));
+  text-decoration: underline;
+  text-decoration-color: var(--c, var(--gt-add));
+  text-decoration-thickness: var(--gt-underline);
+  text-underline-offset: var(--gt-underline-offset);
+}
+.gotipe-table-block.is-suggested.is-was :is(th, td) {
+  border-radius: var(--gt-radius-inline);
+  background: var(--s, var(--gt-add-tint));
+}
+.gotipe-doc > .gotipe-table-block.is-was + * {
+  margin-top: var(--gt-flow);
+}
+/* a host's option: the head cells on a fill of their own */
+.gotipe-table-block.has-head-fill th {
+  background-color: var(--gt-fill-2);
+}
 
 /* ---- the bar over the page: who proposes, how many wait, accept or reject them all ---- */
 .gotipe-review-bar {

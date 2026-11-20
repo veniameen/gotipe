@@ -143,7 +143,8 @@ and scroll. Without `onAccept`, `PageEditor` applies an accepted proposal itself
 ### What the reader sees
 
 - Inline changes stand in the text in the lane's color: new text tinted and underlined,
-  removed text struck through. New list items, table cells and blocks appear in place; a
+  removed text struck through. New list items, table cells and blocks appear in place (a new
+  table keeps its square cells and their fill, the head's too, under the lane's tint); a
   block that changes type shows the old one struck through with the new one below, and its
   card shows Before and After.
 - On a wide page every card sits in a margin column next to its change. On a narrow page
