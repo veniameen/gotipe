@@ -21,7 +21,9 @@
   had no fill at all). The text of the cells is underlined as before.
 - `--gt-inline-code-wrap` (unset: inline code wraps as the text around it): `nowrap` keeps a code
   span on one line, its spaces kept (`text-wrap-mode`), so one that does not fit at the end of a
-  line moves to the next whole.
+  line moves to the next whole. It is declared in a rule of no weight
+  (`:where(.gotipe-content :not(pre) > code)`): a host's own `white-space` on inline code, of any
+  weight, still applies, as in 0.1.4.
 - A review whose proposals are still written (`theme/review/live.css`), nothing of it by default:
   `--gt-sug-live-caret-width` (unset: none) draws a typing caret at the end of a growing
   proposal's text (`.gotipe-sug-live`) in `--gt-sug-live-caret-color` (unset: the lane's colour),
