@@ -10,7 +10,10 @@
       is an arrow pointer with its name instead of a caret with a flag. A proposal still being written
       shows what is written so far and has no answers yet; a lane has a cursor for each text it
       writes, named by the host, and a host can end the growing text with a typing caret. At the
-      page's edge a flag that has no room after its cursor stands before it, above the row.
+      page's edge a flag that has no room after its cursor stands before it, above the row. A
+      suggested table stays a table: its cells square under the author's tint, a head fill kept
+      under it, and a row being written stands under it as any block after a table (before 0.1.5
+      the cells were rounded, lost their fill, and the row stood close under the table).
     </p>
   </figcaption>
   <!-- @frame frame=suggestions view=notion w=1024 label="model suggestions" -->
@@ -124,6 +127,69 @@
           ><span class="gotipe-remote-flag">Summary <span>· writing</span></span></span
         >
       </p>
+    </div>
+  </article>
+  <!-- @end -->
+  <!-- @frame frame=suggestion-table-was view=notion w=480 label="Before 0.1.5, with a head fill: the cells rounded, the fill lost under the tint, the row being written close under the table" -->
+  <article class="gotipe-page is-slice" lang="en">
+    <div class="gotipe-doc">
+      <p>The share of lost edits, by platform:</p>
+      <div class="gotipe-table-block is-suggested is-was has-head-fill" data-person="3">
+        <div class="gotipe-table-wrap">
+          <table class="gotipe-table">
+            <thead>
+              <tr><th>Platform</th><th>Lost edits</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>Web</td><td>under 0.1%</td></tr>
+              <tr><td>macOS</td><td>under 0.1%</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <p class="gotipe-insert-block" data-person="3">| iOS | under 0.</p>
+    </div>
+  </article>
+  <!-- @end -->
+  <!-- @frame frame=suggestion-table-head view=notion w=480 label="With a head fill (host option): square cells, the head keeps its fill under the tint" -->
+  <article class="gotipe-page is-slice" lang="en">
+    <div class="gotipe-doc">
+      <p>The share of lost edits, by platform:</p>
+      <div class="gotipe-table-block is-suggested has-head-fill" data-person="3">
+        <div class="gotipe-table-wrap">
+          <table class="gotipe-table">
+            <thead>
+              <tr><th>Platform</th><th>Lost edits</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>Web</td><td>under 0.1%</td></tr>
+              <tr><td>macOS</td><td>under 0.1%</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <p class="gotipe-insert-block" data-person="3">| iOS | under 0.</p>
+    </div>
+  </article>
+  <!-- @end -->
+  <!-- @frame frame=suggestion-table view=notion w=480 label="A suggested table stays a table: square cells under the tint; the row being written stands under it as after a table" -->
+  <article class="gotipe-page is-slice" lang="en">
+    <div class="gotipe-doc">
+      <p>The share of lost edits, by platform:</p>
+      <div class="gotipe-table-block is-suggested" data-person="3">
+        <div class="gotipe-table-wrap">
+          <table class="gotipe-table">
+            <thead>
+              <tr><th>Platform</th><th>Lost edits</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>Web</td><td>under 0.1%</td></tr>
+              <tr><td>macOS</td><td>under 0.1%</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <p class="gotipe-insert-block" data-person="3">| iOS | under 0.</p>
     </div>
   </article>
   <!-- @end -->

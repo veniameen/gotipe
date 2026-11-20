@@ -158,6 +158,25 @@ describe("review parts have tokens with today's values", () => {
     expect(tokens.view["--gt-sug-block-ins-underline"]).toBe("underline");
     expect(tokens.view["--gt-sug-block-ins-underline-thickness"]).toBe("var(--gt-underline)");
   });
+  it("keeps a new table a table: square cells on their own fill, the same tint over it", () => {
+    const block = review.slice(review.indexOf("/* a whole new block"));
+    const selectors = block.slice(block.indexOf("*/") + 2, block.indexOf("{"));
+    // the rule that rounds and fills a new block does not reach a table's cells
+    expect(selectors).not.toMatch(/\b(?:td|th)\b/);
+    const cells = declarations(review, ".gotipe-sug-block-ins :is(td, th)");
+    expect(cells["border-radius"]).toBeUndefined();
+    expect(cells.background).toBeUndefined();
+    const tint =
+      "color-mix( in srgb, var(--gt-track, var(--gt-add)) var(--gt-sug-block-ins-tint, var(--gt-track-tint)), transparent )";
+    expect(cells["background-image"]?.replace(/\s+/g, " ")).toBe(
+      `linear-gradient( ${tint}, ${tint} )`,
+    );
+    expect(cells["text-decoration"]).toBe("var(--gt-sug-block-ins-underline)");
+    // a stale one's cells: their own fill, no tint
+    const stale = declarations(review, ".gotipe-sug-block-ins.gotipe-sug-stale :is(td, th)");
+    expect(stale["background-image"]).toBe("none");
+    expect(stale.background).toBeUndefined();
+  });
   it("can tint a new block's text alone, none by default", () => {
     const text = declarations(review, ".gotipe-sug-block-ins-text");
     expect(text.background?.replace(/\s+/g, " ")).toBe(

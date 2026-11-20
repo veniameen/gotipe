@@ -171,7 +171,7 @@ can be set on any container.
 | `--gt-sug-ins-underline-thickness` | `var(--gt-rule)` (2 px) | Its thickness |
 | `--gt-sug-ins-underline-offset` | `var(--gt-underline-offset)` (0.2em) | Its offset from the font's underline position |
 | `--gt-sug-ins-line-mix` | `100%` | Share of the lane's colour in an insertion's bar or underline and in a new block's underline; `75%` makes the line paler |
-| `--gt-sug-block-ins-tint` | unset: `--gt-track-tint` (12%) | Share of the lane's colour in a proposed new block's fill; `0%` removes the fill |
+| `--gt-sug-block-ins-tint` | unset: `--gt-track-tint` (12%) | Share of the lane's colour in a proposed new block's fill (in a new table, laid over each cell's own fill, the head's included); `0%` removes the fill |
 | `--gt-sug-block-ins-underline` | `underline` | `none` drops the underline of a proposed new block's text |
 | `--gt-sug-block-ins-underline-thickness` | `var(--gt-underline)` (1 px) | Its thickness |
 | `--gt-sug-block-ins-text-tint` | `0%` | Share of the lane's colour behind a proposed new block's text alone, line by line (`.gotipe-sug-block-ins-text`); with `--gt-sug-block-ins-tint: 0%` the text is filled instead of the row |
