@@ -53,14 +53,14 @@ const live = (id: string, text: string, more: Partial<ReviewProposal> = {}): Rev
 });
 
 /** A page whose review the test replaces as a host does. */
-async function mount(first: Partial<PageReviewProps> = {}) {
+async function mount(first: Partial<PageReviewProps> = {}, markdown = MARKDOWN) {
   const ref = createRef<PageEditorHandle>();
   const draw = (review: Partial<PageReviewProps>) =>
     root.render(
       <PageEditor
         ref={ref}
         locale="en"
-        markdown={MARKDOWN}
+        markdown={markdown}
         reviewLayout="inline"
         reviewBar={{ title: "Writing" }}
         review={{ lanes, proposals: [], ...review }}
@@ -262,6 +262,26 @@ describe("a growing proposal on the page (live)", () => {
     expect(suggested()[0]!.textContent).toContain("const a = 1;");
     expect(container.querySelector("h2[data-block-id]")?.textContent).toBe("Next");
     expect(bold()).toEqual(["bold"]);
+  });
+});
+
+describe("the page reads a growing text as unfinished Markdown", () => {
+  it("leaves the page's own code span alone when the text before it opens one", async () => {
+    // a backtick left open before the page's own code span would pair with it, so the page's
+    // text would be struck and drawn again as code; read as unfinished, it is text
+    const growing: ReviewProposal = {
+      id: "p",
+      laneId: "agent",
+      live: true,
+      edits: [{ before: "Alpha", quote: "", after: " beta `gamma` delta.", text: " new `op" }],
+    };
+    await mount({ proposals: [growing] }, "# Notes\n\nAlpha beta `gamma` delta.\n");
+    expect(container.querySelectorAll(".gotipe-sug-del")).toHaveLength(0);
+    // the diff takes the space both texts share: the new text stands after it
+    expect([...container.querySelectorAll(".gotipe-sug-ins")].map((e) => e.textContent)).toEqual([
+      "new `op ",
+    ]);
+    expect(container.querySelector("[data-block-id] code")?.textContent).toBe("gamma");
   });
 });
 

@@ -25,7 +25,7 @@
   for it, and the default “Accept all” and “Reject all” pass it over. Markdown its end leaves
   unfinished is shown as text and changes nothing around it (a mark without its pair, a link; a
   table comes whole once its head and delimiter rows are, and grows by whole rows; an open code
-  block holds the code so far). Proposals that insert at one point stand by
+  block holds the code so far; CRLF line ends too). Proposals that insert at one point stand by
   `ReviewProposal.order`.
 - Lane cursors: a lane has as many as it is given (`LaneCursor.id`), each with its own `name` on
   the flag and `compact` for a flag in one line (`data-compact`). The cursor of a growing
