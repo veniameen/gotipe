@@ -276,7 +276,17 @@ const TAG_START = /[A-Za-z/!?]/;
  * What stands ahead in a paragraph's lines, each read in one pass: whether a link's text is
  * followed by its finished destination or label, and whether a `<` has its `>` on its line.
  */
-function lookahead(text: string) {
+interface Lookahead {
+  /**
+   * Whether what follows a closing bracket at `at` is finished: a destination or a label that is
+   * closed, or other text. At the very end the next character is not known yet: unfinished.
+   */
+  linkEnds(at: number): boolean;
+  /** Whether a `<` at `at` has its `>` before its line ends. Asked in the order of the text. */
+  tagEnds(at: number): boolean;
+}
+
+function lookahead(text: string): Lookahead {
   // the offset of the `)` that closes each `(` on its line, nested ones counted
   const closers = new Map<number, number>();
   const stack: number[] = [];
@@ -297,24 +307,18 @@ function lookahead(text: string) {
     const found = text.indexOf(char, from);
     return found < 0 ? Number.POSITIVE_INFINITY : found;
   };
-  return {
-    /**
-     * Whether what follows a closing bracket at `at` is finished: a destination or a label that
-     * is closed, or other text. At the very end the next character is not known yet: unfinished.
-     */
-    linkEnds(at: number): boolean {
-      if (at >= text.length) return false;
-      if (text[at] === "[") return lastBracket >= at;
-      if (text[at] !== "(") return true;
-      return closers.has(at);
-    },
-    /** Whether a `<` at `at` has its `>` before its line ends. Asked in the order of the text. */
-    tagEnds(at: number): boolean {
-      if (gt < at) gt = next(">", at);
-      if (nl < at) nl = next("\n", at);
-      return gt < nl;
-    },
+  const linkEnds = (at: number): boolean => {
+    if (at >= text.length) return false;
+    if (text[at] === "[") return lastBracket >= at;
+    if (text[at] !== "(") return true;
+    return closers.has(at);
   };
+  const tagEnds = (at: number): boolean => {
+    if (gt < at) gt = next(">", at);
+    if (nl < at) nl = next("\n", at);
+    return gt < nl;
+  };
+  return { linkEnds, tagEnds };
 }
 
 function runLength(text: string, at: number): number {
