@@ -203,3 +203,32 @@ test.describe('PageEditor: host tokens of 0.1.5', () => {
     await expect(rows).toHaveCount(4);
   });
 });
+
+test.describe('PageEditor: a table with no room under a finger (--gt-table-add-room: 0)', () => {
+  test.use({ hasTouch: true });
+  test.beforeEach(async ({ page }) => {
+    await open(page);
+  });
+
+  test('a touch on the table shows the row bar over what follows, a touch elsewhere hides it; hidden, it takes no touch', async ({ page }) => {
+    const the = await tablePage(page);
+    await setToken(page, '--gt-table-add-room', '0');
+    await the.table.scrollIntoViewIfNeeded();
+    const at = overNext(await the.measure());
+    const cell = the.rows.last().locator('td').first();
+    // at rest the bar is hidden: a touch there goes to what follows
+    expect(await the.onBar(at.x, at.y)).toBe(false);
+    await page.touchscreen.tap(at.x, at.y);
+    await expect.poll(the.caretIn).toBe(the.nextId);
+    // a touch on the table shows it over what follows
+    await cell.tap();
+    await expect.poll(() => the.onBar(at.x, at.y)).toBe(true);
+    await expect(the.bar).toHaveCSS('opacity', '1');
+    // a touch elsewhere hides it, and a touch at its place goes to what follows again
+    await page.locator('[data-gotipe-content] > :first-child').tap();
+    await expect.poll(() => the.onBar(at.x, at.y)).toBe(false);
+    await page.touchscreen.tap(at.x, at.y);
+    await expect.poll(the.caretIn).toBe(the.nextId);
+    await expect(the.rows).toHaveCount(2);
+  });
+});
