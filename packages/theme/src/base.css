@@ -104,6 +104,11 @@
 .gotipe-content > :where(.gotipe-page-title) + * {
   margin-top: var(--gt-flow-after-h1);
 }
+/* a heading as the first block after the title: --gt-head-after-heading above it (unset: as any
+   block, --gt-flow-after-h1); it collapses with the title's own --gt-head-after, the larger stands */
+.gotipe-content > :where(.gotipe-page-title) + :where(h1, h2, h3, h4, h5, h6) {
+  margin-top: var(--gt-head-after-heading, var(--gt-flow-after-h1));
+}
 /* a table right under a heading has its own gap at each level; by default the heading's */
 .gotipe-content > :where(h2) + :where(.gotipe-table-wrapper) {
   margin-top: var(--gt-flow-after-h2-table);
@@ -193,10 +198,8 @@
   -webkit-box-decoration-break: clone;
   box-decoration-break: clone;
 }
-/* It wraps as the text around it does; --gt-inline-code-wrap: nowrap keeps it on one line, its
-   spaces kept. Unset, the declaration has no value and the text's wrapping is inherited; the rule
-   weighs nothing, so a host's own rule on inline code (its white-space) wins over it, as before
-   the token. */
+/* --gt-inline-code-wrap: nowrap keeps it on one line, its spaces kept; unset (no value), the text's
+   wrapping holds, and the rule weighs nothing: a host's own white-space on the code wins */
 :where(.gotipe-content :not(pre) > code) {
   text-wrap-mode: var(--gt-inline-code-wrap);
 }

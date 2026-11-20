@@ -216,6 +216,7 @@ can be set on any container.
 | `--gt-list-item-inset` | `0px` | Inset of a list item from the list's edge: its dot, number or task box moves with its text |
 | `--gt-list-item-text-inset` | `0px` | Inset of a list item's content alone: its text (and a task's box) moves, its dot and number stay where they are |
 | `--gt-flow-between-lists` | `var(--gt-flow)` (8 px) | Space before a list that follows another list, as a numbered list after a task list; `0px` joins them |
+| `--gt-head-after-heading` | unset: `--gt-flow-after-h1` (10 px) | Space above a heading that is the first block after the page title in the text (`PageEditor`). It collapses with the title's own `--gt-head-after`, so the larger of the two stands: set it 2 px over `--gt-head-after` to have a heading stand 2 px lower under the title than a paragraph |
 | `--gt-flow-after-h1-table`, `--gt-flow-after-h2-table`, `--gt-flow-after-h3-table` | `var(--gt-flow-after-h1)`, `-h2`, `-h3` (10, 8, 4 px) | Space before a table right under a heading of that level (`-h3` for h3 to h6; `-h1` also under the page title) |
 | `--gt-table-line` | unset: `--gt-line` | Colour of a table's row lines, column lines and frame |
 | `--gt-table-row-rule` | `var(--gt-hairline)` (1 px) | Width of the line under each row but the last, the head's included; `0px` removes the row lines |
