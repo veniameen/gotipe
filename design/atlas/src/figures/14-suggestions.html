@@ -10,8 +10,9 @@
       is an arrow pointer with its name instead of a caret with a flag. A proposal still being written
       shows what is written so far and has no answers yet; a lane has a cursor for each text it
       writes, named by the host, and a host can end the growing text with a typing caret. At the
-      page's edge a flag that has no room after its cursor stands before it, above the row. A
-      suggested table stays a table: its cells square under the author's tint, a head fill kept
+      page's edge a flag that has no room after its cursor stands before it, above the row. After
+      inline code the caret stands inside the code's plate, just after its last letter, on the
+      text's row, and the cursor with it. A suggested table stays a table: its cells square under the author's tint, a head fill kept
       under it, and a row being written stands under it as any block after a table (before 0.1.5
       the cells were rounded, lost their fill, and the row stood close under the table).
     </p>
@@ -125,6 +126,22 @@
         ><span class="gotipe-remote is-pointer is-flipped" data-person="3"
           ><svg class="gotipe-remote-arrow"><use href="#i-pointer" /></svg
           ><span class="gotipe-remote-flag">Summary <span>· writing</span></span></span
+        >
+      </p>
+    </div>
+  </article>
+  <!-- @end -->
+  <!-- @frame frame=suggestion-live-code view=notion w=768 label="A text that ends in inline code: the typing caret and the cursor after its last letter, inside the plate, on the text's row" -->
+  <article class="gotipe-page is-slice has-live-caret" lang="en">
+    <div class="gotipe-doc">
+      <h3><span class="gotipe-insert" data-person="3">Release</span></h3>
+      <p>
+        <span class="gotipe-insert" data-person="3"
+          >Publish the packages with <code class="gotipe-inline-code">npm run release</code></span
+        ><span class="gotipe-live-caret is-after-code" data-person="3"></span
+        ><span class="gotipe-remote is-pointer" data-person="3"
+          ><svg class="gotipe-remote-arrow"><use href="#i-pointer" /></svg
+          ><span class="gotipe-remote-flag">Release <span>· writing</span></span></span
         >
       </p>
     </div>

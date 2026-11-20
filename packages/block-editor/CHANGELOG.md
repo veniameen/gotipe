@@ -28,7 +28,11 @@
   block holds the code so far; CRLF line ends too), and the spaces its text ends with stay while
   it grows, so its end, the caret and the cursor are after them (a space with no room at a line's
   end hangs there and starts no new line). Proposals that insert at one point stand by
-  `ReviewProposal.order`.
+  `ReviewProposal.order`. Its typing caret (`.gotipe-sug-live-caret`, drawn when a host gives
+  `--gt-sug-live-caret-width`) is drawn with the lane cursors at its cursor's point: just after
+  the last character of the text, on the row of the text's last piece. After inline code both
+  stand inside the code's plate, after its last letter, on the text's row (the cursor used to
+  stand by the code's smaller type, a pixel lower, and the caret after the plate).
 - Lane cursors: a lane has as many as it is given (`LaneCursor.id`), each with its own `name` on
   the flag and `compact` for a flag in one line (`data-compact`). The cursor of a growing
   proposal stands where its text will start while it has none, and goes to the text's new end

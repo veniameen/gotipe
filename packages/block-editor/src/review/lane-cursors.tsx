@@ -47,6 +47,26 @@ const samePlaced = (a: Placed[], b: Placed[]) =>
   a.length === b.length &&
   a.every((one, index) => FIELDS.every((field) => one[field] === b[index]![field]));
 
+/** The typing caret at the end of a growing proposal's text: drawn when a host gives it a width. */
+interface Caret {
+  id: string;
+  color: string;
+  top: number;
+  left: number;
+  height: number;
+}
+
+const sameCarets = (a: Caret[], b: Caret[]) =>
+  a.length === b.length &&
+  a.every(
+    (one, index) =>
+      one.id === b[index]!.id &&
+      one.color === b[index]!.color &&
+      one.top === b[index]!.top &&
+      one.left === b[index]!.left &&
+      one.height === b[index]!.height,
+  );
+
 /** The page's side edges in the window, no further than the window shows. */
 interface Edges {
   left: number;
@@ -63,7 +83,8 @@ interface Edges {
  * took it there. Each says on which side its flag stands (`data-chip-side`): `left` when the flag
  * would cross the page's right edge, for a theme to place it there (the sides are physical, not
  * mirrored on a right-to-left page). The side is found again when a cursor moves and when the
- * page's edges do.
+ * page's edges do. The typing caret of each growing proposal (`.gotipe-sug-live-caret`, as wide as
+ * `--gt-sug-live-caret-width`) is drawn here too, where that proposal's cursor stands.
  */
 export function LaneCursors({
   editor,
@@ -73,6 +94,7 @@ export function LaneCursors({
   lanes,
   proposals,
   tick,
+  liveColors,
   look = "caret",
   pointer,
 }: {
@@ -85,11 +107,14 @@ export function LaneCursors({
   proposals: ProposalState[];
   /** Changes when the review's decorations were drawn again. */
   tick: number;
+  /** The lane colour of each growing proposal, by id: its typing caret's. */
+  liveColors?: Map<string, string>;
   look?: ReviewLaneCursor;
   /** The host's own arrow for `look: "pointer"` instead of the built-in one. */
   pointer?: React.ReactNode;
 }) {
   const [placed, setPlaced] = useState<Placed[]>([]);
+  const [carets, setCarets] = useState<Caret[]>([]);
   /** The page's edges when the cursors were last placed: the flags are measured against them. */
   const [page, setPage] = useState<Edges | null>(null);
   const edges = useRef<Edges | null>(null);
@@ -168,6 +193,17 @@ export function LaneCursors({
       }
       last.current = new Map(out.map((cursor) => [cursor.key, cursor]));
       setPlaced((previous) => (samePlaced(previous, out) ? previous : out));
+      // a typing caret at the end of each growing text: where its cursor stands
+      const marks: Caret[] = [];
+      for (const state of proposals) {
+        if (!state.live || state.status !== "pending") continue;
+        ends ??= liveEndRects(root);
+        const end = ends.get(state.id);
+        if (!end) continue;
+        const color = liveColors?.get(state.id) ?? "var(--gt-track-1)";
+        marks.push({ id: state.id, color, top: end.top, left: end.left, height: end.height });
+      }
+      setCarets((previous) => (sameCarets(previous, marks) ? previous : marks));
     };
     place(false);
     // a scroll of what holds the page, or of a part of the page, takes its cursors along; a
@@ -202,7 +238,7 @@ export function LaneCursors({
       window.removeEventListener("scroll", onScroll, true);
       window.removeEventListener("resize", onWindow);
     };
-  }, [root, editor, session, cursors, lanes, proposals, tick]);
+  }, [root, editor, session, cursors, lanes, proposals, tick, liveColors]);
 
   // Once drawn, and when the page's edges moved, each flag is measured against those edges and
   // takes its side. It is measured from its cursor's place, not from where a glide has it.
@@ -231,6 +267,22 @@ export function LaneCursors({
   const arrow = look === "pointer";
   return (
     <>
+      {carets.map((c) => (
+        <span
+          key={`caret:${c.id}`}
+          className="gotipe-sug-live-caret"
+          style={
+            {
+              position: "fixed",
+              top: c.top,
+              left: c.left,
+              height: c.height,
+              "--gt-track": c.color,
+            } as React.CSSProperties
+          }
+          aria-hidden="true"
+        />
+      ))}
       {placed.map((c) => (
         <div
           key={c.key}

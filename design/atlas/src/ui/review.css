@@ -27,6 +27,20 @@
 .gotipe-page.has-live-caret {
   --gt-sug-live-caret-width: var(--gt-caret-w);
 }
+/* the caret as a mark of its own, on the text's row; it takes no room */
+.gotipe-live-caret {
+  display: inline-block;
+  width: var(--gt-sug-live-caret-width);
+  height: var(--gt-caret-h);
+  margin-right: calc(-1 * var(--gt-sug-live-caret-width));
+  vertical-align: var(--gt-caret-shift);
+  background: var(--c, var(--gt-add));
+}
+/* a text that ends in inline code: the caret stands just after the code's last letter, inside its
+   plate, on the text's row (not the code's smaller type), and the cursor that follows it with it */
+.gotipe-live-caret.is-after-code {
+  margin-left: var(--gt-live-code-end);
+}
 /* a suggested new block: a quiet tint of its author's colour, its text underlined in it */
 .gotipe-insert-block {
   border-radius: var(--gt-radius-inline);

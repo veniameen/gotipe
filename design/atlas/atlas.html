@@ -595,6 +595,9 @@
   --gt-lane-pointer-outline: currentColor;
   /* the typing caret at the end of a text still being written: none unless a host sets a width */
   --gt-sug-live-caret-width: 0px;
+  /* after inline code the caret and the cursor stand after its last letter, inside its plate: back
+     from the plate's end by the code's end padding (0.35em of its own type) */
+  --gt-live-code-end: calc(-0.35 * var(--gt-inline-code-size));
 
   --gt-card-w: 288px;
   --gt-review-card-gap: 8px;
@@ -3741,6 +3744,20 @@ ol.gotipe-list.is-three-digits > li::before {
 }
 .gotipe-page.has-live-caret {
   --gt-sug-live-caret-width: var(--gt-caret-w);
+}
+/* the caret as a mark of its own, on the text's row; it takes no room */
+.gotipe-live-caret {
+  display: inline-block;
+  width: var(--gt-sug-live-caret-width);
+  height: var(--gt-caret-h);
+  margin-right: calc(-1 * var(--gt-sug-live-caret-width));
+  vertical-align: var(--gt-caret-shift);
+  background: var(--c, var(--gt-add));
+}
+/* a text that ends in inline code: the caret stands just after the code's last letter, inside its
+   plate, on the text's row (not the code's smaller type), and the cursor that follows it with it */
+.gotipe-live-caret.is-after-code {
+  margin-left: var(--gt-live-code-end);
 }
 /* a suggested new block: a quiet tint of its author's colour, its text underlined in it */
 .gotipe-insert-block {
@@ -11799,8 +11816,9 @@ editor<span class="tk-pun">.</span>on<span class="tk-pun">(</span><span class="t
       is an arrow pointer with its name instead of a caret with a flag. A proposal still being written
       shows what is written so far and has no answers yet; a lane has a cursor for each text it
       writes, named by the host, and a host can end the growing text with a typing caret. At the
-      page's edge a flag that has no room after its cursor stands before it, above the row. A
-      suggested table stays a table: its cells square under the author's tint, a head fill kept
+      page's edge a flag that has no room after its cursor stands before it, above the row. After
+      inline code the caret stands inside the code's plate, just after its last letter, on the
+      text's row, and the cursor with it. A suggested table stays a table: its cells square under the author's tint, a head fill kept
       under it, and a row being written stands under it as any block after a table (before 0.1.5
       the cells were rounded, lost their fill, and the row stood close under the table).
     </p>
@@ -11925,6 +11943,25 @@ editor<span class="tk-pun">.</span>on<span class="tk-pun">(</span><span class="t
         ><span class="gotipe-remote is-pointer is-flipped" data-person="3"
           ><svg class="gotipe-remote-arrow"><use href="#i-pointer" /></svg
           ><span class="gotipe-remote-flag">Summary <span>· writing</span></span></span
+        >
+      </p>
+    </div>
+  </article>
+</div>
+</section>
+  <section class="at-stage" data-w="768">
+<p class="at-stage-label">A text that ends in inline code: the typing caret and the cursor after its last letter, inside the plate, on the text's row · 768</p>
+<div class="at-frame gotipe-root" data-gt-view="notion" data-frame="suggestion-live-code" data-w="768">
+<article class="gotipe-page is-slice has-live-caret" lang="en">
+    <div class="gotipe-doc">
+      <h3><span class="gotipe-insert" data-person="3">Release</span></h3>
+      <p>
+        <span class="gotipe-insert" data-person="3"
+          >Publish the packages with <code class="gotipe-inline-code">npm run release</code></span
+        ><span class="gotipe-live-caret is-after-code" data-person="3"></span
+        ><span class="gotipe-remote is-pointer" data-person="3"
+          ><svg class="gotipe-remote-arrow"><use href="#i-pointer" /></svg
+          ><span class="gotipe-remote-flag">Release <span>· writing</span></span></span
         >
       </p>
     </div>

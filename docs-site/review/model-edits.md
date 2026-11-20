@@ -202,7 +202,8 @@ While a proposal is `live`:
   them; a space with no room at the end of a line hangs there and starts no new line. Once the
   proposal is written, its text is read as any other.
 - The last piece of its text carries the class `gotipe-sug-live`. Set
-  `--gt-sug-live-caret-width` to draw a typing caret there
+  `--gt-sug-live-caret-width` to draw a typing caret just after its last character, on its row,
+  where the cursor stands too; after inline code it stands inside the code's plate
   (see [theming](/docs/ui/theming#parts)).
 - A cursor with its `proposalId` stands where the text will start while there is none, then
   follows its end. When the text moves it, it goes there over `--gt-lane-cursor-move`

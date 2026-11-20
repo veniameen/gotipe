@@ -537,6 +537,34 @@ describe("lane cursors", () => {
     });
   });
 
+  it("stands with the typing caret just after the text's last letter, on the text's row, code or not", async () => {
+    await measured(async (the) => {
+      // the last letter's box, from a range over it; the row, from the marked piece's own line
+      the.cursor(150);
+      const rows = Element.prototype.getClientRects;
+      Element.prototype.getClientRects = function (this: Element) {
+        return (this.matches(".gotipe-sug-live")
+          ? [{ left: 60, right: 158, top: 96, bottom: 120, width: 98, height: 24 }]
+          : []) as unknown as DOMRectList;
+      };
+      try {
+        const cursor: LaneCursor = { laneId: "agent", id: "c", proposalId: "p" };
+        // the text ends in inline code: its plate and padding reach past the last letter
+        await mount({ proposals: [live("p", "\n\nRun `npm run release`")], cursors: [cursor] });
+        const mark = container.querySelector(".gotipe-sug-live")!;
+        expect(mark.querySelector("code")?.textContent).toBe("npm run release");
+        const caret = container.ownerDocument.querySelector<HTMLElement>(".gotipe-sug-live-caret")!;
+        const at = (element: HTMLElement) =>
+          [element.style.left, element.style.top, element.style.height].join(" ");
+        expect(at(caret)).toBe("150px 96px 24px");
+        expect(at(cursors()[0]!)).toBe("150px 96px 24px");
+        expect(caret.getAttribute("aria-hidden")).toBe("true");
+      } finally {
+        Element.prototype.getClientRects = rows;
+      }
+    });
+  });
+
   it("is placed again, at once, when web fonts have come and laid the text out anew", async () => {
     // the document's fonts, as a browser gives them: an event when loads end, and a promise
     const fonts = Object.assign(new EventTarget(), {

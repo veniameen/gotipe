@@ -85,15 +85,26 @@ describe("liveEndRects: where the texts being written end", () => {
       <h2 data-gotipe-phantom-id="p3" data-gotipe-proposal="empty" class="gotipe-sug-block-ins gotipe-sug-live"></h2>
       <p data-gotipe-phantom-id="p4" data-gotipe-proposal="written" class="gotipe-sug-block-ins">not growing</p>
     </div>`;
-    // jsdom has no layout: a range's last box is told by what it holds
+    // jsdom has no layout: each character of a text node is 10 wide from 10 on, and the marked
+    // pieces (a code block's code) stand on a row at 20
     Range.prototype.getClientRects = function (this: Range) {
       const text = this.toString();
-      return (text ? [rect(10, 20, text.length * 10, 18)] : []) as unknown as DOMRectList;
+      return (text
+        ? [rect(10 + this.startOffset * 10, 20, text.length * 10, 18)]
+        : []) as unknown as DOMRectList;
     };
+    const rows = vi.spyOn(Element.prototype, "getClientRects").mockImplementation(function (
+      this: Element,
+    ) {
+      return (this.matches(".gotipe-sug-live:not(h2), pre > code")
+        ? [rect(0, 20, 999, 18)]
+        : []) as unknown as DOMRectList;
+    });
     vi.spyOn(document.querySelector("h2")!, "getBoundingClientRect").mockReturnValue(
       rect(56, 300, 400, 30),
     );
     const ends = liveEndRects(document.getElementById("root")!);
+    rows.mockRestore();
     expect([...ends.keys()].sort()).toEqual(["blocks", "code", "empty", "inline"]);
     const at = (id: string) => [ends.get(id)?.left, ends.get(id)?.top, ends.get(id)?.width];
     // after the last character of the marked piece
@@ -103,5 +114,38 @@ describe("liveEndRects: where the texts being written end", () => {
     expect(at("code")).toEqual([10 + "const a = 1;".length * 10, 20, 0]);
     // an empty block: at its start
     expect(at("empty")).toEqual([56, 300, 0]);
+  });
+
+  it("puts the end of a text that ends in inline code after the code's last letter, on the text's row", () => {
+    document.body.innerHTML = `<div id="root">
+      <p data-gotipe-phantom-id="p" data-gotipe-proposal="code-end" class="gotipe-sug-block-ins"><span class="gotipe-sug-block-ins-text">Run <span class="gotipe-sug-live"><code>npm run</code></span></span></p>
+      <p data-gotipe-phantom-id="q" data-gotipe-proposal="space-end" class="gotipe-sug-block-ins"><span class="gotipe-sug-live">word </span></p>
+    </div>`;
+    // the code's own box reaches past its letters (its plate), and its letters stand lower
+    Range.prototype.getClientRects = function (this: Range) {
+      const text = this.toString();
+      const lower = this.startContainer.parentElement?.closest("code") ? 1.2 : 0;
+      return (text
+        ? [rect(100 + this.startOffset * 8, 22 + lower, text.length * 8, 15)]
+        : []) as unknown as DOMRectList;
+    };
+    const rows = vi.spyOn(Element.prototype, "getClientRects").mockImplementation(function (
+      this: Element,
+    ) {
+      if (this.matches("code")) return [rect(96, 21, 64, 18)] as unknown as DOMRectList;
+      return (this.matches(".gotipe-sug-live")
+        ? [rect(50, 20, 114, 20)]
+        : []) as unknown as DOMRectList;
+    });
+    const ends = liveEndRects(document.getElementById("root")!);
+    rows.mockRestore();
+    // after "n", the code's last letter, inside its plate; on the marked piece's row
+    expect([
+      ends.get("code-end")?.left,
+      ends.get("code-end")?.top,
+      ends.get("code-end")?.height,
+    ]).toEqual([100 + "npm run".length * 8, 20, 20]);
+    // a space at the end counts as a character: the end is after it
+    expect(ends.get("space-end")?.left).toBe(100 + "word ".length * 8);
   });
 });

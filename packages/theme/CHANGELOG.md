@@ -33,9 +33,11 @@
   (`:where(.gotipe-content :not(pre) > code)`): a host's own `white-space` on inline code, of any
   weight, still applies, as in 0.1.4.
 - A review whose proposals are still written (`theme/review/live.css`), nothing of it by default:
-  `--gt-sug-live-caret-width` (unset: none) draws a typing caret at the end of a growing
-  proposal's text (`.gotipe-sug-live`) in `--gt-sug-live-caret-color` (unset: the lane's colour),
-  as a shadow that takes no room; `--gt-lane-cursor-move` (unset: the fast duration) is the time
+  `--gt-sug-live-caret-width` (unset: none) draws a typing caret (`.gotipe-sug-live-caret`, over
+  the page with the lane cursors) just after the last character of a growing proposal's text
+  (`.gotipe-sug-live`), on its row, where the proposal's cursor stands: after inline code it is
+  inside the code's plate, after its last letter. It is in `--gt-sug-live-caret-color` (unset: the
+  lane's colour) and takes no room; `--gt-lane-cursor-move` (unset: the fast duration) is the time
   the cursor of a growing proposal takes to its text's new end (`.gotipe-lane-cursor[data-glide]`,
   nothing under reduced motion); a compact cursor's flag (`[data-compact]`) is one line, its name
   and label `--gt-lane-chip-gap` apart (unset: `--gt-space-1`), and when its cursor says it has

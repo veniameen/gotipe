@@ -94,8 +94,10 @@ handle and the heading anchor: at rest and under the pointer, on a narrow screen
 12–16. Collaboration and review:
 - cursors;
 - comments;
-- suggested edits; a suggested table before and after 0.1.5 (square cells on their own fill,
-  the block after it spaced as after a table), and with a head fill;
+- suggested edits; a text still being written that ends in inline code (the caret and the
+  cursor after its last letter, inside the plate); a suggested table before and after 0.1.5
+  (square cells on their own fill, the block after it spaced as after a table), and with a head
+  fill;
 - versions;
 - the model's command bar and its hint.
 

@@ -539,22 +539,86 @@ test.describe('PageEditor review: a growing proposal', () => {
     const end = page.locator('.gotipe-sug-live');
     await expect(end).toHaveCount(1);
     await expect(end).toHaveText(' text');
-    const shadow = () =>
-      end.evaluate((element) => {
-        const value = getComputedStyle(element).boxShadow;
-        const lengths = value.replace(/rgba?\([^)]*\)|color\([^)]*\)/g, '').match(/-?[\d.]+px/g) ?? [];
-        return lengths.map((length) => Number.parseFloat(length));
-      });
-    // no caret unless a host asks for one: a shadow of no size
-    expect((await shadow()).every((length) => length === 0)).toBe(true);
+    const caret = page.locator('.gotipe-sug-live-caret');
+    await expect(caret).toHaveCount(1);
+    const box = () => caret.evaluate((node) => {
+      const rect = node.getBoundingClientRect();
+      return { left: rect.left, width: rect.width };
+    });
+    // no caret unless a host asks for one: no width
+    expect((await box()).width).toBe(0);
     const width = await end.evaluate((element) => element.getBoundingClientRect().width);
     await page.locator('.gotipe-page-example-surface').evaluate((node) => node.style.setProperty('--gt-sug-live-caret-width', '2px'));
-    expect((await shadow())[0]).toBe(2);
-    // the caret takes no room: the text does not move
+    await expect.poll(async () => (await box()).width).toBe(2);
+    // at the end of the text; it takes no room, the text does not move
+    const right = await end.evaluate((node) => {
+      const range = node.ownerDocument.createRange();
+      range.selectNodeContents(node);
+      const rects = range.getClientRects();
+      return rects[rects.length - 1]!.right;
+    });
+    expect(Math.abs((await box()).left - right)).toBeLessThan(1);
     expect(await end.evaluate((element) => element.getBoundingClientRect().width)).toBe(width);
-    // written: no mark
+    // written: no mark and no caret
     await show(page, { proposals: [{ ...part('p', '\n\n## Summary\n\nSome **bold** text'), live: false }] });
     await expect(end).toHaveCount(0);
+    await expect(caret).toHaveCount(0);
+  });
+
+  test('after inline code the caret and the cursor stand together after its last letter, on the text row', async ({ page }) => {
+    await page.locator('.gotipe-page-example-surface').evaluate((node) => {
+      (node as HTMLElement).style.setProperty('--gt-sug-live-caret-width', '2px');
+      (node as HTMLElement).style.setProperty('--gt-lane-cursor-move', '0s');
+    });
+    const cursor = { laneId: 'reviewer', id: 'c', label: 'writing', proposalId: 'p' };
+    /** Where the caret, the cursor and the last letter stand once the text is this, its end `mark`. */
+    const place = async (text: string, mark: string) => {
+      await show(page, { proposals: [part('p', text)], cursors: [cursor] });
+      // the exact text of the marked end: toHaveText would trim it
+      await expect.poll(() => page.locator('.gotipe-sug-live').evaluate((node) => node.textContent)).toBe(mark);
+      const measure = () =>
+        page.evaluate(() => {
+          const end = document.querySelector('.gotipe-sug-live')!;
+          const walker = document.createTreeWalker(end, NodeFilter.SHOW_TEXT);
+          let last: Text | null = null;
+          for (let node = walker.nextNode(); node; node = walker.nextNode()) if ((node as Text).length) last = node as Text;
+          const range = document.createRange();
+          range.setStart(last!, last!.length - 1);
+          range.setEnd(last!, last!.length);
+          const caret = document.querySelector('.gotipe-sug-live-caret')!.getBoundingClientRect();
+          const arrow = document.querySelector('.gotipe-lane-cursor')!.getBoundingClientRect();
+          return {
+            caret: { left: caret.left, top: caret.top, height: caret.height, width: caret.width },
+            cursor: { left: arrow.left, top: arrow.top },
+            letter: range.getBoundingClientRect().right,
+            plate: end.querySelector('code')?.getBoundingClientRect().right ?? null,
+          };
+        });
+      // once placed for this text: just after its last letter
+      await expect
+        .poll(async () => {
+          const at = await measure();
+          return Math.abs(at.caret.left - at.letter);
+        })
+        .toBeLessThan(1);
+      return measure();
+    };
+    const text = await place('\n\nRun the release with the', 'Run the release with the');
+    const code = await place('\n\nRun the release with `npm run release`', 'npm run release');
+    const after = await place('\n\nRun the release with `npm run release` now', ' now');
+    for (const at of [text, code, after]) {
+      expect(at.caret.width).toBe(2);
+      // just after the last letter, the caret and the cursor at one point
+      expect(Math.abs(at.caret.left - at.letter)).toBeLessThan(1);
+      expect(Math.abs(at.cursor.left - at.caret.left)).toBeLessThan(1);
+      expect(Math.abs(at.cursor.top - at.caret.top)).toBeLessThan(0.5);
+    }
+    // inside the code's plate: its padding reaches past the caret
+    expect(code.plate! - code.caret.left).toBeGreaterThan(1);
+    // text, code, text: the caret keeps the text's row
+    expect(Math.abs(code.caret.top - text.caret.top)).toBeLessThan(0.5);
+    expect(Math.abs(code.caret.height - text.caret.height)).toBeLessThan(0.5);
+    expect(Math.abs(after.caret.top - code.caret.top)).toBeLessThan(0.5);
   });
 
   test('"Demo writing" writes two sections at one place and leaves them to accept', async ({ page }) => {
