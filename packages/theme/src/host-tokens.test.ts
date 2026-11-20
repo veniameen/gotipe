@@ -99,6 +99,14 @@ describe('data-gt-narrow="off" switches the narrow sizes off, not the layout', (
 
 describe("the document follows the Atlas and names its parts", () => {
   const base = read("base.css");
+  it("lets inline code wrap as its text does unless a host keeps it on one line", () => {
+    const code = declarations(base, ".gotipe-content :not(pre) > code");
+    // no fallback and no value on the view: unset, the text's wrapping is inherited as before
+    expect(code["text-wrap-mode"]).toBe("var(--gt-inline-code-wrap)");
+    expect(code["white-space"]).toBeUndefined();
+    expect(tokens.view).not.toHaveProperty("--gt-inline-code-wrap");
+    expect(tokens.shared).not.toHaveProperty("--gt-inline-code-wrap");
+  });
   it("lets the heading flow reach a list: the list reset weighs nothing (Atlas frame 1)", () => {
     const rule = base.slice(0, base.indexOf("{\n  margin: 0;\n}", base.indexOf("---- lists")));
     expect(rule.slice(rule.lastIndexOf("\n") + 1)).toBe(
