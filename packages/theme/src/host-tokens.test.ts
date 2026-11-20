@@ -163,7 +163,11 @@ describe("review parts have tokens with today's values", () => {
     const selectors = block.slice(block.indexOf("*/") + 2, block.indexOf("{"));
     // the rule that rounds and fills a new block does not reach a table's cells
     expect(selectors).not.toMatch(/\b(?:td|th)\b/);
-    const cells = declarations(review, ".gotipe-sug-block-ins :is(td, th)");
+    // a stylesheet of its own, after the review's
+    const theme = read("theme.css");
+    expect(theme.indexOf("review/tables.css")).toBeGreaterThan(theme.indexOf("review.css"));
+    const tables = read("theme/review/tables.css");
+    const cells = declarations(tables, ".gotipe-sug-block-ins :is(td, th)");
     expect(cells["border-radius"]).toBeUndefined();
     expect(cells.background).toBeUndefined();
     const tint =
@@ -173,7 +177,7 @@ describe("review parts have tokens with today's values", () => {
     );
     expect(cells["text-decoration"]).toBe("var(--gt-sug-block-ins-underline)");
     // a stale one's cells: their own fill, no tint
-    const stale = declarations(review, ".gotipe-sug-block-ins.gotipe-sug-stale :is(td, th)");
+    const stale = declarations(tables, ".gotipe-sug-block-ins.gotipe-sug-stale :is(td, th)");
     expect(stale["background-image"]).toBe("none");
     expect(stale.background).toBeUndefined();
   });

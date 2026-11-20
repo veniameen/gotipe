@@ -45,32 +45,6 @@
   text-underline-offset: var(--gt-underline-offset);
   cursor: pointer;
 }
-/* a new table stays a table (Atlas frame 14): its cells square, each on its own fill (a head
-   cell's --gt-table-head-fill), the same tint laid over it; their text underlined as a new
-   block's */
-.gotipe-sug-block-ins :is(td, th) {
-  background-image: linear-gradient(
-    color-mix(
-      in srgb,
-      var(--gt-track, var(--gt-add)) var(--gt-sug-block-ins-tint, var(--gt-track-tint)),
-      transparent
-    ),
-    color-mix(
-      in srgb,
-      var(--gt-track, var(--gt-add)) var(--gt-sug-block-ins-tint, var(--gt-track-tint)),
-      transparent
-    )
-  );
-  text-decoration: var(--gt-sug-block-ins-underline);
-  text-decoration-color: color-mix(
-    in srgb,
-    var(--gt-track, var(--gt-add)) var(--gt-sug-ins-line-mix),
-    transparent
-  );
-  text-decoration-thickness: var(--gt-sug-block-ins-underline-thickness);
-  text-underline-offset: var(--gt-underline-offset);
-  cursor: pointer;
-}
 /* a new block's text (`.gotipe-sug-block-ins-text`): a tint behind the text alone, line by line,
    --gt-sug-block-ins-text-tint of the lane's colour (0%: none; set it with
    --gt-sug-block-ins-tint: 0% for the text's fill instead of the row's), its corners
@@ -97,14 +71,6 @@
 .gotipe-sug-block-ins.gotipe-sug-stale
   :is(p, li, h1, h2, h3, blockquote, .gotipe-callout-content, .gotipe-todo-item-content) {
   background: transparent;
-  color: var(--gt-sug-stale-color, var(--gt-text-2));
-  text-decoration: underline var(--gt-sug-stale-underline-style)
-    var(--gt-sug-stale-line, var(--gt-line-control));
-  text-decoration-thickness: var(--gt-sug-stale-underline-thickness);
-}
-/* its table's cells keep their own fill, without the tint */
-.gotipe-sug-block-ins.gotipe-sug-stale :is(td, th) {
-  background-image: none;
   color: var(--gt-sug-stale-color, var(--gt-text-2));
   text-decoration: underline var(--gt-sug-stale-underline-style)
     var(--gt-sug-stale-line, var(--gt-line-control));

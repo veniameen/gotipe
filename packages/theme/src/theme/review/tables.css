@@ -1,0 +1,39 @@
+/* A suggested table — GoTipe Atlas, frame 14. A table a proposal adds (or a row it adds to a
+   table) stays a table: the rule that tints a whole new block and rounds it does not reach its
+   cells. They keep their square corners and their own fill, a head cell's
+   --gt-table-head-fill included, and the lane's tint is laid over that fill. */
+
+/* the cells of a new table: the tint over their own fill; their text underlined as a new
+   block's */
+.gotipe-sug-block-ins :is(td, th) {
+  background-image: linear-gradient(
+    color-mix(
+      in srgb,
+      var(--gt-track, var(--gt-add)) var(--gt-sug-block-ins-tint, var(--gt-track-tint)),
+      transparent
+    ),
+    color-mix(
+      in srgb,
+      var(--gt-track, var(--gt-add)) var(--gt-sug-block-ins-tint, var(--gt-track-tint)),
+      transparent
+    )
+  );
+  text-decoration: var(--gt-sug-block-ins-underline);
+  text-decoration-color: color-mix(
+    in srgb,
+    var(--gt-track, var(--gt-add)) var(--gt-sug-ins-line-mix),
+    transparent
+  );
+  text-decoration-thickness: var(--gt-sug-block-ins-underline-thickness);
+  text-underline-offset: var(--gt-underline-offset);
+  cursor: pointer;
+}
+/* a stale proposal's table: its cells keep their own fill, without the tint, quiet and dashed
+   as its other blocks */
+.gotipe-sug-block-ins.gotipe-sug-stale :is(td, th) {
+  background-image: none;
+  color: var(--gt-sug-stale-color, var(--gt-text-2));
+  text-decoration: underline var(--gt-sug-stale-underline-style)
+    var(--gt-sug-stale-line, var(--gt-line-control));
+  text-decoration-thickness: var(--gt-sug-stale-underline-thickness);
+}
