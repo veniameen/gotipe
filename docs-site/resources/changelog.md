@@ -43,7 +43,8 @@ its own), `react`, `theme` and `block-editor` (0.1.5), `markdown`, `suggestions`
   without the reveal and takes no decision until it is whole; its unfinished Markdown is shown
   as text. Proposals at one point stand by `order`. A lane has several cursors (`id`, `name`,
   `compact`); the cursor of a growing proposal waits where its text will start and follows it,
-  and a cursor's flag that has no room at the page's edge stands before it (`data-chip-side`).
+  and a cursor's flag that has no room at the page's right edge stands left of it
+  (`data-chip-side="right"` or `"left"`, physical sides).
   Only what changed is bound and drawn again.
 - A page title with an inline icon is named by its text alone, and its empty prompt starts after
   the icon.

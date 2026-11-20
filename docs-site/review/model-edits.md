@@ -203,11 +203,11 @@ While a proposal is `live`:
 - A cursor with its `proposalId` stands where the text will start while there is none, then
   follows its end. When the text moves it, it goes there over `--gt-lane-cursor-move`
   (`data-glide`); a scroll of the page or a change of the page's width takes it along at once.
-- Every cursor says on which side its flag has room: `data-chip-side="end"`, or `"start"` when
-  the flag would cross the page's end edge. A `compact` flag then stands before its cursor,
+- Every cursor says on which side its flag has room: `data-chip-side="right"`, or `"left"` when
+  the flag would cross the page's right edge. A `compact` flag then stands left of its cursor,
   above the row. The side is found again when the cursor moves and when the page's edge does,
-  and is kept at the edge: the flag comes back only once it fits after the cursor with room to
-  spare.
+  and is kept at the edge: the flag comes back only once it fits right of the cursor with room
+  to spare. The sides are physical: on a right-to-left page they are not mirrored.
 - When its anchor is no longer found, it is stale as any proposal is (`status: "stale"`, and
   `reason` says why) and still `live`: a dashed hint keeps its place, and it takes no decision.
 

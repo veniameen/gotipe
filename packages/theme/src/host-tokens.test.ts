@@ -319,8 +319,8 @@ describe("a review whose proposals are still written: nothing by default, a host
       "column",
     );
   });
-  it("puts a compact flag with no room after its cursor before it, above the row", () => {
-    const flipped = '.gotipe-lane-cursor[data-compact][data-chip-side="start"] > .gotipe-lane-chip';
+  it("puts a compact flag with no room right of its cursor left of it, above the row", () => {
+    const flipped = '.gotipe-lane-cursor[data-compact][data-chip-side="left"] > .gotipe-lane-chip';
     expect(declarations(live, flipped)).toEqual({
       top: "auto",
       right: "var(--gt-lane-chip-flip-x, 0)",

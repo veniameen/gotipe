@@ -24,7 +24,7 @@ interface Placed {
   compact: boolean;
   /** It follows a growing proposal's text: a move the text made is drawn as one. */
   glide: boolean;
-  /** Where its flag stands: after it, or before it when the page's edge leaves no room. */
+  /** Where its flag stands: right of it, or left of it when the page's edge leaves no room. */
   side: ChipSide;
   top: number;
   left: number;
@@ -60,9 +60,9 @@ interface Edges {
  * review's decorations (`tick`), scroll, resize. The cursor of a growing proposal moves to its
  * new place over `--gt-lane-cursor-move` when the text moved it (`data-glide`), and at once when
  * a scroll of the page or a move of the page's edges took it there. Each says on which side its
- * flag stands (`data-chip-side`): before it when the flag would cross the page's end edge, for a
- * theme to place it there. The side is found again when a cursor moves and when the page's edges
- * do.
+ * flag stands (`data-chip-side`): `left` when the flag would cross the page's right edge, for a
+ * theme to place it there (the sides are physical, not mirrored on a right-to-left page). The side
+ * is found again when a cursor moves and when the page's edges do.
  */
 export function LaneCursors({
   editor,
@@ -159,7 +159,7 @@ export function LaneCursors({
           color: lane.color ?? "var(--gt-track-1)",
           compact: cursor.compact === true,
           glide: live && (moved ? false : stays ? before.glide : true),
-          side: sides.current.get(key)?.side ?? "end",
+          side: sides.current.get(key)?.side ?? "right",
           top: rect.top,
           left: rect.left,
           height: rect.height || 20,
@@ -200,7 +200,7 @@ export function LaneCursors({
       const chip = nodes.current.get(cursor.key)?.querySelector<HTMLElement>(".gotipe-lane-chip");
       const known = sides.current.get(cursor.key);
       if (!chip) {
-        next.set(cursor.key, known ?? { side: "end", offset: null });
+        next.set(cursor.key, known ?? { side: "right", offset: null });
         continue;
       }
       const left = cursor.left + chip.offsetLeft;

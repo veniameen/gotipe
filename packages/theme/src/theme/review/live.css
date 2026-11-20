@@ -39,12 +39,13 @@ span.gotipe-sug-live,
 .gotipe-lane-cursor[data-compact] .gotipe-lane-chip-label {
   min-width: 0;
 }
-/* A cursor says on which side its flag has room: `data-chip-side="start"` when the flag would
-   cross the page's end edge. A compact flag then goes before its cursor and above the row, over
-   the text its cursor writes: its end edge --gt-lane-chip-flip-x before the cursor (unset: at
+/* A cursor says on which side its flag has room: `data-chip-side="left"` when the flag would
+   cross the page's right edge (`"right"` otherwise; the sides are physical, not mirrored on a
+   right-to-left page). A compact flag then goes left of its cursor and above the row, over the
+   text its cursor writes: its right edge --gt-lane-chip-flip-x left of the cursor (unset: at
    it), its bottom --gt-lane-chip-flip-y above the row (unset: the gap a flag keeps from its
    caret). The other flags keep their place whatever the side; a host can move them by it. */
-.gotipe-lane-cursor[data-compact][data-chip-side="start"] > .gotipe-lane-chip {
+.gotipe-lane-cursor[data-compact][data-chip-side="left"] > .gotipe-lane-chip {
   top: auto;
   right: var(--gt-lane-chip-flip-x, 0);
   bottom: calc(100% + var(--gt-lane-chip-flip-y, var(--gt-toolbar-gap)));

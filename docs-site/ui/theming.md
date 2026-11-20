@@ -198,7 +198,7 @@ can be set on any container.
 | `--gt-sug-live-caret-color` | unset: the lane's colour | Colour of that caret |
 | `--gt-lane-cursor-move` | unset: `var(--gt-duration-fast)` (100 ms) | Time over which the cursor of a growing proposal goes to its text's new end (`.gotipe-lane-cursor[data-glide]`); `0s` moves it at once. A scroll of the page or a change of the page's width always takes it along at once, and so does reduced motion |
 | `--gt-lane-chip-gap` | unset: `var(--gt-space-1)` (4 px) | Space between the name and the label of a cursor's flag in one line (`LaneCursor.compact`, `.gotipe-lane-cursor[data-compact]`) |
-| `--gt-lane-chip-flip-x`, `--gt-lane-chip-flip-y` | unset: `0`, `var(--gt-toolbar-gap)` (2 px) | A compact flag with no room after its cursor (`[data-chip-side="start"]`) stands before it, above the row: how far its end edge is before the cursor, and its bottom above the row |
+| `--gt-lane-chip-flip-x`, `--gt-lane-chip-flip-y` | unset: `0`, `var(--gt-toolbar-gap)` (2 px) | A compact flag with no room right of its cursor (`[data-chip-side="left"]`) stands left of it, above the row: how far its right edge is left of the cursor, and its bottom above the row |
 | `--gt-sug-replace-gap` | `0px` | Space between a struck deletion and the insertion that replaces it |
 | `--gt-image-radius` | `var(--gt-radius-block)` (8 px) | Corners of an image |
 | `--gt-image-ring` | `0px` | Width of a ring around an image, which keeps a light image apart from the page |
@@ -276,7 +276,7 @@ To underline insertions instead of the bar:
 | `.gotipe-sug-ins`, `.gotipe-sug-del`, `.gotipe-sug-stale` | A proposed insertion, deletion and stale proposal in the text |
 | `.gotipe-sug-block-changed` | A block a proposal changes; draws the bar of `--gt-sug-changed-bar` |
 | `.gotipe-sug-live` | The end of a proposal that is still being written (`live`): its last inline insertion, or a span over the last piece of its last new block's text; a last block with no text of its own (an empty line, a code block) carries it itself. Draws the caret of `--gt-sug-live-caret-width` |
-| `.gotipe-lane-cursor` | A lane's cursor over the page; `[data-variant="pointer"]` as an arrow, `[data-compact]` with its flag in one line, `[data-glide]` while it follows a growing proposal's text, `[data-chip-side="end"]` or `"start"` for the side its flag has room on. Its flag is `.gotipe-lane-chip`, with `.gotipe-lane-chip-name` and `.gotipe-lane-chip-label`; with the pointer, `--gt-lane-pointer-chip-x` and `-y` place it, for a compact one too (on the cursor's own row, say) |
+| `.gotipe-lane-cursor` | A lane's cursor over the page; `[data-variant="pointer"]` as an arrow, `[data-compact]` with its flag in one line, `[data-glide]` while it follows a growing proposal's text, `[data-chip-side="right"]` or `"left"` for the side its flag has room on (physical sides, not mirrored right to left). Its flag is `.gotipe-lane-chip`, with `.gotipe-lane-chip-name` and `.gotipe-lane-chip-label`; with the pointer, `--gt-lane-pointer-chip-x` and `-y` place it, for a compact one too (on the cursor's own row, say) |
 | `.gotipe-review-card[data-live]` | The card of a proposal that is still being written: no answers yet |
 | `.gotipe-slash-menu-item-description` | A second, quiet line under a "/" menu row's title, when the host turns descriptions on; one line with an ellipsis |
 
