@@ -218,12 +218,14 @@ opens the bubble menu's `LinkEditor`, and without a bubble menu the toolbar's. T
 Review of a Markdown page (`PageEditor`'s `review`): `suggestions/src/review-decorations.ts` binds
 proposals and comments to the document, in the proposals' `order`; `review/proposal.ts` binds one
 proposal (`block-diff.ts` diffs the blocks, `live.ts` marks the end of a growing text),
-`review/comment.ts` one comment. `review/cache.ts` and `keep.ts` bind again only what changed and
-keep the objects of the rest, so the renderers redraw only that (`react/src/content/decorations.ts`
-`keepDrawn`, `blocks.tsx` `phantomOf`). In the block editor, `review/use-review-decorations.ts`
-owns the editor's `review` layer, the cache and the reveal of new proposals;
-`review/live-markdown.ts` says how a growing proposal's unfinished Markdown is read;
-`review/lane-cursors.tsx` places the lanes' cursors; `review/review-layer.tsx` ties them with the
+`review/comment.ts` one comment. `review/cache.ts` (an opaque `ReviewCache`, its entries in a
+`WeakMap`) and `keep.ts` bind again only what changed and keep the objects of the rest, so the
+renderers redraw only that (`react/src/content/decorations.ts` `keepDrawn`,
+`react/src/content/presentation.tsx` `phantomOf`). In the block editor,
+`review/use-review-decorations.ts` owns the editor's `review` layer, the cache and the reveal of
+new proposals; `review/live-markdown.ts` says how a growing proposal's unfinished Markdown is read;
+`review/lane-cursors.tsx` places the lanes' cursors (`chip-side.ts`: the physical side of a
+flag); `review/review-layer.tsx` ties them with the
 cards (`review-cards.tsx`, `review-margin.tsx`) and the actions. A proposal that is still being
 written (`live`) takes no decision anywhere in these.
 
