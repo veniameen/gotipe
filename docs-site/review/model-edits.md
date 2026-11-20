@@ -197,7 +197,10 @@ While a proposal is `live`:
   without its pair (`**`, `` ` ``, `~~`, a link). A table comes with all its columns once its
   head row and its delimiter row are whole, and grows by whole rows: a row being written is a
   line of text under it until its line ends. A code block still open holds the code written
-  so far and takes nothing that follows it.
+  so far and takes nothing that follows it. The spaces the text ends with stay while it grows
+  (a paragraph would drop them), so the end of the text, its caret and its cursor stand after
+  them; a space with no room at the end of a line hangs there and starts no new line. Once the
+  proposal is written, its text is read as any other.
 - The last piece of its text carries the class `gotipe-sug-live`. Set
   `--gt-sug-live-caret-width` to draw a typing caret there
   (see [theming](/docs/ui/theming#parts)).

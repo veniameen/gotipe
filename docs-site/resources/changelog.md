@@ -43,7 +43,7 @@ its own), `react`, `theme` and `block-editor` (0.1.5), `markdown`, `suggestions`
 - `reviewLanePointer`: the host's own arrow for the pointer lane cursor.
 - The review shows proposals that are still being written (`live`): the text grows in place
   without the reveal and takes no decision until it is whole; its unfinished Markdown is shown
-  as text. Proposals at one point stand by `order`. A lane has several cursors (`id`, `name`,
+  as text, and the space it ends with stays. Proposals at one point stand by `order`. A lane has several cursors (`id`, `name`,
   `compact`), placed again when web fonts have loaded; the cursor of a growing proposal waits
   where its text will start and follows it,
   and a cursor's flag that has no room at the page's right edge stands left of it

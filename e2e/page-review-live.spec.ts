@@ -372,6 +372,84 @@ test.describe('PageEditor review: a growing proposal', () => {
     await expect(element).not.toHaveAttribute('data-glide', '');
   });
 
+  test('a space that ends the text being written stays: its caret and its cursor stand after it', async ({ page }) => {
+    await page.locator('.gotipe-page-example-surface').evaluate((node) => {
+      (node as HTMLElement).style.setProperty('--gt-sug-live-caret-width', '2px');
+    });
+    const cursor = { laneId: 'reviewer', id: 'c', label: 'writing', proposalId: 'p' };
+    await show(page, { proposals: [part('p', '\n\nSome text')], cursors: [cursor] });
+    const element = page.locator('.gotipe-lane-cursor');
+    const live = page.locator('.gotipe-sug-live');
+    const end = () =>
+      live.evaluate((node) => {
+        const range = node.ownerDocument.createRange();
+        range.selectNodeContents(node);
+        const rects = range.getClientRects();
+        return rects[rects.length - 1]!.right;
+      });
+    const at = () => element.evaluate((node) => node.getBoundingClientRect().left);
+    // the exact text: toHaveText would trim it
+    const written = () => live.evaluate((node) => node.textContent);
+    await expect.poll(written).toBe('Some text');
+    const word = await end();
+    await expect.poll(async () => Math.abs((await at()) - word)).toBeLessThan(1.5);
+    // a space comes: it stays, and the end of the text, the caret and the cursor are after it
+    await show(page, { proposals: [part('p', '\n\nSome text ')], cursors: [cursor] });
+    await expect.poll(written).toBe('Some text ');
+    const spaced = await end();
+    expect(spaced - word).toBeGreaterThan(2);
+    await expect.poll(async () => Math.abs((await at()) - spaced)).toBeLessThan(1.5);
+    // written: the end of the paragraph drops the space, as before
+    await show(page, { proposals: [{ ...part('p', '\n\nSome text '), live: false }], cursors: [] });
+    await expect(suggested(page)).toHaveText(['Some text']);
+  });
+
+  test('a space at the end of a full line stays on that line: no new line, no wider page', async ({ page }) => {
+    const cursor = { laneId: 'reviewer', id: 'c', label: 'writing', proposalId: 'p' };
+    const text = '\n\nA line of text that fills its block';
+    await show(page, { proposals: [part('p', text)], cursors: [cursor] });
+    const block = suggested(page).first();
+    const live = page.locator('.gotipe-sug-live');
+    const written = () => live.evaluate((node) => node.textContent);
+    await expect.poll(written).toBe(text.trim());
+    // the new paragraph is made as wide as its text: a space after the text has no room left
+    const width = await block.evaluate((node) => {
+      const range = node.ownerDocument.createRange();
+      range.selectNodeContents(node);
+      return range.getBoundingClientRect().right - node.getBoundingClientRect().left + 0.5;
+    });
+    await page.addStyleTag({ content: `.gotipe-page-example-surface p[data-gotipe-phantom-id] { width: ${width}px; }` });
+    const measure = () =>
+      page.evaluate(() => {
+        const node = document.querySelector<HTMLElement>('p[data-gotipe-phantom-id]')!;
+        const mark = node.querySelector('.gotipe-sug-live')!;
+        const range = document.createRange();
+        range.selectNodeContents(mark);
+        const rects = [...range.getClientRects()];
+        const box = node.getBoundingClientRect();
+        const content = document.querySelector('[data-gotipe-content]')!;
+        return {
+          height: box.height,
+          width: box.width,
+          lines: new Set(rects.map((rect) => Math.round(rect.top))).size,
+          top: rects[rects.length - 1]!.top,
+          overflow: content.scrollWidth - content.clientWidth,
+        };
+      });
+    const full = await measure();
+    expect(full.lines).toBe(1);
+    await show(page, { proposals: [part('p', `${text} `)], cursors: [cursor] });
+    await expect.poll(written).toBe(`${text.trim()} `);
+    const spaced = await measure();
+    // the space hangs at the end of the line: no line under it, the block and the page as wide
+    expect(spaced.lines).toBe(1);
+    expect(spaced.height).toBe(full.height);
+    expect(spaced.width).toBe(full.width);
+    expect(spaced.overflow).toBe(full.overflow);
+    const cursorTop = await page.locator('.gotipe-lane-cursor').evaluate((node) => node.getBoundingClientRect().top);
+    expect(Math.abs(cursorTop - spaced.top)).toBeLessThan(1.5);
+  });
+
   test('unfinished Markdown at its end is text and changes nothing shown before or after it', async ({ page }) => {
     // the page's own blocks: a suggested one is marked as such
     const pageBlocks = () =>

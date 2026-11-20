@@ -191,6 +191,34 @@ describe("settleLiveMarkdown: what the end leaves open", () => {
     expect(settleLiveMarkdown("-")).toBe("\\-");
   });
 
+  it("keeps the spaces at the end of the text being written, so its end stands after them", () => {
+    // a paragraph, a heading, a list item and a row under its table keep what the next word follows
+    expect(shown("Some word ")).toEqual(["paragraph: Some word "]);
+    expect(shown("## Title ")).toEqual(["heading: Title "]);
+    expect(shown("- item  ")).toEqual(["bulletList:  [listItem: item  ]"]);
+    expect(shown("| a | b |\n| --- | --- |\n| `npm run ").at(-1)).toBe("paragraph: | `npm run ");
+    expect(shown("Some **bold ")).toEqual(["paragraph: Some **bold "]);
+    expect(shown("word\t")).toEqual(["paragraph: word\t"]);
+    // a line break at the end, a line of markers alone, a thematic break, a backslash before the
+    // space, a block of raw text: as they were
+    for (const text of [
+      "word \n",
+      "word\n  ",
+      "## ",
+      "- [ ] ",
+      "> ",
+      "1. ",
+      "*** ",
+      "path\\ ",
+      "<div>\n<p>text ",
+      "$$\nx + y ",
+    ])
+      expect(settleLiveMarkdown(text), JSON.stringify(text)).toBe(text);
+    // code keeps its own spaces
+    expect(settleLiveMarkdown("```\ncode ")).toBe("```\ncode \n```");
+    expect(settleLiveMarkdown("Para.\n\n    code ")).toBe("Para.\n\n    code ");
+  });
+
   it("keeps a backslash at the very end as text", () => {
     expect(settleLiveMarkdown("A path C:\\")).toBe("A path C:\\\\");
     expect(settleLiveMarkdown("Done \\\\")).toBe("Done \\\\");
@@ -215,7 +243,8 @@ describe("settleLiveMarkdown: a long text of unfinished marks", () => {
       parse(`${tags.replaceAll("<", "\\<")}<b>after</b>`).map(look),
     );
     const links = "[a](b ".repeat(2000);
-    expect(settleLiveMarkdown(links)).toBe(links.replaceAll("[a]", "\\[a]"));
+    // the space it ends with stays, as a reference
+    expect(settleLiveMarkdown(links)).toBe(`${links.replaceAll("[a]", "\\[a]").slice(0, -1)}&#32;`);
     // one closed link among them is a link
     expect(shown(`${links}[c](d)`).join()).toMatch(/link:c/);
     // a finished destination after many unfinished ones closes only its own
