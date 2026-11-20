@@ -25,6 +25,8 @@
 - `--gt-flag-label-size` and `--gt-flag-label-leading` (unset: the flag's own, as the name's): the
   size and line height of the label on a lane cursor's flag, a compact one's too, in a rule of no
   weight.
+- `--gt-table-code-radius` (unset: `--gt-radius-inline`): the corners of inline code in a table
+  cell.
 - `--gt-inline-code-wrap` (unset: inline code wraps as the text around it): `nowrap` keeps a code
   span on one line, its spaces kept (`text-wrap-mode`), so one that does not fit at the end of a
   line moves to the next whole. It is declared in a rule of no weight
