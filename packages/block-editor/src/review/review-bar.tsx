@@ -64,8 +64,9 @@ export function ReviewBar({
 }) {
   const i18n = useBlockEditorI18n();
   const [busy, setBusy] = useState(false);
-  const pending = states.filter((s) => s.status === "pending").length;
-  const stale = states.filter((s) => s.status === "stale").length;
+  // what waits for an answer: a growing proposal (`live`) takes none yet
+  const pending = states.filter((s) => s.status === "pending" && !s.live).length;
+  const stale = states.filter((s) => s.status === "stale" && !s.live).length;
   const run = async (fn?: () => Promise<unknown> | unknown) => {
     if (!fn) return;
     setBusy(true);

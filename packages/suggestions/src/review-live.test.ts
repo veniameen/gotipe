@@ -64,9 +64,14 @@ const widgets = (decorations: Decoration[]) =>
   decorations.filter((d): d is Widget => d.type === "widget");
 
 describe("a growing proposal (live)", () => {
-  it("is live, not pending: no text to reveal, and its last inline piece ends the text", () => {
+  it("is pending and says live: no text to reveal, and its last inline piece ends the text", () => {
     const r = run(PAGE, [live("p", inside(" **bold** and plain"))]);
-    expect(r.proposals[0]).toMatchObject({ status: "live", exact: true, insertedChars: 0 });
+    expect(r.proposals[0]).toMatchObject({
+      status: "pending",
+      live: true,
+      exact: true,
+      insertedChars: 0,
+    });
     const pieces = widgets(r.decorations);
     expect(pieces.map((w) => [w.text, w.className])).toEqual([
       ["bold", "gotipe-sug gotipe-sug-ins"],
@@ -77,6 +82,8 @@ describe("a growing proposal (live)", () => {
   it("the same proposal without `live` is pending and has no end mark", () => {
     const r = run(PAGE, [{ ...live("p", inside(" more")), live: false }]);
     expect(r.proposals[0]).toMatchObject({ status: "pending", insertedChars: 5 });
+    // an ordinary proposal's state has no `live` at all, as before there was one
+    expect(r.proposals[0]).not.toHaveProperty("live");
     expect(JSON.stringify(r.decorations)).not.toContain("gotipe-sug-live");
   });
 
@@ -138,7 +145,12 @@ describe("a growing proposal (live)", () => {
     const paragraph = r.blocks[1]!;
     const end = { blockId: paragraph.id, offset: "The first paragraph.".length };
     expect(r.decorations).toEqual([]);
-    expect(r.proposals[0]).toMatchObject({ status: "live", position: end, insertEnd: end });
+    expect(r.proposals[0]).toMatchObject({
+      status: "pending",
+      live: true,
+      position: end,
+      insertEnd: end,
+    });
     // a replacement: after the quote it will replace
     const replace = run(PAGE, [
       live("p", { before: "The ", quote: "first", after: " paragraph.", text: "" }),
@@ -154,13 +166,24 @@ describe("a growing proposal (live)", () => {
     });
   });
 
-  it("stays live when its anchor is not found: the reason says why, a hint keeps its place", () => {
+  it("is stale as any other when its anchor is not found, and still live: a hint keeps its place", () => {
     const r = run(PAGE.replace("## Next", "## Then"), [live("p", below("\n\nNew text."))]);
-    expect(r.proposals[0]).toMatchObject({ status: "live", reason: "missing", insertedChars: 0 });
+    expect(r.proposals[0]).toMatchObject({
+      status: "stale",
+      live: true,
+      reason: "missing",
+      insertedChars: 0,
+    });
     expect(groups(r.decorations)[0]).toMatchObject({
       className: "gotipe-sug gotipe-sug-stale gotipe-sug-block-ins",
     });
     expect(JSON.stringify(r.decorations)).not.toContain("gotipe-sug-live");
+    // the host says it is stale: so it is, live or not, and no reason is made up
+    const told = run(PAGE, [live("p", below("\n\nNew text."), { status: "stale" })]);
+    expect(told.proposals[0]).toMatchObject({ status: "stale", live: true, reason: undefined });
+    expect(groups(told.decorations)[0]).toMatchObject({
+      className: "gotipe-sug gotipe-sug-stale gotipe-sug-block-ins",
+    });
   });
 
   it("reads its unfinished text through `liveText`; other proposals are read as they are", () => {

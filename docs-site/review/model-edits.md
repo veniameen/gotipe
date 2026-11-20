@@ -135,7 +135,7 @@ and scroll. Without `onAccept`, `PageEditor` applies an accepted proposal itself
 | `onAcceptAll` | `() => void \| Promise<void>` | in order | Default: `onAccept` one by one in document order, stopping at the first stale or failed proposal; a `live` proposal is passed over. |
 | `onRejectAll` | `() => void \| Promise<void>` | each | Default: `onReject` for every proposal that is not `live`. |
 | `onReply` | `(commentId, text) => ReviewResult \| Promise<ReviewResult>` | — | A reply to a comment. |
-| `onStatesChange` | `(states) => void` | — | `{ proposals, comments }`: where each item is and which are stale. A proposal's `status` is `"pending"`, `"stale"` or `"live"`. Called when a state changes, not for every growth of a live proposal's text. |
+| `onStatesChange` | `(states) => void` | — | `{ proposals, comments }`: where each item is and which are stale. A proposal's `status` is `"pending"` or `"stale"`; one that is still being written also has `live: true`. Called when a state changes, not for every growth of a live proposal's text. |
 
 `ReviewAction` is `(id: string) => ReviewResult | Promise<ReviewResult>`, and `ReviewResult` is
 `boolean | undefined`. Only `false` counts as a failure.
@@ -191,7 +191,7 @@ While a proposal is `live`:
   and drawn again.
 - It takes no decision. Its card has no Accept or Reject, the handle's `accept(id)` and
   `reject(id)` resolve to `false` without calling you, and Accept all and Reject all pass it
-  over. Its state is `"live"`, and the review bar does not count it.
+  over. Its state has `live: true` beside its `status`, and the review bar does not count it.
 - Markdown its end leaves unfinished is shown as text and changes nothing around it: a mark
   without its pair (`**`, `` ` ``, `~~`, a link). A table comes with all its columns once its
   head row and its delimiter row are whole, and grows by whole rows: a row being written is a
@@ -208,8 +208,8 @@ While a proposal is `live`:
   above the row. The side is found again when the cursor moves and when the page's edge does,
   and is kept at the edge: the flag comes back only once it fits after the cursor with room to
   spare.
-- When its anchor is no longer found, it stays `"live"`, a dashed hint keeps its place, and
-  the state's `reason` says why.
+- When its anchor is no longer found, it is stale as any proposal is (`status: "stale"`, and
+  `reason` says why) and still `live`: a dashed hint keeps its place, and it takes no decision.
 
 Several proposals can insert at the same point, for instance the sections of a new page.
 They stand in ascending `order` (0 when not given), equal ones in the order of `proposals`,

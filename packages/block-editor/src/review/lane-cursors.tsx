@@ -124,9 +124,9 @@ export function LaneCursors({
         const state = cursor.proposalId
           ? proposals.find((proposal) => proposal.id === cursor.proposalId)
           : undefined;
-        const live = state?.status === "live";
+        const live = state?.live === true;
         let rect: DOMRect | null = null;
-        if (live && cursor.proposalId && !state.reason) {
+        if (live && cursor.proposalId && state.status === "pending") {
           ends ??= liveEndRects(root);
           // no text yet: where its text will start
           rect =

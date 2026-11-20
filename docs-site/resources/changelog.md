@@ -51,9 +51,10 @@ its own), `react`, `theme` and `block-editor` (0.1.5), `markdown`, `suggestions`
 ### @gotipe/suggestions
 
 - A proposed new block's text stands in its own `.gotipe-sug-block-ins-text` span.
-- `ReviewProposal.live` and `order`, the `"live"` state, the class `gotipe-sug-live` on the end
-  of a growing text, `LaneCursor.id`, `name` and `compact`, and `createReviewCache()` for
-  `computeReviewDecorations` to bind only what changed.
+- `ReviewProposal.live` and `order`, `ProposalState.live` (its `status` stays `"pending"` or
+  `"stale"`), the class `gotipe-sug-live` on the end of a growing text, `LaneCursor.id`, `name`
+  and `compact`, and an opaque `createReviewCache()` for `computeReviewDecorations` to bind only
+  what changed. The ids of new blocks are the binding's own, not a contract.
 
 ### @gotipe/theme
 

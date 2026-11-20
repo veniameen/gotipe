@@ -440,7 +440,7 @@ export async function acceptAllInOrder(
 ): Promise<number> {
   let accepted = 0;
   for (const state of proposalsInDocumentOrder(editor.getViewState().blocks, states)) {
-    if (state.status === "live") continue;
+    if (state.live) continue;
     if (state.status === "stale") break;
     if (!(await accept(state.id))) break;
     accepted += 1;

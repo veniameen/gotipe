@@ -9,10 +9,11 @@
   the lane's colour behind the text alone, line by line; with `--gt-sug-block-ins-tint: 0%` a host
   fills the text instead of the whole row. A stale one stays unfilled. Defaults look as before.
 - A proposal still being written: `ReviewProposal.live`. As its text grows the host gives a new
-  object with a longer `edits[].text` under the same `id`. Its state is `"live"`
-  (`ProposalState.status`, also when its anchor is not found: `reason` then says why) with
-  `insertedChars` 0, since it is never revealed; with no text yet its `position` and `insertEnd`
-  are where the text will start. The last piece of its text carries the class `gotipe-sug-live`:
+  object with a longer `edits[].text` under the same `id`. Its state says `live: true`
+  (`ProposalState.live`, absent of an ordinary proposal); its `status` is `"pending"` or
+  `"stale"` by its anchor, as any proposal's (`reason` says why a stale one has no place), so
+  `ProposalState.status` keeps the two values it had. Its `insertedChars` is 0, since it is
+  never revealed; with no text yet its `position` and `insertEnd` are where the text will start. The last piece of its text carries the class `gotipe-sug-live`:
   an inline insertion itself, or a span over the last run of the last new block's text (the block
   itself when it has no text). `ReviewInput.liveText` reads its unfinished text, for a codec that
   settles an unfinished end.

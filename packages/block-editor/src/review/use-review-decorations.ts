@@ -116,7 +116,7 @@ export function useReviewDecorations({
       for (const state of out.proposals) {
         if (seenRef.current.has(state.id)) continue;
         seenRef.current.add(state.id);
-        if (!reduced && state.status === "pending" && state.insertedChars > 0) {
+        if (!reduced && state.status === "pending" && !state.live && state.insertedChars > 0) {
           revealRef.current.set(state.id, {
             start: performance.now(),
             total: state.insertedChars,
