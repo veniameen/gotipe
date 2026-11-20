@@ -147,8 +147,8 @@ this package, because core depends on it and not the other way round.
 The owned parser decodes named character references with a platform-independent data
 table. Import and parsing do not create DOM elements, use `innerHTML`, or evaluate code.
 No third-party parser or bundler alias is required. The entity data provenance and
-license are included in the package's third-party notices. A complete host
-integration still needs its application's CSP acceptance checks.
+license are included in the package's third-party notices. An application that embeds the
+parser still runs its own CSP acceptance checks.
 
 ## Development
 
