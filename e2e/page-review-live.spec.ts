@@ -539,16 +539,19 @@ test.describe('PageEditor review: a growing proposal', () => {
     const end = page.locator('.gotipe-sug-live');
     await expect(end).toHaveCount(1);
     await expect(end).toHaveText(' text');
+    // no caret unless a host asks for one: none is drawn, nothing is measured for it
     const caret = page.locator('.gotipe-sug-live-caret');
+    await expect(caret).toHaveCount(0);
+    const width = await end.evaluate((element) => element.getBoundingClientRect().width);
+    await page.locator('.gotipe-page-example-surface').evaluate((node) => node.style.setProperty('--gt-sug-live-caret-width', '2px'));
+    // drawn from the text's next change on
+    await show(page, { proposals: [part('p', '\n\n## Summary\n\nSome **bold** text more')] });
+    await expect(end).toHaveText(' text more');
     await expect(caret).toHaveCount(1);
     const box = () => caret.evaluate((node) => {
       const rect = node.getBoundingClientRect();
       return { left: rect.left, width: rect.width };
     });
-    // no caret unless a host asks for one: no width
-    expect((await box()).width).toBe(0);
-    const width = await end.evaluate((element) => element.getBoundingClientRect().width);
-    await page.locator('.gotipe-page-example-surface').evaluate((node) => node.style.setProperty('--gt-sug-live-caret-width', '2px'));
     await expect.poll(async () => (await box()).width).toBe(2);
     // at the end of the text; it takes no room, the text does not move
     const right = await end.evaluate((node) => {
@@ -558,9 +561,16 @@ test.describe('PageEditor review: a growing proposal', () => {
       return rects[rects.length - 1]!.right;
     });
     expect(Math.abs((await box()).left - right)).toBeLessThan(1);
-    expect(await end.evaluate((element) => element.getBoundingClientRect().width)).toBe(width);
+    const grown = await end.evaluate((element) => element.getBoundingClientRect().width);
+    // the width taken away: the caret goes with the next change, and the text stays as wide
+    await page.locator('.gotipe-page-example-surface').evaluate((node) => node.style.removeProperty('--gt-sug-live-caret-width'));
+    await show(page, { proposals: [part('p', '\n\n## Summary\n\nSome **bold** text more')] });
+    await expect(caret).toHaveCount(0);
+    expect(await end.evaluate((element) => element.getBoundingClientRect().width)).toBe(grown);
+    expect(grown).toBeGreaterThan(width);
     // written: no mark and no caret
-    await show(page, { proposals: [{ ...part('p', '\n\n## Summary\n\nSome **bold** text'), live: false }] });
+    await page.locator('.gotipe-page-example-surface').evaluate((node) => node.style.setProperty('--gt-sug-live-caret-width', '2px'));
+    await show(page, { proposals: [{ ...part('p', '\n\n## Summary\n\nSome **bold** text more'), live: false }] });
     await expect(end).toHaveCount(0);
     await expect(caret).toHaveCount(0);
   });

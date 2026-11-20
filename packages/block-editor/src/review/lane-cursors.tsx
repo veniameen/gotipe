@@ -67,6 +67,16 @@ const sameCarets = (a: Caret[], b: Caret[]) =>
       one.height === b[index]!.height,
   );
 
+/**
+ * Whether a host gives the typing caret a width (`--gt-sug-live-caret-width` on the page or above
+ * it): unset or a zero length, there is no caret to draw or measure.
+ */
+function caretShown(root: HTMLElement): boolean {
+  const width = getComputedStyle(root).getPropertyValue("--gt-sug-live-caret-width").trim();
+  if (width === "") return false;
+  return !(/^[+-]?(\d+\.?\d*|\.\d+)[a-z%]*$/i.test(width) && Number.parseFloat(width) === 0);
+}
+
 /** The page's side edges in the window, no further than the window shows. */
 interface Edges {
   left: number;
@@ -84,7 +94,8 @@ interface Edges {
  * would cross the page's right edge, for a theme to place it there (the sides are physical, not
  * mirrored on a right-to-left page). The side is found again when a cursor moves and when the
  * page's edges do. The typing caret of each growing proposal (`.gotipe-sug-live-caret`, as wide as
- * `--gt-sug-live-caret-width`) is drawn here too, where that proposal's cursor stands.
+ * `--gt-sug-live-caret-width`) is drawn here too, where that proposal's cursor stands, when a host
+ * gives it a width: without one nothing is drawn or measured for it.
  */
 export function LaneCursors({
   editor,
@@ -193,15 +204,18 @@ export function LaneCursors({
       }
       last.current = new Map(out.map((cursor) => [cursor.key, cursor]));
       setPlaced((previous) => (samePlaced(previous, out) ? previous : out));
-      // a typing caret at the end of each growing text: where its cursor stands
+      // a typing caret at the end of each growing text, where its cursor stands; none, and
+      // nothing measured for it, unless a host gives it a width
       const marks: Caret[] = [];
-      for (const state of proposals) {
-        if (!state.live || state.status !== "pending") continue;
+      const growing = proposals.filter((state) => state.live && state.status === "pending");
+      if (growing.length > 0 && caretShown(root)) {
         ends ??= liveEndRects(root);
-        const end = ends.get(state.id);
-        if (!end) continue;
-        const color = liveColors?.get(state.id) ?? "var(--gt-track-1)";
-        marks.push({ id: state.id, color, top: end.top, left: end.left, height: end.height });
+        for (const state of growing) {
+          const end = ends.get(state.id);
+          if (!end) continue;
+          const color = liveColors?.get(state.id) ?? "var(--gt-track-1)";
+          marks.push({ id: state.id, color, top: end.top, left: end.left, height: end.height });
+        }
       }
       setCarets((previous) => (sameCarets(previous, marks) ? previous : marks));
     };

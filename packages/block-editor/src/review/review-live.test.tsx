@@ -537,6 +537,18 @@ describe("lane cursors", () => {
     });
   });
 
+  /** A host's stylesheet on the page; taken away after `run`. */
+  async function styled(css: string, run: () => Promise<void>) {
+    const sheet = document.createElement("style");
+    sheet.textContent = css;
+    document.head.append(sheet);
+    try {
+      await run();
+    } finally {
+      sheet.remove();
+    }
+  }
+
   it("stands with the typing caret just after the text's last letter, on the text's row, code or not", async () => {
     await measured(async (the) => {
       // the last letter's box, from a range over it; the row, from the marked piece's own line
@@ -547,6 +559,9 @@ describe("lane cursors", () => {
           ? [{ left: 60, right: 158, top: 96, bottom: 120, width: 98, height: 24 }]
           : []) as unknown as DOMRectList;
       };
+      const sheet = document.createElement("style");
+      sheet.textContent = "[data-gt-view] { --gt-sug-live-caret-width: 2px; }";
+      document.head.append(sheet);
       try {
         const cursor: LaneCursor = { laneId: "agent", id: "c", proposalId: "p" };
         // the text ends in inline code: its plate and padding reach past the last letter
@@ -560,9 +575,44 @@ describe("lane cursors", () => {
         expect(at(cursors()[0]!)).toBe("150px 96px 24px");
         expect(caret.getAttribute("aria-hidden")).toBe("true");
       } finally {
+        sheet.remove();
         Element.prototype.getClientRects = rows;
       }
     });
+  });
+
+  it("draws no typing caret and measures nothing for it unless a host gives it a width", async () => {
+    // the end of a growing text is measured over its marked piece's own line boxes
+    let measures = 0;
+    const rows = Element.prototype.getClientRects;
+    Element.prototype.getClientRects = function (this: Element) {
+      if (this.matches(".gotipe-sug-live")) measures += 1;
+      return [] as unknown as DOMRectList;
+    };
+    const carets = () => container.ownerDocument.querySelectorAll(".gotipe-sug-live-caret").length;
+    try {
+      // no cursor, no width: the text grows and nothing of its end is measured or drawn
+      const { show } = await mount({ proposals: [live("p", "\n\nSome")] });
+      await show({ proposals: [live("p", "\n\nSome text")] });
+      await show({ proposals: [live("p", "\n\nSome text grows")] });
+      expect(container.querySelector(".gotipe-sug-live")?.textContent).toBe("Some text grows");
+      expect(measures).toBe(0);
+      expect(carets()).toBe(0);
+      // a width of zero is no caret either
+      await styled("[data-gt-view] { --gt-sug-live-caret-width: 0px; }", async () => {
+        await show({ proposals: [live("p", "\n\nSome text grows on")] });
+        expect(measures).toBe(0);
+        expect(carets()).toBe(0);
+      });
+      // a host gives it a width: from the next growth on, measured and drawn
+      await styled("[data-gt-view] { --gt-sug-live-caret-width: 2px; }", async () => {
+        await show({ proposals: [live("p", "\n\nSome text grows on and on")] });
+        expect(measures).toBeGreaterThan(0);
+        expect(carets()).toBe(1);
+      });
+    } finally {
+      Element.prototype.getClientRects = rows;
+    }
   });
 
   it("is placed again, at once, when web fonts have come and laid the text out anew", async () => {
