@@ -32,7 +32,9 @@
   proposal stands where its text will start while it has none, and goes to the text's new end
   over `--gt-lane-cursor-move` when the text moved it (`data-glide`). A scroll of the page or
   a move of the page's edges takes it along at once; a scroll elsewhere on the screen does not
-  end its glide. Every cursor says on which side its flag has room (`data-chip-side="right"`, or
+  end its glide. The cursors are placed again, at once, when web fonts have loaded
+  (`document.fonts`): a font that came after them used to leave them where the text stood in the
+  fallback font. Every cursor says on which side its flag has room (`data-chip-side="right"`, or
   `"left"` when the flag would cross the page's right edge; kept at the edge until the flag fits
   right of the cursor with room to spare; found again when the cursor or the page's edge moves;
   physical sides, not mirrored on a right-to-left page): the theme puts a compact flag left of

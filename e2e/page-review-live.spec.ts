@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { expect, type Page, test } from '@playwright/test';
 
 // A review whose proposals are still being written (`live`), on the public PageEditor showcase.
@@ -328,6 +330,45 @@ test.describe('PageEditor review: a growing proposal', () => {
     await page.locator('.gotipe-page-example-surface').evaluate((node) => {
       (node as HTMLElement).style.width = `${node.getBoundingClientRect().width - 60}px`;
     });
+    await expect(element).not.toHaveAttribute('data-glide', '');
+  });
+
+  test('a web font that comes after its cursor was placed takes the cursor along with its text', async ({ page }) => {
+    // the text of the proposal is set in a font the page loads late: held until the test lets it go
+    const font = readFileSync(resolve('crates/gotipe-export/assets/DejaVuSansMono.ttf'));
+    let release!: () => void;
+    const held = new Promise<void>((done) => {
+      release = done;
+    });
+    await page.route('**/__late-font.ttf', async (route) => {
+      await held;
+      await route.fulfill({ status: 200, contentType: 'font/ttf', body: font });
+    });
+    await page.addStyleTag({
+      content: [
+        '@font-face { font-family: "Late Mono"; src: url("/__late-font.ttf"); font-display: swap; }',
+        '.gotipe-page-example-surface [data-gotipe-phantom-id] { font-family: "Late Mono", serif; }',
+      ].join('\n'),
+    });
+    const cursor = { laneId: 'reviewer', id: 'c', label: 'writing', proposalId: 'p' };
+    await show(page, { proposals: [part('p', '\n\nA short line in a late font')], cursors: [cursor] });
+    const element = page.locator('.gotipe-lane-cursor');
+    await expect(element).toHaveCount(1);
+    const end = () =>
+      page.locator('.gotipe-sug-live').evaluate((node) => {
+        const range = node.ownerDocument.createRange();
+        range.selectNodeContents(node);
+        const rects = range.getClientRects();
+        return rects[rects.length - 1]!.right;
+      });
+    const at = () => element.evaluate((node) => node.getBoundingClientRect().left);
+    await expect.poll(async () => Math.abs((await at()) - (await end()))).toBeLessThan(1.5);
+    const before = await end();
+    // the font comes: the line is laid out anew, the page keeps its size, the cursor follows
+    release();
+    await page.evaluate(() => document.fonts.ready.then(() => undefined));
+    await expect.poll(async () => Math.abs((await end()) - before)).toBeGreaterThan(8);
+    await expect.poll(async () => Math.abs((await at()) - (await end()))).toBeLessThan(1.5);
     await expect(element).not.toHaveAttribute('data-glide', '');
   });
 

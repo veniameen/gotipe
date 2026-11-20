@@ -203,7 +203,8 @@ While a proposal is `live`:
   (see [theming](/docs/ui/theming#parts)).
 - A cursor with its `proposalId` stands where the text will start while there is none, then
   follows its end. When the text moves it, it goes there over `--gt-lane-cursor-move`
-  (`data-glide`); a scroll of the page or a change of the page's width takes it along at once.
+  (`data-glide`); a scroll of the page, a change of the page's width or a web font that has
+  loaded takes it along at once.
 - Every cursor says on which side its flag has room: `data-chip-side="right"`, or `"left"` when
   the flag would cross the page's right edge. A `compact` flag then stands left of its cursor,
   above the row. The side is found again when the cursor moves and when the page's edge does,
