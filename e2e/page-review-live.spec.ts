@@ -374,6 +374,47 @@ test.describe('PageEditor review: a growing proposal', () => {
     expect(await pageBlocks()).toEqual(before);
   });
 
+  test('a suggested table stays a table, and the row being written stands under it as after a table', async ({ page }) => {
+    // a host's head fill: the suggested table's head keeps it
+    await page.locator('.gotipe-page-example-surface').evaluate((node) => {
+      (node as HTMLElement).style.setProperty('--gt-table-head-fill', 'rgb(230, 230, 230)');
+    });
+    await show(page, { proposals: [part('p', '\n\n| a | b |\n| --- | --- |\n| 1 | 2 |\n| 3')] });
+    await expect(suggested(page)).toHaveCount(2);
+    const cells = await suggested(page)
+      .first()
+      .locator('th, td')
+      .evaluateAll((nodes) =>
+        nodes.map((node) => {
+          const style = getComputedStyle(node);
+          return { tag: node.tagName, radius: style.borderTopLeftRadius, fill: style.backgroundColor, tint: style.backgroundImage };
+        }),
+      );
+    expect(cells.map((cell) => cell.tag)).toEqual(['TH', 'TH', 'TD', 'TD']);
+    for (const cell of cells) {
+      expect(cell.radius).toBe('0px');
+      expect(cell.tint).toContain('gradient');
+    }
+    expect(cells.filter((cell) => cell.tag === 'TH').map((cell) => cell.fill)).toEqual(['rgb(230, 230, 230)', 'rgb(230, 230, 230)']);
+    expect(cells.filter((cell) => cell.tag === 'TD').map((cell) => cell.fill)).toEqual(['rgba(0, 0, 0, 0)', 'rgba(0, 0, 0, 0)']);
+    // the row being written: the next block after the table, as far below it as a block after a table
+    const tail = await page.evaluate(() => {
+      const [table, row] = [
+        ...document.querySelectorAll('[data-gotipe-phantom-id]:not([data-gotipe-phantom-id] [data-gotipe-phantom-id])'),
+      ] as HTMLElement[];
+      return {
+        next: table!.nextElementSibling === row,
+        gap: row!.getBoundingClientRect().top - table!.getBoundingClientRect().bottom,
+        flow: Number.parseFloat(getComputedStyle(row!).getPropertyValue('--gt-flow-block')),
+        text: row!.textContent,
+      };
+    });
+    expect(tail.text).toBe('| 3');
+    expect(tail.next).toBe(true);
+    expect(tail.flow).toBeGreaterThan(0);
+    expect(Math.abs(tail.gap - tail.flow)).toBeLessThan(0.5);
+  });
+
   test('the end of the text is marked; a host gives it a caret through a token', async ({ page }) => {
     await show(page, { proposals: [part('p', '\n\n## Summary\n\nSome **bold** text')] });
     const end = page.locator('.gotipe-sug-live');

@@ -118,7 +118,8 @@ export function TableLayoutProvider({
     },
     [editor],
   );
-  const readOnly = usePhantom() || !editor.isEditable;
+  const phantom = usePhantom();
+  const readOnly = phantom || !editor.isEditable;
   // one value per change of the table, so cells and handles re-render only with it
   const value = useMemo(
     () => ({
@@ -139,15 +140,19 @@ export function TableLayoutProvider({
   );
   const selected = range ? rangeCells(grid as TableGrid, range).length : 0;
   const i18n = useGoTipeI18n();
+  // A suggested table selects no cells and changes nothing, so it has nothing to say; and with
+  // no line of its own after it, the block that follows it is spaced as after a table.
   return (
     <Context.Provider value={value}>
       {children}
       {/* cells selected together, said once for screen readers */}
-      <p className="gotipe-sr-only" contentEditable={false} aria-live="polite">
-        {selected > 1 ? i18n.t("table.cellsSelected", { count: selected }) : ""}
-      </p>
+      {phantom ? null : (
+        <p className="gotipe-sr-only" contentEditable={false} aria-live="polite">
+          {selected > 1 ? i18n.t("table.cellsSelected", { count: selected }) : ""}
+        </p>
+      )}
       {/* the editor's toast shows the error; this line is for screen readers only */}
-      {error && (
+      {error && !phantom && (
         <p className="gotipe-sr-only" contentEditable={false} role="alert">
           {error}
         </p>
