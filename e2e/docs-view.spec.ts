@@ -3,7 +3,13 @@ import { expect, type Locator, type Page, test } from '@playwright/test';
 // The view docs (GoTipe Atlas, frame 2; D-30) in the playground's views example: the block handle
 // as in notion, in the gutter beside the outline, and a quiet # after the last word of a heading.
 
-/** Opens the views example in docs; the copied text goes to `window.__copied`. */
+/**
+ * Opens the views example in docs; the copied text goes to `window.__copied`. The view and the
+ * state are chosen from the keyboard: a mouse left over the page by a click would move the handle
+ * on its own. When the page scrolls under it, WebKit sends that mouse a `mousemove` of its own a
+ * little later (to update the hover), and the handle, with the heading's anchor, goes to the block
+ * under it, after a touch too. A test that wants the mouse moves it itself.
+ */
 async function openDocs(page: Page, width: number, state?: 'read only') {
   await page.addInitScript(() => {
     const copied: string[] = [];
@@ -15,8 +21,8 @@ async function openDocs(page: Page, width: number, state?: 'read only') {
   });
   await page.setViewportSize({ width, height: 900 });
   await page.goto('/#views');
-  await page.getByRole('button', { name: 'docs', exact: true }).click();
-  if (state) await page.getByRole('button', { name: state, exact: true }).click();
+  await page.getByRole('button', { name: 'docs', exact: true }).press('Enter');
+  if (state) await page.getByRole('button', { name: state, exact: true }).press('Enter');
   await expect(page.locator('.gotipe-block-editor[data-gt-view="docs"] .gotipe-content')).toBeVisible();
 }
 
@@ -183,6 +189,8 @@ test.describe('View docs: handle and heading anchors (Atlas frame 2)', () => {
     const anchor = anchorOf(heading);
     await heading.scrollIntoViewIfNeeded();
     await expect(anchor).toBeHidden();
+    // a finger alone: no mouse over the page, whose hover the browser would update after a scroll
+    expect(await page.evaluate(() => document.querySelector(':hover') === null)).toBe(true);
     const box = (await heading.boundingBox())!;
     await heading.dispatchEvent('pointerdown', {
       pointerType: 'touch',
