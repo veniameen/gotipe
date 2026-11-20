@@ -495,28 +495,37 @@ not part of the check artifacts.
   test`; Playwright Chromium 1,085 of 1,085, Firefox and WebKit 954 of 955 (only
   `comments.spec.ts:68`, macOS Home, as on 0.1.1).
 - 2026-11-19–20: 0.1.5 prepared from the host's list after 0.1.4, checked by the host on local packs
-  before one release: review card placement and gap, `afterBlock`, selection ranges and bookmarks
-  in the Markdown, the host's lane pointer, proposals still being written (`live`) and several
-  cursors of a lane, a suggested table that stays a table, and tokens. Status: accepted, not
-  released. The release is to hold `core`, `react`, `theme`, `block-editor` at 0.1.5 and
-  `markdown`, `suggestions`, `comments` at 0.1.3. `ai` and `ai-ui` keep 0.1.1: the fix of Tab in a
-  widget (`d4ebae95`) has no version bump and waits for the next release. The final tree c0e1b6a8
-  was accepted on 2026-11-20, 06:53–07:05 (macOS, M4 Max, `output/accept15/`, run by
-  `output/accept15.sh` with the heavy-run lock taken part by part; nothing uncommitted and the
+  before one release (on the last, pack 18, the host had no needs left): review card placement
+  and gap, `afterBlock`, selection ranges and bookmarks in the Markdown, the host's lane pointer,
+  proposals still being written (`live`) and several cursors of a lane, a suggested table that
+  stays a table, the room under an editable table, and tokens. Status: accepted, not released.
+  The release is to hold `core`, `react`, `theme`, `block-editor` at 0.1.5 and `markdown`,
+  `suggestions`, `comments` at 0.1.3. `ai` and `ai-ui` keep 0.1.1: the fix of Tab in a widget
+  (`d4ebae95`) has no version bump and waits for the next release. The final tree c80e5d7e was
+  accepted on 2026-11-20, 11:27–12:07 (macOS, M4 Max, `output/accept18/`, run by
+  `output/accept18.sh` with the heavy-run lock taken part by part; nothing uncommitted and the
   tree unchanged from start to end): build, `check:architecture` and `:release` (808 files, no
   debt), `check:theme`, typecheck, lint, `pnpm test` (42 tasks, 33 from the Turbo cache, their
-  inputs unchanged; suggestions 70, theme 43, react 123, block-editor 279, core 1,143 with 2
-  skipped, markdown 549, the rest green), `check:bundles` (core graph 130,519 of 131,072; react
-  34,086 of 40,960; 143 known comments in expressions), `check:packages` (20 archives),
-  `check:consumer` (30 ESM / 28 CJS entries), `check:exports`, `check:docs-site` (65 pages), the
-  Atlas (214 frames); Playwright Chromium 1,101 of 1,101, Firefox and WebKit 971 each with 130
-  skipped (the full visual sweep runs in Chrome only). Every step exited 0. Not run: the WASM
-  builds, `cargo fmt`, clippy and `cargo test` (Rust and its lock unchanged since 0.1.4), the PDF
-  regression and Go Cloud tests. Earlier trees of the same release, accepted in full the same day:
-  ff3c05bc (`output/accept13/`; Chromium 1,096, Firefox and WebKit 966) and e9e1046d
-  (`output/accept14/`; Chromium 1,097, Firefox and WebKit 967); after them came the host's last
-  tokens (the gap above a heading under the title, the label of a lane cursor's flag, the corners
-  of inline code in a cell) and lane cursors placed again when web fonts have loaded.
+  inputs unchanged; suggestions 70, theme 44, react 123, block-editor 284, core 1,143 with 2
+  skipped, markdown 549, comments 13, the rest green), `check:bundles` (core graph 130,519 of
+  131,072; react 34,086 of 40,960; 143 known comments in expressions), `check:packages` (20
+  archives), `check:consumer` (30 ESM / 28 CJS entries), `check:exports`, `check:docs-site` (65
+  pages), the Atlas (220 frames); Playwright Chromium 1,107 of 1,107, Firefox 977 with 130
+  skipped (the full visual sweep runs in Chrome only), WebKit 976 with 130 skipped and one failure
+  under the machine's load (load average about 19): NL-058 of
+  `notion-like-checklist-051-100.spec.ts` failed in the shared setup of that series, where
+  `setNotionContent` (`e2e/helpers/notion-checklist.ts`) found no editor handle yet. On the same
+  tree that file alone, 3 times, passed 150 of 150, and the full WebKit run again passed 977 with
+  130 skipped. Not run: the WASM builds, `cargo fmt`, clippy and `cargo test` (Rust and its lock
+  unchanged since 0.1.4), the PDF regression and Go Cloud tests. Earlier trees of the release,
+  each accepted in full the same day and followed by the host's next needs: ff3c05bc (`accept13`;
+  Chromium 1,096, Firefox and WebKit 966), e9e1046d (`accept14`; 1,097 and 967), c0e1b6a8
+  (`accept15`; 1,101 and 971) and 40b5d170 (`accept17`; Chromium 1,105, Firefox 975, WebKit 974
+  and one failure under load, `docs-view.spec.ts:174`, which passed 48 of 48 alone and 975 in the
+  full run). The cause of that one was the test: the mouse it left over the page, which WebKit
+  moved after a scroll and so took the handle from a touch; c80e5d7e opens the view from the
+  keyboard, and the file passed 160 of 160 in WebKit 20 times under load. `accept16` (0e1de1cd)
+  does not count: the tree changed while it ran.
 
 ## Acceptance before release (2026-11-15)
 
