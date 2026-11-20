@@ -20,6 +20,8 @@ its own), `react`, `theme` and `block-editor` (0.1.5), `markdown`, `suggestions`
 - `FloatingPlacement` gains `"top-start"`.
 - A block with decorations is drawn again only when its own decorations or children changed, and
   of a growing group of suggested blocks only the new and the changed ones.
+- The block after a suggested table stands as after a table (`--gt-flow-block`): no line for
+  screen readers stands between them any more.
 
 ### @gotipe/markdown
 

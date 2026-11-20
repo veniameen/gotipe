@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import type { Block } from "@gotipe/core";
+import type { Block, BlockView } from "@gotipe/core";
 import { type GoTipeEditor, createEditor } from "@gotipe/core/js";
 import { FullPreset } from "@gotipe/core/presets";
 import { act } from "react";
@@ -81,6 +81,56 @@ describe("merged cells in the MIT renderer", () => {
     expect(editor.getViewState().selection.anchor.blockId).toBe("f");
     editor.chain().goToNextCell().run();
     expect(editor.getViewState().selection.anchor.blockId).toBe("g");
+  });
+});
+
+/** A block as the view state draws it: no decorations of its own. */
+const view = (block: Block): BlockView => ({
+  ...block,
+  content: block.content as BlockView["content"],
+  decorations: [],
+  children: block.children.map(view),
+});
+
+describe("a suggested table in the MIT renderer", () => {
+  it("has no screen-reader line after it, so the next block follows the table itself", () => {
+    act(() => {
+      root.render(<EditorContent editor={editor} />);
+      editor.setDecorations("review", [
+        {
+          type: "blocks",
+          key: "suggested",
+          blockId: "t",
+          position: "after",
+          blocks: [
+            view({
+              id: "s",
+              type: "table",
+              attrs: {},
+              content: null,
+              children: [row("sr", [cell("sa", {}, true)])],
+            }),
+            view({
+              id: "after",
+              type: "paragraph",
+              attrs: {},
+              content: [{ text: "After", marks: [] }],
+              children: [],
+            }),
+          ],
+        },
+      ]);
+    });
+    const content = container.querySelector("[data-gotipe-content]")!;
+    const kinds = [...content.children].map((element) =>
+      element.matches("[data-gotipe-phantom-id]")
+        ? `suggested ${element.getAttribute("data-block-type")}`
+        : element.classList.contains("gotipe-sr-only")
+          ? "screen reader"
+          : (element.getAttribute("data-block-type") ?? element.tagName),
+    );
+    // the page's own table keeps its line for screen readers; the suggested one has none
+    expect(kinds).toEqual(["table", "screen reader", "suggested table", "suggested paragraph"]);
   });
 });
 

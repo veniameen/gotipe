@@ -4,6 +4,12 @@
 
 ### Patch Changes
 
+- A suggested table (a `blocks` decoration) draws no line for screen readers after it: it selects
+  no cells and changes nothing, so it has nothing to announce, and the line stood between the table
+  and the next block, so that block was spaced by `--gt-flow` instead of a table's
+  `--gt-flow-block`. The block after a suggested table (a row being written under a growing one,
+  say) now stands as after a table. A page's own table keeps its line.
+
 - 5110b7e: `afterBlock?: { blockId, node } | null` on `EditorContent`, `Editor`, `BlockEditor` and
   `PageEditor` (type `BlockSlot`): the host's element in the flow of the document right after the
   top-level block that is or holds `blockId`, spaced as one more block, so the text below moves down
