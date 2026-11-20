@@ -212,8 +212,9 @@ While a proposal is `live`:
   `reason` says why) and still `live`: a dashed hint keeps its place, and it takes no decision.
 
 Several proposals can insert at the same point, for instance the sections of a new page.
-They stand in ascending `order` (0 when not given), equal ones in the order of `proposals`,
-and keep their places while they grow. Accepting one changes the text the others are
+They stand in ascending `order` (0 when not given or not a finite number), equal ones in the
+order of `proposals`, and keep their places while they grow; so do insertions of several
+proposals at one place inside a line (before 0.1.5 those stood in the order of their ids). Accepting one changes the text the others are
 anchored to: anchor them again, or apply them together as one edit.
 
 ### Review bar and handle

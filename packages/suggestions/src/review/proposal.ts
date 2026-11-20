@@ -7,7 +7,15 @@ import type {
   ReviewProposal,
   TextMap,
 } from "../review-types";
-import { type Ctx, cls, diffLists, insertBlocks, plainText, widgetKey } from "./block-diff";
+import {
+  type Ctx,
+  cls,
+  diffLists,
+  insertBlocks,
+  plainText,
+  sortable,
+  widgetKey,
+} from "./block-diff";
 import type { ReviewInput } from "./input";
 import { markLiveEnd } from "./live";
 import { mapOffsetToText } from "./positions";
@@ -63,7 +71,7 @@ function clusterEdits(top: TopBlock[], edits: LocatedEdit[]): Cluster[] {
 }
 
 /** A proposal's rank as the lead of its widgets' keys (see `widgetKey`). */
-const rankKey = (rank: number) => `${String(rank).padStart(4, "0")}:`;
+const rankKey = (rank: number) => `${sortable(rank)}:`;
 
 /**
  * One proposal bound to the document. `rank` is its place among the proposals (by `order`, then

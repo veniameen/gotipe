@@ -10,6 +10,7 @@ import {
   revealDecorations,
 } from "./review-decorations";
 import type { ReviewLane, ReviewProposal } from "./review-types";
+import { sortable } from "./review/block-diff";
 
 const PAGE = "# Plan\n\nThe first paragraph.\n\n## Next\n\nThe last paragraph.\n";
 const LANES: ReviewLane[] = [{ id: "agent", name: "Agent", kind: "agent" }];
@@ -259,6 +260,22 @@ describe("proposals that insert at one point", () => {
     expect(new Set(drawn.map((w) => `${w.blockId}:${w.offset}`)).size).toBe(1);
   });
 
+  it("a proposal with an order that is no finite number stands as one without an order", () => {
+    const r = run(PAGE, [
+      live("nan", below("\n\nNot a number."), { order: Number.NaN }),
+      live("one", below("\n\nOne."), { order: 1 }),
+      live("none", below("\n\nNone.")),
+      live("inf", below("\n\nInfinite."), { order: Number.POSITIVE_INFINITY }),
+    ]);
+    expect(texts(r.decorations)).toEqual(["Not a number.", "None.", "Infinite.", "One."]);
+  });
+
+  it("ranks and steps of the keys sort as numbers, past 9999 too", () => {
+    const keys = [0, 1, 9, 10, 99, 100, 9999, 10000, 123456].map(sortable);
+    expect([...keys].sort((a, b) => a.localeCompare(b))).toEqual(keys);
+    expect(sortable(10000).localeCompare(sortable(9999))).toBeGreaterThan(0);
+  });
+
   it("the reveal still finds a proposal's own text", () => {
     const r = run(PAGE, [
       { id: "p9", laneId: "agent", edits: [inside(" nine")] },
@@ -386,6 +403,28 @@ describe("what a renderer keeps while a text grows", () => {
     call(cache);
     expect(counting).toHaveBeenCalledTimes(3);
     call(createReviewCache());
+    expect(counting).toHaveBeenCalledTimes(4);
+  });
+
+  it("with a cache binds again the proposals whose place among the others changed", () => {
+    const doc = page(PAGE);
+    const counting = vi.fn(parse);
+    const cache = createReviewCache();
+    const nine: ReviewProposal = { id: "nine", laneId: "agent", edits: [inside(" nine")] };
+    const ten: ReviewProposal = { id: "ten", laneId: "agent", edits: [inside(" ten")] };
+    const drawn = (proposals: ReviewProposal[]) =>
+      widgets(
+        computeReviewDecorations({ ...doc, parse: counting, lanes: LANES, proposals, cache })
+          .decorations,
+      )
+        .sort((a, b) => a.key.localeCompare(b.key))
+        .map((w) => w.text);
+    expect(drawn([nine, ten])).toEqual(["nine ", "ten "]);
+    expect(counting).toHaveBeenCalledTimes(2);
+    // the same objects in another order: both stand at new places and are bound again
+    expect(drawn([ten, nine])).toEqual(["ten ", "nine "]);
+    expect(counting).toHaveBeenCalledTimes(4);
+    expect(drawn([ten, nine])).toEqual(["ten ", "nine "]);
     expect(counting).toHaveBeenCalledTimes(4);
   });
 

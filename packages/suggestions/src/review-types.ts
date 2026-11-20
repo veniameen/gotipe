@@ -33,7 +33,7 @@ export interface ReviewProposal {
   live?: boolean;
   /**
    * Where the proposal stands among those that insert at the same point: ascending, 0 when not
-   * given; equal ones stand in the order of `proposals`.
+   * given or not a finite number; equal ones stand in the order of `proposals`.
    */
   order?: number;
 }

@@ -1,5 +1,5 @@
 import type { BlockView, Decoration } from "@gotipe/core";
-import type { CommentState, ProposalState } from "./review-types";
+import type { CommentState, ProposalState, ReviewProposal } from "./review-types";
 import { sliceSpans } from "./review/block-diff";
 import { cached, entriesOf, forget, remember } from "./review/cache";
 import { computeComment } from "./review/comment";
@@ -11,6 +11,10 @@ export { createReviewCache } from "./review/cache";
 export type { ReviewCache } from "./review/cache";
 export type { ReviewInput, ReviewOutput } from "./review/input";
 export { findBlockById, mapOffsetToText, mapRangeToText } from "./review/positions";
+
+/** Where a proposal stands among those at its point: its `order`, 0 when that is no finite number. */
+const orderOf = (proposal: ReviewProposal): number =>
+  Number.isFinite(proposal.order) ? (proposal.order as number) : 0;
 
 /**
  * Binds proposals and comments to the current document: locates anchors in
@@ -33,7 +37,7 @@ export function computeReviewDecorations(input: ReviewInput): ReviewOutput {
   const proposals = new Array<ProposalState>(input.proposals.length);
   const ranked = input.proposals
     .map((proposal, index) => ({ proposal, index }))
-    .sort((a, b) => (a.proposal.order ?? 0) - (b.proposal.order ?? 0) || a.index - b.index);
+    .sort((a, b) => orderOf(a.proposal) - orderOf(b.proposal) || a.index - b.index);
   ranked.forEach(({ proposal, index }, rank) => {
     const lane = lanes.get(proposal.laneId);
     const known = cache && cached(cache.proposals, proposal.id, proposal, input, lane?.color, rank);

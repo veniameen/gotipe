@@ -55,6 +55,8 @@ its own), `react`, `theme` and `block-editor` (0.1.5), `markdown`, `suggestions`
   `"stale"`), the class `gotipe-sug-live` on the end of a growing text, `LaneCursor.id`, `name`
   and `compact`, and an opaque `createReviewCache()` for `computeReviewDecorations` to bind only
   what changed. The ids of new blocks are the binding's own, not a contract.
+- A change of behaviour in a rare case: inline insertions of several proposals at one offset
+  stand by `order`, then as listed; they used to stand in the order of their ids.
 
 ### @gotipe/theme
 
