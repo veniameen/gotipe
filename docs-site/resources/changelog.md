@@ -47,7 +47,8 @@ its own), `react`, `theme` and `block-editor` (0.1.5), `markdown`, `suggestions`
   `compact`); the cursor of a growing proposal waits where its text will start and follows it,
   and a cursor's flag that has no room at the page's right edge stands left of it
   (`data-chip-side="right"` or `"left"`, physical sides).
-  Only what changed is bound and drawn again.
+  Only what changed is bound and drawn again, and `onStatesChange` is called only when a state
+  changed, no longer on every edit of the document.
 - A page title with an inline icon is named by its text alone, and its empty prompt starts after
   the icon.
 
