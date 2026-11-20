@@ -19,6 +19,9 @@
   their fill without the tint. The cells used to be rounded by `--gt-radius-inline`, and the tint
   took the place of their fill, so the head lost it (with `--gt-sug-block-ins-tint: 0%` the head
   had no fill at all). The text of the cells is underlined as before.
+- `--gt-head-after-heading` (unset: as any block, `--gt-flow-after-h1`): the space above a heading
+  that is the first block after the page title. It collapses with the title's `--gt-head-after`, so
+  the larger stands; until now any first block stood the same gap under the title.
 - `--gt-inline-code-wrap` (unset: inline code wraps as the text around it): `nowrap` keeps a code
   span on one line, its spaces kept (`text-wrap-mode`), so one that does not fit at the end of a
   line moves to the next whole. It is declared in a rule of no weight

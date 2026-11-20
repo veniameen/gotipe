@@ -68,8 +68,8 @@ its own), `react`, `theme` and `block-editor` (0.1.5), `markdown`, `suggestions`
   `--gt-lane-pointer-outline-width`, `--gt-lane-pointer-tip-x`, `--gt-lane-pointer-tip-y`,
   `--gt-sug-block-ins-text-tint`, `--gt-sug-ins-radius`, `--gt-sug-block-ins-text-radius`, `--gt-table-head-min-width`, `--gt-list-item-text-inset`,
   `--gt-sug-live-caret-width`, `--gt-sug-live-caret-color`, `--gt-lane-cursor-move`, `--gt-lane-chip-gap`,
-  `--gt-lane-chip-flip-x`, `--gt-lane-chip-flip-y`, `--gt-inline-code-wrap`. Defaults keep the
-  0.1.4 look.
+  `--gt-lane-chip-flip-x`, `--gt-lane-chip-flip-y`, `--gt-inline-code-wrap`,
+  `--gt-head-after-heading`. Defaults keep the 0.1.4 look.
 - A fix of the default look: a suggested table stays a table. Its cells are square and keep their
   own fill (a head fill too) under the lane's tint; they used to be rounded and lose the fill.
 - Outside the docs view, an element added to the text no longer makes the browser restyle the

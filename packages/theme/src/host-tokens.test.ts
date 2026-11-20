@@ -493,6 +493,17 @@ describe("tables have tokens for their grid, head, first column and code, today'
 
 describe("flow tokens for tables under headings, lists and list items", () => {
   const base = read("base.css");
+  it("spaces a heading that comes first after the page title by its own token, as any block by default", () => {
+    const heading = ".gotipe-content > :where(.gotipe-page-title) + :where(h1, h2, h3, h4, h5, h6)";
+    expect(declarations(base, heading)).toEqual({
+      "margin-top": "var(--gt-head-after-heading, var(--gt-flow-after-h1))",
+    });
+    // as heavy as the rule for any block after the title, and after it, so it wins for a heading
+    expect(base.indexOf(heading)).toBeGreaterThan(
+      base.indexOf(".gotipe-content > :where(.gotipe-page-title) + * {"),
+    );
+    expect(tokens.view).not.toHaveProperty("--gt-head-after-heading");
+  });
   it("spaces a table under a heading by its own token, the heading's gap by default", () => {
     for (const [selector, level] of [
       [".gotipe-content > :where(h2) + :where(.gotipe-table-wrapper)", "h2"],
