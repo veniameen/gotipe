@@ -135,6 +135,18 @@ describe("a growing proposal on the page (live)", () => {
     expect(texts()).toEqual(["One.", "Two bold"]);
   });
 
+  it("keeps the space its text ends with while it grows, so the end of the text is after it", async () => {
+    const { show } = await mount({ proposals: [live("p", "\n\nOne word ")] });
+    const marked = () => container.querySelector(".gotipe-sug-live")?.textContent;
+    expect(marked()).toBe("One word ");
+    // the next word comes after it
+    await show({ proposals: [live("p", "\n\nOne word more")] });
+    expect(marked()).toBe("One word more");
+    // written: a paragraph's end drops it, as it always did
+    await show({ proposals: [{ ...live("p", "\n\nOne word "), live: false }] });
+    expect(texts()).toEqual(["One word"]);
+  });
+
   it("takes no decision: no answers on its card, none through the handle or the bar", async () => {
     const onAccept = vi.fn(() => true);
     const onReject = vi.fn(() => true);

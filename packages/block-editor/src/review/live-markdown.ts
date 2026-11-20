@@ -11,7 +11,9 @@ import { parseMarkdown } from "@gotipe/markdown";
  * - a table grows by whole rows: its last line, while unfinished, is a line of text under it,
  *   and so is its delimiter row under the head row, so the table comes with all its columns;
  * - a last line of only `-` or `=` under a line of text is text, not yet a heading's underline;
- * - a backslash at the very end is text.
+ * - a backslash at the very end is text;
+ * - spaces at the very end of the last line's text stay: a paragraph would drop them, and the end
+ *   of the text (its caret, its cursor) is after them while the next word is on its way.
  * Whatever is finished is read as Markdown, and a finished text comes back as it is: a fence in
  * an indented code block is code, and CRLF line ends are line ends (what is added keeps them).
  * It takes time in proportion to the text, however many marks its end leaves open.
@@ -55,6 +57,7 @@ export function settleLiveMarkdown(text: string): string {
     return `${body}${body.endsWith("\n") ? "" : eol}${close}`;
   }
   if (scope >= text.length) return text;
+  const raw = RAW.test(text.slice(scope));
   const escapes = openMarks(text.slice(scope)).map((at) => at + scope);
   const lastLine = text.lastIndexOf("\n") + 1;
   // only dashes or equals under a line of text: a heading's underline once the line is done
@@ -63,7 +66,7 @@ export function settleLiveMarkdown(text: string): string {
   if (/(?:^|[^\\])(?:\\\\)*\\$/.test(text)) escapes.push(text.length);
   // an unfinished line that a table would take as a row stands under it as a line of text
   const apart = lastLine > scope && lastLine < text.length && endsInTable(text.slice(scope));
-  if (escapes.length === 0 && !apart) return text;
+  if (escapes.length === 0 && !apart) return keepEnd(text, raw);
   let out = "";
   let from = 0;
   for (const at of [...new Set(escapes)].sort((a, b) => a - b)) {
@@ -78,7 +81,25 @@ export function settleLiveMarkdown(text: string): string {
     out += `${text.slice(from, lastLine)}${eol}`;
     from = lastLine;
   }
-  return out + text.slice(from);
+  return keepEnd(out + text.slice(from), raw);
+}
+
+/**
+ * The spaces and tabs that end the last line's text, written as character references: Markdown
+ * drops the spaces at a paragraph's or a heading's end, and keeps a reference as the character it
+ * names. Not after a line's markers alone (`## `, `- `, `> `: the block is still being begun), in
+ * a thematic break, after a backslash, or in a block of raw text (HTML, a formula), which reads no
+ * references; a line break at the end is left as it is.
+ */
+function keepEnd(text: string, raw: boolean): string {
+  let start = text.length;
+  while (start > 0 && (text[start - 1] === " " || text[start - 1] === "\t")) start -= 1;
+  const before = text[start - 1];
+  if (raw || start === text.length || before === undefined || /[\s\\]/.test(before)) return text;
+  const line = text.slice(text.lastIndexOf("\n", start) + 1, start);
+  if (BREAK.test(line) || line.replace(MARKERS, "").trim() === "") return text;
+  const run = text.slice(start).replace(/[ \t]/g, (c) => (c === " " ? "&#32;" : "&#9;"));
+  return text.slice(0, start) + run;
 }
 
 /** Whether these lines, read as finished, end in a table: its last line is one of its rows. */
@@ -186,6 +207,12 @@ const CLOSE = /^([ \t]*)(`+|~+)[ \t]*\r?$/;
 /** The same in a quote, after its markers. */
 const QUOTED_CLOSE = /^([ \t>]*)(`+|~+)[ \t]*\r?$/;
 const UNDERLINE = /^ {0,3}(?:-+|=+)[ \t]*\r?$/;
+/** The markers a line's blocks begin with: quotes, list items, a heading, a task's box. */
+const MARKERS = /^(?:[ \t]*(?:>|[-*+]|\d{1,9}[.)]|#{1,6}|\[[ xX]\])(?=[ \t]|$))*/;
+/** A thematic break: three or more of one of `-`, `*`, `_`. */
+const BREAK = /^ {0,3}([-*_])(?:[ \t]*\1){2,}[ \t]*$/;
+/** The start of a block of raw text: HTML, a formula. */
+const RAW = /^ {0,3}(?:<[A-Za-z/!?]|\$\$)/;
 /** What starts a bare address, up to the character whose escape keeps it text. */
 const ADDRESS = /https?:(?=\/\/)|www\.|[\w.+-]@/gi;
 const SPACE = /\s/;
