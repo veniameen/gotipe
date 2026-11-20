@@ -497,22 +497,26 @@ not part of the check artifacts.
 - 2026-11-19–20: 0.1.5 prepared from the host's list after 0.1.4, checked by the host on local packs
   before one release: review card placement and gap, `afterBlock`, selection ranges and bookmarks
   in the Markdown, the host's lane pointer, proposals still being written (`live`) and several
-  cursors of a lane, a suggested table that stays a table, and tokens. Not published yet; the
-  release is to hold `core`, `react`, `theme`, `block-editor` at 0.1.5 and `markdown`,
-  `suggestions`, `comments` at 0.1.3. `ai` and `ai-ui` keep 0.1.1: the fix of Tab in a widget
-  (`d4ebae95`) has no version bump and waits for the next release. Accepted on tree ff3c05bc
-  (2026-11-20 04:56–05:07, macOS, M4 Max, `output/accept13/`; the tree had nothing uncommitted at
-  the start and the end): build, `check:architecture` and `:release` (808 files, no debt),
-  `check:theme`, typecheck, lint, `pnpm test` (37 of 42 tasks from the Turbo cache, their inputs
-  unchanged; suggestions 70, theme 41, react 123, block-editor 278, core 1,143 with 2 skipped,
-  markdown 549, the rest green), `check:bundles` (core graph 130,519 of 131,072; react 34,086 of
-  40,960; 143 known comments in expressions), `check:packages` (20 archives), `check:consumer`
-  (30 ESM / 28 CJS entries), `check:exports`, `check:docs-site` (65 pages), the Atlas (214
-  frames); Playwright Chromium 1,096 of 1,096, Firefox and WebKit 966 each with 130 skipped (the
-  full visual sweep runs in Chrome only). Not run there: the WASM builds, `cargo fmt`, clippy and
-  `cargo test` (Rust and its lock unchanged since 0.1.4), the PDF regression and Go Cloud tests.
-  After it, two fixes (the markdown README names no host; the inline code wrap token's rule has no
-  weight) were checked by targeted runs; the final tree is accepted in full before the tag.
+  cursors of a lane, a suggested table that stays a table, and tokens. Status: accepted, not
+  released. The release is to hold `core`, `react`, `theme`, `block-editor` at 0.1.5 and
+  `markdown`, `suggestions`, `comments` at 0.1.3. `ai` and `ai-ui` keep 0.1.1: the fix of Tab in a
+  widget (`d4ebae95`) has no version bump and waits for the next release. The final tree c0e1b6a8
+  was accepted on 2026-11-20, 06:53–07:05 (macOS, M4 Max, `output/accept15/`, run by
+  `output/accept15.sh` with the heavy-run lock taken part by part; nothing uncommitted and the
+  tree unchanged from start to end): build, `check:architecture` and `:release` (808 files, no
+  debt), `check:theme`, typecheck, lint, `pnpm test` (42 tasks, 33 from the Turbo cache, their
+  inputs unchanged; suggestions 70, theme 43, react 123, block-editor 279, core 1,143 with 2
+  skipped, markdown 549, the rest green), `check:bundles` (core graph 130,519 of 131,072; react
+  34,086 of 40,960; 143 known comments in expressions), `check:packages` (20 archives),
+  `check:consumer` (30 ESM / 28 CJS entries), `check:exports`, `check:docs-site` (65 pages), the
+  Atlas (214 frames); Playwright Chromium 1,101 of 1,101, Firefox and WebKit 971 each with 130
+  skipped (the full visual sweep runs in Chrome only). Every step exited 0. Not run: the WASM
+  builds, `cargo fmt`, clippy and `cargo test` (Rust and its lock unchanged since 0.1.4), the PDF
+  regression and Go Cloud tests. Earlier trees of the same release, accepted in full the same day:
+  ff3c05bc (`output/accept13/`; Chromium 1,096, Firefox and WebKit 966) and e9e1046d
+  (`output/accept14/`; Chromium 1,097, Firefox and WebKit 967); after them came the host's last
+  tokens (the gap above a heading under the title, the label of a lane cursor's flag, the corners
+  of inline code in a cell) and lane cursors placed again when web fonts have loaded.
 
 ## Acceptance before release (2026-11-15)
 
