@@ -95,9 +95,18 @@ export function cls(ctx: Ctx, base: string): string {
   return ctx.active ? `${base} is-active` : base;
 }
 
+/**
+ * A whole number as text that sorts as the number does, whatever its size: its digits after
+ * their count (5 is `15`, 10 is `210`).
+ */
+export function sortable(n: number): string {
+  const digits = String(n);
+  return `${digits.length}${digits}`;
+}
+
 export function key(ctx: Ctx, kind: string): string {
   ctx.seq += 1;
-  return `${ctx.pid}:${String(ctx.seq).padStart(4, "0")}:${kind}`;
+  return `${ctx.pid}:${sortable(ctx.seq)}:${kind}`;
 }
 
 /**

@@ -18,8 +18,9 @@
   itself when it has no text). `ReviewInput.liveText` reads its unfinished text, for a codec that
   settles an unfinished end.
 - `ReviewProposal.order`: proposals that insert at the same point stand in ascending `order` (0
-  when not given), equal ones as listed. Inline insertions of several proposals at one offset now
-  stand in that order too; they used to stand in the order of their ids.
+  when not given or not a finite number), equal ones as listed. A change of behaviour in a rare
+  case: inline insertions of several proposals at one offset now stand in that order too; they
+  used to stand in the order of their ids, which no rule described.
 - `computeReviewDecorations` takes a `cache` (`createReviewCache()`, one per editor): a proposal or
   a comment is bound to the document again only when it, the document, its lane's colour, its
   place among the others or its being open changed, and what did not change keeps its state and
