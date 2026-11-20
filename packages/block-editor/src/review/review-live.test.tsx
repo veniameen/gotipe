@@ -350,7 +350,7 @@ describe("lane cursors", () => {
 
   /**
    * A page 300 wide, or as wide as the test makes it, with every cursor where the test puts it.
-   * A flag is 120 wide and stands 10 after its cursor, or ends at it when it is before it.
+   * A flag is 120 wide and stands 10 right of its cursor, or ends at it when it is left of it.
    */
   async function measured(
     run: (the: { cursor(left: number): void; page(width: number): void }) => Promise<void>,
@@ -380,7 +380,7 @@ describe("lane cursors", () => {
     // the flag's own place in its cursor: 10 after it, or ending at it when it is before it
     const flag = (element: HTMLElement) =>
       element.matches(".gotipe-lane-chip")
-        ? element.parentElement?.getAttribute("data-chip-side") === "start"
+        ? element.parentElement?.getAttribute("data-chip-side") === "left"
           ? { left: -120, width: 120 }
           : { left: 10, width: 120 }
         : { left: 0, width: 0 };
@@ -447,22 +447,22 @@ describe("lane cursors", () => {
   const anchor = { before: "The ", quote: "last", after: " one." };
   const flagged: LaneCursor = { laneId: "agent", id: "c", compact: true, anchor };
 
-  it("says on which side its flag stands: before it when the flag would cross the page's edge", async () => {
+  it("says on which side its flag stands: left of it when the flag would cross the page's right edge", async () => {
     await measured(async (the) => {
       const { show } = await mount({ cursors: [flagged] });
-      expect(side()).toBe("end");
+      expect(side()).toBe("right");
       // the cursor moves to the page's end edge: the flag has no room after it
       the.cursor(200);
       await show({ cursors: [{ ...flagged }] });
       expect(cursors()[0]!.style.left).toBe("200px");
-      expect(side()).toBe("start");
+      expect(side()).toBe("left");
       // a little back: it would fit by a few pixels, and keeps its side
       the.cursor(165);
       await show({ cursors: [{ ...flagged }] });
-      expect(side()).toBe("start");
+      expect(side()).toBe("left");
       the.cursor(150);
       await show({ cursors: [{ ...flagged }] });
-      expect(side()).toBe("end");
+      expect(side()).toBe("right");
     });
   });
 
@@ -473,28 +473,28 @@ describe("lane cursors", () => {
       the.cursor(150);
       await mount({ cursors: [flagged] });
       const element = cursors()[0]!;
-      expect(side()).toBe("end");
+      expect(side()).toBe("right");
       // the page narrows; its text, and the cursor with it, stay where they were
       the.page(270);
       await resized();
       expect(cursors()[0]).toBe(element);
       expect(element.style.left).toBe("150px");
-      expect(side()).toBe("start");
+      expect(side()).toBe("left");
       // a little wider: the flag would fit by a few pixels, and keeps its side
       the.page(285);
       await resized();
-      expect(side()).toBe("start");
+      expect(side()).toBe("left");
       the.page(300);
       await resized();
-      expect(side()).toBe("end");
+      expect(side()).toBe("right");
       // the window's edge is the page's when the window shows less of it
       vi.stubGlobal("innerWidth", 270);
       await windowResized();
       expect(element.style.left).toBe("150px");
-      expect(side()).toBe("start");
+      expect(side()).toBe("left");
       vi.stubGlobal("innerWidth", 300);
       await windowResized();
-      expect(side()).toBe("end");
+      expect(side()).toBe("right");
     });
   });
 

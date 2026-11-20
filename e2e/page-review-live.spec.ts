@@ -149,7 +149,7 @@ test.describe('PageEditor review: a growing proposal', () => {
     expect(await lines(1)).toEqual({ sameLine: false, under: true });
   });
 
-  test('a compact flag is placed by the pointer tokens, and stands before its cursor at the page edge', async ({ page }) => {
+  test('a compact flag is placed by the pointer tokens, and stands left of its cursor at the page edge', async ({ page }) => {
     // a host's place for a compact flag: on the cursor's own row, after it
     await page.addStyleTag({
       content:
@@ -159,7 +159,7 @@ test.describe('PageEditor review: a growing proposal', () => {
     await show(page, { proposals: [part('p', '\n\n## Summary')], cursors: [cursor], laneCursor: 'pointer' });
     const element = page.locator('.gotipe-lane-cursor');
     await expect(element).toHaveAttribute('data-variant', 'pointer');
-    await expect(element).toHaveAttribute('data-chip-side', 'end');
+    await expect(element).toHaveAttribute('data-chip-side', 'right');
     const boxes = () =>
       element.evaluate((node) => {
         const own = node.getBoundingClientRect();
@@ -173,7 +173,7 @@ test.describe('PageEditor review: a growing proposal', () => {
     expect(placed.chip.right).toBeLessThanOrEqual(placed.pageRight);
     // the page narrows until the flag has no room after its cursor
     const surface = page.locator('.gotipe-page-example-surface');
-    const narrow = async (side: 'start' | 'end') => {
+    const narrow = async (side: 'left' | 'right') => {
       for (let width = 520; width >= 200; width -= 20) {
         await surface.evaluate((node, value) => {
           (node as HTMLElement).style.width = `${value}px`;
@@ -183,7 +183,7 @@ test.describe('PageEditor review: a growing proposal', () => {
       }
       return 0;
     };
-    const at = await narrow('start');
+    const at = await narrow('left');
     expect(at).toBeGreaterThan(0);
     const flipped = await boxes();
     // before the cursor and above its row, inside the page
@@ -195,15 +195,15 @@ test.describe('PageEditor review: a growing proposal', () => {
       (node as HTMLElement).style.width = `${value}px`;
     }, at + 4);
     await page.evaluate(() => new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(() => done(null)))));
-    await expect(element).toHaveAttribute('data-chip-side', 'start');
+    await expect(element).toHaveAttribute('data-chip-side', 'left');
     await surface.evaluate((node) => {
       (node as HTMLElement).style.width = '';
     });
-    await expect(element).toHaveAttribute('data-chip-side', 'end');
+    await expect(element).toHaveAttribute('data-chip-side', 'right');
     // a flag that is not compact keeps its place whatever the side says
     await show(page, { cursors: [{ ...cursor, compact: false }] });
     await expect(element).not.toHaveAttribute('data-compact', '');
-    expect(await narrow('start')).toBeGreaterThan(0);
+    expect(await narrow('left')).toBeGreaterThan(0);
     const loose = await boxes();
     expect(loose.chip.left).toBeGreaterThan(loose.left);
     expect(loose.chip.top).toBeGreaterThanOrEqual(loose.top);
@@ -236,7 +236,7 @@ test.describe('PageEditor review: a growing proposal', () => {
     await expect
       .poll(async () => Math.abs((await element.evaluate((node) => node.getBoundingClientRect().left)) - (await textEnd())))
       .toBeLessThan(1.5);
-    await expect(element).toHaveAttribute('data-chip-side', 'end');
+    await expect(element).toHaveAttribute('data-chip-side', 'right');
     const boxes = () =>
       element.evaluate((node) => {
         const own = node.getBoundingClientRect();
@@ -258,7 +258,7 @@ test.describe('PageEditor review: a growing proposal', () => {
     };
     // the edge comes in and crosses the flag by a little; the text and its cursor stay where they were
     await edgeAt(wide.chip.right - 4);
-    await expect(element).toHaveAttribute('data-chip-side', 'start');
+    await expect(element).toHaveAttribute('data-chip-side', 'left');
     const flipped = await boxes();
     expect(Math.abs(flipped.page.right - (wide.chip.right - 4))).toBeLessThan(1);
     expect([flipped.left, flipped.top]).toEqual([wide.left, wide.top]);
@@ -266,10 +266,10 @@ test.describe('PageEditor review: a growing proposal', () => {
     expect(flipped.chip.bottom).toBeLessThanOrEqual(flipped.top);
     // the flag would fit after its cursor again by a little: it keeps its side
     await edgeAt(wide.chip.right + 4);
-    await expect(element).toHaveAttribute('data-chip-side', 'start');
+    await expect(element).toHaveAttribute('data-chip-side', 'left');
     // with room to spare it is back, and the cursor has not moved all the while
     await edgeAt(wide.chip.right + 40);
-    await expect(element).toHaveAttribute('data-chip-side', 'end');
+    await expect(element).toHaveAttribute('data-chip-side', 'right');
     const back = await boxes();
     expect([back.left, back.top]).toEqual([wide.left, wide.top]);
     expect(Math.abs(back.chip.right - wide.chip.right)).toBeLessThan(1);

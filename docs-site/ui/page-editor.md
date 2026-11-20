@@ -223,7 +223,7 @@ export function ReviewedPage({ file, save }: { file: string; save: (text: string
   `COMMENT_ACTION_FAILED`; after success drop the comment from `comments`.
 - **Cursors** stand at the end of a proposal's text or at an anchor, with a label. A lane
   can have several, each under its own `id` and with its own `name`; `compact` keeps a
-  cursor's flag in one line, and at the page's edge the flag stands before its cursor
+  cursor's flag in one line, and at the page's right edge the flag stands left of its cursor
   (`data-chip-side`).
 - A proposal with `live: true` is **still being written**: give a new object with a longer
   text under the same `id` as it grows, and the same `id` without `live` when it is whole.

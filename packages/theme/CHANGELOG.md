@@ -20,7 +20,7 @@
   the cursor of a growing proposal takes to its text's new end (`.gotipe-lane-cursor[data-glide]`,
   nothing under reduced motion); a compact cursor's flag (`[data-compact]`) is one line, its name
   and label `--gt-lane-chip-gap` apart (unset: `--gt-space-1`), and when its cursor says it has
-  no room after it (`[data-chip-side="start"]`) it stands before the cursor, above the row
+  no room right of it (`[data-chip-side="left"]`) it stands left of the cursor, above the row
   (`--gt-lane-chip-flip-x`, unset: at the cursor; `--gt-lane-chip-flip-y`, unset:
   `--gt-toolbar-gap`). Each is read with a fallback, so it can be set on any element above the
   page.
