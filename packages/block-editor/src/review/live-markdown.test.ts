@@ -142,6 +142,43 @@ describe("settleLiveMarkdown: what the end leaves open", () => {
     expect(settleLiveMarkdown("```\n**not bold")).toBe("```\n**not bold\n```");
   });
 
+  it("reads a text written with CRLF line ends as one with LF, and keeps its line ends", () => {
+    // finished: as it is, and no empty code block after the closed one
+    const done = "Text.\r\n\r\n```js\r\nconst a = 1;\r\n```\r\n\r\nAfter";
+    expect(settleLiveMarkdown(done)).toBe(done);
+    expect(shown(done)).toEqual(shown(done.replaceAll("\r\n", "\n")));
+    // an open code block is closed with the text's own line end
+    expect(settleLiveMarkdown("```js\r\nconst a = 1;")).toBe("```js\r\nconst a = 1;\r\n```");
+    expect(settleLiveMarkdown("```js\r\nconst a = 1;\r\n``")).toBe("```js\r\nconst a = 1;\r\n```");
+    // a row being written stands under its table, an underline is text until its line is done
+    expect(settleLiveMarkdown("| a | b |\r\n| --- | --- |\r\n| 1")).toBe(
+      "| a | b |\r\n| --- | --- |\r\n\r\n| 1",
+    );
+    expect(shown("Title\r\n--")).toEqual(shown("Title\n--"));
+  });
+
+  it("takes a fence in an indented code block for code, and one in a list item for a fence", () => {
+    // four spaces in: a line of an indented code block, finished as it is
+    for (const text of [
+      "Para.\n\n    ```\n    x = 1\n",
+      "Para.\n\n\t```\n\tx = 1",
+      "- item\n\n      ```\n      x = 1\n",
+    ])
+      expect(settleLiveMarkdown(text), JSON.stringify(text)).toBe(text);
+    // in a list item, its content is where the fence is measured from: an item in an item too
+    expect(settleLiveMarkdown("- a\n  - b\n\n    ```sh\n    ls")).toBe(
+      "- a\n  - b\n\n    ```sh\n    ls\n    ```",
+    );
+    expect(settleLiveMarkdown("1. a\n\n   ```\n   one")).toBe("1. a\n\n   ```\n   one\n   ```");
+    // a line of backticks four columns in is code of the open block, which stays open
+    expect(settleLiveMarkdown("```\ncode\n    ```\nmore")).toBe("```\ncode\n    ```\nmore\n```");
+    expect(shown("```\ncode\n    ```\nmore")).toEqual(["codeBlock: code\n    ```\nmore"]);
+    // no space after a dash: no list item and no fence, a paragraph
+    expect(shown("-```\ncode").map((block) => block.slice(0, block.indexOf(":")))).toEqual([
+      "paragraph",
+    ]);
+  });
+
   it("does not turn the line above into a heading before the underline's line is done", () => {
     expect(shown("Title\n-")).toEqual(["paragraph: Title -"]);
     expect(shown("Title\n--")).toEqual(["paragraph: Title --"]);
@@ -166,6 +203,23 @@ describe("settleLiveMarkdown: what the end leaves open", () => {
     expect(settleLiveMarkdown("* item\n* **bold** item\n")).toBe("* item\n* **bold** item\n");
     expect(settleLiveMarkdown("Text.\n\n***\n")).toBe("Text.\n\n***\n");
     expect(settleLiveMarkdown("A note[^1] here")).toBe("A note[^1] here");
+  });
+});
+
+describe("settleLiveMarkdown: a long text of unfinished marks", () => {
+  it("settles every one of many unfinished tags and links, the page's text after them unharmed", () => {
+    const tags = "x <a ".repeat(2000);
+    const settled = settleLiveMarkdown(tags);
+    expect(settled.split("\\<a").length - 1).toBe(2000);
+    expect(parse(`${settled}<b>after</b>`).map(look)).toEqual(
+      parse(`${tags.replaceAll("<", "\\<")}<b>after</b>`).map(look),
+    );
+    const links = "[a](b ".repeat(2000);
+    expect(settleLiveMarkdown(links)).toBe(links.replaceAll("[a]", "\\[a]"));
+    // one closed link among them is a link
+    expect(shown(`${links}[c](d)`).join()).toMatch(/link:c/);
+    // a finished destination after many unfinished ones closes only its own
+    expect(shown("[a](b [c](d) e").join()).toMatch(/link:c/);
   });
 });
 
