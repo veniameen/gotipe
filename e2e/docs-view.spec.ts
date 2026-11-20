@@ -187,10 +187,15 @@ test.describe('View docs: handle and heading anchors (Atlas frame 2)', () => {
 
     const heading = headingOf(page, 'What changes');
     const anchor = anchorOf(heading);
+    // a finger alone: the handle follows the mouse over the editor (its moves and its leaving),
+    // so the mouse stands beside the editor, in the page's margin, where no move of it, its own
+    // or the browser's after a scroll, reaches the editor
+    const editor = page.locator('.gotipe-block-editor[data-gt-view="docs"]');
+    const frame = (await editor.boundingBox())!;
+    await page.mouse.move(frame.x / 2, 450);
     await heading.scrollIntoViewIfNeeded();
     await expect(anchor).toBeHidden();
-    // a finger alone: no mouse over the page, whose hover the browser would update after a scroll
-    expect(await page.evaluate(() => document.querySelector(':hover') === null)).toBe(true);
+    expect(await editor.evaluate((element) => element.matches(':hover'))).toBe(false);
     const box = (await heading.boundingBox())!;
     await heading.dispatchEvent('pointerdown', {
       pointerType: 'touch',
