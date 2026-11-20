@@ -13,6 +13,9 @@
   proposed new block's text. Read with fallbacks, so each can be set on any element above the text.
 - `--gt-table-head-min-width` (`auto`): the least width of a header cell, a floor for columns sized
   by their content; a host's own `th { min-width }` still wins.
+- `--gt-inline-code-wrap` (unset: inline code wraps as the text around it): `nowrap` keeps a code
+  span on one line, its spaces kept (`text-wrap-mode`), so one that does not fit at the end of a
+  line moves to the next whole.
 - A review whose proposals are still written (`theme/review/live.css`), nothing of it by default:
   `--gt-sug-live-caret-width` (unset: none) draws a typing caret at the end of a growing
   proposal's text (`.gotipe-sug-live`) in `--gt-sug-live-caret-color` (unset: the lane's colour),
