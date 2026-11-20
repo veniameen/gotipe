@@ -22,6 +22,9 @@
 - `--gt-head-after-heading` (unset: as any block, `--gt-flow-after-h1`): the space above a heading
   that is the first block after the page title. It collapses with the title's `--gt-head-after`, so
   the larger stands; until now any first block stood the same gap under the title.
+- `--gt-flag-label-size` and `--gt-flag-label-leading` (unset: the flag's own, as the name's): the
+  size and line height of the label on a lane cursor's flag, a compact one's too, in a rule of no
+  weight.
 - `--gt-inline-code-wrap` (unset: inline code wraps as the text around it): `nowrap` keeps a code
   span on one line, its spaces kept (`text-wrap-mode`), so one that does not fit at the end of a
   line moves to the next whole. It is declared in a rule of no weight

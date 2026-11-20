@@ -344,6 +344,19 @@ describe("a review whose proposals are still written: nothing by default, a host
     // a cursor that does not follow a growing text has no transition of its own
     expect(read("theme/review.css")).not.toMatch(/\.gotipe-lane-cursor[^{]*\{[^}]*transition/);
   });
+  it("sizes a flag's label by tokens of no weight, the flag's own size and leading by default", () => {
+    const review = read("theme/review.css");
+    // no fallback: unset, the label inherits the flag's size and leading, as the name does
+    expect(declarations(review, ":where(.gotipe-lane-chip-label)")).toEqual({
+      "font-size": "var(--gt-flag-label-size)",
+      "line-height": "var(--gt-flag-label-leading)",
+    });
+    expect(declarations(review, ".gotipe-lane-chip-label")["font-size"]).toBeUndefined();
+    for (const name of ["--gt-flag-label-size", "--gt-flag-label-leading"]) {
+      expect(tokens.view).not.toHaveProperty(name);
+      expect(tokens.shared).not.toHaveProperty(name);
+    }
+  });
   it("lays a compact cursor's flag out in one line; the others keep their two", () => {
     expect(declarations(live, ".gotipe-lane-cursor[data-compact] > .gotipe-lane-chip")).toEqual({
       "flex-direction": "row",
