@@ -232,7 +232,7 @@ can be set on any container.
 | `--gt-cell-first-pad` | `0px` | Left padding of the first column, which starts with the text column; with row handles the cell keeps at least the room the handle needs |
 | `--gt-table-row-height` | `auto` | Least height of a body row |
 | `--gt-table-shared-layout` | `fixed` | Columns without a stored width share the text column evenly; `auto` gives them their share by content, as a table without stored widths in HTML. Stored widths stay a column's least width |
-| `--gt-inline-code-wrap` | unset: as the text around it | `nowrap` keeps inline code on one line, its spaces kept: a code span that does not fit at the end of a line moves to the next whole (it sets `text-wrap-mode`) |
+| `--gt-inline-code-wrap` | unset: as the text around it | `nowrap` keeps inline code on one line, its spaces kept: a code span that does not fit at the end of a line moves to the next whole (it sets `text-wrap-mode` in a rule of no weight, so your own `white-space` on inline code still wins) |
 | `--gt-table-code-size` | `var(--gt-inline-code-size)` (0.87em) | Size of inline code in a cell |
 | `--gt-table-code-pad` | `var(--gt-inline-pad)` | Its padding |
 | `--gt-table-code-fill` | unset: `--gt-fill-2` | Its plate; `transparent` with `--gt-table-code-pad: 0` drops the plate |

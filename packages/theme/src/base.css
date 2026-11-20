@@ -180,9 +180,7 @@
   text-decoration-color: currentColor;
 }
 /* Inline code's smaller monospace type stands at its own size: with the paragraph's leading in px
-   it would push the line down. The plate is drawn over the glyphs whatever the leading (D-225).
-   It wraps as the text around it does; --gt-inline-code-wrap: nowrap keeps it on one line, its
-   spaces kept (unset: no value of its own, so the text's is inherited). */
+   it would push the line down. The plate is drawn over the glyphs whatever the leading (D-225). */
 .gotipe-content :not(pre) > code {
   padding: var(--gt-inline-pad);
   border-radius: var(--gt-radius-inline);
@@ -192,9 +190,15 @@
   font-size: var(--gt-inline-code-size);
   line-height: var(--gt-inline-code-leading);
   letter-spacing: normal;
-  text-wrap-mode: var(--gt-inline-code-wrap);
   -webkit-box-decoration-break: clone;
   box-decoration-break: clone;
+}
+/* It wraps as the text around it does; --gt-inline-code-wrap: nowrap keeps it on one line, its
+   spaces kept. Unset, the declaration has no value and the text's wrapping is inherited; the rule
+   weighs nothing, so a host's own rule on inline code (its white-space) wins over it, as before
+   the token. */
+:where(.gotipe-content :not(pre) > code) {
+  text-wrap-mode: var(--gt-inline-code-wrap);
 }
 .gotipe-content mark {
   padding: var(--gt-mark-pad);

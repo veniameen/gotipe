@@ -101,9 +101,13 @@ describe("the document follows the Atlas and names its parts", () => {
   const base = read("base.css");
   it("lets inline code wrap as its text does unless a host keeps it on one line", () => {
     const code = declarations(base, ".gotipe-content :not(pre) > code");
-    // no fallback and no value on the view: unset, the text's wrapping is inherited as before
-    expect(code["text-wrap-mode"]).toBe("var(--gt-inline-code-wrap)");
+    expect(code["text-wrap-mode"]).toBeUndefined();
     expect(code["white-space"]).toBeUndefined();
+    // in a rule of no weight: a host's own white-space on inline code wins, as before the token
+    expect(declarations(base, ":where(.gotipe-content :not(pre) > code)")).toEqual({
+      "text-wrap-mode": "var(--gt-inline-code-wrap)",
+    });
+    // no fallback and no value on the view: unset, the text's wrapping is inherited as before
     expect(tokens.view).not.toHaveProperty("--gt-inline-code-wrap");
     expect(tokens.shared).not.toHaveProperty("--gt-inline-code-wrap");
   });

@@ -38,6 +38,24 @@ test.describe("inline code and --gt-inline-code-wrap", () => {
       return { lines: tops.size, text: code.textContent, mode: getComputedStyle(code).textWrapMode };
     });
 
+  test("without the token a host's own white-space on inline code applies, whatever its weight", async ({ page }) => {
+    // as in 0.1.4, which had no rule for it: the token's rule weighs nothing
+    for (const selector of [
+      ":where(.gotipe-content code)",
+      "code",
+      ".gotipe-block-editor code",
+      ".gotipe-content :not(pre) > code",
+      "div.gotipe-block-editor .gotipe-content p > code",
+    ]) {
+      const style = await page.addStyleTag({ content: `${selector} { white-space: nowrap; }` });
+      const kept = await lines(page);
+      expect(kept.mode, selector).toBe("nowrap");
+      expect(kept.lines, selector).toBe(1);
+      await style.evaluate((node) => node.remove());
+    }
+    expect((await lines(page)).lines).toBeGreaterThan(1);
+  });
+
   test("wraps as its text by default, and stays on one line with the token, spaces kept", async ({ page }) => {
     const wrapped = await lines(page);
     expect(wrapped.mode).toBe("wrap");
