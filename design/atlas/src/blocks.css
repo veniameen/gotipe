@@ -251,7 +251,13 @@ ol.gotipe-list.is-three-digits > li::before {
    them. A wide table scrolls; the edge with hidden columns fades. */
 .gotipe-table-block {
   position: relative;
-  padding-bottom: calc(var(--gt-table-add) + var(--gt-table-add-gap));
+  padding-bottom: var(--gt-table-add-room);
+}
+/* a host's option: no room under the table. What follows stands as after any table; the bar that
+   adds a row stands a gap under the table all the same, over the top of what follows, and only
+   while the pointer is on the table or the keyboard on the bar: otherwise it takes no clicks */
+.gotipe-table-block.is-roomless {
+  --gt-table-add-room: var(--gt-table-add-room-none);
 }
 /* the scrolling area reaches into the left margin by the row handle's room, so the handle of a
    row stays visible beside it; the table itself does not move */
@@ -286,13 +292,13 @@ ol.gotipe-list.is-three-digits > li::before {
 }
 .gotipe-table-add.is-column {
   top: 0;
-  bottom: calc(var(--gt-table-add) + var(--gt-table-add-gap));
+  bottom: var(--gt-table-add-room);
   left: calc(100% + var(--gt-table-add-gap));
   width: var(--gt-table-add);
 }
 .gotipe-table-add.is-row {
+  top: calc(100% - var(--gt-table-add-room) + var(--gt-table-add-gap));
   right: 0;
-  bottom: 0;
   left: 0;
   height: var(--gt-table-add);
 }

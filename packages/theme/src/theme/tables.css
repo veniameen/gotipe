@@ -7,9 +7,11 @@
   position: relative;
   max-width: 100%;
 }
-/* room under the table for the bar that adds a row; read-only tables have no bars */
+/* room under the table for the bar that adds a row: --gt-table-add-room (unset: the bar and its
+   gap); read-only tables have no bars. With less room the bar stands a gap under the table all the
+   same, over what follows it (see .gotipe-table-add-row). */
 .gotipe-table-wrapper:has(> .gotipe-table-add) {
-  padding-bottom: calc(var(--gt-table-add) + var(--gt-table-add-gap));
+  padding-bottom: var(--gt-table-add-room, calc(var(--gt-table-add) + var(--gt-table-add-gap)));
 }
 /* the scrolling area reaches into the left margin by the row handle's room, so a row's handle
    stays visible beside it; the table itself does not move */
@@ -157,7 +159,7 @@
 }
 .gotipe-table-add-col {
   top: 0;
-  bottom: calc(var(--gt-table-add) + var(--gt-table-add-gap));
+  bottom: var(--gt-table-add-room, calc(var(--gt-table-add) + var(--gt-table-add-gap)));
   left: calc(100% + var(--gt-table-add-gap));
   width: var(--gt-table-add);
 }
@@ -170,11 +172,45 @@
   bottom: 0;
   width: var(--gt-table-add-gap);
 }
+/* a gap under the table. The part of it beyond the table's room (none by default) is cut away
+   until the pointer is on the table or the keyboard on the bar: what follows stays clickable, and a
+   caret in the table does not bring the bar over it. The room is read as a length first, so a
+   host's unitless 0 counts as 0px in the arithmetic. */
+@property --gt-table-add-room-length {
+  syntax: "<length>";
+  inherits: false;
+  initial-value: 0px;
+}
 .gotipe-table-add-row {
+  --gt-table-add-room-length: var(
+    --gt-table-add-room,
+    calc(var(--gt-table-add) + var(--gt-table-add-gap))
+  );
+  top: calc(100% - var(--gt-table-add-room-length) + var(--gt-table-add-gap));
   right: 0;
-  bottom: 0;
   left: 0;
   height: var(--gt-table-add);
+  clip-path: inset(
+    0 0
+      max(
+        0px,
+        calc(var(--gt-table-add) + var(--gt-table-add-gap) - var(--gt-table-add-room-length))
+      )
+      0
+  );
+}
+.gotipe-table-wrapper:hover > .gotipe-table-add-row,
+.gotipe-table-add-row:focus-visible {
+  clip-path: none;
+}
+/* bridges the gap, so the pointer keeps the table hovered on its way down to the bar */
+.gotipe-table-add-row::before {
+  content: "";
+  position: absolute;
+  right: 0;
+  bottom: 100%;
+  left: 0;
+  height: var(--gt-table-add-gap);
 }
 .gotipe-table-add > svg {
   width: var(--gt-icon-small);

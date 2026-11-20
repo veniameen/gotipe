@@ -87,7 +87,8 @@ handle and the heading anchor: at rest and under the pointer, on a narrow screen
 - selection, link and color;
 - the “/” menu;
 - handle, block menu and drag;
-- table: the strips that add a row and a column, a wide table, the column and row menus;
+- table: the strips that add a row and a column, a wide table, the column and row menus; no room
+  under the table (a host's option), at rest and with the pointer on the table;
 - image;
 - empty blocks and an empty page.
 

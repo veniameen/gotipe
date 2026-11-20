@@ -503,6 +503,50 @@ describe("tables have tokens for their grid, head, first column and code, today'
     expect(tokens.view["--gt-table-code-pad"]).toBe("var(--gt-inline-pad)");
     expect(tokens.view).not.toHaveProperty("--gt-table-code-radius");
   });
+  it("keeps room under an editable table by a token, the bar and its gap by default", () => {
+    const room = "var(--gt-table-add-room, calc(var(--gt-table-add) + var(--gt-table-add-gap)))";
+    const flat = (value: string | undefined) =>
+      value?.replace(/\s+/g, " ").replace(/\( /g, "(").replace(/ \)/g, ")");
+    expect(declarations(tables, ".gotipe-table-wrapper:has(> .gotipe-table-add)")).toEqual({
+      "padding-bottom": room,
+    });
+    // the column bar as tall as the table, whatever the room
+    expect(declarations(tables, ".gotipe-table-add-col")).toMatchObject({ top: "0", bottom: room });
+    // the row bar a gap under the table; what of it is beyond the room is cut away. The room is
+    // read as a length first: a host's unitless 0 is no number in the arithmetic
+    const row = declarations(tables, ".gotipe-table-add-row");
+    const length = "var(--gt-table-add-room-length)";
+    expect(flat(row["--gt-table-add-room-length"])).toBe(room);
+    expect(flat(row.top)).toBe(`calc(100% - ${length} + var(--gt-table-add-gap))`);
+    expect(row.height).toBe("var(--gt-table-add)");
+    expect(row.bottom).toBeUndefined();
+    expect(flat(row["clip-path"])).toBe(
+      `inset(0 0 max(0px, calc(var(--gt-table-add) + var(--gt-table-add-gap) - ${length})) 0)`,
+    );
+    expect(declarations(tables, "@property --gt-table-add-room-length")).toEqual({
+      syntax: '"<length>"',
+      inherits: "false",
+      "initial-value": "0px",
+    });
+    // ...until the pointer is on the table or the keyboard on the bar; a caret in a cell is not
+    expect(
+      declarations(
+        tables,
+        ".gotipe-table-wrapper:hover > .gotipe-table-add-row,\n.gotipe-table-add-row:focus-visible",
+      ),
+    ).toEqual({ "clip-path": "none" });
+    expect(tables).not.toMatch(/:focus-within\)? > \.gotipe-table-add-row/);
+    // a bridge over the gap keeps the table hovered on the way down to the bar
+    expect(declarations(tables, ".gotipe-table-add-row::before")).toEqual({
+      content: '""',
+      position: "absolute",
+      right: "0",
+      bottom: "100%",
+      left: "0",
+      height: "var(--gt-table-add-gap)",
+    });
+    expect(tokens.view).not.toHaveProperty("--gt-table-add-room");
+  });
 });
 
 describe("flow tokens for tables under headings, lists and list items", () => {
