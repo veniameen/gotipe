@@ -119,6 +119,14 @@ export function ReviewLayer({
   const [busy, setBusy] = useState(false);
   const lanes = useMemo(() => new Map(review.lanes.map((l) => [l.id, l] as const)), [review.lanes]);
   const proposals = review.proposals;
+  // the lane colour of each growing proposal, for its typing caret
+  const liveColors = useMemo(() => {
+    const colors = new Map<string, string>();
+    for (const proposal of proposals)
+      if (proposal.live)
+        colors.set(proposal.id, lanes.get(proposal.laneId)?.color ?? "var(--gt-track-1)");
+    return colors;
+  }, [proposals, lanes]);
   const comments = review.comments ?? NO_COMMENTS;
   // Wide pages keep every card in a margin column (Atlas, frame 14); narrow ones open one by the text.
   const margin = useMarginLayout(root, proposals.length + comments.length > 0, layout);
@@ -391,6 +399,7 @@ export function ReviewLayer({
         lanes={lanes}
         proposals={states.proposals}
         tick={layoutTick}
+        liveColors={liveColors}
         look={laneCursor}
         pointer={lanePointer}
       />

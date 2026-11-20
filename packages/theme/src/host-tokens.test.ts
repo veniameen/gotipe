@@ -309,25 +309,23 @@ describe("review parts have tokens with today's values", () => {
 describe("a review whose proposals are still written: nothing by default, a host's tokens", () => {
   const live = read("theme/review/live.css");
   const flat = (value: string | undefined) => (value ?? "").replace(/\s+/g, " ");
-  const caret =
-    "var(--gt-sug-live-caret-width, 0) 0 0 var(--gt-sug-live-caret-color, var(--gt-track, var(--gt-add)))";
   it("is part of the theme, after the review's own rules", () => {
     const theme = read("theme.css");
     expect(theme).toContain('@import "./theme/review/live.css";');
     expect(theme.indexOf("review/live.css")).toBeGreaterThan(theme.indexOf("review.css"));
   });
-  it("draws the typing caret as a shadow of no width unless a host sets one, in the lane's colour", () => {
-    const end = declarations(
-      live,
-      "span.gotipe-sug-live,\n.gotipe-code-block.gotipe-sug-live pre > code",
+  it("draws the typing caret over the page, of no width unless a host sets one, in the lane's colour", () => {
+    expect(declarations(live, ".gotipe-sug-live-caret")).toEqual({
+      "z-index": "var(--gt-z-selection)",
+      width: "var(--gt-sug-live-caret-width, 0)",
+      background: "var(--gt-sug-live-caret-color, var(--gt-track, var(--gt-add)))",
+      "pointer-events": "none",
+    });
+    // the text carries no caret of its own: an inline insertion keeps its bar alone
+    expect(live).not.toMatch(/box-shadow/);
+    expect(flat(declarations(read("theme/review.css"), ".gotipe-sug-ins")["box-shadow"])).toBe(
+      "inset 0 calc(-1 * var(--gt-sug-ins-bar)) 0 color-mix(in srgb, var(--gt-track, var(--gt-add)) var(--gt-sug-ins-line-mix), transparent)",
     );
-    // a shadow takes no room: the text does not move when the caret comes or goes
-    expect(Object.keys(end)).toEqual(["box-shadow"]);
-    expect(flat(end["box-shadow"])).toBe(caret);
-    // an inline insertion keeps its own bar under the text
-    const insert = flat(declarations(live, ".gotipe-sug-ins.gotipe-sug-live")["box-shadow"]);
-    const bar = flat(declarations(read("theme/review.css"), ".gotipe-sug-ins")["box-shadow"]);
-    expect(insert).toBe(`${bar}, ${caret}`);
     // read with fallbacks, not declared on the view: a value set on any element above wins
     for (const name of ["--gt-sug-live-caret-width", "--gt-sug-live-caret-color"]) {
       expect(tokens.view).not.toHaveProperty(name);

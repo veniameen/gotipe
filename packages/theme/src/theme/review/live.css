@@ -1,23 +1,18 @@
 /* A review while its proposals are still written — GoTipe Atlas, frame 14. A growing proposal
-   (`live`) looks like any other; a host can mark the end of its text with a typing caret, let
-   its lane's cursor glide after the text, and keep a cursor's flag in one line. Without these
-   the page looks as before. */
+   (`live`) looks like any other; a host can end its text with a typing caret, let its lane's
+   cursor glide after the text, and keep a cursor's flag in one line. Without these the page looks
+   as before. */
 
-/* ---- the end of a growing text: `.gotipe-sug-live` on its last inserted piece. The caret is
-   --gt-sug-live-caret-width wide (unset: none) in --gt-sug-live-caret-color (unset: the lane's
-   colour), drawn as a shadow at the end of the piece: it takes no room and moves no text. A
-   last block with no text of its own carries the class itself and draws nothing. ---- */
-span.gotipe-sug-live,
-.gotipe-code-block.gotipe-sug-live pre > code {
-  box-shadow: var(--gt-sug-live-caret-width, 0) 0 0
-    var(--gt-sug-live-caret-color, var(--gt-track, var(--gt-add)));
-}
-/* an inline insertion keeps the bar under its text */
-.gotipe-sug-ins.gotipe-sug-live {
-  box-shadow: inset 0 calc(-1 * var(--gt-sug-ins-bar)) 0
-    color-mix(in srgb, var(--gt-track, var(--gt-add)) var(--gt-sug-ins-line-mix), transparent),
-    var(--gt-sug-live-caret-width, 0) 0 0
-    var(--gt-sug-live-caret-color, var(--gt-track, var(--gt-add)));
+/* ---- the end of a growing text: `.gotipe-sug-live` on its last inserted piece. The typing caret
+   (`.gotipe-sug-live-caret`, drawn over the page with the lane cursors) stands just after the
+   text's last character, on its row: after inline code it is inside the code's plate, after the
+   last letter, where the cursor stands too. It is --gt-sug-live-caret-width wide (unset: none) in
+   --gt-sug-live-caret-color (unset: the lane's colour); it takes no room and moves no text. ---- */
+.gotipe-sug-live-caret {
+  z-index: var(--gt-z-selection);
+  width: var(--gt-sug-live-caret-width, 0);
+  background: var(--gt-sug-live-caret-color, var(--gt-track, var(--gt-add)));
+  pointer-events: none;
 }
 
 /* ---- the cursor of a growing proposal goes to its text's new end over --gt-lane-cursor-move

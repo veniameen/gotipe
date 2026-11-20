@@ -72,6 +72,9 @@
   --gt-lane-pointer-outline: currentColor;
   /* the typing caret at the end of a text still being written: none unless a host sets a width */
   --gt-sug-live-caret-width: 0px;
+  /* after inline code the caret and the cursor stand after its last letter, inside its plate: back
+     from the plate's end by the code's end padding (0.35em of its own type) */
+  --gt-live-code-end: calc(-0.35 * var(--gt-inline-code-size));
 
   --gt-card-w: 288px;
   --gt-review-card-gap: 8px;

@@ -59,9 +59,11 @@ export function proposalEndRect(root: HTMLElement, proposalId: string): DOMRect 
 }
 
 /**
- * The end of the text of every growing proposal on the page, by proposal id: where its last
- * inserted piece ends (the piece marked `gotipe-sug-live`). One pass over the page for all of
- * them, however many there are.
+ * The end of the text of every growing proposal on the page, by proposal id: just after the last
+ * character of its last inserted piece (the piece marked `gotipe-sug-live`), on the row of text
+ * that piece stands in. Inline code's plate and padding do not count, nor its smaller type: a text
+ * that ends in code ends after the code's last letter, on the text's own row. The typing caret and
+ * the lane cursor both stand there. One pass over the page for all of them, however many there are.
  */
 export function liveEndRects(root: HTMLElement): Map<string, DOMRect> {
   const ends = new Map<string, DOMRect>();
@@ -70,13 +72,33 @@ export function liveEndRects(root: HTMLElement): Map<string, DOMRect> {
     if (!id) continue;
     // a block marked itself has no text of its own: a code block ends where its code does
     const text = mark.querySelector("pre > code") ?? mark;
-    const range = document.createRange();
-    range.selectNodeContents(text);
-    const rects = range.getClientRects();
-    const r = rects.length > 0 ? rects[rects.length - 1]! : text.getBoundingClientRect();
-    ends.set(id, new DOMRect(rects.length > 0 ? r.right : r.left, r.top, 0, r.height || 20));
+    const glyph = lastCharacter(text);
+    // the row: the marked piece's own line box, in its own type, where the last letter stands
+    const rows = [...text.getClientRects()];
+    const middle = glyph ? glyph.top + glyph.height / 2 : null;
+    let row = rows[rows.length - 1] ?? text.getBoundingClientRect();
+    for (const one of rows)
+      if (middle !== null && one.top <= middle && middle <= one.bottom) row = one;
+    ends.set(id, new DOMRect(glyph ? glyph.right : row.left, row.top, 0, row.height || 20));
   }
   return ends;
+}
+
+/** The box of the last character of an element's text that is no line break, or null. */
+function lastCharacter(element: Element): DOMRect | null {
+  const walker = element.ownerDocument.createTreeWalker(element, NodeFilter.SHOW_TEXT);
+  let found: { node: Text; at: number } | null = null;
+  for (let node = walker.nextNode() as Text | null; node; node = walker.nextNode() as Text | null) {
+    let at = node.data.length;
+    while (at > 0 && (node.data[at - 1] === "\n" || node.data[at - 1] === "\r")) at -= 1;
+    if (at > 0) found = { node, at };
+  }
+  if (!found) return null;
+  const range = element.ownerDocument.createRange();
+  range.setStart(found.node, found.at - 1);
+  range.setEnd(found.node, found.at);
+  const rects = range.getClientRects();
+  return rects.length > 0 ? rects[rects.length - 1]! : range.getBoundingClientRect();
 }
 
 const BLOCK = "[data-block-id], [data-gotipe-phantom-id]";
