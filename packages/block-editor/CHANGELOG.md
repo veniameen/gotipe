@@ -30,10 +30,12 @@
 - Lane cursors: a lane has as many as it is given (`LaneCursor.id`), each with its own `name` on
   the flag and `compact` for a flag in one line (`data-compact`). The cursor of a growing
   proposal stands where its text will start while it has none, and goes to the text's new end
-  over `--gt-lane-cursor-move` when the text moved it (`data-glide`; at once on a scroll). Every
-  cursor says on which side its flag has room (`data-chip-side="end"`, or `"start"` when the
-  flag would cross the page's end edge; kept at the edge until the flag fits after the cursor
-  with room to spare): the theme puts a compact flag before its cursor then.
+  over `--gt-lane-cursor-move` when the text moved it (`data-glide`). A scroll of the page or
+  a move of the page's edges takes it along at once; a scroll elsewhere on the screen does not
+  end its glide. Every cursor says on which side its flag has room (`data-chip-side="end"`, or
+  `"start"` when the flag would cross the page's end edge; kept at the edge until the flag fits
+  after the cursor with room to spare; found again when the cursor or the page's edge moves):
+  the theme puts a compact flag before its cursor then.
 - The review binds and draws only what changed: a proposal or a comment that is as it was keeps
   its decorations, the editor's `review` layer is not set again for the same decorations, and
   `onStatesChange` is called only when a state changed.

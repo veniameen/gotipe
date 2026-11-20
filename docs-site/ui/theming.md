@@ -196,7 +196,7 @@ can be set on any container.
 | `--gt-lane-pointer-outline-width` | unset: `var(--gt-icon-stroke)` (1.5) | Width of that outline, in the arrow's 16-unit box |
 | `--gt-sug-live-caret-width` | unset: no caret | Width of a typing caret at the end of a proposal that is still being written (`live`), on its last inserted piece (`.gotipe-sug-live`); `2px` draws one. It is a shadow, so it takes no room and moves no text |
 | `--gt-sug-live-caret-color` | unset: the lane's colour | Colour of that caret |
-| `--gt-lane-cursor-move` | unset: `var(--gt-duration-fast)` (100 ms) | Time over which the cursor of a growing proposal goes to its text's new end (`.gotipe-lane-cursor[data-glide]`); `0s` moves it at once. A scroll always moves it at once, and so does reduced motion |
+| `--gt-lane-cursor-move` | unset: `var(--gt-duration-fast)` (100 ms) | Time over which the cursor of a growing proposal goes to its text's new end (`.gotipe-lane-cursor[data-glide]`); `0s` moves it at once. A scroll of the page or a change of the page's width always takes it along at once, and so does reduced motion |
 | `--gt-lane-chip-gap` | unset: `var(--gt-space-1)` (4 px) | Space between the name and the label of a cursor's flag in one line (`LaneCursor.compact`, `.gotipe-lane-cursor[data-compact]`) |
 | `--gt-lane-chip-flip-x`, `--gt-lane-chip-flip-y` | unset: `0`, `var(--gt-toolbar-gap)` (2 px) | A compact flag with no room after its cursor (`[data-chip-side="start"]`) stands before it, above the row: how far its end edge is before the cursor, and its bottom above the row |
 | `--gt-sug-replace-gap` | `0px` | Space between a struck deletion and the insertion that replaces it |
