@@ -95,7 +95,8 @@ export function computeProposal(
   };
   const base: ProposalState = {
     id: proposal.id,
-    status: live ? "live" : "pending",
+    status: "pending",
+    ...(live ? { live: true } : {}),
     position: null,
     insertEnd: null,
     blockIds: [],
@@ -112,7 +113,7 @@ export function computeProposal(
     return {
       state: {
         ...base,
-        status: live ? "live" : "stale",
+        status: "stale",
         reason: located && !located.ok ? located.reason : undefined,
         position: staleWidget(input, edits[0], ctx),
       },

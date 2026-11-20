@@ -152,9 +152,11 @@ describe("a growing proposal on the page (live)", () => {
     };
     const growing = live("p", "\n\nNew text.", { reason: "A new section" });
     const { ref, show } = await mount({ ...review, proposals: [growing, pending] });
-    expect(seen.at(-1)?.map((state) => [state.id, state.status, state.insertedChars])).toEqual([
-      ["p", "live", 0],
-      ["ready", "pending", 5],
+    expect(
+      seen.at(-1)?.map((state) => [state.id, state.status, state.live, state.insertedChars]),
+    ).toEqual([
+      ["p", "pending", true, 0],
+      ["ready", "pending", undefined, 5],
     ]);
     // the bar counts what waits for an answer
     expect(container.querySelector(".gotipe-review-bar")?.textContent).toContain("1 suggestion");
@@ -187,10 +189,55 @@ describe("a growing proposal on the page (live)", () => {
     // written: its card has both answers, and it is accepted with the rest
     await show({ ...review, proposals: [{ ...growing, live: false }, pending] });
     expect(seen.at(-1)?.[0]).toMatchObject({ id: "p", status: "pending" });
+    expect(seen.at(-1)?.[0]).not.toHaveProperty("live");
     expect(document.querySelectorAll('[data-gotipe-review-card="proposal"] button')).toHaveLength(
       2,
     );
     expect(container.querySelector(".gotipe-review-bar")?.textContent).toContain("2 suggestions");
+  });
+
+  it("is stale when its anchor is lost, still takes no decision, and Accept all goes past it", async () => {
+    const onAccept = vi.fn(() => true);
+    const seen: ProposalState[][] = [];
+    const review = {
+      onAccept,
+      onStatesChange: (states: { proposals: ProposalState[] }) => seen.push(states.proposals),
+    };
+    // its anchor names a heading the page does not have
+    const lost: ReviewProposal = {
+      ...live("p", "\n\nNew text."),
+      edits: [{ ...below("\n\nNew text."), after: "\n\n## Gone" }],
+    };
+    const pending: ReviewProposal = {
+      id: "ready",
+      laneId: "agent",
+      edits: [{ before: "The ", quote: "last", after: " one.", text: "final" }],
+    };
+    const { ref } = await mount({ ...review, proposals: [lost, pending] });
+    expect(seen.at(-1)?.[0]).toMatchObject({
+      id: "p",
+      status: "stale",
+      live: true,
+      reason: "missing",
+    });
+    // the bar counts what waits for an answer: neither pending nor stale counts it
+    const bar = container.querySelector(".gotipe-review-bar")?.textContent ?? "";
+    expect(bar).toContain("1 suggestion");
+    expect(bar).not.toMatch(/stale/i);
+    await act(async () => {
+      ref.current!.review!.focus("p");
+      await wait(30);
+    });
+    const card = document.querySelector<HTMLElement>('[data-gotipe-review-card="proposal"]')!;
+    expect(card.hasAttribute("data-live")).toBe(true);
+    expect(card.textContent).toContain("The text around changed");
+    expect(card.querySelector("button")).toBeNull();
+    // it takes no answer, and Accept all accepts the rest
+    await act(async () => {
+      expect(await ref.current!.review!.accept("p")).toBe(false);
+      expect(await ref.current!.review!.acceptAll()).toBe(1);
+    });
+    expect(onAccept.mock.calls).toEqual([["ready"]]);
   });
 
   it("keeps the page's own marks whatever its unfinished end leaves open", async () => {

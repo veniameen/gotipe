@@ -27,8 +27,8 @@ export interface ReviewProposal {
    * The proposal is still being written: as its text grows the host gives a new object with a
    * longer `edits[].text` under the same `id`. It is shown without the reveal animation and
    * takes no decision (no Accept or Reject, not part of “Accept all” or “Reject all”); its
-   * state is `"live"`. Without `live` under the same `id` it is an ordinary proposal, and its
-   * text is not revealed again.
+   * state says `live: true`. Without `live` under the same `id` it is an ordinary proposal, and
+   * its text is not revealed again.
    */
   live?: boolean;
   /**
@@ -97,10 +97,15 @@ export interface ReviewPosition {
 
 export interface ProposalState {
   id: string;
-  /** `live`: the host is still writing it (`ReviewProposal.live`), whether or not it has a place. */
-  status: "pending" | "stale" | "live";
-  /** Why it has no place: of a stale proposal, or of a live one whose anchor is not found. */
+  /** A growing proposal (`live`) is pending or stale by its anchor, as any other. */
+  status: "pending" | "stale";
+  /** Why a stale proposal has no place: its anchor is not found exactly once. */
   reason?: "missing" | "ambiguous" | "overlap";
+  /**
+   * The host is still writing it (`ReviewProposal.live`): it takes no decision yet and its text
+   * is never revealed. Absent of an ordinary proposal.
+   */
+  live?: true;
   /** First place of the change in the editor (for cards and cursors). */
   position: ReviewPosition | null;
   /**
