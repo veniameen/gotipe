@@ -19,24 +19,38 @@ interface Entry<Item, State> {
   call: number;
 }
 
+/** What a cache holds: the binding's own, out of its caller's reach. */
+export interface CacheEntries {
+  readonly proposals: Map<string, Entry<ReviewProposal, ProposalState>>;
+  readonly comments: Map<string, Entry<ReviewComment, CommentState>>;
+  /** The call being made: what it does not use is dropped after it. */
+  call: number;
+}
+
+declare const opaque: unique symbol;
+
 /**
  * What `computeReviewDecorations` found last time, kept by its caller (one per editor). With
  * it a proposal or a comment is bound again only when it (its object, or the values of a new
  * one), the document's text and map, its lane's colour, its place among the others or its
- * being open changed; otherwise its state and decorations are the same objects as before. Made
- * by `createReviewCache()`.
+ * being open changed; otherwise its state and decorations are the same objects as before.
+ * Made by `createReviewCache()` only; it has nothing to read or set.
  */
 export interface ReviewCache {
-  /** @internal */
-  readonly proposals: Map<string, Entry<ReviewProposal, ProposalState>>;
-  /** @internal */
-  readonly comments: Map<string, Entry<ReviewComment, CommentState>>;
-  /** @internal */
-  call: number;
+  readonly [opaque]: "ReviewCache";
 }
 
+const held = new WeakMap<ReviewCache, CacheEntries>();
+
 export function createReviewCache(): ReviewCache {
-  return { proposals: new Map(), comments: new Map(), call: 0 };
+  const cache = Object.freeze({}) as unknown as ReviewCache;
+  held.set(cache, { proposals: new Map(), comments: new Map(), call: 0 });
+  return cache;
+}
+
+/** What a cache made by `createReviewCache()` holds; undefined for any other object. */
+export function entriesOf(cache: ReviewCache): CacheEntries | undefined {
+  return held.get(cache);
 }
 
 /**
@@ -72,7 +86,7 @@ export function cached<Item, State>(
 }
 
 export function remember<Item, State>(
-  cache: ReviewCache,
+  cache: CacheEntries,
   entries: Map<string, Entry<Item, State>>,
   id: string,
   item: Item,
@@ -98,7 +112,7 @@ export function remember<Item, State>(
 }
 
 /** Drops what the call just made did not use: its proposals and comments are gone. */
-export function forget(cache: ReviewCache): void {
+export function forget(cache: CacheEntries): void {
   for (const entries of [cache.proposals, cache.comments]) {
     for (const [id, entry] of entries) if (entry.call !== cache.call) entries.delete(id);
   }

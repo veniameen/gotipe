@@ -2,6 +2,7 @@ import type { BlockView, Decoration } from "@gotipe/core";
 import { parseMarkdown, serializeMarkdown } from "@gotipe/markdown";
 import { describe, expect, it, vi } from "vitest";
 import {
+  type ReviewCache,
   type ReviewInput,
   computeReviewDecorations,
   createReviewCache,
@@ -334,6 +335,35 @@ describe("what a renderer keeps while a text grows", () => {
     const back = call(PAGE, [proposal]);
     expect(counting).toHaveBeenCalledTimes(3);
     expect(back.proposals[0]).toMatchObject({ id: "p", status: "pending" });
+  });
+
+  it("a cache has nothing to read or set, and an object it was not made as is no cache", () => {
+    const cache = createReviewCache();
+    expect(Object.keys(cache)).toEqual([]);
+    expect(Object.getOwnPropertySymbols(cache)).toEqual([]);
+    expect(Object.isFrozen(cache)).toBe(true);
+    const doc = page(PAGE);
+    const counting = vi.fn(parse);
+    const proposals = [live("a", below("\n\nA."))];
+    const call = (given: unknown) =>
+      computeReviewDecorations({
+        ...doc,
+        parse: counting,
+        lanes: LANES,
+        proposals,
+        cache: given as ReviewCache,
+      });
+    const plainCall = computeReviewDecorations({ ...doc, parse, lanes: LANES, proposals });
+    // a look-alike binds everything each time, as no cache does
+    expect(call({ proposals: new Map(), comments: new Map(), call: 0 })).toEqual(plainCall);
+    expect(call({})).toEqual(plainCall);
+    expect(counting).toHaveBeenCalledTimes(2);
+    // each cache is its own: one editor's does not answer for another's
+    call(cache);
+    call(cache);
+    expect(counting).toHaveBeenCalledTimes(3);
+    call(createReviewCache());
+    expect(counting).toHaveBeenCalledTimes(4);
   });
 
   it("without a cache gives the same result", () => {
