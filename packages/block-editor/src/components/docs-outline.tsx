@@ -93,6 +93,28 @@ function readingPosition(scroller: HTMLElement | null) {
 const prefersReducedMotion = () =>
   !!window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
 
+const pixels = (value: string) => Number.parseFloat(value) || 0;
+
+/**
+ * Brings a heading to the top of the box the page scrolls in and leaves the page around that box
+ * where it is: a docs page in a host's panel or a demo window moves inside it. With no such box,
+ * or one that cannot scroll, the page itself scrolls, and the host's `scroll-margin-top` keeps the
+ * heading clear of its fixed header.
+ */
+function scrollToHeading(target: HTMLElement, scroller: HTMLElement | null) {
+  const behavior: ScrollBehavior = prefersReducedMotion() ? "auto" : "smooth";
+  if (!scroller || scroller.scrollHeight <= scroller.clientHeight) {
+    target.scrollIntoView({ behavior, block: "start" });
+    return;
+  }
+  const gap =
+    pixels(getComputedStyle(target).scrollMarginTop) +
+    pixels(getComputedStyle(scroller).scrollPaddingTop);
+  const offset =
+    target.getBoundingClientRect().top - scroller.getBoundingClientRect().top - scroller.clientTop;
+  scroller.scrollTo({ top: scroller.scrollTop + offset - gap, behavior });
+}
+
 type Pin = { id: string; timer: ReturnType<typeof setTimeout> } | null;
 
 /** Keeps a chosen heading current while its scroll runs; every scroll event restarts the wait. */
@@ -106,8 +128,9 @@ function pin(pinned: { current: Pin }, id: string) {
 
 /**
  * The outline of the `docs` view (GoTipe Atlas, frame 2): the page's headings beside it, the current
- * section marked. A link scrolls to its heading and puts the caret at its start. Fewer than two
- * headings draw nothing; a narrow container hides it through `--gt-outline-display`.
+ * section marked. A link scrolls to its heading, inside the box the page scrolls in when it has one,
+ * and puts the caret at its start. Fewer than two headings draw nothing; a narrow container hides
+ * it through `--gt-outline-display`.
  */
 export function DocsOutline({ editor }: { editor: GoTipeEditor }) {
   const i18n = useBlockEditorI18n();
@@ -169,7 +192,7 @@ export function DocsOutline({ editor }: { editor: GoTipeEditor }) {
       editor.focus();
       editor.setSelection({ anchor: { blockId: id, offset: 0 }, head: { blockId: id, offset: 0 } });
     }
-    target.scrollIntoView({ behavior: prefersReducedMotion() ? "auto" : "smooth", block: "start" });
+    scrollToHeading(target, nav.current && scrollingAncestor(nav.current));
   };
 
   return (

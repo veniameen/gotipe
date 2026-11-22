@@ -139,4 +139,53 @@ describe("DocsOutline", () => {
     expect(links()[1]?.getAttribute("aria-current")).toBe("location");
     expect(editor.getViewState().selection.anchor).toEqual({ blockId: "two", offset: 0 });
   });
+
+  /** The outline inside a box with `overflow-y: auto`, its heights and its top on the screen. */
+  const boxed = (heights: { scroll: number; client: number }) => {
+    const box = document.createElement("div");
+    box.style.overflowY = "auto";
+    document.body.append(box);
+    box.append(container);
+    Object.defineProperties(box, {
+      scrollHeight: { value: heights.scroll },
+      clientHeight: { value: heights.client },
+      scrollTop: { value: 40 },
+    });
+    box.getBoundingClientRect = () => ({ top: 100 }) as DOMRect;
+    box.scrollTo = vi.fn() as typeof box.scrollTo;
+    return box;
+  };
+  const clickSecond = () => {
+    act(() =>
+      editor.setContent(
+        doc(block("p", "paragraph", "x"), heading("one", 2, "One"), heading("two", 2, "Two")),
+      ),
+    );
+    act(() => root.render(<DocsOutline editor={editor} />));
+    surface.innerHTML = '<h2 data-block-id="one">One</h2><h2 data-block-id="two">Two</h2>';
+    const target = surface.querySelector<HTMLElement>('[data-block-id="two"]')!;
+    target.getBoundingClientRect = () => ({ top: 700 }) as DOMRect;
+    target.scrollIntoView = vi.fn();
+    act(() =>
+      links()[1]?.dispatchEvent(new MouseEvent("click", { bubbles: true, cancelable: true })),
+    );
+    return target;
+  };
+
+  it("in a box that scrolls, moves that box to the heading and leaves the page where it is", () => {
+    const box = boxed({ scroll: 1200, client: 400 });
+    const target = clickSecond();
+    expect(box.scrollTo).toHaveBeenCalledWith({ top: 640, behavior: "smooth" });
+    expect(target.scrollIntoView).not.toHaveBeenCalled();
+    expect(links()[1]?.getAttribute("aria-current")).toBe("location");
+    box.remove();
+  });
+
+  it("in a box that cannot scroll, scrolls the page to the heading", () => {
+    const box = boxed({ scroll: 400, client: 400 });
+    const target = clickSecond();
+    expect(box.scrollTo).not.toHaveBeenCalled();
+    expect(target.scrollIntoView).toHaveBeenCalledWith({ behavior: "smooth", block: "start" });
+    box.remove();
+  });
 });
