@@ -168,8 +168,10 @@ in the site's code (`motion.css`), the frame draws the rest state it arrives at:
   behind them light passes into the gaps, in the tiles a glow in a grain of dots (`--site-bento-*`,
   `--site-tile-*`); a 3×3 grid — open cells with drawn gradient marks (`--site-glyph-*`), a large name
   and a MIT or Commercial badge; “One markup. Four looks.” — a view switch with a slider above a
-  window of one height; the dark panel “From install to your first edit.” — steps and examples in
-  React, Markdown, Vue tabs (inside, the library's dark theme through `data-theme="dark"`); three
+  window of one height (`--site-look-h`, its tallest view): its page has a glyph, a byline, two
+  headings, code and tasks, so every view shows what it draws differently (frames 1–4); the dark
+  panel “From install to your first edit.” — steps and examples in React, Markdown, Vue tabs
+  (inside, the library's dark theme through `data-theme="dark"`); three
   ways to launch with drawn marks (browser, chip, cloud) and large numbers; two license cards of one
   height; the closing strip — the first screen's light in the page's theme with a document built on
   the engine (`--site-build-*`: glass plates in depth — the engine with a ray from the logo (white by
