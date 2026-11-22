@@ -133,6 +133,7 @@ steps of the `--site-space-*` scale (a 4 px rhythm, like the library's), corners
 site, as a host, hands its surface to the editors (`--gt-page-bg`, `--gt-overlay` inside `.site`); the
 library's pages are not touched. Layout lives in `src/site/`: `landing.css` (shell, headers, footer),
 `landing-hero.css` (first screen, facts), `landing-window.css` (windows with a document),
+`landing-looks.css` (the looks window: a box per view, the blog's comments),
 `landing-sections.css` (stack, bento, parts, views), `landing-closing.css` (dark panel, launch,
 licenses, finale), `docs.css`. The site repeats these rules in `apps/landing/styles`; motion lives only
 in the site's code (`motion.css`), the frame draws the rest state it arrives at:
@@ -167,10 +168,13 @@ in the site's code (`motion.css`), the frame draws the rest state it arrives at:
   pictures (a three-step transaction, Markdown with no rewritten lines, two people in one paragraph),
   behind them light passes into the gaps, in the tiles a glow in a grain of dots (`--site-bento-*`,
   `--site-tile-*`); a 3×3 grid — open cells with drawn gradient marks (`--site-glyph-*`), a large name
-  and a MIT or Commercial badge; “One markup. Four looks.” — a view switch with a slider above a
-  window of one height (`--site-look-h`, its tallest view): its page has a glyph, a byline, two
-  headings, code and tasks, so every view shows what it draws differently (frames 1–4); the dark
-  panel “From install to your first edit.” — steps and examples in React, Markdown, Vue tabs
+  and a MIT or Commercial badge; “One markup. Four looks.” — a view switch (Notion-like, Docs,
+  Modern, Minimal) with a slider above a window of one height (`--site-look-h`): each view shows the
+  page a host builds with it and the parts it brings — a wiki page with handles, the / menu and @
+  mentions; a reference whose outline scrolls the window, not the page; an article under the fixed
+  toolbar with a word count; the comments under that article on a blog, written, edited and shown
+  read only by the editor, with a limit; a page longer than the window scrolls inside it (frame 20
+  draws the window in each view); the dark panel “From install to your first edit.” — steps and examples in React, Markdown, Vue tabs
   (inside, the library's dark theme through `data-theme="dark"`); three
   ways to launch with drawn marks (browser, chip, cloud) and large numbers; two license cards of one
   height; the closing strip — the first screen's light in the page's theme with a document built on
