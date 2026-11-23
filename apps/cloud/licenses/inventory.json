@@ -231,10 +231,10 @@
   },
   {
     "module": "github.com/go-chi/chi/v5",
-    "version": "v5.3.0",
+    "version": "v5.5.0",
     "notices": [
       {
-        "file": "github.com__go-chi__chi__v5@v5.3.0-LICENSE",
+        "file": "github.com__go-chi__chi__v5@v5.5.0-LICENSE",
         "source": "LICENSE",
         "sha256": "a2d51b7515acfaff2f7a88688650f2fc4fd99561383e72bba2305e3db59a1647"
       }
