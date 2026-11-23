@@ -110,7 +110,12 @@ converter source. The underlying names are defined by the WHATWG HTML standard.
 `scripts/collect-cloud-licenses.py` derives the actually linked Go module graph
 using `go list -deps`, copies original module-root license/notice files unchanged,
 and records versions and hashes under `apps/cloud/licenses`. `--check` verifies
-that inventory against the installed module cache. The Cloud image includes those
+that inventory against the installed module cache. The directory is generated
+exclusively from that graph: a run without `--check` removes the notices of module
+versions that are no longer linked, and `--check` fails, naming the files, when
+the directory holds anything the graph does not produce. Only names in the
+script's `KEPT` set (today Finder's `.DS_Store`) are exempt; a file maintained by
+hand there would have to be listed in it. The Cloud image includes those
 notices alongside the optional native export compiler/font notices and the
 repository's original MIT/commercial license files; this does not change their
 terms or grant an alternative license.
