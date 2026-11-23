@@ -1,6 +1,6 @@
-// Problems the check already knows: each is a finding in docs/24 that waits for the owner's
-// decision on its frame. The check prints it under its finding and passes. Once the frame is
-// fixed, the entry fails the check until it is removed here and the finding is closed in docs/24.
+// Problems the check already knows: each is a finding that waits for the owner's decision on
+// its frame. The check prints it under its finding and passes. Once the frame is fixed, the
+// entry fails the check until it is removed here and the finding is closed.
 
 export const KNOWN = [];
 
@@ -22,7 +22,7 @@ export function sortProblems(problems, { audited = true, known = KNOWN } = {}) {
   for (const [entry, count] of found) {
     if (audited && !count)
       failing.push(
-        `${entry.finding} is not found any more: close it in docs/24 and remove it from lib/known.mjs`,
+        `${entry.finding} is not found any more: close the finding and remove it from lib/known.mjs`,
       );
   }
   return { failing, known: listed };

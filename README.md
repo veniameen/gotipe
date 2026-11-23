@@ -13,7 +13,7 @@
   <a href="https://gotipe.com">Website</a> ·
   <a href="https://gotipe.com/docs/">Docs</a> ·
   <a href="https://crates.io/search?q=gotipe">Crates</a> ·
-  <a href="docs/22-release-readiness.md">Release plan</a>
+  <a href="https://gotipe.com/docs/resources/changelog/">Changelog</a>
 </p>
 
 GoTipe is a block editor written from scratch in TypeScript and Rust/WASM. The core, Markdown,
@@ -31,9 +31,9 @@ Three ways to integrate:
 collaboration; `'auto'` tries WASM and falls back to JS when the module is unavailable. Schema and
 document errors are never masked by switching engines.
 
-For the current release-candidate status and the required checks, see the
-[release plan](docs/22-release-readiness.md). Being ready locally does not mean the packages are
-published or that an external Cloud is already deployed.
+Each version's changes are in the [changelog](https://gotipe.com/docs/resources/changelog/); the
+required checks are in the [test matrix](docs/development/testing.md). There is no hosted GoTipe
+Cloud: you deploy the backend yourself.
 
 ## Local setup
 

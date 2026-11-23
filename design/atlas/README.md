@@ -18,7 +18,8 @@ over to `packages/theme` and `packages/block-editor`.
 - `atlas.html` — the built file. It opens in a browser with no server and no network.
 
 A frame is written once between `<!-- @frame frame=… view=… w=… -->` and `<!-- @end -->`.
-The theme of all frames is chosen at once by the switch at the top of the page, as in Specimen v6; narrow frames stand side by side, wide ones one by one.
+The theme of all frames is chosen at once by the switch at the top of the page, as in Specimen v6;
+narrow frames stand side by side, wide ones one by one.
 
 Frame parameters:
 - `w` — width: 320, 375, 480, 768, 1024 or 1440;
@@ -60,7 +61,7 @@ In Chromium the check walks the page twice, switching the theme with the same sw
 - the text contrast is below the threshold on its real background, counting popup surfaces and
   fills.
 
-A problem already recorded as a finding in `docs/24` is entered in `lib/known.mjs`: the check prints it
+A problem already recorded as a finding is entered in `lib/known.mjs`: the check prints it
 under the finding's number and does not fail. When the frame is fixed, the check fails until the entry
 is removed and the finding is closed.
 

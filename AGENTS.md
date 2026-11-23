@@ -9,7 +9,8 @@ messages require a request that says so. Don't change licenses for convenience.
 
 1. Find the area in the [code map](docs/development/code-map.md).
 2. Pick the scenario and checks from the [matrix](docs/development/testing.md).
-3. For current work, check the [release plan](docs/22-release-readiness.md).
+3. Internal plans, the release log and competitor research are kept outside this repository;
+   don't add them here.
 4. Search only the sources you need; exclude node_modules, dist, target, pkg, output.
 
 ## Architecture and SOLID

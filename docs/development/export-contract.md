@@ -144,6 +144,4 @@ compares a fixed native/WASM corpus using independent Poppler/pypdf checks for
 text, typography, links, images, outlines, page dimensions and overflow. Browser
 tests call the public API in Chromium, Firefox and WebKit and validate the saved
 PDF bytes independently. Current receipts belong in
-ignored `output/`; the [release plan](../22-release-readiness.md) tracks current
-results and remaining acceptance work. This is the current contract; the long
-numbered export/API designs contain historical proposals.
+ignored `output/`. This is the current contract.

@@ -234,13 +234,13 @@ Still differs:
 - **The handle stays on a narrow screen** — an owner decision: drag and drop by finger works
   through it, so notion keeps a margin for it on the left.
 
-The host callout "Agent instructions" was removed from the library: the codec reads such a quote as
-a quote, and the host draws its own view through `blockViews`.
+A host's own callout ("Agent instructions") was removed from the library: the codec reads such a
+quote as a quote, and the host draws its own view through `blockViews`.
 
 ## Related documents
 
 - [GoTipe Atlas](../design/atlas/README.md): build, check, frames.
 - [Theme and multiple editors](development/theme.md): the theme API.
-- [Accessibility and i18n](15-accessibility-i18n.md).
-- [Host integration](21-host-integration.md): the host takes the shared view and
-  passes its colors through `--gt-*`.
+- [Internationalization](../docs-site/ui/i18n.md).
+- [Host](../docs-site/concepts/host.md): the host takes the shared view and passes its colors
+  through `--gt-*`.

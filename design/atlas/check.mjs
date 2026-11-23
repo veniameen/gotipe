@@ -3,7 +3,7 @@
 // 1. atlas.html is the build of the current parts; 2. literal colours and sizes only in
 // the token files, every var() defined, markup without inline styles or network; 3. in Chromium:
 // no errors or requests, every figure in both themes of the switch, no overflow, overlap, text
-// off its plate or weak contrast. Problems recorded in docs/24 (lib/known.mjs) are listed and
+// off its plate or weak contrast. Known problems (lib/known.mjs) are listed and
 // pass. Frame screenshots go to output/atlas/ (ignored by Git).
 import { readFileSync, readdirSync } from "node:fs";
 import { createRequire } from "node:module";
@@ -69,7 +69,7 @@ console.log(
   `atlas check: parts ${styles.length} css · frames ${frames.length} · shots ${shots.length}${where}`,
 );
 const { failing, known } = sortProblems([...new Set(problems)], { audited });
-if (known.length) console.log(`KNOWN, in docs/24 (${known.length}):\n  ${known.join("\n  ")}`);
+if (known.length) console.log(`KNOWN (${known.length}):\n  ${known.join("\n  ")}`);
 if (failing.length) {
   console.log(`PROBLEMS (${failing.length}):\n  ${failing.join("\n  ")}`);
   process.exit(1);
