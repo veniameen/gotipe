@@ -63,3 +63,9 @@ The body starts at H2 (`##`). Headings H2–H3 form the outline beside the page.
 - Short sentences, second person, present tense. Lead with the code a reader needs.
 - No marketing words; other editors are named only in the migration guide.
 - Examples are complete enough to paste: imports included, no `...` inside calls.
+
+## Check
+
+`pnpm check:docs-site` holds every page to these rules (`scripts/docs-site/rules.mjs`) and
+reads it with the GoTipe codec; it needs the built codec (`pnpm --filter @gotipe/markdown build`)
+and runs in CI.

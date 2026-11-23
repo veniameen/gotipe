@@ -14,6 +14,7 @@ CSS order, keys/mount, subscriptions, and formats. A test does not repeat the im
 | Cloud/SDK | another role/user/scope, malformed payload, storage failure, 204/errors |
 | Export | a consumer/format validator, Unicode, no format substitution |
 | Packages | tarball/files/license/exports, ESM/CJS/types, a clean consumer |
+| Documentation (docs-site) | `pnpm check:docs-site`: nav.json, front matter, codec reads every page, links and anchors |
 
 ## Commands
 
@@ -29,6 +30,7 @@ pnpm check:packages
 pnpm check:consumer
 pnpm check:bundles
 pnpm check:theme
+pnpm check:docs-site
 pnpm check:exports
 pnpm check:pdf-regression
 pnpm check:cargo-release
