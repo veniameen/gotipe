@@ -76,6 +76,25 @@ the same Chromium or Chrome:
 node --test design/atlas/lib/*.test.mjs
 ```
 
+## A host's frames
+
+A host of the library can draw its own pages over these parts. It adds its files to `src/` and names
+them in `src/host.json`:
+
+```json
+{
+  "tokens": ["tokens-host.css"],
+  "styles": ["host/page.css"],
+  "icons": ["host/icons.svg"],
+  "figures": ["figures/40-home.html"]
+}
+```
+
+Its token files follow the library's and, with them, are the only parts with literal colors and
+sizes; its styles and sprites follow the library's. The page then holds the host's figures alone,
+drawn with every style, and the check holds them to the same rules. This repository has no
+`host.json`; GoTipe's own site draws frames 20–21 this way.
+
 ## Frames
 
 1–4. One document in four views: notion, docs, modern, minimal. The docs view also has the block
@@ -119,75 +138,8 @@ handle and the heading anchor: at rest and under the pointer, on a narrow screen
 
 19. PageEditor: a wiki page on the shared components; notion by default, docs through `view`.
 
-20–21. The site — after the owner's reference (2026-11-16) in GoTipe's voice: the library's
-blue accent, no purple. Text, lines and accent are `--gt-*`; the site's voice is `--site-*` in
-`src/tokens-site.css`: Inter (headings 600 with tight tracking, text) and JetBrains Mono (labels,
-badges, code) first, the library's system families as the fallback, the font files served by the site
-itself; borders with light, glass, thin lines; light and dark values. At the sides of the first screen
-on the site there is a nebula (a WebGL shader, the colors of gas and stars are `--site-shade-*`): soft
-blue gas frames the text, rare stars on top; the cursor lights and swirls the gas, the stars shift a
-little after it; under the text and the header it is quieter, below the first screen it fades; the
-frame draws the first screen without it. The quiet header links over the light are `--site-head-ink`,
-one step stronger than the page's quiet text: not below 4.5:1 on the scene's glow. All distances are
-steps of the `--site-space-*` scale (a 4 px rhythm, like the library's), corners are
-`--site-radius-*`; the tokens of parts name a step of the scale, not a number. In the dark theme the
-site, as a host, hands its surface to the editors (`--gt-page-bg`, `--gt-overlay` inside `.site`); the
-library's pages are not touched. Layout lives in `src/site/`: `landing.css` (shell, headers, footer),
-`landing-hero.css` (first screen, facts), `landing-window.css` (windows with a document),
-`landing-looks.css` (the looks window: a box per view, the blog's comments),
-`landing-sections.css` (stack, bento, parts, views), `landing-closing.css` (dark panel, launch,
-licenses, finale), `docs.css`. The site repeats these rules in `apps/landing/styles`; motion lives only
-in the site's code (`motion.css`), the frame draws the rest state it arrives at:
-- home: the first screen's backdrop stands off the window edge equally at the top and at the sides;
-  the header is a strip across the whole frame, transparent over the first screen; when scrolling
-  starts, its glass smoothly narrows to exactly the page column: the glass edges at the column edges,
-  no further, the mark, links and buttons move inside it (`--site-head-pad-x`), all on one middle
-  line; the theme is one button, one press, the new theme opens as a circle from the button (on a
-  phone, a switch in the menu); in the center the “v0.1” label with a live dot, three lines “Your
-  editor. Your engine. Your rules.” — lit headings (`--site-title-ink`, the accent line is
-  `--site-title-accent`; “rules.” is highlighted as in the editor, a caret after it), two buttons and
-  the install field: the main one is, on a dark page, a gray pill with a soft white light inside, on a
-  light one an ink pill with a cold blue (`--site-lamp-*`): the light at the end of the pill follows
-  the cursor smoothly and stays where the cursor left, the pill's edge burns by the light — a thin line
-  and a glow blurred at 2, 7 and 15 px (`--site-rim-*`; on the light page a thin blue line with almost
-  no blur); the second is dark glass in an outline (on a light page a white pill in a neutral outline
-  with a soft shadow; `--site-pill-*`), its near edge catches the lamp's light (`--site-catch-*`);
-  labels are small caps; under the nebula at the sides lies the editor's interface
-  (`--site-ghost-*`), invisible until the cursor lifts it in a soft circle of light; a live Markdown ↔
-  document window with a beam along the edge: both sides can be edited — an edit in the document is
-  written to Markdown at once, typed Markdown is accepted by the document on a pause, and the block
-  under the cursor has a “+” and a handle in the document's left margin (`--site-render-gutter`) (on a
-  phone, a “Document / Markdown” switch); the line “Not a wrapper. A foundation.” and the technology
-  strip (on a phone, wrapping, no strip); verifiable facts; “The GoTipe stack” — a panel in the page's
-  theme: by day light glass and white nodes, by night a night one (`--site-stack-*`): interfaces on the
-  left, infrastructure on the right, the engine in the middle, glowing, light runs along its edge;
-  comets run along the beams (`--site-comet-*`), nodes flash, the engine responds, the node under the
-  cursor lights its beam; and three parts of the stack with the same marks as the bento tiles; in the
-  “Everything you need” heading a co-author is at work (`--site-co-*`: a caret with a name, a
-  highlighted phrase, the editor's panel); along the left margin, light lines (`--site-lines-*`);
-  bento — three tiles in the page's theme with drawn marks (an engine chip, M↓, two people) and live
-  pictures (a three-step transaction, Markdown with no rewritten lines, two people in one paragraph),
-  behind them light passes into the gaps, in the tiles a glow in a grain of dots (`--site-bento-*`,
-  `--site-tile-*`); a 3×3 grid — open cells with drawn gradient marks (`--site-glyph-*`), a large name
-  and a MIT or Commercial badge; “One markup. Four looks.” — a view switch (Notion-like, Docs,
-  Modern, Minimal) with a slider above a window of one height (`--site-look-h`): each view shows the
-  page a host builds with it and the parts it brings — a wiki page with handles, the / menu and @
-  mentions; a reference whose outline scrolls the window, not the page; an article under the fixed
-  toolbar with a word count; the comments under that article on a blog, written, edited and shown
-  read only by the editor, with a limit; a page longer than the window scrolls inside it (frame 20
-  draws the window in each view); the dark panel “From install to your first edit.” — steps and examples in React, Markdown, Vue tabs
-  (inside, the library's dark theme through `data-theme="dark"`); three
-  ways to launch with drawn marks (browser, chip, cloud) and large numbers; two license cards of one
-  height; the closing strip — the first screen's light in the page's theme with a document built on
-  the engine (`--site-build-*`: glass plates in depth — the engine with a ray from the logo (white by
-  day, by night a silhouette in the engine's light; `--site-build-manta`), the Markdown source,
-  blocks, a page with a co-author's caret; light rises through them) and two buttons; the footer;
-- documentation: the header stands on the page columns (the search field starts where the page
-  starts); on the left sections with mono headings, the navigation fades at its edges, the current
-  page is a blue plate; in the middle the page in the docs view is a GoTipe document: the path and
-  tools in one line, packages and license under the description, links in the text underlined, a
-  footer line under the page; on the right the outline with a mono heading; search in a dialog; on a
-  laptop the outline goes away, on a tablet and a phone the sections go behind a menu button.
+20–21. The site: its home page and its documentation are drawn where the site lives, as a host's
+frames over these parts (A host's frames, above).
 
 22–30. New features:
 - mentions: in the text and under the pointer, the list after “@” with ↵ at the chosen one, no one

@@ -2,7 +2,6 @@
 // every var() is defined, markup carries no inline styles, colours or network addresses.
 import { readPart } from "./assemble.mjs";
 
-const TOKENS = new Set(["tokens.css", "tokens-views.css", "tokens-ui.css", "tokens-site.css"]);
 const COLOR_LITERAL =
   /#[0-9a-f]{3,8}\b|\b(?:rgba?|hsla?|hwb|lab|lch|oklab|oklch|color-mix|color)\(/i;
 const LENGTH_LITERAL =
@@ -74,17 +73,19 @@ function checkPreludes(name, css) {
   return out;
 }
 
-export function checkStyles(names) {
+/** The styles of the page (`names`, in order) by the rules; `tokens` names its token files. */
+export function checkStyles(names, tokens) {
+  const tokenFiles = new Set(tokens);
   const problems = [];
   const defined = new Set();
   const used = [];
   for (const name of names) {
-    if (!TOKENS.has(name)) problems.push(...checkPreludes(name, readPart(name)));
+    if (!tokenFiles.has(name)) problems.push(...checkPreludes(name, readPart(name)));
     for (const { property, value, line } of declarations(readPart(name))) {
       if (property.startsWith("--")) defined.add(property);
       for (const m of value.matchAll(/var\((--[\w-]+)/g))
         used.push({ token: m[1], at: `${name}:${line}` });
-      if (TOKENS.has(name)) {
+      if (tokenFiles.has(name)) {
         if (!property.startsWith("--") && property !== "color-scheme") {
           problems.push(`${name}:${line} ${property} — token files hold only custom properties`);
         }

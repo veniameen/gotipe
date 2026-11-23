@@ -8,7 +8,7 @@
 import { readFileSync, readdirSync } from "node:fs";
 import { createRequire } from "node:module";
 import path from "node:path";
-import { OUTPUT, ROOT, SRC, STYLES, assemble } from "./lib/assemble.mjs";
+import { OUTPUT, ROOT, SRC, assemble, atlasParts } from "./lib/assemble.mjs";
 import { browserAudit } from "./lib/browser-audit.mjs";
 import { sortProblems } from "./lib/known.mjs";
 import { checkMarkup, checkStyles } from "./lib/static-rules.mjs";
@@ -17,14 +17,15 @@ const REPO = path.resolve(ROOT, "../..");
 const SHOTS = path.join(REPO, "output", "atlas");
 const noShots = process.argv.includes("--no-shots");
 
-function partsOf(directory, pattern, prefix = "") {
+function filesIn(directory, pattern, prefix = "") {
   return readdirSync(directory, { withFileTypes: true }).flatMap((entry) => {
     const name = prefix + entry.name;
-    if (entry.isDirectory()) return partsOf(path.join(directory, entry.name), pattern, `${name}/`);
+    if (entry.isDirectory()) return filesIn(path.join(directory, entry.name), pattern, `${name}/`);
     return pattern.test(entry.name) ? [name] : [];
   });
 }
 
+const parts = atlasParts();
 const problems = [];
 let built = "";
 try {
@@ -32,14 +33,14 @@ try {
 } catch {
   problems.push("atlas.html is missing — node design/atlas/build.mjs");
 }
-if (built && built !== assemble())
+if (built && built !== assemble(parts))
   problems.push("atlas.html is stale — node design/atlas/build.mjs");
 
-const styles = partsOf(SRC, /\.css$/);
+const styles = filesIn(SRC, /\.css$/);
 for (const name of styles)
-  if (!STYLES.includes(name)) problems.push(`${name} is not built into the page`);
-const { problems: styleProblems, defined } = checkStyles(STYLES);
-problems.push(...styleProblems, ...checkMarkup(partsOf(SRC, /\.(?:html|svg)$/), defined));
+  if (!parts.styles.includes(name)) problems.push(`${name} is not built into the page`);
+const { problems: styleProblems, defined } = checkStyles(parts.styles, parts.tokens);
+problems.push(...styleProblems, ...checkMarkup(filesIn(SRC, /\.(?:html|svg)$/), defined));
 if (!styles.length) problems.push("no styles found");
 
 let frames = [];

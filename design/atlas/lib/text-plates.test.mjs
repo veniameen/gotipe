@@ -6,12 +6,12 @@ import assert from "node:assert/strict";
 import { createRequire } from "node:module";
 import path from "node:path";
 import { after, before, test } from "node:test";
-import { ROOT, STYLES, readPart } from "./assemble.mjs";
+import { ROOT, atlasParts, readPart } from "./assemble.mjs";
 import { textOffPlates } from "./text-plates.mjs";
 
 const { chromium } = createRequire(path.resolve(ROOT, "../../package.json"))("@playwright/test");
 /** The atlas's styles and, for the tests only, plates, holders and scrollers of their own. */
-const STYLE = `${STYLES.map(readPart).join("\n")}
+const STYLE = `${atlasParts().styles.map(readPart).join("\n")}
 .probe-w { width: 120px; }
 .probe-key { width: 32px; white-space: nowrap; }
 .probe-plate { display: inline-block; padding: 0 8px; background: rgb(0 0 0 / 0.1); font-size: 20px; white-space: nowrap; }
