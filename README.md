@@ -1,5 +1,5 @@
 <p align="center">
-  <a href="https://gotipe.com"><img src="apps/landing/public/brand/gotipe-logo-256.webp" width="112" height="112" alt="GoTipe logo"></a>
+  <a href="https://gotipe.com"><img src=".github/assets/gotipe-logo-256.webp" width="112" height="112" alt="GoTipe logo"></a>
 </p>
 
 <h1 align="center">GoTipe</h1>

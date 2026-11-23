@@ -10,5 +10,5 @@
   "access": "public",
   "baseBranch": "main",
   "updateInternalDependencies": "patch",
-  "ignore": ["@gotipe/playground", "@gotipe/landing"]
+  "ignore": ["@gotipe/playground"]
 }
