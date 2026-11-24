@@ -20,6 +20,6 @@
     "For Vue, Svelte and Solid use @gotipe/core with @gotipe/vue, @gotipe/svelte or @gotipe/solid; the application draws the interface.",
     "A string passed as content or to setContent is HTML. Load Markdown with parseMarkdown from @gotipe/markdown, or use PageEditor.",
     "Collaboration needs engine: \"wasm\" (BlockEditor or a headless editor); PageEditor and engine: \"js\" cannot collaborate. CollaborationProvider talks to a GoTipe Cloud the application runs itself; there is no hosted service.",
-    "@gotipe/block-editor, @gotipe/theme and @gotipe/ai-ui are under the GoTipe Commercial License (free for personal, non-profit, educational and OSI open-source projects, companies under USD 1M revenue, and evaluation); every other package is MIT. Tell the developer when you add one of them."
+    "@gotipe/block-editor, @gotipe/theme and @gotipe/ai-ui use the GoTipe Commercial License (free for personal, non-profit, education, OSI open-source and under USD 1M revenue use, and for evaluation); the rest is MIT. Tell the developer when you add one."
   ]
 }
