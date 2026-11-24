@@ -16,8 +16,10 @@
   <a href="https://gotipe.com/docs/resources/changelog/">Changelog</a>
 </p>
 
-GoTipe is a block editor written from scratch in TypeScript and Rust/WASM. The core, Markdown,
-transactions, history and CRDT are all owned by the project; Tiptap and ProseMirror are not used.
+GoTipe is a block editor framework for the web: a ready Notion-style editor for React, headless
+adapters for React, Vue, Svelte and Solid, lossless Markdown and real-time collaboration, on its own
+TypeScript and Rust/WASM engine. The core, Markdown, transactions, history and CRDT are all owned
+by the project; Tiptap and ProseMirror are not used.
 
 Three ways to integrate:
 
@@ -72,6 +74,18 @@ files are embedded in the document as data URLs; callbacks and limits are descri
 [media contract](docs/development/assets.md).
 Use `getJSON()` for the full rich-document structure; Markdown preserves the syntax and semantics of
 the supported Markdown constructs, not arbitrary JSON.
+
+## AI coding agents
+
+GoTipe ships a skill that teaches coding agents to install, configure and debug it:
+
+```sh
+npx skills add veniameen/gotipe
+```
+
+In Claude Code: `/plugin marketplace add veniameen/gotipe`, then `/plugin install gotipe@gotipe`.
+Agents can also read [llms.txt](https://gotipe.com/llms.txt), which lists every docs page, and the
+Markdown copy of any page at the same address with `.md` instead of the trailing slash.
 
 ## Stack
 

@@ -17,6 +17,7 @@
 | Cloud | `apps/cloud/internal` | auth/storage/sync/workers, permissions before access |
 | Examples | `apps/playground/src` | composition roots of the public APIs |
 | Checks | `scripts/quality`, `.github/workflows` | architecture/build/test/packaging |
+| Coding agents | `.agents/skills/gotipe`, `.agents/.claude-plugin`, `.claude-plugin/marketplace.json`, `context7.json` | the skill users' agents load to integrate GoTipe, its Claude Code marketplace, and what Context7 indexes (`docs-site`, package READMEs); not rules for working on this repository |
 
 Direction: applications → UI/adapters/features → core → WASM.
 Markdown and the SDK are self-contained. The core uses its own `@gotipe/markdown`

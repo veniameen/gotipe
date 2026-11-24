@@ -1,0 +1,40 @@
+{
+  "name": "gotipe",
+  "owner": {
+    "name": "GoTipe",
+    "url": "https://gotipe.com"
+  },
+  "metadata": {
+    "description": "The GoTipe skill for AI coding agents.",
+    "version": "1.0.0"
+  },
+  "plugins": [
+    {
+      "name": "gotipe",
+      "source": "./.agents",
+      "description": "Set up, integrate, configure and debug GoTipe block editors in React, Vue, Svelte and Solid applications.",
+      "version": "1.0.0",
+      "author": {
+        "name": "GoTipe",
+        "url": "https://gotipe.com"
+      },
+      "homepage": "https://gotipe.com/docs/",
+      "repository": "https://github.com/veniameen/gotipe",
+      "license": "MIT",
+      "keywords": [
+        "gotipe",
+        "block-editor",
+        "rich-text-editor",
+        "notion-like-editor",
+        "markdown-editor",
+        "wysiwyg",
+        "react",
+        "vue",
+        "svelte",
+        "solid",
+        "collaboration",
+        "crdt"
+      ]
+    }
+  ]
+}
