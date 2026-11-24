@@ -202,6 +202,7 @@ data later, or read the fields your application has its own attributes for by `b
 
 ## Related
 
+- Step-by-step guides: [from Tiptap](/docs/conversion/from-tiptap), [from Lexical](/docs/conversion/from-lexical), [from Slate and Plate](/docs/conversion/from-slate)
 - [Import and export](/docs/conversion/overview)
 - [Markdown](/docs/conversion/markdown)
 - [Document model](/docs/concepts/document-model)

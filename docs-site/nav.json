@@ -84,7 +84,10 @@
         "conversion/pdf",
         "conversion/docx",
         "conversion/server",
-        "conversion/migration"
+        "conversion/migration",
+        "conversion/from-tiptap",
+        "conversion/from-lexical",
+        "conversion/from-slate"
       ]
     },
     {
