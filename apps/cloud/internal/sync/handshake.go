@@ -6,11 +6,15 @@ import (
 	"github.com/gorilla/websocket"
 )
 
-// offersDeltas reports whether the upgrade will select gotipe.v2.
+// offersDeltas reports whether the upgrade will select gotipe.v2: the upgrader
+// takes the first protocol in the client's list that the server supports.
 func offersDeltas(r *http.Request) bool {
 	for _, protocol := range websocket.Subprotocols(r) {
-		if protocol == deltaSubprotocol {
+		switch protocol {
+		case deltaSubprotocol:
 			return true
+		case baselineSubprotocol:
+			return false
 		}
 	}
 	return false

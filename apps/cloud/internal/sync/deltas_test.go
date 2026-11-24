@@ -363,6 +363,19 @@ func TestSubprotocolAndGenerationAreNegotiatedAtTheHandshake(t *testing.T) {
 	if kind, _ := readFrame(t, legacy); kind != 0x02 {
 		t.Fatalf("expected the full state, got %d", kind)
 	}
+	// The client's order decides: gotipe.v1 offered before gotipe.v2 is selected,
+	// and such a client names no generation.
+	ordered, _, err := dial(t, listener.URL, query("ordered", ""), baselineSubprotocol, deltaSubprotocol)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer ordered.Close()
+	if ordered.Subprotocol() != baselineSubprotocol {
+		t.Fatalf("server selected %q", ordered.Subprotocol())
+	}
+	if kind, _ := readFrame(t, ordered); kind != 0x02 {
+		t.Fatalf("expected the full state, got %d", kind)
+	}
 
 	// An edit of a document larger than the message limit now fits a small frame.
 	frame := append([]byte{0x03}, deltaUpdate(token, "modern", 1)...)
