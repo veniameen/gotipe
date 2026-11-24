@@ -1,6 +1,6 @@
 {
   "name": "@gotipe/block-editor",
-  "version": "0.1.5",
+  "version": "0.1.6",
   "description": "Ready React UI for GoTipe: BlockEditor with slash menu and block handle, and the Markdown PageEditor.",
   "keywords": [
     "gotipe",

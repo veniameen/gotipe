@@ -3,6 +3,30 @@ title: Changelog
 description: Release notes of GoTipe, newest first, grouped by package.
 ---
 
+## 0.1.6
+
+The `docs` view's outline scrolls the box the page is in, and keys pressed in a widget inside the
+text stay with that widget. Released packages: `block-editor` and `ai-ui` (0.1.6) and `ai`
+(0.1.2). `ai-ui` goes from 0.1.1 to 0.1.6 because it shares its version number with
+`block-editor`; its peer ranges are unchanged.
+
+### @gotipe/block-editor
+
+- The `docs` view's outline scrolls the box the page scrolls in, such as a host's panel or a demo
+  window, and leaves the page around that box where it is. Before, a link scrolled every box up to
+  the page, and the heading could end up under the host's fixed header. With no such box, or one
+  that cannot scroll, the page scrolls as before and keeps to the heading's `scroll-margin-top`.
+
+### @gotipe/ai
+
+- A key pressed in a widget inside the text, such as a host's field or a button, is left to that
+  widget: Tab there no longer accepts the ghost text, and Escape there no longer dismisses it.
+
+### @gotipe/ai-ui
+
+- `AiGhostText`: a key pressed in a widget inside the text is left to that widget. Tab there no
+  longer accepts the ghost text, and no key there dismisses it.
+
 ## 0.1.5
 
 Placement fixes for review cards, a host's element in the page's flow, a selection's and a

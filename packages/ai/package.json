@@ -1,6 +1,6 @@
 {
   "name": "@gotipe/ai",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Connect the GoTipe editor to a language model through your own provider: context, commands and proofreading.",
   "keywords": [
     "gotipe",
