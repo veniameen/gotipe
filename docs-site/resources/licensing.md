@@ -4,8 +4,8 @@ description: Which GoTipe packages are MIT, which are under the GoTipe Commercia
 ---
 
 GoTipe is split in two. The engine, the Markdown codec, the framework adapters and every
-headless feature are MIT. The ready interface (the block editor, its theme, the Vue block
-editor and the AI UI) is under the GoTipe Commercial License. Each package states its
+headless feature are MIT. The ready interface (the block editor, its theme and the AI UI, and
+the Vue block editor once it is published) is under the GoTipe Commercial License. Each package states its
 license in `package.json` and ships the license file.
 
 ## Packages
@@ -17,7 +17,7 @@ license in `package.json` and ships the license file.
 | `@gotipe/collaboration`, `@gotipe/comments`, `@gotipe/suggestions`, `@gotipe/versions` | MIT |
 | `@gotipe/ai`, `@gotipe/export`, `@gotipe/export-wasm`, `@gotipe/migration`, `@gotipe/sdk` | MIT |
 | `@gotipe/block-editor` | Commercial |
-| `@gotipe/block-editor-vue` | Commercial |
+| `@gotipe/block-editor-vue` (not published yet) | Commercial |
 | `@gotipe/ai-ui` | Commercial |
 | `@gotipe/theme` | Commercial |
 
@@ -65,7 +65,7 @@ To buy a license or ask whether your use needs one, write to
 | The adapters for Vue, Svelte and Solid | MIT |
 | Collaboration, comments, suggestions, versions, the AI provider layer, migration, the Cloud SDK | MIT |
 | `BlockEditor`, `PageEditor`, the slash menu, block handle, formatting bubble, review UI | Commercial |
-| `BlockEditorVue`, `SlashMenuVue`, `BlockToolbarVue` | Commercial |
+| `BlockEditorVue`, `SlashMenuVue`, `BlockToolbarVue` (not published yet) | Commercial |
 | `@gotipe/ai-ui` components | Commercial |
 | The stylesheets and tokens of `@gotipe/theme` | Commercial |
 

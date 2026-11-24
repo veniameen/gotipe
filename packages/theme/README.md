@@ -26,7 +26,7 @@ import "@gotipe/theme/theme.css";
 | `@gotipe/theme/base.css` | The document in every view: text, blocks, lists, tables, code |
 | `@gotipe/theme/theme.css` | Menus, panels, review cards and the loading, error and read-only states |
 | `@gotipe/theme/tokens.css` | Only the tokens: light and dark palettes and the views |
-| `@gotipe/theme/page.css` | `base.css` and `theme.css` in one import |
+| `@gotipe/theme/page.css` | `base.css` and `theme.css` in one import, kept for older imports |
 
 Switch light and dark mode, or follow the operating system:
 

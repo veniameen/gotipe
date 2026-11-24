@@ -54,11 +54,11 @@ package share one copy of its code in both formats, so an error raised through
 | `@gotipe/vue` | `@gotipe/core`, `vue` ≥ 3.4 |
 | `@gotipe/svelte` | `@gotipe/core`, `svelte` ≥ 5 |
 | `@gotipe/solid` | `@gotipe/core`, `solid-js` ≥ 1.8 |
-| `@gotipe/block-editor` | `@gotipe/core`, `@gotipe/react`, `@gotipe/theme`, `@gotipe/i18n`, `@gotipe/markdown`, `@gotipe/suggestions`, `react` ≥ 18, `react-dom` ≥ 18; `shiki` ^1.22 (optional, code highlighting) |
-| `@gotipe/ai-ui` | `@gotipe/ai`, `@gotipe/core`, `react` ≥ 18, `react-dom` ≥ 18 |
+| `@gotipe/block-editor` | `@gotipe/core`, `@gotipe/react`, `@gotipe/theme`, `@gotipe/i18n`, `@gotipe/markdown`, `@gotipe/suggestions`, `@gotipe/versions`, `react` ≥ 18, `react-dom` ≥ 18; `shiki` ^1.22 (optional, code highlighting) |
+| `@gotipe/ai-ui` | `@gotipe/ai`, `@gotipe/core`, `@gotipe/react`, `react` ≥ 18, `react-dom` ≥ 18 |
 | `@gotipe/export` | `@gotipe/core`; `@gotipe/export-wasm` (optional, PDF and DOCX) |
-| `@gotipe/ai`, `@gotipe/collaboration`, `@gotipe/comments`, `@gotipe/suggestions`, `@gotipe/versions`, `@gotipe/i18n`, `@gotipe/migration`, `@gotipe/theme` | `@gotipe/core` |
-| `@gotipe/markdown`, `@gotipe/sdk`, `@gotipe/wasm`, `@gotipe/export-wasm` | none |
+| `@gotipe/ai`, `@gotipe/collaboration`, `@gotipe/comments`, `@gotipe/suggestions`, `@gotipe/versions`, `@gotipe/migration`, `@gotipe/theme` | `@gotipe/core` |
+| `@gotipe/i18n`, `@gotipe/markdown`, `@gotipe/sdk`, `@gotipe/wasm`, `@gotipe/export-wasm` | none |
 
 ## Styles
 
@@ -74,8 +74,8 @@ import "@gotipe/theme/theme.css";
 |---|---|
 | `@gotipe/theme/base.css` | The document: text, headings, lists, tables, code, in every view |
 | `@gotipe/theme/theme.css` | Menus, panels, review cards, loading and error states |
-| `@gotipe/theme/page.css` | Both files above in one import |
 | `@gotipe/theme/tokens.css` | Only the `--gt-*` design tokens |
+| `@gotipe/theme/page.css` | Both files above in one import, kept for older imports |
 
 The headless adapters ship no CSS. `EditorContent` renders semantic HTML (`p`, `h1`–`h6`,
 `ul`, `ol`, `table`, `pre`) inside `.gotipe-content`, with `data-block-id` and
