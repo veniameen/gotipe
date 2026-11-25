@@ -9,7 +9,7 @@ A Next.js App Router app with a GoTipe block editor.
 - `BlockEditor` props, views and the page head: https://gotipe.com/docs/ui/block-editor.md
 - Every docs page for agents: https://gotipe.com/llms.txt, or all of them in one file:
   https://gotipe.com/llms-full.txt
-- Keep `@gotipe/wasm` installed: Next.js has to resolve the optional Rust engine import of
-  `@gotipe/core`. With `engine: "js"` the page never downloads it.
+- The editor runs with `engine: "js"` and needs no WebAssembly. Collaboration needs the Rust
+  engine: install `@gotipe/wasm` and use `engine: "wasm"`.
 - `@gotipe/block-editor` and `@gotipe/theme` are under the GoTipe Commercial License; the other
   GoTipe packages are MIT.

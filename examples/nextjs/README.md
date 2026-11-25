@@ -55,11 +55,10 @@ Colours, fonts and the four views are covered in [theming](https://gotipe.com/do
 ## Packages
 
 `@gotipe/block-editor` is the ready UI. It needs `@gotipe/core`, `@gotipe/react`, `@gotipe/theme`,
-`@gotipe/i18n`, `@gotipe/markdown`, `@gotipe/suggestions` and `@gotipe/versions`. `@gotipe/wasm` is
-there because `@gotipe/core` can load the Rust engine on demand and Next.js has to resolve that
-import. The editor runs with `engine: "js"`, so the page never downloads WebAssembly. Use
-`engine: "wasm"` when you add [collaboration](https://gotipe.com/docs/collaboration/overview/),
-which needs the Rust engine.
+`@gotipe/i18n`, `@gotipe/markdown`, `@gotipe/suggestions` and `@gotipe/versions`. The editor runs
+with `engine: "js"` and needs no WebAssembly. For [collaboration](https://gotipe.com/docs/collaboration/overview/),
+which needs the Rust engine, install `@gotipe/wasm` and use `engine: "wasm"`; see
+[the WASM engine](https://gotipe.com/docs/getting-started/installation/#the-wasm-engine).
 
 ## Also with shadcn
 

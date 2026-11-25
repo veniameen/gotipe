@@ -17,8 +17,7 @@
         "@gotipe/react",
         "@gotipe/suggestions",
         "@gotipe/theme",
-        "@gotipe/versions",
-        "@gotipe/wasm"
+        "@gotipe/versions"
       ],
       "files": [
         {

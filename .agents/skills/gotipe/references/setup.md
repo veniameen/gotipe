@@ -38,7 +38,7 @@ the alias under [Bundlers](#bundlers), for Next.js to build. With `@gotipe/wasm`
 | New Vite and React app with the ready editor | `npx degit veniameen/gotipe/examples/vite-react my-editor` |
 | Existing project with shadcn/ui (`components.json`) | `npx shadcn@latest add veniameen/gotipe/block-editor`, or by URL, which older CLI versions take too: `npx shadcn@latest add https://gotipe.com/r/block-editor.json` |
 
-The shadcn item installs the eight packages of the ready UI and `@gotipe/wasm`, and writes
+The shadcn item installs the eight packages of the ready UI and writes
 `components/editor.tsx`: a client component `Editor` with `initialContent` (GoTipe JSON or
 HTML) and `onChange(editor)`, which follows a `light` or `dark` class on `<html>`.
 
