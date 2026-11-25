@@ -6,8 +6,8 @@ them in a browser.
 
 | Starter | Start with | Try online |
 |---|---|---|
-| [Next.js](nextjs) (App Router) | `npx create-next-app@latest my-editor --example https://github.com/veniameen/gotipe/tree/main/examples/nextjs` | [Deploy with Vercel](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fveniameen%2Fgotipe%2Ftree%2Fmain%2Fexamples%2Fnextjs&project-name=gotipe-editor&repository-name=gotipe-editor), [CodeSandbox](https://codesandbox.io/p/devbox/github/veniameen/gotipe/tree/main/examples/nextjs) |
-| [Vite and React](vite-react) | `npx degit veniameen/gotipe/examples/vite-react my-editor` | [StackBlitz](https://stackblitz.com/github/veniameen/gotipe/tree/main/examples/vite-react?file=src%2Feditor.tsx), [CodeSandbox](https://codesandbox.io/p/devbox/github/veniameen/gotipe/tree/main/examples/vite-react) |
+| [Next.js](nextjs) (App Router) | `npx create-next-app@latest my-editor --example https://github.com/veniameen/gotipe/tree/main/examples/nextjs` | [Deploy with Vercel](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fveniameen%2Fgotipe%2Ftree%2Fmain%2Fexamples%2Fnextjs&project-name=gotipe-editor&repository-name=gotipe-editor), [StackBlitz](https://stackblitz.com/github/veniameen/gotipe/tree/main/examples/nextjs?file=components%2Feditor.tsx) |
+| [Vite and React](vite-react) | `npx degit veniameen/gotipe/examples/vite-react my-editor` | [StackBlitz](https://stackblitz.com/github/veniameen/gotipe/tree/main/examples/vite-react?file=src%2Feditor.tsx) |
 
 The editor component also installs into an existing React project with shadcn:
 

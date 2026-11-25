@@ -5,7 +5,7 @@ A Notion-style block editor in a Next.js App Router project, built with
 lists, callouts and code, in light and dark.
 
 [![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fveniameen%2Fgotipe%2Ftree%2Fmain%2Fexamples%2Fnextjs&project-name=gotipe-editor&repository-name=gotipe-editor)
-[![Open in CodeSandbox](https://assets.codesandbox.io/github/button-edit-lime.svg)](https://codesandbox.io/p/devbox/github/veniameen/gotipe/tree/main/examples/nextjs)
+[![Open in StackBlitz](https://developer.stackblitz.com/img/open_in_stackblitz.svg)](https://stackblitz.com/github/veniameen/gotipe/tree/main/examples/nextjs?file=components%2Feditor.tsx)
 
 ## Start
 
@@ -27,6 +27,9 @@ Open http://localhost:3000 and type `/` on an empty line.
 
 The editor is created in the browser after the page mounts. During server rendering, and until
 the editor exists, `BlockEditor` shows a loading skeleton.
+
+`.stackblitzrc` starts the dev server with webpack on StackBlitz, which cannot run Turbopack;
+`npm run dev` elsewhere keeps Turbopack.
 
 ## Keep the document
 

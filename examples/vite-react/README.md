@@ -5,7 +5,6 @@ A Notion-style block editor in a Vite and React project, built with
 lists, callouts and code, in light and dark.
 
 [![Open in StackBlitz](https://developer.stackblitz.com/img/open_in_stackblitz.svg)](https://stackblitz.com/github/veniameen/gotipe/tree/main/examples/vite-react?file=src%2Feditor.tsx)
-[![Open in CodeSandbox](https://assets.codesandbox.io/github/button-edit-lime.svg)](https://codesandbox.io/p/devbox/github/veniameen/gotipe/tree/main/examples/vite-react)
 
 ## Start
 
