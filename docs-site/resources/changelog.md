@@ -3,6 +3,30 @@ title: Changelog
 description: Release notes of GoTipe, newest first, grouped by package.
 ---
 
+## 0.1.7
+
+Next.js builds an app that leaves out the optional WASM packages, with Turbopack and with
+`next build --webpack`: `@gotipe/wasm` for the Rust engine and `@gotipe/export-wasm` for PDF and
+DOCX. Released packages: `core` (0.1.6) and `export` (0.1.2); the others keep their versions and
+peer ranges. The release is numbered 0.1.7 because 0.1.6 was the number of the previous one.
+
+### @gotipe/core
+
+- An app that doesn't install `@gotipe/wasm` builds in Next.js and needs no alias of
+  `@gotipe/core` to `@gotipe/core/js`. Before, Next.js stopped at
+  `Module not found: Can't resolve '@gotipe/wasm'`. `next build --webpack` lists the missing
+  package as a warning. Without it, `engine: "auto"` runs on the JS engine and logs a warning, and
+  `engine: "wasm"` rejects with `WASM_INIT_FAILED`, whose message now names `@gotipe/wasm` and
+  says to install it or pass `engine: "js"`. With the package installed nothing changes.
+
+### @gotipe/export
+
+- An app that exports HTML, Markdown or plain text and doesn't install `@gotipe/export-wasm`
+  builds in Next.js. Before, the optional import stopped the build with
+  `Module not found: Can't resolve '@gotipe/export-wasm'`. `exportToPdf` and `exportToDocx` still
+  reject with `EXPORTER_UNAVAILABLE` without the package; the error's `cause` now tells a package
+  that could not be imported from a `.wasm` file that failed to load.
+
 ## 0.1.6
 
 The `docs` view's outline scrolls the box the page is in, and keys pressed in a widget inside the
