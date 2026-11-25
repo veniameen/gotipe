@@ -16,7 +16,8 @@ npx shadcn@latest add veniameen/gotipe/block-editor
 ```
 
 It writes `components/editor.tsx`, the file of the Next.js starter, and installs its packages;
-`registry.json` at the root of this repository describes it.
+`registry.json` at the root of this repository describes it. gotipe.com serves the same item at
+`https://gotipe.com/r/block-editor.json` for CLI versions that take only an address.
 
 The code here is MIT. The starters install `@gotipe/block-editor` and `@gotipe/theme`, which are
 under the [GoTipe Commercial License](../LICENSE-COMMERCIAL).

@@ -35,7 +35,7 @@ and webpack) and fails without the package; install it, or use the alias under
 | --- | --- |
 | New Next.js app with the ready editor | `npx create-next-app@latest my-editor --example https://github.com/veniameen/gotipe/tree/main/examples/nextjs` |
 | New Vite and React app with the ready editor | `npx degit veniameen/gotipe/examples/vite-react my-editor` |
-| Existing project with shadcn/ui (`components.json`) | `npx shadcn@latest add veniameen/gotipe/block-editor` |
+| Existing project with shadcn/ui (`components.json`) | `npx shadcn@latest add veniameen/gotipe/block-editor`, or by URL, which older CLI versions take too: `npx shadcn@latest add https://gotipe.com/r/block-editor.json` |
 
 The shadcn item installs the eight packages of the ready UI and `@gotipe/wasm`, and writes
 `components/editor.tsx`: a client component `Editor` with `initialContent` (GoTipe JSON or

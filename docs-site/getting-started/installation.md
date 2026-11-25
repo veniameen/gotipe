@@ -194,6 +194,9 @@ In a project that uses shadcn/ui, one command writes the editor component to
 npx shadcn@latest add veniameen/gotipe/block-editor
 ```
 
+The same item is served at `https://gotipe.com/r/block-editor.json`, an address older versions of
+the shadcn CLI install from too; `https://gotipe.com/r/registry.json` lists the items.
+
 The starters and the component are in
 [examples](https://github.com/veniameen/gotipe/tree/main/examples) of the repository.
 
