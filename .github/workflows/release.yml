@@ -6,9 +6,11 @@ on:
     tags:
       - "v*"
 
+# Read-only by default. With id-token: write a job of this run can sign in to
+# npm as release.yml (trusted publishing), so only the release job gets it, not
+# the called check workflows that run third-party code.
 permissions:
-  contents: write
-  id-token: write
+  contents: read
 
 jobs:
   checks:
@@ -27,6 +29,9 @@ jobs:
     name: Release
     needs: [checks, browsers, security]
     runs-on: ubuntu-latest
+    permissions:
+      contents: write # the GitHub Release
+      id-token: write # npm trusted publishing and provenance
     steps:
       - uses: actions/checkout@v4
         with:
@@ -54,10 +59,10 @@ jobs:
       - uses: pnpm/action-setup@v4
         with:
           version: 10.28.2
+      # No registry-url: npm signs in through trusted publishing (see below).
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-          registry-url: "https://registry.npmjs.org"
           cache: pnpm
 
       - name: Install dependencies
@@ -103,10 +108,37 @@ jobs:
       # -- Publish npm packages (dependency order) --
       # This job publishes npm. The Rust crates go to crates.io through
       # publish-crates.yml, run by hand once these checks have passed.
+      #
+      # npm trusted publishing (OIDC), no stored npm token: for each new version
+      # npm trades this job's GitHub OIDC token for a short-lived token of that
+      # one package. npmjs.com allows it only if the package's settings hold this
+      # trusted publisher: GitHub Actions, user veniameen, repository gotipe,
+      # workflow release.yml, no environment, allowed action "npm publish".
+      # A new one expires unless a publish uses it within two days, and only a
+      # package that already exists can have one, so add it just before the
+      # release that first publishes the package this way. Without it npm stops
+      # with ENEEDAUTH (a registry-url placeholder token would turn that into a
+      # misleading 404), and the step after the publish prints npm's reason.
+      # https://docs.npmjs.com/trusted-publishers
+      - name: Install npm 11 for trusted publishing
+        # Node 22 ships npm 10; trusted publishing needs npm 11.5.1 or later.
+        # pnpm runs the npm next to its node, which is the one this replaces.
+        run: |
+          npm install --global npm@11.21.2
+          npm --version
+
       - name: Publish npm packages
-        run: pnpm --filter './packages/**' -r publish --access public --no-git-checks --provenance
+        id: publish
+        # pnpm skips versions already on npm and hands each new tarball to npm
+        # in dependency order. `pnpm -r publish` does not pass --provenance on,
+        # but npm reads this variable and then refuses a version it cannot sign.
+        run: pnpm --filter './packages/**' -r publish --access public --no-git-checks
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NPM_CONFIG_PROVENANCE: "true"
+
+      - name: Show why npm could not use trusted publishing
+        if: failure() && steps.publish.outcome == 'failure'
+        run: grep -h -E "oidc/token/exchange|(silly|verbose) oidc" ~/.npm/_logs/*-debug-0.log
 
       # -- Generate changelog --
       - name: Generate changelog
