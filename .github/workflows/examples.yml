@@ -1,0 +1,53 @@
+# .github/workflows/examples.yml
+# The starters in examples/ and the shadcn registry item, installed from npm as their users get
+# them. Weekly as well: new releases of GoTipe, Next.js, Vite and shadcn reach the starters
+# without a change in this repository.
+name: Starters
+
+on:
+  workflow_call:
+  workflow_dispatch:
+  schedule:
+    - cron: "17 5 * * 1"
+  pull_request:
+    paths:
+      - "examples/**"
+      - "registry.json"
+      - "scripts/check-examples.mjs"
+      - "scripts/examples/**"
+      - ".github/workflows/examples.yml"
+  push:
+    branches: [main]
+    paths:
+      - "examples/**"
+      - "registry.json"
+      - "scripts/check-examples.mjs"
+      - "scripts/examples/**"
+      - ".github/workflows/examples.yml"
+
+concurrency:
+  group: examples-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  starters:
+    name: Starters and registry item
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.28.2
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install the check's tools
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Chromium
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Install, build and open the starters and the registry item
+        run: pnpm check:examples

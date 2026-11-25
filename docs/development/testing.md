@@ -15,6 +15,7 @@ CSS order, keys/mount, subscriptions, and formats. A test does not repeat the im
 | Export | a consumer/format validator, Unicode, no format substitution |
 | Packages | tarball/files/license/exports, ESM/CJS/types, a clean consumer |
 | Documentation (docs-site) | `pnpm check:docs-site`: nav.json, front matter, codec reads every page, links and anchors |
+| Starters (`examples/`), `registry.json` | `pnpm check:examples`: install from npm, build, open in Chromium (production and dev server), install the registry item with the shadcn CLI |
 
 ## Commands
 
@@ -31,6 +32,7 @@ pnpm check:consumer
 pnpm check:bundles
 pnpm check:theme
 pnpm check:docs-site
+pnpm check:examples
 pnpm check:exports
 pnpm check:pdf-regression
 pnpm check:cargo-release
@@ -88,6 +90,18 @@ declarations without `skipLibCheck`, headless SSR/Markdown, a PDF/DOCX call, and
 `GoTipeError` across all `@gotipe/core` entry points in ESM and CJS (D-166).
 The command requires a prior build of JS, core WASM, and the optional export WASM.
 
+
+`check:examples` treats the starters as their users get them: each is copied to a temporary
+directory outside the workspace, installed from npm (Next.js, Vite and the published
+`@gotipe/*` releases), built, served as a production build and as a dev server, and opened in
+Chromium: the welcome document shows, typed text lands in it, the `/` menu opens and a `dark`
+class on `<html>` gives the dark palette; a console error or a failed request fails it. The
+registry item is built and installed with the pinned shadcn CLI into the Next.js starter
+stripped of GoTipe, then built and opened the same way. Every `@gotipe/*` range of a starter
+must take the latest release, and the Vite starter's editor must be the Next.js one without
+`"use client"`. The check needs the network and Playwright's Chromium (`GOTIPE_E2E_CHANNEL`
+picks another channel). The Starters workflow runs it on changes to the starters, weekly and
+after each release.
 
 JavaScript size is checked against the [full import graph](javascript-budgets.md),
 not only the entry file. For a full local acceptance run, limit Turbo to

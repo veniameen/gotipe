@@ -1,0 +1,12 @@
+/* The page takes the editor's colours, so it follows the same light or dark palette. */
+body {
+  margin: 0;
+  background: var(--gt-page-bg);
+  color: var(--gt-text);
+}
+
+main {
+  min-height: 100vh;
+  padding: 48px 0;
+  box-sizing: border-box;
+}

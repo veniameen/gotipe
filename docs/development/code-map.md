@@ -16,6 +16,7 @@
 | HTTP SDK | `packages/sdk` | Cloud client without UI |
 | Cloud | `apps/cloud/internal` | auth/storage/sync/workers, permissions before access |
 | Examples | `apps/playground/src` | composition roots of the public APIs |
+| Starters | `examples/*`, `registry.json` | standalone Next.js and Vite apps on the published npm packages, and the shadcn registry of this repository; its item ships `examples/nextjs/components/editor.tsx`; checked by `pnpm check:examples` |
 | Checks | `scripts/quality`, `.github/workflows` | architecture/build/test/packaging |
 | Coding agents | `.agents/skills/gotipe`, `.agents/.claude-plugin`, `.claude-plugin/marketplace.json`, `context7.json` | the skill users' agents load to integrate GoTipe, its Claude Code marketplace, and what Context7 indexes (`docs-site`, package READMEs); not rules for working on this repository |
 
