@@ -15,6 +15,11 @@ Ready editor for React (`BlockEditor` and `PageEditor`):
 npm install @gotipe/block-editor @gotipe/core @gotipe/react @gotipe/theme @gotipe/i18n @gotipe/markdown @gotipe/suggestions @gotipe/versions react react-dom
 ```
 
+In Next.js, also install `@gotipe/wasm`, or alias the core as in [JS-only builds](#js-only-builds).
+Next.js resolves the optional import of the Rust engine when it builds, with Turbopack and with
+webpack, and fails with `Module not found: Can't resolve '@gotipe/wasm'` without either. This
+applies to every adapter, the headless ones too.
+
 Headless editor for React, with your own interface:
 
 ```sh
@@ -134,9 +139,29 @@ export default defineConfig({
 });
 ```
 
+In Next.js, set the alias for Turbopack, its default bundler, and for webpack
+(`next build --webpack`):
+
+```ts title="next.config.ts"
+import type { NextConfig } from "next";
+
+const nextConfig: NextConfig = {
+  turbopack: {
+    resolveAlias: { "@gotipe/core": "@gotipe/core/js" },
+  },
+  webpack(config) {
+    config.resolve.alias = { ...config.resolve.alias, "@gotipe/core$": "@gotipe/core/js" };
+    return config;
+  },
+};
+
+export default nextConfig;
+```
+
 Without `@gotipe/wasm` installed and without the alias, `engine: "auto"` falls back to the
 JS engine and logs a warning; pass `engine: "js"` to skip the attempt. A bundler that
-fails on the unresolved optional import needs the alias.
+fails on the unresolved optional import needs the alias: Next.js does, and Vite builds
+without it.
 
 ## Node
 
@@ -148,6 +173,29 @@ of your own. See [loading the binary](/docs/getting-started/engines#loading-the-
 
 Pass documents as JSON in Node: HTML import uses the browser's `DOMParser` and throws
 `PARSE_ERROR` without it. See [content formats](/docs/concepts/content-formats).
+
+## Starter projects
+
+To begin from a complete project, copy a starter: the ready editor with a welcome document, on
+the published packages.
+
+```sh
+# Next.js (App Router)
+npx create-next-app@latest my-editor --example https://github.com/veniameen/gotipe/tree/main/examples/nextjs
+
+# Vite and React
+npx degit veniameen/gotipe/examples/vite-react my-editor
+```
+
+In a project that uses shadcn/ui, one command writes the editor component to
+`components/editor.tsx` and installs its packages, `@gotipe/wasm` included:
+
+```sh
+npx shadcn@latest add veniameen/gotipe/block-editor
+```
+
+The starters and the component are in
+[examples](https://github.com/veniameen/gotipe/tree/main/examples) of the repository.
 
 ## Next steps
 

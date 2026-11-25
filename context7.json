@@ -2,7 +2,7 @@
   "$schema": "https://context7.com/schema/context7.json",
   "projectTitle": "GoTipe",
   "description": "Block editor framework for the web: a ready Notion-style editor for React, headless adapters for React, Vue, Svelte and Solid, lossless Markdown and real-time collaboration, on its own TypeScript and Rust/WASM engine.",
-  "folders": ["docs-site", "packages"],
+  "folders": ["docs-site", "packages", "examples"],
   "excludeFolders": [
     "docs-site/README.md",
     "packages/block-editor-vue",
@@ -11,7 +11,8 @@
     "packages/*/pkg",
     "packages/*/node_modules",
     "**/test",
-    "**/tests"
+    "**/tests",
+    "examples/*/node_modules"
   ],
   "excludeFiles": ["CHANGELOG.md"],
   "rules": [
@@ -20,6 +21,7 @@
     "For Vue, Svelte and Solid use @gotipe/core with @gotipe/vue, @gotipe/svelte or @gotipe/solid; the application draws the interface.",
     "A string passed as content or to setContent is HTML. Load Markdown with parseMarkdown from @gotipe/markdown, or use PageEditor.",
     "Collaboration needs engine: \"wasm\" (BlockEditor or a headless editor); PageEditor and engine: \"js\" cannot collaborate. CollaborationProvider talks to a GoTipe Cloud the application runs itself; there is no hosted service.",
-    "@gotipe/block-editor, @gotipe/theme and @gotipe/ai-ui use the GoTipe Commercial License (free for personal, non-profit, education, OSI open-source and under USD 1M revenue use, and for evaluation); the rest is MIT. Tell the developer when you add one."
+    "@gotipe/block-editor, @gotipe/theme and @gotipe/ai-ui use the GoTipe Commercial License (free for personal, non-profit, education, OSI open-source and under USD 1M revenue use, and for evaluation); the rest is MIT. Tell the developer when you add one.",
+    "In Next.js, also install @gotipe/wasm (or alias @gotipe/core to @gotipe/core/js): Next.js resolves its optional import when it builds. Starters: examples/nextjs, examples/vite-react; shadcn: npx shadcn@latest add veniameen/gotipe/block-editor"
   ]
 }

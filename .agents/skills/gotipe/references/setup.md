@@ -18,12 +18,28 @@ Every package ships ES modules, CommonJS and TypeScript types (`@gotipe/wasm` an
 | Svelte | `npm install @gotipe/core @gotipe/svelte svelte` | none shipped |
 | Solid | `npm install @gotipe/core @gotipe/solid solid-js` | none shipped |
 | Node: server rendering, scripts, tests | `npm install @gotipe/core` | — |
-| The Rust engine (needed for collaboration) | add `npm install @gotipe/wasm` | — |
+| The Rust engine (needed for collaboration), and any Next.js app | add `npm install @gotipe/wasm` | — |
 | Code highlighting in the ready UI | add `shiki` (^1.22), optional peer of `@gotipe/block-editor` | — |
 
 Framework versions: React 18 or newer, Vue 3.4 or newer, Svelte 5 or newer, Solid 1.8 or
 newer. Use the developer's package manager (`pnpm add`, `yarn add`, `bun add`) with the same
 package list.
+
+Next.js resolves `@gotipe/core`'s optional import of `@gotipe/wasm` when it builds (Turbopack
+and webpack) and fails without the package; install it, or use the alias under
+[Bundlers](#bundlers). With `engine: "js"` the page never downloads the binary.
+
+### Starter projects and shadcn/ui
+
+| Case | Command |
+| --- | --- |
+| New Next.js app with the ready editor | `npx create-next-app@latest my-editor --example https://github.com/veniameen/gotipe/tree/main/examples/nextjs` |
+| New Vite and React app with the ready editor | `npx degit veniameen/gotipe/examples/vite-react my-editor` |
+| Existing project with shadcn/ui (`components.json`) | `npx shadcn@latest add veniameen/gotipe/block-editor` |
+
+The shadcn item installs the eight packages of the ready UI and `@gotipe/wasm`, and writes
+`components/editor.tsx`: a client component `Editor` with `initialContent` (GoTipe JSON or
+HTML) and `onChange(editor)`, which follows a `light` or `dark` class on `<html>`.
 
 ### Styles of the ready UI
 
@@ -229,8 +245,24 @@ export default defineConfig({
 });
 ```
 
-A bundler that fails on the unresolved optional `@gotipe/wasm` import needs this alias. If
-the bundler cannot emit the asset, or the binary lives on a CDN, use
+A bundler that fails on the unresolved optional `@gotipe/wasm` import needs this alias, or
+`@gotipe/wasm` installed. Next.js is one; set the alias for both of its bundlers:
+
+```ts title="next.config.ts"
+import type { NextConfig } from "next";
+
+const nextConfig: NextConfig = {
+  turbopack: { resolveAlias: { "@gotipe/core": "@gotipe/core/js" } },
+  webpack(config) {
+    config.resolve.alias = { ...config.resolve.alias, "@gotipe/core$": "@gotipe/core/js" };
+    return config;
+  },
+};
+
+export default nextConfig;
+```
+
+If the bundler cannot emit the asset, or the binary lives on a CDN, use
 `createEditorWithLoader(options, loader)` from `@gotipe/core` (see the engines page).
 
 Other checks: serve `.wasm` as `application/wasm`; under a CSP the WASM engine needs

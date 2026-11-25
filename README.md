@@ -37,6 +37,22 @@ Each version's changes are in the [changelog](https://gotipe.com/docs/resources/
 required checks are in the [test matrix](docs/development/testing.md). There is no hosted GoTipe
 Cloud: you deploy the backend yourself.
 
+## Get started
+
+Start a new app from a starter project, or add the editor to a project that uses shadcn/ui:
+
+```sh
+npx create-next-app@latest my-editor --example https://github.com/veniameen/gotipe/tree/main/examples/nextjs
+npx degit veniameen/gotipe/examples/vite-react my-editor
+npx shadcn@latest add veniameen/gotipe/block-editor
+```
+
+[![Open in StackBlitz](https://developer.stackblitz.com/img/open_in_stackblitz.svg)](https://stackblitz.com/github/veniameen/gotipe/tree/main/examples/vite-react?file=src%2Feditor.tsx)
+
+The [starters](examples) run the ready block editor on the published packages. To install the
+packages yourself, follow [installation](https://gotipe.com/docs/getting-started/installation/)
+and the [quick start](https://gotipe.com/docs/getting-started/quick-start/).
+
 ## Local setup
 
 You need Node.js, the pnpm version from `packageManager`, Rust with `wasm32-unknown-unknown`,
