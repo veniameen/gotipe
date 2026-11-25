@@ -270,8 +270,7 @@ client.
 
 > [!NOTE]
 > The packages carry no `"use client"` directive. In a framework with React Server
-> Components, import them from a client component. Next.js also needs `@gotipe/wasm` installed,
-> or an alias of the core; see [installation](/docs/getting-started/installation#pick-your-packages).
+> Components, import them from a client component.
 
 ## Limitations
 

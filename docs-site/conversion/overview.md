@@ -36,7 +36,10 @@ npm install @gotipe/core @gotipe/export
 ```
 
 HTML, Markdown and plain text need nothing else. PDF and DOCX also need the optional
-`@gotipe/export-wasm` package, which loads on the first PDF or DOCX call.
+`@gotipe/export-wasm` package, which loads on the first PDF or DOCX call. Without it the app
+still builds, in Next.js too; with `@gotipe/export` 0.1.1 or older, Next.js stops at
+`Module not found: Can't resolve '@gotipe/export-wasm'` until you update it or install the
+package.
 
 ## Export HTML, Markdown and text
 

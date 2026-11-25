@@ -11,7 +11,7 @@
     "build:export-wasm": "bash scripts/build-export-wasm.sh",
     "build:converter": "cargo build --locked -p gotipe-export --features pdf,docx,cli --bin gotipe-convert --release --jobs 2",
     "clean": "turbo run clean && cargo clean",
-    "check:packages": "node scripts/check-packages.mjs",
+    "check:packages": "node --test scripts/quality/optional-peers.test.mjs && node scripts/check-packages.mjs",
     "check:exports": "node scripts/validate-export-formats.mjs",
     "check:docs-site": "node --test scripts/docs-site/rules.test.mjs && node scripts/check-docs-site.mjs",
     "generate:theme": "node scripts/generate-theme.mjs",

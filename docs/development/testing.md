@@ -13,7 +13,7 @@ CSS order, keys/mount, subscriptions, and formats. A test does not repeat the im
 | CRDT | 2–3 peers, different delivery orders, duplicates/reconnect, convergence |
 | Cloud/SDK | another role/user/scope, malformed payload, storage failure, 204/errors |
 | Export | a consumer/format validator, Unicode, no format substitution |
-| Packages | tarball/files/license/exports, ESM/CJS/types, a clean consumer |
+| Packages | tarball/files/license/exports, ESM/CJS/types, a clean consumer, optional peers a bundler can leave out |
 | Documentation (docs-site) | `pnpm check:docs-site`: nav.json, front matter, codec reads every page, links and anchors |
 | Starters (`examples/`), `registry.json` | `pnpm check:examples`: install from npm, build, open in Chromium (production and dev server), install the registry item with the shadcn CLI |
 
@@ -89,6 +89,14 @@ the sources do not replace the contents of the archives. It checks all JS export
 declarations without `skipLibCheck`, headless SSR/Markdown, a PDF/DOCX call, and a single
 `GoTipeError` across all `@gotipe/core` entry points in ESM and CJS (D-166).
 The command requires a prior build of JS, core WASM, and the optional export WASM.
+
+`check:packages` also holds the packed JS of every package with optional peers (`@gotipe/wasm`,
+`@gotipe/export-wasm`, `shiki`) to the rule of webpack and Turbopack, the bundlers of Next.js: an
+app that leaves a peer out builds only if each `import()` or `require()` of it is written
+directly inside a `try` block. A static import, one in a `catch`, `finally` or callback, or one
+guarded by `.catch()` fails those builds with `Module not found`. esbuild and Rolldown accept
+more, so they cannot stand in for the check (`scripts/quality/optional-peers.mjs`). An entry
+named after a peer, `@gotipe/block-editor/shiki`, may require it.
 
 
 `check:examples` treats the starters as their users get them: each is copied to a temporary

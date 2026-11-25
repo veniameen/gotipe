@@ -18,16 +18,17 @@ Every package ships ES modules, CommonJS and TypeScript types (`@gotipe/wasm` an
 | Svelte | `npm install @gotipe/core @gotipe/svelte svelte` | none shipped |
 | Solid | `npm install @gotipe/core @gotipe/solid solid-js` | none shipped |
 | Node: server rendering, scripts, tests | `npm install @gotipe/core` | — |
-| The Rust engine (needed for collaboration), and any Next.js app | add `npm install @gotipe/wasm` | — |
+| The Rust engine (needed for collaboration) | add `npm install @gotipe/wasm` | — |
 | Code highlighting in the ready UI | add `shiki` (^1.22), optional peer of `@gotipe/block-editor` | — |
 
 Framework versions: React 18 or newer, Vue 3.4 or newer, Svelte 5 or newer, Solid 1.8 or
 newer. Use the developer's package manager (`pnpm add`, `yarn add`, `bun add`) with the same
 package list.
 
-Next.js resolves `@gotipe/core`'s optional import of `@gotipe/wasm` when it builds (Turbopack
-and webpack) and fails without the package; install it, or use the alias under
-[Bundlers](#bundlers). With `engine: "js"` the page never downloads the binary.
+Without `@gotipe/wasm` the app still builds, Next.js included, and `engine: "auto"` falls back
+to the JS engine with a console warning; `@gotipe/core` 0.1.5 and older needed the package, or
+the alias under [Bundlers](#bundlers), for Next.js to build. With `@gotipe/wasm` installed and
+`engine: "js"`, the page never downloads the binary.
 
 ### Starter projects and shadcn/ui
 
@@ -245,8 +246,8 @@ export default defineConfig({
 });
 ```
 
-A bundler that fails on the unresolved optional `@gotipe/wasm` import needs this alias, or
-`@gotipe/wasm` installed. Next.js is one; set the alias for both of its bundlers:
+In Next.js, set the alias for both of its bundlers. Without `@gotipe/wasm` installed it also
+removes the warning `next build --webpack` lists for the missing optional package:
 
 ```ts title="next.config.ts"
 import type { NextConfig } from "next";

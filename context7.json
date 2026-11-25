@@ -22,6 +22,6 @@
     "A string passed as content or to setContent is HTML. Load Markdown with parseMarkdown from @gotipe/markdown, or use PageEditor.",
     "Collaboration needs engine: \"wasm\" (BlockEditor or a headless editor); PageEditor and engine: \"js\" cannot collaborate. CollaborationProvider talks to a GoTipe Cloud the application runs itself; there is no hosted service.",
     "@gotipe/block-editor, @gotipe/theme and @gotipe/ai-ui use the GoTipe Commercial License (free for personal, non-profit, education, OSI open-source and under USD 1M revenue use, and for evaluation); the rest is MIT. Tell the developer when you add one.",
-    "In Next.js, also install @gotipe/wasm (or alias @gotipe/core to @gotipe/core/js): Next.js resolves its optional import when it builds. Starters: examples/nextjs, examples/vite-react; shadcn: npx shadcn@latest add veniameen/gotipe/block-editor"
+    "Add @gotipe/wasm only for the Rust engine (collaboration): apps build without it, in Next.js too. With @gotipe/core 0.1.5 or older, Next.js needs @gotipe/wasm installed or @gotipe/core aliased to @gotipe/core/js. Starters: examples/nextjs, examples/vite-react; shadcn: npx shadcn@latest add veniameen/gotipe/block-editor"
   ]
 }

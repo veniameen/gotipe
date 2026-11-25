@@ -6,21 +6,37 @@ let modulePromise: Promise<ExportModule> | undefined;
 
 export function loadExporters(): Promise<ExportModule> {
   if (!modulePromise) {
-    modulePromise = import("@gotipe/export-wasm")
-      .then(async (module) => {
-        await module.default();
-        return module;
-      })
-      .catch((error: unknown) => {
-        modulePromise = undefined;
-        throw new ExportError(
-          "EXPORTER_UNAVAILABLE",
-          "Could not load optional PDF/DOCX exporters. Install @gotipe/export-wasm and serve its WASM asset.",
-          { cause: error },
-        );
-      });
+    modulePromise = (async () => {
+      const module = await importExporterPackage();
+      await module.default();
+      return module;
+    })().catch((error: unknown) => {
+      modulePromise = undefined;
+      throw new ExportError(
+        "EXPORTER_UNAVAILABLE",
+        "Could not load optional PDF/DOCX exporters. Install @gotipe/export-wasm and serve its WASM asset.",
+        { cause: error },
+      );
+    });
   }
   return modulePromise;
+}
+
+/**
+ * `@gotipe/export-wasm` is an optional peer. webpack and Turbopack, the bundlers of Next.js,
+ * treat an import written directly inside a `try` block as optional, so an app that exports
+ * only HTML and Markdown builds without the package. Keep the literal `import()` in this block:
+ * guarded by `.catch()` instead, or moved into a callback, it fails those builds with
+ * "Module not found: Can't resolve '@gotipe/export-wasm'", and a specifier in a variable hides
+ * the package from bundlers. `pnpm check:packages` holds the packed files to this rule.
+ */
+async function importExporterPackage(): Promise<ExportModule> {
+  try {
+    return await import("@gotipe/export-wasm");
+  } catch (error) {
+    const reason = error instanceof Error ? error.message : String(error);
+    throw new Error(`@gotipe/export-wasm could not be imported (${reason})`, { cause: error });
+  }
 }
 
 /**

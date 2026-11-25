@@ -2,6 +2,7 @@ import { execFileSync } from "node:child_process";
 import { existsSync, readFileSync, readdirSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { optionalPeerProblems } from "./quality/optional-peers.mjs";
 
 // Inspect the files npm would actually receive, then load every JS entry in a
 // fresh Node process. This deliberately does not publish or run package scripts.
@@ -106,8 +107,14 @@ for (const { dir, manifest } of packages) {
         fail(`cannot load ${target}: ${String(error.stderr ?? error.message).trim()}`);
       }
     }
+    // An app that leaves an optional peer out still builds with webpack and Turbopack.
+    const optional = optionalPeerProblems({ dir, manifest, files });
+    for (const problem of optional.problems) fail(problem);
+    const peers = optional.peers.length
+      ? `, ${optional.peers.join(", ")} optional in ${optional.entries}`
+      : "";
     process.stdout.write(
-      `${manifest.name}: ${files.size} packaged files, ${imported.size} JS entries checked\n`,
+      `${manifest.name}: ${files.size} packaged files, ${imported.size} JS entries checked${peers}\n`,
     );
   } catch (error) {
     fail(String(error.stderr ?? error.message).trim());

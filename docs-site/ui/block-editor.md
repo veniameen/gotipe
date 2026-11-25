@@ -21,7 +21,6 @@ document, extensions and host stay yours. For Markdown files use
 npm install @gotipe/block-editor @gotipe/core @gotipe/react @gotipe/theme @gotipe/i18n @gotipe/markdown @gotipe/suggestions @gotipe/versions react react-dom
 ```
 
-In Next.js, add `@gotipe/wasm` to the command; see [installation](/docs/getting-started/installation#pick-your-packages).
 In a project with shadcn/ui, `npx shadcn@latest add veniameen/gotipe/block-editor` installs the
 packages and writes `components/editor.tsx`, a client component with this setup.
 

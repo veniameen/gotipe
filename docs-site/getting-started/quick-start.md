@@ -6,9 +6,8 @@ packages: ["@gotipe/block-editor", "@gotipe/core", "@gotipe/react", "@gotipe/vue
 
 Four ways to get an editor running. The first two use the ready UI from
 `@gotipe/block-editor` (commercial); the last two use only MIT packages and your own
-controls. All four run on the JS engine, so they need no WebAssembly setup. If your bundler
-reports that it can't resolve `@gotipe/wasm`, as Next.js does, install `@gotipe/wasm` or add
-the alias from [installation](/docs/getting-started/installation#js-only-builds).
+controls. All four run on the JS engine, so they need no WebAssembly setup and build without
+`@gotipe/wasm`, in Next.js too.
 
 To start from a complete Next.js or Vite project instead, copy a
 [starter project](/docs/getting-started/installation#starter-projects); in a project with shadcn/ui,

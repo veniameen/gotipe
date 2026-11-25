@@ -157,7 +157,9 @@ PDF and DOCX share `@gotipe/export-wasm`: 14.7 MB, 8.6 MB gzipped, most of it fo
 downloaded and initialized on the first `exportToPdf` or `exportToDocx` call and reused
 afterwards. Importing the editor or `@gotipe/export` never loads it, and HTML, Markdown and
 text export never need it. If loading fails, the call rejects with
-`Could not load optional PDF/DOCX exporters` and the next call tries again.
+`Could not load optional PDF/DOCX exporters` and the next call tries again. The error's `cause`
+is the import error when the package is not installed, or the failure to fetch or start its
+`.wasm` file.
 
 ## Errors
 

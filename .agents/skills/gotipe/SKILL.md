@@ -54,11 +54,10 @@ commands, or use the framework-free menus (https://gotipe.com/docs/ui/menus.md).
 npm install @gotipe/block-editor @gotipe/core @gotipe/react @gotipe/theme @gotipe/i18n @gotipe/markdown @gotipe/suggestions @gotipe/versions react react-dom
 ```
 
-In Next.js, add `@gotipe/wasm` to that command and put the editor in a client component
-(`"use client"`). In a project that uses shadcn/ui,
-`npx shadcn@latest add veniameen/gotipe/block-editor` installs the packages, `@gotipe/wasm`
-included, and writes `components/editor.tsx` with `<Editor initialContent onChange />`. For a
-new project, copy a starter:
+In Next.js, put the editor in a client component (`"use client"`). In a project that uses
+shadcn/ui, `npx shadcn@latest add veniameen/gotipe/block-editor` installs the packages,
+`@gotipe/wasm` included, and writes `components/editor.tsx` with
+`<Editor initialContent onChange />`. For a new project, copy a starter:
 `npx create-next-app@latest my-editor --example https://github.com/veniameen/gotipe/tree/main/examples/nextjs`
 or `npx degit veniameen/gotipe/examples/vite-react my-editor`.
 
@@ -112,10 +111,11 @@ install and CSS. Headless React and Vue examples are in [Setup](references/setup
   Call `editor.setContent()`, or remount the component with a new `key`.
 - Turning on collaboration with `engine: "js"`, `@gotipe/core/js` or `PageEditor`: it throws
   `COLLABORATION_UNAVAILABLE`. Use `BlockEditor` or a headless editor with `engine: "wasm"`.
-- Building Next.js without `@gotipe/wasm`: Turbopack and webpack both stop at
-  `Module not found: Can't resolve '@gotipe/wasm'`, whichever adapter is used. Install
-  `@gotipe/wasm`, or alias `@gotipe/core` to `@gotipe/core/js` (see
-  [Setup](references/setup.md#bundlers)). Vite builds without it.
+- `Module not found: Can't resolve '@gotipe/wasm'` when Next.js builds: `@gotipe/core` 0.1.5
+  or older needs the package there. Update the core, install `@gotipe/wasm`, or alias
+  `@gotipe/core` to `@gotipe/core/js` (see [Setup](references/setup.md#bundlers)). The same
+  error for `@gotipe/export-wasm` comes from `@gotipe/export` 0.1.1 or older. Newer versions
+  build without either package; `next build --webpack` lists a missing one as a warning.
 - Vite dev server failing to load the WASM binary: add
   `optimizeDeps: { exclude: ["@gotipe/wasm"] }`.
 - Importing the editor into a React Server Component. The packages have no `"use client"`

@@ -14,8 +14,9 @@ npm install @gotipe/export @gotipe/core
 npm install @gotipe/export-wasm
 ```
 
-`@gotipe/export-wasm` is an optional peer. Without it, `exportToPdf` and `exportToDocx`
-reject with an `ExportError` of code `EXPORTER_UNAVAILABLE`. With it, your bundler must emit
+`@gotipe/export-wasm` is an optional peer. Without it, the app still builds, in Next.js too,
+and `exportToPdf` and `exportToDocx` reject with an `ExportError` of code
+`EXPORTER_UNAVAILABLE`. With it, your bundler must emit
 its `.wasm` file, and under a Content Security Policy `script-src` needs
 `'wasm-unsafe-eval'`.
 

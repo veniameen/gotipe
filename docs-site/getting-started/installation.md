@@ -15,11 +15,6 @@ Ready editor for React (`BlockEditor` and `PageEditor`):
 npm install @gotipe/block-editor @gotipe/core @gotipe/react @gotipe/theme @gotipe/i18n @gotipe/markdown @gotipe/suggestions @gotipe/versions react react-dom
 ```
 
-In Next.js, also install `@gotipe/wasm`, or alias the core as in [JS-only builds](#js-only-builds).
-Next.js resolves the optional import of the Rust engine when it builds, with Turbopack and with
-webpack, and fails with `Module not found: Can't resolve '@gotipe/wasm'` without either. This
-applies to every adapter, the headless ones too.
-
 Headless editor for React, with your own interface:
 
 ```sh
@@ -44,6 +39,9 @@ Add `@gotipe/wasm` when you want the Rust engine, for example for
 ```sh
 npm install @gotipe/wasm
 ```
+
+Without it, the app builds with every bundler, Next.js included, and the editor runs on the JS
+engine; see [JS-only builds](#js-only-builds).
 
 Every package ships ES modules, CommonJS and TypeScript types; `@gotipe/wasm` and
 `@gotipe/export-wasm` are ES modules only. You don't need `@types` packages. The entries of a
@@ -159,9 +157,14 @@ export default nextConfig;
 ```
 
 Without `@gotipe/wasm` installed and without the alias, `engine: "auto"` falls back to the
-JS engine and logs a warning; pass `engine: "js"` to skip the attempt. A bundler that
-fails on the unresolved optional import needs the alias: Next.js does, and Vite builds
-without it.
+JS engine and logs a warning; pass `engine: "js"` to skip the attempt. The app still builds:
+the core imports `@gotipe/wasm` inside a `try` block, which webpack and Turbopack treat as an
+optional import, and Vite, esbuild and Rolldown build it too. `next build --webpack` lists the
+missing package as a warning; the alias removes it.
+
+With `@gotipe/core` 0.1.5 or older, Next.js stops at
+`Module not found: Can't resolve '@gotipe/wasm'`. Update the core, install `@gotipe/wasm`
+or set the alias.
 
 ## Node
 
