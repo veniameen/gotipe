@@ -82,6 +82,16 @@ Reports/traces/screenshots go to the ignored `output/`. Record the command, the 
 the tree/commit, and the result/limitations. An old CI run does not confirm the current code.
 Publishing is not part of local acceptance and is not run automatically.
 
+The Release workflow publishes the npm packages when a `v*` tag is pushed and the required
+checks pass. It signs in to npm through trusted publishing (OIDC) and stores no npm token, so
+every public package needs a trusted publisher on npmjs.com: GitHub Actions, `veniameen`/`gotipe`,
+workflow `release.yml`, no environment, allowed action `npm publish`. A new trusted publisher
+expires unless a publish uses it within two days, and npm offers one only for a package that
+already exists: publish a new package's first version by hand, and add the trusted publisher
+just before the release that first publishes the package from CI. A missing one stops the
+release at that package with `ENEEDAUTH`, and the workflow prints npm's reason. Every version
+the workflow publishes carries npm provenance; npm refuses a version it cannot sign.
+
 `check:consumer` packs all public packages and installs the real tarballs
 into a separate directory with workspace links disabled and strict peer dependencies.
 Local overrides allow only internal versions that are not yet published;
