@@ -65,7 +65,7 @@ which needs the Rust engine, install `@gotipe/wasm` and use `engine: "wasm"`; se
 The same component installs into an existing project with the shadcn CLI:
 
 ```bash
-npx shadcn@latest add veniameen/gotipe/block-editor
+npx shadcn@latest add @gotipe/block-editor
 ```
 
 ## Learn more

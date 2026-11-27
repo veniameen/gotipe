@@ -12,7 +12,7 @@ them in a browser.
 The editor component also installs into an existing React project with shadcn:
 
 ```bash
-npx shadcn@latest add veniameen/gotipe/block-editor
+npx shadcn@latest add @gotipe/block-editor
 ```
 
 It writes `components/editor.tsx`, the file of the Next.js starter, and installs its packages;

@@ -44,7 +44,7 @@ Start a new app from a starter project, or add the editor to a project that uses
 ```sh
 npx create-next-app@latest my-editor --example https://github.com/veniameen/gotipe/tree/main/examples/nextjs
 npx degit veniameen/gotipe/examples/vite-react my-editor
-npx shadcn@latest add veniameen/gotipe/block-editor
+npx shadcn@latest add @gotipe/block-editor
 ```
 
 [![Open in StackBlitz](https://developer.stackblitz.com/img/open_in_stackblitz.svg)](https://stackblitz.com/github/veniameen/gotipe/tree/main/examples/vite-react?file=src%2Feditor.tsx)
@@ -100,6 +100,7 @@ npx skills add veniameen/gotipe
 ```
 
 In Claude Code: `/plugin marketplace add veniameen/gotipe`, then `/plugin install gotipe@gotipe`.
+Tools that discover skills by domain can read the [GoTipe skill index](https://gotipe.com/.well-known/agent-skills/index.json).
 Agents can also read [llms.txt](https://gotipe.com/llms.txt), which lists every docs page, and the
 Markdown copy of any page at the same address with `.md` instead of the trailing slash.
 

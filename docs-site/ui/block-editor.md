@@ -21,7 +21,7 @@ document, extensions and host stay yours. For Markdown files use
 npm install @gotipe/block-editor @gotipe/core @gotipe/react @gotipe/theme @gotipe/i18n @gotipe/markdown @gotipe/suggestions @gotipe/versions react react-dom
 ```
 
-In a project with shadcn/ui, `npx shadcn@latest add veniameen/gotipe/block-editor` installs the
+In a project with shadcn/ui, `npx shadcn@latest add @gotipe/block-editor` installs the
 packages and writes `components/editor.tsx`, a client component with this setup.
 
 Import the styles once. `base.css` draws the document, `theme.css` the menus, panels and

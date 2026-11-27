@@ -11,6 +11,8 @@ when its own text changed. `@gotipe/suggestions` (MIT) locates and applies ancho
 any string. `PageEditor` from the commercial `@gotipe/block-editor` shows them on the page
 for a person to accept or reject.
 
+The [AI edit walkthrough](/docs/guides/apply-ai-edits-after-the-document-changes) runs a successful batch after a human edit, then reproduces ambiguous and missing quotes in Node.js.
+
 ## Install
 
 ```sh

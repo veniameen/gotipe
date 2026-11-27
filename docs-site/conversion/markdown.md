@@ -9,6 +9,8 @@ license: MIT
 
 The package has no dependencies, no side effects on import and no Node-only APIs. It does not touch the DOM, use `eval` or `new Function`, or load WebAssembly, so it runs under a strict Content Security Policy. Both editor engines use it for `getMarkdown()`, and `PageEditor` is built on it.
 
+For a complete file-editing example, [change one paragraph and verify every untouched byte](/docs/guides/edit-markdown-without-reformatting), including the BOM, front matter and CRLF line endings.
+
 ```demo
 page-editor
 ```

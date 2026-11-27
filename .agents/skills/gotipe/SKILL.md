@@ -55,7 +55,7 @@ npm install @gotipe/block-editor @gotipe/core @gotipe/react @gotipe/theme @gotip
 ```
 
 In Next.js, put the editor in a client component (`"use client"`). In a project that uses
-shadcn/ui, `npx shadcn@latest add veniameen/gotipe/block-editor` installs the packages and writes
+shadcn/ui, `npx shadcn@latest add @gotipe/block-editor` installs the packages and writes
 `components/editor.tsx` with `<Editor initialContent onChange />`. For a new project, copy a starter:
 `npx create-next-app@latest my-editor --example https://github.com/veniameen/gotipe/tree/main/examples/nextjs`
 or `npx degit veniameen/gotipe/examples/vite-react my-editor`.
