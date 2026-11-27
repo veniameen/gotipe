@@ -1,6 +1,6 @@
 ---
 title: Migrate from ProseMirror, Slate or Lexical
-description: Convert stored ProseMirror/Tiptap, Slate and Lexical JSON into GoTipe documents that fit the GoTipe schema, keeping unsupported content visible instead of dropping it.
+description: Convert ProseMirror, Tiptap, Slate and Lexical JSON to GoTipe documents, inspect migration warnings and preserve unsupported content for review.
 packages: ["@gotipe/migration"]
 license: MIT
 ---

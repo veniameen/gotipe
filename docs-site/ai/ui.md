@@ -1,6 +1,6 @@
 ---
 title: AI UI
-description: The AI controls of BlockEditor — command bar, Improve, ghost text, proofreading toolbar and status — and the AiCommandPalette and AiToolbar components of @gotipe/ai-ui.
+description: Use the AI controls in BlockEditor for commands, ghost text and proofreading, or add AiCommandPalette and AiToolbar from @gotipe/ai-ui.
 packages: ["@gotipe/block-editor", "@gotipe/ai-ui"]
 license: Commercial
 ---

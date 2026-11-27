@@ -1,6 +1,6 @@
 ---
 title: Versions
-description: Save named and automatic snapshots with VersionsManager, compare them block by block, restore one as an undoable change, show them in the VersionHistory panel, and decide where versions are stored.
+description: Manage named and timed snapshots with VersionsManager, compare blocks, undo a restore and connect the VersionHistory panel to your own storage.
 packages: ["@gotipe/versions", "@gotipe/block-editor"]
 ---
 

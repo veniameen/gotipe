@@ -1,6 +1,6 @@
 ---
 title: Rust crates
-description: The MIT Rust crates behind the WebAssembly engine, the PDF and DOCX exporter and the server converter, published on crates.io, and how to build them from source.
+description: Use GoTipe's MIT Rust crates from crates.io or build them from source for the WebAssembly engine, PDF and DOCX exporter, and gotipe-convert CLI.
 license: MIT
 ---
 

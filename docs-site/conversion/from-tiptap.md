@@ -1,6 +1,6 @@
 ---
 title: Migrate from Tiptap
-description: Move a Tiptap editor in production to GoTipe by converting the stored JSON, replacing the React component and porting extensions, commands, events, Markdown and collaboration.
+description: Migrate from Tiptap to GoTipe by converting stored JSON, replacing the React editor and porting custom nodes, marks, commands, Markdown and collaboration.
 packages: ["@gotipe/migration", "@gotipe/core", "@gotipe/react", "@gotipe/markdown"]
 license: MIT
 ---

@@ -1,6 +1,6 @@
 ---
 title: Find and replace
-description: FindReplace searches the document, keeps the matches and the current one up to date, replaces as one undo step and highlights matches through a decoration layer.
+description: Use FindReplace to search text or regular expressions, highlight matches as the document changes and undo a replacement in one step.
 packages: ["@gotipe/core"]
 license: MIT
 ---

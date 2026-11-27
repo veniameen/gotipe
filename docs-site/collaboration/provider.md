@@ -1,6 +1,6 @@
 ---
 title: Collaboration provider
-description: Options, events and lifecycle of CollaborationProvider — tokens, saving with acknowledgements, reconnects, remote cursors — and the in-page LocalCollaborationBridge.
+description: Configure CollaborationProvider tokens, save acknowledgements, reconnects and remote cursors, or connect editors on one page with LocalCollaborationBridge.
 packages: ["@gotipe/collaboration"]
 license: MIT
 ---

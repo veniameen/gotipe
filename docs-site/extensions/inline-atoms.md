@@ -1,6 +1,6 @@
 ---
 title: Inline atoms and suggestions
-description: Mentions, inline formulas, custom emoji and inline images as atomic marks, their commands, Markdown and HTML, and the headless suggestion utility for @ and : menus.
+description: Work with mentions, formulas, emoji and images as inline atoms, learn their Markdown and HTML forms, and build suggestion menus for @ and : triggers.
 packages: ["@gotipe/core", "@gotipe/react", "@gotipe/vue", "@gotipe/block-editor"]
 license: MIT
 ---

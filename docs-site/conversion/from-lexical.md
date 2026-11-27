@@ -1,6 +1,6 @@
 ---
 title: Migrate from Lexical
-description: Move a Lexical editor in production to GoTipe by converting the serialized editor state, replacing the React composer and porting nodes, commands, listeners, Markdown and collaboration.
+description: Migrate from Lexical to GoTipe by converting editor state, replacing the React composer and porting custom nodes, commands, listeners and collaboration.
 packages: ["@gotipe/migration", "@gotipe/core", "@gotipe/react", "@gotipe/markdown"]
 license: MIT
 ---

@@ -1,6 +1,6 @@
 ---
 title: Fixed toolbar
-description: FixedToolbar is the toolbar over the document of the modern view, with history, block type, font and size, marks, alignment, lists, Insert and More when the bar is narrow.
+description: Use FixedToolbar in the modern view for text and block formatting, inserts and undo, with the More menu keeping extra tools available on narrow screens.
 packages: ["@gotipe/block-editor", "@gotipe/theme"]
 license: Commercial
 ---

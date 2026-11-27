@@ -1,6 +1,6 @@
 ---
 title: Model edits
-description: Anchored edits from a model or any other source — locate and apply them with @gotipe/suggestions, and review them in PageEditor with lanes, cards, cursors and the review bar.
+description: Apply anchored edits with @gotipe/suggestions and review proposals from models or other sources in PageEditor using lanes, cards, cursors and the review bar.
 packages: ["@gotipe/suggestions", "@gotipe/block-editor"]
 ---
 

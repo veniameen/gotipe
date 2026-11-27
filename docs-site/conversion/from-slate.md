@@ -1,6 +1,6 @@
 ---
 title: Migrate from Slate and Plate
-description: Move a Slate or Plate editor in production to GoTipe by converting the stored value, replacing the React component and porting elements, transforms, events, Markdown and collaboration.
+description: Migrate from Slate or Plate to GoTipe by mapping stored values, elements and leaves, replacing the React editor and porting transforms and collaboration.
 packages: ["@gotipe/migration", "@gotipe/core", "@gotipe/react", "@gotipe/markdown"]
 license: MIT
 ---
