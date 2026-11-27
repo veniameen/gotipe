@@ -1,6 +1,6 @@
 ---
 title: Suggestions
-description: Track changes with SuggestionsManager — record edits as suggestions, accept or reject them one at a time or all at once — and review them with SuggestionToolbar.
+description: Track edits with SuggestionsManager and review them in SuggestionToolbar, accepting or rejecting changes individually or all at once.
 packages: ["@gotipe/suggestions", "@gotipe/block-editor"]
 ---
 

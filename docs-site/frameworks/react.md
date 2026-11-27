@@ -1,6 +1,6 @@
 ---
 title: React
-description: The MIT React adapter: useEditor, useEditorStatus and useEditorState, the Editor and EditorContent renderer, BubbleMenu and FloatingMenu, custom block views and server rendering.
+description: Build a GoTipe editor with the MIT React adapter, useEditor hooks, EditorContent, floating menus, custom block views and server rendering.
 packages: ["@gotipe/react"]
 license: MIT
 ---

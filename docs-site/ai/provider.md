@@ -1,6 +1,6 @@
 ---
 title: AI provider
-description: Implement AiProvider against your own backend or GoTipe Cloud — streaming, cancellation, errors and result validation — without exposing model keys to the browser.
+description: Connect AiProvider to your backend or GoTipe Cloud to stream responses, cancel requests and validate results while keeping model keys on the server.
 packages: ["@gotipe/ai"]
 license: MIT
 ---

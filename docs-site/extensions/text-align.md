@@ -1,6 +1,6 @@
 ---
 title: Text alignment and direction
-description: TextAlign aligns paragraphs and headings left, center, right or justified; TextDirection sets a block's direction. Commands, shortcuts, the More menu and HTML output.
+description: Align paragraphs and headings with TextAlign commands, shortcuts or the More menu, and set a block’s writing direction with TextDirection.
 packages: ["@gotipe/core", "@gotipe/block-editor"]
 license: MIT
 ---
