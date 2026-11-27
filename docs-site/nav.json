@@ -10,6 +10,14 @@
       ]
     },
     {
+      "title": "Guides",
+      "pages": [
+        "guides/edit-markdown-without-reformatting",
+        "guides/audit-tiptap-json-before-migration",
+        "guides/apply-ai-edits-after-the-document-changes"
+      ]
+    },
+    {
       "title": "Core concepts",
       "pages": [
         "concepts/document-model",

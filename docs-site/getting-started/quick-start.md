@@ -11,7 +11,7 @@ controls. All four run on the JS engine, so they need no WebAssembly setup and b
 
 To start from a complete Next.js or Vite project instead, copy a
 [starter project](/docs/getting-started/installation#starter-projects); in a project with shadcn/ui,
-`npx shadcn@latest add veniameen/gotipe/block-editor` adds the editor component.
+`npx shadcn@latest add @gotipe/block-editor` adds the editor component.
 
 ```demo
 block-editor

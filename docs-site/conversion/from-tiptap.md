@@ -10,6 +10,8 @@ and want to move to GoTipe. It walks through the data first, then the code. Tipt
 differ in how they model a document, so plan the move as a data migration plus a rewrite of the
 editor code, not as a swap of imports.
 
+Start with the [read-only audit of saved Tiptap JSON](/docs/guides/audit-tiptap-json-before-migration) to identify custom nodes and fields that need a mapping before the switch.
+
 ## What moves and what does not
 
 Moves automatically, with `@gotipe/migration`:

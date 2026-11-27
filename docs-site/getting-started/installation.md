@@ -191,10 +191,10 @@ npx degit veniameen/gotipe/examples/vite-react my-editor
 ```
 
 In a project that uses shadcn/ui, one command writes the editor component to
-`components/editor.tsx` and installs its packages, `@gotipe/wasm` included:
+`components/editor.tsx` and installs its packages:
 
 ```sh
-npx shadcn@latest add veniameen/gotipe/block-editor
+npx shadcn@latest add @gotipe/block-editor
 ```
 
 The same item is served at `https://gotipe.com/r/block-editor.json`, an address older versions of
